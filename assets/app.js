@@ -117,8 +117,8 @@ function buildDirectory() {
   if (!body) return;
   const render = (rows) => {
     body.innerHTML = rows.map(p => `
-      <tr><td><strong>${p[0]}</strong></td><td>${p[1]}</td><td>${p[2]}</td>
-      <td>${p[3]}</td><td><a href="mailto:${p[4]}">${p[4]}</a></td><td>${p[5]}</td></tr>`).join("")
+      <tr><td data-label="Name"><strong>${p[0]}</strong></td><td data-label="Title">${p[1]}</td><td data-label="Office">${p[2]}</td>
+      <td data-label="Phone"><a href="tel:${p[3].replace(/[^0-9]/g,'')}">${p[3]}</a></td><td data-label="Email"><a href="mailto:${p[4]}">${p[4]}</a></td><td data-label="Department">${p[5]}</td></tr>`).join("")
       || `<tr><td colspan="6" style="text-align:center;color:#56627a;padding:22px">No matches.</td></tr>`;
   };
   render(PEOPLE);
@@ -154,12 +154,101 @@ function buildSearchOverlay() {
   document.body.appendChild(el);
 }
 
+/* ---- Document / Form modal ---- */
+const FILE_LABEL = { pdf:"PDF", doc:"DOC", xls:"XLS", vid:"VID", lnk:"LNK" };
+let modalEl;
+function buildModal() {
+  modalEl = document.createElement("div");
+  modalEl.id = "modal";
+  modalEl.className = "modal-overlay";
+  modalEl.innerHTML = `<div class="modal" id="modalCard"></div>`;
+  document.body.appendChild(modalEl);
+  modalEl.addEventListener("click", e => { if (e.target === modalEl) closeModal(); });
+}
+function closeModal() { if (modalEl) modalEl.classList.remove("open"); }
+
+function openDoc(key) {
+  const d = DOCS[key];
+  if (!d) return;
+  const fileType = (d.fi||"lnk");
+  document.getElementById("modalCard").innerHTML = `
+    <div class="modal-top">
+      <span class="fi ${fileType}">${FILE_LABEL[fileType]||"DOC"}</span>
+      <div>
+        <h2>${d.t} ${d.locked?'<span class="badge lock">🔒 Restricted</span>':''}</h2>
+        <div class="m-meta">${d.sec} · ${d.type} · ${d.updated}</div>
+      </div>
+      <button class="x" aria-label="Close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-toolbar">
+      <button class="tbtn">⬇ Download</button>
+      <button class="tbtn">🖨 Print</button>
+      <button class="tbtn">🔗 Share</button>
+      <button class="tbtn">★ Follow</button>
+    </div>
+    <div class="modal-body"><div class="doc-paper">${d.body}</div></div>
+    <div class="modal-note">📄 <b>Prototype preview.</b> In the real Practice Hub this opens the actual file in Microsoft 365 — viewable and editable right in your browser or phone.</div>`;
+  modalEl.classList.add("open");
+}
+
+function openForm(key) {
+  const f = FORMS[key];
+  if (!f) return;
+  const fields = f.fields.map((fld,i) => {
+    const req = fld.req ? ' <span class="req">*</span>' : '';
+    const id = `f_${key}_${i}`;
+    let input;
+    if (fld.type === "textarea") input = `<textarea id="${id}"></textarea>`;
+    else if (fld.type === "select") input = `<select id="${id}"><option value="" disabled selected>Choose…</option>${fld.opts.map(o=>`<option>${o}</option>`).join("")}</select>`;
+    else if (fld.type === "file") input = `<input id="${id}" type="file">`;
+    else if (fld.type === "date") input = `<input id="${id}" type="date">`;
+    else input = `<input id="${id}" type="text">`;
+    return `<div class="fld"><label>${fld.l}${req}</label>${input}</div>`;
+  }).join("");
+  document.getElementById("modalCard").innerHTML = `
+    <div class="form-accent"></div>
+    <div class="modal-top">
+      <div>
+        <h2>${f.t}</h2>
+        <div class="m-meta">Microsoft Forms · ~1 minute · routes to ${f.routesTo}</div>
+      </div>
+      <button class="x" aria-label="Close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body" id="formBody">${fields}</div>
+    <div class="modal-foot">
+      <button class="btn ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn" onclick="submitForm('${key}')">Submit</button>
+    </div>`;
+  modalEl.classList.add("open");
+}
+
+function submitForm(key) {
+  const f = FORMS[key];
+  document.getElementById("formBody").innerHTML = `
+    <div class="form-success">
+      <div class="check"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div>
+      <h3>Thanks — your request was submitted!</h3>
+      <p>In the real build this is saved and sent to <b>${f.routesTo}</b>, who can track and respond. You'd get a confirmation on your phone.</p>
+    </div>`;
+  const foot = document.querySelector("#modal .modal-foot");
+  if (foot) foot.innerHTML = `<button class="btn" onclick="closeModal()">Done</button>`;
+}
+
+/* Open any [data-doc] / [data-form] element */
+function handleDelegatedClick(e) {
+  const docEl = e.target.closest("[data-doc]");
+  if (docEl) { e.preventDefault(); openDoc(docEl.getAttribute("data-doc")); return; }
+  const formEl = e.target.closest("[data-form]");
+  if (formEl) { e.preventDefault(); openForm(formEl.getAttribute("data-form")); return; }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
-  buildHeader(); buildFooter(); buildSearchOverlay(); buildHomeTiles(); buildDirectory();
+  buildHeader(); buildFooter(); buildSearchOverlay(); buildModal(); buildHomeTiles(); buildDirectory();
+  document.addEventListener("click", handleDelegatedClick);
   const si = document.getElementById("searchInput");
   if (si) si.addEventListener("input", e => renderSearch(e.target.value));
   document.addEventListener("keydown", e => {
-    if (e.key === "Escape") closeSearch();
+    if (e.key === "Escape") { closeSearch(); closeModal(); }
     if ((e.metaKey||e.ctrlKey) && e.key === "k") { e.preventDefault(); openSearch(); }
   });
   const ov = document.getElementById("searchOverlay");

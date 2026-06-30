@@ -20,13 +20,13 @@
 
   <div class="tiles">
     <a class="tile" href="scorecards.html"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l3-3 3 3 5-6"/></svg></div><h3>Office KPI Scorecard</h3><p>Your office's monthly numbers at a glance.</p></a>
-    <a class="tile" href="forms.html"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22M5 6h11a3 3 0 0 1 0 6H8a3 3 0 0 0 0 6h11"/></svg></div><h3>Submit an Expense</h3><p>Reimbursement & office spending.</p></a>
-    <a class="tile" href="#docs"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg></div><h3>Office Budget</h3><p>Current monthly budget by office.</p></a>
-    <a class="tile" href="#docs"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 20v-1a5 5 0 0 1 5-5h2a5 5 0 0 1 5 5v1"/></svg></div><h3>Vendor Contacts</h3><p>Approved suppliers & reps.</p></a>
-    <a class="tile" href="#docs"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l5 5v15H6z"/><path d="M9 13l2 2 4-4"/></svg></div><h3>Supply Ordering</h3><p>How to order clinical & office supplies.</p></a>
+    <a class="tile" href="#" data-form="expense"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22M5 6h11a3 3 0 0 1 0 6H8a3 3 0 0 0 0 6h11"/></svg></div><h3>Submit an Expense</h3><p>Reimbursement & office spending.</p></a>
+    <a class="tile" href="#" data-doc="budget"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg></div><h3>Office Budget</h3><p>Current monthly budget by office.</p></a>
+    <a class="tile" href="#" data-doc="vendor-list"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 20v-1a5 5 0 0 1 5-5h2a5 5 0 0 1 5 5v1"/></svg></div><h3>Vendor Contacts</h3><p>Approved suppliers & reps.</p></a>
+    <a class="tile" href="#" data-doc="supply-guide"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l5 5v15H6z"/><path d="M9 13l2 2 4-4"/></svg></div><h3>Supply Ordering</h3><p>How to order clinical & office supplies.</p></a>
     <a class="tile" href="calendars.html"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></div><h3>Office Calendar</h3><p>Schedules & key dates for your office.</p></a>
     <a class="tile" href="operations.html"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><path d="M8 9l2 2 4-4M8 16h8"/></svg></div><h3>Opening / Closing Checklists</h3><p>Daily open & close steps.</p></a>
-    <a class="tile" href="#notes"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2h6l4 4v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg></div><h3>Manager Meeting Notes</h3><p>Notes & action items.</p></a>
+    <a class="tile" href="#" data-doc="manager-notes"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2h6l4 4v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg></div><h3>Manager Meeting Notes</h3><p>Notes & action items.</p></a>
   </div>
 
   <div class="cols" style="margin-top:34px">
@@ -34,12 +34,12 @@
       <div class="card">
         <h2>Office documents</h2>
         <ul class="reslist">
-          <li><span class="fi xls">XLS</span><span class="name">Manage My Office - Monthly KPI Template</span><span class="tag">Updated Jun 2026</span></li>
-          <li><span class="fi xls">XLS</span><span class="name">Finance - Office Budget - 2026</span><span class="tag">Updated Jun 2026</span></li>
-          <li><span class="fi xls">XLS</span><span class="name">Operations - Vendor Contact List</span><span class="tag">Updated May 2026</span></li>
-          <li><span class="fi pdf">PDF</span><span class="name">Operations - Supply Order Guide</span><span class="tag">Updated Apr 2026</span></li>
-          <li><span class="fi doc">DOC</span><span class="name">Operations - Opening Checklist</span><span class="tag">Updated Mar 2026</span></li>
-          <li><span class="fi doc">DOC</span><span class="name">Operations - Closing Checklist</span><span class="tag">Updated Mar 2026</span></li>
+          <li class="clickable" data-doc="kpi-template"><span class="fi xls">XLS</span><span class="name">Manage My Office - Monthly KPI Template</span><span class="tag">Updated Jun 2026</span></li>
+          <li class="clickable" data-doc="budget"><span class="fi xls">XLS</span><span class="name">Finance - Office Budget - 2026</span><span class="tag">Updated Jun 2026</span></li>
+          <li class="clickable" data-doc="vendor-list"><span class="fi xls">XLS</span><span class="name">Operations - Vendor Contact List</span><span class="tag">Updated May 2026</span></li>
+          <li class="clickable" data-doc="supply-guide"><span class="fi pdf">PDF</span><span class="name">Operations - Supply Order Guide</span><span class="tag">Updated Apr 2026</span></li>
+          <li class="clickable" data-doc="opening-checklist"><span class="fi doc">DOC</span><span class="name">Operations - Opening Checklist</span><span class="tag">Updated Mar 2026</span></li>
+          <li class="clickable" data-doc="closing-checklist"><span class="fi doc">DOC</span><span class="name">Operations - Closing Checklist</span><span class="tag">Updated Mar 2026</span></li>
         </ul>
       </div>
     </div>
@@ -48,9 +48,9 @@
       <div class="card" id="notes">
         <h3>📝 Latest manager notes</h3>
         <ul class="qlinks">
-          <li><a href="#">Manager meeting — Jun 24 <span class="arr">›</span></a></li>
-          <li><a href="#">Manager meeting — Jun 10 <span class="arr">›</span></a></li>
-          <li><a href="#">Q2 wrap-up notes <span class="arr">›</span></a></li>
+          <li><a href="#" data-doc="manager-notes">Manager meeting — Jun 24 <span class="arr">›</span></a></li>
+          <li><a href="#" data-doc="manager-notes">Manager meeting — Jun 10 <span class="arr">›</span></a></li>
+          <li><a href="#" data-doc="manager-notes">Q2 wrap-up notes <span class="arr">›</span></a></li>
         </ul>
       </div>
     </div>
