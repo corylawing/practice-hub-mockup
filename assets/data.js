@@ -159,6 +159,15 @@ const DOCS = {
     <p>Per-office detail is in the Scorecards section.</p>` },
   "leadership-notes": { t:"Leadership Meeting Notes — Jun 2026", fi:"doc", sec:"Leadership", updated:"Jun 2026", type:"Meeting notes", locked:true,
     body:`<p class="lead">Monthly leadership meeting.</p><h4>Decisions</h4><ul><li>Approved Practice Hub rollout plan.</li><li>Set Q3 priorities (see Quarterly Priorities).</li></ul>` },
+
+  "doctor-calendars": { t:"Doctor Calendars", fi:"lnk", sec:"Calendars", updated:"How this works", type:"Personal calendars",
+    body:`<p class="lead">Where each doctor is <b>working</b> is shown on the weekly board above — that's the practice-wide rotation.</p>
+    <h4>Each doctor's personal calendar</h4><p>For their own day-to-day (appointments, meetings, time off), each doctor keeps a personal Microsoft 365 (Outlook) calendar. In the real build you'd open a doctor's calendar right here.</p>
+    <h4>Tip</h4><p>To see everywhere a specific doctor works this week, use the <b>“Highlight a doctor”</b> filter at the top of this page.</p>` },
+  "practice-events": { t:"Practice Events", fi:"lnk", sec:"Calendars", updated:"Updated weekly", type:"Shared calendar",
+    body:`<p class="lead">Practice-wide events and key dates everyone should know.</p>
+    <ul><li>All-staff call — last Wednesday monthly</li><li>Office manager meeting — every other Wednesday</li><li>Supply order cutoff — Fridays</li><li>Q3 planning offsite — Aug 14</li><li>Staff appreciation lunch — Jul 25</li></ul>
+    <p>In the real build this is a shared Microsoft 365 group calendar everyone can subscribe to.</p>` },
 };
 
 /* ---- Forms (Microsoft Forms-style intake) ---- */
