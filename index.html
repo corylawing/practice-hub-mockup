@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Practice Hub — Summit Orthodontics</title>
+<meta name="description" content="Practice Hub — the digital front door for Summit Orthodontics.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body data-page="home">
+<div id="hdr"></div>
+
+<div class="wrap">
+
+  <section class="hero">
+    <h1>Good morning 👋</h1>
+    <p>What do you need today? Search the hub or jump to a section below.</p>
+    <div class="hero-search" onclick="openSearch()">
+      <input type="text" placeholder="Search PTO, expense, handbook, vendor, KPI…" readonly>
+      <span class="s-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
+    </div>
+    <div class="hero-chips">
+      <button class="chip" onclick="runSearch('PTO')">PTO</button>
+      <button class="chip" onclick="runSearch('expense')">Expense</button>
+      <button class="chip" onclick="runSearch('handbook')">Handbook</button>
+      <button class="chip" onclick="runSearch('vendor')">Vendor</button>
+      <button class="chip" onclick="runSearch('KPI')">KPI</button>
+    </div>
+  </section>
+
+  <div class="section-title">Where do you want to go?</div>
+  <div class="tiles" id="moduleTiles"></div>
+
+  <div class="cols" style="margin-top:34px">
+    <div>
+      <div class="card">
+        <h2>📣 Announcements</h2>
+        <div class="announce">
+          <div class="pin"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11v2a1 1 0 0 0 1 1h3l5 4V6L7 10H4a1 1 0 0 0-1 1z"/><path d="M16 9a4 4 0 0 1 0 6"/></svg></div>
+          <div>
+            <h4>New PTO request process is live</h4>
+            <div class="meta">Posted by Jordan Avery (COO) · 2 days ago</div>
+            <p style="margin:.4em 0 0;font-size:14px">All time-off requests now go through the Forms page. Texting your manager is being retired — please use the new form so nothing gets lost.</p>
+          </div>
+        </div>
+        <div class="announce">
+          <div class="pin"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11v2a1 1 0 0 0 1 1h3l5 4V6L7 10H4a1 1 0 0 0-1 1z"/><path d="M16 9a4 4 0 0 1 0 6"/></svg></div>
+          <div>
+            <h4>Q3 priorities posted</h4>
+            <div class="meta">Posted by Leadership · 5 days ago</div>
+            <p style="margin:.4em 0 0;font-size:14px">Office managers — please review the Q3 focus areas before the next manager meeting.</p>
+          </div>
+        </div>
+        <div class="announce">
+          <div class="pin"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11v2a1 1 0 0 0 1 1h3l5 4V6L7 10H4a1 1 0 0 0-1 1z"/><path d="M16 9a4 4 0 0 1 0 6"/></svg></div>
+          <div>
+            <h4>Welcome to Practice Hub!</h4>
+            <div class="meta">Posted by Jordan Avery (COO) · 1 week ago</div>
+            <p style="margin:.4em 0 0;font-size:14px">This is now our one place for documents, forms, and updates. Bookmark it on your phone.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <h3>⚡ Quick links</h3>
+        <ul class="qlinks">
+          <li><a href="forms.html">Request time off (PTO) <span class="arr">›</span></a></li>
+          <li><a href="forms.html">Submit an expense <span class="arr">›</span></a></li>
+          <li><a href="hr.html">Employee Handbook <span class="arr">›</span></a></li>
+          <li><a href="manage-my-office.html">Vendor contact list <span class="arr">›</span></a></li>
+          <li><a href="calendars.html">Practice calendar <span class="arr">›</span></a></li>
+          <li><a href="it.html">Get IT help <span class="arr">›</span></a></li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>📅 This week</h3>
+        <ul class="qlinks">
+          <li><a href="calendars.html">Manager meeting — Wed 10:00a <span class="arr">›</span></a></li>
+          <li><a href="calendars.html">Dr. Chen out — Thu/Fri <span class="arr">›</span></a></li>
+          <li><a href="calendars.html">Supply order cutoff — Fri <span class="arr">›</span></a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div id="ftr"></div>
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

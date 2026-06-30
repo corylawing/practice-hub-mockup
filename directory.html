@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Directory — Practice Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body data-page="directory">
+<div id="hdr"></div>
+
+<div class="wrap">
+  <div class="breadcrumb"><a href="index.html">Home</a> › Directory</div>
+  <div class="page-head">
+    <h1>Directory</h1>
+    <p>Find anyone across all 8 offices. Type a name, role, or office to filter instantly.</p>
+  </div>
+
+  <div class="notice">In the real build this is a single <b>Microsoft List</b> — the COO can add or edit a person in seconds, and it stays searchable and mobile-friendly.</div>
+
+  <div class="tablebar">
+    <input id="dirSearch" type="text" placeholder="Search name, title, phone…">
+    <select id="dirOffice"></select>
+  </div>
+  <table class="dir">
+    <thead><tr><th>Name</th><th>Title</th><th>Office</th><th>Phone</th><th>Email</th><th>Department</th></tr></thead>
+    <tbody id="dirBody"></tbody>
+  </table>
+</div>
+
+<div id="ftr"></div>
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>
