@@ -189,6 +189,23 @@ const FORMS = {
     fields:[ {l:"Destination / purpose", type:"text", req:true}, {l:"Dates", type:"text"}, {l:"Estimated cost", type:"text"} ] },
 };
 
+/* ---- Office & Doctor rotation ----
+   In the real build this is ONE SharePoint List (Office, Day, Open?, Doctor, Hours)
+   shown as the weekly board below + per-office and per-doctor filtered views.
+   Cell = null (closed) or {dr, hrs}. Day order: Mon→Sat. */
+const SCHED_DAYS = ["Mon","Tue","Wed","Thu","Fri","Sat"];
+const WK = "8:00a–5:00p", SAT = "8:00a–1:00p";
+const SCHEDULE = {
+  "Summit North":     [{dr:"Dr. Chen",hrs:WK}, null, {dr:"Dr. Rao",hrs:WK}, null, {dr:"Dr. Chen",hrs:WK}, null],
+  "Summit South":     [{dr:"Dr. Rao",hrs:WK}, null, {dr:"Dr. Chen",hrs:WK}, null, null, {dr:"Dr. Lopez",hrs:SAT}],
+  "Summit East":      [null, {dr:"Dr. Chen",hrs:WK}, null, {dr:"Dr. Rao",hrs:WK}, null, null],
+  "Summit West":      [null, {dr:"Dr. Rao",hrs:WK}, null, {dr:"Dr. Chen",hrs:WK}, null, null],
+  "Summit Downtown":  [{dr:"Dr. Mehta",hrs:WK}, null, {dr:"Dr. Lopez",hrs:WK}, null, {dr:"Dr. Rao",hrs:WK}, null],
+  "Summit Lakeside":  [null, {dr:"Dr. Mehta",hrs:WK}, null, {dr:"Dr. Ford",hrs:WK}, {dr:"Dr. Mehta",hrs:WK}, null],
+  "Summit Hilltop":   [{dr:"Dr. Lopez",hrs:WK}, null, {dr:"Dr. Mehta",hrs:WK}, null, {dr:"Dr. Ford",hrs:WK}, null],
+  "Summit Riverside": [null, {dr:"Dr. Ford",hrs:WK}, null, {dr:"Dr. Lopez",hrs:WK}, null, {dr:"Dr. Mehta",hrs:SAT}],
+};
+
 /* Demo directory rows */
 const PEOPLE = [
   ["Jordan Avery","COO","All Offices","(555) 100-2001","javery@summitortho.example","Leadership"],

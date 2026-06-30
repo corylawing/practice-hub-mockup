@@ -137,6 +137,64 @@ function buildDirectory() {
   off.innerHTML = `<option value="All">All offices</option>` + offices.map(o=>`<option>${o}</option>`).join("");
 }
 
+/* ---- Weekly office/doctor board ---- */
+function buildSchedule() {
+  const board = document.getElementById("schedBoard");
+  if (!board || typeof SCHEDULE === "undefined") return;
+  const offices = Object.keys(SCHEDULE);
+  const doctors = [...new Set(Object.values(SCHEDULE).flat().filter(Boolean).map(c => c.dr))].sort();
+
+  // today highlight: JS getDay 0=Sun..6=Sat -> Mon..Sat index 0..5
+  const gd = new Date().getDay();
+  const todayIdx = gd === 0 ? -1 : gd - 1; // Sun = none
+
+  const head = `<tr><th class="off-col">Office</th>${SCHED_DAYS.map((d,i)=>
+    `<th class="${i===todayIdx?'is-today':''}">${d}${i===todayIdx?' · Today':''}</th>`).join("")}</tr>`;
+  const rows = offices.map(off => {
+    const cells = SCHEDULE[off].map((c,i) => {
+      const today = i===todayIdx ? ' is-today' : '';
+      if (!c) return `<td class="cell closed${today}" data-dr="" data-off="${off}"><span class="x-closed">Closed</span></td>`;
+      return `<td class="cell open${today}" data-dr="${c.dr}" data-off="${off}">
+        <span class="c-dr">${c.dr}</span><span class="c-hrs">${c.hrs}</span></td>`;
+    }).join("");
+    return `<tr data-row-off="${off}"><th class="off-col">${off}</th>${cells}</tr>`;
+  }).join("");
+  board.innerHTML = `<table class="sched"><thead>${head}</thead><tbody>${rows}</tbody></table>`;
+
+  // Today summary
+  const sum = document.getElementById("schedToday");
+  if (sum) {
+    if (todayIdx === -1) {
+      sum.innerHTML = `<b>It's the weekend.</b> Most offices are closed Sunday — here's the week at a glance.`;
+    } else {
+      const open = offices.filter(o => SCHEDULE[o][todayIdx]).map(o => `${o.replace('Summit ','')} (${SCHEDULE[o][todayIdx].dr})`);
+      sum.innerHTML = open.length
+        ? `<b>Open today (${SCHED_DAYS[todayIdx]}):</b> ${open.join(" · ")}`
+        : `<b>All offices closed today.</b> Here's the week ahead.`;
+    }
+  }
+
+  // Filters
+  const docSel = document.getElementById("schedDoctor");
+  const offSel = document.getElementById("schedOffice");
+  if (docSel) docSel.innerHTML = `<option value="">Highlight a doctor…</option>` + doctors.map(d=>`<option>${d}</option>`).join("");
+  if (offSel) offSel.innerHTML = `<option value="">Highlight an office…</option>` + offices.map(o=>`<option>${o}</option>`).join("");
+  const apply = () => {
+    const dr = docSel ? docSel.value : "";
+    const off = offSel ? offSel.value : "";
+    const filtering = dr || off;
+    board.classList.toggle("filtering", !!filtering);
+    board.querySelectorAll("td.cell").forEach(td => {
+      const matchDr = !dr || td.getAttribute("data-dr") === dr;
+      const matchOff = !off || td.getAttribute("data-off") === off;
+      td.classList.toggle("dim", filtering && !(matchDr && matchOff && td.classList.contains("open")));
+      td.classList.toggle("hit", filtering && matchDr && matchOff && td.classList.contains("open"));
+    });
+  };
+  if (docSel) docSel.addEventListener("change", () => { if (docSel.value && offSel) offSel.value=""; apply(); });
+  if (offSel) offSel.addEventListener("change", () => { if (offSel.value && docSel) docSel.value=""; apply(); });
+}
+
 function buildSearchOverlay() {
   const el = document.createElement("div");
   el.id = "searchOverlay";
@@ -243,7 +301,7 @@ function handleDelegatedClick(e) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  buildHeader(); buildFooter(); buildSearchOverlay(); buildModal(); buildHomeTiles(); buildDirectory();
+  buildHeader(); buildFooter(); buildSearchOverlay(); buildModal(); buildHomeTiles(); buildDirectory(); buildSchedule();
   document.addEventListener("click", handleDelegatedClick);
   const si = document.getElementById("searchInput");
   if (si) si.addEventListener("input", e => renderSearch(e.target.value));
