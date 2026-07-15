@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KPI Dashboard (V1) — Practice Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/styles.css">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../assets/icons/apple-touch-icon.png">
+<meta name="theme-color" content="#0F2A4A">
+<meta name="description" content="Practice Hub V1 — a simple, easy-to-read KPI dashboard.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Practice Hub">
+<meta property="og:title" content="KPI Dashboard (V1) · Practice Hub">
+<meta property="og:description" content="A simple, easy-to-read KPI dashboard — production, collections & starts at a glance.">
+<meta property="og:image" content="https://corylawing.github.io/practice-hub-mockup/assets/og-image.png">
+<meta property="og:url" content="https://corylawing.github.io/practice-hub-mockup/v1/">
+<style>
+  /* V1 dashboard extras */
+  .v1-badge { background:rgba(255,255,255,.15); color:#eaf1fb; font-size:12px; font-weight:600; padding:4px 10px; border-radius:999px; margin-left:10px; }
+  .month-row { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:18px; }
+  .month-pick { display:inline-flex; align-items:center; gap:8px; background:#fff; border:1px solid var(--line); border-radius:10px; padding:9px 14px; font-weight:600; color:var(--navy); font-size:15px; box-shadow:var(--shadow); }
+  .kpi .val.big { font-size:34px; }
+  /* horizontal bar chart */
+  .bars { display:flex; flex-direction:column; gap:12px; }
+  .bar-row { display:grid; grid-template-columns:110px 1fr 84px; align-items:center; gap:12px; }
+  .bar-label { font-size:14px; color:var(--ink); font-weight:500; }
+  .bar-track { display:block; background:var(--canvas); border:1px solid var(--line); border-radius:8px; height:26px; overflow:hidden; }
+  .bar-fill { display:block; height:100%; background:linear-gradient(90deg,var(--teal),#2bc0b8); }
+  .bar-val { font-size:14px; font-weight:700; color:var(--navy); text-align:right; }
+  /* trend */
+  .trend { display:flex; align-items:flex-end; gap:12px; height:150px; padding-top:8px; }
+  .trend .col { flex:1; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; gap:8px; height:100%; }
+  .trend .b { width:100%; max-width:52px; background:var(--teal-soft); border-radius:8px 8px 0 0; position:relative; }
+  .trend .b.hi { background:var(--teal); }
+  .trend .b .v { position:absolute; top:-22px; left:0; right:0; text-align:center; font-size:12px; font-weight:700; color:var(--navy); }
+  .trend .m { font-size:12px; color:var(--ink-soft); font-weight:600; }
+  @media (max-width:720px){ .bar-row{ grid-template-columns:84px 1fr 66px; gap:8px; } .trend .b .v{ font-size:10px; } }
+</style>
+</head>
+<body>
+<div class="demo-ribbon">PROTOTYPE — sample numbers shown. Your real figures from the Excel sheet drop in here.</div>
+<header class="site-header">
+  <div class="hdr-inner">
+    <a class="brand" href="../index.html">
+      <span class="mark">PH</span>
+      <span>Practice Hub<span class="sub">KPI Dashboard</span></span>
+    </a>
+    <span class="v1-badge">V1 preview</span>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="month-row">
+    <div class="page-head" style="margin:0">
+      <h1 style="font-size:26px">Practice KPI Dashboard</h1>
+      <p>The numbers that matter, in one glance.</p>
+    </div>
+    <span class="month-pick">📅 June 2026 ▾</span>
+  </div>
+
+  <!-- Big numbers -->
+  <div class="kpi-grid">
+    <div class="kpi"><div class="label">Production</div><div class="val big">$842k</div><div class="delta up">▲ 6.2% vs May</div></div>
+    <div class="kpi"><div class="label">Collections</div><div class="val big">$791k</div><div class="delta up">▲ 4.1% vs May</div></div>
+    <div class="kpi"><div class="label">Net Production</div><div class="val big">$805k</div><div class="delta up">▲ 5.0% vs May</div></div>
+    <div class="kpi"><div class="label">New Patient Starts</div><div class="val big">214</div><div class="delta up">▲ 11 vs May</div></div>
+  </div>
+
+  <!-- Production by office -->
+  <div class="section-title">Production by office — June</div>
+  <div class="card">
+    <div class="bars">
+      <div class="bar-row"><span class="bar-label">Office 1</span><span class="bar-track"><span class="bar-fill" style="width:100%"></span></span><span class="bar-val">$132k</span></div>
+      <div class="bar-row"><span class="bar-label">Office 2</span><span class="bar-track"><span class="bar-fill" style="width:89%"></span></span><span class="bar-val">$118k</span></div>
+      <div class="bar-row"><span class="bar-label">Office 3</span><span class="bar-track"><span class="bar-fill" style="width:82%"></span></span><span class="bar-val">$108k</span></div>
+      <div class="bar-row"><span class="bar-label">Office 4</span><span class="bar-track"><span class="bar-fill" style="width:75%"></span></span><span class="bar-val">$99k</span></div>
+      <div class="bar-row"><span class="bar-label">Office 5</span><span class="bar-track"><span class="bar-fill" style="width:71%"></span></span><span class="bar-val">$94k</span></div>
+      <div class="bar-row"><span class="bar-label">Office 6</span><span class="bar-track"><span class="bar-fill" style="width:62%"></span></span><span class="bar-val">$82k</span></div>
+      <div class="bar-row"><span class="bar-label">Office 7</span><span class="bar-track"><span class="bar-fill" style="width:46%"></span></span><span class="bar-val">$61k</span></div>
+      <div class="bar-row"><span class="bar-label">Office 8</span><span class="bar-track"><span class="bar-fill" style="width:36%"></span></span><span class="bar-val">$48k</span></div>
+    </div>
+    <p style="font-size:13px;color:var(--ink-soft);margin:16px 0 0">Office names above are placeholders — your 8 real office names go here.</p>
+  </div>
+
+  <div class="cols">
+    <div>
+      <div class="section-title">Production trend — last 6 months</div>
+      <div class="card">
+        <div class="trend">
+          <div class="col"><div class="b" style="height:74%"><span class="v">$620k</span></div><span class="m">Jan</span></div>
+          <div class="col"><div class="b" style="height:78%"><span class="v">$660k</span></div><span class="m">Feb</span></div>
+          <div class="col"><div class="b" style="height:84%"><span class="v">$705k</span></div><span class="m">Mar</span></div>
+          <div class="col"><div class="b" style="height:86%"><span class="v">$728k</span></div><span class="m">Apr</span></div>
+          <div class="col"><div class="b" style="height:94%"><span class="v">$793k</span></div><span class="m">May</span></div>
+          <div class="col"><div class="b hi" style="height:100%"><span class="v">$842k</span></div><span class="m">Jun</span></div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="section-title">Rates</div>
+      <div class="card">
+        <div style="display:flex;flex-direction:column;gap:18px">
+          <div><div class="label" style="font-size:13px;color:var(--ink-soft)">Collection rate</div><div class="val" style="font-size:30px;font-weight:700;color:var(--navy)">94%</div></div>
+          <div><div class="label" style="font-size:13px;color:var(--ink-soft)">Case acceptance</div><div class="val" style="font-size:30px;font-weight:700;color:var(--navy)">68%</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="notice future" style="margin-top:24px">
+    <b>How this works at go-live:</b> in the real Practice Hub, this dashboard reads straight from your Excel sheet in SharePoint (via the built-in Excel web part) — so when someone updates the sheet, these numbers update automatically. No copy-paste, no code. This V1 page is just to confirm the <i>look</i> first.
+  </div>
+
+</div>
+
+<footer class="site-footer">
+  <div class="ftr-inner">
+    <div>© 2026 Practice Hub <span style="opacity:.6">(V1 prototype — sample data)</span></div>
+    <div><a href="../index.html">← Back to full mockup</a></div>
+  </div>
+</footer>
+</body>
+</html>
