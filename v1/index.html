@@ -42,6 +42,11 @@
   .pickrow{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
   select.pick{padding:10px 14px;border:1px solid var(--line);border-radius:10px;font-size:15px;font-weight:600;
     color:var(--navy);background:#fff;box-shadow:var(--shadow);font-family:inherit;cursor:pointer}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 20px}
+  .chip{padding:8px 14px;border:1px solid var(--line);border-radius:999px;background:#fff;font-size:14px;font-weight:600;
+    color:var(--navy);cursor:pointer;box-shadow:var(--shadow);font-family:inherit;transition:all .12s}
+  .chip:hover{border-color:var(--teal);color:var(--teal-600)}
+  .chip.active{background:var(--navy);color:#fff;border-color:var(--navy)}
   .sect{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--soft);font-weight:700;margin:30px 0 14px}
   .summary{background:#fff;border:1px solid var(--line);border-left:4px solid var(--teal);border-radius:10px;
     padding:12px 16px;font-size:14.5px;color:var(--ink);margin-bottom:20px;box-shadow:var(--shadow)}
@@ -80,18 +85,20 @@
   .pill.up{background:var(--good-soft);color:var(--good)} .pill.down{background:var(--bad-soft);color:var(--bad)}
   /* monthly bar chart */
   .chart2{min-width:460px}
-  .plot{position:relative;height:210px;display:flex;align-items:flex-end;gap:16px;padding-top:26px;padding-left:52px}
-  .goalline2{position:absolute;left:0;right:0;border-top:2px dashed #9aa6b6;z-index:1}
-  .goalline2 .gtag{position:absolute;left:0;top:-9px;background:#fff;padding:0 8px 0 0;font-size:11px;font-weight:700;color:#6b7787}
+  .plot{position:relative;height:210px;display:flex;align-items:flex-end;gap:16px;padding-top:26px}
   .bcol{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;position:relative;z-index:2}
   .bar2{width:100%;max-width:40px;border-radius:6px 6px 0 0;position:relative;cursor:pointer;transition:filter .12s,transform .12s}
   .bar2:hover{filter:brightness(1.06)}
   .bar2.active{transform:scaleX(1.04)}
   .pv2{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);margin-bottom:5px;font-size:12px;font-weight:800;white-space:nowrap}
-  .xrow{display:flex;gap:16px;margin-top:8px;padding-left:52px}
+  .gmark{position:absolute;left:50%;transform:translateX(-50%);width:48px;max-width:100%;border-top:3px solid var(--navy);border-radius:2px;z-index:4;pointer-events:none}
+  .gmark::after{content:"";position:absolute;right:-2px;top:-4px;width:5px;height:5px;border-radius:50%;background:var(--navy)}
+  .gkey{display:inline-block;width:16px;border-top:3px solid var(--navy);position:relative;top:-3px}
+  .xrow{display:flex;gap:16px;margin-top:8px}
   .xcol{flex:1;text-align:center}
   .xm{font-size:13px;color:var(--soft);font-weight:600}
-  .xd{font-size:12px;color:var(--navy);font-weight:700;margin-top:2px}
+  .xd{font-size:13px;color:var(--navy);font-weight:800;margin-top:2px}
+  .xg{font-size:11px;color:var(--soft);margin-top:1px}
   .tip{position:absolute;z-index:10;background:var(--navy);color:#fff;border-radius:10px;padding:10px 12px;font-size:12.5px;
     box-shadow:0 8px 24px rgba(15,42,74,.3);pointer-events:none;opacity:0;transform:translate(-50%,-6px);transition:opacity .12s;min-width:150px}
   .tip.show{opacity:1}
@@ -126,11 +133,9 @@
       <h1>Production Dashboard</h1>
       <p>How each office is tracking against goal — at a glance.</p>
     </div>
-    <div class="pickrow">
-      <select class="pick" id="officePick" aria-label="Choose office"></select>
-      <select class="pick" id="yearPick" aria-label="Choose year"><option>2026</option></select>
-    </div>
+    <select class="pick" id="yearPick" aria-label="Choose year"><option>2026</option></select>
   </div>
+  <div class="chips" id="officeChips"></div>
   <div id="view"></div>
 
   <div class="note">
@@ -223,21 +228,24 @@ function renderAll(){
 }
 
 function renderOffice(o){
-  const maxPct = Math.max(120, ...o.pct.filter(x=>x!=null));
   const H = 184;
-  const goalPx = Math.round(100/maxPct*H);
+  const maxVal = Math.max(1, ...o.act.map((a,i)=> a!=null ? Math.max(a, o.goal[i]) : 0));
   const plotBars = o.pct.map((p,i)=>{
     if(p==null) return `<div class="bcol"></div>`;
-    const hpx = Math.max(10, Math.round(p/maxPct*H));
-    return `<div class="bcol"><div class="bar2" data-i="${i}" tabindex="0" style="height:${hpx}px;background:${pctColor(p)}"><span class="pv2" style="color:${pctColor(p)}">${p}%</span></div></div>`;
+    const bh = Math.max(10, Math.round(o.act[i]/maxVal*H));
+    const gy = Math.round(o.goal[i]/maxVal*H);
+    return `<div class="bcol">
+      <div class="bar2" data-i="${i}" tabindex="0" style="height:${bh}px;background:${pctColor(p)}"><span class="pv2" style="color:${pctColor(p)}">${p}%</span></div>
+      <div class="gmark" style="bottom:${gy}px"></div>
+    </div>`;
   }).join("");
-  const xcols = o.pct.map((p,i)=>`<div class="xcol"><div class="xm">${MONTHS[i]}</div><div class="xd">${p!=null?fmtK(o.act[i]):'—'}</div></div>`).join("");
+  const xcols = o.pct.map((p,i)=>`<div class="xcol"><div class="xm">${MONTHS[i]}</div><div class="xd">${p!=null?fmtK(o.act[i]):'—'}</div><div class="xg">${p!=null?'goal '+fmtK(o.goal[i]):''}</div></div>`).join("");
   const chart = o.newish
     ? `<div class="card"><p style="margin:0;color:var(--soft)">This office recently began reporting — monthly history builds over the year.</p></div>`
     : `<div class="card chart2" id="chart2" style="position:relative">
-        <div class="legend"><span><b style="color:var(--good)">green</b> ≥100% · <b style="color:var(--amber)">amber</b> 85–99 · <b style="color:var(--bad)">red</b> &lt;85</span><span style="margin-left:auto">Dashed line = goal · tap a bar for $ detail</span></div>
+        <div class="legend"><span>Bars = actual $ · <b style="color:var(--good)">green</b> beat goal · <b style="color:var(--amber)">amber</b> 85–99% · <b style="color:var(--bad)">red</b> &lt;85%</span><span style="margin-left:auto"><span class="gkey"></span> = that month's goal · tap for $</span></div>
         <div style="overflow-x:auto">
-          <div class="plot"><div class="goalline2" style="bottom:${goalPx}px"><span class="gtag">Goal</span></div>${plotBars}</div>
+          <div class="plot">${plotBars}</div>
           <div class="xrow">${xcols}</div>
         </div>
         <div class="tip" id="tip"></div>
@@ -298,18 +306,18 @@ function wireBars(o){
   document.addEventListener("click",hide);
 }
 
-function pick(name){ document.getElementById("officePick").value = name; route(); }
+let current = "all";
+function pick(v){ current = v; route(); }
 function route(){
-  const v = document.getElementById("officePick").value;
-  if(v==="all") renderAll(); else renderOffice(OFFICES.find(o=>o.name===v));
+  document.querySelectorAll("#officeChips .chip").forEach(c=>c.classList.toggle("active", c.dataset.v===current));
+  if(current==="all") renderAll(); else renderOffice(OFFICES.find(o=>o.name===current));
   window.scrollTo(0,0);
 }
 (function init(){
-  const sel = document.getElementById("officePick");
-  sel.innerHTML = `<option value="all">🏢 All Offices</option>` +
-    OFFICES.map(o=>`<option value="${o.name}">${o.name}</option>`).join("");
-  sel.addEventListener("change", route);
-  renderAll();
+  document.getElementById("officeChips").innerHTML =
+    `<button class="chip" data-v="all" onclick="pick('all')">🏢 All Offices</button>` +
+    OFFICES.map(o=>`<button class="chip" data-v="${o.name}" onclick="pick('${o.name}')">${o.name}</button>`).join("");
+  route();
 })();
 </script>
 </body>
