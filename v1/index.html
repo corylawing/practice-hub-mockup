@@ -203,17 +203,6 @@ const signedN = n => (n>=0?"+":"−")+Math.abs(n);
 const pctColor = p => p>=100 ? "var(--good)" : (p>=85 ? "var(--amber)" : "var(--bad)");
 const ANNUAL_GOAL = 13742510; // sum of each office's 2026 full-year production goal
 
-function spark(vals){
-  const pts = (vals||[]).filter(v=>v!=null);
-  if(pts.length<2) return '<span style="color:var(--soft);font-size:12px">—</span>';
-  const w=96,h=26,min=Math.min(...pts),max=Math.max(...pts),rng=(max-min)||1,step=w/(pts.length-1);
-  const xy=pts.map((v,i)=>[(i*step).toFixed(1),(h-2-((v-min)/rng)*(h-5)).toFixed(1)]);
-  const last=xy[xy.length-1];
-  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="display:block;margin-top:6px">
-    <polyline points="${xy.map(p=>p.join(',')).join(' ')}" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-    <circle cx="${last[0]}" cy="${last[1]}" r="2.6" fill="var(--teal)"/></svg>`;
-}
-
 function ring(pct,size=112){
   const cx=size/2, r=cx-11, c=2*Math.PI*r, off=c*(1-Math.min(pct,1));
   return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
@@ -248,7 +237,7 @@ function renderAll(){
   const rows = [...OFFICES].sort((a,b)=>{ const av=val(a),bv=val(b); const r=(typeof av==="string")?av.localeCompare(bv):av-bv; return sortDir==="asc"?r:-r; }).map(o=>`
     <tr onclick="pick('${o.name}')">
       <td>${o.name} <span class="chev">›</span></td>
-      <td><div class="prodnum">${fmt(o.prod)}</div>${spark(o.act)}</td>
+      <td><div class="prodnum">${fmt(o.prod)}</div><div class="minibar"><span style="width:${Math.round(o.prod/maxProd*100)}%"></span></div></td>
       <td><span class="pill ${o.vsGoal>=0?'up':'down'}">${signed(o.vsGoal)}</span></td>
       <td><span class="pill ${o.startsVsGoal>=0?'up':'down'}">${signedN(o.startsVsGoal)}</span></td>
     </tr>`).join("");
