@@ -61,6 +61,9 @@
   table.off td:first-child:hover{color:var(--teal)}
   table.off tr:last-child td{border-bottom:none}
   table.off tr.total td{background:#fafbfc;font-weight:800;color:var(--navy)}
+  .prodnum{font-weight:700;color:var(--navy)}
+  .minibar{height:6px;background:var(--canvas);border-radius:4px;margin-top:6px;min-width:80px}
+  .minibar span{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,var(--teal),var(--teal2))}
   .pill{display:inline-block;padding:3px 9px;border-radius:999px;font-size:13px;font-weight:700}
   .pill.up{background:var(--good-soft);color:var(--good)} .pill.down{background:var(--bad-soft);color:var(--bad)}
   /* pct bars */
@@ -126,7 +129,7 @@ const OFFICES = [
   {name:"Clovis (FFO)",     prod:1351134, vsGoal:172037, startsVsGoal:32, starts:137, debands:101,latest:"Jun 126%", yoy:145, avgDay:22080, fee:5418, pct:[151,125,119,84,101,126]},
   {name:"Hobbs (FFO)",      prod:1359890, vsGoal:86670,  startsVsGoal:14, starts:105, debands:51, latest:"Jun 114%", yoy:118, avgDay:32414, fee:6175, pct:[86,104,110,124,97,114]},
   {name:"San Angelo (FFO)", prod:1773027, vsGoal:257403, startsVsGoal:46, starts:175, debands:86, latest:"Jun 130%", yoy:132, avgDay:34518, fee:5622, pct:[132,180,114,99,74,130]},
-  {name:"Lubbock (FFO)",    prod:618287,  vsGoal:-22956, startsVsGoal:0,  starts:67,  debands:60, latest:"Jun 101%", yoy:92,  avgDay:10188, fee:5164, pct:[84,78,117,109,103,101]},
+  {name:"Lubbock (FFO)",    prod:618287,  vsGoal:-22956, startsVsGoal:-4, starts:67,  debands:60, latest:"Jun 101%", yoy:92,  avgDay:10188, fee:5164, pct:[84,78,117,109,103,101]},
   {name:"Mansfield (SUN)",  prod:728029,  vsGoal:-90290, startsVsGoal:-15,starts:80,  debands:60, latest:"Jun 172%", yoy:117, avgDay:19854, fee:6000, pct:[null,null,null,73,36,172]},
   {name:"Cruces (LCO)",     prod:656262,  vsGoal:38987,  startsVsGoal:8,  starts:null,debands:null,latest:"Jul 78%",  yoy:null,avgDay:20111, fee:4750, pct:[null,null,null,null,null,null], newish:true},
   {name:"Cruces (Legacy)",  prod:396791,  vsGoal:-28686, startsVsGoal:-6, starts:null,debands:null,latest:"Jul 17%",  yoy:null,avgDay:4998,  fee:4601, pct:[null,null,null,null,null,null], newish:true},
@@ -142,10 +145,11 @@ function renderAll(){
   const prod = OFFICES.reduce((s,o)=>s+o.prod,0);
   const vs   = OFFICES.reduce((s,o)=>s+o.vsGoal,0);
   const st   = OFFICES.reduce((s,o)=>s+o.startsVsGoal,0);
+  const maxProd = Math.max(...OFFICES.map(o=>o.prod));
   const rows = [...OFFICES].sort((a,b)=>b.prod-a.prod).map(o=>`
     <tr>
       <td onclick="pick('${o.name}')">${o.name}</td>
-      <td>${fmt(o.prod)}</td>
+      <td><div class="prodnum">${fmt(o.prod)}</div><div class="minibar"><span style="width:${Math.round(o.prod/maxProd*100)}%"></span></div></td>
       <td><span class="pill ${o.vsGoal>=0?'up':'down'}">${signed(o.vsGoal)}</span></td>
       <td><span class="pill ${o.startsVsGoal>=0?'up':'down'}">${signedN(o.startsVsGoal)}</span></td>
     </tr>`).join("");
