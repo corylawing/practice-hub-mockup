@@ -57,23 +57,40 @@
     text-align:right;padding:12px 16px;background:#fafbfc;border-bottom:1px solid var(--line)}
   table.off th:first-child{text-align:left}
   table.off td{padding:13px 16px;border-bottom:1px solid var(--line);font-size:15px;text-align:right}
-  table.off td:first-child{text-align:left;font-weight:600;color:var(--navy);cursor:pointer}
-  table.off td:first-child:hover{color:var(--teal)}
+  table.off td:first-child{text-align:left;font-weight:600;color:var(--navy)}
+  table.off tbody tr{cursor:pointer}
+  table.off tbody tr:not(.total):hover td{background:#f2fbfa}
+  table.off tbody tr:not(.total):hover td:first-child{color:var(--teal)}
+  table.off tbody tr:not(.total):hover .chev{color:var(--teal)}
+  .chev{color:var(--soft);font-weight:400;float:right}
   table.off tr:last-child td{border-bottom:none}
+  table.off tr.total{cursor:default}
   table.off tr.total td{background:#fafbfc;font-weight:800;color:var(--navy)}
   .prodnum{font-weight:700;color:var(--navy)}
   .minibar{height:6px;background:var(--canvas);border-radius:4px;margin-top:6px;min-width:80px}
   .minibar span{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,var(--teal),var(--teal2))}
   .pill{display:inline-block;padding:3px 9px;border-radius:999px;font-size:13px;font-weight:700}
   .pill.up{background:var(--good-soft);color:var(--good)} .pill.down{background:var(--bad-soft);color:var(--bad)}
-  /* pct bars */
-  .pctchart{display:flex;align-items:flex-end;gap:14px;height:210px;min-width:420px;padding-top:22px}
-  .pcol{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;height:100%}
-  .pcol .pv{font-size:12px;font-weight:800}
-  .pbar-wrap{flex:1;display:flex;align-items:flex-end;width:100%;justify-content:center}
-  .pbar{width:34px;border-radius:6px 6px 0 0;position:relative}
-  .goalline{position:absolute;left:-6px;right:-6px;border-top:2px dashed #9aa6b6}
-  .pm{font-size:13px;color:var(--soft);font-weight:600}
+  /* monthly bar chart */
+  .chart2{min-width:460px}
+  .plot{position:relative;height:210px;display:flex;align-items:flex-end;gap:16px;padding-top:26px}
+  .goalline2{position:absolute;left:0;right:0;border-top:2px dashed #9aa6b6;z-index:1}
+  .goalline2 .gtag{position:absolute;right:0;top:-9px;background:#fff;padding:0 6px;font-size:11px;font-weight:700;color:#6b7787}
+  .bcol{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;position:relative;z-index:2}
+  .bar2{width:100%;max-width:40px;border-radius:6px 6px 0 0;position:relative;cursor:pointer;transition:filter .12s,transform .12s}
+  .bar2:hover{filter:brightness(1.06)}
+  .bar2.active{transform:scaleX(1.04)}
+  .pv2{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);margin-bottom:5px;font-size:12px;font-weight:800;white-space:nowrap}
+  .xrow{display:flex;gap:16px;margin-top:8px}
+  .xcol{flex:1;text-align:center}
+  .xm{font-size:13px;color:var(--soft);font-weight:600}
+  .xd{font-size:12px;color:var(--navy);font-weight:700;margin-top:2px}
+  .tip{position:absolute;z-index:10;background:var(--navy);color:#fff;border-radius:10px;padding:10px 12px;font-size:12.5px;
+    box-shadow:0 8px 24px rgba(15,42,74,.3);pointer-events:none;opacity:0;transform:translate(-50%,-6px);transition:opacity .12s;min-width:150px}
+  .tip.show{opacity:1}
+  .tip b{font-size:14px} .tip .row{display:flex;justify-content:space-between;gap:14px;margin-top:5px;color:#c7d4e6}
+  .tip .row b{color:#fff;font-size:12.5px}
+  .tip .p{margin-top:6px;font-weight:800}
   .mini{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
   .mini .lab{font-size:13px;color:var(--soft)} .mini .val{font-size:22px;font-weight:700;color:var(--navy);margin-top:4px}
   .note{background:#FFF6E9;border:1px solid #f3dcb3;border-radius:12px;padding:14px 16px;font-size:14px;color:#7a5212;margin-top:26px}
@@ -125,18 +142,27 @@
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun"];
 // Real 2026 YTD figures pulled from the Production workbook (Jan–Jul actuals).
 const OFFICES = [
-  {name:"Carlsbad (FFO)",   prod:1385156, vsGoal:87597,  startsVsGoal:16, starts:128, debands:91, latest:"Jun 105%", yoy:112, avgDay:26012, fee:5556, pct:[72,103,160,100,100,105]},
-  {name:"Clovis (FFO)",     prod:1351134, vsGoal:172037, startsVsGoal:32, starts:137, debands:101,latest:"Jun 126%", yoy:145, avgDay:22080, fee:5418, pct:[151,125,119,84,101,126]},
-  {name:"Hobbs (FFO)",      prod:1359890, vsGoal:86670,  startsVsGoal:14, starts:105, debands:51, latest:"Jun 114%", yoy:118, avgDay:32414, fee:6175, pct:[86,104,110,124,97,114]},
-  {name:"San Angelo (FFO)", prod:1773027, vsGoal:257403, startsVsGoal:46, starts:175, debands:86, latest:"Jun 130%", yoy:132, avgDay:34518, fee:5622, pct:[132,180,114,99,74,130]},
-  {name:"Lubbock (FFO)",    prod:618287,  vsGoal:-22956, startsVsGoal:-4, starts:67,  debands:60, latest:"Jun 101%", yoy:92,  avgDay:10188, fee:5164, pct:[84,78,117,109,103,101]},
-  {name:"Mansfield (SUN)",  prod:728029,  vsGoal:-90290, startsVsGoal:-15,starts:80,  debands:60, latest:"Jun 172%", yoy:117, avgDay:19854, fee:6000, pct:[null,null,null,73,36,172]},
-  {name:"Cruces (LCO)",     prod:656262,  vsGoal:38987,  startsVsGoal:8,  starts:null,debands:null,latest:"Jul 78%",  yoy:null,avgDay:20111, fee:4750, pct:[null,null,null,null,null,null], newish:true},
-  {name:"Cruces (Legacy)",  prod:396791,  vsGoal:-28686, startsVsGoal:-6, starts:null,debands:null,latest:"Jul 17%",  yoy:null,avgDay:4998,  fee:4601, pct:[null,null,null,null,null,null], newish:true},
+  {name:"Carlsbad (FFO)",   prod:1385156, vsGoal:87597,  startsVsGoal:16, starts:128, debands:91, latest:"Jun 105%", yoy:112, avgDay:26012, fee:5556,
+    pct:[72,103,160,100,100,105], act:[181401,222938,265861,215356,189779,234104], goal:[252912,216988,166188,214647,189249,222278]},
+  {name:"Clovis (FFO)",     prod:1351134, vsGoal:172037, startsVsGoal:32, starts:137, debands:101,latest:"Jun 126%", yoy:145, avgDay:22080, fee:5418,
+    pct:[151,125,119,84,101,126], act:[226073,258625,246687,172148,167889,198722], goal:[150201,207644,207905,204125,166173,158085]},
+  {name:"Hobbs (FFO)",      prod:1359890, vsGoal:86670,  startsVsGoal:14, starts:105, debands:51, latest:"Jun 114%", yoy:118, avgDay:32414, fee:6175,
+    pct:[86,104,110,124,97,114], act:[197542,208458,229738,225227,197845,259312], goal:[230923,199566,208649,181588,204041,228096]},
+  {name:"San Angelo (FFO)", prod:1773027, vsGoal:257403, startsVsGoal:46, starts:175, debands:86, latest:"Jun 130%", yoy:132, avgDay:34518, fee:5622,
+    pct:[132,180,114,99,74,130], act:[364028,347608,273810,209565,201489,310660], goal:[275667,193614,240442,210867,274049,239473]},
+  {name:"Lubbock (FFO)",    prod:618287,  vsGoal:-22956, startsVsGoal:-4, starts:67,  debands:60, latest:"Jun 101%", yoy:92,  avgDay:10188, fee:5164,
+    pct:[84,78,117,109,103,101], act:[123060,104157,137058,84810,103300,81500], goal:[146572,133479,116836,77523,100442,80660]},
+  {name:"Mansfield (SUN)",  prod:728029,  vsGoal:-90290, startsVsGoal:-15,starts:80,  debands:60, latest:"Jun 172%", yoy:117, avgDay:19854, fee:6000,
+    pct:[null,null,null,73,36,172], act:[null,null,null,95285,63447,178690], goal:[null,null,null,130268,174025,104054]},
+  {name:"Cruces (LCO)",     prod:656262,  vsGoal:38987,  startsVsGoal:8,  starts:null,debands:null,latest:"Jul 78%",  yoy:null,avgDay:20111, fee:4750,
+    pct:[null,null,null,null,null,null], act:[], goal:[], newish:true},
+  {name:"Cruces (Legacy)",  prod:396791,  vsGoal:-28686, startsVsGoal:-6, starts:null,debands:null,latest:"Jul 17%",  yoy:null,avgDay:4998,  fee:4601,
+    pct:[null,null,null,null,null,null], act:[], goal:[], newish:true},
 ];
 
 const fmt = n => "$"+Math.round(n).toLocaleString("en-US");
 const fmtM = n => "$"+(n/1e6).toFixed(2)+"M";
+const fmtK = n => n>=1e6 ? "$"+(n/1e6).toFixed(2)+"M" : "$"+Math.round(n/1000)+"k";
 const signed = n => (n>=0?"+":"−")+"$"+Math.abs(Math.round(n)).toLocaleString("en-US");
 const signedN = n => (n>=0?"+":"−")+Math.abs(n);
 const pctColor = p => p>=100 ? "var(--good)" : (p>=85 ? "var(--amber)" : "var(--bad)");
@@ -147,8 +173,8 @@ function renderAll(){
   const st   = OFFICES.reduce((s,o)=>s+o.startsVsGoal,0);
   const maxProd = Math.max(...OFFICES.map(o=>o.prod));
   const rows = [...OFFICES].sort((a,b)=>b.prod-a.prod).map(o=>`
-    <tr>
-      <td onclick="pick('${o.name}')">${o.name}</td>
+    <tr onclick="pick('${o.name}')">
+      <td>${o.name} <span class="chev">›</span></td>
       <td><div class="prodnum">${fmt(o.prod)}</div><div class="minibar"><span style="width:${Math.round(o.prod/maxProd*100)}%"></span></div></td>
       <td><span class="pill ${o.vsGoal>=0?'up':'down'}">${signed(o.vsGoal)}</span></td>
       <td><span class="pill ${o.startsVsGoal>=0?'up':'down'}">${signedN(o.startsVsGoal)}</span></td>
@@ -175,18 +201,24 @@ function renderAll(){
 
 function renderOffice(o){
   const maxPct = Math.max(120, ...o.pct.filter(x=>x!=null));
-  const bars = o.pct.map((p,i)=>{
-    if(p==null) return `<div class="pcol"><div class="pv" style="color:var(--soft)">—</div><div class="pbar-wrap"></div><div class="pm">${MONTHS[i]}</div></div>`;
-    const h = Math.max(6, Math.round(p/maxPct*100));
-    const goalH = Math.round(100/maxPct*100);
-    return `<div class="pcol"><div class="pv" style="color:${pctColor(p)}">${p}%</div>
-      <div class="pbar-wrap"><div class="pbar" style="height:${h}%;background:${pctColor(p)}"><div class="goalline" style="bottom:${goalH}%"></div></div></div>
-      <div class="pm">${MONTHS[i]}</div></div>`;
+  const H = 184;
+  const goalPx = Math.round(100/maxPct*H);
+  const plotBars = o.pct.map((p,i)=>{
+    if(p==null) return `<div class="bcol"></div>`;
+    const hpx = Math.max(10, Math.round(p/maxPct*H));
+    return `<div class="bcol"><div class="bar2" data-i="${i}" tabindex="0" style="height:${hpx}px;background:${pctColor(p)}"><span class="pv2" style="color:${pctColor(p)}">${p}%</span></div></div>`;
   }).join("");
+  const xcols = o.pct.map((p,i)=>`<div class="xcol"><div class="xm">${MONTHS[i]}</div><div class="xd">${p!=null?fmtK(o.act[i]):'—'}</div></div>`).join("");
   const chart = o.newish
     ? `<div class="card"><p style="margin:0;color:var(--soft)">This office recently began reporting — monthly history builds over the year.</p></div>`
-    : `<div class="card"><div class="legend"><span>Bars = % of monthly goal</span><span>┈ dashed line = 100% (goal)</span><span style="margin-left:auto"><b style="color:var(--good)">green</b> ≥100 · <b style="color:var(--amber)">amber</b> 85–99 · <b style="color:var(--bad)">red</b> &lt;85</span></div>
-        <div style="overflow-x:auto"><div class="pctchart">${bars}</div></div></div>`;
+    : `<div class="card chart2" id="chart2" style="position:relative">
+        <div class="legend"><span><b style="color:var(--good)">green</b> ≥100% · <b style="color:var(--amber)">amber</b> 85–99 · <b style="color:var(--bad)">red</b> &lt;85</span><span style="margin-left:auto">Dashed line = goal · tap a bar for $ detail</span></div>
+        <div style="overflow-x:auto">
+          <div class="plot"><div class="goalline2" style="bottom:${goalPx}px"><span class="gtag">Goal · 100%</span></div>${plotBars}</div>
+          <div class="xrow">${xcols}</div>
+        </div>
+        <div class="tip" id="tip"></div>
+      </div>`;
   document.getElementById("view").innerHTML = `
     <div class="kpis">
       <div class="kpi"><div class="lab">Net Production (YTD)</div><div class="val">${fmt(o.prod)}</div><div class="sub flat">incl. Medicaid</div></div>
@@ -203,6 +235,35 @@ function renderOffice(o){
       <div><div class="lab">Avg Production / Day</div><div class="val">${fmt(o.avgDay)}</div></div>
       <div><div class="lab">Avg Case Fee (2025)</div><div class="val">${fmt(o.fee)}</div></div>
     </div></div>`;
+  if(!o.newish) wireBars(o);
+}
+
+function wireBars(o){
+  const chart=document.getElementById("chart2"); if(!chart) return;
+  const tip=document.getElementById("tip");
+  const bars=[...chart.querySelectorAll(".bar2")];
+  const tipColor=p=>p>=100?"#7EE6C6":(p>=85?"#F7C67A":"#F3A79A");
+  function show(bar){
+    const i=+bar.dataset.i;
+    tip.innerHTML=`<b>${MONTHS[i]} 2026</b>
+      <div class="row"><span>Production</span><b>${fmt(o.act[i])}</b></div>
+      <div class="row"><span>Goal</span><b>${fmt(o.goal[i])}</b></div>
+      <div class="p" style="color:${tipColor(o.pct[i])}">${o.pct[i]}% of goal</div>`;
+    const cr=chart.getBoundingClientRect(), br=bar.getBoundingClientRect();
+    tip.style.left=(br.left-cr.left+br.width/2)+"px";
+    tip.style.top=(br.top-cr.top-10)+"px";
+    tip.classList.add("show");
+    bars.forEach(b=>b.classList.remove("active")); bar.classList.add("active");
+  }
+  function hide(){ tip.classList.remove("show"); bars.forEach(b=>b.classList.remove("active")); }
+  bars.forEach(bar=>{
+    bar.addEventListener("mouseenter",()=>show(bar));
+    bar.addEventListener("mouseleave",hide);
+    bar.addEventListener("focus",()=>show(bar));
+    bar.addEventListener("blur",hide);
+    bar.addEventListener("click",e=>{e.stopPropagation();show(bar);});
+  });
+  document.addEventListener("click",hide);
 }
 
 function pick(name){ document.getElementById("officePick").value = name; route(); }
