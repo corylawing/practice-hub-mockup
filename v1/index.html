@@ -8,18 +8,18 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
 <meta name="theme-color" content="#0F2A4A">
-<meta name="description" content="Practice Hub V1 — a simple, easy-to-read production KPI dashboard.">
+<meta name="description" content="Practice Hub V1 — a simple, easy-to-read production KPI dashboard for all offices.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Practice Hub">
 <meta property="og:title" content="KPI Dashboard (V1) · Practice Hub">
-<meta property="og:description" content="A simple, easy-to-read production dashboard — actual vs goal, at a glance.">
+<meta property="og:description" content="Production vs goal across all offices — at a glance.">
 <meta property="og:image" content="https://corylawing.github.io/practice-hub-mockup/assets/og-image.png">
 <meta property="og:url" content="https://corylawing.github.io/practice-hub-mockup/v1/">
 <style>
   :root{
     --navy:#0F2A4A; --navy2:#25456e; --teal:#149B96; --teal2:#2BC0B8; --teal-soft:#E5F4F3;
     --ink:#1F2D3D; --soft:#56627A; --line:#E4E8EE; --canvas:#F4F6F8; --white:#fff;
-    --good:#2E9E6B; --bad:#D7503A; --amber:#F2A03D;
+    --good:#2E9E6B; --good-soft:#E7F4EE; --bad:#D7503A; --bad-soft:#FBEAE7; --amber:#F2A03D;
     --shadow:0 1px 2px rgba(15,42,74,.06),0 6px 18px rgba(15,42,74,.06);
     --radius:14px; --maxw:1080px;
   }
@@ -39,49 +39,52 @@
   .toprow{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:20px}
   .toprow h1{font-size:26px}
   .toprow p{margin:4px 0 0;color:var(--soft);font-size:15px}
-  .pickers{display:flex;gap:10px;flex-wrap:wrap}
-  .pick{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);
-    border-radius:10px;padding:9px 14px;font-weight:600;color:var(--navy);font-size:14px;box-shadow:var(--shadow)}
+  .pickrow{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  select.pick{padding:10px 14px;border:1px solid var(--line);border-radius:10px;font-size:15px;font-weight:600;
+    color:var(--navy);background:#fff;box-shadow:var(--shadow);font-family:inherit;cursor:pointer}
   .sect{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--soft);font-weight:700;margin:30px 0 14px}
   .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:20px 22px;box-shadow:var(--shadow)}
-  /* KPI cards */
   .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
   .kpi{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow)}
   .kpi .lab{font-size:13px;color:var(--soft)}
-  .kpi .val{font-size:31px;font-weight:800;color:var(--navy);margin:6px 0 4px;letter-spacing:-.5px}
+  .kpi .val{font-size:29px;font-weight:800;color:var(--navy);margin:6px 0 4px;letter-spacing:-.5px}
   .kpi .sub{font-size:13px;font-weight:600}
   .kpi .sub.up{color:var(--good)} .kpi .sub.down{color:var(--bad)} .kpi .sub.flat{color:var(--soft)}
-  /* grouped bar chart */
-  .legend{display:flex;gap:18px;font-size:13px;color:var(--soft);margin:2px 0 16px}
-  .legend span{display:inline-flex;align-items:center;gap:7px}
-  .legend i{width:14px;height:14px;border-radius:4px;display:inline-block}
-  .i-actual{background:linear-gradient(180deg,var(--teal2),var(--teal))}
-  .i-goal{background:#dbe3ee}
-  .chart-scroll{overflow-x:auto}
-  .gchart{display:flex;align-items:flex-end;gap:16px;height:250px;min-width:520px;padding-top:8px}
-  .gcol{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;height:100%}
-  .gpct{font-size:12px;font-weight:800}
-  .gpct.up{color:var(--good)} .gpct.down{color:var(--bad)}
-  .gbars{display:flex;align-items:flex-end;gap:6px;height:100%;width:100%;justify-content:center;flex:1}
-  .gb{width:30px;border-radius:6px 6px 0 0}
-  .gb.actual{background:linear-gradient(180deg,var(--teal2),var(--teal))}
-  .gb.goal{background:#dbe3ee}
-  .gm{font-size:13px;color:var(--soft);font-weight:600}
-  /* mini stats */
+  /* office table */
+  .tbl-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+  table.off{width:100%;border-collapse:collapse;background:#fff;min-width:560px}
+  table.off th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--soft);font-weight:700;
+    text-align:right;padding:12px 16px;background:#fafbfc;border-bottom:1px solid var(--line)}
+  table.off th:first-child{text-align:left}
+  table.off td{padding:13px 16px;border-bottom:1px solid var(--line);font-size:15px;text-align:right}
+  table.off td:first-child{text-align:left;font-weight:600;color:var(--navy);cursor:pointer}
+  table.off td:first-child:hover{color:var(--teal)}
+  table.off tr:last-child td{border-bottom:none}
+  table.off tr.total td{background:#fafbfc;font-weight:800;color:var(--navy)}
+  .pill{display:inline-block;padding:3px 9px;border-radius:999px;font-size:13px;font-weight:700}
+  .pill.up{background:var(--good-soft);color:var(--good)} .pill.down{background:var(--bad-soft);color:var(--bad)}
+  /* pct bars */
+  .pctchart{display:flex;align-items:flex-end;gap:14px;height:210px;min-width:420px;padding-top:22px}
+  .pcol{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;height:100%}
+  .pcol .pv{font-size:12px;font-weight:800}
+  .pbar-wrap{flex:1;display:flex;align-items:flex-end;width:100%;justify-content:center}
+  .pbar{width:34px;border-radius:6px 6px 0 0;position:relative}
+  .goalline{position:absolute;left:-6px;right:-6px;border-top:2px dashed #9aa6b6}
+  .pm{font-size:13px;color:var(--soft);font-weight:600}
   .mini{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
-  .mini .lab{font-size:13px;color:var(--soft)}
-  .mini .val{font-size:24px;font-weight:700;color:var(--navy);margin-top:4px}
+  .mini .lab{font-size:13px;color:var(--soft)} .mini .val{font-size:22px;font-weight:700;color:var(--navy);margin-top:4px}
   .note{background:#FFF6E9;border:1px solid #f3dcb3;border-radius:12px;padding:14px 16px;font-size:14px;color:#7a5212;margin-top:26px}
   .note b{color:#5e3f0c}
-  .foot{background:var(--navy);color:#9fb4d0;font-size:13px;margin-top:0}
+  .legend{display:flex;gap:18px;font-size:13px;color:var(--soft);margin:2px 0 14px;flex-wrap:wrap}
+  .legend span{display:inline-flex;align-items:center;gap:7px}
+  .foot{background:var(--navy);color:#9fb4d0;font-size:13px;margin-top:40px}
   .foot-in{max-width:var(--maxw);margin:0 auto;padding:24px 20px;display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
   .foot a{color:#c7d4e6}
   @media(max-width:820px){ .kpis{grid-template-columns:1fr 1fr} .mini{grid-template-columns:1fr 1fr} }
-  @media(max-width:480px){ .kpis{grid-template-columns:1fr 1fr} .gb{width:22px} }
 </style>
 </head>
 <body>
-<div class="ribbon">PROTOTYPE — real Carlsbad (FFO) numbers shown for validation. Live version reads straight from the Excel sheet.</div>
+<div class="ribbon">PROTOTYPE — real numbers from the 2026 Production sheet, for validation. Live version reads the Excel automatically.</div>
 <header class="hdr">
   <div class="hdr-in">
     <span class="mark">PH</span>
@@ -91,69 +94,126 @@
 </header>
 
 <div class="wrap">
-
   <div class="toprow">
     <div>
       <h1>Production Dashboard</h1>
-      <p>How this office is tracking against goal — at a glance.</p>
+      <p>How each office is tracking against goal — at a glance.</p>
     </div>
-    <div class="pickers">
-      <span class="pick">🏢 Carlsbad (FFO) ▾</span>
-      <span class="pick">📅 2026 ▾</span>
-    </div>
-  </div>
-
-  <!-- Headline numbers -->
-  <div class="kpis">
-    <div class="kpi"><div class="lab">2026 Net Production (YTD)</div><div class="val">$1,385,156</div><div class="sub flat">Jan–Jul · incl. Medicaid</div></div>
-    <div class="kpi"><div class="lab">YTD vs Goal</div><div class="val" style="color:var(--good)">+$87,597</div><div class="sub up">▲ Ahead of pace</div></div>
-    <div class="kpi"><div class="lab">Last full month (June)</div><div class="val">105%</div><div class="sub up">▲ of goal</div></div>
-    <div class="kpi"><div class="lab">Growth vs last year (June)</div><div class="val">112%</div><div class="sub up">▲ vs June 2025</div></div>
-  </div>
-
-  <!-- Actual vs Goal by month -->
-  <div class="sect">Production vs Goal — 2026</div>
-  <div class="card">
-    <div class="legend">
-      <span><i class="i-actual"></i> Actual production</span>
-      <span><i class="i-goal"></i> Monthly goal</span>
-      <span style="margin-left:auto;color:var(--soft)">% = actual vs goal</span>
-    </div>
-    <div class="chart-scroll">
-      <div class="gchart">
-        <div class="gcol"><div class="gpct down">72%</div><div class="gbars"><div class="gb actual" style="height:68%"></div><div class="gb goal" style="height:95%"></div></div><div class="gm">Jan</div></div>
-        <div class="gcol"><div class="gpct up">103%</div><div class="gbars"><div class="gb actual" style="height:84%"></div><div class="gb goal" style="height:82%"></div></div><div class="gm">Feb</div></div>
-        <div class="gcol"><div class="gpct up">160%</div><div class="gbars"><div class="gb actual" style="height:100%"></div><div class="gb goal" style="height:63%"></div></div><div class="gm">Mar</div></div>
-        <div class="gcol"><div class="gpct up">100%</div><div class="gbars"><div class="gb actual" style="height:81%"></div><div class="gb goal" style="height:81%"></div></div><div class="gm">Apr</div></div>
-        <div class="gcol"><div class="gpct up">100%</div><div class="gbars"><div class="gb actual" style="height:71%"></div><div class="gb goal" style="height:71%"></div></div><div class="gm">May</div></div>
-        <div class="gcol"><div class="gpct up">105%</div><div class="gbars"><div class="gb actual" style="height:88%"></div><div class="gb goal" style="height:84%"></div></div><div class="gm">Jun</div></div>
-      </div>
-    </div>
-    <p style="font-size:13px;color:var(--soft);margin:14px 0 0">July is still in progress, so it's not shown yet. Bars compare actual production to the monthly goal.</p>
-  </div>
-
-  <!-- Secondary numbers -->
-  <div class="sect">Other key numbers (2026 YTD)</div>
-  <div class="card">
-    <div class="mini">
-      <div><div class="lab">Total Starts</div><div class="val">128</div></div>
-      <div><div class="lab">Total Debands</div><div class="val">91</div></div>
-      <div><div class="lab">Avg Production / Day (Jun)</div><div class="val">$26,012</div></div>
-      <div><div class="lab">Avg Case Fee (2025)</div><div class="val">$5,556</div></div>
+    <div class="pickrow">
+      <select class="pick" id="officePick" aria-label="Choose office"></select>
+      <select class="pick" id="yearPick" aria-label="Choose year"><option>2026</option></select>
     </div>
   </div>
+  <div id="view"></div>
 
   <div class="note">
-    <b>How this works at go-live:</b> in the real Practice Hub this dashboard reads directly from the Carlsbad production sheet in SharePoint (via the built-in Excel web part), so when the sheet is updated these numbers update automatically — no copy-paste, no code. Each of the 8 offices gets the same view, chosen from the office picker up top. This V1 page is just to confirm the layout and which numbers to feature.
+    <b>How this works at go-live:</b> in the real Practice Hub this reads straight from your Production sheet in SharePoint (Excel web part), so it updates itself when the sheet changes — no copy-paste, no code. Pick an office up top to drill in, or “All Offices” for the leadership view. July is in progress so monthly charts show full months only.
   </div>
-
 </div>
 
 <footer class="foot">
   <div class="foot-in">
-    <div>© 2026 Practice Hub <span style="opacity:.6">(V1 prototype — Carlsbad sample)</span></div>
+    <div>© 2026 Practice Hub <span style="opacity:.6">(V1 prototype — real 2026 data)</span></div>
     <div><a href="../index.html">← Back to full mockup</a></div>
   </div>
 </footer>
+
+<script>
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun"];
+// Real 2026 YTD figures pulled from the Production workbook (Jan–Jul actuals).
+const OFFICES = [
+  {name:"Carlsbad (FFO)",   prod:1385156, vsGoal:87597,  startsVsGoal:16, starts:128, debands:91, latest:"Jun 105%", yoy:112, avgDay:26012, fee:5556, pct:[72,103,160,100,100,105]},
+  {name:"Clovis (FFO)",     prod:1351134, vsGoal:172037, startsVsGoal:32, starts:137, debands:101,latest:"Jun 126%", yoy:145, avgDay:22080, fee:5418, pct:[151,125,119,84,101,126]},
+  {name:"Hobbs (FFO)",      prod:1359890, vsGoal:86670,  startsVsGoal:14, starts:105, debands:51, latest:"Jun 114%", yoy:118, avgDay:32414, fee:6175, pct:[86,104,110,124,97,114]},
+  {name:"San Angelo (FFO)", prod:1773027, vsGoal:257403, startsVsGoal:46, starts:175, debands:86, latest:"Jun 130%", yoy:132, avgDay:34518, fee:5622, pct:[132,180,114,99,74,130]},
+  {name:"Lubbock (FFO)",    prod:618287,  vsGoal:-22956, startsVsGoal:0,  starts:67,  debands:60, latest:"Jun 101%", yoy:92,  avgDay:10188, fee:5164, pct:[84,78,117,109,103,101]},
+  {name:"Mansfield (SUN)",  prod:728029,  vsGoal:-90290, startsVsGoal:-15,starts:80,  debands:60, latest:"Jun 172%", yoy:117, avgDay:19854, fee:6000, pct:[null,null,null,73,36,172]},
+  {name:"Cruces (LCO)",     prod:656262,  vsGoal:38987,  startsVsGoal:8,  starts:null,debands:null,latest:"Jul 78%",  yoy:null,avgDay:20111, fee:4750, pct:[null,null,null,null,null,null], newish:true},
+  {name:"Cruces (Legacy)",  prod:396791,  vsGoal:-28686, startsVsGoal:-6, starts:null,debands:null,latest:"Jul 17%",  yoy:null,avgDay:4998,  fee:4601, pct:[null,null,null,null,null,null], newish:true},
+];
+
+const fmt = n => "$"+Math.round(n).toLocaleString("en-US");
+const fmtM = n => "$"+(n/1e6).toFixed(2)+"M";
+const signed = n => (n>=0?"+":"−")+"$"+Math.abs(Math.round(n)).toLocaleString("en-US");
+const signedN = n => (n>=0?"+":"−")+Math.abs(n);
+const pctColor = p => p>=100 ? "var(--good)" : (p>=85 ? "var(--amber)" : "var(--bad)");
+
+function renderAll(){
+  const prod = OFFICES.reduce((s,o)=>s+o.prod,0);
+  const vs   = OFFICES.reduce((s,o)=>s+o.vsGoal,0);
+  const st   = OFFICES.reduce((s,o)=>s+o.startsVsGoal,0);
+  const rows = [...OFFICES].sort((a,b)=>b.prod-a.prod).map(o=>`
+    <tr>
+      <td onclick="pick('${o.name}')">${o.name}</td>
+      <td>${fmt(o.prod)}</td>
+      <td><span class="pill ${o.vsGoal>=0?'up':'down'}">${signed(o.vsGoal)}</span></td>
+      <td><span class="pill ${o.startsVsGoal>=0?'up':'down'}">${signedN(o.startsVsGoal)}</span></td>
+    </tr>`).join("");
+  document.getElementById("view").innerHTML = `
+    <div class="kpis">
+      <div class="kpi"><div class="lab">Group Net Production (YTD)</div><div class="val">${fmtM(prod)}</div><div class="sub flat">across ${OFFICES.length} offices</div></div>
+      <div class="kpi"><div class="lab">Group vs Goal (YTD)</div><div class="val" style="color:${vs>=0?'var(--good)':'var(--bad)'}">${signed(vs)}</div><div class="sub ${vs>=0?'up':'down'}">${vs>=0?'▲ ahead of pace':'▼ behind pace'}</div></div>
+      <div class="kpi"><div class="lab">Net Starts vs Goal</div><div class="val" style="color:${st>=0?'var(--good)':'var(--bad)'}">${signedN(st)}</div><div class="sub ${st>=0?'up':'down'}">${st>=0?'▲ ahead':'▼ behind'}</div></div>
+      <div class="kpi"><div class="lab">Offices ahead of goal</div><div class="val">${OFFICES.filter(o=>o.vsGoal>=0).length} / ${OFFICES.length}</div><div class="sub flat">on production</div></div>
+    </div>
+    <div class="sect">Every office — 2026 YTD</div>
+    <div class="tbl-scroll">
+      <table class="off">
+        <thead><tr><th>Office</th><th>Net Production</th><th>vs Goal</th><th>Starts vs Goal</th></tr></thead>
+        <tbody>
+          ${rows}
+          <tr class="total"><td>All offices</td><td>${fmt(prod)}</td><td>${signed(vs)}</td><td>${signedN(st)}</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="font-size:13px;color:var(--soft);margin:12px 2px 0">Tap an office name to drill into its monthly detail.</p>`;
+}
+
+function renderOffice(o){
+  const maxPct = Math.max(120, ...o.pct.filter(x=>x!=null));
+  const bars = o.pct.map((p,i)=>{
+    if(p==null) return `<div class="pcol"><div class="pv" style="color:var(--soft)">—</div><div class="pbar-wrap"></div><div class="pm">${MONTHS[i]}</div></div>`;
+    const h = Math.max(6, Math.round(p/maxPct*100));
+    const goalH = Math.round(100/maxPct*100);
+    return `<div class="pcol"><div class="pv" style="color:${pctColor(p)}">${p}%</div>
+      <div class="pbar-wrap"><div class="pbar" style="height:${h}%;background:${pctColor(p)}"><div class="goalline" style="bottom:${goalH}%"></div></div></div>
+      <div class="pm">${MONTHS[i]}</div></div>`;
+  }).join("");
+  const chart = o.newish
+    ? `<div class="card"><p style="margin:0;color:var(--soft)">This office recently began reporting — monthly history builds over the year.</p></div>`
+    : `<div class="card"><div class="legend"><span>Bars = % of monthly goal</span><span>┈ dashed line = 100% (goal)</span><span style="margin-left:auto"><b style="color:var(--good)">green</b> ≥100 · <b style="color:var(--amber)">amber</b> 85–99 · <b style="color:var(--bad)">red</b> &lt;85</span></div>
+        <div style="overflow-x:auto"><div class="pctchart">${bars}</div></div></div>`;
+  document.getElementById("view").innerHTML = `
+    <div class="kpis">
+      <div class="kpi"><div class="lab">Net Production (YTD)</div><div class="val">${fmt(o.prod)}</div><div class="sub flat">incl. Medicaid</div></div>
+      <div class="kpi"><div class="lab">YTD vs Goal</div><div class="val" style="color:${o.vsGoal>=0?'var(--good)':'var(--bad)'}">${signed(o.vsGoal)}</div><div class="sub ${o.vsGoal>=0?'up':'down'}">${o.vsGoal>=0?'▲ ahead':'▼ behind'}</div></div>
+      <div class="kpi"><div class="lab">Last month to goal</div><div class="val">${o.latest.split(' ')[1]}</div><div class="sub flat">${o.latest.split(' ')[0]}</div></div>
+      <div class="kpi"><div class="lab">Growth vs last year</div><div class="val">${o.yoy!=null?o.yoy+'%':'—'}</div><div class="sub ${o.yoy>=100?'up':'flat'}">${o.yoy!=null?'June vs 2025':'building history'}</div></div>
+    </div>
+    <div class="sect">Production vs goal by month — 2026</div>
+    ${chart}
+    <div class="sect">Other key numbers (YTD)</div>
+    <div class="card"><div class="mini">
+      <div><div class="lab">Total Starts</div><div class="val">${o.starts!=null?o.starts:'—'}</div></div>
+      <div><div class="lab">Total Debands</div><div class="val">${o.debands!=null?o.debands:'—'}</div></div>
+      <div><div class="lab">Avg Production / Day</div><div class="val">${fmt(o.avgDay)}</div></div>
+      <div><div class="lab">Avg Case Fee (2025)</div><div class="val">${fmt(o.fee)}</div></div>
+    </div></div>`;
+}
+
+function pick(name){ document.getElementById("officePick").value = name; route(); }
+function route(){
+  const v = document.getElementById("officePick").value;
+  if(v==="all") renderAll(); else renderOffice(OFFICES.find(o=>o.name===v));
+  window.scrollTo(0,0);
+}
+(function init(){
+  const sel = document.getElementById("officePick");
+  sel.innerHTML = `<option value="all">🏢 All Offices</option>` +
+    OFFICES.map(o=>`<option value="${o.name}">${o.name}</option>`).join("");
+  sel.addEventListener("change", route);
+  renderAll();
+})();
+</script>
 </body>
 </html>
