@@ -84,6 +84,11 @@
   table.off th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--soft);font-weight:700;
     text-align:right;padding:12px 16px;background:#fafbfc;border-bottom:1px solid var(--line)}
   table.off th:first-child{text-align:left}
+  table.off th.sortable{cursor:pointer;user-select:none;white-space:nowrap}
+  table.off th.sortable:hover{color:var(--navy)}
+  table.off th.active{color:var(--navy)}
+  .sarr{font-size:10px;color:#b4bdc9}
+  table.off th.active .sarr{color:var(--teal)}
   table.off td{padding:13px 16px;border-bottom:1px solid var(--line);font-size:15px;text-align:right}
   table.off td:first-child{text-align:left;font-weight:600;color:var(--navy)}
   table.off tbody tr{cursor:pointer}
@@ -219,8 +224,16 @@ function ring(pct,size=112){
     <text x="${cx}" y="${cx+17}" text-anchor="middle" font-size="10.5" fill="var(--soft)">of annual</text></svg>`;
 }
 
-let sortBy = "prod";
-function setSort(v){ sortBy = v; renderAll(); }
+let sortKey = "prod", sortDir = "desc";
+function sortCol(key){
+  if(sortKey===key) sortDir = sortDir==="asc" ? "desc" : "asc";
+  else { sortKey = key; sortDir = key==="name" ? "asc" : "desc"; }
+  renderAll();
+}
+function sortTh(label,key){
+  const active = sortKey===key, arrow = active ? (sortDir==="asc"?"▲":"▼") : "↕";
+  return `<th class="sortable${active?" active":""}" onclick="sortCol('${key}')">${label} <span class="sarr">${arrow}</span></th>`;
+}
 
 function renderAll(){
   const prod = OFFICES.reduce((s,o)=>s+o.prod,0);
@@ -231,8 +244,8 @@ function renderAll(){
   const byGoal = [...OFFICES].sort((a,b)=>b.vsGoal-a.vsGoal);
   const top = byGoal[0], bottom = byGoal[byGoal.length-1];
   const summary = `<div class="summary"><b>${ahead} of ${OFFICES.length} offices</b> are ahead of goal. <b>${top.name}</b> leads at ${signed(top.vsGoal)}; <b>${bottom.name}</b> is furthest behind at ${signed(bottom.vsGoal)}.</div>`;
-  const cmp = sortBy==="vsgoal" ? (a,b)=>b.vsGoal-a.vsGoal : sortBy==="name" ? (a,b)=>a.name.localeCompare(b.name) : (a,b)=>b.prod-a.prod;
-  const rows = [...OFFICES].sort(cmp).map(o=>`
+  const val = o => sortKey==="name" ? o.name : sortKey==="vsgoal" ? o.vsGoal : sortKey==="starts" ? o.startsVsGoal : o.prod;
+  const rows = [...OFFICES].sort((a,b)=>{ const av=val(a),bv=val(b); const r=(typeof av==="string")?av.localeCompare(bv):av-bv; return sortDir==="asc"?r:-r; }).map(o=>`
     <tr onclick="pick('${o.name}')">
       <td>${o.name} <span class="chev">›</span></td>
       <td><div class="prodnum">${fmt(o.prod)}</div>${spark(o.act)}</td>
@@ -252,24 +265,17 @@ function renderAll(){
       <div class="kpi"><div class="lab">Net Starts vs Goal</div><div class="val" style="color:${st>=0?'var(--good)':'var(--bad)'}">${signedN(st)}</div><div class="sub ${st>=0?'up':'down'}">${st>=0?'▲ ahead':'▼ behind'}</div></div>
       <div class="kpi"><div class="lab">Offices ahead of goal</div><div class="val">${OFFICES.filter(o=>o.vsGoal>=0).length} / ${OFFICES.length}</div><div class="sub flat">on production</div></div>
     </div>
-    <div class="sortrow">
-      <div class="sect">Every office — 2026 YTD</div>
-      <select class="sortsel" onchange="setSort(this.value)">
-        <option value="prod" ${sortBy==="prod"?"selected":""}>Sort: Production</option>
-        <option value="vsgoal" ${sortBy==="vsgoal"?"selected":""}>Sort: vs Goal</option>
-        <option value="name" ${sortBy==="name"?"selected":""}>Sort: Name</option>
-      </select>
-    </div>
+    <div class="sect">Every office — 2026 YTD</div>
     <div class="tbl-scroll">
       <table class="off">
-        <thead><tr><th>Office</th><th>Net Production</th><th>vs Goal</th><th>Starts vs Goal</th></tr></thead>
+        <thead><tr>${sortTh("Office","name")}${sortTh("Net Production","prod")}${sortTh("vs Goal","vsgoal")}${sortTh("Starts vs Goal","starts")}</tr></thead>
         <tbody>
           ${rows}
           <tr class="total"><td>All offices</td><td>${fmt(prod)}</td><td>${signed(vs)}</td><td>${signedN(st)}</td></tr>
         </tbody>
       </table>
     </div>
-    <p style="font-size:13px;color:var(--soft);margin:12px 2px 0">Tap any office row to drill into its monthly detail.</p>`;
+    <p style="font-size:13px;color:var(--soft);margin:12px 2px 0">Tap a column header to sort · tap a row to open an office.</p>`;
 }
 
 function renderOffice(o){
