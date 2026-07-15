@@ -80,15 +80,15 @@
   .pill.up{background:var(--good-soft);color:var(--good)} .pill.down{background:var(--bad-soft);color:var(--bad)}
   /* monthly bar chart */
   .chart2{min-width:460px}
-  .plot{position:relative;height:210px;display:flex;align-items:flex-end;gap:16px;padding-top:26px}
+  .plot{position:relative;height:210px;display:flex;align-items:flex-end;gap:16px;padding-top:26px;padding-left:52px}
   .goalline2{position:absolute;left:0;right:0;border-top:2px dashed #9aa6b6;z-index:1}
-  .goalline2 .gtag{position:absolute;right:0;top:-9px;background:#fff;padding:0 6px;font-size:11px;font-weight:700;color:#6b7787}
+  .goalline2 .gtag{position:absolute;left:0;top:-9px;background:#fff;padding:0 8px 0 0;font-size:11px;font-weight:700;color:#6b7787}
   .bcol{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;position:relative;z-index:2}
   .bar2{width:100%;max-width:40px;border-radius:6px 6px 0 0;position:relative;cursor:pointer;transition:filter .12s,transform .12s}
   .bar2:hover{filter:brightness(1.06)}
   .bar2.active{transform:scaleX(1.04)}
   .pv2{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);margin-bottom:5px;font-size:12px;font-weight:800;white-space:nowrap}
-  .xrow{display:flex;gap:16px;margin-top:8px}
+  .xrow{display:flex;gap:16px;margin-top:8px;padding-left:52px}
   .xcol{flex:1;text-align:center}
   .xm{font-size:13px;color:var(--soft);font-weight:600}
   .xd{font-size:12px;color:var(--navy);font-weight:700;margin-top:2px}
@@ -237,7 +237,7 @@ function renderOffice(o){
     : `<div class="card chart2" id="chart2" style="position:relative">
         <div class="legend"><span><b style="color:var(--good)">green</b> ≥100% · <b style="color:var(--amber)">amber</b> 85–99 · <b style="color:var(--bad)">red</b> &lt;85</span><span style="margin-left:auto">Dashed line = goal · tap a bar for $ detail</span></div>
         <div style="overflow-x:auto">
-          <div class="plot"><div class="goalline2" style="bottom:${goalPx}px"><span class="gtag">Goal · 100%</span></div>${plotBars}</div>
+          <div class="plot"><div class="goalline2" style="bottom:${goalPx}px"><span class="gtag">Goal</span></div>${plotBars}</div>
           <div class="xrow">${xcols}</div>
         </div>
         <div class="tip" id="tip"></div>
