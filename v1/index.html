@@ -114,6 +114,10 @@
   .pv2{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);margin-bottom:5px;font-size:12px;font-weight:800;white-space:nowrap}
   .gmark{position:absolute;left:50%;transform:translateX(-50%);width:52px;max-width:120%;border-top:2px dashed var(--navy);z-index:4;pointer-events:none}
   .gkey{display:inline-block;width:18px;border-top:2px dashed var(--navy);position:relative;top:-3px}
+  .bar2.mtd{background:var(--teal-soft);border:2px dashed var(--teal);border-bottom:none}
+  .pv2.mtd-lab{color:var(--teal-600);font-size:11px;letter-spacing:.03em}
+  .mtd-tag{font-size:10px;color:var(--teal-600);background:var(--teal-soft);padding:1px 5px;border-radius:5px;font-weight:700}
+  .mtd-key{display:inline-block;width:15px;height:11px;border:1.5px dashed var(--teal);background:var(--teal-soft);vertical-align:middle;border-radius:2px}
   .xrow{display:flex;gap:16px;margin-top:8px}
   .xcol{flex:1;text-align:center}
   .xm{font-size:13px;color:var(--soft);font-weight:600}
@@ -162,7 +166,7 @@
   <div id="view"></div>
 
   <div class="note">
-    <b>How this works at go-live:</b> in the real Practice Hub this reads straight from your Production sheet in SharePoint (Excel web part), so it updates itself when the sheet changes — no copy-paste, no code. Pick an office up top to drill in, or “All Offices” for the leadership view. July is in progress so monthly charts show full months only.
+    <b>How this works at go-live:</b> in the real Practice Hub this reads straight from your Production sheet in SharePoint (Excel web part), so it updates itself when the sheet changes — no copy-paste, no code. Pick an office up top to drill in, or “All Offices” for the leadership view. The current month (July) shows month-to-date as an “in progress” bar, so the numbers read in real time.
   </div>
 </div>
 
@@ -174,21 +178,21 @@
 </footer>
 
 <script>
-const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun"];
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul"];
 // Real 2026 YTD figures pulled from the Production workbook (Jan–Jul actuals).
 const OFFICES = [
   {name:"Carlsbad (FFO)",   prod:1385156, vsGoal:87597,  startsVsGoal:16, starts:128, debands:91, latest:"Jun 105%", yoy:112, avgDay:26012, fee:5556,
-    pct:[72,103,160,100,100,105], act:[181401,222938,265861,215356,189779,234104], goal:[252912,216988,166188,214647,189249,222278]},
+    pct:[72,103,160,100,100,105,46], act:[181401,222938,265861,215356,189779,234104,114212], goal:[252912,216988,166188,214647,189249,222278,245976], mtdIdx:6},
   {name:"Clovis (FFO)",     prod:1351134, vsGoal:172037, startsVsGoal:32, starts:137, debands:101,latest:"Jun 126%", yoy:145, avgDay:22080, fee:5418,
-    pct:[151,125,119,84,101,126], act:[226073,258625,246687,172148,167889,198722], goal:[150201,207644,207905,204125,166173,158085]},
+    pct:[151,125,119,84,101,126,29], act:[226073,258625,246687,172148,167889,198722,93666], goal:[150201,207644,207905,204125,166173,158085,325468], mtdIdx:6},
   {name:"Hobbs (FFO)",      prod:1359890, vsGoal:86670,  startsVsGoal:14, starts:105, debands:51, latest:"Jun 114%", yoy:118, avgDay:32414, fee:6175,
-    pct:[86,104,110,124,97,114], act:[197542,208458,229738,225227,197845,259312], goal:[230923,199566,208649,181588,204041,228096]},
+    pct:[86,104,110,124,97,114,49], act:[197542,208458,229738,225227,197845,259312,68069], goal:[230923,199566,208649,181588,204041,228096,139976], mtdIdx:6},
   {name:"San Angelo (FFO)", prod:1773027, vsGoal:257403, startsVsGoal:46, starts:175, debands:86, latest:"Jun 130%", yoy:132, avgDay:34518, fee:5622,
-    pct:[132,180,114,99,74,130], act:[364028,347608,273810,209565,201489,310660], goal:[275667,193614,240442,210867,274049,239473]},
+    pct:[132,180,114,99,74,130,35], act:[364028,347608,273810,209565,201489,310660,100943], goal:[275667,193614,240442,210867,274049,239473,291472], mtdIdx:6},
   {name:"Lubbock (FFO)",    prod:618287,  vsGoal:-22956, startsVsGoal:-4, starts:67,  debands:60, latest:"Jun 101%", yoy:92,  avgDay:10188, fee:5164,
-    pct:[84,78,117,109,103,101], act:[123060,104157,137058,84810,103300,81500], goal:[146572,133479,116836,77523,100442,80660]},
+    pct:[84,78,117,109,103,101,36], act:[123060,104157,137058,84810,103300,81500,34865], goal:[146572,133479,116836,77523,100442,80660,96519], mtdIdx:6},
   {name:"Mansfield (SUN)",  prod:728029,  vsGoal:-90290, startsVsGoal:-15,starts:80,  debands:60, latest:"Jun 172%", yoy:117, avgDay:19854, fee:6000,
-    pct:[null,null,null,73,36,172], act:[null,null,null,95285,63447,178690], goal:[null,null,null,130268,174025,104054]},
+    pct:[null,null,null,73,36,172,37], act:[null,null,null,95285,63447,178690,53890], goal:[null,null,null,130268,174025,104054,146511], mtdIdx:6},
   {name:"Cruces (LCO)",     prod:656262,  vsGoal:38987,  startsVsGoal:8,  starts:null,debands:null,latest:"Jul 78%",  yoy:null,avgDay:20111, fee:4750,
     pct:[null,null,null,null,null,null], act:[], goal:[], newish:true},
   {name:"Cruces (Legacy)",  prod:396791,  vsGoal:-28686, startsVsGoal:-6, starts:null,debands:null,latest:"Jul 17%",  yoy:null,avgDay:4998,  fee:4601,
@@ -274,16 +278,19 @@ function renderOffice(o){
     if(p==null) return `<div class="bcol"></div>`;
     const bh = Math.max(10, Math.round(o.act[i]/maxVal*H));
     const gy = Math.round(o.goal[i]/maxVal*H);
+    const mtd = i===o.mtdIdx;
+    const barStyle = mtd ? `height:${bh}px` : `height:${bh}px;background:${pctColor(p)}`;
+    const topLab = mtd ? `<span class="pv2 mtd-lab">MTD</span>` : `<span class="pv2" style="color:${pctColor(p)}">${p}%</span>`;
     return `<div class="bcol">
-      <div class="bar2" data-i="${i}" tabindex="0" style="height:${bh}px;background:${pctColor(p)}"><span class="pv2" style="color:${pctColor(p)}">${p}%</span></div>
+      <div class="bar2${mtd?' mtd':''}" data-i="${i}" tabindex="0" style="${barStyle}">${topLab}</div>
       <div class="gmark" style="bottom:${gy}px"></div>
     </div>`;
   }).join("");
-  const xcols = o.pct.map((p,i)=>`<div class="xcol"><div class="xm">${MONTHS[i]}</div><div class="xd">${p!=null?fmtK(o.act[i]):'—'}</div><div class="xg">${p!=null?'goal '+fmtK(o.goal[i]):''}</div></div>`).join("");
+  const xcols = o.pct.map((p,i)=>`<div class="xcol"><div class="xm">${MONTHS[i]}${i===o.mtdIdx?' <span class="mtd-tag">so far</span>':''}</div><div class="xd">${p!=null?fmtK(o.act[i]):'—'}</div><div class="xg">${p!=null?'goal '+fmtK(o.goal[i]):''}</div></div>`).join("");
   const chart = o.newish
     ? `<div class="card"><p style="margin:0;color:var(--soft)">This office recently began reporting — monthly history builds over the year.</p></div>`
     : `<div class="card chart2" id="chart2" style="position:relative">
-        <div class="legend"><span>Bars = actual $ · <b style="color:var(--good)">green</b> beat goal · <b style="color:var(--amber)">amber</b> 85–99% · <b style="color:var(--bad)">red</b> &lt;85%</span><span style="margin-left:auto"><span class="gkey"></span> = that month's goal · tap for $</span></div>
+        <div class="legend"><span>Bars = actual $ · <b style="color:var(--good)">green</b> beat goal · <b style="color:var(--amber)">amber</b> 85–99% · <b style="color:var(--bad)">red</b> &lt;85%</span><span style="margin-left:auto"><span class="gkey"></span> goal · <span class="mtd-key"></span> July so far · tap for $</span></div>
         <div style="overflow-x:auto">
           <div class="plot">${plotBars}</div>
           <div class="xrow">${xcols}</div>
@@ -291,7 +298,7 @@ function renderOffice(o){
         <div class="tip" id="tip"></div>
       </div>`;
   const parts=o.latest.split(' '), lastMo=parts[0], lastPct=parts[1];
-  const idxs=o.pct.map((p,i)=>p!=null?i:-1).filter(i=>i>=0);
+  const idxs=o.pct.map((p,i)=> (p!=null && i!==o.mtdIdx) ? i : -1).filter(i=>i>=0);
   let moDelta=`<div class="sub flat">${lastMo}</div>`;
   if(idxs.length>=2){const li=idxs[idxs.length-1],pi=idxs[idxs.length-2],d=o.pct[li]-o.pct[pi];
     moDelta=`<div class="sub ${d>=0?'up':'down'}">${d>=0?'▲':'▼'} ${Math.abs(d)} pts vs ${MONTHS[pi]}</div>`;}
@@ -324,11 +331,11 @@ function wireBars(o){
   const bars=[...chart.querySelectorAll(".bar2")];
   const tipColor=p=>p>=100?"#7EE6C6":(p>=85?"#F7C67A":"#F3A79A");
   function show(bar){
-    const i=+bar.dataset.i;
-    tip.innerHTML=`<b>${MONTHS[i]} 2026</b>
-      <div class="row"><span>Production</span><b>${fmt(o.act[i])}</b></div>
+    const i=+bar.dataset.i, mtd=i===o.mtdIdx;
+    tip.innerHTML=`<b>${MONTHS[i]} 2026${mtd?" · in progress":""}</b>
+      <div class="row"><span>${mtd?"So far":"Production"}</span><b>${fmt(o.act[i])}</b></div>
       <div class="row"><span>Goal</span><b>${fmt(o.goal[i])}</b></div>
-      <div class="p" style="color:${tipColor(o.pct[i])}">${o.pct[i]}% of goal</div>`;
+      <div class="p" style="color:${mtd?"#c7d4e6":tipColor(o.pct[i])}">${o.pct[i]}% of goal${mtd?" so far":""}</div>`;
     const cr=chart.getBoundingClientRect(), br=bar.getBoundingClientRect();
     tip.style.left=(br.left-cr.left+br.width/2)+"px";
     tip.style.top=(br.top-cr.top-10)+"px";
