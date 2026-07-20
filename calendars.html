@@ -32,7 +32,13 @@
   .pchip{border:1px solid transparent;border-radius:999px;padding:7px 13px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:7px}
   .pchip.sel{outline:2px solid var(--navy);outline-offset:1px}
   .pchip.addp{background:#fff;color:var(--navy);border:1px dashed var(--line)}
+  .pchip{user-select:none}
+  .pedit{border:none;background:none;color:inherit;opacity:.5;cursor:pointer;font-size:12px;padding:0;margin-left:1px;font-family:inherit;line-height:1}
+  .pedit:hover{opacity:1}
   .pdot{width:9px;height:9px;border-radius:50%;display:inline-block}
+  .swwrap{display:flex;gap:9px;flex-wrap:wrap}
+  .sw{width:30px;height:30px;border-radius:8px;border:2px solid #fff;box-shadow:0 0 0 1px var(--line);cursor:pointer;padding:0}
+  .sw.sel{box-shadow:0 0 0 2px var(--navy)}
   .board-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
   table.sgrid{width:100%;border-collapse:collapse;background:#fff;min-width:760px}
   table.sgrid th{font-size:12px;font-weight:700;color:var(--navy);background:#fafbfc;padding:10px;text-align:center;border-bottom:1px solid var(--line)}
@@ -122,7 +128,7 @@
     'Cruces LCO':[null,{p:4,h:WK},null,{p:3,h:WK},null,null],
     'Cruces Legacy':[null,null,{p:0,h:WK},null,null,{p:2,h:HALF}]
   };
-  let filterP=null, weekOffset=0, tmp={p:null,h:WK};
+  let filterP=null, weekOffset=0, tmp={p:null,h:WK}, tmpC=0, tmpEdit=null;
   const el=id=>document.getElementById(id);
   const col=ci=>PALETTE[ci%PALETTE.length];
 
@@ -134,7 +140,7 @@
 
   function renderRoster(){
     el('roster').innerHTML='<span class="rlab">Doctors</span>'+people.map((p,i)=>{const c=col(p.c);
-      return '<button class="pchip'+(filterP===i?' sel':'')+'" style="background:'+c.bg+';color:'+c.fg+'" onclick="PS.filter('+i+')"><span class="pdot" style="background:'+c.fg+'"></span>'+p.n+'</button>';
+      return '<span class="pchip'+(filterP===i?' sel':'')+'" style="background:'+c.bg+';color:'+c.fg+'" onclick="PS.filter('+i+')"><span class="pdot" style="background:'+c.fg+'"></span>'+p.n+'<button class="pedit" title="Edit doctor" onclick="event.stopPropagation();PS.edit('+i+')">✎</button></span>';
     }).join('')+'<button class="pchip addp" onclick="PS.addPerson()">+ Add doctor</button>';
   }
 
@@ -183,11 +189,23 @@
   function save(loc,d){ if(tmp.p==null){const h=el('s-hint'); if(h)h.textContent='Pick a doctor, or choose “Mark closed.”'; return;} if(!sched[loc])sched[loc]=[null,null,null,null,null,null]; sched[loc][d]={p:tmp.p,h:tmp.h}; closeModal(); renderGrid(); }
   function setClosed(loc,d){ if(!sched[loc])sched[loc]=[null,null,null,null,null,null]; sched[loc][d]=null; closeModal(); renderGrid(); }
 
-  function addPerson(){
-    openModal('<div class="s-top"><b>Add a doctor / person</b><button class="x" onclick="PS.close()">×</button></div><div class="s-body"><div class="s-lab">Name</div><input id="npName" class="s-input" placeholder="e.g. Dr. Smith" autocomplete="off"></div><div class="s-foot"><span style="flex:1"></span><button class="sbtn ghost" onclick="PS.close()">Cancel</button><button class="sbtn" onclick="PS.doAddPerson()">Add doctor</button></div>');
-    setTimeout(()=>{const i=el('npName'); if(i){i.focus(); i.addEventListener('keydown',e=>{if(e.key==='Enter')doAddPerson();});}},40);
+  function personModal(editIdx){
+    const isEdit=editIdx!=null;
+    const cur=isEdit?people[editIdx]:{n:'',c:people.length%PALETTE.length};
+    tmpC=cur.c; tmpEdit=editIdx;
+    const sw=PALETTE.map((c,i)=>'<button class="sw'+(i===tmpC?' sel':'')+'" style="background:'+c.fg+'" onclick="PS.pc('+i+')" aria-label="color"></button>').join('');
+    openModal(
+      '<div class="s-top"><b>'+(isEdit?'Edit doctor':'Add a doctor / person')+'</b><button class="x" onclick="PS.close()">×</button></div>'+
+      '<div class="s-body"><div class="s-lab">Name</div><input id="pName" class="s-input" placeholder="e.g. Dr. Smith" value="'+(isEdit?cur.n.replace(/"/g,'&quot;'):'')+'" autocomplete="off">'+
+      '<div class="s-lab">Color</div><div class="swwrap" id="swwrap">'+sw+'</div></div>'+
+      '<div class="s-foot">'+(isEdit?'<button class="sbtn ghost" onclick="PS.delPerson('+editIdx+')">Remove</button>':'')+'<span style="flex:1"></span><button class="sbtn ghost" onclick="PS.close()">Cancel</button><button class="sbtn" onclick="PS.savePerson()">'+(isEdit?'Save':'Add doctor')+'</button></div>');
+    setTimeout(()=>{const i=el('pName'); if(i){i.focus(); i.addEventListener('keydown',e=>{if(e.key==='Enter')savePerson();});}},40);
   }
-  function doAddPerson(){ const v=el('npName').value.trim(); if(!v)return; people.push({n:v,c:people.length}); closeModal(); renderRoster(); }
+  function addPerson(){ personModal(null); }
+  function editPerson(i){ personModal(i); }
+  function pc(i){ tmpC=i; [...document.querySelectorAll('#swwrap .sw')].forEach((b,k)=>b.classList.toggle('sel',k===i)); }
+  function savePerson(){ const v=el('pName').value.trim(); if(!v)return; if(tmpEdit!=null){people[tmpEdit].n=v; people[tmpEdit].c=tmpC;} else {people.push({n:v,c:tmpC});} closeModal(); renderRoster(); renderGrid(); }
+  function delPerson(i){ people.splice(i,1); Object.keys(sched).forEach(loc=>{ sched[loc]=sched[loc].map(c=>{ if(!c)return null; if(c.p===i)return null; if(c.p>i)return {p:c.p-1,h:c.h}; return c; }); }); filterP=null; closeModal(); renderRoster(); renderGrid(); }
 
   function addLocation(){
     openModal('<div class="s-top"><b>Add a location</b><button class="x" onclick="PS.close()">×</button></div><div class="s-body"><div class="s-lab">Location name</div><input id="nlName" class="s-input" placeholder="e.g. Roswell" autocomplete="off"></div><div class="s-foot"><span style="flex:1"></span><button class="sbtn ghost" onclick="PS.close()">Cancel</button><button class="sbtn" onclick="PS.doAddLoc()">Add location</button></div>');
@@ -199,7 +217,7 @@
   function filter(i){ filterP = (filterP===i)?null:i; renderRoster(); renderGrid(); }
   function week(dir){ weekOffset+=dir; renderGrid(); }
 
-  window.PS={filter,addPerson,doAddPerson,addLocation,doAddLoc,delLoc,assign,tp,th,save,setClosed,close:closeModal,week};
+  window.PS={filter,addPerson,edit:editPerson,pc,savePerson,delPerson,addLocation,doAddLoc,delLoc,assign,tp,th,save,setClosed,close:closeModal,week};
   el('schedModal').addEventListener('click',e=>{if(e.target.id==='schedModal')closeModal();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
   renderRoster(); renderGrid();
