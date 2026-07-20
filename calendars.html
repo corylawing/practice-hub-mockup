@@ -52,9 +52,20 @@
   td.cell.open .who{display:block;font-weight:700;font-size:13px;line-height:1.2}
   td.cell.open .hrs{display:block;font-size:11px;color:var(--ink-soft);margin-top:3px}
   td.cell.closed{background:#fafbfc}
-  td.cell.closed .add{color:#c3ccd8;font-size:18px}
+  td.cell.closed .cx{color:#9aa6b6;font-size:12.5px;font-weight:600}
   td.cell.closed:hover{background:var(--teal-soft)}
-  td.cell.closed:hover .add{color:var(--teal-600)}
+  td.cell.needs{background:#FFF6E9}
+  td.cell.needs .nd{color:#b07d1a;font-size:12px;font-weight:700}
+  td.cell.needs:hover{background:#FCEED3}
+  .sched-status{border-radius:10px;padding:12px 16px;font-size:14.5px;margin-bottom:16px;border:1px solid}
+  .sched-status.ok{background:#E7F4EE;border-color:#bfe3cf;color:#256b45}
+  .sched-status.warn{background:#FFF6E9;border-color:#f3dcb3;color:#7a5212}
+  .ledit{border:none;background:none;color:var(--soft);cursor:pointer;font-size:14px;margin-left:6px;opacity:0;line-height:1}
+  table.sgrid tr:hover .ledit{opacity:.55}
+  .ledit:hover{color:var(--teal-600);opacity:1}
+  .dtogs{display:flex;gap:6px;flex-wrap:wrap}
+  .dtog{border:1px solid var(--line);background:#fff;color:var(--soft);border-radius:8px;padding:8px 12px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+  .dtog.on{border-color:var(--teal);background:var(--teal-soft);color:var(--teal-600)}
   td.cell.today{box-shadow:inset 0 0 0 2px var(--teal-soft)}
   td.cell.dim{opacity:.22}
   td.cell.hit{outline:2px solid var(--teal);outline-offset:-2px}
@@ -103,6 +114,7 @@
 
   <div class="roster" id="roster"></div>
 
+  <div id="schedStatus" class="sched-status"></div>
   <div id="schedGrid"></div>
   <p class="hint">Tap any cell to assign a doctor or mark the office closed · tap a doctor above to highlight where they work · today's column is highlighted.</p>
 </div>
@@ -133,7 +145,18 @@
     'Cruces LCO':[null,{p:4,...FULL},null,{p:3,...FULL},null,null],
     'Cruces Legacy':[null,null,{p:0,...FULL},null,null,{p:2,...HALFD}]
   };
-  let filterP=null, weekOffset=0, tmp={p:null,mode:'full',s:480,e:1020}, tmpC=0, tmpEdit=null;
+  // office hours: which weekdays each location is open (Mon..Sat)
+  let openH={
+    'Carlsbad':[true,false,true,true,true,false],
+    'Clovis':[true,false,true,false,true,true],
+    'Hobbs':[false,true,false,true,false,false],
+    'San Angelo':[true,false,true,false,true,false],
+    'Lubbock':[false,true,false,true,true,false],
+    'Mansfield':[true,false,true,false,true,false],
+    'Cruces LCO':[false,true,false,true,false,false],
+    'Cruces Legacy':[false,false,true,false,false,true]
+  };
+  let filterP=null, weekOffset=0, tmp={p:null,mode:'full',s:480,e:1020}, tmpC=0, tmpEdit=null, tmpLoc=null;
   const el=id=>document.getElementById(id);
   const col=ci=>PALETTE[ci%PALETTE.length];
   const fmtT=m=>{let h=Math.floor(m/60),mm=m%60,ap=h>=12?'p':'a',hh=h%12||12;return hh+':'+(mm<10?'0'+mm:mm)+ap;};
@@ -162,20 +185,38 @@
     const ti=todayIdx();
     const dts=weekDates(weekOffset);
     const head='<tr><th class="corner">Location</th>'+DAYS.map((d,i)=>'<th class="'+(i===ti?'today':'')+'">'+d+(i===ti?' · Today':'')+'<span class="daynum">'+dts[i]+'</span></th>').join('')+'</tr>';
+    let needs=0, openTotal=0, filled=0;
     const rows=locations.map(loc=>{
       const arr=sched[loc]||[null,null,null,null,null,null];
+      const oh=openH[loc]||[false,false,false,false,false,false];
       const cells=arr.map((cell,d)=>{
         const t=d===ti?' today':'';
-        if(!cell||!people[cell.p]) return '<td class="cell closed'+t+'" onclick="PS.assign(\''+loc+'\','+d+')"><span class="add">+</span></td>';
-        const p=people[cell.p], c=col(p.c);
-        const dim=(filterP!=null&&filterP!==cell.p)?' dim':'';
-        const hit=(filterP!=null&&filterP===cell.p)?' hit':'';
-        return '<td class="cell open'+t+dim+hit+'" style="background:'+c.bg+'" onclick="PS.assign(\''+loc+'\','+d+')"><span class="who" style="color:'+c.fg+'">'+p.n+'</span><span class="hrs">'+cell.h+'</span></td>';
+        const isOpen=!!oh[d];
+        if(cell && cell.p!=null && people[cell.p]){
+          const p=people[cell.p], c=col(p.c);
+          if(isOpen){filled++;openTotal++;}
+          const dim=(filterP!=null&&filterP!==cell.p)?' dim':'';
+          const hit=(filterP!=null&&filterP===cell.p)?' hit':'';
+          return '<td class="cell open'+t+dim+hit+'" style="background:'+c.bg+'" onclick="PS.assign(\''+loc+'\','+d+')"><span class="who" style="color:'+c.fg+'">'+p.n+'</span><span class="hrs">'+cell.h+'</span></td>';
+        }
+        if(cell && cell.closed){
+          return '<td class="cell closed'+t+'" onclick="PS.assign(\''+loc+'\','+d+')"><span class="cx">Closed</span></td>';
+        }
+        if(isOpen){ needs++; openTotal++;
+          return '<td class="cell needs'+t+'" onclick="PS.assign(\''+loc+'\','+d+')"><span class="nd">Needs doctor</span></td>';
+        }
+        return '<td class="cell closed'+t+'" onclick="PS.assign(\''+loc+'\','+d+')"><span class="cx">Closed</span></td>';
       }).join('');
-      return '<tr><th class="loc">'+loc+'<button class="delloc" title="Remove location" onclick="event.stopPropagation();PS.delLoc(\''+loc+'\')">×</button></th>'+cells+'</tr>';
+      return '<tr><th class="loc">'+loc+'<button class="ledit" title="Edit location & office hours" onclick="event.stopPropagation();PS.editLoc(\''+loc+'\')">✎</button></th>'+cells+'</tr>';
     }).join('');
     el('schedGrid').innerHTML='<div class="board-scroll"><table class="sgrid"><thead>'+head+'</thead><tbody>'+rows+'</tbody></table></div>';
     el('weekLabel').textContent=weekLabel(weekOffset);
+    const st=el('schedStatus');
+    if(st){ st.className='sched-status '+(needs===0?'ok':'warn');
+      st.innerHTML = needs===0
+        ? '<b>✓ Fully scheduled</b> — every open day this week has a doctor ('+filled+' of '+openTotal+' open days covered).'
+        : '<b>'+needs+' open day'+(needs>1?'s still need':' still needs')+' a doctor</b> — highlighted in amber below ('+filled+' of '+openTotal+' covered).';
+    }
   }
 
   function openModal(html){ el('schedModalCard').innerHTML=html; el('schedModal').classList.add('open'); }
@@ -214,7 +255,7 @@
     sched[loc][d]={p:tmp.p,h:hoursLabel(s,e),s,e};
     closeModal(); renderGrid();
   }
-  function setClosed(loc,d){ if(!sched[loc])sched[loc]=[null,null,null,null,null,null]; sched[loc][d]=null; closeModal(); renderGrid(); }
+  function setClosed(loc,d){ if(!sched[loc])sched[loc]=[null,null,null,null,null,null]; sched[loc][d]={closed:true}; closeModal(); renderGrid(); }
 
   function personModal(editIdx){
     const isEdit=editIdx!=null;
@@ -234,17 +275,35 @@
   function savePerson(){ const v=el('pName').value.trim(); if(!v)return; if(tmpEdit!=null){people[tmpEdit].n=v; people[tmpEdit].c=tmpC;} else {people.push({n:v,c:tmpC});} closeModal(); renderRoster(); renderGrid(); }
   function delPerson(i){ people.splice(i,1); Object.keys(sched).forEach(loc=>{ sched[loc]=sched[loc].map(c=>{ if(!c)return null; if(c.p===i)return null; if(c.p>i)return {p:c.p-1,h:c.h}; return c; }); }); filterP=null; closeModal(); renderRoster(); renderGrid(); }
 
-  function addLocation(){
-    openModal('<div class="s-top"><b>Add a location</b><button class="x" onclick="PS.close()">×</button></div><div class="s-body"><div class="s-lab">Location name</div><input id="nlName" class="s-input" placeholder="e.g. Roswell" autocomplete="off"></div><div class="s-foot"><span style="flex:1"></span><button class="sbtn ghost" onclick="PS.close()">Cancel</button><button class="sbtn" onclick="PS.doAddLoc()">Add location</button></div>');
-    setTimeout(()=>{const i=el('nlName'); if(i){i.focus(); i.addEventListener('keydown',e=>{if(e.key==='Enter')doAddLoc();});}},40);
+  function locModal(editName){
+    const isEdit=editName!=null;
+    const open=isEdit?(openH[editName]||[false,false,false,false,false,false]).slice():[true,true,true,true,true,false];
+    tmpLoc={orig:editName,open};
+    const days=DAYS.map((d,i)=>'<button class="dtog'+(open[i]?' on':'')+'" data-i="'+i+'" onclick="PS.dtog('+i+')">'+d+'</button>').join('');
+    openModal(
+      '<div class="s-top"><b>'+(isEdit?'Edit location':'Add a location')+'</b><button class="x" onclick="PS.close()">×</button></div>'+
+      '<div class="s-body"><div class="s-lab">Location name</div><input id="lName" class="s-input" value="'+(isEdit?editName.replace(/"/g,'&quot;'):'')+'" placeholder="e.g. Roswell" autocomplete="off">'+
+      '<div class="s-lab">Office hours — days open</div><div class="dtogs" id="dtogs">'+days+'</div></div>'+
+      '<div class="s-foot">'+(isEdit?'<button class="sbtn ghost" onclick="PS.delLoc(\''+editName+'\')">Remove</button>':'')+'<span style="flex:1"></span><button class="sbtn ghost" onclick="PS.close()">Cancel</button><button class="sbtn" onclick="PS.saveLoc()">'+(isEdit?'Save':'Add location')+'</button></div>');
+    setTimeout(()=>el('lName')&&el('lName').focus(),40);
   }
-  function doAddLoc(){ const v=el('nlName').value.trim(); if(!v)return; if(!locations.includes(v)){locations.push(v); sched[v]=[null,null,null,null,null,null];} closeModal(); renderGrid(); }
-  function delLoc(loc){ locations=locations.filter(l=>l!==loc); delete sched[loc]; renderGrid(); }
+  function addLocation(){ locModal(null); }
+  function editLoc(name){ locModal(name); }
+  function dtog(i){ tmpLoc.open[i]=!tmpLoc.open[i]; [...document.querySelectorAll('#dtogs .dtog')].forEach(b=>b.classList.toggle('on',tmpLoc.open[+b.dataset.i])); }
+  function saveLoc(){
+    const v=el('lName').value.trim(); if(!v)return;
+    if(tmpLoc.orig){
+      if(v!==tmpLoc.orig){ const i=locations.indexOf(tmpLoc.orig); if(i>=0)locations[i]=v; sched[v]=sched[tmpLoc.orig]; delete sched[tmpLoc.orig]; delete openH[tmpLoc.orig]; }
+      openH[v]=tmpLoc.open;
+    } else if(!locations.includes(v)){ locations.push(v); sched[v]=[null,null,null,null,null,null]; openH[v]=tmpLoc.open; }
+    closeModal(); renderGrid();
+  }
+  function delLoc(loc){ locations=locations.filter(l=>l!==loc); delete sched[loc]; delete openH[loc]; closeModal(); renderGrid(); }
 
   function filter(i){ filterP = (filterP===i)?null:i; renderRoster(); renderGrid(); }
   function week(dir){ weekOffset+=dir; renderGrid(); }
 
-  window.PS={filter,addPerson,edit:editPerson,pc,savePerson,delPerson,addLocation,doAddLoc,delLoc,assign,tp,hm,save,setClosed,close:closeModal,week};
+  window.PS={filter,addPerson,edit:editPerson,pc,savePerson,delPerson,addLocation,editLoc,dtog,saveLoc,delLoc,assign,tp,hm,save,setClosed,close:closeModal,week};
   el('schedModal').addEventListener('click',e=>{if(e.target.id==='schedModal')closeModal();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
   renderRoster(); renderGrid();
