@@ -91,6 +91,13 @@
   .dtogs{display:flex;gap:6px;flex-wrap:wrap}
   .dtog{border:1px solid var(--line);background:#fff;color:var(--soft);border-radius:8px;padding:8px 12px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
   .dtog.on{border-color:var(--teal);background:var(--teal-soft);color:var(--teal-600)}
+  .dayrows{display:flex;flex-direction:column;gap:8px}
+  .dayrow{display:flex;align-items:center;gap:10px}
+  .dayrow .dtog{min-width:62px;text-align:center}
+  .dtimes{display:flex;align-items:center;gap:6px}
+  .dtimes input[type=time]{padding:7px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--navy)}
+  .dtimes span{color:var(--soft);font-size:12px}
+  .dclosed{color:#9aa6b6;font-size:13px}
   .hint{font-size:13px;color:var(--soft);margin-top:12px}
   .s-overlay{position:fixed;inset:0;background:rgba(15,42,74,.5);z-index:120;display:none;align-items:center;justify-content:center;padding:16px}
   .s-overlay.open{display:flex}
@@ -171,11 +178,13 @@
     'Cruces LCO':[null,{p:4,...FULL},null,{p:3,...FULL},null,null],
     'Cruces Legacy':[null,null,{p:0,...FULL},null,null,{p:2,...HALFD}]
   };
+  // office hours per day: null = closed, or {s,e} minutes
+  const WKh={s:480,e:1020}, SATh={s:480,e:780};
   let openH={
-    'Carlsbad':[true,false,true,true,true,false],'Clovis':[true,false,true,false,true,true],
-    'Hobbs':[false,true,false,true,false,false],'San Angelo':[true,false,true,false,true,false],
-    'Lubbock':[false,true,false,true,true,false],'Mansfield':[true,false,true,false,true,false],
-    'Cruces LCO':[false,true,false,true,false,false],'Cruces Legacy':[false,false,true,false,false,true]
+    'Carlsbad':[WKh,null,WKh,WKh,WKh,null],'Clovis':[WKh,null,WKh,null,WKh,SATh],
+    'Hobbs':[null,WKh,null,WKh,null,null],'San Angelo':[WKh,null,WKh,null,WKh,null],
+    'Lubbock':[null,WKh,null,WKh,WKh,null],'Mansfield':[WKh,null,WKh,null,WKh,null],
+    'Cruces LCO':[null,WKh,null,WKh,null,null],'Cruces Legacy':[null,null,WKh,null,null,SATh]
   };
   let filterP=null, weekOffset=0, tmp={p:null,mode:'full',s:480,e:1020}, tmpC=0, tmpEdit=null, tmpLoc=null;
   const el=id=>document.getElementById(id);
@@ -232,8 +241,10 @@
 
   function assign(loc,d){
     const cur=(sched[loc]||[])[d];
-    let mode='full',s=480,e=1020;
-    if(cur){s=cur.s;e=cur.e;mode=(s===480&&e===1020)?'full':(s===480&&e===780)?'half':'custom';}
+    let s=480,e=1020;
+    if(cur&&cur.s!=null){s=cur.s;e=cur.e;}
+    else if(openH[loc]&&openH[loc][d]){s=openH[loc][d].s;e=openH[loc][d].e;}
+    const mode=(s===480&&e===1020)?'full':(s===480&&e===780)?'half':'custom';
     tmp={p:cur?cur.p:null,mode,s,e};
     const bookedBy={}; for(const L of locations){ if(L===loc)continue; const c=(sched[L]||[])[d]; if(c&&c.p!=null) bookedBy[c.p]=L; }
     let bookedCount=0;
@@ -289,30 +300,38 @@
   function delPerson(i){ people.splice(i,1); Object.keys(sched).forEach(loc=>{ sched[loc]=sched[loc].map(c=>{ if(!c)return null; if(c.p===i)return null; if(c.p>i)return {p:c.p-1,h:c.h,s:c.s,e:c.e}; return c; }); }); filterP=null; closeModal(); renderRoster(); renderGrid(); }
 
   function locModal(editName){
-    const isEdit=editName!=null; const open=isEdit?(openH[editName]||[false,false,false,false,false,false]).slice():[true,true,true,true,true,false];
-    tmpLoc={orig:editName,open};
-    const days=DAYS.map((d,i)=>'<button class="dtog'+(open[i]?' on':'')+'" data-i="'+i+'" onclick="PS.dtog('+i+')">'+d+'</button>').join('');
+    const isEdit=editName!=null;
+    const src=isEdit?(openH[editName]||[]):[WKh,WKh,WKh,WKh,WKh,null];
+    tmpLoc={orig:editName, hours:DAYS.map((_,i)=>{const h=src[i]; return h?{s:h.s,e:h.e}:null;})};
     openModal(
       '<div class="s-top"><b>'+(isEdit?'Edit location':'Add a location')+'</b><button class="x" onclick="PS.close()">×</button></div>'+
       '<div class="s-body"><div class="s-lab">Location name</div><input id="lName" class="s-input" value="'+(isEdit?editName.replace(/"/g,'&quot;'):'')+'" placeholder="e.g. Roswell" autocomplete="off">'+
-      '<div class="s-lab">Office hours — days open</div><div class="dtogs" id="dtogs">'+days+'</div></div>'+
+      '<div class="s-lab">Office hours</div><div class="dayrows" id="dayrows"></div></div>'+
       '<div class="s-foot">'+(isEdit?'<button class="sbtn ghost" onclick="PS.delLoc(\''+editName+'\')">Remove</button>':'')+'<span style="flex:1"></span><button class="sbtn ghost" onclick="PS.close()">Cancel</button><button class="sbtn" onclick="PS.saveLoc()">'+(isEdit?'Save':'Add location')+'</button></div>');
+    renderDayRows();
     setTimeout(()=>el('lName')&&el('lName').focus(),40);
+  }
+  function renderDayRows(){
+    el('dayrows').innerHTML=DAYS.map((d,i)=>{const h=tmpLoc.hours[i];
+      return '<div class="dayrow"><button class="dtog'+(h?' on':'')+'" onclick="PS.dtog('+i+')">'+d+'</button>'+
+        (h?'<span class="dtimes"><input type="time" value="'+fmt24(h.s)+'" onchange="PS.dtime('+i+',\'s\',this.value)"><span>to</span><input type="time" value="'+fmt24(h.e)+'" onchange="PS.dtime('+i+',\'e\',this.value)"></span>':'<span class="dclosed">Closed</span>')+
+      '</div>';}).join('');
   }
   function addLocation(){ locModal(null); }
   function editLoc(name){ locModal(name); }
-  function dtog(i){ tmpLoc.open[i]=!tmpLoc.open[i]; [...document.querySelectorAll('#dtogs .dtog')].forEach(b=>b.classList.toggle('on',tmpLoc.open[+b.dataset.i])); }
+  function dtog(i){ tmpLoc.hours[i]=tmpLoc.hours[i]?null:{s:480,e:1020}; renderDayRows(); }
+  function dtime(i,w,v){ if(tmpLoc.hours[i])tmpLoc.hours[i][w]=parseT(v); }
   function saveLoc(){
     const v=el('lName').value.trim(); if(!v)return;
-    if(tmpLoc.orig){ if(v!==tmpLoc.orig){ const i=locations.indexOf(tmpLoc.orig); if(i>=0)locations[i]=v; sched[v]=sched[tmpLoc.orig]; delete sched[tmpLoc.orig]; delete openH[tmpLoc.orig]; } openH[v]=tmpLoc.open; }
-    else if(!locations.includes(v)){ locations.push(v); sched[v]=[null,null,null,null,null,null]; openH[v]=tmpLoc.open; }
+    if(tmpLoc.orig){ if(v!==tmpLoc.orig){ const i=locations.indexOf(tmpLoc.orig); if(i>=0)locations[i]=v; sched[v]=sched[tmpLoc.orig]; delete sched[tmpLoc.orig]; delete openH[tmpLoc.orig]; } openH[v]=tmpLoc.hours; }
+    else if(!locations.includes(v)){ locations.push(v); sched[v]=[null,null,null,null,null,null]; openH[v]=tmpLoc.hours; }
     closeModal(); renderGrid();
   }
   function delLoc(loc){ locations=locations.filter(l=>l!==loc); delete sched[loc]; delete openH[loc]; closeModal(); renderGrid(); }
   function filter(i){ filterP=(filterP===i)?null:i; renderRoster(); renderGrid(); }
   function week(dir){ weekOffset+=dir; renderGrid(); }
 
-  window.PS={filter,addPerson,edit:editPerson,pc,savePerson,delPerson,addLocation,editLoc,dtog,saveLoc,delLoc,assign,tp,hm,save,setClosed,close:closeModal,week};
+  window.PS={filter,addPerson,edit:editPerson,pc,savePerson,delPerson,addLocation,editLoc,dtog,dtime,saveLoc,delLoc,assign,tp,hm,save,setClosed,close:closeModal,week};
   el('schedModal').addEventListener('click',e=>{if(e.target.id==='schedModal')closeModal();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
   renderRoster(); renderGrid();
