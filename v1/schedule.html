@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Schedule (V1) — Practice Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#0F2A4A">
+<meta name="description" content="Practice Hub V1 — staff schedule: which office is open each day and who's working.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Practice Hub">
+<meta property="og:title" content="Schedule (V1) · Practice Hub">
+<meta property="og:description" content="Which office is open each day and who's working — manage every location's schedule.">
+<meta property="og:image" content="https://corylawing.github.io/practice-hub-mockup/assets/og-image.png">
+<meta property="og:url" content="https://corylawing.github.io/practice-hub-mockup/v1/schedule.html">
+<style>
+  :root{
+    --navy:#0F2A4A; --navy2:#25456e; --teal:#149B96; --teal2:#2BC0B8; --teal-soft:#E5F4F3; --teal-600:#0F827E;
+    --ink:#1F2D3D; --ink-soft:#56627A; --soft:#56627A; --line:#E4E8EE; --canvas:#F4F6F8; --white:#fff;
+    --good:#2E9E6B; --bad:#D7503A; --amber:#F2A03D;
+    --shadow:0 1px 2px rgba(15,42,74,.06),0 6px 18px rgba(15,42,74,.06);
+    --shadow-lg:0 10px 30px rgba(15,42,74,.12); --radius:14px; --maxw:1080px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--canvas);line-height:1.5;-webkit-font-smoothing:antialiased}
+  h1{color:var(--navy);margin:0}
+  .ribbon{background:var(--amber);color:#3a2400;text-align:center;font-size:13px;font-weight:600;padding:6px 14px}
+  .hdr{background:var(--navy);color:#fff}
+  .hdr-in{max-width:var(--maxw);margin:0 auto;display:flex;align-items:center;gap:12px;padding:13px 20px}
+  .mark{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--teal),var(--teal2));display:grid;place-items:center;color:#fff;font-weight:800;font-size:16px}
+  .brand{font-weight:700;font-size:18px;color:#fff;line-height:1.1}
+  .brand small{display:block;font-weight:500;font-size:12px;color:#9fb4d0}
+  .v1{background:rgba(255,255,255,.15);color:#eaf1fb;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;margin-left:6px}
+  .v1nav{background:var(--navy2)}
+  .v1nav-in{max-width:var(--maxw);margin:0 auto;display:flex;gap:2px;padding:0 12px}
+  .v1nav a{color:#cdd9ea;font-size:14px;font-weight:600;padding:13px 16px;text-decoration:none;border-bottom:3px solid transparent}
+  .v1nav a:hover{color:#fff;background:rgba(255,255,255,.05)}
+  .v1nav a.active{color:#fff;border-bottom-color:var(--teal)}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:26px 20px 90px}
+  .page-head h1{font-size:26px}
+  .page-head p{margin:4px 0 0;color:var(--soft);font-size:15px}
+  .notice{background:var(--teal-soft);border:1px solid #c4e6e3;border-radius:12px;padding:13px 16px;font-size:14px;color:#0c5b57;margin:18px 0}
+  .sched-toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+  .weeknav{display:inline-flex;align-items:center;gap:4px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:4px 6px;box-shadow:var(--shadow)}
+  .weeknav button{border:none;background:none;font-size:18px;color:var(--navy);cursor:pointer;padding:2px 9px;border-radius:6px;font-family:inherit}
+  .weeknav button:hover{background:var(--canvas)}
+  .weeknav span{font-weight:700;color:var(--navy);font-size:14px;min-width:118px;text-align:center}
+  .sbtn{background:var(--teal);color:#fff;border:none;border-radius:9px;padding:9px 14px;font-weight:600;font-size:14px;cursor:pointer;font-family:inherit;white-space:nowrap}
+  .sbtn:hover{background:var(--teal-600)}
+  .sbtn.ghost{background:#fff;color:var(--navy);border:1px solid var(--line)}
+  .sbtn.ghost:hover{border-color:var(--teal);color:var(--teal-600)}
+  .roster{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:16px}
+  .roster .rlab{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--soft);font-weight:700;margin-right:2px}
+  .pchip{border:1px solid transparent;border-radius:999px;padding:7px 13px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:7px;user-select:none}
+  .pchip.sel{outline:2px solid var(--navy);outline-offset:1px}
+  .pchip.addp{background:#fff;color:var(--navy);border:1px dashed var(--line)}
+  .pedit{border:none;background:none;color:inherit;opacity:.5;cursor:pointer;font-size:12px;padding:0;margin-left:1px;font-family:inherit;line-height:1}
+  .pedit:hover{opacity:1}
+  .pdot{width:9px;height:9px;border-radius:50%;display:inline-block}
+  .swwrap{display:flex;gap:9px;flex-wrap:wrap}
+  .sw{width:30px;height:30px;border-radius:8px;border:2px solid #fff;box-shadow:0 0 0 1px var(--line);cursor:pointer;padding:0}
+  .sw.sel{box-shadow:0 0 0 2px var(--navy)}
+  .board-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+  table.sgrid{width:100%;border-collapse:collapse;background:#fff;min-width:760px}
+  table.sgrid th{font-size:12px;font-weight:700;color:var(--navy);background:#fafbfc;padding:10px;text-align:center;border-bottom:1px solid var(--line)}
+  table.sgrid th.corner{text-align:left;position:sticky;left:0;background:#fafbfc;z-index:2;min-width:158px}
+  table.sgrid th.today{color:var(--teal-600);background:var(--teal-soft)}
+  table.sgrid th.loc{text-align:left;position:sticky;left:0;background:#fff;z-index:1;min-width:158px;font-size:14px;font-weight:600;color:var(--ink);border-bottom:1px solid var(--line);white-space:nowrap}
+  td.cell{border-left:1px solid var(--line);border-bottom:1px solid var(--line);padding:8px;height:62px;text-align:center;vertical-align:middle;cursor:pointer;transition:opacity .12s}
+  td.cell.open .who{display:block;font-weight:700;font-size:13px;line-height:1.2}
+  td.cell.open .hrs{display:block;font-size:11px;color:var(--ink-soft);margin-top:3px}
+  td.cell.closed{background:#fafbfc}
+  td.cell.closed .cx{color:#9aa6b6;font-size:12.5px;font-weight:600}
+  td.cell.closed:hover{background:var(--teal-soft)}
+  td.cell.needs{background:#FFF6E9}
+  td.cell.needs .nd{color:#b07d1a;font-size:12px;font-weight:700}
+  td.cell.needs:hover{background:#FCEED3}
+  td.cell.today{box-shadow:inset 0 0 0 2px var(--teal-soft)}
+  td.cell.dim{opacity:.22}
+  td.cell.hit{outline:2px solid var(--teal);outline-offset:-2px}
+  table.sgrid th .daynum{display:block;font-size:11px;color:var(--soft);font-weight:600;margin-top:2px}
+  table.sgrid th.today .daynum{color:var(--teal-600)}
+  .sched-status{border-radius:10px;padding:12px 16px;font-size:14.5px;margin-bottom:16px;border:1px solid}
+  .sched-status.ok{background:#E7F4EE;border-color:#bfe3cf;color:#256b45}
+  .sched-status.warn{background:#FFF6E9;border-color:#f3dcb3;color:#7a5212}
+  .ledit{border:none;background:none;color:var(--soft);cursor:pointer;font-size:14px;margin-left:6px;opacity:0;line-height:1}
+  table.sgrid tr:hover .ledit{opacity:.55}
+  .ledit:hover{color:var(--teal-600);opacity:1}
+  .dtogs{display:flex;gap:6px;flex-wrap:wrap}
+  .dtog{border:1px solid var(--line);background:#fff;color:var(--soft);border-radius:8px;padding:8px 12px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+  .dtog.on{border-color:var(--teal);background:var(--teal-soft);color:var(--teal-600)}
+  .hint{font-size:13px;color:var(--soft);margin-top:12px}
+  .s-overlay{position:fixed;inset:0;background:rgba(15,42,74,.5);z-index:120;display:none;align-items:center;justify-content:center;padding:16px}
+  .s-overlay.open{display:flex}
+  .s-modal{background:#fff;width:100%;max-width:460px;border-radius:16px;box-shadow:var(--shadow-lg);overflow:hidden}
+  .s-top{display:flex;align-items:center;padding:16px 18px;border-bottom:1px solid var(--line);font-size:16px;color:var(--navy)}
+  .s-top .x{margin-left:auto;border:none;background:none;font-size:24px;color:var(--soft);cursor:pointer;line-height:1}
+  .s-body{padding:18px}
+  .s-lab{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--soft);font-weight:700;margin:16px 0 8px}
+  .s-lab:first-child{margin-top:0}
+  .pickwrap{display:flex;flex-wrap:wrap;gap:8px}
+  .pick{border:1px solid transparent;border-radius:999px;padding:7px 12px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px}
+  .pick.sel{outline:2px solid var(--navy);outline-offset:1px}
+  .pick.booked{background:#f4f6f8;color:#9aa6b6;cursor:not-allowed}
+  .pick.booked .pdot{opacity:.5}
+  .pickhint{font-size:12px;color:var(--soft);margin-top:8px}
+  .hrbtns{display:flex;flex-direction:column;gap:8px}
+  .hb{text-align:left;border:1px solid var(--line);border-radius:9px;padding:10px 12px;font-size:14px;font-weight:600;color:var(--navy);background:#fff;cursor:pointer;font-family:inherit}
+  .hb.sel{border-color:var(--teal);background:var(--teal-soft);color:var(--teal-600)}
+  .custrow{align-items:center;gap:8px;margin-top:2px}
+  .custrow input[type=time]{padding:9px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;color:var(--navy)}
+  .custrow span{color:var(--soft);font-size:13px}
+  .s-input{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:9px;font-size:15px;font-family:inherit;outline:none}
+  .s-input:focus{border-color:var(--teal);box-shadow:0 0 0 3px var(--teal-soft)}
+  .s-foot{display:flex;align-items:center;gap:10px;padding:14px 18px;border-top:1px solid var(--line);background:#fafbfc}
+</style>
+</head>
+<body>
+<div class="ribbon">PROTOTYPE — sample staff schedule for validation. Live version = one Microsoft List the practice maintains.</div>
+<header class="hdr">
+  <div class="hdr-in">
+    <span class="mark">PH</span>
+    <span class="brand">Practice Hub<small>KPI Dashboard</small></span>
+    <span class="v1">V1 preview</span>
+  </div>
+</header>
+<nav class="v1nav"><div class="v1nav-in">
+  <a href="index.html">📊 Dashboard</a>
+  <a href="schedule.html" class="active">📅 Schedule</a>
+</div></nav>
+
+<div class="wrap">
+  <div class="page-head">
+    <h1>Schedule — Who's Where</h1>
+    <p>Which office is open each day and who's working there. Add locations, add doctors, and assign them — all in one place.</p>
+  </div>
+  <div class="notice" id="tourNotice">In the real build this is <b>one Microsoft List</b> the COO maintains. Here it's interactive — <b>tap a cell</b> to assign a doctor, add locations or doctors, and set each location's office hours.</div>
+
+  <div class="sched-toolbar">
+    <div class="weeknav" id="weeknav"><button onclick="PS.week(-1)" aria-label="Previous week">‹</button><span id="weekLabel"></span><button onclick="PS.week(1)" aria-label="Next week">›</button></div>
+    <div style="margin-left:auto"><button class="sbtn" id="addLocBtn" onclick="PS.addLocation()">+ Add location</button></div>
+  </div>
+
+  <div class="roster" id="roster"></div>
+  <div id="schedStatus" class="sched-status"></div>
+  <div id="schedGrid"></div>
+  <p class="hint">Tap any cell to assign a doctor or mark the office closed · tap a doctor above to highlight where they work · today's column is highlighted.</p>
+</div>
+
+<div id="schedModal" class="s-overlay"><div class="s-modal" id="schedModalCard"></div></div>
+
+<script>
+(function(){
+  const PALETTE=[
+    {bg:'#E5F4F3',fg:'#0F827E'},{bg:'#E9EEF5',fg:'#25456e'},{bg:'#FFF0D6',fg:'#946011'},
+    {bg:'#EFE7FB',fg:'#6b3fd0'},{bg:'#FBE7EE',fg:'#b03a63'},{bg:'#E7F4EE',fg:'#2E7D52'},
+    {bg:'#E3F0FA',fg:'#1f6f9e'},{bg:'#FCEBE7',fg:'#b0442f'}];
+  const DAYS=['Mon','Tue','Wed','Thu','Fri','Sat'];
+  const FULL={h:'8:00a–5:00p',s:480,e:1020}, HALFD={h:'8:00a–1:00p',s:480,e:780};
+  let people=[{n:'Dr. Chen',c:0},{n:'Dr. Rao',c:1},{n:'Dr. Mehta',c:3},{n:'Dr. Lopez',c:5},{n:'Dr. Ford',c:2}];
+  let locations=['Carlsbad','Clovis','Hobbs','San Angelo','Lubbock','Mansfield','Cruces LCO','Cruces Legacy'];
+  let sched={
+    'Carlsbad':[{p:0,...FULL},null,{p:1,...FULL},null,{p:0,...FULL},null],
+    'Clovis':[{p:1,...FULL},null,{p:0,...FULL},null,null,{p:3,...HALFD}],
+    'Hobbs':[null,{p:0,...FULL},null,{p:1,...FULL},null,null],
+    'San Angelo':[{p:2,...FULL},null,{p:3,...FULL},null,{p:1,...FULL},null],
+    'Lubbock':[null,{p:2,...FULL},null,{p:4,...FULL},{p:2,...FULL},null],
+    'Mansfield':[{p:3,...FULL},null,{p:2,...FULL},null,{p:4,...FULL},null],
+    'Cruces LCO':[null,{p:4,...FULL},null,{p:3,...FULL},null,null],
+    'Cruces Legacy':[null,null,{p:0,...FULL},null,null,{p:2,...HALFD}]
+  };
+  let openH={
+    'Carlsbad':[true,false,true,true,true,false],'Clovis':[true,false,true,false,true,true],
+    'Hobbs':[false,true,false,true,false,false],'San Angelo':[true,false,true,false,true,false],
+    'Lubbock':[false,true,false,true,true,false],'Mansfield':[true,false,true,false,true,false],
+    'Cruces LCO':[false,true,false,true,false,false],'Cruces Legacy':[false,false,true,false,false,true]
+  };
+  let filterP=null, weekOffset=0, tmp={p:null,mode:'full',s:480,e:1020}, tmpC=0, tmpEdit=null, tmpLoc=null;
+  const el=id=>document.getElementById(id);
+  const col=ci=>PALETTE[ci%PALETTE.length];
+  const fmtT=m=>{let h=Math.floor(m/60),mm=m%60,ap=h>=12?'p':'a',hh=h%12||12;return hh+':'+(mm<10?'0'+mm:mm)+ap;};
+  const fmt24=m=>{let h=Math.floor(m/60),mm=m%60;return (h<10?'0'+h:h)+':'+(mm<10?'0'+mm:mm);};
+  const parseT=s=>{const a=s.split(':').map(Number);return a[0]*60+a[1];};
+  const hoursLabel=(s,e)=>fmtT(s)+'–'+fmtT(e);
+  const hint=m=>{const h=el('s-hint'); if(h)h.textContent=m;};
+  function weekMon(off){const d=new Date();const dow=(d.getDay()+6)%7;d.setDate(d.getDate()-dow+off*7);return d;}
+  function weekDates(off){const m=weekMon(off);return DAYS.map((_,i)=>{const x=new Date(m);x.setDate(m.getDate()+i);return x.getDate();});}
+  function dayLabel(off,i){const x=weekMon(off);x.setDate(x.getDate()+i);return x.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});}
+  function conflictAt(loc,d,p,s,e){for(const L of locations){if(L===loc)continue;const c=(sched[L]||[])[d];if(c&&c.p===p&&s<c.e&&c.s<e)return {loc:L,c};}return null;}
+  function weekLabel(off){const d=weekMon(off);return 'Week of '+d.toLocaleDateString('en-US',{month:'short',day:'numeric'});}
+  function todayIdx(){ if(weekOffset!==0) return -1; const g=new Date().getDay(); return g===0?-1:g-1; }
+
+  function renderRoster(){
+    el('roster').innerHTML='<span class="rlab">Doctors</span>'+people.map((p,i)=>{const c=col(p.c);
+      return '<span class="pchip'+(filterP===i?' sel':'')+'" style="background:'+c.bg+';color:'+c.fg+'" onclick="PS.filter('+i+')"><span class="pdot" style="background:'+c.fg+'"></span>'+p.n+'<button class="pedit" title="Edit doctor" onclick="event.stopPropagation();PS.edit('+i+')">✎</button></span>';
+    }).join('')+'<button class="pchip addp" id="addDocBtn" onclick="PS.addPerson()">+ Add doctor</button>';
+  }
+
+  function renderGrid(){
+    const ti=todayIdx(); const dts=weekDates(weekOffset);
+    const head='<tr><th class="corner">Location</th>'+DAYS.map((d,i)=>'<th class="'+(i===ti?'today':'')+'">'+d+(i===ti?' · Today':'')+'<span class="daynum">'+dts[i]+'</span></th>').join('')+'</tr>';
+    let needs=0, openTotal=0, filled=0;
+    const rows=locations.map(loc=>{
+      const arr=sched[loc]||[null,null,null,null,null,null]; const oh=openH[loc]||[false,false,false,false,false,false];
+      const cells=arr.map((cell,d)=>{
+        const t=d===ti?' today':''; const isOpen=!!oh[d];
+        if(cell && cell.p!=null && people[cell.p]){
+          const p=people[cell.p], c=col(p.c); if(isOpen){filled++;openTotal++;}
+          const dim=(filterP!=null&&filterP!==cell.p)?' dim':''; const hit=(filterP!=null&&filterP===cell.p)?' hit':'';
+          return '<td class="cell open'+t+dim+hit+'" style="background:'+c.bg+'" onclick="PS.assign(\''+loc+'\','+d+')"><span class="who" style="color:'+c.fg+'">'+p.n+'</span><span class="hrs">'+cell.h+'</span></td>';
+        }
+        if(cell && cell.closed) return '<td class="cell closed'+t+'" onclick="PS.assign(\''+loc+'\','+d+')"><span class="cx">Closed</span></td>';
+        if(isOpen){ needs++; openTotal++; return '<td class="cell needs'+t+'" onclick="PS.assign(\''+loc+'\','+d+')"><span class="nd">Needs doctor</span></td>'; }
+        return '<td class="cell closed'+t+'" onclick="PS.assign(\''+loc+'\','+d+')"><span class="cx">Closed</span></td>';
+      }).join('');
+      return '<tr><th class="loc">'+loc+'<button class="ledit" title="Edit location & office hours" onclick="event.stopPropagation();PS.editLoc(\''+loc+'\')">✎</button></th>'+cells+'</tr>';
+    }).join('');
+    el('schedGrid').innerHTML='<div class="board-scroll"><table class="sgrid"><thead>'+head+'</thead><tbody>'+rows+'</tbody></table></div>';
+    el('weekLabel').textContent=weekLabel(weekOffset);
+    const st=el('schedStatus');
+    if(st){ st.className='sched-status '+(needs===0?'ok':'warn');
+      st.innerHTML = needs===0
+        ? '<b>✓ Fully scheduled</b> — every open day this week has a doctor ('+filled+' of '+openTotal+' open days covered).'
+        : '<b>'+needs+' open day'+(needs>1?'s still need':' still needs')+' a doctor</b> — highlighted in amber below ('+filled+' of '+openTotal+' covered).';
+    }
+  }
+
+  function openModal(html){ el('schedModalCard').innerHTML=html; el('schedModal').classList.add('open'); }
+  function closeModal(){ el('schedModal').classList.remove('open'); }
+
+  function assign(loc,d){
+    const cur=(sched[loc]||[])[d];
+    let mode='full',s=480,e=1020;
+    if(cur){s=cur.s;e=cur.e;mode=(s===480&&e===1020)?'full':(s===480&&e===780)?'half':'custom';}
+    tmp={p:cur?cur.p:null,mode,s,e};
+    const bookedBy={}; for(const L of locations){ if(L===loc)continue; const c=(sched[L]||[])[d]; if(c&&c.p!=null) bookedBy[c.p]=L; }
+    let bookedCount=0;
+    const chips=people.map((p,i)=>{const c=col(p.c);
+      if(bookedBy[i]!==undefined && tmp.p!==i){ bookedCount++;
+        return '<button class="pick booked" disabled title="Already working '+bookedBy[i]+' that day"><span class="pdot" style="background:'+c.fg+'"></span>'+p.n+' · at '+bookedBy[i]+'</button>';
+      }
+      return '<button class="pick'+(tmp.p===i?' sel':'')+'" style="background:'+c.bg+';color:'+c.fg+'" onclick="PS.tp('+i+')"><span class="pdot" style="background:'+c.fg+'"></span>'+p.n+'</button>';}).join('');
+    const noteHtml = bookedCount>0 ? '<div class="pickhint">Greyed doctors are already booked elsewhere that day.</div>' : '';
+    const hb=(m,lab)=>'<button class="hb'+(mode===m?' sel':'')+'" data-m="'+m+'" onclick="PS.hm(\''+m+'\')">'+lab+'</button>';
+    openModal(
+      '<div class="s-top"><b>'+loc+' · '+dayLabel(weekOffset,d)+'</b><button class="x" onclick="PS.close()">×</button></div>'+
+      '<div class="s-body"><div class="s-lab">Who\'s working? <span style="font-weight:500;text-transform:none;letter-spacing:0;color:var(--soft)">(only doctors free that day)</span></div><div class="pickwrap" id="pickwrap">'+chips+'</div>'+noteHtml+
+      '<div class="s-lab">Hours</div><div class="hrbtns" id="hrbtns">'+
+        hb('full','Full day · 8:00a–5:00p')+hb('half','Half day · 8:00a–1:00p')+hb('custom','Custom hours…')+
+        '<div class="custrow" id="custrow" style="display:'+(mode==='custom'?'flex':'none')+'"><input type="time" id="cS" value="'+fmt24(s)+'"><span>to</span><input type="time" id="cE" value="'+fmt24(e)+'"></div>'+
+      '</div></div>'+
+      '<div class="s-foot"><button class="sbtn ghost" onclick="PS.setClosed(\''+loc+'\','+d+')">Mark closed</button><span id="s-hint" style="flex:1;color:var(--bad);font-size:12.5px"></span><button class="sbtn ghost" onclick="PS.close()">Cancel</button><button class="sbtn" onclick="PS.save(\''+loc+'\','+d+')">Save</button></div>');
+  }
+  function tp(i){tmp.p=i; [...document.querySelectorAll('#pickwrap .pick')].forEach((b,k)=>{if(!b.disabled)b.classList.toggle('sel',k===i);}); hint('');}
+  function hm(m){tmp.mode=m; if(m==='full'){tmp.s=480;tmp.e=1020;} if(m==='half'){tmp.s=480;tmp.e=780;}
+    [...document.querySelectorAll('#hrbtns .hb')].forEach(b=>b.classList.toggle('sel',b.dataset.m===m));
+    const cr=el('custrow'); cr.style.display=m==='custom'?'flex':'none';
+    if(m==='custom'){el('cS').value=fmt24(tmp.s);el('cE').value=fmt24(tmp.e);}
+  }
+  function save(loc,d){
+    if(tmp.p==null){hint('Pick a doctor, or choose “Mark closed.”');return;}
+    let s=tmp.s,e=tmp.e;
+    if(tmp.mode==='custom'){s=parseT(el('cS').value||'08:00');e=parseT(el('cE').value||'17:00'); if(e<=s){hint('End time must be after the start time.');return;}}
+    const cf=conflictAt(loc,d,tmp.p,s,e);
+    if(cf){hint(people[tmp.p].n+' already works '+cf.loc+' ('+cf.c.h+') that day — times overlap.');return;}
+    if(!sched[loc])sched[loc]=[null,null,null,null,null,null];
+    sched[loc][d]={p:tmp.p,h:hoursLabel(s,e),s,e};
+    closeModal(); renderGrid();
+  }
+  function setClosed(loc,d){ if(!sched[loc])sched[loc]=[null,null,null,null,null,null]; sched[loc][d]={closed:true}; closeModal(); renderGrid(); }
+
+  function personModal(editIdx){
+    const isEdit=editIdx!=null; const cur=isEdit?people[editIdx]:{n:'',c:people.length%PALETTE.length};
+    tmpC=cur.c; tmpEdit=editIdx;
+    const sw=PALETTE.map((c,i)=>'<button class="sw'+(i===tmpC?' sel':'')+'" style="background:'+c.fg+'" onclick="PS.pc('+i+')" aria-label="color"></button>').join('');
+    openModal(
+      '<div class="s-top"><b>'+(isEdit?'Edit doctor':'Add a doctor / person')+'</b><button class="x" onclick="PS.close()">×</button></div>'+
+      '<div class="s-body"><div class="s-lab">Name</div><input id="pName" class="s-input" placeholder="e.g. Dr. Smith" value="'+(isEdit?cur.n.replace(/"/g,'&quot;'):'')+'" autocomplete="off">'+
+      '<div class="s-lab">Color</div><div class="swwrap" id="swwrap">'+sw+'</div></div>'+
+      '<div class="s-foot">'+(isEdit?'<button class="sbtn ghost" onclick="PS.delPerson('+editIdx+')">Remove</button>':'')+'<span style="flex:1"></span><button class="sbtn ghost" onclick="PS.close()">Cancel</button><button class="sbtn" onclick="PS.savePerson()">'+(isEdit?'Save':'Add doctor')+'</button></div>');
+    setTimeout(()=>{const i=el('pName'); if(i){i.focus(); i.addEventListener('keydown',e=>{if(e.key==='Enter')savePerson();});}},40);
+  }
+  function addPerson(){ personModal(null); }
+  function editPerson(i){ personModal(i); }
+  function pc(i){ tmpC=i; [...document.querySelectorAll('#swwrap .sw')].forEach((b,k)=>b.classList.toggle('sel',k===i)); }
+  function savePerson(){ const v=el('pName').value.trim(); if(!v)return; if(tmpEdit!=null){people[tmpEdit].n=v; people[tmpEdit].c=tmpC;} else {people.push({n:v,c:tmpC});} closeModal(); renderRoster(); renderGrid(); }
+  function delPerson(i){ people.splice(i,1); Object.keys(sched).forEach(loc=>{ sched[loc]=sched[loc].map(c=>{ if(!c)return null; if(c.p===i)return null; if(c.p>i)return {p:c.p-1,h:c.h,s:c.s,e:c.e}; return c; }); }); filterP=null; closeModal(); renderRoster(); renderGrid(); }
+
+  function locModal(editName){
+    const isEdit=editName!=null; const open=isEdit?(openH[editName]||[false,false,false,false,false,false]).slice():[true,true,true,true,true,false];
+    tmpLoc={orig:editName,open};
+    const days=DAYS.map((d,i)=>'<button class="dtog'+(open[i]?' on':'')+'" data-i="'+i+'" onclick="PS.dtog('+i+')">'+d+'</button>').join('');
+    openModal(
+      '<div class="s-top"><b>'+(isEdit?'Edit location':'Add a location')+'</b><button class="x" onclick="PS.close()">×</button></div>'+
+      '<div class="s-body"><div class="s-lab">Location name</div><input id="lName" class="s-input" value="'+(isEdit?editName.replace(/"/g,'&quot;'):'')+'" placeholder="e.g. Roswell" autocomplete="off">'+
+      '<div class="s-lab">Office hours — days open</div><div class="dtogs" id="dtogs">'+days+'</div></div>'+
+      '<div class="s-foot">'+(isEdit?'<button class="sbtn ghost" onclick="PS.delLoc(\''+editName+'\')">Remove</button>':'')+'<span style="flex:1"></span><button class="sbtn ghost" onclick="PS.close()">Cancel</button><button class="sbtn" onclick="PS.saveLoc()">'+(isEdit?'Save':'Add location')+'</button></div>');
+    setTimeout(()=>el('lName')&&el('lName').focus(),40);
+  }
+  function addLocation(){ locModal(null); }
+  function editLoc(name){ locModal(name); }
+  function dtog(i){ tmpLoc.open[i]=!tmpLoc.open[i]; [...document.querySelectorAll('#dtogs .dtog')].forEach(b=>b.classList.toggle('on',tmpLoc.open[+b.dataset.i])); }
+  function saveLoc(){
+    const v=el('lName').value.trim(); if(!v)return;
+    if(tmpLoc.orig){ if(v!==tmpLoc.orig){ const i=locations.indexOf(tmpLoc.orig); if(i>=0)locations[i]=v; sched[v]=sched[tmpLoc.orig]; delete sched[tmpLoc.orig]; delete openH[tmpLoc.orig]; } openH[v]=tmpLoc.open; }
+    else if(!locations.includes(v)){ locations.push(v); sched[v]=[null,null,null,null,null,null]; openH[v]=tmpLoc.open; }
+    closeModal(); renderGrid();
+  }
+  function delLoc(loc){ locations=locations.filter(l=>l!==loc); delete sched[loc]; delete openH[loc]; closeModal(); renderGrid(); }
+  function filter(i){ filterP=(filterP===i)?null:i; renderRoster(); renderGrid(); }
+  function week(dir){ weekOffset+=dir; renderGrid(); }
+
+  window.PS={filter,addPerson,edit:editPerson,pc,savePerson,delPerson,addLocation,editLoc,dtog,saveLoc,delLoc,assign,tp,hm,save,setClosed,close:closeModal,week};
+  el('schedModal').addEventListener('click',e=>{if(e.target.id==='schedModal')closeModal();});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+  renderRoster(); renderGrid();
+})();
+</script>
+<script src="tour.js"></script>
+<script>
+Tour.init([
+  {sel:'.v1nav', title:'Two views', body:'Switch between the <b>Dashboard</b> (the numbers) and the <b>Schedule</b> (who works where) up here.'},
+  {sel:'#schedStatus', title:'Is the week fully staffed?', body:'This bar tells you instantly — “fully scheduled,” or how many open days still need a doctor.'},
+  {sel:'#schedGrid', title:'Who\'s where, at a glance', body:'Locations down the side, days across the top. Each doctor has a color. <b>Closed</b> = office not open; <b>amber</b> = open but nobody assigned yet.'},
+  {sel:'#roster', title:'Your doctors', body:'Add doctors, pick their color, and tap one to highlight everywhere they work this week.'},
+  {sel:'#addLocBtn', title:'Add a practice', body:'Add a new location and set its office hours (which days it\'s open).'},
+  {sel:'#weeknav', title:'Move between weeks', body:'Page forward or back — the dates update for the week you\'re viewing.'}
+], {key:'sched', auto:true});
+</script>
+</body>
+</html>
