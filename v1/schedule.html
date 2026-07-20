@@ -98,6 +98,10 @@
   .dtimes input[type=time]{padding:7px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--navy)}
   .dtimes span{color:var(--soft);font-size:12px}
   .dclosed{color:#9aa6b6;font-size:13px}
+  th.loc .locname{display:flex;align-items:center;gap:6px}
+  th.loc .tz{font-size:10px;font-weight:700;color:var(--teal-600);background:var(--teal-soft);padding:1px 6px;border-radius:5px}
+  th.loc .locsub{font-size:11px;color:var(--soft);font-weight:500;margin-top:2px}
+  select.s-input{cursor:pointer}
   .hint{font-size:13px;color:var(--soft);margin-top:12px}
   .s-overlay{position:fixed;inset:0;background:rgba(15,42,74,.5);z-index:120;display:none;align-items:center;justify-content:center;padding:16px}
   .s-overlay.open{display:flex}
@@ -186,10 +190,16 @@
     'Lubbock':[null,WKh,null,WKh,WKh,null],'Mansfield':[WKh,null,WKh,null,WKh,null],
     'Cruces LCO':[null,WKh,null,WKh,null,null],'Cruces Legacy':[null,null,WKh,null,null,SATh]
   };
+  // NM offices = Mountain, TX offices (Lubbock/San Angelo/Mansfield) = Central
+  let locTZ={'Carlsbad':'MT','Clovis':'MT','Hobbs':'MT','San Angelo':'CT','Lubbock':'CT','Mansfield':'CT','Cruces LCO':'MT','Cruces Legacy':'MT'};
+  // lunch varies by office
+  let locLunch={'Carlsbad':{s:720,e:780},'Clovis':{s:720,e:780},'Hobbs':{s:720,e:780},'San Angelo':{s:780,e:840},'Lubbock':{s:690,e:750},'Mansfield':{s:720,e:780},'Cruces LCO':{s:720,e:780},'Cruces Legacy':{s:720,e:780}};
+  const TZS=['MT','CT','PT','ET','AZ'];
   let filterP=null, weekOffset=0, tmp={p:null,mode:'full',s:480,e:1020}, tmpC=0, tmpEdit=null, tmpLoc=null;
   const el=id=>document.getElementById(id);
   const col=ci=>PALETTE[ci%PALETTE.length];
   const fmtT=m=>{let h=Math.floor(m/60),mm=m%60,ap=h>=12?'p':'a',hh=h%12||12;return hh+':'+(mm<10?'0'+mm:mm)+ap;};
+  const fmtTc=m=>{let h=Math.floor(m/60),mm=m%60,ap=h>=12?'p':'a',hh=h%12||12;return hh+(mm?':'+(mm<10?'0'+mm:mm):'')+ap;};
   const fmt24=m=>{let h=Math.floor(m/60),mm=m%60;return (h<10?'0'+h:h)+':'+(mm<10?'0'+mm:mm);};
   const parseT=s=>{const a=s.split(':').map(Number);return a[0]*60+a[1];};
   const hoursLabel=(s,e)=>fmtT(s)+'–'+fmtT(e);
@@ -224,7 +234,8 @@
         if(isOpen){ needs++; openTotal++; return '<td class="cell needs'+t+'" onclick="PS.assign(\''+loc+'\','+d+')"><span class="nd">Needs doctor</span></td>'; }
         return '<td class="cell closed'+t+'" onclick="PS.assign(\''+loc+'\','+d+')"><span class="cx">Closed</span></td>';
       }).join('');
-      return '<tr><th class="loc">'+loc+'<button class="ledit" title="Edit location & office hours" onclick="event.stopPropagation();PS.editLoc(\''+loc+'\')">✎</button></th>'+cells+'</tr>';
+      const tz=locTZ[loc], ln=locLunch[loc];
+      return '<tr><th class="loc"><div class="locname">'+loc+(tz?' <span class="tz">'+tz+'</span>':'')+'<button class="ledit" title="Edit location, hours, time zone & lunch" onclick="event.stopPropagation();PS.editLoc(\''+loc+'\')">✎</button></div>'+(ln?'<div class="locsub">lunch '+fmtTc(ln.s)+'–'+fmtTc(ln.e)+'</div>':'')+'</th>'+cells+'</tr>';
     }).join('');
     el('schedGrid').innerHTML='<div class="board-scroll"><table class="sgrid"><thead>'+head+'</thead><tbody>'+rows+'</tbody></table></div>';
     el('weekLabel').textContent=weekLabel(weekOffset);
@@ -302,15 +313,23 @@
   function locModal(editName){
     const isEdit=editName!=null;
     const src=isEdit?(openH[editName]||[]):[WKh,WKh,WKh,WKh,WKh,null];
-    tmpLoc={orig:editName, hours:DAYS.map((_,i)=>{const h=src[i]; return h?{s:h.s,e:h.e}:null;})};
+    const tz=isEdit?(locTZ[editName]||'MT'):'MT';
+    const lunch=isEdit?(locLunch[editName]||{s:720,e:780}):{s:720,e:780};
+    tmpLoc={orig:editName, hours:DAYS.map((_,i)=>{const h=src[i]; return h?{s:h.s,e:h.e}:null;}), tz, lunch:{s:lunch.s,e:lunch.e}};
     openModal(
       '<div class="s-top"><b>'+(isEdit?'Edit location':'Add a location')+'</b><button class="x" onclick="PS.close()">×</button></div>'+
       '<div class="s-body"><div class="s-lab">Location name</div><input id="lName" class="s-input" value="'+(isEdit?editName.replace(/"/g,'&quot;'):'')+'" placeholder="e.g. Roswell" autocomplete="off">'+
-      '<div class="s-lab">Office hours</div><div class="dayrows" id="dayrows"></div></div>'+
+      '<div class="s-lab">Time zone</div><select id="lTZ" class="s-input" onchange="PS.setTZ(this.value)">'+TZS.map(z=>'<option'+(z===tz?' selected':'')+'>'+z+'</option>').join('')+'</select>'+
+      '<div class="s-lab">Office hours <span style="font-weight:500;text-transform:none;letter-spacing:0;color:var(--soft)">(usually the same — Fridays often differ)</span></div><div class="dayrows" id="dayrows"></div>'+
+      '<div class="s-lab">Lunch</div><div class="custrow" style="display:flex"><input type="time" id="lunchS" value="'+fmt24(lunch.s)+'" onchange="PS.setLunch(\'s\',this.value)"><span>to</span><input type="time" id="lunchE" value="'+fmt24(lunch.e)+'" onchange="PS.setLunch(\'e\',this.value)"></div>'+
+      '<button class="sbtn ghost" style="margin-top:14px;width:100%" onclick="PS.applyAll()">Apply these hours &amp; lunch to all locations</button></div>'+
       '<div class="s-foot">'+(isEdit?'<button class="sbtn ghost" onclick="PS.delLoc(\''+editName+'\')">Remove</button>':'')+'<span style="flex:1"></span><button class="sbtn ghost" onclick="PS.close()">Cancel</button><button class="sbtn" onclick="PS.saveLoc()">'+(isEdit?'Save':'Add location')+'</button></div>');
     renderDayRows();
     setTimeout(()=>el('lName')&&el('lName').focus(),40);
   }
+  function setTZ(v){ tmpLoc.tz=v; }
+  function setLunch(w,v){ tmpLoc.lunch[w]=parseT(v); }
+  function applyAll(){ locations.forEach(L=>{ openH[L]=tmpLoc.hours.map(h=>h?{s:h.s,e:h.e}:null); locLunch[L]={s:tmpLoc.lunch.s,e:tmpLoc.lunch.e}; }); closeModal(); renderGrid(); }
   function renderDayRows(){
     el('dayrows').innerHTML=DAYS.map((d,i)=>{const h=tmpLoc.hours[i];
       return '<div class="dayrow"><button class="dtog'+(h?' on':'')+'" onclick="PS.dtog('+i+')">'+d+'</button>'+
@@ -323,15 +342,15 @@
   function dtime(i,w,v){ if(tmpLoc.hours[i])tmpLoc.hours[i][w]=parseT(v); }
   function saveLoc(){
     const v=el('lName').value.trim(); if(!v)return;
-    if(tmpLoc.orig){ if(v!==tmpLoc.orig){ const i=locations.indexOf(tmpLoc.orig); if(i>=0)locations[i]=v; sched[v]=sched[tmpLoc.orig]; delete sched[tmpLoc.orig]; delete openH[tmpLoc.orig]; } openH[v]=tmpLoc.hours; }
-    else if(!locations.includes(v)){ locations.push(v); sched[v]=[null,null,null,null,null,null]; openH[v]=tmpLoc.hours; }
+    if(tmpLoc.orig){ if(v!==tmpLoc.orig){ const i=locations.indexOf(tmpLoc.orig); if(i>=0)locations[i]=v; sched[v]=sched[tmpLoc.orig]; delete sched[tmpLoc.orig]; delete openH[tmpLoc.orig]; delete locTZ[tmpLoc.orig]; delete locLunch[tmpLoc.orig]; } openH[v]=tmpLoc.hours; locTZ[v]=tmpLoc.tz; locLunch[v]=tmpLoc.lunch; }
+    else if(!locations.includes(v)){ locations.push(v); sched[v]=[null,null,null,null,null,null]; openH[v]=tmpLoc.hours; locTZ[v]=tmpLoc.tz; locLunch[v]=tmpLoc.lunch; }
     closeModal(); renderGrid();
   }
   function delLoc(loc){ locations=locations.filter(l=>l!==loc); delete sched[loc]; delete openH[loc]; closeModal(); renderGrid(); }
   function filter(i){ filterP=(filterP===i)?null:i; renderRoster(); renderGrid(); }
   function week(dir){ weekOffset+=dir; renderGrid(); }
 
-  window.PS={filter,addPerson,edit:editPerson,pc,savePerson,delPerson,addLocation,editLoc,dtog,dtime,saveLoc,delLoc,assign,tp,hm,save,setClosed,close:closeModal,week};
+  window.PS={filter,addPerson,edit:editPerson,pc,savePerson,delPerson,addLocation,editLoc,dtog,dtime,setTZ,setLunch,applyAll,saveLoc,delLoc,assign,tp,hm,save,setClosed,close:closeModal,week};
   el('schedModal').addEventListener('click',e=>{if(e.target.id==='schedModal')closeModal();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
   renderRoster(); renderGrid();
@@ -346,7 +365,7 @@ Tour.init([
   {sel:'#roster', title:'Your doctors', body:'Add doctors, pick their color, and tap one to highlight everywhere they work this week.'},
   {sel:'#addLocBtn', title:'Add a practice', body:'Add a new location and set its office hours (which days it\'s open).'},
   {sel:'#weeknav', title:'Move between weeks', body:'Page forward or back — the dates update for the week you\'re viewing.'}
-], {key:'sched', auto:true});
+], {key:'sched'});
 </script>
 </body>
 </html>
