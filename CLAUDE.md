@@ -51,7 +51,7 @@ docs, schedules, KPIs, and marketing.
 | `v1/index.html` | **KPI Dashboard** — leadership "All Offices" view + per-office drill-down, built on their REAL production data. |
 | `v1/schedule.html` | **Staff Schedule** — weekly board: which office open each day + which doctor where. |
 | `v1/marketing.html` | **Marketing Kanban** — events/social posts move Ideas→Planned→In progress→Done; scored Good/Mixed/Bad. |
-| `v1/admin.html` | **Admin Console** — People, Teams & Access, Sections & Files, Roles. Backend permissions & profiles. |
+| `v1/admin.html` | **Admin Console** — People, Teams & Access, Sections & Files. Backend permissions & profiles. |
 | `v1/tour.js` | Shared **guided walkthrough** engine (spotlight + pulsing "Show me around"). Included by all V1 pages. |
 
 ---
@@ -116,17 +116,23 @@ Font: Inter (Google Fonts). Radius ~14px. Soft shadows. maxw ~1080–1180px.
 - Tour: `Tour.init([...4 steps], {key:'mkt'})`. Real build = Microsoft Lists / Planner.
 
 ### 4d. `v1/admin.html` — Admin Console (the backend/permissions)
-Four tabs (`window.AD`), all client-side demo state:
+**THE PERMISSION MODEL (simplified 2026-07-28 — user found "Roles" confusing/redundant, so it was
+REMOVED): one rule — a person's TEAM decides WHAT they can do; their LOCATION decides WHICH offices'
+stuff they see.** No separate role objects. Levels: None / View / Add files / Edit / Manage
+(5 levels, `LEVELS`/`rank`; "Add files" is its own level per the user). Example: Staff team = View,
+so a staff member at Carlsbad = view-only + Carlsbad folders only.
+
+Three tabs (`window.AD`), all client-side demo state:
 
 1. **People** — table of users; each **syncs from Microsoft 365** (name/email/photo). Admin sets
-   **team(s), role, location, status**. Click a row → **profile modal**:
+   **team(s), location, status**. Click a row → **profile modal**:
    - Left panel "From Microsoft 365 (SYNCED)" — read-only dashed fields (First/Last/Email/Phone/
      Employee ID) + Photo (badge **"EMPLOYEE CAN EDIT"**).
    - Right panel "Managed in Practice Hub" — Team(s) chips, Role, Location(s), Region, Brand,
      Status (**admin only**: Active/Paused/Inactive).
    - **About me** — badge "EMPLOYEE CAN EDIT" (self-service, like photo).
    - Live **"What [name] can access"** box = union of their teams' section access (highest level wins).
-   - `users[]` fields: f,l,email,emp,loc,state,brand,teams[],role,region,phone,about,status,c(color).
+   - `users[]` fields: f,l,email,emp,loc,state,brand,teams[],region,phone,about,status,c(color).
 2. **Teams & Access** — visual **matrix**: `TEAMS` (rows) × `SECTIONS` (cols). Cell = access level
    None/View/Edit/Manage; **tap to cycle** (`cycle(t,k)`). `access[team][sectionKey]`. A person's
    effective access = **best level across all their teams** (`userAccess`). This is the whole
@@ -138,9 +144,8 @@ Four tabs (`window.AD`), all client-side demo state:
    `items[]` with `{n,aud,scope}`, or `byLocation`/`byBrand` auto-folders). `AUDCYC` cycles the
    audience (`cycFile`). Real HR example baked in: New-Hire/PTO split TX vs NM (location), payroll
    by team, discounts everyone.
-4. **Roles** — reusable permission bundles (`ROLES`): Administrator/Manager/Contributor/Viewer.
-   A role = **how much** you can do; team = **which sections**. Some roles are **per-location**
-   (`loc:true`). Practice can add its own (`addRole`).
+(The old 4th tab "Roles" was deleted — redundant with the matrix and confused the user. Do not
+   re-add a separate role concept; team+location is the whole model.)
 
 - Tour: `Tour.init([...5 steps], {key:'admin'})`.
 
@@ -194,7 +199,72 @@ This is the corrected mental model after the friend clarified it:
 
 ---
 
-## 5. The real-world deployment story (context, not built here)
+## 5. PRODUCTION ARCHITECTURE — how sign-in & users actually work (decided 2026-07-28)
+
+The practice barely uses technology; they're just starting on Microsoft ("OneDrive/SharePoint").
+The mockup is the pitch; production must use **their existing Microsoft licenses for sign-in and
+user creation**. Here is the plan:
+
+### Identity & user creation (the answer to "how do we sign in?")
+- **Sign in with Microsoft (Entra ID)** — included with EVERY Microsoft 365 license, even $2 F1.
+  Staff tap "Sign in with Microsoft" and use their work account. **No new passwords, no separate
+  user database, nothing for staff to remember.**
+- **Creating a user = creating them in Microsoft 365** (the admin does this once in the M365 admin
+  center, or we script it). The hub then sees them automatically via **Microsoft Graph API**
+  (names, emails, photos — this is the "synced from Microsoft" behavior the mockup shows).
+- **Teams in the hub = Microsoft Entra security groups.** Put a person in the "Office Managers"
+  group → the hub (and SharePoint) grant access everywhere. One source of truth for permissions.
+
+### Where things live (maps every mockup concept to Microsoft)
+| Mockup concept | Production reality |
+|---|---|
+| Sign-in / user profiles | Entra ID + Microsoft Graph (`/me`, `/users`, photos) |
+| Teams | Entra security groups (or M365 groups) |
+| Documents section & folders | SharePoint document libraries; folder-level permissions per group/location |
+| "Who can see this" on a file | SharePoint permissions + audience targeting (location AND team = group intersection) |
+| Two-way sync ("one file, two doors") | It IS the same file — the hub embeds/links the SharePoint file; Office-for-the-web editor for in-hub editing |
+| "Updates for you" notifications | Power Automate flow: file added/changed → notify matching group (Teams message, email, or push) |
+| KPI Dashboard | Excel on SharePoint read via Graph API (or embedded Excel web part) |
+| Schedule | One SharePoint List, read/written via Graph |
+| Marketing Kanban | Microsoft Lists (board view) or Planner, surfaced in the hub |
+
+### Build path (RECOMMENDED — hybrid)
+- **Storage/permissions/identity = 100% Microsoft** (SharePoint + Entra + Graph). Never build our own.
+- **Front-end = a small custom web app with the mockup's exact UX**, hosted on **Azure Static Web
+  Apps (free tier) inside their tenant**, signing in via Entra (MSAL.js). Why not plain SharePoint
+  pages? Because this practice needs the dead-simple, app-like UX the mockup shows — out-of-the-box
+  SharePoint looks like SharePoint, and adoption is the whole game.
+- Fallback if custom maintenance is a concern: plain SharePoint communication site (uglier but
+  zero-code). Decision belongs to Cory + the practice; hybrid is the recommendation.
+- **Hard prerequisite: Phase 0 tenant consolidation below.** Nothing ships across 3 tenants.
+
+## 5b. ROLLOUT GAME PLAN (for Cory — do NOT put this in the mockup)
+
+**Phase 0 — Foundation (weeks 1–4, runs in parallel with mockup feedback)**
+1. CEO decision: one master tenant + who owns global admin. Wrangle the 3 IT companies.
+2. Add all brand domains; license everyone (F1/F3 frontline ~$2–8, Business Standard for managers).
+3. Create Entra groups matching the hub's teams; put the 69 staff in Microsoft 365.
+
+**Phase 1 — Managers first (buy-in) (weeks 4–8)**
+1. Load REAL content: their actual HR docs, office folders, vendor lists, the live KPI Excel.
+2. Onboard the ~10 managers + 4 doctors personally (15-min walkthrough each — the built-in tours).
+3. Managers run their week in it: schedule updates, EOM reporting, document lookups.
+4. Weekly tweak loop with the COO — fix friction fast; managers must LOVE it before staff see it.
+
+**Phase 2 — Everyone (weeks 8–12)**
+1. Announce at office level, by the managers (not corporate email) — "here's where everything is now."
+2. Every staff member gets sign-in on their phone (mobile-first was designed for exactly this).
+3. Retire the old paths gradually: new docs go ONLY to the hub → checking it becomes necessary.
+4. Notifications pull people back: new doc for your office/team = a ping.
+
+**Adoption metrics (define "widely adopted"):** % staff signed in weekly · docs opened via hub vs.
+sent by text/email · schedule questions to managers (should drop) · EOM reports on time.
+
+**Key adoption rules:** managers announce it, not IT · nothing lives in two places · the hub is
+where new things appear first · keep the home page under ~5 tiles · never require training beyond
+the built-in "Show me around" tours.
+
+## 5c. The real-world deployment story (context, not built here)
 
 - The group is currently split across **MULTIPLE Microsoft 365 tenants** managed by **3 different
   IT companies** (e.g. "Legacy Smiles LC" and "Las Cruces Orthodontics" tenants; live KPI Excel

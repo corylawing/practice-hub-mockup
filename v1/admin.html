@@ -8,11 +8,11 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
 <meta name="theme-color" content="#0F2A4A">
-<meta name="description" content="Practice Hub V1 — admin console: users, teams, roles, section files and who can access what.">
+<meta name="description" content="Practice Hub V1 — admin console: people, teams, section files and who can access what.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Practice Hub">
 <meta property="og:title" content="Admin (V1) · Practice Hub">
-<meta property="og:description" content="Manage users, teams, roles, files, and control who can access which sections.">
+<meta property="og:description" content="Manage people, teams, files, and control who can access which sections.">
 <meta property="og:image" content="https://corylawing.github.io/practice-hub-mockup/assets/og-image.png">
 <meta property="og:url" content="https://corylawing.github.io/practice-hub-mockup/v1/admin.html">
 <style>
@@ -81,6 +81,7 @@
   .lvl{width:100%;border:none;border-radius:7px;padding:7px 4px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit}
   .lvl.none{background:#f4f6f8;color:#b4bdc9}
   .lvl.view{background:var(--blue-soft);color:var(--blue)}
+  .lvl.add{background:var(--good-soft);color:var(--good)}
   .lvl.edit{background:var(--teal-soft);color:var(--teal-600)}
   .lvl.manage{background:var(--navy);color:#fff}
   .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--soft);margin-top:12px}
@@ -109,13 +110,6 @@
   .aud.locked{cursor:default;opacity:.92}
   .addfile{margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
   .mini{font-size:12px;color:var(--soft)}
-  /* roles */
-  .rolegrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
-  .role{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)}
-  .role h3{margin:0 0 4px;font-size:16px;color:var(--navy)}
-  .role .lvlbadge{font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px;text-transform:uppercase;letter-spacing:.03em}
-  .role p{font-size:13px;color:var(--soft);margin:10px 0 12px}
-  .role .locnote{font-size:12px;color:var(--teal-600);font-weight:600}
   /* modal */
   .ov{position:fixed;inset:0;background:rgba(15,42,74,.5);z-index:120;display:none;align-items:flex-start;justify-content:center;padding:24px 16px;overflow:auto}
   .ov.open{display:flex}
@@ -164,14 +158,13 @@
 <div class="wrap">
   <div class="page-head">
     <h1>Admin Console</h1>
-    <p>Manage people, teams, roles and files — and control who sees what, without touching a line of code.</p>
+    <p>One simple rule: a person's <b>team</b> decides what they can do; their <b>location</b> decides which offices' stuff they see.</p>
   </div>
 
   <div class="tabs" id="tabs">
     <button class="tab active" data-t="users" onclick="AD.tab('users')">People</button>
     <button class="tab" data-t="access" onclick="AD.tab('access')">Teams &amp; Access</button>
     <button class="tab" data-t="files" onclick="AD.tab('files')">Sections &amp; Files</button>
-    <button class="tab" data-t="roles" onclick="AD.tab('roles')">Roles</button>
   </div>
 
   <div id="view"></div>
@@ -193,15 +186,10 @@
     {k:'admin',n:'Admin Console',s:'Admin'}
   ];
   const TEAMS=['Executive Team','Leadership Team','Office Managers','Clinic Managers','TCs','Doctors','Marketing Team','Financial Coordinator Team','Staff','Admin'];
-  let ROLES=[
-    {n:'Administrator',lvl:'manage',loc:false,d:'Full control of a section, plus settings and user management.'},
-    {n:'Manager',lvl:'edit',loc:true,d:'Edit content for their location(s). Cannot change access settings.'},
-    {n:'Contributor',lvl:'edit',loc:true,d:'Add and edit content in assigned areas for their location(s).'},
-    {n:'Viewer',lvl:'view',loc:false,d:'Read-only access to the sections their team allows.'}
-  ];
-  const LEVELS=['none','view','edit','manage'];
-  const LVLNAME={none:'—',view:'View',edit:'Edit',manage:'Manage'};
-  const rank={none:0,view:1,edit:2,manage:3};
+  // THE WHOLE MODEL: team = what you can do; location = which offices' stuff you see.
+  const LEVELS=['none','view','add','edit','manage'];
+  const LVLNAME={none:'—',view:'View',add:'Add',edit:'Edit',manage:'Manage'};
+  const rank={none:0,view:1,add:2,edit:3,manage:4};
 
   let access={};
   TEAMS.forEach(t=>{access[t]={}; SECTIONS.forEach(s=>access[t][s.k]='none');});
@@ -240,7 +228,7 @@
   const AUDLBL={everyone:'🌐 Everyone',location:'📍 By location / state',team:'👥 By team'};
 
   // Real staff roster (imported). Doctors -> Doctors team; everyone else defaults to Staff
-  // as a neutral placeholder — the practice reassigns real teams/roles/locations here.
+  // as a neutral placeholder — the practice reassigns real teams/locations here.
   const DOCTOR_NAMES=['Dr. Carla Coehlo','Dr. Susan McBeth','Dr. David Farnsworth','Dr. Jae Brimhall'];
   const ROSTER=[
     'Alexandra (Lexi) Espinosa','Cyndal Gomez','Serenity Gonzales','Keyly Moran','Tayler Nesbit',
@@ -265,7 +253,7 @@
     const handle=(first[0]+(last||first)).toLowerCase().replace(/[^a-z]/g,'');
     return {f:isDoc?('Dr. '+first):first, l:last, email:handle+'@farnsworthorthodontics.com',
       emp:'E-'+(1001+i), loc:'Unassigned', state:'', brand:'', teams:[isDoc?'Doctors':'Staff'],
-      role:'Viewer', region:'', phone:'—', about:'', status:'Active', c:i%PAL.length};
+      region:'', phone:'—', about:'', status:'Active', c:i%PAL.length};
   });
 
   const el=id=>document.getElementById(id);
@@ -274,14 +262,14 @@
   let tab='users', search='', tmpU=null, openSecs=new Set(['managers','hr']);
 
   function tabSet(t){ tab=t; [...document.querySelectorAll('.tab')].forEach(b=>b.classList.toggle('active',b.dataset.t===t)); render(); }
-  function render(){ if(tab==='users')renderUsers(); else if(tab==='access')renderAccess(); else if(tab==='files')renderFiles(); else renderRoles(); }
+  function render(){ if(tab==='users')renderUsers(); else if(tab==='access')renderAccess(); else renderFiles(); }
 
   /* ---------- PEOPLE ---------- */
   function renderUsers(){
     el('view').innerHTML=
-      '<div class="intro">Your real roster is imported here — everyone <b>syncs from Microsoft 365</b> (name, email, photo). Doctors are tagged <b>Doctors</b>; everyone else starts as <b>Staff</b> as a neutral placeholder. Set each person\'s <b>team(s), role, location &amp; status</b> to decide what they see (they can edit their own <b>photo &amp; “About me”</b>). <b>Tap a person</b> to open their profile.</div>'+
+      '<div class="intro">Your real roster is imported here — everyone <b>syncs from Microsoft 365</b> (name, email, photo). Doctors are tagged <b>Doctors</b>; everyone else starts as <b>Staff</b> as a neutral placeholder. Set each person\'s <b>team(s), location &amp; status</b> to decide what they see (they can edit their own <b>photo &amp; “About me”</b>). <b>Tap a person</b> to open their profile.</div>'+
       '<div class="toolrow"><input class="search" id="usearch" placeholder="Search people, email, team, location…" value="'+search.replace(/"/g,'&quot;')+'"><button class="btn" onclick="AD.addUser()">+ Add person</button></div>'+
-      '<div class="tbl-scroll"><table class="u"><thead><tr><th>Person</th><th>Team(s)</th><th>Role</th><th>Location</th><th>Status</th></tr></thead><tbody></tbody></table></div>'+
+      '<div class="tbl-scroll"><table class="u"><thead><tr><th>Person</th><th>Team(s) — what they can do</th><th>Location — where</th><th>Status</th></tr></thead><tbody></tbody></table></div>'+
       '<p style="font-size:13px;color:var(--soft);margin:12px 2px 0" id="ucount"></p>';
     renderUsersBody();
     const s=el('usearch'); if(s) s.oninput=e=>{search=e.target.value; renderUsersBody();};
@@ -293,24 +281,23 @@
     tb.innerHTML=list.map(u=>{const gi=users.indexOf(u);
       return '<tr onclick="AD.profile('+gi+')"><td><div class="who"><span class="av" style="background:'+av(u)+'">'+initials(u)+'</span><div><div class="uname">'+u.f+' '+u.l+'</div><div style="font-size:12px;color:var(--soft)">'+u.email+'</div></div></div></td>'+
         '<td><div class="chips">'+u.teams.map(t=>'<span class="chip">'+t+'</span>').join('')+'</div></td>'+
-        '<td>'+u.role+'</td><td>'+u.loc+'</td><td><span class="pill '+u.status.toLowerCase()+'">'+u.status+'</span></td></tr>';}).join('');
+        '<td>'+u.loc+'</td><td><span class="pill '+u.status.toLowerCase()+'">'+u.status+'</span></td></tr>';}).join('');
     const c=el('ucount'); if(c)c.textContent=list.length+' of '+users.length+' people shown.';
   }
   function userAccess(u){ const out={}; SECTIONS.forEach(s=>{let best='none'; u.teams.forEach(t=>{const lv=(access[t]||{})[s.k]||'none'; if(rank[lv]>rank[best])best=lv;}); out[s.k]=best;}); return out; }
-  function profile(gi){ const u=users[gi]; tmpU={gi,teams:u.teams.slice(),role:u.role,status:u.status}; openProfile(u); }
+  function profile(gi){ const u=users[gi]; tmpU={gi,teams:u.teams.slice(),status:u.status}; openProfile(u); }
   function openProfile(u){
     const teamChips=TEAMS.map(t=>'<button class="tp'+(tmpU.teams.includes(t)?' on':'')+'" onclick="AD.togTeam(\''+t+'\')">'+t+'</button>').join('');
     openModal(
-      '<div class="m-top"><span class="av" style="width:44px;height:44px;font-size:16px;background:'+av(u)+'">'+initials(u)+'</span><div><div style="font-weight:800;font-size:18px;color:var(--navy)">'+u.f+' '+u.l+'</div><div style="font-size:13px;color:var(--soft)">'+u.role+' · '+u.loc+'</div></div><span class="pill '+u.status.toLowerCase()+'" style="margin-left:auto">'+u.status+'</span><button class="x" onclick="AD.close()">×</button></div>'+
+      '<div class="m-top"><span class="av" style="width:44px;height:44px;font-size:16px;background:'+av(u)+'">'+initials(u)+'</span><div><div style="font-weight:800;font-size:18px;color:var(--navy)">'+u.f+' '+u.l+'</div><div style="font-size:13px;color:var(--soft)">'+u.teams.join(' · ')+' · '+u.loc+'</div></div><span class="pill '+u.status.toLowerCase()+'" style="margin-left:auto">'+u.status+'</span><button class="x" onclick="AD.close()">×</button></div>'+
       '<div class="m-body"><div class="grid2">'+
         '<div><div class="panel-lab">From Microsoft 365 <span class="msbadge">SYNCED</span></div>'+
           fldRO('First name',u.f)+fldRO('Last name',u.l)+fldRO('Email',u.email)+fldRO('Phone',u.phone)+fldRO('Employee ID',u.emp)+
           '<div class="fld"><label>Photo <span class="selfbadge">EMPLOYEE CAN EDIT</span></label><div class="fld ro"><div class="val" style="display:flex;align-items:center;gap:10px"><span class="av" style="background:'+av(u)+'">'+initials(u)+'</span> Change photo…</div></div></div>'+
         '</div>'+
         '<div><div class="panel-lab">Managed in Practice Hub</div>'+
-          '<div class="fld"><label>Team(s) — opens their sections</label><div class="teampick" id="teampick">'+teamChips+'</div></div>'+
-          '<div class="fld"><label>Role</label><select id="fRole" onchange="AD.setRole(this.value)">'+ROLES.map(r=>'<option'+(r.n===tmpU.role?' selected':'')+'>'+r.n+'</option>').join('')+'</select></div>'+
-          '<div class="fld"><label>Location(s)</label><input value="'+u.loc+'"></div>'+
+          '<div class="fld"><label>Team(s) — <b>what</b> they can see &amp; do</label><div class="teampick" id="teampick">'+teamChips+'</div></div>'+
+          '<div class="fld"><label>Location(s) — <b>which offices\'</b> stuff they see</label><input value="'+u.loc+'"></div>'+
           '<div class="fld"><label>Region</label><input value="'+u.region+'"></div>'+
           '<div class="fld"><label>Brand</label><input value="'+u.brand+'"></div>'+
           '<div class="fld"><label>Status <span style="color:var(--bad)">(admin only)</span></label><select id="fStatus" onchange="AD.setStatus(this.value)">'+['Active','Paused','Inactive'].map(s=>'<option'+(s===tmpU.status?' selected':'')+'>'+s+'</option>').join('')+'</select></div>'+
@@ -330,9 +317,9 @@
   }
   function togTeam(t){ const i=tmpU.teams.indexOf(t); if(i>=0)tmpU.teams.splice(i,1); else tmpU.teams.push(t);
     [...document.querySelectorAll('#teampick .tp')].forEach(b=>b.classList.toggle('on',tmpU.teams.includes(b.textContent))); refreshAccessPreview(); }
-  function setRole(v){tmpU.role=v;} function setStatus(v){tmpU.status=v;}
-  function saveUser(){ const u=users[tmpU.gi]; u.teams=tmpU.teams.slice(); u.role=tmpU.role; u.status=tmpU.status; closeModal(); renderUsersBody(); }
-  function addUser(){ users.push({f:'New',l:'Employee',email:'new.employee@farnsworthorthodontics.com',emp:'E-'+(1050+users.length),loc:'Carlsbad',state:'NM',brand:'FFO',teams:['Staff'],role:'Viewer',region:'NM',phone:'(000) 000-0000',about:'—',status:'Active',c:users.length%PAL.length}); renderUsers(); profile(users.length-1); }
+  function setStatus(v){tmpU.status=v;}
+  function saveUser(){ const u=users[tmpU.gi]; u.teams=tmpU.teams.slice(); u.status=tmpU.status; closeModal(); renderUsersBody(); }
+  function addUser(){ users.push({f:'New',l:'Employee',email:'new.employee@farnsworthorthodontics.com',emp:'E-'+(1050+users.length),loc:'Carlsbad',state:'NM',brand:'FFO',teams:['Staff'],region:'NM',phone:'(000) 000-0000',about:'—',status:'Active',c:users.length%PAL.length}); renderUsers(); profile(users.length-1); }
 
   /* ---------- TEAMS & ACCESS ---------- */
   function renderAccess(){
@@ -340,9 +327,9 @@
     const rows=TEAMS.map(t=>'<tr><th class="team">'+t+'</th>'+SECTIONS.map(s=>{const lv=access[t][s.k];
       return '<td><button class="lvl '+lv+'" onclick="AD.cycle(\''+t+'\',\''+s.k+'\')">'+LVLNAME[lv]+'</button></td>';}).join('')+'</tr>').join('');
     el('view').innerHTML=
-      '<div class="intro"><b>How access works:</b> a person joins one or more <b>teams</b>. Each team gets a level on each section. A person sees the <b>best</b> level across their teams. <b>Tap a cell</b> to change it — no permission sets to wrangle.</div>'+
+      '<div class="intro"><b>One rule:</b> a person\'s <b>team</b> decides what they can do (below); their <b>location</b> decides which offices\' folders they see. On two teams? They get the <b>best</b> level of both. <b>Tap a cell</b> to change it: None → View → Add files → Edit → Manage.</div>'+
       '<div class="mx-scroll"><table class="mx"><thead>'+head+'</thead><tbody>'+rows+'</tbody></table></div>'+
-      '<div class="legend"><span><i style="background:#f4f6f8"></i> None</span><span><i style="background:var(--blue-soft)"></i> View</span><span><i style="background:var(--teal-soft)"></i> Edit</span><span><i style="background:var(--navy)"></i> Manage</span><span style="margin-left:auto">Tap a cell to cycle the level.</span></div>';
+      '<div class="legend"><span><i style="background:#f4f6f8"></i> None</span><span><i style="background:var(--blue-soft)"></i> View</span><span><i style="background:var(--good-soft)"></i> Add files</span><span><i style="background:var(--teal-soft)"></i> Edit</span><span><i style="background:var(--navy)"></i> Manage</span><span style="margin-left:auto">Tap a cell to cycle the level.</span></div>';
   }
   function cycle(t,k){ const cur=access[t][k]; access[t][k]=LEVELS[(LEVELS.indexOf(cur)+1)%LEVELS.length]; renderAccess(); }
 
@@ -379,21 +366,10 @@
   function addFile(k){ const f=SECFILES[k]; if(f.items){ f.items.push({n:'New file',aud:(f.items[0]?f.items[0].aud:'everyone'),scope:f.items[0]?f.items[0].scope:undefined}); } openSecs.add(k); renderFiles(); }
   function noop(){}
 
-  /* ---------- ROLES ---------- */
-  function renderRoles(){
-    const badge=lv=>'<span class="lvlbadge lvl '+lv+'">'+LVLNAME[lv]+'</span>';
-    const cards=ROLES.map(r=>'<div class="role"><div style="display:flex;align-items:center;gap:8px"><h3 style="flex:1">'+r.n+'</h3>'+badge(r.lvl)+'</div><p>'+r.d+'</p>'+(r.loc?'<div class="locnote">📍 Applies per assigned location</div>':'<div class="locnote" style="color:var(--soft)">Applies across all locations</div>')+'</div>').join('');
-    el('view').innerHTML=
-      '<div class="intro"><b>Roles</b> are reusable permission bundles. A role sets <b>how much</b> a person can do; their <b>team</b> sets <b>which sections</b>. Some roles apply <b>per location</b> — e.g. a manager for Carlsbad only. Your practice can define its own.</div>'+
-      '<div class="toolrow"><span style="flex:1"></span><button class="btn" onclick="AD.addRole()">+ Add role</button></div>'+
-      '<div class="rolegrid">'+cards+'</div>';
-  }
-  function addRole(){ ROLES.push({n:'New Role',lvl:'view',loc:false,d:'Describe what this role can do — your practice defines this.'}); renderRoles(); }
-
   function openModal(h){ el('modalCard').innerHTML=h; el('modal').classList.add('open'); }
   function closeModal(){ el('modal').classList.remove('open'); }
 
-  window.AD={tab:tabSet,profile,addUser,togTeam,setRole,setStatus,saveUser,cycle,tog,cycFile,addFile,noop,addRole,close:closeModal};
+  window.AD={tab:tabSet,profile,addUser,togTeam,setStatus,saveUser,cycle,tog,cycFile,addFile,noop,close:closeModal};
   el('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
   render();
@@ -403,8 +379,8 @@
 <script>
 Tour.init([
   {sel:'.v1nav', title:'Where Admin lives', body:'The <b>Admin</b> tab is where you manage people and control who sees what. Everyday users never need it.'},
-  {sel:'#tabs', title:'Four simple areas', body:'<b>People</b>, <b>Teams &amp; Access</b> (who sees what), <b>Sections &amp; Files</b> (audience for documents), and <b>Roles</b> (how much they can do).'},
-  {sel:'.tbl-scroll, .intro', title:'People sync from Microsoft', body:'Names, emails and photos come from Microsoft 365. You set each person\'s team, role, location and status. Employees can update their own photo &amp; “About me.” Tap a person to open their profile.'},
+  {sel:'#tabs', title:'Three simple areas', body:'<b>People</b>, <b>Teams &amp; Access</b> (what each team can do in each section), and <b>Sections &amp; Files</b> (who documents are for).'},
+  {sel:'.tbl-scroll, .intro', title:'People sync from Microsoft', body:'Names, emails and photos come from Microsoft 365. You set each person\'s team, location and status. Employees can update their own photo &amp; “About me.” Tap a person to open their profile.'},
   {sel:'#tabs', title:'Control access visually', body:'Open <b>Teams &amp; Access</b>: a grid of teams × sections. Tap a cell to set None / View / Edit / Manage — that\'s the whole permission model.'},
   {sel:'#tabs', title:'Files know their audience', body:'Open <b>Sections &amp; Files</b>: each folder is 🌐 Everyone, 📍 By location, or 👥 By team. Files inherit it, so you set it once — no per-file clicking.'}
 ], {key:'admin'});
