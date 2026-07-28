@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Enter Production (V1) — Practice Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#0F2A4A">
+<meta name="description" content="Practice Hub V1 — enter monthly production numbers; the dashboard and the SharePoint workbook update together.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Practice Hub">
+<meta property="og:title" content="Enter Production (V1) · Practice Hub">
+<meta property="og:description" content="Type the month's numbers once. The dashboard and the Excel workbook both update.">
+<meta property="og:image" content="https://corylawing.github.io/practice-hub-mockup/assets/og-image.png">
+<meta property="og:url" content="https://corylawing.github.io/practice-hub-mockup/v1/production.html">
+<style>
+  :root{
+    --navy:#0F2A4A; --navy2:#25456e; --teal:#149B96; --teal2:#2BC0B8; --teal-soft:#E5F4F3; --teal-600:#0F827E;
+    --ink:#1F2D3D; --soft:#56627A; --line:#E4E8EE; --canvas:#F4F6F8; --white:#fff;
+    --good:#2E9E6B; --good-soft:#E7F4EE; --bad:#D7503A; --bad-soft:#FBEAE7; --amber:#F2A03D;
+    --blue:#1f6f9e; --blue-soft:#E3F0FA;
+    --shadow:0 1px 2px rgba(15,42,74,.06),0 6px 18px rgba(15,42,74,.06);
+    --shadow-lg:0 10px 30px rgba(15,42,74,.12); --radius:14px; --maxw:1000px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--canvas);line-height:1.5;-webkit-font-smoothing:antialiased}
+  h1{color:var(--navy);margin:0}
+  .ribbon{background:var(--amber);color:#3a2400;text-align:center;font-size:13px;font-weight:600;padding:6px 14px}
+  .hdr{background:var(--navy);color:#fff}
+  .hdr-in{max-width:var(--maxw);margin:0 auto;display:flex;align-items:center;gap:12px;padding:13px 20px}
+  .mark{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--teal),var(--teal2));display:grid;place-items:center;color:#fff;font-weight:800;font-size:16px}
+  .brand{font-weight:700;font-size:18px;color:#fff;line-height:1.1}
+  .brand small{display:block;font-weight:500;font-size:12px;color:#9fb4d0}
+  .v1{background:rgba(255,255,255,.15);color:#eaf1fb;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;margin-left:6px}
+  .v1nav{background:var(--navy2)}
+  .v1nav-in{max-width:var(--maxw);margin:0 auto;display:flex;gap:2px;padding:0 12px;overflow-x:auto}
+  .v1nav a{color:#cdd9ea;font-size:14px;font-weight:600;padding:13px 15px;text-decoration:none;border-bottom:3px solid transparent;white-space:nowrap}
+  .v1nav a:hover{color:#fff;background:rgba(255,255,255,.05)}
+  .v1nav a.active{color:#fff;border-bottom-color:var(--teal)}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:22px 20px 90px}
+  .viewas{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:13px 16px;display:flex;align-items:center;gap:13px;flex-wrap:wrap;margin-bottom:16px;border-left:5px solid var(--teal)}
+  .viewas .lab{font-size:12px;color:var(--soft);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+  .viewas select{padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;font-weight:700;color:var(--navy);background:#fff}
+  .page-head h1{font-size:25px}
+  .page-head p{margin:4px 0 0;color:var(--soft);font-size:14.5px}
+  .syncbar{background:var(--blue-soft);border:1px solid #c3ddf2;border-radius:12px;padding:11px 15px;font-size:13px;color:#14496c;margin:16px 0 4px;line-height:1.5}
+  .syncbar b{color:#0d3550}
+  .pickrow{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin:18px 0 6px}
+  .pick{display:flex;flex-direction:column;gap:5px}
+  .pick label{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--soft)}
+  .pick select{padding:10px 13px;border:1px solid var(--line);border-radius:10px;font-size:15px;font-family:inherit;font-weight:700;color:var(--navy);background:#fff;min-width:170px;box-shadow:var(--shadow)}
+  .grid2{display:grid;grid-template-columns:1.15fr .85fr;gap:16px;margin-top:14px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
+  .card h2{margin:0 0 3px;font-size:16px;color:var(--navy)}
+  .card .sub{font-size:12.5px;color:var(--soft);margin-bottom:14px}
+  .f{margin-bottom:14px}
+  .f label{display:block;font-size:13px;font-weight:600;color:var(--ink);margin-bottom:4px}
+  .f .help{font-size:11.5px;color:var(--soft);font-weight:500}
+  .money{position:relative}
+  .money span{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--soft);font-weight:700;font-size:15px}
+  .money input{padding-left:28px}
+  .f input{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10px;font-size:16px;font-family:inherit;font-weight:600;color:var(--navy);background:#fff}
+  .f input:focus{outline:2px solid var(--teal);border-color:var(--teal)}
+  .f .money input{padding-left:30px}
+  .f input.ro{background:#fafbfc;color:var(--soft);font-weight:700}
+  .rowline{display:flex;justify-content:space-between;align-items:baseline;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}
+  .rowline:last-child{border-bottom:none}
+  .rowline .k{color:var(--soft)}
+  .rowline .v{font-weight:800;color:var(--navy);font-size:16px}
+  .rowline .v.g{color:var(--good)} .rowline .v.b{color:var(--bad)}
+  .big{background:var(--teal-soft);border:1px solid #c4e6e3;border-radius:12px;padding:14px 16px;margin-bottom:14px}
+  .big .k{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:#0a4d49;font-weight:700}
+  .big .v{font-size:28px;font-weight:800;color:#0a4d49;line-height:1.15}
+  .savebar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:16px}
+  .btn{background:var(--teal);color:#fff;border:none;border-radius:10px;padding:12px 20px;font-weight:700;font-size:15px;cursor:pointer;font-family:inherit}
+  .btn:hover{background:var(--teal-600)}
+  .btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--line);font-weight:600;font-size:14px;padding:10px 15px}
+  .saved{font-size:13px;font-weight:700;color:var(--good);background:var(--good-soft);padding:7px 13px;border-radius:999px;opacity:0;transition:opacity .2s}
+  .saved.on{opacity:1}
+  .months{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+  .mchip{border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 10px;font-size:12.5px;font-weight:700;color:var(--navy);cursor:pointer;font-family:inherit;min-width:46px}
+  .mchip.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .mchip.has{border-color:var(--teal);color:var(--teal-600)}
+  .mchip.has.on{background:var(--navy);color:#fff}
+  .noacc{background:#fff;border:1px dashed var(--line);border-radius:14px;padding:34px;text-align:center;color:var(--soft)}
+  .noacc b{color:var(--navy)}
+  @media(max-width:760px){ .grid2{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<div class="ribbon">PROTOTYPE — type the month's numbers here. In the real build this writes straight into the SharePoint workbook.</div>
+<header class="hdr">
+  <div class="hdr-in">
+    <span class="mark">PH</span>
+    <span class="brand">Practice Hub<small>Enter Production</small></span>
+    <span class="v1">V1 preview</span>
+  </div>
+</header>
+<nav class="v1nav"><div class="v1nav-in" id="nav"></div></nav>
+
+<div class="wrap">
+  <div class="viewas">
+    <span class="lab">👤 Viewing as</span>
+    <select id="persona" onchange="PROD.set(this.value)"></select>
+  </div>
+  <div class="page-head">
+    <h1>Enter Production</h1>
+    <p>Type the month's numbers once. The dashboard and the Excel workbook both update.</p>
+  </div>
+  <div class="syncbar">🔄 <b>One set of numbers, two places to work.</b> Type here and it saves to the <b>2026 Production Dashboard workbook on SharePoint</b>. If someone types in the Excel instead, it shows up here — it's the same file, not a copy.</div>
+  <div id="view"></div>
+</div>
+
+<script>
+(function(){
+  const MO=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const MOFULL=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  // Baseline from their workbook (what's already filled in).
+  const BASE={
+   'Carlsbad':   {md:1,tc:[143601,172538,194461,156556,160379,204704,231803,0,0,0,0,0], mdp:[37800,50400,71400,58800,29400,29400,58800,0,0,0,0,0], adj:[4623,-16042,-9408,-9284,-13561,5178,0,0,0,0,0,0], dys:[9,9,8,8,7,9,10,0,0,0,0,0], goal:[252912,216988,166188,214647,189249,222278,245976,200435,218840,177212,146966,139312], str:[278203,238687,191117,231819,227099,231169,268114,214465,227594,212654,176359,167174]},
+   'Clovis':     {md:1,tc:[187073,213625,199287,131948,131289,159722,178862,0,0,0,0,0], mdp:[39000,45000,47400,40200,36600,39000,50400,0,0,0,0,0], adj:[0,0,0,0,0,0,0,0,0,0,0,0], dys:[9,9,9,9,9,9,10,0,0,0,0,0], goal:[150201,207644,207905,204125,166173,158085,325468,226833,159142,175696,145196,179490], str:[171230,236714,237012,232702,189437,180217,348251,258590,181422,200293,165523,204619]},
+   'Hobbs':      {md:1,tc:[159142,166658,178138,180827,157045,214912,152647,0,0,0,0,0], mdp:[38400,41800,51600,44400,40800,44400,50400,0,0,0,0,0], adj:[0,0,0,0,0,0,0,0,0,0,0,0], dys:[7,9,9,8,7,8,9,0,0,0,0,0], goal:[230923,199566,208649,181588,204041,228096,139976,178059,151724,246031,188257,177982], str:[260942,225509,239946,205195,244849,255468,162372,206549,174482,295237,225909,195780]},
+   'Cruces LCO': {md:1,tc:[0,0,0,0,0,0,126724,0,0,0,0,0], mdp:[0,0,0,0,0,0,21000,0,0,0,0,0], adj:[0,0,0,0,0,0,0,0,0,0,0,0], dys:[0,0,0,0,0,0,10,0,0,0,0,0], goal:[0,0,0,0,0,0,103648,166866,167404,138716,81094,102830], str:[0,0,0,0,0,0,129560,191896,192514,166459,97313,113113]},
+   'Cruces FFO': {md:0,tc:[0,0,0,0,0,0,43930,0,0,0,0,0], mdp:[0,0,0,0,0,0,0,0,0,0,0,0], adj:[0,0,0,0,0,0,0,0,0,0,0,0], dys:[0,0,0,0,0,0,6,0,0,0,0,0], goal:[0,0,0,0,0,0,87361,75272,68613,73501,70542,79563], str:[0,0,0,0,0,0,104834,90326,82336,88202,84650,95476]},
+   'Lubbock':    {md:0,tc:[123060,104157,137058,84810,103300,81500,83115,0,0,0,0,0], mdp:[0,0,0,0,0,0,0,0,0,0,0,0], adj:[0,0,0,0,0,0,0,0,0,0,0,0], dys:[7,8,8,8,8,8,8,0,0,0,0,0], goal:[146572,133479,116836,77523,100442,80660,96519,98413,99420,115639,81771,88319], str:[166559,157748,132768,119808,127835,124656,131617,113722,112977,111191,107470,103905]},
+   'San Angelo': {md:0,tc:[364028,347608,273810,209565,201489,310660,203469,0,0,0,0,0], mdp:[0,0,0,0,0,0,0,0,0,0,0,0], adj:[0,0,0,0,0,0,0,0,0,0,0,0], dys:[10,13,10,9,10,9,10,0,0,0,0,0], goal:[275667,193614,240442,210867,274049,239473,291472,312606,214035,248641,192785,267286], str:[301921,219429,263341,230950,300148,262279,319232,342378,234419,272321,211145,292741]},
+   'Mansfield':  {md:0,tc:[108954,92996,139815,95285,63447,178690,173500,0,0,0,0,0], mdp:[0,0,0,0,0,0,0,0,0,0,0,0], adj:[0,0,0,0,0,0,0,0,0,0,0,0], dys:[9,10,11,9,10,9,10,0,0,0,0,0], goal:[0,0,0,130268,174025,104053,146511,100531,74090,71498,103061,52919], str:[0,0,0,145900,189158,148648,209301,143616,105842,96522,139132,71440]}
+  };
+  const PERSONAS=[
+    {id:'admin',name:'Administrator',offices:'all',can:true},
+    {id:'om',name:'Office Manager — Carlsbad',offices:['Carlsbad'],can:true},
+    {id:'doctor',name:'Doctor — Carlsbad & Hobbs',offices:['Carlsbad','Hobbs'],can:false},
+    {id:'tc',name:'Treatment Coordinator',offices:[],can:false},
+    {id:'staff',name:'Front Desk / Staff',offices:[],can:false}
+  ];
+  const el=id=>document.getElementById(id);
+  let cur=PERSONAS[0], office=null, month=6, edits={};
+  try{ edits=JSON.parse(localStorage.getItem('ph_prod'))||{}; }catch(_){ edits={}; }
+  const save=()=>{ try{ localStorage.setItem('ph_prod',JSON.stringify(edits)); }catch(_){} };
+  const key=(o,m)=>o+'|'+m;
+  function val(o,m,f){
+    const e=edits[key(o,m)];
+    if(e && e[f]!==undefined && e[f]!=='') return Number(e[f]);
+    return BASE[o]?BASE[o][f==='tc'?'tc':f==='mdp'?'mdp':f==='adj'?'adj':f==='dys'?'dys':f==='goal'?'goal':'str'][m]:0;
+  }
+  const money=v=>'$'+Math.round(v).toLocaleString('en-US');
+  const pc=v=>Math.round(v*100)+'%';
+
+  function renderNav(){
+    let h='<a href="home.html">🏠 Home</a><a href="index.html">📊 Dashboard</a><a class="active" href="production.html">📝 Enter Production</a>'+
+          '<a href="schedule.html">📅 Schedule</a><a href="marketing.html">📣 Marketing</a><a href="documents.html">📁 Documents</a>';
+    if(cur.id==='admin')h+='<a href="admin.html">⚙️ Admin</a>';
+    el('nav').innerHTML=h;
+  }
+  function offices(){ return cur.offices==='all'?Object.keys(BASE):cur.offices.filter(o=>BASE[o]); }
+  function render(){
+    renderNav();
+    const list=offices();
+    if(!cur.can || !list.length){
+      el('view').innerHTML='<div class="noacc"><b>This role can\'t enter production numbers.</b><br>Entering numbers needs <b>Edit</b> on the Dashboard section — set per team in <b>Admin → Teams &amp; Access</b>.</div>';
+      return;
+    }
+    if(!office || list.indexOf(office)<0) office=list[0];
+    const b=BASE[office];
+    const tc=val(office,month,'tc'), mdp=b.md?val(office,month,'mdp'):0, adj=val(office,month,'adj');
+    const dys=val(office,month,'dys'), goal=val(office,month,'goal'), str=val(office,month,'str');
+    const total=tc+mdp, net=total+adj, pctGoal=goal?total/goal:0, pctStr=str?total/str:0;
+    const perDay=dys?net/dys:0, vGoal=total-goal;
+    const mchips=MO.map((m,i)=>{
+      const has=(BASE[office].tc[i]>0)||(edits[key(office,i)]&&edits[key(office,i)].tc);
+      return '<button class="mchip'+(i===month?' on':'')+(has?' has':'')+'" onclick="PROD.month('+i+')">'+m+'</button>';
+    }).join('');
+    el('view').innerHTML=
+      '<div class="pickrow">'+
+        '<div class="pick"><label>Office</label><select onchange="PROD.office(this.value)">'+list.map(o=>'<option'+(o===office?' selected':'')+'>'+o+'</option>').join('')+'</select></div>'+
+        '<div class="pick" style="flex:1"><label>Month</label><div class="months">'+mchips+'</div></div>'+
+      '</div>'+
+      '<div class="grid2">'+
+        '<div class="card"><h2>'+MOFULL[month]+' 2026 · '+office+'</h2><div class="sub">Only these few boxes. Everything else is worked out for you.</div>'+
+          fld('TC Net Production','Total production minus discounts','tc',tc)+
+          (b.md?fld('Medicaid Production','Medicaid production for the month','mdp',mdp):'')+
+          fld('Write-offs &amp; other adjustments','Can be negative','adj',adj)+
+          fld('Completed production days','How many days you actually saw patients','dys',dys,true)+
+          '<div class="savebar"><button class="btn" onclick="PROD.commit()">Save to workbook</button>'+
+            '<button class="btn ghost" onclick="PROD.reset()">Undo my changes</button>'+
+            '<span class="saved" id="saved">✓ Saved · dashboard &amp; Excel updated</span></div>'+
+        '</div>'+
+        '<div class="card"><h2>What that gives you</h2><div class="sub">Updates as you type.</div>'+
+          '<div class="big"><div class="k">Total production</div><div class="v">'+money(total)+'</div></div>'+
+          line('Main goal',money(goal))+
+          line('vs main goal',(vGoal>=0?'+':'')+money(vGoal),vGoal>=0?'g':'b')+
+          line('% of main goal',pc(pctGoal))+
+          line('Stretch goal',money(str))+
+          line('% of stretch',pc(pctStr))+
+          line('Adjusted net',money(net))+
+          line('Average per day',dys?money(perDay):'—')+
+        '</div>'+
+      '</div>';
+  }
+  function fld(lab,help,f,v,isInt){
+    return '<div class="f"><label>'+lab+'</label><div class="help">'+help+'</div>'+
+      (isInt? '<input type="number" value="'+v+'" oninput="PROD.edit(\''+f+'\',this.value)">'
+            : '<div class="money"><span>$</span><input type="number" value="'+v+'" oninput="PROD.edit(\''+f+'\',this.value)"></div>')+'</div>';
+  }
+  function line(k,v,cls){ return '<div class="rowline"><span class="k">'+k+'</span><span class="v '+(cls||'')+'">'+v+'</span></div>'; }
+  function edit(f,v){
+    const k=key(office,month); edits[k]=edits[k]||{}; edits[k][f]=v===''?'':Number(v);
+    // store the resulting TOTAL so the dashboard never has to re-derive it
+    const b=BASE[office];
+    edits[k]._total = val(office,month,'tc') + (b.md?val(office,month,'mdp'):0);
+    edits[k]._days  = val(office,month,'dys');
+    save(); refreshRight();
+  }
+  function refreshRight(){
+    const b=BASE[office];
+    const tc=val(office,month,'tc'), mdp=b.md?val(office,month,'mdp'):0, adj=val(office,month,'adj');
+    const dys=val(office,month,'dys'), goal=val(office,month,'goal'), str=val(office,month,'str');
+    const total=tc+mdp, net=total+adj, vGoal=total-goal;
+    const cards=document.querySelectorAll('.grid2 .card')[1]; if(!cards)return;
+    cards.innerHTML='<h2>What that gives you</h2><div class="sub">Updates as you type.</div>'+
+      '<div class="big"><div class="k">Total production</div><div class="v">'+money(total)+'</div></div>'+
+      line('Main goal',money(goal))+line('vs main goal',(vGoal>=0?'+':'')+money(vGoal),vGoal>=0?'g':'b')+
+      line('% of main goal',pc(goal?total/goal:0))+line('Stretch goal',money(str))+
+      line('% of stretch',pc(str?total/str:0))+line('Adjusted net',money(net))+
+      line('Average per day',dys?money(net/dys):'—');
+  }
+  function commit(){ save(); const s=el('saved'); if(s){s.classList.add('on'); setTimeout(()=>s.classList.remove('on'),2600);} }
+  function reset(){ Object.keys(edits).forEach(k=>{ if(k.indexOf(office+'|')===0) delete edits[k]; }); save(); render(); }
+  function setOffice(o){ office=o; render(); }
+  function setMonth(m){ month=m; render(); }
+  function set(id){
+    cur=PERSONAS.find(p=>p.id===id)||PERSONAS[0];
+    try{ localStorage.setItem('ph_viewas',cur.id); }catch(_){}
+    el('persona').value=cur.id; office=null; render();
+  }
+  el('persona').innerHTML=PERSONAS.map(p=>'<option value="'+p.id+'">'+p.name+'</option>').join('');
+  window.PROD={set,office:setOffice,month:setMonth,edit,commit,reset};
+  let saved='admin'; try{ saved=localStorage.getItem('ph_viewas')||'admin'; }catch(_){}
+  if(!PERSONAS.some(p=>p.id===saved)) saved='admin';
+  set(saved);
+})();
+</script>
+<script src="tour.js"></script>
+<script>
+Tour.init([
+  {sel:'.syncbar', title:'One set of numbers', body:'Type here and it saves into the <b>same Excel workbook</b> on SharePoint. If someone types in Excel instead, it shows up here. There is never a second copy.'},
+  {sel:'.pickrow', title:'Pick the office and month', body:'Months with numbers already in are outlined in teal. You only ever see the offices you have access to.'},
+  {sel:'.grid2 .card', title:'Just a few boxes', body:'Production, Medicaid (if your office bills it), adjustments, and days worked. That\'s all you type.'},
+  {sel:'.big', title:'The math is done for you', body:'Totals, % of main goal, % of stretch and average per day update as you type — then hit <b>Save to workbook</b>.'}
+], {key:'prod'});
+</script>
+</body>
+</html>

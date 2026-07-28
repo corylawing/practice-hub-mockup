@@ -48,7 +48,8 @@ docs, schedules, KPIs, and marketing.
 |---|---|
 | `v1/home.html` | **Logged-in Home** — the daily landing page. "Viewing as ▾" role switcher, personalized section tiles, an "Updates for you" feed, Documents folders. Shows the admin-vs-employee difference. |
 | `v1/documents.html` | **Documents section** — persona-aware folder browser (persona persists via `localStorage.ph_viewas`). Add-a-document flow with audience control (Everyone / locations / teams + "who will see this"). Click a file → live **two-way SharePoint/OneDrive sync** demo (edit in hub ↔ drive). |
-| `v1/index.html` | **KPI Dashboard** — leadership "All Offices" view + per-office drill-down, built on their REAL production data. |
+| `v1/index.html` | **Production Dashboard** — location-scoped. Main **and** stretch goals, last-year bars, per-office pages + an all-office **leaderboard** with production days remaining. |
+| `v1/production.html` | **Enter Production** — the few boxes a manager types each month; math shown live; writes back to the SharePoint workbook and **drives the dashboard** (localStorage `ph_prod`). |
 | `v1/schedule.html` | **Staff Schedule** — weekly board: which office open each day + which doctor where. |
 | `v1/marketing.html` | **Marketing Kanban** — events/social posts move Ideas→Planned→In progress→Done; scored Good/Mixed/Bad. |
 | `v1/admin.html` | **Admin Console** — People, Teams & Access, Sections & Files. Backend permissions & profiles. |
@@ -76,15 +77,34 @@ Font: Inter (Google Fonts). Radius ~14px. Soft shadows. maxw ~1080–1180px.
 
 ## 4. Page-by-page detail
 
-### 4a. `v1/index.html` — KPI Dashboard
-- Office chips (All Offices + 8), annual **pace ring** (`ring(pct)` SVG), 4 KPI cards.
-- Sortable table (`sortCol(key)` / `sortTh(label,key)`, ↕/▲/▼), relative-size minibar.
-- Per-office **drill-down** `renderOffice(o)`: dollar bars, per-month dashed **goal markers**
-  (`.gmark`), **July shown as in-progress** (`.mtd` bar labeled "so far") — user insisted July
-  not be omitted. Tooltips via `wireBars`. Plain-English summary + vs-last-month delta. Print/PDF.
-- Data: `OFFICES` array with pct/act/goal/mtdIdx (7 months incl. July). **Sample-ish** numbers
-  derived from their real workbook; real go-live reads the live Excel via SharePoint web part.
-- Tour: `Tour.init([...6 steps], {key:'dash'})`.
+### 4a. `v1/index.html` — Production Dashboard (rebuilt 2026-07-28 from their feedback sheet)
+Their written feedback, all implemented:
+1. **Main AND stretch goal** everywhere (KPI card shows % of main with % of stretch beneath; the chart
+   draws a **dashed main-goal line** and a **dotted stretch line** per month).
+2. **Last-year column** on the bar chart — each month is a grey **2025** bar next to the 2026 bar.
+3. **Removed** the "5 of 8 offices are ahead of goal…" ribbon.
+4. All-Offices page now **mimics an office page** (same KPI cards + same chart, group totals) with a
+   **leaderboard** as the bottom section, **best performance on top** (sorted by % of main goal).
+5. Leaderboard shows **production days remaining** ("Days left").
+6. **Location-scoped access** (their later note): a persona only sees its own offices. One office →
+   lands straight on that office, no All-Offices tab and no leaderboard. No dashboard access → a
+   clear "this role doesn't have the Dashboard" panel.
+
+**Data is REAL, from `2026 PRODUCTION DASHBOARD (New)-2.xlsx`** (parsed from the xlsx XML; openpyxl
+is not installed). Per office: `act` (their *2026 Actual TC ONLY + Medicaid* row — this is the row
+their goal comparison uses, NOT the adjusted-net row), `goal`, `stretch`, `ly` (2025 net + 2025
+Medicaid), `days`, `done`.
+- **Templates differ per office**: Medicaid offices (Carlsbad, Clovis, Hobbs, Cruces LCO) use
+  "2026 Total Production Goal (TC + Medicaid)"; TC-only offices (Lubbock, San Angelo, Mansfield,
+  Cruces FFO) use "2026 TC Production Goal". Match labels flexibly, never fixed row numbers.
+- **A month only counts when it has BOTH an actual and a goal** (`live()`), because Mansfield has
+  production from January but goals only from April. Get this wrong and Mansfield reads 154% instead
+  of 92%. With this rule every office reconciles **exactly** with their own
+  "Current Tracking (Over/Under) to Goal" row.
+- **Second workbook error found (report to the practice):** the Dashboard tab's 2026 total shows
+  **+$449,954** vs goal; the eight offices actually sum to **+$406,663** — the total formula **skips
+  Mansfield** (−$43,935). Shown in the page footer. (Earlier, separate finding was +$580,749 vs
+  +$500,762 on the older file.)
 
 ### 4b. `v1/schedule.html` — Staff Schedule
 - Weekly board (locations × Mon–Sat), color per doctor. Week nav with **real dates**
@@ -95,6 +115,11 @@ Font: Inter (Google Fonts). Radius ~14px. Soft shadows. maxw ~1080–1180px.
   - `openH{loc:[6 per-day {s,e}|null]}` — office hours WITH times per day.
   - `locTZ{loc}` (NM=MT, TX=CT — **confirmed correct**, editable), `locLunch{loc:{s,e}}`.
   - Times stored as **minutes**. Conflict = time overlap (`s1<e2 && s2<e1`), guarded by `conflictAt`.
+- **Wording (their feedback):** a cell marked as "no doctor on site" is a **“● Yellow Dot Day”**
+  (`.cell.ydot`, pale yellow) — NOT "Closed". "Closed" is reserved for a day the office has no
+  office hours at all. The button reads **“Mark Yellow Dot Day.”**
+- **`Cruces Legacy` was renamed `Cruces FFO`** everywhere (their instruction; the workbook tab is
+  already "Cruces (FFO)" although cell A1 still says CRUCES (LEGACY)).
 - Features: **availability-only** doctor picker (booked doctors greyed "· at [office]"),
   completeness bar (`#schedStatus`, "X open days still need a doctor"), Closed / "Needs doctor"
   cells, **"Apply these hours & lunch to all locations"** (`applyAll`).
@@ -138,7 +163,14 @@ stuff they see.** No separate role objects. Levels: None / View / Add files / Ed
 (5 levels, `LEVELS`/`rank`; "Add files" is its own level per the user). Example: Staff team = View,
 so a staff member at Carlsbad = view-only + Carlsbad folders only.
 
-Three tabs (`window.AD`), all client-side demo state (tab 3 is **Document Sections**):
+**Four tabs** (`window.AD`): People · Teams & Access · Document Sections · **Locations**.
+**Locations tab (added 2026-07-28):** the practice may expand, so admins add offices themselves —
+name, brand, state, time zone (`LOCS`, `DEFAULT_LOCS`, persisted to `localStorage.ph_locations`;
+`LOCATIONS_OF()` / `BRANDS_OF()` are the live lists). Adding an office immediately creates its
+Office Docs folder, adds it to people's location chips, and (once numbers exist) the dashboard.
+Never hardcode a location list again — always call `LOCATIONS_OF()`.
+
+All client-side demo state:
 
 1. **People** — table of users; each **syncs from Microsoft 365** (name/email/photo). Admin sets
    **team(s), location, status**. Click a row → **profile modal**:

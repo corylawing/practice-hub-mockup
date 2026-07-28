@@ -238,6 +238,7 @@
     NAVSECS.forEach(s=>{ if((!s.adminOnly||p.id==='admin')&&p.sec[s.k]) h+='<a href="'+s.href+'">'+s.n+'</a>'; });
     // order: Home, tools, Documents(active), Admin — rebuild cleanly
     let out='<a href="home.html">🏠 Home</a>';
+    if(p.sec['dashboard']) out+='<a href="production.html">📝 Enter Production</a>';
     NAVSECS.filter(s=>s.k!=='admin').forEach(s=>{ if(p.sec[s.k]) out+='<a href="'+s.href+'">'+s.n+'</a>'; });
     out+='<a class="active" href="documents.html">📁 Documents</a>';
     if(p.id==='admin') out+='<a href="admin.html">⚙️ Admin</a>';

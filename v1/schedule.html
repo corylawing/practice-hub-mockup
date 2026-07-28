@@ -97,6 +97,9 @@
   .dtimes{display:flex;align-items:center;gap:6px}
   .dtimes input[type=time]{padding:7px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--navy)}
   .dtimes span{color:var(--soft);font-size:12px}
+  td.cell.ydot{background:#FFFBEF}
+  td.cell.ydot:hover{background:#FFF3D6}
+  td.cell.ydot .yd{color:#946011;font-size:12px;font-weight:700;line-height:1.25;display:inline-block}
   .dclosed{color:#9aa6b6;font-size:13px}
   th.loc .locname{display:flex;align-items:center;gap:6px}
   th.loc .tz{font-size:10px;font-weight:700;color:var(--teal-600);background:var(--teal-soft);padding:1px 6px;border-radius:5px}
@@ -140,6 +143,7 @@
 <nav class="v1nav"><div class="v1nav-in">
   <a href="home.html">🏠 Home</a>
   <a href="index.html">📊 Dashboard</a>
+  <a href="production.html">📝 Enter Production</a>
   <a href="schedule.html" class="active">📅 Schedule</a>
   <a href="marketing.html">📣 Marketing</a>
   <a href="admin.html">⚙️ Admin</a>
@@ -160,7 +164,7 @@
   <div class="roster" id="roster"></div>
   <div id="schedStatus" class="sched-status"></div>
   <div id="schedGrid"></div>
-  <p class="hint">Tap any cell to assign a doctor or mark the office closed · tap a doctor above to highlight where they work · today's column is highlighted.</p>
+  <p class="hint">Tap any cell to assign a doctor or mark it a Yellow Dot Day (no doctor on site) · tap a doctor above to highlight where they work · today's column is highlighted.</p>
 </div>
 
 <div id="schedModal" class="s-overlay"><div class="s-modal" id="schedModalCard"></div></div>
@@ -174,7 +178,7 @@
   const DAYS=['Mon','Tue','Wed','Thu','Fri','Sat'];
   const FULL={h:'8:00a–5:00p',s:480,e:1020}, HALFD={h:'8:00a–1:00p',s:480,e:780};
   let people=[{n:'Dr. Chen',c:0},{n:'Dr. Rao',c:1},{n:'Dr. Mehta',c:3},{n:'Dr. Lopez',c:5},{n:'Dr. Ford',c:2}];
-  let locations=['Carlsbad','Clovis','Hobbs','San Angelo','Lubbock','Mansfield','Cruces LCO','Cruces Legacy'];
+  let locations=['Carlsbad','Clovis','Hobbs','San Angelo','Lubbock','Mansfield','Cruces LCO','Cruces FFO'];
   let sched={
     'Carlsbad':[{p:0,...FULL},null,{p:1,...FULL},null,{p:0,...FULL},null],
     'Clovis':[{p:1,...FULL},null,{p:0,...FULL},null,null,{p:3,...HALFD}],
@@ -183,7 +187,7 @@
     'Lubbock':[null,{p:2,...FULL},null,{p:4,...FULL},{p:2,...FULL},null],
     'Mansfield':[{p:3,...FULL},null,{p:2,...FULL},null,{p:4,...FULL},null],
     'Cruces LCO':[null,{p:4,...FULL},null,{p:3,...FULL},null,null],
-    'Cruces Legacy':[null,null,{p:0,...FULL},null,null,{p:2,...HALFD}]
+    'Cruces FFO':[null,null,{p:0,...FULL},null,null,{p:2,...HALFD}]
   };
   // office hours per day: null = closed, or {s,e} minutes
   const WKh={s:480,e:1020}, SATh={s:480,e:780};
@@ -191,12 +195,12 @@
     'Carlsbad':[WKh,null,WKh,WKh,WKh,null],'Clovis':[WKh,null,WKh,null,WKh,SATh],
     'Hobbs':[null,WKh,null,WKh,null,null],'San Angelo':[WKh,null,WKh,null,WKh,null],
     'Lubbock':[null,WKh,null,WKh,WKh,null],'Mansfield':[WKh,null,WKh,null,WKh,null],
-    'Cruces LCO':[null,WKh,null,WKh,null,null],'Cruces Legacy':[null,null,WKh,null,null,SATh]
+    'Cruces LCO':[null,WKh,null,WKh,null,null],'Cruces FFO':[null,null,WKh,null,null,SATh]
   };
   // NM offices = Mountain, TX offices (Lubbock/San Angelo/Mansfield) = Central
-  let locTZ={'Carlsbad':'MT','Clovis':'MT','Hobbs':'MT','San Angelo':'CT','Lubbock':'CT','Mansfield':'CT','Cruces LCO':'MT','Cruces Legacy':'MT'};
+  let locTZ={'Carlsbad':'MT','Clovis':'MT','Hobbs':'MT','San Angelo':'CT','Lubbock':'CT','Mansfield':'CT','Cruces LCO':'MT','Cruces FFO':'MT'};
   // lunch varies by office
-  let locLunch={'Carlsbad':{s:720,e:780},'Clovis':{s:720,e:780},'Hobbs':{s:720,e:780},'San Angelo':{s:780,e:840},'Lubbock':{s:690,e:750},'Mansfield':{s:720,e:780},'Cruces LCO':{s:720,e:780},'Cruces Legacy':{s:720,e:780}};
+  let locLunch={'Carlsbad':{s:720,e:780},'Clovis':{s:720,e:780},'Hobbs':{s:720,e:780},'San Angelo':{s:780,e:840},'Lubbock':{s:690,e:750},'Mansfield':{s:720,e:780},'Cruces LCO':{s:720,e:780},'Cruces FFO':{s:720,e:780}};
   const TZS=['MT','CT','PT','ET','AZ'];
   let filterP=null, weekOffset=0, tmp={p:null,mode:'full',s:480,e:1020}, tmpC=0, tmpEdit=null, tmpLoc=null;
   const el=id=>document.getElementById(id);
@@ -233,7 +237,7 @@
           const dim=(filterP!=null&&filterP!==cell.p)?' dim':''; const hit=(filterP!=null&&filterP===cell.p)?' hit':'';
           return '<td class="cell open'+t+dim+hit+'" style="background:'+c.bg+'" onclick="PS.assign(\''+loc+'\','+d+')"><span class="who" style="color:'+c.fg+'">'+p.n+'</span><span class="hrs">'+cell.h+'</span></td>';
         }
-        if(cell && cell.closed) return '<td class="cell closed'+t+'" onclick="PS.assign(\''+loc+'\','+d+')"><span class="cx">Closed</span></td>';
+        if(cell && cell.closed) return '<td class="cell ydot'+t+'" onclick="PS.assign(\''+loc+'\','+d+')"><span class="yd">\u25CF Yellow Dot Day</span></td>';
         if(isOpen){ needs++; openTotal++; return '<td class="cell needs'+t+'" onclick="PS.assign(\''+loc+'\','+d+')"><span class="nd">Needs doctor</span></td>'; }
         return '<td class="cell closed'+t+'" onclick="PS.assign(\''+loc+'\','+d+')"><span class="cx">Closed</span></td>';
       }).join('');
@@ -276,7 +280,7 @@
         hb('full','Full day · 8:00a–5:00p')+hb('half','Half day · 8:00a–1:00p')+hb('custom','Custom hours…')+
         '<div class="custrow" id="custrow" style="display:'+(mode==='custom'?'flex':'none')+'"><input type="time" id="cS" value="'+fmt24(s)+'"><span>to</span><input type="time" id="cE" value="'+fmt24(e)+'"></div>'+
       '</div></div>'+
-      '<div class="s-foot"><button class="sbtn ghost" onclick="PS.setClosed(\''+loc+'\','+d+')">Mark closed</button><span id="s-hint" style="flex:1;color:var(--bad);font-size:12.5px"></span><button class="sbtn ghost" onclick="PS.close()">Cancel</button><button class="sbtn" onclick="PS.save(\''+loc+'\','+d+')">Save</button></div>');
+      '<div class="s-foot"><button class="sbtn ghost" onclick="PS.setClosed(\''+loc+'\','+d+')">Mark Yellow Dot Day</button><span id="s-hint" style="flex:1;color:var(--bad);font-size:12.5px"></span><button class="sbtn ghost" onclick="PS.close()">Cancel</button><button class="sbtn" onclick="PS.save(\''+loc+'\','+d+')">Save</button></div>');
   }
   function tp(i){tmp.p=i; [...document.querySelectorAll('#pickwrap .pick')].forEach((b,k)=>{if(!b.disabled)b.classList.toggle('sel',k===i);}); hint('');}
   function hm(m){tmp.mode=m; if(m==='full'){tmp.s=480;tmp.e=1020;} if(m==='half'){tmp.s=480;tmp.e=780;}
@@ -285,7 +289,7 @@
     if(m==='custom'){el('cS').value=fmt24(tmp.s);el('cE').value=fmt24(tmp.e);}
   }
   function save(loc,d){
-    if(tmp.p==null){hint('Pick a doctor, or choose “Mark closed.”');return;}
+    if(tmp.p==null){hint('Pick a doctor, or choose “Mark Yellow Dot Day.”');return;}
     let s=tmp.s,e=tmp.e;
     if(tmp.mode==='custom'){s=parseT(el('cS').value||'08:00');e=parseT(el('cE').value||'17:00'); if(e<=s){hint('End time must be after the start time.');return;}}
     const cf=conflictAt(loc,d,tmp.p,s,e);
@@ -364,7 +368,7 @@
 Tour.init([
   {sel:'.v1nav', title:'Two views', body:'Switch between the <b>Dashboard</b> (the numbers) and the <b>Schedule</b> (who works where) up here.'},
   {sel:'#schedStatus', title:'Is the week fully staffed?', body:'This bar tells you instantly — “fully scheduled,” or how many open days still need a doctor.'},
-  {sel:'#schedGrid', title:'Who\'s where, at a glance', body:'Locations down the side, days across the top. Each doctor has a color. <b>Closed</b> = office not open; <b>amber</b> = open but nobody assigned yet.'},
+  {sel:'#schedGrid', title:'Who\'s where, at a glance', body:'Locations down the side, days across the top. Each doctor has a color. <b>Yellow Dot Day</b> = open but no doctor on site; <b>Closed</b> = office not open at all; <b>amber</b> = open and still needs a doctor.'},
   {sel:'#roster', title:'Your doctors', body:'Add doctors, pick their color, and tap one to highlight everywhere they work this week.'},
   {sel:'#addLocBtn', title:'Add a practice', body:'Add a new location and set its office hours (which days it\'s open).'},
   {sel:'#weeknav', title:'Move between weeks', body:'Page forward or back — the dates update for the week you\'re viewing.'}

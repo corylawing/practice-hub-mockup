@@ -167,6 +167,7 @@
 <nav class="v1nav"><div class="v1nav-in">
   <a href="home.html">🏠 Home</a>
   <a href="index.html">📊 Dashboard</a>
+  <a href="production.html">📝 Enter Production</a>
   <a href="schedule.html">📅 Schedule</a>
   <a href="marketing.html">📣 Marketing</a>
   <a href="admin.html" class="active">⚙️ Admin</a>
@@ -182,6 +183,7 @@
     <button class="tab active" data-t="users" onclick="AD.tab('users')">People</button>
     <button class="tab" data-t="access" onclick="AD.tab('access')">Teams &amp; Access</button>
     <button class="tab" data-t="files" onclick="AD.tab('files')">Document Sections</button>
+    <button class="tab" data-t="locs" onclick="AD.tab('locs')">Locations</button>
   </div>
 
   <div id="view"></div>
@@ -192,8 +194,18 @@
 <script>
 (function(){
   const PAL=['#149B96','#25456e','#946011','#6b3fd0','#b03a63','#2E7D52','#1f6f9e','#b0442f'];
-  const LOCATIONS=['Clovis','Hobbs','Carlsbad','San Angelo','Mansfield','Lubbock','Las Cruces LCO','Las Cruces FOLC'];
-  const BRANDS=['FFO','Sunflower','LCO'];
+  const DEFAULT_LOCS=[
+    {n:'Carlsbad',brand:'FFO',state:'NM',tz:'MT'},{n:'Clovis',brand:'FFO',state:'NM',tz:'MT'},
+    {n:'Hobbs',brand:'FFO',state:'NM',tz:'MT'},{n:'Cruces LCO',brand:'LCO',state:'NM',tz:'MT'},
+    {n:'Cruces FFO',brand:'FFO',state:'NM',tz:'MT'},{n:'Lubbock',brand:'FFO',state:'TX',tz:'CT'},
+    {n:'San Angelo',brand:'FFO',state:'TX',tz:'CT'},{n:'Mansfield',brand:'SUN',state:'TX',tz:'CT'}
+  ];
+  function loadLocs(){ try{ const st=JSON.parse(localStorage.getItem('ph_locations')); if(Array.isArray(st)&&st.length)return st; }catch(_){} return JSON.parse(JSON.stringify(DEFAULT_LOCS)); }
+  function saveLocs(){ try{ localStorage.setItem('ph_locations',JSON.stringify(LOCS)); }catch(_){} }
+  let LOCS=loadLocs();
+  const LOCATIONS_OF=()=>LOCS.map(l=>l.n);
+  const TZS=['MT','CT','PT','ET','AZ'];
+  const BRANDS_OF=()=>[...new Set(LOCS.map(l=>l.brand))];
   /* TWO KINDS OF THINGS — this is the whole mental model:
      TOOLS   = real app features (Dashboard, Schedule, Marketing). Fixed. You only choose WHO gets them.
      DOCSECS = document sections that live inside Documents (HR, Vendors, ...). Admin can CREATE these. */
@@ -287,7 +299,7 @@
   let tab='users', search='', tmpU=null, openSecs=new Set(['managers','hr']);
 
   function tabSet(t){ tab=t; [...document.querySelectorAll('.tab')].forEach(b=>b.classList.toggle('active',b.dataset.t===t)); render(); }
-  function render(){ if(tab==='users')renderUsers(); else if(tab==='access')renderAccess(); else renderFiles(); }
+  function render(){ if(tab==='users')renderUsers(); else if(tab==='access')renderAccess(); else if(tab==='locs')renderLocs(); else renderFiles(); }
 
   /* ---------- PEOPLE ---------- */
   function renderUsers(){
@@ -341,7 +353,7 @@
     const lines=allSections().filter(s=>acc[s.k]!=='none').map(s=>'<div class="acc-line"><span>'+s.n+'</span><b class="lvl '+acc[s.k]+'" style="padding:1px 8px;border-radius:6px">'+LVLNAME[acc[s.k]]+'</b></div>').join('')||'<div class="acc-line" style="color:var(--soft)">No sections yet — add a team.</div>';
     const box=el('accpreview'); if(box) box.innerHTML='<h4>What '+u.f+' can access (from their teams)</h4>'+lines;
   }
-  function locChips(){ return ['All offices'].concat(LOCATIONS).map(l=>'<button class="tp'+(tmpU.locs.includes(l)?' on':'')+'" onclick="AD.togLoc(\''+l+'\')">'+l+'</button>').join(''); }
+  function locChips(){ return ['All offices'].concat(LOCATIONS_OF()).map(l=>'<button class="tp'+(tmpU.locs.includes(l)?' on':'')+'" onclick="AD.togLoc(\''+l+'\')">'+l+'</button>').join(''); }
   function togLoc(l){
     if(l==='All offices'){ tmpU.locs = tmpU.locs.includes('All offices')?[]:['All offices']; }
     else { const i=tmpU.locs.indexOf(l); if(i>=0)tmpU.locs.splice(i,1); else tmpU.locs.push(l);
@@ -367,6 +379,48 @@
       '<div class="legend"><span><i style="background:#f4f6f8"></i> None</span><span><i style="background:var(--blue-soft)"></i> View</span><span><i style="background:var(--good-soft)"></i> Add files</span><span><i style="background:var(--teal-soft)"></i> Edit</span><span><i style="background:var(--navy)"></i> Manage</span><span style="margin-left:auto">New sections you create appear here automatically.</span></div>';
   }
 
+  /* ---------- LOCATIONS (add offices as the group expands) ---------- */
+  function renderLocs(){
+    const rows=LOCS.map((l,i)=>'<tr onclick="AD.editLoc('+i+')"><td><div class="uname">'+l.n+'</div></td>'+
+      '<td><span class="chip">'+l.brand+'</span></td><td>'+l.state+'</td><td>'+l.tz+'</td>'+
+      '<td style="text-align:right"><button class="btn ghost mini-btn" onclick="event.stopPropagation();AD.editLoc('+i+')">Edit</button></td></tr>').join('');
+    el('view').innerHTML=
+      '<div class="intro"><b>Opening a new office?</b> Add it here once and it shows up everywhere \u2014 the schedule, the per-office document folders, people\u2019s locations, and the dashboard\u2019s office list. Nothing else to set up.</div>'+
+      '<div class="toolrow"><div class="panel-lab" style="margin:0">'+LOCS.length+' locations</div><span style="flex:1"></span>'+
+        '<button class="btn ghost" onclick="AD.resetLocs()">Reset to defaults</button><button class="btn" onclick="AD.newLoc()">+ Add location</button></div>'+
+      '<div class="tbl-scroll"><table class="u"><thead><tr><th>Office</th><th>Brand</th><th>State</th><th>Time zone</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+  }
+  let locDraft=null;
+  function newLoc(){ locDraft={i:-1,n:'',brand:(BRANDS_OF()[0]||'FFO'),state:'NM',tz:'MT'}; renderLocModal(); }
+  function editLoc(i){ locDraft=Object.assign({i:i},LOCS[i]); renderLocModal(); }
+  function renderLocModal(){
+    const d=locDraft, isNew=d.i<0;
+    const seg=(v,cur,fn)=>'<button class="segb'+(cur===v?' on':'')+'" onclick="AD.'+fn+'(\''+v+'\')">'+v+'</button>';
+    openModal(
+      '<div class="m-top"><h3 style="margin:0;font-size:17px;color:var(--navy)">'+(isNew?'\u2795 Add a location':'Edit location')+'</h3><button class="x" onclick="AD.close()">\u00d7</button></div>'+
+      '<div class="m-body">'+
+        '<div class="fld"><label>Office name</label><input id="locName" value="'+(d.n||'').replace(/"/g,'&quot;')+'" placeholder="e.g. Roswell"></div>'+
+        '<div class="fld"><label>Brand</label><div class="segrow">'+BRANDS_OF().concat(BRANDS_OF().indexOf(d.brand)<0&&d.brand?[d.brand]:[]).map(b=>seg(b,d.brand,'setLocBrand')).join('')+'</div></div>'+
+        '<div class="fld"><label>State</label><div class="segrow">'+['NM','TX','AZ','OK','CO'].map(x=>seg(x,d.state,'setLocState')).join('')+'</div></div>'+
+        '<div class="fld"><label>Time zone</label><div class="segrow">'+TZS.map(x=>seg(x,d.tz,'setLocTZ')).join('')+'</div></div>'+
+        '<div class="accessbox"><h4>What happens</h4>Adding an office creates its <b>Office Docs folder</b>, adds it to the <b>schedule board</b>, makes it selectable on <b>people\u2019s profiles</b>, and adds it to the <b>dashboard</b> once production numbers exist.</div>'+
+      '</div>'+
+      '<div class="m-foot">'+(isNew?'':'<button class="btn ghost" onclick="AD.delLoc()">Delete</button>')+
+        '<span style="flex:1"></span><button class="btn ghost" onclick="AD.close()">Cancel</button>'+
+        '<button class="btn" onclick="AD.saveLoc()">'+(isNew?'Add location':'Save')+'</button></div>');
+  }
+  function setLocBrand(v){locDraft.brand=v;renderLocModal();}
+  function setLocState(v){locDraft.state=v;renderLocModal();}
+  function setLocTZ(v){locDraft.tz=v;renderLocModal();}
+  function saveLoc(){
+    const nm=(el('locName')?el('locName').value:locDraft.n).trim(); if(!nm)return;
+    const rec={n:nm,brand:locDraft.brand,state:locDraft.state,tz:locDraft.tz};
+    if(locDraft.i<0) LOCS.push(rec); else LOCS[locDraft.i]=rec;
+    saveLocs(); closeModal(); renderLocs();
+  }
+  function delLoc(){ if(locDraft.i>=0){LOCS.splice(locDraft.i,1); saveLocs();} closeModal(); renderLocs(); }
+  function resetLocs(){ LOCS=JSON.parse(JSON.stringify(DEFAULT_LOCS)); saveLocs(); renderLocs(); }
+
   /* ---------- DOCUMENT SECTIONS (admin can create these) ---------- */
   const ICONS=['📁','👥','🏢','📝','🚚','🗂️','📆','🎓','🦷','💡','🧾','🔧','⭐','🔒'];
   function audChip(aud,scope,onclick){ return '<span class="aud '+aud+(onclick?'':' locked')+'"'+(onclick?' onclick="'+onclick+'"':'')+'>'+AUDLBL[aud]+(scope?' · '+scope:'')+'</span>'; }
@@ -381,11 +435,11 @@
       const open=openSecs.has(sec.k); let body='';
       if(sec.structure==='byLocation'){
         body='<p class="mini" style="margin:8px 0 2px">Automatically has <b>one folder per office</b> — each office only sees its own.</p>'+
-          LOCATIONS.map(loc=>'<div class="folder"><div class="folder-h">📁 '+loc+' '+audChip('location',loc+' team')+'</div>'+
+          LOCATIONS_OF().map(loc=>'<div class="folder"><div class="folder-h">📁 '+loc+' '+audChip('location',loc+' team')+'</div>'+
             (sec.locItems||[]).map(it=>fileRow(it,audChip('location',null))).join('')+'</div>').join('');
       } else if(sec.structure==='byBrand'){
         body='<p class="mini" style="margin:8px 0 2px">Automatically has <b>one folder per brand</b>.</p>'+
-          BRANDS.map(b=>'<div class="folder"><div class="folder-h">📁 '+b+' '+audChip('everyone',null)+'</div>'+
+          BRANDS_OF().map(b=>'<div class="folder"><div class="folder-h">📁 '+b+' '+audChip('everyone',null)+'</div>'+
             (sec.brandItems||[]).map(it=>fileRow(it,audChip('everyone',null))).join('')+'</div>').join('');
       } else {
         const items=sec.items||[];
@@ -425,7 +479,7 @@
     const d=secDraft;
     const seg=(cur,v,lab,fn)=>'<button class="segb'+(cur===v?' on':'')+'" onclick="AD.'+fn+'(\''+v+'\')">'+lab+'</button>';
     const icons=ICONS.map(i=>'<button class="icb'+(d.ic===i?' on':'')+'" onclick="AD.setSecIcon(\''+i+'\')">'+i+'</button>').join('');
-    const locPick = d.locMode==='some' ? '<div class="teampick" style="margin-top:8px">'+LOCATIONS.map(l=>'<button class="tp'+(d.locs.includes(l)?' on':'')+'" onclick="AD.togSecLoc(\''+l+'\')">'+l+'</button>').join('')+'</div>' : '';
+    const locPick = d.locMode==='some' ? '<div class="teampick" style="margin-top:8px">'+LOCATIONS_OF().map(l=>'<button class="tp'+(d.locs.includes(l)?' on':'')+'" onclick="AD.togSecLoc(\''+l+'\')">'+l+'</button>').join('')+'</div>' : '';
     const teamPick = d.teamMode==='some' ? '<div class="teampick" style="margin-top:8px">'+TEAMS.filter(t=>t!=='Admin').map(t=>'<button class="tp'+(d.teams.includes(t)?' on':'')+'" onclick="AD.togSecTeam(\''+t.replace(/'/g,"\\'")+'\')">'+t+'</button>').join('')+'</div>' : '';
     openModal(
       '<div class="m-top"><h3 style="margin:0;font-size:17px;color:var(--navy)">'+(d.isNew?'➕ New document section':'Edit section')+'</h3><button class="x" onclick="AD.close()">×</button></div>'+
@@ -520,7 +574,7 @@
   function openModal(h){ el('modalCard').innerHTML=h; el('modal').classList.add('open'); }
   function closeModal(){ el('modal').classList.remove('open'); }
 
-  window.AD={tab:tabSet,profile,addUser,togTeam,togLoc,setStatus,saveUser,pickLevel,pickAud,tog,addFile,noop,newSec,editSec,saveSec,delSec,resetSecs,setSecName,setSecIcon,setSecStruct,setSecLocMode,setSecTeamMode,togSecLoc,togSecTeam,close:closeModal};
+  window.AD={tab:tabSet,profile,addUser,togTeam,togLoc,setStatus,saveUser,pickLevel,pickAud,tog,addFile,noop,newSec,editSec,saveSec,delSec,resetSecs,setSecName,setSecIcon,setSecStruct,setSecLocMode,setSecTeamMode,togSecLoc,togSecTeam,renderLocs,newLoc,editLoc,saveLoc,delLoc,resetLocs,setLocBrand,setLocState,setLocTZ,close:closeModal};
   el('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
   render();

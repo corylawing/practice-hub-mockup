@@ -3,391 +3,352 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>KPI Dashboard (V1) — Practice Hub</title>
+<title>Production Dashboard (V1) — Practice Hub</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
 <meta name="theme-color" content="#0F2A4A">
-<meta name="description" content="Practice Hub V1 — a simple, easy-to-read production KPI dashboard for all offices.">
+<meta name="description" content="Practice Hub V1 — Production Dashboard: main & stretch goals, last-year comparison, and an all-office leaderboard.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Practice Hub">
-<meta property="og:title" content="KPI Dashboard (V1) · Practice Hub">
-<meta property="og:description" content="Production vs goal across all offices — at a glance.">
+<meta property="og:title" content="Production Dashboard (V1) · Practice Hub">
+<meta property="og:description" content="Production vs main and stretch goals, last year, and a leaderboard across all offices.">
 <meta property="og:image" content="https://corylawing.github.io/practice-hub-mockup/assets/og-image.png">
-<meta property="og:url" content="https://corylawing.github.io/practice-hub-mockup/v1/">
+<meta property="og:url" content="https://corylawing.github.io/practice-hub-mockup/v1/index.html">
 <style>
   :root{
-    --navy:#0F2A4A; --navy2:#25456e; --teal:#149B96; --teal2:#2BC0B8; --teal-soft:#E5F4F3;
+    --navy:#0F2A4A; --navy2:#25456e; --teal:#149B96; --teal2:#2BC0B8; --teal-soft:#E5F4F3; --teal-600:#0F827E;
     --ink:#1F2D3D; --soft:#56627A; --line:#E4E8EE; --canvas:#F4F6F8; --white:#fff;
-    --good:#2E9E6B; --good-soft:#E7F4EE; --bad:#D7503A; --bad-soft:#FBEAE7; --amber:#F2A03D;
+    --good:#2E9E6B; --good-soft:#E7F4EE; --bad:#D7503A; --bad-soft:#FBEAE7; --amber:#F2A03D; --amber-soft:#FFF3E2;
+    --blue:#1f6f9e; --blue-soft:#E3F0FA; --ly:#b9c3d1;
     --shadow:0 1px 2px rgba(15,42,74,.06),0 6px 18px rgba(15,42,74,.06);
-    --radius:14px; --maxw:1080px;
+    --shadow-lg:0 10px 30px rgba(15,42,74,.12); --radius:14px; --maxw:1100px;
   }
   *{box-sizing:border-box}
-  body{margin:0;font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-    color:var(--ink);background:var(--canvas);line-height:1.5;-webkit-font-smoothing:antialiased}
+  body{margin:0;font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--canvas);line-height:1.5;-webkit-font-smoothing:antialiased}
   h1{color:var(--navy);margin:0}
   .ribbon{background:var(--amber);color:#3a2400;text-align:center;font-size:13px;font-weight:600;padding:6px 14px}
   .hdr{background:var(--navy);color:#fff}
   .hdr-in{max-width:var(--maxw);margin:0 auto;display:flex;align-items:center;gap:12px;padding:13px 20px}
-  .mark{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--teal),var(--teal2));
-    display:grid;place-items:center;color:#fff;font-weight:800;font-size:16px}
+  .mark{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--teal),var(--teal2));display:grid;place-items:center;color:#fff;font-weight:800;font-size:16px}
   .brand{font-weight:700;font-size:18px;color:#fff;line-height:1.1}
   .brand small{display:block;font-weight:500;font-size:12px;color:#9fb4d0}
   .v1{background:rgba(255,255,255,.15);color:#eaf1fb;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;margin-left:6px}
   .v1nav{background:var(--navy2)}
-  .v1nav-in{max-width:var(--maxw);margin:0 auto;display:flex;gap:2px;padding:0 12px}
-  .v1nav a{color:#cdd9ea;font-size:14px;font-weight:600;padding:13px 16px;text-decoration:none;border-bottom:3px solid transparent}
+  .v1nav-in{max-width:var(--maxw);margin:0 auto;display:flex;gap:2px;padding:0 12px;overflow-x:auto}
+  .v1nav a{color:#cdd9ea;font-size:14px;font-weight:600;padding:13px 15px;text-decoration:none;border-bottom:3px solid transparent;white-space:nowrap}
   .v1nav a:hover{color:#fff;background:rgba(255,255,255,.05)}
   .v1nav a.active{color:#fff;border-bottom-color:var(--teal)}
-  .wrap{max-width:var(--maxw);margin:0 auto;padding:26px 20px 90px}
-  .toprow{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:20px}
-  .toprow h1{font-size:26px}
-  .toprow p{margin:4px 0 0;color:var(--soft);font-size:15px}
-  .pickrow{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-  select.pick{padding:10px 14px;border:1px solid var(--line);border-radius:10px;font-size:15px;font-weight:600;
-    color:var(--navy);background:#fff;box-shadow:var(--shadow);font-family:inherit;cursor:pointer}
-  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 20px}
-  .chip{padding:8px 14px;border:1px solid var(--line);border-radius:999px;background:#fff;font-size:14px;font-weight:600;
-    color:var(--navy);cursor:pointer;box-shadow:var(--shadow);font-family:inherit;transition:all .12s}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:22px 20px 90px}
+  /* viewing as */
+  .viewas{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:13px 16px;display:flex;align-items:center;gap:13px;flex-wrap:wrap;margin-bottom:18px;border-left:5px solid var(--teal)}
+  .viewas .lab{font-size:12px;color:var(--soft);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+  .viewas select{padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;font-weight:700;color:var(--navy);background:#fff;min-width:200px}
+  .viewas .scope{font-size:12.5px;color:var(--teal-600);background:var(--teal-soft);border:1px solid #c4e6e3;padding:5px 11px;border-radius:999px;font-weight:600;margin-left:auto}
+  .page-head h1{font-size:25px}
+  .page-head p{margin:4px 0 0;color:var(--soft);font-size:14.5px}
+  /* office tabs */
+  .chips{display:flex;gap:7px;flex-wrap:wrap;margin:18px 0 20px}
+  .chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;font-size:13.5px;font-weight:600;color:var(--navy);cursor:pointer;font-family:inherit;box-shadow:var(--shadow)}
   .chip:hover{border-color:var(--teal);color:var(--teal-600)}
-  .chip.active{background:var(--navy);color:#fff;border-color:var(--navy)}
-  .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-  .btn-print{padding:10px 14px;border:1px solid var(--line);border-radius:10px;font-size:14px;font-weight:600;
-    color:var(--navy);background:#fff;box-shadow:var(--shadow);font-family:inherit;cursor:pointer;white-space:nowrap}
-  .btn-print:hover{border-color:var(--teal);color:var(--teal-600)}
-  .pace{display:flex;align-items:center;gap:22px;margin-bottom:16px}
-  .pace .ring{flex:none}
-  .pace-h{font-size:17px;font-weight:800;color:var(--navy)}
-  .pace-sub{color:var(--soft);font-size:14.5px;margin-top:4px}
-  .pace-sub b{color:var(--navy)}
-  @media(max-width:520px){ .pace{flex-direction:column;text-align:center;gap:12px} }
-  @media print{
-    .ribbon,.hdr,.chips,.foot,.toolbar,.note,.sortsel,.tip{display:none!important}
-    body{background:#fff} .wrap{padding:8px 0}
-    .card,.kpi{box-shadow:none;border:1px solid #d9dfe7;break-inside:avoid}
-    *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  }
-  .sect{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--soft);font-weight:700;margin:30px 0 14px}
-  .summary{background:#fff;border:1px solid var(--line);border-left:4px solid var(--teal);border-radius:10px;
-    padding:12px 16px;font-size:14.5px;color:var(--ink);margin-bottom:20px;box-shadow:var(--shadow)}
-  .summary b{color:var(--navy)}
-  .sortrow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:30px 0 14px}
-  .sortrow .sect{margin:0}
-  select.sortsel{padding:7px 11px;border:1px solid var(--line);border-radius:8px;font-size:13px;font-weight:600;
-    color:var(--navy);background:#fff;font-family:inherit;cursor:pointer}
-  .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:20px 22px;box-shadow:var(--shadow)}
-  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
-  .kpi{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow)}
-  .kpi .lab{font-size:13px;color:var(--soft)}
-  .kpi .val{font-size:29px;font-weight:800;color:var(--navy);margin:6px 0 4px;letter-spacing:-.5px}
-  .kpi .sub{font-size:13px;font-weight:600}
-  .kpi .sub.up{color:var(--good)} .kpi .sub.down{color:var(--bad)} .kpi .sub.flat{color:var(--soft)}
-  /* office table */
-  .tbl-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
-  table.off{width:100%;border-collapse:collapse;background:#fff;min-width:560px}
-  table.off th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--soft);font-weight:700;
-    text-align:right;padding:12px 16px;background:#fafbfc;border-bottom:1px solid var(--line)}
-  table.off th:first-child{text-align:left}
-  table.off th.sortable{cursor:pointer;user-select:none;white-space:nowrap}
-  table.off th.sortable:hover{color:var(--navy)}
-  table.off th.active{color:var(--navy)}
-  .sarr{font-size:10px;color:#b4bdc9}
-  table.off th.active .sarr{color:var(--teal)}
-  table.off td{padding:13px 16px;border-bottom:1px solid var(--line);font-size:15px;text-align:right}
-  table.off td:first-child{text-align:left;font-weight:600;color:var(--navy)}
-  table.off tbody tr{cursor:pointer}
-  table.off tbody tr:not(.total):hover td{background:#f2fbfa}
-  table.off tbody tr:not(.total):hover td:first-child{color:var(--teal)}
-  table.off tbody tr:not(.total):hover .chev{color:var(--teal)}
-  .chev{color:var(--soft);font-weight:400;float:right}
-  table.off tr:last-child td{border-bottom:none}
-  table.off tr.total{cursor:default}
-  table.off tr.total td{background:#fafbfc;font-weight:800;color:var(--navy)}
-  .prodnum{font-weight:700;color:var(--navy)}
-  .minibar{height:6px;background:var(--canvas);border-radius:4px;margin-top:6px;min-width:80px}
-  .minibar span{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,var(--teal),var(--teal2))}
-  .pill{display:inline-block;padding:3px 9px;border-radius:999px;font-size:13px;font-weight:700}
-  .pill.up{background:var(--good-soft);color:var(--good)} .pill.down{background:var(--bad-soft);color:var(--bad)}
-  /* monthly bar chart */
-  .chart2{min-width:460px}
-  .plot{position:relative;height:210px;display:flex;align-items:flex-end;gap:16px;padding-top:26px}
-  .bcol{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;position:relative;z-index:2}
-  .bar2{width:100%;max-width:40px;border-radius:6px 6px 0 0;position:relative;cursor:pointer;transition:filter .12s,transform .12s}
-  .bar2:hover{filter:brightness(1.06)}
-  .bar2.active{transform:scaleX(1.04)}
-  .pv2{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);margin-bottom:5px;font-size:12px;font-weight:800;white-space:nowrap}
-  .gmark{position:absolute;left:50%;transform:translateX(-50%);width:52px;max-width:120%;border-top:2px dashed var(--navy);z-index:4;pointer-events:none}
-  .gkey{display:inline-block;width:18px;border-top:2px dashed var(--navy);position:relative;top:-3px}
-  .bar2.mtd{background:var(--teal-soft);border:2px dashed var(--teal);border-bottom:none}
-  .pv2.mtd-lab{color:var(--teal-600);font-size:11px;letter-spacing:.03em}
-  .mtd-tag{font-size:10px;color:var(--teal-600);background:var(--teal-soft);padding:1px 5px;border-radius:5px;font-weight:700}
-  .mtd-key{display:inline-block;width:15px;height:11px;border:1.5px dashed var(--teal);background:var(--teal-soft);vertical-align:middle;border-radius:2px}
-  .xrow{display:flex;gap:16px;margin-top:8px}
-  .xcol{flex:1;text-align:center}
-  .xm{font-size:13px;color:var(--soft);font-weight:600}
-  .xd{font-size:13px;color:var(--navy);font-weight:800;margin-top:2px}
-  .xg{font-size:11px;color:var(--soft);margin-top:1px}
-  .tip{position:absolute;z-index:10;background:var(--navy);color:#fff;border-radius:10px;padding:10px 12px;font-size:12.5px;
-    box-shadow:0 8px 24px rgba(15,42,74,.3);pointer-events:none;opacity:0;transform:translate(-50%,-6px);transition:opacity .12s;min-width:150px}
-  .tip.show{opacity:1}
-  .tip b{font-size:14px} .tip .row{display:flex;justify-content:space-between;gap:14px;margin-top:5px;color:#c7d4e6}
-  .tip .row b{color:#fff;font-size:12.5px}
-  .tip .p{margin-top:6px;font-weight:800}
-  .mini{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
-  .mini .lab{font-size:13px;color:var(--soft)} .mini .val{font-size:22px;font-weight:700;color:var(--navy);margin-top:4px}
-  .note{background:#FFF6E9;border:1px solid #f3dcb3;border-radius:12px;padding:14px 16px;font-size:14px;color:#7a5212;margin-top:26px}
-  .note b{color:#5e3f0c}
-  .legend{display:flex;gap:18px;font-size:13px;color:var(--soft);margin:2px 0 14px;flex-wrap:wrap}
-  .legend span{display:inline-flex;align-items:center;gap:7px}
-  .foot{background:var(--navy);color:#9fb4d0;font-size:13px;margin-top:40px}
-  .foot-in{max-width:var(--maxw);margin:0 auto;padding:24px 20px;display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
-  .foot a{color:#c7d4e6}
-  @media(max-width:820px){ .kpis{grid-template-columns:1fr 1fr} .mini{grid-template-columns:1fr 1fr} }
+  .chip.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .chip .br{font-size:10.5px;opacity:.65;margin-left:4px}
+  /* kpi cards */
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+  .kpi{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:15px 17px;border-top:4px solid var(--teal)}
+  .kpi.g{border-top-color:var(--good)} .kpi.b{border-top-color:var(--bad)} .kpi.n{border-top-color:var(--blue)}
+  .kpi .k{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--soft);font-weight:700}
+  .kpi .v{font-size:26px;font-weight:800;color:var(--navy);line-height:1.15;margin-top:3px}
+  .kpi .s{font-size:12.5px;color:var(--soft);margin-top:3px}
+  .kpi .s b.g{color:var(--good)} .kpi .s b.b{color:var(--bad)}
+  /* chart */
+  .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px;margin-top:18px}
+  .card h2{margin:0 0 2px;font-size:16px;color:var(--navy)}
+  .card .sub{font-size:12.5px;color:var(--soft);margin-bottom:14px}
+  .legend{display:flex;gap:15px;flex-wrap:wrap;font-size:12px;color:var(--soft);margin-bottom:12px;align-items:center}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .sw{width:13px;height:13px;border-radius:3px;display:inline-block}
+  .swline{width:16px;height:0;border-top:2px dashed var(--navy);display:inline-block}
+  .swdot{width:16px;height:0;border-top:2px dotted #8a5cf5;display:inline-block}
+  .chartwrap{overflow-x:auto}
+  .chart{display:flex;gap:10px;align-items:flex-end;min-width:620px;height:200px;padding-top:6px}
+  .mo{flex:1;display:flex;flex-direction:column;align-items:center;height:100%}
+  .bars{position:relative;width:100%;height:100%;display:flex;align-items:flex-end;justify-content:center;gap:3px}
+  .bar{width:38%;border-radius:5px 5px 0 0;position:relative;transition:filter .15s}
+  .bar:hover{filter:brightness(.92)}
+  .bar.lyb{background:var(--ly)}
+  .bar.ab{background:var(--teal)}
+  .bar.ab.over{background:var(--good)} .bar.ab.under{background:var(--bad)} .bar.ab.mtd{background:var(--amber)}
+  .gm{position:absolute;left:2%;right:2%;border-top:2px dashed var(--navy);pointer-events:none}
+  .sm{position:absolute;left:2%;right:2%;border-top:2px dotted #8a5cf5;pointer-events:none}
+  .molab{font-size:11px;color:var(--soft);font-weight:700;margin-top:7px;white-space:nowrap}
+  .tip{position:fixed;background:var(--navy);color:#fff;font-size:12px;padding:7px 10px;border-radius:8px;pointer-events:none;opacity:0;transition:opacity .12s;z-index:50;white-space:nowrap;box-shadow:var(--shadow-lg)}
+  /* leaderboard */
+  .lb-scroll{overflow-x:auto}
+  table.lb{width:100%;border-collapse:collapse;min-width:680px}
+  table.lb th{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--soft);font-weight:700;text-align:left;padding:9px 10px;border-bottom:1px solid var(--line)}
+  table.lb td{padding:11px 10px;border-bottom:1px solid var(--line);font-size:14px}
+  table.lb tr:last-child td{border-bottom:none}
+  table.lb tbody tr{cursor:pointer}
+  table.lb tbody tr:hover td{background:#f2fbfa}
+  .rk{font-weight:800;color:var(--soft);width:34px}
+  .rk.top{color:#b8860b}
+  .onm{font-weight:700;color:var(--navy)}
+  .onm .br{font-size:10.5px;color:var(--soft);font-weight:600;margin-left:5px}
+  .pbar{height:8px;background:var(--canvas);border-radius:99px;overflow:hidden;min-width:80px;margin-top:4px}
+  .pbar i{display:block;height:100%;border-radius:99px;background:var(--good)}
+  .pbar i.b{background:var(--bad)} .pbar i.a{background:var(--amber)}
+  .num{font-weight:700} .num.g{color:var(--good)} .num.b{color:var(--bad)}
+  .dleft{font-weight:700;color:var(--navy)}
+  .noacc{background:#fff;border:1px dashed var(--line);border-radius:14px;padding:34px;text-align:center;color:var(--soft)}
+  .noacc b{color:var(--navy)}
+  .foot{font-size:12px;color:var(--soft);margin-top:18px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 15px;line-height:1.55}
+  .foot b{color:var(--navy)}
+  @media(max-width:620px){ .kpi .v{font-size:22px} }
 </style>
 </head>
 <body>
-<div class="ribbon">PROTOTYPE — real numbers from the 2026 Production sheet, for validation. Live version reads the Excel automatically.</div>
+<div class="ribbon">PROTOTYPE — real numbers from the 2026 Production Dashboard workbook. You only see the offices you have access to.</div>
 <header class="hdr">
   <div class="hdr-in">
     <span class="mark">PH</span>
-    <span class="brand">Practice Hub<small>KPI Dashboard</small></span>
+    <span class="brand">Practice Hub<small>Production Dashboard</small></span>
     <span class="v1">V1 preview</span>
   </div>
 </header>
-<nav class="v1nav"><div class="v1nav-in">
-  <a href="home.html">🏠 Home</a>
-  <a href="index.html" class="active">📊 Dashboard</a>
-  <a href="schedule.html">📅 Schedule</a>
-  <a href="marketing.html">📣 Marketing</a>
-  <a href="admin.html">⚙️ Admin</a>
-</div></nav>
+<nav class="v1nav"><div class="v1nav-in" id="nav"></div></nav>
 
 <div class="wrap">
-  <div class="toprow">
-    <div>
-      <h1>Production Dashboard</h1>
-      <p>How each office is tracking against goal — at a glance.</p>
-    </div>
-    <div class="toolbar">
-      <select class="pick" id="yearPick" aria-label="Choose year"><option>2026</option></select>
-      <button class="btn-print" onclick="window.print()">🖨 Print / PDF</button>
-    </div>
+  <div class="viewas">
+    <span class="lab">👤 Viewing as</span>
+    <select id="persona" onchange="DASH.set(this.value)"></select>
+    <span class="scope" id="scope"></span>
   </div>
-  <div class="chips" id="officeChips"></div>
+  <div class="page-head">
+    <h1>Production Dashboard</h1>
+    <p id="sub">Where production stands against the main goal and the stretch goal.</p>
+  </div>
+  <div id="chips" class="chips"></div>
   <div id="view"></div>
-
-  <div class="note">
-    <b>How this works at go-live:</b> in the real Practice Hub this reads straight from your Production sheet in SharePoint (Excel web part), so it updates itself when the sheet changes — no copy-paste, no code. Pick an office up top to drill in, or “All Offices” for the leadership view. The current month (July) shows month-to-date as an “in progress” bar, so the numbers read in real time.
-  </div>
 </div>
-
-<footer class="foot">
-  <div class="foot-in">
-    <div>© 2026 Practice Hub <span style="opacity:.6">(V1 prototype — real 2026 data)</span></div>
-    <div><a href="../index.html">← Back to full mockup</a></div>
-  </div>
-</footer>
+<div class="tip" id="tip"></div>
 
 <script>
-const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul"];
-// Real 2026 YTD figures pulled from the Production workbook (Jan–Jul actuals).
-const OFFICES = [
-  {name:"Carlsbad (FFO)",   prod:1385156, vsGoal:87597,  startsVsGoal:16, starts:128, debands:91, latest:"Jun 105%", yoy:112, avgDay:26012, fee:5556,
-    pct:[72,103,160,100,100,105,46], act:[181401,222938,265861,215356,189779,234104,114212], goal:[252912,216988,166188,214647,189249,222278,245976], mtdIdx:6},
-  {name:"Clovis (FFO)",     prod:1351134, vsGoal:172037, startsVsGoal:32, starts:137, debands:101,latest:"Jun 126%", yoy:145, avgDay:22080, fee:5418,
-    pct:[151,125,119,84,101,126,29], act:[226073,258625,246687,172148,167889,198722,93666], goal:[150201,207644,207905,204125,166173,158085,325468], mtdIdx:6},
-  {name:"Hobbs (FFO)",      prod:1359890, vsGoal:86670,  startsVsGoal:14, starts:105, debands:51, latest:"Jun 114%", yoy:118, avgDay:32414, fee:6175,
-    pct:[86,104,110,124,97,114,49], act:[197542,208458,229738,225227,197845,259312,68069], goal:[230923,199566,208649,181588,204041,228096,139976], mtdIdx:6},
-  {name:"San Angelo (FFO)", prod:1773027, vsGoal:257403, startsVsGoal:46, starts:175, debands:86, latest:"Jun 130%", yoy:132, avgDay:34518, fee:5622,
-    pct:[132,180,114,99,74,130,35], act:[364028,347608,273810,209565,201489,310660,100943], goal:[275667,193614,240442,210867,274049,239473,291472], mtdIdx:6},
-  {name:"Lubbock (FFO)",    prod:618287,  vsGoal:-22956, startsVsGoal:-4, starts:67,  debands:60, latest:"Jun 101%", yoy:92,  avgDay:10188, fee:5164,
-    pct:[84,78,117,109,103,101,36], act:[123060,104157,137058,84810,103300,81500,34865], goal:[146572,133479,116836,77523,100442,80660,96519], mtdIdx:6},
-  {name:"Mansfield (SUN)",  prod:728029,  vsGoal:-90290, startsVsGoal:-15,starts:80,  debands:60, latest:"Jun 172%", yoy:117, avgDay:19854, fee:6000,
-    pct:[null,null,null,73,36,172,37], act:[null,null,null,95285,63447,178690,53890], goal:[null,null,null,130268,174025,104054,146511], mtdIdx:6},
-  {name:"Cruces (LCO)",     prod:656262,  vsGoal:38987,  startsVsGoal:8,  starts:null,debands:null,latest:"Jul 78%",  yoy:null,avgDay:20111, fee:4750,
-    pct:[null,null,null,null,null,null], act:[], goal:[], newish:true},
-  {name:"Cruces (Legacy)",  prod:396791,  vsGoal:-28686, startsVsGoal:-6, starts:null,debands:null,latest:"Jul 17%",  yoy:null,avgDay:4998,  fee:4601,
-    pct:[null,null,null,null,null,null], act:[], goal:[], newish:true},
+const OFFICES=[
+  {n:'Carlsbad',brand:'FFO',state:'NM',
+   act:[181401, 222938, 265861, 215356, 189779, 234104, 290603, 0, 0, 0, 0, 0],
+   goal:[252912, 216988, 166188, 214647, 189249, 222278, 245976, 200435, 218840, 177212, 146966, 139312],
+   stretch:[278203, 238687, 191117, 231819, 227099, 231169, 268114, 214465, 227594, 212654, 176359, 167174],
+   ly:[243184, 208642, 159797, 211773, 181970, 213729, 245514, 192726, 210423, 170396, 141314, 99715],
+   days:[9, 9, 8, 8, 7, 9, 10, 9, 9, 9, 9, 9], done:[9, 9, 8, 8, 7, 9, 10, 0, 0, 0, 0, 0]},
+  {n:'Clovis',brand:'FFO',state:'NM',
+   act:[226073, 258625, 246687, 172148, 167889, 198722, 229262, 0, 0, 0, 0, 0],
+   goal:[150201, 207644, 207905, 204125, 166173, 158085, 325468, 226833, 159142, 175696, 145196, 179490],
+   stretch:[171230, 236714, 237012, 232702, 189437, 180217, 348251, 258590, 181422, 200293, 165523, 204619],
+   ly:[141194, 199658, 199909, 196274, 159782, 135696, 324796, 218109, 153021, 168938, 131996, 172587],
+   days:[9, 9, 9, 9, 9, 9, 10, 9, 9, 9, 9, 9], done:[9, 9, 9, 9, 9, 9, 10, 0, 0, 0, 0, 0]},
+  {n:'Hobbs',brand:'FFO',state:'NM',
+   act:[197542, 208458, 229738, 225227, 197845, 259312, 203047, 0, 0, 0, 0, 0],
+   goal:[230923, 199566, 208649, 181588, 204041, 228096, 139976, 178059, 151724, 246031, 188257, 177982],
+   stretch:[260942, 225509, 239946, 205195, 244849, 255468, 162372, 206549, 174482, 295237, 225909, 195780],
+   ly:[213817, 182569, 200624, 179291, 196193, 219323, 139850, 171211, 132037, 236568, 162606, 176638],
+   days:[7, 9, 9, 8, 7, 8, 9, 8, 12, 9, 9, 9], done:[7, 9, 9, 8, 7, 8, 9, 0, 0, 0, 0, 0]},
+  {n:'Cruces LCO',brand:'LCO',state:'NM',
+   act:[0, 0, 0, 0, 0, 0, 147724, 0, 0, 0, 0, 0],
+   goal:[0, 0, 0, 0, 0, 0, 103648, 166866, 167404, 138716, 81094, 102830],
+   stretch:[0, 0, 0, 0, 0, 0, 129560, 191896, 192514, 166459, 97313, 113113],
+   ly:[162853, 182471, 195844, 108465, 154735, 128231, 85323, 154751, 156004, 126105, 61088, 92631],
+   days:[7, 9, 9, 9, 9, 9, 10, 9, 9, 9, 9, 9], done:[0, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0, 0]},
+  {n:'Cruces FFO',brand:'FFO',state:'NM',
+   act:[0, 0, 0, 0, 0, 0, 43930, 0, 0, 0, 0, 0],
+   goal:[0, 0, 0, 0, 0, 0, 87361, 75272, 68613, 73501, 70542, 79563],
+   stretch:[0, 0, 0, 0, 0, 0, 104834, 90326, 82336, 88202, 84650, 95476],
+   ly:[76649, 81688, 111595, 77344, 93396, 77875, 116482, 53766, 42883, 40834, 39190, 61202],
+   days:[0, 0, 0, 0, 0, 0, 6, 7, 7, 7, 7, 7], done:[0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 0]},
+  {n:'Lubbock',brand:'FFO',state:'TX',
+   act:[123060, 104157, 137058, 84810, 103300, 81500, 83115, 0, 0, 0, 0, 0],
+   goal:[146572, 133479, 116836, 77523, 100442, 80660, 96519, 98413, 99420, 115639, 81771, 88319],
+   stretch:[166559, 157748, 132768, 119808, 127835, 124656, 131617, 113722, 112977, 111191, 107470, 103905],
+   ly:[133247, 121345, 106214, 70475, 91311, 73327, 87744, 87479, 90382, 88953, 46726, 51952],
+   days:[7, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8], done:[7, 8, 8, 8, 8, 8, 8, 0, 0, 0, 0, 0]},
+  {n:'San Angelo',brand:'FFO',state:'TX',
+   act:[364028, 347608, 273810, 209565, 201489, 310660, 203469, 0, 0, 0, 0, 0],
+   goal:[275667, 193614, 240442, 210867, 274049, 239473, 291472, 312606, 214035, 248641, 192785, 267286],
+   stretch:[301921, 219429, 263341, 230950, 300148, 262279, 319232, 342378, 234419, 272321, 211145, 292741],
+   ly:[262540, 129076, 228992, 200826, 260999, 228069, 277593, 297720, 203842, 236801, 183605, 254558],
+   days:[10, 13, 10, 9, 10, 9, 10, 10, 10, 9, 8, 9], done:[10, 13, 10, 9, 10, 9, 10, 0, 0, 0, 0, 0]},
+  {n:'Mansfield',brand:'SUN',state:'TX',
+   act:[108954, 92996, 139815, 95285, 63447, 178690, 173500, 0, 0, 0, 0, 0],
+   goal:[0, 0, 0, 130268, 174025, 104053, 146511, 100531, 74090, 71498, 103061, 52919],
+   stretch:[0, 0, 0, 145900, 189158, 148648, 209301, 143616, 105842, 96522, 139132, 71440],
+   ly:[107458, 121458, 124990, 104214, 151326, 148648, 209301, 143616, 105842, 71498, 103061, 52919],
+   days:[9, 10, 11, 9, 10, 9, 10, 9, 9, 8, 7, 8], done:[9, 10, 11, 9, 10, 9, 10, 0, 0, 0, 0, 0]}
 ];
-
-const fmt = n => "$"+Math.round(n).toLocaleString("en-US");
-const fmtM = n => "$"+(n/1e6).toFixed(2)+"M";
-const fmtK = n => n>=1e6 ? "$"+(n/1e6).toFixed(2)+"M" : "$"+Math.round(n/1000)+"k";
-const signed = n => (n>=0?"+":"−")+"$"+Math.abs(Math.round(n)).toLocaleString("en-US");
-const signedN = n => (n>=0?"+":"−")+Math.abs(n);
-const pctColor = p => p>=100 ? "var(--good)" : (p>=85 ? "var(--amber)" : "var(--bad)");
-const ANNUAL_GOAL = 13742510; // sum of each office's 2026 full-year production goal
-
-function ring(pct,size=112){
-  const cx=size/2, r=cx-11, c=2*Math.PI*r, off=c*(1-Math.min(pct,1));
-  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
-    <circle cx="${cx}" cy="${cx}" r="${r}" fill="none" stroke="var(--canvas)" stroke-width="11"/>
-    <circle cx="${cx}" cy="${cx}" r="${r}" fill="none" stroke="var(--teal)" stroke-width="11" stroke-linecap="round"
-      stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}" transform="rotate(-90 ${cx} ${cx})"/>
-    <text x="${cx}" y="${cx-1}" text-anchor="middle" font-size="25" font-weight="800" fill="var(--navy)">${Math.round(pct*100)}%</text>
-    <text x="${cx}" y="${cx+17}" text-anchor="middle" font-size="10.5" fill="var(--soft)">of annual</text></svg>`;
-}
-
-let sortKey = "prod", sortDir = "desc";
-function sortCol(key){
-  if(sortKey===key) sortDir = sortDir==="asc" ? "desc" : "asc";
-  else { sortKey = key; sortDir = key==="name" ? "asc" : "desc"; }
-  renderAll();
-}
-function sortTh(label,key){
-  const active = sortKey===key, arrow = active ? (sortDir==="asc"?"▲":"▼") : "↕";
-  return `<th class="sortable${active?" active":""}" onclick="sortCol('${key}')">${label} <span class="sarr">${arrow}</span></th>`;
-}
-
-function renderAll(){
-  const prod = OFFICES.reduce((s,o)=>s+o.prod,0);
-  const vs   = OFFICES.reduce((s,o)=>s+o.vsGoal,0);
-  const st   = OFFICES.reduce((s,o)=>s+o.startsVsGoal,0);
-  const maxProd = Math.max(...OFFICES.map(o=>o.prod));
-  const ahead = OFFICES.filter(o=>o.vsGoal>=0).length;
-  const byGoal = [...OFFICES].sort((a,b)=>b.vsGoal-a.vsGoal);
-  const top = byGoal[0], bottom = byGoal[byGoal.length-1];
-  const summary = `<div class="summary"><b>${ahead} of ${OFFICES.length} offices</b> are ahead of goal. <b>${top.name}</b> leads at ${signed(top.vsGoal)}; <b>${bottom.name}</b> is furthest behind at ${signed(bottom.vsGoal)}.</div>`;
-  const val = o => sortKey==="name" ? o.name : sortKey==="vsgoal" ? o.vsGoal : sortKey==="starts" ? o.startsVsGoal : o.prod;
-  const rows = [...OFFICES].sort((a,b)=>{ const av=val(a),bv=val(b); const r=(typeof av==="string")?av.localeCompare(bv):av-bv; return sortDir==="asc"?r:-r; }).map(o=>`
-    <tr onclick="pick('${o.name}')">
-      <td>${o.name} <span class="chev">›</span></td>
-      <td><div class="prodnum">${fmt(o.prod)}</div><div class="minibar"><span style="width:${Math.round(o.prod/maxProd*100)}%"></span></div></td>
-      <td><span class="pill ${o.vsGoal>=0?'up':'down'}">${signed(o.vsGoal)}</span></td>
-      <td><span class="pill ${o.startsVsGoal>=0?'up':'down'}">${signedN(o.startsVsGoal)}</span></td>
-    </tr>`).join("");
-  const pace = prod/ANNUAL_GOAL;
-  const paceCard = `<div class="card pace"><div class="ring">${ring(pace)}</div>
-    <div><div class="pace-h">2026 annual pace</div>
-    <div class="pace-sub"><b>${fmtM(prod)}</b> produced of the <b>${fmtM(ANNUAL_GOAL)}</b> full-year goal, across all ${OFFICES.length} offices.</div></div></div>`;
-  document.getElementById("view").innerHTML = `
-    ${summary}
-    ${paceCard}
-    <div class="kpis">
-      <div class="kpi"><div class="lab">Group Net Production (YTD)</div><div class="val">${fmtM(prod)}</div><div class="sub flat">across ${OFFICES.length} offices</div></div>
-      <div class="kpi"><div class="lab">Group vs Goal (YTD)</div><div class="val" style="color:${vs>=0?'var(--good)':'var(--bad)'}">${signed(vs)}</div><div class="sub ${vs>=0?'up':'down'}">${vs>=0?'▲ ahead of pace':'▼ behind pace'}</div></div>
-      <div class="kpi"><div class="lab">Net Starts vs Goal</div><div class="val" style="color:${st>=0?'var(--good)':'var(--bad)'}">${signedN(st)}</div><div class="sub ${st>=0?'up':'down'}">${st>=0?'▲ ahead':'▼ behind'}</div></div>
-      <div class="kpi"><div class="lab">Offices ahead of goal</div><div class="val">${OFFICES.filter(o=>o.vsGoal>=0).length} / ${OFFICES.length}</div><div class="sub flat">on production</div></div>
-    </div>
-    <div class="sect">Every office — 2026 YTD</div>
-    <div class="tbl-scroll">
-      <table class="off">
-        <thead><tr>${sortTh("Office","name")}${sortTh("Net Production","prod")}${sortTh("vs Goal","vsgoal")}${sortTh("Starts vs Goal","starts")}</tr></thead>
-        <tbody>
-          ${rows}
-          <tr class="total"><td>All offices</td><td>${fmt(prod)}</td><td>${signed(vs)}</td><td>${signedN(st)}</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <p style="font-size:13px;color:var(--soft);margin:12px 2px 0">Tap a column header to sort · tap a row to open an office.</p>`;
-}
-
-function renderOffice(o){
-  const H = 184;
-  const maxVal = Math.max(1, ...o.act.map((a,i)=> a!=null ? Math.max(a, o.goal[i]) : 0));
-  const plotBars = o.pct.map((p,i)=>{
-    if(p==null) return `<div class="bcol"></div>`;
-    const bh = Math.max(10, Math.round(o.act[i]/maxVal*H));
-    const gy = Math.round(o.goal[i]/maxVal*H);
-    const mtd = i===o.mtdIdx;
-    const barStyle = mtd ? `height:${bh}px` : `height:${bh}px;background:${pctColor(p)}`;
-    const topLab = mtd ? `<span class="pv2 mtd-lab">MTD</span>` : `<span class="pv2" style="color:${pctColor(p)}">${p}%</span>`;
-    return `<div class="bcol">
-      <div class="bar2${mtd?' mtd':''}" data-i="${i}" tabindex="0" style="${barStyle}">${topLab}</div>
-      <div class="gmark" style="bottom:${gy}px"></div>
-    </div>`;
-  }).join("");
-  const xcols = o.pct.map((p,i)=>`<div class="xcol"><div class="xm">${MONTHS[i]}${i===o.mtdIdx?' <span class="mtd-tag">so far</span>':''}</div><div class="xd">${p!=null?fmtK(o.act[i]):'—'}</div><div class="xg">${p!=null?'goal '+fmtK(o.goal[i]):''}</div></div>`).join("");
-  const chart = o.newish
-    ? `<div class="card"><p style="margin:0;color:var(--soft)">This office recently began reporting — monthly history builds over the year.</p></div>`
-    : `<div class="card chart2" id="chart2" style="position:relative">
-        <div class="legend"><span>Bars = actual $ · <b style="color:var(--good)">green</b> beat goal · <b style="color:var(--amber)">amber</b> 85–99% · <b style="color:var(--bad)">red</b> &lt;85%</span><span style="margin-left:auto"><span class="gkey"></span> goal · <span class="mtd-key"></span> July so far · tap for $</span></div>
-        <div style="overflow-x:auto">
-          <div class="plot">${plotBars}</div>
-          <div class="xrow">${xcols}</div>
-        </div>
-        <div class="tip" id="tip"></div>
-      </div>`;
-  const parts=o.latest.split(' '), lastMo=parts[0], lastPct=parts[1];
-  const idxs=o.pct.map((p,i)=> (p!=null && i!==o.mtdIdx) ? i : -1).filter(i=>i>=0);
-  let moDelta=`<div class="sub flat">${lastMo}</div>`;
-  if(idxs.length>=2){const li=idxs[idxs.length-1],pi=idxs[idxs.length-2],d=o.pct[li]-o.pct[pi];
-    moDelta=`<div class="sub ${d>=0?'up':'down'}">${d>=0?'▲':'▼'} ${Math.abs(d)} pts vs ${MONTHS[pi]}</div>`;}
-  const summary = o.newish
-    ? `<div class="summary"><b>${o.name}</b> recently began reporting — monthly trends build over the year.</div>`
-    : `<div class="summary"><b>${o.name}</b> is ${o.vsGoal>=0?'ahead of':'behind'} its 2026 goal by <b>${fmt(Math.abs(o.vsGoal))}</b>, tracking at <b>${lastPct}</b> of goal in ${lastMo}.</div>`;
-  document.getElementById("view").innerHTML = `
-    ${summary}
-    <div class="kpis">
-      <div class="kpi"><div class="lab">Net Production (YTD)</div><div class="val">${fmt(o.prod)}</div><div class="sub flat">incl. Medicaid</div></div>
-      <div class="kpi"><div class="lab">YTD vs Goal</div><div class="val" style="color:${o.vsGoal>=0?'var(--good)':'var(--bad)'}">${signed(o.vsGoal)}</div><div class="sub ${o.vsGoal>=0?'up':'down'}">${o.vsGoal>=0?'▲ ahead':'▼ behind'}</div></div>
-      <div class="kpi"><div class="lab">Last month to goal</div><div class="val">${lastPct}</div>${moDelta}</div>
-      <div class="kpi"><div class="lab">Growth vs last year</div><div class="val">${o.yoy!=null?o.yoy+'%':'—'}</div><div class="sub ${o.yoy>=100?'up':'flat'}">${o.yoy!=null?'June vs 2025':'building history'}</div></div>
-    </div>
-    <div class="sect">Production vs goal by month — 2026</div>
-    ${chart}
-    <div class="sect">Other key numbers (YTD)</div>
-    <div class="card"><div class="mini">
-      <div><div class="lab">Total Starts</div><div class="val">${o.starts!=null?o.starts:'—'}</div></div>
-      <div><div class="lab">Total Debands</div><div class="val">${o.debands!=null?o.debands:'—'}</div></div>
-      <div><div class="lab">Avg Production / Day</div><div class="val">${fmt(o.avgDay)}</div></div>
-      <div><div class="lab">Avg Case Fee (2025)</div><div class="val">${fmt(o.fee)}</div></div>
-    </div></div>`;
-  if(!o.newish) wireBars(o);
-}
-
-function wireBars(o){
-  const chart=document.getElementById("chart2"); if(!chart) return;
-  const tip=document.getElementById("tip");
-  const bars=[...chart.querySelectorAll(".bar2")];
-  const tipColor=p=>p>=100?"#7EE6C6":(p>=85?"#F7C67A":"#F3A79A");
-  function show(bar){
-    const i=+bar.dataset.i, mtd=i===o.mtdIdx;
-    tip.innerHTML=`<b>${MONTHS[i]} 2026${mtd?" · in progress":""}</b>
-      <div class="row"><span>${mtd?"So far":"Production"}</span><b>${fmt(o.act[i])}</b></div>
-      <div class="row"><span>Goal</span><b>${fmt(o.goal[i])}</b></div>
-      <div class="p" style="color:${mtd?"#c7d4e6":tipColor(o.pct[i])}">${o.pct[i]}% of goal${mtd?" so far":""}</div>`;
-    const cr=chart.getBoundingClientRect(), br=bar.getBoundingClientRect();
-    tip.style.left=(br.left-cr.left+br.width/2)+"px";
-    tip.style.top=(br.top-cr.top-10)+"px";
-    tip.classList.add("show");
-    bars.forEach(b=>b.classList.remove("active")); bar.classList.add("active");
-  }
-  function hide(){ tip.classList.remove("show"); bars.forEach(b=>b.classList.remove("active")); }
-  bars.forEach(bar=>{
-    bar.addEventListener("mouseenter",()=>show(bar));
-    bar.addEventListener("mouseleave",hide);
-    bar.addEventListener("focus",()=>show(bar));
-    bar.addEventListener("blur",hide);
-    bar.addEventListener("click",e=>{e.stopPropagation();show(bar);});
+// Numbers typed on the "Enter Production" page flow straight into this dashboard.
+(function applyEdits(){
+  let e={}; try{ e=JSON.parse(localStorage.getItem('ph_prod'))||{}; }catch(_){ return; }
+  Object.keys(e).forEach(k=>{
+    const p=k.split('|'), o=OFFICES.find(x=>x.n===p[0]), m=+p[1], v=e[k];
+    if(!o||isNaN(m)) return;
+    if(v._total!==undefined&&v._total!=='') o.act[m]=Number(v._total);
+    if(v.goal!==undefined&&v.goal!=='')    o.goal[m]=Number(v.goal);
+    if(v._days!==undefined&&v._days!=='')  o.done[m]=Number(v._days);
   });
-  document.addEventListener("click",hide);
-}
+})();
+(function(){
+  const MO=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const PERSONAS=[
+    {id:'admin',name:'Administrator',offices:'all'},
+    {id:'om',name:'Office Manager — Carlsbad',offices:['Carlsbad']},
+    {id:'doctor',name:'Doctor — Carlsbad & Hobbs',offices:['Carlsbad','Hobbs']},
+    {id:'tc',name:'Treatment Coordinator',offices:[]},
+    {id:'staff',name:'Front Desk / Staff',offices:[]}
+  ];
+  const NAVSECS=[{k:'schedule',n:'📅 Schedule',href:'schedule.html'},{k:'marketing',n:'📣 Marketing',href:'marketing.html'}];
+  const el=id=>document.getElementById(id);
+  let cur=PERSONAS[0], sel='ALL', allowed=[];
 
-let current = "all";
-function pick(v){ current = v; route(); }
-function route(){
-  document.querySelectorAll("#officeChips .chip").forEach(c=>c.classList.toggle("active", c.dataset.v===current));
-  if(current==="all") renderAll(); else renderOffice(OFFICES.find(o=>o.name===current));
-  window.scrollTo(0,0);
-}
-(function init(){
-  document.getElementById("officeChips").innerHTML =
-    `<button class="chip" data-v="all" onclick="pick('all')">🏢 All Offices</button>` +
-    OFFICES.map(o=>`<button class="chip" data-v="${o.name}" onclick="pick('${o.name}')">${o.name}</button>`).join("");
-  route();
+  // a month counts once it has BOTH an actual and a goal (Mansfield has actuals from Jan but goals only from Apr)
+  const live=o=>{const a=[];for(let i=0;i<12;i++)if(o.act[i]>0&&o.goal[i]>0)a.push(i);return a;};
+  const sum=(arr,idx)=>idx.reduce((s,i)=>s+arr[i],0);
+  function stats(o){
+    const L=live(o);
+    const a=sum(o.act,L), g=sum(o.goal,L), s=sum(o.stretch,L), l=sum(o.ly,L);
+    return {L,a,g,s,l,pct:g?a/g:0,spct:s?a/s:0,yoy:l?a/l:0,vgoal:a-g,vstretch:a-s,
+            daysLeft:o.days.reduce((x,y)=>x+y,0)-o.done.reduce((x,y)=>x+y,0)};
+  }
+  function group(list){
+    const z=()=>Array(12).fill(0);
+    const G={n:'All Offices',brand:'',act:z(),goal:z(),stretch:z(),ly:z(),days:z(),done:z()};
+    list.forEach(o=>{ const L=live(o);
+      for(let i=0;i<12;i++){ if(L.indexOf(i)>=0){G.act[i]+=o.act[i];G.goal[i]+=o.goal[i];G.stretch[i]+=o.stretch[i];G.ly[i]+=o.ly[i];}
+        G.days[i]+=o.days[i]; G.done[i]+=o.done[i]; } });
+    return G;
+  }
+  const money=v=>{const s=v<0?'-':'';v=Math.abs(v);
+    return s+'$'+(v>=1e6?(v/1e6).toFixed(2)+'M':v>=1e3?Math.round(v/1e3)+'K':Math.round(v));};
+  const full=v=>(v<0?'-$':'$')+Math.abs(Math.round(v)).toLocaleString('en-US');
+  const pc=v=>Math.round(v*100)+'%';
+
+  function renderNav(){
+    let h='<a href="home.html">🏠 Home</a><a class="active" href="index.html">📊 Dashboard</a><a href="production.html">📝 Enter Production</a>';
+    NAVSECS.forEach(s=>h+='<a href="'+s.href+'">'+s.n+'</a>');
+    h+='<a href="documents.html">📁 Documents</a>';
+    if(cur.id==='admin')h+='<a href="admin.html">⚙️ Admin</a>';
+    el('nav').innerHTML=h;
+  }
+  function kpis(o){
+    const t=stats(o);
+    const vg=t.vgoal>=0, vy=t.yoy>=1;
+    return '<div class="kpis">'+
+      '<div class="kpi n"><div class="k">Production so far</div><div class="v">'+money(t.a)+'</div>'+
+        '<div class="s">'+t.L.length+' month'+(t.L.length===1?'':'s')+' with a goal set</div></div>'+
+      '<div class="kpi '+(vg?'g':'b')+'"><div class="k">vs Main goal</div><div class="v" style="color:'+(vg?'var(--good)':'var(--bad)')+'">'+(vg?'+':'')+money(t.vgoal)+'</div>'+
+        '<div class="s">Main goal '+money(t.g)+'</div></div>'+
+      '<div class="kpi"><div class="k">% of main goal</div><div class="v">'+pc(t.pct)+'</div>'+
+        '<div class="s">Stretch: <b class="'+(t.vstretch>=0?'g':'b')+'">'+pc(t.spct)+'</b> of '+money(t.s)+'</div></div>'+
+      '<div class="kpi '+(vy?'g':'b')+'"><div class="k">vs Last year</div><div class="v" style="color:'+(vy?'var(--good)':'var(--bad)')+'">'+pc(t.yoy)+'</div>'+
+        '<div class="s">Last year '+money(t.l)+'</div></div>'+
+    '</div>';
+  }
+  function chart(o){
+    const L=live(o); if(!L.length) return '';
+    let max=0; L.forEach(i=>{max=Math.max(max,o.act[i],o.goal[i],o.stretch[i],o.ly[i]);}); max*=1.08;
+    const cols=L.map(i=>{
+      const inProg=o.done[i]>0&&o.done[i]<o.days[i];
+      const cls=inProg?'mtd':(o.act[i]>=o.goal[i]?'over':'under');
+      const h=v=>Math.max(2,(v/max)*100);
+      return '<div class="mo"><div class="bars">'+
+        '<div class="gm" style="bottom:'+h(o.goal[i])+'%"></div>'+
+        '<div class="sm" style="bottom:'+h(o.stretch[i])+'%"></div>'+
+        '<div class="bar lyb" style="height:'+h(o.ly[i])+'%" data-t="'+MO[i]+' last year: '+full(o.ly[i])+'"></div>'+
+        '<div class="bar ab '+cls+'" style="height:'+h(o.act[i])+'%" data-t="'+MO[i]+' 2026: '+full(o.act[i])+' · main goal '+full(o.goal[i])+' · stretch '+full(o.stretch[i])+'"></div>'+
+        '</div><div class="molab">'+MO[i]+'</div></div>';
+    }).join('');
+    return '<div class="card"><h2>Month by month</h2>'+
+      '<div class="sub">Last year next to this year, with both goal lines. Green = beat the main goal, red = under.</div>'+
+      '<div class="legend"><span><i class="sw" style="background:var(--ly)"></i> Last year (2025)</span>'+
+        '<span><i class="sw" style="background:var(--good)"></i> 2026 at/above goal</span>'+
+        '<span><i class="sw" style="background:var(--bad)"></i> 2026 under goal</span>'+
+        '<span><i class="swline"></i> Main goal</span><span><i class="swdot"></i> Stretch goal</span></div>'+
+      '<div class="chartwrap"><div class="chart">'+cols+'</div></div></div>';
+  }
+  function leaderboard(list){
+    const rows=list.map(o=>({o,t:stats(o)})).sort((x,y)=>y.t.pct-x.t.pct);
+    const body=rows.map((r,i)=>{
+      const t=r.t, pctw=Math.min(100,t.pct*100), cls=t.pct>=1?'':(t.pct>=.9?'a':'b');
+      return '<tr onclick="DASH.pick(\''+r.o.n+'\')">'+
+        '<td class="rk'+(i===0?' top':'')+'">'+(i===0?'🏆':i+1)+'</td>'+
+        '<td><div class="onm">'+r.o.n+'<span class="br">'+r.o.brand+'</span></div>'+
+          '<div class="pbar"><i class="'+cls+'" style="width:'+pctw+'%"></i></div></td>'+
+        '<td class="num">'+pc(t.pct)+'</td>'+
+        '<td class="num '+(t.vgoal>=0?'g':'b')+'">'+(t.vgoal>=0?'+':'')+full(t.vgoal)+'</td>'+
+        '<td class="num">'+pc(t.spct)+'</td>'+
+        '<td class="num '+(t.yoy>=1?'g':'b')+'">'+pc(t.yoy)+'</td>'+
+        '<td class="dleft">'+t.daysLeft+'</td></tr>';
+    }).join('');
+    return '<div class="card"><h2>Leaderboard</h2>'+
+      '<div class="sub">Best performance on top, by % of main goal. “Days left” = production days remaining this year.</div>'+
+      '<div class="lb-scroll"><table class="lb"><thead><tr><th></th><th>Office</th><th>% of goal</th><th>vs goal</th><th>% of stretch</th><th>vs last yr</th><th>Days left</th></tr></thead>'+
+      '<tbody>'+body+'</tbody></table></div></div>';
+  }
+  function render(){
+    renderNav();
+    if(!allowed.length){
+      el('chips').innerHTML=''; el('scope').textContent='No dashboard access';
+      el('view').innerHTML='<div class="noacc"><b>This role doesn\'t have the Production Dashboard.</b><br>An admin grants access per team in <b>Admin → Teams &amp; Access</b>.</div>';
+      el('sub').textContent='Access is set by team; the offices you see are set by your location.';
+      return;
+    }
+    const multi=allowed.length>1;
+    el('scope').textContent = cur.offices==='all' ? 'All 8 offices' : (allowed.length+' office'+(allowed.length>1?'s':'')+': '+allowed.map(o=>o.n).join(', '));
+    el('sub').textContent = multi ? 'Where production stands against the main goal and the stretch goal.'
+                                  : 'Your office\'s production against the main goal and the stretch goal.';
+    if(!multi) sel=allowed[0].n;
+    else if(sel!=='ALL' && !allowed.some(o=>o.n===sel)) sel='ALL';
+    el('chips').innerHTML = multi
+      ? ('<button class="chip'+(sel==='ALL'?' on':'')+'" onclick="DASH.pick(\'ALL\')">All Offices</button>'+
+         allowed.map(o=>'<button class="chip'+(sel===o.n?' on':'')+'" onclick="DASH.pick(\''+o.n+'\')">'+o.n+'<span class="br">'+o.brand+'</span></button>').join(''))
+      : '';
+    const isAll = multi && sel==='ALL';
+    const o = isAll ? group(allowed) : allowed.find(x=>x.n===sel);
+    let html = kpis(o) + chart(o);
+    if(isAll) html += leaderboard(allowed);
+    html += '<div class="foot"><b>Where these numbers come from:</b> the practice\'s 2026 Production Dashboard workbook on SharePoint — the hub reads it live, so there is no second copy to keep in sync. A month counts once it has <b>both</b> an actual and a goal (Mansfield has production from January but goals from April).<br><br><b>Heads up on the workbook:</b> the “Dashboard” tab\'s 2026 total shows <b>+$449,954</b> vs goal, but adding the eight offices gives <b>+$406,663</b> — the total formula skips Mansfield (−$43,935). The hub adds every office every time.</div>';
+    el('view').innerHTML = html;
+    wireTips();
+  }
+  function wireTips(){
+    const tip=el('tip');
+    document.querySelectorAll('.bar[data-t]').forEach(b=>{
+      b.onmousemove=e=>{tip.textContent=b.dataset.t;tip.style.opacity='1';
+        tip.style.left=Math.min(e.clientX+12,window.innerWidth-tip.offsetWidth-10)+'px';tip.style.top=(e.clientY-34)+'px';};
+      b.onmouseleave=()=>{tip.style.opacity='0';};
+    });
+  }
+  function pick(n){ sel=n; render(); window.scrollTo({top:0,behavior:'smooth'}); }
+  function set(id){
+    cur=PERSONAS.find(p=>p.id===id)||PERSONAS[0];
+    try{ localStorage.setItem('ph_viewas',cur.id); }catch(_){}
+    el('persona').value=cur.id;
+    allowed = cur.offices==='all' ? OFFICES.slice() : OFFICES.filter(o=>cur.offices.indexOf(o.n)>=0);
+    sel = allowed.length>1 ? 'ALL' : (allowed[0]?allowed[0].n:'ALL');
+    render();
+  }
+  el('persona').innerHTML=PERSONAS.map(p=>'<option value="'+p.id+'">'+p.name+'</option>').join('');
+  window.DASH={set,pick};
+  let saved='admin'; try{ saved=localStorage.getItem('ph_viewas')||'admin'; }catch(_){}
+  if(!PERSONAS.some(p=>p.id===saved)) saved='admin';
+  set(saved);
 })();
 </script>
 <script src="tour.js"></script>
 <script>
 Tour.init([
-  {sel:'.v1nav', title:'Two views', body:'Switch between the <b>Dashboard</b> (the numbers) and the <b>Schedule</b> (who works where) up here.'},
-  {sel:'#officeChips', title:'Pick an office', body:'Start on <b>All Offices</b> for the group view, or tap any office to drill into its detail.'},
-  {sel:'.pace', title:'On pace for the year?', body:'This ring shows how the whole group is tracking toward the annual production goal.'},
-  {sel:'.kpis', title:'The headline numbers', body:'Group production, how it\'s doing vs goal, net new starts, and how many offices are ahead.'},
-  {sel:'table.off thead', title:'Sort any column', body:'Tap a column header to sort (tap again to flip). Then tap any office <b>row</b> to open its monthly detail.'},
-  {sel:'.btn-print', title:'Print for meetings', body:'One click makes a clean one-page printout / PDF — great for the monthly review.'}
+  {sel:'.viewas', title:'You see your offices only', body:'Access is set by your <b>team</b>; which offices you see is set by your <b>location</b>. A Carlsbad manager opens this and sees Carlsbad — not the whole group.'},
+  {sel:'.kpis', title:'The four numbers that matter', body:'Production so far, how far <b>ahead or behind the main goal</b>, the <b>% of main goal</b> (with stretch underneath), and <b>vs last year</b>.'},
+  {sel:'.chart', title:'This year vs last year', body:'Each month shows <b>last year</b> (grey) next to <b>this year</b>. The <b>dashed line</b> is the main goal, the <b>dotted line</b> is the stretch goal.'},
+  {sel:'table.lb', title:'Leaderboard', body:'All offices ranked, <b>best on top</b> by % of goal — plus <b>production days left</b> in the year. Tap any row to open that office.'}
 ], {key:'dash'});
 </script>
 </body>

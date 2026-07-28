@@ -130,6 +130,7 @@
     {k:'dashboard',n:'Dashboard',ic:'📊',d:'Goals & production numbers',href:'index.html',kind:'tool'},
     {k:'schedule',n:'Schedule',ic:'📅',d:'Who works where this week',href:'schedule.html',kind:'tool'},
     {k:'marketing',n:'Marketing',ic:'📣',d:'Events & social post board',href:'marketing.html',kind:'tool'},
+    {k:'production',n:'Enter Production',ic:'📝',d:"Type the month's numbers",href:'production.html',kind:'tool'},
     {k:'documents',n:'Documents',ic:'📁',d:'Files, forms & policies',kind:'docs'},
     {k:'admin',n:'Admin',ic:'⚙️',d:'Manage people & access',href:'admin.html',kind:'tool',adminOnly:true}
   ];
@@ -145,10 +146,10 @@
   // Personas = capability profiles. cap per section, and per document-folder.
   const PERSONAS=[
     {id:'admin',name:'Administrator',sub:'Full access · all offices',scope:'all',state:'',brand:'',
-      sec:{dashboard:'manage',schedule:'manage',marketing:'manage',admin:'manage'},
+      sec:{dashboard:'manage',production:'edit',schedule:'manage',marketing:'manage',admin:'manage'},
       doc:{hr:'manage',officedocs:'manage',forms:'manage',vendors:'manage',filing:'manage',eom:'manage'}},
     {id:'om',name:'Office Manager',sub:'Carlsbad',scope:'Carlsbad',state:'NM',brand:'FFO',
-      sec:{dashboard:'view',schedule:'edit',marketing:'view'},
+      sec:{dashboard:'view',production:'edit',schedule:'edit',marketing:'view'},
       doc:{hr:'view',officedocs:'edit',forms:'edit',vendors:'edit',filing:'edit',eom:'edit'}},
     {id:'doctor',name:'Doctor',sub:'Clinical · rotates NM offices',scope:'all',state:'NM',brand:'FFO',
       sec:{dashboard:'view',schedule:'view'},
