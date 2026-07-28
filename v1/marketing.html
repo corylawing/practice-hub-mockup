@@ -57,7 +57,11 @@
   .dot{width:11px;height:11px;border-radius:50%;display:inline-block}
   /* board */
   .board{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:18px}
-  .col{background:#eef1f5;border-radius:14px;padding:10px;min-height:200px}
+  .col{background:#eef1f5;border-radius:14px;padding:10px;min-height:200px;transition:background .12s,outline .12s}
+  .col.dragover{outline:2px dashed var(--teal);outline-offset:-2px;background:#e3efee}
+  .kcard.dragging{opacity:.45}
+  .kcard{cursor:grab}
+  .kcard:active{cursor:grabbing}
   .col-h{display:flex;align-items:center;gap:8px;font-weight:700;color:var(--navy);font-size:14px;padding:4px 6px 10px}
   .col-h .ct{background:#fff;color:var(--soft);font-size:12px;font-weight:700;border-radius:999px;padding:1px 8px;margin-left:auto}
   .add{width:100%;border:1px dashed #c3ccd8;background:transparent;color:var(--soft);border-radius:10px;padding:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:2px}
@@ -108,6 +112,7 @@
   </div>
 </header>
 <nav class="v1nav"><div class="v1nav-in">
+  <a href="home.html">🏠 Home</a>
   <a href="index.html">📊 Dashboard</a>
   <a href="schedule.html">📅 Schedule</a>
   <a href="marketing.html" class="active">📣 Marketing</a>
@@ -176,7 +181,7 @@
     const resChip = c.stage==='done'
       ? '<button class="res '+c.result+'" onclick="event.stopPropagation();MK.cycRes('+c.id+')">'+RES[c.result]+'</button>'
       : '';
-    return '<div class="kcard t-'+c.type+'" onclick="MK.open('+c.id+')">'+
+    return '<div class="kcard t-'+c.type+'" draggable="true" data-id="'+c.id+'" onclick="MK.open('+c.id+')">'+
       '<div class="kt">'+c.title+'</div>'+
       '<div class="kmeta"><span class="tag">'+TYPEN[c.type]+'</span><span class="tag">📍 '+c.loc+'</span>'+(c.date?'<span class="tag">'+c.date+'</span>':'')+'</div>'+
       '<div class="kfoot"><span>'+(c.owner?'👤 '+c.owner:'Unassigned')+'</span><span class="sp"></span>'+resChip+
@@ -187,7 +192,7 @@
   function renderBoard(){
     el('board').innerHTML=STAGES.map(s=>{
       const list=cards.filter(c=>c.stage===s.k);
-      return '<div class="col"><div class="col-h">'+s.n+'<span class="ct">'+list.length+'</span></div>'+
+      return '<div class="col" data-stage="'+s.k+'"><div class="col-h">'+s.n+'<span class="ct">'+list.length+'</span></div>'+
         list.map(card).join('')+
         '<button class="add" onclick="MK.add(\''+s.k+'\')">+ Add</button></div>';
     }).join('');
@@ -244,6 +249,26 @@
   function closeModal(discard){ if(discard){ const c=cards.find(x=>x.id===editId); if(c&&!c.title) cards=cards.filter(x=>x.id!==editId); } el('modal').classList.remove('open'); if(discard)render(); }
   function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
 
+  function dropTo(id,stage){ const c=cards.find(x=>x.id===id); if(!c||c.stage===stage)return;
+    c.stage=stage; if(stage==='done'&&c.result==='none')c.result='good'; if(stage!=='done')c.result='none'; render(); }
+
+  // Drag & drop (listeners live on the persistent #board container, survive re-renders)
+  let dragId=null;
+  const board=el('board');
+  board.addEventListener('dragstart',e=>{ const k=e.target.closest('.kcard'); if(!k)return;
+    dragId=+k.dataset.id; k.classList.add('dragging'); e.dataTransfer.effectAllowed='move';
+    try{ e.dataTransfer.setData('text/plain',k.dataset.id); }catch(_){} });
+  board.addEventListener('dragend',e=>{ const k=e.target.closest('.kcard'); if(k)k.classList.remove('dragging');
+    document.querySelectorAll('.col.dragover').forEach(c=>c.classList.remove('dragover')); dragId=null; });
+  board.addEventListener('dragover',e=>{ const col=e.target.closest('.col'); if(!col)return;
+    e.preventDefault(); e.dataTransfer.dropEffect='move';
+    document.querySelectorAll('.col.dragover').forEach(c=>{if(c!==col)c.classList.remove('dragover')});
+    col.classList.add('dragover'); });
+  board.addEventListener('dragleave',e=>{ const col=e.target.closest('.col'); if(col && !col.contains(e.relatedTarget))col.classList.remove('dragover'); });
+  board.addEventListener('drop',e=>{ const col=e.target.closest('.col'); if(!col)return;
+    e.preventDefault(); col.classList.remove('dragover');
+    const id=dragId||+(e.dataTransfer.getData('text/plain')); if(id)dropTo(id,col.dataset.stage); });
+
   window.MK={add,open,move,cycRes,pick,save,del,close:closeModal};
   el('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal(true);});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal(true);});
@@ -253,7 +278,7 @@
 <script src="tour.js"></script>
 <script>
 Tour.init([
-  {sel:'.board', title:'Your marketing board', body:'Every event, promo and social post is a card. It moves left → right: <b>Ideas → Planned → In progress → Done</b>. Colored stripe = the type of campaign.'},
+  {sel:'.board', title:'Your marketing board', body:'Every event, promo and social post is a card. <b>Drag a card</b> between columns — Ideas → Planned → In progress → Done — or tap the ◀ ▶ arrows. Colored stripe = the type of campaign.'},
   {sel:'#board .col:last-child', title:'Score it when it\'s done', body:'When a card reaches <b>Done</b>, tap its result chip to mark it 🟢 Good, 🟡 Mixed or 🔴 Underperformed — so you learn what actually works.'},
   {sel:'#summary', title:'See what\'s working', body:'The top row totals your results at a glance — how many campaigns landed vs. flopped.'},
   {sel:'.page-head .btn', title:'Add anything, anytime', body:'Capture a new idea here (or “+ Add” in any column). Tap a card to edit details, owner, location and notes.'}

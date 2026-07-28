@@ -154,6 +154,7 @@
   </div>
 </header>
 <nav class="v1nav"><div class="v1nav-in">
+  <a href="home.html">🏠 Home</a>
   <a href="index.html">📊 Dashboard</a>
   <a href="schedule.html">📅 Schedule</a>
   <a href="marketing.html">📣 Marketing</a>
@@ -238,16 +239,34 @@
   const AUDCYC=['everyone','location','team'];
   const AUDLBL={everyone:'🌐 Everyone',location:'📍 By location / state',team:'👥 By team'};
 
-  let users=[
-    {f:'Jordan',l:'Avery',email:'javery@farnsworthorthodontics.com',emp:'E-1001',loc:'All offices',state:'NM',brand:'Group',teams:['Executive Team','Admin'],role:'Administrator',region:'All',phone:'(575) 555-1001',about:'COO — oversees all 8 offices.',status:'Active',c:1},
-    {f:'Heather',l:'Farnsworth',email:'heather@farnsworthorthodontics.com',emp:'E-1002',loc:'All offices',state:'NM',brand:'FFO',teams:['Admin','Financial Coordinator Team'],role:'Administrator',region:'All',phone:'(575) 555-1002',about:'Practice administrator & finance lead.',status:'Active',c:3},
-    {f:'Tasha',l:'Brooks',email:'tbrooks@farnsworthorthodontics.com',emp:'E-1010',loc:'Carlsbad',state:'NM',brand:'FFO',teams:['Office Managers'],role:'Manager',region:'NM',phone:'(575) 555-1010',about:'Office manager — Carlsbad.',status:'Active',c:0},
-    {f:'Maya',l:'Chen',email:'mchen@farnsworthorthodontics.com',emp:'E-1020',loc:'Carlsbad, Hobbs',state:'NM',brand:'FFO',teams:['Doctors','Leadership Team'],role:'Viewer',region:'NM',phone:'(575) 555-1020',about:'Orthodontist — rotates NM offices.',status:'Active',c:5},
-    {f:'Priya',l:'Nair',email:'pnair@farnsworthorthodontics.com',emp:'E-1030',loc:'Carlsbad',state:'NM',brand:'FFO',teams:['TCs'],role:'Contributor',region:'NM',phone:'(575) 555-1030',about:'Treatment coordinator.',status:'Active',c:2},
-    {f:'Dana',l:'Kim',email:'dkim@farnsworthorthodontics.com',emp:'E-1040',loc:'All offices',state:'TX',brand:'Group',teams:['Marketing Team'],role:'Contributor',region:'All',phone:'(806) 555-1040',about:'Marketing coordinator.',status:'Active',c:6},
-    {f:'Carlos',l:'Mendez',email:'cmendez@farnsworthorthodontics.com',emp:'E-1012',loc:'Lubbock',state:'TX',brand:'FFO',teams:['Office Managers'],role:'Manager',region:'TX',phone:'(806) 555-1012',about:'Office manager — Lubbock.',status:'Paused',c:7},
-    {f:'Sam',l:'Whitfield',email:'swhitfield@farnsworthorthodontics.com',emp:'E-1021',loc:'San Angelo',state:'TX',brand:'SUN',teams:['Clinic Managers'],role:'Contributor',region:'TX',phone:'(325) 555-1021',about:'Clinic lead.',status:'Inactive',c:4}
+  // Real staff roster (imported). Doctors -> Doctors team; everyone else defaults to Staff
+  // as a neutral placeholder — the practice reassigns real teams/roles/locations here.
+  const DOCTOR_NAMES=['Dr. Carla Coehlo','Dr. Susan McBeth','Dr. David Farnsworth','Dr. Jae Brimhall'];
+  const ROSTER=[
+    'Alexandra (Lexi) Espinosa','Cyndal Gomez','Serenity Gonzales','Keyly Moran','Tayler Nesbit',
+    'Jennifer Peters','Lily Rico','Alyssa Smith','Macayla Villegas','Mia Armenta','Pamela Hernandez',
+    'Linda Herrera','Lucero Holguin','Hannah Lanier','Melissa Medina','Maria Pando','Elizabeth Reyes',
+    'Yessenia Romaniz','Dr. Carla Coehlo','Rebecca Fluhman','Shayna Garza','Melissa Hernandez',
+    'Elizabeth James','Lluvia Lujan','Karen Qualls','Patricia Tidwell','Dr. Susan McBeth',
+    'Monika Flores-Aleman','Maria Honorato','Yulissa Martinez','Ashley Rodriguez','Latricia Sanchez',
+    'Idaly Tarango','Rebekah White','Cacy Briseno','Lyndsey Dunn','Klorissa Garcia',
+    'Alicyn "Haley" Gossett','Elizabeth "Liz" Guerrero','Samantha Molina','Arianna Peacock',
+    'Melinda Tavarez','Amanda Vasquez','Heather Beal','Selene Brown','Jessica Lynch','Brenda Garcia',
+    'Kandace Lain','Erika Munoz','Kim Partee','Noemi Sanchez Torres','Tierney Whitesel','Sirena Zamudio',
+    'Karin Alons','Suzy Brown','Michelle Eichleberger','Melissa Elliott','Cindy Peterson','Roma Powell',
+    'Yvonne Avalos','Yessenia Flores','Maria Hinojos','Erica Martinez','Anette Olvera','Tara Pacini',
+    'Joemily Prieto','Melissa Villalva','Jenny Whitefield','Dr. David Farnsworth','Dr. Jae Brimhall'
   ];
+  let users=ROSTER.map((full,i)=>{
+    const isDoc=DOCTOR_NAMES.includes(full);
+    const clean=full.replace(/"[^"]*"/g,'').replace(/\([^)]*\)/g,'').replace(/\s+/g,' ').trim();
+    const parts=clean.replace(/^Dr\.\s*/,'').split(' ');
+    const first=parts[0], last=parts.slice(1).join(' ');
+    const handle=(first[0]+(last||first)).toLowerCase().replace(/[^a-z]/g,'');
+    return {f:isDoc?('Dr. '+first):first, l:last, email:handle+'@farnsworthorthodontics.com',
+      emp:'E-'+(1001+i), loc:'Unassigned', state:'', brand:'', teams:[isDoc?'Doctors':'Staff'],
+      role:'Viewer', region:'', phone:'—', about:'', status:'Active', c:i%PAL.length};
+  });
 
   const el=id=>document.getElementById(id);
   const av=u=>PAL[u.c%PAL.length];
@@ -260,7 +279,7 @@
   /* ---------- PEOPLE ---------- */
   function renderUsers(){
     el('view').innerHTML=
-      '<div class="intro">Everyone here <b>syncs from Microsoft 365</b> (name, email, photo). You just set their <b>team(s), role, location &amp; status</b> — that decides what they see. Employees can update their own <b>photo &amp; “About me.”</b> <b>Tap a person</b> to open their profile.</div>'+
+      '<div class="intro">Your real roster is imported here — everyone <b>syncs from Microsoft 365</b> (name, email, photo). Doctors are tagged <b>Doctors</b>; everyone else starts as <b>Staff</b> as a neutral placeholder. Set each person\'s <b>team(s), role, location &amp; status</b> to decide what they see (they can edit their own <b>photo &amp; “About me”</b>). <b>Tap a person</b> to open their profile.</div>'+
       '<div class="toolrow"><input class="search" id="usearch" placeholder="Search people, email, team, location…" value="'+search.replace(/"/g,'&quot;')+'"><button class="btn" onclick="AD.addUser()">+ Add person</button></div>'+
       '<div class="tbl-scroll"><table class="u"><thead><tr><th>Person</th><th>Team(s)</th><th>Role</th><th>Location</th><th>Status</th></tr></thead><tbody></tbody></table></div>'+
       '<p style="font-size:13px;color:var(--soft);margin:12px 2px 0" id="ucount"></p>';

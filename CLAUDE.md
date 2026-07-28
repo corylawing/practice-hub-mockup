@@ -46,6 +46,7 @@ docs, schedules, KPIs, and marketing.
 ### V1 pages (all share a top nav: Dashboard · Schedule · Marketing · Admin)
 | File | Purpose |
 |---|---|
+| `v1/home.html` | **Logged-in Home** — the daily landing page. "Viewing as ▾" role switcher, personalized section tiles, an "Updates for you" feed, Documents folders. Shows the admin-vs-employee difference. |
 | `v1/index.html` | **KPI Dashboard** — leadership "All Offices" view + per-office drill-down, built on their REAL production data. |
 | `v1/schedule.html` | **Staff Schedule** — weekly board: which office open each day + which doctor where. |
 | `v1/marketing.html` | **Marketing Kanban** — events/social posts move Ideas→Planned→In progress→Done; scored Good/Mixed/Bad. |
@@ -107,8 +108,10 @@ Font: Inter (Google Fonts). Radius ~14px. Soft shadows. maxw ~1080–1180px.
 - Columns (`STAGES`): 💡 Ideas → 🗓️ Planned → 🚀 In progress → ✅ Done.
 - Card `TYPES`: social / event / promo / email / referral (colored left stripe `.t-*`).
 - **Result** set only in Done: `good` 🟢 / `mixed` 🟡 / `bad` 🔴 (`.res` chip, click to cycle).
-  Summary row totals Good/Mixed/Bad. Move via ◀ ▶ (`move(id,dir)`), click card → edit modal
-  (`open`/`save`/`del`), add via `add(stage)`. All state in `cards[]`, API `window.MK`.
+  Summary row totals Good/Mixed/Bad. Move by **drag-and-drop** between columns (HTML5 DnD, listeners
+  delegated on the persistent `#board`, `dropTo(id,stage)`; dropping into Done auto-sets Good) **or** the
+  ◀ ▶ arrows (`move(id,dir)`). Click card → edit modal (`open`/`save`/`del`), add via `add(stage)`.
+  All state in `cards[]`, API `window.MK`.
 - Tour: `Tour.init([...4 steps], {key:'mkt'})`. Real build = Microsoft Lists / Planner.
 
 ### 4d. `v1/admin.html` — Admin Console (the backend/permissions)
@@ -144,6 +147,24 @@ Four tabs (`window.AD`), all client-side demo state:
 End-of-Month Reporting, Office Docs (Managers, per-location folders: Office Contracts / Equipment
 Invoices / Dental Licenses), Office Forms (per-brand: FFO/Sunflower/LCO — DDS Referral / Medical
 History / Invisalign-Vivera Scan Sheet), Vendors, Insurance/W-9, Marketing, Directory, Admin.
+
+### 4f. `v1/home.html` — the logged-in Home (added 2026-07-28)
+This is the corrected mental model after the friend clarified it:
+- **Sections = the real areas of the app** (Dashboard, Schedule, Marketing, **Documents**, Admin) — NOT an admin
+  config screen. **Locations and brands are just FOLDERS inside a section**, never their own section. You have
+  ~5 sections; everything else is folders underneath, and permissions reach down to a single folder.
+- **"Viewing as ▾"** persona switcher (`PERSONAS`: Administrator / Office Manager / Doctor / TC / Front Desk).
+  Changing it re-renders the nav, the section tiles, the Documents folders (scoped to the persona's office/brand),
+  and the Updates feed — so you can *show* the difference between admin and employee. `window.HOME.set(id)`.
+- **Capabilities per section**: view / add (add files) / edit / manage — displayed as chips. (Friend asked that
+  "adding files" be its own permission.)
+- **"Updates for you" feed** (`UPDATES[]`, filtered by `canSee`/`matchScope`): new docs/changes that match the
+  viewer's section access + scope (everyone / location / state TX·NM / brand FFO·Sunflower·LCO). Admin sees all,
+  Staff sees a filtered subset. This is the notification model the friend described.
+- **Two-way SharePoint/OneDrive sync (concept, represented not built):** files are NOT copies — the hub links to
+  the real file on SharePoint/OneDrive. Change it on the drive → shows here + editors notified; update from the hub
+  → writes back. One source of truth. Shown via the "opens in SharePoint ↗" hints + the explainer note.
+- Home is the first nav item on every V1 page now.
 
 ### 4e. `v1/tour.js` — guided walkthrough engine
 - `Tour.init(steps, {key})`. Each step `{sel, title, body}`. Builds a pulsing **"👋 Show me around"**

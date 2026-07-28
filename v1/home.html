@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Home (V1) — Practice Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#0F2A4A">
+<meta name="description" content="Practice Hub V1 — the logged-in home. Switch 'Viewing as' to see how the app changes by role.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Practice Hub">
+<meta property="og:title" content="Home (V1) · Practice Hub">
+<meta property="og:description" content="What a person sees when they log in — sections and files based on their role and team.">
+<meta property="og:image" content="https://corylawing.github.io/practice-hub-mockup/assets/og-image.png">
+<meta property="og:url" content="https://corylawing.github.io/practice-hub-mockup/v1/home.html">
+<style>
+  :root{
+    --navy:#0F2A4A; --navy2:#25456e; --teal:#149B96; --teal2:#2BC0B8; --teal-soft:#E5F4F3; --teal-600:#0F827E;
+    --ink:#1F2D3D; --soft:#56627A; --line:#E4E8EE; --canvas:#F4F6F8; --white:#fff;
+    --good:#2E9E6B; --good-soft:#E7F4EE; --bad:#D7503A; --amber:#F2A03D;
+    --blue:#1f6f9e; --blue-soft:#E3F0FA; --purple:#6b3fd0; --purple-soft:#efe9fb;
+    --shadow:0 1px 2px rgba(15,42,74,.06),0 6px 18px rgba(15,42,74,.06);
+    --shadow-lg:0 10px 30px rgba(15,42,74,.12); --radius:14px; --maxw:1080px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--canvas);line-height:1.5;-webkit-font-smoothing:antialiased}
+  h1{color:var(--navy);margin:0}
+  .ribbon{background:var(--amber);color:#3a2400;text-align:center;font-size:13px;font-weight:600;padding:6px 14px}
+  .hdr{background:var(--navy);color:#fff}
+  .hdr-in{max-width:var(--maxw);margin:0 auto;display:flex;align-items:center;gap:12px;padding:13px 20px}
+  .mark{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--teal),var(--teal2));display:grid;place-items:center;color:#fff;font-weight:800;font-size:16px}
+  .brand{font-weight:700;font-size:18px;color:#fff;line-height:1.1}
+  .brand small{display:block;font-weight:500;font-size:12px;color:#9fb4d0}
+  .v1{background:rgba(255,255,255,.15);color:#eaf1fb;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;margin-left:6px}
+  .v1nav{background:var(--navy2)}
+  .v1nav-in{max-width:var(--maxw);margin:0 auto;display:flex;gap:2px;padding:0 12px;overflow-x:auto}
+  .v1nav a{color:#cdd9ea;font-size:14px;font-weight:600;padding:13px 15px;text-decoration:none;border-bottom:3px solid transparent;white-space:nowrap}
+  .v1nav a:hover{color:#fff;background:rgba(255,255,255,.05)}
+  .v1nav a.active{color:#fff;border-bottom-color:var(--teal)}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:24px 20px 90px}
+  /* viewing-as bar */
+  .viewas{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:16px 18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:8px;border-left:5px solid var(--teal)}
+  .viewas .lab{font-size:13px;color:var(--soft);font-weight:600}
+  .viewas .lab b{color:var(--navy);display:block;font-size:12px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px}
+  .viewas select{padding:10px 13px;border:1px solid var(--line);border-radius:10px;font-size:15px;font-family:inherit;font-weight:700;color:var(--navy);background:#fff;min-width:230px}
+  .viewas .demo{font-size:12.5px;color:var(--teal-600);background:var(--teal-soft);border:1px solid #c4e6e3;padding:6px 11px;border-radius:999px;font-weight:600;margin-left:auto}
+  .whoami{display:flex;align-items:center;gap:12px;margin:20px 0 4px}
+  .whoami .av{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;font-size:17px;background:var(--navy2)}
+  .whoami h1{font-size:24px}
+  .whoami .sub{font-size:14px;color:var(--soft)}
+  .summary{font-size:14px;color:var(--soft);margin:2px 0 20px}
+  .summary b{color:var(--navy)}
+  /* tiles */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
+  .tile{display:block;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:18px;color:inherit;border-top:4px solid var(--teal);transition:box-shadow .15s,transform .15s}
+  a.tile:hover{box-shadow:var(--shadow-lg);transform:translateY(-2px)}
+  .tile.docs{border-top-color:var(--blue)} .tile.admin{border-top-color:var(--navy2)}
+  .tile .ic{font-size:26px;line-height:1}
+  .tile .tn{font-weight:800;color:var(--navy);font-size:17px;margin:8px 0 2px}
+  .tile .td{font-size:13px;color:var(--soft);margin-bottom:12px}
+  .cap{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px}
+  .cap.view{background:var(--blue-soft);color:var(--blue)}
+  .cap.add{background:var(--good-soft);color:var(--good)}
+  .cap.edit{background:var(--teal-soft);color:var(--teal-600)}
+  .cap.manage{background:var(--navy);color:#fff}
+  .folders{margin-top:12px;border-top:1px solid var(--line);padding-top:10px;display:flex;flex-direction:column;gap:7px}
+  .frow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px}
+  .frow .fn{font-weight:700;color:var(--navy);min-width:96px}
+  .locchip{font-size:11px;font-weight:700;background:var(--teal-soft);color:var(--teal-600);border-radius:999px;padding:2px 8px}
+  .locchip.brand{background:var(--purple-soft);color:var(--purple)}
+  .capmini{font-size:11px;font-weight:700;padding:1px 8px;border-radius:999px;margin-left:auto}
+  .capmini.view{background:var(--blue-soft);color:var(--blue)}
+  .capmini.add{background:var(--good-soft);color:var(--good)}
+  .capmini.edit{background:var(--teal-soft);color:var(--teal-600)}
+  .capmini.manage{background:var(--navy);color:#fff}
+  .synced{margin-top:12px;border-top:1px solid var(--line);padding-top:10px;font-size:12px;color:var(--soft);line-height:1.5}
+  .synced b{color:var(--navy)}
+  .empty{background:#fff;border:1px dashed var(--line);border-radius:14px;padding:26px;text-align:center;color:var(--soft);font-size:14px}
+  .note{font-size:12.5px;color:var(--soft);margin-top:22px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 15px}
+  .note b{color:var(--navy)}
+  .updates{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:16px 18px;margin-bottom:22px}
+  .updates h2{font-size:15px;color:var(--navy);margin:0;display:flex;align-items:center;gap:8px}
+  .updates .cnt{background:var(--teal);color:#fff;font-size:12px;font-weight:800;border-radius:999px;padding:1px 9px}
+  .updates .sub2{font-size:12.5px;color:var(--soft);margin:4px 0 8px}
+  .upd{display:flex;align-items:flex-start;gap:11px;padding:11px 0;border-top:1px solid var(--line)}
+  .upd .uic{font-size:18px;line-height:1.3}
+  .upd .ut{font-size:14px;color:var(--ink);font-weight:600}
+  .upd .uw{font-size:12px;color:var(--soft)}
+  .upd .utag{margin-left:auto;font-size:11px;font-weight:700;color:var(--teal-600);background:var(--teal-soft);border-radius:999px;padding:2px 9px;white-space:nowrap}
+</style>
+</head>
+<body>
+<div class="ribbon">PROTOTYPE — this is the logged-in home. Use “Viewing as” to see how the app changes for each role.</div>
+<header class="hdr">
+  <div class="hdr-in">
+    <span class="mark">PH</span>
+    <span class="brand">Practice Hub<small>Home</small></span>
+    <span class="v1">V1 preview</span>
+  </div>
+</header>
+<nav class="v1nav"><div class="v1nav-in" id="nav"></div></nav>
+
+<div class="wrap">
+  <div class="viewas">
+    <div class="lab"><b>👤 Viewing the app as</b>Switch roles to see the difference</div>
+    <select id="persona" onchange="HOME.set(this.value)"></select>
+    <span class="demo">Demo control — not a real login</span>
+  </div>
+
+  <div class="whoami"><span class="av" id="who_av"></span><div><h1 id="who_name"></h1><div class="sub" id="who_sub"></div></div></div>
+  <div class="summary" id="summary"></div>
+
+  <div class="updates" id="updates"></div>
+
+  <div id="tiles"></div>
+
+  <div class="note"><b>How this works:</b> each person logs in and sees only the <b>sections</b> their role &amp; team allow — and within a section, only the <b>folders</b> meant for them (their office, their brand). What they can <i>do</i> is set per section: view, add files, edit, or manage. Admins set all of this in the Admin console.<br><br><b>Two-way with your Microsoft drive:</b> documents live on <b>SharePoint/OneDrive</b> and the hub links to them. Change a file on the drive → it shows here (and editors get notified). Update data or a doc from inside the hub → it writes back to the same file on the drive. One source of truth, never a second copy to keep in sync.</div>
+</div>
+
+<script>
+(function(){
+  const LOCS=['Carlsbad','Hobbs','Clovis','San Angelo','Mansfield','Lubbock','Las Cruces LCO','Las Cruces FOLC'];
+  const BRANDS=['FFO','Sunflower','LCO'];
+  const CAPTXT={view:'View only',add:'View + add files',edit:'View, add & edit',manage:'Full control'};
+  const CAPSHORT={view:'View',add:'+ Add files',edit:'Edit',manage:'Manage'};
+
+  const SECTIONS=[
+    {k:'dashboard',n:'Dashboard',ic:'📊',d:'Goals & production numbers',href:'index.html',kind:'tool'},
+    {k:'schedule',n:'Schedule',ic:'📅',d:'Who works where this week',href:'schedule.html',kind:'tool'},
+    {k:'marketing',n:'Marketing',ic:'📣',d:'Events & social post board',href:'marketing.html',kind:'tool'},
+    {k:'documents',n:'Documents',ic:'📁',d:'Files, forms & policies',kind:'docs'},
+    {k:'admin',n:'Admin',ic:'⚙️',d:'Manage people & access',href:'admin.html',kind:'tool',adminOnly:true}
+  ];
+  const FOLDERS=[
+    {k:'hr',n:'HR',note:'policies · PTO · new-hire'},
+    {k:'officedocs',n:'Office Docs',perLocation:true},
+    {k:'forms',n:'Office Forms',perBrand:true},
+    {k:'vendors',n:'Vendors'},
+    {k:'filing',n:'Insurance / W-9'},
+    {k:'eom',n:'End-of-Month'}
+  ];
+
+  // Personas = capability profiles. cap per section, and per document-folder.
+  const PERSONAS=[
+    {id:'admin',name:'Administrator',sub:'Full access · all offices',scope:'all',state:'',brand:'',
+      sec:{dashboard:'manage',schedule:'manage',marketing:'manage',admin:'manage'},
+      doc:{hr:'manage',officedocs:'manage',forms:'manage',vendors:'manage',filing:'manage',eom:'manage'}},
+    {id:'om',name:'Office Manager',sub:'Carlsbad',scope:'Carlsbad',state:'NM',brand:'FFO',
+      sec:{dashboard:'view',schedule:'edit',marketing:'view'},
+      doc:{hr:'view',officedocs:'edit',forms:'edit',vendors:'edit',filing:'edit',eom:'edit'}},
+    {id:'doctor',name:'Doctor',sub:'Clinical · rotates NM offices',scope:'all',state:'NM',brand:'FFO',
+      sec:{dashboard:'view',schedule:'view'},
+      doc:{hr:'view',forms:'view'}},
+    {id:'tc',name:'Treatment Coordinator',sub:'Front office · Carlsbad',scope:'Carlsbad',state:'NM',brand:'FFO',
+      sec:{schedule:'view'},
+      doc:{hr:'view',forms:'add'}},
+    {id:'staff',name:'Front Desk / Staff',sub:'General · Carlsbad',scope:'Carlsbad',state:'NM',brand:'FFO',
+      sec:{schedule:'view'},
+      doc:{hr:'view',forms:'view'}}
+  ];
+
+  // Updates feed — each item is filtered to the viewer's section access + scope (location/state/brand).
+  // In the real build these fire when a linked SharePoint/OneDrive file changes or an app record updates.
+  const UPDATES=[
+    {sec:'documents',fold:'hr',scope:'New Mexico offices',ic:'📄',title:'HR · New-Hire Packet (New Mexico) updated',when:'2 hours ago'},
+    {sec:'documents',fold:'hr',scope:'everyone',ic:'📄',title:'HR · Uniform Policy replaced',when:'Yesterday'},
+    {sec:'documents',fold:'officedocs',scope:'Carlsbad',ic:'📄',title:'Office Docs · Carlsbad equipment invoice added',when:'Yesterday'},
+    {sec:'documents',fold:'forms',scope:'FFO',ic:'📄',title:'Office Forms · FFO — new DDS Referral form',when:'2 days ago'},
+    {sec:'schedule',scope:'Carlsbad',ic:'📅',title:'Schedule · Dr. Chen now covers Thursday at Carlsbad',when:'2 days ago'},
+    {sec:'dashboard',scope:'everyone',ic:'📊',title:'Dashboard · June production posted — 105% of goal',when:'3 days ago'},
+    {sec:'documents',fold:'filing',scope:'Texas offices',ic:'📄',title:'Insurance / W-9 · Lubbock W-9 refiled',when:'4 days ago'},
+    {sec:'marketing',scope:'everyone',ic:'📣',title:'Marketing · “Summer smile giveaway” scored 🟢 Good',when:'5 days ago'}
+  ];
+
+  const el=id=>document.getElementById(id);
+  let cur=PERSONAS[0];
+
+  function matchScope(scope,p){
+    if(scope==='everyone')return true;
+    if(scope==='Texas offices')return p.scope==='all'||p.state==='TX';
+    if(scope==='New Mexico offices')return p.scope==='all'||p.state==='NM';
+    if(BRANDS.includes(scope))return p.scope==='all'||p.brand===scope;
+    if(LOCS.includes(scope))return p.scope==='all'||p.scope===scope;
+    return false;
+  }
+  function canSee(u,p){
+    const acc = u.sec==='documents' ? !!p.doc[u.fold] : !!p.sec[u.sec];
+    return acc && matchScope(u.scope,p);
+  }
+  function secName(k){ const s=SECTIONS.find(x=>x.k===k); return s?s.n:k; }
+  function renderUpdates(p){
+    const list=UPDATES.filter(u=>canSee(u,p));
+    el('updates').innerHTML='<h2>🔔 Updates for you <span class="cnt">'+list.length+'</span></h2>'+
+      '<p class="sub2">New documents &amp; changes that match your role, location &amp; team. Files open on your Microsoft drive.</p>'+
+      (list.length? list.map(u=>'<div class="upd"><span class="uic">'+u.ic+'</span><div><div class="ut">'+u.title+'</div><div class="uw">'+u.when+' · opens in SharePoint ↗</div></div><span class="utag">'+secName(u.sec)+'</span></div>').join('')
+        : '<div class="upd" style="border-top:none;color:var(--soft)">Nothing new right now.</div>');
+  }
+
+  function initials(n){const p=n.split(' ');return (p[0][0]+(p[1]?p[1][0]:'')).toUpperCase();}
+  function foldersFor(p){ return FOLDERS.filter(f=>p.doc[f.k]); }
+
+  function renderNav(p){
+    el('nav').innerHTML=SECTIONS.filter(s=> s.k==='documents' ? foldersFor(p).length>0 : (s.k==='home'|| p.sec[s.k])).map(s=>{
+      if(s.k==='documents') return '<a href="#docs">📁 Documents</a>';
+      return '<a href="'+s.href+'">'+s.ic+' '+s.n+'</a>';
+    }).join('');
+    // prepend Home
+    el('nav').insertAdjacentHTML('afterbegin','<a class="active" href="home.html">🏠 Home</a>');
+  }
+
+  function tileCap(c){ return '<span class="cap '+c+'">'+CAPTXT[c]+'</span>'; }
+
+  function renderTiles(p){
+    const toolTiles=SECTIONS.filter(s=>s.kind==='tool' && (!s.adminOnly|| p.id==='admin') && p.sec[s.k]).map(s=>
+      '<a class="tile '+(s.k==='admin'?'admin':'')+'" href="'+s.href+'"><div class="ic">'+s.ic+'</div><div class="tn">'+s.n+'</div><div class="td">'+s.d+'</div>'+tileCap(p.sec[s.k])+'</a>'
+    );
+    // documents tile
+    const folds=foldersFor(p);
+    let docsTile='';
+    if(folds.length){
+      const rows=folds.map(f=>{
+        let chips='';
+        if(f.perLocation){ const locs = p.scope==='all'?LOCS:[p.scope]; chips=locs.map(l=>'<span class="locchip">'+l+'</span>').join(''); }
+        else if(f.perBrand){ chips=BRANDS.map(b=>'<span class="locchip brand">'+b+'</span>').join(''); }
+        else if(f.note){ chips='<span style="font-size:12px;color:var(--soft)">'+f.note+'</span>'; }
+        return '<div class="frow"><span class="fn">'+f.n+'</span>'+chips+'<span class="capmini '+p.doc[f.k]+'">'+CAPSHORT[p.doc[f.k]]+'</span></div>';
+      }).join('');
+      docsTile='<div class="tile docs" id="docs"><div class="ic">📁</div><div class="tn">Documents</div><div class="td">Files, forms &amp; policies you can open</div><div class="folders">'+rows+'</div><div class="synced">📎 These open the <b>real files on your Microsoft (SharePoint/OneDrive) drive</b> — the hub links to them, it doesn\'t keep copies.</div></div>';
+    }
+    const html=toolTiles.join('')+docsTile;
+    el('tiles').innerHTML= html ? '<div class="grid">'+html+'</div>' : '<div class="empty">This role has no sections yet — an admin assigns access in the Admin console.</div>';
+  }
+
+  function set(id){
+    cur=PERSONAS.find(p=>p.id===id)||PERSONAS[0];
+    el('who_av').textContent=initials(cur.name);
+    el('who_name').textContent=cur.name;
+    el('who_sub').textContent=cur.sub;
+    const nSec=SECTIONS.filter(s=>s.kind==='tool'&&(!s.adminOnly||cur.id==='admin')&&cur.sec[s.k]).length + (foldersFor(cur).length?1:0);
+    const docScope = cur.scope==='all'?'all offices':('the '+cur.scope+' folder only');
+    el('summary').innerHTML='Sees <b>'+nSec+'</b> section'+(nSec===1?'':'s')+'. In Documents, sees <b>'+docScope+'</b>.'+(cur.id==='admin'?' Plus the <b>Admin console</b> to manage everyone.':'');
+    renderNav(cur); renderUpdates(cur); renderTiles(cur);
+  }
+
+  // build the dropdown
+  el('persona').innerHTML=PERSONAS.map(p=>'<option value="'+p.id+'">'+p.name+(p.scope!=='all'&&p.id!=='admin'?' — '+p.scope:'')+'</option>').join('');
+  window.HOME={set};
+  set('admin');
+})();
+</script>
+</body>
+</html>
