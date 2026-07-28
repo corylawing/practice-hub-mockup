@@ -88,6 +88,7 @@
   .noacc b{color:var(--navy)}
   @media(max-width:760px){ .grid2{grid-template-columns:1fr} }
 </style>
+<script src="user.js"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — type the month's numbers here. In the real build this writes straight into the SharePoint workbook.</div>
@@ -128,13 +129,11 @@
    'San Angelo': {md:0,tc:[364028,347608,273810,209565,201489,310660,203469,0,0,0,0,0], mdp:[0,0,0,0,0,0,0,0,0,0,0,0], adj:[0,0,0,0,0,0,0,0,0,0,0,0], dys:[10,13,10,9,10,9,10,0,0,0,0,0], goal:[275667,193614,240442,210867,274049,239473,291472,312606,214035,248641,192785,267286], str:[301921,219429,263341,230950,300148,262279,319232,342378,234419,272321,211145,292741]},
    'Mansfield':  {md:0,tc:[108954,92996,139815,95285,63447,178690,173500,0,0,0,0,0], mdp:[0,0,0,0,0,0,0,0,0,0,0,0], adj:[0,0,0,0,0,0,0,0,0,0,0,0], dys:[9,10,11,9,10,9,10,0,0,0,0,0], goal:[0,0,0,130268,174025,104053,146511,100531,74090,71498,103061,52919], str:[0,0,0,145900,189158,148648,209301,143616,105842,96522,139132,71440]}
   };
-  const PERSONAS=[
-    {id:'admin',name:'Administrator',offices:'all',can:true},
-    {id:'om',name:'Office Manager — Carlsbad',offices:['Carlsbad'],can:true},
-    {id:'doctor',name:'Doctor — Carlsbad & Hobbs',offices:['Carlsbad','Hobbs'],can:false},
-    {id:'tc',name:'Treatment Coordinator',offices:[],can:false},
-    {id:'staff',name:'Front Desk / Staff',offices:[],can:false}
-  ];
+  const PERSONAS=(window.PH?PH.PEOPLE:[]).map(p=>({
+    id:p.id, name:PH.name(p)+' — '+p.title.split(' \u00b7 ')[0],
+    offices:p.offices, can:PH.atLeast?null:null }));
+  const canEnter=()=>!window.PH||PH.atLeast('production','edit');
+  const canGoals=()=>!window.PH||PH.atLeast('production','manage');
   const el=id=>document.getElementById(id);
   let cur=PERSONAS[0], office=null, month=6, edits={};
   try{ edits=JSON.parse(localStorage.getItem('ph_prod'))||{}; }catch(_){ edits={}; }
@@ -148,17 +147,11 @@
   const money=v=>'$'+Math.round(v).toLocaleString('en-US');
   const pc=v=>Math.round(v*100)+'%';
 
-  function renderNav(){
-    let h='<a href="home.html">🏠 Home</a><a href="index.html">📊 Dashboard</a><a class="active" href="production.html">📝 Enter Production</a>'+
-          '<a href="schedule.html">📅 Schedule</a><a href="marketing.html">📣 Marketing</a><a href="documents.html">📁 Documents</a>';
-    if(cur.id==='admin')h+='<a href="admin.html">⚙️ Admin</a>';
-    el('nav').innerHTML=h;
-  }
   function offices(){ return cur.offices==='all'?Object.keys(BASE):cur.offices.filter(o=>BASE[o]); }
   function render(){
-    renderNav();
+
     const list=offices();
-    if(!cur.can || !list.length){
+    if(!canEnter() || !list.length){
       el('view').innerHTML='<div class="noacc"><b>This role can\'t enter production numbers.</b><br>Entering numbers needs <b>Edit</b> on the Dashboard section — set per team in <b>Admin → Teams &amp; Access</b>.</div>';
       return;
     }
@@ -183,6 +176,14 @@
           (b.md?fld('Medicaid Production','Medicaid production for the month','mdp',mdp):'')+
           fld('Write-offs &amp; other adjustments','Can be negative','adj',adj)+
           fld('Completed production days','How many days you actually saw patients','dys',dys,true)+
+          '<div style="border-top:1px solid var(--line);margin:4px 0 14px"></div>'+
+          (canGoals()
+            ? '<p style="font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--soft);margin:0 0 10px">Goals <span style="background:#FFF6E9;color:#946011;font-size:10px;padding:2px 7px;border-radius:5px;letter-spacing:0">LEADERSHIP ONLY</span></p>'+
+              fld('Main production goal','The number this office is held to','goal',goal)+
+              fld('Stretch goal','The reach number','str',str)
+            : '<p style="font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--soft);margin:0 0 8px">Goals</p>'+
+              '<div class="f"><label>Main production goal</label><div class="help">Set by leadership \u2014 you can\u2019t change this</div><input class="ro" value="$'+goal.toLocaleString('en-US')+'" readonly></div>'+
+              '<div class="f"><label>Stretch goal</label><div class="help">Set by leadership \u2014 you can\u2019t change this</div><input class="ro" value="$'+str.toLocaleString('en-US')+'" readonly></div>')+
           '<div class="savebar"><button class="btn" onclick="PROD.commit()">Save to workbook</button>'+
             '<button class="btn ghost" onclick="PROD.reset()">Undo my changes</button>'+
             '<span class="saved" id="saved">✓ Saved · dashboard &amp; Excel updated</span></div>'+
@@ -211,6 +212,7 @@
     const b=BASE[office];
     edits[k]._total = val(office,month,'tc') + (b.md?val(office,month,'mdp'):0);
     edits[k]._days  = val(office,month,'dys');
+    edits[k]._goal  = val(office,month,'goal');
     save(); refreshRight();
   }
   function refreshRight(){
@@ -230,19 +232,24 @@
   function reset(){ Object.keys(edits).forEach(k=>{ if(k.indexOf(office+'|')===0) delete edits[k]; }); save(); render(); }
   function setOffice(o){ office=o; render(); }
   function setMonth(m){ month=m; render(); }
+  let booted=false;
   function set(id){
+    const prev=cur?cur.id:null;
     cur=PERSONAS.find(p=>p.id===id)||PERSONAS[0];
     try{ localStorage.setItem('ph_viewas',cur.id); }catch(_){}
-    el('persona').value=cur.id; office=null; render();
+    el('persona').value=cur.id; office=null;
+    // only when a human switches person (not on first paint) do we reload so the nav re-filters
+    if(booted && prev && prev!==cur.id){ location.reload(); return; }
+    render();
   }
   el('persona').innerHTML=PERSONAS.map(p=>'<option value="'+p.id+'">'+p.name+'</option>').join('');
   window.PROD={set,office:setOffice,month:setMonth,edit,commit,reset};
   let saved='admin'; try{ saved=localStorage.getItem('ph_viewas')||'admin'; }catch(_){}
   if(!PERSONAS.some(p=>p.id===saved)) saved='admin';
-  set(saved);
+  set(saved); booted=true;
 })();
 </script>
-<script src="user.js"></script>
+<script>PH.nav('production');</script>
 <script src="tour.js"></script>
 <script>
 Tour.init([

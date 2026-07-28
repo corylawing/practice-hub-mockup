@@ -100,12 +100,16 @@
   .pbar i.b{background:var(--bad)} .pbar i.a{background:var(--amber)}
   .num{font-weight:700} .num.g{color:var(--good)} .num.b{color:var(--bad)}
   .dleft{font-weight:700;color:var(--navy)}
+  .secttl{font-size:19px;color:var(--navy);margin:26px 0 2px}
+  .secttl:first-of-type{margin-top:8px}
+  .secsub{font-size:13.5px;color:var(--soft);margin:0 0 14px}
   .noacc{background:#fff;border:1px dashed var(--line);border-radius:14px;padding:34px;text-align:center;color:var(--soft)}
   .noacc b{color:var(--navy)}
   .foot{font-size:12px;color:var(--soft);margin-top:18px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 15px;line-height:1.55}
   .foot b{color:var(--navy)}
   @media(max-width:620px){ .kpi .v{font-size:22px} }
 </style>
+<script src="user.js"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — real numbers from the 2026 Production Dashboard workbook. You only see the offices you have access to.</div>
@@ -140,48 +144,64 @@ const OFFICES=[
    goal:[252912, 216988, 166188, 214647, 189249, 222278, 245976, 200435, 218840, 177212, 146966, 139312],
    stretch:[278203, 238687, 191117, 231819, 227099, 231169, 268114, 214465, 227594, 212654, 176359, 167174],
    ly:[243184, 208642, 159797, 211773, 181970, 213729, 245514, 192726, 210423, 170396, 141314, 99715],
+   sAct:[23, 35, 38, 34, 27, 37, 44, 28, 25, 23, 21, 18],
+   sGoal:[36, 34, 20, 34, 27, 34, 36, 28, 25, 23, 21, 18],
    days:[9, 9, 8, 8, 7, 9, 10, 9, 9, 9, 9, 9], done:[9, 9, 8, 8, 7, 9, 10, 0, 0, 0, 0, 0]},
   {n:'Clovis',brand:'FFO',state:'NM',
    act:[226073, 258625, 246687, 172148, 167889, 198722, 229262, 0, 0, 0, 0, 0],
    goal:[150201, 207644, 207905, 204125, 166173, 158085, 325468, 226833, 159142, 175696, 145196, 179490],
    stretch:[171230, 236714, 237012, 232702, 189437, 180217, 348251, 258590, 181422, 200293, 165523, 204619],
    ly:[141194, 199658, 199909, 196274, 159782, 135696, 324796, 218109, 153021, 168938, 131996, 172587],
+   sAct:[37, 42, 42, 29, 25, 32, 36, 35, 20, 24, 18, 22],
+   sGoal:[23, 33, 34, 34, 25, 25, 54, 35, 20, 24, 18, 22],
    days:[9, 9, 9, 9, 9, 9, 10, 9, 9, 9, 9, 9], done:[9, 9, 9, 9, 9, 9, 10, 0, 0, 0, 0, 0]},
   {n:'Hobbs',brand:'FFO',state:'NM',
    act:[197542, 208458, 229738, 225227, 197845, 259312, 203047, 0, 0, 0, 0, 0],
    goal:[230923, 199566, 208649, 181588, 204041, 228096, 139976, 178059, 151724, 246031, 188257, 177982],
    stretch:[260942, 225509, 239946, 205195, 244849, 255468, 162372, 206549, 174482, 295237, 225909, 195780],
    ly:[213817, 182569, 200624, 179291, 196193, 219323, 139850, 171211, 132037, 236568, 162606, 176638],
+   sAct:[25, 30, 36, 34, 27, 36, 31, 23, 18, 36, 29, 23],
+   sGoal:[31, 29, 32, 27, 28, 31, 21, 23, 18, 36, 29, 23],
    days:[7, 9, 9, 8, 7, 8, 9, 8, 12, 9, 9, 9], done:[7, 9, 9, 8, 7, 8, 9, 0, 0, 0, 0, 0]},
   {n:'Cruces LCO',brand:'LCO',state:'NM',
    act:[0, 0, 0, 0, 0, 0, 147724, 0, 0, 0, 0, 0],
    goal:[0, 0, 0, 0, 0, 0, 103648, 166866, 167404, 138716, 81094, 102830],
    stretch:[0, 0, 0, 0, 0, 0, 129560, 191896, 192514, 166459, 97313, 113113],
    ly:[162853, 182471, 195844, 108465, 154735, 128231, 85323, 154751, 156004, 126105, 61088, 92631],
+   sAct:[28, 37, 41, 20, 27, 20, 28, 28, 26, 24, 14, 14],
+   sGoal:[28, 37, 41, 20, 27, 20, 18, 28, 26, 24, 14, 14],
    days:[7, 9, 9, 9, 9, 9, 10, 9, 9, 9, 9, 9], done:[0, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0, 0]},
   {n:'Cruces FFO',brand:'FFO',state:'NM',
    act:[0, 0, 0, 0, 0, 0, 43930, 0, 0, 0, 0, 0],
    goal:[0, 0, 0, 0, 0, 0, 87361, 75272, 68613, 73501, 70542, 79563],
    stretch:[0, 0, 0, 0, 0, 0, 104834, 90326, 82336, 88202, 84650, 95476],
    ly:[76649, 81688, 111595, 77344, 93396, 77875, 116482, 53766, 42883, 40834, 39190, 61202],
+   sAct:[0, 0, 0, 0, 0, 0, 10, 16, 15, 16, 15, 17],
+   sGoal:[0, 0, 0, 0, 0, 0, 19, 16, 15, 16, 15, 17],
    days:[0, 0, 0, 0, 0, 0, 6, 7, 7, 7, 7, 7], done:[0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 0]},
   {n:'Lubbock',brand:'FFO',state:'TX',
    act:[123060, 104157, 137058, 84810, 103300, 81500, 83115, 0, 0, 0, 0, 0],
    goal:[146572, 133479, 116836, 77523, 100442, 80660, 96519, 98413, 99420, 115639, 81771, 88319],
    stretch:[166559, 157748, 132768, 119808, 127835, 124656, 131617, 113722, 112977, 111191, 107470, 103905],
    ly:[133247, 121345, 106214, 70475, 91311, 73327, 87744, 87479, 90382, 88953, 46726, 51952],
+   sAct:[20, 24, 26, 19, 20, 18, 19, 19, 19, 22, 16, 20],
+   sGoal:[25, 30, 23, 17, 19, 18, 21, 19, 19, 22, 16, 20],
    days:[7, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8], done:[7, 8, 8, 8, 8, 8, 8, 0, 0, 0, 0, 0]},
   {n:'San Angelo',brand:'FFO',state:'TX',
    act:[364028, 347608, 273810, 209565, 201489, 310660, 203469, 0, 0, 0, 0, 0],
    goal:[275667, 193614, 240442, 210867, 274049, 239473, 291472, 312606, 214035, 248641, 192785, 267286],
    stretch:[301921, 219429, 263341, 230950, 300148, 262279, 319232, 342378, 234419, 272321, 211145, 292741],
    ly:[262540, 129076, 228992, 200826, 260999, 228069, 277593, 297720, 203842, 236801, 183605, 254558],
+   sAct:[62, 62, 49, 37, 36, 55, 36, 56, 38, 44, 34, 48],
+   sGoal:[47, 34, 43, 38, 49, 43, 52, 56, 38, 44, 34, 48],
    days:[10, 13, 10, 9, 10, 9, 10, 10, 10, 9, 8, 9], done:[10, 13, 10, 9, 10, 9, 10, 0, 0, 0, 0, 0]},
   {n:'Mansfield',brand:'SUN',state:'TX',
    act:[108954, 92996, 139815, 95285, 63447, 178690, 173500, 0, 0, 0, 0, 0],
    goal:[0, 0, 0, 130268, 174025, 104053, 146511, 100531, 74090, 71498, 103061, 52919],
    stretch:[0, 0, 0, 145900, 189158, 148648, 209301, 143616, 105842, 96522, 139132, 71440],
    ly:[107458, 121458, 124990, 104214, 151326, 148648, 209301, 143616, 105842, 71498, 103061, 52919],
+   sAct:[0, 0, 0, 16, 11, 30, 29, 17, 12, 12, 17, 9],
+   sGoal:[0, 0, 0, 22, 29, 17, 24, 17, 12, 12, 17, 9],
    days:[9, 10, 11, 9, 10, 9, 10, 9, 9, 8, 7, 8], done:[9, 10, 11, 9, 10, 9, 10, 0, 0, 0, 0, 0]}
 ];
 // Numbers typed on the "Enter Production" page flow straight into this dashboard.
@@ -191,7 +211,7 @@ const OFFICES=[
     const p=k.split('|'), o=OFFICES.find(x=>x.n===p[0]), m=+p[1], v=e[k];
     if(!o||isNaN(m)) return;
     if(v._total!==undefined&&v._total!=='') o.act[m]=Number(v._total);
-    if(v.goal!==undefined&&v.goal!=='')    o.goal[m]=Number(v.goal);
+    if(v._goal!==undefined&&v._goal!=='')   o.goal[m]=Number(v._goal);
     if(v._days!==undefined&&v._days!=='')  o.done[m]=Number(v._days);
   });
 })();
@@ -219,9 +239,10 @@ const OFFICES=[
   }
   function group(list){
     const z=()=>Array(12).fill(0);
-    const G={n:'All Offices',brand:'',act:z(),goal:z(),stretch:z(),ly:z(),days:z(),done:z()};
+    const G={n:'All Offices',brand:'',act:z(),goal:z(),stretch:z(),ly:z(),sAct:z(),sGoal:z(),days:z(),done:z()};
     list.forEach(o=>{ const L=live(o);
-      for(let i=0;i<12;i++){ if(L.indexOf(i)>=0){G.act[i]+=o.act[i];G.goal[i]+=o.goal[i];G.stretch[i]+=o.stretch[i];G.ly[i]+=o.ly[i];}
+      for(let i=0;i<12;i++){ if(L.indexOf(i)>=0){G.act[i]+=o.act[i];G.goal[i]+=o.goal[i];G.stretch[i]+=o.stretch[i];G.ly[i]+=o.ly[i];
+          G.sAct[i]+=(o.sAct[i]||0); G.sGoal[i]+=(o.sGoal[i]||0);}
         G.days[i]+=o.days[i]; G.done[i]+=o.done[i]; } });
     return G;
   }
@@ -230,13 +251,6 @@ const OFFICES=[
   const full=v=>(v<0?'-$':'$')+Math.abs(Math.round(v)).toLocaleString('en-US');
   const pc=v=>Math.round(v*100)+'%';
 
-  function renderNav(){
-    let h='<a href="home.html">🏠 Home</a><a class="active" href="index.html">📊 Dashboard</a><a href="production.html">📝 Enter Production</a>';
-    NAVSECS.forEach(s=>h+='<a href="'+s.href+'">'+s.n+'</a>');
-    h+='<a href="documents.html">📁 Documents</a>';
-    if(cur.id==='admin')h+='<a href="admin.html">⚙️ Admin</a>';
-    el('nav').innerHTML=h;
-  }
   function kpis(o){
     const t=stats(o);
     const vg=t.vgoal>=0, vy=t.yoy>=1;
@@ -250,6 +264,44 @@ const OFFICES=[
       '<div class="kpi '+(vy?'g':'b')+'"><div class="k">vs Last year</div><div class="v" style="color:'+(vy?'var(--good)':'var(--bad)')+'">'+pc(t.yoy)+'</div>'+
         '<div class="s">Last year '+money(t.l)+'</div></div>'+
     '</div>';
+  }
+  function sStats(o){
+    const L=live(o); // same reported months as production
+    const sa=o.sAct||[], sg=o.sGoal||[];
+    const a=L.reduce((x,i)=>x+(sa[i]||0),0), g=L.reduce((x,i)=>x+(sg[i]||0),0);
+    const days=L.reduce((x,i)=>x+(o.done[i]||0),0);
+    return {L,a,g,pct:g?a/g:0,v:a-g,perDay:days?a/days:0};
+  }
+  function startsKpis(o){
+    const t=sStats(o), up=t.v>=0;
+    return '<div class="kpis">'+
+      '<div class="kpi n"><div class="k">Starts so far</div><div class="v">'+Math.round(t.a)+'</div>'+
+        '<div class="s">'+t.L.length+' month'+(t.L.length===1?'':'s')+' reported</div></div>'+
+      '<div class="kpi '+(up?'g':'b')+'"><div class="k">vs Starts goal</div><div class="v" style="color:'+(up?'var(--good)':'var(--bad)')+'">'+(up?'+':'')+Math.round(t.v)+'</div>'+
+        '<div class="s">Goal '+Math.round(t.g)+' starts</div></div>'+
+      '<div class="kpi"><div class="k">% of starts goal</div><div class="v">'+pc(t.pct)+'</div>'+
+        '<div class="s">'+(up?'ahead of':'behind')+' where it should be</div></div>'+
+      '<div class="kpi"><div class="k">Starts per day</div><div class="v">'+t.perDay.toFixed(1)+'</div>'+
+        '<div class="s">across production days worked</div></div>'+
+    '</div>';
+  }
+  function startsChart(o){
+    const L=live(o); if(!L.length) return '';
+    const sa=o.sAct||[], sg=o.sGoal||[];
+    let max=0; L.forEach(i=>{max=Math.max(max,sa[i]||0,sg[i]||0);}); max*=1.12;
+    const cols=L.map(i=>{
+      const a=sa[i]||0, g=sg[i]||0, h=v=>Math.max(2,(v/max)*100);
+      return '<div class="mo"><div class="bars">'+
+        '<div class="gm" style="bottom:'+h(g)+'%"></div>'+
+        '<div class="bar ab '+(a>=g?'over':'under')+'" style="height:'+h(a)+'%;width:56%" data-t="'+MO[i]+': '+Math.round(a)+' starts \u00b7 goal '+Math.round(g)+'"></div>'+
+        '</div><div class="molab">'+MO[i]+'</div></div>';
+    }).join('');
+    return '<div class="card"><h2>Starts month by month</h2>'+
+      '<div class="sub">Bars are starts; the <b>dashed line</b> is that month\u2019s starts goal.</div>'+
+      '<div class="legend"><span><i class="sw" style="background:var(--good)"></i> At/above goal</span>'+
+        '<span><i class="sw" style="background:var(--bad)"></i> Under goal</span>'+
+        '<span><i class="swline"></i> Starts goal</span></div>'+
+      '<div class="chartwrap"><div class="chart">'+cols+'</div></div></div>';
   }
   function chart(o){
     const L=live(o); if(!L.length) return '';
@@ -274,26 +326,27 @@ const OFFICES=[
       '<div class="chartwrap"><div class="chart">'+cols+'</div></div></div>';
   }
   function leaderboard(list){
-    const rows=list.map(o=>({o,t:stats(o)})).sort((x,y)=>y.t.pct-x.t.pct);
+    const rows=list.map(o=>({o,t:stats(o),s:sStats(o)})).sort((x,y)=>y.s.pct-x.s.pct);
     const body=rows.map((r,i)=>{
-      const t=r.t, pctw=Math.min(100,t.pct*100), cls=t.pct>=1?'':(t.pct>=.9?'a':'b');
+      const t=r.t, pctw=Math.min(100,r.s.pct*100), cls=r.s.pct>=1?'':(r.s.pct>=.9?'a':'b');
       return '<tr onclick="DASH.pick(\''+r.o.n+'\')">'+
         '<td class="rk'+(i===0?' top':'')+'">'+(i===0?'🏆':i+1)+'</td>'+
         '<td><div class="onm">'+r.o.n+'<span class="br">'+r.o.brand+'</span></div>'+
           '<div class="pbar"><i class="'+cls+'" style="width:'+pctw+'%"></i></div></td>'+
+        '<td class="num">'+pc(r.s.pct)+'</td>'+
+        '<td class="num '+(r.s.v>=0?'g':'b')+'">'+(r.s.v>=0?'+':'')+Math.round(r.s.v)+'</td>'+
         '<td class="num">'+pc(t.pct)+'</td>'+
         '<td class="num '+(t.vgoal>=0?'g':'b')+'">'+(t.vgoal>=0?'+':'')+full(t.vgoal)+'</td>'+
-        '<td class="num">'+pc(t.spct)+'</td>'+
         '<td class="num '+(t.yoy>=1?'g':'b')+'">'+pc(t.yoy)+'</td>'+
         '<td class="dleft">'+t.daysLeft+'</td></tr>';
     }).join('');
     return '<div class="card"><h2>Leaderboard</h2>'+
-      '<div class="sub">Best performance on top, by % of main goal. “Days left” = production days remaining this year.</div>'+
-      '<div class="lb-scroll"><table class="lb"><thead><tr><th></th><th>Office</th><th>% of goal</th><th>vs goal</th><th>% of stretch</th><th>vs last yr</th><th>Days left</th></tr></thead>'+
+      '<div class="sub">Best performance on top, ranked by <b>% of starts goal</b>. “Days left” = production days remaining this year.</div>'+
+      '<div class="lb-scroll"><table class="lb"><thead><tr><th></th><th>Office</th><th>Starts %</th><th>Starts ±</th><th>Prod %</th><th>Prod vs goal</th><th>vs last yr</th><th>Days left</th></tr></thead>'+
       '<tbody>'+body+'</tbody></table></div></div>';
   }
   function render(){
-    renderNav();
+
     if(!allowed.length){
       el('chips').innerHTML=''; el('scope').textContent='No dashboard access';
       el('view').innerHTML='<div class="noacc"><b>This role doesn\'t have the Production Dashboard.</b><br>An admin grants access per team in <b>Admin → Teams &amp; Access</b>.</div>';
@@ -312,7 +365,11 @@ const OFFICES=[
       : '';
     const isAll = multi && sel==='ALL';
     const o = isAll ? group(allowed) : allowed.find(x=>x.n===sel);
-    let html = kpis(o) + chart(o);
+    let html =
+      '<h2 class="secttl">\ud83e\uddb7 Starts</h2><p class="secsub">New patients started \u2014 the front end of production.</p>'+
+      startsKpis(o) + startsChart(o) +
+      '<h2 class="secttl">\ud83d\udcb0 Production</h2><p class="secsub">Dollars produced against the main and stretch goals.</p>'+
+      kpis(o) + chart(o);
     if(isAll) html += leaderboard(allowed);
     html += '<div class="foot"><b>Where these numbers come from:</b> the practice\'s 2026 Production Dashboard workbook on SharePoint — the hub reads it live, so there is no second copy to keep in sync. A month counts once it has <b>both</b> an actual and a goal (Mansfield has production from January but goals from April).<br><br><b>Heads up on the workbook:</b> the “Dashboard” tab\'s 2026 total shows <b>+$449,954</b> vs goal, but adding the eight offices gives <b>+$406,663</b> — the total formula skips Mansfield (−$43,935). The hub adds every office every time.</div>';
     el('view').innerHTML = html;
@@ -342,7 +399,7 @@ const OFFICES=[
   set(saved);
 })();
 </script>
-<script src="user.js"></script>
+<script>PH.nav('dashboard');</script>
 <script src="tour.js"></script>
 <script>
 Tour.init([

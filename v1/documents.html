@@ -121,6 +121,7 @@
   .whobox b{color:#0a4d49}
   .file.newf .nm{color:var(--teal-600);font-weight:700}
 </style>
+<script src="user.js"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — Documents. You see only the folders your role, location &amp; team allow. Files open on the Microsoft drive.</div>
@@ -232,18 +233,6 @@
     if(LOCS.includes(scope))return p.scope==='all'||p.scope===scope;
     return false;
   }
-  function renderNav(p){
-    let h='<a class="active" href="documents.html">📁 Documents</a>';
-    h='<a href="home.html">🏠 Home</a>'+h;
-    NAVSECS.forEach(s=>{ if((!s.adminOnly||p.id==='admin')&&p.sec[s.k]) h+='<a href="'+s.href+'">'+s.n+'</a>'; });
-    // order: Home, tools, Documents(active), Admin — rebuild cleanly
-    let out='<a href="home.html">🏠 Home</a>';
-    if(p.sec['dashboard']) out+='<a href="production.html">📝 Enter Production</a>';
-    NAVSECS.filter(s=>s.k!=='admin').forEach(s=>{ if(p.sec[s.k]) out+='<a href="'+s.href+'">'+s.n+'</a>'; });
-    out+='<a class="active" href="documents.html">📁 Documents</a>';
-    if(p.id==='admin') out+='<a href="admin.html">⚙️ Admin</a>';
-    el('nav').innerHTML=out;
-  }
   function fileRow(name,scopeChip){
     const safe=String(name).replace(/'/g,"\\'");
     return '<div class="file"><span class="fic">📄</span><span class="nm">'+name+'</span>'+(scopeChip||'')+'<a class="sp" href="#" onclick="DOCS.openDoc(\''+safe+'\');return false">Open ↗</a></div>';
@@ -282,7 +271,7 @@
     el('persona').value=cur.id;
     const n=accessibleSections(cur).length;
     el('sub').innerHTML='As <b>'+cur.name+'</b>, you can open <b>'+n+'</b> document folder'+(n===1?'':'s')+'. Click one to see what\'s inside.';
-    renderNav(cur); renderFolders(cur);
+    PH.nav('documents'); renderFolders(cur);
   }
   function toggle(k){ if(!openSet)openSet=new Set(); if(openSet.has(k))openSet.delete(k); else openSet.add(k); renderFolders(cur); }
   /* ---- Live two-way sync viewer (click a file) ---- */
@@ -377,7 +366,7 @@
   set(saved);
 })();
 </script>
-<script src="user.js"></script>
+<script>PH.nav('documents');</script>
 <script src="tour.js"></script>
 <script>
 Tour.init([

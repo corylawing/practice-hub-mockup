@@ -11,27 +11,27 @@
      teams:['Admin','Financial Coordinator Team'], loc:'All offices', region:'All', brand:'Group',
      phone:'(575) 555-1002', emp:'E-1002', status:'Active', color:'#25456e', offices:'all',
      about:'Practice administrator. I keep the production workbook and add new staff to the hub.',
-     can:{dashboard:'manage',production:'edit',schedule:'manage',marketing:'manage',documents:'manage',admin:'manage'}},
+     can:{dashboard:'manage',production:'manage',schedule:'manage',marketing:'manage',documents:'manage',team:'manage',admin:'manage'}},
     {id:'om', first:'Karin', last:'Alons', title:'Office Manager · Carlsbad',
      teams:['Office Managers'], loc:'Carlsbad', region:'NM', brand:'FFO',
      phone:'(575) 555-1010', emp:'E-1010', status:'Active', color:'#149B96', offices:['Carlsbad'],
      about:'Office manager at Carlsbad.',
-     can:{dashboard:'view',production:'edit',schedule:'edit',marketing:'view',documents:'edit',admin:'none'}},
+     can:{dashboard:'view',production:'edit',schedule:'edit',marketing:'view',documents:'edit',team:'view',admin:'none'}},
     {id:'doctor', first:'Carla', last:'Coehlo', title:'Doctor · rotates offices', dr:true,
      teams:['Doctors'], loc:'Carlsbad, Hobbs', region:'NM', brand:'FFO',
      phone:'(575) 555-1020', emp:'E-1020', status:'Active', color:'#6b3fd0', offices:['Carlsbad','Hobbs'],
      about:'Orthodontist. I rotate between the New Mexico offices.',
-     can:{dashboard:'view',production:'none',schedule:'view',marketing:'none',documents:'view',admin:'none'}},
+     can:{dashboard:'view',production:'none',schedule:'view',marketing:'none',documents:'view',team:'view',admin:'none'}},
     {id:'tc', first:'Lily', last:'Rico', title:'Treatment Coordinator · Carlsbad',
      teams:['TCs'], loc:'Carlsbad', region:'NM', brand:'FFO',
      phone:'(575) 555-1030', emp:'E-1030', status:'Active', color:'#946011', offices:['Carlsbad'],
      about:'Treatment coordinator at Carlsbad.',
-     can:{dashboard:'none',production:'none',schedule:'view',marketing:'none',documents:'add',admin:'none'}},
+     can:{dashboard:'none',production:'none',schedule:'view',marketing:'none',documents:'add',team:'view',admin:'none'}},
     {id:'staff', first:'Serenity', last:'Gonzales', title:'Front Desk · Carlsbad',
      teams:['Staff'], loc:'Carlsbad', region:'NM', brand:'FFO',
      phone:'(575) 555-1055', emp:'E-1055', status:'Active', color:'#b03a63', offices:['Carlsbad'],
      about:'Front desk at Carlsbad.',
-     can:{dashboard:'none',production:'none',schedule:'view',marketing:'none',documents:'view',admin:'none'}}
+     can:{dashboard:'none',production:'none',schedule:'view',marketing:'none',documents:'view',team:'view',admin:'none'}}
   ];
   const COLORS=['#25456e','#149B96','#6b3fd0','#946011','#b03a63','#2E7D52','#1f6f9e','#b0442f'];
 
@@ -181,6 +181,24 @@
   }
   function closeProfile(){ const o=document.getElementById('ph-ov'); if(o)o.classList.remove('open'); }
 
+  /* ONE nav for every page — identical order everywhere, so it never rearranges itself.
+     A tab only appears if the person can actually open it. */
+  const NAV=[
+    {k:'home',       n:'\ud83c\udfe0 Home',             href:'home.html',       show:()=>true},
+    {k:'dashboard',  n:'\ud83d\udcca Dashboard',        href:'index.html',      show:()=>atLeast('dashboard','view')},
+    {k:'production', n:'\ud83d\udcdd Enter Production',  href:'production.html', show:()=>atLeast('production','edit')},
+    {k:'schedule',   n:'\ud83d\udcc5 Schedule',          href:'schedule.html',   show:()=>atLeast('schedule','view')},
+    {k:'marketing',  n:'\ud83d\udce3 Marketing',         href:'marketing.html',  show:()=>atLeast('marketing','view')},
+    {k:'documents',  n:'\ud83d\udcc1 Documents',         href:'documents.html',  show:()=>atLeast('documents','view')},
+    {k:'team',       n:'\ud83d\udc65 Team',              href:'team.html',       show:()=>atLeast('team','view')},
+    {k:'admin',      n:'\u2699\ufe0f Admin',            href:'admin.html',      show:()=>atLeast('admin','view')}
+  ];
+  function nav(active){
+    const host=document.getElementById('nav')||document.querySelector('.v1nav-in'); if(!host)return;
+    host.innerHTML=NAV.filter(x=>x.show()).map(x=>
+      '<a href="'+x.href+'"'+(x.k===active?' class="active"':'')+'>'+x.n+'</a>').join('');
+  }
+
   /* Drop a "view only" banner at the top of a page's content. */
   function readOnlyBanner(target,what){
     const host=document.querySelector(target); if(!host||host.querySelector('.ph-ro-banner'))return;
@@ -189,6 +207,6 @@
     host.insertBefore(d,host.firstChild);
   }
 
-  window.PH={PEOPLE,me,name,initials,email,can,atLeast,offices,setMe,mount,profile,saveProfile,setColor,closeProfile,readOnlyBanner};
+  window.PH={PEOPLE,me,name,initials,email,can,atLeast,offices,setMe,mount,nav,NAV,profile,saveProfile,setColor,closeProfile,readOnlyBanner};
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mount); else mount();
 })();

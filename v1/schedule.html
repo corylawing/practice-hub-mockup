@@ -133,6 +133,7 @@
   .s-input:focus{border-color:var(--teal);box-shadow:0 0 0 3px var(--teal-soft)}
   .s-foot{display:flex;align-items:center;gap:10px;padding:14px 18px;border-top:1px solid var(--line);background:#fafbfc}
 </style>
+<script src="user.js"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — sample staff schedule for validation. Live version = one Microsoft List the practice maintains.</div>
@@ -143,14 +144,7 @@
     <span class="v1">V1 preview</span>
   </div>
 </header>
-<nav class="v1nav"><div class="v1nav-in">
-  <a href="home.html">🏠 Home</a>
-  <a href="index.html">📊 Dashboard</a>
-  <a href="production.html">📝 Enter Production</a>
-  <a href="schedule.html" class="active">📅 Schedule</a>
-  <a href="marketing.html">📣 Marketing</a>
-  <a href="admin.html">⚙️ Admin</a>
-</div></nav>
+<nav class="v1nav"><div class="v1nav-in" id="nav"></div></nav>
 
 <div class="wrap">
   <div class="page-head">
@@ -378,7 +372,7 @@
   renderRoster(); renderGrid();
 })();
 </script>
-<script src="user.js"></script>
+<script>PH.nav('schedule');</script>
 <script>if(window.PS&&PS.applyPerms)PS.applyPerms();</script>
 <script src="tour.js"></script>
 <script>

@@ -47,6 +47,7 @@ docs, schedules, KPIs, and marketing.
 | File | Purpose |
 |---|---|
 | `v1/home.html` | **Logged-in Home** — the daily landing page. "Viewing as ▾" role switcher, personalized section tiles, an "Updates for you" feed, Documents folders. Shows the admin-vs-employee difference. |
+| `v1/team.html` | **Team** — the who's-who directory (photo, role, office, tap-to-call phone, tap-to-email). Replaced a fictional "Staff Directory" the practice never had; they liked the idea, so it was built for real. |
 | `v1/documents.html` | **Documents section** — persona-aware folder browser (persona persists via `localStorage.ph_viewas`). Add-a-document flow with audience control (Everyone / locations / teams + "who will see this"). Click a file → live **two-way SharePoint/OneDrive sync** demo (edit in hub ↔ drive). |
 | `v1/index.html` | **Production Dashboard** — location-scoped. Main **and** stretch goals, last-year bars, per-office pages + an all-office **leaderboard** with production days remaining. |
 | `v1/production.html` | **Enter Production** — the few boxes a manager types each month; math shown live; writes back to the SharePoint workbook and **drives the dashboard** (localStorage `ph_prod`). |
@@ -80,6 +81,12 @@ Font: Inter (Google Fonts). Radius ~14px. Soft shadows. maxw ~1080–1180px.
 
 ### 4a. `v1/index.html` — Production Dashboard (rebuilt 2026-07-28 from their feedback sheet)
 Their written feedback, all implemented:
+0. **STARTS COMES FIRST.** They asked for starts shown "just like Production but put starts first".
+   The page is now two stacked sections: **🦷 Starts** then **💰 Production**, and the leaderboard is
+   **ranked by % of starts goal** with Starts %/± as its first two columns. Starts data is derived
+   from their sheet: `sGoal` = "Needed Number of Starts per day" × "Number of Production Days (2026)",
+   `sAct` = that goal + their "Current # of Starts Ahead or Behind Goal" row, counted over the same
+   reported months as production. Reconciles with their own variance row per office.
 1. **Main AND stretch goal** everywhere (KPI card shows % of main with % of stretch beneath; the chart
    draws a **dashed main-goal line** and a **dotted stretch line** per month).
 2. **Last-year column** on the bar chart — each month is a grey **2025** bar next to the 2026 bar.
@@ -350,6 +357,20 @@ Design Brief.docx` (regenerate via `build-response-doc.js`, which is gitignored)
   modals/hints (existing pattern).
 - Keep V1 pages **self-contained**. Match the existing token set and component styles.
 - Commit style: short imperative subject scoped by page, e.g. `V1 Admin: …`, `Schedule: …`.
+
+### ONE nav, ONE persona list (2026-07-28)
+`PH.nav(activeKey)` in `user.js` renders the tab bar on **every** page from a single ordered list:
+**Home · Dashboard · Enter Production · Schedule · Marketing · Documents · Team · Admin**. The user
+complained the menu **reordered itself** between pages — never build a per-page nav again. A tab only
+appears if `atLeast()` passes; **Enter Production requires `edit`**, so people who can't type numbers
+never see it. `user.js` MUST be loaded in `<head>` (before any page script) or `PH` is undefined.
+Watch out: a `location.reload()` inside a persona setter needs a `booted` guard, or it reload-loops.
+
+### Editing dashboard data is a PERMISSION (2026-07-28)
+Section `production` levels: `view` (nothing useful), **`edit` = type the monthly actuals**,
+**`manage` = also set the main and stretch goals**. In `production.html` the goal boxes render as
+locked read-only inputs ("Set by leadership — you can't change this") unless
+`PH.atLeast('production','manage')`. Goal edits flow to the dashboard via `_goal`.
 
 ### Permissions must be ENFORCED, not just displayed (2026-07-28)
 The user caught that a Doctor with **View** on the schedule could still edit it. Any page that

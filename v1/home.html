@@ -90,6 +90,7 @@
   .upd .uw{font-size:12px;color:var(--soft)}
   .upd .utag{margin-left:auto;font-size:11px;font-weight:700;color:var(--teal-600);background:var(--teal-soft);border-radius:999px;padding:2px 9px;white-space:nowrap}
 </style>
+<script src="user.js"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — this is the logged-in home. Use “Viewing as” to see how the app changes for each role.</div>
@@ -202,14 +203,6 @@
   function initials(n){const p=n.split(' ');return (p[0][0]+(p[1]?p[1][0]:'')).toUpperCase();}
   function foldersFor(p){ return FOLDERS.filter(f=>p.doc[f.k]); }
 
-  function renderNav(p){
-    el('nav').innerHTML=SECTIONS.filter(s=> s.k==='documents' ? foldersFor(p).length>0 : (s.k==='home'|| p.sec[s.k])).map(s=>{
-      if(s.k==='documents') return '<a href="documents.html">📁 Documents</a>';
-      return '<a href="'+s.href+'">'+s.ic+' '+s.n+'</a>';
-    }).join('');
-    // prepend Home
-    el('nav').insertAdjacentHTML('afterbegin','<a class="active" href="home.html">🏠 Home</a>');
-  }
 
   function tileCap(c){ return '<span class="cap '+c+'">'+CAPTXT[c]+'</span>'; }
 
@@ -243,7 +236,7 @@
     const nSec=SECTIONS.filter(s=>s.kind==='tool'&&(!s.adminOnly||cur.id==='admin')&&cur.sec[s.k]).length + (foldersFor(cur).length?1:0);
     const docScope = cur.scope==='all'?'all offices':('the '+cur.scope+' folder only');
     el('summary').innerHTML='Sees <b>'+nSec+'</b> section'+(nSec===1?'':'s')+'. In Documents, sees <b>'+docScope+'</b>.'+(cur.id==='admin'?' Plus the <b>Admin console</b> to manage everyone.':'');
-    renderNav(cur); renderUpdates(cur); renderTiles(cur);
+    PH.nav('home'); renderUpdates(cur); renderTiles(cur);
   }
 
   // build the dropdown
@@ -254,7 +247,7 @@
   el('persona').value=saved; set(saved);
 })();
 </script>
-<script src="user.js"></script>
+<script>PH.nav('home');</script>
 <script src="tour.js"></script>
 <script>
 Tour.init([

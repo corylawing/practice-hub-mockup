@@ -109,6 +109,7 @@
   @media(max-width:900px){ .board{grid-template-columns:repeat(2,1fr)} }
   @media(max-width:560px){ .board{grid-template-columns:1fr} }
 </style>
+<script src="user.js"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — marketing board concept for validation. Real build lives in Practice Hub (Microsoft Lists / Planner).</div>
@@ -119,14 +120,7 @@
     <span class="v1">V1 preview</span>
   </div>
 </header>
-<nav class="v1nav"><div class="v1nav-in">
-  <a href="home.html">🏠 Home</a>
-  <a href="index.html">📊 Dashboard</a>
-  <a href="production.html">📝 Enter Production</a>
-  <a href="schedule.html">📅 Schedule</a>
-  <a href="marketing.html" class="active">📣 Marketing</a>
-  <a href="admin.html">⚙️ Admin</a>
-</div></nav>
+<nav class="v1nav"><div class="v1nav-in" id="nav"></div></nav>
 
 <div class="wrap">
   <div class="page-head">
@@ -324,7 +318,7 @@
   render();
 })();
 </script>
-<script src="user.js"></script>
+<script>PH.nav('marketing');</script>
 <script src="tour.js"></script>
 <script>
 Tour.init([

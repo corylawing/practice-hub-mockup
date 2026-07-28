@@ -154,6 +154,7 @@
   .tp.on{background:var(--navy);color:#fff;border-color:var(--navy)}
   @media(max-width:640px){ .grid2{grid-template-columns:1fr} }
 </style>
+<script src="user.js"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — admin console concept for validation. Real build: people sync from Microsoft 365; access is managed here.</div>
@@ -164,14 +165,7 @@
     <span class="v1">V1 preview</span>
   </div>
 </header>
-<nav class="v1nav"><div class="v1nav-in">
-  <a href="home.html">🏠 Home</a>
-  <a href="index.html">📊 Dashboard</a>
-  <a href="production.html">📝 Enter Production</a>
-  <a href="schedule.html">📅 Schedule</a>
-  <a href="marketing.html">📣 Marketing</a>
-  <a href="admin.html" class="active">⚙️ Admin</a>
-</div></nav>
+<nav class="v1nav"><div class="v1nav-in" id="nav"></div></nav>
 
 <div class="wrap">
   <div class="page-head">
@@ -212,8 +206,9 @@
   const TOOLS=[
     {k:'dashboard',n:'Dashboard (Goals Tracker)',s:'Dashboard',ic:'📊'},
     {k:'schedule',n:'Schedule',s:'Schedule',ic:'📅'},
+    {k:'production',n:'Enter Production (type the numbers)',s:'Enter Prod',ic:'📝'},
     {k:'marketing',n:'Marketing board',s:'Marketing',ic:'📣'},
-    {k:'directory',n:'Staff Directory',s:'Directory',ic:'👥'},
+    {k:'team',n:'Team (who\u2019s who)',s:'Team',ic:'👥'},
     {k:'admin',n:'Admin Console',s:'Admin',ic:'⚙️'}
   ];
   const DEFAULT_DOCSECS=[
@@ -251,15 +246,15 @@
   ensureAccess();
   const set=(t,o)=>Object.assign(access[t],o);
   allSections().forEach(x=>access['Admin'][x.k]='manage');
-  set('Executive Team',{dashboard:'manage',schedule:'view',marketing:'view',directory:'view',admin:'view',hr:'edit',eom:'manage',officedocs:'view',forms:'view',vendors:'view',filing:'view'});
-  set('Leadership Team',{dashboard:'edit',schedule:'view',marketing:'view',directory:'view',hr:'edit',eom:'edit',officedocs:'view',forms:'view',vendors:'view',filing:'view'});
-  set('Office Managers',{dashboard:'view',schedule:'edit',marketing:'view',directory:'edit',hr:'view',eom:'edit',officedocs:'edit',forms:'edit',vendors:'edit',filing:'edit'});
-  set('Clinic Managers',{dashboard:'view',schedule:'edit',directory:'view',hr:'view',officedocs:'view',forms:'edit'});
-  set('TCs',{schedule:'view',directory:'view',hr:'view',forms:'add'});
-  set('Doctors',{dashboard:'view',schedule:'view',directory:'view',hr:'view',forms:'view'});
-  set('Marketing Team',{marketing:'manage',directory:'view',hr:'view',forms:'view'});
-  set('Financial Coordinator Team',{dashboard:'view',directory:'view',eom:'edit',vendors:'view',filing:'edit'});
-  set('Staff',{schedule:'view',directory:'view',hr:'view',forms:'view'});
+  set('Executive Team',{production:'manage',dashboard:'manage',schedule:'view',marketing:'view',team:'view',admin:'view',hr:'edit',eom:'manage',officedocs:'view',forms:'view',vendors:'view',filing:'view'});
+  set('Leadership Team',{production:'manage',dashboard:'edit',schedule:'view',marketing:'view',team:'view',hr:'edit',eom:'edit',officedocs:'view',forms:'view',vendors:'view',filing:'view'});
+  set('Office Managers',{production:'edit',dashboard:'view',schedule:'edit',marketing:'view',team:'view',hr:'view',eom:'edit',officedocs:'edit',forms:'edit',vendors:'edit',filing:'edit'});
+  set('Clinic Managers',{dashboard:'view',schedule:'edit',team:'view',hr:'view',officedocs:'view',forms:'edit'});
+  set('TCs',{schedule:'view',team:'view',hr:'view',forms:'add'});
+  set('Doctors',{dashboard:'view',schedule:'view',team:'view',hr:'view',forms:'view'});
+  set('Marketing Team',{marketing:'manage',team:'view',hr:'view',forms:'view'});
+  set('Financial Coordinator Team',{production:'edit',dashboard:'view',team:'view',eom:'edit',vendors:'view',filing:'edit'});
+  set('Staff',{schedule:'view',team:'view',hr:'view',forms:'view'});
   DOCSECS.forEach(sec=>{ if(!DEFAULT_DOCSECS.some(d=>d.k===sec.k)) applySecAudience(sec); });
 
   const AUDLBL={everyone:'🌐 Everyone',location:'📍 By location / state',team:'👥 By team'};
@@ -633,7 +628,7 @@
   render();
 })();
 </script>
-<script src="user.js"></script>
+<script>PH.nav('admin');</script>
 <script src="tour.js"></script>
 <script>
 Tour.init([
