@@ -110,6 +110,14 @@
   .aud.locked{cursor:default;opacity:.92}
   .addfile{margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
   .mini{font-size:12px;color:var(--soft)}
+  /* tap-to-pick menu (replaces click-to-cycle) */
+  .pk{position:fixed;z-index:300;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow-lg);padding:6px;min-width:200px}
+  .pk button{display:flex;align-items:center;gap:10px;width:100%;border:none;background:none;font-family:inherit;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:13.5px;font-weight:600;color:var(--ink);text-align:left}
+  .pk button:hover{background:var(--canvas)}
+  .pk button.cur{background:var(--teal-soft)}
+  .pk .sw{width:15px;height:15px;border-radius:4px;flex:none;border:1px solid rgba(15,42,74,.08)}
+  .pk small{display:block;color:var(--soft);font-size:11px;font-weight:500;line-height:1.3}
+  .pk .ck{margin-left:auto;color:var(--teal-600);font-weight:800}
   /* modal */
   .ov{position:fixed;inset:0;background:rgba(15,42,74,.5);z-index:120;display:none;align-items:flex-start;justify-content:center;padding:24px 16px;overflow:auto}
   .ov.open{display:flex}
@@ -285,7 +293,8 @@
     const c=el('ucount'); if(c)c.textContent=list.length+' of '+users.length+' people shown.';
   }
   function userAccess(u){ const out={}; SECTIONS.forEach(s=>{let best='none'; u.teams.forEach(t=>{const lv=(access[t]||{})[s.k]||'none'; if(rank[lv]>rank[best])best=lv;}); out[s.k]=best;}); return out; }
-  function profile(gi){ const u=users[gi]; tmpU={gi,teams:u.teams.slice(),status:u.status}; openProfile(u); }
+  function parseLoc(loc){ if(!loc||loc==='Unassigned')return []; if(loc==='All offices')return ['All offices']; return loc.split(',').map(x=>x.trim()).filter(Boolean); }
+  function profile(gi){ const u=users[gi]; tmpU={gi,teams:u.teams.slice(),status:u.status,locs:parseLoc(u.loc)}; openProfile(u); }
   function openProfile(u){
     const teamChips=TEAMS.map(t=>'<button class="tp'+(tmpU.teams.includes(t)?' on':'')+'" onclick="AD.togTeam(\''+t+'\')">'+t+'</button>').join('');
     openModal(
@@ -297,7 +306,7 @@
         '</div>'+
         '<div><div class="panel-lab">Managed in Practice Hub</div>'+
           '<div class="fld"><label>Team(s) — <b>what</b> they can see &amp; do</label><div class="teampick" id="teampick">'+teamChips+'</div></div>'+
-          '<div class="fld"><label>Location(s) — <b>which offices\'</b> stuff they see</label><input value="'+u.loc+'"></div>'+
+          '<div class="fld"><label>Location(s) — <b>which offices\'</b> stuff they see</label><div class="teampick" id="locpick">'+locChips()+'</div></div>'+
           '<div class="fld"><label>Region</label><input value="'+u.region+'"></div>'+
           '<div class="fld"><label>Brand</label><input value="'+u.brand+'"></div>'+
           '<div class="fld"><label>Status <span style="color:var(--bad)">(admin only)</span></label><select id="fStatus" onchange="AD.setStatus(this.value)">'+['Active','Paused','Inactive'].map(s=>'<option'+(s===tmpU.status?' selected':'')+'>'+s+'</option>').join('')+'</select></div>'+
@@ -315,23 +324,29 @@
     const lines=SECTIONS.filter(s=>acc[s.k]!=='none').map(s=>'<div class="acc-line"><span>'+s.n+'</span><b class="lvl '+acc[s.k]+'" style="padding:1px 8px;border-radius:6px">'+LVLNAME[acc[s.k]]+'</b></div>').join('')||'<div class="acc-line" style="color:var(--soft)">No sections yet — add a team.</div>';
     const box=el('accpreview'); if(box) box.innerHTML='<h4>What '+u.f+' can access (from their teams)</h4>'+lines;
   }
+  function locChips(){ return ['All offices'].concat(LOCATIONS).map(l=>'<button class="tp'+(tmpU.locs.includes(l)?' on':'')+'" onclick="AD.togLoc(\''+l+'\')">'+l+'</button>').join(''); }
+  function togLoc(l){
+    if(l==='All offices'){ tmpU.locs = tmpU.locs.includes('All offices')?[]:['All offices']; }
+    else { const i=tmpU.locs.indexOf(l); if(i>=0)tmpU.locs.splice(i,1); else tmpU.locs.push(l);
+      const ai=tmpU.locs.indexOf('All offices'); if(ai>=0)tmpU.locs.splice(ai,1); }
+    const lp=document.getElementById('locpick'); if(lp)lp.innerHTML=locChips();
+  }
   function togTeam(t){ const i=tmpU.teams.indexOf(t); if(i>=0)tmpU.teams.splice(i,1); else tmpU.teams.push(t);
     [...document.querySelectorAll('#teampick .tp')].forEach(b=>b.classList.toggle('on',tmpU.teams.includes(b.textContent))); refreshAccessPreview(); }
   function setStatus(v){tmpU.status=v;}
-  function saveUser(){ const u=users[tmpU.gi]; u.teams=tmpU.teams.slice(); u.status=tmpU.status; closeModal(); renderUsersBody(); }
+  function saveUser(){ const u=users[tmpU.gi]; u.teams=tmpU.teams.slice(); u.status=tmpU.status; u.loc=tmpU.locs.length?(tmpU.locs.includes('All offices')?'All offices':tmpU.locs.join(', ')):'Unassigned'; closeModal(); renderUsersBody(); }
   function addUser(){ users.push({f:'New',l:'Employee',email:'new.employee@farnsworthorthodontics.com',emp:'E-'+(1050+users.length),loc:'Carlsbad',state:'NM',brand:'FFO',teams:['Staff'],region:'NM',phone:'(000) 000-0000',about:'—',status:'Active',c:users.length%PAL.length}); renderUsers(); profile(users.length-1); }
 
   /* ---------- TEAMS & ACCESS ---------- */
   function renderAccess(){
     const head='<tr><th class="corner">Team</th>'+SECTIONS.map(s=>'<th title="'+s.n+'">'+s.s+'</th>').join('')+'</tr>';
     const rows=TEAMS.map(t=>'<tr><th class="team">'+t+'</th>'+SECTIONS.map(s=>{const lv=access[t][s.k];
-      return '<td><button class="lvl '+lv+'" onclick="AD.cycle(\''+t+'\',\''+s.k+'\')">'+LVLNAME[lv]+'</button></td>';}).join('')+'</tr>').join('');
+      return '<td><button class="lvl '+lv+'" onclick="AD.pickLevel(event,\''+t+'\',\''+s.k+'\')">'+LVLNAME[lv]+'</button></td>';}).join('')+'</tr>').join('');
     el('view').innerHTML=
-      '<div class="intro"><b>One rule:</b> a person\'s <b>team</b> decides what they can do (below); their <b>location</b> decides which offices\' folders they see. On two teams? They get the <b>best</b> level of both. <b>Tap a cell</b> to change it: None → View → Add files → Edit → Manage.</div>'+
+      '<div class="intro"><b>One rule:</b> a person\'s <b>team</b> decides what they can do (below); their <b>location</b> decides which offices\' folders they see. On two teams? They get the <b>best</b> level of both. <b>Tap a cell</b> and pick: None, View, Add files, Edit or Manage.</div>'+
       '<div class="mx-scroll"><table class="mx"><thead>'+head+'</thead><tbody>'+rows+'</tbody></table></div>'+
-      '<div class="legend"><span><i style="background:#f4f6f8"></i> None</span><span><i style="background:var(--blue-soft)"></i> View</span><span><i style="background:var(--good-soft)"></i> Add files</span><span><i style="background:var(--teal-soft)"></i> Edit</span><span><i style="background:var(--navy)"></i> Manage</span><span style="margin-left:auto">Tap a cell to cycle the level.</span></div>';
+      '<div class="legend"><span><i style="background:#f4f6f8"></i> None</span><span><i style="background:var(--blue-soft)"></i> View</span><span><i style="background:var(--good-soft)"></i> Add files</span><span><i style="background:var(--teal-soft)"></i> Edit</span><span><i style="background:var(--navy)"></i> Manage</span><span style="margin-left:auto">Tap a cell and pick a level.</span></div>';
   }
-  function cycle(t,k){ const cur=access[t][k]; access[t][k]=LEVELS[(LEVELS.indexOf(cur)+1)%LEVELS.length]; renderAccess(); }
 
   /* ---------- SECTIONS & FILES ---------- */
   function audChip(aud,scope,onclick){ return '<span class="aud '+aud+(onclick?'':' locked')+'"'+(onclick?' onclick="'+onclick+'"':'')+'>'+AUDLBL[aud]+(scope?' · '+scope:'')+'</span>'; }
@@ -351,7 +366,7 @@
           BRANDS.map(b=>'<div class="folder"><div class="folder-h">📁 '+b+' '+audChip('everyone',null,'AD.noop()')+'</div>'+
             f.brandItems.map(it=>fileRow(it,audChip('everyone',null))).join('')+'</div>').join('');
       } else {
-        body='<div class="folder">'+f.items.map((it,idx)=>fileRow(it.n,audChip(it.aud,it.scope,'AD.cycFile(\''+s.k+'\','+idx+')'))).join('')+'</div>';
+        body='<div class="folder">'+f.items.map((it,idx)=>fileRow(it.n,audChip(it.aud,it.scope,'AD.pickAud(event,\''+s.k+'\','+idx+')'))).join('')+'</div>';
       }
       const addf = f.link?'':'<div class="addfile"><button class="btn ghost" onclick="event.stopPropagation();AD.addFile(\''+s.k+'\')">+ Add file</button><span class="mini">New files inherit their folder\'s audience — no extra setup.</span></div>';
       return '<div class="sec'+(open?' open':'')+'"><div class="sec-h" onclick="AD.tog(\''+s.k+'\')"><span class="car">▶</span><div style="flex:1"><div class="sn">'+s.n+'</div></div></div>'+
@@ -362,14 +377,52 @@
       '<div class="secacc">'+secHtml+'</div>';
   }
   function tog(k){ if(openSecs.has(k))openSecs.delete(k); else openSecs.add(k); renderFiles(); }
-  function cycFile(k,idx){ const it=SECFILES[k].items[idx]; it.aud=AUDCYC[(AUDCYC.indexOf(it.aud)+1)%AUDCYC.length]; if(it.aud==='everyone')delete it.scope; else if(!it.scope)it.scope=(it.aud==='location'?'Choose location':'Choose team'); renderFiles(); }
   function addFile(k){ const f=SECFILES[k]; if(f.items){ f.items.push({n:'New file',aud:(f.items[0]?f.items[0].aud:'everyone'),scope:f.items[0]?f.items[0].scope:undefined}); } openSecs.add(k); renderFiles(); }
   function noop(){}
+
+  /* ---------- TAP-TO-PICK MENU (one tap opens choices; one tap picks) ---------- */
+  let pk=null;
+  function closePk(){ if(pk){pk.remove();pk=null;} }
+  function openPk(anchor,items,onPick){
+    closePk();
+    pk=document.createElement('div'); pk.className='pk';
+    items.forEach(it=>{
+      const b=document.createElement('button'); if(it.cur)b.classList.add('cur');
+      b.innerHTML=(it.swatch?'<span class="sw" style="background:'+it.swatch+'"></span>':'')+
+        '<span>'+it.label+(it.desc?'<small>'+it.desc+'</small>':'')+'</span>'+(it.cur?'<span class="ck">✓</span>':'');
+      b.onclick=e=>{e.stopPropagation(); closePk(); onPick(it.value);};
+      pk.appendChild(b);
+    });
+    document.body.appendChild(pk);
+    const r=anchor.getBoundingClientRect(), pr=pk.getBoundingClientRect();
+    let top=r.bottom+6; if(top+pr.height>window.innerHeight-8) top=Math.max(8,r.top-pr.height-6);
+    let left=Math.min(Math.max(8,r.left),window.innerWidth-pr.width-8);
+    pk.style.top=top+'px'; pk.style.left=left+'px';
+  }
+  document.addEventListener('click',e=>{ if(pk&&!pk.contains(e.target))closePk(); });
+  window.addEventListener('scroll',closePk,true);
+  window.addEventListener('resize',closePk);
+
+  const LVLSW={none:'#f4f6f8',view:'#E3F0FA',add:'#E7F4EE',edit:'#E5F4F3',manage:'#0F2A4A'};
+  const LVLDESC={none:"Can't see this section",view:'Can look, nothing else',add:'Can view + upload files',edit:'Can view, add & change',manage:'Full control'};
+  function pickLevel(ev,t,k){
+    ev.stopPropagation();
+    openPk(ev.currentTarget, LEVELS.map(l=>({value:l,label:(l==='none'?'None':LVLNAME[l]),desc:LVLDESC[l],swatch:LVLSW[l],cur:access[t][k]===l})),
+      v=>{ access[t][k]=v; renderAccess(); });
+  }
+  function pickAud(ev,k,idx){
+    ev.stopPropagation(); const it=SECFILES[k].items[idx];
+    openPk(ev.currentTarget,[
+      {value:'everyone',label:'🌐 Everyone',desc:'The whole practice',cur:it.aud==='everyone'},
+      {value:'location',label:'📍 By location / state',desc:'Only certain offices',cur:it.aud==='location'},
+      {value:'team',label:'👥 By team',desc:'Only certain teams',cur:it.aud==='team'}
+    ], v=>{ it.aud=v; if(v==='everyone')delete it.scope; else if(!it.scope)it.scope=(v==='location'?'Choose location':'Choose team'); renderFiles(); });
+  }
 
   function openModal(h){ el('modalCard').innerHTML=h; el('modal').classList.add('open'); }
   function closeModal(){ el('modal').classList.remove('open'); }
 
-  window.AD={tab:tabSet,profile,addUser,togTeam,setStatus,saveUser,cycle,tog,cycFile,addFile,noop,close:closeModal};
+  window.AD={tab:tabSet,profile,addUser,togTeam,togLoc,setStatus,saveUser,pickLevel,pickAud,tog,addFile,noop,close:closeModal};
   el('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
   render();
@@ -381,7 +434,7 @@ Tour.init([
   {sel:'.v1nav', title:'Where Admin lives', body:'The <b>Admin</b> tab is where you manage people and control who sees what. Everyday users never need it.'},
   {sel:'#tabs', title:'Three simple areas', body:'<b>People</b>, <b>Teams &amp; Access</b> (what each team can do in each section), and <b>Sections &amp; Files</b> (who documents are for).'},
   {sel:'.tbl-scroll, .intro', title:'People sync from Microsoft', body:'Names, emails and photos come from Microsoft 365. You set each person\'s team, location and status. Employees can update their own photo &amp; “About me.” Tap a person to open their profile.'},
-  {sel:'#tabs', title:'Control access visually', body:'Open <b>Teams &amp; Access</b>: a grid of teams × sections. Tap a cell to set None / View / Edit / Manage — that\'s the whole permission model.'},
+  {sel:'#tabs', title:'Control access visually', body:'Open <b>Teams &amp; Access</b>: a grid of teams × sections. Tap a cell and pick View, Add files, Edit or Manage — that\'s the whole permission model.'},
   {sel:'#tabs', title:'Files know their audience', body:'Open <b>Sections &amp; Files</b>: each folder is 🌐 Everyone, 📍 By location, or 👥 By team. Files inherit it, so you set it once — no per-file clicking.'}
 ], {key:'admin'});
 </script>

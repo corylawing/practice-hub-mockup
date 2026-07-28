@@ -81,6 +81,13 @@
   .res{font-weight:700;padding:3px 9px;border-radius:999px;cursor:pointer;font-size:11.5px;font-family:inherit;border:none}
   .res.good{background:var(--good-soft);color:var(--good)} .res.bad{background:var(--bad-soft);color:var(--bad)}
   .res.mixed{background:var(--amber-soft);color:#946011} .res.none{background:#eef1f5;color:#8a94a6}
+  /* tap-to-pick menu */
+  .pk{position:fixed;z-index:300;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow-lg);padding:6px;min-width:200px}
+  .pk button{display:flex;align-items:center;gap:10px;width:100%;border:none;background:none;font-family:inherit;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:13.5px;font-weight:600;color:var(--ink);text-align:left}
+  .pk button:hover{background:var(--canvas)}
+  .pk button.cur{background:var(--teal-soft)}
+  .pk small{display:block;color:var(--soft);font-size:11px;font-weight:500}
+  .pk .ck{margin-left:auto;color:var(--teal-600);font-weight:800}
   /* modal */
   .ov{position:fixed;inset:0;background:rgba(15,42,74,.5);z-index:120;display:none;align-items:flex-start;justify-content:center;padding:24px 16px;overflow:auto}
   .ov.open{display:flex}
@@ -179,7 +186,7 @@
   function card(c){
     const si=STAGES.findIndex(s=>s.k===c.stage);
     const resChip = c.stage==='done'
-      ? '<button class="res '+c.result+'" onclick="event.stopPropagation();MK.cycRes('+c.id+')">'+RES[c.result]+'</button>'
+      ? '<button class="res '+c.result+'" onclick="event.stopPropagation();MK.pickRes(event,'+c.id+')">'+RES[c.result]+'</button>'
       : '';
     return '<div class="kcard t-'+c.type+'" draggable="true" data-id="'+c.id+'" onclick="MK.open('+c.id+')">'+
       '<div class="kt">'+c.title+'</div>'+
@@ -206,7 +213,29 @@
     if(c.stage!=='done') c.result='none';
     render();
   }
-  function cycRes(id){ const c=cards.find(x=>x.id===id); const order=['good','mixed','bad']; c.result=order[(order.indexOf(c.result)+1)%order.length]; render(); }
+  let pk=null;
+  function closePk(){ if(pk){pk.remove();pk=null;} }
+  function openPk(anchor,items,onPick){
+    closePk(); pk=document.createElement('div'); pk.className='pk';
+    items.forEach(it=>{ const b=document.createElement('button'); if(it.cur)b.classList.add('cur');
+      b.innerHTML='<span>'+it.label+(it.desc?'<small>'+it.desc+'</small>':'')+'</span>'+(it.cur?'<span class="ck">✓</span>':'');
+      b.onclick=e=>{e.stopPropagation(); closePk(); onPick(it.value);}; pk.appendChild(b); });
+    document.body.appendChild(pk);
+    const r=anchor.getBoundingClientRect(), pr=pk.getBoundingClientRect();
+    let top=r.bottom+6; if(top+pr.height>window.innerHeight-8) top=Math.max(8,r.top-pr.height-6);
+    let left=Math.min(Math.max(8,r.left),window.innerWidth-pr.width-8);
+    pk.style.top=top+'px'; pk.style.left=left+'px';
+  }
+  document.addEventListener('click',e=>{ if(pk&&!pk.contains(e.target))closePk(); });
+  window.addEventListener('scroll',closePk,true);
+  function pickRes(ev,id){
+    const c=cards.find(x=>x.id===id);
+    openPk(ev.currentTarget,[
+      {value:'good',label:'🟢 Good',desc:'Hit or beat the goal',cur:c.result==='good'},
+      {value:'mixed',label:'🟡 Mixed',desc:'Okay — room to improve',cur:c.result==='mixed'},
+      {value:'bad',label:'🔴 Underperformed',desc:"Didn't work — skip or rethink",cur:c.result==='bad'}
+    ], v=>{ c.result=v; render(); });
+  }
 
   function open(id){ editId=id; const c=cards.find(x=>x.id===id); openModal(c); }
   function add(stage){ const c={id:++seq,title:'',type:'social',owner:'',loc:'All offices',date:'',stage:stage,result:stage==='done'?'good':'none',notes:''}; cards.push(c); editId=id=c.id; openModal(c,true); }
@@ -269,7 +298,7 @@
     e.preventDefault(); col.classList.remove('dragover');
     const id=dragId||+(e.dataTransfer.getData('text/plain')); if(id)dropTo(id,col.dataset.stage); });
 
-  window.MK={add,open,move,cycRes,pick,save,del,close:closeModal};
+  window.MK={add,open,move,pickRes,pick,save,del,close:closeModal};
   el('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal(true);});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal(true);});
   render();
@@ -279,7 +308,7 @@
 <script>
 Tour.init([
   {sel:'.board', title:'Your marketing board', body:'Every event, promo and social post is a card. <b>Drag a card</b> between columns — Ideas → Planned → In progress → Done — or tap the ◀ ▶ arrows. Colored stripe = the type of campaign.'},
-  {sel:'#board .col:last-child', title:'Score it when it\'s done', body:'When a card reaches <b>Done</b>, tap its result chip to mark it 🟢 Good, 🟡 Mixed or 🔴 Underperformed — so you learn what actually works.'},
+  {sel:'#board .col:last-child', title:'Score it when it\'s done', body:'When a card reaches <b>Done</b>, tap its result chip and pick 🟢 Good, 🟡 Mixed or 🔴 Underperformed — so you learn what actually works.'},
   {sel:'#summary', title:'See what\'s working', body:'The top row totals your results at a glance — how many campaigns landed vs. flopped.'},
   {sel:'.page-head .btn', title:'Add anything, anytime', body:'Capture a new idea here (or “+ Add” in any column). Tap a card to edit details, owner, location and notes.'}
 ], {key:'mkt'});

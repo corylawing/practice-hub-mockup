@@ -302,6 +302,13 @@ Design Brief.docx` (regenerate via `build-response-doc.js`, which is gitignored)
 - Keep V1 pages **self-contained**. Match the existing token set and component styles.
 - Commit style: short imperative subject scoped by page, e.g. `V1 Admin: …`, `Schedule: …`.
 
+### UX interaction rules (locked in 2026-07-28 after user feedback)
+- **NEVER use click-to-cycle** ("tap repeatedly until the right value appears"). The user called
+  this out as unintuitive. Always **tap-to-pick**: one tap opens a small `.pk` menu showing ALL
+  options with a plain-English description and a ✓ on the current one; one tap picks. This pattern
+  now lives in admin.html (`openPk`/`pickLevel`/`pickAud`) and marketing.html (`pickRes`) — reuse it.
+- Multi-value fields are **tappable chips**, never free-text (teams, locations in the profile).
+
 ### Recurring user preferences (learned the hard way — honor them)
 - Tour: **click-only, never auto-start.**
 - Don't invent copy/asides in the UI (once added a "(Fridays often differ)" note the user was only
