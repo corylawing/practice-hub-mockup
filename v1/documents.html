@@ -172,33 +172,60 @@
       {n:'Uniform Policy',scope:'everyone'},{n:'Commitment to my Co-Workers',scope:'everyone'},
       {n:'New-Hire Packet — Texas',scope:'Texas offices'},{n:'PTO — Texas',scope:'Texas offices'},
       {n:'New-Hire Packet — New Mexico',scope:'New Mexico offices'},{n:'PTO — New Mexico',scope:'New Mexico offices'},
-      {n:'Payroll Tracking Sheet',scope:'team'},{n:'Employee Dismissal Checklist',scope:'team'}
+      {n:'Payroll Tracking Sheet',scope:'team',teams:'HR, Managers'},{n:'Employee Dismissal Checklist',scope:'team',teams:'Managers'}
     ]},
     {k:'officedocs',n:'Office Docs',ic:'🏢',perLocation:true,files:['Office Contracts','Equipment Invoices','Dental Licenses']},
     {k:'forms',n:'Office Forms',ic:'📝',perBrand:true,files:['DDS Referral','Medical History','Invisalign / Vivera Scan Sheet']},
-    {k:'vendors',n:'Vendors',ic:'🚚',files:[{n:'Approved Vendor List',scope:'team'},{n:'Vendor Tracking Sheet',scope:'team'}]},
-    {k:'filing',n:'Insurance / W-9',ic:'🗂️',files:[{n:'W-9s',scope:'team'},{n:'Type 2 NPI Letter',scope:'team'}]},
-    {k:'eom',n:'End-of-Month Reporting',ic:'📆',files:[{n:'Monthly Monitor Report',scope:'team'},{n:'RIP Tracker',scope:'team'},{n:'Medicaid Tracker',scope:'team'}]}
+    {k:'vendors',n:'Vendors',ic:'🚚',files:[{n:'Approved Vendor List',scope:'team',teams:'Managers'},{n:'Vendor Tracking Sheet',scope:'team',teams:'Managers'}]},
+    {k:'filing',n:'Insurance / W-9',ic:'🗂️',files:[{n:'W-9s',scope:'team',teams:'Financial, Managers'},{n:'Type 2 NPI Letter',scope:'team',teams:'Financial, Managers'}]},
+    {k:'eom',n:'End-of-Month Reporting',ic:'📆',files:[{n:'Monthly Monitor Report',scope:'team',teams:'Leadership'},{n:'RIP Tracker',scope:'team',teams:'Leadership, Financial'},{n:'Medicaid Tracker',scope:'team',teams:'Financial'}]}
   ];
 
   const PERSONAS=[
-    {id:'admin',name:'Administrator',scope:'all',state:'',brand:'',sec:{dashboard:1,schedule:1,marketing:1,admin:1},
+    {id:'admin',name:'Administrator',teamName:'Admin',scope:'all',state:'',brand:'',sec:{dashboard:1,schedule:1,marketing:1,admin:1},
       doc:{hr:'manage',officedocs:'manage',forms:'manage',vendors:'manage',filing:'manage',eom:'manage'}},
-    {id:'om',name:'Office Manager',scope:'Carlsbad',state:'NM',brand:'FFO',sec:{dashboard:1,schedule:1,marketing:1},
+    {id:'om',name:'Office Manager',teamName:'Office Managers',scope:'Carlsbad',state:'NM',brand:'FFO',sec:{dashboard:1,schedule:1,marketing:1},
       doc:{hr:'view',officedocs:'edit',forms:'edit',vendors:'edit',filing:'edit',eom:'edit'}},
-    {id:'doctor',name:'Doctor',scope:'all',state:'NM',brand:'FFO',sec:{dashboard:1,schedule:1},
+    {id:'doctor',name:'Doctor',teamName:'Doctors',scope:'all',state:'NM',brand:'FFO',sec:{dashboard:1,schedule:1},
       doc:{hr:'view',forms:'view'}},
-    {id:'tc',name:'Treatment Coordinator',scope:'Carlsbad',state:'NM',brand:'FFO',sec:{schedule:1},
+    {id:'tc',name:'Treatment Coordinator',teamName:'TCs',scope:'Carlsbad',state:'NM',brand:'FFO',sec:{schedule:1},
       doc:{hr:'view',forms:'add'}},
-    {id:'staff',name:'Front Desk / Staff',scope:'Carlsbad',state:'NM',brand:'FFO',sec:{schedule:1},
+    {id:'staff',name:'Front Desk / Staff',teamName:'Staff',scope:'Carlsbad',state:'NM',brand:'FFO',sec:{schedule:1},
       doc:{hr:'view',forms:'view'}}
   ];
 
+  // Sections the admin created in Admin -> Document Sections show up here automatically.
+  function customSecs(){ try{ const st=JSON.parse(localStorage.getItem('ph_docsecs'));
+      if(Array.isArray(st)) return st.filter(x=>!FOLDERS.some(f=>f.k===x.k)); }catch(_){} return []; }
+  function customCap(sec,p){
+    const teamOk = sec.teamMode==='all' || (sec.teams||[]).includes(p.teamName) || p.id==='admin';
+    const locOk  = sec.locMode==='all'  || p.scope==='all' || (sec.locs||[]).includes(p.scope);
+    return (teamOk&&locOk) ? (p.id==='admin'?'manage':'view') : null;
+  }
+  function accessibleSections(p){
+    const out=FOLDERS.filter(f=>p.doc[f.k]).map(f=>({f,cap:p.doc[f.k]}));
+    customSecs().forEach(sec=>{ const cap=customCap(sec,p); if(!cap)return;
+      const perLoc=sec.structure==='byLocation', perBrand=sec.structure==='byBrand';
+      const files = perLoc ? (sec.locItems||[]) : perBrand ? (sec.brandItems||[])
+        : (sec.items||[]).map(i=>typeof i==='string'?{n:i,scope:'everyone'}:{n:i.n,scope:i.scope||'everyone'});
+      out.push({f:{k:sec.k,n:sec.n,ic:sec.ic||'📁',perLocation:perLoc,perBrand:perBrand,files:files,isNew:true},cap:cap});
+    });
+    return out;
+  }
   const el=id=>document.getElementById(id);
-  let cur=PERSONAS[0], openK=null;
+  let cur=PERSONAS[0], openSet=null;
 
-  function matchScope(scope,p){
-    if(scope==='everyone'||scope==='team')return true; // team-scoped files are governed by folder access
+  // A file marked "by team" is an exception INSIDE a section others can see —
+  // only people on a listed team may open it (e.g. Payroll stays with HR/Managers).
+  function teamScopeOK(scope,p){
+    if(p.id==='admin')return true;
+    const tn=(p.teamName||'').toLowerCase(); if(!tn)return false;
+    return String(scope||'').split(',').map(x=>x.trim().toLowerCase()).filter(Boolean)
+      .some(tk=>tn.includes(tk)||tk.includes(tn));
+  }
+  function matchScope(scope,p,teamScope){
+    if(scope==='everyone')return true;
+    if(scope==='team')return teamScopeOK(teamScope,p);
     if(scope==='Texas offices')return p.scope==='all'||p.state==='TX';
     if(scope==='New Mexico offices')return p.scope==='all'||p.state==='NM';
     if(BRANDS.includes(scope))return p.scope==='all'||p.brand===scope;
@@ -221,11 +248,11 @@
     return '<div class="file"><span class="fic">📄</span><span class="nm">'+name+'</span>'+(scopeChip||'')+'<a class="sp" href="#" onclick="DOCS.openDoc(\''+safe+'\');return false">Open ↗</a></div>';
   }
   function renderFolders(p){
-    const accessible=FOLDERS.filter(f=>p.doc[f.k]);
+    const accessible=accessibleSections(p);
     if(!accessible.length){ el('folders').innerHTML='<div class="empty">No document folders are shared with this role yet. An admin grants access in the Admin console.</div>'; return; }
-    if(openK===null) openK=accessible[0].k;
-    el('folders').innerHTML='<div class="folders">'+accessible.map(f=>{
-      const cap=p.doc[f.k], open=(openK===f.k);
+    if(openSet===null) openSet=new Set(accessible.map(e=>e.f.k)); // everything open by default
+    el('folders').innerHTML='<div class="folders">'+accessible.map(entry=>{
+      const f=entry.f, cap=entry.cap, open=openSet.has(f.k);
       let count=0, body='';
       if(f.perLocation){
         const locs=p.scope==='all'?LOCS:[p.scope];
@@ -234,28 +261,29 @@
         const brands=p.scope==='all'?BRANDS:[p.brand];
         body=brands.map(b=>{ count+=f.files.length; return '<div class="subfold brand">🏷 '+b+'</div>'+f.files.map(x=>fileRow(x,'')).join(''); }).join('');
       } else {
-        const vis=f.files.filter(x=>matchScope(x.scope,p)); count=vis.length;
-        body=vis.map(x=>{ const chip = (x.scope!=='everyone'&&x.scope!=='team')?'<span class="scopechip">'+x.scope+'</span>':''; return fileRow(x.n,chip); }).join('');
+        const vis=f.files.filter(x=>matchScope(x.scope,p,x.teams)); count=vis.length;
+        body=vis.map(x=>{ const chip = x.scope==='team' ? '<span class="scopechip">'+(x.teams||'team')+' only</span>' : (x.scope!=='everyone'?'<span class="scopechip">'+x.scope+'</span>':''); return fileRow(x.n,chip); }).join('');
       }
       if(f.added&&f.added.length){ body=f.added.map(a=>{ const safe=String(a.n).replace(/'/g,"\\'"); return '<div class="file newf"><span class="fic">🆕</span><span class="nm">'+a.n+'</span><span class="scopechip">'+a.audLabel+'</span><a class="sp" href="#" onclick="DOCS.openDoc(\''+safe+'\');return false">Open ↗</a></div>'; }).join('')+body; count+=f.added.length; }
       const action = cap==='view' ? '<div class="readonly">You can open these, but not add or change them.</div>'
         : '<button class="addbtn" onclick="event.stopPropagation();DOCS.addDoc(\''+f.k+'\')">+ Add file</button>';
       return '<div class="folder'+(open?' open':'')+'"><div class="fhead" onclick="DOCS.toggle(\''+f.k+'\')">'+
         '<span class="car">▶</span><span class="fi">'+f.ic+'</span>'+
-        '<div><div class="fn">'+f.n+'</div><div class="fmeta">'+count+' file'+(count===1?'':'s')+'</div></div>'+
+        '<div><div class="fn">'+f.n+(f.isNew?' <span class="scopechip" style="background:var(--teal-soft);color:var(--teal-600)">new</span>':'')+'</div><div class="fmeta">'+count+' file'+(count===1?'':'s')+'</div></div>'+
         '<span class="cap '+cap+'">'+CAPTXT[cap]+'</span></div>'+
         '<div class="fbody">'+body+action+'</div></div>';
     }).join('')+'</div>';
   }
   function set(id){
     cur=PERSONAS.find(p=>p.id===id)||PERSONAS[0];
+    openSet=null; // new person -> show all of THEIR sections expanded
     try{ localStorage.setItem('ph_viewas',cur.id); }catch(_){}
     el('persona').value=cur.id;
-    const n=FOLDERS.filter(f=>cur.doc[f.k]).length;
+    const n=accessibleSections(cur).length;
     el('sub').innerHTML='As <b>'+cur.name+'</b>, you can open <b>'+n+'</b> document folder'+(n===1?'':'s')+'. Click one to see what\'s inside.';
     renderNav(cur); renderFolders(cur);
   }
-  function toggle(k){ openK = (openK===k? '' : k); renderFolders(cur); }
+  function toggle(k){ if(!openSet)openSet=new Set(); if(openSet.has(k))openSet.delete(k); else openSet.add(k); renderFolders(cur); }
   /* ---- Live two-way sync viewer (click a file) ---- */
   const SHEET={cols:['Vendor','Category','Status'],rows:[['Henry Schein','Supplies','Active'],['Ortho2','Software','Active'],['Align Tech','Aligners','Review']]};
   let simStep=0;
@@ -336,7 +364,7 @@
   function saveDoc(){
     const f=FOLDERS.find(x=>x.k===addCtx.k); if(!f.added)f.added=[];
     f.added.unshift({n:addCtx.name||'New document.pdf', audLabel:audLabel()});
-    openK=addCtx.k; closeDoc(); renderFolders(cur);
+    if(openSet)openSet.add(addCtx.k); closeDoc(); renderFolders(cur);
   }
   function closeDoc(){ el('docmodal').classList.remove('open'); addCtx=null; }
 

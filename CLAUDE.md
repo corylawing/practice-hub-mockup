@@ -116,13 +116,29 @@ Font: Inter (Google Fonts). Radius ~14px. Soft shadows. maxw ~1080–1180px.
 - Tour: `Tour.init([...4 steps], {key:'mkt'})`. Real build = Microsoft Lists / Planner.
 
 ### 4d. `v1/admin.html` — Admin Console (the backend/permissions)
+**TOOLS vs DOCUMENT SECTIONS (corrected 2026-07-28 — the user's mental model, get this right):**
+- **`TOOLS`** = real app features: Dashboard (Goals Tracker), Schedule, Marketing board, Staff
+  Directory, Admin. **Fixed** — admins can NOT add/remove them, they only choose *who gets them*.
+  Marketing is a Kanban tool, **not** a document folder — never list it alongside HR/Vendors.
+- **`DOCSECS`** = document sections living inside **Documents** (HR, Office Docs, Office Forms,
+  Vendors, Insurance/W-9, End-of-Month, + any the admin creates). **Admins CREATE these freely**
+  via `+ New section` (`newSec`/`renderSecModal`/`saveSec`, editable/deletable via `editSec`/`delSec`,
+  `resetSecs` restores defaults). Each has: name, icon (`ICONS`), `structure`
+  (`plain` | `byLocation` → auto folder per office | `byBrand` → auto folder per brand), plus its
+  audience (`locMode`/`locs` + `teamMode`/`teams`).
+- **Locations/brands are FOLDERS inside a section, never sections themselves.**
+- Persisted to `localStorage.ph_docsecs` so **documents.html picks up admin-created sections live**
+  (`customSecs`/`customCap`/`accessibleSections`) — create "Training" for Staff in Admin, switch the
+  Documents persona to Front Desk, and it's there. New sections auto-appear as matrix columns
+  (`allSections()` = TOOLS + DOCSECS) and get View for their audience teams (`applySecAudience`).
+
 **THE PERMISSION MODEL (simplified 2026-07-28 — user found "Roles" confusing/redundant, so it was
 REMOVED): one rule — a person's TEAM decides WHAT they can do; their LOCATION decides WHICH offices'
 stuff they see.** No separate role objects. Levels: None / View / Add files / Edit / Manage
 (5 levels, `LEVELS`/`rank`; "Add files" is its own level per the user). Example: Staff team = View,
 so a staff member at Carlsbad = view-only + Carlsbad folders only.
 
-Three tabs (`window.AD`), all client-side demo state:
+Three tabs (`window.AD`), all client-side demo state (tab 3 is **Document Sections**):
 
 1. **People** — table of users; each **syncs from Microsoft 365** (name/email/photo). Admin sets
    **team(s), location, status**. Click a row → **profile modal**:
@@ -308,6 +324,13 @@ Design Brief.docx` (regenerate via `build-response-doc.js`, which is gitignored)
   options with a plain-English description and a ✓ on the current one; one tap picks. This pattern
   now lives in admin.html (`openPk`/`pickLevel`/`pickAud`) and marketing.html (`pickRes`) — reuse it.
 - Multi-value fields are **tappable chips**, never free-text (teams, locations in the profile).
+- **Document sections are expanded by default** in documents.html (`openSet`, reset per persona) —
+  the user does not want people hunting for a disclosure triangle to find their files.
+- **Team-restricted files must actually be hidden.** A file with `scope:'team'` carries a `teams`
+  string (e.g. `'HR, Managers'`) and `teamScopeOK()` matches it against the viewer's `teamName`.
+  Regression to avoid: Front Desk / Staff could see the **Payroll Tracking Sheet** because
+  team-scoped files were being treated as visible-to-all-in-the-section. The chip reads
+  "HR, Managers only" so it's obvious *why* a file is there.
 
 ### Recurring user preferences (learned the hard way — honor them)
 - Tour: **click-only, never auto-start.**

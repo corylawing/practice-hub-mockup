@@ -84,6 +84,15 @@
   .lvl.add{background:var(--good-soft);color:var(--good)}
   .lvl.edit{background:var(--teal-soft);color:var(--teal-600)}
   .lvl.manage{background:var(--navy);color:#fff}
+  table.mx th.grp{background:#f2f5f9;color:var(--soft);text-transform:uppercase;letter-spacing:.06em;font-size:10px;text-align:center}
+  .secwho{display:flex;gap:5px;flex-wrap:wrap;margin-top:4px}
+  .mini-btn{padding:5px 11px;font-size:12.5px}
+  .segrow{display:flex;gap:7px;flex-wrap:wrap}
+  .segb{border:1px solid var(--line);background:#fff;border-radius:9px;padding:8px 12px;font-size:13px;font-weight:600;color:var(--navy);cursor:pointer;font-family:inherit}
+  .segb.on{border-color:var(--teal);color:var(--teal-600);background:var(--teal-soft)}
+  .iconrow{display:flex;gap:6px;flex-wrap:wrap}
+  .icb{border:1px solid var(--line);background:#fff;border-radius:9px;width:38px;height:38px;font-size:18px;cursor:pointer;line-height:1}
+  .icb.on{border-color:var(--teal);background:var(--teal-soft)}
   .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--soft);margin-top:12px}
   .legend span{display:inline-flex;align-items:center;gap:6px}
   .legend i{width:14px;height:14px;border-radius:4px;display:inline-block}
@@ -172,7 +181,7 @@
   <div class="tabs" id="tabs">
     <button class="tab active" data-t="users" onclick="AD.tab('users')">People</button>
     <button class="tab" data-t="access" onclick="AD.tab('access')">Teams &amp; Access</button>
-    <button class="tab" data-t="files" onclick="AD.tab('files')">Sections &amp; Files</button>
+    <button class="tab" data-t="files" onclick="AD.tab('files')">Document Sections</button>
   </div>
 
   <div id="view"></div>
@@ -185,14 +194,39 @@
   const PAL=['#149B96','#25456e','#946011','#6b3fd0','#b03a63','#2E7D52','#1f6f9e','#b0442f'];
   const LOCATIONS=['Clovis','Hobbs','Carlsbad','San Angelo','Mansfield','Lubbock','Las Cruces LCO','Las Cruces FOLC'];
   const BRANDS=['FFO','Sunflower','LCO'];
-  const SECTIONS=[
-    {k:'goals',n:'Goals Tracker',s:'Goals'},{k:'schedule',n:'Schedule',s:'Schedule'},
-    {k:'hr',n:'HR',s:'HR'},{k:'eom',n:'End-of-Month Reporting',s:'EOM'},
-    {k:'managers',n:'Office Docs (Managers)',s:'Office Docs'},{k:'forms',n:'Office Forms',s:'Forms'},
-    {k:'vendors',n:'Vendors',s:'Vendors'},{k:'filing',n:'Insurance / W-9',s:'Filing'},
-    {k:'marketing',n:'Marketing (Kanban)',s:'Marketing'},{k:'directory',n:'Directory',s:'Directory'},
-    {k:'admin',n:'Admin Console',s:'Admin'}
+  /* TWO KINDS OF THINGS — this is the whole mental model:
+     TOOLS   = real app features (Dashboard, Schedule, Marketing). Fixed. You only choose WHO gets them.
+     DOCSECS = document sections that live inside Documents (HR, Vendors, ...). Admin can CREATE these. */
+  const TOOLS=[
+    {k:'dashboard',n:'Dashboard (Goals Tracker)',s:'Dashboard',ic:'📊'},
+    {k:'schedule',n:'Schedule',s:'Schedule',ic:'📅'},
+    {k:'marketing',n:'Marketing board',s:'Marketing',ic:'📣'},
+    {k:'directory',n:'Staff Directory',s:'Directory',ic:'👥'},
+    {k:'admin',n:'Admin Console',s:'Admin',ic:'⚙️'}
   ];
+  const DEFAULT_DOCSECS=[
+    {k:'hr',n:'HR',ic:'👥',structure:'plain',locMode:'all',locs:[],teamMode:'all',teams:[],items:[
+      {n:'Employee & Family Tx',aud:'everyone'},{n:'Dental Professionals Discount',aud:'everyone'},
+      {n:'Uniform Policy',aud:'everyone'},{n:'Commitment to my Co-Workers',aud:'everyone'},
+      {n:'New Hire Packet — Texas',aud:'location',scope:'Texas offices'},{n:'PTO — Texas',aud:'location',scope:'Texas offices'},
+      {n:'New Hire Packet — New Mexico',aud:'location',scope:'New Mexico offices'},{n:'PTO — New Mexico',aud:'location',scope:'New Mexico offices'},
+      {n:'Payroll Tracking Sheet',aud:'team',scope:'HR, Managers'},{n:'Employee Dismissal Checklist',aud:'team',scope:'Managers'}]},
+    {k:'officedocs',n:'Office Docs',ic:'🏢',structure:'byLocation',locMode:'all',locs:[],teamMode:'some',teams:['Office Managers','Clinic Managers'],
+      locItems:['Office Contracts','Equipment Invoices','Dental Licenses']},
+    {k:'forms',n:'Office Forms',ic:'📝',structure:'byBrand',locMode:'all',locs:[],teamMode:'all',teams:[],
+      brandItems:['DDS Referral','Medical History','Invisalign / Vivera Scan Sheet']},
+    {k:'vendors',n:'Vendors',ic:'🚚',structure:'plain',locMode:'all',locs:[],teamMode:'some',teams:['Office Managers'],items:[
+      {n:'Approved Vendor List',aud:'team',scope:'Managers'},{n:'Vendor Tracking Sheet',aud:'team',scope:'Managers'}]},
+    {k:'filing',n:'Insurance / W-9',ic:'🗂️',structure:'plain',locMode:'all',locs:[],teamMode:'some',teams:['Financial Coordinator Team','Office Managers'],items:[
+      {n:'W-9s',aud:'team',scope:'Financial, Managers'},{n:'Type 2 NPI Letter',aud:'team',scope:'Financial, Managers'}]},
+    {k:'eom',n:'End-of-Month Reporting',ic:'📆',structure:'plain',locMode:'all',locs:[],teamMode:'some',teams:['Leadership Team','Financial Coordinator Team'],items:[
+      {n:'Monthly Monitor Report',aud:'team',scope:'Leadership'},{n:'RIP Tracker',aud:'team',scope:'Leadership, Financial'},{n:'Medicaid Tracker',aud:'team',scope:'Financial'}]}
+  ];
+  function loadSecs(){ try{ const st=JSON.parse(localStorage.getItem('ph_docsecs')); if(Array.isArray(st)&&st.length)return st; }catch(_){} return JSON.parse(JSON.stringify(DEFAULT_DOCSECS)); }
+  function saveSecs(){ try{ localStorage.setItem('ph_docsecs',JSON.stringify(DOCSECS)); }catch(_){} }
+  let DOCSECS=loadSecs();
+  const allSections=()=>TOOLS.concat(DOCSECS);
+
   const TEAMS=['Executive Team','Leadership Team','Office Managers','Clinic Managers','TCs','Doctors','Marketing Team','Financial Coordinator Team','Staff','Admin'];
   // THE WHOLE MODEL: team = what you can do; location = which offices' stuff you see.
   const LEVELS=['none','view','add','edit','manage'];
@@ -200,39 +234,22 @@
   const rank={none:0,view:1,add:2,edit:3,manage:4};
 
   let access={};
-  TEAMS.forEach(t=>{access[t]={}; SECTIONS.forEach(s=>access[t][s.k]='none');});
+  function ensureAccess(){ TEAMS.forEach(t=>{ access[t]=access[t]||{}; allSections().forEach(x=>{ if(access[t][x.k]===undefined)access[t][x.k]='none'; }); }); }
+  function applySecAudience(sec){ (sec.teamMode==='all'?TEAMS:(sec.teams||[])).forEach(t=>{ if(access[t]&&rank[access[t][sec.k]||'none']<1)access[t][sec.k]='view'; }); if(access['Admin'])access['Admin'][sec.k]='manage'; }
+  ensureAccess();
   const set=(t,o)=>Object.assign(access[t],o);
-  SECTIONS.forEach(s=>access['Admin'][s.k]='manage');
-  set('Executive Team',{goals:'manage',schedule:'view',hr:'edit',eom:'manage',managers:'view',forms:'view',vendors:'view',filing:'view',marketing:'view',directory:'view',admin:'view'});
-  set('Leadership Team',{goals:'edit',schedule:'view',hr:'edit',eom:'edit',managers:'view',forms:'view',vendors:'view',filing:'view',marketing:'view',directory:'view'});
-  set('Office Managers',{goals:'view',schedule:'edit',hr:'view',eom:'edit',managers:'edit',forms:'edit',vendors:'edit',filing:'edit',marketing:'view',directory:'edit'});
-  set('Clinic Managers',{goals:'view',schedule:'edit',hr:'view',managers:'view',forms:'edit',directory:'view'});
-  set('TCs',{schedule:'view',hr:'view',forms:'edit',directory:'view'});
-  set('Doctors',{goals:'view',schedule:'view',forms:'view',directory:'view'});
-  set('Marketing Team',{marketing:'manage',forms:'view',directory:'view',hr:'view'});
-  set('Financial Coordinator Team',{goals:'view',eom:'edit',vendors:'view',filing:'edit',directory:'view'});
-  set('Staff',{schedule:'view',hr:'view',forms:'view',directory:'view'});
+  allSections().forEach(x=>access['Admin'][x.k]='manage');
+  set('Executive Team',{dashboard:'manage',schedule:'view',marketing:'view',directory:'view',admin:'view',hr:'edit',eom:'manage',officedocs:'view',forms:'view',vendors:'view',filing:'view'});
+  set('Leadership Team',{dashboard:'edit',schedule:'view',marketing:'view',directory:'view',hr:'edit',eom:'edit',officedocs:'view',forms:'view',vendors:'view',filing:'view'});
+  set('Office Managers',{dashboard:'view',schedule:'edit',marketing:'view',directory:'edit',hr:'view',eom:'edit',officedocs:'edit',forms:'edit',vendors:'edit',filing:'edit'});
+  set('Clinic Managers',{dashboard:'view',schedule:'edit',directory:'view',hr:'view',officedocs:'view',forms:'edit'});
+  set('TCs',{schedule:'view',directory:'view',hr:'view',forms:'add'});
+  set('Doctors',{dashboard:'view',schedule:'view',directory:'view',hr:'view',forms:'view'});
+  set('Marketing Team',{marketing:'manage',directory:'view',hr:'view',forms:'view'});
+  set('Financial Coordinator Team',{dashboard:'view',directory:'view',eom:'edit',vendors:'view',filing:'edit'});
+  set('Staff',{schedule:'view',directory:'view',hr:'view',forms:'view'});
+  DOCSECS.forEach(sec=>{ if(!DEFAULT_DOCSECS.some(d=>d.k===sec.k)) applySecAudience(sec); });
 
-  // Section files — audience is set on the FOLDER; files inherit. 3 modes: everyone / location / team.
-  let SECFILES={
-    goals:{items:[{n:'Production Sheet',aud:'team',scope:'Leadership, Managers'}]},
-    schedule:{link:'schedule.html'},
-    hr:{items:[
-      {n:'Employee & Family Tx',aud:'everyone'},{n:'Dental Professionals Discount',aud:'everyone'},
-      {n:'Uniform Policy',aud:'everyone'},{n:'Commitment to my Co-Workers',aud:'everyone'},
-      {n:'New Hire Packet — Texas',aud:'location',scope:'Texas offices'},{n:'PTO — Texas',aud:'location',scope:'Texas offices'},
-      {n:'New Hire Packet — New Mexico',aud:'location',scope:'New Mexico offices'},{n:'PTO — New Mexico',aud:'location',scope:'New Mexico offices'},
-      {n:'Payroll Tracking Sheet',aud:'team',scope:'HR, Managers'},{n:'Employee Dismissal Checklist',aud:'team',scope:'Managers'}
-    ]},
-    eom:{items:[{n:'Monthly Monitor Report',aud:'team',scope:'Leadership'},{n:'RIP Tracker',aud:'team',scope:'Leadership, Financial'},{n:'Medicaid Tracker',aud:'team',scope:'Financial'}]},
-    managers:{byLocation:true,locItems:['Office Contracts','Equipment Invoices','Dental Licenses']},
-    forms:{byBrand:true,brandItems:['DDS Referral','Medical History','Invisalign / Vivera Scan Sheet']},
-    vendors:{items:[{n:'Approved Vendor List',aud:'team',scope:'Managers'},{n:'Vendor Tracking Sheet',aud:'team',scope:'Managers'}]},
-    filing:{items:[{n:'W-9s',aud:'team',scope:'Financial, Managers'},{n:'Type 2 NPI Letter',aud:'team',scope:'Financial, Managers'}]},
-    marketing:{link:'marketing.html'},
-    directory:{items:[{n:'Staff Directory',aud:'everyone'}]}
-  };
-  const AUDCYC=['everyone','location','team'];
   const AUDLBL={everyone:'🌐 Everyone',location:'📍 By location / state',team:'👥 By team'};
 
   // Real staff roster (imported). Doctors -> Doctors team; everyone else defaults to Staff
@@ -292,7 +309,7 @@
         '<td>'+u.loc+'</td><td><span class="pill '+u.status.toLowerCase()+'">'+u.status+'</span></td></tr>';}).join('');
     const c=el('ucount'); if(c)c.textContent=list.length+' of '+users.length+' people shown.';
   }
-  function userAccess(u){ const out={}; SECTIONS.forEach(s=>{let best='none'; u.teams.forEach(t=>{const lv=(access[t]||{})[s.k]||'none'; if(rank[lv]>rank[best])best=lv;}); out[s.k]=best;}); return out; }
+  function userAccess(u){ const out={}; allSections().forEach(s=>{let best='none'; u.teams.forEach(t=>{const lv=(access[t]||{})[s.k]||'none'; if(rank[lv]>rank[best])best=lv;}); out[s.k]=best;}); return out; }
   function parseLoc(loc){ if(!loc||loc==='Unassigned')return []; if(loc==='All offices')return ['All offices']; return loc.split(',').map(x=>x.trim()).filter(Boolean); }
   function profile(gi){ const u=users[gi]; tmpU={gi,teams:u.teams.slice(),status:u.status,locs:parseLoc(u.loc)}; openProfile(u); }
   function openProfile(u){
@@ -321,7 +338,7 @@
   function fldRO(lab,val){ return '<div class="fld ro"><label>'+lab+'</label><div class="val">'+(val||'—')+'</div></div>'; }
   function refreshAccessPreview(){
     const u=users[tmpU.gi]; const acc=userAccess({teams:tmpU.teams});
-    const lines=SECTIONS.filter(s=>acc[s.k]!=='none').map(s=>'<div class="acc-line"><span>'+s.n+'</span><b class="lvl '+acc[s.k]+'" style="padding:1px 8px;border-radius:6px">'+LVLNAME[acc[s.k]]+'</b></div>').join('')||'<div class="acc-line" style="color:var(--soft)">No sections yet — add a team.</div>';
+    const lines=allSections().filter(s=>acc[s.k]!=='none').map(s=>'<div class="acc-line"><span>'+s.n+'</span><b class="lvl '+acc[s.k]+'" style="padding:1px 8px;border-radius:6px">'+LVLNAME[acc[s.k]]+'</b></div>').join('')||'<div class="acc-line" style="color:var(--soft)">No sections yet — add a team.</div>';
     const box=el('accpreview'); if(box) box.innerHTML='<h4>What '+u.f+' can access (from their teams)</h4>'+lines;
   }
   function locChips(){ return ['All offices'].concat(LOCATIONS).map(l=>'<button class="tp'+(tmpU.locs.includes(l)?' on':'')+'" onclick="AD.togLoc(\''+l+'\')">'+l+'</button>').join(''); }
@@ -339,46 +356,127 @@
 
   /* ---------- TEAMS & ACCESS ---------- */
   function renderAccess(){
-    const head='<tr><th class="corner">Team</th>'+SECTIONS.map(s=>'<th title="'+s.n+'">'+s.s+'</th>').join('')+'</tr>';
-    const rows=TEAMS.map(t=>'<tr><th class="team">'+t+'</th>'+SECTIONS.map(s=>{const lv=access[t][s.k];
-      return '<td><button class="lvl '+lv+'" onclick="AD.pickLevel(event,\''+t+'\',\''+s.k+'\')">'+LVLNAME[lv]+'</button></td>';}).join('')+'</tr>').join('');
+    const secs=allSections();
+    const grp='<tr><th class="corner"></th><th class="grp" colspan="'+TOOLS.length+'">App tools</th><th class="grp" colspan="'+DOCSECS.length+'">Document sections</th></tr>';
+    const head='<tr><th class="corner">Team</th>'+secs.map(x=>'<th title="'+x.n+'">'+(x.s||x.n)+'</th>').join('')+'</tr>';
+    const rows=TEAMS.map(t=>'<tr><th class="team">'+t+'</th>'+secs.map(x=>{const lv=access[t][x.k]||'none';
+      return '<td><button class="lvl '+lv+'" onclick="AD.pickLevel(event,\''+t+'\',\''+x.k+'\')">'+LVLNAME[lv]+'</button></td>';}).join('')+'</tr>').join('');
     el('view').innerHTML=
       '<div class="intro"><b>One rule:</b> a person\'s <b>team</b> decides what they can do (below); their <b>location</b> decides which offices\' folders they see. On two teams? They get the <b>best</b> level of both. <b>Tap a cell</b> and pick: None, View, Add files, Edit or Manage.</div>'+
-      '<div class="mx-scroll"><table class="mx"><thead>'+head+'</thead><tbody>'+rows+'</tbody></table></div>'+
-      '<div class="legend"><span><i style="background:#f4f6f8"></i> None</span><span><i style="background:var(--blue-soft)"></i> View</span><span><i style="background:var(--good-soft)"></i> Add files</span><span><i style="background:var(--teal-soft)"></i> Edit</span><span><i style="background:var(--navy)"></i> Manage</span><span style="margin-left:auto">Tap a cell and pick a level.</span></div>';
+      '<div class="mx-scroll"><table class="mx"><thead>'+grp+head+'</thead><tbody>'+rows+'</tbody></table></div>'+
+      '<div class="legend"><span><i style="background:#f4f6f8"></i> None</span><span><i style="background:var(--blue-soft)"></i> View</span><span><i style="background:var(--good-soft)"></i> Add files</span><span><i style="background:var(--teal-soft)"></i> Edit</span><span><i style="background:var(--navy)"></i> Manage</span><span style="margin-left:auto">New sections you create appear here automatically.</span></div>';
   }
 
-  /* ---------- SECTIONS & FILES ---------- */
+  /* ---------- DOCUMENT SECTIONS (admin can create these) ---------- */
+  const ICONS=['📁','👥','🏢','📝','🚚','🗂️','📆','🎓','🦷','💡','🧾','🔧','⭐','🔒'];
   function audChip(aud,scope,onclick){ return '<span class="aud '+aud+(onclick?'':' locked')+'"'+(onclick?' onclick="'+onclick+'"':'')+'>'+AUDLBL[aud]+(scope?' · '+scope:'')+'</span>'; }
   function fileRow(name,chip){ return '<div class="file"><span class="fic">📄</span><span class="fn">'+name+'</span>'+chip+'</div>'; }
+  function whoLine(sec){
+    const team = sec.teamMode==='all' ? 'Everyone' : ((sec.teams||[]).join(', ')||'no teams yet');
+    const loc  = sec.locMode==='all' ? 'All offices' : ((sec.locs||[]).join(', ')||'no locations yet');
+    return '<span class="aud team">👥 '+team+'</span><span class="aud location">📍 '+loc+'</span>';
+  }
   function renderFiles(){
-    const secHtml=SECTIONS.filter(s=>SECFILES[s.k]).map(s=>{
-      const f=SECFILES[s.k]; const open=openSecs.has(s.k);
-      let body='';
-      if(f.link){
-        body='<p class="mini" style="margin:8px 0 0">This section opens the interactive <b>'+s.n+'</b> tool. <a href="'+f.link+'" style="color:var(--teal-600);font-weight:600">Open '+s.n+' →</a></p>';
-      } else if(f.byLocation){
-        body='<p class="mini" style="margin:8px 0 2px">One folder per office. Each folder is <b>📍 scoped to that location\'s team</b> automatically — everything inside inherits it.</p>'+
+    const secHtml=DOCSECS.map(sec=>{
+      const open=openSecs.has(sec.k); let body='';
+      if(sec.structure==='byLocation'){
+        body='<p class="mini" style="margin:8px 0 2px">Automatically has <b>one folder per office</b> — each office only sees its own.</p>'+
           LOCATIONS.map(loc=>'<div class="folder"><div class="folder-h">📁 '+loc+' '+audChip('location',loc+' team')+'</div>'+
-            f.locItems.map(it=>fileRow(it,audChip('location',null))).join('')+'</div>').join('');
-      } else if(f.byBrand){
-        body='<p class="mini" style="margin:8px 0 2px">One folder per brand. Clinical forms below are shared with <b>everyone</b>, but you can narrow any folder.</p>'+
-          BRANDS.map(b=>'<div class="folder"><div class="folder-h">📁 '+b+' '+audChip('everyone',null,'AD.noop()')+'</div>'+
-            f.brandItems.map(it=>fileRow(it,audChip('everyone',null))).join('')+'</div>').join('');
+            (sec.locItems||[]).map(it=>fileRow(it,audChip('location',null))).join('')+'</div>').join('');
+      } else if(sec.structure==='byBrand'){
+        body='<p class="mini" style="margin:8px 0 2px">Automatically has <b>one folder per brand</b>.</p>'+
+          BRANDS.map(b=>'<div class="folder"><div class="folder-h">📁 '+b+' '+audChip('everyone',null)+'</div>'+
+            (sec.brandItems||[]).map(it=>fileRow(it,audChip('everyone',null))).join('')+'</div>').join('');
       } else {
-        body='<div class="folder">'+f.items.map((it,idx)=>fileRow(it.n,audChip(it.aud,it.scope,'AD.pickAud(event,\''+s.k+'\','+idx+')'))).join('')+'</div>';
+        const items=sec.items||[];
+        body= items.length ? '<div class="folder">'+items.map((it,idx)=>fileRow(it.n,audChip(it.aud||'everyone',it.scope,'AD.pickAud(event,\''+sec.k+'\','+idx+')'))).join('')+'</div>'
+                           : '<p class="mini" style="margin:8px 0 0">No files yet — add the first one below.</p>';
       }
-      const addf = f.link?'':'<div class="addfile"><button class="btn ghost" onclick="event.stopPropagation();AD.addFile(\''+s.k+'\')">+ Add file</button><span class="mini">New files inherit their folder\'s audience — no extra setup.</span></div>';
-      return '<div class="sec'+(open?' open':'')+'"><div class="sec-h" onclick="AD.tog(\''+s.k+'\')"><span class="car">▶</span><div style="flex:1"><div class="sn">'+s.n+'</div></div></div>'+
+      const addf='<div class="addfile"><button class="btn ghost" onclick="event.stopPropagation();AD.addFile(\''+sec.k+'\')">+ Add file</button><span class="mini">New files inherit this section\'s audience — no extra setup.</span></div>';
+      return '<div class="sec'+(open?' open':'')+'"><div class="sec-h" onclick="AD.tog(\''+sec.k+'\')">'+
+          '<span class="car">▶</span><span style="font-size:19px">'+(sec.ic||'📁')+'</span>'+
+          '<div style="flex:1"><div class="sn">'+sec.n+'</div><div class="secwho">'+whoLine(sec)+'</div></div>'+
+          '<button class="btn ghost mini-btn" onclick="event.stopPropagation();AD.editSec(\''+sec.k+'\')">Edit</button></div>'+
         '<div class="sec-b">'+body+addf+'</div></div>';
     }).join('');
     el('view').innerHTML=
-      '<div class="intro"><b>Set it once, not a thousand times.</b> Each folder has an <b>audience</b> — 🌐 Everyone, 📍 By location/state, or 👥 By team. Files inside <b>inherit</b> it, so uploading a doc automatically shares it with the right people. Only override a single file when it\'s an exception. <b>Tap an audience chip</b> to change it.</div>'+
+      '<div class="intro"><b>Two different things:</b> <b>App tools</b> (Dashboard, Schedule, Marketing) are built-in features — you only choose who gets them. <b>Document sections</b> below are the folders inside <b>Documents</b>, and you can <b>add as many as you want</b>.</div>'+
+      '<div class="card" style="padding:14px 16px;margin-bottom:18px"><div class="panel-lab" style="margin-bottom:8px">App tools — built in, can\'t be added or removed</div>'+
+        '<div class="chips">'+TOOLS.map(t=>'<span class="chip">'+t.ic+' '+t.n+'</span>').join('')+'</div>'+
+        '<p class="mini" style="margin:9px 0 0">Choose who gets each one in <b>Teams &amp; Access</b>.</p></div>'+
+      '<div class="toolrow"><div class="panel-lab" style="margin:0">Document sections — '+DOCSECS.length+' right now</div><span style="flex:1"></span>'+
+        '<button class="btn ghost" onclick="AD.resetSecs()">Reset to defaults</button><button class="btn" onclick="AD.newSec()">+ New section</button></div>'+
       '<div class="secacc">'+secHtml+'</div>';
   }
   function tog(k){ if(openSecs.has(k))openSecs.delete(k); else openSecs.add(k); renderFiles(); }
-  function addFile(k){ const f=SECFILES[k]; if(f.items){ f.items.push({n:'New file',aud:(f.items[0]?f.items[0].aud:'everyone'),scope:f.items[0]?f.items[0].scope:undefined}); } openSecs.add(k); renderFiles(); }
+  function addFile(k){ const sec=DOCSECS.find(x=>x.k===k); if(!sec)return;
+    if(sec.structure==='byLocation'){ sec.locItems=sec.locItems||[]; sec.locItems.push('New file'); }
+    else if(sec.structure==='byBrand'){ sec.brandItems=sec.brandItems||[]; sec.brandItems.push('New file'); }
+    else { sec.items=sec.items||[]; const first=sec.items[0]; sec.items.push({n:'New file',aud:first?first.aud:'everyone',scope:first?first.scope:undefined}); }
+    saveSecs(); openSecs.add(k); renderFiles(); }
   function noop(){}
+
+  /* ----- create / edit a section ----- */
+  let secDraft=null;
+  function newSec(){ secDraft={k:'',n:'',ic:'📁',structure:'plain',locMode:'all',locs:[],teamMode:'all',teams:[],isNew:true}; renderSecModal(); }
+  function editSec(k){ const sec=DOCSECS.find(x=>x.k===k); if(!sec)return;
+    secDraft=Object.assign({},sec,{locs:(sec.locs||[]).slice(),teams:(sec.teams||[]).slice(),isNew:false}); renderSecModal(); }
+  function renderSecModal(){
+    const d=secDraft;
+    const seg=(cur,v,lab,fn)=>'<button class="segb'+(cur===v?' on':'')+'" onclick="AD.'+fn+'(\''+v+'\')">'+lab+'</button>';
+    const icons=ICONS.map(i=>'<button class="icb'+(d.ic===i?' on':'')+'" onclick="AD.setSecIcon(\''+i+'\')">'+i+'</button>').join('');
+    const locPick = d.locMode==='some' ? '<div class="teampick" style="margin-top:8px">'+LOCATIONS.map(l=>'<button class="tp'+(d.locs.includes(l)?' on':'')+'" onclick="AD.togSecLoc(\''+l+'\')">'+l+'</button>').join('')+'</div>' : '';
+    const teamPick = d.teamMode==='some' ? '<div class="teampick" style="margin-top:8px">'+TEAMS.filter(t=>t!=='Admin').map(t=>'<button class="tp'+(d.teams.includes(t)?' on':'')+'" onclick="AD.togSecTeam(\''+t.replace(/'/g,"\\'")+'\')">'+t+'</button>').join('')+'</div>' : '';
+    openModal(
+      '<div class="m-top"><h3 style="margin:0;font-size:17px;color:var(--navy)">'+(d.isNew?'➕ New document section':'Edit section')+'</h3><button class="x" onclick="AD.close()">×</button></div>'+
+      '<div class="m-body">'+
+        '<div class="fld"><label>Section name</label><input id="secName" value="'+(d.n||'').replace(/"/g,'&quot;')+'" placeholder="e.g. Training, Compliance, Onboarding" oninput="AD.setSecName(this.value)"></div>'+
+        '<div class="fld"><label>Icon</label><div class="iconrow">'+icons+'</div></div>'+
+        '<div class="fld"><label>How is it organized?</label><div class="segrow">'+
+          seg(d.structure,'plain','Just files','setSecStruct')+seg(d.structure,'byLocation','A folder for each office','setSecStruct')+seg(d.structure,'byBrand','A folder for each brand','setSecStruct')+'</div></div>'+
+        '<div class="fld"><label>👥 Which teams can see it?</label><div class="segrow">'+seg(d.teamMode,'all','Everyone','setSecTeamMode')+seg(d.teamMode,'some','Specific teams','setSecTeamMode')+'</div>'+teamPick+'</div>'+
+        '<div class="fld"><label>📍 Which locations?</label><div class="segrow">'+seg(d.locMode,'all','All offices','setSecLocMode')+seg(d.locMode,'some','Specific locations','setSecLocMode')+'</div>'+locPick+'</div>'+
+        '<div class="accessbox"><h4>What will happen</h4><div id="secWho"></div></div>'+
+      '</div>'+
+      '<div class="m-foot">'+(d.isNew?'':'<button class="btn ghost" onclick="AD.delSec(\''+d.k+'\')">Delete section</button>')+
+        '<span style="flex:1"></span><button class="btn ghost" onclick="AD.close()">Cancel</button>'+
+        '<button class="btn" onclick="AD.saveSec()">'+(d.isNew?'Create section':'Save')+'</button></div>');
+    updSecWho();
+  }
+  function updSecWho(){
+    const d=secDraft, box=el('secWho'); if(!box)return;
+    const nm=d.n||'This section';
+    const team = d.teamMode==='all' ? 'everyone' : ((d.teams||[]).join(', ')||'(pick teams)');
+    const loc  = d.locMode==='all' ? 'all offices' : ((d.locs||[]).join(', ')||'(pick locations)');
+    const struct = d.structure==='byLocation' ? ' It will start with <b>one folder per office</b>.' : d.structure==='byBrand' ? ' It will start with <b>one folder per brand</b>.' : '';
+    box.innerHTML='<b>'+nm+'</b> will appear under <b>Documents</b> for <b>'+team+'</b> at <b>'+loc+'</b>.'+struct+' They get <b>View</b> to start — change any team to Add/Edit in <b>Teams &amp; Access</b>.';
+  }
+  function setSecName(v){ secDraft.n=v; updSecWho(); }
+  function setSecIcon(v){ secDraft.ic=v; renderSecModal(); }
+  function setSecStruct(v){ secDraft.structure=v; renderSecModal(); }
+  function setSecLocMode(m){ secDraft.locMode=m; if(m==='all')secDraft.locs=[]; renderSecModal(); }
+  function setSecTeamMode(m){ secDraft.teamMode=m; if(m==='all')secDraft.teams=[]; renderSecModal(); }
+  function togSecLoc(l){ const i=secDraft.locs.indexOf(l); if(i>=0)secDraft.locs.splice(i,1); else secDraft.locs.push(l); renderSecModal(); }
+  function togSecTeam(t){ const i=secDraft.teams.indexOf(t); if(i>=0)secDraft.teams.splice(i,1); else secDraft.teams.push(t); renderSecModal(); }
+  function saveSec(){
+    const d=secDraft; const nameEl=el('secName'); d.n=((nameEl?nameEl.value:d.n)||'').trim()||'New section';
+    if(d.isNew){
+      d.k='sec_'+Math.abs(d.n.split('').reduce((a,c)=>a*31+c.charCodeAt(0)|0,7)).toString(36)+DOCSECS.length;
+      const sec={k:d.k,n:d.n,ic:d.ic,structure:d.structure,locMode:d.locMode,locs:d.locs.slice(),teamMode:d.teamMode,teams:d.teams.slice()};
+      if(d.structure==='byLocation')sec.locItems=[]; else if(d.structure==='byBrand')sec.brandItems=[]; else sec.items=[];
+      DOCSECS.push(sec); ensureAccess(); applySecAudience(sec); openSecs.add(sec.k);
+    } else {
+      const sec=DOCSECS.find(x=>x.k===d.k);
+      Object.assign(sec,{n:d.n,ic:d.ic,structure:d.structure,locMode:d.locMode,locs:d.locs.slice(),teamMode:d.teamMode,teams:d.teams.slice()});
+      if(sec.structure==='byLocation'&&!sec.locItems)sec.locItems=[];
+      if(sec.structure==='byBrand'&&!sec.brandItems)sec.brandItems=[];
+      if(sec.structure==='plain'&&!sec.items)sec.items=[];
+      ensureAccess(); applySecAudience(sec);
+    }
+    saveSecs(); closeModal(); renderFiles();
+  }
+  function delSec(k){ DOCSECS=DOCSECS.filter(x=>x.k!==k); saveSecs(); closeModal(); renderFiles(); }
+  function resetSecs(){ DOCSECS=JSON.parse(JSON.stringify(DEFAULT_DOCSECS)); saveSecs(); ensureAccess(); renderFiles(); }
 
   /* ---------- TAP-TO-PICK MENU (one tap opens choices; one tap picks) ---------- */
   let pk=null;
@@ -411,18 +509,18 @@
       v=>{ access[t][k]=v; renderAccess(); });
   }
   function pickAud(ev,k,idx){
-    ev.stopPropagation(); const it=SECFILES[k].items[idx];
+    ev.stopPropagation(); const sec=DOCSECS.find(x=>x.k===k); if(!sec)return; const it=sec.items[idx];
     openPk(ev.currentTarget,[
-      {value:'everyone',label:'🌐 Everyone',desc:'The whole practice',cur:it.aud==='everyone'},
+      {value:'everyone',label:'🌐 Everyone',desc:'The whole practice',cur:(it.aud||'everyone')==='everyone'},
       {value:'location',label:'📍 By location / state',desc:'Only certain offices',cur:it.aud==='location'},
       {value:'team',label:'👥 By team',desc:'Only certain teams',cur:it.aud==='team'}
-    ], v=>{ it.aud=v; if(v==='everyone')delete it.scope; else if(!it.scope)it.scope=(v==='location'?'Choose location':'Choose team'); renderFiles(); });
+    ], v=>{ it.aud=v; if(v==='everyone')delete it.scope; else if(!it.scope)it.scope=(v==='location'?'Choose location':'Choose team'); saveSecs(); renderFiles(); });
   }
 
   function openModal(h){ el('modalCard').innerHTML=h; el('modal').classList.add('open'); }
   function closeModal(){ el('modal').classList.remove('open'); }
 
-  window.AD={tab:tabSet,profile,addUser,togTeam,togLoc,setStatus,saveUser,pickLevel,pickAud,tog,addFile,noop,close:closeModal};
+  window.AD={tab:tabSet,profile,addUser,togTeam,togLoc,setStatus,saveUser,pickLevel,pickAud,tog,addFile,noop,newSec,editSec,saveSec,delSec,resetSecs,setSecName,setSecIcon,setSecStruct,setSecLocMode,setSecTeamMode,togSecLoc,togSecTeam,close:closeModal};
   el('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
   render();
