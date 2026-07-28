@@ -34,8 +34,8 @@
   .brand small{display:block;font-weight:500;font-size:12px;color:#9fb4d0}
   .v1{background:rgba(255,255,255,.15);color:#eaf1fb;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;margin-left:6px}
   .v1nav{background:var(--navy2)}
-  .v1nav-in{max-width:var(--maxw);margin:0 auto;display:flex;gap:2px;padding:0 12px}
-  .v1nav a{color:#cdd9ea;font-size:14px;font-weight:600;padding:13px 16px;text-decoration:none;border-bottom:3px solid transparent}
+  .v1nav-in{max-width:var(--maxw);margin:0 auto;display:flex;gap:2px;padding:0 12px;overflow-x:auto}
+  .v1nav a{color:#cdd9ea;font-size:14px;font-weight:600;padding:13px 15px;text-decoration:none;border-bottom:3px solid transparent;white-space:nowrap}
   .v1nav a:hover{color:#fff;background:rgba(255,255,255,.05)}
   .v1nav a.active{color:#fff;border-bottom-color:var(--teal)}
   .wrap{max-width:var(--maxw);margin:0 auto;padding:26px 20px 90px}
@@ -85,8 +85,8 @@
   .sched-status{border-radius:10px;padding:12px 16px;font-size:14.5px;margin-bottom:16px;border:1px solid}
   .sched-status.ok{background:#E7F4EE;border-color:#bfe3cf;color:#256b45}
   .sched-status.warn{background:#FFF6E9;border-color:#f3dcb3;color:#7a5212}
-  .ledit{border:none;background:none;color:var(--soft);cursor:pointer;font-size:14px;margin-left:6px;opacity:0;line-height:1}
-  table.sgrid tr:hover .ledit{opacity:.55}
+  .ledit{border:none;background:none;color:var(--soft);cursor:pointer;font-size:14px;margin-left:6px;opacity:.4;line-height:1}
+  table.sgrid tr:hover .ledit{opacity:.7}
   .ledit:hover{color:var(--teal-600);opacity:1}
   .dtogs{display:flex;gap:6px;flex-wrap:wrap}
   .dtog{border:1px solid var(--line);background:#fff;color:var(--soft);border-radius:8px;padding:8px 12px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
@@ -140,6 +140,8 @@
 <nav class="v1nav"><div class="v1nav-in">
   <a href="index.html">📊 Dashboard</a>
   <a href="schedule.html" class="active">📅 Schedule</a>
+  <a href="marketing.html">📣 Marketing</a>
+  <a href="admin.html">⚙️ Admin</a>
 </div></nav>
 
 <div class="wrap">

@@ -37,8 +37,8 @@
     if(n>=steps.length) return end();
     i=n; const s=steps[i]; const t=document.querySelector(s.sel);
     if(!t) return show(n+1);
-    t.scrollIntoView({block:'center',behavior:'smooth'});
-    setTimeout(()=>place(t,s),300);
+    t.scrollIntoView({block:'center',inline:'nearest',behavior:'auto'});
+    requestAnimationFrame(()=>requestAnimationFrame(()=>place(t,s)));
   }
   function place(t,s){
     const r=t.getBoundingClientRect(), pad=6;

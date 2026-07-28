@@ -1,0 +1,227 @@
+# Practice Hub — Project Guide (for Claude Code)
+
+> Read this first. It's the full context for the **Practice Hub** project so any Claude
+> session (including on mobile) can make updates without re-learning everything.
+> Last major update: 2026-07-28.
+
+---
+
+## 1. What this is
+
+**Practice Hub** is a **clickable mockup of a Microsoft 365 / SharePoint intranet** for a
+growing **8-office orthodontic practice** (the "Farnsworth" group — brands FFO, Sunflower/SUN,
+LCO/Legacy). Cory is building it to help a friend (the practice's COO) **validate the concept
+before the real build**. It's a "digital front door" — one calm, simple place for staff to find
+docs, schedules, KPIs, and marketing.
+
+- **Repo:** this folder (`~/practice-hub-mockup`), pushed to `github.com/corylawing/practice-hub-mockup`.
+- **Live:** https://corylawing.github.io/practice-hub-mockup/ (GitHub Pages, `main` branch, root).
+- **Stack:** plain static HTML/CSS/JS. **No framework, no build step.** Preview via
+  `.claude/launch.json` config named **`practice-hub`** on **port 8790**.
+- **Real build target (later):** SharePoint communication site + Teams + Microsoft Forms +
+  Lists, living *inside their own Microsoft tenant*. This mockup is the prototype/validation layer.
+
+### Guiding principles (from the friend's design brief — obey these)
+1. **Simplicity & adoption over features.** Non-technical staff must "get it" instantly.
+2. **Practice leadership must self-maintain it** — no consultant needed. Everything admin-editable.
+3. **Mobile-first.** Most staff are deskless (clinical).
+4. **Reusable** as a framework for future practices.
+5. **"User friendly is the most important."** Repeatedly stressed. When in doubt, fewer clicks,
+   plainer words, sensible defaults over configuration.
+
+---
+
+## 2. Two site trees in ONE repo (important mental model)
+
+- **Root (`/index.html`, `/calendars.html`, `/assets/…`)** = the *original first-draft concept*
+  mockup. Shared chrome via `assets/app.js` + `assets/styles.css` + `assets/data.js`. Kept as
+  reference. The older interactive schedule is here (`calendars.html`) but lacks the newer
+  features (availability filter, tour, per-day hours/tz/lunch).
+- **`/v1/`** = **THE REAL BUILD** — what they've decided to actually build. Multi-page, and each
+  page is **fully self-contained** (inline CSS + JS + data; own `:root` tokens). Do NOT reference
+  `../assets/*` from V1 pages — that broke styling in preview before. Keep V1 pages standalone.
+
+**Always do new work in `/v1/`** unless explicitly asked to touch the root concept.
+
+### V1 pages (all share a top nav: Dashboard · Schedule · Marketing · Admin)
+| File | Purpose |
+|---|---|
+| `v1/index.html` | **KPI Dashboard** — leadership "All Offices" view + per-office drill-down, built on their REAL production data. |
+| `v1/schedule.html` | **Staff Schedule** — weekly board: which office open each day + which doctor where. |
+| `v1/marketing.html` | **Marketing Kanban** — events/social posts move Ideas→Planned→In progress→Done; scored Good/Mixed/Bad. |
+| `v1/admin.html` | **Admin Console** — People, Teams & Access, Sections & Files, Roles. Backend permissions & profiles. |
+| `v1/tour.js` | Shared **guided walkthrough** engine (spotlight + pulsing "Show me around"). Included by all V1 pages. |
+
+---
+
+## 3. Design system (V1 tokens — keep consistent)
+
+```
+--navy:#0F2A4A  --navy2:#25456e  --teal:#149B96  --teal2:#2BC0B8
+--teal-soft:#E5F4F3  --teal-600:#0F827E
+--ink:#1F2D3D  --soft/--ink-soft:#56627A  --line:#E4E8EE  --canvas:#F4F6F8
+--good:#2E9E6B  --good-soft:#E7F4EE  --bad:#D7503A  --bad-soft:#FBEAE7
+--amber:#F2A03D  --blue:#1f6f9e  --blue-soft:#E3F0FA
+Font: Inter (Google Fonts). Radius ~14px. Soft shadows. maxw ~1080–1180px.
+```
+- Structure/nav = navy; primary actions/accents = teal; success/goal = green; miss = red;
+  in-progress/attention = amber.
+- Every V1 page has: an **amber "PROTOTYPE" ribbon**, navy header with `PH` mark + "V1 preview"
+  pill, and the `.v1nav` tab bar (horizontal-scroll on mobile).
+- Branding/social meta: `favicon.svg`, `assets/og-image.png`, OG tags on each page.
+
+---
+
+## 4. Page-by-page detail
+
+### 4a. `v1/index.html` — KPI Dashboard
+- Office chips (All Offices + 8), annual **pace ring** (`ring(pct)` SVG), 4 KPI cards.
+- Sortable table (`sortCol(key)` / `sortTh(label,key)`, ↕/▲/▼), relative-size minibar.
+- Per-office **drill-down** `renderOffice(o)`: dollar bars, per-month dashed **goal markers**
+  (`.gmark`), **July shown as in-progress** (`.mtd` bar labeled "so far") — user insisted July
+  not be omitted. Tooltips via `wireBars`. Plain-English summary + vs-last-month delta. Print/PDF.
+- Data: `OFFICES` array with pct/act/goal/mtdIdx (7 months incl. July). **Sample-ish** numbers
+  derived from their real workbook; real go-live reads the live Excel via SharePoint web part.
+- Tour: `Tour.init([...6 steps], {key:'dash'})`.
+
+### 4b. `v1/schedule.html` — Staff Schedule
+- Weekly board (locations × Mon–Sat), color per doctor. Week nav with **real dates**
+  (`weekDates`/`dayLabel`/`weekMon`); today column highlighted.
+- Data model (all in one IIFE, exposed as `window.PS`):
+  - `people[{n,c}]` (c = color index; 8-color `PALETTE`), `locations[]`.
+  - `sched{loc:[6 cells]}` — cell = `null` | `{p,h,s,e}` (person/hours/start/end) | `{closed:true}`.
+  - `openH{loc:[6 per-day {s,e}|null]}` — office hours WITH times per day.
+  - `locTZ{loc}` (NM=MT, TX=CT — **confirmed correct**, editable), `locLunch{loc:{s,e}}`.
+  - Times stored as **minutes**. Conflict = time overlap (`s1<e2 && s2<e1`), guarded by `conflictAt`.
+- Features: **availability-only** doctor picker (booked doctors greyed "· at [office]"),
+  completeness bar (`#schedStatus`, "X open days still need a doctor"), Closed / "Needs doctor"
+  cells, **"Apply these hours & lunch to all locations"** (`applyAll`).
+- Add/edit/remove **locations** (`locModal`/`renderDayRows`/`dtog`/`dtime`/`setTZ`/`setLunch`/
+  `saveLoc`/`delLoc`) and **doctors** (`personModal`/`savePerson`/`delPerson`, color picker).
+- Edit pencils: `.ledit` (locations) faintly visible (opacity .4), `.pedit` (doctors).
+- Tour: `Tour.init([...6 steps], {key:'sched'})`. Step 4 targets `#roster` (doctors).
+- Real build = **ONE Microsoft List** (Office, Day, Open/Closed, Doctor, Hours), NOT a
+  calendar-per-office.
+
+### 4c. `v1/marketing.html` — Marketing Kanban
+- Columns (`STAGES`): 💡 Ideas → 🗓️ Planned → 🚀 In progress → ✅ Done.
+- Card `TYPES`: social / event / promo / email / referral (colored left stripe `.t-*`).
+- **Result** set only in Done: `good` 🟢 / `mixed` 🟡 / `bad` 🔴 (`.res` chip, click to cycle).
+  Summary row totals Good/Mixed/Bad. Move via ◀ ▶ (`move(id,dir)`), click card → edit modal
+  (`open`/`save`/`del`), add via `add(stage)`. All state in `cards[]`, API `window.MK`.
+- Tour: `Tour.init([...4 steps], {key:'mkt'})`. Real build = Microsoft Lists / Planner.
+
+### 4d. `v1/admin.html` — Admin Console (the backend/permissions)
+Four tabs (`window.AD`), all client-side demo state:
+
+1. **People** — table of users; each **syncs from Microsoft 365** (name/email/photo). Admin sets
+   **team(s), role, location, status**. Click a row → **profile modal**:
+   - Left panel "From Microsoft 365 (SYNCED)" — read-only dashed fields (First/Last/Email/Phone/
+     Employee ID) + Photo (badge **"EMPLOYEE CAN EDIT"**).
+   - Right panel "Managed in Practice Hub" — Team(s) chips, Role, Location(s), Region, Brand,
+     Status (**admin only**: Active/Paused/Inactive).
+   - **About me** — badge "EMPLOYEE CAN EDIT" (self-service, like photo).
+   - Live **"What [name] can access"** box = union of their teams' section access (highest level wins).
+   - `users[]` fields: f,l,email,emp,loc,state,brand,teams[],role,region,phone,about,status,c(color).
+2. **Teams & Access** — visual **matrix**: `TEAMS` (rows) × `SECTIONS` (cols). Cell = access level
+   None/View/Edit/Manage; **tap to cycle** (`cycle(t,k)`). `access[team][sectionKey]`. A person's
+   effective access = **best level across all their teams** (`userAccess`). This is the whole
+   permission model — "way more user friendly than Salesforce."
+3. **Sections & Files** — **KEY concept the practice asked for.** Documents in a section can be
+   for **🌐 Everyone / 📍 By location(state) / 👥 By team**. Simplification to keep it easy:
+   **audience is set on the FOLDER and files inherit it** — uploading a doc auto-shares it with the
+   right people; only override a single file for an exception. Data = `SECFILES` (per section:
+   `items[]` with `{n,aud,scope}`, or `byLocation`/`byBrand` auto-folders). `AUDCYC` cycles the
+   audience (`cycFile`). Real HR example baked in: New-Hire/PTO split TX vs NM (location), payroll
+   by team, discounts everyone.
+4. **Roles** — reusable permission bundles (`ROLES`): Administrator/Manager/Contributor/Viewer.
+   A role = **how much** you can do; team = **which sections**. Some roles are **per-location**
+   (`loc:true`). Practice can add its own (`addRole`).
+
+- Tour: `Tour.init([...5 steps], {key:'admin'})`.
+
+**The sections list (`SECTIONS`) reflects their real content areas:** Goals Tracker, Schedule, HR,
+End-of-Month Reporting, Office Docs (Managers, per-location folders: Office Contracts / Equipment
+Invoices / Dental Licenses), Office Forms (per-brand: FFO/Sunflower/LCO — DDS Referral / Medical
+History / Invisalign-Vivera Scan Sheet), Vendors, Insurance/W-9, Marketing, Directory, Admin.
+
+### 4e. `v1/tour.js` — guided walkthrough engine
+- `Tour.init(steps, {key})`. Each step `{sel, title, body}`. Builds a pulsing **"👋 Show me around"**
+  launcher (bottom-right). **Click-only — must NOT auto-start** (user requirement).
+- Spotlight = fixed `.tour-hole` (big box-shadow overlay) + pulsing `.tour-ring` + `.tour-pop`
+  popover with Back/Next/Skip.
+- **Highlight-accuracy fix (2026-07-28):** `show()` uses **instant** scroll
+  (`scrollIntoView({behavior:'auto'})`) + **double `requestAnimationFrame`** before `place()`, so
+  the spotlight measures the target's final rect (was mis-measuring mid-smooth-scroll — the doctor
+  step didn't land on the roster). If you add steps, verify each `sel` resolves and lands correctly.
+
+---
+
+## 5. The real-world deployment story (context, not built here)
+
+- The group is currently split across **MULTIPLE Microsoft 365 tenants** managed by **3 different
+  IT companies** (e.g. "Legacy Smiles LC" and "Las Cruces Orthodontics" tenants; live KPI Excel
+  sits in yet another — omegaorthodontics/farnsworthorthodontics). ~9 licenses today (only
+  leadership/managers have accounts; most staff have no email yet).
+- **SharePoint/Teams/search/permissions can't span tenants.** So **Phase 0 = consolidate the whole
+  group into ONE master tenant** (add all brand domains so per-brand email survives). This is the
+  long pole — bigger than building the hub.
+- **Licensing:** Frontline **F1 (~$2.25)/F3 (~$8)** for deskless clinical staff + **Business
+  Standard (~$12.50)/E3** for admins/leadership/doctors/managers.
+- **KPI data:** stays in SharePoint; the live dashboard reads it via the **Excel web part** (one
+  source of truth — the hub is a presentation layer, not new math).
+- **Value-over-Excel proof:** their Excel "Dashboard" tab vs-goal total (**+$580,749**) only summed
+  5 of 8 offices; correct all-8 = **+$500,762** (the app computes live). "A hub can't silently drop
+  an office."
+
+Full answers to the friend's 8 brief questions live in `~/Downloads/Practice Hub - Response to
+Design Brief.docx` (regenerate via `build-response-doc.js`, which is gitignored).
+
+---
+
+## 6. How to work on this
+
+```bash
+# Preview (never use plain `python -m http.server` if you can use the preview tool):
+# launch.json config is named "practice-hub" on port 8790.
+# In Claude Code: preview_start {name:"practice-hub"}, then open /v1/<page>.html
+```
+- **Verify in the browser** after changes: check `read_console_messages` (should be zero errors),
+  screenshot the affected page, and if you touched the tour, actually run it to the changed step.
+- Preview can be racy: navigate with a full `http://localhost:8790/v1/<page>.html` URL and
+  screenshot; restart the server if a page seems to serve stale JS/data.
+- **No native `alert()`/`confirm()`** — they block browser automation and feel dated. Use in-page
+  modals/hints (existing pattern).
+- Keep V1 pages **self-contained**. Match the existing token set and component styles.
+- Commit style: short imperative subject scoped by page, e.g. `V1 Admin: …`, `Schedule: …`.
+
+### Recurring user preferences (learned the hard way — honor them)
+- Tour: **click-only, never auto-start.**
+- Don't invent copy/asides in the UI (once added a "(Fridays often differ)" note the user was only
+  telling *me* — they made me remove it). Put explanations in tour steps, not permanent labels.
+- Show **July as in-progress**, not omitted. Dashed **per-bar** monthly goals (not one flat line).
+- Sparkline/trend belongs on the **individual office** view, not "All Offices" (minibar there).
+- "Mark closed" must **visibly show "Closed."**
+- **User-friendliness beats configurability** every time. Prefer inheritance/defaults over
+  per-item settings (that's why file audience inherits from the folder).
+
+---
+
+## 7. Status & possible next steps
+
+**Done & verified (2026-07-28):** KPI dashboard on real data; interactive schedule (hours/tz/lunch/
+conflicts/availability/completeness); guided tour (highlight bug fixed); Marketing Kanban with
+scored results; Admin console (People + M365-sync profiles w/ self-service photo & About me, Teams
+×Sections access matrix, Sections & Files audience-inheritance model, Roles); nav wired across all
+four V1 pages.
+
+**Open / previously offered (unconfirmed):**
+- Schedule: "Copy last week" + "Print this week"; click a "needs a doctor" cell to jump to it.
+- Sync or retire the old root `calendars.html` (superseded by `v1/schedule.html`).
+- Admin: make the per-location/brand folder audiences individually editable (currently the
+  location folders are fixed-scoped by design; brand folders demo an "everyone" default).
+- Real data refresh for the dashboard when the live Excel numbers change.
+- A per-user "My Profile" self-service page (currently self-service is represented via badges in
+  the admin profile modal).
+
+When unsure what the friend wants, keep it **simple and self-maintainable** — that's the whole point.

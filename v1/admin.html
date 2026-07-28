@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin (V1) — Practice Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#0F2A4A">
+<meta name="description" content="Practice Hub V1 — admin console: users, teams, roles, section files and who can access what.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Practice Hub">
+<meta property="og:title" content="Admin (V1) · Practice Hub">
+<meta property="og:description" content="Manage users, teams, roles, files, and control who can access which sections.">
+<meta property="og:image" content="https://corylawing.github.io/practice-hub-mockup/assets/og-image.png">
+<meta property="og:url" content="https://corylawing.github.io/practice-hub-mockup/v1/admin.html">
+<style>
+  :root{
+    --navy:#0F2A4A; --navy2:#25456e; --teal:#149B96; --teal2:#2BC0B8; --teal-soft:#E5F4F3; --teal-600:#0F827E;
+    --ink:#1F2D3D; --ink-soft:#56627A; --soft:#56627A; --line:#E4E8EE; --canvas:#F4F6F8; --white:#fff;
+    --good:#2E9E6B; --good-soft:#E7F4EE; --bad:#D7503A; --bad-soft:#FBEAE7; --amber:#F2A03D;
+    --blue:#1f6f9e; --blue-soft:#E3F0FA;
+    --shadow:0 1px 2px rgba(15,42,74,.06),0 6px 18px rgba(15,42,74,.06);
+    --shadow-lg:0 10px 30px rgba(15,42,74,.12); --radius:14px; --maxw:1080px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--canvas);line-height:1.5;-webkit-font-smoothing:antialiased}
+  h1{color:var(--navy);margin:0}
+  .ribbon{background:var(--amber);color:#3a2400;text-align:center;font-size:13px;font-weight:600;padding:6px 14px}
+  .hdr{background:var(--navy);color:#fff}
+  .hdr-in{max-width:var(--maxw);margin:0 auto;display:flex;align-items:center;gap:12px;padding:13px 20px}
+  .mark{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--teal),var(--teal2));display:grid;place-items:center;color:#fff;font-weight:800;font-size:16px}
+  .brand{font-weight:700;font-size:18px;color:#fff;line-height:1.1}
+  .brand small{display:block;font-weight:500;font-size:12px;color:#9fb4d0}
+  .v1{background:rgba(255,255,255,.15);color:#eaf1fb;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;margin-left:6px}
+  .v1nav{background:var(--navy2)}
+  .v1nav-in{max-width:var(--maxw);margin:0 auto;display:flex;gap:2px;padding:0 12px;overflow-x:auto}
+  .v1nav a{color:#cdd9ea;font-size:14px;font-weight:600;padding:13px 15px;text-decoration:none;border-bottom:3px solid transparent;white-space:nowrap}
+  .v1nav a:hover{color:#fff;background:rgba(255,255,255,.05)}
+  .v1nav a.active{color:#fff;border-bottom-color:var(--teal)}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:26px 20px 90px}
+  .page-head h1{font-size:26px}
+  .page-head p{margin:4px 0 0;color:var(--soft);font-size:15px}
+  .tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin:20px 0 22px;flex-wrap:wrap}
+  .tab{background:none;border:none;font-family:inherit;font-size:15px;font-weight:600;color:var(--soft);padding:10px 14px;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1px}
+  .tab:hover{color:var(--navy)}
+  .tab.active{color:var(--navy);border-bottom-color:var(--teal)}
+  .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+  .toolrow{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+  .search{flex:1;min-width:200px;padding:10px 13px;border:1px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;background:#fff;box-shadow:var(--shadow)}
+  .btn{background:var(--teal);color:#fff;border:none;border-radius:9px;padding:10px 15px;font-weight:600;font-size:14px;cursor:pointer;font-family:inherit;white-space:nowrap}
+  .btn:hover{background:var(--teal-600)}
+  .btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--line)}
+  .btn.ghost:hover{border-color:var(--teal);color:var(--teal-600)}
+  .intro{background:var(--teal-soft);border:1px solid #c4e6e3;border-radius:12px;padding:13px 16px;font-size:14px;color:#0c5b57;margin-bottom:18px}
+  .intro b{color:#0a4d49}
+  .tbl-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+  table.u{width:100%;border-collapse:collapse;background:#fff;min-width:720px}
+  table.u th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--soft);font-weight:700;text-align:left;padding:12px 14px;background:#fafbfc;border-bottom:1px solid var(--line)}
+  table.u td{padding:11px 14px;border-bottom:1px solid var(--line);font-size:14px;vertical-align:middle}
+  table.u tbody tr{cursor:pointer}
+  table.u tbody tr:hover td{background:#f2fbfa}
+  table.u tr:last-child td{border-bottom:none}
+  .who{display:flex;align-items:center;gap:10px}
+  .av{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:700;font-size:13px;flex:none}
+  .uname{font-weight:600;color:var(--navy)}
+  .chips{display:flex;flex-wrap:wrap;gap:4px}
+  .chip{font-size:12px;font-weight:600;background:var(--canvas);color:var(--ink);border:1px solid var(--line);padding:2px 8px;border-radius:999px}
+  .pill{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700}
+  .pill.active{background:var(--good-soft);color:var(--good)}
+  .pill.inactive{background:#eef1f5;color:#8a94a6}
+  .pill.paused{background:#FFF6E9;color:#946011}
+  /* access matrix */
+  .mx-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+  table.mx{border-collapse:collapse;background:#fff;min-width:960px;width:100%}
+  table.mx th{font-size:11px;font-weight:700;color:var(--navy);background:#fafbfc;padding:10px 8px;text-align:center;border-bottom:1px solid var(--line);border-left:1px solid var(--line)}
+  table.mx th.corner{text-align:left;position:sticky;left:0;z-index:2;min-width:170px}
+  table.mx th.team{text-align:left;position:sticky;left:0;background:#fff;z-index:1;min-width:170px;font-size:13px;color:var(--ink);border-bottom:1px solid var(--line);white-space:nowrap}
+  table.mx td{border-left:1px solid var(--line);border-bottom:1px solid var(--line);padding:5px;text-align:center}
+  .lvl{width:100%;border:none;border-radius:7px;padding:7px 4px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit}
+  .lvl.none{background:#f4f6f8;color:#b4bdc9}
+  .lvl.view{background:var(--blue-soft);color:var(--blue)}
+  .lvl.edit{background:var(--teal-soft);color:var(--teal-600)}
+  .lvl.manage{background:var(--navy);color:#fff}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--soft);margin-top:12px}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .legend i{width:14px;height:14px;border-radius:4px;display:inline-block}
+  /* files / sections */
+  .secacc{display:flex;flex-direction:column;gap:10px}
+  .sec{background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);overflow:hidden}
+  .sec-h{display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer}
+  .sec-h:hover{background:#fafbfc}
+  .sec-h .car{transition:transform .2s;color:var(--soft);font-size:13px}
+  .sec.open .sec-h .car{transform:rotate(90deg)}
+  .sec-h .sn{font-weight:700;color:var(--navy);font-size:15px}
+  .sec-b{display:none;padding:4px 16px 16px;border-top:1px solid var(--line)}
+  .sec.open .sec-b{display:block}
+  .folder{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-top:10px;background:#fafbfc}
+  .folder-h{display:flex;align-items:center;gap:8px;font-weight:700;color:var(--navy);font-size:13.5px;flex-wrap:wrap}
+  .file{display:flex;align-items:center;gap:10px;padding:8px 4px;font-size:13.5px;border-bottom:1px solid var(--line)}
+  .file:last-child{border-bottom:none}
+  .file .fn{flex:1;color:var(--ink)}
+  .file .fic{color:var(--soft)}
+  .aud{font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:999px;cursor:pointer;border:1px solid transparent;white-space:nowrap;font-family:inherit}
+  .aud.everyone{background:var(--blue-soft);color:var(--blue)}
+  .aud.location{background:var(--teal-soft);color:var(--teal-600)}
+  .aud.team{background:#efe9fb;color:#6b3fd0}
+  .aud.locked{cursor:default;opacity:.92}
+  .addfile{margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .mini{font-size:12px;color:var(--soft)}
+  /* roles */
+  .rolegrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
+  .role{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)}
+  .role h3{margin:0 0 4px;font-size:16px;color:var(--navy)}
+  .role .lvlbadge{font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px;text-transform:uppercase;letter-spacing:.03em}
+  .role p{font-size:13px;color:var(--soft);margin:10px 0 12px}
+  .role .locnote{font-size:12px;color:var(--teal-600);font-weight:600}
+  /* modal */
+  .ov{position:fixed;inset:0;background:rgba(15,42,74,.5);z-index:120;display:none;align-items:flex-start;justify-content:center;padding:24px 16px;overflow:auto}
+  .ov.open{display:flex}
+  .modal{background:#fff;width:100%;max-width:660px;border-radius:16px;box-shadow:var(--shadow-lg);overflow:hidden;margin:auto}
+  .m-top{display:flex;align-items:center;gap:12px;padding:18px 20px;border-bottom:1px solid var(--line)}
+  .m-top .x{margin-left:auto;border:none;background:none;font-size:24px;color:var(--soft);cursor:pointer;line-height:1}
+  .m-body{padding:20px;max-height:70vh;overflow:auto}
+  .m-foot{display:flex;gap:10px;align-items:center;padding:14px 20px;border-top:1px solid var(--line);background:#fafbfc}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  .panel-lab{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--soft);font-weight:700;margin:0 0 10px;display:flex;align-items:center;gap:8px}
+  .msbadge{background:#eef3fb;color:#2b5f9e;font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px}
+  .selfbadge{background:var(--good-soft);color:var(--good);font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px}
+  .fld{margin-bottom:12px}
+  .fld label{display:block;font-size:12px;font-weight:600;color:var(--soft);margin-bottom:3px}
+  .fld .val{font-size:14.5px;color:var(--ink);font-weight:500}
+  .fld input,.fld select,.fld textarea{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:9px;font-size:14px;font-family:inherit;background:#fff}
+  .fld textarea{resize:vertical;min-height:60px}
+  .fld.ro .val{background:#fafbfc;border:1px dashed var(--line);border-radius:8px;padding:8px 11px}
+  .accessbox{background:var(--teal-soft);border:1px solid #c4e6e3;border-radius:12px;padding:14px 16px;margin-top:4px}
+  .accessbox h4{margin:0 0 8px;font-size:13px;color:#0a4d49;text-transform:uppercase;letter-spacing:.04em}
+  .acc-line{display:flex;justify-content:space-between;font-size:13.5px;padding:3px 0;color:var(--ink)}
+  .acc-line b{font-weight:700}
+  .teampick{display:flex;flex-wrap:wrap;gap:6px}
+  .tp{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 11px;font-size:12.5px;font-weight:600;color:var(--navy);cursor:pointer;font-family:inherit}
+  .tp.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+  @media(max-width:640px){ .grid2{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<div class="ribbon">PROTOTYPE — admin console concept for validation. Real build: people sync from Microsoft 365; access is managed here.</div>
+<header class="hdr">
+  <div class="hdr-in">
+    <span class="mark">PH</span>
+    <span class="brand">Practice Hub<small>Admin Console</small></span>
+    <span class="v1">V1 preview</span>
+  </div>
+</header>
+<nav class="v1nav"><div class="v1nav-in">
+  <a href="index.html">📊 Dashboard</a>
+  <a href="schedule.html">📅 Schedule</a>
+  <a href="marketing.html">📣 Marketing</a>
+  <a href="admin.html" class="active">⚙️ Admin</a>
+</div></nav>
+
+<div class="wrap">
+  <div class="page-head">
+    <h1>Admin Console</h1>
+    <p>Manage people, teams, roles and files — and control who sees what, without touching a line of code.</p>
+  </div>
+
+  <div class="tabs" id="tabs">
+    <button class="tab active" data-t="users" onclick="AD.tab('users')">People</button>
+    <button class="tab" data-t="access" onclick="AD.tab('access')">Teams &amp; Access</button>
+    <button class="tab" data-t="files" onclick="AD.tab('files')">Sections &amp; Files</button>
+    <button class="tab" data-t="roles" onclick="AD.tab('roles')">Roles</button>
+  </div>
+
+  <div id="view"></div>
+</div>
+
+<div id="modal" class="ov"><div class="modal" id="modalCard"></div></div>
+
+<script>
+(function(){
+  const PAL=['#149B96','#25456e','#946011','#6b3fd0','#b03a63','#2E7D52','#1f6f9e','#b0442f'];
+  const LOCATIONS=['Clovis','Hobbs','Carlsbad','San Angelo','Mansfield','Lubbock','Las Cruces LCO','Las Cruces FOLC'];
+  const BRANDS=['FFO','Sunflower','LCO'];
+  const SECTIONS=[
+    {k:'goals',n:'Goals Tracker',s:'Goals'},{k:'schedule',n:'Schedule',s:'Schedule'},
+    {k:'hr',n:'HR',s:'HR'},{k:'eom',n:'End-of-Month Reporting',s:'EOM'},
+    {k:'managers',n:'Office Docs (Managers)',s:'Office Docs'},{k:'forms',n:'Office Forms',s:'Forms'},
+    {k:'vendors',n:'Vendors',s:'Vendors'},{k:'filing',n:'Insurance / W-9',s:'Filing'},
+    {k:'marketing',n:'Marketing (Kanban)',s:'Marketing'},{k:'directory',n:'Directory',s:'Directory'},
+    {k:'admin',n:'Admin Console',s:'Admin'}
+  ];
+  const TEAMS=['Executive Team','Leadership Team','Office Managers','Clinic Managers','TCs','Doctors','Marketing Team','Financial Coordinator Team','Staff','Admin'];
+  let ROLES=[
+    {n:'Administrator',lvl:'manage',loc:false,d:'Full control of a section, plus settings and user management.'},
+    {n:'Manager',lvl:'edit',loc:true,d:'Edit content for their location(s). Cannot change access settings.'},
+    {n:'Contributor',lvl:'edit',loc:true,d:'Add and edit content in assigned areas for their location(s).'},
+    {n:'Viewer',lvl:'view',loc:false,d:'Read-only access to the sections their team allows.'}
+  ];
+  const LEVELS=['none','view','edit','manage'];
+  const LVLNAME={none:'—',view:'View',edit:'Edit',manage:'Manage'};
+  const rank={none:0,view:1,edit:2,manage:3};
+
+  let access={};
+  TEAMS.forEach(t=>{access[t]={}; SECTIONS.forEach(s=>access[t][s.k]='none');});
+  const set=(t,o)=>Object.assign(access[t],o);
+  SECTIONS.forEach(s=>access['Admin'][s.k]='manage');
+  set('Executive Team',{goals:'manage',schedule:'view',hr:'edit',eom:'manage',managers:'view',forms:'view',vendors:'view',filing:'view',marketing:'view',directory:'view',admin:'view'});
+  set('Leadership Team',{goals:'edit',schedule:'view',hr:'edit',eom:'edit',managers:'view',forms:'view',vendors:'view',filing:'view',marketing:'view',directory:'view'});
+  set('Office Managers',{goals:'view',schedule:'edit',hr:'view',eom:'edit',managers:'edit',forms:'edit',vendors:'edit',filing:'edit',marketing:'view',directory:'edit'});
+  set('Clinic Managers',{goals:'view',schedule:'edit',hr:'view',managers:'view',forms:'edit',directory:'view'});
+  set('TCs',{schedule:'view',hr:'view',forms:'edit',directory:'view'});
+  set('Doctors',{goals:'view',schedule:'view',forms:'view',directory:'view'});
+  set('Marketing Team',{marketing:'manage',forms:'view',directory:'view',hr:'view'});
+  set('Financial Coordinator Team',{goals:'view',eom:'edit',vendors:'view',filing:'edit',directory:'view'});
+  set('Staff',{schedule:'view',hr:'view',forms:'view',directory:'view'});
+
+  // Section files — audience is set on the FOLDER; files inherit. 3 modes: everyone / location / team.
+  let SECFILES={
+    goals:{items:[{n:'Production Sheet',aud:'team',scope:'Leadership, Managers'}]},
+    schedule:{link:'schedule.html'},
+    hr:{items:[
+      {n:'Employee & Family Tx',aud:'everyone'},{n:'Dental Professionals Discount',aud:'everyone'},
+      {n:'Uniform Policy',aud:'everyone'},{n:'Commitment to my Co-Workers',aud:'everyone'},
+      {n:'New Hire Packet — Texas',aud:'location',scope:'Texas offices'},{n:'PTO — Texas',aud:'location',scope:'Texas offices'},
+      {n:'New Hire Packet — New Mexico',aud:'location',scope:'New Mexico offices'},{n:'PTO — New Mexico',aud:'location',scope:'New Mexico offices'},
+      {n:'Payroll Tracking Sheet',aud:'team',scope:'HR, Managers'},{n:'Employee Dismissal Checklist',aud:'team',scope:'Managers'}
+    ]},
+    eom:{items:[{n:'Monthly Monitor Report',aud:'team',scope:'Leadership'},{n:'RIP Tracker',aud:'team',scope:'Leadership, Financial'},{n:'Medicaid Tracker',aud:'team',scope:'Financial'}]},
+    managers:{byLocation:true,locItems:['Office Contracts','Equipment Invoices','Dental Licenses']},
+    forms:{byBrand:true,brandItems:['DDS Referral','Medical History','Invisalign / Vivera Scan Sheet']},
+    vendors:{items:[{n:'Approved Vendor List',aud:'team',scope:'Managers'},{n:'Vendor Tracking Sheet',aud:'team',scope:'Managers'}]},
+    filing:{items:[{n:'W-9s',aud:'team',scope:'Financial, Managers'},{n:'Type 2 NPI Letter',aud:'team',scope:'Financial, Managers'}]},
+    marketing:{link:'marketing.html'},
+    directory:{items:[{n:'Staff Directory',aud:'everyone'}]}
+  };
+  const AUDCYC=['everyone','location','team'];
+  const AUDLBL={everyone:'🌐 Everyone',location:'📍 By location / state',team:'👥 By team'};
+
+  let users=[
+    {f:'Jordan',l:'Avery',email:'javery@farnsworthorthodontics.com',emp:'E-1001',loc:'All offices',state:'NM',brand:'Group',teams:['Executive Team','Admin'],role:'Administrator',region:'All',phone:'(575) 555-1001',about:'COO — oversees all 8 offices.',status:'Active',c:1},
+    {f:'Heather',l:'Farnsworth',email:'heather@farnsworthorthodontics.com',emp:'E-1002',loc:'All offices',state:'NM',brand:'FFO',teams:['Admin','Financial Coordinator Team'],role:'Administrator',region:'All',phone:'(575) 555-1002',about:'Practice administrator & finance lead.',status:'Active',c:3},
+    {f:'Tasha',l:'Brooks',email:'tbrooks@farnsworthorthodontics.com',emp:'E-1010',loc:'Carlsbad',state:'NM',brand:'FFO',teams:['Office Managers'],role:'Manager',region:'NM',phone:'(575) 555-1010',about:'Office manager — Carlsbad.',status:'Active',c:0},
+    {f:'Maya',l:'Chen',email:'mchen@farnsworthorthodontics.com',emp:'E-1020',loc:'Carlsbad, Hobbs',state:'NM',brand:'FFO',teams:['Doctors','Leadership Team'],role:'Viewer',region:'NM',phone:'(575) 555-1020',about:'Orthodontist — rotates NM offices.',status:'Active',c:5},
+    {f:'Priya',l:'Nair',email:'pnair@farnsworthorthodontics.com',emp:'E-1030',loc:'Carlsbad',state:'NM',brand:'FFO',teams:['TCs'],role:'Contributor',region:'NM',phone:'(575) 555-1030',about:'Treatment coordinator.',status:'Active',c:2},
+    {f:'Dana',l:'Kim',email:'dkim@farnsworthorthodontics.com',emp:'E-1040',loc:'All offices',state:'TX',brand:'Group',teams:['Marketing Team'],role:'Contributor',region:'All',phone:'(806) 555-1040',about:'Marketing coordinator.',status:'Active',c:6},
+    {f:'Carlos',l:'Mendez',email:'cmendez@farnsworthorthodontics.com',emp:'E-1012',loc:'Lubbock',state:'TX',brand:'FFO',teams:['Office Managers'],role:'Manager',region:'TX',phone:'(806) 555-1012',about:'Office manager — Lubbock.',status:'Paused',c:7},
+    {f:'Sam',l:'Whitfield',email:'swhitfield@farnsworthorthodontics.com',emp:'E-1021',loc:'San Angelo',state:'TX',brand:'SUN',teams:['Clinic Managers'],role:'Contributor',region:'TX',phone:'(325) 555-1021',about:'Clinic lead.',status:'Inactive',c:4}
+  ];
+
+  const el=id=>document.getElementById(id);
+  const av=u=>PAL[u.c%PAL.length];
+  const initials=u=>(u.f[0]+u.l[0]).toUpperCase();
+  let tab='users', search='', tmpU=null, openSecs=new Set(['managers','hr']);
+
+  function tabSet(t){ tab=t; [...document.querySelectorAll('.tab')].forEach(b=>b.classList.toggle('active',b.dataset.t===t)); render(); }
+  function render(){ if(tab==='users')renderUsers(); else if(tab==='access')renderAccess(); else if(tab==='files')renderFiles(); else renderRoles(); }
+
+  /* ---------- PEOPLE ---------- */
+  function renderUsers(){
+    el('view').innerHTML=
+      '<div class="intro">Everyone here <b>syncs from Microsoft 365</b> (name, email, photo). You just set their <b>team(s), role, location &amp; status</b> — that decides what they see. Employees can update their own <b>photo &amp; “About me.”</b> <b>Tap a person</b> to open their profile.</div>'+
+      '<div class="toolrow"><input class="search" id="usearch" placeholder="Search people, email, team, location…" value="'+search.replace(/"/g,'&quot;')+'"><button class="btn" onclick="AD.addUser()">+ Add person</button></div>'+
+      '<div class="tbl-scroll"><table class="u"><thead><tr><th>Person</th><th>Team(s)</th><th>Role</th><th>Location</th><th>Status</th></tr></thead><tbody></tbody></table></div>'+
+      '<p style="font-size:13px;color:var(--soft);margin:12px 2px 0" id="ucount"></p>';
+    renderUsersBody();
+    const s=el('usearch'); if(s) s.oninput=e=>{search=e.target.value; renderUsersBody();};
+  }
+  function renderUsersBody(){
+    const q=search.toLowerCase();
+    const list=users.filter(u=>!q || (u.f+' '+u.l+' '+u.email+' '+u.teams.join(' ')+' '+u.loc).toLowerCase().includes(q));
+    const tb=document.querySelector('table.u tbody'); if(!tb)return;
+    tb.innerHTML=list.map(u=>{const gi=users.indexOf(u);
+      return '<tr onclick="AD.profile('+gi+')"><td><div class="who"><span class="av" style="background:'+av(u)+'">'+initials(u)+'</span><div><div class="uname">'+u.f+' '+u.l+'</div><div style="font-size:12px;color:var(--soft)">'+u.email+'</div></div></div></td>'+
+        '<td><div class="chips">'+u.teams.map(t=>'<span class="chip">'+t+'</span>').join('')+'</div></td>'+
+        '<td>'+u.role+'</td><td>'+u.loc+'</td><td><span class="pill '+u.status.toLowerCase()+'">'+u.status+'</span></td></tr>';}).join('');
+    const c=el('ucount'); if(c)c.textContent=list.length+' of '+users.length+' people shown.';
+  }
+  function userAccess(u){ const out={}; SECTIONS.forEach(s=>{let best='none'; u.teams.forEach(t=>{const lv=(access[t]||{})[s.k]||'none'; if(rank[lv]>rank[best])best=lv;}); out[s.k]=best;}); return out; }
+  function profile(gi){ const u=users[gi]; tmpU={gi,teams:u.teams.slice(),role:u.role,status:u.status}; openProfile(u); }
+  function openProfile(u){
+    const teamChips=TEAMS.map(t=>'<button class="tp'+(tmpU.teams.includes(t)?' on':'')+'" onclick="AD.togTeam(\''+t+'\')">'+t+'</button>').join('');
+    openModal(
+      '<div class="m-top"><span class="av" style="width:44px;height:44px;font-size:16px;background:'+av(u)+'">'+initials(u)+'</span><div><div style="font-weight:800;font-size:18px;color:var(--navy)">'+u.f+' '+u.l+'</div><div style="font-size:13px;color:var(--soft)">'+u.role+' · '+u.loc+'</div></div><span class="pill '+u.status.toLowerCase()+'" style="margin-left:auto">'+u.status+'</span><button class="x" onclick="AD.close()">×</button></div>'+
+      '<div class="m-body"><div class="grid2">'+
+        '<div><div class="panel-lab">From Microsoft 365 <span class="msbadge">SYNCED</span></div>'+
+          fldRO('First name',u.f)+fldRO('Last name',u.l)+fldRO('Email',u.email)+fldRO('Phone',u.phone)+fldRO('Employee ID',u.emp)+
+          '<div class="fld"><label>Photo <span class="selfbadge">EMPLOYEE CAN EDIT</span></label><div class="fld ro"><div class="val" style="display:flex;align-items:center;gap:10px"><span class="av" style="background:'+av(u)+'">'+initials(u)+'</span> Change photo…</div></div></div>'+
+        '</div>'+
+        '<div><div class="panel-lab">Managed in Practice Hub</div>'+
+          '<div class="fld"><label>Team(s) — opens their sections</label><div class="teampick" id="teampick">'+teamChips+'</div></div>'+
+          '<div class="fld"><label>Role</label><select id="fRole" onchange="AD.setRole(this.value)">'+ROLES.map(r=>'<option'+(r.n===tmpU.role?' selected':'')+'>'+r.n+'</option>').join('')+'</select></div>'+
+          '<div class="fld"><label>Location(s)</label><input value="'+u.loc+'"></div>'+
+          '<div class="fld"><label>Region</label><input value="'+u.region+'"></div>'+
+          '<div class="fld"><label>Brand</label><input value="'+u.brand+'"></div>'+
+          '<div class="fld"><label>Status <span style="color:var(--bad)">(admin only)</span></label><select id="fStatus" onchange="AD.setStatus(this.value)">'+['Active','Paused','Inactive'].map(s=>'<option'+(s===tmpU.status?' selected':'')+'>'+s+'</option>').join('')+'</select></div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="fld" style="margin-top:6px"><label>About me <span class="selfbadge">EMPLOYEE CAN EDIT</span></label><textarea>'+u.about+'</textarea></div>'+
+      '<div class="accessbox" id="accpreview"></div>'+
+      '</div>'+
+      '<div class="m-foot"><span style="flex:1;font-size:12.5px;color:var(--soft)">Synced fields update from Microsoft 365. Photo &amp; About me are self-service.</span><button class="btn ghost" onclick="AD.close()">Cancel</button><button class="btn" onclick="AD.saveUser()">Save</button></div>');
+    refreshAccessPreview();
+  }
+  function fldRO(lab,val){ return '<div class="fld ro"><label>'+lab+'</label><div class="val">'+(val||'—')+'</div></div>'; }
+  function refreshAccessPreview(){
+    const u=users[tmpU.gi]; const acc=userAccess({teams:tmpU.teams});
+    const lines=SECTIONS.filter(s=>acc[s.k]!=='none').map(s=>'<div class="acc-line"><span>'+s.n+'</span><b class="lvl '+acc[s.k]+'" style="padding:1px 8px;border-radius:6px">'+LVLNAME[acc[s.k]]+'</b></div>').join('')||'<div class="acc-line" style="color:var(--soft)">No sections yet — add a team.</div>';
+    const box=el('accpreview'); if(box) box.innerHTML='<h4>What '+u.f+' can access (from their teams)</h4>'+lines;
+  }
+  function togTeam(t){ const i=tmpU.teams.indexOf(t); if(i>=0)tmpU.teams.splice(i,1); else tmpU.teams.push(t);
+    [...document.querySelectorAll('#teampick .tp')].forEach(b=>b.classList.toggle('on',tmpU.teams.includes(b.textContent))); refreshAccessPreview(); }
+  function setRole(v){tmpU.role=v;} function setStatus(v){tmpU.status=v;}
+  function saveUser(){ const u=users[tmpU.gi]; u.teams=tmpU.teams.slice(); u.role=tmpU.role; u.status=tmpU.status; closeModal(); renderUsersBody(); }
+  function addUser(){ users.push({f:'New',l:'Employee',email:'new.employee@farnsworthorthodontics.com',emp:'E-'+(1050+users.length),loc:'Carlsbad',state:'NM',brand:'FFO',teams:['Staff'],role:'Viewer',region:'NM',phone:'(000) 000-0000',about:'—',status:'Active',c:users.length%PAL.length}); renderUsers(); profile(users.length-1); }
+
+  /* ---------- TEAMS & ACCESS ---------- */
+  function renderAccess(){
+    const head='<tr><th class="corner">Team</th>'+SECTIONS.map(s=>'<th title="'+s.n+'">'+s.s+'</th>').join('')+'</tr>';
+    const rows=TEAMS.map(t=>'<tr><th class="team">'+t+'</th>'+SECTIONS.map(s=>{const lv=access[t][s.k];
+      return '<td><button class="lvl '+lv+'" onclick="AD.cycle(\''+t+'\',\''+s.k+'\')">'+LVLNAME[lv]+'</button></td>';}).join('')+'</tr>').join('');
+    el('view').innerHTML=
+      '<div class="intro"><b>How access works:</b> a person joins one or more <b>teams</b>. Each team gets a level on each section. A person sees the <b>best</b> level across their teams. <b>Tap a cell</b> to change it — no permission sets to wrangle.</div>'+
+      '<div class="mx-scroll"><table class="mx"><thead>'+head+'</thead><tbody>'+rows+'</tbody></table></div>'+
+      '<div class="legend"><span><i style="background:#f4f6f8"></i> None</span><span><i style="background:var(--blue-soft)"></i> View</span><span><i style="background:var(--teal-soft)"></i> Edit</span><span><i style="background:var(--navy)"></i> Manage</span><span style="margin-left:auto">Tap a cell to cycle the level.</span></div>';
+  }
+  function cycle(t,k){ const cur=access[t][k]; access[t][k]=LEVELS[(LEVELS.indexOf(cur)+1)%LEVELS.length]; renderAccess(); }
+
+  /* ---------- SECTIONS & FILES ---------- */
+  function audChip(aud,scope,onclick){ return '<span class="aud '+aud+(onclick?'':' locked')+'"'+(onclick?' onclick="'+onclick+'"':'')+'>'+AUDLBL[aud]+(scope?' · '+scope:'')+'</span>'; }
+  function fileRow(name,chip){ return '<div class="file"><span class="fic">📄</span><span class="fn">'+name+'</span>'+chip+'</div>'; }
+  function renderFiles(){
+    const secHtml=SECTIONS.filter(s=>SECFILES[s.k]).map(s=>{
+      const f=SECFILES[s.k]; const open=openSecs.has(s.k);
+      let body='';
+      if(f.link){
+        body='<p class="mini" style="margin:8px 0 0">This section opens the interactive <b>'+s.n+'</b> tool. <a href="'+f.link+'" style="color:var(--teal-600);font-weight:600">Open '+s.n+' →</a></p>';
+      } else if(f.byLocation){
+        body='<p class="mini" style="margin:8px 0 2px">One folder per office. Each folder is <b>📍 scoped to that location\'s team</b> automatically — everything inside inherits it.</p>'+
+          LOCATIONS.map(loc=>'<div class="folder"><div class="folder-h">📁 '+loc+' '+audChip('location',loc+' team')+'</div>'+
+            f.locItems.map(it=>fileRow(it,audChip('location',null))).join('')+'</div>').join('');
+      } else if(f.byBrand){
+        body='<p class="mini" style="margin:8px 0 2px">One folder per brand. Clinical forms below are shared with <b>everyone</b>, but you can narrow any folder.</p>'+
+          BRANDS.map(b=>'<div class="folder"><div class="folder-h">📁 '+b+' '+audChip('everyone',null,'AD.noop()')+'</div>'+
+            f.brandItems.map(it=>fileRow(it,audChip('everyone',null))).join('')+'</div>').join('');
+      } else {
+        body='<div class="folder">'+f.items.map((it,idx)=>fileRow(it.n,audChip(it.aud,it.scope,'AD.cycFile(\''+s.k+'\','+idx+')'))).join('')+'</div>';
+      }
+      const addf = f.link?'':'<div class="addfile"><button class="btn ghost" onclick="event.stopPropagation();AD.addFile(\''+s.k+'\')">+ Add file</button><span class="mini">New files inherit their folder\'s audience — no extra setup.</span></div>';
+      return '<div class="sec'+(open?' open':'')+'"><div class="sec-h" onclick="AD.tog(\''+s.k+'\')"><span class="car">▶</span><div style="flex:1"><div class="sn">'+s.n+'</div></div></div>'+
+        '<div class="sec-b">'+body+addf+'</div></div>';
+    }).join('');
+    el('view').innerHTML=
+      '<div class="intro"><b>Set it once, not a thousand times.</b> Each folder has an <b>audience</b> — 🌐 Everyone, 📍 By location/state, or 👥 By team. Files inside <b>inherit</b> it, so uploading a doc automatically shares it with the right people. Only override a single file when it\'s an exception. <b>Tap an audience chip</b> to change it.</div>'+
+      '<div class="secacc">'+secHtml+'</div>';
+  }
+  function tog(k){ if(openSecs.has(k))openSecs.delete(k); else openSecs.add(k); renderFiles(); }
+  function cycFile(k,idx){ const it=SECFILES[k].items[idx]; it.aud=AUDCYC[(AUDCYC.indexOf(it.aud)+1)%AUDCYC.length]; if(it.aud==='everyone')delete it.scope; else if(!it.scope)it.scope=(it.aud==='location'?'Choose location':'Choose team'); renderFiles(); }
+  function addFile(k){ const f=SECFILES[k]; if(f.items){ f.items.push({n:'New file',aud:(f.items[0]?f.items[0].aud:'everyone'),scope:f.items[0]?f.items[0].scope:undefined}); } openSecs.add(k); renderFiles(); }
+  function noop(){}
+
+  /* ---------- ROLES ---------- */
+  function renderRoles(){
+    const badge=lv=>'<span class="lvlbadge lvl '+lv+'">'+LVLNAME[lv]+'</span>';
+    const cards=ROLES.map(r=>'<div class="role"><div style="display:flex;align-items:center;gap:8px"><h3 style="flex:1">'+r.n+'</h3>'+badge(r.lvl)+'</div><p>'+r.d+'</p>'+(r.loc?'<div class="locnote">📍 Applies per assigned location</div>':'<div class="locnote" style="color:var(--soft)">Applies across all locations</div>')+'</div>').join('');
+    el('view').innerHTML=
+      '<div class="intro"><b>Roles</b> are reusable permission bundles. A role sets <b>how much</b> a person can do; their <b>team</b> sets <b>which sections</b>. Some roles apply <b>per location</b> — e.g. a manager for Carlsbad only. Your practice can define its own.</div>'+
+      '<div class="toolrow"><span style="flex:1"></span><button class="btn" onclick="AD.addRole()">+ Add role</button></div>'+
+      '<div class="rolegrid">'+cards+'</div>';
+  }
+  function addRole(){ ROLES.push({n:'New Role',lvl:'view',loc:false,d:'Describe what this role can do — your practice defines this.'}); renderRoles(); }
+
+  function openModal(h){ el('modalCard').innerHTML=h; el('modal').classList.add('open'); }
+  function closeModal(){ el('modal').classList.remove('open'); }
+
+  window.AD={tab:tabSet,profile,addUser,togTeam,setRole,setStatus,saveUser,cycle,tog,cycFile,addFile,noop,addRole,close:closeModal};
+  el('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal();});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+  render();
+})();
+</script>
+<script src="tour.js"></script>
+<script>
+Tour.init([
+  {sel:'.v1nav', title:'Where Admin lives', body:'The <b>Admin</b> tab is where you manage people and control who sees what. Everyday users never need it.'},
+  {sel:'#tabs', title:'Four simple areas', body:'<b>People</b>, <b>Teams &amp; Access</b> (who sees what), <b>Sections &amp; Files</b> (audience for documents), and <b>Roles</b> (how much they can do).'},
+  {sel:'.tbl-scroll, .intro', title:'People sync from Microsoft', body:'Names, emails and photos come from Microsoft 365. You set each person\'s team, role, location and status. Employees can update their own photo &amp; “About me.” Tap a person to open their profile.'},
+  {sel:'#tabs', title:'Control access visually', body:'Open <b>Teams &amp; Access</b>: a grid of teams × sections. Tap a cell to set None / View / Edit / Manage — that\'s the whole permission model.'},
+  {sel:'#tabs', title:'Files know their audience', body:'Open <b>Sections &amp; Files</b>: each folder is 🌐 Everyone, 📍 By location, or 👥 By team. Files inherit it, so you set it once — no per-file clicking.'}
+], {key:'admin'});
+</script>
+</body>
+</html>
