@@ -88,6 +88,7 @@
   .pk button.cur{background:var(--teal-soft)}
   .pk small{display:block;color:var(--soft);font-size:11px;font-weight:500}
   .pk .ck{margin-left:auto;color:var(--teal-600);font-weight:800}
+  .pk .pkh{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--soft);padding:7px 10px 5px}
   /* modal */
   .ov{position:fixed;inset:0;background:rgba(15,42,74,.5);z-index:120;display:none;align-items:flex-start;justify-content:center;padding:24px 16px;overflow:auto}
   .ov.open{display:flex}
@@ -209,15 +210,17 @@
 
   function move(id,dir){
     const c=cards.find(x=>x.id===id); const si=STAGES.findIndex(s=>s.k===c.stage);
-    const ni=Math.max(0,Math.min(STAGES.length-1,si+dir)); c.stage=STAGES[ni].k;
-    if(c.stage==='done' && c.result==='none') c.result='good';
+    const ni=Math.max(0,Math.min(STAGES.length-1,si+dir)); const wasNotDone=c.stage!=='done';
+    c.stage=STAGES[ni].k;
     if(c.stage!=='done') c.result='none';
     render();
+    if(c.stage==='done'&&wasNotDone) askResult(c.id);
   }
   let pk=null;
   function closePk(){ if(pk){pk.remove();pk=null;} }
-  function openPk(anchor,items,onPick){
+  function openPk(anchor,items,onPick,title){
     closePk(); pk=document.createElement('div'); pk.className='pk';
+    if(title){ const h=document.createElement('div'); h.className='pkh'; h.textContent=title; pk.appendChild(h); }
     items.forEach(it=>{ const b=document.createElement('button'); if(it.cur)b.classList.add('cur');
       b.innerHTML='<span>'+it.label+(it.desc?'<small>'+it.desc+'</small>':'')+'</span>'+(it.cur?'<span class="ck">✓</span>':'');
       b.onclick=e=>{e.stopPropagation(); closePk(); onPick(it.value);}; pk.appendChild(b); });
@@ -279,8 +282,24 @@
   function closeModal(discard){ if(discard){ const c=cards.find(x=>x.id===editId); if(c&&!c.title) cards=cards.filter(x=>x.id!==editId); } el('modal').classList.remove('open'); if(discard)render(); }
   function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
 
-  function dropTo(id,stage){ const c=cards.find(x=>x.id===id); if(!c||c.stage===stage)return;
-    c.stage=stage; if(stage==='done'&&c.result==='none')c.result='good'; if(stage!=='done')c.result='none'; render(); }
+  function dropTo(id,stage,anchor){ const c=cards.find(x=>x.id===id); if(!c||c.stage===stage)return;
+    const wasNotDone=c.stage!=='done';
+    c.stage=stage; if(stage!=='done')c.result='none';
+    render();
+    if(stage==='done'&&wasNotDone) askResult(c.id,anchor);
+  }
+  // Landing in Done always asks "how did it go?" — nothing gets scored by accident.
+  function askResult(cardId,anchor){
+    const c=cards.find(x=>x.id===cardId); if(!c)return;
+    const node=document.querySelector('.kcard[data-id="'+cardId+'"] .res')
+              ||document.querySelector('.kcard[data-id="'+cardId+'"]')||anchor;
+    if(!node){ c.result='good'; render(); return; }
+    openPk(node,[
+      {value:'good',label:'\ud83d\udfe2 Good',desc:'Hit or beat the goal',cur:c.result==='good'},
+      {value:'mixed',label:'\ud83d\udfe1 Mixed',desc:'Okay \u2014 room to improve',cur:c.result==='mixed'},
+      {value:'bad',label:'\ud83d\udd34 Underperformed',desc:"Didn't work \u2014 skip or rethink",cur:c.result==='bad'}
+    ], v=>{ c.result=v; render(); }, 'How did it go?');
+  }
 
   // Drag & drop (listeners live on the persistent #board container, survive re-renders)
   let dragId=null;
@@ -297,22 +316,23 @@
   board.addEventListener('dragleave',e=>{ const col=e.target.closest('.col'); if(col && !col.contains(e.relatedTarget))col.classList.remove('dragover'); });
   board.addEventListener('drop',e=>{ const col=e.target.closest('.col'); if(!col)return;
     e.preventDefault(); col.classList.remove('dragover');
-    const id=dragId||+(e.dataTransfer.getData('text/plain')); if(id)dropTo(id,col.dataset.stage); });
+    const id=dragId||+(e.dataTransfer.getData('text/plain')); if(id)dropTo(id,col.dataset.stage,col); });
 
-  window.MK={add,open,move,pickRes,pick,save,del,close:closeModal};
+  window.MK={add,open,move,pickRes,askResult,pick,save,del,close:closeModal};
   el('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal(true);});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal(true);});
   render();
 })();
 </script>
+<script src="user.js"></script>
 <script src="tour.js"></script>
 <script>
 Tour.init([
-  {sel:'.board', title:'Your marketing board', body:'Every event, promo and social post is a card. <b>Drag a card</b> between columns — Ideas → Planned → In progress → Done — or tap the ◀ ▶ arrows. Colored stripe = the type of campaign.'},
-  {sel:'#board .col:last-child', title:'Score it when it\'s done', body:'When a card reaches <b>Done</b>, tap its result chip and pick 🟢 Good, 🟡 Mixed or 🔴 Underperformed — so you learn what actually works.'},
-  {sel:'#summary', title:'See what\'s working', body:'The top row totals your results at a glance — how many campaigns landed vs. flopped.'},
-  {sel:'.page-head .btn', title:'Add anything, anytime', body:'Capture a new idea here (or “+ Add” in any column). Tap a card to edit details, owner, location and notes.'}
-], {key:'mkt'});
+  {sel:'.board', title:'Your marketing board', body:'Every event, promo and post is a card that moves left to right: <b>Ideas \u2192 Planned \u2192 In progress \u2192 Done</b>. <b>Drag a card</b> across, or use the \u25c0 \u25b6 arrows on a phone.'},
+  {sel:'.page-head .btn', title:'Capture anything', body:'<b>+ New idea</b>, or <b>+ Add</b> at the bottom of any column. Tap a card to set its type, owner, office, date and notes.'},
+  {sel:'#board .col:last-child', title:'Every finished thing gets scored', body:'The moment a card lands in <b>Done</b> it asks <b>\u201cHow did it go?\u201d</b> \u2014 \ud83d\udfe2 Good, \ud83d\udfe1 Mixed or \ud83d\udd34 Underperformed. Nothing gets marked a success by accident.'},
+  {sel:'#summary', title:'So you learn what works', body:'The tally at the top is the point of the whole board: after a year you can see which kinds of marketing actually brought patients in \u2014 and stop repeating the ones that didn\u2019t.'}
+], {key:'mkt', title:'Marketing', next:{label:'Documents', href:'documents.html'}});
 </script>
 </body>
 </html>

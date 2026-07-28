@@ -377,5 +377,16 @@
   set(saved);
 })();
 </script>
+<script src="user.js"></script>
+<script src="tour.js"></script>
+<script>
+Tour.init([
+  {sel:'.crumb', title:'Everything in one place', body:'This replaces \u201cwho has the latest copy?\u201d. Every policy, form and office file lives here \u2014 and people only ever see the folders meant for them.'},
+  {sel:'#folders .folder', title:'Your folders, already open', body:'No hunting. Folders are expanded, and the badge on the right (<b>View only</b>, <b>You can add files</b>, <b>Add &amp; edit</b>) says what you can do in that folder.'},
+  {sel:'#folders .file .sp', title:'Files open on your Microsoft drive', body:'<b>Open</b> launches the real file on SharePoint/OneDrive \u2014 not a copy. Tap one to see how an edit here and an edit in Excel are the same edit.'},
+  {sel:'.viewas', title:'Prove it to yourself', body:'Switch to <b>Front Desk / Staff</b>: the folder list shrinks and the restricted payroll files vanish. Switch back to Administrator and they return.'},
+  {sel:'.synced', title:'No second copies, ever', body:'The hub points at your real files. That\u2019s the whole trick \u2014 nothing to sync, nothing to go stale.'}
+], {key:'docs', title:'Documents', next:{label:'the Admin console', href:'admin.html'}});
+</script>
 </body>
 </html>

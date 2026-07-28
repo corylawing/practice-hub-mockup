@@ -100,6 +100,9 @@
   td.cell.ydot{background:#FFFBEF}
   td.cell.ydot:hover{background:#FFF3D6}
   td.cell.ydot .yd{color:#946011;font-size:12px;font-weight:700;line-height:1.25;display:inline-block}
+  body.ph-view-only td.cell{cursor:default}
+  body.ph-view-only td.cell:hover{background:inherit}
+  body.ph-view-only .ledit,body.ph-view-only .pedit,body.ph-view-only .addp{display:none}
   .dclosed{color:#9aa6b6;font-size:13px}
   th.loc .locname{display:flex;align-items:center;gap:6px}
   th.loc .tz{font-size:10px;font-weight:700;color:var(--teal-600);background:var(--teal-soft);padding:1px 6px;border-radius:5px}
@@ -136,7 +139,7 @@
 <header class="hdr">
   <div class="hdr-in">
     <span class="mark">PH</span>
-    <span class="brand">Practice Hub<small>KPI Dashboard</small></span>
+    <span class="brand">Practice Hub<small>Schedule</small></span>
     <span class="v1">V1 preview</span>
   </div>
 </header>
@@ -257,7 +260,9 @@
   function openModal(html){ el('schedModalCard').innerHTML=html; el('schedModal').classList.add('open'); }
   function closeModal(){ el('schedModal').classList.remove('open'); }
 
+  const canEdit=()=>!window.PH||PH.atLeast('schedule','edit');
   function assign(loc,d){
+    if(!canEdit())return;
     const cur=(sched[loc]||[])[d];
     let s=480,e=1020;
     if(cur&&cur.s!=null){s=cur.s;e=cur.e;}
@@ -311,8 +316,9 @@
       '<div class="s-foot">'+(isEdit?'<button class="sbtn ghost" onclick="PS.delPerson('+editIdx+')">Remove</button>':'')+'<span style="flex:1"></span><button class="sbtn ghost" onclick="PS.close()">Cancel</button><button class="sbtn" onclick="PS.savePerson()">'+(isEdit?'Save':'Add doctor')+'</button></div>');
     setTimeout(()=>{const i=el('pName'); if(i){i.focus(); i.addEventListener('keydown',e=>{if(e.key==='Enter')savePerson();});}},40);
   }
-  function addPerson(){ personModal(null); }
-  function editPerson(i){ personModal(i); }
+  function addPerson(){ if(!canEdit())return; personModal(null); }
+  function editPerson(i){ if(!canEdit())return; return _editPerson(i); }
+  function _editPerson(i){ personModal(i); }
   function pc(i){ tmpC=i; [...document.querySelectorAll('#swwrap .sw')].forEach((b,k)=>b.classList.toggle('sel',k===i)); }
   function savePerson(){ const v=el('pName').value.trim(); if(!v)return; if(tmpEdit!=null){people[tmpEdit].n=v; people[tmpEdit].c=tmpC;} else {people.push({n:v,c:tmpC});} closeModal(); renderRoster(); renderGrid(); }
   function delPerson(i){ people.splice(i,1); Object.keys(sched).forEach(loc=>{ sched[loc]=sched[loc].map(c=>{ if(!c)return null; if(c.p===i)return null; if(c.p>i)return {p:c.p-1,h:c.h,s:c.s,e:c.e}; return c; }); }); filterP=null; closeModal(); renderRoster(); renderGrid(); }
@@ -343,8 +349,9 @@
         (h?'<span class="dtimes"><input type="time" value="'+fmt24(h.s)+'" onchange="PS.dtime('+i+',\'s\',this.value)"><span>to</span><input type="time" value="'+fmt24(h.e)+'" onchange="PS.dtime('+i+',\'e\',this.value)"></span>':'<span class="dclosed">Closed</span>')+
       '</div>';}).join('');
   }
-  function addLocation(){ locModal(null); }
-  function editLoc(name){ locModal(name); }
+  function addLocation(){ if(!canEdit())return; locModal(null); }
+  function editLoc(l){ if(!canEdit())return; return _editLoc(l); }
+  function _editLoc(name){ locModal(name); }
   function dtog(i){ tmpLoc.hours[i]=tmpLoc.hours[i]?null:{s:480,e:1020}; renderDayRows(); }
   function dtime(i,w,v){ if(tmpLoc.hours[i])tmpLoc.hours[i][w]=parseT(v); }
   function saveLoc(){
@@ -357,22 +364,33 @@
   function filter(i){ filterP=(filterP===i)?null:i; renderRoster(); renderGrid(); }
   function week(dir){ weekOffset+=dir; renderGrid(); }
 
-  window.PS={filter,addPerson,edit:editPerson,pc,savePerson,delPerson,addLocation,editLoc,dtog,dtime,setTZ,setLunch,applyAll,saveLoc,delLoc,assign,tp,hm,save,setClosed,close:closeModal,week};
+  function applyPerms(){
+    if(canEdit())return;
+    document.body.classList.add('ph-view-only');
+    if(window.PH) PH.readOnlyBanner('.wrap','schedule');
+    const b=document.getElementById('addLocBtn'); if(b)b.style.display='none';
+    const hint=document.querySelector('.hint');
+    if(hint)hint.textContent='Tap a doctor above to highlight where they work this week · today\u2019s column is highlighted.';
+  }
+  window.PS={applyPerms,filter,addPerson,edit:editPerson,pc,savePerson,delPerson,addLocation,editLoc,dtog,dtime,setTZ,setLunch,applyAll,saveLoc,delLoc,assign,tp,hm,save,setClosed,close:closeModal,week};
   el('schedModal').addEventListener('click',e=>{if(e.target.id==='schedModal')closeModal();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
   renderRoster(); renderGrid();
 })();
 </script>
+<script src="user.js"></script>
+<script>if(window.PS&&PS.applyPerms)PS.applyPerms();</script>
 <script src="tour.js"></script>
 <script>
 Tour.init([
-  {sel:'.v1nav', title:'Two views', body:'Switch between the <b>Dashboard</b> (the numbers) and the <b>Schedule</b> (who works where) up here.'},
-  {sel:'#schedStatus', title:'Is the week fully staffed?', body:'This bar tells you instantly — “fully scheduled,” or how many open days still need a doctor.'},
-  {sel:'#schedGrid', title:'Who\'s where, at a glance', body:'Locations down the side, days across the top. Each doctor has a color. <b>Yellow Dot Day</b> = open but no doctor on site; <b>Closed</b> = office not open at all; <b>amber</b> = open and still needs a doctor.'},
-  {sel:'#roster', title:'Your doctors', body:'Add doctors, pick their color, and tap one to highlight everywhere they work this week.'},
-  {sel:'#addLocBtn', title:'Add a practice', body:'Add a new location and set its office hours (which days it\'s open).'},
-  {sel:'#weeknav', title:'Move between weeks', body:'Page forward or back — the dates update for the week you\'re viewing.'}
-], {key:'sched'});
+  {sel:'#weeknav', title:'One week at a time', body:'Page forward and back with the arrows \u2014 the real dates follow, and today\u2019s column is always highlighted.'},
+  {sel:'#roster', title:'Your doctors', body:'Each doctor has their own colour. <b>Tap a name</b> to light up every office they work this week. Use \u270e to rename one or change their colour, and <b>+ Add doctor</b> for a new one.'},
+  {sel:'#schedStatus', title:'Is the week actually covered?', body:'This bar answers the only question that matters on a Monday morning: <b>is anything still missing a doctor?</b>'},
+  {sel:'#schedGrid', title:'Who\u2019s where', body:'Offices down the side, days across the top. <b>Tap any cell</b> to put a doctor in it \u2014 you\u2019ll only be offered doctors who are <b>free that day</b>, so you can\u2019t double-book anyone.'},
+  {sel:'#schedGrid', title:'Yellow Dot Days and closed days', body:'<b>Yellow Dot Day</b> = the office is open but <b>no doctor on site</b>. <b>Closed</b> = the office isn\u2019t open at all that day, which comes from its office hours.'},
+  {sel:'#addLocBtn', title:'Hours, lunches, time zones', body:'Each office row has a \u270e for its <b>opening times per day, its time zone and its lunch</b> \u2014 plus \u201capply to all\u201d if they\u2019re mostly the same. <b>+ Add location</b> adds a new office.'},
+  {sel:'.ph-av', title:'Not everyone can edit this', body:'Doctors and staff see this page <b>read-only</b> \u2014 no cells to tap, nothing to break. Sign in as the Doctor from your avatar to check.'}
+], {key:'sched', title:'Schedule', next:{label:'Marketing', href:'marketing.html'}});
 </script>
 </body>
 </html>

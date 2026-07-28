@@ -53,7 +53,8 @@ docs, schedules, KPIs, and marketing.
 | `v1/schedule.html` | **Staff Schedule** — weekly board: which office open each day + which doctor where. |
 | `v1/marketing.html` | **Marketing Kanban** — events/social posts move Ideas→Planned→In progress→Done; scored Good/Mixed/Bad. |
 | `v1/admin.html` | **Admin Console** — People, Teams & Access, Sections & Files. Backend permissions & profiles. |
-| `v1/tour.js` | Shared **guided walkthrough** engine (spotlight + pulsing "Show me around"). Included by all V1 pages. |
+| `v1/user.js` | **The signed-in person** — SINGLE source of truth for personas + permissions. Header avatar, **My Profile**, and the demo "sign in as" switcher. `PH.can(section)`, `PH.atLeast(section,lvl)`, `PH.offices()`, `PH.readOnlyBanner()`. Include on every page. |
+| `v1/tour.js` | Shared **guided walkthrough** engine. Steps support `pre()` (switch a tab first) and `opts.next` **chains the tour across pages** so the COO can walk the whole app alone. |
 
 ---
 
@@ -350,12 +351,30 @@ Design Brief.docx` (regenerate via `build-response-doc.js`, which is gitignored)
 - Keep V1 pages **self-contained**. Match the existing token set and component styles.
 - Commit style: short imperative subject scoped by page, e.g. `V1 Admin: …`, `Schedule: …`.
 
+### Permissions must be ENFORCED, not just displayed (2026-07-28)
+The user caught that a Doctor with **View** on the schedule could still edit it. Any page that
+renders editable UI must gate it: `const canEdit=()=>!window.PH||PH.atLeast('schedule','edit')`,
+early-return from every mutating entry point, add `body.ph-view-only` (hides pencils/add buttons,
+kills hover/cursor) and call `PH.readOnlyBanner('.wrap','schedule')`. Do the same for any new
+editable surface. Personas live ONLY in `user.js` — never redefine them per page.
+
+### Self-service profile (2026-07-28)
+Every page has an **avatar top-right** (`PH.mount()`, auto-runs). It opens a menu → **My profile**
++ "sign in as" list. In the profile: **photo & About me are the person's own** (saved to
+`localStorage.ph_me_<id>`); **name/email/phone/employee ID are read-only "from Microsoft 365"**;
+**team/location/region/brand/status are read-only "set by your admin."** Never make the locked
+fields editable there — the whole point is showing what a normal user can and can't change.
+
 ### UX interaction rules (locked in 2026-07-28 after user feedback)
 - **NEVER use click-to-cycle** ("tap repeatedly until the right value appears"). The user called
   this out as unintuitive. Always **tap-to-pick**: one tap opens a small `.pk` menu showing ALL
   options with a plain-English description and a ✓ on the current one; one tap picks. This pattern
   now lives in admin.html (`openPk`/`pickLevel`/`pickAud`) and marketing.html (`pickRes`) — reuse it.
 - Multi-value fields are **tappable chips**, never free-text (teams, locations in the profile).
+- **Nothing consequential happens silently.** Dropping a card into Done *asks* "How did it go?"
+  (`askResult`) instead of assuming Good; **+ Add file** asks who can open it before saving and
+  warns when the choice differs from the folder. If a new action shares or scores something,
+  it must prompt.
 - **Document sections are expanded by default** in documents.html (`openSet`, reset per persona) —
   the user does not want people hunting for a disclosure triangle to find their files.
 - **Team-restricted files must actually be hidden.** A file with `scope:'team'` carries a `teams`

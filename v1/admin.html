@@ -463,11 +463,64 @@
       '<div class="secacc">'+secHtml+'</div>';
   }
   function tog(k){ if(openSecs.has(k))openSecs.delete(k); else openSecs.add(k); renderFiles(); }
+  /* Adding a file ALWAYS asks who it's for — nothing gets shared by accident. */
+  let fileDraft=null;
   function addFile(k){ const sec=DOCSECS.find(x=>x.k===k); if(!sec)return;
-    if(sec.structure==='byLocation'){ sec.locItems=sec.locItems||[]; sec.locItems.push('New file'); }
-    else if(sec.structure==='byBrand'){ sec.brandItems=sec.brandItems||[]; sec.brandItems.push('New file'); }
-    else { sec.items=sec.items||[]; const first=sec.items[0]; sec.items.push({n:'New file',aud:first?first.aud:'everyone',scope:first?first.scope:undefined}); }
-    saveSecs(); openSecs.add(k); renderFiles(); }
+    fileDraft={k:k,n:'',locMode:'inherit',locs:[],teamMode:'inherit',teams:[]}; renderFileModal(); }
+  function renderFileModal(){
+    const d=fileDraft, sec=DOCSECS.find(x=>x.k===d.k);
+    const seg=(cur,v,lab,fn)=>'<button class="segb'+(cur===v?' on':'')+'" onclick="AD.'+fn+'(\''+v+'\')">'+lab+'</button>';
+    const locPick = d.locMode==='some' ? '<div class="teampick" style="margin-top:8px">'+LOCATIONS_OF().map(l=>'<button class="tp'+(d.locs.includes(l)?' on':'')+'" onclick="AD.togFileLoc(\''+l+'\')">'+l+'</button>').join('')+'</div>' : '';
+    const teamPick = d.teamMode==='some' ? '<div class="teampick" style="margin-top:8px">'+TEAMS.filter(t=>t!=='Admin').map(t=>'<button class="tp'+(d.teams.includes(t)?' on':'')+'" onclick="AD.togFileTeam(\''+t.replace(/'/g,"\\'")+'\')">'+t+'</button>').join('')+'</div>' : '';
+    const inheritTeam = sec.teamMode==='all'?'Everyone':((sec.teams||[]).join(', ')||'the section\u2019s teams');
+    const inheritLoc  = sec.locMode==='all'?'All offices':((sec.locs||[]).join(', ')||'the section\u2019s locations');
+    openModal(
+      '<div class="m-top"><h3 style="margin:0;font-size:17px;color:var(--navy)">\u2795 Add a file to '+sec.n+'</h3><button class="x" onclick="AD.close()">\u00d7</button></div>'+
+      '<div class="dm-banner" style="background:var(--teal-soft);border-bottom:1px solid #c4e6e3;color:#0c5b57;font-size:12.5px;padding:10px 20px;line-height:1.5">Pick the file, then confirm <b>who can see it</b>. By default it matches the rest of the folder \u2014 change it only if this one file is an exception.</div>'+
+      '<div class="m-body">'+
+        '<div class="fld"><label>File</label><div class="filepick" style="display:flex;align-items:center;gap:10px;border:1px dashed var(--line);border-radius:10px;padding:10px 12px;font-size:14px;flex-wrap:wrap">\ud83d\udcc4 <span id="fName" style="flex:1;color:var(--ink)">'+(d.n||'No file chosen yet\u2026')+'</span><button class="segb" onclick="AD.pickFileFromDrive()">Browse drive</button></div></div>'+
+        '<div class="fld"><label>\ud83d\udc65 Which teams can open it?</label><div class="segrow">'+
+          seg(d.teamMode,'inherit','Same as folder','setFileTeamMode')+seg(d.teamMode,'all','Everyone','setFileTeamMode')+seg(d.teamMode,'some','Specific teams','setFileTeamMode')+'</div>'+teamPick+'</div>'+
+        '<div class="fld"><label>\ud83d\udccd Which locations?</label><div class="segrow">'+
+          seg(d.locMode,'inherit','Same as folder','setFileLocMode')+seg(d.locMode,'all','All offices','setFileLocMode')+seg(d.locMode,'some','Specific locations','setFileLocMode')+'</div>'+locPick+'</div>'+
+        '<div class="accessbox"><h4>Who will see this file</h4><div id="fWho"></div></div>'+
+      '</div>'+
+      '<div class="m-foot"><span style="flex:1"></span><button class="btn ghost" onclick="AD.close()">Cancel</button><button class="btn" onclick="AD.saveFile()">Add file</button></div>');
+    updFileWho(inheritTeam,inheritLoc);
+  }
+  function updFileWho(it,il){
+    const d=fileDraft, box=el('fWho'); if(!box)return;
+    const sec=DOCSECS.find(x=>x.k===d.k);
+    it=it||(sec.teamMode==='all'?'Everyone':((sec.teams||[]).join(', ')||'the section\u2019s teams'));
+    il=il||(sec.locMode==='all'?'All offices':((sec.locs||[]).join(', ')||'the section\u2019s locations'));
+    const team = d.teamMode==='inherit'? it : d.teamMode==='all'? 'Everyone' : ((d.teams||[]).join(', ')||'(pick teams)');
+    const loc  = d.locMode==='inherit' ? il : d.locMode==='all' ? 'All offices' : ((d.locs||[]).join(', ')||'(pick locations)');
+    box.innerHTML='\ud83d\udc41 <b>'+team+'</b> at <b>'+loc+'</b> will see <b>'+(d.n||'this file')+'</b> \u2014 a person must match <b>both</b>.'+
+      (d.teamMode==='inherit'&&d.locMode==='inherit'?' <span style="color:var(--soft)">(inherited from the folder)</span>':' <span style="color:var(--bad);font-weight:700">(exception \u2014 different from the folder)</span>');
+  }
+  function pickFileFromDrive(){ fileDraft.n='New document.pdf'; renderFileModal(); }
+  function setFileTeamMode(m){ fileDraft.teamMode=m; if(m!=='some')fileDraft.teams=[]; renderFileModal(); }
+  function setFileLocMode(m){ fileDraft.locMode=m; if(m!=='some')fileDraft.locs=[]; renderFileModal(); }
+  function togFileLoc(l){ const a=fileDraft.locs, i=a.indexOf(l); if(i>=0)a.splice(i,1); else a.push(l); renderFileModal(); }
+  function togFileTeam(t){ const a=fileDraft.teams, i=a.indexOf(t); if(i>=0)a.splice(i,1); else a.push(t); renderFileModal(); }
+  function saveFile(){
+    const d=fileDraft, sec=DOCSECS.find(x=>x.k===d.k); if(!sec)return;
+    const nm=d.n||'New document.pdf';
+    if(sec.structure==='byLocation'){ sec.locItems=sec.locItems||[]; sec.locItems.push(nm); }
+    else if(sec.structure==='byBrand'){ sec.brandItems=sec.brandItems||[]; sec.brandItems.push(nm); }
+    else {
+      sec.items=sec.items||[];
+      let aud='everyone',scope;
+      if(d.teamMode==='some'&&d.teams.length){ aud='team'; scope=d.teams.join(', '); }
+      else if(d.locMode==='some'&&d.locs.length){ aud='location'; scope=d.locs.join(', '); }
+      else if(d.teamMode==='inherit'||d.locMode==='inherit'){
+        if(sec.teamMode==='some'&&(sec.teams||[]).length){ aud='team'; scope=sec.teams.join(', '); }
+        else if(sec.locMode==='some'&&(sec.locs||[]).length){ aud='location'; scope=sec.locs.join(', '); }
+      }
+      sec.items.push({n:nm,aud:aud,scope:scope});
+    }
+    saveSecs(); closeModal(); openSecs.add(d.k); renderFiles();
+  }
   function noop(){}
 
   /* ----- create / edit a section ----- */
@@ -574,21 +627,27 @@
   function openModal(h){ el('modalCard').innerHTML=h; el('modal').classList.add('open'); }
   function closeModal(){ el('modal').classList.remove('open'); }
 
-  window.AD={tab:tabSet,profile,addUser,togTeam,togLoc,setStatus,saveUser,pickLevel,pickAud,tog,addFile,noop,newSec,editSec,saveSec,delSec,resetSecs,setSecName,setSecIcon,setSecStruct,setSecLocMode,setSecTeamMode,togSecLoc,togSecTeam,renderLocs,newLoc,editLoc,saveLoc,delLoc,resetLocs,setLocBrand,setLocState,setLocTZ,close:closeModal};
+  window.AD={tab:tabSet,profile,addUser,togTeam,togLoc,setStatus,saveUser,pickLevel,pickAud,tog,addFile,noop,newSec,editSec,saveSec,delSec,resetSecs,setSecName,setSecIcon,setSecStruct,setSecLocMode,setSecTeamMode,togSecLoc,togSecTeam,saveFile,pickFileFromDrive,setFileTeamMode,setFileLocMode,togFileLoc,togFileTeam,renderLocs,newLoc,editLoc,saveLoc,delLoc,resetLocs,setLocBrand,setLocState,setLocTZ,close:closeModal};
   el('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
   render();
 })();
 </script>
+<script src="user.js"></script>
 <script src="tour.js"></script>
 <script>
 Tour.init([
-  {sel:'.v1nav', title:'Where Admin lives', body:'The <b>Admin</b> tab is where you manage people and control who sees what. Everyday users never need it.'},
-  {sel:'#tabs', title:'Three simple areas', body:'<b>People</b>, <b>Teams &amp; Access</b> (what each team can do in each section), and <b>Sections &amp; Files</b> (who documents are for).'},
-  {sel:'.tbl-scroll, .intro', title:'People sync from Microsoft', body:'Names, emails and photos come from Microsoft 365. You set each person\'s team, location and status. Employees can update their own photo &amp; “About me.” Tap a person to open their profile.'},
-  {sel:'#tabs', title:'Control access visually', body:'Open <b>Teams &amp; Access</b>: a grid of teams × sections. Tap a cell and pick View, Add files, Edit or Manage — that\'s the whole permission model.'},
-  {sel:'#tabs', title:'Files know their audience', body:'Open <b>Sections &amp; Files</b>: each folder is 🌐 Everyone, 📍 By location, or 👥 By team. Files inherit it, so you set it once — no per-file clicking.'}
-], {key:'admin'});
+  {sel:'#tabs', title:'This is your control room', body:'Four tabs and you can run the whole hub: <b>People</b>, <b>Teams &amp; Access</b>, <b>Document Sections</b> and <b>Locations</b>. No developer, no consultant.', pre:()=>AD.tab('users')},
+  {sel:'.intro', title:'People come from Microsoft', body:'Everyone on your Microsoft 365 account appears here automatically \u2014 names, emails and photos included. You never retype staff details.', pre:()=>AD.tab('users')},
+  {sel:'table.u tbody tr', title:'Setting one person up', body:'Tap anyone. You set just three things: their <b>team(s)</b>, their <b>location(s)</b> and their <b>status</b>. That is the entire job of adding a new hire.', pre:()=>AD.tab('users')},
+  {sel:'.intro', title:'The one rule to remember', body:'A person\u2019s <b>team</b> decides <b>what they can do</b>. Their <b>location</b> decides <b>whose offices they see</b>. Someone on two teams gets the more generous of the two.', pre:()=>AD.tab('access')},
+  {sel:'table.mx', title:'Who can do what', body:'Teams down the side, sections across the top. <b>Tap any square</b> and pick: None, View, Add files, Edit or Manage. Changing one square changes it for everyone on that team, instantly.', pre:()=>AD.tab('access')},
+  {sel:'.card', title:'Tools vs documents', body:'<b>App tools</b> (Dashboard, Schedule, Marketing) are built in \u2014 you only choose who gets them. Everything below is <b>document sections</b>, and those are yours to create.', pre:()=>AD.tab('files')},
+  {sel:'.toolrow .btn', title:'Make a new section yourself', body:'<b>+ New section</b>: name it, pick an icon, choose whether it wants <b>a folder per office</b> or per brand, then say which <b>teams and locations</b> it\u2019s for. It appears for those people immediately.', pre:()=>AD.tab('files')},
+  {sel:'.sec .addfile', title:'Adding a file always asks', body:'<b>+ Add file</b> asks <b>who can open it</b> before it saves \u2014 defaulting to the rest of the folder, and warning you when you\u2019re making an exception. Nothing gets shared by accident.', pre:()=>{AD.tab('files');if(!document.querySelector('.sec.open .addfile'))AD.tog('hr');}},
+  {sel:'.toolrow', title:'Opening a ninth office', body:'Add it once here and it appears everywhere \u2014 the schedule board, its own document folder, and people\u2019s locations. Nothing else to set up.', pre:()=>AD.tab('locs')},
+  {sel:'.ph-av', title:'Check your work', body:'The best habit: after changing access, use your avatar to <b>sign in as that person</b> and confirm they see what you intended. That\u2019s the walkthrough \u2014 you can run this hub on your own now.', pre:()=>AD.tab('users')}
+], {key:'admin', title:'Admin \u2014 how to run this', launch:'Teach me the admin side'});
 </script>
 </body>
 </html>

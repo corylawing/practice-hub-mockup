@@ -342,14 +342,17 @@ const OFFICES=[
   set(saved);
 })();
 </script>
+<script src="user.js"></script>
 <script src="tour.js"></script>
 <script>
 Tour.init([
-  {sel:'.viewas', title:'You see your offices only', body:'Access is set by your <b>team</b>; which offices you see is set by your <b>location</b>. A Carlsbad manager opens this and sees Carlsbad — not the whole group.'},
-  {sel:'.kpis', title:'The four numbers that matter', body:'Production so far, how far <b>ahead or behind the main goal</b>, the <b>% of main goal</b> (with stretch underneath), and <b>vs last year</b>.'},
-  {sel:'.chart', title:'This year vs last year', body:'Each month shows <b>last year</b> (grey) next to <b>this year</b>. The <b>dashed line</b> is the main goal, the <b>dotted line</b> is the stretch goal.'},
-  {sel:'table.lb', title:'Leaderboard', body:'All offices ranked, <b>best on top</b> by % of goal — plus <b>production days left</b> in the year. Tap any row to open that office.'}
-], {key:'dash'});
+  {sel:'.viewas', title:'You only see your offices', body:'Production numbers are sensitive, so people see <b>only the offices they\u2019re assigned to</b>. Switch to the Carlsbad manager \u2014 the group totals and the leaderboard disappear, because they aren\u2019t hers to see.'},
+  {sel:'.kpis', title:'The four numbers', body:'Production so far \u00b7 how far <b>ahead or behind the main goal</b> \u00b7 <b>% of the main goal</b> with the <b>stretch goal</b> underneath \u00b7 and how it compares to <b>last year</b>.'},
+  {sel:'#chips', title:'Group, or one office', body:'<b>All Offices</b> is the group view. Tap any office name to open just that office. A manager with one office skips straight to hers.'},
+  {sel:'.chart', title:'This year vs last year', body:'Each month shows <b>last year in grey</b> beside this year. The <b>dashed line</b> is the main goal; the <b>dotted line</b> is the stretch goal. Green means the main goal was beaten.'},
+  {sel:'table.lb', title:'The leaderboard', body:'Every office ranked <b>best on top</b> by % of goal, with <b>production days left</b> in the year. Tap any row to open that office.'},
+  {sel:'.foot', title:'Where the numbers live', body:'Straight from your <b>Production Dashboard workbook on SharePoint</b> \u2014 no second copy. This note also flags a real adding error we found in the workbook\u2019s own total.'}
+], {key:'dash', title:'Production Dashboard', next:{label:'entering the numbers', href:'production.html'}});
 </script>
 </body>
 </html>

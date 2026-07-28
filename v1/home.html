@@ -254,5 +254,16 @@
   el('persona').value=saved; set(saved);
 })();
 </script>
+<script src="user.js"></script>
+<script src="tour.js"></script>
+<script>
+Tour.init([
+  {sel:'.ph-av', title:'This is you', body:'Your name and photo, top right. Tap it any time for <b>My profile</b> \u2014 and, in this demo, to <b>sign in as someone else</b> so you can see exactly what each person sees.'},
+  {sel:'.viewas', title:'Try it as your staff', body:'This grey bar is a <b>demo control only</b> \u2014 it won\u2019t exist in the real hub. Switch to an office manager or a front-desk person and watch the whole app change around them.'},
+  {sel:'#updates', title:'What\u2019s new for me', body:'Whenever a document or a number changes, the people it affects see it here \u2014 filtered by their <b>role, team and location</b>. A Texas policy never reaches New Mexico staff.'},
+  {sel:'#tiles', title:'Your sections', body:'Everyone lands here and only sees the tiles they\u2019re allowed to open. The label on each tile (<b>View only</b>, <b>Add files</b>, <b>Full control</b>) says what they can do inside.'},
+  {sel:'.note', title:'The whole idea, in one line', body:'Your <b>team</b> decides what you can do. Your <b>location</b> decides whose offices you see. Everything else follows from those two settings.'}
+], {key:'home', title:'Getting started', launch:'Show me around the whole app', next:{label:'the Dashboard', href:'index.html'}});
+</script>
 </body>
 </html>

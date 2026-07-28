@@ -242,14 +242,16 @@
   set(saved);
 })();
 </script>
+<script src="user.js"></script>
 <script src="tour.js"></script>
 <script>
 Tour.init([
-  {sel:'.syncbar', title:'One set of numbers', body:'Type here and it saves into the <b>same Excel workbook</b> on SharePoint. If someone types in Excel instead, it shows up here. There is never a second copy.'},
-  {sel:'.pickrow', title:'Pick the office and month', body:'Months with numbers already in are outlined in teal. You only ever see the offices you have access to.'},
-  {sel:'.grid2 .card', title:'Just a few boxes', body:'Production, Medicaid (if your office bills it), adjustments, and days worked. That\'s all you type.'},
-  {sel:'.big', title:'The math is done for you', body:'Totals, % of main goal, % of stretch and average per day update as you type — then hit <b>Save to workbook</b>.'}
-], {key:'prod'});
+  {sel:'.syncbar', title:'One set of numbers', body:'Type here and it saves into the <b>same Excel workbook</b> on SharePoint. If someone types in Excel instead, it shows up here. There is never a second copy to reconcile.'},
+  {sel:'.pickrow', title:'Pick office and month', body:'Months that already have numbers are outlined in teal. You only see the offices you\u2019re responsible for.'},
+  {sel:'.grid2 .card', title:'Only four boxes', body:'Production, Medicaid (if your office bills it), adjustments, and days worked. That is genuinely everything a manager types each month.'},
+  {sel:'.big', title:'The maths is automatic', body:'Totals, % of main goal, % of stretch and average per day update as you type \u2014 no formulas to copy, nothing to break.'},
+  {sel:'.savebar', title:'Save, and it\u2019s everywhere', body:'<b>Save to workbook</b> writes it back and the <b>Dashboard updates immediately</b>. Got it wrong? <b>Undo my changes</b> puts it back.'}
+], {key:'prod', title:'Enter Production', next:{label:'the Schedule', href:'schedule.html'}});
 </script>
 </body>
 </html>
