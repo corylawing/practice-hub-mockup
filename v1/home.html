@@ -203,7 +203,7 @@
 
   function renderNav(p){
     el('nav').innerHTML=SECTIONS.filter(s=> s.k==='documents' ? foldersFor(p).length>0 : (s.k==='home'|| p.sec[s.k])).map(s=>{
-      if(s.k==='documents') return '<a href="#docs">📁 Documents</a>';
+      if(s.k==='documents') return '<a href="documents.html">📁 Documents</a>';
       return '<a href="'+s.href+'">'+s.ic+' '+s.n+'</a>';
     }).join('');
     // prepend Home
@@ -227,7 +227,7 @@
         else if(f.note){ chips='<span style="font-size:12px;color:var(--soft)">'+f.note+'</span>'; }
         return '<div class="frow"><span class="fn">'+f.n+'</span>'+chips+'<span class="capmini '+p.doc[f.k]+'">'+CAPSHORT[p.doc[f.k]]+'</span></div>';
       }).join('');
-      docsTile='<div class="tile docs" id="docs"><div class="ic">📁</div><div class="tn">Documents</div><div class="td">Files, forms &amp; policies you can open</div><div class="folders">'+rows+'</div><div class="synced">📎 These open the <b>real files on your Microsoft (SharePoint/OneDrive) drive</b> — the hub links to them, it doesn\'t keep copies.</div></div>';
+      docsTile='<a class="tile docs" id="docs" href="documents.html"><div class="ic">📁</div><div class="tn">Documents →</div><div class="td">Files, forms &amp; policies you can open</div><div class="folders">'+rows+'</div><div class="synced">📎 Opens the <b>real files on your Microsoft (SharePoint/OneDrive) drive</b> — the hub links to them, it doesn\'t keep copies.</div></a>';
     }
     const html=toolTiles.join('')+docsTile;
     el('tiles').innerHTML= html ? '<div class="grid">'+html+'</div>' : '<div class="empty">This role has no sections yet — an admin assigns access in the Admin console.</div>';
@@ -235,6 +235,7 @@
 
   function set(id){
     cur=PERSONAS.find(p=>p.id===id)||PERSONAS[0];
+    try{ localStorage.setItem('ph_viewas',cur.id); }catch(_){}
     el('who_av').textContent=initials(cur.name);
     el('who_name').textContent=cur.name;
     el('who_sub').textContent=cur.sub;
@@ -247,7 +248,9 @@
   // build the dropdown
   el('persona').innerHTML=PERSONAS.map(p=>'<option value="'+p.id+'">'+p.name+(p.scope!=='all'&&p.id!=='admin'?' — '+p.scope:'')+'</option>').join('');
   window.HOME={set};
-  set('admin');
+  let saved='admin'; try{ saved=localStorage.getItem('ph_viewas')||'admin'; }catch(_){}
+  if(!PERSONAS.some(p=>p.id===saved)) saved='admin';
+  el('persona').value=saved; set(saved);
 })();
 </script>
 </body>

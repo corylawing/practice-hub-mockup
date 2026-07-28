@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Documents (V1) — Practice Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#0F2A4A">
+<meta name="description" content="Practice Hub V1 — Documents. The folders and files you can open, based on your role, location and team.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Practice Hub">
+<meta property="og:title" content="Documents (V1) · Practice Hub">
+<meta property="og:description" content="The folders and files you can open, based on your role, location and team.">
+<meta property="og:image" content="https://corylawing.github.io/practice-hub-mockup/assets/og-image.png">
+<meta property="og:url" content="https://corylawing.github.io/practice-hub-mockup/v1/documents.html">
+<style>
+  :root{
+    --navy:#0F2A4A; --navy2:#25456e; --teal:#149B96; --teal2:#2BC0B8; --teal-soft:#E5F4F3; --teal-600:#0F827E;
+    --ink:#1F2D3D; --soft:#56627A; --line:#E4E8EE; --canvas:#F4F6F8; --white:#fff;
+    --good:#2E9E6B; --good-soft:#E7F4EE; --amber:#F2A03D;
+    --blue:#1f6f9e; --blue-soft:#E3F0FA; --purple:#6b3fd0; --purple-soft:#efe9fb;
+    --shadow:0 1px 2px rgba(15,42,74,.06),0 6px 18px rgba(15,42,74,.06);
+    --shadow-lg:0 10px 30px rgba(15,42,74,.12); --radius:14px; --maxw:1080px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--canvas);line-height:1.5;-webkit-font-smoothing:antialiased}
+  h1{color:var(--navy);margin:0}
+  .ribbon{background:var(--amber);color:#3a2400;text-align:center;font-size:13px;font-weight:600;padding:6px 14px}
+  .hdr{background:var(--navy);color:#fff}
+  .hdr-in{max-width:var(--maxw);margin:0 auto;display:flex;align-items:center;gap:12px;padding:13px 20px}
+  .mark{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--teal),var(--teal2));display:grid;place-items:center;color:#fff;font-weight:800;font-size:16px}
+  .brand{font-weight:700;font-size:18px;color:#fff;line-height:1.1}
+  .brand small{display:block;font-weight:500;font-size:12px;color:#9fb4d0}
+  .v1{background:rgba(255,255,255,.15);color:#eaf1fb;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;margin-left:6px}
+  .v1nav{background:var(--navy2)}
+  .v1nav-in{max-width:var(--maxw);margin:0 auto;display:flex;gap:2px;padding:0 12px;overflow-x:auto}
+  .v1nav a{color:#cdd9ea;font-size:14px;font-weight:600;padding:13px 15px;text-decoration:none;border-bottom:3px solid transparent;white-space:nowrap}
+  .v1nav a:hover{color:#fff;background:rgba(255,255,255,.05)}
+  .v1nav a.active{color:#fff;border-bottom-color:var(--teal)}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:24px 20px 90px}
+  .viewas{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:14px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:18px;border-left:5px solid var(--teal)}
+  .viewas .lab{font-size:12px;color:var(--soft);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+  .viewas select{padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;font-weight:700;color:var(--navy);background:#fff;min-width:210px}
+  .viewas .demo{font-size:12px;color:var(--teal-600);background:var(--teal-soft);border:1px solid #c4e6e3;padding:5px 10px;border-radius:999px;font-weight:600;margin-left:auto}
+  .crumb{font-size:13px;color:var(--soft);margin-bottom:4px}
+  .crumb a{color:var(--teal-600);text-decoration:none;font-weight:600}
+  .page-head h1{font-size:25px}
+  .page-head p{margin:4px 0 0;color:var(--soft);font-size:14.5px}
+  .folders{margin-top:20px;display:flex;flex-direction:column;gap:12px}
+  .folder{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+  .fhead{display:flex;align-items:center;gap:12px;padding:15px 16px;cursor:pointer}
+  .fhead:hover{background:#fafbfc}
+  .fhead .car{color:var(--soft);font-size:13px;transition:transform .2s}
+  .folder.open .fhead .car{transform:rotate(90deg)}
+  .fhead .fi{font-size:22px;line-height:1}
+  .fhead .fn{font-weight:800;color:var(--navy);font-size:16px}
+  .fhead .fmeta{font-size:12.5px;color:var(--soft)}
+  .cap{margin-left:auto;font-size:11.5px;font-weight:700;padding:4px 10px;border-radius:999px;white-space:nowrap}
+  .cap.view{background:var(--blue-soft);color:var(--blue)}
+  .cap.add{background:var(--good-soft);color:var(--good)}
+  .cap.edit{background:var(--teal-soft);color:var(--teal-600)}
+  .cap.manage{background:var(--navy);color:#fff}
+  .fbody{display:none;padding:0 16px 14px;border-top:1px solid var(--line)}
+  .folder.open .fbody{display:block}
+  .subfold{font-size:12.5px;font-weight:700;color:var(--teal-600);background:var(--teal-soft);display:inline-block;border-radius:8px;padding:3px 10px;margin:12px 0 4px}
+  .subfold.brand{color:var(--purple);background:var(--purple-soft)}
+  .file{display:flex;align-items:center;gap:11px;padding:10px 2px;border-bottom:1px solid var(--line);font-size:14px}
+  .file:last-child{border-bottom:none}
+  .file .fic{font-size:16px}
+  .file .nm{flex:1;color:var(--ink);font-weight:500}
+  .file .sp{font-size:12.5px;font-weight:600;color:var(--teal-600);text-decoration:none;white-space:nowrap}
+  .file .sp:hover{text-decoration:underline}
+  .scopechip{font-size:11px;font-weight:700;background:var(--canvas);color:var(--soft);border:1px solid var(--line);border-radius:999px;padding:1px 8px}
+  .addbtn{margin-top:12px;background:var(--teal);color:#fff;border:none;border-radius:9px;padding:9px 14px;font-weight:600;font-size:13.5px;cursor:pointer;font-family:inherit}
+  .addbtn:hover{background:var(--teal-600)}
+  .readonly{margin-top:12px;font-size:12.5px;color:var(--soft);font-style:italic}
+  .synced{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 15px;font-size:12.5px;color:var(--soft);margin-top:20px;line-height:1.55}
+  .synced b{color:var(--navy)}
+  .empty{background:#fff;border:1px dashed var(--line);border-radius:14px;padding:30px;text-align:center;color:var(--soft);font-size:14px}
+  /* live-sync doc viewer */
+  .ov{position:fixed;inset:0;background:rgba(15,42,74,.55);z-index:120;display:none;align-items:flex-start;justify-content:center;padding:20px 14px;overflow:auto}
+  .ov.open{display:flex}
+  .modal{background:#fff;width:100%;max-width:840px;border-radius:16px;box-shadow:var(--shadow-lg);overflow:hidden;margin:auto}
+  .dm-top{display:flex;align-items:center;gap:10px;padding:15px 18px;border-bottom:1px solid var(--line)}
+  .dm-top h3{margin:0;font-size:16px;color:var(--navy)}
+  .dm-top .x{margin-left:auto;border:none;background:none;font-size:24px;color:var(--soft);cursor:pointer;line-height:1}
+  .dm-banner{background:var(--teal-soft);border-bottom:1px solid #c4e6e3;color:#0c5b57;font-size:12.5px;padding:9px 18px;line-height:1.5}
+  .dm-banner b{color:#0a4d49}
+  .dm-body{padding:16px 18px;max-height:66vh;overflow:auto}
+  .panes{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .pane{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .pane-h{display:flex;align-items:center;gap:8px;padding:9px 12px;font-size:12.5px;font-weight:700}
+  .pane.hub .pane-h{background:#eef6f5;color:var(--teal-600)}
+  .pane.drive .pane-h{background:#eef3fb;color:var(--blue)}
+  .pane-h .who{margin-left:auto;font-weight:500;color:var(--soft);font-size:11px}
+  table.sheet{width:100%;border-collapse:collapse}
+  table.sheet th{font-size:10.5px;text-transform:uppercase;letter-spacing:.03em;color:var(--soft);text-align:left;padding:6px 8px;background:#fafbfc;border-bottom:1px solid var(--line)}
+  table.sheet td{border-bottom:1px solid var(--line);padding:2px}
+  table.sheet tr:last-child td{border-bottom:none}
+  table.sheet input{width:100%;border:none;background:transparent;padding:8px;font-size:13px;font-family:inherit;color:var(--ink)}
+  table.sheet input:focus{outline:2px solid var(--teal);border-radius:6px}
+  td.flash{animation:flash 1.2s ease}
+  @keyframes flash{0%{background:#fff2c9}100%{background:transparent}}
+  .dm-foot{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:13px 18px;border-top:1px solid var(--line);background:#fafbfc}
+  .syncpill{font-size:12px;font-weight:700;color:var(--good);background:var(--good-soft);border-radius:999px;padding:5px 12px}
+  .simbtn{background:#fff;border:1px solid var(--line);border-radius:9px;padding:9px 13px;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;color:var(--navy)}
+  .simbtn:hover{border-color:var(--blue);color:var(--blue)}
+  @media(max-width:640px){.panes{grid-template-columns:1fr}}
+  .afield{margin-bottom:16px}
+  .afield label{display:block;font-size:12px;font-weight:700;color:var(--soft);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px}
+  .filepick{display:flex;align-items:center;gap:10px;border:1px dashed var(--line);border-radius:10px;padding:10px 12px;font-size:14px;color:var(--soft);flex-wrap:wrap}
+  .filepick #fileName{flex:1;color:var(--ink);min-width:120px}
+  .segrow{display:flex;gap:8px;flex-wrap:wrap}
+  .simbtn.on{border-color:var(--teal);color:var(--teal-600);background:var(--teal-soft)}
+  .pickwrap{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+  .pchip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 12px;font-size:12.5px;font-weight:600;color:var(--navy);cursor:pointer;font-family:inherit}
+  .pchip.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .whobox{background:var(--teal-soft);border:1px solid #c4e6e3;border-radius:10px;padding:11px 14px;font-size:13.5px;color:#0c5b57;margin-top:6px}
+  .whobox b{color:#0a4d49}
+  .file.newf .nm{color:var(--teal-600);font-weight:700}
+</style>
+</head>
+<body>
+<div class="ribbon">PROTOTYPE — Documents. You see only the folders your role, location &amp; team allow. Files open on the Microsoft drive.</div>
+<header class="hdr">
+  <div class="hdr-in">
+    <span class="mark">PH</span>
+    <span class="brand">Practice Hub<small>Documents</small></span>
+    <span class="v1">V1 preview</span>
+  </div>
+</header>
+<nav class="v1nav"><div class="v1nav-in" id="nav"></div></nav>
+
+<div class="wrap">
+  <div class="viewas">
+    <span class="lab">👤 Viewing as</span>
+    <select id="persona" onchange="DOCS.set(this.value)"></select>
+    <span class="demo">Demo control — carries across pages</span>
+  </div>
+
+  <div class="crumb"><a href="home.html">🏠 Home</a> › Documents</div>
+  <div class="page-head">
+    <h1>Documents</h1>
+    <p id="sub">The folders and files you can open. Click a folder to see what's inside.</p>
+  </div>
+
+  <div id="folders"></div>
+
+  <div class="synced">📎 <b>Nothing here is a copy.</b> Each file opens the real document on your Microsoft <b>SharePoint/OneDrive</b> drive. Edit it there or (if you have access) from inside the hub — it's the same file, always in sync.</div>
+</div>
+
+<div id="docmodal" class="ov"><div class="modal" id="docmodalcard"></div></div>
+
+<script>
+(function(){
+  const LOCS=['Carlsbad','Hobbs','Clovis','San Angelo','Mansfield','Lubbock','Las Cruces LCO','Las Cruces FOLC'];
+  const BRANDS=['FFO','Sunflower','LCO'];
+  const CAPTXT={view:'View only',add:'You can add files',edit:'Add & edit',manage:'Full control'};
+
+  // Tool sections (for the nav) + the documents folders (this page).
+  const NAVSECS=[
+    {k:'dashboard',n:'📊 Dashboard',href:'index.html'},
+    {k:'schedule',n:'📅 Schedule',href:'schedule.html'},
+    {k:'marketing',n:'📣 Marketing',href:'marketing.html'},
+    {k:'admin',n:'⚙️ Admin',href:'admin.html',adminOnly:true}
+  ];
+  const FOLDERS=[
+    {k:'hr',n:'HR',ic:'👥',files:[
+      {n:'Employee & Family Tx',scope:'everyone'},{n:'Dental Professionals Discount',scope:'everyone'},
+      {n:'Uniform Policy',scope:'everyone'},{n:'Commitment to my Co-Workers',scope:'everyone'},
+      {n:'New-Hire Packet — Texas',scope:'Texas offices'},{n:'PTO — Texas',scope:'Texas offices'},
+      {n:'New-Hire Packet — New Mexico',scope:'New Mexico offices'},{n:'PTO — New Mexico',scope:'New Mexico offices'},
+      {n:'Payroll Tracking Sheet',scope:'team'},{n:'Employee Dismissal Checklist',scope:'team'}
+    ]},
+    {k:'officedocs',n:'Office Docs',ic:'🏢',perLocation:true,files:['Office Contracts','Equipment Invoices','Dental Licenses']},
+    {k:'forms',n:'Office Forms',ic:'📝',perBrand:true,files:['DDS Referral','Medical History','Invisalign / Vivera Scan Sheet']},
+    {k:'vendors',n:'Vendors',ic:'🚚',files:[{n:'Approved Vendor List',scope:'team'},{n:'Vendor Tracking Sheet',scope:'team'}]},
+    {k:'filing',n:'Insurance / W-9',ic:'🗂️',files:[{n:'W-9s',scope:'team'},{n:'Type 2 NPI Letter',scope:'team'}]},
+    {k:'eom',n:'End-of-Month Reporting',ic:'📆',files:[{n:'Monthly Monitor Report',scope:'team'},{n:'RIP Tracker',scope:'team'},{n:'Medicaid Tracker',scope:'team'}]}
+  ];
+
+  const PERSONAS=[
+    {id:'admin',name:'Administrator',scope:'all',state:'',brand:'',sec:{dashboard:1,schedule:1,marketing:1,admin:1},
+      doc:{hr:'manage',officedocs:'manage',forms:'manage',vendors:'manage',filing:'manage',eom:'manage'}},
+    {id:'om',name:'Office Manager',scope:'Carlsbad',state:'NM',brand:'FFO',sec:{dashboard:1,schedule:1,marketing:1},
+      doc:{hr:'view',officedocs:'edit',forms:'edit',vendors:'edit',filing:'edit',eom:'edit'}},
+    {id:'doctor',name:'Doctor',scope:'all',state:'NM',brand:'FFO',sec:{dashboard:1,schedule:1},
+      doc:{hr:'view',forms:'view'}},
+    {id:'tc',name:'Treatment Coordinator',scope:'Carlsbad',state:'NM',brand:'FFO',sec:{schedule:1},
+      doc:{hr:'view',forms:'add'}},
+    {id:'staff',name:'Front Desk / Staff',scope:'Carlsbad',state:'NM',brand:'FFO',sec:{schedule:1},
+      doc:{hr:'view',forms:'view'}}
+  ];
+
+  const el=id=>document.getElementById(id);
+  let cur=PERSONAS[0], openK=null;
+
+  function matchScope(scope,p){
+    if(scope==='everyone'||scope==='team')return true; // team-scoped files are governed by folder access
+    if(scope==='Texas offices')return p.scope==='all'||p.state==='TX';
+    if(scope==='New Mexico offices')return p.scope==='all'||p.state==='NM';
+    if(BRANDS.includes(scope))return p.scope==='all'||p.brand===scope;
+    if(LOCS.includes(scope))return p.scope==='all'||p.scope===scope;
+    return false;
+  }
+  function renderNav(p){
+    let h='<a class="active" href="documents.html">📁 Documents</a>';
+    h='<a href="home.html">🏠 Home</a>'+h;
+    NAVSECS.forEach(s=>{ if((!s.adminOnly||p.id==='admin')&&p.sec[s.k]) h+='<a href="'+s.href+'">'+s.n+'</a>'; });
+    // order: Home, tools, Documents(active), Admin — rebuild cleanly
+    let out='<a href="home.html">🏠 Home</a>';
+    NAVSECS.filter(s=>s.k!=='admin').forEach(s=>{ if(p.sec[s.k]) out+='<a href="'+s.href+'">'+s.n+'</a>'; });
+    out+='<a class="active" href="documents.html">📁 Documents</a>';
+    if(p.id==='admin') out+='<a href="admin.html">⚙️ Admin</a>';
+    el('nav').innerHTML=out;
+  }
+  function fileRow(name,scopeChip){
+    const safe=String(name).replace(/'/g,"\\'");
+    return '<div class="file"><span class="fic">📄</span><span class="nm">'+name+'</span>'+(scopeChip||'')+'<a class="sp" href="#" onclick="DOCS.openDoc(\''+safe+'\');return false">Open ↗</a></div>';
+  }
+  function renderFolders(p){
+    const accessible=FOLDERS.filter(f=>p.doc[f.k]);
+    if(!accessible.length){ el('folders').innerHTML='<div class="empty">No document folders are shared with this role yet. An admin grants access in the Admin console.</div>'; return; }
+    if(openK===null) openK=accessible[0].k;
+    el('folders').innerHTML='<div class="folders">'+accessible.map(f=>{
+      const cap=p.doc[f.k], open=(openK===f.k);
+      let count=0, body='';
+      if(f.perLocation){
+        const locs=p.scope==='all'?LOCS:[p.scope];
+        body=locs.map(loc=>{ count+=f.files.length; return '<div class="subfold">📍 '+loc+'</div>'+f.files.map(x=>fileRow(x,'')).join(''); }).join('');
+      } else if(f.perBrand){
+        const brands=p.scope==='all'?BRANDS:[p.brand];
+        body=brands.map(b=>{ count+=f.files.length; return '<div class="subfold brand">🏷 '+b+'</div>'+f.files.map(x=>fileRow(x,'')).join(''); }).join('');
+      } else {
+        const vis=f.files.filter(x=>matchScope(x.scope,p)); count=vis.length;
+        body=vis.map(x=>{ const chip = (x.scope!=='everyone'&&x.scope!=='team')?'<span class="scopechip">'+x.scope+'</span>':''; return fileRow(x.n,chip); }).join('');
+      }
+      if(f.added&&f.added.length){ body=f.added.map(a=>{ const safe=String(a.n).replace(/'/g,"\\'"); return '<div class="file newf"><span class="fic">🆕</span><span class="nm">'+a.n+'</span><span class="scopechip">'+a.audLabel+'</span><a class="sp" href="#" onclick="DOCS.openDoc(\''+safe+'\');return false">Open ↗</a></div>'; }).join('')+body; count+=f.added.length; }
+      const action = cap==='view' ? '<div class="readonly">You can open these, but not add or change them.</div>'
+        : '<button class="addbtn" onclick="event.stopPropagation();DOCS.addDoc(\''+f.k+'\')">+ Add file</button>';
+      return '<div class="folder'+(open?' open':'')+'"><div class="fhead" onclick="DOCS.toggle(\''+f.k+'\')">'+
+        '<span class="car">▶</span><span class="fi">'+f.ic+'</span>'+
+        '<div><div class="fn">'+f.n+'</div><div class="fmeta">'+count+' file'+(count===1?'':'s')+'</div></div>'+
+        '<span class="cap '+cap+'">'+CAPTXT[cap]+'</span></div>'+
+        '<div class="fbody">'+body+action+'</div></div>';
+    }).join('')+'</div>';
+  }
+  function set(id){
+    cur=PERSONAS.find(p=>p.id===id)||PERSONAS[0];
+    try{ localStorage.setItem('ph_viewas',cur.id); }catch(_){}
+    el('persona').value=cur.id;
+    const n=FOLDERS.filter(f=>cur.doc[f.k]).length;
+    el('sub').innerHTML='As <b>'+cur.name+'</b>, you can open <b>'+n+'</b> document folder'+(n===1?'':'s')+'. Click one to see what\'s inside.';
+    renderNav(cur); renderFolders(cur);
+  }
+  function toggle(k){ openK = (openK===k? '' : k); renderFolders(cur); }
+  /* ---- Live two-way sync viewer (click a file) ---- */
+  const SHEET={cols:['Vendor','Category','Status'],rows:[['Henry Schein','Supplies','Active'],['Ortho2','Software','Active'],['Align Tech','Aligners','Review']]};
+  let simStep=0;
+  function paneHTML(side){
+    const label=side==='hub'?'📄 In Practice Hub':'☁ Microsoft drive';
+    const who=side==='hub'?'you':'Anna · in Excel';
+    let t='<table class="sheet"><thead><tr>'+SHEET.cols.map(c=>'<th>'+c+'</th>').join('')+'</tr></thead><tbody>';
+    SHEET.rows.forEach((r,ri)=>{ t+='<tr>'+r.map((v,ci)=>'<td><input data-side="'+side+'" data-r="'+ri+'" data-c="'+ci+'" value="'+String(v).replace(/"/g,'&quot;')+'"></td>').join('')+'</tr>'; });
+    t+='</tbody></table>';
+    return '<div class="pane '+side+'"><div class="pane-h">'+label+'<span class="who">'+who+'</span></div>'+t+'</div>';
+  }
+  function openDoc(name){
+    el('docmodalcard').innerHTML=
+      '<div class="dm-top"><h3>📄 '+name+'</h3><button class="x" onclick="DOCS.closeDoc()">×</button></div>'+
+      '<div class="dm-banner">This is <b>one file</b> with two doors. Edit it here in the hub, or on the Microsoft drive — both stay in sync in real time. Try typing in either side. (Sample contents.)</div>'+
+      '<div class="dm-body"><div class="panes">'+paneHTML('hub')+paneHTML('drive')+'</div></div>'+
+      '<div class="dm-foot"><span class="syncpill" id="syncpill">✓ Synced</span><button class="simbtn" onclick="DOCS.sim()">☁ Someone edits on the drive →</button><span style="flex:1"></span><button class="simbtn" onclick="DOCS.closeDoc()">Close</button></div>';
+    el('docmodal').classList.add('open');
+    el('docmodal').querySelectorAll('table.sheet input').forEach(inp=>inp.addEventListener('input',onCell));
+  }
+  function onCell(e){
+    const inp=e.target, ri=+inp.dataset.r, ci=+inp.dataset.c, side=inp.dataset.side;
+    SHEET.rows[ri][ci]=inp.value;
+    const other=el('docmodal').querySelector('input[data-side="'+(side==='hub'?'drive':'hub')+'"][data-r="'+ri+'"][data-c="'+ci+'"]');
+    if(other){ other.value=inp.value; flash(other); }
+    synced(side==='hub'?'Saved to the drive':'Updated from the drive');
+  }
+  function flash(node){ const td=node.closest('td'); if(td){ td.classList.remove('flash'); void td.offsetWidth; td.classList.add('flash'); } }
+  function synced(msg){ const p=el('syncpill'); if(p)p.textContent='✓ '+(msg||'Synced')+' · just now'; }
+  function sim(){
+    const edits=[[2,2,'Approved'],[0,2,'Active'],[1,1,'Practice software'],[2,0,'Align Technology']];
+    const e=edits[simStep%edits.length]; simStep++;
+    SHEET.rows[e[0]][e[1]]=e[2];
+    ['hub','drive'].forEach(side=>{ const n=el('docmodal').querySelector('input[data-side="'+side+'"][data-r="'+e[0]+'"][data-c="'+e[1]+'"]'); if(n){ n.value=e[2]; if(side==='hub')flash(n); } });
+    synced('Anna edited on the drive');
+  }
+
+  /* ---- Add a document + choose who sees it ---- */
+  const TEAMS=['Office Managers','Clinic Managers','TCs','Doctors','Marketing Team','Financial Coordinator Team','Leadership Team','Staff'];
+  let addCtx=null;
+  function addDoc(k){ addCtx={k,name:'',mode:'everyone',locs:[],teams:[]}; renderAdd(); el('docmodal').classList.add('open'); }
+  function renderAdd(){
+    const f=FOLDERS.find(x=>x.k===addCtx.k);
+    const seg=(m,lab)=>'<button class="simbtn'+(addCtx.mode===m?' on':'')+'" onclick="DOCS.mode(\''+m+'\')">'+lab+'</button>';
+    let picker='';
+    if(addCtx.mode==='location') picker='<div class="pickwrap">'+LOCS.map(l=>'<button class="pchip'+(addCtx.locs.includes(l)?' on':'')+'" onclick="DOCS.tog(\'loc\',\''+l+'\')">'+l+'</button>').join('')+'</div>';
+    else if(addCtx.mode==='team') picker='<div class="pickwrap">'+TEAMS.map(t=>'<button class="pchip'+(addCtx.teams.includes(t)?' on':'')+'" onclick="DOCS.tog(\'team\',\''+t.replace(/'/g,"\\'")+'\')">'+t+'</button>').join('')+'</div>';
+    el('docmodalcard').innerHTML=
+      '<div class="dm-top"><h3>➕ Add a document to '+f.n+'</h3><button class="x" onclick="DOCS.closeDoc()">×</button></div>'+
+      '<div class="dm-banner">Pick the file from your Microsoft drive, then choose <b>who can see it</b>. That\'s the only step — everyone who matches gets it (and a notification); everyone else never sees it.</div>'+
+      '<div class="dm-body">'+
+        '<div class="afield"><label>File</label><div class="filepick">📄 <span id="fileName">'+(addCtx.name||'No file chosen yet…')+'</span><button class="simbtn" onclick="DOCS.pickFile()">Browse drive</button></div></div>'+
+        '<div class="afield"><label>Who can see this?</label><div class="segrow">'+seg('everyone','🌐 Everyone')+seg('location','📍 Specific locations')+seg('team','👥 Specific teams')+'</div>'+picker+'</div>'+
+        '<div class="whobox" id="whobox"></div>'+
+      '</div>'+
+      '<div class="dm-foot"><span style="flex:1"></span><button class="simbtn" onclick="DOCS.closeDoc()">Cancel</button><button class="addbtn" onclick="DOCS.saveDoc()">Add document</button></div>';
+    renderWho();
+  }
+  function mode(m){ addCtx.mode=m; renderAdd(); }
+  function tog(kind,val){ const arr=kind==='loc'?addCtx.locs:addCtx.teams; const i=arr.indexOf(val); if(i>=0)arr.splice(i,1); else arr.push(val); renderAdd(); }
+  function pickFile(){ addCtx.name='New Vendor W-9.pdf'; renderAdd(); }
+  function audLabel(){
+    if(addCtx.mode==='everyone')return '🌐 Everyone';
+    if(addCtx.mode==='location')return addCtx.locs.length?'📍 '+addCtx.locs.join(', '):'📍 (pick locations)';
+    return addCtx.teams.length?'👥 '+addCtx.teams.join(', '):'👥 (pick teams)';
+  }
+  function renderWho(){
+    const b=el('whobox'); if(!b)return; let who;
+    if(addCtx.mode==='everyone') who='<b>Everyone</b> in the practice will see this and be notified.';
+    else if(addCtx.mode==='location') who=addCtx.locs.length?'Only staff at <b>'+addCtx.locs.join(', ')+'</b> will see this.':'Pick one or more <b>locations</b> above.';
+    else who=addCtx.teams.length?'Only members of <b>'+addCtx.teams.join(', ')+'</b> will see this.':'Pick one or more <b>teams</b> above.';
+    b.innerHTML='👁 '+who;
+  }
+  function saveDoc(){
+    const f=FOLDERS.find(x=>x.k===addCtx.k); if(!f.added)f.added=[];
+    f.added.unshift({n:addCtx.name||'New document.pdf', audLabel:audLabel()});
+    openK=addCtx.k; closeDoc(); renderFolders(cur);
+  }
+  function closeDoc(){ el('docmodal').classList.remove('open'); addCtx=null; }
+
+  el('persona').innerHTML=PERSONAS.map(p=>'<option value="'+p.id+'">'+p.name+'</option>').join('');
+  window.DOCS={set,toggle,openDoc,sim,addDoc,mode,tog,pickFile,saveDoc,closeDoc};
+  el('docmodal').addEventListener('click',e=>{if(e.target.id==='docmodal')closeDoc();});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDoc();});
+  let saved='admin'; try{ saved=localStorage.getItem('ph_viewas')||'admin'; }catch(_){}
+  set(saved);
+})();
+</script>
+</body>
+</html>

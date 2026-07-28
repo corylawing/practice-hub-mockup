@@ -47,6 +47,7 @@ docs, schedules, KPIs, and marketing.
 | File | Purpose |
 |---|---|
 | `v1/home.html` | **Logged-in Home** — the daily landing page. "Viewing as ▾" role switcher, personalized section tiles, an "Updates for you" feed, Documents folders. Shows the admin-vs-employee difference. |
+| `v1/documents.html` | **Documents section** — persona-aware folder browser (persona persists via `localStorage.ph_viewas`). Add-a-document flow with audience control (Everyone / locations / teams + "who will see this"). Click a file → live **two-way SharePoint/OneDrive sync** demo (edit in hub ↔ drive). |
 | `v1/index.html` | **KPI Dashboard** — leadership "All Offices" view + per-office drill-down, built on their REAL production data. |
 | `v1/schedule.html` | **Staff Schedule** — weekly board: which office open each day + which doctor where. |
 | `v1/marketing.html` | **Marketing Kanban** — events/social posts move Ideas→Planned→In progress→Done; scored Good/Mixed/Bad. |
@@ -165,6 +166,21 @@ This is the corrected mental model after the friend clarified it:
   the real file on SharePoint/OneDrive. Change it on the drive → shows here + editors notified; update from the hub
   → writes back. One source of truth. Shown via the "opens in SharePoint ↗" hints + the explainer note.
 - Home is the first nav item on every V1 page now.
+
+### 4g. `v1/documents.html` — the Documents section (added 2026-07-28)
+- Reached from Home (nav "Documents" + the Documents tile). Persona-aware: reads/writes
+  `localStorage.ph_viewas` so the "Viewing as" choice **persists across pages** (home + documents
+  both read it). Shows only the folders the persona can access; folders expand to files.
+- **Add a document** (`addDoc`→`renderAdd`→`saveDoc`): pick a file from the drive, then set the
+  **audience** — 🌐 Everyone / 📍 Specific locations (multi-select) / 👥 Specific teams (multi-select) —
+  with a live "who will see this" line. Saved files appear with a 🆕 + audience chip. This is the
+  answer to "how do I control what locations/teams can see?"
+- **Live two-way sync viewer** (`openDoc`/`onCell`/`sim`): click a file → two panes ("In Practice
+  Hub" + "Microsoft drive — Anna in Excel") over one shared data model. Typing in either updates the
+  other instantly; "Someone edits on the drive →" (`sim`) pushes an external change into the hub.
+  Demonstrates that files are one source of truth on SharePoint/OneDrive, not copies.
+- Capabilities gate the UI: `view` personas see files read-only (no Add button); `add`/`edit`/`manage`
+  see "+ Add file".
 
 ### 4e. `v1/tour.js` — guided walkthrough engine
 - `Tour.init(steps, {key})`. Each step `{sel, title, body}`. Builds a pulsing **"👋 Show me around"**
