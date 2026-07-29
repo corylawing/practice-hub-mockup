@@ -6,31 +6,36 @@
 
   // Sample people for the demo. Real names/emails/photos come from Microsoft 365 at go-live;
   // teams & locations are placeholders until the practice sends their real groupings.
+  // REAL people and REAL roles from the practice's User Profile sheet (2026-07-28).
+  // Note many staff hold DUAL roles — that's why `role` can be a combination.
   const PEOPLE=[
-    {id:'admin', first:'Heather', last:'Farnsworth', title:'Practice Administrator',
-     teams:['Admin','Financial Coordinator Team'], loc:'All offices', region:'All', brand:'Group',
+    {id:'admin', first:'Heather', last:'Beal', role:'COO', title:'COO \u00b7 App Administrator',
+     teams:['Admin','Executive Team'], loc:'All offices', region:'All', brand:'Group',
+     mail:'heather@farnsworthorthodontics.com',
      phone:'(575) 555-1002', emp:'E-1002', status:'Active', color:'#25456e', offices:'all',
-     about:'Practice administrator. I keep the production workbook and add new staff to the hub.',
+     about:'COO. I look after the group and I\u2019m the administrator for this hub.',
      can:{dashboard:'manage',production:'manage',schedule:'manage',marketing:'manage',documents:'manage',team:'manage',admin:'manage'}},
-    {id:'om', first:'Karin', last:'Alons', title:'Office Manager · Carlsbad',
-     teams:['Office Managers'], loc:'Carlsbad', region:'NM', brand:'FFO',
+    {id:'om', first:'Lily', last:'Rico', role:'OM / Clinic Lead', title:'Office Manager \u00b7 Carlsbad',
+     teams:['Office Managers','Clinic Managers'], loc:'Carlsbad', region:'NM', brand:'FFO',
+     mail:'lily@farnsworthorthodontics.com',
      phone:'(575) 555-1010', emp:'E-1010', status:'Active', color:'#149B96', offices:['Carlsbad'],
-     about:'Office manager at Carlsbad.',
+     about:'Office manager and clinic lead at Carlsbad.',
      can:{dashboard:'view',production:'edit',schedule:'edit',marketing:'view',documents:'edit',team:'view',admin:'none'}},
-    {id:'doctor', first:'Carla', last:'Coehlo', title:'Doctor · rotates offices', dr:true,
-     teams:['Doctors'], loc:'Carlsbad, Hobbs', region:'NM', brand:'FFO',
+    {id:'doctor', first:'Carla', last:'Coehlo', role:'Associate Doctor', title:'Associate Doctor \u00b7 rotates', dr:true,
+     teams:['Doctors'], loc:'Rotates', region:'NM', brand:'FFO',
      phone:'(575) 555-1020', emp:'E-1020', status:'Active', color:'#6b3fd0', offices:['Carlsbad','Hobbs'],
-     about:'Orthodontist. I rotate between the New Mexico offices.',
+     about:'Associate doctor. I rotate between offices.',
      can:{dashboard:'view',production:'none',schedule:'view',marketing:'none',documents:'view',team:'view',admin:'none'}},
-    {id:'tc', first:'Lily', last:'Rico', title:'Treatment Coordinator · Carlsbad',
-     teams:['TCs'], loc:'Carlsbad', region:'NM', brand:'FFO',
-     phone:'(575) 555-1030', emp:'E-1030', status:'Active', color:'#946011', offices:['Carlsbad'],
-     about:'Treatment coordinator at Carlsbad.',
+    {id:'tc', first:'Elizabeth', last:'Reyes', role:'TC', title:'Treatment Coordinator \u00b7 Hobbs',
+     teams:['TCs'], loc:'Hobbs', region:'NM', brand:'FFO',
+     mail:'liz@farnsworthorthodontics.com',
+     phone:'(575) 555-1030', emp:'E-1030', status:'Active', color:'#946011', offices:['Hobbs'],
+     about:'Treatment coordinator at Hobbs.',
      can:{dashboard:'none',production:'none',schedule:'view',marketing:'none',documents:'add',team:'view',admin:'none'}},
-    {id:'staff', first:'Serenity', last:'Gonzales', title:'Front Desk · Carlsbad',
+    {id:'staff', first:'Serenity', last:'Gonzales', role:'Clinical Assistant', title:'Clinical Assistant \u00b7 Carlsbad',
      teams:['Staff'], loc:'Carlsbad', region:'NM', brand:'FFO',
      phone:'(575) 555-1055', emp:'E-1055', status:'Active', color:'#b03a63', offices:['Carlsbad'],
-     about:'Front desk at Carlsbad.',
+     about:'Clinical assistant at Carlsbad.',
      can:{dashboard:'none',production:'none',schedule:'view',marketing:'none',documents:'view',team:'view',admin:'none'}}
   ];
   const COLORS=['#25456e','#149B96','#6b3fd0','#946011','#b03a63','#2E7D52','#1f6f9e','#b0442f'];
@@ -46,13 +51,21 @@
     const k='ph_me_'+id(); let cur={}; try{ cur=JSON.parse(localStorage.getItem(k))||{}; }catch(_){}
     try{ localStorage.setItem(k,JSON.stringify(Object.assign(cur,patch))); }catch(_){}
   }
-  const name=p=>((p.dr?'Dr. ':'')+p.first+' '+p.last);
-  const initials=p=>(p.first[0]+p.last[0]).toUpperCase();
-  const email=p=>(p.first[0]+p.last).toLowerCase().replace(/[^a-z]/g,'')+'@farnsworthorthodontics.com';
+  const name=p=>((p.dr?'Dr. ':'')+(p.preferred||p.first)+' '+p.last);
+  const initialsOf=p=>((p.preferred||p.first)[0]+p.last[0]).toUpperCase();
+  const initials=p=>((p.preferred||p.first)[0]+(p.last[0]||'')).toUpperCase();
+  const email=p=>p.mail||((p.first[0]+p.last).toLowerCase().replace(/[^a-z]/g,'')+'@farnsworthorthodontics.com');
   function can(section){ const c=me().can||{}; return c[section]||'none'; }
   function atLeast(section,lvl){ return RANK[can(section)]>=RANK[lvl]; }
   function offices(){ return me().offices; }
-  function setMe(v){ try{ localStorage.setItem('ph_viewas',v); }catch(_){} location.reload(); }
+  function setMe(v){
+    try{ localStorage.setItem('ph_viewas',v); }catch(_){}
+    // If the person we just became can't open this page, don't leave them staring at it.
+    const file=(location.pathname.split('/').pop()||'home.html');
+    const entry=NAV.find(x=>x.href===file);
+    if(entry && !entry.show()){ location.assign('home.html'); return; }
+    location.reload();
+  }
 
   const css=`
   .ph-av{margin-left:auto;display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.18);
@@ -96,6 +109,13 @@
   .ph-edit:focus{outline:2px solid #149B96;border-color:#149B96}
   textarea.ph-edit{min-height:74px;resize:vertical}
   .ph-pick{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+  .ph-photo{display:flex;align-items:center;gap:14px;flex-wrap:wrap;border:2px dashed #dbe2ea;border-radius:14px;padding:14px;background:#fafbfc;transition:border-color .15s,background .15s}
+  .ph-photo.over{border-color:#149B96;background:#E5F4F3}
+  .ph-face{width:66px;height:66px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;font-size:23px;flex:none}
+  .ph-photo-txt{flex:1;min-width:150px;display:flex;flex-direction:column}
+  .ph-photo-txt b{font-size:13.5px;color:#0F2A4A}
+  .ph-photo-txt span{font-size:12px;color:#56627A}
+  .ph-photo-btns{display:flex;gap:8px;flex-wrap:wrap}
   .ph-sw{width:30px;height:30px;border-radius:50%;border:2px solid transparent;cursor:pointer}
   .ph-sw.on{border-color:#0F2A4A}
   .ph-note{background:#E5F4F3;border:1px solid #c4e6e3;border-radius:10px;padding:11px 14px;font-size:12.5px;color:#0c5b57;line-height:1.5}
@@ -122,7 +142,7 @@
       '<button onclick="PH.profile()">👤 My profile</button>'+
       '<div class="sec">Demo — sign in as</div>'+
       PEOPLE.map(x=>'<button class="'+(x.id===p.id?'cur':'')+'" onclick="PH.setMe(\''+x.id+'\')">'+
-        '<span class="cir" style="width:22px;height:22px;font-size:10px;background:'+x.color+'">'+initials(x)+'</span>'+
+        '<span class="cir" style="width:22px;height:22px;font-size:10px;'+faceStyle(x.id===p.id?p:x)+'">'+face(x.id===p.id?p:x)+'</span>'+
         x.title.split(' · ')[0]+(x.id===p.id?'<span class="ck">✓</span>':'')+'</button>').join('');
     document.body.appendChild(menu);
     const r=anchor.getBoundingClientRect(), m=menu.getBoundingClientRect();
@@ -130,11 +150,14 @@
     menu.style.left=Math.max(8,Math.min(r.right-m.width,window.innerWidth-m.width-8))+'px';
   }
 
+  // one place that draws a person's picture: their uploaded photo if there is one, else initials
+  function faceStyle(p){ return p.photo ? 'background-image:url('+p.photo+');background-size:cover;background-position:center' : 'background:'+p.color; }
+  function face(p){ return p.photo ? '' : initials(p); }
   function mount(){
     const bar=document.querySelector('.hdr-in'); if(!bar||bar.querySelector('.ph-av'))return;
     const p=me();
     const b=document.createElement('button'); b.className='ph-av';
-    b.innerHTML='<span class="cir" style="background:'+p.color+'">'+initials(p)+'</span>'+
+    b.innerHTML='<span class="cir" style="'+faceStyle(p)+'">'+face(p)+'</span>'+
       '<span class="who"><b>'+name(p)+'</b><small>'+p.title.split(' · ')[0]+'</small></span><span class="car">▼</span>';
     b.onclick=e=>{e.stopPropagation(); menu?closeMenu():openMenu(b);};
     bar.appendChild(b);
@@ -151,32 +174,82 @@
     closeMenu(); const p=me();
     const ro=(l,v)=>'<div class="ph-f"><label>'+l+'</label><div class="ph-ro">'+(v||'—')+'</div></div>';
     document.getElementById('ph-card').innerHTML=
-      '<div class="ph-top"><span class="big" style="background:'+p.color+'">'+initials(p)+'</span>'+
+      '<div class="ph-top"><span class="big" style="'+faceStyle(p)+'">'+face(p)+'</span>'+
         '<div><h3>'+name(p)+'</h3><div class="t">'+p.title+'</div></div>'+
         '<button class="x" onclick="PH.closeProfile()">×</button></div>'+
       '<div class="ph-body">'+
         '<p class="ph-lab">You can change these <span class="ph-tag you">YOURS TO EDIT</span></p>'+
-        '<div class="ph-f" style="margin-bottom:14px"><label>Photo</label>'+
-          '<div class="ph-pick">'+COLORS.map(c=>'<button class="ph-sw'+(c===p.color?' on':'')+'" style="background:'+c+'" onclick="PH.setColor(\''+c+'\')" title="Use this colour"></button>').join('')+
-          '<span style="font-size:12px;color:#56627A;margin-left:4px">Upload a photo, or pick a colour for your initials.</span></div></div>'+
+        '<div class="ph-f" style="margin-bottom:16px"><label>Photo</label>'+
+          '<div class="ph-photo" id="ph-drop">'+
+            '<span class="ph-face" style="'+faceStyle(p)+'">'+face(p)+'</span>'+
+            '<div class="ph-photo-txt"><b>'+(p.photo?'Your photo':'No photo yet')+'</b>'+
+              '<span>Drag a picture here, or choose one from your device \u2014 JPG or PNG.</span></div>'+
+            '<div class="ph-photo-btns">'+
+              '<button class="ph-btn" onclick="document.getElementById(\'ph-file\').click()">'+(p.photo?'Change photo':'Choose photo')+'</button>'+
+              (p.photo?'<button class="ph-btn g" onclick="PH.clearPhoto()">Remove</button>':'')+
+            '</div>'+
+            '<input type="file" id="ph-file" accept="image/*" style="display:none" onchange="PH.pickPhoto(this)">'+
+          '</div>'+
+          (p.photo?'':'<div class="ph-pick" style="margin-top:10px"><span style="font-size:12px;color:#56627A">No photo? Pick a colour for your initials:</span>'+
+            COLORS.map(c=>'<button class="ph-sw'+(c===p.color?' on':'')+'" style="background:'+c+'" onclick="PH.setColor(\''+c+'\')" title="Use this colour"></button>').join('')+'</div>')+
+        '</div>'+
+        '<div class="ph-f" style="margin-bottom:14px"><label>Preferred name</label>'+
+          '<input class="ph-edit" id="ph-pref" value="'+((p.preferred||'')).replace(/"/g,'&quot;')+'" placeholder="'+p.first+'">'+
+          '<div style="font-size:11.5px;color:#56627A;margin-top:4px">What you\u2019d like to be called \u2014 this is the name your team sees. Leave blank to use \u201c'+p.first+'\u201d.</div></div>'+
+        '<div class="ph-f" style="margin-bottom:14px"><label>Contact phone</label>'+
+          '<input class="ph-edit" id="ph-phone" value="'+(p.phone||'').replace(/"/g,'&quot;')+'" placeholder="(575) 555-0000">'+
+          '<div style="font-size:11.5px;color:#56627A;margin-top:4px">Microsoft doesn\'t hold this — keep it current so your team can reach you.</div></div>'+
         '<div class="ph-f" style="margin-bottom:18px"><label>About me</label>'+
           '<textarea class="ph-edit" id="ph-about" placeholder="A line about what you do…">'+(p.about||'')+'</textarea></div>'+
         '<p class="ph-lab">From Microsoft 365 <span class="ph-tag ms">SYNCED — CAN\'T EDIT HERE</span></p>'+
-        '<div class="ph-g">'+ro('First name',p.first)+ro('Last name',p.last)+ro('Email',email(p))+ro('Phone',p.phone)+ro('Employee ID',p.emp)+'</div>'+
+        '<div class="ph-g">'+ro('First name',p.first)+ro('Last name',p.last)+ro('Email',email(p))+ro('Employee ID',p.emp)+'</div>'+
         '<p class="ph-lab">Set by your admin <span class="ph-tag adm">ADMIN ONLY</span></p>'+
-        '<div class="ph-g">'+ro('Team(s)',p.teams.join(', '))+ro('Location(s)',p.loc)+ro('Region',p.region)+ro('Brand',p.brand)+ro('Status',p.status)+'</div>'+
-        '<div class="ph-note"><b>Why some boxes are locked:</b> your name, email and phone come straight from Microsoft, so they only change there. Your team, location and status decide what you can open — only an admin can change those. Your <b>photo</b> and <b>About me</b> are yours.</div>'+
+        '<div class="ph-g">'+ro('Role(s)',p.role||'\u2014')+ro('Team(s)',p.teams.join(', '))+ro('Location(s)',p.loc)+ro('Region',p.region)+ro('Brand',p.brand)+ro('Status',p.status)+'</div>'+
+        '<div class="ph-note"><b>Why some boxes are locked:</b> your name and email come straight from Microsoft, so they only change there. Your team, location and status decide what you can open — only an admin can change those. Your <b>photo</b>, <b>phone</b> and <b>About me</b> are yours to keep current.</div>'+
       '</div>'+
       '<div class="ph-foot"><span class="ph-ok" id="ph-ok">✓ Saved</span><span style="flex:1"></span>'+
         '<button class="ph-btn g" onclick="PH.closeProfile()">Close</button>'+
         '<button class="ph-btn" onclick="PH.saveProfile()">Save my changes</button></div>';
     document.getElementById('ph-ov').classList.add('open');
+    wireDrop();
+  }
+  function pickPhoto(input){ const f=input.files&&input.files[0]; if(f) readPhoto(f); }
+  function readPhoto(file){
+    if(!/^image\//.test(file.type)) return;
+    const r=new FileReader();
+    r.onload=e=>{
+      const img=new Image();
+      img.onload=()=>{ // shrink to a sensible avatar so it fits in storage
+        const S=256, c=document.createElement('canvas'); c.width=S; c.height=S;
+        const g=c.getContext('2d'), m=Math.min(img.width,img.height);
+        g.drawImage(img,(img.width-m)/2,(img.height-m)/2,m,m,0,0,S,S);
+        saveMine({photo:c.toDataURL('image/jpeg',0.82)});
+        profile(); refreshFaces();
+      };
+      img.src=e.target.result;
+    };
+    r.readAsDataURL(file);
+  }
+  function clearPhoto(){ saveMine({photo:null}); profile(); refreshFaces(); }
+  function refreshFaces(){ const p=me(); const a=document.querySelector('.ph-av .cir');
+    if(a){ a.setAttribute('style',faceStyle(p)); a.textContent=face(p); }
+    document.dispatchEvent(new CustomEvent('ph:me-changed')); }
+  function wireDrop(){
+    const d=document.getElementById('ph-drop'); if(!d)return;
+    ['dragenter','dragover'].forEach(t=>d.addEventListener(t,e=>{e.preventDefault();d.classList.add('over');}));
+    ['dragleave','drop'].forEach(t=>d.addEventListener(t,e=>{e.preventDefault();d.classList.remove('over');}));
+    d.addEventListener('drop',e=>{ const f=e.dataTransfer.files&&e.dataTransfer.files[0]; if(f)readPhoto(f); });
   }
   function setColor(c){ saveMine({color:c}); profile();
     const av=document.querySelector('.ph-av .cir'); if(av)av.style.background=c; }
   function saveProfile(){
-    const t=document.getElementById('ph-about');
-    saveMine({about:t?t.value:''});
+    const t=document.getElementById('ph-about'), ph=document.getElementById('ph-phone'), pr=document.getElementById('ph-pref');
+    const patch={about:t?t.value:''};
+    if(ph) patch.phone=ph.value.trim();
+    if(pr) patch.preferred=pr.value.trim();
+    saveMine(patch);
+    refreshFaces();
+    const av=document.querySelector('.ph-av .who b'); if(av) av.textContent=name(me());
     const ok=document.getElementById('ph-ok'); if(ok){ok.classList.add('on'); setTimeout(()=>ok.classList.remove('on'),2200);}
   }
   function closeProfile(){ const o=document.getElementById('ph-ov'); if(o)o.classList.remove('open'); }
@@ -207,6 +280,6 @@
     host.insertBefore(d,host.firstChild);
   }
 
-  window.PH={PEOPLE,me,name,initials,email,can,atLeast,offices,setMe,mount,nav,NAV,profile,saveProfile,setColor,closeProfile,readOnlyBanner};
+  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,setMe,mount,nav,NAV,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner};
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mount); else mount();
 })();

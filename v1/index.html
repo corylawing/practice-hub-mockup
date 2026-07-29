@@ -100,6 +100,13 @@
   .pbar i.b{background:var(--bad)} .pbar i.a{background:var(--amber)}
   .num{font-weight:700} .num.g{color:var(--good)} .num.b{color:var(--bad)}
   .dleft{font-weight:700;color:var(--navy)}
+  .periodbar{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin:4px 0 6px}
+  .pchip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 15px;font-size:13.5px;font-weight:700;color:var(--navy);cursor:pointer;font-family:inherit;box-shadow:var(--shadow)}
+  .pchip:hover{border-color:var(--teal);color:var(--teal-600)}
+  .pchip.on{background:var(--teal);color:#fff;border-color:var(--teal)}
+  .pchip.sm{padding:6px 12px;font-size:12.5px;box-shadow:none}
+  .phint{font-size:12.5px;color:var(--soft)}
+  .charttog{display:flex;gap:6px;margin-bottom:12px}
   .secttl{font-size:19px;color:var(--navy);margin:26px 0 2px}
   .secttl:first-of-type{margin-top:8px}
   .secsub{font-size:13.5px;color:var(--soft);margin:0 0 14px}
@@ -227,14 +234,21 @@ const OFFICES=[
   const NAVSECS=[{k:'schedule',n:'📅 Schedule',href:'schedule.html'},{k:'marketing',n:'📣 Marketing',href:'marketing.html'}];
   const el=id=>document.getElementById(id);
   let cur=PERSONAS[0], sel='ALL', allowed=[];
+  let period='mtd';      // their ask: default to MTD, with a toggle to the year
+  let chartMode='starts'; // their ask: one chart at the bottom, toggled starts <-> production
 
   // a month counts once it has BOTH an actual and a goal (Mansfield has actuals from Jan but goals only from Apr)
   const live=o=>{const a=[];for(let i=0;i<12;i++)if(o.act[i]>0&&o.goal[i]>0)a.push(i);return a;};
   const sum=(arr,idx)=>idx.reduce((s,i)=>s+arr[i],0);
+  function months(o){ const L=live(o); return period==='mtd' ? (L.length?[L[L.length-1]]:[]) : L; }
+  const monthName=o=>{ const L=live(o); return L.length?MO[L[L.length-1]]:''; };
   function stats(o){
-    const L=live(o);
+    const L=months(o);
     const a=sum(o.act,L), g=sum(o.goal,L), s=sum(o.stretch,L), l=sum(o.ly,L);
+    const schd = period==='mtd' ? L.reduce((x,i)=>x+o.days[i],0) : o.days.reduce((x,y)=>x+y,0);
+    const comp = L.reduce((x,i)=>x+o.done[i],0);
     return {L,a,g,s,l,pct:g?a/g:0,spct:s?a/s:0,yoy:l?a/l:0,vgoal:a-g,vstretch:a-s,
+            sched:schd, done:comp,
             daysLeft:o.days.reduce((x,y)=>x+y,0)-o.done.reduce((x,y)=>x+y,0)};
   }
   function group(list){
@@ -266,7 +280,7 @@ const OFFICES=[
     '</div>';
   }
   function sStats(o){
-    const L=live(o); // same reported months as production
+    const L=months(o);
     const sa=o.sAct||[], sg=o.sGoal||[];
     const a=L.reduce((x,i)=>x+(sa[i]||0),0), g=L.reduce((x,i)=>x+(sg[i]||0),0);
     const days=L.reduce((x,i)=>x+(o.done[i]||0),0);
@@ -296,12 +310,30 @@ const OFFICES=[
         '<div class="bar ab '+(a>=g?'over':'under')+'" style="height:'+h(a)+'%;width:56%" data-t="'+MO[i]+': '+Math.round(a)+' starts \u00b7 goal '+Math.round(g)+'"></div>'+
         '</div><div class="molab">'+MO[i]+'</div></div>';
     }).join('');
-    return '<div class="card"><h2>Starts month by month</h2>'+
+    return '<div class="card" id="bottomchart"><h2>Starts month by month</h2>'+
       '<div class="sub">Bars are starts; the <b>dashed line</b> is that month\u2019s starts goal.</div>'+
+      chartToggle()+
       '<div class="legend"><span><i class="sw" style="background:var(--good)"></i> At/above goal</span>'+
         '<span><i class="sw" style="background:var(--bad)"></i> Under goal</span>'+
         '<span><i class="swline"></i> Starts goal</span></div>'+
       '<div class="chartwrap"><div class="chart">'+cols+'</div></div></div>';
+  }
+  function periodBar(o){
+    const nm=monthName(o);
+    const b=(v,lab)=>'<button class="pchip'+(period===v?' on':'')+'" onclick="DASH.period(\''+v+'\')">'+lab+'</button>';
+    return '<div class="periodbar">'+b('mtd','This month'+(nm?' \u00b7 '+nm:''))+b('ytd','Year to date')+
+      '<span class="phint">'+(period==='mtd'?'Showing '+(nm||'the latest month')+' only.':'Showing every month reported so far.')+'</span></div>';
+  }
+  function daysTiles(o){
+    const t=stats(o); const pctDone=t.sched?Math.round(t.done/t.sched*100):0;
+    return '<div class="kpis" style="margin-top:14px">'+
+      '<div class="kpi n"><div class="k">Production days scheduled</div><div class="v">'+t.sched+'</div>'+
+        '<div class="s">'+(period==='mtd'?'this month':'for the whole year')+'</div></div>'+
+      '<div class="kpi"><div class="k">Production days completed</div><div class="v">'+t.done+'</div>'+
+        '<div class="s">'+pctDone+'% of scheduled</div></div>'+
+      '<div class="kpi"><div class="k">Production days left</div><div class="v">'+t.daysLeft+'</div>'+
+        '<div class="s">remaining this year</div></div>'+
+    '</div>';
   }
   function chart(o){
     const L=live(o); if(!L.length) return '';
@@ -317,13 +349,18 @@ const OFFICES=[
         '<div class="bar ab '+cls+'" style="height:'+h(o.act[i])+'%" data-t="'+MO[i]+' 2026: '+full(o.act[i])+' · main goal '+full(o.goal[i])+' · stretch '+full(o.stretch[i])+'"></div>'+
         '</div><div class="molab">'+MO[i]+'</div></div>';
     }).join('');
-    return '<div class="card"><h2>Month by month</h2>'+
+    return '<div class="card" id="bottomchart"><h2>Month by month</h2>'+
       '<div class="sub">Last year next to this year, with both goal lines. Green = beat the main goal, red = under.</div>'+
+      chartToggle()+
       '<div class="legend"><span><i class="sw" style="background:var(--ly)"></i> Last year (2025)</span>'+
         '<span><i class="sw" style="background:var(--good)"></i> 2026 at/above goal</span>'+
         '<span><i class="sw" style="background:var(--bad)"></i> 2026 under goal</span>'+
         '<span><i class="swline"></i> Main goal</span><span><i class="swdot"></i> Stretch goal</span></div>'+
       '<div class="chartwrap"><div class="chart">'+cols+'</div></div></div>';
+  }
+  function chartToggle(){
+    const b=(v,lab)=>'<button class="pchip sm'+(chartMode===v?' on':'')+'" onclick="DASH.chart(\''+v+'\')">'+lab+'</button>';
+    return '<div class="charttog">'+b('starts','\ud83e\uddb7 Starts')+b('production','\ud83d\udcb0 Production')+'</div>';
   }
   function leaderboard(list){
     const rows=list.map(o=>({o,t:stats(o),s:sStats(o)})).sort((x,y)=>y.s.pct-x.s.pct);
@@ -365,11 +402,14 @@ const OFFICES=[
       : '';
     const isAll = multi && sel==='ALL';
     const o = isAll ? group(allowed) : allowed.find(x=>x.n===sel);
-    let html =
+    let html = periodBar(o)+
       '<h2 class="secttl">\ud83e\uddb7 Starts</h2><p class="secsub">New patients started \u2014 the front end of production.</p>'+
-      startsKpis(o) + startsChart(o) +
+      startsKpis(o) +
       '<h2 class="secttl">\ud83d\udcb0 Production</h2><p class="secsub">Dollars produced against the main and stretch goals.</p>'+
-      kpis(o) + chart(o);
+      kpis(o) +
+      '<h2 class="secttl">\ud83d\udcc6 Production days</h2><p class="secsub">How much of the '+(period==='mtd'?'month':'year')+' has actually been worked.</p>'+
+      daysTiles(o) +
+      (chartMode==='starts'? startsChart(o) : chart(o));
     if(isAll) html += leaderboard(allowed);
     html += '<div class="foot"><b>Where these numbers come from:</b> the practice\'s 2026 Production Dashboard workbook on SharePoint — the hub reads it live, so there is no second copy to keep in sync. A month counts once it has <b>both</b> an actual and a goal (Mansfield has production from January but goals from April).<br><br><b>Heads up on the workbook:</b> the “Dashboard” tab\'s 2026 total shows <b>+$449,954</b> vs goal, but adding the eight offices gives <b>+$406,663</b> — the total formula skips Mansfield (−$43,935). The hub adds every office every time.</div>';
     el('view').innerHTML = html;
@@ -393,7 +433,7 @@ const OFFICES=[
     render();
   }
   el('persona').innerHTML=PERSONAS.map(p=>'<option value="'+p.id+'">'+p.name+'</option>').join('');
-  window.DASH={set,pick};
+  window.DASH={set,pick,period:v=>{period=v;render();},chart:v=>{chartMode=v;render();}};
   let saved='admin'; try{ saved=localStorage.getItem('ph_viewas')||'admin'; }catch(_){}
   if(!PERSONAS.some(p=>p.id===saved)) saved='admin';
   set(saved);

@@ -240,7 +240,7 @@
   function renderFolders(p){
     const accessible=accessibleSections(p);
     if(!accessible.length){ el('folders').innerHTML='<div class="empty">No document folders are shared with this role yet. An admin grants access in the Admin console.</div>'; return; }
-    if(openSet===null) openSet=new Set(accessible.map(e=>e.f.k)); // everything open by default
+    if(openSet===null) openSet=new Set(); // start collapsed — the user opens what they need
     el('folders').innerHTML='<div class="folders">'+accessible.map(entry=>{
       const f=entry.f, cap=entry.cap, open=openSet.has(f.k);
       let count=0, body='';
@@ -270,7 +270,7 @@
     try{ localStorage.setItem('ph_viewas',cur.id); }catch(_){}
     el('persona').value=cur.id;
     const n=accessibleSections(cur).length;
-    el('sub').innerHTML='As <b>'+cur.name+'</b>, you can open <b>'+n+'</b> document folder'+(n===1?'':'s')+'. Click one to see what\'s inside.';
+    el('sub').innerHTML='As <b>'+cur.name+'</b>, you can open <b>'+n+'</b> document folder'+(n===1?'':'s')+'. Tap one to open it.';
     PH.nav('documents'); renderFolders(cur);
   }
   function toggle(k){ if(!openSet)openSet=new Set(); if(openSet.has(k))openSet.delete(k); else openSet.add(k); renderFolders(cur); }

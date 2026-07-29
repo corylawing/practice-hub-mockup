@@ -90,46 +90,100 @@
   <div class="filters" id="filters"></div>
   <div class="count" id="count"></div>
   <div id="grid"></div>
-  <div class="note"><b>Where this comes from:</b> names, photos, emails and phone numbers come straight from <b>Microsoft 365</b> — nobody maintains this list by hand. Each person controls their own <b>photo</b> and <b>“About me”</b> from their profile; their <b>team, office and role</b> are set by an admin. <b>Roles and offices below are placeholders</b> until the practice confirms who sits where.</div>
+  <div class="note"><b>Where this comes from:</b> names, photos, emails and phone numbers come straight from <b>Microsoft 365</b> — nobody maintains this list by hand. Each person controls their own <b>photo</b> and <b>“About me”</b> from their profile; their <b>team, office and role</b> are set by an admin. <b>Roles, offices and brands are the practice\u2019s real data.</b> Emails marked <b>sample</b> and all phone numbers are placeholders until Microsoft accounts exist.</div>
 </div>
 
 <script>
 (function(){
   const PAL=['#149B96','#25456e','#946011','#6b3fd0','#b03a63','#2E7D52','#1f6f9e','#b0442f'];
-  const OFFICES=['Carlsbad','Clovis','Hobbs','Cruces LCO','Cruces FFO','Lubbock','San Angelo','Mansfield'];
-  const DOCTORS=['Dr. Carla Coehlo','Dr. Susan McBeth','Dr. David Farnsworth','Dr. Jae Brimhall'];
-  // Real staff roster. Doctors are tagged; everyone else is "Team member" until the practice
-  // tells us the real roles — we don't invent titles for real people.
-  const ROSTER=[
-    'Alexandra (Lexi) Espinosa','Cyndal Gomez','Serenity Gonzales','Keyly Moran','Tayler Nesbit',
-    'Jennifer Peters','Lily Rico','Alyssa Smith','Macayla Villegas','Mia Armenta','Pamela Hernandez',
-    'Linda Herrera','Lucero Holguin','Hannah Lanier','Melissa Medina','Maria Pando','Elizabeth Reyes',
-    'Yessenia Romaniz','Dr. Carla Coehlo','Rebecca Fluhman','Shayna Garza','Melissa Hernandez',
-    'Elizabeth James','Lluvia Lujan','Karen Qualls','Patricia Tidwell','Dr. Susan McBeth',
-    'Monika Flores-Aleman','Maria Honorato','Yulissa Martinez','Ashley Rodriguez','Latricia Sanchez',
-    'Idaly Tarango','Rebekah White','Cacy Briseno','Lyndsey Dunn','Klorissa Garcia',
-    'Alicyn "Haley" Gossett','Elizabeth "Liz" Guerrero','Samantha Molina','Arianna Peacock',
-    'Melinda Tavarez','Amanda Vasquez','Heather Beal','Selene Brown','Jessica Lynch','Brenda Garcia',
-    'Kandace Lain','Erika Munoz','Kim Partee','Noemi Sanchez Torres','Tierney Whitesel','Sirena Zamudio',
-    'Karin Alons','Suzy Brown','Michelle Eichleberger','Melissa Elliott','Cindy Peterson','Roma Powell',
-    'Yvonne Avalos','Yessenia Flores','Maria Hinojos','Erica Martinez','Anette Olvera','Tara Pacini',
-    'Joemily Prieto','Melissa Villalva','Jenny Whitefield','Dr. David Farnsworth','Dr. Jae Brimhall'
+  const STAFF=[
+   {n:"Alexandra (Lexi) Espinosa",mail:"",loc:"Carlsbad",st:"NM",brand:"FFO",role:"Clinical Asst",team:"Staff"},
+   {n:"Cyndal Gomez",mail:"",loc:"Carlsbad",st:"NM",brand:"FFO",role:"Clinical Asst",team:"Staff"},
+   {n:"Serenity Gonzales",mail:"",loc:"Carlsbad",st:"NM",brand:"FFO",role:"Clinical Asst",team:"Staff"},
+   {n:"Keyly Moran",mail:"",loc:"Carlsbad",st:"NM",brand:"FFO",role:"Front Desk",team:"Staff"},
+   {n:"Tayler Nesbit",mail:"",loc:"Carlsbad",st:"NM",brand:"FFO",role:"Clinical Asst",team:"Staff"},
+   {n:"Jennifer Peters",mail:"jennifer@farnsworthorthodontics.com",loc:"Carlsbad",st:"NM",brand:"FFO",role:"TC/Financial Coord",team:"Staff"},
+   {n:"Lily Rico",mail:"lily@farnsworthorthodontics.com",loc:"Carlsbad",st:"NM",brand:"FFO",role:"OM/Clinic Lead",team:"Staff"},
+   {n:"Alyssa Smith",mail:"",loc:"Carlsbad",st:"NM",brand:"FFO",role:"Clinical Asst/Mktg Liason",team:"Staff"},
+   {n:"Macayla Villegas",mail:"",loc:"Carlsbad",st:"NM",brand:"FFO",role:"Clinical Asst",team:"Staff"},
+   {n:"Mia Armenta",mail:"",loc:"Hobbs",st:"NM",brand:"FFO",role:"Clinical Asst",team:"Staff"},
+   {n:"Pamela Hernandez",mail:"",loc:"Hobbs",st:"NM",brand:"FFO",role:"Clinic Lead",team:"Staff"},
+   {n:"Linda Herrera",mail:"",loc:"Hobbs",st:"NM",brand:"FFO",role:"Clinical Asst",team:"Staff"},
+   {n:"Lucero Holguin",mail:"",loc:"Hobbs",st:"NM",brand:"FFO",role:"Front Desk/Mrkg Liason",team:"Staff"},
+   {n:"Hannah Lanier",mail:"",loc:"Hobbs",st:"NM",brand:"FFO",role:"Clinical Asst",team:"Staff"},
+   {n:"Melissa Medina",mail:"",loc:"Hobbs",st:"NM",brand:"FFO",role:"Front Desk/Mktg Liason",team:"Staff"},
+   {n:"Maria Pando",mail:"",loc:"Hobbs",st:"NM",brand:"FFO",role:"Clinical Asst",team:"Staff"},
+   {n:"Elizabeth Reyes",mail:"liz@farnsworthorthodontics.com",loc:"Hobbs",st:"NM",brand:"FFO",role:"TC",team:"Staff"},
+   {n:"Yessenia Romaniz",mail:"yessenia@farnsworthorthodontics.com",loc:"Hobbs",st:"NM",brand:"FFO",role:"OM/Clincal Asst",team:"Staff"},
+   {n:"Dr. Carla Coehlo",mail:"",loc:"",st:"",brand:"",role:"Associate Doctor",team:"Staff"},
+   {n:"Rebecca Fluhman",mail:"becca@farnsworthorthodontics.com",loc:"Lubbock",st:"TX",brand:"FFO",role:"OM/TC",team:"Staff"},
+   {n:"Shayna Garza",mail:"",loc:"Lubbock",st:"TX",brand:"FFO",role:"Clinic Lead",team:"Staff"},
+   {n:"Melissa Hernandez",mail:"",loc:"Lubbock",st:"TX",brand:"FFO",role:"Clinical Asst",team:"Staff"},
+   {n:"Elizabeth James",mail:"",loc:"Lubbock",st:"TX",brand:"FFO",role:"Front Desk",team:"Staff"},
+   {n:"Lluvia Lujan",mail:"",loc:"Lubbock",st:"TX",brand:"FFO",role:"Clinical Asst/Mktg Liason",team:"Staff"},
+   {n:"Karen Qualls",mail:"karen@farnsworthorthodontics.com",loc:"Lubbock",st:"TX",brand:"FFO",role:"Financial Coord/Front Desk",team:"Staff"},
+   {n:"Patricia Tidwell",mail:"",loc:"Lubbock",st:"TX",brand:"FFO",role:"Clinical Asst",team:"Staff"},
+   {n:"Dr. Susan McBeth",mail:"drmcbeth@ffortho.com",loc:"",st:"",brand:"",role:"Associate Doctor",team:"Staff"},
+   {n:"Monika Flores-Aleman",mail:"",loc:"Clovis",st:"NM",brand:"FFO",role:"Clinic Lead",team:"Staff"},
+   {n:"Maria Honorato",mail:"",loc:"Clovis",st:"NM",brand:"FFO",role:"Front Desk",team:"Staff"},
+   {n:"Yulissa Martinez",mail:"",loc:"Clovis",st:"NM",brand:"FFO",role:"Clinical Asst",team:"Staff"},
+   {n:"Ashley Rodriguez",mail:"",loc:"Clovis",st:"NM",brand:"FFO",role:"Clinical Asst",team:"Staff"},
+   {n:"Latricia Sanchez",mail:"latricia@farnsworthorthodontics.com",loc:"Clovis",st:"NM",brand:"FFO",role:"OM/TC/Financial Coord",team:"Staff"},
+   {n:"Idaly Tarango",mail:"",loc:"Clovis",st:"NM",brand:"FFO",role:"Front Desk",team:"Staff"},
+   {n:"Rebekah White",mail:"",loc:"Clovis",st:"NM",brand:"FFO",role:"Clinical Asst/Mktg Liason",team:"Staff"},
+   {n:"Cacy Briseno",mail:"",loc:"San Angelo",st:"TX",brand:"FFO",role:"Front Desk",team:"Staff"},
+   {n:"Lyndsey Dunn",mail:"",loc:"San Angelo",st:"TX",brand:"FFO",role:"Clinical Asst",team:"Staff"},
+   {n:"Klorissa Garcia",mail:"",loc:"San Angelo",st:"TX",brand:"FFO",role:"Clinic Lead",team:"Staff"},
+   {n:"Alicyn \"Haley\" Gossett",mail:"haley@farnsworthorthodontics.com",loc:"San Angelo",st:"TX",brand:"FFO",role:"OM/Clinical Asst",team:"Staff"},
+   {n:"Elizabeth \"Liz\" Guerrero",mail:"",loc:"San Angelo",st:"TX",brand:"FFO",role:"Front Desk/Records Tech",team:"Staff"},
+   {n:"Samantha Molina",mail:"",loc:"San Angelo",st:"TX",brand:"FFO",role:"Clinical Asst",team:"Staff"},
+   {n:"Arianna Peacock",mail:"",loc:"San Angelo",st:"TX",brand:"FFO",role:"Clinical Asst",team:"Staff"},
+   {n:"Melinda Tavarez",mail:"melinda@farnsworthorthodontics.com",loc:"San Angelo",st:"TX",brand:"FFO",role:"TC/Financial Coord",team:"Staff"},
+   {n:"Amanda Vasquez",mail:"",loc:"San Angelo",st:"TX",brand:"FFO",role:"Clinical Asst",team:"Staff"},
+   {n:"Heather Beal",mail:"heather@farnsworthorthodontics.com",loc:"",st:"",brand:"",role:"COO",team:"Staff"},
+   {n:"Selene Brown",mail:"selene@farnsworthorthodontics.com",loc:"",st:"",brand:"",role:"Marketing Director",team:"Staff"},
+   {n:"Jessica Lynch",mail:"jessica@ffortho.com",loc:"",st:"",brand:"",role:"CSO",team:"Staff"},
+   {n:"Brenda Garcia",mail:"",loc:"Mansfield",st:"TX",brand:"Sunflower",role:"Clinical Asst",team:"Staff"},
+   {n:"Kandace Lain",mail:"",loc:"Mansfield",st:"TX",brand:"Sunflower",role:"Clinic Lead",team:"Staff"},
+   {n:"Erika Munoz",mail:"",loc:"Mansfield",st:"TX",brand:"Sunflower",role:"Clinical Asst",team:"Staff"},
+   {n:"Kim Partee",mail:"",loc:"Mansfield",st:"TX",brand:"Sunflower",role:"Clinical Asst/Mktg Liason",team:"Staff"},
+   {n:"Noemi Sanchez Torres",mail:"noemi@sunflowerorthomansfield.com",loc:"Mansfield",st:"TX",brand:"Sunflower",role:"OM/TC",team:"Staff"},
+   {n:"Tierney Whitesel",mail:"tierney@sunflowerorthomansfield.com",loc:"Mansfield",st:"TX",brand:"Sunflower",role:"Front Desk/Financial Coord",team:"Staff"},
+   {n:"Sirena Zamudio",mail:"",loc:"Mansfield",st:"TX",brand:"Sunflower",role:"Front Desk",team:"Staff"},
+   {n:"Karin Alons",mail:"",loc:"Las Cruces",st:"NM",brand:"FFO",role:"Clinical Asst",team:"Staff"},
+   {n:"Suzy Brown",mail:"suzy@fortholascruces.com",loc:"Las Cruces",st:"NM",brand:"FFO",role:"OM/Clinic Lead",team:"Staff"},
+   {n:"Michelle Eichleberger",mail:"",loc:"Las Cruces",st:"NM",brand:"FFO",role:"Front Desk",team:"Staff"},
+   {n:"Melissa Elliott",mail:"",loc:"Las Cruces",st:"NM",brand:"FFO",role:"Clinical Asst",team:"Staff"},
+   {n:"Cindy Peterson",mail:"cindy@fortholascruces.com",loc:"Las Cruces",st:"NM",brand:"FFO",role:"TC/Financial Coord",team:"Staff"},
+   {n:"Roma Powell",mail:"",loc:"Las Cruces",st:"NM",brand:"FFO",role:"Front Desk",team:"Staff"},
+   {n:"Yvonne Avalos",mail:"",loc:"Las Cruces",st:"NM",brand:"LCO",role:"Clinical Asst",team:"Staff"},
+   {n:"Yessenia Flores",mail:"",loc:"Las Cruces",st:"NM",brand:"LCO",role:"Front Desk",team:"Staff"},
+   {n:"Maria Hinojos",mail:"",loc:"Las Cruces",st:"NM",brand:"LCO",role:"Clinical Asst",team:"Staff"},
+   {n:"Erica Martinez",mail:"",loc:"Las Cruces",st:"NM",brand:"LCO",role:"Clinical Asst",team:"Staff"},
+   {n:"Anette Olvera",mail:"",loc:"Las Cruces",st:"NM",brand:"FFO/LCO",role:"Clinical Asst",team:"Staff"},
+   {n:"Tara Pacini",mail:"",loc:"Las Cruces",st:"NM",brand:"LCO",role:"Clinical Asst",team:"Staff"},
+   {n:"Joemily \"Emmy\" Prieto",mail:"",loc:"Las Cruces",st:"NM",brand:"LCO",role:"Front Desk",team:"Staff"},
+   {n:"Melissa Villalva",mail:"melissa@lascrucessmiles.com",loc:"Las Cruces",st:"NM",brand:"LCO",role:"TC",team:"Staff"},
+   {n:"Jenny Whitefield",mail:"jenny@lascrucessmiles.com",loc:"Las Cruces",st:"NM",brand:"LCO",role:"OM/Clincal Asst",team:"Staff"},
+   {n:"Dr. David Farnsworth",mail:"",loc:"",st:"",brand:"",role:"Owner/Doctor",team:"Staff"},
+   {n:"Dr. Jae Brimhall",mail:"drbrimhall@farnsworthorthodontics.com",loc:"",st:"",brand:"",role:"Owner/Doctor",team:"Staff"}
   ];
-  const AREA={'Carlsbad':'575','Clovis':'575','Hobbs':'575','Cruces LCO':'575','Cruces FFO':'575',
-              'Lubbock':'806','San Angelo':'325','Mansfield':'817'};
-  const PEOPLE=ROSTER.map((full,i)=>{
-    const isDoc=DOCTORS.includes(full);
-    const clean=full.replace(/"[^"]*"/g,'').replace(/\([^)]*\)/g,'').replace(/\s+/g,' ').trim();
+  // Their real sheet lists "Las Cruces" once and splits the two practices by brand.
+  const OFFICES=['Carlsbad','Hobbs','Clovis','Las Cruces','Lubbock','San Angelo','Mansfield'];
+  const AREA={'Carlsbad':'575','Clovis':'575','Hobbs':'575','Las Cruces':'575','Lubbock':'806','San Angelo':'325','Mansfield':'817'};
+  const PEOPLE=STAFF.map((r,i)=>{
+    const isDoc=/^Dr\./.test(r.n);
+    const clean=r.n.replace(/"[^"]*"/g,'').replace(/\([^)]*\)/g,'').replace(/\s+/g,' ').trim();
     const parts=clean.replace(/^Dr\.\s*/,'').split(' ');
     const first=parts[0], last=parts.slice(1).join(' ');
-    const office=isDoc?'Rotates':OFFICES[i%OFFICES.length];
-    const area=AREA[office]||'575';
-    return {full:(isDoc?'Dr. ':'')+first+' '+last, first, last, isDoc,
-      title:isDoc?'Doctor':'Team member', office,
-      team:isDoc?'Doctors':'Staff',
-      email:(first[0]+last).toLowerCase().replace(/[^a-z]/g,'')+'@farnsworthorthodontics.com',
-      phone:'('+area+') 555-'+String(1000+i).slice(-4),
-      color:PAL[i%PAL.length], nick:(full.match(/"([^"]*)"/)||[])[1]||null};
+    const leader=/COO|CSO|Director/i.test(r.role);
+    const office=r.loc||(isDoc?'Rotates':(leader?'All offices':'\u2014'));
+    return {full:(isDoc?'Dr. ':'')+first+' '+last, first, last, isDoc, leader,
+      title:r.role||'Team member', office, brand:r.brand||'', team:r.team||'Staff',
+      email:r.mail||((first[0]+last).toLowerCase().replace(/[^a-z]/g,'')+'@farnsworthorthodontics.com'),
+      realMail:!!r.mail,
+      phone:'('+(AREA[r.loc]||'575')+') 555-'+String(1000+i).slice(-4),
+      color:PAL[i%PAL.length], nick:(r.n.match(/"([^"]*)"/)||r.n.match(/\(([^)]*)\)/)||[])[1]||null};
   });
   const el=id=>document.getElementById(id);
   let q='', office='All';
@@ -138,25 +192,31 @@
   function render(){
     const mine = window.PH ? PH.me() : null;
     const myName = mine ? PH.name(mine) : '';
+    const isMeOf=p=>{ if(!mine) return false;
+      const legal=(mine.first+' '+mine.last).toLowerCase();
+      return (p.first+' '+p.last).toLowerCase()===legal; };
     const list=PEOPLE.filter(p=>{
       if(office!=='All' && p.office!==office) return false;
       if(!q) return true;
-      const t=(p.full+' '+p.title+' '+p.office+' '+p.email+' '+p.phone+' '+(p.nick||'')).toLowerCase();
+      const t=(p.full+' '+(p.nick||'')+' '+p.title+' '+p.office+' '+p.brand+' '+p.team+' '+p.email+' '+p.phone+' '+(p.nick||'')).toLowerCase();
       return t.includes(q.toLowerCase());
     });
-    el('filters').innerHTML=['All'].concat(OFFICES).concat(['Rotates']).map(o=>
-      '<button class="fchip'+(office===o?' on':'')+'" onclick="TEAM.office(\''+o+'\')">'+(o==='All'?'Everyone':o)+'</button>').join('');
+    el('filters').innerHTML=['All'].concat(OFFICES).concat(['Rotates','All offices']).map(o=>
+      '<button class="fchip'+(office===o?' on':'')+'" onclick="TEAM.office(\''+o+'\')">'+(o==='All'?'Everyone':o==='Rotates'?'Doctors':o==='All offices'?'Leadership':o)+'</button>').join('');
     el('count').textContent=list.length+' of '+PEOPLE.length+' people';
     el('grid').innerHTML= list.length ? '<div class="grid">'+list.map(p=>{
-      const isMe = myName && p.full===myName;
+      const pref = (isMeOf(p)&&mine&&mine.preferred)||p.nick||null;
+      const shown = pref ? (p.isDoc?'Dr. ':'')+pref+' '+p.last : p.full;
+      const isMe = isMeOf(p);
       return '<div class="p'+(isMe?' me':'')+'">'+
-        '<div class="top"><span class="cir" style="background:'+(isMe&&mine.color?mine.color:p.color)+'">'+initials(p)+'</span>'+
-          '<div><div class="nm">'+p.full+(p.nick?' <span style="color:var(--soft);font-weight:600">“'+p.nick+'”</span>':'')+'</div>'+
+        '<div class="top"><span class="cir" style="'+((isMe&&window.PH)?PH.faceStyle(mine):('background:'+p.color))+'">'+((isMe&&window.PH)?PH.face(mine):initials(p))+'</span>'+
+          '<div><div class="nm">'+shown+'</div>'+(pref?'<div style="font-size:11.5px;color:var(--soft)">'+p.first+' '+p.last+'</div>':'')+
           '<div class="ttl">'+p.title+'</div></div>'+(isMe?'<span class="mine">You</span>':'')+'</div>'+
         '<div class="row"><span class="ic">📍</span>'+p.office+'</div>'+
         '<div class="row"><span class="ic">📞</span><a href="tel:'+p.phone.replace(/[^0-9]/g,'')+'">'+p.phone+'</a></div>'+
-        '<div class="row"><span class="ic">✉️</span><a href="mailto:'+p.email+'">'+p.email+'</a></div>'+
-        '<div class="tchips"><span class="t'+(p.isDoc?' dr':'')+'">'+p.team+'</span><span class="t loc">'+p.office+'</span></div>'+
+        '<div class="row"><span class="ic">✉️</span><a href="mailto:'+p.email+'">'+p.email+'</a>'+(p.realMail?'':'<span class="t" style="margin-left:4px">sample</span>')+'</div>'+
+        '<div class="tchips"><span class="t'+(p.isDoc?' dr':'')+'">'+p.team+'</span>'+
+          (p.brand?'<span class="t">'+p.brand+'</span>':'')+'<span class="t loc">'+p.office+'</span></div>'+
         (isMe?'<div class="row" style="margin-top:8px"><button style="border:1px solid var(--line);background:#fff;border-radius:9px;padding:7px 12px;font-size:12.5px;font-weight:700;color:var(--navy);cursor:pointer;font-family:inherit" onclick="PH.profile()">Edit my profile</button></div>':'')+
       '</div>';
     }).join('')+'</div>' : '<div class="empty">Nobody matches that search.</div>';

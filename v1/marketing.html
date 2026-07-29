@@ -81,6 +81,36 @@
   .res{font-weight:700;padding:3px 9px;border-radius:999px;cursor:pointer;font-size:11.5px;font-family:inherit;border:none}
   .res.good{background:var(--good-soft);color:var(--good)} .res.bad{background:var(--bad-soft);color:var(--bad)}
   .res.mixed{background:var(--amber-soft);color:#946011} .res.none{background:#eef1f5;color:#8a94a6}
+  /* calendar overview */
+  .calwrap{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px;margin-top:22px}
+  .calhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px}
+  .calhead h2{margin:0;font-size:17px;color:var(--navy)}
+  .calhead .nav{display:flex;align-items:center;gap:6px;margin-left:auto}
+  .calhead button{border:1px solid var(--line);background:#fff;border-radius:9px;width:32px;height:32px;font-size:15px;cursor:pointer;color:var(--navy);font-family:inherit}
+  .calhead button:hover{border-color:var(--teal);color:var(--teal-600)}
+  .calhead .mlab{font-weight:800;color:var(--navy);font-size:15px;min-width:132px;text-align:center}
+  .calsub{font-size:12.5px;color:var(--soft);margin-bottom:14px}
+  .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;min-width:640px}
+  .calscroll{overflow-x:auto}
+  .cal .dow{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--soft);text-align:center;padding:4px 0}
+  .cal .day{min-height:74px;border:1px solid var(--line);border-radius:9px;padding:5px 6px;background:#fff}
+  .cal .day.out{background:#fafbfc;border-color:#f0f2f5}
+  .cal .day.today{border-color:var(--teal);box-shadow:0 0 0 2px var(--teal-soft) inset}
+  .cal .dnum{font-size:11.5px;font-weight:700;color:var(--soft);margin-bottom:3px}
+  .cal .day.today .dnum{color:var(--teal-600)}
+  .ev{display:block;width:100%;text-align:left;border:none;border-radius:6px;padding:3px 6px;margin-bottom:3px;font-size:11px;font-weight:700;
+      cursor:pointer;font-family:inherit;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ev.t-social{background:#6b3fd0} .ev.t-event{background:#149B96} .ev.t-promo{background:#F2A03D;color:#3a2400}
+  .ev.t-email{background:#1f6f9e} .ev.t-referral{background:#b03a63}
+  .ev.done{opacity:.62}
+  .ev .rd{font-weight:800}
+  .callegend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--soft);margin-top:12px}
+  .callegend span{display:inline-flex;align-items:center;gap:6px}
+  .callegend i{width:11px;height:11px;border-radius:3px;display:inline-block}
+  .nodate{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+  .nodate .t2{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--soft);margin-bottom:7px}
+  .nodate .chips2{display:flex;gap:6px;flex-wrap:wrap}
+  .nodate .chips2 button{border:1px dashed var(--line);background:#fff;border-radius:999px;padding:5px 11px;font-size:12px;font-weight:600;color:var(--navy);cursor:pointer;font-family:inherit}
   /* tap-to-pick menu */
   .pk{position:fixed;z-index:300;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow-lg);padding:6px;min-width:200px}
   .pk button{display:flex;align-items:center;gap:10px;width:100%;border:none;background:none;font-family:inherit;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:13.5px;font-weight:600;color:var(--ink);text-align:left}
@@ -141,6 +171,7 @@
   </div>
 
   <div class="board" id="board"></div>
+  <div id="calendar"></div>
 </div>
 
 <div id="modal" class="ov"><div class="modal" id="modalCard"></div></div>
@@ -155,17 +186,20 @@
 
   let seq=100;
   let cards=[
-    {id:++seq,title:'Back-to-school braces promo',type:'promo',owner:'Dana K.',loc:'All offices',date:'Aug',stage:'planned',result:'none',notes:'$500 off full treatment, Aug 1–31.'},
-    {id:++seq,title:'“Meet Dr. Chen” reel',type:'social',owner:'Dana K.',loc:'Carlsbad',date:'Jul 30',stage:'active',result:'none',notes:'Instagram + Facebook reel.'},
-    {id:++seq,title:'Hobbs school-supply drive',type:'event',owner:'Tasha B.',loc:'Hobbs',date:'Aug 12',stage:'planned',result:'none',notes:'Community goodwill + lead capture.'},
-    {id:++seq,title:'Referral thank-you cards to DDS',type:'referral',owner:'Heather F.',loc:'All offices',date:'Jul',stage:'active',result:'none',notes:'Handwritten cards to referring dentists.'},
-    {id:++seq,title:'Summer smile giveaway',type:'social',owner:'Dana K.',loc:'All offices',date:'Jun',stage:'done',result:'good',notes:'320 new followers, 41 consult requests.'},
-    {id:++seq,title:'June e-newsletter',type:'email',owner:'Dana K.',loc:'All offices',date:'Jun',stage:'done',result:'mixed',notes:'Open rate 28% — subject line could be stronger.'},
-    {id:++seq,title:'Mall kiosk weekend',type:'event',owner:'Carlos M.',loc:'Lubbock',date:'May',stage:'done',result:'bad',notes:'Low foot traffic; cost > leads. Skip next year.'},
-    {id:++seq,title:'Google review push',type:'social',owner:'Priya N.',loc:'Carlsbad',date:'',stage:'ideas',result:'none',notes:'Ask happy patients at deband.'},
+    {id:++seq,title:'Back-to-school braces promo',type:'promo',owner:'Dana K.',loc:'All offices',date:'2026-08-01',stage:'planned',result:'none',notes:'$500 off full treatment, Aug 1–31.'},
+    {id:++seq,title:'“Meet Dr. Chen” reel',type:'social',owner:'Dana K.',loc:'Carlsbad',date:'2026-07-30',stage:'active',result:'none',notes:'Instagram + Facebook reel.'},
+    {id:++seq,title:'Hobbs school-supply drive',type:'event',owner:'Yessenia R.',loc:'Hobbs',date:'2026-08-12',stage:'planned',result:'none',notes:'Community goodwill + lead capture.'},
+    {id:++seq,title:'Referral thank-you cards to DDS',type:'referral',owner:'Heather B.',loc:'All offices',date:'2026-07-24',stage:'active',result:'none',notes:'Handwritten cards to referring dentists.'},
+    {id:++seq,title:'Summer smile giveaway',type:'social',owner:'Selene B.',loc:'All offices',date:'2026-06-15',stage:'done',result:'good',notes:'320 new followers, 41 consult requests.'},
+    {id:++seq,title:'June e-newsletter',type:'email',owner:'Selene B.',loc:'All offices',date:'2026-06-26',stage:'done',result:'mixed',notes:'Open rate 28% — subject line could be stronger.'},
+    {id:++seq,title:'Mall kiosk weekend',type:'event',owner:'Becca F.',loc:'Lubbock',date:'2026-05-16',stage:'done',result:'bad',notes:'Low foot traffic; cost > leads. Skip next year.'},
+    {id:++seq,title:'Google review push',type:'social',owner:'Lily R.',loc:'Carlsbad',date:'',stage:'ideas',result:'none',notes:'Ask happy patients at deband.'},
     {id:++seq,title:'Invisalign teen webinar',type:'event',owner:'',loc:'All offices',date:'',stage:'ideas',result:'none',notes:'Parents Q&A on Zoom.'}
   ];
 
+  const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function parts(d){ const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(d||''); return m?{y:+m[1],m:+m[2]-1,d:+m[3]}:null; }
+  function niceDate(d){ const p=parts(d); return p? MONTHS[p.m]+' '+p.d : (d||''); }
   const el=id=>document.getElementById(id);
   let editId=null;
 
@@ -186,7 +220,7 @@
       : '';
     return '<div class="kcard t-'+c.type+'" draggable="true" data-id="'+c.id+'" onclick="MK.open('+c.id+')">'+
       '<div class="kt">'+c.title+'</div>'+
-      '<div class="kmeta"><span class="tag">'+TYPEN[c.type]+'</span><span class="tag">📍 '+c.loc+'</span>'+(c.date?'<span class="tag">'+c.date+'</span>':'')+'</div>'+
+      '<div class="kmeta"><span class="tag">'+TYPEN[c.type]+'</span><span class="tag">📍 '+c.loc+'</span>'+(c.date?'<span class="tag">'+niceDate(c.date)+'</span>':'')+'</div>'+
       '<div class="kfoot"><span>'+(c.owner?'👤 '+c.owner:'Unassigned')+'</span><span class="sp"></span>'+resChip+
         '<button class="mv" onclick="event.stopPropagation();MK.move('+c.id+',-1)" '+(si===0?'disabled':'')+'>◀</button>'+
         '<button class="mv" onclick="event.stopPropagation();MK.move('+c.id+',1)" '+(si===STAGES.length-1?'disabled':'')+'>▶</button>'+
@@ -200,7 +234,41 @@
         '<button class="add" onclick="MK.add(\''+s.k+'\')">+ Add</button></div>';
     }).join('');
   }
-  function render(){ renderSummary(); renderBoard(); }
+  const TODAY={y:2026,m:6,d:28}; // the mockup's "today" — Jul 28 2026
+  let calY=TODAY.y, calM=TODAY.m;
+  const RESDOT={good:'\ud83d\udfe2',mixed:'\ud83d\udfe1',bad:'\ud83d\udd34',none:''};
+  function renderCalendar(){
+    const first=new Date(calY,calM,1), start=first.getDay();
+    const dim=new Date(calY,calM+1,0).getDate();
+    const prevDim=new Date(calY,calM,0).getDate();
+    const dow=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=>'<div class="dow">'+d+'</div>').join('');
+    const byDay={};
+    cards.forEach(c=>{ const p=parts(c.date); if(p&&p.y===calY&&p.m===calM){ (byDay[p.d]=byDay[p.d]||[]).push(c); } });
+    let cells='';
+    for(let i=0;i<start;i++) cells+='<div class="day out"><div class="dnum">'+(prevDim-start+i+1)+'</div></div>';
+    for(let d=1;d<=dim;d++){
+      const isToday=(calY===TODAY.y&&calM===TODAY.m&&d===TODAY.d);
+      const evs=(byDay[d]||[]).map(c=>'<button class="ev t-'+c.type+(c.stage==='done'?' done':'')+'" title="'+esc(c.title)+' \u00b7 '+c.loc+'" onclick="MK.open('+c.id+')">'+
+        (c.stage==='done'&&c.result!=='none'?'<span class="rd">'+RESDOT[c.result]+'</span> ':'')+esc(c.title)+'</button>').join('');
+      cells+='<div class="day'+(isToday?' today':'')+'"><div class="dnum">'+d+(isToday?' \u00b7 today':'')+'</div>'+evs+'</div>';
+    }
+    const tail=(7-((start+dim)%7))%7;
+    for(let i=1;i<=tail;i++) cells+='<div class="day out"><div class="dnum">'+i+'</div></div>';
+    const undated=cards.filter(c=>!parts(c.date));
+    el('calendar').innerHTML=
+      '<div class="calwrap"><div class="calhead"><h2>\ud83d\uddd3\ufe0f Calendar overview</h2>'+
+        '<div class="nav"><button onclick="MK.calMove(-1)" aria-label="Previous month">\u2039</button>'+
+        '<span class="mlab">'+new Date(calY,calM,1).toLocaleDateString('en-US',{month:'long',year:'numeric'})+'</span>'+
+        '<button onclick="MK.calMove(1)" aria-label="Next month">\u203a</button>'+
+        '<button onclick="MK.calToday()" title="Back to this month" style="width:auto;padding:0 11px;font-size:12.5px;font-weight:700">Today</button></div></div>'+
+      '<div class="calsub">Everything with a date, laid out on the month. Tap any item to open it. Finished items carry their result.</div>'+
+      '<div class="calscroll"><div class="cal">'+dow+cells+'</div></div>'+
+      '<div class="callegend">'+TYPES.map(t=>'<span><i style="background:'+({social:'#6b3fd0',event:'#149B96',promo:'#F2A03D',email:'#1f6f9e',referral:'#b03a63'})[t.k]+'"></i> '+t.n+'</span>').join('')+'</div>'+
+      (undated.length? '<div class="nodate"><div class="t2">No date yet \u2014 tap to set one</div><div class="chips2">'+
+        undated.map(c=>'<button onclick="MK.open('+c.id+')">'+esc(c.title)+'</button>').join('')+'</div></div>' : '')+
+      '</div>';
+  }
+  function render(){ renderSummary(); renderBoard(); renderCalendar(); }
 
   function move(id,dir){
     const c=cards.find(x=>x.id===id); const si=STAGES.findIndex(s=>s.k===c.stage);
@@ -251,7 +319,7 @@
           '<button class="seg b'+(c.result==='bad'?' on':'')+'" onclick="MK.pick(\'result\',\'bad\')">🔴 Underperformed</button></div></div>'+
         '<div class="fld"><label>Owner</label><input id="e_owner" value="'+esc(c.owner)+'" placeholder="Who\'s running it"></div>'+
         '<div class="fld"><label>Location</label><select id="e_loc">'+LOCS.map(l=>'<option'+(l===c.loc?' selected':'')+'>'+l+'</option>').join('')+'</select></div>'+
-        '<div class="fld"><label>When</label><input id="e_date" value="'+esc(c.date)+'" placeholder="e.g. Aug 12"></div>'+
+        '<div class="fld"><label>When \u2014 exact date</label><input type="date" id="e_date" value="'+esc(c.date)+'"></div>'+
         '<div class="fld"><label>Notes / results</label><textarea id="e_notes" placeholder="What happened, key numbers…">'+esc(c.notes)+'</textarea></div>'+
       '</div>'+
       '<div class="m-foot"><button class="btn ghost" onclick="MK.del()">Delete</button><button class="btn" onclick="MK.save()">Save</button></div>';
@@ -312,7 +380,9 @@
     e.preventDefault(); col.classList.remove('dragover');
     const id=dragId||+(e.dataTransfer.getData('text/plain')); if(id)dropTo(id,col.dataset.stage,col); });
 
-  window.MK={add,open,move,pickRes,askResult,pick,save,del,close:closeModal};
+  window.MK={add,open,move,pickRes,askResult,pick,save,del,close:closeModal,
+    calMove:d=>{calM+=d; if(calM<0){calM=11;calY--;} if(calM>11){calM=0;calY++;} renderCalendar();},
+    calToday:()=>{calY=TODAY.y;calM=TODAY.m;renderCalendar();}};
   el('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal(true);});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal(true);});
   render();
