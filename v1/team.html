@@ -176,10 +176,11 @@
     const clean=r.n.replace(/"[^"]*"/g,'').replace(/\([^)]*\)/g,'').replace(/\s+/g,' ').trim();
     const parts=clean.replace(/^Dr\.\s*/,'').split(' ');
     const first=parts[0], last=parts.slice(1).join(' ');
-    const leader=/COO|CSO|Director/i.test(r.role);
+    const leader=/\bC[COS]O\b|CSO|Director|Owner/i.test(r.role);
     const office=r.loc||(isDoc?'Rotates':(leader?'All offices':'\u2014'));
     return {full:(isDoc?'Dr. ':'')+first+' '+last, first, last, isDoc, leader,
-      title:r.role||'Team member', office, brand:r.brand||'', team:r.team||'Staff',
+      title:r.role||'Team member', office, brand:r.brand||'',
+      team:(isDoc?'Doctors':leader?'Leadership':(r.team||'Staff')),
       email:r.mail||((first[0]+last).toLowerCase().replace(/[^a-z]/g,'')+'@farnsworthorthodontics.com'),
       realMail:!!r.mail,
       phone:'('+(AREA[r.loc]||'575')+') 555-'+String(1000+i).slice(-4),

@@ -79,13 +79,14 @@ sheet). Note **many staff hold dual roles** — `role` is often a combination:
 
 | id | Person | Role | Access highlights |
 |---|---|---|---|
-| `admin` | **Heather Beal** | COO · **App Administrator** | everything `manage` |
+| `admin` | **Heather Beal** | **COO (Admin)** | everything `manage` |
 | `om` | Lily Rico | OM / Clinic Lead, Carlsbad | production `edit`, schedule `edit` |
 | `doctor` | Dr. Carla Coehlo | Associate Doctor, rotates | dashboard `view`, schedule **`view`** |
 | `tc` | Elizabeth Reyes | TC, Hobbs | schedule `view`, documents `add` |
 | `staff` | Serenity Gonzales | Clinical Assistant, Carlsbad | schedule `view`, documents `view` |
 
-Heather is **COO**, not "Practice Administrator" — she is the *app* administrator. Don't relabel her.
+Heather's title is exactly **"COO (Admin)"** — she is the COO *and* the app's administrator.
+Not "Practice Administrator". Don't relabel her.
 
 ### Permission levels
 `none < view < add < edit < manage` (`RANK`). Sections: `dashboard`, `production`, `schedule`,

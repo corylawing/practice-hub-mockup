@@ -9,7 +9,7 @@
   // REAL people and REAL roles from the practice's User Profile sheet (2026-07-28).
   // Note many staff hold DUAL roles — that's why `role` can be a combination.
   const PEOPLE=[
-    {id:'admin', first:'Heather', last:'Beal', role:'COO', title:'COO \u00b7 App Administrator',
+    {id:'admin', first:'Heather', last:'Beal', role:'COO', title:'COO (Admin)',
      teams:['Admin','Executive Team'], loc:'All offices', region:'All', brand:'Group',
      mail:'heather@farnsworthorthodontics.com',
      phone:'(575) 555-1002', emp:'E-1002', status:'Active', color:'#25456e', offices:'all',
