@@ -153,6 +153,12 @@ without much reading."*
   session (`partied` Set) plus a **"Celebrate again"** button on the banner. Works on every office
   page *and* All Offices. Today: Carlsbad, Cruces LCO and San Angelo hit both; the group, Clovis and
   Hobbs hit main; Cruces FFO, Lubbock and Mansfield hit neither — a good spread for the demo.
+- **"This month" = the newest month with any production that isn't fully worked** (`partial()`).
+  It used to require `0 < done < days`, which broke for **Clovis and Hobbs**: they had August
+  production but hadn't typed in any completed days, so the dashboard fell back to showing **July**
+  while every other office showed August. When days worked aren't logged, the month is still "this
+  month" but goals are **not** pace-scaled — it compares against the whole-month goal and says
+  "days worked not logged yet" so nobody misreads a low percentage.
 - **Partial months are handled honestly.** August is part-worked, so `live()` counts only **finished**
   months for the year, `partial()` finds the in-progress one, and in MTD view `paceRatio()` scales
   the goal to the days actually worked — otherwise every office looks catastrophic on the 2nd of the

@@ -328,7 +328,13 @@ const OFFICES=[
   // finished months (all scheduled days worked) — these make up the year figure
   const live=o=>{const a=[];for(let i=0;i<12;i++)if(o.act[i]>0&&o.goal[i]>0&&o.days[i]>0&&o.done[i]>=o.days[i])a.push(i);return a;};
   // the month currently in progress (some days worked, not all)
-  const partial=o=>{for(let i=0;i<12;i++)if(o.done[i]>0&&o.days[i]>0&&o.done[i]<o.days[i])return i;return -1;};
+  function partial(o){
+    let last=-1;
+    for(let i=0;i<12;i++) if(o.act[i]>0) last=i;      // newest month with any production
+    if(last<0) return -1;
+    const finished = o.days[last]>0 && o.done[last]>=o.days[last];
+    return finished ? -1 : last;                      // not fully worked yet => it's this month
+  }
   const sum=(arr,idx)=>idx.reduce((s,i)=>s+arr[i],0);
   const isMonth=()=>typeof period==='number';
   function curIdx(o){ const p=partial(o); if(p>=0)return p; const L=live(o); return L.length?L[L.length-1]:-1; }
@@ -342,7 +348,7 @@ const OFFICES=[
   // how far through the month we are, so a part-month isn't judged against a whole month's goal
   function paceRatio(o){
     if(period!=='mtd') return 1;      // a finished past month is judged against its full goal
-    const c=partial(o); if(c<0||!o.days[c]) return 1;
+    const c=partial(o); if(c<0||!o.days[c]||!o.done[c]) return 1;   // no days logged => no scaling
     return o.done[c]/o.days[c];
   }
   function stats(o){
@@ -441,12 +447,16 @@ const OFFICES=[
   }
   function gauges(o){
     const t=stats(o), st=sStats(o);
-    const par = inProgress(o) ? ' pace' : ' goal';
+    const c0=partial(o);
+    const paced = inProgress(o) && c0>=0 && o.done[c0]>0;
+    const par = paced ? ' pace' : ' goal';
     const sVerdict = st.v>=0 ? '\u2705 '+Math.abs(Math.round(st.v))+' starts ahead of'+par
                              : '\u26a0\ufe0f '+Math.abs(Math.round(st.v))+' starts behind'+par;
     const pVerdict = t.vgoal>=0 ? '\u2705 '+full(Math.abs(t.vgoal))+' ahead of'+par
                                 : '\u26a0\ufe0f '+full(Math.abs(t.vgoal))+' behind'+par;
-    const dayNote = inProgress(o) ? (()=>{const c=partial(o);return ' \u00b7 '+o.done[c]+' of '+o.days[c]+' days';})() : '';
+    const dayNote = inProgress(o) ? (()=>{const c=partial(o);
+      return o.done[c] ? ' \u00b7 '+o.done[c]+' of '+o.days[c]+' days'
+                       : ' \u00b7 days not logged yet';})() : '';
     // their sheet has no starts stretch goal, so use the same reach production asks for
     const stretchRatio = t.g? t.s/t.g : 0;
     const stretchStarts = Math.round(st.g*stretchRatio);
@@ -465,7 +475,8 @@ const OFFICES=[
         pct:t.pct,stretchPct:(t.g?t.s/t.g:0),verdict:pVerdict,
         footer:'<span>Main goal <b>'+money(t.g)+'</b></span><span>Stretch <b>'+money(t.s)+'</b> ('+pc(t.spct)+' there)</span>'+
                  '<span>Per day <b>'+money(t.perDay)+'</b> vs <b>'+money(t.needPerDay)+'</b> needed</span>'+
-                 (inProgress(o)?'<span style="color:var(--teal-600)">goals scaled to days worked</span>':'')})+
+                 (paced?'<span style="color:var(--teal-600)">goals scaled to days worked</span>'
+                   :(inProgress(o)?'<span style="color:var(--amber)">whole-month goal \u2014 days worked not logged yet</span>':''))})+
     '</div>';
   }
 
