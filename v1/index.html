@@ -507,7 +507,6 @@ const OFFICES=[
   }
   function daysTiles(o){
     const t=stats(o), pct=t.sched?t.done/t.sched:0;
-    const left=Math.max(0,t.sched-t.done);
     const pips=t.sched<=31 ? '<div class="pips">'+Array.from({length:t.sched},(_,i)=>
         '<i class="'+(i<t.done?'on':'')+'"></i>').join('')+'</div>' : '';
     return '<div class="card daycard"><div class="dayrow">'+
@@ -515,9 +514,6 @@ const OFFICES=[
         '<div class="daybar"><div style="width:'+Math.min(100,pct*100)+'%"></div></div>'+
         '<div class="daypct">'+pc(pct)+'</div>'+
       '</div>'+pips+
-      '<div class="daysub">'+(isMonth()
-          ? MOFULL[period]+' is finished \u2014 all '+t.done+' production days worked.'
-          : left+' production day'+(left===1?'':'s')+' still to work '+(period==='mtd'?'this month':'this year'))+'</div>'+
     '</div>';
   }
   function startsChart(o){

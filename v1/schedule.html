@@ -8,20 +8,20 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
 <meta name="theme-color" content="#0F2A4A">
-<meta name="description" content="Practice Hub V1 — staff schedule: which office is open each day and who's working.">
+<meta name="description" content="Practice Hub V1 — the practice schedule: which office is open, which doctor is where, by week or month.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Practice Hub">
 <meta property="og:title" content="Schedule (V1) · Practice Hub">
-<meta property="og:description" content="Which office is open each day and who's working — manage every location's schedule.">
+<meta property="og:description" content="Which office is open each day and which doctor is working where.">
 <meta property="og:image" content="https://corylawing.github.io/practice-hub-mockup/assets/og-image.png">
 <meta property="og:url" content="https://corylawing.github.io/practice-hub-mockup/v1/schedule.html">
 <style>
   :root{
     --navy:#0F2A4A; --navy2:#25456e; --teal:#149B96; --teal2:#2BC0B8; --teal-soft:#E5F4F3; --teal-600:#0F827E;
-    --ink:#1F2D3D; --ink-soft:#56627A; --soft:#56627A; --line:#E4E8EE; --canvas:#F4F6F8; --white:#fff;
-    --good:#2E9E6B; --bad:#D7503A; --amber:#F2A03D;
+    --ink:#1F2D3D; --soft:#56627A; --line:#E4E8EE; --canvas:#F4F6F8; --white:#fff;
+    --good:#2E9E6B; --good-soft:#E7F4EE; --bad:#D7503A; --amber:#F2A03D;
     --shadow:0 1px 2px rgba(15,42,74,.06),0 6px 18px rgba(15,42,74,.06);
-    --shadow-lg:0 10px 30px rgba(15,42,74,.12); --radius:14px; --maxw:1080px;
+    --shadow-lg:0 10px 30px rgba(15,42,74,.12); --radius:14px; --maxw:1220px;
   }
   *{box-sizing:border-box}
   body{margin:0;font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--canvas);line-height:1.5;-webkit-font-smoothing:antialiased}
@@ -38,100 +38,114 @@
   .v1nav a{color:#cdd9ea;font-size:14px;font-weight:600;padding:13px 15px;text-decoration:none;border-bottom:3px solid transparent;white-space:nowrap}
   .v1nav a:hover{color:#fff;background:rgba(255,255,255,.05)}
   .v1nav a.active{color:#fff;border-bottom-color:var(--teal)}
-  .wrap{max-width:var(--maxw);margin:0 auto;padding:26px 20px 90px}
-  .page-head h1{font-size:26px}
-  .page-head p{margin:4px 0 0;color:var(--soft);font-size:15px}
-  .notice{background:var(--teal-soft);border:1px solid #c4e6e3;border-radius:12px;padding:13px 16px;font-size:14px;color:#0c5b57;margin:18px 0}
-  .sched-toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
-  .weeknav{display:inline-flex;align-items:center;gap:4px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:4px 6px;box-shadow:var(--shadow)}
-  .weeknav button{border:none;background:none;font-size:18px;color:var(--navy);cursor:pointer;padding:2px 9px;border-radius:6px;font-family:inherit}
-  .weeknav button:hover{background:var(--canvas)}
-  .weeknav span{font-weight:700;color:var(--navy);font-size:14px;min-width:118px;text-align:center}
-  .sbtn{background:var(--teal);color:#fff;border:none;border-radius:9px;padding:9px 14px;font-weight:600;font-size:14px;cursor:pointer;font-family:inherit;white-space:nowrap}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:22px 20px 90px}
+  .page-head h1{font-size:25px}
+  .page-head p{margin:4px 0 0;color:var(--soft);font-size:14.5px}
+  .notice{background:var(--teal-soft);border:1px solid #c4e6e3;border-radius:12px;padding:12px 15px;font-size:13.5px;color:#0c5b57;margin:14px 0}
+  .notice b{color:#0a4d49}
+  .bar{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin:16px 0 12px}
+  .seg{display:flex;gap:4px;background:#e9edf2;border-radius:999px;padding:4px}
+  .seg button{border:none;background:none;border-radius:999px;padding:8px 17px;font-size:13.5px;font-weight:700;color:var(--navy);cursor:pointer;font-family:inherit}
+  .seg button.on{background:#fff;box-shadow:var(--shadow)}
+  .nav2{display:flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:4px;box-shadow:var(--shadow)}
+  .nav2 button{border:none;background:none;width:30px;height:30px;border-radius:50%;font-size:17px;color:var(--navy);cursor:pointer;font-family:inherit}
+  .nav2 button:hover{background:var(--canvas)}
+  .nav2 .lab{font-weight:800;color:var(--navy);font-size:14px;min-width:158px;text-align:center}
+  .sbtn{background:var(--teal);color:#fff;border:none;border-radius:10px;padding:9px 15px;font-weight:700;font-size:13.5px;cursor:pointer;font-family:inherit;white-space:nowrap}
   .sbtn:hover{background:var(--teal-600)}
-  .sbtn.ghost{background:#fff;color:var(--navy);border:1px solid var(--line)}
+  .sbtn.ghost{background:#fff;color:var(--navy);border:1px solid var(--line);font-weight:600}
   .sbtn.ghost:hover{border-color:var(--teal);color:var(--teal-600)}
-  .roster{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:16px}
-  .roster .rlab{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--soft);font-weight:700;margin-right:2px}
-  .pchip{border:1px solid transparent;border-radius:999px;padding:7px 13px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:7px;user-select:none}
-  .pchip.sel{outline:2px solid var(--navy);outline-offset:1px}
-  .pchip.addp{background:#fff;color:var(--navy);border:1px dashed var(--line)}
-  .pedit{border:none;background:none;color:inherit;opacity:.5;cursor:pointer;font-size:12px;padding:0;margin-left:1px;font-family:inherit;line-height:1}
-  .pedit:hover{opacity:1}
-  .pdot{width:9px;height:9px;border-radius:50%;display:inline-block}
-  .swwrap{display:flex;gap:9px;flex-wrap:wrap}
-  .sw{width:30px;height:30px;border-radius:8px;border:2px solid #fff;box-shadow:0 0 0 1px var(--line);cursor:pointer;padding:0}
-  .sw.sel{box-shadow:0 0 0 2px var(--navy)}
-  .board-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
-  table.sgrid{width:100%;border-collapse:collapse;background:#fff;min-width:760px}
-  table.sgrid th{font-size:12px;font-weight:700;color:var(--navy);background:#fafbfc;padding:10px;text-align:center;border-bottom:1px solid var(--line)}
-  table.sgrid th.corner{text-align:left;position:sticky;left:0;background:#fafbfc;z-index:2;min-width:158px}
-  table.sgrid th.today{color:var(--teal-600);background:var(--teal-soft)}
-  table.sgrid th.loc{text-align:left;position:sticky;left:0;background:#fff;z-index:1;min-width:158px;font-size:14px;font-weight:600;color:var(--ink);border-bottom:1px solid var(--line);white-space:nowrap}
-  td.cell{border-left:1px solid var(--line);border-bottom:1px solid var(--line);padding:8px;height:62px;text-align:center;vertical-align:middle;cursor:pointer;transition:opacity .12s}
-  td.cell.open .who{display:block;font-weight:700;font-size:13px;line-height:1.2}
-  td.cell.open .hrs{display:block;font-size:11px;color:var(--ink-soft);margin-top:3px}
-  td.cell.closed{background:#fafbfc}
-  td.cell.closed .cx{color:#9aa6b6;font-size:12.5px;font-weight:600}
-  td.cell.closed:hover{background:var(--teal-soft)}
-  td.cell.needs{background:#FFF6E9}
-  td.cell.needs .nd{color:#b07d1a;font-size:12px;font-weight:700}
-  td.cell.needs:hover{background:#FCEED3}
-  td.cell.today{box-shadow:inset 0 0 0 2px var(--teal-soft)}
-  td.cell.dim{opacity:.22}
-  td.cell.hit{outline:2px solid var(--teal);outline-offset:-2px}
-  table.sgrid th .daynum{display:block;font-size:11px;color:var(--soft);font-weight:600;margin-top:2px}
-  table.sgrid th.today .daynum{color:var(--teal-600)}
-  .sched-status{border-radius:10px;padding:12px 16px;font-size:14.5px;margin-bottom:16px;border:1px solid}
-  .sched-status.ok{background:#E7F4EE;border-color:#bfe3cf;color:#256b45}
-  .sched-status.warn{background:#FFF6E9;border-color:#f3dcb3;color:#7a5212}
-  .ledit{border:none;background:none;color:var(--soft);cursor:pointer;font-size:14px;margin-left:6px;opacity:.4;line-height:1}
-  table.sgrid tr:hover .ledit{opacity:.7}
-  .ledit:hover{color:var(--teal-600);opacity:1}
-  .dtogs{display:flex;gap:6px;flex-wrap:wrap}
-  .dtog{border:1px solid var(--line);background:#fff;color:var(--soft);border-radius:8px;padding:8px 12px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
-  .dtog.on{border-color:var(--teal);background:var(--teal-soft);color:var(--teal-600)}
-  .dayrows{display:flex;flex-direction:column;gap:8px}
-  .dayrow{display:flex;align-items:center;gap:10px}
-  .dayrow .dtog{min-width:62px;text-align:center}
-  .dtimes{display:flex;align-items:center;gap:6px}
-  .dtimes input[type=time]{padding:7px 8px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:13px;color:var(--navy)}
-  .dtimes span{color:var(--soft);font-size:12px}
-  td.cell.ydot{background:#FFFBEF}
-  td.cell.ydot:hover{background:#FFF3D6}
-  td.cell.ydot .yd{color:#946011;font-size:12px;font-weight:700;line-height:1.25;display:inline-block}
-  body.ph-view-only td.cell{cursor:default}
-  body.ph-view-only td.cell:hover{background:inherit}
-  body.ph-view-only .ledit,body.ph-view-only .pedit,body.ph-view-only .addp{display:none}
-  .dclosed{color:#9aa6b6;font-size:13px}
-  th.loc .locname{display:flex;align-items:center;gap:6px}
-  th.loc .tz{font-size:10px;font-weight:700;color:var(--teal-600);background:var(--teal-soft);padding:1px 6px;border-radius:5px}
-  th.loc .locsub{font-size:11px;color:var(--soft);font-weight:500;margin-top:2px}
-  select.s-input{cursor:pointer}
-  .hint{font-size:13px;color:var(--soft);margin-top:12px}
-  .s-overlay{position:fixed;inset:0;background:rgba(15,42,74,.5);z-index:120;display:none;align-items:center;justify-content:center;padding:16px}
-  .s-overlay.open{display:flex}
-  .s-modal{background:#fff;width:100%;max-width:460px;border-radius:16px;box-shadow:var(--shadow-lg);overflow:hidden}
-  .s-top{display:flex;align-items:center;padding:16px 18px;border-bottom:1px solid var(--line);font-size:16px;color:var(--navy)}
-  .s-top .x{margin-left:auto;border:none;background:none;font-size:24px;color:var(--soft);cursor:pointer;line-height:1}
-  .s-body{padding:18px}
-  .s-lab{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--soft);font-weight:700;margin:16px 0 8px}
+  .filters{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:12px 15px;margin-bottom:13px}
+  .frow{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+  .frow + .frow{margin-top:9px;padding-top:9px;border-top:1px solid var(--line)}
+  .flab{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--soft);min-width:60px}
+  .lchip{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:5px 12px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px}
+  .lchip .dot{width:11px;height:11px;border-radius:50%;display:inline-block}
+  .lchip.off{opacity:.34;filter:grayscale(.6)}
+  .dchip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 13px;font-size:12.5px;font-weight:700;color:var(--navy);cursor:pointer;font-family:inherit}
+  .dchip.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .scroll{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);background:#fff}
+  table.sgrid{border-collapse:collapse;width:100%;min-width:900px}
+  table.sgrid th,table.sgrid td{border-bottom:1px solid var(--line);border-left:1px solid var(--line)}
+  table.sgrid th:first-child,table.sgrid td:first-child{border-left:none}
+  table.sgrid thead th{background:#fafbfc;font-size:12px;color:var(--navy);font-weight:800;padding:9px 6px;text-align:center}
+  table.sgrid thead th .dnum{display:block;font-size:11px;color:var(--soft);font-weight:600}
+  table.sgrid thead th.istoday{color:var(--teal-600)}
+  th.loc{text-align:left;padding:10px 12px;min-width:190px;background:#fff}
+  .locname{display:flex;align-items:center;gap:7px;font-weight:800;color:var(--navy);font-size:14px}
+  .locname .dot{width:12px;height:12px;border-radius:50%;flex:none}
+  .tz{font-size:9.5px;font-weight:800;background:var(--canvas);color:var(--soft);border-radius:5px;padding:1px 5px}
+  .locsub{font-size:11.5px;color:var(--soft);margin-top:2px}
+  .ledit{border:none;background:none;color:var(--soft);cursor:pointer;font-size:13px;opacity:.45;font-family:inherit}
+  tr:hover .ledit{opacity:.9}
+  td.cell{padding:7px 6px;text-align:center;cursor:pointer;vertical-align:middle;height:62px}
+  td.cell:hover{filter:brightness(.96)}
+  td.cell.today{box-shadow:inset 0 0 0 2px var(--teal2)}
+  .who{display:block;font-weight:800;font-size:13px;line-height:1.2}
+  .hrs{display:block;font-size:11px;opacity:.85;margin-top:1px}
+  .needs{color:#946011;font-size:12px;font-weight:700}
+  td.needsc{background:#FFFBEF}
+  .ydot{color:#8a6410;font-size:11.5px;font-weight:800}
+  td.ydotc{background:#FEF3C7}
+  .closed{color:#9aa6b6;font-size:12px;font-weight:600}
+  td.closedc{background:#fafbfc}
+  .dim{opacity:.16}
+  .month{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;min-width:940px}
+  .mscroll{overflow-x:auto}
+  .month .dow{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--soft);text-align:center;padding:4px 0}
+  .mday{background:#fff;border:1px solid var(--line);border-radius:10px;min-height:108px;padding:6px 7px}
+  .mday.out{background:#fafbfc;border-color:#f0f2f5}
+  .mday.today{border-color:var(--teal);box-shadow:0 0 0 2px var(--teal-soft) inset}
+  .mdnum{font-size:11.5px;font-weight:800;color:var(--soft);margin-bottom:4px}
+  .mday.today .mdnum{color:var(--teal-600)}
+  .ent{display:block;width:100%;text-align:left;border:none;border-radius:6px;padding:3px 6px;margin-bottom:3px;
+    font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;line-height:1.25}
+  .ent small{display:block;font-weight:600;opacity:.8;font-size:10px}
+  .counts{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
+  .card h2{margin:0 0 3px;font-size:16px;color:var(--navy)}
+  .card .sub{font-size:12.5px;color:var(--soft);margin-bottom:12px}
+  table.cnt{width:100%;border-collapse:collapse}
+  table.cnt th{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--soft);font-weight:800;text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)}
+  table.cnt td{padding:7px 8px;border-bottom:1px solid var(--line);font-size:13.5px}
+  table.cnt tr:last-child td{border-bottom:none}
+  table.cnt td.n{text-align:right;font-weight:800;color:var(--navy)}
+  .pilldot{display:inline-flex;align-items:center;gap:7px;font-weight:700}
+  .pilldot i{width:11px;height:11px;border-radius:50%}
+  .cbar{height:7px;background:var(--canvas);border-radius:99px;overflow:hidden;margin-top:4px;min-width:70px}
+  .cbar i{display:block;height:100%;border-radius:99px}
+  .status{border-radius:12px;padding:11px 15px;font-size:13.5px;margin:12px 0;box-shadow:var(--shadow);border:1px solid var(--line);background:#fff}
+  .status.ok{background:var(--good-soft);border-color:#bfe4d0;color:#1d6b48}
+  .status.warn{background:#FFF6E9;border-color:#f0d9ae;color:#7a4d0a}
+  .hint{font-size:12.5px;color:var(--soft);margin-top:10px}
+  .ov{position:fixed;inset:0;background:rgba(15,42,74,.5);z-index:120;display:none;align-items:flex-start;justify-content:center;padding:22px 14px;overflow:auto}
+  .ov.open{display:flex}
+  .modal{background:#fff;width:100%;max-width:560px;border-radius:16px;box-shadow:var(--shadow-lg);margin:auto;overflow:hidden}
+  .m-top{display:flex;align-items:center;gap:11px;padding:16px 20px;border-bottom:1px solid var(--line)}
+  .m-top h3{margin:0;font-size:17px;color:var(--navy)}
+  .m-top .x{margin-left:auto;border:none;background:none;font-size:24px;color:var(--soft);cursor:pointer}
+  .m-body{padding:18px 20px;max-height:70vh;overflow:auto}
+  .m-foot{display:flex;gap:10px;align-items:center;padding:14px 20px;border-top:1px solid var(--line);background:#fafbfc;flex-wrap:wrap}
+  .s-lab{font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--soft);margin:15px 0 7px}
   .s-lab:first-child{margin-top:0}
-  .pickwrap{display:flex;flex-wrap:wrap;gap:8px}
-  .pick{border:1px solid transparent;border-radius:999px;padding:7px 12px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px}
-  .pick.sel{outline:2px solid var(--navy);outline-offset:1px}
-  .pick.booked{background:#f4f6f8;color:#9aa6b6;cursor:not-allowed}
-  .pick.booked .pdot{opacity:.5}
-  .pickhint{font-size:12px;color:var(--soft);margin-top:8px}
-  .hrbtns{display:flex;flex-direction:column;gap:8px}
-  .hb{text-align:left;border:1px solid var(--line);border-radius:9px;padding:10px 12px;font-size:14px;font-weight:600;color:var(--navy);background:#fff;cursor:pointer;font-family:inherit}
-  .hb.sel{border-color:var(--teal);background:var(--teal-soft);color:var(--teal-600)}
-  .custrow{align-items:center;gap:8px;margin-top:2px}
-  .custrow input[type=time]{padding:9px 10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:14px;color:var(--navy)}
-  .custrow span{color:var(--soft);font-size:13px}
-  .s-input{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:9px;font-size:15px;font-family:inherit;outline:none}
-  .s-input:focus{border-color:var(--teal);box-shadow:0 0 0 3px var(--teal-soft)}
-  .s-foot{display:flex;align-items:center;gap:10px;padding:14px 18px;border-top:1px solid var(--line);background:#fafbfc}
+  .picks{display:flex;gap:7px;flex-wrap:wrap}
+  .pk{border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 13px;font-size:13.5px;font-weight:700;color:var(--navy);cursor:pointer;font-family:inherit}
+  .pk.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .pk.busy{opacity:.42;cursor:not-allowed}
+  .pk small{display:block;font-weight:600;font-size:10.5px}
+  .pk.yd.on{background:#FEF3C7;color:#8a6410;border-color:#e6c877}
+  .s-input{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:9px;font-size:14px;font-family:inherit}
+  .drow{display:flex;align-items:center;gap:9px;padding:6px 0;flex-wrap:wrap}
+  .drow .dname{min-width:44px;font-weight:700;font-size:13px;color:var(--navy)}
+  .dtimes{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+  .dtimes input{padding:5px 7px;border:1px solid var(--line);border-radius:7px;font-size:12.5px;font-family:inherit}
+  .dclosed{color:#9aa6b6;font-size:12.5px}
+  .sw{display:inline-flex;align-items:center;gap:7px;font-size:13.5px;cursor:pointer}
+  .colgrid{display:flex;gap:8px;flex-wrap:wrap}
+  .colsw{width:34px;height:34px;border-radius:9px;border:2px solid transparent;cursor:pointer}
+  .colsw.on{border-color:var(--navy);box-shadow:0 0 0 2px #fff inset}
+  .ph-ro-banner{background:#FFF6E9;border:1px solid #f0d9ae;color:#7a4d0a;border-radius:12px;padding:11px 15px;font-size:13.5px;font-weight:600;margin-bottom:14px}
+  @media(max-width:820px){ .counts{grid-template-columns:1fr} }
 </style>
 <script src="user.js"></script>
 </head>
@@ -149,243 +163,478 @@
 <div class="wrap">
   <div class="page-head">
     <h1>Schedule — Who's Where</h1>
-    <p>Which office is open each day and who's working there. Add locations, add doctors, and assign them — all in one place.</p>
+    <p>Which office is open each day and which doctor is working there.</p>
   </div>
-  <div class="notice" id="tourNotice">In the real build this is <b>one Microsoft List</b> the COO maintains. Here it's interactive — <b>tap a cell</b> to assign a doctor, add locations or doctors, and set each location's office hours.</div>
+  <div class="notice" id="tourNotice"><b>Every office has its own colour.</b> Tap any day to put a doctor in it, mark it a <b>Yellow Dot Day</b> (open, no doctor) or close it. Switch between <b>Week</b> and <b>Month</b>, and build the whole year in one go.</div>
 
-  <div class="sched-toolbar">
-    <div class="weeknav" id="weeknav"><button onclick="PS.week(-1)" aria-label="Previous week">‹</button><span id="weekLabel"></span><button onclick="PS.week(1)" aria-label="Next week">›</button></div>
-    <div style="margin-left:auto"><button class="sbtn" id="addLocBtn" onclick="PS.addLocation()">+ Add location</button></div>
+  <div class="bar">
+    <div class="seg" id="viewseg"></div>
+    <div class="nav2"><button onclick="PS.step(-1)" aria-label="Previous">‹</button><span class="lab" id="perlab"></span><button onclick="PS.step(1)" aria-label="Next">›</button></div>
+    <button class="sbtn ghost" onclick="PS.today()">Today</button>
+    <span style="flex:1"></span>
+    <button class="sbtn ghost" id="addLocBtn" onclick="PS.addLocation()">+ Add office</button>
+    <button class="sbtn ghost" id="addDocBtn" onclick="PS.addPerson()">+ Add doctor</button>
+    <button class="sbtn" id="yearBtn" onclick="PS.yearModal()">📅 Build out the year</button>
   </div>
 
-  <div class="roster" id="roster"></div>
-  <div id="schedStatus" class="sched-status"></div>
-  <div id="schedGrid"></div>
-  <p class="hint">Tap any cell to assign a doctor or mark it a Yellow Dot Day (no doctor on site) · tap a doctor above to highlight where they work · today's column is highlighted.</p>
+  <div class="filters" id="filters"></div>
+  <div id="status"></div>
+  <div id="board"></div>
+  <p class="hint" id="hint"></p>
+  <div id="counters"></div>
 </div>
 
-<div id="schedModal" class="s-overlay"><div class="s-modal" id="schedModalCard"></div></div>
+<div id="modal" class="ov"><div class="modal" id="modalCard"></div></div>
 
 <script>
 (function(){
+  /* ---------- the OFFICE carries the colour, not the doctor ---------- */
   const PALETTE=[
-    {bg:'#E5F4F3',fg:'#0F827E'},{bg:'#E9EEF5',fg:'#25456e'},{bg:'#FFF0D6',fg:'#946011'},
-    {bg:'#EFE7FB',fg:'#6b3fd0'},{bg:'#FBE7EE',fg:'#b03a63'},{bg:'#E7F4EE',fg:'#2E7D52'},
-    {bg:'#E3F0FA',fg:'#1f6f9e'},{bg:'#FCEBE7',fg:'#b0442f'}];
-  const DAYS=['Mon','Tue','Wed','Thu','Fri','Sat'];
-  const FULL={h:'8:00a–5:00p',s:480,e:1020}, HALFD={h:'8:00a–1:00p',s:480,e:780};
-  let people=[{n:'Dr. Chen',c:0},{n:'Dr. Rao',c:1},{n:'Dr. Mehta',c:3},{n:'Dr. Lopez',c:5},{n:'Dr. Ford',c:2}];
-  let locations=['Carlsbad','Clovis','Hobbs','San Angelo','Lubbock','Mansfield','Cruces LCO','Cruces FFO'];
-  let sched={
-    'Carlsbad':[{p:0,...FULL},null,{p:1,...FULL},null,{p:0,...FULL},null],
-    'Clovis':[{p:1,...FULL},null,{p:0,...FULL},null,null,{p:3,...HALFD}],
-    'Hobbs':[null,{p:0,...FULL},null,{p:1,...FULL},null,null],
-    'San Angelo':[{p:2,...FULL},null,{p:3,...FULL},null,{p:1,...FULL},null],
-    'Lubbock':[null,{p:2,...FULL},null,{p:4,...FULL},{p:2,...FULL},null],
-    'Mansfield':[{p:3,...FULL},null,{p:2,...FULL},null,{p:4,...FULL},null],
-    'Cruces LCO':[null,{p:4,...FULL},null,{p:3,...FULL},null,null],
-    'Cruces FFO':[null,null,{p:0,...FULL},null,null,{p:2,...HALFD}]
-  };
-  // office hours per day: null = closed, or {s,e} minutes
-  const WKh={s:480,e:1020}, SATh={s:480,e:780};
-  let openH={
-    'Carlsbad':[WKh,null,WKh,WKh,WKh,null],'Clovis':[WKh,null,WKh,null,WKh,SATh],
-    'Hobbs':[null,WKh,null,WKh,null,null],'San Angelo':[WKh,null,WKh,null,WKh,null],
-    'Lubbock':[null,WKh,null,WKh,WKh,null],'Mansfield':[WKh,null,WKh,null,WKh,null],
-    'Cruces LCO':[null,WKh,null,WKh,null,null],'Cruces FFO':[null,null,WKh,null,null,SATh]
-  };
-  // NM offices = Mountain, TX offices (Lubbock/San Angelo/Mansfield) = Central
-  let locTZ={'Carlsbad':'Mountain Time','Clovis':'Mountain Time','Hobbs':'Mountain Time','San Angelo':'Central Time','Lubbock':'Central Time','Mansfield':'Central Time','Cruces LCO':'Mountain Time','Cruces FFO':'Mountain Time'};
-  // lunch varies by office
-  let locLunch={'Carlsbad':{s:720,e:780},'Clovis':{s:720,e:780},'Hobbs':{s:720,e:780},'San Angelo':{s:780,e:840},'Lubbock':{s:690,e:750},'Mansfield':{s:720,e:780},'Cruces LCO':{s:720,e:780},'Cruces FFO':{s:720,e:780}};
+    {k:'Hot Pink',           dot:'#FF2D95', bg:'#FFE1EF', fg:'#A80F63'},
+    {k:'Purple',             dot:'#7C3AED', bg:'#EDE7FD', fg:'#5B21B6'},
+    {k:'Sky Blue',           dot:'#38BDF8', bg:'#DFF3FE', fg:'#0369A1'},
+    {k:'Highlighter Orange', dot:'#FF7A00', bg:'#FFE9D3', fg:'#B45309'},
+    {k:'Lime Green',         dot:'#84CC16', bg:'#ECFACC', fg:'#4D7C0F'},
+    {k:'Highlighter Yellow', dot:'#FACC15', bg:'#FEF6C7', fg:'#7A5B08'},
+    {k:'Light Pink',         dot:'#F9A8D4', bg:'#FDEEF6', fg:'#9D2C6B'},
+    {k:'Light Orange',       dot:'#FDBA74', bg:'#FFF0DF', fg:'#9A5B1B'},
+    {k:'Teal',               dot:'#14B8A6', bg:'#DBF5F1', fg:'#0F766E'},
+    {k:'Slate Blue',         dot:'#475569', bg:'#E8ECF1', fg:'#334155'}
+  ];
+  const colOf=c=>PALETTE.find(p=>p.k===c)||PALETTE[9];
+
+  const WK={s:480,e:1020};   // 8:00a – 5:00p
+  const HALF={s:480,e:840};  // 8:00a – 2:00p  (their half day)
+  const SAT={s:480,e:840};
+
+  let locations=[
+    {n:'Carlsbad',   color:'Hot Pink',           tz:'Mountain Time', lunch:{s:720,e:780}, hours:[WK,null,WK,null,WK,null]},
+    {n:'Clovis',     color:'Highlighter Orange', tz:'Mountain Time', lunch:{s:720,e:780}, hours:[WK,null,WK,null,null,SAT]},
+    {n:'Hobbs',      color:'Lime Green',         tz:'Mountain Time', lunch:{s:720,e:780}, hours:[null,WK,null,WK,null,null]},
+    {n:'San Angelo', color:'Sky Blue',           tz:'Central Time',  lunch:{s:780,e:840}, hours:[WK,null,WK,null,WK,null]},
+    {n:'Lubbock',    color:'Highlighter Yellow', tz:'Central Time',  lunch:null,          hours:[null,WK,null,WK,WK,null]},
+    {n:'Mansfield',  color:'Purple',             tz:'Central Time',  lunch:{s:720,e:780}, hours:[WK,null,WK,null,WK,null]},
+    {n:'Cruces LCO', color:'Light Pink',         tz:'Mountain Time', lunch:{s:720,e:780}, hours:[null,WK,null,WK,null,null]},
+    {n:'Cruces FFO', color:'Light Orange',       tz:'Mountain Time', lunch:null,          hours:[null,null,WK,null,null,SAT]}
+  ];
+  // Doctors have no colour now — a day takes the colour of its office.
+  let people=[{n:'Dr. Farnsworth'},{n:'Dr. Brimhall'},{n:'Dr. Coehlo'},{n:'Dr. McBeth'}];
+
   const TZS=['Eastern Time','Central Time','Mountain Time','Mountain Time (Arizona, no DST)','Pacific Time','Alaska Time','Hawaii Time'];
   const TZSHORT={'Eastern Time':'ET','Central Time':'CT','Mountain Time':'MT','Mountain Time (Arizona, no DST)':'AZ','Pacific Time':'PT','Alaska Time':'AKT','Hawaii Time':'HT'};
-  const tzBadge=t=>TZSHORT[t]||t;
-  let filterP=null, weekOffset=0, tmp={p:null,mode:'full',s:480,e:1020}, tmpC=0, tmpEdit=null, tmpLoc=null;
-  const el=id=>document.getElementById(id);
-  const col=ci=>PALETTE[ci%PALETTE.length];
-  const fmtT=m=>{let h=Math.floor(m/60),mm=m%60,ap=h>=12?'p':'a',hh=h%12||12;return hh+':'+(mm<10?'0'+mm:mm)+ap;};
-  const fmtTc=m=>{let h=Math.floor(m/60),mm=m%60,ap=h>=12?'p':'a',hh=h%12||12;return hh+(mm?':'+(mm<10?'0'+mm:mm):'')+ap;};
-  const fmt24=m=>{let h=Math.floor(m/60),mm=m%60;return (h<10?'0'+h:h)+':'+(mm<10?'0'+mm:mm);};
-  const parseT=s=>{const a=s.split(':').map(Number);return a[0]*60+a[1];};
-  const hoursLabel=(s,e)=>fmtT(s)+'–'+fmtT(e);
-  const hint=m=>{const h=el('s-hint'); if(h)h.textContent=m;};
-  function weekMon(off){const d=new Date();const dow=(d.getDay()+6)%7;d.setDate(d.getDate()-dow+off*7);return d;}
-  function weekDates(off){const m=weekMon(off);return DAYS.map((_,i)=>{const x=new Date(m);x.setDate(m.getDate()+i);return x.getDate();});}
-  function dayLabel(off,i){const x=weekMon(off);x.setDate(x.getDate()+i);return x.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});}
-  function conflictAt(loc,d,p,s,e){for(const L of locations){if(L===loc)continue;const c=(sched[L]||[])[d];if(c&&c.p===p&&s<c.e&&c.s<e)return {loc:L,c};}return null;}
-  function weekLabel(off){const d=weekMon(off);return 'Week of '+d.toLocaleDateString('en-US',{month:'short',day:'numeric'});}
-  function todayIdx(){ if(weekOffset!==0) return -1; const g=new Date().getDay(); return g===0?-1:g-1; }
+  const DOW=['Mon','Tue','Wed','Thu','Fri','Sat'];
+  const MOFULL=['January','February','March','April','May','June','July','August','September','October','November','December'];
 
-  function renderRoster(){
-    el('roster').innerHTML='<span class="rlab">Doctors</span>'+people.map((p,i)=>{const c=col(p.c);
-      return '<span class="pchip'+(filterP===i?' sel':'')+'" style="background:'+c.bg+';color:'+c.fg+'" onclick="PS.filter('+i+')"><span class="pdot" style="background:'+c.fg+'"></span>'+p.n+'<button class="pedit" title="Edit doctor" onclick="event.stopPropagation();PS.edit('+i+')">✎</button></span>';
-    }).join('')+'<button class="pchip addp" id="addDocBtn" onclick="PS.addPerson()">+ Add doctor</button>';
-  }
+  /* ---------- keyed by real date, so a whole year can be built ---------- */
+  let sched={};
+  const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  const parseISO=s=>{const p=s.split('-');return new Date(+p[0],+p[1]-1,+p[2]);};
+  const dowIdx=d=>(d.getDay()+6)%7;
+  const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x;};
+  const mondayOf=d=>addDays(d,-dowIdx(d));
+  const TODAY=new Date();
+  const loc=n=>locations.find(l=>l.n===n);
+  const openOn=(l,d)=>{const i=dowIdx(d); return i<6? l.hours[i] : null;};
+  const cellOf=(l,d)=>(sched[iso(d)]||{})[l.n];
+  function setCell(l,d,v){ const k=iso(d); sched[k]=sched[k]||{}; if(v===null) delete sched[k][l.n]; else sched[k][l.n]=v; save(); }
+  function save(){ try{ localStorage.setItem('ph_sched',JSON.stringify(sched)); }catch(_){} }
 
-  function renderGrid(){
-    const ti=todayIdx(); const dts=weekDates(weekOffset);
-    const head='<tr><th class="corner">Location</th>'+DAYS.map((d,i)=>'<th class="'+(i===ti?'today':'')+'">'+d+(i===ti?' · Today':'')+'<span class="daynum">'+dts[i]+'</span></th>').join('')+'</tr>';
-    let needs=0, openTotal=0, filled=0;
-    const rows=locations.map(loc=>{
-      const arr=sched[loc]||[null,null,null,null,null,null]; const oh=openH[loc]||[false,false,false,false,false,false];
-      const cells=arr.map((cell,d)=>{
-        const t=d===ti?' today':''; const isOpen=!!oh[d];
-        if(cell && cell.p!=null && people[cell.p]){
-          const p=people[cell.p], c=col(p.c); if(isOpen){filled++;openTotal++;}
-          const dim=(filterP!=null&&filterP!==cell.p)?' dim':''; const hit=(filterP!=null&&filterP===cell.p)?' hit':'';
-          return '<td class="cell open'+t+dim+hit+'" style="background:'+c.bg+'" onclick="PS.assign(\''+loc+'\','+d+')"><span class="who" style="color:'+c.fg+'">'+p.n+'</span><span class="hrs">'+cell.h+'</span></td>';
-        }
-        if(cell && cell.closed) return '<td class="cell ydot'+t+'" onclick="PS.assign(\''+loc+'\','+d+')"><span class="yd">\u25CF Yellow Dot Day</span></td>';
-        if(isOpen){ needs++; openTotal++; return '<td class="cell needs'+t+'" onclick="PS.assign(\''+loc+'\','+d+')"><span class="nd">Needs doctor</span></td>'; }
-        return '<td class="cell closed'+t+'" onclick="PS.assign(\''+loc+'\','+d+')"><span class="cx">Closed</span></td>';
-      }).join('');
-      const tz=locTZ[loc], ln=locLunch[loc];
-      return '<tr><th class="loc"><div class="locname">'+loc+(tz?' <span class="tz" title="'+tz+'">'+tzBadge(tz)+'</span>':'')+'<button class="ledit" title="Edit location, hours, time zone & lunch" onclick="event.stopPropagation();PS.editLoc(\''+loc+'\')">✎</button></div>'+(ln?'<div class="locsub">lunch '+fmtTc(ln.s)+'–'+fmtTc(ln.e)+'</div>':'')+'</th>'+cells+'</tr>';
-    }).join('');
-    el('schedGrid').innerHTML='<div class="board-scroll"><table class="sgrid"><thead>'+head+'</thead><tbody>'+rows+'</tbody></table></div>';
-    el('weekLabel').textContent=weekLabel(weekOffset);
-    const st=el('schedStatus');
-    if(st){ st.className='sched-status '+(needs===0?'ok':'warn');
-      st.innerHTML = needs===0
-        ? '<b>✓ Fully scheduled</b> — every open day this week has a doctor ('+filled+' of '+openTotal+' open days covered).'
-        : '<b>'+needs+' open day'+(needs>1?'s still need':' still needs')+' a doctor</b> — highlighted in amber below ('+filled+' of '+openTotal+' covered).';
+  const PATTERN={
+    'Carlsbad':[0,null,1,null,0,null], 'Clovis':[1,null,0,null,null,2],
+    'Hobbs':[null,0,null,1,null,null], 'San Angelo':[2,null,3,null,1,null],
+    'Lubbock':[null,2,null,3,2,null],  'Mansfield':[3,null,2,null,3,null],
+    'Cruces LCO':[null,3,null,2,null,null], 'Cruces FFO':[null,null,2,null,null,3]
+  };
+  function buildYear(year){
+    let d=new Date(year,0,1); const end=new Date(year,11,31);
+    while(d<=end){
+      const i=dowIdx(d);
+      if(i<6) locations.forEach(l=>{
+        const h=openOn(l,d); if(!h) return;
+        const p=(PATTERN[l.n]||[])[i];
+        setCell(l,d, (p==null) ? {ydot:true} : {p:p,s:h.s,e:h.e});
+      });
+      d=addDays(d,1);
     }
+    save();
   }
 
-  function openModal(html){ el('schedModalCard').innerHTML=html; el('schedModal').classList.add('open'); }
-  function closeModal(){ el('schedModal').classList.remove('open'); }
+  let view='week';
+  let anchor=mondayOf(new Date(TODAY));
+  let mY=TODAY.getFullYear(), mM=TODAY.getMonth();
+  let fLoc=new Set(locations.map(l=>l.n));
+  let fDoc=null;
 
+  const el=id=>document.getElementById(id);
   const canEdit=()=>!window.PH||PH.atLeast('schedule','edit');
-  function assign(loc,d){
+  const two=n=>String(n).padStart(2,'0');
+  const fmt=m=>{const h=Math.floor(m/60),x=m%60,ap=h>=12?'p':'a',hh=((h+11)%12)+1;return hh+(x?':'+two(x):'')+ap;};
+  const fmt24=m=>two(Math.floor(m/60))+':'+two(m%60);
+  const hm=v=>{const p=v.split(':');return (+p[0])*60+(+p[1]);};
+  const esc=s=>String(s).replace(/'/g,"\\'");
+  const shownLocs=()=>locations.filter(l=>fLoc.has(l.n));
+
+  /* ---------- filters: office AND/OR doctor ---------- */
+  function renderFilters(){
+    const locs=locations.map(l=>{const c=colOf(l.color);
+      return '<button class="lchip'+(fLoc.has(l.n)?'':' off')+'" style="border-color:'+c.dot+';color:'+c.fg+';background:'+(fLoc.has(l.n)?c.bg:'#fff')+'" onclick="PS.togLoc(\''+esc(l.n)+'\')">'+
+        '<span class="dot" style="background:'+c.dot+'"></span>'+l.n+'</button>';}).join('');
+    const docs=people.map((p,i)=>'<button class="dchip'+(fDoc===i?' on':'')+'" onclick="PS.togDoc('+i+')">'+p.n+'</button>').join('');
+    el('filters').innerHTML=
+      '<div class="frow"><span class="flab">Offices</span>'+locs+
+        '<button class="sbtn ghost" style="padding:5px 11px;font-size:12px" onclick="PS.allLocs()">'+(fLoc.size===locations.length?'Hide all':'Show all')+'</button></div>'+
+      '<div class="frow"><span class="flab">Doctor</span>'+docs+
+        (fDoc!==null?'<button class="sbtn ghost" style="padding:5px 11px;font-size:12px" onclick="PS.togDoc('+fDoc+')">Show all doctors</button>':'')+'</div>';
+  }
+
+  /* ---------- week board ---------- */
+  const weekDays=()=>Array.from({length:6},(_,i)=>addDays(anchor,i));
+  function cellHtml(l,d){
+    const c=colOf(l.color), cell=cellOf(l,d), open=openOn(l,d);
+    const t=(iso(d)===iso(TODAY)?' today':'');
+    const click=canEdit()?' onclick="PS.open(\''+esc(l.n)+'\',\''+iso(d)+'\')"':'';
+    if(cell&&cell.closed) return '<td class="cell closedc'+t+'"'+click+'><span class="closed">Closed</span></td>';
+    if(cell&&cell.p!=null&&people[cell.p]){
+      const dim=(fDoc!==null&&fDoc!==cell.p)?' dim':'';
+      return '<td class="cell'+t+dim+'" style="background:'+c.bg+'"'+click+'>'+
+        '<span class="who" style="color:'+c.fg+'">'+people[cell.p].n+'</span>'+
+        '<span class="hrs" style="color:'+c.fg+'">'+fmt(cell.s)+'–'+fmt(cell.e)+'</span></td>';
+    }
+    if(cell&&cell.ydot) return '<td class="cell ydotc'+t+(fDoc!==null?' dim':'')+'"'+click+'><span class="ydot">● Yellow Dot Day</span></td>';
+    if(open) return '<td class="cell needsc'+t+(fDoc!==null?' dim':'')+'"'+click+'><span class="needs">Needs doctor</span></td>';
+    return '<td class="cell closedc'+t+'"'+click+'><span class="closed">Closed</span></td>';
+  }
+  function renderWeek(){
+    const days=weekDays();
+    const head='<tr><th class="loc">Office</th>'+days.map(d=>'<th'+(iso(d)===iso(TODAY)?' class="istoday"':'')+'>'+DOW[dowIdx(d)]+
+      '<span class="dnum">'+(d.getMonth()+1)+'/'+d.getDate()+'</span></th>').join('')+'</tr>';
+    const rows=shownLocs().map(l=>{
+      const c=colOf(l.color);
+      return '<tr><th class="loc"><div class="locname"><span class="dot" style="background:'+c.dot+'"></span>'+l.n+
+        '<span class="tz" title="'+l.tz+'">'+(TZSHORT[l.tz]||l.tz)+'</span>'+
+        (canEdit()?'<button class="ledit" title="Edit office" onclick="event.stopPropagation();PS.editLoc(\''+esc(l.n)+'\')">✎</button>':'')+'</div>'+
+        '<div class="locsub">'+(l.lunch?'lunch '+fmt(l.lunch.s)+'–'+fmt(l.lunch.e):'no set lunch')+'</div></th>'+
+        days.map(d=>cellHtml(l,d)).join('')+'</tr>';
+    }).join('');
+    el('board').innerHTML='<div class="scroll"><table class="sgrid"><thead>'+head+'</thead><tbody>'+rows+'</tbody></table></div>';
+  }
+
+  /* ---------- month view ---------- */
+  function renderMonth(){
+    const first=new Date(mY,mM,1), start=dowIdx(first), dim=new Date(mY,mM+1,0).getDate();
+    let cells='';
+    for(let i=0;i<start;i++) cells+='<div class="mday out"></div>';
+    for(let dn=1;dn<=dim;dn++){
+      const d=new Date(mY,mM,dn), isT=iso(d)===iso(TODAY);
+      let ents='';
+      shownLocs().forEach(l=>{
+        const cell=cellOf(l,d), c=colOf(l.color), open=openOn(l,d);
+        if(cell&&cell.closed) return;
+        const click=canEdit()?' onclick="PS.open(\''+esc(l.n)+'\',\''+iso(d)+'\')"':'';
+        if(cell&&cell.p!=null&&people[cell.p]){
+          if(fDoc!==null&&fDoc!==cell.p) return;
+          ents+='<button class="ent" style="background:'+c.bg+';color:'+c.fg+'"'+click+'>'+l.n+'<small>'+people[cell.p].n+'</small></button>';
+        } else if(cell&&cell.ydot){
+          if(fDoc!==null) return;
+          ents+='<button class="ent" style="background:#FEF3C7;color:#8a6410"'+click+'>'+l.n+'<small>● Yellow Dot</small></button>';
+        } else if(open){
+          if(fDoc!==null) return;
+          ents+='<button class="ent" style="background:#FFFBEF;color:#946011"'+click+'>'+l.n+'<small>needs doctor</small></button>';
+        }
+      });
+      cells+='<div class="mday'+(isT?' today':'')+'"><div class="mdnum">'+dn+(isT?' · today':'')+'</div>'+ents+'</div>';
+    }
+    const tail=(7-((start+dim)%7))%7;
+    for(let i=0;i<tail;i++) cells+='<div class="mday out"></div>';
+    el('board').innerHTML='<div class="mscroll"><div class="month">'+
+      ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(x=>'<div class="dow">'+x+'</div>').join('')+cells+'</div></div>';
+  }
+
+  /* ---------- counters ---------- */
+  function tally(from,to){
+    const perDoc={}, perPair={}, perLoc={};
+    let d=new Date(from);
+    while(d<=to){
+      const day=sched[iso(d)];
+      if(day) locations.forEach(l=>{
+        const c=day[l.n];
+        if(c&&c.p!=null){ perDoc[c.p]=(perDoc[c.p]||0)+1; perLoc[l.n]=(perLoc[l.n]||0)+1;
+          perPair[c.p+'|'+l.n]=(perPair[c.p+'|'+l.n]||0)+1; }
+      });
+      d=addDays(d,1);
+    }
+    return {perDoc,perPair,perLoc};
+  }
+  function renderCounters(){
+    const M=tally(new Date(mY,mM,1), new Date(mY,mM+1,0));
+    const Y=tally(new Date(mY,0,1),  new Date(mY,11,31));
+    const maxDoc=Math.max(1,...people.map((p,i)=>Y.perDoc[i]||0));
+    const maxLoc=Math.max(1,...locations.map(l=>Y.perLoc[l.n]||0));
+    const mn=MOFULL[mM].slice(0,3);
+    const docRows=people.map((p,i)=>'<tr><td><b>'+p.n+'</b>'+
+        '<div class="cbar"><i style="width:'+((Y.perDoc[i]||0)/maxDoc*100)+'%;background:var(--teal)"></i></div></td>'+
+        '<td class="n">'+(M.perDoc[i]||0)+'</td><td class="n">'+(Y.perDoc[i]||0)+'</td></tr>').join('');
+    const locRows=locations.map(l=>{const c=colOf(l.color);
+      return '<tr><td><span class="pilldot"><i style="background:'+c.dot+'"></i>'+l.n+'</span>'+
+        '<div class="cbar"><i style="width:'+((Y.perLoc[l.n]||0)/maxLoc*100)+'%;background:'+c.dot+'"></i></div></td>'+
+        '<td class="n">'+(M.perLoc[l.n]||0)+'</td><td class="n">'+(Y.perLoc[l.n]||0)+'</td></tr>';}).join('');
+    const pairRows=[];
+    people.forEach((p,i)=>locations.forEach(l=>{
+      const y=Y.perPair[i+'|'+l.n]||0; if(!y)return;
+      const c=colOf(l.color);
+      pairRows.push('<tr><td>'+p.n+'</td><td><span class="pilldot"><i style="background:'+c.dot+'"></i>'+l.n+'</span></td>'+
+        '<td class="n">'+(M.perPair[i+'|'+l.n]||0)+'</td><td class="n">'+y+'</td></tr>');
+    }));
+    el('counters').innerHTML='<div class="counts">'+
+      '<div class="card"><h2>🧑‍⚕️ Doctor days</h2><div class="sub">Days each doctor is scheduled to work.</div>'+
+        '<table class="cnt"><thead><tr><th>Doctor</th><th style="text-align:right">'+mn+'</th><th style="text-align:right">'+mY+'</th></tr></thead><tbody>'+docRows+'</tbody></table></div>'+
+      '<div class="card"><h2>🏢 Days covered per office</h2><div class="sub">Days with a doctor on site.</div>'+
+        '<table class="cnt"><thead><tr><th>Office</th><th style="text-align:right">'+mn+'</th><th style="text-align:right">'+mY+'</th></tr></thead><tbody>'+locRows+'</tbody></table></div>'+
+      '</div>'+
+      '<div class="card" style="margin-top:16px"><h2>Doctor days by office</h2><div class="sub">Who covers where, and how often.</div>'+
+        '<div style="overflow-x:auto"><table class="cnt"><thead><tr><th>Doctor</th><th>Office</th><th style="text-align:right">'+mn+'</th><th style="text-align:right">'+mY+'</th></tr></thead>'+
+        '<tbody>'+(pairRows.join('')||'<tr><td colspan="4" style="color:var(--soft)">Nothing scheduled yet.</td></tr>')+'</tbody></table></div></div>';
+  }
+
+  function renderStatus(){
+    let need=0,total=0;
+    const days = view==='week'? weekDays() : (()=>{const a=[],dim=new Date(mY,mM+1,0).getDate();
+      for(let i=1;i<=dim;i++)a.push(new Date(mY,mM,i)); return a;})();
+    days.forEach(d=>shownLocs().forEach(l=>{
+      if(!openOn(l,d))return; const c=cellOf(l,d);
+      if(c&&c.closed)return;
+      total++; if(!(c&&c.p!=null))need++;
+    }));
+    const st=el('status');
+    st.className='status '+(need===0?'ok':'warn');
+    st.innerHTML = total===0 ? '<b>Nothing open</b> in this view.'
+      : need===0 ? '<b>Fully covered.</b> Every open day '+(view==='week'?'this week':'this month')+' has a doctor ('+total+' of '+total+').'
+      : '<b>'+need+' open day'+(need===1?'':'s')+' with no doctor</b> — shown in amber ('+(total-need)+' of '+total+' covered).';
+  }
+
+  /* ---------- day editor ---------- */
+  let cur=null;
+  function busyAt(dateStr,pi,exceptLoc){
+    const day=sched[dateStr]||{};
+    for(const ln in day){ if(ln===exceptLoc)continue;
+      const c=day[ln]; if(c&&c.p===pi) return ln; }
+    return null;
+  }
+  function open(locName,dateStr){
     if(!canEdit())return;
-    const cur=(sched[loc]||[])[d];
-    let s=480,e=1020;
-    if(cur&&cur.s!=null){s=cur.s;e=cur.e;}
-    else if(openH[loc]&&openH[loc][d]){s=openH[loc][d].s;e=openH[loc][d].e;}
-    const mode=(s===480&&e===1020)?'full':(s===480&&e===780)?'half':'custom';
-    tmp={p:cur?cur.p:null,mode,s,e};
-    const bookedBy={}; for(const L of locations){ if(L===loc)continue; const c=(sched[L]||[])[d]; if(c&&c.p!=null) bookedBy[c.p]=L; }
-    let bookedCount=0;
-    const chips=people.map((p,i)=>{const c=col(p.c);
-      if(bookedBy[i]!==undefined && tmp.p!==i){ bookedCount++;
-        return '<button class="pick booked" disabled title="Already working '+bookedBy[i]+' that day"><span class="pdot" style="background:'+c.fg+'"></span>'+p.n+' · at '+bookedBy[i]+'</button>';
-      }
-      return '<button class="pick'+(tmp.p===i?' sel':'')+'" style="background:'+c.bg+';color:'+c.fg+'" onclick="PS.tp('+i+')"><span class="pdot" style="background:'+c.fg+'"></span>'+p.n+'</button>';}).join('');
-    const noteHtml = bookedCount>0 ? '<div class="pickhint">Greyed doctors are already booked elsewhere that day.</div>' : '';
-    const hb=(m,lab)=>'<button class="hb'+(mode===m?' sel':'')+'" data-m="'+m+'" onclick="PS.hm(\''+m+'\')">'+lab+'</button>';
+    const l=loc(locName), d=parseISO(dateStr), c=cellOf(l,d), h=openOn(l,d)||WK;
+    cur={loc:locName,date:dateStr,
+      tmp:{p:(c&&c.p!=null)?c.p:null, s:(c&&c.s!=null)?c.s:h.s, e:(c&&c.e!=null)?c.e:h.e,
+           ydot:!!(c&&c.ydot), closed:!!(c&&c.closed)}};
+    renderDay();
+  }
+  function renderDay(){
+    const l=loc(cur.loc), d=parseISO(cur.date), t=cur.tmp, cc=colOf(l.color);
+    const picks=people.map((p,i)=>{
+      const busy=busyAt(cur.date,i,cur.loc);
+      if(busy) return '<button class="pk busy" disabled>'+p.n+'<small>at '+busy+'</small></button>';
+      return '<button class="pk'+(t.p===i?' on':'')+'" onclick="PS.pickDoc('+i+')">'+p.n+'</button>';
+    }).join('');
     openModal(
-      '<div class="s-top"><b>'+loc+' · '+dayLabel(weekOffset,d)+'</b><button class="x" onclick="PS.close()">×</button></div>'+
-      '<div class="s-body"><div class="s-lab">Who\'s working? <span style="font-weight:500;text-transform:none;letter-spacing:0;color:var(--soft)">(only doctors free that day)</span></div><div class="pickwrap" id="pickwrap">'+chips+'</div>'+noteHtml+
-      '<div class="s-lab">Hours</div><div class="hrbtns" id="hrbtns">'+
-        hb('full','Full day · 8:00a–5:00p')+hb('half','Half day · 8:00a–1:00p')+hb('custom','Custom hours…')+
-        '<div class="custrow" id="custrow" style="display:'+(mode==='custom'?'flex':'none')+'"><input type="time" id="cS" value="'+fmt24(s)+'"><span>to</span><input type="time" id="cE" value="'+fmt24(e)+'"></div>'+
-      '</div></div>'+
-      '<div class="s-foot"><button class="sbtn ghost" onclick="PS.setClosed(\''+loc+'\','+d+')">Mark Yellow Dot Day</button><span id="s-hint" style="flex:1;color:var(--bad);font-size:12.5px"></span><button class="sbtn ghost" onclick="PS.close()">Cancel</button><button class="sbtn" onclick="PS.save(\''+loc+'\','+d+')">Save</button></div>');
+      '<div class="m-top"><span style="width:14px;height:14px;border-radius:50%;background:'+cc.dot+'"></span>'+
+        '<h3>'+l.n+' · '+DOW[dowIdx(d)]+' '+(d.getMonth()+1)+'/'+d.getDate()+'</h3><button class="x" onclick="PS.close()">×</button></div>'+
+      '<div class="m-body">'+
+        '<div class="s-lab">Who is working?</div><div class="picks">'+picks+'</div>'+
+        '<div class="s-lab">Hours</div>'+
+        '<div class="dtimes"><input type="time" value="'+fmt24(t.s)+'" onchange="PS.setT(\'s\',this.value)"><span>to</span>'+
+          '<input type="time" value="'+fmt24(t.e)+'" onchange="PS.setT(\'e\',this.value)">'+
+          '<button class="sbtn ghost" style="padding:6px 11px;font-size:12.5px" onclick="PS.halfDay()">Half day (8–2)</button>'+
+          '<button class="sbtn ghost" style="padding:6px 11px;font-size:12.5px" onclick="PS.fullDay()">Full day (8–5)</button></div>'+
+        '<div class="s-lab">Or mark the day</div><div class="picks">'+
+          '<button class="pk yd'+(t.ydot?' on':'')+'" onclick="PS.markYdot()">● Yellow Dot Day</button>'+
+          '<button class="pk'+(t.closed?' on':'')+'" onclick="PS.markClosed()">Closed</button>'+
+        '</div>'+
+        '<p class="hint">Tap <b>Yellow Dot Day</b> again to switch it off — the office then shows as <b>Closed</b>. Yellow Dot = open with no doctor; Closed = not open at all.</p>'+
+      '</div>'+
+      '<div class="m-foot"><button class="sbtn ghost" onclick="PS.clearDay()">Clear</button>'+
+        '<span id="dhint" style="flex:1;color:var(--bad);font-size:12.5px"></span>'+
+        '<button class="sbtn ghost" onclick="PS.close()">Cancel</button>'+
+        '<button class="sbtn" onclick="PS.saveDay()">Save</button></div>');
   }
-  function tp(i){tmp.p=i; [...document.querySelectorAll('#pickwrap .pick')].forEach((b,k)=>{if(!b.disabled)b.classList.toggle('sel',k===i);}); hint('');}
-  function hm(m){tmp.mode=m; if(m==='full'){tmp.s=480;tmp.e=1020;} if(m==='half'){tmp.s=480;tmp.e=780;}
-    [...document.querySelectorAll('#hrbtns .hb')].forEach(b=>b.classList.toggle('sel',b.dataset.m===m));
-    const cr=el('custrow'); cr.style.display=m==='custom'?'flex':'none';
-    if(m==='custom'){el('cS').value=fmt24(tmp.s);el('cE').value=fmt24(tmp.e);}
+  function pickDoc(i){ const t=cur.tmp; t.p=(t.p===i?null:i); t.ydot=false; t.closed=false; renderDay(); }
+  function setT(k,v){ cur.tmp[k]=hm(v); }
+  function halfDay(){ cur.tmp.s=HALF.s; cur.tmp.e=HALF.e; renderDay(); }
+  function fullDay(){ cur.tmp.s=WK.s; cur.tmp.e=WK.e; renderDay(); }
+  // their ask: de-selecting a Yellow Dot Day closes the office
+  function markYdot(){ const t=cur.tmp;
+    if(t.ydot){ t.ydot=false; t.closed=true; } else { t.ydot=true; t.closed=false; t.p=null; } renderDay(); }
+  function markClosed(){ const t=cur.tmp;
+    if(t.closed){ t.closed=false; } else { t.closed=true; t.ydot=false; t.p=null; } renderDay(); }
+  function clearDay(){ setCell(loc(cur.loc),parseISO(cur.date),null); closeModal(); refresh(); }
+  function saveDay(){
+    const t=cur.tmp, l=loc(cur.loc), d=parseISO(cur.date);
+    if(t.closed) setCell(l,d,{closed:true});
+    else if(t.ydot) setCell(l,d,{ydot:true});
+    else if(t.p!=null){
+      if(t.e<=t.s){ el('dhint').textContent='End time must be after the start time.'; return; }
+      setCell(l,d,{p:t.p,s:t.s,e:t.e});
+    } else setCell(l,d,null);
+    closeModal(); refresh();
   }
-  function save(loc,d){
-    if(tmp.p==null){hint('Pick a doctor, or choose “Mark Yellow Dot Day.”');return;}
-    let s=tmp.s,e=tmp.e;
-    if(tmp.mode==='custom'){s=parseT(el('cS').value||'08:00');e=parseT(el('cE').value||'17:00'); if(e<=s){hint('End time must be after the start time.');return;}}
-    const cf=conflictAt(loc,d,tmp.p,s,e);
-    if(cf){hint(people[tmp.p].n+' already works '+cf.loc+' ('+cf.c.h+') that day — times overlap.');return;}
-    if(!sched[loc])sched[loc]=[null,null,null,null,null,null];
-    sched[loc][d]={p:tmp.p,h:hoursLabel(s,e),s,e};
-    closeModal(); renderGrid();
-  }
-  function setClosed(loc,d){ if(!sched[loc])sched[loc]=[null,null,null,null,null,null]; sched[loc][d]={closed:true}; closeModal(); renderGrid(); }
 
-  function personModal(editIdx){
-    const isEdit=editIdx!=null; const cur=isEdit?people[editIdx]:{n:'',c:people.length%PALETTE.length};
-    tmpC=cur.c; tmpEdit=editIdx;
-    const sw=PALETTE.map((c,i)=>'<button class="sw'+(i===tmpC?' sel':'')+'" style="background:'+c.fg+'" onclick="PS.pc('+i+')" aria-label="color"></button>').join('');
-    openModal(
-      '<div class="s-top"><b>'+(isEdit?'Edit doctor':'Add a doctor / person')+'</b><button class="x" onclick="PS.close()">×</button></div>'+
-      '<div class="s-body"><div class="s-lab">Name</div><input id="pName" class="s-input" placeholder="e.g. Dr. Smith" value="'+(isEdit?cur.n.replace(/"/g,'&quot;'):'')+'" autocomplete="off">'+
-      '<div class="s-lab">Color</div><div class="swwrap" id="swwrap">'+sw+'</div></div>'+
-      '<div class="s-foot">'+(isEdit?'<button class="sbtn ghost" onclick="PS.delPerson('+editIdx+')">Remove</button>':'')+'<span style="flex:1"></span><button class="sbtn ghost" onclick="PS.close()">Cancel</button><button class="sbtn" onclick="PS.savePerson()">'+(isEdit?'Save':'Add doctor')+'</button></div>');
-    setTimeout(()=>{const i=el('pName'); if(i){i.focus(); i.addEventListener('keydown',e=>{if(e.key==='Enter')savePerson();});}},40);
-  }
-  function addPerson(){ if(!canEdit())return; personModal(null); }
-  function editPerson(i){ if(!canEdit())return; return _editPerson(i); }
-  function _editPerson(i){ personModal(i); }
-  function pc(i){ tmpC=i; [...document.querySelectorAll('#swwrap .sw')].forEach((b,k)=>b.classList.toggle('sel',k===i)); }
-  function savePerson(){ const v=el('pName').value.trim(); if(!v)return; if(tmpEdit!=null){people[tmpEdit].n=v; people[tmpEdit].c=tmpC;} else {people.push({n:v,c:tmpC});} closeModal(); renderRoster(); renderGrid(); }
-  function delPerson(i){ people.splice(i,1); Object.keys(sched).forEach(loc=>{ sched[loc]=sched[loc].map(c=>{ if(!c)return null; if(c.p===i)return null; if(c.p>i)return {p:c.p-1,h:c.h,s:c.s,e:c.e}; return c; }); }); filterP=null; closeModal(); renderRoster(); renderGrid(); }
-
-  function locModal(editName){
-    const isEdit=editName!=null;
-    const src=isEdit?(openH[editName]||[]):[WKh,WKh,WKh,WKh,WKh,null];
-    const tz=isEdit?(locTZ[editName]||'MT'):'MT';
-    const lunch=isEdit?(locLunch[editName]||{s:720,e:780}):{s:720,e:780};
-    tmpLoc={orig:editName, hours:DAYS.map((_,i)=>{const h=src[i]; return h?{s:h.s,e:h.e}:null;}), tz, lunch:{s:lunch.s,e:lunch.e}};
-    openModal(
-      '<div class="s-top"><b>'+(isEdit?'Edit location':'Add a location')+'</b><button class="x" onclick="PS.close()">×</button></div>'+
-      '<div class="s-body"><div class="s-lab">Location name</div><input id="lName" class="s-input" value="'+(isEdit?editName.replace(/"/g,'&quot;'):'')+'" placeholder="e.g. Roswell" autocomplete="off">'+
-      '<div class="s-lab">Time zone</div><select id="lTZ" class="s-input" onchange="PS.setTZ(this.value)">'+TZS.map(z=>'<option'+(z===tz?' selected':'')+'>'+z+'</option>').join('')+'</select>'+
-      '<div class="s-lab">Office hours</div><div class="dayrows" id="dayrows"></div>'+
-      '<div class="s-lab">Lunch</div><div class="custrow" style="display:flex"><input type="time" id="lunchS" value="'+fmt24(lunch.s)+'" onchange="PS.setLunch(\'s\',this.value)"><span>to</span><input type="time" id="lunchE" value="'+fmt24(lunch.e)+'" onchange="PS.setLunch(\'e\',this.value)"></div>'+
-      '<button class="sbtn ghost" style="margin-top:14px;width:100%" onclick="PS.applyAll()">Apply these hours &amp; lunch to all locations</button></div>'+
-      '<div class="s-foot">'+(isEdit?'<button class="sbtn ghost" onclick="PS.delLoc(\''+editName+'\')">Remove</button>':'')+'<span style="flex:1"></span><button class="sbtn ghost" onclick="PS.close()">Cancel</button><button class="sbtn" onclick="PS.saveLoc()">'+(isEdit?'Save':'Add location')+'</button></div>');
-    renderDayRows();
-    setTimeout(()=>el('lName')&&el('lName').focus(),40);
-  }
-  function setTZ(v){ tmpLoc.tz=v; }
-  function setLunch(w,v){ tmpLoc.lunch[w]=parseT(v); }
-  function applyAll(){ locations.forEach(L=>{ openH[L]=tmpLoc.hours.map(h=>h?{s:h.s,e:h.e}:null); locLunch[L]={s:tmpLoc.lunch.s,e:tmpLoc.lunch.e}; }); closeModal(); renderGrid(); }
-  function renderDayRows(){
-    el('dayrows').innerHTML=DAYS.map((d,i)=>{const h=tmpLoc.hours[i];
-      return '<div class="dayrow"><button class="dtog'+(h?' on':'')+'" onclick="PS.dtog('+i+')">'+d+'</button>'+
-        (h?'<span class="dtimes"><input type="time" value="'+fmt24(h.s)+'" onchange="PS.dtime('+i+',\'s\',this.value)"><span>to</span><input type="time" value="'+fmt24(h.e)+'" onchange="PS.dtime('+i+',\'e\',this.value)"></span>':'<span class="dclosed">Closed</span>')+
+  /* ---------- office editor ---------- */
+  let tmpLoc=null;
+  function addLocation(){ if(!canEdit())return;
+    tmpLoc={isNew:true,n:'',color:PALETTE[8].k,tz:'Mountain Time',lunch:null,hours:[WK,null,WK,null,WK,null]}; renderLoc(); }
+  function editLoc(n){ if(!canEdit())return;
+    const l=loc(n); tmpLoc=JSON.parse(JSON.stringify(l)); tmpLoc.isNew=false; tmpLoc.orig=n; renderLoc(); }
+  function renderLoc(){
+    const t=tmpLoc;
+    const cols=PALETTE.map(c=>'<button class="colsw'+(t.color===c.k?' on':'')+'" style="background:'+c.dot+'" title="'+c.k+'" onclick="PS.setColor(\''+esc(c.k)+'\')"></button>').join('');
+    const days=DOW.map((d,i)=>{
+      const h=t.hours[i];
+      return '<div class="drow"><span class="dname">'+d+'</span>'+
+        '<label class="sw"><input type="checkbox" '+(h?'checked':'')+' onchange="PS.dtog('+i+')"> open</label>'+
+        (h?'<span class="dtimes"><input type="time" value="'+fmt24(h.s)+'" onchange="PS.dtime('+i+',\'s\',this.value)"><span>to</span><input type="time" value="'+fmt24(h.e)+'" onchange="PS.dtime('+i+',\'e\',this.value)"></span>':'<span class="dclosed">closed</span>')+
       '</div>';}).join('');
+    openModal(
+      '<div class="m-top"><h3>'+(t.isNew?'Add an office':'Edit '+t.orig)+'</h3><button class="x" onclick="PS.close()">×</button></div>'+
+      '<div class="m-body">'+
+        '<div class="s-lab">Office name</div><input class="s-input" id="lName" value="'+(t.n||'').replace(/"/g,'&quot;')+'" placeholder="e.g. Roswell">'+
+        '<div class="s-lab">Colour — how this office shows on the schedule</div><div class="colgrid">'+cols+'</div>'+
+        '<div class="s-lab">Time zone</div><select class="s-input" onchange="PS.setTZ(this.value)">'+TZS.map(z=>'<option'+(z===t.tz?' selected':'')+'>'+z+'</option>').join('')+'</select>'+
+        '<div class="s-lab">Office hours</div>'+days+
+        '<div class="s-lab">Lunch</div>'+
+        '<label class="sw"><input type="checkbox" '+(t.lunch?'checked':'')+' onchange="PS.lunchTog()"> this office takes a set lunch</label>'+
+        (t.lunch?'<div class="dtimes" style="margin-top:8px"><input type="time" value="'+fmt24(t.lunch.s)+'" onchange="PS.lunchT(\'s\',this.value)"><span>to</span><input type="time" value="'+fmt24(t.lunch.e)+'" onchange="PS.lunchT(\'e\',this.value)"></div>':'<p class="hint">No set lunch — leave it unticked if this office doesn\'t schedule one.</p>')+
+      '</div>'+
+      '<div class="m-foot">'+(t.isNew?'':'<button class="sbtn ghost" onclick="PS.delLoc()">Delete office</button>')+
+        '<span style="flex:1"></span><button class="sbtn ghost" onclick="PS.close()">Cancel</button>'+
+        '<button class="sbtn" onclick="PS.saveLoc()">Save</button></div>');
   }
-  function addLocation(){ if(!canEdit())return; locModal(null); }
-  function editLoc(l){ if(!canEdit())return; return _editLoc(l); }
-  function _editLoc(name){ locModal(name); }
-  function dtog(i){ tmpLoc.hours[i]=tmpLoc.hours[i]?null:{s:480,e:1020}; renderDayRows(); }
-  function dtime(i,w,v){ if(tmpLoc.hours[i])tmpLoc.hours[i][w]=parseT(v); }
+  function setColor(c){ tmpLoc.color=c; renderLoc(); }
+  function setTZ(v){ tmpLoc.tz=v; }
+  function dtog(i){ tmpLoc.hours[i]=tmpLoc.hours[i]?null:{s:WK.s,e:WK.e}; renderLoc(); }
+  function dtime(i,k,v){ if(tmpLoc.hours[i]) tmpLoc.hours[i][k]=hm(v); }
+  function lunchTog(){ tmpLoc.lunch=tmpLoc.lunch?null:{s:720,e:780}; renderLoc(); }
+  function lunchT(k,v){ if(tmpLoc.lunch) tmpLoc.lunch[k]=hm(v); }
   function saveLoc(){
-    const v=el('lName').value.trim(); if(!v)return;
-    if(tmpLoc.orig){ if(v!==tmpLoc.orig){ const i=locations.indexOf(tmpLoc.orig); if(i>=0)locations[i]=v; sched[v]=sched[tmpLoc.orig]; delete sched[tmpLoc.orig]; delete openH[tmpLoc.orig]; delete locTZ[tmpLoc.orig]; delete locLunch[tmpLoc.orig]; } openH[v]=tmpLoc.hours; locTZ[v]=tmpLoc.tz; locLunch[v]=tmpLoc.lunch; }
-    else if(!locations.includes(v)){ locations.push(v); sched[v]=[null,null,null,null,null,null]; openH[v]=tmpLoc.hours; locTZ[v]=tmpLoc.tz; locLunch[v]=tmpLoc.lunch; }
-    closeModal(); renderGrid();
+    const nm=(el('lName').value||'').trim(); if(!nm)return;
+    const rec={n:nm,color:tmpLoc.color,tz:tmpLoc.tz,lunch:tmpLoc.lunch,hours:tmpLoc.hours};
+    if(tmpLoc.isNew){ locations.push(rec); fLoc.add(nm); }
+    else{
+      const i=locations.findIndex(l=>l.n===tmpLoc.orig);
+      if(tmpLoc.orig!==nm){
+        Object.keys(sched).forEach(k=>{ if(sched[k][tmpLoc.orig]!==undefined){ sched[k][nm]=sched[k][tmpLoc.orig]; delete sched[k][tmpLoc.orig]; }});
+        fLoc.delete(tmpLoc.orig); fLoc.add(nm);
+      }
+      locations[i]=rec;
+    }
+    save(); closeModal(); refresh();
   }
-  function delLoc(loc){ locations=locations.filter(l=>l!==loc); delete sched[loc]; delete openH[loc]; closeModal(); renderGrid(); }
-  function filter(i){ filterP=(filterP===i)?null:i; renderRoster(); renderGrid(); }
-  function week(dir){ weekOffset+=dir; renderGrid(); }
+  function delLoc(){
+    locations=locations.filter(l=>l.n!==tmpLoc.orig); fLoc.delete(tmpLoc.orig);
+    Object.keys(sched).forEach(k=>delete sched[k][tmpLoc.orig]);
+    save(); closeModal(); refresh();
+  }
+
+  /* ---------- doctors (name only) ---------- */
+  let tmpP=null;
+  function addPerson(){ if(!canEdit())return; tmpP={i:-1,n:''}; renderPerson(); }
+  function editPerson(i){ if(!canEdit())return; tmpP={i:i,n:people[i].n}; renderPerson(); }
+  function renderPerson(){
+    openModal(
+      '<div class="m-top"><h3>'+(tmpP.i<0?'Add a doctor':'Edit doctor')+'</h3><button class="x" onclick="PS.close()">×</button></div>'+
+      '<div class="m-body"><div class="s-lab">Name</div>'+
+        '<input class="s-input" id="pName" value="'+(tmpP.n||'').replace(/"/g,'&quot;')+'" placeholder="e.g. Dr. Smith">'+
+        '<p class="hint">Doctors don\'t have their own colour — a day takes the colour of the <b>office</b>.</p></div>'+
+      '<div class="m-foot">'+(tmpP.i<0?'':'<button class="sbtn ghost" onclick="PS.delPerson()">Remove</button>')+
+        '<span style="flex:1"></span><button class="sbtn ghost" onclick="PS.close()">Cancel</button>'+
+        '<button class="sbtn" onclick="PS.savePerson()">Save</button></div>');
+  }
+  function savePerson(){
+    const nm=(el('pName').value||'').trim(); if(!nm)return;
+    if(tmpP.i<0) people.push({n:nm}); else people[tmpP.i].n=nm;
+    closeModal(); refresh();
+  }
+  function delPerson(){
+    const i=tmpP.i;
+    Object.keys(sched).forEach(k=>Object.keys(sched[k]).forEach(ln=>{
+      const c=sched[k][ln];
+      if(c&&c.p===i) delete sched[k][ln];
+      else if(c&&c.p>i) c.p--;
+    }));
+    people.splice(i,1); if(fDoc===i)fDoc=null; save(); closeModal(); refresh();
+  }
+
+  /* ---------- build the year ---------- */
+  function yearModal(){
+    if(!canEdit())return;
+    openModal(
+      '<div class="m-top"><h3>📅 Build out the year</h3><button class="x" onclick="PS.close()">×</button></div>'+
+      '<div class="m-body">'+
+        '<p style="font-size:14px;line-height:1.6;margin:0 0 14px">Fills in <b>every week of the year</b> using the pattern each office normally runs — the same doctor on the same weekday, following each office\'s own opening days.</p>'+
+        '<div class="notice" style="margin:0">Days an office is open but the pattern has nobody for become <b>Yellow Dot Days</b>. You can change any single day afterwards.</div>'+
+        '<div class="s-lab">Year</div><select class="s-input" id="yPick">'+
+          [mY-1,mY,mY+1].map(y=>'<option'+(y===mY?' selected':'')+'>'+y+'</option>').join('')+'</select>'+
+      '</div>'+
+      '<div class="m-foot"><span style="flex:1"></span><button class="sbtn ghost" onclick="PS.close()">Cancel</button>'+
+        '<button class="sbtn" onclick="PS.doYear()">Build it</button></div>');
+  }
+  function doYear(){ buildYear(+el('yPick').value); closeModal(); refresh(); }
+
+  /* ---------- chrome ---------- */
+  function renderBar(){
+    el('viewseg').innerHTML=
+      '<button class="'+(view==='week'?'on':'')+'" onclick="PS.view(\'week\')">Week</button>'+
+      '<button class="'+(view==='month'?'on':'')+'" onclick="PS.view(\'month\')">Month</button>';
+    el('perlab').textContent = view==='week'
+      ? 'Week of '+MOFULL[anchor.getMonth()].slice(0,3)+' '+anchor.getDate()
+      : MOFULL[mM]+' '+mY;
+    el('hint').textContent = canEdit()
+      ? 'Tap any day to set a doctor, a Yellow Dot Day, or close it · every office has its own colour · today is outlined.'
+      : 'Filter by office or doctor to find what you need · today is outlined.';
+  }
+  function refresh(){ renderBar(); renderFilters(); renderStatus(); view==='week'?renderWeek():renderMonth(); renderCounters(); }
+  function step(n){ if(view==='week'){ anchor=addDays(anchor,7*n); mY=anchor.getFullYear(); mM=anchor.getMonth(); }
+    else { mM+=n; if(mM<0){mM=11;mY--;} if(mM>11){mM=0;mY++;} } refresh(); }
+  function today(){ anchor=mondayOf(new Date(TODAY)); mY=TODAY.getFullYear(); mM=TODAY.getMonth(); refresh(); }
+  function setView(v){ view=v; refresh(); }
+  function togLoc(n){ fLoc.has(n)?fLoc.delete(n):fLoc.add(n); refresh(); }
+  function allLocs(){ if(fLoc.size===locations.length) fLoc.clear(); else locations.forEach(l=>fLoc.add(l.n)); refresh(); }
+  function togDoc(i){ fDoc=(fDoc===i?null:i); refresh(); }
+  function openModal(h){ el('modalCard').innerHTML=h; el('modal').classList.add('open'); }
+  function closeModal(){ el('modal').classList.remove('open'); }
 
   function applyPerms(){
     if(canEdit())return;
     document.body.classList.add('ph-view-only');
     if(window.PH) PH.readOnlyBanner('.wrap','schedule');
-    const b=document.getElementById('addLocBtn'); if(b)b.style.display='none';
-    const hint=document.querySelector('.hint');
-    if(hint)hint.textContent='Tap a doctor above to highlight where they work this week · today\u2019s column is highlighted.';
+    ['addLocBtn','addDocBtn','yearBtn'].forEach(id=>{const b=el(id); if(b)b.style.display='none';});
+    const n=el('tourNotice');
+    if(n)n.innerHTML='<b>Every office has its own colour.</b> Grey = closed, <b>Yellow Dot Day</b> = open with no doctor on site. Use the filters to find an office or a doctor.';
   }
-  window.PS={applyPerms,filter,addPerson,edit:editPerson,pc,savePerson,delPerson,addLocation,editLoc,dtog,dtime,setTZ,setLunch,applyAll,saveLoc,delLoc,assign,tp,hm,save,setClosed,close:closeModal,week};
-  el('schedModal').addEventListener('click',e=>{if(e.target.id==='schedModal')closeModal();});
+
+  window.PS={view:setView,step,today,togLoc,allLocs,togDoc,open,pickDoc,setT,halfDay,fullDay,markYdot,markClosed,
+    clearDay,saveDay,addLocation,editLoc,setColor,setTZ,dtog,dtime,lunchTog,lunchT,saveLoc,delLoc,
+    addPerson,edit:editPerson,savePerson,delPerson,yearModal,doYear,close:closeModal};
+
+  el('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
-  renderRoster(); renderGrid();
+
+  let stored=null; try{ stored=JSON.parse(localStorage.getItem('ph_sched')); }catch(_){}
+  if(stored && typeof stored==='object' && Object.keys(stored).length) sched=stored;
+  else buildYear(TODAY.getFullYear());
+  applyPerms();
+  refresh();
 })();
 </script>
 <script>PH.nav('schedule');</script>
-<script>if(window.PS&&PS.applyPerms)PS.applyPerms();</script>
 <script src="tour.js"></script>
 <script>
 Tour.init([
-  {sel:'#weeknav', title:'One week at a time', body:'Page forward and back with the arrows \u2014 the real dates follow, and today\u2019s column is always highlighted.'},
-  {sel:'#roster', title:'Your doctors', body:'Each doctor has their own colour. <b>Tap a name</b> to light up every office they work this week. Use \u270e to rename one or change their colour, and <b>+ Add doctor</b> for a new one.'},
-  {sel:'#schedStatus', title:'Is the week actually covered?', body:'This bar answers the only question that matters on a Monday morning: <b>is anything still missing a doctor?</b>'},
-  {sel:'#schedGrid', title:'Who\u2019s where', body:'Offices down the side, days across the top. <b>Tap any cell</b> to put a doctor in it \u2014 you\u2019ll only be offered doctors who are <b>free that day</b>, so you can\u2019t double-book anyone.'},
-  {sel:'#schedGrid', title:'Yellow Dot Days and closed days', body:'<b>Yellow Dot Day</b> = the office is open but <b>no doctor on site</b>. <b>Closed</b> = the office isn\u2019t open at all that day, which comes from its office hours.'},
-  {sel:'#addLocBtn', title:'Hours, lunches, time zones', body:'Each office row has a \u270e for its <b>opening times per day, its time zone and its lunch</b> \u2014 plus \u201capply to all\u201d if they\u2019re mostly the same. <b>+ Add location</b> adds a new office.'},
-  {sel:'.ph-av', title:'Not everyone can edit this', body:'Doctors and staff see this page <b>read-only</b> \u2014 no cells to tap, nothing to break. Sign in as the Doctor from your avatar to check.'}
+  {sel:'#viewseg', title:'Week or month', body:'<b>Week</b> is the day-to-day working view. <b>Month</b> shows the whole month at a glance, with every office in its own colour.'},
+  {sel:'#filters', title:'Find anything fast', body:'Tap offices to show or hide them, and tap a doctor to see <b>only</b> where that doctor is working. Both filters work in either view.'},
+  {sel:'#status', title:'Is it actually covered?', body:'The one question that matters on a Monday: <b>is any open day still without a doctor?</b>'},
+  {sel:'#board', title:'Tap any day to set it', body:'Pick a doctor — you\'ll only be offered doctors who are <b>free that day</b> — set the hours or use <b>Half day (8–2)</b>, or mark it a <b>Yellow Dot Day</b>. Tapping Yellow Dot again switches it off and closes the office.'},
+  {sel:'#yearBtn', title:'Build the whole year at once', body:'Fills in <b>every week of the year</b> from the pattern each office normally runs, so you only fix the exceptions.'},
+  {sel:'#counters', title:'Doctor days, counted for you', body:'How many days each doctor works, how many days each office is covered, and who covers where — for <b>this month and the whole year</b>.'},
+  {sel:'#addLocBtn', title:'Offices, colours, hours and lunches', body:'Add an office, choose its <b>colour</b>, set its opening days and times, its time zone, and whether it takes a <b>set lunch at all</b>.'}
 ], {key:'sched', title:'Schedule', next:{label:'Marketing', href:'marketing.html'}});
 </script>
 </body>

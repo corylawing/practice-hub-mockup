@@ -228,18 +228,31 @@ the xlsx was unzipped and the sheet XML parsed directly).
   `index.html` applies `_total`/`_days`/`_goal` on load. **Store the computed `_total`** — deriving
   it in the dashboard silently dropped the Medicaid portion once.
 
-### 5c. `v1/schedule.html` — Schedule
-- Weekly board (locations × Mon–Sat), colour per doctor, real dates, today highlighted.
-- Data (`window.PS`): `people[{n,c}]`, `locations[]`, `sched{loc:[6 cells]}` (cell = `null` |
-  `{p,h,s,e}` | `{closed:true}`), `openH{loc:[6 × {s,e}|null]}`, `locTZ`, `locLunch`. Times in
-  minutes; conflict = overlap (`s1<e2 && s2<e1`) guarded by `conflictAt`.
-- **Wording (their feedback):** a cell with no doctor on site is a **"● Yellow Dot Day"**
-  (`.cell.ydot`, pale yellow) — **not** "Closed". "Closed" means the office has no hours that day.
-  Button reads **"Mark Yellow Dot Day."**
-- **`Cruces Legacy` renamed `Cruces FFO`** everywhere (their instruction).
-- Availability-only doctor picker; completeness bar; per-day hours + time zone + lunch with
-  "apply to all"; add/edit/remove locations and doctors.
-- **Read-only is enforced** — see §6.
+### 5c. `v1/schedule.html` — Schedule (rebuilt 2026-08-08)
+**The OFFICE carries the colour, not the doctor** — their explicit instruction. `PALETTE` holds the
+exact colours they named: Carlsbad **Hot Pink**, Mansfield **Purple**, San Angelo **Sky Blue**,
+Clovis **Highlighter Orange**, Hobbs **Lime Green**, Lubbock **Highlighter Yellow**,
+Cruces LCO **Light Pink**, Cruces FFO **Light Orange**. **Doctors have no colour** and no colour
+picker — a day is tinted by its office.
+
+**Date-keyed model** (this is why it was rebuilt): `sched['2026-08-10']['Carlsbad'] = {p,s,e} |
+{ydot:true} | {closed:true}`, persisted to `localStorage.ph_sched`. The old model was one generic
+week, which could never hold a year.
+
+- **Week and Month views.** Month shows every office on its day, in colour, with the doctor beneath.
+- **Filter by office AND/OR doctor** — both filters work in either view.
+- **Yellow Dot Day de-select closes the office** (`markYdot`): tapping it once sets Yellow Dot,
+  tapping again turns it off and sets **Closed**. Yellow Dot = open, no doctor; Closed = not open.
+- **Half day is 8:00–2:00** (`HALF`), with a one-tap button (plus Full day 8–5).
+- **Lunch is optional** — an office can have **no set lunch** (`lunch:null`, shown as "no set lunch").
+  Lubbock and Cruces FFO are seeded that way.
+- **Build out the year** (`buildYear`) fills every week of a chosen year from `PATTERN` — the same
+  doctor on the same weekday, respecting each office's opening days. Open days with nobody in the
+  pattern become Yellow Dot Days.
+- **Counters** (`tally`): doctor days per doctor, days covered per office, and doctor×office — each
+  for **the displayed month and the whole year**, with bars.
+- Availability guard still applies: a doctor already booked elsewhere that date is greyed out.
+- Read-only enforcement unchanged (`canEdit`, view-only banner, hidden add/build buttons).
 
 ### 5d. `v1/marketing.html` — Marketing
 - Kanban `STAGES`: 💡 Ideas → 🗓️ Planned → 🚀 In progress → ✅ Done. Drag-and-drop **or** ◀ ▶.
