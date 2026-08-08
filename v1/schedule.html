@@ -85,8 +85,8 @@
   .hrs{display:block;font-size:11px;opacity:.85;margin-top:1px}
   .needs{color:#946011;font-size:12px;font-weight:700}
   td.needsc{background:#FFFBEF}
-  .ydot{color:#8a6410;font-size:11.5px;font-weight:800}
-  td.ydotc{background:#FEF3C7}
+  .ydot{color:#6b4c05;font-size:11.5px;font-weight:800;display:inline-flex;align-items:center;gap:5px}
+  td.ydotc{background:#FDE047}
   .closed{color:#9aa6b6;font-size:12px;font-weight:600}
   td.closedc{background:#fafbfc}
   .dim{opacity:.16}
@@ -101,6 +101,14 @@
   .ent{display:block;width:100%;text-align:left;border:none;border-radius:6px;padding:3px 6px;margin-bottom:3px;
     font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;line-height:1.25}
   .ent small{display:block;font-weight:600;opacity:.8;font-size:10px}
+  .ent.yd{background:#FDE047;color:#6b4c05;border:1px solid #eab308}
+  .ent.yd small{opacity:1;font-weight:800;display:flex;align-items:center;gap:4px}
+  .ydmark{width:8px;height:8px;border-radius:50%;background:#a16207;display:inline-block;flex:none;
+    box-shadow:0 0 0 2px rgba(161,98,7,.25)}
+  .ent.nd{background:#FFF7E6;color:#9a6b12;border:1px dashed #e6c877}
+  .addday{display:block;width:100%;border:1px dashed #cfd7e0;background:transparent;color:#8a94a6;border-radius:6px;
+    padding:3px 6px;font-size:10.5px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:2px}
+  .mday:hover .addday{border-color:var(--teal);color:var(--teal-600)}
   .counts{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px}
   .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
   .card h2{margin:0 0 3px;font-size:16px;color:var(--navy)}
@@ -117,6 +125,10 @@
   .status{border-radius:12px;padding:11px 15px;font-size:13.5px;margin:12px 0;box-shadow:var(--shadow);border:1px solid var(--line);background:#fff}
   .status.ok{background:var(--good-soft);border-color:#bfe4d0;color:#1d6b48}
   .status.warn{background:#FFF6E9;border-color:#f0d9ae;color:#7a4d0a}
+  .keyrow{display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin:0 0 12px;font-size:12.5px;color:var(--soft)}
+  .keyitem{display:inline-flex;align-items:center;gap:6px}
+  .keyitem b{color:var(--ink)}
+  .kbox{width:14px;height:14px;border-radius:4px;border:1px solid var(--line);display:inline-block}
   .hint{font-size:12.5px;color:var(--soft);margin-top:10px}
   .ov{position:fixed;inset:0;background:rgba(15,42,74,.5);z-index:120;display:none;align-items:flex-start;justify-content:center;padding:22px 14px;overflow:auto}
   .ov.open{display:flex}
@@ -141,6 +153,13 @@
   .dtimes input{padding:5px 7px;border:1px solid var(--line);border-radius:7px;font-size:12.5px;font-family:inherit}
   .dclosed{color:#9aa6b6;font-size:12.5px}
   .sw{display:inline-flex;align-items:center;gap:7px;font-size:13.5px;cursor:pointer}
+  .offgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .offpick{border:1.5px solid var(--line);border-radius:11px;padding:10px 12px;text-align:left;cursor:pointer;font-family:inherit;
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .offpick b{font-size:13.5px;font-weight:800}
+  .offpick small{display:block;width:100%;font-size:11px;opacity:.85;font-weight:600}
+  .offpick .dot{width:11px;height:11px;border-radius:50%;flex:none}
+  @media(max-width:560px){ .offgrid{grid-template-columns:1fr} }
   .colgrid{display:flex;gap:8px;flex-wrap:wrap}
   .colsw{width:34px;height:34px;border-radius:9px;border:2px solid transparent;cursor:pointer}
   .colsw.on{border-color:var(--navy);box-shadow:0 0 0 2px #fff inset}
@@ -165,7 +184,7 @@
     <h1>Schedule — Who's Where</h1>
     <p>Which office is open each day and which doctor is working there.</p>
   </div>
-  <div class="notice" id="tourNotice"><b>Every office has its own colour.</b> Tap any day to put a doctor in it, mark it a <b>Yellow Dot Day</b> (open, no doctor) or close it. Switch between <b>Week</b> and <b>Month</b>, and build the whole year in one go.</div>
+  <div class="notice" id="tourNotice"><b>Every office has its own colour.</b> Tap any day to put a doctor in it, mark it a <b>Yellow Dot Day</b> (open, no doctor) or close it. Work in <b>Month</b> view and tap <b>+ Add</b> on any day to put an office and doctor on it.</div>
 
   <div class="bar">
     <div class="seg" id="viewseg"></div>
@@ -174,11 +193,16 @@
     <span style="flex:1"></span>
     <button class="sbtn ghost" id="addLocBtn" onclick="PS.addLocation()">+ Add office</button>
     <button class="sbtn ghost" id="addDocBtn" onclick="PS.addPerson()">+ Add doctor</button>
-    <button class="sbtn" id="yearBtn" onclick="PS.yearModal()">📅 Build out the year</button>
   </div>
 
   <div class="filters" id="filters"></div>
   <div id="status"></div>
+  <div class="keyrow">
+    <span class="keyitem"><i class="kbox" style="background:#FDE047;border-color:#eab308"></i><span class="ydmark"></span> <b>Yellow Dot Day</b> — open, no doctor on site</span>
+    <span class="keyitem"><i class="kbox" style="background:#FFF7E6;border:1px dashed #e6c877"></i> Needs a doctor</span>
+    <span class="keyitem"><i class="kbox" style="background:#fafbfc"></i> Closed</span>
+    <span class="keyitem"><i class="kbox" style="background:#FFE1EF;border-color:#FF2D95"></i> Doctor on site (office colour)</span>
+  </div>
   <div id="board"></div>
   <p class="hint" id="hint"></p>
   <div id="counters"></div>
@@ -237,13 +261,19 @@
   const openOn=(l,d)=>{const i=dowIdx(d); return i<6? l.hours[i] : null;};
   const cellOf=(l,d)=>(sched[iso(d)]||{})[l.n];
   function setCell(l,d,v){ const k=iso(d); sched[k]=sched[k]||{}; if(v===null) delete sched[k][l.n]; else sched[k][l.n]=v; save(); }
-  function save(){ try{ localStorage.setItem('ph_sched',JSON.stringify(sched)); }catch(_){} }
+  function save(){ try{ localStorage.setItem('ph_sched2',JSON.stringify(sched)); }catch(_){} }
 
+  // null on a day the office is OPEN = nobody rostered = a Yellow Dot Day.
+  // Several offices genuinely run days with staff but no doctor on site.
   const PATTERN={
-    'Carlsbad':[0,null,1,null,0,null], 'Clovis':[1,null,0,null,null,2],
-    'Hobbs':[null,0,null,1,null,null], 'San Angelo':[2,null,3,null,1,null],
-    'Lubbock':[null,2,null,3,2,null],  'Mansfield':[3,null,2,null,3,null],
-    'Cruces LCO':[null,3,null,2,null,null], 'Cruces FFO':[null,null,2,null,null,3]
+    'Carlsbad':[0,null,1,null,0,null],
+    'Clovis':[1,null,0,null,null,null],      // Saturday: open, no doctor
+    'Hobbs':[null,0,null,1,null,null],
+    'San Angelo':[2,null,3,null,1,null],
+    'Lubbock':[null,2,null,3,null,null],     // Friday: open, no doctor
+    'Mansfield':[3,null,2,null,3,null],
+    'Cruces LCO':[null,3,null,2,null,null],
+    'Cruces FFO':[null,null,2,null,null,null] // Saturday: open, no doctor
   };
   function buildYear(year){
     let d=new Date(year,0,1); const end=new Date(year,11,31);
@@ -300,7 +330,7 @@
         '<span class="who" style="color:'+c.fg+'">'+people[cell.p].n+'</span>'+
         '<span class="hrs" style="color:'+c.fg+'">'+fmt(cell.s)+'–'+fmt(cell.e)+'</span></td>';
     }
-    if(cell&&cell.ydot) return '<td class="cell ydotc'+t+(fDoc!==null?' dim':'')+'"'+click+'><span class="ydot">● Yellow Dot Day</span></td>';
+    if(cell&&cell.ydot) return '<td class="cell ydotc'+t+(fDoc!==null?' dim':'')+'"'+click+'><span class="ydot"><span class="ydmark"></span> Yellow Dot Day</span></td>';
     if(open) return '<td class="cell needsc'+t+(fDoc!==null?' dim':'')+'"'+click+'><span class="needs">Needs doctor</span></td>';
     return '<td class="cell closedc'+t+'"'+click+'><span class="closed">Closed</span></td>';
   }
@@ -336,13 +366,16 @@
           ents+='<button class="ent" style="background:'+c.bg+';color:'+c.fg+'"'+click+'>'+l.n+'<small>'+people[cell.p].n+'</small></button>';
         } else if(cell&&cell.ydot){
           if(fDoc!==null) return;
-          ents+='<button class="ent" style="background:#FEF3C7;color:#8a6410"'+click+'>'+l.n+'<small>● Yellow Dot</small></button>';
+          ents+='<button class="ent yd"'+click+'>'+l.n+'<small><span class="ydmark"></span>Yellow Dot Day</small></button>';
         } else if(open){
           if(fDoc!==null) return;
-          ents+='<button class="ent" style="background:#FFFBEF;color:#946011"'+click+'>'+l.n+'<small>needs doctor</small></button>';
+          ents+='<button class="ent nd"'+click+'>'+l.n+'<small>needs a doctor</small></button>';
         }
       });
-      cells+='<div class="mday'+(isT?' today':'')+'"><div class="mdnum">'+dn+(isT?' · today':'')+'</div>'+ents+'</div>';
+      const addBtn = canEdit()
+        ? '<button class="addday" onclick="PS.addTo(\''+iso(d)+'\')" title="Add an office and doctor to this day">+ Add</button>'
+        : '';
+      cells+='<div class="mday'+(isT?' today':'')+'"><div class="mdnum">'+dn+(isT?' · today':'')+'</div>'+ents+addBtn+'</div>';
     }
     const tail=(7-((start+dim)%7))%7;
     for(let i=0;i<tail;i++) cells+='<div class="mday out"></div>';
@@ -419,6 +452,23 @@
     for(const ln in day){ if(ln===exceptLoc)continue;
       const c=day[ln]; if(c&&c.p===pi) return ln; }
     return null;
+  }
+  // Clicking "+ Add" on a day: choose the office first, then the doctor.
+  function addTo(dateStr){
+    if(!canEdit())return;
+    const d=parseISO(dateStr);
+    const rows=locations.map(l=>{
+      const c=colOf(l.color), h=openOn(l,d), cell=cellOf(l,d);
+      const has = cell&&cell.p!=null&&people[cell.p];
+      const note = has ? 'already '+people[cell.p].n : (h? 'open '+fmt(h.s)+'\u2013'+fmt(h.e) : 'not normally open');
+      return '<button class="offpick" style="background:'+c.bg+';color:'+c.fg+';border-color:'+c.dot+'" onclick="PS.open(\''+esc(l.n)+'\',\''+dateStr+'\')">'+
+        '<span class="dot" style="background:'+c.dot+'"></span><b>'+l.n+'</b><small>'+note+'</small></button>';
+    }).join('');
+    openModal(
+      '<div class="m-top"><h3>Add to '+DOW[dowIdx(d)]+' '+(d.getMonth()+1)+'/'+d.getDate()+'</h3><button class="x" onclick="PS.close()">\u00d7</button></div>'+
+      '<div class="m-body"><div class="s-lab">Which office?</div><div class="offgrid">'+rows+'</div>'+
+        '<p class="hint">Pick an office and you\u2019ll choose the doctor and hours next. You can add several offices to the same day.</p></div>'+
+      '<div class="m-foot"><span style="flex:1"></span><button class="sbtn ghost" onclick="PS.close()">Cancel</button></div>');
   }
   function open(locName,dateStr){
     if(!canEdit())return;
@@ -562,22 +612,6 @@
     people.splice(i,1); if(fDoc===i)fDoc=null; save(); closeModal(); refresh();
   }
 
-  /* ---------- build the year ---------- */
-  function yearModal(){
-    if(!canEdit())return;
-    openModal(
-      '<div class="m-top"><h3>📅 Build out the year</h3><button class="x" onclick="PS.close()">×</button></div>'+
-      '<div class="m-body">'+
-        '<p style="font-size:14px;line-height:1.6;margin:0 0 14px">Fills in <b>every week of the year</b> using the pattern each office normally runs — the same doctor on the same weekday, following each office\'s own opening days.</p>'+
-        '<div class="notice" style="margin:0">Days an office is open but the pattern has nobody for become <b>Yellow Dot Days</b>. You can change any single day afterwards.</div>'+
-        '<div class="s-lab">Year</div><select class="s-input" id="yPick">'+
-          [mY-1,mY,mY+1].map(y=>'<option'+(y===mY?' selected':'')+'>'+y+'</option>').join('')+'</select>'+
-      '</div>'+
-      '<div class="m-foot"><span style="flex:1"></span><button class="sbtn ghost" onclick="PS.close()">Cancel</button>'+
-        '<button class="sbtn" onclick="PS.doYear()">Build it</button></div>');
-  }
-  function doYear(){ buildYear(+el('yPick').value); closeModal(); refresh(); }
-
   /* ---------- chrome ---------- */
   function renderBar(){
     el('viewseg').innerHTML=
@@ -605,19 +639,19 @@
     if(canEdit())return;
     document.body.classList.add('ph-view-only');
     if(window.PH) PH.readOnlyBanner('.wrap','schedule');
-    ['addLocBtn','addDocBtn','yearBtn'].forEach(id=>{const b=el(id); if(b)b.style.display='none';});
+    ['addLocBtn','addDocBtn'].forEach(id=>{const b=el(id); if(b)b.style.display='none';});
     const n=el('tourNotice');
     if(n)n.innerHTML='<b>Every office has its own colour.</b> Grey = closed, <b>Yellow Dot Day</b> = open with no doctor on site. Use the filters to find an office or a doctor.';
   }
 
-  window.PS={view:setView,step,today,togLoc,allLocs,togDoc,open,pickDoc,setT,halfDay,fullDay,markYdot,markClosed,
+  window.PS={view:setView,step,today,togLoc,allLocs,togDoc,open,addTo,pickDoc,setT,halfDay,fullDay,markYdot,markClosed,
     clearDay,saveDay,addLocation,editLoc,setColor,setTZ,dtog,dtime,lunchTog,lunchT,saveLoc,delLoc,
-    addPerson,edit:editPerson,savePerson,delPerson,yearModal,doYear,close:closeModal};
+    addPerson,edit:editPerson,savePerson,delPerson,close:closeModal};
 
   el('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
 
-  let stored=null; try{ stored=JSON.parse(localStorage.getItem('ph_sched')); }catch(_){}
+  let stored=null; try{ stored=JSON.parse(localStorage.getItem('ph_sched2')); }catch(_){}
   if(stored && typeof stored==='object' && Object.keys(stored).length) sched=stored;
   else buildYear(TODAY.getFullYear());
   applyPerms();
@@ -632,7 +666,7 @@ Tour.init([
   {sel:'#filters', title:'Find anything fast', body:'Tap offices to show or hide them, and tap a doctor to see <b>only</b> where that doctor is working. Both filters work in either view.'},
   {sel:'#status', title:'Is it actually covered?', body:'The one question that matters on a Monday: <b>is any open day still without a doctor?</b>'},
   {sel:'#board', title:'Tap any day to set it', body:'Pick a doctor — you\'ll only be offered doctors who are <b>free that day</b> — set the hours or use <b>Half day (8–2)</b>, or mark it a <b>Yellow Dot Day</b>. Tapping Yellow Dot again switches it off and closes the office.'},
-  {sel:'#yearBtn', title:'Build the whole year at once', body:'Fills in <b>every week of the year</b> from the pattern each office normally runs, so you only fix the exceptions.'},
+  {sel:'#board', title:'Add a day as you go', body:'In <b>Month</b> view every day has a small <b>+ Add</b>. Tap it, choose the <b>office</b>, then the <b>doctor</b> and hours \u2014 that\u2019s how the calendar gets built.'},
   {sel:'#counters', title:'Doctor days, counted for you', body:'How many days each doctor works, how many days each office is covered, and who covers where — for <b>this month and the whole year</b>.'},
   {sel:'#addLocBtn', title:'Offices, colours, hours and lunches', body:'Add an office, choose its <b>colour</b>, set its opening days and times, its time zone, and whether it takes a <b>set lunch at all</b>.'}
 ], {key:'sched', title:'Schedule', next:{label:'Marketing', href:'marketing.html'}});

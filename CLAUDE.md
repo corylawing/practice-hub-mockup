@@ -166,7 +166,11 @@ without much reading."*
   staff, but needs to be there"* — so it lives on the bottom chart, not in the headline tiles.
 - **Look back at any finished month** — a "Look back at a month…" select next to This month /
   Year to date. A past month is judged against its **full** goal (no pace scaling).
-- **Combine offices** — "➕ Combine offices" turns the chips into multi-select; picking Carlsbad +
+- **Combine offices** — "➕ Combine offices" turns the chips into multi-select. **Bug fixed
+  2026-08-08:** `isAll` (sel==='ALL') took precedence over combine mode, so starting from the
+  All Offices tab the chips never selected and the view never changed. `isAll` is now
+  `sel==='ALL' && !combine`, chip state reads from `combined` whenever combining, and picking
+  nothing shows a "pick the offices you want to add together" prompt. It picking Carlsbad +
   Clovis + Hobbs shows one combined set of numbers and one combined celebration. **Permissioning is
   implicit**: you can only combine offices you can already see, so a single-office manager has
   nothing to combine and leadership can combine anything. No new permission level was invented.
@@ -246,9 +250,14 @@ week, which could never hold a year.
 - **Half day is 8:00–2:00** (`HALF`), with a one-tap button (plus Full day 8–5).
 - **Lunch is optional** — an office can have **no set lunch** (`lunch:null`, shown as "no set lunch").
   Lubbock and Cruces FFO are seeded that way.
-- **Build out the year** (`buildYear`) fills every week of a chosen year from `PATTERN` — the same
-  doctor on the same weekday, respecting each office's opening days. Open days with nobody in the
-  pattern become Yellow Dot Days.
+- **No "build out the year" button** — they didn't want it. `buildYear()` survives only as the demo
+  **seed** so the calendar isn't empty. The way you actually build the calendar is **Month view →
+  `+ Add` on any day → pick the office → pick the doctor and hours** (`addTo`). She will live in
+  Month view, so that flow is the primary one.
+- `PATTERN` deliberately leaves some open days with **nobody rostered** (Clovis Sat, Lubbock Fri,
+  Cruces FFO Sat) so real **Yellow Dot Days** appear — previously every day was covered and she
+  couldn't see the feature. Yellow Dot is bright `#FDE047` with a dot marker in both views, and
+  there's a colour key above the board.
 - **Counters** (`tally`): doctor days per doctor, days covered per office, and doctor×office — each
   for **the displayed month and the whole year**, with bars.
 - Availability guard still applies: a doctor already booked elsewhere that date is greyed out.

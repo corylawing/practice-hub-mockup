@@ -614,16 +614,21 @@ const OFFICES=[
     if(!multi) sel=allowed[0].n;
     else if(sel!=='ALL' && !allowed.some(o=>o.n===sel)) sel='ALL';
     el('chips').innerHTML = multi
-      ? ('<button class="chip'+(sel==='ALL'?' on':'')+'" onclick="DASH.pick(\'ALL\')">All Offices</button>'+
-         allowed.map(o=>{ const on = sel==='ALL'? false : (combine? combined.has(o.n) : sel===o.n);
+      ? ('<button class="chip'+((sel==='ALL'&&!combine)?' on':'')+'" onclick="DASH.pick(\'ALL\')">All Offices</button>'+
+         allowed.map(o=>{ const on = combine ? combined.has(o.n) : (sel!=='ALL' && sel===o.n);
            return '<button class="chip'+(on?' on':'')+'" onclick="DASH.pick(\''+o.n+'\')">'+
              (combine?'<span class="tick">'+(on?'\u2713':'+')+'</span> ':'')+o.n+'<span class="br">'+o.brand+'</span></button>';}).join('')+
          '<button class="chip combtog'+(combine?' on':'')+'" onclick="DASH.combine()" title="Add offices together and see one set of numbers">'+
            (combine?'\u2715 Stop combining':'\u2795 Combine offices')+'</button>')
       : '';
-    const isAll = multi && sel==='ALL';
+    const isAll = multi && sel==='ALL' && !combine;
     const picked = combine ? allowed.filter(x=>combined.has(x.n)) : [];
     const isCombo = combine && picked.length>0;
+    if(combine && !picked.length){
+      el('view').innerHTML='<div class="noacc"><b>Pick the offices you want to add together.</b><br>'+
+        'Tap them above \u2014 the numbers below will combine as you go.</div>';
+      return;
+    }
     const o = isAll ? group(allowed) : isCombo ? group(picked) : allowed.find(x=>x.n===sel);
     if(isCombo) o.n = picked.length+' offices combined';
     shown=o;
