@@ -344,18 +344,41 @@ someone is or what a role should be, **ask** rather than guess.
 
 Production must use **their existing Microsoft licenses**.
 
-- **Sign in with Microsoft (Entra ID)** — included with every M365 licence, even $2 F1. No new
-  passwords, no separate user database.
-- **Creating a user = creating them in Microsoft 365.** The hub reads them via **Microsoft Graph**
-  (names, emails, photos — the "synced from Microsoft" behaviour the mockup shows).
-- **Teams in the hub = Entra security groups.** One source of truth for permissions.
+**OPEN DECISION (2026-08-08):** the practice is deciding whether people can *also* be created
+directly in the hub, or **only** in Microsoft. **Microsoft-only is confirmed; hub-side creation is
+"maybe".** The mockup currently reflects Microsoft-only: Admin → People has no "+ Add person", just
+a **"Someone missing?"** explainer (`whyNoAdd`). If they say yes to both, re-add a create flow there.
+
+**THE HUB OWNS ITS OWN PERMISSIONS.** (Corrected 2026-08-08 — an earlier draft of this
+file said permissions came from Entra security groups. That is WRONG and the user rejected it.)
+
+- **The hub has its own user list, its own teams, its own access rules.** Everything in the Admin
+  console — People, Teams & Access, Document Sections, Locations — is the hub's own data, managed by
+  the practice, not mirrored from Microsoft. Do not push permission decisions into Entra groups.
+- **Microsoft is used for exactly two things:**
+  1. **Signing in.** "Sign in with Microsoft" (Entra ID) so nobody needs another password. Needs only
+     the delegated `User.Read` scope.
+  2. **Knowing a new person exists.** When IT creates a Microsoft account, that person should appear
+     in the hub automatically.
+- **How auto-creation works (recommended: both):**
+  - **Just-in-time on first sign-in** — an unknown but valid Microsoft account signs in, the hub
+    creates their record from the token (name, email), sets them to **no access**, and flags them in
+    Admin for the admin to assign a team + location. Requires nothing from IT beyond sign-in.
+  - **A periodic staff-list sync** (`User.ReadBasic.All`) so new hires appear in Admin *before* they
+    first log in, and leavers show as inactive.
+- **Offboarding is automatic:** disabling the Microsoft account blocks sign-in, so hub access ends
+  without anyone touching the hub.
+- **Which fields come from where:** name + email + (optionally) employee ID arrive from Microsoft at
+  creation. **Team, location, status and every access level are the hub's own.** Preferred name,
+  photo, phone and About me belong to the person.
 
 | Mockup concept | Production reality |
 |---|---|
-| Sign-in / profiles | Entra ID + Graph (`/me`, `/users`, photos) |
-| Teams | Entra security groups |
+| Sign-in | Entra ID (`User.Read` only) |
+| New person appears | JIT on first sign-in + optional staff-list sync (`User.ReadBasic.All`) |
+| Teams & access levels | **The hub's own data** — not Entra groups |
 | Documents & folders | SharePoint document libraries; folder permissions per group/location |
-| "Who can see this" | SharePoint permissions + audience targeting (location AND team = group intersection) |
+| "Who can see this" | The hub decides (team AND location), then requests the file from SharePoint |
 | Two-way sync | It IS the same file — hub links/embeds it; Office-for-the-web for in-hub editing |
 | "Updates for you" | Power Automate: file added/changed → notify matching group |
 | Dashboard | Excel on SharePoint via Graph (or the Excel web part) |

@@ -348,8 +348,8 @@
   /* ---------- PEOPLE ---------- */
   function renderUsers(){
     el('view').innerHTML=
-      '<div class="intro">Your real roster is imported here — everyone <b>syncs from Microsoft 365</b> (name, email, photo). Doctors are tagged <b>Doctors</b>; everyone else starts as <b>Staff</b> as a neutral placeholder. Set each person\'s <b>team(s), location &amp; status</b> to decide what they see (they can edit their own <b>photo &amp; “About me”</b>). <b>Tap a person</b> to open their profile.</div>'+
-      '<div class="toolrow"><input class="search" id="usearch" placeholder="Search people, email, team, location…" value="'+search.replace(/"/g,'&quot;')+'"><button class="btn" onclick="AD.addUser()">+ Add person</button></div>'+
+      '<div class="intro"><b>People are created in Microsoft \u2014 never here.</b> As soon as IT sets up someone\'s Microsoft account they appear in this list, with <b>no access</b> until you give them a team. What they can then reach is decided <b>here in the hub</b>: set their <b>team(s), location &amp; status</b>. They look after their own <b>photo, preferred name, phone &amp; \u201cAbout me\u201d</b>. <b>Tap a person</b> to open their profile.</div>'+
+      '<div class="toolrow"><input class="search" id="usearch" placeholder="Search people, email, team, location…" value="'+search.replace(/"/g,'&quot;')+'"><button class="btn ghost" onclick="AD.whyNoAdd()">Someone missing?</button></div>'+
       '<div class="tbl-scroll"><table class="u"><thead><tr><th>Person</th><th>Team(s) — what they can do</th><th>Location — where</th><th>Status</th></tr></thead><tbody></tbody></table></div>'+
       '<p style="font-size:13px;color:var(--soft);margin:12px 2px 0" id="ucount"></p>';
     renderUsersBody();
@@ -408,7 +408,22 @@
     [...document.querySelectorAll('#teampick .tp')].forEach(b=>b.classList.toggle('on',tmpU.teams.includes(b.textContent))); refreshAccessPreview(); }
   function setStatus(v){tmpU.status=v;}
   function saveUser(){ const u=users[tmpU.gi]; u.teams=tmpU.teams.slice(); u.status=tmpU.status; u.loc=tmpU.locs.length?(tmpU.locs.includes('All offices')?'All offices':tmpU.locs.join(', ')):'Unassigned'; closeModal(); renderUsersBody(); }
-  function addUser(){ users.push({f:'New',l:'Employee',email:'new.employee@farnsworthorthodontics.com',emp:'E-'+(1050+users.length),loc:'Carlsbad',state:'NM',brand:'FFO',teams:['Staff'],region:'NM',phone:'(000) 000-0000',about:'—',status:'Active',c:users.length%PAL.length}); renderUsers(); profile(users.length-1); }
+  function whyNoAdd(){
+    openModal(
+      '<div class="m-top"><h3 style="margin:0;font-size:17px;color:var(--navy)">Someone missing from this list?</h3><button class="x" onclick="AD.close()">\u00d7</button></div>'+
+      '<div class="m-body">'+
+        '<div class="accessbox" style="margin-top:0"><h4>People come from Microsoft</h4>'+
+        'Staff are never created in the hub \u2014 they are created once, in <b>Microsoft 365</b>, by whoever manages your accounts. The moment that account exists, the person shows up here automatically with their name and email.</div>'+
+        '<p style="font-size:14px;color:var(--ink);line-height:1.6;margin:16px 0 8px"><b>So if someone is missing:</b></p>'+
+        '<ol style="font-size:14px;color:var(--ink);line-height:1.7;padding-left:20px;margin:0">'+
+          '<li>Ask IT to create their <b>Microsoft account</b> \u2014 the same one they use for email.</li>'+
+          '<li>They appear in this list on their own. Nothing to type here.</li>'+
+          '<li>Come back and give them a <b>team</b> and a <b>location</b>. Until you do, they can sign in but see nothing.</li>'+
+        '</ol>'+
+        '<p style="font-size:13px;color:var(--soft);line-height:1.6;margin:16px 0 0">This way there is only ever <b>one</b> list of staff. When someone leaves and IT switches their Microsoft account off, they lose access here straight away \u2014 nobody has to remember to remove them.</p>'+
+      '</div>'+
+      '<div class="m-foot"><span style="flex:1"></span><button class="btn" onclick="AD.close()">Got it</button></div>');
+  }
 
   /* ---------- TEAMS & ACCESS ---------- */
   function renderAccess(){
@@ -716,7 +731,7 @@
   function openModal(h){ el('modalCard').innerHTML=h; el('modal').classList.add('open'); }
   function closeModal(){ el('modal').classList.remove('open'); }
 
-  window.AD={tab:tabSet,newTeam,editTeam,saveTeam,delTeam,resetTeams,profile,addUser,togTeam,togLoc,setStatus,saveUser,pickLevel,pickAud,tog,addFile,noop,newSec,editSec,saveSec,delSec,resetSecs,setSecName,setSecIcon,setSecStruct,setSecLocMode,setSecTeamMode,togSecLoc,togSecTeam,saveFile,pickFileFromDrive,setFileTeamMode,setFileLocMode,togFileLoc,togFileTeam,renderLocs,newLoc,editLoc,saveLoc,delLoc,resetLocs,setLocBrand,setLocState,setLocTZ,close:closeModal};
+  window.AD={tab:tabSet,newTeam,editTeam,saveTeam,delTeam,resetTeams,profile,whyNoAdd,togTeam,togLoc,setStatus,saveUser,pickLevel,pickAud,tog,addFile,noop,newSec,editSec,saveSec,delSec,resetSecs,setSecName,setSecIcon,setSecStruct,setSecLocMode,setSecTeamMode,togSecLoc,togSecTeam,saveFile,pickFileFromDrive,setFileTeamMode,setFileLocMode,togFileLoc,togFileTeam,renderLocs,newLoc,editLoc,saveLoc,delLoc,resetLocs,setLocBrand,setLocState,setLocTZ,close:closeModal};
   el('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
   render();
