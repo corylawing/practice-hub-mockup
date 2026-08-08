@@ -104,6 +104,12 @@
   .pchip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 15px;font-size:13.5px;font-weight:700;color:var(--navy);cursor:pointer;font-family:inherit;box-shadow:var(--shadow)}
   .pchip:hover{border-color:var(--teal);color:var(--teal-600)}
   .pchip.on{background:var(--teal);color:#fff;border-color:var(--teal)}
+  .mback{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 13px;font-size:13px;font-weight:700;
+    color:var(--navy);font-family:inherit;cursor:pointer;box-shadow:var(--shadow)}
+  .chip .tick{font-weight:800;color:var(--teal-600)}
+  .chip.on .tick{color:#fff}
+  .chip.combtog{border-style:dashed;font-weight:700}
+  .chip.combtog.on{background:var(--teal);border-color:var(--teal);color:#fff}
   .pchip.sm{padding:6px 12px;font-size:12.5px;box-shadow:none}
   .phint{font-size:12.5px;color:var(--soft)}
   .charttog{display:flex;gap:6px;margin-bottom:12px}
@@ -118,16 +124,19 @@
   .g-pct{font-size:23px;font-weight:800;margin-left:auto}
   .g-pct.ok{color:var(--good)} .g-pct.near{color:var(--amber)} .g-pct.low{color:var(--bad)}
   .g-sub{font-size:13px;color:var(--soft);margin-bottom:14px}
-  .track{position:relative;height:26px;background:#eef1f5;border-radius:999px;overflow:visible;margin-bottom:9px}
+  .track{position:relative;height:26px;background:#eef1f5;border-radius:999px;overflow:visible;margin:34px 0 9px}
   .fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--teal2),var(--teal));transition:width .7s cubic-bezier(.2,.8,.2,1)}
   .fill.ok{background:linear-gradient(90deg,#3fbf7f,var(--good))}
   .fill.near{background:linear-gradient(90deg,#f7bd6b,var(--amber))}
   .fill.low{background:linear-gradient(90deg,#e8836e,var(--bad))}
   .mk{position:absolute;top:-5px;bottom:-5px;width:3px;border-radius:2px}
   .mk.main{background:var(--navy)} .mk.str{background:#8a5cf5}
-  .mk span{position:absolute;top:-19px;left:50%;transform:translateX(-50%);font-size:10px;font-weight:800;
-    letter-spacing:.04em;white-space:nowrap;color:inherit}
-  .mk.main span{color:var(--navy)} .mk.str span{color:#8a5cf5}
+  .mklab{position:absolute;top:-20px;transform:translateX(-50%);font-size:10px;font-weight:800;
+    letter-spacing:.05em;white-space:nowrap;pointer-events:none}
+  .mklab.hi{top:-36px}
+  .mklab.main{color:var(--navy)} .mklab.str{color:#8a5cf5}
+  .mklab::after{content:'';position:absolute;left:50%;top:13px;width:1px;height:7px;background:currentColor;opacity:.45}
+  .mklab.hi::after{height:23px}
   .g-foot{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--soft);margin-top:14px}
   .g-foot b{color:var(--navy)}
   .g-verdict{font-size:14.5px;font-weight:700;margin-top:4px}
@@ -142,6 +151,18 @@
     border-radius:999px;padding:9px 16px;font-weight:700;font-size:13.5px;cursor:pointer;font-family:inherit}
   .party button:hover{background:rgba(255,255,255,.3)}
   @media(max-width:760px){ .gauges{grid-template-columns:1fr} .g-big{font-size:33px} }
+  .daycard{padding:16px 20px}
+  .dayrow{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .dayn{display:flex;align-items:baseline;gap:7px;white-space:nowrap}
+  .dayn b{font-size:30px;font-weight:800;color:var(--navy);line-height:1}
+  .dayn span{font-size:13px;color:var(--soft)}
+  .daybar{flex:1;min-width:160px;height:16px;background:#eef1f5;border-radius:999px;overflow:hidden}
+  .daybar div{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--teal2),var(--teal));transition:width .7s cubic-bezier(.2,.8,.2,1)}
+  .daypct{font-size:19px;font-weight:800;color:var(--teal-600)}
+  .pips{display:flex;gap:4px;flex-wrap:wrap;margin-top:12px}
+  .pips i{width:13px;height:13px;border-radius:4px;background:#e3e8ef;display:block}
+  .pips i.on{background:var(--teal)}
+  .daysub{font-size:13px;color:var(--soft);margin-top:10px}
   .secttl{font-size:19px;color:var(--navy);margin:26px 0 2px}
   .secttl:first-of-type{margin-top:8px}
   .secsub{font-size:13.5px;color:var(--soft);margin:0 0 14px}
@@ -190,6 +211,7 @@ const OFFICES=[
    sAct:[23, 37, 42, 32, 28, 38, 60, 29, 27, 27, 18, 18],
    sGoal:[36, 36, 24, 32, 28, 36, 40, 27, 27, 27, 18, 18],
    mdStarts:[9, 12, 17, 14, 7, 7, 16, 5, 0, 0, 0, 0],
+   lyStarts:[47, 39, 32, 40, 35, 40, 47, 37, 42, 33, 27, 20],
    days:[9, 9, 8, 8, 7, 9, 10, 9, 9, 9, 9, 9], done:[9, 9, 8, 8, 7, 9, 10, 2, 0, 0, 0, 0]},
   {n:'Clovis',brand:'FFO',fee:4200,
    act:[226073, 258625, 246687, 172148, 167889, 198722, 247763, 21328, 0, 0, 0, 0],
@@ -199,6 +221,7 @@ const OFFICES=[
    sAct:[41, 45, 43, 30, 27, 35, 36, 40, 18, 27, 18, 18],
    sGoal:[27, 36, 36, 36, 27, 27, 50, 36, 18, 27, 18, 18],
    mdStarts:[7, 3, 7, 7, 6, 7, 9, 0, 0, 0, 0, 0],
+   lyStarts:[27, 38, 38, 37, 31, 26, 62, 42, 31, 34, 27, 35],
    days:[9, 9, 9, 9, 9, 9, 10, 9, 9, 9, 9, 9], done:[9, 9, 9, 9, 9, 9, 10, 0, 0, 0, 0, 0]},
   {n:'Hobbs',brand:'FFO',fee:4200,
    act:[197542, 208458, 229738, 225227, 197845, 259312, 203047, 12382, 0, 0, 0, 0],
@@ -208,6 +231,7 @@ const OFFICES=[
    sAct:[23, 28, 39, 31, 27, 37, 28, 26, 12, 36, 27, 27],
    sGoal:[28, 27, 36, 24, 28, 32, 18, 24, 12, 36, 27, 27],
    mdStarts:[8, 12, 2, 3, 8, 4, 6, 0, 0, 0, 0, 0],
+   lyStarts:[38, 31, 33, 30, 34, 38, 24, 30, 25, 40, 27, 31],
    days:[7, 9, 9, 8, 7, 8, 9, 8, 12, 9, 9, 9], done:[7, 9, 9, 8, 7, 8, 9, 0, 0, 0, 0, 0]},
   {n:'Cruces LCO',brand:'LCO',fee:4200,
    act:[0, 0, 0, 0, 0, 0, 159104, 25214, 0, 0, 0, 0],
@@ -217,6 +241,7 @@ const OFFICES=[
    sAct:[28, 36, 45, 18, 27, 18, 32, 21, 27, 27, 18, 18],
    sGoal:[28, 36, 45, 18, 27, 18, 20, 27, 27, 27, 18, 18],
    mdStarts:[0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0],
+   lyStarts:[35, 39, 41, 23, 33, 28, 18, 34, 34, 27, 13, 20],
    days:[7, 9, 9, 9, 9, 9, 10, 9, 9, 9, 9, 9], done:[0, 0, 0, 0, 0, 0, 10, 3, 0, 0, 0, 0]},
   {n:'Cruces FFO',brand:'FFO',fee:0,
    act:[0, 0, 0, 0, 0, 0, 48178, 25277, 0, 0, 0, 0],
@@ -226,6 +251,7 @@ const OFFICES=[
    sAct:[0, 0, 0, 0, 0, 0, 9, 15, 14, 14, 14, 14],
    sGoal:[0, 0, 0, 0, 0, 0, 18, 14, 14, 14, 14, 14],
    mdStarts:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+   lyStarts:[17, 18, 24, 17, 20, 17, 25, 12, 9, 9, 9, 13],
    days:[0, 0, 0, 0, 0, 0, 6, 7, 7, 7, 7, 7], done:[0, 0, 0, 0, 0, 0, 6, 2, 0, 0, 0, 0]},
   {n:'Lubbock',brand:'FFO',fee:0,
    act:[123060, 104157, 137058, 84810, 103300, 81500, 97835, 20410, 0, 0, 0, 0],
@@ -235,6 +261,7 @@ const OFFICES=[
    sAct:[23, 26, 28, 17, 17, 16, 24, 10, 16, 24, 16, 16],
    sGoal:[28, 32, 24, 16, 16, 16, 24, 16, 16, 24, 16, 16],
    mdStarts:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+   lyStarts:[26, 23, 21, 14, 18, 14, 17, 17, 18, 17, 9, 10],
    days:[7, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8], done:[7, 8, 8, 8, 8, 8, 8, 4, 0, 0, 0, 0]},
   {n:'San Angelo',brand:'FFO',fee:0,
    act:[364028, 347608, 273810, 209565, 201489, 310660, 332910, 78745, 0, 0, 0, 0],
@@ -244,6 +271,7 @@ const OFFICES=[
    sAct:[66, 66, 46, 36, 37, 58, 57, 57, 40, 45, 32, 45],
    sGoal:[50, 39, 40, 36, 50, 45, 50, 60, 40, 45, 32, 45],
    mdStarts:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+   lyStarts:[47, 23, 41, 36, 46, 41, 49, 53, 36, 42, 33, 45],
    days:[10, 13, 10, 9, 10, 9, 10, 10, 10, 9, 8, 9], done:[10, 13, 10, 9, 10, 9, 10, 3, 0, 0, 0, 0]},
   {n:'Mansfield',brand:'SUN',fee:0,
    act:[108954, 92996, 139815, 95285, 63447, 178690, 194970, 43715, 0, 0, 0, 0],
@@ -253,6 +281,7 @@ const OFFICES=[
    sAct:[0, 0, 0, 12, 12, 30, 28, 22, 9, 8, 14, 8],
    sGoal:[0, 0, 0, 18, 30, 18, 20, 18, 9, 8, 14, 8],
    mdStarts:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+   lyStarts:[18, 20, 21, 17, 25, 25, 35, 24, 18, 12, 17, 9],
    days:[9, 10, 11, 9, 10, 9, 10, 9, 9, 8, 7, 8], done:[9, 10, 11, 9, 10, 9, 10, 2, 0, 0, 0, 0]}
 ];
 // Numbers typed on the "Enter Production" page flow straight into this dashboard.
@@ -268,6 +297,7 @@ const OFFICES=[
 })();
 (function(){
   const MO=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const MOFULL=['January','February','March','April','May','June','July','August','September','October','November','December'];
   const PERSONAS=[
     {id:'admin',name:'Administrator',offices:'all'},
     {id:'om',name:'Office Manager — Carlsbad',offices:['Carlsbad']},
@@ -278,6 +308,7 @@ const OFFICES=[
   const NAVSECS=[{k:'schedule',n:'📅 Schedule',href:'schedule.html'},{k:'marketing',n:'📣 Marketing',href:'marketing.html'}];
   const el=id=>document.getElementById(id);
   let cur=PERSONAS[0], sel='ALL', allowed=[];
+  let combine=false, combined=new Set();
   let shown=null;
   const curOffice=()=>shown;
   let period='mtd';      // their ask: default to MTD, with a toggle to the year
@@ -289,20 +320,25 @@ const OFFICES=[
   // the month currently in progress (some days worked, not all)
   const partial=o=>{for(let i=0;i<12;i++)if(o.done[i]>0&&o.days[i]>0&&o.done[i]<o.days[i])return i;return -1;};
   const sum=(arr,idx)=>idx.reduce((s,i)=>s+arr[i],0);
+  const isMonth=()=>typeof period==='number';
   function curIdx(o){ const p=partial(o); if(p>=0)return p; const L=live(o); return L.length?L[L.length-1]:-1; }
-  function months(o){ const L=live(o); if(period!=='mtd') return L; const c=curIdx(o); return c>=0?[c]:[]; }
-  const monthName=o=>{ const c=curIdx(o); return c>=0?MO[c]:''; };
-  const inProgress=o=>partial(o)>=0 && period==='mtd';
+  function months(o){
+    if(isMonth()) return (o.act[period]>0&&o.goal[period]>0)?[period]:[];
+    const L=live(o); if(period!=='mtd') return L;
+    const c=curIdx(o); return c>=0?[c]:[];
+  }
+  const monthName=o=>{ if(isMonth())return MO[period]; const c=curIdx(o); return c>=0?MO[c]:''; };
+  const inProgress=o=>period==='mtd' && partial(o)>=0;
   // how far through the month we are, so a part-month isn't judged against a whole month's goal
   function paceRatio(o){
-    if(period!=='mtd') return 1;
+    if(period!=='mtd') return 1;      // a finished past month is judged against its full goal
     const c=partial(o); if(c<0||!o.days[c]) return 1;
     return o.done[c]/o.days[c];
   }
   function stats(o){
     const L=months(o);
     const a=sum(o.act,L); let g=sum(o.goal,L), s=sum(o.stretch,L), l=sum(o.ly,L);
-    const schd = period==='mtd' ? L.reduce((x,i)=>x+o.days[i],0) : o.days.reduce((x,y)=>x+y,0);
+    const schd = (period==='mtd'||isMonth()) ? L.reduce((x,i)=>x+o.days[i],0) : o.days.reduce((x,y)=>x+y,0);
     const comp = L.reduce((x,i)=>x+o.done[i],0);
     const perDay = comp? a/comp : 0, needPerDay = comp? (sum(o.goal,L)*paceRatio(o))/comp : 0;
     const pace = paceRatio(o);       // 1 for finished periods, <1 part-way through a month
@@ -313,11 +349,16 @@ const OFFICES=[
   }
   function group(list){
     const z=()=>Array(12).fill(0);
-    const G={n:'All Offices',brand:'',act:z(),goal:z(),stretch:z(),ly:z(),sAct:z(),sGoal:z(),days:z(),done:z()};
-    list.forEach(o=>{ const L=live(o);
-      for(let i=0;i<12;i++){ if(L.indexOf(i)>=0){G.act[i]+=o.act[i];G.goal[i]+=o.goal[i];G.stretch[i]+=o.stretch[i];G.ly[i]+=o.ly[i];
-          G.sAct[i]+=(o.sAct[i]||0); G.sGoal[i]+=(o.sGoal[i]||0);}
-        G.days[i]+=o.days[i]; G.done[i]+=o.done[i]; } });
+    const G={n:'All Offices',brand:'',act:z(),goal:z(),stretch:z(),ly:z(),sAct:z(),sGoal:z(),lyStarts:z(),days:z(),done:z()};
+    // Only roll up months an office actually reported — finished months, plus the one in progress.
+    // (Summing every office's scheduled days made January look half-worked for the group.)
+    list.forEach(o=>{ const L=live(o), p=partial(o);
+      for(let i=0;i<12;i++){
+        if(L.indexOf(i)<0 && i!==p) continue;
+        G.act[i]+=o.act[i]; G.goal[i]+=o.goal[i]; G.stretch[i]+=o.stretch[i]; G.ly[i]+=o.ly[i];
+        G.sAct[i]+=(o.sAct[i]||0); G.sGoal[i]+=(o.sGoal[i]||0); G.lyStarts[i]+=(o.lyStarts&&o.lyStarts[i])||0;
+        G.days[i]+=o.days[i]; G.done[i]+=o.done[i];
+      } });
     return G;
   }
   const money=v=>{const s=v<0?'-':'';v=Math.abs(v);
@@ -362,31 +403,38 @@ const OFFICES=[
   }
   function startsChart(o){
     const L=live(o); if(!L.length) return '';
-    const sa=o.sAct||[], sg=o.sGoal||[];
-    let max=0; L.forEach(i=>{max=Math.max(max,sa[i]||0,sg[i]||0);}); max*=1.12;
+    const sa=o.sAct||[], sg=o.sGoal||[], sl=o.lyStarts||[];
+    let max=0; L.forEach(i=>{max=Math.max(max,sa[i]||0,sg[i]||0,sl[i]||0);}); max*=1.10;
     const cols=L.map(i=>{
-      const a=sa[i]||0, g=sg[i]||0, h=v=>Math.max(2,(v/max)*100);
+      const a=sa[i]||0, g=sg[i]||0, l=sl[i]||0, h=v=>Math.max(2,(v/max)*100);
       return '<div class="mo"><div class="bars">'+
         '<div class="gm" style="bottom:'+h(g)+'%"></div>'+
-        '<div class="bar ab '+(a>=g?'over':'under')+'" style="height:'+h(a)+'%;width:56%" data-t="'+MO[i]+': '+Math.round(a)+' starts \u00b7 goal '+Math.round(g)+'"></div>'+
+        '<div class="bar lyb" style="height:'+h(l)+'%" data-t="'+MO[i]+' last year: about '+Math.round(l)+' starts"></div>'+
+        '<div class="bar ab '+(a>=g?'over':'under')+'" style="height:'+h(a)+'%" data-t="'+MO[i]+' 2026: '+Math.round(a)+' starts \u00b7 goal '+Math.round(g)+'"></div>'+
         '</div><div class="molab">'+MO[i]+'</div></div>';
     }).join('');
     return '<div class="card" id="bottomchart"><h2>Starts month by month</h2>'+
-      '<div class="sub">Bars are starts; the <b>dashed line</b> is that month\u2019s starts goal.</div>'+
+      '<div class="sub">Last year next to this year. The <b>dashed line</b> is that month\u2019s starts goal.</div>'+
       chartToggle()+
-      '<div class="legend"><span><i class="sw" style="background:var(--good)"></i> At/above goal</span>'+
-        '<span><i class="sw" style="background:var(--bad)"></i> Under goal</span>'+
-        '<span><i class="swline"></i> Starts goal</span></div>'+
+      '<div class="legend"><span><i class="sw" style="background:var(--ly)"></i> Last year (2025)</span>'+
+        '<span><i class="sw" style="background:var(--good)"></i> 2026 at/above goal</span>'+
+        '<span><i class="sw" style="background:var(--bad)"></i> 2026 under goal</span>'+
+        '<span><i class="swline"></i> Starts goal</span>'+
+        '<span style="margin-left:auto;font-style:italic">last year\u2019s starts estimated from 2025 production \u00f7 average case fee</span></div>'+
       '<div class="chartwrap"><div class="chart">'+cols+'</div></div></div>';
   }
   const band=p=>p>=1?'ok':(p>=0.9?'near':'low');
   function gauge(opts){
     // opts: {icon,title,big,sub,pct,goalTxt,stretchPct,stretchTxt,verdict,footer}
     const cls=band(opts.pct);
-    const top=Math.max(opts.pct, opts.stretchPct||0, 1)*1.06;      // always show the goal marks
+    const top=Math.max(opts.pct, opts.stretchPct||0, 1)*1.10;      // always leave room for the marks
     const w=v=>Math.min(100,(v/top)*100);
-    let marks='<div class="mk main" style="left:'+w(1)+'%"><span>GOAL</span></div>';
-    if(opts.stretchPct) marks+='<div class="mk str" style="left:'+w(opts.stretchPct)+'%"><span>STRETCH</span></div>';
+    const gp=w(1), sp=opts.stretchPct?w(opts.stretchPct):null;
+    // when the two marks are close together the labels used to collide — lift the second one
+    const close = sp!==null && Math.abs(sp-gp)<17;
+    const lab=(pos,txt,cls,hi)=>'<div class="mklab '+cls+(hi?' hi':'')+'" style="left:'+pos+'%">'+txt+'</div>';
+    let marks='<div class="mk main" style="left:'+gp+'%"></div>'+lab(gp,'GOAL','main',false);
+    if(sp!==null) marks+='<div class="mk str" style="left:'+sp+'%"></div>'+lab(sp,'STRETCH','str',close);
     return '<div class="gauge '+cls+'">'+
       '<div class="g-top"><span class="g-ttl">'+opts.icon+' '+opts.title+'</span>'+
         '<span class="g-pct '+cls+'">'+pc(opts.pct)+'</span></div>'+
@@ -403,13 +451,17 @@ const OFFICES=[
     const pVerdict = t.vgoal>=0 ? '\u2705 '+full(Math.abs(t.vgoal))+' ahead of'+par
                                 : '\u26a0\ufe0f '+full(Math.abs(t.vgoal))+' behind'+par;
     const dayNote = inProgress(o) ? (()=>{const c=partial(o);return ' \u00b7 '+o.done[c]+' of '+o.days[c]+' days';})() : '';
+    // their sheet has no starts stretch goal, so use the same reach as production asks for
+    const stretchRatio = t.g? t.s/t.g : 0;
+    const stretchStarts = Math.round(st.g*stretchRatio);
     return '<div class="gauges">'+
-      gauge({icon:'\ud83e\uddb7',title:'Starts',big:Math.round(st.a)+' starts',
+      gauge({icon:'\ud83e\uddb7',title:'Starts',big:Math.round(st.a)+' starts',stretchPct:stretchRatio,
         sub:(period==='mtd'?monthName(o)+' so far'+dayNote:'Year so far')+' \u00b7 '+st.perDay.toFixed(1)+' a day',
         pct:st.pct,verdict:sVerdict,
-        footer:'<span>Goal so far <b>'+Math.round(st.g)+'</b></span>'+
+        footer:'<span>Main goal <b>'+Math.round(st.g)+'</b></span>'+
+          (stretchStarts?'<span>Stretch <b>'+stretchStarts+'</b> ('+pc(stretchStarts?st.a/stretchStarts:0)+' there)</span>':'')+
           '<span>Per day <b>'+st.perDay.toFixed(1)+'</b> vs <b>'+st.needPerDay.toFixed(1)+'</b> needed</span>'+
-          '<span>'+st.days+' production days worked</span>'})+
+          '<span>'+st.days+' days worked</span>'})+
       gauge({icon:'\ud83d\udcb0',title:'Production',big:money(t.a),
         sub:(period==='mtd'?monthName(o)+' so far'+dayNote:'Year so far')+' \u00b7 vs last year '+pc(t.yoy),
         pct:t.pct,stretchPct:(t.g?t.s/t.g:0),verdict:pVerdict,
@@ -444,18 +496,30 @@ const OFFICES=[
   function periodBar(o){
     const nm=monthName(o);
     const b=(v,lab)=>'<button class="pchip'+(period===v?' on':'')+'" onclick="DASH.period(\''+v+'\')">'+lab+'</button>';
-    return '<div class="periodbar">'+b('mtd','This month'+(nm?' \u00b7 '+nm:''))+b('ytd','Year to date')+
-      '<span class="phint">'+(period==='mtd'?'Showing '+(nm||'the latest month')+' only \u2014 goals scaled to the days worked so far.':'Showing every month reported so far.')+'</span></div>';
+    const done=live(o), cur=partial(o);
+    const opts=done.filter(i=>i!==cur).map(i=>'<option value="'+i+'"'+(period===i?' selected':'')+'>'+MOFULL[i]+'</option>').join('');
+    const back='<select class="mback" onchange="DASH.month(this.value)">'+
+      '<option value="">Look back at a month\u2026</option>'+opts+'</select>';
+    const hint = isMonth() ? MOFULL[period]+' \u2014 a finished month, judged against its full goal.'
+      : period==='mtd' ? 'Showing '+(nm||'the latest month')+' only \u2014 goals scaled to the days worked so far.'
+      : 'Showing every finished month this year.';
+    return '<div class="periodbar">'+b('mtd','This month'+(nm&&period==='mtd'?' \u00b7 '+nm:''))+b('ytd','Year to date')+back+
+      '<span class="phint">'+hint+'</span></div>';
   }
   function daysTiles(o){
-    const t=stats(o); const pctDone=t.sched?Math.round(t.done/t.sched*100):0;
-    return '<div class="kpis" style="margin-top:14px">'+
-      '<div class="kpi n"><div class="k">Production days scheduled</div><div class="v">'+t.sched+'</div>'+
-        '<div class="s">'+(period==='mtd'?'this month':'for the whole year')+'</div></div>'+
-      '<div class="kpi"><div class="k">Production days completed</div><div class="v">'+t.done+'</div>'+
-        '<div class="s">'+pctDone+'% of scheduled</div></div>'+
-      '<div class="kpi"><div class="k">Production days left</div><div class="v">'+t.daysLeft+'</div>'+
-        '<div class="s">remaining this year</div></div>'+
+    const t=stats(o), pct=t.sched?t.done/t.sched:0;
+    const left=Math.max(0,t.sched-t.done);
+    // one visual line rather than three number tiles
+    const pips=t.sched<=31 ? '<div class="pips">'+Array.from({length:t.sched},(_,i)=>
+        '<i class="'+(i<t.done?'on':'')+'"></i>').join('')+'</div>' : '';
+    return '<div class="card daycard"><div class="dayrow">'+
+        '<div class="dayn"><b>'+t.done+'</b><span>of '+t.sched+' days worked</span></div>'+
+        '<div class="daybar"><div style="width:'+Math.min(100,pct*100)+'%"></div></div>'+
+        '<div class="daypct">'+pc(pct)+'</div>'+
+      '</div>'+pips+
+      '<div class="daysub">'+(isMonth()
+          ? MOFULL[period]+' is finished \u2014 all '+t.done+' production days worked.'
+          : left+' production day'+(left===1?'':'s')+' still to work '+(period==='mtd'?'this month':'this year'))+'</div>'+
     '</div>';
   }
   function chart(o){
@@ -521,12 +585,19 @@ const OFFICES=[
     else if(sel!=='ALL' && !allowed.some(o=>o.n===sel)) sel='ALL';
     el('chips').innerHTML = multi
       ? ('<button class="chip'+(sel==='ALL'?' on':'')+'" onclick="DASH.pick(\'ALL\')">All Offices</button>'+
-         allowed.map(o=>'<button class="chip'+(sel===o.n?' on':'')+'" onclick="DASH.pick(\''+o.n+'\')">'+o.n+'<span class="br">'+o.brand+'</span></button>').join(''))
+         allowed.map(o=>{ const on = sel==='ALL'? false : (combine? combined.has(o.n) : sel===o.n);
+           return '<button class="chip'+(on?' on':'')+'" onclick="DASH.pick(\''+o.n+'\')">'+
+             (combine?'<span class="tick">'+(on?'\u2713':'+')+'</span> ':'')+o.n+'<span class="br">'+o.brand+'</span></button>';}).join('')+
+         '<button class="chip combtog'+(combine?' on':'')+'" onclick="DASH.combine()" title="Add offices together and see one set of numbers">'+
+           (combine?'\u2715 Stop combining':'\u2795 Combine offices')+'</button>')
       : '';
     const isAll = multi && sel==='ALL';
-    const o = isAll ? group(allowed) : allowed.find(x=>x.n===sel);
+    const picked = combine ? allowed.filter(x=>combined.has(x.n)) : [];
+    const isCombo = combine && picked.length>0;
+    const o = isAll ? group(allowed) : isCombo ? group(picked) : allowed.find(x=>x.n===sel);
+    if(isCombo) o.n = picked.length+' offices combined';
     shown=o;
-    const who = isAll ? 'The group' : o.n;
+    const who = isAll ? 'The group' : isCombo ? picked.map(x=>x.n).join(' + ') : o.n;
     let html = partyBanner(o,who) + periodBar(o) + gauges(o) +
       '<h2 class="secttl">\ud83d\udcc6 Production days</h2><p class="secsub">How much of the '+(period==='mtd'?'month':'year')+' has actually been worked.</p>'+
       daysTiles(o) +
@@ -545,7 +616,16 @@ const OFFICES=[
       b.onmouseleave=()=>{tip.style.opacity='0';};
     });
   }
-  function pick(n){ sel=n; render(); window.scrollTo({top:0,behavior:'smooth'}); }
+  function pick(n){
+    if(combine && n!=='ALL'){ combined.has(n)?combined.delete(n):combined.add(n); render(); return; }
+    if(n==='ALL'){ combine=false; combined.clear(); }
+    sel=n; render(); window.scrollTo({top:0,behavior:'smooth'});
+  }
+  function toggleCombine(){
+    combine=!combine;
+    if(combine){ combined.clear(); if(sel!=='ALL') combined.add(sel); }
+    render();
+  }
   function set(id){
     cur=PERSONAS.find(p=>p.id===id)||PERSONAS[0];
     try{ localStorage.setItem('ph_viewas',cur.id); }catch(_){}
@@ -555,7 +635,10 @@ const OFFICES=[
     render();
   }
   el('persona').innerHTML=PERSONAS.map(p=>'<option value="'+p.id+'">'+p.name+'</option>').join('');
-  window.DASH={set,pick,party:partyNow,period:v=>{period=v;render();},chart:v=>{chartMode=v;render();}};
+  window.DASH={set,pick,party:partyNow,combine:toggleCombine,
+    period:v=>{period=v;render();},
+    month:v=>{ if(v==='')return; period=Number(v); render(); },
+    chart:v=>{chartMode=v;render();}};
   let saved='admin'; try{ saved=localStorage.getItem('ph_viewas')||'admin'; }catch(_){}
   if(!PERSONAS.some(p=>p.id===saved)) saved='admin';
   set(saved);

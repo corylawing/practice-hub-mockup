@@ -158,6 +158,29 @@ without much reading."*
   the goal to the days actually worked — otherwise every office looks catastrophic on the 2nd of the
   month. The wording switches to "ahead/behind **pace**" and shows "4 of 8 days".
 
+**Round 2 of their feedback (2026-08-08):**
+- **Production days** is one visual line (`daysTiles` → `.daycard`): "52 of 52 days worked" + a bar +
+  a % + day pips when the count is small. The "days left remaining this year" tile is **gone**.
+- **Starts chart now has last-year bars**, same as production, and the **starts/production toggle**
+  sits on that one chart. Their words: *"comparison vs last year less important for lower level
+  staff, but needs to be there"* — so it lives on the bottom chart, not in the headline tiles.
+- **Look back at any finished month** — a "Look back at a month…" select next to This month /
+  Year to date. A past month is judged against its **full** goal (no pace scaling).
+- **Combine offices** — "➕ Combine offices" turns the chips into multi-select; picking Carlsbad +
+  Clovis + Hobbs shows one combined set of numbers and one combined celebration. **Permissioning is
+  implicit**: you can only combine offices you can already see, so a single-office manager has
+  nothing to combine and leadership can combine anything. No new permission level was invented.
+- **Starts stretch is DERIVED.** Their workbook has no starts stretch goal, so it uses the same reach
+  as production (`stretchRatio = production stretch ÷ production goal`) — e.g. San Angelo goal 310 →
+  stretch 341. If they add a real starts stretch row, use theirs instead.
+- **Last-year starts are DERIVED too**: 2025 production ÷ 2025 average case fee (+ Medicaid at its
+  own fee). Stated in the chart legend. No such row exists in the workbook.
+- Gauge marker labels are staggered when GOAL and STRETCH are close — they used to overlap and read
+  as "GOALSTRETCH", which is why they thought stretch was missing.
+- **Bug fixed:** All Offices showed **January** as the current month, because the group summed every
+  office's scheduled days including months they never reported. `group()` now rolls up only each
+  office's finished months plus its in-progress one.
+
 #### (previous notes)
 **Their written feedback sheet, all of it, implemented:**
 1. **Starts first**, then Production — two stacked sections (`🦷 Starts`, `💰 Production`).
