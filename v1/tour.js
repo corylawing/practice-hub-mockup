@@ -1,4 +1,4 @@
-/* Practice Hub V1 — guided walkthrough.
+/* Home-Brace V1 — guided walkthrough.
    Steps: {sel, title, body, pre?}  pre() runs first (e.g. switch a tab) then we spotlight sel.
    Options: {key, title, launch, next:{label,href}}  next = where the walkthrough continues, so
    someone can walk the whole app end to end on their own, with no one sitting beside them. */

@@ -1,4 +1,4 @@
-/* Practice Hub — shared chrome + interactivity.
+/* Home-Brace — shared chrome + interactivity.
    Header, nav and footer are injected here so navigation stays identical on
    every page (Design Rule: "Keep navigation consistent across the site"). */
 
@@ -34,8 +34,8 @@ function buildHeader() {
   <header class="site-header">
     <div class="hdr-inner">
       <a class="brand" href="index.html">
-        <span class="mark">PH</span>
-        <span>Practice Hub<span class="sub">${PRACTICE}</span></span>
+        <span class="mark" aria-label="Home-Brace"><img src="assets/logo-mark.png" alt="" width="34" height="34"></span>
+        <span>Home-<i>Brace</i><span class="sub">${PRACTICE}</span></span>
       </a>
       <div class="hdr-search" onclick="openSearch()">
         <input type="text" placeholder="Search PTO, expense, handbook, vendor…" readonly>
@@ -55,7 +55,7 @@ function buildFooter() {
   const ftr = `
   <footer class="site-footer">
     <div class="ftr-inner">
-      <div>© 2026 ${PRACTICE} · Practice Hub <span style="opacity:.6">(prototype)</span></div>
+      <div>© 2026 ${PRACTICE} · Home-Brace <span style="opacity:.6">(prototype)</span></div>
       <div><a href="index.html">Home</a> · <a href="it.html">IT Help</a> · <a href="directory.html">Directory</a></div>
     </div>
   </footer>`;
@@ -245,7 +245,7 @@ function openDoc(key) {
       <button class="tbtn">★ Follow</button>
     </div>
     <div class="modal-body"><div class="doc-paper">${d.body}</div></div>
-    <div class="modal-note">📄 <b>Prototype preview.</b> In the real Practice Hub this opens the actual file in Microsoft 365 — viewable and editable right in your browser or phone.</div>`;
+    <div class="modal-note">📄 <b>Prototype preview.</b> In the real Home-Brace this opens the actual file in Microsoft 365 — viewable and editable right in your browser or phone.</div>`;
   modalEl.classList.add("open");
 }
 

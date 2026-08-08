@@ -1,8 +1,8 @@
-# Practice Hub — Project Guide (for Claude Code)
+# Home-Brace — Project Guide (for Claude Code)
 
-> Read this first. It is the full context for **Practice Hub** so any session (including on a phone)
+> Read this first. It is the full context for **Home-Brace** so any session (including on a phone)
 > can pick this up cold. Keep it current — the user asks for that explicitly.
-> Last full update: **2026-07-29**.
+> Last full update: **2026-08-08** (renamed Practice Hub → Home-Brace).
 
 ---
 
@@ -64,8 +64,24 @@ dashboards and updates**, for everyone from the COO to a clinical assistant.
 --amber:#F2A03D  --blue:#1f6f9e  --blue-soft:#E3F0FA  --purple:#6b3fd0
 Font: Inter. Radius ~14px. Soft shadows. maxw 1000–1180px.
 ```
-Every page: amber **PROTOTYPE** ribbon · navy header with `PH` mark + "V1 preview" pill + the
+Every page: amber **PROTOTYPE** ribbon · navy header with the **logo mark** + "V1 preview" pill + the
 **avatar** (from `user.js`) · `.v1nav` tab bar (horizontal-scroll on mobile).
+
+### Logo & name (renamed to Home-Brace 2026-08-08)
+
+The app is **Home-Brace**. The mark is a **white house outline with a braces archwire across it**
+(brackets on a wire) on a rounded teal-gradient tile — supplied by Cory as finished artwork.
+
+- `assets/logo-mark.png` (512², transparent corners) — the header mark, rendered at 34×34.
+- `assets/favicon.png` (256²) + `assets/icons/{favicon-32,icon-512,apple-touch-icon}.png`,
+  all derived from the same file.
+- **Do NOT redraw this mark as SVG.** A hand-traced SVG version was rejected outright.
+  If it needs a new size, re-export from `assets/logo-mark.png` with Pillow.
+- Wordmark: **"Home-"** then **"Brace"** in `--teal2`, markup `Home-<i>Brace</i>`
+  (`.brand i{font-style:normal;color:var(--teal2)}`). On light backgrounds "Home-" is `--navy`.
+- Tagline from the logo lockup: **Centralize. Connect. Grow.** (not used in the app chrome yet).
+- Root-site shared assets carry a `?v=hb1` query — **bump it** when editing `assets/app.js`,
+  `assets/data.js` or `assets/styles.css`, or browsers serve the stale copy.
 
 ---
 
@@ -294,7 +310,7 @@ week, which could never hold a year.
 - **Team-restricted files are actually hidden** (`teamScopeOK`) — a file with `scope:'team'` carries
   a `teams` string and is matched against the viewer's team. Regression to avoid: Front Desk could
   once see the **Payroll Tracking Sheet**. Chips read "HR, Managers only" so it's obvious why.
-- **Live two-way sync viewer** (`openDoc`): two panes ("In Practice Hub" / "Microsoft drive") over
+- **Live two-way sync viewer** (`openDoc`): two panes ("In Home-Brace" / "Microsoft drive") over
   one shared model; typing in either updates the other; "Someone edits on the drive →" simulates an
   external change. Demonstrates one file, two doors — never a copy.
 - Sections the admin created appear here automatically (`customSecs`, `localStorage.ph_docsecs`).
@@ -490,7 +506,7 @@ notifications pull people back.
 **Adoption metrics:** % staff signed in weekly · docs opened via hub vs texted · schedule questions
 to managers (should drop) · EOM reports on time.
 
-Answers to the friend's original 8 brief questions: `~/Downloads/Practice Hub - Response to Design
+Answers to the friend's original 8 brief questions: `~/Downloads/Home-Brace - Response to Design
 Brief.docx` (regenerate via the gitignored `build-response-doc.js`).
 
 ---

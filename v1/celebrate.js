@@ -1,4 +1,4 @@
-/* Practice Hub V1 — celebrations.
+/* Home-Brace V1 — celebrations.
    Fireworks when an office hits its MAIN production goal, confetti when it hits STRETCH,
    both together when both are reached. Pure canvas, no libraries.
    Celebrate.fire({fireworks:true, confetti:true}) */

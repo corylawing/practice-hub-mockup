@@ -1,4 +1,4 @@
-/* Practice Hub — demo content + search index.
+/* Home-Brace — demo content + search index.
    This is the single place a "super user" would conceptually add items.
    `syn` = synonyms so search works even when people don't know the exact name
    (e.g. "vacation" finds the PTO Policy). In real SharePoint this maps to
@@ -77,7 +77,7 @@ const DOCS = {
     body:`<p class="lead">Welcome to Summit Orthodontics. This handbook explains what you can expect from us and what we ask of you.</p>
     <h4>1. Our mission</h4><p>To deliver exceptional orthodontic care while building a workplace people are proud of.</p>
     <h4>2. Hours & attendance</h4><p>Standard clinic hours are 8:00a–5:00p. Notify your office manager as early as possible if you'll be out — see the <b>PTO Policy</b> for how to request time off.</p>
-    <h4>3. Conduct</h4><ul><li>Treat patients and teammates with respect.</li><li>Protect patient privacy at all times (HIPAA).</li><li>Keep work communication in Practice Hub / Teams, not personal text.</li></ul>
+    <h4>3. Conduct</h4><ul><li>Treat patients and teammates with respect.</li><li>Protect patient privacy at all times (HIPAA).</li><li>Keep work communication in Home-Brace / Teams, not personal text.</li></ul>
     <h4>4. Benefits</h4><p>Eligible employees receive health, dental, vision, and 401(k). See the <b>Benefits Overview</b> for details.</p>` },
   "pto-policy": { t:"PTO Policy 2026", fi:"doc", sec:"HR", updated:"Updated Jan 2026", type:"Word document",
     body:`<p class="lead">How paid time off is earned, requested, and approved.</p>
@@ -93,7 +93,7 @@ const DOCS = {
     <ul><li>New Year's Day</li><li>Memorial Day</li><li>Juneteenth</li><li>Independence Day</li><li>Labor Day</li><li>Thanksgiving (Thu & Fri)</li><li>Christmas Eve & Christmas Day</li></ul>` },
   "new-hire": { t:"New Hire Onboarding Guide", fi:"doc", sec:"HR", updated:"Updated Mar 2026", type:"Word document",
     body:`<p class="lead">Your first week, step by step.</p>
-    <h4>Day 1</h4><ul><li>Get your Practice Hub login and install Teams on your phone.</li><li>Meet your office manager and team.</li><li>Review the Employee Handbook.</li></ul>
+    <h4>Day 1</h4><ul><li>Get your Home-Brace login and install Teams on your phone.</li><li>Meet your office manager and team.</li><li>Review the Employee Handbook.</li></ul>
     <h4>Week 1</h4><ul><li>Complete required training in the Operations Manual.</li><li>Shadow your role's daily checklist.</li></ul>` },
   "code-of-conduct": { t:"Code of Conduct", fi:"pdf", sec:"HR", updated:"Updated Jan 2026", type:"PDF",
     body:`<p class="lead">The standards we hold ourselves to.</p><ul><li>Patient safety and privacy come first.</li><li>Be honest, professional, and kind.</li><li>Speak up about concerns — leadership is listening.</li></ul>` },
@@ -138,7 +138,7 @@ const DOCS = {
   "office-mgmt": { t:"Office Management Procedures", fi:"doc", sec:"Operations", updated:"Framework", type:"SOP collection",
     body:`<p class="lead">Daily operations and facilities.</p><ul><li>Opening & closing checklists</li><li>Supply ordering</li><li>Equipment & maintenance</li></ul><p><i>Framework — more to come.</i></p>` },
   "training-videos": { t:"Training Videos", fi:"vid", sec:"Operations", updated:"Updated 2026", type:"Video library",
-    body:`<p class="lead">Short how-to videos by topic.</p><ul><li>New patient check-in (3 min)</li><li>Using Practice Hub on your phone (4 min)</li><li>Sterilization walkthrough (6 min)</li></ul>` },
+    body:`<p class="lead">Short how-to videos by topic.</p><ul><li>New patient check-in (3 min)</li><li>Using Home-Brace on your phone (4 min)</li><li>Sterilization walkthrough (6 min)</li></ul>` },
   "checkin-video": { t:"New Patient Check-In (video)", fi:"vid", sec:"Operations", updated:"Updated 2026", type:"Training video",
     body:`<p class="lead">▶ A 3-minute walkthrough of the front-desk check-in process.</p><p style="background:#0F2A4A;color:#cdd9ea;border-radius:10px;padding:40px;text-align:center">▶ Video player (sample)</p>` },
   "insurance-sop": { t:"Insurance Verification SOP", fi:"pdf", sec:"Operations", updated:"Apr 2026", type:"SOP",
@@ -149,16 +149,16 @@ const DOCS = {
   "strategic-plan": { t:"Strategic Plan 2026–2028", fi:"pdf", sec:"Leadership", updated:"Feb 2026", type:"PDF", locked:true,
     body:`<p class="lead">Our three-year direction. Restricted to leadership.</p>
     <h4>Vision</h4><p>Grow from 8 to 12 offices while keeping a consistent, high-trust patient experience.</p>
-    <h4>Pillars</h4><ul><li>Standardize operations across all locations</li><li>Invest in team development & retention</li><li>Modernize systems (Practice Hub is step one)</li></ul>` },
+    <h4>Pillars</h4><ul><li>Standardize operations across all locations</li><li>Invest in team development & retention</li><li>Modernize systems (Home-Brace is step one)</li></ul>` },
   "quarterly-priorities": { t:"Quarterly Priorities — Q3 2026", fi:"doc", sec:"Leadership", updated:"Jun 2026", type:"Word document", locked:true,
     body:`<p class="lead">Where leadership is focused this quarter.</p>
-    <h4>Q3 focus areas</h4><ul><li>Launch Practice Hub to all 8 offices</li><li>Move work communication off personal text → Teams</li><li>Standardize the monthly KPI scorecard</li><li>Hire & onboard 2 treatment coordinators</li></ul>` },
+    <h4>Q3 focus areas</h4><ul><li>Launch Home-Brace to all 8 offices</li><li>Move work communication off personal text → Teams</li><li>Standardize the monthly KPI scorecard</li><li>Hire & onboard 2 treatment coordinators</li></ul>` },
   "financial-reports": { t:"Consolidated Financials — May 2026", fi:"xls", sec:"Leadership", updated:"Jun 2026", type:"Excel workbook", locked:true,
     body:`<p class="lead">Practice-wide financial summary. Restricted to leadership.</p>
     <div class="kv"><span>Production</span><span>$842,000</span><span>Collections</span><span>$791,000</span><span>Collection rate</span><span>94%</span><span>Overhead</span><span>58%</span></div>
     <p>Per-office detail is in the Scorecards section.</p>` },
   "leadership-notes": { t:"Leadership Meeting Notes — Jun 2026", fi:"doc", sec:"Leadership", updated:"Jun 2026", type:"Meeting notes", locked:true,
-    body:`<p class="lead">Monthly leadership meeting.</p><h4>Decisions</h4><ul><li>Approved Practice Hub rollout plan.</li><li>Set Q3 priorities (see Quarterly Priorities).</li></ul>` },
+    body:`<p class="lead">Monthly leadership meeting.</p><h4>Decisions</h4><ul><li>Approved Home-Brace rollout plan.</li><li>Set Q3 priorities (see Quarterly Priorities).</li></ul>` },
 
   "doctor-calendars": { t:"Doctor Calendars", fi:"lnk", sec:"Calendars", updated:"How this works", type:"Personal calendars",
     body:`<p class="lead">Where each doctor is <b>working</b> is shown on the weekly board above — that's the practice-wide rotation.</p>

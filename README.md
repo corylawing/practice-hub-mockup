@@ -1,6 +1,6 @@
-# Practice Hub — Interactive Mockup
+# Home-Brace — Interactive Mockup
 
-A clickable prototype of **Practice Hub**, a centralized "digital front door" intranet for a
+A clickable prototype of **Home-Brace**, a centralized "digital front door" intranet for a
 multi-office orthodontic practice. Built to look and feel like the proposed
 **Microsoft SharePoint communication site** so non-technical stakeholders can react to the
 *experience* before anything is built for real.

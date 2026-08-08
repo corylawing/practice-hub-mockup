@@ -1,4 +1,4 @@
-/* Practice Hub V1 — the signed-in person: avatar, My Profile, and what they're allowed to do.
+/* Home-Brace V1 — the signed-in person: avatar, My Profile, and what they're allowed to do.
    ONE source of truth for personas + permissions. Every page includes this.
    Levels: none < view < add < edit < manage   (see Admin → Teams & Access) */
 (function(){
