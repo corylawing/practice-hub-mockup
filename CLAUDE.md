@@ -83,7 +83,12 @@ The app is **Home-Brace**. The mark is a **white house outline with a braces arc
 - Wordmark: **"Home-"** then **"Brace"** in `--teal2`, markup `Home-<i>Brace</i>`
   (`.brand i{font-style:normal;color:var(--teal2)}`). On light backgrounds "Home-" is `--navy`.
 - Tagline from the logo lockup: **Centralize. Connect. Grow.** (not used in the app chrome yet).
-- Root-site shared assets carry a `?v=hb2` query — **bump it** when editing `assets/app.js`,
+- **No practice name in the chrome.** The placeholder "Summit Orthodontics" was removed 2026-08-08.
+  There is no umbrella name — the practice runs three brands (FFO/Farnsworth, Sunflower, LCO) — so
+  `PRACTICE` in `assets/app.js` is `""` and the header shows only the wordmark. Don't invent one.
+  The root site's eight fake "Summit …" offices were renamed to the real eight: Carlsbad, Clovis,
+  Hobbs, Cruces LCO, Cruces FFO, Lubbock, San Angelo, Mansfield.
+- Root-site shared assets carry a `?v=hb3` query — **bump it** when editing `assets/app.js`,
   `assets/data.js` or `assets/styles.css`, or browsers serve the stale copy.
 
 ---

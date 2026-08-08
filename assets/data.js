@@ -74,7 +74,7 @@ const RESOURCES = [
    `body` is illustrative sample content. */
 const DOCS = {
   "handbook": { t:"Employee Handbook 2026", fi:"doc", sec:"HR", updated:"Updated Jan 2026", type:"Word document",
-    body:`<p class="lead">Welcome to Summit Orthodontics. This handbook explains what you can expect from us and what we ask of you.</p>
+    body:`<p class="lead">Welcome. This handbook explains what you can expect from us and what we ask of you.</p>
     <h4>1. Our mission</h4><p>To deliver exceptional orthodontic care while building a workplace people are proud of.</p>
     <h4>2. Hours & attendance</h4><p>Standard clinic hours are 8:00a–5:00p. Notify your office manager as early as possible if you'll be out — see the <b>PTO Policy</b> for how to request time off.</p>
     <h4>3. Conduct</h4><ul><li>Treat patients and teammates with respect.</li><li>Protect patient privacy at all times (HIPAA).</li><li>Keep work communication in Home-Brace / Teams, not personal text.</li></ul>
@@ -181,7 +181,7 @@ const FORMS = {
       {l:"Category", type:"select", opts:["Supplies","Lab","Marketing","Travel","Other"]},
       {l:"Receipt", type:"file"} ] },
   "maintenance": { t:"Maintenance Request", routesTo:"facilities",
-    fields:[ {l:"Office", type:"select", req:true, opts:["Summit North","Summit South","Summit East","Summit West"]},
+    fields:[ {l:"Office", type:"select", req:true, opts:["Carlsbad","Hobbs","Clovis","Lubbock"]},
       {l:"What needs attention?", type:"textarea", req:true}, {l:"Urgency", type:"select", opts:["Low","Normal","Urgent"]} ] },
   "it": { t:"IT Request", routesTo:"IT support",
     fields:[ {l:"What do you need help with?", type:"select", req:true, opts:["Password / login","New equipment","Access to something","Something is broken","Other"]},
@@ -192,7 +192,7 @@ const FORMS = {
   "equipment": { t:"Equipment Request", routesTo:"your office manager",
     fields:[ {l:"Item needed", type:"text", req:true}, {l:"Reason", type:"textarea"} ] },
   "new-employee": { t:"New Employee Request", routesTo:"HR & leadership",
-    fields:[ {l:"Role", type:"text", req:true}, {l:"Office", type:"select", opts:["Summit North","Summit South","Summit East","Summit West"]},
+    fields:[ {l:"Role", type:"text", req:true}, {l:"Office", type:"select", opts:["Carlsbad","Hobbs","Clovis","Lubbock"]},
       {l:"Why is this role needed?", type:"textarea", req:true} ] },
   "travel": { t:"Travel Request", routesTo:"your office manager",
     fields:[ {l:"Destination / purpose", type:"text", req:true}, {l:"Dates", type:"text"}, {l:"Estimated cost", type:"text"} ] },
@@ -205,26 +205,26 @@ const FORMS = {
 const SCHED_DAYS = ["Mon","Tue","Wed","Thu","Fri","Sat"];
 const WK = "8:00a–5:00p", SAT = "8:00a–1:00p";
 const SCHEDULE = {
-  "Summit North":     [{dr:"Dr. Chen",hrs:WK}, null, {dr:"Dr. Rao",hrs:WK}, null, {dr:"Dr. Chen",hrs:WK}, null],
-  "Summit South":     [{dr:"Dr. Rao",hrs:WK}, null, {dr:"Dr. Chen",hrs:WK}, null, null, {dr:"Dr. Lopez",hrs:SAT}],
-  "Summit East":      [null, {dr:"Dr. Chen",hrs:WK}, null, {dr:"Dr. Rao",hrs:WK}, null, null],
-  "Summit West":      [null, {dr:"Dr. Rao",hrs:WK}, null, {dr:"Dr. Chen",hrs:WK}, null, null],
-  "Summit Downtown":  [{dr:"Dr. Mehta",hrs:WK}, null, {dr:"Dr. Lopez",hrs:WK}, null, {dr:"Dr. Rao",hrs:WK}, null],
-  "Summit Lakeside":  [null, {dr:"Dr. Mehta",hrs:WK}, null, {dr:"Dr. Ford",hrs:WK}, {dr:"Dr. Mehta",hrs:WK}, null],
-  "Summit Hilltop":   [{dr:"Dr. Lopez",hrs:WK}, null, {dr:"Dr. Mehta",hrs:WK}, null, {dr:"Dr. Ford",hrs:WK}, null],
-  "Summit Riverside": [null, {dr:"Dr. Ford",hrs:WK}, null, {dr:"Dr. Lopez",hrs:WK}, null, {dr:"Dr. Mehta",hrs:SAT}],
+  "Carlsbad":     [{dr:"Dr. Chen",hrs:WK}, null, {dr:"Dr. Rao",hrs:WK}, null, {dr:"Dr. Chen",hrs:WK}, null],
+  "Hobbs":     [{dr:"Dr. Rao",hrs:WK}, null, {dr:"Dr. Chen",hrs:WK}, null, null, {dr:"Dr. Lopez",hrs:SAT}],
+  "Clovis":      [null, {dr:"Dr. Chen",hrs:WK}, null, {dr:"Dr. Rao",hrs:WK}, null, null],
+  "Lubbock":      [null, {dr:"Dr. Rao",hrs:WK}, null, {dr:"Dr. Chen",hrs:WK}, null, null],
+  "San Angelo":  [{dr:"Dr. Mehta",hrs:WK}, null, {dr:"Dr. Lopez",hrs:WK}, null, {dr:"Dr. Rao",hrs:WK}, null],
+  "Cruces LCO":  [null, {dr:"Dr. Mehta",hrs:WK}, null, {dr:"Dr. Ford",hrs:WK}, {dr:"Dr. Mehta",hrs:WK}, null],
+  "Cruces FFO":   [{dr:"Dr. Lopez",hrs:WK}, null, {dr:"Dr. Mehta",hrs:WK}, null, {dr:"Dr. Ford",hrs:WK}, null],
+  "Mansfield": [null, {dr:"Dr. Ford",hrs:WK}, null, {dr:"Dr. Lopez",hrs:WK}, null, {dr:"Dr. Mehta",hrs:SAT}],
 };
 
 /* Demo directory rows */
 const PEOPLE = [
-  ["Jordan Avery","COO","All Offices","(555) 100-2001","javery@summitortho.example","Leadership"],
-  ["Dr. Maya Chen","Owner Doctor","Summit North","(555) 100-2002","mchen@summitortho.example","Clinical"],
-  ["Dr. Patel Rao","Owner Doctor","Summit South","(555) 100-2003","prao@summitortho.example","Clinical"],
-  ["Tasha Brooks","Office Manager","Summit North","(555) 100-2010","tbrooks@summitortho.example","Operations"],
-  ["Liam Ortiz","Office Manager","Summit South","(555) 100-2011","lortiz@summitortho.example","Operations"],
-  ["Priya Nair","Treatment Coordinator","Summit North","(555) 100-2020","pnair@summitortho.example","Clinical"],
-  ["Sam Whitfield","Clinic Lead","Summit West","(555) 100-2021","swhitfield@summitortho.example","Clinical"],
-  ["Dana Kim","Marketing","All Offices","(555) 100-2030","dkim@summitortho.example","Marketing"],
-  ["Carlos Mendez","Office Manager","Summit East","(555) 100-2012","cmendez@summitortho.example","Operations"],
-  ["Rachel Goldberg","Treatment Coordinator","Summit South","(555) 100-2022","rgoldberg@summitortho.example","Clinical"],
+  ["Jordan Avery","COO","All Offices","(555) 100-2001","javery@practice.example","Leadership"],
+  ["Dr. Maya Chen","Owner Doctor","Carlsbad","(555) 100-2002","mchen@practice.example","Clinical"],
+  ["Dr. Patel Rao","Owner Doctor","Hobbs","(555) 100-2003","prao@practice.example","Clinical"],
+  ["Tasha Brooks","Office Manager","Carlsbad","(555) 100-2010","tbrooks@practice.example","Operations"],
+  ["Liam Ortiz","Office Manager","Hobbs","(555) 100-2011","lortiz@practice.example","Operations"],
+  ["Priya Nair","Treatment Coordinator","Carlsbad","(555) 100-2020","pnair@practice.example","Clinical"],
+  ["Sam Whitfield","Clinic Lead","Lubbock","(555) 100-2021","swhitfield@practice.example","Clinical"],
+  ["Dana Kim","Marketing","All Offices","(555) 100-2030","dkim@practice.example","Marketing"],
+  ["Carlos Mendez","Office Manager","Clovis","(555) 100-2012","cmendez@practice.example","Operations"],
+  ["Rachel Goldberg","Treatment Coordinator","Hobbs","(555) 100-2022","rgoldberg@practice.example","Clinical"],
 ];

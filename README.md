@@ -5,7 +5,7 @@ multi-office orthodontic practice. Built to look and feel like the proposed
 **Microsoft SharePoint communication site** so non-technical stakeholders can react to the
 *experience* before anything is built for real.
 
-> ⚠️ **Prototype only.** Sample content and placeholder branding ("Summit Orthodontics").
+> ⚠️ **Prototype only.** Sample content and placeholder branding ("the practice").
 > This is not a live system and contains no real practice data.
 
 ## What it demonstrates

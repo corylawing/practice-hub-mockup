@@ -18,7 +18,9 @@ const ICONS = {
   arrow:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>',
 };
 
-const PRACTICE = "Summit Orthodontics";
+// The practice runs three brands (FFO/Farnsworth, Sunflower, LCO) with no umbrella
+// name, so the chrome carries no practice name at all.
+const PRACTICE = "";
 
 function buildHeader() {
   const active = document.body.dataset.page || "";
@@ -35,7 +37,7 @@ function buildHeader() {
     <div class="hdr-inner">
       <a class="brand" href="index.html">
         <span class="mark" aria-label="Home-Brace"><img src="assets/logo-mark.png" alt="" width="34" height="34"></span>
-        <span>Home-<i>Brace</i><span class="sub">${PRACTICE}</span></span>
+        <span>Home-<i>Brace</i>${PRACTICE ? `<span class="sub">${PRACTICE}</span>` : ""}</span>
       </a>
       <div class="hdr-search" onclick="openSearch()">
         <input type="text" placeholder="Search PTO, expense, handbook, vendor…" readonly>
@@ -55,7 +57,7 @@ function buildFooter() {
   const ftr = `
   <footer class="site-footer">
     <div class="ftr-inner">
-      <div>© 2026 ${PRACTICE} · Home-Brace <span style="opacity:.6">(prototype)</span></div>
+      <div>© 2026 Home-Brace <span style="opacity:.6">(prototype)</span></div>
       <div><a href="index.html">Home</a> · <a href="it.html">IT Help</a> · <a href="directory.html">Directory</a></div>
     </div>
   </footer>`;
@@ -167,7 +169,7 @@ function buildSchedule() {
     if (todayIdx === -1) {
       sum.innerHTML = `<b>It's the weekend.</b> Most offices are closed Sunday — here's the week at a glance.`;
     } else {
-      const open = offices.filter(o => SCHEDULE[o][todayIdx]).map(o => `${o.replace('Summit ','')} (${SCHEDULE[o][todayIdx].dr})`);
+      const open = offices.filter(o => SCHEDULE[o][todayIdx]).map(o => `${o} (${SCHEDULE[o][todayIdx].dr})`);
       sum.innerHTML = open.length
         ? `<b>Open today (${SCHED_DAYS[todayIdx]}):</b> ${open.join(" · ")}`
         : `<b>All offices closed today.</b> Here's the week ahead.`;
