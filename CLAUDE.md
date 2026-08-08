@@ -139,6 +139,26 @@ use them anywhere an avatar appears. `PH.name(p)` respects **preferred name**.
 ## 5. Page detail
 
 ### 5a. `v1/index.html` — Production Dashboard
+**Rebuilt visually 2026-08-08 on the `-3` workbook.** Their note: *"these people are used to looking
+at numbers on an excel and are visual learners… lets make it visual, they want to pull it up and tell
+without much reading."*
+- **Two big mirrored gauges** (`gauge()` / `gauges()`) — 🦷 **Starts** and 💰 **Production** in the
+  same visual language: huge number, huge %, a fat progress bar with a **GOAL** mark and (production)
+  a **STRETCH** mark, a colour band (green ≥100 / amber ≥90 / red below) and a one-line verdict
+  ("✅ 28 starts ahead of goal"). The wall of small KPI tiles is gone.
+- **Goals live in the same tile in small type** — "Main goal $1.51M · Stretch $1.67M (100% there)",
+  plus **per day vs needed per day** for both metrics (their sheet tracks both) and days worked.
+- **CELEBRATIONS** (`v1/celebrate.js`, canvas, no libraries): **fireworks** when the main goal is hit
+  (their row 18), **confetti** for stretch, **both** when both. Fires once per office+period per
+  session (`partied` Set) plus a **"Celebrate again"** button on the banner. Works on every office
+  page *and* All Offices. Today: Carlsbad, Cruces LCO and San Angelo hit both; the group, Clovis and
+  Hobbs hit main; Cruces FFO, Lubbock and Mansfield hit neither — a good spread for the demo.
+- **Partial months are handled honestly.** August is part-worked, so `live()` counts only **finished**
+  months for the year, `partial()` finds the in-progress one, and in MTD view `paceRatio()` scales
+  the goal to the days actually worked — otherwise every office looks catastrophic on the 2nd of the
+  month. The wording switches to "ahead/behind **pace**" and shows "4 of 8 days".
+
+#### (previous notes)
 **Their written feedback sheet, all of it, implemented:**
 1. **Starts first**, then Production — two stacked sections (`🦷 Starts`, `💰 Production`).
 2. **Toggle the bottom bar chart between Starts and Production** (`chartMode`, `chartToggle()`).
@@ -177,7 +197,11 @@ the xlsx was unzipped and the sheet XML parsed directly).
 - **Editing dashboard data is a permission** (their words): `production` `edit` = type the monthly
   actuals; **`manage` = also set the main and stretch goals**. Without `manage` the goal boxes render
   as locked read-only inputs reading *"Set by leadership — you can't change this."*
-- Edits persist to `localStorage.ph_prod` as `{tc,mdp,adj,dys,goal,str,_total,_days,_goal}`;
+- **Medicaid is a COUNT × a CASE FEE**, not a dollar entry (their ask, and how the workbook works:
+  row 6 × row 42 = row 17). The form takes **Medicaid starts** and shows a live
+  "16 starts × $4,200 = $67,200" line. The **case fee is leadership-only** (`canGoals()`, i.e.
+  `manage`) and applies to **every month at that office**; managers see it locked.
+- Edits persist to `localStorage.ph_prod` as `{tc,mds,fee,adj,dys,goal,str,_total,_days,_goal}`;
   `index.html` applies `_total`/`_days`/`_goal` on load. **Store the computed `_total`** — deriving
   it in the dashboard silently dropped the Medicaid portion once.
 

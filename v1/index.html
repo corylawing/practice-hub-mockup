@@ -107,6 +107,41 @@
   .pchip.sm{padding:6px 12px;font-size:12.5px;box-shadow:none}
   .phint{font-size:12.5px;color:var(--soft)}
   .charttog{display:flex;gap:6px;margin-bottom:12px}
+  /* the at-a-glance gauges — this is the bit people read first */
+  .gauges{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:6px}
+  .gauge{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:18px 20px 16px;position:relative;overflow:hidden}
+  .gauge::before{content:'';position:absolute;inset:0 0 auto 0;height:5px}
+  .gauge.ok::before{background:var(--good)} .gauge.near::before{background:var(--amber)} .gauge.low::before{background:var(--bad)}
+  .g-top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .g-ttl{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--soft)}
+  .g-big{font-size:40px;font-weight:800;color:var(--navy);line-height:1;margin:6px 0 2px}
+  .g-pct{font-size:23px;font-weight:800;margin-left:auto}
+  .g-pct.ok{color:var(--good)} .g-pct.near{color:var(--amber)} .g-pct.low{color:var(--bad)}
+  .g-sub{font-size:13px;color:var(--soft);margin-bottom:14px}
+  .track{position:relative;height:26px;background:#eef1f5;border-radius:999px;overflow:visible;margin-bottom:9px}
+  .fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--teal2),var(--teal));transition:width .7s cubic-bezier(.2,.8,.2,1)}
+  .fill.ok{background:linear-gradient(90deg,#3fbf7f,var(--good))}
+  .fill.near{background:linear-gradient(90deg,#f7bd6b,var(--amber))}
+  .fill.low{background:linear-gradient(90deg,#e8836e,var(--bad))}
+  .mk{position:absolute;top:-5px;bottom:-5px;width:3px;border-radius:2px}
+  .mk.main{background:var(--navy)} .mk.str{background:#8a5cf5}
+  .mk span{position:absolute;top:-19px;left:50%;transform:translateX(-50%);font-size:10px;font-weight:800;
+    letter-spacing:.04em;white-space:nowrap;color:inherit}
+  .mk.main span{color:var(--navy)} .mk.str span{color:#8a5cf5}
+  .g-foot{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--soft);margin-top:14px}
+  .g-foot b{color:var(--navy)}
+  .g-verdict{font-size:14.5px;font-weight:700;margin-top:4px}
+  .g-verdict.ok{color:var(--good)} .g-verdict.near{color:var(--amber)} .g-verdict.low{color:var(--bad)}
+  /* celebration */
+  .party{background:linear-gradient(100deg,#0F827E,#149B96 55%,#2BC0B8);color:#fff;border-radius:16px;
+    padding:16px 20px;margin-bottom:16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;box-shadow:var(--shadow-lg)}
+  .party .em{font-size:30px;line-height:1}
+  .party b{font-size:17px;display:block}
+  .party span{font-size:13.5px;opacity:.92}
+  .party button{margin-left:auto;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);color:#fff;
+    border-radius:999px;padding:9px 16px;font-weight:700;font-size:13.5px;cursor:pointer;font-family:inherit}
+  .party button:hover{background:rgba(255,255,255,.3)}
+  @media(max-width:760px){ .gauges{grid-template-columns:1fr} .g-big{font-size:33px} }
   .secttl{font-size:19px;color:var(--navy);margin:26px 0 2px}
   .secttl:first-of-type{margin-top:8px}
   .secsub{font-size:13.5px;color:var(--soft);margin:0 0 14px}
@@ -117,6 +152,7 @@
   @media(max-width:620px){ .kpi .v{font-size:22px} }
 </style>
 <script src="user.js"></script>
+<script src="celebrate.js"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — real numbers from the 2026 Production Dashboard workbook. You only see the offices you have access to.</div>
@@ -146,70 +182,78 @@
 
 <script>
 const OFFICES=[
-  {n:'Carlsbad',brand:'FFO',state:'NM',
-   act:[181401, 222938, 265861, 215356, 189779, 234104, 290603, 0, 0, 0, 0, 0],
+  {n:'Carlsbad',brand:'FFO',fee:4200,
+   act:[181401, 222938, 265861, 215356, 189779, 234104, 357879, 58188, 0, 0, 0, 0],
    goal:[252912, 216988, 166188, 214647, 189249, 222278, 245976, 200435, 218840, 177212, 146966, 139312],
    stretch:[278203, 238687, 191117, 231819, 227099, 231169, 268114, 214465, 227594, 212654, 176359, 167174],
    ly:[243184, 208642, 159797, 211773, 181970, 213729, 245514, 192726, 210423, 170396, 141314, 99715],
-   sAct:[23, 35, 38, 34, 27, 37, 44, 28, 25, 23, 21, 18],
-   sGoal:[36, 34, 20, 34, 27, 34, 36, 28, 25, 23, 21, 18],
-   days:[9, 9, 8, 8, 7, 9, 10, 9, 9, 9, 9, 9], done:[9, 9, 8, 8, 7, 9, 10, 0, 0, 0, 0, 0]},
-  {n:'Clovis',brand:'FFO',state:'NM',
-   act:[226073, 258625, 246687, 172148, 167889, 198722, 229262, 0, 0, 0, 0, 0],
+   sAct:[23, 37, 42, 32, 28, 38, 60, 29, 27, 27, 18, 18],
+   sGoal:[36, 36, 24, 32, 28, 36, 40, 27, 27, 27, 18, 18],
+   mdStarts:[9, 12, 17, 14, 7, 7, 16, 5, 0, 0, 0, 0],
+   days:[9, 9, 8, 8, 7, 9, 10, 9, 9, 9, 9, 9], done:[9, 9, 8, 8, 7, 9, 10, 2, 0, 0, 0, 0]},
+  {n:'Clovis',brand:'FFO',fee:4200,
+   act:[226073, 258625, 246687, 172148, 167889, 198722, 247763, 21328, 0, 0, 0, 0],
    goal:[150201, 207644, 207905, 204125, 166173, 158085, 325468, 226833, 159142, 175696, 145196, 179490],
    stretch:[171230, 236714, 237012, 232702, 189437, 180217, 348251, 258590, 181422, 200293, 165523, 204619],
    ly:[141194, 199658, 199909, 196274, 159782, 135696, 324796, 218109, 153021, 168938, 131996, 172587],
-   sAct:[37, 42, 42, 29, 25, 32, 36, 35, 20, 24, 18, 22],
-   sGoal:[23, 33, 34, 34, 25, 25, 54, 35, 20, 24, 18, 22],
+   sAct:[41, 45, 43, 30, 27, 35, 36, 40, 18, 27, 18, 18],
+   sGoal:[27, 36, 36, 36, 27, 27, 50, 36, 18, 27, 18, 18],
+   mdStarts:[7, 3, 7, 7, 6, 7, 9, 0, 0, 0, 0, 0],
    days:[9, 9, 9, 9, 9, 9, 10, 9, 9, 9, 9, 9], done:[9, 9, 9, 9, 9, 9, 10, 0, 0, 0, 0, 0]},
-  {n:'Hobbs',brand:'FFO',state:'NM',
-   act:[197542, 208458, 229738, 225227, 197845, 259312, 203047, 0, 0, 0, 0, 0],
+  {n:'Hobbs',brand:'FFO',fee:4200,
+   act:[197542, 208458, 229738, 225227, 197845, 259312, 203047, 12382, 0, 0, 0, 0],
    goal:[230923, 199566, 208649, 181588, 204041, 228096, 139976, 178059, 151724, 246031, 188257, 177982],
    stretch:[260942, 225509, 239946, 205195, 244849, 255468, 162372, 206549, 174482, 295237, 225909, 195780],
    ly:[213817, 182569, 200624, 179291, 196193, 219323, 139850, 171211, 132037, 236568, 162606, 176638],
-   sAct:[25, 30, 36, 34, 27, 36, 31, 23, 18, 36, 29, 23],
-   sGoal:[31, 29, 32, 27, 28, 31, 21, 23, 18, 36, 29, 23],
+   sAct:[23, 28, 39, 31, 27, 37, 28, 26, 12, 36, 27, 27],
+   sGoal:[28, 27, 36, 24, 28, 32, 18, 24, 12, 36, 27, 27],
+   mdStarts:[8, 12, 2, 3, 8, 4, 6, 0, 0, 0, 0, 0],
    days:[7, 9, 9, 8, 7, 8, 9, 8, 12, 9, 9, 9], done:[7, 9, 9, 8, 7, 8, 9, 0, 0, 0, 0, 0]},
-  {n:'Cruces LCO',brand:'LCO',state:'NM',
-   act:[0, 0, 0, 0, 0, 0, 147724, 0, 0, 0, 0, 0],
+  {n:'Cruces LCO',brand:'LCO',fee:4200,
+   act:[0, 0, 0, 0, 0, 0, 159104, 25214, 0, 0, 0, 0],
    goal:[0, 0, 0, 0, 0, 0, 103648, 166866, 167404, 138716, 81094, 102830],
    stretch:[0, 0, 0, 0, 0, 0, 129560, 191896, 192514, 166459, 97313, 113113],
    ly:[162853, 182471, 195844, 108465, 154735, 128231, 85323, 154751, 156004, 126105, 61088, 92631],
-   sAct:[28, 37, 41, 20, 27, 20, 28, 28, 26, 24, 14, 14],
-   sGoal:[28, 37, 41, 20, 27, 20, 18, 28, 26, 24, 14, 14],
-   days:[7, 9, 9, 9, 9, 9, 10, 9, 9, 9, 9, 9], done:[0, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0, 0]},
-  {n:'Cruces FFO',brand:'FFO',state:'NM',
-   act:[0, 0, 0, 0, 0, 0, 43930, 0, 0, 0, 0, 0],
+   sAct:[28, 36, 45, 18, 27, 18, 32, 21, 27, 27, 18, 18],
+   sGoal:[28, 36, 45, 18, 27, 18, 20, 27, 27, 27, 18, 18],
+   mdStarts:[0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0],
+   days:[7, 9, 9, 9, 9, 9, 10, 9, 9, 9, 9, 9], done:[0, 0, 0, 0, 0, 0, 10, 3, 0, 0, 0, 0]},
+  {n:'Cruces FFO',brand:'FFO',fee:0,
+   act:[0, 0, 0, 0, 0, 0, 48178, 25277, 0, 0, 0, 0],
    goal:[0, 0, 0, 0, 0, 0, 87361, 75272, 68613, 73501, 70542, 79563],
    stretch:[0, 0, 0, 0, 0, 0, 104834, 90326, 82336, 88202, 84650, 95476],
    ly:[76649, 81688, 111595, 77344, 93396, 77875, 116482, 53766, 42883, 40834, 39190, 61202],
-   sAct:[0, 0, 0, 0, 0, 0, 10, 16, 15, 16, 15, 17],
-   sGoal:[0, 0, 0, 0, 0, 0, 19, 16, 15, 16, 15, 17],
-   days:[0, 0, 0, 0, 0, 0, 6, 7, 7, 7, 7, 7], done:[0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 0]},
-  {n:'Lubbock',brand:'FFO',state:'TX',
-   act:[123060, 104157, 137058, 84810, 103300, 81500, 83115, 0, 0, 0, 0, 0],
+   sAct:[0, 0, 0, 0, 0, 0, 9, 15, 14, 14, 14, 14],
+   sGoal:[0, 0, 0, 0, 0, 0, 18, 14, 14, 14, 14, 14],
+   mdStarts:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+   days:[0, 0, 0, 0, 0, 0, 6, 7, 7, 7, 7, 7], done:[0, 0, 0, 0, 0, 0, 6, 2, 0, 0, 0, 0]},
+  {n:'Lubbock',brand:'FFO',fee:0,
+   act:[123060, 104157, 137058, 84810, 103300, 81500, 97835, 20410, 0, 0, 0, 0],
    goal:[146572, 133479, 116836, 77523, 100442, 80660, 96519, 98413, 99420, 115639, 81771, 88319],
    stretch:[166559, 157748, 132768, 119808, 127835, 124656, 131617, 113722, 112977, 111191, 107470, 103905],
    ly:[133247, 121345, 106214, 70475, 91311, 73327, 87744, 87479, 90382, 88953, 46726, 51952],
-   sAct:[20, 24, 26, 19, 20, 18, 19, 19, 19, 22, 16, 20],
-   sGoal:[25, 30, 23, 17, 19, 18, 21, 19, 19, 22, 16, 20],
-   days:[7, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8], done:[7, 8, 8, 8, 8, 8, 8, 0, 0, 0, 0, 0]},
-  {n:'San Angelo',brand:'FFO',state:'TX',
-   act:[364028, 347608, 273810, 209565, 201489, 310660, 203469, 0, 0, 0, 0, 0],
+   sAct:[23, 26, 28, 17, 17, 16, 24, 10, 16, 24, 16, 16],
+   sGoal:[28, 32, 24, 16, 16, 16, 24, 16, 16, 24, 16, 16],
+   mdStarts:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+   days:[7, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8], done:[7, 8, 8, 8, 8, 8, 8, 4, 0, 0, 0, 0]},
+  {n:'San Angelo',brand:'FFO',fee:0,
+   act:[364028, 347608, 273810, 209565, 201489, 310660, 332910, 78745, 0, 0, 0, 0],
    goal:[275667, 193614, 240442, 210867, 274049, 239473, 291472, 312606, 214035, 248641, 192785, 267286],
    stretch:[301921, 219429, 263341, 230950, 300148, 262279, 319232, 342378, 234419, 272321, 211145, 292741],
    ly:[262540, 129076, 228992, 200826, 260999, 228069, 277593, 297720, 203842, 236801, 183605, 254558],
-   sAct:[62, 62, 49, 37, 36, 55, 36, 56, 38, 44, 34, 48],
-   sGoal:[47, 34, 43, 38, 49, 43, 52, 56, 38, 44, 34, 48],
-   days:[10, 13, 10, 9, 10, 9, 10, 10, 10, 9, 8, 9], done:[10, 13, 10, 9, 10, 9, 10, 0, 0, 0, 0, 0]},
-  {n:'Mansfield',brand:'SUN',state:'TX',
-   act:[108954, 92996, 139815, 95285, 63447, 178690, 173500, 0, 0, 0, 0, 0],
+   sAct:[66, 66, 46, 36, 37, 58, 57, 57, 40, 45, 32, 45],
+   sGoal:[50, 39, 40, 36, 50, 45, 50, 60, 40, 45, 32, 45],
+   mdStarts:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+   days:[10, 13, 10, 9, 10, 9, 10, 10, 10, 9, 8, 9], done:[10, 13, 10, 9, 10, 9, 10, 3, 0, 0, 0, 0]},
+  {n:'Mansfield',brand:'SUN',fee:0,
+   act:[108954, 92996, 139815, 95285, 63447, 178690, 194970, 43715, 0, 0, 0, 0],
    goal:[0, 0, 0, 130268, 174025, 104053, 146511, 100531, 74090, 71498, 103061, 52919],
    stretch:[0, 0, 0, 145900, 189158, 148648, 209301, 143616, 105842, 96522, 139132, 71440],
    ly:[107458, 121458, 124990, 104214, 151326, 148648, 209301, 143616, 105842, 71498, 103061, 52919],
-   sAct:[0, 0, 0, 16, 11, 30, 29, 17, 12, 12, 17, 9],
-   sGoal:[0, 0, 0, 22, 29, 17, 24, 17, 12, 12, 17, 9],
-   days:[9, 10, 11, 9, 10, 9, 10, 9, 9, 8, 7, 8], done:[9, 10, 11, 9, 10, 9, 10, 0, 0, 0, 0, 0]}
+   sAct:[0, 0, 0, 12, 12, 30, 28, 22, 9, 8, 14, 8],
+   sGoal:[0, 0, 0, 18, 30, 18, 20, 18, 9, 8, 14, 8],
+   mdStarts:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+   days:[9, 10, 11, 9, 10, 9, 10, 9, 9, 8, 7, 8], done:[9, 10, 11, 9, 10, 9, 10, 2, 0, 0, 0, 0]}
 ];
 // Numbers typed on the "Enter Production" page flow straight into this dashboard.
 (function applyEdits(){
@@ -234,20 +278,36 @@ const OFFICES=[
   const NAVSECS=[{k:'schedule',n:'📅 Schedule',href:'schedule.html'},{k:'marketing',n:'📣 Marketing',href:'marketing.html'}];
   const el=id=>document.getElementById(id);
   let cur=PERSONAS[0], sel='ALL', allowed=[];
+  let shown=null;
+  const curOffice=()=>shown;
   let period='mtd';      // their ask: default to MTD, with a toggle to the year
   let chartMode='starts'; // their ask: one chart at the bottom, toggled starts <-> production
 
   // a month counts once it has BOTH an actual and a goal (Mansfield has actuals from Jan but goals only from Apr)
-  const live=o=>{const a=[];for(let i=0;i<12;i++)if(o.act[i]>0&&o.goal[i]>0)a.push(i);return a;};
+  // finished months (all scheduled days worked) — these make up the year figure
+  const live=o=>{const a=[];for(let i=0;i<12;i++)if(o.act[i]>0&&o.goal[i]>0&&o.days[i]>0&&o.done[i]>=o.days[i])a.push(i);return a;};
+  // the month currently in progress (some days worked, not all)
+  const partial=o=>{for(let i=0;i<12;i++)if(o.done[i]>0&&o.days[i]>0&&o.done[i]<o.days[i])return i;return -1;};
   const sum=(arr,idx)=>idx.reduce((s,i)=>s+arr[i],0);
-  function months(o){ const L=live(o); return period==='mtd' ? (L.length?[L[L.length-1]]:[]) : L; }
-  const monthName=o=>{ const L=live(o); return L.length?MO[L[L.length-1]]:''; };
+  function curIdx(o){ const p=partial(o); if(p>=0)return p; const L=live(o); return L.length?L[L.length-1]:-1; }
+  function months(o){ const L=live(o); if(period!=='mtd') return L; const c=curIdx(o); return c>=0?[c]:[]; }
+  const monthName=o=>{ const c=curIdx(o); return c>=0?MO[c]:''; };
+  const inProgress=o=>partial(o)>=0 && period==='mtd';
+  // how far through the month we are, so a part-month isn't judged against a whole month's goal
+  function paceRatio(o){
+    if(period!=='mtd') return 1;
+    const c=partial(o); if(c<0||!o.days[c]) return 1;
+    return o.done[c]/o.days[c];
+  }
   function stats(o){
     const L=months(o);
-    const a=sum(o.act,L), g=sum(o.goal,L), s=sum(o.stretch,L), l=sum(o.ly,L);
+    const a=sum(o.act,L); let g=sum(o.goal,L), s=sum(o.stretch,L), l=sum(o.ly,L);
     const schd = period==='mtd' ? L.reduce((x,i)=>x+o.days[i],0) : o.days.reduce((x,y)=>x+y,0);
     const comp = L.reduce((x,i)=>x+o.done[i],0);
-    return {L,a,g,s,l,pct:g?a/g:0,spct:s?a/s:0,yoy:l?a/l:0,vgoal:a-g,vstretch:a-s,
+    const perDay = comp? a/comp : 0, needPerDay = comp? (sum(o.goal,L)*paceRatio(o))/comp : 0;
+    const pace = paceRatio(o);       // 1 for finished periods, <1 part-way through a month
+    g*=pace; s*=pace; l*=pace;
+    return {L,a,g,s,l,perDay,needPerDay,pct:g?a/g:0,spct:s?a/s:0,yoy:l?a/l:0,vgoal:a-g,vstretch:a-s,
             sched:schd, done:comp,
             daysLeft:o.days.reduce((x,y)=>x+y,0)-o.done.reduce((x,y)=>x+y,0)};
   }
@@ -282,9 +342,10 @@ const OFFICES=[
   function sStats(o){
     const L=months(o);
     const sa=o.sAct||[], sg=o.sGoal||[];
-    const a=L.reduce((x,i)=>x+(sa[i]||0),0), g=L.reduce((x,i)=>x+(sg[i]||0),0);
+    const a=L.reduce((x,i)=>x+(sa[i]||0),0); let g=L.reduce((x,i)=>x+(sg[i]||0),0);
+    g*=paceRatio(o);
     const days=L.reduce((x,i)=>x+(o.done[i]||0),0);
-    return {L,a,g,pct:g?a/g:0,v:a-g,perDay:days?a/days:0};
+    return {L,a,g,pct:g?a/g:0,v:a-g,perDay:days?a/days:0,needPerDay:days?g/days:0,days};
   }
   function startsKpis(o){
     const t=sStats(o), up=t.v>=0;
@@ -318,11 +379,73 @@ const OFFICES=[
         '<span><i class="swline"></i> Starts goal</span></div>'+
       '<div class="chartwrap"><div class="chart">'+cols+'</div></div></div>';
   }
+  const band=p=>p>=1?'ok':(p>=0.9?'near':'low');
+  function gauge(opts){
+    // opts: {icon,title,big,sub,pct,goalTxt,stretchPct,stretchTxt,verdict,footer}
+    const cls=band(opts.pct);
+    const top=Math.max(opts.pct, opts.stretchPct||0, 1)*1.06;      // always show the goal marks
+    const w=v=>Math.min(100,(v/top)*100);
+    let marks='<div class="mk main" style="left:'+w(1)+'%"><span>GOAL</span></div>';
+    if(opts.stretchPct) marks+='<div class="mk str" style="left:'+w(opts.stretchPct)+'%"><span>STRETCH</span></div>';
+    return '<div class="gauge '+cls+'">'+
+      '<div class="g-top"><span class="g-ttl">'+opts.icon+' '+opts.title+'</span>'+
+        '<span class="g-pct '+cls+'">'+pc(opts.pct)+'</span></div>'+
+      '<div class="g-big">'+opts.big+'</div><div class="g-sub">'+opts.sub+'</div>'+
+      '<div class="track"><div class="fill '+cls+'" style="width:'+w(opts.pct)+'%"></div>'+marks+'</div>'+
+      '<div class="g-verdict '+cls+'">'+opts.verdict+'</div>'+
+      '<div class="g-foot">'+opts.footer+'</div></div>';
+  }
+  function gauges(o){
+    const t=stats(o), st=sStats(o);
+    const par = inProgress(o) ? ' pace' : ' goal';
+    const sVerdict = st.v>=0 ? '\u2705 '+Math.abs(Math.round(st.v))+' starts ahead of'+par
+                             : '\u26a0\ufe0f '+Math.abs(Math.round(st.v))+' starts behind'+par;
+    const pVerdict = t.vgoal>=0 ? '\u2705 '+full(Math.abs(t.vgoal))+' ahead of'+par
+                                : '\u26a0\ufe0f '+full(Math.abs(t.vgoal))+' behind'+par;
+    const dayNote = inProgress(o) ? (()=>{const c=partial(o);return ' \u00b7 '+o.done[c]+' of '+o.days[c]+' days';})() : '';
+    return '<div class="gauges">'+
+      gauge({icon:'\ud83e\uddb7',title:'Starts',big:Math.round(st.a)+' starts',
+        sub:(period==='mtd'?monthName(o)+' so far'+dayNote:'Year so far')+' \u00b7 '+st.perDay.toFixed(1)+' a day',
+        pct:st.pct,verdict:sVerdict,
+        footer:'<span>Goal so far <b>'+Math.round(st.g)+'</b></span>'+
+          '<span>Per day <b>'+st.perDay.toFixed(1)+'</b> vs <b>'+st.needPerDay.toFixed(1)+'</b> needed</span>'+
+          '<span>'+st.days+' production days worked</span>'})+
+      gauge({icon:'\ud83d\udcb0',title:'Production',big:money(t.a),
+        sub:(period==='mtd'?monthName(o)+' so far'+dayNote:'Year so far')+' \u00b7 vs last year '+pc(t.yoy),
+        pct:t.pct,stretchPct:(t.g?t.s/t.g:0),verdict:pVerdict,
+        footer:'<span>Main goal <b>'+money(t.g)+'</b></span><span>Stretch <b>'+money(t.s)+'</b> ('+pc(t.spct)+' there)</span>'+
+                 '<span>Per day <b>'+money(t.perDay)+'</b> vs <b>'+money(t.needPerDay)+'</b> needed</span>'+
+                 (inProgress(o)?'<span style="color:var(--teal-600)">goals scaled to days worked</span>':'')})+
+    '</div>';
+  }
+
+  /* ---------- celebrations ---------- */
+  const partied=new Set();
+  function goalState(o){ const t=stats(o); return {main:t.pct>=1, stretch:t.s>0&&t.a>=t.s, t}; }
+  function partyBanner(o,who){
+    const g=goalState(o); if(!g.main&&!g.stretch) return '';
+    const msg = g.main&&g.stretch ? 'smashed the main goal AND the stretch goal!'
+              : g.main ? 'hit the main goal!' : 'reached the stretch goal!';
+    const em = g.main&&g.stretch ? '\ud83c\udf86\ud83c\udf89' : g.main ? '\ud83c\udf86' : '\ud83c\udf89';
+    return '<div class="party"><span class="em">'+em+'</span><div><b>'+who+' '+msg+'</b>'+
+      '<span>'+pc(g.t.pct)+' of goal \u00b7 '+full(g.t.a)+' produced'+(period==='mtd'?' this month':' this year')+'</span></div>'+
+      '<button onclick="DASH.party()">Celebrate again \ud83c\udf8a</button></div>';
+  }
+  function maybeParty(o,key){
+    const g=goalState(o); if(!g.main&&!g.stretch) return;
+    if(partied.has(key)) return; partied.add(key);
+    setTimeout(()=>{ if(window.Celebrate) Celebrate.fire({fireworks:g.main,confetti:g.stretch}); },420);
+  }
+  function partyNow(){
+    const o=curOffice(); if(!o||!window.Celebrate) return;
+    const g=goalState(o); Celebrate.fire({fireworks:g.main||!g.stretch,confetti:g.stretch});
+  }
+
   function periodBar(o){
     const nm=monthName(o);
     const b=(v,lab)=>'<button class="pchip'+(period===v?' on':'')+'" onclick="DASH.period(\''+v+'\')">'+lab+'</button>';
     return '<div class="periodbar">'+b('mtd','This month'+(nm?' \u00b7 '+nm:''))+b('ytd','Year to date')+
-      '<span class="phint">'+(period==='mtd'?'Showing '+(nm||'the latest month')+' only.':'Showing every month reported so far.')+'</span></div>';
+      '<span class="phint">'+(period==='mtd'?'Showing '+(nm||'the latest month')+' only \u2014 goals scaled to the days worked so far.':'Showing every month reported so far.')+'</span></div>';
   }
   function daysTiles(o){
     const t=stats(o); const pctDone=t.sched?Math.round(t.done/t.sched*100):0;
@@ -402,11 +525,9 @@ const OFFICES=[
       : '';
     const isAll = multi && sel==='ALL';
     const o = isAll ? group(allowed) : allowed.find(x=>x.n===sel);
-    let html = periodBar(o)+
-      '<h2 class="secttl">\ud83e\uddb7 Starts</h2><p class="secsub">New patients started \u2014 the front end of production.</p>'+
-      startsKpis(o) +
-      '<h2 class="secttl">\ud83d\udcb0 Production</h2><p class="secsub">Dollars produced against the main and stretch goals.</p>'+
-      kpis(o) +
+    shown=o;
+    const who = isAll ? 'The group' : o.n;
+    let html = partyBanner(o,who) + periodBar(o) + gauges(o) +
       '<h2 class="secttl">\ud83d\udcc6 Production days</h2><p class="secsub">How much of the '+(period==='mtd'?'month':'year')+' has actually been worked.</p>'+
       daysTiles(o) +
       (chartMode==='starts'? startsChart(o) : chart(o));
@@ -414,6 +535,7 @@ const OFFICES=[
     html += '<div class="foot"><b>Where these numbers come from:</b> the practice\'s 2026 Production Dashboard workbook on SharePoint — the hub reads it live, so there is no second copy to keep in sync. A month counts once it has <b>both</b> an actual and a goal (Mansfield has production from January but goals from April).<br><br><b>Heads up on the workbook:</b> the “Dashboard” tab\'s 2026 total shows <b>+$449,954</b> vs goal, but adding the eight offices gives <b>+$406,663</b> — the total formula skips Mansfield (−$43,935). The hub adds every office every time.</div>';
     el('view').innerHTML = html;
     wireTips();
+    maybeParty(o,(isAll?'ALL':sel)+'|'+period);
   }
   function wireTips(){
     const tip=el('tip');
@@ -433,7 +555,7 @@ const OFFICES=[
     render();
   }
   el('persona').innerHTML=PERSONAS.map(p=>'<option value="'+p.id+'">'+p.name+'</option>').join('');
-  window.DASH={set,pick,period:v=>{period=v;render();},chart:v=>{chartMode=v;render();}};
+  window.DASH={set,pick,party:partyNow,period:v=>{period=v;render();},chart:v=>{chartMode=v;render();}};
   let saved='admin'; try{ saved=localStorage.getItem('ph_viewas')||'admin'; }catch(_){}
   if(!PERSONAS.some(p=>p.id===saved)) saved='admin';
   set(saved);
