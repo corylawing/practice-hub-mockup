@@ -195,10 +195,12 @@
     'Cruces LCO':[null,WKh,null,WKh,null,null],'Cruces FFO':[null,null,WKh,null,null,SATh]
   };
   // NM offices = Mountain, TX offices (Lubbock/San Angelo/Mansfield) = Central
-  let locTZ={'Carlsbad':'MT','Clovis':'MT','Hobbs':'MT','San Angelo':'CT','Lubbock':'CT','Mansfield':'CT','Cruces LCO':'MT','Cruces FFO':'MT'};
+  let locTZ={'Carlsbad':'Mountain Time','Clovis':'Mountain Time','Hobbs':'Mountain Time','San Angelo':'Central Time','Lubbock':'Central Time','Mansfield':'Central Time','Cruces LCO':'Mountain Time','Cruces FFO':'Mountain Time'};
   // lunch varies by office
   let locLunch={'Carlsbad':{s:720,e:780},'Clovis':{s:720,e:780},'Hobbs':{s:720,e:780},'San Angelo':{s:780,e:840},'Lubbock':{s:690,e:750},'Mansfield':{s:720,e:780},'Cruces LCO':{s:720,e:780},'Cruces FFO':{s:720,e:780}};
-  const TZS=['MT','CT','PT','ET','AZ'];
+  const TZS=['Eastern Time','Central Time','Mountain Time','Mountain Time (Arizona, no DST)','Pacific Time','Alaska Time','Hawaii Time'];
+  const TZSHORT={'Eastern Time':'ET','Central Time':'CT','Mountain Time':'MT','Mountain Time (Arizona, no DST)':'AZ','Pacific Time':'PT','Alaska Time':'AKT','Hawaii Time':'HT'};
+  const tzBadge=t=>TZSHORT[t]||t;
   let filterP=null, weekOffset=0, tmp={p:null,mode:'full',s:480,e:1020}, tmpC=0, tmpEdit=null, tmpLoc=null;
   const el=id=>document.getElementById(id);
   const col=ci=>PALETTE[ci%PALETTE.length];
@@ -239,7 +241,7 @@
         return '<td class="cell closed'+t+'" onclick="PS.assign(\''+loc+'\','+d+')"><span class="cx">Closed</span></td>';
       }).join('');
       const tz=locTZ[loc], ln=locLunch[loc];
-      return '<tr><th class="loc"><div class="locname">'+loc+(tz?' <span class="tz">'+tz+'</span>':'')+'<button class="ledit" title="Edit location, hours, time zone & lunch" onclick="event.stopPropagation();PS.editLoc(\''+loc+'\')">✎</button></div>'+(ln?'<div class="locsub">lunch '+fmtTc(ln.s)+'–'+fmtTc(ln.e)+'</div>':'')+'</th>'+cells+'</tr>';
+      return '<tr><th class="loc"><div class="locname">'+loc+(tz?' <span class="tz" title="'+tz+'">'+tzBadge(tz)+'</span>':'')+'<button class="ledit" title="Edit location, hours, time zone & lunch" onclick="event.stopPropagation();PS.editLoc(\''+loc+'\')">✎</button></div>'+(ln?'<div class="locsub">lunch '+fmtTc(ln.s)+'–'+fmtTc(ln.e)+'</div>':'')+'</th>'+cells+'</tr>';
     }).join('');
     el('schedGrid').innerHTML='<div class="board-scroll"><table class="sgrid"><thead>'+head+'</thead><tbody>'+rows+'</tbody></table></div>';
     el('weekLabel').textContent=weekLabel(weekOffset);

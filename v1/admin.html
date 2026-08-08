@@ -85,6 +85,9 @@
   .lvl.edit{background:var(--teal-soft);color:var(--teal-600)}
   .lvl.manage{background:var(--navy);color:#fff}
   table.mx th.grp{background:#f2f5f9;color:var(--soft);text-transform:uppercase;letter-spacing:.06em;font-size:10px;text-align:center}
+  .tedit{border:none;background:none;color:var(--soft);cursor:pointer;font-size:12px;margin-left:6px;opacity:.45;font-family:inherit}
+  table.mx tr:hover .tedit{opacity:.9}
+  .tedit:hover{color:var(--teal-600)}
   .secwho{display:flex;gap:5px;flex-wrap:wrap;margin-top:4px}
   .mini-btn{padding:5px 11px;font-size:12.5px}
   .segrow{display:flex;gap:7px;flex-wrap:wrap}
@@ -142,6 +145,7 @@
   .fld{margin-bottom:12px}
   .fld label{display:block;font-size:12px;font-weight:600;color:var(--soft);margin-bottom:3px}
   .fld .val{font-size:14.5px;color:var(--ink);font-weight:500}
+  .fld select{width:100%}
   .fld input,.fld select,.fld textarea{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:9px;font-size:14px;font-family:inherit;background:#fff}
   .fld textarea{resize:vertical;min-height:60px}
   .fld.ro .val{background:#fafbfc;border:1px dashed var(--line);border-radius:8px;padding:8px 11px}
@@ -189,16 +193,23 @@
 (function(){
   const PAL=['#149B96','#25456e','#946011','#6b3fd0','#b03a63','#2E7D52','#1f6f9e','#b0442f'];
   const DEFAULT_LOCS=[
-    {n:'Carlsbad',brand:'FFO',state:'NM',tz:'MT'},{n:'Clovis',brand:'FFO',state:'NM',tz:'MT'},
-    {n:'Hobbs',brand:'FFO',state:'NM',tz:'MT'},{n:'Cruces LCO',brand:'LCO',state:'NM',tz:'MT'},
-    {n:'Cruces FFO',brand:'FFO',state:'NM',tz:'MT'},{n:'Lubbock',brand:'FFO',state:'TX',tz:'CT'},
-    {n:'San Angelo',brand:'FFO',state:'TX',tz:'CT'},{n:'Mansfield',brand:'SUN',state:'TX',tz:'CT'}
+    {n:'Carlsbad',brand:'FFO',state:'New Mexico',tz:'Mountain Time'},{n:'Clovis',brand:'FFO',state:'New Mexico',tz:'Mountain Time'},
+    {n:'Hobbs',brand:'FFO',state:'New Mexico',tz:'Mountain Time'},{n:'Cruces LCO',brand:'LCO',state:'New Mexico',tz:'Mountain Time'},
+    {n:'Cruces FFO',brand:'FFO',state:'New Mexico',tz:'Mountain Time'},{n:'Lubbock',brand:'FFO',state:'Texas',tz:'Central Time'},
+    {n:'San Angelo',brand:'FFO',state:'Texas',tz:'Central Time'},{n:'Mansfield',brand:'SUN',state:'Texas',tz:'Central Time'}
   ];
   function loadLocs(){ try{ const st=JSON.parse(localStorage.getItem('ph_locations')); if(Array.isArray(st)&&st.length)return st; }catch(_){} return JSON.parse(JSON.stringify(DEFAULT_LOCS)); }
   function saveLocs(){ try{ localStorage.setItem('ph_locations',JSON.stringify(LOCS)); }catch(_){} }
   let LOCS=loadLocs();
   const LOCATIONS_OF=()=>LOCS.map(l=>l.n);
-  const TZS=['MT','CT','PT','ET','AZ'];
+  const STATES=['Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut','Delaware',
+    'District of Columbia','Florida','Georgia','Hawaii','Idaho','Illinois','Indiana','Iowa','Kansas','Kentucky',
+    'Louisiana','Maine','Maryland','Massachusetts','Michigan','Minnesota','Mississippi','Missouri','Montana',
+    'Nebraska','Nevada','New Hampshire','New Jersey','New Mexico','New York','North Carolina','North Dakota',
+    'Ohio','Oklahoma','Oregon','Pennsylvania','Rhode Island','South Carolina','South Dakota','Tennessee','Texas',
+    'Utah','Vermont','Virginia','Washington','West Virginia','Wisconsin','Wyoming'];
+  const TZS=['Eastern Time','Central Time','Mountain Time','Mountain Time (Arizona, no DST)','Pacific Time','Alaska Time','Hawaii Time'];
+  const TZSHORT={'Eastern Time':'ET','Central Time':'CT','Mountain Time':'MT','Mountain Time (Arizona, no DST)':'AZ','Pacific Time':'PT','Alaska Time':'AKT','Hawaii Time':'HT'};
   const BRANDS_OF=()=>[...new Set(LOCS.map(l=>l.brand))];
   /* TWO KINDS OF THINGS — this is the whole mental model:
      TOOLS   = real app features (Dashboard, Schedule, Marketing). Fixed. You only choose WHO gets them.
@@ -208,7 +219,7 @@
     {k:'schedule',n:'Schedule',s:'Schedule',ic:'📅'},
     {k:'production',n:'Enter Production (type the numbers)',s:'Enter Prod',ic:'📝'},
     {k:'marketing',n:'Marketing board',s:'Marketing',ic:'📣'},
-    {k:'team',n:'Team (who\u2019s who)',s:'Team',ic:'👥'},
+    {k:'team',n:'Team (who\u2019s who)',s:'Directory',ic:'👥'},
     {k:'admin',n:'Admin Console',s:'Admin',ic:'⚙️'}
   ];
   const DEFAULT_DOCSECS=[
@@ -234,9 +245,46 @@
   let DOCSECS=loadSecs();
   const allSections=()=>TOOLS.concat(DOCSECS);
 
-  const TEAMS=['Executive Team','Leadership Team','Office Managers','Clinic Managers','TCs','Doctors','Marketing Team','Financial Coordinator Team','Staff','Admin'];
+  const DEFAULT_TEAMS=['Executive Team','Leadership Team','Office Managers','Clinic Managers','TCs','Doctors','Marketing Team','Financial Coordinator Team','Staff','Admin'];
+  function loadTeams(){ try{ const st=JSON.parse(localStorage.getItem('ph_teams')); if(Array.isArray(st)&&st.length)return st; }catch(_){} return DEFAULT_TEAMS.slice(); }
+  function saveTeams(){ try{ localStorage.setItem('ph_teams',JSON.stringify(TEAMS)); }catch(_){} }
+  let TEAMS=loadTeams();
   // THE WHOLE MODEL: team = what you can do; location = which offices' stuff you see.
   const LEVELS=['none','view','add','edit','manage'];
+  // Only offer choices that mean something. A square with five options where three do
+  // nothing is the same trap the old "Roles" tab was.
+  const SEC_LEVELS={
+    dashboard:['none','view'],
+    production:['none','edit','manage'],
+    schedule:['none','view','edit'],
+    marketing:['none','view','edit'],
+    team:['none','view'],
+    admin:['none','manage']
+  };
+  const levelsFor=k=>SEC_LEVELS[k]||LEVELS;   // document sections use the full ladder
+  // short text in the grid square
+  const SEC_SHORT={production:{edit:'Enter',manage:'Enter + goals'},admin:{manage:'Full control'}};
+  const shortFor=(k,l)=>((SEC_SHORT[k]||{})[l])||LVLNAME[l];
+  // plain-English explanation in the picker
+  const SEC_DESC={
+    dashboard:{view:'Can see the numbers for their offices'},
+    production:{edit:'Can type the monthly actuals',manage:'Can type actuals AND set the goals'},
+    schedule:{view:'Can look at the rota, change nothing',edit:'Can assign doctors and set hours'},
+    marketing:{view:'Can look at the board',edit:'Can move cards and score results'},
+    team:{view:"Can see everyone's contact card"},
+    admin:{manage:'Full control of the hub, including who sees what'}
+  };
+  const descFor=(k,l)=>((SEC_DESC[k]||{})[l])||LVLDESC[l];
+  // clamp anything stored outside a section's allowed set down to the nearest allowed level
+  function clampAccess(){
+    TEAMS.forEach(t=>allSections().forEach(x=>{
+      const ok=levelsFor(x.k), cur=access[t][x.k]||'none';
+      if(ok.indexOf(cur)>=0) return;
+      let best='none';
+      ok.forEach(l=>{ if(rank[l]<=rank[cur] && rank[l]>=rank[best]) best=l; });
+      access[t][x.k]=best;
+    }));
+  }
   const LVLNAME={none:'—',view:'View',add:'Add',edit:'Edit',manage:'Manage'};
   const rank={none:0,view:1,add:2,edit:3,manage:4};
 
@@ -256,6 +304,7 @@
   set('Financial Coordinator Team',{production:'edit',dashboard:'view',team:'view',eom:'edit',vendors:'view',filing:'edit'});
   set('Staff',{schedule:'view',team:'view',hr:'view',forms:'view'});
   DOCSECS.forEach(sec=>{ if(!DEFAULT_DOCSECS.some(d=>d.k===sec.k)) applySecAudience(sec); });
+  clampAccess();
 
   const AUDLBL={everyone:'🌐 Everyone',location:'📍 By location / state',team:'👥 By team'};
 
@@ -365,19 +414,61 @@
   function renderAccess(){
     const secs=allSections();
     const grp='<tr><th class="corner"></th><th class="grp" colspan="'+TOOLS.length+'">App tools</th><th class="grp" colspan="'+DOCSECS.length+'">Document sections</th></tr>';
-    const head='<tr><th class="corner">Team</th>'+secs.map(x=>'<th title="'+x.n+'">'+(x.s||x.n)+'</th>').join('')+'</tr>';
-    const rows=TEAMS.map(t=>'<tr><th class="team">'+t+'</th>'+secs.map(x=>{const lv=access[t][x.k]||'none';
-      return '<td><button class="lvl '+lv+'" onclick="AD.pickLevel(event,\''+t+'\',\''+x.k+'\')">'+LVLNAME[lv]+'</button></td>';}).join('')+'</tr>').join('');
+    const head='<tr><th class="corner">Teams \u2193</th>'+secs.map(x=>'<th title="'+x.n+'">'+(x.s||x.n)+'</th>').join('')+'</tr>';
+    const rows=TEAMS.map(t=>'<tr><th class="team">'+t+
+      '<button class="tedit" title="Rename or delete this team" onclick="AD.editTeam(\''+t.replace(/'/g,"\\'")+'\')">\u270e</button></th>'+secs.map(x=>{const lv=access[t][x.k]||'none';
+      return '<td><button class="lvl '+lv+'" onclick="AD.pickLevel(event,\''+t+'\',\''+x.k+'\')">'+shortFor(x.k,lv)+'</button></td>';}).join('')+'</tr>').join('');
     el('view').innerHTML=
-      '<div class="intro"><b>One rule:</b> a person\'s <b>team</b> decides what they can do (below); their <b>location</b> decides which offices\' folders they see. On two teams? They get the <b>best</b> level of both. <b>Tap a cell</b> and pick: None, View, Add files, Edit or Manage.</div>'+
+      '<div class="intro"><b>One rule:</b> a person\'s <b>team</b> decides what they can do (below); their <b>location</b> decides which offices\' folders they see. On two teams? They get the <b>best</b> level of both. <b>Tap a cell</b> and pick \u2014 each section only offers the choices that actually mean something there.</div>'+
+      '<div class="toolrow"><div class="panel-lab" style="margin:0">'+TEAMS.length+' teams \u00b7 '+secs.length+' sections</div><span style="flex:1"></span>'+
+        '<button class="btn ghost" onclick="AD.resetTeams()">Reset teams</button><button class="btn" onclick="AD.newTeam()">+ Add team</button></div>'+
       '<div class="mx-scroll"><table class="mx"><thead>'+grp+head+'</thead><tbody>'+rows+'</tbody></table></div>'+
       '<div class="legend"><span><i style="background:#f4f6f8"></i> None</span><span><i style="background:var(--blue-soft)"></i> View</span><span><i style="background:var(--good-soft)"></i> Add files</span><span><i style="background:var(--teal-soft)"></i> Edit</span><span><i style="background:var(--navy)"></i> Manage</span><span style="margin-left:auto">New sections you create appear here automatically.</span></div>';
   }
 
+  /* ---------- TEAMS (add your own; they appear as rows in the grid straight away) ---------- */
+  let teamDraft=null;
+  function newTeam(){ teamDraft={old:null,n:''}; renderTeamModal(); }
+  function editTeam(t){ teamDraft={old:t,n:t}; renderTeamModal(); }
+  function renderTeamModal(){
+    const d=teamDraft, isNew=!d.old;
+    openModal(
+      '<div class="m-top"><h3 style="margin:0;font-size:17px;color:var(--navy)">'+(isNew?'\u2795 New team':'Rename team')+'</h3><button class="x" onclick="AD.close()">\u00d7</button></div>'+
+      '<div class="dm-banner" style="background:var(--teal-soft);border-bottom:1px solid #c4e6e3;color:#0c5b57;font-size:12.5px;padding:10px 20px;line-height:1.5">A team is <b>what a group of people can do</b>. Create it here and it appears as a new row in the grid \u2014 then tick what it can reach.</div>'+
+      '<div class="m-body"><div class="fld"><label>Team name</label>'+
+        '<input id="teamName" value="'+(d.n||'').replace(/"/g,'&quot;')+'" placeholder="e.g. Records Techs, Regional Managers"></div>'+
+        '<div class="accessbox"><h4>What happens</h4>A new team starts with <b>no access to anything</b> \u2014 you decide square by square. Then add people to it from <b>People</b>.</div></div>'+
+      '<div class="m-foot">'+(isNew?'':'<button class="btn ghost" onclick="AD.delTeam()">Delete team</button>')+
+        '<span style="flex:1"></span><button class="btn ghost" onclick="AD.close()">Cancel</button>'+
+        '<button class="btn" onclick="AD.saveTeam()">'+(isNew?'Create team':'Save')+'</button></div>');
+  }
+  function saveTeam(){
+    const nm=(el('teamName')?el('teamName').value:'').trim(); if(!nm)return;
+    const d=teamDraft;
+    if(!d.old){
+      if(TEAMS.indexOf(nm)<0){ TEAMS.push(nm); access[nm]={}; allSections().forEach(x=>access[nm][x.k]='none'); }
+    } else if(nm!==d.old){
+      TEAMS=TEAMS.map(t=>t===d.old?nm:t);
+      access[nm]=access[d.old]; delete access[d.old];
+      users.forEach(u=>{ u.teams=u.teams.map(t=>t===d.old?nm:t); });
+      DOCSECS.forEach(sec=>{ if(sec.teams) sec.teams=sec.teams.map(t=>t===d.old?nm:t); });
+      saveSecs();
+    }
+    saveTeams(); ensureAccess(); clampAccess(); closeModal(); renderAccess();
+  }
+  function delTeam(){
+    const t=teamDraft.old; if(!t)return;
+    TEAMS=TEAMS.filter(x=>x!==t); delete access[t];
+    users.forEach(u=>{ u.teams=u.teams.filter(x=>x!==t); });
+    DOCSECS.forEach(sec=>{ if(sec.teams) sec.teams=sec.teams.filter(x=>x!==t); });
+    saveTeams(); saveSecs(); closeModal(); renderAccess();
+  }
+  function resetTeams(){ TEAMS=DEFAULT_TEAMS.slice(); saveTeams(); location.reload(); }
+
   /* ---------- LOCATIONS (add offices as the group expands) ---------- */
   function renderLocs(){
     const rows=LOCS.map((l,i)=>'<tr onclick="AD.editLoc('+i+')"><td><div class="uname">'+l.n+'</div></td>'+
-      '<td><span class="chip">'+l.brand+'</span></td><td>'+l.state+'</td><td>'+l.tz+'</td>'+
+      '<td><span class="chip">'+l.brand+'</span></td><td>'+l.state+'</td><td>'+l.tz+(TZSHORT[l.tz]?' <span class="chip">'+TZSHORT[l.tz]+'</span>':'')+'</td>'+
       '<td style="text-align:right"><button class="btn ghost mini-btn" onclick="event.stopPropagation();AD.editLoc('+i+')">Edit</button></td></tr>').join('');
     el('view').innerHTML=
       '<div class="intro"><b>Opening a new office?</b> Add it here once and it shows up everywhere \u2014 the schedule, the per-office document folders, people\u2019s locations, and the dashboard\u2019s office list. Nothing else to set up.</div>'+
@@ -386,7 +477,7 @@
       '<div class="tbl-scroll"><table class="u"><thead><tr><th>Office</th><th>Brand</th><th>State</th><th>Time zone</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>';
   }
   let locDraft=null;
-  function newLoc(){ locDraft={i:-1,n:'',brand:(BRANDS_OF()[0]||'FFO'),state:'NM',tz:'MT'}; renderLocModal(); }
+  function newLoc(){ locDraft={i:-1,n:'',brand:(BRANDS_OF()[0]||'FFO'),state:'New Mexico',tz:'Mountain Time'}; renderLocModal(); }
   function editLoc(i){ locDraft=Object.assign({i:i},LOCS[i]); renderLocModal(); }
   function renderLocModal(){
     const d=locDraft, isNew=d.i<0;
@@ -396,8 +487,10 @@
       '<div class="m-body">'+
         '<div class="fld"><label>Office name</label><input id="locName" value="'+(d.n||'').replace(/"/g,'&quot;')+'" placeholder="e.g. Roswell"></div>'+
         '<div class="fld"><label>Brand</label><div class="segrow">'+BRANDS_OF().concat(BRANDS_OF().indexOf(d.brand)<0&&d.brand?[d.brand]:[]).map(b=>seg(b,d.brand,'setLocBrand')).join('')+'</div></div>'+
-        '<div class="fld"><label>State</label><div class="segrow">'+['NM','TX','AZ','OK','CO'].map(x=>seg(x,d.state,'setLocState')).join('')+'</div></div>'+
-        '<div class="fld"><label>Time zone</label><div class="segrow">'+TZS.map(x=>seg(x,d.tz,'setLocTZ')).join('')+'</div></div>'+
+        '<div class="fld"><label>State</label><select onchange="AD.setLocState(this.value)">'+
+          STATES.map(x=>'<option'+(x===d.state?' selected':'')+'>'+x+'</option>').join('')+'</select></div>'+
+        '<div class="fld"><label>Time zone</label><select onchange="AD.setLocTZ(this.value)">'+
+          TZS.map(x=>'<option'+(x===d.tz?' selected':'')+'>'+x+'</option>').join('')+'</select></div>'+
         '<div class="accessbox"><h4>What happens</h4>Adding an office creates its <b>Office Docs folder</b>, adds it to the <b>schedule board</b>, makes it selectable on <b>people\u2019s profiles</b>, and adds it to the <b>dashboard</b> once production numbers exist.</div>'+
       '</div>'+
       '<div class="m-foot">'+(isNew?'':'<button class="btn ghost" onclick="AD.delLoc()">Delete</button>')+
@@ -405,8 +498,8 @@
         '<button class="btn" onclick="AD.saveLoc()">'+(isNew?'Add location':'Save')+'</button></div>');
   }
   function setLocBrand(v){locDraft.brand=v;renderLocModal();}
-  function setLocState(v){locDraft.state=v;renderLocModal();}
-  function setLocTZ(v){locDraft.tz=v;renderLocModal();}
+  function setLocState(v){locDraft.state=v;}
+  function setLocTZ(v){locDraft.tz=v;}
   function saveLoc(){
     const nm=(el('locName')?el('locName').value:locDraft.n).trim(); if(!nm)return;
     const rec={n:nm,brand:locDraft.brand,state:locDraft.state,tz:locDraft.tz};
@@ -561,7 +654,8 @@
   function togSecLoc(l){ const i=secDraft.locs.indexOf(l); if(i>=0)secDraft.locs.splice(i,1); else secDraft.locs.push(l); renderSecModal(); }
   function togSecTeam(t){ const i=secDraft.teams.indexOf(t); if(i>=0)secDraft.teams.splice(i,1); else secDraft.teams.push(t); renderSecModal(); }
   function saveSec(){
-    const d=secDraft; const nameEl=el('secName'); d.n=((nameEl?nameEl.value:d.n)||'').trim()||'New section';
+    const d=secDraft; const nameEl=el('secName');
+    const typed=(nameEl?nameEl.value:'').trim(); d.n=(typed||d.n||'').trim()||'New section';
     if(d.isNew){
       d.k='sec_'+Math.abs(d.n.split('').reduce((a,c)=>a*31+c.charCodeAt(0)|0,7)).toString(36)+DOCSECS.length;
       const sec={k:d.k,n:d.n,ic:d.ic,structure:d.structure,locMode:d.locMode,locs:d.locs.slice(),teamMode:d.teamMode,teams:d.teams.slice()};
@@ -607,7 +701,7 @@
   const LVLDESC={none:"Can't see this section",view:'Can look, nothing else',add:'Can view + upload files',edit:'Can view, add & change',manage:'Full control'};
   function pickLevel(ev,t,k){
     ev.stopPropagation();
-    openPk(ev.currentTarget, LEVELS.map(l=>({value:l,label:(l==='none'?'None':LVLNAME[l]),desc:LVLDESC[l],swatch:LVLSW[l],cur:access[t][k]===l})),
+    openPk(ev.currentTarget, levelsFor(k).map(l=>({value:l,label:(l==='none'?'None':shortFor(k,l)),desc:descFor(k,l),swatch:LVLSW[l],cur:(access[t][k]||'none')===l})),
       v=>{ access[t][k]=v; renderAccess(); });
   }
   function pickAud(ev,k,idx){
@@ -622,7 +716,7 @@
   function openModal(h){ el('modalCard').innerHTML=h; el('modal').classList.add('open'); }
   function closeModal(){ el('modal').classList.remove('open'); }
 
-  window.AD={tab:tabSet,profile,addUser,togTeam,togLoc,setStatus,saveUser,pickLevel,pickAud,tog,addFile,noop,newSec,editSec,saveSec,delSec,resetSecs,setSecName,setSecIcon,setSecStruct,setSecLocMode,setSecTeamMode,togSecLoc,togSecTeam,saveFile,pickFileFromDrive,setFileTeamMode,setFileLocMode,togFileLoc,togFileTeam,renderLocs,newLoc,editLoc,saveLoc,delLoc,resetLocs,setLocBrand,setLocState,setLocTZ,close:closeModal};
+  window.AD={tab:tabSet,newTeam,editTeam,saveTeam,delTeam,resetTeams,profile,addUser,togTeam,togLoc,setStatus,saveUser,pickLevel,pickAud,tog,addFile,noop,newSec,editSec,saveSec,delSec,resetSecs,setSecName,setSecIcon,setSecStruct,setSecLocMode,setSecTeamMode,togSecLoc,togSecTeam,saveFile,pickFileFromDrive,setFileTeamMode,setFileLocMode,togFileLoc,togFileTeam,renderLocs,newLoc,editLoc,saveLoc,delLoc,resetLocs,setLocBrand,setLocState,setLocTZ,close:closeModal};
   el('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
   render();

@@ -14,7 +14,7 @@
      mail:'heather@farnsworthorthodontics.com',
      phone:'(575) 555-1002', emp:'E-1002', status:'Active', color:'#25456e', offices:'all',
      about:'COO. I look after the group and I\u2019m the administrator for this hub.',
-     can:{dashboard:'manage',production:'manage',schedule:'manage',marketing:'manage',documents:'manage',team:'manage',admin:'manage'}},
+     can:{dashboard:'view',production:'manage',schedule:'edit',marketing:'edit',documents:'manage',team:'view',admin:'manage'}},
     {id:'om', first:'Lily', last:'Rico', role:'OM / Clinic Lead', title:'Office Manager \u00b7 Carlsbad',
      teams:['Office Managers','Clinic Managers'], loc:'Carlsbad', region:'NM', brand:'FFO',
      mail:'lily@farnsworthorthodontics.com',

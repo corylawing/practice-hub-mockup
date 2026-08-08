@@ -93,6 +93,24 @@ Not "Practice Administrator". Don't relabel her.
 `marketing`, `documents`, `team`, `admin`.
 - `PH.can(section)` → level · `PH.atLeast(section,'edit')` → bool · `PH.offices()` → `'all'` or list.
 
+**Each section only offers the levels that DO something** (`SEC_LEVELS` in admin.html; anything
+stored outside the allowed set is clamped by `clampAccess()`). The user asked for this after I
+admitted the grid was showing five choices where two or three were dead:
+
+| Section | Choices offered | What they mean |
+|---|---|---|
+| Dashboard | None · View | View = see the numbers **for their offices** |
+| Enter Production | None · **Enter** · **Enter + goals** | `edit` = type the actuals; `manage` = also set main/stretch goals |
+| Schedule | None · View · Edit | View = read-only rota; Edit = assign doctors, hours, offices |
+| Marketing | None · View · Edit | View = read-only board; Edit = move cards + score results |
+| Directory (Team) | None · View | contact cards |
+| Admin | None · **Full control** | a read-only admin console isn't a thing |
+| **Document sections** | the full ladder | View · **Add files** · Edit · Manage — this is where "Add" earns its place |
+
+Per-section wording lives in `SEC_SHORT` (grid square) and `SEC_DESC` (picker description).
+The grid corner reads **"Teams ↓"** and the Team section's column is **"Directory"** — they used to
+both say "Team" and were indistinguishable.
+
 ### ONE nav (never build a per-page nav again)
 `PH.nav(activeKey)` renders the tab bar on every page from one ordered list:
 **Home · Dashboard · Enter Production · Schedule · Marketing · Documents · Team · Admin**.
@@ -231,14 +249,21 @@ the xlsx was unzipped and the sheet XML parsed directly).
    status** only. Row → profile modal (synced vs admin-managed vs self-service, live "what they can
    access" preview).
 2. **Teams & Access** — matrix of **TEAMS × (tools + doc sections)**, grouped headers. **Tap a cell
-   → pick** None / View / Add files / Edit / Manage. A person on two teams gets the **best** level.
+   → pick** (choices vary per section, see above). A person on two teams gets the **best** level.
+   **Teams are editable**: "+ Add team", and a ✎ on each row to rename or delete. `TEAMS` is
+   persisted to `ph_teams`; renaming rewrites the team on every user and every section audience.
+   **A new team appears as a row immediately; a new document section appears as a column
+   immediately** (both verified) — that's the whole point of the grid.
 3. **Document Sections** — create/edit/delete sections: name, icon, structure
    (`plain` | `byLocation` → auto folder per office | `byBrand`), plus audience
    (`locMode`/`locs` + `teamMode`/`teams`). **+ Add file asks who can open it** before saving,
    defaulting to the folder and warning when it's an exception. Persisted to `ph_docsecs`, so new
    sections appear in Documents and as matrix columns immediately. "Reset to defaults" for demos.
 4. **Locations** — the practice is expanding, so admins add offices themselves (name, brand, state,
-   time zone). `LOCS`, `DEFAULT_LOCS`, persisted to `ph_locations`. **Always call `LOCATIONS_OF()` /
+   time zone). **States are all 50 + DC, spelled out** (`STATES`); **time zones are spelled out**
+   (`TZS`: Eastern/Central/Mountain/Mountain-Arizona/Pacific/Alaska/Hawaii) with `TZSHORT` for the
+   compact badges on the schedule board. Both are `<select>`s, not chips — 51 chips is not a UI.
+   `LOCS`, `DEFAULT_LOCS`, persisted to `ph_locations`. **Always call `LOCATIONS_OF()` /
    `BRANDS_OF()`** — never hardcode a location list. Adding an office immediately creates its Office
    Docs folder and appears on people's location chips.
 
@@ -259,6 +284,13 @@ a permission object (`role` on a person is now just a job title from their sheet
 ---
 
 ## 6. Rules learned the hard way (violate these and the user notices)
+
+### Every section must actually enforce its level
+Gaps found by auditing rather than by the user, and now closed: **Marketing had no enforcement at
+all** (anyone who could open the board could drag cards and score results). It now gates
+`add`/`open`/`move`/`dropTo`/`pickRes`, drops `draggable`, hides the arrows, the "+ Add" buttons and
+"+ New idea", renders result chips as `<span>` not `<button>`, and shows the read-only banner.
+**When adding any new interactive surface, gate it the same way.**
 
 ### Permissions must be ENFORCED, not just displayed
 A Doctor with **View** on the schedule could still edit it. Any page rendering editable UI must gate

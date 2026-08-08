@@ -61,6 +61,8 @@
   .col.dragover{outline:2px dashed var(--teal);outline-offset:-2px;background:#e3efee}
   .kcard.dragging{opacity:.45}
   .kcard{cursor:grab}
+  body.ph-view-only .kcard{cursor:default}
+  body.ph-view-only .res{cursor:default}
   .kcard:active{cursor:grabbing}
   .col-h{display:flex;align-items:center;gap:8px;font-weight:700;color:var(--navy);font-size:14px;padding:4px 6px 10px}
   .col-h .ct{background:#fff;color:var(--soft);font-size:12px;font-weight:700;border-radius:999px;padding:1px 8px;margin-left:auto}
@@ -200,6 +202,7 @@
   const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   function parts(d){ const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(d||''); return m?{y:+m[1],m:+m[2]-1,d:+m[3]}:null; }
   function niceDate(d){ const p=parts(d); return p? MONTHS[p.m]+' '+p.d : (d||''); }
+  const canEdit=()=>!window.PH||PH.atLeast('marketing','edit');
   const el=id=>document.getElementById(id);
   let editId=null;
 
@@ -214,16 +217,18 @@
       '<div class="sumcard bad"><div class="n">'+b+'</div><div class="k">Underperformed</div></div>';
   }
   function card(c){
+    const ed=canEdit();
     const si=STAGES.findIndex(s=>s.k===c.stage);
     const resChip = c.stage==='done'
-      ? '<button class="res '+c.result+'" onclick="event.stopPropagation();MK.pickRes(event,'+c.id+')">'+RES[c.result]+'</button>'
+      ? (ed ? '<button class="res '+c.result+'" onclick="event.stopPropagation();MK.pickRes(event,'+c.id+')">'+RES[c.result]+'</button>'
+            : '<span class="res '+c.result+'">'+RES[c.result]+'</span>')
       : '';
-    return '<div class="kcard t-'+c.type+'" draggable="true" data-id="'+c.id+'" onclick="MK.open('+c.id+')">'+
+    return '<div class="kcard t-'+c.type+'"'+(ed?' draggable="true"':'')+' data-id="'+c.id+'"'+(ed?' onclick="MK.open('+c.id+')"':'')+'>'+
       '<div class="kt">'+c.title+'</div>'+
       '<div class="kmeta"><span class="tag">'+TYPEN[c.type]+'</span><span class="tag">📍 '+c.loc+'</span>'+(c.date?'<span class="tag">'+niceDate(c.date)+'</span>':'')+'</div>'+
       '<div class="kfoot"><span>'+(c.owner?'👤 '+c.owner:'Unassigned')+'</span><span class="sp"></span>'+resChip+
-        '<button class="mv" onclick="event.stopPropagation();MK.move('+c.id+',-1)" '+(si===0?'disabled':'')+'>◀</button>'+
-        '<button class="mv" onclick="event.stopPropagation();MK.move('+c.id+',1)" '+(si===STAGES.length-1?'disabled':'')+'>▶</button>'+
+        (ed?'<button class="mv" onclick="event.stopPropagation();MK.move('+c.id+',-1)" '+(si===0?'disabled':'')+'>◀</button>'+
+            '<button class="mv" onclick="event.stopPropagation();MK.move('+c.id+',1)" '+(si===STAGES.length-1?'disabled':'')+'>▶</button>':'')+
       '</div></div>';
   }
   function renderBoard(){
@@ -231,7 +236,7 @@
       const list=cards.filter(c=>c.stage===s.k);
       return '<div class="col" data-stage="'+s.k+'"><div class="col-h">'+s.n+'<span class="ct">'+list.length+'</span></div>'+
         list.map(card).join('')+
-        '<button class="add" onclick="MK.add(\''+s.k+'\')">+ Add</button></div>';
+        (canEdit()?'<button class="add" onclick="MK.add(\''+s.k+'\')">+ Add</button>':'')+'</div>';
     }).join('');
   }
   const TODAY={y:2026,m:6,d:28}; // the mockup's "today" — Jul 28 2026
@@ -271,6 +276,7 @@
   function render(){ renderSummary(); renderBoard(); renderCalendar(); }
 
   function move(id,dir){
+    if(!canEdit())return;
     const c=cards.find(x=>x.id===id); const si=STAGES.findIndex(s=>s.k===c.stage);
     const ni=Math.max(0,Math.min(STAGES.length-1,si+dir)); const wasNotDone=c.stage!=='done';
     c.stage=STAGES[ni].k;
@@ -295,6 +301,7 @@
   document.addEventListener('click',e=>{ if(pk&&!pk.contains(e.target))closePk(); });
   window.addEventListener('scroll',closePk,true);
   function pickRes(ev,id){
+    if(!canEdit())return;
     const c=cards.find(x=>x.id===id);
     openPk(ev.currentTarget,[
       {value:'good',label:'🟢 Good',desc:'Hit or beat the goal',cur:c.result==='good'},
@@ -303,8 +310,10 @@
     ], v=>{ c.result=v; render(); });
   }
 
-  function open(id){ editId=id; const c=cards.find(x=>x.id===id); openModal(c); }
-  function add(stage){ const c={id:++seq,title:'',type:'social',owner:'',loc:'All offices',date:'',stage:stage,result:stage==='done'?'good':'none',notes:''}; cards.push(c); editId=id=c.id; openModal(c,true); }
+  function open(id){
+    if(!canEdit())return; editId=id; const c=cards.find(x=>x.id===id); openModal(c); }
+  function add(stage){
+    if(!canEdit())return; const c={id:++seq,title:'',type:'social',owner:'',loc:'All offices',date:'',stage:stage,result:stage==='done'?'good':'none',notes:''}; cards.push(c); editId=id=c.id; openModal(c,true); }
 
   function openModal(c,isNew){
     el('modalCard').innerHTML=
@@ -344,7 +353,8 @@
   function closeModal(discard){ if(discard){ const c=cards.find(x=>x.id===editId); if(c&&!c.title) cards=cards.filter(x=>x.id!==editId); } el('modal').classList.remove('open'); if(discard)render(); }
   function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
 
-  function dropTo(id,stage,anchor){ const c=cards.find(x=>x.id===id); if(!c||c.stage===stage)return;
+  function dropTo(id,stage,anchor){
+    if(!canEdit())return; const c=cards.find(x=>x.id===id); if(!c||c.stage===stage)return;
     const wasNotDone=c.stage!=='done';
     c.stage=stage; if(stage!=='done')c.result='none';
     render();
@@ -385,6 +395,13 @@
     calToday:()=>{calY=TODAY.y;calM=TODAY.m;renderCalendar();}};
   el('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal(true);});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal(true);});
+  if(!canEdit()){
+    document.body.classList.add('ph-view-only');
+    const nb=document.querySelector('.page-head .btn'); if(nb)nb.style.display='none';
+    if(window.PH) PH.readOnlyBanner('.wrap','marketing board');
+    const sub=document.querySelector('.page-head p');
+    if(sub)sub.textContent='What marketing is planned and how past campaigns did.';
+  }
   render();
 })();
 </script>
