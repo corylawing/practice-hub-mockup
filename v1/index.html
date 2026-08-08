@@ -70,18 +70,26 @@
   .sw{width:13px;height:13px;border-radius:3px;display:inline-block}
   .swline{width:16px;height:0;border-top:2px dashed var(--navy);display:inline-block}
   .swdot{width:16px;height:0;border-top:2px dotted #8a5cf5;display:inline-block}
-  .chartwrap{overflow-x:auto}
-  .chart{display:flex;gap:10px;align-items:flex-end;min-width:620px;height:200px;padding-top:6px}
-  .mo{flex:1;display:flex;flex-direction:column;align-items:center;height:100%}
-  .bars{position:relative;width:100%;height:100%;display:flex;align-items:flex-end;justify-content:center;gap:3px}
-  .bar{width:38%;border-radius:5px 5px 0 0;position:relative;transition:filter .15s}
-  .bar:hover{filter:brightness(.92)}
+  .chartwrap{overflow-x:auto;padding-top:8px}
+  .plot{position:relative;min-width:660px;padding:26px 0 0 46px}
+  .grid{position:absolute;left:46px;right:0;top:26px;bottom:30px;pointer-events:none}
+  .grid .gl{position:absolute;left:0;right:0;border-top:1px dashed #e7ebf0}
+  .grid .gl b{position:absolute;left:-46px;top:-8px;width:40px;text-align:right;font-size:10px;font-weight:700;color:#9aa6b6}
+  .grid .gl.base{border-top:1px solid #d7dde5}
+  .chart{position:relative;display:flex;gap:12px;align-items:flex-end;height:210px;padding-bottom:30px}
+  .mo{flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end;position:relative}
+  .bars{position:relative;width:100%;height:100%;display:flex;align-items:flex-end;justify-content:center;gap:4px}
+  .bar{width:36%;border-radius:6px 6px 0 0;position:relative;transition:filter .15s,transform .15s;cursor:default}
+  .bar:hover{filter:brightness(.94);transform:translateY(-2px)}
+  .bval{position:absolute;top:-17px;left:0;right:0;text-align:center;font-size:10.5px;font-weight:800;color:var(--navy);white-space:nowrap}
+  .bar.lyb .bval{color:#8794a6}
   .bar.lyb{background:var(--ly)}
   .bar.ab{background:var(--teal)}
   .bar.ab.over{background:var(--good)} .bar.ab.under{background:var(--bad)} .bar.ab.mtd{background:var(--amber)}
   .gm{position:absolute;left:2%;right:2%;border-top:2px dashed var(--navy);pointer-events:none}
   .sm{position:absolute;left:2%;right:2%;border-top:2px dotted #8a5cf5;pointer-events:none}
-  .molab{font-size:11px;color:var(--soft);font-weight:700;margin-top:7px;white-space:nowrap}
+  .molab{position:absolute;bottom:-24px;left:0;right:0;text-align:center;font-size:11.5px;color:var(--soft);font-weight:700;white-space:nowrap}
+  .mo.best .molab{color:var(--good)}
   .tip{position:fixed;background:var(--navy);color:#fff;font-size:12px;padding:7px 10px;border-radius:8px;pointer-events:none;opacity:0;transition:opacity .12s;z-index:50;white-space:nowrap;box-shadow:var(--shadow-lg)}
   /* leaderboard */
   .lb-scroll{overflow-x:auto}
@@ -110,7 +118,7 @@
   .chip.on .tick{color:#fff}
   .chip.combtog{border-style:dashed;font-weight:700}
   .chip.combtog.on{background:var(--teal);border-color:var(--teal);color:#fff}
-  .pchip.sm{padding:6px 12px;font-size:12.5px;box-shadow:none}
+  .pchip.mini{padding:6px 12px;font-size:12.5px;box-shadow:none}
   .phint{font-size:12.5px;color:var(--soft)}
   .charttog{display:flex;gap:6px;margin-bottom:12px}
   /* the at-a-glance gauges — this is the bit people read first */
@@ -137,6 +145,8 @@
   .mklab.main{color:var(--navy)} .mklab.str{color:#8a5cf5}
   .mklab::after{content:'';position:absolute;left:50%;top:13px;width:1px;height:7px;background:currentColor;opacity:.45}
   .mklab.hi::after{height:23px}
+  .overflag{position:absolute;right:9px;top:50%;transform:translateY(-50%);font-size:11px;font-weight:800;color:#fff;
+    text-shadow:0 1px 2px rgba(0,0,0,.25);pointer-events:none}
   .g-foot{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--soft);margin-top:14px}
   .g-foot b{color:var(--navy)}
   .g-verdict{font-size:14.5px;font-weight:700;margin-top:4px}
@@ -365,6 +375,11 @@ const OFFICES=[
     return s+'$'+(v>=1e6?(v/1e6).toFixed(2)+'M':v>=1e3?Math.round(v/1e3)+'K':Math.round(v));};
   const full=v=>(v<0?'-$':'$')+Math.abs(Math.round(v)).toLocaleString('en-US');
   const pc=v=>Math.round(v*100)+'%';
+  function niceMax(v){ if(!v) return 1;
+    const target=v*1.06, mag=Math.pow(10,Math.floor(Math.log10(target))), n=target/mag;
+    const steps=[1,1.2,1.5,2,2.5,3,4,5,6,8,10];
+    return (steps.find(x=>x>=n)||10)*mag;
+  }
 
   function kpis(o){
     const t=stats(o);
@@ -401,45 +416,26 @@ const OFFICES=[
         '<div class="s">across production days worked</div></div>'+
     '</div>';
   }
-  function startsChart(o){
-    const L=live(o); if(!L.length) return '';
-    const sa=o.sAct||[], sg=o.sGoal||[], sl=o.lyStarts||[];
-    let max=0; L.forEach(i=>{max=Math.max(max,sa[i]||0,sg[i]||0,sl[i]||0);}); max*=1.10;
-    const cols=L.map(i=>{
-      const a=sa[i]||0, g=sg[i]||0, l=sl[i]||0, h=v=>Math.max(2,(v/max)*100);
-      return '<div class="mo"><div class="bars">'+
-        '<div class="gm" style="bottom:'+h(g)+'%"></div>'+
-        '<div class="bar lyb" style="height:'+h(l)+'%" data-t="'+MO[i]+' last year: about '+Math.round(l)+' starts"></div>'+
-        '<div class="bar ab '+(a>=g?'over':'under')+'" style="height:'+h(a)+'%" data-t="'+MO[i]+' 2026: '+Math.round(a)+' starts \u00b7 goal '+Math.round(g)+'"></div>'+
-        '</div><div class="molab">'+MO[i]+'</div></div>';
-    }).join('');
-    return '<div class="card" id="bottomchart"><h2>Starts month by month</h2>'+
-      '<div class="sub">Last year next to this year. The <b>dashed line</b> is that month\u2019s starts goal.</div>'+
-      chartToggle()+
-      '<div class="legend"><span><i class="sw" style="background:var(--ly)"></i> Last year (2025)</span>'+
-        '<span><i class="sw" style="background:var(--good)"></i> 2026 at/above goal</span>'+
-        '<span><i class="sw" style="background:var(--bad)"></i> 2026 under goal</span>'+
-        '<span><i class="swline"></i> Starts goal</span>'+
-        '<span style="margin-left:auto;font-style:italic">last year\u2019s starts estimated from 2025 production \u00f7 average case fee</span></div>'+
-      '<div class="chartwrap"><div class="chart">'+cols+'</div></div></div>';
-  }
   const band=p=>p>=1?'ok':(p>=0.9?'near':'low');
   function gauge(opts){
-    // opts: {icon,title,big,sub,pct,goalTxt,stretchPct,stretchTxt,verdict,footer}
     const cls=band(opts.pct);
-    const top=Math.max(opts.pct, opts.stretchPct||0, 1)*1.10;      // always leave room for the marks
+    // Keep the goal mark readable even at 400%: the scale never stretches past ~1.35x the
+    // furthest goal, and anything beyond that fills the bar and shows an "over" flag.
+    const far=Math.max(1,opts.stretchPct||0);
+    const top=Math.min(Math.max(opts.pct,far)*1.08, far*1.35);
     const w=v=>Math.min(100,(v/top)*100);
+    const over=opts.pct>top;
     const gp=w(1), sp=opts.stretchPct?w(opts.stretchPct):null;
-    // when the two marks are close together the labels used to collide — lift the second one
     const close = sp!==null && Math.abs(sp-gp)<17;
-    const lab=(pos,txt,cls,hi)=>'<div class="mklab '+cls+(hi?' hi':'')+'" style="left:'+pos+'%">'+txt+'</div>';
+    const lab=(pos,txt,cls2,hi)=>'<div class="mklab '+cls2+(hi?' hi':'')+'" style="left:'+pos+'%">'+txt+'</div>';
     let marks='<div class="mk main" style="left:'+gp+'%"></div>'+lab(gp,'GOAL','main',false);
     if(sp!==null) marks+='<div class="mk str" style="left:'+sp+'%"></div>'+lab(sp,'STRETCH','str',close);
     return '<div class="gauge '+cls+'">'+
       '<div class="g-top"><span class="g-ttl">'+opts.icon+' '+opts.title+'</span>'+
         '<span class="g-pct '+cls+'">'+pc(opts.pct)+'</span></div>'+
       '<div class="g-big">'+opts.big+'</div><div class="g-sub">'+opts.sub+'</div>'+
-      '<div class="track"><div class="fill '+cls+'" style="width:'+w(opts.pct)+'%"></div>'+marks+'</div>'+
+      '<div class="track"><div class="fill '+cls+'" style="width:'+w(opts.pct)+'%"></div>'+marks+
+        (over?'<span class="overflag">'+pc(opts.pct)+' \u25b6</span>':'')+'</div>'+
       '<div class="g-verdict '+cls+'">'+opts.verdict+'</div>'+
       '<div class="g-foot">'+opts.footer+'</div></div>';
   }
@@ -451,19 +447,21 @@ const OFFICES=[
     const pVerdict = t.vgoal>=0 ? '\u2705 '+full(Math.abs(t.vgoal))+' ahead of'+par
                                 : '\u26a0\ufe0f '+full(Math.abs(t.vgoal))+' behind'+par;
     const dayNote = inProgress(o) ? (()=>{const c=partial(o);return ' \u00b7 '+o.done[c]+' of '+o.days[c]+' days';})() : '';
-    // their sheet has no starts stretch goal, so use the same reach as production asks for
+    // their sheet has no starts stretch goal, so use the same reach production asks for
     const stretchRatio = t.g? t.s/t.g : 0;
     const stretchStarts = Math.round(st.g*stretchRatio);
+    const showSS = stretchStarts>Math.round(st.g);
     return '<div class="gauges">'+
-      gauge({icon:'\ud83e\uddb7',title:'Starts',big:Math.round(st.a)+' starts',stretchPct:stretchRatio,
-        sub:(period==='mtd'?monthName(o)+' so far'+dayNote:'Year so far')+' \u00b7 '+st.perDay.toFixed(1)+' a day',
+      gauge({icon:'\ud83e\uddb7',title:'Starts',big:Math.round(st.a)+' starts',
+        stretchPct:(showSS?stretchRatio:0),
+        sub:(period==='mtd'?monthName(o)+' so far'+dayNote:(isMonth()?MOFULL[period]:'Year so far'))+' \u00b7 '+st.perDay.toFixed(1)+' a day',
         pct:st.pct,verdict:sVerdict,
         footer:'<span>Main goal <b>'+Math.round(st.g)+'</b></span>'+
-          (stretchStarts?'<span>Stretch <b>'+stretchStarts+'</b> ('+pc(stretchStarts?st.a/stretchStarts:0)+' there)</span>':'')+
+          (showSS?'<span>Stretch <b>'+stretchStarts+'</b> ('+pc(st.a/stretchStarts)+' there)</span>':'')+
           '<span>Per day <b>'+st.perDay.toFixed(1)+'</b> vs <b>'+st.needPerDay.toFixed(1)+'</b> needed</span>'+
           '<span>'+st.days+' days worked</span>'})+
       gauge({icon:'\ud83d\udcb0',title:'Production',big:money(t.a),
-        sub:(period==='mtd'?monthName(o)+' so far'+dayNote:'Year so far')+' \u00b7 vs last year '+pc(t.yoy),
+        sub:(period==='mtd'?monthName(o)+' so far'+dayNote:(isMonth()?MOFULL[period]:'Year so far'))+' \u00b7 vs last year '+pc(t.yoy),
         pct:t.pct,stretchPct:(t.g?t.s/t.g:0),verdict:pVerdict,
         footer:'<span>Main goal <b>'+money(t.g)+'</b></span><span>Stretch <b>'+money(t.s)+'</b> ('+pc(t.spct)+' there)</span>'+
                  '<span>Per day <b>'+money(t.perDay)+'</b> vs <b>'+money(t.needPerDay)+'</b> needed</span>'+
@@ -479,8 +477,9 @@ const OFFICES=[
     const msg = g.main&&g.stretch ? 'smashed the main goal AND the stretch goal!'
               : g.main ? 'hit the main goal!' : 'reached the stretch goal!';
     const em = g.main&&g.stretch ? '\ud83c\udf86\ud83c\udf89' : g.main ? '\ud83c\udf86' : '\ud83c\udf89';
+    const when = period==='mtd' ? ' this month' : (isMonth()? ' in '+MOFULL[period] : ' this year');
     return '<div class="party"><span class="em">'+em+'</span><div><b>'+who+' '+msg+'</b>'+
-      '<span>'+pc(g.t.pct)+' of goal \u00b7 '+full(g.t.a)+' produced'+(period==='mtd'?' this month':' this year')+'</span></div>'+
+      '<span>'+pc(g.t.pct)+' of goal \u00b7 '+full(g.t.a)+' produced'+when+'</span></div>'+
       '<button onclick="DASH.party()">Celebrate again \ud83c\udf8a</button></div>';
   }
   function maybeParty(o,key){
@@ -509,7 +508,6 @@ const OFFICES=[
   function daysTiles(o){
     const t=stats(o), pct=t.sched?t.done/t.sched:0;
     const left=Math.max(0,t.sched-t.done);
-    // one visual line rather than three number tiles
     const pips=t.sched<=31 ? '<div class="pips">'+Array.from({length:t.sched},(_,i)=>
         '<i class="'+(i<t.done?'on':'')+'"></i>').join('')+'</div>' : '';
     return '<div class="card daycard"><div class="dayrow">'+
@@ -522,31 +520,67 @@ const OFFICES=[
           : left+' production day'+(left===1?'':'s')+' still to work '+(period==='mtd'?'this month':'this year'))+'</div>'+
     '</div>';
   }
+  function startsChart(o){
+    const L=live(o); if(!L.length) return '';
+    const sa=o.sAct||[], sg=o.sGoal||[], sl=o.lyStarts||[];
+    let max=0; L.forEach(i=>{max=Math.max(max,sa[i]||0,sg[i]||0,sl[i]||0);});
+    max=niceMax(max);
+    const best=L.reduce((b,i)=>((sg[i]?sa[i]/sg[i]:0)>(sg[b]?sa[b]/sg[b]:0)?i:b),L[0]);
+    const cols=L.map(i=>{
+      const a=sa[i]||0, g=sg[i]||0, l=sl[i]||0, h=v=>Math.max(1.5,(v/max)*100);
+      return '<div class="mo'+(i===best?' best':'')+'"><div class="bars">'+
+        '<div class="gm" style="bottom:'+h(g)+'%"></div>'+
+        '<div class="bar lyb" style="height:'+h(l)+'%" data-t="'+MO[i]+' last year: about '+Math.round(l)+' starts"></div>'+
+        '<div class="bar ab '+(a>=g?'over':'under')+'" style="height:'+h(a)+'%" data-t="'+MO[i]+' 2026: '+Math.round(a)+' starts \u00b7 goal '+Math.round(g)+'">'+
+          '<span class="bval">'+Math.round(a)+'</span></div>'+
+        '</div><div class="molab">'+MO[i]+(i===best?' \u2605':'')+'</div></div>';
+    }).join('');
+    return '<div class="card" id="bottomchart"><h2>Starts month by month</h2>'+
+      '<div class="sub">Last year beside this year. The <b>dashed line</b> is that month\u2019s starts goal. \u2605 marks the best month.</div>'+
+      chartToggle()+
+      '<div class="legend"><span><i class="sw" style="background:var(--ly)"></i> Last year (2025)</span>'+
+        '<span><i class="sw" style="background:var(--good)"></i> 2026 at/above goal</span>'+
+        '<span><i class="sw" style="background:var(--bad)"></i> 2026 under goal</span>'+
+        '<span><i class="swline"></i> Starts goal</span>'+
+        '<span style="margin-left:auto;font-style:italic">last year\u2019s starts estimated from 2025 production \u00f7 average case fee</span></div>'+
+      '<div class="chartwrap"><div class="plot">'+axis(max,false)+'<div class="chart">'+cols+'</div></div></div></div>';
+  }
   function chart(o){
     const L=live(o); if(!L.length) return '';
-    let max=0; L.forEach(i=>{max=Math.max(max,o.act[i],o.goal[i],o.stretch[i],o.ly[i]);}); max*=1.08;
+    let max=0; L.forEach(i=>{max=Math.max(max,o.act[i],o.goal[i],o.stretch[i],o.ly[i]);});
+    max=niceMax(max);
+    const best=L.reduce((b,i)=>((o.goal[i]?o.act[i]/o.goal[i]:0)>(o.goal[b]?o.act[b]/o.goal[b]:0)?i:b),L[0]);
     const cols=L.map(i=>{
       const inProg=o.done[i]>0&&o.done[i]<o.days[i];
       const cls=inProg?'mtd':(o.act[i]>=o.goal[i]?'over':'under');
-      const h=v=>Math.max(2,(v/max)*100);
-      return '<div class="mo"><div class="bars">'+
+      const h=v=>Math.max(1.5,(v/max)*100);
+      return '<div class="mo'+(i===best?' best':'')+'"><div class="bars">'+
         '<div class="gm" style="bottom:'+h(o.goal[i])+'%"></div>'+
         '<div class="sm" style="bottom:'+h(o.stretch[i])+'%"></div>'+
         '<div class="bar lyb" style="height:'+h(o.ly[i])+'%" data-t="'+MO[i]+' last year: '+full(o.ly[i])+'"></div>'+
-        '<div class="bar ab '+cls+'" style="height:'+h(o.act[i])+'%" data-t="'+MO[i]+' 2026: '+full(o.act[i])+' · main goal '+full(o.goal[i])+' · stretch '+full(o.stretch[i])+'"></div>'+
-        '</div><div class="molab">'+MO[i]+'</div></div>';
+        '<div class="bar ab '+cls+'" style="height:'+h(o.act[i])+'%" data-t="'+MO[i]+' 2026: '+full(o.act[i])+' \u00b7 main goal '+full(o.goal[i])+' \u00b7 stretch '+full(o.stretch[i])+'">'+
+          '<span class="bval">'+money(o.act[i])+'</span></div>'+
+        '</div><div class="molab">'+MO[i]+(i===best?' \u2605':'')+'</div></div>';
     }).join('');
     return '<div class="card" id="bottomchart"><h2>Month by month</h2>'+
-      '<div class="sub">Last year next to this year, with both goal lines. Green = beat the main goal, red = under.</div>'+
+      '<div class="sub">Last year beside this year. <b>Dashed</b> = main goal, <b>dotted</b> = stretch. Hover any bar for exact figures. \u2605 = best month.</div>'+
       chartToggle()+
       '<div class="legend"><span><i class="sw" style="background:var(--ly)"></i> Last year (2025)</span>'+
         '<span><i class="sw" style="background:var(--good)"></i> 2026 at/above goal</span>'+
         '<span><i class="sw" style="background:var(--bad)"></i> 2026 under goal</span>'+
         '<span><i class="swline"></i> Main goal</span><span><i class="swdot"></i> Stretch goal</span></div>'+
-      '<div class="chartwrap"><div class="chart">'+cols+'</div></div></div>';
+      '<div class="chartwrap"><div class="plot">'+axis(max,true)+'<div class="chart">'+cols+'</div></div></div></div>';
+  }
+  function axis(max,money$){
+    const steps=4, lines=[];
+    for(let i=steps;i>=0;i--){
+      const v=max*(i/steps), pct=(i/steps)*100;
+      lines.push('<div class="gl'+(i===0?' base':'')+'" style="bottom:'+pct+'%"><b>'+(money$?money(v):Math.round(v))+'</b></div>');
+    }
+    return '<div class="grid">'+lines.join('')+'</div>';
   }
   function chartToggle(){
-    const b=(v,lab)=>'<button class="pchip sm'+(chartMode===v?' on':'')+'" onclick="DASH.chart(\''+v+'\')">'+lab+'</button>';
+    const b=(v,lab)=>'<button class="pchip mini'+(chartMode===v?' on':'')+'" onclick="DASH.chart(\''+v+'\')">'+lab+'</button>';
     return '<div class="charttog">'+b('starts','\ud83e\uddb7 Starts')+b('production','\ud83d\udcb0 Production')+'</div>';
   }
   function leaderboard(list){
