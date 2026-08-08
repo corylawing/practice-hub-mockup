@@ -70,17 +70,20 @@ Every page: amber **PROTOTYPE** ribbon · navy header with the **logo mark** + "
 ### Logo & name (renamed to Home-Brace 2026-08-08)
 
 The app is **Home-Brace**. The mark is a **white house outline with a braces archwire across it**
-(brackets on a wire) on a rounded teal-gradient tile — supplied by Cory as finished artwork.
+(brackets on a wire) on a teal-gradient square — supplied by Cory as finished artwork.
 
-- `assets/logo-mark.png` (512², transparent corners) — the header mark, rendered at 34×34.
+- **Source of truth: `~/Documents/homebracelogoV2.png`** (1254², full-bleed square, no margin,
+  no rounded corners). V1 of the artwork was rejected — always use **V2**.
+- `assets/logo-mark.png` (512²) — the header mark, rendered at 34×34.
 - `assets/favicon.png` (256²) + `assets/icons/{favicon-32,icon-512,apple-touch-icon}.png`,
-  all derived from the same file.
+  all re-exported from the V2 source with Pillow.
+- The artwork is a hard square, so the header rounds it in CSS:
+  `.mark img{border-radius:9px}`. Don't bake rounding into the PNG.
 - **Do NOT redraw this mark as SVG.** A hand-traced SVG version was rejected outright.
-  If it needs a new size, re-export from `assets/logo-mark.png` with Pillow.
 - Wordmark: **"Home-"** then **"Brace"** in `--teal2`, markup `Home-<i>Brace</i>`
   (`.brand i{font-style:normal;color:var(--teal2)}`). On light backgrounds "Home-" is `--navy`.
 - Tagline from the logo lockup: **Centralize. Connect. Grow.** (not used in the app chrome yet).
-- Root-site shared assets carry a `?v=hb1` query — **bump it** when editing `assets/app.js`,
+- Root-site shared assets carry a `?v=hb2` query — **bump it** when editing `assets/app.js`,
   `assets/data.js` or `assets/styles.css`, or browsers serve the stale copy.
 
 ---
