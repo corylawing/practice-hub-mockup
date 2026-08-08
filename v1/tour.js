@@ -30,7 +30,14 @@
   .tour-btn.back{background:#fff;color:#0F2A4A;border:1px solid #E4E8EE}
   .tour-skip{background:none;border:none;color:#8a94a6;font-size:13px;cursor:pointer;font-family:inherit}
   .tour-skip:hover{color:#465264}
-  @media(max-width:520px){.tour-pop{max-width:calc(100vw - 24px)}.tour-launch{right:12px;bottom:12px;padding:11px 15px;font-size:14px}}
+  /* On phones the full "Show me around" pill sat on top of the content you were trying
+     to read. Collapse it to a round icon button — same tap target, far less in the way. */
+  @media(max-width:760px){
+    .tour-pop{max-width:calc(100vw - 24px)}
+    .tour-launch{right:14px;bottom:14px;width:52px;height:52px;padding:0;border-radius:50%;
+      font-size:22px;justify-content:center;gap:0}
+    .tour-launch .tl-txt{display:none}
+  }
   `;
   const styleEl=document.createElement('style'); styleEl.textContent=css; document.head.appendChild(styleEl);
 
@@ -78,7 +85,9 @@
   window.Tour={
     init:function(s,o){ opts=o||{}; steps=s; build();
       launch=document.createElement('button'); launch.className='tour-launch pulse';
-      launch.innerHTML='👋 '+(opts.launch||'Show me around');
+      launch.title=(opts.launch||'Show me around');
+      launch.setAttribute('aria-label',(opts.launch||'Show me around'));
+      launch.innerHTML='👋<span class="tl-txt">'+(opts.launch||'Show me around')+'</span>';
       launch.onclick=()=>{ launch.classList.remove('pulse'); show(0); };
       document.body.appendChild(launch);
       // continue a walkthrough that was handed over from the previous page

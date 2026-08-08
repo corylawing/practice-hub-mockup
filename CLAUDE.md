@@ -88,8 +88,9 @@ The app is **Home-Brace**. The mark is a **white house outline with a braces arc
   `PRACTICE` in `assets/app.js` is `""` and the header shows only the wordmark. Don't invent one.
   The root site's eight fake "Summit …" offices were renamed to the real eight: Carlsbad, Clovis,
   Hobbs, Cruces LCO, Cruces FFO, Lubbock, San Angelo, Mansfield.
-- Root-site shared assets carry a `?v=hb3` query — **bump it** when editing `assets/app.js`,
-  `assets/data.js` or `assets/styles.css`, or browsers serve the stale copy.
+- **All** shared assets carry a `?v=…` query (currently `hb5`) — **bump it** when editing `assets/app.js`,
+  `assets/data.js`, `assets/styles.css`, `v1/user.js`, `v1/tour.js` or `v1/celebrate.js` —
+  browsers cache them hard and will silently serve the old copy otherwise. This bit us twice.
 
 ---
 
@@ -395,6 +396,15 @@ all** (anyone who could open the board could drag cards and score results). It n
 `add`/`open`/`move`/`dropTo`/`pickRes`, drops `draggable`, hides the arrows, the "+ Add" buttons and
 "+ New idea", renders result chips as `<span>` not `<button>`, and shows the read-only banner.
 **When adding any new interactive surface, gate it the same way.**
+
+### One gate, in user.js — never per page
+`PH.nav('<key>')` (which every page already calls) runs `guard()`. If the person fails that
+section's `show()` rule it paints a **"You don't have access"** panel and adds `body.ph-locked`;
+CSS then hides every other child of `.wrap`, so it holds even if the page re-renders later.
+**Hiding a nav tab is not access control** — anyone can type the URL. Audit 2026-08-08 found
+Admin, Marketing, Documents and Team all fully readable that way (the Admin console handed out
+every name and email). Any new page gets this free as long as it calls `PH.nav()`.
+Note this is client-side only — right for a mockup, but the real build must enforce server-side.
 
 ### Permissions must be ENFORCED, not just displayed
 A Doctor with **View** on the schedule could still edit it. Any page rendering editable UI must gate

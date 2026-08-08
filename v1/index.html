@@ -114,13 +114,26 @@
   .pchip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 15px;font-size:13.5px;font-weight:700;color:var(--navy);cursor:pointer;font-family:inherit;box-shadow:var(--shadow)}
   .pchip:hover{border-color:var(--teal);color:var(--teal-600)}
   .pchip.on{background:var(--teal);color:#fff;border-color:var(--teal)}
-  .mback{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 13px;font-size:13px;font-weight:700;
-    color:var(--navy);font-family:inherit;cursor:pointer;box-shadow:var(--shadow)}
+  /* Month stepper — replaces the old "Look back at a month…" dropdown.
+     One control, two arrows, no extra pills. Walk back a month at a time. */
+  .mstep{display:inline-flex;align-items:center;background:#fff;border:1px solid var(--line);
+    border-radius:999px;box-shadow:var(--shadow);overflow:hidden}
+  .mstep button{border:none;background:none;font-family:inherit;cursor:pointer;color:var(--navy);
+    width:38px;height:38px;font-size:17px;line-height:1;display:grid;place-items:center}
+  .mstep button:hover:not(:disabled){background:var(--teal-soft);color:var(--teal-600)}
+  .mstep button:disabled{color:#c3ccd8;cursor:default}
+  .mstep .lab{min-width:104px;text-align:center;font-size:13.5px;font-weight:700;color:var(--soft);
+    padding:0 4px;user-select:none}
+  .mstep.on{border-color:var(--teal);background:var(--teal)}
+  .mstep.on .lab{color:#fff}
+  .mstep.on button{color:#eafffd}
+  .mstep.on button:hover:not(:disabled){background:rgba(255,255,255,.18);color:#fff}
+  .mstep.on button:disabled{color:rgba(255,255,255,.4)}
   .chip .tick{font-weight:800;color:var(--teal-600)}
   .chip.on .tick{color:#fff}
   .chip.combtog{border-style:dashed;font-weight:700}
   .chip.combtog.on{background:var(--teal);border-color:var(--teal);color:#fff}
-  .pchip.mini{padding:6px 12px;font-size:12.5px;box-shadow:none}
+  .pchip.mini{padding:8px 14px;font-size:12.5px;box-shadow:none;min-height:36px}
   .phint{font-size:12.5px;color:var(--soft)}
   .charttog{display:flex;gap:6px;margin-bottom:12px}
   /* the at-a-glance gauges — this is the bit people read first */
@@ -184,8 +197,8 @@
   .foot b{color:var(--navy)}
   @media(max-width:620px){ .kpi .v{font-size:22px} }
 </style>
-<script src="user.js"></script>
-<script src="celebrate.js"></script>
+<script src="user.js?v=hb5"></script>
+<script src="celebrate.js?v=hb5"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — real numbers from the 2026 Production Dashboard workbook. You only see the offices you have access to.</div>
@@ -462,14 +475,17 @@ const OFFICES=[
     // their sheet has no starts stretch goal, so use the same reach production asks for
     const stretchRatio = t.g? t.s/t.g : 0;
     const stretchStarts = Math.round(st.g*stretchRatio);
-    const showSS = stretchStarts>Math.round(st.g);
+    // Show the stretch whenever production actually asks for one. Testing the ROUNDED
+    // starts figure used to hide the marker on small goals (goal 6 × 1.05 rounds back to 6).
+    const showSS = stretchRatio>1.001 && st.g>0;
     return '<div class="gauges">'+
       gauge({icon:'\ud83e\uddb7',title:'Starts',big:Math.round(st.a)+' starts',
         stretchPct:(showSS?stretchRatio:0),
         sub:(period==='mtd'?monthName(o)+' so far'+dayNote:(isMonth()?MOFULL[period]:'Year so far'))+' \u00b7 '+st.perDay.toFixed(1)+' a day',
         pct:st.pct,verdict:sVerdict,
         footer:'<span>Main goal <b>'+Math.round(st.g)+'</b></span>'+
-          (showSS?'<span>Stretch <b>'+stretchStarts+'</b> ('+pc(st.a/stretchStarts)+' there)</span>':'')+
+          (showSS?'<span>Stretch <b>'+(stretchStarts>Math.round(st.g)?stretchStarts:(st.g*stretchRatio).toFixed(1))+
+            '</b> ('+pc(st.a/(st.g*stretchRatio))+' there)</span>':'')+
           '<span>Per day <b>'+st.perDay.toFixed(1)+'</b> vs <b>'+st.needPerDay.toFixed(1)+'</b> needed</span>'+
           '<span>'+st.days+' days worked</span>'})+
       gauge({icon:'\ud83d\udcb0',title:'Production',big:money(t.a),
@@ -509,9 +525,14 @@ const OFFICES=[
     const nm=monthName(o);
     const b=(v,lab)=>'<button class="pchip'+(period===v?' on':'')+'" onclick="DASH.period(\''+v+'\')">'+lab+'</button>';
     const done=live(o), cur=partial(o);
-    const opts=done.filter(i=>i!==cur).map(i=>'<option value="'+i+'"'+(period===i?' selected':'')+'>'+MOFULL[i]+'</option>').join('');
-    const back='<select class="mback" onchange="DASH.month(this.value)">'+
-      '<option value="">Look back at a month\u2026</option>'+opts+'</select>';
+    const avail=done.filter(i=>i!==cur);                 // finished months you can look back at
+    const at=isMonth()?avail.indexOf(period):-1;
+    const canBack = avail.length && (at<0 || at>0);
+    const canFwd  = at>=0;                               // forward always lands somewhere (last step = back to "this month")
+    const back='<div class="mstep'+(at>=0?' on':'')+'">'+
+      '<button onclick="DASH.step(-1)"'+(canBack?'':' disabled')+' aria-label="Previous month" title="Previous month">\u2039</button>'+
+      '<span class="lab">'+(at>=0?MOFULL[period]:'Look back')+'</span>'+
+      '<button onclick="DASH.step(1)"'+(canFwd?'':' disabled')+' aria-label="Next month" title="Next month">\u203a</button></div>';
     const hint = isMonth() ? MOFULL[period]+' \u2014 a finished month, judged against its full goal.'
       : period==='mtd' ? 'Showing '+(nm||'the latest month')+' only \u2014 goals scaled to the days worked so far.'
       : 'Showing every finished month this year.';
@@ -697,6 +718,21 @@ const OFFICES=[
   window.DASH={set,pick,party:partyNow,combine:toggleCombine,
     period:v=>{period=v;render();},
     month:v=>{ if(v==='')return; period=Number(v); render(); },
+    // Walk the month stepper. Stepping forward past the newest finished month
+    // returns you to "This month", so there's always a way back without hunting.
+    step:d=>{
+      const o=shown; if(!o) return;
+      const avail=live(o).filter(i=>i!==partial(o));
+      if(!avail.length) return;
+      const at=isMonth()?avail.indexOf(period):-1;
+      if(at<0){ if(d<0) period=avail[avail.length-1]; }
+      else{
+        const nx=at+d;
+        if(nx<0) return;
+        period = nx>=avail.length ? 'mtd' : avail[nx];
+      }
+      render();
+    },
     chart:v=>{chartMode=v;render();}};
   let saved='admin'; try{ saved=localStorage.getItem('ph_viewas')||'admin'; }catch(_){}
   if(!PERSONAS.some(p=>p.id===saved)) saved='admin';
@@ -704,7 +740,7 @@ const OFFICES=[
 })();
 </script>
 <script>PH.nav('dashboard');</script>
-<script src="tour.js"></script>
+<script src="tour.js?v=hb5"></script>
 <script>
 Tour.init([
   {sel:'.viewas', title:'You only see your offices', body:'Production numbers are sensitive, so people see <b>only the offices they\u2019re assigned to</b>. Switch to the Carlsbad manager \u2014 the group totals and the leaderboard disappear, because they aren\u2019t hers to see.'},

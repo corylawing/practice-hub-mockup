@@ -80,6 +80,15 @@
   .kfoot{display:flex;align-items:center;gap:8px;margin-top:9px;font-size:11.5px;color:var(--soft)}
   .kfoot .sp{flex:1}
   .mv{border:1px solid var(--line);background:#fff;border-radius:7px;width:24px;height:24px;font-size:13px;cursor:pointer;color:var(--navy);line-height:1;font-family:inherit}
+  /* Touch devices can't drag cards, so these arrows are the only way to move one. */
+  @media(max-width:760px){
+    .mv{width:38px;height:38px;font-size:16px}
+    .res{padding:8px 14px;font-size:12.5px;min-height:36px}
+    .ev{padding:7px 9px;font-size:12px;min-height:32px;display:flex;align-items:center}
+    .kcard{padding:13px 14px}
+    .kcard .kt{font-size:14.5px}
+    .nodate .chips2 button{padding:8px 14px;font-size:12.5px;min-height:36px}
+  }
   .mv:hover{border-color:var(--teal);color:var(--teal-600)}
   .mv:disabled{opacity:.3;cursor:default}
   .res{font-weight:700;padding:3px 9px;border-radius:999px;cursor:pointer;font-size:11.5px;font-family:inherit;border:none}
@@ -143,7 +152,7 @@
   @media(max-width:900px){ .board{grid-template-columns:repeat(2,1fr)} }
   @media(max-width:560px){ .board{grid-template-columns:1fr} }
 </style>
-<script src="user.js"></script>
+<script src="user.js?v=hb5"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — marketing board concept for validation. Real build lives in Home-Brace (Microsoft Lists / Planner).</div>
@@ -190,8 +199,8 @@
 
   let seq=100;
   let cards=[
-    {id:++seq,title:'Back-to-school braces promo',type:'promo',owner:'Dana K.',loc:'All offices',date:'2026-08-01',stage:'planned',result:'none',notes:'$500 off full treatment, Aug 1–31.'},
-    {id:++seq,title:'“Meet Dr. Chen” reel',type:'social',owner:'Dana K.',loc:'Carlsbad',date:'2026-07-30',stage:'active',result:'none',notes:'Instagram + Facebook reel.'},
+    {id:++seq,title:'Back-to-school braces promo',type:'promo',owner:'Selene B.',loc:'All offices',date:'2026-08-01',stage:'planned',result:'none',notes:'$500 off full treatment, Aug 1–31.'},
+    {id:++seq,title:'“Meet Dr. Farnsworth” reel',type:'social',owner:'Selene B.',loc:'Carlsbad',date:'2026-07-30',stage:'active',result:'none',notes:'Instagram + Facebook reel.'},
     {id:++seq,title:'Hobbs school-supply drive',type:'event',owner:'Yessenia R.',loc:'Hobbs',date:'2026-08-12',stage:'planned',result:'none',notes:'Community goodwill + lead capture.'},
     {id:++seq,title:'Referral thank-you cards to DDS',type:'referral',owner:'Heather B.',loc:'All offices',date:'2026-07-24',stage:'active',result:'none',notes:'Handwritten cards to referring dentists.'},
     {id:++seq,title:'Summer smile giveaway',type:'social',owner:'Selene B.',loc:'All offices',date:'2026-06-15',stage:'done',result:'good',notes:'320 new followers, 41 consult requests.'},
@@ -408,7 +417,7 @@
 })();
 </script>
 <script>PH.nav('marketing');</script>
-<script src="tour.js"></script>
+<script src="tour.js?v=hb5"></script>
 <script>
 Tour.init([
   {sel:'.board', title:'Your marketing board', body:'Every event, promo and post is a card that moves left to right: <b>Ideas \u2192 Planned \u2192 In progress \u2192 Done</b>. <b>Drag a card</b> across, or use the \u25c0 \u25b6 arrows on a phone.'},

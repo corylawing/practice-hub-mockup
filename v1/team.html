@@ -47,6 +47,8 @@
   .search{flex:1;min-width:210px;padding:11px 14px;border:1px solid var(--line);border-radius:11px;font-size:15px;font-family:inherit;background:#fff;box-shadow:var(--shadow)}
   .filters{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 4px}
   .fchip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 13px;font-size:13px;font-weight:600;color:var(--navy);cursor:pointer;font-family:inherit}
+  /* Comfortable thumb targets on phones. */
+  @media(max-width:760px){ .fchip{padding:10px 16px;min-height:38px;font-size:13.5px} }
   .fchip:hover{border-color:var(--teal);color:var(--teal-600)}
   .fchip.on{background:var(--navy);color:#fff;border-color:var(--navy)}
   .count{font-size:13px;color:var(--soft);margin:12px 2px 6px}
@@ -70,7 +72,7 @@
   .note b{color:var(--navy)}
   .empty{background:#fff;border:1px dashed var(--line);border-radius:14px;padding:30px;text-align:center;color:var(--soft)}
 </style>
-<script src="user.js"></script>
+<script src="user.js?v=hb5"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — everyone's contact card. In the real hub this list builds itself from Microsoft 365.</div>
@@ -230,7 +232,7 @@
 })();
 </script>
 <script>PH.nav('team');</script>
-<script src="tour.js"></script>
+<script src="tour.js?v=hb5"></script>
 <script>
 Tour.init([
   {sel:'#q', title:'Find anyone fast', body:'Type a name, an office, or part of a phone number. This is the quickest way to reach the right person at the right office.'},

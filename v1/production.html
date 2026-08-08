@@ -88,11 +88,13 @@
   .mchip.on{background:var(--navy);color:#fff;border-color:var(--navy)}
   .mchip.has{border-color:var(--teal);color:var(--teal-600)}
   .mchip.has.on{background:var(--navy);color:#fff}
+  /* Month buttons were 29px tall — too small to hit reliably with a thumb. */
+  @media(max-width:760px){ .mchip{padding:9px 12px;min-height:40px;font-size:13.5px} }
   .noacc{background:#fff;border:1px dashed var(--line);border-radius:14px;padding:34px;text-align:center;color:var(--soft)}
   .noacc b{color:var(--navy)}
   @media(max-width:760px){ .grid2{grid-template-columns:1fr} }
 </style>
-<script src="user.js"></script>
+<script src="user.js?v=hb5"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — type the month's numbers here. In the real build this writes straight into the SharePoint workbook.</div>
@@ -289,7 +291,7 @@
 })();
 </script>
 <script>PH.nav('production');</script>
-<script src="tour.js"></script>
+<script src="tour.js?v=hb5"></script>
 <script>
 Tour.init([
   {sel:'.syncbar', title:'One set of numbers', body:'Type here and it saves into the <b>same Excel workbook</b> on SharePoint. If someone types in Excel instead, it shows up here. There is never a second copy to reconcile.'},

@@ -68,6 +68,16 @@
   }
 
   const css=`
+  body.ph-locked .wrap > *:not(.ph-noaccess){display:none!important}
+  body.ph-locked .ph-fab,body.ph-locked .tourfab,body.ph-locked #tourfab{display:none!important}
+  .ph-noaccess{background:#fff;border:1px solid #E4E8EE;border-radius:16px;padding:40px 28px;text-align:center;
+    max-width:520px;margin:40px auto;box-shadow:0 1px 2px rgba(15,42,74,.06),0 6px 18px rgba(15,42,74,.06)}
+  .ph-noaccess .ic{font-size:34px;line-height:1}
+  .ph-noaccess h2{margin:12px 0 8px;font-size:20px;color:#0F2A4A}
+  .ph-noaccess p{margin:0 0 20px;font-size:14.5px;color:#56627A;line-height:1.55}
+  .ph-noaccess .btn{display:inline-block;background:#149B96;color:#fff;text-decoration:none;
+    border-radius:10px;padding:11px 18px;font-weight:700;font-size:14px}
+  .ph-noaccess .btn:hover{background:#0F827E}
   .ph-av{margin-left:auto;display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.18);
     border-radius:999px;padding:5px 12px 5px 6px;cursor:pointer;font-family:inherit;color:#fff}
   .ph-av:hover{background:rgba(255,255,255,.18)}
@@ -267,9 +277,39 @@
     {k:'admin',      n:'\u2699\ufe0f Admin',            href:'admin.html',      show:()=>atLeast('admin','view')}
   ];
   function nav(active){
-    const host=document.getElementById('nav')||document.querySelector('.v1nav-in'); if(!host)return;
-    host.innerHTML=NAV.filter(x=>x.show()).map(x=>
+    const host=document.getElementById('nav')||document.querySelector('.v1nav-in');
+    if(host) host.innerHTML=NAV.filter(x=>x.show()).map(x=>
       '<a href="'+x.href+'"'+(x.k===active?' class="active"':'')+'>'+x.n+'</a>').join('');
+    guard(active);
+  }
+
+  /* One gate for every page.
+     Hiding a tab in the nav is NOT enough — anyone can type the URL. Each page calls
+     PH.nav('<key>'), so this runs everywhere for free and uses the SAME show() rule the
+     nav does. The body class does the real work: even if the page's own script renders
+     afterwards (or re-renders later), CSS keeps its content hidden. */
+  const SECNAME={dashboard:'Production Dashboard',production:'Enter Production',schedule:'Schedule',
+    marketing:'Marketing board',documents:'Documents',team:'Team directory',admin:'Admin Console'};
+  function guard(active){
+    const entry=NAV.find(x=>x.k===active);
+    if(!entry || entry.show()){ document.body && document.body.classList.remove('ph-locked'); return true; }
+    const paint=()=>{
+      const wrap=document.querySelector('.wrap'); if(!wrap) return;
+      document.body.classList.add('ph-locked');
+      if(!wrap.querySelector('.ph-noaccess')){
+        const d=document.createElement('div'); d.className='ph-noaccess';
+        d.innerHTML='<div class="ic">🔒</div>'+
+          '<h2>You don\'t have access to '+(SECNAME[active]||'this page')+'</h2>'+
+          '<p>Access is set by your <b>team</b>. If you need this, ask an admin to add you '+
+          'in <b>Admin → Teams &amp; Access</b>.</p>'+
+          '<a class="btn" href="home.html">← Back to Home</a>';
+        wrap.insertBefore(d,wrap.firstChild);
+      }
+    };
+    paint();
+    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',paint);
+    window.addEventListener('load',paint);
+    return false;
   }
 
   /* Drop a "view only" banner at the top of a page's content. */
@@ -280,6 +320,6 @@
     host.insertBefore(d,host.firstChild);
   }
 
-  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,setMe,mount,nav,NAV,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner};
+  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner};
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mount); else mount();
 })();
