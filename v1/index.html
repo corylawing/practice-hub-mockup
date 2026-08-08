@@ -114,21 +114,41 @@
   .pchip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 15px;font-size:13.5px;font-weight:700;color:var(--navy);cursor:pointer;font-family:inherit;box-shadow:var(--shadow)}
   .pchip:hover{border-color:var(--teal);color:var(--teal-600)}
   .pchip.on{background:var(--teal);color:#fff;border-color:var(--teal)}
-  /* Month stepper — replaces the old "Look back at a month…" dropdown.
-     One control, two arrows, no extra pills. Walk back a month at a time. */
-  .mstep{display:inline-flex;align-items:center;background:#fff;border:1px solid var(--line);
-    border-radius:999px;box-shadow:var(--shadow);overflow:hidden}
-  .mstep button{border:none;background:none;font-family:inherit;cursor:pointer;color:var(--navy);
-    width:38px;height:38px;font-size:17px;line-height:1;display:grid;place-items:center}
-  .mstep button:hover:not(:disabled){background:var(--teal-soft);color:var(--teal-600)}
-  .mstep button:disabled{color:#c3ccd8;cursor:default}
-  .mstep .lab{min-width:104px;text-align:center;font-size:13.5px;font-weight:700;color:var(--soft);
-    padding:0 4px;user-select:none}
-  .mstep.on{border-color:var(--teal);background:var(--teal)}
-  .mstep.on .lab{color:#fff}
-  .mstep.on button{color:#eafffd}
-  .mstep.on button:hover:not(:disabled){background:rgba(255,255,255,.18);color:#fff}
-  .mstep.on button:disabled{color:rgba(255,255,255,.4)}
+  /* Month picker — one button, opens a grid, pick a month. The trigger is a FIXED width
+     and the grid is an overlay, so nothing on the page shifts when you open it or change
+     month (an earlier stepper made the row jump every time the label changed length). */
+  .mpick{position:relative;display:inline-block}
+  .mpick > .trg{display:inline-flex;align-items:center;gap:8px;width:150px;height:38px;
+    border:1px solid var(--line);background:#fff;border-radius:999px;box-shadow:var(--shadow);
+    padding:0 14px;font-family:inherit;font-size:13.5px;font-weight:700;color:var(--soft);cursor:pointer}
+  .mpick > .trg:hover{border-color:var(--teal);color:var(--teal-600)}
+  .mpick > .trg .cal{font-size:14px;line-height:1}
+  .mpick > .trg .txt{flex:1;text-align:left;white-space:nowrap;overflow:hidden}
+  .mpick > .trg .car{font-size:10px;opacity:.7}
+  .mpick.on > .trg{background:var(--teal);border-color:var(--teal);color:#fff}
+  .mpick.open > .trg{border-color:var(--teal)}
+  .mgrid{position:absolute;top:44px;left:0;z-index:60;background:#fff;border:1px solid var(--line);
+    border-radius:14px;box-shadow:var(--shadow-lg);padding:12px;width:262px;display:none}
+  .mpick.open .mgrid{display:block}
+  .mgrid .gh{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;
+    color:var(--soft);padding:0 2px 9px}
+  .mgrid .g{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+  .mgrid .g button{border:1px solid var(--line);background:#fff;border-radius:9px;padding:9px 0;
+    font-family:inherit;font-size:13px;font-weight:700;color:var(--navy);cursor:pointer}
+  .mgrid .g button:hover:not(:disabled){border-color:var(--teal);color:var(--teal-600);background:var(--teal-soft)}
+  .mgrid .g button.on{background:var(--teal);border-color:var(--teal);color:#fff}
+  .mgrid .g button:disabled{color:#c3ccd8;background:#fafbfc;border-color:#eef1f5;cursor:default}
+  .mgrid .clr{width:100%;margin-top:9px;border:none;background:none;font-family:inherit;font-size:12.5px;
+    font-weight:700;color:var(--teal-600);cursor:pointer;padding:7px}
+  .mgrid .clr:hover{text-decoration:underline}
+  /* On a phone a left-anchored 262px panel hangs off the screen edge, so centre it
+     instead — a familiar picker sheet. Outside-tap and Esc still close it. */
+  @media(max-width:520px){
+    .mgrid{position:fixed;left:14px;right:14px;top:50%;transform:translateY(-50%);
+      width:auto;padding:16px;box-shadow:0 20px 60px rgba(15,42,74,.4)}
+    .mgrid .g button{padding:13px 0;font-size:14px}
+    .mgrid .clr{padding:11px}
+  }
   .chip .tick{font-weight:800;color:var(--teal-600)}
   .chip.on .tick{color:#fff}
   .chip.combtog{border-style:dashed;font-weight:700}
@@ -197,8 +217,8 @@
   .foot b{color:var(--navy)}
   @media(max-width:620px){ .kpi .v{font-size:22px} }
 </style>
-<script src="user.js?v=hb5"></script>
-<script src="celebrate.js?v=hb5"></script>
+<script src="user.js?v=hb6"></script>
+<script src="celebrate.js?v=hb6"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — real numbers from the 2026 Production Dashboard workbook. You only see the offices you have access to.</div>
@@ -337,6 +357,7 @@ const OFFICES=[
   let shown=null;
   const curOffice=()=>shown;
   let period='mtd';      // their ask: default to MTD, with a toggle to the year
+  let pickOpen=false;    // month-picker popover open?
   let chartMode='starts'; // their ask: one chart at the bottom, toggled starts <-> production
 
   // a month counts once it has BOTH an actual and a goal (Mansfield has actuals from Jan but goals only from Apr)
@@ -522,21 +543,32 @@ const OFFICES=[
   }
 
   function periodBar(o){
-    const nm=monthName(o);
+    // The "This month" pill must always name the CURRENT month. monthName() returns the
+    // selected one, so looking back at July used to relabel the pill "This month · Jul".
+    const ci=curIdx(o); const nm = ci>=0 ? MO[ci] : '';
     const b=(v,lab)=>'<button class="pchip'+(period===v?' on':'')+'" onclick="DASH.period(\''+v+'\')">'+lab+'</button>';
     const done=live(o), cur=partial(o);
     const avail=done.filter(i=>i!==cur);                 // finished months you can look back at
-    const at=isMonth()?avail.indexOf(period):-1;
-    const canBack = avail.length && (at<0 || at>0);
-    const canFwd  = at>=0;                               // forward always lands somewhere (last step = back to "this month")
-    const back='<div class="mstep'+(at>=0?' on':'')+'">'+
-      '<button onclick="DASH.step(-1)"'+(canBack?'':' disabled')+' aria-label="Previous month" title="Previous month">\u2039</button>'+
-      '<span class="lab">'+(at>=0?MOFULL[period]:'Look back')+'</span>'+
-      '<button onclick="DASH.step(1)"'+(canFwd?'':' disabled')+' aria-label="Next month" title="Next month">\u203a</button></div>';
+    const sel2=isMonth()?period:-1;
+    // 12 months in a grid \u2014 months with no figures yet are simply not clickable.
+    const cells=MOFULL.map((m,i)=>{
+      const ok=avail.indexOf(i)>=0;
+      return '<button'+(ok?'':' disabled')+(i===sel2?' class="on"':'')+
+        (ok?' onclick="DASH.month('+i+')"':'')+' title="'+m+'">'+MO[i]+'</button>';
+    }).join('');
+    const back='<div class="mpick'+(sel2>=0?' on':'')+(pickOpen?' open':'')+'">'+
+      '<button class="trg" onclick="DASH.pickOpen()" aria-haspopup="true" aria-expanded="'+(pickOpen?'true':'false')+'">'+
+        '<span class="cal">\ud83d\udcc5</span><span class="txt">'+(sel2>=0?MOFULL[sel2]:'Pick a month')+'</span><span class="car">\u25bc</span></button>'+
+      '<div class="mgrid" onclick="event.stopPropagation()"><div class="gh">Look back at a finished month</div>'+
+        '<div class="g">'+cells+'</div>'+
+        (sel2>=0?'<button class="clr" onclick="DASH.period(\'mtd\')">\u2190 Back to this month</button>':'')+
+      '</div></div>';
     const hint = isMonth() ? MOFULL[period]+' \u2014 a finished month, judged against its full goal.'
       : period==='mtd' ? 'Showing '+(nm||'the latest month')+' only \u2014 goals scaled to the days worked so far.'
       : 'Showing every finished month this year.';
-    return '<div class="periodbar">'+b('mtd','This month'+(nm&&period==='mtd'?' \u00b7 '+nm:''))+b('ytd','Year to date')+back+
+    // Keep the month suffix ALWAYS — it used to appear only while MTD was selected, which
+    // changed the pill's width and shoved the month picker sideways on every switch.
+    return '<div class="periodbar">'+b('mtd','This month'+(nm?' \u00b7 '+nm:''))+b('ytd','Year to date')+back+
       '<span class="phint">'+hint+'</span></div>';
   }
   function daysTiles(o){
@@ -716,31 +748,21 @@ const OFFICES=[
   }
   el('persona').innerHTML=PERSONAS.map(p=>'<option value="'+p.id+'">'+p.name+'</option>').join('');
   window.DASH={set,pick,party:partyNow,combine:toggleCombine,
-    period:v=>{period=v;render();},
-    month:v=>{ if(v==='')return; period=Number(v); render(); },
-    // Walk the month stepper. Stepping forward past the newest finished month
-    // returns you to "This month", so there's always a way back without hunting.
-    step:d=>{
-      const o=shown; if(!o) return;
-      const avail=live(o).filter(i=>i!==partial(o));
-      if(!avail.length) return;
-      const at=isMonth()?avail.indexOf(period):-1;
-      if(at<0){ if(d<0) period=avail[avail.length-1]; }
-      else{
-        const nx=at+d;
-        if(nx<0) return;
-        period = nx>=avail.length ? 'mtd' : avail[nx];
-      }
-      render();
-    },
+    period:v=>{period=v;pickOpen=false;render();},
+    month:v=>{ if(v===''||v==null)return; period=Number(v); pickOpen=false; render(); },
+    pickOpen:()=>{ pickOpen=!pickOpen; render(); },
     chart:v=>{chartMode=v;render();}};
+  document.addEventListener('click',e=>{
+    if(pickOpen && !e.target.closest('.mpick')){ pickOpen=false; render(); }
+  });
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&pickOpen){ pickOpen=false; render(); } });
   let saved='admin'; try{ saved=localStorage.getItem('ph_viewas')||'admin'; }catch(_){}
   if(!PERSONAS.some(p=>p.id===saved)) saved='admin';
   set(saved);
 })();
 </script>
 <script>PH.nav('dashboard');</script>
-<script src="tour.js?v=hb5"></script>
+<script src="tour.js?v=hb6"></script>
 <script>
 Tour.init([
   {sel:'.viewas', title:'You only see your offices', body:'Production numbers are sensitive, so people see <b>only the offices they\u2019re assigned to</b>. Switch to the Carlsbad manager \u2014 the group totals and the leaderboard disappear, because they aren\u2019t hers to see.'},

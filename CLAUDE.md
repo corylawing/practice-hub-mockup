@@ -82,13 +82,16 @@ The app is **Home-Brace**. The mark is a **white house outline with a braces arc
 - **Do NOT redraw this mark as SVG.** A hand-traced SVG version was rejected outright.
 - Wordmark: **"Home-"** then **"Brace"** in `--teal2`, markup `Home-<i>Brace</i>`
   (`.brand i{font-style:normal;color:var(--teal2)}`). On light backgrounds "Home-" is `--navy`.
-- Tagline from the logo lockup: **Centralize. Connect. Grow.** (not used in the app chrome yet).
+- Tagline from the logo lockup: **Centralize. Connect. Grow.** (used on the social card).
+- `assets/og-image.png` (1200×630) is the **link-preview card** and is a PNG, so a
+  find-and-replace rename will NOT touch it. It still said "PH / Practice Hub / Summit
+  Orthodontics" for a while after the rename. Rebuild it whenever the name or mark changes.
 - **No practice name in the chrome.** The placeholder "Summit Orthodontics" was removed 2026-08-08.
   There is no umbrella name — the practice runs three brands (FFO/Farnsworth, Sunflower, LCO) — so
   `PRACTICE` in `assets/app.js` is `""` and the header shows only the wordmark. Don't invent one.
   The root site's eight fake "Summit …" offices were renamed to the real eight: Carlsbad, Clovis,
   Hobbs, Cruces LCO, Cruces FFO, Lubbock, San Angelo, Mansfield.
-- **All** shared assets carry a `?v=…` query (currently `hb5`) — **bump it** when editing `assets/app.js`,
+- **All** shared assets carry a `?v=…` query (currently `hb6`) — **bump it** when editing `assets/app.js`,
   `assets/data.js`, `assets/styles.css`, `v1/user.js`, `v1/tour.js` or `v1/celebrate.js` —
   browsers cache them hard and will silently serve the old copy otherwise. This bit us twice.
 
