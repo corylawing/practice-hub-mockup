@@ -653,7 +653,14 @@ const OFFICES=[
       daysTiles(o) +
       (chartMode==='starts'? startsChart(o) : chart(o));
     if(isAll) html += leaderboard(allowed);
-    html += '<div class="foot"><b>Where these numbers come from:</b> the practice\'s 2026 Production Dashboard workbook on SharePoint — the hub reads it live, so there is no second copy to keep in sync. A month counts once it has <b>both</b> an actual and a goal (Mansfield has production from January but goals from April).<br><br><b>Heads up on the workbook:</b> the “Dashboard” tab\'s 2026 total shows <b>+$449,954</b> vs goal, but adding the eight offices gives <b>+$406,663</b> — the total formula skips Mansfield (−$43,935). The hub adds every office every time.</div>';
+    html += '<div class="foot"><b>Where these numbers come from:</b> the practice\u2019s 2026 Production '+
+      'Dashboard workbook on SharePoint \u2014 the hub reads it live, so there is no second copy to keep in '+
+      'sync. A month counts once it has <b>both</b> an actual and a goal (Mansfield has production from '+
+      'January but goals from April), and the month in progress is kept separate from the year figure.<br><br>'+
+      '<b>One to check in the workbook:</b> on the \u201cDashboard\u201d tab, January to June add up exactly '+
+      'to the eight office tabs, but <b>July is $16,273 low</b> and <b>August is $26,638 high</b> \u2014 most '+
+      'likely a total that hasn\u2019t been stretched across the two Cruces columns yet. The hub always adds '+
+      'every office.</div>';
     el('view').innerHTML = html;
     wireTips();
     maybeParty(o,(isAll?'ALL':sel)+'|'+period);

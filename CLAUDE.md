@@ -219,10 +219,12 @@ the xlsx was unzipped and the sheet XML parsed directly).
 - **A month counts only when it has BOTH an actual and a goal** (`live()`). Mansfield has production
   from January but goals only from **April** — get this wrong and it reads 154% instead of 92%. With
   this rule **every office reconciles exactly** with their own tracking row.
-- **Two workbook errors found (tell the practice):** the Dashboard tab's 2026 total shows
-  **+$449,954** but the eight offices sum to **+$406,663** — the total formula **skips Mansfield**
-  (−$43,935). Shown in the page footer. (An earlier, separate finding on the older file was
-  +$580,749 vs +$500,762.)
+- **Workbook reconciliation (re-checked on the `-3` file, 2026-08-08):** the earlier "total skips
+  Mansfield" error is **FIXED** in their new version — January to June now match the eight office
+  tabs **to the cent**. What remains is **July $16,273 low** and **August $26,638 high** on the
+  Dashboard tab versus the office tabs, most likely a total not yet stretched across the two Cruces
+  columns. The page footer says exactly this. **Re-verify this claim whenever they send a new
+  workbook — do not leave a stale accusation on screen.**
 
 ### 5b. `v1/production.html` — Enter Production
 - Four boxes: TC net production, Medicaid (if the office bills it), adjustments, completed days.
@@ -249,7 +251,10 @@ picker — a day is tinted by its office.
 {ydot:true} | {closed:true}`, persisted to `localStorage.ph_sched`. The old model was one generic
 week, which could never hold a year.
 
-- **Week and Month views.** Month shows every office on its day, in colour, with the doctor beneath.
+- **Opens on MONTH view** — that's where she works. Week is kept for day-to-day detail.
+- **Yellow Dot / Closed are one tap from the calendar.** `+ Add / set day` on any month day opens the
+  office picker, and each office row has **Yellow Dot** and **Closed** buttons (`quick()`) beside it,
+  so a day can be set without going through the doctor step. The full editor still offers both too.
 - **Filter by office AND/OR doctor** — both filters work in either view.
 - **Yellow Dot Day de-select closes the office** (`markYdot`): tapping it once sets Yellow Dot,
   tapping again turns it off and sets **Closed**. Yellow Dot = open, no doctor; Closed = not open.
