@@ -519,26 +519,30 @@ const OFFICES=[
   function startsChart(o){
     const L=live(o); if(!L.length) return '';
     const sa=o.sAct||[], sg=o.sGoal||[], sl=o.lyStarts||[];
-    let max=0; L.forEach(i=>{max=Math.max(max,sa[i]||0,sg[i]||0,sl[i]||0);});
+    // their sheet has no starts stretch row, so use the same reach production's stretch asks for
+    const sStretch=i=>o.goal[i]? (sg[i]||0)*(o.stretch[i]/o.goal[i]) : 0;
+    let max=0; L.forEach(i=>{max=Math.max(max,sa[i]||0,sg[i]||0,sl[i]||0,sStretch(i));});
     max=niceMax(max);
     const best=L.reduce((b,i)=>((sg[i]?sa[i]/sg[i]:0)>(sg[b]?sa[b]/sg[b]:0)?i:b),L[0]);
     const cols=L.map(i=>{
       const a=sa[i]||0, g=sg[i]||0, l=sl[i]||0, h=v=>Math.max(1.5,(v/max)*100);
+      const st=sStretch(i);
       return '<div class="mo'+(i===best?' best':'')+'"><div class="bars">'+
         '<div class="gm" style="bottom:'+h(g)+'%"></div>'+
+        (st?'<div class="sm" style="bottom:'+h(st)+'%"></div>':'')+
         '<div class="bar lyb" style="height:'+h(l)+'%" data-t="'+MO[i]+' last year: about '+Math.round(l)+' starts"></div>'+
-        '<div class="bar ab '+(a>=g?'over':'under')+'" style="height:'+h(a)+'%" data-t="'+MO[i]+' 2026: '+Math.round(a)+' starts \u00b7 goal '+Math.round(g)+'">'+
+        '<div class="bar ab '+(a>=g?'over':'under')+'" style="height:'+h(a)+'%" data-t="'+MO[i]+' 2026: '+Math.round(a)+' starts \u00b7 goal '+Math.round(g)+(st?' \u00b7 stretch '+Math.round(st):'')+'">'+
           '<span class="bval">'+Math.round(a)+'</span></div>'+
         '</div><div class="molab">'+MO[i]+(i===best?' \u2605':'')+'</div></div>';
     }).join('');
     return '<div class="card" id="bottomchart"><h2>Starts month by month</h2>'+
-      '<div class="sub">Last year beside this year. The <b>dashed line</b> is that month\u2019s starts goal. \u2605 marks the best month.</div>'+
+      '<div class="sub">Last year beside this year. <b>Dashed</b> = starts goal, <b>dotted</b> = stretch. \u2605 marks the best month.</div>'+
       chartToggle()+
       '<div class="legend"><span><i class="sw" style="background:var(--ly)"></i> Last year (2025)</span>'+
         '<span><i class="sw" style="background:var(--good)"></i> 2026 at/above goal</span>'+
         '<span><i class="sw" style="background:var(--bad)"></i> 2026 under goal</span>'+
-        '<span><i class="swline"></i> Starts goal</span>'+
-        '<span style="margin-left:auto;font-style:italic">last year\u2019s starts estimated from 2025 production \u00f7 average case fee</span></div>'+
+        '<span><i class="swline"></i> Starts goal</span><span><i class="swdot"></i> Stretch goal</span>'+
+        '<span style="margin-left:auto;font-style:italic">stretch &amp; last year\u2019s starts are worked out from the production figures</span></div>'+
       '<div class="chartwrap"><div class="plot">'+axis(max,false)+'<div class="chart">'+cols+'</div></div></div></div>';
   }
   function chart(o){
