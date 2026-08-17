@@ -84,7 +84,7 @@
   @media(max-width:760px){
     .mv{width:38px;height:38px;font-size:16px}
     .res{padding:8px 14px;font-size:12.5px;min-height:36px}
-    .ev{padding:7px 9px;font-size:12px;min-height:32px;display:flex;align-items:center}
+    .ev{padding:8px 9px;font-size:12px;min-height:32px}
     .kcard{padding:13px 14px}
     .kcard .kt{font-size:14.5px}
     .nodate .chips2 button{padding:8px 14px;font-size:12.5px;min-height:36px}
@@ -106,7 +106,11 @@
   .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;min-width:640px}
   .calscroll{overflow-x:auto}
   .cal .dow{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--soft);text-align:center;padding:4px 0}
-  .cal .day{min-height:74px;border:1px solid var(--line);border-radius:9px;padding:5px 6px;background:#fff}
+  /* min-width:0 is the fix for long campaign names stretching a column: grid items
+     default to min-width:auto, so the cell refuses to shrink below its widest
+     nowrap title and steals space from the other six days. With this, the title
+     ellipsises instead and every day stays the same width. */
+  .cal .day{min-height:74px;border:1px solid var(--line);border-radius:9px;padding:5px 6px;background:#fff;min-width:0}
   .cal .day.out{background:#fafbfc;border-color:#f0f2f5}
   .cal .day.today{border-color:var(--teal);box-shadow:0 0 0 2px var(--teal-soft) inset}
   .cal .dnum{font-size:11.5px;font-weight:700;color:var(--soft);margin-bottom:3px}
@@ -152,7 +156,7 @@
   @media(max-width:900px){ .board{grid-template-columns:repeat(2,1fr)} }
   @media(max-width:560px){ .board{grid-template-columns:1fr} }
 </style>
-<script src="user.js?v=hb6"></script>
+<script src="user.js?v=hb7"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — marketing board concept for validation. Real build lives in Home-Brace (Microsoft Lists / Planner).</div>
@@ -417,7 +421,7 @@
 })();
 </script>
 <script>PH.nav('marketing');</script>
-<script src="tour.js?v=hb6"></script>
+<script src="tour.js?v=hb7"></script>
 <script>
 Tour.init([
   {sel:'.board', title:'Your marketing board', body:'Every event, promo and post is a card that moves left to right: <b>Ideas \u2192 Planned \u2192 In progress \u2192 Done</b>. <b>Drag a card</b> across, or use the \u25c0 \u25b6 arrows on a phone.'},
