@@ -38,6 +38,16 @@ dashboards and updates**, for everyone from the COO to a clinical assistant.
 
 **Always work in `/v1/`.** The only shared files are `v1/user.js` and `v1/tour.js`.
 
+### Adding a file LINKS a live drive document — it never uploads a copy
+`PH.drivePicker({ns,path,name,path2})` in `user.js` is the shared Microsoft-drive browser used by
+**both** Documents ("+ Add file") and Admin → Document Sections. It shows the practice's SharePoint
+tree, and the chosen file is stamped **"🔗 LINKED — always the live file"** with its drive path.
+Device upload is offered second and explains it saves **onto the drive first**, then links.
+
+Before 2026-08-17 both pages had a "Browse drive" button that just stubbed in a filename, so the
+whole thing read like a device upload — which contradicts the app's core promise ("nothing here is
+a copy"). The `DRIVE` sample tree lives in `user.js` only; do not copy it into a page.
+
 ### A person has no region or brand
 Both were editable fields on the Admin person record and both were **always blank and never read**.
 They also duplicate the office: Carlsbad *is* FFO in New Mexico, so a person's brand and region
@@ -113,7 +123,7 @@ The app is **Home-Brace**. The mark is a **white house outline with a braces arc
   `PRACTICE` in `assets/app.js` is `""` and the header shows only the wordmark. Don't invent one.
   The root site's eight fake "Summit …" offices were renamed to the real eight: Carlsbad, Clovis,
   Hobbs, Cruces LCO, Cruces FFO, Lubbock, San Angelo, Mansfield.
-- **All** shared assets carry a `?v=…` query (currently `hb11`) — **bump it** when editing `assets/app.js`,
+- **All** shared assets carry a `?v=…` query (currently `hb13`) — **bump it** when editing `assets/app.js`,
   `assets/data.js`, `assets/styles.css`, `v1/user.js`, `v1/tour.js` or `v1/celebrate.js` —
   browsers cache them hard and will silently serve the old copy otherwise. This bit us twice.
 

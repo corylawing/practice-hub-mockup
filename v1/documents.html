@@ -119,11 +119,38 @@
   .pickwrap{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
   .pchip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 12px;font-size:12.5px;font-weight:600;color:var(--navy);cursor:pointer;font-family:inherit}
   .pchip.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+  /* Drive picker — the point of the hub is that a file is LINKED, never copied, so the
+     picker has to look like their SharePoint, not like a device upload box. */
+  .drivebox{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .drive-h{display:flex;align-items:center;gap:8px;background:#eef3fb;color:var(--blue);
+    padding:9px 12px;font-size:12.5px;font-weight:700}
+  .crumb2{display:flex;align-items:center;gap:4px;flex-wrap:wrap;font-size:12.5px;color:var(--soft);
+    padding:8px 12px;border-bottom:1px solid var(--line);background:#fafbfc}
+  .crumb2 button{border:none;background:none;font-family:inherit;font-size:12.5px;font-weight:700;
+    color:var(--teal-600);cursor:pointer;padding:2px 4px}
+  .drivelist{max-height:230px;overflow:auto}
+  .drow{display:flex;align-items:center;gap:10px;width:100%;border:none;background:none;
+    font-family:inherit;text-align:left;padding:10px 13px;font-size:14px;cursor:pointer;
+    border-bottom:1px solid var(--line);color:var(--ink)}
+  .drow:last-child{border-bottom:none}
+  .drow:hover{background:var(--teal-soft)}
+  .drow .di{font-size:16px;flex:none}
+  .drow .dn{flex:1;font-weight:500}
+  .drow .dm{font-size:11.5px;color:var(--soft)}
+  .picked{display:flex;align-items:flex-start;gap:11px;border:1px solid #c4e6e3;background:var(--teal-soft);
+    border-radius:10px;padding:11px 13px}
+  .picked .pn{font-weight:700;color:var(--navy);font-size:14px}
+  .picked .pp{font-size:12px;color:#0c5b57;margin-top:2px}
+  .linkpill{display:inline-block;background:#fff;border:1px solid #c4e6e3;color:var(--teal-600);
+    border-radius:999px;padding:2px 9px;font-size:11px;font-weight:800;margin-top:6px}
+  .orline{display:flex;align-items:center;gap:10px;margin:12px 0 0;color:var(--soft);font-size:12px}
+  .orline:before,.orline:after{content:'';flex:1;height:1px;background:var(--line)}
+  .uploadnote{font-size:12.5px;color:var(--soft);margin-top:7px;line-height:1.5}
   .whobox{background:var(--teal-soft);border:1px solid #c4e6e3;border-radius:10px;padding:11px 14px;font-size:13.5px;color:#0c5b57;margin-top:6px}
   .whobox b{color:#0a4d49}
   .file.newf .nm{color:var(--teal-600);font-weight:700}
 </style>
-<script src="user.js?v=hb11"></script>
+<script src="user.js?v=hb13"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — Documents. You see only the folders your role, location &amp; team allow. Files open on the Microsoft drive.</div>
@@ -329,7 +356,7 @@
       '<div class="dm-top"><h3>➕ Add a document to '+f.n+'</h3><button class="x" onclick="DOCS.closeDoc()">×</button></div>'+
       '<div class="dm-banner">Pick the file, then set who can see it using <b>location</b> and <b>team</b> together. Someone must match <b>both</b> — e.g. <i>Office Managers</i> at <i>Carlsbad &amp; Hobbs</i>. Leave one on “all” to ignore it.</div>'+
       '<div class="dm-body">'+
-        '<div class="afield"><label>File</label><div class="filepick">📄 <span id="fileName">'+(addCtx.name||'No file chosen yet…')+'</span><button class="simbtn" onclick="DOCS.pickFile()">Browse drive</button></div></div>'+
+        '<div class="afield"><label>Which document?</label>'+PH.drivePicker({ns:'DOCS',path:drivePath,name:addCtx.name,path2:addCtx.path})+'</div>'+
         '<div class="afield"><label>📍 Which locations?</label><div class="segrow">'+seg(addCtx.locMode,'all','All offices','setLoc')+seg(addCtx.locMode,'some','Specific locations','setLoc')+'</div>'+locPick+'</div>'+
         '<div class="afield"><label>👥 Which teams?</label><div class="segrow">'+seg(addCtx.teamMode,'all','Everyone','setTeam')+seg(addCtx.teamMode,'some','Specific teams','setTeam')+'</div>'+teamPick+'</div>'+
         '<div class="whobox" id="whobox"></div>'+
@@ -340,7 +367,11 @@
   function setLoc(m){ addCtx.locMode=m; if(m==='all')addCtx.locs=[]; renderAdd(); }
   function setTeam(m){ addCtx.teamMode=m; if(m==='all')addCtx.teams=[]; renderAdd(); }
   function tog(kind,val){ const arr=kind==='loc'?addCtx.locs:addCtx.teams; const i=arr.indexOf(val); if(i>=0)arr.splice(i,1); else arr.push(val); renderAdd(); }
-  function pickFile(){ addCtx.name='New Vendor W-9.pdf'; renderAdd(); }
+  function cd(p){ drivePath=p; renderAdd(); }
+  function useFile(n){ addCtx.name=n; addCtx.path='Microsoft drive \u203a '+(drivePath?drivePath.split('/').join(' \u203a '):'root'); renderAdd(); }
+  function clearFile(){ addCtx.name=''; addCtx.path=''; renderAdd(); }
+  function uploadFile(){ addCtx.name='New Vendor W-9.pdf';
+    addCtx.path='Uploaded to Microsoft drive \u203a '+(drivePath||'Home-Brace')+' \u2014 then linked'; renderAdd(); }
   function locPart(){ return addCtx.locMode==='all' ? 'all offices' : (addCtx.locs.length?addCtx.locs.join(', '):'(pick locations)'); }
   function teamPart(){ return addCtx.teamMode==='all' ? 'Everyone' : (addCtx.teams.length?addCtx.teams.join(', '):'(pick teams)'); }
   function audLabel(){
@@ -364,7 +395,7 @@
   function closeDoc(){ el('docmodal').classList.remove('open'); addCtx=null; }
 
   el('persona').innerHTML=PERSONAS.map(p=>'<option value="'+p.id+'">'+p.name+'</option>').join('');
-  window.DOCS={set,toggle,openDoc,sim,addDoc,setLoc,setTeam,tog,pickFile,saveDoc,closeDoc};
+  window.DOCS={set,toggle,openDoc,sim,addDoc,setLoc,setTeam,tog,cd,useFile,clearFile,uploadFile,saveDoc,closeDoc};
   el('docmodal').addEventListener('click',e=>{if(e.target.id==='docmodal')closeDoc();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDoc();});
   let saved='admin'; try{ saved=localStorage.getItem('ph_viewas')||'admin'; }catch(_){}
@@ -372,7 +403,7 @@
 })();
 </script>
 <script>PH.nav('documents');</script>
-<script src="tour.js?v=hb11"></script>
+<script src="tour.js?v=hb13"></script>
 <script>
 Tour.init([
   {sel:'.crumb', title:'Everything in one place', body:'This replaces \u201cwho has the latest copy?\u201d. Every policy, form and office file lives here \u2014 and people only ever see the folders meant for them.'},

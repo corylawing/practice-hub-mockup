@@ -130,6 +130,70 @@
       return rec;
     });
   }
+  /* A stand-in for their SharePoint tree. In production this is the Graph file picker,
+     which returns the file's real driveId/itemId — the hub stores the LINK, never a copy. */
+  const DRIVE={
+    '':{folders:['Home-Brace','Shared Documents','Clinical','Finance'],files:[]},
+    'Home-Brace':{folders:['HR','Operations','Marketing','Office Forms'],files:[]},
+    'Home-Brace/HR':{folders:['New Hire','Policies'],files:[
+      ['Employee Handbook 2026.docx','Modified 2 days ago by Heather B.'],
+      ['PTO Request Form.xlsx','Modified last week by Lily R.']]},
+    'Home-Brace/HR/New Hire':{folders:[],files:[
+      ['New-Hire Packet (New Mexico).pdf','Modified yesterday by Heather B.'],
+      ['New-Hire Packet (Texas).pdf','Modified yesterday by Heather B.'],
+      ['W-9 Blank.pdf','Modified 3 months ago']]},
+    'Home-Brace/HR/Policies':{folders:[],files:[
+      ['Uniform Policy.docx','Modified last month by Heather B.'],
+      ['Attendance Policy.docx','Modified last month by Heather B.']]},
+    'Home-Brace/Operations':{folders:[],files:[
+      ['2026 Production Dashboard.xlsx','Modified today by Lily R.'],
+      ['Opening & Closing Checklist.docx','Modified 2 weeks ago'],
+      ['Supply Order Form.xlsx','Modified last week']]},
+    'Home-Brace/Marketing':{folders:[],files:[
+      ['Marketing Calendar 2026.xlsx','Modified 3 days ago by Selene B.'],
+      ['Referral Card Artwork.pdf','Modified last month']]},
+    'Home-Brace/Office Forms':{folders:[],files:[
+      ['Maintenance Request.docx','Modified 2 months ago'],
+      ['Incident Report.pdf','Modified 5 months ago']]},
+    'Shared Documents':{folders:[],files:[['Group Org Chart.pptx','Modified last quarter']]},
+    'Clinical':{folders:[],files:[['Sterilization Log.xlsx','Modified today']]},
+    'Finance':{folders:[],files:[['Payroll Tracking Sheet.xlsx','Modified today by Heather B.']]}
+  };
+  let drivePath='';
+  const esc=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  /* Browse the Microsoft drive and LINK the live file. This is the whole point of the hub —
+     the document keeps living on SharePoint and the hub points at it, so it is never a stale
+     second copy. Uploading from a device is offered too, but it uploads TO the drive first. */
+  function drivePicker(o){
+    if(o.name){
+      return '<div class="picked"><span style="font-size:20px">\ud83d\udcc4</span>'+
+        '<div style="flex:1"><div class="pn">'+esc(o.name)+'</div>'+
+        '<div class="pp">\u2601 '+esc(o.path2||'Microsoft drive')+'</div>'+
+        '<div class="linkpill">\ud83d\udd17 LINKED \u2014 ALWAYS THE LIVE FILE</div></div>'+
+        '<button class="dpbtn" onclick="'+o.ns+'.clearFile()">Change</button></div>';
+    }
+    const node=DRIVE[o.path||'']||{folders:[],files:[]};
+    const parts=(o.path||'')?(o.path||'').split('/'):[];
+    let acc='', crumbs='<button onclick="'+o.ns+'.cd(\'\')">\u2601 Microsoft drive</button>';
+    parts.forEach(p=>{ acc=acc?acc+'/'+p:p; crumbs+='<span>\u203a</span><button onclick="'+o.ns+'.cd(\''+acc.replace(/'/g,"\\'")+'\')">'+p+'</button>'; });
+    const up = (o.path||'') ? '<button class="drow" onclick="'+o.ns+'.cd(\''+parts.slice(0,-1).join('/').replace(/'/g,"\\'")+'\')"><span class="di">\u21a9</span><span class="dn">Back</span></button>' : '';
+    const rows = node.folders.map(f=>{
+      const full=((o.path||'')?(o.path||'')+'/':'')+f;
+      return '<button class="drow" onclick="'+o.ns+'.cd(\''+full.replace(/'/g,"\\'")+'\')"><span class="di">\ud83d\udcc1</span><span class="dn">'+f+'</span><span class="dm">\u203a</span></button>';
+    }).join('') + node.files.map(f=>
+      '<button class="drow" onclick="'+o.ns+'.useFile(\''+f[0].replace(/'/g,"\\'")+'\')"><span class="di">\ud83d\udcc4</span><span class="dn">'+f[0]+'</span><span class="dm">'+f[1]+'</span></button>'
+    ).join('');
+    return '<div class="drivebox">'+
+        '<div class="drive-h">\u2601 Choose a document already on your Microsoft drive</div>'+
+        '<div class="crumb2">'+crumbs+'</div>'+
+        '<div class="drivelist">'+up+(rows||'<div style="padding:14px;color:var(--soft);font-size:13.5px">Nothing in this folder.</div>')+'</div>'+
+      '</div>'+
+      '<div class="orline">or</div>'+
+      '<div class="dfile">\ud83d\udcbb <span style="flex:1">Upload a file from this device</span>'+
+        '<button class="dpbtn" onclick="'+o.ns+'.uploadFile()">Choose file\u2026</button></div>'+
+      '<div class="uploadnote">An upload is saved <b>onto the practice\u2019s Microsoft drive first</b>, then linked here \u2014 so it behaves exactly like the files above. The hub never keeps its own copy.</div>';
+  }
+
   function saveLocations(list){
     try{ localStorage.setItem('ph_locations',JSON.stringify(list)); }catch(_){}
   }
@@ -145,6 +209,30 @@
   }
 
   const css=`
+  /* Microsoft-drive file picker — shared by Documents and Admin so the two can't drift. */
+  .dpbtn{background:#fff;border:1px solid #E4E8EE;border-radius:9px;padding:9px 13px;font-weight:600;
+    font-size:13px;cursor:pointer;font-family:inherit;color:#0F2A4A}
+  .dpbtn:hover{border-color:#149B96;color:#0F827E}
+  .drivebox{border:1px solid #E4E8EE;border-radius:12px;overflow:hidden}
+  .drive-h{display:flex;align-items:center;gap:8px;background:#eef3fb;color:#1f6f9e;padding:9px 12px;font-size:12.5px;font-weight:700}
+  .crumb2{display:flex;align-items:center;gap:4px;flex-wrap:wrap;font-size:12.5px;color:#56627A;padding:8px 12px;border-bottom:1px solid #E4E8EE;background:#fafbfc}
+  .crumb2 button{border:none;background:none;font-family:inherit;font-size:12.5px;font-weight:700;color:#0F827E;cursor:pointer;padding:2px 4px}
+  .drivelist{max-height:230px;overflow:auto}
+  .drow{display:flex;align-items:center;gap:10px;width:100%;border:none;background:none;font-family:inherit;
+    text-align:left;padding:10px 13px;font-size:14px;cursor:pointer;border-bottom:1px solid #E4E8EE;color:#1F2D3D}
+  .drow:last-child{border-bottom:none}
+  .drow:hover{background:#E5F4F3}
+  .drow .di{font-size:16px;flex:none}
+  .drow .dn{flex:1;font-weight:500}
+  .drow .dm{font-size:11.5px;color:#56627A}
+  .picked{display:flex;align-items:flex-start;gap:11px;border:1px solid #c4e6e3;background:#E5F4F3;border-radius:10px;padding:11px 13px}
+  .picked .pn{font-weight:700;color:#0F2A4A;font-size:14px}
+  .picked .pp{font-size:12px;color:#0c5b57;margin-top:2px}
+  .linkpill{display:inline-block;background:#fff;border:1px solid #c4e6e3;color:#0F827E;border-radius:999px;padding:2px 9px;font-size:11px;font-weight:800;margin-top:6px}
+  .orline{display:flex;align-items:center;gap:10px;margin:12px 0 0;color:#56627A;font-size:12px}
+  .orline:before,.orline:after{content:'';flex:1;height:1px;background:#E4E8EE}
+  .uploadnote{font-size:12.5px;color:#56627A;margin-top:7px;line-height:1.5}
+  .dfile{display:flex;align-items:center;gap:10px;border:1px dashed #E4E8EE;border-radius:10px;padding:10px 12px;font-size:14px;color:#56627A;margin-top:8px}
   body.ph-locked .wrap > *:not(.ph-noaccess){display:none!important}
   body.ph-locked .ph-fab,body.ph-locked .tourfab,body.ph-locked #tourfab{display:none!important}
   .ph-noaccess{background:#fff;border:1px solid #E4E8EE;border-radius:16px;padding:40px 28px;text-align:center;
@@ -397,6 +485,6 @@
     host.insertBefore(d,host.firstChild);
   }
 
-  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner};
+  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner};
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mount); else mount();
 })();

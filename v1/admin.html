@@ -167,7 +167,7 @@
   .tp.on{background:var(--navy);color:#fff;border-color:var(--navy)}
   @media(max-width:640px){ .grid2{grid-template-columns:1fr} }
 </style>
-<script src="user.js?v=hb11"></script>
+<script src="user.js?v=hb13"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — admin console concept for validation. Real build: people sync from Microsoft 365; access is managed here.</div>
@@ -597,7 +597,7 @@
       '<div class="m-top"><h3 style="margin:0;font-size:17px;color:var(--navy)">\u2795 Add a file to '+sec.n+'</h3><button class="x" onclick="AD.close()">\u00d7</button></div>'+
       '<div class="dm-banner" style="background:var(--teal-soft);border-bottom:1px solid #c4e6e3;color:#0c5b57;font-size:12.5px;padding:10px 20px;line-height:1.5">Pick the file, then confirm <b>who can see it</b>. By default it matches the rest of the folder \u2014 change it only if this one file is an exception.</div>'+
       '<div class="m-body">'+
-        '<div class="fld"><label>File</label><div class="filepick" style="display:flex;align-items:center;gap:10px;border:1px dashed var(--line);border-radius:10px;padding:10px 12px;font-size:14px;flex-wrap:wrap">\ud83d\udcc4 <span id="fName" style="flex:1;color:var(--ink)">'+(d.n||'No file chosen yet\u2026')+'</span><button class="segb" onclick="AD.pickFileFromDrive()">Browse drive</button></div></div>'+
+        '<div class="fld"><label>Which document?</label>'+PH.drivePicker({ns:'AD',path:drivePath,name:d.n,path2:d.path})+'</div>'+
         '<div class="fld"><label>\ud83d\udc65 Which teams can open it?</label><div class="segrow">'+
           seg(d.teamMode,'inherit','Same as folder','setFileTeamMode')+seg(d.teamMode,'all','Everyone','setFileTeamMode')+seg(d.teamMode,'some','Specific teams','setFileTeamMode')+'</div>'+teamPick+'</div>'+
         '<div class="fld"><label>\ud83d\udccd Which locations?</label><div class="segrow">'+
@@ -617,7 +617,15 @@
     box.innerHTML='\ud83d\udc41 <b>'+team+'</b> at <b>'+loc+'</b> will see <b>'+(d.n||'this file')+'</b> \u2014 a person must match <b>both</b>.'+
       (d.teamMode==='inherit'&&d.locMode==='inherit'?' <span style="color:var(--soft)">(inherited from the folder)</span>':' <span style="color:var(--bad);font-weight:700">(exception \u2014 different from the folder)</span>');
   }
-  function pickFileFromDrive(){ fileDraft.n='New document.pdf'; renderFileModal(); }
+  // Same shared picker as Documents (PH.drivePicker) — the hub LINKS the live file on
+  // their Microsoft drive, it never keeps a copy.
+  let drivePath='';
+  function cd(p){ drivePath=p; renderFileModal(); }
+  function useFile(n){ fileDraft.n=n;
+    fileDraft.path='Microsoft drive \u203a '+(drivePath?drivePath.split('/').join(' \u203a '):'root'); renderFileModal(); }
+  function clearFile(){ fileDraft.n=''; fileDraft.path=''; renderFileModal(); }
+  function uploadFile(){ fileDraft.n='New document.pdf';
+    fileDraft.path='Uploaded to Microsoft drive \u203a '+(drivePath||'Home-Brace')+' \u2014 then linked'; renderFileModal(); }
   function setFileTeamMode(m){ fileDraft.teamMode=m; if(m!=='some')fileDraft.teams=[]; renderFileModal(); }
   function setFileLocMode(m){ fileDraft.locMode=m; if(m!=='some')fileDraft.locs=[]; renderFileModal(); }
   function togFileLoc(l){ const a=fileDraft.locs, i=a.indexOf(l); if(i>=0)a.splice(i,1); else a.push(l); renderFileModal(); }
@@ -747,14 +755,14 @@
   function openModal(h){ el('modalCard').innerHTML=h; el('modal').classList.add('open'); }
   function closeModal(){ el('modal').classList.remove('open'); }
 
-  window.AD={tab:tabSet,newTeam,editTeam,saveTeam,delTeam,resetTeams,profile,whyNoAdd,togTeam,togLoc,setStatus,saveUser,pickLevel,pickAud,tog,addFile,noop,newSec,editSec,saveSec,delSec,resetSecs,setSecName,setSecIcon,setSecStruct,setSecLocMode,setSecTeamMode,togSecLoc,togSecTeam,saveFile,pickFileFromDrive,setFileTeamMode,setFileLocMode,togFileLoc,togFileTeam,renderLocs,newLoc,editLoc,saveLoc,delLoc,resetLocs,setLocBrand,setLocState,setLocTZ,close:closeModal};
+  window.AD={tab:tabSet,newTeam,editTeam,saveTeam,delTeam,resetTeams,profile,whyNoAdd,togTeam,togLoc,setStatus,saveUser,pickLevel,pickAud,tog,addFile,noop,newSec,editSec,saveSec,delSec,resetSecs,setSecName,setSecIcon,setSecStruct,setSecLocMode,setSecTeamMode,togSecLoc,togSecTeam,saveFile,cd,useFile,clearFile,uploadFile,setFileTeamMode,setFileLocMode,togFileLoc,togFileTeam,renderLocs,newLoc,editLoc,saveLoc,delLoc,resetLocs,setLocBrand,setLocState,setLocTZ,close:closeModal};
   el('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
   render();
 })();
 </script>
 <script>PH.nav('admin');</script>
-<script src="tour.js?v=hb11"></script>
+<script src="tour.js?v=hb13"></script>
 <script>
 Tour.init([
   {sel:'#tabs', title:'This is your control room', body:'Four tabs and you can run the whole hub: <b>People</b>, <b>Teams &amp; Access</b>, <b>Document Sections</b> and <b>Locations</b>. No developer, no consultant.', pre:()=>AD.tab('users')},
