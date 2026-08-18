@@ -550,6 +550,38 @@ real roster and roles; permissions enforced and location-scoped; profile with ph
 name and editable phone; chained walkthroughs on all pages; admin can create sections and add
 locations; mobile verified at 375px on every page.
 
+### Workbook reconciliation — full re-audit 2026-08-17
+Verified with a **label-driven** parser (row numbers differ between tabs — see below).
+**44 series across all 8 offices, zero mismatches**: actual production, main goal, stretch goal,
+scheduled days, completed days, Medicaid starts, last-year production, case fees.
+
+**Two different tab layouts.** Carlsbad / Clovis / Cruces LCO / Hobbs carry Medicaid rows
+("Total Production Goal (TC + Medicaid)"). Cruces FFO / Lubbock / Mansfield / San Angelo have no
+Medicaid at all and use "2026 TC Production Goal". **Never read these tabs by row number** — an
+earlier pass did and silently compared the wrong rows. Match on the column-A label.
+Note Cruces FFO's tab is titled **"CRUCES (LEGACY)"**.
+
+**In the workbook, deliberately NOT in the app** (raise with Heather before the build):
+- **Roswell** — a 9th office named in 4 places on the Dashboard sheet, no tab, no data yet.
+- **Retainer Insurance** — monthly count per office (Dashboard r45–54).
+- **Average Production per Day: 2026 vs 2025 vs YOY** table (Dashboard r32–42).
+- **2024 baseline** — 2024 net production, 2024 Medicaid production, 2024 production days.
+- **Comfort/Rebond % of Total Appointments** and **OECD (Over Estimated Completion Date)**.
+- **Total Starts / Total Debands / Difference** — YTD single values per office.
+- **Number of NPE (2022)** — New Patient Exams, only on the Cruces FFO and Lubbock tabs.
+- Five unlabelled numbers at Dashboard B26:B30 (look like case fees; nothing identifies them).
+
+**Two judgement calls that need Heather's sign-off:**
+1. **Starts are reconstructed, not read.** The workbook has **no monthly actual-starts row**.
+   The dashboard's headline starts = derived goal + "Current # of Starts (Ahead/Behind) Goal".
+   Verified to reproduce their figures exactly, but it is a derivation, not their data.
+2. **Adjusted vs unadjusted production.** The app shows "Actual TC ONLY + Medicaid"; the workbook's
+   own YOY growth % uses "TOTAL Adjusted Net Production" (which adds write-offs). Carlsbad February
+   differs by $16,042 between the two. Which is "the" number is theirs to decide.
+
+**Fixed 2026-08-17:** San Angelo works **half days** (January = 10.5 production days). Both arrays
+had rounded it to 10, understating the month and skewing that office's per-day and pace maths.
+
 **Waiting on the practice:**
 - **Team column is blank for most people** in their sheet — only some are marked "Staff". Which
   team does each role map to (e.g. is a Clinic Lead an "Office Manager" for access purposes)?
