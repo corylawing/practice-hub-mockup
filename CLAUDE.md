@@ -38,6 +38,12 @@ dashboards and updates**, for everyone from the COO to a clinical assistant.
 
 **Always work in `/v1/`.** The only shared files are `v1/user.js` and `v1/tour.js`.
 
+### A person has no region or brand
+Both were editable fields on the Admin person record and both were **always blank and never read**.
+They also duplicate the office: Carlsbad *is* FFO in New Mexico, so a person's brand and region
+follow from the location(s) they're assigned to. Removed 2026-08-17 — if they're ever wanted back,
+derive them from `PH.locations()`, don't store them per person.
+
 ### No abbreviations for state or time zone
 The practice asked for full names ("New Mexico", "Mountain Time") — not NM/MT. `PH.locations()`
 **normalises on read**, so stored records written by older versions get healed rather than showing
@@ -107,7 +113,7 @@ The app is **Home-Brace**. The mark is a **white house outline with a braces arc
   `PRACTICE` in `assets/app.js` is `""` and the header shows only the wordmark. Don't invent one.
   The root site's eight fake "Summit …" offices were renamed to the real eight: Carlsbad, Clovis,
   Hobbs, Cruces LCO, Cruces FFO, Lubbock, San Angelo, Mansfield.
-- **All** shared assets carry a `?v=…` query (currently `hb10`) — **bump it** when editing `assets/app.js`,
+- **All** shared assets carry a `?v=…` query (currently `hb11`) — **bump it** when editing `assets/app.js`,
   `assets/data.js`, `assets/styles.css`, `v1/user.js`, `v1/tour.js` or `v1/celebrate.js` —
   browsers cache them hard and will silently serve the old copy otherwise. This bit us twice.
 
