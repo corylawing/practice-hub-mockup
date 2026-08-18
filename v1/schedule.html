@@ -202,7 +202,7 @@
     .addday{padding:9px 11px;font-size:12px}
   }
 </style>
-<script src="user.js?v=hb13"></script>
+<script src="user.js?v=hb14"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — sample staff schedule for validation. Live version = one Microsoft List the practice maintains.</div>
@@ -235,7 +235,7 @@
   <div id="status"></div>
   <div class="keyrow">
     <span class="keyitem"><span class="kmulti"><i class="kbox" style="background:#FFE1EF;border-color:#FF2D95"></i><i class="kbox" style="background:#DFF3FE;border-color:#38BDF8"></i><i class="kbox" style="background:#ECFACC;border-color:#84CC16"></i></span> <b>Doctor on site</b> — shown in that office's own colour</span>
-    <span class="keyitem"><i class="kbox" style="background:#FFF7E6;border:1px dashed #e6c877"></i> Needs a doctor</span>
+    <span class="keyitem"><i class="kbox" style="background:#FFF7E6;border:1px dashed #e6c877"></i> <b>Not decided yet</b> — open, no doctor and no Yellow Dot</span>
     <span class="keyitem"><i class="kbox" style="background:#FDE047;border-color:#eab308"></i><span class="ydmark"></span> <b>Yellow Dot Day</b> — open, no doctor on site</span>
     <span class="keyitem"><i class="kbox" style="background:#fafbfc"></i> Closed</span>
   </div>
@@ -397,7 +397,7 @@
           ents+='<button class="ent yd"'+click+'>'+l.n+'<small><span class="ydmark"></span>Yellow Dot Day</small></button>';
         } else if(open){
           if(fDoc!==null) return;
-          ents+='<button class="ent nd"'+click+'>'+l.n+'<small>needs a doctor</small></button>';
+          ents+='<button class="ent nd"'+click+'>'+l.n+'<small>not decided yet</small></button>';
         }
       });
       const addBtn = canEdit()
@@ -464,16 +464,24 @@
     let need=0,total=0;
     const days = view==='week'? weekDays() : (()=>{const a=[],dim=new Date(mY,mM+1,0).getDate();
       for(let i=1;i<=dim;i++)a.push(new Date(mY,mM,i)); return a;})();
+    let ydotN=0, undecided=0;
     days.forEach(d=>shownLocs().forEach(l=>{
       if(!openOn(l,d))return; const c=cellOf(l,d);
       if(c&&c.closed)return;
-      total++; if(!(c&&c.p!=null))need++;
+      total++;
+      if(!(c&&c.p!=null)){ need++; if(c&&c.ydot) ydotN++; else undecided++; }
     }));
     const st=el('status');
     st.className='status '+(need===0?'ok':'warn');
+    // Split the two: a Yellow Dot Day is a decision already taken; an unassigned open day
+    // is still waiting on one. Lumping them together hid the days that need action.
+    const parts=[];
+    if(ydotN)     parts.push(ydotN+' marked <b>Yellow Dot Day</b>');
+    if(undecided) parts.push(undecided+' <b>still to decide</b>');
     st.innerHTML = total===0 ? '<b>Nothing open</b> in this view.'
       : need===0 ? '<b>Fully covered.</b> Every open day '+(view==='week'?'this week':'this month')+' has a doctor ('+total+' of '+total+').'
-      : '<b>'+need+' open day'+(need===1?'':'s')+' with no doctor</b> — shown in amber ('+(total-need)+' of '+total+' covered).';
+      : '<b>'+need+' open day'+(need===1?'':'s')+' with no doctor</b> — '+parts.join(' · ')+
+        ' ('+(total-need)+' of '+total+' have a doctor).';
   }
 
   /* ---------- day editor ---------- */
@@ -702,7 +710,7 @@
 })();
 </script>
 <script>PH.nav('schedule');</script>
-<script src="tour.js?v=hb13"></script>
+<script src="tour.js?v=hb14"></script>
 <script>
 Tour.init([
   {sel:'#viewseg', title:'Week or month', body:'<b>Week</b> is the day-to-day working view. <b>Month</b> shows the whole month at a glance, with every office in its own colour.'},
