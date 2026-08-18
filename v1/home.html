@@ -92,7 +92,7 @@
   .upd .uw{font-size:12px;color:var(--soft)}
   .upd .utag{margin-left:auto;font-size:11px;font-weight:700;color:var(--teal-600);background:var(--teal-soft);border-radius:999px;padding:2px 9px;white-space:nowrap}
 </style>
-<script src="user.js?v=hb7"></script>
+<script src="user.js?v=hb9"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — this is the logged-in home. Use “Viewing as” to see how the app changes for each role.</div>
@@ -124,7 +124,10 @@
 
 <script>
 (function(){
-  const LOCS=['Carlsbad','Hobbs','Clovis','San Angelo','Mansfield','Lubbock','Las Cruces LCO','Las Cruces FOLC'];
+  // Offices come from the one shared list (user.js) — the same one Admin and the
+  // Schedule edit. This used to be a hardcoded copy that had drifted out of sync
+  // ('Las Cruces FOLC' was never a real office name).
+  const LOCS=PH.officeNames();
   const BRANDS=['FFO','Sunflower','LCO'];
   const CAPTXT={view:'View only',add:'View + add files',edit:'View, add & edit',manage:'Full control'};
   const CAPSHORT={view:'View',add:'+ Add files',edit:'Edit',manage:'Manage'};
@@ -250,7 +253,7 @@
 })();
 </script>
 <script>PH.nav('home');</script>
-<script src="tour.js?v=hb7"></script>
+<script src="tour.js?v=hb9"></script>
 <script>
 Tour.init([
   {sel:'.ph-av', title:'This is you', body:'Your name and photo, top right. Tap it any time for <b>My profile</b> \u2014 and, in this demo, to <b>sign in as someone else</b> so you can see exactly what each person sees.'},

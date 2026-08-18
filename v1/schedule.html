@@ -133,6 +133,9 @@
   .keyitem{display:inline-flex;align-items:center;gap:6px}
   .keyitem b{color:var(--ink)}
   .kbox{width:14px;height:14px;border-radius:4px;border:1px solid var(--line);display:inline-block}
+  /* Three office colours side by side, so this swatch reads as "it varies" rather than
+     "pink means doctor on site" — every other swatch in this row IS its literal colour. */
+  .kmulti{display:inline-flex;gap:3px}
   .hint{font-size:12.5px;color:var(--soft);margin-top:10px}
   .ov{position:fixed;inset:0;background:rgba(15,42,74,.5);z-index:120;display:none;align-items:flex-start;justify-content:center;padding:22px 14px;overflow:auto}
   .ov.open{display:flex}
@@ -199,7 +202,7 @@
     .addday{padding:9px 11px;font-size:12px}
   }
 </style>
-<script src="user.js?v=hb7"></script>
+<script src="user.js?v=hb9"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — sample staff schedule for validation. Live version = one Microsoft List the practice maintains.</div>
@@ -231,10 +234,10 @@
   <div class="filters" id="filters"></div>
   <div id="status"></div>
   <div class="keyrow">
-    <span class="keyitem"><i class="kbox" style="background:#FDE047;border-color:#eab308"></i><span class="ydmark"></span> <b>Yellow Dot Day</b> — open, no doctor on site</span>
+    <span class="keyitem"><span class="kmulti"><i class="kbox" style="background:#FFE1EF;border-color:#FF2D95"></i><i class="kbox" style="background:#DFF3FE;border-color:#38BDF8"></i><i class="kbox" style="background:#ECFACC;border-color:#84CC16"></i></span> <b>Doctor on site</b> — shown in that office's own colour</span>
     <span class="keyitem"><i class="kbox" style="background:#FFF7E6;border:1px dashed #e6c877"></i> Needs a doctor</span>
+    <span class="keyitem"><i class="kbox" style="background:#FDE047;border-color:#eab308"></i><span class="ydmark"></span> <b>Yellow Dot Day</b> — open, no doctor on site</span>
     <span class="keyitem"><i class="kbox" style="background:#fafbfc"></i> Closed</span>
-    <span class="keyitem"><i class="kbox" style="background:#FFE1EF;border-color:#FF2D95"></i> Doctor on site (office colour)</span>
   </div>
   <div id="board"></div>
   <p class="hint" id="hint"></p>
@@ -264,16 +267,9 @@
   const HALF={s:480,e:840};  // 8:00a – 2:00p  (their half day)
   const SAT={s:480,e:840};
 
-  let locations=[
-    {n:'Carlsbad',   color:'Hot Pink',           tz:'Mountain Time', lunch:{s:720,e:780}, hours:[WK,null,WK,null,WK,null]},
-    {n:'Clovis',     color:'Highlighter Orange', tz:'Mountain Time', lunch:{s:720,e:780}, hours:[WK,null,WK,null,null,SAT]},
-    {n:'Hobbs',      color:'Lime Green',         tz:'Mountain Time', lunch:{s:720,e:780}, hours:[null,WK,null,WK,null,null]},
-    {n:'San Angelo', color:'Sky Blue',           tz:'Central Time',  lunch:{s:780,e:840}, hours:[WK,null,WK,null,WK,null]},
-    {n:'Lubbock',    color:'Highlighter Yellow', tz:'Central Time',  lunch:null,          hours:[null,WK,null,WK,WK,null]},
-    {n:'Mansfield',  color:'Purple',             tz:'Central Time',  lunch:{s:720,e:780}, hours:[WK,null,WK,null,WK,null]},
-    {n:'Cruces LCO', color:'Light Pink',         tz:'Mountain Time', lunch:{s:720,e:780}, hours:[null,WK,null,WK,null,null]},
-    {n:'Cruces FFO', color:'Light Orange',       tz:'Mountain Time', lunch:null,          hours:[null,null,WK,null,null,SAT]}
-  ];
+  // Same list Admin edits (lives in user.js). Add an office in either place and it
+  // shows up in both — plus the dashboard, documents, team and marketing.
+  let locations=PH.locations();
   // Doctors have no colour now — a day takes the colour of its office.
   let people=[{n:'Dr. Farnsworth'},{n:'Dr. Brimhall'},{n:'Dr. Coehlo'},{n:'Dr. McBeth'}];
 
@@ -611,7 +607,9 @@
   function lunchT(k,v){ if(tmpLoc.lunch) tmpLoc.lunch[k]=hm(v); }
   function saveLoc(){
     const nm=(el('lName').value||'').trim(); if(!nm)return;
-    const rec={n:nm,color:tmpLoc.color,tz:tmpLoc.tz,lunch:tmpLoc.lunch,hours:tmpLoc.hours};
+    // Keep brand/state from Admin — this page doesn't edit them and must not drop them.
+    const keep = tmpLoc.isNew ? {} : (locations.find(l=>l.n===tmpLoc.orig)||{});
+    const rec=Object.assign({},keep,{n:nm,color:tmpLoc.color,tz:tmpLoc.tz,lunch:tmpLoc.lunch,hours:tmpLoc.hours});
     if(tmpLoc.isNew){ locations.push(rec); fLoc.add(nm); }
     else{
       const i=locations.findIndex(l=>l.n===tmpLoc.orig);
@@ -621,12 +619,12 @@
       }
       locations[i]=rec;
     }
-    save(); closeModal(); refresh();
+    save(); PH.saveLocations(locations); closeModal(); refresh();
   }
   function delLoc(){
     locations=locations.filter(l=>l.n!==tmpLoc.orig); fLoc.delete(tmpLoc.orig);
     Object.keys(sched).forEach(k=>delete sched[k][tmpLoc.orig]);
-    save(); closeModal(); refresh();
+    save(); PH.saveLocations(locations); closeModal(); refresh();
   }
 
   /* ---------- doctors (name only) ---------- */
@@ -705,7 +703,7 @@
 })();
 </script>
 <script>PH.nav('schedule');</script>
-<script src="tour.js?v=hb7"></script>
+<script src="tour.js?v=hb9"></script>
 <script>
 Tour.init([
   {sel:'#viewseg', title:'Week or month', body:'<b>Week</b> is the day-to-day working view. <b>Month</b> shows the whole month at a glance, with every office in its own colour.'},

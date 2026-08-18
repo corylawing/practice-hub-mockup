@@ -58,6 +58,62 @@
   function can(section){ const c=me().can||{}; return c[section]||'none'; }
   function atLeast(section,lvl){ return RANK[can(section)]>=RANK[lvl]; }
   function offices(){ return me().offices; }
+
+  /* ------------------------------------------------------------------
+     LOCATIONS — one list, shared by every page.
+     Admin owns brand/state/tz. Schedule owns colour/lunch/hours. Both write the
+     WHOLE record back so neither wipes the other's fields. Every other page just
+     reads it, so adding an office in either place shows up everywhere at once.
+     ------------------------------------------------------------------ */
+  const WKH={s:480,e:1020};                       // 8:00a–5:00p, the usual day
+  const DEFAULT_LOCATIONS=[
+    {n:'Carlsbad',  brand:'FFO', state:'New Mexico', tz:'Mountain Time', color:'Hot Pink',
+     lunch:{s:720,e:780}, hours:[WKH,null,WKH,null,WKH,null]},
+    {n:'Clovis',    brand:'FFO', state:'New Mexico', tz:'Mountain Time', color:'Highlighter Orange',
+     lunch:{s:720,e:780}, hours:[WKH,null,WKH,null,null,{s:480,e:840}]},
+    {n:'Hobbs',     brand:'FFO', state:'New Mexico', tz:'Mountain Time', color:'Lime Green',
+     lunch:{s:720,e:780}, hours:[null,WKH,null,WKH,null,null]},
+    {n:'San Angelo',brand:'FFO', state:'Texas',      tz:'Central Time',  color:'Sky Blue',
+     lunch:{s:780,e:840}, hours:[WKH,null,WKH,null,WKH,null]},
+    {n:'Lubbock',   brand:'FFO', state:'Texas',      tz:'Central Time',  color:'Highlighter Yellow',
+     lunch:null,          hours:[null,WKH,null,WKH,WKH,null]},
+    {n:'Mansfield', brand:'SUN', state:'Texas',      tz:'Central Time',  color:'Purple',
+     lunch:{s:720,e:780}, hours:[WKH,null,WKH,null,WKH,null]},
+    {n:'Cruces LCO',brand:'LCO', state:'New Mexico', tz:'Mountain Time', color:'Light Pink',
+     lunch:{s:720,e:780}, hours:[null,WKH,null,WKH,null,null]},
+    {n:'Cruces FFO',brand:'FFO', state:'New Mexico', tz:'Mountain Time', color:'Light Orange',
+     lunch:null,          hours:[null,null,WKH,null,null,{s:480,e:840}]}
+  ];
+  // Same order as the Schedule's PALETTE, so an auto-assigned colour is always one the
+  // schedule can actually render.
+  const ALL_COLORS=['Teal','Slate Blue','Hot Pink','Purple','Sky Blue','Highlighter Orange',
+                    'Lime Green','Highlighter Yellow','Light Pink','Light Orange'];
+  function locations(){
+    let st=null; try{ st=JSON.parse(localStorage.getItem('ph_locations')); }catch(_){}
+    if(!Array.isArray(st)||!st.length) return JSON.parse(JSON.stringify(DEFAULT_LOCATIONS));
+    // An office added from Admin has no colour/hours yet; give it usable ones so the
+    // Schedule can draw it straight away instead of rendering blank.
+    const used=st.map(l=>l.color).filter(Boolean);
+    let spare=0;
+    const nextColor=()=>{
+      const free=ALL_COLORS.find(c=>used.indexOf(c)<0);
+      // Track it immediately — otherwise every office added in the same pass gets the
+      // same colour, and two offices sharing a colour breaks the whole calendar.
+      const pick = free || ALL_COLORS[spare++ % ALL_COLORS.length];
+      used.push(pick);
+      return pick;
+    };
+    return st.map(l=>Object.assign({
+      brand:'', state:'', tz:'Mountain Time',
+      lunch: null,
+      hours: [null,null,null,null,null,null]      // closed until someone sets the days
+    }, l, l.color?{}:{color:nextColor()}));
+  }
+  function saveLocations(list){
+    try{ localStorage.setItem('ph_locations',JSON.stringify(list)); }catch(_){}
+  }
+  const officeNames=()=>locations().map(l=>l.n);
+
   function setMe(v){
     try{ localStorage.setItem('ph_viewas',v); }catch(_){}
     // If the person we just became can't open this page, don't leave them staring at it.
@@ -320,6 +376,6 @@
     host.insertBefore(d,host.firstChild);
   }
 
-  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner};
+  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner};
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mount); else mount();
 })();

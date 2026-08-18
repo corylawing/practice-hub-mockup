@@ -217,8 +217,8 @@
   .foot b{color:var(--navy)}
   @media(max-width:620px){ .kpi .v{font-size:22px} }
 </style>
-<script src="user.js?v=hb7"></script>
-<script src="celebrate.js?v=hb7"></script>
+<script src="user.js?v=hb9"></script>
+<script src="celebrate.js?v=hb9"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — real numbers from the 2026 Production Dashboard workbook. You only see the offices you have access to.</div>
@@ -329,6 +329,20 @@ const OFFICES=[
    lyStarts:[18, 20, 21, 17, 25, 25, 35, 24, 18, 12, 17, 9],
    days:[9, 10, 11, 9, 10, 9, 10, 9, 9, 8, 7, 8], done:[9, 10, 11, 9, 10, 9, 10, 2, 0, 0, 0, 0]}
 ];
+// An office added in Admin (or the Schedule) has no workbook figures yet. Show it anyway,
+// with zeros and a fee of 0, so the practice can see it exists and start entering — rather
+// than adding an office and finding the dashboard silently ignores it.
+(function addNewOffices(){
+  if(!window.PH || !PH.locations) return;
+  const zero=()=>[0,0,0,0,0,0,0,0,0,0,0,0];
+  PH.locations().forEach(l=>{
+    if(OFFICES.some(o=>o.n===l.n)) return;
+    OFFICES.push({n:l.n, brand:l.brand||'', fee:0, isNew:true,
+      act:zero(), goal:zero(), stretch:zero(), ly:zero(),
+      sAct:zero(), sGoal:zero(), mdStarts:zero(), lyStarts:zero(),
+      days:zero(), done:zero()});
+  });
+})();
 // Numbers typed on the "Enter Production" page flow straight into this dashboard.
 (function applyEdits(){
   let e={}; try{ e=JSON.parse(localStorage.getItem('ph_prod'))||{}; }catch(_){ return; }
@@ -762,7 +776,7 @@ const OFFICES=[
 })();
 </script>
 <script>PH.nav('dashboard');</script>
-<script src="tour.js?v=hb7"></script>
+<script src="tour.js?v=hb9"></script>
 <script>
 Tour.init([
   {sel:'.viewas', title:'You only see your offices', body:'Production numbers are sensitive, so people see <b>only the offices they\u2019re assigned to</b>. Switch to the Carlsbad manager \u2014 the group totals and the leaderboard disappear, because they aren\u2019t hers to see.'},

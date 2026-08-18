@@ -94,7 +94,7 @@
   .noacc b{color:var(--navy)}
   @media(max-width:760px){ .grid2{grid-template-columns:1fr} }
 </style>
-<script src="user.js?v=hb7"></script>
+<script src="user.js?v=hb9"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — type the month's numbers here. In the real build this writes straight into the SharePoint workbook.</div>
@@ -150,7 +150,17 @@
    'Mansfield':{fee:0, tc:[108954, 92996, 139815, 95285, 63447, 178690, 194970, 43715, 0, 0, 0, 0], mds:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], adj:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], dys:[9, 10, 11, 9, 10, 9, 10, 2, 0, 0, 0, 0],
      goal:[0, 0, 0, 130268, 174025, 104053, 146511, 100531, 74090, 71498, 103061, 52919],
      str:[0, 0, 0, 145900, 189158, 148648, 209301, 143616, 105842, 96522, 139132, 71440]}
-  };;
+  };
+  // Offices added in Admin / the Schedule get an empty row here so a manager can start
+  // typing their numbers straight away — the shared list is the single source of truth.
+  (function addNewOffices(){
+    if(!window.PH || !PH.locations) return;
+    const zero=()=>[0,0,0,0,0,0,0,0,0,0,0,0];
+    PH.locations().forEach(l=>{
+      if(BASE[l.n]) return;
+      BASE[l.n]={fee:0, tc:zero(), mds:zero(), adj:zero(), dys:zero(), goal:zero(), str:zero()};
+    });
+  })();
   const PERSONAS=(window.PH?PH.PEOPLE:[]).map(p=>({
     id:p.id, name:PH.name(p)+' — '+p.title.split(' \u00b7 ')[0],
     offices:p.offices, can:PH.atLeast?null:null }));
@@ -291,7 +301,7 @@
 })();
 </script>
 <script>PH.nav('production');</script>
-<script src="tour.js?v=hb7"></script>
+<script src="tour.js?v=hb9"></script>
 <script>
 Tour.init([
   {sel:'.syncbar', title:'One set of numbers', body:'Type here and it saves into the <b>same Excel workbook</b> on SharePoint. If someone types in Excel instead, it shows up here. There is never a second copy to reconcile.'},

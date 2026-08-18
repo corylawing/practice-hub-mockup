@@ -72,7 +72,7 @@
   .note b{color:var(--navy)}
   .empty{background:#fff;border:1px dashed var(--line);border-radius:14px;padding:30px;text-align:center;color:var(--soft)}
 </style>
-<script src="user.js?v=hb7"></script>
+<script src="user.js?v=hb9"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — everyone's contact card. In the real hub this list builds itself from Microsoft 365.</div>
@@ -173,7 +173,15 @@
    {n:"Dr. Jae Brimhall",mail:"drbrimhall@farnsworthorthodontics.com",loc:"",st:"",brand:"",role:"Owner/Doctor",team:"Staff"}
   ];
   // Their real sheet lists "Las Cruces" once and splits the two practices by brand.
-  const OFFICES=['Carlsbad','Hobbs','Clovis','Las Cruces','Lubbock','San Angelo','Mansfield'];
+  // Shared office list (user.js) UNION whatever offices the roster actually uses, so a
+  // new office from Admin gets a chip and nobody already on the roster loses theirs.
+  // (The roster says 'Las Cruces'; the workbook splits it into Cruces LCO / Cruces FFO —
+  // still an open question with the practice, so keep both until they decide.)
+  const OFFICES=(function(){
+    const shared=PH.officeNames(), out=shared.slice();
+    STAFF.forEach(p=>{ if(p.loc && out.indexOf(p.loc)<0) out.push(p.loc); });
+    return out;
+  })();
   const AREA={'Carlsbad':'575','Clovis':'575','Hobbs':'575','Las Cruces':'575','Lubbock':'806','San Angelo':'325','Mansfield':'817'};
   const PEOPLE=STAFF.map((r,i)=>{
     const isDoc=/^Dr\./.test(r.n);
@@ -232,7 +240,7 @@
 })();
 </script>
 <script>PH.nav('team');</script>
-<script src="tour.js?v=hb7"></script>
+<script src="tour.js?v=hb9"></script>
 <script>
 Tour.init([
   {sel:'#q', title:'Find anyone fast', body:'Type a name, an office, or part of a phone number. This is the quickest way to reach the right person at the right office.'},

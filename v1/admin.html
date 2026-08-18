@@ -160,7 +160,7 @@
   .tp.on{background:var(--navy);color:#fff;border-color:var(--navy)}
   @media(max-width:640px){ .grid2{grid-template-columns:1fr} }
 </style>
-<script src="user.js?v=hb7"></script>
+<script src="user.js?v=hb9"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — admin console concept for validation. Real build: people sync from Microsoft 365; access is managed here.</div>
@@ -200,8 +200,9 @@
     {n:'Cruces FFO',brand:'FFO',state:'New Mexico',tz:'Mountain Time'},{n:'Lubbock',brand:'FFO',state:'Texas',tz:'Central Time'},
     {n:'San Angelo',brand:'FFO',state:'Texas',tz:'Central Time'},{n:'Mansfield',brand:'SUN',state:'Texas',tz:'Central Time'}
   ];
-  function loadLocs(){ try{ const st=JSON.parse(localStorage.getItem('ph_locations')); if(Array.isArray(st)&&st.length)return st; }catch(_){} return JSON.parse(JSON.stringify(DEFAULT_LOCS)); }
-  function saveLocs(){ try{ localStorage.setItem('ph_locations',JSON.stringify(LOCS)); }catch(_){} }
+  // Locations live in user.js so Admin and Schedule are the SAME list.
+  function loadLocs(){ return PH.locations(); }
+  function saveLocs(){ PH.saveLocations(LOCS); }
   let LOCS=loadLocs();
   const LOCATIONS_OF=()=>LOCS.map(l=>l.n);
   const STATES=['Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut','Delaware',
@@ -519,12 +520,15 @@
   function setLocTZ(v){locDraft.tz=v;}
   function saveLoc(){
     const nm=(el('locName')?el('locName').value:locDraft.n).trim(); if(!nm)return;
-    const rec={n:nm,brand:locDraft.brand,state:locDraft.state,tz:locDraft.tz};
+    // Keep whatever the Schedule owns on this record — colour, lunch and opening days —
+    // otherwise saving a brand or timezone here would silently wipe the rota.
+    const keep = locDraft.i<0 ? {} : LOCS[locDraft.i];
+    const rec=Object.assign({},keep,{n:nm,brand:locDraft.brand,state:locDraft.state,tz:locDraft.tz});
     if(locDraft.i<0) LOCS.push(rec); else LOCS[locDraft.i]=rec;
     saveLocs(); closeModal(); renderLocs();
   }
   function delLoc(){ if(locDraft.i>=0){LOCS.splice(locDraft.i,1); saveLocs();} closeModal(); renderLocs(); }
-  function resetLocs(){ LOCS=JSON.parse(JSON.stringify(DEFAULT_LOCS)); saveLocs(); renderLocs(); }
+  function resetLocs(){ try{localStorage.removeItem('ph_locations');}catch(_){} LOCS=PH.locations(); renderLocs(); }
 
   /* ---------- DOCUMENT SECTIONS (admin can create these) ---------- */
   const ICONS=['📁','👥','🏢','📝','🚚','🗂️','📆','🎓','🦷','💡','🧾','🔧','⭐','🔒'];
@@ -740,7 +744,7 @@
 })();
 </script>
 <script>PH.nav('admin');</script>
-<script src="tour.js?v=hb7"></script>
+<script src="tour.js?v=hb9"></script>
 <script>
 Tour.init([
   {sel:'#tabs', title:'This is your control room', body:'Four tabs and you can run the whole hub: <b>People</b>, <b>Teams &amp; Access</b>, <b>Document Sections</b> and <b>Locations</b>. No developer, no consultant.', pre:()=>AD.tab('users')},

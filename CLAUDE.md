@@ -38,6 +38,17 @@ dashboards and updates**, for everyone from the COO to a clinical assistant.
 
 **Always work in `/v1/`.** The only shared files are `v1/user.js` and `v1/tour.js`.
 
+### Locations are ONE list — never hardcode offices again
+`PH.locations()` / `PH.saveLocations()` / `PH.officeNames()` in `user.js` are the single source of
+truth for the eight offices. **Admin owns brand/state/tz; Schedule owns colour/lunch/hours; both
+write the whole record back** so neither wipes the other's fields. Every other page reads it.
+
+Before 2026-08-17 **seven pages each had their own hardcoded office array** — adding a location in
+Admin changed nothing anywhere else, and the copies had drifted (`documents.html` and `home.html`
+listed a "Las Cruces FOLC" that has never existed). If a page needs offices, call `PH.officeNames()`.
+Pages holding per-office DATA (dashboard, Enter Production) append any office they don't know about
+with zeros so it shows up and can be filled in, rather than silently ignoring it.
+
 ### V1 pages
 | File | Purpose |
 |---|---|
@@ -91,7 +102,7 @@ The app is **Home-Brace**. The mark is a **white house outline with a braces arc
   `PRACTICE` in `assets/app.js` is `""` and the header shows only the wordmark. Don't invent one.
   The root site's eight fake "Summit …" offices were renamed to the real eight: Carlsbad, Clovis,
   Hobbs, Cruces LCO, Cruces FFO, Lubbock, San Angelo, Mansfield.
-- **All** shared assets carry a `?v=…` query (currently `hb7`) — **bump it** when editing `assets/app.js`,
+- **All** shared assets carry a `?v=…` query (currently `hb9`) — **bump it** when editing `assets/app.js`,
   `assets/data.js`, `assets/styles.css`, `v1/user.js`, `v1/tour.js` or `v1/celebrate.js` —
   browsers cache them hard and will silently serve the old copy otherwise. This bit us twice.
 
