@@ -135,12 +135,19 @@
   /* modal */
   .ov{position:fixed;inset:0;background:rgba(15,42,74,.5);z-index:120;display:none;align-items:flex-start;justify-content:center;padding:24px 16px;overflow:auto}
   .ov.open{display:flex}
-  .modal{background:#fff;width:100%;max-width:660px;border-radius:16px;box-shadow:var(--shadow-lg);overflow:hidden;margin:auto}
+  .modal{background:#fff;width:100%;max-width:880px;border-radius:16px;box-shadow:var(--shadow-lg);overflow:hidden;margin:auto}
   .m-top{display:flex;align-items:center;gap:12px;padding:18px 20px;border-bottom:1px solid var(--line)}
   .m-top .x{margin-left:auto;border:none;background:none;font-size:24px;color:var(--soft);cursor:pointer;line-height:1}
   .m-body{padding:20px;max-height:70vh;overflow:auto}
   .m-foot{display:flex;gap:10px;align-items:center;padding:14px 20px;border-top:1px solid var(--line);background:#fafbfc}
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+  /* Team and office chips need the FULL modal width — squeezed into a half-width column
+     they wrapped one or two per line and the panel read as cramped. */
+  .fullband{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+  .fullband .fld{margin-bottom:16px}
+  .m-body textarea.tall{min-height:132px;resize:vertical}
+  .minigrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:640px){ .minigrid{grid-template-columns:1fr} }
   .panel-lab{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--soft);font-weight:700;margin:0 0 10px;display:flex;align-items:center;gap:8px}
   .msbadge{background:#eef3fb;color:#2b5f9e;font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px}
   .selfbadge{background:var(--good-soft);color:var(--good);font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px}
@@ -155,12 +162,12 @@
   .accessbox h4{margin:0 0 8px;font-size:13px;color:#0a4d49;text-transform:uppercase;letter-spacing:.04em}
   .acc-line{display:flex;justify-content:space-between;font-size:13.5px;padding:3px 0;color:var(--ink)}
   .acc-line b{font-weight:700}
-  .teampick{display:flex;flex-wrap:wrap;gap:6px}
-  .tp{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 11px;font-size:12.5px;font-weight:600;color:var(--navy);cursor:pointer;font-family:inherit}
+  .teampick{display:flex;flex-wrap:wrap;gap:8px}
+  .tp{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;font-size:13px;font-weight:600;color:var(--navy);cursor:pointer;font-family:inherit;line-height:1.2}
   .tp.on{background:var(--navy);color:#fff;border-color:var(--navy)}
   @media(max-width:640px){ .grid2{grid-template-columns:1fr} }
 </style>
-<script src="user.js?v=hb9"></script>
+<script src="user.js?v=hb10"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — admin console concept for validation. Real build: people sync from Microsoft 365; access is managed here.</div>
@@ -212,7 +219,6 @@
     'Ohio','Oklahoma','Oregon','Pennsylvania','Rhode Island','South Carolina','South Dakota','Tennessee','Texas',
     'Utah','Vermont','Virginia','Washington','West Virginia','Wisconsin','Wyoming'];
   const TZS=['Eastern Time','Central Time','Mountain Time','Mountain Time (Arizona, no DST)','Pacific Time','Alaska Time','Hawaii Time'];
-  const TZSHORT={'Eastern Time':'ET','Central Time':'CT','Mountain Time':'MT','Mountain Time (Arizona, no DST)':'AZ','Pacific Time':'PT','Alaska Time':'AKT','Hawaii Time':'HT'};
   const BRANDS_OF=()=>[...new Set(LOCS.map(l=>l.brand))];
   /* TWO KINDS OF THINGS — this is the whole mental model:
      TOOLS   = real app features (Dashboard, Schedule, Marketing). Fixed. You only choose WHO gets them.
@@ -381,14 +387,20 @@
           '<div class="fld"><label>Photo <span class="selfbadge">EMPLOYEE CAN EDIT</span></label><div class="fld ro"><div class="val" style="display:flex;align-items:center;gap:10px"><span class="av" style="background:'+av(u)+'">'+initials(u)+'</span> Change photo…</div></div></div>'+
         '</div>'+
         '<div><div class="panel-lab">Managed in Home-Brace</div>'+
-          '<div class="fld"><label>Team(s) — <b>what</b> they can see &amp; do</label><div class="teampick" id="teampick">'+teamChips+'</div></div>'+
-          '<div class="fld"><label>Location(s) — <b>which offices\'</b> stuff they see</label><div class="teampick" id="locpick">'+locChips()+'</div></div>'+
-          '<div class="fld"><label>Region</label><input value="'+u.region+'"></div>'+
-          '<div class="fld"><label>Brand</label><input value="'+u.brand+'"></div>'+
+          '<div class="minigrid">'+
+            '<div class="fld"><label>Region</label><input value="'+u.region+'" placeholder="Not set"></div>'+
+            '<div class="fld"><label>Brand</label><input value="'+u.brand+'" placeholder="Not set"></div>'+
+          '</div>'+
           '<div class="fld"><label>Status <span style="color:var(--bad)">(admin only)</span></label><select id="fStatus" onchange="AD.setStatus(this.value)">'+['Active','Paused','Inactive'].map(s=>'<option'+(s===tmpU.status?' selected':'')+'>'+s+'</option>').join('')+'</select></div>'+
+          // About me sits here so the right column matches the height of the synced
+          // fields on the left, instead of trailing off into empty space.
+          '<div class="fld"><label>About me <span class="selfbadge">EMPLOYEE CAN EDIT</span></label><textarea class="tall">'+u.about+'</textarea></div>'+
         '</div>'+
       '</div>'+
-      '<div class="fld" style="margin-top:6px"><label>About me <span class="selfbadge">EMPLOYEE CAN EDIT</span></label><textarea>'+u.about+'</textarea></div>'+
+      '<div class="fullband">'+
+        '<div class="fld"><label>Team(s) — <b>what</b> they can see &amp; do</label><div class="teampick" id="teampick">'+teamChips+'</div></div>'+
+        '<div class="fld"><label>Location(s) — <b>which offices\'</b> stuff they see</label><div class="teampick" id="locpick">'+locChips()+'</div></div>'+
+      '</div>'+
       '<div class="accessbox" id="accpreview"></div>'+
       '</div>'+
       '<div class="m-foot"><span style="flex:1;font-size:12.5px;color:var(--soft)">Synced fields update from Microsoft 365. Photo &amp; About me are self-service.</span><button class="btn ghost" onclick="AD.close()">Cancel</button><button class="btn" onclick="AD.saveUser()">Save</button></div>');
@@ -486,7 +498,7 @@
   /* ---------- LOCATIONS (add offices as the group expands) ---------- */
   function renderLocs(){
     const rows=LOCS.map((l,i)=>'<tr onclick="AD.editLoc('+i+')"><td><div class="uname">'+l.n+'</div></td>'+
-      '<td><span class="chip">'+l.brand+'</span></td><td>'+l.state+'</td><td>'+l.tz+(TZSHORT[l.tz]?' <span class="chip">'+TZSHORT[l.tz]+'</span>':'')+'</td>'+
+      '<td><span class="chip">'+l.brand+'</span></td><td>'+l.state+'</td><td>'+l.tz+'</td>'+
       '<td style="text-align:right"><button class="btn ghost mini-btn" onclick="event.stopPropagation();AD.editLoc('+i+')">Edit</button></td></tr>').join('');
     el('view').innerHTML=
       '<div class="intro"><b>Opening a new office?</b> Add it here once and it shows up everywhere \u2014 the schedule, the per-office document folders, people\u2019s locations, and the dashboard\u2019s office list. Nothing else to set up.</div>'+
@@ -744,7 +756,7 @@
 })();
 </script>
 <script>PH.nav('admin');</script>
-<script src="tour.js?v=hb9"></script>
+<script src="tour.js?v=hb10"></script>
 <script>
 Tour.init([
   {sel:'#tabs', title:'This is your control room', body:'Four tabs and you can run the whole hub: <b>People</b>, <b>Teams &amp; Access</b>, <b>Document Sections</b> and <b>Locations</b>. No developer, no consultant.', pre:()=>AD.tab('users')},

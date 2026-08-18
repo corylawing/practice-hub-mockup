@@ -88,6 +88,23 @@
   // schedule can actually render.
   const ALL_COLORS=['Teal','Slate Blue','Hot Pink','Purple','Sky Blue','Highlighter Orange',
                     'Lime Green','Highlighter Yellow','Light Pink','Light Orange'];
+  // Stored locations from earlier versions hold abbreviations ("NM", "MT"). The practice
+  // asked for full names everywhere, so heal them on read rather than leaving stale data
+  // showing codes forever.
+  const STATE_FULL={AL:'Alabama',AK:'Alaska',AZ:'Arizona',AR:'Arkansas',CA:'California',CO:'Colorado',
+    CT:'Connecticut',DE:'Delaware',DC:'District of Columbia',FL:'Florida',GA:'Georgia',HI:'Hawaii',
+    ID:'Idaho',IL:'Illinois',IN:'Indiana',IA:'Iowa',KS:'Kansas',KY:'Kentucky',LA:'Louisiana',ME:'Maine',
+    MD:'Maryland',MA:'Massachusetts',MI:'Michigan',MN:'Minnesota',MS:'Mississippi',MO:'Missouri',
+    MT:'Montana',NE:'Nebraska',NV:'Nevada',NH:'New Hampshire',NJ:'New Jersey',NM:'New Mexico',
+    NY:'New York',NC:'North Carolina',ND:'North Dakota',OH:'Ohio',OK:'Oklahoma',OR:'Oregon',
+    PA:'Pennsylvania',RI:'Rhode Island',SC:'South Carolina',SD:'South Dakota',TN:'Tennessee',TX:'Texas',
+    UT:'Utah',VT:'Vermont',VA:'Virginia',WA:'Washington',WV:'West Virginia',WI:'Wisconsin',WY:'Wyoming'};
+  const TZ_FULL={ET:'Eastern Time',CT:'Central Time',MT:'Mountain Time',AZ:'Mountain Time (Arizona, no DST)',
+    PT:'Pacific Time',AKT:'Alaska Time',HT:'Hawaii Time',
+    Eastern:'Eastern Time',Central:'Central Time',Mountain:'Mountain Time',Pacific:'Pacific Time'};
+  const fullState=v=>{ v=(v||'').trim(); return STATE_FULL[v.toUpperCase()] || v; };
+  const fullTZ=v=>{ v=(v||'').trim(); return TZ_FULL[v] || TZ_FULL[v.toUpperCase()] || v; };
+
   function locations(){
     let st=null; try{ st=JSON.parse(localStorage.getItem('ph_locations')); }catch(_){}
     if(!Array.isArray(st)||!st.length) return JSON.parse(JSON.stringify(DEFAULT_LOCATIONS));
@@ -103,11 +120,15 @@
       used.push(pick);
       return pick;
     };
-    return st.map(l=>Object.assign({
-      brand:'', state:'', tz:'Mountain Time',
-      lunch: null,
-      hours: [null,null,null,null,null,null]      // closed until someone sets the days
-    }, l, l.color?{}:{color:nextColor()}));
+    return st.map(l=>{
+      const rec=Object.assign({
+        brand:'', state:'', tz:'Mountain Time',
+        lunch: null,
+        hours: [null,null,null,null,null,null]    // closed until someone sets the days
+      }, l, l.color?{}:{color:nextColor()});
+      rec.state=fullState(rec.state); rec.tz=fullTZ(rec.tz);
+      return rec;
+    });
   }
   function saveLocations(list){
     try{ localStorage.setItem('ph_locations',JSON.stringify(list)); }catch(_){}
