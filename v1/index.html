@@ -139,6 +139,9 @@
   .mgrid .g button:hover:not(:disabled){border-color:var(--teal);color:var(--teal-600);background:var(--teal-soft)}
   .mgrid .g button.on{background:var(--teal);border-color:var(--teal);color:#fff}
   .mgrid .g button:disabled{color:#c3ccd8;background:#fafbfc;border-color:#eef1f5;cursor:default}
+  .mgrid .clr.comb{border:1px dashed var(--line);border-radius:9px;margin-top:10px}
+  .mgrid .clr.comb.on{background:var(--teal);border-color:var(--teal);color:#fff}
+  .mgrid .g button .tick{font-weight:800}
   .mgrid .clr{width:100%;margin-top:9px;border:none;background:none;font-family:inherit;font-size:12.5px;
     font-weight:700;color:var(--teal-600);cursor:pointer;padding:7px}
   .mgrid .clr:hover{text-decoration:underline}
@@ -218,8 +221,8 @@
   .foot b{color:var(--navy)}
   @media(max-width:620px){ .kpi .v{font-size:22px} }
 </style>
-<script src="user.js?v=hb22"></script>
-<script src="celebrate.js?v=hb22"></script>
+<script src="user.js?v=hb24"></script>
+<script src="celebrate.js?v=hb24"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — real numbers from the 2026 Production Dashboard workbook. You only see the offices you have access to.</div>
@@ -373,6 +376,7 @@ const OFFICES=[
   const curOffice=()=>shown;
   let period='mtd';      // their ask: default to MTD, with a toggle to the year
   let pickOpen=false;    // month-picker popover open?
+  let combineM=false;    // combine several months, like Combine offices
   let chartMode='production'; // opens on Production — their headline number; toggle to Starts
 
   // a month counts once it has BOTH an actual and a goal (Mansfield has actuals from Jan but goals only from Apr)
@@ -387,29 +391,47 @@ const OFFICES=[
     return finished ? -1 : last;                      // not fully worked yet => it's this month
   }
   const sum=(arr,idx)=>idx.reduce((s,i)=>s+arr[i],0);
-  const isMonth=()=>typeof period==='number';
+  const isMonth =()=>typeof period==='number';
+  const isMonths=()=>Array.isArray(period);          // several months combined
+  const pickedMonths=()=>isMonths()?period.slice().sort((a,b)=>a-b):(isMonth()?[period]:[]);
   function curIdx(o){ const p=partial(o); if(p>=0)return p; const L=live(o); return L.length?L[L.length-1]:-1; }
   function months(o){
+    if(isMonths()) return period.filter(i=>o.act[i]>0&&o.goal[i]>0).sort((a,b)=>a-b);
     if(isMonth()) return (o.act[period]>0&&o.goal[period]>0)?[period]:[];
-    const L=live(o); if(period!=='mtd') return L;
-    const c=curIdx(o); return c>=0?[c]:[];
+    const L=live(o);
+    if(period==='mtd'){ const c=curIdx(o); return c>=0?[c]:[]; }
+    // Year to date = every finished month PLUS the one in progress, so the year figure
+    // runs through today instead of stopping at the last completed month.
+    const p=partial(o);
+    return (p>=0 && o.act[p]>0 && o.goal[p]>0 && L.indexOf(p)<0) ? L.concat([p]) : L;
   }
-  const monthName=o=>{ if(isMonth())return MO[period]; const c=curIdx(o); return c>=0?MO[c]:''; };
+  const monthName=o=>{ if(isMonth())return MO[period];
+    if(isMonths())return pickedMonths().map(i=>MO[i]).join(' + ');
+    const c=curIdx(o); return c>=0?MO[c]:''; };
   const inProgress=o=>period==='mtd' && partial(o)>=0;
   // how far through the month we are, so a part-month isn't judged against a whole month's goal
-  function paceRatio(o){
-    if(period!=='mtd') return 1;      // a finished past month is judged against its full goal
-    const c=partial(o); if(c<0||!o.days[c]||!o.done[c]) return 1;   // no days logged => no scaling
-    return o.done[c]/o.days[c];
+  // How much of a given month has been worked. 1 for a finished month; for the month in
+  // progress it's days worked / days scheduled, so a part-month isn't judged against a
+  // whole month's goal. Used per-month so YTD keeps full goals for finished months.
+  function monthPace(o,i){
+    const p=partial(o);
+    if(i!==p) return 1;
+    if(!o.days[i]||!o.done[i]) return 1;              // no days logged => don't scale
+    return o.done[i]/o.days[i];
+  }
+  const pacedSum=(o,arr,L)=>L.reduce((x,i)=>x+(arr[i]||0)*monthPace(o,i),0);
+  function paceRatio(o){                              // kept for the "goals scaled" note
+    const c=partial(o); if(c<0) return 1;
+    return months(o).indexOf(c)>=0 ? monthPace(o,c) : 1;
   }
   function stats(o){
     const L=months(o);
-    const a=sum(o.act,L); let g=sum(o.goal,L), s=sum(o.stretch,L), l=sum(o.ly,L);
-    const schd = (period==='mtd'||isMonth()) ? L.reduce((x,i)=>x+o.days[i],0) : o.days.reduce((x,y)=>x+y,0);
+    const a=sum(o.act,L);
+    // full goal for every finished month, pro-rated goal for the month in progress
+    let g=pacedSum(o,o.goal,L), s=pacedSum(o,o.stretch,L), l=pacedSum(o,o.ly,L);
+    const schd = L.reduce((x,i)=>x+o.days[i],0);
     const comp = L.reduce((x,i)=>x+o.done[i],0);
-    const perDay = comp? a/comp : 0, needPerDay = comp? (sum(o.goal,L)*paceRatio(o))/comp : 0;
-    const pace = paceRatio(o);       // 1 for finished periods, <1 part-way through a month
-    g*=pace; s*=pace; l*=pace;
+    const perDay = comp? a/comp : 0, needPerDay = comp? g/comp : 0;
     return {L,a,g,s,l,perDay,needPerDay,pct:g?a/g:0,spct:s?a/s:0,yoy:l?a/l:0,vgoal:a-g,vstretch:a-s,
             sched:schd, done:comp,
             daysLeft:o.days.reduce((x,y)=>x+y,0)-o.done.reduce((x,y)=>x+y,0)};
@@ -455,8 +477,8 @@ const OFFICES=[
   function sStats(o){
     const L=months(o);
     const sa=o.sAct||[], sg=o.sGoal||[];
-    const a=L.reduce((x,i)=>x+(sa[i]||0),0); let g=L.reduce((x,i)=>x+(sg[i]||0),0);
-    g*=paceRatio(o);
+    const a=L.reduce((x,i)=>x+(sa[i]||0),0);
+    const g=pacedSum(o,sg,L);
     const days=L.reduce((x,i)=>x+(o.done[i]||0),0);
     return {L,a,g,pct:g?a/g:0,v:a-g,perDay:days?a/days:0,needPerDay:days?g/days:0,days};
   }
@@ -558,23 +580,31 @@ const OFFICES=[
     const b=(v,lab)=>'<button class="pchip'+(period===v?' on':'')+'" onclick="DASH.period(\''+v+'\')">'+lab+'</button>';
     const done=live(o), cur=partial(o);
     const avail=done.filter(i=>i!==cur);                 // finished months you can look back at
-    const sel2=isMonth()?period:-1;
-    // 12 months in a grid \u2014 months with no figures yet are simply not clickable.
+    const picked=pickedMonths();
+    // 12 months in a grid — months with no figures yet are simply not clickable.
+    // Combine mode ticks several and adds them together — same idea as Combine offices.
     const cells=MOFULL.map((m,i)=>{
-      const ok=avail.indexOf(i)>=0;
-      return '<button'+(ok?'':' disabled')+(i===sel2?' class="on"':'')+
-        (ok?' onclick="DASH.month('+i+')"':'')+' title="'+m+'">'+MO[i]+'</button>';
+      const ok=avail.indexOf(i)>=0, on=picked.indexOf(i)>=0;
+      return '<button'+(ok?'':' disabled')+(on?' class="on"':'')+
+        (ok?' onclick="DASH.month('+i+')"':'')+' title="'+m+'">'+
+        (combineM&&ok?'<span class="tick">'+(on?'✓':'+')+'</span> ':'')+MO[i]+'</button>';
     }).join('');
-    const back='<div class="mpick'+(sel2>=0?' on':'')+(pickOpen?' open':'')+'">'+
+    const mlabel = picked.length===0 ? 'Pick a month'
+      : picked.length===1 ? MOFULL[picked[0]] : picked.length+' months';
+    const back='<div class="mpick'+(picked.length?' on':'')+(pickOpen?' open':'')+'">'+
       '<button class="trg" onclick="DASH.pickOpen()" aria-haspopup="true" aria-expanded="'+(pickOpen?'true':'false')+'">'+
-        '<span class="cal">\ud83d\udcc5</span><span class="txt">'+(sel2>=0?MOFULL[sel2]:'Pick a month')+'</span><span class="car">\u25bc</span></button>'+
-      '<div class="mgrid" onclick="event.stopPropagation()"><div class="gh">Look back at a finished month</div>'+
+        '<span class="cal">📅</span><span class="txt">'+mlabel+'</span><span class="car">▼</span></button>'+
+      '<div class="mgrid" onclick="event.stopPropagation()">'+
+        '<div class="gh">'+(combineM?'Tick the months to add together':'Look back at a finished month')+'</div>'+
         '<div class="g">'+cells+'</div>'+
-        (sel2>=0?'<button class="clr" onclick="DASH.period(\'mtd\')">\u2190 Back to this month</button>':'')+
+        '<button class="clr comb'+(combineM?' on':'')+'" onclick="DASH.combineMonths()">'+
+          (combineM?'✕ Stop combining months':'➕ Combine months')+'</button>'+
+        (picked.length?'<button class="clr" onclick="DASH.period(\'mtd\')">← Back to this month</button>':'')+
       '</div></div>';
-    const hint = isMonth() ? MOFULL[period]+' \u2014 a finished month, judged against its full goal.'
-      : period==='mtd' ? 'Showing '+(nm||'the latest month')+' only \u2014 goals scaled to the days worked so far.'
-      : 'Showing every finished month this year.';
+    const hint = isMonths() ? picked.map(i=>MOFULL[i]).join(' + ')+' added together.'
+      : isMonth() ? MOFULL[period]+' — a finished month, judged against its full goal.'
+      : period==='mtd' ? 'Showing '+(nm||'the latest month')+' only — goals scaled to the days worked so far.'
+      : 'Every month so far this year, through today — ' + (nm?nm+' is counted up to the days worked.':'live.');
     // Keep the month suffix ALWAYS — it used to appear only while MTD was selected, which
     // changed the pill's width and shoved the month picker sideways on every switch.
     return '<div class="periodbar">'+b('mtd','This month'+(nm?' \u00b7 '+nm:''))+b('ytd','Year to date')+back+
@@ -591,8 +621,14 @@ const OFFICES=[
       '</div>'+pips+
     '</div>';
   }
+  // Months to plot: finished ones plus the month in progress, so the chart doesn't stop
+  // a month behind the rest of the dashboard.
+  function plotMonths(o){
+    const L=live(o), p=partial(o);
+    return (p>=0 && o.act[p]>0 && L.indexOf(p)<0) ? L.concat([p]) : L;
+  }
   function startsChart(o){
-    const L=live(o); if(!L.length) return '';
+    const L=plotMonths(o); if(!L.length) return '';
     const sa=o.sAct||[], sg=o.sGoal||[], sl=o.lyStarts||[];
     // No stretch on starts anywhere (dropped 2026-08-17) — their workbook has no starts
     // stretch row and the derived one was more confusing than useful.
@@ -619,7 +655,7 @@ const OFFICES=[
       '<div class="chartwrap"><div class="plot">'+axis(max,false)+'<div class="chart">'+cols+'</div></div></div></div>';
   }
   function chart(o){
-    const L=live(o); if(!L.length) return '';
+    const L=plotMonths(o); if(!L.length) return '';
     let max=0; L.forEach(i=>{max=Math.max(max,o.act[i],o.goal[i],o.stretch[i],o.ly[i]);});
     max=niceMax(max);
     const best=L.reduce((b,i)=>((o.goal[i]?o.act[i]/o.goal[i]:0)>(o.goal[b]?o.act[b]/o.goal[b]:0)?i:b),L[0]);
@@ -756,8 +792,21 @@ const OFFICES=[
   }
   el('persona').innerHTML=PERSONAS.map(p=>'<option value="'+p.id+'">'+p.name+'</option>').join('');
   window.DASH={set,pick,party:partyNow,combine:toggleCombine,
-    period:v=>{period=v;pickOpen=false;render();},
-    month:v=>{ if(v===''||v==null)return; period=Number(v); pickOpen=false; render(); },
+    period:v=>{period=v;pickOpen=false;combineM=false;render();},
+    month:v=>{ if(v===''||v==null)return; const i=Number(v);
+      if(combineM){
+        const cur=isMonths()?period.slice():(isMonth()?[period]:[]);
+        const k=cur.indexOf(i); if(k>=0)cur.splice(k,1); else cur.push(i);
+        period = cur.length? cur : 'mtd';               // untick the last one and you're back to this month
+        render(); return;                               // keep the popover open while ticking
+      }
+      period=i; pickOpen=false; render(); },
+    combineMonths:()=>{
+      combineM=!combineM;
+      if(combineM){ if(isMonth()) period=[period]; }
+      else if(isMonths()) period = period.length? period[period.length-1] : 'mtd';
+      render();
+    },
     pickOpen:()=>{ pickOpen=!pickOpen; render(); },
     chart:v=>{chartMode=v;render();}};
   document.addEventListener('click',e=>{
@@ -770,7 +819,7 @@ const OFFICES=[
 })();
 </script>
 <script>PH.nav('dashboard');</script>
-<script src="tour.js?v=hb22"></script>
+<script src="tour.js?v=hb24"></script>
 <script>
 Tour.init([
   {sel:'.viewas', title:'You only see your offices', body:'Production numbers are sensitive, so people see <b>only the offices they\u2019re assigned to</b>. Switch to the Carlsbad manager \u2014 the group totals and the leaderboard disappear, because they aren\u2019t hers to see.'},

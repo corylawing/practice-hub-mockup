@@ -98,6 +98,23 @@ someone can split a day between two offices. The chip now shows "also at Lubbock
 line appears under the picker. (The seeded rota already double-books Coelho on one Wednesday, so
 the hard block was inconsistent with the app's own data anyway.)
 
+### Year to date is LIVE — it includes the month in progress
+Until 2026-08-17 `months()` returned only `live(o)` (fully-worked months), so **YTD, the charts and
+the leaderboard all stopped at July** while the rest of the dashboard showed August. Fixed:
+
+- **YTD = finished months + the month in progress.** `plotMonths(o)` does the same for both charts.
+- **Goals are pro-rated PER MONTH**, not by one global multiplier: `monthPace(o,i)` is 1 for a
+  finished month and `done/days` for the one in progress, and `pacedSum()` applies it per month.
+  A single ratio would have discounted the whole year by August's fraction.
+  Verified: Carlsbad YTD goal $1.55M = Jan–Jul at full goal + August × 2/9 days.
+
+### Combine months
+`period` can be `'mtd'` | `'ytd'` | a month index | **an array of month indexes**. Use `isMonths()`
+and `pickedMonths()`; never test `typeof period==='number'` alone. The month popover has a
+**➕ Combine months** toggle mirroring Combine offices — tick several, they add together, the popover
+stays open while ticking, and unticking the last one drops back to This month. Finished months keep
+their full goal; only the in-progress month is pro-rated (Jul + Aug = $416K vs a $291K goal).
+
 ### Production leads, and starts has NO stretch goal
 Reversed on 2026-08-17 after they saw it — earlier versions put starts first and carried a
 *derived* starts stretch (starts goal × production stretch/goal ratio).
@@ -183,7 +200,7 @@ The app is **Home-Brace**. The mark is a **white house outline with a braces arc
   `PRACTICE` in `assets/app.js` is `""` and the header shows only the wordmark. Don't invent one.
   The root site's eight fake "Summit …" offices were renamed to the real eight: Carlsbad, Clovis,
   Hobbs, Cruces LCO, Cruces FFO, Lubbock, San Angelo, Mansfield.
-- **All** shared assets carry a `?v=…` query (currently `hb22`) — **bump it** when editing `assets/app.js`,
+- **All** shared assets carry a `?v=…` query (currently `hb24`) — **bump it** when editing `assets/app.js`,
   `assets/data.js`, `assets/styles.css`, `v1/user.js`, `v1/tour.js` or `v1/celebrate.js` —
   browsers cache them hard and will silently serve the old copy otherwise. This bit us twice.
 
