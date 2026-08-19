@@ -132,6 +132,16 @@ Verified: 2025 = $14.43M group (matches the workbook exactly), 2024 = $8.57M acr
 that have it, Mansfield/Cruces have no 2024 and say so, Cruces FFO 2025 has 0 production days and
 hides the days card. No `NaN`/`undefined` in any combination.
 
+### ONE month control — no separate "This month" button
+The period bar is now just **[Year] [📅 month picker] [Year to date]**. The picker **defaults to
+"This month · Aug"**; the current month sits in the grid marked with a teal dot (`.now` / `.nowdot`)
+and clicking it means `'mtd'` — this month pro-rated to the days worked. Finished months set a single
+month. There is deliberately no extra "This month" pill; one control does both.
+
+Watch the `'mtd'` ↔ array conversions: entering Combine from "This month" must seed the set with the
+current month index (it dropped August the first time), and leaving Combine with only the current
+month selected must return to `'mtd'`.
+
 ### Combine months
 `period` can be `'mtd'` | `'ytd'` | a month index | **an array of month indexes**. Use `isMonths()`
 and `pickedMonths()`; never test `typeof period==='number'` alone. The month popover has a
@@ -224,7 +234,7 @@ The app is **Home-Brace**. The mark is a **white house outline with a braces arc
   `PRACTICE` in `assets/app.js` is `""` and the header shows only the wordmark. Don't invent one.
   The root site's eight fake "Summit …" offices were renamed to the real eight: Carlsbad, Clovis,
   Hobbs, Cruces LCO, Cruces FFO, Lubbock, San Angelo, Mansfield.
-- **All** shared assets carry a `?v=…` query (currently `hb27`) — **bump it** when editing `assets/app.js`,
+- **All** shared assets carry a `?v=…` query (currently `hb29`) — **bump it** when editing `assets/app.js`,
   `assets/data.js`, `assets/styles.css`, `v1/user.js`, `v1/tour.js` or `v1/celebrate.js` —
   browsers cache them hard and will silently serve the old copy otherwise. This bit us twice.
 

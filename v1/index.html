@@ -142,6 +142,10 @@
   .mgrid .clr.comb{border:1px dashed var(--line);border-radius:9px;margin-top:10px}
   .mgrid .clr.comb.on{background:var(--teal);border-color:var(--teal);color:#fff}
   .mgrid .g button .tick{font-weight:800}
+  .mgrid .g button.now{border-color:var(--teal);color:var(--teal-600)}
+  .mgrid .g button .nowdot{display:inline-block;width:5px;height:5px;border-radius:50%;
+    background:var(--teal);margin-left:5px;vertical-align:middle}
+  .mgrid .g button.on .nowdot{background:#fff}
   .mgrid .clr{width:100%;margin-top:9px;border:none;background:none;font-family:inherit;font-size:12.5px;
     font-weight:700;color:var(--teal-600);cursor:pointer;padding:7px}
   .mgrid .clr:hover{text-decoration:underline}
@@ -230,8 +234,8 @@
   .foot b{color:var(--navy)}
   @media(max-width:620px){ .kpi .v{font-size:22px} }
 </style>
-<script src="user.js?v=hb27"></script>
-<script src="celebrate.js?v=hb27"></script>
+<script src="user.js?v=hb29"></script>
+<script src="celebrate.js?v=hb29"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — real numbers from the 2026 Production Dashboard workbook. You only see the offices you have access to.</div>
@@ -668,25 +672,29 @@ const OFFICES=[
     const done=live(o), cur=partial(o);
     const avail=done.filter(i=>i!==cur);                 // finished months you can look back at
     const picked=pickedMonths();
-    // 12 months in a grid — months with no figures yet are simply not clickable.
-    // Combine mode ticks several and adds them together — same idea as Combine offices.
+    // ONE month control. It defaults to this month, so there's no separate "This month"
+    // button — the current month sits in the grid marked "now", finished months are
+    // pickable, and Combine ticks several together.
     const cells=MOFULL.map((m,i)=>{
-      const ok=avail.indexOf(i)>=0, on=picked.indexOf(i)>=0;
-      return '<button'+(ok?'':' disabled')+(on?' class="on"':'')+
-        (ok?' onclick="DASH.month('+i+')"':'')+' title="'+m+'">'+
-        (combineM&&ok?'<span class="tick">'+(on?'✓':'+')+'</span> ':'')+MO[i]+'</button>';
+      const isNow = i===cur;
+      const ok = avail.indexOf(i)>=0 || isNow;
+      const on = isNow ? (period==='mtd' || picked.indexOf(i)>=0) : picked.indexOf(i)>=0;
+      return '<button'+(ok?'':' disabled')+(on?' class="on"':(isNow?' class="now"':''))+
+        (ok?' onclick="DASH.month('+i+')"':'')+' title="'+m+(isNow?' (this month so far)':'')+'">'+
+        (combineM&&ok?'<span class="tick">'+(on?'✓':'+')+'</span> ':'')+MO[i]+
+        (isNow?'<i class="nowdot" title="this month"></i>':'')+'</button>';
     }).join('');
-    const mlabel = picked.length===0 ? 'Pick a month'
+    const mlabel = period==='mtd' ? 'This month · '+(nm||MO[cur]||'')
+      : picked.length===0 ? 'Pick a month'
       : picked.length===1 ? MOFULL[picked[0]] : picked.length+' months';
-    const back='<div class="mpick'+(picked.length?' on':'')+(pickOpen?' open':'')+'">'+
+    const back='<div class="mpick on'+(pickOpen?' open':'')+'">'+
       '<button class="trg" onclick="DASH.pickOpen()" aria-haspopup="true" aria-expanded="'+(pickOpen?'true':'false')+'">'+
         '<span class="cal">📅</span><span class="txt">'+mlabel+'</span><span class="car">▼</span></button>'+
       '<div class="mgrid" onclick="event.stopPropagation()">'+
-        '<div class="gh">'+(combineM?'Tick the months to add together':'Look back at a finished month')+'</div>'+
+        '<div class="gh">'+(combineM?'Tick the months to add together':'Pick a month — ● is this month so far')+'</div>'+
         '<div class="g">'+cells+'</div>'+
         '<button class="clr comb'+(combineM?' on':'')+'" onclick="DASH.combineMonths()">'+
           (combineM?'✕ Stop combining months':'➕ Combine months')+'</button>'+
-        (picked.length?'<button class="clr" onclick="DASH.period(\'mtd\')">← Back to this month</button>':'')+
       '</div></div>';
     const hint = year!==LIVE_YEAR
       ? year+' as recorded in the workbook \u2014 production'+(o.hasStarts!==false?', starts':'')+
@@ -703,9 +711,7 @@ const OFFICES=[
         ys.map(y=>'<option value="'+y+'"'+(y===year?' selected':'')+'>'+y+(y===LIVE_YEAR?'':' \u00b7 actuals only')+'</option>').join('')+
       '</select></div>';
     // A past year is closed out — This month / month picker make no sense there.
-    const cur2 = year===LIVE_YEAR
-      ? b('mtd','This month'+(nm?' \u00b7 '+nm:''))+b('ytd','Year to date')+back
-      : b('ytd','Whole of '+year);
+    const cur2 = year===LIVE_YEAR ? back+b('ytd','Year to date') : b('ytd','Whole of '+year);
     return '<div class="periodbar">'+ysel+cur2+
       '<span class="phint">'+hint+'</span></div>';
   }
@@ -907,16 +913,30 @@ const OFFICES=[
     year:v=>{ year=Number(v); period='ytd'; pickOpen=false; combineM=false; render(); },
     month:v=>{ if(v===''||v==null)return; const i=Number(v);
       if(combineM){
-        const cur=isMonths()?period.slice():(isMonth()?[period]:[]);
+        // 'mtd' means the current month — carry it into the set instead of losing it.
+        const now=partial(shown||OFFICES[0]);
+        const cur = isMonths() ? period.slice()
+                  : isMonth() ? [period]
+                  : (period==='mtd' && now>=0) ? [now] : [];
         const k=cur.indexOf(i); if(k>=0)cur.splice(k,1); else cur.push(i);
         period = cur.length? cur : 'mtd';               // untick the last one and you're back to this month
         render(); return;                               // keep the popover open while ticking
       }
-      period=i; pickOpen=false; render(); },
+      // The current month in the grid IS "this month" — pro-rated to the days worked.
+      period = (i===partial(shown||OFFICES[0])) ? 'mtd' : i;
+      pickOpen=false; render(); },
     combineMonths:()=>{
       combineM=!combineM;
-      if(combineM){ if(isMonth()) period=[period]; }
-      else if(isMonths()) period = period.length? period[period.length-1] : 'mtd';
+      if(combineM){
+        const now=partial(shown||OFFICES[0]);
+        if(isMonth()) period=[period];
+        else if(period==='mtd' && now>=0) period=[now];   // start from this month
+      }
+      else if(isMonths()){
+        const now=partial(shown||OFFICES[0]);
+        const last=period.length? period[period.length-1] : null;
+        period = (last===null) ? 'mtd' : (last===now ? 'mtd' : last);
+      }
       render();
     },
     pickOpen:()=>{ pickOpen=!pickOpen; render(); },
@@ -931,7 +951,7 @@ const OFFICES=[
 })();
 </script>
 <script>PH.nav('dashboard');</script>
-<script src="tour.js?v=hb27"></script>
+<script src="tour.js?v=hb29"></script>
 <script>
 Tour.init([
   {sel:'.viewas', title:'You only see your offices', body:'Production numbers are sensitive, so people see <b>only the offices they\u2019re assigned to</b>. Switch to the Carlsbad manager \u2014 the group totals and the leaderboard disappear, because they aren\u2019t hers to see.'},
