@@ -48,6 +48,16 @@ Before 2026-08-17 both pages had a "Browse drive" button that just stubbed in a 
 whole thing read like a device upload — which contradicts the app's core promise ("nothing here is
 a copy"). The `DRIVE` sample tree lives in `user.js` only; do not copy it into a page.
 
+### Production leads, and starts has NO stretch goal
+Reversed on 2026-08-17 after they saw it — earlier versions put starts first and carried a
+*derived* starts stretch (starts goal × production stretch/goal ratio).
+
+- **Production is the headline number.** Left gauge, first in the DOM (so it's top on mobile),
+  first in the chart toggle, the chart's default view, and the leaderboard's rank + first columns.
+- **Starts has no stretch anywhere** — no gauge marker, no footer figure, no dotted chart line, no
+  legend entry. Their workbook has no starts stretch row and the derived one was dropped. Stretch
+  stays on **production only**. Don't reintroduce it.
+
 ### A person has no region or brand
 Both were editable fields on the Admin person record and both were **always blank and never read**.
 They also duplicate the office: Carlsbad *is* FFO in New Mexico, so a person's brand and region
@@ -74,7 +84,7 @@ with zeros so it shows up and can be filled in, rather than silently ignoring it
 | File | Purpose |
 |---|---|
 | `v1/home.html` | **Home** — the daily landing page. Personalised section tiles, an **"Updates for you"** feed filtered by role/team/location. |
-| `v1/index.html` | **Production Dashboard** — location-scoped. **Starts first, then Production**, MTD by default with a year toggle, production-days tiles, one toggled bar chart, and an all-office **leaderboard**. |
+| `v1/index.html` | **Production Dashboard** — location-scoped. **Production LEFT, Starts RIGHT** (production is their headline number), MTD by default with a year toggle + month picker, production-days tiles, one toggled bar chart that **opens on Production**, and an all-office **leaderboard ranked by production %**. |
 | `v1/production.html` | **Enter Production** — the few boxes a manager types each month. Writes back to the SharePoint workbook and **drives the dashboard**. Goals editable only with `manage`. |
 | `v1/schedule.html` | **Schedule** — weekly board: which office is open each day and which doctor is where. Enforced read-only for view-only roles. |
 | `v1/marketing.html` | **Marketing** — Kanban board (Ideas→Planned→In progress→Done, scored on arrival in Done) **plus a month calendar overview** at the bottom. |
