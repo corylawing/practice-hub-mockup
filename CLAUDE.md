@@ -132,6 +132,21 @@ Verified: 2025 = $14.43M group (matches the workbook exactly), 2024 = $8.57M acr
 that have it, Mansfield/Cruces have no 2024 and say so, Cruces FFO 2025 has 0 production days and
 hides the days card. No `NaN`/`undefined` in any combination.
 
+### Leaderboard rules
+- **Number first, percentage second** for both metrics: Office · **Production ($)** · % of goal ·
+  vs last yr · **Starts (#)** · % of goal · Days left. The absolute figure is the bold one
+  (`td.num.big`); the % supports it. Don't put a percentage before its number.
+- **Ranked by % of production goal** — top of the table is the leader. A year with no goals falls
+  back to ranking by production actual.
+- **It uses the same live-through-today data as everything else** (it calls `stats()`), so August is
+  included. Verified San Angelo YTD = $2,118,815, exactly Jan–Aug from the workbook.
+- **"Days left" = scheduled production days − completed days**, and it follows the selected period:
+  Year to date → rest of the year; a single month or combined set → only those months; a finished
+  past month or a closed year → **—**. Verified against the workbook: San Angelo 117.5 − 74.5 = 43,
+  Cruces LCO 107 − 13 = 94.
+  ⚠️ Those two rows sit at **different line numbers per tab** (Carlsbad 26 & 5, San Angelo 19 & 5,
+  Cruces LCO 23 & 5) because of the two tab layouts — always match on the label, never the row number.
+
 ### ONE month control — no separate "This month" button
 The period bar is now just **[Year] [📅 month picker] [Year to date]**. The picker **defaults to
 "This month · Aug"**; the current month sits in the grid marked with a teal dot (`.now` / `.nowdot`)
@@ -234,7 +249,7 @@ The app is **Home-Brace**. The mark is a **white house outline with a braces arc
   `PRACTICE` in `assets/app.js` is `""` and the header shows only the wordmark. Don't invent one.
   The root site's eight fake "Summit …" offices were renamed to the real eight: Carlsbad, Clovis,
   Hobbs, Cruces LCO, Cruces FFO, Lubbock, San Angelo, Mansfield.
-- **All** shared assets carry a `?v=…` query (currently `hb29`) — **bump it** when editing `assets/app.js`,
+- **All** shared assets carry a `?v=…` query (currently `hb30`) — **bump it** when editing `assets/app.js`,
   `assets/data.js`, `assets/styles.css`, `v1/user.js`, `v1/tour.js` or `v1/celebrate.js` —
   browsers cache them hard and will silently serve the old copy otherwise. This bit us twice.
 

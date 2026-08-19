@@ -99,6 +99,7 @@
   table.lb{width:100%;border-collapse:collapse;min-width:680px}
   table.lb th{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--soft);font-weight:700;text-align:left;padding:9px 10px;border-bottom:1px solid var(--line)}
   table.lb td{padding:11px 10px;border-bottom:1px solid var(--line);font-size:14px}
+  table.lb td.num.big{font-weight:800;color:var(--navy)}   /* the figure leads, the % supports it */
   table.lb tr:last-child td{border-bottom:none}
   table.lb tbody tr{cursor:pointer}
   table.lb tbody tr:hover td{background:#f2fbfa}
@@ -234,8 +235,8 @@
   .foot b{color:var(--navy)}
   @media(max-width:620px){ .kpi .v{font-size:22px} }
 </style>
-<script src="user.js?v=hb29"></script>
-<script src="celebrate.js?v=hb29"></script>
+<script src="user.js?v=hb30"></script>
+<script src="celebrate.js?v=hb30"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — real numbers from the 2026 Production Dashboard workbook. You only see the offices you have access to.</div>
@@ -509,7 +510,15 @@ const OFFICES=[
     const perDay = comp? a/comp : 0, needPerDay = comp? g/comp : 0;
     return {L,a,g,s,l,perDay,needPerDay,pct:g?a/g:0,spct:s?a/s:0,yoy:l?a/l:0,vgoal:a-g,vstretch:a-s,
             sched:schd, done:comp,
-            daysLeft:o.days.reduce((x,y)=>x+y,0)-o.done.reduce((x,y)=>x+y,0)};
+            // "Days left" = scheduled production days (workbook line 26) minus completed
+            // days (line 5). It follows the period chosen: a month or a combined set counts
+            // only those months; Year to date counts the rest of the year. A closed-out past
+            // year has none left.
+            daysLeft:(function(){
+              if(o.noGoals) return 0;
+              if(period==='ytd') return o.days.reduce((x,y)=>x+y,0)-o.done.reduce((x,y)=>x+y,0);
+              return L.reduce((x,i)=>x+Math.max(0,(o.days[i]||0)-(o.done[i]||0)),0);
+            })()};
   }
   function group(list){
     const z=()=>Array(12).fill(0);
@@ -809,16 +818,19 @@ const OFFICES=[
         '<td class="rk'+(i===0?' top':'')+'">'+(i===0?'🏆':i+1)+'</td>'+
         '<td><div class="onm">'+r.o.n+'<span class="br">'+r.o.brand+'</span></div>'+
           '<div class="pbar"><i class="'+cls+'" style="width:'+pctw+'%"></i></div></td>'+
-        '<td class="num">'+pc(t.pct)+'</td>'+
-        '<td class="num '+(t.vgoal>=0?'g':'b')+'">'+(t.vgoal>=0?'+':'')+full(t.vgoal)+'</td>'+
-        '<td class="num '+(t.yoy>=1?'g':'b')+'">'+pc(t.yoy)+'</td>'+
-        '<td class="num">'+pc(r.s.pct)+'</td>'+
-        '<td class="num '+(r.s.v>=0?'g':'b')+'">'+(r.s.v>=0?'+':'')+Math.round(r.s.v)+'</td>'+
-        '<td class="dleft">'+t.daysLeft+'</td></tr>';
+        '<td class="num big">'+full(t.a)+'</td>'+
+        '<td class="num">'+(r.o.noGoals?'\u2014':pc(t.pct))+'</td>'+
+        '<td class="num '+(t.yoy>=1?'g':'b')+'">'+(t.l?pc(t.yoy):'\u2014')+'</td>'+
+        '<td class="num big">'+Math.round(r.s.a)+'</td>'+
+        '<td class="num">'+(r.o.noGoals||!r.s.g?'\u2014':pc(r.s.pct))+'</td>'+
+        '<td class="dleft">'+(t.daysLeft||'\u2014')+'</td></tr>';
     }).join('');
     return '<div class="card"><h2>Leaderboard</h2>'+
-      '<div class="sub">Best performance on top, ranked by <b>% of production goal</b>. “Days left” = production days remaining this year.</div>'+
-      '<div class="lb-scroll"><table class="lb"><thead><tr><th></th><th>Office</th><th>Prod %</th><th>Prod vs goal</th><th>vs last yr</th><th>Starts %</th><th>Starts ±</th><th>Days left</th></tr></thead>'+
+      '<div class="sub">Ranked by <b>% of production goal</b> \u2014 top of the table is the leader. '+
+        '\u201cDays left\u201d = production days scheduled minus days worked, for whatever period is selected above.</div>'+
+      '<div class="lb-scroll"><table class="lb"><thead><tr><th></th><th>Office</th>'+
+        '<th>Production</th><th>% of goal</th><th>vs last yr</th>'+
+        '<th>Starts</th><th>% of goal</th><th>Days left</th></tr></thead>'+
       '<tbody>'+body+'</tbody></table></div></div>';
   }
   function render(){
@@ -951,7 +963,7 @@ const OFFICES=[
 })();
 </script>
 <script>PH.nav('dashboard');</script>
-<script src="tour.js?v=hb29"></script>
+<script src="tour.js?v=hb30"></script>
 <script>
 Tour.init([
   {sel:'.viewas', title:'You only see your offices', body:'Production numbers are sensitive, so people see <b>only the offices they\u2019re assigned to</b>. Switch to the Carlsbad manager \u2014 the group totals and the leaderboard disappear, because they aren\u2019t hers to see.'},
