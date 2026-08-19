@@ -21,7 +21,7 @@
      phone:'(575) 555-1010', emp:'E-1010', status:'Active', color:'#149B96', offices:['Carlsbad'],
      about:'Office manager and clinic lead at Carlsbad.',
      can:{dashboard:'view',production:'edit',schedule:'edit',marketing:'view',documents:'edit',team:'view',admin:'none'}},
-    {id:'doctor', first:'Carla', last:'Coehlo', role:'Associate Doctor', title:'Associate Doctor \u00b7 rotates', dr:true,
+    {id:'doctor', first:'Carla', last:'Coelho', role:'Associate Doctor', title:'Associate Doctor \u00b7 rotates', dr:true,
      teams:['Doctors'], loc:'Rotates', region:'NM', brand:'FFO',
      phone:'(575) 555-1020', emp:'E-1020', status:'Active', color:'#6b3fd0', offices:['Carlsbad','Hobbs'],
      about:'Associate doctor. I rotate between offices.',

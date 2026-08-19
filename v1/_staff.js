@@ -17,7 +17,7 @@
    {n:"Maria Pando",mail:"",loc:"Hobbs",st:"NM",brand:"FFO",role:"Clinical Asst",team:"Staff"},
    {n:"Elizabeth Reyes",mail:"liz@farnsworthorthodontics.com",loc:"Hobbs",st:"NM",brand:"FFO",role:"TC",team:"Staff"},
    {n:"Yessenia Romaniz",mail:"yessenia@farnsworthorthodontics.com",loc:"Hobbs",st:"NM",brand:"FFO",role:"OM/Clincal Asst",team:"Staff"},
-   {n:"Dr. Carla Coehlo",mail:"",loc:"",st:"",brand:"",role:"Associate Doctor",team:"Staff"},
+   {n:"Dr. Carla Coelho",mail:"",loc:"",st:"",brand:"",role:"Associate Doctor",team:"Staff"},
    {n:"Rebecca Fluhman",mail:"becca@farnsworthorthodontics.com",loc:"Lubbock",st:"TX",brand:"FFO",role:"OM/TC",team:"Staff"},
    {n:"Shayna Garza",mail:"",loc:"Lubbock",st:"TX",brand:"FFO",role:"Clinic Lead",team:"Staff"},
    {n:"Melissa Hernandez",mail:"",loc:"Lubbock",st:"TX",brand:"FFO",role:"Clinical Asst",team:"Staff"},

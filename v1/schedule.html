@@ -58,6 +58,11 @@
   .sbtn.ghost{background:#fff;color:var(--navy);border:1px solid var(--line);font-weight:600}
   .sbtn.ghost:hover{border-color:var(--teal);color:var(--teal-600)}
   .sbtn.tiny{padding:5px 11px;font-size:12px}
+  .s-note{font-weight:600;text-transform:none;letter-spacing:0;color:var(--soft);font-size:11.5px}
+  .pk.alsoat{border-style:dashed}
+  .pk.alsoat small{display:block;font-weight:600;font-size:10.5px;opacity:.8}
+  .clash{background:#FFF6E9;border:1px solid #f0d9ae;color:#7a4d0a;border-radius:9px;
+    padding:9px 12px;font-size:12.5px;margin:8px 0 0;line-height:1.5}
   .filters{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:12px 15px;margin-bottom:13px}
   .frow{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
   .frow + .frow{margin-top:9px;padding-top:9px;border-top:1px solid var(--line)}
@@ -202,7 +207,7 @@
     .addday{padding:9px 11px;font-size:12px}
   }
 </style>
-<script src="user.js?v=hb14"></script>
+<script src="user.js?v=hb15"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — sample staff schedule for validation. Live version = one Microsoft List the practice maintains.</div>
@@ -271,7 +276,7 @@
   // shows up in both — plus the dashboard, documents, team and marketing.
   let locations=PH.locations();
   // Doctors have no colour now — a day takes the colour of its office.
-  let people=[{n:'Dr. Farnsworth'},{n:'Dr. Brimhall'},{n:'Dr. Coehlo'},{n:'Dr. McBeth'}];
+  let people=[{n:'Dr. Farnsworth'},{n:'Dr. Brimhall'},{n:'Dr. Coelho'},{n:'Dr. McBeth'}];
 
   const TZS=['Eastern Time','Central Time','Mountain Time','Mountain Time (Arizona, no DST)','Pacific Time','Alaska Time','Hawaii Time'];
   const DOW=['Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -352,10 +357,11 @@
     const t=(iso(d)===iso(TODAY)?' today':'');
     const click=canEdit()?' onclick="PS.open(\''+esc(l.n)+'\',\''+iso(d)+'\')"':'';
     if(cell&&cell.closed) return '<td class="cell closedc'+t+'"'+click+'><span class="closed">Closed</span></td>';
-    if(cell&&cell.p!=null&&people[cell.p]){
-      const dim=(fDoc!==null&&fDoc!==cell.p)?' dim':'';
+    const ds=docsOf(cell);
+    if(ds.length){
+      const dim=(fDoc!==null&&ds.indexOf(fDoc)<0)?' dim':'';
       return '<td class="cell'+t+dim+'" style="background:'+c.bg+'"'+click+'>'+
-        '<span class="who" style="color:'+c.fg+'">'+people[cell.p].n+'</span>'+
+        ds.map(i=>'<span class="who" style="color:'+c.fg+'">'+people[i].n+'</span>').join('')+
         '<span class="hrs" style="color:'+c.fg+'">'+fmt(cell.s)+'–'+fmt(cell.e)+'</span></td>';
     }
     if(cell&&cell.ydot) return '<td class="cell ydotc'+t+(fDoc!==null?' dim':'')+'"'+click+'><span class="ydot"><span class="ydmark"></span> Yellow Dot Day</span></td>';
@@ -389,9 +395,11 @@
         const cell=cellOf(l,d), c=colOf(l.color), open=openOn(l,d);
         if(cell&&cell.closed) return;
         const click=canEdit()?' onclick="PS.open(\''+esc(l.n)+'\',\''+iso(d)+'\')"':'';
-        if(cell&&cell.p!=null&&people[cell.p]){
-          if(fDoc!==null&&fDoc!==cell.p) return;
-          ents+='<button class="ent" style="background:'+c.bg+';color:'+c.fg+'"'+click+'>'+l.n+'<small>'+people[cell.p].n+'</small></button>';
+        const mds=docsOf(cell);
+        if(mds.length){
+          if(fDoc!==null&&mds.indexOf(fDoc)<0) return;
+          ents+='<button class="ent" style="background:'+c.bg+';color:'+c.fg+'"'+click+'>'+l.n+
+            '<small>'+mds.map(i=>people[i].n).join(', ')+'</small></button>';
         } else if(cell&&cell.ydot){
           if(fDoc!==null) return;
           ents+='<button class="ent yd"'+click+'>'+l.n+'<small><span class="ydmark"></span>Yellow Dot Day</small></button>';
@@ -422,8 +430,14 @@
       const day=sched[iso(d)];
       if(day) locations.forEach(l=>{
         const c=day[l.n];
-        if(c&&c.p!=null){ perDoc[c.p]=(perDoc[c.p]||0)+1; perLoc[l.n]=(perLoc[l.n]||0)+1;
-          perPair[c.p+'|'+l.n]=(perPair[c.p+'|'+l.n]||0)+1; }
+        const ds=docsOf(c);
+        if(ds.length){
+          perLoc[l.n]=(perLoc[l.n]||0)+1;              // the OFFICE had a doctor-day
+          ds.forEach(pi=>{                             // and each doctor worked it
+            perDoc[pi]=(perDoc[pi]||0)+1;
+            perPair[pi+'|'+l.n]=(perPair[pi+'|'+l.n]||0)+1;
+          });
+        }
       });
       d=addDays(d,1);
     }
@@ -469,7 +483,7 @@
       if(!openOn(l,d))return; const c=cellOf(l,d);
       if(c&&c.closed)return;
       total++;
-      if(!(c&&c.p!=null)){ need++; if(c&&c.ydot) ydotN++; else undecided++; }
+      if(!docsOf(c).length){ need++; if(c&&c.ydot) ydotN++; else undecided++; }
     }));
     const st=el('status');
     st.className='status '+(need===0?'ok':'warn');
@@ -486,10 +500,19 @@
 
   /* ---------- day editor ---------- */
   let cur=null;
+  /* A day at an office can have SEVERAL doctors. Cells store `ps` (an array of doctor
+     indexes); older saved cells store a single `p`, so read everything through docsOf()
+     and nobody's existing rota breaks. */
+  function docsOf(cell){
+    if(!cell) return [];
+    if(Array.isArray(cell.ps)) return cell.ps.filter(i=>people[i]);
+    return (cell.p!=null && people[cell.p]) ? [cell.p] : [];
+  }
+  const docNames=cell=>docsOf(cell).map(i=>people[i].n);
   function busyAt(dateStr,pi,exceptLoc){
     const day=sched[dateStr]||{};
     for(const ln in day){ if(ln===exceptLoc)continue;
-      const c=day[ln]; if(c&&c.p===pi) return ln; }
+      if(docsOf(day[ln]).indexOf(pi)>=0) return ln; }
     return null;
   }
   // Clicking "+ Add" on a day: choose the office first, then the doctor.
@@ -498,8 +521,8 @@
     const d=parseISO(dateStr);
     const rows=locations.map(l=>{
       const c=colOf(l.color), h=openOn(l,d), cell=cellOf(l,d);
-      const has = cell&&cell.p!=null&&people[cell.p];
-      const note = has ? 'already '+people[cell.p].n : (h? 'open '+fmt(h.s)+'\u2013'+fmt(h.e) : 'not normally open');
+      const hasN = docNames(cell);
+      const note = hasN.length ? 'already '+hasN.join(', ') : (h? 'open '+fmt(h.s)+'\u2013'+fmt(h.e) : 'not normally open');
       return '<div class="offrow" style="background:'+c.bg+';border-color:'+c.dot+'">'+
         '<button class="offpick" style="color:'+c.fg+'" onclick="PS.open(\''+esc(l.n)+'\',\''+dateStr+'\')">'+
           '<span class="dot" style="background:'+c.dot+'"></span><b>'+l.n+'</b><small>'+note+'</small></button>'+
@@ -523,22 +546,31 @@
     if(!canEdit())return;
     const l=loc(locName), d=parseISO(dateStr), c=cellOf(l,d), h=openOn(l,d)||WK;
     cur={loc:locName,date:dateStr,
-      tmp:{p:(c&&c.p!=null)?c.p:null, s:(c&&c.s!=null)?c.s:h.s, e:(c&&c.e!=null)?c.e:h.e,
+      tmp:{ps:docsOf(c).slice(), s:(c&&c.s!=null)?c.s:h.s, e:(c&&c.e!=null)?c.e:h.e,
            ydot:!!(c&&c.ydot), closed:!!(c&&c.closed)}};
     renderDay();
   }
   function renderDay(){
     const l=loc(cur.loc), d=parseISO(cur.date), t=cur.tmp, cc=colOf(l.color);
+    // A doctor booked elsewhere that day is FLAGGED, not blocked. Half days exist precisely
+    // so someone can do 8–2 at one office and the afternoon at another, and with 4 doctors
+    // across 8 offices a hard block made it impossible to ever put two in one office.
+    const clashes=[];
     const picks=people.map((p,i)=>{
       const busy=busyAt(cur.date,i,cur.loc);
-      if(busy) return '<button class="pk busy" disabled>'+p.n+'<small>at '+busy+'</small></button>';
-      return '<button class="pk'+(t.p===i?' on':'')+'" onclick="PS.pickDoc('+i+')">'+p.n+'</button>';
+      const on=t.ps.indexOf(i)>=0;
+      if(busy && on) clashes.push(p.n+' is also at '+busy);
+      return '<button class="pk'+(on?' on':'')+(busy?' alsoat':'')+'" onclick="PS.pickDoc('+i+')">'+
+        p.n+(busy?'<small>also at '+busy+'</small>':'')+'</button>';
     }).join('');
     openModal(
       '<div class="m-top"><span style="width:14px;height:14px;border-radius:50%;background:'+cc.dot+'"></span>'+
         '<h3>'+l.n+' · '+DOW[dowIdx(d)]+' '+(d.getMonth()+1)+'/'+d.getDate()+'</h3><button class="x" onclick="PS.close()">×</button></div>'+
       '<div class="m-body">'+
-        '<div class="s-lab">Who is working?</div><div class="picks">'+picks+'</div>'+
+        '<div class="s-lab">Who is working? <span class="s-note">tap as many as you need</span></div>'+
+        '<div class="picks">'+picks+'</div>'+
+        (t.ps.length>1?'<p class="hint" style="margin:6px 0 0">'+t.ps.length+' doctors at '+l.n+' that day \u2014 it counts as one doctor-day for the office and a day each for '+t.ps.map(i=>people[i].n).join(' and ')+'.</p>':'')+
+        (clashes.length?'<p class="clash">\u26a0\ufe0f '+clashes.join(' \u00b7 ')+' the same day. Fine if they\u2019re splitting the day \u2014 just check the hours.</p>':'')+
         '<div class="s-lab">Hours</div>'+
         '<div class="dtimes"><input type="time" value="'+fmt24(t.s)+'" onchange="PS.setT(\'s\',this.value)"><span>to</span>'+
           '<input type="time" value="'+fmt24(t.e)+'" onchange="PS.setT(\'e\',this.value)">'+
@@ -555,23 +587,26 @@
         '<button class="sbtn ghost" onclick="PS.close()">Cancel</button>'+
         '<button class="sbtn" onclick="PS.saveDay()">Save</button></div>');
   }
-  function pickDoc(i){ const t=cur.tmp; t.p=(t.p===i?null:i); t.ydot=false; t.closed=false; renderDay(); }
+  // Toggle — tap as many doctors as are in that office that day.
+  function pickDoc(i){ const t=cur.tmp; const k=t.ps.indexOf(i);
+    if(k>=0) t.ps.splice(k,1); else t.ps.push(i);
+    t.ydot=false; t.closed=false; renderDay(); }
   function setT(k,v){ cur.tmp[k]=hm(v); }
   function halfDay(){ cur.tmp.s=HALF.s; cur.tmp.e=HALF.e; renderDay(); }
   function fullDay(){ cur.tmp.s=WK.s; cur.tmp.e=WK.e; renderDay(); }
   // their ask: de-selecting a Yellow Dot Day closes the office
   function markYdot(){ const t=cur.tmp;
-    if(t.ydot){ t.ydot=false; t.closed=true; } else { t.ydot=true; t.closed=false; t.p=null; } renderDay(); }
+    if(t.ydot){ t.ydot=false; t.closed=true; } else { t.ydot=true; t.closed=false; t.ps=[]; } renderDay(); }
   function markClosed(){ const t=cur.tmp;
-    if(t.closed){ t.closed=false; } else { t.closed=true; t.ydot=false; t.p=null; } renderDay(); }
+    if(t.closed){ t.closed=false; } else { t.closed=true; t.ydot=false; t.ps=[]; } renderDay(); }
   function clearDay(){ setCell(loc(cur.loc),parseISO(cur.date),null); closeModal(); refresh(); }
   function saveDay(){
     const t=cur.tmp, l=loc(cur.loc), d=parseISO(cur.date);
     if(t.closed) setCell(l,d,{closed:true});
     else if(t.ydot) setCell(l,d,{ydot:true});
-    else if(t.p!=null){
+    else if(t.ps.length){
       if(t.e<=t.s){ el('dhint').textContent='End time must be after the start time.'; return; }
-      setCell(l,d,{p:t.p,s:t.s,e:t.e});
+      setCell(l,d,{ps:t.ps.slice(),s:t.s,e:t.e});
     } else setCell(l,d,null);
     closeModal(); refresh();
   }
@@ -656,9 +691,10 @@
   function delPerson(){
     const i=tmpP.i;
     Object.keys(sched).forEach(k=>Object.keys(sched[k]).forEach(ln=>{
-      const c=sched[k][ln];
-      if(c&&c.p===i) delete sched[k][ln];
-      else if(c&&c.p>i) c.p--;
+      const c=sched[k][ln]; if(!c) return;
+      const ds=docsOf(c).filter(x=>x!==i).map(x=>x>i?x-1:x);
+      delete c.p;                                   // collapse legacy shape as we go
+      if(ds.length) c.ps=ds; else delete sched[k][ln];
     }));
     people.splice(i,1); if(fDoc===i)fDoc=null; save(); closeModal(); refresh();
   }
@@ -710,7 +746,7 @@
 })();
 </script>
 <script>PH.nav('schedule');</script>
-<script src="tour.js?v=hb14"></script>
+<script src="tour.js?v=hb15"></script>
 <script>
 Tour.init([
   {sel:'#viewseg', title:'Week or month', body:'<b>Week</b> is the day-to-day working view. <b>Month</b> shows the whole month at a glance, with every office in its own colour.'},

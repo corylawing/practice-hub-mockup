@@ -48,6 +48,20 @@ Before 2026-08-17 both pages had a "Browse drive" button that just stubbed in a 
 whole thing read like a device upload — which contradicts the app's core promise ("nothing here is
 a copy"). The `DRIVE` sample tree lives in `user.js` only; do not copy it into a page.
 
+### A day can have SEVERAL doctors at one office
+Cells store **`ps`** — an array of doctor indexes. Older saved cells hold a single `p`, so
+**everything reads through `docsOf(cell)`** in `schedule.html`; never touch `cell.p` directly.
+The day editor's doctor picker is multi-select ("tap as many as you need"); week grid stacks the
+names, month view joins them with commas, and the counters credit **one doctor-day to the office
+and one day to each doctor**.
+
+**Being booked elsewhere is a warning, not a block.** It used to disable the button — but with
+4 doctors across 8 offices every doctor is placed on a normal weekday, which made it impossible to
+ever put two in one office. It also contradicted the **half day (8–2)** feature, which exists so
+someone can split a day between two offices. The chip now shows "also at Lubbock" and an amber
+line appears under the picker. (The seeded rota already double-books Coelho on one Wednesday, so
+the hard block was inconsistent with the app's own data anyway.)
+
 ### Production leads, and starts has NO stretch goal
 Reversed on 2026-08-17 after they saw it — earlier versions put starts first and carried a
 *derived* starts stretch (starts goal × production stretch/goal ratio).
@@ -133,7 +147,7 @@ The app is **Home-Brace**. The mark is a **white house outline with a braces arc
   `PRACTICE` in `assets/app.js` is `""` and the header shows only the wordmark. Don't invent one.
   The root site's eight fake "Summit …" offices were renamed to the real eight: Carlsbad, Clovis,
   Hobbs, Cruces LCO, Cruces FFO, Lubbock, San Angelo, Mansfield.
-- **All** shared assets carry a `?v=…` query (currently `hb14`) — **bump it** when editing `assets/app.js`,
+- **All** shared assets carry a `?v=…` query (currently `hb15`) — **bump it** when editing `assets/app.js`,
   `assets/data.js`, `assets/styles.css`, `v1/user.js`, `v1/tour.js` or `v1/celebrate.js` —
   browsers cache them hard and will silently serve the old copy otherwise. This bit us twice.
 
@@ -151,7 +165,7 @@ sheet). Note **many staff hold dual roles** — `role` is often a combination:
 |---|---|---|---|
 | `admin` | **Heather Beal** | **COO (Admin)** | everything `manage` |
 | `om` | Lily Rico | OM / Clinic Lead, Carlsbad | production `edit`, schedule `edit` |
-| `doctor` | Dr. Carla Coehlo | Associate Doctor, rotates | dashboard `view`, schedule **`view`** |
+| `doctor` | Dr. Carla Coelho | Associate Doctor, rotates | dashboard `view`, schedule **`view`** |
 | `tc` | Elizabeth Reyes | TC, Hobbs | schedule `view`, documents `add` |
 | `staff` | Serenity Gonzales | Clinical Assistant, Carlsbad | schedule `view`, documents `view` |
 
