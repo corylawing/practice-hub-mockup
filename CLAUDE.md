@@ -132,6 +132,19 @@ Verified: 2025 = $14.43M group (matches the workbook exactly), 2024 = $8.57M acr
 that have it, Mansfield/Cruces have no 2024 and say so, Cruces FFO 2025 has 0 production days and
 hides the days card. No `NaN`/`undefined` in any combination.
 
+### "Main goal" must say WHICH goal it is
+Heather flagged (2026-08-17) that the label meant two different things: a **part-month** goal on
+offices that had logged days, and the **whole month's** goal on offices that hadn't. She read $45K vs
+$227K and reasonably concluded one of them was a daily figure.
+
+- The footer label is now explicit: **"Goal for 2 of 9 days"** when pro-rated, **"Whole-month goal"**
+  when days aren't logged, plain **"Goal"** for a finished period. Never just "Main goal".
+- **A tile with no days logged is `pending`** — it shows **—** instead of a %, an empty track, an
+  amber top border and *"⏳ Enter days worked to see whether this is on pace."* Comparing 2 days of
+  production against a 9-day goal was rendering a red **9%** and *"$205,505 behind goal"* that was
+  simply untrue.
+- Currently only **Clovis and Hobbs** are in that state (August production entered, `done`=0).
+
 ### Leaderboard rules
 - **Number first, percentage second** for both metrics: Office · **Production ($)** · % of goal ·
   vs last yr · **Starts (#)** · % of goal · Days left. The absolute figure is the bold one
@@ -249,7 +262,7 @@ The app is **Home-Brace**. The mark is a **white house outline with a braces arc
   `PRACTICE` in `assets/app.js` is `""` and the header shows only the wordmark. Don't invent one.
   The root site's eight fake "Summit …" offices were renamed to the real eight: Carlsbad, Clovis,
   Hobbs, Cruces LCO, Cruces FFO, Lubbock, San Angelo, Mansfield.
-- **All** shared assets carry a `?v=…` query (currently `hb30`) — **bump it** when editing `assets/app.js`,
+- **All** shared assets carry a `?v=…` query (currently `hb31`) — **bump it** when editing `assets/app.js`,
   `assets/data.js`, `assets/styles.css`, `v1/user.js`, `v1/tour.js` or `v1/celebrate.js` —
   browsers cache them hard and will silently serve the old copy otherwise. This bit us twice.
 

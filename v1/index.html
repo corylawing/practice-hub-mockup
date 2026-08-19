@@ -170,6 +170,9 @@
   .ypick select{border:none;background:none;font-family:inherit;font-size:13.5px;font-weight:700;
     color:var(--navy);height:36px;padding-right:4px;cursor:pointer}
   .gauge.flat{border-top-color:var(--soft)}
+  .gauge.pend{border-top-color:var(--amber)}
+  .g-pct.pend{color:var(--soft)}
+  .g-verdict.pend{color:#7a4d0a}
   .g-nogoal{font-size:12px;font-weight:700;color:var(--soft);background:var(--canvas);
     border:1px solid var(--line);border-radius:999px;padding:3px 10px}
   .g-verdict.flatv{color:var(--soft);font-weight:600}
@@ -235,8 +238,8 @@
   .foot b{color:var(--navy)}
   @media(max-width:620px){ .kpi .v{font-size:22px} }
 </style>
-<script src="user.js?v=hb30"></script>
-<script src="celebrate.js?v=hb30"></script>
+<script src="user.js?v=hb31"></script>
+<script src="celebrate.js?v=hb31"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — real numbers from the 2026 Production Dashboard workbook. You only see the offices you have access to.</div>
@@ -583,6 +586,8 @@ const OFFICES=[
   }
   const band=p=>p>=1?'ok':(p>=0.9?'near':'low');
   function gauge(opts){
+    // Pending = production entered but no days logged. Don't paint it red; we don't know.
+    if(opts.pending) opts=Object.assign({},opts,{pct:null});
     if(opts.noGoal){
       return '<div class="gauge flat">'+
         '<div class="g-top"><span class="g-ttl">'+opts.icon+' '+opts.title+'</span>'+
@@ -591,7 +596,8 @@ const OFFICES=[
         '<div class="g-verdict flatv">'+opts.verdict+'</div>'+
         '<div class="g-foot">'+opts.footer+'</div></div>';
     }
-    const cls=band(opts.pct);
+    const isPending = opts.pct===null;
+    const cls = isPending ? 'pend' : band(opts.pct);
     // Keep the goal mark readable even at 400%: the scale never stretches past ~1.35x the
     // furthest goal, and anything beyond that fills the bar and shows an "over" flag.
     const far=Math.max(1,opts.stretchPct||0);
@@ -605,10 +611,10 @@ const OFFICES=[
     if(sp!==null) marks+='<div class="mk str" style="left:'+sp+'%"></div>'+lab(sp,'STRETCH','str',close);
     return '<div class="gauge '+cls+'">'+
       '<div class="g-top"><span class="g-ttl">'+opts.icon+' '+opts.title+'</span>'+
-        '<span class="g-pct '+cls+'">'+pc(opts.pct)+'</span></div>'+
+        '<span class="g-pct '+cls+'">'+(isPending?'\u2014':pc(opts.pct))+'</span></div>'+
       '<div class="g-big">'+opts.big+'</div><div class="g-sub">'+opts.sub+'</div>'+
-      '<div class="track"><div class="fill '+cls+'" style="width:'+w(opts.pct)+'%"></div>'+marks+
-        (over?'<span class="overflag">'+pc(opts.pct)+' \u25b6</span>':'')+'</div>'+
+      '<div class="track"><div class="fill '+cls+'" style="width:'+(isPending?0:w(opts.pct))+'%"></div>'+marks+
+        ((!isPending&&over)?'<span class="overflag">'+pc(opts.pct)+' \u25b6</span>':'')+'</div>'+
       '<div class="g-verdict '+cls+'">'+opts.verdict+'</div>'+
       '<div class="g-foot">'+opts.footer+'</div></div>';
   }
@@ -617,18 +623,29 @@ const OFFICES=[
     const c0=partial(o);
     const paced = inProgress(o) && c0>=0 && o.done[c0]>0;
     const par = paced ? ' pace' : ' goal';
+    // Heather flagged this: "Main goal" meant two different things depending on whether the
+    // office had logged its days — a part-month goal on some tiles, the whole month's on
+    // others. Say which one it is, every time.
+    const goalLab = paced ? 'Goal for '+o.done[c0]+' of '+o.days[c0]+' days'
+                  : inProgress(o) ? 'Whole-month goal' : 'Goal';
+    // With no days logged we can't say whether they're behind — comparing a part month to a
+    // whole month's goal produced a red 9% and "$205,505 behind goal" that simply wasn't true.
+    const pending = inProgress(o) && c0>=0 && !o.done[c0];
     const sVerdict = o.noGoals
       ? (o.hasStarts===false ? 'Starts aren\u2019t on file for '+year
          : 'Worked out from '+year+'\u2019s production and average case fee.')
+      : pending ? '\u23f3 Enter days worked to see whether this is on pace.'
       : (st.v>=0 ? '\u2705 '+Math.abs(Math.round(st.v))+' starts ahead of'+par
                  : '\u26a0\ufe0f '+Math.abs(Math.round(st.v))+' starts behind'+par);
     const pVerdict = o.noGoals
       ? year+' actuals from the workbook \u2014 no goals were recorded for that year.'
+      : pending ? '\u23f3 Enter days worked to see whether this is on pace.'
       : (t.vgoal>=0 ? '\u2705 '+full(Math.abs(t.vgoal))+' ahead of'+par
                     : '\u26a0\ufe0f '+full(Math.abs(t.vgoal))+' behind'+par);
     const dayNote = inProgress(o) ? (()=>{const c=partial(o);
       return o.done[c] ? ' \u00b7 '+o.done[c]+' of '+o.days[c]+' days'
                        : ' \u00b7 days not logged yet';})() : '';
+
     // Production LEFT, Starts RIGHT — production is the number they lead with.
     // No stretch on starts: their workbook has no starts stretch goal, and the derived one
     // was dropped on request (2026-08-17). Stretch stays on production only.
@@ -636,15 +653,17 @@ const OFFICES=[
       gauge({icon:'\ud83d\udcb0',title:'Production',big:money(t.a),noGoal:!!o.noGoals,
         sub:(period==='mtd'?monthName(o)+' so far'+dayNote:(isMonth()?MOFULL[period]:'Year so far'))+' \u00b7 vs last year '+pc(t.yoy),
         pct:t.pct,stretchPct:(t.g?t.s/t.g:0),verdict:pVerdict,
-        footer:'<span>Main goal <b>'+money(t.g)+'</b></span><span>Stretch <b>'+money(t.s)+'</b> ('+pc(t.spct)+' there)</span>'+
+        pending:pending,
+        footer:'<span>'+goalLab+' <b>'+money(t.g)+'</b></span><span>Stretch <b>'+money(t.s)+'</b> ('+pc(t.spct)+' there)</span>'+
                  '<span>Per day <b>'+money(t.perDay)+'</b> vs <b>'+money(t.needPerDay)+'</b> needed</span>'+
-                 (paced?'<span style="color:var(--teal-600)">goals scaled to days worked</span>'
-                   :(inProgress(o)?'<span style="color:var(--amber)">whole-month goal \u2014 days worked not logged yet</span>':''))})+
+                 (paced?'<span style="color:var(--teal-600)">goal scaled to the days worked</span>'
+                   :(pending?'<span style="color:var(--amber)">no days logged yet \u2014 shown against the whole month</span>':''))})+
       gauge({icon:'\ud83e\uddb7',title:'Starts',
         big:(o.noGoals&&o.hasStarts===false)?'\u2014':Math.round(st.a)+' starts',noGoal:!!o.noGoals,
         sub:(period==='mtd'?monthName(o)+' so far'+dayNote:(isMonth()?MOFULL[period]:'Year so far'))+' \u00b7 '+st.perDay.toFixed(1)+' a day',
         pct:st.pct,verdict:sVerdict,
-        footer:'<span>Main goal <b>'+Math.round(st.g)+'</b></span>'+
+        pending:pending,
+        footer:'<span>'+goalLab+' <b>'+Math.round(st.g)+'</b></span>'+
           '<span>Per day <b>'+st.perDay.toFixed(1)+'</b> vs <b>'+st.needPerDay.toFixed(1)+'</b> needed</span>'+
           '<span>'+st.days+' days worked</span>'})+
     '</div>';
@@ -963,7 +982,7 @@ const OFFICES=[
 })();
 </script>
 <script>PH.nav('dashboard');</script>
-<script src="tour.js?v=hb30"></script>
+<script src="tour.js?v=hb31"></script>
 <script>
 Tour.init([
   {sel:'.viewas', title:'You only see your offices', body:'Production numbers are sensitive, so people see <b>only the offices they\u2019re assigned to</b>. Switch to the Carlsbad manager \u2014 the group totals and the leaderboard disappear, because they aren\u2019t hers to see.'},
