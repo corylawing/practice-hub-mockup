@@ -48,6 +48,25 @@ Before 2026-08-17 both pages had a "Browse drive" button that just stubbed in a 
 whole thing read like a device upload — which contradicts the app's core promise ("nothing here is
 a copy"). The `DRIVE` sample tree lives in `user.js` only; do not copy it into a page.
 
+### Month view is Mon–Fri, offices A–Z, all 8 visible without scrolling
+Their goal: *see at a glance that every office has a doctor on every day, without visual overwhelm
+or scrolling inside a day.*
+
+- **Weekend columns removed** — `DOW` is Mon–Fri, `openOn()` guards `i<5`, `weekDays()` returns 5,
+  and the month grid is `repeat(5,1fr)`. Five columns ≈ 231px each, so all eight offices fit.
+- **Build the grid from WEEKDAYS.** Pad from the first *weekday* of the month (August 2026 starts on
+  a Saturday, so the grid begins at Monday the 3rd with no blanks) and `continue` past any day with
+  `dowIdx > 4`. Getting either wrong shifts every day into the wrong column — it did, twice.
+- **Offices sorted A–Z** via `byName` at load and re-sorted after an add/rename. One sort, so the
+  filter chips, week rows, month rows and counters all agree.
+- **Row layout:** doctor rows stay **stacked** (office over doctor). Only the **Yellow Dot Day** row
+  reads across — office left, "● Yellow Dot Day" pushed right — and it **keeps the office colour**;
+  only the dot is yellow (`#FDE047` with a `#a16207` ring so it pops on any office background).
+
+⚠️ **Clovis and Cruces FFO have Saturday hours** (`hours[5]`). With Saturday gone those no longer
+appear anywhere. Raise it with the practice — either move those to weekdays in the office editor or
+bring back a narrow Saturday column.
+
 ### A day can have SEVERAL doctors at one office
 Cells store **`ps`** — an array of doctor indexes. Older saved cells hold a single `p`, so
 **everything reads through `docsOf(cell)`** in `schedule.html`; never touch `cell.p` directly.
@@ -147,7 +166,7 @@ The app is **Home-Brace**. The mark is a **white house outline with a braces arc
   `PRACTICE` in `assets/app.js` is `""` and the header shows only the wordmark. Don't invent one.
   The root site's eight fake "Summit …" offices were renamed to the real eight: Carlsbad, Clovis,
   Hobbs, Cruces LCO, Cruces FFO, Lubbock, San Angelo, Mansfield.
-- **All** shared assets carry a `?v=…` query (currently `hb15`) — **bump it** when editing `assets/app.js`,
+- **All** shared assets carry a `?v=…` query (currently `hb19`) — **bump it** when editing `assets/app.js`,
   `assets/data.js`, `assets/styles.css`, `v1/user.js`, `v1/tour.js` or `v1/celebrate.js` —
   browsers cache them hard and will silently serve the old copy otherwise. This bit us twice.
 

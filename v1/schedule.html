@@ -98,7 +98,7 @@
   .closed{color:#9aa6b6;font-size:12px;font-weight:600}
   td.closedc{background:#fafbfc}
   .dim{opacity:.16}
-  .month{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;min-width:940px}
+  .month{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;min-width:820px}
   .mscroll{overflow-x:auto}
   .mdnum .dw{display:none}
   .month .dow{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--soft);text-align:center;padding:4px 0}
@@ -110,9 +110,16 @@
   .ent{display:block;width:100%;text-align:left;border:none;border-radius:6px;padding:3px 6px;margin-bottom:3px;
     font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;line-height:1.25}
   .ent small{display:block;font-weight:600;opacity:.8;font-size:10px}
-  .ent.yd{background:#FDE047;color:#6b4c05;border:1px solid #eab308}
-  .ent.yd small{opacity:1;font-weight:800;display:flex;align-items:center;gap:4px}
-  .ydmark{width:8px;height:8px;border-radius:50%;background:#a16207;display:inline-block;flex:none;
+  /* Yellow Dot Day is the ONE row that reads across: office on the left, the label pushed
+     right. Everything else stays stacked (office over doctor). */
+  .ent.yd{display:flex;align-items:center;gap:6px}
+  .ent.yd .eo{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ent.yd .es{margin-left:auto;font-weight:800;font-size:10.5px;white-space:nowrap;
+    display:inline-flex;align-items:center;gap:5px}
+  .ent.yd .es{opacity:1;font-weight:800}
+  /* Bright yellow, ringed so it stands out on any office colour. */
+  .ydmark{width:10px;height:10px;border-radius:50%;background:#FDE047;display:inline-block;flex:none;
+    border:1.5px solid #a16207;
     box-shadow:0 0 0 2px rgba(161,98,7,.25)}
   .ent.nd{background:#FFF7E6;color:#9a6b12;border:1px dashed #e6c877}
   .addday{display:block;width:100%;border:1px dashed #cfd7e0;background:transparent;color:#8a94a6;border-radius:6px;
@@ -207,7 +214,7 @@
     .addday{padding:9px 11px;font-size:12px}
   }
 </style>
-<script src="user.js?v=hb15"></script>
+<script src="user.js?v=hb19"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — sample staff schedule for validation. Live version = one Microsoft List the practice maintains.</div>
@@ -274,12 +281,15 @@
 
   // Same list Admin edits (lives in user.js). Add an office in either place and it
   // shows up in both — plus the dashboard, documents, team and marketing.
-  let locations=PH.locations();
+  // A–Z everywhere — filter chips, week grid rows, month rows, counters.
+  const byName=(a,b)=>a.n.localeCompare(b.n);
+  let locations=PH.locations().sort(byName);
   // Doctors have no colour now — a day takes the colour of its office.
   let people=[{n:'Dr. Farnsworth'},{n:'Dr. Brimhall'},{n:'Dr. Coelho'},{n:'Dr. McBeth'}];
 
   const TZS=['Eastern Time','Central Time','Mountain Time','Mountain Time (Arizona, no DST)','Pacific Time','Alaska Time','Hawaii Time'];
-  const DOW=['Mon','Tue','Wed','Thu','Fri','Sat'];
+  // Mon–Fri only — five wide columns so all eight offices fit in a day without scrolling.
+  const DOW=['Mon','Tue','Wed','Thu','Fri'];
   const MOFULL=['January','February','March','April','May','June','July','August','September','October','November','December'];
 
   /* ---------- keyed by real date, so a whole year can be built ---------- */
@@ -291,7 +301,7 @@
   const mondayOf=d=>addDays(d,-dowIdx(d));
   const TODAY=new Date();
   const loc=n=>locations.find(l=>l.n===n);
-  const openOn=(l,d)=>{const i=dowIdx(d); return i<6? l.hours[i] : null;};
+  const openOn=(l,d)=>{const i=dowIdx(d); return i<5? l.hours[i] : null;};
   const cellOf=(l,d)=>(sched[iso(d)]||{})[l.n];
   function setCell(l,d,v){ const k=iso(d); sched[k]=sched[k]||{}; if(v===null) delete sched[k][l.n]; else sched[k][l.n]=v; save(); }
   function save(){ try{ localStorage.setItem('ph_sched2',JSON.stringify(sched)); }catch(_){} }
@@ -351,7 +361,7 @@
   }
 
   /* ---------- week board ---------- */
-  const weekDays=()=>Array.from({length:6},(_,i)=>addDays(anchor,i));
+  const weekDays=()=>Array.from({length:5},(_,i)=>addDays(anchor,i));  // Mon–Fri
   function cellHtml(l,d){
     const c=colOf(l.color), cell=cellOf(l,d), open=openOn(l,d);
     const t=(iso(d)===iso(TODAY)?' today':'');
@@ -385,11 +395,21 @@
 
   /* ---------- month view ---------- */
   function renderMonth(){
-    const first=new Date(mY,mM,1), start=dowIdx(first), dim=new Date(mY,mM+1,0).getDate();
+    const first=new Date(mY,mM,1), dim=new Date(mY,mM+1,0).getDate();
+    // Five columns = Mon–Fri. Pad to the 1st's weekday (a weekend 1st starts the grid at
+    // Monday) and skip Saturdays and Sundays completely, or days land in the wrong column.
+    // Pad from the first WEEKDAY of the month, not the 1st — August 2026 starts on a
+    // Saturday, so the grid must begin at Monday the 3rd with no leading blanks.
+    let fw=new Date(mY,mM,1);
+    while(dowIdx(fw)>4) fw=addDays(fw,1);
+    const start=dowIdx(fw);
     let cells='';
-    for(let i=0;i<start;i++) cells+='<div class="mday out"></div>';
+    let slots=0;
+    for(let i=0;i<start;i++){ cells+='<div class="mday out"></div>'; slots++; }
     for(let dn=1;dn<=dim;dn++){
       const d=new Date(mY,mM,dn), isT=iso(d)===iso(TODAY);
+      if(dowIdx(d)>4) continue;                      // Saturday / Sunday: no column for it
+      slots++;
       let ents='';
       shownLocs().forEach(l=>{
         const cell=cellOf(l,d), c=colOf(l.color), open=openOn(l,d);
@@ -402,7 +422,10 @@
             '<small>'+mds.map(i=>people[i].n).join(', ')+'</small></button>';
         } else if(cell&&cell.ydot){
           if(fDoc!==null) return;
-          ents+='<button class="ent yd"'+click+'>'+l.n+'<small><span class="ydmark"></span>Yellow Dot Day</small></button>';
+          // Keep the office colour so you can still tell WHICH office — only the dot is yellow.
+          ents+='<button class="ent yd" style="background:'+c.bg+';color:'+c.fg+'"'+click+'>'+
+            '<span class="eo">'+l.n+'</span>'+
+            '<span class="es"><span class="ydmark"></span>Yellow Dot Day</span></button>';
         } else if(open){
           if(fDoc!==null) return;
           ents+='<button class="ent nd"'+click+'>'+l.n+'<small>not decided yet</small></button>';
@@ -416,10 +439,10 @@
       const dw='<span class="dw">'+['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()]+'</span>';
       cells+='<div class="mday'+(isT?' today':'')+(ents?'':' empty')+'"><div class="mdnum">'+dw+dn+(isT?' · today':'')+'</div>'+ents+addBtn+'</div>';
     }
-    const tail=(7-((start+dim)%7))%7;
+    const tail=(5-(slots%5))%5;
     for(let i=0;i<tail;i++) cells+='<div class="mday out"></div>';
     el('board').innerHTML='<div class="mscroll"><div class="month">'+
-      ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(x=>'<div class="dow">'+x+'</div>').join('')+cells+'</div></div>';
+      ['Mon','Tue','Wed','Thu','Fri'].map(x=>'<div class="dow">'+x+'</div>').join('')+cells+'</div></div>';
   }
 
   /* ---------- counters ---------- */
@@ -746,7 +769,7 @@
 })();
 </script>
 <script>PH.nav('schedule');</script>
-<script src="tour.js?v=hb15"></script>
+<script src="tour.js?v=hb19"></script>
 <script>
 Tour.init([
   {sel:'#viewseg', title:'Week or month', body:'<b>Week</b> is the day-to-day working view. <b>Month</b> shows the whole month at a glance, with every office in its own colour.'},
