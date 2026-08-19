@@ -82,7 +82,8 @@
   .mo{flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end;position:relative}
   .bars{position:relative;width:100%;height:100%;display:flex;align-items:flex-end;justify-content:center;gap:4px}
   .bar{width:36%;border-radius:6px 6px 0 0;position:relative;transition:filter .15s,transform .15s;cursor:default}
-  .bar:hover{filter:brightness(.94);transform:translateY(-2px)}
+  /* Overlay instead of filter:brightness() — consistent across Safari and the rest. */
+  .bar:hover{box-shadow:inset 0 0 0 999px rgba(15,42,74,.075);transform:translateY(-2px)}
   .bval{position:absolute;top:-17px;left:0;right:0;text-align:center;font-size:10.5px;font-weight:800;color:var(--navy);white-space:nowrap}
   .bar.lyb .bval{color:#8794a6}
   .bar.lyb{background:var(--ly)}
@@ -217,8 +218,8 @@
   .foot b{color:var(--navy)}
   @media(max-width:620px){ .kpi .v{font-size:22px} }
 </style>
-<script src="user.js?v=hb21"></script>
-<script src="celebrate.js?v=hb21"></script>
+<script src="user.js?v=hb22"></script>
+<script src="celebrate.js?v=hb22"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — real numbers from the 2026 Production Dashboard workbook. You only see the offices you have access to.</div>
@@ -769,7 +770,7 @@ const OFFICES=[
 })();
 </script>
 <script>PH.nav('dashboard');</script>
-<script src="tour.js?v=hb21"></script>
+<script src="tour.js?v=hb22"></script>
 <script>
 Tour.init([
   {sel:'.viewas', title:'You only see your offices', body:'Production numbers are sensitive, so people see <b>only the offices they\u2019re assigned to</b>. Switch to the Carlsbad manager \u2014 the group totals and the leaderboard disappear, because they aren\u2019t hers to see.'},

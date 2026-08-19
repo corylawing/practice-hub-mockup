@@ -48,6 +48,19 @@ Before 2026-08-17 both pages had a "Browse drive" button that just stubbed in a 
 whole thing read like a device upload — which contradicts the app's core promise ("nothing here is
 a copy"). The `DRIVE` sample tree lives in `user.js` only; do not copy it into a page.
 
+### Keep colours consistent across browsers — no CSS filters
+Cory saw the office colours look different in Safari on his Mac. Cause: **wide-gamut (Display P3)
+screen**. CSS hex is sRGB, and Safari converts sRGB→P3 differently from Chrome/Edge/Firefox, so
+highly saturated colours bloom. Two things done about it (2026-08-17):
+
+1. **No `filter:` anywhere.** `filter:brightness()` / `grayscale()` are composited in a different
+   colour space by Safari. Replaced with `box-shadow:inset 0 0 0 999px rgba(...)` overlays for the
+   week-cell and chart-bar hover, and plain `opacity` for switched-off office chips.
+   **Don't reintroduce CSS filters.**
+2. **Pulled the two edge colours just inside sRGB** so no channel is pinned at 0 or 255 — those
+   bloom worst on P3. Hot Pink `#FF2D95`→**`#F0378F`**, Highlighter Orange `#FF7A00`→**`#F27C1A`**.
+   Hue shifts are ~1.5°, invisible in practice. The other six were already safe.
+
 ### Month view is Mon–Fri, offices A–Z, all 8 visible without scrolling
 Their goal: *see at a glance that every office has a doctor on every day, without visual overwhelm
 or scrolling inside a day.*
@@ -170,7 +183,7 @@ The app is **Home-Brace**. The mark is a **white house outline with a braces arc
   `PRACTICE` in `assets/app.js` is `""` and the header shows only the wordmark. Don't invent one.
   The root site's eight fake "Summit …" offices were renamed to the real eight: Carlsbad, Clovis,
   Hobbs, Cruces LCO, Cruces FFO, Lubbock, San Angelo, Mansfield.
-- **All** shared assets carry a `?v=…` query (currently `hb21`) — **bump it** when editing `assets/app.js`,
+- **All** shared assets carry a `?v=…` query (currently `hb22`) — **bump it** when editing `assets/app.js`,
   `assets/data.js`, `assets/styles.css`, `v1/user.js`, `v1/tour.js` or `v1/celebrate.js` —
   browsers cache them hard and will silently serve the old copy otherwise. This bit us twice.
 

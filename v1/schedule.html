@@ -69,7 +69,7 @@
   .flab{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--soft);min-width:60px}
   .lchip{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:5px 12px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px}
   .lchip .dot{width:11px;height:11px;border-radius:50%;display:inline-block}
-  .lchip.off{opacity:.34;filter:grayscale(.6)}
+  .lchip.off{opacity:.38}   /* no grayscale() — Safari renders CSS filters differently */
   .dchip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 13px;font-size:12.5px;font-weight:700;color:var(--navy);cursor:pointer;font-family:inherit}
   .dchip.on{background:var(--navy);color:#fff;border-color:var(--navy)}
   .scroll{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);background:#fff}
@@ -87,7 +87,9 @@
   .ledit{border:none;background:none;color:var(--soft);cursor:pointer;font-size:13px;opacity:.45;font-family:inherit}
   tr:hover .ledit{opacity:.9}
   td.cell{padding:7px 6px;text-align:center;cursor:pointer;vertical-align:middle;height:62px}
-  td.cell:hover{filter:brightness(.96)}
+  /* Darken with a translucent overlay rather than filter:brightness(), which Safari
+     composites in a different colour space than Chrome/Edge/Firefox. */
+  td.cell:hover{box-shadow:inset 0 0 0 999px rgba(15,42,74,.055)}
   td.cell.today{box-shadow:inset 0 0 0 2px var(--teal2)}
   .who{display:block;font-weight:800;font-size:13px;line-height:1.2}
   .hrs{display:block;font-size:11px;opacity:.85;margin-top:1px}
@@ -214,7 +216,7 @@
     .addday{padding:9px 11px;font-size:12px}
   }
 </style>
-<script src="user.js?v=hb21"></script>
+<script src="user.js?v=hb22"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — sample staff schedule for validation. Live version = one Microsoft List the practice maintains.</div>
@@ -246,7 +248,7 @@
   <div class="filters" id="filters"></div>
   <div id="status"></div>
   <div class="keyrow">
-    <span class="keyitem"><span class="kmulti"><i class="kbox" style="background:#FFE1EF;border-color:#FF2D95"></i><i class="kbox" style="background:#DFF3FE;border-color:#38BDF8"></i><i class="kbox" style="background:#ECFACC;border-color:#84CC16"></i></span> <b>Doctor on site</b> — shown in that office's own colour</span>
+    <span class="keyitem"><span class="kmulti"><i class="kbox" style="background:#FFE1EF;border-color:#F0378F"></i><i class="kbox" style="background:#DFF3FE;border-color:#38BDF8"></i><i class="kbox" style="background:#ECFACC;border-color:#84CC16"></i></span> <b>Doctor on site</b> — shown in that office's own colour</span>
     <span class="keyitem"><i class="kbox" style="background:#FFF7E6;border:1px dashed #e6c877"></i> <b>Not decided yet</b> — open, no doctor and no Yellow Dot</span>
     <span class="keyitem"><i class="kbox" style="background:#FDE047;border-color:#eab308"></i><span class="ydmark"></span> <b>Yellow Dot Day</b> — open, no doctor on site</span>
     <span class="keyitem"><i class="kbox" style="background:#fafbfc"></i> Closed</span>
@@ -262,10 +264,10 @@
 (function(){
   /* ---------- the OFFICE carries the colour, not the doctor ---------- */
   const PALETTE=[
-    {k:'Hot Pink',           dot:'#FF2D95', bg:'#FFE1EF', fg:'#A80F63'},
+    {k:'Hot Pink',           dot:'#F0378F', bg:'#FFE1EF', fg:'#A80F63'},
     {k:'Purple',             dot:'#7C3AED', bg:'#EDE7FD', fg:'#5B21B6'},
     {k:'Sky Blue',           dot:'#38BDF8', bg:'#DFF3FE', fg:'#0369A1'},
-    {k:'Highlighter Orange', dot:'#FF7A00', bg:'#FFE9D3', fg:'#B45309'},
+    {k:'Highlighter Orange', dot:'#F27C1A', bg:'#FFE9D3', fg:'#B45309'},
     {k:'Lime Green',         dot:'#84CC16', bg:'#ECFACC', fg:'#4D7C0F'},
     {k:'Highlighter Yellow', dot:'#FACC15', bg:'#FEF6C7', fg:'#7A5B08'},
     {k:'Light Pink',         dot:'#F9A8D4', bg:'#FDEEF6', fg:'#9D2C6B'},
@@ -773,7 +775,7 @@
 })();
 </script>
 <script>PH.nav('schedule');</script>
-<script src="tour.js?v=hb21"></script>
+<script src="tour.js?v=hb22"></script>
 <script>
 Tour.init([
   {sel:'#viewseg', title:'Week or month', body:'<b>Week</b> is the day-to-day working view. <b>Month</b> shows the whole month at a glance, with every office in its own colour.'},
