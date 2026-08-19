@@ -63,9 +63,13 @@ or scrolling inside a day.*
   reads across — office left, "● Yellow Dot Day" pushed right — and it **keeps the office colour**;
   only the dot is yellow (`#FDE047` with a `#a16207` ring so it pops on any office background).
 
-⚠️ **Clovis and Cruces FFO have Saturday hours** (`hours[5]`). With Saturday gone those no longer
-appear anywhere. Raise it with the practice — either move those to weekdays in the office editor or
-bring back a narrow Saturday column.
+**The practice is Mon–Fri.** `hours[]` and `PATTERN[]` are now **5 slots (Mon–Fri)** everywhere —
+the Saturday openings on Clovis and Cruces FFO were demo invention and were removed 2026-08-17.
+Don't add a sixth slot back.
+
+**All eight offices fit one day without scrolling** — measured 289px for a fully-covered day, cell
+content 289px, no inner scroll. The `+ Add / set day` button hides itself once every visible office
+has an entry, which is what keeps a full day from overflowing.
 
 ### A day can have SEVERAL doctors at one office
 Cells store **`ps`** — an array of doctor indexes. Older saved cells hold a single `p`, so
@@ -166,7 +170,7 @@ The app is **Home-Brace**. The mark is a **white house outline with a braces arc
   `PRACTICE` in `assets/app.js` is `""` and the header shows only the wordmark. Don't invent one.
   The root site's eight fake "Summit …" offices were renamed to the real eight: Carlsbad, Clovis,
   Hobbs, Cruces LCO, Cruces FFO, Lubbock, San Angelo, Mansfield.
-- **All** shared assets carry a `?v=…` query (currently `hb19`) — **bump it** when editing `assets/app.js`,
+- **All** shared assets carry a `?v=…` query (currently `hb21`) — **bump it** when editing `assets/app.js`,
   `assets/data.js`, `assets/styles.css`, `v1/user.js`, `v1/tour.js` or `v1/celebrate.js` —
   browsers cache them hard and will silently serve the old copy otherwise. This bit us twice.
 

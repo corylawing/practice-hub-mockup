@@ -65,24 +65,24 @@
      WHOLE record back so neither wipes the other's fields. Every other page just
      reads it, so adding an office in either place shows up everywhere at once.
      ------------------------------------------------------------------ */
-  const WKH={s:480,e:1020};                       // 8:00a–5:00p, the usual day
+  const WKH={s:480,e:1020};   // 8:00a–5:00p. hours[] is Mon–Fri (5 slots) — no weekends.
   const DEFAULT_LOCATIONS=[
     {n:'Carlsbad',  brand:'FFO', state:'New Mexico', tz:'Mountain Time', color:'Hot Pink',
-     lunch:{s:720,e:780}, hours:[WKH,null,WKH,null,WKH,null]},
+     lunch:{s:720,e:780}, hours:[WKH,null,WKH,null,WKH]},
     {n:'Clovis',    brand:'FFO', state:'New Mexico', tz:'Mountain Time', color:'Highlighter Orange',
-     lunch:{s:720,e:780}, hours:[WKH,null,WKH,null,null,{s:480,e:840}]},
+     lunch:{s:720,e:780}, hours:[WKH,null,WKH,null,WKH]},
     {n:'Hobbs',     brand:'FFO', state:'New Mexico', tz:'Mountain Time', color:'Lime Green',
-     lunch:{s:720,e:780}, hours:[null,WKH,null,WKH,null,null]},
+     lunch:{s:720,e:780}, hours:[null,WKH,null,WKH,null]},
     {n:'San Angelo',brand:'FFO', state:'Texas',      tz:'Central Time',  color:'Sky Blue',
-     lunch:{s:780,e:840}, hours:[WKH,null,WKH,null,WKH,null]},
+     lunch:{s:780,e:840}, hours:[WKH,null,WKH,null,WKH]},
     {n:'Lubbock',   brand:'FFO', state:'Texas',      tz:'Central Time',  color:'Highlighter Yellow',
-     lunch:null,          hours:[null,WKH,null,WKH,WKH,null]},
+     lunch:null,          hours:[null,WKH,null,WKH,WKH]},
     {n:'Mansfield', brand:'SUN', state:'Texas',      tz:'Central Time',  color:'Purple',
-     lunch:{s:720,e:780}, hours:[WKH,null,WKH,null,WKH,null]},
+     lunch:{s:720,e:780}, hours:[WKH,null,WKH,null,WKH]},
     {n:'Cruces LCO',brand:'LCO', state:'New Mexico', tz:'Mountain Time', color:'Light Pink',
-     lunch:{s:720,e:780}, hours:[null,WKH,null,WKH,null,null]},
+     lunch:{s:720,e:780}, hours:[null,WKH,null,WKH,null]},
     {n:'Cruces FFO',brand:'FFO', state:'New Mexico', tz:'Mountain Time', color:'Light Orange',
-     lunch:null,          hours:[null,null,WKH,null,null,{s:480,e:840}]}
+     lunch:null,          hours:[null,null,WKH,null,WKH]}
   ];
   // Same order as the Schedule's PALETTE, so an auto-assigned colour is always one the
   // schedule can actually render.

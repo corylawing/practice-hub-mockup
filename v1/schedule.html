@@ -107,9 +107,9 @@
   .mday.today{border-color:var(--teal);box-shadow:0 0 0 2px var(--teal-soft) inset}
   .mdnum{font-size:11.5px;font-weight:800;color:var(--soft);margin-bottom:4px}
   .mday.today .mdnum{color:var(--teal-600)}
-  .ent{display:block;width:100%;text-align:left;border:none;border-radius:6px;padding:3px 6px;margin-bottom:3px;
+  .ent{display:block;width:100%;text-align:left;border:none;border-radius:6px;padding:2px 6px;margin-bottom:2px;
     font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;line-height:1.25}
-  .ent small{display:block;font-weight:600;opacity:.8;font-size:10px}
+  .ent small{display:block;font-weight:600;opacity:.8;font-size:10px;line-height:1.2}
   /* Yellow Dot Day is the ONE row that reads across: office on the left, the label pushed
      right. Everything else stays stacked (office over doctor). */
   .ent.yd{display:flex;align-items:center;gap:6px}
@@ -214,7 +214,7 @@
     .addday{padding:9px 11px;font-size:12px}
   }
 </style>
-<script src="user.js?v=hb19"></script>
+<script src="user.js?v=hb21"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — sample staff schedule for validation. Live version = one Microsoft List the practice maintains.</div>
@@ -309,14 +309,14 @@
   // null on a day the office is OPEN = nobody rostered = a Yellow Dot Day.
   // Several offices genuinely run days with staff but no doctor on site.
   const PATTERN={
-    'Carlsbad':[0,null,1,null,0,null],
-    'Clovis':[1,null,0,null,null,null],      // Saturday: open, no doctor
-    'Hobbs':[null,0,null,1,null,null],
-    'San Angelo':[2,null,3,null,1,null],
-    'Lubbock':[null,2,null,3,null,null],     // Friday: open, no doctor
-    'Mansfield':[3,null,2,null,3,null],
-    'Cruces LCO':[null,3,null,2,null,null],
-    'Cruces FFO':[null,null,2,null,null,null] // Saturday: open, no doctor
+    'Carlsbad':[0,null,1,null,0],
+    'Clovis':[1,null,0,null,2],
+    'Hobbs':[null,0,null,1,null],
+    'San Angelo':[2,null,3,null,1],
+    'Lubbock':[null,2,null,3,null],     // Friday: open, no doctor
+    'Mansfield':[3,null,2,null,3],
+    'Cruces LCO':[null,3,null,2,null],
+    'Cruces FFO':[null,null,2,null,1]
   };
   function buildYear(year){
     let d=new Date(year,0,1); const end=new Date(year,11,31);
@@ -431,7 +431,11 @@
           ents+='<button class="ent nd"'+click+'>'+l.n+'<small>not decided yet</small></button>';
         }
       });
-      const addBtn = canEdit()
+      // Nothing to add once every visible office has an entry — drop the button and
+      // reclaim its row, which matters on a day where all eight are covered.
+      const allSet = shownLocs().every(l=>{const cl=cellOf(l,d);
+        return docsOf(cl).length || (cl&&(cl.ydot||cl.closed));});
+      const addBtn = (canEdit() && !allSet)
         ? '<button class="addday" onclick="PS.addTo(\''+iso(d)+'\')" title="Add an office and doctor to this day">+ Add / set day</button>'
         : '';
       // The weekday label is hidden on desktop (the column headers do that job) and shown
@@ -769,7 +773,7 @@
 })();
 </script>
 <script>PH.nav('schedule');</script>
-<script src="tour.js?v=hb19"></script>
+<script src="tour.js?v=hb21"></script>
 <script>
 Tour.init([
   {sel:'#viewseg', title:'Week or month', body:'<b>Week</b> is the day-to-day working view. <b>Month</b> shows the whole month at a glance, with every office in its own colour.'},
