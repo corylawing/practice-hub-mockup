@@ -159,6 +159,15 @@
   .chip.combtog.on{background:var(--teal);border-color:var(--teal);color:#fff}
   .pchip.mini{padding:8px 14px;font-size:12.5px;box-shadow:none;min-height:36px}
   .phint{font-size:12.5px;color:var(--soft)}
+  .ypick{display:inline-flex;align-items:center;gap:7px;background:#fff;border:1px solid var(--line);
+    border-radius:999px;box-shadow:var(--shadow);padding:0 6px 0 13px;height:38px}
+  .ypick label{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--soft)}
+  .ypick select{border:none;background:none;font-family:inherit;font-size:13.5px;font-weight:700;
+    color:var(--navy);height:36px;padding-right:4px;cursor:pointer}
+  .gauge.flat{border-top-color:var(--soft)}
+  .g-nogoal{font-size:12px;font-weight:700;color:var(--soft);background:var(--canvas);
+    border:1px solid var(--line);border-radius:999px;padding:3px 10px}
+  .g-verdict.flatv{color:var(--soft);font-weight:600}
   .charttog{display:flex;gap:6px;margin-bottom:12px}
   /* the at-a-glance gauges — this is the bit people read first */
   .gauges{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:6px}
@@ -221,8 +230,8 @@
   .foot b{color:var(--navy)}
   @media(max-width:620px){ .kpi .v{font-size:22px} }
 </style>
-<script src="user.js?v=hb24"></script>
-<script src="celebrate.js?v=hb24"></script>
+<script src="user.js?v=hb27"></script>
+<script src="celebrate.js?v=hb27"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — real numbers from the 2026 Production Dashboard workbook. You only see the offices you have access to.</div>
@@ -261,7 +270,11 @@ const OFFICES=[
    sGoal:[36, 36, 24, 32, 28, 36, 40, 27, 27, 27, 18, 18],
    mdStarts:[9, 12, 17, 14, 7, 7, 16, 5, 0, 0, 0, 0],
    lyStarts:[47, 39, 32, 40, 35, 40, 47, 37, 42, 33, 27, 20],
-   days:[9, 9, 8, 8, 7, 9, 10, 9, 9, 9, 9, 9], done:[9, 9, 8, 8, 7, 9, 10, 2, 0, 0, 0, 0]},
+   days:[9, 9, 8, 8, 7, 9, 10, 9, 9, 9, 9, 9], done:[9, 9, 8, 8, 7, 9, 10, 2, 0, 0, 0, 0],
+   // Past years straight from the workbook (production + production days; 2025 also
+   // has starts derived from that year's average case fee). More years appear here as
+   // the practice adds columns — the year picker reads whatever exists.
+   hist:{'2025':{act:[243184, 208642, 159797, 211773, 181970, 213729, 245514, 192726, 210423, 170396, 141314, 99715],days:[8, 8, 7, 7, 7, 7, 8, 9, 8, 8, 7, 8],sAct:[44, 38, 29, 38, 33, 38, 44, 35, 38, 31, 25, 18]},'2024':{act:[118437, 169597, 78430, 109299, 191311, 133001, 162597, 150019, 172407, 150539, 108320, 105936],days:[11, 11, 11, 12, 12, 12, 12, 12, 8, 8, 7, 7]}}},
   {n:'Clovis',brand:'FFO',fee:4200,
    act:[226073, 258625, 246687, 172148, 167889, 198722, 247763, 21328, 0, 0, 0, 0],
    goal:[150201, 207644, 207905, 204125, 166173, 158085, 325468, 226833, 159142, 175696, 145196, 179490],
@@ -271,7 +284,11 @@ const OFFICES=[
    sGoal:[27, 36, 36, 36, 27, 27, 50, 36, 18, 27, 18, 18],
    mdStarts:[7, 3, 7, 7, 6, 7, 9, 0, 0, 0, 0, 0],
    lyStarts:[27, 38, 38, 37, 31, 26, 62, 42, 31, 34, 27, 35],
-   days:[9, 9, 9, 9, 9, 9, 10, 9, 9, 9, 9, 9], done:[9, 9, 9, 9, 9, 9, 10, 0, 0, 0, 0, 0]},
+   days:[9, 9, 9, 9, 9, 9, 10, 9, 9, 9, 9, 9], done:[9, 9, 9, 9, 9, 9, 10, 0, 0, 0, 0, 0],
+   // Past years straight from the workbook (production + production days; 2025 also
+   // has starts derived from that year's average case fee). More years appear here as
+   // the practice adds columns — the year picker reads whatever exists.
+   hist:{'2025':{act:[141194, 199658, 199909, 196274, 159782, 135696, 324796, 218109, 153021, 168938, 131996, 172587],days:[10, 8, 9, 8, 8, 7, 11, 9, 8, 8, 8, 7],sAct:[26, 37, 37, 36, 29, 25, 60, 40, 28, 31, 24, 32]},'2024':{act:[125124, 157547, 187418, 176360, 86789, 127619, 169279, 165339, 130069, 151143, 152328, 113575],days:[8, 8, 8, 8, 7, 8, 8, 8, 8, 8, 7, 7]}}},
   {n:'Hobbs',brand:'FFO',fee:4200,
    act:[197542, 208458, 229738, 225227, 197845, 259312, 203047, 12382, 0, 0, 0, 0],
    goal:[230923, 199566, 208649, 181588, 204041, 228096, 139976, 178059, 151724, 246031, 188257, 177982],
@@ -281,7 +298,11 @@ const OFFICES=[
    sGoal:[28, 27, 36, 24, 28, 32, 18, 24, 12, 36, 27, 27],
    mdStarts:[8, 12, 2, 3, 8, 4, 6, 0, 0, 0, 0, 0],
    lyStarts:[38, 31, 33, 30, 34, 38, 24, 30, 25, 40, 27, 31],
-   days:[7, 9, 9, 8, 7, 8, 9, 8, 12, 9, 9, 9], done:[7, 9, 9, 8, 7, 8, 9, 0, 0, 0, 0, 0]},
+   days:[7, 9, 9, 8, 7, 8, 9, 8, 12, 9, 9, 9], done:[7, 9, 9, 8, 7, 8, 9, 0, 0, 0, 0, 0],
+   // Past years straight from the workbook (production + production days; 2025 also
+   // has starts derived from that year's average case fee). More years appear here as
+   // the practice adds columns — the year picker reads whatever exists.
+   hist:{'2025':{act:[213817, 182569, 200624, 179291, 196193, 219323, 139850, 171211, 132037, 236568, 162606, 176638],days:[10, 8, 9, 8, 8, 7, 11, 9, 8, 8, 8, 7],sAct:[35, 30, 32, 29, 32, 36, 23, 28, 21, 38, 26, 29]},'2024':{act:[160913, 78436, 133443, 90124, 162114, 151610, 171173, 126600, 157025, 176926, 111608, 85639],days:[8, 8, 8, 8, 7, 8, 8, 8, 8, 8, 7, 7]}}},
   {n:'Cruces LCO',brand:'LCO',fee:4200,
    act:[0, 0, 0, 0, 0, 0, 159104, 25214, 0, 0, 0, 0],
    goal:[0, 0, 0, 0, 0, 0, 103648, 166866, 167404, 138716, 81094, 102830],
@@ -291,7 +312,11 @@ const OFFICES=[
    sGoal:[28, 36, 45, 18, 27, 18, 20, 27, 27, 27, 18, 18],
    mdStarts:[0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0],
    lyStarts:[35, 39, 41, 23, 33, 28, 18, 34, 34, 27, 13, 20],
-   days:[7, 9, 9, 9, 9, 9, 10, 9, 9, 9, 9, 9], done:[0, 0, 0, 0, 0, 0, 10, 3, 0, 0, 0, 0]},
+   days:[7, 9, 9, 9, 9, 9, 10, 9, 9, 9, 9, 9], done:[0, 0, 0, 0, 0, 0, 10, 3, 0, 0, 0, 0],
+   // Past years straight from the workbook (production + production days; 2025 also
+   // has starts derived from that year's average case fee). More years appear here as
+   // the practice adds columns — the year picker reads whatever exists.
+   hist:{'2025':{act:[162853, 182471, 195844, 108465, 154735, 128231, 85323, 154751, 156004, 126105, 61088, 92631],days:[10, 8, 9, 8, 8, 7, 11, 9, 8, 8, 8, 7],sAct:[34, 38, 41, 23, 33, 27, 18, 33, 33, 27, 13, 20]}}},
   {n:'Cruces FFO',brand:'FFO',fee:0,
    act:[0, 0, 0, 0, 0, 0, 48178, 25277, 0, 0, 0, 0],
    goal:[0, 0, 0, 0, 0, 0, 87361, 75272, 68613, 73501, 70542, 79563],
@@ -301,7 +326,11 @@ const OFFICES=[
    sGoal:[0, 0, 0, 0, 0, 0, 18, 14, 14, 14, 14, 14],
    mdStarts:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
    lyStarts:[17, 18, 24, 17, 20, 17, 25, 12, 9, 9, 9, 13],
-   days:[0, 0, 0, 0, 0, 0, 6, 7, 7, 7, 7, 7], done:[0, 0, 0, 0, 0, 0, 6, 2, 0, 0, 0, 0]},
+   days:[0, 0, 0, 0, 0, 0, 6, 7, 7, 7, 7, 7], done:[0, 0, 0, 0, 0, 0, 6, 2, 0, 0, 0, 0],
+   // Past years straight from the workbook (production + production days; 2025 also
+   // has starts derived from that year's average case fee). More years appear here as
+   // the practice adds columns — the year picker reads whatever exists.
+   hist:{'2025':{act:[76649, 81688, 111595, 77344, 93396, 77875, 116482, 53766, 42883, 40834, 39190, 61202],days:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],sAct:[17, 18, 24, 17, 20, 17, 25, 12, 9, 9, 9, 13]}}},
   {n:'Lubbock',brand:'FFO',fee:0,
    act:[123060, 104157, 137058, 84810, 103300, 81500, 97835, 20410, 0, 0, 0, 0],
    goal:[146572, 133479, 116836, 77523, 100442, 80660, 96519, 98413, 99420, 115639, 81771, 88319],
@@ -311,7 +340,11 @@ const OFFICES=[
    sGoal:[28, 32, 24, 16, 16, 16, 24, 16, 16, 24, 16, 16],
    mdStarts:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
    lyStarts:[26, 23, 21, 14, 18, 14, 17, 17, 18, 17, 9, 10],
-   days:[7, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8], done:[7, 8, 8, 8, 8, 8, 8, 4, 0, 0, 0, 0]},
+   days:[7, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8], done:[7, 8, 8, 8, 8, 8, 8, 4, 0, 0, 0, 0],
+   // Past years straight from the workbook (production + production days; 2025 also
+   // has starts derived from that year's average case fee). More years appear here as
+   // the practice adds columns — the year picker reads whatever exists.
+   hist:{'2025':{act:[133247, 121345, 106214, 70475, 91311, 73327, 87744, 87479, 90382, 88953, 46726, 51952],days:[8, 7, 8, 7, 8, 7, 7, 8, 8, 8, 8, 7],sAct:[26, 23, 21, 14, 18, 14, 17, 17, 18, 17, 9, 10]},'2024':{act:[88550, 52447, 114191, 72001, 78347, 100170, 59920, 74509, 68558, 94450, 114788, 76471],days:[8, 7, 8, 8, 8, 8, 6, 8, 6, 8, 8, 8]}}},
   {n:'San Angelo',brand:'FFO',fee:0,
    act:[364028, 347608, 273810, 209565, 201489, 310660, 332910, 78745, 0, 0, 0, 0],
    goal:[275667, 193614, 240442, 210867, 274049, 239473, 291472, 312606, 214035, 248641, 192785, 267286],
@@ -321,7 +354,11 @@ const OFFICES=[
    sGoal:[50, 39, 40, 36, 50, 45, 50, 60, 40, 45, 32, 45],
    mdStarts:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
    lyStarts:[47, 23, 41, 36, 46, 41, 49, 53, 36, 42, 33, 45],
-   days:[10.5, 13, 10, 9, 10, 9, 10, 10, 10, 9, 8, 9], done:[10.5, 13, 10, 9, 10, 9, 10, 3, 0, 0, 0, 0]},
+   days:[10.5, 13, 10, 9, 10, 9, 10, 10, 10, 9, 8, 9], done:[10.5, 13, 10, 9, 10, 9, 10, 3, 0, 0, 0, 0],
+   // Past years straight from the workbook (production + production days; 2025 also
+   // has starts derived from that year's average case fee). More years appear here as
+   // the practice adds columns — the year picker reads whatever exists.
+   hist:{'2025':{act:[262540, 129076, 228992, 200826, 260999, 228069, 277593, 297720, 203842, 236801, 183605, 254558],days:[8, 7, 8, 7, 8, 7, 7, 8, 8, 8, 8, 7],sAct:[47, 23, 41, 36, 46, 41, 49, 53, 36, 42, 33, 45]},'2024':{act:[278202, 213393, 224983, 214375, 251328, 226009, 185984, 274368, 194749, 190316, 145010, 180704],days:[8, 7, 8, 8, 8, 8, 6, 8, 6, 8, 8, 8]}}},
   {n:'Mansfield',brand:'SUN',fee:0,
    act:[108954, 92996, 139815, 95285, 63447, 178690, 194970, 43715, 0, 0, 0, 0],
    goal:[0, 0, 0, 130268, 174025, 104053, 146511, 100531, 74090, 71498, 103061, 52919],
@@ -331,7 +368,11 @@ const OFFICES=[
    sGoal:[0, 0, 0, 18, 30, 18, 20, 18, 9, 8, 14, 8],
    mdStarts:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
    lyStarts:[18, 20, 21, 17, 25, 25, 35, 24, 18, 12, 17, 9],
-   days:[9, 10, 11, 9, 10, 9, 10, 9, 9, 8, 7, 8], done:[9, 10, 11, 9, 10, 9, 10, 2, 0, 0, 0, 0]}
+   days:[9, 10, 11, 9, 10, 9, 10, 9, 9, 8, 7, 8], done:[9, 10, 11, 9, 10, 9, 10, 2, 0, 0, 0, 0],
+   // Past years straight from the workbook (production + production days; 2025 also
+   // has starts derived from that year's average case fee). More years appear here as
+   // the practice adds columns — the year picker reads whatever exists.
+   hist:{'2025':{act:[107458, 121458, 124990, 104214, 151326, 148648, 209301, 143616, 105842, 71498, 103061, 52919],days:[11, 10, 10, 11, 12, 11, 13, 7, 14, 9, 11, 11],sAct:[18, 20, 21, 17, 25, 25, 35, 24, 18, 12, 17, 9]}}}
 ];
 // An office added in Admin (or the Schedule) has no workbook figures yet. Show it anyway,
 // with zeros and a fee of 0, so the practice can see it exists and start entering — rather
@@ -375,15 +416,44 @@ const OFFICES=[
   let shown=null;
   const curOffice=()=>shown;
   let period='mtd';      // their ask: default to MTD, with a toggle to the year
+  /* ---------- YEARS ----------
+     LIVE_YEAR is the year the workbook is actively tracking (actuals + goals + starts).
+     Anything in an office's `hist` is a past year. The list is DISCOVERED from the data, so
+     when the practice adds 2027 columns the picker gains 2027 with no code change. Years
+     without goals still work — the UI drops the goal-dependent parts instead of breaking. */
+  const LIVE_YEAR=2026;
+  function allYears(){
+    const set=new Set([LIVE_YEAR]);
+    OFFICES.forEach(o=>Object.keys(o.hist||{}).forEach(y=>set.add(+y)));
+    return [...set].sort((a,b)=>b-a);
+  }
+  let year=LIVE_YEAR;
+  const Z=()=>Array(12).fill(0);
+  const yearHasGoals=y=>y===LIVE_YEAR;
+  // Return an office shaped exactly like the live year, whatever the selected year holds.
+  function yearOf(o){
+    if(year===LIVE_YEAR) return o;
+    const h=(o.hist||{})[String(year)]||{};
+    const act=h.act||Z(), days=h.days||Z();
+    return Object.assign({},o,{
+      act:act, days:days, done:days.slice(),        // a past year is finished, so pace = 1
+      sAct:h.sAct||Z(), sGoal:Z(), goal:Z(), stretch:Z(), ly:Z(), lyStarts:Z(), mdStarts:Z(),
+      noGoals:true, hasStarts:!!h.sAct, hasDays:days.some(d=>d>0)
+    });
+  }
   let pickOpen=false;    // month-picker popover open?
   let combineM=false;    // combine several months, like Combine offices
   let chartMode='production'; // opens on Production — their headline number; toggle to Starts
 
   // a month counts once it has BOTH an actual and a goal (Mansfield has actuals from Jan but goals only from Apr)
   // finished months (all scheduled days worked) — these make up the year figure
-  const live=o=>{const a=[];for(let i=0;i<12;i++)if(o.act[i]>0&&o.goal[i]>0&&o.days[i]>0&&o.done[i]>=o.days[i])a.push(i);return a;};
+  const live=o=>{const a=[];for(let i=0;i<12;i++){
+    const ok = o.noGoals ? o.act[i]>0                       // past year: actuals are all there is
+                         : (o.act[i]>0&&o.goal[i]>0&&o.days[i]>0&&o.done[i]>=o.days[i]);
+    if(ok)a.push(i);} return a;};
   // the month currently in progress (some days worked, not all)
   function partial(o){
+    if(o.noGoals) return -1;                        // a closed-out year has nothing in progress
     let last=-1;
     for(let i=0;i<12;i++) if(o.act[i]>0) last=i;      // newest month with any production
     if(last<0) return -1;
@@ -396,8 +466,9 @@ const OFFICES=[
   const pickedMonths=()=>isMonths()?period.slice().sort((a,b)=>a-b):(isMonth()?[period]:[]);
   function curIdx(o){ const p=partial(o); if(p>=0)return p; const L=live(o); return L.length?L[L.length-1]:-1; }
   function months(o){
-    if(isMonths()) return period.filter(i=>o.act[i]>0&&o.goal[i]>0).sort((a,b)=>a-b);
-    if(isMonth()) return (o.act[period]>0&&o.goal[period]>0)?[period]:[];
+    const okM=i=>o.act[i]>0 && (o.noGoals || o.goal[i]>0);
+    if(isMonths()) return period.filter(okM).sort((a,b)=>a-b);
+    if(isMonth()) return okM(period)?[period]:[];
     const L=live(o);
     if(period==='mtd'){ const c=curIdx(o); return c>=0?[c]:[]; }
     // Year to date = every finished month PLUS the one in progress, so the year figure
@@ -438,7 +509,9 @@ const OFFICES=[
   }
   function group(list){
     const z=()=>Array(12).fill(0);
-    const G={n:'All Offices',brand:'',act:z(),goal:z(),stretch:z(),ly:z(),sAct:z(),sGoal:z(),lyStarts:z(),days:z(),done:z()};
+    const G={n:'All Offices',brand:'',act:z(),goal:z(),stretch:z(),ly:z(),sAct:z(),sGoal:z(),lyStarts:z(),days:z(),done:z(),
+             noGoals:list.some(o=>o.noGoals), hasStarts:list.some(o=>o.hasStarts!==false),
+             hasDays:list.some(o=>o.days.some(d=>d>0))};
     // Only roll up months an office actually reported — finished months, plus the one in progress.
     // (Summing every office's scheduled days made January look half-worked for the group.)
     list.forEach(o=>{ const L=live(o), p=partial(o);
@@ -497,6 +570,14 @@ const OFFICES=[
   }
   const band=p=>p>=1?'ok':(p>=0.9?'near':'low');
   function gauge(opts){
+    if(opts.noGoal){
+      return '<div class="gauge flat">'+
+        '<div class="g-top"><span class="g-ttl">'+opts.icon+' '+opts.title+'</span>'+
+          '<span class="g-nogoal">no goal on file</span></div>'+
+        '<div class="g-big">'+opts.big+'</div><div class="g-sub">'+opts.sub+'</div>'+
+        '<div class="g-verdict flatv">'+opts.verdict+'</div>'+
+        '<div class="g-foot">'+opts.footer+'</div></div>';
+    }
     const cls=band(opts.pct);
     // Keep the goal mark readable even at 400%: the scale never stretches past ~1.35x the
     // furthest goal, and anything beyond that fills the bar and shows an "over" flag.
@@ -523,10 +604,15 @@ const OFFICES=[
     const c0=partial(o);
     const paced = inProgress(o) && c0>=0 && o.done[c0]>0;
     const par = paced ? ' pace' : ' goal';
-    const sVerdict = st.v>=0 ? '\u2705 '+Math.abs(Math.round(st.v))+' starts ahead of'+par
-                             : '\u26a0\ufe0f '+Math.abs(Math.round(st.v))+' starts behind'+par;
-    const pVerdict = t.vgoal>=0 ? '\u2705 '+full(Math.abs(t.vgoal))+' ahead of'+par
-                                : '\u26a0\ufe0f '+full(Math.abs(t.vgoal))+' behind'+par;
+    const sVerdict = o.noGoals
+      ? (o.hasStarts===false ? 'Starts aren\u2019t on file for '+year
+         : 'Worked out from '+year+'\u2019s production and average case fee.')
+      : (st.v>=0 ? '\u2705 '+Math.abs(Math.round(st.v))+' starts ahead of'+par
+                 : '\u26a0\ufe0f '+Math.abs(Math.round(st.v))+' starts behind'+par);
+    const pVerdict = o.noGoals
+      ? year+' actuals from the workbook \u2014 no goals were recorded for that year.'
+      : (t.vgoal>=0 ? '\u2705 '+full(Math.abs(t.vgoal))+' ahead of'+par
+                    : '\u26a0\ufe0f '+full(Math.abs(t.vgoal))+' behind'+par);
     const dayNote = inProgress(o) ? (()=>{const c=partial(o);
       return o.done[c] ? ' \u00b7 '+o.done[c]+' of '+o.days[c]+' days'
                        : ' \u00b7 days not logged yet';})() : '';
@@ -534,14 +620,15 @@ const OFFICES=[
     // No stretch on starts: their workbook has no starts stretch goal, and the derived one
     // was dropped on request (2026-08-17). Stretch stays on production only.
     return '<div class="gauges">'+
-      gauge({icon:'\ud83d\udcb0',title:'Production',big:money(t.a),
+      gauge({icon:'\ud83d\udcb0',title:'Production',big:money(t.a),noGoal:!!o.noGoals,
         sub:(period==='mtd'?monthName(o)+' so far'+dayNote:(isMonth()?MOFULL[period]:'Year so far'))+' \u00b7 vs last year '+pc(t.yoy),
         pct:t.pct,stretchPct:(t.g?t.s/t.g:0),verdict:pVerdict,
         footer:'<span>Main goal <b>'+money(t.g)+'</b></span><span>Stretch <b>'+money(t.s)+'</b> ('+pc(t.spct)+' there)</span>'+
                  '<span>Per day <b>'+money(t.perDay)+'</b> vs <b>'+money(t.needPerDay)+'</b> needed</span>'+
                  (paced?'<span style="color:var(--teal-600)">goals scaled to days worked</span>'
                    :(inProgress(o)?'<span style="color:var(--amber)">whole-month goal \u2014 days worked not logged yet</span>':''))})+
-      gauge({icon:'\ud83e\uddb7',title:'Starts',big:Math.round(st.a)+' starts',
+      gauge({icon:'\ud83e\uddb7',title:'Starts',
+        big:(o.noGoals&&o.hasStarts===false)?'\u2014':Math.round(st.a)+' starts',noGoal:!!o.noGoals,
         sub:(period==='mtd'?monthName(o)+' so far'+dayNote:(isMonth()?MOFULL[period]:'Year so far'))+' \u00b7 '+st.perDay.toFixed(1)+' a day',
         pct:st.pct,verdict:sVerdict,
         footer:'<span>Main goal <b>'+Math.round(st.g)+'</b></span>'+
@@ -601,13 +688,25 @@ const OFFICES=[
           (combineM?'✕ Stop combining months':'➕ Combine months')+'</button>'+
         (picked.length?'<button class="clr" onclick="DASH.period(\'mtd\')">← Back to this month</button>':'')+
       '</div></div>';
-    const hint = isMonths() ? picked.map(i=>MOFULL[i]).join(' + ')+' added together.'
+    const hint = year!==LIVE_YEAR
+      ? year+' as recorded in the workbook \u2014 production'+(o.hasStarts!==false?', starts':'')+
+        (o.hasDays?' and production days':'')+'. No goals were kept for that year.'
+      : isMonths() ? picked.map(i=>MOFULL[i]).join(' + ')+' added together.'
       : isMonth() ? MOFULL[period]+' — a finished month, judged against its full goal.'
       : period==='mtd' ? 'Showing '+(nm||'the latest month')+' only — goals scaled to the days worked so far.'
       : 'Every month so far this year, through today — ' + (nm?nm+' is counted up to the days worked.':'live.');
     // Keep the month suffix ALWAYS — it used to appear only while MTD was selected, which
     // changed the pill's width and shoved the month picker sideways on every switch.
-    return '<div class="periodbar">'+b('mtd','This month'+(nm?' \u00b7 '+nm:''))+b('ytd','Year to date')+back+
+    const ys=allYears();
+    const ysel = ys.length<2 ? '' :
+      '<div class="ypick"><label for="yearsel">Year</label><select id="yearsel" onchange="DASH.year(this.value)">'+
+        ys.map(y=>'<option value="'+y+'"'+(y===year?' selected':'')+'>'+y+(y===LIVE_YEAR?'':' \u00b7 actuals only')+'</option>').join('')+
+      '</select></div>';
+    // A past year is closed out — This month / month picker make no sense there.
+    const cur2 = year===LIVE_YEAR
+      ? b('mtd','This month'+(nm?' \u00b7 '+nm:''))+b('ytd','Year to date')+back
+      : b('ytd','Whole of '+year);
+    return '<div class="periodbar">'+ysel+cur2+
       '<span class="phint">'+hint+'</span></div>';
   }
   function daysTiles(o){
@@ -634,7 +733,8 @@ const OFFICES=[
     // stretch row and the derived one was more confusing than useful.
     let max=0; L.forEach(i=>{max=Math.max(max,sa[i]||0,sg[i]||0,sl[i]||0);});
     max=niceMax(max);
-    const best=L.reduce((b,i)=>((sg[i]?sa[i]/sg[i]:0)>(sg[b]?sa[b]/sg[b]:0)?i:b),L[0]);
+    const best=o.noGoals ? L.reduce((b,i)=>((sa[i]||0)>(sa[b]||0)?i:b),L[0])
+      : L.reduce((b,i)=>((sg[i]?sa[i]/sg[i]:0)>(sg[b]?sa[b]/sg[b]:0)?i:b),L[0]);
     const cols=L.map(i=>{
       const a=sa[i]||0, g=sg[i]||0, l=sl[i]||0, h=v=>Math.max(1.5,(v/max)*100);
       return '<div class="mo'+(i===best?' best':'')+'"><div class="bars">'+
@@ -658,7 +758,8 @@ const OFFICES=[
     const L=plotMonths(o); if(!L.length) return '';
     let max=0; L.forEach(i=>{max=Math.max(max,o.act[i],o.goal[i],o.stretch[i],o.ly[i]);});
     max=niceMax(max);
-    const best=L.reduce((b,i)=>((o.goal[i]?o.act[i]/o.goal[i]:0)>(o.goal[b]?o.act[b]/o.goal[b]:0)?i:b),L[0]);
+    const best=o.noGoals ? L.reduce((b,i)=>(o.act[i]>o.act[b]?i:b),L[0])
+      : L.reduce((b,i)=>((o.goal[i]?o.act[i]/o.goal[i]:0)>(o.goal[b]?o.act[b]/o.goal[b]:0)?i:b),L[0]);
     const cols=L.map(i=>{
       const inProg=o.done[i]>0&&o.done[i]<o.days[i];
       const cls=inProg?'mtd':(o.act[i]>=o.goal[i]?'over':'under');
@@ -694,7 +795,8 @@ const OFFICES=[
   }
   function leaderboard(list){
     // Production leads and ranks the table — it's the number they run the business on.
-    const rows=list.map(o=>({o,t:stats(o),s:sStats(o)})).sort((x,y)=>y.t.pct-x.t.pct);
+    const rows=list.map(src=>{const o=yearOf(src); return {o,t:stats(o),s:sStats(o)};})
+      .sort((x,y)=> x.o.noGoals ? y.t.a-x.t.a : y.t.pct-x.t.pct);   // no goals => rank by production
     const body=rows.map((r,i)=>{
       const t=r.t, pctw=Math.min(100,t.pct*100), cls=t.pct>=1?'':(t.pct>=.9?'a':'b');
       return '<tr onclick="DASH.pick(\''+r.o.n+'\')">'+
@@ -743,15 +845,24 @@ const OFFICES=[
         'Tap them above \u2014 the numbers below will combine as you go.</div>';
       return;
     }
-    const o = isAll ? group(allowed) : isCombo ? group(picked) : allowed.find(x=>x.n===sel);
+    // Swap in the selected year before anything is computed.
+    const src = isAll ? allowed : isCombo ? picked : [allowed.find(x=>x.n===sel)];
+    const scoped = src.map(yearOf);
+    const o = (isAll||isCombo) ? group(scoped) : scoped[0];
     if(isCombo) o.n = picked.length+' offices combined';
     shown=o;
     const who = isAll ? 'The group' : isCombo ? picked.map(x=>x.n).join(' + ') : o.n;
-    let html = partyBanner(o,who) + periodBar(o) + gauges(o) +
-      '<h2 class="secttl">\ud83d\udcc6 Production days</h2><p class="secsub">How much of the '+(period==='mtd'?'month':'year')+' has actually been worked.</p>'+
-      daysTiles(o) +
-      (chartMode==='starts'? startsChart(o) : chart(o));
-    if(isAll) html += leaderboard(allowed);
+    const noFigures = o.noGoals && !o.act.some(v=>v>0);
+    let html = partyBanner(o,who) + periodBar(o) +
+      (noFigures
+        ? '<div class="noacc" style="margin-top:14px"><b>No '+year+' figures for '+who+'.</b><br>'+
+          'The workbook doesn\u2019t have that year for this office \u2014 pick another year above.</div>'
+        : gauges(o)) +
+      (o.days.some(d=>d>0)
+        ? '<h2 class="secttl">\ud83d\udcc6 Production days</h2><p class="secsub">How much of the '+(period==='mtd'?'month':'year')+' has actually been worked.</p>'+daysTiles(o)
+        : '') +
+      (noFigures ? '' : (chartMode==='starts'? startsChart(o) : chart(o)));
+    if(isAll && !noFigures) html += leaderboard(allowed);
     html += '<div class="foot"><b>Where these numbers come from:</b> the practice\u2019s 2026 Production '+
       'Dashboard workbook on SharePoint \u2014 the hub reads it live, so there is no second copy to keep in '+
       'sync. A month counts once it has <b>both</b> an actual and a goal (Mansfield has production from '+
@@ -793,6 +904,7 @@ const OFFICES=[
   el('persona').innerHTML=PERSONAS.map(p=>'<option value="'+p.id+'">'+p.name+'</option>').join('');
   window.DASH={set,pick,party:partyNow,combine:toggleCombine,
     period:v=>{period=v;pickOpen=false;combineM=false;render();},
+    year:v=>{ year=Number(v); period='ytd'; pickOpen=false; combineM=false; render(); },
     month:v=>{ if(v===''||v==null)return; const i=Number(v);
       if(combineM){
         const cur=isMonths()?period.slice():(isMonth()?[period]:[]);
@@ -819,7 +931,7 @@ const OFFICES=[
 })();
 </script>
 <script>PH.nav('dashboard');</script>
-<script src="tour.js?v=hb24"></script>
+<script src="tour.js?v=hb27"></script>
 <script>
 Tour.init([
   {sel:'.viewas', title:'You only see your offices', body:'Production numbers are sensitive, so people see <b>only the offices they\u2019re assigned to</b>. Switch to the Carlsbad manager \u2014 the group totals and the leaderboard disappear, because they aren\u2019t hers to see.'},

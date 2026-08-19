@@ -108,6 +108,30 @@ the leaderboard all stopped at July** while the rest of the dashboard showed Aug
   A single ratio would have discounted the whole year by August's fraction.
   Verified: Carlsbad YTD goal $1.55M = Jan–Jul at full goal + August × 2/9 days.
 
+### Year picker — built to survive years being added
+`LIVE_YEAR = 2026` is the year the workbook actively tracks (actuals + goals + starts + days).
+Past years live per office in **`hist`** (real workbook columns: 2024 and 2025 net production +
+Medicaid, production days; 2025 also gets starts derived from that year's average case fee).
+
+**The year list is DISCOVERED, not hardcoded** — `allYears()` unions `LIVE_YEAR` with every key in
+every office's `hist`. When the practice adds 2027 columns, 2027 appears with no code change.
+
+**Nothing assumes a year is complete.** `yearOf(o)` returns the same record shape whatever the year
+holds, plus flags `noGoals`, `hasStarts`, `hasDays`. Everything downstream degrades instead of
+breaking:
+- `live()` / `months()` count a month on its **actual alone** when the year has no goals
+- `partial()` returns −1 for a closed year, so pace = 1
+- gauges render a flat "no goal on file" variant with an honest verdict; starts shows **—** rather
+  than "0 starts" when starts aren't on file
+- the ★ best-month marker ranks by **actual** when there's no goal ratio to rank by
+- the leaderboard ranks by production **actual** instead of %
+- the production-days card hides when the year has no days, and an office with no figures for the
+  chosen year gets a plain "No 2024 figures for Mansfield" panel instead of `$0`
+
+Verified: 2025 = $14.43M group (matches the workbook exactly), 2024 = $8.57M across the five offices
+that have it, Mansfield/Cruces have no 2024 and say so, Cruces FFO 2025 has 0 production days and
+hides the days card. No `NaN`/`undefined` in any combination.
+
 ### Combine months
 `period` can be `'mtd'` | `'ytd'` | a month index | **an array of month indexes**. Use `isMonths()`
 and `pickedMonths()`; never test `typeof period==='number'` alone. The month popover has a
@@ -200,7 +224,7 @@ The app is **Home-Brace**. The mark is a **white house outline with a braces arc
   `PRACTICE` in `assets/app.js` is `""` and the header shows only the wordmark. Don't invent one.
   The root site's eight fake "Summit …" offices were renamed to the real eight: Carlsbad, Clovis,
   Hobbs, Cruces LCO, Cruces FFO, Lubbock, San Angelo, Mansfield.
-- **All** shared assets carry a `?v=…` query (currently `hb24`) — **bump it** when editing `assets/app.js`,
+- **All** shared assets carry a `?v=…` query (currently `hb27`) — **bump it** when editing `assets/app.js`,
   `assets/data.js`, `assets/styles.css`, `v1/user.js`, `v1/tour.js` or `v1/celebrate.js` —
   browsers cache them hard and will silently serve the old copy otherwise. This bit us twice.
 
