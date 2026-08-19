@@ -238,8 +238,8 @@
   .foot b{color:var(--navy)}
   @media(max-width:620px){ .kpi .v{font-size:22px} }
 </style>
-<script src="user.js?v=hb32"></script>
-<script src="celebrate.js?v=hb32"></script>
+<script src="user.js?v=hb34"></script>
+<script src="celebrate.js?v=hb34"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — real numbers from the 2026 Production Dashboard workbook. You only see the offices you have access to.</div>
@@ -484,10 +484,12 @@ const OFFICES=[
     const a=sum(o.act,L);
     // full goal for every finished month, pro-rated goal for the month in progress
     let g=pacedSum(o,o.goal,L), s=pacedSum(o,o.stretch,L), l=pacedSum(o,o.ly,L);
+    const gFull=L.reduce((x,i)=>x+(o.goal[i]||0),0);      // whole-month goal, un-paced
     const schd = L.reduce((x,i)=>x+o.days[i],0);
     const comp = L.reduce((x,i)=>x+o.done[i],0);
     const perDay = comp? a/comp : 0, needPerDay = comp? g/comp : 0;
-    return {L,a,g,s,l,perDay,needPerDay,pct:g?a/g:0,spct:s?a/s:0,yoy:l?a/l:0,vgoal:a-g,vstretch:a-s,
+    return {L,a,g,s,l,gFull,perDay,needPerDay,pct:g?a/g:0,spct:s?a/s:0,yoy:l?a/l:0,vgoal:a-g,vstretch:a-s,
+            pctFull:gFull?a/gFull:0, share:gFull?g/gFull:1,
             sched:schd, done:comp,
             // "Days left" = scheduled production days (workbook line 26) minus completed
             // days (line 5). It follows the period chosen: a month or a combined set counts
@@ -632,7 +634,8 @@ const OFFICES=[
         pending:pending,
         footer:'<span>'+goalLab+' <b>'+money(t.g)+'</b></span><span>Stretch <b>'+money(t.s)+'</b> ('+pc(t.spct)+' there)</span>'+
                  '<span>Per day <b>'+money(t.perDay)+'</b> vs <b>'+money(t.needPerDay)+'</b> needed</span>'+
-                 (paced?'<span style="color:var(--teal-600)">goal scaled to the days worked</span>'
+                 (paced?'<span style="color:var(--teal-600)">'+pc(t.pctFull)+' of the month\u2019s goal \u00b7 '+
+                        pc(t.share)+' of the month\u2019s days done</span>'
                    :(pending?'<span style="color:var(--amber)">no days logged yet \u2014 shown against the whole month</span>':''))})+
       gauge({icon:'\ud83e\uddb7',title:'Starts',
         big:(o.noGoals&&o.hasStarts===false)?'\u2014':Math.round(st.a)+' starts',noGoal:!!o.noGoals,
@@ -958,7 +961,7 @@ const OFFICES=[
 })();
 </script>
 <script>PH.nav('dashboard');</script>
-<script src="tour.js?v=hb32"></script>
+<script src="tour.js?v=hb34"></script>
 <script>
 Tour.init([
   {sel:'.viewas', title:'You only see your offices', body:'Production numbers are sensitive, so people see <b>only the offices they\u2019re assigned to</b>. Switch to the Carlsbad manager \u2014 the group totals and the leaderboard disappear, because they aren\u2019t hers to see.'},

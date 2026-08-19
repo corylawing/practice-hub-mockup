@@ -145,6 +145,22 @@ $227K and reasonably concluded one of them was a daily figure.
   simply untrue.
 - Currently only **Clovis and Hobbs** are in that state (August production entered, `done`=0).
 
+### The in-progress month's % will NEVER match their sheet — and that's fine
+Heather queried August after every past month reconciled. It isn't a bug; the app shows her two
+figures **divided**. Her tab has:
+
+- **"Current Percentage to Goal"** = actual ÷ whole-month goal (Carlsbad Aug **48%**)
+- **"Percentage of Goal if Tracking"** = how much of the month is done (**44%**, i.e. 4 of 9 days)
+
+The app's headline is 48 ÷ 44 = **108%** — "ahead of pace". Finished months have "if tracking" = 100%,
+so app % equals her % and they agree; only the live month diverges. Verified on all 8 offices
+(Mansfield 79/44 = 178%, Cruces FFO 57/83 = 68%).
+
+So the footer now prints **both** of her numbers next to the paced headline —
+*"48% of the month's goal · 44% of the month's days done"* — so anyone can reconcile it to the sheet
+without doing the arithmetic. Don't "fix" the paced % to match her sheet; it answers a different and
+more useful question.
+
 ### Leaderboard rules
 - **Number first, percentage second** for both metrics: Office · **Production ($)** · % of goal ·
   vs last yr · **Starts (#)** · % of goal · Days left. The absolute figure is the bold one
@@ -262,7 +278,7 @@ The app is **Home-Brace**. The mark is a **white house outline with a braces arc
   `PRACTICE` in `assets/app.js` is `""` and the header shows only the wordmark. Don't invent one.
   The root site's eight fake "Summit …" offices were renamed to the real eight: Carlsbad, Clovis,
   Hobbs, Cruces LCO, Cruces FFO, Lubbock, San Angelo, Mansfield.
-- **All** shared assets carry a `?v=…` query (currently `hb31`) — **bump it** when editing `assets/app.js`,
+- **All** shared assets carry a `?v=…` query (currently `hb34`) — **bump it** when editing `assets/app.js`,
   `assets/data.js`, `assets/styles.css`, `v1/user.js`, `v1/tour.js` or `v1/celebrate.js` —
   browsers cache them hard and will silently serve the old copy otherwise. This bit us twice.
 
