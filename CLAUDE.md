@@ -145,7 +145,28 @@ $227K and reasonably concluded one of them was a daily figure.
   simply untrue.
 - Currently only **Clovis and Hobbs** are in that state (August production entered, `done`=0).
 
-### The in-progress month's % will NEVER match their sheet — and that's fine
+### GOALS ARE NEVER SCALED. The goal shown is the workbook's goal.
+Settled by Heather 2026-08-19 with screenshots. Earlier the app pro-rated a part-month's goal to the
+days worked, so Carlsbad August showed a **$89K** goal and **108%** — reading as "goal hit" when they
+were at $96K of a **$200,435** goal. She said plainly: *"it shows them to have already hit goal which
+is not true"*, and that she prefers the finished-month presentation.
+
+**Rules now:**
+- `stats().g` / `sStats().g` are the **plain sum of the workbook's goals** for the selected months.
+  `pct = actual ÷ that goal`. Carlsbad Aug = **48%**, matching her "Current Percentage to Goal" —
+  and all 8 offices match hers exactly (23/36/36/57/67/79/46).
+- Label is **"Monthly goal"** — never "Whole-month goal" or a days-scaled variant.
+- Pace still shows, but **explicitly as pace** and only in the verdict line:
+  *"$7,016 ahead of pace for 4 of 9 days"* — that figure is her Dashboard tab's "Production
+  Tracking" and matches on all 8. `t.gPace` / `t.vpace` hold it. Never let pace touch `pct`.
+- A finished month reads *"$111,903 over goal"* / *"… to go"* — no pace wording.
+
+**Starts had a real bug:** `sAct` was built as *full-month* starts goal + "starts ahead/behind",
+which double-counted a part month (Carlsbad Aug 29 instead of 14). Correct basis is
+**(needed starts/day × days WORKED) + ahead**. Finished months are unaffected (worked = scheduled),
+which is exactly why only August looked wrong to her.
+
+### (superseded) The in-progress month's % vs their sheet
 Heather queried August after every past month reconciled. It isn't a bug; the app shows her two
 figures **divided**. Her tab has:
 
@@ -278,7 +299,7 @@ The app is **Home-Brace**. The mark is a **white house outline with a braces arc
   `PRACTICE` in `assets/app.js` is `""` and the header shows only the wordmark. Don't invent one.
   The root site's eight fake "Summit …" offices were renamed to the real eight: Carlsbad, Clovis,
   Hobbs, Cruces LCO, Cruces FFO, Lubbock, San Angelo, Mansfield.
-- **All** shared assets carry a `?v=…` query (currently `hb34`) — **bump it** when editing `assets/app.js`,
+- **All** shared assets carry a `?v=…` query (currently `hb36`) — **bump it** when editing `assets/app.js`,
   `assets/data.js`, `assets/styles.css`, `v1/user.js`, `v1/tour.js` or `v1/celebrate.js` —
   browsers cache them hard and will silently serve the old copy otherwise. This bit us twice.
 
