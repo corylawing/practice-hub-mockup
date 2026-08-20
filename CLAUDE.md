@@ -305,6 +305,28 @@ The app is **Home-Brace**. The mark is a **white house outline with a braces arc
 
 ---
 
+### Entra app registration (created 2026-08-19)
+| | |
+|---|---|
+| Tenant | **Farnsworth Family Orthodontics** |
+| Directory (tenant) ID | `edb81e45-7fa8-4147-982f-2f31c6298086` |
+| Application (client) ID | `2122a06f-b6e9-4618-9106-3b6d6a84b5eb` |
+| Account types | Single tenant |
+| Redirect URI | `http://localhost:8790` (SPA) — add the live URL when hosted |
+| Client secret | **none, and don't add one** — a SPA can't hold a secret |
+
+Both IDs are **public by design**: a browser app ships them in its JavaScript. They are not secrets.
+Cory has an admin account (`Consult@farnsworthorthodontics.com`) with App Registration rights.
+
+**Delegated Graph scopes needed:** `User.Read` (sign-in), `Sites.ReadWrite.All` (lists, documents,
+the workbook), `User.ReadBasic.All` (so new hires appear before first login).
+
+⚠️ Still unresolved: the group is across **multiple tenants**. Single-tenant is correct anyway —
+multi-tenant would give one disconnected hub per tenant, not one shared one. Consolidation is still
+Phase 0.
+
+---
+
 ## 4. `v1/user.js` — people, permissions, nav, profile
 
 **This is the spine of the app. Read it before touching any page.**
