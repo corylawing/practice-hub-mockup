@@ -314,12 +314,23 @@ The app is **Home-Brace**. The mark is a **white house outline with a braces arc
 | Account types | Single tenant |
 | Redirect URI | `http://localhost:8790` (SPA) — add the live URL when hosted |
 | Client secret | **none, and don't add one** — a SPA can't hold a secret |
+| SharePoint host | **`omegaorthodontics.sharepoint.com`** (admin: `omegaorthodontics-admin…`) |
+| Cory's role | **SharePoint Administrator** — enough to build sites/lists, **cannot** grant consent |
 
 Both IDs are **public by design**: a browser app ships them in its JavaScript. They are not secrets.
 Cory has an admin account (`Consult@farnsworthorthodontics.com`) with App Registration rights.
 
 **Delegated Graph scopes needed:** `User.Read` (sign-in), `Sites.ReadWrite.All` (lists, documents,
 the workbook), `User.ReadBasic.All` (so new hires appear before first login).
+
+⚠️ **Admin consent is REQUIRED and Cory cannot grant it.** All four scopes show "Admin consent
+required: No", but that's Microsoft's *default* — this tenant has **user consent switched off**, so
+sign-in is blocked until a Global/Cloud Application Administrator clicks Grant admin consent. Proven
+three ways: greyed button on App registrations, greyed on Enterprise applications, and the
+`/adminconsent` URL returning "Need admin approval".
+
+⚠️ The tenant's SharePoint host is **omegaorthodontics**, not farnsworth — the tenant predates the
+Farnsworth branding. Relevant to the which-tenant-is-master decision.
 
 ⚠️ Still unresolved: the group is across **multiple tenants**. Single-tenant is correct anyway —
 multi-tenant would give one disconnected hub per tenant, not one shared one. Consolidation is still
