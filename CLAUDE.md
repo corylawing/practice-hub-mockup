@@ -2,7 +2,79 @@
 
 > Read this first. It is the full context for **Home-Brace** so any session (including on a phone)
 > can pick this up cold. Keep it current — the user asks for that explicitly.
-> Last full update: **2026-08-08** (renamed Practice Hub → Home-Brace).
+> Last full update: **2026-08-20**.
+
+---
+
+## 0. WHERE WE ARE RIGHT NOW (read before anything else)
+
+**The user is Cory Lawing.** He is building this for a friend's orthodontic practice. He is not a
+developer. Keep answers **short** — he has told me repeatedly that I write too much. Give the
+answer, not the reasoning behind every alternative.
+
+### What this is
+A **clickable mockup** of an internal hub for an 8-office orthodontic practice, used to get
+leadership sign-off before anything real is built. It is **static HTML/CSS/JS with hardcoded data**.
+Nothing persists beyond one browser's `localStorage`. There is **no backend and no sign-in**.
+
+### Who the people are
+- **Cory** — building it. Works at DentalMonitoring; this is a side project for a friend.
+- **Heather Beal** — the practice's **COO**. The decision-maker. She reviews the dashboard against
+  her Excel workbook and finds real bugs. Treat her feedback as authoritative; **the Excel is their
+  bible**. She has been right and I have been wrong more than once.
+- **An external IT company** manages their Microsoft tenant(s).
+
+### State of the build
+Eight V1 pages, all working and audited on desktop + mobile: Home, Production Dashboard, Enter
+Production, Schedule, Marketing, Documents, Team, Admin. Real staff roster, real office list, real
+production figures reconciled to their workbook. Live at
+`corylawing.github.io/practice-hub-mockup/v1/home.html`.
+
+### State of the Microsoft side (2026-08-20)
+| | |
+|---|---|
+| Entra app registration | **Done** — IDs in §3 "Entra app registration" |
+| Four delegated Graph permissions | **Added** |
+| **Admin consent** | ❌ **BLOCKED — the IT company must click it.** Cory cannot. |
+| Cory's role | SharePoint Administrator (can build SharePoint, cannot consent) |
+| Cory's M365 licence | None assigned |
+| Integration code | **None written.** No MSAL, no Graph calls. Not started. |
+
+**Nothing on the Microsoft side can progress until the IT company grants consent.** An email
+asking for it has been drafted and sent.
+
+### The data workflow right now
+The dashboard's numbers are a **manual snapshot**. When the practice updates their workbook, Cory
+sends the file, and the figures are re-extracted and committed. Current file:
+`~/Documents/2026 PRODUCTION DASHBOARD (CURRENT).xlsx`.
+**Always re-reconcile after importing** — see §9 "Workbook reconciliation" for the method. Heather once reviewed weeks-old
+numbers and reported them as bugs, so keep the snapshot fresh and tell her it is a snapshot.
+
+### What to do next
+1. **Keep iterating the mockup with Heather.** This is the live, valuable loop and is blocked on
+   nothing. She is engaged and finding genuine issues.
+2. **Waiting on the IT company:** grant admin consent; confirm which tenant is the long-term master
+   (their SharePoint host is `omegaorthodontics`, but the org displays as Farnsworth Family
+   Orthodontics, and the group spans several tenants); optionally a licence for Cory.
+3. **Do NOT build the SharePoint site or lists yet** — Cory has the rights, but if the master tenant
+   turns out to be a different one the work is wasted.
+4. **Once consent lands**, the first thing to build is the Production Dashboard reading the workbook
+   live via Graph. It proves the architecture and ends the stale-snapshot problem.
+
+### Open questions with the practice
+- Row 13 on the Lubbock and San Angelo tabs is `=B12/B7` (2026 ÷ 2024). Heather confirmed it should
+  be `=B8/B7` (2025 ÷ 2024). **A bug in her sheet, not ours** — no app change needed.
+- Whether managers may overwrite goals (currently `manage` only).
+- Which team each role maps to — the Team column is blank for most of the roster.
+- Whether any tracker file contains **patient names**. If yes it is PHI and changes everything about
+  access, auditing and device policy. **Unanswered and important.**
+
+### Hard-won rules — violating these has caused real bugs
+- **Never scale a goal.** Show the workbook's goal. See §"GOALS ARE NEVER SCALED".
+- **Match workbook rows by LABEL, never by row number** — the tabs have two different layouts.
+- **Bump the `?v=` cache stamp** on every shared-file edit or browsers serve a stale app.
+- **Do not invent people, offices, figures or features.** Cory has caught several inventions and it
+  costs trust every time.
 
 ---
 
