@@ -254,6 +254,17 @@ So the footer now prints **both** of her numbers next to the paced headline —
 without doing the arithmetic. Don't "fix" the paced % to match her sheet; it answers a different and
 more useful question.
 
+### Two case fees on Enter Production, both leadership-only
+`BASE[office].fee` = **Medicaid case fee**; `BASE[office].afee` = **average case fee** (the workbook's
+"2025 Average Case Fee"). Both are **per office, not per month** — `val()` returns them directly and
+`edit()` writes them across all 12 months. Both are gated on `canGoals()` (`manage`), read-only for
+an office manager, exactly like the goals.
+
+Each has a live calc line under it: Medicaid shows *starts × fee = production*, average shows
+*production ÷ fee ≈ starts*. The right-hand panel carries a matching "Starts (from average case fee)"
+row. **Update both the initial render AND `refreshRight()`** — they build that panel separately, and
+I missed the initial one first time.
+
 ### Leaderboard rules
 - **Number first, percentage second** for both metrics: Office · **Production ($)** · % of goal ·
   vs last yr · **Starts (#)** · % of goal · Days left. The absolute figure is the bold one
@@ -371,7 +382,7 @@ The app is **Home-Brace**. The mark is a **white house outline with a braces arc
   `PRACTICE` in `assets/app.js` is `""` and the header shows only the wordmark. Don't invent one.
   The root site's eight fake "Summit …" offices were renamed to the real eight: Carlsbad, Clovis,
   Hobbs, Cruces LCO, Cruces FFO, Lubbock, San Angelo, Mansfield.
-- **All** shared assets carry a `?v=…` query (currently `hb37`) — **bump it** when editing `assets/app.js`,
+- **All** shared assets carry a `?v=…` query (currently `hb39`) — **bump it** when editing `assets/app.js`,
   `assets/data.js`, `assets/styles.css`, `v1/user.js`, `v1/tour.js` or `v1/celebrate.js` —
   browsers cache them hard and will silently serve the old copy otherwise. This bit us twice.
 

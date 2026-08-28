@@ -94,7 +94,7 @@
   .noacc b{color:var(--navy)}
   @media(max-width:760px){ .grid2{grid-template-columns:1fr} }
 </style>
-<script src="user.js?v=hb37"></script>
+<script src="user.js?v=hb39"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — type the month's numbers here. In the real build this writes straight into the SharePoint workbook.</div>
@@ -126,28 +126,28 @@
   const MOFULL=['January','February','March','April','May','June','July','August','September','October','November','December'];
   // Baseline from their workbook (what's already filled in).
   const BASE={
-   'Carlsbad':{fee:4200, tc:[143601, 172538, 194461, 156556, 160379, 204704, 290679, 130128, 0, 0, 0, 0], mds:[9, 12, 17, 14, 7, 7, 16, 4, 0, 0, 0, 0], adj:[4623, -16042, -9408, -9284, -13561, 5178, -19187, -9211, 0, 0, 0, 0], dys:[9.0, 9.0, 8.0, 8.0, 7.0, 9.0, 10.0, 7.0, 0.0, 0.0, 0.0, 0.0],
+   'Carlsbad':{fee:4200, afee:5556, tc:[143601, 172538, 194461, 156556, 160379, 204704, 290679, 130128, 0, 0, 0, 0], mds:[9, 12, 17, 14, 7, 7, 16, 4, 0, 0, 0, 0], adj:[4623, -16042, -9408, -9284, -13561, 5178, -19187, -9211, 0, 0, 0, 0], dys:[9.0, 9.0, 8.0, 8.0, 7.0, 9.0, 10.0, 7.0, 0.0, 0.0, 0.0, 0.0],
      goal:[252912, 216988, 166188, 214647, 189249, 222278, 245976, 200435, 218840, 177212, 146966, 139312],
      str:[278203, 238687, 191117, 231819, 227099, 231169, 268114, 214465, 227594, 212654, 176359, 167174]},
-   'Clovis':{fee:4200, tc:[196673, 246025, 217287, 142748, 142689, 169322, 209963, 156837, 0, 0, 0, 0], mds:[7, 3, 7, 7, 6, 7, 9, 3, 0, 0, 0, 0], adj:[-5155, -5244, -289, 7381, -7988, -1381, -11210, 1706, 0, 0, 0, 0], dys:[9.0, 9.0, 9.0, 9.0, 9.0, 9.0, 10.0, 6.0, 0.0, 0.0, 0.0, 0.0],
+   'Clovis':{fee:4200, afee:5418, tc:[196673, 246025, 217287, 142748, 142689, 169322, 209963, 156837, 0, 0, 0, 0], mds:[7, 3, 7, 7, 6, 7, 9, 3, 0, 0, 0, 0], adj:[-5155, -5244, -289, 7381, -7988, -1381, -11210, 1706, 0, 0, 0, 0], dys:[9.0, 9.0, 9.0, 9.0, 9.0, 9.0, 10.0, 6.0, 0.0, 0.0, 0.0, 0.0],
      goal:[150201, 207644, 207905, 204125, 166173, 158085, 325468, 226833, 159142, 175696, 145196, 179490],
      str:[171230, 236714, 237012, 232702, 189437, 180217, 348251, 258590, 181422, 200293, 165523, 204619]},
-   'Hobbs':{fee:4200, tc:[163942, 158058, 221338, 212627, 164245, 242512, 177847, 223571, 0, 0, 0, 0], mds:[8, 12, 2, 3, 8, 4, 6, 3, 0, 0, 0, 0], adj:[-5660, -2652, -503, 7317, -23559, -1245, -2962, 1498, 0, 0, 0, 0], dys:[7.0, 9.0, 9.0, 8.0, 7.0, 8.0, 9.0, 8.0, 0.0, 0.0, 0.0, 0.0],
+   'Hobbs':{fee:4200, afee:6175, tc:[163942, 158058, 221338, 212627, 164245, 242512, 177847, 223571, 0, 0, 0, 0], mds:[8, 12, 2, 3, 8, 4, 6, 3, 0, 0, 0, 0], adj:[-5660, -2652, -503, 7317, -23559, -1245, -2962, 1498, 0, 0, 0, 0], dys:[7.0, 9.0, 9.0, 8.0, 7.0, 8.0, 9.0, 8.0, 0.0, 0.0, 0.0, 0.0],
      goal:[230923, 199566, 208649, 181588, 204041, 228096, 139976, 178059, 151724, 246031, 188257, 177982],
      str:[260942, 225509, 239946, 205195, 244849, 255468, 162372, 206549, 174482, 295237, 225909, 195780]},
-   'Cruces LCO':{fee:4200, tc:[159338, 148715, 123748, 100799, 101118, 0, 138104, 88078, 0, 0, 0, 0], mds:[0, 0, 0, 0, 0, 0, 5, 1, 0, 0, 0, 0], adj:[-9696, -5504, -30217, -12484, 0, 0, 1633, 962, 0, 0, 0, 0], dys:[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 10.0, 8.0, 0.0, 0.0, 0.0, 0.0],
+   'Cruces LCO':{fee:4200, afee:4750, tc:[159338, 148715, 123748, 100799, 101118, 0, 138104, 88078, 0, 0, 0, 0], mds:[0, 0, 0, 0, 0, 0, 5, 1, 0, 0, 0, 0], adj:[-9696, -5504, -30217, -12484, 0, 0, 1633, 962, 0, 0, 0, 0], dys:[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 10.0, 8.0, 0.0, 0.0, 0.0, 0.0],
      goal:[0, 0, 0, 0, 0, 0, 103648, 166866, 167404, 138716, 81094, 102830],
      str:[0, 0, 0, 0, 0, 0, 129560, 191896, 192514, 166459, 97313, 113113]},
-   'Cruces FFO':{fee:0, tc:[106907, 106892, 106210, 57183, 44268, 0, 48178, 56531, 0, 0, 0, 0], mds:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], adj:[-16174, -11257, -12234, 0, 0, 0, 0, 0, 0, 0, 0, 0], dys:[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 6.0, 6.0, 0.0, 0.0, 0.0, 0.0],
+   'Cruces FFO':{fee:0, afee:4601, tc:[106907, 106892, 106210, 57183, 44268, 0, 48178, 56531, 0, 0, 0, 0], mds:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], adj:[-16174, -11257, -12234, 0, 0, 0, 0, 0, 0, 0, 0, 0], dys:[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 6.0, 6.0, 0.0, 0.0, 0.0, 0.0],
      goal:[0, 0, 0, 0, 0, 0, 87361, 75272, 68613, 73501, 70542, 79563],
      str:[0, 0, 0, 0, 0, 0, 104834, 90326, 82336, 88202, 84650, 95476]},
-   'Lubbock':{fee:0, tc:[123060, 104157, 137058, 84810, 103300, 81500, 97835, 91772, 0, 0, 0, 0], mds:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], adj:[-1208, -18237, -7013, -2113, -7475, -14273, -6791, -8684, 0, 0, 0, 0], dys:[7.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 0.0, 0.0, 0.0, 0.0],
+   'Lubbock':{fee:0, afee:5164, tc:[123060, 104157, 137058, 84810, 103300, 81500, 97835, 91772, 0, 0, 0, 0], mds:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], adj:[-1208, -18237, -7013, -2113, -7475, -14273, -6791, -8684, 0, 0, 0, 0], dys:[7.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 8.0, 0.0, 0.0, 0.0, 0.0],
      goal:[146572, 133479, 116836, 77523, 100442, 80660, 96519, 98413, 99420, 115639, 81771, 88319],
      str:[166559, 157748, 132768, 119808, 127835, 124656, 131617, 113722, 112977, 111191, 107470, 103905]},
-   'San Angelo':{fee:0, tc:[364028, 347608, 273810, 209565, 201489, 310660, 332910, 228853, 0, 0, 0, 0], mds:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], adj:[-10876, -4738, 7686, -3249, -12407, -9982, 4721, -3212, 0, 0, 0, 0], dys:[10.5, 13.0, 10.0, 9.0, 10.0, 9.0, 10.0, 10.0, 0.0, 0.0, 0.0, 0.0],
+   'San Angelo':{fee:0, afee:5622, tc:[364028, 347608, 273810, 209565, 201489, 310660, 332910, 228853, 0, 0, 0, 0], mds:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], adj:[-10876, -4738, 7686, -3249, -12407, -9982, 4721, -3212, 0, 0, 0, 0], dys:[10.5, 13.0, 10.0, 9.0, 10.0, 9.0, 10.0, 10.0, 0.0, 0.0, 0.0, 0.0],
      goal:[275667, 193614, 240442, 210867, 274049, 239473, 291472, 312606, 214035, 248641, 192785, 267286],
      str:[301921, 219429, 263341, 230950, 300148, 262279, 319232, 342378, 234419, 272321, 211145, 292741]},
-   'Mansfield':{fee:0, tc:[108954, 92996, 139815, 95285, 63447, 178690, 194970, 105593, 0, 0, 0, 0], mds:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], adj:[0, 0, 0, 0, 6, -5053, -1683, 2860, 0, 0, 0, 0], dys:[9.0, 10.0, 11.0, 9.0, 10.0, 9.0, 10.0, 6.0, 0.0, 0.0, 0.0, 0.0],
+   'Mansfield':{fee:0, afee:6000, tc:[108954, 92996, 139815, 95285, 63447, 178690, 194970, 105593, 0, 0, 0, 0], mds:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], adj:[0, 0, 0, 0, 6, -5053, -1683, 2860, 0, 0, 0, 0], dys:[9.0, 10.0, 11.0, 9.0, 10.0, 9.0, 10.0, 6.0, 0.0, 0.0, 0.0, 0.0],
      goal:[0, 0, 0, 130268, 174025, 104053, 146511, 100531, 74090, 71498, 103061, 52919],
      str:[0, 0, 0, 145900, 189158, 148648, 209301, 143616, 105842, 96522, 139132, 71440]}
   };
@@ -159,7 +159,7 @@
     const zero=()=>[0,0,0,0,0,0,0,0,0,0,0,0];
     PH.locations().forEach(l=>{
       if(BASE[l.n]) return;
-      BASE[l.n]={fee:0, tc:zero(), mds:zero(), adj:zero(), dys:zero(), goal:zero(), str:zero()};
+      BASE[l.n]={fee:0, afee:0, tc:zero(), mds:zero(), adj:zero(), dys:zero(), goal:zero(), str:zero()};
     });
   })();
   const PERSONAS=(window.PH?PH.PEOPLE:[]).map(p=>({
@@ -176,7 +176,8 @@
     const e=edits[key(o,m)];
     if(e && e[f]!==undefined && e[f]!=='') return Number(e[f]);
     const b=BASE[o]; if(!b) return 0;
-    if(f==='fee') return b.fee;                 // case fee is per office, not per month
+    if(f==='fee')  return b.fee;                // both case fees are per office, not per month
+    if(f==='afee') return b.afee||0;
     return (b[f]||[])[m]||0;
   }
   const medDollars=(o,m)=>val(o,m,'mds')*val(o,m,'fee');
@@ -194,6 +195,7 @@
     if(!office || list.indexOf(office)<0) office=list[0];
     const b=BASE[office];
     const tc=val(office,month,'tc'), mds=val(office,month,'mds'), fee=val(office,month,'fee');
+    const afee=val(office,month,'afee');
     const mdp=mds*fee, adj=val(office,month,'adj');
     const dys=val(office,month,'dys'), goal=val(office,month,'goal'), str=val(office,month,'str');
     const total=tc+mdp, net=total+adj, pctGoal=goal?total/goal:0, pctStr=str?total/str:0;
@@ -218,6 +220,10 @@
                 : '<div class="f"><label>Medicaid case fee</label><div class="help">Set by leadership \u2014 you can\u2019t change this</div><input class="ro" value="$'+fee.toLocaleString('en-US')+'" readonly></div>')+
               '<div class="calcline" id="calcline">'+mds+' starts \u00d7 '+money(fee)+' = <b>'+money(mdp)+'</b> Medicaid production</div>'
             : '')+
+          (canGoals()
+            ? fld('Average case fee','What a typical case is worth here. Turns production into a starts figure. Applies to every month at this office.','afee',afee)
+            : '<div class="f"><label>Average case fee</label><div class="help">Set by leadership \u2014 you can\u2019t change this</div><input class="ro" value="$'+afee.toLocaleString('en-US')+'" readonly></div>')+
+          (afee>0 ? '<div class="calcline" id="startline">'+money(tc)+' \u00f7 '+money(afee)+' \u2248 <b>'+Math.round(tc/afee)+'</b> starts</div>' : '')+
           fld('Write-offs &amp; other adjustments','Can be negative','adj',adj)+
           fld('Completed production days','How many days you actually saw patients','dys',dys,true)+
           '<div style="border-top:1px solid var(--line);margin:4px 0 14px"></div>'+
@@ -241,7 +247,8 @@
           line('% of stretch',pc(pctStr))+
           (billsMedicaid?line('Medicaid production',money(mdp)):'')+
           line('Adjusted net',money(net))+
-          line('Average per day',dys?money(perDay):'—')+
+          line('Average per day',dys?money(perDay):'\u2014')+
+          line('Starts (from average case fee)',afee>0?Math.round(tc/afee):'\u2014')+
         '</div>'+
       '</div>';
   }
@@ -252,8 +259,8 @@
   }
   function line(k,v,cls){ return '<div class="rowline"><span class="k">'+k+'</span><span class="v '+(cls||'')+'">'+v+'</span></div>'; }
   function edit(f,v){
-    if(f==='fee'){ // the case fee applies to the whole office, every month
-      for(let m=0;m<12;m++){ const kk=key(office,m); edits[kk]=edits[kk]||{}; edits[kk].fee=v===''?'':Number(v); }
+    if(f==='fee'||f==='afee'){ // a case fee applies to the whole office, every month
+      for(let m=0;m<12;m++){ const kk=key(office,m); edits[kk]=edits[kk]||{}; edits[kk][f]=v===''?'':Number(v); }
     }
     const k=key(office,month); edits[k]=edits[k]||{}; edits[k][f]=v===''?'':Number(v);
     // store the resulting TOTAL so the dashboard never has to re-derive it
@@ -266,11 +273,14 @@
   function refreshRight(){
     const b=BASE[office];
     const tc=val(office,month,'tc'), mds=val(office,month,'mds'), fee=val(office,month,'fee');
+    const afee=val(office,month,'afee');
     const mdp=mds*fee, adj=val(office,month,'adj');
     const dys=val(office,month,'dys'), goal=val(office,month,'goal'), str=val(office,month,'str');
     const total=tc+mdp, net=total+adj, vGoal=total-goal; const billsMedicaid=fee>0||mds>0;
     const cl=el('calcline');
     if(cl && billsMedicaid) cl.innerHTML=mds+' starts \u00d7 '+money(fee)+' = <b>'+money(mdp)+'</b> Medicaid production';
+    const sl=el('startline');
+    if(sl) sl.innerHTML = afee>0 ? money(tc)+' \u00f7 '+money(afee)+' \u2248 <b>'+Math.round(tc/afee)+'</b> starts' : '';
     const cards=document.querySelectorAll('.grid2 .card')[1]; if(!cards)return;
     cards.innerHTML='<h2>What that gives you</h2><div class="sub">Updates as you type.</div>'+
       '<div class="big"><div class="k">Total production</div><div class="v">'+money(total)+'</div></div>'+
@@ -278,7 +288,8 @@
       line('% of main goal',pc(goal?total/goal:0))+line('Stretch goal',money(str))+
       line('% of stretch',pc(str?total/str:0))+
       (billsMedicaid?line('Medicaid production',money(mdp)):'')+line('Adjusted net',money(net))+
-      line('Average per day',dys?money(net/dys):'—');
+      line('Average per day',dys?money(net/dys):'\u2014')+
+      line('Starts (from average case fee)',afee>0?Math.round(tc/afee):'\u2014');
   }
   function commit(){ save(); const s=el('saved'); if(s){s.classList.add('on'); setTimeout(()=>s.classList.remove('on'),2600);} }
   function reset(){ Object.keys(edits).forEach(k=>{ if(k.indexOf(office+'|')===0) delete edits[k]; }); save(); render(); }
@@ -302,7 +313,7 @@
 })();
 </script>
 <script>PH.nav('production');</script>
-<script src="tour.js?v=hb37"></script>
+<script src="tour.js?v=hb39"></script>
 <script>
 Tour.init([
   {sel:'.syncbar', title:'One set of numbers', body:'Type here and it saves into the <b>same Excel workbook</b> on SharePoint. If someone types in Excel instead, it shows up here. There is never a second copy to reconcile.'},
