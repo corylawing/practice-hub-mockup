@@ -46,7 +46,7 @@ asking for it has been drafted and sent.
 ### The data workflow right now
 The dashboard's numbers are a **manual snapshot**. When the practice updates their workbook, Cory
 sends the file, and the figures are re-extracted and committed. Current file:
-`~/Documents/2026 PRODUCTION DASHBOARD (CURRENT).xlsx`.
+`~/Documents/2026 PRODUCTION DASHBOARD (CURRENT).xlsx` (currently the **-5** file, imported 2026-08-28).
 **Always re-reconcile after importing** — see §9 "Workbook reconciliation" for the method. Heather once reviewed weeks-old
 numbers and reported them as bugs, so keep the snapshot fresh and tell her it is a snapshot.
 
@@ -371,7 +371,7 @@ The app is **Home-Brace**. The mark is a **white house outline with a braces arc
   `PRACTICE` in `assets/app.js` is `""` and the header shows only the wordmark. Don't invent one.
   The root site's eight fake "Summit …" offices were renamed to the real eight: Carlsbad, Clovis,
   Hobbs, Cruces LCO, Cruces FFO, Lubbock, San Angelo, Mansfield.
-- **All** shared assets carry a `?v=…` query (currently `hb36`) — **bump it** when editing `assets/app.js`,
+- **All** shared assets carry a `?v=…` query (currently `hb37`) — **bump it** when editing `assets/app.js`,
   `assets/data.js`, `assets/styles.css`, `v1/user.js`, `v1/tour.js` or `v1/celebrate.js` —
   browsers cache them hard and will silently serve the old copy otherwise. This bit us twice.
 
