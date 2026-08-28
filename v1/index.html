@@ -238,11 +238,11 @@
   .foot b{color:var(--navy)}
   @media(max-width:620px){ .kpi .v{font-size:22px} }
 </style>
-<script src="user.js?v=hb52"></script>
-<script src="celebrate.js?v=hb52"></script>
+<script src="user.js?v=hb53"></script>
+<script src="celebrate.js?v=hb53"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="workbook.js?v=hb52"></script>
-  <script src="gate.js?v=hb52"></script>
+  <script src="workbook.js?v=hb53"></script>
+  <script src="gate.js?v=hb53"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — real numbers from the 2026 Production Dashboard workbook. You only see the offices you have access to.</div>
@@ -425,10 +425,6 @@ const OFFICES=[
     return o.done[i]/o.days[i];
   }
   const pacedSum=(o,arr,L)=>L.reduce((x,i)=>x+(arr[i]||0)*monthPace(o,i),0);
-  function paceRatio(o){                              // kept for the "goals scaled" note
-    const c=partial(o); if(c<0) return 1;
-    return months(o).indexOf(c)>=0 ? monthPace(o,c) : 1;
-  }
   function stats(o){
     const L=months(o);
     const a=sum(o.act,L);
@@ -667,7 +663,10 @@ const OFFICES=[
         (o.hasDays?' and production days':'')+'. No goals were kept for that year.'
       : isMonths() ? picked.map(i=>MOFULL[i]).join(' + ')+' added together.'
       : isMonth() ? MOFULL[period]+' — a finished month, judged against its full goal.'
-      : period==='mtd' ? 'Showing '+(nm||'the latest month')+' only — goals scaled to the days worked so far.'
+      // Was "goals scaled to the days worked so far" — which is what the app used to do and
+      // exactly what Heather rejected: August read as goal-hit when it was not. The goal shown
+      // is the FULL monthly goal; only the pace comparison uses days worked.
+      : period==='mtd' ? 'Showing '+(nm||'the latest month')+' so far, against its full monthly goal.'
       : 'Every month so far this year, through today — ' + (nm?nm+' is counted up to the days worked.':'live.');
     // Keep the month suffix ALWAYS — it used to appear only while MTD was selected, which
     // changed the pill's width and shoved the month picker sideways on every switch.
@@ -979,7 +978,7 @@ const OFFICES=[
 })();
 </script>
 <script>PH.nav('dashboard');</script>
-<script src="tour.js?v=hb52"></script>
+<script src="tour.js?v=hb53"></script>
 <script>
 Tour.init([
   {sel:'.viewas', title:'You only see your offices', body:'Production numbers are sensitive, so people see <b>only the offices they\u2019re assigned to</b>. Switch to the Carlsbad manager \u2014 the group totals and the leaderboard disappear, because they aren\u2019t hers to see.'},
