@@ -927,6 +927,17 @@ Verified with a **label-driven** parser (row numbers differ between tabs — see
 **44 series across all 8 offices, zero mismatches**: actual production, main goal, stretch goal,
 scheduled days, completed days, Medicaid starts, last-year production, case fees.
 
+**Exact row labels for actual production (confirmed against the live file 2026-08-28):**
+- Medicaid tabs (Carlsbad, Clovis, Hobbs, Cruces LCO): **`2026 Actual TC ONLY + Medicaid Production`**
+- TC-only tabs (Lubbock, San Angelo, Cruces FFO, Mansfield): **`2026 Actual TC Net Production`**
+- **The trap:** Medicaid tabs ALSO carry `2026 Actual TC Net Production (Non-Medicaid)` - a subset,
+  not the total. Match the Medicaid label first AND exclude `non-medicaid`, or every Medicaid
+  office silently understates.
+- Other labels, identical across both layouts: `2026 STRETCH Production Goal[ (TC + Medicaid)]`,
+  `Number of Production Days (2026)`, `Completed Number of Production Days`.
+- Starts labels DIFFER: TC-only says `Current # of Starts (Ahead/Behind) TC Goal`; Medicaid says
+  `Current # of Starts Ahead or Behind Goal`.
+
 **Two different tab layouts.** Carlsbad / Clovis / Cruces LCO / Hobbs carry Medicaid rows
 ("Total Production Goal (TC + Medicaid)"). Cruces FFO / Lubbock / Mansfield / San Angelo have no
 Medicaid at all and use "2026 TC Production Goal". **Never read these tabs by row number** — an

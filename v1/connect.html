@@ -338,7 +338,12 @@
      an earlier pass silently compared the wrong rows. Each entry lists the substrings that must
      all appear in the (lowercased) label. First match wins. */
   var SERIES = {
-    act:      [['2026','actual','tc only']],
+    /* Order matters. Medicaid tabs carry BOTH "2026 Actual TC ONLY + Medicaid Production"
+       (the total we want) and "2026 Actual TC Net Production (Non-Medicaid)" (a subset).
+       Match the total first, and exclude the Non-Medicaid row outright so the TC-only
+       fallback can never grab it. */
+    act:      [['2026','actual','tc only','+','medicaid'],
+               {all:['2026','actual','tc net production'], not:['non-medicaid']}],
     goal:     [['2026','total production goal'], ['2026','tc production goal']],
     stretch:  [['stretch']],
     days:     [['number of production days','2026'], ['production days','2026']],
@@ -347,11 +352,15 @@
   function norm(v){ return String(v == null ? '' : v).toLowerCase().replace(/\s+/g,' ').trim(); }
   function findRow(rows, pats){
     for (var p = 0; p < pats.length; p++){
+      var pat = pats[p];
+      var must = Array.isArray(pat) ? pat : pat.all;
+      var never = (Array.isArray(pat) ? null : pat.not) || [];
       for (var r = 0; r < rows.length; r++){
         var label = norm(rows[r][0]);
         if (!label) continue;
-        var all = pats[p].every(function(frag){ return label.indexOf(frag) >= 0; });
-        if (all) return { row: r, label: rows[r][0] };
+        var ok = must.every(function(frag){ return label.indexOf(frag) >= 0; })
+              && !never.some(function(frag){ return label.indexOf(frag) >= 0; });
+        if (ok) return { row: r, label: rows[r][0] };
       }
     }
     return null;
