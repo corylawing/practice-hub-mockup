@@ -66,9 +66,16 @@ multi-line-text column lives there for step 8; harmless to keep or delete.
    the app's code, only its data. Do not attempt SPFx - it is a rewrite.
 2. **Move the app's storage off `localStorage`** onto lists on that site: `ph_sched2`, `ph_locations`,
    `ph_teams`, `ph_prod`, `ph_docsecs`.
-3. **Heather's answer on restricted data** (below) decides whether sensitive series get their own
-   list with its own permissions, or share the open one. Cheap now, expensive after data exists.
+3. ~~Heather's answer on restricted data.~~ **ANSWERED 2026-08-28: it is a RULE.** An Office Manager
+   must NOT be able to see another location's production numbers - exactly as the app has it.
+   So production **cannot** share one open list: it needs **one list per office**, each granted to
+   that office's group plus Admin/Executive, so SharePoint enforces it rather than the interface
+   merely hiding it. The schedule, office list and team directory can share one open list.
 4. The practice sorting out named accounts - their call, not a blocker.
+
+**IT handover doc:** https://claude.ai/code/artifact/32d9b945-2dfa-4aca-be3e-87db73d35a5f - the
+Entra groups to create (7 team + 8 office), the permission matrix, the per-office restriction, and
+the shared-account problem. Republish that same file to update it; do not create a second one.
 
 **Access model:** grant a GROUP, never individuals - "Everyone except external guests" makes new
 hires work automatically. But note the app's team/location filtering is **presentation**; if a list
