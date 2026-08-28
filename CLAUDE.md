@@ -64,6 +64,13 @@ All four permissions returned real data. What the results told us:
   **Nothing has to be moved.** The hub points at a file where it already lives - see "one file, two
   doors - never a copy". Do not propose a migration or a folder structure; Cory pushed back on that
   and was right.
+- **The workbook itself opens via the Excel Graph API.** Verified 2026-08-28: 9 tabs read, plus real
+  cell values. Tab names are **`Dashboard`, `Lubbock (FFO)`, `Clovis (FFO)`, `Hobbs (FFO)`,
+  `Carlsbad (FFO)`, `San Angelo (FFO)`, `Cruces (FFO)`, `Mansfield (SUN)`, `Cruces (LCO)`**.
+  Note these differ from the app's office names - `Cruces (FFO)` vs the app's `Cruces FFO` - so a
+  name map is needed when wiring the dashboard. Read cells with
+  `/drives/{driveId}/items/{itemId}/workbook/worksheets('NAME')/range(address='A1:C6')`; no download
+  or xlsx parsing required.
 - **⚠ The directory is mostly shared role accounts, not named people.** Returned entries include
   `Lubbock Treatment Coordinator` (`becca@`), `CA Clinic`, plus vendor/service accounts
   (`Simpatico Systems` = their IT company, `Barracuda NDR`). **Job titles are blank on everyone.**
