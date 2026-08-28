@@ -35,13 +35,19 @@ production figures reconciled to their workbook. Live at
 |---|---|
 | Entra app registration | **Done** — IDs in §3 "Entra app registration" |
 | Four delegated Graph permissions | **Added** |
-| **Admin consent** | ❌ **BLOCKED — the IT company must click it.** Cory cannot. |
+| **Admin consent** | ✅ **GRANTED 2026-08-28** by the IT company, in the **Farnsworth Family Orthodontics** tenant |
 | Cory's role | SharePoint Administrator (can build SharePoint, cannot consent) |
-| Cory's M365 licence | None assigned |
+| Cory's M365 licence | ✅ **Assigned 2026-08-28.** He is now a real licensed user in the tenant, so he can sign in to the app himself and Graph will return his own SharePoint/OneDrive data. |
 | Integration code | **None written.** No MSAL, no Graph calls. Not started. |
 
-**Nothing on the Microsoft side can progress until the IT company grants consent.** An email
-asking for it has been drafted and sent.
+Consented permissions, all **Delegated** (verified in Enterprise applications -> Permissions ->
+Admin consent): `offline_access`, `Sites.ReadWrite.All`, `User.Read`, `User.ReadBasic.All`.
+**Never add Application permissions** - delegated means SharePoint keeps enforcing each person's
+own access, which is the whole security model here.
+
+**Consent is granted in the Farnsworth tenant specifically.** If the long-term master turns out to
+be a different tenant, consent has to be granted again there - so the tenant question below is
+still live and still gates building anything in SharePoint.
 
 ### The data workflow right now
 The dashboard's numbers are a **manual snapshot**. When the practice updates their workbook, Cory
@@ -51,15 +57,21 @@ sends the file, and the figures are re-extracted and committed. Current file:
 numbers and reported them as bugs, so keep the snapshot fresh and tell her it is a snapshot.
 
 ### What to do next
-1. **Keep iterating the mockup with Heather.** This is the live, valuable loop and is blocked on
-   nothing. She is engaged and finding genuine issues.
-2. **Waiting on the IT company:** grant admin consent; confirm which tenant is the long-term master
-   (their SharePoint host is `omegaorthodontics`, but the org displays as Farnsworth Family
-   Orthodontics, and the group spans several tenants); optionally a licence for Cory.
-3. **Do NOT build the SharePoint site or lists yet** — Cory has the rights, but if the master tenant
-   turns out to be a different one the work is wasted.
-4. **Once consent lands**, the first thing to build is the Production Dashboard reading the workbook
-   live via Graph. It proves the architecture and ends the stale-snapshot problem.
+1. **Build the sign-in.** Consent is granted, so this is now unblocked and is the next real step:
+   MSAL browser sign-in against the Farnsworth tenant, showing the signed-in name on the page.
+   Nothing else can be tested until a token can be acquired. Keep it a **SPA** - **never add a
+   client secret**, a browser app cannot hold one.
+2. **Then the Production Dashboard via Graph** - read Heather's workbook live instead of the manual
+   snapshot. It proves the architecture and ends the stale-numbers problem.
+3. **Keep iterating the mockup with Heather** in parallel. Blocked on nothing; she is engaged and
+   finding genuine issues.
+4. **Still waiting on the IT company:** confirm which tenant is the long-term master (SharePoint host
+   is `omegaorthodontics`, org displays as Farnsworth Family Orthodontics, group spans several
+   tenants); optionally a licence for Cory.
+5. **Do NOT build the SharePoint site or lists yet** — Cory has the rights, but if the master tenant
+   turns out to be a different one the work is wasted, and consent would need granting again there.
+6. **Settle the PHI question before real data flows** - see Open questions. If any tracker holds
+   patient names it changes access, auditing and device policy.
 
 ### Open questions with the practice
 - Row 13 on the Lubbock and San Angelo tabs is `=B12/B7` (2026 ÷ 2024). Heather confirmed it should
@@ -75,6 +87,11 @@ numbers and reported them as bugs, so keep the snapshot fresh and tell her it is
 - **Bump the `?v=` cache stamp** on every shared-file edit or browsers serve a stale app.
 - **Do not invent people, offices, figures or features.** Cory has caught several inventions and it
   costs trust every time.
+- **Office colours must differ by hue family, not just by a distance number.** Two colours at
+  dE 45 in the SAME family (blue vs purple) still read as one colour when stacked in a day cell;
+  the same 45 across families (orange vs yellow) reads fine. Check every pair against every
+  other office, not just the alphabetically adjacent ones — any two offices can end up stacked.
+  Retired palette names must be added to `COLOR_RENAME` in user.js so saved data still renders.
 
 ---
 
@@ -147,6 +164,14 @@ or scrolling inside a day.*
 - **Row layout:** doctor rows stay **stacked** (office over doctor). Only the **Yellow Dot Day** row
   reads across — office left, "● Yellow Dot Day" pushed right — and it **keeps the office colour**;
   only the dot is yellow (`#FDE047` with a `#a16207` ring so it pops on any office background).
+- **Row layout, closed:** the **Closed** row reads across too (office left, "Closed" right), greyed,
+  but it **keeps the office's colour bar** — Cory's point was "we need to know which ones are closed",
+  so the office must stay identifiable. Month view lists every office every day in the same A-Z
+  order, so an office holds the same row position across days.
+- **Show toggles** (`fYdot`, `fClosed`, both default true, in the filter panel's third row): hide
+  Yellow Dot Days and Closed rows. Both work in **both** views. Not persisted - they reset on load,
+  the same as the office and doctor filters. The legend items follow them (`renderKey`), so the key
+  never explains something that isn't on screen. A doctor filter hides Closed rows outright.
 
 **The practice is Mon–Fri.** `hours[]` and `PATTERN[]` are now **5 slots (Mon–Fri)** everywhere —
 the Saturday openings on Clovis and Cruces FFO were demo invention and were removed 2026-08-17.

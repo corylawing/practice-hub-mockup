@@ -72,6 +72,15 @@
   .lchip.off{opacity:.38}   /* no grayscale() — Safari renders CSS filters differently */
   .dchip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 13px;font-size:12.5px;font-weight:700;color:var(--navy);cursor:pointer;font-family:inherit}
   .dchip.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+  /* Show/hide toggles. Same "dimmed = hidden" language as the office chips. */
+  .tchip{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:5px 12px;font-size:12.5px;
+    font-weight:700;color:var(--navy);cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px}
+  .tchip .sw{width:26px;height:15px;border-radius:999px;background:#cbd5e1;position:relative;transition:background .12s}
+  .tchip .sw::after{content:'';position:absolute;top:2px;left:2px;width:11px;height:11px;border-radius:50%;
+    background:#fff;transition:transform .12s}
+  .tchip.on .sw{background:var(--teal)}
+  .tchip.on .sw::after{transform:translateX(11px)}
+  .tchip.off{opacity:.5}
   .scroll{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);background:#fff}
   table.sgrid{border-collapse:collapse;width:100%;min-width:900px}
   table.sgrid th,table.sgrid td{border-bottom:1px solid var(--line);border-left:1px solid var(--line)}
@@ -109,11 +118,21 @@
   .mday.today{border-color:var(--teal);box-shadow:0 0 0 2px var(--teal-soft) inset}
   .mdnum{font-size:11.5px;font-weight:800;color:var(--soft);margin-bottom:4px}
   .mday.today .mdnum{color:var(--teal-600)}
-  .ent{display:block;width:100%;text-align:left;border:none;border-radius:6px;padding:2px 6px;margin-bottom:2px;
+  /* A solid bar in the office's REAL colour. The pale fills we derived are only ~4 ΔE
+     apart — two offices could look identical, and worse in some browsers. Her own colours
+     are ~36 apart, so the bar is what you actually read. */
+  .ent{display:block;width:100%;text-align:left;border:none;border-left:6px solid transparent;
+    border-radius:4px;padding:2px 6px 2px 7px;margin-bottom:2px;
     font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;line-height:1.25}
   .ent small{display:block;font-weight:600;opacity:.8;font-size:10px;line-height:1.2}
   /* Yellow Dot Day is the ONE row that reads across: office on the left, the label pushed
      right. Everything else stays stacked (office over doctor). */
+  /* Closed reads across too: office on the left, "Closed" right. Grey fill and grey text
+     say "not working", but the office's colour bar stays full strength so you can still
+     tell WHICH office is closed at a glance. */
+  .ent.cl{display:flex;align-items:center;gap:6px;background:#fafbfc;color:#94a3b8}
+  .ent.cl .eo{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700}
+  .ent.cl .es{margin-left:auto;font-weight:700;font-size:10.5px;white-space:nowrap;letter-spacing:.02em}
   .ent.yd{display:flex;align-items:center;gap:6px}
   .ent.yd .eo{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .ent.yd .es{margin-left:auto;font-weight:800;font-size:10.5px;white-space:nowrap;
@@ -123,7 +142,7 @@
   .ydmark{width:10px;height:10px;border-radius:50%;background:#FDE047;display:inline-block;flex:none;
     border:1.5px solid #a16207;
     box-shadow:0 0 0 2px rgba(161,98,7,.25)}
-  .ent.nd{background:#FFF7E6;color:#9a6b12;border:1px dashed #e6c877}
+  .ent.nd{background:#FFF7E6;color:#9a6b12;border:1px dashed #e6c877;border-left-width:6px;border-left-style:solid;border-left-color:#e6c877}
   .addday{display:block;width:100%;border:1px dashed #cfd7e0;background:transparent;color:#8a94a6;border-radius:6px;
     padding:3px 6px;font-size:10.5px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:2px}
   .mday:hover .addday{border-color:var(--teal);color:var(--teal-600)}
@@ -193,7 +212,7 @@
   @media(max-width:820px){ .counts{grid-template-columns:1fr} }
   /* Bigger finger targets on phones — the filter chips and month arrows were ~28px. */
   @media(max-width:760px){
-    .lchip,.dchip,.sbtn.tiny{min-height:38px;padding-top:8px;padding-bottom:8px;font-size:13.5px}
+    .lchip,.dchip,.tchip,.sbtn.tiny{min-height:38px;padding-top:8px;padding-bottom:8px;font-size:13.5px}
     .nav2 button{width:40px;height:40px;font-size:19px}
     .seg button{padding:10px 20px}
   }
@@ -216,7 +235,7 @@
     .addday{padding:9px 11px;font-size:12px}
   }
 </style>
-<script src="user.js?v=hb39"></script>
+<script src="user.js?v=hb46"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — sample staff schedule for validation. Live version = one Microsoft List the practice maintains.</div>
@@ -250,8 +269,8 @@
   <div class="keyrow">
     <span class="keyitem"><span class="kmulti"><i class="kbox" style="background:#FFE1EF;border-color:#F0378F"></i><i class="kbox" style="background:#DFF3FE;border-color:#38BDF8"></i><i class="kbox" style="background:#ECFACC;border-color:#84CC16"></i></span> <b>Doctor on site</b> — shown in that office's own colour</span>
     <span class="keyitem"><i class="kbox" style="background:#FFF7E6;border:1px dashed #e6c877"></i> <b>Not decided yet</b> — open, no doctor and no Yellow Dot</span>
-    <span class="keyitem"><i class="kbox" style="background:#FDE047;border-color:#eab308"></i><span class="ydmark"></span> <b>Yellow Dot Day</b> — open, no doctor on site</span>
-    <span class="keyitem"><i class="kbox" style="background:#fafbfc"></i> Closed</span>
+    <span class="keyitem" id="keyYdot"><i class="kbox" style="background:#FDE047;border-color:#eab308"></i><span class="ydmark"></span> <b>Yellow Dot Day</b> — open, no doctor on site</span>
+    <span class="keyitem" id="keyClosed"><i class="kbox" style="background:#fafbfc"></i> Closed</span>
   </div>
   <div id="board"></div>
   <p class="hint" id="hint"></p>
@@ -270,8 +289,12 @@
     {k:'Highlighter Orange', dot:'#F27C1A', bg:'#FFE9D3', fg:'#B45309'},
     {k:'Lime Green',         dot:'#84CC16', bg:'#ECFACC', fg:'#4D7C0F'},
     {k:'Highlighter Yellow', dot:'#FACC15', bg:'#FEF6C7', fg:'#7A5B08'},
-    {k:'Light Pink',         dot:'#F9A8D4', bg:'#FDEEF6', fg:'#9D2C6B'},
-    {k:'Light Orange',       dot:'#FDBA74', bg:'#FFF0DF', fg:'#9A5B1B'},
+    // Light Pink and Light Orange lived here. Each was the same hue as Hot Pink /
+    // Highlighter Orange, only paler, so stacked in one day cell they read as one
+    // colour. Jade is the only hue the palette had real room for; Red is a spare.
+    // The two offices that had them now use Jade and the unused Slate Blue.
+    {k:'Jade',               dot:'#5CD6A9', bg:'#E3FDF3', fg:'#0A7F54'},
+    {k:'Red',                dot:'#F31637', bg:'#FDE3E7', fg:'#8E0B1F'},
     {k:'Teal',               dot:'#14B8A6', bg:'#DBF5F1', fg:'#0F766E'},
     {k:'Slate Blue',         dot:'#475569', bg:'#E8ECF1', fg:'#334155'}
   ];
@@ -339,6 +362,8 @@
   let mY=TODAY.getFullYear(), mM=TODAY.getMonth();
   let fLoc=new Set(locations.map(l=>l.n));
   let fDoc=null;
+  // Both on by default: the calendar shows everything until you choose to quieten it.
+  let fYdot=true, fClosed=true;
 
   const el=id=>document.getElementById(id);
   const canEdit=()=>!window.PH||PH.atLeast('schedule','edit');
@@ -355,11 +380,17 @@
       return '<button class="lchip'+(fLoc.has(l.n)?'':' off')+'" style="border-color:'+c.dot+';color:'+c.fg+';background:'+(fLoc.has(l.n)?c.bg:'#fff')+'" onclick="PS.togLoc(\''+esc(l.n)+'\')">'+
         '<span class="dot" style="background:'+c.dot+'"></span>'+l.n+'</button>';}).join('');
     const docs=people.map((p,i)=>'<button class="dchip'+(fDoc===i?' on':'')+'" onclick="PS.togDoc('+i+')">'+p.n+'</button>').join('');
+    const tog=(on,fn,dot,label)=>
+      '<button class="tchip '+(on?'on':'off')+'" onclick="PS.'+fn+'()" aria-pressed="'+on+'">'+
+        '<span class="sw"></span><span class="dot" style="background:'+dot+';width:11px;height:11px;border-radius:50%;display:inline-block"></span>'+label+'</button>';
+    const shows=tog(fYdot,'togYdot','#FACC15','Yellow Dot Days')+
+      tog(fClosed,'togClosed','#cbd5e1','Closed days');
     el('filters').innerHTML=
       '<div class="frow"><span class="flab">Offices</span>'+locs+
         '<button class="sbtn ghost tiny" onclick="PS.allLocs()">'+(fLoc.size===locations.length?'Hide all':'Show all')+'</button></div>'+
       '<div class="frow"><span class="flab">Doctor</span>'+docs+
-        (fDoc!==null?'<button class="sbtn ghost tiny" onclick="PS.togDoc('+fDoc+')">Show all doctors</button>':'')+'</div>';
+        (fDoc!==null?'<button class="sbtn ghost tiny" onclick="PS.togDoc('+fDoc+')">Show all doctors</button>':'')+'</div>'+
+      '<div class="frow"><span class="flab">Show</span>'+shows+'</div>';
   }
 
   /* ---------- week board ---------- */
@@ -368,17 +399,18 @@
     const c=colOf(l.color), cell=cellOf(l,d), open=openOn(l,d);
     const t=(iso(d)===iso(TODAY)?' today':'');
     const click=canEdit()?' onclick="PS.open(\''+esc(l.n)+'\',\''+iso(d)+'\')"':'';
-    if(cell&&cell.closed) return '<td class="cell closedc'+t+'"'+click+'><span class="closed">Closed</span></td>';
+    const blank='<td class="cell closedc'+t+'"'+click+'></td>';
+    if(cell&&cell.closed) return fClosed?'<td class="cell closedc'+t+'"'+click+'><span class="closed">Closed</span></td>':blank;
     const ds=docsOf(cell);
     if(ds.length){
       const dim=(fDoc!==null&&ds.indexOf(fDoc)<0)?' dim':'';
-      return '<td class="cell'+t+dim+'" style="background:'+c.bg+'"'+click+'>'+
+      return '<td class="cell'+t+dim+'" style="background:'+c.bg+';box-shadow:inset 6px 0 0 '+c.dot+'"'+click+'>'+
         ds.map(i=>'<span class="who" style="color:'+c.fg+'">'+people[i].n+'</span>').join('')+
         '<span class="hrs" style="color:'+c.fg+'">'+fmt(cell.s)+'–'+fmt(cell.e)+'</span></td>';
     }
-    if(cell&&cell.ydot) return '<td class="cell ydotc'+t+(fDoc!==null?' dim':'')+'"'+click+'><span class="ydot"><span class="ydmark"></span> Yellow Dot Day</span></td>';
+    if(cell&&cell.ydot) return fYdot?'<td class="cell ydotc'+t+(fDoc!==null?' dim':'')+'"'+click+'><span class="ydot"><span class="ydmark"></span> Yellow Dot Day</span></td>':blank;
     if(open) return '<td class="cell needsc'+t+(fDoc!==null?' dim':'')+'"'+click+'><span class="needs">Needs doctor</span></td>';
-    return '<td class="cell closedc'+t+'"'+click+'><span class="closed">Closed</span></td>';
+    return fClosed?'<td class="cell closedc'+t+'"'+click+'><span class="closed">Closed</span></td>':blank;
   }
   function renderWeek(){
     const days=weekDays();
@@ -415,22 +447,28 @@
       let ents='';
       shownLocs().forEach(l=>{
         const cell=cellOf(l,d), c=colOf(l.color), open=openOn(l,d);
-        if(cell&&cell.closed) return;
         const click=canEdit()?' onclick="PS.open(\''+esc(l.n)+'\',\''+iso(d)+'\')"':'';
+        const closedEnt=()=>'<button class="ent cl" style="border-left-color:'+c.dot+'"'+click+'>'+
+          '<span class="eo">'+l.n+'</span><span class="es">Closed</span></button>';
+        // Marked closed outright.
+        if(cell&&cell.closed){ if(fClosed&&fDoc===null) ents+=closedEnt(); return; }
         const mds=docsOf(cell);
         if(mds.length){
           if(fDoc!==null&&mds.indexOf(fDoc)<0) return;
-          ents+='<button class="ent" style="background:'+c.bg+';color:'+c.fg+'"'+click+'>'+l.n+
+          ents+='<button class="ent" style="background:'+c.bg+';color:'+c.fg+';border-left-color:'+c.dot+'"'+click+'>'+l.n+
             '<small>'+mds.map(i=>people[i].n).join(', ')+'</small></button>';
         } else if(cell&&cell.ydot){
-          if(fDoc!==null) return;
+          if(fDoc!==null||!fYdot) return;
           // Keep the office colour so you can still tell WHICH office — only the dot is yellow.
-          ents+='<button class="ent yd" style="background:'+c.bg+';color:'+c.fg+'"'+click+'>'+
+          ents+='<button class="ent yd" style="background:'+c.bg+';color:'+c.fg+';border-left-color:'+c.dot+'"'+click+'>'+
             '<span class="eo">'+l.n+'</span>'+
             '<span class="es"><span class="ydmark"></span>Yellow Dot Day</span></button>';
         } else if(open){
           if(fDoc!==null) return;
           ents+='<button class="ent nd"'+click+'>'+l.n+'<small>not decided yet</small></button>';
+        } else {
+          // Not open on this weekday at all — same thing to a reader as "Closed".
+          if(fClosed&&fDoc===null) ents+=closedEnt();
         }
       });
       // Nothing to add once every visible office has an entry — drop the button and
@@ -740,7 +778,12 @@
       ? 'Tap any day to set a doctor, a Yellow Dot Day, or close it · every office has its own colour · today is outlined.'
       : 'Filter by office or doctor to find what you need · today is outlined.';
   }
-  function refresh(){ renderBar(); renderFilters(); renderStatus(); view==='week'?renderWeek():renderMonth(); renderCounters(); }
+  function refresh(){ renderBar(); renderFilters(); renderStatus(); view==='week'?renderWeek():renderMonth(); renderCounters(); renderKey(); }
+  // Don't explain a colour that isn't on screen — the legend follows the Show toggles.
+  function renderKey(){
+    el('keyYdot').style.display = fYdot ? '' : 'none';
+    el('keyClosed').style.display = fClosed ? '' : 'none';
+  }
   function step(n){ if(view==='week'){ anchor=addDays(anchor,7*n); mY=anchor.getFullYear(); mM=anchor.getMonth(); }
     else { mM+=n; if(mM<0){mM=11;mY--;} if(mM>11){mM=0;mY++;} } refresh(); }
   function today(){ anchor=mondayOf(new Date(TODAY)); mY=TODAY.getFullYear(); mM=TODAY.getMonth(); refresh(); }
@@ -748,6 +791,8 @@
   function togLoc(n){ fLoc.has(n)?fLoc.delete(n):fLoc.add(n); refresh(); }
   function allLocs(){ if(fLoc.size===locations.length) fLoc.clear(); else locations.forEach(l=>fLoc.add(l.n)); refresh(); }
   function togDoc(i){ fDoc=(fDoc===i?null:i); refresh(); }
+  function togYdot(){ fYdot=!fYdot; refresh(); }
+  function togClosed(){ fClosed=!fClosed; refresh(); }
   function openModal(h){ el('modalCard').innerHTML=h; el('modal').classList.add('open'); }
   function closeModal(){ el('modal').classList.remove('open'); }
 
@@ -760,7 +805,7 @@
     if(n)n.innerHTML='<b>Every office has its own colour.</b> Grey = closed, <b>Yellow Dot Day</b> = open with no doctor on site. Use the filters to find an office or a doctor.';
   }
 
-  window.PS={view:setView,step,today,togLoc,allLocs,togDoc,open,addTo,quick,pickDoc,setT,halfDay,fullDay,markYdot,markClosed,
+  window.PS={view:setView,step,today,togLoc,allLocs,togDoc,togYdot,togClosed,open,addTo,quick,pickDoc,setT,halfDay,fullDay,markYdot,markClosed,
     clearDay,saveDay,addLocation,editLoc,setColor,setTZ,dtog,dtime,lunchTog,lunchT,saveLoc,delLoc,
     addPerson,edit:editPerson,savePerson,delPerson,close:closeModal};
 
@@ -775,7 +820,7 @@
 })();
 </script>
 <script>PH.nav('schedule');</script>
-<script src="tour.js?v=hb39"></script>
+<script src="tour.js?v=hb46"></script>
 <script>
 Tour.init([
   {sel:'#viewseg', title:'Week or month', body:'<b>Week</b> is the day-to-day working view. <b>Month</b> shows the whole month at a glance, with every office in its own colour.'},

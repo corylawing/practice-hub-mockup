@@ -4,8 +4,12 @@
     {
       "name": "practice-hub",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "8765"],
-      "port": 8765
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8790"
+      ],
+      "port": 8790
     }
   ]
 }

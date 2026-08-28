@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Microsoft Connection Test — Home-Brace</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" href="../assets/favicon.png" type="image/png">
+<meta name="theme-color" content="#0F2A4A">
+<meta name="robots" content="noindex">
+<style>
+  :root{
+    --navy:#0F2A4A; --navy2:#25456e; --teal:#149B96; --teal2:#2BC0B8; --teal-soft:#E5F4F3; --teal-600:#0F827E;
+    --ink:#1F2D3D; --soft:#56627A; --line:#E4E8EE; --canvas:#F4F6F8;
+    --good:#2E9E6B; --good-soft:#E7F4EE; --bad:#D7503A; --bad-soft:#FCEBE8; --amber:#F2A03D;
+    --shadow:0 1px 2px rgba(15,42,74,.06),0 6px 18px rgba(15,42,74,.06);
+    --radius:14px; --maxw:900px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    color:var(--ink);background:var(--canvas);line-height:1.5;-webkit-font-smoothing:antialiased}
+  .ribbon{background:var(--amber);color:#3a2400;text-align:center;font-size:13px;font-weight:600;padding:6px 14px}
+  .hdr{background:var(--navy);color:#fff}
+  .hdr-in{max-width:var(--maxw);margin:0 auto;display:flex;align-items:center;gap:12px;padding:13px 20px}
+  .mark img{width:34px;height:34px;display:block;border-radius:9px}
+  .brand{font-weight:700;font-size:18px;color:#fff;line-height:1.1}
+  .brand i{font-style:normal;color:var(--teal2)}
+  .brand small{display:block;font-weight:500;font-size:12px;color:#9fb4d0}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:22px 20px 60px}
+  h1{color:var(--navy);margin:0 0 4px;font-size:26px}
+  .sub{color:var(--soft);margin:0 0 20px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);
+    padding:18px 20px;margin-bottom:14px}
+  .card h2{font-size:15px;margin:0 0 3px;color:var(--navy);display:flex;align-items:center;gap:9px}
+  .card p.hint{margin:0 0 14px;color:var(--soft);font-size:13.5px}
+  .step{width:23px;height:23px;border-radius:50%;background:var(--navy);color:#fff;font-size:12px;
+    display:inline-flex;align-items:center;justify-content:center;flex:none;font-weight:800}
+  .card.done .step{background:var(--good)}
+  .card.fail .step{background:var(--bad)}
+  button{font-family:inherit;font-size:14px;font-weight:700;border-radius:10px;padding:10px 17px;
+    border:1px solid var(--navy);background:var(--navy);color:#fff;cursor:pointer}
+  button:hover:not(:disabled){background:var(--navy2)}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  button.ghost{background:#fff;color:var(--navy)}
+  .row{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+  .res{margin-top:13px;font-size:13.5px;border-radius:10px;padding:12px 14px;display:none}
+  .res.show{display:block}
+  .res.ok{background:var(--good-soft);color:#1d6b47;border:1px solid #bfe3d0}
+  .res.err{background:var(--bad-soft);color:#93301f;border:1px solid #f0c3b9}
+  .res b{display:block;margin-bottom:3px}
+  pre{background:#0f1b2d;color:#d7e3f4;padding:12px 14px;border-radius:10px;overflow-x:auto;
+    font-size:12px;line-height:1.5;margin:11px 0 0;max-height:270px}
+  dl{display:grid;grid-template-columns:auto 1fr;gap:5px 16px;margin:11px 0 0;font-size:13.5px}
+  dt{color:var(--soft);font-weight:600}
+  dd{margin:0;font-weight:600;word-break:break-all}
+  .note{background:#fff;border:1px solid var(--line);border-left:4px solid var(--amber);
+    border-radius:10px;padding:13px 15px;font-size:13.5px;color:var(--soft);margin-bottom:18px}
+  .note b{color:var(--ink)}
+  ul.sites{margin:11px 0 0;padding-left:19px;font-size:13.5px}
+  ul.sites li{margin-bottom:5px}
+  ul.sites small{color:var(--soft);display:block;word-break:break-all}
+  a{color:var(--teal-600)}
+</style>
+</head>
+<body>
+<div class="ribbon">ENGINEERING TEST PAGE — not part of the mockup. Proves the Microsoft connection works.</div>
+<header class="hdr"><div class="hdr-in">
+  <span class="mark"><img src="../assets/logo-mark.png" alt=""></span>
+  <span class="brand">Home-<i>Brace</i><small>Microsoft connection test</small></span>
+</div></header>
+
+<div class="wrap">
+  <h1>Does the Microsoft connection work?</h1>
+  <p class="sub">Four checks, in order. Each one has to pass before the next means anything.</p>
+
+  <div class="note">
+    <b>This page reads only.</b> It signs you in, reads your name, and lists SharePoint sites you can
+    already see. It does not change, upload or delete anything. Close the tab and nothing is left behind
+    except a normal Microsoft sign-in session.
+  </div>
+
+  <div class="card" id="c1">
+    <h2><span class="step">1</span> Sign in with Microsoft</h2>
+    <p class="hint">Opens the real Microsoft login for the Farnsworth tenant. Use your work account.</p>
+    <div class="row">
+      <button id="btnIn">Sign in with Microsoft</button>
+      <button id="btnOut" class="ghost" disabled>Sign out</button>
+    </div>
+    <div class="res" id="r1"></div>
+  </div>
+
+  <div class="card" id="c2">
+    <h2><span class="step">2</span> Read who you are</h2>
+    <p class="hint">Calls Graph <code>/me</code>. Proves the <b>User.Read</b> permission works.</p>
+    <button id="btnMe" disabled>Read my profile</button>
+    <div class="res" id="r2"></div>
+  </div>
+
+  <div class="card" id="c3">
+    <h2><span class="step">3</span> Reach SharePoint</h2>
+    <p class="hint">Lists sites you can see. Proves <b>Sites.ReadWrite.All</b> works — the permission the
+      real hub needs to read Heather's workbook.</p>
+    <button id="btnSites" disabled>List SharePoint sites</button>
+    <div class="res" id="r3"></div>
+  </div>
+
+  <div class="card" id="c4">
+    <h2><span class="step">4</span> Read the staff directory</h2>
+    <p class="hint">Proves <b>User.ReadBasic.All</b> works — how new hires appear in the hub before they
+      ever log in.</p>
+    <button id="btnUsers" disabled>List people</button>
+    <div class="res" id="r4"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
+<script>
+(function(){
+  'use strict';
+  /* Both IDs are public by design — a browser app ships them in its JavaScript.
+     There is NO client secret and there must never be one: a SPA cannot hold a secret. */
+  var CLIENT_ID = '2122a06f-b6e9-4618-9106-3b6d6a84b5eb';
+  var TENANT_ID = 'edb81e45-7fa8-4147-982f-2f31c6298086';
+  /* All DELEGATED. The app acts as the signed-in person, so SharePoint keeps enforcing
+     their own access — never Application permissions. */
+  var SCOPES = ['User.Read','Sites.ReadWrite.All','User.ReadBasic.All'];
+
+  var el = function(id){ return document.getElementById(id); };
+  function show(id, ok, title, body){
+    var n = el(id);
+    n.className = 'res show ' + (ok ? 'ok' : 'err');
+    n.innerHTML = '<b>' + title + '</b>' + (body || '');
+    var card = n.closest('.card');
+    card.classList.toggle('done', ok);
+    card.classList.toggle('fail', !ok);
+  }
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];
+    });
+  }
+  // Graph errors are nested and unreadable raw; surface the part that says what to fix.
+  function why(e){
+    if (e && e.errorCode === 'popup_window_error') return 'The popup was blocked. Allow popups for this site and try again.';
+    if (e && e.errorCode === 'user_cancelled') return 'Sign-in was cancelled.';
+    return (e && (e.errorMessage || e.message)) || String(e);
+  }
+
+  if (typeof msal === 'undefined'){
+    show('r1', false, 'Could not load the Microsoft sign-in library',
+      'Check the internet connection and reload. Nothing else on this page will work until this does.');
+    return;
+  }
+
+  var app = new msal.PublicClientApplication({
+    auth: {
+      clientId: CLIENT_ID,
+      authority: 'https://login.microsoftonline.com/' + TENANT_ID,
+      // Must match a redirect URI registered on the app EXACTLY, character for character.
+      // Locally that is the bare origin (http://localhost:8790, registered 2026-08-19);
+      // on the live site it is this page's full URL.
+      redirectUri: /^https?:\/\/localhost:8790/.test(window.location.origin)
+        ? 'http://localhost:8790'
+        : window.location.origin + window.location.pathname
+    },
+    cache: { cacheLocation: 'sessionStorage' }
+  });
+
+  var account = null;
+  var ready = app.initialize();   // v3 requires this before any other MSAL call
+
+  function setSignedIn(acc){
+    account = acc;
+    var on = !!acc;
+    el('btnIn').disabled = on;
+    el('btnOut').disabled = !on;
+    ['btnMe','btnSites','btnUsers'].forEach(function(id){ el(id).disabled = !on; });
+    if (on){
+      show('r1', true, 'Signed in',
+        '<dl><dt>Name</dt><dd>' + esc(acc.name) + '</dd>' +
+        '<dt>Account</dt><dd>' + esc(acc.username) + '</dd>' +
+        '<dt>Tenant</dt><dd>' + esc(acc.tenantId) + '</dd></dl>');
+    }
+  }
+
+  async function token(){
+    var req = { scopes: SCOPES, account: account };
+    try {
+      // Silent first — only prompt when the cached token genuinely can't be renewed.
+      var r = await app.acquireTokenSilent(req);
+      return r.accessToken;
+    } catch (e) {
+      var r2 = await app.acquireTokenPopup(req);
+      return r2.accessToken;
+    }
+  }
+
+  async function graph(path){
+    var t = await token();
+    var res = await fetch('https://graph.microsoft.com/v1.0' + path, {
+      headers: { Authorization: 'Bearer ' + t }
+    });
+    var body = await res.json().catch(function(){ return {}; });
+    if (!res.ok){
+      var err = (body.error && body.error.message) || res.statusText;
+      throw new Error('Graph said ' + res.status + ': ' + err);
+    }
+    return body;
+  }
+
+  el('btnIn').onclick = async function(){
+    try {
+      await ready;
+      var r = await app.loginPopup({ scopes: SCOPES });
+      setSignedIn(r.account);
+    } catch (e) {
+      show('r1', false, 'Sign-in failed', esc(why(e)));
+    }
+  };
+
+  el('btnOut').onclick = function(){
+    app.logoutPopup({ account: account }).catch(function(){});
+    account = null;
+    el('btnIn').disabled = false;
+    el('btnOut').disabled = true;
+    ['btnMe','btnSites','btnUsers'].forEach(function(id){ el(id).disabled = true; });
+    ['r1','r2','r3','r4'].forEach(function(id){
+      el(id).className = 'res';
+      el(id).closest('.card').classList.remove('done','fail');
+    });
+  };
+
+  el('btnMe').onclick = async function(){
+    try {
+      var me = await graph('/me');
+      show('r2', true, 'User.Read works',
+        '<dl><dt>Name</dt><dd>' + esc(me.displayName) + '</dd>' +
+        '<dt>Job title</dt><dd>' + esc(me.jobTitle || '(none set)') + '</dd>' +
+        '<dt>Email</dt><dd>' + esc(me.mail || me.userPrincipalName) + '</dd></dl>');
+    } catch (e) {
+      show('r2', false, 'Could not read your profile', esc(why(e)));
+    }
+  };
+
+  el('btnSites').onclick = async function(){
+    try {
+      var r = await graph('/sites?search=*');
+      var list = (r.value || []);
+      if (!list.length){
+        show('r3', true, 'Connected, but no sites came back',
+          'The permission works. It just means no SharePoint site matched — expected if none has been ' +
+          'created in this tenant yet.');
+        return;
+      }
+      var items = list.slice(0, 15).map(function(s){
+        return '<li>' + esc(s.displayName || s.name || '(unnamed)') +
+               '<small>' + esc(s.webUrl || '') + '</small></li>';
+      }).join('');
+      show('r3', true, 'Sites.ReadWrite.All works — ' + list.length + ' site(s) visible',
+        '<ul class="sites">' + items + '</ul>' +
+        (list.length > 15 ? '<p style="margin:8px 0 0">…and ' + (list.length - 15) + ' more.</p>' : ''));
+    } catch (e) {
+      show('r3', false, 'Could not reach SharePoint', esc(why(e)));
+    }
+  };
+
+  el('btnUsers').onclick = async function(){
+    try {
+      var r = await graph('/users?$top=10&$select=displayName,jobTitle,mail');
+      var items = (r.value || []).map(function(u){
+        return '<li>' + esc(u.displayName) +
+               '<small>' + esc(u.jobTitle || '(no title)') + ' · ' + esc(u.mail || '(no email)') + '</small></li>';
+      }).join('');
+      show('r4', true, 'User.ReadBasic.All works',
+        '<ul class="sites">' + items + '</ul>');
+    } catch (e) {
+      show('r4', false, 'Could not read the directory', esc(why(e)));
+    }
+  };
+
+  // Returning to an existing session shouldn't make you sign in again.
+  ready.then(function(){
+    var known = app.getAllAccounts();
+    if (known.length) setSignedIn(known[0]);
+  }).catch(function(e){
+    show('r1', false, 'Microsoft sign-in could not start', esc(why(e)));
+  });
+})();
+</script>
+</body>
+</html>

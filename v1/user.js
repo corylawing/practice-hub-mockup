@@ -79,15 +79,15 @@
      lunch:null,          hours:[null,WKH,null,WKH,WKH]},
     {n:'Mansfield', brand:'SUN', state:'Texas',      tz:'Central Time',  color:'Purple',
      lunch:{s:720,e:780}, hours:[WKH,null,WKH,null,WKH]},
-    {n:'Cruces LCO',brand:'LCO', state:'New Mexico', tz:'Mountain Time', color:'Light Pink',
+    {n:'Cruces LCO',brand:'LCO', state:'New Mexico', tz:'Mountain Time', color:'Jade',
      lunch:{s:720,e:780}, hours:[null,WKH,null,WKH,null]},
-    {n:'Cruces FFO',brand:'FFO', state:'New Mexico', tz:'Mountain Time', color:'Light Orange',
+    {n:'Cruces FFO',brand:'FFO', state:'New Mexico', tz:'Mountain Time', color:'Slate Blue',
      lunch:null,          hours:[null,null,WKH,null,WKH]}
   ];
   // Same order as the Schedule's PALETTE, so an auto-assigned colour is always one the
   // schedule can actually render.
   const ALL_COLORS=['Teal','Slate Blue','Hot Pink','Purple','Sky Blue','Highlighter Orange',
-                    'Lime Green','Highlighter Yellow','Light Pink','Light Orange'];
+                    'Lime Green','Highlighter Yellow','Jade','Red'];
   // Stored locations from earlier versions hold abbreviations ("NM", "MT"). The practice
   // asked for full names everywhere, so heal them on read rather than leaving stale data
   // showing codes forever.
@@ -103,6 +103,10 @@
     PT:'Pacific Time',AKT:'Alaska Time',HT:'Hawaii Time',
     Eastern:'Eastern Time',Central:'Central Time',Mountain:'Mountain Time',Pacific:'Pacific Time'};
   const fullState=v=>{ v=(v||'').trim(); return STATE_FULL[v.toUpperCase()] || v; };
+  // Light Pink/Light Orange were retired for reading as Hot Pink and Highlighter Orange
+  // when stacked together in a day cell. Anyone holding a retired name keeps a colour
+  // that still renders, rather than losing it or drawing blank.
+  const COLOR_RENAME={'Light Pink':'Jade','Light Orange':'Slate Blue','Royal Blue':'Slate Blue'};
   const fullTZ=v=>{ v=(v||'').trim(); return TZ_FULL[v] || TZ_FULL[v.toUpperCase()] || v; };
 
   function locations(){
@@ -127,6 +131,7 @@
         hours: [null,null,null,null,null,null]    // closed until someone sets the days
       }, l, l.color?{}:{color:nextColor()});
       rec.state=fullState(rec.state); rec.tz=fullTZ(rec.tz);
+      if(COLOR_RENAME[rec.color]) rec.color=COLOR_RENAME[rec.color];
       return rec;
     });
   }
