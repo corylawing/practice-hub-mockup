@@ -38,16 +38,31 @@ production figures reconciled to their workbook. Live at
 | **Admin consent** | ✅ **GRANTED 2026-08-28** by the IT company, in the **Farnsworth Family Orthodontics** tenant |
 | Cory's role | SharePoint Administrator (can build SharePoint, cannot consent) |
 | Cory's M365 licence | ✅ **Assigned 2026-08-28.** He is now a real licensed user in the tenant, so he can sign in to the app himself and Graph will return his own SharePoint/OneDrive data. |
-| Integration code | **None written.** No MSAL, no Graph calls. Not started. |
+| Integration code | ✅ **Proven 2026-08-28.** `v1/connect.html` signs in and calls Graph. MSAL 3.30.0 from jsDelivr, popup flow, delegated scopes only. |
 
 Consented permissions, all **Delegated** (verified in Enterprise applications -> Permissions ->
 Admin consent): `offline_access`, `Sites.ReadWrite.All`, `User.Read`, `User.ReadBasic.All`.
 **Never add Application permissions** - delegated means SharePoint keeps enforcing each person's
 own access, which is the whole security model here.
 
-**Consent is granted in the Farnsworth tenant specifically.** If the long-term master turns out to
-be a different tenant, consent has to be granted again there - so the tenant question below is
-still live and still gates building anything in SharePoint.
+### Verified live 2026-08-28 via `v1/connect.html` (signed in as `Consult@farnsworthorthodontics.com`)
+All four permissions returned real data. What the results told us:
+
+- **The tenant question is largely answered.** Signed into the Farnsworth tenant
+  (`edb81e45-...`), every SharePoint site returned is on **`omegaorthodontics.sharepoint.com`**.
+  Farnsworth-the-tenant and Omega-the-SharePoint-host are the **same tenant**, displayed under
+  different names. Still worth confirming with IT that this is the long-term master before building,
+  but the "spans several tenants" worry did not show up in the data.
+- **Sites visible (5):** `Omega Orthodontics Team Site` (root), `All Company`, `App Catalog Site`,
+  plus `Community` and `PointPublishing Hub Site` under `/portals/` - those last two are
+  auto-provisioned by Microsoft, not something the practice built. **There is no operations site
+  yet**, so Home-Brace would get a new one.
+- **⚠ The directory is mostly shared role accounts, not named people.** Returned entries include
+  `Lubbock Treatment Coordinator` (`becca@`), `CA Clinic`, plus vendor/service accounts
+  (`Simpatico Systems` = their IT company, `Barracuda NDR`). **Job titles are blank on everyone.**
+  Two consequences: (a) role -> team mapping **cannot** be driven off Entra job titles as assumed;
+  (b) if staff share a login, per-person permissions and audit trails do not work the way the
+  mockup's permission model assumes. **Confirm with Heather before building the real access model.**
 
 ### The data workflow right now
 The dashboard's numbers are a **manual snapshot**. When the practice updates their workbook, Cory
