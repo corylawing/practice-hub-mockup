@@ -37,6 +37,7 @@ production figures reconciled to their workbook. Live at
 | Four delegated Graph permissions | **Added** |
 | **Admin consent** | ✅ **GRANTED 2026-08-28** by the IT company, in the **Farnsworth Family Orthodontics** tenant |
 | Cory's role | SharePoint Administrator (can build SharePoint, cannot consent) |
+| The live workbook | ✅ `2026 PRODUCTION DASHBOARD (New).xlsx` in Heather's OneDrive - **confirmed by Cory as the file she actually maintains**, and the same content as the `-5` file, just live. No patient names. |
 | Cory's M365 licence | ✅ **Assigned 2026-08-28.** He is now a real licensed user in the tenant, so he can sign in to the app himself and Graph will return his own SharePoint/OneDrive data. |
 | Integration code | ✅ **Proven 2026-08-28.** `v1/connect.html` signs in and calls Graph. MSAL 3.30.0 from jsDelivr, popup flow, delegated scopes only. |
 
@@ -102,8 +103,10 @@ numbers and reported them as bugs, so keep the snapshot fresh and tell her it is
   be `=B8/B7` (2025 ÷ 2024). **A bug in her sheet, not ours** — no app change needed.
 - Whether managers may overwrite goals (currently `manage` only).
 - Which team each role maps to — the Team column is blank for most of the roster.
-- Whether any tracker file contains **patient names**. If yes it is PHI and changes everything about
-  access, auditing and device policy. **Unanswered and important.**
+- ~~Whether any tracker file contains **patient names**.~~ **ANSWERED 2026-08-28: no.** Cory
+  confirmed the production dashboard holds no patient names - it is the same content he has been
+  sending, just the live copy. **No PHI, so no special auditing or device policy is triggered.**
+  Re-ask if the hub is ever pointed at a *different* tracker.
 
 ### Hard-won rules — violating these has caused real bugs
 - **Never scale a goal.** Show the workbook's goal. See §"GOALS ARE NEVER SCALED".

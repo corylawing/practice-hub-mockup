@@ -120,6 +120,15 @@
     <div class="res" id="r5"></div>
   </div>
 
+  <div class="card" id="c6">
+    <h2><span class="step">6</span> Read inside the workbook</h2>
+    <p class="hint">Step 5 only proved the <i>file</i> is reachable. This opens it and reads the
+      actual tabs and cells &mdash; a different Graph surface that can fail on its own. Run step 5
+      first.</p>
+    <button id="btnSheets" disabled>Open the workbook</button>
+    <div class="res" id="r6"></div>
+  </div>
+
   <div class="card" id="c4">
     <h2><span class="step">4</span> Read the staff directory</h2>
     <p class="hint">Proves <b>User.ReadBasic.All</b> works — how new hires appear in the hub before they
@@ -133,6 +142,9 @@
 <script>
 (function(){
   'use strict';
+  /* When the sign-in popup lands here, MSAL in the opener reads the URL and closes us.
+     Booting the test page's own app in that split second is pointless and noisy. */
+  if (window.opener && window.opener !== window && /[?#].*(code=|error=|state=)/.test(location.href)) return;
   /* Both IDs are public by design — a browser app ships them in its JavaScript.
      There is NO client secret and there must never be one: a SPA cannot hold a secret. */
   var CLIENT_ID = '2122a06f-b6e9-4618-9106-3b6d6a84b5eb';
@@ -239,8 +251,8 @@
     account = null;
     el('btnIn').disabled = false;
     el('btnOut').disabled = true;
-    ['btnMe','btnSites','btnUsers','btnFile'].forEach(function(id){ el(id).disabled = true; });
-    ['r1','r2','r3','r4','r5'].forEach(function(id){
+    ['btnMe','btnSites','btnUsers','btnFile','btnSheets'].forEach(function(id){ el(id).disabled = true; });
+    ['r1','r2','r3','r4','r5','r6'].forEach(function(id){
       el(id).className = 'res';
       el(id).closest('.card').classList.remove('done','fail');
     });
@@ -305,18 +317,55 @@
     return n < 1024*1024 ? Math.round(n/1024) + ' KB' : (n/1048576).toFixed(1) + ' MB';
   }
 
+  var FILE = null;   // set by step 5, used by step 6
+
+  el('btnSheets').onclick = async function(){
+    if (!FILE) { show('r6', false, 'Run step 5 first', 'It finds the file this step opens.'); return; }
+    var base = '/drives/' + FILE.driveId + '/items/' + FILE.itemId + '/workbook';
+    try {
+      var ws = await graph(base + '/worksheets');
+      var names = (ws.value || []).map(function(w){ return w.name; });
+      if (!names.length) throw new Error('The workbook opened but reported no worksheets.');
+      // Prove real cell access, not just the tab list. Bounded range -- a whole sheet is huge.
+      var cells = null, readErr = null;
+      try {
+        cells = await graph(base + "/worksheets('" + encodeURIComponent(names[0]) +
+                            "')/range(address='A1:C6')");
+      } catch (e2) { readErr = why(e2); }
+      var grid = '';
+      if (cells && cells.values){
+        grid = '<pre>' + esc(cells.values.map(function(r){
+          return r.map(function(c){ return (c === '' || c == null) ? '·' : String(c); }).join('\t');
+        }).join('\n')) + '</pre>';
+      }
+      show('r6', true, 'The workbook opens — ' + names.length + ' tab(s)',
+        '<ul class="sites">' + names.map(function(n){ return '<li>' + esc(n) + '</li>'; }).join('') + '</ul>' +
+        (grid ? '<p style="margin:11px 0 0">Top-left of <b>' + esc(names[0]) + '</b>:</p>' + grid
+              : '<p style="margin:11px 0 0">Tabs listed, but reading cells failed: ' + esc(readErr) + '</p>'));
+    } catch (e) {
+      show('r6', false, 'Could not open the workbook', esc(why(e)));
+    }
+  };
+
   el('btnFile').onclick = async function(){
     var url = el('lnk').value.trim();
     if (!url){ show('r5', false, 'Paste the sharing link first', ''); return; }
     try {
       var f = await graph('/shares/' + shareId(url) + '/driveItem');
+      /* driveId + itemId are the STABLE address of the file. Unlike the sharing link they
+         grant nothing on their own -- access is still the signed-in user's. These are what
+         the real app stores, per "the hub stores the LINK, never a copy". */
+      FILE = { driveId: f.parentReference && f.parentReference.driveId, itemId: f.id, name: f.name };
+      el('btnSheets').disabled = !(FILE.driveId && FILE.itemId);
       var dt = (f.parentReference && f.parentReference.driveType) || '';
       var personal = dt === 'personal' || /-my\.sharepoint\.com/.test(url);
       show('r5', true, 'The app can read the workbook',
         '<dl><dt>File</dt><dd>' + esc(f.name) + '</dd>' +
         '<dt>Size</dt><dd>' + bytes(f.size) + '</dd>' +
         '<dt>Last saved</dt><dd>' + esc(f.lastModifiedDateTime || '(unknown)') + '</dd>' +
-        '<dt>Lives in</dt><dd>' + esc(personal ? 'a personal OneDrive' : 'a SharePoint library') + '</dd></dl>' +
+        '<dt>Lives in</dt><dd>' + esc(personal ? 'a personal OneDrive' : 'a SharePoint library') + '</dd>' +
+        '<dt>Drive ID</dt><dd>' + esc(FILE.driveId) + '</dd>' +
+        '<dt>Item ID</dt><dd>' + esc(FILE.itemId) + '</dd></dl>' +
         (personal ? '<p style="margin:10px 0 0">Worth knowing: it sits in a personal OneDrive, so ' +
           'it would go with that account if the person ever left. Reading it works fine either way ' +
           '&mdash; nothing needs moving.</p>' : ''));
