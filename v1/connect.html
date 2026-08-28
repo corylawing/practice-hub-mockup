@@ -383,10 +383,11 @@
         var rows = rng.values || [];
         var mine = snap.offices[office] || {};
         var line = [];
+        var showLabels = false;
         Object.keys(SERIES).forEach(function(key){
           if (!mine[key]) return;
           var hit = findRow(rows, SERIES[key]);
-          if (!hit){ line.push('  ' + key + ': LABEL NOT FOUND'); return; }
+          if (!hit){ line.push('  ' + key + ': LABEL NOT FOUND'); showLabels = true; return; }
           var live = nums(rows[hit.row]);
           var bad = [];
           for (var m = 0; m < 12; m++){
@@ -399,6 +400,17 @@
           line.push('  ' + key + ': ' + (bad.length ? bad.length + ' differ — ' + bad.slice(0,3).join('; ') : 'matches')
                     + '   [' + hit.label + ']');
         });
+        if (showLabels){
+          // Every non-empty column-A label on this tab, so the right one can be chosen
+          // deliberately rather than pattern-guessed.
+          var labels = [];
+          for (var r = 0; r < rows.length; r++){
+            var L = rows[r][0];
+            if (L !== '' && L != null) labels.push('    r' + (r+1) + ': ' + L);
+          }
+          line.push('  --- all row labels on this tab ---');
+          line.push(labels.join('\n'));
+        }
         report.push(office + ' (' + tab + ')\n' + line.join('\n'));
       }
       var clean = diffs === 0 && !missing.length;
