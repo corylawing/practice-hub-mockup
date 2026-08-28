@@ -57,6 +57,12 @@ All four permissions returned real data. What the results told us:
   plus `Community` and `PointPublishing Hub Site` under `/portals/` - those last two are
   auto-provisioned by Microsoft, not something the practice built. **There is no operations site
   yet**, so Home-Brace would get a new one.
+- **`Sites.ReadWrite.All` reaches personal OneDrive.** Verified 2026-08-28 against Heather's actual
+  workbook (`2026 PRODUCTION DASHBOARD (New).xlsx`, in her own OneDrive, resolved via
+  `/shares/{id}/driveItem`). **`Files.Read.All` is NOT needed** and no further IT consent is required.
+  **Nothing has to be moved.** The hub points at a file where it already lives - see "one file, two
+  doors - never a copy". Do not propose a migration or a folder structure; Cory pushed back on that
+  and was right.
 - **⚠ The directory is mostly shared role accounts, not named people.** Returned entries include
   `Lubbock Treatment Coordinator` (`becca@`), `CA Clinic`, plus vendor/service accounts
   (`Simpatico Systems` = their IT company, `Barracuda NDR`). **Job titles are blank on everyone.**

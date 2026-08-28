@@ -317,9 +317,9 @@
         '<dt>Size</dt><dd>' + bytes(f.size) + '</dd>' +
         '<dt>Last saved</dt><dd>' + esc(f.lastModifiedDateTime || '(unknown)') + '</dd>' +
         '<dt>Lives in</dt><dd>' + esc(personal ? 'a personal OneDrive' : 'a SharePoint library') + '</dd></dl>' +
-        (personal ? '<p style="margin:10px 0 0"><b>But it is in a personal OneDrive.</b> If that ' +
-          'person leaves, the file goes with their account. Move it to a SharePoint library before ' +
-          'anything depends on it.</p>' : ''));
+        (personal ? '<p style="margin:10px 0 0">Worth knowing: it sits in a personal OneDrive, so ' +
+          'it would go with that account if the person ever left. Reading it works fine either way ' +
+          '&mdash; nothing needs moving.</p>' : ''));
     } catch (e) {
       var m = why(e);
       var denied = /403|access denied|forbidden/i.test(m);
