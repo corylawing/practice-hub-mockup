@@ -120,18 +120,48 @@
 
   /* graph(path) -> Promise of parsed JSON, supplied by the caller so this module
      stays out of the sign-in business. */
+
+  var CACHE_KEY = 'ph_wb_cache';
+
+  /* Three things keep this fast:
+       1. the eight tabs are fetched IN PARALLEL, not one after another -- sequential
+          round trips were the whole 7-10s;
+       2. $select=values drops address/formulas/formatting from each response;
+       3. the result is cached against the file's lastModifiedDateTime, so a reload is
+          instant and still correct -- the moment she saves, the stamp changes and the
+          cache is skipped. */
   function load(graph, driveId, itemId){
-    var base = '/drives/' + driveId + '/items/' + itemId + '/workbook';
+    var item = '/drives/' + driveId + '/items/' + itemId;
+    var base = item + '/workbook';
     var names = Object.keys(TABS);
-    var out = {}, errs = [];
-    return names.reduce(function(chain, name){
-      return chain.then(function(){
-        return graph(base + "/worksheets('" + encodeURIComponent(TABS[name]) + "')/usedRange(valuesOnly=true)")
+
+    return graph(item + '?$select=lastModifiedDateTime,name').then(function(meta){
+      var stamp = meta && meta.lastModifiedDateTime;
+      var hit = null;
+      try {
+        var raw = sessionStorage.getItem(CACHE_KEY);
+        if (raw){
+          var c = JSON.parse(raw);
+          if (c && c.stamp && c.stamp === stamp && c.itemId === itemId) hit = c;
+        }
+      } catch(_){}
+      if (hit) return { offices: hit.offices, errors: [], savedAt: stamp, cached: true };
+
+      var out = {}, errs = [];
+      return Promise.all(names.map(function(name){
+        return graph(base + "/worksheets('" + encodeURIComponent(TABS[name]) +
+                     "')/usedRange(valuesOnly=true)?$select=values")
           .then(function(rng){ out[name] = office(rng.values || [], !!MEDICAID[name]); })
           .catch(function(e){ errs.push(name + ': ' + ((e && e.message) || e)); });
+      })).then(function(){
+        if (!errs.length){
+          try {
+            sessionStorage.setItem(CACHE_KEY, JSON.stringify(
+              { stamp: stamp, itemId: itemId, offices: out }));
+          } catch(_){}   // quota or private mode -- caching is an optimisation, not a requirement
+        }
+        return { offices: out, errors: errs, savedAt: stamp, cached: false };
       });
-    }, Promise.resolve()).then(function(){
-      return { offices: out, errors: errs };
     });
   }
 

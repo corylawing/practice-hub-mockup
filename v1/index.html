@@ -238,11 +238,11 @@
   .foot b{color:var(--navy)}
   @media(max-width:620px){ .kpi .v{font-size:22px} }
 </style>
-<script src="user.js?v=hb46"></script>
-<script src="celebrate.js?v=hb46"></script>
+<script src="user.js?v=hb50"></script>
+<script src="celebrate.js?v=hb50"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="workbook.js?v=hb49"></script>
-  <script src="gate.js?v=hb49"></script>
+  <script src="workbook.js?v=hb50"></script>
+  <script src="gate.js?v=hb50"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — real numbers from the 2026 Production Dashboard workbook. You only see the offices you have access to.</div>
@@ -926,8 +926,8 @@ const OFFICES=[
   function banner(html, bad){
     let n=document.getElementById('wbstate');
     if(!n){ n=document.createElement('div'); n.id='wbstate';
-      n.style.cssText='max-width:var(--maxw);margin:14px auto 0;padding:11px 15px;border-radius:11px;'+
-        'font-size:13.5px;border:1px solid';
+      n.style.cssText='max-width:var(--maxw);margin:0 auto 14px;padding:9px 14px;border-radius:10px;'+
+        'font-size:12.5px;font-weight:600;border:1px solid;display:flex;align-items:center;gap:8px';
       document.querySelector('.wrap').prepend(n); }
     n.style.background = bad ? '#FCEBE8' : '#E5F4F3';
     n.style.color      = bad ? '#93301f' : '#0F827E';
@@ -954,9 +954,11 @@ const OFFICES=[
     });
     if(!filled){ banner('<b>No office data came back.</b> '+(res.errors.join('; ')||''), true); return false; }
     const stamp=res.savedAt ? new Date(res.savedAt).toLocaleString() : '';
-    banner('Live from the practice\'s workbook &mdash; '+filled+' of '+OFFICES.length+' offices'+
-           (stamp?', last saved '+stamp:'')+
-           (res.errors.length?' <b>('+res.errors.length+' tab(s) unread)</b>':''), res.errors.length>0);
+    banner('<span>\u25CF</span><span>Live from the practice\'s workbook'+
+           (stamp?' &mdash; last saved '+stamp:'')+
+           (res.cached?' (cached)':'')+
+           (res.errors.length?' <b>&mdash; '+res.errors.length+' tab(s) unread</b>':'')+'</span>',
+           res.errors.length>0);
     return true;
   }
 
@@ -967,7 +969,7 @@ const OFFICES=[
 })();
 </script>
 <script>PH.nav('dashboard');</script>
-<script src="tour.js?v=hb46"></script>
+<script src="tour.js?v=hb50"></script>
 <script>
 Tour.init([
   {sel:'.viewas', title:'You only see your offices', body:'Production numbers are sensitive, so people see <b>only the offices they\u2019re assigned to</b>. Switch to the Carlsbad manager \u2014 the group totals and the leaderboard disappear, because they aren\u2019t hers to see.'},
