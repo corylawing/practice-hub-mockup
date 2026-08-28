@@ -927,6 +927,11 @@ Verified with a **label-driven** parser (row numbers differ between tabs — see
 **44 series across all 8 offices, zero mismatches**: actual production, main goal, stretch goal,
 scheduled days, completed days, Medicaid starts, last-year production, case fees.
 
+**HEATHER VERIFIED THE MOCKUP'S NUMBERS.** `v1/snapshot.json` is the hand-imported set she
+reviewed against her own workbook and confirmed correct. It is the **reference** for the live
+Graph reader, not a draft. If `workbook.js` ever disagrees with it, the live reader is wrong -
+do not rewrite the figures or "simplify" a derivation to make a difference go away.
+
 **Exact row labels for actual production (confirmed against the live file 2026-08-28):**
 - Medicaid tabs (Carlsbad, Clovis, Hobbs, Cruces LCO): **`2026 Actual TC ONLY + Medicaid Production`**
 - TC-only tabs (Lubbock, San Angelo, Cruces FFO, Mansfield): **`2026 Actual TC Net Production`**

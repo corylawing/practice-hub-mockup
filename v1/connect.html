@@ -131,8 +131,8 @@
 
   <div class="card" id="c7">
     <h2><span class="step">7</span> Does the live read match the dashboard?</h2>
-    <p class="hint">Pulls every office tab from Heather's live file and compares it against the
-      numbers currently hard-coded in the dashboard. This is the check that has caught my mistakes
+    <p class="hint">Runs the real reader against Heather's live file and compares all ten series against the
+      numbers she reviewed and confirmed. This is the check that has caught my mistakes
       before &mdash; I will not switch the dashboard over until it comes back clean. Run steps 5
       and 6 first.</p>
     <button id="btnCompare" disabled>Compare all eight offices</button>
@@ -149,6 +149,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
+<script src="workbook.js?v=hb49"></script>
 <script>
 (function(){
   'use strict';
@@ -327,106 +328,41 @@
 
   var FILE = null;   // set by step 5, used by step 6
 
-  /* App office name -> the tab that holds it. The live file says "Cruces (FFO)", NOT the
-     "CRUCES (LEGACY)" my notes claimed - which is exactly why we read rather than assume. */
-  var TABS = {
-    'Carlsbad':'Carlsbad (FFO)', 'Clovis':'Clovis (FFO)', 'Hobbs':'Hobbs (FFO)',
-    'Lubbock':'Lubbock (FFO)', 'San Angelo':'San Angelo (FFO)', 'Cruces FFO':'Cruces (FFO)',
-    'Cruces LCO':'Cruces (LCO)', 'Mansfield':'Mansfield (SUN)'
-  };
-  /* Matched on the column-A LABEL, never a row number: the tabs use two different layouts and
-     an earlier pass silently compared the wrong rows. Each entry lists the substrings that must
-     all appear in the (lowercased) label. First match wins. */
-  var SERIES = {
-    /* Order matters. Medicaid tabs carry BOTH "2026 Actual TC ONLY + Medicaid Production"
-       (the total we want) and "2026 Actual TC Net Production (Non-Medicaid)" (a subset).
-       Match the total first, and exclude the Non-Medicaid row outright so the TC-only
-       fallback can never grab it. */
-    act:      [['2026','actual','tc only','+','medicaid'],
-               {all:['2026','actual','tc net production'], not:['non-medicaid']}],
-    goal:     [['2026','total production goal'], ['2026','tc production goal']],
-    stretch:  [['stretch']],
-    days:     [['number of production days','2026'], ['production days','2026']],
-    done:     [['completed','days'], ['days','completed']]
-  };
-  function norm(v){ return String(v == null ? '' : v).toLowerCase().replace(/\s+/g,' ').trim(); }
-  function findRow(rows, pats){
-    for (var p = 0; p < pats.length; p++){
-      var pat = pats[p];
-      var must = Array.isArray(pat) ? pat : pat.all;
-      var never = (Array.isArray(pat) ? null : pat.not) || [];
-      for (var r = 0; r < rows.length; r++){
-        var label = norm(rows[r][0]);
-        if (!label) continue;
-        var ok = must.every(function(frag){ return label.indexOf(frag) >= 0; })
-              && !never.some(function(frag){ return label.indexOf(frag) >= 0; });
-        if (ok) return { row: r, label: rows[r][0] };
-      }
-    }
-    return null;
-  }
-  function nums(row){
-    // 12 months start at the first numeric cell after the label column.
-    var out = [];
-    for (var c = 1; c < row.length && out.length < 12; c++){
-      var v = row[c];
-      out.push(typeof v === 'number' ? v : (v === '' || v == null ? 0 : (parseFloat(v) || 0)));
-    }
-    while (out.length < 12) out.push(0);
-    return out;
-  }
-
+  /* Step 7 deliberately runs workbook.js -- the SAME module the dashboard uses. Verifying
+     one implementation and shipping another would prove nothing. snapshot.json holds the
+     figures Heather reviewed and confirmed, so it is the reference: a difference means the
+     live reader is wrong, not that her numbers changed. */
   el('btnCompare').onclick = async function(){
     if (!FILE) { show('r7', false, 'Run step 5 first', ''); return; }
     var btn = this; btn.disabled = true;
-    var base = '/drives/' + FILE.driveId + '/items/' + FILE.itemId + '/workbook';
     try {
       var snap = await (await fetch('snapshot.json')).json();
-      var names = Object.keys(TABS), report = [], missing = [], diffs = 0, checked = 0;
-      for (var i = 0; i < names.length; i++){
-        var office = names[i], tab = TABS[office];
-        var rng;
-        try {
-          rng = await graph(base + "/worksheets('" + encodeURIComponent(tab) + "')/usedRange(valuesOnly=true)");
-        } catch (e){ missing.push(office + ' — tab "' + tab + '" not readable: ' + why(e)); continue; }
-        var rows = rng.values || [];
-        var mine = snap.offices[office] || {};
+      var res = await PH_WB.load(graph, FILE.driveId, FILE.itemId);
+      var keys = ['act','goal','stretch','ly','sAct','sGoal','mdStarts','lyStarts','days','done'];
+      var report = [], checked = 0, diffs = 0;
+      Object.keys(PH_WB.TABS).forEach(function(office){
+        var got = res.offices[office], want = snap.offices[office] || {};
+        if (!got){ report.push(office + ': NOT READ'); return; }
         var line = [];
-        var showLabels = false;
-        Object.keys(SERIES).forEach(function(key){
-          if (!mine[key]) return;
-          var hit = findRow(rows, SERIES[key]);
-          if (!hit){ line.push('  ' + key + ': LABEL NOT FOUND'); showLabels = true; return; }
-          var live = nums(rows[hit.row]);
+        keys.forEach(function(k){
+          if (!want[k]) return;
           var bad = [];
           for (var m = 0; m < 12; m++){
             checked++;
-            if (Math.abs(live[m] - mine[key][m]) > 0.51){
-              bad.push('m' + (m+1) + ' live ' + Math.round(live[m]) + ' vs app ' + Math.round(mine[key][m]));
+            if (Math.abs((got[k][m] || 0) - (want[k][m] || 0)) > 0.51){
+              bad.push('m' + (m+1) + ' live ' + Math.round(got[k][m]) + ' vs verified ' + Math.round(want[k][m]));
             }
           }
           diffs += bad.length;
-          line.push('  ' + key + ': ' + (bad.length ? bad.length + ' differ — ' + bad.slice(0,3).join('; ') : 'matches')
-                    + '   [' + hit.label + ']');
+          line.push('  ' + k + ': ' + (bad.length ? bad.length + ' DIFFER — ' + bad.slice(0,3).join('; ') : 'matches'));
         });
-        if (showLabels){
-          // Every non-empty column-A label on this tab, so the right one can be chosen
-          // deliberately rather than pattern-guessed.
-          var labels = [];
-          for (var r = 0; r < rows.length; r++){
-            var L = rows[r][0];
-            if (L !== '' && L != null) labels.push('    r' + (r+1) + ': ' + L);
-          }
-          line.push('  --- all row labels on this tab ---');
-          line.push(labels.join('\n'));
-        }
-        report.push(office + ' (' + tab + ')\n' + line.join('\n'));
-      }
-      var clean = diffs === 0 && !missing.length;
+        report.push(office + ' (' + PH_WB.TABS[office] + ')\n' + line.join('\n'));
+      });
+      var clean = diffs === 0 && !res.errors.length;
       show('r7', clean,
-        clean ? 'Clean — ' + checked + ' values checked, live matches the dashboard'
-              : diffs + ' difference(s) across ' + checked + ' values checked',
-        (missing.length ? '<p style="margin:9px 0 0"><b>Tabs not read:</b><br>' + esc(missing.join('<br>')) + '</p>' : '') +
+        clean ? 'Clean — ' + checked + ' values, live matches the numbers Heather verified'
+              : diffs + ' difference(s) across ' + checked + ' values',
+        (res.errors.length ? '<p style="margin:9px 0 0"><b>Tabs not read:</b><br>' + esc(res.errors.join('<br>')) + '</p>' : '') +
         '<pre>' + esc(report.join('\n\n')) + '</pre>');
     } catch (e){
       show('r7', false, 'Comparison failed', esc(why(e)));
