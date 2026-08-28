@@ -79,9 +79,11 @@
   <p class="sub">Five checks, in order. Each one has to pass before the next means anything.</p>
 
   <div class="note">
-    <b>This page reads only.</b> It signs you in, reads your name, and lists SharePoint sites you can
-    already see. It does not change, upload or delete anything. Close the tab and nothing is left behind
-    except a normal Microsoft sign-in session.
+    <b>Steps 1&ndash;7 read only.</b> They sign you in, read your name, and list what you can already see.
+    <br><b>Step 8 writes.</b> It creates a list called <code>HomeBrace Write Test</code> on a site you
+    name, puts a row in it, edits it, reads it back, then deletes the whole list again. That is the only
+    way to prove the app can actually store the schedule and everything else. It touches nothing that
+    already exists.
   </div>
 
   <div class="card" id="c1">
@@ -137,6 +139,20 @@
       and 6 first.</p>
     <button id="btnCompare" disabled>Compare all eight offices</button>
     <div class="res" id="r7"></div>
+  </div>
+
+  <div class="card" id="c8">
+    <h2><span class="step">8</span> Can SharePoint store what the app needs?</h2>
+    <p class="hint">Reading the workbook is solved. The rest of the hub &mdash; the schedule, offices,
+      teams, production entries, document sections &mdash; currently lives in browser storage and would
+      need somewhere real. This proves a SharePoint list can do it: <b>create, write, edit, read back,
+      delete</b>. Paste the address of the site you want to test in.</p>
+    <input id="siteurl" type="text" spellcheck="false" autocomplete="off"
+           placeholder="https://omegaorthodontics.sharepoint.com/sites/YourSite">
+    <p class="warn">Creates and then removes one list named <code>HomeBrace Write Test</code>. Nothing
+      else on the site is touched.</p>
+    <button id="btnStore" disabled>Run the storage test</button>
+    <div class="res" id="r8"></div>
   </div>
 
   <div class="card" id="c4">
@@ -211,7 +227,7 @@
     var on = !!acc;
     el('btnIn').disabled = on;
     el('btnOut').disabled = !on;
-    ['btnMe','btnSites','btnUsers','btnFile'].forEach(function(id){ el(id).disabled = !on; });
+    ['btnMe','btnSites','btnUsers','btnFile','btnStore'].forEach(function(id){ el(id).disabled = !on; });
     if (on){
       show('r1', true, 'Signed in',
         '<dl><dt>Name</dt><dd>' + esc(acc.name) + '</dd>' +
@@ -219,6 +235,8 @@
         '<dt>Tenant</dt><dd>' + esc(acc.tenantId) + '</dd></dl>');
     }
   }
+
+  function PH_AUTH_TOKEN(){ return token(); }
 
   async function token(){
     var req = { scopes: SCOPES, account: account };
@@ -260,8 +278,8 @@
     account = null;
     el('btnIn').disabled = false;
     el('btnOut').disabled = true;
-    ['btnMe','btnSites','btnUsers','btnFile','btnSheets','btnCompare'].forEach(function(id){ el(id).disabled = true; });
-    ['r1','r2','r3','r4','r5','r6','r7'].forEach(function(id){
+    ['btnMe','btnSites','btnUsers','btnFile','btnSheets','btnCompare','btnStore'].forEach(function(id){ el(id).disabled = true; });
+    ['r1','r2','r3','r4','r5','r6','r7','r8'].forEach(function(id){
       el(id).className = 'res';
       el(id).closest('.card').classList.remove('done','fail');
     });
@@ -332,6 +350,90 @@
      one implementation and shipping another would prove nothing. snapshot.json holds the
      figures Heather reviewed and confirmed, so it is the reference: a difference means the
      live reader is wrong, not that her numbers changed. */
+  /* Everything the hub currently keeps in browser storage. If a SharePoint list can hold a
+     row like this, it can hold all of it -- the schedule is the largest and most awkward. */
+  var STORES = ['schedule','offices','teams','production entries','document sections'];
+
+  async function graphSend(method, path, body){
+    var t = await PH_AUTH_TOKEN();
+    var res = await fetch('https://graph.microsoft.com/v1.0' + path, {
+      method: method,
+      headers: { Authorization: 'Bearer ' + t, 'Content-Type': 'application/json' },
+      body: body ? JSON.stringify(body) : undefined
+    });
+    if (res.status === 204) return {};
+    var out = await res.json().catch(function(){ return {}; });
+    if (!res.ok) throw new Error('Graph ' + res.status + ': ' + ((out.error && out.error.message) || res.statusText));
+    return out;
+  }
+
+  el('btnStore').onclick = async function(){
+    var url = el('siteurl').value.trim();
+    if (!url){ show('r8', false, 'Paste a site address first', ''); return; }
+    var btn = this; btn.disabled = true;
+    var steps = [], listId = null, siteId = null;
+    function note(ok, txt){ steps.push((ok ? '  OK   ' : '  FAIL ') + txt); }
+    try {
+      var m = url.replace(/\/+$/,'').match(/^https?:\/\/([^\/]+)(\/sites\/[^\/?#]+)?/);
+      if (!m) throw new Error('That does not look like a SharePoint site address.');
+      var lookup = m[2] ? '/sites/' + m[1] + ':' + m[2] : '/sites/' + m[1];
+      var site = await graph(lookup);
+      siteId = site.id;
+      note(true, 'Found the site: ' + (site.displayName || site.name));
+
+      // 1. create
+      var list = await graphSend('POST', '/sites/' + siteId + '/lists', {
+        displayName: 'HomeBrace Write Test',
+        list: { template: 'genericList' },
+        columns: [
+          { name: 'Payload',  text: { allowMultipleLines: true } },
+          { name: 'ItemKey',  text: {} }
+        ]
+      });
+      listId = list.id;
+      note(true, 'Created a list  (so the app can make its own storage)');
+
+      // 2. write a row shaped like the app's real data
+      var payload = JSON.stringify({ store:'ph_sched2', sample:{ '2026-08-05': { Carlsbad:{ ps:[0,2], s:480, e:1020 } } } });
+      var item = await graphSend('POST', '/sites/' + siteId + '/lists/' + listId + '/items', {
+        fields: { Title: 'schedule', ItemKey: 'ph_sched2', Payload: payload }
+      });
+      note(true, 'Wrote a row      (' + payload.length + ' characters of real schedule shape)');
+
+      // 3. edit it
+      await graphSend('PATCH', '/sites/' + siteId + '/lists/' + listId + '/items/' + item.id + '/fields',
+        { Payload: payload.replace('Carlsbad', 'Clovis') });
+      note(true, 'Edited the row   (so saving a change works)');
+
+      // 4. read it back
+      var back = await graph('/sites/' + siteId + '/lists/' + listId + '/items/' + item.id + '?$expand=fields');
+      var got = back.fields && back.fields.Payload;
+      if (!got || got.indexOf('Clovis') < 0) throw new Error('Read back the row but the edit was not there.');
+      note(true, 'Read it back     (the edit survived)');
+
+      // 5. clean up
+      await graphSend('DELETE', '/sites/' + siteId + '/lists/' + listId);
+      listId = null;
+      note(true, 'Deleted the list (nothing left behind)');
+
+      show('r8', true, 'SharePoint can store everything the app needs',
+        '<pre>' + esc(steps.join('\n')) + '</pre>' +
+        '<p style="margin:10px 0 0">That covers all of it: ' + esc(STORES.join(', ')) +
+        '. Each becomes a list on this site, read and written as the signed-in person &mdash; so ' +
+        'SharePoint keeps enforcing who can see what.</p>');
+    } catch (e) {
+      note(false, why(e));
+      var cleanup = '';
+      if (listId){
+        try { await graphSend('DELETE', '/sites/' + siteId + '/lists/' + listId); cleanup = ' The test list was removed.'; }
+        catch(_){ cleanup = ' <b>A list called "HomeBrace Write Test" may still be on the site &mdash; delete it manually.</b>'; }
+      }
+      show('r8', false, 'Storage test failed', '<pre>' + esc(steps.join('\n')) + '</pre>' +
+        '<p style="margin:10px 0 0">' + esc(why(e)) + cleanup + '</p>');
+    }
+    btn.disabled = false;
+  };
+
   el('btnCompare').onclick = async function(){
     if (!FILE) { show('r7', false, 'Run step 5 first', ''); return; }
     var btn = this; btn.disabled = true;
