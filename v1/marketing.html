@@ -156,9 +156,9 @@
   @media(max-width:900px){ .board{grid-template-columns:repeat(2,1fr)} }
   @media(max-width:560px){ .board{grid-template-columns:1fr} }
 </style>
-<script src="user.js?v=hb58"></script>
+<script src="user.js?v=hb59"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="gate.js?v=hb58"></script>
+  <script src="gate.js?v=hb59"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — marketing board concept for validation. Real build lives in Home-Brace (Microsoft Lists / Planner).</div>
@@ -205,12 +205,11 @@
   const two=n=>String(n).padStart(2,'0');
   const CSS=document.createElement('style');
   CSS.textContent=
-    '.tag.oloc{border:1px solid;font-weight:700;display:inline-flex;align-items:center;gap:5px}'+
-    '.tag.oloc i{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none}'+
+
     '.wrow{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px;padding-top:5px;border-top:1px dashed var(--line)}'+
     '.wrow .who{font-size:10.5px;font-weight:700;padding:2px 6px;border-radius:5px;'+
+      'background:var(--teal-soft,#E5F4F3);color:var(--teal-600,#0F827E);'+
       'display:inline-flex;align-items:center;gap:4px;white-space:nowrap}'+
-    '.wrow .who i{width:7px;height:7px;border-radius:50%;display:inline-block;flex:none}'+
     /* One "+ I'll be here" on all 31 days drowned the calendar. Keep it out of sight until
        the day is hovered -- except on touch, where there is no hover to reveal it. */
     '.wset{font-family:inherit;font-size:10.5px;font-weight:700;border:1px dashed var(--line);'+
@@ -222,22 +221,16 @@
     /* A day with nobody on it needs no divider line. */
     '.wrow:has(.wset:only-child){border-top:0;margin-top:2px;padding-top:0}'+
     '.wpick{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}'+
-    '.wopt{font-family:inherit;font-size:13px;font-weight:700;border:1.5px solid;background:#fff;'+
-      'border-radius:9px;padding:8px 13px;cursor:pointer;display:inline-flex;align-items:center;gap:7px}'+
-    '.wopt i{width:10px;height:10px;border-radius:50%;display:inline-block}'+
-    '.wopt.on{box-shadow:0 0 0 2px rgba(20,155,150,.25)}'+
+    '.wopt{font-family:inherit;font-size:13px;font-weight:700;border:1.5px solid var(--line);'+
+      'background:#fff;color:var(--navy);border-radius:9px;padding:8px 13px;cursor:pointer}'+
+    '.wopt.on{border-color:var(--teal);background:var(--teal-soft,#E5F4F3);color:var(--teal-600,#0F827E)}'+
     '.wclear{font-family:inherit;font-size:13px;font-weight:600;background:transparent;border:none;'+
       'color:var(--bad,#D7503A);cursor:pointer;padding:4px 0}';
   document.head.appendChild(CSS);
 
-  /* An office tag in that office's own colour — the same colour the Schedule gives it,
-     so an office looks the same wherever you meet it. */
-  function officeTag(loc){
-    if(loc==='All offices') return '<span class="tag">\u{1F4CD} All offices</span>';
-    const c=PH.colorForOffice(loc);
-    return '<span class="tag oloc" style="background:'+c.bg+';color:'+c.fg+';border-color:'+c.dot+'">'+
-           '<i style="background:'+c.dot+'"></i>'+esc(loc)+'</span>';
-  }
+  /* Plain tag. Marketing keeps its own type colours; office colours belong to the
+     Schedule and mixing the two made the calendar read as two systems at once. */
+  function officeTag(loc){ return '<span class="tag">\u{1F4CD} '+esc(loc)+'</span>'; }
 
   /* "Where I'll be": marketing staff mark which office they are at on a given day, so the
      calendar shows the activity AND the person alongside it. Keyed by date, then by person. */
@@ -251,11 +244,9 @@
     const day=where[iso]||{};
     const names=Object.keys(day);
     const mine=day[meName()];
-    const rows=names.map(n=>{
-      const c=PH.colorForOffice(day[n]);
-      return '<span class="who" style="background:'+c.bg+';color:'+c.fg+'" title="'+esc(n)+' at '+esc(day[n])+'">'+
-             '<i style="background:'+c.dot+'"></i>'+esc(n.split(' ')[0])+' \u00b7 '+esc(day[n])+'</span>';
-    }).join('');
+    const rows=names.map(n=>
+      '<span class="who" title="'+esc(n)+' at '+esc(day[n])+'">\u{1F464} '+
+      esc(n.split(' ')[0])+' \u00b7 '+esc(day[n])+'</span>').join('');
     const btn = canEdit()
       ? '<button class="wset" onclick="MK.setWhere(\''+iso+'\')">'+(mine?'Change where I am':'+ I\u2019ll be here')+'</button>'
       : '';
@@ -268,11 +259,9 @@
     const opts=PH.officeNames();
     openModalRaw('<h3 style="margin:0 0 4px">Where will you be?</h3>'+
       '<p style="margin:0 0 14px;color:var(--soft);font-size:13.5px">'+niceDate(iso)+' \u2014 shows on the calendar next to that day\u2019s marketing.</p>'+
-      '<div class="wpick">'+opts.map(o=>{
-        const c=PH.colorForOffice(o);
-        return '<button class="wopt'+(o===cur?' on':'')+'" style="border-color:'+c.dot+';background:'+(o===cur?c.bg:'#fff')+';color:'+c.fg+'"'+
-               ' onclick="MK.pickWhere(\''+iso+'\',\''+esc(o)+'\')"><i style="background:'+c.dot+'"></i>'+esc(o)+'</button>';
-      }).join('')+'</div>'+
+      '<div class="wpick">'+opts.map(o=>
+        '<button class="wopt'+(o===cur?' on':'')+'" onclick="MK.pickWhere(\''+iso+'\',\''+esc(o)+'\')">'+
+        esc(o)+'</button>').join('')+'</div>'+
       (cur?'<button class="wclear" onclick="MK.pickWhere(\''+iso+'\',\'\')">Remove me from this day</button>':''));
   }
   function pickWhere(iso,office){
@@ -352,15 +341,12 @@
     for(let i=0;i<start;i++) cells+='<div class="day out"><div class="dnum">'+(prevDim-start+i+1)+'</div></div>';
     for(let d=1;d<=dim;d++){
       const isToday=(calY===TODAY.y&&calM===TODAY.m&&d===TODAY.d);
-      const evs=(byDay[d]||[]).map(c=>{
-        const oc=PH.colorForOffice(c.loc);
-        // Same office colour the Schedule uses, so one office reads the same on both pages.
-        const bar = c.loc==='All offices' ? '' : ';border-left:5px solid '+oc.dot;
-        return '<button class="ev t-'+c.type+(c.stage==='done'?' done':'')+'" style="'+
-          (c.loc==='All offices'?'':'background:'+oc.bg+';color:'+oc.fg)+bar+'"'+
-          ' title="'+esc(c.title)+' \u00b7 '+esc(c.loc)+'" onclick="MK.open('+c.id+')">'+
-          (c.stage==='done'&&c.result!=='none'?'<span class="rd">'+RESDOT[c.result]+'</span> ':'')+esc(c.title)+'</button>';
-      }).join('');
+      // Colour comes from the marketing TYPE (t-social, t-event, ...), not the office.
+      const evs=(byDay[d]||[]).map(c=>
+        '<button class="ev t-'+c.type+(c.stage==='done'?' done':'')+'"'+
+        ' title="'+esc(c.title)+' \u00b7 '+esc(c.loc)+'" onclick="MK.open('+c.id+')">'+
+        (c.stage==='done'&&c.result!=='none'?'<span class="rd">'+RESDOT[c.result]+'</span> ':'')+
+        esc(c.title)+'</button>').join('');
       const iso=calY+'-'+two(calM+1)+'-'+two(d);
       cells+='<div class="day'+(isToday?' today':'')+'"><div class="dnum">'+d+(isToday?' \u00b7 today':'')+'</div>'+
         evs+whereHtml(iso)+'</div>';
@@ -523,7 +509,7 @@
 })();
 </script>
 <script>PH.nav('marketing');</script>
-<script src="tour.js?v=hb58"></script>
+<script src="tour.js?v=hb59"></script>
 <script>
 Tour.init([
   {sel:'.board', title:'Your marketing board', body:'Every event, promo and post is a card that moves left to right: <b>Ideas \u2192 Planned \u2192 In progress \u2192 Done</b>. <b>Drag a card</b> across, or use the \u25c0 \u25b6 arrows on a phone.'},
