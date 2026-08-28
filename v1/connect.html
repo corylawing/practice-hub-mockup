@@ -145,12 +145,16 @@
     <h2><span class="step">8</span> Can SharePoint store what the app needs?</h2>
     <p class="hint">Reading the workbook is solved. The rest of the hub &mdash; the schedule, offices,
       teams, production entries, document sections &mdash; currently lives in browser storage and would
-      need somewhere real. This proves a SharePoint list can do it: <b>create, write, edit, read back,
-      delete</b>. Paste the address of the site you want to test in.</p>
+      need somewhere real. This writes a row into a list, edits it, reads it back and deletes it.</p>
+    <p class="hint"><b>Make the list first, by hand.</b> On the site: <b>New &rarr; List &rarr; Blank
+      list</b>, name it <code>HomeBrace Write Test</code>, then add one column: <b>Add column &rarr;
+      Multiple lines of text</b>, named <code>Payload</code>. The app never creates its own lists &mdash;
+      that needs a permission we deliberately do not have, and schema should not appear at run time.</p>
     <input id="siteurl" type="text" spellcheck="false" autocomplete="off"
-           placeholder="https://omegaorthodontics.sharepoint.com/sites/YourSite">
-    <p class="warn">Creates and then removes one list named <code>HomeBrace Write Test</code>. Nothing
-      else on the site is touched.</p>
+           placeholder="https://omegaorthodontics.sharepoint.com/sites/Home-Brace">
+    <input id="listname" type="text" spellcheck="false" autocomplete="off" value="HomeBrace Write Test">
+    <p class="warn">Adds one row, edits it, reads it, then deletes that row. The list itself is left
+      alone, and nothing else on the site is touched.</p>
     <button id="btnStore" disabled>Run the storage test</button>
     <div class="res" id="r8"></div>
   </div>
@@ -165,7 +169,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-<script src="workbook.js?v=hb51"></script>
+<script src="workbook.js?v=hb52"></script>
 <script>
 (function(){
   'use strict';
@@ -369,67 +373,65 @@
 
   el('btnStore').onclick = async function(){
     var url = el('siteurl').value.trim();
+    var listName = el('listname').value.trim() || 'HomeBrace Write Test';
     if (!url){ show('r8', false, 'Paste a site address first', ''); return; }
     var btn = this; btn.disabled = true;
-    var steps = [], listId = null, siteId = null;
+    var steps = [], siteId = null, listId = null, itemId = null;
     function note(ok, txt){ steps.push((ok ? '  OK   ' : '  FAIL ') + txt); }
     try {
       var m = url.replace(/\/+$/,'').match(/^https?:\/\/([^\/]+)(\/sites\/[^\/?#]+)?/);
       if (!m) throw new Error('That does not look like a SharePoint site address.');
-      var lookup = m[2] ? '/sites/' + m[1] + ':' + m[2] : '/sites/' + m[1];
-      var site = await graph(lookup);
+      var site = await graph(m[2] ? '/sites/' + m[1] + ':' + m[2] : '/sites/' + m[1]);
       siteId = site.id;
       note(true, 'Found the site: ' + (site.displayName || site.name));
 
-      // 1. create
-      var list = await graphSend('POST', '/sites/' + siteId + '/lists', {
-        displayName: 'HomeBrace Write Test',
-        list: { template: 'genericList' },
-        columns: [
-          { name: 'Payload',  text: { allowMultipleLines: true } },
-          { name: 'ItemKey',  text: {} }
-        ]
-      });
-      listId = list.id;
-      note(true, 'Created a list  (so the app can make its own storage)');
+      var lists = await graph('/sites/' + siteId + '/lists?$select=id,displayName');
+      var found = (lists.value || []).filter(function(l){ return l.displayName === listName; })[0];
+      if (!found){
+        throw new Error('No list called "' + listName + '" on that site. Create it first: ' +
+                        'New > List > Blank list, then add a "Multiple lines of text" column named Payload.');
+      }
+      listId = found.id;
+      note(true, 'Found the list: ' + listName);
 
-      // 2. write a row shaped like the app's real data
-      var payload = JSON.stringify({ store:'ph_sched2', sample:{ '2026-08-05': { Carlsbad:{ ps:[0,2], s:480, e:1020 } } } });
-      var item = await graphSend('POST', '/sites/' + siteId + '/lists/' + listId + '/items', {
-        fields: { Title: 'schedule', ItemKey: 'ph_sched2', Payload: payload }
-      });
+      // A row shaped like the app's real schedule data -- the biggest, most awkward thing it stores.
+      var payload = JSON.stringify({ store:'ph_sched2',
+        sample:{ '2026-08-05': { Carlsbad:{ ps:[0,2], s:480, e:1020 }, Clovis:{ closed:true } } } });
+      var item = await graphSend('POST', '/sites/' + siteId + '/lists/' + listId + '/items',
+        { fields: { Title: 'schedule', Payload: payload } });
+      itemId = item.id;
       note(true, 'Wrote a row      (' + payload.length + ' characters of real schedule shape)');
 
-      // 3. edit it
-      await graphSend('PATCH', '/sites/' + siteId + '/lists/' + listId + '/items/' + item.id + '/fields',
-        { Payload: payload.replace('Carlsbad', 'Clovis') });
+      await graphSend('PATCH', '/sites/' + siteId + '/lists/' + listId + '/items/' + itemId + '/fields',
+        { Payload: payload.replace('Carlsbad', 'Mansfield') });
       note(true, 'Edited the row   (so saving a change works)');
 
-      // 4. read it back
-      var back = await graph('/sites/' + siteId + '/lists/' + listId + '/items/' + item.id + '?$expand=fields');
+      var back = await graph('/sites/' + siteId + '/lists/' + listId + '/items/' + itemId + '?$expand=fields');
       var got = back.fields && back.fields.Payload;
-      if (!got || got.indexOf('Clovis') < 0) throw new Error('Read back the row but the edit was not there.');
-      note(true, 'Read it back     (the edit survived)');
+      if (!got) throw new Error('Read the row back but the Payload column was empty. Is the column named exactly "Payload"?');
+      if (got.indexOf('Mansfield') < 0) throw new Error('Read the row back but the edit was not there.');
+      note(true, 'Read it back     (the edit survived, ' + got.length + ' characters intact)');
 
-      // 5. clean up
-      await graphSend('DELETE', '/sites/' + siteId + '/lists/' + listId);
-      listId = null;
-      note(true, 'Deleted the list (nothing left behind)');
+      await graphSend('DELETE', '/sites/' + siteId + '/lists/' + listId + '/items/' + itemId);
+      itemId = null;
+      note(true, 'Deleted the row  (nothing left behind)');
 
       show('r8', true, 'SharePoint can store everything the app needs',
         '<pre>' + esc(steps.join('\n')) + '</pre>' +
-        '<p style="margin:10px 0 0">That covers all of it: ' + esc(STORES.join(', ')) +
-        '. Each becomes a list on this site, read and written as the signed-in person &mdash; so ' +
-        'SharePoint keeps enforcing who can see what.</p>');
+        '<p style="margin:10px 0 0">That is the full cycle the hub needs for ' + esc(STORES.join(', ')) +
+        '. Each becomes a list, read and written as the signed-in person &mdash; so SharePoint keeps ' +
+        'enforcing who can see what.</p>');
     } catch (e) {
       note(false, why(e));
-      var cleanup = '';
-      if (listId){
-        try { await graphSend('DELETE', '/sites/' + siteId + '/lists/' + listId); cleanup = ' The test list was removed.'; }
-        catch(_){ cleanup = ' <b>A list called "HomeBrace Write Test" may still be on the site &mdash; delete it manually.</b>'; }
+      var tail = '';
+      if (itemId){
+        try { await graphSend('DELETE', '/sites/' + siteId + '/lists/' + listId + '/items/' + itemId);
+              tail = ' The test row was removed.'; }
+        catch(_){ tail = ' <b>A test row may still be in the list &mdash; delete it manually.</b>'; }
       }
-      show('r8', false, 'Storage test failed', '<pre>' + esc(steps.join('\n')) + '</pre>' +
-        '<p style="margin:10px 0 0">' + esc(why(e)) + cleanup + '</p>');
+      show('r8', false, 'Storage test failed',
+        '<pre>' + esc(steps.join('\n')) + '</pre>' +
+        '<p style="margin:10px 0 0">' + esc(why(e)) + tail + '</p>');
     }
     btn.disabled = false;
   };

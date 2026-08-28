@@ -927,6 +927,12 @@ Verified with a **label-driven** parser (row numbers differ between tabs — see
 **44 series across all 8 offices, zero mismatches**: actual production, main goal, stretch goal,
 scheduled days, completed days, Medicaid starts, last-year production, case fees.
 
+**`Sites.ReadWrite.All` does NOT allow creating lists.** Verified 2026-08-28: reading a site works,
+`POST /sites/{id}/lists` returns **403 Access denied**. Creating lists needs `Sites.Manage.All`.
+**Do not request it.** The app should never create schema at run time - make each list once, by hand,
+in the SharePoint UI, and the app then reads and writes ITEMS, which `Sites.ReadWrite.All` covers.
+This keeps the app's permissions as small as they can be and avoids another IT consent round.
+
 **HEATHER VERIFIED THE MOCKUP'S NUMBERS.** `v1/snapshot.json` is the hand-imported set she
 reviewed against her own workbook and confirmed correct. It is the **reference** for the live
 Graph reader, not a draft. If `workbook.js` ever disagrees with it, the live reader is wrong -
