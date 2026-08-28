@@ -62,7 +62,10 @@ All four permissions returned real data. What the results told us:
   (`Simpatico Systems` = their IT company, `Barracuda NDR`). **Job titles are blank on everyone.**
   Two consequences: (a) role -> team mapping **cannot** be driven off Entra job titles as assumed;
   (b) if staff share a login, per-person permissions and audit trails do not work the way the
-  mockup's permission model assumes. **Confirm with Heather before building the real access model.**
+  mockup's permission model assumes.
+  **Cory's call 2026-08-28: the practice will sort out named accounts, roles and titles themselves.
+  Do NOT block on it.** Build against the mockup's own user list and permission model for now;
+  wire Home-Brace to Entra identities only once the practice says their directory is ready.
 
 ### The data workflow right now
 The dashboard's numbers are a **manual snapshot**. When the practice updates their workbook, Cory

@@ -60,6 +60,10 @@
   ul.sites{margin:11px 0 0;padding-left:19px;font-size:13.5px}
   ul.sites li{margin-bottom:5px}
   ul.sites small{color:var(--soft);display:block;word-break:break-all}
+  input[type=text]{width:100%;font-family:inherit;font-size:13.5px;padding:10px 12px;
+    border:1px solid var(--line);border-radius:10px;margin-bottom:8px}
+  input[type=text]:focus{outline:2px solid var(--teal);outline-offset:-1px;border-color:var(--teal)}
+  .warn{font-size:12.5px;color:var(--soft);margin:0 0 12px}
   a{color:var(--teal-600)}
 </style>
 </head>
@@ -72,7 +76,7 @@
 
 <div class="wrap">
   <h1>Does the Microsoft connection work?</h1>
-  <p class="sub">Four checks, in order. Each one has to pass before the next means anything.</p>
+  <p class="sub">Five checks, in order. Each one has to pass before the next means anything.</p>
 
   <div class="note">
     <b>This page reads only.</b> It signs you in, reads your name, and lists SharePoint sites you can
@@ -103,6 +107,17 @@
       real hub needs to read Heather's workbook.</p>
     <button id="btnSites" disabled>List SharePoint sites</button>
     <div class="res" id="r3"></div>
+  </div>
+
+  <div class="card" id="c5">
+    <h2><span class="step">5</span> Read the actual workbook</h2>
+    <p class="hint">Paste the sharing link to the production dashboard file. This checks whether the
+      app can reach it <b>where it lives today</b>, using only the permissions we already have.</p>
+    <input id="lnk" type="text" placeholder="Paste the workbook sharing link here" autocomplete="off" spellcheck="false">
+    <p class="warn">Used in your browser only. Never saved, never committed to the repo, never sent
+      anywhere except Microsoft.</p>
+    <button id="btnFile" disabled>Try to read it</button>
+    <div class="res" id="r5"></div>
   </div>
 
   <div class="card" id="c4">
@@ -175,7 +190,7 @@
     var on = !!acc;
     el('btnIn').disabled = on;
     el('btnOut').disabled = !on;
-    ['btnMe','btnSites','btnUsers'].forEach(function(id){ el(id).disabled = !on; });
+    ['btnMe','btnSites','btnUsers','btnFile'].forEach(function(id){ el(id).disabled = !on; });
     if (on){
       show('r1', true, 'Signed in',
         '<dl><dt>Name</dt><dd>' + esc(acc.name) + '</dd>' +
@@ -224,8 +239,8 @@
     account = null;
     el('btnIn').disabled = false;
     el('btnOut').disabled = true;
-    ['btnMe','btnSites','btnUsers'].forEach(function(id){ el(id).disabled = true; });
-    ['r1','r2','r3','r4'].forEach(function(id){
+    ['btnMe','btnSites','btnUsers','btnFile'].forEach(function(id){ el(id).disabled = true; });
+    ['r1','r2','r3','r4','r5'].forEach(function(id){
       el(id).className = 'res';
       el(id).closest('.card').classList.remove('done','fail');
     });
@@ -276,6 +291,44 @@
         '<ul class="sites">' + items + '</ul>');
     } catch (e) {
       show('r4', false, 'Could not read the directory', esc(why(e)));
+    }
+  };
+
+  /* Graph addresses a shared file by an encoding of its sharing URL:
+     "u!" + base64(url), URL-safe, no padding. */
+  function shareId(url){
+    var b = btoa(unescape(encodeURIComponent(url)));
+    return 'u!' + b.replace(/=+$/, '').replace(/\+/g, '-').replace(/\//g, '_');
+  }
+  function bytes(n){
+    if (!n && n !== 0) return '(unknown)';
+    return n < 1024*1024 ? Math.round(n/1024) + ' KB' : (n/1048576).toFixed(1) + ' MB';
+  }
+
+  el('btnFile').onclick = async function(){
+    var url = el('lnk').value.trim();
+    if (!url){ show('r5', false, 'Paste the sharing link first', ''); return; }
+    try {
+      var f = await graph('/shares/' + shareId(url) + '/driveItem');
+      var dt = (f.parentReference && f.parentReference.driveType) || '';
+      var personal = dt === 'personal' || /-my\.sharepoint\.com/.test(url);
+      show('r5', true, 'The app can read the workbook',
+        '<dl><dt>File</dt><dd>' + esc(f.name) + '</dd>' +
+        '<dt>Size</dt><dd>' + bytes(f.size) + '</dd>' +
+        '<dt>Last saved</dt><dd>' + esc(f.lastModifiedDateTime || '(unknown)') + '</dd>' +
+        '<dt>Lives in</dt><dd>' + esc(personal ? 'a personal OneDrive' : 'a SharePoint library') + '</dd></dl>' +
+        (personal ? '<p style="margin:10px 0 0"><b>But it is in a personal OneDrive.</b> If that ' +
+          'person leaves, the file goes with their account. Move it to a SharePoint library before ' +
+          'anything depends on it.</p>' : ''));
+    } catch (e) {
+      var m = why(e);
+      var denied = /403|access denied|forbidden/i.test(m);
+      show('r5', false, 'Could not read the workbook',
+        esc(m) + (denied
+          ? '<p style="margin:10px 0 0">A 403 most likely means the file sits in a personal OneDrive, ' +
+            'which <b>Sites.ReadWrite.All</b> does not cover. Two fixes: move it to a SharePoint ' +
+            'document library (better anyway), or ask IT to consent to <b>Files.Read.All</b>.</p>'
+          : ''));
     }
   };
 
