@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Signing in…</title>
+<meta name="robots" content="noindex">
+</head>
+<body>
+<!--
+  Deliberately blank. This page exists ONLY to be the sign-in popup's landing spot.
+
+  Microsoft redirects the popup here with the auth response in the URL fragment, and
+  the window that opened it reads that fragment. Anything that runs here risks
+  consuming or clearing the fragment first, which surfaces as MSAL's
+  "Hash value cannot be processed because it is empty".
+
+  So: no scripts, no styles, no fonts, no MSAL. Do not add any.
+-->
+</body>
+</html>

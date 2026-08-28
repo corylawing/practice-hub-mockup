@@ -12,11 +12,13 @@
   var CLIENT_ID = '2122a06f-b6e9-4618-9106-3b6d6a84b5eb';
   var TENANT_ID = 'edb81e45-7fa8-4147-982f-2f31c6298086';
   var SCOPES = ['User.Read'];
-  /* The popup lands on a URI that must already be registered on the app.
-     connect.html is registered, so reuse it rather than needing another round in Entra. */
+  /* A BLANK page, on purpose. The popup lands here and the opener reads the auth
+     response out of the URL fragment. Landing on a real page risks that page
+     consuming the fragment first -- which is exactly MSAL's "Hash value cannot be
+     processed because it is empty". Must be registered as a redirect URI in Entra. */
   var REDIRECT = /localhost:8790/.test(location.origin)
-    ? 'http://localhost:8790'
-    : 'https://corylawing.github.io/practice-hub-mockup/v1/connect.html';
+    ? location.origin + '/v1/auth.html'
+    : 'https://corylawing.github.io/practice-hub-mockup/v1/auth.html';
 
   var CSS =
     '#phgate{position:fixed;inset:0;z-index:99999;background:#0F2A4A;color:#fff;display:flex;' +

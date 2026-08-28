@@ -184,12 +184,10 @@
     auth: {
       clientId: CLIENT_ID,
       authority: 'https://login.microsoftonline.com/' + TENANT_ID,
-      // Must match a redirect URI registered on the app EXACTLY, character for character.
-      // Locally that is the bare origin (http://localhost:8790, registered 2026-08-19);
-      // on the live site it is this page's full URL.
+      // Blank landing page, same reasoning as gate.js -- never point this at a real page.
       redirectUri: /^https?:\/\/localhost:8790/.test(window.location.origin)
-        ? 'http://localhost:8790'
-        : window.location.origin + window.location.pathname
+        ? window.location.origin + '/v1/auth.html'
+        : 'https://corylawing.github.io/practice-hub-mockup/v1/auth.html'
     },
     cache: { cacheLocation: 'sessionStorage' }
   });
