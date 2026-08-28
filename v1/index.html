@@ -238,11 +238,11 @@
   .foot b{color:var(--navy)}
   @media(max-width:620px){ .kpi .v{font-size:22px} }
 </style>
-<script src="user.js?v=hb50"></script>
-<script src="celebrate.js?v=hb50"></script>
+<script src="user.js?v=hb51"></script>
+<script src="celebrate.js?v=hb51"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="workbook.js?v=hb50"></script>
-  <script src="gate.js?v=hb50"></script>
+  <script src="workbook.js?v=hb51"></script>
+  <script src="gate.js?v=hb51"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — real numbers from the 2026 Production Dashboard workbook. You only see the offices you have access to.</div>
@@ -953,10 +953,20 @@ const OFFICES=[
       filled++;
     });
     if(!filled){ banner('<b>No office data came back.</b> '+(res.errors.join('; ')||''), true); return false; }
-    const stamp=res.savedAt ? new Date(res.savedAt).toLocaleString() : '';
-    banner('<span>\u25CF</span><span>Live from the practice\'s workbook'+
-           (stamp?' &mdash; last saved '+stamp:'')+
-           (res.cached?' (cached)':'')+
+    /* The question this answers is "are these numbers current?", so lead with how long ago
+       Heather saved rather than a raw timestamp. Exact time stays on hover. */
+    let when='';
+    if(res.savedAt){
+      const d=new Date(res.savedAt), mins=Math.round((Date.now()-d)/60000);
+      const ago = mins<2 ? 'just now'
+                : mins<60 ? mins+' minutes ago'
+                : mins<120 ? 'an hour ago'
+                : mins<1440 ? Math.round(mins/60)+' hours ago'
+                : mins<2880 ? 'yesterday'
+                : Math.round(mins/1440)+' days ago';
+      when=' <span title="'+d.toLocaleString()+'">&mdash; Heather last saved it <b>'+ago+'</b></span>';
+    }
+    banner('<span>\u25CF</span><span>Showing the practice\'s live workbook'+when+
            (res.errors.length?' <b>&mdash; '+res.errors.length+' tab(s) unread</b>':'')+'</span>',
            res.errors.length>0);
     return true;
@@ -969,7 +979,7 @@ const OFFICES=[
 })();
 </script>
 <script>PH.nav('dashboard');</script>
-<script src="tour.js?v=hb50"></script>
+<script src="tour.js?v=hb51"></script>
 <script>
 Tour.init([
   {sel:'.viewas', title:'You only see your offices', body:'Production numbers are sensitive, so people see <b>only the offices they\u2019re assigned to</b>. Switch to the Carlsbad manager \u2014 the group totals and the leaderboard disappear, because they aren\u2019t hers to see.'},
