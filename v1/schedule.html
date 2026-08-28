@@ -235,9 +235,9 @@
     .addday{padding:9px 11px;font-size:12px}
   }
 </style>
-<script src="user.js?v=hb53"></script>
+<script src="user.js?v=hb58"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="gate.js?v=hb53"></script>
+  <script src="gate.js?v=hb58"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — sample staff schedule for validation. Live version = one Microsoft List the practice maintains.</div>
@@ -284,22 +284,8 @@
 <script>
 (function(){
   /* ---------- the OFFICE carries the colour, not the doctor ---------- */
-  const PALETTE=[
-    {k:'Hot Pink',           dot:'#F0378F', bg:'#FFE1EF', fg:'#A80F63'},
-    {k:'Purple',             dot:'#7C3AED', bg:'#EDE7FD', fg:'#5B21B6'},
-    {k:'Sky Blue',           dot:'#38BDF8', bg:'#DFF3FE', fg:'#0369A1'},
-    {k:'Highlighter Orange', dot:'#F27C1A', bg:'#FFE9D3', fg:'#B45309'},
-    {k:'Lime Green',         dot:'#84CC16', bg:'#ECFACC', fg:'#4D7C0F'},
-    {k:'Highlighter Yellow', dot:'#FACC15', bg:'#FEF6C7', fg:'#7A5B08'},
-    // Light Pink and Light Orange lived here. Each was the same hue as Hot Pink /
-    // Highlighter Orange, only paler, so stacked in one day cell they read as one
-    // colour. Jade is the only hue the palette had real room for; Red is a spare.
-    // The two offices that had them now use Jade and the unused Slate Blue.
-    {k:'Jade',               dot:'#5CD6A9', bg:'#E3FDF3', fg:'#0A7F54'},
-    {k:'Red',                dot:'#F31637', bg:'#FDE3E7', fg:'#8E0B1F'},
-    {k:'Teal',               dot:'#14B8A6', bg:'#DBF5F1', fg:'#0F766E'},
-    {k:'Slate Blue',         dot:'#475569', bg:'#E8ECF1', fg:'#334155'}
-  ];
+  // PALETTE now lives in user.js so Marketing uses the identical colours.
+  const PALETTE=PH.palette();
   const colOf=c=>PALETTE.find(p=>p.k===c)||PALETTE[9];
 
   const WK={s:480,e:1020};   // 8:00a – 5:00p
@@ -822,7 +808,7 @@
 })();
 </script>
 <script>PH.nav('schedule');</script>
-<script src="tour.js?v=hb53"></script>
+<script src="tour.js?v=hb58"></script>
 <script>
 Tour.init([
   {sel:'#viewseg', title:'Week or month', body:'<b>Week</b> is the day-to-day working view. <b>Month</b> shows the whole month at a glance, with every office in its own colour.'},

@@ -490,6 +490,33 @@
     host.insertBefore(d,host.firstChild);
   }
 
-  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner};
+  /* Office colours. Lives HERE, not in schedule.html, because Marketing colours its
+     items by office too and the two must never drift. Schedule owns which office has
+     which colour; this owns what each colour actually is. */
+  const PALETTE=[
+    {k:'Hot Pink',           dot:'#F0378F', bg:'#FFE1EF', fg:'#A80F63'},
+    {k:'Purple',             dot:'#7C3AED', bg:'#EDE7FD', fg:'#5B21B6'},
+    {k:'Sky Blue',           dot:'#38BDF8', bg:'#DFF3FE', fg:'#0369A1'},
+    {k:'Highlighter Orange', dot:'#F27C1A', bg:'#FFE9D3', fg:'#B45309'},
+    {k:'Lime Green',         dot:'#84CC16', bg:'#ECFACC', fg:'#4D7C0F'},
+    {k:'Highlighter Yellow', dot:'#FACC15', bg:'#FEF6C7', fg:'#7A5B08'},
+    // Light Pink and Light Orange lived here. Each was the same hue as Hot Pink /
+    // Highlighter Orange, only paler, so stacked in one day cell they read as one
+    // colour. Jade is the only hue the palette had real room for; Red is a spare.
+    // The two offices that had them now use Jade and the unused Slate Blue.
+    {k:'Jade',               dot:'#5CD6A9', bg:'#E3FDF3', fg:'#0A7F54'},
+    {k:'Red',                dot:'#F31637', bg:'#FDE3E7', fg:'#8E0B1F'},
+    {k:'Teal',               dot:'#14B8A6', bg:'#DBF5F1', fg:'#0F766E'},
+    {k:'Slate Blue',         dot:'#475569', bg:'#E8ECF1', fg:'#334155'}
+  ];
+  const colorOf=c=>PALETTE.find(p=>p.k===c)||PALETTE[PALETTE.length-1];
+  /* By OFFICE name, which is what Marketing has to hand. Falls back to a neutral so an
+     office that has not been given a colour yet still renders. */
+  function colorForOffice(n){
+    const l=locations().find(x=>x.n===n);
+    return l ? colorOf(l.color) : {k:'',dot:'#94a3b8',bg:'#F1F5F9',fg:'#475569'};
+  }
+
+  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice};
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mount); else mount();
 })();
