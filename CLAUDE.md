@@ -46,6 +46,36 @@ Admin consent): `offline_access`, `Sites.ReadWrite.All`, `User.Read`, `User.Read
 **Never add Application permissions** - delegated means SharePoint keeps enforcing each person's
 own access, which is the whole security model here.
 
+### ARCHITECTURE FULLY VERIFIED 2026-08-28
+Every capability the real app needs is proven against the practice's own tenant, via
+`v1/connect.html` steps 1-8. Nothing about the approach is unproven any more:
+
+| | |
+|---|---|
+| Microsoft sign-in | works (MSAL 3.30.0, popup, blank `auth.html` redirect) |
+| Read the live workbook | works - all 10 series, 8 offices, matches Heather's verified figures |
+| Write/edit/read/delete app data | works - full cycle against a SharePoint list |
+| Create lists | **denied, by design** - see the `Sites.Manage.All` note below |
+
+**The site:** `https://omegaorthodontics.sharepoint.com/sites/Home-Brace` (Team site, Private,
+created 2026-08-28, Cory is owner). A `HomeBrace Write Test` list with a `Payload`
+multi-line-text column lives there for step 8; harmless to keep or delete.
+
+**What is left before staff can use it:**
+1. **Hosting** - Azure Static Web App with Entra auth (needs IT; free tier). SharePoint cannot host
+   the app's code, only its data. Do not attempt SPFx - it is a rewrite.
+2. **Move the app's storage off `localStorage`** onto lists on that site: `ph_sched2`, `ph_locations`,
+   `ph_teams`, `ph_prod`, `ph_docsecs`.
+3. **Heather's answer on restricted data** (below) decides whether sensitive series get their own
+   list with its own permissions, or share the open one. Cheap now, expensive after data exists.
+4. The practice sorting out named accounts - their call, not a blocker.
+
+**Access model:** grant a GROUP, never individuals - "Everyone except external guests" makes new
+hires work automatically. But note the app's team/location filtering is **presentation**; if a list
+is readable by all, someone technical can read it directly via Graph. Anything genuinely restricted
+(the Payroll Tracking Sheet, per-office production if the practice means it) needs its own list with
+its own permissions so SharePoint enforces it.
+
 ### Verified live 2026-08-28 via `v1/connect.html` (signed in as `Consult@farnsworthorthodontics.com`)
 All four permissions returned real data. What the results told us:
 
