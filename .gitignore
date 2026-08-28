@@ -1,2 +1,6 @@
 .DS_Store
 build-response-doc.js
+
+# Heather-verified figures, kept locally for regression checks only.
+# Never publish: this is the practice's real production data and the site is public.
+v1/snapshot.json

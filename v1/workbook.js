@@ -93,12 +93,29 @@
       return done[i] > 0 ? Math.round(p * done[i] + ahead[i]) : 0;
     });
 
-    // No last-year starts row exists either; their own average case fee reproduces it.
-    var fee = firstNonZero(months(rows, row(rows, ['2025 average case fee'])));
-    var lyStarts = ly.map(function(v){ return fee ? Math.round(v / fee) : 0; });
+    /* TWO different case fees, easily confused:
+         avgFee = "2025 Average Case Fee"  -- reconstructs last year's starts
+         mdFee  = "Medicaid Case Fee"      -- what the dashboard calls `fee` (0 on TC-only tabs)
+       No last-year starts row exists, so it is derived from production / average fee. */
+    var avgFee = firstNonZero(months(rows, row(rows, ['2025 average case fee'])));
+    var mdFee  = firstNonZero(months(rows, row(rows, ['medicaid case fee'])));
+    var lyStarts = ly.map(function(v){ return avgFee ? Math.round(v / avgFee) : 0; });
+
+    /* Past years, for the year selector. 2025 production is the same figure as `ly`;
+       kept separate because the dashboard addresses them differently. */
+    var hist = {
+      '2024': { act: months(rows, row(rows, ['2024','net production'])).map(function(v, i){
+                  var m = med ? months(rows, row(rows, ['2024','medicaid production'])) : null;
+                  return v + (m ? m[i] : 0);
+                }),
+                days: months(rows, row(rows, ['number of production days','(2024)'])) },
+      '2025': { act: ly.slice(), days: months(rows, row(rows, ['number of production days','(2025)'])),
+                sAct: lyStarts.slice() }
+    };
 
     return { act:act, goal:goal, stretch:stretch, ly:ly, sAct:sAct, sGoal:sGoal,
-             mdStarts:mdStarts, lyStarts:lyStarts, days:days, done:done };
+             mdStarts:mdStarts, lyStarts:lyStarts, days:days, done:done,
+             hist:hist, fee:mdFee, avgFee:avgFee };
   }
 
   /* graph(path) -> Promise of parsed JSON, supplied by the caller so this module

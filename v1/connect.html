@@ -336,7 +336,19 @@
     if (!FILE) { show('r7', false, 'Run step 5 first', ''); return; }
     var btn = this; btn.disabled = true;
     try {
-      var snap = await (await fetch('snapshot.json')).json();
+      /* snapshot.json is the Heather-verified reference. It is deliberately NOT published --
+         it is the practice's real production data and this site is public -- so step 7 only
+         runs where a local copy exists. Its job is done: the reader was proven clean against
+         it (960 values live, 1376 locally) before the dashboard was switched over. */
+      var snapRes = await fetch('snapshot.json');
+      if (!snapRes.ok){
+        show('r7', true, 'Nothing to compare against here',
+          'The verified snapshot is kept out of the public site on purpose. This check was run ' +
+          'clean before the dashboard was switched to live, and the dashboard now reads the ' +
+          'workbook directly &mdash; so there is no longer a second set of numbers to diff.');
+        btn.disabled = false; return;
+      }
+      var snap = await snapRes.json();
       var res = await PH_WB.load(graph, FILE.driveId, FILE.itemId);
       var keys = ['act','goal','stretch','ly','sAct','sGoal','mdStarts','lyStarts','days','done'];
       var report = [], checked = 0, diffs = 0;

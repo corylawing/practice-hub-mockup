@@ -7,11 +7,14 @@
    move the numbers out of the file and fetch them from Graph after sign-in, or
    host somewhere that refuses to serve files to anonymous users (Azure Static
    Web Apps with Entra auth). Both are planned; neither is done. */
-(function(){
+(function(global){
   'use strict';
   var CLIENT_ID = '2122a06f-b6e9-4618-9106-3b6d6a84b5eb';
   var TENANT_ID = 'edb81e45-7fa8-4147-982f-2f31c6298086';
-  var SCOPES = ['User.Read'];
+  /* One sign-in covers everything the hub needs. Consent is granted tenant-wide, so
+     asking for all three here does not add a prompt. All DELEGATED -- the app acts as the
+     signed-in person and SharePoint keeps enforcing their own access. */
+  var SCOPES = ['User.Read','Sites.ReadWrite.All','User.ReadBasic.All'];
   /* A BLANK page, on purpose. The popup lands here and the opener reads the auth
      response out of the URL fragment. Landing on a real page risks that page
      consuming the fragment first -- which is exactly MSAL's "Hash value cannot be
@@ -56,6 +59,35 @@
   function open(gate){
     gate.remove();
     document.body.classList.remove('phgated');
+    document.dispatchEvent(new CustomEvent('ph-signed-in'));
+  }
+
+  /* Shared Graph access, so pages don't each stand up their own MSAL instance. */
+  function expose(app, account){
+    global.PH_AUTH = {
+      account: account,
+      token: function(){
+        var req = { scopes: SCOPES, account: account };
+        return app.acquireTokenSilent(req)
+          .catch(function(){ return app.acquireTokenPopup(req); })
+          .then(function(r){ return r.accessToken; });
+      },
+      graph: function(path){
+        return global.PH_AUTH.token().then(function(t){
+          return fetch('https://graph.microsoft.com/v1.0' + path, {
+            headers: { Authorization: 'Bearer ' + t }
+          }).then(function(res){
+            return res.json().catch(function(){ return {}; }).then(function(body){
+              if (!res.ok){
+                throw new Error('Graph ' + res.status + ': ' +
+                  ((body.error && body.error.message) || res.statusText));
+              }
+              return body;
+            });
+          });
+        });
+      }
+    };
   }
 
   function start(){
@@ -76,10 +108,12 @@
     });
     app.initialize().then(function(){
       // Already signed in this session? Don't make them do it again on every page.
-      if (app.getAllAccounts().length){ open(gate); return; }
+      var known = app.getAllAccounts();
+      if (known.length){ expose(app, known[0]); open(gate); return; }
       btn.onclick = function(){
         btn.disabled = true; err.textContent = '';
-        app.loginPopup({ scopes: SCOPES }).then(function(){
+        app.loginPopup({ scopes: SCOPES }).then(function(r){
+          expose(app, r.account);
           open(gate);
         }).catch(function(e){
           fail(e && e.errorCode === 'popup_window_error'
@@ -94,4 +128,4 @@
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
   else start();
-})();
+})(window);
