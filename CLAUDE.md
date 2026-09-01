@@ -2,7 +2,7 @@
 
 > Read this first. It is the full context for **Home-Brace** so any session (including on a phone)
 > can pick this up cold. Keep it current — the user asks for that explicitly.
-> Last full update: **2026-08-20**.
+> Last full update: **2026-09-01**.
 
 ---
 
@@ -129,6 +129,28 @@ sends the file, and the figures are re-extracted and committed. Current file:
 `~/Documents/2026 PRODUCTION DASHBOARD (CURRENT).xlsx` (currently the **-5** file, imported 2026-08-28).
 **Always re-reconcile after importing** — see §9 "Workbook reconciliation" for the method. Heather once reviewed weeks-old
 numbers and reported them as bugs, so keep the snapshot fresh and tell her it is a snapshot.
+
+### Today's state (2026-09-01) — readiness pass before IT does their setup
+- **Adam (IT, at Simpatico Systems) is doing his part today**: Azure Static Web App (free tier,
+  Entra auth), opening /sites/Home-Brace to staff + cross-tenant B2B guests (his suggestion; all
+  under the same multi-practice group), and populating Job title / Department / Office location on
+  each account per the email Cory sent (values must match the app's strings EXACTLY).
+- **App-side readiness shipped today:** (1) Enter Production writes an audit stamp
+  (`ph_prodaudit`: who/when/office) and the leaderboard shows "Last app entry: ..." in small text;
+  (2) Enter Production month was hardcoded to July — now real current month; dashboard pill says
+  "Latest · Aug" when the newest data month trails the calendar; (3) the stale footer accusation
+  about their Dashboard tab is REMOVED — their per-office "Production Tracking" rows = actual −
+  goal *paced to days worked* (blank until a month has a goal), and recomputing that reproduces the
+  -5 file to the dollar on all 8 offices — my earlier formula was wrong, not their sheet;
+  (4) Schedule doctor filter is multi-select (`fDocs` Set, `PS.allDocs()` clears).
+- **connect.html step 9** ("Check their Dashboard tab") re-verifies their tracking rows against the
+  office tabs on the LIVE file and lists Dashboard offices the app doesn't know. **Cory still needs
+  to run steps 5→9 against live** — the local -5 file is stale. **Roswell** is on their Dashboard
+  (empty in -5); if step 9 says it HAS NUMBERS, add it: TABS in workbook.js + OFFICES in index.html
+  + user.js locations.
+- Marketing: coloured by marketing TYPE (office colours were tried and reverted — Cory's call);
+  "where I'll be" chips per day (`ph_mktgwhere`), hover-reveal; marketing stays OFF the Schedule.
+  Office palette lives in user.js (`PH.palette/colorOf/colorForOffice`) — one source.
 
 ### What to do next
 1. **Build the sign-in.** Consent is granted, so this is now unblocked and is the next real step:
