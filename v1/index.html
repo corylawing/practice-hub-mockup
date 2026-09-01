@@ -96,6 +96,8 @@
   .tip{position:fixed;background:var(--navy);color:#fff;font-size:12px;padding:7px 10px;border-radius:8px;pointer-events:none;opacity:0;transition:opacity .12s;z-index:50;white-space:nowrap;box-shadow:var(--shadow-lg)}
   /* leaderboard */
   .lb-audit{font-size:10px;color:var(--soft);opacity:.75;margin:-2px 0 4px;letter-spacing:.01em}
+  .lb-upd{font-size:9.5px;color:var(--soft);opacity:.8;margin-top:2px;white-space:nowrap}
+  .lb-upd.none{opacity:.45;font-style:italic}
   .lb-scroll{overflow-x:auto}
   table.lb{width:100%;border-collapse:collapse;min-width:680px}
   table.lb th{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--soft);font-weight:700;text-align:left;padding:9px 10px;border-bottom:1px solid var(--line)}
@@ -239,11 +241,11 @@
   .foot b{color:var(--navy)}
   @media(max-width:620px){ .kpi .v{font-size:22px} }
 </style>
-<script src="user.js?v=hb60"></script>
-<script src="celebrate.js?v=hb60"></script>
+<script src="user.js?v=hb61"></script>
+<script src="celebrate.js?v=hb61"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="workbook.js?v=hb60"></script>
-  <script src="gate.js?v=hb60"></script>
+  <script src="workbook.js?v=hb61"></script>
+  <script src="gate.js?v=hb61"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — real numbers from the 2026 Production Dashboard workbook. You only see the offices you have access to.</div>
@@ -770,6 +772,17 @@ const OFFICES=[
     const b=(v,lab)=>'<button class="pchip mini'+(chartMode===v?' on':'')+'" onclick="DASH.chart(\''+v+'\')">'+lab+'</button>';
     return '<div class="charttog">'+b('production','\ud83d\udcb0 Production')+b('starts','\ud83e\uddb7 Starts')+'</div>';
   }
+  function officeAudit(name){
+    try{
+      const a=JSON.parse(localStorage.getItem('ph_prodaudit')||'{}');
+      const e=(a.offices||{})[name];
+      if(!e) return '<div class="lb-upd none">no app entry yet</div>';
+      const d=new Date(e.at);
+      return '<div class="lb-upd">'+e.by.split(' ')[0]+' \u00b7 '+
+        d.toLocaleDateString('en-US',{month:'short',day:'numeric'})+', '+
+        d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})+'</div>';
+    }catch(_){ return ''; }
+  }
   function leaderboard(list){
     // Production leads and ranks the table — it's the number they run the business on.
     const rows=list.map(src=>{const o=yearOf(src); return {o,t:stats(o),s:sStats(o)};})
@@ -779,7 +792,8 @@ const OFFICES=[
       return '<tr onclick="DASH.pick(\''+r.o.n+'\')">'+
         '<td class="rk'+(i===0?' top':'')+'">'+(i===0?'🏆':i+1)+'</td>'+
         '<td><div class="onm">'+r.o.n+'<span class="br">'+r.o.brand+'</span></div>'+
-          '<div class="pbar"><i class="'+cls+'" style="width:'+pctw+'%"></i></div></td>'+
+          '<div class="pbar"><i class="'+cls+'" style="width:'+pctw+'%"></i></div>'+
+          officeAudit(r.o.n)+'</td>'+
         '<td class="num big">'+full(t.a)+'</td>'+
         '<td class="num">'+(r.o.noGoals?'\u2014':pc(t.pct))+'</td>'+
         '<td class="num '+(t.yoy>=1?'g':'b')+'">'+(t.l?pc(t.yoy):'\u2014')+'</td>'+
@@ -791,9 +805,11 @@ const OFFICES=[
     let audit='';
     try{
       const a=JSON.parse(localStorage.getItem('ph_prodaudit')||'{}');
+      // Top line stays the WORKBOOK stamp (who/when the excel side moved) — the per-office
+      // app entries live on each row below.
       if(a.last&&a.last.by){
         const d=new Date(a.last.at);
-        audit='<div class="lb-audit">Last app entry: '+a.last.by+' \u00b7 '+a.last.office+' \u00b7 '+
+        audit='<div class="lb-audit">Latest app entry: '+a.last.by+' \u00b7 '+a.last.office+' \u00b7 '+
           d.toLocaleDateString('en-US',{month:'short',day:'numeric'})+', '+
           d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})+'</div>';
       }
@@ -994,7 +1010,7 @@ const OFFICES=[
 })();
 </script>
 <script>PH.nav('dashboard');</script>
-<script src="tour.js?v=hb60"></script>
+<script src="tour.js?v=hb61"></script>
 <script>
 Tour.init([
   {sel:'.viewas', title:'You only see your offices', body:'Production numbers are sensitive, so people see <b>only the offices they\u2019re assigned to</b>. Switch to the Carlsbad manager \u2014 the group totals and the leaderboard disappear, because they aren\u2019t hers to see.'},
