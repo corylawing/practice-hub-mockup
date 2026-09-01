@@ -159,6 +159,17 @@
     <div class="res" id="r8"></div>
   </div>
 
+  <div class="card" id="c9">
+    <h2><span class="step">9</span> Check their Dashboard tab's own addition</h2>
+    <p class="hint">The workbook's Dashboard tab carries a <i>Production Tracking</i> row per office
+      (actual minus goal). An earlier version had these out of step with the office tabs. This
+      recomputes every one from the office tabs and diffs it against what their Dashboard tab says
+      &mdash; and lists any office on their Dashboard that the app doesn't know yet (e.g. Roswell).
+      Run step 5 first.</p>
+    <button id="btnXcheck" disabled>Check the Dashboard tab</button>
+    <div class="res" id="r9"></div>
+  </div>
+
   <div class="card" id="c4">
     <h2><span class="step">4</span> Read the staff directory</h2>
     <p class="hint">Proves <b>User.ReadBasic.All</b> works — how new hires appear in the hub before they
@@ -169,7 +180,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-<script src="workbook.js?v=hb59"></script>
+<script src="workbook.js?v=hb60"></script>
 <script>
 (function(){
   'use strict';
@@ -282,8 +293,8 @@
     account = null;
     el('btnIn').disabled = false;
     el('btnOut').disabled = true;
-    ['btnMe','btnSites','btnUsers','btnFile','btnSheets','btnCompare','btnStore'].forEach(function(id){ el(id).disabled = true; });
-    ['r1','r2','r3','r4','r5','r6','r7','r8'].forEach(function(id){
+    ['btnMe','btnSites','btnUsers','btnFile','btnSheets','btnCompare','btnStore','btnXcheck'].forEach(function(id){ el(id).disabled = true; });
+    ['r1','r2','r3','r4','r5','r6','r7','r8','r9'].forEach(function(id){
       el(id).className = 'res';
       el(id).closest('.card').classList.remove('done','fail');
     });
@@ -486,6 +497,70 @@
     btn.disabled = false;
   };
 
+  el('btnXcheck').onclick = async function(){
+    if (!FILE) { show('r9', false, 'Run step 5 first', ''); return; }
+    var btn = this; btn.disabled = true;
+    var base = '/drives/' + FILE.driveId + '/items/' + FILE.itemId + '/workbook';
+    try {
+      var dash = await graph(base + "/worksheets('Dashboard')/usedRange(valuesOnly=true)?$select=values");
+      var rows = dash.values || [];
+      var res = await PH_WB.load(graph, FILE.driveId, FILE.itemId);
+      var lines = [], bad = 0, checked = 0, unknown = [];
+      var norm = function(v){ return String(v == null ? '' : v).toLowerCase().replace(/\s+/g,' ').trim(); };
+
+      // Every "X Production Tracking" row on their Dashboard.
+      var tracking = [];
+      rows.forEach(function(r){
+        var L = norm(r[0]);
+        if (L && L.indexOf('production tracking') >= 0) tracking.push(r);
+      });
+
+      Object.keys(PH_WB.TABS).forEach(function(office){
+        var tab = PH_WB.TABS[office], o = res.offices[office];
+        var row = tracking.filter(function(r){ return norm(r[0]).indexOf(norm(tab)) === 0; })[0];
+        if (!o || !row){ lines.push(office + ': ' + (o ? 'no tracking row found on their Dashboard' : 'office tab unreadable')); bad++; return; }
+        var diffs = [];
+        for (var m = 0; m < 12; m++){
+          // Their tracking row = actual minus the goal PACED to days worked (full goal once
+          // the month is finished), and blank when a month has no goal yet. Verified to
+          // reproduce the -5 file exactly, all 8 offices.
+          if (!(o.done[m] > 0 && o.goal[m] > 0 && o.days[m] > 0)) continue;
+          var paced = o.goal[m] * Math.min(1, o.done[m] / o.days[m]);
+          var ours = (o.act[m] || 0) - paced;
+          var theirs = typeof row[m+1] === 'number' ? row[m+1] : 0;
+          checked++;
+          if (Math.abs(ours - theirs) > 1) diffs.push('m' + (m+1) + ' theirs ' + Math.round(theirs) + ' vs recomputed ' + Math.round(ours));
+        }
+        bad += diffs.length;
+        lines.push(office.padEnd ? office : office);
+        lines[lines.length-1] = office + ': ' + (diffs.length ? diffs.join('; ') : 'adds up');
+      });
+
+      // Offices on their Dashboard the app doesn't know about.
+      tracking.forEach(function(r){
+        var known = Object.keys(PH_WB.TABS).some(function(k){ return norm(r[0]).indexOf(norm(PH_WB.TABS[k])) === 0; });
+        if (!known){
+          var hasData = r.slice(1,13).some(function(v){ return typeof v === 'number' && Math.abs(v) > 0.5; });
+          unknown.push(String(r[0]).replace(/production tracking/i,'').trim() +
+            (hasData ? ' — HAS NUMBERS, the app is not showing this office yet' : ' — still empty, nothing to add'));
+        }
+      });
+
+      var clean = bad === 0;
+      show('r9', clean,
+        clean ? 'Their Dashboard tab adds up — every tracking row matches the office tabs'
+              : bad + ' issue(s) found on their Dashboard tab',
+        '<pre>' + esc(lines.join('\n')) + '</pre>' +
+        (unknown.length ? '<p style="margin:10px 0 0"><b>Offices on their Dashboard the app doesn\'t track:</b><br>' +
+          esc(unknown.join('<br>')) + '</p>' : '') +
+        '<p style="margin:10px 0 0">Either way the hub\'s own totals are safe: it sums the office tabs ' +
+        'directly and never reads this Dashboard tab, so nothing is double-counted.</p>');
+    } catch (e) {
+      show('r9', false, 'Could not check the Dashboard tab', esc(why(e)));
+    }
+    btn.disabled = false;
+  };
+
   el('btnSheets').onclick = async function(){
     if (!FILE) { show('r6', false, 'Run step 5 first', 'It finds the file this step opens.'); return; }
     var base = '/drives/' + FILE.driveId + '/items/' + FILE.itemId + '/workbook';
@@ -525,6 +600,7 @@
       FILE = { driveId: f.parentReference && f.parentReference.driveId, itemId: f.id, name: f.name };
       el('btnSheets').disabled = !(FILE.driveId && FILE.itemId);
       el('btnCompare').disabled = !(FILE.driveId && FILE.itemId);
+      el('btnXcheck').disabled = !(FILE.driveId && FILE.itemId);
       var dt = (f.parentReference && f.parentReference.driveType) || '';
       var personal = dt === 'personal' || /-my\.sharepoint\.com/.test(url);
       show('r5', true, 'The app can read the workbook',

@@ -95,6 +95,7 @@
   .mo.best .molab{color:var(--good)}
   .tip{position:fixed;background:var(--navy);color:#fff;font-size:12px;padding:7px 10px;border-radius:8px;pointer-events:none;opacity:0;transition:opacity .12s;z-index:50;white-space:nowrap;box-shadow:var(--shadow-lg)}
   /* leaderboard */
+  .lb-audit{font-size:10px;color:var(--soft);opacity:.75;margin:-2px 0 4px;letter-spacing:.01em}
   .lb-scroll{overflow-x:auto}
   table.lb{width:100%;border-collapse:collapse;min-width:680px}
   table.lb th{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--soft);font-weight:700;text-align:left;padding:9px 10px;border-bottom:1px solid var(--line)}
@@ -238,11 +239,11 @@
   .foot b{color:var(--navy)}
   @media(max-width:620px){ .kpi .v{font-size:22px} }
 </style>
-<script src="user.js?v=hb59"></script>
-<script src="celebrate.js?v=hb59"></script>
+<script src="user.js?v=hb60"></script>
+<script src="celebrate.js?v=hb60"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="workbook.js?v=hb59"></script>
-  <script src="gate.js?v=hb59"></script>
+  <script src="workbook.js?v=hb60"></script>
+  <script src="gate.js?v=hb60"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — real numbers from the 2026 Production Dashboard workbook. You only see the offices you have access to.</div>
@@ -646,7 +647,12 @@ const OFFICES=[
         (combineM&&ok?'<span class="tick">'+(on?'✓':'+')+'</span> ':'')+MO[i]+
         (isNow?'<i class="nowdot" title="this month"></i>':'')+'</button>';
     }).join('');
-    const mlabel = period==='mtd' ? 'This month · '+(nm||MO[cur]||'')
+    // If the newest month with numbers IS the calendar month, say "This month".
+    // If the calendar has moved on (Sept 1, workbook still on August), say "Latest"
+    // — calling August "this month" in September read as a bug.
+    const realNow=(new Date()).getMonth();
+    const isCal = year===LIVE_YEAR && ci===realNow;
+    const mlabel = period==='mtd' ? (isCal?'This month · ':'Latest · ')+(nm||MO[cur]||'')
       : picked.length===0 ? 'Pick a month'
       : picked.length===1 ? MOFULL[picked[0]] : picked.length+' months';
     const back='<div class="mpick on'+(pickOpen?' open':'')+'">'+
@@ -666,7 +672,7 @@ const OFFICES=[
       // Was "goals scaled to the days worked so far" — which is what the app used to do and
       // exactly what Heather rejected: August read as goal-hit when it was not. The goal shown
       // is the FULL monthly goal; only the pace comparison uses days worked.
-      : period==='mtd' ? 'Showing '+(nm||'the latest month')+' so far, against its full monthly goal.'
+      : period==='mtd' ? 'Showing '+(nm||'the latest month')+(isCal?' so far':' — the newest month with numbers')+', against its full monthly goal.'
       : 'Every month so far this year, through today — ' + (nm?nm+' is counted up to the days worked.':'live.');
     // Keep the month suffix ALWAYS — it used to appear only while MTD was selected, which
     // changed the pill's width and shoved the month picker sideways on every switch.
@@ -781,7 +787,18 @@ const OFFICES=[
         '<td class="num">'+(r.o.noGoals||!r.s.g?'\u2014':pc(r.s.pct))+'</td>'+
         '<td class="dleft">'+(t.daysLeft||'\u2014')+'</td></tr>';
     }).join('');
-    return '<div class="card"><h2>Leaderboard</h2>'+
+    // Who last entered numbers in the app, so leadership can see entries are current.
+    let audit='';
+    try{
+      const a=JSON.parse(localStorage.getItem('ph_prodaudit')||'{}');
+      if(a.last&&a.last.by){
+        const d=new Date(a.last.at);
+        audit='<div class="lb-audit">Last app entry: '+a.last.by+' \u00b7 '+a.last.office+' \u00b7 '+
+          d.toLocaleDateString('en-US',{month:'short',day:'numeric'})+', '+
+          d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})+'</div>';
+      }
+    }catch(_){}
+    return '<div class="card"><h2>Leaderboard</h2>'+audit+
       '<div class="sub">Ranked by <b>% of production goal</b> \u2014 top of the table is the leader. '+
         '\u201cDays left\u201d = production days scheduled minus days worked, for whatever period is selected above.</div>'+
       '<div class="lb-scroll"><table class="lb"><thead><tr><th></th><th>Office</th>'+
@@ -841,10 +858,9 @@ const OFFICES=[
       'Dashboard workbook on SharePoint \u2014 the hub reads it live, so there is no second copy to keep in '+
       'sync. A month counts once it has <b>both</b> an actual and a goal (Mansfield has production from '+
       'January but goals from April), and the month in progress is kept separate from the year figure.<br><br>'+
-      '<b>One to check in the workbook:</b> on the \u201cDashboard\u201d tab, January to June add up exactly '+
-      'to the eight office tabs, but <b>July is $16,273 low</b> and <b>August is $26,638 high</b> \u2014 most '+
-      'likely a total that hasn\u2019t been stretched across the two Cruces columns yet. The hub always adds '+
-      'every office.</div>';
+      '<b>How the total is built:</b> the hub adds the eight office tabs itself \u2014 it never reads the '+
+      'workbook\u2019s own \u201cDashboard\u201d tab \u2014 so each office is counted exactly once, and a '+
+      'summing slip on that tab can\u2019t reach these numbers.</div>';
     el('view').innerHTML = html;
     wireTips();
     maybeParty(o,(isAll?'ALL':sel)+'|'+period);
@@ -978,7 +994,7 @@ const OFFICES=[
 })();
 </script>
 <script>PH.nav('dashboard');</script>
-<script src="tour.js?v=hb59"></script>
+<script src="tour.js?v=hb60"></script>
 <script>
 Tour.init([
   {sel:'.viewas', title:'You only see your offices', body:'Production numbers are sensitive, so people see <b>only the offices they\u2019re assigned to</b>. Switch to the Carlsbad manager \u2014 the group totals and the leaderboard disappear, because they aren\u2019t hers to see.'},

@@ -94,9 +94,9 @@
   .noacc b{color:var(--navy)}
   @media(max-width:760px){ .grid2{grid-template-columns:1fr} }
 </style>
-<script src="user.js?v=hb59"></script>
+<script src="user.js?v=hb60"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="gate.js?v=hb59"></script>
+  <script src="gate.js?v=hb60"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — type the month's numbers here. In the real build this writes straight into the SharePoint workbook.</div>
@@ -170,7 +170,8 @@
   const canEnter=()=>!window.PH||PH.atLeast('production','edit');
   const canGoals=()=>!window.PH||PH.atLeast('production','manage');
   const el=id=>document.getElementById(id);
-  let cur=PERSONAS[0], office=null, month=6, edits={};
+  // month was hardcoded to 6 (July) and the page opened two months behind.
+  let cur=PERSONAS[0], office=null, month=(new Date()).getMonth(), edits={};
   try{ edits=JSON.parse(localStorage.getItem('ph_prod'))||{}; }catch(_){ edits={}; }
   const save=()=>{ try{ localStorage.setItem('ph_prod',JSON.stringify(edits)); }catch(_){} };
   const key=(o,m)=>o+'|'+m;
@@ -270,6 +271,16 @@
     edits[k]._total = val(office,month,'tc') + medDollars(office,month);
     edits[k]._days  = val(office,month,'dys');
     edits[k]._goal  = val(office,month,'goal');
+    // Audit trail: who last entered numbers in the app, and when. The leaderboard
+    // shows it so leadership can see at a glance that entries are current.
+    try{
+      const a=JSON.parse(localStorage.getItem('ph_prodaudit')||'{}');
+      const me=(window.PH&&PH.me)?PH.name(PH.me()):'Unknown';
+      const now=new Date().toISOString();
+      a.last={by:me,at:now,office:office};
+      (a.offices=a.offices||{})[office]={by:me,at:now};
+      localStorage.setItem('ph_prodaudit',JSON.stringify(a));
+    }catch(_){}
     save(); refreshRight();
   }
   function refreshRight(){
@@ -315,7 +326,7 @@
 })();
 </script>
 <script>PH.nav('production');</script>
-<script src="tour.js?v=hb59"></script>
+<script src="tour.js?v=hb60"></script>
 <script>
 Tour.init([
   {sel:'.syncbar', title:'One set of numbers', body:'Type here and it saves into the <b>same Excel workbook</b> on SharePoint. If someone types in Excel instead, it shows up here. There is never a second copy to reconcile.'},

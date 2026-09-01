@@ -235,9 +235,9 @@
     .addday{padding:9px 11px;font-size:12px}
   }
 </style>
-<script src="user.js?v=hb59"></script>
+<script src="user.js?v=hb60"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="gate.js?v=hb59"></script>
+  <script src="gate.js?v=hb60"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — sample staff schedule for validation. Live version = one Microsoft List the practice maintains.</div>
@@ -349,7 +349,10 @@
   let anchor=mondayOf(new Date(TODAY));
   let mY=TODAY.getFullYear(), mM=TODAY.getMonth();
   let fLoc=new Set(locations.map(l=>l.n));
-  let fDoc=null;
+  // Doctor filter is a SET so several doctors can be picked at once (empty = everyone).
+  let fDocs=new Set();
+  const fAll=()=>fDocs.size===0;                       // no filter -> show everything
+  const fHit=ds=>fAll()||ds.some(d=>fDocs.has(d));     // does this cell match the filter?
   // Both on by default: the calendar shows everything until you choose to quieten it.
   let fYdot=true, fClosed=true;
 
@@ -367,7 +370,7 @@
     const locs=locations.map(l=>{const c=colOf(l.color);
       return '<button class="lchip'+(fLoc.has(l.n)?'':' off')+'" style="border-color:'+c.dot+';color:'+c.fg+';background:'+(fLoc.has(l.n)?c.bg:'#fff')+'" onclick="PS.togLoc(\''+esc(l.n)+'\')">'+
         '<span class="dot" style="background:'+c.dot+'"></span>'+l.n+'</button>';}).join('');
-    const docs=people.map((p,i)=>'<button class="dchip'+(fDoc===i?' on':'')+'" onclick="PS.togDoc('+i+')">'+p.n+'</button>').join('');
+    const docs=people.map((p,i)=>'<button class="dchip'+(fDocs.has(i)?' on':'')+'" onclick="PS.togDoc('+i+')">'+p.n+'</button>').join('');
     const tog=(on,fn,dot,label)=>
       '<button class="tchip '+(on?'on':'off')+'" onclick="PS.'+fn+'()" aria-pressed="'+on+'">'+
         '<span class="sw"></span><span class="dot" style="background:'+dot+';width:11px;height:11px;border-radius:50%;display:inline-block"></span>'+label+'</button>';
@@ -377,7 +380,7 @@
       '<div class="frow"><span class="flab">Offices</span>'+locs+
         '<button class="sbtn ghost tiny" onclick="PS.allLocs()">'+(fLoc.size===locations.length?'Hide all':'Show all')+'</button></div>'+
       '<div class="frow"><span class="flab">Doctor</span>'+docs+
-        (fDoc!==null?'<button class="sbtn ghost tiny" onclick="PS.togDoc('+fDoc+')">Show all doctors</button>':'')+'</div>'+
+        (!fAll()?'<button class="sbtn ghost tiny" onclick="PS.allDocs()">Show all doctors</button>':'')+'</div>'+
       '<div class="frow"><span class="flab">Show</span>'+shows+'</div>';
   }
 
@@ -391,13 +394,13 @@
     if(cell&&cell.closed) return fClosed?'<td class="cell closedc'+t+'"'+click+'><span class="closed">Closed</span></td>':blank;
     const ds=docsOf(cell);
     if(ds.length){
-      const dim=(fDoc!==null&&ds.indexOf(fDoc)<0)?' dim':'';
+      const dim=fHit(ds)?'':' dim';
       return '<td class="cell'+t+dim+'" style="background:'+c.bg+';box-shadow:inset 6px 0 0 '+c.dot+'"'+click+'>'+
         ds.map(i=>'<span class="who" style="color:'+c.fg+'">'+people[i].n+'</span>').join('')+
         '<span class="hrs" style="color:'+c.fg+'">'+fmt(cell.s)+'–'+fmt(cell.e)+'</span></td>';
     }
-    if(cell&&cell.ydot) return fYdot?'<td class="cell ydotc'+t+(fDoc!==null?' dim':'')+'"'+click+'><span class="ydot"><span class="ydmark"></span> Yellow Dot Day</span></td>':blank;
-    if(open) return '<td class="cell needsc'+t+(fDoc!==null?' dim':'')+'"'+click+'><span class="needs">Needs doctor</span></td>';
+    if(cell&&cell.ydot) return fYdot?'<td class="cell ydotc'+t+(fAll()?'':' dim')+'"'+click+'><span class="ydot"><span class="ydmark"></span> Yellow Dot Day</span></td>':blank;
+    if(open) return '<td class="cell needsc'+t+(fAll()?'':' dim')+'"'+click+'><span class="needs">Needs doctor</span></td>';
     return fClosed?'<td class="cell closedc'+t+'"'+click+'><span class="closed">Closed</span></td>':blank;
   }
   function renderWeek(){
@@ -439,24 +442,24 @@
         const closedEnt=()=>'<button class="ent cl" style="border-left-color:'+c.dot+'"'+click+'>'+
           '<span class="eo">'+l.n+'</span><span class="es">Closed</span></button>';
         // Marked closed outright.
-        if(cell&&cell.closed){ if(fClosed&&fDoc===null) ents+=closedEnt(); return; }
+        if(cell&&cell.closed){ if(fClosed&&fAll()) ents+=closedEnt(); return; }
         const mds=docsOf(cell);
         if(mds.length){
-          if(fDoc!==null&&mds.indexOf(fDoc)<0) return;
+          if(!fHit(mds)) return;
           ents+='<button class="ent" style="background:'+c.bg+';color:'+c.fg+';border-left-color:'+c.dot+'"'+click+'>'+l.n+
             '<small>'+mds.map(i=>people[i].n).join(', ')+'</small></button>';
         } else if(cell&&cell.ydot){
-          if(fDoc!==null||!fYdot) return;
+          if(!fAll()||!fYdot) return;
           // Keep the office colour so you can still tell WHICH office — only the dot is yellow.
           ents+='<button class="ent yd" style="background:'+c.bg+';color:'+c.fg+';border-left-color:'+c.dot+'"'+click+'>'+
             '<span class="eo">'+l.n+'</span>'+
             '<span class="es"><span class="ydmark"></span>Yellow Dot Day</span></button>';
         } else if(open){
-          if(fDoc!==null) return;
+          if(!fAll()) return;
           ents+='<button class="ent nd"'+click+'>'+l.n+'<small>not decided yet</small></button>';
         } else {
           // Not open on this weekday at all — same thing to a reader as "Closed".
-          if(fClosed&&fDoc===null) ents+=closedEnt();
+          if(fClosed&&fAll()) ents+=closedEnt();
         }
       });
       // Nothing to add once every visible office has an entry — drop the button and
@@ -751,7 +754,10 @@
       delete c.p;                                   // collapse legacy shape as we go
       if(ds.length) c.ps=ds; else delete sched[k][ln];
     }));
-    people.splice(i,1); if(fDoc===i)fDoc=null; save(); closeModal(); refresh();
+    people.splice(i,1);
+    // Re-key the filter: drop the removed doctor, shift the indexes above them down.
+    fDocs=new Set([...fDocs].filter(x=>x!==i).map(x=>x>i?x-1:x));
+    save(); closeModal(); refresh();
   }
 
   /* ---------- chrome ---------- */
@@ -778,7 +784,8 @@
   function setView(v){ view=v; refresh(); }
   function togLoc(n){ fLoc.has(n)?fLoc.delete(n):fLoc.add(n); refresh(); }
   function allLocs(){ if(fLoc.size===locations.length) fLoc.clear(); else locations.forEach(l=>fLoc.add(l.n)); refresh(); }
-  function togDoc(i){ fDoc=(fDoc===i?null:i); refresh(); }
+  function togDoc(i){ fDocs.has(i)?fDocs.delete(i):fDocs.add(i); refresh(); }
+  function allDocs(){ fDocs.clear(); refresh(); }
   function togYdot(){ fYdot=!fYdot; refresh(); }
   function togClosed(){ fClosed=!fClosed; refresh(); }
   function openModal(h){ el('modalCard').innerHTML=h; el('modal').classList.add('open'); }
@@ -793,7 +800,7 @@
     if(n)n.innerHTML='<b>Every office has its own colour.</b> Grey = closed, <b>Yellow Dot Day</b> = open with no doctor on site. Use the filters to find an office or a doctor.';
   }
 
-  window.PS={view:setView,step,today,togLoc,allLocs,togDoc,togYdot,togClosed,open,addTo,quick,pickDoc,setT,halfDay,fullDay,markYdot,markClosed,
+  window.PS={view:setView,step,today,togLoc,allLocs,togDoc,allDocs,togYdot,togClosed,open,addTo,quick,pickDoc,setT,halfDay,fullDay,markYdot,markClosed,
     clearDay,saveDay,addLocation,editLoc,setColor,setTZ,dtog,dtime,lunchTog,lunchT,saveLoc,delLoc,
     addPerson,edit:editPerson,savePerson,delPerson,close:closeModal};
 
@@ -808,7 +815,7 @@
 })();
 </script>
 <script>PH.nav('schedule');</script>
-<script src="tour.js?v=hb59"></script>
+<script src="tour.js?v=hb60"></script>
 <script>
 Tour.init([
   {sel:'#viewseg', title:'Week or month', body:'<b>Week</b> is the day-to-day working view. <b>Month</b> shows the whole month at a glance, with every office in its own colour.'},
