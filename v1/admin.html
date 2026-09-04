@@ -174,11 +174,11 @@
   .tp.on{background:var(--navy);color:#fff;border-color:var(--navy)}
   @media(max-width:640px){ .grid2{grid-template-columns:1fr} }
 </style>
-<script src="user.js?v=hb80"></script>
+<script src="user.js?v=hb81"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="_staff.js?v=hb80"></script>
-  <script src="store.js?v=hb80"></script>
-  <script src="gate.js?v=hb80"></script>
+  <script src="_staff.js?v=hb81"></script>
+  <script src="store.js?v=hb81"></script>
+  <script src="gate.js?v=hb81"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — admin console concept for validation. Real build: people sync from Microsoft 365; access is managed here.</div>
@@ -384,7 +384,17 @@
     const parts=clean.replace(/^Dr\.\s*/,'').split(' ');
     const first=parts[0], last=parts.slice(1).join(' ');
     const handle=(first[0]+(last||first)).toLowerCase().replace(/[^a-z]/g,'');
-    return {f:isDoc?('Dr. '+first):first, l:last, email:handle+'@farnsworthorthodontics.com',
+    /* Use the person's REAL email from the shared roster. Inventing one meant per-person
+       access was saved under a key that never matched the address they sign in with —
+       Jessica Lynch is jessica@ffortho.com, not jlynch@farnsworthorthodontics.com. */
+    const known=(typeof STAFF!=='undefined'?STAFF:[]).find(x=>{
+      const a=(x.n||'').replace(/^Dr\.\s*/,'').toLowerCase().trim();
+      const b=clean.replace(/^Dr\.\s*/,'').toLowerCase().trim();
+      return a===b;
+    });
+    return {f:isDoc?('Dr. '+first):first, l:last,
+      email:(known&&known.mail)||handle+'@farnsworthorthodontics.com',
+      realEmail:!!(known&&known.mail),
       emp:'E-'+(1001+i), loc:'Unassigned', teams:[isDoc?'Doctors':'Staff'],
       // Region and brand aren't stored on a person — they follow from the office(s)
       // they're assigned to, and duplicating them just lets the two drift apart.
@@ -843,7 +853,7 @@
 })();
 </script>
 <script>PH.nav('admin');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();});</script>
-<script src="tour.js?v=hb80"></script>
+<script src="tour.js?v=hb81"></script>
 <script>
 Tour.init([
   {sel:'#tabs', title:'This is your control room', body:'Four tabs and you can run the whole hub: <b>People</b>, <b>Teams &amp; Access</b>, <b>Document Sections</b> and <b>Locations</b>. No developer, no consultant.', pre:()=>AD.tab('users')},
