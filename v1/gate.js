@@ -69,7 +69,7 @@
 
   function open(gate){
     loadProfile().then(function(){
-      gate.remove();
+      if(gate && gate.remove) gate.remove();
       document.body.classList.remove('phgated');
       document.dispatchEvent(new CustomEvent('ph-signed-in'));
     });
@@ -104,10 +104,24 @@
   }
 
   function start(){
-    var gate = paint();
-    var btn = document.getElementById('phgatebtn');
-    var err = document.getElementById('phgateerr');
-    function fail(m){ err.textContent = m; btn.disabled = false; }
+    /* Don't paint the sign-in screen up front. Every page load would flash it for a moment
+       before MSAL confirms the existing session, which made moving between tabs look broken.
+       Hide the content instantly, decide quietly, and only build the sign-in screen if the
+       person genuinely isn't signed in. */
+    document.body.classList.add('phgated');
+    var gate = null;
+    function ensureGate(){
+      if(!gate){
+        gate = paint();
+        gate.__btn = document.getElementById('phgatebtn');
+        gate.__err = document.getElementById('phgateerr');
+      }
+      return gate;
+    }
+    function fail(m){
+      var g = ensureGate();
+      g.__err.textContent = m; g.__btn.disabled = false;
+    }
 
     if (typeof msal === 'undefined'){
       fail('Could not load the Microsoft sign-in library. Check the connection and reload.');
@@ -134,7 +148,10 @@
     app.initialize().then(function(){
       // Already signed in this session? Don't make them do it again on every page.
       var known = app.getAllAccounts();
+      // Already signed in: never build the sign-in screen at all — painting it just to
+      // remove it is exactly the flash this is meant to avoid.
       if (known.length){ expose(app, known[0]); open(gate); return; }
+      var g = ensureGate(), btn = g.__btn, err = g.__err;
       btn.onclick = function(){
         btn.disabled = true; err.textContent = '';
         app.loginPopup({ scopes: SCOPES }).then(function(r){

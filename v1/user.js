@@ -65,6 +65,16 @@
   // Departments that legitimately see every office.
   const ALL_OFFICE_DEPTS=['admin','executive team','leadership team'];
 
+  /* BOOTSTRAP ADMINS.
+     Access normally comes from the Entra Department field. But until someone sets those
+     fields nobody is an admin — and Admin is where you'd fix it. That deadlock would leave
+     the hub unadministrable on day one. These accounts are treated as Admin regardless, by
+     email. Keep the list tiny and remove people once their Entra profile is set properly.
+     This grants nothing in SharePoint — only what the interface offers. */
+  const BOOTSTRAP_ADMINS=[
+    'consult@farnsworthorthodontics.com'
+  ];
+
   // Set by gate.js once Graph /me comes back.
   let PROFILE=null;
   function setProfile(p){ PROFILE=p; }
@@ -82,8 +92,12 @@
     const known=depts.some(d=>DEPT_CAN[d]);
     if(!can) can=Object.assign({},DEPT_CAN['staff']);   // unrecognised/blank -> least access
 
+    const mail=String(PROFILE.mail||PROFILE.userPrincipalName||'').toLowerCase().trim();
+    const boot=BOOTSTRAP_ADMINS.indexOf(mail)>=0;
+    if(boot) can=Object.assign({},DEPT_CAN['admin']);
+
     const loc=String(PROFILE.officeLocation||'').trim();
-    const seesAll=depts.some(d=>ALL_OFFICE_DEPTS.indexOf(d)>=0);
+    const seesAll=boot || depts.some(d=>ALL_OFFICE_DEPTS.indexOf(d)>=0);
     const offs = seesAll ? 'all' : (loc?[loc]:[]);
 
     const full=String(PROFILE.displayName||PROFILE.mail||'').trim();
@@ -95,7 +109,7 @@
       teams:depts.length?depts.map(d=>d.replace(/\b\w/g,c=>c.toUpperCase())):['Staff'],
       loc:loc||'', offices:offs, can:can,
       // Flags the UI uses to explain a thin-looking account rather than just showing nothing.
-      _needsSetup: !known || (!seesAll && !loc)
+      _needsSetup: !boot && (!known || (!seesAll && !loc))
     };
   }
 

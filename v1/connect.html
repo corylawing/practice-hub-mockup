@@ -170,6 +170,16 @@
     <div class="res" id="r9"></div>
   </div>
 
+  <div class="card" id="c10">
+    <h2><span class="step">10</span> Can we read OTHER people's Department and Office?</h2>
+    <p class="hint">The hub decides what someone sees from their Entra <b>Department</b> and
+      <b>Office location</b>. Reading your own is covered by <code>User.Read</code>. Reading
+      <i>everyone's</i> may need <code>User.Read.All</code> &mdash; another consent round.
+      This settles it instead of guessing.</p>
+    <button id="btnDirFields" disabled>Check the directory</button>
+    <div class="res" id="r10"></div>
+  </div>
+
   <div class="card" id="c4">
     <h2><span class="step">4</span> Read the staff directory</h2>
     <p class="hint">Proves <b>User.ReadBasic.All</b> works — how new hires appear in the hub before they
@@ -180,7 +190,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-<script src="workbook.js?v=hb67"></script>
+<script src="workbook.js?v=hb71"></script>
 <script>
 (function(){
   'use strict';
@@ -241,7 +251,7 @@
     var on = !!acc;
     el('btnIn').disabled = on;
     el('btnOut').disabled = !on;
-    ['btnMe','btnSites','btnUsers','btnFile','btnStore'].forEach(function(id){ el(id).disabled = !on; });
+    ['btnMe','btnSites','btnUsers','btnFile','btnStore','btnDirFields'].forEach(function(id){ el(id).disabled = !on; });
     if (on){
       show('r1', true, 'Signed in',
         '<dl><dt>Name</dt><dd>' + esc(acc.name) + '</dd>' +
@@ -292,8 +302,8 @@
     account = null;
     el('btnIn').disabled = false;
     el('btnOut').disabled = true;
-    ['btnMe','btnSites','btnUsers','btnFile','btnSheets','btnCompare','btnStore','btnXcheck'].forEach(function(id){ el(id).disabled = true; });
-    ['r1','r2','r3','r4','r5','r6','r7','r8','r9'].forEach(function(id){
+    ['btnMe','btnSites','btnUsers','btnFile','btnSheets','btnCompare','btnStore','btnXcheck','btnDirFields'].forEach(function(id){ el(id).disabled = true; });
+    ['r1','r2','r3','r4','r5','r6','r7','r8','r9','r10'].forEach(function(id){
       el(id).className = 'res';
       el(id).closest('.card').classList.remove('done','fail');
     });
@@ -330,6 +340,35 @@
         (list.length > 15 ? '<p style="margin:8px 0 0">…and ' + (list.length - 15) + ' more.</p>' : ''));
     } catch (e) {
       show('r3', false, 'Could not reach SharePoint', esc(why(e)));
+    }
+  };
+
+  el('btnDirFields').onclick = async function(){
+    try {
+      var r = await graph('/users?$top=25&$select=displayName,jobTitle,department,officeLocation,mail');
+      var list = r.value || [];
+      var wT=list.filter(function(u){return u.jobTitle;}).length;
+      var wD=list.filter(function(u){return u.department;}).length;
+      var wO=list.filter(function(u){return u.officeLocation;}).length;
+      var rows = list.slice(0,10).map(function(u){
+        return '<li>' + esc(u.displayName) + '<small>title: ' + esc(u.jobTitle||'\u2014') +
+          '  \u00b7  dept: ' + esc(u.department||'\u2014') +
+          '  \u00b7  office: ' + esc(u.officeLocation||'\u2014') + '</small></li>';
+      }).join('');
+      var any = wT||wD||wO;
+      show('r10', !!any,
+        any ? 'The fields come back \u2014 no extra permission needed'
+            : 'Every field is empty on all ' + list.length + ' accounts',
+        '<ul class="sites">' + rows + '</ul>' +
+        '<p style="margin:10px 0 0">Of ' + list.length + ' accounts: <b>' + wT + '</b> have a job title, <b>' +
+        wD + '</b> a department, <b>' + wO + '</b> an office location.</p>' +
+        (any ? '<p style="margin:8px 0 0">So <code>User.ReadBasic.All</code> is enough \u2014 the hub can build its people list from the tenant.</p>'
+             : '<p style="margin:8px 0 0"><b>Can\'t tell yet.</b> Either the permission hides these fields or nobody has them filled in. Set Department and Office on ONE account, run this again \u2014 still blank means we need <code>User.Read.All</code>.</p>'));
+    } catch (e) {
+      var m = why(e);
+      show('r10', false, 'Could not read the directory', esc(m) +
+        (/403|Authorization|privileges/i.test(m)
+          ? '<p style="margin:10px 0 0">A permission block \u2014 reading other people\'s Department and Office needs <code>User.Read.All</code>.</p>' : ''));
     }
   };
 
