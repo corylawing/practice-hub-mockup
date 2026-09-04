@@ -170,5 +170,73 @@
     });
   }
 
-  global.PH_WB = { load:load, office:office, TABS:TABS, MEDICAID:MEDICAID };
+  /* ------------------------------------------------------------------
+     WRITING BACK.
+     The direction that matters: people enter numbers in the hub, and the workbook stays
+     the report an owner reads. Two rules, because this writes into the document they run
+     the practice on:
+       1. Never guess an address. Resolve it from the sheet's own used-range origin and
+          the row whose column-A label matches -- the same matching the reader is verified
+          against to the dollar.
+       2. Never trust the write. Read the cell back and compare before reporting success.
+     ------------------------------------------------------------------ */
+
+  // Which column-A label each editable field lives on. Two tab layouts, first match wins.
+  var WRITE_ROWS = {
+    tc:   [ {all:['tc net production']} ],
+    adj:  [ {all:['write-offs']} ],
+    mds:  [ {all:['number of medicaid starts']} ],
+    dys:  [ {all:['number of production days','(2026)']} ],
+    done: [ {all:['completed number of production days']} ],
+    goal: [ {all:['2026','total production goal']}, {all:['2026','tc production goal'], not:['non-medicaid']} ],
+    str:  [ {all:['2026','stretch production goal']} ],
+    fee:  [ {all:['medicaid case fee']} ],
+    afee: [ {all:['2025 average case fee']} ]
+  };
+
+  function colLetters(n){                 // 0 -> A, 25 -> Z, 26 -> AA
+    var out='', v=n+1;
+    while(v>0){ var r=(v-1)%26; out=String.fromCharCode(65+r)+out; v=Math.floor((v-1)/26); }
+    return out;
+  }
+  function parseOrigin(address){          // "Sheet1!A1:N60" -> {col:0,row:1}
+    var m=/!\$?([A-Z]+)\$?(\d+)/.exec(address||'');
+    if(!m) return {col:0,row:1};
+    var c=0, L=m[1];
+    for(var i=0;i<L.length;i++) c=c*26+(L.charCodeAt(i)-64);
+    return { col:c-1, row:parseInt(m[2],10) };
+  }
+
+  /* Write one month of one field, then verify it. graph = GET helper, send = method helper. */
+  function writeCell(graph, send, driveId, itemId, officeName, field, monthIndex, value){
+    var tab=TABS[officeName];
+    if(!tab) return Promise.reject(new Error('Unknown office: '+officeName));
+    var pats=WRITE_ROWS[field];
+    if(!pats) return Promise.reject(new Error('"'+field+'" is not a writable field.'));
+    if(!(monthIndex>=0 && monthIndex<12)) return Promise.reject(new Error('Bad month.'));
+
+    var base='/drives/'+driveId+'/items/'+itemId+"/workbook/worksheets('"+encodeURIComponent(tab)+"')";
+    return graph(base+'/usedRange(valuesOnly=true)?$select=values,address').then(function(rng){
+      var rows=rng.values||[], origin=parseOrigin(rng.address), idx=-1;
+      for(var i=0;i<pats.length && idx<0;i++) idx=row(rows, pats[i].all, pats[i].not);
+      if(idx<0) throw new Error('Could not find the row for "'+field+'" on '+tab+'.');
+
+      var address = colLetters(origin.col + 1 + monthIndex) + (origin.row + idx);
+      var num = (value===''||value===null||value===undefined) ? null : Number(value);
+      if(num!==null && !isFinite(num)) throw new Error('That is not a number.');
+
+      return send('PATCH', base+"/range(address='"+address+"')", { values: [[num]] })
+        .then(function(){ return graph(base+"/range(address='"+address+"')?$select=values"); })
+        .then(function(check){
+          var got=(check.values&&check.values[0]&&check.values[0][0]);
+          var ok = (num===null) ? (got===null||got===''||got===0)
+                                : Math.abs(Number(got)-num) < 0.01;
+          if(!ok) throw new Error('Wrote '+num+' to '+address+' but it reads back as '+got+'.');
+          return { address:address, sheet:tab, value:num, label:rows[idx][0] };
+        });
+    });
+  }
+
+  global.PH_WB = { load:load, office:office, TABS:TABS, MEDICAID:MEDICAID,
+                   writeCell:writeCell, WRITE_ROWS:WRITE_ROWS, colLetters:colLetters };
 })(window);

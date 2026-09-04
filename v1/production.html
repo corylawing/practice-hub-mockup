@@ -94,11 +94,11 @@
   .noacc b{color:var(--navy)}
   @media(max-width:760px){ .grid2{grid-template-columns:1fr} }
 </style>
-<script src="user.js?v=hb79"></script>
+<script src="user.js?v=hb80"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="workbook.js?v=hb79"></script>
-  <script src="store.js?v=hb79"></script>
-  <script src="gate.js?v=hb79"></script>
+  <script src="workbook.js?v=hb80"></script>
+  <script src="store.js?v=hb80"></script>
+  <script src="gate.js?v=hb80"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — type the month's numbers here. In the real build this writes straight into the SharePoint workbook.</div>
@@ -250,7 +250,7 @@
             : '<p style="font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--soft);margin:0 0 8px">Goals</p>'+
               '<div class="f"><label>Main production goal</label><div class="help">Set by leadership \u2014 you can\u2019t change this</div><input class="ro" value="$'+goal.toLocaleString('en-US')+'" readonly></div>'+
               '<div class="f"><label>Stretch goal</label><div class="help">Set by leadership \u2014 you can\u2019t change this</div><input class="ro" value="$'+str.toLocaleString('en-US')+'" readonly></div>')+
-          '<div class="savebar"><button class="btn" onclick="PROD.commit()">Save to workbook</button>'+
+          '<div class="savebar"><button class="btn" id="pushbtn" onclick="PROD.commit()">Save to workbook</button>'+
             '<button class="btn ghost" onclick="PROD.reset()">Undo my changes</button>'+
             '<span class="saved" id="saved">✓ Saved · dashboard &amp; Excel updated</span></div>'+
         '</div>'+
@@ -320,7 +320,49 @@
       line('Average per day',dys?money(net/dys):'\u2014')+
       line('Starts (from average case fee)',afee>0?Math.round(tc/afee):'\u2014');
   }
-  function commit(){ save(); const s=el('saved'); if(s){s.classList.add('on'); setTimeout(()=>s.classList.remove('on'),2600);} }
+  /* Push this office+month to the practice's workbook. The hub and the workbook are two
+     doors onto the same numbers, so saving here has to reach the file the owner reads.
+     Every cell is verified after writing; anything that fails is reported, not swallowed. */
+  async function pushToWorkbook(){
+    if(!window.PH_AUTH || typeof PH_WB==='undefined' || !PH_WB.writeCell){
+      wbBanner('<b>Not connected.</b> Sign in before saving to the workbook.', true); return;
+    }
+    const fields=['tc','adj','mds','dys','goal','str','fee','afee'];
+    const btn=el('pushbtn'); if(btn){ btn.disabled=true; btn.textContent='Saving to workbook…'; }
+    const done=[], failed=[];
+    // A shared sender, so the write and its read-back use one token path.
+    const send=(method,path,body)=>PH_AUTH.token().then(t=>
+      fetch('https://graph.microsoft.com/v1.0'+path,{method,
+        headers:{Authorization:'Bearer '+t,'Content-Type':'application/json'},
+        body:body?JSON.stringify(body):undefined})
+      .then(r=>r.status===204?{}:r.json().then(j=>{
+        if(!r.ok) throw new Error('Graph '+r.status+': '+((j.error&&j.error.message)||r.statusText));
+        return j; })));
+    for(const f of fields){
+      const v=val(office,month,f);
+      if(v===''||v===null||v===undefined) continue;
+      try{
+        const r=await PH_WB.writeCell(PH_AUTH.graph, send, WB_DRIVE, WB_ITEM, office, f, month, v);
+        done.push(f+' \u2192 '+r.address);
+      }catch(e){ failed.push(f+': '+((e&&e.message)||e)); }
+    }
+    if(btn){ btn.disabled=false; btn.textContent='Save to workbook'; }
+    if(failed.length){
+      wbBanner('<b>'+failed.length+' value(s) did not save.</b> '+
+               failed.join(' \u00b7 ').replace(/</g,'&lt;')+
+               (done.length?' \u2014 '+done.length+' did.':''), true);
+    } else if(done.length){
+      wbBanner('\u2713 Saved '+done.length+' value(s) to the workbook for '+office+
+               ' \u00b7 '+MO[month]+'. Verified in the file.');
+      if(window.PH && PH.logActivity && PH.isLive())
+        PH.logActivity({sec:'production', ic:'\u{1F4DD}',
+          title:'Workbook updated \u2014 '+office+' '+MO[month], scope:office});
+    } else {
+      wbBanner('Nothing to save for '+office+' \u00b7 '+MO[month]+' yet.', true);
+    }
+  }
+
+  function commit(){ save(); pushToWorkbook(); const s=el('saved'); if(s){s.classList.add('on'); setTimeout(()=>s.classList.remove('on'),2600);} }
   function reset(){ Object.keys(edits).forEach(k=>{ if(k.indexOf(office+'|')===0) delete edits[k]; }); save(); render(); }
   function setOffice(o){ office=o; render(); }
   function setMonth(m){ month=m; render(); }
@@ -390,7 +432,7 @@
 })();
 </script>
 <script>PH.nav('production');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hb79"></script>
+<script src="tour.js?v=hb80"></script>
 <script>
 Tour.init([
   {sel:'.syncbar', title:'One set of numbers', body:'Type here and it saves into the <b>same Excel workbook</b> on SharePoint. If someone types in Excel instead, it shows up here. There is never a second copy to reconcile.'},
