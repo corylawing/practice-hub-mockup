@@ -241,12 +241,12 @@
   .foot b{color:var(--navy)}
   @media(max-width:620px){ .kpi .v{font-size:22px} }
 </style>
-<script src="user.js?v=hb96"></script>
-<script src="celebrate.js?v=hb96"></script>
+<script src="user.js?v=hb97"></script>
+<script src="celebrate.js?v=hb97"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="workbook.js?v=hb96"></script>
-  <script src="store.js?v=hb96"></script>
-  <script src="gate.js?v=hb96"></script>
+  <script src="workbook.js?v=hb97"></script>
+  <script src="store.js?v=hb97"></script>
+  <script src="gate.js?v=hb97"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — real numbers from the 2026 Production Dashboard workbook. You only see the offices you have access to.</div>
@@ -1016,7 +1016,10 @@ const OFFICES=[
                 : mins<1440 ? Math.round(mins/60)+' hours ago'
                 : mins<2880 ? 'yesterday'
                 : Math.round(mins/1440)+' days ago';
-      when=' <span title="'+d.toLocaleString()+'">&mdash; Heather last saved it <b>'+ago+'</b></span>';
+      // Name whoever actually saved it, in full — not an assumption about who usually does.
+      const who = String(res.savedBy||'').replace(/[<>&]/g,'');
+      when=' <span title="'+d.toLocaleString()+'">&mdash; '+
+           (who ? who+' last saved it' : 'last saved')+' <b>'+ago+'</b></span>';
     }
     banner('<span>\u25CF</span><span>Showing the practice\'s live workbook'+when+
            (res.errors.length?' <b>&mdash; '+res.errors.length+' tab(s) unread</b>':'')+'</span>',
@@ -1031,7 +1034,7 @@ const OFFICES=[
 })();
 </script>
 <script>PH.nav('dashboard');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hb96"></script>
+<script src="tour.js?v=hb97"></script>
 <script>
 Tour.init([
   {sel:'.viewas', title:'You only see your offices', body:'Production numbers are sensitive, so people see <b>only the offices they\u2019re assigned to</b>. Switch to the Carlsbad manager \u2014 the group totals and the leaderboard disappear, because they aren\u2019t hers to see.'},

@@ -140,8 +140,12 @@
     var base = item + '/workbook';
     var names = Object.keys(TABS);
 
-    return graph(item + '?$select=lastModifiedDateTime,name').then(function(meta){
+    // Ask WHO saved it too — assuming it's always Heather would be wrong the first time
+    // anyone else touches the file.
+    return graph(item + '?$select=lastModifiedDateTime,lastModifiedBy,name').then(function(meta){
       var stamp = meta && meta.lastModifiedDateTime;
+      var who = (meta && meta.lastModifiedBy && meta.lastModifiedBy.user &&
+                 meta.lastModifiedBy.user.displayName) || '';
       var hit = null;
       try {
         var raw = sessionStorage.getItem(CACHE_KEY);
@@ -150,7 +154,7 @@
           if (c && c.stamp && c.stamp === stamp && c.itemId === itemId) hit = c;
         }
       } catch(_){}
-      if (hit) return { offices: hit.offices, errors: [], savedAt: stamp, cached: true };
+      if (hit) return { offices: hit.offices, errors: [], savedAt: stamp, savedBy: who, cached: true };
 
       var out = {}, errs = [];
       return Promise.all(names.map(function(name){
@@ -165,7 +169,7 @@
               { stamp: stamp, itemId: itemId, offices: out }));
           } catch(_){}   // quota or private mode -- caching is an optimisation, not a requirement
         }
-        return { offices: out, errors: errs, savedAt: stamp, cached: false };
+        return { offices: out, errors: errs, savedAt: stamp, savedBy: who, cached: false };
       });
     });
   }
