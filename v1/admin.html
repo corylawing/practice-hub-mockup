@@ -174,11 +174,11 @@
   .tp.on{background:var(--navy);color:#fff;border-color:var(--navy)}
   @media(max-width:640px){ .grid2{grid-template-columns:1fr} }
 </style>
-<script src="user.js?v=hb87"></script>
+<script src="user.js?v=hb88"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="_staff.js?v=hb87"></script>
-  <script src="store.js?v=hb87"></script>
-  <script src="gate.js?v=hb87"></script>
+  <script src="_staff.js?v=hb88"></script>
+  <script src="store.js?v=hb88"></script>
+  <script src="gate.js?v=hb88"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — admin console concept for validation. Real build: people sync from Microsoft 365; access is managed here.</div>
@@ -448,6 +448,22 @@
     renderUsersBody();
     const s=el('usearch'); if(s) s.oninput=e=>{search=e.target.value; renderUsersBody();};
   }
+  /* A person's face: their own photo if they've set one, else initials. Used by the
+     table, the profile header and the photo row, so the three can't disagree. */
+  function photoOf(u){
+    try{
+      const mine=JSON.parse(localStorage.getItem('ph_me_'+(u.email||'').toLowerCase())||'{}');
+      return (mine && mine.photo) || '';
+    }catch(_){ return ''; }
+  }
+  function faceFor(u, size){
+    const p=photoOf(u);
+    const dim = size ? 'width:'+size+'px;height:'+size+'px;font-size:'+Math.round(size/2.7)+'px;' : '';
+    return p
+      ? '<span class="av" style="'+dim+'background-image:url('+p+');background-size:cover;background-position:center"></span>'
+      : '<span class="av" style="'+dim+'background:'+av(u)+'">'+initials(u)+'</span>';
+  }
+
   function renderUsersBody(){
     const q=search.toLowerCase();
     const list=users.filter(u=>!q || (u.f+' '+u.l+' '+u.email+' '+u.teams.join(' ')+' '+u.loc).toLowerCase().includes(q));
@@ -455,13 +471,7 @@
     tb.innerHTML=list.map(u=>{const gi=users.indexOf(u);
       /* Someone's own photo lives under their email, set from My profile. Show it here
          rather than initials, so the table matches the avatar in the header. */
-      let photo=''; try{
-        const mine=JSON.parse(localStorage.getItem('ph_me_'+(u.email||'').toLowerCase())||'{}');
-        if(mine && mine.photo) photo=mine.photo;
-      }catch(_){}
-      const face = photo
-        ? '<span class="av" style="background-image:url('+photo+');background-size:cover;background-position:center"></span>'
-        : '<span class="av" style="background:'+av(u)+'">'+initials(u)+'</span>';
+      const face = faceFor(u);
       return '<tr onclick="AD.profile('+gi+')"><td><div class="who">'+face+'<div><div class="uname">'+u.f+' '+u.l+'</div><div style="font-size:12px;color:var(--soft)">'+u.email+'</div></div></div></td>'+
         '<td><div class="chips">'+u.teams.map(t=>'<span class="chip">'+t+'</span>').join('')+'</div></td>'+
         '<td>'+u.loc+'</td><td><span class="pill '+u.status.toLowerCase()+'">'+u.status+'</span></td>'+
@@ -476,11 +486,11 @@
   function openProfile(u){
     const teamChips=TEAMS.map(t=>'<button class="tp'+(tmpU.teams.includes(t)?' on':'')+'" onclick="AD.togTeam(\''+t+'\')">'+t+'</button>').join('');
     openModal(
-      '<div class="m-top"><span class="av" style="width:44px;height:44px;font-size:16px;background:'+av(u)+'">'+initials(u)+'</span><div><div style="font-weight:800;font-size:18px;color:var(--navy)">'+u.f+' '+u.l+'</div><div style="font-size:13px;color:var(--soft)">'+u.teams.join(' · ')+' · '+u.loc+'</div></div><span class="pill '+u.status.toLowerCase()+'" style="margin-left:auto">'+u.status+'</span><button class="x" onclick="AD.close()">×</button></div>'+
+      '<div class="m-top">'+faceFor(u,44)+'<div><div style="font-weight:800;font-size:18px;color:var(--navy)">'+u.f+' '+u.l+'</div><div style="font-size:13px;color:var(--soft)">'+u.teams.join(' · ')+' · '+u.loc+'</div></div><span class="pill '+u.status.toLowerCase()+'" style="margin-left:auto">'+u.status+'</span><button class="x" onclick="AD.close()">×</button></div>'+
       '<div class="m-body"><div class="grid2">'+
         '<div><div class="panel-lab">From Microsoft 365 <span class="msbadge">SYNCED</span></div>'+
           fldRO('First name',u.f)+fldRO('Last name',u.l)+fldRO('Email',u.email)+fldRO('Phone',u.phone)+fldRO('Employee ID',u.emp)+
-          '<div class="fld"><label>Photo <span class="selfbadge">EMPLOYEE CAN EDIT</span></label><div class="fld ro"><div class="val" style="display:flex;align-items:center;gap:10px"><span class="av" style="background:'+av(u)+'">'+initials(u)+'</span> Change photo…</div></div></div>'+
+          '<div class="fld"><label>Photo <span class="selfbadge">EMPLOYEE CAN EDIT</span></label><div class="fld ro"><div class="val" style="display:flex;align-items:center;gap:10px">'+faceFor(u)+' Change photo…</div></div></div>'+
         '</div>'+
         '<div><div class="panel-lab">Managed in Home-Brace</div>'+
           '<div class="fld"><label>Status <span style="color:var(--bad)">(admin only)</span></label><select id="fStatus" onchange="AD.setStatus(this.value)">'+['Active','Paused','Inactive'].map(s=>'<option'+(s===tmpU.status?' selected':'')+'>'+s+'</option>').join('')+'</select></div>'+
@@ -869,7 +879,7 @@
 })();
 </script>
 <script>PH.nav('admin');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();});</script>
-<script src="tour.js?v=hb87"></script>
+<script src="tour.js?v=hb88"></script>
 <script>
 Tour.init([
   {sel:'#tabs', title:'This is your control room', body:'Four tabs and you can run the whole hub: <b>People</b>, <b>Teams &amp; Access</b>, <b>Document Sections</b> and <b>Locations</b>. No developer, no consultant.', pre:()=>AD.tab('users')},
