@@ -69,6 +69,33 @@
      control over permissions, so it wins; DEPT_CAN above is only the starting point for
      a team the matrix doesn't mention. Keys there are team names as typed, so match
      case-insensitively. */
+  /* PER-PERSON OVERRIDES set in Admin > People.
+     Microsoft creates the account; the HUB decides access. So whatever an administrator
+     sets here beats the Entra Department/Office fields — those are only the starting
+     point for someone nobody has configured yet. */
+  let PEOPLE_OVR=null;
+  function loadPeopleLocal(){
+    try{ PEOPLE_OVR=JSON.parse(localStorage.getItem('ph_people')); }catch(_){ PEOPLE_OVR=null; }
+  }
+  loadPeopleLocal();
+  function reloadPeople(){
+    loadPeopleLocal();
+    if(window.PH_STORE && isLive()){
+      return window.PH_STORE.get('ph_people').then(function(r){
+        if(r && typeof r==='object'){
+          PEOPLE_OVR=r;
+          try{ localStorage.setItem('ph_people',JSON.stringify(r)); }catch(_){}
+        }
+        return PEOPLE_OVR;
+      }).catch(function(){ return PEOPLE_OVR; });
+    }
+    return Promise.resolve(PEOPLE_OVR);
+  }
+  function overrideFor(mail){
+    if(!PEOPLE_OVR || !mail) return null;
+    return PEOPLE_OVR[String(mail).toLowerCase().trim()] || null;
+  }
+
   let ACCESS=null;
   function loadAccessLocal(){
     try{ ACCESS=JSON.parse(localStorage.getItem('ph_access')); }catch(_){ ACCESS=null; }
@@ -109,7 +136,13 @@
 
   function fromProfile(){
     if(!PROFILE) return null;
-    const depts=String(PROFILE.department||'').split(/[;,]/).map(x=>x.trim().toLowerCase()).filter(Boolean);
+    const mailNow=String(PROFILE.mail||PROFILE.userPrincipalName||'').toLowerCase().trim();
+    const ovr=overrideFor(mailNow);
+    // The hub's own setting wins; Entra is only the fallback for an unconfigured person.
+    const deptSrc = (ovr && ovr.teams && ovr.teams.length)
+      ? ovr.teams.join(';')
+      : String(PROFILE.department||'');
+    const depts=deptSrc.split(/[;,]/).map(x=>x.trim().toLowerCase()).filter(Boolean);
     // Several departments -> take the most permissive level for each area.
     let can=null;
     depts.forEach(d=>{
@@ -124,9 +157,14 @@
     const boot=BOOTSTRAP_ADMINS.indexOf(mail)>=0;
     if(boot) can=Object.assign({},DEPT_CAN['admin']);
 
-    const loc=String(PROFILE.officeLocation||'').trim();
-    const seesAll=boot || depts.some(d=>ALL_OFFICE_DEPTS.indexOf(d)>=0);
-    const offs = seesAll ? 'all' : (loc?[loc]:[]);
+    const ovrLocs = (ovr && ovr.locs && ovr.locs.length) ? ovr.locs : null;
+    const loc = ovrLocs ? ovrLocs.filter(l=>l!=='All offices').join(', ')
+                        : String(PROFILE.officeLocation||'').trim();
+    const seesAll = boot
+      || (ovrLocs ? ovrLocs.indexOf('All offices')>=0 : false)
+      || depts.some(d=>ALL_OFFICE_DEPTS.indexOf(d)>=0);
+    const offs = seesAll ? 'all'
+      : (ovrLocs ? ovrLocs.slice() : (loc?[loc]:[]));
 
     const full=String(PROFILE.displayName||PROFILE.mail||'').trim();
     const bits=full.split(/\s+/);
@@ -137,7 +175,7 @@
       teams:depts.length?depts.map(d=>d.replace(/\b\w/g,c=>c.toUpperCase())):['Staff'],
       loc:loc||'', offices:offs, can:can,
       // Flags the UI uses to explain a thin-looking account rather than just showing nothing.
-      _needsSetup: !boot && (!known || (!seesAll && !loc))
+      _needsSetup: !boot && !ovr && (!known || (!seesAll && !loc))
     };
   }
 
@@ -628,8 +666,13 @@
      keeps all of it, because that is what it is for. */
   function impersonationBar(){
     const imp=impersonating();
-    if(!imp || !isAdmin(realMe())) return;
+    // dechrome() runs twice — once on load, once after sign-in — so both banners must be
+    // idempotent or they stack.
+    const existing=document.getElementById('ph-impbar');
+    if(!imp || !isAdmin(realMe())){ if(existing) existing.remove(); return; }
+    if(existing) return;
     const b=document.createElement('div');
+    b.id='ph-impbar';
     b.style.cssText='background:#4B2E83;color:#fff;padding:8px 16px;font-size:13px;'+
       'display:flex;align-items:center;justify-content:center;gap:14px;font-weight:600';
     b.innerHTML='\u{1F441} Viewing as <b>'+((imp.first||'')+' '+(imp.last||'')).trim()+
@@ -650,8 +693,10 @@
     // If a person's Entra profile isn't filled in yet, say so plainly instead of
     // silently showing them an empty app.
     const m=me();
+    if(document.getElementById('ph-setupbar')) return;
     if(m && m._needsSetup){
       const b=document.createElement('div');
+      b.id='ph-setupbar';
       b.style.cssText='background:#FFF6E5;color:#8a5a00;border-bottom:1px solid #f0d9a8;'+
         'padding:8px 16px;font-size:13px;text-align:center';
       b.innerHTML='Your profile isn\u2019t finished yet, so you may not see everything. '+
@@ -796,6 +841,6 @@
   }
   const isLive=()=>env()==='live';
 
-  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess};
+  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople};
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mount); else mount();
 })();

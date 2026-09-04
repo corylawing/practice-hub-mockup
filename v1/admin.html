@@ -171,11 +171,11 @@
   .tp.on{background:var(--navy);color:#fff;border-color:var(--navy)}
   @media(max-width:640px){ .grid2{grid-template-columns:1fr} }
 </style>
-<script src="user.js?v=hb75"></script>
+<script src="user.js?v=hb77"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="_staff.js?v=hb75"></script>
-  <script src="store.js?v=hb75"></script>
-  <script src="gate.js?v=hb75"></script>
+  <script src="_staff.js?v=hb77"></script>
+  <script src="store.js?v=hb77"></script>
+  <script src="gate.js?v=hb77"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — admin console concept for validation. Real build: people sync from Microsoft 365; access is managed here.</div>
@@ -362,6 +362,20 @@
     'Yvonne Avalos','Yessenia Flores','Maria Hinojos','Erica Martinez','Anette Olvera','Tara Pacini',
     'Joemily Prieto','Melissa Villalva','Jenny Whitefield','Dr. David Farnsworth','Dr. Jae Brimhall'
   ];
+  /* Per-person overrides the practice sets here. Keyed by email, saved locally and to
+     SharePoint, and read by user.js — so changing someone's team or location in Admin
+     actually changes what they can do, rather than only what this table shows. */
+  const PEOPLE_KEY='ph_people';
+  function loadPeopleOverrides(){
+    try{ return JSON.parse(localStorage.getItem(PEOPLE_KEY))||{}; }catch(_){ return {}; }
+  }
+  let PEOPLE_OVR=loadPeopleOverrides();
+  function savePeopleOverrides(){
+    try{ localStorage.setItem(PEOPLE_KEY, JSON.stringify(PEOPLE_OVR)); }catch(_){}
+    if(window.PH_STORE && PH.isLive()) window.PH_STORE.set(PEOPLE_KEY, PEOPLE_OVR);
+    if(window.PH && PH.reloadPeople) PH.reloadPeople();
+  }
+
   let users=ROSTER.map((full,i)=>{
     const isDoc=DOCTOR_NAMES.includes(full);
     const clean=full.replace(/"[^"]*"/g,'').replace(/\([^)]*\)/g,'').replace(/\s+/g,' ').trim();
@@ -373,6 +387,16 @@
       // Region and brand aren't stored on a person — they follow from the office(s)
       // they're assigned to, and duplicating them just lets the two drift apart.
       phone:'\u2014', about:'', status:'Active', c:i%PAL.length};
+  
+  }).map(u=>{
+    // Anything an administrator has set for this person wins over the defaults above.
+    const o=PEOPLE_OVR[(u.email||'').toLowerCase()];
+    if(o){
+      if(o.teams) u.teams=o.teams.slice();
+      if(o.status) u.status=o.status;
+      if(o.locs) u.loc=o.locs.length?(o.locs.includes('All offices')?'All offices':o.locs.join(', ')):'Unassigned';
+    }
+    return u;
   });
 
   const el=id=>document.getElementById(id);
@@ -488,7 +512,19 @@
   function togTeam(t){ const i=tmpU.teams.indexOf(t); if(i>=0)tmpU.teams.splice(i,1); else tmpU.teams.push(t);
     [...document.querySelectorAll('#teampick .tp')].forEach(b=>b.classList.toggle('on',tmpU.teams.includes(b.textContent))); refreshAccessPreview(); }
   function setStatus(v){tmpU.status=v;}
-  function saveUser(){ const u=users[tmpU.gi]; u.teams=tmpU.teams.slice(); u.status=tmpU.status; u.loc=tmpU.locs.length?(tmpU.locs.includes('All offices')?'All offices':tmpU.locs.join(', ')):'Unassigned'; closeModal(); renderUsersBody(); }
+  function saveUser(){
+    const u=users[tmpU.gi];
+    u.teams=tmpU.teams.slice();
+    u.status=tmpU.status;
+    u.loc=tmpU.locs.length?(tmpU.locs.includes('All offices')?'All offices':tmpU.locs.join(', ')):'Unassigned';
+    // Persist, keyed by email so it survives a reload and reaches the live app.
+    PEOPLE_OVR[(u.email||'').toLowerCase()]={teams:u.teams.slice(), locs:tmpU.locs.slice(), status:u.status};
+    savePeopleOverrides();
+    if(window.PH && PH.logActivity && PH.isLive())
+      PH.logActivity({sec:'admin', ic:'\u2699\uFE0F',
+        title:'Access changed for '+u.f+' '+u.l, scope:'everyone'});
+    closeModal(); renderUsersBody();
+  }
   function whyNoAdd(){
     openModal(
       '<div class="m-top"><h3 style="margin:0;font-size:17px;color:var(--navy)">Someone missing from this list?</h3><button class="x" onclick="AD.close()">\u00d7</button></div>'+
@@ -830,7 +866,7 @@
 })();
 </script>
 <script>PH.nav('admin');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();});</script>
-<script src="tour.js?v=hb75"></script>
+<script src="tour.js?v=hb77"></script>
 <script>
 Tour.init([
   {sel:'#tabs', title:'This is your control room', body:'Four tabs and you can run the whole hub: <b>People</b>, <b>Teams &amp; Access</b>, <b>Document Sections</b> and <b>Locations</b>. No developer, no consultant.', pre:()=>AD.tab('users')},
