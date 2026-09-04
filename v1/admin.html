@@ -174,11 +174,11 @@
   .tp.on{background:var(--navy);color:#fff;border-color:var(--navy)}
   @media(max-width:640px){ .grid2{grid-template-columns:1fr} }
 </style>
-<script src="user.js?v=hb86"></script>
+<script src="user.js?v=hb87"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="_staff.js?v=hb86"></script>
-  <script src="store.js?v=hb86"></script>
-  <script src="gate.js?v=hb86"></script>
+  <script src="_staff.js?v=hb87"></script>
+  <script src="store.js?v=hb87"></script>
+  <script src="gate.js?v=hb87"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — admin console concept for validation. Real build: people sync from Microsoft 365; access is managed here.</div>
@@ -396,7 +396,12 @@
     return {f:isDoc?('Dr. '+first):first, l:last,
       email:(known&&known.mail)||handle+'@farnsworthorthodontics.com',
       realEmail:!!(known&&known.mail),
-      emp:'E-'+(1001+i), loc:'Unassigned', teams:[isDoc?'Doctors':'Staff'],
+      emp:'E-'+(1001+i),
+      // Take the team and office the roster actually records; only fall back when blank.
+      loc:(known&&known.loc)||'Unassigned',
+      teams:(known&&known.team)
+              ? String(known.team).split(/[;,]/).map(x=>x.trim()).filter(Boolean)
+              : [isDoc?'Doctors':'Staff'],
       // Region and brand aren't stored on a person — they follow from the office(s)
       // they're assigned to, and duplicating them just lets the two drift apart.
       phone:'\u2014', about:'', status:'Active', c:i%PAL.length};
@@ -448,7 +453,16 @@
     const list=users.filter(u=>!q || (u.f+' '+u.l+' '+u.email+' '+u.teams.join(' ')+' '+u.loc).toLowerCase().includes(q));
     const tb=document.querySelector('table.u tbody'); if(!tb)return;
     tb.innerHTML=list.map(u=>{const gi=users.indexOf(u);
-      return '<tr onclick="AD.profile('+gi+')"><td><div class="who"><span class="av" style="background:'+av(u)+'">'+initials(u)+'</span><div><div class="uname">'+u.f+' '+u.l+'</div><div style="font-size:12px;color:var(--soft)">'+u.email+'</div></div></div></td>'+
+      /* Someone's own photo lives under their email, set from My profile. Show it here
+         rather than initials, so the table matches the avatar in the header. */
+      let photo=''; try{
+        const mine=JSON.parse(localStorage.getItem('ph_me_'+(u.email||'').toLowerCase())||'{}');
+        if(mine && mine.photo) photo=mine.photo;
+      }catch(_){}
+      const face = photo
+        ? '<span class="av" style="background-image:url('+photo+');background-size:cover;background-position:center"></span>'
+        : '<span class="av" style="background:'+av(u)+'">'+initials(u)+'</span>';
+      return '<tr onclick="AD.profile('+gi+')"><td><div class="who">'+face+'<div><div class="uname">'+u.f+' '+u.l+'</div><div style="font-size:12px;color:var(--soft)">'+u.email+'</div></div></div></td>'+
         '<td><div class="chips">'+u.teams.map(t=>'<span class="chip">'+t+'</span>').join('')+'</div></td>'+
         '<td>'+u.loc+'</td><td><span class="pill '+u.status.toLowerCase()+'">'+u.status+'</span></td>'+
         // Looking through someone's eyes belongs next to the person, not in its own tab.
@@ -855,7 +869,7 @@
 })();
 </script>
 <script>PH.nav('admin');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();});</script>
-<script src="tour.js?v=hb86"></script>
+<script src="tour.js?v=hb87"></script>
 <script>
 Tour.init([
   {sel:'#tabs', title:'This is your control room', body:'Four tabs and you can run the whole hub: <b>People</b>, <b>Teams &amp; Access</b>, <b>Document Sections</b> and <b>Locations</b>. No developer, no consultant.', pre:()=>AD.tab('users')},
