@@ -120,11 +120,11 @@
   }
 
 </style>
-<script src="user.js?v=hb99"></script>
+<script src="user.js?v=hc01"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="workbook.js?v=hb99"></script>
-  <script src="store.js?v=hb99"></script>
-  <script src="gate.js?v=hb99"></script>
+  <script src="workbook.js?v=hc01"></script>
+  <script src="store.js?v=hc01"></script>
+  <script src="gate.js?v=hc01"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — type the month's numbers here. In the real build this writes straight into the SharePoint workbook.</div>
@@ -353,7 +353,13 @@
     if(!window.PH_AUTH || typeof PH_WB==='undefined' || !PH_WB.writeCell){
       wbBanner('<b>Not connected.</b> Sign in before saving to the workbook.', true); return;
     }
-    const fields=['tc','adj','mds','dys','goal','str','fee','afee'];
+    /* Write ONLY what this person actually changed. Pushing all eight fields meant a save
+       could overwrite something the owner had just typed in Excel, using our older copy.
+       `edits` already records exactly which boxes were touched. */
+    const WRITABLE=['tc','adj','mds','dys','goal','str','fee','afee'];
+    const touched=Object.keys((edits[key(office,month)]||{}))
+      .filter(f=>WRITABLE.indexOf(f)>=0);
+    const fields=touched;
     const btn=el('pushbtn');
     if(btn){ btn.disabled=true; btn.classList.remove('done','failed'); btn.classList.add('saving'); }
     const done=[], failed=[];
@@ -365,6 +371,27 @@
       .then(r=>r.status===204?{}:r.json().then(j=>{
         if(!r.ok) throw new Error('Graph '+r.status+': '+((j.error&&j.error.message)||r.statusText));
         return j; })));
+    /* Has the workbook moved since we loaded it? If the owner has saved in Excel
+       meanwhile, our copy is stale and writing it would undo his work. Re-read first
+       and let the person decide. */
+    let clash=false;
+    try{
+      const meta=await PH_AUTH.graph('/drives/'+WB_DRIVE+'/items/'+WB_ITEM+
+                                     '?$select=lastModifiedDateTime,lastModifiedBy');
+      const now=meta && meta.lastModifiedDateTime;
+      if(loadedStamp && now && now!==loadedStamp){
+        const who=(meta.lastModifiedBy&&meta.lastModifiedBy.user&&meta.lastModifiedBy.user.displayName)||'Someone';
+        clash=!confirm(who+' saved the workbook after this page loaded.\n\n'+
+          'Saving now would write your figures over theirs. Reload to see their changes first, '+
+          'or press OK to save anyway.');
+      }
+    }catch(_){ /* can't check -> proceed rather than block the save */ }
+    if(clash){
+      if(btn){ btn.classList.remove('saving'); btn.disabled=false; }
+      wbBanner('<b>Not saved.</b> Reload the page to pick up the newer workbook, then re-enter.', true);
+      return;
+    }
+
     for(const f of fields){
       const v=val(office,month,f);
       if(v===''||v===null||v===undefined) continue;
@@ -392,14 +419,20 @@
                (done.length?' \u2014 '+done.length+' did.':''), true);
     } else if(done.length){
       settle('done', 'Saved to workbook');
+      // We just moved the file, so our own write must not look like someone else's clash.
+      try{
+        const m2=await PH_AUTH.graph('/drives/'+WB_DRIVE+'/items/'+WB_ITEM+'?$select=lastModifiedDateTime');
+        if(m2 && m2.lastModifiedDateTime) loadedStamp=m2.lastModifiedDateTime;
+      }catch(_){}
       wbBanner('\u2713 Saved '+done.length+' value(s) to the workbook for '+office+
                ' \u00b7 '+MO[month]+'. Verified in the file.');
       if(window.PH && PH.logActivity && PH.isLive())
         PH.logActivity({sec:'production', ic:'\u{1F4DD}',
           title:'Workbook updated \u2014 '+office+' '+MO[month], scope:office});
     } else {
-      settle('failed', 'Nothing to save');
-      wbBanner('Nothing to save for '+office+' \u00b7 '+MO[month]+' yet.', true);
+      settle('failed', 'Nothing changed');
+      wbBanner('Nothing to save \u2014 no boxes were changed for '+office+
+               ' \u00b7 '+MO[month]+'.', true);
     }
   }
 
@@ -425,6 +458,7 @@
   /* Same live workbook the dashboard reads. BASE above is only a placeholder shape —
      these are the practice's real inputs, fetched after sign-in, so no figures live
      in this file. */
+  let loadedStamp=null;   // the workbook's last-saved time when this page read it
   const WB_DRIVE='b!_iYahf-6ukmoAAj5kJvRerfxyG2Vel1DjXWUHR3Q-rM_xdgQyKrjQJEx8aAKAvQ-';
   const WB_ITEM ='0153I7MX4WXYRN4DKUJFEZPTWOZ4GBQMIV';
 
@@ -462,6 +496,7 @@
       if(L.avgFee)  b.afee=L.avgFee;
       n++;
     });
+    loadedStamp=res.savedAt||null;
     const stamp=res.savedAt?new Date(res.savedAt).toLocaleString():'';
     const who=String(res.savedBy||'').replace(/[<>&]/g,'');
     wbBanner('\u25CF Live from the practice\u2019s workbook \u2014 '+n+' of '+Object.keys(BASE).length+
@@ -475,7 +510,7 @@
 })();
 </script>
 <script>PH.nav('production');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hb99"></script>
+<script src="tour.js?v=hc01"></script>
 <script>
 Tour.init([
   {sel:'.syncbar', title:'One set of numbers', body:'Type here and it saves into the <b>same Excel workbook</b> on SharePoint. If someone types in Excel instead, it shows up here. There is never a second copy to reconcile.'},
