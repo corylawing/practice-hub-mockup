@@ -241,12 +241,12 @@
   .foot b{color:var(--navy)}
   @media(max-width:620px){ .kpi .v{font-size:22px} }
 </style>
-<script src="user.js?v=hb97"></script>
-<script src="celebrate.js?v=hb97"></script>
+<script src="user.js?v=hb98"></script>
+<script src="celebrate.js?v=hb98"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="workbook.js?v=hb97"></script>
-  <script src="store.js?v=hb97"></script>
-  <script src="gate.js?v=hb97"></script>
+  <script src="workbook.js?v=hb98"></script>
+  <script src="store.js?v=hb98"></script>
+  <script src="gate.js?v=hb98"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — real numbers from the 2026 Production Dashboard workbook. You only see the offices you have access to.</div>
@@ -808,16 +808,18 @@ const OFFICES=[
     // Production leads and ranks the table — it's the number they run the business on.
     const rows=list.map(src=>{const o=yearOf(src); return {o,t:stats(o),s:sStats(o)};})
       .sort((x,y)=> x.o.noGoals ? y.t.a-x.t.a : y.t.pct-x.t.pct);   // no goals => rank by production
+    // Nobody leads a table of zeros. Only crown someone once there is production to rank.
+    const anyProduction=rows.some(r=>r.t.a>0);
     const body=rows.map((r,i)=>{
       const t=r.t, pctw=Math.min(100,t.pct*100), cls=t.pct>=1?'':(t.pct>=.9?'a':'b');
       return '<tr onclick="DASH.pick(\''+r.o.n+'\')">'+
-        '<td class="rk'+(i===0?' top':'')+'">'+(i===0?'🏆':i+1)+'</td>'+
+        '<td class="rk'+(i===0&&anyProduction?' top':'')+'">'+((i===0&&anyProduction)?'🏆':i+1)+'</td>'+
         '<td><div class="onm">'+r.o.n+'<span class="br">'+r.o.brand+'</span></div>'+
           '<div class="pbar"><i class="'+cls+'" style="width:'+pctw+'%"></i></div>'+
           officeAudit(r.o.n)+'</td>'+
         '<td class="num big">'+full(t.a)+'</td>'+
         '<td class="num">'+(r.o.noGoals?'\u2014':pc(t.pct))+'</td>'+
-        '<td class="num '+(t.yoy>=1?'g':'b')+'">'+(t.l?pc(t.yoy):'\u2014')+'</td>'+
+        '<td class="num '+(t.yoy>=1?'g':'b')+'">'+((t.l&&t.a>0)?pc(t.yoy):'\u2014')+'</td>'+
         '<td class="num big">'+Math.round(r.s.a)+'</td>'+
         '<td class="num">'+(r.o.noGoals||!r.s.g?'\u2014':pc(r.s.pct))+'</td>'+
         '<td class="dleft">'+(t.daysLeft||'\u2014')+'</td></tr>';
@@ -1034,7 +1036,7 @@ const OFFICES=[
 })();
 </script>
 <script>PH.nav('dashboard');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hb97"></script>
+<script src="tour.js?v=hb98"></script>
 <script>
 Tour.init([
   {sel:'.viewas', title:'You only see your offices', body:'Production numbers are sensitive, so people see <b>only the offices they\u2019re assigned to</b>. Switch to the Carlsbad manager \u2014 the group totals and the leaderboard disappear, because they aren\u2019t hers to see.'},
