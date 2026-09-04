@@ -1,6 +1,7 @@
 /* The practice's roster, from Heather's "Centralized Hub Ideas" workbook.
    Shared so Admin's View-as list and the Team page cannot drift apart. */
   const STAFF=[
+   {n:"Corey Lawing",mail:"Consult@farnsworthorthodontics.com",loc:"",st:"",brand:"Group",role:"Consultant",team:"Admin"},
    {n:"Alexandra (Lexi) Espinosa",mail:"",loc:"Carlsbad",st:"NM",brand:"FFO",role:"Clinical Asst",team:"Staff"},
    {n:"Cyndal Gomez",mail:"",loc:"Carlsbad",st:"NM",brand:"FFO",role:"Clinical Asst",team:"Staff"},
    {n:"Serenity Gonzales",mail:"",loc:"Carlsbad",st:"NM",brand:"FFO",role:"Clinical Asst",team:"Staff"},
