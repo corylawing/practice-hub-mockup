@@ -167,18 +167,27 @@
   .fld.ro .val{background:#fafbfc;border:1px dashed var(--line);border-radius:8px;padding:8px 11px}
   .accessbox{background:var(--teal-soft);border:1px solid #c4e6e3;border-radius:12px;padding:14px 16px;margin-top:4px}
   .accessbox h4{margin:0 0 8px;font-size:13px;color:#0a4d49;text-transform:uppercase;letter-spacing:.04em}
-  .acc-line{display:flex;justify-content:space-between;font-size:13.5px;padding:3px 0;color:var(--ink)}
+  /* Two aligned columns. This was a flex row where the label took its natural width, so
+     every pill started at a different x and stretched to a different length — .lvl is
+     width:100% for the matrix grid, which made it worse. */
+  .acc-line{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;
+    gap:12px;font-size:13.5px;padding:4px 0;color:var(--ink)}
+  .acc-line + .acc-line{border-top:1px solid rgba(10,77,73,.08)}
+  .acc-line > span{min-width:0}
   .acc-line b{font-weight:700}
+  /* Inside this box a level is a small pill, never a full-width bar. */
+  .accessbox .lvl{width:auto;display:inline-block;padding:2px 10px;border-radius:999px;
+    font-size:11px;white-space:nowrap;justify-self:end}
   .teampick{display:flex;flex-wrap:wrap;gap:8px}
   .tp{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;font-size:13px;font-weight:600;color:var(--navy);cursor:pointer;font-family:inherit;line-height:1.2}
   .tp.on{background:var(--navy);color:#fff;border-color:var(--navy)}
   @media(max-width:640px){ .grid2{grid-template-columns:1fr} }
 </style>
-<script src="user.js?v=hb93"></script>
+<script src="user.js?v=hb94"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="_staff.js?v=hb93"></script>
-  <script src="store.js?v=hb93"></script>
-  <script src="gate.js?v=hb93"></script>
+  <script src="_staff.js?v=hb94"></script>
+  <script src="store.js?v=hb94"></script>
+  <script src="gate.js?v=hb94"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — admin console concept for validation. Real build: people sync from Microsoft 365; access is managed here.</div>
@@ -511,7 +520,7 @@
   function fldRO(lab,val){ return '<div class="fld ro"><label>'+lab+'</label><div class="val">'+(val||'—')+'</div></div>'; }
   function refreshAccessPreview(){
     const u=users[tmpU.gi]; const acc=userAccess({teams:tmpU.teams});
-    const lines=allSections().filter(s=>acc[s.k]!=='none').map(s=>'<div class="acc-line"><span>'+s.n+'</span><b class="lvl '+acc[s.k]+'" style="padding:1px 8px;border-radius:6px">'+LVLNAME[acc[s.k]]+'</b></div>').join('')||'<div class="acc-line" style="color:var(--soft)">No sections yet — add a team.</div>';
+    const lines=allSections().filter(s=>acc[s.k]!=='none').map(s=>'<div class="acc-line"><span>'+s.n+'</span><b class="lvl '+acc[s.k]+'">'+LVLNAME[acc[s.k]]+'</b></div>').join('')||'<div class="acc-line" style="color:var(--soft)">No sections yet — add a team.</div>';
     const box=el('accpreview'); if(box) box.innerHTML='<h4>What '+u.f+' can access (from their teams)</h4>'+lines;
   }
   function locChips(){ return ['All offices'].concat(LOCATIONS_OF()).map(l=>'<button class="tp'+(tmpU.locs.includes(l)?' on':'')+'" onclick="AD.togLoc(\''+l+'\')">'+l+'</button>').join(''); }
@@ -647,7 +656,7 @@
   function setLocTZ(v){locDraft.tz=v;}
   function saveLoc(){
     const nm=(el('locName')?el('locName').value:locDraft.n).trim(); if(!nm)return;
-    // Keep whatever the Schedule owns on this record — colour, lunch and opening days —
+    // Keep whatever the Schedule owns on this record — color, lunch and opening days —
     // otherwise saving a brand or timezone here would silently wipe the rota.
     const keep = locDraft.i<0 ? {} : LOCS[locDraft.i];
     const rec=Object.assign({},keep,{n:nm,brand:locDraft.brand,state:locDraft.state,tz:locDraft.tz});
@@ -879,7 +888,7 @@
 })();
 </script>
 <script>PH.nav('admin');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(PH.loadPhotos)PH.loadPhotos().then(function(got){if(got&&window.AD&&AD.tab)AD.tab('users');});});</script>
-<script src="tour.js?v=hb93"></script>
+<script src="tour.js?v=hb94"></script>
 <script>
 Tour.init([
   {sel:'#tabs', title:'This is your control room', body:'Four tabs and you can run the whole hub: <b>People</b>, <b>Teams &amp; Access</b>, <b>Document Sections</b> and <b>Locations</b>. No developer, no consultant.', pre:()=>AD.tab('users')},

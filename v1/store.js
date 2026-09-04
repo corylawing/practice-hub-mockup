@@ -14,7 +14,7 @@
    not have. Create it by hand once (see setup() below for the exact steps).
 
    Every read falls back to localStorage, and every write mirrors to localStorage, so a
-   SharePoint hiccup degrades to the old behaviour instead of losing someone's work. */
+   SharePoint hiccup degrades to the old behavior instead of losing someone's work. */
 (function(global){
   'use strict';
 

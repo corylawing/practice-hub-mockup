@@ -97,7 +97,7 @@
   tr:hover .ledit{opacity:.9}
   td.cell{padding:7px 6px;text-align:center;cursor:pointer;vertical-align:middle;height:62px}
   /* Darken with a translucent overlay rather than filter:brightness(), which Safari
-     composites in a different colour space than Chrome/Edge/Firefox. */
+     composites in a different color space than Chrome/Edge/Firefox. */
   td.cell:hover{box-shadow:inset 0 0 0 999px rgba(15,42,74,.055)}
   td.cell.today{box-shadow:inset 0 0 0 2px var(--teal2)}
   .who{display:block;font-weight:800;font-size:13px;line-height:1.2}
@@ -118,8 +118,8 @@
   .mday.today{border-color:var(--teal);box-shadow:0 0 0 2px var(--teal-soft) inset}
   .mdnum{font-size:11.5px;font-weight:800;color:var(--soft);margin-bottom:4px}
   .mday.today .mdnum{color:var(--teal-600)}
-  /* A solid bar in the office's REAL colour. The pale fills we derived are only ~4 ΔE
-     apart — two offices could look identical, and worse in some browsers. Her own colours
+  /* A solid bar in the office's REAL color. The pale fills we derived are only ~4 ΔE
+     apart — two offices could look identical, and worse in some browsers. Her own colors
      are ~36 apart, so the bar is what you actually read. */
   .ent{display:block;width:100%;text-align:left;border:none;border-left:6px solid transparent;
     border-radius:4px;padding:2px 6px 2px 7px;margin-bottom:2px;
@@ -128,7 +128,7 @@
   /* Yellow Dot Day is the ONE row that reads across: office on the left, the label pushed
      right. Everything else stays stacked (office over doctor). */
   /* Closed reads across too: office on the left, "Closed" right. Grey fill and grey text
-     say "not working", but the office's colour bar stays full strength so you can still
+     say "not working", but the office's color bar stays full strength so you can still
      tell WHICH office is closed at a glance. */
   .ent.cl{display:flex;align-items:center;gap:6px;background:#fafbfc;color:#94a3b8}
   .ent.cl .eo{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700}
@@ -138,7 +138,7 @@
   .ent.yd .es{margin-left:auto;font-weight:800;font-size:10.5px;white-space:nowrap;
     display:inline-flex;align-items:center;gap:5px}
   .ent.yd .es{opacity:1;font-weight:800}
-  /* Bright yellow, ringed so it stands out on any office colour. */
+  /* Bright yellow, ringed so it stands out on any office color. */
   .ydmark{width:10px;height:10px;border-radius:50%;background:#FDE047;display:inline-block;flex:none;
     border:1.5px solid #a16207;
     box-shadow:0 0 0 2px rgba(161,98,7,.25)}
@@ -166,8 +166,8 @@
   .keyitem{display:inline-flex;align-items:center;gap:6px}
   .keyitem b{color:var(--ink)}
   .kbox{width:14px;height:14px;border-radius:4px;border:1px solid var(--line);display:inline-block}
-  /* Three office colours side by side, so this swatch reads as "it varies" rather than
-     "pink means doctor on site" — every other swatch in this row IS its literal colour. */
+  /* Three office colors side by side, so this swatch reads as "it varies" rather than
+     "pink means doctor on site" — every other swatch in this row IS its literal color. */
   .kmulti{display:inline-flex;gap:3px}
   .hint{font-size:12.5px;color:var(--soft);margin-top:10px}
   .ov{position:fixed;inset:0;background:rgba(15,42,74,.5);z-index:120;display:none;align-items:flex-start;justify-content:center;padding:22px 14px;overflow:auto}
@@ -235,10 +235,10 @@
     .addday{padding:9px 11px;font-size:12px}
   }
 </style>
-<script src="user.js?v=hb93"></script>
+<script src="user.js?v=hb94"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hb93"></script>
-  <script src="gate.js?v=hb93"></script>
+  <script src="store.js?v=hb94"></script>
+  <script src="gate.js?v=hb94"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — sample staff schedule for validation. Live version = one Microsoft List the practice maintains.</div>
@@ -256,7 +256,7 @@
     <h1>Schedule — Who's Where</h1>
     <p>Which office is open each day and which doctor is working there.</p>
   </div>
-  <div class="notice" id="tourNotice"><b>Every office has its own colour.</b> Tap any day to put a doctor in it, mark it a <b>Yellow Dot Day</b> (open, no doctor) or close it. Work in <b>Month</b> view and tap <b>+ Add</b> on any day to put an office and doctor on it.</div>
+  <div class="notice" id="tourNotice"><b>Every office has its own color.</b> Tap any day to put a doctor in it, mark it a <b>Yellow Dot Day</b> (open, no doctor) or close it. Work in <b>Month</b> view and tap <b>+ Add</b> on any day to put an office and doctor on it.</div>
 
   <div class="bar">
     <div class="seg" id="viewseg"></div>
@@ -270,7 +270,7 @@
   <div class="filters" id="filters"></div>
   <div id="status"></div>
   <div class="keyrow">
-    <span class="keyitem"><span class="kmulti"><i class="kbox" style="background:#FFE1EF;border-color:#F0378F"></i><i class="kbox" style="background:#DFF3FE;border-color:#38BDF8"></i><i class="kbox" style="background:#ECFACC;border-color:#84CC16"></i></span> <b>Doctor on site</b> — shown in that office's own colour</span>
+    <span class="keyitem"><span class="kmulti"><i class="kbox" style="background:#FFE1EF;border-color:#F0378F"></i><i class="kbox" style="background:#DFF3FE;border-color:#38BDF8"></i><i class="kbox" style="background:#ECFACC;border-color:#84CC16"></i></span> <b>Doctor on site</b> — shown in that office's own color</span>
     <span class="keyitem"><i class="kbox" style="background:#FFF7E6;border:1px dashed #e6c877"></i> <b>Not decided yet</b> — open, no doctor and no Yellow Dot</span>
     <span class="keyitem" id="keyYdot"><i class="kbox" style="background:#FDE047;border-color:#eab308"></i><span class="ydmark"></span> <b>Yellow Dot Day</b> — open, no doctor on site</span>
     <span class="keyitem" id="keyClosed"><i class="kbox" style="background:#fafbfc"></i> Closed</span>
@@ -284,8 +284,8 @@
 
 <script>
 (function(){
-  /* ---------- the OFFICE carries the colour, not the doctor ---------- */
-  // PALETTE now lives in user.js so Marketing uses the identical colours.
+  /* ---------- the OFFICE carries the color, not the doctor ---------- */
+  // PALETTE now lives in user.js so Marketing uses the identical colors.
   const PALETTE=PH.palette();
   const colOf=c=>PALETTE.find(p=>p.k===c)||PALETTE[9];
 
@@ -298,7 +298,7 @@
   // A–Z everywhere — filter chips, week grid rows, month rows, counters.
   const byName=(a,b)=>a.n.localeCompare(b.n);
   let locations=PH.locations().sort(byName);
-  // Doctors have no colour now — a day takes the colour of its office.
+  // Doctors have no color now — a day takes the color of its office.
   let people=[{n:'Dr. Farnsworth'},{n:'Dr. Brimhall'},{n:'Dr. Coelho'},{n:'Dr. McBeth'}];
 
   const TZS=['Eastern Time','Central Time','Mountain Time','Mountain Time (Arizona, no DST)','Pacific Time','Alaska Time','Hawaii Time'];
@@ -359,7 +359,7 @@
       });
       d=addDays(d,1);
     }
-    // Stamp it, so a demo schedule that got saved before this existed can be recognised
+    // Stamp it, so a demo schedule that got saved before this existed can be recognized
     // and thrown away in production instead of being mistaken for real work.
     sched.__demo=true;
     save();
@@ -470,7 +470,7 @@
             '<small>'+mds.map(i=>people[i].n).join(', ')+'</small></button>';
         } else if(cell&&cell.ydot){
           if(!fAll()||!fYdot) return;
-          // Keep the office colour so you can still tell WHICH office — only the dot is yellow.
+          // Keep the office color so you can still tell WHICH office — only the dot is yellow.
           ents+='<button class="ent yd" style="background:'+c.bg+';color:'+c.fg+';border-left-color:'+c.dot+'"'+click+'>'+
             '<span class="eo">'+l.n+'</span>'+
             '<span class="es"><span class="ydmark"></span>Yellow Dot Day</span></button>';
@@ -708,7 +708,7 @@
       '<div class="m-top"><h3>'+(t.isNew?'Add an office':'Edit '+t.orig)+'</h3><button class="x" onclick="PS.close()">×</button></div>'+
       '<div class="m-body">'+
         '<div class="s-lab">Office name</div><input class="s-input" id="lName" value="'+(t.n||'').replace(/"/g,'&quot;')+'" placeholder="e.g. Roswell">'+
-        '<div class="s-lab">Colour — how this office shows on the schedule</div><div class="colgrid">'+cols+'</div>'+
+        '<div class="s-lab">Color — how this office shows on the schedule</div><div class="colgrid">'+cols+'</div>'+
         '<div class="s-lab">Time zone</div><select class="s-input" onchange="PS.setTZ(this.value)">'+TZS.map(z=>'<option'+(z===t.tz?' selected':'')+'>'+z+'</option>').join('')+'</select>'+
         '<div class="s-lab">Office hours</div>'+days+
         '<div class="s-lab">Lunch</div>'+
@@ -756,7 +756,7 @@
       '<div class="m-top"><h3>'+(tmpP.i<0?'Add a doctor':'Edit doctor')+'</h3><button class="x" onclick="PS.close()">×</button></div>'+
       '<div class="m-body"><div class="s-lab">Name</div>'+
         '<input class="s-input" id="pName" value="'+(tmpP.n||'').replace(/"/g,'&quot;')+'" placeholder="e.g. Dr. Smith">'+
-        '<p class="hint">Doctors don\'t have their own colour — a day takes the colour of the <b>office</b>.</p></div>'+
+        '<p class="hint">Doctors don\'t have their own color — a day takes the color of the <b>office</b>.</p></div>'+
       '<div class="m-foot">'+(tmpP.i<0?'':'<button class="sbtn ghost" onclick="PS.delPerson()">Remove</button>')+
         '<span style="flex:1"></span><button class="sbtn ghost" onclick="PS.close()">Cancel</button>'+
         '<button class="sbtn" onclick="PS.savePerson()">Save</button></div>');
@@ -789,11 +789,11 @@
       ? 'Week of '+MOFULL[anchor.getMonth()].slice(0,3)+' '+anchor.getDate()
       : MOFULL[mM]+' '+mY;
     el('hint').textContent = canEdit()
-      ? 'Tap any day to set a doctor, a Yellow Dot Day, or close it · every office has its own colour · today is outlined.'
+      ? 'Tap any day to set a doctor, a Yellow Dot Day, or close it · every office has its own color · today is outlined.'
       : 'Filter by office or doctor to find what you need · today is outlined.';
   }
   function refresh(){ renderBar(); renderFilters(); renderStatus(); view==='week'?renderWeek():renderMonth(); renderCounters(); renderKey(); }
-  // Don't explain a colour that isn't on screen — the legend follows the Show toggles.
+  // Don't explain a color that isn't on screen — the legend follows the Show toggles.
   function renderKey(){
     el('keyYdot').style.display = fYdot ? '' : 'none';
     el('keyClosed').style.display = fClosed ? '' : 'none';
@@ -817,7 +817,7 @@
     if(window.PH) PH.readOnlyBanner('.wrap','schedule');
     ['addLocBtn','addDocBtn'].forEach(id=>{const b=el(id); if(b)b.style.display='none';});
     const n=el('tourNotice');
-    if(n)n.innerHTML='<b>Every office has its own colour.</b> Grey = closed, <b>Yellow Dot Day</b> = open with no doctor on site. Use the filters to find an office or a doctor.';
+    if(n)n.innerHTML='<b>Every office has its own color.</b> Grey = closed, <b>Yellow Dot Day</b> = open with no doctor on site. Use the filters to find an office or a doctor.';
   }
 
   window.PS={view:setView,step,today,togLoc,allLocs,togDoc,allDocs,togYdot,togClosed,open,addTo,quick,pickDoc,setT,halfDay,fullDay,markYdot,markClosed,
@@ -858,16 +858,16 @@
 })();
 </script>
 <script>PH.nav('schedule');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hb93"></script>
+<script src="tour.js?v=hb94"></script>
 <script>
 Tour.init([
-  {sel:'#viewseg', title:'Week or month', body:'<b>Week</b> is the day-to-day working view. <b>Month</b> shows the whole month at a glance, with every office in its own colour.'},
+  {sel:'#viewseg', title:'Week or month', body:'<b>Week</b> is the day-to-day working view. <b>Month</b> shows the whole month at a glance, with every office in its own color.'},
   {sel:'#filters', title:'Find anything fast', body:'Tap offices to show or hide them, and tap a doctor to see <b>only</b> where that doctor is working. Both filters work in either view.'},
   {sel:'#status', title:'Is it actually covered?', body:'The one question that matters on a Monday: <b>is any open day still without a doctor?</b>'},
   {sel:'#board', title:'Tap any day to set it', body:'Pick a doctor — you\'ll only be offered doctors who are <b>free that day</b> — set the hours or use <b>Half day (8–2)</b>, or mark it a <b>Yellow Dot Day</b>. Tapping Yellow Dot again switches it off and closes the office.'},
   {sel:'#board', title:'Add a day as you go', body:'In <b>Month</b> view every day has a small <b>+ Add</b>. Tap it, choose the <b>office</b>, then the <b>doctor</b> and hours \u2014 that\u2019s how the calendar gets built.'},
   {sel:'#counters', title:'Doctor days, counted for you', body:'How many days each doctor works, how many days each office is covered, and who covers where — for <b>this month and the whole year</b>.'},
-  {sel:'#addLocBtn', title:'Offices, colours, hours and lunches', body:'Add an office, choose its <b>colour</b>, set its opening days and times, its time zone, and whether it takes a <b>set lunch at all</b>.'}
+  {sel:'#addLocBtn', title:'Offices, colors, hours and lunches', body:'Add an office, choose its <b>color</b>, set its opening days and times, its time zone, and whether it takes a <b>set lunch at all</b>.'}
 ], {key:'sched', title:'Schedule', next:{label:'Marketing', href:'marketing.html'}});
 </script>
 </body>

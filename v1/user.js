@@ -269,7 +269,7 @@
 
   /* ------------------------------------------------------------------
      LOCATIONS — one list, shared by every page.
-     Admin owns brand/state/tz. Schedule owns colour/lunch/hours. Both write the
+     Admin owns brand/state/tz. Schedule owns color/lunch/hours. Both write the
      WHOLE record back so neither wipes the other's fields. Every other page just
      reads it, so adding an office in either place shows up everywhere at once.
      ------------------------------------------------------------------ */
@@ -292,7 +292,7 @@
     {n:'Cruces FFO',brand:'FFO', state:'New Mexico', tz:'Mountain Time', color:'Slate Blue',
      lunch:null,          hours:[null,null,WKH,null,WKH]}
   ];
-  // Same order as the Schedule's PALETTE, so an auto-assigned colour is always one the
+  // Same order as the Schedule's PALETTE, so an auto-assigned color is always one the
   // schedule can actually render.
   const ALL_COLORS=['Teal','Slate Blue','Hot Pink','Purple','Sky Blue','Highlighter Orange',
                     'Lime Green','Highlighter Yellow','Jade','Red'];
@@ -312,7 +312,7 @@
     Eastern:'Eastern Time',Central:'Central Time',Mountain:'Mountain Time',Pacific:'Pacific Time'};
   const fullState=v=>{ v=(v||'').trim(); return STATE_FULL[v.toUpperCase()] || v; };
   // Light Pink/Light Orange were retired for reading as Hot Pink and Highlighter Orange
-  // when stacked together in a day cell. Anyone holding a retired name keeps a colour
+  // when stacked together in a day cell. Anyone holding a retired name keeps a color
   // that still renders, rather than losing it or drawing blank.
   const COLOR_RENAME={'Light Pink':'Jade','Light Orange':'Slate Blue','Royal Blue':'Slate Blue'};
   const fullTZ=v=>{ v=(v||'').trim(); return TZ_FULL[v] || TZ_FULL[v.toUpperCase()] || v; };
@@ -333,14 +333,14 @@
       }
     }
     if(!Array.isArray(st)||!st.length) return JSON.parse(JSON.stringify(DEFAULT_LOCATIONS));
-    // An office added from Admin has no colour/hours yet; give it usable ones so the
+    // An office added from Admin has no color/hours yet; give it usable ones so the
     // Schedule can draw it straight away instead of rendering blank.
     const used=st.map(l=>l.color).filter(Boolean);
     let spare=0;
     const nextColor=()=>{
       const free=ALL_COLORS.find(c=>used.indexOf(c)<0);
       // Track it immediately — otherwise every office added in the same pass gets the
-      // same colour, and two offices sharing a colour breaks the whole calendar.
+      // same color, and two offices sharing a color breaks the whole calendar.
       const pick = free || ALL_COLORS[spare++ % ALL_COLORS.length];
       used.push(pick);
       return pick;
@@ -598,8 +598,8 @@
             '</div>'+
             '<input type="file" id="ph-file" accept="image/*" style="display:none" onchange="PH.pickPhoto(this)">'+
           '</div>'+
-          (p.photo?'':'<div class="ph-pick" style="margin-top:10px"><span style="font-size:12px;color:#56627A">No photo? Pick a colour for your initials:</span>'+
-            COLORS.map(c=>'<button class="ph-sw'+(c===p.color?' on':'')+'" style="background:'+c+'" onclick="PH.setColor(\''+c+'\')" title="Use this colour"></button>').join('')+'</div>')+
+          (p.photo?'':'<div class="ph-pick" style="margin-top:10px"><span style="font-size:12px;color:#56627A">No photo? Pick a color for your initials:</span>'+
+            COLORS.map(c=>'<button class="ph-sw'+(c===p.color?' on':'')+'" style="background:'+c+'" onclick="PH.setColor(\''+c+'\')" title="Use this color"></button>').join('')+'</div>')+
         '</div>'+
         '<div class="ph-f" style="margin-bottom:14px"><label>Preferred name</label>'+
           '<input class="ph-edit" id="ph-pref" value="'+((p.preferred||'')).replace(/"/g,'&quot;')+'" placeholder="'+p.first+'">'+
@@ -863,9 +863,9 @@
     host.insertBefore(d,host.firstChild);
   }
 
-  /* Office colours. Lives HERE, not in schedule.html, because Marketing colours its
+  /* Office colors. Lives HERE, not in schedule.html, because Marketing colors its
      items by office too and the two must never drift. Schedule owns which office has
-     which colour; this owns what each colour actually is. */
+     which color; this owns what each color actually is. */
   const PALETTE=[
     {k:'Hot Pink',           dot:'#F0378F', bg:'#FFE1EF', fg:'#A80F63'},
     {k:'Purple',             dot:'#7C3AED', bg:'#EDE7FD', fg:'#5B21B6'},
@@ -875,7 +875,7 @@
     {k:'Highlighter Yellow', dot:'#FACC15', bg:'#FEF6C7', fg:'#7A5B08'},
     // Light Pink and Light Orange lived here. Each was the same hue as Hot Pink /
     // Highlighter Orange, only paler, so stacked in one day cell they read as one
-    // colour. Jade is the only hue the palette had real room for; Red is a spare.
+    // color. Jade is the only hue the palette had real room for; Red is a spare.
     // The two offices that had them now use Jade and the unused Slate Blue.
     {k:'Jade',               dot:'#5CD6A9', bg:'#E3FDF3', fg:'#0A7F54'},
     {k:'Red',                dot:'#F31637', bg:'#FDE3E7', fg:'#8E0B1F'},
@@ -884,7 +884,7 @@
   ];
   const colorOf=c=>PALETTE.find(p=>p.k===c)||PALETTE[PALETTE.length-1];
   /* By OFFICE name, which is what Marketing has to hand. Falls back to a neutral so an
-     office that has not been given a colour yet still renders. */
+     office that has not been given a color yet still renders. */
   function colorForOffice(n){
     const l=locations().find(x=>x.n===n);
     return l ? colorOf(l.color) : {k:'',dot:'#94a3b8',bg:'#F1F5F9',fg:'#475569'};
