@@ -80,6 +80,9 @@
   table.mx{border-collapse:collapse;background:#fff;min-width:1180px;width:100%}
   table.mx th:not(.corner):not(.team),table.mx td{min-width:112px}
   table.mx .lvl{white-space:nowrap}
+  .btn.tiny{padding:4px 10px;font-size:12px}
+  td.vacell{text-align:right;white-space:nowrap}
+  table.u tbody tr:hover .btn.tiny{border-color:var(--teal);color:var(--teal)}
   table.mx th{font-size:11px;font-weight:700;color:var(--navy);background:#fafbfc;padding:10px 8px;text-align:center;border-bottom:1px solid var(--line);border-left:1px solid var(--line)}
   table.mx th.corner{text-align:left;position:sticky;left:0;z-index:2;min-width:170px}
   table.mx th.team{text-align:left;position:sticky;left:0;background:#fff;z-index:1;min-width:170px;font-size:13px;color:var(--ink);border-bottom:1px solid var(--line);white-space:nowrap}
@@ -171,11 +174,11 @@
   .tp.on{background:var(--navy);color:#fff;border-color:var(--navy)}
   @media(max-width:640px){ .grid2{grid-template-columns:1fr} }
 </style>
-<script src="user.js?v=hb77"></script>
+<script src="user.js?v=hb78"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="_staff.js?v=hb77"></script>
-  <script src="store.js?v=hb77"></script>
-  <script src="gate.js?v=hb77"></script>
+  <script src="_staff.js?v=hb78"></script>
+  <script src="store.js?v=hb78"></script>
+  <script src="gate.js?v=hb78"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — admin console concept for validation. Real build: people sync from Microsoft 365; access is managed here.</div>
@@ -199,7 +202,6 @@
     <button class="tab" data-t="access" onclick="AD.tab('access')">Teams &amp; Access</button>
     <button class="tab" data-t="files" onclick="AD.tab('files')">Document Sections</button>
     <button class="tab" data-t="locs" onclick="AD.tab('locs')">Locations</button>
-    <button class="tab" data-t="viewas" onclick="AD.tab('viewas')">View as</button>
   </div>
 
   <div id="view"></div>
@@ -406,46 +408,17 @@
 
   function tabSet(t){ tab=t; [...document.querySelectorAll('.tab')].forEach(b=>b.classList.toggle('active',b.dataset.t===t)); render(); }
   function render(){ if(tab==='users')renderUsers(); else if(tab==='access')renderAccess();
-    else if(tab==='locs')renderLocs(); else if(tab==='viewas')renderViewAs(); else renderFiles(); }
+    else if(tab==='locs')renderLocs(); else renderFiles(); }
 
   const esc=v=>String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
 
-  /* ---------- VIEW AS (administrators only) ---------- */
-  function renderViewAs(){
-    if(!PH.isAdmin()){
-      el('view').innerHTML='<div class="intro"><b>Administrators only.</b> This lets an admin '+
-        'look at the hub as another person, to check what they can see.</div>';
-      return;
-    }
-    const cur=PH.impersonating();
-    const roster=(typeof STAFF!=='undefined'?STAFF:[]).filter(p=>p.n);
-    const rows=roster.map((p,i)=>
-      '<tr><td><b>'+esc(p.n)+'</b><div style="font-size:12px;color:var(--soft)">'+esc(p.role||'')+'</div></td>'+
-      '<td>'+esc(p.team||'\u2014')+'</td><td>'+esc(p.loc||'\u2014')+'</td>'+
-      '<td><button class="btn ghost" onclick="AD.viewAs('+i+')">View as</button></td></tr>').join('');
-    el('view').innerHTML=
-      '<div class="intro"><b>See the hub as someone else.</b> Useful when a person says '+
-      '\u201cI can\u2019t find X\u201d \u2014 look through their eyes instead of guessing. '+
-      'A purple bar stays on screen the whole time, and one click returns you to your own account.'+
-      '<br><br><b>This changes what you see, not what you can reach.</b> SharePoint still answers '+
-      'to your own sign-in, so you can never see data you don\u2019t already have rights to.</div>'+
-      (cur?'<div class="intro" style="border-left:3px solid #4B2E83">Currently viewing as <b>'+
-        esc(((cur.first||'')+' '+(cur.last||'')).trim())+'</b>. '+
-        '<button class="btn" onclick="PH.stopViewAs()">Return to my account</button></div>':'')+
-      '<div class="toolrow"><input class="search" id="vsearch" placeholder="Search people…" oninput="AD.vfilter(this.value)"></div>'+
-      '<div class="tbl-scroll"><table class="u" id="vtbl"><thead><tr><th>Person</th><th>Team</th><th>Location</th><th></th></tr></thead>'+
-      '<tbody>'+rows+'</tbody></table></div>';
-  }
-  function doViewAs(i){
-    const roster=(typeof STAFF!=='undefined'?STAFF:[]);
-    const row=roster[i]; if(!row) return;
-    PH.viewAs(PH.personFromStaff(row));
-  }
-  function vfilter(q){
-    q=(q||'').toLowerCase();
-    [...document.querySelectorAll('#vtbl tbody tr')].forEach(tr=>{
-      tr.style.display = tr.textContent.toLowerCase().indexOf(q)>=0 ? '' : 'none';
-    });
+  /* ---------- VIEW AS — lives in the People table, not its own tab ---------- */
+  function doViewAs(gi){
+    const u=users[gi]; if(!u) return;
+    PH.viewAs(PH.personFromStaff({
+      n:(u.f+' '+u.l).trim(), mail:u.email, loc:(u.loc==='Unassigned'?'':u.loc),
+      role:(u.teams[0]||'Staff'), team:u.teams.join('; ')
+    }));
   }
 
   /* ---------- PEOPLE ---------- */
@@ -453,7 +426,8 @@
     el('view').innerHTML=
       '<div class="intro"><b>People are created in Microsoft \u2014 never here.</b> As soon as IT sets up someone\'s Microsoft account they appear in this list, with <b>no access</b> until you give them a team. What they can then reach is decided <b>here in the hub</b>: set their <b>team(s), location &amp; status</b>. They look after their own <b>photo, preferred name, phone &amp; \u201cAbout me\u201d</b>. <b>Tap a person</b> to open their profile.</div>'+
       '<div class="toolrow"><input class="search" id="usearch" placeholder="Search people, email, team, location…" value="'+search.replace(/"/g,'&quot;')+'"><button class="btn ghost" onclick="AD.whyNoAdd()">Someone missing?</button></div>'+
-      '<div class="tbl-scroll"><table class="u"><thead><tr><th>Person</th><th>Team(s) — what they can do</th><th>Location — where</th><th>Status</th></tr></thead><tbody></tbody></table></div>'+
+      '<div class="tbl-scroll"><table class="u"><thead><tr><th>Person</th><th>Team(s) — what they can do</th><th>Location — where</th><th>Status</th>'+
+        (PH.isAdmin()?'<th></th>':'')+'</tr></thead><tbody></tbody></table></div>'+
       '<p style="font-size:13px;color:var(--soft);margin:12px 2px 0" id="ucount"></p>';
     renderUsersBody();
     const s=el('usearch'); if(s) s.oninput=e=>{search=e.target.value; renderUsersBody();};
@@ -465,7 +439,10 @@
     tb.innerHTML=list.map(u=>{const gi=users.indexOf(u);
       return '<tr onclick="AD.profile('+gi+')"><td><div class="who"><span class="av" style="background:'+av(u)+'">'+initials(u)+'</span><div><div class="uname">'+u.f+' '+u.l+'</div><div style="font-size:12px;color:var(--soft)">'+u.email+'</div></div></div></td>'+
         '<td><div class="chips">'+u.teams.map(t=>'<span class="chip">'+t+'</span>').join('')+'</div></td>'+
-        '<td>'+u.loc+'</td><td><span class="pill '+u.status.toLowerCase()+'">'+u.status+'</span></td></tr>';}).join('');
+        '<td>'+u.loc+'</td><td><span class="pill '+u.status.toLowerCase()+'">'+u.status+'</span></td>'+
+        // Looking through someone's eyes belongs next to the person, not in its own tab.
+        (PH.isAdmin()?'<td class="vacell"><button class="btn ghost tiny" onclick="event.stopPropagation();AD.viewAs('+gi+')">View as</button></td>':'')+
+        '</tr>';}).join('');
     const c=el('ucount'); if(c)c.textContent=list.length+' of '+users.length+' people shown.';
   }
   function userAccess(u){ const out={}; allSections().forEach(s=>{let best='none'; u.teams.forEach(t=>{const lv=(access[t]||{})[s.k]||'none'; if(rank[lv]>rank[best])best=lv;}); out[s.k]=best;}); return out; }
@@ -859,14 +836,14 @@
   function openModal(h){ el('modalCard').innerHTML=h; el('modal').classList.add('open'); }
   function closeModal(){ el('modal').classList.remove('open'); }
 
-  window.AD={tab:tabSet,viewAs:doViewAs,vfilter,newTeam,editTeam,saveTeam,delTeam,resetTeams,profile,whyNoAdd,togTeam,togLoc,setStatus,saveUser,pickLevel,pickAud,tog,addFile,noop,newSec,editSec,saveSec,delSec,resetSecs,setSecName,setSecIcon,setSecStruct,setSecLocMode,setSecTeamMode,togSecLoc,togSecTeam,saveFile,cd,useFile,clearFile,uploadFile,setFileTeamMode,setFileLocMode,togFileLoc,togFileTeam,renderLocs,newLoc,editLoc,saveLoc,delLoc,resetLocs,setLocBrand,setLocState,setLocTZ,close:closeModal};
+  window.AD={tab:tabSet,viewAs:doViewAs,newTeam,editTeam,saveTeam,delTeam,resetTeams,profile,whyNoAdd,togTeam,togLoc,setStatus,saveUser,pickLevel,pickAud,tog,addFile,noop,newSec,editSec,saveSec,delSec,resetSecs,setSecName,setSecIcon,setSecStruct,setSecLocMode,setSecTeamMode,togSecLoc,togSecTeam,saveFile,cd,useFile,clearFile,uploadFile,setFileTeamMode,setFileLocMode,togFileLoc,togFileTeam,renderLocs,newLoc,editLoc,saveLoc,delLoc,resetLocs,setLocBrand,setLocState,setLocTZ,close:closeModal};
   el('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
   render();
 })();
 </script>
 <script>PH.nav('admin');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();});</script>
-<script src="tour.js?v=hb77"></script>
+<script src="tour.js?v=hb78"></script>
 <script>
 Tour.init([
   {sel:'#tabs', title:'This is your control room', body:'Four tabs and you can run the whole hub: <b>People</b>, <b>Teams &amp; Access</b>, <b>Document Sections</b> and <b>Locations</b>. No developer, no consultant.', pre:()=>AD.tab('users')},
