@@ -726,7 +726,7 @@
      the audit trail for production numbers lives separately in ph_prodaudit.
      --------------------------------------------------------------- */
   const ACT_KEY='ph_activity', ACT_MAX=60;
-  const ACT_DAYS=14;          // a feed, not an archive — older entries drop off
+  const ACT_DAYS=3;           // a feed, not an archive — three days and it drops off
   function fresh(list){
     const cut=Date.now()-ACT_DAYS*86400000;
     return (list||[]).filter(e=>e && e.at && new Date(e.at).getTime()>cut);
