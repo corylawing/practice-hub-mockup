@@ -235,10 +235,10 @@
     .addday{padding:9px 11px;font-size:12px}
   }
 </style>
-<script src="user.js?v=hb71"></script>
+<script src="user.js?v=hb75"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hb71"></script>
-  <script src="gate.js?v=hb71"></script>
+  <script src="store.js?v=hb75"></script>
+  <script src="gate.js?v=hb75"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — sample staff schedule for validation. Live version = one Microsoft List the practice maintains.</div>
@@ -320,7 +320,18 @@
   function setCell(l,d,v){ const k=iso(d); sched[k]=sched[k]||{}; if(v===null) delete sched[k][l.n]; else sched[k][l.n]=v; save(); }
   /* Local first so the calendar never lags, then out to SharePoint so the schedule
      follows people between devices. PH_STORE handles both and degrades to local alone. */
+  /* Schedules written before production existed were demo data, but carry no marker —
+     the stamp above only catches ones built since. So production also requires a schedule
+     to declare this version; anything older is treated as pre-launch demo data and dropped.
+     Safe only because nothing real has been entered yet. Bumping this again later WOULD
+     discard genuine work, so don't. */
+  const SCHED_VERSION=2;
+
   function save(){
+    sched.__v=SCHED_VERSION;
+    // Feeds Home's notifications. Debounced inside logActivity.
+    if(window.PH && PH.logActivity && PH.isLive())
+      PH.logActivity({sec:'schedule', ic:'\u{1F4C5}', title:'Schedule updated', scope:'everyone'});
     try{ localStorage.setItem('ph_sched2',JSON.stringify(sched)); }catch(_){}
     if(window.PH_STORE) PH_STORE.set('ph_sched2', sched);
   }
@@ -830,7 +841,7 @@
     }
   }
   function boot(stored){
-    const isDemo = stored && stored.__demo;
+    const isDemo = stored && (stored.__demo || stored.__v!==SCHED_VERSION);
     if(PH.isLive() && isDemo) stored=null;          // never show invented days in the real app
     if(stored && typeof stored==='object' && Object.keys(stored).length) sched=stored;
     else if(PH.isLive()){ startEmpty(); save(); }   // persist the clean slate over the demo one
@@ -847,7 +858,7 @@
 })();
 </script>
 <script>PH.nav('schedule');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();});</script>
-<script src="tour.js?v=hb71"></script>
+<script src="tour.js?v=hb75"></script>
 <script>
 Tour.init([
   {sel:'#viewseg', title:'Week or month', body:'<b>Week</b> is the day-to-day working view. <b>Month</b> shows the whole month at a glance, with every office in its own colour.'},

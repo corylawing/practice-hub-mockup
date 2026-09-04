@@ -65,6 +65,34 @@
   // Departments that legitimately see every office.
   const ALL_OFFICE_DEPTS=['admin','executive team','leadership team'];
 
+  /* What Admin > Teams & Access has actually set. That screen is the practice's own
+     control over permissions, so it wins; DEPT_CAN above is only the starting point for
+     a team the matrix doesn't mention. Keys there are team names as typed, so match
+     case-insensitively. */
+  let ACCESS=null;
+  function loadAccessLocal(){
+    try{ ACCESS=JSON.parse(localStorage.getItem('ph_access')); }catch(_){ ACCESS=null; }
+  }
+  loadAccessLocal();
+  function reloadAccess(){
+    loadAccessLocal();
+    if(window.PH_STORE && isLive()){
+      return window.PH_STORE.get('ph_access').then(function(r){
+        if(r && typeof r==='object'){
+          ACCESS=r;
+          try{ localStorage.setItem('ph_access',JSON.stringify(r)); }catch(_){}
+        }
+        return ACCESS;
+      }).catch(function(){ return ACCESS; });
+    }
+    return Promise.resolve(ACCESS);
+  }
+  function accessForTeam(dept){
+    if(!ACCESS) return null;
+    const key=Object.keys(ACCESS).find(k=>k.toLowerCase()===dept);
+    return key?ACCESS[key]:null;
+  }
+
   /* BOOTSTRAP ADMINS.
      Access normally comes from the Entra Department field. But until someone sets those
      fields nobody is an admin — and Admin is where you'd fix it. That deadlock would leave
@@ -85,11 +113,11 @@
     // Several departments -> take the most permissive level for each area.
     let can=null;
     depts.forEach(d=>{
-      const c=DEPT_CAN[d]; if(!c) return;
+      const c=accessForTeam(d) || DEPT_CAN[d]; if(!c) return;
       if(!can){ can=Object.assign({},c); return; }
       Object.keys(c).forEach(k=>{ if(RANK[c[k]]>RANK[can[k]]) can[k]=c[k]; });
     });
-    const known=depts.some(d=>DEPT_CAN[d]);
+    const known=depts.some(d=>accessForTeam(d)||DEPT_CAN[d]);
     if(!can) can=Object.assign({},DEPT_CAN['staff']);   // unrecognised/blank -> least access
 
     const mail=String(PROFILE.mail||PROFILE.userPrincipalName||'').toLowerCase().trim();
@@ -155,14 +183,30 @@
     const imp=impersonating();
     if(imp && isAdmin(realMe())) return imp;    // admin looking through someone else's eyes
     const real=fromProfile();
-    if(real) return real;                       // live: the signed-in person
+    if(real){
+      let mine={}; try{ mine=JSON.parse(localStorage.getItem(profileKey()))||{}; }catch(_){}
+      return Object.assign(real, mine);         // live: the signed-in person + their own edits
+    }
     const base=PEOPLE.find(p=>p.id===id());     // sandbox: the chosen persona
     let mine={}; try{ mine=JSON.parse(localStorage.getItem('ph_me_'+base.id))||{}; }catch(_){}
     return Object.assign({},base,mine);
   }
+  /* Profile edits (photo, preferred name, phone, About me) belong to the PERSON, so in
+     production they're keyed by their email — not by a demo persona id, which would have
+     made everyone share one profile. They also go to SharePoint so they follow the person
+     between devices. */
+  function profileKey(){
+    if(PROFILE){
+      const mail=String(PROFILE.mail||PROFILE.userPrincipalName||'').toLowerCase().trim();
+      if(mail) return 'ph_me_'+mail;
+    }
+    return 'ph_me_'+id();
+  }
   function saveMine(patch){
-    const k='ph_me_'+id(); let cur={}; try{ cur=JSON.parse(localStorage.getItem(k))||{}; }catch(_){}
-    try{ localStorage.setItem(k,JSON.stringify(Object.assign(cur,patch))); }catch(_){}
+    const k=profileKey(); let cur={}; try{ cur=JSON.parse(localStorage.getItem(k))||{}; }catch(_){}
+    const merged=Object.assign(cur,patch);
+    try{ localStorage.setItem(k,JSON.stringify(merged)); }catch(_){}
+    if(window.PH_STORE && isLive()) window.PH_STORE.set(k, merged);
   }
   const name=p=>((p.dr?'Dr. ':'')+(p.preferred||p.first)+' '+p.last);
   const initialsOf=p=>((p.preferred||p.first)[0]+p.last[0]).toUpperCase();
@@ -224,6 +268,19 @@
 
   function locations(){
     let st=null; try{ st=JSON.parse(localStorage.getItem('ph_locations')); }catch(_){}
+    /* The default open/closed pattern per office is demo invention — it claims Carlsbad
+       shuts on Tuesdays and so on. In production every office starts open Mon–Fri with
+       nothing decided, and the practice closes the days they actually close. Stored
+       locations from before this are dropped the same way, by version. */
+    const LOC_VERSION=2;
+    const openAllWeek=()=>[WKH,WKH,WKH,WKH,WKH].map(h=>({s:h.s,e:h.e}));
+    if(isLive()){
+      const stale = !Array.isArray(st) || !st.length || st.some(l=>l.__v!==LOC_VERSION);
+      if(stale){
+        return DEFAULT_LOCATIONS.map(l=>Object.assign(
+          JSON.parse(JSON.stringify(l)), {hours:openAllWeek(), __v:LOC_VERSION}));
+      }
+    }
     if(!Array.isArray(st)||!st.length) return JSON.parse(JSON.stringify(DEFAULT_LOCATIONS));
     // An office added from Admin has no colour/hours yet; give it usable ones so the
     // Schedule can draw it straight away instead of rendering blank.
@@ -313,9 +370,10 @@
   }
 
   function saveLocations(list){
+    if(isLive()) list.forEach(l=>{ l.__v=2; });   // mark as the practice's own, not demo
     try{ localStorage.setItem('ph_locations',JSON.stringify(list)); }catch(_){}
     // Offices are shared practice-wide, so they belong in SharePoint, not one browser.
-    if(window.PH_STORE) PH_STORE.set('ph_locations', list);
+    if(window.PH_STORE) window.PH_STORE.set('ph_locations', list);
   }
   const officeNames=()=>locations().map(l=>l.n);
 
@@ -435,10 +493,11 @@
     menu=document.createElement('div'); menu.className='ph-menu';
     menu.innerHTML='<div class="mh"><b>'+name(p)+'</b><small>'+p.title+'</small></div>'+
       '<button onclick="PH.profile()">👤 My profile</button>'+
+      (isLive() ? '' :
       '<div class="sec">Demo — sign in as</div>'+
       PEOPLE.map(x=>'<button class="'+(x.id===p.id?'cur':'')+'" onclick="PH.setMe(\''+x.id+'\')">'+
         '<span class="cir" style="width:22px;height:22px;font-size:10px;'+faceStyle(x.id===p.id?p:x)+'">'+face(x.id===p.id?p:x)+'</span>'+
-        x.title.split(' · ')[0]+(x.id===p.id?'<span class="ck">✓</span>':'')+'</button>').join('');
+        x.title.split(' · ')[0]+(x.id===p.id?'<span class="ck">✓</span>':'')+'</button>').join(''));
     document.body.appendChild(menu);
     const r=anchor.getBoundingClientRect(), m=menu.getBoundingClientRect();
     menu.style.top=(r.bottom+8)+'px';
@@ -601,6 +660,58 @@
     }
   }
 
+  /* ---------------------------------------------------------------
+     ACTIVITY — a real notification feed.
+     The home page used to list invented updates. Now anything that actually changes
+     records who did it, when, and which office it touched, and Home shows the entries
+     the reader is allowed to see. Capped, because this is a feed, not an audit log —
+     the audit trail for production numbers lives separately in ph_prodaudit.
+     --------------------------------------------------------------- */
+  const ACT_KEY='ph_activity', ACT_MAX=60;
+
+  function activity(){
+    try{ return JSON.parse(localStorage.getItem(ACT_KEY)||'[]'); }catch(_){ return []; }
+  }
+  function logActivity(e){
+    if(!e || !e.title) return;
+    const who=realMe();
+    const entry={
+      title:e.title, sec:e.sec||'', ic:e.ic||'\u{1F514}',
+      scope:e.scope||'everyone',
+      by:((who.first||'')+' '+(who.last||'')).trim()||'Someone',
+      at:new Date().toISOString()
+    };
+    let list=activity();
+    // Collapse a burst of edits to the same thing by the same person into one entry.
+    const recent=list[0];
+    if(recent && recent.title===entry.title && recent.by===entry.by &&
+       (Date.now()-new Date(recent.at)) < 5*60*1000){ list[0]=entry; }
+    else list.unshift(entry);
+    list=list.slice(0,ACT_MAX);
+    try{ localStorage.setItem(ACT_KEY,JSON.stringify(list)); }catch(_){}
+    if(window.PH_STORE) window.PH_STORE.set(ACT_KEY, list);
+    return list;
+  }
+  function loadActivity(){
+    if(!window.PH_STORE || !isLive()) return Promise.resolve(activity());
+    return window.PH_STORE.get(ACT_KEY).then(function(remote){
+      if(Array.isArray(remote)){
+        try{ localStorage.setItem(ACT_KEY,JSON.stringify(remote)); }catch(_){}
+        return remote;
+      }
+      return activity();
+    }).catch(function(){ return activity(); });
+  }
+  function ago(iso){
+    const mins=Math.round((Date.now()-new Date(iso))/60000);
+    if(mins<2) return 'just now';
+    if(mins<60) return mins+' minutes ago';
+    if(mins<120) return 'an hour ago';
+    if(mins<1440) return Math.round(mins/60)+' hours ago';
+    if(mins<2880) return 'yesterday';
+    return Math.round(mins/1440)+' days ago';
+  }
+
   function nav(active){
     const host=document.getElementById('nav')||document.querySelector('.v1nav-in');
     if(host) host.innerHTML=NAV.filter(x=>x.show()).map(x=>
@@ -685,6 +796,6 @@
   }
   const isLive=()=>env()==='live';
 
-  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN};
+  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess};
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mount); else mount();
 })();

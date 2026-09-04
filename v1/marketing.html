@@ -156,10 +156,10 @@
   @media(max-width:900px){ .board{grid-template-columns:repeat(2,1fr)} }
   @media(max-width:560px){ .board{grid-template-columns:1fr} }
 </style>
-<script src="user.js?v=hb71"></script>
+<script src="user.js?v=hb75"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hb71"></script>
-  <script src="gate.js?v=hb71"></script>
+  <script src="store.js?v=hb75"></script>
+  <script src="gate.js?v=hb75"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — marketing board concept for validation. Real build lives in Home-Brace (Microsoft Lists / Planner).</div>
@@ -454,6 +454,10 @@
     c.title=el('e_title').value.trim()||'Untitled'; c.owner=el('e_owner').value.trim();
     c.loc=el('e_loc').value; c.date=el('e_date').value.trim(); c.notes=el('e_notes').value.trim();
     if(c.stage!=='done')c.result='none';
+    if(window.PH && PH.logActivity && PH.isLive())
+      PH.logActivity({sec:'marketing', ic:'\u{1F4E3}',
+        title:'Marketing \u00b7 '+c.title, scope:c.loc||'everyone'});
+    if(window.PH_STORE) PH_STORE.set('ph_mktg', cards);
     closeModal(); render();
   }
   function del(){ cards=cards.filter(x=>x.id!==editId); closeModal(); render(); }
@@ -513,7 +517,7 @@
 })();
 </script>
 <script>PH.nav('marketing');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();});</script>
-<script src="tour.js?v=hb71"></script>
+<script src="tour.js?v=hb75"></script>
 <script>
 Tour.init([
   {sel:'.board', title:'Your marketing board', body:'Every event, promo and post is a card that moves left to right: <b>Ideas \u2192 Planned \u2192 In progress \u2192 Done</b>. <b>Drag a card</b> across, or use the \u25c0 \u25b6 arrows on a phone.'},

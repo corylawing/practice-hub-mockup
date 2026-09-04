@@ -75,7 +75,11 @@
   .pill.paused{background:#FFF6E9;color:#946011}
   /* access matrix */
   .mx-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
-  table.mx{border-collapse:collapse;background:#fff;min-width:960px;width:100%}
+  /* "Enter + goals" was wrapping onto three lines in a narrow column, which read as a
+     squashed blob. Give the columns room and let the table scroll instead. */
+  table.mx{border-collapse:collapse;background:#fff;min-width:1180px;width:100%}
+  table.mx th:not(.corner):not(.team),table.mx td{min-width:112px}
+  table.mx .lvl{white-space:nowrap}
   table.mx th{font-size:11px;font-weight:700;color:var(--navy);background:#fafbfc;padding:10px 8px;text-align:center;border-bottom:1px solid var(--line);border-left:1px solid var(--line)}
   table.mx th.corner{text-align:left;position:sticky;left:0;z-index:2;min-width:170px}
   table.mx th.team{text-align:left;position:sticky;left:0;background:#fff;z-index:1;min-width:170px;font-size:13px;color:var(--ink);border-bottom:1px solid var(--line);white-space:nowrap}
@@ -167,11 +171,11 @@
   .tp.on{background:var(--navy);color:#fff;border-color:var(--navy)}
   @media(max-width:640px){ .grid2{grid-template-columns:1fr} }
 </style>
-<script src="user.js?v=hb71"></script>
+<script src="user.js?v=hb75"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="_staff.js?v=hb71"></script>
-  <script src="store.js?v=hb71"></script>
-  <script src="gate.js?v=hb71"></script>
+  <script src="_staff.js?v=hb75"></script>
+  <script src="store.js?v=hb75"></script>
+  <script src="gate.js?v=hb75"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — admin console concept for validation. Real build: people sync from Microsoft 365; access is managed here.</div>
@@ -302,11 +306,22 @@
   const LVLNAME={none:'—',view:'View',add:'Add',edit:'Edit',manage:'Manage'};
   const rank={none:0,view:1,add:2,edit:3,manage:4};
 
+  /* The access matrix is REAL: what an admin sets here is what people can actually do.
+     Saved to ph_access and read by user.js, which uses its built-in defaults only for a
+     team the matrix doesn't cover. */
+  const ACCESS_KEY='ph_access';
+  function saveAccess(){
+    try{ localStorage.setItem(ACCESS_KEY, JSON.stringify(access)); }catch(_){}
+    if(window.PH_STORE && PH.isLive()) window.PH_STORE.set(ACCESS_KEY, access);
+    if(window.PH && PH.reloadAccess) PH.reloadAccess();
+  }
   let access={};
   function ensureAccess(){ TEAMS.forEach(t=>{ access[t]=access[t]||{}; allSections().forEach(x=>{ if(access[t][x.k]===undefined)access[t][x.k]='none'; }); }); }
   function applySecAudience(sec){ (sec.teamMode==='all'?TEAMS:(sec.teams||[])).forEach(t=>{ if(access[t]&&rank[access[t][sec.k]||'none']<1)access[t][sec.k]='view'; }); if(access['Admin'])access['Admin'][sec.k]='manage'; }
   ensureAccess();
   const set=(t,o)=>Object.assign(access[t],o);
+  let SAVED_ACCESS=null;
+  try{ SAVED_ACCESS=JSON.parse(localStorage.getItem(ACCESS_KEY)); }catch(_){}
   allSections().forEach(x=>access['Admin'][x.k]='manage');
   set('Executive Team',{production:'manage',dashboard:'manage',schedule:'view',marketing:'view',team:'view',admin:'view',hr:'edit',eom:'manage',officedocs:'view',forms:'view',vendors:'view',filing:'view'});
   set('Leadership Team',{production:'manage',dashboard:'edit',schedule:'view',marketing:'view',team:'view',hr:'edit',eom:'edit',officedocs:'view',forms:'view',vendors:'view',filing:'view'});
@@ -317,6 +332,13 @@
   set('Marketing Team',{marketing:'manage',team:'view',hr:'view',forms:'view'});
   set('Financial Coordinator Team',{production:'edit',dashboard:'view',team:'view',eom:'edit',vendors:'view',filing:'edit'});
   set('Staff',{schedule:'view',team:'view',hr:'view',forms:'view'});
+  // Anything an admin has already set wins over these starting values.
+  if(SAVED_ACCESS && typeof SAVED_ACCESS==='object'){
+    Object.keys(SAVED_ACCESS).forEach(t=>{
+      if(!access[t]) access[t]={};
+      Object.assign(access[t], SAVED_ACCESS[t]);
+    });
+  }
   DOCSECS.forEach(sec=>{ if(!DEFAULT_DOCSECS.some(d=>d.k===sec.k)) applySecAudience(sec); });
   clampAccess();
 
@@ -528,14 +550,14 @@
       DOCSECS.forEach(sec=>{ if(sec.teams) sec.teams=sec.teams.map(t=>t===d.old?nm:t); });
       saveSecs();
     }
-    saveTeams(); ensureAccess(); clampAccess(); closeModal(); renderAccess();
+    saveTeams(); ensureAccess(); clampAccess(); saveAccess(); closeModal(); renderAccess();
   }
   function delTeam(){
     const t=teamDraft.old; if(!t)return;
     TEAMS=TEAMS.filter(x=>x!==t); delete access[t];
     users.forEach(u=>{ u.teams=u.teams.filter(x=>x!==t); });
     DOCSECS.forEach(sec=>{ if(sec.teams) sec.teams=sec.teams.filter(x=>x!==t); });
-    saveTeams(); saveSecs(); closeModal(); renderAccess();
+    saveTeams(); saveSecs(); saveAccess(); closeModal(); renderAccess();
   }
   function resetTeams(){ TEAMS=DEFAULT_TEAMS.slice(); saveTeams(); location.reload(); }
 
@@ -787,7 +809,7 @@
   function pickLevel(ev,t,k){
     ev.stopPropagation();
     openPk(ev.currentTarget, levelsFor(k).map(l=>({value:l,label:(l==='none'?'None':shortFor(k,l)),desc:descFor(k,l),swatch:LVLSW[l],cur:(access[t][k]||'none')===l})),
-      v=>{ access[t][k]=v; renderAccess(); });
+      v=>{ access[t][k]=v; saveAccess(); renderAccess(); });
   }
   function pickAud(ev,k,idx){
     ev.stopPropagation(); const sec=DOCSECS.find(x=>x.k===k); if(!sec)return; const it=sec.items[idx];
@@ -808,7 +830,7 @@
 })();
 </script>
 <script>PH.nav('admin');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();});</script>
-<script src="tour.js?v=hb71"></script>
+<script src="tour.js?v=hb75"></script>
 <script>
 Tour.init([
   {sel:'#tabs', title:'This is your control room', body:'Four tabs and you can run the whole hub: <b>People</b>, <b>Teams &amp; Access</b>, <b>Document Sections</b> and <b>Locations</b>. No developer, no consultant.', pre:()=>AD.tab('users')},

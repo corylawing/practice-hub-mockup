@@ -92,10 +92,10 @@
   .upd .uw{font-size:12px;color:var(--soft)}
   .upd .utag{margin-left:auto;font-size:11px;font-weight:700;color:var(--teal-600);background:var(--teal-soft);border-radius:999px;padding:2px 9px;white-space:nowrap}
 </style>
-<script src="user.js?v=hb71"></script>
+<script src="user.js?v=hb75"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hb71"></script>
-  <script src="gate.js?v=hb71"></script>
+  <script src="store.js?v=hb75"></script>
+  <script src="gate.js?v=hb75"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — this is the logged-in home. Use “Viewing as” to see how the app changes for each role.</div>
@@ -201,11 +201,20 @@
   }
   function secName(k){ const s=SECTIONS.find(x=>x.k===k); return s?s.n:k; }
   function renderUpdates(p){
-    const list=UPDATES.filter(u=>canSee(u,p));
+    // Live shows what has actually happened; sandbox keeps the sample list so the
+    // page still demonstrates something.
+    const src = (window.PH && PH.isLive && PH.isLive())
+      ? PH.activity().map(a=>({sec:a.sec, scope:a.scope, ic:a.ic,
+          title:a.title+' \u2014 '+a.by, when:PH.ago(a.at)}))
+      : UPDATES;
+    const list=src.filter(u=>canSee(u,p));
     el('updates').innerHTML='<h2>🔔 Updates for you <span class="cnt">'+list.length+'</span></h2>'+
       '<p class="sub2">New documents &amp; changes that match your role, location &amp; team. Files open on your Microsoft drive.</p>'+
       (list.length? list.map(u=>'<div class="upd"><span class="uic">'+u.ic+'</span><div><div class="ut">'+u.title+'</div><div class="uw">'+u.when+' · opens in SharePoint ↗</div></div><span class="utag">'+secName(u.sec)+'</span></div>').join('')
-        : '<div class="upd" style="border-top:none;color:var(--soft)">Nothing new right now.</div>');
+        : '<div class="upd" style="border-top:none;color:var(--soft)">'+
+          ((window.PH&&PH.isLive&&PH.isLive())
+            ? 'Nothing yet. Updates appear here as people enter production numbers, change the schedule or post marketing.'
+            : 'Nothing new right now.')+'</div>');
   }
 
   function initials(n){const p=n.split(' ');return (p[0][0]+(p[1]?p[1][0]:'')).toUpperCase();}
@@ -249,14 +258,17 @@
 
   // build the dropdown
   el('persona').innerHTML=PERSONAS.map(p=>'<option value="'+p.id+'">'+p.name+(p.scope!=='all'&&p.id!=='admin'?' — '+p.scope:'')+'</option>').join('');
-  window.HOME={set};
+  // Home paints before sign-in resolves; this lets the page refresh its feed once the
+  // real activity has been fetched.
+  function refreshUpdates(){ try{ renderUpdates(PH.me()); }catch(_){} }
+  window.HOME={set, refreshUpdates};
   let saved='admin'; try{ saved=localStorage.getItem('ph_viewas')||'admin'; }catch(_){}
   if(!PERSONAS.some(p=>p.id===saved)) saved='admin';
   el('persona').value=saved; set(saved);
 })();
 </script>
-<script>PH.nav('home');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();});</script>
-<script src="tour.js?v=hb71"></script>
+<script>PH.nav('home');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.loadActivity)PH.loadActivity().then(function(){if(window.HOME&&HOME.refreshUpdates)HOME.refreshUpdates();});});</script>
+<script src="tour.js?v=hb75"></script>
 <script>
 Tour.init([
   {sel:'.ph-av', title:'This is you', body:'Your name and photo, top right. Tap it any time for <b>My profile</b> \u2014 and, in this demo, to <b>sign in as someone else</b> so you can see exactly what each person sees.'},
