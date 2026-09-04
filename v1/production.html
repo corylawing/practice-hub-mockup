@@ -78,6 +78,23 @@
   .big .k{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:#0a4d49;font-weight:700}
   .big .v{font-size:28px;font-weight:800;color:#0a4d49;line-height:1.15}
   .savebar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:16px}
+  /* The button reports its own outcome. Someone who has just typed a month of numbers
+     is looking at the button they pressed, not at a banner elsewhere on the page. */
+  .btn.saving{position:relative;color:transparent}
+  .btn.saving::after{content:'';position:absolute;inset:0;margin:auto;width:16px;height:16px;
+    border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;
+    animation:btnspin .6s linear infinite}
+  @keyframes btnspin{to{transform:rotate(360deg)}}
+  .btn.done{background:var(--good,#2E9E6B)}
+  .btn.done::before{content:'\2713  '}
+  .btn.failed{background:var(--bad,#D7503A)}
+  /* A quick settle, not a bounce — this is a confirmation, not a reward. */
+  .btn.done,.btn.failed{animation:btnsettle .28s ease-out}
+  @keyframes btnsettle{from{transform:scale(.97)}to{transform:none}}
+  @media (prefers-reduced-motion: reduce){
+    .btn.saving::after{animation:none;border-top-color:rgba(255,255,255,.9)}
+    .btn.done,.btn.failed{animation:none}
+  }
   .btn{background:var(--teal);color:#fff;border:none;border-radius:10px;padding:12px 20px;font-weight:700;font-size:15px;cursor:pointer;font-family:inherit}
   .btn:hover{background:var(--teal-600)}
   .btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--line);font-weight:600;font-size:14px;padding:10px 15px}
@@ -93,12 +110,21 @@
   .noacc{background:#fff;border:1px dashed var(--line);border-radius:14px;padding:34px;text-align:center;color:var(--soft)}
   .noacc b{color:var(--navy)}
   @media(max-width:760px){ .grid2{grid-template-columns:1fr} }
+  /* Some people set "reduce motion" in Windows or macOS, often because movement makes
+     them unwell. Honour it everywhere: keep the state changes, drop the travel. */
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{
+      animation-duration:.01ms !important; animation-iteration-count:1 !important;
+      transition-duration:.01ms !important; scroll-behavior:auto !important;
+    }
+  }
+
 </style>
-<script src="user.js?v=hb98"></script>
+<script src="user.js?v=hb99"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="workbook.js?v=hb98"></script>
-  <script src="store.js?v=hb98"></script>
-  <script src="gate.js?v=hb98"></script>
+  <script src="workbook.js?v=hb99"></script>
+  <script src="store.js?v=hb99"></script>
+  <script src="gate.js?v=hb99"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — type the month's numbers here. In the real build this writes straight into the SharePoint workbook.</div>
@@ -328,7 +354,8 @@
       wbBanner('<b>Not connected.</b> Sign in before saving to the workbook.', true); return;
     }
     const fields=['tc','adj','mds','dys','goal','str','fee','afee'];
-    const btn=el('pushbtn'); if(btn){ btn.disabled=true; btn.textContent='Saving to workbook…'; }
+    const btn=el('pushbtn');
+    if(btn){ btn.disabled=true; btn.classList.remove('done','failed'); btn.classList.add('saving'); }
     const done=[], failed=[];
     // A shared sender, so the write and its read-back use one token path.
     const send=(method,path,body)=>PH_AUTH.token().then(t=>
@@ -346,18 +373,32 @@
         done.push(f+' \u2192 '+r.address);
       }catch(e){ failed.push(f+': '+((e&&e.message)||e)); }
     }
-    if(btn){ btn.disabled=false; btn.textContent='Save to workbook'; }
+    /* Say what happened on the button itself, then return it to normal. */
+    function settle(state, label){
+      if(!btn) return;
+      btn.classList.remove('saving');
+      btn.disabled=false;
+      btn.classList.add(state);
+      btn.textContent=label;
+      setTimeout(function(){
+        btn.classList.remove('done','failed');
+        btn.textContent='Save to workbook';
+      }, state==='done' ? 2600 : 4000);
+    }
     if(failed.length){
+      settle('failed', failed.length+' didn\u2019t save');
       wbBanner('<b>'+failed.length+' value(s) did not save.</b> '+
                failed.join(' \u00b7 ').replace(/</g,'&lt;')+
                (done.length?' \u2014 '+done.length+' did.':''), true);
     } else if(done.length){
+      settle('done', 'Saved to workbook');
       wbBanner('\u2713 Saved '+done.length+' value(s) to the workbook for '+office+
                ' \u00b7 '+MO[month]+'. Verified in the file.');
       if(window.PH && PH.logActivity && PH.isLive())
         PH.logActivity({sec:'production', ic:'\u{1F4DD}',
           title:'Workbook updated \u2014 '+office+' '+MO[month], scope:office});
     } else {
+      settle('failed', 'Nothing to save');
       wbBanner('Nothing to save for '+office+' \u00b7 '+MO[month]+' yet.', true);
     }
   }
@@ -434,7 +475,7 @@
 })();
 </script>
 <script>PH.nav('production');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hb98"></script>
+<script src="tour.js?v=hb99"></script>
 <script>
 Tour.init([
   {sel:'.syncbar', title:'One set of numbers', body:'Type here and it saves into the <b>same Excel workbook</b> on SharePoint. If someone types in Excel instead, it shows up here. There is never a second copy to reconcile.'},

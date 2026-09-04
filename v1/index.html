@@ -240,13 +240,22 @@
   .foot{font-size:12px;color:var(--soft);margin-top:18px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 15px;line-height:1.55}
   .foot b{color:var(--navy)}
   @media(max-width:620px){ .kpi .v{font-size:22px} }
+  /* Some people set "reduce motion" in Windows or macOS, often because movement makes
+     them unwell. Honour it everywhere: keep the state changes, drop the travel. */
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{
+      animation-duration:.01ms !important; animation-iteration-count:1 !important;
+      transition-duration:.01ms !important; scroll-behavior:auto !important;
+    }
+  }
+
 </style>
-<script src="user.js?v=hb98"></script>
-<script src="celebrate.js?v=hb98"></script>
+<script src="user.js?v=hb99"></script>
+<script src="celebrate.js?v=hb99"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="workbook.js?v=hb98"></script>
-  <script src="store.js?v=hb98"></script>
-  <script src="gate.js?v=hb98"></script>
+  <script src="workbook.js?v=hb99"></script>
+  <script src="store.js?v=hb99"></script>
+  <script src="gate.js?v=hb99"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — real numbers from the 2026 Production Dashboard workbook. You only see the offices you have access to.</div>
@@ -640,6 +649,18 @@ const OFFICES=[
   function maybeParty(o,key){
     const g=goalState(o); if(!g.main&&!g.stretch) return;
     if(partied.has(key)) return; partied.add(key);
+    /* `partied` is in-memory, so an office already over goal was celebrated on every
+       single page load — charming once, wearing by Thursday, on the page people open to
+       check whether they are in trouble. Once per office per month is enough. */
+    try{
+      const seen=JSON.parse(localStorage.getItem('ph_partied')||'{}');
+      const stamp=new Date().getFullYear()+'-'+new Date().getMonth();
+      if(seen[key]===stamp) return;
+      seen[key]=stamp;
+      localStorage.setItem('ph_partied', JSON.stringify(seen));
+    }catch(_){}
+    // Someone who asked for less motion should not get fireworks.
+    try{ if(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return; }catch(_){}
     setTimeout(()=>{ if(window.Celebrate) Celebrate.fire({fireworks:g.main,confetti:g.stretch}); },420);
   }
   function partyNow(){
@@ -1036,7 +1057,7 @@ const OFFICES=[
 })();
 </script>
 <script>PH.nav('dashboard');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hb98"></script>
+<script src="tour.js?v=hb99"></script>
 <script>
 Tour.init([
   {sel:'.viewas', title:'You only see your offices', body:'Production numbers are sensitive, so people see <b>only the offices they\u2019re assigned to</b>. Switch to the Carlsbad manager \u2014 the group totals and the leaderboard disappear, because they aren\u2019t hers to see.'},

@@ -149,11 +149,20 @@
   .whobox{background:var(--teal-soft);border:1px solid #c4e6e3;border-radius:10px;padding:11px 14px;font-size:13.5px;color:#0c5b57;margin-top:6px}
   .whobox b{color:#0a4d49}
   .file.newf .nm{color:var(--teal-600);font-weight:700}
+  /* Some people set "reduce motion" in Windows or macOS, often because movement makes
+     them unwell. Honour it everywhere: keep the state changes, drop the travel. */
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{
+      animation-duration:.01ms !important; animation-iteration-count:1 !important;
+      transition-duration:.01ms !important; scroll-behavior:auto !important;
+    }
+  }
+
 </style>
-<script src="user.js?v=hb98"></script>
+<script src="user.js?v=hb99"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hb98"></script>
-  <script src="gate.js?v=hb98"></script>
+  <script src="store.js?v=hb99"></script>
+  <script src="gate.js?v=hb99"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — Documents. You see only the folders your role, location &amp; team allow. Files open on the Microsoft drive.</div>
@@ -406,7 +415,7 @@
 })();
 </script>
 <script>PH.nav('documents');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hb98"></script>
+<script src="tour.js?v=hb99"></script>
 <script>
 Tour.init([
   {sel:'.crumb', title:'Everything in one place', body:'This replaces \u201cwho has the latest copy?\u201d. Every policy, form and office file lives here \u2014 and people only ever see the folders meant for them.'},

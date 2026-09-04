@@ -65,6 +65,15 @@
   input[type=text]:focus{outline:2px solid var(--teal);outline-offset:-1px;border-color:var(--teal)}
   .warn{font-size:12.5px;color:var(--soft);margin:0 0 12px}
   a{color:var(--teal-600)}
+  /* Some people set "reduce motion" in Windows or macOS, often because movement makes
+     them unwell. Honour it everywhere: keep the state changes, drop the travel. */
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{
+      animation-duration:.01ms !important; animation-iteration-count:1 !important;
+      transition-duration:.01ms !important; scroll-behavior:auto !important;
+    }
+  }
+
 </style>
 </head>
 <body>
@@ -190,7 +199,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-<script src="workbook.js?v=hb98"></script>
+<script src="workbook.js?v=hb99"></script>
 <script>
 (function(){
   'use strict';
