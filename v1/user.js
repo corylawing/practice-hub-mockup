@@ -776,6 +776,49 @@
     return Math.round(mins/1440)+' days ago';
   }
 
+  /* ---------------------------------------------------------------
+     PROFILE PHOTOS.
+     People upload their own from My profile — most staff have never set a photo on
+     their Microsoft account, so asking the directory for one would mostly return
+     nothing. An upload saves to their own profile row, which syncs to SharePoint;
+     this pulls everyone's rows in a single request so the Team page and Admin can
+     show each other's faces.
+     --------------------------------------------------------------- */
+  const PHOTO_KEY='ph_photos';
+  let PHOTOS=null;
+  function photoCache(){
+    if(PHOTOS) return PHOTOS;
+    try{ PHOTOS=JSON.parse(localStorage.getItem(PHOTO_KEY))||{}; }catch(_){ PHOTOS={}; }
+    return PHOTOS;
+  }
+  function photoFor(mail){
+    const k=String(mail||'').toLowerCase().trim();
+    if(!k) return '';
+    // Their own row on this device first — instant after they upload.
+    try{
+      const own=JSON.parse(localStorage.getItem('ph_me_'+k)||'{}');
+      if(own && own.photo) return own.photo;
+    }catch(_){}
+    return photoCache()[k] || '';
+  }
+  /* Pull every profile row from SharePoint so other people's photos appear too.
+     Resolves true when something changed, so the caller can re-render. */
+  function loadPhotos(){
+    if(!window.PH_STORE || !window.PH_STORE.getAll || !isLive()) return Promise.resolve(false);
+    return window.PH_STORE.getAll('ph_me_').then(function(rows){
+      const cache=photoCache(); let changed=false;
+      Object.keys(rows||{}).forEach(function(k){
+        const mail=k.slice('ph_me_'.length);
+        const v=rows[k];
+        if(v && v.photo && cache[mail]!==v.photo){ cache[mail]=v.photo; changed=true; }
+        // Keep each person's own row current on this device too.
+        try{ if(v) localStorage.setItem(k, JSON.stringify(v)); }catch(_){}
+      });
+      if(changed){ try{ localStorage.setItem(PHOTO_KEY, JSON.stringify(cache)); }catch(_){} }
+      return changed;
+    }).catch(function(){ return false; });
+  }
+
   function nav(active){
     const host=document.getElementById('nav')||document.querySelector('.v1nav-in');
     if(host) host.innerHTML=NAV.filter(x=>x.show()).map(x=>
@@ -860,6 +903,6 @@
   }
   const isLive=()=>env()==='live';
 
-  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople};
+  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, photoFor, loadPhotos};
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mount); else mount();
 })();

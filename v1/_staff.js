@@ -73,3 +73,5 @@
    {n:"Dr. David Farnsworth",mail:"",loc:"",st:"",brand:"",role:"Owner/Doctor",team:"Staff"},
    {n:"Dr. Jae Brimhall",mail:"drbrimhall@farnsworthorthodontics.com",loc:"",st:"",brand:"",role:"Owner/Doctor",team:"Staff"}
   ];
+  // Published so pages loaded after this can read it without scope games.
+  window.STAFF=STAFF;

@@ -72,10 +72,11 @@
   .note b{color:var(--navy)}
   .empty{background:#fff;border:1px dashed var(--line);border-radius:14px;padding:30px;text-align:center;color:var(--soft)}
 </style>
-<script src="user.js?v=hb88"></script>
+<script src="user.js?v=hb93"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hb88"></script>
-  <script src="gate.js?v=hb88"></script>
+  <script src="_staff.js?v=hb93"></script>
+  <script src="store.js?v=hb93"></script>
+  <script src="gate.js?v=hb93"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — everyone's contact card. In the real hub this list builds itself from Microsoft 365.</div>
@@ -225,7 +226,13 @@
       const shown = pref ? (p.isDoc?'Dr. ':'')+pref+' '+p.last : p.full;
       const isMe = isMeOf(p);
       return '<div class="p'+(isMe?' me':'')+'">'+
-        '<div class="top"><span class="cir" style="'+((isMe&&window.PH)?PH.faceStyle(mine):('background:'+p.color))+'">'+((isMe&&window.PH)?PH.face(mine):initials(p))+'</span>'+
+        /* Their own upload wins, then their Microsoft photo, then initials. */
+        '<div class="top">'+(function(){
+          const ph = (window.PH && PH.photoFor) ? PH.photoFor(p.email) : '';   // the card exposes email, not mail
+          if(isMe && window.PH) return '<span class="cir" style="'+PH.faceStyle(mine)+'">'+PH.face(mine)+'</span>';
+          if(ph) return '<span class="cir" style="background-image:url('+ph+');background-size:cover;background-position:center"></span>';
+          return '<span class="cir" style="background:'+p.color+'">'+initials(p)+'</span>';
+        })()+
           '<div><div class="nm">'+shown+'</div>'+(pref?'<div style="font-size:11.5px;color:var(--soft)">'+p.first+' '+p.last+'</div>':'')+
           '<div class="ttl">'+p.title+'</div></div>'+(isMe?'<span class="mine">You</span>':'')+'</div>'+
         '<div class="row"><span class="ic">📍</span>'+p.office+'</div>'+
@@ -239,11 +246,12 @@
   }
   el('q').oninput=e=>{q=e.target.value; render();};
   window.TEAM={office:o=>{office=o; render();}};
+  window.TEAMPAGE={refresh:render};   // re-draw once Microsoft photos arrive
   render();
 })();
 </script>
-<script>PH.nav('team');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hb88"></script>
+<script>PH.nav('team');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.loadPhotos)PH.loadPhotos().then(function(got){if(got&&window.TEAMPAGE&&TEAMPAGE.refresh)TEAMPAGE.refresh();});if(PH.reloadAccess)PH.reloadAccess();});</script>
+<script src="tour.js?v=hb93"></script>
 <script>
 Tour.init([
   {sel:'#q', title:'Find anyone fast', body:'Type a name, an office, or part of a phone number. This is the quickest way to reach the right person at the right office.'},

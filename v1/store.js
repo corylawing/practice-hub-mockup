@@ -123,11 +123,33 @@
     try{ return JSON.parse(raw); }catch(_){ return null; }
   }
 
+  /* Every row whose key starts with a prefix, as { key: parsedValue }. Used to pull
+     everyone's profile row in one request instead of 70. */
+  function getAll(prefix){
+    if(!live()) return Promise.resolve({});
+    return connect()
+      .then(function(){
+        return PH_AUTH.graph('/sites/'+siteId+'/lists/'+listId+'/items?$expand=fields&$top=500');
+      })
+      .then(function(r){
+        var out={};
+        (r.value||[]).forEach(function(i){
+          var t=i.fields && i.fields.Title;
+          if(t && t.indexOf(prefix)===0){
+            idCache[t]=i.id;
+            out[t]=parse(i.fields.Payload||'');
+          }
+        });
+        return out;
+      })
+      .catch(function(){ return {}; });
+  }
+
   /* What a human has to do once, by hand, before live storage works. */
   function setup(){
     return 'On ' + SITE_PATH + ': New > List > Blank list, name it "' + LIST_NAME + '", ' +
            'then Add column > Multiple lines of text named "Payload". Nothing else.';
   }
 
-  global.PH_STORE = { get:get, set:set, setup:setup, LIST_NAME:LIST_NAME, SITE_PATH:SITE_PATH };
+  global.PH_STORE = { get:get, set:set, getAll:getAll, setup:setup, LIST_NAME:LIST_NAME, SITE_PATH:SITE_PATH };
 })(window);
