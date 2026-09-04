@@ -66,23 +66,36 @@
     if(!live()) return Promise.resolve(parse(local(key)));
     return connect()
       .then(function(){
-        return PH_AUTH.graph('/sites/'+siteId+'/lists/'+listId+'/items?$expand=fields&$top=200');
+        return PH_AUTH.graph('/sites/'+siteId+'/lists/'+listId+'/items?$expand=fields&$top=200&$select=id,lastModifiedDateTime');
       })
       .then(function(r){
         var hit=(r.value||[]).filter(function(i){ return i.fields && i.fields.Title===key; })[0];
         if(!hit) return parse(local(key));
         idCache[key]=hit.id;
         var raw=hit.fields.Payload || '';
-        setLocal(key, raw);                       // keep the offline copy current
+        /* Only accept the remote copy if it is at least as new as ours. SharePoint's own
+           lastModifiedDateTime is the arbiter; a local change made since then wins, and
+           gets pushed on the next save. */
+        var remoteAt = Date.parse(hit.lastModifiedDateTime || (hit.fields && hit.fields.Modified) || 0) || 0;
+        if (localStamp(key) > remoteAt + 1000) return parse(local(key));
+        setLocal(key, raw);
+        setLocal(stampKey(key), String(remoteAt || Date.now()));
         return parse(raw);
       })
       .catch(function(){ return parse(local(key)); });   // never block the app on storage
   }
 
+  /* Stamp every write, so a sync can tell which copy is newer instead of blindly
+     trusting whichever it read last. Without this, opening the app on a second device
+     could push an older copy over a change made on the first. */
+  function stampKey(k){ return k + '__at'; }
+  function localStamp(k){ return Number(local(stampKey(k))) || 0; }
+
   /* Write one key. Always writes locally first so the UI stays instant. */
   function set(key, value){
     var raw = JSON.stringify(value);
     setLocal(key, raw);
+    setLocal(stampKey(key), String(Date.now()));
     if(!live()) return Promise.resolve({local:true});
     return connect()
       .then(function(){
