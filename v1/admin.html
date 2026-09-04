@@ -174,11 +174,11 @@
   .tp.on{background:var(--navy);color:#fff;border-color:var(--navy)}
   @media(max-width:640px){ .grid2{grid-template-columns:1fr} }
 </style>
-<script src="user.js?v=hb81"></script>
+<script src="user.js?v=hb82"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="_staff.js?v=hb81"></script>
-  <script src="store.js?v=hb81"></script>
-  <script src="gate.js?v=hb81"></script>
+  <script src="_staff.js?v=hb82"></script>
+  <script src="store.js?v=hb82"></script>
+  <script src="gate.js?v=hb82"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — admin console concept for validation. Real build: people sync from Microsoft 365; access is managed here.</div>
@@ -853,7 +853,7 @@
 })();
 </script>
 <script>PH.nav('admin');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();});</script>
-<script src="tour.js?v=hb81"></script>
+<script src="tour.js?v=hb82"></script>
 <script>
 Tour.init([
   {sel:'#tabs', title:'This is your control room', body:'Four tabs and you can run the whole hub: <b>People</b>, <b>Teams &amp; Access</b>, <b>Document Sections</b> and <b>Locations</b>. No developer, no consultant.', pre:()=>AD.tab('users')},
@@ -865,7 +865,7 @@ Tour.init([
   {sel:'.toolrow .btn', title:'Make a new section yourself', body:'<b>+ New section</b>: name it, pick an icon, choose whether it wants <b>a folder per office</b> or per brand, then say which <b>teams and locations</b> it\u2019s for. It appears for those people immediately.', pre:()=>AD.tab('files')},
   {sel:'.sec .addfile', title:'Adding a file always asks', body:'<b>+ Add file</b> asks <b>who can open it</b> before it saves \u2014 defaulting to the rest of the folder, and warning you when you\u2019re making an exception. Nothing gets shared by accident.', pre:()=>{AD.tab('files');if(!document.querySelector('.sec.open .addfile'))AD.tog('hr');}},
   {sel:'.toolrow', title:'Opening a ninth office', body:'Add it once here and it appears everywhere \u2014 the schedule board, its own document folder, and people\u2019s locations. Nothing else to set up.', pre:()=>AD.tab('locs')},
-  {sel:'.ph-av', title:'Check your work', body:'The best habit: after changing access, use your avatar to <b>sign in as that person</b> and confirm they see what you intended. That\u2019s the walkthrough \u2014 you can run this hub on your own now.', pre:()=>AD.tab('users')}
+  {sel:'table.u', title:'Check your work', body:'The best habit: after changing someone\u2019s access, use <b>View as</b> on their row and confirm they see what you intended. A purple bar stays on screen while you do, with one click back to your own account. That\u2019s the walkthrough \u2014 you can run this hub on your own now.', pre:()=>AD.tab('users')}
 ], {key:'admin', title:'Admin \u2014 how to run this', launch:'Teach me the admin side'});
 </script>
 </body>

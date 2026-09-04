@@ -241,12 +241,12 @@
   .foot b{color:var(--navy)}
   @media(max-width:620px){ .kpi .v{font-size:22px} }
 </style>
-<script src="user.js?v=hb81"></script>
-<script src="celebrate.js?v=hb81"></script>
+<script src="user.js?v=hb82"></script>
+<script src="celebrate.js?v=hb82"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="workbook.js?v=hb81"></script>
-  <script src="store.js?v=hb81"></script>
-  <script src="gate.js?v=hb81"></script>
+  <script src="workbook.js?v=hb82"></script>
+  <script src="store.js?v=hb82"></script>
+  <script src="gate.js?v=hb82"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — real numbers from the 2026 Production Dashboard workbook. You only see the offices you have access to.</div>
@@ -1011,7 +1011,7 @@ const OFFICES=[
 })();
 </script>
 <script>PH.nav('dashboard');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hb81"></script>
+<script src="tour.js?v=hb82"></script>
 <script>
 Tour.init([
   {sel:'.viewas', title:'You only see your offices', body:'Production numbers are sensitive, so people see <b>only the offices they\u2019re assigned to</b>. Switch to the Carlsbad manager \u2014 the group totals and the leaderboard disappear, because they aren\u2019t hers to see.'},
@@ -1019,7 +1019,7 @@ Tour.init([
   {sel:'#chips', title:'Group, or one office', body:'<b>All Offices</b> is the group view. Tap any office name to open just that office. A manager with one office skips straight to hers.'},
   {sel:'.chart', title:'This year vs last year', body:'Each month shows <b>last year in grey</b> beside this year. The <b>dashed line</b> is the main goal; the <b>dotted line</b> is the stretch goal. Green means the main goal was beaten.'},
   {sel:'table.lb', title:'The leaderboard', body:'Every office ranked <b>best on top</b> by % of goal, with <b>production days left</b> in the year. Tap any row to open that office.'},
-  {sel:'.foot', title:'Where the numbers live', body:'Straight from your <b>Production Dashboard workbook on SharePoint</b> \u2014 no second copy. This note also flags a real adding error we found in the workbook\u2019s own total.'}
+  {sel:'.foot', title:'Where the numbers live', body:'Straight from your <b>Production Dashboard workbook on SharePoint</b> \u2014 no second copy. The hub adds the eight office tabs itself, so every office is counted exactly once.'}
 ], {key:'dash', title:'Production Dashboard', next:{label:'entering the numbers', href:'production.html'}});
 </script>
 </body>
