@@ -241,12 +241,12 @@
   .foot b{color:var(--navy)}
   @media(max-width:620px){ .kpi .v{font-size:22px} }
 </style>
-<script src="user.js?v=hb94"></script>
-<script src="celebrate.js?v=hb94"></script>
+<script src="user.js?v=hb95"></script>
+<script src="celebrate.js?v=hb95"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="workbook.js?v=hb94"></script>
-  <script src="store.js?v=hb94"></script>
-  <script src="gate.js?v=hb94"></script>
+  <script src="workbook.js?v=hb95"></script>
+  <script src="store.js?v=hb95"></script>
+  <script src="gate.js?v=hb95"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — real numbers from the 2026 Production Dashboard workbook. You only see the offices you have access to.</div>
@@ -390,13 +390,27 @@ const OFFICES=[
                          : (o.act[i]>0&&o.goal[i]>0&&o.days[i]>0&&o.done[i]>=o.days[i]);
     if(ok)a.push(i);} return a;};
   // the month currently in progress (some days worked, not all)
+  /* The month in progress.
+     Prefer the ACTUAL calendar month once it has a goal, even before anyone has entered
+     a number — on the 4th of September a manager wants to see September at zero, not be
+     shown August and told it is "the latest". Only fall back to the newest month with
+     production when the calendar month isn't being tracked yet. */
+  const calMonth=()=>(new Date()).getMonth();
   function partial(o){
     if(o.noGoals) return -1;                        // a closed-out year has nothing in progress
+    if(year===LIVE_YEAR){
+      const c=calMonth();
+      const tracked = (o.goal[c]>0) || (o.act[c]>0);
+      if(tracked){
+        const finished = o.days[c]>0 && o.done[c]>=o.days[c];
+        if(!finished) return c;
+      }
+    }
     let last=-1;
     for(let i=0;i<12;i++) if(o.act[i]>0) last=i;      // newest month with any production
     if(last<0) return -1;
     const finished = o.days[last]>0 && o.done[last]>=o.days[last];
-    return finished ? -1 : last;                      // not fully worked yet => it's this month
+    return finished ? -1 : last;
   }
   const sum=(arr,idx)=>idx.reduce((s,i)=>s+arr[i],0);
   const isMonth =()=>typeof period==='number';
@@ -404,7 +418,10 @@ const OFFICES=[
   const pickedMonths=()=>isMonths()?period.slice().sort((a,b)=>a-b):(isMonth()?[period]:[]);
   function curIdx(o){ const p=partial(o); if(p>=0)return p; const L=live(o); return L.length?L[L.length-1]:-1; }
   function months(o){
-    const okM=i=>o.act[i]>0 && (o.noGoals || o.goal[i]>0);
+    /* A month counts if it has production, or if it is the current month and has a goal
+       — otherwise September reads as "no data" when it is simply not finished. */
+    const okM=i=>(o.act[i]>0 || (year===LIVE_YEAR && i===calMonth() && o.goal[i]>0))
+                 && (o.noGoals || o.goal[i]>0);
     if(isMonths()) return period.filter(okM).sort((a,b)=>a-b);
     if(isMonth()) return okM(period)?[period]:[];
     const L=live(o);
@@ -643,7 +660,7 @@ const OFFICES=[
     // pickable, and Combine ticks several together.
     const cells=MOFULL.map((m,i)=>{
       const isNow = i===cur;
-      const ok = avail.indexOf(i)>=0 || isNow;
+      const ok = avail.indexOf(i)>=0 || isNow || i===cur;
       const on = isNow ? (period==='mtd' || picked.indexOf(i)>=0) : picked.indexOf(i)>=0;
       return '<button'+(ok?'':' disabled')+(on?' class="on"':(isNow?' class="now"':''))+
         (ok?' onclick="DASH.month('+i+')"':'')+' title="'+m+(isNow?' (this month so far)':'')+'">'+
@@ -1011,7 +1028,7 @@ const OFFICES=[
 })();
 </script>
 <script>PH.nav('dashboard');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hb94"></script>
+<script src="tour.js?v=hb95"></script>
 <script>
 Tour.init([
   {sel:'.viewas', title:'You only see your offices', body:'Production numbers are sensitive, so people see <b>only the offices they\u2019re assigned to</b>. Switch to the Carlsbad manager \u2014 the group totals and the leaderboard disappear, because they aren\u2019t hers to see.'},
