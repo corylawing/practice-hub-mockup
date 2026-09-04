@@ -726,9 +726,15 @@
      the audit trail for production numbers lives separately in ph_prodaudit.
      --------------------------------------------------------------- */
   const ACT_KEY='ph_activity', ACT_MAX=60;
+  const ACT_DAYS=14;          // a feed, not an archive — older entries drop off
+  function fresh(list){
+    const cut=Date.now()-ACT_DAYS*86400000;
+    return (list||[]).filter(e=>e && e.at && new Date(e.at).getTime()>cut);
+  }
 
   function activity(){
-    try{ return JSON.parse(localStorage.getItem(ACT_KEY)||'[]'); }catch(_){ return []; }
+    let l=[]; try{ l=JSON.parse(localStorage.getItem(ACT_KEY)||'[]'); }catch(_){ l=[]; }
+    return fresh(l);
   }
   function logActivity(e){
     if(!e || !e.title) return;
@@ -745,7 +751,7 @@
     if(recent && recent.title===entry.title && recent.by===entry.by &&
        (Date.now()-new Date(recent.at)) < 5*60*1000){ list[0]=entry; }
     else list.unshift(entry);
-    list=list.slice(0,ACT_MAX);
+    list=fresh(list).slice(0,ACT_MAX);
     try{ localStorage.setItem(ACT_KEY,JSON.stringify(list)); }catch(_){}
     if(window.PH_STORE) window.PH_STORE.set(ACT_KEY, list);
     return list;

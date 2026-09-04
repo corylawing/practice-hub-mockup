@@ -92,10 +92,10 @@
   .upd .uw{font-size:12px;color:var(--soft)}
   .upd .utag{margin-left:auto;font-size:11px;font-weight:700;color:var(--teal-600);background:var(--teal-soft);border-radius:999px;padding:2px 9px;white-space:nowrap}
 </style>
-<script src="user.js?v=hb83"></script>
+<script src="user.js?v=hb84"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hb83"></script>
-  <script src="gate.js?v=hb83"></script>
+  <script src="store.js?v=hb84"></script>
+  <script src="gate.js?v=hb84"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — this is the logged-in home. Use “Viewing as” to see how the app changes for each role.</div>
@@ -189,6 +189,8 @@
 
   function matchScope(scope,p){
     if(scope==='everyone')return true;
+    // Admin housekeeping only surfaces for people who can actually reach Admin.
+    if(scope==='admins')return !!(window.PH && PH.isAdmin && PH.isAdmin());
     if(scope==='Texas offices')return p.scope==='all'||p.state==='TX';
     if(scope==='New Mexico offices')return p.scope==='all'||p.state==='NM';
     if(BRANDS.includes(scope))return p.scope==='all'||p.brand===scope;
@@ -196,6 +198,7 @@
     return false;
   }
   function canSee(u,p){
+    if(u.scope==='admins') return matchScope('admins',p);
     const acc = u.sec==='documents' ? !!p.doc[u.fold] : !!p.sec[u.sec];
     return acc && matchScope(u.scope,p);
   }
@@ -210,7 +213,7 @@
     const list=src.filter(u=>canSee(u,p));
     el('updates').innerHTML='<h2>🔔 Updates for you <span class="cnt">'+list.length+'</span></h2>'+
       '<p class="sub2">New documents &amp; changes that match your role, location &amp; team. Files open on your Microsoft drive.</p>'+
-      (list.length? list.map(u=>'<div class="upd"><span class="uic">'+u.ic+'</span><div><div class="ut">'+u.title+'</div><div class="uw">'+u.when+' · opens in SharePoint ↗</div></div><span class="utag">'+secName(u.sec)+'</span></div>').join('')
+      (list.length? list.map(u=>'<div class="upd"><span class="uic">'+u.ic+'</span><div><div class="ut">'+u.title+'</div><div class="uw">'+u.when+(u.sec==='documents'?' · opens in SharePoint ↗':'')+'</div></div><span class="utag">'+secName(u.sec)+'</span></div>').join('')
         : '<div class="upd" style="border-top:none;color:var(--soft)">'+
           ((window.PH&&PH.isLive&&PH.isLive())
             ? 'Nothing yet. Updates appear here as people enter production numbers, change the schedule or post marketing.'
@@ -268,7 +271,7 @@
 })();
 </script>
 <script>PH.nav('home');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(PH.loadActivity)PH.loadActivity().then(function(){if(window.HOME&&HOME.refreshUpdates)HOME.refreshUpdates();});});</script>
-<script src="tour.js?v=hb83"></script>
+<script src="tour.js?v=hb84"></script>
 <script>
 Tour.init([
   {sel:'.ph-av', title:'This is you', body:'Your name and photo, top right. Tap it any time for <b>My profile</b> \u2014 your photo, preferred name, phone and \u201cAbout me\u201d. Those follow you between devices.'},
