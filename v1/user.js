@@ -99,9 +99,47 @@
     };
   }
 
+  /* VIEW AS — admin only, Salesforce-style. An administrator can look at the hub through
+     someone else's eyes to debug "I can't see X". A banner always says so, and one click
+     returns. Presentation only: SharePoint still answers to the REAL person's token, so
+     this can never grant access the impersonator doesn't already have. */
+  const IMP_KEY='ph_impersonate';
+  function impersonating(){
+    try{ return JSON.parse(localStorage.getItem(IMP_KEY)||'null'); }catch(_){ return null; }
+  }
+  function realMe(){
+    const real=fromProfile();
+    if(real) return real;
+    const base=PEOPLE.find(p=>p.id===id());
+    let mine={}; try{ mine=JSON.parse(localStorage.getItem('ph_me_'+base.id))||{}; }catch(_){}
+    return Object.assign({},base,mine);
+  }
+  function isAdmin(p){ p=p||realMe(); return RANK[(p.can||{}).admin||'none']>=RANK['manage']; }
+  function viewAs(person){
+    if(!isAdmin()) return false;                       // only an admin may do this
+    try{ localStorage.setItem(IMP_KEY, JSON.stringify(person)); }catch(_){}
+    location.reload(); return true;
+  }
+  function stopViewAs(){
+    try{ localStorage.removeItem(IMP_KEY); }catch(_){}
+    location.reload();
+  }
+  /* Turn a roster row into someone the app can render as. */
+  function personFromStaff(row){
+    const dept=String(row.team||'').trim();
+    const bits=String(row.n||'').trim().split(/\s+/);
+    return { id:'imp', first:bits[0]||'', last:bits.slice(1).join(' '),
+             role:row.role||'', title:row.role||'', mail:row.mail||'',
+             teams:dept?[dept]:['Staff'], loc:row.loc||'',
+             offices:/admin|executive|leadership/i.test(dept) ? 'all' : (row.loc?[row.loc]:[]),
+             can:(DEPT_CAN[dept.toLowerCase()]||DEPT_CAN['staff']) };
+  }
+
   function id(){ let v='admin'; try{ v=localStorage.getItem('ph_viewas')||'admin'; }catch(_){}
     return PEOPLE.some(p=>p.id===v)?v:'admin'; }
   function me(){
+    const imp=impersonating();
+    if(imp && isAdmin(realMe())) return imp;    // admin looking through someone else's eyes
     const real=fromProfile();
     if(real) return real;                       // live: the signed-in person
     const base=PEOPLE.find(p=>p.id===id());     // sandbox: the chosen persona
@@ -397,7 +435,10 @@
   function faceStyle(p){ return p.photo ? 'background-image:url('+p.photo+');background-size:cover;background-position:center' : 'background:'+p.color; }
   function face(p){ return p.photo ? '' : initials(p); }
   function mount(){
-    const bar=document.querySelector('.hdr-in'); if(!bar||bar.querySelector('.ph-av'))return;
+    const bar=document.querySelector('.hdr-in'); if(!bar)return;
+    // Re-mount once the real profile lands: pages call nav()/mount() before sign-in
+    // finishes, so the first paint would otherwise show a demo persona forever.
+    const old=bar.querySelector('.ph-av'); if(old) old.remove();
     const p=me();
     const b=document.createElement('button'); b.className='ph-av';
     b.innerHTML='<span class="cir" style="'+faceStyle(p)+'">'+face(p)+'</span>'+
@@ -512,7 +553,22 @@
   /* Production is not a prototype. Strip the demo chrome — the amber ribbon, the
      "Viewing as" switcher, the V1 badge — so staff see an app, not a mock-up. Sandbox
      keeps all of it, because that is what it is for. */
+  function impersonationBar(){
+    const imp=impersonating();
+    if(!imp || !isAdmin(realMe())) return;
+    const b=document.createElement('div');
+    b.style.cssText='background:#4B2E83;color:#fff;padding:8px 16px;font-size:13px;'+
+      'display:flex;align-items:center;justify-content:center;gap:14px;font-weight:600';
+    b.innerHTML='\u{1F441} Viewing as <b>'+((imp.first||'')+' '+(imp.last||'')).trim()+
+      '</b>'+(imp.role?' \u00b7 '+imp.role:'')+
+      ' <button style="font:inherit;font-weight:700;background:#fff;color:#4B2E83;border:none;'+
+      'border-radius:7px;padding:4px 12px;cursor:pointer">Return to my account</button>';
+    b.querySelector('button').onclick=stopViewAs;
+    document.body.insertBefore(b, document.body.firstChild);
+  }
+
   function dechrome(){
+    impersonationBar();
     if(!isLive()) return;
     document.documentElement.classList.add('ph-live');
     const css=document.createElement('style');
@@ -526,7 +582,7 @@
       b.style.cssText='background:#FFF6E5;color:#8a5a00;border-bottom:1px solid #f0d9a8;'+
         'padding:8px 16px;font-size:13px;text-align:center';
       b.innerHTML='Your profile isn\u2019t finished yet, so you may not see everything. '+
-        'Ask IT to set your <b>Department</b> and <b>Office location</b>.';
+        'Ask your administrator to set your <b>Department</b> and <b>Office location</b>.';
       document.body.insertBefore(b, document.body.firstChild);
     }
   }
@@ -615,6 +671,6 @@
   }
   const isLive=()=>env()==='live';
 
-  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome};
+  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN};
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mount); else mount();
 })();

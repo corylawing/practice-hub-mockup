@@ -167,10 +167,11 @@
   .tp.on{background:var(--navy);color:#fff;border-color:var(--navy)}
   @media(max-width:640px){ .grid2{grid-template-columns:1fr} }
 </style>
-<script src="user.js?v=hb65"></script>
+<script src="user.js?v=hb67"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hb65"></script>
-  <script src="gate.js?v=hb65"></script>
+  <script src="_staff.js?v=hb67"></script>
+  <script src="store.js?v=hb67"></script>
+  <script src="gate.js?v=hb67"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — admin console concept for validation. Real build: people sync from Microsoft 365; access is managed here.</div>
@@ -194,6 +195,7 @@
     <button class="tab" data-t="access" onclick="AD.tab('access')">Teams &amp; Access</button>
     <button class="tab" data-t="files" onclick="AD.tab('files')">Document Sections</button>
     <button class="tab" data-t="locs" onclick="AD.tab('locs')">Locations</button>
+    <button class="tab" data-t="viewas" onclick="AD.tab('viewas')">View as</button>
   </div>
 
   <div id="view"></div>
@@ -357,7 +359,48 @@
   let tab='users', search='', tmpU=null, openSecs=new Set(['managers','hr']);
 
   function tabSet(t){ tab=t; [...document.querySelectorAll('.tab')].forEach(b=>b.classList.toggle('active',b.dataset.t===t)); render(); }
-  function render(){ if(tab==='users')renderUsers(); else if(tab==='access')renderAccess(); else if(tab==='locs')renderLocs(); else renderFiles(); }
+  function render(){ if(tab==='users')renderUsers(); else if(tab==='access')renderAccess();
+    else if(tab==='locs')renderLocs(); else if(tab==='viewas')renderViewAs(); else renderFiles(); }
+
+  const esc=v=>String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+
+  /* ---------- VIEW AS (administrators only) ---------- */
+  function renderViewAs(){
+    if(!PH.isAdmin()){
+      el('view').innerHTML='<div class="intro"><b>Administrators only.</b> This lets an admin '+
+        'look at the hub as another person, to check what they can see.</div>';
+      return;
+    }
+    const cur=PH.impersonating();
+    const roster=(typeof STAFF!=='undefined'?STAFF:[]).filter(p=>p.n);
+    const rows=roster.map((p,i)=>
+      '<tr><td><b>'+esc(p.n)+'</b><div style="font-size:12px;color:var(--soft)">'+esc(p.role||'')+'</div></td>'+
+      '<td>'+esc(p.team||'\u2014')+'</td><td>'+esc(p.loc||'\u2014')+'</td>'+
+      '<td><button class="btn ghost" onclick="AD.viewAs('+i+')">View as</button></td></tr>').join('');
+    el('view').innerHTML=
+      '<div class="intro"><b>See the hub as someone else.</b> Useful when a person says '+
+      '\u201cI can\u2019t find X\u201d \u2014 look through their eyes instead of guessing. '+
+      'A purple bar stays on screen the whole time, and one click returns you to your own account.'+
+      '<br><br><b>This changes what you see, not what you can reach.</b> SharePoint still answers '+
+      'to your own sign-in, so you can never see data you don\u2019t already have rights to.</div>'+
+      (cur?'<div class="intro" style="border-left:3px solid #4B2E83">Currently viewing as <b>'+
+        esc(((cur.first||'')+' '+(cur.last||'')).trim())+'</b>. '+
+        '<button class="btn" onclick="PH.stopViewAs()">Return to my account</button></div>':'')+
+      '<div class="toolrow"><input class="search" id="vsearch" placeholder="Search people…" oninput="AD.vfilter(this.value)"></div>'+
+      '<div class="tbl-scroll"><table class="u" id="vtbl"><thead><tr><th>Person</th><th>Team</th><th>Location</th><th></th></tr></thead>'+
+      '<tbody>'+rows+'</tbody></table></div>';
+  }
+  function doViewAs(i){
+    const roster=(typeof STAFF!=='undefined'?STAFF:[]);
+    const row=roster[i]; if(!row) return;
+    PH.viewAs(PH.personFromStaff(row));
+  }
+  function vfilter(q){
+    q=(q||'').toLowerCase();
+    [...document.querySelectorAll('#vtbl tbody tr')].forEach(tr=>{
+      tr.style.display = tr.textContent.toLowerCase().indexOf(q)>=0 ? '' : 'none';
+    });
+  }
 
   /* ---------- PEOPLE ---------- */
   function renderUsers(){
@@ -758,14 +801,14 @@
   function openModal(h){ el('modalCard').innerHTML=h; el('modal').classList.add('open'); }
   function closeModal(){ el('modal').classList.remove('open'); }
 
-  window.AD={tab:tabSet,newTeam,editTeam,saveTeam,delTeam,resetTeams,profile,whyNoAdd,togTeam,togLoc,setStatus,saveUser,pickLevel,pickAud,tog,addFile,noop,newSec,editSec,saveSec,delSec,resetSecs,setSecName,setSecIcon,setSecStruct,setSecLocMode,setSecTeamMode,togSecLoc,togSecTeam,saveFile,cd,useFile,clearFile,uploadFile,setFileTeamMode,setFileLocMode,togFileLoc,togFileTeam,renderLocs,newLoc,editLoc,saveLoc,delLoc,resetLocs,setLocBrand,setLocState,setLocTZ,close:closeModal};
+  window.AD={tab:tabSet,viewAs:doViewAs,vfilter,newTeam,editTeam,saveTeam,delTeam,resetTeams,profile,whyNoAdd,togTeam,togLoc,setStatus,saveUser,pickLevel,pickAud,tog,addFile,noop,newSec,editSec,saveSec,delSec,resetSecs,setSecName,setSecIcon,setSecStruct,setSecLocMode,setSecTeamMode,togSecLoc,togSecTeam,saveFile,cd,useFile,clearFile,uploadFile,setFileTeamMode,setFileLocMode,togFileLoc,togFileTeam,renderLocs,newLoc,editLoc,saveLoc,delLoc,resetLocs,setLocBrand,setLocState,setLocTZ,close:closeModal};
   el('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
   render();
 })();
 </script>
-<script>PH.nav('admin');PH.dechrome();</script>
-<script src="tour.js?v=hb65"></script>
+<script>PH.nav('admin');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();});</script>
+<script src="tour.js?v=hb67"></script>
 <script>
 Tour.init([
   {sel:'#tabs', title:'This is your control room', body:'Four tabs and you can run the whole hub: <b>People</b>, <b>Teams &amp; Access</b>, <b>Document Sections</b> and <b>Locations</b>. No developer, no consultant.', pre:()=>AD.tab('users')},

@@ -235,10 +235,10 @@
     .addday{padding:9px 11px;font-size:12px}
   }
 </style>
-<script src="user.js?v=hb65"></script>
+<script src="user.js?v=hb67"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hb65"></script>
-  <script src="gate.js?v=hb65"></script>
+  <script src="store.js?v=hb67"></script>
+  <script src="gate.js?v=hb67"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — sample staff schedule for validation. Live version = one Microsoft List the practice maintains.</div>
@@ -813,15 +813,36 @@
   el('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
 
-  let stored=null; try{ stored=JSON.parse(localStorage.getItem('ph_sched2')); }catch(_){}
-  if(stored && typeof stored==='object' && Object.keys(stored).length) sched=stored;
-  else buildYear(TODAY.getFullYear());
-  applyPerms();
-  refresh();
+  /* Where the schedule comes from.
+     Live: whatever the practice has actually entered, from SharePoint. If they have
+       entered nothing, it starts EMPTY — inventing doctor days in the real app would put
+       fiction in front of staff who might act on it.
+     Sandbox: the demo pattern, so the calendar has something to show. */
+  function startEmpty(){
+    sched={};
+    let d=new Date(TODAY.getFullYear(),0,1); const end=new Date(TODAY.getFullYear(),11,31);
+    while(d<=end){
+      if(dowIdx(d)<6) locations.forEach(l=>{ if(openOn(l,d)) setCell(l,d,{}); });
+      d=addDays(d,1);
+    }
+  }
+  function boot(stored){
+    if(stored && typeof stored==='object' && Object.keys(stored).length) sched=stored;
+    else if(PH.isLive()) startEmpty();
+    else buildYear(TODAY.getFullYear());
+    applyPerms();
+    refresh();
+  }
+
+  let local=null; try{ local=JSON.parse(localStorage.getItem('ph_sched2')); }catch(_){}
+  if(window.PH_STORE && PH.isLive()){
+    PH_STORE.get('ph_sched2').then(function(remote){ boot(remote || local); })
+                             .catch(function(){ boot(local); });
+  } else boot(local);
 })();
 </script>
-<script>PH.nav('schedule');PH.dechrome();</script>
-<script src="tour.js?v=hb65"></script>
+<script>PH.nav('schedule');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();});</script>
+<script src="tour.js?v=hb67"></script>
 <script>
 Tour.init([
   {sel:'#viewseg', title:'Week or month', body:'<b>Week</b> is the day-to-day working view. <b>Month</b> shows the whole month at a glance, with every office in its own colour.'},
