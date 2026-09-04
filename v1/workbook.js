@@ -113,9 +113,14 @@
                 sAct: lyStarts.slice() }
     };
 
+    /* Enter Production works from the raw inputs rather than the totals: TC net production
+       and the write-offs line, both present on either tab layout. */
+    var tc  = months(rows, row(rows, ['tc net production']));
+    var adj = months(rows, row(rows, ['write-offs']));
+
     return { act:act, goal:goal, stretch:stretch, ly:ly, sAct:sAct, sGoal:sGoal,
              mdStarts:mdStarts, lyStarts:lyStarts, days:days, done:done,
-             hist:hist, fee:mdFee, avgFee:avgFee };
+             hist:hist, fee:mdFee, avgFee:avgFee, tc:tc, adj:adj };
   }
 
   /* graph(path) -> Promise of parsed JSON, supplied by the caller so this module

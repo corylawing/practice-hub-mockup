@@ -235,9 +235,10 @@
     .addday{padding:9px 11px;font-size:12px}
   }
 </style>
-<script src="user.js?v=hb61"></script>
+<script src="user.js?v=hb65"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="gate.js?v=hb61"></script>
+  <script src="store.js?v=hb65"></script>
+  <script src="gate.js?v=hb65"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — sample staff schedule for validation. Live version = one Microsoft List the practice maintains.</div>
@@ -317,7 +318,12 @@
   const openOn=(l,d)=>{const i=dowIdx(d); return i<5? l.hours[i] : null;};
   const cellOf=(l,d)=>(sched[iso(d)]||{})[l.n];
   function setCell(l,d,v){ const k=iso(d); sched[k]=sched[k]||{}; if(v===null) delete sched[k][l.n]; else sched[k][l.n]=v; save(); }
-  function save(){ try{ localStorage.setItem('ph_sched2',JSON.stringify(sched)); }catch(_){} }
+  /* Local first so the calendar never lags, then out to SharePoint so the schedule
+     follows people between devices. PH_STORE handles both and degrades to local alone. */
+  function save(){
+    try{ localStorage.setItem('ph_sched2',JSON.stringify(sched)); }catch(_){}
+    if(window.PH_STORE) PH_STORE.set('ph_sched2', sched);
+  }
 
   // null on a day the office is OPEN = nobody rostered = a Yellow Dot Day.
   // Several offices genuinely run days with staff but no doctor on site.
@@ -814,8 +820,8 @@
   refresh();
 })();
 </script>
-<script>PH.nav('schedule');</script>
-<script src="tour.js?v=hb61"></script>
+<script>PH.nav('schedule');PH.dechrome();</script>
+<script src="tour.js?v=hb65"></script>
 <script>
 Tour.init([
   {sel:'#viewseg', title:'Week or month', body:'<b>Week</b> is the day-to-day working view. <b>Month</b> shows the whole month at a glance, with every office in its own colour.'},

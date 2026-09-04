@@ -40,10 +40,71 @@
   ];
   const COLORS=['#25456e','#149B96','#6b3fd0','#946011','#b03a63','#2E7D52','#1f6f9e','#b0442f'];
 
+  /* ------------------------------------------------------------------
+     WHO IS THIS?
+     Sandbox: the "Viewing as" dropdown, so roles can be demonstrated.
+     Live: the person's own Microsoft profile. Their Entra **Department** decides what
+     they can do and their **Office location** decides whose numbers they see — the two
+     fields IT populates. Nothing here is a security boundary on its own; SharePoint
+     still enforces what a token can actually fetch.
+     ------------------------------------------------------------------ */
+
+  // Department (Entra) -> what they can do. Keys are Heather's own ten team names, lowercased.
+  const DEPT_CAN={
+    'admin':                      {dashboard:'view',production:'manage',schedule:'edit',marketing:'edit',documents:'manage',team:'view',admin:'manage'},
+    'executive team':             {dashboard:'view',production:'edit',  schedule:'edit',marketing:'edit',documents:'manage',team:'view',admin:'none'},
+    'leadership team':            {dashboard:'view',production:'edit',  schedule:'edit',marketing:'edit',documents:'manage',team:'view',admin:'none'},
+    'office managers':            {dashboard:'view',production:'edit',  schedule:'edit',marketing:'view',documents:'edit',  team:'view',admin:'none'},
+    'clinic managers':            {dashboard:'view',production:'view',  schedule:'edit',marketing:'view',documents:'edit',  team:'view',admin:'none'},
+    'doctors':                    {dashboard:'view',production:'none',  schedule:'view',marketing:'none',documents:'view',  team:'view',admin:'none'},
+    'tcs':                        {dashboard:'none',production:'none',  schedule:'view',marketing:'none',documents:'add',   team:'view',admin:'none'},
+    'marketing team':             {dashboard:'none',production:'none',  schedule:'view',marketing:'edit',documents:'edit',  team:'view',admin:'none'},
+    'financial coordinator team': {dashboard:'view',production:'edit',  schedule:'view',marketing:'none',documents:'view',  team:'view',admin:'none'},
+    'staff':                      {dashboard:'none',production:'none',  schedule:'view',marketing:'none',documents:'view',  team:'view',admin:'none'}
+  };
+  // Departments that legitimately see every office.
+  const ALL_OFFICE_DEPTS=['admin','executive team','leadership team'];
+
+  // Set by gate.js once Graph /me comes back.
+  let PROFILE=null;
+  function setProfile(p){ PROFILE=p; }
+
+  function fromProfile(){
+    if(!PROFILE) return null;
+    const depts=String(PROFILE.department||'').split(/[;,]/).map(x=>x.trim().toLowerCase()).filter(Boolean);
+    // Several departments -> take the most permissive level for each area.
+    let can=null;
+    depts.forEach(d=>{
+      const c=DEPT_CAN[d]; if(!c) return;
+      if(!can){ can=Object.assign({},c); return; }
+      Object.keys(c).forEach(k=>{ if(RANK[c[k]]>RANK[can[k]]) can[k]=c[k]; });
+    });
+    const known=depts.some(d=>DEPT_CAN[d]);
+    if(!can) can=Object.assign({},DEPT_CAN['staff']);   // unrecognised/blank -> least access
+
+    const loc=String(PROFILE.officeLocation||'').trim();
+    const seesAll=depts.some(d=>ALL_OFFICE_DEPTS.indexOf(d)>=0);
+    const offs = seesAll ? 'all' : (loc?[loc]:[]);
+
+    const full=String(PROFILE.displayName||PROFILE.mail||'').trim();
+    const bits=full.split(/\s+/);
+    return {
+      id:'me', first:bits[0]||'', last:bits.slice(1).join(' '),
+      role:PROFILE.jobTitle||'', title:PROFILE.jobTitle||'',
+      mail:PROFILE.mail||PROFILE.userPrincipalName||'',
+      teams:depts.length?depts.map(d=>d.replace(/\b\w/g,c=>c.toUpperCase())):['Staff'],
+      loc:loc||'', offices:offs, can:can,
+      // Flags the UI uses to explain a thin-looking account rather than just showing nothing.
+      _needsSetup: !known || (!seesAll && !loc)
+    };
+  }
+
   function id(){ let v='admin'; try{ v=localStorage.getItem('ph_viewas')||'admin'; }catch(_){}
     return PEOPLE.some(p=>p.id===v)?v:'admin'; }
   function me(){
-    const base=PEOPLE.find(p=>p.id===id());
+    const real=fromProfile();
+    if(real) return real;                       // live: the signed-in person
+    const base=PEOPLE.find(p=>p.id===id());     // sandbox: the chosen persona
     let mine={}; try{ mine=JSON.parse(localStorage.getItem('ph_me_'+base.id))||{}; }catch(_){}
     return Object.assign({},base,mine);
   }
@@ -201,6 +262,8 @@
 
   function saveLocations(list){
     try{ localStorage.setItem('ph_locations',JSON.stringify(list)); }catch(_){}
+    // Offices are shared practice-wide, so they belong in SharePoint, not one browser.
+    if(window.PH_STORE) PH_STORE.set('ph_locations', list);
   }
   const officeNames=()=>locations().map(l=>l.n);
 
@@ -446,6 +509,28 @@
     {k:'team',       n:'\ud83d\udc65 Team',              href:'team.html',       show:()=>atLeast('team','view')},
     {k:'admin',      n:'\u2699\ufe0f Admin',            href:'admin.html',      show:()=>atLeast('admin','view')}
   ];
+  /* Production is not a prototype. Strip the demo chrome — the amber ribbon, the
+     "Viewing as" switcher, the V1 badge — so staff see an app, not a mock-up. Sandbox
+     keeps all of it, because that is what it is for. */
+  function dechrome(){
+    if(!isLive()) return;
+    document.documentElement.classList.add('ph-live');
+    const css=document.createElement('style');
+    css.textContent='.ph-live .ribbon,.ph-live .viewas,.ph-live .v1{display:none !important}';
+    document.head.appendChild(css);
+    // If a person's Entra profile isn't filled in yet, say so plainly instead of
+    // silently showing them an empty app.
+    const m=me();
+    if(m && m._needsSetup){
+      const b=document.createElement('div');
+      b.style.cssText='background:#FFF6E5;color:#8a5a00;border-bottom:1px solid #f0d9a8;'+
+        'padding:8px 16px;font-size:13px;text-align:center';
+      b.innerHTML='Your profile isn\u2019t finished yet, so you may not see everything. '+
+        'Ask IT to set your <b>Department</b> and <b>Office location</b>.';
+      document.body.insertBefore(b, document.body.firstChild);
+    }
+  }
+
   function nav(active){
     const host=document.getElementById('nav')||document.querySelector('.v1nav-in');
     if(host) host.innerHTML=NAV.filter(x=>x.show()).map(x=>
@@ -517,6 +602,19 @@
     return l ? colorOf(l.color) : {k:'',dot:'#94a3b8',bg:'#F1F5F9',fg:'#475569'};
   }
 
-  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice};
+  /* WHERE ARE WE RUNNING?
+       'live'    - the practice's real hub on Azure. Reads their workbook.
+       'sandbox' - GitHub Pages or localhost. Demo numbers only, never real figures,
+                   because that host is public.
+     Anything that would expose real data must check this. */
+  function env(){
+    const h=location.hostname;
+    if(/azurestaticapps\.net$/i.test(h)) return 'live';
+    if(/^hub\./i.test(h)) return 'live';               // future custom domain
+    return 'sandbox';
+  }
+  const isLive=()=>env()==='live';
+
+  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome};
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mount); else mount();
 })();

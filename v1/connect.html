@@ -180,7 +180,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-<script src="workbook.js?v=hb61"></script>
+<script src="workbook.js?v=hb65"></script>
 <script>
 (function(){
   'use strict';
@@ -227,9 +227,8 @@
       clientId: CLIENT_ID,
       authority: 'https://login.microsoftonline.com/' + TENANT_ID,
       // Blank landing page, same reasoning as gate.js -- never point this at a real page.
-      redirectUri: /^https?:\/\/localhost:8790/.test(window.location.origin)
-        ? window.location.origin + '/v1/auth.html'
-        : 'https://corylawing.github.io/practice-hub-mockup/v1/auth.html'
+      // Same-origin, always — see the note in gate.js.
+      redirectUri: window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '/') + 'auth.html'
     },
     cache: { cacheLocation: 'sessionStorage' }
   });

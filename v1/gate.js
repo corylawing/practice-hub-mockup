@@ -19,9 +19,11 @@
      response out of the URL fragment. Landing on a real page risks that page
      consuming the fragment first -- which is exactly MSAL's "Hash value cannot be
      processed because it is empty". Must be registered as a redirect URI in Entra. */
-  var REDIRECT = /localhost:8790/.test(location.origin)
-    ? location.origin + '/v1/auth.html'
-    : 'https://corylawing.github.io/practice-hub-mockup/v1/auth.html';
+  /* ALWAYS same-origin. The popup posts the sign-in result back to whoever opened it, and
+     a browser will not let one origin read another's URL — pointing this at a fixed host
+     meant Azure opened GitHub's page and then sat there blank forever. Every host this runs
+     on needs its own /v1/auth.html registered as a redirect URI in Entra. */
+  var REDIRECT = location.origin + location.pathname.replace(/\/[^\/]*$/, '/') + 'auth.html';
 
   var CSS =
     '#phgate{position:fixed;inset:0;z-index:99999;background:#0F2A4A;color:#fff;display:flex;' +
@@ -56,10 +58,21 @@
     return g;
   }
 
+  /* Fetch the person's own profile before letting the page render: their Department and
+     Office location decide what they can see, so the app must not paint until it knows. */
+  function loadProfile(){
+    if(!global.PH_AUTH) return Promise.resolve();
+    return global.PH_AUTH.graph('/me?$select=displayName,mail,userPrincipalName,jobTitle,department,officeLocation')
+      .then(function(p){ if(global.PH && PH.setProfile) PH.setProfile(p); })
+      .catch(function(){ /* proceed with least access rather than locking anyone out */ });
+  }
+
   function open(gate){
-    gate.remove();
-    document.body.classList.remove('phgated');
-    document.dispatchEvent(new CustomEvent('ph-signed-in'));
+    loadProfile().then(function(){
+      gate.remove();
+      document.body.classList.remove('phgated');
+      document.dispatchEvent(new CustomEvent('ph-signed-in'));
+    });
   }
 
   /* Shared Graph access, so pages don't each stand up their own MSAL instance. */
@@ -100,6 +113,18 @@
       fail('Could not load the Microsoft sign-in library. Check the connection and reload.');
       return;
     }
+    /* A sign-in that fails part-way (a redirect-URI mismatch, a closed popup) leaves MSAL's
+       "interaction in progress" flag set, and every later attempt then dies with
+       interaction_in_progress until the browser's storage is cleared by hand. On a fresh
+       page load nothing can legitimately be in progress, so clear it. */
+    try{
+      [sessionStorage, localStorage].forEach(function(store){
+        Object.keys(store).forEach(function(k){
+          if (k.indexOf('interaction.status') >= 0) store.removeItem(k);
+        });
+      });
+    }catch(_){}
+
     var app = new msal.PublicClientApplication({
       auth: { clientId: CLIENT_ID,
               authority: 'https://login.microsoftonline.com/' + TENANT_ID,
@@ -116,7 +141,20 @@
           expose(app, r.account);
           open(gate);
         }).catch(function(e){
-          fail(e && e.errorCode === 'popup_window_error'
+          var code = e && e.errorCode;
+          if (code === 'interaction_in_progress'){
+            // Shouldn't happen now we clear on load, but never leave a person stuck.
+            try{
+              [sessionStorage, localStorage].forEach(function(store){
+                Object.keys(store).forEach(function(k){
+                  if (k.indexOf('interaction.status') >= 0) store.removeItem(k);
+                });
+              });
+            }catch(_){}
+            fail('That sign-in was interrupted. Press the button once more.');
+            return;
+          }
+          fail(code === 'popup_window_error'
             ? 'The popup was blocked. Allow popups for this site, then try again.'
             : (e && (e.errorMessage || e.message)) || 'Sign-in failed.');
         });
