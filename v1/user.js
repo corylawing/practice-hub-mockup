@@ -134,6 +134,20 @@
   let PROFILE=null;
   function setProfile(p){ PROFILE=p; }
 
+  /* Turn one or more team names into a permission set. Used by BOTH real sign-in and
+     View as — they diverged once, and an admin impersonating another admin got locked
+     out of Admin because "Admin; Leadership Team" was looked up as a single literal. */
+  function canForTeams(depts){
+    let can=null;
+    depts.forEach(d=>{
+      const c=accessForTeam(d) || DEPT_CAN[d]; if(!c) return;
+      if(!can){ can=Object.assign({},c); return; }
+      Object.keys(c).forEach(k=>{ if(RANK[c[k]]>RANK[can[k]]) can[k]=c[k]; });
+    });
+    return can;
+  }
+  const splitTeams=v=>String(v||'').split(/[;,]/).map(x=>x.trim().toLowerCase()).filter(Boolean);
+
   function fromProfile(){
     if(!PROFILE) return null;
     const mailNow=String(PROFILE.mail||PROFILE.userPrincipalName||'').toLowerCase().trim();
@@ -142,14 +156,9 @@
     const deptSrc = (ovr && ovr.teams && ovr.teams.length)
       ? ovr.teams.join(';')
       : String(PROFILE.department||'');
-    const depts=deptSrc.split(/[;,]/).map(x=>x.trim().toLowerCase()).filter(Boolean);
+    const depts=splitTeams(deptSrc);
     // Several departments -> take the most permissive level for each area.
-    let can=null;
-    depts.forEach(d=>{
-      const c=accessForTeam(d) || DEPT_CAN[d]; if(!c) return;
-      if(!can){ can=Object.assign({},c); return; }
-      Object.keys(c).forEach(k=>{ if(RANK[c[k]]>RANK[can[k]]) can[k]=c[k]; });
-    });
+    let can=canForTeams(depts);
     const known=depts.some(d=>accessForTeam(d)||DEPT_CAN[d]);
     if(!can) can=Object.assign({},DEPT_CAN['staff']);   // unrecognised/blank -> least access
 
@@ -206,13 +215,17 @@
   }
   /* Turn a roster row into someone the app can render as. */
   function personFromStaff(row){
-    const dept=String(row.team||'').trim();
+    const depts=splitTeams(row.team);
     const bits=String(row.n||'').trim().split(/\s+/);
+    const locs=String(row.loc||'').split(',').map(x=>x.trim()).filter(Boolean);
+    const seesAll = locs.indexOf('All offices')>=0 ||
+                    depts.some(d=>ALL_OFFICE_DEPTS.indexOf(d)>=0);
     return { id:'imp', first:bits[0]||'', last:bits.slice(1).join(' '),
              role:row.role||'', title:row.role||'', mail:row.mail||'',
-             teams:dept?[dept]:['Staff'], loc:row.loc||'',
-             offices:/admin|executive|leadership/i.test(dept) ? 'all' : (row.loc?[row.loc]:[]),
-             can:(DEPT_CAN[dept.toLowerCase()]||DEPT_CAN['staff']) };
+             teams:depts.length?depts.map(d=>d.replace(/\b\w/g,c=>c.toUpperCase())):['Staff'],
+             loc:row.loc||'',
+             offices: seesAll ? 'all' : locs,
+             can: canForTeams(depts) || Object.assign({},DEPT_CAN['staff']) };
   }
 
   function id(){ let v='admin'; try{ v=localStorage.getItem('ph_viewas')||'admin'; }catch(_){}
