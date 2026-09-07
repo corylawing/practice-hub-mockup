@@ -339,7 +339,10 @@
         .then(function(r){ return (r.formulas && r.formulas[0] && r.formulas[0][0]); });
     };
     var steps=[], wrote=false, orig=null, origSched=null, atDone=null, atSched=null;
-    var ok=function(t){ steps.push({ok:true, text:t}); };
+    /* Report each step as it happens, not in a lump at the end. If the tab dies
+       mid-test the person still has the original value on screen to type back. */
+    var onStep = opts.onStep || function(){};
+    var ok=function(t){ var st={ok:true, text:t}; steps.push(st); try{ onStep(st, steps); }catch(_){ } };
     var blank=function(v){ return v===null||v===undefined||v===''; };
     var same=function(a,b){
       if(blank(a)||blank(b)) return blank(a)&&blank(b);

@@ -221,7 +221,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-<script src="workbook.js?v=hc05"></script>
+<script src="workbook.js?v=hc06"></script>
 <script>
 (function(){
   'use strict';
@@ -593,13 +593,20 @@
     var month  = parseInt(el('rtMonth').value, 10);
     var label  = esc(office) + ' &middot; ' + MONTHS_RT[month];
 
+    var draw = function(list){
+      return '<ul class="ticks">' + list.map(function(s){
+        return '<li>' + (s.ok ? '✓ ' : '✗ ') + esc(s.text) + '</li>';
+      }).join('') + '</ul>';
+    };
+
     show('r11', true, 'Running…', 'Testing ' + label + '. Leave this tab open.');
     try {
       var r = await PH_WB.roundTrip(function(){ return token(); },
-                                    FILE.driveId, FILE.itemId, office, month);
-      var ticks = '<ul class="ticks">' + r.steps.map(function(s){
-        return '<li>' + (s.ok ? '✓ ' : '✗ ') + esc(s.text) + '</li>';
-      }).join('') + '</ul>';
+                                    FILE.driveId, FILE.itemId, office, month,
+        // Paint each step the moment it happens, so the original value is on
+        // screen before anything is written to their workbook.
+        { onStep: function(step, all){ show('r11', true, 'Running… ' + label, draw(all)); } });
+      var ticks = draw(r.steps);
 
       if (r.pass){
         show('r11', true, 'Round-trip passed on ' + label, ticks);

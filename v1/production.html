@@ -120,11 +120,11 @@
   }
 
 </style>
-<script src="user.js?v=hc05"></script>
+<script src="user.js?v=hc06"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="workbook.js?v=hc05"></script>
-  <script src="store.js?v=hc05"></script>
-  <script src="gate.js?v=hc05"></script>
+  <script src="workbook.js?v=hc06"></script>
+  <script src="store.js?v=hc06"></script>
+  <script src="gate.js?v=hc06"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — type the month's numbers here. In the real build this writes straight into the SharePoint workbook.</div>
@@ -214,14 +214,22 @@
   try{ edits=JSON.parse(localStorage.getItem('ph_prod'))||{}; }catch(_){ edits={}; }
   const save=()=>{ try{ localStorage.setItem('ph_prod',JSON.stringify(edits)); }catch(_){} };
   const key=(o,m)=>o+'|'+m;
+  /* An emptied box is NOT the same as an untouched one. '' means the person deliberately
+     cleared it and wants that cell blank in the workbook, so it must not fall back to the
+     figure already there -- otherwise a number typed into the wrong month can only be
+     undone in Excel. */
+  const cleared=(o,m,f)=>{ const e=edits[key(o,m)]; return !!(e && e[f]===''); };
   function val(o,m,f){
     const e=edits[key(o,m)];
     if(e && e[f]!==undefined && e[f]!=='') return Number(e[f]);
+    if(e && e[f]==='') return 0;              // cleared counts as nothing, for every total
     const b=BASE[o]; if(!b) return 0;
     if(f==='fee')  return b.fee;                // both case fees are per office, not per month
     if(f==='afee') return b.afee||0;
     return (b[f]||[])[m]||0;
   }
+  // What the input shows: blank when cleared, the figure otherwise.
+  const disp=(o,m,f)=> cleared(o,m,f) ? '' : val(o,m,f);
   const medDollars=(o,m)=>val(o,m,'mds')*val(o,m,'fee');
   const money=v=>'$'+Math.round(v).toLocaleString('en-US');
   const pc=v=>Math.round(v*100)+'%';
@@ -254,25 +262,25 @@
       '</div>'+
       '<div class="grid2">'+
         '<div class="card"><h2>'+MOFULL[month]+' 2026 · '+office+'</h2><div class="sub">Only these few boxes. Everything else is worked out for you.</div>'+
-          fld('TC Net Production','Total production minus discounts','tc',tc)+
+          fld('TC Net Production','Total production minus discounts','tc',disp(office,month,'tc'))+
           (billsMedicaid
-            ? fld('Medicaid starts','How many Medicaid cases started this month \u2014 a count, not dollars','mds',mds,true)+
+            ? fld('Medicaid starts','How many Medicaid cases started this month \u2014 a count, not dollars','mds',disp(office,month,'mds'),true)+
               (canGoals()
-                ? fld('Medicaid case fee','What one Medicaid case is worth. Applies to every month at this office.','fee',fee)
+                ? fld('Medicaid case fee','What one Medicaid case is worth. Applies to every month at this office.','fee',disp(office,month,'fee'))
                 : '<div class="f"><label>Medicaid case fee</label><div class="help">Set by leadership \u2014 you can\u2019t change this</div><input class="ro" value="$'+fee.toLocaleString('en-US')+'" readonly></div>')+
               '<div class="calcline" id="calcline">'+mds+' starts \u00d7 '+money(fee)+' = <b>'+money(mdp)+'</b> Medicaid production</div>'
             : '')+
           (canGoals()
-            ? fld('Average case fee','What a typical case is worth here. Turns production into a starts figure. Applies to every month at this office.','afee',afee)
+            ? fld('Average case fee','What a typical case is worth here. Turns production into a starts figure. Applies to every month at this office.','afee',disp(office,month,'afee'))
             : '<div class="f"><label>Average case fee</label><div class="help">Set by leadership \u2014 you can\u2019t change this</div><input class="ro" value="$'+afee.toLocaleString('en-US')+'" readonly></div>')+
           (afee>0 ? '<div class="calcline" id="startline">'+money(tc)+' \u00f7 '+money(afee)+' \u2248 <b>'+Math.round(tc/afee)+'</b> starts</div>' : '')+
-          fld('Write-offs &amp; other adjustments','Can be negative','adj',adj)+
-          fld('Completed production days','How many days you actually saw patients','dys',dys,true)+
+          fld('Write-offs &amp; other adjustments','Can be negative','adj',disp(office,month,'adj'))+
+          fld('Completed production days','How many days you actually saw patients','dys',disp(office,month,'dys'),true)+
           '<div style="border-top:1px solid var(--line);margin:4px 0 14px"></div>'+
           (canGoals()
             ? '<p style="font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--soft);margin:0 0 10px">Goals <span style="background:#FFF6E9;color:#946011;font-size:10px;padding:2px 7px;border-radius:5px;letter-spacing:0">LEADERSHIP ONLY</span></p>'+
-              fld('Main production goal','The number this office is held to','goal',goal)+
-              fld('Stretch goal','The reach number','str',str)
+              fld('Main production goal','The number this office is held to','goal',disp(office,month,'goal'))+
+              fld('Stretch goal','The reach number','str',disp(office,month,'str'))
             : '<p style="font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--soft);margin:0 0 8px">Goals</p>'+
               '<div class="f"><label>Main production goal</label><div class="help">Set by leadership \u2014 you can\u2019t change this</div><input class="ro" value="$'+goal.toLocaleString('en-US')+'" readonly></div>'+
               '<div class="f"><label>Stretch goal</label><div class="help">Set by leadership \u2014 you can\u2019t change this</div><input class="ro" value="$'+str.toLocaleString('en-US')+'" readonly></div>')+
@@ -407,8 +415,11 @@
     }
 
     for(const f of fields){
-      const v=val(office,month,f);
-      if(v===''||v===null||v===undefined) continue;
+      // '' tells writeCell to clear the cell (it uses Graph's clear action, since a
+      // PATCH of null is ignored). Only genuinely absent values are skipped.
+      const blank=cleared(office,month,f);
+      const v=blank ? '' : val(office,month,f);
+      if(!blank && (v===''||v===null||v===undefined)) continue;
       try{
         const r=await PH_WB.writeCell(PH_AUTH.token, WB_DRIVE, WB_ITEM, office, f, month, v);
         done.push(f+' \u2192 '+r.address);
@@ -531,7 +542,7 @@
 })();
 </script>
 <script>PH.nav('production');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc05"></script>
+<script src="tour.js?v=hc06"></script>
 <script>
 Tour.init([
   {sel:'.syncbar', title:'One set of numbers', body:'Type here and it saves into the <b>same Excel workbook</b> on SharePoint. If someone types in Excel instead, it shows up here. There is never a second copy to reconcile.'},
