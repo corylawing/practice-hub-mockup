@@ -2,7 +2,7 @@
 
 > Read this first. It is the full context for **Home-Brace** so any session (including on a phone)
 > can pick this up cold. Keep it current — the user asks for that explicitly.
-> Last full update: **2026-09-01**.
+> Last full update: **2026-09-07**.
 
 ---
 
@@ -13,9 +13,18 @@ developer. Keep answers **short** — he has told me repeatedly that I write too
 answer, not the reasoning behind every alternative.
 
 ### What this is
-A **clickable mockup** of an internal hub for an 8-office orthodontic practice, used to get
-leadership sign-off before anything real is built. It is **static HTML/CSS/JS with hardcoded data**.
-Nothing persists beyond one browser's `localStorage`. There is **no backend and no sign-in**.
+A **live internal hub** for an 8-office orthodontic practice — no longer a mockup. Static
+HTML/CSS/JS (no framework, no build step), but every page sits behind Microsoft sign-in, reads and
+writes Heather's real workbook, and stores app data in SharePoint.
+
+**Two environments, one codebase** (`PH.env()` decides by hostname):
+| | |
+|---|---|
+| **Production** | Azure Static Web App in *their* tenant — `kind-hill-00da87410.3.azurestaticapps.net`. Prototype chrome (View As, the top banner) is stripped by `PH.dechrome()`. Custom domain still to come. |
+| **Sandbox** | `corylawing.github.io/practice-hub-mockup/v1/home.html` — keeps the demo data and the prototype chrome. |
+
+**Structural changes go to both.** Cory's rule: *"The structural changes (not data and everything)
+like for instance adding view as always need to go to mockup as well."* Data does not.
 
 ### Who the people are
 - **Cory** — building it. Works at DentalMonitoring; this is a side project for a friend.
@@ -152,22 +161,50 @@ numbers and reported them as bugs, so keep the snapshot fresh and tell her it is
   "where I'll be" chips per day (`ph_mktgwhere`), hover-reveal; marketing stays OFF the Schedule.
   Office palette lives in user.js (`PH.palette/colorOf/colorForOffice`) — one source.
 
+### Today's state (2026-09-07) — Heather's first round of real-use bugs, all fixed
+She has been using Enter Production for real. Four issues, all shipped today:
+1. **Wrong Excel row.** "Completed production days" was bound to the *scheduled* row
+   (`Number of Production Days (2026)`) for read AND write, so editing it changed the wrong cell —
+   exactly what she described. `dys` now maps to `completed number of production days`; the
+   scheduled row got its own key (`sched`). Her diagnosis was right, as usual.
+2. **Writes not sticking** ("wrote 1 to J21 but it reads back as 8"). There was no Excel session,
+   so each Graph call could land on a different snapshot. `workbook.js` now opens a persistent
+   session (`createSession {persistChanges:true}`), sends `workbook-session-id` on every call in a
+   save, and `production.html` closes it afterwards. **Don't remove this.**
+3. **`#DIV/0!` from 0 days.** Saving 0 completed days against non-zero production now asks first.
+4. **No way to rename or remove a doctor** (she wants Dr. Brimhall → Dr. Jae). `editPerson()`
+   existed and was exported as `PS.edit`, but *nothing ever called it* — added a pencil beside each
+   doctor filter chip.
+
+Found while testing (4): **the doctor list was never persisted at all.** A rename vanished on
+reload, and a removal was worse — `delPerson()` re-indexed the days and saved them, but the old
+list came back, so days pointed at the wrong doctor. `people` now saves to `ph_docs` in the same
+`save()` call as the days, so the two can never be written apart. It is deliberately NOT stored
+inside `sched` — three loops walk `Object.keys(sched)` and an array there would poison them.
+
 ### What to do next
-1. **Build the sign-in.** Consent is granted, so this is now unblocked and is the next real step:
-   MSAL browser sign-in against the Farnsworth tenant, showing the signed-in name on the page.
-   Nothing else can be tested until a token can be acquired. Keep it a **SPA** - **never add a
-   client secret**, a browser app cannot hold one.
-2. **Then the Production Dashboard via Graph** - read Heather's workbook live instead of the manual
-   snapshot. It proves the architecture and ends the stale-numbers problem.
-3. **Keep iterating the mockup with Heather** in parallel. Blocked on nothing; she is engaged and
-   finding genuine issues.
-4. **Still waiting on the IT company:** confirm which tenant is the long-term master (SharePoint host
-   is `omegaorthodontics`, org displays as Farnsworth Family Orthodontics, group spans several
-   tenants); optionally a licence for Cory.
-5. **Do NOT build the SharePoint site or lists yet** — Cory has the rights, but if the master tenant
-   turns out to be a different one the work is wasted, and consent would need granting again there.
-6. **Settle the PHI question before real data flows** - see Open questions. If any tracker holds
-   patient names it changes access, auditing and device policy.
+1. **Deploy today's fixes to production.** The sandbox is pushed; the Azure Static Web App is not.
+   Needs the deployment token, which is **not stored in this repo on purpose** — get it from Azure
+   Portal -> the Static Web App -> Manage deployment token, then
+   `npx @azure/static-web-apps-cli deploy ./v1 --deployment-token <token> --env production`.
+2. **Rotate that token.** It was pasted into a chat once. Azure -> Manage deployment token -> Reset.
+3. **Custom domain** `hub.farnsworthorthodontics.com` — Cory adds it in Azure, Adam adds the DNS
+   record. Renaming does **not** require redoing the Entra work; it needs the new URL added as a
+   redirect URI alongside the existing one.
+4. **Adam still owes:** Job title / Department / Office location on each account (values must match
+   the app's strings EXACTLY). Once one account has them, run `connect.html` **step 10** to confirm
+   other people's Department/Office are readable.
+5. **Run connect steps 5->9 against live.** The local -5 file is stale. **Roswell** is on their
+   Dashboard tab (empty in -5); if step 9 says it HAS NUMBERS, add it in three places: `TABS` in
+   workbook.js + `OFFICES` in index.html + locations in user.js.
+6. **Cory's call, from the app-wide review — none chosen yet:**
+   - Documents opens nothing (every `href="#"`).
+   - Team shows fabricated phone numbers and ~50 of 70 invented emails. Real ones exist in
+     `_staff.js` for the rest.
+   - SharePoint storage has never been verified across two devices — the whole point of it.
+   - Schedule has no bulk-fill: 8 offices x ~250 weekdays is not enterable by hand.
+7. **Settle the PHI question before pointing the hub at any *different* tracker** — the production
+   dashboard itself is confirmed clear (see Open questions).
 
 ### Open questions with the practice
 - Row 13 on the Lubbock and San Angelo tabs is `=B12/B7` (2026 ÷ 2024). Heather confirmed it should
