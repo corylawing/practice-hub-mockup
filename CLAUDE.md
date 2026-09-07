@@ -204,6 +204,23 @@ parent), and a deploy is only real once the **cache stamp changes** on the live 
 After every deploy, verify against the live host, not localhost:
 `curl -s <host>/v1/workbook.js | grep -A2 "dys:"` and the `v=hc..` stamp on a page.
 
+### Round-trip testing against the live workbook (added 2026-09-07)
+`connect.html` **step 11** proves on the real file that a field lands where it should and puts the
+original back. **Cory's rule: a test must never leave their workbook changed.** The logic is
+`PH_WB.roundTrip`; it refuses to write if the two fields resolve to the same cell or if the target
+holds a formula, restores on every exit path, verifies the restore by reading it back, and names
+the tab/cell/number if it ever cannot. Steps paint as they happen so the original is on screen
+before anything is written.
+
+Verified on the live workbook 2026-09-07: **Carlsbad · November passed clean** — `L5` (completed)
+vs `L26` (scheduled), wrote, checked, restored a blank. The offline suite
+(`scratchpad/rt/test.js`, 22 checks over six scenarios) must keep failing against the pre-fix build
+or it is not testing anything.
+
+**Still worth running: one TC-only tab** (Lubbock, San Angelo, Cruces FFO or Mansfield). Those tabs
+have a different layout from the Medicaid ones and have produced LABEL NOT FOUND before, so
+Carlsbad passing does not cover them.
+
 ### What to do next
 1. **Rotate the deployment token.** It has been pasted into chat twice now. Azure -> Manage
    deployment token -> **Reset**. Deploys still work afterwards; you just pass the new one.
@@ -239,6 +256,17 @@ After every deploy, verify against the live host, not localhost:
 - **Never scale a goal.** Show the workbook's goal. See §"GOALS ARE NEVER SCALED".
 - **Match workbook rows by LABEL, never by row number** — the tabs have two different layouts.
 - **Bump the `?v=` cache stamp** on every shared-file edit or browsers serve a stale app.
+- **To blank a cell, use Graph's `range/clear` action, never a PATCH of `[[null]]`.** Graph reads
+  `null` in a values array as *"leave this cell alone"*, so the write silently does nothing. This
+  cost us a value left sitting in the practice's live workbook (Carlsbad `M5`, 2026-09-07). The
+  verify must not accept `0` as proof of a cleared cell either, or it hides the same failure.
+- **Never test the mapping with a re-implementation of the mapping.** The wrong-row bug Heather
+  found survived because nothing exercised `writeCell`'s own row matching. Tests go through
+  `PH_WB.resolve/readCell/writeCell`, and a test is only trustworthy once it has been shown to
+  **fail against the broken build** — `scratchpad/rt/test.js` does exactly that.
+- **A local simulation of the Graph API is a guess until the live run agrees with it.** The
+  `null`-clear bug passed every local check because the simulator applied the null write; Graph
+  does not. When a simulator and the live file disagree, the simulator is wrong.
 - **Do not invent people, offices, figures or features.** Cory has caught several inventions and it
   costs trust every time.
 - **Office colours must differ by hue family, not just by a distance number.** Two colours at
