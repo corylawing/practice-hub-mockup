@@ -182,12 +182,31 @@ list came back, so days pointed at the wrong doctor. `people` now saves to `ph_d
 `save()` call as the days, so the two can never be written apart. It is deliberately NOT stored
 inside `sched` — three loops walk `Object.keys(sched)` and an array there would poison them.
 
+### HOW TO DEPLOY TO PRODUCTION (2026-09-07 — read this before deploying)
+`./deploy/deploy-production.sh <deployment-token>` — that's it. Token comes from Azure Portal ->
+Static Web App `kind-hill-00da87410` -> **Manage deployment token**. **Never commit the token.**
+
+**Production is NOT the repo root**, and this trips you up if you don't know it:
+| Path in production | Comes from |
+|---|---|
+| `/` | `deploy/index.html` — a tiny redirect to `v1/home.html` |
+| `/v1/*` | `v1/` minus `snapshot.json` and `_testgrids.json` |
+| `/assets/*` | `assets/` |
+| `/hr.html`, `/calendars.html`, the other V0 pages | **not deployed** — they fall back to `/` |
+
+The repo root's own `index.html` is the **old V0 mockup home**, full of invented announcements from
+"Jordan Avery (COO)" and "Dr. Chen out Thu/Fri". Deploying the repo root would put those fake posts
+on the practice's real app. The script exists so that can't happen by accident.
+
+Two gotchas: the SWA CLI **refuses to run from inside the folder it is deploying** (deploy from the
+parent), and a deploy is only real once the **cache stamp changes** on the live URL — check it.
+
+After every deploy, verify against the live host, not localhost:
+`curl -s <host>/v1/workbook.js | grep -A2 "dys:"` and the `v=hc..` stamp on a page.
+
 ### What to do next
-1. **Deploy today's fixes to production.** The sandbox is pushed; the Azure Static Web App is not.
-   Needs the deployment token, which is **not stored in this repo on purpose** — get it from Azure
-   Portal -> the Static Web App -> Manage deployment token, then
-   `npx @azure/static-web-apps-cli deploy ./v1 --deployment-token <token> --env production`.
-2. **Rotate that token.** It was pasted into a chat once. Azure -> Manage deployment token -> Reset.
+1. **Rotate the deployment token.** It has been pasted into chat twice now. Azure -> Manage
+   deployment token -> **Reset**. Deploys still work afterwards; you just pass the new one.
 3. **Custom domain** `hub.farnsworthorthodontics.com` — Cory adds it in Azure, Adam adds the DNS
    record. Renaming does **not** require redoing the Entra work; it needs the new URL added as a
    redirect URI alongside the existing one.
