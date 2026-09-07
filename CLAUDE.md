@@ -212,14 +212,18 @@ holds a formula, restores on every exit path, verifies the restore by reading it
 the tab/cell/number if it ever cannot. Steps paint as they happen so the original is on screen
 before anything is written.
 
-Verified on the live workbook 2026-09-07: **Carlsbad · November passed clean** — `L5` (completed)
-vs `L26` (scheduled), wrote, checked, restored a blank. The offline suite
-(`scratchpad/rt/test.js`, 22 checks over six scenarios) must keep failing against the pre-fix build
-or it is not testing anything.
+Verified on the live workbook 2026-09-07, **both tab layouts, both clean**:
+| Office | Completed | Scheduled | Result |
+|---|---|---|---|
+| Carlsbad (Medicaid tab) | `L5` | `L26` | passed, blank restored |
+| Lubbock (TC-only tab) | `L5` | `L21` | passed, blank restored |
 
-**Still worth running: one TC-only tab** (Lubbock, San Angelo, Cruces FFO or Mansfield). Those tabs
-have a different layout from the Medicaid ones and have produced LABEL NOT FOUND before, so
-Carlsbad passing does not cover them.
+The differing scheduled rows (26 vs 21) are the point: the label matching handles both layouts.
+**Row 21 is the row Heather named** in her report ("wrote 1 to J21"), so Lubbock was her office and
+her bug is confirmed fixed against the real file.
+
+The offline suite (`scratchpad/rt/test.js`, 22 checks over six scenarios) must keep failing against
+the pre-fix build or it is not testing anything.
 
 ### What to do next
 1. **Rotate the deployment token.** It has been pasted into chat twice now. Azure -> Manage
