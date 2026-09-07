@@ -294,13 +294,24 @@
       var num = (value===''||value===null||value===undefined) ? null : Number(value);
       if(num!==null && !isFinite(num)) throw new Error('That is not a number.');
 
-      return call(token, 'PATCH', base+"/range(address='"+address+"')", { values: [[num]] })
+      /* Clearing a cell needs the clear action, NOT a PATCH of [[null]]: Graph reads
+         null in a values array as "leave this cell alone", so a blank silently did
+         nothing and the verify below then failed. applyTo Contents keeps the cell's
+         formatting. Found on the live workbook - the round-trip test could not put a
+         blank December back. */
+      var send = (num===null)
+        ? call(token, 'POST', base+"/range(address='"+address+"')/clear", { applyTo:'Contents' })
+        : call(token, 'PATCH', base+"/range(address='"+address+"')", { values: [[num]] });
+
+      return send
         .then(function(){ return call(token, 'GET', base+"/range(address='"+address+"')?$select=values"); })
         .then(function(check){
           var got=(check.values&&check.values[0]&&check.values[0][0]);
-          var ok = (num===null) ? (got===null||got===''||got===0)
+          // A cleared cell reads back as '' or null. Accepting 0 here would hide a failure.
+          var ok = (num===null) ? (got===null||got===''||got===undefined)
                                 : Math.abs(Number(got)-num) < 0.01;
-          if(!ok) throw new Error('wrote '+num+' to '+address+', reads back as '+
+          if(!ok) throw new Error((num===null?'cleared ':'wrote '+num+' to ')+address+
+                                  ', reads back as '+
                                   (got===''||got===null||got===undefined?'(blank)':got));
           return { address:address, sheet:tab, value:num, label:at.label };
         });
