@@ -74,6 +74,11 @@
     }
   }
 
+  .rt-row{display:flex;gap:14px;flex-wrap:wrap;margin:10px 0 12px}
+  .rt-row label{font-size:13px;color:#456;display:flex;align-items:center;gap:6px}
+  .rt-row select{font:inherit;padding:6px 8px;border:1px solid #cbd5e1;border-radius:8px;background:#fff}
+  ul.ticks{margin:.2em 0 0;padding-left:1.1em;line-height:1.55}
+  ul.ticks li{margin:.15em 0}
 </style>
 </head>
 <body>
@@ -189,6 +194,23 @@
     <div class="res" id="r10"></div>
   </div>
 
+  <div class="card" id="c11">
+    <h2><span class="step">11</span> Round-trip test on the live workbook</h2>
+    <p class="hint">Proves the fix for the bug Heather found: that <b>Completed production days</b>
+      now lands on the <i>completed</i> row and does <b>not</b> touch the <i>scheduled</i> row.
+      It records the cell's current value, writes a test number, checks both rows, then
+      <b>puts the original back and verifies it</b>. If anything looks unsafe &mdash; a formula in
+      the cell, a row it can't identify &mdash; it stops before writing. Run step 5 first.</p>
+    <p class="hint"><b>Pick a month nobody is editing right now.</b> The value is restored either
+      way, but for a few seconds the cell holds a test number.</p>
+    <div class="rt-row">
+      <label>Office <select id="rtOffice"></select></label>
+      <label>Month <select id="rtMonth"></select></label>
+    </div>
+    <button id="btnRound" disabled>Run the round-trip test</button>
+    <div class="res" id="r11"></div>
+  </div>
+
   <div class="card" id="c4">
     <h2><span class="step">4</span> Read the staff directory</h2>
     <p class="hint">Proves <b>User.ReadBasic.All</b> works — how new hires appear in the hub before they
@@ -199,7 +221,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-<script src="workbook.js?v=hc03"></script>
+<script src="workbook.js?v=hc04"></script>
 <script>
 (function(){
   'use strict';
@@ -311,8 +333,8 @@
     account = null;
     el('btnIn').disabled = false;
     el('btnOut').disabled = true;
-    ['btnMe','btnSites','btnUsers','btnFile','btnSheets','btnCompare','btnStore','btnXcheck','btnDirFields'].forEach(function(id){ el(id).disabled = true; });
-    ['r1','r2','r3','r4','r5','r6','r7','r8','r9','r10'].forEach(function(id){
+    ['btnMe','btnSites','btnUsers','btnFile','btnSheets','btnCompare','btnStore','btnXcheck','btnDirFields','btnRound'].forEach(function(id){ el(id).disabled = true; });
+    ['r1','r2','r3','r4','r5','r6','r7','r8','r9','r10','r11'].forEach(function(id){
       el(id).className = 'res';
       el(id).closest('.card').classList.remove('done','fail');
     });
@@ -544,6 +566,61 @@
     btn.disabled = false;
   };
 
+  /* ---- Step 11: round-trip test against the live workbook ------------------
+     All the logic lives in PH_WB.roundTrip so this page renders a result rather than
+     re-implementing the mapping -- a test that re-implemented it would have passed on
+     the broken build. This half only draws. */
+  var MONTHS_RT = ['January','February','March','April','May','June','July',
+                   'August','September','October','November','December'];
+
+  (function initRoundTrip(){
+    var os = el('rtOffice'), ms = el('rtMonth');
+    if (!os || !ms || !window.PH_WB) return;
+    Object.keys(PH_WB.TABS).forEach(function(n){
+      os.insertAdjacentHTML('beforeend', '<option>' + esc(n) + '</option>');
+    });
+    MONTHS_RT.forEach(function(n, i){
+      ms.insertAdjacentHTML('beforeend', '<option value="' + i + '">' + n + '</option>');
+    });
+    var here = new Date().getMonth();          // default away from the month in use now
+    ms.value = String(here === 11 ? 0 : 11);
+  })();
+
+  el('btnRound').onclick = async function(){
+    var btn = this;
+    btn.disabled = true;
+    var office = el('rtOffice').value;
+    var month  = parseInt(el('rtMonth').value, 10);
+    var label  = esc(office) + ' &middot; ' + MONTHS_RT[month];
+
+    show('r11', true, 'Running…', 'Testing ' + label + '. Leave this tab open.');
+    try {
+      var r = await PH_WB.roundTrip(function(){ return token(); },
+                                    FILE.driveId, FILE.itemId, office, month);
+      var ticks = '<ul class="ticks">' + r.steps.map(function(s){
+        return '<li>' + (s.ok ? '✓ ' : '✗ ') + esc(s.text) + '</li>';
+      }).join('') + '</ul>';
+
+      if (r.pass){
+        show('r11', true, 'Round-trip passed on ' + label, ticks);
+      } else {
+        var tail = '<p>' + esc(r.error) + '</p>';
+        if (r.manualFix)
+          tail += '<p style="color:#b00"><b>COULD NOT PUT IT BACK.</b> On the <b>' +
+                  esc(r.manualFix.sheet) + '</b> tab, set <code>' + esc(r.manualFix.cell) +
+                  '</code> back to <b>' + esc(r.manualFix.value) + '</b> by hand, or restore the ' +
+                  'file from OneDrive version history.</p>';
+        else if (r.restored)
+          tail += '<p>The workbook was left unchanged.</p>';
+        show('r11', false, 'Round-trip failed on ' + label, ticks + tail);
+      }
+    } catch (e) {
+      show('r11', false, 'Round-trip could not run on ' + label, esc(why(e)));
+    } finally {
+      btn.disabled = false;
+    }
+  };
+
   el('btnXcheck').onclick = async function(){
     if (!FILE) { show('r9', false, 'Run step 5 first', ''); return; }
     var btn = this; btn.disabled = true;
@@ -648,6 +725,7 @@
       el('btnSheets').disabled = !(FILE.driveId && FILE.itemId);
       el('btnCompare').disabled = !(FILE.driveId && FILE.itemId);
       el('btnXcheck').disabled = !(FILE.driveId && FILE.itemId);
+      el('btnRound').disabled  = !(FILE.driveId && FILE.itemId);
       var dt = (f.parentReference && f.parentReference.driveType) || '';
       var personal = dt === 'personal' || /-my\.sharepoint\.com/.test(url);
       show('r5', true, 'The app can read the workbook',

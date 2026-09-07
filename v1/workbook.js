@@ -251,8 +251,10 @@
       .then(function(){ SESSION = null; });
   }
 
-  /* Write one month of one field, then verify it. `token` returns a bearer token. */
-  function writeCell(token, driveId, itemId, officeName, field, monthIndex, value){
+  /* Where does one field/month actually live on the sheet? Both the writer and the
+     round-trip test go through this, so a test can never verify a different mapping
+     from the one the app ships -- which is how the wrong-row bug survived so long. */
+  function resolve(token, driveId, itemId, officeName, field, monthIndex){
     var tab=TABS[officeName];
     if(!tab) return Promise.reject(new Error('Unknown office: '+officeName));
     var pats=WRITE_ROWS[field];
@@ -267,7 +269,28 @@
       for(var i=0;i<pats.length && idx<0;i++) idx=row(rows, pats[i].all, pats[i].not);
       if(idx<0) throw new Error('Could not find the row for "'+field+'" on '+tab+'.');
 
-      var address = colLetters(origin.col + 1 + monthIndex) + (origin.row + idx);
+      return { base:base, sheet:tab,
+               address: colLetters(origin.col + 1 + monthIndex) + (origin.row + idx),
+               label: rows[idx][0] };
+    });
+  }
+
+  /* Read one field/month from exactly where the writer would put it. */
+  function readCell(token, driveId, itemId, officeName, field, monthIndex){
+    return resolve(token, driveId, itemId, officeName, field, monthIndex).then(function(at){
+      return call(token, 'GET', at.base+"/range(address='"+at.address+"')?$select=values")
+        .then(function(r){
+          var v=(r.values&&r.values[0]&&r.values[0][0]);
+          return { address:at.address, sheet:at.sheet, label:at.label,
+                   value:(v===''||v===null||v===undefined) ? null : v };
+        });
+    });
+  }
+
+  /* Write one month of one field, then verify it. `token` returns a bearer token. */
+  function writeCell(token, driveId, itemId, officeName, field, monthIndex, value){
+    return resolve(token, driveId, itemId, officeName, field, monthIndex).then(function(at){
+      var base=at.base, address=at.address, tab=at.sheet;
       var num = (value===''||value===null||value===undefined) ? null : Number(value);
       if(num!==null && !isFinite(num)) throw new Error('That is not a number.');
 
@@ -279,11 +302,117 @@
                                 : Math.abs(Number(got)-num) < 0.01;
           if(!ok) throw new Error('wrote '+num+' to '+address+', reads back as '+
                                   (got===''||got===null||got===undefined?'(blank)':got));
-          return { address:address, sheet:tab, value:num, label:rows[idx][0] };
+          return { address:address, sheet:tab, value:num, label:at.label };
         });
     });
   }
 
+  /* ---- Self-restoring round-trip test -------------------------------------
+     Proves on the LIVE file that "completed production days" lands on the completed
+     row and leaves the scheduled row alone -- the bug Heather reported. It drives the
+     same resolve/readCell/writeCell the app uses, because a test that re-implements
+     the mapping would have passed on the broken build.
+
+     It must never leave the practice's workbook altered:
+       - refuses if the two fields resolve to the same cell (that IS the bug)
+       - refuses if the target holds a formula: writing a value destroys it, and
+         restoring a value would not bring the formula back
+       - restores the original on every exit path, including after a failure
+       - verifies the restore by reading it back, and reports the exact cell and
+         number to type by hand if it ever cannot put it back.
+     Returns {pass, steps:[{ok,text}], error, restored, manualFix}. */
+  function roundTrip(token, driveId, itemId, officeName, monthIndex, opts){
+    opts = opts || {};
+    var readFormula = opts.readFormula || function(at){
+      return call(token, 'GET', at.base+"/range(address='"+at.address+"')?$select=formulas")
+        .then(function(r){ return (r.formulas && r.formulas[0] && r.formulas[0][0]); });
+    };
+    var steps=[], wrote=false, orig=null, origSched=null, atDone=null, atSched=null;
+    var ok=function(t){ steps.push({ok:true, text:t}); };
+    var blank=function(v){ return v===null||v===undefined||v===''; };
+    var same=function(a,b){
+      if(blank(a)||blank(b)) return blank(a)&&blank(b);
+      return Math.abs(Number(a)-Number(b)) < 0.0001;
+    };
+    var show=function(v){ return blank(v) ? '(blank)' : String(v); };
+
+    return Promise.resolve()
+      .then(function(){ return resolve(token, driveId, itemId, officeName, 'dys', monthIndex); })
+      .then(function(a){ atDone=a;
+        return resolve(token, driveId, itemId, officeName, 'sched', monthIndex); })
+      .then(function(b){ atSched=b;
+        ok('Completed days resolves to '+atDone.address+' - row "'+atDone.label+'"');
+        ok('Scheduled days resolves to '+atSched.address+' - row "'+atSched.label+'"');
+        if(atDone.address===atSched.address)
+          throw new Error('Both resolve to '+atDone.address+'. That is the original bug - nothing was written.');
+        ok('They are different cells, which is the point of the fix.');
+        return readFormula(atDone);
+      })
+      .then(function(f){
+        if(typeof f==='string' && f.charAt(0)==='=')
+          throw new Error(atDone.address+' holds a formula ('+f+'). Not writing to it - pick another month.');
+        ok('No formula in '+atDone.address+' - safe to write and restore.');
+        return readCell(token, driveId, itemId, officeName, 'dys', monthIndex);
+      })
+      .then(function(r){ orig=r.value;
+        return readCell(token, driveId, itemId, officeName, 'sched', monthIndex); })
+      .then(function(r){ origSched=r.value;
+        ok('Recorded originals - completed '+show(orig)+', scheduled '+show(origSched)+'.');
+        var test = (Number(orig)===17) ? 18 : 17;
+        wrote=true;
+        return writeCell(token, driveId, itemId, officeName, 'dys', monthIndex, test)
+          .then(function(){ return test; });
+      })
+      .then(function(test){
+        return readCell(token, driveId, itemId, officeName, 'dys', monthIndex).then(function(a){
+          return readCell(token, driveId, itemId, officeName, 'sched', monthIndex).then(function(b){
+            if(!same(a.value, test))
+              throw new Error('Wrote '+test+' to '+atDone.address+' but it reads back as '+show(a.value)+'.');
+            ok('Wrote '+test+' - it landed in '+atDone.address+', the completed row.');
+            if(!same(b.value, origSched))
+              throw new Error('The scheduled cell '+atSched.address+' changed from '+show(origSched)+
+                              ' to '+show(b.value)+'. That is the bug Heather reported, still present.');
+            ok('Scheduled cell '+atSched.address+' did not move - still '+show(origSched)+
+               '. This is the bug she reported, and it is gone.');
+          });
+        });
+      })
+      .then(function(){
+        return writeCell(token, driveId, itemId, officeName, 'dys', monthIndex, blank(orig)?'':orig);
+      })
+      .then(function(){ wrote=false;
+        return readCell(token, driveId, itemId, officeName, 'dys', monthIndex); })
+      .then(function(a){
+        return readCell(token, driveId, itemId, officeName, 'sched', monthIndex).then(function(b){
+          if(!same(a.value, orig))
+            throw new Error('RESTORE FAILED. '+atDone.address+' should be '+show(orig)+
+                            ' but reads '+show(a.value)+'.');
+          if(!same(b.value, origSched))
+            throw new Error('RESTORE FAILED. '+atSched.address+' should be '+show(origSched)+
+                            ' but reads '+show(b.value)+'.');
+          ok('Restored - '+atDone.address+' is back to '+show(orig)+' and '+atSched.address+
+             ' to '+show(origSched)+'. The workbook is exactly as it was.');
+          return { pass:true, steps:steps, restored:true };
+        });
+      })
+      .catch(function(e){
+        var out = { pass:false, steps:steps, error:e.message||String(e), restored:!wrote };
+        if(!wrote) return out;
+        // A test number is sitting in their workbook. Getting it out matters more than the result.
+        return writeCell(token, driveId, itemId, officeName, 'dys', monthIndex, blank(orig)?'':orig)
+          .then(function(){ out.restored=true; return out; })
+          .catch(function(){
+            out.restored=false;
+            out.manualFix={ sheet:atDone&&atDone.sheet, cell:atDone&&atDone.address, value:show(orig) };
+            return out;
+          });
+      })
+      .then(function(out){
+        return closeSession(token, driveId, itemId).catch(function(){}).then(function(){ return out; });
+      });
+  }
+
   global.PH_WB = { load:load, office:office, TABS:TABS, MEDICAID:MEDICAID,
-                   writeCell:writeCell, closeSession:closeSession, WRITE_ROWS:WRITE_ROWS, colLetters:colLetters };
+                   writeCell:writeCell, readCell:readCell, resolve:resolve, roundTrip:roundTrip,
+                   closeSession:closeSession, WRITE_ROWS:WRITE_ROWS, colLetters:colLetters };
 })(window);
