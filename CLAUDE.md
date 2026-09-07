@@ -217,6 +217,7 @@ Verified on the live workbook 2026-09-07, **both tab layouts, both clean**:
 |---|---|---|---|
 | Carlsbad (Medicaid tab) | `L5` | `L26` | passed, blank restored |
 | Lubbock (TC-only tab) | `L5` | `L21` | passed, blank restored |
+| Carlsbad · December | `M5` | `M26` | passed; M5 confirmed blank again |
 
 The differing scheduled rows (26 vs 21) are the point: the label matching handles both layouts.
 **Row 21 is the row Heather named** in her report ("wrote 1 to J21"), so Lubbock was her office and
@@ -264,6 +265,7 @@ the pre-fix build or it is not testing anything.
   `null` in a values array as *"leave this cell alone"*, so the write silently does nothing. This
   cost us a value left sitting in the practice's live workbook (Carlsbad `M5`, 2026-09-07). The
   verify must not accept `0` as proof of a cleared cell either, or it hides the same failure.
+  *Resolved the same day: M5 confirmed back to blank by a later round-trip on that exact cell.*
 - **Never test the mapping with a re-implementation of the mapping.** The wrong-row bug Heather
   found survived because nothing exercised `writeCell`'s own row matching. Tests go through
   `PH_WB.resolve/readCell/writeCell`, and a test is only trustworthy once it has been shown to
