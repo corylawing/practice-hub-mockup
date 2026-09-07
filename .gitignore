@@ -4,3 +4,7 @@ build-response-doc.js
 # Heather-verified figures, kept locally for regression checks only.
 # Never publish: this is the practice's real production data and the site is public.
 v1/snapshot.json
+
+# Same reason as snapshot.json: real production figures, used as a local
+# regression fixture for the browser harness. Never publish.
+v1/_testgrids.json

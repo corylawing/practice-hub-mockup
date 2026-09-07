@@ -120,11 +120,11 @@
   }
 
 </style>
-<script src="user.js?v=hc01"></script>
+<script src="user.js?v=hc03"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="workbook.js?v=hc01"></script>
-  <script src="store.js?v=hc01"></script>
-  <script src="gate.js?v=hc01"></script>
+  <script src="workbook.js?v=hc03"></script>
+  <script src="store.js?v=hc03"></script>
+  <script src="gate.js?v=hc03"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — type the month's numbers here. In the real build this writes straight into the SharePoint workbook.</div>
@@ -371,6 +371,20 @@
       .then(r=>r.status===204?{}:r.json().then(j=>{
         if(!r.ok) throw new Error('Graph '+r.status+': '+((j.error&&j.error.message)||r.statusText));
         return j; })));
+    /* Their sheet divides production by completed days, so 0 days with production in it
+       produces #DIV/0! in several places. Say so before writing it rather than letting
+       them find a broken workbook. */
+    const daysNow=val(office,month,'dys'), prodNow=val(office,month,'tc');
+    if(touched.indexOf('dys')>=0 && (daysNow===''||Number(daysNow)===0) && Number(prodNow)>0){
+      if(!confirm('This office has production but 0 completed days.\n\n'+
+                  'The workbook divides production by days, so several cells will show '+
+                  '#DIV/0!. Enter the days actually worked, or press OK to save anyway.')){
+        if(btn){ btn.classList.remove('saving'); btn.disabled=false; }
+        wbBanner('<b>Not saved.</b> Enter the number of days this office saw patients.', true);
+        return;
+      }
+    }
+
     /* Has the workbook moved since we loaded it? If the owner has saved in Excel
        meanwhile, our copy is stale and writing it would undo his work. Re-read first
        and let the person decide. */
@@ -396,7 +410,7 @@
       const v=val(office,month,f);
       if(v===''||v===null||v===undefined) continue;
       try{
-        const r=await PH_WB.writeCell(PH_AUTH.graph, send, WB_DRIVE, WB_ITEM, office, f, month, v);
+        const r=await PH_WB.writeCell(PH_AUTH.token, WB_DRIVE, WB_ITEM, office, f, month, v);
         done.push(f+' \u2192 '+r.address);
       }catch(e){ failed.push(f+': '+((e&&e.message)||e)); }
     }
@@ -412,6 +426,9 @@
         btn.textContent='Save to workbook';
       }, state==='done' ? 2600 : 4000);
     }
+    // Flush the session so the workbook on disk reflects the writes.
+    try{ if(PH_WB.closeSession) await PH_WB.closeSession(PH_AUTH.token, WB_DRIVE, WB_ITEM); }catch(_){}
+
     if(failed.length){
       settle('failed', failed.length+' didn\u2019t save');
       wbBanner('<b>'+failed.length+' value(s) did not save.</b> '+
@@ -488,7 +505,11 @@
       const b=BASE[name];
       if(L.tc)      b.tc=L.tc.slice();
       if(L.adj)     b.adj=L.adj.slice();
-      if(L.days)    b.dys=L.days.slice();
+      // The input asks "how many days you actually saw patients", so it must be the
+      // COMPLETED row — it was reading and writing "Number of Production Days (2026)",
+      // which is the schedule. Heather changed one number and a different one moved.
+      if(L.done)    b.dys=L.done.slice();
+      if(L.days)    b.sched=L.days.slice();
       if(L.goal)    b.goal=L.goal.slice();
       if(L.stretch) b.str=L.stretch.slice();
       if(L.mdStarts)b.mds=L.mdStarts.slice();
@@ -510,7 +531,7 @@
 })();
 </script>
 <script>PH.nav('production');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc01"></script>
+<script src="tour.js?v=hc03"></script>
 <script>
 Tour.init([
   {sel:'.syncbar', title:'One set of numbers', body:'Type here and it saves into the <b>same Excel workbook</b> on SharePoint. If someone types in Excel instead, it shows up here. There is never a second copy to reconcile.'},

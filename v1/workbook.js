@@ -190,7 +190,9 @@
     tc:   [ {all:['tc net production']} ],
     adj:  [ {all:['write-offs']} ],
     mds:  [ {all:['number of medicaid starts']} ],
-    dys:  [ {all:['number of production days','(2026)']} ],
+    // "Completed production days" in the app = the COMPLETED row, not the schedule.
+    dys:  [ {all:['completed number of production days']} ],
+    sched:[ {all:['number of production days','(2026)']} ],
     done: [ {all:['completed number of production days']} ],
     goal: [ {all:['2026','total production goal']}, {all:['2026','tc production goal'], not:['non-medicaid']} ],
     str:  [ {all:['2026','stretch production goal']} ],
@@ -211,8 +213,46 @@
     return { col:c-1, row:parseInt(m[2],10) };
   }
 
-  /* Write one month of one field, then verify it. graph = GET helper, send = method helper. */
-  function writeCell(graph, send, driveId, itemId, officeName, field, monthIndex, value){
+  /* EXCEL SESSIONS.
+     Without one, each Graph call can land on a different snapshot of the workbook: a write
+     reports success and the read-back still shows the old value. That is exactly the
+     "wrote 1 to J21 but it reads back as 8" Heather saw. A persistent session makes every
+     call in a save see the same document, so writes actually stick.  */
+  var SESSION = null;
+
+  function call(token, method, path, body){
+    return token().then(function(t){
+      var h = { Authorization:'Bearer '+t, 'Content-Type':'application/json' };
+      if (SESSION) h['workbook-session-id'] = SESSION;
+      return fetch('https://graph.microsoft.com/v1.0' + path, {
+        method: method, headers: h, body: body ? JSON.stringify(body) : undefined
+      }).then(function(res){
+        if (res.status === 204) return {};
+        return res.json().catch(function(){ return {}; }).then(function(j){
+          if (!res.ok) throw new Error('Graph '+res.status+': '+((j.error&&j.error.message)||res.statusText));
+          return j;
+        });
+      });
+    });
+  }
+
+  function openSession(token, driveId, itemId){
+    if (SESSION) return Promise.resolve(SESSION);
+    return call(token, 'POST', '/drives/'+driveId+'/items/'+itemId+'/workbook/createSession',
+                { persistChanges: true })
+      .then(function(r){ SESSION = r && r.id; return SESSION; })
+      .catch(function(){ SESSION = null; return null; });   // proceed without; worse, not fatal
+  }
+  function closeSession(token, driveId, itemId){
+    if (!SESSION) return Promise.resolve();
+    // Keep SESSION set for this last call - closeSession needs its own header - then clear it.
+    return call(token, 'POST', '/drives/'+driveId+'/items/'+itemId+'/workbook/closeSession', {})
+      .catch(function(){})
+      .then(function(){ SESSION = null; });
+  }
+
+  /* Write one month of one field, then verify it. `token` returns a bearer token. */
+  function writeCell(token, driveId, itemId, officeName, field, monthIndex, value){
     var tab=TABS[officeName];
     if(!tab) return Promise.reject(new Error('Unknown office: '+officeName));
     var pats=WRITE_ROWS[field];
@@ -220,7 +260,9 @@
     if(!(monthIndex>=0 && monthIndex<12)) return Promise.reject(new Error('Bad month.'));
 
     var base='/drives/'+driveId+'/items/'+itemId+"/workbook/worksheets('"+encodeURIComponent(tab)+"')";
-    return graph(base+'/usedRange(valuesOnly=true)?$select=values,address').then(function(rng){
+    return openSession(token, driveId, itemId).then(function(){
+      return call(token, 'GET', base+'/usedRange(valuesOnly=true)?$select=values,address');
+    }).then(function(rng){
       var rows=rng.values||[], origin=parseOrigin(rng.address), idx=-1;
       for(var i=0;i<pats.length && idx<0;i++) idx=row(rows, pats[i].all, pats[i].not);
       if(idx<0) throw new Error('Could not find the row for "'+field+'" on '+tab+'.');
@@ -229,18 +271,19 @@
       var num = (value===''||value===null||value===undefined) ? null : Number(value);
       if(num!==null && !isFinite(num)) throw new Error('That is not a number.');
 
-      return send('PATCH', base+"/range(address='"+address+"')", { values: [[num]] })
-        .then(function(){ return graph(base+"/range(address='"+address+"')?$select=values"); })
+      return call(token, 'PATCH', base+"/range(address='"+address+"')", { values: [[num]] })
+        .then(function(){ return call(token, 'GET', base+"/range(address='"+address+"')?$select=values"); })
         .then(function(check){
           var got=(check.values&&check.values[0]&&check.values[0][0]);
           var ok = (num===null) ? (got===null||got===''||got===0)
                                 : Math.abs(Number(got)-num) < 0.01;
-          if(!ok) throw new Error('Wrote '+num+' to '+address+' but it reads back as '+got+'.');
+          if(!ok) throw new Error('wrote '+num+' to '+address+', reads back as '+
+                                  (got===''||got===null||got===undefined?'(blank)':got));
           return { address:address, sheet:tab, value:num, label:rows[idx][0] };
         });
     });
   }
 
   global.PH_WB = { load:load, office:office, TABS:TABS, MEDICAID:MEDICAID,
-                   writeCell:writeCell, WRITE_ROWS:WRITE_ROWS, colLetters:colLetters };
+                   writeCell:writeCell, closeSession:closeSession, WRITE_ROWS:WRITE_ROWS, colLetters:colLetters };
 })(window);

@@ -72,6 +72,12 @@
   .lchip.off{opacity:.38}   /* no grayscale() — Safari renders CSS filters differently */
   .dchip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 13px;font-size:12.5px;font-weight:700;color:var(--navy);cursor:pointer;font-family:inherit}
   .dchip.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .dwrap{display:inline-flex;align-items:center;gap:2px}
+  .dedit{border:none;background:transparent;color:var(--soft);cursor:pointer;font-family:inherit;
+    font-size:12px;padding:4px 5px;border-radius:6px;opacity:0;transition:opacity .12s}
+  .dwrap:hover .dedit,.dedit:focus-visible{opacity:1}
+  .dedit:hover{color:var(--teal);background:var(--teal-soft)}
+  @media (hover:none){.dedit{opacity:1}}
   /* Show/hide toggles. Same "dimmed = hidden" language as the office chips. */
   .tchip{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:5px 12px;font-size:12.5px;
     font-weight:700;color:var(--navy);cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px}
@@ -244,10 +250,10 @@
   }
 
 </style>
-<script src="user.js?v=hc01"></script>
+<script src="user.js?v=hc03"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc01"></script>
-  <script src="gate.js?v=hc01"></script>
+  <script src="store.js?v=hc03"></script>
+  <script src="gate.js?v=hc03"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — sample staff schedule for validation. Live version = one Microsoft List the practice maintains.</div>
@@ -343,6 +349,11 @@
       PH.logActivity({sec:'schedule', ic:'\u{1F4C5}', title:'Schedule updated', scope:'everyone'});
     try{ localStorage.setItem('ph_sched2',JSON.stringify(sched)); }catch(_){}
     if(window.PH_STORE) PH_STORE.set('ph_sched2', sched);
+    /* The doctor list rides along on every save. Removing a doctor re-numbers the
+       days, so the list and the days MUST persist together or the days point at
+       the wrong doctor. Kept out of `sched` because three loops walk its keys. */
+    try{ localStorage.setItem('ph_docs',JSON.stringify(people)); }catch(_){}
+    if(window.PH_STORE) PH_STORE.set('ph_docs', people);
   }
 
   // null on a day the office is OPEN = nobody rostered = a Yellow Dot Day.
@@ -399,7 +410,13 @@
     const locs=locations.map(l=>{const c=colOf(l.color);
       return '<button class="lchip'+(fLoc.has(l.n)?'':' off')+'" style="border-color:'+c.dot+';color:'+c.fg+';background:'+(fLoc.has(l.n)?c.bg:'#fff')+'" onclick="PS.togLoc(\''+esc(l.n)+'\')">'+
         '<span class="dot" style="background:'+c.dot+'"></span>'+l.n+'</button>';}).join('');
-    const docs=people.map((p,i)=>'<button class="dchip'+(fDocs.has(i)?' on':'')+'" onclick="PS.togDoc('+i+')">'+p.n+'</button>').join('');
+    /* A doctor chip filters; the pencil renames or removes. editPerson() existed and was
+       even exported, but nothing ever called it — so a doctor could be added and then
+       never corrected. Dr. Brimhall wanting to be Dr. Jae had no way through. */
+    const docs=people.map((p,i)=>
+      '<span class="dwrap"><button class="dchip'+(fDocs.has(i)?' on':'')+'" onclick="PS.togDoc('+i+')">'+p.n+'</button>'+
+      (canEdit()?'<button class="dedit" title="Rename or remove '+esc(p.n)+'" '+
+        'onclick="event.stopPropagation();PS.edit('+i+')">\u270E</button>':'')+'</span>').join('');
     const tog=(on,fn,dot,label)=>
       '<button class="tchip '+(on?'on':'off')+'" onclick="PS.'+fn+'()" aria-pressed="'+on+'">'+
         '<span class="sw"></span><span class="dot" style="background:'+dot+';width:11px;height:11px;border-radius:50%;display:inline-block"></span>'+label+'</button>';
@@ -773,7 +790,7 @@
   function savePerson(){
     const nm=(el('pName').value||'').trim(); if(!nm)return;
     if(tmpP.i<0) people.push({n:nm}); else people[tmpP.i].n=nm;
-    closeModal(); refresh();
+    save(); closeModal(); refresh();
   }
   function delPerson(){
     const i=tmpP.i;
@@ -849,7 +866,8 @@
       d=addDays(d,1);
     }
   }
-  function boot(stored){
+  function boot(stored, docs){
+    if(Array.isArray(docs) && docs.length && docs.every(d=>d&&d.n)) people=docs;
     const isDemo = stored && (stored.__demo || stored.__v!==SCHED_VERSION);
     if(PH.isLive() && isDemo) stored=null;          // never show invented days in the real app
     if(stored && typeof stored==='object' && Object.keys(stored).length) sched=stored;
@@ -860,14 +878,17 @@
   }
 
   let local=null; try{ local=JSON.parse(localStorage.getItem('ph_sched2')); }catch(_){}
+  let ldocs=null; try{ ldocs=JSON.parse(localStorage.getItem('ph_docs')); }catch(_){}
   if(window.PH_STORE && PH.isLive()){
-    PH_STORE.get('ph_sched2').then(function(remote){ boot(remote || local); })
-                             .catch(function(){ boot(local); });
-  } else boot(local);
+    Promise.all([ PH_STORE.get('ph_sched2').catch(function(){return null;}),
+                  PH_STORE.get('ph_docs').catch(function(){return null;}) ])
+           .then(function(r){ boot(r[0] || local, r[1] || ldocs); })
+           .catch(function(){ boot(local, ldocs); });
+  } else boot(local, ldocs);
 })();
 </script>
 <script>PH.nav('schedule');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc01"></script>
+<script src="tour.js?v=hc03"></script>
 <script>
 Tour.init([
   {sel:'#viewseg', title:'Week or month', body:'<b>Week</b> is the day-to-day working view. <b>Month</b> shows the whole month at a glance, with every office in its own color.'},
