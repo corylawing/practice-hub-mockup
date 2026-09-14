@@ -167,6 +167,16 @@ numbers and reported them as bugs, so keep the snapshot fresh and tell her it is
   this year — we only have 2026), the **Spring Black Friday** and **Black Friday** offers (both
   TBD), and whether **Mansfield** is in for Columbus Day. Jessica's later ask, not built: an
   admin-only view overlapping promos with doctor days.
+- Marketing has **three views behind one switch** (`ph_mktgview`, Board is the default): Board,
+  Calendar, **By office**. Cory asked whether the calendar should be a separate admin page; the
+  answer was no — Executive and Leadership already have `edit` on marketing, so a second page
+  unlocks nothing and only risks the two drifting apart. By office is a row per office x twelve
+  months: **coloured = aimed at that office, grey = only reached by an all-offices campaign**, so
+  an all-grey row means that office got nothing of its own all year (named in the line above the
+  table). Rows carry the good/mixed/underperformed tally and expand to the item list. It is
+  deliberately the same offices-down, dates-across shape that Jessica's promos-over-doctor-days
+  overlay will need. Tour steps use tour.js's `pre()` hook to switch views, since only one view is
+  in the DOM at a time.
 - Marketing, previously: coloured by marketing TYPE (office colours were tried and reverted);
   "where I'll be" chips per day (`ph_mktgwhere`), hover-reveal; marketing stays OFF the Schedule.
   Office palette lives in user.js (`PH.palette/colorOf/colorForOffice`) — one source.
