@@ -116,13 +116,62 @@
   .byo-name i{width:10px;height:10px;border-radius:50%;flex:none}
   .byo-name .car{color:#94a3b8;font-size:11px;margin-left:1px;transition:transform .15s}
   .byorow.open .byo-name .car{transform:rotate(90deg)}
-  .mcell{width:26px;height:22px;border-radius:5px;background:#F1F5F9;margin:0 auto;position:relative}
-  .mcell.all{background:#CBD5E1}
+  /* "Nothing" has to be obviously different from "an all-office campaign reached
+     them" - the first version used two greys three shades apart and nobody could
+     tell them apart. Nothing is now an empty outline. */
+  .mcell{width:26px;height:22px;border-radius:5px;background:transparent;
+    border:1px dashed #D9E1EA;margin:0 auto;position:relative}
+  .mcell.all{background:#94A3B8;border-color:#94A3B8}
+  .byo-key{display:inline-flex;align-items:center;gap:6px;margin:6px 16px 0 0;font-size:12.5px}
+  .byo-key i{width:15px;height:13px;border-radius:4px;display:inline-block}
+  .byo-key i.k1{background:#F0378F}
+  .byo-key i.k2{background:#94A3B8}
+  .byo-key i.k3{background:transparent;border:1px dashed #D9E1EA}
   .mcell b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
     font-size:10.5px;font-weight:800;color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.25)}
   .byo-n{text-align:right;font-size:12.5px;color:#475569;padding-right:2px;white-space:nowrap}
   .byo-n b{color:var(--navy)}
   .byo-res{display:block;font-size:11.5px;margin-top:2px;letter-spacing:.5px}
+  /* ---- Year view: one row per promotion, twelve months across ---- */
+  .yr{background:#fff;border:1px solid var(--line,#E4E9F0);border-radius:16px;padding:18px}
+  .yr-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .yr-head h2{margin:0;font-size:17px}
+  .yr-sub{font-size:13.5px;color:#475569;margin:6px 0 16px;line-height:1.5}
+  .yrscroll{overflow-x:auto}
+  .yrgrid{min-width:760px}
+  .yrrow{display:grid;grid-template-columns:210px 1fr 200px;gap:14px;align-items:center;
+    padding:9px 0;border-top:1px solid var(--line,#E4E9F0)}
+  .yrrow.hd{border:none;padding-bottom:2px}
+  .yrrow.hd .yrtrack div{font-size:11px;font-weight:700;color:#94a3b8;text-align:center}
+  .yrrow.hd .yrtrack div.gap{color:var(--bad,#D7503A)}
+  .yrrow.hd .yrtrack div.now{color:var(--teal-600,#0F827E)}
+  .yrname{font-size:13.5px;font-weight:700;color:var(--navy);line-height:1.3}
+  .yrwhen{font-size:12px;font-weight:600;color:#64748b;margin-top:2px}
+  .yrwhen b{color:var(--teal-600,#0F827E)}
+  .yrtrack{display:grid;grid-template-columns:repeat(12,1fr);gap:3px}
+  .yrtrack>*{grid-row:1}
+  .yrcell{height:26px;border-radius:6px;background:#F4F7FA}
+  .yrcell.gap{background:#FDECE8}
+  .yrnow{font-size:9.5px;font-weight:800;color:var(--teal-600,#0F827E);display:block;
+    letter-spacing:.03em;margin-top:1px}
+  .yrbar{height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;
+    color:#fff;font-size:11px;font-weight:800;text-shadow:0 1px 1px rgba(0,0,0,.28);
+    cursor:pointer;border:none;font-family:inherit;padding:0 4px;overflow:hidden}
+  .yrbar.done{opacity:.55}
+  .yroff{display:flex;flex-wrap:wrap;gap:5px}
+  .yroff span{font-size:11.5px;font-weight:600;color:var(--navy);display:inline-flex;
+    align-items:center;gap:4px;background:#F4F7FA;border-radius:999px;padding:3px 8px}
+  .yroff span i{width:8px;height:8px;border-radius:50%;flex:none}
+  .yrnote{display:flex;gap:9px;align-items:flex-start;font-size:13.5px;line-height:1.5;
+    background:#FDECE8;border:1px solid #f3c6bb;border-radius:12px;padding:11px 14px;margin-top:16px}
+  .yrnote.ok{background:#E8F6F4;border-color:#bfe3d0}
+  .yrnote b{color:var(--navy)}
+  .yrshelf{margin-top:14px;border:1px solid #F2A03D;background:#FFFBF2;border-radius:12px;padding:12px 14px}
+  .yrshelf .t2{font-size:13px;font-weight:800;color:var(--navy);margin-bottom:3px}
+  .yrshelf p{font-size:12.5px;color:#64748b;margin:0 0 9px}
+  .lnk{font:inherit;font-size:13px;font-weight:700;background:transparent;border:none;
+    color:var(--teal-600,#0F827E);text-decoration:underline;cursor:pointer;padding:0}
+  @media(max-width:640px){ .yr{padding:14px 12px} }
   .byo-n .none{color:var(--bad,#D7503A);font-weight:700}
   .byo-items{background:#F8FAFC;border-top:1px solid var(--line,#E4E9F0)}
   .byo-items td{padding:11px 2px 14px}
@@ -224,10 +273,10 @@
   }
 
 </style>
-<script src="user.js?v=hc08"></script>
+<script src="user.js?v=hc09"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc08"></script>
-  <script src="gate.js?v=hc08"></script>
+  <script src="store.js?v=hc09"></script>
+  <script src="gate.js?v=hc09"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — marketing board concept for validation. Real build lives in Home-Brace (Microsoft Lists / Planner).</div>
@@ -260,6 +309,7 @@
 
   <div class="viewseg" id="viewseg"></div>
 
+  <div id="year"></div>
   <div class="board" id="board"></div>
   <div id="calendar"></div>
   <div id="byoffice"></div>
@@ -520,6 +570,24 @@
   const TODAY={y:_t.getFullYear(), m:_t.getMonth(), d:_t.getDate()};
   let calY=TODAY.y, calM=TODAY.m;
   const RESDOT={good:'\ud83d\udfe2',mixed:'\ud83d\udfe1',bad:'\ud83d\udd34',none:''};
+  /* An empty month used to look like a broken page: the calendar opens on the
+     current month, and a month with no promotion in it simply showed nothing.
+     Say so in words, and offer the nearest month that does have something. */
+  function emptyMonthNote(){
+    const has=d=>cards.some(c=>{
+      const ms=monthsTouched(c,calY); return parts(c.date) && ms.indexOf(d)>=0; });
+    if(has(calM)) return '';
+    const dated=cards.filter(c=>parts(c.date)).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+    if(!dated.length) return '';
+    const hereISO=calY+'-'+two(calM+1)+'-01';
+    const next=dated.find(c=>(endOf(c)||c.date)>=hereISO) ||dated[dated.length-1];
+    const p=parts(next.date);
+    return '<div class="yrnote"><span>\u{1F4C5}</span><div>Nothing is on in <b>'+
+      MOFULL[calM]+' '+calY+'</b>. The nearest is <b>'+esc(next.title)+'</b> on '+
+      esc(dateLabel(next))+'. <button class="lnk" onclick="MK.goMonth('+p.y+','+p.m+
+      ')">Jump to '+MOFULL[p.m]+'</button></div></div>';
+  }
+  function goMonth(y,m){ calY=y; calM=m; renderCalendar(); }
   function renderCalendar(){
     const first=new Date(calY,calM,1), start=first.getDay();
     const dim=new Date(calY,calM+1,0).getDate();
@@ -571,6 +639,7 @@
         '<button onclick="MK.calMove(1)" aria-label="Next month">\u203a</button>'+
         '<button onclick="MK.calToday()" title="Back to this month" style="width:auto;padding:0 11px;font-size:12.5px;font-weight:700">Today</button></div></div>'+
       '<div class="calsub">Everything with a date, laid out on the month. Tap any item to open it. Finished items carry their result.</div>'+
+      emptyMonthNote()+
       '<div class="calscroll"><div class="cal">'+dow+cells+'</div></div>'+
       '<div class="callegend">'+PH.officeNames().map(function(n){
           const col=PH.colorForOffice(n);
@@ -590,8 +659,9 @@
      separate pages that could drift apart. Board stays the default, so nothing
      changes for anyone who does not touch the switch. */
   const VKEY='ph_mktgview';
-  const VIEWS=[{k:'board',n:'Board'},{k:'calendar',n:'Calendar'},{k:'byoffice',n:'By office'}];
-  let view='board';
+  const VIEWS=[{k:'year',n:'The year'},{k:'board',n:'Board'},
+               {k:'calendar',n:'Month'},{k:'byoffice',n:'By office'}];
+  let view='year';
   try{ const v=localStorage.getItem(VKEY); if(VIEWS.some(x=>x.k===v)) view=v; }catch(_){}
   function setView(v){
     view=v; try{ localStorage.setItem(VKEY,v); }catch(_){}
@@ -655,7 +725,7 @@
     const rows=officeRows(), ys=yearsPresent();
     const head='<tr><th class="oh">Office</th>'+
       MONTHS.map(m=>'<th>'+m[0]+'</th>').join('')+
-      '<th class="nh">Aimed here \u00b7 all-office</th></tr>';
+      '<th class="nh">Just for them \u00b7 everywhere</th></tr>';
     const body=rows.map(function(r,i){
       const cells=r.months.map(function(m){
         if(m.t) return '<td><div class="mcell" style="background:'+r.col.dot+'" title="'+m.t+
@@ -665,8 +735,8 @@
         return '<td><div class="mcell"></div></td>';
       }).join('');
       const n = (r.targeted.length
-        ? '<b>'+r.targeted.length+'</b> aimed here \u00b7 '+r.shared.length+' all-office'
-        : '<span class="none">Nothing aimed here</span> \u00b7 '+r.shared.length+' all-office')
+        ? '<b>'+r.targeted.length+'</b> just for them \u00b7 '+r.shared.length+' everywhere'
+        : '<span class="none">None of their own</span> \u00b7 '+r.shared.length+' everywhere')
         // Leadership's second question is whether it worked, so the scores ride along.
         + (r.good||r.mixed||r.bad
             ? '<span class="byo-res">'+(r.good?'\u{1F7E2}'+r.good+' ':'')+
@@ -695,10 +765,12 @@
       '<div class="byo"><div class="byo-head"><h2>\u{1F4CD} By office</h2>'+
         (ys.length>1?'<div class="yrseg">'+ys.map(y=>'<button class="'+(y===byoYear?'on':'')+
           '" onclick="MK.byoYear('+y+')">'+y+'</button>').join('')+'</div>':'')+'</div>'+
-      '<p class="byo-sub">What each office actually got. A <b>coloured</b> month had something '+
-        'aimed at that office; a <b>grey</b> one only had an all-offices campaign reach it. '+
+      '<p class="byo-sub">One row per office, January to December.<br>'+
+        '<span class="byo-key"><i class="k1"></i> a promotion <b>named that office</b></span>'+
+        '<span class="byo-key"><i class="k2"></i> a promotion that ran <b>everywhere</b></span>'+
+        '<span class="byo-key"><i class="k3"></i> nothing at all</span><br>'+
         'Tap a row to see the list.'+
-        (missed.length? ' <b>Nothing aimed at '+missed.map(esc).join(', ')+' in '+byoYear+'.</b>':'')+
+        (missed.length? ' <b>No promotion named '+missed.map(esc).join(', ')+' in '+byoYear+'.</b>':'')+
         '</p>'+
       '<div class="byoscroll"><table class="byotable"><thead>'+head+'</thead><tbody>'+body+
       '</tbody></table></div></div>';
@@ -706,12 +778,100 @@
   function byoToggle(n){ openOffice = (openOffice===n) ? null : n; renderByOffice(); }
   function byoSetYear(y){ byoYear=y; openOffice=null; renderByOffice(); }
 
+  /* ---- The year -------------------------------------------------------------
+     Jessica's reason for all this: "I was asking for this info to plan goals for
+     next year." That is a question about the YEAR, not about a month, so one row
+     per promotion with the twelve months across it. The gaps are the point - the
+     empty columns are the months with nothing running - so they are called out in
+     a plain sentence as well as coloured, because nobody should have to count
+     squares to find them. */
+  function renderYear(){
+    if(view!=='year'){ el('year').innerHTML=''; return; }
+    const y=byoYear, ys=yearsPresent();
+    const dated=cards.filter(c=>inYear(c,y))
+                     .sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+    const shelf=cards.filter(c=>isFlash(c)&&!parts(c.date));
+
+    // Which months have nothing at all? That is the planning conversation.
+    const empty=[];
+    for(let m=0;m<12;m++) if(!dated.some(c=>monthsTouched(c,y).indexOf(m)>=0)) empty.push(m);
+    // And which offices are never named?
+    const never=PH.officeNames().filter(n=>!dated.some(c=>locsOf(c).indexOf(n)>=0));
+    const nowM=(y===TODAY.y)?TODAY.m:-1;
+
+    const head='<div class="yrrow hd"><div></div><div class="yrtrack">'+
+      MONTHS.map(function(mn,m){
+        const cls=(empty.indexOf(m)>=0?'gap':'')+(m===nowM?' now':'');
+        return '<div class="'+cls.trim()+'">'+mn+
+               (m===nowM?'<span class="yrnow">we are here</span>':'')+'</div>';
+      }).join('')+'</div><div></div></div>';
+
+    const rows=dated.map(function(c){
+      const ms=monthsTouched(c,y);
+      const from=ms.length?ms[0]:0, to=ms.length?ms[ms.length-1]:0;
+      const ls=locsOf(c), cols=ls.map(n=>PH.colorForOffice(n).dot);
+      const bg = !cols.length ? '#64748b'
+        : cols.length===1 ? cols[0]
+        : 'linear-gradient(to right,'+cols.map(function(c2,i){
+            const st=100/cols.length; return c2+' '+(i*st)+'%,'+c2+' '+((i+1)*st)+'%'; }).join(',');
+      const cells=MONTHS.map(function(_,m){
+        return '<div class="yrcell'+(empty.indexOf(m)>=0?' gap':'')+'"></div>';
+      }).join('');
+      const offices = ls.length
+        ? ls.map(n=>'<span><i style="background:'+PH.colorForOffice(n).dot+'"></i>'+esc(n)+'</span>').join('')
+        : '<span><i style="background:#64748b"></i>Every office</span>';
+      const res=(c.stage==='done'&&c.result!=='none')?' '+RESDOT[c.result]:'';
+      return '<div class="yrrow">'+
+        '<div><div class="yrname">'+esc(c.title)+res+'</div>'+
+          '<div class="yrwhen">'+esc(dateLabel(c))+(c.offer?' \u00b7 <b>'+esc(c.offer)+'</b>':
+            ' \u00b7 <b>offer not decided yet</b>')+'</div></div>'+
+        '<div class="yrtrack">'+cells+
+          '<button class="yrbar'+(c.stage==='done'?' done':'')+'" style="grid-column:'+(from+1)+'/'+(to+2)+
+          ';background:'+bg+'" onclick="MK.open('+c.id+')" title="'+esc(c.title)+
+          ' \u2014 '+esc(dateLabel(c))+'">'+(to>from?esc(dateLabel(c)):'')+'</button>'+
+        '</div>'+
+        '<div class="yroff">'+offices+'</div></div>';
+    }).join('');
+
+    const say=a=>a.length===1?a[0]:a.slice(0,-1).join(', ')+' and '+a[a.length-1];
+    const notes=
+      (empty.length
+        ? '<div class="yrnote"><span>\u26A0\uFE0F</span><div>Nothing is running in <b>'+
+          say(empty.map(m=>MOFULL[m]))+'</b>. '+
+          (y>=TODAY.y?'Those are the gaps to fill.':'')+'</div></div>'
+        : '<div class="yrnote ok"><span>\u2705</span><div>Every month of '+y+' has something running.</div></div>')+
+      (never.length
+        ? '<div class="yrnote"><span>\u26A0\uFE0F</span><div>No promotion names <b>'+say(never.map(esc))+
+          '</b> in '+y+'. They are only reached by the all-office campaigns.</div></div>'
+        : '');
+
+    el('year').innerHTML=
+      '<div class="yr"><div class="yr-head"><h2>\u{1F4C5} '+y+' promotions</h2>'+
+        (ys.length>1?'<div class="yrseg" style="margin-left:auto">'+ys.map(yy=>'<button class="'+
+          (yy===byoYear?'on':'')+'" onclick="MK.byoYear('+yy+')">'+yy+'</button>').join('')+'</div>':'')+
+      '</div>'+
+      '<p class="yr-sub">Every promotion in '+y+' \u2014 when it runs, what the offer is, and which '+
+        'offices it covers. The colored bar shows the months it is on. <b>Tap any bar to open it.</b></p>'+
+      (dated.length
+        ? '<div class="yrscroll"><div class="yrgrid">'+head+rows+'</div></div>'
+        : '<p class="byo-empty">Nothing on the calendar for '+y+' yet.</p>')+
+      notes+
+      (shelf.length
+        ? '<div class="yrshelf"><div class="t2">\u26A1 Ready to launch \u2014 no dates</div>'+
+          '<p>Offer and artwork already approved. Give one dates when an office needs a lift.</p>'+
+          '<div class="chips2">'+shelf.map(c=>'<button onclick="MK.open('+c.id+')">'+esc(c.title)+
+            (c.offer?' \u00b7 '+esc(c.offer):'')+'</button>').join('')+'</div></div>'
+        : '')+
+      '</div>';
+  }
+
   function render(){
     renderViewSeg(); renderSummary();
     el('board').style.display   = view==='board'    ? '' : 'none';
     el('calendar').style.display= view==='calendar' ? '' : 'none';
     if(view==='board')    renderBoard();
     if(view==='calendar') renderCalendar();
+    renderYear();
     renderByOffice();
   }
 
@@ -880,7 +1040,7 @@
     const id=dragId||+(e.dataTransfer.getData('text/plain')); if(id)dropTo(id,col.dataset.stage,col); });
 
   window.MK={add,open,move,pickRes,askResult,pick,save,del,close:closeModal,setWhere,pickWhere,closeRaw,
-    togLoc,togFlash,view:setView,byoToggle,byoYear:byoSetYear,
+    togLoc,togFlash,view:setView,byoToggle,byoYear:byoSetYear,goMonth,
     calMove:d=>{calM+=d; if(calM<0){calM=11;calY--;} if(calM>11){calM=0;calY++;} renderCalendar();},
     calToday:()=>{calY=TODAY.y;calM=TODAY.m;renderCalendar();}};
   el('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal(true);});
@@ -896,15 +1056,16 @@
 })();
 </script>
 <script>PH.nav('marketing');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc08"></script>
+<script src="tour.js?v=hc09"></script>
 <script>
 Tour.init([
-  {sel:'#viewseg', pre:()=>MK.view('board'), title:'Three ways to look at it', body:'<b>Board</b> is the working view \u2014 what is coming up and who has it. <b>Calendar</b> lays it out on the month. <b>By office</b> is the leadership view: what each location actually got.'},
-  {sel:'.board', pre:()=>MK.view('board'), title:'Your marketing board', body:'Every event, promo and post is a card that moves left to right: <b>Ideas \u2192 Planned \u2192 In progress \u2192 Done</b>. <b>Drag a card</b> across, or use the \u25c0 \u25b6 arrows on a phone.'},
+  {sel:'#viewseg', pre:()=>MK.view('year'), title:'Four ways to look at it', body:'<b>The year</b> is the planning view \u2014 every promotion on one screen. <b>Board</b> is the day-to-day working view. <b>Month</b> lays everything out on a calendar. <b>By office</b> shows what each location got.'},
+  {sel:'#year', pre:()=>MK.view('year'), title:'The whole year on one screen', body:'One row per promotion: <b>when it runs, the offer, and which offices</b>. The colored bar sits on the months it is on \u2014 tap it to open it. The <b>pink months are empty</b>, and the notes underneath say in plain words which months have nothing and which offices were never named. That is the list to work from when planning next year.'},
+  {sel:'.board', pre:()=>MK.view('board'), title:'The working board', body:'Every event, promo and post is a card that moves left to right: <b>Ideas \u2192 Planned \u2192 In progress \u2192 Done</b>. <b>Drag a card</b> across, or use the \u25c0 \u25b6 arrows on a phone.'},
   {sel:'.page-head .btn', pre:()=>MK.view('board'), title:'Capture anything', body:'<b>+ New idea</b>, or <b>+ Add</b> at the bottom of any column. Tap a card to set its type, owner, dates and notes \u2014 and the <b>offices</b> it runs at. Pick several if a promo covers more than one; leave them all off for every office.'},
   {sel:'#board .col:last-child', pre:()=>MK.view('board'), title:'Every finished thing gets scored', body:'The moment a card lands in <b>Done</b> it asks <b>\u201cHow did it go?\u201d</b> \u2014 \ud83d\udfe2 Good, \ud83d\udfe1 Mixed or \ud83d\udd34 Underperformed. Nothing gets marked a success by accident.'},
-  {sel:'#calendar', pre:()=>MK.view('calendar'), title:'Promotions, in office colors', body:'A promo running at three offices draws <b>three chips \u2014 one in each office\u2019s color</b>, the same colors as the Schedule. Anything with a start and end date fills every day in between. \u26a1 <b>Flash sales</b> sit on their own shelf below the month: approved in advance, no dates, ready to launch when an office needs a lift.'},
-  {sel:'#byoffice', pre:()=>MK.view('byoffice'), title:'Who is actually getting marketing', body:'One row per office, twelve months across. A <b>colored</b> month had something aimed at that office; a <b>grey</b> one only had an all-offices campaign reach it. So an office with nothing but grey has had <b>nothing of its own all year</b> \u2014 the line at the top names them. Tap a row for the list.'},
+  {sel:'#calendar', pre:()=>MK.view('calendar'), title:'The month, day by day', body:'A promo running at three offices draws <b>three chips \u2014 one in each office\u2019s color</b>, the same colors as the Schedule. If a month has nothing in it, the page says so and offers to jump to the nearest one. \u26a1 <b>Flash sales</b> sit on their own shelf below.'},
+  {sel:'#byoffice', pre:()=>MK.view('byoffice'), title:'What each office got', body:'One row per office, January to December. A <b>colored</b> square means a promotion named that office; a <b>solid grey</b> one means only an all-offices campaign reached them; an <b>empty outline</b> means nothing at all. Tap a row for the list.'},
   {sel:'#summary', pre:()=>MK.view('board'), title:'So you learn what works', body:'The tally at the top is the point of the whole board: after a year you can see which kinds of marketing actually brought patients in \u2014 and stop repeating the ones that didn\u2019t.'}
 ], {key:'mkt', title:'Marketing', next:{label:'Documents', href:'documents.html'}});
 </script>
