@@ -88,6 +88,51 @@
   .opt{font-weight:500;color:#94a3b8;font-size:11.5px}
   .fld.two{display:flex;gap:12px} .fld.two>div{flex:1}
   .flashshelf{border-color:#F2A03D;background:#FFFBF2}
+  /* View switch - same shape as the Schedule's Week/Month segment, so the two pages
+     behave alike. */
+  .viewseg{display:inline-flex;gap:2px;background:#EEF2F6;border-radius:11px;padding:3px;margin:0 0 16px}
+  .viewseg button{font:inherit;font-size:13px;font-weight:700;border:none;background:transparent;
+    color:#64748b;border-radius:9px;padding:7px 15px;cursor:pointer}
+  .viewseg button.on{background:#fff;color:var(--navy);box-shadow:0 1px 3px rgba(15,42,74,.14)}
+  /* By office */
+  .byo{background:#fff;border:1px solid var(--line,#E4E9F0);border-radius:16px;padding:18px 18px 6px}
+  .byo-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:4px}
+  .byo-head h2{margin:0;font-size:17px}
+  .byo-sub{font-size:13px;color:#64748b;margin:2px 0 16px}
+  .yrseg{display:inline-flex;gap:2px;background:#EEF2F6;border-radius:10px;padding:3px;margin-left:auto}
+  .yrseg button{font:inherit;font-size:12.5px;font-weight:700;border:none;background:transparent;
+    color:#64748b;border-radius:8px;padding:5px 12px;cursor:pointer}
+  .yrseg button.on{background:#fff;color:var(--navy);box-shadow:0 1px 3px rgba(15,42,74,.14)}
+  .byoscroll{overflow-x:auto}
+  .byotable{width:100%;min-width:720px;border-collapse:collapse}
+  .byotable th{font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;
+    letter-spacing:.04em;padding:0 0 8px;text-align:center}
+  .byotable th.oh{text-align:left;padding-left:2px;width:132px}
+  .byotable th.nh{text-align:right;width:150px;padding-right:2px}
+  .byorow{cursor:pointer;border-top:1px solid var(--line,#E4E9F0)}
+  .byorow:hover{background:#F8FAFC}
+  .byorow td{padding:9px 0}
+  .byo-name{font-size:13.5px;font-weight:700;color:var(--navy);display:flex;align-items:center;gap:7px}
+  .byo-name i{width:10px;height:10px;border-radius:50%;flex:none}
+  .byo-name .car{color:#94a3b8;font-size:11px;margin-left:1px;transition:transform .15s}
+  .byorow.open .byo-name .car{transform:rotate(90deg)}
+  .mcell{width:26px;height:22px;border-radius:5px;background:#F1F5F9;margin:0 auto;position:relative}
+  .mcell.all{background:#CBD5E1}
+  .mcell b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-size:10.5px;font-weight:800;color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.25)}
+  .byo-n{text-align:right;font-size:12.5px;color:#475569;padding-right:2px;white-space:nowrap}
+  .byo-n b{color:var(--navy)}
+  .byo-res{display:block;font-size:11.5px;margin-top:2px;letter-spacing:.5px}
+  .byo-n .none{color:var(--bad,#D7503A);font-weight:700}
+  .byo-items{background:#F8FAFC;border-top:1px solid var(--line,#E4E9F0)}
+  .byo-items td{padding:11px 2px 14px}
+  .byo-items .chips2{display:flex;flex-wrap:wrap;gap:7px}
+  .byo-items button{font:inherit;font-size:12.5px;font-weight:600;border:1px solid #d8dfe7;
+    background:#fff;color:var(--navy);border-radius:9px;padding:6px 11px;cursor:pointer;
+    display:inline-flex;align-items:center;gap:6px}
+  .byo-items button i{width:8px;height:8px;border-radius:50%;flex:none}
+  .byo-empty{font-size:12.5px;color:#64748b;font-style:italic}
+  @media(max-width:640px){ .byo{padding:14px 12px 4px} .byotable th.nh{width:96px} }
   .kcard .kt{font-weight:700;color:var(--navy);font-size:14px;margin-bottom:6px}
   .kmeta{display:flex;flex-wrap:wrap;gap:5px;align-items:center;font-size:11.5px}
   .tag{font-weight:700;padding:2px 8px;border-radius:999px;background:var(--canvas);color:var(--soft);border:1px solid var(--line)}
@@ -179,10 +224,10 @@
   }
 
 </style>
-<script src="user.js?v=hc07"></script>
+<script src="user.js?v=hc08"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc07"></script>
-  <script src="gate.js?v=hc07"></script>
+  <script src="store.js?v=hc08"></script>
+  <script src="gate.js?v=hc08"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — marketing board concept for validation. Real build lives in Home-Brace (Microsoft Lists / Planner).</div>
@@ -213,8 +258,11 @@
     <span style="margin-left:auto">Score is set when a card reaches <b>Done</b>.</span>
   </div>
 
+  <div class="viewseg" id="viewseg"></div>
+
   <div class="board" id="board"></div>
   <div id="calendar"></div>
+  <div id="byoffice"></div>
 </div>
 
 <div id="modal" class="ov"><div class="modal" id="modalCard"></div></div>
@@ -536,7 +584,136 @@
         undated.map(c=>'<button onclick="MK.open('+c.id+')">'+esc(c.title)+'</button>').join('')+'</div></div>' : '')+
       '</div>';
   }
-  function render(){ renderSummary(); renderBoard(); renderCalendar(); }
+  /* ---- Views ---------------------------------------------------------------
+     Board, Calendar and By office are three questions about the same cards, not
+     three sets of data - so they live on one page behind a switch rather than on
+     separate pages that could drift apart. Board stays the default, so nothing
+     changes for anyone who does not touch the switch. */
+  const VKEY='ph_mktgview';
+  const VIEWS=[{k:'board',n:'Board'},{k:'calendar',n:'Calendar'},{k:'byoffice',n:'By office'}];
+  let view='board';
+  try{ const v=localStorage.getItem(VKEY); if(VIEWS.some(x=>x.k===v)) view=v; }catch(_){}
+  function setView(v){
+    view=v; try{ localStorage.setItem(VKEY,v); }catch(_){}
+    openOffice=null;                       // don't carry an expanded row between views
+    render();
+  }
+  function renderViewSeg(){
+    el('viewseg').innerHTML=VIEWS.map(v=>
+      '<button class="'+(v.k===view?'on':'')+'" onclick="MK.view(\''+v.k+'\')">'+v.n+'</button>').join('');
+  }
+
+  /* ---- By office ------------------------------------------------------------
+     The question leadership cannot answer today: which offices are actually
+     getting marketing, and which are being missed. An item aimed AT an office
+     counts as targeted; an all-offices item reaches it too but is not aimed at
+     it, so the two are counted and coloured separately - an office showing only
+     grey has had nothing of its own all year. */
+  let openOffice=null;
+  function yearsPresent(){
+    const ys={};
+    cards.forEach(c=>{ const p=parts(c.date); if(p) ys[p.y]=1; });
+    ys[TODAY.y]=1;
+    return Object.keys(ys).map(Number).sort();
+  }
+  let byoYear=TODAY.y;
+  function inYear(c,y){
+    const a=parts(c.date); if(!a) return false;
+    const b=parts(endOf(c))||a;
+    return a.y<=y && b.y>=y;                       // a range may straddle a year end
+  }
+  function monthsTouched(c,y){
+    const a=parts(c.date); if(!a) return [];
+    const b=parts(endOf(c))||a;
+    const from = a.y<y ? 0 : a.m, to = b.y>y ? 11 : b.m;
+    const out=[]; for(let m=from;m<=to;m++) out.push(m);
+    return out;
+  }
+  function officeRows(){
+    const y=byoYear;
+    const dated=cards.filter(c=>inYear(c,y));
+    return PH.officeNames().map(function(n){
+      const targeted=dated.filter(c=>locsOf(c).indexOf(n)>=0);
+      const shared  =dated.filter(c=>isAllOff(c));
+      const months=[];
+      for(let m=0;m<12;m++){
+        const t=targeted.filter(c=>monthsTouched(c,y).indexOf(m)>=0);
+        const a=shared.filter(c=>monthsTouched(c,y).indexOf(m)>=0);
+        months.push({t:t.length, a:a.length});
+      }
+      const all=targeted.concat(shared).sort((x,z)=>(x.date||'').localeCompare(z.date||''));
+      const scored=all.filter(c=>c.stage==='done'&&c.result!=='none');
+      return { office:n, col:PH.colorForOffice(n), targeted:targeted, shared:shared,
+               months:months, all:all,
+               good:scored.filter(c=>c.result==='good').length,
+               mixed:scored.filter(c=>c.result==='mixed').length,
+               bad:scored.filter(c=>c.result==='bad').length };
+    });
+  }
+  function renderByOffice(){
+    if(view!=='byoffice'){ el('byoffice').innerHTML=''; return; }
+    const rows=officeRows(), ys=yearsPresent();
+    const head='<tr><th class="oh">Office</th>'+
+      MONTHS.map(m=>'<th>'+m[0]+'</th>').join('')+
+      '<th class="nh">Aimed here \u00b7 all-office</th></tr>';
+    const body=rows.map(function(r,i){
+      const cells=r.months.map(function(m){
+        if(m.t) return '<td><div class="mcell" style="background:'+r.col.dot+'" title="'+m.t+
+                       ' aimed at '+esc(r.office)+(m.a?', '+m.a+' all-office':'')+'">'+
+                       (m.t>1?'<b>'+m.t+'</b>':'')+'</div></td>';
+        if(m.a) return '<td><div class="mcell all" title="'+m.a+' all-office"></div></td>';
+        return '<td><div class="mcell"></div></td>';
+      }).join('');
+      const n = (r.targeted.length
+        ? '<b>'+r.targeted.length+'</b> aimed here \u00b7 '+r.shared.length+' all-office'
+        : '<span class="none">Nothing aimed here</span> \u00b7 '+r.shared.length+' all-office')
+        // Leadership's second question is whether it worked, so the scores ride along.
+        + (r.good||r.mixed||r.bad
+            ? '<span class="byo-res">'+(r.good?'\u{1F7E2}'+r.good+' ':'')+
+              (r.mixed?'\u{1F7E1}'+r.mixed+' ':'')+(r.bad?'\u{1F534}'+r.bad:'')+'</span>'
+            : '');
+      const open=(openOffice===r.office);
+      const items = r.all.length
+        ? '<div class="chips2">'+r.all.map(function(c){
+            const own=locsOf(c).indexOf(r.office)>=0;
+            return '<button onclick="event.stopPropagation();MK.open('+c.id+')">'+
+              '<i style="background:'+(own?r.col.dot:'#94a3b8')+'"></i>'+esc(c.title)+
+              (c.offer?' \u00b7 '+esc(c.offer):'')+
+              (c.date?' \u00b7 '+esc(dateLabel(c)):'')+
+              (c.stage==='done'&&c.result!=='none'?' '+RESDOT[c.result]:'')+'</button>';
+          }).join('')+'</div>'
+        : '<div class="byo-empty">Nothing on the calendar for '+esc(r.office)+' in '+byoYear+'.</div>';
+      return '<tr class="byorow'+(open?' open':'')+'" onclick="MK.byoToggle(\''+
+             r.office.replace(/'/g,"\\'")+'\')">'+
+        '<td><div class="byo-name"><span class="car">\u203a</span>'+
+          '<i style="background:'+r.col.dot+'"></i>'+esc(r.office)+'</div></td>'+
+        cells+'<td class="byo-n">'+n+'</td></tr>'+
+        (open?'<tr class="byo-items"><td colspan="14">'+items+'</td></tr>':'');
+    }).join('');
+    const missed=rows.filter(r=>!r.targeted.length).map(r=>r.office);
+    el('byoffice').innerHTML=
+      '<div class="byo"><div class="byo-head"><h2>\u{1F4CD} By office</h2>'+
+        (ys.length>1?'<div class="yrseg">'+ys.map(y=>'<button class="'+(y===byoYear?'on':'')+
+          '" onclick="MK.byoYear('+y+')">'+y+'</button>').join('')+'</div>':'')+'</div>'+
+      '<p class="byo-sub">What each office actually got. A <b>coloured</b> month had something '+
+        'aimed at that office; a <b>grey</b> one only had an all-offices campaign reach it. '+
+        'Tap a row to see the list.'+
+        (missed.length? ' <b>Nothing aimed at '+missed.map(esc).join(', ')+' in '+byoYear+'.</b>':'')+
+        '</p>'+
+      '<div class="byoscroll"><table class="byotable"><thead>'+head+'</thead><tbody>'+body+
+      '</tbody></table></div></div>';
+  }
+  function byoToggle(n){ openOffice = (openOffice===n) ? null : n; renderByOffice(); }
+  function byoSetYear(y){ byoYear=y; openOffice=null; renderByOffice(); }
+
+  function render(){
+    renderViewSeg(); renderSummary();
+    el('board').style.display   = view==='board'    ? '' : 'none';
+    el('calendar').style.display= view==='calendar' ? '' : 'none';
+    if(view==='board')    renderBoard();
+    if(view==='calendar') renderCalendar();
+    renderByOffice();
+  }
 
   function move(id,dir){
     if(!canEdit())return;
@@ -703,7 +880,7 @@
     const id=dragId||+(e.dataTransfer.getData('text/plain')); if(id)dropTo(id,col.dataset.stage,col); });
 
   window.MK={add,open,move,pickRes,askResult,pick,save,del,close:closeModal,setWhere,pickWhere,closeRaw,
-    togLoc,togFlash,
+    togLoc,togFlash,view:setView,byoToggle,byoYear:byoSetYear,
     calMove:d=>{calM+=d; if(calM<0){calM=11;calY--;} if(calM>11){calM=0;calY++;} renderCalendar();},
     calToday:()=>{calY=TODAY.y;calM=TODAY.m;renderCalendar();}};
   el('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal(true);});
@@ -719,14 +896,16 @@
 })();
 </script>
 <script>PH.nav('marketing');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc07"></script>
+<script src="tour.js?v=hc08"></script>
 <script>
 Tour.init([
-  {sel:'.board', title:'Your marketing board', body:'Every event, promo and post is a card that moves left to right: <b>Ideas \u2192 Planned \u2192 In progress \u2192 Done</b>. <b>Drag a card</b> across, or use the \u25c0 \u25b6 arrows on a phone.'},
-  {sel:'.page-head .btn', title:'Capture anything', body:'<b>+ New idea</b>, or <b>+ Add</b> at the bottom of any column. Tap a card to set its type, owner, dates and notes \u2014 and the <b>offices</b> it runs at. Pick several if a promo covers more than one; leave them all off for every office.'},
-  {sel:'#calendar', title:'Promotions, in office colors', body:'A promo that runs at three offices draws <b>three chips \u2014 one in each office\u2019s color</b>, the same colors as the Schedule. Anything with a start and end date fills every day in between. \u26a1 <b>Flash sales</b> sit on their own shelf below the month: approved in advance, no dates, ready to launch when an office needs a lift.'},
-  {sel:'#board .col:last-child', title:'Every finished thing gets scored', body:'The moment a card lands in <b>Done</b> it asks <b>\u201cHow did it go?\u201d</b> \u2014 \ud83d\udfe2 Good, \ud83d\udfe1 Mixed or \ud83d\udd34 Underperformed. Nothing gets marked a success by accident.'},
-  {sel:'#summary', title:'So you learn what works', body:'The tally at the top is the point of the whole board: after a year you can see which kinds of marketing actually brought patients in \u2014 and stop repeating the ones that didn\u2019t.'}
+  {sel:'#viewseg', pre:()=>MK.view('board'), title:'Three ways to look at it', body:'<b>Board</b> is the working view \u2014 what is coming up and who has it. <b>Calendar</b> lays it out on the month. <b>By office</b> is the leadership view: what each location actually got.'},
+  {sel:'.board', pre:()=>MK.view('board'), title:'Your marketing board', body:'Every event, promo and post is a card that moves left to right: <b>Ideas \u2192 Planned \u2192 In progress \u2192 Done</b>. <b>Drag a card</b> across, or use the \u25c0 \u25b6 arrows on a phone.'},
+  {sel:'.page-head .btn', pre:()=>MK.view('board'), title:'Capture anything', body:'<b>+ New idea</b>, or <b>+ Add</b> at the bottom of any column. Tap a card to set its type, owner, dates and notes \u2014 and the <b>offices</b> it runs at. Pick several if a promo covers more than one; leave them all off for every office.'},
+  {sel:'#board .col:last-child', pre:()=>MK.view('board'), title:'Every finished thing gets scored', body:'The moment a card lands in <b>Done</b> it asks <b>\u201cHow did it go?\u201d</b> \u2014 \ud83d\udfe2 Good, \ud83d\udfe1 Mixed or \ud83d\udd34 Underperformed. Nothing gets marked a success by accident.'},
+  {sel:'#calendar', pre:()=>MK.view('calendar'), title:'Promotions, in office colors', body:'A promo running at three offices draws <b>three chips \u2014 one in each office\u2019s color</b>, the same colors as the Schedule. Anything with a start and end date fills every day in between. \u26a1 <b>Flash sales</b> sit on their own shelf below the month: approved in advance, no dates, ready to launch when an office needs a lift.'},
+  {sel:'#byoffice', pre:()=>MK.view('byoffice'), title:'Who is actually getting marketing', body:'One row per office, twelve months across. A <b>colored</b> month had something aimed at that office; a <b>grey</b> one only had an all-offices campaign reach it. So an office with nothing but grey has had <b>nothing of its own all year</b> \u2014 the line at the top names them. Tap a row for the list.'},
+  {sel:'#summary', pre:()=>MK.view('board'), title:'So you learn what works', body:'The tally at the top is the point of the whole board: after a year you can see which kinds of marketing actually brought patients in \u2014 and stop repeating the ones that didn\u2019t.'}
 ], {key:'mkt', title:'Marketing', next:{label:'Documents', href:'documents.html'}});
 </script>
 </body>
