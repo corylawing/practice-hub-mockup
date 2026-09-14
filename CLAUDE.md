@@ -157,7 +157,17 @@ numbers and reported them as bugs, so keep the snapshot fresh and tell her it is
   to run steps 5→9 against live** — the local -5 file is stale. **Roswell** is on their Dashboard
   (empty in -5); if step 9 says it HAS NUMBERS, add it: TABS in workbook.js + OFFICES in index.html
   + user.js locations.
-- Marketing: coloured by marketing TYPE (office colours were tried and reverted — Cory's call);
+- Marketing (**changed 2026-09-14**): coloured by **OFFICE**, matching the Schedule — Cory reversed
+  the earlier "keep marketing's own type colours" call. Type still shows on each card as words. A
+  card now holds **several offices** (`locs[]`, empty = all), a **start and end date**, an `offer`,
+  and a `flash` flag; the old single `loc`/`date` cards still read. Flash sales get a shelf under
+  the month. The practice's real promo list is **`v1/_promos.json` — gitignored** (commercial
+  information, this repo is public) and deployed only to their tenant; it seeds the board once,
+  guarded by `ph_mktg_seeded`. Open with them: **2025 promos** (Jessica asked for last year AND
+  this year — we only have 2026), the **Spring Black Friday** and **Black Friday** offers (both
+  TBD), and whether **Mansfield** is in for Columbus Day. Jessica's later ask, not built: an
+  admin-only view overlapping promos with doctor days.
+- Marketing, previously: coloured by marketing TYPE (office colours were tried and reverted);
   "where I'll be" chips per day (`ph_mktgwhere`), hover-reveal; marketing stays OFF the Schedule.
   Office palette lives in user.js (`PH.palette/colorOf/colorForOffice`) — one source.
 
