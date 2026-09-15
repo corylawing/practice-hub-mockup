@@ -80,6 +80,11 @@
   loadPeopleLocal();
   function reloadPeople(){
     loadPeopleLocal();
+    // Make sure the roster has landed before anyone asks who this person is.
+    if(!ROSTER_BY_MAIL) return rosterReady.then(function(){ return reloadPeopleRemote(); });
+    return reloadPeopleRemote();
+  }
+  function reloadPeopleRemote(){
     if(window.PH_STORE && isLive()){
       return window.PH_STORE.get('ph_people').then(function(r){
         if(r && typeof r==='object'){
@@ -91,6 +96,33 @@
     }
     return Promise.resolve(PEOPLE_OVR);
   }
+  /* THE ROSTER as a fallback for permissions, not just for display.
+     Until today, teams and offices came only from an admin override or from the
+     Entra Department/Office fields. A B2B guest has neither, and Adam has not filled
+     those fields in for the in-tenant staff either - so everyone would have landed as
+     Staff with no office until somebody opened Admin and pressed Save on all seventy.
+     `_people.json` (the practice's own list) now fills that gap. Precedence stays:
+     what an admin sets wins, then Entra, then this. Fetched at load because it is a
+     static file needing no token, so it is long since ready by the time a sign-in
+     popup completes. */
+  let ROSTER_BY_MAIL=null;
+  const rosterReady=(typeof fetch==='function')
+    ? fetch('_people.json').then(function(r){ return r.ok?r.json():null; }).then(function(j){
+        const rows=j&&j.people;
+        if(!Array.isArray(rows)) return null;
+        ROSTER_BY_MAIL={};
+        rows.forEach(function(x){
+          const m=String(x.email||'').toLowerCase().trim();
+          if(m) ROSTER_BY_MAIL[m]=x;
+        });
+        return ROSTER_BY_MAIL;
+      }).catch(function(){ return null; })
+    : Promise.resolve(null);
+  function rosterFor(mail){
+    if(!ROSTER_BY_MAIL || !mail) return null;
+    return ROSTER_BY_MAIL[String(mail).toLowerCase().trim()] || null;
+  }
+
   /* GUESTS FROM ANOTHER TENANT.
      A B2B guest signs in as jenny_lascrucessmiles.com#EXT#@<host>.onmicrosoft.com.
      Graph usually also returns their real address in `mail`, but not always - and
@@ -172,10 +204,13 @@
     if(!PROFILE) return null;
     const mailNow=signedInAddress();
     const ovr=overrideFor(mailNow);
-    // The hub's own setting wins; Entra is only the fallback for an unconfigured person.
+    const ros=rosterFor(mailNow);
+    /* The hub's own setting wins; then Entra, if IT has filled it in; then the
+       practice's own roster, which is what makes a brand-new guest work. */
     const deptSrc = (ovr && ovr.teams && ovr.teams.length)
       ? ovr.teams.join(';')
-      : String(PROFILE.department||'');
+      : (String(PROFILE.department||'').trim()
+         || ((ros && ros.teams && ros.teams.length) ? ros.teams.join(';') : ''));
     const depts=splitTeams(deptSrc);
     // Several departments -> take the most permissive level for each area.
     let can=canForTeams(depts);
@@ -197,14 +232,21 @@
       });
     }
 
-    const ovrLocs = (ovr && ovr.locs && ovr.locs.length) ? ovr.locs : null;
+    const ovrLocs = (ovr && ovr.locs && ovr.locs.length) ? ovr.locs
+                  : null;
+    // Same order for offices: admin, then Entra, then the roster.
+    const rosLocs = (!ovrLocs && !String(PROFILE.officeLocation||'').trim()
+                     && ros && ros.offices && ros.offices.length) ? ros.offices : null;
     const loc = ovrLocs ? ovrLocs.filter(l=>l!=='All offices').join(', ')
-                        : String(PROFILE.officeLocation||'').trim();
+              : rosLocs ? rosLocs.join(', ')
+              : String(PROFILE.officeLocation||'').trim();
     const seesAll = boot
       || (ovrLocs ? ovrLocs.indexOf('All offices')>=0 : false)
       || depts.some(d=>ALL_OFFICE_DEPTS.indexOf(d)>=0);
     const offs = seesAll ? 'all'
-      : (ovrLocs ? ovrLocs.slice() : (loc?[loc]:[]));
+      : (ovrLocs ? ovrLocs.slice()
+      : rosLocs ? rosLocs.slice()
+      : (loc?[loc]:[]));
 
     const full=String(PROFILE.displayName||PROFILE.mail||'').trim();
     const bits=full.split(/\s+/);
@@ -940,6 +982,6 @@
   }
   const isLive=()=>env()==='live';
 
-  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, photoFor, loadPhotos};
+  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, photoFor, loadPhotos, rosterReady};
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mount); else mount();
 })();
