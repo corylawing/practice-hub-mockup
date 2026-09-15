@@ -91,6 +91,26 @@
     }
     return Promise.resolve(PEOPLE_OVR);
   }
+  /* GUESTS FROM ANOTHER TENANT.
+     A B2B guest signs in as jenny_lascrucessmiles.com#EXT#@<host>.onmicrosoft.com.
+     Graph usually also returns their real address in `mail`, but not always - and
+     when it doesn't, nothing in the roster or the admin overrides matches, so the
+     person lands as Staff with no access and the invite looks broken. Turn that UPN
+     back into the address it was made from. */
+  function realAddress(v){
+    const raw=String(v||'').toLowerCase().trim();
+    const i=raw.indexOf('#ext#');
+    if(i<0) return raw;
+    const left=raw.slice(0,i);
+    const u=left.lastIndexOf('_');
+    return u<0 ? left : left.slice(0,u)+'@'+left.slice(u+1);
+  }
+  function signedInAddress(){
+    if(!PROFILE) return '';
+    // Prefer the real mailbox; fall back to un-mangling the guest UPN.
+    return String(PROFILE.mail||'').toLowerCase().trim() || realAddress(PROFILE.userPrincipalName);
+  }
+
   function overrideFor(mail){
     if(!PEOPLE_OVR || !mail) return null;
     return PEOPLE_OVR[String(mail).toLowerCase().trim()] || null;
@@ -150,7 +170,7 @@
 
   function fromProfile(){
     if(!PROFILE) return null;
-    const mailNow=String(PROFILE.mail||PROFILE.userPrincipalName||'').toLowerCase().trim();
+    const mailNow=signedInAddress();
     const ovr=overrideFor(mailNow);
     // The hub's own setting wins; Entra is only the fallback for an unconfigured person.
     const deptSrc = (ovr && ovr.teams && ovr.teams.length)
@@ -162,7 +182,7 @@
     const known=depts.some(d=>accessForTeam(d)||DEPT_CAN[d]);
     if(!can) can=Object.assign({},DEPT_CAN['staff']);   // unrecognised/blank -> least access
 
-    const mail=String(PROFILE.mail||PROFILE.userPrincipalName||'').toLowerCase().trim();
+    const mail=signedInAddress();
     const boot=BOOTSTRAP_ADMINS.indexOf(mail)>=0;
     if(boot) can=Object.assign({},DEPT_CAN['admin']);
 
@@ -191,7 +211,7 @@
     return {
       id:'me', first:bits[0]||'', last:bits.slice(1).join(' '),
       role:PROFILE.jobTitle||'', title:PROFILE.jobTitle||'',
-      mail:PROFILE.mail||PROFILE.userPrincipalName||'',
+      mail:PROFILE.mail||realAddress(PROFILE.userPrincipalName)||'',
       teams:depts.length?depts.map(d=>d.replace(/\b\w/g,c=>c.toUpperCase())):['Staff'],
       loc:loc||'', offices:offs, can:can,
       // Flags the UI uses to explain a thin-looking account rather than just showing nothing.
@@ -259,7 +279,7 @@
      between devices. */
   function profileKey(){
     if(PROFILE){
-      const mail=String(PROFILE.mail||PROFILE.userPrincipalName||'').toLowerCase().trim();
+      const mail=signedInAddress();
       if(mail) return 'ph_me_'+mail;
     }
     return 'ph_me_'+id();
