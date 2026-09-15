@@ -971,6 +971,18 @@
   /* Office colors. Lives HERE, not in schedule.html, because Marketing colors its
      items by office too and the two must never drift. Schedule owns which office has
      which color; this owns what each color actually is. */
+  /* WHERE THE WORKBOOK LIVES.
+     One place, because it is referenced by both the Dashboard and Enter Production and
+     a half-updated pair is a silent breakage. These IDs identify the file; they grant
+     nothing on their own - reading it still needs a signed-in person who already has
+     access. If the file is ever MOVED (e.g. from Heather's OneDrive into the Home-Brace
+     site) both values change: get the new ones from connect.html step 5 and change them
+     here only. */
+  const WORKBOOK={
+    drive:'b!_iYahf-6ukmoAAj5kJvRerfxyG2Vel1DjXWUHR3Q-rM_xdgQyKrjQJEx8aAKAvQ-',
+    item :'0153I7MX4WXYRN4DKUJFEZPTWOZ4GBQMIV'
+  };
+
   const PALETTE=[
     {k:'Hot Pink',           dot:'#F0378F', bg:'#FFE1EF', fg:'#A80F63'},
     {k:'Purple',             dot:'#7C3AED', bg:'#EDE7FD', fg:'#5B21B6'},
@@ -1008,6 +1020,6 @@
   }
   const isLive=()=>env()==='live';
 
-  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, photoFor, loadPhotos, rosterReady};
+  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, photoFor, loadPhotos, rosterReady, WORKBOOK};
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mount); else mount();
 })();

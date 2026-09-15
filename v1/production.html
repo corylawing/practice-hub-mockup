@@ -120,11 +120,11 @@
   }
 
 </style>
-<script src="user.js?v=hc16"></script>
+<script src="user.js?v=hc17"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="workbook.js?v=hc16"></script>
-  <script src="store.js?v=hc16"></script>
-  <script src="gate.js?v=hc16"></script>
+  <script src="workbook.js?v=hc17"></script>
+  <script src="store.js?v=hc17"></script>
+  <script src="gate.js?v=hc17"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — type the month's numbers here. In the real build this writes straight into the SharePoint workbook.</div>
@@ -487,8 +487,9 @@
      these are the practice's real inputs, fetched after sign-in, so no figures live
      in this file. */
   let loadedStamp=null;   // the workbook's last-saved time when this page read it
-  const WB_DRIVE='b!_iYahf-6ukmoAAj5kJvRerfxyG2Vel1DjXWUHR3Q-rM_xdgQyKrjQJEx8aAKAvQ-';
-  const WB_ITEM ='0153I7MX4WXYRN4DKUJFEZPTWOZ4GBQMIV';
+  // Single source in user.js - see PH.WORKBOOK there if the file is ever moved.
+  const WB_DRIVE=(window.PH&&PH.WORKBOOK)?PH.WORKBOOK.drive:'';
+  const WB_ITEM =(window.PH&&PH.WORKBOOK)?PH.WORKBOOK.item :'';
 
   function wbBanner(html,bad){
     let n=document.getElementById('wbstate');
@@ -554,7 +555,7 @@
 })();
 </script>
 <script>PH.nav('production');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(window.PROD&&PROD.identity)PROD.identity();});</script>
-<script src="tour.js?v=hc16"></script>
+<script src="tour.js?v=hc17"></script>
 <script>
 Tour.init([
   {sel:'.syncbar', title:'One set of numbers', body:'Type here and it saves into the <b>same Excel workbook</b> on SharePoint. If someone types in Excel instead, it shows up here. There is never a second copy to reconcile.'},

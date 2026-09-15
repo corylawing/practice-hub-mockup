@@ -250,12 +250,12 @@
   }
 
 </style>
-<script src="user.js?v=hc16"></script>
-<script src="celebrate.js?v=hc16"></script>
+<script src="user.js?v=hc17"></script>
+<script src="celebrate.js?v=hc17"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="workbook.js?v=hc16"></script>
-  <script src="store.js?v=hc16"></script>
-  <script src="gate.js?v=hc16"></script>
+  <script src="workbook.js?v=hc17"></script>
+  <script src="store.js?v=hc17"></script>
+  <script src="gate.js?v=hc17"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — real numbers from the 2026 Production Dashboard workbook. You only see the offices you have access to.</div>
@@ -1012,8 +1012,9 @@ const OFFICES=[
   /* The practice's live workbook, by its permanent address. These IDs identify the file but
      grant nothing on their own -- reading it still requires a signed-in person who already
      has access to it. */
-  const WB_DRIVE='b!_iYahf-6ukmoAAj5kJvRerfxyG2Vel1DjXWUHR3Q-rM_xdgQyKrjQJEx8aAKAvQ-';
-  const WB_ITEM ='0153I7MX4WXYRN4DKUJFEZPTWOZ4GBQMIV';
+  // Single source in user.js - see PH.WORKBOOK there if the file is ever moved.
+  const WB_DRIVE=(window.PH&&PH.WORKBOOK)?PH.WORKBOOK.drive:'';
+  const WB_ITEM =(window.PH&&PH.WORKBOOK)?PH.WORKBOOK.item :'';
 
   function banner(html, bad){
     let n=document.getElementById('wbstate');
@@ -1101,7 +1102,7 @@ const OFFICES=[
 })();
 </script>
 <script>PH.nav('dashboard');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(window.DASH&&DASH.identity)DASH.identity();});</script>
-<script src="tour.js?v=hc16"></script>
+<script src="tour.js?v=hc17"></script>
 <script>
 Tour.init([
   {sel:'.viewas', title:'You only see your offices', body:'Everyone can see <b>All Offices</b> \u2014 the practice total as one number. What your location decides is which offices you can <b>open individually</b>. Switch to the Carlsbad manager: she keeps the group total and Carlsbad, but the other offices and the leaderboard disappear, because those name every office\u2019s figures.'},
