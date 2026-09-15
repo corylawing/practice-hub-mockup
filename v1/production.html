@@ -120,11 +120,11 @@
   }
 
 </style>
-<script src="user.js?v=hc11"></script>
+<script src="user.js?v=hc12"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="workbook.js?v=hc11"></script>
-  <script src="store.js?v=hc11"></script>
-  <script src="gate.js?v=hc11"></script>
+  <script src="workbook.js?v=hc12"></script>
+  <script src="store.js?v=hc12"></script>
+  <script src="gate.js?v=hc12"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — type the month's numbers here. In the real build this writes straight into the SharePoint workbook.</div>
@@ -479,7 +479,7 @@
     render();
   }
   el('persona').innerHTML=PERSONAS.map(p=>'<option value="'+p.id+'">'+p.name+'</option>').join('');
-  window.PROD={set,office:setOffice,month:setMonth,edit,commit,reset};
+  window.PROD={set,office:setOffice,month:setMonth,edit,commit,reset,identity:applyIdentity};
   let saved='admin'; try{ saved=localStorage.getItem('ph_viewas')||'admin'; }catch(_){}
   if(!PERSONAS.some(p=>p.id===saved)) saved='admin';
 
@@ -536,13 +536,25 @@
              res.errors.length>0);
   }
 
-  function boot(){ hydrate().then(()=>{ set(saved); booted=true; }); }
+  /* Same trap as the dashboard: PERSONAS is the sandbox's "View as" list, which
+     dechrome() hides in the real app while this page carried on USING it - so a
+     signed-in person got persona #1's offices instead of their own. The account
+     decides here too. */
+  function applyIdentity(){
+    if(!(window.PH && PH.me && PH.isLive && PH.isLive())) return false;
+    const m=PH.me(); if(!m) return false;
+    cur={ id:'me', name:(PH.name?PH.name(m):'')||'You',
+          offices:(m.offices==='all'?'all':(m.offices||[])) };
+    office=null; render();
+    return true;
+  }
+  function boot(){ hydrate().then(()=>{ if(!applyIdentity()) set(saved); booted=true; }); }
   if(window.PH_AUTH) boot();
   else document.addEventListener('ph-signed-in', boot, {once:true});
 })();
 </script>
-<script>PH.nav('production');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc11"></script>
+<script>PH.nav('production');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(window.PROD&&PROD.identity)PROD.identity();});</script>
+<script src="tour.js?v=hc12"></script>
 <script>
 Tour.init([
   {sel:'.syncbar', title:'One set of numbers', body:'Type here and it saves into the <b>same Excel workbook</b> on SharePoint. If someone types in Excel instead, it shows up here. There is never a second copy to reconcile.'},

@@ -250,12 +250,12 @@
   }
 
 </style>
-<script src="user.js?v=hc11"></script>
-<script src="celebrate.js?v=hc11"></script>
+<script src="user.js?v=hc12"></script>
+<script src="celebrate.js?v=hc12"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="workbook.js?v=hc11"></script>
-  <script src="store.js?v=hc11"></script>
-  <script src="gate.js?v=hc11"></script>
+  <script src="workbook.js?v=hc12"></script>
+  <script src="store.js?v=hc12"></script>
+  <script src="gate.js?v=hc12"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — real numbers from the 2026 Production Dashboard workbook. You only see the offices you have access to.</div>
@@ -969,7 +969,7 @@ const OFFICES=[
     render();
   }
   el('persona').innerHTML=PERSONAS.map(p=>'<option value="'+p.id+'">'+p.name+'</option>').join('');
-  window.DASH={set,pick,party:partyNow,combine:toggleCombine,
+  window.DASH={set,pick,party:partyNow,combine:toggleCombine,identity:applyIdentity,
     period:v=>{period=v;pickOpen=false;combineM=false;render();},
     year:v=>{ year=Number(v); period='ytd'; pickOpen=false; combineM=false; render(); },
     month:v=>{ if(v===''||v==null)return; const i=Number(v);
@@ -1067,14 +1067,41 @@ const OFFICES=[
     return true;
   }
 
+  /* WHO IS ACTUALLY LOOKING.
+     PERSONAS is the sandbox's "View as" toy. dechrome() hides that picker in the
+     real app, but this page was still USING it - and it defaults to Administrator,
+     so every signed-in person was being handed all eight offices regardless of
+     their team or location. The signed-in account has to decide instead. */
+  function realPerson(){
+    if(!(window.PH && PH.me && PH.isLive && PH.isLive())) return null;
+    const m=PH.me(); if(!m) return null;
+    return { id:'me', name:(PH.name?PH.name(m):'')||'You',
+             offices:(m.offices==='all'?'all':(m.offices||[])) };
+  }
+  function applyIdentity(){
+    const real=realPerson();
+    if(!real) return false;
+    // The team decides whether you get this page at all; the location decides
+    // which offices you can open on it.
+    if(window.PH && PH.atLeast && !PH.atLeast('dashboard','view')){
+      cur={id:'me',name:real.name,offices:[]};
+      allowed=[]; render(); return true;
+    }
+    cur=real;
+    allowed = cur.offices==='all' ? OFFICES.slice() : OFFICES.filter(o=>cur.offices.indexOf(o.n)>=0);
+    sel = allowed.length>1 ? 'ALL' : (allowed[0] ? allowed[0].n : 'ALL');
+    render();
+    return true;
+  }
+
   // Wait for the workbook before the first paint, so nobody ever sees a screen of zeros.
-  function boot(){ hydrate().then(()=>set(saved)); }
+  function boot(){ hydrate().then(()=>{ if(!applyIdentity()) set(saved); }); }
   if(window.PH_AUTH) boot();
   else document.addEventListener('ph-signed-in', boot, {once:true});
 })();
 </script>
-<script>PH.nav('dashboard');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc11"></script>
+<script>PH.nav('dashboard');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(window.DASH&&DASH.identity)DASH.identity();});</script>
+<script src="tour.js?v=hc12"></script>
 <script>
 Tour.init([
   {sel:'.viewas', title:'You only see your offices', body:'Everyone can see <b>All Offices</b> \u2014 the practice total as one number. What your location decides is which offices you can <b>open individually</b>. Switch to the Carlsbad manager: she keeps the group total and Carlsbad, but the other offices and the leaderboard disappear, because those name every office\u2019s figures.'},
