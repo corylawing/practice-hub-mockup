@@ -250,12 +250,12 @@
   }
 
 </style>
-<script src="user.js?v=hc10"></script>
-<script src="celebrate.js?v=hc10"></script>
+<script src="user.js?v=hc11"></script>
+<script src="celebrate.js?v=hc11"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="workbook.js?v=hc10"></script>
-  <script src="store.js?v=hc10"></script>
-  <script src="gate.js?v=hc10"></script>
+  <script src="workbook.js?v=hc11"></script>
+  <script src="store.js?v=hc11"></script>
+  <script src="gate.js?v=hc11"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — real numbers from the 2026 Production Dashboard workbook. You only see the offices you have access to.</div>
@@ -874,21 +874,31 @@ const OFFICES=[
       el('sub').textContent='Access is set by team; the offices you see are set by your location.';
       return;
     }
+    /* EVERYONE who has the dashboard can see the group roll-up; what your location
+       controls is which offices you can open INDIVIDUALLY. So a Carlsbad person gets
+       "All Offices" (the practice total) plus Carlsbad, and no other office by name.
+       The group total is a single number for all eight - it never breaks the other
+       offices out - which is why it is safe to show and the leaderboard is not. */
+    const seesEvery = allowed.length===OFFICES.length;
     const multi=allowed.length>1;
-    el('scope').textContent = cur.offices==='all' ? 'All 8 offices' : (allowed.length+' office'+(allowed.length>1?'s':'')+': '+allowed.map(o=>o.n).join(', '));
-    el('sub').textContent = multi ? 'Where production stands against the main goal and the stretch goal.'
-                                  : 'Your office\'s production against the main goal and the stretch goal.';
-    if(!multi) sel=allowed[0].n;
-    else if(sel!=='ALL' && !allowed.some(o=>o.n===sel)) sel='ALL';
-    el('chips').innerHTML = multi
-      ? ('<button class="chip'+((sel==='ALL'&&!combine)?' on':'')+'" onclick="DASH.pick(\'ALL\')">All Offices</button>'+
-         allowed.map(o=>{ const on = combine ? combined.has(o.n) : (sel!=='ALL' && sel===o.n);
-           return '<button class="chip'+(on?' on':'')+'" onclick="DASH.pick(\''+o.n+'\')">'+
-             (combine?'<span class="tick">'+(on?'\u2713':'+')+'</span> ':'')+o.n+'<span class="br">'+o.brand+'</span></button>';}).join('')+
-         '<button class="chip combtog'+(combine?' on':'')+'" onclick="DASH.combine()" title="Add offices together and see one set of numbers">'+
-           (combine?'\u2715 Stop combining':'\u2795 Combine offices')+'</button>')
-      : '';
-    const isAll = multi && sel==='ALL' && !combine;
+    el('scope').textContent = seesEvery
+      ? 'All '+OFFICES.length+' offices'
+      : 'Group totals \u00b7 '+allowed.map(o=>o.n).join(', ');
+    el('sub').textContent = seesEvery
+      ? 'Where production stands against the main goal and the stretch goal.'
+      : 'The group, and your own office, against the main goal and the stretch goal.';
+    if(sel!=='ALL' && !allowed.some(o=>o.n===sel)) sel = multi ? 'ALL' : allowed[0].n;
+    el('chips').innerHTML =
+      '<button class="chip'+((sel==='ALL'&&!combine)?' on':'')+'" onclick="DASH.pick(\'ALL\')">All Offices</button>'+
+      allowed.map(o=>{ const on = combine ? combined.has(o.n) : (sel!=='ALL' && sel===o.n);
+        return '<button class="chip'+(on?' on':'')+'" onclick="DASH.pick(\''+o.n+'\')">'+
+          (combine?'<span class="tick">'+(on?'\u2713':'+')+'</span> ':'')+o.n+'<span class="br">'+o.brand+'</span></button>';}).join('')+
+      // Combining is only meaningful when you have more than one office of your own.
+      (multi
+        ? '<button class="chip combtog'+(combine?' on':'')+'" onclick="DASH.combine()" title="Add offices together and see one set of numbers">'+
+          (combine?'\u2715 Stop combining':'\u2795 Combine offices')+'</button>'
+        : '');
+    const isAll = sel==='ALL' && !combine;
     const picked = combine ? allowed.filter(x=>combined.has(x.n)) : [];
     const isCombo = combine && picked.length>0;
     if(combine && !picked.length){
@@ -897,7 +907,9 @@ const OFFICES=[
       return;
     }
     // Swap in the selected year before anything is computed.
-    const src = isAll ? allowed : isCombo ? picked : [allowed.find(x=>x.n===sel)];
+    // "All Offices" means the whole practice for everyone - otherwise a one-office
+    // person's "group" total would just be their own office again.
+    const src = isAll ? OFFICES : isCombo ? picked : [allowed.find(x=>x.n===sel)];
     const scoped = src.map(yearOf);
     const o = (isAll||isCombo) ? group(scoped) : scoped[0];
     if(isCombo) o.n = picked.length+' offices combined';
@@ -913,7 +925,10 @@ const OFFICES=[
         ? '<h2 class="secttl">\ud83d\udcc6 Production days</h2><p class="secsub">How much of the '+(period==='mtd'?'month':'year')+' has actually been worked.</p>'+daysTiles(o)
         : '') +
       (noFigures ? '' : (chartMode==='starts'? startsChart(o) : chart(o)));
-    if(isAll && !noFigures) html += leaderboard(allowed);
+    /* The leaderboard lists every office by name and number, so it is only for
+       people who are allowed to see the offices individually. Everyone else gets
+       the group total without the breakdown. */
+    if(isAll && seesEvery && !noFigures) html += leaderboard(allowed);
     html += '<div class="foot"><b>Where these numbers come from:</b> the practice\u2019s 2026 Production '+
       'Dashboard workbook on SharePoint \u2014 the hub reads it live, so there is no second copy to keep in '+
       'sync. A month counts once it has <b>both</b> an actual and a goal (Mansfield has production from '+
@@ -948,6 +963,8 @@ const OFFICES=[
     try{ localStorage.setItem('ph_viewas',cur.id); }catch(_){}
     el('persona').value=cur.id;
     allowed = cur.offices==='all' ? OFFICES.slice() : OFFICES.filter(o=>cur.offices.indexOf(o.n)>=0);
+    // Land on the group when you hold several offices, on your own office when you
+    // hold one - the group is still one tap away either way.
     sel = allowed.length>1 ? 'ALL' : (allowed[0]?allowed[0].n:'ALL');
     render();
   }
@@ -1057,10 +1074,10 @@ const OFFICES=[
 })();
 </script>
 <script>PH.nav('dashboard');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc10"></script>
+<script src="tour.js?v=hc11"></script>
 <script>
 Tour.init([
-  {sel:'.viewas', title:'You only see your offices', body:'Production numbers are sensitive, so people see <b>only the offices they\u2019re assigned to</b>. Switch to the Carlsbad manager \u2014 the group totals and the leaderboard disappear, because they aren\u2019t hers to see.'},
+  {sel:'.viewas', title:'You only see your offices', body:'Everyone can see <b>All Offices</b> \u2014 the practice total as one number. What your location decides is which offices you can <b>open individually</b>. Switch to the Carlsbad manager: she keeps the group total and Carlsbad, but the other offices and the leaderboard disappear, because those name every office\u2019s figures.'},
   {sel:'.kpis', title:'The four numbers', body:'Production so far \u00b7 how far <b>ahead or behind the main goal</b> \u00b7 <b>% of the main goal</b> with the <b>stretch goal</b> underneath \u00b7 and how it compares to <b>last year</b>.'},
   {sel:'#chips', title:'Group, or one office', body:'<b>All Offices</b> is the group view. Tap any office name to open just that office. A manager with one office skips straight to hers.'},
   {sel:'.chart', title:'This year vs last year', body:'Each month shows <b>last year in grey</b> beside this year. The <b>dashed line</b> is the main goal; the <b>dotted line</b> is the stretch goal. Green means the main goal was beaten.'},
