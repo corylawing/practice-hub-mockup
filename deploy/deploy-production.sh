@@ -9,7 +9,7 @@
 # snapshot.json and _testgrids.json are excluded: both hold the practice's real
 # figures, neither is used at runtime, and both are 404 in production today.
 #
-# Usage:  ./deploy/deploy-production.sh <deployment-token>
+# Usage:  ./deploy/deploy-production.sh <deployment-token> [--with-api]
 #   Token: Azure Portal -> Static Web App "kind-hill-00da87410"
 #          -> Manage deployment token. Never commit it.
 set -euo pipefail
@@ -26,8 +26,11 @@ rsync -a --exclude 'snapshot.json' --exclude '_testgrids.json' "$REPO/v1/" "$STA
 # Only deployed once it is configured. Without the app credentials it cannot do
 # anything, and the pages fall back to talking to Graph directly, so shipping it
 # half-configured would just add a broken endpoint.
+# Pass --with-api to include it. Off by default: it can do nothing until Adam has
+# granted the app permission and the settings are in place, and adding an /api route
+# to a working site for no benefit is not a risk worth taking on a normal deploy.
 API=""
-if [ -d "$REPO/api" ]; then
+if [ "${2:-}" = "--with-api" ] && [ -d "$REPO/api" ]; then
   API="$(dirname "$STAGE")/api"
   rsync -a --exclude 'node_modules' "$REPO/api/" "$API/"
   # The function needs the shared writer and the roster NEXT TO IT - the v1 folder

@@ -434,9 +434,17 @@
         const res=await fetch('/api/production',{method:'POST',
           headers:{'Content-Type':'application/json','Authorization':'Bearer '+t},
           body:JSON.stringify({office:office,month:month,values:payload})});
-        if(res.status!==404){
+        /* Is the server actually THERE? With no API deployed, Azure answers the
+           static site's own 405 - not a 404 - so status alone is not enough. It
+           counts as present only if it answers like our function: one of the
+           statuses it uses, with a JSON body of the shape it returns. Anything
+           else is treated as "not deployed" and we write directly, as before.
+           Getting this wrong in the other direction would break every save. */
+        const ours=[200,207,400,401,403,500].indexOf(res.status)>=0;
+        const j = ours ? await res.json().catch(()=>null) : null;
+        const shaped = j && (Array.isArray(j.saved) || typeof j.error==='string');
+        if(ours && shaped){
           viaServer=true;
-          const j=await res.json().catch(()=>({}));
           if(res.status===401||res.status===403){
             failed.push(j.error||'You are not allowed to save that.');
           } else if(!res.ok && res.status!==207){
