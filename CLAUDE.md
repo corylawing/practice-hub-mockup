@@ -277,6 +277,26 @@ the pre-fix build or it is not testing anything.
   sending, just the live copy. **No PHI, so no special auditing or device policy is triggered.**
   Re-ask if the hub is ever pointed at a *different* tracker.
 
+### Office access: the signed-in account decides, never PERSONAS (fixed 2026-09-15)
+`PERSONAS` in index.html / production.html is the **sandbox's "View as" list only**. `dechrome()`
+hides the picker in the live app, but for weeks both pages still *used* it, defaulting to persona
+#1 (**Administrator, offices:'all'**) — so **every signed-in person saw all eight offices'
+production figures**, whatever their team or location. Found when Cory asked why Jennifer Peters
+(Carlsbad) had all offices.
+
+Both pages now take offices from `PH.me()` via `applyIdentity()`, re-run on `ph-signed-in`, and the
+dashboard also enforces `PH.atLeast('dashboard','view')` — a location alone used to be enough.
+**Any new page that scopes by office must do the same; never read PERSONAS in live.**
+
+The policy on top of it: **everyone with the dashboard sees the "All Offices" roll-up** (one number
+for all eight, never broken out), and **location decides only which offices can be opened
+individually**. The **leaderboard names every office and its figures, so it stays restricted** to
+people who may see them all.
+
+Caveat worth remembering: this is presentation. The workbook is read client-side with the signed-in
+person's own token, so anyone who can load the dashboard can reach all eight tabs in the browser —
+and could open the file in Excel anyway. Real containment would need per-office files or a server.
+
 ### Hard-won rules — violating these has caused real bugs
 - **Never scale a goal.** Show the workbook's goal. See §"GOALS ARE NEVER SCALED".
 - **Match workbook rows by LABEL, never by row number** — the tabs have two different layouts.
