@@ -166,6 +166,17 @@
     const boot=BOOTSTRAP_ADMINS.indexOf(mail)>=0;
     if(boot) can=Object.assign({},DEPT_CAN['admin']);
 
+    /* A per-person override set in Admin beats the team grid, for the cases teams
+       can't express. Applied after the bootstrap admin so it can't lock the hub's
+       own administrator out of Admin. */
+    if(ovr && ovr.access){
+      can=Object.assign({},can);
+      Object.keys(ovr.access).forEach(function(k){
+        if(boot && k==='admin') return;
+        can[k]=ovr.access[k];
+      });
+    }
+
     const ovrLocs = (ovr && ovr.locs && ovr.locs.length) ? ovr.locs : null;
     const loc = ovrLocs ? ovrLocs.filter(l=>l!=='All offices').join(', ')
                         : String(PROFILE.officeLocation||'').trim();
@@ -791,7 +802,13 @@
     try{ PHOTOS=JSON.parse(localStorage.getItem(PHOTO_KEY))||{}; }catch(_){ PHOTOS={}; }
     return PHOTOS;
   }
+  function adminPhoto(mail){
+    const o=overrideFor(String(mail||'').toLowerCase().trim());
+    return (o && o.photo) ? o.photo : '';
+  }
   function photoFor(mail){
+    // An admin-set photo counts the same as one the person uploaded themselves.
+    const set=adminPhoto(mail); if(set) return set;
     const k=String(mail||'').toLowerCase().trim();
     if(!k) return '';
     // Their own row on this device first — instant after they upload.

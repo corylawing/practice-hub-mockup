@@ -12,3 +12,7 @@ v1/_testgrids.json
 # The practice promotional calendar - commercial information, and the sandbox repo
 # is public. Deployed to their tenant only (the deploy script copies it).
 v1/_promos.json
+
+# The practice roster: real names, work emails and employee IDs. Public repo,
+# so this is tenant-only (the deploy script copies it).
+v1/_people.json

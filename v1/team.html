@@ -81,11 +81,11 @@
   }
 
 </style>
-<script src="user.js?v=hc12"></script>
+<script src="user.js?v=hc13"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="_staff.js?v=hc12"></script>
-  <script src="store.js?v=hc12"></script>
-  <script src="gate.js?v=hc12"></script>
+  <script src="_staff.js?v=hc13"></script>
+  <script src="store.js?v=hc13"></script>
+  <script src="gate.js?v=hc13"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — everyone's contact card. In the real hub this list builds itself from Microsoft 365.</div>
@@ -107,7 +107,7 @@
   <div class="filters" id="filters"></div>
   <div class="count" id="count"></div>
   <div id="grid"></div>
-  <div class="note"><b>Where this comes from:</b> names, photos, emails and phone numbers come straight from <b>Microsoft 365</b> — nobody maintains this list by hand. Each person controls their own <b>photo</b> and <b>“About me”</b> from their profile; their <b>team, office and role</b> are set by an admin. <b>Roles, offices and brands are the practice\u2019s real data.</b> Emails marked <b>sample</b> and all phone numbers are placeholders until Microsoft accounts exist.</div>
+  <div class="note"><b>Where this comes from:</b> names, photos and emails come from <b>Microsoft 365</b> — nobody maintains this list by hand. Each person controls their own <b>photo</b> and <b>“About me”</b>; their <b>team, office, role and email</b> can be set by an admin in <b>Admin → People</b>. Where an email or phone number is blank, nobody has one on file yet — it is never made up.</div>
 </div>
 
 <script>
@@ -190,13 +190,20 @@
   // new office from Admin gets a chip and nobody already on the roster loses theirs.
   // (The roster says 'Las Cruces'; the workbook splits it into Cruces LCO / Cruces FFO —
   // still an open question with the practice, so keep both until they decide.)
-  const OFFICES=(function(){
-    const shared=PH.officeNames(), out=shared.slice();
-    STAFF.forEach(p=>{ if(p.loc && out.indexOf(p.loc)<0) out.push(p.loc); });
-    return out;
-  })();
-  const AREA={'Carlsbad':'575','Clovis':'575','Hobbs':'575','Las Cruces':'575','Lubbock':'806','San Angelo':'325','Mansfield':'817'};
-  const PEOPLE=STAFF.map((r,i)=>{
+  /* Filter chips follow the people actually on screen, not a fixed list - otherwise
+     a stale office from the sandbox roster (e.g. "Las Cruces", which is really two
+     offices) keeps a chip long after the real roster has replaced it. */
+  let OFFICES=[];
+  function rebuildOffices(){
+    const out=PH.officeNames().slice();
+    PEOPLE.forEach(p=>String(p.office||'').split(',').map(x=>x.trim()).forEach(function(o){
+      if(o && o!=='\u2014' && o!=='Rotates' && o!=='All offices' && out.indexOf(o)<0) out.push(o);
+    }));
+    OFFICES=out;
+  }
+  /* The real roster is a tenant-only data file (see admin.html); the built-in STAFF
+     list below is the public sandbox's stand-in. */
+  function buildPeople(rows){ return rows.map((r,i)=>{
     const isDoc=/^Dr\./.test(r.n);
     const clean=r.n.replace(/"[^"]*"/g,'').replace(/\([^)]*\)/g,'').replace(/\s+/g,' ').trim();
     const parts=clean.replace(/^Dr\.\s*/,'').split(' ');
@@ -206,11 +213,13 @@
     return {full:(isDoc?'Dr. ':'')+first+' '+last, first, last, isDoc, leader,
       title:r.role||'Team member', office, brand:r.brand||'',
       team:(isDoc?'Doctors':leader?'Leadership':(r.team||'Staff')),
-      email:r.mail||((first[0]+last).toLowerCase().replace(/[^a-z]/g,'')+'@farnsworthorthodontics.com'),
-      realMail:!!r.mail,
-      phone:'('+(AREA[r.loc]||'575')+') 555-'+String(1000+i).slice(-4),
+      // No invented addresses or numbers: blank is honest, a made-up mailto is not.
+      email:r.mail||'', realMail:!!r.mail,
+      phone:r.phone||'',
       color:PAL[i%PAL.length], nick:(r.n.match(/"([^"]*)"/)||r.n.match(/\(([^)]*)\)/)||[])[1]||null};
-  });
+  }); }
+  let PEOPLE=buildPeople(STAFF);
+  rebuildOffices();
   const el=id=>document.getElementById(id);
   let q='', office='All';
   const initials=p=>(p.first[0]+(p.last[0]||'')).toUpperCase();
@@ -245,8 +254,12 @@
           '<div><div class="nm">'+shown+'</div>'+(pref?'<div style="font-size:11.5px;color:var(--soft)">'+p.first+' '+p.last+'</div>':'')+
           '<div class="ttl">'+p.title+'</div></div>'+(isMe?'<span class="mine">You</span>':'')+'</div>'+
         '<div class="row"><span class="ic">📍</span>'+p.office+'</div>'+
-        '<div class="row"><span class="ic">📞</span><a href="tel:'+p.phone.replace(/[^0-9]/g,'')+'">'+p.phone+'</a></div>'+
-        '<div class="row"><span class="ic">✉️</span><a href="mailto:'+p.email+'">'+p.email+'</a>'+(p.realMail?'':'<span class="t" style="margin-left:4px">sample</span>')+'</div>'+
+        (p.phone
+          ? '<div class="row"><span class="ic">📞</span><a href="tel:'+p.phone.replace(/[^0-9]/g,'')+'">'+p.phone+'</a></div>'
+          : '')+
+        (p.email
+          ? '<div class="row"><span class="ic">✉️</span><a href="mailto:'+p.email+'">'+p.email+'</a></div>'
+          : '<div class="row"><span class="ic">✉️</span><span class="t">No email on file — an admin can add one</span></div>')+
         '<div class="tchips"><span class="t'+(p.isDoc?' dr':'')+'">'+p.team+'</span>'+
           (p.brand?'<span class="t">'+p.brand+'</span>':'')+'<span class="t loc">'+p.office+'</span></div>'+
         (isMe?'<div class="row" style="margin-top:8px"><button style="border:1px solid var(--line);background:#fff;border-radius:9px;padding:7px 12px;font-size:12.5px;font-weight:700;color:var(--navy);cursor:pointer;font-family:inherit" onclick="PH.profile()">Edit my profile</button></div>':'')+
@@ -256,11 +269,23 @@
   el('q').oninput=e=>{q=e.target.value; render();};
   window.TEAM={office:o=>{office=o; render();}};
   window.TEAMPAGE={refresh:render};   // re-draw once Microsoft photos arrive
-  render();
+  /* Prefer the real roster; without it (public sandbox) the built-in list stands. */
+  fetch('_people.json').then(r=>r.ok?r.json():null).then(function(j){
+    const rows=j&&j.people;
+    if(Array.isArray(rows)&&rows.length){
+      PEOPLE=buildPeople(rows.map(function(x){
+        return { n:x.name, mail:x.email||'', loc:(x.offices||[]).join(', '),
+                 st:x.state||'', brand:x.brand||'', role:x.role||'',
+                 team:(x.teams||[]).join(', '), phone:x.phone||'' };
+      }));
+    }
+    rebuildOffices();
+    render();
+  }).catch(render);
 })();
 </script>
 <script>PH.nav('team');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.loadPhotos)PH.loadPhotos().then(function(got){if(got&&window.TEAMPAGE&&TEAMPAGE.refresh)TEAMPAGE.refresh();});if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc12"></script>
+<script src="tour.js?v=hc13"></script>
 <script>
 Tour.init([
   {sel:'#q', title:'Find anyone fast', body:'Type a name, an office, or part of a phone number. This is the quickest way to reach the right person at the right office.'},

@@ -73,6 +73,16 @@
   .pill.active{background:var(--good-soft);color:var(--good)}
   .pill.inactive{background:#eef1f5;color:#8a94a6}
   .pill.paused{background:#FFF6E9;color:#946011}
+  .tp.stray{background:#FDECE8;border-color:#e6b4a8;color:#93301f}
+  .photorow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .acc-sub{font-size:12.5px;color:var(--soft);margin:2px 0 10px;line-height:1.5}
+  .acc-line .accbtn{font:inherit;border:none;cursor:pointer}
+  .ovbadge{font-style:normal;font-size:10.5px;font-weight:800;color:var(--teal-600,#0F827E);
+    background:var(--teal-soft,#E5F4F3);border-radius:999px;padding:2px 7px;margin-left:6px}
+  .acc-line .undo{font:inherit;font-size:14px;background:transparent;border:none;cursor:pointer;
+    color:var(--soft);padding:0 4px;margin-left:6px}
+  .acc-line .undo:hover{color:var(--navy)}
+  .hint2{font-size:12.5px;color:var(--soft)}
   /* access matrix */
   .mx-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
   /* "Enter + goals" was wrapping onto three lines in a narrow column, which read as a
@@ -192,11 +202,11 @@
   }
 
 </style>
-<script src="user.js?v=hc12"></script>
+<script src="user.js?v=hc13"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="_staff.js?v=hc12"></script>
-  <script src="store.js?v=hc12"></script>
-  <script src="gate.js?v=hc12"></script>
+  <script src="_staff.js?v=hc13"></script>
+  <script src="store.js?v=hc13"></script>
+  <script src="gate.js?v=hc13"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — admin console concept for validation. Real build: people sync from Microsoft 365; access is managed here.</div>
@@ -397,6 +407,27 @@
     if(window.PH && PH.reloadPeople) PH.reloadPeople();
   }
 
+  /* The real roster ships as a data file, not as code: real names, work emails and
+     employee IDs, and the sandbox repo is public. `_people.json` is gitignored and
+     reaches their tenant only; without it the page falls back to the name list below
+     so the sandbox still works. Loaded before first paint by boot(). */
+  let ROSTER_ROWS=null;
+  function usersFromRoster(rows){
+    return rows.map(function(r,i){
+      const full=String(r.name||'').trim();
+      const isDoc=/^Dr\.\s/.test(full) || (r.teams||[]).indexOf('Doctors')>=0;
+      const clean=full.replace(/"[^"]*"/g,'').replace(/\([^)]*\)/g,'').replace(/\s+/g,' ').trim();
+      const parts=clean.replace(/^Dr\.\s*/,'').split(' ');
+      const first=parts[0]||full, last=parts.slice(1).join(' ');
+      return { f:isDoc?('Dr. '+first):first, l:last,
+        // No invented addresses: blank stays blank, and an admin can fill it in.
+        email:r.email||'', realEmail:!!r.email,
+        emp:r.empId||'', role:r.role||'',
+        loc:(r.offices&&r.offices.length)?r.offices.join(', '):'Unassigned',
+        teams:(r.teams&&r.teams.length)?r.teams.slice():[isDoc?'Doctors':'Staff'],
+        phone:r.phone||'\u2014', about:r.about||'', status:r.status||'Active', c:i%PAL.length };
+    });
+  }
   let users=ROSTER.map((full,i)=>{
     const isDoc=DOCTOR_NAMES.includes(full);
     const clean=full.replace(/"[^"]*"/g,'').replace(/\([^)]*\)/g,'').replace(/\s+/g,' ').trim();
@@ -424,16 +455,26 @@
       // they're assigned to, and duplicating them just lets the two drift apart.
       phone:'\u2014', about:'', status:'Active', c:i%PAL.length};
   
-  }).map(u=>{
-    // Anything an administrator has set for this person wins over the defaults above.
-    const o=PEOPLE_OVR[(u.email||'').toLowerCase()];
+  }).map(applyOverride);
+
+  /* Anything an administrator has set for this person wins over the roster file.
+     Keyed by email where there is one; by employee id otherwise, so the people with
+     no email address can still be edited and keep their settings. */
+  function ovrKey(u){ return String(u.email||('emp:'+(u.emp||''))||'').toLowerCase(); }
+  function applyOverride(u){
+    const o=PEOPLE_OVR[ovrKey(u)];
     if(o){
-      if(o.teams) u.teams=o.teams.slice();
+      if(o.teams)  u.teams=o.teams.slice();
       if(o.status) u.status=o.status;
-      if(o.locs) u.loc=o.locs.length?(o.locs.includes('All offices')?'All offices':o.locs.join(', ')):'Unassigned';
+      if(o.locs)   u.loc=o.locs.length?(o.locs.includes('All offices')?'All offices':o.locs.join(', ')):'Unassigned';
+      if(o.email!==undefined) { u.email=o.email; u.realEmail=!!o.email; }
+      if(o.emp!==undefined)   u.emp=o.emp;
+      if(o.role!==undefined)  u.role=o.role;
+      if(o.photo!==undefined) u.photo=o.photo;
+      if(o.access)            u.access=o.access;      // per-person overrides of the team grid
     }
     return u;
-  });
+  }
 
   const el=id=>document.getElementById(id);
   const av=u=>PAL[u.c%PAL.length];
@@ -516,15 +557,41 @@
   }
   function userAccess(u){ const out={}; allSections().forEach(s=>{let best='none'; u.teams.forEach(t=>{const lv=(access[t]||{})[s.k]||'none'; if(rank[lv]>rank[best])best=lv;}); out[s.k]=best;}); return out; }
   function parseLoc(loc){ if(!loc||loc==='Unassigned')return []; if(loc==='All offices')return ['All offices']; return loc.split(',').map(x=>x.trim()).filter(Boolean); }
-  function profile(gi){ const u=users[gi]; tmpU={gi,teams:u.teams.slice(),status:u.status,locs:parseLoc(u.loc)}; openProfile(u); }
+  function profile(gi){
+    const u=users[gi];
+    tmpU={ gi, teams:u.teams.slice(), status:u.status, locs:parseLoc(u.loc),
+           email:u.email||'', emp:u.emp||'', role:u.role||'',
+           photo:(u.photo!==undefined?u.photo:undefined),
+           access:u.access?Object.assign({},u.access):null };
+    openProfile(u);
+  }
   function openProfile(u){
     const teamChips=TEAMS.map(t=>'<button class="tp'+(tmpU.teams.includes(t)?' on':'')+'" onclick="AD.togTeam(\''+t+'\')">'+t+'</button>').join('');
     openModal(
       '<div class="m-top">'+faceFor(u,44)+'<div><div style="font-weight:800;font-size:18px;color:var(--navy)">'+u.f+' '+u.l+'</div><div style="font-size:13px;color:var(--soft)">'+u.teams.join(' · ')+' · '+u.loc+'</div></div><span class="pill '+u.status.toLowerCase()+'" style="margin-left:auto">'+u.status+'</span><button class="x" onclick="AD.close()">×</button></div>'+
       '<div class="m-body"><div class="grid2">'+
-        '<div><div class="panel-lab">From Microsoft 365 <span class="msbadge">SYNCED</span></div>'+
-          fldRO('First name',u.f)+fldRO('Last name',u.l)+fldRO('Email',u.email)+fldRO('Phone',u.phone)+fldRO('Employee ID',u.emp)+
-          '<div class="fld"><label>Photo <span class="selfbadge">EMPLOYEE CAN EDIT</span></label><div class="fld ro"><div class="val" style="display:flex;align-items:center;gap:10px">'+faceFor(u)+' Change photo…</div></div></div>'+
+        '<div><div class="panel-lab">Person <span class="msbadge">SYNCS FROM MICROSOFT</span></div>'+
+          fldRO('First name',u.f)+fldRO('Last name',u.l)+
+          /* These were read-only, which left nowhere to fix a missing address or a
+             wrong employee number. Microsoft still fills them in when it can; what
+             an admin types here wins. */
+          '<div class="fld"><label>Email <span style="color:var(--bad)">(admin can edit)</span></label>'+
+            '<input id="fEmail" type="email" value="'+esc(u.email||'')+'" placeholder="none on file" '+
+            'oninput="AD.setField(\'email\',this.value)"></div>'+
+          '<div class="fld"><label>Employee ID <span style="color:var(--bad)">(admin can edit)</span></label>'+
+            '<input id="fEmp" value="'+esc(u.emp||'')+'" placeholder="none on file" '+
+            'oninput="AD.setField(\'emp\',this.value)"></div>'+
+          '<div class="fld"><label>Role</label>'+
+            '<input id="fRole" value="'+esc(u.role||'')+'" placeholder="e.g. Clinical Asst" '+
+            'oninput="AD.setField(\'role\',this.value)"></div>'+
+          fldRO('Phone',u.phone)+
+          '<div class="fld"><label>Photo <span style="color:var(--bad)">(admin can edit)</span> '+
+            '<span class="selfbadge">EMPLOYEE CAN TOO</span></label>'+
+            '<div class="photorow"><span id="fPhotoFace">'+faceFor(u)+'</span>'+
+              '<button class="btn ghost mini-btn" onclick="AD.pickPhoto()">Upload photo\u2026</button>'+
+              (tmpU.photo||u.photo ? '<button class="btn ghost mini-btn" onclick="AD.clearPhoto()">Remove</button>' : '')+
+              '<input type="file" id="fPhotoInput" accept="image/*" hidden onchange="AD.photoChosen(this)">'+
+            '</div></div>'+
         '</div>'+
         '<div><div class="panel-lab">Managed in Home-Brace</div>'+
           '<div class="fld"><label>Status <span style="color:var(--bad)">(admin only)</span></label><select id="fStatus" onchange="AD.setStatus(this.value)">'+['Active','Paused','Inactive'].map(s=>'<option'+(s===tmpU.status?' selected':'')+'>'+s+'</option>').join('')+'</select></div>'+
@@ -543,16 +610,86 @@
     refreshAccessPreview();
   }
   function fldRO(lab,val){ return '<div class="fld ro"><label>'+lab+'</label><div class="val">'+(val||'—')+'</div></div>'; }
+  /* What they can access is normally decided by their teams. An admin can now
+     override any single line for this one person - for the cases the team grid
+     cannot express - and each override says so, with one tap to hand it back. */
   function refreshAccessPreview(){
-    const u=users[tmpU.gi]; const acc=userAccess({teams:tmpU.teams});
-    const lines=allSections().filter(s=>acc[s.k]!=='none').map(s=>'<div class="acc-line"><span>'+s.n+'</span><b class="lvl '+acc[s.k]+'">'+LVLNAME[acc[s.k]]+'</b></div>').join('')||'<div class="acc-line" style="color:var(--soft)">No sections yet — add a team.</div>';
-    const box=el('accpreview'); if(box) box.innerHTML='<h4>What '+u.f+' can access (from their teams)</h4>'+lines;
+    const u=users[tmpU.gi];
+    const fromTeams=userAccess({teams:tmpU.teams});
+    const over=tmpU.access||{};
+    const lines=allSections().map(function(sec){
+      const base=fromTeams[sec.k]||'none';
+      const lv=(over[sec.k]!==undefined)?over[sec.k]:base;
+      const custom=(over[sec.k]!==undefined && over[sec.k]!==base);
+      return '<div class="acc-line"><span>'+sec.n+
+        (custom?' <em class="ovbadge">set for '+esc(u.f)+'</em>':'')+'</span>'+
+        '<button class="lvl '+lv+' accbtn" onclick="AD.pickUserLevel(event,\''+sec.k+'\')">'+
+          LVLNAME[lv]+'</button>'+
+        (custom?'<button class="undo" title="Go back to what their teams give" '+
+                'onclick="AD.clearUserLevel(\''+sec.k+'\')">\u21ba</button>':'')+
+      '</div>';
+    }).join('');
+    const box=el('accpreview');
+    if(box) box.innerHTML='<h4>What '+esc(u.f)+' can access</h4>'+
+      '<p class="acc-sub">From their team(s). Tap a level to set it for '+esc(u.f)+
+      ' alone \u2014 that overrides the team, and \u21ba puts it back.</p>'+lines;
   }
-  function locChips(){ return ['All offices'].concat(LOCATIONS_OF()).map(l=>'<button class="tp'+(tmpU.locs.includes(l)?' on':'')+'" onclick="AD.togLoc(\''+l+'\')">'+l+'</button>').join(''); }
+  function pickUserLevel(ev,k){
+    ev.stopPropagation();
+    const base=userAccess({teams:tmpU.teams})[k]||'none';
+    const cur=(tmpU.access&&tmpU.access[k]!==undefined)?tmpU.access[k]:base;
+    openPk(ev.currentTarget, levelsFor(k).map(l=>({value:l,
+      label:(l==='none'?'None':shortFor(k,l)), desc:descFor(k,l), swatch:LVLSW[l], cur:cur===l})),
+      function(v){
+        tmpU.access=tmpU.access||{};
+        if(v===base) delete tmpU.access[k]; else tmpU.access[k]=v;
+        refreshAccessPreview();
+      });
+  }
+  function clearUserLevel(k){ if(tmpU.access) delete tmpU.access[k]; refreshAccessPreview(); }
+
+  function setField(f,v){ tmpU[f]=v; }
+  function pickPhoto(){ const i=el('fPhotoInput'); if(i) i.click(); }
+  function photoChosen(input){
+    const f=input.files&&input.files[0]; if(!f) return;
+    if(f.size>1400000){ alert('That photo is too large. Please use one under about 1.4 MB.'); input.value=''; return; }
+    const r=new FileReader();
+    r.onload=function(){ tmpU.photo=r.result;
+      const face=el('fPhotoFace');
+      if(face) face.innerHTML='<img class="face" src="'+r.result+'" alt="" style="width:34px;height:34px;border-radius:50%;object-fit:cover">';
+    };
+    r.readAsDataURL(f);
+  }
+  function clearPhoto(){ tmpU.photo='';
+    const face=el('fPhotoFace'); if(face) face.innerHTML=faceFor(users[tmpU.gi]); }
+  /* "Las Cruces" is not an office - there are two, Cruces FFO and Cruces LCO - so a
+     person imported with it had a location with no chip to match. Picking the right
+     office ADDED it and the stray "Las Cruces" stayed, with no way to remove it.
+     Anything not in the office list is now shown as an unresolved chip that says so
+     and can be tapped away, and choosing a real office clears it automatically. */
+  const knownLoc=l=>l==='All offices'||LOCATIONS_OF().indexOf(l)>=0;
+  const strayLocs=()=>tmpU.locs.filter(l=>!knownLoc(l));
+  function locChips(){
+    const chips=['All offices'].concat(LOCATIONS_OF()).map(l=>
+      '<button class="tp'+(tmpU.locs.includes(l)?' on':'')+'" onclick="AD.togLoc(\''+
+      String(l).replace(/'/g,"\\'")+'\')">'+l+'</button>').join('');
+    const stray=strayLocs().map(l=>
+      '<button class="tp stray" title="Not one of the offices - pick the right one, or tap to remove" '+
+      'onclick="AD.togLoc(\''+String(l).replace(/'/g,"\\'")+'\')">\u26A0\uFE0F '+l+' \u00d7</button>').join('');
+    return chips+stray+(stray
+      ? '<p class="hint2" style="width:100%;margin:8px 0 0">\u201c'+strayLocs().join('\u201d, \u201c')+
+        '\u201d isn\u2019t one of the offices. Pick the right one above \u2014 it will clear itself.</p>'
+      : '');
+  }
   function togLoc(l){
     if(l==='All offices'){ tmpU.locs = tmpU.locs.includes('All offices')?[]:['All offices']; }
-    else { const i=tmpU.locs.indexOf(l); if(i>=0)tmpU.locs.splice(i,1); else tmpU.locs.push(l);
-      const ai=tmpU.locs.indexOf('All offices'); if(ai>=0)tmpU.locs.splice(ai,1); }
+    else {
+      const i=tmpU.locs.indexOf(l);
+      if(i>=0) tmpU.locs.splice(i,1); else tmpU.locs.push(l);
+      const ai=tmpU.locs.indexOf('All offices'); if(ai>=0) tmpU.locs.splice(ai,1);
+      // Choosing a real office answers the question the stray value was asking.
+      if(knownLoc(l) && tmpU.locs.indexOf(l)>=0) tmpU.locs=tmpU.locs.filter(knownLoc);
+    }
     const lp=document.getElementById('locpick'); if(lp)lp.innerHTML=locChips();
   }
   function togTeam(t){ const i=tmpU.teams.indexOf(t); if(i>=0)tmpU.teams.splice(i,1); else tmpU.teams.push(t);
@@ -560,11 +697,26 @@
   function setStatus(v){tmpU.status=v;}
   function saveUser(){
     const u=users[tmpU.gi];
+    const oldKey=ovrKey(u);
     u.teams=tmpU.teams.slice();
     u.status=tmpU.status;
-    u.loc=tmpU.locs.length?(tmpU.locs.includes('All offices')?'All offices':tmpU.locs.join(', ')):'Unassigned';
-    // Persist, keyed by email so it survives a reload and reaches the live app.
-    PEOPLE_OVR[(u.email||'').toLowerCase()]={teams:u.teams.slice(), locs:tmpU.locs.slice(), status:u.status};
+    // Only real offices are stored - a stray value like "Las Cruces" never gets saved back.
+    const locs=tmpU.locs.filter(knownLoc);
+    u.loc=locs.length?(locs.includes('All offices')?'All offices':locs.join(', ')):'Unassigned';
+    u.email=(tmpU.email||'').trim(); u.realEmail=!!u.email;
+    u.emp=(tmpU.emp||'').trim();
+    u.role=(tmpU.role||'').trim();
+    if(tmpU.photo!==undefined) u.photo=tmpU.photo;
+    u.access=(tmpU.access && Object.keys(tmpU.access).length)?Object.assign({},tmpU.access):undefined;
+    /* Keyed by email, or by employee id when there is no email, so the people whose
+       address we don't have can still be edited. Changing the email moves the record
+       to the new key rather than orphaning it. */
+    const key=ovrKey(u);
+    if(oldKey && oldKey!==key) delete PEOPLE_OVR[oldKey];
+    PEOPLE_OVR[key]={teams:u.teams.slice(), locs:locs.slice(), status:u.status,
+                     email:u.email, emp:u.emp, role:u.role,
+                     photo:(u.photo!==undefined?u.photo:undefined),
+                     access:u.access};
     savePeopleOverrides();
     if(window.PH && PH.logActivity && PH.isLive())
       PH.logActivity({sec:'admin', ic:'\u2699\uFE0F',
@@ -921,14 +1073,25 @@
   function openModal(h){ el('modalCard').innerHTML=h; el('modal').classList.add('open'); }
   function closeModal(){ el('modal').classList.remove('open'); }
 
-  window.AD={tab:tabSet,viewAs:doViewAs,newTeam,editTeam,saveTeam,delTeam,resetTeams,profile,whyNoAdd,togTeam,togLoc,setStatus,saveUser,pickLevel,pickAud,tog,addFile,noop,newSec,editSec,saveSec,delSec,resetSecs,setSecName,setSecIcon,setSecStruct,setSecLocMode,setSecTeamMode,togSecLoc,togSecTeam,saveFile,cd,useFile,clearFile,uploadFile,setFileTeamMode,setFileLocMode,togFileLoc,togFileTeam,renderLocs,newLoc,editLoc,saveLoc,delLoc,resetLocs,setLocBrand,setLocState,setLocTZ,close:closeModal};
+  window.AD={tab:tabSet,viewAs:doViewAs,newTeam,editTeam,saveTeam,delTeam,resetTeams,profile,whyNoAdd,togTeam,togLoc,setStatus,saveUser,pickLevel,pickAud,setField,pickPhoto,photoChosen,clearPhoto,pickUserLevel,clearUserLevel,tog,addFile,noop,newSec,editSec,saveSec,delSec,resetSecs,setSecName,setSecIcon,setSecStruct,setSecLocMode,setSecTeamMode,togSecLoc,togSecTeam,saveFile,cd,useFile,clearFile,uploadFile,setFileTeamMode,setFileLocMode,togFileLoc,togFileTeam,renderLocs,newLoc,editLoc,saveLoc,delLoc,resetLocs,setLocBrand,setLocState,setLocTZ,close:closeModal};
   el('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
-  render();
+  /* Load the real roster before the first paint. If it isn't there (the public
+     sandbox), the built-in name list below already rendered and nothing changes. */
+  function loadRoster(){
+    return fetch('_people.json').then(r=>r.ok?r.json():null).then(function(j){
+      const rows=j&&j.people;
+      if(!Array.isArray(rows)||!rows.length) return false;
+      ROSTER_ROWS=rows;
+      users=usersFromRoster(rows).map(applyOverride);
+      return true;
+    }).catch(function(){ return false; });
+  }
+  loadRoster().then(render);
 })();
 </script>
 <script>PH.nav('admin');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(PH.loadPhotos)PH.loadPhotos().then(function(got){if(got&&window.AD&&AD.tab)AD.tab('users');});});</script>
-<script src="tour.js?v=hc12"></script>
+<script src="tour.js?v=hc13"></script>
 <script>
 Tour.init([
   {sel:'#tabs', title:'This is your control room', body:'Four tabs and you can run the whole hub: <b>People</b>, <b>Teams &amp; Access</b>, <b>Document Sections</b> and <b>Locations</b>. No developer, no consultant.', pre:()=>AD.tab('users')},
