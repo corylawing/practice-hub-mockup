@@ -1,0 +1,8 @@
+{
+  "name": "home-brace-api",
+  "version": "1.0.0",
+  "description": "Server side of Home-Brace. Holds the workbook access so people do not have to.",
+  "main": "index.js",
+  "engines": { "node": ">=18" },
+  "dependencies": {}
+}

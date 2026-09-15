@@ -429,4 +429,10 @@
   global.PH_WB = { load:load, office:office, TABS:TABS, MEDICAID:MEDICAID,
                    writeCell:writeCell, readCell:readCell, resolve:resolve, roundTrip:roundTrip,
                    closeSession:closeSession, WRITE_ROWS:WRITE_ROWS, colLetters:colLetters };
-})(window);
+})(typeof globalThis!=='undefined' ? globalThis : window);
+
+/* Also usable from Node, so the SERVER parses the workbook with this exact code rather
+   than a second copy of it. The parsing was verified to the dollar against Heather's
+   figures once; two implementations would drift, and a drifting parser is what caused
+   the wrong-row bug in the first place. */
+if (typeof module !== 'undefined' && module.exports) module.exports = globalThis.PH_WB;

@@ -120,11 +120,11 @@
   }
 
 </style>
-<script src="user.js?v=hc17"></script>
+<script src="user.js?v=hc18"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="workbook.js?v=hc17"></script>
-  <script src="store.js?v=hc17"></script>
-  <script src="gate.js?v=hc17"></script>
+  <script src="workbook.js?v=hc18"></script>
+  <script src="store.js?v=hc18"></script>
+  <script src="gate.js?v=hc18"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — type the month's numbers here. In the real build this writes straight into the SharePoint workbook.</div>
@@ -414,16 +414,49 @@
       return;
     }
 
+    /* Collect what to write, then prefer the SERVER if it is there. The server holds
+       the workbook access and checks the office against who you are, so nobody needs
+       the file shared with them. If it is not deployed yet (404) we write directly as
+       before, so the app keeps working until it is - but any OTHER server error is
+       surfaced rather than quietly bypassing the permission check. */
+    const payload={};
     for(const f of fields){
-      // '' tells writeCell to clear the cell (it uses Graph's clear action, since a
-      // PATCH of null is ignored). Only genuinely absent values are skipped.
       const blank=cleared(office,month,f);
       const v=blank ? '' : val(office,month,f);
       if(!blank && (v===''||v===null||v===undefined)) continue;
+      payload[f]=v;
+    }
+
+    let viaServer=false;
+    if(Object.keys(payload).length){
       try{
-        const r=await PH_WB.writeCell(PH_AUTH.token, WB_DRIVE, WB_ITEM, office, f, month, v);
-        done.push(f+' \u2192 '+r.address);
-      }catch(e){ failed.push(f+': '+((e&&e.message)||e)); }
+        const t=await PH_AUTH.token();
+        const res=await fetch('/api/production',{method:'POST',
+          headers:{'Content-Type':'application/json','Authorization':'Bearer '+t},
+          body:JSON.stringify({office:office,month:month,values:payload})});
+        if(res.status!==404){
+          viaServer=true;
+          const j=await res.json().catch(()=>({}));
+          if(res.status===401||res.status===403){
+            failed.push(j.error||'You are not allowed to save that.');
+          } else if(!res.ok && res.status!==207){
+            failed.push(j.error||('Server '+res.status));
+          } else {
+            (j.saved||[]).forEach(x=>done.push(x.field+' \u2192 '+x.address));
+            (j.refused||[]).forEach(x=>failed.push(x));
+            (j.failed||[]).forEach(x=>failed.push(x));
+          }
+        }
+      }catch(e){ /* couldn't reach it at all -> fall through to the direct path */ }
+    }
+
+    if(!viaServer){
+      for(const f of Object.keys(payload)){
+        try{
+          const r=await PH_WB.writeCell(PH_AUTH.token, WB_DRIVE, WB_ITEM, office, f, month, payload[f]);
+          done.push(f+' \u2192 '+r.address);
+        }catch(e){ failed.push(f+': '+((e&&e.message)||e)); }
+      }
     }
     /* Say what happened on the button itself, then return it to normal. */
     function settle(state, label){
@@ -437,8 +470,9 @@
         btn.textContent='Save to workbook';
       }, state==='done' ? 2600 : 4000);
     }
-    // Flush the session so the workbook on disk reflects the writes.
-    try{ if(PH_WB.closeSession) await PH_WB.closeSession(PH_AUTH.token, WB_DRIVE, WB_ITEM); }catch(_){}
+    // Flush the session so the workbook on disk reflects the writes. The server closes
+    // its own session, so this is only for the direct path.
+    if(!viaServer){ try{ if(PH_WB.closeSession) await PH_WB.closeSession(PH_AUTH.token, WB_DRIVE, WB_ITEM); }catch(_){} }
 
     if(failed.length){
       settle('failed', failed.length+' didn\u2019t save');
@@ -555,7 +589,7 @@
 })();
 </script>
 <script>PH.nav('production');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(window.PROD&&PROD.identity)PROD.identity();});</script>
-<script src="tour.js?v=hc17"></script>
+<script src="tour.js?v=hc18"></script>
 <script>
 Tour.init([
   {sel:'.syncbar', title:'One set of numbers', body:'Type here and it saves into the <b>same Excel workbook</b> on SharePoint. If someone types in Excel instead, it shows up here. There is never a second copy to reconcile.'},

@@ -22,10 +22,25 @@ cp "$REPO/deploy/index.html" "$STAGE/index.html"
 cp -R "$REPO/assets" "$STAGE/assets"
 rsync -a --exclude 'snapshot.json' --exclude '_testgrids.json' "$REPO/v1/" "$STAGE/v1/"
 
+# ---- the API (server side) -------------------------------------------------
+# Only deployed once it is configured. Without the app credentials it cannot do
+# anything, and the pages fall back to talking to Graph directly, so shipping it
+# half-configured would just add a broken endpoint.
+API=""
+if [ -d "$REPO/api" ]; then
+  API="$(dirname "$STAGE")/api"
+  rsync -a --exclude 'node_modules' "$REPO/api/" "$API/"
+  # The function needs the shared writer and the roster NEXT TO IT - the v1 folder
+  # is not deployed alongside the API.
+  cp "$REPO/v1/workbook.js" "$API/workbook.js"
+  [ -f "$REPO/v1/_people.json" ] && cp "$REPO/v1/_people.json" "$API/_people.json"
+fi
+
 # The CLI refuses to run from inside the artifact folder, so deploy from its parent.
 cd "$(dirname "$STAGE")"
 SWA_CLI_DEPLOYMENT_TOKEN="$TOKEN" \
-  npx --yes @azure/static-web-apps-cli@2.0.10 deploy ./swa --env production
+  npx --yes @azure/static-web-apps-cli@2.0.10 deploy ./swa --env production \
+    ${API:+--api-location ./api}
 
 echo
 echo "Deployed. Verify the cache stamp actually changed:"
