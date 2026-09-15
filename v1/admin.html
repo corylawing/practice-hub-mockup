@@ -192,11 +192,11 @@
   }
 
 </style>
-<script src="user.js?v=hc09"></script>
+<script src="user.js?v=hc10"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="_staff.js?v=hc09"></script>
-  <script src="store.js?v=hc09"></script>
-  <script src="gate.js?v=hc09"></script>
+  <script src="_staff.js?v=hc10"></script>
+  <script src="store.js?v=hc10"></script>
+  <script src="gate.js?v=hc10"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — admin console concept for validation. Real build: people sync from Microsoft 365; access is managed here.</div>
@@ -441,6 +441,20 @@
   let tab='users', search='', tmpU=null, openSecs=new Set(['managers','hr']);
 
   function tabSet(t){ tab=t; [...document.querySelectorAll('.tab')].forEach(b=>b.classList.toggle('active',b.dataset.t===t)); render(); }
+  /* Repainting a whole tab throws away where the person was. The access matrix is
+     wider than the screen, so setting a permission on a right-hand column used to
+     snap back to the far left; expanding a document section jumped the page to the
+     top the same way. Capture both scroll positions, then put them back. */
+  function holdScroll(){
+    const was=document.querySelector('.mx-scroll,.tbl-scroll');
+    const x=was?was.scrollLeft:0, y=window.scrollY;
+    return function(){
+      const now=document.querySelector('.mx-scroll,.tbl-scroll');
+      if(now && x) now.scrollLeft=x;
+      if(y) window.scrollTo(0,y);
+    };
+  }
+
   function render(){ if(tab==='users')renderUsers(); else if(tab==='access')renderAccess();
     else if(tab==='locs')renderLocs(); else renderFiles(); }
 
@@ -457,6 +471,7 @@
 
   /* ---------- PEOPLE ---------- */
   function renderUsers(){
+    const restore=holdScroll();
     el('view').innerHTML=
       '<div class="intro"><b>People are created in Microsoft \u2014 never here.</b> As soon as IT sets up someone\'s Microsoft account they appear in this list, with <b>no access</b> until you give them a team. What they can then reach is decided <b>here in the hub</b>: set their <b>team(s), location &amp; status</b>. They look after their own <b>photo, preferred name, phone &amp; \u201cAbout me\u201d</b>. <b>Tap a person</b> to open their profile.</div>'+
       '<div class="toolrow"><input class="search" id="usearch" placeholder="Search people, email, team, location…" value="'+search.replace(/"/g,'&quot;')+'"><button class="btn ghost" onclick="AD.whyNoAdd()">Someone missing?</button></div>'+
@@ -465,6 +480,7 @@
       '<p style="font-size:13px;color:var(--soft);margin:12px 2px 0" id="ucount"></p>';
     renderUsersBody();
     const s=el('usearch'); if(s) s.oninput=e=>{search=e.target.value; renderUsersBody();};
+    restore();
   }
   /* A person's face: their own photo if they've set one, else initials. Used by the
      table, the profile header and the photo row, so the three can't disagree. */
@@ -575,6 +591,8 @@
 
   /* ---------- TEAMS & ACCESS ---------- */
   function renderAccess(){
+    // Adding, renaming or deleting a team does need the whole tab rebuilt.
+    const restore=holdScroll();
     const secs=allSections();
     const grp='<tr><th class="corner"></th><th class="grp" colspan="'+TOOLS.length+'">App tools</th><th class="grp" colspan="'+DOCSECS.length+'">Document sections</th></tr>';
     const head='<tr><th class="corner">Teams \u2193</th>'+secs.map(x=>'<th title="'+x.n+'">'+(x.s||x.n)+'</th>').join('')+'</tr>';
@@ -587,6 +605,7 @@
         '<button class="btn ghost" onclick="AD.resetTeams()">Reset teams</button><button class="btn" onclick="AD.newTeam()">+ Add team</button></div>'+
       '<div class="mx-scroll"><table class="mx"><thead>'+grp+head+'</thead><tbody>'+rows+'</tbody></table></div>'+
       '<div class="legend"><span><i style="background:#f4f6f8"></i> None</span><span><i style="background:var(--blue-soft)"></i> View</span><span><i style="background:var(--good-soft)"></i> Add files</span><span><i style="background:var(--teal-soft)"></i> Edit</span><span><i style="background:var(--navy)"></i> Manage</span><span style="margin-left:auto">New sections you create appear here automatically.</span></div>';
+    restore();
   }
 
   /* ---------- TEAMS (add your own; they appear as rows in the grid straight away) ---------- */
@@ -630,6 +649,7 @@
 
   /* ---------- LOCATIONS (add offices as the group expands) ---------- */
   function renderLocs(){
+    const restore=holdScroll();
     const rows=LOCS.map((l,i)=>'<tr onclick="AD.editLoc('+i+')"><td><div class="uname">'+l.n+'</div></td>'+
       '<td><span class="chip">'+l.brand+'</span></td><td>'+l.state+'</td><td>'+l.tz+'</td>'+
       '<td style="text-align:right"><button class="btn ghost mini-btn" onclick="event.stopPropagation();AD.editLoc('+i+')">Edit</button></td></tr>').join('');
@@ -638,6 +658,7 @@
       '<div class="toolrow"><div class="panel-lab" style="margin:0">'+LOCS.length+' locations</div><span style="flex:1"></span>'+
         '<button class="btn ghost" onclick="AD.resetLocs()">Reset to defaults</button><button class="btn" onclick="AD.newLoc()">+ Add location</button></div>'+
       '<div class="tbl-scroll"><table class="u"><thead><tr><th>Office</th><th>Brand</th><th>State</th><th>Time zone</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+    restore();
   }
   let locDraft=null;
   function newLoc(){ locDraft={i:-1,n:'',brand:(BRANDS_OF()[0]||'FFO'),state:'New Mexico',tz:'Mountain Time'}; renderLocModal(); }
@@ -685,6 +706,7 @@
     return '<span class="aud team">👥 '+team+'</span><span class="aud location">📍 '+loc+'</span>';
   }
   function renderFiles(){
+    const restore=holdScroll();
     const secHtml=DOCSECS.map(sec=>{
       const open=openSecs.has(sec.k); let body='';
       if(sec.structure==='byLocation'){
@@ -715,6 +737,7 @@
       '<div class="toolrow"><div class="panel-lab" style="margin:0">Document sections — '+DOCSECS.length+' right now</div><span style="flex:1"></span>'+
         '<button class="btn ghost" onclick="AD.resetSecs()">Reset to defaults</button><button class="btn" onclick="AD.newSec()">+ New section</button></div>'+
       '<div class="secacc">'+secHtml+'</div>';
+    restore();
   }
   function tog(k){ if(openSecs.has(k))openSecs.delete(k); else openSecs.add(k); renderFiles(); }
   /* Adding a file ALWAYS asks who it's for — nothing gets shared by accident. */
@@ -875,8 +898,16 @@
   const LVLDESC={none:"Can't see this section",view:'Can look, nothing else',add:'Can view + upload files',edit:'Can view, add & change',manage:'Full control'};
   function pickLevel(ev,t,k){
     ev.stopPropagation();
-    openPk(ev.currentTarget, levelsFor(k).map(l=>({value:l,label:(l==='none'?'None':shortFor(k,l)),desc:descFor(k,l),swatch:LVLSW[l],cur:(access[t][k]||'none')===l})),
-      v=>{ access[t][k]=v; saveAccess(); renderAccess(); });
+    /* Repaint just this one cell. Rebuilding the whole tab used to throw away
+       where the person was: the matrix is wider than the screen, so setting a
+       permission on a right-hand column snapped them back to the far left every
+       time. currentTarget is captured now because it is null by the time the
+       picker's callback runs. */
+    const btn=ev.currentTarget;
+    openPk(btn, levelsFor(k).map(l=>({value:l,label:(l==='none'?'None':shortFor(k,l)),desc:descFor(k,l),swatch:LVLSW[l],cur:(access[t][k]||'none')===l})),
+      v=>{ access[t][k]=v; saveAccess();
+           if(btn){ btn.className='lvl '+v; btn.textContent=shortFor(k,v); }
+           else renderAccess(); });
   }
   function pickAud(ev,k,idx){
     ev.stopPropagation(); const sec=DOCSECS.find(x=>x.k===k); if(!sec)return; const it=sec.items[idx];
@@ -897,7 +928,7 @@
 })();
 </script>
 <script>PH.nav('admin');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(PH.loadPhotos)PH.loadPhotos().then(function(got){if(got&&window.AD&&AD.tab)AD.tab('users');});});</script>
-<script src="tour.js?v=hc09"></script>
+<script src="tour.js?v=hc10"></script>
 <script>
 Tour.init([
   {sel:'#tabs', title:'This is your control room', body:'Four tabs and you can run the whole hub: <b>People</b>, <b>Teams &amp; Access</b>, <b>Document Sections</b> and <b>Locations</b>. No developer, no consultant.', pre:()=>AD.tab('users')},
