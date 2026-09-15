@@ -115,7 +115,18 @@
               .then(function(created){ idCache[key]=created.id; return created; });
           });
       })
-      .catch(function(e){ return {local:true, error:(e&&e.message)||String(e)}; });
+      .catch(function(e){
+        /* A shared save that fails used to be completely silent: it still went into
+           this browser's localStorage, so it LOOKED saved, and nobody else ever got
+           it. That is the worst way to find out someone's SharePoint permissions are
+           wrong. Say so instead - user.js listens and puts a banner up. */
+        var msg=(e&&e.message)||String(e);
+        try{
+          document.dispatchEvent(new CustomEvent('ph-save-failed',
+            {detail:{key:key, error:msg, denied:/403|forbidden|accessDenied|denied/i.test(msg)}}));
+        }catch(_){}
+        return {local:true, error:msg};
+      });
   }
 
   function parse(raw){

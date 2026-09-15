@@ -769,6 +769,32 @@
     document.body.insertBefore(b, document.body.firstChild);
   }
 
+  /* A shared save that could not reach SharePoint has to be visible. It is still in
+     this browser, so the page looks fine - but nobody else will ever see it, and the
+     usual cause is a permission that was never granted. Shown once, not per save. */
+  let saveWarned=false;
+  function warnSaveFailed(d){
+    if(saveWarned) return; saveWarned=true;
+    const denied=d&&d.denied;
+    const n=document.createElement('div');
+    n.id='ph-savefail';
+    n.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:9000;'+
+      'max-width:min(560px,92vw);background:#FCEBE8;color:#93301f;border:1px solid #f0c3b9;'+
+      'border-radius:12px;padding:12px 16px;font:600 13.5px/1.55 inherit;'+
+      'box-shadow:0 8px 24px rgba(15,42,74,.18);display:flex;gap:10px;align-items:flex-start';
+    n.innerHTML='<span>\u26A0\uFE0F</span><div><b>Your change was not saved for anyone else.</b><br>'+
+      (denied
+        ? 'You don\u2019t have permission to save to the practice\u2019s SharePoint site, so this '+
+          'stayed on your own device. Ask an admin for <b>Edit</b> access to the Home-Brace site.'
+        : 'The hub could not reach SharePoint, so this stayed on your own device. Check your '+
+          'connection and try again.')+
+      '</div><button style="margin-left:auto;background:none;border:none;color:inherit;'+
+      'font-size:17px;cursor:pointer;line-height:1" aria-label="Dismiss">\u00d7</button>';
+    n.querySelector('button').onclick=function(){ n.remove(); saveWarned=false; };
+    document.body.appendChild(n);
+  }
+  document.addEventListener('ph-save-failed',function(e){ warnSaveFailed(e&&e.detail); });
+
   function dechrome(){
     impersonationBar();
     if(!isLive()) return;
