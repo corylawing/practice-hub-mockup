@@ -250,12 +250,12 @@
   }
 
 </style>
-<script src="user.js?v=hc18"></script>
-<script src="celebrate.js?v=hc18"></script>
+<script src="user.js?v=hc19"></script>
+<script src="celebrate.js?v=hc19"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="workbook.js?v=hc18"></script>
-  <script src="store.js?v=hc18"></script>
-  <script src="gate.js?v=hc18"></script>
+  <script src="workbook.js?v=hc19"></script>
+  <script src="store.js?v=hc19"></script>
+  <script src="gate.js?v=hc19"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — real numbers from the 2026 Production Dashboard workbook. You only see the offices you have access to.</div>
@@ -1028,6 +1028,20 @@ const OFFICES=[
     n.innerHTML=html;
   }
 
+  /* "Graph 403: Access denied" reads as a broken app. It is not - it means the
+     workbook has not been shared with this person yet, which is a thing an admin
+     fixes in one click. Say that instead. */
+  function wbWhyNot(e){
+    const msg=(e&&e.message)||String(e);
+    if(/403|denied|forbidden|itemNotFound|404/i.test(msg))
+      return '<b>You don\u2019t have access to the production workbook yet.</b> '+
+             'Everything else in the hub works \u2014 just the numbers need the workbook '+
+             'shared with you. Ask an admin and they can do it in a moment.';
+    if(/423|locked/i.test(msg))
+      return '<b>The workbook is open in Excel by someone else right now.</b> '+
+             'Try again in a minute.';
+    return '<b>Could not read the workbook.</b> '+msg;
+  }
   async function hydrate(){
     if(typeof PH_WB==='undefined' || !window.PH_AUTH){
       banner('<b>Not signed in.</b> The dashboard shows live figures from the practice\'s workbook '+
@@ -1037,7 +1051,7 @@ const OFFICES=[
     banner('Reading the live workbook…');
     let res;
     try{ res = await PH_WB.load(PH_AUTH.graph, WB_DRIVE, WB_ITEM); }
-    catch(e){ banner('<b>Could not read the workbook.</b> '+(e&&e.message||e), true); return false; }
+    catch(e){ banner(wbWhyNot(e), true); return false; }
     let filled=0;
     OFFICES.forEach(o=>{
       const live=res.offices[o.n];
@@ -1102,7 +1116,7 @@ const OFFICES=[
 })();
 </script>
 <script>PH.nav('dashboard');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(window.DASH&&DASH.identity)DASH.identity();});</script>
-<script src="tour.js?v=hc18"></script>
+<script src="tour.js?v=hc19"></script>
 <script>
 Tour.init([
   {sel:'.viewas', title:'You only see your offices', body:'Everyone can see <b>All Offices</b> \u2014 the practice total as one number. What your location decides is which offices you can <b>open individually</b>. Switch to the Carlsbad manager: she keeps the group total and Carlsbad, but the other offices and the leaderboard disappear, because those name every office\u2019s figures.'},

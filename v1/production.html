@@ -120,11 +120,11 @@
   }
 
 </style>
-<script src="user.js?v=hc18"></script>
+<script src="user.js?v=hc19"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="workbook.js?v=hc18"></script>
-  <script src="store.js?v=hc18"></script>
-  <script src="gate.js?v=hc18"></script>
+  <script src="workbook.js?v=hc19"></script>
+  <script src="store.js?v=hc19"></script>
+  <script src="gate.js?v=hc19"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — type the month's numbers here. In the real build this writes straight into the SharePoint workbook.</div>
@@ -545,6 +545,20 @@
     n.innerHTML=html;
   }
 
+  /* "Graph 403: Access denied" reads as a broken app. It is not - it means the
+     workbook has not been shared with this person yet, which is a thing an admin
+     fixes in one click. Say that instead. */
+  function wbWhyNot(e){
+    const msg=(e&&e.message)||String(e);
+    if(/403|denied|forbidden|itemNotFound|404/i.test(msg))
+      return '<b>You don\u2019t have access to the production workbook yet.</b> '+
+             'Everything else in the hub works \u2014 just the numbers need the workbook '+
+             'shared with you. Ask an admin and they can do it in a moment.';
+    if(/423|locked/i.test(msg))
+      return '<b>The workbook is open in Excel by someone else right now.</b> '+
+             'Try again in a minute.';
+    return '<b>Could not read the workbook.</b> '+msg;
+  }
   async function hydrate(){
     if(typeof PH_WB==='undefined' || !window.PH_AUTH){
       wbBanner('<b>Not signed in.</b> Showing placeholder figures until you sign in.',true); return;
@@ -552,7 +566,7 @@
     wbBanner('Reading the live workbook…');
     let res;
     try{ res=await PH_WB.load(PH_AUTH.graph,WB_DRIVE,WB_ITEM); }
-    catch(e){ wbBanner('<b>Could not read the workbook.</b> '+(e&&e.message||e),true); return; }
+    catch(e){ wbBanner(wbWhyNot(e),true); return; }
     let n=0;
     Object.keys(BASE).forEach(name=>{
       const L=res.offices[name]; if(!L) return;
@@ -597,7 +611,7 @@
 })();
 </script>
 <script>PH.nav('production');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(window.PROD&&PROD.identity)PROD.identity();});</script>
-<script src="tour.js?v=hc18"></script>
+<script src="tour.js?v=hc19"></script>
 <script>
 Tour.init([
   {sel:'.syncbar', title:'One set of numbers', body:'Type here and it saves into the <b>same Excel workbook</b> on SharePoint. If someone types in Excel instead, it shows up here. There is never a second copy to reconcile.'},
