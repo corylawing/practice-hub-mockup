@@ -263,10 +263,10 @@
   }
 
 </style>
-<script src="user.js?v=hc21"></script>
+<script src="user.js?v=hc22"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc21"></script>
-  <script src="gate.js?v=hc21"></script>
+  <script src="store.js?v=hc22"></script>
+  <script src="gate.js?v=hc22"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — sample staff schedule for validation. Live version = one Microsoft List the practice maintains.</div>
@@ -415,7 +415,18 @@
   const fmt=m=>{const h=Math.floor(m/60),x=m%60,ap=h>=12?'p':'a',hh=((h+11)%12)+1;return hh+(x?':'+two(x):'')+ap;};
   const fmt24=m=>two(Math.floor(m/60))+':'+two(m%60);
   const hm=v=>{const p=v.split(':');return (+p[0])*60+(+p[1]);};
+  /* Two different jobs, and using the wrong one is a security bug.
+       esc()  - safe inside a JS STRING LITERAL (an onclick attribute). Escapes the
+                quote only, which is all that job needs.
+       escH() - safe as HTML text or an attribute value.
+     The Special event field is typed by a person and shared with the whole practice
+     through SharePoint, so it must go through escH. Passing it through esc() let
+     `" onfocus="..."` or an <img onerror> out of the field and into the page for
+     everyone who opened the schedule. */
   const esc=s=>String(s).replace(/'/g,"\\'");
+  const escH=s=>String(s==null?'':s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
   const shownLocs=()=>locations.filter(l=>fLoc.has(l.n));
 
   /* ---------- filters: office AND/OR doctor ---------- */
@@ -459,14 +470,21 @@
       const h=l.hours && l.hours[i];
       if(!h) continue;
       const last=groups[groups.length-1];
-      if(last && last.s===h.s && last.e===h.e) last.days.push(i);
+      /* Only extend the run when this day is ADJACENT to the last. Skipping a closed
+         day used to keep the run going, so Mon/Wed/Thu collapsed into one group and
+         printed "Mon-Thu" - telling everyone the office is open on a Tuesday it is
+         shut. Wrong hours are worse than no hours. */
+      if(last && last.s===h.s && last.e===h.e && last.days[last.days.length-1]===i-1)
+        last.days.push(i);
       else groups.push({s:h.s, e:h.e, days:[i]});
     }
     if(!groups.length) return '';
     const span=g=>g.days.length===1 ? DOW[g.days[0]]
+              : g.days.length===2 ? DOW[g.days[0]]+', '+DOW[g.days[1]]
               : DOW[g.days[0]]+'\u2013'+DOW[g.days[g.days.length-1]];
-    // One set of times across every open day needs no day names at all.
-    if(groups.length===1) return fmt(groups[0].s)+'\u2013'+fmt(groups[0].e);
+    // Day names can only be dropped when the office really is open all five days.
+    if(groups.length===1 && groups[0].days.length===5)
+      return fmt(groups[0].s)+'\u2013'+fmt(groups[0].e);
     return groups.map(g=>span(g)+' '+fmt(g.s)+'\u2013'+fmt(g.e)).join(' \u00b7 ');
   }
 
@@ -478,7 +496,7 @@
     const click=canEdit()?' onclick="PS.open(\''+esc(l.n)+'\',\''+iso(d)+'\')"':'';
     const blank='<td class="cell closedc'+t+'"'+click+'></td>';
     // The event label goes ON whatever the day already is, rather than replacing it.
-    const ev=(cell&&cell.event&&fEvent)?'<span class="evt" title="Special event">\u2605 '+esc(cell.event)+'</span>':'';
+    const ev=(cell&&cell.event&&fEvent)?'<span class="evt" title="Special event">\u2605 '+escH(cell.event)+'</span>':'';
     if(cell&&cell.closed) return (fClosed||ev)?'<td class="cell closedc'+t+'"'+click+'><span class="closed">Closed</span>'+ev+'</td>':blank;
     const ds=docsOf(cell);
     if(ds.length){
@@ -531,7 +549,7 @@
       shownLocs().forEach(l=>{
         const cell=cellOf(l,d), c=colOf(l.color), open=openOn(l,d);
         const click=canEdit()?' onclick="PS.open(\''+esc(l.n)+'\',\''+iso(d)+'\')"':'';
-        const mev=(cell&&cell.event&&fEvent)?'<span class="es evt">\u2605 '+esc(cell.event)+'</span>':'';
+        const mev=(cell&&cell.event&&fEvent)?'<span class="es evt">\u2605 '+escH(cell.event)+'</span>':'';
         const closedEnt=()=>'<button class="ent cl" style="border-left-color:'+c.dot+'"'+click+'>'+
           '<span class="eo">'+l.n+'</span><span class="es">Closed</span>'+mev+'</button>';
         // Marked closed outright.
@@ -551,7 +569,7 @@
           // An event on its own is a settled day, not one still waiting for a doctor.
           if(!fAll()) return;
           ents+='<button class="ent ev" style="background:'+c.bg+';color:'+c.fg+';border-left-color:'+c.dot+'"'+click+'>'+
-            '<span class="eo">'+l.n+'</span><span class="es">\u2605 '+esc(cell.event)+'</span></button>';
+            '<span class="eo">'+l.n+'</span><span class="es">\u2605 '+escH(cell.event)+'</span></button>';
         } else if(open){
           if(!fAll()) return;
           ents+='<button class="ent nd"'+click+'>'+l.n+'<small>not decided yet</small></button>';
@@ -755,7 +773,7 @@
         '<p class="hint">Tap <b>Yellow Dot Day</b> again to switch it off — the office then shows as <b>Closed</b>. Yellow Dot = open with no doctor; Closed = not open at all.</p>'+
         '<div class="s-lab">Special event <span class="s-note">optional \u2014 shows on the day</span></div>'+
         '<div class="evrow">'+
-          '<input class="s-input" id="evtext" maxlength="60" value="'+esc(t.event||'')+'" '+
+          '<input class="s-input" id="evtext" maxlength="60" value="'+escH(t.event||'')+'" '+
             'placeholder="e.g. Staff training, Team lunch" oninput="PS.setEvent(this.value)">'+
           (t.event?'<button class="sbtn ghost" onclick="PS.setEvent(\'\',true)">Remove</button>':'')+
         '</div>'+
@@ -975,7 +993,7 @@
 })();
 </script>
 <script>PH.nav('schedule');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc21"></script>
+<script src="tour.js?v=hc22"></script>
 <script>
 Tour.init([
   {sel:'#viewseg', title:'Week or month', body:'<b>Week</b> is the day-to-day working view. <b>Month</b> shows the whole month at a glance, with every office in its own color.'},

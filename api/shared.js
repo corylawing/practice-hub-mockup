@@ -93,10 +93,16 @@ function loadRoster(){
   return roster;
 }
 
-// Mirrors DEPT_CAN in user.js: who may write production numbers.
-const MAY_WRITE = ['admin', 'executive team', 'leadership team',
-                   'office managers', 'tcs', 'financial coordinator team'];
-// These teams are not tied to one office.
+/* These MUST match DEPT_CAN in v1/user.js. They are written out rather than imported
+   because user.js touches the DOM at load and cannot be required from Node — but the
+   copy is CHECKED, not trusted: api/test.js parses DEPT_CAN out of user.js and fails
+   if these lists disagree. The first hand-written version had already drifted on the
+   day it was written (it granted 'tcs', whom DEPT_CAN gives production:'none'), and
+   since the server holds the credentials it was the looser of the two boundaries. */
+const MAY_WRITE  = ['admin', 'executive team', 'leadership team',
+                    'office managers', 'financial coordinator team'];   // production >= edit
+const MAY_MANAGE = ['admin'];                                           // production == manage
+// Teams that are not tied to one office (ALL_OFFICE_DEPTS in user.js).
 const ALL_OFFICES = ['admin', 'executive team', 'leadership team'];
 
 function permissionsFor(mail, overrides){
@@ -151,4 +157,4 @@ function reply(context, status, obj){
 }
 
 module.exports = { cfg, appToken, whoIsCalling, permissionsFor, graph, sheetBase, reply,
-                   realAddress, loadRoster, MAY_WRITE, ALL_OFFICES };
+                   realAddress, loadRoster, MAY_WRITE, MAY_MANAGE, ALL_OFFICES };

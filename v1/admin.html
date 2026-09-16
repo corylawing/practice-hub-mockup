@@ -202,11 +202,11 @@
   }
 
 </style>
-<script src="user.js?v=hc21"></script>
+<script src="user.js?v=hc22"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="_staff.js?v=hc21"></script>
-  <script src="store.js?v=hc21"></script>
-  <script src="gate.js?v=hc21"></script>
+  <script src="_staff.js?v=hc22"></script>
+  <script src="store.js?v=hc22"></script>
+  <script src="gate.js?v=hc22"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — admin console concept for validation. Real build: people sync from Microsoft 365; access is managed here.</div>
@@ -402,7 +402,18 @@
   }
   let PEOPLE_OVR=loadPeopleOverrides();
   function savePeopleOverrides(){
-    try{ localStorage.setItem(PEOPLE_KEY, JSON.stringify(PEOPLE_OVR)); }catch(_){}
+    /* This used to swallow the error. When browser storage filled up, the screen
+       still showed the change, the activity log still recorded it, and the next
+       reload silently reverted every person's teams, offices and access. Say so
+       instead - losing the change is survivable, not knowing is not. */
+    try{ localStorage.setItem(PEOPLE_KEY, JSON.stringify(PEOPLE_OVR)); }
+    catch(e){
+      alert('That did not save.\n\nThis browser has run out of room for the hub\u2019s '+
+            'settings, usually because of profile photos. Remove a photo or two and try '+
+            'again \u2014 nothing else you changed just now was saved either.');
+      try{ if(window.PH && PH.reloadPeople) PH.reloadPeople(); }catch(_){}
+      return;
+    }
     if(window.PH_STORE && PH.isLive()) window.PH_STORE.set(PEOPLE_KEY, PEOPLE_OVR);
     if(window.PH && PH.reloadPeople) PH.reloadPeople();
   }
@@ -652,7 +663,16 @@
   function pickPhoto(){ const i=el('fPhotoInput'); if(i) i.click(); }
   function photoChosen(input){
     const f=input.files&&input.files[0]; if(!f) return;
-    if(f.size>1400000){ alert('That photo is too large. Please use one under about 1.4 MB.'); input.value=''; return; }
+    /* Hard limit, and it is deliberately small. Photos are kept in the SAME record
+       as everyone's teams, offices and access, and browser storage for the whole
+       site is only about 5 MB. Three 1.4 MB photos used to overflow it - and the
+       failure was silent, so the next reload lost every setting an admin had made,
+       not just the photos. A headshot fits in 250 KB easily. */
+    if(f.size>250000){
+      alert('That photo is too large \u2014 please use one under 250 KB.\n\n'+
+            'Most phone photos are far bigger than that; resizing it first is the quickest fix.');
+      input.value=''; return;
+    }
     const r=new FileReader();
     r.onload=function(){ tmpU.photo=r.result;
       const face=el('fPhotoFace');
@@ -1091,7 +1111,7 @@
 })();
 </script>
 <script>PH.nav('admin');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(PH.loadPhotos)PH.loadPhotos().then(function(got){if(got&&window.AD&&AD.tab)AD.tab('users');});});</script>
-<script src="tour.js?v=hc21"></script>
+<script src="tour.js?v=hc22"></script>
 <script>
 Tour.init([
   {sel:'#tabs', title:'This is your control room', body:'Four tabs and you can run the whole hub: <b>People</b>, <b>Teams &amp; Access</b>, <b>Document Sections</b> and <b>Locations</b>. No developer, no consultant.', pre:()=>AD.tab('users')},

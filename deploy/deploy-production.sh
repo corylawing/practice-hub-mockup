@@ -22,6 +22,26 @@ cp "$REPO/deploy/index.html" "$STAGE/index.html"
 cp -R "$REPO/assets" "$STAGE/assets"
 rsync -a --exclude 'snapshot.json' --exclude '_testgrids.json' "$REPO/v1/" "$STAGE/v1/"
 
+# The roster is a STATIC file on a site whose pages are public (the sign-in gate is
+# drawn by JavaScript; it does not protect files). So anyone with the hub's URL can
+# fetch it. The app only needs email -> teams/offices before sign-in, so strip the
+# fields it does not need that far: employee IDs and personal notes. Names, work
+# emails and offices remain, because identity matching needs them.
+if [ -f "$STAGE/v1/_people.json" ]; then
+  python3 - "$STAGE/v1/_people.json" <<'STRIP'
+import json,sys
+p=sys.argv[1]; d=json.load(open(p))
+for row in d.get('people',[]):
+    row.pop('empId',None)
+    row.pop('about',None)
+    row.pop('phone',None)
+d['_note']=('Published copy: employee IDs and personal notes are removed at deploy '
+            'time because this file is served without a sign-in. See deploy-production.sh.')
+json.dump(d,open(p,'w'),indent=1,ensure_ascii=False)
+print('  roster: stripped employee IDs from the published copy')
+STRIP
+fi
+
 # ---- the API (server side) -------------------------------------------------
 # Only deployed once it is configured. Without the app credentials it cannot do
 # anything, and the pages fall back to talking to Graph directly, so shipping it

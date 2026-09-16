@@ -218,12 +218,19 @@
      reports success and the read-back still shows the old value. That is exactly the
      "wrote 1 to J21 but it reads back as 8" Heather saw. A persistent session makes every
      call in a save see the same document, so writes actually stick.  */
-  var SESSION = null;
+  /* One session per SAVE, not one per page. In a browser a module-level session was
+     fine - one person, one tab. On the server this same file is loaded once and
+     serves everybody, so a shared session meant two office managers saving at the
+     same time used one id, and whichever finished first closed it under the other,
+     who then got "wrote 250000 to J21, reads back as 8" on writes that had actually
+     landed. The session now travels with the request. */
+  var SESSION = null;            // browser only: one person, one workbook
 
-  function call(token, method, path, body){
+  function call(token, method, path, body, sessionId){
     return token().then(function(t){
       var h = { Authorization:'Bearer '+t, 'Content-Type':'application/json' };
-      if (SESSION) h['workbook-session-id'] = SESSION;
+      var sid = sessionId || SESSION;
+      if (sid) h['workbook-session-id'] = sid;
       return fetch('https://graph.microsoft.com/v1.0' + path, {
         method: method, headers: h, body: body ? JSON.stringify(body) : undefined
       }).then(function(res){
@@ -236,25 +243,33 @@
     });
   }
 
-  function openSession(token, driveId, itemId){
-    if (SESSION) return Promise.resolve(SESSION);
+  /* `own` opens a session that belongs to the CALLER, returned rather than stored,
+     for the server where several saves run at once. Without it the browser keeps its
+     single shared session, which is correct there. */
+  function openSession(token, driveId, itemId, own){
+    if (!own && SESSION) return Promise.resolve(SESSION);
     return call(token, 'POST', '/drives/'+driveId+'/items/'+itemId+'/workbook/createSession',
                 { persistChanges: true })
-      .then(function(r){ SESSION = r && r.id; return SESSION; })
-      .catch(function(){ SESSION = null; return null; });   // proceed without; worse, not fatal
+      .then(function(r){
+        var id = r && r.id;
+        if (!own) SESSION = id;
+        return id;
+      })
+      .catch(function(){ if(!own) SESSION = null; return null; });  // proceed without; worse, not fatal
   }
-  function closeSession(token, driveId, itemId){
-    if (!SESSION) return Promise.resolve();
-    // Keep SESSION set for this last call - closeSession needs its own header - then clear it.
-    return call(token, 'POST', '/drives/'+driveId+'/items/'+itemId+'/workbook/closeSession', {})
+  function closeSession(token, driveId, itemId, sessionId){
+    var id = sessionId || SESSION;
+    if (!id) return Promise.resolve();
+    return call(token, 'POST', '/drives/'+driveId+'/items/'+itemId+'/workbook/closeSession', {},
+                id)
       .catch(function(){})
-      .then(function(){ SESSION = null; });
+      .then(function(){ if(!sessionId) SESSION = null; });
   }
 
   /* Where does one field/month actually live on the sheet? Both the writer and the
      round-trip test go through this, so a test can never verify a different mapping
      from the one the app ships -- which is how the wrong-row bug survived so long. */
-  function resolve(token, driveId, itemId, officeName, field, monthIndex){
+  function resolve(token, driveId, itemId, officeName, field, monthIndex, sid){
     var tab=TABS[officeName];
     if(!tab) return Promise.reject(new Error('Unknown office: '+officeName));
     var pats=WRITE_ROWS[field];
@@ -262,23 +277,24 @@
     if(!(monthIndex>=0 && monthIndex<12)) return Promise.reject(new Error('Bad month.'));
 
     var base='/drives/'+driveId+'/items/'+itemId+"/workbook/worksheets('"+encodeURIComponent(tab)+"')";
-    return openSession(token, driveId, itemId).then(function(){
-      return call(token, 'GET', base+'/usedRange(valuesOnly=true)?$select=values,address');
+    return Promise.resolve(sid || openSession(token, driveId, itemId)).then(function(s){
+      sid = sid || s;
+      return call(token, 'GET', base+'/usedRange(valuesOnly=true)?$select=values,address', null, sid);
     }).then(function(rng){
       var rows=rng.values||[], origin=parseOrigin(rng.address), idx=-1;
       for(var i=0;i<pats.length && idx<0;i++) idx=row(rows, pats[i].all, pats[i].not);
       if(idx<0) throw new Error('Could not find the row for "'+field+'" on '+tab+'.');
 
-      return { base:base, sheet:tab,
+      return { base:base, sheet:tab, sid:sid,
                address: colLetters(origin.col + 1 + monthIndex) + (origin.row + idx),
                label: rows[idx][0] };
     });
   }
 
   /* Read one field/month from exactly where the writer would put it. */
-  function readCell(token, driveId, itemId, officeName, field, monthIndex){
-    return resolve(token, driveId, itemId, officeName, field, monthIndex).then(function(at){
-      return call(token, 'GET', at.base+"/range(address='"+at.address+"')?$select=values")
+  function readCell(token, driveId, itemId, officeName, field, monthIndex, sid){
+    return resolve(token, driveId, itemId, officeName, field, monthIndex, sid).then(function(at){
+      return call(token, 'GET', at.base+"/range(address='"+at.address+"')?$select=values", null, at.sid)
         .then(function(r){
           var v=(r.values&&r.values[0]&&r.values[0][0]);
           return { address:at.address, sheet:at.sheet, label:at.label,
@@ -288,8 +304,8 @@
   }
 
   /* Write one month of one field, then verify it. `token` returns a bearer token. */
-  function writeCell(token, driveId, itemId, officeName, field, monthIndex, value){
-    return resolve(token, driveId, itemId, officeName, field, monthIndex).then(function(at){
+  function writeCell(token, driveId, itemId, officeName, field, monthIndex, value, sid){
+    return resolve(token, driveId, itemId, officeName, field, monthIndex, sid).then(function(at){
       var base=at.base, address=at.address, tab=at.sheet;
       var num = (value===''||value===null||value===undefined) ? null : Number(value);
       if(num!==null && !isFinite(num)) throw new Error('That is not a number.');
@@ -300,11 +316,11 @@
          formatting. Found on the live workbook - the round-trip test could not put a
          blank December back. */
       var send = (num===null)
-        ? call(token, 'POST', base+"/range(address='"+address+"')/clear", { applyTo:'Contents' })
-        : call(token, 'PATCH', base+"/range(address='"+address+"')", { values: [[num]] });
+        ? call(token, 'POST', base+"/range(address='"+address+"')/clear", { applyTo:'Contents' }, at.sid)
+        : call(token, 'PATCH', base+"/range(address='"+address+"')", { values: [[num]] }, at.sid);
 
       return send
-        .then(function(){ return call(token, 'GET', base+"/range(address='"+address+"')?$select=values"); })
+        .then(function(){ return call(token, 'GET', base+"/range(address='"+address+"')?$select=values", null, at.sid); })
         .then(function(check){
           var got=(check.values&&check.values[0]&&check.values[0][0]);
           // A cleared cell reads back as '' or null. Accepting 0 here would hide a failure.
@@ -428,6 +444,7 @@
 
   global.PH_WB = { load:load, office:office, TABS:TABS, MEDICAID:MEDICAID,
                    writeCell:writeCell, readCell:readCell, resolve:resolve, roundTrip:roundTrip,
+                   openSession:openSession,
                    closeSession:closeSession, WRITE_ROWS:WRITE_ROWS, colLetters:colLetters };
 })(typeof globalThis!=='undefined' ? globalThis : window);
 
