@@ -263,10 +263,10 @@
   }
 
 </style>
-<script src="user.js?v=hc27"></script>
+<script src="user.js?v=hc28"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc27"></script>
-  <script src="gate.js?v=hc27"></script>
+  <script src="store.js?v=hc28"></script>
+  <script src="gate.js?v=hc28"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — sample staff schedule for validation. Live version = one Microsoft List the practice maintains.</div>
@@ -366,13 +366,16 @@
     // Feeds Home's notifications. Debounced inside logActivity.
     if(window.PH && PH.logActivity && PH.isLive())
       PH.logActivity({sec:'schedule', ic:'\u{1F4C5}', title:'Schedule updated', scope:'everyone'});
-    try{ localStorage.setItem('ph_sched2',JSON.stringify(sched)); }catch(_){}
+    /* Goes through the store, never straight to localStorage: the store is what keeps
+       the previous copy, weighs the new one, and refuses a write that would empty the
+       year out. A direct localStorage.setItem here would step around all of it. */
     if(window.PH_STORE) PH_STORE.set('ph_sched2', sched);
+    else try{ localStorage.setItem('ph_sched2',JSON.stringify(sched)); }catch(_){}
     /* The doctor list rides along on every save. Removing a doctor re-numbers the
        days, so the list and the days MUST persist together or the days point at
        the wrong doctor. Kept out of `sched` because three loops walk its keys. */
-    try{ localStorage.setItem('ph_docs',JSON.stringify(people)); }catch(_){}
     if(window.PH_STORE) PH_STORE.set('ph_docs', people);
+    else try{ localStorage.setItem('ph_docs',JSON.stringify(people)); }catch(_){}
   }
 
   // null on a day the office is OPEN = nobody rostered = a Yellow Dot Day.
@@ -1019,21 +1022,22 @@
   let local=null; try{ local=JSON.parse(localStorage.getItem('ph_sched2')); }catch(_){}
   let ldocs=null; try{ ldocs=JSON.parse(localStorage.getItem('ph_docs')); }catch(_){}
   if(window.PH_STORE && PH.isLive()){
-    // Track the failure explicitly - "it broke" and "there is nothing there" are very
-    // different answers, and treating the first as the second is what lost a schedule.
-    let failed=false;
-    Promise.all([ PH_STORE.get('ph_sched2').catch(function(){ failed=true; return null; }),
-                  PH_STORE.get('ph_docs').catch(function(){ return null; }) ])
+    /* "It broke" and "there is nothing there" are very different answers, and treating
+       the first as the second is what lost a schedule. This used to hang a .catch on
+       the read - which never fired, because PH_STORE.get() swallows its own errors by
+       design so a storage hiccup can't take the page down. The store now records the
+       failure and we ask it. */
+    Promise.all([ PH_STORE.get('ph_sched2'), PH_STORE.get('ph_docs') ])
            .then(function(r){
              const got = r[0] || local;
-             boot(got, r[1] || ldocs, failed && !got);
+             boot(got, r[1] || ldocs, PH_STORE.readFailed('ph_sched2') && !got);
            })
            .catch(function(){ boot(local, ldocs, !local); });
   } else boot(local, ldocs, false);
 })();
 </script>
 <script>PH.nav('schedule');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc27"></script>
+<script src="tour.js?v=hc28"></script>
 <script>
 Tour.init([
   {sel:'#viewseg', title:'Week or month', body:'<b>Week</b> is the day-to-day working view. <b>Month</b> shows the whole month at a glance, with every office in its own color.'},

@@ -311,6 +311,28 @@ person's own token, so anyone who can load the dashboard can reach all eight tab
 and could open the file in Excel anyway. Real containment would need per-office files or a server.
 
 ### Hard-won rules — violating these has caused real bugs
+- **A failed read is NOT an empty one, and code that can't tell the difference will eventually
+  destroy somebody's work.** On 2026-09-15 `schedule.html` asked for the shared copy, the request
+  failed, `PH_STORE.get()` swallowed the error and returned `null` (by design, so storage can't
+  take a page down), the page read `null` as "nothing saved yet", built a blank year and saved it
+  over a year of Heather's work — 974 writes in one minute. **I wrote that change.** The blank year
+  was not small: every day present, every cell an empty `{}`, so nothing checking payload size
+  would have caught it. Hence:
+  - `PH_STORE.get()` records the failure; ask `PH_STORE.readFailed(key)`. Never infer it from a
+    null, and never hang a `.catch` on `get()` — it does not reject.
+  - `PH_STORE.set()` refuses to write a key this session could not read, and refuses a write that
+    empties a key which held real content. `weigh()` counts non-empty leaves, **not bytes**.
+  - `{force:true}` lifts both. Only `restore.html` uses it.
+  - The store keeps the copy it replaced at `<key>__prev`; `PH_STORE.backup(key)` reads it.
+  - **`node test/guard.test.js` replays the whole incident.** Run it before touching `store.js` or
+    any save path. It must pass.
+- **Never write a shared key straight to `localStorage`.** Go through `PH_STORE.set()`. A local
+  write first makes the store see no change, so it keeps no backup and weighs the wrong thing —
+  and it steps around both guards above.
+- **Every shared key must be READ from the store, not just written to it.** `ph_locations` was
+  written to SharePoint and only ever read from `localStorage`, so a second device showed the
+  defaults and the next save pushed those defaults over the practice's real office setup. Fixed
+  2026-09-16 with `PH.reloadLocations()`. If you add a key, add both halves.
 - **Never scale a goal.** Show the workbook's goal. See §"GOALS ARE NEVER SCALED".
 - **Match workbook rows by LABEL, never by row number** — the tabs have two different layouts.
 - **Bump the `?v=` cache stamp** on every shared-file edit or browsers serve a stale app.

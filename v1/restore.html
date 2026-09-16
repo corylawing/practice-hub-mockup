@@ -48,7 +48,11 @@
     <p class="hint">The text from SharePoint&rsquo;s version history &mdash; it starts with
       <code>{"2026-01-01":</code>. Paste the whole thing.</p>
     <textarea id="src" placeholder='{"2026-01-01":{ ... }}' spellcheck="false"></textarea>
-    <div style="margin-top:12px"><button id="check">Check it</button></div>
+    <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
+      <button id="check">Check it</button>
+      <button id="mine" class="ghost" hidden>Use this browser&rsquo;s backup</button>
+    </div>
+    <p class="hint" id="minehint" style="margin:10px 0 0" hidden></p>
     <div class="res" id="r1"></div>
   </div>
 
@@ -61,16 +65,32 @@
   </div>
 </div>
 
-<script src="user.js?v=hc27"></script>
+<script src="user.js?v=hc28"></script>
 <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-<script src="store.js?v=hc27"></script>
-<script src="gate.js?v=hc27"></script>
+<script src="store.js?v=hc28"></script>
+<script src="gate.js?v=hc28"></script>
 <script>
 (function(){
   'use strict';
   var el=function(id){return document.getElementById(id);};
   var parsed=null;
   function show(id,cls,html){ var n=el(id); n.className='res on '+cls; n.innerHTML=html; }
+
+  /* The store keeps the copy it last replaced, in this browser. If the person sitting
+     here is the one whose work went missing, it is very likely still on this machine
+     and nobody has to go hunting through SharePoint's version history at all. */
+  document.addEventListener('DOMContentLoaded', function(){
+    var b=null; try{ b = window.PH_STORE && PH_STORE.backup('ph_sched2'); }catch(_){}
+    var days = b ? Object.keys(b).filter(function(k){ return /^\d{4}-\d{2}-\d{2}$/.test(k); }).length : 0;
+    if(!days) return;
+    el('mine').hidden=false; el('minehint').hidden=false;
+    el('minehint').textContent='This browser still has the copy it replaced last \u2014 '+
+      days+' days. That is often the quickest way back.';
+    el('mine').onclick=function(){
+      el('src').value=JSON.stringify(b);
+      el('check').click();
+    };
+  });
 
   /* Look at it properly before anything is written. A blank or half-parsed payload is
      exactly what caused the loss in the first place; restoring one would repeat it. */
@@ -126,9 +146,10 @@
     if(!window.PH_STORE || !window.PH_AUTH)
       return show('r2','bad','<b>Not signed in.</b> Reload the page and sign in first.');
     parsed.__v = 2;                                  // the schedule's current format marker
-    // Local first, then the shared copy - the same order the schedule itself uses.
-    try{ localStorage.setItem('ph_sched2', JSON.stringify(parsed)); }catch(_){}
-    PH_STORE.set('ph_sched2', parsed).then(function(r){
+    /* force: this page IS the deliberate overwrite. The store's guard exists to stop
+       an accident, and a restore is the one place where replacing what is there is
+       exactly the intention. Everywhere else it stays on. */
+    PH_STORE.set('ph_sched2', parsed, {force:true}).then(function(r){
       if(r && r.local){
         show('r2','bad','<b>It saved on this device only.</b> '+
           'SharePoint refused it'+(r.error?(' — '+String(r.error).replace(/[<>&]/g,'')):'')+

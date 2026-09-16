@@ -329,8 +329,11 @@
   function saveMine(patch){
     const k=profileKey(); let cur={}; try{ cur=JSON.parse(localStorage.getItem(k))||{}; }catch(_){}
     const merged=Object.assign(cur,patch);
-    try{ localStorage.setItem(k,JSON.stringify(merged)); }catch(_){}
-    if(window.PH_STORE && isLive()) window.PH_STORE.set(k, merged);
+    /* Through the store, not straight to localStorage: writing it locally first would
+       make the store see the old and new copies as identical, so it would keep no
+       backup and weigh the wrong thing. */
+    if(window.PH_STORE) window.PH_STORE.set(k, merged);
+    else try{ localStorage.setItem(k,JSON.stringify(merged)); }catch(_){}
   }
   const name=p=>((p.dr?'Dr. ':'')+(p.preferred||p.first)+' '+p.last);
   const initialsOf=p=>((p.preferred||p.first)[0]+p.last[0]).toUpperCase();
@@ -493,9 +496,30 @@
       '<div class="uploadnote">An upload is saved <b>onto the practice\u2019s Microsoft drive first</b>, then linked here \u2014 so it behaves exactly like the files above. The hub never keeps its own copy.</div>';
   }
 
+  /* The office list was written to SharePoint and only ever read back from this
+     browser. So a second device saw the defaults, and the moment anything was saved
+     there, the defaults went over the practice's real setup. Same shape of loss as the
+     schedule, different key. locations() is called synchronously all over the app and
+     can't wait for a network round trip, so this pulls the shared copy into this
+     browser and tells the page it changed. */
+  let locsPulled=false;
+  function reloadLocations(){
+    if(locsPulled || !window.PH_STORE || !isLive()) return Promise.resolve(false);
+    locsPulled=true;
+    return window.PH_STORE.get('ph_locations').then(function(r){
+      if(!Array.isArray(r) || !r.length) return false;
+      const before=localStorage.getItem('ph_locations');
+      const after=JSON.stringify(r);
+      if(before===after) return false;
+      try{ localStorage.setItem('ph_locations', after); }catch(_){ return false; }
+      try{ document.dispatchEvent(new CustomEvent('ph-locations-changed')); }catch(_){}
+      return true;
+    }).catch(function(){ return false; });
+  }
+
   function saveLocations(list){
     if(isLive()) list.forEach(l=>{ l.__v=2; });   // mark as the practice's own, not demo
-    try{ localStorage.setItem('ph_locations',JSON.stringify(list)); }catch(_){}
+    /* Through the store - see saveMine above. */
     // Offices are shared practice-wide, so they belong in SharePoint, not one browser.
     if(window.PH_STORE) window.PH_STORE.set('ph_locations', list);
   }
@@ -632,6 +656,7 @@
   function faceStyle(p){ return p.photo ? 'background-image:url('+p.photo+');background-size:cover;background-position:center' : 'background:'+p.color; }
   function face(p){ return p.photo ? '' : initials(p); }
   function mount(){
+    reloadLocations();            // offices are shared; pull the practice's copy once
     const bar=document.querySelector('.hdr-in'); if(!bar)return;
     // Re-mount once the real profile lands: pages call nav()/mount() before sign-in
     // finishes, so the first paint would otherwise show a demo persona forever.
@@ -795,6 +820,27 @@
   }
   document.addEventListener('ph-save-failed',function(e){ warnSaveFailed(e&&e.detail); });
 
+  /* The store refused a save because it would have wiped out real work. This has to be
+     loud and it has to say what to do, because the alternative is someone deciding the
+     hub is broken and typing it all in again. */
+  function warnSaveBlocked(d){
+    if(document.getElementById('ph-saveblock')) return;
+    const n=document.createElement('div');
+    n.id='ph-saveblock';
+    n.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:9001;'+
+      'max-width:min(580px,92vw);background:#FFF6E5;color:#7a4b00;border:1px solid #f0d9a8;'+
+      'border-radius:12px;padding:13px 16px;font:600 13.5px/1.55 inherit;'+
+      'box-shadow:0 8px 24px rgba(15,42,74,.18);display:flex;gap:10px;align-items:flex-start';
+    n.innerHTML='<span>\u{1F6E1}\uFE0F</span><div><b>The hub stopped this from saving, on purpose.</b><br>'+
+      ((d&&d.why)||'')+' Nothing already saved has been touched. '+
+      '<b>Reload the page</b> to get the saved copy back, then make your change again.'+
+      '</div><button style="margin-left:auto;background:none;border:none;color:inherit;'+
+      'font-size:17px;cursor:pointer;line-height:1" aria-label="Dismiss">\u00d7</button>';
+    n.querySelector('button').onclick=function(){ n.remove(); };
+    document.body.appendChild(n);
+  }
+  document.addEventListener('ph-save-blocked',function(e){ warnSaveBlocked(e&&e.detail); });
+
   function dechrome(){
     impersonationBar();
     if(!isLive()) return;
@@ -851,8 +897,8 @@
        (Date.now()-new Date(recent.at)) < 5*60*1000){ list[0]=entry; }
     else list.unshift(entry);
     list=fresh(list).slice(0,ACT_MAX);
-    try{ localStorage.setItem(ACT_KEY,JSON.stringify(list)); }catch(_){}
     if(window.PH_STORE) window.PH_STORE.set(ACT_KEY, list);
+    else try{ localStorage.setItem(ACT_KEY,JSON.stringify(list)); }catch(_){}
     return list;
   }
   function loadActivity(){
@@ -1020,6 +1066,6 @@
   }
   const isLive=()=>env()==='live';
 
-  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, photoFor, loadPhotos, rosterReady, WORKBOOK};
+  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, photoFor, loadPhotos, rosterReady, WORKBOOK};
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mount); else mount();
 })();

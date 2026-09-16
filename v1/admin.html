@@ -202,11 +202,11 @@
   }
 
 </style>
-<script src="user.js?v=hc27"></script>
+<script src="user.js?v=hc28"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="_staff.js?v=hc27"></script>
-  <script src="store.js?v=hc27"></script>
-  <script src="gate.js?v=hc27"></script>
+  <script src="_staff.js?v=hc28"></script>
+  <script src="store.js?v=hc28"></script>
+  <script src="gate.js?v=hc28"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — admin console concept for validation. Real build: people sync from Microsoft 365; access is managed here.</div>
@@ -341,8 +341,10 @@
      team the matrix doesn't cover. */
   const ACCESS_KEY='ph_access';
   function saveAccess(){
-    try{ localStorage.setItem(ACCESS_KEY, JSON.stringify(access)); }catch(_){}
-    if(window.PH_STORE && PH.isLive()) window.PH_STORE.set(ACCESS_KEY, access);
+    /* Through the store, which writes this browser's copy too. Writing it here first
+       would make the store see no change and keep no backup of what it replaced. */
+    if(window.PH_STORE) window.PH_STORE.set(ACCESS_KEY, access);
+    else try{ localStorage.setItem(ACCESS_KEY, JSON.stringify(access)); }catch(_){}
     if(window.PH && PH.reloadAccess) PH.reloadAccess();
   }
   let access={};
@@ -406,15 +408,17 @@
        still showed the change, the activity log still recorded it, and the next
        reload silently reverted every person's teams, offices and access. Say so
        instead - losing the change is survivable, not knowing is not. */
-    try{ localStorage.setItem(PEOPLE_KEY, JSON.stringify(PEOPLE_OVR)); }
-    catch(e){
-      alert('That did not save.\n\nThis browser has run out of room for the hub\u2019s '+
-            'settings, usually because of profile photos. Remove a photo or two and try '+
-            'again \u2014 nothing else you changed just now was saved either.');
-      try{ if(window.PH && PH.reloadPeople) PH.reloadPeople(); }catch(_){}
-      return;
-    }
-    if(window.PH_STORE && PH.isLive()) window.PH_STORE.set(PEOPLE_KEY, PEOPLE_OVR);
+    var done = window.PH_STORE
+      ? window.PH_STORE.set(PEOPLE_KEY, PEOPLE_OVR)
+      : Promise.resolve({});
+    done.then(function(r){
+      if(r && r.quota){
+        alert('That did not save.\n\nThis browser has run out of room for the hub\u2019s '+
+              'settings, usually because of profile photos. Remove a photo or two and try '+
+              'again \u2014 nothing else you changed just now was saved either.');
+        try{ if(window.PH && PH.reloadPeople) PH.reloadPeople(); }catch(_){}
+      }
+    });
     if(window.PH && PH.reloadPeople) PH.reloadPeople();
   }
 
@@ -1111,7 +1115,7 @@
 })();
 </script>
 <script>PH.nav('admin');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(PH.loadPhotos)PH.loadPhotos().then(function(got){if(got&&window.AD&&AD.tab)AD.tab('users');});});</script>
-<script src="tour.js?v=hc27"></script>
+<script src="tour.js?v=hc28"></script>
 <script>
 Tour.init([
   {sel:'#tabs', title:'This is your control room', body:'Four tabs and you can run the whole hub: <b>People</b>, <b>Teams &amp; Access</b>, <b>Document Sections</b> and <b>Locations</b>. No developer, no consultant.', pre:()=>AD.tab('users')},
