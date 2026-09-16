@@ -155,7 +155,25 @@
      cleared on purpose all the time. Nothing to protect. */
   var GUARD_FLOOR = 12;
 
+  /* Keys that are SUPPOSED to shrink, and that nobody typed. The notification feed
+     drops anything older than three days, so a quiet weekend empties it; a person's
+     read-list is pruned to whatever is still in that feed; the photo cache is rebuilt
+     from everyone's profile rows. Guarding these would only ever fire by mistake, and
+     the banner would cry wolf over background bookkeeping.
+
+     They are exempt from the shrink rule ONLY. The failed-read rule still applies:
+     writing a feed over a copy we could not read would still drop other people's
+     entries. When one of these is refused it stays quiet, because the next event
+     writes it again anyway. */
+  var HOUSEKEEPING = ['ph_activity', 'ph_seen_', 'ph_photos'];
+  function housekeeping(key){
+    for(var i=0;i<HOUSEKEEPING.length;i++)
+      if(key === HOUSEKEEPING[i] || key.indexOf(HOUSEKEEPING[i]) === 0) return true;
+    return false;
+  }
+
   function wouldWipe(key, value){
+    if(housekeeping(key)) return false;
     var had = knownWeight(key);
     if(had < GUARD_FLOOR) return false;
     return weigh(value) < had * 0.25;
@@ -165,9 +183,11 @@
      still here rather than gone, which is the whole point. */
   function refuse(key, value, why){
     try{ setLocal(key + '__refused', JSON.stringify(value)); }catch(_){}
-    try{
-      document.dispatchEvent(new CustomEvent('ph-save-blocked', {detail:{key:key, why:why}}));
-    }catch(_){}
+    if(!housekeeping(key)){
+      try{
+        document.dispatchEvent(new CustomEvent('ph-save-blocked', {detail:{key:key, why:why}}));
+      }catch(_){}
+    }
     return Promise.resolve({blocked:true, why:why});
   }
 

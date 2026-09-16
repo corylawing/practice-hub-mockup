@@ -569,6 +569,37 @@
   .ph-noaccess .btn{display:inline-block;background:#149B96;color:#fff;text-decoration:none;
     border-radius:10px;padding:11px 18px;font-weight:700;font-size:14px}
   .ph-noaccess .btn:hover{background:#0F827E}
+  .ph-bw{position:relative;margin-left:auto;display:flex;flex:none}
+  .ph-bell{display:grid;place-items:center;width:36px;height:36px;
+    border-radius:999px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.18);
+    cursor:pointer;font-size:16px;line-height:1;color:#fff;font-family:inherit;flex:none}
+  .ph-bell:hover{background:rgba(255,255,255,.18)}
+  .ph-bell .dot{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;padding:0 5px;
+    border-radius:999px;background:#D7503A;color:#fff;font-size:11px;font-weight:800;
+    display:grid;place-items:center;border:2px solid #0F2A4A;box-sizing:content-box}
+  .ph-bw + .ph-av{margin-left:10px}
+  .ph-np{position:absolute;top:calc(100% + 10px);right:0;width:min(380px,calc(100vw - 24px));
+    background:#fff;border:1px solid #E4E8EE;border-radius:14px;z-index:8000;overflow:hidden;
+    box-shadow:0 12px 34px rgba(15,42,74,.20);color:#0F2A4A;text-align:left;cursor:default}
+  .ph-np .nph{display:flex;align-items:center;gap:8px;padding:13px 15px;border-bottom:1px solid #EEF1F5}
+  .ph-np .nph b{font-size:14.5px;flex:1}
+  .ph-np .nall{background:none;border:none;color:#149B96;font:700 12.5px inherit;cursor:pointer;padding:4px 2px}
+  .ph-np .nall[disabled]{color:#9AA7B8;cursor:default}
+  .ph-np .nlist{max-height:min(60vh,420px);overflow:auto}
+  .ph-np .ni{display:flex;gap:10px;align-items:flex-start;padding:12px 15px;border-bottom:1px solid #F3F5F8;
+    background:#F2FBFA}
+  .ph-np .ni.read{background:#fff}
+  .ph-np .ni .nic{font-size:16px;line-height:1.2;flex:none}
+  .ph-np .ni .ntx{flex:1;min-width:0}
+  .ph-np .ni .ntt{font-size:13.5px;font-weight:700;line-height:1.35}
+  .ph-np .ni.read .ntt{font-weight:600;color:#56627A}
+  .ph-np .ni .nw{font-size:11.5px;color:#7A889B;margin-top:2px}
+  .ph-np .ni .nok{background:#fff;border:1px solid #CBD5E1;border-radius:8px;color:#0F2A4A;
+    font:700 11.5px inherit;padding:5px 9px;cursor:pointer;flex:none;white-space:nowrap}
+  .ph-np .ni .nok:hover{background:#F2FBFA;border-color:#149B96;color:#0F827E}
+  .ph-np .ni.read .nok{visibility:hidden}
+  .ph-np .nempty{padding:26px 18px;text-align:center;font-size:13.5px;color:#7A889B;line-height:1.55}
+  @media(max-width:560px){ .ph-np{position:fixed;left:12px;right:12px;width:auto;top:62px} }
   .ph-av{margin-left:auto;display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.18);
     border-radius:999px;padding:5px 12px 5px 6px;cursor:pointer;font-family:inherit;color:#fff}
   .ph-av:hover{background:rgba(255,255,255,.18)}
@@ -655,6 +686,81 @@
   // one place that draws a person's picture: their uploaded photo if there is one, else initials
   function faceStyle(p){ return p.photo ? 'background-image:url('+p.photo+');background-size:cover;background-position:center' : 'background:'+p.color; }
   function face(p){ return p.photo ? '' : initials(p); }
+
+  /* ---------------------------------------------------------------
+     THE BELL. Lives in the header on every page, because mount() runs on every page.
+     Shows how many updates this person has not checked off; opening it does NOT
+     mark anything read - they tick each one, or use "Mark all as read". Checking
+     something off is a decision, not a side effect of glancing at the list.
+     --------------------------------------------------------------- */
+  let npanel=null;
+  function closeNotes(){ if(npanel){ npanel.remove(); npanel=null; } }
+  function bellBadge(){
+    const b=document.querySelector('.ph-bell'); if(!b) return;
+    const n=unreadCount();
+    const dot=b.querySelector('.dot');
+    if(!n){ if(dot) dot.remove(); b.setAttribute('aria-label','Notifications — nothing new'); return; }
+    const txt=n>9?'9+':String(n);
+    if(dot) dot.textContent=txt;
+    else { const d=document.createElement('span'); d.className='dot'; d.textContent=txt; b.appendChild(d); }
+    b.setAttribute('aria-label', n+' unread notification'+(n===1?'':'s'));
+  }
+  function notesHTML(){
+    const list=notifications();
+    const unread=list.filter(n=>!n.seen).length;
+    const row=n=>'<div class="ni'+(n.seen?' read':'')+'" data-id="'+escAttr(n.id)+'">'+
+      '<span class="nic">'+escHTML(n.ic||'\u{1F514}')+'</span>'+
+      '<div class="ntx"><div class="ntt">'+escHTML(n.title)+'</div>'+
+      '<div class="nw">'+escHTML(n.by||'')+(n.by?' · ':'')+escHTML(ago(n.at))+'</div></div>'+
+      '<button class="nok" type="button">Got it</button></div>';
+    return '<div class="nph"><b>Notifications</b>'+
+      '<button class="nall" type="button"'+(unread?'':' disabled')+'>Mark all as read</button></div>'+
+      (list.length
+        ? '<div class="nlist">'+list.map(row).join('')+'</div>'
+        : '<div class="nempty">Nothing new right now.<br>Updates show up here when someone '+
+          'changes the schedule, enters production or posts something.</div>');
+  }
+  function openNotes(wrap){
+    closeNotes();
+    npanel=document.createElement('div');
+    npanel.className='ph-np';
+    npanel.innerHTML=notesHTML();
+    npanel.addEventListener('click',function(e){
+      e.stopPropagation();
+      if(e.target.classList.contains('nall')){ markAllSeen(); return; }
+      const ok=e.target.closest('.nok'); if(!ok) return;
+      const row=ok.closest('.ni'); if(!row) return;
+      markSeen({id:row.getAttribute('data-id')});
+    });
+    wrap.appendChild(npanel);
+    bellBadge();
+  }
+  /* Repaint wherever it is showing, so ticking one off in the panel updates the
+     badge and Home's list at the same time. */
+  document.addEventListener('ph-notifications-changed',function(){
+    bellBadge();
+    if(npanel) npanel.innerHTML=notesHTML();
+  });
+  document.addEventListener('click',function(e){
+    if(npanel && !e.target.closest('.ph-bw')) closeNotes();
+  });
+
+  function bell(){
+    const bar=document.querySelector('.hdr-in'); if(!bar) return;
+    const old=bar.querySelector('.ph-bw'); if(old) old.remove();
+    const wrap=document.createElement('span'); wrap.className='ph-bw';
+    const b=document.createElement('button');
+    b.className='ph-bell'; b.type='button'; b.title='Notifications';
+    b.textContent='\u{1F514}';
+    b.onclick=function(e){ e.stopPropagation(); npanel?closeNotes():openNotes(wrap); };
+    wrap.appendChild(b);
+    bar.appendChild(wrap);
+    bellBadge();
+    /* Their read list lives in SharePoint too, so something ticked off on a phone is
+       still ticked off on the desktop. */
+    loadSeen().then(function(){ bellBadge(); if(npanel) npanel.innerHTML=notesHTML(); });
+  }
+
   function mount(){
     reloadLocations();            // offices are shared; pull the practice's copy once
     const bar=document.querySelector('.hdr-in'); if(!bar)return;
@@ -666,6 +772,7 @@
     b.innerHTML='<span class="cir" style="'+faceStyle(p)+'">'+face(p)+'</span>'+
       '<span class="who"><b>'+name(p)+'</b><small>'+p.title.split(' · ')[0]+'</small></span><span class="car">▼</span>';
     b.onclick=e=>{e.stopPropagation(); menu?closeMenu():openMenu(b);};
+    bell();                       // bell first, so it sits left of the avatar
     bar.appendChild(b);
     if(!document.getElementById('ph-ov')){
       const ov=document.createElement('div'); ov.id='ph-ov'; ov.className='ph-ov';
@@ -885,6 +992,10 @@
     if(!e || !e.title) return;
     const who=realMe();
     const entry={
+      /* An id of its own, so "I have read this" survives the entry being updated.
+         Without one the id would come from the timestamp, and saving again two
+         minutes later would make an update somebody already checked off come back. */
+      id:'a'+Date.now().toString(36)+Math.random().toString(36).slice(2,7),
       title:e.title, sec:e.sec||'', ic:e.ic||'\u{1F514}',
       scope:e.scope||'everyone',
       by:((who.first||'')+' '+(who.last||'')).trim()||'Someone',
@@ -894,7 +1005,10 @@
     // Collapse a burst of edits to the same thing by the same person into one entry.
     const recent=list[0];
     if(recent && recent.title===entry.title && recent.by===entry.by &&
-       (Date.now()-new Date(recent.at)) < 5*60*1000){ list[0]=entry; }
+       (Date.now()-new Date(recent.at)) < 5*60*1000){
+      entry.id = recent.id || entry.id;        // same event, so it stays read
+      list[0]=entry;
+    }
     else list.unshift(entry);
     list=fresh(list).slice(0,ACT_MAX);
     if(window.PH_STORE) window.PH_STORE.set(ACT_KEY, list);
@@ -911,6 +1025,106 @@
       return activity();
     }).catch(function(){ return activity(); });
   }
+
+  /* ---------------------------------------------------------------
+     WHAT I HAVE ALREADY SEEN.
+     The feed used to show everybody the same list forever, so the only way to stop
+     an update nagging you was to wait three days for it to expire. Now each person
+     keeps their own list of what they have checked off, in their own row, and a
+     notification they have read never counts against them again.
+
+     Per person, not per browser: ph_seen_<their email>. Read on one device, read on
+     all of them.
+     --------------------------------------------------------------- */
+  /* Anything a person can type ends up in innerHTML somewhere. A staff name is
+     editable in Admin, so an unescaped one would run in everybody's header. */
+  function escHTML(v){
+    return String(v==null?'':v).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  const escAttr = escHTML;
+
+  function actId(e){
+    if(!e) return '';
+    return e.id || ((e.at||'')+'|'+(e.title||'')+'|'+(e.by||''));
+  }
+  /* Keyed exactly like their profile row. A person object carries no email property -
+     the address is derived - so reading m.mail here gave an empty key and nothing was
+     ever saved. Reuse profileKey(), which is the one that has always been right:
+     the signed-in address in production, the persona id in the sandbox. */
+  function seenKey(){
+    const k=profileKey();
+    return (k && k.indexOf('ph_me_')===0 && k.length>6) ? 'ph_seen_'+k.slice(6) : '';
+  }
+  let SEEN=null;
+  function seenList(){
+    if(SEEN) return SEEN;
+    const k=seenKey(); if(!k){ SEEN=[]; return SEEN; }
+    try{ SEEN=JSON.parse(localStorage.getItem(k))||[]; }catch(_){ SEEN=[]; }
+    if(!Array.isArray(SEEN)) SEEN=[];
+    return SEEN;
+  }
+  function saveSeen(){
+    const k=seenKey(); if(!k) return;
+    /* Only keep ids that are still in the feed. The feed drops entries after three
+       days, so without this the list would grow forever for no benefit. */
+    const alive={}; activity().forEach(e=>{ alive[actId(e)]=1; });
+    SEEN=seenList().filter(id=>alive[id]);
+    if(window.PH_STORE) window.PH_STORE.set(k, SEEN);
+    else try{ localStorage.setItem(k, JSON.stringify(SEEN)); }catch(_){}
+  }
+  /* Their list follows them between devices. Resolves true when something arrived. */
+  function loadSeen(){
+    const k=seenKey();
+    if(!k || !window.PH_STORE || !isLive()) return Promise.resolve(false);
+    return window.PH_STORE.get(k).then(function(r){
+      if(!Array.isArray(r)) return false;
+      const merged=r.concat(seenList()).filter((v,i,a)=>a.indexOf(v)===i);
+      const changed = merged.length !== seenList().length;
+      SEEN=merged;
+      try{ localStorage.setItem(k, JSON.stringify(SEEN)); }catch(_){}
+      return changed;
+    }).catch(function(){ return false; });
+  }
+  function isSeen(e){ return seenList().indexOf(actId(e))>=0; }
+  function markSeen(e){
+    const id=actId(e); if(!id) return;
+    if(seenList().indexOf(id)<0){ seenList().push(id); saveSeen(); notifyChanged(); }
+  }
+  function markAllSeen(){
+    let hit=false;
+    notifications().forEach(e=>{
+      const id=actId(e);
+      if(id && seenList().indexOf(id)<0){ seenList().push(id); hit=true; }
+    });
+    if(hit){ saveSeen(); notifyChanged(); }
+  }
+  function notifyChanged(){
+    try{ document.dispatchEvent(new CustomEvent('ph-notifications-changed')); }catch(_){}
+  }
+
+  /* Is this entry any of my business? One rule, so the bell and Home can never
+     disagree about what a person is allowed to see. */
+  function canSeeActivity(e){
+    if(!e) return false;
+    if(e.sec && can(e.sec)==='none') return false;     // they can't open that page anyway
+    const sc=e.scope||'everyone';
+    if(sc==='everyone'||sc==='all') return true;
+    if(sc==='admins') return isAdmin();
+    const mine=offices();
+    if(mine==='all') return true;
+    return Array.isArray(mine) && mine.indexOf(sc)>=0;
+  }
+
+  /* The feed as it applies to whoever is signed in, newest first, each entry
+     carrying its own id and whether they have already checked it off. */
+  function notifications(){
+    return activity().filter(canSeeActivity)
+      .map(e=>Object.assign({}, e, {id:actId(e), seen:isSeen(e)}));
+  }
+  function unreadCount(){ return notifications().filter(n=>!n.seen).length; }
+
   function ago(iso){
     const mins=Math.round((Date.now()-new Date(iso))/60000);
     if(mins<2) return 'just now';
@@ -1066,6 +1280,6 @@
   }
   const isLive=()=>env()==='live';
 
-  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, photoFor, loadPhotos, rosterReady, WORKBOOK};
+  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, photoFor, loadPhotos, rosterReady, WORKBOOK};
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mount); else mount();
 })();

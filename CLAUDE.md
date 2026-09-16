@@ -326,6 +326,19 @@ and could open the file in Excel anyway. Real containment would need per-office 
   - The store keeps the copy it replaced at `<key>__prev`; `PH_STORE.backup(key)` reads it.
   - **`node test/guard.test.js` replays the whole incident.** Run it before touching `store.js` or
     any save path. It must pass.
+- **Anything keyed per person must be tested on a person WITHOUT an email property.** Only three
+  personas carry `.mail`; the rest derive it. A read-list keyed off `m.mail` worked for Heather and
+  silently threw everyone else's clicks away, and the first test passed because the default test
+  persona was one of the three. Key per-person data off `profileKey()`, and test the round trip
+  after a reload, as somebody who is not Heather — `test/notifications.test.js` does both.
+- **Notification read state is per person: `ph_seen_<same suffix as their profile row>`.** Each
+  entry carries its own `id`, kept when a burst collapses, so something already checked off does
+  not come back when the same thing is saved again. `PH.notifications()` is the ONE visibility
+  rule — the header bell and Home's Updates both use it, so they cannot disagree.
+- **Keys that are supposed to shrink are exempt from the wipe guard** (`HOUSEKEEPING` in
+  store.js: `ph_activity`, `ph_seen_`, `ph_photos`). A three-day feed empties on a quiet weekend
+  and a read-list is pruned to match; guarding those would only ever cry wolf. The failed-read
+  rule still applies to them, quietly.
 - **Never write a shared key straight to `localStorage`.** Go through `PH_STORE.set()`. A local
   write first makes the store see no change, so it keeps no backup and weighs the wrong thing —
   and it steps around both guards above.

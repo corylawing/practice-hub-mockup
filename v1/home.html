@@ -86,6 +86,12 @@
   .updates h2{font-size:15px;color:var(--navy);margin:0;display:flex;align-items:center;gap:8px}
   .updates .cnt{background:var(--teal);color:#fff;font-size:12px;font-weight:800;border-radius:999px;padding:1px 9px}
   .updates .sub2{font-size:12.5px;color:var(--soft);margin:4px 0 8px}
+  .updates .upd.read{opacity:.55}
+  .updates .upd .uok{margin-left:auto;background:#fff;border:1px solid #CBD5E1;border-radius:8px;
+    color:var(--navy);font:700 11.5px inherit;padding:5px 10px;cursor:pointer;flex:none;white-space:nowrap}
+  .updates .upd .uok:hover{background:#F2FBFA;border-color:var(--teal);color:#0F827E}
+  .updates .uall{margin-left:auto;background:none;border:none;color:var(--teal);
+    font:700 12.5px inherit;cursor:pointer;padding:2px}
   .upd{display:flex;align-items:flex-start;gap:11px;padding:11px 0;border-top:1px solid var(--line)}
   .upd .uic{font-size:18px;line-height:1.3}
   .upd .ut{font-size:14px;color:var(--ink);font-weight:600}
@@ -101,10 +107,10 @@
   }
 
 </style>
-<script src="user.js?v=hc28"></script>
+<script src="user.js?v=hc29"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc28"></script>
-  <script src="gate.js?v=hc28"></script>
+  <script src="store.js?v=hc29"></script>
+  <script src="gate.js?v=hc29"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — this is the logged-in home. Use “Viewing as” to see how the app changes for each role.</div>
@@ -212,22 +218,50 @@
     return acc && matchScope(u.scope,p);
   }
   function secName(k){ const s=SECTIONS.find(x=>x.k===k); return s?s.n:k; }
+  function esc(v){ return String(v==null?'':v).replace(/[&<>"']/g,c=>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+  /* Live uses PH.notifications(), which is the same list and the same visibility rule
+     the bell in the header uses - the two can never disagree about what a person is
+     allowed to see, or about what they have already checked off. The count is UNREAD,
+     not total, because a count that never goes down is just decoration. */
   function renderUpdates(p){
-    // Live shows what has actually happened; sandbox keeps the sample list so the
-    // page still demonstrates something.
-    const src = (window.PH && PH.isLive && PH.isLive())
-      ? PH.activity().map(a=>({sec:a.sec, scope:a.scope, ic:a.ic,
+    const live = !!(window.PH && PH.isLive && PH.isLive());
+    const list = live
+      ? PH.notifications().map(a=>({id:a.id, seen:a.seen, sec:a.sec, ic:a.ic,
           title:a.title+' \u2014 '+a.by, when:PH.ago(a.at)}))
-      : UPDATES;
-    const list=src.filter(u=>canSee(u,p));
-    el('updates').innerHTML='<h2>🔔 Updates for you <span class="cnt">'+list.length+'</span></h2>'+
+      : UPDATES.filter(u=>canSee(u,p)).map(u=>Object.assign({seen:false,id:''},u));
+    const unread=list.filter(u=>!u.seen).length;
+    const row=u=>'<div class="upd'+(u.seen?' read':'')+'" data-id="'+esc(u.id)+'">'+
+      '<span class="uic">'+esc(u.ic)+'</span>'+
+      '<div><div class="ut">'+esc(u.title)+'</div>'+
+      '<div class="uw">'+esc(u.when)+(u.sec==='documents'?' \u00b7 opens in SharePoint \u2197':'')+'</div></div>'+
+      (live && !u.seen ? '<button class="uok" type="button">Got it</button>'
+                       : '<span class="utag">'+esc(secName(u.sec))+'</span>')+'</div>';
+    el('updates').innerHTML='<h2>\u{1F514} Updates for you'+
+        (unread?' <span class="cnt">'+unread+'</span>':'')+
+        (live&&unread?'<button class="uall" type="button">Mark all as read</button>':'')+'</h2>'+
       '<p class="sub2">New documents &amp; changes that match your role, location &amp; team. Files open on your Microsoft drive.</p>'+
-      (list.length? list.map(u=>'<div class="upd"><span class="uic">'+u.ic+'</span><div><div class="ut">'+u.title+'</div><div class="uw">'+u.when+(u.sec==='documents'?' · opens in SharePoint ↗':'')+'</div></div><span class="utag">'+secName(u.sec)+'</span></div>').join('')
+      (list.length? list.map(row).join('')
         : '<div class="upd" style="border-top:none;color:var(--soft)">'+
-          ((window.PH&&PH.isLive&&PH.isLive())
+          (live
             ? 'Nothing yet. Updates appear here as people enter production numbers, change the schedule or post marketing.'
             : 'Nothing new right now.')+'</div>');
   }
+
+  /* One listener on the card rather than one per row, so it keeps working after
+     every repaint. */
+  document.addEventListener('click',function(e){
+    const box=e.target.closest('#updates'); if(!box) return;
+    if(e.target.classList.contains('uall')){ PH.markAllSeen(); return; }
+    const ok=e.target.closest('.uok'); if(!ok) return;
+    const row=ok.closest('.upd'); if(!row) return;
+    PH.markSeen({id:row.getAttribute('data-id')});
+  });
+  // The bell and this list are two views of one thing; either one changing repaints both.
+  document.addEventListener('ph-notifications-changed',function(){
+    try{ renderUpdates(PH.me()); }catch(_){}
+  });
 
   function initials(n){const p=n.split(' ');return (p[0][0]+(p[1]?p[1][0]:'')).toUpperCase();}
   function foldersFor(p){ return FOLDERS.filter(f=>p.doc[f.k]); }
@@ -279,8 +313,8 @@
   el('persona').value=saved; set(saved);
 })();
 </script>
-<script>PH.nav('home');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(PH.loadActivity)PH.loadActivity().then(function(){if(window.HOME&&HOME.refreshUpdates)HOME.refreshUpdates();});});</script>
-<script src="tour.js?v=hc28"></script>
+<script>PH.nav('home');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(PH.loadActivity)PH.loadActivity().then(function(){return PH.loadSeen?PH.loadSeen():null;}).then(function(){if(window.HOME&&HOME.refreshUpdates)HOME.refreshUpdates();if(PH.refreshBell)PH.refreshBell();});});</script>
+<script src="tour.js?v=hc29"></script>
 <script>
 Tour.init([
   {sel:'.ph-av', title:'This is you', body:'Your name and photo, top right. Tap it any time for <b>My profile</b> \u2014 your photo, preferred name, phone and \u201cAbout me\u201d. Those follow you between devices.'},

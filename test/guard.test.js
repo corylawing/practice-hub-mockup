@@ -80,6 +80,27 @@ const t=(n,v)=>{ (v? ok:bad).push(n); };
   t('an explicit restore is never blocked', (await S2.set('ph_sched2', real, {force:true})).blocked!==true);
   t('the replaced copy is kept as a local backup', S2.backup('ph_sched2')!==null);
 
+  /* Feeds that expire on purpose must not trip the guard. The notification feed drops
+     anything over three days old, so a quiet weekend legitimately empties it, and each
+     person's read-list is pruned to match. Blocking those would cry wolf on background
+     bookkeeping and train everyone to ignore the banner. */
+  const feed=[]; for(let i=0;i<60;i++) feed.push({id:'a'+i,title:'Schedule updated',by:'Heather',at:'x'});
+  await S2.set('ph_activity', feed, {force:true});
+  const quietBefore=events.length;
+  const fr=await S2.set('ph_activity', [{id:'a99',title:'One new thing',by:'Cory',at:'y'}]);
+  t('an expiring feed may shrink to almost nothing', fr.blocked!==true);
+  await S2.set('ph_seen_heather@x.com', ['a1','a2','a3','a4','a5','a6','a7','a8','a9','a10','a11','a12','a13','a14'], {force:true});
+  const sr=await S2.set('ph_seen_heather@x.com', ['a99']);
+  t('a pruned read-list may shrink too', sr.blocked!==true);
+  t('and neither raised a banner', events.length===quietBefore);
+
+  /* But the failed-read rule still covers them - writing a feed over a copy we could
+     not see would drop whatever other people added to it. */
+  FAIL=true; await S2.get('ph_activity'); FAIL=false;
+  const nr=await S2.set('ph_activity', feed);
+  t('a feed is still not written over a copy we could not read', nr.blocked===true);
+  t('and that refusal stays quiet', events.length===quietBefore);
+
   console.log(ok.map(s=>'  PASS  '+s).join('\n'));
   if(bad.length) console.log(bad.map(s=>'  FAIL  '+s).join('\n'));
   console.log('\n'+ok.length+' passed, '+bad.length+' failed');
