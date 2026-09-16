@@ -263,10 +263,10 @@
   }
 
 </style>
-<script src="user.js?v=hc26"></script>
+<script src="user.js?v=hc27"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc26"></script>
-  <script src="gate.js?v=hc26"></script>
+  <script src="store.js?v=hc27"></script>
+  <script src="gate.js?v=hc27"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — sample staff schedule for validation. Live version = one Microsoft List the practice maintains.</div>
@@ -355,7 +355,13 @@
      discard genuine work, so don't. */
   const SCHED_VERSION=2;
 
-  function save(){
+  /* Writes are coalesced. Any code path that changes many cells in a row - a bulk
+     fill, a doctor being removed from a year of days - used to fire one SharePoint
+     write per cell. One write, just after the last change, is what anybody actually
+     wants, and it makes a thousand-version storm impossible. */
+  let saveTimer=null;
+  function save(){ clearTimeout(saveTimer); saveTimer=setTimeout(saveNow, 400); }
+  function saveNow(){
     sched.__v=SCHED_VERSION;
     // Feeds Home's notifications. Debounced inside logActivity.
     if(window.PH && PH.logActivity && PH.isLive())
@@ -963,11 +969,18 @@
        entered nothing, it starts EMPTY — inventing doctor days in the real app would put
        fiction in front of staff who might act on it.
      Sandbox: the demo pattern, so the calendar has something to show. */
+  /* Builds the blank year IN MEMORY. It used to go through setCell(), which saves on
+     every single call - roughly a thousand writes to the shared store for one page
+     load, each one a new version, and each one overwriting whatever was there. That is
+     what produced ~1000 versions in two minutes and wiped a schedule somebody had
+     spent hours on. Nothing here writes; the first real edit is what saves. */
   function startEmpty(){
     sched={};
     let d=new Date(TODAY.getFullYear(),0,1); const end=new Date(TODAY.getFullYear(),11,31);
     while(d<=end){
-      if(dowIdx(d)<6) locations.forEach(l=>{ if(openOn(l,d)) setCell(l,d,{}); });
+      if(dowIdx(d)<6) locations.forEach(l=>{
+        if(openOn(l,d)){ const k=iso(d); sched[k]=sched[k]||{}; sched[k][l.n]={}; }
+      });
       d=addDays(d,1);
     }
   }
@@ -1020,7 +1033,7 @@
 })();
 </script>
 <script>PH.nav('schedule');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc26"></script>
+<script src="tour.js?v=hc27"></script>
 <script>
 Tour.init([
   {sel:'#viewseg', title:'Week or month', body:'<b>Week</b> is the day-to-day working view. <b>Month</b> shows the whole month at a glance, with every office in its own color.'},

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Restore the schedule — Home-Brace</title>
+<link rel="icon" href="../assets/favicon.png?v=2" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{--navy:#0F2A4A;--teal:#149B96;--teal-600:#0F827E;--line:#E4E9F0;--soft:#64748B;
+        --good:#15803D;--bad:#D7503A;--maxw:860px}
+  *{box-sizing:border-box}
+  body{margin:0;background:#F4F6F9;font:15px/1.6 Inter,system-ui,sans-serif;color:var(--navy)}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:28px 16px 60px}
+  h1{font-size:24px;margin:0 0 6px}
+  .sub{color:var(--soft);margin:0 0 22px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:16px;
+        box-shadow:0 1px 3px rgba(15,42,74,.06)}
+  .card h2{font-size:16px;margin:0 0 4px;display:flex;align-items:center;gap:9px}
+  .step{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;
+        border-radius:50%;background:var(--teal);color:#fff;font-size:13px;font-weight:800;flex:none}
+  .hint{font-size:13.5px;color:var(--soft);margin:2px 0 14px;line-height:1.55}
+  textarea{width:100%;min-height:150px;font:12px/1.5 ui-monospace,Menlo,Consolas,monospace;
+           border:1px solid #cbd5e1;border-radius:10px;padding:11px;resize:vertical;background:#FBFCFE}
+  button{font:inherit;font-weight:700;background:var(--teal);color:#fff;border:none;border-radius:10px;
+         padding:11px 18px;cursor:pointer}
+  button:disabled{background:#c7d2da;cursor:not-allowed}
+  button.ghost{background:#fff;color:var(--navy);border:1px solid #cbd5e1}
+  .res{margin-top:14px;padding:13px 15px;border-radius:11px;font-size:14px;display:none}
+  .res.on{display:block}
+  .res.ok{background:#E8F6F4;border:1px solid #bfe3d0;color:var(--teal-600)}
+  .res.bad{background:#FCEBE8;border:1px solid #f0c3b9;color:#93301f}
+  .res.warn{background:#FFF8E6;border:1px solid #f2d99b;color:#7a5200}
+  table{border-collapse:collapse;margin-top:10px;font-size:13.5px}
+  td{padding:3px 14px 3px 0}
+  td.n{font-weight:800;text-align:right}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Restore the schedule</h1>
+  <p class="sub">Puts a saved copy of the doctor schedule back, exactly as it was. Nothing is
+     written until you have seen what it contains and pressed the button.</p>
+
+  <div class="card">
+    <h2><span class="step">1</span> Paste the saved copy</h2>
+    <p class="hint">The text from SharePoint&rsquo;s version history &mdash; it starts with
+      <code>{"2026-01-01":</code>. Paste the whole thing.</p>
+    <textarea id="src" placeholder='{"2026-01-01":{ ... }}' spellcheck="false"></textarea>
+    <div style="margin-top:12px"><button id="check">Check it</button></div>
+    <div class="res" id="r1"></div>
+  </div>
+
+  <div class="card">
+    <h2><span class="step">2</span> Put it back</h2>
+    <p class="hint">This replaces whatever the schedule currently holds. Check step 1 first &mdash;
+      it tells you how many days and doctor days you are about to restore.</p>
+    <button id="go" disabled>Restore the schedule</button>
+    <div class="res" id="r2"></div>
+  </div>
+</div>
+
+<script src="user.js?v=hc27"></script>
+<script src="store.js?v=hc27"></script>
+<script src="gate.js?v=hc27"></script>
+<script>
+(function(){
+  'use strict';
+  var el=function(id){return document.getElementById(id);};
+  var parsed=null;
+  function show(id,cls,html){ var n=el(id); n.className='res on '+cls; n.innerHTML=html; }
+
+  /* Look at it properly before anything is written. A blank or half-parsed payload is
+     exactly what caused the loss in the first place; restoring one would repeat it. */
+  el('check').onclick=function(){
+    parsed=null; el('go').disabled=true;
+    var raw=(el('src').value||'').trim();
+    if(!raw) return show('r1','bad','<b>Nothing pasted yet.</b>');
+    var data;
+    try{ data=JSON.parse(raw); }
+    catch(e){ return show('r1','bad','<b>That is not complete.</b> '+
+      'It has to start with <code>{</code> and end with <code>}</code> &mdash; it looks like '+
+      'part of it is missing.<br><small>'+String(e.message).replace(/[<>&]/g,'')+'</small>'); }
+    if(!data || typeof data!=='object' || Array.isArray(data))
+      return show('r1','bad','<b>That is not a schedule.</b>');
+
+    var days=0, withDoctor=0, ydot=0, closed=0, events=0, first=null, last=null;
+    Object.keys(data).forEach(function(k){
+      if(k.indexOf('__')===0) return;
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(k)) return;
+      days++; if(!first||k<first)first=k; if(!last||k>last)last=k;
+      var day=data[k]||{};
+      Object.keys(day).forEach(function(o){
+        var c=day[o]||{};
+        if((c.ps&&c.ps.length)||c.p!=null) withDoctor++;
+        if(c.ydot) ydot++;
+        if(c.closed) closed++;
+        if(c.event) events++;
+      });
+    });
+    if(!days) return show('r1','bad','<b>No dated days in there.</b> Nothing to restore.');
+    if(!withDoctor && !ydot && !closed)
+      return show('r1','warn','<b>That copy is empty.</b> It has '+days+' days but no doctors, '+
+        'no Yellow Dot Days and no closures &mdash; it is one of the blank versions. '+
+        'Go further back in the version history.');
+
+    parsed=data; el('go').disabled=false;
+    show('r1','ok','<b>That looks right.</b> Here is what would be restored:'+
+      '<table>'+
+      '<tr><td>Days</td><td class="n">'+days+'</td></tr>'+
+      '<tr><td>Doctor days</td><td class="n">'+withDoctor+'</td></tr>'+
+      '<tr><td>Yellow Dot Days</td><td class="n">'+ydot+'</td></tr>'+
+      '<tr><td>Closed</td><td class="n">'+closed+'</td></tr>'+
+      (events?'<tr><td>Special events</td><td class="n">'+events+'</td></tr>':'')+
+      '<tr><td>From</td><td class="n">'+first+'</td></tr>'+
+      '<tr><td>To</td><td class="n">'+last+'</td></tr>'+
+      '</table>');
+  };
+
+  el('go').onclick=function(){
+    if(!parsed) return;
+    el('go').disabled=true;
+    show('r2','warn','Saving…');
+    if(!window.PH_STORE || !window.PH_AUTH)
+      return show('r2','bad','<b>Not signed in.</b> Reload the page and sign in first.');
+    parsed.__v = 2;                                  // the schedule's current format marker
+    // Local first, then the shared copy - the same order the schedule itself uses.
+    try{ localStorage.setItem('ph_sched2', JSON.stringify(parsed)); }catch(_){}
+    PH_STORE.set('ph_sched2', parsed).then(function(r){
+      if(r && r.local){
+        show('r2','bad','<b>It saved on this device only.</b> '+
+          'SharePoint refused it'+(r.error?(' — '+String(r.error).replace(/[<>&]/g,'')):'')+
+          '. Nobody else will see it yet.');
+        el('go').disabled=false; return;
+      }
+      /* Read it straight back. Saying "restored" without checking is what this whole
+         mess was made of. */
+      PH_STORE.get('ph_sched2').then(function(back){
+        var n=0; if(back) Object.keys(back).forEach(function(k){
+          if(/^\d{4}-\d{2}-\d{2}$/.test(k)) n++; });
+        show('r2', n?'ok':'bad', n
+          ? '<b>Restored, and checked.</b> '+n+' days are back in the shared schedule. '+
+            '<a href="schedule.html">Open the schedule</a> to see it.'
+          : '<b>Saved, but reading it back gave nothing.</b> Do not close this page — '+
+            'tell Cory before trying again.');
+      }).catch(function(){
+        show('r2','warn','<b>Saved,</b> but it could not be read back to confirm. '+
+          'Open the schedule and check before closing this page.');
+      });
+    }).catch(function(e){
+      el('go').disabled=false;
+      show('r2','bad','<b>It did not save.</b> '+String((e&&e.message)||e).replace(/[<>&]/g,''));
+    });
+  };
+})();
+</script>
+</body>
+</html>
