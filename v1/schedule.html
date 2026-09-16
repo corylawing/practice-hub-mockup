@@ -97,6 +97,19 @@
   th.loc{text-align:left;padding:10px 12px;min-width:190px;background:#fff}
   .locname{display:flex;align-items:center;gap:7px;font-weight:800;color:var(--navy);font-size:14px}
   .locname .dot{width:12px;height:12px;border-radius:50%;flex:none}
+  /* Office opening hours beside the name - Heather asked for these to be visible
+     instead of buried in the office editor. */
+  .ohrs{display:block;font-size:11px;font-weight:700;color:var(--teal-600,#0F827E);
+    letter-spacing:.01em;margin-top:1px}
+  /* Special events: purple so they read as neither a doctor nor a Yellow Dot. */
+  .evt{display:block;font-size:10.5px;font-weight:800;color:#5B21B6;background:#EDE9FE;
+    border-radius:5px;padding:2px 6px;margin-top:3px;line-height:1.35;
+    white-space:normal;overflow-wrap:anywhere}
+  .cell.evtc{background:#FAF8FF}
+  .ent.ev .es{color:#5B21B6}
+  .es.evt{display:block;color:#5B21B6;font-weight:800}
+  .evrow{display:flex;gap:8px;align-items:center}
+  .evrow .s-input{flex:1}
   .tz{font-size:10px;font-weight:700;background:var(--canvas);color:var(--soft);border-radius:5px;padding:1px 6px;white-space:nowrap}
   .locsub{font-size:11.5px;color:var(--soft);margin-top:2px}
   .ledit{border:none;background:none;color:var(--soft);cursor:pointer;font-size:13px;opacity:.45;font-family:inherit}
@@ -250,10 +263,10 @@
   }
 
 </style>
-<script src="user.js?v=hc19"></script>
+<script src="user.js?v=hc20"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc19"></script>
-  <script src="gate.js?v=hc19"></script>
+  <script src="store.js?v=hc20"></script>
+  <script src="gate.js?v=hc20"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — sample staff schedule for validation. Live version = one Microsoft List the practice maintains.</div>
@@ -394,7 +407,7 @@
   const fAll=()=>fDocs.size===0;                       // no filter -> show everything
   const fHit=ds=>fAll()||ds.some(d=>fDocs.has(d));     // does this cell match the filter?
   // Both on by default: the calendar shows everything until you choose to quieten it.
-  let fYdot=true, fClosed=true;
+  let fYdot=true, fClosed=true, fEvent=true;
 
   const el=id=>document.getElementById(id);
   const canEdit=()=>!window.PH||PH.atLeast('schedule','edit');
@@ -421,13 +434,40 @@
       '<button class="tchip '+(on?'on':'off')+'" onclick="PS.'+fn+'()" aria-pressed="'+on+'">'+
         '<span class="sw"></span><span class="dot" style="background:'+dot+';width:11px;height:11px;border-radius:50%;display:inline-block"></span>'+label+'</button>';
     const shows=tog(fYdot,'togYdot','#FACC15','Yellow Dot Days')+
-      tog(fClosed,'togClosed','#cbd5e1','Closed days');
+      tog(fClosed,'togClosed','#cbd5e1','Closed days')+
+      tog(fEvent,'togEvent','#7C3AED','Special events');
     el('filters').innerHTML=
       '<div class="frow"><span class="flab">Offices</span>'+locs+
         '<button class="sbtn ghost tiny" onclick="PS.allLocs()">'+(fLoc.size===locations.length?'Hide all':'Show all')+'</button></div>'+
       '<div class="frow"><span class="flab">Doctor</span>'+docs+
         (!fAll()?'<button class="sbtn ghost tiny" onclick="PS.allDocs()">Show all doctors</button>':'')+'</div>'+
       '<div class="frow"><span class="flab">Show</span>'+shows+'</div>';
+  }
+
+  /* ---------- an office's opening hours, in words ----------------------------
+     Heather: "when I change the hours for a location, can it display next to the
+     name? ... you have to go searching for it and I would prefer it show so
+     everyone knows."
+
+     Hours are set PER WEEKDAY, so this is not one number. Days that share the same
+     times are grouped, so an office open 8-5 all week reads "8:00a-5:00p", while one
+     that closes early on Friday reads "Mon-Thu 8:00a-5:00p - Fri 8:00a-2:00p". Days
+     the office is shut are simply left out; the grid already shows those. */
+  function hoursLabel(l){
+    const groups=[];                       // [{s,e,days:[0..4]}] in weekday order
+    for(let i=0;i<5;i++){
+      const h=l.hours && l.hours[i];
+      if(!h) continue;
+      const last=groups[groups.length-1];
+      if(last && last.s===h.s && last.e===h.e) last.days.push(i);
+      else groups.push({s:h.s, e:h.e, days:[i]});
+    }
+    if(!groups.length) return '';
+    const span=g=>g.days.length===1 ? DOW[g.days[0]]
+              : DOW[g.days[0]]+'\u2013'+DOW[g.days[g.days.length-1]];
+    // One set of times across every open day needs no day names at all.
+    if(groups.length===1) return fmt(groups[0].s)+'\u2013'+fmt(groups[0].e);
+    return groups.map(g=>span(g)+' '+fmt(g.s)+'\u2013'+fmt(g.e)).join(' \u00b7 ');
   }
 
   /* ---------- week board ---------- */
@@ -437,15 +477,19 @@
     const t=(iso(d)===iso(TODAY)?' today':'');
     const click=canEdit()?' onclick="PS.open(\''+esc(l.n)+'\',\''+iso(d)+'\')"':'';
     const blank='<td class="cell closedc'+t+'"'+click+'></td>';
-    if(cell&&cell.closed) return fClosed?'<td class="cell closedc'+t+'"'+click+'><span class="closed">Closed</span></td>':blank;
+    // The event label goes ON whatever the day already is, rather than replacing it.
+    const ev=(cell&&cell.event&&fEvent)?'<span class="evt" title="Special event">\u2605 '+esc(cell.event)+'</span>':'';
+    if(cell&&cell.closed) return (fClosed||ev)?'<td class="cell closedc'+t+'"'+click+'><span class="closed">Closed</span>'+ev+'</td>':blank;
     const ds=docsOf(cell);
     if(ds.length){
       const dim=fHit(ds)?'':' dim';
       return '<td class="cell'+t+dim+'" style="background:'+c.bg+';box-shadow:inset 6px 0 0 '+c.dot+'"'+click+'>'+
         ds.map(i=>'<span class="who" style="color:'+c.fg+'">'+people[i].n+'</span>').join('')+
-        '<span class="hrs" style="color:'+c.fg+'">'+fmt(cell.s)+'–'+fmt(cell.e)+'</span></td>';
+        '<span class="hrs" style="color:'+c.fg+'">'+fmt(cell.s)+'\u2013'+fmt(cell.e)+'</span>'+ev+'</td>';
     }
-    if(cell&&cell.ydot) return fYdot?'<td class="cell ydotc'+t+(fAll()?'':' dim')+'"'+click+'><span class="ydot"><span class="ydmark"></span> Yellow Dot Day</span></td>':blank;
+    if(cell&&cell.ydot) return fYdot?'<td class="cell ydotc'+t+(fAll()?'':' dim')+'"'+click+'><span class="ydot"><span class="ydmark"></span> Yellow Dot Day</span>'+ev+'</td>':blank;
+    // An event on its own is a settled day, not one still waiting for a doctor.
+    if(ev) return '<td class="cell evtc'+t+(fAll()?'':' dim')+'"'+click+'>'+ev+'</td>';
     if(open) return '<td class="cell needsc'+t+(fAll()?'':' dim')+'"'+click+'><span class="needs">Needs doctor</span></td>';
     return fClosed?'<td class="cell closedc'+t+'"'+click+'><span class="closed">Closed</span></td>':blank;
   }
@@ -455,7 +499,9 @@
       '<span class="dnum">'+(d.getMonth()+1)+'/'+d.getDate()+'</span></th>').join('')+'</tr>';
     const rows=shownLocs().map(l=>{
       const c=colOf(l.color);
+      const hrs=hoursLabel(l);
       return '<tr><th class="loc"><div class="locname"><span class="dot" style="background:'+c.dot+'"></span>'+l.n+
+        (hrs?'<span class="ohrs" title="When this office is open">'+hrs+'</span>':'')+
         '<span class="tz">'+l.tz+'</span>'+
         (canEdit()?'<button class="ledit" title="Edit office" onclick="event.stopPropagation();PS.editLoc(\''+esc(l.n)+'\')">✎</button>':'')+'</div>'+
         '<div class="locsub">'+(l.lunch?'lunch '+fmt(l.lunch.s)+'–'+fmt(l.lunch.e):'no set lunch')+'</div></th>'+
@@ -485,21 +531,27 @@
       shownLocs().forEach(l=>{
         const cell=cellOf(l,d), c=colOf(l.color), open=openOn(l,d);
         const click=canEdit()?' onclick="PS.open(\''+esc(l.n)+'\',\''+iso(d)+'\')"':'';
+        const mev=(cell&&cell.event&&fEvent)?'<span class="es evt">\u2605 '+esc(cell.event)+'</span>':'';
         const closedEnt=()=>'<button class="ent cl" style="border-left-color:'+c.dot+'"'+click+'>'+
-          '<span class="eo">'+l.n+'</span><span class="es">Closed</span></button>';
+          '<span class="eo">'+l.n+'</span><span class="es">Closed</span>'+mev+'</button>';
         // Marked closed outright.
         if(cell&&cell.closed){ if(fClosed&&fAll()) ents+=closedEnt(); return; }
         const mds=docsOf(cell);
         if(mds.length){
           if(!fHit(mds)) return;
           ents+='<button class="ent" style="background:'+c.bg+';color:'+c.fg+';border-left-color:'+c.dot+'"'+click+'>'+l.n+
-            '<small>'+mds.map(i=>people[i].n).join(', ')+'</small></button>';
+            '<small>'+mds.map(i=>people[i].n).join(', ')+'</small>'+mev+'</button>';
         } else if(cell&&cell.ydot){
           if(!fAll()||!fYdot) return;
           // Keep the office color so you can still tell WHICH office — only the dot is yellow.
           ents+='<button class="ent yd" style="background:'+c.bg+';color:'+c.fg+';border-left-color:'+c.dot+'"'+click+'>'+
             '<span class="eo">'+l.n+'</span>'+
-            '<span class="es"><span class="ydmark"></span>Yellow Dot Day</span></button>';
+            '<span class="es"><span class="ydmark"></span>Yellow Dot Day</span>'+mev+'</button>';
+        } else if(cell&&cell.event&&fEvent){
+          // An event on its own is a settled day, not one still waiting for a doctor.
+          if(!fAll()) return;
+          ents+='<button class="ent ev" style="background:'+c.bg+';color:'+c.fg+';border-left-color:'+c.dot+'"'+click+'>'+
+            '<span class="eo">'+l.n+'</span><span class="es">\u2605 '+esc(cell.event)+'</span></button>';
         } else if(open){
           if(!fAll()) return;
           ents+='<button class="ent nd"'+click+'>'+l.n+'<small>not decided yet</small></button>';
@@ -582,20 +634,36 @@
     let need=0,total=0;
     const days = view==='week'? weekDays() : (()=>{const a=[],dim=new Date(mY,mM+1,0).getDate();
       for(let i=1;i<=dim;i++)a.push(new Date(mY,mM,i)); return a;})();
-    let ydotN=0, undecided=0;
+    let ydotN=0, undecided=0, eventN=0;
     days.forEach(d=>shownLocs().forEach(l=>{
       if(!openOn(l,d))return; const c=cellOf(l,d);
       if(c&&c.closed)return;
       total++;
-      if(!docsOf(c).length){ need++; if(c&&c.ydot) ydotN++; else undecided++; }
+      /* Heather: "We do not want it to count toward an open doctor day." The
+         doctor-day counters already only count days WITH a doctor, so those were
+         fine. Here a special event is treated like a Yellow Dot: a day with no
+         doctor, but a decision already taken rather than something outstanding.
+         It is deliberately still counted in the total - skipping it entirely made
+         this line claim "21 of 21 have a doctor" on a day that had a staff
+         training and no doctor at all, which is worse than the problem it fixed. */
+      if(!docsOf(c).length){
+        need++;
+        if(c&&c.event)     eventN++;
+        else if(c&&c.ydot) ydotN++;
+        else               undecided++;
+      }
     }));
     const st=el('status');
-    st.className='status '+(need===0?'ok':'warn');
+    st.className='status ';   // set below, once we know what is actually outstanding
     // Split the two: a Yellow Dot Day is a decision already taken; an unassigned open day
     // is still waiting on one. Lumping them together hid the days that need action.
     const parts=[];
     if(ydotN)     parts.push(ydotN+' marked <b>Yellow Dot Day</b>');
+    if(eventN)    parts.push(eventN+' with a <b>special event</b>');
     if(undecided) parts.push(undecided+' <b>still to decide</b>');
+    // Only days nobody has decided on are a warning; the rest are settled.
+    const outstanding=undecided;
+    st.className='status '+(undecided===0?'ok':'warn');
     st.innerHTML = total===0 ? '<b>Nothing open</b> in this view.'
       : need===0 ? '<b>Fully covered.</b> Every open day '+(view==='week'?'this week':'this month')+' has a doctor ('+total+' of '+total+').'
       : '<b>'+need+' open day'+(need===1?'':'s')+' with no doctor</b> — '+parts.join(' · ')+
@@ -651,7 +719,7 @@
     const l=loc(locName), d=parseISO(dateStr), c=cellOf(l,d), h=openOn(l,d)||WK;
     cur={loc:locName,date:dateStr,
       tmp:{ps:docsOf(c).slice(), s:(c&&c.s!=null)?c.s:h.s, e:(c&&c.e!=null)?c.e:h.e,
-           ydot:!!(c&&c.ydot), closed:!!(c&&c.closed)}};
+           ydot:!!(c&&c.ydot), closed:!!(c&&c.closed), event:(c&&c.event)||''}};
     renderDay();
   }
   function renderDay(){
@@ -685,6 +753,15 @@
           '<button class="pk'+(t.closed?' on':'')+'" onclick="PS.markClosed()">Closed</button>'+
         '</div>'+
         '<p class="hint">Tap <b>Yellow Dot Day</b> again to switch it off — the office then shows as <b>Closed</b>. Yellow Dot = open with no doctor; Closed = not open at all.</p>'+
+        '<div class="s-lab">Special event <span class="s-note">optional \u2014 shows on the day</span></div>'+
+        '<div class="evrow">'+
+          '<input class="s-input" id="evtext" maxlength="60" value="'+esc(t.event||'')+'" '+
+            'placeholder="e.g. Staff training, Team lunch" oninput="PS.setEvent(this.value)">'+
+          (t.event?'<button class="sbtn ghost" onclick="PS.setEvent(\'\',true)">Remove</button>':'')+
+        '</div>'+
+        '<p class="hint">Use this when something is on at the office so nobody treats it as a '+
+        'free day. It shows on the calendar and <b>never counts as a doctor day</b> \u2014 it can '+
+        'sit on a day that already has a doctor, or on its own.</p>'+
       '</div>'+
       '<div class="m-foot"><button class="sbtn ghost" onclick="PS.clearDay()">Clear</button>'+
         '<span id="dhint" style="flex:1;color:var(--bad);font-size:12.5px"></span>'+
@@ -696,6 +773,7 @@
     if(k>=0) t.ps.splice(k,1); else t.ps.push(i);
     t.ydot=false; t.closed=false; renderDay(); }
   function setT(k,v){ cur.tmp[k]=hm(v); }
+  function setEvent(v,redraw){ cur.tmp.event=v; if(redraw) renderDay(); }
   function halfDay(){ cur.tmp.s=HALF.s; cur.tmp.e=HALF.e; renderDay(); }
   function fullDay(){ cur.tmp.s=WK.s; cur.tmp.e=WK.e; renderDay(); }
   // their ask: de-selecting a Yellow Dot Day closes the office
@@ -706,12 +784,20 @@
   function clearDay(){ setCell(loc(cur.loc),parseISO(cur.date),null); closeModal(); refresh(); }
   function saveDay(){
     const t=cur.tmp, l=loc(cur.loc), d=parseISO(cur.date);
-    if(t.closed) setCell(l,d,{closed:true});
-    else if(t.ydot) setCell(l,d,{ydot:true});
+    /* A special event is a LABEL on the day, not a state of its own, so it can sit on a
+       day that already has a doctor, a Yellow Dot or a closure - "Dr. Coelho in, plus a
+       team lunch at 4" is a real thing. It is also enough on its own to keep a day that
+       would otherwise be cleared. */
+    const ev=(t.event||'').trim().slice(0,60);
+    let cell=null;
+    if(t.closed)    cell={closed:true};
+    else if(t.ydot) cell={ydot:true};
     else if(t.ps.length){
       if(t.e<=t.s){ el('dhint').textContent='End time must be after the start time.'; return; }
-      setCell(l,d,{ps:t.ps.slice(),s:t.s,e:t.e});
-    } else setCell(l,d,null);
+      cell={ps:t.ps.slice(),s:t.s,e:t.e};
+    }
+    if(ev){ cell=cell||{}; cell.event=ev; }
+    setCell(l,d,cell);
     closeModal(); refresh();
   }
 
@@ -833,6 +919,7 @@
   function togDoc(i){ fDocs.has(i)?fDocs.delete(i):fDocs.add(i); refresh(); }
   function allDocs(){ fDocs.clear(); refresh(); }
   function togYdot(){ fYdot=!fYdot; refresh(); }
+  function togEvent(){ fEvent=!fEvent; refresh(); }
   function togClosed(){ fClosed=!fClosed; refresh(); }
   function openModal(h){ el('modalCard').innerHTML=h; el('modal').classList.add('open'); }
   function closeModal(){ el('modal').classList.remove('open'); }
@@ -846,7 +933,7 @@
     if(n)n.innerHTML='<b>Every office has its own color.</b> Grey = closed, <b>Yellow Dot Day</b> = open with no doctor on site. Use the filters to find an office or a doctor.';
   }
 
-  window.PS={view:setView,step,today,togLoc,allLocs,togDoc,allDocs,togYdot,togClosed,open,addTo,quick,pickDoc,setT,halfDay,fullDay,markYdot,markClosed,
+  window.PS={view:setView,step,today,togLoc,allLocs,togDoc,allDocs,togYdot,togClosed,togEvent,setEvent,open,addTo,quick,pickDoc,setT,halfDay,fullDay,markYdot,markClosed,
     clearDay,saveDay,addLocation,editLoc,setColor,setTZ,dtog,dtime,lunchTog,lunchT,saveLoc,delLoc,
     addPerson,edit:editPerson,savePerson,delPerson,close:closeModal};
 
@@ -888,13 +975,14 @@
 })();
 </script>
 <script>PH.nav('schedule');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc19"></script>
+<script src="tour.js?v=hc20"></script>
 <script>
 Tour.init([
   {sel:'#viewseg', title:'Week or month', body:'<b>Week</b> is the day-to-day working view. <b>Month</b> shows the whole month at a glance, with every office in its own color.'},
   {sel:'#filters', title:'Find anything fast', body:'Tap offices to show or hide them, and tap a doctor to see <b>only</b> where that doctor is working. Both filters work in either view.'},
   {sel:'#status', title:'Is it actually covered?', body:'The one question that matters on a Monday: <b>is any open day still without a doctor?</b>'},
   {sel:'#board', title:'Tap any day to set it', body:'Pick a doctor — you\'ll only be offered doctors who are <b>free that day</b> — set the hours or use <b>Half day (8–2)</b>, or mark it a <b>Yellow Dot Day</b>. Tapping Yellow Dot again switches it off and closes the office.'},
+  {sel:'#board', title:'Hours, and anything else going on', body:'Each office\u2019s <b>opening hours</b> now sit next to its name, so nobody has to go looking for them \u2014 and if an office keeps different hours on different days, it says so. You can also give any day a <b>\u2605 special event</b> (\u201cStaff training\u201d, \u201cTeam lunch\u201d) so people can see something is on and it isn\u2019t a free day to ask off. It <b>never counts as a doctor day</b>, and it can sit on a day that already has a doctor.'},
   {sel:'#board', title:'Add a day as you go', body:'In <b>Month</b> view every day has a small <b>+ Add</b>. Tap it, choose the <b>office</b>, then the <b>doctor</b> and hours \u2014 that\u2019s how the calendar gets built.'},
   {sel:'#counters', title:'Doctor days, counted for you', body:'How many days each doctor works, how many days each office is covered, and who covers where — for <b>this month and the whole year</b>.'},
   {sel:'#addLocBtn', title:'Offices, colors, hours and lunches', body:'Add an office, choose its <b>color</b>, set its opening days and times, its time zone, and whether it takes a <b>set lunch at all</b>.'}
