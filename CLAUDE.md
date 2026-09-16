@@ -246,6 +246,19 @@ her bug is confirmed fixed against the real file.
 The offline suite (`scratchpad/rt/test.js`, 22 checks over six scenarios) must keep failing against
 the pre-fix build or it is not testing anything.
 
+### The server side: BUILT, then not adopted (2026-09-16)
+`api/` holds a finished, tested route that would have let the app hold the workbook's
+access instead of every person needing the file shared with them. **Cory's decision: the
+practice is not running a server.** Nothing is deployed, nothing calls it, and the client
+hook in `production.html` was removed rather than left half-wired — it cost a wasted
+request before every save and a guess about whether the endpoint was really answering.
+See `api/README.md` for what switching it on would take and the three gaps that would
+have to be closed first. **Do not re-add the client call without closing those.**
+
+What follows from the decision: people who enter production **need the workbook shared
+with them**, and the share is all-or-nothing — anyone who can save through the hub can
+also open the file in Excel and change any office. The practice accepted that knowingly.
+
 ### What to do next
 1. **Rotate the deployment token.** It has been pasted into chat twice now. Azure -> Manage
    deployment token -> **Reset**. Deploys still work afterwards; you just pass the new one.
