@@ -263,10 +263,10 @@
   }
 
 </style>
-<script src="user.js?v=hc25"></script>
+<script src="user.js?v=hc26"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc25"></script>
-  <script src="gate.js?v=hc25"></script>
+  <script src="store.js?v=hc26"></script>
+  <script src="gate.js?v=hc26"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — sample staff schedule for validation. Live version = one Microsoft List the practice maintains.</div>
@@ -971,13 +971,34 @@
       d=addDays(d,1);
     }
   }
-  function boot(stored, docs){
+  /* DATA LOSS, fixed 2026-09-16. This used to answer "nothing came back" by writing a
+     blank year over the top - which is fine the very first time, and catastrophic every
+     other time. If the read FAILED (a stale sign-in, a dropped connection, SharePoint
+     having a moment) the result is also "nothing came back", so the blank slate was
+     saved over a schedule somebody had spent hours filling in.
+
+     Two changes: a failed read is now told apart from a genuinely empty one and never
+     writes anything, and an empty schedule is never persisted at all. It simply renders
+     empty; the first real edit saves it. Nothing is written until a person does something. */
+  function boot(stored, docs, readFailed){
     if(Array.isArray(docs) && docs.length && docs.every(d=>d&&d.n)) people=docs;
     const isDemo = stored && (stored.__demo || stored.__v!==SCHED_VERSION);
     if(PH.isLive() && isDemo) stored=null;          // never show invented days in the real app
-    if(stored && typeof stored==='object' && Object.keys(stored).length) sched=stored;
-    else if(PH.isLive()){ startEmpty(); save(); }   // persist the clean slate over the demo one
-    else buildYear(TODAY.getFullYear());
+    if(stored && typeof stored==='object' && Object.keys(stored).length){
+      sched=stored;
+    } else if(readFailed){
+      /* Say so rather than showing an empty calendar that looks like lost work. */
+      sched={};
+      const n=document.createElement('div');
+      n.style.cssText='max-width:var(--maxw);margin:0 auto 14px;padding:11px 14px;border-radius:10px;'+
+        'font-size:13px;font-weight:600;background:#FCEBE8;color:#93301f;border:1px solid #f0c3b9';
+      n.innerHTML='<b>The schedule could not be loaded just now.</b> This is not an empty '+
+        'schedule \u2014 nothing has been lost. Reload the page in a moment; if it keeps '+
+        'happening, sign out and back in.';
+      const w=document.querySelector('.wrap'); if(w) w.prepend(n);
+    } else if(PH.isLive()){
+      startEmpty();                                  // in memory only - never saved over anyone
+    } else buildYear(TODAY.getFullYear());
     applyPerms();
     refresh();
   }
@@ -985,15 +1006,21 @@
   let local=null; try{ local=JSON.parse(localStorage.getItem('ph_sched2')); }catch(_){}
   let ldocs=null; try{ ldocs=JSON.parse(localStorage.getItem('ph_docs')); }catch(_){}
   if(window.PH_STORE && PH.isLive()){
-    Promise.all([ PH_STORE.get('ph_sched2').catch(function(){return null;}),
-                  PH_STORE.get('ph_docs').catch(function(){return null;}) ])
-           .then(function(r){ boot(r[0] || local, r[1] || ldocs); })
-           .catch(function(){ boot(local, ldocs); });
-  } else boot(local, ldocs);
+    // Track the failure explicitly - "it broke" and "there is nothing there" are very
+    // different answers, and treating the first as the second is what lost a schedule.
+    let failed=false;
+    Promise.all([ PH_STORE.get('ph_sched2').catch(function(){ failed=true; return null; }),
+                  PH_STORE.get('ph_docs').catch(function(){ return null; }) ])
+           .then(function(r){
+             const got = r[0] || local;
+             boot(got, r[1] || ldocs, failed && !got);
+           })
+           .catch(function(){ boot(local, ldocs, !local); });
+  } else boot(local, ldocs, false);
 })();
 </script>
 <script>PH.nav('schedule');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc25"></script>
+<script src="tour.js?v=hc26"></script>
 <script>
 Tour.init([
   {sel:'#viewseg', title:'Week or month', body:'<b>Week</b> is the day-to-day working view. <b>Month</b> shows the whole month at a glance, with every office in its own color.'},
