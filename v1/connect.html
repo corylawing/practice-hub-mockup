@@ -133,6 +133,7 @@
     <p class="warn">Used in your browser only. Never saved, never committed to the repo, never sent
       anywhere except Microsoft.</p>
     <button id="btnFile" disabled>Try to read it</button>
+    <button id="btnKnown" disabled title="Uses the drive and item IDs the app already carries">Use the one the app already points at</button>
     <div class="res" id="r5"></div>
   </div>
 
@@ -221,7 +222,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-<script src="workbook.js?v=hc20"></script>
+<script src="workbook.js?v=hc21"></script>
 <script>
 (function(){
   'use strict';
@@ -230,6 +231,12 @@
   if (window.opener && window.opener !== window && /[?#].*(code=|error=|state=)/.test(location.href)) return;
   /* Both IDs are public by design — a browser app ships them in its JavaScript.
      There is NO client secret and there must never be one: a SPA cannot hold a secret. */
+  /* This page deliberately loads no user.js - it is the diagnostic that has to work
+     even when the rest of the app does not. So the workbook address is repeated here.
+     If it ever changes, change it in user.js (PH.WORKBOOK) AND here. */
+  var WB = { drive:'b!_iYahf-6ukmoAAj5kJvRerfxyG2Vel1DjXWUHR3Q-rM_xdgQyKrjQJEx8aAKAvQ-',
+             item :'0153I7MX4WXYRN4DKUJFEZPTWOZ4GBQMIV' };
+
   var CLIENT_ID = '2122a06f-b6e9-4618-9106-3b6d6a84b5eb';
   var TENANT_ID = 'edb81e45-7fa8-4147-982f-2f31c6298086';
   /* All DELEGATED. The app acts as the signed-in person, so SharePoint keeps enforcing
@@ -282,7 +289,7 @@
     var on = !!acc;
     el('btnIn').disabled = on;
     el('btnOut').disabled = !on;
-    ['btnMe','btnSites','btnUsers','btnFile','btnStore','btnDirFields'].forEach(function(id){ el(id).disabled = !on; });
+    ['btnMe','btnSites','btnUsers','btnFile','btnKnown','btnStore','btnDirFields'].forEach(function(id){ el(id).disabled = !on; });
     if (on){
       show('r1', true, 'Signed in',
         '<dl><dt>Name</dt><dd>' + esc(acc.name) + '</dd>' +
@@ -333,11 +340,42 @@
     account = null;
     el('btnIn').disabled = false;
     el('btnOut').disabled = true;
-    ['btnMe','btnSites','btnUsers','btnFile','btnSheets','btnCompare','btnStore','btnXcheck','btnDirFields','btnRound'].forEach(function(id){ el(id).disabled = true; });
+    ['btnMe','btnSites','btnUsers','btnFile','btnKnown','btnSheets','btnCompare','btnStore','btnXcheck','btnDirFields','btnRound'].forEach(function(id){ el(id).disabled = true; });
     ['r1','r2','r3','r4','r5','r6','r7','r8','r9','r10','r11'].forEach(function(id){
       el(id).className = 'res';
       el(id).closest('.card').classList.remove('done','fail');
     });
+  };
+
+  /* Finding the workbook WITHOUT a sharing link. The app addresses it by IDs, so
+     asking for a link first is circular when the link is the thing you are trying
+     to find. This resolves the IDs the app already carries and prints the address. */
+  el('btnKnown').onclick = async function(){
+    var w = (window.PH && PH.WORKBOOK) || WB;
+    if (!w || !w.drive || !w.item)
+      return show('r5', false, 'No workbook is configured', 'The app has no drive/item IDs set.');
+    try {
+      var f = await graph('/drives/' + w.drive + '/items/' + w.item);
+      FILE = { driveId: w.drive, itemId: w.item, name: f.name };
+      ['btnSheets','btnCompare','btnXcheck','btnRound'].forEach(function(id){
+        var b = el(id); if (b) b.disabled = false; });
+      show('r5', true, 'This is the workbook the app reads',
+        '<dl><dt>File</dt><dd>' + esc(f.name) + '</dd>' +
+        '<dt>Size</dt><dd>' + bytes(f.size) + '</dd>' +
+        '<dt>Last saved</dt><dd>' + esc(f.lastModifiedDateTime || '(unknown)') + '</dd>' +
+        (f.webUrl ? '<dt>Open it</dt><dd><a href="' + esc(f.webUrl) + '" target="_blank" rel="noopener">' +
+                    esc(f.webUrl) + '</a></dd>' : '') +
+        '<dt>Drive ID</dt><dd>' + esc(w.drive) + '</dd>' +
+        '<dt>Item ID</dt><dd>' + esc(w.item) + '</dd></dl>' +
+        '<p style="margin:10px 0 0">That address is the one to use when sharing it with '+
+        'somebody, and it is also where the Dashboard and Enter Production read from.</p>');
+    } catch (e) {
+      var m = why(e);
+      show('r5', false, 'Could not open the workbook the app points at',
+        esc(m) + (/403|denied|forbidden|404|notFound/i.test(m)
+          ? '<p style="margin:10px 0 0">That usually means it has not been shared with '+
+            '<b>you</b> \u2014 the IDs are fine, your access is not.</p>' : ''));
+    }
   };
 
   el('btnMe').onclick = async function(){
@@ -739,6 +777,11 @@
         '<dl><dt>File</dt><dd>' + esc(f.name) + '</dd>' +
         '<dt>Size</dt><dd>' + bytes(f.size) + '</dd>' +
         '<dt>Last saved</dt><dd>' + esc(f.lastModifiedDateTime || '(unknown)') + '</dd>' +
+        /* The app addresses the file by its IDs, so its actual web address is never
+           written down anywhere. Show it - it is needed every time somebody has to
+           open the workbook or share it with a new person. */
+        (f.webUrl ? '<dt>Open it</dt><dd><a href="' + esc(f.webUrl) + '" target="_blank" rel="noopener">' +
+                    esc(f.webUrl) + '</a></dd>' : '') +
         '<dt>Lives in</dt><dd>' + esc(personal ? 'a personal OneDrive' : 'a SharePoint library') + '</dd>' +
         '<dt>Drive ID</dt><dd>' + esc(FILE.driveId) + '</dd>' +
         '<dt>Item ID</dt><dd>' + esc(FILE.itemId) + '</dd></dl>' +
