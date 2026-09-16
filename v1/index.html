@@ -250,12 +250,12 @@
   }
 
 </style>
-<script src="user.js?v=hc23"></script>
-<script src="celebrate.js?v=hc23"></script>
+<script src="user.js?v=hc24"></script>
+<script src="celebrate.js?v=hc24"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="workbook.js?v=hc23"></script>
-  <script src="store.js?v=hc23"></script>
-  <script src="gate.js?v=hc23"></script>
+  <script src="workbook.js?v=hc24"></script>
+  <script src="store.js?v=hc24"></script>
+  <script src="gate.js?v=hc24"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — real numbers from the 2026 Production Dashboard workbook. You only see the offices you have access to.</div>
@@ -1039,19 +1039,34 @@ const OFFICES=[
     n.innerHTML=html;
   }
 
-  /* "Graph 403: Access denied" reads as a broken app. It is not - it means the
-     workbook has not been shared with this person yet, which is a thing an admin
-     fixes in one click. Say that instead. */
+  /* Turn a Graph failure into something a person can act on.
+     The status is read from the FRONT of the message (workbook.js throws
+     'Graph <status>: <text>'), not matched anywhere inside it - an earlier version
+     tested /423|locked/ against the whole string, and Microsoft's errors carry
+     request ids full of digits, so an unrelated failure could report itself as
+     "someone has it open in Excel". The raw error is always appended, because a
+     friendly guess that turns out to be wrong wastes more time than no guess. */
   function wbWhyNot(e){
     const msg=(e&&e.message)||String(e);
-    if(/403|denied|forbidden|itemNotFound|404/i.test(msg))
+    const m=/^Graph\s+(\d{3})\b/.exec(msg);
+    const code=m?Number(m[1]):0;
+    const detail='<div style="margin-top:8px;font-weight:400;opacity:.75;font-size:12px">'+
+                 String(msg).replace(/[<>&]/g,'')+'</div>';
+    if(code===403 || code===401 || /accessdenied|unauthenticated/i.test(msg))
       return '<b>You don\u2019t have access to the production workbook yet.</b> '+
              'Everything else in the hub works \u2014 just the numbers need the workbook '+
-             'shared with you. Ask an admin and they can do it in a moment.';
-    if(/423|locked/i.test(msg))
-      return '<b>The workbook is open in Excel by someone else right now.</b> '+
-             'Try again in a minute.';
-    return '<b>Could not read the workbook.</b> '+msg;
+             'shared with you. Ask an admin and they can do it in a moment.'+detail;
+    if(code===404 || /itemnotfound/i.test(msg))
+      return '<b>The hub can\u2019t find the production workbook.</b> '+
+             'It may have been moved or renamed \u2014 that needs fixing in the hub, '+
+             'not by sharing it again.'+detail;
+    if(code===423 || /resourcelocked|\blocked\b/i.test(msg))
+      return '<b>The workbook is locked right now</b>, usually because someone has it '+
+             'open in Excel. Try again in a minute.'+detail;
+    if(code===429 || code>=500)
+      return '<b>Microsoft is busy or having trouble.</b> Try again in a minute \u2014 '+
+             'nothing is wrong with the hub or your access.'+detail;
+    return '<b>Could not read the workbook.</b>'+detail;
   }
   async function hydrate(){
     if(typeof PH_WB==='undefined' || !window.PH_AUTH){
@@ -1127,7 +1142,7 @@ const OFFICES=[
 })();
 </script>
 <script>PH.nav('dashboard');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(window.DASH&&DASH.identity)DASH.identity();});</script>
-<script src="tour.js?v=hc23"></script>
+<script src="tour.js?v=hc24"></script>
 <script>
 Tour.init([
   {sel:'.viewas', title:'You only see your offices', body:'Everyone can see <b>All Offices</b> \u2014 the practice total as one number. What your location decides is which offices you can <b>open individually</b>. Switch to the Carlsbad manager: she keeps the group total and Carlsbad, but the other offices and the leaderboard disappear, because those name every office\u2019s figures.'},
