@@ -346,6 +346,12 @@ and could open the file in Excel anyway. Real containment would need per-office 
   written to SharePoint and only ever read from `localStorage`, so a second device showed the
   defaults and the next save pushed those defaults over the practice's real office setup. Fixed
   2026-09-16 with `PH.reloadLocations()`. If you add a key, add both halves.
+- **Anything Heather needs must be reachable from MONTH view.** She lives in Month; Week is the
+  exception. The office editor — where the hours are set — existed only as a pencil in the Week
+  view's row header, so changing an office's hours meant knowing to switch views first. It is now
+  also on each office chip in the filter bar, which both views share, and that pencil is always
+  visible rather than appearing on hover. Before adding an editing affordance, check it is reachable
+  from Month.
 - **A day stores its own start/end times; the office's hours are a separate record.** Changing an
   office's hours therefore changes only the label beside the office name — Heather set Carlsbad to
   8–2 on 2026-09-16 and every day under it still read 8a–5p. `saveLoc()` now offers to move the

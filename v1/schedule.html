@@ -78,6 +78,9 @@
   .dwrap:hover .dedit,.dedit:focus-visible{opacity:1}
   .dedit:hover{color:var(--teal);background:var(--teal-soft)}
   @media (hover:none){.dedit{opacity:1}}
+  /* The OFFICE pencil is always visible, not hover-only. Office hours are set behind it,
+     and "hover the chip to discover the pencil" is not something to make anyone guess. */
+  .dedit.always{opacity:1}
   /* Show/hide toggles. Same "dimmed = hidden" language as the office chips. */
   .tchip{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:5px 12px;font-size:12.5px;
     font-weight:700;color:var(--navy);cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px}
@@ -263,10 +266,10 @@
   }
 
 </style>
-<script src="user.js?v=hc30"></script>
+<script src="user.js?v=hc31"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc30"></script>
-  <script src="gate.js?v=hc30"></script>
+  <script src="store.js?v=hc31"></script>
+  <script src="gate.js?v=hc31"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — sample staff schedule for validation. Live version = one Microsoft List the practice maintains.</div>
@@ -440,9 +443,16 @@
 
   /* ---------- filters: office AND/OR doctor ---------- */
   function renderFilters(){
+    /* The pencil sits here as well as on the Week row, because the office editor - hours
+       included - used to live ONLY in the Week view's row header. Heather works in Month
+       view, so changing an office's hours meant knowing to switch views first. Same
+       pattern as the doctor chips right below: the chip filters, the pencil edits. */
     const locs=locations.map(l=>{const c=colOf(l.color);
-      return '<button class="lchip'+(fLoc.has(l.n)?'':' off')+'" style="border-color:'+c.dot+';color:'+c.fg+';background:'+(fLoc.has(l.n)?c.bg:'#fff')+'" onclick="PS.togLoc(\''+esc(l.n)+'\')">'+
-        '<span class="dot" style="background:'+c.dot+'"></span>'+l.n+'</button>';}).join('');
+      return '<span class="dwrap"><button class="lchip'+(fLoc.has(l.n)?'':' off')+'" style="border-color:'+c.dot+';color:'+c.fg+';background:'+(fLoc.has(l.n)?c.bg:'#fff')+'" onclick="PS.togLoc(\''+esc(l.n)+'\')">'+
+        '<span class="dot" style="background:'+c.dot+'"></span>'+l.n+'</button>'+
+        (canEdit()?'<button class="dedit always" title="Edit '+esc(l.n)+' \u2014 hours, colour, lunch" '+
+          'onclick="event.stopPropagation();PS.editLoc(\''+esc(l.n)+'\')">\u270E</button>':'')+
+        '</span>';}).join('');
     /* A doctor chip filters; the pencil renames or removes. editPerson() existed and was
        even exported, but nothing ever called it — so a doctor could be added and then
        never corrected. Dr. Brimhall wanting to be Dr. Jae had no way through. */
@@ -1084,7 +1094,7 @@
 })();
 </script>
 <script>PH.nav('schedule');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc30"></script>
+<script src="tour.js?v=hc31"></script>
 <script>
 Tour.init([
   {sel:'#viewseg', title:'Week or month', body:'<b>Week</b> is the day-to-day working view. <b>Month</b> shows the whole month at a glance, with every office in its own color.'},
