@@ -346,6 +346,13 @@ and could open the file in Excel anyway. Real containment would need per-office 
   written to SharePoint and only ever read from `localStorage`, so a second device showed the
   defaults and the next save pushed those defaults over the practice's real office setup. Fixed
   2026-09-16 with `PH.reloadLocations()`. If you add a key, add both halves.
+- **A day stores its own start/end times; the office's hours are a separate record.** Changing an
+  office's hours therefore changes only the label beside the office name — Heather set Carlsbad to
+  8–2 on 2026-09-16 and every day under it still read 8a–5p. `saveLoc()` now offers to move the
+  days that were merely following the office hours. It only touches a day whose times match the
+  office's OLD hours exactly (a deliberate half day is left alone), only from today forward (a past
+  day is a record of what happened), and it **asks first** — never mass-edit somebody's schedule
+  silently.
 - **Never scale a goal.** Show the workbook's goal. See §"GOALS ARE NEVER SCALED".
 - **Match workbook rows by LABEL, never by row number** — the tabs have two different layouts.
 - **Bump the `?v=` cache stamp** on every shared-file edit or browsers serve a stale app.

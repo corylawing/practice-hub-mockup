@@ -263,10 +263,10 @@
   }
 
 </style>
-<script src="user.js?v=hc29"></script>
+<script src="user.js?v=hc30"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc29"></script>
-  <script src="gate.js?v=hc29"></script>
+  <script src="store.js?v=hc30"></script>
+  <script src="gate.js?v=hc30"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — sample staff schedule for validation. Live version = one Microsoft List the practice maintains.</div>
@@ -566,8 +566,12 @@
         const mds=docsOf(cell);
         if(mds.length){
           if(!fHit(mds)) return;
+          /* The times belong here too. Week view has shown them next to the doctor since
+             Heather asked for it; Month view showed the doctor and nothing else, so a
+             half day looked exactly like a full one. */
+          const mt=(cell.s!=null&&cell.e!=null)?' \u00b7 '+fmt(cell.s)+'\u2013'+fmt(cell.e):'';
           ents+='<button class="ent" style="background:'+c.bg+';color:'+c.fg+';border-left-color:'+c.dot+'"'+click+'>'+l.n+
-            '<small>'+mds.map(i=>people[i].n).join(', ')+'</small>'+mev+'</button>';
+            '<small>'+mds.map(i=>people[i].n).join(', ')+mt+'</small>'+mev+'</button>';
         } else if(cell&&cell.ydot){
           if(!fAll()||!fYdot) return;
           // Keep the office color so you can still tell WHICH office — only the dot is yellow.
@@ -864,6 +868,37 @@
   function dtime(i,k,v){ if(tmpLoc.hours[i]) tmpLoc.hours[i][k]=hm(v); }
   function lunchTog(){ tmpLoc.lunch=tmpLoc.lunch?null:{s:720,e:780}; renderLoc(); }
   function lunchT(k,v){ if(tmpLoc.lunch) tmpLoc.lunch[k]=hm(v); }
+
+  /* ---------- office hours vs. the days already on the calendar -------------------
+     Heather, 2026-09-16: "when I change an office to 8-2 the hours do not show up on
+     the calendar."
+
+     Every day stores the times it was created with. Changing the office's hours
+     changed the label beside the office name and nothing else, so the row read
+     "Mon 8a-2p" while all five days under it still read 8a-5p.
+
+     Days that were only ever following the office hours should keep following them.
+     Days where somebody typed a different time on purpose must not be touched - half
+     days exist precisely so a doctor can do 8-2 at one office and the afternoon at
+     another. So a day only moves when its times match the office's OLD hours exactly.
+
+     Only from today forward. A past day is a record of what actually happened and
+     rewriting it would be a lie. */
+  function daysFollowingHours(name, oldHours, newHours){
+    const hits=[], today=iso(TODAY);
+    Object.keys(sched).forEach(k=>{
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(k) || k < today) return;
+      const cell=(sched[k]||{})[name];
+      if(!cell || cell.s==null || cell.e==null) return;
+      const i=dowIdx(parseISO(k)); if(i>4) return;
+      const was=oldHours&&oldHours[i], now=newHours&&newHours[i];
+      if(!was || !now) return;                       // closed then or closed now
+      if(was.s===now.s && was.e===now.e) return;     // that weekday did not change
+      if(cell.s===was.s && cell.e===was.e) hits.push({k:k, i:i});
+    });
+    return hits;
+  }
+
   function saveLoc(){
     const nm=(el('lName').value||'').trim(); if(!nm)return;
     // Keep brand/state from Admin — this page doesn't edit them and must not drop them.
@@ -877,6 +912,18 @@
         fLoc.delete(tmpLoc.orig); fLoc.add(nm);
       }
       locations[i]=rec;
+    }
+    /* Ask before touching days she has already filled in - never rewrite a schedule
+       on somebody's behalf without saying so. */
+    const follow = tmpLoc.isNew ? [] : daysFollowingHours(nm, keep.hours||[], rec.hours);
+    if(follow.length){
+      const n=follow.length;
+      if(confirm(n+(n===1?' day':' days')+' from today onward still show '+nm+'\u2019s old '+
+                 'hours.\n\nChange '+(n===1?'it':'them')+' to the new hours?\n\n'+
+                 'Days where someone set a different time on purpose are left alone, '+
+                 'and days before today are not changed.')){
+        follow.forEach(h=>{ const c=sched[h.k][nm]; c.s=rec.hours[h.i].s; c.e=rec.hours[h.i].e; });
+      }
     }
     save(); PH.saveLocations(locations); closeModal(); refresh();
   }
@@ -1037,7 +1084,7 @@
 })();
 </script>
 <script>PH.nav('schedule');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc29"></script>
+<script src="tour.js?v=hc30"></script>
 <script>
 Tour.init([
   {sel:'#viewseg', title:'Week or month', body:'<b>Week</b> is the day-to-day working view. <b>Month</b> shows the whole month at a glance, with every office in its own color.'},
