@@ -75,6 +75,10 @@
     });
   }
 
+  /* Set by the sign-in scope below. expose() cannot open a popup itself - see the
+     comment in token() - so it asks for one through this. */
+  var requestSignIn = function(){};
+
   /* Shared Graph access, so pages don't each stand up their own MSAL instance. */
   function expose(app, account){
     global.PH_AUTH = {
@@ -82,7 +86,15 @@
       token: function(){
         var req = { scopes: SCOPES, account: account };
         return app.acquireTokenSilent(req)
-          .catch(function(){ return app.acquireTokenPopup(req); })
+          .catch(function(e){
+            /* DO NOT open a popup from here. A browser only allows one that a person's
+               own click just opened, and this runs long after any click - while a page
+               is loading, or partway through a save. The popup was being blocked, so a
+               session that simply needed renewing surfaced as the baffling
+               "Error opening popup window". Ask for the click instead. */
+            requestSignIn(app, account, e);
+            throw new Error('Your Microsoft sign-in needs renewing \u2014 use the Sign in button.');
+          })
           .then(function(r){ return r.accessToken; });
       },
       graph: function(path){
@@ -123,6 +135,58 @@
       g.__err.textContent = m; g.__btn.disabled = false;
     }
 
+    /* Two Microsoft accounts signed in on one browser is normal - your own and one you
+       were shown. Guessing between them is how somebody ends up looking at the wrong
+       person's figures, or at an error because that account cannot reach the workbook. */
+    function chooseAccount(app, accounts){
+      var g = ensureGate();
+      g.__btn.style.display = 'none';
+      g.__err.innerHTML = '';
+      var wrap = document.createElement('div');
+      wrap.style.cssText = 'display:flex;flex-direction:column;gap:8px;text-align:left';
+      var head = document.createElement('div');
+      head.style.cssText = 'font-weight:700;margin-bottom:2px';
+      head.textContent = 'You are signed in with more than one account. Which one?';
+      wrap.appendChild(head);
+      accounts.forEach(function(a){
+        var b = document.createElement('button');
+        b.textContent = a.username || a.name || 'Account';
+        b.style.cssText = 'width:100%';
+        b.onclick = function(){
+          if (app.setActiveAccount) app.setActiveAccount(a);
+          expose(app, a); open(gate);
+        };
+        wrap.appendChild(b);
+      });
+      g.__err.appendChild(wrap);
+      g.style.display = '';
+    }
+
+    /* A silent renewal failed, so a real click is needed. Put the gate back with a
+       button rather than trying to open a window nobody asked for. */
+    requestSignIn = function(app, account){
+      try{
+        var g = ensureGate();
+        document.body.classList.add('phgated');
+        g.style.display = '';
+        g.__btn.style.display = '';
+        g.__btn.disabled = false;
+        g.__btn.textContent = 'Sign in again';
+        g.__err.textContent = 'Your Microsoft sign-in needs renewing.';
+        g.__btn.onclick = function(){
+          g.__btn.disabled = true;
+          app.acquireTokenPopup({ scopes: SCOPES, account: account })
+            .then(function(){ location.reload(); })
+            .catch(function(e){
+              g.__btn.disabled = false;
+              g.__err.textContent = (e && e.errorCode === 'popup_window_error')
+                ? 'Your browser blocked the sign-in window. Allow pop-ups for this site, then try again.'
+                : ((e && e.errorMessage) || 'Sign-in failed. Try again.');
+            });
+        };
+      }catch(_){}
+    };
+
     if (typeof msal === 'undefined'){
       fail('Could not load the Microsoft sign-in library. Check the connection and reload.');
       return;
@@ -150,11 +214,22 @@
       var known = app.getAllAccounts();
       // Already signed in: never build the sign-in screen at all — painting it just to
       // remove it is exactly the flash this is meant to avoid.
-      if (known.length){ expose(app, known[0]); open(gate); return; }
+      /* known[0] was a coin toss once two accounts were signed in. Picking the wrong
+         one made the silent token renewal fail, which is what produced the blocked
+         popup. Prefer the account MSAL has marked active; with exactly one, mark it;
+         with several and none active, ask. */
+      var active = (app.getActiveAccount && app.getActiveAccount()) || null;
+      if (active){ expose(app, active); open(gate); return; }
+      if (known.length === 1){
+        if (app.setActiveAccount) app.setActiveAccount(known[0]);
+        expose(app, known[0]); open(gate); return;
+      }
+      if (known.length > 1){ chooseAccount(app, known); return; }
       var g = ensureGate(), btn = g.__btn, err = g.__err;
       btn.onclick = function(){
         btn.disabled = true; err.textContent = '';
         app.loginPopup({ scopes: SCOPES }).then(function(r){
+          if (app.setActiveAccount && r.account) app.setActiveAccount(r.account);
           expose(app, r.account);
           open(gate);
         }).catch(function(e){
