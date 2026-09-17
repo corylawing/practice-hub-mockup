@@ -372,6 +372,26 @@ and could open the file in Excel anyway. Real containment would need per-office 
   written to SharePoint and only ever read from `localStorage`, so a second device showed the
   defaults and the next save pushed those defaults over the practice's real office setup. Fixed
   2026-09-16 with `PH.reloadLocations()`. If you add a key, add both halves.
+- **Change one part of a shared record with `PH_STORE.update(key, fn)`, never by sending the
+  page's whole copy.** Every save used to send the entire record. A page open for an hour sent an
+  hour-old copy over whatever anyone else had saved since — and the size barely moves, so the wipe
+  guard had nothing to say. `update()` reads the shared copy first, hands it to `fn` to change, and
+  writes the result; a read that fails leaves `set()` refusing. Admin's per-person settings merge
+  only the slots touched (`savePeopleOverrides(changedKeys)`); the access grid merges one cell
+  (`saveAccess(team, section)`); added/removed people merge through `saveRosterExtra()`.
+- **There is ONE roster: `PH.rosterRows()`.** The deployed `_people.json` plus `ph_roster_extra`
+  (`{added:[rows], removed:[personKeys]}`) laid over it. Admin, Team and the permissions in user.js
+  all read it — admin.html and team.html used to fetch the file themselves, so a person added in
+  one place would never have appeared in another. Removing **hides**, never deletes; the Removed
+  list restores. Admin used to tell Heather "people come from Microsoft and appear on their own" —
+  that was never true and sent her chasing IT.
+- **A person's roster row is found by email, then by display name.** `fromProfile()` looked it up
+  by email only, so the **38 staff with no email on file** signed in and got least-access regardless
+  of their roster team — and the Admin overrides meant to fix that were looked up the same broken
+  way. Names are unique across the 70; a miss finds nothing and falls back to the roster defaults.
+- **`ph_teams` and `ph_docsecs` go through the store.** Both were `localStorage` only — a team or a
+  document section Heather created existed on her machine and nowhere else. Admin pulls the shared
+  copies on `ph-identity`; documents.html does the same.
 - **A person's settings slot is `PH.personKey()`, and nothing else may compute one.** admin.html
   built its own as `email || 'emp:' + employeeId`. **38 of the 70 staff have no email on file** and
   four have no employee id either, so those collapsed to the literal string `"emp:"` — one shared

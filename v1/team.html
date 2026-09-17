@@ -84,11 +84,11 @@
   }
 
 </style>
-<script src="user.js?v=hc37"></script>
+<script src="user.js?v=hc38"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="_staff.js?v=hc37"></script>
-  <script src="store.js?v=hc37"></script>
-  <script src="gate.js?v=hc37"></script>
+  <script src="_staff.js?v=hc38"></script>
+  <script src="store.js?v=hc38"></script>
+  <script src="gate.js?v=hc38"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — everyone's contact card. In the real hub this list builds itself from Microsoft 365.</div>
@@ -291,10 +291,13 @@
   el('q').oninput=e=>{q=e.target.value; render();};
   window.TEAM={office:o=>{office=o; render();}};
   window.TEAMPAGE={refresh:render};   // re-draw once Microsoft photos arrive
-  /* Prefer the real roster; without it (public sandbox) the built-in list stands. */
-  fetch('_people.json').then(r=>r.ok?r.json():null).then(function(j){
-    const rows=j&&j.people;
-    if(Array.isArray(rows)&&rows.length){
+  /* ONE roster, from user.js: the deployed file plus anyone added in Admin, minus
+     anyone removed there. This page used to fetch the file itself, so a person Heather
+     added would never have appeared here. Without a roster (public sandbox) the
+     built-in list stands. */
+  function adoptRoster(){
+    const rows=(window.PH && PH.rosterRows) ? PH.rosterRows() : [];
+    if(rows.length){
       PEOPLE=buildPeople(rows.map(function(x){
         return { n:x.name, mail:x.email||'', loc:(x.offices||[]).join(', '),
                  st:x.state||'', brand:x.brand||'', role:x.role||'',
@@ -303,11 +306,14 @@
     }
     rebuildOffices();
     render();
-  }).catch(render);
+  }
+  if(window.PH && PH.rosterReady) PH.rosterReady.then(adoptRoster, adoptRoster); else render();
+  // Additions and removals arrive after sign-in, and again whenever an admin saves one.
+  document.addEventListener('ph-identity', adoptRoster);
 })();
 </script>
 <script>PH.nav('team');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.loadPhotos)PH.loadPhotos().then(function(got){if(got&&window.TEAMPAGE&&TEAMPAGE.refresh)TEAMPAGE.refresh();});if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc37"></script>
+<script src="tour.js?v=hc38"></script>
 <script>
 Tour.init([
   {sel:'#q', title:'Find anyone fast', body:'Type a name, an office, or part of a phone number. This is the quickest way to reach the right person at the right office.'},

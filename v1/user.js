@@ -106,15 +106,81 @@
      static file needing no token, so it is long since ready by the time a sign-in
      popup completes. */
   let ROSTER_BY_MAIL=null, ROSTER_BY_NAME=null, ROSTER_ROWS=null;
+  /* ------------------------------------------------------------------
+     THE ROSTER, AND WHO HAS BEEN ADDED OR REMOVED SINCE.
+
+     _people.json is built from Heather's workbook and deployed by Cory. The practice
+     cannot edit a deployed file - but they hire, and people leave, and Admin told them
+     "people come from Microsoft and appear on their own", which was never true. So the
+     changes live in SharePoint, under ph_roster_extra, and are laid over the file:
+
+         { added:   [ {name, role, offices, teams, email, empId, ...}, ... ],
+           removed: [ personKey, ... ] }
+
+     Removing HIDES. It never deletes: the row is still in the file, the key is still in
+     this list, and un-removing is deleting the key. Every reader - Admin, Team, and the
+     permissions in this file - takes rosterRows(), so a person added here can sign in
+     and get their team's rights the same as anyone in the file.
+     ------------------------------------------------------------------ */
+  let ROSTER_FILE=null, ROSTER_EXTRA={added:[],removed:[]};
+  const EXTRA_KEY='ph_roster_extra';
+  function applyExtra(){
+    const base=(ROSTER_FILE||[]).slice();
+    (ROSTER_EXTRA.added||[]).forEach(function(r){
+      if(r && r.name) base.push(Object.assign({_added:true}, r));
+    });
+    const gone={};
+    (ROSTER_EXTRA.removed||[]).forEach(function(k){ gone[String(k||'').toLowerCase()]=1; });
+    const rows=base.filter(function(r){ return !gone[personKey(r)]; });
+    ROSTER_ROWS=rows; ROSTER_BY_NAME=null; ROSTER_BY_MAIL={};
+    rows.forEach(function(x){
+      const m=String(x.email||'').toLowerCase().trim();
+      if(m) ROSTER_BY_MAIL[m]=x;
+    });
+    return rows;
+  }
+  /* Everyone currently on the books - the file plus the added, minus the removed. */
+  function rosterRows(){ return (ROSTER_ROWS||[]).slice(); }
+  /* The people hidden by a removal, so it can be undone. */
+  function removedRows(){
+    const gone={};
+    (ROSTER_EXTRA.removed||[]).forEach(function(k){ gone[String(k||'').toLowerCase()]=1; });
+    const base=(ROSTER_FILE||[]).concat((ROSTER_EXTRA.added||[]).map(function(r){ return Object.assign({_added:true}, r); }));
+    return base.filter(function(r){ return gone[personKey(r)]; });
+  }
+  function reloadRosterExtra(){
+    if(!window.PH_STORE || !isLive()) return Promise.resolve(false);
+    return window.PH_STORE.get(EXTRA_KEY).then(function(r){
+      if(r && typeof r==='object'){
+        ROSTER_EXTRA={added:Array.isArray(r.added)?r.added:[], removed:Array.isArray(r.removed)?r.removed:[]};
+        applyExtra(); return true;
+      }
+      return false;
+    }).catch(function(){ return false; });
+  }
+  /* Change the added/removed lists. Goes through update(), so a page that has been
+     open a while lays its one change onto the shared copy rather than over it. */
+  function saveRosterExtra(mutate){
+    if(!window.PH_STORE || !window.PH_STORE.update) return Promise.resolve({local:true});
+    return window.PH_STORE.update(EXTRA_KEY, function(cur){
+      const ex={ added:(cur&&Array.isArray(cur.added))?cur.added.slice():[],
+                 removed:(cur&&Array.isArray(cur.removed))?cur.removed.slice():[] };
+      const next=mutate(ex)||ex;
+      ROSTER_EXTRA=next; applyExtra();
+      return next;
+    }).then(function(r){ identityChanged(); return r; });
+  }
+
   const rosterReady=(typeof fetch==='function')
     ? fetch('_people.json').then(function(r){ return r.ok?r.json():null; }).then(function(j){
         const rows=j&&j.people;
         if(!Array.isArray(rows)) return null;
-        ROSTER_BY_MAIL={}; ROSTER_BY_NAME=null; ROSTER_ROWS=rows;
-        rows.forEach(function(x){
-          const m=String(x.email||'').toLowerCase().trim();
-          if(m) ROSTER_BY_MAIL[m]=x;
-        });
+        ROSTER_FILE=rows;
+        // Whatever this browser already knows about additions and removals, until the
+        // shared copy is pulled after sign-in.
+        try{ const ex=JSON.parse(localStorage.getItem(EXTRA_KEY));
+             if(ex && typeof ex==='object') ROSTER_EXTRA={added:ex.added||[], removed:ex.removed||[]}; }catch(_){}
+        applyExtra();
         return ROSTER_BY_MAIL;
       }).catch(function(){ return null; })
     : Promise.resolve(null);
@@ -274,7 +340,11 @@
     if(!PROFILE) return null;
     const mailNow=signedInAddress();
     const ovr=overrideFor(mailNow, PROFILE && PROFILE.displayName);
-    const ros=rosterFor(mailNow);
+    /* The roster row by email, or by display name when the roster holds no email for
+       them - which is 38 of the 70. Without this, half the practice signed in and got
+       least-access no matter what team the roster gave them, and the Admin settings
+       meant to correct it were looked up the same broken way. */
+    const ros=rosterFor(mailNow) || rosterByName(PROFILE && PROFILE.displayName);
     /* The hub's own setting wins; then Entra, if IT has filled it in; then the
        practice's own roster, which is what makes a brand-new guest work. */
     const deptSrc = (ovr && ovr.teams && ovr.teams.length)
@@ -1332,7 +1402,8 @@
   document.addEventListener('ph-signed-in', function(){
     identityChanged();
     // ...and again once each late source has landed.
-    if(rosterReady && rosterReady.then) rosterReady.then(identityChanged, identityChanged);
+    if(rosterReady && rosterReady.then)
+      rosterReady.then(function(){ return reloadRosterExtra(); }).then(identityChanged, identityChanged);
     Promise.resolve(reloadAccess()).then(identityChanged, identityChanged);
     Promise.resolve(reloadPeople()).then(identityChanged, identityChanged);
   });
@@ -1435,6 +1506,6 @@
   }
   const isLive=()=>env()==='live';
 
-  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK};
+  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, rosterRows, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK};
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mount); else mount();
 })();

@@ -272,6 +272,34 @@
       });
   }
 
+  /* ------------------------------------------------------------------
+     CHANGE ONE PART OF A SHARED RECORD WITHOUT FLATTENING THE REST.
+
+     Every save used to send the page's whole copy of a record. A page that had been
+     open for an hour sent an hour-old copy, and whatever anybody else had saved in
+     that hour was gone - quietly, because the size barely moved so the wipe guard had
+     nothing to say. The Admin screen does this for every person's settings and every
+     cell of the access grid, so it was the most exposed.
+
+     update() reads the shared copy FIRST, hands it to the caller to change, and writes
+     the result. The read goes through get(), so a copy this browser is still holding
+     unsent stays the base, and a read that fails leaves set() refusing to write - you
+     cannot safely merge onto something you could not see.
+
+     The caller returns the new value, or undefined for "nothing to write". */
+  function update(key, mutate, opts){
+    return get(key).then(function(current){
+      var next;
+      try{ next = mutate(current === null ? undefined : current); }
+      catch(e){ return Promise.reject(e); }
+      if(next === undefined) return {unchanged:true, value:current};
+      return set(key, next, opts).then(function(r){
+        if(r) r.value = next;
+        return r;
+      });
+    });
+  }
+
   function parse(raw){
     if(raw===null || raw===undefined || raw==='') return null;
     try{ return JSON.parse(raw); }catch(_){ return null; }
@@ -308,7 +336,7 @@
   }
 
   global.PH_STORE = {
-    get:get, set:set, getAll:getAll, setup:setup,
+    get:get, set:set, update:update, getAll:getAll, setup:setup,
     /* Pages ask this instead of guessing from a null. */
     readFailed:function(k){ return readFailed[k] === true; },
     /* True when this browser is holding a change SharePoint never took. */

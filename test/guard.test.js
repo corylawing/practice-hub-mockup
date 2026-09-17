@@ -214,6 +214,51 @@ const t=(n,v)=>{ (v? ok:bad).push(n); };
     t('and somebody is told', ev.some(e=>e.type==='ph-save-blocked'));
   }
 
+  /* ---- ONE PART OF A RECORD, NOT THE WHOLE THING -------------------------------
+     Every save used to send the page's entire copy. A page open for an hour sent an
+     hour-old copy over whatever anyone else had saved since. The size barely moves,
+     so the wipe guard has nothing to say. update() reads first, then changes, then
+     writes - so two people editing two different slots both keep their work. */
+  {
+    const LS5={};
+    global.localStorage={getItem:k=>k in LS5?LS5[k]:null,setItem:(k,v)=>{LS5[k]=String(v)},
+                         removeItem:k=>{delete LS5[k]}};
+    global.document={dispatchEvent:()=>{}};
+    let SHARED={ 'liz@x.com':{locs:['Hobbs']}, 'emp:a7ab79':{locs:['Lubbock']} };
+    global.PH_AUTH.graph=p=>{
+      if(/\/sites\/omega/.test(p)) return Promise.resolve({id:'site'});
+      if(/lists\?/.test(p))        return Promise.resolve({value:[{id:'L',displayName:'HomeBraceData'}]});
+      return Promise.resolve({value:[{id:'1', lastModifiedDateTime:new Date().toISOString(),
+        fields:{Title:'ph_people', Payload:JSON.stringify(SHARED)}}]});
+    };
+    global.fetch=(u,o)=>{ const b=JSON.parse(o.body);
+      SHARED=JSON.parse(b.Payload!==undefined?b.Payload:b.fields.Payload);
+      return Promise.resolve({status:200,ok:true,json:()=>Promise.resolve({id:'1'})}); };
+    delete require.cache[require.resolve(STORE)];
+    require(STORE); const U=window.PH_STORE;
+
+    // Heather fixes Mia. Meanwhile Jessica (another browser) has already fixed Liz.
+    SHARED['liz@x.com']={locs:['Carlsbad']};                 // Jessica's save landed
+    const r=await U.update('ph_people', function(cur){       // Heather's page, stale
+      const next=Object.assign({}, cur||{});
+      next['emp:a7ab79']={locs:['Hobbs']};
+      return next;
+    });
+    t('update() writes the change', SHARED['emp:a7ab79'].locs[0]==='Hobbs');
+    t('and does NOT flatten the other person\u2019s newer save',
+      SHARED['liz@x.com'].locs[0]==='Carlsbad');
+    t('the caller gets the merged result back', r.value && r.value['liz@x.com'].locs[0]==='Carlsbad');
+
+    const r2=await U.update('ph_people', function(){ return undefined; });
+    t('returning nothing writes nothing', r2.unchanged===true);
+
+    // A read that fails must not turn into a write over the unseen copy.
+    global.PH_AUTH.graph=()=>Promise.reject(new Error('Graph 503'));
+    const r3=await U.update('ph_people', function(cur){ return Object.assign({}, cur||{}, {x:{locs:['Clovis']}}); });
+    t('update() after a failed read is refused', r3.blocked===true);
+    t('and the shared copy is untouched', !SHARED.x);
+  }
+
   console.log(ok.map(s=>'  PASS  '+s).join('\n'));
   if(bad.length) console.log(bad.map(s=>'  FAIL  '+s).join('\n'));
   console.log('\n'+ok.length+' passed, '+bad.length+' failed');

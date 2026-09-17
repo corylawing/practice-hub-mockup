@@ -162,10 +162,10 @@
   }
 
 </style>
-<script src="user.js?v=hc37"></script>
+<script src="user.js?v=hc38"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc37"></script>
-  <script src="gate.js?v=hc37"></script>
+  <script src="store.js?v=hc38"></script>
+  <script src="gate.js?v=hc38"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — Documents. You see only the folders your role, location &amp; team allow. Files open on the Microsoft drive.</div>
@@ -410,15 +410,30 @@
   function closeDoc(){ el('docmodal').classList.remove('open'); addCtx=null; }
 
   el('persona').innerHTML=PERSONAS.map(p=>'<option value="'+p.id+'">'+p.name+'</option>').join('');
-  window.DOCS={set,toggle,openDoc,sim,addDoc,setLoc,setTeam,tog,cd,useFile,clearFile,uploadFile,saveDoc,closeDoc};
+  window.DOCS={set,toggle,openDoc,sim,addDoc,setLoc,setTeam,tog,cd,useFile,clearFile,uploadFile,saveDoc,closeDoc,
+    refresh:function(){ try{ renderFolders(cur); }catch(_){} }};
   el('docmodal').addEventListener('click',e=>{if(e.target.id==='docmodal')closeDoc();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDoc();});
   let saved='admin'; try{ saved=localStorage.getItem('ph_viewas')||'admin'; }catch(_){}
   set(saved);
 })();
 </script>
-<script>PH.nav('documents');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc37"></script>
+<script>
+/* Document sections were this-browser-only until 17/09: a section Heather created
+   existed on her machine and nowhere else. Admin now saves them through the store;
+   pull the shared copy when identity settles and redraw. */
+document.addEventListener('ph-identity',function(){
+  if(!(window.PH_STORE && PH.isLive())) return;
+  PH_STORE.get('ph_docsecs').then(function(r){
+    if(!Array.isArray(r)) return;
+    var was=localStorage.getItem('ph_docsecs'), now=JSON.stringify(r);
+    if(was===now) return;
+    try{ localStorage.setItem('ph_docsecs', now); }catch(_){}
+    if(window.DOCS && DOCS.refresh) DOCS.refresh();
+  });
+});
+PH.nav('documents');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
+<script src="tour.js?v=hc38"></script>
 <script>
 Tour.init([
   {sel:'.crumb', title:'Everything in one place', body:'This replaces \u201cwho has the latest copy?\u201d. Every policy, form and office file lives here \u2014 and people only ever see the folders meant for them.'},

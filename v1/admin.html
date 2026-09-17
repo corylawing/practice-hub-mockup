@@ -205,11 +205,11 @@
   }
 
 </style>
-<script src="user.js?v=hc37"></script>
+<script src="user.js?v=hc38"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="_staff.js?v=hc37"></script>
-  <script src="store.js?v=hc37"></script>
-  <script src="gate.js?v=hc37"></script>
+  <script src="_staff.js?v=hc38"></script>
+  <script src="store.js?v=hc38"></script>
+  <script src="gate.js?v=hc38"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — admin console concept for validation. Real build: people sync from Microsoft 365; access is managed here.</div>
@@ -292,13 +292,23 @@
       {n:'Monthly Monitor Report',aud:'team',scope:'Leadership'},{n:'RIP Tracker',aud:'team',scope:'Leadership, Financial'},{n:'Medicaid Tracker',aud:'team',scope:'Financial'}]}
   ];
   function loadSecs(){ try{ const st=JSON.parse(localStorage.getItem('ph_docsecs')); if(Array.isArray(st)&&st.length)return st; }catch(_){} return JSON.parse(JSON.stringify(DEFAULT_DOCSECS)); }
-  function saveSecs(){ try{ localStorage.setItem('ph_docsecs',JSON.stringify(DOCSECS)); }catch(_){} }
+  /* These two were written to THIS BROWSER and nowhere else. A team Heather added, or a
+     document section, existed only on the machine she added it on. Through the store
+     now, like everything else - and pulled back from it below when the shared copy
+     lands. */
+  function saveSecs(){
+    if(window.PH_STORE) window.PH_STORE.set('ph_docsecs', DOCSECS);
+    else try{ localStorage.setItem('ph_docsecs',JSON.stringify(DOCSECS)); }catch(_){}
+  }
   let DOCSECS=loadSecs();
   const allSections=()=>TOOLS.concat(DOCSECS);
 
   const DEFAULT_TEAMS=['Executive Team','Leadership Team','Office Managers','Clinic Managers','TCs','Doctors','Marketing Team','Financial Coordinator Team','Staff','Admin'];
   function loadTeams(){ try{ const st=JSON.parse(localStorage.getItem('ph_teams')); if(Array.isArray(st)&&st.length)return st; }catch(_){} return DEFAULT_TEAMS.slice(); }
-  function saveTeams(){ try{ localStorage.setItem('ph_teams',JSON.stringify(TEAMS)); }catch(_){} }
+  function saveTeams(){
+    if(window.PH_STORE) window.PH_STORE.set('ph_teams', TEAMS);
+    else try{ localStorage.setItem('ph_teams',JSON.stringify(TEAMS)); }catch(_){}
+  }
   let TEAMS=loadTeams();
   // THE WHOLE MODEL: team = what you can do; location = which offices' stuff you see.
   const LEVELS=['none','view','add','edit','manage'];
@@ -343,9 +353,22 @@
      Saved to ph_access and read by user.js, which uses its built-in defaults only for a
      team the matrix doesn't cover. */
   const ACCESS_KEY='ph_access';
-  function saveAccess(){
-    /* Through the store, which writes this browser's copy too. Writing it here first
-       would make the store see no change and keep no backup of what it replaced. */
+  function saveAccess(team, section){
+    /* Given a team and a section, merge just that one cell onto the shared grid - that
+       is what tapping a cell does, and it is nearly every save. A page that has been
+       open a while then changes one cell and nothing else. Adding, renaming or deleting
+       a team rewrites its whole row and comes through with no arguments. */
+    if(window.PH_STORE && window.PH_STORE.update && team && section){
+      window.PH_STORE.update(ACCESS_KEY, function(remote){
+        var merged = (remote && typeof remote==='object') ? remote : {};
+        merged[team] = Object.assign({}, merged[team]||{});
+        merged[team][section] = (access[team]||{})[section] || 'none';
+        access = Object.assign({}, merged, {});   // adopt the shared truth locally
+        ensureAccess();
+        return merged;
+      }).then(function(){ if(window.PH && PH.reloadAccess) PH.reloadAccess(); });
+      return;
+    }
     if(window.PH_STORE) window.PH_STORE.set(ACCESS_KEY, access);
     else try{ localStorage.setItem(ACCESS_KEY, JSON.stringify(access)); }catch(_){}
     if(window.PH && PH.reloadAccess) PH.reloadAccess();
@@ -406,14 +429,30 @@
     try{ return JSON.parse(localStorage.getItem(PEOPLE_KEY))||{}; }catch(_){ return {}; }
   }
   let PEOPLE_OVR=loadPeopleOverrides();
-  function savePeopleOverrides(){
+  function savePeopleOverrides(changed){
+    /* THE CHANGED SLOTS ONLY. This used to send the page's whole copy, so a page open
+       for an hour sent an hour-old copy over whatever anyone else had saved since - and
+       the record barely changes size, so the wipe guard had nothing to say. Now: read
+       the shared copy, lay just the slots touched here on top of it, write that, and
+       adopt the result locally so the screen shows the truth. With no list given, every
+       local slot is laid on top - which adds and updates but never deletes anyone
+       else's. */
+    var keys = Array.isArray(changed) ? changed : Object.keys(PEOPLE_OVR);
+    var done = window.PH_STORE && window.PH_STORE.update
+      ? window.PH_STORE.update(PEOPLE_KEY, function(remote){
+          var merged = Object.assign({}, (remote && typeof remote==='object') ? remote : {});
+          keys.forEach(function(k){
+            if(PEOPLE_OVR[k]===undefined){ if(Array.isArray(changed)) delete merged[k]; }
+            else merged[k]=PEOPLE_OVR[k];
+          });
+          PEOPLE_OVR = merged;
+          return merged;
+        })
+      : Promise.resolve({});
     /* This used to swallow the error. When browser storage filled up, the screen
        still showed the change, the activity log still recorded it, and the next
        reload silently reverted every person's teams, offices and access. Say so
        instead - losing the change is survivable, not knowing is not. */
-    var done = window.PH_STORE
-      ? window.PH_STORE.set(PEOPLE_KEY, PEOPLE_OVR)
-      : Promise.resolve({});
     done.then(function(r){
       if(r && r.quota){
         alert('That did not save.\n\nThis browser has run out of room for the hub\u2019s '+
@@ -440,6 +479,7 @@
       return { f:isDoc?('Dr. '+first):first, l:last,
         // The slot their settings live in, from the roster and fixed for good.
         ovrid:(window.PH && PH.personKey) ? PH.personKey(r) : '',
+        _added:!!r._added,
         // No invented addresses: blank stays blank, and an admin can fill it in.
         email:r.email||'', realEmail:!!r.email,
         emp:r.empId||'', role:r.role||'',
@@ -562,7 +602,7 @@
     const restore=holdScroll();
     el('view').innerHTML=
       '<div class="intro"><b>People are created in Microsoft \u2014 never here.</b> As soon as IT sets up someone\'s Microsoft account they appear in this list, with <b>no access</b> until you give them a team. What they can then reach is decided <b>here in the hub</b>: set their <b>team(s), location &amp; status</b>. They look after their own <b>photo, preferred name, phone &amp; \u201cAbout me\u201d</b>. <b>Tap a person</b> to open their profile.</div>'+
-      '<div class="toolrow"><input class="search" id="usearch" placeholder="Search people, email, team, location…" value="'+search.replace(/"/g,'&quot;')+'"><button class="btn ghost" onclick="AD.whyNoAdd()">Someone missing?</button></div>'+
+      '<div class="toolrow"><input class="search" id="usearch" placeholder="Search people, email, team, location…" value="'+search.replace(/"/g,'&quot;')+'"><button class="btn ghost" onclick="AD.showRemoved()">'+removedLabel()+'</button><button class="btn" onclick="AD.addPerson()">+ Add person</button></div>'+
       '<div class="tbl-scroll"><table class="u"><thead><tr><th>Person</th><th>Team(s) — what they can do</th><th>Location — where</th><th>Status</th>'+
         (PH.isAdmin()?'<th></th>':'')+'</tr></thead><tbody></tbody></table></div>'+
       '<p style="font-size:13px;color:var(--soft);margin:12px 2px 0" id="ucount"></p>';
@@ -586,15 +626,32 @@
       : '<span class="av" style="'+dim+'background:'+av(u)+'">'+initials(u)+'</span>';
   }
 
+  let showingRemoved=false;
+  function removedLabel(){
+    const n=(window.PH && PH.removedRows) ? PH.removedRows().length : 0;
+    return showingRemoved ? '\u2190 Back to everyone' : ('Removed ('+n+')');
+  }
+  function showRemoved(){ showingRemoved=!showingRemoved; renderUsers(); }
   function renderUsersBody(){
     const q=search.toLowerCase();
-    const list=users.filter(u=>!q || (u.f+' '+u.l+' '+u.email+' '+u.teams.join(' ')+' '+u.loc).toLowerCase().includes(q));
+    /* Removed people are hidden, never deleted. This list is how you see them and put
+       them back. */
+    const pool = showingRemoved
+      ? usersFromRoster((window.PH && PH.removedRows) ? PH.removedRows() : []).map(applyOverride)
+      : users;
+    const list=pool.filter(u=>!q || (u.f+' '+u.l+' '+u.email+' '+u.teams.join(' ')+' '+u.loc).toLowerCase().includes(q));
     const tb=document.querySelector('table.u tbody'); if(!tb)return;
     tb.innerHTML=list.map(u=>{const gi=users.indexOf(u);
       /* Someone's own photo lives under their email, set from My profile. Show it here
          rather than initials, so the table matches the avatar in the header. */
       const face = faceFor(u);
-      return '<tr onclick="AD.profile('+gi+')"><td><div class="who">'+face+'<div><div class="uname">'+u.f+' '+u.l+'</div><div style="font-size:12px;color:var(--soft)">'+u.email+'</div></div></div></td>'+
+      if(showingRemoved){
+        return '<tr><td><div class="who">'+face+'<div><div class="uname">'+esc(u.f+' '+u.l)+'</div><div style="font-size:12px;color:var(--soft)">'+esc(u.email)+'</div></div></div></td>'+
+          '<td><div class="chips">'+u.teams.map(t=>'<span class="chip">'+esc(t)+'</span>').join('')+'</div></td>'+
+          '<td>'+esc(u.loc)+'</td><td><span class="pill inactive">Removed</span></td>'+
+          '<td class="vacell"><button class="btn tiny" onclick="AD.restorePerson(\''+esc(u.ovrid)+'\')">Restore</button></td></tr>';
+      }
+      return '<tr onclick="AD.profile('+gi+')"><td><div class="who">'+face+'<div><div class="uname">'+u.f+' '+u.l+(u._added?' <span class="chip" style="font-size:10px">added here</span>':'')+'</div><div style="font-size:12px;color:var(--soft)">'+u.email+'</div></div></div></td>'+
         '<td><div class="chips">'+u.teams.map(t=>'<span class="chip">'+t+'</span>').join('')+'</div></td>'+
         '<td>'+u.loc+'</td><td><span class="pill '+u.status.toLowerCase()+'">'+u.status+'</span></td>'+
         // Looking through someone's eyes belongs next to the person, not in its own tab.
@@ -653,7 +710,7 @@
       '</div>'+
       '<div class="accessbox" id="accpreview"></div>'+
       '</div>'+
-      '<div class="m-foot"><span style="flex:1;font-size:12.5px;color:var(--soft)">Synced fields update from Microsoft 365. Photo &amp; About me are self-service.</span><button class="btn ghost" onclick="AD.close()">Cancel</button><button class="btn" onclick="AD.saveUser()">Save</button></div>');
+      '<div class="m-foot"><button class="btn ghost" style="color:var(--bad)" onclick="AD.removePerson()">Remove from hub</button><span style="flex:1;font-size:12.5px;color:var(--soft)">Photo &amp; About me are self-service.</span><button class="btn ghost" onclick="AD.close()">Cancel</button><button class="btn" onclick="AD.saveUser()">Save</button></div>');
     refreshAccessPreview();
   }
   function fldRO(lab,val){ return '<div class="fld ro"><label>'+lab+'</label><div class="val">'+(val||'—')+'</div></div>'; }
@@ -770,19 +827,85 @@
     const key=ovrKey(u);
     if(!key){ alert('This person has no name, email or employee ID, so there is nowhere '+
                     'to save their settings. Tell Cory.'); return; }
-    ovrKeysFor(u).concat([oldKey]).forEach(function(k){
-      if(k && k!==key) delete PEOPLE_OVR[k];
-    });
+    var retired = ovrKeysFor(u).concat([oldKey]).filter(function(k){ return k && k!==key; });
+    retired.forEach(function(k){ delete PEOPLE_OVR[k]; });
     PEOPLE_OVR[key]={teams:u.teams.slice(), locs:locs.slice(), status:u.status,
                      email:u.email, emp:u.emp, role:u.role,
                      photo:(u.photo!==undefined?u.photo:undefined),
                      access:u.access};
-    savePeopleOverrides();
+    savePeopleOverrides([key].concat(retired));
     if(window.PH && PH.logActivity && PH.isLive())
       PH.logActivity({sec:'admin', ic:'\u2699\uFE0F',
         // Admin housekeeping — only people who can reach Admin should see it.
         title:'Access changed for '+u.f+' '+u.l, scope:'admins'});
     closeModal(); renderUsersBody();
+  }
+  /* ---------- ADD, REMOVE, RESTORE ----------
+     This screen used to say "people come from Microsoft and appear on their own".
+     They come from a file Cory deploys, and nobody appears on their own. Additions and
+     removals now go to SharePoint (ph_roster_extra, see user.js) and show up for
+     everyone: here, on the Team page, and in the person's own permissions when they
+     sign in. Removing hides; it never deletes, and the Removed list restores. */
+  let newP=null;
+  function addPerson(){
+    newP={name:'', role:'', email:'', emp:'', locs:[], teams:['Staff']};
+    renderAddPerson();
+  }
+  function renderAddPerson(){
+    const locChips=LOCS.map(l=>'<button class="tp'+(newP.locs.includes(l.n)?' on':'')+'" onclick="AD.npLoc(\''+esc(l.n)+'\')">'+esc(l.n)+'</button>').join('');
+    const teamChips=TEAMS.filter(t=>t!=='Admin').map(t=>'<button class="tp'+(newP.teams.includes(t)?' on':'')+'" onclick="AD.npTeam(\''+esc(t)+'\')">'+esc(t)+'</button>').join('');
+    openModal(
+      '<div class="m-top"><h3 style="margin:0;font-size:17px;color:var(--navy)">Add a person</h3><button class="x" onclick="AD.close()">\u00d7</button></div>'+
+      '<div class="m-body">'+
+        '<div class="fld"><label>Full name</label><input id="npName" value="'+esc(newP.name)+'" placeholder="e.g. Dr. Lightheart, or Jane Smith" oninput="AD.npSet(\'name\',this.value)"></div>'+
+        '<div class="fld"><label>Role</label><input id="npRole" value="'+esc(newP.role)+'" placeholder="e.g. Clinical Asst, Associate Doctor" oninput="AD.npSet(\'role\',this.value)"></div>'+
+        '<div class="fld"><label>Work email <span style="color:var(--soft);font-weight:400">(if they have one)</span></label><input id="npMail" value="'+esc(newP.email)+'" placeholder="name@farnsworthorthodontics.com" oninput="AD.npSet(\'email\',this.value)"></div>'+
+        '<div class="fld"><label>Employee ID <span style="color:var(--soft);font-weight:400">(optional)</span></label><input id="npEmp" value="'+esc(newP.emp)+'" oninput="AD.npSet(\'emp\',this.value)"></div>'+
+        '<div class="fld"><label>Office(s)</label><div class="teampick">'+locChips+'</div></div>'+
+        '<div class="fld"><label>Team(s) \u2014 what they can do</label><div class="teampick">'+teamChips+'</div></div>'+
+        '<p class="hint" style="font-size:13px;color:var(--soft)">They will appear on the Team page straight away. If they have a Microsoft account they can sign in and will get their team\u2019s access.</p>'+
+      '</div>'+
+      '<div class="m-foot"><span style="flex:1"></span><button class="btn ghost" onclick="AD.close()">Cancel</button><button class="btn" onclick="AD.saveNewPerson()">Add</button></div>');
+  }
+  function npSet(k,v){ if(newP) newP[k]=v; }
+  function npLoc(l){ const i=newP.locs.indexOf(l); if(i>=0) newP.locs.splice(i,1); else newP.locs.push(l); renderAddPerson(); }
+  function npTeam(t){ const i=newP.teams.indexOf(t); if(i>=0) newP.teams.splice(i,1); else newP.teams.push(t); renderAddPerson(); }
+  function saveNewPerson(){
+    const name=(newP.name||'').trim();
+    if(!name){ alert('Type their name first.'); return; }
+    const row={ name:name, role:(newP.role||'').trim(), email:(newP.email||'').trim().toLowerCase(),
+                empId:(newP.emp||'').trim(), offices:newP.locs.slice(),
+                teams:newP.teams.length?newP.teams.slice():['Staff'], status:'Active' };
+    // Same person twice is a mistake, not a second person.
+    const key=PH.personKey(row);
+    const clash=PH.rosterRows().some(r=>PH.personKey(r)===key);
+    if(clash){ alert(name+' is already in the list.'); return; }
+    PH.saveRosterExtra(function(ex){ ex.added.push(row); return ex; }).then(function(r){
+      if(r && (r.blocked||r.error)){ alert('That did not save to SharePoint. '+(r.why||r.error||'')); return; }
+      closeModal();
+      if(window.PH && PH.logActivity && PH.isLive())
+        PH.logActivity({sec:'admin', ic:'\u2699\uFE0F', title:name+' added to the hub', scope:'admins'});
+    });
+  }
+  function removePerson(){
+    const u=users[tmpU.gi]; if(!u || !u.ovrid) return;
+    if(!confirm('Remove '+u.f+' '+u.l+' from the hub?\n\nThey disappear from the Team page and from this list. '+
+                'Nothing is deleted \u2014 you can put them back from the Removed list at any time.')) return;
+    const key=u.ovrid;
+    PH.saveRosterExtra(function(ex){ if(ex.removed.indexOf(key)<0) ex.removed.push(key); return ex; }).then(function(r){
+      if(r && (r.blocked||r.error)){ alert('That did not save to SharePoint. '+(r.why||r.error||'')); return; }
+      closeModal();
+      if(window.PH && PH.logActivity && PH.isLive())
+        PH.logActivity({sec:'admin', ic:'\u2699\uFE0F', title:u.f+' '+u.l+' removed from the hub', scope:'admins'});
+    });
+  }
+  function restorePerson(key){
+    PH.saveRosterExtra(function(ex){ ex.removed=ex.removed.filter(k=>k!==key); return ex; }).then(function(r){
+      if(r && (r.blocked||r.error)){ alert('That did not save to SharePoint. '+(r.why||r.error||'')); return; }
+      /* ph-identity has already repainted the (now shorter) removed list by the time
+         we get here; if it is empty, flip back to everyone and paint again. */
+      if(!PH.removedRows().length){ showingRemoved=false; renderUsers(); }
+    });
   }
   function whyNoAdd(){
     openModal(
@@ -1117,7 +1240,7 @@
        picker's callback runs. */
     const btn=ev.currentTarget;
     openPk(btn, levelsFor(k).map(l=>({value:l,label:(l==='none'?'None':shortFor(k,l)),desc:descFor(k,l),swatch:LVLSW[l],cur:(access[t][k]||'none')===l})),
-      v=>{ access[t][k]=v; saveAccess();
+      v=>{ access[t][k]=v; saveAccess(t,k);
            if(btn){ btn.className='lvl '+v; btn.textContent=shortFor(k,v); }
            else renderAccess(); });
   }
@@ -1133,15 +1256,19 @@
   function openModal(h){ el('modalCard').innerHTML=h; el('modal').classList.add('open'); }
   function closeModal(){ el('modal').classList.remove('open'); }
 
-  window.AD={tab:tabSet,viewAs:doViewAs,newTeam,editTeam,saveTeam,delTeam,resetTeams,profile,whyNoAdd,togTeam,togLoc,setStatus,saveUser,pickLevel,pickAud,setField,pickPhoto,photoChosen,clearPhoto,pickUserLevel,clearUserLevel,tog,addFile,noop,newSec,editSec,saveSec,delSec,resetSecs,setSecName,setSecIcon,setSecStruct,setSecLocMode,setSecTeamMode,togSecLoc,togSecTeam,saveFile,cd,useFile,clearFile,uploadFile,setFileTeamMode,setFileLocMode,togFileLoc,togFileTeam,renderLocs,newLoc,editLoc,saveLoc,delLoc,resetLocs,setLocBrand,setLocState,setLocTZ,close:closeModal};
+  window.AD={tab:tabSet,viewAs:doViewAs,newTeam,editTeam,saveTeam,delTeam,resetTeams,profile,whyNoAdd,
+    addPerson,npSet,npLoc,npTeam,saveNewPerson,removePerson,restorePerson,showRemoved,togTeam,togLoc,setStatus,saveUser,pickLevel,pickAud,setField,pickPhoto,photoChosen,clearPhoto,pickUserLevel,clearUserLevel,tog,addFile,noop,newSec,editSec,saveSec,delSec,resetSecs,setSecName,setSecIcon,setSecStruct,setSecLocMode,setSecTeamMode,togSecLoc,togSecTeam,saveFile,cd,useFile,clearFile,uploadFile,setFileTeamMode,setFileLocMode,togFileLoc,togFileTeam,renderLocs,newLoc,editLoc,saveLoc,delLoc,resetLocs,setLocBrand,setLocState,setLocTZ,close:closeModal};
   el('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
   /* Load the real roster before the first paint. If it isn't there (the public
      sandbox), the built-in name list below already rendered and nothing changes. */
+  /* ONE roster, from user.js: the deployed file plus anyone added here, minus anyone
+     removed here. This page used to fetch the file itself. */
   function loadRoster(){
-    return fetch('_people.json').then(r=>r.ok?r.json():null).then(function(j){
-      const rows=j&&j.people;
-      if(!Array.isArray(rows)||!rows.length) return false;
+    if(!(window.PH && PH.rosterReady)) return Promise.resolve(false);
+    return PH.rosterReady.then(function(){
+      const rows=PH.rosterRows();
+      if(!rows.length) return false;
       ROSTER_ROWS=rows;
       users=usersFromRoster(rows).map(applyOverride);
       return true;
@@ -1163,14 +1290,30 @@
   document.addEventListener('ph-identity', function(){
     const restore=holdScroll();
     PEOPLE_OVR=loadPeopleOverrides();
-    if(ROSTER_ROWS && ROSTER_ROWS.length) users=usersFromRoster(ROSTER_ROWS).map(applyOverride);
+    const rows=(window.PH && PH.rosterRows) ? PH.rosterRows() : (ROSTER_ROWS||[]);
+    if(rows.length){ ROSTER_ROWS=rows; users=usersFromRoster(rows).map(applyOverride); }
     else users=users.map(function(u){ return applyOverride(u); });
     render(); restore();
+    /* Teams and document sections were this-browser-only until 17/09. Pull the shared
+       copies; the grid is re-shaped around whatever teams and sections come back. */
+    document.addEventListener('ph-locations-changed', function(){
+      LOCS=PH.locations(); if(tab==='locs'){ const keep=holdScroll(); render(); keep(); }
+    });
+    if(window.PH_STORE && PH.isLive()){
+      Promise.all([PH_STORE.get('ph_teams'), PH_STORE.get('ph_docsecs'), PH_STORE.get(ACCESS_KEY)])
+        .then(function(r){
+          var changed=false;
+          if(Array.isArray(r[0]) && r[0].length && JSON.stringify(r[0])!==JSON.stringify(TEAMS)){ TEAMS=r[0]; changed=true; }
+          if(Array.isArray(r[1]) && r[1].length && JSON.stringify(r[1])!==JSON.stringify(DOCSECS)){ DOCSECS=r[1]; changed=true; }
+          if(r[2] && typeof r[2]==='object' && JSON.stringify(r[2])!==JSON.stringify(access)){ access=r[2]; changed=true; }
+          if(changed){ ensureAccess(); const keep=holdScroll(); render(); keep(); }
+        });
+    }
   });
 })();
 </script>
 <script>PH.nav('admin');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(PH.loadPhotos)PH.loadPhotos().then(function(got){if(got&&window.AD&&AD.tab)AD.tab('users');});});</script>
-<script src="tour.js?v=hc37"></script>
+<script src="tour.js?v=hc38"></script>
 <script>
 Tour.init([
   {sel:'#tabs', title:'This is your control room', body:'Four tabs and you can run the whole hub: <b>People</b>, <b>Teams &amp; Access</b>, <b>Document Sections</b> and <b>Locations</b>. No developer, no consultant.', pre:()=>AD.tab('users')},

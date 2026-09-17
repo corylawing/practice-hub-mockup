@@ -3,7 +3,7 @@
 #   sh test/all.sh
 cd "$(dirname "$0")/.."
 fail=0
-for t in permissions peoplekey guard notifications; do
+for t in permissions peoplekey roster guard notifications; do
   out=$(node "test/$t.test.js" 2>&1) || fail=1
   printf '%-14s %s\n' "$t" "$(printf '%s' "$out" | tail -1)"
   printf '%s' "$out" | grep '  FAIL' && fail=1

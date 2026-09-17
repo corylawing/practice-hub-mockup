@@ -269,10 +269,10 @@
   }
 
 </style>
-<script src="user.js?v=hc37"></script>
+<script src="user.js?v=hc38"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc37"></script>
-  <script src="gate.js?v=hc37"></script>
+  <script src="store.js?v=hc38"></script>
+  <script src="gate.js?v=hc38"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — sample staff schedule for validation. Live version = one Microsoft List the practice maintains.</div>
@@ -1030,6 +1030,7 @@
 
   window.PS={view:setView,step,today,togLoc,allLocs,togDoc,allDocs,togYdot,togClosed,togEvent,setEvent,open,addTo,quick,pickDoc,setT,halfDay,fullDay,markYdot,markClosed,
     clearDay,saveDay,addLocation,editLoc,setColor,setTZ,dtog,dtime,lunchTog,lunchT,saveLoc,delLoc,
+    relocate:function(){ locations=PH.locations(); locations.forEach(l=>fLoc.add(l.n)); refresh(); },
     addPerson,edit:editPerson,savePerson,delPerson,close:closeModal};
 
   el('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal();});
@@ -1138,8 +1139,13 @@
   } else boot(local, ldocs, false, false);
 })();
 </script>
-<script>PH.nav('schedule');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc37"></script>
+<script>
+/* The shared office list can land after the board has drawn (user.js pulls it on
+   mount and fires this). Re-read it and redraw, or an office added on another
+   machine is missing here until the next page load. */
+document.addEventListener('ph-locations-changed',function(){ if(window.PS&&PS.relocate)PS.relocate(); });
+PH.nav('schedule');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
+<script src="tour.js?v=hc38"></script>
 <script>
 Tour.init([
   {sel:'#viewseg', title:'Week or month', body:'<b>Week</b> is the day-to-day working view. <b>Month</b> shows the whole month at a glance, with every office in its own color.'},
