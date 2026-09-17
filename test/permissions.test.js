@@ -104,6 +104,14 @@ const t=(n,v)=>{ (v?ok:bad).push(n); };
   t('signing in rebuilds the menu', afterMenu!==beforeMenu || beforeMenu==='');
   t('Jenny is recognised', (B.PH.me().first+' '+B.PH.me().last).trim()==='Jenny Whitefield');
   t('Jenny is not an admin', B.PH.isAdmin()===false);
+  /* My Profile prints me().teams and me().loc straight out. Pre-profile that was the
+     'admin' persona, so a guest opening her own profile was shown
+     "Team(s): Admin, Executive Team - Location(s): All offices". That is what Jenny
+     reported on 2026-09-17 as her staff being "listed under executive". */
+  t('her own profile does not show her someone else\u2019s teams',
+    B.PH.me().teams.indexOf('Executive Team')<0 && B.PH.me().teams.indexOf('Admin')<0);
+  t('her own profile does not show her All offices',
+    String(B.PH.me().loc)!=='All offices');
   t('Jenny has no Admin tab', B.tabs().indexOf('admin')<0);
   t('Jenny has no Admin link in the rendered menu', afterMenu.indexOf('admin.html')<0);
   t('Jenny cannot manage anything', SECTIONS.every(s=>B.PH.can(s)!=='manage'));

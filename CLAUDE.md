@@ -369,6 +369,11 @@ and could open the file in Excel anyway. Real containment would need per-office 
     `mount()` and `dechrome()` and all forgot `nav()`.
   - `guard()` must remove its refusal card when access is granted, not just drop `ph-locked` —
     once it runs twice, a leftover card would sit on every allowed page.
+  - The visible symptom people reported was **My Profile**, which prints `me().teams` and
+    `me().loc`: a guest opening her own profile was shown *"Team(s): Admin, Executive Team ·
+    Location(s): All offices"*. Jenny read that as her LCO staff being filed under Executive.
+    The roster itself was correct and matched Heather's spreadsheet exactly — when someone
+    reports wrong *data*, check whether they are being shown the wrong *person* first.
   - **`sh test/all.sh` before every deploy.** `test/permissions.test.js` fails 14 checks against
     the build that shipped this bug.
 - **Anything Heather needs must be reachable from MONTH view.** She lives in Month; Week is the
