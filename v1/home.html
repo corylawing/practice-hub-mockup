@@ -110,10 +110,10 @@
   }
 
 </style>
-<script src="user.js?v=hc39"></script>
+<script src="user.js?v=hc40"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc39"></script>
-  <script src="gate.js?v=hc39"></script>
+  <script src="store.js?v=hc40"></script>
+  <script src="gate.js?v=hc40"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — this is the logged-in home. Use “Viewing as” to see how the app changes for each role.</div>
@@ -240,7 +240,8 @@
       '<div><div class="ut">'+esc(u.title)+'</div>'+
       '<div class="uw">'+esc(u.when)+(u.sec==='documents'?' \u00b7 opens in SharePoint \u2197':'')+'</div></div>'+
       (live && !u.seen ? '<button class="uok" type="button">Got it</button>'
-                       : '<span class="utag">'+esc(secName(u.sec))+'</span>')+'</div>';
+        : (live && u.seen ? '<span class="utag" title="You checked this off">\u2713 Read</span>'
+                          : '<span class="utag">'+esc(secName(u.sec))+'</span>'))+'</div>';
     el('updates').innerHTML='<h2>\u{1F514} Updates for you'+
         (unread?' <span class="cnt">'+unread+'</span>':'')+
         (live&&unread?'<button class="uall" type="button">Mark all as read</button>':'')+'</h2>'+
@@ -317,7 +318,7 @@
 })();
 </script>
 <script>PH.nav('home');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(PH.loadActivity)PH.loadActivity().then(function(){return PH.loadSeen?PH.loadSeen():null;}).then(function(){if(window.HOME&&HOME.refreshUpdates)HOME.refreshUpdates();if(PH.refreshBell)PH.refreshBell();});});</script>
-<script src="tour.js?v=hc39"></script>
+<script src="tour.js?v=hc40"></script>
 <script>
 Tour.init([
   {sel:'.ph-av', title:'This is you', body:'Your name and photo, top right. Tap it any time for <b>My profile</b> \u2014 your photo, preferred name, phone and \u201cAbout me\u201d. Those follow you between devices.'},

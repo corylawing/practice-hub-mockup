@@ -763,7 +763,7 @@
   .ph-np .nph{display:flex;align-items:center;gap:8px;padding:13px 15px;border-bottom:1px solid #EEF1F5}
   .ph-np .nph b{font-size:14.5px;flex:1}
   .ph-np .nall{background:none;border:none;color:#149B96;font:700 12.5px inherit;cursor:pointer;padding:4px 2px}
-  .ph-np .nall[disabled]{color:#9AA7B8;cursor:default}
+  .ph-np .nallok{font-size:12.5px;font-weight:700;color:#0F827E}
   .ph-np .nlist{max-height:min(60vh,420px);overflow:auto}
   .ph-np .ni{display:flex;gap:10px;align-items:flex-start;padding:12px 15px;border-bottom:1px solid #F3F5F8;
     background:#F2FBFA}
@@ -776,7 +776,8 @@
   .ph-np .ni .nok{background:#fff;border:1px solid #CBD5E1;border-radius:8px;color:#0F2A4A;
     font:700 11.5px inherit;padding:5px 9px;cursor:pointer;flex:none;white-space:nowrap}
   .ph-np .ni .nok:hover{background:#F2FBFA;border-color:#149B96;color:#0F827E}
-  .ph-np .ni.read .nok{visibility:hidden}
+  .ph-np .ni .ndone{flex:none;font-size:11.5px;font-weight:700;color:#0F827E;background:#E8F6F4;
+    border-radius:8px;padding:5px 9px;white-space:nowrap;align-self:flex-start}
   .ph-np .nempty{padding:26px 18px;text-align:center;font-size:13.5px;color:#7A889B;line-height:1.55}
   @media(max-width:560px){ .ph-np{position:fixed;left:12px;right:12px;width:auto;top:62px} }
   .ph-av{margin-left:auto;display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.18);
@@ -891,9 +892,11 @@
       '<span class="nic">'+escHTML(n.ic||'\u{1F514}')+'</span>'+
       '<div class="ntx"><div class="ntt">'+escHTML(n.title)+'</div>'+
       '<div class="nw">'+escHTML(n.by||'')+(n.by?' · ':'')+escHTML(ago(n.at))+'</div></div>'+
-      '<button class="nok" type="button">Got it</button></div>';
+      (n.seen ? '<span class="ndone" title="You checked this off">\u2713 Read</span>'
+              : '<button class="nok" type="button">Got it</button>')+'</div>';
     return '<div class="nph"><b>Notifications</b>'+
-      '<button class="nall" type="button"'+(unread?'':' disabled')+'>Mark all as read</button></div>'+
+      (unread ? '<button class="nall" type="button">Mark all as read</button>'
+              : (list.length ? '<span class="nallok">\u2713 All read</span>' : ''))+'</div>'+
       (list.length
         ? '<div class="nlist">'+list.map(row).join('')+'</div>'
         : '<div class="nempty">Nothing new right now.<br>Updates show up here when someone '+
