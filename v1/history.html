@@ -84,10 +84,10 @@
   </div>
 </div>
 
-<script src="user.js?v=hc34"></script>
+<script src="user.js?v=hc35"></script>
 <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-<script src="store.js?v=hc34"></script>
-<script src="gate.js?v=hc34"></script>
+<script src="store.js?v=hc35"></script>
+<script src="gate.js?v=hc35"></script>
 <script>
 (function(){
   'use strict';
@@ -114,6 +114,37 @@
       });
     }
     return page(path);
+  }
+
+  /* A schedule is a hundred kilobytes of JSON - a slice off the front tells you nothing
+     about whether a version is the good one. Count what is actually in it instead, so
+     two versions can be compared at a glance. That is this page's whole job: working
+     out which version to put back. */
+  function summarise(parsed, pay){
+    if(!parsed || typeof parsed!=='object')
+      return '<span class="muted">'+esc(pay.slice(0,180))+(pay.length>180?'\u2026':'')+'</span>';
+    var days=0, docs=0, ydot=0, closed=0, events=0, first='', last='';
+    Object.keys(parsed).forEach(function(k){
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(k)) return;
+      days++; if(!first||k<first) first=k; if(!last||k>last) last=k;
+      var day=parsed[k]||{};
+      Object.keys(day).forEach(function(office){
+        var c=day[office]; if(!c) return;
+        if(c.closed) closed++;
+        else if(c.ydot) ydot++;
+        else if(c.ps || c.p!=null) docs++;
+        if(c.event) events++;
+      });
+    });
+    if(!days){
+      var n=Object.keys(parsed).length;
+      return '<span class="muted">'+n+' entr'+(n===1?'y':'ies')+' \u00b7 '+
+             Math.round(pay.length/1024)+' KB</span>';
+    }
+    return '<b>'+docs+'</b> doctor days \u00b7 '+ydot+' yellow dot \u00b7 '+closed+' closed'+
+           (events?' \u00b7 '+events+' events':'')+
+           '<br><span class="muted">'+days+' dated days, '+esc(first)+' to '+esc(last)+
+           ' \u00b7 '+Math.round(pay.length/1024)+' KB</span>';
   }
 
   var PAYLOADS={}, CURRENT_KEY=null;
@@ -156,6 +187,10 @@
             '. Everyone should reload the hub to pick it up.'
           : '<b>Saved, but reading it back gave something different.</b> Do not press '+
             'anything else \u2014 tell Cory.');
+        /* Re-read the history, or the table is left saying IN USE NOW against the very
+           version we just replaced. In a recovery tool that is the one thing that must
+           not be wrong. */
+        if(same) setTimeout(function(){ el('go').click(); }, 900);
       });
     }).catch(function(e){
       b.disabled=false; b.textContent='Put this back';
@@ -209,7 +244,7 @@
                 var label=(d&&(d.n||d.name))||JSON.stringify(d);
                 return '<span class="pos">'+(n+1)+'</span>'+esc(label);
               }).join('  ');
-            else names='<span class="muted">'+esc(pay.slice(0,180))+(pay.length>180?'…':'')+'</span>';
+            else names=summarise(parsed, pay);
           }catch(_){ names='<span class="muted">'+esc(pay.slice(0,180))+(pay.length>180?'…':'')+'</span>'; }
           rows.push({ id:v.id, raw:pay, when:f.Modified||v.lastModifiedDateTime||'',
             who:(v.lastModifiedBy&&v.lastModifiedBy.user&&v.lastModifiedBy.user.displayName)||
