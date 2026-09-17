@@ -372,6 +372,30 @@ and could open the file in Excel anyway. Real containment would need per-office 
   written to SharePoint and only ever read from `localStorage`, so a second device showed the
   defaults and the next save pushed those defaults over the practice's real office setup. Fixed
   2026-09-16 with `PH.reloadLocations()`. If you add a key, add both halves.
+- **A person's settings slot is `PH.personKey()`, and nothing else may compute one.** admin.html
+  built its own as `email || 'emp:' + employeeId`. **38 of the 70 staff have no email on file** and
+  four have no employee id either, so those collapsed to the literal string `"emp:"` — one shared
+  slot. Heather set a location, it wrote to `emp:`; she set the next person, it overwrote the same
+  slot; on load that one office was stamped onto all of them over the correct roster. The
+  `ph_people` history showed it changing every few seconds: Lubbock, Clovis, Lubbock, All offices,
+  Carlsbad. Reported 2026-09-17 as "locations wrong on Admin, right on Team, and my fixes don't
+  stick" — Team was right because it never reads overrides.
+  - Email first (the slots already saved are keyed that way and must not orphan), then employee id,
+    then **name** — so there is no way left to land in a shared bucket.
+  - The slot is stamped from the **roster row** (`u.ovrid`), never recomputed from fields an
+    override can change — an override can blank someone's employee id, which used to move their
+    own slot into the shared bucket.
+  - `ovrKeysFor()` READS from any slot a person's settings might already be in and WRITES to one,
+    clearing the others, so nothing orphans and each person converges on a single record.
+  - `overrideFor()` looked up **by email only**, so for those same 38 people an admin's team and
+    office never reached their actual permissions — the Admin screen was decorative for more than
+    half the practice. It now falls back to the roster row, by email then by display name. A name
+    that misses finds nothing and the person falls back to their roster values, so it fails closed.
+- **"Doctors" must mean a doctor, and an office must match membership.** `team.html` filtered
+  `p.office !== office` — one line with two bugs. The chip labelled "Doctors" is the value
+  `'Rotates'`, meaning *no fixed office*, so a doctor **with** an office was not a doctor; and the
+  comparison was against the whole string, so someone at two offices ("Hobbs, Carlsbad") matched
+  neither chip. Dr. Carla was reachable only from "Everyone".
 - **NEVER decide what someone can see before you know who they are.** Found 2026-09-17 from a
   screenshot of Jenny Whitefield — an external guest — looking at the full nav including **Admin**.
   Nothing was wrong with how permissions were *calculated*; the problem was *when*. Every page

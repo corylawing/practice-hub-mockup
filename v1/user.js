@@ -105,12 +105,12 @@
      what an admin sets wins, then Entra, then this. Fetched at load because it is a
      static file needing no token, so it is long since ready by the time a sign-in
      popup completes. */
-  let ROSTER_BY_MAIL=null;
+  let ROSTER_BY_MAIL=null, ROSTER_BY_NAME=null, ROSTER_ROWS=null;
   const rosterReady=(typeof fetch==='function')
     ? fetch('_people.json').then(function(r){ return r.ok?r.json():null; }).then(function(j){
         const rows=j&&j.people;
         if(!Array.isArray(rows)) return null;
-        ROSTER_BY_MAIL={};
+        ROSTER_BY_MAIL={}; ROSTER_BY_NAME=null; ROSTER_ROWS=rows;
         rows.forEach(function(x){
           const m=String(x.email||'').toLowerCase().trim();
           if(m) ROSTER_BY_MAIL[m]=x;
@@ -121,6 +121,29 @@
   function rosterFor(mail){
     if(!ROSTER_BY_MAIL || !mail) return null;
     return ROSTER_BY_MAIL[String(mail).toLowerCase().trim()] || null;
+  }
+  /* By name, for the thirty-eight staff the roster holds no email for. Their Microsoft
+     address is real but the roster does not record it, so the display name is the only
+     link back to their row. Names are unique across the seventy; a miss returns null
+     and the caller falls back to the default, so a mismatch costs nothing. */
+  function rosterName(n){
+    return String(n||'').replace(/"[^"]*"|\([^)]*\)/g,'')
+      .trim().toLowerCase().replace(/\s+/g,' ');
+  }
+  function rosterByName(name){
+    if(!ROSTER_BY_MAIL && !ROSTER_ROWS) return null;
+    const want=rosterName(name); if(!want) return null;
+    if(!ROSTER_BY_NAME){
+      ROSTER_BY_NAME={};
+      Object.keys(ROSTER_BY_MAIL||{}).forEach(function(k){
+        const r=ROSTER_BY_MAIL[k]; const n=rosterName(r && r.name);
+        if(n) ROSTER_BY_NAME[n]=r;
+      });
+      (ROSTER_ROWS||[]).forEach(function(r){
+        const n=rosterName(r && r.name); if(n) ROSTER_BY_NAME[n]=r;
+      });
+    }
+    return ROSTER_BY_NAME[want] || null;
   }
 
   /* GUESTS FROM ANOTHER TENANT.
@@ -143,9 +166,56 @@
     return String(PROFILE.mail||'').toLowerCase().trim() || realAddress(PROFILE.userPrincipalName);
   }
 
-  function overrideFor(mail){
-    if(!PEOPLE_OVR || !mail) return null;
-    return PEOPLE_OVR[String(mail).toLowerCase().trim()] || null;
+  /* ------------------------------------------------------------------
+     WHICH SLOT DO THIS PERSON'S ADMIN SETTINGS LIVE IN?
+
+     One definition, used by Admin when it writes and by this file when it reads.
+     They had two, and both were wrong.
+
+     admin.html built the slot as `email || 'emp:' + employeeId`. Thirty-eight of the
+     seventy staff have no email on file, and four have no employee id either - so
+     those collapsed to the literal string "emp:" and SHARED ONE SLOT. Heather set a
+     location, it wrote to "emp:"; she set the next person, it overwrote the same
+     slot; and on load that one office was stamped onto all of them, over the correct
+     roster. The ph_people history showed it changing hands every few seconds:
+     Lubbock, Clovis, Lubbock, All offices, Carlsbad.
+
+     Email first, because that is how the twenty-one slots already saved are keyed and
+     none of them may be orphaned. Then the employee id. Then the name, which every
+     person has - so there is no way left to land in a shared bucket.
+     ------------------------------------------------------------------ */
+  function personKey(row){
+    if(!row) return '';
+    const mail=String(row.email||row.mail||'').trim().toLowerCase();
+    if(mail) return mail;
+    const emp=String(row.empId||row.emp||'').trim().toLowerCase();
+    if(emp) return 'emp:'+emp;
+    const nm=String(row.name || ((row.f||'')+' '+(row.l||''))).trim()
+      .toLowerCase().replace(/\s+/g,' ');
+    return nm ? 'name:'+nm : '';
+  }
+
+  /* Settings an admin saved for this person, whichever slot they are in.
+
+     This used to look up by email and nothing else. For the thirty-eight staff whose
+     roster row has no email, their slot is NOT their address - so an admin could set
+     their team and their offices in Admin and it would never reach what they actually
+     saw. The Admin screen was decorative for more than half the practice.
+
+     A signed-in address that the roster does not list is matched on display name,
+     which is the only link there is. A name that does not match finds nothing and the
+     person falls back to their roster teams and offices - the correct default - so
+     this fails closed. */
+  function overrideFor(mail, name){
+    if(!PEOPLE_OVR) return null;
+    const m=String(mail||'').toLowerCase().trim();
+    if(m && PEOPLE_OVR[m]) return PEOPLE_OVR[m];
+    const row=(m && rosterFor(m)) || (name && rosterByName(name)) || null;
+    if(row){
+      const k=personKey(row);
+      if(k && PEOPLE_OVR[k]) return PEOPLE_OVR[k];
+    }
+    return null;
   }
 
   let ACCESS=null;
@@ -203,7 +273,7 @@
   function fromProfile(){
     if(!PROFILE) return null;
     const mailNow=signedInAddress();
-    const ovr=overrideFor(mailNow);
+    const ovr=overrideFor(mailNow, PROFILE && PROFILE.displayName);
     const ros=rosterFor(mailNow);
     /* The hub's own setting wins; then Entra, if IT has filled it in; then the
        practice's own roster, which is what makes a brand-new guest work. */
@@ -1365,6 +1435,6 @@
   }
   const isLive=()=>env()==='live';
 
-  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK};
+  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK};
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mount); else mount();
 })();

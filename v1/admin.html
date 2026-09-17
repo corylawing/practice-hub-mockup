@@ -205,11 +205,11 @@
   }
 
 </style>
-<script src="user.js?v=hc36"></script>
+<script src="user.js?v=hc37"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="_staff.js?v=hc36"></script>
-  <script src="store.js?v=hc36"></script>
-  <script src="gate.js?v=hc36"></script>
+  <script src="_staff.js?v=hc37"></script>
+  <script src="store.js?v=hc37"></script>
+  <script src="gate.js?v=hc37"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — admin console concept for validation. Real build: people sync from Microsoft 365; access is managed here.</div>
@@ -438,6 +438,8 @@
       const parts=clean.replace(/^Dr\.\s*/,'').split(' ');
       const first=parts[0]||full, last=parts.slice(1).join(' ');
       return { f:isDoc?('Dr. '+first):first, l:last,
+        // The slot their settings live in, from the roster and fixed for good.
+        ovrid:(window.PH && PH.personKey) ? PH.personKey(r) : '',
         // No invented addresses: blank stays blank, and an admin can fill it in.
         email:r.email||'', realEmail:!!r.email,
         emp:r.empId||'', role:r.role||'',
@@ -461,6 +463,10 @@
       return a===b;
     });
     return {f:isDoc?('Dr. '+first):first, l:last,
+      /* The built-in name list is the sandbox's stand-in. Key it by NAME - the old
+         'E-'+index employee ids were positional, so a slot could land on whoever
+         happened to sit at that index. */
+      ovrid:(window.PH && PH.personKey) ? PH.personKey({name:clean}) : '',
       email:(known&&known.mail)||handle+'@farnsworthorthodontics.com',
       realEmail:!!(known&&known.mail),
       emp:'E-'+(1001+i),
@@ -478,9 +484,32 @@
   /* Anything an administrator has set for this person wins over the roster file.
      Keyed by email where there is one; by employee id otherwise, so the people with
      no email address can still be edited and keep their settings. */
-  function ovrKey(u){ return String(u.email||('emp:'+(u.emp||''))||'').toLowerCase(); }
+  /* WHICH SLOT a person's settings live in. One definition, in user.js, shared with the
+     code that reads them back - see PH.personKey. This file used to build its own as
+     `email || 'emp:'+employeeId`, which put everyone with neither into the single slot
+     "emp:": editing one overwrote the last, and on load that one office was stamped
+     onto all of them over the correct roster.
+
+     u.ovrid is stamped from the ROSTER row, before any override is applied, so editing
+     somebody can never move their own slot. */
+  function ovrKey(u){
+    return (u && u.ovrid) || (window.PH && PH.personKey ? PH.personKey(u) : '');
+  }
+  /* Every slot this person's settings could ALREADY be under. Entries saved before the
+     slot was fixed are keyed by an email an admin typed in, so read from any of these
+     and nothing orphans; writing always goes to ovrid and clears the rest, so each
+     person converges on one record. */
+  function ovrKeysFor(u){
+    const out=[], push=k=>{ k=String(k||'').toLowerCase().trim();
+      if(k && k!=='emp:' && out.indexOf(k)<0) out.push(k); };
+    push(u && u.ovrid);
+    push(u && u.email);
+    if(u && u.emp) push('emp:'+u.emp);
+    return out;
+  }
   function applyOverride(u){
-    const o=PEOPLE_OVR[ovrKey(u)];
+    const hit=ovrKeysFor(u).filter(k=>PEOPLE_OVR[k])[0];
+    const o=hit?PEOPLE_OVR[hit]:null;
     if(o){
       if(o.teams)  u.teams=o.teams.slice();
       if(o.status) u.status=o.status;
@@ -735,11 +764,15 @@
     u.role=(tmpU.role||'').trim();
     if(tmpU.photo!==undefined) u.photo=tmpU.photo;
     u.access=(tmpU.access && Object.keys(tmpU.access).length)?Object.assign({},tmpU.access):undefined;
-    /* Keyed by email, or by employee id when there is no email, so the people whose
-       address we don't have can still be edited. Changing the email moves the record
-       to the new key rather than orphaning it. */
+    /* One slot per person, fixed by the roster, so editing them cannot move it and two
+       people can never share it. Any older slot for this same person - from before the
+       slot was fixed - is cleared, so each person ends up with exactly one record. */
     const key=ovrKey(u);
-    if(oldKey && oldKey!==key) delete PEOPLE_OVR[oldKey];
+    if(!key){ alert('This person has no name, email or employee ID, so there is nowhere '+
+                    'to save their settings. Tell Cory.'); return; }
+    ovrKeysFor(u).concat([oldKey]).forEach(function(k){
+      if(k && k!==key) delete PEOPLE_OVR[k];
+    });
     PEOPLE_OVR[key]={teams:u.teams.slice(), locs:locs.slice(), status:u.status,
                      email:u.email, emp:u.emp, role:u.role,
                      photo:(u.photo!==undefined?u.photo:undefined),
@@ -1115,10 +1148,29 @@
     }).catch(function(){ return false; });
   }
   loadRoster().then(render);
+
+  /* AND AGAIN WHEN THE SHARED COPY ARRIVES.
+
+     This page keeps its own PEOPLE_OVR, read from THIS BROWSER'S storage at parse
+     time. The practice's copy comes from SharePoint a moment later, via
+     PH.reloadPeople() - and nothing here ever re-read it or rebuilt the list. So Admin
+     showed whatever settings happened to be cached locally, for the rest of the
+     session, no matter what anybody else had saved.
+
+     ph-identity fires on sign-in and again once the roster and the shared overrides
+     have landed (see user.js), so rebuild from the roster and repaint. The scroll
+     position is held because this can fire while somebody is part-way down the table. */
+  document.addEventListener('ph-identity', function(){
+    const restore=holdScroll();
+    PEOPLE_OVR=loadPeopleOverrides();
+    if(ROSTER_ROWS && ROSTER_ROWS.length) users=usersFromRoster(ROSTER_ROWS).map(applyOverride);
+    else users=users.map(function(u){ return applyOverride(u); });
+    render(); restore();
+  });
 })();
 </script>
 <script>PH.nav('admin');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(PH.loadPhotos)PH.loadPhotos().then(function(got){if(got&&window.AD&&AD.tab)AD.tab('users');});});</script>
-<script src="tour.js?v=hc36"></script>
+<script src="tour.js?v=hc37"></script>
 <script>
 Tour.init([
   {sel:'#tabs', title:'This is your control room', body:'Four tabs and you can run the whole hub: <b>People</b>, <b>Teams &amp; Access</b>, <b>Document Sections</b> and <b>Locations</b>. No developer, no consultant.', pre:()=>AD.tab('users')},

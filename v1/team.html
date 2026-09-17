@@ -84,11 +84,11 @@
   }
 
 </style>
-<script src="user.js?v=hc36"></script>
+<script src="user.js?v=hc37"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="_staff.js?v=hc36"></script>
-  <script src="store.js?v=hc36"></script>
-  <script src="gate.js?v=hc36"></script>
+  <script src="_staff.js?v=hc37"></script>
+  <script src="store.js?v=hc37"></script>
+  <script src="gate.js?v=hc37"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — everyone's contact card. In the real hub this list builds itself from Microsoft 365.</div>
@@ -233,8 +233,27 @@
     const isMeOf=p=>{ if(!mine) return false;
       const legal=(mine.first+' '+mine.last).toLowerCase();
       return (p.first+' '+p.last).toLowerCase()===legal; };
+    /* WHO MATCHES THE CHIP.
+
+       Two bugs lived in the one line this replaces, `p.office!==office`:
+
+       - The chip labelled "Doctors" is the value 'Rotates', i.e. "has no fixed
+         office". So a doctor WITH an office was not a doctor. Dr. Carla works at
+         Hobbs and Carlsbad, so she vanished from Doctors - Heather, 17/09.
+       - It compared the whole office string. Somebody at two offices has the string
+         "Hobbs, Carlsbad", which equals neither "Hobbs" nor "Carlsbad", so they
+         matched no office chip either. Dr. Carla and Anette Olvera were reachable
+         only from "Everyone".
+
+       Doctors now means a doctor, Leadership means a leader, and an office matches if
+       the person works there. */
     const list=PEOPLE.filter(p=>{
-      if(office!=='All' && p.office!==office) return false;
+      if(office==='Rotates'){ if(!p.isDoc) return false; }
+      else if(office==='All offices'){ if(!p.leader) return false; }
+      else if(office!=='All'){
+        const mine=String(p.office||'').split(',').map(x=>x.trim());
+        if(mine.indexOf(office)<0) return false;
+      }
       if(!q) return true;
       const t=(p.full+' '+(p.nick||'')+' '+p.title+' '+p.office+' '+p.brand+' '+p.team+' '+p.email+' '+p.phone+' '+(p.nick||'')).toLowerCase();
       return t.includes(q.toLowerCase());
@@ -288,7 +307,7 @@
 })();
 </script>
 <script>PH.nav('team');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.loadPhotos)PH.loadPhotos().then(function(got){if(got&&window.TEAMPAGE&&TEAMPAGE.refresh)TEAMPAGE.refresh();});if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc36"></script>
+<script src="tour.js?v=hc37"></script>
 <script>
 Tour.init([
   {sel:'#q', title:'Find anyone fast', body:'Type a name, an office, or part of a phone number. This is the quickest way to reach the right person at the right office.'},
