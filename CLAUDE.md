@@ -339,6 +339,16 @@ and could open the file in Excel anyway. Real containment would need per-office 
   store.js: `ph_activity`, `ph_seen_`, `ph_photos`). A three-day feed empties on a quiet weekend
   and a read-list is pruned to match; guarding those would only ever cry wolf. The failed-read
   rule still applies to them, quietly.
+- **A guard is only ever as good as the read it measures against.** The wipe guard went live
+  2026-09-16 13:36. At **21:45 the same day** it failed to stop a browser writing a blank year over
+  Heather's 489 doctor days, 325 yellow dot days and 118 closures. The guard was not wrong — it was
+  measuring the wrong baseline. `get()` preferred that browser's stale local copy (clock rule,
+  below), reported the read as a **success**, and recorded *that* copy's weight as the baseline via
+  `rememberWeight`. So the guard compared a blank year against a blank year and correctly concluded
+  nothing was being lost. The clock rule silently disarmed it.
+  My original test missed this because it seeded local *empty* and remote *full*; it never seeded
+  local **stale but stamped newer**, which is the case that actually happened. Replay the whole
+  round trip — read then write — never hand a guard its baseline directly in a test.
 - **A local copy may only beat the shared copy when it holds a change SharePoint never took.**
   `get()` used to keep whichever copy looked newer by comparing this browser's clock to
   SharePoint's `lastModifiedDateTime` — two clocks on two machines. And `saveNow()` rewrote

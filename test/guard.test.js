@@ -152,6 +152,68 @@ const t=(n,v)=>{ (v? ok:bad).push(n); };
     t('and the shared copy is trusted again', after.length===5);
   }
 
+  /* ---- THE GUARD WAS DISARMED BY THE READ ------------------------------------
+     16/09 21:45. The wipe guard had been live since 13:36 that day and it did not
+     stop Jenny's browser writing a blank year over Heather's 489 doctor days, 325
+     yellow dot days and 118 closures.
+
+     Not because the guard was wrong, but because it was measuring the wrong thing.
+     get() preferred her stale local copy - her clock was ahead of Heather's save -
+     reported the read as a SUCCESS, and recorded THAT copy's weight as the baseline.
+     So the guard compared her blank year against her own blank year and correctly
+     concluded nothing was being lost.
+
+     A guard that takes its baseline from get() is only ever as good as get(). This
+     replays the whole thing end to end rather than seeding a baseline by hand, which
+     is how the original test missed it: it set local empty and remote full, never
+     local STALE and stamped newer - the case that actually happened. */
+  {
+    const LS4={};
+    global.localStorage={getItem:k=>k in LS4?LS4[k]:null,setItem:(k,v)=>{LS4[k]=String(v)},
+                         removeItem:k=>{delete LS4[k]}};
+    const ev=[]; global.document={dispatchEvent:e=>ev.push(e)};
+
+    const HER={__v:2}; let dd=new Date(2026,0,1);
+    for(let i=0;i<365;i++,dd.setDate(dd.getDate()+1)){
+      if(dd.getDay()===0||dd.getDay()===6) continue;
+      const k=dd.toISOString().slice(0,10); HER[k]={};
+      ['Carlsbad','Clovis','Hobbs','Cruces LCO'].forEach((o,n)=>{ HER[k][o]={p:n%4,s:480,e:1020}; });
+    }
+    const EMPTY={__v:2};
+    Object.keys(HER).forEach(k=>{ if(k==='__v') return; EMPTY[k]={};
+      ['Carlsbad','Clovis','Hobbs','Cruces LCO'].forEach(o=>{ EMPTY[k][o]={}; }); });
+
+    // Jenny's browser: a blank year, stamped a minute AFTER Heather's save.
+    LS4['ph_sched2']=JSON.stringify(EMPTY);
+    LS4['ph_sched2__at']=String(Date.parse('2026-09-16T21:44:00Z'));
+
+    global.PH_AUTH.graph=p=>{
+      if(/\/sites\/omega/.test(p)) return Promise.resolve({id:'site'});
+      if(/lists\?/.test(p))        return Promise.resolve({value:[{id:'L',displayName:'HomeBraceData'}]});
+      return Promise.resolve({value:[{id:'1', lastModifiedDateTime:'2026-09-16T21:43:35Z',
+        fields:{Title:'ph_sched2', Payload:JSON.stringify(HER)}}]});
+    };
+    let STORED=JSON.stringify(HER);
+    global.fetch=(u,o)=>{ const b=JSON.parse(o.body);
+      STORED=(b.Payload!==undefined?b.Payload:b.fields.Payload);
+      return Promise.resolve({status:200,ok:true,json:()=>Promise.resolve({id:'1'})}); };
+
+    delete require.cache[require.resolve(STORE)];
+    require(STORE); const K=window.PH_STORE;
+
+    const handed=await K.get('ph_sched2');
+    const doctorDays=v=>Object.keys(v||{}).filter(k=>/^\d{4}/.test(k))
+      .reduce((n,k)=>n+Object.keys(v[k]).filter(o=>v[k][o]&&v[k][o].p!=null).length,0);
+
+    t('a stale local copy stamped newer no longer wins the read', doctorDays(handed)>1000);
+    t('so the guard\u2019s baseline is HER year, not the blank one',
+      Number(LS4['ph_sched2__w'])>2000);
+    const blocked=await K.set('ph_sched2', EMPTY);
+    t('the blank year is refused', blocked.blocked===true);
+    t('and SharePoint still holds her year', doctorDays(JSON.parse(STORED))>1000);
+    t('and somebody is told', ev.some(e=>e.type==='ph-save-blocked'));
+  }
+
   console.log(ok.map(s=>'  PASS  '+s).join('\n'));
   if(bad.length) console.log(bad.map(s=>'  FAIL  '+s).join('\n'));
   console.log('\n'+ok.length+' passed, '+bad.length+' failed');
