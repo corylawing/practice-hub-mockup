@@ -103,6 +103,69 @@ t('and the feed itself survived the reload', R.notifications().length===4);
 R.logActivity({sec:'schedule', ic:'\u{1F4C5}', title:'Something brand new', scope:'everyone'});
 t('a genuinely new update after a reload does show unread', R.unreadCount()===1);
 
+/* ---- WHO GETS TOLD. Every type of employee, only what they need. ---------------
+   Decided in canSeeActivity(). The person is narrowed the way the app itself narrows
+   them - by writing their own row - so this runs the real rule, not a copy of it. */
+{
+  const R=load({ph_viewas:'admin'}).PH;     // sandbox admin, then narrowed per case
+  const MK='ph_me_'+R.me().id;
+  const as=o=>{ /* narrow the signed-in person */ };
+  const K=load({ph_viewas:'admin'});
+  const asPerson=o=>{ K.LS['ph_me_'+K.PH.me().id]=JSON.stringify(o); };
+  const P=K.PH;
+
+  // The events the sources now emit:
+  P.logActivity({kind:'schedule', sec:'schedule', title:'Dr. Carla now at Carlsbad on Mon 21 Sep', offices:['Carlsbad'], people:['Dr. Carla']});
+  P.logActivity({kind:'schedule', sec:'schedule', title:'Hobbs closed Fri 25 Sep', offices:['Hobbs']});
+  P.logActivity({kind:'production', sec:'production', title:'Production numbers entered for Hobbs', offices:['Hobbs']});
+  P.logActivity({kind:'promo', sec:'marketing', title:'Marketing \u00b7 Fall promo', offices:['Carlsbad','Clovis']});
+  P.logActivity({kind:'goal', sec:'dashboard', title:'Hobbs hit its September goal', offices:['Hobbs'], teams:['Leadership Team','Executive Team']});
+  P.logActivity({kind:'people', sec:'team', title:'Jane Smith joined Hobbs', offices:['Hobbs'], teams:['Office Managers','TCs']});
+  P.logActivity({kind:'blocked', sec:'admin', title:'A save was refused', scope:'admins'});
+  const titles=()=>P.notifications().map(n=>n.title);
+  const has=t=>titles().some(x=>x.indexOf(t)>=0);
+
+  // A Hobbs clinical assistant: Staff team, Hobbs only, cannot open production.
+  asPerson({offices:['Hobbs'], teams:['Staff'], can:Object.assign({}, P.me().can, {production:'none', dashboard:'none', admin:'none', marketing:'view'})});
+  t('Hobbs staff hear their office closed', has('Hobbs closed'));
+  t('Hobbs staff do NOT hear about a Carlsbad schedule change', !has('Carlsbad on Mon'));
+  t('Hobbs staff do NOT hear Hobbs production (they cannot open it)', !has('Production numbers entered for Hobbs'));
+  t('Hobbs staff do NOT get the leadership goal notice', !has('hit its September goal'));
+  t('Hobbs staff do NOT get the office-manager notice about a new colleague', !has('Jane Smith joined'));
+  t('Hobbs staff do NOT see the Carlsbad/Clovis promo', !has('Fall promo'));
+  t('Hobbs staff do NOT see refused saves', !has('A save was refused'));
+
+  // Dr. Carla: Doctors team, based at Hobbs - but the change is HER day, at Carlsbad.
+  asPerson({first:'Carla', last:'Coelho', dr:true, preferred:'', offices:['Hobbs'], teams:['Doctors'], can:Object.assign({}, P.me().can, {production:'none', admin:'none'})});
+  t('a doctor hears about HER day at an office she does not otherwise see', has('Dr. Carla now at Carlsbad'));
+  t('and still hears her own office closing', has('Hobbs closed'));
+
+  // Hobbs office manager: sees Hobbs production and the new colleague; not the goal notice.
+  asPerson({offices:['Hobbs'], teams:['Office Managers'], can:Object.assign({}, P.me().can, {production:'edit', dashboard:'view', admin:'none'})});
+  t('an office manager hears production was entered at her office', has('Production numbers entered for Hobbs'));
+  t('and that somebody joined her office', has('Jane Smith joined Hobbs'));
+  t('but not the leadership goal notice', !has('hit its September goal'));
+  t('and not a Carlsbad doctor\u2019s day', !has('Carlsbad on Mon'));
+
+  // A Carlsbad office manager does not hear Hobbs production.
+  asPerson({offices:['Carlsbad'], teams:['Office Managers'], can:Object.assign({}, P.me().can, {production:'edit', admin:'none'})});
+  t('a Carlsbad manager does NOT hear Hobbs production', !has('Production numbers entered for Hobbs'));
+  t('but does see the promo running at Carlsbad', has('Fall promo'));
+
+  // Leadership: all offices, the goal notice, but not the office-manager chatter unless on that team.
+  asPerson({offices:'all', teams:['Leadership Team'], can:Object.assign({}, P.me().can, {admin:'none'})});
+  t('leadership gets the goal notice', has('hit its September goal'));
+  t('leadership sees every office\u2019s production', has('Production numbers entered for Hobbs'));
+  t('leadership does not get the office-manager-only notice', !has('Jane Smith joined'));
+  t('leadership does not see refused saves (admins only)', !has('A save was refused'));
+
+  // Admin: everything, including refused saves.
+  asPerson({offices:'all', teams:['Admin'], can:Object.assign({}, P.me().can, {admin:'manage'})});
+  t('admins see refused saves', has('A save was refused'));
+  t('admins see the team-restricted items too', has('Jane Smith joined') && has('hit its September goal'));
+  delete K.LS[MK];
+}
+
 /* And again as somebody who is NOT one of the three people whose record happens to
    carry an email property. Keying the read-list off a person's .mail worked for
    Heather and silently threw away everybody else's ticks - which is the version of

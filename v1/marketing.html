@@ -276,10 +276,10 @@
   }
 
 </style>
-<script src="user.js?v=hc38"></script>
+<script src="user.js?v=hc39"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc38"></script>
-  <script src="gate.js?v=hc38"></script>
+  <script src="store.js?v=hc39"></script>
+  <script src="gate.js?v=hc39"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — marketing board concept for validation. Real build lives in Home-Brace (Microsoft Lists / Planner).</div>
@@ -996,8 +996,12 @@
     delete c.loc;                                        // offices live on c.locs now
     if(c.stage!=='done')c.result='none';
     if(window.PH && PH.logActivity && PH.isLive())
-      PH.logActivity({sec:'marketing', ic:'\u{1F4E3}',
-        title:'Marketing \u00b7 '+c.title, scope:(isAllOff(c)?'everyone':locsOf(c).join(', '))});
+      /* A promo for Carlsbad reaches the people in Carlsbad; one for every office reaches
+         everyone. The old scope joined several offices with commas, which matched no
+         office at all - so a two-office promo told nobody. */
+      PH.logActivity({kind:'promo', sec:'marketing', ic:'\u{1F4E3}',
+        title:'Marketing \u00b7 '+c.title+(c.date?' \u2014 from '+c.date:''),
+        offices:(isAllOff(c)?[]:locsOf(c)), scope:'everyone'});
     persist();
     closeModal(); render();
   }
@@ -1059,7 +1063,7 @@
 })();
 </script>
 <script>PH.nav('marketing');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc38"></script>
+<script src="tour.js?v=hc39"></script>
 <script>
 Tour.init([
   {sel:'#viewseg', pre:()=>MK.view('year'), title:'Four ways to look at it', body:'<b>The year</b> is the planning view \u2014 every promotion on one screen. <b>Board</b> is the day-to-day working view. <b>Month</b> lays everything out on a calendar. <b>By office</b> shows what each location got.'},

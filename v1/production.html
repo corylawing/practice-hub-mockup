@@ -123,11 +123,11 @@
   }
 
 </style>
-<script src="user.js?v=hc38"></script>
+<script src="user.js?v=hc39"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="workbook.js?v=hc38"></script>
-  <script src="store.js?v=hc38"></script>
-  <script src="gate.js?v=hc38"></script>
+  <script src="workbook.js?v=hc39"></script>
+  <script src="store.js?v=hc39"></script>
+  <script src="gate.js?v=hc39"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — type the month's numbers here. In the real build this writes straight into the SharePoint workbook.</div>
@@ -332,8 +332,8 @@
       localStorage.setItem('ph_prodaudit',JSON.stringify(a));
     }catch(_){}
     if(window.PH && PH.logActivity && PH.isLive())
-      PH.logActivity({sec:'production', ic:'\u{1F4DD}',
-        title:'Production numbers entered for '+office, scope:office});
+      PH.logActivity({kind:'production', sec:'production', ic:'\u{1F4DD}',
+        title:'Production numbers entered for '+office+' \u00b7 '+MO[month], offices:[office]});
     save(); refreshRight();
   }
   function refreshRight(){
@@ -464,9 +464,11 @@
       }catch(_){}
       wbBanner('\u2713 Saved '+done.length+' value(s) to the workbook for '+office+
                ' \u00b7 '+MO[month]+'. Verified in the file.');
-      if(window.PH && PH.logActivity && PH.isLive())
-        PH.logActivity({sec:'production', ic:'\u{1F4DD}',
-          title:'Workbook updated \u2014 '+office+' '+MO[month], scope:office});
+      if(window.PH && PH.logActivity && PH.isLive()){
+        PH.logActivity({kind:'production', sec:'production', ic:'\u{1F4DD}',
+          title:'Workbook updated \u2014 '+office+' '+MO[month], offices:[office]});
+        tellLeadership();
+      }
     } else {
       settle('failed', 'Nothing changed');
       wbBanner('Nothing to save \u2014 no boxes were changed for '+office+
@@ -474,6 +476,30 @@
     }
   }
 
+  /* THE TWO THINGS LEADERSHIP ASKED TO HEAR ABOUT, raised only when numbers have
+     actually reached the workbook:
+       - an office crossing its monthly goal - said once per office per month, with a
+         marker in this browser so re-saving the same month does not repeat it;
+       - numbers going in late - more than five days after the month they belong to
+         ended. */
+  const LEAD=['Leadership Team','Executive Team','Admin'];
+  function tellLeadership(){
+    try{
+      const goal=val(office,month,'goal');
+      const total=val(office,month,'tc')+val(office,month,'mds')*val(office,month,'fee');
+      const mark='ph_goalhit_'+office+'_'+month;
+      if(goal>0 && total>=goal && !localStorage.getItem(mark)){
+        localStorage.setItem(mark,'1');
+        PH.logActivity({kind:'goal', sec:'dashboard', ic:'\u{1F3AF}', offices:[office], teams:LEAD,
+          title:office+' has reached its '+MO[month]+' goal'});
+      }
+      const monthEnd=new Date(new Date().getFullYear(), month+1, 0);
+      const daysLate=Math.floor((Date.now()-monthEnd.getTime())/86400000);
+      if(daysLate>5)
+        PH.logActivity({kind:'late', sec:'dashboard', ic:'\u23F0', offices:[office], teams:LEAD,
+          title:office+'\u2019s '+MO[month]+' numbers were entered '+daysLate+' days after month end'});
+    }catch(_){}
+  }
   function commit(){ save(); pushToWorkbook(); const s=el('saved'); if(s){s.classList.add('on'); setTimeout(()=>s.classList.remove('on'),2600);} }
   function reset(){ Object.keys(edits).forEach(k=>{ if(k.indexOf(office+'|')===0) delete edits[k]; }); save(); render(); }
   function setOffice(o){ office=o; render(); }
@@ -594,7 +620,7 @@
 })();
 </script>
 <script>PH.nav('production');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(window.PROD&&PROD.identity)PROD.identity();});document.addEventListener('ph-identity',function(){if(window.PROD&&PROD.identity)PROD.identity();});</script>
-<script src="tour.js?v=hc38"></script>
+<script src="tour.js?v=hc39"></script>
 <script>
 Tour.init([
   {sel:'.syncbar', title:'One set of numbers', body:'Type here and it saves into the <b>same Excel workbook</b> on SharePoint. If someone types in Excel instead, it shows up here. There is never a second copy to reconcile.'},

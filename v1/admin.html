@@ -205,11 +205,11 @@
   }
 
 </style>
-<script src="user.js?v=hc38"></script>
+<script src="user.js?v=hc39"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="_staff.js?v=hc38"></script>
-  <script src="store.js?v=hc38"></script>
-  <script src="gate.js?v=hc38"></script>
+  <script src="_staff.js?v=hc39"></script>
+  <script src="store.js?v=hc39"></script>
+  <script src="gate.js?v=hc39"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — admin console concept for validation. Real build: people sync from Microsoft 365; access is managed here.</div>
@@ -835,7 +835,7 @@
                      access:u.access};
     savePeopleOverrides([key].concat(retired));
     if(window.PH && PH.logActivity && PH.isLive())
-      PH.logActivity({sec:'admin', ic:'\u2699\uFE0F',
+      PH.logActivity({kind:'access', sec:'admin', ic:'\u2699\uFE0F',
         // Admin housekeeping — only people who can reach Admin should see it.
         title:'Access changed for '+u.f+' '+u.l, scope:'admins'});
     closeModal(); renderUsersBody();
@@ -884,7 +884,9 @@
       if(r && (r.blocked||r.error)){ alert('That did not save to SharePoint. '+(r.why||r.error||'')); return; }
       closeModal();
       if(window.PH && PH.logActivity && PH.isLive())
-        PH.logActivity({sec:'admin', ic:'\u2699\uFE0F', title:name+' added to the hub', scope:'admins'});
+        PH.logActivity({kind:'people', sec:'team', ic:'\u{1F464}', scope:'everyone',
+          title:name+' joined'+(row.offices.length?' '+row.offices.join(' / '):' the practice'),
+          offices:row.offices, teams:['Office Managers','Clinic Managers','TCs','Leadership Team','Executive Team','Admin']});
     });
   }
   function removePerson(){
@@ -896,7 +898,10 @@
       if(r && (r.blocked||r.error)){ alert('That did not save to SharePoint. '+(r.why||r.error||'')); return; }
       closeModal();
       if(window.PH && PH.logActivity && PH.isLive())
-        PH.logActivity({sec:'admin', ic:'\u2699\uFE0F', title:u.f+' '+u.l+' removed from the hub', scope:'admins'});
+        PH.logActivity({kind:'people', sec:'team', ic:'\u{1F464}', scope:'everyone',
+          title:u.f+' '+u.l+' left'+(u.loc&&u.loc!=='Unassigned'?' '+u.loc:''),
+          offices:(u.loc&&u.loc!=='Unassigned'&&u.loc!=='All offices')?u.loc.split(',').map(x=>x.trim()):[],
+          teams:['Office Managers','Clinic Managers','TCs','Leadership Team','Executive Team','Admin']});
     });
   }
   function restorePerson(key){
@@ -1313,7 +1318,7 @@
 })();
 </script>
 <script>PH.nav('admin');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(PH.loadPhotos)PH.loadPhotos().then(function(got){if(got&&window.AD&&AD.tab)AD.tab('users');});});</script>
-<script src="tour.js?v=hc38"></script>
+<script src="tour.js?v=hc39"></script>
 <script>
 Tour.init([
   {sel:'#tabs', title:'This is your control room', body:'Four tabs and you can run the whole hub: <b>People</b>, <b>Teams &amp; Access</b>, <b>Document Sections</b> and <b>Locations</b>. No developer, no consultant.', pre:()=>AD.tab('users')},

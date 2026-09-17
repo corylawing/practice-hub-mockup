@@ -372,6 +372,15 @@ and could open the file in Excel anyway. Real containment would need per-office 
   written to SharePoint and only ever read from `localStorage`, so a second device showed the
   defaults and the next save pushed those defaults over the practice's real office setup. Fixed
   2026-09-16 with `PH.reloadLocations()`. If you add a key, add both halves.
+- **Notifications are routed by WHO IT IS FOR, decided once in `canSeeActivity()`.** An entry may
+  carry `offices[]` (only people who can see one of them), `people[]` (the person it is *about* —
+  a doctor whose day moved gets it even at an office she does not otherwise see), `teams[]` (the
+  leadership-only items) and `kind` (schedule · production · document · promo · people · access ·
+  blocked · goal · late). Two rules never bend: **nobody is told about an office they cannot see,**
+  and **a doctor is told about her own days across offices.** Raise the notification *where the
+  change is made*, naming the office and the doctor — a blanket "Schedule updated" to everyone told
+  nobody anything. The old single `scope` still works; a comma-joined office scope used to match
+  **no** office at all, so a two-office promo told nobody — use `offices[]`.
 - **Change one part of a shared record with `PH_STORE.update(key, fn)`, never by sending the
   page's whole copy.** Every save used to send the entire record. A page open for an hour sent an
   hour-old copy over whatever anyone else had saved since — and the size barely moves, so the wipe

@@ -1125,7 +1125,17 @@
     n.querySelector('button').onclick=function(){ n.remove(); };
     document.body.appendChild(n);
   }
-  document.addEventListener('ph-save-blocked',function(e){ warnSaveBlocked(e&&e.detail); });
+  document.addEventListener('ph-save-blocked',function(e){
+    warnSaveBlocked(e&&e.detail);
+    /* And put it in front of the admins, who are the only ones who can act on it. The
+       log write goes through the same store; if THAT is refused it stays quiet
+       (ph_activity is housekeeping), so this cannot loop. */
+    try{
+      const d=(e&&e.detail)||{};
+      logActivity({kind:'blocked', sec:'admin', ic:'\u{1F6E1}\uFE0F', scope:'admins',
+        title:'A save was refused to protect existing data'+(d.key?' ('+d.key+')':'')});
+    }catch(_){}
+  });
 
   function dechrome(){
     impersonationBar();
@@ -1170,6 +1180,7 @@
   function logActivity(e){
     if(!e || !e.title) return;
     const who=realMe();
+    const arr=v=>Array.isArray(v)?v.filter(Boolean).map(String):(v?[String(v)]:[]);
     const entry={
       /* An id of its own, so "I have read this" survives the entry being updated.
          Without one the id would come from the timestamp, and saving again two
@@ -1177,6 +1188,14 @@
       id:'a'+Date.now().toString(36)+Math.random().toString(36).slice(2,7),
       title:e.title, sec:e.sec||'', ic:e.ic||'\u{1F514}',
       scope:e.scope||'everyone',
+      /* WHO THIS IS FOR - see canSeeActivity(). All optional, all additive:
+           kind     a short type: schedule, production, document, promo, people,
+                    access, blocked, goal, late - for the icon and for grouping
+           offices  the office(s) it touches; only people who can see one of them get it
+           people   the person/people it is ABOUT (a doctor whose day moved); they get
+                    it even at an office they do not otherwise see
+           teams    restrict to these teams (the leadership-only items) */
+      kind:e.kind||'', offices:arr(e.offices), people:arr(e.people), teams:arr(e.teams),
       by:((who.first||'')+' '+(who.last||'')).trim()||'Someone',
       at:new Date().toISOString()
     };
@@ -1285,15 +1304,40 @@
 
   /* Is this entry any of my business? One rule, so the bell and Home can never
      disagree about what a person is allowed to see. */
+  /* WHO GETS TOLD. Decided once, here, for the bell and for Home.
+
+       1. It is ABOUT you (your name is in e.people - a doctor whose day moved) -> you
+          get it, whichever office it is at. A doctor rotates; her days are hers.
+       2. Otherwise you must be able to open the section it belongs to. Nobody is told
+          about production at an office when they cannot open production at all.
+       3. If it names offices, you must see one of them (or see all). Nobody is told
+          about an office they cannot see.
+       4. If it names teams, you must be on one of them. The leadership-only items.
+       5. scope: 'admins' means admins; an office name means that office (the old,
+          single-office way of saying it); 'everyone' means everyone left standing. */
   function canSeeActivity(e){
     if(!e) return false;
-    if(e.sec && can(e.sec)==='none') return false;     // they can't open that page anyway
+    const m=me();
+    const myName=name(m).toLowerCase().trim();
+    const myTeams=(m.teams||[]).map(t=>String(t).toLowerCase());
+    const mine=offices();
+    const seesOffice=o=>mine==='all' || (Array.isArray(mine) && mine.indexOf(o)>=0);
+
+    const about=(e.people||[]).map(p=>String(p).toLowerCase().trim());
+    if(about.length && myName && about.some(p=>p===myName || (p.length>3 && myName.indexOf(p)>=0))) return true;
+
+    if(e.sec && can(e.sec)==='none') return false;
+    const offs=(e.offices||[]);
+    if(offs.length && !offs.some(seesOffice)) return false;
+    const teams=(e.teams||[]).map(t=>String(t).toLowerCase());
+    if(teams.length && !teams.some(t=>myTeams.indexOf(t)>=0) && !isAdmin()) return false;
+
     const sc=e.scope||'everyone';
     if(sc==='everyone'||sc==='all') return true;
     if(sc==='admins') return isAdmin();
-    const mine=offices();
-    if(mine==='all') return true;
-    return Array.isArray(mine) && mine.indexOf(sc)>=0;
+    /* An old-style office scope. It was sometimes several offices joined with commas,
+       which matched nothing; treat it as a list. */
+    return String(sc).split(',').map(x=>x.trim()).filter(Boolean).some(seesOffice);
   }
 
   /* The feed as it applies to whoever is signed in, newest first, each entry
