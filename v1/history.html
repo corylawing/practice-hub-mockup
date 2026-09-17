@@ -43,13 +43,18 @@
   .tag{display:inline-block;background:var(--teal);color:#fff;border-radius:999px;padding:1px 8px;
        font-size:10.5px;font-weight:800;letter-spacing:.03em}
   .muted{color:var(--soft)}
+  .put{background:#fff;color:var(--navy);border:1px solid #cbd5e1;border-radius:8px;
+       font:700 11.5px inherit;padding:5px 10px;cursor:pointer;margin:0;white-space:nowrap}
+  .put:hover{background:#E8F6F4;border-color:var(--teal);color:var(--teal-600)}
+  .now{font-size:10.5px;font-weight:800;color:var(--teal-600);letter-spacing:.03em}
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>Look through the history</h1>
   <p class="sub">Every saved version of one of the hub's records, straight from SharePoint &mdash; further
-     back than the panel in SharePoint will scroll. Read only: this page never writes anything.</p>
+     back than the panel in SharePoint will scroll. It only ever writes if you press
+     <b>Put this back</b> on a version and confirm it.</p>
 
   <div class="card">
     <h2>What to look for</h2>
@@ -79,10 +84,10 @@
   </div>
 </div>
 
-<script src="user.js?v=hc33"></script>
+<script src="user.js?v=hc34"></script>
 <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-<script src="store.js?v=hc33"></script>
-<script src="gate.js?v=hc33"></script>
+<script src="store.js?v=hc34"></script>
+<script src="gate.js?v=hc34"></script>
 <script>
 (function(){
   'use strict';
@@ -110,6 +115,53 @@
     }
     return page(path);
   }
+
+  var PAYLOADS={}, CURRENT_KEY=null;
+
+  /* Putting a version back. The one thing this page can change, and only when somebody
+     presses the button and confirms what it contains.
+
+     Positions are why this exists rather than "just retype the names". A day stores its
+     doctor as an index into this list, so restoring the exact list restores every day
+     that pointed into it - and retyping the names in a different order would silently
+     point those days at the wrong doctor. */
+  document.addEventListener('click', function(ev){
+    var b=ev.target.closest && ev.target.closest('.put'); if(!b) return;
+    var vid=b.getAttribute('data-v'), raw=PAYLOADS[vid], key=CURRENT_KEY;
+    if(!raw || !key) return;
+    var parsed; try{ parsed=JSON.parse(raw); }catch(_){ 
+      return show('bad','<b>That version could not be read back.</b> Tell Cory before trying again.'); }
+
+    var what = Object.prototype.toString.call(parsed)==='[object Array]'
+      ? parsed.map(function(d,n){ return (n+1)+'. '+((d&&(d.n||d.name))||''); }).join('\n')
+      : (raw.length+' characters of data');
+    if(!confirm('Put version '+vid+' back as the current '+key+'?\n\n'+what+
+                '\n\nThis replaces what is there now. The previous content stays in this '+
+                'history, so it can be put back too.')) return;
+
+    b.disabled=true; b.textContent='Saving\u2026';
+    PH_STORE.set(key, parsed, {force:true}).then(function(r){
+      if(r && (r.local || r.blocked)){
+        b.disabled=false; b.textContent='Put this back';
+        return show('bad','<b>It did not save to SharePoint.</b> '+
+          esc((r.error||r.why||'')) + ' Nothing has changed for anyone else.');
+      }
+      /* Read it straight back. Saying "restored" without checking is what this whole
+         mess was made of. */
+      return PH_STORE.get(key).then(function(back){
+        var same=JSON.stringify(back)===JSON.stringify(parsed);
+        b.textContent='Put back \u2713';
+        show(same?'ok':'warn', same
+          ? '<b>Done, and checked.</b> Version '+esc(vid)+' is now the current '+esc(key)+
+            '. Everyone should reload the hub to pick it up.'
+          : '<b>Saved, but reading it back gave something different.</b> Do not press '+
+            'anything else \u2014 tell Cory.');
+      });
+    }).catch(function(e){
+      b.disabled=false; b.textContent='Put this back';
+      show('bad','<b>It did not save.</b> '+esc((e&&e.message)||e));
+    });
+  });
 
   el('go').onclick=function(){
     if(!window.PH_AUTH) return show('bad','<b>Not signed in.</b> Reload the page and sign in first.');
@@ -159,7 +211,7 @@
               }).join('  ');
             else names='<span class="muted">'+esc(pay.slice(0,180))+(pay.length>180?'…':'')+'</span>';
           }catch(_){ names='<span class="muted">'+esc(pay.slice(0,180))+(pay.length>180?'…':'')+'</span>'; }
-          rows.push({ id:v.id, when:f.Modified||v.lastModifiedDateTime||'',
+          rows.push({ id:v.id, raw:pay, when:f.Modified||v.lastModifiedDateTime||'',
             who:(v.lastModifiedBy&&v.lastModifiedBy.user&&v.lastModifiedBy.user.displayName)||
                 (f.Editor&&f.Editor.LookupValue)||'—',
             found:found, names:names, bytes:pay.length });
@@ -171,14 +223,22 @@
           (needle ? (hits ? ' <b>'+hits+'</b> of those contain “'+esc(needle)+'” — highlighted below.'
                           : ' <b>None</b> of them contain “'+esc(needle)+'”.') : ''));
 
+        /* Keep each version's exact payload, so "Put this back" writes the bytes that
+           were actually there rather than something re-assembled from the screen. */
+        PAYLOADS={}; rows.forEach(function(r){ PAYLOADS[r.id]=r.raw; });
+        CURRENT_KEY=key;
+
         el('out').innerHTML='<table><thead><tr><th>Version</th><th>When</th><th>Saved by</th>'+
-          '<th>Content</th></tr></thead><tbody>'+
-          rows.map(function(r){
+          '<th>Content</th><th></th></tr></thead><tbody>'+
+          rows.map(function(r,i){
             return '<tr class="'+(r.found?'hit':'')+'"><td>'+esc(r.id)+
               (r.found?' <span class="tag">FOUND</span>':'')+'</td>'+
               '<td>'+esc(r.when?new Date(r.when).toLocaleString():'—')+'</td>'+
               '<td>'+esc(r.who)+'</td>'+
-              '<td class="names">'+r.names+'</td></tr>';
+              '<td class="names">'+r.names+'</td>'+
+              '<td>'+(i===0 ? '<span class="now">IN USE NOW</span>'
+                            : '<button class="put" data-v="'+esc(r.id)+'">Put this back</button>')+
+              '</td></tr>';
           }).join('')+'</tbody></table>';
       })
       .catch(function(e){
