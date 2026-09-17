@@ -19,6 +19,9 @@ STAGE="$(mktemp -d)/swa"
 
 mkdir -p "$STAGE/v1"
 cp "$REPO/deploy/index.html" "$STAGE/index.html"
+# The staff sign-in guide. Root level and ungated on purpose: it is what you hand
+# someone who cannot get in yet, so it must not sit behind the sign-in.
+cp "$REPO/start.html" "$STAGE/start.html"
 cp -R "$REPO/assets" "$STAGE/assets"
 rsync -a --exclude 'snapshot.json' --exclude '_testgrids.json' "$REPO/v1/" "$STAGE/v1/"
 
