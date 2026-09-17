@@ -339,6 +339,22 @@ and could open the file in Excel anyway. Real containment would need per-office 
   store.js: `ph_activity`, `ph_seen_`, `ph_photos`). A three-day feed empties on a quiet weekend
   and a read-list is pruned to match; guarding those would only ever cry wolf. The failed-read
   rule still applies to them, quietly.
+- **A local copy may only beat the shared copy when it holds a change SharePoint never took.**
+  `get()` used to keep whichever copy looked newer by comparing this browser's clock to
+  SharePoint's `lastModifiedDateTime` — two clocks on two machines. And `saveNow()` rewrote
+  `ph_docs` on *every* schedule save, so merely using the page stamped the local copy as newer
+  without changing anything; once a browser's push failed, it stayed ahead for good and never saw
+  anyone else's changes again. Heather added Dr. Lightheart on 2026-09-16 and Jenny's calendar
+  kept showing four doctors. Now: `<key>__unsent` is set when a push fails and cleared when one
+  lands, and that flag — not a timestamp — is the only reason to prefer the local copy.
+- **Only persist what actually changed.** `ph_docs` rode along on every schedule save; it now
+  writes only when the doctor list differs from what was loaded (`docsSaved`, set at the end of
+  `boot()` — starting it at `null` makes the first save push regardless and defeats the point).
+- **Defaults must never be presented as the practice's data.** `schedule.html` starts with four
+  hardcoded doctors as a seed. When the shared list failed to load it showed those four with
+  nothing to say so, which is indistinguishable from "the practice has four doctors". It now
+  warns, and blocks adding/removing a doctor entirely — renumbering days against a list you
+  cannot see would move the days and not the list.
 - **Never write a shared key straight to `localStorage`.** Go through `PH_STORE.set()`. A local
   write first makes the store see no change, so it keeps no backup and weighs the wrong thing —
   and it steps around both guards above.

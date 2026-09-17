@@ -81,11 +81,24 @@
         if(!hit){ rememberWeight(key, null); return parse(local(key)); }
         idCache[key]=hit.id;
         var raw=hit.fields.Payload || '';
-        /* Only accept the remote copy if it is at least as new as ours. SharePoint's own
-           lastModifiedDateTime is the arbiter; a local change made since then wins, and
-           gets pushed on the next save. */
+        /* WHOSE COPY WINS.
+
+           This used to compare one browser's clock against SharePoint's timestamp and
+           keep whichever looked newer. That is not a sound question to ask: the two
+           clocks belong to different machines, and every save on the schedule page
+           rewrites ph_docs, so simply using the page stamped the local copy as "newer"
+           without changing a thing. Once a person's push to SharePoint failed - which
+           is what happens to a guest with read but not write access to the site - their
+           local stamp stayed ahead of the remote one for good, and they never saw
+           anybody else's changes again.
+
+           Reported 2026-09-17: Heather added Dr. Lightheart to the doctor list, and
+           Jenny's calendar carried on showing the four it had.
+
+           So: the local copy wins ONLY when it is holding changes that never reached
+           SharePoint. Otherwise the shared copy is the truth. No clocks involved. */
         var remoteAt = Date.parse(hit.lastModifiedDateTime || (hit.fields && hit.fields.Modified) || 0) || 0;
-        if (localStamp(key) > remoteAt + 1000){
+        if (unsent(key)){
           var mine = parse(local(key)); rememberWeight(key, mine); return mine;
         }
         setLocal(key, raw);
@@ -108,6 +121,16 @@
      could push an older copy over a change made on the first. */
   function stampKey(k){ return k + '__at'; }
   function localStamp(k){ return Number(local(stampKey(k))) || 0; }
+
+  /* "This browser has a change that SharePoint never took." Set when a push fails,
+     cleared the moment one succeeds. It is the only reason to prefer a local copy over
+     the shared one - see the note in get(). */
+  function unsentKey(k){ return k + '__unsent'; }
+  function unsent(k){ return local(unsentKey(k)) === '1'; }
+  function markUnsent(k, yes){
+    if(yes) setLocal(unsentKey(k), '1');
+    else try{ localStorage.removeItem(unsentKey(k)); }catch(_){}
+  }
 
 
   /* ------------------------------------------------------------------
@@ -231,12 +254,16 @@
               .then(function(created){ idCache[key]=created.id; return created; });
           });
       })
+      .then(function(r){ markUnsent(key, false); return r; })   // it landed
       .catch(function(e){
         /* A shared save that fails used to be completely silent: it still went into
            this browser's localStorage, so it LOOKED saved, and nobody else ever got
            it. That is the worst way to find out someone's SharePoint permissions are
            wrong. Say so instead - user.js listens and puts a banner up. */
         var msg=(e&&e.message)||String(e);
+        /* It did not land. Remember that, so the next read keeps this copy instead of
+           being overwritten - and so it stops keeping it as soon as one does land. */
+        markUnsent(key, true);
         try{
           document.dispatchEvent(new CustomEvent('ph-save-failed',
             {detail:{key:key, error:msg, denied:/403|forbidden|accessDenied|denied/i.test(msg)}}));
@@ -284,6 +311,8 @@
     get:get, set:set, getAll:getAll, setup:setup,
     /* Pages ask this instead of guessing from a null. */
     readFailed:function(k){ return readFailed[k] === true; },
+    /* True when this browser is holding a change SharePoint never took. */
+    unsent:unsent,
     /* The copy this browser replaced last, for restore.html. */
     backup:function(k){ return parse(local(k + '__prev')); },
     weigh:weigh,

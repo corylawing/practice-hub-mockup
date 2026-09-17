@@ -101,6 +101,57 @@ const t=(n,v)=>{ (v? ok:bad).push(n); };
   t('a feed is still not written over a copy we could not read', nr.blocked===true);
   t('and that refusal stays quiet', events.length===quietBefore);
 
+  /* ---- WHOSE COPY WINS -------------------------------------------------------
+     2026-09-17: Heather added Dr. Lightheart to the doctor list; Jenny's calendar
+     carried on showing the four it already had. get() was keeping whichever copy
+     looked newer by clock - and every save on the schedule page rewrote ph_docs, so
+     merely using the page stamped the local copy as newer without changing anything.
+     A browser whose push had failed then stayed ahead of the shared copy for good. */
+  {
+    const LS3={};
+    global.localStorage={getItem:k=>k in LS3?LS3[k]:null,setItem:(k,v)=>{LS3[k]=String(v)},
+                         removeItem:k=>{delete LS3[k]}};
+    delete require.cache[require.resolve(STORE)];
+    require(STORE); const J=window.PH_STORE;
+
+    const HEATHERS=[{n:'Dr. Farnsworth'},{n:'Dr. Brimhall'},{n:'Dr. Coelho'},
+                    {n:'Dr. McBeth'},{n:'Dr. Lightheart'}];
+    const JENNYS  =[{n:'Dr. Farnsworth'},{n:'Dr. Brimhall'},{n:'Dr. Coelho'},{n:'Dr. McBeth'}];
+
+    // Jenny's browser holds the old four, stamped with her own clock, far in the future.
+    LS3['ph_docs']=JSON.stringify(JENNYS);
+    LS3['ph_docs__at']=String(Date.now()+86400000);
+    // Heather's five are what SharePoint holds, saved yesterday.
+    REMOTE=HEATHERS;
+    global.fetch=(u,o)=>Promise.resolve({status:200,ok:true,json:()=>Promise.resolve({id:'1'})});
+    global.PH_AUTH.graph=p=>{
+      if(/\/sites\/omega/.test(p)) return Promise.resolve({id:'site'});
+      if(/lists\?/.test(p))        return Promise.resolve({value:[{id:'L',displayName:'HomeBraceData'}]});
+      return Promise.resolve({value:[{id:'1', lastModifiedDateTime:'2026-09-16T22:14:00Z',
+        fields:{Title:'ph_docs', Payload:JSON.stringify(HEATHERS)}}]});
+    };
+
+    const got=await J.get('ph_docs');
+    t('a newer local clock no longer beats the shared copy',
+      Array.isArray(got) && got.length===5);
+    t('Dr. Lightheart reaches the other browser',
+      (got||[]).some(d=>d.n==='Dr. Lightheart'));
+
+    // But a change that genuinely never reached SharePoint must NOT be thrown away.
+    global.fetch=()=>Promise.reject(new Error('403 accessDenied'));
+    const mine=HEATHERS.concat([{n:'Dr. Nguyen'}]);
+    const w=await J.set('ph_docs', mine, {force:true});
+    t('a push that SharePoint refuses is reported, not silently kept', w.local===true);
+    t('and the browser records that it is holding an unsent change', J.unsent('ph_docs')===true);
+    global.fetch=(u,o)=>Promise.resolve({status:200,ok:true,json:()=>Promise.resolve({id:'1'})});
+    const back=await J.get('ph_docs');
+    t('an unsent change survives the next read', (back||[]).some(d=>d.n==='Dr. Nguyen'));
+    await J.set('ph_docs', mine, {force:true});
+    t('once it lands, the unsent mark is cleared', J.unsent('ph_docs')===false);
+    const after=await J.get('ph_docs');
+    t('and the shared copy is trusted again', after.length===5);
+  }
+
   console.log(ok.map(s=>'  PASS  '+s).join('\n'));
   if(bad.length) console.log(bad.map(s=>'  FAIL  '+s).join('\n'));
   console.log('\n'+ok.length+' passed, '+bad.length+' failed');

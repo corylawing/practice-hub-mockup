@@ -266,10 +266,10 @@
   }
 
 </style>
-<script src="user.js?v=hc32"></script>
+<script src="user.js?v=hc33"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc32"></script>
-  <script src="gate.js?v=hc32"></script>
+  <script src="store.js?v=hc33"></script>
+  <script src="gate.js?v=hc33"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — sample staff schedule for validation. Live version = one Microsoft List the practice maintains.</div>
@@ -363,6 +363,7 @@
      write per cell. One write, just after the last change, is what anybody actually
      wants, and it makes a thousand-version storm impossible. */
   let saveTimer=null;
+  let docsSaved=null;              // the doctor list as last persisted, to spot a real change
   function save(){ clearTimeout(saveTimer); saveTimer=setTimeout(saveNow, 400); }
   function saveNow(){
     sched.__v=SCHED_VERSION;
@@ -374,11 +375,18 @@
        year out. A direct localStorage.setItem here would step around all of it. */
     if(window.PH_STORE) PH_STORE.set('ph_sched2', sched);
     else try{ localStorage.setItem('ph_sched2',JSON.stringify(sched)); }catch(_){}
-    /* The doctor list rides along on every save. Removing a doctor re-numbers the
-       days, so the list and the days MUST persist together or the days point at
-       the wrong doctor. Kept out of `sched` because three loops walk its keys. */
-    if(window.PH_STORE) PH_STORE.set('ph_docs', people);
-    else try{ localStorage.setItem('ph_docs',JSON.stringify(people)); }catch(_){}
+    /* The doctor list rides along WHEN IT CHANGED. Removing a doctor re-numbers the
+       days, so the list and the days must persist together or the days point at the
+       wrong doctor - but rewriting it on every single save meant that simply using the
+       page restamped it, and a browser whose push had failed then held the whole
+       practice's doctor list hostage to its own stale copy. Kept out of `sched`
+       because three loops walk its keys. */
+    const docsNow=JSON.stringify(people);
+    if(docsNow!==docsSaved){
+      docsSaved=docsNow;
+      if(window.PH_STORE) PH_STORE.set('ph_docs', people);
+      else try{ localStorage.setItem('ph_docs',docsNow); }catch(_){}
+    }
   }
 
   // null on a day the office is OPEN = nobody rostered = a Yellow Dot Day.
@@ -945,8 +953,8 @@
 
   /* ---------- doctors (name only) ---------- */
   let tmpP=null;
-  function addPerson(){ if(!canEdit())return; tmpP={i:-1,n:''}; renderPerson(); }
-  function editPerson(i){ if(!canEdit())return; tmpP={i:i,n:people[i].n}; renderPerson(); }
+  function addPerson(){ if(docsBlocked())return; if(!canEdit())return; tmpP={i:-1,n:''}; renderPerson(); }
+  function editPerson(i){ if(docsBlocked())return; if(!canEdit())return; tmpP={i:i,n:people[i].n}; renderPerson(); }
   function renderPerson(){
     openModal(
       '<div class="m-top"><h3>'+(tmpP.i<0?'Add a doctor':'Edit doctor')+'</h3><button class="x" onclick="PS.close()">×</button></div>'+
@@ -957,12 +965,12 @@
         '<span style="flex:1"></span><button class="sbtn ghost" onclick="PS.close()">Cancel</button>'+
         '<button class="sbtn" onclick="PS.savePerson()">Save</button></div>');
   }
-  function savePerson(){
+  function savePerson(){ if(docsBlocked())return;
     const nm=(el('pName').value||'').trim(); if(!nm)return;
     if(tmpP.i<0) people.push({n:nm}); else people[tmpP.i].n=nm;
     save(); closeModal(); refresh();
   }
-  function delPerson(){
+  function delPerson(){ if(docsBlocked())return;
     const i=tmpP.i;
     Object.keys(sched).forEach(k=>Object.keys(sched[k]).forEach(ln=>{
       const c=sched[k][ln]; if(!c) return;
@@ -1053,8 +1061,41 @@
      Two changes: a failed read is now told apart from a genuinely empty one and never
      writes anything, and an empty schedule is never persisted at all. It simply renders
      empty; the first real edit saves it. Nothing is written until a person does something. */
-  function boot(stored, docs, readFailed){
+  function warn(html){
+    const n=document.createElement('div');
+    n.style.cssText='max-width:var(--maxw);margin:0 auto 14px;padding:11px 14px;border-radius:10px;'+
+      'font-size:13px;font-weight:600;background:#FCEBE8;color:#93301f;border:1px solid #f0c3b9';
+    n.innerHTML=html;
+    const w=document.querySelector('.wrap'); if(w) w.prepend(n);
+  }
+  /* Adding or removing a doctor renumbers the days that point at them. Doing that
+     against a list we could not read would leave the days pointing at the wrong
+     doctor, and the store would refuse the list half of the write anyway - so the
+     days would move and the list would not. Blocked outright while it is stale. */
+  let docsStale=false;
+  function docsBlocked(){
+    if(!docsStale) return false;
+    alert('The practice\u2019s doctor list could not be loaded, so it can\u2019t be changed '+
+          'right now \u2014 adding or removing a doctor here would renumber the days '+
+          'against a list that may be out of date.\n\nReload the page and try again. If it '+
+          'keeps happening, sign out and back in.');
+    return true;
+  }
+  function boot(stored, docs, readFailed, docsFailed){
     if(Array.isArray(docs) && docs.length && docs.every(d=>d&&d.n)) people=docs;
+    /* The four names in `people` above are a starting point, not the practice's list.
+       When the shared list cannot be read they were shown anyway, with nothing to say
+       so - which is how Heather could add Dr. Lightheart and Jenny's calendar could
+       carry on showing four doctors as though that were the truth. The names stay on
+       screen because the day cells point at them by position, but nobody is told they
+       are current when they are not. Saving the list back is refused while this is up:
+       PH_STORE will not write a key it could not read. */
+    else if(docsFailed && PH.isLive())
+      docsStale=true,
+      warn('<b>The doctor list could not be loaded.</b> The names below are the '+
+           'starting list, not the practice\u2019s \u2014 anyone added recently will be '+
+           'missing. Reload in a moment; if it keeps happening, sign out and back in. '+
+           'Nothing you change now will overwrite the real list.');
     const isDemo = stored && (stored.__demo || stored.__v!==SCHED_VERSION);
     if(PH.isLive() && isDemo) stored=null;          // never show invented days in the real app
     if(stored && typeof stored==='object' && Object.keys(stored).length){
@@ -1062,16 +1103,16 @@
     } else if(readFailed){
       /* Say so rather than showing an empty calendar that looks like lost work. */
       sched={};
-      const n=document.createElement('div');
-      n.style.cssText='max-width:var(--maxw);margin:0 auto 14px;padding:11px 14px;border-radius:10px;'+
-        'font-size:13px;font-weight:600;background:#FCEBE8;color:#93301f;border:1px solid #f0c3b9';
-      n.innerHTML='<b>The schedule could not be loaded just now.</b> This is not an empty '+
-        'schedule \u2014 nothing has been lost. Reload the page in a moment; if it keeps '+
-        'happening, sign out and back in.';
-      const w=document.querySelector('.wrap'); if(w) w.prepend(n);
+      warn('<b>The schedule could not be loaded just now.</b> This is not an empty '+
+           'schedule \u2014 nothing has been lost. Reload the page in a moment; if it keeps '+
+           'happening, sign out and back in.');
     } else if(PH.isLive()){
       startEmpty();                                  // in memory only - never saved over anyone
     } else buildYear(TODAY.getFullYear());
+    /* What is persisted right now, so a save that changed nothing about the doctors
+       does not rewrite their row. Set AFTER people is settled, or the first save
+       would push regardless and we would be back to restamping on every edit. */
+    docsSaved=JSON.stringify(people);
     applyPerms();
     refresh();
   }
@@ -1087,14 +1128,15 @@
     Promise.all([ PH_STORE.get('ph_sched2'), PH_STORE.get('ph_docs') ])
            .then(function(r){
              const got = r[0] || local;
-             boot(got, r[1] || ldocs, PH_STORE.readFailed('ph_sched2') && !got);
+             boot(got, r[1] || ldocs, PH_STORE.readFailed('ph_sched2') && !got,
+                  PH_STORE.readFailed('ph_docs') && !r[1]);
            })
-           .catch(function(){ boot(local, ldocs, !local); });
-  } else boot(local, ldocs, false);
+           .catch(function(){ boot(local, ldocs, !local, !ldocs); });
+  } else boot(local, ldocs, false, false);
 })();
 </script>
 <script>PH.nav('schedule');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc32"></script>
+<script src="tour.js?v=hc33"></script>
 <script>
 Tour.init([
   {sel:'#viewseg', title:'Week or month', body:'<b>Week</b> is the day-to-day working view. <b>Month</b> shows the whole month at a glance, with every office in its own color.'},
