@@ -272,9 +272,11 @@
   function realMe(){
     const real=fromProfile();
     if(real) return real;
-    const base=PEOPLE.find(p=>p.id===id());
-    let mine={}; try{ mine=JSON.parse(localStorage.getItem('ph_me_'+base.id))||{}; }catch(_){}
-    return Object.assign({},base,mine);
+    /* Had its own copy of the fallback, with the same hole. isAdmin() reads realMe(),
+       so before the profile landed isAdmin() answered true for everybody - which also
+       meant an impersonation written into localStorage was honoured, and viewAs() let
+       anyone through. */
+    return withoutProfile();
   }
   function isAdmin(p){ p=p||realMe(); return RANK[(p.can||{}).admin||'none']>=RANK['manage']; }
   function viewAs(person){
@@ -301,8 +303,47 @@
              can: canForTeams(depts) || Object.assign({},DEPT_CAN['staff']) };
   }
 
+  /* SANDBOX ONLY. The demo persona picker defaults to 'admin', which is Heather with
+     manage rights on everything. That default must never be reachable in production -
+     see nobody() directly below. */
   function id(){ let v='admin'; try{ v=localStorage.getItem('ph_viewas')||'admin'; }catch(_){}
     return PEOPLE.some(p=>p.id===v)?v:'admin'; }
+
+  /* ------------------------------------------------------------------
+     WHO WE ARE WHEN WE DO NOT YET KNOW.
+
+     Found 2026-09-17, from a screenshot of Jenny Whitefield - an external guest -
+     looking at the full navigation including Admin.
+
+     Every page calls PH.nav() the moment it parses. gate.js does not set PROFILE
+     until Microsoft Graph answers /me, which is a network round trip later. So for
+     the first stretch of every page load there is no profile, and me() used to answer
+     that by falling through to the SANDBOX persona - 'admin', Heather, COO, manage on
+     everything, offices 'all'. nav() built the menu from that and guard() waved the
+     page through, and neither was ever recomputed.
+
+     The gate's own comment said it would "proceed with least access rather than
+     locking anyone out". It did the exact opposite: it proceeded with the most access
+     there is. Two ways that showed up:
+       - the window on every page load, before /me answers;
+       - permanently, for anyone whose /me call fails - gate.js catches that and
+         carries on, so a guest with a restricted directory read got admin for good.
+
+     Not knowing who someone is now means no access, and it says so. */
+  function nobody(){
+    const none={}; Object.keys(DEPT_CAN['staff']||{}).forEach(k=>{ none[k]='none'; });
+    none.admin='none';
+    return { id:'unknown', first:'', last:'', role:'', title:'',
+             mail:'', teams:[], loc:'', offices:[], can:none, _unknown:true };
+  }
+  /* The one place the "no profile" answer is decided, so me() and realMe() cannot
+     drift apart - they already had two copies of this and both were wrong. */
+  function withoutProfile(){
+    if(isLive()) return nobody();
+    const base=PEOPLE.find(p=>p.id===id());
+    let mine={}; try{ mine=JSON.parse(localStorage.getItem('ph_me_'+base.id))||{}; }catch(_){}
+    return Object.assign({},base,mine);
+  }
   function me(){
     const imp=impersonating();
     if(imp && isAdmin(realMe())) return imp;    // admin looking through someone else's eyes
@@ -311,9 +352,7 @@
       let mine={}; try{ mine=JSON.parse(localStorage.getItem(profileKey()))||{}; }catch(_){}
       return Object.assign(real, mine);         // live: the signed-in person + their own edits
     }
-    const base=PEOPLE.find(p=>p.id===id());     // sandbox: the chosen persona
-    let mine={}; try{ mine=JSON.parse(localStorage.getItem('ph_me_'+base.id))||{}; }catch(_){}
-    return Object.assign({},base,mine);
+    return withoutProfile();                    // live: nobody. sandbox: the chosen persona.
   }
   /* Profile edits (photo, preferred name, phone, About me) belong to the PERSON, so in
      production they're keyed by their email — not by a demo persona id, which would have
@@ -1184,12 +1223,49 @@
     }).catch(function(){ return false; });
   }
 
+  /* Which page this is. Remembered so the menu and the guard can be recomputed the
+     moment we learn who the reader is - see the listener below. */
+  let NAV_ACTIVE=null;
   function nav(active){
+    if(active!=null) NAV_ACTIVE=active;
     const host=document.getElementById('nav')||document.querySelector('.v1nav-in');
     if(host) host.innerHTML=NAV.filter(x=>x.show()).map(x=>
-      '<a href="'+x.href+'"'+(x.k===active?' class="active"':'')+'>'+x.n+'</a>').join('');
-    guard(active);
+      '<a href="'+x.href+'"'+(x.k===NAV_ACTIVE?' class="active"':'')+'>'+x.n+'</a>').join('');
+    guard(NAV_ACTIVE);
   }
+
+  /* THE RE-CHECK. Every page calls PH.nav() as it parses, which is before Graph has
+     said who this is; not one page called it again afterwards. So the menu and the
+     page guard were both decided by whatever me() returned at parse time and never
+     revisited - which is how a guest ended up looking at the Admin tab.
+
+     This lives in user.js, deliberately, and not in nine copies of an inline script at
+     the bottom of nine pages. That is exactly how it got missed: the pages all
+     remembered to re-run mount() and dechrome() on this event, so the avatar showed the
+     right name over the wrong menu. A page added later gets this for free. */
+  /* ONE SIGNAL FOR "the answer to who-is-this just changed".
+
+     Sign-in is not the only moment it changes. fromProfile() reads three sources and
+     two of them arrive later: the practice roster (rosterReady, a fetch of
+     _people.json) and the admin overrides / team grid (reloadPeople, reloadAccess).
+     A guest whose Entra record is empty - which is every guest - gets her team and
+     her offices from the roster, so between sign-in and the roster landing she is
+     resolved as least-access with no offices, and nothing recomputed after that.
+
+     That direction is at least safe, but it is still the wrong answer left on screen.
+     So anything that can change the answer ends here, and this rebuilds the menu, the
+     page guard, and tells the page to rescope its own content. */
+  function identityChanged(){
+    nav(NAV_ACTIVE);
+    try{ document.dispatchEvent(new CustomEvent('ph-identity')); }catch(_){}
+  }
+  document.addEventListener('ph-signed-in', function(){
+    identityChanged();
+    // ...and again once each late source has landed.
+    if(rosterReady && rosterReady.then) rosterReady.then(identityChanged, identityChanged);
+    Promise.resolve(reloadAccess()).then(identityChanged, identityChanged);
+    Promise.resolve(reloadPeople()).then(identityChanged, identityChanged);
+  });
 
   /* One gate for every page.
      Hiding a tab in the nav is NOT enough — anyone can type the URL. Each page calls
@@ -1200,7 +1276,16 @@
     marketing:'Marketing board',documents:'Documents',team:'Team directory',admin:'Admin Console'};
   function guard(active){
     const entry=NAV.find(x=>x.k===active);
-    if(!entry || entry.show()){ document.body && document.body.classList.remove('ph-locked'); return true; }
+    if(!entry || entry.show()){
+      /* Unlock AND take the panel away. It used to only drop the class and leave the
+         "you don't have access" card sitting in the page - which never showed before,
+         because guard() only ever ran once. Now that it runs again on sign-in, every
+         allowed page would open with a stale refusal above its content. */
+      if(document.body) document.body.classList.remove('ph-locked');
+      const stale=document.querySelector('.ph-noaccess');
+      if(stale && stale.remove) stale.remove();
+      return true;
+    }
     const paint=()=>{
       const wrap=document.querySelector('.wrap'); if(!wrap) return;
       document.body.classList.add('ph-locked');
@@ -1280,6 +1365,6 @@
   }
   const isLive=()=>env()==='live';
 
-  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, photoFor, loadPhotos, rosterReady, WORKBOOK};
+  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK};
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mount); else mount();
 })();

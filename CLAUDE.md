@@ -346,6 +346,31 @@ and could open the file in Excel anyway. Real containment would need per-office 
   written to SharePoint and only ever read from `localStorage`, so a second device showed the
   defaults and the next save pushed those defaults over the practice's real office setup. Fixed
   2026-09-16 with `PH.reloadLocations()`. If you add a key, add both halves.
+- **NEVER decide what someone can see before you know who they are.** Found 2026-09-17 from a
+  screenshot of Jenny Whitefield — an external guest — looking at the full nav including **Admin**.
+  Nothing was wrong with how permissions were *calculated*; the problem was *when*. Every page
+  calls `PH.nav()` as it parses, and gate.js does not set `PROFILE` until Graph answers `/me`. With
+  no profile, `me()` and `realMe()` both fell through to the **sandbox `admin` persona** — Heather,
+  manage on everything, `offices:'all'` — and `nav()` built the menu and ran `guard()` from that.
+  No page ever called `nav()` again, so the menu and the guard stayed as decided at parse time.
+  The avatar *was* re-rendered on sign-in, which is why the screenshot showed the right name over
+  the wrong menu. gate.js's own comment claimed it would "proceed with least access"; it proceeded
+  with the most.
+  - `withoutProfile()` is the ONE place the no-profile answer is decided: in live it is `nobody()`
+    (every section `none`, no offices); only the sandbox resolves a persona. `me()` and `realMe()`
+    had separate copies and both were wrong — never reintroduce a second one.
+  - `isAdmin()` reads `realMe()`, so the same hole made `isAdmin()` true for everyone pre-profile —
+    which also honoured an impersonation planted in `localStorage` and let `viewAs()` through.
+  - **`ph-identity` fires whenever the answer changes** — on sign-in and again once each late
+    source lands (`rosterReady`, `reloadAccess`, `reloadPeople`). A guest's team and offices come
+    from the roster, which arrives *after* sign-in. user.js re-runs `nav()`/`guard()` on it; pages
+    that scope content by office (index, production) re-run their own `identity()`. Put this
+    recomputation in **user.js, not in each page's inline script** — nine pages all remembered
+    `mount()` and `dechrome()` and all forgot `nav()`.
+  - `guard()` must remove its refusal card when access is granted, not just drop `ph-locked` —
+    once it runs twice, a leftover card would sit on every allowed page.
+  - **`sh test/all.sh` before every deploy.** `test/permissions.test.js` fails 14 checks against
+    the build that shipped this bug.
 - **Anything Heather needs must be reachable from MONTH view.** She lives in Month; Week is the
   exception. The office editor — where the hours are set — existed only as a pencil in the Week
   view's row header, so changing an office's hours meant knowing to switch views first. It is now

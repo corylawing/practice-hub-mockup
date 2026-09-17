@@ -20,7 +20,13 @@ function load(reuse){
     console, Promise, Date, JSON, Math, Object, Array, String, Number, RegExp, isNaN, parseInt,
     setTimeout, clearTimeout,
     localStorage:{ getItem:k=>k in LS?LS[k]:null, setItem:(k,v)=>{LS[k]=String(v)}, removeItem:k=>{delete LS[k]} },
-    location:{ hostname:'kind-hill-00da87410.3.azurestaticapps.net', pathname:'/v1/home.html', search:'' },
+    /* The SANDBOX host on purpose: this file tests the read-state mechanics through the
+       demo personas, which are a sandbox feature. It used to point at the production
+       host and still resolve a persona - because me() fell through to the 'admin' demo
+       persona when there was no profile. That fail-open is what handed a guest the
+       Admin tab (see test/permissions.test.js); with it closed, a live host and no
+       sign-in correctly resolves to nobody, and nobody has no notifications. */
+    location:{ hostname:'corylawing.github.io', pathname:'/v1/home.html', search:'' },
     CustomEvent:class{constructor(t,o){this.type=t;this.detail=o&&o.detail}},
     document:{ readyState:'complete', documentElement:mk(), body:mk(), head:mk(),
       createElement:mk, getElementById:()=>null, querySelector:()=>null, querySelectorAll:()=>[],
