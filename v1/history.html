@@ -87,10 +87,10 @@
   </div>
 </div>
 
-<script src="user.js?v=hc35"></script>
+<script src="user.js?v=hc36"></script>
 <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-<script src="store.js?v=hc35"></script>
-<script src="gate.js?v=hc35"></script>
+<script src="store.js?v=hc36"></script>
+<script src="gate.js?v=hc36"></script>
 <script>
 (function(){
   'use strict';
@@ -140,6 +140,21 @@
       });
     });
     if(!days){
+      var keys=Object.keys(parsed);
+      /* An overrides record: key -> {locs, teams, status, ...}. Show who, and the
+         office each one has been pinned to, because that is the field that goes wrong. */
+      var looksLikeOverrides = keys.length && keys.every(function(k){
+        var v=parsed[k];
+        return v && typeof v==='object' && (v.locs||v.teams||v.status||v.access);
+      });
+      if(looksLikeOverrides){
+        return '<b>'+keys.length+'</b> people set by hand<br>'+
+          keys.map(function(k){
+            var v=parsed[k]||{};
+            var where=(v.locs&&v.locs.length)?v.locs.join(' + '):'\u2014';
+            return '<span class="muted">'+esc(nameFor(k))+'</span> '+esc(where);
+          }).join('<br>');
+      }
       var n=Object.keys(parsed).length;
       return '<span class="muted">'+n+' entr'+(n===1?'y':'ies')+' \u00b7 '+
              Math.round(pay.length/1024)+' KB</span>';
@@ -149,6 +164,30 @@
            '<br><span class="muted">'+days+' dated days, '+esc(first)+' to '+esc(last)+
            ' \u00b7 '+Math.round(pay.length/1024)+' KB</span>';
   }
+
+  /* The overrides record is keyed by email, or by "emp:<id>" for the many staff who
+     have no email on file. Neither is something a person can read, so pull the roster
+     once and label each entry with the actual name. Without this the record renders as
+     "21 entries" and tells you nothing, which is exactly the state it was in when we
+     needed to know which people had the wrong office. */
+  var NAMES=null;
+  function loadNames(){
+    if(NAMES) return Promise.resolve(NAMES);
+    return fetch('_people.json').then(function(r){ return r.ok?r.json():null; })
+      .then(function(j){
+        NAMES={};
+        ((j&&j.people)||[]).forEach(function(r){
+          if(r.email) NAMES[String(r.email).toLowerCase()]=r.name;
+          if(r.empId) NAMES['emp:'+String(r.empId).toLowerCase()]=r.name;
+        });
+        return NAMES;
+      }).catch(function(){ NAMES={}; return NAMES; });
+  }
+  function nameFor(key){
+    var k=String(key||'').toLowerCase();
+    return (NAMES && NAMES[k]) || key;
+  }
+
 
   var PAYLOADS={}, CURRENT_KEY=null;
 
@@ -221,7 +260,9 @@
         var hit=(r.value||[]).filter(function(i){ return i.fields && i.fields.Title===key; })[0];
         if(!hit) throw new Error('There is no "'+key+'" record in the list yet.');
         itemId=hit.id;
-        return allVersions('/sites/'+siteId+'/lists/'+listId+'/items/'+itemId+'/versions?$top=200');
+        return loadNames().then(function(){
+          return allVersions('/sites/'+siteId+'/lists/'+listId+'/items/'+itemId+'/versions?$top=200');
+        });
       })
       .then(function(vers){
         el('go').disabled=false;
