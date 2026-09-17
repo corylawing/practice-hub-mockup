@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="assets/favicon.png?v=2" type="image/png">
+<meta name="theme-color" content="#0F2A4A">
+<meta name="apple-mobile-web-app-title" content="Home-Brace">
+<link rel="apple-touch-icon" href="assets/logo-mark.png">
+<meta name="robots" content="noindex">
+<meta name="description" content="How to sign in to Home-Brace, the practice hub.">
+<style>
+  html{color-scheme:light dark}
+  body{margin:0}
+  img{max-width:100%}
+  [hidden]{display:none!important}
+</style>
+<title>Getting into Home-Brace</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bitter:wght@500;700&family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+  /* Home-Brace's own palette, so the guide looks like the thing it opens. */
+  :root{
+    --navy:#0F2A4A;
+    --teal:#149B96;
+    --teal-deep:#0F827E;
+    --teal-wash:#E8F6F4;
+    --ground:#F5F7FA;          /* cool off-white, biased toward the navy */
+    --surface:#FFFFFF;
+    --ink:#16283F;
+    --ink-soft:#4A5768;        /* grey with a navy lean */
+    --rule:#E1E7EF;
+    --note-bg:#FFF6E5;
+    --note-ink:#7A5200;
+    --note-rule:#F0DCAE;
+    --mock-sky:#0F2A4A;
+    --shadow:0 10px 30px rgba(15,42,74,.10);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --navy:#DDE7F2;
+      --teal:#3FBDB4;
+      --teal-deep:#7AD6CE;
+      --teal-wash:#12302F;
+      --ground:#0C1521;
+      --surface:#141F2E;
+      --ink:#E8EEF6;
+      --ink-soft:#A3B2C6;
+      --rule:#25344A;
+      --note-bg:#2C2312;
+      --note-ink:#F0D9A8;
+      --note-rule:#4A3C1C;
+      --mock-sky:#0A1523;
+      --shadow:0 10px 30px rgba(0,0,0,.45);
+    }
+  }
+  :root[data-theme="dark"]{
+    --navy:#DDE7F2;
+    --teal:#3FBDB4;
+    --teal-deep:#7AD6CE;
+    --teal-wash:#12302F;
+    --ground:#0C1521;
+    --surface:#141F2E;
+    --ink:#E8EEF6;
+    --ink-soft:#A3B2C6;
+    --rule:#25344A;
+    --note-bg:#2C2312;
+    --note-ink:#F0D9A8;
+    --note-rule:#4A3C1C;
+    --mock-sky:#0A1523;
+    --shadow:0 10px 30px rgba(0,0,0,.45);
+  }
+
+  *{box-sizing:border-box}
+  body{
+    background:var(--ground);
+    color:var(--ink);
+    font:17px/1.65 Inter,-apple-system,"Segoe UI",Roboto,sans-serif;
+    padding-block:40px 64px;
+    padding-left:20px; padding-right:20px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .sheet{max-width:660px;margin:0 auto;display:flex;flex-direction:column;gap:38px}
+
+  /* ---- masthead ---- */
+  .top{display:flex;flex-direction:column;gap:12px}
+  .eyebrow{
+    font-size:11.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--teal-deep);
+  }
+  h1{
+    font-family:Bitter,Georgia,serif;font-weight:700;
+    font-size:clamp(30px,6.4vw,42px);line-height:1.12;letter-spacing:-.015em;
+    margin:0;color:var(--navy);text-wrap:balance;
+  }
+  .standfirst{margin:0;font-size:18px;color:var(--ink-soft);max-width:52ch}
+
+  /* ---- the link, the single most important thing on the page ---- */
+  .addr{
+    display:flex;flex-direction:column;gap:7px;
+    border-left:4px solid var(--teal);
+    background:var(--surface);
+    padding:16px 18px;border-radius:0 12px 12px 0;
+  }
+  .addr span{
+    font-size:11.5px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;
+    color:var(--ink-soft);
+  }
+  .addr a{
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:15px;font-weight:600;line-height:1.45;
+    color:var(--teal-deep);word-break:break-all;text-decoration:none;
+    border-bottom:1.5px solid var(--teal);align-self:flex-start;
+  }
+  .addr a:hover{color:var(--teal)}
+  .addr a:focus-visible{outline:2.5px solid var(--teal);outline-offset:3px;border-radius:3px}
+
+  /* ---- steps: a real sequence, so they are numbered ---- */
+  h2{
+    font-family:Bitter,Georgia,serif;font-weight:700;
+    font-size:22px;line-height:1.25;margin:0 0 4px;color:var(--navy);
+  }
+  ol.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+  ol.steps > li{
+    display:grid;grid-template-columns:46px 1fr;gap:0 18px;
+    padding:22px 0;border-top:1px solid var(--rule);
+  }
+  ol.steps > li:first-child{border-top:none;padding-top:4px}
+  .num{
+    font-family:Bitter,Georgia,serif;font-weight:700;font-size:30px;line-height:1;
+    color:var(--teal);font-variant-numeric:tabular-nums;padding-top:2px;
+  }
+  .what{font-size:19px;font-weight:600;line-height:1.4;color:var(--ink);margin:0}
+  .why{margin:7px 0 0;color:var(--ink-soft);font-size:16.5px}
+  .why b{color:var(--ink);font-weight:600}
+  .step-extra{grid-column:2;margin-top:15px}
+
+  /* ---- the one lifted object: what the sign-in screen looks like ---- */
+  .mock{
+    background:var(--mock-sky);border-radius:14px;padding:30px 26px;text-align:center;
+    box-shadow:var(--shadow);
+  }
+  .mock .mark{
+    width:40px;height:40px;border-radius:11px;margin:0 auto 12px;
+    background:var(--teal);display:grid;place-items:center;
+    font-size:19px;line-height:1;
+  }
+  .mock .name{
+    font-weight:700;font-size:19px;color:#fff;margin:0 0 5px;
+    font-family:Inter,sans-serif;
+  }
+  .mock .blurb{
+    font-size:12.5px;line-height:1.5;color:#9FB4D0;margin:0 auto 18px;max-width:30ch;
+  }
+  .mock .btn{
+    display:block;width:100%;background:var(--teal);color:#fff;
+    font-weight:700;font-size:14.5px;padding:12px;border-radius:10px;
+  }
+  .caption{
+    margin:9px 0 0;font-size:13.5px;color:var(--ink-soft);text-align:center;font-style:italic;
+  }
+
+  /* ---- the pop-up problem: the thing that will actually go wrong ---- */
+  .note{
+    background:var(--note-bg);border:1px solid var(--note-rule);
+    border-radius:12px;padding:19px 21px;color:var(--note-ink);
+  }
+  .note h3{
+    font-family:Bitter,Georgia,serif;font-size:17.5px;font-weight:700;
+    margin:0 0 7px;color:var(--note-ink);
+  }
+  .note p{margin:0;font-size:16.5px;line-height:1.6}
+  .note p + p{margin-top:9px}
+  .note b{font-weight:700}
+
+  /* ---- what you'll see ---- */
+  .tabs{
+    display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 0;padding:0;list-style:none;
+  }
+  .tabs li{
+    background:var(--teal-wash);color:var(--teal-deep);
+    border-radius:999px;padding:5px 13px;font-size:14.5px;font-weight:600;
+  }
+  dl.finds{margin:18px 0 0;display:flex;flex-direction:column;gap:15px}
+  dl.finds div{display:flex;flex-direction:column;gap:2px}
+  dl.finds dt{font-weight:700;font-size:16.5px;color:var(--ink)}
+  dl.finds dd{margin:0;color:var(--ink-soft);font-size:16.5px}
+
+  /* ---- three platforms, one recipe each: a table would be overkill, cards would
+          imply they are separate things. Labelled rows on a shared rule. ---- */
+  dl.devices{margin:16px 0 0;padding:0;display:flex;flex-direction:column}
+  dl.devices > div{
+    display:grid;grid-template-columns:132px 1fr;gap:4px 18px;
+    padding:15px 0;border-top:1px solid var(--rule);
+  }
+  dl.devices > div:first-child{border-top:none}
+  dl.devices dt{
+    font-size:12px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;
+    color:var(--teal-deep);padding-top:4px;
+  }
+  dl.devices dd{margin:0;font-size:16.5px;color:var(--ink-soft)}
+  dl.devices dd b{color:var(--ink);font-weight:600}
+  @media (max-width:430px){
+    dl.devices > div{grid-template-columns:1fr;gap:5px}
+    dl.devices dt{padding-top:0}
+  }
+
+  /* ---- the one thing we are asking them to do: teal invites, amber warns ---- */
+  .invite{
+    background:var(--teal-wash);border:1px solid var(--teal);
+    border-radius:12px;padding:21px 22px;
+  }
+  .invite h2{margin-bottom:8px}
+  .invite > p{margin:0;font-size:16.5px;color:var(--ink-soft)}
+  .invite > p b{color:var(--ink);font-weight:600}
+  .route{
+    display:flex;align-items:center;gap:9px;flex-wrap:wrap;
+    margin:16px 0 0;font-size:15.5px;font-weight:600;color:var(--teal-deep);
+  }
+  .route .chip{
+    background:var(--surface);border:1px solid var(--rule);border-radius:8px;
+    padding:4px 10px;color:var(--ink);font-weight:600;
+  }
+  .route .arrow{color:var(--teal);font-weight:700}
+  ul.yours{list-style:none;margin:18px 0 0;padding:0;display:flex;flex-direction:column;gap:13px}
+  ul.yours li{display:flex;gap:11px;align-items:flex-start;font-size:16.5px;color:var(--ink-soft)}
+  ul.yours li::before{
+    content:"";flex:none;width:7px;height:7px;border-radius:50%;
+    background:var(--teal);margin-top:9px;
+  }
+  ul.yours b{color:var(--ink);font-weight:700}
+  .invite footer{
+    border-top:1px solid var(--teal);margin-top:18px;padding-top:14px;
+    font-size:15px;color:var(--ink-soft);display:block;
+  }
+
+  /* ---- closing ---- */
+  .ask{
+    border-top:2px solid var(--navy);padding-top:20px;
+    display:flex;flex-direction:column;gap:8px;
+  }
+  .ask p{margin:0;font-size:16.5px;color:var(--ink-soft)}
+  .ask strong{color:var(--ink)}
+  footer{
+    display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;
+    font-size:12.5px;color:var(--ink-soft);
+    border-top:1px solid var(--rule);padding-top:16px;
+  }
+  footer .brands{font-weight:700;letter-spacing:.09em;color:var(--teal-deep)}
+
+  @media (max-width:430px){
+    body{font-size:16px}
+    ol.steps > li{grid-template-columns:34px 1fr;gap:0 13px}
+    .num{font-size:25px}
+    .what{font-size:17.5px}
+    .why,.note p,dl.finds dt,dl.finds dd,.ask p{font-size:15.5px}
+  }
+  @media print{
+    body{background:#fff;color:#000;padding-block:0}
+    .mock{box-shadow:none;border:1px solid #ccc}
+    .sheet{gap:26px}
+  }
+</style>
+</head>
+<body>
+
+<div class="sheet">
+
+  <header class="top">
+    <p class="eyebrow">Farnsworth &middot; Sunflower &middot; Las Cruces</p>
+    <h1>Getting into Home-Brace</h1>
+    <p class="standfirst">Home-Brace is the practice hub &mdash; the schedule, production numbers,
+      documents and team directory in one place. Signing in takes about a minute.</p>
+  </header>
+
+  <div class="addr">
+    <span>The address</span>
+    <a href="https://kind-hill-00da87410.3.azurestaticapps.net/v1/home.html">kind-hill-00da87410.3.azurestaticapps.net/v1/home.html</a>
+  </div>
+
+  <section>
+    <ol class="steps">
+      <li>
+        <div class="num">1</div>
+        <div>
+          <p class="what">Open the address above.</p>
+          <p class="why">Type it in, or click the link if you were sent this by email.
+            Bookmark it once you are in.</p>
+        </div>
+      </li>
+
+      <li>
+        <div class="num">2</div>
+        <div>
+          <p class="what">Click <b>Sign in with Microsoft</b>.</p>
+          <p class="why">This is the screen you will see.</p>
+        </div>
+        <div class="step-extra">
+          <div class="mock">
+            <div class="mark">&#127968;</div>
+            <p class="name">Home-Brace</p>
+            <p class="blurb">This hub contains the practice&rsquo;s production figures.
+              Sign in with your work Microsoft account to continue.</p>
+            <div class="btn">Sign in with Microsoft</div>
+          </div>
+          <p class="caption">Click the teal button.</p>
+        </div>
+      </li>
+
+      <li>
+        <div class="num">3</div>
+        <div>
+          <p class="what">A small window opens. Pick your work email.</p>
+          <p class="why">It is the same email and password you use for your work email.
+            Nothing new to remember.</p>
+        </div>
+      </li>
+
+      <li>
+        <div class="num">4</div>
+        <div>
+          <p class="what">You are in.</p>
+          <p class="why">The small window closes by itself and Home-Brace opens.</p>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <div class="note">
+    <h3>If the small window never appears</h3>
+    <p>Your browser blocked it. Look at the <b>right-hand end of the address bar</b> at the top of the
+      screen for a small icon, click it, and choose to <b>always allow</b> pop-ups from this site.</p>
+    <p>Then click <b>Sign in with Microsoft</b> again.</p>
+  </div>
+
+  <section>
+    <h2>Finding your way around</h2>
+    <p class="why" style="margin-top:6px">The tabs run across the top of every page:</p>
+    <ul class="tabs">
+      <li>&#127968; Home</li>
+      <li>&#128202; Production Dashboard</li>
+      <li>&#128221; Enter Production</li>
+      <li>&#128197; Schedule</li>
+      <li>&#128227; Marketing</li>
+      <li>&#128193; Documents</li>
+      <li>&#128101; Team</li>
+    </ul>
+    <dl class="finds">
+      <div>
+        <dt>You will not see every tab</dt>
+        <dd>You see the ones for your role and your office. That is normal, not a fault.</dd>
+      </div>
+      <div>
+        <dt>Your name, top right</dt>
+        <dd>Your photo, phone number and &ldquo;About me&rdquo; &mdash; yours to change any time.</dd>
+      </div>
+      <div>
+        <dt>The bell, top right</dt>
+        <dd>Anything new for you. Click <b>Got it</b> on one and it will not come back.</dd>
+      </div>
+      <div>
+        <dt>If something looks out of date</dt>
+        <dd>Press <b>F5</b> to refresh the page.</dd>
+      </div>
+    </dl>
+  </section>
+
+  <section>
+    <h2>Keep it one tap away</h2>
+    <p class="why" style="margin-top:6px">Save Home-Brace to your phone or desktop and it opens
+      with one tap, like any other app &mdash; no typing the address again.</p>
+    <dl class="devices">
+      <div>
+        <dt>iPhone / iPad</dt>
+        <dd>In Safari, tap the <b>Share</b> button at the bottom (a square with an arrow
+          coming out of it), scroll down, and tap <b>Add to Home Screen</b>.</dd>
+      </div>
+      <div>
+        <dt>Android</dt>
+        <dd>In Chrome, tap the <b>three dots</b> at the top right, then
+          <b>Add to Home screen</b>.</dd>
+      </div>
+      <div>
+        <dt>Windows</dt>
+        <dd>In Edge, click the <b>three dots</b> at the top right, then <b>Apps</b>, then
+          <b>Install this site as an app</b>. In Chrome it is the three dots, then
+          <b>Cast, save and share</b>, then <b>Install page as app</b>.</dd>
+      </div>
+    </dl>
+  </section>
+
+  <section class="invite">
+    <h2>Please fill in your profile</h2>
+    <p>There are around <b>70 of us across eight offices</b>, and most have never met.
+      A photo and a line about what you do means the person calling from Lubbock knows
+      who they are asking for.</p>
+
+    <div class="route">
+      <span class="chip">Your name, top right</span>
+      <span class="arrow">&rarr;</span>
+      <span class="chip">&#128100; My profile</span>
+    </div>
+
+    <ul class="yours">
+      <li><span><b>Photo.</b> Drag a picture in, or choose one from your phone or computer.
+        Any size &mdash; it is resized for you. No photo? Pick a colour for your initials
+        instead.</span></li>
+      <li><span><b>Preferred name.</b> What you would like to be called. This is the name
+        your team sees.</span></li>
+      <li><span><b>Contact phone.</b> Microsoft does not hold this one, so it is blank until
+        you add it.</span></li>
+      <li><span><b>About me.</b> One line on what you do.</span></li>
+    </ul>
+
+    <footer>All of this shows on the <b>&#128101; Team</b> tab, where anyone can search by name,
+      office, role or phone. Your name and email come from Microsoft, and your team and office
+      are set by an admin &mdash; those four above are yours.</footer>
+  </section>
+
+  <div class="ask">
+    <h2>If you cannot sign in at all</h2>
+    <p>Some email addresses are not yet part of the practice&rsquo;s Microsoft account and have to be
+      added before they will work. Nothing you can do at your end &mdash; it takes us a minute.</p>
+    <p>Email <strong>Heather</strong> or <strong>Jessica</strong> with the address you tried,
+      and we will sort it.</p>
+  </div>
+
+  <footer>
+    <span class="brands">FFO &middot; SUN &middot; LCO</span>
+    <span>Home-Brace &mdash; the practice hub</span>
+  </footer>
+
+</div>
+
+</body>
+</html>
