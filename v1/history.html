@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Look through the history — Home-Brace</title>
+<link rel="icon" href="../assets/favicon.png?v=2" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{--navy:#0F2A4A;--teal:#149B96;--teal-600:#0F827E;--line:#E4E9F0;--soft:#64748B;--maxw:940px}
+  *{box-sizing:border-box}
+  body{margin:0;background:#F4F6F9;font:15px/1.6 Inter,system-ui,sans-serif;color:var(--navy)}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:28px 16px 60px}
+  h1{font-size:24px;margin:0 0 6px}
+  .sub{color:var(--soft);margin:0 0 22px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:16px;
+        box-shadow:0 1px 3px rgba(15,42,74,.06)}
+  .card h2{font-size:16px;margin:0 0 4px}
+  .hint{font-size:13.5px;color:var(--soft);margin:2px 0 14px;line-height:1.55}
+  label{display:block;font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;
+        color:var(--soft);margin:0 0 5px}
+  input,select{width:100%;font:inherit;border:1px solid #cbd5e1;border-radius:10px;padding:10px 11px;background:#FBFCFE}
+  .row{display:flex;gap:12px;flex-wrap:wrap}
+  .row > div{flex:1;min-width:190px}
+  button{font:inherit;font-weight:700;background:var(--teal);color:#fff;border:none;border-radius:10px;
+         padding:11px 18px;cursor:pointer;margin-top:13px}
+  button:disabled{background:#c7d2da;cursor:not-allowed}
+  .res{margin-top:14px;padding:13px 15px;border-radius:11px;font-size:14px;display:none}
+  .res.on{display:block}
+  .res.ok{background:#E8F6F4;border:1px solid #bfe3d0;color:var(--teal-600)}
+  .res.bad{background:#FCEBE8;border:1px solid #f0c3b9;color:#93301f}
+  .res.warn{background:#FFF8E6;border:1px solid #f2d99b;color:#7a5200}
+  table{width:100%;border-collapse:collapse;margin-top:14px;font-size:13px}
+  th{text-align:left;font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--soft);
+     border-bottom:1px solid var(--line);padding:7px 9px 7px 0;white-space:nowrap}
+  td{padding:8px 9px 8px 0;border-bottom:1px solid #F1F4F8;vertical-align:top}
+  tr.hit td{background:#E8F6F4}
+  tr.chg td{font-weight:700}
+  .names{font:12px/1.45 ui-monospace,Menlo,Consolas,monospace;color:var(--navy);word-break:break-word}
+  .pos{display:inline-block;background:#EEF2F7;border-radius:5px;padding:0 5px;margin-right:5px;
+       font-weight:800;font-size:11px;color:var(--soft)}
+  .tag{display:inline-block;background:var(--teal);color:#fff;border-radius:999px;padding:1px 8px;
+       font-size:10.5px;font-weight:800;letter-spacing:.03em}
+  .muted{color:var(--soft)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Look through the history</h1>
+  <p class="sub">Every saved version of one of the hub's records, straight from SharePoint &mdash; further
+     back than the panel in SharePoint will scroll. Read only: this page never writes anything.</p>
+
+  <div class="card">
+    <h2>What to look for</h2>
+    <p class="hint">Pick the record and type a word to hunt for. Versions containing it are highlighted,
+       and for the doctor list the names are shown <b>in order</b> &mdash; the calendar stores doctors by
+       position, so the order is what matters.</p>
+    <div class="row">
+      <div>
+        <label for="key">Record</label>
+        <select id="key">
+          <option value="ph_docs">Doctor list (ph_docs)</option>
+          <option value="ph_sched2">Doctor schedule (ph_sched2)</option>
+          <option value="ph_locations">Offices (ph_locations)</option>
+          <option value="ph_people">People overrides (ph_people)</option>
+          <option value="ph_access">Teams &amp; access (ph_access)</option>
+          <option value="ph_mktg">Marketing board (ph_mktg)</option>
+        </select>
+      </div>
+      <div>
+        <label for="find">Word to find</label>
+        <input id="find" value="Lightheart" spellcheck="false" placeholder="e.g. Lightheart">
+      </div>
+    </div>
+    <button id="go">Search the history</button>
+    <div class="res" id="r"></div>
+    <div id="out"></div>
+  </div>
+</div>
+
+<script src="user.js?v=hc33"></script>
+<script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
+<script src="store.js?v=hc33"></script>
+<script src="gate.js?v=hc33"></script>
+<script>
+(function(){
+  'use strict';
+  var el=function(i){ return document.getElementById(i); };
+  function show(cls,html){ var n=el('r'); n.className='res on '+cls; n.innerHTML=html; }
+  function esc(v){ return String(v==null?'':v).replace(/[&<>"]/g,function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+
+  var HOST='omegaorthodontics.sharepoint.com', SITE='/sites/Home-Brace', LIST='HomeBraceData';
+
+  /* Every page of versions. SharePoint's own panel stops after a few hundred; this
+     follows @odata.nextLink until there are no more, which is the whole point of the
+     page - the answer we needed was ~950 versions down. */
+  function allVersions(path){
+    var out=[];
+    function page(p){
+      return PH_AUTH.graph(p).then(function(r){
+        out=out.concat(r.value||[]);
+        var next=r['@odata.nextLink'];
+        if(next && out.length<4000){
+          return page(next.replace('https://graph.microsoft.com/v1.0',''));
+        }
+        return out;
+      });
+    }
+    return page(path);
+  }
+
+  el('go').onclick=function(){
+    if(!window.PH_AUTH) return show('bad','<b>Not signed in.</b> Reload the page and sign in first.');
+    var key=el('key').value, needle=(el('find').value||'').trim();
+    el('go').disabled=true; el('out').innerHTML='';
+    show('warn','Reading the history… several hundred versions can take a moment.');
+
+    var siteId, listId, itemId;
+    PH_AUTH.graph('/sites/'+HOST+':'+SITE)
+      .then(function(s){ siteId=s.id;
+        return PH_AUTH.graph('/sites/'+siteId+'/lists?$select=id,displayName'); })
+      .then(function(r){
+        var hit=(r.value||[]).filter(function(l){ return l.displayName===LIST; })[0];
+        if(!hit) throw new Error('No "'+LIST+'" list on '+SITE+'.');
+        listId=hit.id;
+        return PH_AUTH.graph('/sites/'+siteId+'/lists/'+listId+'/items?$expand=fields&$top=200');
+      })
+      .then(function(r){
+        var hit=(r.value||[]).filter(function(i){ return i.fields && i.fields.Title===key; })[0];
+        if(!hit) throw new Error('There is no "'+key+'" record in the list yet.');
+        itemId=hit.id;
+        return allVersions('/sites/'+siteId+'/lists/'+listId+'/items/'+itemId+'/versions?$top=200');
+      })
+      .then(function(vers){
+        el('go').disabled=false;
+        if(!vers.length) return show('bad','<b>No versions came back.</b>');
+
+        /* Newest first, and only the versions where the CONTENT actually changed - the
+           rest are the same payload saved again, which is most of them. */
+        vers.sort(function(a,b){ return String(b.id).localeCompare(String(a.id),undefined,{numeric:true}); });
+        var rows=[], lastPayload=null, changes=0, hits=0;
+        for(var i=vers.length-1;i>=0;i--){                 // oldest -> newest, to spot changes
+          var v=vers[i], f=v.fields||{}, pay=f.Payload||'';
+          var changed = pay!==lastPayload;
+          lastPayload = pay;
+          if(!changed) continue;
+          changes++;
+          var found = needle && pay.toLowerCase().indexOf(needle.toLowerCase())>=0;
+          if(found) hits++;
+          var names='';
+          try{
+            var parsed=JSON.parse(pay);
+            if(Object.prototype.toString.call(parsed)==='[object Array]')
+              names=parsed.map(function(d,n){
+                var label=(d&&(d.n||d.name))||JSON.stringify(d);
+                return '<span class="pos">'+(n+1)+'</span>'+esc(label);
+              }).join('  ');
+            else names='<span class="muted">'+esc(pay.slice(0,180))+(pay.length>180?'…':'')+'</span>';
+          }catch(_){ names='<span class="muted">'+esc(pay.slice(0,180))+(pay.length>180?'…':'')+'</span>'; }
+          rows.push({ id:v.id, when:f.Modified||v.lastModifiedDateTime||'',
+            who:(v.lastModifiedBy&&v.lastModifiedBy.user&&v.lastModifiedBy.user.displayName)||
+                (f.Editor&&f.Editor.LookupValue)||'—',
+            found:found, names:names, bytes:pay.length });
+        }
+        rows.reverse();                                    // newest first for reading
+
+        show(hits?'ok':'warn',
+          '<b>'+vers.length+' versions</b>, of which <b>'+changes+'</b> actually changed the content.'+
+          (needle ? (hits ? ' <b>'+hits+'</b> of those contain “'+esc(needle)+'” — highlighted below.'
+                          : ' <b>None</b> of them contain “'+esc(needle)+'”.') : ''));
+
+        el('out').innerHTML='<table><thead><tr><th>Version</th><th>When</th><th>Saved by</th>'+
+          '<th>Content</th></tr></thead><tbody>'+
+          rows.map(function(r){
+            return '<tr class="'+(r.found?'hit':'')+'"><td>'+esc(r.id)+
+              (r.found?' <span class="tag">FOUND</span>':'')+'</td>'+
+              '<td>'+esc(r.when?new Date(r.when).toLocaleString():'—')+'</td>'+
+              '<td>'+esc(r.who)+'</td>'+
+              '<td class="names">'+r.names+'</td></tr>';
+          }).join('')+'</tbody></table>';
+      })
+      .catch(function(e){
+        el('go').disabled=false;
+        show('bad','<b>Could not read the history.</b> '+esc((e&&e.message)||e));
+      });
+  };
+})();
+</script>
+</body>
+</html>
