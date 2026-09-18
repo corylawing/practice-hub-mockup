@@ -519,6 +519,37 @@
   const initials=p=>((p.preferred||p.first)[0]+(p.last[0]||'')).toUpperCase();
   const email=p=>p.mail||((p.first[0]+p.last).toLowerCase().replace(/[^a-z]/g,'')+'@farnsworthorthodontics.com');
   function can(section){ const c=me().can||{}; return c[section]||'none'; }
+
+  /* THE SIGNED-IN PERSON, IN THE SHAPE HOME AND DOCUMENTS RENDER FROM.
+
+     Those two pages were written for the sandbox's persona objects ({sec, doc, scope})
+     and in production kept rendering PERSONAS[0] - the demo Administrator. Every
+     signed-in person saw the Administrator's tiles and folders, clicked one, and the
+     real page correctly refused them. Jenny, 18/09: "Documents, then a message that
+     she doesn't have access." Both pages now render THIS.
+
+     Tool tiles come from can(). Folders come from the per-folder rows of the access
+     grid (hr, officedocs, forms, ...), which every team has once the grid is loaded.
+     Until it is - sandbox, or the read not landed yet - a folder falls back to the
+     person's overall Documents level, so the page and its own guard agree instead of
+     one saying "Documents" and the other saying "0 folders". */
+  const TOOL_KEYS=['dashboard','production','schedule','marketing','team','admin'];
+  const DOC_KEYS=['hr','officedocs','forms','vendors','filing','eom'];
+  function asPersona(){
+    const m=me(), c=m.can||{};
+    const sec={}; TOOL_KEYS.forEach(k=>{ const v=c[k]||'none'; if(v!=='none') sec[k]=v; });
+    const overall=c.documents||'none';
+    const doc={}; DOC_KEYS.forEach(k=>{
+      const v=(c[k]===undefined)?overall:c[k];
+      if(v && v!=='none') doc[k]=v;
+    });
+    const offs=offices();
+    const scopes=offs==='all'?['all']:(Array.isArray(offs)?offs.slice():[]);
+    return { id:isAdmin()?'admin':'me', name:name(m), sub:m.title||'',
+             scope:offs==='all'?'all':(scopes[0]||'—'), scopes:scopes,
+             state:'', brand:'', teams:(m.teams||[]).slice(), teamName:(m.teams||[])[0]||'',
+             sec:sec, doc:doc, live:true };
+  }
   function atLeast(section,lvl){ return RANK[can(section)]>=RANK[lvl]; }
   function offices(){ return me().offices; }
 
@@ -1553,6 +1584,6 @@
   }
   const isLive=()=>env()==='live';
 
-  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, rosterRows, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK};
+  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK};
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mount); else mount();
 })();

@@ -162,10 +162,10 @@
   }
 
 </style>
-<script src="user.js?v=hc40"></script>
+<script src="user.js?v=hc41"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc40"></script>
-  <script src="gate.js?v=hc40"></script>
+  <script src="store.js?v=hc41"></script>
+  <script src="gate.js?v=hc41"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — Documents. You see only the folders your role, location &amp; team allow. Files open on the Microsoft drive.</div>
@@ -246,8 +246,10 @@
   function customSecs(){ try{ const st=JSON.parse(localStorage.getItem('ph_docsecs'));
       if(Array.isArray(st)) return st.filter(x=>!FOLDERS.some(f=>f.k===x.k)); }catch(_){} return []; }
   function customCap(sec,p){
-    const teamOk = sec.teamMode==='all' || (sec.teams||[]).includes(p.teamName) || p.id==='admin';
-    const locOk  = sec.locMode==='all'  || p.scope==='all' || (sec.locs||[]).includes(p.scope);
+    const myTeams=(p.teams&&p.teams.length)?p.teams:[p.teamName];
+    const myLocs=p.scopes||[p.scope];
+    const teamOk = sec.teamMode==='all' || myTeams.some(t=>(sec.teams||[]).includes(t)) || p.id==='admin';
+    const locOk  = sec.locMode==='all'  || p.scope==='all' || myLocs.some(l=>(sec.locs||[]).includes(l));
     return (teamOk&&locOk) ? (p.id==='admin'?'manage':'view') : null;
   }
   function accessibleSections(p){
@@ -312,10 +314,14 @@
     }).join('')+'</div>';
   }
   function set(id){
-    cur=PERSONAS.find(p=>p.id===id)||PERSONAS[0];
+    /* Production: the signed-in person, never a demo persona - see PH.asPersona(). */
+    if(window.PH && PH.isLive && PH.isLive() && PH.asPersona){ cur=PH.asPersona(); }
+    else {
+      cur=PERSONAS.find(p=>p.id===id)||PERSONAS[0];
+      try{ localStorage.setItem('ph_viewas',cur.id); }catch(_){}
+      el('persona').value=cur.id;
+    }
     openSet=null; // new person -> show all of THEIR sections expanded
-    try{ localStorage.setItem('ph_viewas',cur.id); }catch(_){}
-    el('persona').value=cur.id;
     const n=accessibleSections(cur).length;
     el('sub').innerHTML='As <b>'+cur.name+'</b>, you can open <b>'+n+'</b> document folder'+(n===1?'':'s')+'. Tap one to open it.';
     PH.nav('documents'); renderFolders(cur);
@@ -419,7 +425,9 @@
 
   el('persona').innerHTML=PERSONAS.map(p=>'<option value="'+p.id+'">'+p.name+'</option>').join('');
   window.DOCS={set,toggle,openDoc,sim,addDoc,setLoc,setTeam,tog,cd,useFile,clearFile,uploadFile,saveDoc,closeDoc,
-    refresh:function(){ try{ renderFolders(cur); }catch(_){} }};
+    refresh:function(){ try{ set(cur&&cur.id); }catch(_){} }};
+  // Identity settles in stages after sign-in; each can change the folders this person gets.
+  document.addEventListener('ph-identity', function(){ try{ set(cur&&cur.id); }catch(_){} });
   el('docmodal').addEventListener('click',e=>{if(e.target.id==='docmodal')closeDoc();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDoc();});
   let saved='admin'; try{ saved=localStorage.getItem('ph_viewas')||'admin'; }catch(_){}
@@ -441,7 +449,7 @@ document.addEventListener('ph-identity',function(){
   });
 });
 PH.nav('documents');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc40"></script>
+<script src="tour.js?v=hc41"></script>
 <script>
 Tour.init([
   {sel:'.crumb', title:'Everything in one place', body:'This replaces \u201cwho has the latest copy?\u201d. Every policy, form and office file lives here \u2014 and people only ever see the folders meant for them.'},

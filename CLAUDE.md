@@ -372,6 +372,15 @@ and could open the file in Excel anyway. Real containment would need per-office 
   written to SharePoint and only ever read from `localStorage`, so a second device showed the
   defaults and the next save pushed those defaults over the practice's real office setup. Fixed
   2026-09-16 with `PH.reloadLocations()`. If you add a key, add both halves.
+- **Home and Documents render `PH.asPersona()` in production — never `PERSONAS[0]`.** Both pages
+  were written for the sandbox's persona shape (`{sec, doc, scope}`) and kept rendering the demo
+  **Administrator** to every signed-in person: Jenny saw the Administrator's tiles, clicked
+  Documents, and the real page (whose guard *did* use `PH.me()`) refused her (2026-09-18). That is
+  the PERSONAS bug from the dashboards, a third time. `asPersona()` builds that shape from the
+  signed-in person — tool tiles from `can()`, folders from the grid's per-folder rows (hr,
+  officedocs, forms, vendors, filing, eom) falling back to the overall Documents level until the
+  grid lands — and both pages redraw on `ph-identity`. **Any page that renders from a persona must
+  branch on `PH.isLive()` and use `asPersona()`; grep for `PERSONAS[0]` before shipping.**
 - **Notifications are routed by WHO IT IS FOR, decided once in `canSeeActivity()`.** An entry may
   carry `offices[]` (only people who can see one of them), `people[]` (the person it is *about* —
   a doctor whose day moved gets it even at an office she does not otherwise see), `teams[]` (the

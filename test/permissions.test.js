@@ -195,6 +195,39 @@ const t=(n,v)=>{ (v?ok:bad).push(n); };
   t('an office manager does NOT get Admin', OM.PH.can('admin')==='none');
 }
 
+/* ---- 6c. HOME AND DOCUMENTS RENDER THE SIGNED-IN PERSON, NOT THE DEMO ADMIN.
+          Both pages were written for the sandbox persona shape and kept rendering
+          PERSONAS[0] in production. Jenny saw the Administrator's tiles, clicked
+          Documents, and the real page refused her. PH.asPersona() is what they render
+          from now. ---- */
+{
+  const J=load({page:'home'});
+  J.PH.nav('home');
+  const before=J.PH.asPersona();
+  t('before sign-in the persona has NO tiles', Object.keys(before.sec).length===0);
+  t('and no document folders', Object.keys(before.doc).length===0);
+
+  J.signIn(JENNY);
+  const p=J.PH.asPersona();
+  t('Jenny\u2019s persona is not the admin', p.id!=='admin' && !p.sec.admin);
+  t('her tiles match exactly what she can open',
+    ['dashboard','production','schedule','marketing','team','admin'].every(k=>
+      (!!p.sec[k]) === (J.PH.can(k)!=='none')));
+  t('her folders follow her Documents level',
+    (J.PH.can('documents')==='none') ? Object.keys(p.doc).length===0 : Object.keys(p.doc).length>0);
+  t('her office scope is her own, not \u201call\u201d', p.scope!=='all');
+  t('it carries her teams for section audiences', Array.isArray(p.teams));
+
+  const H=load({page:'home'});
+  H.PH.nav('home');
+  H.signIn({ displayName:'Heather Beal', mail:'heather@farnsworthorthodontics.com',
+             userPrincipalName:'heather@farnsworthorthodontics.com',
+             jobTitle:'COO', department:'Admin', officeLocation:'' });
+  const a=H.PH.asPersona();
+  t('the COO\u2019s persona is the admin, sees all offices, gets the Admin tile',
+    a.id==='admin' && a.scope==='all' && !!a.sec.admin);
+}
+
 /* ---- 7. The sandbox must keep working - it is the demo, and the personas live there. ---- */
 {
   const S=load({ host:'corylawing.github.io', page:'team', ls:{ ph_viewas:'admin' } });
