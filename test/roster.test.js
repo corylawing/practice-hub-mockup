@@ -33,7 +33,8 @@ function load(ls, shared, opts){
         return Promise.resolve({ok:true, json:()=>Promise.resolve(FILE)}); }
       // Graph writes land in `shared`
       if(o && o.body){ const b=JSON.parse(o.body); const raw=b.Payload!==undefined?b.Payload:(b.fields&&b.fields.Payload);
-        const title=(b.fields&&b.fields.Title)||shared.__lastKey; shared[title]=raw; }
+        const title=(b.fields&&b.fields.Title)||shared.__lastKey; shared[title]=raw;
+        if(title==='ph_roster') shared.__rosterWrites=(shared.__rosterWrites||0)+1; }
       return Promise.resolve({status:200,ok:true,json:()=>Promise.resolve({id:'1'})});
     }};
   ctx.window=ctx; ctx.globalThis=ctx; ctx.self=ctx; ctx.addEventListener=ctx.document.addEventListener;
@@ -139,6 +140,21 @@ const settle=()=>new Promise(r=>setTimeout(r,30));
       jobTitle:'', department:'Staff', officeLocation:'Hobbs'}});
     await R3.PH.rosterReady; await settle(); await settle();
     t('a non-admin reads the file but never writes the roster', R3.PH.rosterRows().length>0 && !S3.ph_roster);
+
+    // (e) the real order at sign-in: PH_STORE.ready fires as soon as PH_AUTH exists, the
+    //     profile (/me) lands on its own request - so the roster is usually read BEFORE the
+    //     hub knows the person is an admin. The seed must wait for identity, not miss it.
+    const S5={};
+    const R5=load({}, S5);
+    await R5.PH.rosterReady; await settle(); await settle();
+    t('before the profile lands, nothing is written', !S5.ph_roster);
+    R5.signIn({displayName:'Heather Beal', mail:'heather@farnsworthorthodontics.com',
+      userPrincipalName:'heather@farnsworthorthodontics.com', jobTitle:'COO', department:'Admin', officeLocation:''});
+    await settle(); await settle();
+    t('an admin whose profile lands after the roster was read still seeds SharePoint',
+      !!S5.ph_roster && JSON.parse(S5.ph_roster).length===FILE.people.length);
+    R5.PH.identityChanged(); await settle();
+    t('and seeds it once, not on every identity change', S5.__rosterWrites===1);
 
     // (d) roster in SharePoint AND the file gone from the deploy: everything still works.
     const S4={ ph_roster: JSON.stringify(FILE.people), __noFile:true };

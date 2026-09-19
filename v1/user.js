@@ -186,6 +186,19 @@
     applyExtra();
     return ROSTER_BY_MAIL;
   }
+  /* ONE-TIME SEED. The first admin to open the hub copies the file into SharePoint so the
+     file can stop being public. Whether that admin is KNOWN yet is a race at sign-in:
+     PH_STORE.ready fires as soon as PH_AUTH exists, while the profile (/me) that says
+     "admin" lands on its own request - so the roster is usually read first and isAdmin()
+     answers false. The rows wait here; identityChanged() asks again each time the answer
+     to who-is-this changes, and the write happens once. */
+  let SEED_ROWS=null;
+  function seedRoster(){
+    if(!SEED_ROWS || !window.PH_STORE || !isLive() || !isAdmin()) return false;
+    const rows=SEED_ROWS; SEED_ROWS=null;
+    window.PH_STORE.set(ROSTER_KEY, rows, {force:true});
+    return true;
+  }
   const rosterReady=new Promise(function(resolve){
     const fromFile=()=>(typeof fetch==='function')
       ? fetch('_people.json').then(r=>r.ok?r.json():null).then(j=>(j&&Array.isArray(j.people))?j.people:null).catch(()=>null)
@@ -199,9 +212,7 @@
         return fromFile().then(function(fileRows){
           if(!fileRows) return null;
           const out=rosterFromRows(fileRows);
-          // One-time seed, by an admin, so the file can stop being public.
-          if(window.PH_STORE && isLive() && isAdmin())
-            window.PH_STORE.set(ROSTER_KEY, fileRows, {force:true});
+          SEED_ROWS=fileRows; seedRoster();     // now if the admin is already known, else when identity lands
           return out;
         });
       }).then(resolve, function(){ resolve(null); });
@@ -1632,6 +1643,7 @@
      So anything that can change the answer ends here, and this rebuilds the menu, the
      page guard, and tells the page to rescope its own content. */
   function identityChanged(){
+    seedRoster();                                // the admin may only now be known
     nav(NAV_ACTIVE);
     try{ document.dispatchEvent(new CustomEvent('ph-identity')); }catch(_){}
   }

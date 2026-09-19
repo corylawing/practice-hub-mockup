@@ -397,7 +397,9 @@ and could open the file in Excel anyway. Real containment would need per-office 
   email and office with no sign-in. The file is still deployed as the seed/fallback; the first
   admin to open the hub copies it in (`rosterReady`). **Follow-up: once `history.html` shows a
   `ph_roster` record, stop deploying the file.** `empId` is now kept in the file — it is the stable
-  key settings are filed under. `rosterReady` must never run during user.js's own evaluation
+  key settings are filed under. **The seed waits for identity** (`seedRoster()`, asked again from `identityChanged()`):
+  `PH_STORE.ready` fires as soon as `PH_AUTH` exists, before `/me` has said who this is, so
+  the roster is usually read while `isAdmin()` still answers false. `rosterReady` must never run during user.js's own evaluation
   (`setTimeout(run,0)`): `isLive()` is declared below it.
 - **Before sign-in a live page is HELD, not refused** — `body.ph-pending` hides content, no
   "You don't have access" card. Refusing at parse painted a one-second refusal on every tab change.
