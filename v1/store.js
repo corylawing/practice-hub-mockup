@@ -32,7 +32,34 @@
      the next reload with nobody any the wiser. */
   function setLocal(k,v){ try{ localStorage.setItem(k,v); return true; }catch(_){ return false; } }
 
-  function live(){ return global.PH && PH.isLive && PH.isLive() && global.PH_AUTH; }
+  /* ------------------------------------------------------------------
+     A LIVE SITE THAT IS NOT SIGNED IN YET IS NOT THE SANDBOX.
+
+     19/09/2026, Heather on her phone: a blank September, four doctors, "View only" for
+     the COO. Every page reads its data the instant it loads, and at that instant
+     Microsoft has not finished signing the person in - PH_AUTH does not exist yet.
+     live() used to require PH_AUTH, so on a live site before sign-in it said "sandbox"
+     and handed back this browser's local cache as the truth. On a desktop used for
+     weeks the cache is warm and it looked fine. On a fresh phone it is empty: the page
+     built a blank year from nothing, decided edit/view for nobody, and nothing ever
+     read again after sign-in. It also recorded "nothing here" as the guard's baseline,
+     which is how a fresh device could still write a blank year over a full one.
+
+     Now live() is about the SITE, and a read on a live site WAITS for sign-in. Every
+     page's existing read simply resolves a moment later, with the real data. A write
+     on a live site before sign-in is refused: nothing legitimate writes then.
+     ------------------------------------------------------------------ */
+  function live(){ return !!(global.PH && PH.isLive && PH.isLive()); }
+  function signedIn(){ return !!global.PH_AUTH; }
+  var authReady = new Promise(function(res){
+    if(signedIn()) return res();
+    var done=false, fin=function(){ if(done) return; done=true; clearInterval(t); res(); };
+    try{ document.addEventListener('ph-signed-in', fin, {once:true}); }catch(_){}
+    // gate.js sets PH_AUTH a moment before it fires the event; poll so neither order matters.
+    var t=setInterval(function(){ if(signedIn()) fin(); }, 150);
+    // Never keep a test process alive waiting for a sign-in that is not coming.
+    if(t && typeof t.unref==='function') t.unref();
+  });
 
   function connect(){
     if(ready) return ready;
@@ -68,7 +95,7 @@
   /* Read one key. Resolves to the parsed value, or null. */
   function get(key){
     if(!live()){ var lv = parse(local(key)); rememberWeight(key, lv); return Promise.resolve(lv); }
-    return connect()
+    return authReady.then(connect)
       .then(function(){
         return PH_AUTH.graph('/sites/'+siteId+'/lists/'+listId+'/items?$expand=fields&$top=200&$select=id,lastModifiedDateTime');
       })
@@ -216,6 +243,12 @@
 
   /* Write one key. Always writes locally first so the UI stays instant. */
   function set(key, value, opts){
+    if(live() && !signedIn()){
+      /* Quiet, on purpose: this is a page bug, not something the person can act on,
+         and the banner would sit under the sign-in screen. Loud in the console. */
+      try{ console.warn('PH_STORE.set('+key+') before sign-in - refused'); }catch(_){}
+      return Promise.resolve({blocked:true, notReady:true, why:'Not signed in yet.'});
+    }
     if(!(opts && opts.force)){
       if(readFailed[key] === true)
         return refuse(key, value,
@@ -309,7 +342,7 @@
      everyone's profile row in one request instead of 70. */
   function getAll(prefix){
     if(!live()) return Promise.resolve({});
-    return connect()
+    return authReady.then(connect)
       .then(function(){
         return PH_AUTH.graph('/sites/'+siteId+'/lists/'+listId+'/items?$expand=fields&$top=500');
       })
@@ -337,6 +370,8 @@
 
   global.PH_STORE = {
     get:get, set:set, update:update, getAll:getAll, setup:setup,
+    /* Resolves once the person is signed in; a live site reads nothing before that. */
+    ready:authReady,
     /* Pages ask this instead of guessing from a null. */
     readFailed:function(k){ return readFailed[k] === true; },
     /* True when this browser is holding a change SharePoint never took. */

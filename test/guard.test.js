@@ -259,6 +259,56 @@ const t=(n,v)=>{ (v? ok:bad).push(n); };
     t('and the shared copy is untouched', !SHARED.x);
   }
 
+  /* ---- THE COLD PHONE ------------------------------------------------------------
+     19/09/2026, Heather on her phone: blank September, four doctors, "View only" for
+     the COO. Every page reads the instant it loads, before sign-in has finished, and
+     the store treated "live site, no PH_AUTH yet" as the SANDBOX - handing back an
+     empty local cache as the truth, recording "nothing here" as the guard's baseline,
+     and never reading again. A live site must WAIT for sign-in instead. */
+  {
+    const LS6={};
+    global.localStorage={getItem:k=>k in LS6?LS6[k]:null,setItem:(k,v)=>{LS6[k]=String(v)},removeItem:k=>{delete LS6[k]}};
+    const listeners={};
+    global.document={ dispatchEvent:e=>{(listeners[e.type]||[]).forEach(f=>f(e));},
+                      addEventListener:(t,f)=>{(listeners[t]=listeners[t]||[]).push(f);} };
+    const FULL={__v:2}; let d6=new Date(2026,0,1);
+    for(let i=0;i<365;i++,d6.setDate(d6.getDate()+1)){ if(d6.getDay()%6===0) continue;
+      const k=d6.toISOString().slice(0,10); FULL[k]={Carlsbad:{p:0,s:480,e:1020},Hobbs:{p:1,s:480,e:1020}}; }
+    let STORED=JSON.stringify(FULL), writes=0;
+    const savedAuth=global.PH_AUTH; delete global.PH_AUTH;      // not signed in yet
+    global.fetch=(u,o)=>{ writes++; const b=JSON.parse(o.body); STORED=(b.Payload!==undefined?b.Payload:b.fields.Payload);
+      return Promise.resolve({status:200,ok:true,json:()=>Promise.resolve({id:'1'})}); };
+    delete require.cache[require.resolve(STORE)];
+    require(STORE); const C=window.PH_STORE;
+
+    let resolvedEarly=false;
+    const pending=C.get('ph_sched2').then(v=>{ resolvedEarly=true; return v; });
+    await new Promise(r=>setTimeout(r,350));
+    t('on a live site, a read before sign-in does NOT answer', resolvedEarly===false);
+    t('and records no baseline for the guard', LS6['ph_sched2__w']===undefined);
+    const w=await C.set('ph_sched2', {__v:2});
+    t('a write before sign-in is refused', w.blocked===true && w.notReady===true);
+    t('and touched nothing', writes===0 && LS6['ph_sched2']===undefined);
+
+    // Sign-in completes.
+    global.PH_AUTH={ token:()=>Promise.resolve('t'), graph:p=>{
+      if(/\/sites\/omega/.test(p)) return Promise.resolve({id:'site'});
+      if(/lists\?/.test(p))        return Promise.resolve({value:[{id:'L',displayName:'HomeBraceData'}]});
+      return Promise.resolve({value:[{id:'1', lastModifiedDateTime:'2026-09-18T20:00:00Z',
+        fields:{Title:'ph_sched2', Payload:STORED}}]});
+    }};
+    global.document.dispatchEvent({type:'ph-signed-in'});
+    const got=await pending;
+    const days=v=>Object.keys(v||{}).filter(k=>/^\d{4}/.test(k)).length;
+    t('the very same read then answers with the real schedule', days(got)>200);
+    t('and the guard\u2019s baseline is the real one', Number(LS6['ph_sched2__w'])>400);
+    const blank={__v:2}; Object.keys(FULL).forEach(k=>{ if(k!=='__v') blank[k]={Carlsbad:{},Hobbs:{}}; });
+    const r=await C.set('ph_sched2', blank);
+    t('so a blank year from a fresh device is refused', r.blocked===true);
+    t('and the practice\u2019s schedule is still there', days(JSON.parse(STORED))>200);
+    global.PH_AUTH=savedAuth;
+  }
+
   console.log(ok.map(s=>'  PASS  '+s).join('\n'));
   if(bad.length) console.log(bad.map(s=>'  FAIL  '+s).join('\n'));
   console.log('\n'+ok.length+' passed, '+bad.length+' failed');

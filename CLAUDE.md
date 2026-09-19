@@ -372,6 +372,22 @@ and could open the file in Excel anyway. Real containment would need per-office 
   written to SharePoint and only ever read from `localStorage`, so a second device showed the
   defaults and the next save pushed those defaults over the practice's real office setup. Fixed
   2026-09-16 with `PH.reloadLocations()`. If you add a key, add both halves.
+- **A live site reads NOTHING before sign-in — `PH_STORE.get()` waits for `PH_STORE.ready`.**
+  Every page reads its data the instant it loads, before Microsoft has finished signing the person
+  in. `store.live()` used to require `PH_AUTH`, which gate.js sets asynchronously, so at that
+  instant a live site was treated as the **sandbox** and handed back the browser's local cache as
+  the truth. On a desktop used for weeks the cache is warm and it looked fine; on a fresh phone it
+  is empty — blank year, four default doctors, edit/view decided for nobody ("View only" for the
+  COO), no warning, and never read again. Heather, 2026-09-19. It also recorded "nothing here" as
+  the wipe guard's baseline, so a fresh device could still write a blank year over a full one.
+  `live()` is now about the SITE; a live read waits for sign-in and every existing caller simply
+  resolves later with real data; a live write before sign-in is refused (`notReady`). **Anything
+  the page decides from identity — edit vs view, tiles, folders — must be re-decided on
+  `ph-identity`** (`applyPerms()` is re-runnable and toggles both ways). `?env=live` forces
+  production behaviour on any host so this flow can be driven in a local browser; it only ever
+  makes a page more locked down.
+- **Testing rule: every identity-dependent page gets a COLD-DEVICE run** — empty storage, page
+  parsed, *then* sign-in completes. Warm-cache desktop testing hid this for weeks.
 - **Home and Documents render `PH.asPersona()` in production — never `PERSONAS[0]`.** Both pages
   were written for the sandbox's persona shape (`{sec, doc, scope}`) and kept rendering the demo
   **Administrator** to every signed-in person: Jenny saw the Administrator's tiles, clicked

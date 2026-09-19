@@ -1577,6 +1577,10 @@
                    because that host is public.
      Anything that would expose real data must check this. */
   function env(){
+    /* ?env=live forces production behaviour on any host, so the cold-device flow can
+       be exercised in a local browser. It only ever makes a page MORE locked down
+       (production requires sign-in; the sandbox does not), so it is safe to leave in. */
+    if(/[?&]env=live(&|$)/.test(location.search||'')) return 'live';
     const h=location.hostname;
     if(/azurestaticapps\.net$/i.test(h)) return 'live';
     if(/^hub\./i.test(h)) return 'live';               // future custom domain

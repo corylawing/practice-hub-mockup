@@ -269,10 +269,10 @@
   }
 
 </style>
-<script src="user.js?v=hc41"></script>
+<script src="user.js?v=hc42"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc41"></script>
-  <script src="gate.js?v=hc41"></script>
+  <script src="store.js?v=hc42"></script>
+  <script src="gate.js?v=hc42"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — sample staff schedule for validation. Live version = one Microsoft List the practice maintains.</div>
@@ -1060,14 +1060,21 @@
   function openModal(h){ el('modalCard').innerHTML=h; el('modal').classList.add('open'); }
   function closeModal(){ el('modal').classList.remove('open'); }
 
+  /* Re-runnable. Identity settles in stages after sign-in - profile, then roster, then
+     the access grid - and the COO's edit rights can arrive on the third. This used to
+     run once, at boot, and never look again; on a fresh phone that meant "View only"
+     for Heather. It now runs on every ph-identity and can go both ways. */
   function applyPerms(){
-    if(canEdit())return;
-    document.body.classList.add('ph-view-only');
-    if(window.PH) PH.readOnlyBanner('.wrap','schedule');
-    ['addLocBtn','addDocBtn'].forEach(id=>{const b=el(id); if(b)b.style.display='none';});
+    const edit=canEdit();
+    document.body.classList.toggle('ph-view-only', !edit);
+    document.querySelectorAll('.ph-ro-banner').forEach(n=>n.remove());
+    if(!edit && window.PH) PH.readOnlyBanner('.wrap','schedule');
+    ['addLocBtn','addDocBtn'].forEach(id=>{const b=el(id); if(b)b.style.display=edit?'':'none';});
     const n=el('tourNotice');
-    if(n)n.innerHTML='<b>Every office has its own color.</b> Grey = closed, <b>Yellow Dot Day</b> = open with no doctor on site. Use the filters to find an office or a doctor.';
+    if(n && !edit)n.innerHTML='<b>Every office has its own color.</b> Grey = closed, <b>Yellow Dot Day</b> = open with no doctor on site. Use the filters to find an office or a doctor.';
   }
+  let booted=false;
+  document.addEventListener('ph-identity', function(){ if(booted){ applyPerms(); refresh(); } });
 
   window.PS={view:setView,step,today,togLoc,allLocs,togDoc,allDocs,togYdot,togClosed,togEvent,setEvent,open,addTo,quick,pickDoc,setT,halfDay,fullDay,markYdot,markClosed,
     clearDay,saveDay,addLocation,editLoc,setColor,setTZ,dtog,dtime,lunchTog,lunchT,saveLoc,delLoc,
@@ -1160,6 +1167,7 @@
     docsSaved=JSON.stringify(people);
     applyPerms();
     refresh();
+    booted=true;
   }
 
   let local=null; try{ local=JSON.parse(localStorage.getItem('ph_sched2')); }catch(_){}
@@ -1186,7 +1194,7 @@
    machine is missing here until the next page load. */
 document.addEventListener('ph-locations-changed',function(){ if(window.PS&&PS.relocate)PS.relocate(); });
 PH.nav('schedule');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc41"></script>
+<script src="tour.js?v=hc42"></script>
 <script>
 Tour.init([
   {sel:'#viewseg', title:'Week or month', body:'<b>Week</b> is the day-to-day working view. <b>Month</b> shows the whole month at a glance, with every office in its own color.'},
