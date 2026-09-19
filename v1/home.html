@@ -3,21 +3,26 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Home (V1) — Home-Brace</title>
+<title>Home-Brace · Home</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="icon" href="../assets/favicon.png?v=2" type="image/png">
 <meta name="theme-color" content="#0F2A4A">
 <meta name="apple-mobile-web-app-title" content="Home-Brace">
 <link rel="apple-touch-icon" href="../assets/logo-mark.png">
-<meta name="theme-color" content="#0F2A4A">
-<meta name="description" content="Home-Brace V1 — the logged-in home. Switch 'Viewing as' to see how the app changes by role.">
+<meta name="description" content="The practice’s central hub — schedule, production, documents and team, in one place. Farnsworth · Sunflower · Las Cruces.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Home-Brace">
-<meta property="og:title" content="Home (V1) · Home-Brace">
-<meta property="og:description" content="What a person sees when they log in — sections and files based on their role and team.">
-<meta property="og:image" content="https://corylawing.github.io/practice-hub-mockup/assets/og-image.png">
-<meta property="og:url" content="https://corylawing.github.io/practice-hub-mockup/v1/home.html">
+<meta property="og:title" content="Home-Brace">
+<meta property="og:description" content="The practice’s central hub — schedule, production, documents and team, in one place. Farnsworth · Sunflower · Las Cruces.">
+<meta property="og:image" content="https://kind-hill-00da87410.3.azurestaticapps.net/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="https://kind-hill-00da87410.3.azurestaticapps.net/v1/home.html">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Home-Brace">
+<meta name="twitter:description" content="The practice’s central hub — schedule, production, documents and team, in one place. Farnsworth · Sunflower · Las Cruces.">
+<meta name="twitter:image" content="https://kind-hill-00da87410.3.azurestaticapps.net/assets/og-image.png">
 <style>
   :root{
     --navy:#0F2A4A; --navy2:#25456e; --teal:#149B96; --teal2:#2BC0B8; --teal-soft:#E5F4F3; --teal-600:#0F827E;
@@ -110,10 +115,10 @@
   }
 
 </style>
-<script src="user.js?v=hc42"></script>
+<script src="user.js?v=hc43"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc42"></script>
-  <script src="gate.js?v=hc42"></script>
+  <script src="store.js?v=hc43"></script>
+  <script src="gate.js?v=hc43"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — this is the logged-in home. Use “Viewing as” to see how the app changes for each role.</div>
@@ -326,7 +331,7 @@
 })();
 </script>
 <script>PH.nav('home');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(PH.loadActivity)PH.loadActivity().then(function(){return PH.loadSeen?PH.loadSeen():null;}).then(function(){if(window.HOME&&HOME.refreshUpdates)HOME.refreshUpdates();if(PH.refreshBell)PH.refreshBell();});});</script>
-<script src="tour.js?v=hc42"></script>
+<script src="tour.js?v=hc43"></script>
 <script>
 Tour.init([
   {sel:'.ph-av', title:'This is you', body:'Your name and photo, top right. Tap it any time for <b>My profile</b> \u2014 your photo, preferred name, phone and \u201cAbout me\u201d. Those follow you between devices.'},

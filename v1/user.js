@@ -811,6 +811,42 @@
     border-radius:8px;padding:5px 9px;white-space:nowrap;align-self:flex-start}
   .ph-np .nempty{padding:26px 18px;text-align:center;font-size:13.5px;color:#7A889B;line-height:1.55}
   @media(max-width:560px){ .ph-np{position:fixed;left:12px;right:12px;width:auto;top:62px} }
+  /* ---- PHONE SHELL. Below 640px the top tab strip goes and a bottom bar takes over,
+          the way a phone app does. Same NAV list, same show() rule, same order - so a
+          person sees exactly the sections they may open, nothing else. Heather asked
+          for it 18/09; Cory: keep the icons modest. ---- */
+  .ph-tabbar{display:none}
+  @media(max-width:640px){
+    .v1nav{display:none !important}
+    body{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px)) !important}
+    .tour-launch{bottom:calc(76px + env(safe-area-inset-bottom,0px)) !important}
+    .ph-np{top:auto !important;bottom:calc(72px + env(safe-area-inset-bottom,0px)) !important}
+    .ph-tabbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:7000;
+      background:#0F2A4A;border-top:1px solid rgba(255,255,255,.10);
+      padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px));
+      box-shadow:0 -6px 20px rgba(15,42,74,.18)}
+    .ph-tabbar a,.ph-tabbar button{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;
+      gap:3px;padding:6px 2px 4px;color:#B7C6DA;text-decoration:none;font-family:inherit;font-size:10.5px;font-weight:600;line-height:1.15;
+      background:none;border:none;border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+    .ph-tabbar .ti{font-size:19px;line-height:1;filter:grayscale(1) opacity(.72)}
+    .ph-tabbar .tl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+    .ph-tabbar a.active{color:#fff}
+    .ph-tabbar a.active .ti{filter:none}
+    .ph-tabbar a.active .tl{position:relative}
+    .ph-tabbar a.active .tl::after{content:"";position:absolute;left:25%;right:25%;bottom:-5px;height:2px;border-radius:2px;background:#2BC0B8}
+    .ph-tabbar .more{color:#B7C6DA}
+    .ph-tabbar .more.on{color:#fff}
+    .ph-more{position:fixed;left:0;right:0;bottom:0;z-index:7100;background:#fff;color:#0F2A4A;
+      border-radius:16px 16px 0 0;box-shadow:0 -12px 34px rgba(15,42,74,.28);
+      padding:10px 14px calc(14px + env(safe-area-inset-bottom,0px))}
+    .ph-more .grab{width:38px;height:4px;border-radius:2px;background:#D5DDE8;margin:2px auto 12px}
+    .ph-more a{display:flex;align-items:center;gap:12px;padding:13px 10px;border-radius:12px;
+      text-decoration:none;color:#0F2A4A;font-family:inherit;font-size:15px;font-weight:600}
+    .ph-more a:active{background:#EEF2F7}
+    .ph-more a .ti{font-size:20px;width:28px;text-align:center}
+    .ph-more a.active{background:#E8F6F4;color:#0F827E}
+    .ph-scrim{position:fixed;inset:0;z-index:7050;background:rgba(15,42,74,.35)}
+  }
   .ph-av{margin-left:auto;display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.18);
     border-radius:999px;padding:5px 12px 5px 6px;cursor:pointer;font-family:inherit;color:#fff}
   .ph-av:hover{background:rgba(255,255,255,.18)}
@@ -1449,8 +1485,52 @@
     const host=document.getElementById('nav')||document.querySelector('.v1nav-in');
     if(host) host.innerHTML=NAV.filter(x=>x.show()).map(x=>
       '<a href="'+x.href+'"'+(x.k===NAV_ACTIVE?' class="active"':'')+'>'+x.n+'</a>').join('');
+    tabbar();
     guard(NAV_ACTIVE);
   }
+
+  /* The phone bar. Rendered from the SAME filtered list as the top nav, every time nav()
+     runs - so it re-shapes itself as identity settles after sign-in, exactly like the
+     top nav does, and Admin appears only for people who may open Admin. The first four
+     sit on the bar; anything beyond that is under "More", which shows only what the
+     person may open. Emoji and label are split from the NAV name so the icon can be
+     sized on its own. */
+  const TAB_MAX=4;
+  /* Bar labels must fit one line at 375px with five items across. The full names
+     ("Production Dashboard", "Enter Production") truncated to "Produc..." and
+     "Enter P..." - which reads as broken. Short forms for the bar; the sheet and the
+     top nav keep the full names. */
+  const TAB_SHORT={home:'Home',dashboard:'Dashboard',production:'Enter Prod',schedule:'Schedule',
+                   marketing:'Marketing',documents:'Documents',team:'Team',admin:'Admin'};
+  function splitNav(n,k){ const m=String(n).match(/^(\S+)\s+(.*)$/);
+    return m?{ic:m[1],label:(k&&TAB_SHORT[k])||m[2]}:{ic:'',label:String(n)}; }
+  function tabbar(){
+    if(!document.body) return;
+    let bar=document.querySelector('.ph-tabbar');
+    if(!bar){ bar=document.createElement('nav'); bar.className='ph-tabbar'; bar.setAttribute('aria-label','Sections'); document.body.appendChild(bar); }
+    const items=NAV.filter(x=>x.show());
+    const primary=items.length>TAB_MAX ? items.slice(0,TAB_MAX) : items;
+    const rest=items.length>TAB_MAX ? items.slice(TAB_MAX) : [];
+    const link=x=>{ const p=splitNav(x.n,x.k);
+      return '<a href="'+x.href+'"'+(x.k===NAV_ACTIVE?' class="active"':'')+'><span class="ti">'+p.ic+'</span><span class="tl">'+p.label+'</span></a>'; };
+    const restActive=rest.some(x=>x.k===NAV_ACTIVE);
+    bar.innerHTML=primary.map(link).join('')+
+      (rest.length?'<button type="button" class="more'+(restActive?' on':'')+'" aria-haspopup="true"><span class="ti">\u2630</span><span class="tl">More</span></button>':'');
+    const more=bar.querySelector('.more');
+    if(more) more.onclick=function(){ openMore(rest); };
+  }
+  let moreSheet=null;
+  function closeMore(){ if(moreSheet){ moreSheet.scrim.remove(); moreSheet.sheet.remove(); moreSheet=null; } }
+  function openMore(rest){
+    closeMore();
+    const scrim=document.createElement('div'); scrim.className='ph-scrim'; scrim.onclick=closeMore;
+    const sheet=document.createElement('div'); sheet.className='ph-more';
+    sheet.innerHTML='<div class="grab"></div>'+rest.map(x=>{ const p=splitNav(x.n);
+      return '<a href="'+x.href+'"'+(x.k===NAV_ACTIVE?' class="active"':'')+'><span class="ti">'+p.ic+'</span>'+p.label+'</a>'; }).join('');
+    document.body.appendChild(scrim); document.body.appendChild(sheet);
+    moreSheet={scrim:scrim, sheet:sheet};
+  }
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeMore(); });
 
   /* THE RE-CHECK. Every page calls PH.nav() as it parses, which is before Graph has
      said who this is; not one page called it again afterwards. So the menu and the

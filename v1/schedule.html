@@ -3,21 +3,26 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Schedule (V1) — Home-Brace</title>
+<title>Home-Brace · Schedule</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="icon" href="../assets/favicon.png?v=2" type="image/png">
 <meta name="theme-color" content="#0F2A4A">
 <meta name="apple-mobile-web-app-title" content="Home-Brace">
 <link rel="apple-touch-icon" href="../assets/logo-mark.png">
-<meta name="theme-color" content="#0F2A4A">
-<meta name="description" content="Home-Brace V1 — the practice schedule: which office is open, which doctor is where, by week or month.">
+<meta name="description" content="The practice’s central hub — schedule, production, documents and team, in one place. Farnsworth · Sunflower · Las Cruces.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Home-Brace">
-<meta property="og:title" content="Schedule (V1) · Home-Brace">
-<meta property="og:description" content="Which office is open each day and which doctor is working where.">
-<meta property="og:image" content="https://corylawing.github.io/practice-hub-mockup/assets/og-image.png">
-<meta property="og:url" content="https://corylawing.github.io/practice-hub-mockup/v1/schedule.html">
+<meta property="og:title" content="Home-Brace">
+<meta property="og:description" content="The practice’s central hub — schedule, production, documents and team, in one place. Farnsworth · Sunflower · Las Cruces.">
+<meta property="og:image" content="https://kind-hill-00da87410.3.azurestaticapps.net/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="https://kind-hill-00da87410.3.azurestaticapps.net/v1/schedule.html">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Home-Brace">
+<meta name="twitter:description" content="The practice’s central hub — schedule, production, documents and team, in one place. Farnsworth · Sunflower · Las Cruces.">
+<meta name="twitter:image" content="https://kind-hill-00da87410.3.azurestaticapps.net/assets/og-image.png">
 <style>
   :root{
     --navy:#0F2A4A; --navy2:#25456e; --teal:#149B96; --teal2:#2BC0B8; --teal-soft:#E5F4F3; --teal-600:#0F827E;
@@ -269,10 +274,10 @@
   }
 
 </style>
-<script src="user.js?v=hc42"></script>
+<script src="user.js?v=hc43"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc42"></script>
-  <script src="gate.js?v=hc42"></script>
+  <script src="store.js?v=hc43"></script>
+  <script src="gate.js?v=hc43"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — sample staff schedule for validation. Live version = one Microsoft List the practice maintains.</div>
@@ -1194,7 +1199,7 @@
    machine is missing here until the next page load. */
 document.addEventListener('ph-locations-changed',function(){ if(window.PS&&PS.relocate)PS.relocate(); });
 PH.nav('schedule');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc42"></script>
+<script src="tour.js?v=hc43"></script>
 <script>
 Tour.init([
   {sel:'#viewseg', title:'Week or month', body:'<b>Week</b> is the day-to-day working view. <b>Month</b> shows the whole month at a glance, with every office in its own color.'},

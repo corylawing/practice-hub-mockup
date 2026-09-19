@@ -372,6 +372,21 @@ and could open the file in Excel anyway. Real containment would need per-office 
   written to SharePoint and only ever read from `localStorage`, so a second device showed the
   defaults and the next save pushed those defaults over the practice's real office setup. Fixed
   2026-09-16 with `PH.reloadLocations()`. If you add a key, add both halves.
+- **On phones (≤640px) the nav is a bottom bar, drawn by `tabbar()` in user.js from the SAME
+  `NAV.filter(show)` list as the top strip, every time `nav()` runs** — so it re-shapes as identity
+  settles and Admin appears only for admins. First four items on the bar, the rest under "More".
+  Bar labels use `TAB_SHORT` (one line at 375px with five across; the full names truncated to
+  "Produc…"). Heather asked for it 2026-09-18. The `.tour-launch` FAB and the bell panel are lifted
+  above the bar; `body` gets bottom padding with `env(safe-area-inset-bottom)`.
+- **`font: 600 10.5px/1.15 inherit` is INVALID CSS** — `inherit` cannot sit inside a shorthand, so
+  the browser drops the whole declaration and the element inherits the page's size. Use explicit
+  `font-family/size/weight/line-height`. Five older bell-panel rules still use the shorthand and
+  therefore render at inherited sizes; they were reviewed visually and left alone — do not "fix"
+  them without re-checking the bell.
+- **Sharing cards are uniform and say nothing about which page.** Every page carries the same
+  og/twitter block: title "Home-Brace", one professional description, `og:image` on the production
+  host (it pointed at the sandbox host before), `og:url` per page. `<title>` is "Home-Brace ·
+  Page" — no "(V1)" anywhere. A shared WhatsApp preview read "Schedule (V1) · Home-Brace" before.
 - **A live site reads NOTHING before sign-in — `PH_STORE.get()` waits for `PH_STORE.ready`.**
   Every page reads its data the instant it loads, before Microsoft has finished signing the person
   in. `store.live()` used to require `PH_AUTH`, which gate.js sets asynchronously, so at that
