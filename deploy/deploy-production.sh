@@ -15,6 +15,14 @@
 set -euo pipefail
 TOKEN="${1:?Pass the deployment token as the first argument}"
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
+# No deploy with a red test. Every incident this week was a class of bug the suite now
+# replays - the blank year, the shared settings slot, the pre-sign-in read. A deploy
+# that skips them is how one of those ships again.
+if ! sh "$REPO/test/all.sh"; then
+  echo "Tests failed - nothing was deployed." >&2
+  exit 1
+fi
+
 STAGE="$(mktemp -d)/swa"
 
 mkdir -p "$STAGE/v1"
