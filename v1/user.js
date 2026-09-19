@@ -171,19 +171,46 @@
     }).then(function(r){ identityChanged(); return r; });
   }
 
-  const rosterReady=(typeof fetch==='function')
-    ? fetch('_people.json').then(function(r){ return r.ok?r.json():null; }).then(function(j){
-        const rows=j&&j.people;
-        if(!Array.isArray(rows)) return null;
-        ROSTER_FILE=rows;
-        // Whatever this browser already knows about additions and removals, until the
-        // shared copy is pulled after sign-in.
-        try{ const ex=JSON.parse(localStorage.getItem(EXTRA_KEY));
-             if(ex && typeof ex==='object') ROSTER_EXTRA={added:ex.added||[], removed:ex.removed||[]}; }catch(_){}
-        applyExtra();
-        return ROSTER_BY_MAIL;
-      }).catch(function(){ return null; })
-    : Promise.resolve(null);
+  /* THE ROSTER LIVES IN SHAREPOINT (ph_roster), where only signed-in members can read
+     it. It used to be a public file: anyone with the URL could fetch every name, work
+     email and office without signing in. The file is still deployed for now as the
+     seed and the fallback; the first admin to open the hub after this ships copies it
+     into SharePoint, and once that record exists the file stops being deployed. */
+  const ROSTER_KEY='ph_roster';
+  function rosterFromRows(rows){
+    ROSTER_FILE=rows;
+    // Whatever this browser already knows about additions and removals, until the
+    // shared copy is pulled after sign-in.
+    try{ const ex=JSON.parse(localStorage.getItem(EXTRA_KEY));
+         if(ex && typeof ex==='object') ROSTER_EXTRA={added:ex.added||[], removed:ex.removed||[]}; }catch(_){}
+    applyExtra();
+    return ROSTER_BY_MAIL;
+  }
+  const rosterReady=new Promise(function(resolve){
+    const fromFile=()=>(typeof fetch==='function')
+      ? fetch('_people.json').then(r=>r.ok?r.json():null).then(j=>(j&&Array.isArray(j.people))?j.people:null).catch(()=>null)
+      : Promise.resolve(null);
+    const fromStore=()=>(window.PH_STORE && isLive())
+      ? window.PH_STORE.get(ROSTER_KEY).catch(()=>null)      // waits for sign-in on a live site
+      : Promise.resolve(null);
+    const run=function(){
+      fromStore().then(function(rows){
+        if(Array.isArray(rows) && rows.length) return rosterFromRows(rows);
+        return fromFile().then(function(fileRows){
+          if(!fileRows) return null;
+          const out=rosterFromRows(fileRows);
+          // One-time seed, by an admin, so the file can stop being public.
+          if(window.PH_STORE && isLive() && isAdmin())
+            window.PH_STORE.set(ROSTER_KEY, fileRows, {force:true});
+          return out;
+        });
+      }).then(resolve, function(){ resolve(null); });
+    };
+    /* Never run inside this file's own evaluation: isLive(), isAdmin() and PH_STORE are
+       all declared later (store.js loads after this file). Wait for the document, or
+       at least for the current script to finish - a deferred load must not break it. */
+    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', run); else setTimeout(run, 0);
+  });
   function rosterFor(mail){
     if(!ROSTER_BY_MAIL || !mail) return null;
     return ROSTER_BY_MAIL[String(mail).toLowerCase().trim()] || null;
@@ -770,6 +797,11 @@
   .uploadnote{font-size:12.5px;color:#56627A;margin-top:7px;line-height:1.5}
   .dfile{display:flex;align-items:center;gap:10px;border:1px dashed #E4E8EE;border-radius:10px;padding:10px 12px;font-size:14px;color:#56627A;margin-top:8px}
   body.ph-locked .wrap > *:not(.ph-noaccess){display:none!important}
+  /* Identity not known yet: hide the page's content without saying anything about access. */
+  body.ph-pending .wrap > *{visibility:hidden}
+  body.ph-pending .wrap{min-height:40vh;position:relative}
+  body.ph-pending .wrap::after{content:"One moment\u2026";visibility:visible;position:absolute;left:0;right:0;top:64px;
+    text-align:center;color:#8a94a6;font-size:14px}
   body.ph-locked .ph-fab,body.ph-locked .tourfab,body.ph-locked #tourfab{display:none!important}
   .ph-noaccess{background:#fff;border:1px solid #E4E8EE;border-radius:16px;padding:40px 28px;text-align:center;
     max-width:520px;margin:40px auto;box-shadow:0 1px 2px rgba(15,42,74,.06),0 6px 18px rgba(15,42,74,.06)}
@@ -810,7 +842,7 @@
   .ph-np .ni .ndone{flex:none;font-size:11.5px;font-weight:700;color:#0F827E;background:#E8F6F4;
     border-radius:8px;padding:5px 9px;white-space:nowrap;align-self:flex-start}
   .ph-np .nempty{padding:26px 18px;text-align:center;font-size:13.5px;color:#7A889B;line-height:1.55}
-  @media(max-width:560px){ .ph-np{position:fixed;left:12px;right:12px;width:auto;top:62px} }
+
   /* ---- PHONE SHELL. Below 640px the top tab strip goes and a bottom bar takes over,
           the way a phone app does. Same NAV list, same show() rule, same order - so a
           person sees exactly the sections they may open, nothing else. Heather asked
@@ -820,7 +852,7 @@
     .v1nav{display:none !important}
     body{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px)) !important}
     .tour-launch{bottom:calc(76px + env(safe-area-inset-bottom,0px)) !important}
-    .ph-np{top:auto !important;bottom:calc(72px + env(safe-area-inset-bottom,0px)) !important}
+
     .ph-tabbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:7000;
       background:#0F2A4A;border-top:1px solid rgba(255,255,255,.10);
       padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px));
@@ -828,10 +860,10 @@
     .ph-tabbar a,.ph-tabbar button{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;
       gap:3px;padding:6px 2px 4px;color:#B7C6DA;text-decoration:none;font-family:inherit;font-size:10.5px;font-weight:600;line-height:1.15;
       background:none;border:none;border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent}
-    .ph-tabbar .ti{font-size:19px;line-height:1;filter:grayscale(1) opacity(.72)}
+    .ph-tabbar .ti{width:22px;height:22px;display:block;opacity:.72}
     .ph-tabbar .tl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
     .ph-tabbar a.active{color:#fff}
-    .ph-tabbar a.active .ti{filter:none}
+    .ph-tabbar a.active .ti{opacity:1;stroke-width:2.1}
     .ph-tabbar a.active .tl{position:relative}
     .ph-tabbar a.active .tl::after{content:"";position:absolute;left:25%;right:25%;bottom:-5px;height:2px;border-radius:2px;background:#2BC0B8}
     .ph-tabbar .more{color:#B7C6DA}
@@ -843,9 +875,41 @@
     .ph-more a{display:flex;align-items:center;gap:12px;padding:13px 10px;border-radius:12px;
       text-decoration:none;color:#0F2A4A;font-family:inherit;font-size:15px;font-weight:600}
     .ph-more a:active{background:#EEF2F7}
-    .ph-more a .ti{font-size:20px;width:28px;text-align:center}
+    .ph-more a .ti{width:22px;height:22px;flex:none;opacity:.8}
     .ph-more a.active{background:#E8F6F4;color:#0F827E}
     .ph-scrim{position:fixed;inset:0;z-index:7050;background:rgba(15,42,74,.35)}
+    /* ON A PHONE, A DIALOG IS A SHEET, NOT A FLOATING CARD. The profile card and every
+       page's editor were desktop popovers squeezed onto a phone: taller than the screen,
+       scrolled by dragging the page behind them, Save somewhere below the fold or under
+       the bar (Cory, 19/09: "like you have to scroll down on the side of the app"). Now:
+       the sheet fills the screen, its BODY scrolls, header and buttons stay put. Same for
+       the bell panel. Desktop is untouched - these rules only exist below 640px. */
+    .ph-ov,.ov{padding:0 !important;align-items:stretch !important}
+    .ph-card,.ov > *{max-width:none !important;width:100% !important;margin:0 !important;border-radius:0 !important;
+      height:100%;max-height:100dvh;display:flex;flex-direction:column;box-shadow:none !important}
+    .ph-body,.ov .m-body{flex:1 1 auto;max-height:none !important;overflow:auto;-webkit-overflow-scrolling:touch;min-height:0}
+    .ph-foot,.ov .m-foot,.ov .dm-foot{flex:none;position:sticky;bottom:0;padding-bottom:calc(14px + env(safe-area-inset-bottom,0px)) !important}
+    .ph-top,.ov .m-top{flex:none}
+    .ph-np{position:fixed !important;left:8px;right:8px;top:60px;bottom:calc(64px + env(safe-area-inset-bottom,0px));
+      width:auto !important;display:flex;flex-direction:column;border-radius:14px}
+    .ph-np .nph{flex:none}
+    .ph-np .nlist{flex:1 1 auto;max-height:none !important;overflow:auto;-webkit-overflow-scrolling:touch}
+    /* DIALOG FOOTERS ON A PHONE. Desktop footers put a destructive button left, a helper
+       note in the middle, Cancel and Save right - five things in one row that a 375px
+       screen cannot hold, so Save fell off the edge (Cory, 19/09, Admin person editor).
+       On a phone: the note goes, buttons share the row, and anything destructive
+       (delete / remove / clear) takes a row of its own. */
+    .ov .m-foot,.ov .dm-foot,.ph-foot{flex-wrap:wrap;gap:8px;padding:10px 12px calc(12px + env(safe-area-inset-bottom,0px)) !important}
+    .ov .m-foot > span,.ov .dm-foot > span,.ph-foot > span:not(.ph-ok){display:none}
+    .ov .m-foot > button,.ov .dm-foot > button,.ph-foot > button{flex:1 1 0;min-width:0;white-space:nowrap;text-align:center;margin:0 !important}
+    .ov .m-foot > button[onclick*="del"],.ov .m-foot > button[onclick*="remove"],.ov .m-foot > button[onclick*="clear"]{flex:1 1 100%;order:1}
+    /* The tour button has no business floating over an open dialog's buttons. */
+    body:has(.ov.open) .tour-launch, body:has(.ph-ov.open) .tour-launch{display:none !important}
+    /* While any dialog is open the bar steps aside so the sheet has the whole screen; for
+       browsers without :has(), every overlay stops above the bar instead. */
+    body:has(.ov.open) .ph-tabbar, body:has(.ph-ov.open) .ph-tabbar, body:has(#modal.open) .ph-tabbar{display:none}
+    .ov,.ph-ov{bottom:calc(64px + env(safe-area-inset-bottom,0px)) !important}
+    body:has(.ov.open) .ov, body:has(.ph-ov.open) .ph-ov{bottom:0 !important}
   }
   .ph-av{margin-left:auto;display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.18);
     border-radius:999px;padding:5px 12px 5px 6px;cursor:pointer;font-family:inherit;color:#fff}
@@ -1502,6 +1566,20 @@
      top nav keep the full names. */
   const TAB_SHORT={home:'Home',dashboard:'Dashboard',production:'Enter Prod',schedule:'Schedule',
                    marketing:'Marketing',documents:'Documents',team:'Team',admin:'Admin'};
+  /* Line icons for the phone bar instead of emoji - emoji render differently on every
+     phone and read as casual. 24-unit grid, stroke follows the text colour. */
+  const ICON={
+    home:'<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/>',
+    dashboard:'<path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/>',
+    production:'<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/>',
+    schedule:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/>',
+    marketing:'<path d="M3 11v2a1 1 0 001 1h2l5 4V6L6 10H4a1 1 0 00-1 1z"/><path d="M15 9a3 3 0 010 6"/><path d="M18 6a7 7 0 010 12"/>',
+    documents:'<path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>',
+    team:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0113 0"/><circle cx="17" cy="9" r="3"/><path d="M15.5 14.5A5.5 5.5 0 0122 20"/>',
+    admin:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 01-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 01-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 01-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 010-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 012.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 014 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 012.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 010 4h-.1a1.7 1.7 0 00-1.5 1z"/>',
+    more:'<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>'
+  };
+  function icon(k){ return '<svg class="ti" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(ICON[k]||ICON.more)+'</svg>'; }
   function splitNav(n,k){ const m=String(n).match(/^(\S+)\s+(.*)$/);
     return m?{ic:m[1],label:(k&&TAB_SHORT[k])||m[2]}:{ic:'',label:String(n)}; }
   function tabbar(){
@@ -1512,10 +1590,10 @@
     const primary=items.length>TAB_MAX ? items.slice(0,TAB_MAX) : items;
     const rest=items.length>TAB_MAX ? items.slice(TAB_MAX) : [];
     const link=x=>{ const p=splitNav(x.n,x.k);
-      return '<a href="'+x.href+'"'+(x.k===NAV_ACTIVE?' class="active"':'')+'><span class="ti">'+p.ic+'</span><span class="tl">'+p.label+'</span></a>'; };
+      return '<a href="'+x.href+'"'+(x.k===NAV_ACTIVE?' class="active"':'')+'>'+icon(x.k)+'<span class="tl">'+p.label+'</span></a>'; };
     const restActive=rest.some(x=>x.k===NAV_ACTIVE);
     bar.innerHTML=primary.map(link).join('')+
-      (rest.length?'<button type="button" class="more'+(restActive?' on':'')+'" aria-haspopup="true"><span class="ti">\u2630</span><span class="tl">More</span></button>':'');
+      (rest.length?'<button type="button" class="more'+(restActive?' on':'')+'" aria-haspopup="true">'+icon('more')+'<span class="tl">More</span></button>':'');
     const more=bar.querySelector('.more');
     if(more) more.onclick=function(){ openMore(rest); };
   }
@@ -1526,7 +1604,7 @@
     const scrim=document.createElement('div'); scrim.className='ph-scrim'; scrim.onclick=closeMore;
     const sheet=document.createElement('div'); sheet.className='ph-more';
     sheet.innerHTML='<div class="grab"></div>'+rest.map(x=>{ const p=splitNav(x.n);
-      return '<a href="'+x.href+'"'+(x.k===NAV_ACTIVE?' class="active"':'')+'><span class="ti">'+p.ic+'</span>'+p.label+'</a>'; }).join('');
+      return '<a href="'+x.href+'"'+(x.k===NAV_ACTIVE?' class="active"':'')+'>'+icon(x.k)+p.label+'</a>'; }).join('');
     document.body.appendChild(scrim); document.body.appendChild(sheet);
     moreSheet={scrim:scrim, sheet:sheet};
   }
@@ -1575,6 +1653,16 @@
     marketing:'Marketing board',documents:'Documents',team:'Team directory',admin:'Admin Console'};
   function guard(active){
     const entry=NAV.find(x=>x.k===active);
+    /* WHILE WE DO NOT YET KNOW WHO THIS IS, DECIDE NOTHING. On a phone the silent sign-in
+       takes about a second; this used to run at parse, see "nobody", paint "You don't
+       have access", and then unlock - a flash of refusal on every tab change. Hold the
+       page quietly instead and decide once identity lands (nav() re-runs then). */
+    if(isLive() && !PROFILE && !window.PH_AUTH && entry && entry.k!=='home'){
+      if(document.body){ document.body.classList.add('ph-pending'); document.body.classList.remove('ph-locked'); }
+      const stale=document.querySelector('.ph-noaccess'); if(stale && stale.remove) stale.remove();
+      return false;
+    }
+    if(document.body) document.body.classList.remove('ph-pending');
     if(!entry || entry.show()){
       /* Unlock AND take the panel away. It used to only drop the class and leave the
          "you don't have access" card sitting in the page - which never showed before,

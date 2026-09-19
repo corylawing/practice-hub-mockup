@@ -87,6 +87,9 @@
           <option value="ph_people">People overrides (ph_people)</option>
           <option value="ph_access">Teams &amp; access (ph_access)</option>
           <option value="ph_mktg">Marketing board (ph_mktg)</option>
+          <option value="ph_roster">Staff roster (ph_roster)</option>
+          <option value="ph_roster_extra">Staff added / removed (ph_roster_extra)</option>
+          <option value="ph_prodaudit">Production entries — who and when (ph_prodaudit)</option>
         </select>
       </div>
       <div>
@@ -100,10 +103,10 @@
   </div>
 </div>
 
-<script src="user.js?v=hc43"></script>
+<script src="user.js?v=hc44"></script>
 <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-<script src="store.js?v=hc43"></script>
-<script src="gate.js?v=hc43"></script>
+<script src="store.js?v=hc44"></script>
+<script src="gate.js?v=hc44"></script>
 <script>
 (function(){
   'use strict';
@@ -186,10 +189,10 @@
   var NAMES=null;
   function loadNames(){
     if(NAMES) return Promise.resolve(NAMES);
-    return fetch('_people.json').then(function(r){ return r.ok?r.json():null; })
-      .then(function(j){
+    return (window.PH && PH.rosterReady ? PH.rosterReady : Promise.resolve())
+      .then(function(){
         NAMES={};
-        ((j&&j.people)||[]).forEach(function(r){
+        ((window.PH && PH.rosterRows) ? PH.rosterRows() : []).forEach(function(r){
           if(r.email) NAMES[String(r.email).toLowerCase()]=r.name;
           if(r.empId) NAMES['emp:'+String(r.empId).toLowerCase()]=r.name;
         });

@@ -43,7 +43,6 @@ if [ -f "$STAGE/v1/_people.json" ]; then
 import json,sys
 p=sys.argv[1]; d=json.load(open(p))
 for row in d.get('people',[]):
-    row.pop('empId',None)
     row.pop('about',None)
     row.pop('phone',None)
 d['_note']=('Published copy: employee IDs and personal notes are removed at deploy '

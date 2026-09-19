@@ -143,6 +143,25 @@
   .mscroll{overflow-x:auto}
   .mdnum .dw{display:none}
   .month .dow{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--soft);text-align:center;padding:4px 0}
+  .nav2 .lab{font:inherit;font-weight:800;background:none;border:none;color:inherit;cursor:pointer;padding:6px 10px;border-radius:8px}
+  .nav2 .lab:hover{background:rgba(15,42,74,.06)}
+  .yrow{display:flex;align-items:center;justify-content:center;gap:16px;font-size:18px;margin:4px 0 14px}
+  .pmgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .pm{font:inherit;font-weight:700;padding:12px 0;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--navy);cursor:pointer}
+  .pm.now{border-color:var(--teal)}
+  .pm.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .mini{display:none}
+  .mday.flash{box-shadow:0 0 0 3px var(--teal) inset}
+  @media(max-width:640px){
+    .mini{display:block;background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 10px 8px;margin:0 0 12px}
+    .mmh,.mmg{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
+    .mmh span{font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--soft);text-align:center;padding-bottom:4px}
+    .mm{font:inherit;font-size:13.5px;font-weight:600;padding:7px 0;border:none;border-radius:8px;background:transparent;color:var(--navy);position:relative}
+    .mm.out{visibility:hidden}
+    .mm.busy::after{content:"";position:absolute;left:50%;bottom:2px;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:var(--teal)}
+    .mm.today{background:var(--navy);color:#fff}
+    .mm.today.busy::after{background:#fff}
+  }
   .mday{background:#fff;border:1px solid var(--line);border-radius:10px;min-height:108px;padding:6px 7px}
   .mday.out{background:#fafbfc;border-color:#f0f2f5}
   .mday.today{border-color:var(--teal);box-shadow:0 0 0 2px var(--teal-soft) inset}
@@ -274,10 +293,10 @@
   }
 
 </style>
-<script src="user.js?v=hc43"></script>
+<script src="user.js?v=hc44"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc43"></script>
-  <script src="gate.js?v=hc43"></script>
+  <script src="store.js?v=hc44"></script>
+  <script src="gate.js?v=hc44"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — sample staff schedule for validation. Live version = one Microsoft List the practice maintains.</div>
@@ -299,7 +318,7 @@
 
   <div class="bar">
     <div class="seg" id="viewseg"></div>
-    <div class="nav2"><button onclick="PS.step(-1)" aria-label="Previous">‹</button><span class="lab" id="perlab"></span><button onclick="PS.step(1)" aria-label="Next">›</button></div>
+    <div class="nav2"><button onclick="PS.step(-1)" aria-label="Previous">‹</button><button class="lab" id="perlab" type="button" onclick="PS.pickMonth()" title="Jump to a month"></button><button onclick="PS.step(1)" aria-label="Next">›</button></div>
     <button class="sbtn ghost" onclick="PS.today()">Today</button>
     <span style="flex:1"></span>
     <button class="sbtn ghost" id="addLocBtn" onclick="PS.addLocation()">+ Add office</button>
@@ -372,6 +391,7 @@
      wants, and it makes a thousand-version storm impossible. */
   let saveTimer=null;
   let docsSaved=null;              // the doctor list as last persisted, to spot a real change
+  let docsLoaded=null;             // ...and as loaded, to spot somebody else's change
   function save(){ clearTimeout(saveTimer); saveTimer=setTimeout(saveNow, 400); }
   function saveNow(){
     sched.__v=SCHED_VERSION;
@@ -381,8 +401,29 @@
     /* Goes through the store, never straight to localStorage: the store is what keeps
        the previous copy, weighs the new one, and refuses a write that would empty the
        year out. A direct localStorage.setItem here would step around all of it. */
-    if(window.PH_STORE) PH_STORE.set('ph_sched2', sched);
-    else try{ localStorage.setItem('ph_sched2',JSON.stringify(sched)); }catch(_){}
+    if(window.PH_STORE && PH_STORE.update && PH.isLive()){
+      /* ONLY THE DAYS THIS PAGE CHANGED go out, laid onto the shared copy. Two people
+         editing at once used to be last-save-wins for the whole year. The changed days
+         are found by comparing against the snapshot taken at load and after each save,
+         so every path that touches a day - the day editor, office hours following, a
+         doctor removed, an office renamed - is covered without instrumenting each one.
+         What comes back is the merged year, which then becomes ours, so the other
+         person's changes appear here too. */
+      const d=dirtyDays();
+      if(d.changed.length || d.removed.length){
+        const mine=sched;
+        PH_STORE.update('ph_sched2', function(remote){
+          const merged=PH_STORE.mergeInto(remote, mine, d.changed, d.removed);
+          merged.__v=SCHED_VERSION; delete merged.__demo;
+          return merged;
+        }).then(function(r){
+          if(r && r.value && !r.blocked){ sched=r.value; takeSnap(); refresh(); }
+        });
+      }
+    } else {
+      if(window.PH_STORE) PH_STORE.set('ph_sched2', sched);
+      else try{ localStorage.setItem('ph_sched2',JSON.stringify(sched)); }catch(_){}
+    }
     /* The doctor list rides along WHEN IT CHANGED. Removing a doctor re-numbers the
        days, so the list and the days must persist together or the days point at the
        wrong doctor - but rewriting it on every single save meant that simply using the
@@ -391,10 +432,41 @@
        because three loops walk its keys. */
     const docsNow=JSON.stringify(people);
     if(docsNow!==docsSaved){
-      docsSaved=docsNow;
-      if(window.PH_STORE) PH_STORE.set('ph_docs', people);
-      else try{ localStorage.setItem('ph_docs',docsNow); }catch(_){}
+      if(window.PH_STORE && PH_STORE.update && PH.isLive()){
+        /* The doctor list is positional - the days point at doctors by index - so two
+           people's edits to it cannot be merged. Instead: if somebody else changed the
+           list since this page loaded, keep theirs and say so, rather than silently
+           putting ours over it. */
+        let clash=false;
+        PH_STORE.update('ph_docs', function(remote){
+          if(remote && JSON.stringify(remote)!==docsLoaded){ clash=true; return undefined; }
+          return people;
+        }).then(function(r){
+          if(clash){
+            alert('The doctor list was changed by someone else while this page was open. '+
+                  'Reload to see their version, then make your change again.');
+          } else if(r && !r.blocked){ docsSaved=docsNow; docsLoaded=docsNow; }
+        });
+      } else {
+        docsSaved=docsNow;
+        if(window.PH_STORE) PH_STORE.set('ph_docs', people);
+        else try{ localStorage.setItem('ph_docs',docsNow); }catch(_){}
+      }
     }
+  }
+  /* Snapshot of every day as last loaded or saved, for finding what THIS page changed. */
+  let snap={};
+  const isDay=k=>/^\d{4}-\d{2}-\d{2}$/.test(k);
+  function takeSnap(){ snap={}; Object.keys(sched).forEach(k=>{ if(isDay(k)) snap[k]=JSON.stringify(sched[k]); }); }
+  function dirtyDays(){
+    const changed=[], removed=[], seen={};
+    Object.keys(sched).filter(isDay).concat(Object.keys(snap)).forEach(k=>{
+      if(seen[k]) return; seen[k]=1;
+      const now = sched[k]===undefined ? undefined : JSON.stringify(sched[k]);
+      if(now===undefined){ if(snap[k]!==undefined) removed.push(k); }
+      else if(now!==snap[k]) changed.push(k);
+    });
+    return {changed, removed};
   }
 
   // null on a day the office is OPEN = nobody rostered = a Yellow Dot Day.
@@ -627,12 +699,13 @@
       // The weekday label is hidden on desktop (the column headers do that job) and shown
       // on phones, where the grid collapses to a one-day-per-row agenda.
       const dw='<span class="dw">'+['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()]+'</span>';
-      cells+='<div class="mday'+(isT?' today':'')+(ents?'':' empty')+'"><div class="mdnum">'+dw+dn+(isT?' · today':'')+'</div>'+ents+addBtn+'</div>';
+      cells+='<div class="mday'+(isT?' today':'')+(ents?'':' empty')+'" data-date="'+iso(d)+'"><div class="mdnum">'+dw+dn+(isT?' · today':'')+'</div>'+ents+addBtn+'</div>';
     }
     const tail=(5-(slots%5))%5;
     for(let i=0;i<tail;i++) cells+='<div class="mday out"></div>';
-    el('board').innerHTML='<div class="mscroll"><div class="month">'+
+    el('board').innerHTML=miniMonth()+'<div class="mscroll"><div class="month">'+
       ['Mon','Tue','Wed','Thu','Fri'].map(x=>'<div class="dow">'+x+'</div>').join('')+cells+'</div></div>';
+    autoScrollToday();
   }
 
   /* ---------- counters ---------- */
@@ -1051,6 +1124,68 @@
     el('keyYdot').style.display = fYdot ? '' : 'none';
     el('keyClosed').style.display = fClosed ? '' : 'none';
   }
+  /* JUMP TO A MONTH. Tap the "September 2026" label: a year with arrows and twelve
+     months. Heather on her phone: "somewhere to see the month and pick one, like Google
+     Calendar". Works in both views; in week view it lands on that month's first week. */
+  function pickMonth(){
+    let y=mY;
+    const draw=()=>{
+      const months=MOFULL.map((n,i)=>'<button class="pm'+(i===mM&&y===mY?' on':'')+(i===TODAY.getMonth()&&y===TODAY.getFullYear()?' now':'')+'" onclick="PS.goMonth('+y+','+i+')">'+n.slice(0,3)+'</button>').join('');
+      openModal('<div class="m-top"><h3>Go to</h3><button class="x" onclick="PS.close()">\u00d7</button></div>'+
+        '<div class="m-body"><div class="yrow"><button class="sbtn ghost" onclick="PS.pickYear('+(y-1)+')">\u2039</button><b>'+y+'</b><button class="sbtn ghost" onclick="PS.pickYear('+(y+1)+')">\u203a</button></div>'+
+        '<div class="pmgrid">'+months+'</div></div>'+
+        '<div class="m-foot"><button class="sbtn ghost" onclick="PS.today();PS.close()">Today</button><span style="flex:1"></span><button class="sbtn ghost" onclick="PS.close()">Cancel</button></div>');
+    };
+    window.PS.pickYear=function(yy){ y=yy; draw(); };
+    draw();
+  }
+  function goMonth(y,m){
+    mY=y; mM=m;
+    if(view==='week') anchor=mondayOf(new Date(y,m,1));
+    closeModal(); refresh();
+    const first=document.querySelector('.mday[data-date]'); if(first && isPhone()) first.scrollIntoView({block:'start'});
+  }
+  const isPhone=()=>window.matchMedia && window.matchMedia('(max-width:640px)').matches;
+  /* On a phone the month is a long list; tap a date on the mini calendar to land on it. */
+  function jumpTo(dateStr){
+    const n=document.querySelector('.mday[data-date="'+dateStr+'"]');
+    if(n){ n.scrollIntoView({block:'start',behavior:'smooth'}); n.classList.add('flash'); setTimeout(()=>n.classList.remove('flash'),1200); }
+  }
+  function miniMonth(){
+    const dim=new Date(mY,mM+1,0).getDate();
+    let cells=''; let fw=new Date(mY,mM,1); while(dowIdx(fw)>4) fw=addDays(fw,1);
+    for(let i=0;i<dowIdx(fw);i++) cells+='<span class="mm out"></span>';
+    for(let dn=1;dn<=dim;dn++){
+      const d=new Date(mY,mM,dn); if(dowIdx(d)>4) continue;
+      const k=iso(d), day=sched[k]||{};
+      const busy=Object.keys(day).some(o=>{ const c=day[o]; return c && (docsOf(c).length || c.event); });
+      cells+='<button class="mm'+(k===iso(TODAY)?' today':'')+(busy?' busy':'')+'" onclick="PS.jumpTo(\''+k+'\')">'+dn+'</button>';
+    }
+    return '<div class="mini" aria-label="Pick a date"><div class="mmh">'+['Mon','Tue','Wed','Thu','Fri'].map(x=>'<span>'+x+'</span>').join('')+'</div><div class="mmg">'+cells+'</div></div>';
+  }
+  let autoScrolled=false, autoScrollPending=false;
+  function autoScrollToday(){
+    /* Once per page load, on a phone, when the month on screen is this month: land on
+       today instead of the 1st. Not when the person has deliberately stepped elsewhere. */
+    if(autoScrolled || !isPhone() || view!=='month') return;
+    if(mY!==TODAY.getFullYear() || mM!==TODAY.getMonth()) return;
+    /* Today, or - on a weekend, when the Mon-Fri board has no "today" - the next working
+       day. Landing at the 1st on a Saturday was the gap the first version had. */
+    const t=iso(TODAY);
+    const find=()=>document.querySelector('.mday.today')
+         || Array.from(document.querySelectorAll('.mday[data-date]')).find(x=>x.getAttribute('data-date')>=t);
+    if(!find() || autoScrollPending) return;
+    /* Identity settles in stages after sign-in and each stage redraws the board, so an
+       element grabbed now can be detached by the time the scroll runs - which is a
+       silent no-op. Look the element up inside the timer, and only count it done once
+       an attached element has actually been scrolled to. */
+    autoScrollPending=true;
+    setTimeout(function(){
+      autoScrollPending=false;
+      const n=find(); if(!n || !n.isConnected) return;
+      n.scrollIntoView({block:'start'}); autoScrolled=true;
+    }, 350);
+  }
   function step(n){ if(view==='week'){ anchor=addDays(anchor,7*n); mY=anchor.getFullYear(); mM=anchor.getMonth(); }
     else { mM+=n; if(mM<0){mM=11;mY--;} if(mM>11){mM=0;mY++;} } refresh(); }
   function today(){ anchor=mondayOf(new Date(TODAY)); mY=TODAY.getFullYear(); mM=TODAY.getMonth(); refresh(); }
@@ -1084,6 +1219,7 @@
   window.PS={view:setView,step,today,togLoc,allLocs,togDoc,allDocs,togYdot,togClosed,togEvent,setEvent,open,addTo,quick,pickDoc,setT,halfDay,fullDay,markYdot,markClosed,
     clearDay,saveDay,addLocation,editLoc,setColor,setTZ,dtog,dtime,lunchTog,lunchT,saveLoc,delLoc,
     relocate:function(){ locations=PH.locations(); locations.forEach(l=>fLoc.add(l.n)); refresh(); },
+    pickMonth,goMonth,jumpTo,
     addPerson,edit:editPerson,savePerson,delPerson,close:closeModal};
 
   el('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal();});
@@ -1169,7 +1305,8 @@
     /* What is persisted right now, so a save that changed nothing about the doctors
        does not rewrite their row. Set AFTER people is settled, or the first save
        would push regardless and we would be back to restamping on every edit. */
-    docsSaved=JSON.stringify(people);
+    docsSaved=JSON.stringify(people); docsLoaded=docsSaved;
+    takeSnap();
     applyPerms();
     refresh();
     booted=true;
@@ -1199,7 +1336,7 @@
    machine is missing here until the next page load. */
 document.addEventListener('ph-locations-changed',function(){ if(window.PS&&PS.relocate)PS.relocate(); });
 PH.nav('schedule');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc43"></script>
+<script src="tour.js?v=hc44"></script>
 <script>
 Tour.init([
   {sel:'#viewseg', title:'Week or month', body:'<b>Week</b> is the day-to-day working view. <b>Month</b> shows the whole month at a glance, with every office in its own color.'},

@@ -128,11 +128,11 @@
   }
 
 </style>
-<script src="user.js?v=hc43"></script>
+<script src="user.js?v=hc44"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="workbook.js?v=hc43"></script>
-  <script src="store.js?v=hc43"></script>
-  <script src="gate.js?v=hc43"></script>
+  <script src="workbook.js?v=hc44"></script>
+  <script src="store.js?v=hc44"></script>
+  <script src="gate.js?v=hc44"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — type the month's numbers here. In the real build this writes straight into the SharePoint workbook.</div>
@@ -328,13 +328,15 @@
     edits[k]._goal  = val(office,month,'goal');
     // Audit trail: who last entered numbers in the app, and when. The leaderboard
     // shows it so leadership can see at a glance that entries are current.
+    /* Who entered what, when - SHARED, so leadership sees it on the dashboard from any
+       device. It lived in this browser only until 19/09. Merged one office at a time. */
     try{
-      const a=JSON.parse(localStorage.getItem('ph_prodaudit')||'{}');
       const me=(window.PH&&PH.me)?PH.name(PH.me()):'Unknown';
       const now=new Date().toISOString();
-      a.last={by:me,at:now,office:office};
-      (a.offices=a.offices||{})[office]={by:me,at:now};
-      localStorage.setItem('ph_prodaudit',JSON.stringify(a));
+      const stamp=function(a){ a=(a&&typeof a==='object')?a:{}; a.last={by:me,at:now,office:office};
+        (a.offices=a.offices||{})[office]={by:me,at:now}; return a; };
+      if(window.PH_STORE && PH_STORE.update && PH.isLive()) PH_STORE.update('ph_prodaudit', stamp);
+      else localStorage.setItem('ph_prodaudit',JSON.stringify(stamp(JSON.parse(localStorage.getItem('ph_prodaudit')||'{}'))));
     }catch(_){}
     if(window.PH && PH.logActivity && PH.isLive())
       PH.logActivity({kind:'production', sec:'production', ic:'\u{1F4DD}',
@@ -625,7 +627,7 @@
 })();
 </script>
 <script>PH.nav('production');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(window.PROD&&PROD.identity)PROD.identity();});document.addEventListener('ph-identity',function(){if(window.PROD&&PROD.identity)PROD.identity();});</script>
-<script src="tour.js?v=hc43"></script>
+<script src="tour.js?v=hc44"></script>
 <script>
 Tour.init([
   {sel:'.syncbar', title:'One set of numbers', body:'Type here and it saves into the <b>same Excel workbook</b> on SharePoint. If someone types in Excel instead, it shows up here. There is never a second copy to reconcile.'},

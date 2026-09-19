@@ -387,6 +387,33 @@ and could open the file in Excel anyway. Real containment would need per-office 
   og/twitter block: title "Home-Brace", one professional description, `og:image` on the production
   host (it pointed at the sandbox host before), `og:url` per page. `<title>` is "Home-Brace ·
   Page" — no "(V1)" anywhere. A shared WhatsApp preview read "Schedule (V1) · Home-Brace" before.
+- **Saves merge only what THIS page changed** — `PH_STORE.mergeInto()` (schedule: per day, found by
+  diffing against a snapshot taken at load/after save) and `PH_STORE.mergeById()` (marketing: per
+  card). Two people editing at once both keep their work. The **doctor list cannot be merged** (days
+  point at doctors by index): if someone else changed it since this page loaded, keep theirs and
+  tell the user to reload (`docsLoaded`). The production audit trail (`ph_prodaudit`) is shared,
+  merged per office; the dashboard reads it after sign-in.
+- **The roster lives in SharePoint (`ph_roster`).** `_people.json` was public — every name, work
+  email and office with no sign-in. The file is still deployed as the seed/fallback; the first
+  admin to open the hub copies it in (`rosterReady`). **Follow-up: once `history.html` shows a
+  `ph_roster` record, stop deploying the file.** `empId` is now kept in the file — it is the stable
+  key settings are filed under. `rosterReady` must never run during user.js's own evaluation
+  (`setTimeout(run,0)`): `isLive()` is declared below it.
+- **Before sign-in a live page is HELD, not refused** — `body.ph-pending` hides content, no
+  "You don't have access" card. Refusing at parse painted a one-second refusal on every tab change.
+  Hold only while `!PROFILE && !PH_AUTH`; a signed-in person with no profile (a failed `/me`) is
+  refused. Every page that stamps view-only (`schedule`, `marketing`) has a re-runnable
+  `applyPerms()` that goes **both ways** and restores what view-only hid (buttons, subtitles).
+- **Phone (≤640px):** dialogs are full-height sheets (`.ph-card`, `.ov > *`) with a scrolling body
+  and pinned footer; footers wrap, notes hide, destructive buttons take their own row; the bell panel
+  is a fixed sheet; the bar and the tour button hide while a dialog is open (`body:has(.ov.open)`).
+  Bar icons are inline SVG (`ICON`), not emoji. Schedule: tap the month label for a picker
+  (`pickMonth`), a Mon–Fri mini-calendar jumps to a date (`jumpTo`), and the month lands on today
+  or the next working day once per load (`autoScrollToday`, looked up *inside* the timer because
+  identity redraws detach nodes).
+- **Bugs found by the phone dialog pass, not by users:** `documents.html` "Add document" threw
+  `drivePath is not defined` (variable private to user.js) — declare page-local state in the page.
+  `dict.pop` regex edit in the deploy strip left `row.pop(None)`. **Review the diff before deploy.**
 - **A live site reads NOTHING before sign-in — `PH_STORE.get()` waits for `PH_STORE.ready`.**
   Every page reads its data the instant it loads, before Microsoft has finished signing the person
   in. `store.live()` used to require `PH_AUTH`, which gate.js sets asynchronously, so at that

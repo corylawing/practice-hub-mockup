@@ -281,10 +281,10 @@
   }
 
 </style>
-<script src="user.js?v=hc43"></script>
+<script src="user.js?v=hc44"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc43"></script>
-  <script src="gate.js?v=hc43"></script>
+  <script src="store.js?v=hc44"></script>
+  <script src="gate.js?v=hc44"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — marketing board concept for validation. Real build lives in Home-Brace (Microsoft Lists / Planner).</div>
@@ -462,7 +462,29 @@
   let cards = (window.PH && PH.isLive && PH.isLive()) ? [] : DEMO.slice();
 
   const MKEY='ph_mktg';
+  /* Only the cards THIS page changed go out, laid onto the shared board, so two people
+     working the board at once both keep their cards. Changes are found against a
+     snapshot by card id, so add, edit, move and delete are all covered. */
+  let snapCards={};
+  function takeCardSnap(){ snapCards={}; cards.forEach(c=>{ snapCards[String(c.id)]=JSON.stringify(c); }); }
+  function dirtyCards(){
+    const changed=[], removed=[], now={};
+    cards.forEach(c=>{ const id=String(c.id); now[id]=1; if(JSON.stringify(c)!==snapCards[id]) changed.push(id); });
+    Object.keys(snapCards).forEach(id=>{ if(!now[id]) removed.push(id); });
+    return {changed, removed};
+  }
   function persist(){
+    if(window.PH_STORE && PH_STORE.update && PH.isLive()){
+      const d=dirtyCards();
+      if(!d.changed.length && !d.removed.length) return;
+      const mine=cards;
+      PH_STORE.update(MKEY, function(remote){
+        return PH_STORE.mergeById(remote, mine, d.changed, d.removed);
+      }).then(function(r){
+        if(r && r.value && !r.blocked){ cards=r.value; cards.forEach(c=>{ if(+c.id>seq) seq=+c.id; }); takeCardSnap(); render(); }
+      });
+      return;
+    }
     if(window.PH_STORE) PH_STORE.set(MKEY, cards);
     else try{ localStorage.setItem(MKEY,JSON.stringify(cards)); }catch(_){}
   }
@@ -509,7 +531,8 @@
     if(window.PH_STORE && PH.isLive()){
       PH_STORE.get(MKEY).catch(()=>null).then(function(remote){
         adopt(remote)||adopt(local);
-        seedPromos().then(done);          // adds the promo calendar alongside whatever is there
+        takeCardSnap();
+        seedPromos().then(function(){ takeCardSnap(); done(); });   // adds the promo calendar alongside whatever is there
       });
       return;
     }
@@ -1057,20 +1080,35 @@
     calToday:()=>{calY=TODAY.y;calM=TODAY.m;renderCalendar();}};
   el('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal(true);});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal(true);});
-  if(!canEdit()){
-    document.body.classList.add('ph-view-only');
-    const nb=document.querySelector('.page-head .btn'); if(nb)nb.style.display='none';
-    if(window.PH) PH.readOnlyBanner('.wrap','marketing board');
+  /* Re-runnable, both ways. This used to run once at parse - before sign-in had finished
+     - see "nobody", and stamp the board view-only for good. Cory, 19/09: "On marketing
+     board it says I can view but not edit?" Identity settles in stages; decide on each. */
+  let subOriginal=null;
+  function applyPerms(){
+    const edit=canEdit();
+    document.body.classList.toggle('ph-view-only', !edit);
+    document.querySelectorAll('.ph-ro-banner').forEach(n=>n.remove());
+    const nb=document.querySelector('.page-head .btn');
     const sub=document.querySelector('.page-head p');
-    if(sub)sub.textContent='What marketing is planned and how past campaigns did.';
+    if(sub && subOriginal===null) subOriginal=sub.textContent;
+    if(!edit){
+      if(nb) nb.style.display='none';
+      if(window.PH) PH.readOnlyBanner('.wrap','marketing board');
+      if(sub) sub.textContent='What marketing is planned and how past campaigns did.';
+    } else {
+      // Rights arrived after the first pass: put back what view-only took away.
+      if(nb) nb.style.display='';
+      if(sub && subOriginal!==null) sub.textContent=subOriginal;
+    }
   }
+  applyPerms();
   boot();
   // What this person may see settles in stages after sign-in; redraw on each.
-  document.addEventListener('ph-identity', function(){ try{ render(); }catch(_){} });
+  document.addEventListener('ph-identity', function(){ try{ applyPerms(); render(); }catch(_){} });
 })();
 </script>
 <script>PH.nav('marketing');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc43"></script>
+<script src="tour.js?v=hc44"></script>
 <script>
 Tour.init([
   {sel:'#viewseg', pre:()=>MK.view('year'), title:'Four ways to look at it', body:'<b>The year</b> is the planning view \u2014 every promotion on one screen. <b>Board</b> is the day-to-day working view. <b>Month</b> lays everything out on a calendar. <b>By office</b> shows what each location got.'},

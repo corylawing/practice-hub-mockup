@@ -62,7 +62,8 @@ function load(opts){
            signIn:p=>{ ctx.PH.setProfile(p); ctx.document.dispatchEvent(new ctx.CustomEvent('ph-signed-in')); },
            tabs:()=>ctx.PH.NAV.filter(x=>x.show()).map(x=>x.k),
            menu:()=>navHost.innerHTML,
-           locked:()=>body.classList.contains('ph-locked') };
+           locked:()=>body.classList.contains('ph-locked'),
+           pending:()=>body.classList.contains('ph-pending') };
 }
 
 const JENNY={ displayName:'Jenny Whitefield', mail:null,
@@ -87,11 +88,14 @@ const t=(n,v)=>{ (v?ok:bad).push(n); };
   t('before sign-in, the menu has no Enter Production link', A.menu().indexOf('production.html')<0);
 }
 
-/* ---- 2. Admin console itself is locked until we know. ---- */
+/* ---- 2. Admin console itself is HELD until we know - not shown, and not refused.
+          Refusing at parse time painted "You don't have access" for a second on every
+          tab change on a phone, then unlocked (Cory, 19/09). ---- */
 {
   const A=load({page:'admin'});
   A.PH.nav('admin');
-  t('opening admin.html directly before sign-in locks the page', A.locked()===true);
+  t('opening admin.html directly before sign-in holds the page', A.pending()===true && A.locked()===false);
+  t('and paints no refusal while it waits', A.wrap.children.every(c=>(c.innerHTML||'').indexOf('have access')<0));
 }
 
 /* ---- 3. The menu is REBUILT when the profile lands. This is the missing re-check. ---- */
@@ -156,10 +160,11 @@ const t=(n,v)=>{ (v?ok:bad).push(n); };
 {
   const E=load({page:'admin'});
   E.PH.nav('admin');
-  E.ctx.document.dispatchEvent(new E.ctx.CustomEvent('ph-signed-in'));   // no setProfile
+  E.ctx.PH_AUTH={};                                                       // signed in...
+  E.ctx.document.dispatchEvent(new E.ctx.CustomEvent('ph-signed-in'));   // ...but /me gave nothing
   t('a failed /me leaves the person with no access, not full access',
     E.PH.isAdmin()===false && SECTIONS.every(s=>E.PH.can(s)==='none'));
-  t('and admin.html stays locked', E.locked()===true);
+  t('and admin.html is refused, not held forever', E.locked()===true && E.pending()===false);
 }
 
 /* ---- 6b. The people who SHOULD have access must still get it. Closing a fail-open is

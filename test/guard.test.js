@@ -309,6 +309,45 @@ const t=(n,v)=>{ (v? ok:bad).push(n); };
     global.PH_AUTH=savedAuth;
   }
 
+  /* ---- TWO PEOPLE, ONE SCHEDULE ---------------------------------------------------
+     Whole-record saves meant whoever saved second erased the other's cell. The pages now
+     lay only THEIR changed days onto the shared copy. */
+  {
+    const M=window.PH_STORE;
+    // the pure helpers
+    const remote={ '2026-09-21':{Carlsbad:{p:0}}, '2026-09-22':{Hobbs:{p:1}}, '2026-09-23':{Clovis:{p:2}}, __v:2 };
+    const local ={ '2026-09-21':{Carlsbad:{p:0}}, '2026-09-22':{Hobbs:{p:5}},                          __v:2 };
+    const m=M.mergeInto(remote, local, ['2026-09-22'], ['2026-09-21']);
+    t('mergeInto keeps the day only the other person has', !!m['2026-09-23']);
+    t('mergeInto takes this page\u2019s changed day', m['2026-09-22'].Hobbs.p===5);
+    t('mergeInto applies this page\u2019s deletion', m['2026-09-21']===undefined);
+    t('mergeInto does not touch the untouched', m.__v===2);
+    const rc=[{id:1,t:'a'},{id:2,t:'b'},{id:3,t:'c'}], lc=[{id:1,t:'a'},{id:2,t:'B'},{id:9,t:'new'}];
+    const mm=M.mergeById(rc, lc, ['2','9'], ['1']);
+    t('mergeById edits, adds and deletes only what this page did, keeps the rest',
+      JSON.stringify(mm)===JSON.stringify([{id:2,t:'B'},{id:3,t:'c'},{id:9,t:'new'}]));
+
+    // end to end through update(): Heather changes Monday while Jenny already saved Tuesday
+    const LS7={}; global.localStorage={getItem:k=>k in LS7?LS7[k]:null,setItem:(k,v)=>{LS7[k]=String(v)},removeItem:k=>{delete LS7[k]}};
+    global.document={dispatchEvent:()=>{},addEventListener:()=>{}};
+    let SHARED={ '2026-09-21':{Carlsbad:{p:0,s:480,e:1020}}, '2026-09-22':{Carlsbad:{p:1,s:480,e:1020}}, __v:2 };
+    global.PH_AUTH={ token:()=>Promise.resolve('t'), graph:p=>{
+      if(/\/sites\/omega/.test(p)) return Promise.resolve({id:'site'});
+      if(/lists\?/.test(p))        return Promise.resolve({value:[{id:'L',displayName:'HomeBraceData'}]});
+      return Promise.resolve({value:[{id:'1', lastModifiedDateTime:new Date().toISOString(), fields:{Title:'ph_sched2', Payload:JSON.stringify(SHARED)}}]});
+    }};
+    global.fetch=(u,o)=>{ const b=JSON.parse(o.body); SHARED=JSON.parse(b.Payload!==undefined?b.Payload:b.fields.Payload);
+      return Promise.resolve({status:200,ok:true,json:()=>Promise.resolve({id:'1'})}); };
+    delete require.cache[require.resolve(STORE)]; require(STORE); const E=window.PH_STORE;
+    const loaded=await E.get('ph_sched2');                                  // Heather's page loads
+    SHARED['2026-09-22']={Carlsbad:{p:3,s:480,e:1020}};                      // Jenny saves Tuesday meanwhile
+    const mine=JSON.parse(JSON.stringify(loaded)); mine['2026-09-21']={Carlsbad:{p:4,s:480,e:840}};   // Heather edits Monday
+    const r=await E.update('ph_sched2', rem=>{ const out=E.mergeInto(rem, mine, ['2026-09-21'], []); out.__v=2; return out; });
+    t('Heather\u2019s Monday landed', SHARED['2026-09-21'].Carlsbad.p===4);
+    t('Jenny\u2019s Tuesday, saved meanwhile, survived', SHARED['2026-09-22'].Carlsbad.p===3);
+    t('and Heather\u2019s page gets the merged year back to show', r.value['2026-09-22'].Carlsbad.p===3);
+  }
+
   console.log(ok.map(s=>'  PASS  '+s).join('\n'));
   if(bad.length) console.log(bad.map(s=>'  FAIL  '+s).join('\n'));
   console.log('\n'+ok.length+' passed, '+bad.length+' failed');

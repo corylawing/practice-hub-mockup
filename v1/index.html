@@ -258,12 +258,12 @@
   }
 
 </style>
-<script src="user.js?v=hc43"></script>
-<script src="celebrate.js?v=hc43"></script>
+<script src="user.js?v=hc44"></script>
+<script src="celebrate.js?v=hc44"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="workbook.js?v=hc43"></script>
-  <script src="store.js?v=hc43"></script>
-  <script src="gate.js?v=hc43"></script>
+  <script src="workbook.js?v=hc44"></script>
+  <script src="store.js?v=hc44"></script>
+  <script src="gate.js?v=hc44"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — real numbers from the 2026 Production Dashboard workbook. You only see the offices you have access to.</div>
@@ -822,9 +822,17 @@ const OFFICES=[
     const b=(v,lab)=>'<button class="pchip mini'+(chartMode===v?' on':'')+'" onclick="DASH.chart(\''+v+'\')">'+lab+'</button>';
     return '<div class="charttog">'+b('production','\ud83d\udcb0 Production')+b('starts','\ud83e\uddb7 Starts')+'</div>';
   }
+  /* The audit trail comes from SharePoint after sign-in (loadAudit, on ph-identity);
+     the local copy is only the sandbox's. */
+  let AUDIT=null;
+  function auditData(){ if(AUDIT) return AUDIT; try{ return JSON.parse(localStorage.getItem('ph_prodaudit')||'{}'); }catch(_){ return {}; } }
+  function loadAudit(){
+    if(!(window.PH_STORE && PH.isLive())) return;
+    PH_STORE.get('ph_prodaudit').then(function(a){ if(a && typeof a==='object'){ AUDIT=a; render(); } }).catch(function(){});
+  }
   function officeAudit(name){
     try{
-      const a=JSON.parse(localStorage.getItem('ph_prodaudit')||'{}');
+      const a=auditData();
       const e=(a.offices||{})[name];
       if(!e) return '<div class="lb-upd none">no app entry yet</div>';
       const d=new Date(e.at);
@@ -856,7 +864,7 @@ const OFFICES=[
     // Who last entered numbers in the app, so leadership can see entries are current.
     let audit='';
     try{
-      const a=JSON.parse(localStorage.getItem('ph_prodaudit')||'{}');
+      const a=auditData();
       // Top line stays the WORKBOOK stamp (who/when the excel side moved) — the per-office
       // app entries live on each row below.
       if(a.last&&a.last.by){
@@ -988,7 +996,7 @@ const OFFICES=[
     render();
   }
   el('persona').innerHTML=PERSONAS.map(p=>'<option value="'+p.id+'">'+p.name+'</option>').join('');
-  window.DASH={set,pick,party:partyNow,combine:toggleCombine,identity:applyIdentity,
+  window.DASH={set,pick,party:partyNow,combine:toggleCombine,identity:applyIdentity,loadAudit,
     period:v=>{period=v;pickOpen=false;combineM=false;render();},
     year:v=>{ year=Number(v); period='ytd'; pickOpen=false; combineM=false; render(); },
     month:v=>{ if(v===''||v==null)return; const i=Number(v);
@@ -1149,8 +1157,8 @@ const OFFICES=[
   else document.addEventListener('ph-signed-in', boot, {once:true});
 })();
 </script>
-<script>PH.nav('dashboard');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(window.DASH&&DASH.identity)DASH.identity();});document.addEventListener('ph-identity',function(){if(window.DASH&&DASH.identity)DASH.identity();});</script>
-<script src="tour.js?v=hc43"></script>
+<script>PH.nav('dashboard');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(window.DASH&&DASH.identity)DASH.identity();});document.addEventListener('ph-identity',function(){if(window.DASH&&DASH.identity)DASH.identity();if(window.DASH&&DASH.loadAudit)DASH.loadAudit();});</script>
+<script src="tour.js?v=hc44"></script>
 <script>
 Tour.init([
   {sel:'.viewas', title:'You only see your offices', body:'Everyone can see <b>All Offices</b> \u2014 the practice total as one number. What your location decides is which offices you can <b>open individually</b>. Switch to the Carlsbad manager: she keeps the group total and Carlsbad, but the other offices and the leaderboard disappear, because those name every office\u2019s figures.'},

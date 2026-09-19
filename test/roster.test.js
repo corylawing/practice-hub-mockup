@@ -9,7 +9,7 @@ const fs=require('fs'), vm=require('vm'), path=require('path');
 const V1=path.join(__dirname,'..','v1');
 const FILE=JSON.parse(fs.readFileSync(path.join(V1,'_people.json'),'utf8'));
 
-function load(ls, shared){
+function load(ls, shared, opts){
   const LS=ls||{}, listeners={}; shared=shared||{};
   const mk=()=>({style:{},classList:{add(){},remove(){},contains(){return false}},children:[],
     appendChild(c){this.children.push(c);return c},remove(){},setAttribute(){},getAttribute(){return null},
@@ -28,8 +28,9 @@ function load(ls, shared){
       dispatchEvent:e=>{(listeners[e.type]||[]).forEach(f=>f(e));return true}},
     navigator:{userAgent:'node'},
     fetch:(u,o)=>{
-      if(String(u).indexOf('_people.json')>=0)
-        return Promise.resolve({ok:true, json:()=>Promise.resolve(FILE)});
+      if(String(u).indexOf('_people.json')>=0){ shared.__fileFetches=(shared.__fileFetches||0)+1;
+        if(shared.__noFile) return Promise.resolve({ok:false});
+        return Promise.resolve({ok:true, json:()=>Promise.resolve(FILE)}); }
       // Graph writes land in `shared`
       if(o && o.body){ const b=JSON.parse(o.body); const raw=b.Payload!==undefined?b.Payload:(b.fields&&b.fields.Payload);
         const title=(b.fields&&b.fields.Title)||shared.__lastKey; shared[title]=raw; }
@@ -46,8 +47,12 @@ function load(ls, shared){
   }};
   vm.createContext(ctx);
   vm.runInContext(fs.readFileSync(path.join(V1,'_staff.js'),'utf8'),ctx,{filename:'_staff.js'});
-  vm.runInContext(fs.readFileSync(path.join(V1,'user.js'),'utf8'),ctx,{filename:'user.js'});
+  // store.js first: the roster now comes from SharePoint, and user.js looks for PH_STORE
+  // once every script has parsed (readyState is 'complete' here, so: immediately).
   vm.runInContext(fs.readFileSync(path.join(V1,'store.js'),'utf8'),ctx,{filename:'store.js'});
+  if(opts && opts.profile) { /* set below, before user.js chains run */ }
+  vm.runInContext(fs.readFileSync(path.join(V1,'user.js'),'utf8'),ctx,{filename:'user.js'});
+  if(opts && opts.profile) ctx.PH.setProfile(opts.profile);
   // PATCH the stand-in so a PATCH to items/<id>/fields is recorded under the right key
   const origFetch=ctx.fetch;
   ctx.fetch=(u,o)=>{ const m=String(u).match(/items\/(\d+)\/fields/);
@@ -104,6 +109,43 @@ const settle=()=>new Promise(r=>setTimeout(r,30));
   const merged=JSON.parse(sharedB.ph_roster_extra);
   t('a second browser’s addition does not erase the first’s', merged.added.some(a=>a.name==='Dr. Gallagher'));
   t('and its own addition landed', merged.added.some(a=>a.name==='Dr. Lightheart'));
+
+  /* ---- THE ROSTER LIVES IN SHAREPOINT --------------------------------------------
+     _people.json was public: every name, work email and office, no sign-in needed. The
+     roster is read from ph_roster now; the file is the seed and the fallback. */
+  {
+    // (a) SharePoint has a roster: it is used, and the public file is never asked for.
+    const two=[{name:'Only Person', email:'only@x.com', empId:'z1', offices:['Hobbs'], teams:['Staff']},
+               {name:'Second Person', email:'', empId:'z2', offices:['Clovis'], teams:['TCs']}];
+    const S1={ ph_roster: JSON.stringify(two) };
+    const R1=load({}, S1);
+    await R1.PH.rosterReady; await settle();
+    t('with a roster in SharePoint, that is the roster', R1.PH.rosterRows().length===2);
+    t('and the public file is not fetched at all', !S1.__fileFetches);
+    t('permissions read it too: the no-email person is found by name',
+      !!R1.PH.personKey(R1.PH.rosterRows()[1]) && R1.PH.rosterRows()[1].name==='Second Person');
+
+    // (b) no roster in SharePoint yet, an ADMIN opens the hub: the file is used and copied in.
+    const S2={};
+    const R2=load({}, S2, {profile:{displayName:'Heather Beal', mail:'heather@farnsworthorthodontics.com',
+      userPrincipalName:'heather@farnsworthorthodontics.com', jobTitle:'COO', department:'Admin', officeLocation:''}});
+    await R2.PH.rosterReady; await settle(); await settle();
+    t('with no roster yet, the file is used', R2.PH.rosterRows().length===FILE.people.length);
+    t('and an admin\u2019s browser seeds SharePoint with it', !!S2.ph_roster && JSON.parse(S2.ph_roster).length===FILE.people.length);
+
+    // (c) same, but a plain staff member: read the file, seed nothing.
+    const S3={};
+    const R3=load({}, S3, {profile:{displayName:'Mia Armenta', mail:'mia@x.com', userPrincipalName:'mia@x.com',
+      jobTitle:'', department:'Staff', officeLocation:'Hobbs'}});
+    await R3.PH.rosterReady; await settle(); await settle();
+    t('a non-admin reads the file but never writes the roster', R3.PH.rosterRows().length>0 && !S3.ph_roster);
+
+    // (d) roster in SharePoint AND the file gone from the deploy: everything still works.
+    const S4={ ph_roster: JSON.stringify(FILE.people), __noFile:true };
+    const R4=load({}, S4);
+    await R4.PH.rosterReady; await settle();
+    t('once the file stops being deployed, the roster still loads from SharePoint', R4.PH.rosterRows().length===FILE.people.length);
+  }
 
   console.log(ok.map(s=>'  PASS  '+s).join('\n'));
   if(bad.length) console.log(bad.map(s=>'  FAIL  '+s).join('\n'));

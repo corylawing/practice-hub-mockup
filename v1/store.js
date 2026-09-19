@@ -333,6 +333,30 @@
     });
   }
 
+  /* ------------------------------------------------------------------
+     MERGE ONLY WHAT THIS PAGE CHANGED.
+
+     Two people editing the schedule at once used to be last-save-wins for the whole
+     year: each page sent its entire copy, so whoever saved second erased the other's
+     cell. The wipe guard stops blanking, not that. These take the shared copy as the
+     base and lay only this page's changed pieces on top, so both people keep their
+     work. Pure functions, tested in test/guard.test.js. */
+  function mergeInto(remote, local, changed, removed){
+    var out = Object.assign({}, (remote && typeof remote==='object') ? remote : {});
+    (changed||[]).forEach(function(k){ if(local && local[k]!==undefined) out[k]=local[k]; });
+    (removed||[]).forEach(function(k){ delete out[k]; });
+    return out;
+  }
+  function mergeById(remote, local, changedIds, removedIds){
+    var byId={}, order=[], mine={};
+    (Array.isArray(remote)?remote:[]).forEach(function(c){ var id=String(c&&c.id); byId[id]=c; order.push(id); });
+    (Array.isArray(local)?local:[]).forEach(function(c){ mine[String(c&&c.id)]=c; });
+    (changedIds||[]).forEach(function(id){ id=String(id); if(mine[id]===undefined) return;
+      if(!(id in byId)) order.push(id); byId[id]=mine[id]; });
+    (removedIds||[]).forEach(function(id){ delete byId[String(id)]; });
+    return order.filter(function(id){ return byId[id]!==undefined; }).map(function(id){ return byId[id]; });
+  }
+
   function parse(raw){
     if(raw===null || raw===undefined || raw==='') return null;
     try{ return JSON.parse(raw); }catch(_){ return null; }
@@ -370,6 +394,7 @@
 
   global.PH_STORE = {
     get:get, set:set, update:update, getAll:getAll, setup:setup,
+    mergeInto:mergeInto, mergeById:mergeById,
     /* Resolves once the person is signed in; a live site reads nothing before that. */
     ready:authReady,
     /* Pages ask this instead of guessing from a null. */
