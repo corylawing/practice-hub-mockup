@@ -156,6 +156,13 @@ const settle=()=>new Promise(r=>setTimeout(r,30));
     R5.PH.identityChanged(); await settle();
     t('and seeds it once, not on every identity change', S5.__rosterWrites===1);
 
+    // (f) the header search finds people in the roster and opens them on the Team page
+    const who=FILE.people.find(p=>/^[A-Za-z. ]+ [A-Za-z]+$/.test(p.name||''));
+    const html=R5.PH.searchHTML(who.name.split(' ').pop().toLowerCase());
+    t('the header search finds a person from the roster', html.indexOf(who.name)>=0);
+    t('and opens them on the Team page, filtered to them', html.indexOf('href="team.html?q=')>=0);
+    t('a search for nobody finds nobody', R5.PH.searchHTML('zzqqxx').indexOf('Nothing matches')>=0);
+
     // (d) roster in SharePoint AND the file gone from the deploy: everything still works.
     const S4={ ph_roster: JSON.stringify(FILE.people), __noFile:true };
     const R4=load({}, S4);

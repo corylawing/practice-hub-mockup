@@ -152,6 +152,7 @@
   .pm.on{background:var(--navy);color:#fff;border-color:var(--navy)}
   .mini{display:none}
   .mday.flash{box-shadow:0 0 0 3px var(--teal) inset}
+  td.cell.flash{box-shadow:inset 0 0 0 3px var(--teal)}
   @media(max-width:640px){
     .mini{display:block;background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 10px 8px;margin:0 0 12px}
     .mmh,.mmg{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
@@ -293,10 +294,10 @@
   }
 
 </style>
-<script src="user.js?v=hc45"></script>
+<script src="user.js?v=hc46"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc45"></script>
-  <script src="gate.js?v=hc45"></script>
+  <script src="store.js?v=hc46"></script>
+  <script src="gate.js?v=hc46"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — sample staff schedule for validation. Live version = one Microsoft List the practice maintains.</div>
@@ -1188,7 +1189,23 @@
   }
   function step(n){ if(view==='week'){ anchor=addDays(anchor,7*n); mY=anchor.getFullYear(); mM=anchor.getMonth(); }
     else { mM+=n; if(mM<0){mM=11;mY--;} if(mM>11){mM=0;mY++;} } refresh(); }
-  function today(){ anchor=mondayOf(new Date(TODAY)); mY=TODAY.getFullYear(); mM=TODAY.getMonth(); refresh(); }
+  function today(){ anchor=mondayOf(new Date(TODAY)); mY=TODAY.getFullYear(); mM=TODAY.getMonth(); refresh(); landOnToday(); }
+  /* "Today" has to be SEEN to do something, even when this month is already on screen -
+     on a phone the month is a long list, so the button looked dead (Cory, 19/09). Scroll
+     to today, or the next working day on a weekend, and flash it; on a desktop the whole
+     month is in view, so just the flash. Looked up inside the timer: refresh() redraws. */
+  function landOnToday(){
+    const t=iso(TODAY);
+    const find=()=>document.querySelector('.mday.today, td.cell.today')
+      || Array.from(document.querySelectorAll('.mday[data-date]')).find(x=>x.getAttribute('data-date')>=t);
+    setTimeout(function(){
+      const n=find(); if(!n || !n.isConnected) return;
+      /* A smooth scroll from the 1st to the 20th is 7,000px and over a second long - it
+         looks like nothing happened until it suddenly does. Jump when far, glide when near. */
+      if(isPhone()){ const far=Math.abs(n.getBoundingClientRect().top)>1500; n.scrollIntoView({block:'start',behavior:far?'auto':'smooth'}); }
+      n.classList.add('flash'); setTimeout(()=>n.classList.remove('flash'),1400);
+    }, 60);
+  }
   function setView(v){ view=v; refresh(); }
   function togLoc(n){ fLoc.has(n)?fLoc.delete(n):fLoc.add(n); refresh(); }
   function allLocs(){ if(fLoc.size===locations.length) fLoc.clear(); else locations.forEach(l=>fLoc.add(l.n)); refresh(); }
@@ -1336,7 +1353,7 @@
    machine is missing here until the next page load. */
 document.addEventListener('ph-locations-changed',function(){ if(window.PS&&PS.relocate)PS.relocate(); });
 PH.nav('schedule');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc45"></script>
+<script src="tour.js?v=hc46"></script>
 <script>
 Tour.init([
   {sel:'#viewseg', title:'Week or month', body:'<b>Week</b> is the day-to-day working view. <b>Month</b> shows the whole month at a glance, with every office in its own color.'},

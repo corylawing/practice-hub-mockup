@@ -210,6 +210,33 @@ t('and one they can open still is',
   PH.notifications().some(n=>n.sec==='schedule'));
 delete E.LS[MEKEY];
 
+/* READ ONES GO AWAY (Cory, 19/09: "if we have read notifications it should go away").
+   The bell panel lists what is unread; a checked-off item leaves the list and sits
+   behind "Show N read" instead of staying put with a tick. */
+{
+  PH.logActivity({sec:'schedule', ic:'\u{1F4C5}', title:'Read-test entry', scope:'everyone'});
+  const mine=PH.notifications().find(n=>n.title==='Read-test entry');
+  t('a fresh entry is unread', !!mine && !mine.seen);
+  let html=PH.notesHTML();
+  t('an unread item is in the panel', html.indexOf('data-id="'+mine.id+'"')>=0);
+  PH.markSeen({id:mine.id});
+  html=PH.notesHTML();
+  t('once checked off it leaves the panel', html.indexOf('data-id="'+mine.id+'"')<0);
+  t('and the read ones are one tap away', /Show \d+ read/.test(html));
+  t('what is still unread stays listed',
+    PH.notifications().filter(n=>!n.seen).every(n=>html.indexOf('data-id="'+n.id+'"')>=0));
+  PH.markAllSeen();
+  html=PH.notesHTML();
+  t('with everything read the panel says so and lists nothing', html.indexOf('all caught up')>=0 && html.indexOf('class="ni')<0);
+}
+/* SEARCH in the header: the pages this person may open (people are covered in
+   test/roster.test.js, where a roster is loaded). */
+{
+  t('search finds a page by name', PH.searchHTML('sched').indexOf('href="schedule.html"')>=0);
+  t('search with no match says so', PH.searchHTML('qqqzzz').indexOf('Nothing matches')>=0);
+  t('an empty search invites typing', PH.searchHTML('').indexOf('Type a name')>=0);
+}
+
 console.log(ok.map(s=>'  PASS  '+s).join('\n'));
 if(bad.length) console.log(bad.map(s=>'  FAIL  '+s).join('\n'));
 console.log('\n'+ok.length+' passed, '+bad.length+' failed');

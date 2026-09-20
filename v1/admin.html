@@ -123,6 +123,23 @@
   .iconrow{display:flex;gap:6px;flex-wrap:wrap}
   .icb{border:1px solid var(--line);background:#fff;border-radius:9px;width:38px;height:38px;font-size:18px;cursor:pointer;line-height:1}
   .icb.on{border-color:var(--teal);background:var(--teal-soft)}
+  /* phone cards (see isPhone) */
+  .cards{display:flex;flex-direction:column;gap:8px}
+  .lcard,.pcard{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;box-shadow:var(--shadow);cursor:pointer}
+  .lcard .lmain,.pcard .pmain{flex:1;min-width:0}
+  .lsub,.psub{font-size:12.5px;color:var(--soft);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pcard{flex-direction:column;align-items:stretch;gap:9px}
+  .pcard .who{align-items:center}
+  .pcard .pill{margin-left:auto;flex:none}
+  .prow{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0}
+  .prow .psub{margin:0}
+  .empty2{padding:26px;text-align:center;color:var(--soft);font-size:14px}
+  .acccard{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px 6px;margin-top:12px;box-shadow:var(--shadow)}
+  .acccard .acchead{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+  .acccard .acchead b{font-size:16px;color:var(--navy)}
+  .acccard .acc-line{padding:9px 0}
+  .acccard .acc-line + .acc-line{border-top:1px solid #EEF1F5}
+  .acccard .lvl{width:auto;display:inline-block;padding:7px 12px;border-radius:999px;font-size:12px;white-space:nowrap;justify-self:end;min-width:78px}
   .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--soft);margin-top:12px}
   .legend span{display:inline-flex;align-items:center;gap:6px}
   .legend i{width:14px;height:14px;border-radius:4px;display:inline-block}
@@ -210,11 +227,11 @@
   }
 
 </style>
-<script src="user.js?v=hc45"></script>
+<script src="user.js?v=hc46"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="_staff.js?v=hc45"></script>
-  <script src="store.js?v=hc45"></script>
-  <script src="gate.js?v=hc45"></script>
+  <script src="_staff.js?v=hc46"></script>
+  <script src="store.js?v=hc46"></script>
+  <script src="gate.js?v=hc46"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — admin console concept for validation. Real build: people sync from Microsoft 365; access is managed here.</div>
@@ -569,6 +586,12 @@
   }
 
   const el=id=>document.getElementById(id);
+  /* ON A PHONE THE TABLES BECOME CARDS. The People and Locations tables are 720px wide and
+     the access matrix 1500px; on a 375px screen only a sliver showed and the rest had to be
+     dragged into view - "nearly impossible to see" (Cory, 19/09). Same data, same actions,
+     laid out down the page instead of across it. */
+  const isPhone=()=>!!(window.matchMedia && window.matchMedia('(max-width:640px)').matches);
+  try{ window.matchMedia('(max-width:640px)').addEventListener('change', function(){ render(); }); }catch(_){}
   const av=u=>PAL[u.c%PAL.length];
   const initials=u=>(u.f[0]+u.l[0]).toUpperCase();
   let tab='users', search='', tmpU=null, openSecs=new Set(['managers','hr']);
@@ -608,8 +631,9 @@
     el('view').innerHTML=
       '<div class="intro"><b>People are created in Microsoft \u2014 never here.</b> As soon as IT sets up someone\'s Microsoft account they appear in this list, with <b>no access</b> until you give them a team. What they can then reach is decided <b>here in the hub</b>: set their <b>team(s), location &amp; status</b>. They look after their own <b>photo, preferred name, phone &amp; \u201cAbout me\u201d</b>. <b>Tap a person</b> to open their profile.</div>'+
       '<div class="toolrow"><input class="search" id="usearch" placeholder="Search people, email, team, location…" value="'+search.replace(/"/g,'&quot;')+'"><button class="btn ghost" onclick="AD.showRemoved()">'+removedLabel()+'</button><button class="btn" onclick="AD.addPerson()">+ Add person</button></div>'+
+      (isPhone() ? '<div class="cards" id="ucards"></div>' :
       '<div class="tbl-scroll"><table class="u"><thead><tr><th>Person</th><th>Team(s) — what they can do</th><th>Location — where</th><th>Status</th>'+
-        (PH.isAdmin()?'<th></th>':'')+'</tr></thead><tbody></tbody></table></div>'+
+        (PH.isAdmin()?'<th></th>':'')+'</tr></thead><tbody></tbody></table></div>')+
       '<p style="font-size:13px;color:var(--soft);margin:12px 2px 0" id="ucount"></p>';
     renderUsersBody();
     const s=el('usearch'); if(s) s.oninput=e=>{search=e.target.value; renderUsersBody();};
@@ -645,7 +669,12 @@
       ? usersFromRoster((window.PH && PH.removedRows) ? PH.removedRows() : []).map(applyOverride)
       : users;
     const list=pool.filter(u=>!q || (u.f+' '+u.l+' '+u.email+' '+u.teams.join(' ')+' '+u.loc).toLowerCase().includes(q));
-    const tb=document.querySelector('table.u tbody'); if(!tb)return;
+    const tb=document.querySelector('table.u tbody'), cards=el('ucards'); if(!tb && !cards)return;
+    if(cards){
+      cards.innerHTML=list.length ? list.map(personCard).join('') : '<div class="empty2">Nobody matches that search.</div>';
+      const c0=el('ucount'); if(c0)c0.textContent=list.length+' of '+users.length+' people shown.';
+      return;
+    }
     tb.innerHTML=list.map(u=>{const gi=users.indexOf(u);
       /* Someone's own photo lives under their email, set from My profile. Show it here
          rather than initials, so the table matches the avatar in the header. */
@@ -663,6 +692,24 @@
         (PH.isAdmin()?'<td class="vacell"><button class="btn ghost tiny" onclick="event.stopPropagation();AD.viewAs('+gi+')">View as</button></td>':'')+
         '</tr>';}).join('');
     const c=el('ucount'); if(c)c.textContent=list.length+' of '+users.length+' people shown.';
+  }
+  /* One person as a card: face, name, email, status; their teams; where they are; the
+     same Restore / View as actions the table row has. */
+  function personCard(u){
+    const gi=users.indexOf(u), face=faceFor(u);
+    if(showingRemoved){
+      return '<div class="pcard"><div class="who">'+face+'<div class="pmain"><div class="uname">'+esc(u.f+' '+u.l)+'</div>'+
+        '<div class="psub">'+esc(u.email)+'</div></div><span class="pill inactive">Removed</span></div>'+
+        '<div class="prow"><div class="chips">'+u.teams.map(t=>'<span class="chip">'+esc(t)+'</span>').join('')+'</div></div>'+
+        '<div class="prow"><span class="psub">\ud83d\udccd '+esc(u.loc)+'</span>'+
+          '<button class="btn tiny" onclick="AD.restorePerson(\''+esc(u.ovrid)+'\')">Restore</button></div></div>';
+    }
+    return '<div class="pcard" onclick="AD.profile('+gi+')"><div class="who">'+face+'<div class="pmain"><div class="uname">'+u.f+' '+u.l+
+        (u._added?' <span class="chip" style="font-size:10px">added here</span>':'')+'</div>'+
+        '<div class="psub">'+u.email+'</div></div><span class="pill '+u.status.toLowerCase()+'">'+u.status+'</span></div>'+
+      '<div class="prow"><div class="chips">'+u.teams.map(t=>'<span class="chip">'+t+'</span>').join('')+'</div></div>'+
+      '<div class="prow"><span class="psub">\ud83d\udccd '+u.loc+'</span>'+
+        (PH.isAdmin()?'<button class="btn ghost tiny" onclick="event.stopPropagation();AD.viewAs('+gi+')">View as</button>':'')+'</div></div>';
   }
   function userAccess(u){ const out={}; allSections().forEach(s=>{let best='none'; u.teams.forEach(t=>{const lv=(access[t]||{})[s.k]||'none'; if(rank[lv]>rank[best])best=lv;}); out[s.k]=best;}); return out; }
   function parseLoc(loc){ if(!loc||loc==='Unassigned')return []; if(loc==='All offices')return ['All offices']; return loc.split(',').map(x=>x.trim()).filter(Boolean); }
@@ -935,7 +982,29 @@
   }
 
   /* ---------- TEAMS & ACCESS ---------- */
+  let accTeam=null;
+  function setAccTeam(t){ accTeam=t; renderAccess(); }
+  function renderAccessPhone(){
+    const secs=allSections();
+    if(!accTeam || TEAMS.indexOf(accTeam)<0) accTeam=TEAMS[0];
+    const t=accTeam, q=s=>String(s).replace(/'/g,"\\'");
+    const chips=TEAMS.map(x=>'<button class="tp'+(x===t?' on':'')+'" onclick="AD.accTeam(\''+q(x)+'\')">'+esc(x)+'</button>').join('');
+    const group=(label,list)=>'<div class="panel-lab" style="margin:14px 0 4px">'+label+'</div>'+
+      list.map(x=>{ const lv=access[t][x.k]||'none';
+        return '<div class="acc-line"><span>'+(x.ic?esc(x.ic)+' ':'')+esc(x.n)+'</span>'+
+          '<button class="lvl '+lv+' accbtn" onclick="AD.pickLevel(event,\''+q(t)+'\',\''+x.k+'\')">'+shortFor(x.k,lv)+'</button></div>'; }).join('');
+    el('view').innerHTML=
+      '<div class="intro"><b>One rule:</b> a person\'s <b>team</b> decides what they can do; their <b>location</b> decides which offices\' folders they see. On two teams? They get the <b>best</b> level of both. <b>Pick a team</b>, then <b>tap a level</b> to change it \u2014 each section only offers the choices that mean something there.</div>'+
+      '<div class="toolrow"><div class="panel-lab" style="margin:0">'+TEAMS.length+' teams \u00b7 '+secs.length+' sections</div><span style="flex:1"></span>'+
+        '<button class="btn ghost" onclick="AD.resetTeams()">Reset teams</button><button class="btn" onclick="AD.newTeam()">+ Add team</button></div>'+
+      '<div class="panel-lab">Team</div><div class="teampick">'+chips+'</div>'+
+      '<div class="acccard"><div class="acchead"><b>'+esc(t)+'</b>'+
+        '<button class="btn ghost mini-btn" onclick="AD.editTeam(\''+q(t)+'\')">Rename or delete</button></div>'+
+        group('App tools',TOOLS)+group('Document sections',DOCSECS)+'</div>'+
+      '<div class="legend"><span><i style="background:#f4f6f8"></i> None</span><span><i style="background:var(--blue-soft)"></i> View</span><span><i style="background:var(--good-soft)"></i> Add files</span><span><i style="background:var(--teal-soft)"></i> Edit</span><span><i style="background:var(--navy)"></i> Manage</span></div>';
+  }
   function renderAccess(){
+    if(isPhone()){ renderAccessPhone(); return; }
     // Adding, renaming or deleting a team does need the whole tab rebuilt.
     const restore=holdScroll();
     const secs=allSections();
@@ -1002,7 +1071,11 @@
       '<div class="intro"><b>Opening a new office?</b> Add it here once and it shows up everywhere \u2014 the schedule, the per-office document folders, people\u2019s locations, and the dashboard\u2019s office list. Nothing else to set up.</div>'+
       '<div class="toolrow"><div class="panel-lab" style="margin:0">'+LOCS.length+' locations</div><span style="flex:1"></span>'+
         '<button class="btn ghost" onclick="AD.resetLocs()">Reset to defaults</button><button class="btn" onclick="AD.newLoc()">+ Add location</button></div>'+
-      '<div class="tbl-scroll"><table class="u"><thead><tr><th>Office</th><th>Brand</th><th>State</th><th>Time zone</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+      (isPhone()
+        ? '<div class="cards">'+LOCS.map((l,i)=>'<div class="lcard" onclick="AD.editLoc('+i+')"><div class="lmain"><div class="uname">'+esc(l.n)+'</div>'+
+            '<div class="lsub">'+esc(l.state)+' \u00b7 '+esc(l.tz)+'</div></div><span class="chip">'+esc(l.brand)+'</span>'+
+            '<button class="btn ghost mini-btn" onclick="event.stopPropagation();AD.editLoc('+i+')">Edit</button></div>').join('')+'</div>'
+        : '<div class="tbl-scroll"><table class="u"><thead><tr><th>Office</th><th>Brand</th><th>State</th><th>Time zone</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>');
     restore();
   }
   let locDraft=null;
@@ -1251,7 +1324,7 @@
     const btn=ev.currentTarget;
     openPk(btn, levelsFor(k).map(l=>({value:l,label:(l==='none'?'None':shortFor(k,l)),desc:descFor(k,l),swatch:LVLSW[l],cur:(access[t][k]||'none')===l})),
       v=>{ access[t][k]=v; saveAccess(t,k);
-           if(btn){ btn.className='lvl '+v; btn.textContent=shortFor(k,v); }
+           if(btn){ LEVELS.forEach(l=>btn.classList.remove(l)); btn.classList.add(v); btn.textContent=shortFor(k,v); }
            else renderAccess(); });
   }
   function pickAud(ev,k,idx){
@@ -1267,7 +1340,7 @@
   function closeModal(){ el('modal').classList.remove('open'); }
 
   window.AD={tab:tabSet,viewAs:doViewAs,newTeam,editTeam,saveTeam,delTeam,resetTeams,profile,whyNoAdd,
-    addPerson,npSet,npLoc,npTeam,saveNewPerson,removePerson,restorePerson,showRemoved,togTeam,togLoc,setStatus,saveUser,pickLevel,pickAud,setField,pickPhoto,photoChosen,clearPhoto,pickUserLevel,clearUserLevel,tog,addFile,noop,newSec,editSec,saveSec,delSec,resetSecs,setSecName,setSecIcon,setSecStruct,setSecLocMode,setSecTeamMode,togSecLoc,togSecTeam,saveFile,cd,useFile,clearFile,uploadFile,setFileTeamMode,setFileLocMode,togFileLoc,togFileTeam,renderLocs,newLoc,editLoc,saveLoc,delLoc,resetLocs,setLocBrand,setLocState,setLocTZ,close:closeModal};
+    addPerson,npSet,npLoc,npTeam,saveNewPerson,accTeam:setAccTeam,removePerson,restorePerson,showRemoved,togTeam,togLoc,setStatus,saveUser,pickLevel,pickAud,setField,pickPhoto,photoChosen,clearPhoto,pickUserLevel,clearUserLevel,tog,addFile,noop,newSec,editSec,saveSec,delSec,resetSecs,setSecName,setSecIcon,setSecStruct,setSecLocMode,setSecTeamMode,togSecLoc,togSecTeam,saveFile,cd,useFile,clearFile,uploadFile,setFileTeamMode,setFileLocMode,togFileLoc,togFileTeam,renderLocs,newLoc,editLoc,saveLoc,delLoc,resetLocs,setLocBrand,setLocState,setLocTZ,close:closeModal};
   el('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
   /* Load the real roster before the first paint. If it isn't there (the public
@@ -1323,12 +1396,12 @@
 })();
 </script>
 <script>PH.nav('admin');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(PH.loadPhotos)PH.loadPhotos().then(function(got){if(got&&window.AD&&AD.tab)AD.tab('users');});});</script>
-<script src="tour.js?v=hc45"></script>
+<script src="tour.js?v=hc46"></script>
 <script>
 Tour.init([
   {sel:'#tabs', title:'This is your control room', body:'Four tabs and you can run the whole hub: <b>People</b>, <b>Teams &amp; Access</b>, <b>Document Sections</b> and <b>Locations</b>. No developer, no consultant.', pre:()=>AD.tab('users')},
   {sel:'.intro', title:'People come from Microsoft', body:'Everyone on your Microsoft 365 account appears here automatically \u2014 names, emails and photos included. You never retype staff details.', pre:()=>AD.tab('users')},
-  {sel:'table.u tbody tr', title:'Setting one person up', body:'Tap anyone. You set just three things: their <b>team(s)</b>, their <b>location(s)</b> and their <b>status</b>. That is the entire job of adding a new hire.', pre:()=>AD.tab('users')},
+  {sel:'table.u tbody tr, .pcard', title:'Setting one person up', body:'Tap anyone. You set just three things: their <b>team(s)</b>, their <b>location(s)</b> and their <b>status</b>. That is the entire job of adding a new hire.', pre:()=>AD.tab('users')},
   {sel:'.intro', title:'The one rule to remember', body:'A person\u2019s <b>team</b> decides <b>what they can do</b>. Their <b>location</b> decides <b>whose offices they see</b>. Someone on two teams gets the more generous of the two.', pre:()=>AD.tab('access')},
   {sel:'table.mx', title:'Who can do what', body:'Teams down the side, sections across the top. <b>Tap any square</b> and pick: None, View, Add files, Edit or Manage. Changing one square changes it for everyone on that team, instantly.', pre:()=>AD.tab('access')},
   {sel:'.card', title:'Tools vs documents', body:'<b>App tools</b> (Dashboard, Schedule, Marketing) are built in \u2014 you only choose who gets them. Everything below is <b>document sections</b>, and those are yours to create.', pre:()=>AD.tab('files')},

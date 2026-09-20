@@ -822,7 +822,8 @@
   .ph-noaccess .btn{display:inline-block;background:#149B96;color:#fff;text-decoration:none;
     border-radius:10px;padding:11px 18px;font-weight:700;font-size:14px}
   .ph-noaccess .btn:hover{background:#0F827E}
-  .ph-bw{position:relative;margin-left:auto;display:flex;flex:none}
+  .ph-bw{position:relative;margin-left:auto;display:flex;flex:none;gap:8px;align-items:center}
+  .ph-bell svg{display:block}
   .ph-bell{display:grid;place-items:center;width:36px;height:36px;
     border-radius:999px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.18);
     cursor:pointer;font-size:16px;line-height:1;color:#fff;font-family:inherit;flex:none}
@@ -853,6 +854,20 @@
   .ph-np .ni .ndone{flex:none;font-size:11.5px;font-weight:700;color:#0F827E;background:#E8F6F4;
     border-radius:8px;padding:5px 9px;white-space:nowrap;align-self:flex-start}
   .ph-np .nempty{padding:26px 18px;text-align:center;font-size:13.5px;color:#7A889B;line-height:1.55}
+  .ph-np .nshow{display:block;width:100%;background:#FAFBFC;border:none;border-top:1px solid #EEF1F5;color:#56627A;
+    font-size:12.5px;font-weight:600;padding:11px;cursor:pointer;font-family:inherit;flex:none}
+  .ph-np .nshow:hover{color:#0F827E}
+  .ph-np .sph{padding:10px 12px;gap:8px}
+  .ph-np .sin{flex:1;min-width:0;border:1px solid #E4E8EE;border-radius:10px;padding:9px 12px;font-size:14px;
+    font-family:inherit;color:#0F2A4A;background:#F7F9FB;outline:none;-webkit-appearance:none;appearance:none}
+  .ph-np .sin:focus{border-color:#149B96;background:#fff}
+  .ph-np .sx{border:none;background:none;font-size:22px;line-height:1;color:#56627A;cursor:pointer;padding:2px 4px;font-family:inherit;flex:none}
+  .ph-np .slab{font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#7A889B;padding:10px 15px 4px;background:#FAFBFC}
+  .ph-np a.ni{text-decoration:none;color:inherit;cursor:pointer}
+  .ph-np a.ni:hover{background:#F7FBFB}
+  .ph-np .sav{width:30px;height:30px;border-radius:50%;background:#E8F6F4;color:#0F827E;font-size:12px;font-weight:800;display:grid;place-items:center;flex:none}
+  .ph-np .sr .nic{display:grid;place-items:center;width:30px;height:30px;flex:none}
+  .ph-np .sr .ti{width:20px;height:20px;display:block;color:#0F2A4A;opacity:.8}
 
   /* ---- PHONE SHELL. Below 640px the top tab strip goes and a bottom bar takes over,
           the way a phone app does. Same NAV list, same show() rule, same order - so a
@@ -861,7 +876,7 @@
   .ph-tabbar{display:none}
   @media(max-width:640px){
     .v1nav{display:none !important}
-    body{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px)) !important}
+    body{padding-bottom:calc(136px + env(safe-area-inset-bottom,0px)) !important}   /* bar + the tour button */
     .tour-launch{bottom:calc(76px + env(safe-area-inset-bottom,0px)) !important}
 
     .ph-tabbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:7000;
@@ -882,7 +897,12 @@
     .ph-more{position:fixed;left:0;right:0;bottom:0;z-index:7100;background:#fff;color:#0F2A4A;
       border-radius:16px 16px 0 0;box-shadow:0 -12px 34px rgba(15,42,74,.28);
       padding:10px 14px calc(14px + env(safe-area-inset-bottom,0px))}
-    .ph-more .grab{width:38px;height:4px;border-radius:2px;background:#D5DDE8;margin:2px auto 12px}
+    .ph-more .grab{width:38px;height:4px;border-radius:2px;background:#D5DDE8;margin:2px auto 8px}
+    .ph-more .mh{display:flex;align-items:center;justify-content:space-between;padding:0 2px 6px 10px}
+    .ph-more .mh b{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:#7A889B;font-weight:800}
+    .ph-more .mx{border:none;background:#EEF2F7;color:#0F2A4A;width:34px;height:34px;border-radius:50%;font-size:22px;
+      line-height:1;cursor:pointer;font-family:inherit;display:grid;place-items:center}
+    .ph-more .mx:active{background:#DDE5EE}
     .ph-more a{display:flex;align-items:center;gap:12px;padding:13px 10px;border-radius:12px;
       text-decoration:none;color:#0F2A4A;font-family:inherit;font-size:15px;font-weight:600}
     .ph-more a:active{background:#EEF2F7}
@@ -1017,6 +1037,54 @@
      --------------------------------------------------------------- */
   let npanel=null;
   function closeNotes(){ if(npanel){ npanel.remove(); npanel=null; } }
+
+  /* SEARCH. People (the practice roster) and the pages this person may open. A person
+     opens on the Team page, filtered to them, where the phone number and email live -
+     if this person may see Team; otherwise the result is shown here and goes nowhere. */
+  let spanel=null;
+  function closeSearch(){ if(spanel){ spanel.remove(); spanel=null; } }
+  function openSearch(wrap){
+    closeSearch();
+    spanel=document.createElement('div');
+    spanel.className='ph-np ph-sp';
+    spanel.innerHTML='<div class="nph sph"><input class="sin" type="search" placeholder="Search people and pages\u2026" '+
+      'autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" aria-label="Search"></div><div class="nlist sres"></div>';
+    spanel.addEventListener('click',function(e){ e.stopPropagation(); if(e.target.closest('.sx')) closeSearch(); });
+    const inp=spanel.querySelector('.sin'), res=spanel.querySelector('.sres');
+    inp.oninput=function(){ res.innerHTML=searchHTML(inp.value); };
+    inp.onkeydown=function(e){ if(e.key==='Enter'){ const a=res.querySelector('a.ni'); if(a) location.href=a.getAttribute('href'); } };
+    res.innerHTML=searchHTML('');
+    wrap.appendChild(spanel);
+    try{ inp.focus(); }catch(_){}
+    setTimeout(function(){ try{ inp.focus(); }catch(_){} },30);   // again once the phone sheet has laid out
+  }
+  function searchInitials(n){
+    return String(n||'').replace(/^Dr\.?\s+/i,'').replace(/["\u201c\u201d(][^"\u201c\u201d)]*["\u201c\u201d)]/g,'')
+      .split(/\s+/).filter(Boolean).map(function(x){ return x[0]; }).slice(0,2).join('').toUpperCase();
+  }
+  function searchHTML(q){
+    q=String(q||'').trim().toLowerCase();
+    if(!q) return '<div class="nempty">Type a name, an office, a team or a page.</div>';
+    const words=q.split(/\s+/).filter(Boolean);
+    const hit=function(t){ t=String(t||'').toLowerCase(); return words.every(function(w){ return t.indexOf(w)>=0; }); };
+    const pages=NAV.filter(function(x){ return x.show(); })
+      .filter(function(x){ return hit(splitNav(x.n,x.k).label+' '+x.n); });
+    const canTeam=atLeast('team','view');
+    const people=rosterRows().filter(function(r){
+      return hit([r.name,r.role,(r.offices||[]).join(' '),(r.teams||[]).join(' '),r.email||''].join(' ')); }).slice(0,12);
+    if(!pages.length && !people.length) return '<div class="nempty">Nothing matches \u201c'+escHTML(q)+'\u201d.</div>';
+    const pg=pages.map(function(x){ const p=splitNav(x.n,x.k);
+      return '<a class="ni sr" href="'+escAttr(x.href)+'"><span class="nic">'+icon(x.k)+'</span>'+
+        '<div class="ntx"><div class="ntt">'+escHTML(p.label)+'</div><div class="nw">Open the page</div></div></a>'; }).join('');
+    const pp=people.map(function(r){
+      const sub=[r.role,(r.offices||[]).join(', ')].filter(Boolean).join(' \u00b7 ');
+      const inner='<span class="nic sav">'+escHTML(searchInitials(r.name))+'</span>'+
+        '<div class="ntx"><div class="ntt">'+escHTML(r.name)+'</div><div class="nw">'+escHTML(sub)+'</div></div>';
+      return canTeam
+        ? '<a class="ni sr" href="team.html?q='+encodeURIComponent(r.name)+'">'+inner+'</a>'
+        : '<div class="ni sr">'+inner+'</div>'; }).join('');
+    return (pages.length?'<div class="slab">Pages</div>'+pg:'')+(people.length?'<div class="slab">People</div>'+pp:'');
+  }
   function bellBadge(){
     const b=document.querySelector('.ph-bell'); if(!b) return;
     const n=unreadCount();
@@ -1027,22 +1095,32 @@
     else { const d=document.createElement('span'); d.className='dot'; d.textContent=txt; b.appendChild(d); }
     b.setAttribute('aria-label', n+' unread notification'+(n===1?'':'s'));
   }
+  /* READ ONES GO AWAY. Cory, 19/09: "if we have read notifications it should go away."
+     The panel lists what is still unread; ticking one off removes it. The read ones are a
+     tap away ("Show N read") rather than gone for good. */
+  let showRead=false;
   function notesHTML(){
     const list=notifications();
-    const unread=list.filter(n=>!n.seen).length;
+    const unreadList=list.filter(n=>!n.seen), readList=list.filter(n=>n.seen);
+    const shown=showRead?list:unreadList;
     const row=n=>'<div class="ni'+(n.seen?' read':'')+'" data-id="'+escAttr(n.id)+'">'+
       '<span class="nic">'+escHTML(n.ic||'\u{1F514}')+'</span>'+
       '<div class="ntx"><div class="ntt">'+escHTML(n.title)+'</div>'+
-      '<div class="nw">'+escHTML(n.by||'')+(n.by?' · ':'')+escHTML(ago(n.at))+'</div></div>'+
+      '<div class="nw">'+escHTML(n.by||'')+(n.by?' \u00b7 ':'')+escHTML(ago(n.at))+'</div></div>'+
       (n.seen ? '<span class="ndone" title="You checked this off">\u2713 Read</span>'
               : '<button class="nok" type="button">Got it</button>')+'</div>';
     return '<div class="nph"><b>Notifications</b>'+
-      (unread ? '<button class="nall" type="button">Mark all as read</button>'
-              : (list.length ? '<span class="nallok">\u2713 All read</span>' : ''))+'</div>'+
-      (list.length
-        ? '<div class="nlist">'+list.map(row).join('')+'</div>'
-        : '<div class="nempty">Nothing new right now.<br>Updates show up here when someone '+
-          'changes the schedule, enters production or posts something.</div>');
+      (unreadList.length ? '<button class="nall" type="button">Mark all as read</button>'
+              : (list.length ? '<span class="nallok">\u2713 All caught up</span>' : ''))+'</div>'+
+      (shown.length
+        ? '<div class="nlist">'+shown.map(row).join('')+'</div>'
+        : '<div class="nempty">'+(list.length
+            ? 'You\u2019re all caught up.'
+            : 'Nothing new right now.<br>Updates show up here when someone '+
+              'changes the schedule, enters production or posts something.')+'</div>')+
+      (readList.length
+        ? '<button class="nshow" type="button">'+(showRead?'Hide read':'Show '+readList.length+' read')+'</button>'
+        : '');
   }
   function openNotes(wrap){
     closeNotes();
@@ -1051,6 +1129,7 @@
     npanel.innerHTML=notesHTML();
     npanel.addEventListener('click',function(e){
       e.stopPropagation();
+      if(e.target.classList.contains('nshow')){ showRead=!showRead; npanel.innerHTML=notesHTML(); return; }
       if(e.target.classList.contains('nall')){ markAllSeen(); return; }
       const ok=e.target.closest('.nok'); if(!ok) return;
       const row=ok.closest('.ni'); if(!row) return;
@@ -1067,16 +1146,24 @@
   });
   document.addEventListener('click',function(e){
     if(npanel && !e.target.closest('.ph-bw')) closeNotes();
+    if(spanel && !e.target.closest('.ph-bw')) closeSearch();
   });
 
   function bell(){
     const bar=document.querySelector('.hdr-in'); if(!bar) return;
     const old=bar.querySelector('.ph-bw'); if(old) old.remove();
     const wrap=document.createElement('span'); wrap.className='ph-bw';
+    /* Search sits left of the bell, on every page, desktop and phone. Cory, 19/09. */
+    const s=document.createElement('button');
+    s.className='ph-bell ph-srch'; s.type='button'; s.title='Search'; s.setAttribute('aria-label','Search');
+    s.innerHTML='<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg>';
+    s.onclick=function(e){ e.stopPropagation(); closeNotes(); spanel?closeSearch():openSearch(wrap); };
+    wrap.appendChild(s);
     const b=document.createElement('button');
     b.className='ph-bell'; b.type='button'; b.title='Notifications';
-    b.textContent='\u{1F514}';
-    b.onclick=function(e){ e.stopPropagation(); npanel?closeNotes():openNotes(wrap); };
+    // A line icon like the search and the phone bar - "more modern and less emoji" (Cory).
+    b.innerHTML='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 16V11a6 6 0 0112 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 004 0"/></svg>';
+    b.onclick=function(e){ e.stopPropagation(); closeSearch(); npanel?closeNotes():openNotes(wrap); };
     wrap.appendChild(b);
     bar.appendChild(wrap);
     bellBadge();
@@ -1104,7 +1191,7 @@
       ov.addEventListener('click',e=>{ if(e.target===ov) closeProfile(); });
       document.body.appendChild(ov);
     }
-    document.addEventListener('keydown',e=>{ if(e.key==='Escape'){closeProfile();closeMenu();} });
+    document.addEventListener('keydown',e=>{ if(e.key==='Escape'){closeProfile();closeMenu();closeNotes();closeSearch();} });
   }
 
   function profile(){
@@ -1606,7 +1693,7 @@
     bar.innerHTML=primary.map(link).join('')+
       (rest.length?'<button type="button" class="more'+(restActive?' on':'')+'" aria-haspopup="true">'+icon('more')+'<span class="tl">More</span></button>':'');
     const more=bar.querySelector('.more');
-    if(more) more.onclick=function(){ openMore(rest); };
+    if(more) more.onclick=function(){ moreSheet?closeMore():openMore(rest); };
   }
   let moreSheet=null;
   function closeMore(){ if(moreSheet){ moreSheet.scrim.remove(); moreSheet.sheet.remove(); moreSheet=null; } }
@@ -1614,8 +1701,19 @@
     closeMore();
     const scrim=document.createElement('div'); scrim.className='ph-scrim'; scrim.onclick=closeMore;
     const sheet=document.createElement('div'); sheet.className='ph-more';
-    sheet.innerHTML='<div class="grab"></div>'+rest.map(x=>{ const p=splitNav(x.n);
+    /* Three ways out, all visible: the x, tapping "More" again, or dragging the sheet
+       down. Tapping the dim background still works, but nobody guesses that. Cory, 19/09. */
+    sheet.innerHTML='<div class="grab"></div><div class="mh"><b>More</b><button type="button" class="mx" aria-label="Close">\u00d7</button></div>'+
+      rest.map(x=>{ const p=splitNav(x.n);
       return '<a href="'+x.href+'"'+(x.k===NAV_ACTIVE?' class="active"':'')+'>'+icon(x.k)+p.label+'</a>'; }).join('');
+    sheet.querySelector('.mx').onclick=closeMore;
+    let y0=null;
+    sheet.addEventListener('touchstart',function(e){ y0=e.touches[0].clientY; sheet.style.transition='none'; },{passive:true});
+    sheet.addEventListener('touchmove',function(e){ if(y0==null) return;
+      sheet.style.transform='translateY('+Math.max(0,e.touches[0].clientY-y0)+'px)'; },{passive:true});
+    sheet.addEventListener('touchend',function(e){ if(y0==null) return;
+      const dy=e.changedTouches[0].clientY-y0; y0=null;
+      if(dy>70) closeMore(); else { sheet.style.transition='transform .18s ease-out'; sheet.style.transform=''; } });
     document.body.appendChild(scrim); document.body.appendChild(sheet);
     moreSheet={scrim:scrim, sheet:sheet};
   }
@@ -1768,6 +1866,6 @@
   }
   const isLive=()=>env()==='live';
 
-  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK};
+  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK, notesHTML, searchHTML};
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mount); else mount();
 })();

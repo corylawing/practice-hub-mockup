@@ -416,6 +416,26 @@ and could open the file in Excel anyway. Real containment would need per-office 
 - **Bugs found by the phone dialog pass, not by users:** `documents.html` "Add document" threw
   `drivePath is not defined` (variable private to user.js) — declare page-local state in the page.
   `dict.pop` regex edit in the deploy strip left `row.pop(None)`. **Review the diff before deploy.**
+- **Phone round 2 (Cory's own testing, 19/09):**
+  - **Admin's tables become cards on a phone** (`isPhone()` in admin.html, re-rendered when the
+    media query flips): People → `.pcard`, Locations → `.lcard`, Teams & Access → one team at a
+    time (`renderAccessPhone`: team chips + an `.acccard` of section rows, same `pickLevel` /
+    `openPk`). A 720px table in a 333px box showed a sliver and cut the State column off.
+    `pickLevel` repaints the tapped button by toggling level classes, so it serves both layouts.
+    The tour's People step selector includes `.pcard`.
+  - **Search sits left of the bell on every page** (`.ph-srch`, `openSearch`/`searchHTML`):
+    people from `rosterRows()` and the pages this person may open (`NAV.filter(show)`). A person
+    opens `team.html?q=<name>` (Team pre-fills `#q` from the URL) only if `atLeast('team','view')`.
+    Both header icons are line SVGs now, like the phone bar.
+  - **Read notifications leave the list.** The bell panel and Home's Updates show the unread;
+    a checked-off item disappears and sits behind "Show N read" (`showRead`, `showReadHome`).
+    `notesHTML` and `searchHTML` are exported on `PH` for the tests.
+  - **The More sheet closes three visible ways** — the ×, tapping More again, dragging it down.
+    Tapping the dim background still works; nobody guesses it.
+  - **Schedule "Today" is seen to do something** (`landOnToday()`): scroll to today or the next
+    working day and flash it on a phone, flash on a desktop (`td.cell.flash` in week view).
+    `autoScrollToday` is once per load; Today is every time.
+  - Phone `body` padding-bottom is 136px so the last row can scroll clear of the tour button.
 - **A live site reads NOTHING before sign-in — `PH_STORE.get()` waits for `PH_STORE.ready`.**
   Every page reads its data the instant it loads, before Microsoft has finished signing the person
   in. `store.live()` used to require `PH_AUTH`, which gate.js sets asynchronously, so at that

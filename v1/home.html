@@ -105,6 +105,8 @@
   .upd .ut{font-size:14px;color:var(--ink);font-weight:600}
   .upd .uw{font-size:12px;color:var(--soft)}
   .upd .utag{margin-left:auto;font-size:11px;font-weight:700;color:var(--teal-600);background:var(--teal-soft);border-radius:999px;padding:2px 9px;white-space:nowrap}
+  .updates .ushow{display:block;width:100%;background:none;border:none;border-top:1px solid var(--line);color:var(--soft);font-size:12.5px;font-weight:600;padding:10px;cursor:pointer;font-family:inherit;margin-top:4px}
+  .updates .ushow:hover{color:var(--teal-600)}
   /* Some people set "reduce motion" in Windows or macOS, often because movement makes
      them unwell. Honour it everywhere: keep the state changes, drop the travel. */
   @media (prefers-reduced-motion: reduce){
@@ -115,10 +117,10 @@
   }
 
 </style>
-<script src="user.js?v=hc45"></script>
+<script src="user.js?v=hc46"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc45"></script>
-  <script src="gate.js?v=hc45"></script>
+  <script src="store.js?v=hc46"></script>
+  <script src="gate.js?v=hc46"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — this is the logged-in home. Use “Viewing as” to see how the app changes for each role.</div>
@@ -233,13 +235,15 @@
      the bell in the header uses - the two can never disagree about what a person is
      allowed to see, or about what they have already checked off. The count is UNREAD,
      not total, because a count that never goes down is just decoration. */
+  let showReadHome=false;    // read ones go away; "Show N read" brings them back
   function renderUpdates(p){
     const live = !!(window.PH && PH.isLive && PH.isLive());
     const list = live
       ? PH.notifications().map(a=>({id:a.id, seen:a.seen, sec:a.sec, ic:a.ic,
           title:a.title+' \u2014 '+a.by, when:PH.ago(a.at)}))
       : UPDATES.filter(u=>canSee(u,p)).map(u=>Object.assign({seen:false,id:''},u));
-    const unread=list.filter(u=>!u.seen).length;
+    const unread=list.filter(u=>!u.seen).length, readN=list.filter(u=>u.seen).length;
+    const shown=(live && !showReadHome) ? list.filter(u=>!u.seen) : list;
     const row=u=>'<div class="upd'+(u.seen?' read':'')+'" data-id="'+esc(u.id)+'">'+
       '<span class="uic">'+esc(u.ic)+'</span>'+
       '<div><div class="ut">'+esc(u.title)+'</div>'+
@@ -251,17 +255,20 @@
         (unread?' <span class="cnt">'+unread+'</span>':'')+
         (live&&unread?'<button class="uall" type="button">Mark all as read</button>':'')+'</h2>'+
       '<p class="sub2">New documents &amp; changes that match your role, location &amp; team. Files open on your Microsoft drive.</p>'+
-      (list.length? list.map(row).join('')
+      (shown.length? shown.map(row).join('')
         : '<div class="upd" style="border-top:none;color:var(--soft)">'+
-          (live
+          (list.length ? 'You\u2019re all caught up.'
+            : (live
             ? 'Nothing yet. Updates appear here as people enter production numbers, change the schedule or post marketing.'
-            : 'Nothing new right now.')+'</div>');
+            : 'Nothing new right now.'))+'</div>')+
+      (live && readN ? '<button class="ushow" type="button">'+(showReadHome?'Hide read':'Show '+readN+' read')+'</button>' : '');
   }
 
   /* One listener on the card rather than one per row, so it keeps working after
      every repaint. */
   document.addEventListener('click',function(e){
     const box=e.target.closest('#updates'); if(!box) return;
+    if(e.target.classList.contains('ushow')){ showReadHome=!showReadHome; renderUpdates(PH.me()); return; }
     if(e.target.classList.contains('uall')){ PH.markAllSeen(); return; }
     const ok=e.target.closest('.uok'); if(!ok) return;
     const row=ok.closest('.upd'); if(!row) return;
@@ -331,7 +338,7 @@
 })();
 </script>
 <script>PH.nav('home');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(PH.loadActivity)PH.loadActivity().then(function(){return PH.loadSeen?PH.loadSeen():null;}).then(function(){if(window.HOME&&HOME.refreshUpdates)HOME.refreshUpdates();if(PH.refreshBell)PH.refreshBell();});});</script>
-<script src="tour.js?v=hc45"></script>
+<script src="tour.js?v=hc46"></script>
 <script>
 Tour.init([
   {sel:'.ph-av', title:'This is you', body:'Your name and photo, top right. Tap it any time for <b>My profile</b> \u2014 your photo, preferred name, phone and \u201cAbout me\u201d. Those follow you between devices.'},
