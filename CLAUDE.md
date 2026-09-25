@@ -391,10 +391,17 @@ and could open the file in Excel anyway. Real containment would need per-office 
   Heather, entering 2027 doctor dates: "Your change was not saved for anyone else", repeatedly.
   The whole schedule is ONE row; most of 2026 is ~61,000 characters, so 2027 took it over and
   every save bounced (the storage proof in connect.html had only ever written 100 characters).
-  Now `store.js` **packs** any payload over 16,000 characters (browser zlib, base64, tag `~z1:`) —
-  a year of schedule is ~7,000 — and refuses to send anything still over `COL_MAX` (63,000),
-  keeping it held with a `tooBig` banner. **Anything that reads raw payloads must go through
-  `PH_STORE.unpack`** (history.html, restore.html do). Small records stay plain JSON.
+  Now `store.js` **packs** a payload over 48,000 characters (browser zlib, base64) — 2026 plus
+  two months of 2027 go up as ~7,300 — and refuses to send anything still over `COL_MAX`
+  (63,000), keeping it held with a `tooBig` banner. **Packed records are WRAPPED:
+  `{"__packed":"~z1:..."}`.** A tab still running the previous store.js reads a bare `~z1:`
+  string as not-JSON = EMPTY, and its next save writes back only the day it changed (replayed
+  against the deployed file: 259 days became 1). Wrapped, old code merges its day onto the
+  object and carries the packed year along; `unpack()` lays those extra keys back on top.
+  **Before changing any storage format, replay the previous store.js against it**
+  (`test/fixtures/store.hc46.js`, section 12 of sync.test.js). **Anything that reads raw
+  payloads must go through `PH_STORE.unpack`** (history.html, restore.html do). Records under
+  48,000 characters are never packed and stay plain JSON, readable by every version.
 - **The store's write rules now (all in `store.js`, tested in `test/sync.test.js`):**
   - **One queue per key** (`inTurn`): reads wait behind writes; `update()` is read-change-write as
     ONE unit; queued `set()`s of a key send only the newest. A day edit used to fire three
