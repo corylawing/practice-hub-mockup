@@ -1056,11 +1056,13 @@
     padding:7px 7px 8px;cursor:pointer;text-align:left;font-family:inherit;color:var(--ink,#1F2D3D)}
   .ph-th:hover{border-color:#CBD5E1}
   .ph-th.on{border-color:var(--teal-600,#0F827E);box-shadow:0 0 0 3px var(--teal-soft,#E5F4F3)}
-  .ph-th .sw{display:flex;height:28px;border-radius:8px;overflow:hidden;border:1px solid rgba(15,42,74,.08)}
-  .ph-th .sw i{flex:3} .ph-th .sw b{flex:2} .ph-th .sw em{flex:2}
-  .ph-th .nm{font-size:12.5px;font-weight:700;line-height:1.2;display:flex;align-items:center;gap:5px}
-  .ph-th .nm .ck{margin-left:auto;color:var(--teal-600,#0F827E);font-weight:800}
-  .ph-th small{font-size:11px;color:#56627A;line-height:1.2;margin-top:-3px}
+  .ph-thsw{display:flex;align-items:stretch;width:100%;height:28px;border-radius:8px;overflow:hidden;
+    border:1px solid rgba(15,42,74,.08);box-sizing:border-box}
+  .ph-thsw > span{display:block;height:auto;min-width:0}
+  .ph-thsw-p{flex:3 1 0} .ph-thsw-a{flex:2 1 0} .ph-thsw-t{flex:2 1 0}
+  .ph-thn{font-size:12.5px;font-weight:700;line-height:1.2;display:flex;align-items:center;gap:5px;color:#1F2D3D}
+  .ph-thck{margin-left:auto;color:var(--teal-600,#0F827E);font-weight:800}
+  .ph-thnote{display:block;font-size:11px;color:#56627A;line-height:1.2;margin-top:-3px}
   .ph-top{display:flex;align-items:center;gap:13px;padding:17px 20px;border-bottom:1px solid #E4E8EE}
   .ph-top .big{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;font-size:19px;flex:none}
   .ph-top h3{margin:0;font-size:19px;color:var(--navy,#0F2A4A)}
@@ -1391,10 +1393,15 @@
     return THEMES.map(th=>{
       const t = th.k==='homebrace' ? {'--navy':'#0F2A4A','--teal':'#149B96','--teal-soft':'#E5F4F3'} : schemeTokens(th);
       const on=th.k===THEME;
+      /* Class names only this picker uses. It first borrowed "sw", which the Schedule and
+         the Dashboard already give their own switches - there the bars shrank to nothing
+         and every card showed an empty box (Cory's screenshot, 25/09). */
       return '<button type="button" class="ph-th'+(on?' on':'')+'" aria-pressed="'+on+'" onclick="PH.setTheme(\''+th.k+'\')">'+
-        '<span class="sw"><i style="background:'+t['--navy']+'"></i><b style="background:'+t['--teal']+'"></b><em style="background:'+t['--teal-soft']+'"></em></span>'+
-        '<span class="nm">'+escHTML(th.n)+(on?'<span class="ck">\u2713</span>':'')+'</span>'+
-        (th.note?'<small>'+escHTML(th.note)+'</small>':'')+'</button>';
+        '<span class="ph-thsw"><span class="ph-thsw-p" style="background:'+t['--navy']+'"></span>'+
+          '<span class="ph-thsw-a" style="background:'+t['--teal']+'"></span>'+
+          '<span class="ph-thsw-t" style="background:'+t['--teal-soft']+'"></span></span>'+
+        '<span class="ph-thn">'+escHTML(th.n)+(on?'<span class="ph-thck">\u2713</span>':'')+'</span>'+
+        (th.note?'<span class="ph-thnote">'+escHTML(th.note)+'</span>':'')+'</button>';
     }).join('');
   }
   function setColor(c){ saveMine({color:c}); profile();

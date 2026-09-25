@@ -408,6 +408,11 @@ and could open the file in Excel anyway. Real containment would need per-office 
   - **Not theme, never convert**: office colors (`PALETTE`), initials colors (`COLORS`), Admin/Team
     avatar `PAL`, demo personas, semantic colors (good/bad/amber/blue/purple, the blue Microsoft
     badge), the logo and the sign-in gate. Test: `test/theme.test.js`.
+  - **Anything user.js draws inside a page uses class names no page styles.** The picker first used
+    `.sw`, `.nm`, `.ck` — the Schedule and Dashboard style `.sw` as their own switches, so live every
+    swatch was an empty box (Cory's screenshot) while Home, where it was tried, looked right. Now
+    `ph-th*`; theme.test.js fails if a page stylesheet targets any of the picker's classes.
+    **Check a shared component on every page, not the one it was built on.**
   - Not built: dark mode (≈180 hard-coded light backgrounds across the pages) — offered as a follow-up.
 - **SharePoint's column holds 63,999 characters per record — and nothing checked (25/09/2026).**
   Heather, entering 2027 doctor dates: "Your change was not saved for anyone else", repeatedly.

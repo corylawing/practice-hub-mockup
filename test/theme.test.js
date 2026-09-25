@@ -89,6 +89,22 @@ D.LS[me]=JSON.stringify({preferred:'Jess', theme:'graphite'});
 D.fire('ph-signed-in');
 t('and a person’s own scheme comes back when they sign in', D.PH.theme()==='graphite');
 
+// 6. The picker's own class names must not be ones a page already styles. It first used
+//    "sw", which the Schedule and the Dashboard give their switches: live, every card showed an
+//    empty box (Cory's screenshot, 25/09) while it looked right on Home, where it was tried.
+{
+  const src=fs.readFileSync(path.join(V1,'user.js'),'utf8');
+  const body=src.slice(src.indexOf('function themePicker'), src.indexOf('function setColor'));
+  const classes=[...new Set([...body.matchAll(/class="([^"']+)/g)].flatMap(m=>m[1].split(/\s+/)))].filter(c=>c && c!=='on');
+  const clashes=[];
+  ['home','index','production','schedule','marketing','documents','team','admin'].forEach(pg=>{
+    const css=(fs.readFileSync(path.join(V1,pg+'.html'),'utf8').match(/<style[^>]*>[\s\S]*?<\/style>/g)||[]).join('\n');
+    classes.forEach(c=>{ if(new RegExp('\\.'+c.replace(/-/g,'\\-')+'(?![\\w-])').test(css)) clashes.push(pg+': .'+c); });
+  });
+  t('the picker found its class names ('+classes.length+')', classes.length>=6);
+  t('no page styles any of the picker\u2019s class names'+(clashes.length?' - '+clashes.join(', '):''), clashes.length===0);
+}
+
 console.log(ok.map(s=>'  PASS  '+s).join('\n'));
 if(bad.length) console.log(bad.map(s=>'  FAIL  '+s).join('\n'));
 console.log('\n'+ok.length+' passed, '+bad.length+' failed');
