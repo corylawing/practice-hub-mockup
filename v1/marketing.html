@@ -41,11 +41,11 @@
   .mark img{width:34px;height:34px;display:block;border-radius:50%}
   .brand{font-weight:700;font-size:18px;color:#fff;line-height:1.1}
   .brand i{font-style:normal;color:var(--teal2)}
-  .brand small{display:block;font-weight:500;font-size:12px;color:#9fb4d0}
+  .brand small{display:block;font-weight:500;font-size:12px;color:var(--navy-mute,#9fb4d0)}
   .v1{background:rgba(255,255,255,.15);color:#eaf1fb;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;margin-left:6px}
   .v1nav{background:var(--navy2)}
   .v1nav-in{max-width:var(--maxw);margin:0 auto;display:flex;gap:2px;padding:0 12px;overflow-x:auto}
-  .v1nav a{color:#cdd9ea;font-size:14px;font-weight:600;padding:13px 15px;text-decoration:none;border-bottom:3px solid transparent;white-space:nowrap}
+  .v1nav a{color:var(--navy-mute,#cdd9ea);font-size:14px;font-weight:600;padding:13px 15px;text-decoration:none;border-bottom:3px solid transparent;white-space:nowrap}
   .v1nav a:hover{color:#fff;background:rgba(255,255,255,.05)}
   .v1nav a.active{color:#fff;border-bottom-color:var(--teal)}
   .wrap{max-width:var(--maxw);margin:0 auto;padding:24px 20px 90px}
@@ -68,7 +68,7 @@
   /* board */
   .board{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:18px}
   .col{background:#eef1f5;border-radius:14px;padding:10px;min-height:200px;transition:background .12s,outline .12s}
-  .col.dragover{outline:2px dashed var(--teal);outline-offset:-2px;background:#e3efee}
+  .col.dragover{outline:2px dashed var(--teal);outline-offset:-2px;background:var(--teal-wash,#e3efee)}
   .kcard.dragging{opacity:.45}
   .kcard{cursor:grab}
   body.ph-view-only .kcard{cursor:default}
@@ -172,7 +172,7 @@
   .yroff span i{width:8px;height:8px;border-radius:50%;flex:none}
   .yrnote{display:flex;gap:9px;align-items:flex-start;font-size:13.5px;line-height:1.5;
     background:#FDECE8;border:1px solid #f3c6bb;border-radius:12px;padding:11px 14px;margin-top:16px}
-  .yrnote.ok{background:#E8F6F4;border-color:#bfe3d0}
+  .yrnote.ok{background:var(--teal-soft,#E8F6F4);border-color:var(--teal-line,#bfe3d0)}
   .yrnote b{color:var(--navy)}
   .yrshelf{margin-top:14px;border:1px solid #F2A03D;background:#FFFBF2;border-radius:12px;padding:12px 14px}
   .yrshelf .t2{font-size:13px;font-weight:800;color:var(--navy);margin-bottom:3px}
@@ -281,10 +281,10 @@
   }
 
 </style>
-<script src="user.js?v=hc51"></script>
+<script src="user.js?v=hc53"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc51"></script>
-  <script src="gate.js?v=hc51"></script>
+  <script src="store.js?v=hc53"></script>
+  <script src="gate.js?v=hc53"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — marketing board concept for validation. Real build lives in Home-Brace (Microsoft Lists / Planner).</div>
@@ -1130,7 +1130,7 @@
 })();
 </script>
 <script>PH.nav('marketing');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc51"></script>
+<script src="tour.js?v=hc53"></script>
 <script>
 Tour.init([
   {sel:'#viewseg', pre:()=>MK.view('year'), title:'Four ways to look at it', body:'<b>The year</b> is the planning view \u2014 every promotion on one screen. <b>Board</b> is the day-to-day working view. <b>Month</b> lays everything out on a calendar. <b>By office</b> shows what each location got.'},

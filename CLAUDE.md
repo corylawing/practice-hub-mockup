@@ -387,6 +387,28 @@ and could open the file in Excel anyway. Real containment would need per-office 
   og/twitter block: title "Home-Brace", one professional description, `og:image` on the production
   host (it pointed at the sandbox host before), `og:url` per page. `<title>` is "Home-Brace ·
   Page" — no "(V1)" anywhere. A shared WhatsApp preview read "Schedule (V1) · Home-Brace" before.
+- **Color schemes, per person (25/09/2026).** Cory: "for the user in their profile to change the
+  colors of the practice hub. It needs to be smart. We should provide color schemes." / "default is
+  what we have already". My profile → **Colors for the hub**: `THEMES` in user.js — Home-Brace
+  (default), Harbor Blue, Evergreen, Plum, Terracotta, Rose, Graphite, High contrast. A scheme is
+  TWO colors (bar `p`, accent `a`); `schemeTokens()` derives every other shade and enforces
+  contrast floors (white on the bar 7:1, muted text on the bar 4.5:1, white on buttons 3:1, accent
+  text on white 4.5:1, text on tints 7:1) by darkening until met. Applied as CSS variables set
+  inline on `<html>` (`THEME_VARS`) — **Home-Brace sets nothing at all**, proven: every element's
+  computed colors identical before/after on 14 views (8 pages, desktop + phone). Saved as `theme` in
+  the person's own `ph_me_` row (follows them between devices), cached as `ph_theme` and applied as
+  user.js loads (no flash); `syncTheme()` on `ph-signed-in` applies the signed-in person's own
+  choice — a shared front-desk computer does not keep the previous person's colors. The
+  `theme-color` meta follows, so the phone's address bar matches.
+  - **Brand colors in styles are variables with the original as fallback**: `var(--navy,#0F2A4A)`,
+    `--navy2`, `--navy-mute` (light text on the bar), `--teal`, `--teal2`, `--teal-600`,
+    `--teal-soft`, `--teal-line` (tint borders), `--teal-ink` (text on tints), `--teal-wash` (hover
+    tints), `--ink`. The last five exist only under a scheme — **always write them with the
+    fallback**. **Never hard-code a navy/teal in new CSS.**
+  - **Not theme, never convert**: office colors (`PALETTE`), initials colors (`COLORS`), Admin/Team
+    avatar `PAL`, demo personas, semantic colors (good/bad/amber/blue/purple, the blue Microsoft
+    badge), the logo and the sign-in gate. Test: `test/theme.test.js`.
+  - Not built: dark mode (≈180 hard-coded light backgrounds across the pages) — offered as a follow-up.
 - **SharePoint's column holds 63,999 characters per record — and nothing checked (25/09/2026).**
   Heather, entering 2027 doctor dates: "Your change was not saved for anyone else", repeatedly.
   The whole schedule is ONE row; most of 2026 is ~61,000 characters, so 2027 took it over and

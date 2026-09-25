@@ -42,11 +42,11 @@
   .mark img{width:34px;height:34px;display:block;border-radius:50%}
   .brand{font-weight:700;font-size:18px;color:#fff;line-height:1.1}
   .brand i{font-style:normal;color:var(--teal2)}
-  .brand small{display:block;font-weight:500;font-size:12px;color:#9fb4d0}
+  .brand small{display:block;font-weight:500;font-size:12px;color:var(--navy-mute,#9fb4d0)}
   .v1{background:rgba(255,255,255,.15);color:#eaf1fb;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;margin-left:6px}
   .v1nav{background:var(--navy2)}
   .v1nav-in{max-width:var(--maxw);margin:0 auto;display:flex;gap:2px;padding:0 12px;overflow-x:auto}
-  .v1nav a{color:#cdd9ea;font-size:14px;font-weight:600;padding:13px 15px;text-decoration:none;border-bottom:3px solid transparent;white-space:nowrap}
+  .v1nav a{color:var(--navy-mute,#cdd9ea);font-size:14px;font-weight:600;padding:13px 15px;text-decoration:none;border-bottom:3px solid transparent;white-space:nowrap}
   .v1nav a:hover{color:#fff;background:rgba(255,255,255,.05)}
   .v1nav a.active{color:#fff;border-bottom-color:var(--teal)}
   .wrap{max-width:var(--maxw);margin:0 auto;padding:24px 20px 90px}
@@ -55,7 +55,7 @@
   .viewas .lab{font-size:13px;color:var(--soft);font-weight:600}
   .viewas .lab b{color:var(--navy);display:block;font-size:12px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px}
   .viewas select{padding:10px 13px;border:1px solid var(--line);border-radius:10px;font-size:15px;font-family:inherit;font-weight:700;color:var(--navy);background:#fff;min-width:230px}
-  .viewas .demo{font-size:12.5px;color:var(--teal-600);background:var(--teal-soft);border:1px solid #c4e6e3;padding:6px 11px;border-radius:999px;font-weight:600;margin-left:auto}
+  .viewas .demo{font-size:12.5px;color:var(--teal-600);background:var(--teal-soft);border:1px solid var(--teal-line,#c4e6e3);padding:6px 11px;border-radius:999px;font-weight:600;margin-left:auto}
   .whoami{display:flex;align-items:center;gap:12px;margin:20px 0 4px}
   .whoami .av{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;font-size:17px;background:var(--navy2)}
   .whoami h1{font-size:24px}
@@ -97,7 +97,7 @@
   .updates .upd.read{opacity:.55}
   .updates .upd .uok{margin-left:auto;background:#fff;border:1px solid #CBD5E1;border-radius:8px;
     color:var(--navy);font:700 11.5px inherit;padding:5px 10px;cursor:pointer;flex:none;white-space:nowrap}
-  .updates .upd .uok:hover{background:#F2FBFA;border-color:var(--teal);color:#0F827E}
+  .updates .upd .uok:hover{background:var(--teal-wash,#F2FBFA);border-color:var(--teal);color:var(--teal-600,#0F827E)}
   .updates .uall{margin-left:auto;background:none;border:none;color:var(--teal);
     font:700 12.5px inherit;cursor:pointer;padding:2px}
   .upd{display:flex;align-items:flex-start;gap:11px;padding:11px 0;border-top:1px solid var(--line)}
@@ -117,10 +117,10 @@
   }
 
 </style>
-<script src="user.js?v=hc51"></script>
+<script src="user.js?v=hc53"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc51"></script>
-  <script src="gate.js?v=hc51"></script>
+  <script src="store.js?v=hc53"></script>
+  <script src="gate.js?v=hc53"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — this is the logged-in home. Use “Viewing as” to see how the app changes for each role.</div>
@@ -338,7 +338,7 @@
 })();
 </script>
 <script>PH.nav('home');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(PH.loadActivity)PH.loadActivity().then(function(){return PH.loadSeen?PH.loadSeen():null;}).then(function(){if(window.HOME&&HOME.refreshUpdates)HOME.refreshUpdates();if(PH.refreshBell)PH.refreshBell();});});</script>
-<script src="tour.js?v=hc51"></script>
+<script src="tour.js?v=hc53"></script>
 <script>
 Tour.init([
   {sel:'.ph-av', title:'This is you', body:'Your name and photo, top right. Tap it any time for <b>My profile</b> \u2014 your photo, preferred name, phone and \u201cAbout me\u201d. Those follow you between devices.'},

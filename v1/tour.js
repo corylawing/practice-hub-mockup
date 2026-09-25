@@ -12,22 +12,22 @@
     70%{box-shadow:0 0 0 18px rgba(20,155,150,0),0 8px 24px rgba(15,42,74,.28)}
     100%{box-shadow:0 0 0 0 rgba(20,155,150,0),0 8px 24px rgba(15,42,74,.28)}}
   .tour-hole{position:fixed;z-index:201;border-radius:12px;box-shadow:0 0 0 9999px rgba(15,42,74,.64);pointer-events:none;transition:all .28s ease}
-  .tour-ring{position:fixed;z-index:202;border-radius:14px;border:3px solid #2BC0B8;pointer-events:none;transition:all .28s ease;animation:tourring 1.3s infinite}
+  .tour-ring{position:fixed;z-index:202;border-radius:14px;border:3px solid var(--teal2,#2BC0B8);pointer-events:none;transition:all .28s ease;animation:tourring 1.3s infinite}
   @keyframes tourring{0%{box-shadow:0 0 0 0 rgba(43,192,184,.55)}70%{box-shadow:0 0 0 14px rgba(43,192,184,0)}100%{box-shadow:0 0 0 0 rgba(43,192,184,0)}}
   .tour-pop{position:fixed;z-index:203;background:#fff;border-radius:14px;box-shadow:0 16px 44px rgba(15,42,74,.4);max-width:352px;padding:18px;transition:top .28s ease,left .28s ease}
-  .tour-pop h4{margin:0 0 6px;color:#0F2A4A;font-size:16.5px;line-height:1.3}
+  .tour-pop h4{margin:0 0 6px;color:var(--navy,#0F2A4A);font-size:16.5px;line-height:1.3}
   .tour-pop p{margin:0 0 14px;color:#465264;font-size:14px;line-height:1.55}
-  .tour-pop p b{color:#0F2A4A}
+  .tour-pop p b{color:var(--navy,#0F2A4A)}
   .tour-pop .trow{display:flex;align-items:center;gap:8px}
   .tour-pop .step{font-size:11.5px;color:#8a94a6;font-weight:800;letter-spacing:.05em;text-transform:uppercase;margin-bottom:7px}
   .tour-pop .dots{display:flex;gap:4px;margin-bottom:9px}
   .tour-pop .dots i{width:6px;height:6px;border-radius:50%;background:#dde3ea;display:block}
-  .tour-pop .dots i.on{background:#149B96}
+  .tour-pop .dots i.on{background:var(--teal,#149B96)}
   .tour-pop .sp{flex:1}
   .tour-btn{border:none;border-radius:9px;padding:9px 15px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer}
-  .tour-btn.next{background:#149B96;color:#fff}
-  .tour-btn.next:hover{background:#0F827E}
-  .tour-btn.back{background:#fff;color:#0F2A4A;border:1px solid #E4E8EE}
+  .tour-btn.next{background:var(--teal,#149B96);color:#fff}
+  .tour-btn.next:hover{background:var(--teal-600,#0F827E)}
+  .tour-btn.back{background:#fff;color:var(--navy,#0F2A4A);border:1px solid #E4E8EE}
   .tour-skip{background:none;border:none;color:#8a94a6;font-size:13px;cursor:pointer;font-family:inherit}
   .tour-skip:hover{color:#465264}
   /* On phones the full "Show me around" pill sat on top of the content you were trying

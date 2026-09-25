@@ -42,11 +42,11 @@
   .mark img{width:34px;height:34px;display:block;border-radius:50%}
   .brand{font-weight:700;font-size:18px;color:#fff;line-height:1.1}
   .brand i{font-style:normal;color:var(--teal2)}
-  .brand small{display:block;font-weight:500;font-size:12px;color:#9fb4d0}
+  .brand small{display:block;font-weight:500;font-size:12px;color:var(--navy-mute,#9fb4d0)}
   .v1{background:rgba(255,255,255,.15);color:#eaf1fb;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;margin-left:6px}
   .v1nav{background:var(--navy2)}
   .v1nav-in{max-width:var(--maxw);margin:0 auto;display:flex;gap:2px;padding:0 12px;overflow-x:auto}
-  .v1nav a{color:#cdd9ea;font-size:14px;font-weight:600;padding:13px 15px;text-decoration:none;border-bottom:3px solid transparent;white-space:nowrap}
+  .v1nav a{color:var(--navy-mute,#cdd9ea);font-size:14px;font-weight:600;padding:13px 15px;text-decoration:none;border-bottom:3px solid transparent;white-space:nowrap}
   .v1nav a:hover{color:#fff;background:rgba(255,255,255,.05)}
   .v1nav a.active{color:#fff;border-bottom-color:var(--teal)}
   .wrap{max-width:var(--maxw);margin:0 auto;padding:26px 20px 90px}
@@ -63,14 +63,14 @@
   .btn:hover{background:var(--teal-600)}
   .btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--line)}
   .btn.ghost:hover{border-color:var(--teal);color:var(--teal-600)}
-  .intro{background:var(--teal-soft);border:1px solid #c4e6e3;border-radius:12px;padding:13px 16px;font-size:14px;color:#0c5b57;margin-bottom:18px}
-  .intro b{color:#0a4d49}
+  .intro{background:var(--teal-soft);border:1px solid var(--teal-line,#c4e6e3);border-radius:12px;padding:13px 16px;font-size:14px;color:var(--teal-ink,#0c5b57);margin-bottom:18px}
+  .intro b{color:var(--teal-ink,#0a4d49)}
   .tbl-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
   table.u{width:100%;border-collapse:collapse;background:#fff;min-width:720px}
   table.u th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--soft);font-weight:700;text-align:left;padding:12px 14px;background:#fafbfc;border-bottom:1px solid var(--line)}
   table.u td{padding:11px 14px;border-bottom:1px solid var(--line);font-size:14px;vertical-align:middle}
   table.u tbody tr{cursor:pointer}
-  table.u tbody tr:hover td{background:#f2fbfa}
+  table.u tbody tr:hover td{background:var(--teal-wash,#f2fbfa)}
   table.u tr:last-child td{border-bottom:none}
   .who{display:flex;align-items:center;gap:10px}
   .av{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:700;font-size:13px;flex:none}
@@ -200,8 +200,8 @@
   .fld input,.fld select,.fld textarea{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:9px;font-size:14px;font-family:inherit;background:#fff}
   .fld textarea{resize:vertical;min-height:60px}
   .fld.ro .val{background:#fafbfc;border:1px dashed var(--line);border-radius:8px;padding:8px 11px}
-  .accessbox{background:var(--teal-soft);border:1px solid #c4e6e3;border-radius:12px;padding:14px 16px;margin-top:4px}
-  .accessbox h4{margin:0 0 8px;font-size:13px;color:#0a4d49;text-transform:uppercase;letter-spacing:.04em}
+  .accessbox{background:var(--teal-soft);border:1px solid var(--teal-line,#c4e6e3);border-radius:12px;padding:14px 16px;margin-top:4px}
+  .accessbox h4{margin:0 0 8px;font-size:13px;color:var(--teal-ink,#0a4d49);text-transform:uppercase;letter-spacing:.04em}
   /* Two aligned columns. This was a flex row where the label took its natural width, so
      every pill started at a different x and stretched to a different length — .lvl is
      width:100% for the matrix grid, which made it worse. */
@@ -227,11 +227,11 @@
   }
 
 </style>
-<script src="user.js?v=hc51"></script>
+<script src="user.js?v=hc53"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="_staff.js?v=hc51"></script>
-  <script src="store.js?v=hc51"></script>
-  <script src="gate.js?v=hc51"></script>
+  <script src="_staff.js?v=hc53"></script>
+  <script src="store.js?v=hc53"></script>
+  <script src="gate.js?v=hc53"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — admin console concept for validation. Real build: people sync from Microsoft 365; access is managed here.</div>
@@ -1071,7 +1071,7 @@
     const d=teamDraft, isNew=!d.old;
     openModal(
       '<div class="m-top"><h3 style="margin:0;font-size:17px;color:var(--navy)">'+(isNew?'\u2795 New team':'Rename team')+'</h3><button class="x" onclick="AD.close()">\u00d7</button></div>'+
-      '<div class="dm-banner" style="background:var(--teal-soft);border-bottom:1px solid #c4e6e3;color:#0c5b57;font-size:12.5px;padding:10px 20px;line-height:1.5">A team is <b>what a group of people can do</b>. Create it here and it appears as a new row in the grid \u2014 then tick what it can reach.</div>'+
+      '<div class="dm-banner" style="background:var(--teal-soft);border-bottom:1px solid var(--teal-line,#c4e6e3);color:var(--teal-ink,#0c5b57);font-size:12.5px;padding:10px 20px;line-height:1.5">A team is <b>what a group of people can do</b>. Create it here and it appears as a new row in the grid \u2014 then tick what it can reach.</div>'+
       '<div class="m-body"><div class="fld"><label>Team name</label>'+
         '<input id="teamName" value="'+(d.n||'').replace(/"/g,'&quot;')+'" placeholder="e.g. Records Techs, Regional Managers"></div>'+
         '<div class="accessbox"><h4>What happens</h4>A new team starts with <b>no access to anything</b> \u2014 you decide square by square. Then add people to it from <b>People</b>.</div></div>'+
@@ -1212,7 +1212,7 @@
     const inheritLoc  = sec.locMode==='all'?'All offices':((sec.locs||[]).join(', ')||'the section\u2019s locations');
     openModal(
       '<div class="m-top"><h3 style="margin:0;font-size:17px;color:var(--navy)">\u2795 Add a file to '+sec.n+'</h3><button class="x" onclick="AD.close()">\u00d7</button></div>'+
-      '<div class="dm-banner" style="background:var(--teal-soft);border-bottom:1px solid #c4e6e3;color:#0c5b57;font-size:12.5px;padding:10px 20px;line-height:1.5">Pick the file, then confirm <b>who can see it</b>. By default it matches the rest of the folder \u2014 change it only if this one file is an exception.</div>'+
+      '<div class="dm-banner" style="background:var(--teal-soft);border-bottom:1px solid var(--teal-line,#c4e6e3);color:var(--teal-ink,#0c5b57);font-size:12.5px;padding:10px 20px;line-height:1.5">Pick the file, then confirm <b>who can see it</b>. By default it matches the rest of the folder \u2014 change it only if this one file is an exception.</div>'+
       '<div class="m-body">'+
         '<div class="fld"><label>Which document?</label>'+PH.drivePicker({ns:'AD',path:drivePath,name:d.n,path2:d.path})+'</div>'+
         '<div class="fld"><label>\ud83d\udc65 Which teams can open it?</label><div class="segrow">'+
@@ -1353,7 +1353,7 @@
   window.addEventListener('scroll',closePk,true);
   window.addEventListener('resize',closePk);
 
-  const LVLSW={none:'#f4f6f8',view:'#E3F0FA',add:'#E7F4EE',edit:'#E5F4F3',manage:'#0F2A4A'};
+  const LVLSW={none:'#f4f6f8',view:'#E3F0FA',add:'#E7F4EE',edit:'var(--teal-soft,#E5F4F3)',manage:'var(--navy,#0F2A4A)'};
   const LVLDESC={none:"Can't see this section",view:'Can look, nothing else',add:'Can view + upload files',edit:'Can view, add & change',manage:'Full control'};
   function pickLevel(ev,t,k){
     ev.stopPropagation();
@@ -1437,7 +1437,7 @@
 })();
 </script>
 <script>PH.nav('admin');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(PH.loadPhotos)PH.loadPhotos().then(function(got){if(got&&window.AD&&AD.tab)AD.tab('users');});});</script>
-<script src="tour.js?v=hc51"></script>
+<script src="tour.js?v=hc53"></script>
 <script>
 Tour.init([
   {sel:'#tabs', title:'This is your control room', body:'Four tabs and you can run the whole hub: <b>People</b>, <b>Teams &amp; Access</b>, <b>Document Sections</b> and <b>Locations</b>. No developer, no consultant.', pre:()=>AD.tab('users')},

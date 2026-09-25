@@ -42,11 +42,11 @@
   .mark img{width:34px;height:34px;display:block;border-radius:50%}
   .brand{font-weight:700;font-size:18px;color:#fff;line-height:1.1}
   .brand i{font-style:normal;color:var(--teal2)}
-  .brand small{display:block;font-weight:500;font-size:12px;color:#9fb4d0}
+  .brand small{display:block;font-weight:500;font-size:12px;color:var(--navy-mute,#9fb4d0)}
   .v1{background:rgba(255,255,255,.15);color:#eaf1fb;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;margin-left:6px}
   .v1nav{background:var(--navy2)}
   .v1nav-in{max-width:var(--maxw);margin:0 auto;display:flex;gap:2px;padding:0 12px;overflow-x:auto}
-  .v1nav a{color:#cdd9ea;font-size:14px;font-weight:600;padding:13px 15px;text-decoration:none;border-bottom:3px solid transparent;white-space:nowrap}
+  .v1nav a{color:var(--navy-mute,#cdd9ea);font-size:14px;font-weight:600;padding:13px 15px;text-decoration:none;border-bottom:3px solid transparent;white-space:nowrap}
   .v1nav a:hover{color:#fff;background:rgba(255,255,255,.05)}
   .v1nav a.active{color:#fff;border-bottom-color:var(--teal)}
   .wrap{max-width:var(--maxw);margin:0 auto;padding:22px 20px 90px}
@@ -54,7 +54,7 @@
   .viewas{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:13px 16px;display:flex;align-items:center;gap:13px;flex-wrap:wrap;margin-bottom:18px;border-left:5px solid var(--teal)}
   .viewas .lab{font-size:12px;color:var(--soft);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
   .viewas select{padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;font-weight:700;color:var(--navy);background:#fff;min-width:200px}
-  .viewas .scope{font-size:12.5px;color:var(--teal-600);background:var(--teal-soft);border:1px solid #c4e6e3;padding:5px 11px;border-radius:999px;font-weight:600;margin-left:auto}
+  .viewas .scope{font-size:12.5px;color:var(--teal-600);background:var(--teal-soft);border:1px solid var(--teal-line,#c4e6e3);padding:5px 11px;border-radius:999px;font-weight:600;margin-left:auto}
   .page-head h1{font-size:25px}
   .page-head p{margin:4px 0 0;color:var(--soft);font-size:14.5px}
   /* office tabs */
@@ -113,7 +113,7 @@
   table.lb td.num.big{font-weight:800;color:var(--navy)}   /* the figure leads, the % supports it */
   table.lb tr:last-child td{border-bottom:none}
   table.lb tbody tr.go{cursor:pointer}              /* only offices this person can open */
-  table.lb tbody tr.go:hover td{background:#f2fbfa}
+  table.lb tbody tr.go:hover td{background:var(--teal-wash,#f2fbfa)}
   .rk{font-weight:800;color:var(--soft);width:34px}
   .rk.top{color:#b8860b}
   .onm{font-weight:700;color:var(--navy)}
@@ -219,7 +219,7 @@
   .g-verdict{font-size:14.5px;font-weight:700;margin-top:4px}
   .g-verdict.ok{color:var(--good)} .g-verdict.near{color:var(--amber)} .g-verdict.low{color:var(--bad)}
   /* celebration */
-  .party{background:linear-gradient(100deg,#0F827E,#149B96 55%,#2BC0B8);color:#fff;border-radius:16px;
+  .party{background:linear-gradient(100deg,var(--teal-600,#0F827E),var(--teal,#149B96) 55%,var(--teal2,#2BC0B8));color:#fff;border-radius:16px;
     padding:16px 20px;margin-bottom:16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;box-shadow:var(--shadow-lg)}
   .party .em{font-size:30px;line-height:1}
   .party b{font-size:17px;display:block}
@@ -258,12 +258,12 @@
   }
 
 </style>
-<script src="user.js?v=hc51"></script>
-<script src="celebrate.js?v=hc51"></script>
+<script src="user.js?v=hc53"></script>
+<script src="celebrate.js?v=hc53"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="workbook.js?v=hc51"></script>
-  <script src="store.js?v=hc51"></script>
-  <script src="gate.js?v=hc51"></script>
+  <script src="workbook.js?v=hc53"></script>
+  <script src="store.js?v=hc53"></script>
+  <script src="gate.js?v=hc53"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — real numbers from the 2026 Production Dashboard workbook. You only see the offices you have access to.</div>
@@ -1053,9 +1053,9 @@ const OFFICES=[
       n.style.cssText='max-width:var(--maxw);margin:0 auto 14px;padding:9px 14px;border-radius:10px;'+
         'font-size:12.5px;font-weight:600;border:1px solid;display:flex;align-items:center;gap:8px';
       document.querySelector('.wrap').prepend(n); }
-    n.style.background = bad ? '#FCEBE8' : '#E5F4F3';
-    n.style.color      = bad ? '#93301f' : '#0F827E';
-    n.style.borderColor= bad ? '#f0c3b9' : '#bfe3d0';
+    n.style.background = bad ? '#FCEBE8' : 'var(--teal-soft,#E5F4F3)';
+    n.style.color      = bad ? '#93301f' : 'var(--teal-600,#0F827E)';
+    n.style.borderColor= bad ? '#f0c3b9' : 'var(--teal-line,#bfe3d0)';
     n.innerHTML=html;
   }
 
@@ -1162,7 +1162,7 @@ const OFFICES=[
 })();
 </script>
 <script>PH.nav('dashboard');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(window.DASH&&DASH.identity)DASH.identity();});document.addEventListener('ph-identity',function(){if(window.DASH&&DASH.identity)DASH.identity();if(window.DASH&&DASH.loadAudit)DASH.loadAudit();});</script>
-<script src="tour.js?v=hc51"></script>
+<script src="tour.js?v=hc53"></script>
 <script>
 Tour.init([
   {sel:'.viewas', title:'You only see your offices', body:'Everyone can see <b>All Offices</b> \u2014 the practice total as one number. What your location decides is which offices you can <b>open individually</b>. Switch to the Carlsbad manager: she keeps the group total, the leaderboard and Carlsbad, but can\u2019t open the other offices on their own.'},

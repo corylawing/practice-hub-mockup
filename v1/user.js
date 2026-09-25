@@ -41,6 +41,89 @@
   const COLORS=['#25456e','#149B96','#6b3fd0','#946011','#b03a63','#2E7D52','#1f6f9e','#b0442f'];
 
   /* ------------------------------------------------------------------
+     COLOUR SCHEMES - each person picks their own, in My profile.
+
+     Cory, 25/09/2026: "for the user in their profile to change the colors of the practice
+     hub. It needs to be smart. We should provide color schemes." And: "default is what we
+     have already" - Home-Brace is the pages' own colours, untouched; choosing it removes
+     every override.
+
+     What makes it safe to hand to seventy people:
+       - A scheme is TWO colours, the bar and the accent. Every other shade is worked out
+         from them here and its contrast is checked: a shade that would be hard to read is
+         darkened until it is not - 7:1 for white on the bar, 3:1 for white on a button,
+         4.5:1 for accent text on white, 7:1 for text on the tinted panels (WCAG AA/AAA).
+       - Only the hub's own colours move. Office colours on the schedule, initials colours,
+         the logo, and the red/amber/green that give figures their meaning are the same for
+         everybody, so "Carlsbad is pink" reads the same on every screen.
+       - It follows the person: saved in their own profile row, so a phone and a desktop
+         match; cached on the device and applied before the page draws, so there is no
+         flash of the default first.
+     --------------------------------------------------------------- */
+  const THEMES=[
+    {k:'homebrace',  n:'Home-Brace',    p:'#0F2A4A', a:'#149B96', note:'The original'},
+    {k:'harbor',     n:'Harbor Blue',   p:'#13315C', a:'#2563EB'},
+    {k:'evergreen',  n:'Evergreen',     p:'#173F2E', a:'#2F855A'},
+    {k:'plum',       n:'Plum',          p:'#3B1E4B', a:'#9B3D7E'},
+    {k:'terracotta', n:'Terracotta',    p:'#4A2419', a:'#C05621'},
+    {k:'rose',       n:'Rose',          p:'#5B1F37', a:'#C2456B'},
+    {k:'graphite',   n:'Graphite',      p:'#22262B', a:'#5B5FD6'},
+    {k:'contrast',   n:'High contrast', p:'#000000', a:'#0A58CA', note:'Easiest to read',
+       extra:{'--ink':'#0B0F14','--soft':'#2F3A48','--line':'#98A2B3','--canvas':'#FFFFFF'}}
+  ];
+  const THEME_KEY='ph_theme';
+  const THEME_VARS=['--navy','--navy2','--navy-mute','--teal','--teal2','--teal-600','--teal-soft',
+                    '--teal-line','--teal-ink','--teal-wash','--ink','--soft','--line','--canvas'];
+  function hexRgb(h){ h=String(h).replace('#',''); if(h.length===3) h=h.split('').map(c=>c+c).join('');
+    const n=parseInt(h,16); return [n>>16&255, n>>8&255, n&255]; }
+  function rgbHex(c){ return '#'+c.map(v=>Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,'0')).join('').toUpperCase(); }
+  function mixHex(a,b,t){ const x=hexRgb(a), y=hexRgb(b); return rgbHex(x.map((v,i)=>v+(y[i]-v)*t)); }
+  function luminance(h){ const w=[0.2126,0.7152,0.0722];
+    return hexRgb(h).reduce((s,v,i)=>{ v/=255; return s+w[i]*(v<=0.03928 ? v/12.92 : Math.pow((v+0.055)/1.055,2.4)); },0); }
+  function contrast(a,b){ const x=luminance(a), y=luminance(b); return (Math.max(x,y)+0.05)/(Math.min(x,y)+0.05); }
+  /* Move `c` toward black (on a light background) or white (on a dark one) until it reaches
+     `min` contrast against `bg`. This is the "smart" part: nobody can pick an unreadable hub. */
+  function readable(c,bg,min){
+    const toward=luminance(bg)>0.4 ? '#000000' : '#FFFFFF';
+    let t=0, out=rgbHex(hexRgb(c));
+    while(contrast(out,bg)<min && t<1){ t=Math.min(1,t+0.04); out=mixHex(c,toward,t); }
+    return out;
+  }
+  function schemeTokens(th){
+    const W='#FFFFFF', navy=readable(th.p,W,7), teal=readable(th.a,W,3), soft=mixHex(teal,W,0.9);
+    return Object.assign({
+      '--navy':navy,                                          // the header, nav and phone bar
+      '--navy2':mixHex(navy,W,0.16),                          // the strip under the header
+      '--navy-mute':readable(mixHex(navy,W,0.66),navy,4.5),   // quiet text on the bar
+      '--teal':teal,                                          // buttons and highlights
+      '--teal2':mixHex(teal,W,0.28),                          // the lighter accent
+      '--teal-600':readable(teal,W,4.5),                      // accent text and links on white
+      '--teal-soft':soft,                                     // tinted panels
+      '--teal-wash':mixHex(teal,W,0.95),                      // the lightest tint: hovers and highlights
+      '--teal-line':mixHex(teal,W,0.72),                      // their borders
+      '--teal-ink':readable(teal,soft,7)                      // text on the tinted panels
+    }, th.extra||{});
+  }
+  const themeOf=k=>THEMES.find(t=>t.k===k)||THEMES[0];
+  let THEME='homebrace';
+  function applyTheme(k){
+    const th=themeOf(k), root=document.documentElement;
+    THEME=th.k;
+    const st=root && root.style;
+    const tok = th.k==='homebrace' ? null : schemeTokens(th);
+    if(st && st.removeProperty){
+      THEME_VARS.forEach(v=>st.removeProperty(v));
+      if(tok) Object.keys(tok).forEach(v=>st.setProperty(v,tok[v]));
+    }
+    if(root && root.setAttribute) root.setAttribute('data-scheme',th.k);
+    // The phone's address bar takes the bar colour too.
+    let m=document.querySelector('meta[name="theme-color"]');
+    if(!m && document.head){ m=document.createElement('meta'); m.name='theme-color'; document.head.appendChild(m); }
+    if(m) m.setAttribute('content', tok ? tok['--navy'] : '#0F2A4A');
+  }
+  try{ applyTheme(localStorage.getItem(THEME_KEY)||'homebrace'); }catch(_){}
+
+  /* ------------------------------------------------------------------
      WHO IS THIS?
      Sandbox: the "Viewing as" dropdown, so roles can be demonstrated.
      Live: the person's own Microsoft profile. Their Entra **Department** decides what
@@ -785,24 +868,24 @@
   const css=`
   /* Microsoft-drive file picker — shared by Documents and Admin so the two can't drift. */
   .dpbtn{background:#fff;border:1px solid #E4E8EE;border-radius:9px;padding:9px 13px;font-weight:600;
-    font-size:13px;cursor:pointer;font-family:inherit;color:#0F2A4A}
-  .dpbtn:hover{border-color:#149B96;color:#0F827E}
+    font-size:13px;cursor:pointer;font-family:inherit;color:var(--navy,#0F2A4A)}
+  .dpbtn:hover{border-color:var(--teal,#149B96);color:var(--teal-600,#0F827E)}
   .drivebox{border:1px solid #E4E8EE;border-radius:12px;overflow:hidden}
   .drive-h{display:flex;align-items:center;gap:8px;background:#eef3fb;color:#1f6f9e;padding:9px 12px;font-size:12.5px;font-weight:700}
   .crumb2{display:flex;align-items:center;gap:4px;flex-wrap:wrap;font-size:12.5px;color:#56627A;padding:8px 12px;border-bottom:1px solid #E4E8EE;background:#fafbfc}
-  .crumb2 button{border:none;background:none;font-family:inherit;font-size:12.5px;font-weight:700;color:#0F827E;cursor:pointer;padding:2px 4px}
+  .crumb2 button{border:none;background:none;font-family:inherit;font-size:12.5px;font-weight:700;color:var(--teal-600,#0F827E);cursor:pointer;padding:2px 4px}
   .drivelist{max-height:230px;overflow:auto}
   .drow{display:flex;align-items:center;gap:10px;width:100%;border:none;background:none;font-family:inherit;
-    text-align:left;padding:10px 13px;font-size:14px;cursor:pointer;border-bottom:1px solid #E4E8EE;color:#1F2D3D}
+    text-align:left;padding:10px 13px;font-size:14px;cursor:pointer;border-bottom:1px solid #E4E8EE;color:var(--ink,#1F2D3D)}
   .drow:last-child{border-bottom:none}
-  .drow:hover{background:#E5F4F3}
+  .drow:hover{background:var(--teal-soft,#E5F4F3)}
   .drow .di{font-size:16px;flex:none}
   .drow .dn{flex:1;font-weight:500}
   .drow .dm{font-size:11.5px;color:#56627A}
-  .picked{display:flex;align-items:flex-start;gap:11px;border:1px solid #c4e6e3;background:#E5F4F3;border-radius:10px;padding:11px 13px}
-  .picked .pn{font-weight:700;color:#0F2A4A;font-size:14px}
-  .picked .pp{font-size:12px;color:#0c5b57;margin-top:2px}
-  .linkpill{display:inline-block;background:#fff;border:1px solid #c4e6e3;color:#0F827E;border-radius:999px;padding:2px 9px;font-size:11px;font-weight:800;margin-top:6px}
+  .picked{display:flex;align-items:flex-start;gap:11px;border:1px solid var(--teal-line,#c4e6e3);background:var(--teal-soft,#E5F4F3);border-radius:10px;padding:11px 13px}
+  .picked .pn{font-weight:700;color:var(--navy,#0F2A4A);font-size:14px}
+  .picked .pp{font-size:12px;color:var(--teal-ink,#0c5b57);margin-top:2px}
+  .linkpill{display:inline-block;background:#fff;border:1px solid var(--teal-line,#c4e6e3);color:var(--teal-600,#0F827E);border-radius:999px;padding:2px 9px;font-size:11px;font-weight:800;margin-top:6px}
   .orline{display:flex;align-items:center;gap:10px;margin:12px 0 0;color:#56627A;font-size:12px}
   .orline:before,.orline:after{content:'';flex:1;height:1px;background:#E4E8EE}
   .uploadnote{font-size:12.5px;color:#56627A;margin-top:7px;line-height:1.5}
@@ -817,11 +900,11 @@
   .ph-noaccess{background:#fff;border:1px solid #E4E8EE;border-radius:16px;padding:40px 28px;text-align:center;
     max-width:520px;margin:40px auto;box-shadow:0 1px 2px rgba(15,42,74,.06),0 6px 18px rgba(15,42,74,.06)}
   .ph-noaccess .ic{font-size:34px;line-height:1}
-  .ph-noaccess h2{margin:12px 0 8px;font-size:20px;color:#0F2A4A}
+  .ph-noaccess h2{margin:12px 0 8px;font-size:20px;color:var(--navy,#0F2A4A)}
   .ph-noaccess p{margin:0 0 20px;font-size:14.5px;color:#56627A;line-height:1.55}
-  .ph-noaccess .btn{display:inline-block;background:#149B96;color:#fff;text-decoration:none;
+  .ph-noaccess .btn{display:inline-block;background:var(--teal,#149B96);color:#fff;text-decoration:none;
     border-radius:10px;padding:11px 18px;font-weight:700;font-size:14px}
-  .ph-noaccess .btn:hover{background:#0F827E}
+  .ph-noaccess .btn:hover{background:var(--teal-600,#0F827E)}
   .ph-bw{position:relative;margin-left:auto;display:flex;flex:none;gap:8px;align-items:center}
   .ph-bell svg{display:block}
   .ph-bell{display:grid;place-items:center;width:36px;height:36px;
@@ -830,44 +913,44 @@
   .ph-bell:hover{background:rgba(255,255,255,.18)}
   .ph-bell .dot{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;padding:0 5px;
     border-radius:999px;background:#D7503A;color:#fff;font-size:11px;font-weight:800;
-    display:grid;place-items:center;border:2px solid #0F2A4A;box-sizing:content-box}
+    display:grid;place-items:center;border:2px solid var(--navy,#0F2A4A);box-sizing:content-box}
   .ph-bw + .ph-av{margin-left:10px}
   .ph-np{position:absolute;top:calc(100% + 10px);right:0;width:min(380px,calc(100vw - 24px));
     background:#fff;border:1px solid #E4E8EE;border-radius:14px;z-index:8000;overflow:hidden;
-    box-shadow:0 12px 34px rgba(15,42,74,.20);color:#0F2A4A;text-align:left;cursor:default}
+    box-shadow:0 12px 34px rgba(15,42,74,.20);color:var(--navy,#0F2A4A);text-align:left;cursor:default}
   .ph-np .nph{display:flex;align-items:center;gap:8px;padding:13px 15px;border-bottom:1px solid #EEF1F5}
   .ph-np .nph b{font-size:14.5px;flex:1}
-  .ph-np .nall{background:none;border:none;color:#149B96;font:700 12.5px inherit;cursor:pointer;padding:4px 2px}
-  .ph-np .nallok{font-size:12.5px;font-weight:700;color:#0F827E}
+  .ph-np .nall{background:none;border:none;color:var(--teal,#149B96);font:700 12.5px inherit;cursor:pointer;padding:4px 2px}
+  .ph-np .nallok{font-size:12.5px;font-weight:700;color:var(--teal-600,#0F827E)}
   .ph-np .nlist{max-height:min(60vh,420px);overflow:auto}
   .ph-np .ni{display:flex;gap:10px;align-items:flex-start;padding:12px 15px;border-bottom:1px solid #F3F5F8;
-    background:#F2FBFA}
+    background:var(--teal-wash,#F2FBFA)}
   .ph-np .ni.read{background:#fff}
   .ph-np .ni .nic{font-size:16px;line-height:1.2;flex:none}
   .ph-np .ni .ntx{flex:1;min-width:0}
   .ph-np .ni .ntt{font-size:13.5px;font-weight:700;line-height:1.35}
   .ph-np .ni.read .ntt{font-weight:600;color:#56627A}
   .ph-np .ni .nw{font-size:11.5px;color:#7A889B;margin-top:2px}
-  .ph-np .ni .nok{background:#fff;border:1px solid #CBD5E1;border-radius:8px;color:#0F2A4A;
+  .ph-np .ni .nok{background:#fff;border:1px solid #CBD5E1;border-radius:8px;color:var(--navy,#0F2A4A);
     font:700 11.5px inherit;padding:5px 9px;cursor:pointer;flex:none;white-space:nowrap}
-  .ph-np .ni .nok:hover{background:#F2FBFA;border-color:#149B96;color:#0F827E}
-  .ph-np .ni .ndone{flex:none;font-size:11.5px;font-weight:700;color:#0F827E;background:#E8F6F4;
+  .ph-np .ni .nok:hover{background:var(--teal-wash,#F2FBFA);border-color:var(--teal,#149B96);color:var(--teal-600,#0F827E)}
+  .ph-np .ni .ndone{flex:none;font-size:11.5px;font-weight:700;color:var(--teal-600,#0F827E);background:var(--teal-soft,#E8F6F4);
     border-radius:8px;padding:5px 9px;white-space:nowrap;align-self:flex-start}
   .ph-np .nempty{padding:26px 18px;text-align:center;font-size:13.5px;color:#7A889B;line-height:1.55}
   .ph-np .nshow{display:block;width:100%;background:#FAFBFC;border:none;border-top:1px solid #EEF1F5;color:#56627A;
     font-size:12.5px;font-weight:600;padding:11px;cursor:pointer;font-family:inherit;flex:none}
-  .ph-np .nshow:hover{color:#0F827E}
+  .ph-np .nshow:hover{color:var(--teal-600,#0F827E)}
   .ph-np .sph{padding:10px 12px;gap:8px}
   .ph-np .sin{flex:1;min-width:0;border:1px solid #E4E8EE;border-radius:10px;padding:9px 12px;font-size:14px;
-    font-family:inherit;color:#0F2A4A;background:#F7F9FB;outline:none;-webkit-appearance:none;appearance:none}
-  .ph-np .sin:focus{border-color:#149B96;background:#fff}
+    font-family:inherit;color:var(--navy,#0F2A4A);background:#F7F9FB;outline:none;-webkit-appearance:none;appearance:none}
+  .ph-np .sin:focus{border-color:var(--teal,#149B96);background:#fff}
   .ph-np .sx{border:none;background:none;font-size:22px;line-height:1;color:#56627A;cursor:pointer;padding:2px 4px;font-family:inherit;flex:none}
   .ph-np .slab{font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#7A889B;padding:10px 15px 4px;background:#FAFBFC}
   .ph-np a.ni{text-decoration:none;color:inherit;cursor:pointer}
-  .ph-np a.ni:hover{background:#F7FBFB}
-  .ph-np .sav{width:30px;height:30px;border-radius:50%;background:#E8F6F4;color:#0F827E;font-size:12px;font-weight:800;display:grid;place-items:center;flex:none}
+  .ph-np a.ni:hover{background:var(--teal-wash,#F7FBFB)}
+  .ph-np .sav{width:30px;height:30px;border-radius:50%;background:var(--teal-soft,#E8F6F4);color:var(--teal-600,#0F827E);font-size:12px;font-weight:800;display:grid;place-items:center;flex:none}
   .ph-np .sr .nic{display:grid;place-items:center;width:30px;height:30px;flex:none}
-  .ph-np .sr .ti{width:20px;height:20px;display:block;color:#0F2A4A;opacity:.8}
+  .ph-np .sr .ti{width:20px;height:20px;display:block;color:var(--navy,#0F2A4A);opacity:.8}
 
   /* ---- PHONE SHELL. Below 640px the top tab strip goes and a bottom bar takes over,
           the way a phone app does. Same NAV list, same show() rule, same order - so a
@@ -883,34 +966,34 @@
       left:12px !important;right:12px !important;transform:none !important;width:auto !important;max-width:none !important}
 
     .ph-tabbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:7000;
-      background:#0F2A4A;border-top:1px solid rgba(255,255,255,.10);
+      background:var(--navy,#0F2A4A);border-top:1px solid rgba(255,255,255,.10);
       padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px));
       box-shadow:0 -6px 20px rgba(15,42,74,.18)}
     .ph-tabbar a,.ph-tabbar button{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;
-      gap:3px;padding:6px 2px 4px;color:#B7C6DA;text-decoration:none;font-family:inherit;font-size:10.5px;font-weight:600;line-height:1.15;
+      gap:3px;padding:6px 2px 4px;color:var(--navy-mute,#B7C6DA);text-decoration:none;font-family:inherit;font-size:10.5px;font-weight:600;line-height:1.15;
       background:none;border:none;border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent}
     .ph-tabbar .ti{width:22px;height:22px;display:block;opacity:.72}
     .ph-tabbar .tl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
     .ph-tabbar a.active{color:#fff}
     .ph-tabbar a.active .ti{opacity:1;stroke-width:2.1}
     .ph-tabbar a.active .tl{position:relative}
-    .ph-tabbar a.active .tl::after{content:"";position:absolute;left:25%;right:25%;bottom:-5px;height:2px;border-radius:2px;background:#2BC0B8}
-    .ph-tabbar .more{color:#B7C6DA}
+    .ph-tabbar a.active .tl::after{content:"";position:absolute;left:25%;right:25%;bottom:-5px;height:2px;border-radius:2px;background:var(--teal2,#2BC0B8)}
+    .ph-tabbar .more{color:var(--navy-mute,#B7C6DA)}
     .ph-tabbar .more.on{color:#fff}
-    .ph-more{position:fixed;left:0;right:0;bottom:0;z-index:7100;background:#fff;color:#0F2A4A;
+    .ph-more{position:fixed;left:0;right:0;bottom:0;z-index:7100;background:#fff;color:var(--navy,#0F2A4A);
       border-radius:16px 16px 0 0;box-shadow:0 -12px 34px rgba(15,42,74,.28);
       padding:10px 14px calc(14px + env(safe-area-inset-bottom,0px))}
     .ph-more .grab{width:38px;height:4px;border-radius:2px;background:#D5DDE8;margin:2px auto 8px}
     .ph-more .mh{display:flex;align-items:center;justify-content:space-between;padding:0 2px 6px 10px}
     .ph-more .mh b{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:#7A889B;font-weight:800}
-    .ph-more .mx{border:none;background:#EEF2F7;color:#0F2A4A;width:34px;height:34px;border-radius:50%;font-size:22px;
+    .ph-more .mx{border:none;background:#EEF2F7;color:var(--navy,#0F2A4A);width:34px;height:34px;border-radius:50%;font-size:22px;
       line-height:1;cursor:pointer;font-family:inherit;display:grid;place-items:center}
     .ph-more .mx:active{background:#DDE5EE}
     .ph-more a{display:flex;align-items:center;gap:12px;padding:13px 10px;border-radius:12px;
-      text-decoration:none;color:#0F2A4A;font-family:inherit;font-size:15px;font-weight:600}
+      text-decoration:none;color:var(--navy,#0F2A4A);font-family:inherit;font-size:15px;font-weight:600}
     .ph-more a:active{background:#EEF2F7}
     .ph-more a .ti{width:22px;height:22px;flex:none;opacity:.8}
-    .ph-more a.active{background:#E8F6F4;color:#0F827E}
+    .ph-more a.active{background:var(--teal-soft,#E8F6F4);color:var(--teal-600,#0F827E)}
     .ph-scrim{position:fixed;inset:0;z-index:7050;background:rgba(15,42,74,.35)}
     /* ON A PHONE, A DIALOG IS A SHEET, NOT A FLOATING CARD. The profile card and every
        page's editor were desktop popovers squeezed onto a phone: taller than the screen,
@@ -951,26 +1034,36 @@
   .ph-av .cir{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:12px;color:#fff;flex:none}
   .ph-av .who{text-align:left;line-height:1.15}
   .ph-av .who b{display:block;font-size:13px;font-weight:700}
-  .ph-av .who small{font-size:10.5px;color:#a8bdd8}
-  .ph-av .car{font-size:9px;color:#a8bdd8}
+  .ph-av .who small{font-size:10.5px;color:var(--navy-mute,#a8bdd8)}
+  .ph-av .car{font-size:9px;color:var(--navy-mute,#a8bdd8)}
   @media(max-width:560px){ .ph-av .who{display:none} }
   .ph-menu{position:fixed;z-index:400;background:#fff;border:1px solid #E4E8EE;border-radius:14px;box-shadow:0 16px 44px rgba(15,42,74,.28);
     padding:7px;min-width:250px;font-family:inherit}
   .ph-menu .mh{padding:9px 11px 8px;border-bottom:1px solid #E4E8EE;margin-bottom:6px}
-  .ph-menu .mh b{display:block;color:#0F2A4A;font-size:14px}
+  .ph-menu .mh b{display:block;color:var(--navy,#0F2A4A);font-size:14px}
   .ph-menu .mh small{color:#56627A;font-size:11.5px}
   .ph-menu button{display:flex;align-items:center;gap:9px;width:100%;border:none;background:none;font-family:inherit;text-align:left;
-    padding:9px 11px;border-radius:9px;cursor:pointer;font-size:13.5px;font-weight:600;color:#1F2D3D}
+    padding:9px 11px;border-radius:9px;cursor:pointer;font-size:13.5px;font-weight:600;color:var(--ink,#1F2D3D)}
   .ph-menu button:hover{background:#F4F6F8}
   .ph-menu .sec{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#8a94a6;padding:9px 11px 4px}
-  .ph-menu button.cur{background:#E5F4F3;color:#0F827E}
-  .ph-menu button .ck{margin-left:auto;font-weight:800;color:#0F827E}
+  .ph-menu button.cur{background:var(--teal-soft,#E5F4F3);color:var(--teal-600,#0F827E)}
+  .ph-menu button .ck{margin-left:auto;font-weight:800;color:var(--teal-600,#0F827E)}
   .ph-ov{position:fixed;inset:0;background:rgba(15,42,74,.55);z-index:410;display:none;align-items:flex-start;justify-content:center;padding:22px 14px;overflow:auto}
   .ph-ov.open{display:flex}
   .ph-card{background:#fff;width:100%;max-width:620px;border-radius:16px;box-shadow:0 16px 44px rgba(15,42,74,.3);margin:auto;overflow:hidden;font-family:inherit}
+  .ph-themes{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px}
+  .ph-th{display:flex;flex-direction:column;gap:6px;border:1.5px solid #E4E8EE;background:#fff;border-radius:12px;
+    padding:7px 7px 8px;cursor:pointer;text-align:left;font-family:inherit;color:var(--ink,#1F2D3D)}
+  .ph-th:hover{border-color:#CBD5E1}
+  .ph-th.on{border-color:var(--teal-600,#0F827E);box-shadow:0 0 0 3px var(--teal-soft,#E5F4F3)}
+  .ph-th .sw{display:flex;height:28px;border-radius:8px;overflow:hidden;border:1px solid rgba(15,42,74,.08)}
+  .ph-th .sw i{flex:3} .ph-th .sw b{flex:2} .ph-th .sw em{flex:2}
+  .ph-th .nm{font-size:12.5px;font-weight:700;line-height:1.2;display:flex;align-items:center;gap:5px}
+  .ph-th .nm .ck{margin-left:auto;color:var(--teal-600,#0F827E);font-weight:800}
+  .ph-th small{font-size:11px;color:#56627A;line-height:1.2;margin-top:-3px}
   .ph-top{display:flex;align-items:center;gap:13px;padding:17px 20px;border-bottom:1px solid #E4E8EE}
   .ph-top .big{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;font-size:19px;flex:none}
-  .ph-top h3{margin:0;font-size:19px;color:#0F2A4A}
+  .ph-top h3{margin:0;font-size:19px;color:var(--navy,#0F2A4A)}
   .ph-top .t{font-size:13px;color:#56627A}
   .ph-top .x{margin-left:auto;border:none;background:none;font-size:25px;color:#56627A;cursor:pointer;line-height:1}
   .ph-body{padding:18px 20px;max-height:68vh;overflow:auto}
@@ -981,26 +1074,26 @@
   .ph-tag.you{background:#E7F4EE;color:#2E9E6B}
   .ph-g{display:grid;grid-template-columns:1fr 1fr;gap:9px 16px;margin-bottom:18px}
   .ph-f label{display:block;font-size:11.5px;font-weight:600;color:#56627A;margin-bottom:3px}
-  .ph-ro{background:#fafbfc;border:1px dashed #E4E8EE;border-radius:9px;padding:9px 11px;font-size:14px;color:#1F2D3D;font-weight:500}
-  .ph-edit{border:1px solid #E4E8EE;border-radius:9px;padding:10px 12px;font-size:14px;font-family:inherit;width:100%;color:#1F2D3D}
-  .ph-edit:focus{outline:2px solid #149B96;border-color:#149B96}
+  .ph-ro{background:#fafbfc;border:1px dashed #E4E8EE;border-radius:9px;padding:9px 11px;font-size:14px;color:var(--ink,#1F2D3D);font-weight:500}
+  .ph-edit{border:1px solid #E4E8EE;border-radius:9px;padding:10px 12px;font-size:14px;font-family:inherit;width:100%;color:var(--ink,#1F2D3D)}
+  .ph-edit:focus{outline:2px solid var(--teal,#149B96);border-color:var(--teal,#149B96)}
   textarea.ph-edit{min-height:74px;resize:vertical}
   .ph-pick{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
   .ph-photo{display:flex;align-items:center;gap:14px;flex-wrap:wrap;border:2px dashed #dbe2ea;border-radius:14px;padding:14px;background:#fafbfc;transition:border-color .15s,background .15s}
-  .ph-photo.over{border-color:#149B96;background:#E5F4F3}
+  .ph-photo.over{border-color:var(--teal,#149B96);background:var(--teal-soft,#E5F4F3)}
   .ph-face{width:66px;height:66px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;font-size:23px;flex:none}
   .ph-photo-txt{flex:1;min-width:150px;display:flex;flex-direction:column}
-  .ph-photo-txt b{font-size:13.5px;color:#0F2A4A}
+  .ph-photo-txt b{font-size:13.5px;color:var(--navy,#0F2A4A)}
   .ph-photo-txt span{font-size:12px;color:#56627A}
   .ph-photo-btns{display:flex;gap:8px;flex-wrap:wrap}
   .ph-sw{width:30px;height:30px;border-radius:50%;border:2px solid transparent;cursor:pointer}
-  .ph-sw.on{border-color:#0F2A4A}
-  .ph-note{background:#E5F4F3;border:1px solid #c4e6e3;border-radius:10px;padding:11px 14px;font-size:12.5px;color:#0c5b57;line-height:1.5}
-  .ph-note b{color:#0a4d49}
+  .ph-sw.on{border-color:var(--navy,#0F2A4A)}
+  .ph-note{background:var(--teal-soft,#E5F4F3);border:1px solid var(--teal-line,#c4e6e3);border-radius:10px;padding:11px 14px;font-size:12.5px;color:var(--teal-ink,#0c5b57);line-height:1.5}
+  .ph-note b{color:var(--teal-ink,#0a4d49)}
   .ph-foot{display:flex;align-items:center;gap:10px;padding:14px 20px;border-top:1px solid #E4E8EE;background:#fafbfc}
-  .ph-btn{background:#149B96;color:#fff;border:none;border-radius:9px;padding:10px 17px;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit}
-  .ph-btn:hover{background:#0F827E}
-  .ph-btn.g{background:#fff;color:#0F2A4A;border:1px solid #E4E8EE;font-weight:600}
+  .ph-btn{background:var(--teal,#149B96);color:#fff;border:none;border-radius:9px;padding:10px 17px;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit}
+  .ph-btn:hover{background:var(--teal-600,#0F827E)}
+  .ph-btn.g{background:#fff;color:var(--navy,#0F2A4A);border:1px solid #E4E8EE;font-weight:600}
   .ph-ok{font-size:12.5px;font-weight:700;color:#2E9E6B;opacity:0;transition:opacity .2s}
   .ph-ok.on{opacity:1}
   .ph-ro-banner{background:#FFF6E9;border:1px solid #f0d9ae;color:#7a4d0a;border-radius:12px;padding:11px 15px;font-size:13.5px;font-weight:600;margin-bottom:16px;display:flex;align-items:center;gap:9px}
@@ -1220,6 +1313,10 @@
           (p.photo?'':'<div class="ph-pick" style="margin-top:10px"><span style="font-size:12px;color:#56627A">No photo? Pick a color for your initials:</span>'+
             COLORS.map(c=>'<button class="ph-sw'+(c===p.color?' on':'')+'" style="background:'+c+'" onclick="PH.setColor(\''+c+'\')" title="Use this color"></button>').join('')+'</div>')+
         '</div>'+
+        '<div class="ph-f" style="margin-bottom:16px"><label>Colors for the hub</label>'+
+          '<div class="ph-themes" id="ph-themes">'+themePicker()+'</div>'+
+          '<div style="font-size:11.5px;color:#56627A;margin-top:6px">Just for you, on every device you sign in on. '+
+          'Office colors on the schedule stay the same for everyone.</div></div>'+
         '<div class="ph-f" style="margin-bottom:14px"><label>Preferred name</label>'+
           '<input class="ph-edit" id="ph-pref" value="'+((p.preferred||'')).replace(/"/g,'&quot;')+'" placeholder="'+p.first+'">'+
           '<div style="font-size:11.5px;color:#56627A;margin-top:4px">What you\u2019d like to be called \u2014 this is the name your team sees. Leave blank to use \u201c'+p.first+'\u201d.</div></div>'+
@@ -1266,6 +1363,39 @@
     ['dragenter','dragover'].forEach(t=>d.addEventListener(t,e=>{e.preventDefault();d.classList.add('over');}));
     ['dragleave','drop'].forEach(t=>d.addEventListener(t,e=>{e.preventDefault();d.classList.remove('over');}));
     d.addEventListener('drop',e=>{ const f=e.dataTransfer.files&&e.dataTransfer.files[0]; if(f)readPhoto(f); });
+  }
+  /* Picking a scheme applies it at once and saves it to the person's own row. */
+  function setTheme(k){
+    applyTheme(k);
+    try{ localStorage.setItem(THEME_KEY, THEME); }catch(_){}
+    saveMine({theme:THEME});
+    const box=document.getElementById('ph-themes'); if(box) box.innerHTML=themePicker();
+  }
+  /* After sign-in: whoever this is, their own scheme - also on a front-desk computer that
+     several people share, where the one cached on the device may be somebody else's. */
+  function syncTheme(){
+    const key=profileKey();
+    const use=row=>{ const k=(row&&row.theme)||'homebrace';
+      if(k!==THEME) applyTheme(k);
+      try{ localStorage.setItem(THEME_KEY, THEME); }catch(_){} };
+    let local=null; try{ local=JSON.parse(localStorage.getItem(key)); }catch(_){}
+    if(local) use(local);
+    if(window.PH_STORE && isLive() && window.PH_AUTH){
+      window.PH_STORE.get(key).then(function(row){
+        if(window.PH_STORE.readFailed && window.PH_STORE.readFailed(key)) return;   // unknown: keep what is showing
+        use(row);
+      }).catch(function(){});
+    }
+  }
+  function themePicker(){
+    return THEMES.map(th=>{
+      const t = th.k==='homebrace' ? {'--navy':'#0F2A4A','--teal':'#149B96','--teal-soft':'#E5F4F3'} : schemeTokens(th);
+      const on=th.k===THEME;
+      return '<button type="button" class="ph-th'+(on?' on':'')+'" aria-pressed="'+on+'" onclick="PH.setTheme(\''+th.k+'\')">'+
+        '<span class="sw"><i style="background:'+t['--navy']+'"></i><b style="background:'+t['--teal']+'"></b><em style="background:'+t['--teal-soft']+'"></em></span>'+
+        '<span class="nm">'+escHTML(th.n)+(on?'<span class="ck">\u2713</span>':'')+'</span>'+
+        (th.note?'<small>'+escHTML(th.note)+'</small>':'')+'</button>';
+    }).join('');
   }
   function setColor(c){ saveMine({color:c}); profile();
     const av=document.querySelector('.ph-av .cir'); if(av)av.style.background=c; }
@@ -1805,6 +1935,7 @@
     try{ document.dispatchEvent(new CustomEvent('ph-identity')); }catch(_){}
   }
   document.addEventListener('ph-signed-in', function(){
+    try{ syncTheme(); }catch(_){}
     identityChanged();
     // ...and again once each late source has landed.
     if(rosterReady && rosterReady.then)
@@ -1925,6 +2056,7 @@
   }
   const isLive=()=>env()==='live';
 
-  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK, notesHTML, searchHTML, saveFace, faceOf};
+  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK, notesHTML, searchHTML, saveFace, faceOf,
+    setTheme, theme:()=>THEME, themes:()=>THEMES.map(t=>({k:t.k, n:t.n})), schemeTokens:k=>schemeTokens(themeOf(k)), contrast};
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mount); else mount();
 })();

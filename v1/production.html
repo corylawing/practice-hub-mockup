@@ -42,11 +42,11 @@
   .mark img{width:34px;height:34px;display:block;border-radius:50%}
   .brand{font-weight:700;font-size:18px;color:#fff;line-height:1.1}
   .brand i{font-style:normal;color:var(--teal2)}
-  .brand small{display:block;font-weight:500;font-size:12px;color:#9fb4d0}
+  .brand small{display:block;font-weight:500;font-size:12px;color:var(--navy-mute,#9fb4d0)}
   .v1{background:rgba(255,255,255,.15);color:#eaf1fb;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;margin-left:6px}
   .v1nav{background:var(--navy2)}
   .v1nav-in{max-width:var(--maxw);margin:0 auto;display:flex;gap:2px;padding:0 12px;overflow-x:auto}
-  .v1nav a{color:#cdd9ea;font-size:14px;font-weight:600;padding:13px 15px;text-decoration:none;border-bottom:3px solid transparent;white-space:nowrap}
+  .v1nav a{color:var(--navy-mute,#cdd9ea);font-size:14px;font-weight:600;padding:13px 15px;text-decoration:none;border-bottom:3px solid transparent;white-space:nowrap}
   .v1nav a:hover{color:#fff;background:rgba(255,255,255,.05)}
   .v1nav a.active{color:#fff;border-bottom-color:var(--teal)}
   .wrap{max-width:var(--maxw);margin:0 auto;padding:22px 20px 90px}
@@ -74,17 +74,17 @@
   .f input{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10px;font-size:16px;font-family:inherit;font-weight:600;color:var(--navy);background:#fff}
   .f input:focus{outline:2px solid var(--teal);border-color:var(--teal)}
   .f .money input{padding-left:30px}
-  .calcline{background:var(--teal-soft);border:1px solid #c4e6e3;border-radius:9px;padding:9px 12px;font-size:13px;color:#0c5b57;margin:-4px 0 14px}
-  .calcline b{color:#0a4d49}
+  .calcline{background:var(--teal-soft);border:1px solid var(--teal-line,#c4e6e3);border-radius:9px;padding:9px 12px;font-size:13px;color:var(--teal-ink,#0c5b57);margin:-4px 0 14px}
+  .calcline b{color:var(--teal-ink,#0a4d49)}
   .f input.ro{background:#fafbfc;color:var(--soft);font-weight:700}
   .rowline{display:flex;justify-content:space-between;align-items:baseline;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}
   .rowline:last-child{border-bottom:none}
   .rowline .k{color:var(--soft)}
   .rowline .v{font-weight:800;color:var(--navy);font-size:16px}
   .rowline .v.g{color:var(--good)} .rowline .v.b{color:var(--bad)}
-  .big{background:var(--teal-soft);border:1px solid #c4e6e3;border-radius:12px;padding:14px 16px;margin-bottom:14px}
-  .big .k{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:#0a4d49;font-weight:700}
-  .big .v{font-size:28px;font-weight:800;color:#0a4d49;line-height:1.15}
+  .big{background:var(--teal-soft);border:1px solid var(--teal-line,#c4e6e3);border-radius:12px;padding:14px 16px;margin-bottom:14px}
+  .big .k{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--teal-ink,#0a4d49);font-weight:700}
+  .big .v{font-size:28px;font-weight:800;color:var(--teal-ink,#0a4d49);line-height:1.15}
   .savebar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:16px}
   /* The button reports its own outcome. Someone who has just typed a month of numbers
      is looking at the button they pressed, not at a banner elsewhere on the page. */
@@ -128,11 +128,11 @@
   }
 
 </style>
-<script src="user.js?v=hc51"></script>
+<script src="user.js?v=hc53"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="workbook.js?v=hc51"></script>
-  <script src="store.js?v=hc51"></script>
-  <script src="gate.js?v=hc51"></script>
+  <script src="workbook.js?v=hc53"></script>
+  <script src="store.js?v=hc53"></script>
+  <script src="gate.js?v=hc53"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — type the month's numbers here. In the real build this writes straight into the SharePoint workbook.</div>
@@ -540,9 +540,9 @@
       n.style.cssText='max-width:var(--maxw);margin:0 auto 14px;padding:9px 14px;border-radius:10px;'+
         'font-size:12.5px;font-weight:600;border:1px solid';
       const w=document.querySelector('.wrap'); if(w) w.prepend(n); }
-    n.style.background = bad?'#FCEBE8':'#E5F4F3';
-    n.style.color      = bad?'#93301f':'#0F827E';
-    n.style.borderColor= bad?'#f0c3b9':'#bfe3d0';
+    n.style.background = bad?'#FCEBE8':'var(--teal-soft,#E5F4F3)';
+    n.style.color      = bad?'#93301f':'var(--teal-600,#0F827E)';
+    n.style.borderColor= bad?'#f0c3b9':'var(--teal-line,#bfe3d0)';
     n.innerHTML=html;
   }
 
@@ -627,7 +627,7 @@
 })();
 </script>
 <script>PH.nav('production');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(window.PROD&&PROD.identity)PROD.identity();});document.addEventListener('ph-identity',function(){if(window.PROD&&PROD.identity)PROD.identity();});</script>
-<script src="tour.js?v=hc51"></script>
+<script src="tour.js?v=hc53"></script>
 <script>
 Tour.init([
   {sel:'.syncbar', title:'One set of numbers', body:'Type here and it saves into the <b>same Excel workbook</b> on SharePoint. If someone types in Excel instead, it shows up here. There is never a second copy to reconcile.'},

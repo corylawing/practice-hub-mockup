@@ -544,7 +544,9 @@
        the next event rewrites the feed, and both are resent in the background. A red
        "your change was not saved" for them was a false alarm - it went up on a day edit
        whose schedule save had gone through, because the day's notification had not. */
-    if(!quiet && !housekeeping(key)) emit('ph-save-failed', {key:key, error:msg, denied:denied, tooBig:tooBig});
+    /* ph_roster is the one-time copy of the roster file an admin's browser makes on its
+       own; nobody typed it, so nobody should be told "your change" did not save. */
+    if(!quiet && !housekeeping(key) && key !== 'ph_roster') emit('ph-save-failed', {key:key, error:msg, denied:denied, tooBig:tooBig});
     else try{ console.warn('PH_STORE: '+key+' not sent yet - '+msg); }catch(_){}
     return {local:true, error:msg, denied:denied, tooBig:tooBig, conflict: st === 409};
   }
