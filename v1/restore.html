@@ -81,10 +81,10 @@
   </div>
 </div>
 
-<script src="user.js?v=hc46"></script>
+<script src="user.js?v=hc51"></script>
 <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-<script src="store.js?v=hc46"></script>
-<script src="gate.js?v=hc46"></script>
+<script src="store.js?v=hc51"></script>
+<script src="gate.js?v=hc51"></script>
 <script>
 (function(){
   'use strict';
@@ -114,6 +114,14 @@
     parsed=null; el('go').disabled=true;
     var raw=(el('src').value||'').trim();
     if(!raw) return show('r1','bad','<b>Nothing pasted yet.</b>');
+    /* A large record is stored packed (it starts ~z1:). Open it into plain JSON in the
+       box, then check that, so what gets restored is exactly what can be read. */
+    if(raw.indexOf('~z1:')===0 || raw.indexOf('{"__packed":')===0){
+      if(!(window.PH_STORE && PH_STORE.unpack))
+        return show('r1','bad','<b>That is a packed copy, and this page could not open it.</b> Tell Cory.');
+      return PH_STORE.unpack(raw).then(function(txt){ el('src').value=txt; el('check').onclick(); },
+        function(){ show('r1','bad','<b>That packed copy could not be opened.</b> It may be cut off &mdash; copy it again, all of it.'); });
+    }
     var data;
     try{ data=JSON.parse(raw); }
     catch(e){ return show('r1','bad','<b>That is not complete.</b> '+

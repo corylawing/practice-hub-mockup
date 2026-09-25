@@ -112,8 +112,8 @@
   table.lb td{padding:11px 10px;border-bottom:1px solid var(--line);font-size:14px}
   table.lb td.num.big{font-weight:800;color:var(--navy)}   /* the figure leads, the % supports it */
   table.lb tr:last-child td{border-bottom:none}
-  table.lb tbody tr{cursor:pointer}
-  table.lb tbody tr:hover td{background:#f2fbfa}
+  table.lb tbody tr.go{cursor:pointer}              /* only offices this person can open */
+  table.lb tbody tr.go:hover td{background:#f2fbfa}
   .rk{font-weight:800;color:var(--soft);width:34px}
   .rk.top{color:#b8860b}
   .onm{font-weight:700;color:var(--navy)}
@@ -258,12 +258,12 @@
   }
 
 </style>
-<script src="user.js?v=hc46"></script>
-<script src="celebrate.js?v=hc46"></script>
+<script src="user.js?v=hc51"></script>
+<script src="celebrate.js?v=hc51"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="workbook.js?v=hc46"></script>
-  <script src="store.js?v=hc46"></script>
-  <script src="gate.js?v=hc46"></script>
+  <script src="workbook.js?v=hc51"></script>
+  <script src="store.js?v=hc51"></script>
+  <script src="gate.js?v=hc51"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — real numbers from the 2026 Production Dashboard workbook. You only see the offices you have access to.</div>
@@ -849,7 +849,8 @@ const OFFICES=[
     const anyProduction=rows.some(r=>r.t.a>0);
     const body=rows.map((r,i)=>{
       const t=r.t, pctw=Math.min(100,t.pct*100), cls=t.pct>=1?'':(t.pct>=.9?'a':'b');
-      return '<tr onclick="DASH.pick(\''+r.o.n+'\')">'+
+      const canOpen=allowed.some(a=>a.n===r.o.n);
+      return '<tr'+(canOpen?' class="go" onclick="DASH.pick(\''+r.o.n+'\')" title="Open '+r.o.n+'"':'')+'>'+
         '<td class="rk'+(i===0&&anyProduction?' top':'')+'">'+((i===0&&anyProduction)?'🏆':i+1)+'</td>'+
         '<td><div class="onm">'+r.o.n+'<span class="br">'+r.o.brand+'</span></div>'+
           '<div class="pbar"><i class="'+cls+'" style="width:'+pctw+'%"></i></div>'+
@@ -952,10 +953,13 @@ const OFFICES=[
         ? '<h2 class="secttl">\ud83d\udcc6 Production days</h2><p class="secsub">How much of the '+(period==='mtd'?'month':'year')+' has actually been worked.</p>'+daysTiles(o)
         : '') +
       (noFigures ? '' : (chartMode==='starts'? startsChart(o) : chart(o)));
-    /* The leaderboard lists every office by name and number, so it is only for
-       people who are allowed to see the offices individually. Everyone else gets
-       the group total without the breakdown. */
-    if(isAll && seesEvery && !noFigures) html += leaderboard(allowed);
+    /* THE LEADERBOARD IS FOR EVERYONE WHO CAN OPEN "ALL OFFICES". Cory, 25/09/2026:
+       "The leaderboard should appear regardless - if they have access to the all
+       offices it should appear." It had been kept to people who may open every office
+       individually, because it names each office's figures; Haley (San Angelo) and
+       every other one-office person saw the group total with no table under it. It
+       lists all eight now. A row opens that office only for someone who holds it. */
+    if(isAll && !noFigures) html += leaderboard(OFFICES);
     html += '<div class="foot"><b>Where these numbers come from:</b> the practice\u2019s 2026 Production '+
       'Dashboard workbook on SharePoint \u2014 the hub reads it live, so there is no second copy to keep in '+
       'sync. A month counts once it has <b>both</b> an actual and a goal (Mansfield has production from '+
@@ -1158,14 +1162,14 @@ const OFFICES=[
 })();
 </script>
 <script>PH.nav('dashboard');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(window.DASH&&DASH.identity)DASH.identity();});document.addEventListener('ph-identity',function(){if(window.DASH&&DASH.identity)DASH.identity();if(window.DASH&&DASH.loadAudit)DASH.loadAudit();});</script>
-<script src="tour.js?v=hc46"></script>
+<script src="tour.js?v=hc51"></script>
 <script>
 Tour.init([
-  {sel:'.viewas', title:'You only see your offices', body:'Everyone can see <b>All Offices</b> \u2014 the practice total as one number. What your location decides is which offices you can <b>open individually</b>. Switch to the Carlsbad manager: she keeps the group total and Carlsbad, but the other offices and the leaderboard disappear, because those name every office\u2019s figures.'},
+  {sel:'.viewas', title:'You only see your offices', body:'Everyone can see <b>All Offices</b> \u2014 the practice total as one number. What your location decides is which offices you can <b>open individually</b>. Switch to the Carlsbad manager: she keeps the group total, the leaderboard and Carlsbad, but can\u2019t open the other offices on their own.'},
   {sel:'.kpis', title:'The four numbers', body:'Production so far \u00b7 how far <b>ahead or behind the main goal</b> \u00b7 <b>% of the main goal</b> with the <b>stretch goal</b> underneath \u00b7 and how it compares to <b>last year</b>.'},
   {sel:'#chips', title:'Group, or one office', body:'<b>All Offices</b> is the group view. Tap any office name to open just that office. A manager with one office skips straight to hers.'},
   {sel:'.chart', title:'This year vs last year', body:'Each month shows <b>last year in grey</b> beside this year. The <b>dashed line</b> is the main goal; the <b>dotted line</b> is the stretch goal. Green means the main goal was beaten.'},
-  {sel:'table.lb', title:'The leaderboard', body:'Every office ranked <b>best on top</b> by % of goal, with <b>production days left</b> in the year. Tap any row to open that office.'},
+  {sel:'table.lb', title:'The leaderboard', body:'Every office ranked <b>best on top</b> by % of goal, with <b>production days left</b> in the year. Tap a row to open an office you look after.'},
   {sel:'.foot', title:'Where the numbers live', body:'Straight from your <b>Production Dashboard workbook on SharePoint</b> \u2014 no second copy. The hub adds the eight office tabs itself, so every office is counted exactly once.'}
 ], {key:'dash', title:'Production Dashboard', next:{label:'entering the numbers', href:'production.html'}});
 </script>

@@ -25,9 +25,12 @@ global.PH_AUTH={
     return Promise.resolve({value: REMOTE===null?[]:[{id:'1',lastModifiedDateTime:'2026-09-14T00:00:00Z',
                                                       fields:{Title:'ph_sched2',Payload:JSON.stringify(REMOTE)}}]});
   }};
+/* Large payloads now arrive packed (see "A RECORD SHAREPOINT WILL TAKE" in store.js),
+   so the stand-in SharePoint unpacks what it is sent, the way reading it back would. */
 global.fetch=(u,o)=>{ if(FAIL) return Promise.reject(new Error('offline'));
-  REMOTE=JSON.parse(JSON.parse(o.body).Payload||JSON.parse(o.body).fields.Payload);
-  return Promise.resolve({status:200,ok:true,json:()=>Promise.resolve({id:'1'})}); };
+  const b=JSON.parse(o.body), pay=b.Payload!==undefined?b.Payload:b.fields.Payload;
+  return window.PH_STORE.unpack(pay).then(raw=>{ REMOTE=JSON.parse(raw);
+    return {status:200,ok:true,json:()=>Promise.resolve({id:'1'})}; }); };
 require(STORE);
 const S=window.PH_STORE;
 
@@ -86,20 +89,23 @@ const t=(n,v)=>{ (v? ok:bad).push(n); };
      bookkeeping and train everyone to ignore the banner. */
   const feed=[]; for(let i=0;i<60;i++) feed.push({id:'a'+i,title:'Schedule updated',by:'Heather',at:'x'});
   await S2.set('ph_activity', feed, {force:true});
-  const quietBefore=events.length;
+  /* Banners only: store.js also announces a save that landed ('ph-save-landed'), which
+     is not a banner and must not count as one. */
+  const banners=()=>events.filter(e=>e.type==='ph-save-blocked'||e.type==='ph-save-failed').length;
+  const quietBefore=banners();
   const fr=await S2.set('ph_activity', [{id:'a99',title:'One new thing',by:'Cory',at:'y'}]);
   t('an expiring feed may shrink to almost nothing', fr.blocked!==true);
   await S2.set('ph_seen_heather@x.com', ['a1','a2','a3','a4','a5','a6','a7','a8','a9','a10','a11','a12','a13','a14'], {force:true});
   const sr=await S2.set('ph_seen_heather@x.com', ['a99']);
   t('a pruned read-list may shrink too', sr.blocked!==true);
-  t('and neither raised a banner', events.length===quietBefore);
+  t('and neither raised a banner', banners()===quietBefore);
 
   /* But the failed-read rule still covers them - writing a feed over a copy we could
      not see would drop whatever other people added to it. */
   FAIL=true; await S2.get('ph_activity'); FAIL=false;
   const nr=await S2.set('ph_activity', feed);
   t('a feed is still not written over a copy we could not read', nr.blocked===true);
-  t('and that refusal stays quiet', events.length===quietBefore);
+  t('and that refusal stays quiet', banners()===quietBefore);
 
   /* ---- WHOSE COPY WINS -------------------------------------------------------
      2026-09-17: Heather added Dr. Lightheart to the doctor list; Jenny's calendar

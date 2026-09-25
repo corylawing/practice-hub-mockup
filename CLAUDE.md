@@ -387,6 +387,57 @@ and could open the file in Excel anyway. Real containment would need per-office 
   og/twitter block: title "Home-Brace", one professional description, `og:image` on the production
   host (it pointed at the sandbox host before), `og:url` per page. `<title>` is "Home-Brace ·
   Page" — no "(V1)" anywhere. A shared WhatsApp preview read "Schedule (V1) · Home-Brace" before.
+- **SharePoint's column holds 63,999 characters per record — and nothing checked (25/09/2026).**
+  Heather, entering 2027 doctor dates: "Your change was not saved for anyone else", repeatedly.
+  The whole schedule is ONE row; most of 2026 is ~61,000 characters, so 2027 took it over and
+  every save bounced (the storage proof in connect.html had only ever written 100 characters).
+  Now `store.js` **packs** any payload over 16,000 characters (browser zlib, base64, tag `~z1:`) —
+  a year of schedule is ~7,000 — and refuses to send anything still over `COL_MAX` (63,000),
+  keeping it held with a `tooBig` banner. **Anything that reads raw payloads must go through
+  `PH_STORE.unpack`** (history.html, restore.html do). Small records stay plain JSON.
+- **The store's write rules now (all in `store.js`, tested in `test/sync.test.js`):**
+  - **One queue per key** (`inTurn`): reads wait behind writes; `update()` is read-change-write as
+    ONE unit; queued `set()`s of a key send only the newest. A day edit used to fire three
+    simultaneous writes at the notification row — the documented cause of 409 "Save Conflict".
+  - **Busy is retried**: 409/423/429/5xx/network, waits 0.8 s, 2.5 s, 6 s (honours Retry-After);
+    `update()` re-reads and re-merges on 409. `connect()` forgets a failed first connection.
+  - **Reads**: the listing follows `@odata.nextLink` (the old `$top=200` would have missed rows
+    past 200 and created duplicates); after that, single-item reads by id. The FIRST row wins
+    for a duplicated Title. A payload that will not parse or unpack is a FAILED read, never empty.
+  - **Held changes**: a key is marked `__unsent` BEFORE its send (a phone that locks mid-save
+    used to lose the change silently), with `__base` = what SharePoint held underneath it and,
+    after a failure, `__why` (`later`/`denied`/`tooBig`). `recover()` (on any read of a held key)
+    combines instead of letting the local copy win: `merge3` walks two levels of objects (days →
+    offices; teams → sections), treats deeper values (a cell) as one, merges top-level lists by
+    value or id — and **never removes anything SharePoint has** (Cory: "Do not delete any data on
+    the schedule"). With a base, the side that changed a value wins; without one, SharePoint's
+    value stands. A browser left holding a change from before `__base` existed finds its base as
+    **its own newest version in SharePoint's version history**. Positional lists (`ph_docs`) are
+    never auto-combined, except doctors appended at the end. The pre-combine copy stays in
+    `<key>__mine`. A held copy equal to SharePoint's is simply let go.
+  - **Background resend**: 3 s after sign-in, every 60 s, and on `online`, every held key is read
+    (which combines and sends). `denied`/`tooBig` wait for a real save.
+  - **Banners**: `ph-save-failed` only for real work — the notification feed and read-lists fail
+    quietly (they were raising false alarms on day edits whose schedule save had landed).
+    `ph-save-landed` takes the red banner down; after a real failure it shows a green "Your
+    earlier changes are saved now". The banner says it keeps trying and carries the error text.
+- **Pages save the pieces they changed, one save at a time.** Schedule: changed **office cells**
+  (`dirtyCells`), not days — a whole-day save overwrote another person's office on the same day;
+  one save in flight, and `adoptSaved()` lays edits made while it travelled back on top (they used
+  to vanish when the earlier save came back). A failed save stays changed. Marketing: same, per
+  card. Admin's access grid and people settings capture the value **when tapped/saved**, adopt
+  only what landed, and keep showing taps still on their way (two quick taps used to undo one).
+- **Admin-set photos live in one row per person** (`ph_face_<slot>`, `PH.saveFace/faceOf`, cached
+  in `ph_faces`), shrunk to 256 px like self-uploads. In `ph_people` (everyone's settings in one
+  row) a single photo would have stopped every Admin save; old ones move out on the next save.
+- **The leaderboard shows to everyone who can open All Offices** (Cory, 25/09: "if they have access
+  to the all offices it should appear"), all eight offices; a row opens an office only for someone
+  who holds it (`tr.go`). The earlier rule kept it to all-office people.
+- **Browser-testing live saves locally**: open `…?env=live`, then inject a fake `PH_AUTH` + `fetch`
+  that stand in for Graph (items, single item, versions; PATCH/POST with a 63,999 limit, a delay
+  and a failure queue), seed rows, remove `#phgate`, `PH.setProfile(...)`, dispatch `ph-signed-in`.
+  Drive the schedule with `PS.open(office, date)`, `PS.pickDoc(i)`, `PS.saveDay()`. Bump the `v=`
+  stamp between runs or the browser keeps the old script.
 - **Saves merge only what THIS page changed** — `PH_STORE.mergeInto()` (schedule: per day, found by
   diffing against a snapshot taken at load/after save) and `PH_STORE.mergeById()` (marketing: per
   card). Two people editing at once both keep their work. The **doctor list cannot be merged** (days

@@ -878,6 +878,9 @@
     .v1nav{display:none !important}
     body{padding-bottom:calc(136px + env(safe-area-inset-bottom,0px)) !important}   /* bar + the tour button */
     .tour-launch{bottom:calc(76px + env(safe-area-inset-bottom,0px)) !important}
+    /* Above the bar, and the phone's full width - centred with left:50% they shrank to half. */
+    #ph-savefail,#ph-saveok{bottom:calc(76px + env(safe-area-inset-bottom,0px)) !important;
+      left:12px !important;right:12px !important;transform:none !important;width:auto !important;max-width:none !important}
 
     .ph-tabbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:7000;
       background:#0F2A4A;border-top:1px solid rgba(255,255,255,.10);
@@ -1322,21 +1325,45 @@
     const n=document.createElement('div');
     n.id='ph-savefail';
     n.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:9000;'+
-      'max-width:min(560px,92vw);background:#FCEBE8;color:#93301f;border:1px solid #f0c3b9;'+
+      'width:max-content;max-width:min(560px,92vw);background:#FCEBE8;color:#93301f;border:1px solid #f0c3b9;'+
       'border-radius:12px;padding:12px 16px;font:600 13.5px/1.55 inherit;'+
       'box-shadow:0 8px 24px rgba(15,42,74,.18);display:flex;gap:10px;align-items:flex-start';
-    n.innerHTML='<span>\u26A0\uFE0F</span><div><b>Your change was not saved for anyone else.</b><br>'+
+    const tooBig=d&&d.tooBig;
+    const detail=d&&d.error ? '<br><small style="font-weight:500;opacity:.75">Details: '+
+      escHTML(String(d.error).slice(0,160))+'</small>' : '';
+    n.innerHTML='<span>\u26A0\uFE0F</span><div><b>Your change was not saved for anyone else yet.</b><br>'+
       (denied
         ? 'You don\u2019t have permission to save to the practice\u2019s SharePoint site, so this '+
           'stayed on your own device. Ask an admin for <b>Edit</b> access to the Home-Brace site.'
-        : 'The hub could not reach SharePoint, so this stayed on your own device. Check your '+
-          'connection and try again.')+
+        : tooBig
+        ? 'This is too large for SharePoint to take in one piece. It is kept safe on this device. '+
+          'Tell Cory, and keep using this device until he says it is sorted.'
+        : 'SharePoint did not take it just now. It is kept safe on this device and the hub keeps '+
+          'trying on its own \u2014 you do not need to enter it again. Keep using this device for now.')+
+      detail+
       '</div><button style="margin-left:auto;background:none;border:none;color:inherit;'+
       'font-size:17px;cursor:pointer;line-height:1" aria-label="Dismiss">\u00d7</button>';
     n.querySelector('button').onclick=function(){ n.remove(); saveWarned=false; };
     document.body.appendChild(n);
   }
   document.addEventListener('ph-save-failed',function(e){ warnSaveFailed(e&&e.detail); });
+  /* It went after all - a retry, the background resend, or the next save. The red
+     banner comes down, and if it had been held back, say that it is saved now. */
+  document.addEventListener('ph-save-landed',function(e){
+    const b=document.getElementById('ph-savefail');
+    const recovered=e&&e.detail&&e.detail.recovered;
+    if(b){ b.remove(); saveWarned=false; }
+    if(!recovered || !document.body) return;
+    const old=document.getElementById('ph-saveok'); if(old) old.remove();
+    const n=document.createElement('div'); n.id='ph-saveok';
+    n.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:9000;'+
+      'width:max-content;max-width:min(460px,92vw);background:#E7F4EE;color:#1d6b45;border:1px solid #bfe3cf;'+
+      'border-radius:12px;padding:11px 16px;font-size:13.5px;font-weight:600;line-height:1.5;'+
+      'box-shadow:0 8px 24px rgba(15,42,74,.14)';
+    n.textContent='\u2713 Your earlier changes are saved now. Everyone can see them.';
+    document.body.appendChild(n);
+    setTimeout(function(){ n.remove(); }, 6000);
+  });
 
   /* The store refused a save because it would have wiped out real work. This has to be
      loud and it has to say what to do, because the alternative is someone deciding the
@@ -1605,8 +1632,32 @@
     try{ PHOTOS=JSON.parse(localStorage.getItem(PHOTO_KEY))||{}; }catch(_){ PHOTOS={}; }
     return PHOTOS;
   }
+  /* PHOTOS AN ADMIN SETS live in the person's own row, ph_face_<their slot>, one small
+     picture per row. They used to sit inside ph_people - the single record holding
+     everybody's teams, offices and access - and SharePoint holds 63,999 characters per
+     record, so one photo there would stop every Admin save for everyone. The local
+     cache below is filled by loadPhotos(); a photo still inside ph_people from before
+     is shown until that person is next saved, which moves it. */
+  const FACE_KEY='ph_faces', FACE_PRE='ph_face_';
+  let FACES=null;
+  function faceCache(){
+    if(FACES) return FACES;
+    try{ FACES=JSON.parse(localStorage.getItem(FACE_KEY))||{}; }catch(_){ FACES={}; }
+    return FACES;
+  }
+  function faceOf(slot){ return slot ? (faceCache()[String(slot).toLowerCase()]||'') : ''; }
+  function saveFace(slot, photo){
+    slot=String(slot||'').toLowerCase(); if(!slot) return Promise.resolve({});
+    const c=faceCache(); if(photo) c[slot]=photo; else delete c[slot];
+    try{ localStorage.setItem(FACE_KEY, JSON.stringify(c)); }catch(_){}
+    try{ refreshFaces(); }catch(_){}
+    if(!window.PH_STORE) return Promise.resolve({local:true});
+    return window.PH_STORE.set(FACE_PRE+slot, {photo:photo||''});
+  }
   function adminPhoto(mail){
-    const o=overrideFor(String(mail||'').toLowerCase().trim());
+    const k=String(mail||'').toLowerCase().trim();
+    const f=faceOf(k); if(f) return f;
+    const o=overrideFor(k);
     return (o && o.photo) ? o.photo : '';
   }
   function photoFor(mail){
@@ -1625,9 +1676,16 @@
      Resolves true when something changed, so the caller can re-render. */
   function loadPhotos(){
     if(!window.PH_STORE || !window.PH_STORE.getAll || !isLive()) return Promise.resolve(false);
-    return window.PH_STORE.getAll('ph_me_').then(function(rows){
+    return window.PH_STORE.getAll(['ph_me_', FACE_PRE]).then(function(rows){
       const cache=photoCache(); let changed=false;
+      const faces=faceCache(); let facesChanged=false;
       Object.keys(rows||{}).forEach(function(k){
+        if(k.indexOf(FACE_PRE)===0){                 // a photo an admin set - cache only
+          const slot=k.slice(FACE_PRE.length), ph=(rows[k]&&rows[k].photo)||'';
+          if(ph && faces[slot]!==ph){ faces[slot]=ph; facesChanged=true; }
+          else if(!ph && faces[slot]){ delete faces[slot]; facesChanged=true; }
+          return;
+        }
         const mail=k.slice('ph_me_'.length);
         const v=rows[k];
         if(v && v.photo && cache[mail]!==v.photo){ cache[mail]=v.photo; changed=true; }
@@ -1635,7 +1693,8 @@
         try{ if(v) localStorage.setItem(k, JSON.stringify(v)); }catch(_){}
       });
       if(changed){ try{ localStorage.setItem(PHOTO_KEY, JSON.stringify(cache)); }catch(_){} }
-      return changed;
+      if(facesChanged){ try{ localStorage.setItem(FACE_KEY, JSON.stringify(faces)); }catch(_){} }
+      return changed || facesChanged;
     }).catch(function(){ return false; });
   }
 
@@ -1866,6 +1925,6 @@
   }
   const isLive=()=>env()==='live';
 
-  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK, notesHTML, searchHTML};
+  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK, notesHTML, searchHTML, saveFace, faceOf};
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mount); else mount();
 })();

@@ -103,10 +103,10 @@
   </div>
 </div>
 
-<script src="user.js?v=hc46"></script>
+<script src="user.js?v=hc51"></script>
 <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-<script src="store.js?v=hc46"></script>
-<script src="gate.js?v=hc46"></script>
+<script src="store.js?v=hc51"></script>
+<script src="gate.js?v=hc51"></script>
 <script>
 (function(){
   'use strict';
@@ -279,6 +279,18 @@
         return loadNames().then(function(){
           return allVersions('/sites/'+siteId+'/lists/'+listId+'/items/'+itemId+'/versions?$top=200');
         });
+      })
+      .then(function(vers){
+        /* Large records are stored packed now (see store.js, "A RECORD SHAREPOINT WILL
+           TAKE"). Unpack every version first, so what is compared, searched, shown and
+           put back is the JSON itself. A version that will not unpack keeps its raw text
+           and says so rather than disappearing. */
+        var up = (window.PH_STORE && PH_STORE.unpack) ? PH_STORE.unpack : function(x){ return Promise.resolve(x); };
+        return Promise.all(vers.map(function(v){
+          var f = v.fields || {};
+          return up(f.Payload || '').then(function(txt){ f.Payload = txt; v.fields = f; return v; },
+                                          function(){ return v; });
+        }));
       })
       .then(function(vers){
         el('go').disabled=false;

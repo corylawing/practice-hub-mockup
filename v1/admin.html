@@ -227,11 +227,11 @@
   }
 
 </style>
-<script src="user.js?v=hc46"></script>
+<script src="user.js?v=hc51"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="_staff.js?v=hc46"></script>
-  <script src="store.js?v=hc46"></script>
-  <script src="gate.js?v=hc46"></script>
+  <script src="_staff.js?v=hc51"></script>
+  <script src="store.js?v=hc51"></script>
+  <script src="gate.js?v=hc51"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — admin console concept for validation. Real build: people sync from Microsoft 365; access is managed here.</div>
@@ -375,20 +375,34 @@
      Saved to ph_access and read by user.js, which uses its built-in defaults only for a
      team the matrix doesn't cover. */
   const ACCESS_KEY='ph_access';
+  const PENDING_CELLS={};        // grid taps still on their way to SharePoint
   function saveAccess(team, section){
     /* Given a team and a section, merge just that one cell onto the shared grid - that
        is what tapping a cell does, and it is nearly every save. A page that has been
        open a while then changes one cell and nothing else. Adding, renaming or deleting
        a team rewrites its whole row and comes through with no arguments. */
     if(window.PH_STORE && window.PH_STORE.update && team && section){
+      /* The level as tapped NOW. Read later, when the write got its turn, it could be
+         whatever an earlier save had just put back into `access` - so tapping two cells
+         quickly could quietly undo the first. Taps still on their way stay on screen when
+         an earlier save brings the shared grid back. */
+      var v = (access[team]||{})[section] || 'none', ck = team+'\u0000'+section;
+      PENDING_CELLS[ck] = {team:team, section:section, v:v};
       window.PH_STORE.update(ACCESS_KEY, function(remote){
         var merged = (remote && typeof remote==='object') ? remote : {};
         merged[team] = Object.assign({}, merged[team]||{});
-        merged[team][section] = (access[team]||{})[section] || 'none';
-        access = Object.assign({}, merged, {});   // adopt the shared truth locally
-        ensureAccess();
+        merged[team][section] = v;
         return merged;
-      }).then(function(){ if(window.PH && PH.reloadAccess) PH.reloadAccess(); });
+      }).then(function(r){
+        if(PENDING_CELLS[ck] && PENDING_CELLS[ck].v===v) delete PENDING_CELLS[ck];
+        if(r && r.value && !r.blocked && !r.error){
+          access = Object.assign({}, r.value);              // adopt the shared truth locally
+          Object.keys(PENDING_CELLS).forEach(function(k){ var p=PENDING_CELLS[k];
+            access[p.team] = Object.assign({}, access[p.team]||{}); access[p.team][p.section] = p.v; });
+          ensureAccess();
+        }
+        if(window.PH && PH.reloadAccess) PH.reloadAccess();
+      });
       return;
     }
     if(window.PH_STORE) window.PH_STORE.set(ACCESS_KEY, access);
@@ -451,6 +465,7 @@
     try{ return JSON.parse(localStorage.getItem(PEOPLE_KEY))||{}; }catch(_){ return {}; }
   }
   let PEOPLE_OVR=loadPeopleOverrides();
+  const PENDING_OVR={};          // people saves still on their way to SharePoint
   function savePeopleOverrides(changed){
     /* THE CHANGED SLOTS ONLY. This used to send the page's whole copy, so a page open
        for an hour sent an hour-old copy over whatever anyone else had saved since - and
@@ -460,15 +475,29 @@
        local slot is laid on top - which adds and updates but never deletes anyone
        else's. */
     var keys = Array.isArray(changed) ? changed : Object.keys(PEOPLE_OVR);
+    /* The settings as they are NOW, when Save was pressed. This used to read PEOPLE_OVR
+       when the write got its turn - and an earlier save had by then replaced PEOPLE_OVR
+       with the shared copy, which did not have this person's new settings yet. Saving
+       two people quickly could write the second person's OLD settings back, or delete
+       their slot. */
+    var vals = {};
+    keys.forEach(function(k){ vals[k] = PEOPLE_OVR[k]; PENDING_OVR[k] = {v:PEOPLE_OVR[k]}; });
     var done = window.PH_STORE && window.PH_STORE.update
       ? window.PH_STORE.update(PEOPLE_KEY, function(remote){
           var merged = Object.assign({}, (remote && typeof remote==='object') ? remote : {});
           keys.forEach(function(k){
-            if(PEOPLE_OVR[k]===undefined){ if(Array.isArray(changed)) delete merged[k]; }
-            else merged[k]=PEOPLE_OVR[k];
+            if(vals[k]===undefined){ if(Array.isArray(changed)) delete merged[k]; }
+            else merged[k]=vals[k];
           });
-          PEOPLE_OVR = merged;
           return merged;
+        }).then(function(r){
+          keys.forEach(function(k){ if(PENDING_OVR[k] && PENDING_OVR[k].v===vals[k]) delete PENDING_OVR[k]; });
+          if(r && r.value && !r.blocked && !r.error){
+            PEOPLE_OVR = Object.assign({}, r.value);
+            Object.keys(PENDING_OVR).forEach(function(k){ var p=PENDING_OVR[k];
+              if(p.v===undefined) delete PEOPLE_OVR[k]; else PEOPLE_OVR[k]=p.v; });
+          }
+          return r;
         })
       : Promise.resolve({});
     /* This used to swallow the error. When browser storage filled up, the screen
@@ -582,6 +611,9 @@
       if(o.photo!==undefined) u.photo=o.photo;
       if(o.access)            u.access=o.access;      // per-person overrides of the team grid
     }
+    // A photo set here lives in the person's own row now (see PH.saveFace).
+    const fp=(window.PH && PH.faceOf) ? PH.faceOf(ovrKey(u)) : '';
+    if(fp) u.photo=fp;
     return u;
   }
 
@@ -808,20 +840,25 @@
   function pickPhoto(){ const i=el('fPhotoInput'); if(i) i.click(); }
   function photoChosen(input){
     const f=input.files&&input.files[0]; if(!f) return;
-    /* Hard limit, and it is deliberately small. Photos are kept in the SAME record
-       as everyone's teams, offices and access, and browser storage for the whole
-       site is only about 5 MB. Three 1.4 MB photos used to overflow it - and the
-       failure was silent, so the next reload lost every setting an admin had made,
-       not just the photos. A headshot fits in 250 KB easily. */
-    if(f.size>250000){
-      alert('That photo is too large \u2014 please use one under 250 KB.\n\n'+
-            'Most phone photos are far bigger than that; resizing it first is the quickest fix.');
-      input.value=''; return;
-    }
+    if(!/^image\//.test(f.type)){ alert('That file is not a picture. Try a JPG or PNG.'); input.value=''; return; }
+    /* Shrunk to the same 256px square as a photo people upload for themselves, whatever
+       size it started at, and saved in the person's OWN row (ph_face_<slot>, see saveUser).
+       It used to go in full into the one record that holds everyone's teams, offices and
+       access. SharePoint holds 63,999 characters per record: one phone photo would have
+       stopped every Admin save, for everybody, until it was removed. */
     const r=new FileReader();
-    r.onload=function(){ tmpU.photo=r.result;
-      const face=el('fPhotoFace');
-      if(face) face.innerHTML='<img class="face" src="'+r.result+'" alt="" style="width:34px;height:34px;border-radius:50%;object-fit:cover">';
+    r.onload=function(){
+      const img=new Image();
+      img.onload=function(){
+        const S=256, c=document.createElement('canvas'); c.width=S; c.height=S;
+        const g=c.getContext('2d'), m=Math.min(img.width,img.height);
+        g.drawImage(img,(img.width-m)/2,(img.height-m)/2,m,m,0,0,S,S);
+        tmpU.photo=c.toDataURL('image/jpeg',0.82);
+        const face=el('fPhotoFace');
+        if(face) face.innerHTML='<img class="face" src="'+tmpU.photo+'" alt="" style="width:34px;height:34px;border-radius:50%;object-fit:cover">';
+      };
+      img.onerror=function(){ alert('That picture could not be opened. Try a JPG or PNG.'); input.value=''; };
+      img.src=r.result;
     };
     r.readAsDataURL(f);
   }
@@ -880,11 +917,15 @@
     if(!key){ alert('This person has no name, email or employee ID, so there is nowhere '+
                     'to save their settings. Tell Cory.'); return; }
     var retired = ovrKeysFor(u).concat([oldKey]).filter(function(k){ return k && k!==key; });
+    /* A photo kept in the shared record by an older version moves to the person's own
+       row the next time they are saved, so the shared record only ever gets smaller. */
+    var legacyPhoto = [key].concat(retired).some(function(k){ return PEOPLE_OVR[k] && PEOPLE_OVR[k].photo; });
     retired.forEach(function(k){ delete PEOPLE_OVR[k]; });
     PEOPLE_OVR[key]={teams:u.teams.slice(), locs:locs.slice(), status:u.status,
                      email:u.email, emp:u.emp, role:u.role,
-                     photo:(u.photo!==undefined?u.photo:undefined),
                      access:u.access};
+    if((tmpU.photo!==undefined || legacyPhoto) && window.PH && PH.saveFace)
+      PH.saveFace(key, u.photo||'');
     savePeopleOverrides([key].concat(retired));
     if(window.PH && PH.logActivity && PH.isLive())
       PH.logActivity({kind:'access', sec:'admin', ic:'\u2699\uFE0F',
@@ -1396,7 +1437,7 @@
 })();
 </script>
 <script>PH.nav('admin');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(PH.loadPhotos)PH.loadPhotos().then(function(got){if(got&&window.AD&&AD.tab)AD.tab('users');});});</script>
-<script src="tour.js?v=hc46"></script>
+<script src="tour.js?v=hc51"></script>
 <script>
 Tour.init([
   {sel:'#tabs', title:'This is your control room', body:'Four tabs and you can run the whole hub: <b>People</b>, <b>Teams &amp; Access</b>, <b>Document Sections</b> and <b>Locations</b>. No developer, no consultant.', pre:()=>AD.tab('users')},

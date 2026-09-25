@@ -281,10 +281,10 @@
   }
 
 </style>
-<script src="user.js?v=hc46"></script>
+<script src="user.js?v=hc51"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc46"></script>
-  <script src="gate.js?v=hc46"></script>
+  <script src="store.js?v=hc51"></script>
+  <script src="gate.js?v=hc51"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — marketing board concept for validation. Real build lives in Home-Brace (Microsoft Lists / Planner).</div>
@@ -477,11 +477,33 @@
     if(window.PH_STORE && PH_STORE.update && PH.isLive()){
       const d=dirtyCards();
       if(!d.changed.length && !d.removed.length) return;
-      const mine=cards;
+      const mine=cards, sent={};
       PH_STORE.update(MKEY, function(remote){
+        d.changed.forEach(id=>{ const c=mine.find(x=>String(x.id)===id); sent[id]=c?JSON.stringify(c):undefined; });
+        d.removed.forEach(id=>{ sent[id]=undefined; });
         return PH_STORE.mergeById(remote, mine, d.changed, d.removed);
       }).then(function(r){
-        if(r && r.value && !r.blocked){ cards=r.value; cards.forEach(c=>{ if(+c.id>seq) seq=+c.id; }); takeCardSnap(); render(); }
+        /* Not saved means not saved: the cards stay changed and go with the next save.
+           And a save that comes back late must not take back a card edited since it
+           left - the same fix as the schedule (see adoptSaved there). */
+        if(!r || r.blocked || r.error || !r.value) return;
+        const now={}; cards.forEach(c=>{ now[String(c.id)]=c; });
+        const keep={};
+        Object.keys(now).concat(Object.keys(snapCards)).forEach(id=>{
+          if(Object.prototype.hasOwnProperty.call(keep,id)) return;
+          const cur=now[id]?JSON.stringify(now[id]):undefined;
+          const was=Object.prototype.hasOwnProperty.call(sent,id)?sent[id]:snapCards[id];
+          if(cur!==was) keep[id]=now[id]||null;
+        });
+        cards=r.value.slice(); takeCardSnap();
+        Object.keys(keep).forEach(id=>{
+          const i=cards.findIndex(c=>String(c.id)===id);
+          if(keep[id]===null){ if(i>=0) cards.splice(i,1); }
+          else if(i>=0) cards[i]=keep[id]; else cards.push(keep[id]);
+        });
+        cards.forEach(c=>{ if(+c.id>seq) seq=+c.id; });
+        render();
+        if(Object.keys(keep).length) persist();
       });
       return;
     }
@@ -1108,7 +1130,7 @@
 })();
 </script>
 <script>PH.nav('marketing');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc46"></script>
+<script src="tour.js?v=hc51"></script>
 <script>
 Tour.init([
   {sel:'#viewseg', pre:()=>MK.view('year'), title:'Four ways to look at it', body:'<b>The year</b> is the planning view \u2014 every promotion on one screen. <b>Board</b> is the day-to-day working view. <b>Month</b> lays everything out on a calendar. <b>By office</b> shows what each location got.'},

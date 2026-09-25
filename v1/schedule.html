@@ -294,10 +294,10 @@
   }
 
 </style>
-<script src="user.js?v=hc46"></script>
+<script src="user.js?v=hc51"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc46"></script>
-  <script src="gate.js?v=hc46"></script>
+  <script src="store.js?v=hc51"></script>
+  <script src="gate.js?v=hc51"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — sample staff schedule for validation. Live version = one Microsoft List the practice maintains.</div>
@@ -403,24 +403,15 @@
        the previous copy, weighs the new one, and refuses a write that would empty the
        year out. A direct localStorage.setItem here would step around all of it. */
     if(window.PH_STORE && PH_STORE.update && PH.isLive()){
-      /* ONLY THE DAYS THIS PAGE CHANGED go out, laid onto the shared copy. Two people
-         editing at once used to be last-save-wins for the whole year. The changed days
-         are found by comparing against the snapshot taken at load and after each save,
-         so every path that touches a day - the day editor, office hours following, a
-         doctor removed, an office renamed - is covered without instrumenting each one.
-         What comes back is the merged year, which then becomes ours, so the other
-         person's changes appear here too. */
-      const d=dirtyDays();
-      if(d.changed.length || d.removed.length){
-        const mine=sched;
-        PH_STORE.update('ph_sched2', function(remote){
-          const merged=PH_STORE.mergeInto(remote, mine, d.changed, d.removed);
-          merged.__v=SCHED_VERSION; delete merged.__demo;
-          return merged;
-        }).then(function(r){
-          if(r && r.value && !r.blocked){ sched=r.value; takeSnap(); refresh(); }
-        });
-      }
+      /* ONLY THE OFFICE CELLS THIS PAGE CHANGED go out, laid onto the shared copy.
+         Two people editing at once used to be last-save-wins for the whole year; then
+         for a whole DAY - Heather setting Carlsbad on the 5th sent the 5th as her page
+         had it, over the Clovis doctor Jenny had just put on the same day. Changes are
+         found by comparing against the snapshot taken at load and after each save, so
+         every path that touches a day - the day editor, office hours following, a doctor
+         removed, an office renamed - is covered without instrumenting each one. One save
+         at a time from this page: anything changed while one is on its way goes next. */
+      if(saving) again=true; else sendCells();
     } else {
       if(window.PH_STORE) PH_STORE.set('ph_sched2', sched);
       else try{ localStorage.setItem('ph_sched2',JSON.stringify(sched)); }catch(_){}
@@ -459,15 +450,76 @@
   let snap={};
   const isDay=k=>/^\d{4}-\d{2}-\d{2}$/.test(k);
   function takeSnap(){ snap={}; Object.keys(sched).forEach(k=>{ if(isDay(k)) snap[k]=JSON.stringify(sched[k]); }); }
-  function dirtyDays(){
-    const changed=[], removed=[], seen={};
+  const J=v=>v===undefined ? undefined : JSON.stringify(v);
+  /* Every [day, office] whose cell differs from the snapshot. */
+  function dirtyCells(){
+    const cells=[], seen={};
     Object.keys(sched).filter(isDay).concat(Object.keys(snap)).forEach(k=>{
       if(seen[k]) return; seen[k]=1;
-      const now = sched[k]===undefined ? undefined : JSON.stringify(sched[k]);
-      if(now===undefined){ if(snap[k]!==undefined) removed.push(k); }
-      else if(now!==snap[k]) changed.push(k);
+      const cur=sched[k]||{};
+      if(snap[k]!==undefined && JSON.stringify(cur)===snap[k]) return;
+      const was=snap[k]===undefined ? {} : JSON.parse(snap[k]), offs={};
+      Object.keys(cur).concat(Object.keys(was)).forEach(o=>{
+        if(offs[o]) return; offs[o]=1;
+        if(J(cur[o])!==J(was[o])) cells.push([k,o]);
+      });
     });
-    return {changed, removed};
+    return cells;
+  }
+  let saving=false, again=false;
+  function sendCells(){
+    const cells=dirtyCells();
+    if(!cells.length) return;
+    saving=true; again=false;
+    const sent={};                                   // 'day|office' -> what went (undefined = cleared)
+    PH_STORE.update('ph_sched2', function(remote){
+      Object.keys(sent).forEach(k=>{ delete sent[k]; });           // this may run again after a conflict
+      const out=Object.assign({}, (remote && typeof remote==='object') ? remote : {});
+      cells.forEach(([k,o])=>{
+        const v=sched[k] ? sched[k][o] : undefined;
+        const day=Object.assign({}, out[k]||{});
+        if(v===undefined) delete day[o]; else day[o]=v;
+        out[k]=day;
+        sent[k+'|'+o]=J(v);
+      });
+      out.__v=SCHED_VERSION; delete out.__demo;
+      return out;
+    }).then(function(r){
+      saving=false;
+      /* NOT SAVED MEANS NOT SAVED. This used to adopt the result and re-snapshot even
+         when the send had failed - r.value is filled in either way - so the page forgot
+         those cells were unsent. They stay changed now and go with the next save, and
+         the store holds them and sends them itself. No retry loop from here. */
+      if(r && !r.blocked && !r.error && r.value){
+        adoptSaved(r.value, sent);
+        if(again || dirtyCells().length) save();
+      } else if(again) save();
+    }, function(){ saving=false; if(again) save(); });
+  }
+  /* A SAVE THAT FINISHES LATE MUST NOT TAKE BACK A LATER EDIT.
+
+     Saving is quick in the office and slow on a phone. Heather enters a doctor on
+     Tuesday, the save goes; she enters Wednesday while it is still on its way; the
+     Tuesday save comes back with the shared year and the page used to REPLACE its
+     schedule with it - Wednesday was not in it, and the snapshot taken next said
+     Wednesday was never changed, so it was never sent. Now the shared year comes in,
+     every cell edited here since that save left is laid back on top, and it stays
+     marked as changed so the next save carries it. */
+  function adoptSaved(merged, sent){
+    const keep=[], seen={};
+    Object.keys(sched).filter(isDay).concat(Object.keys(snap)).forEach(k=>{
+      if(seen[k]) return; seen[k]=1;
+      const cur=sched[k]||{}, was=snap[k]===undefined ? {} : JSON.parse(snap[k]), offs={};
+      Object.keys(cur).concat(Object.keys(was)).forEach(o=>{
+        if(offs[o]) return; offs[o]=1;
+        const id=k+'|'+o, now=J(cur[o]);
+        const left=Object.prototype.hasOwnProperty.call(sent,id) ? sent[id] : J(was[o]);
+        if(now!==left) keep.push([k,o,cur[o]]);
+      });
+    });
+    sched=merged; takeSnap();
+    keep.forEach(([k,o,v])=>{ const day=Object.assign({}, sched[k]||{}); if(v===undefined) delete day[o]; else day[o]=v; sched[k]=day; });
+    refresh();
   }
 
   // null on a day the office is OPEN = nobody rostered = a Yellow Dot Day.
@@ -1353,7 +1405,7 @@
    machine is missing here until the next page load. */
 document.addEventListener('ph-locations-changed',function(){ if(window.PS&&PS.relocate)PS.relocate(); });
 PH.nav('schedule');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc46"></script>
+<script src="tour.js?v=hc51"></script>
 <script>
 Tour.init([
   {sel:'#viewseg', title:'Week or month', body:'<b>Week</b> is the day-to-day working view. <b>Month</b> shows the whole month at a glance, with every office in its own color.'},
