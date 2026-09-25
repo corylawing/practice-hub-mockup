@@ -39,7 +39,9 @@ const ok=[],bad=[]; const t=(n,v)=>{ (v?ok:bad).push(n); };
 
 const A=load();
 const C=A.PH.contrast, W='#FFFFFF';
-t('eight schemes, the first is Home-Brace', A.PH.themes().length===8 && A.PH.themes()[0].k==='homebrace');
+t('fifteen schemes, the first is Home-Brace', A.PH.themes().length===15 && A.PH.themes()[0].k==='homebrace');
+t('the softer schemes Cory asked for are there', ['blush','peony','rose','lavender','mauve','plum','coral','rosegold','sage'].every(k=>A.PH.themes().some(t=>t.k===k)));
+t('no two schemes share a name or key', new Set(A.PH.themes().map(t=>t.k)).size===15 && new Set(A.PH.themes().map(t=>t.n)).size===15);
 
 // 1. Readable, whatever is picked.
 A.PH.themes().forEach(th=>{

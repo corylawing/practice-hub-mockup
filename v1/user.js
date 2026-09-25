@@ -60,13 +60,23 @@
          match; cached on the device and applied before the page draws, so there is no
          flash of the default first.
      --------------------------------------------------------------- */
+  /* Cory, 25/09: "Most of the practice employees are female so if you could have more
+     female contrasts would be great." The softer, warmer schemes come first, after the
+     original; every one passes the same readability rules as picked. */
   const THEMES=[
     {k:'homebrace',  n:'Home-Brace',    p:'#0F2A4A', a:'#149B96', note:'The original'},
+    {k:'blush',      n:'Blush',         p:'#5E3445', a:'#D96A8E'},
+    {k:'peony',      n:'Peony',         p:'#5A1A45', a:'#D9448B'},
+    {k:'rose',       n:'Rose',          p:'#5B1F37', a:'#C2456B'},
+    {k:'lavender',   n:'Lavender',      p:'#3D3270', a:'#8A73E0'},
+    {k:'mauve',      n:'Mauve',         p:'#4D3550', a:'#A5679A'},
+    {k:'plum',       n:'Plum',          p:'#3B1E4B', a:'#9B3D7E'},
+    {k:'coral',      n:'Coral',         p:'#5A2B2B', a:'#E0604F'},
+    {k:'rosegold',   n:'Rose Gold',     p:'#4A2C2A', a:'#C27C6B'},
+    {k:'sage',       n:'Sage',          p:'#2E4A3F', a:'#5F917A'},
     {k:'harbor',     n:'Harbor Blue',   p:'#13315C', a:'#2563EB'},
     {k:'evergreen',  n:'Evergreen',     p:'#173F2E', a:'#2F855A'},
-    {k:'plum',       n:'Plum',          p:'#3B1E4B', a:'#9B3D7E'},
     {k:'terracotta', n:'Terracotta',    p:'#4A2419', a:'#C05621'},
-    {k:'rose',       n:'Rose',          p:'#5B1F37', a:'#C2456B'},
     {k:'graphite',   n:'Graphite',      p:'#22262B', a:'#5B5FD6'},
     {k:'contrast',   n:'High contrast', p:'#000000', a:'#0A58CA', note:'Easiest to read',
        extra:{'--ink':'#0B0F14','--soft':'#2F3A48','--line':'#98A2B3','--canvas':'#FFFFFF'}}
@@ -1051,7 +1061,7 @@
   .ph-ov{position:fixed;inset:0;background:rgba(15,42,74,.55);z-index:410;display:none;align-items:flex-start;justify-content:center;padding:22px 14px;overflow:auto}
   .ph-ov.open{display:flex}
   .ph-card{background:#fff;width:100%;max-width:620px;border-radius:16px;box-shadow:0 16px 44px rgba(15,42,74,.3);margin:auto;overflow:hidden;font-family:inherit}
-  .ph-themes{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px}
+  .ph-themes{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px}
   .ph-th{display:flex;flex-direction:column;gap:6px;border:1.5px solid #E4E8EE;background:#fff;border-radius:12px;
     padding:7px 7px 8px;cursor:pointer;text-align:left;font-family:inherit;color:var(--ink,#1F2D3D)}
   .ph-th:hover{border-color:#CBD5E1}
@@ -1060,8 +1070,12 @@
     border:1px solid rgba(15,42,74,.08);box-sizing:border-box}
   .ph-thsw > span{display:block;height:auto;min-width:0}
   .ph-thsw-p{flex:3 1 0} .ph-thsw-a{flex:2 1 0} .ph-thsw-t{flex:2 1 0}
-  .ph-thn{font-size:12.5px;font-weight:700;line-height:1.2;display:flex;align-items:center;gap:5px;color:#1F2D3D}
-  .ph-thck{margin-left:auto;color:var(--teal-600,#0F827E);font-weight:800}
+  .ph-th{position:relative}
+  .ph-thn{display:block;font-size:12.5px;font-weight:700;line-height:1.2;color:#1F2D3D}
+  /* The tick is a badge on the corner, so a name never has to share its line with it. */
+  .ph-thck{position:absolute;top:3px;right:3px;width:18px;height:18px;border-radius:50%;background:#fff;
+    color:var(--teal-600,#0F827E);font-size:11px;font-weight:800;line-height:18px;text-align:center;
+    box-shadow:0 1px 3px rgba(15,42,74,.25)}
   .ph-thnote{display:block;font-size:11px;color:#56627A;line-height:1.2;margin-top:-3px}
   .ph-top{display:flex;align-items:center;gap:13px;padding:17px 20px;border-bottom:1px solid #E4E8EE}
   .ph-top .big{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;font-size:19px;flex:none}
@@ -1400,7 +1414,8 @@
         '<span class="ph-thsw"><span class="ph-thsw-p" style="background:'+t['--navy']+'"></span>'+
           '<span class="ph-thsw-a" style="background:'+t['--teal']+'"></span>'+
           '<span class="ph-thsw-t" style="background:'+t['--teal-soft']+'"></span></span>'+
-        '<span class="ph-thn">'+escHTML(th.n)+(on?'<span class="ph-thck">\u2713</span>':'')+'</span>'+
+        (on?'<span class="ph-thck" aria-hidden="true">\u2713</span>':'')+
+        '<span class="ph-thn">'+escHTML(th.n)+'</span>'+
         (th.note?'<span class="ph-thnote">'+escHTML(th.note)+'</span>':'')+'</button>';
     }).join('');
   }

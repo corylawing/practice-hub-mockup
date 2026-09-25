@@ -390,7 +390,9 @@ and could open the file in Excel anyway. Real containment would need per-office 
 - **Color schemes, per person (25/09/2026).** Cory: "for the user in their profile to change the
   colors of the practice hub. It needs to be smart. We should provide color schemes." / "default is
   what we have already". My profile → **Colors for the hub**: `THEMES` in user.js — Home-Brace
-  (default), Harbor Blue, Evergreen, Plum, Terracotta, Rose, Graphite, High contrast. A scheme is
+  (default); then, because "most of the practice employees are female" (Cory, same day), the softer
+  ones first: Blush, Peony, Rose, Lavender, Mauve, Plum, Coral, Rose Gold, Sage; then Harbor Blue,
+  Evergreen, Terracotta, Graphite, High contrast — 15 in all. A scheme is
   TWO colors (bar `p`, accent `a`); `schemeTokens()` derives every other shade and enforces
   contrast floors (white on the bar 7:1, muted text on the bar 4.5:1, white on buttons 3:1, accent
   text on white 4.5:1, text on tints 7:1) by darkening until met. Applied as CSS variables set
