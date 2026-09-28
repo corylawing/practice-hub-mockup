@@ -27,9 +27,15 @@ STAGE="$(mktemp -d)/swa"
 
 mkdir -p "$STAGE/v1"
 cp "$REPO/deploy/index.html" "$STAGE/index.html"
+# Site settings. Only a file type today: without it .mp4 is served as application/octet-stream,
+# which iPhones may refuse to play.
+cp "$REPO/deploy/staticwebapp.config.json" "$STAGE/staticwebapp.config.json"
 # The staff sign-in guide. Root level and ungated on purpose: it is what you hand
 # someone who cannot get in yet, so it must not sit behind the sign-in.
 cp "$REPO/start.html" "$STAGE/start.html"
+# The launch video that start.html plays. Not in git (it shows staff names; the repo is public),
+# so it only exists on the machine that deploys. start.html hides the player if it is missing.
+if [ -d "$REPO/media" ]; then cp -R "$REPO/media" "$STAGE/media"; else echo "  note: no media/ folder - start.html will show no video"; fi
 cp -R "$REPO/assets" "$STAGE/assets"
 rsync -a --exclude 'snapshot.json' --exclude '_testgrids.json' "$REPO/v1/" "$STAGE/v1/"
 

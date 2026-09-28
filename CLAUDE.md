@@ -88,6 +88,15 @@ multi-line-text column lives there for step 8; harmless to keep or delete.
 Entra groups to create (7 team + 8 office), the permission matrix, the per-office restriction, and
 the shared-account problem. Republish that same file to update it; do not create a second one.
 
+**Staff sign-in guide + launch video (2026-09-28):** the link to hand out is
+`https://kind-hill-00da87410.3.azurestaticapps.net/start.html` (ungated). It now carries Heather's
+"why we built it" and the 2:32 launch video, served from `media/` on their site. `media/` is
+**gitignored** (the video shows staff names; this repo is public) and exists only on Cory's Mac;
+the deploy script copies it, and start.html hides the player when the file is missing (sandbox).
+`deploy/staticwebapp.config.json` only sets `.mp4` -> `video/mp4` (SWA served octet-stream, which
+iPhones may refuse). A claude.ai copy of the guide also exists (artifact KrFc2mkqjGE8e6vdHTdshp).
+The master video + everything to re-render it: `~/Movies/Home-Brace/` (`source/README.txt`).
+
 **Access model (simplified 2026-08-28):** because the app does the filtering, SharePoint needs only
 **baseline site access** - one group, or "Everyone except external guests" so new hires work with no
 admin step. The 15 team/office groups previously drafted are **not needed** and were dropped.

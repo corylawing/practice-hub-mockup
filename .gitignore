@@ -16,3 +16,7 @@ v1/_promos.json
 # The practice roster: real names, work emails and employee IDs. Public repo,
 # so this is tenant-only (the deploy script copies it).
 v1/_people.json
+
+# The launch video and its poster for start.html. It shows real staff names and the repo
+# is public, so it lives only on this machine and on their site (the deploy script copies it).
+media/

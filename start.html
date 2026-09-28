@@ -261,17 +261,39 @@
   }
   footer .brands{font-weight:700;letter-spacing:.09em;color:var(--teal-deep)}
 
+  /* ---- why we built it: Heather's words, set as a quotation ---- */
+  .why-we{margin:0;display:flex;flex-direction:column;gap:14px}
+  .why-we .label{font-size:11.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--teal-deep)}
+  .why-we blockquote{margin:0;position:relative;padding-left:34px;
+    font-family:Bitter,Georgia,serif;font-weight:500;font-size:20px;line-height:1.6;color:var(--ink)}
+  .why-we blockquote::before{content:"\201C";position:absolute;left:-4px;top:-14px;
+    font-family:Bitter,Georgia,serif;font-size:62px;line-height:1;color:var(--teal)}
+  .why-we blockquote p{margin:0}
+  .why-we blockquote p + p{margin-top:12px}
+  .why-we figcaption{padding-left:34px;font-size:15.5px;color:var(--ink-soft)}
+  .why-we figcaption b{color:var(--ink);font-weight:700}
+
+  /* ---- the launch video. media/ is kept out of git (it shows staff names and the repo is
+          public), so the sandbox copy has no video: the script at the end hides this. ---- */
+  .tour{display:flex;flex-direction:column;gap:10px}
+  .tour video{display:block;width:100%;max-width:100%;aspect-ratio:16/9;border-radius:14px;
+    background:#0F2A4A;box-shadow:var(--shadow)}
+  .tour p{margin:0;font-size:14.5px;color:var(--ink-soft)}
+
   @media (max-width:430px){
     body{font-size:16px}
     ol.steps > li{grid-template-columns:34px 1fr;gap:0 13px}
     .num{font-size:25px}
     .what{font-size:17.5px}
     .why,.note p,dl.finds dt,dl.finds dd,.ask p{font-size:15.5px}
+    .why-we blockquote{font-size:18px;padding-left:26px}
+    .why-we figcaption{padding-left:26px}
   }
   @media print{
     body{background:#fff;color:#000;padding-block:0}
     .mock{box-shadow:none;border:1px solid #ccc}
     .sheet{gap:26px}
+    .tour{display:none}
   }
 </style>
 </head>
@@ -285,6 +307,27 @@
     <p class="standfirst">Home-Brace is the practice hub &mdash; the schedule, production numbers,
       documents and team directory in one place. Signing in takes about a minute.</p>
   </header>
+
+  <figure class="why-we">
+    <span class="label">Why we built it</span>
+    <blockquote>
+      <p>We created this centralized hub to bring the information our teams need most into one
+        easy-to-access place. Our goal is to make it simpler to find what you need, when you need it.</p>
+      <p>As our organization continues to grow, this hub will serve as a shared resource to improve
+        communication, create greater visibility, and help our teams stay connected and aligned across
+        all locations.</p>
+    </blockquote>
+    <figcaption><b>Heather Beal</b>, Chief Operating Officer</figcaption>
+  </figure>
+
+  <section class="tour" aria-label="Video tour">
+    <h2>A quick tour</h2>
+    <video id="tour-video" controls playsinline preload="metadata" poster="media/home-brace-tour-v2-poster.jpg">
+      <source src="media/home-brace-tour-v2.mp4" type="video/mp4">
+    </video>
+    <p>How to sign in, what you can set in your profile, each part of the hub, and how to save it
+      to your phone. Turn the sound up for the music. Every step is also written on screen.</p>
+  </section>
 
   <div class="addr">
     <span>The address</span>
@@ -333,7 +376,8 @@
         <div class="num">4</div>
         <div>
           <p class="what">You are in.</p>
-          <p class="why">The small window closes by itself and Home-Brace opens.</p>
+          <p class="why">The small window closes by itself and Home-Brace opens. Next time it is
+            usually one click.</p>
         </div>
       </li>
     </ol>
@@ -348,7 +392,8 @@
 
   <section>
     <h2>Finding your way around</h2>
-    <p class="why" style="margin-top:6px">The tabs run across the top of every page:</p>
+    <p class="why" style="margin-top:6px">The tabs run across the top of every page. On a phone they
+      sit along the bottom instead, with <b>More</b> for the rest.</p>
     <ul class="tabs">
       <li>&#127968; Home</li>
       <li>&#128202; Production Dashboard</li>
@@ -365,15 +410,20 @@
       </div>
       <div>
         <dt>Your name, top right</dt>
-        <dd>Your photo, phone number and &ldquo;About me&rdquo; &mdash; yours to change any time.</dd>
+        <dd>Your photo, phone number, &ldquo;About me&rdquo; and colors &mdash; yours to change any time.</dd>
       </div>
       <div>
         <dt>The bell, top right</dt>
         <dd>Anything new for you. Click <b>Got it</b> on one and it will not come back.</dd>
       </div>
       <div>
+        <dt>The magnifying glass, next to the bell</dt>
+        <dd>Search for anyone at any office, or jump straight to a page. Start typing and the
+          results appear.</dd>
+      </div>
+      <div>
         <dt>If something looks out of date</dt>
-        <dd>Press <b>F5</b> to refresh the page.</dd>
+        <dd>Refresh the page: press <b>F5</b> on a computer, or pull the page down on a phone.</dd>
       </div>
     </dl>
   </section>
@@ -416,8 +466,10 @@
 
     <ul class="yours">
       <li><span><b>Photo.</b> Drag a picture in, or choose one from your phone or computer.
-        Any size &mdash; it is resized for you. No photo? Pick a colour for your initials
+        Any size &mdash; it is resized for you. No photo? Pick a color for your initials
         instead.</span></li>
+      <li><span><b>Colors for the hub.</b> Pick one of 15 color schemes. It changes the hub for
+        you only, on every device you sign in on. Home-Brace, the original, is the default.</span></li>
       <li><span><b>Preferred name.</b> What you would like to be called. This is the name
         your team sees.</span></li>
       <li><span><b>Contact phone.</b> Microsoft does not hold this one, so it is blank until
@@ -426,8 +478,8 @@
     </ul>
 
     <footer>All of this shows on the <b>&#128101; Team</b> tab, where anyone can search by name,
-      office, role or phone. Your name and email come from Microsoft, and your team and office
-      are set by an admin &mdash; those four above are yours.</footer>
+      office or role. Your name and email come from Microsoft, and your team and office
+      are set by an admin &mdash; the rest is yours.</footer>
   </section>
 
   <div class="ask">
@@ -444,6 +496,13 @@
   </footer>
 
 </div>
+
+<script>
+  // No video file (the sandbox copy): hide the section rather than show an empty player.
+  (function(){ var v=document.getElementById('tour-video'); if(!v) return;
+    function gone(){ var t=v.closest('.tour'); if(t) t.hidden=true; }
+    var s=v.querySelector('source'); if(s) s.addEventListener('error',gone); v.addEventListener('error',gone); })();
+</script>
 
 </body>
 </html>
