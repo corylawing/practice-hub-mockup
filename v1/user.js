@@ -2224,7 +2224,7 @@
       return '<i class="phfb-dot" style="background:'+c+';--dx:'+Math.round(Math.cos(a)*d)+'px;--dy:'+Math.round(Math.sin(a)*d)+'px"></i>'; }).join('');
     return '<div class="phfb-done" role="status"><div class="phfb-badge"><span class="phfb-disc"></span><span class="phfb-wave"></span>'+dots+
       '<svg viewBox="0 0 92 92" aria-hidden="true"><path class="phfb-tick" d="M28 47 L41 60 L65 34"/></svg></div>'+
-      '<h3>Sent. Thank you!</h3><p>'+(sandbox?'This is the sandbox copy, so nothing was actually sent.':'Cory has it.')+'</p>'+
+      '<h3>Sent. Thank you!</h3><p>'+(sandbox?'This is the sandbox copy, so nothing was actually sent.':'We’ve got it.')+'</p>'+
       '<div class="phfb-row"><button type="button" class="phfb-btn phfb-cancel phfb-ok">Done</button></div></div>';
   }
   function openFeedback(){
@@ -2234,7 +2234,7 @@
     const ov=document.createElement('div'); ov.className='phfb-ov';
     ov.setAttribute('role','dialog'); ov.setAttribute('aria-modal','true'); ov.setAttribute('aria-label','Send feedback');
     ov.innerHTML='<div class="phfb-card">'+
-      '<div class="phfb-hd"><div><h3>Send feedback</h3><p>It goes straight to Cory, with the page you are on, so he can see what you saw.</p></div>'+
+      '<div class="phfb-hd"><div><h3>Send feedback</h3><p>It comes straight to us, with the page you’re on, so we can see what you saw.</p></div>'+
       '<button type="button" class="phfb-x" aria-label="Close">×</button></div>'+
       '<div class="phfb-kinds" role="group" aria-label="What kind of feedback">'+
         FB_KINDS.map(k=>'<button type="button" class="phfb-kind" aria-pressed="false" data-k="'+k[0]+'"><span aria-hidden="true">'+k[2]+'</span>'+k[1]+'</button>').join('')+'</div>'+
@@ -2275,7 +2275,7 @@
         setTimeout(close,3200);
       }).catch(e=>{
         busy=false; send.disabled=false; send.textContent='Send';
-        err.textContent=(e&&e.missingList)?'Feedback isn’t switched on yet. Please tell Cory.'
+        err.textContent=(e&&e.missingList)?'Feedback isn’t working right now. Please try again later.'
           :'That didn’t send. Check your connection and try again — what you wrote is still here.';
         err.style.display='block';
       });

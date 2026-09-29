@@ -97,6 +97,9 @@ Cory chose this over IT-approved instant mail, and guests could not have sent ma
 list -> the form says "not switched on yet" and keeps the text. Rows carry who (the REAL person, plus
 "viewing as"), page, what was picked (`data-fb-view` + pressed chips/selects), device, version, recent
 errors - never page content; the form asks for no patient details. Tests: `test/feedback.test.js`.
+**Set up and proven 29/09/2026:** list made by Cory; flow "Home-Brace feedback" (owner Corey Lawing,
+SharePoint + Outlook connections signed in as Consult@farnsworthorthodontics.com). Heather's test
+reached Cory's Gmail. If that account's password changes, re-sign the flow's connections.
 
 **Staff sign-in guide + launch video (2026-09-28):** the link to hand out is
 `https://kind-hill-00da87410.3.azurestaticapps.net/start.html` (ungated). It now carries Heather's
