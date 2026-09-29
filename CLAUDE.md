@@ -88,7 +88,7 @@ multi-line-text column lives there for step 8; harmless to keep or delete.
 Entra groups to create (7 team + 8 office), the permission matrix, the per-office restriction, and
 the shared-account problem. Republish that same file to update it; do not create a second one.
 
-**Feedback (2026-09-29, hc57):** the round button bottom-right is now "Tour & feedback" (tour.js
+**Feedback (2026-09-29, hc58):** the round button bottom-right is now "Tour & feedback" (tour.js
 menu). *Send feedback* (user.js `openFeedback`, classes `phfb-*`) writes ONE row to the SharePoint list
 **`HomeBraceFeedback`** (Title = email subject, `Details` = multi-line body) via
 `PH_STORE.addFeedback`; a **Power Automate flow Cory owns** ("When an item is created" -> Outlook
@@ -100,6 +100,7 @@ errors - never page content; the form asks for no patient details. Tests: `test/
 **Set up and proven 29/09/2026:** list made by Cory; flow "Home-Brace feedback" (owner Corey Lawing,
 SharePoint + Outlook connections signed in as Consult@farnsworthorthodontics.com). Heather's test
 reached Cory's Gmail. If that account's password changes, re-sign the flow's connections.
+The form never names Cory (his rule, 29/09): "Tell us", "It comes straight to us", "We've got it".
 
 **Staff sign-in guide + launch video (2026-09-28):** the link to hand out is
 `https://kind-hill-00da87410.3.azurestaticapps.net/start.html` (ungated). It now carries Heather's
