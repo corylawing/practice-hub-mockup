@@ -306,6 +306,18 @@
     el('tiles').innerHTML= html ? '<div class="grid">'+html+'</div>' : '<div class="empty">This role has no sections yet — an admin assigns access in the Admin console.</div>';
   }
 
+  /* The greeting's picture is the same one as top right: their photo if they have one,
+     else initials in their chosen color. It drew initials only, so Cory's photo showed
+     in the header and "CL" here (29/09). Sandbox personas have no photos. */
+  function paintAvatar(){
+    const a=el('who_av'); if(!a) return;
+    if(window.PH && PH.isLive && PH.isLive() && PH.me && PH.faceStyle){
+      const m=PH.me(); a.setAttribute('style',PH.faceStyle(m)); a.textContent=PH.face(m);
+    } else { a.removeAttribute('style'); a.textContent=initials(cur.name); }
+  }
+  // A photo that lands after the first paint (SharePoint, or just uploaded) shows at once.
+  document.addEventListener('ph:me-changed', function(){ try{ paintAvatar(); }catch(_){} });
+
   function set(id){
     /* Production: the signed-in person, never a demo persona. The View-as dropdown is
        sandbox chrome (dechrome() hides it), so `id` is ignored there. */
@@ -314,7 +326,7 @@
       cur=PERSONAS.find(p=>p.id===id)||PERSONAS[0];
       try{ localStorage.setItem('ph_viewas',cur.id); }catch(_){}
     }
-    el('who_av').textContent=initials(cur.name);
+    paintAvatar();
     el('who_name').textContent=cur.name;
     el('who_sub').textContent=cur.sub;
     const nSec=SECTIONS.filter(s=>s.kind==='tool'&&(!s.adminOnly||cur.id==='admin')&&cur.sec[s.k]).length + (foldersFor(cur).length?1:0);
