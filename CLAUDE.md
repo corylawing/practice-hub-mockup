@@ -88,6 +88,16 @@ multi-line-text column lives there for step 8; harmless to keep or delete.
 Entra groups to create (7 team + 8 office), the permission matrix, the per-office restriction, and
 the shared-account problem. Republish that same file to update it; do not create a second one.
 
+**Feedback (2026-09-29, hc57):** the round button bottom-right is now "Tour & feedback" (tour.js
+menu). *Send feedback* (user.js `openFeedback`, classes `phfb-*`) writes ONE row to the SharePoint list
+**`HomeBraceFeedback`** (Title = email subject, `Details` = multi-line body) via
+`PH_STORE.addFeedback`; a **Power Automate flow Cory owns** ("When an item is created" -> Outlook
+"Send an email (V2)" to corylawing@gmail.com) emails it, usually within a few minutes. No Mail.Send:
+Cory chose this over IT-approved instant mail, and guests could not have sent mail anyway. Missing
+list -> the form says "not switched on yet" and keeps the text. Rows carry who (the REAL person, plus
+"viewing as"), page, what was picked (`data-fb-view` + pressed chips/selects), device, version, recent
+errors - never page content; the form asks for no patient details. Tests: `test/feedback.test.js`.
+
 **Staff sign-in guide + launch video (2026-09-28):** the link to hand out is
 `https://kind-hill-00da87410.3.azurestaticapps.net/start.html` (ungated). It now carries Heather's
 "why we built it" and the 2:32 launch video, served from `media/` on their site. `media/` is

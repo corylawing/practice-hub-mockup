@@ -918,8 +918,40 @@
            'then Add column > Multiple lines of text named "Payload". Nothing else.';
   }
 
+  /* ------------------------------------------------------------------
+     FEEDBACK: one row per message, on its own list.
+
+     29/09/2026, Cory: feedback "collected with information on user, what screen they
+     were on, etc and forwarded to me by email". The hub cannot send email (no Mail.Send,
+     on purpose), so each message is a new row on "HomeBraceFeedback" and a Power
+     Automate flow on that list emails it. A row, not a key on HomeBraceData: the flow
+     fires on "item created", and the data list creates items for other reasons.
+
+     Made by hand like HomeBraceData: Title, plus "Details" (multiple lines of text).
+     A missing list is reported as missingList, so the form can say "not switched on
+     yet" rather than "check your connection". */
+  var FEEDBACK_LIST = 'HomeBraceFeedback', feedbackListId = null;
+  function addFeedback(fields){
+    if(!live()) return Promise.resolve({sandbox:true});
+    return authReady.then(connect).then(function(){
+      if(feedbackListId) return feedbackListId;
+      return PH_AUTH.graph('/sites/' + siteId + '/lists?$select=id,displayName').then(function(r){
+        var hit = (r.value||[]).filter(function(l){ return l.displayName === FEEDBACK_LIST; })[0];
+        if(!hit){
+          var e = new Error('No "' + FEEDBACK_LIST + '" list on ' + SITE_PATH + ' yet.');
+          e.missingList = true; throw e;
+        }
+        return (feedbackListId = hit.id);
+      });
+    }).then(function(id){
+      return withRetry(function(){ return send('POST', '/sites/' + siteId + '/lists/' + id + '/items', {fields:fields}); });
+    });
+  }
+
   global.PH_STORE = {
     get:get, set:set, update:update, getAll:getAll, setup:setup,
+    /* One feedback message -> one new row on HomeBraceFeedback (see addFeedback). */
+    addFeedback:addFeedback, FEEDBACK_LIST:FEEDBACK_LIST,
     mergeInto:mergeInto, mergeById:mergeById,
     /* Packed payloads: history.html and restore.html read raw versions through these. */
     pack:pack, unpack:unpack, COL_MAX:COL_MAX,

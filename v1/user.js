@@ -2061,6 +2061,227 @@
     return l ? colorOf(l.color) : {k:'',dot:'#94a3b8',bg:'#F1F5F9',fg:'#475569'};
   }
 
+  /* ------------------------------------------------------------------
+     FEEDBACK - "Send feedback", from the round button bottom-right (tour.js offers it).
+
+     29/09/2026, Cory: "The feedback should be collected with information on user, what
+     screen they were on, etc and forwarded to me by email." Each message becomes a new
+     row on the HomeBraceFeedback list (PH_STORE.addFeedback) and a Power Automate flow
+     emails it to him. What rides along is facts ABOUT the page - which page, what was
+     picked on it, the device, recent errors - never what is on it, so no patient details
+     travel unless someone types them, and the form asks them not to.
+     "Sent" shows only once SharePoint has the row. A failure keeps what they typed.
+     ------------------------------------------------------------------ */
+  const FB_PAGES={'home.html':'Home','index.html':'Production Dashboard','production.html':'Enter Production',
+    'schedule.html':'Schedule','marketing.html':'Marketing','documents.html':'Documents','team.html':'Team',
+    'admin.html':'Admin','history.html':'History','restore.html':'Restore'};
+  const FB_KINDS=[['problem','Something’s wrong','🐞'],['idea','Idea','💡'],['question','Question','❓']];
+  const FB_TROUBLE=[];   // the last few errors on this page - most "something's wrong" reports need them
+  function fbNote(msg){
+    try{
+      FB_TROUBLE.push(new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})+'  '+String(msg).replace(/\s+/g,' ').slice(0,160));
+      if(FB_TROUBLE.length>5) FB_TROUBLE.shift();
+    }catch(_){}
+  }
+  try{
+    window.addEventListener('error',e=>fbNote((e&&e.message)||'Script error'));
+    window.addEventListener('unhandledrejection',e=>{ const r=e&&e.reason; fbNote('Unhandled: '+((r&&r.message)||r||'?')); });
+  }catch(_){}
+  document.addEventListener('ph-save-failed',e=>fbNote('A save did not reach SharePoint'+(e&&e.detail&&e.detail.key?' ('+e.detail.key+')':'')));
+
+  function fbPage(){
+    const f=String(location.pathname||'').split('/').pop();
+    return FB_PAGES[f]||(typeof document.title==='string'&&document.title)||f||'Unknown page';
+  }
+  /* What was picked on the page: what a page names with data-fb-view, dropdowns, and the
+     pressed chip or tab ("on"/"active" on these pages). Short labels only, and never the
+     navigation, the tour or this form. */
+  function fbLooking(){
+    const out=[], seen={};
+    const add=t=>{ t=String(t||'').replace(/\s+/g,' ').trim(); if(t && t.length<=60 && !seen[t] && out.length<8){ seen[t]=1; out.push(t); } };
+    try{
+      const vis=el=>!!(el.offsetParent||(el.getClientRects&&el.getClientRects().length)) &&
+        !el.closest('nav,header,.ribbon,.ph-tabbar,.phfb-ov,.tour-menu,.tour-pop');
+      // A page can name what is on screen outright (the Schedule's month): data-fb-view.
+      document.querySelectorAll('[data-fb-view]').forEach(el=>{ if(vis(el)) add(el.textContent); });
+      document.querySelectorAll('select').forEach(s=>{
+        if(!vis(s)) return; const o=s.options[s.selectedIndex]; if(!o) return;
+        let lab=s.getAttribute('aria-label')||'';
+        if(!lab && s.id){ const l=document.querySelector('label[for="'+s.id+'"]'); if(l) lab=l.textContent; }
+        add((lab?lab.trim()+': ':'')+o.text);
+      });
+      document.querySelectorAll('button.on,button.active,[role="tab"].on,[role="tab"].active,.on>button,[aria-pressed="true"],[aria-selected="true"]').forEach(el=>{ if(vis(el)) add(el.textContent); });
+    }catch(_){}
+    return out;
+  }
+  function fbDevice(){
+    const ua=(typeof navigator!=='undefined'&&navigator.userAgent)||'';
+    const m=(re,label)=>{ const x=re.exec(ua); return x?label+(x[1]?' '+x[1]:''):''; };
+    const br=m(/Edg\/(\d+)/,'Edge')||m(/CriOS\/(\d+)/,'Chrome')||m(/Chrome\/(\d+)/,'Chrome')||m(/(?:FxiOS|Firefox)\/(\d+)/,'Firefox')||m(/Version\/(\d+)[\d.]* .*Safari/,'Safari')||'Browser';
+    const os=/iPhone/.test(ua)?'iPhone':/iPad/.test(ua)?'iPad':/Android/.test(ua)?'Android':/Windows/.test(ua)?'Windows':/Mac OS X/.test(ua)?'Mac':/CrOS/.test(ua)?'Chromebook':'';
+    let phone=/Mobi/.test(ua); try{ phone=phone||matchMedia('(max-width:760px)').matches; }catch(_){}
+    return (phone?'Phone':'Computer')+' · '+br+(os?' on '+os:'')+' · '+window.innerWidth+'×'+window.innerHeight;
+  }
+  function fbVersion(){
+    try{ const s=[...document.scripts].map(x=>x.src||'').find(x=>/user\.js\?v=/.test(x)); const v=s&&/[?&]v=([\w.-]+)/.exec(s); return v?v[1]:'?'; }
+    catch(_){ return '?'; }
+  }
+  /* Who sent it is the REAL person - an admin looking through someone else's eyes is
+     named, with who they were viewing as. */
+  function feedbackContext(){
+    const r=realMe()||{}, imp=impersonating(), known=!!(r.first||r.last);
+    const offs=r.offices==='all'?'All offices':(Array.isArray(r.offices)&&r.offices.length?r.offices.join(', '):'');
+    const th=THEMES.find(t=>t.k===THEME);
+    return { name:known?name(r):'', email:(known&&r.mail?String(r.mail):'')||signedInAddress()||'',
+      role:r.title||'', teams:(r.teams||[]).join(', '), offices:offs,
+      viewingAs:(imp&&imp.first&&isAdmin(r))?name(imp):'',
+      page:fbPage(), url:String(location.href||'').slice(0,400), looking:fbLooking(),
+      device:fbDevice(), version:fbVersion(), colors:th?th.n:'',
+      online:!(typeof navigator!=='undefined'&&navigator.onLine===false), trouble:FB_TROUBLE.slice(), when:new Date() };
+  }
+  /* The row: Title is the email subject, Details is the body. Pure - tested in
+     test/feedback.test.js. */
+  function feedbackText(ctx, kind, msg){
+    ctx=ctx||{};
+    const k=(FB_KINDS.find(x=>x[0]===kind)||[null,'Feedback'])[1];
+    const who=ctx.name||ctx.email||'Someone';
+    const text=String(msg||'').trim(), one=text.replace(/\s+/g,' ');
+    const title=(k+': '+(one.length>70?one.slice(0,67)+'…':one)+' — '+who+', '+(ctx.page||'?')).slice(0,250);
+    let when=String(ctx.when||'');
+    try{ if(ctx.when instanceof Date) when=ctx.when.toLocaleString([],{weekday:'short',month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short'}); }catch(_){}
+    const lines=[k.toUpperCase(), text, '',
+      'From: '+who+(ctx.email&&ctx.email!==who?' <'+ctx.email+'>':''),
+      ctx.role?'Role: '+ctx.role:null, ctx.teams?'Team: '+ctx.teams:null, ctx.offices?'Offices: '+ctx.offices:null,
+      ctx.viewingAs?'Was viewing as: '+ctx.viewingAs:null,
+      'Page: '+(ctx.page||'?'),
+      ctx.looking&&ctx.looking.length?'Had open: '+ctx.looking.join(' · '):null,
+      ctx.url?'Link: '+ctx.url:null,
+      ctx.device?'Device: '+ctx.device:null,
+      'Home-Brace version: '+(ctx.version||'?')+(ctx.colors?' · Colors: '+ctx.colors:''),
+      ctx.online===false?'Connection: offline when it was written':null,
+      'Recent errors on this page: '+(ctx.trouble&&ctx.trouble.length?'\n  '+ctx.trouble.join('\n  '):'none'),
+      'Sent: '+when].filter(l=>l!==null);
+    return {Title:title, Details:lines.join('\n').slice(0,20000)};
+  }
+
+  let FB_CSS=false;
+  function fbStyles(){
+    if(FB_CSS) return; FB_CSS=true;
+    const s=document.createElement('style');
+    s.textContent=`
+    .phfb-ov{position:fixed;inset:0;z-index:9400;background:rgba(15,42,74,.46);display:flex;align-items:center;justify-content:center;padding:18px;opacity:0;transition:opacity .18s ease}
+    .phfb-ov.open{opacity:1}
+    .phfb-card{position:relative;width:min(480px,100%);background:#fff;border-radius:18px;box-shadow:0 24px 64px rgba(15,42,74,.35);padding:22px 22px 18px;color:#1F2D3D;font-family:inherit;transform:translateY(14px) scale(.98);transition:transform .22s cubic-bezier(.2,.9,.3,1.2)}
+    .phfb-ov.open .phfb-card{transform:none}
+    .phfb-hd{display:flex;align-items:flex-start;gap:12px}
+    .phfb-hd h3{margin:0;font-size:19px;line-height:1.25;color:var(--navy,#0F2A4A);letter-spacing:-.01em}
+    .phfb-hd p{margin:5px 0 0;font-size:13.5px;line-height:1.5;color:#56627A}
+    .phfb-x{margin-left:auto;background:none;border:none;font-size:24px;line-height:1;color:#8a94a6;cursor:pointer;padding:0 4px}
+    .phfb-kinds{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 12px}
+    .phfb-kind{display:flex;gap:7px;align-items:center;border:1.5px solid #DCE2EA;background:#fff;border-radius:999px;padding:8px 13px;font-family:inherit;font-size:13.5px;font-weight:600;line-height:1;color:#3B4A5C;cursor:pointer}
+    .phfb-kind[aria-pressed="true"]{border-color:var(--teal,#149B96);background:var(--teal-soft,#E5F4F3);color:var(--navy,#0F2A4A)}
+    .phfb-msg{display:block;width:100%;box-sizing:border-box;min-height:124px;resize:vertical;border:1.5px solid #DCE2EA;border-radius:12px;padding:12px 13px;font-family:inherit;font-size:15px;line-height:1.5;color:#1F2D3D;background:#fff}
+    .phfb-msg:focus{outline:none;border-color:var(--teal,#149B96);box-shadow:0 0 0 3px rgba(20,155,150,.15)}
+    .phfb-note{margin:9px 0 0;font-size:12.5px;font-weight:600;color:#8a5a00}
+    .phfb-also{margin:4px 0 0;font-size:12.5px;line-height:1.45;color:#6B7A8C}
+    .phfb-err{display:none;margin:10px 0 0;font-size:13px;font-weight:600;line-height:1.45;color:#B42318}
+    .phfb-row{display:flex;gap:10px;justify-content:flex-end;margin-top:16px}
+    .phfb-btn{border:none;border-radius:10px;padding:11px 18px;font-family:inherit;font-size:14.5px;font-weight:700;line-height:1;cursor:pointer}
+    .phfb-cancel{background:#fff;color:var(--navy,#0F2A4A);border:1px solid #DCE2EA}
+    .phfb-send{display:flex;align-items:center;gap:8px;background:var(--teal,#149B96);color:#fff}
+    .phfb-send:disabled{opacity:.45;cursor:default}
+    .phfb-spin{width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,.45);border-top-color:#fff;animation:phfbspin .7s linear infinite}
+    .phfb-done{text-align:center;padding:14px 6px 6px}
+    .phfb-badge{position:relative;width:92px;height:92px;margin:6px auto 16px}
+    .phfb-disc{position:absolute;inset:0;border-radius:50%;background:var(--teal,#149B96);transform:scale(0);animation:phfbpop .45s cubic-bezier(.2,.9,.3,1.35) forwards}
+    .phfb-wave{position:absolute;inset:-10px;border-radius:50%;border:3px solid var(--teal,#149B96);opacity:0;animation:phfbwave .8s ease-out .25s forwards}
+    .phfb-dot{position:absolute;left:50%;top:50%;width:8px;height:8px;border-radius:50%;opacity:0;animation:phfbburst .75s ease-out .3s forwards}
+    .phfb-badge svg{position:absolute;inset:0;width:92px;height:92px}
+    .phfb-tick{fill:none;stroke:#fff;stroke-width:7;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:60;stroke-dashoffset:60;animation:phfbdraw .38s ease-out .32s forwards}
+    .phfb-done h3{margin:0;font-size:21px;color:var(--navy,#0F2A4A);opacity:0;animation:phfbup .35s ease-out .45s forwards}
+    .phfb-done p{margin:6px 0 0;font-size:14px;color:#56627A;opacity:0;animation:phfbup .35s ease-out .55s forwards}
+    .phfb-done .phfb-row{justify-content:center}
+    @keyframes phfbspin{to{transform:rotate(360deg)}}
+    @keyframes phfbpop{to{transform:scale(1)}}
+    @keyframes phfbwave{0%{opacity:.7;transform:scale(.85)}100%{opacity:0;transform:scale(1.4)}}
+    @keyframes phfbburst{0%{opacity:1;transform:translate(-50%,-50%)}100%{opacity:0;transform:translate(-50%,-50%) translate(var(--dx),var(--dy)) scale(.4)}}
+    @keyframes phfbdraw{to{stroke-dashoffset:0}}
+    @keyframes phfbup{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+    @media (max-width:760px){
+      .phfb-ov{align-items:flex-end;padding:0}
+      .phfb-card{border-radius:18px 18px 0 0;padding-bottom:calc(18px + env(safe-area-inset-bottom,0px))}
+    }
+    @media (prefers-reduced-motion:reduce){
+      .phfb-ov,.phfb-card{transition:none}
+      .phfb-disc,.phfb-wave,.phfb-dot,.phfb-tick,.phfb-done h3,.phfb-done p{animation-duration:.01s;animation-delay:0s}
+    }
+    body:has(.phfb-ov) .tour-launch{display:none !important}`;
+    document.head.appendChild(s);
+  }
+  function fbSentHTML(sandbox){
+    const cols=['#2BC0B8','#149B96','#F2B84B','#D96A8E','#8A73E0','#0F2A4A'];
+    const dots=cols.concat(cols).map((c,i)=>{ const a=i/12*Math.PI*2, d=60+(i%3)*9;
+      return '<i class="phfb-dot" style="background:'+c+';--dx:'+Math.round(Math.cos(a)*d)+'px;--dy:'+Math.round(Math.sin(a)*d)+'px"></i>'; }).join('');
+    return '<div class="phfb-done" role="status"><div class="phfb-badge"><span class="phfb-disc"></span><span class="phfb-wave"></span>'+dots+
+      '<svg viewBox="0 0 92 92" aria-hidden="true"><path class="phfb-tick" d="M28 47 L41 60 L65 34"/></svg></div>'+
+      '<h3>Sent. Thank you!</h3><p>'+(sandbox?'This is the sandbox copy, so nothing was actually sent.':'Cory has it.')+'</p>'+
+      '<div class="phfb-row"><button type="button" class="phfb-btn phfb-cancel phfb-ok">Done</button></div></div>';
+  }
+  function openFeedback(){
+    if(document.querySelector('.phfb-ov')) return;
+    fbStyles();
+    const ctx=feedbackContext();           // the page as it was when they opened the form
+    const ov=document.createElement('div'); ov.className='phfb-ov';
+    ov.setAttribute('role','dialog'); ov.setAttribute('aria-modal','true'); ov.setAttribute('aria-label','Send feedback');
+    ov.innerHTML='<div class="phfb-card">'+
+      '<div class="phfb-hd"><div><h3>Send feedback</h3><p>It goes straight to Cory, with the page you are on, so he can see what you saw.</p></div>'+
+      '<button type="button" class="phfb-x" aria-label="Close">×</button></div>'+
+      '<div class="phfb-kinds" role="group" aria-label="What kind of feedback">'+
+        FB_KINDS.map(k=>'<button type="button" class="phfb-kind" aria-pressed="false" data-k="'+k[0]+'"><span aria-hidden="true">'+k[2]+'</span>'+k[1]+'</button>').join('')+'</div>'+
+      '<textarea class="phfb-msg" maxlength="4000" placeholder="What happened, or what would make it better?" aria-label="Your feedback"></textarea>'+
+      '<p class="phfb-note">Please don’t include patient details.</p>'+
+      '<p class="phfb-also">Also sent: your name, this page ('+escHTML(ctx.page)+'), your device and the time.</p>'+
+      '<p class="phfb-err" role="alert"></p>'+
+      '<div class="phfb-row"><button type="button" class="phfb-btn phfb-cancel">Cancel</button>'+
+      '<button type="button" class="phfb-btn phfb-send" disabled>Send</button></div></div>';
+    document.body.appendChild(ov);
+    requestAnimationFrame(()=>ov.classList.add('open'));
+    const card=ov.querySelector('.phfb-card'), msg=ov.querySelector('.phfb-msg'), send=ov.querySelector('.phfb-send'), err=ov.querySelector('.phfb-err');
+    let kind='', busy=false, closed=false;
+    const onKey=e=>{ if(e.key==='Escape' && !busy){ e.stopPropagation(); close(); } };
+    function close(){ if(closed) return; closed=true; document.removeEventListener('keydown',onKey,true); ov.classList.remove('open'); setTimeout(()=>ov.remove(),200); }
+    document.addEventListener('keydown',onKey,true);
+    // A stray tap outside must not throw away what someone has typed.
+    ov.addEventListener('click',e=>{ if(e.target===ov && !busy && !msg.value.trim()) close(); });
+    ov.querySelector('.phfb-x').onclick=()=>{ if(!busy) close(); };
+    ov.querySelector('.phfb-cancel').onclick=()=>{ if(!busy) close(); };
+    ov.querySelectorAll('.phfb-kind').forEach(b=>b.onclick=()=>{
+      kind=kind===b.dataset.k?'':b.dataset.k;
+      ov.querySelectorAll('.phfb-kind').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.k===kind))); });
+    msg.addEventListener('input',()=>{ send.disabled=!msg.value.trim(); err.style.display='none'; });
+    setTimeout(()=>{ try{ msg.focus(); }catch(_){} },60);
+    send.onclick=()=>{
+      const text=msg.value.trim(); if(!text||busy) return;
+      busy=true; send.disabled=true; err.style.display='none';
+      send.innerHTML='<span class="phfb-spin" aria-hidden="true"></span>Sending…';
+      const row=feedbackText(Object.assign(ctx,{when:new Date(), trouble:FB_TROUBLE.slice(),
+        online:!(typeof navigator!=='undefined'&&navigator.onLine===false)}), kind, text);
+      const go=(window.PH_STORE&&PH_STORE.addFeedback)?PH_STORE.addFeedback(row):Promise.reject(new Error('Storage is not loaded'));
+      Promise.resolve(go).then(res=>{
+        const sandbox=!!(res&&res.sandbox);
+        if(sandbox) try{ console.info('[feedback - sandbox, not sent]\n'+row.Title+'\n\n'+row.Details); }catch(_){}
+        busy=false; card.innerHTML=fbSentHTML(sandbox);
+        const ok=card.querySelector('.phfb-ok'); if(ok){ ok.onclick=close; try{ ok.focus(); }catch(_){} }
+        setTimeout(close,3200);
+      }).catch(e=>{
+        busy=false; send.disabled=false; send.textContent='Send';
+        err.textContent=(e&&e.missingList)?'Feedback isn’t switched on yet. Please tell Cory.'
+          :'That didn’t send. Check your connection and try again — what you wrote is still here.';
+        err.style.display='block';
+      });
+    };
+  }
+
   /* WHERE ARE WE RUNNING?
        'live'    - the practice's real hub on Azure. Reads their workbook.
        'sandbox' - GitHub Pages or localhost. Demo numbers only, never real figures,
@@ -2079,6 +2300,7 @@
   const isLive=()=>env()==='live';
 
   window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK, notesHTML, searchHTML, saveFace, faceOf,
-    setTheme, theme:()=>THEME, themes:()=>THEMES.map(t=>({k:t.k, n:t.n})), schemeTokens:k=>schemeTokens(themeOf(k)), contrast};
+    setTheme, theme:()=>THEME, themes:()=>THEMES.map(t=>({k:t.k, n:t.n})), schemeTokens:k=>schemeTokens(themeOf(k)), contrast,
+    feedback:openFeedback, feedbackText, feedbackContext};
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mount); else mount();
 })();

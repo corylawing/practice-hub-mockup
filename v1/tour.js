@@ -30,6 +30,17 @@
   .tour-btn.back{background:#fff;color:var(--navy,#0F2A4A);border:1px solid #E4E8EE}
   .tour-skip{background:none;border:none;color:#8a94a6;font-size:13px;cursor:pointer;font-family:inherit}
   .tour-skip:hover{color:#465264}
+  /* The button offers two things now: the tour, and feedback (user.js draws the form). */
+  .tour-menu{position:fixed;z-index:205;background:#fff;border-radius:16px;box-shadow:0 18px 48px rgba(15,42,74,.3);padding:6px;
+    width:272px;max-width:calc(100vw - 28px);transform-origin:100% 100%;opacity:0;transform:translateY(8px) scale(.96);
+    transition:opacity .16s ease,transform .2s cubic-bezier(.2,.9,.3,1.2);pointer-events:none}
+  .tour-menu.open{opacity:1;transform:none;pointer-events:auto}
+  .tour-mi{display:flex;gap:12px;align-items:center;width:100%;border:none;background:none;padding:11px 12px;border-radius:11px;
+    text-align:left;font-family:inherit;cursor:pointer;color:inherit}
+  .tour-mi:hover,.tour-mi:focus-visible{background:#F1F5F9;outline:none}
+  .tour-mi .tmi-ic{flex:none;width:38px;height:38px;border-radius:11px;background:var(--teal-soft,#E5F4F3);display:grid;place-items:center;font-size:19px}
+  .tour-mi b{display:block;color:var(--navy,#0F2A4A);font-size:14.5px;font-weight:700}
+  .tour-mi small{display:block;color:#6B7A8C;font-size:12.5px;line-height:1.35;margin-top:2px}
   /* On phones the full "Show me around" pill sat on top of the content you were trying
      to read. Collapse it to a round icon button — same tap target, far less in the way. */
   @media(max-width:760px){
@@ -41,7 +52,26 @@
   `;
   const styleEl=document.createElement('style'); styleEl.textContent=css; document.head.appendChild(styleEl);
 
-  let steps=[], i=0, hole, ring, pop, launch, opts={};
+  let steps=[], i=0, hole, ring, pop, launch, menu, opts={};
+  const canFeedback=()=>!!(window.PH&&PH.feedback);
+  function openMenu(){
+    if(!menu){
+      menu=document.createElement('div'); menu.className='tour-menu'; menu.setAttribute('role','menu');
+      menu.addEventListener('click',e=>{ const b=e.target.closest('.tour-mi'); if(!b) return; closeMenu();
+        if(b.dataset.a==='fb') PH.feedback(); else show(0); });
+      document.body.appendChild(menu);
+    }
+    menu.innerHTML='<button type="button" class="tour-mi" role="menuitem" data-a="tour"><span class="tmi-ic" aria-hidden="true">\u{1F44B}</span>'+
+      '<span><b>'+(opts.launch||'Show me around')+'</b><small>Step by step, a minute or two</small></span></button>'+
+      '<button type="button" class="tour-mi" role="menuitem" data-a="fb"><span class="tmi-ic" aria-hidden="true">\u{1F4AC}</span>'+
+      '<span><b>Send feedback</b><small>Something wrong, or an idea? Tell Cory.</small></span></button>';
+    const r=launch.getBoundingClientRect();
+    menu.style.right=Math.max(10,window.innerWidth-r.right)+'px'; menu.style.bottom=(window.innerHeight-r.top+10)+'px';
+    requestAnimationFrame(()=>menu.classList.add('open')); launch.setAttribute('aria-expanded','true');
+  }
+  function closeMenu(){ if(menu) menu.classList.remove('open'); if(launch) launch.setAttribute('aria-expanded','false'); }
+  document.addEventListener('click',e=>{ if(menu&&menu.classList.contains('open')&&!e.target.closest('.tour-menu,.tour-launch')) closeMenu(); },true);
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeMenu(); });
   function build(){
     hole=document.createElement('div'); hole.className='tour-hole';
     ring=document.createElement('div'); ring.className='tour-ring';
@@ -85,10 +115,14 @@
   window.Tour={
     init:function(s,o){ opts=o||{}; steps=s; build();
       launch=document.createElement('button'); launch.className='tour-launch pulse';
-      launch.title=(opts.launch||'Show me around');
-      launch.setAttribute('aria-label',(opts.launch||'Show me around'));
-      launch.innerHTML='👋<span class="tl-txt">'+(opts.launch||'Show me around')+'</span>';
-      launch.onclick=()=>{ launch.classList.remove('pulse'); show(0); };
+      // With feedback available the button opens a small menu: the tour, or Send feedback.
+      const two=canFeedback(), label=two?'Tour & feedback':(opts.launch||'Show me around');
+      launch.title=label; launch.setAttribute('aria-label',label);
+      if(two){ launch.setAttribute('aria-haspopup','menu'); launch.setAttribute('aria-expanded','false'); }
+      launch.innerHTML='👋<span class="tl-txt">'+label.replace('&','&amp;')+'</span>';
+      launch.onclick=()=>{ launch.classList.remove('pulse');
+        if(!canFeedback()) return show(0);
+        if(menu&&menu.classList.contains('open')) closeMenu(); else openMenu(); };
       document.body.appendChild(launch);
       // continue a walkthrough that was handed over from the previous page
       let auto=null; try{ auto=sessionStorage.getItem('ph_tour_auto'); }catch(_){}
