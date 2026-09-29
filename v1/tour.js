@@ -64,7 +64,7 @@
     menu.innerHTML='<button type="button" class="tour-mi" role="menuitem" data-a="tour"><span class="tmi-ic" aria-hidden="true">\u{1F44B}</span>'+
       '<span><b>'+(opts.launch||'Show me around')+'</b><small>Step by step, a minute or two</small></span></button>'+
       '<button type="button" class="tour-mi" role="menuitem" data-a="fb"><span class="tmi-ic" aria-hidden="true">\u{1F4AC}</span>'+
-      '<span><b>Send feedback</b><small>Something wrong, or an idea? Tell us.</small></span></button>';
+      '<span><b>Send Feedback</b><small>Something wrong, or an idea? Tell us.</small></span></button>';
     const r=launch.getBoundingClientRect();
     menu.style.right=Math.max(10,window.innerWidth-r.right)+'px'; menu.style.bottom=(window.innerHeight-r.top+10)+'px';
     requestAnimationFrame(()=>menu.classList.add('open')); launch.setAttribute('aria-expanded','true');
@@ -116,7 +116,7 @@
     init:function(s,o){ opts=o||{}; steps=s; build();
       launch=document.createElement('button'); launch.className='tour-launch pulse';
       // With feedback available the button opens a small menu: the tour, or Send feedback.
-      const two=canFeedback(), label=two?'Tour & feedback':(opts.launch||'Show me around');
+      const two=canFeedback(), label=two?'Tour & Feedback':(opts.launch||'Show me around');
       launch.title=label; launch.setAttribute('aria-label',label);
       if(two){ launch.setAttribute('aria-haspopup','menu'); launch.setAttribute('aria-expanded','false'); }
       launch.innerHTML='👋<span class="tl-txt">'+label.replace('&','&amp;')+'</span>';

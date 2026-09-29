@@ -2232,9 +2232,9 @@
     fbStyles();
     const ctx=feedbackContext();           // the page as it was when they opened the form
     const ov=document.createElement('div'); ov.className='phfb-ov';
-    ov.setAttribute('role','dialog'); ov.setAttribute('aria-modal','true'); ov.setAttribute('aria-label','Send feedback');
+    ov.setAttribute('role','dialog'); ov.setAttribute('aria-modal','true'); ov.setAttribute('aria-label','Send Feedback');
     ov.innerHTML='<div class="phfb-card">'+
-      '<div class="phfb-hd"><div><h3>Send feedback</h3><p>It comes straight to us, with the page you’re on, so we can see what you saw.</p></div>'+
+      '<div class="phfb-hd"><div><h3>Send Feedback</h3><p>It comes straight to us, with the page you’re on, so we can see what you saw.</p></div>'+
       '<button type="button" class="phfb-x" aria-label="Close">×</button></div>'+
       '<div class="phfb-kinds" role="group" aria-label="What kind of feedback">'+
         FB_KINDS.map(k=>'<button type="button" class="phfb-kind" aria-pressed="false" data-k="'+k[0]+'"><span aria-hidden="true">'+k[2]+'</span>'+k[1]+'</button>').join('')+'</div>'+

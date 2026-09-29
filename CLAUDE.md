@@ -88,8 +88,8 @@ multi-line-text column lives there for step 8; harmless to keep or delete.
 Entra groups to create (7 team + 8 office), the permission matrix, the per-office restriction, and
 the shared-account problem. Republish that same file to update it; do not create a second one.
 
-**Feedback (2026-09-29, hc58):** the round button bottom-right is now "Tour & feedback" (tour.js
-menu). *Send feedback* (user.js `openFeedback`, classes `phfb-*`) writes ONE row to the SharePoint list
+**Feedback (2026-09-29, hc59):** the round button bottom-right is now "Tour & Feedback" (tour.js
+menu). *Send Feedback* (user.js `openFeedback`, classes `phfb-*`) writes ONE row to the SharePoint list
 **`HomeBraceFeedback`** (Title = email subject, `Details` = multi-line body) via
 `PH_STORE.addFeedback`; a **Power Automate flow Cory owns** ("When an item is created" -> Outlook
 "Send an email (V2)" to corylawing@gmail.com) emails it, usually within a few minutes. No Mail.Send:
