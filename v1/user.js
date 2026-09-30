@@ -2240,7 +2240,7 @@
         FB_KINDS.map(k=>'<button type="button" class="phfb-kind" aria-pressed="false" data-k="'+k[0]+'"><span aria-hidden="true">'+k[2]+'</span>'+k[1]+'</button>').join('')+'</div>'+
       '<textarea class="phfb-msg" maxlength="4000" placeholder="What happened, or what would make it better?" aria-label="Your feedback"></textarea>'+
       '<p class="phfb-note">Please don’t include patient details.</p>'+
-      '<p class="phfb-also">Also sent: your name, this page ('+escHTML(ctx.page)+'), your device and the time.</p>'+
+      '<p class="phfb-also">Sent automatically with your comments: your name, this page ('+escHTML(ctx.page)+'), your device and the time.</p>'+
       '<p class="phfb-err" role="alert"></p>'+
       '<div class="phfb-row"><button type="button" class="phfb-btn phfb-cancel">Cancel</button>'+
       '<button type="button" class="phfb-btn phfb-send" disabled>Send</button></div></div>';
