@@ -1726,6 +1726,15 @@
        4. If it names teams, you must be on one of them. The leadership-only items.
        5. scope: 'admins' means admins; an office name means that office (the old,
           single-office way of saying it); 'everyone' means everyone left standing. */
+  /* A person's level in one Documents section: the Teams & Access grid when it says;
+     for the six built-in sections, their overall Documents level when it does not
+     (asPersona() does the same). A section Admin created is 'none' unless the grid
+     gives it. */
+  function docLevel(k){
+    const c=me().can||{};
+    if(c[k]!==undefined) return c[k]||'none';
+    return DOC_KEYS.indexOf(k)>=0 ? (c.documents||'none') : 'none';
+  }
   function canSeeActivity(e){
     if(!e) return false;
     const m=me();
@@ -1737,7 +1746,10 @@
     const about=(e.people||[]).map(p=>String(p).toLowerCase().trim());
     if(about.length && myName && about.some(p=>p===myName || (p.length>3 && myName.indexOf(p)>=0))) return true;
 
-    if(e.sec && can(e.sec)==='none') return false;
+    /* A document's update follows the SECTION it went into (HR, Office Docs...), by the
+       same rule the Documents page uses - so a new payroll file's name never reaches
+       someone who cannot open HR. */
+    if(e.sec && (e.kind==='document' && e.sec!=='documents' ? docLevel(e.sec) : can(e.sec))==='none') return false;
     const offs=(e.offices||[]);
     if(offs.length && !offs.some(seesOffice)) return false;
     const teams=(e.teams||[]).map(t=>String(t).toLowerCase());

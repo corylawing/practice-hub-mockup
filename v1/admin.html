@@ -182,6 +182,12 @@
   .m-top .x{margin-left:auto;border:none;background:none;font-size:24px;color:var(--soft);cursor:pointer;line-height:1}
   .m-body{padding:20px;max-height:70vh;overflow:auto}
   .m-foot{display:flex;gap:10px;align-items:center;padding:14px 20px;border-top:1px solid var(--line);background:#fafbfc}
+  .btn.danger{background:#b42318;border-color:#b42318;color:#fff}
+  .btn.danger:disabled{opacity:.5;cursor:default}
+  .docwarn{background:#FFF6E5;color:#7a4b00;border:1px solid #f0d9a8;border-radius:10px;padding:11px 14px;font-size:13.5px;line-height:1.5}
+  .docerr{background:#FDECEC;color:#8a1c1c;border:1px solid #f3c4c4;border-radius:10px;padding:11px 14px;font-size:13.5px;margin-top:10px}
+  .docwhere{font-size:13px;color:var(--soft);margin:8px 0 2px;line-height:1.5}
+  .docwhere b{color:var(--navy)}
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:24px}
   /* Team and office chips need the FULL modal width — squeezed into a half-width column
      they wrapped one or two per line and the panel read as cramped. */
@@ -227,11 +233,12 @@
   }
 
 </style>
-<script src="user.js?v=hc61"></script>
+<script src="user.js?v=hc62"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="_staff.js?v=hc61"></script>
-  <script src="store.js?v=hc61"></script>
-  <script src="gate.js?v=hc61"></script>
+  <script src="_staff.js?v=hc62"></script>
+  <script src="store.js?v=hc62"></script>
+  <script src="gate.js?v=hc62"></script>
+  <script src="docs.js?v=hc62"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — admin console concept for validation. Real build: people sync from Microsoft 365; access is managed here.</div>
@@ -1181,7 +1188,15 @@
         body= items.length ? '<div class="folder">'+items.map((it,idx)=>fileRow(it.n,audChip(it.aud||'everyone',it.scope,'AD.pickAud(event,\''+sec.k+'\','+idx+')'))).join('')+'</div>'
                            : '<p class="mini" style="margin:8px 0 0">No files yet — add the first one below.</p>';
       }
-      const addf='<div class="addfile"><button class="btn ghost" onclick="event.stopPropagation();AD.addFile(\''+sec.k+'\')">+ Add file</button><span class="mini">New files inherit this section\'s audience — no extra setup.</span></div>';
+      if(liveDocs()){
+        const f=secFolder(sec);
+        body='<p class="docwhere">\u{1F4C1} In SharePoint: <b>Home-Brace Documents \u203a '+esc(f)+'</b>'+
+          (sec.structure==='byLocation'?' \u203a a folder for each office':sec.structure==='byBrand'?' \u203a a folder for each brand':'')+'</p>'+
+          '<p class="docwhere">Files are added, opened and removed on the Documents page.</p>';
+      }
+      const addf=liveDocs()
+        ? '<div class="addfile"><a class="btn ghost" href="documents.html#'+encodeURIComponent(sec.k)+'" onclick="event.stopPropagation()">Open in Documents \u2192</a></div>'
+        : '<div class="addfile"><button class="btn ghost" onclick="event.stopPropagation();AD.addFile(\''+sec.k+'\')">+ Add file</button><span class="mini">New files inherit this section\'s audience — no extra setup.</span></div>';
       return '<div class="sec'+(open?' open':'')+'"><div class="sec-h" onclick="AD.tog(\''+sec.k+'\')">'+
           '<span class="car">▶</span><span style="font-size:19px">'+(sec.ic||'📁')+'</span>'+
           '<div style="flex:1"><div class="sn">'+sec.n+'</div><div class="secwho">'+whoLine(sec)+'</div></div>'+
@@ -1194,7 +1209,7 @@
         '<div class="chips">'+TOOLS.map(t=>'<span class="chip">'+t.ic+' '+t.n+'</span>').join('')+'</div>'+
         '<p class="mini" style="margin:9px 0 0">Choose who gets each one in <b>Teams &amp; Access</b>.</p></div>'+
       '<div class="toolrow"><div class="panel-lab" style="margin:0">Document sections — '+DOCSECS.length+' right now</div><span style="flex:1"></span>'+
-        '<button class="btn ghost" onclick="AD.resetSecs()">Reset to defaults</button><button class="btn" onclick="AD.newSec()">+ New section</button></div>'+
+        (liveDocs()?'':'<button class="btn ghost" onclick="AD.resetSecs()">Reset to defaults</button>')+'<button class="btn" onclick="AD.newSec()">+ New section</button></div>'+
       '<div class="secacc">'+secHtml+'</div>';
     restore();
   }
@@ -1310,15 +1325,17 @@
   function togSecLoc(l){ const i=secDraft.locs.indexOf(l); if(i>=0)secDraft.locs.splice(i,1); else secDraft.locs.push(l); renderSecModal(); }
   function togSecTeam(t){ const i=secDraft.teams.indexOf(t); if(i>=0)secDraft.teams.splice(i,1); else secDraft.teams.push(t); renderSecModal(); }
   function saveSec(){
-    const d=secDraft; const nameEl=el('secName');
+    const d=secDraft; const nameEl=el('secName'); let made=null;
     const typed=(nameEl?nameEl.value:'').trim(); d.n=(typed||d.n||'').trim()||'New section';
     if(d.isNew){
       d.k='sec_'+Math.abs(d.n.split('').reduce((a,c)=>a*31+c.charCodeAt(0)|0,7)).toString(36)+DOCSECS.length;
       const sec={k:d.k,n:d.n,ic:d.ic,structure:d.structure,locMode:d.locMode,locs:d.locs.slice(),teamMode:d.teamMode,teams:d.teams.slice()};
       if(d.structure==='byLocation')sec.locItems=[]; else if(d.structure==='byBrand')sec.brandItems=[]; else sec.items=[];
-      DOCSECS.push(sec); ensureAccess(); applySecAudience(sec); openSecs.add(sec.k);
+      if(liveDocs()) sec.folder=PH_DOCS.clean(sec.n);          // its folder, for good - a rename never moves files
+      DOCSECS.push(sec); ensureAccess(); applySecAudience(sec); openSecs.add(sec.k); made=sec;
     } else {
       const sec=DOCSECS.find(x=>x.k===d.k);
+      if(liveDocs() && !sec.folder && sec.n!==d.n) sec.folder=PH_DOCS.clean(sec.n);   // keep the folder it already has
       Object.assign(sec,{n:d.n,ic:d.ic,structure:d.structure,locMode:d.locMode,locs:d.locs.slice(),teamMode:d.teamMode,teams:d.teams.slice()});
       if(sec.structure==='byLocation'&&!sec.locItems)sec.locItems=[];
       if(sec.structure==='byBrand'&&!sec.brandItems)sec.brandItems=[];
@@ -1326,9 +1343,65 @@
       ensureAccess(); applySecAudience(sec);
     }
     saveSecs(); closeModal(); renderFiles();
+    if(made) makeSecFolders(made);
   }
-  function delSec(k){ DOCSECS=DOCSECS.filter(x=>x.k!==k); saveSecs(); closeModal(); renderFiles(); }
-  function resetSecs(){ DOCSECS=JSON.parse(JSON.stringify(DEFAULT_DOCSECS)); saveSecs(); ensureAccess(); renderFiles(); }
+  /* ---- LIVE: a Documents section IS a folder in SharePoint (docs.js) ----
+     30/09/2026. Making a section makes its folder - and one for each office or brand if
+     it is organised that way. Renaming keeps the folder it has, so no file ever moves.
+     Deleting asks first, says what is in the folder, and sends it to the SharePoint
+     recycle bin (93 days). The sandbox keeps the old in-memory behaviour. */
+  function liveDocs(){ return !!(window.PH && PH.isLive && PH.isLive() && window.PH_DOCS); }
+  const BRAND_NAME={FFO:'FFO',SUN:'Sunflower',LCO:'LCO'};
+  function secFolder(sec){ return sec.folder||PH_DOCS.clean(sec.n||'Untitled'); }
+  function docToast(msg,bad){
+    const old=document.getElementById('docToast'); if(old) old.remove();
+    const n=document.createElement('div'); n.id='docToast';
+    n.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:22px;z-index:9000;max-width:min(520px,92vw);'+
+      'border-radius:12px;padding:11px 16px;font-size:13.5px;font-weight:600;line-height:1.5;box-shadow:0 8px 24px rgba(15,42,74,.16);'+
+      (bad?'background:#FFF6E5;color:#7a4b00;border:1px solid #f0d9a8':'background:#E7F4EE;color:#1d6b45;border:1px solid #bfe3cf');
+    n.textContent=msg; document.body.appendChild(n); setTimeout(function(){ n.remove(); }, 6000);
+  }
+  function makeSecFolders(sec){
+    if(!liveDocs()) return Promise.resolve();
+    const f=secFolder(sec);
+    const subs=sec.structure==='byLocation'?LOCATIONS_OF():sec.structure==='byBrand'?BRANDS_OF().map(b=>BRAND_NAME[b]||b):[];
+    return subs.reduce((c,x)=>c.then(()=>PH_DOCS.ensureFolder(PH_DOCS.path(f,x))), PH_DOCS.ensureFolder(PH_DOCS.path(f)))
+      .then(()=>docToast('\u{1F4C1} Folder ready in SharePoint: Home-Brace Documents \u203a '+f),
+            e=>docToast('The section is saved. Its folder will be made when the first file goes in. ('+((e&&e.message)||'SharePoint didn\u2019t answer')+')',true));
+  }
+  let DEL=null;
+  function delSec(k){
+    const sec=DOCSECS.find(x=>x.k===k); if(!sec) return;
+    if(!liveDocs()){ DOCSECS=DOCSECS.filter(x=>x.k!==k); saveSecs(); closeModal(); renderFiles(); return; }
+    const d=DEL={sec:sec,folder:null,count:null,busy:false,err:'',failed:false}; drawDel();
+    PH_DOCS.item(PH_DOCS.path(secFolder(sec))).then(it=>{
+      if(DEL!==d) return;
+      d.folder=(it&&it.folder)?it:null;
+      return d.folder ? PH_DOCS.tally(d.folder).then(c=>{ d.count=c; }) : (d.count={files:0,folders:0});
+    }).catch(e=>{ d.failed=true; d.err='Couldn\u2019t check its folder ('+((e&&e.message)||'SharePoint didn\u2019t answer')+'). Nothing has been deleted - try again in a moment.'; })
+      .then(()=>{ if(DEL===d) drawDel(); });
+  }
+  function drawDel(){
+    const d=DEL; if(!d) return; const c=d.count;
+    const inside=d.failed?'':c===null?'<p class="docwhere">Checking its folder in SharePoint\u2026</p>'
+      :d.folder?((c.files||c.folders)?'<div class="docwarn">Its folder has <b>'+c.files+(c.more?'+':'')+' file'+(c.files===1?'':'s')+'</b>'+(c.folders?' and <b>'+c.folders+' folder'+(c.folders===1?'':'s')+'</b>':'')+'. They go with it.</div>':'<p class="docwhere">Its folder is empty.</p>')
+      :'<p class="docwhere">It has no folder in SharePoint yet, so nothing else is removed.</p>';
+    openModal('<div class="m-top"><h3 style="margin:0;font-size:17px;color:var(--navy)">Delete the \u201c'+esc(d.sec.n)+'\u201d section?</h3><button class="x" onclick="AD.close()">\u00d7</button></div>'+
+      '<div class="m-body">'+inside+
+        '<p style="font-size:13.5px;color:var(--soft);margin:12px 0 0;line-height:1.5">It disappears from Documents for everyone.'+(d.folder?' The folder goes to the <b>SharePoint recycle bin</b>, where it can be brought back for <b>93 days</b>.':'')+'</p>'+
+        (d.err?'<div class="docerr">'+esc(d.err)+'</div>':'')+'</div>'+
+      '<div class="m-foot"><span style="flex:1"></span><button class="btn ghost" onclick="AD.close()">Cancel</button>'+
+        '<button class="btn danger" onclick="AD.delSecGo()"'+(c===null||d.busy||d.failed?' disabled':'')+'>'+(d.busy?'Deleting\u2026':'Delete section')+'</button></div>');
+  }
+  function delSecGo(){
+    const d=DEL; if(!d||d.busy||d.count===null||d.failed) return;
+    d.busy=true; d.err=''; drawDel();
+    (d.folder?PH_DOCS.remove(d.folder):Promise.resolve()).then(()=>{
+      DOCSECS=DOCSECS.filter(x=>x.k!==d.sec.k); saveSecs(); DEL=null; closeModal(); renderFiles();
+      docToast('Deleted the \u201c'+d.sec.n+'\u201d section.'+(d.folder?' Its folder is in the SharePoint recycle bin for 93 days.':''));
+    }, e=>{ d.busy=false; d.err='Nothing was deleted: '+((e&&e.message)||'SharePoint didn\u2019t answer')+'.'; drawDel(); });
+  }
+  function resetSecs(){ if(liveDocs()) return; DOCSECS=JSON.parse(JSON.stringify(DEFAULT_DOCSECS)); saveSecs(); ensureAccess(); renderFiles(); }
 
   /* ---------- TAP-TO-PICK MENU (one tap opens choices; one tap picks) ---------- */
   let pk=null;
@@ -1381,7 +1454,7 @@
   function closeModal(){ el('modal').classList.remove('open'); }
 
   window.AD={tab:tabSet,viewAs:doViewAs,newTeam,editTeam,saveTeam,delTeam,resetTeams,profile,whyNoAdd,
-    addPerson,npSet,npLoc,npTeam,saveNewPerson,accTeam:setAccTeam,removePerson,restorePerson,showRemoved,togTeam,togLoc,setStatus,saveUser,pickLevel,pickAud,setField,pickPhoto,photoChosen,clearPhoto,pickUserLevel,clearUserLevel,tog,addFile,noop,newSec,editSec,saveSec,delSec,resetSecs,setSecName,setSecIcon,setSecStruct,setSecLocMode,setSecTeamMode,togSecLoc,togSecTeam,saveFile,cd,useFile,clearFile,uploadFile,setFileTeamMode,setFileLocMode,togFileLoc,togFileTeam,renderLocs,newLoc,editLoc,saveLoc,delLoc,resetLocs,setLocBrand,setLocState,setLocTZ,close:closeModal};
+    addPerson,npSet,npLoc,npTeam,saveNewPerson,accTeam:setAccTeam,removePerson,restorePerson,showRemoved,togTeam,togLoc,setStatus,saveUser,pickLevel,pickAud,setField,pickPhoto,photoChosen,clearPhoto,pickUserLevel,clearUserLevel,tog,addFile,noop,newSec,editSec,saveSec,delSec,delSecGo,resetSecs,setSecName,setSecIcon,setSecStruct,setSecLocMode,setSecTeamMode,togSecLoc,togSecTeam,saveFile,cd,useFile,clearFile,uploadFile,setFileTeamMode,setFileLocMode,togFileLoc,togFileTeam,renderLocs,newLoc,editLoc,saveLoc,delLoc,resetLocs,setLocBrand,setLocState,setLocTZ,close:closeModal};
   el('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
   /* Load the real roster before the first paint. If it isn't there (the public
@@ -1437,7 +1510,7 @@
 })();
 </script>
 <script>PH.nav('admin');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(PH.loadPhotos)PH.loadPhotos().then(function(got){if(got&&window.AD&&AD.tab)AD.tab('users');});});</script>
-<script src="tour.js?v=hc61"></script>
+<script src="tour.js?v=hc62"></script>
 <script>
 Tour.init([
   {sel:'#tabs', title:'This is your control room', body:'Four tabs and you can run the whole hub: <b>People</b>, <b>Teams &amp; Access</b>, <b>Document Sections</b> and <b>Locations</b>. No developer, no consultant.', pre:()=>AD.tab('users')},

@@ -157,6 +157,68 @@
   .whobox{background:var(--teal-soft);border:1px solid var(--teal-line,#c4e6e3);border-radius:10px;padding:11px 14px;font-size:13.5px;color:var(--teal-ink,#0c5b57);margin-top:6px}
   .whobox b{color:var(--teal-ink,#0a4d49)}
   .file.newf .nm{color:var(--teal-600);font-weight:700}
+  /* ---- live: real folders and files in SharePoint (docs.js) ---- */
+  .file .nm a{color:var(--ink);text-decoration:none}
+  .file .nm a:hover{color:var(--teal-600);text-decoration:underline}
+  .lv-meta{display:block;font-size:11.5px;color:var(--soft);font-weight:500;margin-top:1px}
+  .lv-msg{font-size:13px;color:var(--soft);padding:12px 2px}
+  .lv-msg.err{color:#8a3b12}
+  .lv-link{border:none;background:none;color:var(--teal-600);font-weight:700;font-family:inherit;font-size:13px;cursor:pointer;padding:0;text-decoration:underline}
+  .lv-root{border-radius:12px;transition:background .15s,box-shadow .15s}
+  .lv-root.over{background:var(--teal-soft);box-shadow:inset 0 0 0 2px var(--teal)}
+  .dropz.over{background:var(--teal-soft);box-shadow:inset 0 0 0 2px var(--teal);border-radius:10px}
+  .lv-in{border-radius:10px;transition:background .15s,box-shadow .15s}
+  .lv-sacts{display:flex;gap:16px;flex-wrap:wrap;padding:4px 2px 10px}
+  .lv-acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px}
+  .lv-acts .addbtn{margin-top:0}
+  .lv-btn{background:#fff;border:1px solid var(--line);border-radius:9px;padding:9px 13px;font-weight:600;font-size:13.5px;cursor:pointer;font-family:inherit;color:var(--navy)}
+  .lv-btn:hover{border-color:var(--teal);color:var(--teal-600)}
+  .lv-rm{border:none;background:none;color:#b42318;font-weight:600;font-size:12px;cursor:pointer;font-family:inherit;padding:4px 2px;white-space:nowrap}
+  .lv-rm:hover{text-decoration:underline}
+  .lv-fold{gap:6px}
+  .lv-tw{flex:1;display:flex;align-items:center;gap:8px;border:none;background:none;font-family:inherit;font-size:14px;cursor:pointer;padding:0;text-align:left;color:var(--ink)}
+  .lv-tw .car{font-size:11px;color:var(--soft);transition:transform .2s;display:inline-block}
+  .lv-fold.open .lv-tw .car{transform:rotate(90deg)}
+  .lv-tw .nm{font-weight:600}
+  .lv-drop{border:2px dashed #c9d3df;border-radius:14px;padding:22px 16px;text-align:center;color:var(--soft);font-size:14px;background:#fafbfc;transition:all .15s}
+  .lv-drop.over{border-color:var(--teal);background:var(--teal-soft);color:var(--teal-600)}
+  .lv-drop b{color:var(--navy)}
+  .lv-drop .lv-acts{justify-content:center}
+  .lv-chosen{margin-top:10px;font-size:13px;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 12px;max-height:150px;overflow:auto}
+  .lv-chosen div{padding:3px 0;display:flex;gap:8px}
+  .lv-chosen small{color:var(--soft);margin-left:auto;white-space:nowrap}
+  .afield .lv-radio{display:flex;align-items:flex-start;gap:10px;padding:11px 13px;border:1px solid var(--line);border-radius:11px;margin-top:8px;cursor:pointer;
+    font-size:14px;font-weight:500;color:var(--ink);background:#fff;text-transform:none;letter-spacing:0}
+  .afield .lv-radio b{color:var(--navy)}
+  .afield .lv-radio.on{border-color:var(--teal);background:var(--teal-soft)}
+  .lv-radio input{margin-top:3px;accent-color:var(--teal)}
+  .afield .lv-radio small{display:block;color:var(--soft);font-size:12.5px;font-weight:500;margin-top:2px;text-transform:none;letter-spacing:0}
+  .lv-row .lv-btn{white-space:nowrap}
+  .lv-footwho{flex:1 1 240px;font-size:13.5px;line-height:1.45;color:var(--teal-ink,#0c5b57);margin-right:6px}
+  .lv-footwho b{color:var(--teal-ink,#0a4d49)}
+  .lv-again{margin:6px 0 12px}
+  .dm-foot .simbtn,.dm-foot .addbtn{flex:none}
+  @media(max-width:560px){
+    .lv-footwho{flex-basis:100%;margin:0 0 2px}
+    .lv-footwho + .simbtn{margin-left:auto}
+  }
+  .lv-pick{margin:8px 0 0 30px}
+  .lv-pl{font-size:12px;font-weight:700;color:var(--soft);text-transform:uppercase;letter-spacing:.04em;margin-top:10px}
+  .lv-pl small{text-transform:none;letter-spacing:0;font-weight:500}
+  .lv-prog{margin-top:6px}
+  .lv-bar{height:10px;border-radius:999px;background:#e8edf2;overflow:hidden;margin:10px 0 6px}
+  .lv-bar i{display:block;height:100%;width:0;background:var(--teal);border-radius:999px;transition:width .2s}
+  .lv-note{font-size:12.5px;color:var(--soft);margin-top:8px;line-height:1.5}
+  .lv-ok{background:var(--good-soft);color:#1d6b45;border:1px solid #bfe3cf;border-radius:10px;padding:11px 14px;font-size:14px;font-weight:600;margin-top:6px}
+  .lv-warn{background:#FFF6E5;color:#7a4b00;border:1px solid #f0d9a8;border-radius:10px;padding:11px 14px;font-size:13.5px;margin-top:8px;line-height:1.5}
+  .lv-bad{background:#FDECEC;color:#8a1c1c;border:1px solid #f3c4c4;border-radius:10px;padding:11px 14px;font-size:13.5px;margin-top:8px;line-height:1.5}
+  .lv-input{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit}
+  .lv-input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(20,155,150,.15)}
+  .lv-row{display:flex;gap:8px}
+  .lv-found{display:flex;gap:11px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:11px 13px;margin-top:10px;font-weight:600;color:var(--navy)}
+  .dm-foot .danger{background:#b42318}
+  .dm-foot .danger:hover{background:#912018}
+  .addbtn:disabled,.lv-btn:disabled{opacity:.45;cursor:default}
   /* Some people set "reduce motion" in Windows or macOS, often because movement makes
      them unwell. Honour it everywhere: keep the state changes, drop the travel. */
   @media (prefers-reduced-motion: reduce){
@@ -167,10 +229,11 @@
   }
 
 </style>
-<script src="user.js?v=hc61"></script>
+<script src="user.js?v=hc62"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc61"></script>
-  <script src="gate.js?v=hc61"></script>
+  <script src="store.js?v=hc62"></script>
+  <script src="gate.js?v=hc62"></script>
+  <script src="docs.js?v=hc62"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — Documents. You see only the folders your role, location &amp; team allow. Files open on the Microsoft drive.</div>
@@ -198,7 +261,7 @@
 
   <div id="folders"></div>
 
-  <div class="synced">📎 <b>Nothing here is a copy.</b> Each file opens the real document on your Microsoft <b>SharePoint/OneDrive</b> drive. Edit it there or (if you have access) from inside the hub — it's the same file, always in sync.</div>
+  <div class="synced">📎 <b>Nothing here is a copy.</b> Files are kept in the practice's <b>SharePoint</b> (Home-Brace › Documents). <b>Open</b> shows the real file, and any change saves straight to it.</div>
 </div>
 
 <div id="docmodal" class="ov"><div class="modal" id="docmodalcard"></div></div>
@@ -268,7 +331,8 @@
     return out;
   }
   const el=id=>document.getElementById(id);
-  let cur=PERSONAS[0], openSet=null;
+  let cur=PERSONAS[0], openSet=null, lastWho=null;
+  let wantHash=''; try{ wantHash=decodeURIComponent((location.hash||'').slice(1)); }catch(_){}
   /* The drive picker's current folder. This was never declared here - user.js has its
      own, private to its file - so "Add document" threw ReferenceError the moment it
      opened. Found 19/09 in the phone dialog pass; it had been broken on the live app. */
@@ -296,6 +360,7 @@
     return '<div class="file"><span class="fic">📄</span><span class="nm">'+name+'</span>'+(scopeChip||'')+'<a class="sp" href="#" onclick="DOCS.openDoc(\''+safe+'\');return false">Open ↗</a></div>';
   }
   function renderFolders(p){
+    if(isLive()) return liveRender();
     const accessible=accessibleSections(p);
     if(!accessible.length){ el('folders').innerHTML='<div class="empty">No document folders are shared with this role yet. An admin grants access in the Admin console.</div>'; return; }
     if(openSet===null) openSet=new Set(); // start collapsed — the user opens what they need
@@ -330,10 +395,22 @@
       try{ localStorage.setItem('ph_viewas',cur.id); }catch(_){}
       el('persona').value=cur.id;
     }
-    openSet=null; // new person -> show all of THEIR sections expanded
+    /* A new person starts with every folder closed. On the live site identity settles in
+       stages for the SAME person - keep what they have opened. */
+    const who=cur&&cur.name;
+    if(!(isLive() && openSet && who===lastWho)) openSet=null;
+    lastWho=who;
+    PH.nav('documents');
+    if(isLive()){
+      /* Admin's "Open in Documents" lands on documents.html#<section>: open that one -
+         once this person can actually see it (identity lands in stages). */
+      if(wantHash){ const sec=liveSecs().find(x=>x.k===wantHash);
+        if(sec && liveCap(sec,cur)){ openSet=openSet||new Set(); openSet.add(wantHash); wantHash=''; } }
+      renderFolders(cur); return;
+    }
     const n=accessibleSections(cur).length;
     el('sub').innerHTML='As <b>'+cur.name+'</b>, you can open <b>'+n+'</b> document folder'+(n===1?'':'s')+'. Tap one to open it.';
-    PH.nav('documents'); renderFolders(cur);
+    renderFolders(cur);
   }
   function toggle(k){ if(!openSet)openSet=new Set(); if(openSet.has(k))openSet.delete(k); else openSet.add(k); renderFolders(cur); }
   /* ---- Live two-way sync viewer (click a file) ---- */
@@ -430,7 +507,452 @@
         teams:(addCtx.teamMode==='all'?[]:addCtx.teams.slice())});
     if(openSet)openSet.add(addCtx.k); closeDoc(); renderFolders(cur);
   }
-  function closeDoc(){ el('docmodal').classList.remove('open'); addCtx=null; }
+  function closeDoc(){
+    if(isLive() && DLG){ closeLive(); return; }
+    el('docmodal').classList.remove('open'); addCtx=null;
+  }
+
+  /* ================= LIVE: real folders and files in SharePoint =================
+     30/09/2026 - Cory: Heather creates folders from Home-Brace, drags files in, links
+     files she already has, removes folders she made, and "uploading a document and
+     deciding the controls needs to be very easy to understand".
+     The folders are real folders in the Home-Brace site's library (docs.js has the
+     where and the rules); files open the real file. The demo above - sample files,
+     the two-way "sync" viewer, the View-as picker - stays for the sandbox only.
+     Every action is a data-act button handled in one place below, so a folder or file
+     name with a quote in it cannot break a click. */
+  const isLive=()=>!!(window.PH && PH.isLive && PH.isLive() && window.PH_DOCS);
+  const BRAND_NAME={FFO:'FFO',SUN:'Sunflower',LCO:'LCO'};
+  const NODES={}, OPENF=new Set();
+  let LINKS=[], META={}, extras='no', LIVE_TEAMS=null;   // extras: 'no' | 'loading' | 'yes'
+  /* Only real web links become links - never a javascript: one from a tampered record. */
+  const safeUrl=u=>/^https:\/\//i.test(String(u||''))?String(u):'#';
+  const escH=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const myName=()=>{ try{ return PH.name(PH.me()); }catch(_){ return ''; } };
+
+  /* The sections: Admin's saved list when there is one (so a section Heather adds,
+     renames or deletes there is what everyone sees), otherwise the six defaults. Each
+     keeps the FOLDER it was made with: renaming a section in Admin never moves files. */
+  function liveSecs(){
+    let saved=null; try{ saved=JSON.parse(localStorage.getItem('ph_docsecs')); }catch(_){}
+    if(!(Array.isArray(saved) && saved.length))
+      return FOLDERS.map(f=>({k:f.k,n:f.n,ic:f.ic,folder:PH_DOCS.clean(f.n),perLocation:!!f.perLocation,perBrand:!!f.perBrand,
+        locMode:'all',locs:[],teamMode:'all',teams:[],custom:false}));
+    return saved.filter(x=>x&&x.k).map(x=>({k:x.k,n:x.n||'Untitled',ic:x.ic||'\u{1F4C1}',folder:x.folder||PH_DOCS.clean(x.n||'Untitled'),
+      perLocation:x.structure==='byLocation',perBrand:x.structure==='byBrand',
+      locMode:x.locMode||'all',locs:x.locs||[],teamMode:x.teamMode||'all',teams:x.teams||[],custom:!FOLDERS.some(f=>f.k===x.k)}));
+  }
+  /* What this person can do in a section: the Teams & Access grid decides; a custom
+     section nobody has set in the grid falls back to its own audience (customCap). */
+  function liveCap(s,p){
+    const admin=p.id==='admin';
+    if(!admin && s.locMode==='some' && p.scope!=='all' && !(p.scopes||[p.scope]).some(l=>(s.locs||[]).includes(l))) return null;
+    if(!s.custom) return (p.doc&&p.doc[s.k])||null;
+    const g=PH.can?PH.can(s.k):'none';
+    if(g && g!=='none') return g;
+    return customCap(s,p);
+  }
+  const canAddAt=cap=>cap==='add'||cap==='edit'||cap==='manage';
+  const canEditAt=cap=>cap==='edit'||cap==='manage';
+  function myOffices(p){ return p.scope==='all' ? PH.officeNames() : (p.scopes||[p.scope]).filter(Boolean); }
+  function brandOf(code){ return BRAND_NAME[code]||code; }
+  /* Where a section's files sit: one folder, or one per office / per brand the person has. */
+  function roots(s,p){
+    const locs=PH.locations?PH.locations():[];
+    if(s.perLocation) return myOffices(p).map(o=>({label:'\u{1F4CD} '+o,path:PH_DOCS.path(s.folder,o),sub:o,offices:[o]}));
+    if(s.perBrand){
+      const mine=myOffices(p);
+      const brands=[...new Set(locs.filter(l=>p.scope==='all'||mine.includes(l.n)).map(l=>brandOf(l.brand)).filter(Boolean))];
+      return brands.map(b=>({label:'\u{1F3F7} '+b,path:PH_DOCS.path(s.folder,b),sub:b,
+        offices:locs.filter(l=>brandOf(l.brand)===b).map(l=>l.n)}));
+    }
+    return [{label:'',path:PH_DOCS.path(s.folder),sub:'',offices:[]}];
+  }
+  /* "Only certain people" is kept per file/folder/link in ph_docmeta. People who manage
+     the section always see everything, marked, so they can look after it. */
+  function seesItem(id,p,cap){
+    const a=META[id]; if(!a) return true;
+    if(cap==='manage' || p.id==='admin') return true;
+    const mine=(p.teams||[]).map(t=>String(t).toLowerCase());
+    const teamOk=!(a.teams||[]).length || a.teams.some(t=>mine.includes(String(t).toLowerCase()));
+    const offOk=!(a.offices||[]).length || p.scope==='all' || a.offices.some(o=>(p.scopes||[p.scope]).includes(o));
+    return teamOk && offOk;
+  }
+  function audChip(id){
+    const a=META[id]; if(!a) return '';
+    const parts=[]; if((a.teams||[]).length) parts.push(a.teams.join(', ')); if((a.offices||[]).length) parts.push(a.offices.join(', '));
+    return '<span class="scopechip" title="Only these people see it">\u{1F465} Only '+escH(parts.join(' · '))+'</span>';
+  }
+  function fileIcon(n){
+    const x=String(n).toLowerCase().split('.').pop();
+    if(x==='pdf') return '\u{1F4D5}';
+    if(['doc','docx','rtf','txt','odt'].includes(x)) return '\u{1F4D8}';
+    if(['xls','xlsx','xlsm','csv','ods'].includes(x)) return '\u{1F4D7}';
+    if(['ppt','pptx','odp'].includes(x)) return '\u{1F4D9}';
+    if(['png','jpg','jpeg','gif','heic','webp','bmp'].includes(x)) return '\u{1F5BC}️';
+    return '\u{1F4C4}';
+  }
+  function whenBy(f){
+    const by=f.lastModifiedBy&&f.lastModifiedBy.user&&f.lastModifiedBy.user.displayName;
+    let w=''; try{ w=f.lastModifiedDateTime?PH.ago(f.lastModifiedDateTime):''; }catch(_){}
+    return 'Updated '+(w||'')+(by?' · '+by:'');
+  }
+  function load(path){
+    const n=NODES[path]; if(n && (n.state==='ok'||n.state==='loading')) return;
+    NODES[path]={state:'loading'};
+    PH_DOCS.list(path).then(r=>{ NODES[path]={state:'ok',folders:r.folders,files:r.files,missing:r.missing}; liveRender(); },
+      e=>{ NODES[path]={state:'error',status:e&&e.status}; liveRender(); });
+  }
+  function loadExtras(){
+    if(extras!=='no') return; extras='loading';
+    const teams=(window.PH_STORE?PH_STORE.get('ph_teams'):Promise.resolve(null)).catch(()=>null);
+    Promise.all([PH_DOCS.links(),PH_DOCS.meta(),teams]).then(r=>{ LINKS=r[0]; META=r[1]; if(Array.isArray(r[2])&&r[2].length) LIVE_TEAMS=r[2]; extras='yes'; liveRender(); },
+      ()=>{ extras='yes'; liveRender(); });
+  }
+  function forget(path){ Object.keys(NODES).forEach(k=>{ if(k===path || k.indexOf(path+'/')===0) delete NODES[k]; }); }
+  function itemIn(path,id){ const n=NODES[path]; return n&&n.state==='ok' ? n.folders.concat(n.files).find(x=>x.id===id) : null; }
+  const attr=(k,v)=>' data-'+k+'="'+escH(v)+'"';
+
+  function folderHTML(path,depth,ctx){
+    const n=NODES[path];
+    if(!n){ load(path); return '<div class="lv-msg">Loading…</div>'; }
+    if(n.state==='loading') return '<div class="lv-msg">Loading…</div>';
+    if(n.state==='error') return '<div class="lv-msg err">'+((n.status===401||n.status===403)
+        ? 'You can’t open this folder yet. Ask an admin to add you to the Home-Brace group.'
+        : 'This folder didn’t load.')+' <button class="lv-link"'+attr('act','retry')+attr('path',path)+'>Try again</button></div>';
+    const pad=depth?' style="padding-left:'+(depth*20)+'px"':'';
+    const rows=[];
+    n.folders.filter(f=>seesItem(f.id,cur,ctx.cap)).forEach(f=>{
+      const fp=path+'/'+f.name, open=OPENF.has(fp);
+      const here=attr('k',ctx.k)+attr('sub',ctx.sub)+attr('path',fp), ipad=' style="padding-left:'+((depth+1)*20)+'px"';
+      rows.push('<div class="file lv-fold'+(open?' open':'')+(ctx.canAdd?' dropz':'')+'"'+(ctx.canAdd?here:'')+pad+'>'+
+        '<button class="lv-tw"'+attr('act','openf')+attr('path',fp)+' aria-expanded="'+open+'"><span class="car">▶</span><span class="fic">\u{1F4C1}</span><span class="nm">'+escH(f.name)+'</span></button>'+
+        audChip(f.id)+(ctx.canManage?'<button class="lv-rm"'+attr('act','rm')+attr('path',path)+attr('id',f.id)+'>Remove</button>':'')+'</div>'+
+        (open?'<div class="lv-in'+(ctx.canAdd?' dropz':'')+'"'+(ctx.canAdd?here:'')+'>'+folderHTML(fp,depth+1,ctx)+
+          (ctx.canAdd?'<div class="lv-sacts"'+ipad+'><button class="lv-link"'+attr('act','add')+here+'>+ Add files here</button>'+
+            (ctx.canEdit?'<button class="lv-link"'+attr('act','newf')+here+'>+ New folder here</button>':'')+'</div>':'')+'</div>':''));
+    });
+    n.files.filter(f=>seesItem(f.id,cur,ctx.cap)).forEach(f=>{
+      rows.push('<div class="file"'+pad+'><span class="fic">'+fileIcon(f.name)+'</span>'+
+        '<span class="nm"><a href="'+escH(safeUrl(f.webUrl))+'" target="_blank" rel="noopener">'+escH(f.name)+'</a><span class="lv-meta">'+escH(whenBy(f))+'</span></span>'+
+        audChip(f.id)+'<a class="sp" href="'+escH(safeUrl(f.webUrl))+'" target="_blank" rel="noopener">Open ↗</a>'+
+        (ctx.canManage?'<button class="lv-rm"'+attr('act','rm')+attr('path',path)+attr('id',f.id)+'>Remove</button>':'')+'</div>');
+    });
+    if(!rows.length) return depth ? '<div class="lv-msg"'+pad+'>Empty folder.</div>' : '';
+    return rows.join('');
+  }
+
+  function liveRender(){
+    const p=cur;
+    const secs=liveSecs().map(s=>({s,cap:liveCap(s,p)})).filter(x=>x.cap);
+    if(!secs.length){ el('folders').innerHTML='<div class="empty">No document folders are shared with you yet. An admin grants access in <b>Admin → Teams &amp; Access</b>.</div>'; return; }
+    if(openSet===null) openSet=new Set();
+    if(secs.some(x=>openSet.has(x.s.k))) loadExtras();
+    el('folders').innerHTML='<div class="folders">'+secs.map(({s,cap})=>{
+      const open=openSet.has(s.k), add=canAddAt(cap), edit=canEditAt(cap), manage=cap==='manage';
+      const rs=roots(s,p);
+      let body='', nFiles=0, nFolders=0, counted=true;
+      if(open){
+        body=rs.map(r=>{
+          const links=LINKS.filter(l=>l && !l.hidden && l.sec===s.k && (l.sub||'')===r.sub && seesItem(l.id,p,cap));
+          const ctx={k:s.k,sub:r.sub,cap,canManage:manage,canAdd:add,canEdit:edit};
+          const inner=folderHTML(r.path,0,ctx), n=NODES[r.path];
+          if(n && n.state==='ok'){ nFiles+=n.files.filter(f=>seesItem(f.id,p,cap)).length+links.length; nFolders+=n.folders.filter(f=>seesItem(f.id,p,cap)).length; }
+          else counted=false;
+          const empty=n && n.state==='ok' && !inner && !links.length;
+          const linkRows=links.map(l=>'<div class="file"><span class="fic">\u{1F517}</span>'+
+            '<span class="nm"><a href="'+escH(safeUrl(l.webUrl))+'" target="_blank" rel="noopener">'+escH(l.name)+'</a><span class="lv-meta">Linked — kept '+(l.shared===false?'elsewhere · ⚠ not shared with everyone yet':'elsewhere')+'</span></span>'+
+            audChip(l.id)+'<a class="sp" href="'+escH(safeUrl(l.webUrl))+'" target="_blank" rel="noopener">Open ↗</a>'+
+            (manage?'<button class="lv-rm"'+attr('act','unlink')+attr('id',l.id)+'>Remove link</button>':'')+'</div>').join('');
+          const acts=add?'<div class="lv-acts">'+
+              '<button class="addbtn"'+attr('act','add')+attr('k',s.k)+attr('sub',r.sub)+'>+ Add files</button>'+
+              (edit?'<button class="lv-btn"'+attr('act','newf')+attr('k',s.k)+attr('sub',r.sub)+'>+ New folder</button>':'')+
+              '<button class="lv-btn"'+attr('act','link')+attr('k',s.k)+attr('sub',r.sub)+'>\u{1F517} Link a file</button></div>':'';
+          return (r.label?'<div class="subfold'+(s.perBrand?' brand':'')+'">'+escH(r.label)+'</div>':'')+
+            '<div class="lv-root'+(add?' dropz':'')+'"'+attr('k',s.k)+attr('sub',r.sub)+'>'+linkRows+inner+
+            (empty?'<div class="lv-msg">Nothing here yet.'+(add?' Drag files or folders here, or use <b>+ Add files</b>.':'')+'</div>':'')+acts+'</div>';
+        }).join('')+(cap==='view'?'<div class="readonly">You can open these, but not add or change them.</div>':'')+
+          '<div class="lv-acts" style="margin-top:8px"><button class="lv-link"'+attr('act','refresh')+attr('k',s.k)+'>↻ Refresh</button></div>';
+      }
+      const meta=open&&counted ? ([nFolders?nFolders+' folder'+(nFolders===1?'':'s'):'', nFiles?nFiles+' file'+(nFiles===1?'':'s'):''].filter(Boolean).join(' · ')||'Empty') : 'Tap to open';
+      return '<div class="folder'+(open?' open':'')+'"><div class="fhead" onclick="DOCS.toggle(\''+s.k.replace(/[^\w-]/g,'')+'\')">'+
+        '<span class="car">▶</span><span class="fi">'+escH(s.ic)+'</span>'+
+        '<div><div class="fn">'+escH(s.n)+'</div><div class="fmeta">'+meta+'</div></div>'+
+        '<span class="cap '+cap+'">'+CAPTXT[cap]+'</span></div>'+
+        '<div class="fbody">'+body+'</div></div>';
+    }).join('')+'</div>';
+    const n=secs.length;
+    el('sub').innerHTML='You can open <b>'+n+'</b> document folder'+(n===1?'':'s')+'. Tap one to see what’s inside.';
+  }
+
+  /* ---------- the dialogs: add files, new folder, link a file, remove ---------- */
+  let DLG=null;                         // {kind, ...} while a live dialog is open
+  function teamList(){
+    let t=LIVE_TEAMS; if(!(Array.isArray(t)&&t.length)) try{ t=JSON.parse(localStorage.getItem('ph_teams')); }catch(_){}
+    return (Array.isArray(t)&&t.length?t:TEAMS).filter(x=>x && x!=='Admin');
+  }
+  function openDlg(d){ DLG=d; drawDlg(); el('docmodal').classList.add('open'); }
+  function where(d){
+    const deeper=d.at && d.at!==d.r.path ? d.at.slice(d.r.path.length+1).split('/').join(' › ') : '';
+    return d.s.n+(d.r.sub?' · '+d.r.sub:'')+(deeper?' › '+deeper:'');
+  }
+  /* A folder path from the page, kept only if it really is inside this section's folder. */
+  function inRoot(r,path){ return path && (path===r.path || path.indexOf(r.path+'/')===0) ? path : r.path; }
+  function audHTML(a,what,d){
+    const place=where(d);
+    const chip=(kind,v,on)=>'<button class="pchip'+(on?' on':'')+'"'+attr('act','aud-'+kind)+attr('v',v)+'>'+escH(v)+'</button>';
+    return '<div class="afield"><label>Who should see '+what+'?</label>'+
+      '<label class="lv-radio'+(a.mode==='all'?' on':'')+'"><input type="radio" name="lvaud"'+attr('act','aud-mode')+' value="all"'+(a.mode==='all'?' checked':'')+'>'+
+        '<span><b>Everyone who can open '+escH(place)+'</b><small>The usual choice. They get a notification.</small></span></label>'+
+      '<label class="lv-radio'+(a.mode==='some'?' on':'')+'"><input type="radio" name="lvaud"'+attr('act','aud-mode')+' value="some"'+(a.mode==='some'?' checked':'')+'>'+
+        '<span><b>Only certain people</b><small>Pick teams, offices, or both.</small></span></label>'+
+      (a.mode==='some'?'<div class="lv-pick">'+
+        '<div class="lv-pl">Teams <small>(none picked = every team)</small></div><div class="pickwrap">'+teamList().map(t=>chip('team',t,a.teams.includes(t))).join('')+'</div>'+
+        '<div class="lv-pl">Offices <small>(none picked = every office)</small></div><div class="pickwrap">'+PH.officeNames().map(o=>chip('off',o,a.offices.includes(o))).join('')+'</div></div>':'')+
+      '</div>';
+  }
+  function whoSentence(a,what,place){
+    if(a.mode==='all') return '\u{1F441} Everyone who can open <b>'+escH(place)+'</b> will see '+what+'.';
+    if(!a.teams.length && !a.offices.length) return '\u{1F441} Pick at least one team or office above.';
+    const t=a.teams.length?'<b>'+escH(a.teams.join(', '))+'</b>':'<b>every team</b>';
+    const o=a.offices.length?'<b>'+escH(a.offices.join(', '))+'</b>':'<b>every office</b>';
+    return '\u{1F441} Only '+t+' at '+o+' will see '+what+'.';
+  }
+  const audOk=a=>a.mode==='all' || a.teams.length>0 || a.offices.length>0;
+  const audOf=a=>a.mode==='some'?{teams:a.teams.slice(),offices:a.offices.slice()}:null;
+  function top(title){ return '<div class="dm-top"><h3>'+title+'</h3><button class="x"'+attr('act','close')+'>×</button></div>'; }
+  /* The footer can carry the one sentence that matters - who will see it - right beside
+     the button that does it, so it is never scrolled out of sight. */
+  function foot(inner,left){ return '<div class="dm-foot">'+(left?'<div class="lv-footwho">'+left+'</div>':'<span style="flex:1"></span>')+inner+'</div>'; }
+  function sizeTxt(b){ return b>=1048576?(b/1048576).toFixed(1)+' MB':Math.max(1,Math.round(b/1024))+' KB'; }
+  function whatOf(entries){
+    const files=entries.filter(e=>e.file).length, dirs=new Set(entries.filter(e=>e.dir).map(e=>e.dir.split('/')[0])).size;
+    if(dirs && !files) return dirs===1?'this folder':'these '+dirs+' folders';
+    return files===1?'this file':'these '+files+' files';
+  }
+
+  function drawDlg(){
+    const d=DLG, card=el('docmodalcard'); if(!d) return;
+    if(d.kind==='add'){
+      const files=d.entries.filter(e=>e.file), dirs=[...new Set(d.entries.filter(e=>e.dir).map(e=>e.dir.split('/')[0]))];
+      if(d.stage==='busy'){
+        card.innerHTML=top('➕ Adding to '+escH(where(d)))+'<div class="dm-body"><div class="lv-prog"><b id="lvProgTxt">Starting…</b><div class="lv-bar"><i id="lvProgBar"></i></div>'+
+          '<div class="lv-note">Keep this page open until it finishes.</div></div></div>';
+        return;
+      }
+      if(d.stage==='done'){
+        const r=d.result, n=r.uploaded.length, fl=r.failed;
+        card.innerHTML=top('➕ Added to '+escH(where(d)))+'<div class="dm-body">'+
+          (n||r.folders.length?'<div class="lv-ok">✓ '+(n?n+' file'+(n===1?'':'s'):'')+(n&&r.folders.length?' and ':'')+(r.folders.length?r.folders.length+' folder'+(r.folders.length===1?'':'s'):'')+' added to '+escH(where(d))+'.</div>':'')+
+          (fl.length?'<div class="lv-bad"><b>'+fl.length+' didn’t go:</b><br>'+fl.slice(0,8).map(f=>escH(f.name)+' — '+escH((f.error&&f.error.message)||'error')).join('<br>')+(fl.length>8?'<br>…and '+(fl.length-8)+' more':'')+'</div>':'')+
+          (d.audWarn?'<div class="lv-warn">The files are in, but “who can see it” didn’t save, so everyone who can open this folder can see them. Try again from the file later.</div>':'')+
+          '</div>'+foot('<button class="addbtn"'+attr('act','close')+'>Done</button>');
+        return;
+      }
+      const list=files.slice(0,12).map(e=>'<div><span>'+fileIcon(e.file.name)+'</span><span>'+escH((e.dir?e.dir+'/':'')+e.file.name)+'</span><small>'+sizeTxt(e.file.size)+'</small></div>').join('')+
+        (files.length>12?'<div><span></span><span>…and '+(files.length-12)+' more</span></div>':'');
+      const any=files.length||dirs.length;
+      card.innerHTML=top('➕ Add to '+escH(where(d)))+'<div class="dm-body">'+
+        '<div class="lv-drop" id="lvDrop"><div>\u{1F4E5} <b>Drag files or folders here</b></div>'+
+          '<div class="lv-acts"><button class="lv-btn"'+attr('act','pick-files')+'>Choose files</button><button class="lv-btn"'+attr('act','pick-folder')+'>Choose a folder</button></div>'+
+          '<input type="file" id="lvFiles" multiple hidden><input type="file" id="lvFolder" webkitdirectory multiple hidden></div>'+
+        (any?'<div class="lv-chosen">'+(dirs.length?'<div><span>\u{1F4C1}</span><span>'+escH(dirs.join(', '))+'</span></div>':'')+list+'</div>'+
+             '<div class="lv-acts lv-again"><button class="lv-link"'+attr('act','clear')+'>Start again</button></div>':'')+
+        (d.err?'<div class="lv-bad">'+escH(d.err)+'</div>':'')+
+        (any?audHTML(d.aud,whatOf(d.entries),d):'')+
+        '<div class="lv-note">Nothing is overwritten: a file with a name that’s already there is added as “name 1”. Private files like payroll belong in a locked folder — ask an admin.</div>'+
+        '</div>'+foot('<button class="simbtn"'+attr('act','close')+'>Cancel</button>'+
+          '<button class="addbtn"'+attr('act','upload')+(any&&audOk(d.aud)?'':' disabled')+'>'+(files.length?'Add '+files.length+' file'+(files.length===1?'':'s'):'Add')+'</button>',
+          any?whoSentence(d.aud,whatOf(d.entries),where(d)):'');
+      wireChooser();
+      return;
+    }
+    if(d.kind==='newf'){
+      card.innerHTML=top('\u{1F4C1} New folder in '+escH(where(d)))+'<div class="dm-body">'+
+        '<div class="afield"><label>Folder name</label><input class="lv-input" id="lvNewName" value="'+escH(d.name||'')+'" placeholder="e.g. New Hire" maxlength="120"></div>'+
+        (d.err?'<div class="lv-bad">'+escH(d.err)+'</div>':'')+'</div>'+
+        foot('<button class="simbtn"'+attr('act','close')+'>Cancel</button><button class="addbtn"'+attr('act','newf-go')+(d.busy?' disabled':'')+'>'+(d.busy?'Creating…':'Create folder')+'</button>');
+      const i=el('lvNewName'); if(i){ i.focus(); i.addEventListener('input',()=>{ d.name=i.value; }); i.addEventListener('keydown',e=>{ if(e.key==='Enter') newfGo(); }); }
+      return;
+    }
+    if(d.kind==='link'){
+      const it=d.item;
+      const shared=d.shared===true?'<div class="lv-ok">✓ Everyone in Home-Brace can open it.</div>'
+        :d.shared===false?'<div class="lv-warn">⚠ Right now only the people it’s shared with can open it. In the file, click <b>Share</b> and add <b>Home-Brace Members</b>, or others will see “no access”.</div>'
+        :(it?'<div class="lv-warn">Couldn’t check who can open it. Make sure it’s shared with <b>Home-Brace Members</b>.</div>':'');
+      card.innerHTML=top('\u{1F517} Link a file to '+escH(where(d)))+'<div class="dm-body">'+
+        '<div class="dm-banner" style="margin:-16px -18px 14px;border-radius:0">For a file that should stay where it is — like a workbook you keep updating. Home-Brace shows it here and opens the original; nothing is copied.</div>'+
+        '<div class="afield"><label>Paste the file’s link</label><div class="lv-row"><input class="lv-input" id="lvUrl" value="'+escH(d.url||'')+'" placeholder="In the file: Share → Copy link, then paste here">'+
+          '<button class="lv-btn"'+attr('act','link-find')+(d.busy?' disabled':'')+'>'+(d.busy?'Looking…':'Find it')+'</button></div></div>'+
+        (d.err?'<div class="lv-bad">'+escH(d.err)+'</div>':'')+
+        (it?'<div class="lv-found"><span style="font-size:20px">'+fileIcon(it.name)+'</span>'+escH(it.name)+'</div>'+shared+audHTML(d.aud,'this file',d):'')+
+        '</div>'+foot('<button class="simbtn"'+attr('act','close')+'>Cancel</button><button class="addbtn"'+attr('act','link-go')+(it&&audOk(d.aud)&&!d.busy?'':' disabled')+'>Add link</button>',
+          it?whoSentence(d.aud,'this file',where(d)):'');
+      const i=el('lvUrl'); if(i){ i.addEventListener('input',()=>{ d.url=i.value; }); i.addEventListener('keydown',e=>{ if(e.key==='Enter') linkFind(); }); if(!it) i.focus(); }
+      return;
+    }
+    if(d.kind==='rm'){
+      const it=d.item, folder=!!it.folder, c=d.count;
+      const inside=!folder?'':(!c?'<div class="lv-note">Checking what’s inside…</div>'
+        :c.unknown?''
+        :(c.files||c.folders)?'<div class="lv-warn">It has <b>'+c.files+(c.more?'+':'')+' file'+(c.files===1?'':'s')+'</b>'+(c.folders?' and <b>'+c.folders+' folder'+(c.folders===1?'':'s')+'</b>':'')+' inside. They go with it.</div>'
+        :'<div class="lv-note">It’s empty.</div>');
+      card.innerHTML=top('Remove “'+escH(it.name)+'”?')+'<div class="dm-body">'+inside+
+        '<div class="lv-note" style="font-size:13.5px">It goes to the <b>SharePoint recycle bin</b>. It can be brought back from there for <b>93 days</b>.</div>'+
+        (d.err?'<div class="lv-bad">'+escH(d.err)+'</div>':'')+'</div>'+
+        foot('<button class="simbtn"'+attr('act','close')+'>Cancel</button><button class="addbtn danger"'+attr('act','rm-go')+((folder&&!c)||d.busy?' disabled':'')+'>'+(d.busy?'Removing…':'Remove '+(folder?'folder':'file'))+'</button>');
+      return;
+    }
+    if(d.kind==='unlink'){
+      card.innerHTML=top('Remove the link to “'+escH(d.link.name)+'”?')+'<div class="dm-body">'+
+        '<div class="lv-note" style="font-size:13.5px">The file itself isn’t touched — it stays where it is. Home-Brace just stops showing it here.</div>'+
+        (d.err?'<div class="lv-bad">'+escH(d.err)+'</div>':'')+'</div>'+
+        foot('<button class="simbtn"'+attr('act','close')+'>Cancel</button><button class="addbtn danger"'+attr('act','unlink-go')+(d.busy?' disabled':'')+'>Remove link</button>');
+    }
+  }
+  function wireChooser(){
+    const f=el('lvFiles'), g=el('lvFolder');
+    if(f) f.onchange=()=>{ DLG.entries=DLG.entries.concat(PH_DOCS.fromInput(f.files)); DLG.err=''; drawDlg(); };
+    if(g) g.onchange=()=>{ DLG.entries=DLG.entries.concat(PH_DOCS.fromInput(g.files)); DLG.err=''; drawDlg(); };
+  }
+  function secRoot(k,sub){
+    const s=liveSecs().find(x=>x.k===k); if(!s) return null;
+    const rs=roots(s,cur); const r=rs.find(x=>x.sub===(sub||''))||rs[0]; if(!r) return null;
+    return {s,r,cap:liveCap(s,cur)};
+  }
+  function openAdd(k,sub,entries,path){
+    const sr=secRoot(k,sub); if(!sr || !canAddAt(sr.cap)) return;
+    openDlg({kind:'add',s:sr.s,r:sr.r,k,at:inRoot(sr.r,path),entries:entries||[],aud:{mode:'all',teams:[],offices:[]},stage:'pick',err:''});
+  }
+  function progress(p){
+    const t=el('lvProgTxt'), b=el('lvProgBar'); if(!t||!b) return;
+    const total=p.total||0, done=Math.min(p.done||0,total);
+    t.textContent=total?('Adding '+Math.min(total,Math.floor(done)+1)+' of '+total+'…'):'Making folders…';
+    b.style.width=(total?Math.round(done/total*100):30)+'%';
+  }
+  function announce(d,count,firstName,ids){
+    if(!count || !PH.logActivity) return;
+    const aud=audOf(d.aud);
+    try{ PH.logActivity({kind:'document', sec:d.k, ic:'\u{1F4C4}', scope:'everyone',
+      title:(count===1?'New in '+where(d)+': '+firstName:count+' new files in '+where(d)),
+      offices:(aud&&aud.offices.length)?aud.offices:d.r.offices, teams:aud?aud.teams:[]}); }catch(_){}
+  }
+  function uploadGo(){
+    const d=DLG; if(!d || d.kind!=='add' || d.stage!=='pick') return;
+    if(!d.entries.length || !audOk(d.aud)) return;
+    d.stage='busy'; drawDlg(); progress({done:0,total:d.entries.filter(e=>e.file).length});
+    PH_DOCS.uploadAll(d.at||d.r.path, d.entries, progress).then(res=>{
+      const top=res.folders.filter(f=>f.dir.indexOf('/')<0).map(f=>f.id);
+      const ids=res.uploaded.map(i=>i.id).concat(top);
+      const aud=audOf(d.aud);
+      const saveAud=aud&&ids.length ? PH_DOCS.setAudience(ids,aud,myName()).then(()=>false,()=>true) : Promise.resolve(false);
+      return saveAud.then(warn=>{
+        d.result=res; d.audWarn=warn; d.stage='done';
+        announce(d,res.uploaded.length,(res.uploaded[0]||{}).name,ids);
+        forget(d.r.path); extras='no'; openSet.add(d.k); if(d.at && d.at!==d.r.path) OPENF.add(d.at);
+        if(DLG===d) drawDlg(); liveRender();
+      });
+    }).catch(e=>{ d.stage='pick'; d.err='That didn’t work: '+((e&&e.message)||'error')+'. Nothing was changed; try again.'; if(DLG===d) drawDlg(); });
+  }
+  function newfGo(){
+    const d=DLG; if(!d || d.kind!=='newf' || d.busy) return;
+    const name=((el('lvNewName')||{}).value||d.name||'').trim();
+    if(!name){ d.err='Type a name for the folder.'; drawDlg(); return; }
+    d.busy=true; d.name=name; d.err=''; drawDlg();
+    PH_DOCS.newFolder(d.at||d.r.path,name).then(()=>{ forget(d.r.path); openSet.add(d.k); if(d.at && d.at!==d.r.path) OPENF.add(d.at); closeLive(); liveRender(); },
+      e=>{ d.busy=false; d.err=(e&&e.message)||'That didn’t work. Try again.'; drawDlg(); });
+  }
+  function linkFind(){
+    const d=DLG; if(!d || d.kind!=='link' || d.busy) return;
+    d.url=((el('lvUrl')||{}).value||d.url||'').trim(); d.item=null; d.shared=null; d.err='';
+    if(!d.url){ d.err='Paste the link first.'; drawDlg(); return; }
+    d.busy=true; drawDlg();
+    PH_DOCS.resolveLink(d.url).then(it=>PH_DOCS.whoCanOpen(it).then(sh=>{ d.item=it; d.shared=sh; }))
+      .catch(e=>{ d.err=(e&&e.message)||'That link didn’t work.'; })
+      .then(()=>{ d.busy=false; if(DLG===d) drawDlg(); });
+  }
+  function linkGo(){
+    const d=DLG; if(!d || d.kind!=='link' || !d.item || d.busy || !audOk(d.aud)) return;
+    if(d.item.folder){ d.err='That’s a folder. Link a file, or drag the folder in with + Add files.'; drawDlg(); return; }
+    d.busy=true; drawDlg();
+    PH_DOCS.addLink(d.k,d.r.sub,d.item,d.shared,myName()).then(entry=>{
+      const aud=audOf(d.aud);
+      return (aud?PH_DOCS.setAudience([entry.id],aud,myName()):Promise.resolve()).then(()=>entry);
+    }).then(entry=>{ announce(d,1,entry.name,[entry.id]); extras='no'; openSet.add(d.k); closeLive(); liveRender(); },
+      e=>{ d.busy=false; d.err=(e&&e.message)||'That didn’t save. Try again.'; drawDlg(); });
+  }
+  function rmOpen(path,id){
+    const it=itemIn(path,id); if(!it) return;
+    const d={kind:'rm',path,item:it,count:null,err:''}; openDlg(d);
+    if(it.folder) PH_DOCS.tally(it).then(c=>{ d.count=c; if(DLG===d) drawDlg(); },
+      ()=>{ d.count={files:0,folders:0,more:true,unknown:true}; if(DLG===d){ d.err='Couldn’t count what’s inside. Removing it still sends everything to the recycle bin.'; drawDlg(); } });
+  }
+  function rmGo(){
+    const d=DLG; if(!d || d.kind!=='rm' || d.busy) return;
+    d.busy=true; drawDlg();
+    PH_DOCS.remove(d.item).then(()=>{ forget(d.path); closeLive(); liveRender(); },
+      e=>{ d.busy=false; d.err=(e&&e.message)||'That didn’t work. Nothing was removed.'; drawDlg(); });
+  }
+  function unlinkGo(){
+    const d=DLG; if(!d || d.kind!=='unlink' || d.busy) return;
+    d.busy=true; drawDlg();
+    PH_DOCS.unlink(d.link.id,myName()).then(()=>{ extras='no'; closeLive(); liveRender(); },
+      e=>{ d.busy=false; d.err=(e&&e.message)||'That didn’t work.'; drawDlg(); });
+  }
+  function closeLive(){
+    if(DLG && DLG.kind==='add' && DLG.stage==='busy') return false;   // never walk away from an upload
+    DLG=null; el('docmodal').classList.remove('open'); return true;
+  }
+
+  /* One place for every live click, and for dragging files onto a folder. */
+  function onAct(e){
+    const b=e.target.closest('[data-act]'); if(!b || !isLive()) return;
+    const act=b.dataset.act, d=DLG;
+    if(act==='openf'){ const p=b.dataset.path; if(OPENF.has(p)) OPENF.delete(p); else OPENF.add(p); liveRender(); return; }
+    if(act==='retry'){ delete NODES[b.dataset.path]; liveRender(); return; }
+    if(act==='refresh'){ const s=liveSecs().find(x=>x.k===b.dataset.k); if(s) forget(PH_DOCS.path(s.folder)); extras='no'; liveRender(); return; }
+    if(act==='add'){ openAdd(b.dataset.k,b.dataset.sub,null,b.dataset.path); return; }
+    if(act==='newf'){ const sr=secRoot(b.dataset.k,b.dataset.sub); if(sr && canEditAt(sr.cap)) openDlg({kind:'newf',s:sr.s,r:sr.r,k:b.dataset.k,at:inRoot(sr.r,b.dataset.path),name:'',err:''}); return; }
+    if(act==='link'){ const sr=secRoot(b.dataset.k,b.dataset.sub); if(sr && canAddAt(sr.cap)) openDlg({kind:'link',s:sr.s,r:sr.r,k:b.dataset.k,url:'',item:null,shared:null,aud:{mode:'all',teams:[],offices:[]},err:''}); return; }
+    if(act==='rm'){ rmOpen(b.dataset.path,b.dataset.id); return; }
+    if(act==='unlink'){ const l=LINKS.find(x=>x&&x.id===b.dataset.id); if(l) openDlg({kind:'unlink',link:l,err:''}); return; }
+    if(act==='close'){ closeLive(); return; }
+    if(!d) return;
+    if(act==='pick-files'){ const i=el('lvFiles'); if(i) i.click(); return; }
+    if(act==='pick-folder'){ const i=el('lvFolder'); if(i) i.click(); return; }
+    if(act==='clear'){ d.entries=[]; d.err=''; drawDlg(); return; }
+    if(act==='aud-mode'){ d.aud.mode=b.value==='some'?'some':'all'; if(d.aud.mode==='all'){ d.aud.teams=[]; d.aud.offices=[]; } drawDlg(); return; }
+    if(act==='aud-team'||act==='aud-off'){ const arr=act==='aud-team'?d.aud.teams:d.aud.offices, v=b.dataset.v, i=arr.indexOf(v); if(i>=0) arr.splice(i,1); else arr.push(v); drawDlg(); return; }
+    if(act==='upload'){ uploadGo(); return; }
+    if(act==='newf-go'){ newfGo(); return; }
+    if(act==='link-find'){ linkFind(); return; }
+    if(act==='link-go'){ linkGo(); return; }
+    if(act==='rm-go'){ rmGo(); return; }
+    if(act==='unlink-go'){ unlinkGo(); return; }
+  }
+  function dropTarget(e){ return e.target.closest && (e.target.closest('.dropz') || e.target.closest('#lvDrop')); }
+  function unlight(keep){ document.querySelectorAll('.dropz.over,#lvDrop.over').forEach(x=>{ if(x!==keep) x.classList.remove('over'); }); }
+  function onDragOver(e){ const z=isLive()&&dropTarget(e); if(!z) return; e.preventDefault(); unlight(z); z.classList.add('over'); }
+  function onDragLeave(e){ const z=isLive()&&dropTarget(e); if(z && !z.contains(e.relatedTarget)) z.classList.remove('over'); }
+  function onDrop(e){
+    const z=isLive()&&dropTarget(e); if(!z) return;
+    e.preventDefault(); unlight(null);
+    const got=PH_DOCS.fromDrop(e.dataTransfer);            // read NOW - the browser empties it after
+    got.then(entries=>{
+      if(!entries.length) return;
+      if(z.id==='lvDrop'){ if(DLG && DLG.kind==='add'){ DLG.entries=DLG.entries.concat(entries); DLG.err=''; drawDlg(); } return; }
+      if(DLG) return;                                        // one dialog at a time - never over an upload
+      openAdd(z.dataset.k,z.dataset.sub,entries,z.dataset.path);
+    });
+  }
+  el('folders').addEventListener('click',onAct);
+  el('docmodal').addEventListener('click',e=>{ if(isLive() && DLG) onAct(e); });
+  el('docmodal').addEventListener('change',e=>{ if(isLive() && DLG && e.target.matches('input[type=radio][data-act]')) onAct(e); });
+  [el('folders'),el('docmodal')].forEach(z=>{ z.addEventListener('dragover',onDragOver); z.addEventListener('dragleave',onDragLeave); z.addEventListener('drop',onDrop); });
+  /* Dropping a file anywhere else on the page must not open it in place of the hub. */
+  window.addEventListener('dragover',e=>{ if(isLive()) e.preventDefault(); });
+  window.addEventListener('drop',e=>{ if(isLive() && !dropTarget(e)) e.preventDefault(); });
+  window.addEventListener('beforeunload',e=>{ if(DLG && DLG.kind==='add' && DLG.stage==='busy'){ e.preventDefault(); e.returnValue=''; } });
 
   el('persona').innerHTML=PERSONAS.map(p=>'<option value="'+p.id+'">'+p.name+'</option>').join('');
   window.DOCS={set,toggle,openDoc,sim,addDoc,setLoc,setTeam,tog,cd,useFile,clearFile,uploadFile,saveDoc,closeDoc,
@@ -458,14 +980,14 @@ document.addEventListener('ph-identity',function(){
   });
 });
 PH.nav('documents');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc61"></script>
+<script src="tour.js?v=hc62"></script>
 <script>
 Tour.init([
   {sel:'.crumb', title:'Everything in one place', body:'This replaces \u201cwho has the latest copy?\u201d. Every policy, form and office file lives here \u2014 and people only ever see the folders meant for them.'},
-  {sel:'#folders .folder', title:'Your folders, already open', body:'No hunting. Folders are expanded, and the badge on the right (<b>View only</b>, <b>You can add files</b>, <b>Add &amp; edit</b>) says what you can do in that folder.'},
-  {sel:'#folders .file .sp', title:'Files open on your Microsoft drive', body:'<b>Open</b> launches the real file on SharePoint/OneDrive \u2014 not a copy. Tap one to see how an edit here and an edit in Excel are the same edit.'},
+  {sel:'#folders .folder', title:'Your folders', body:'Tap a folder to open it. The badge on the right (<b>View only</b>, <b>You can add files</b>, <b>Add &amp; edit</b>, <b>Full control</b>) says what you can do there. If you can add, drag files straight onto the open folder.'},
+  {sel:'#folders .file .sp', title:'Files open in Microsoft', body:'<b>Open</b> shows the real file in Word, Excel or your browser \u2014 not a copy. Change it there and everyone sees the change.'},
   {sel:'.viewas', title:'Prove it to yourself', body:'Switch to <b>Front Desk / Staff</b>: the folder list shrinks and the restricted payroll files vanish. Switch back to Administrator and they return.'},
-  {sel:'.synced', title:'No second copies, ever', body:'The hub points at your real files. That\u2019s the whole trick \u2014 nothing to sync, nothing to go stale.'}
+  {sel:'.synced', title:'No second copies, ever', body:'Files live in the practice\u2019s SharePoint and Home-Brace shows them. Nothing to sync, nothing to go stale.'}
 ], {key:'docs', title:'Documents', next:{label:'the Admin console', href:'admin.html'}});
 </script>
 </body>

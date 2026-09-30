@@ -88,6 +88,23 @@ multi-line-text column lives there for step 8; harmless to keep or delete.
 Entra groups to create (7 team + 8 office), the permission matrix, the per-office restriction, and
 the shared-account problem. Republish that same file to update it; do not create a second one.
 
+**Documents are real (2026-09-30, hc62).** Live Documents reads and writes the Home-Brace site's own library,
+folder **`Home-Brace Documents`**, one folder per section (per office / per brand inside for byLocation /
+byBrand) - all through **`v1/docs.js`** (`PH_DOCS`), as the signed-in person. Heather is master in the hub:
+Admin -> Document Sections **creates the folder** (and office/brand folders); a section keeps its `folder`
+forever, so **renaming never moves files**; deleting a section asks, counts what is inside, and sends the
+folder to the **SharePoint recycle bin (93 days)**. Documents: drag files/folders onto an open section or
+`+ Add files` (one question: "Everyone who can open X" / "Only certain people" -> `ph_docmeta`, the
+sentence sits beside the button), `+ New folder` (edit+); **every folder is its own drop target** with `+ Add files here` (a file dropped on
+"New Hire" goes INTO New Hire - run3 rig); `Link a file` for files kept elsewhere (Heather's
+workbook) -> `ph_doclinks`, warns when not shared with Home-Brace Members; managers get `Remove`.
+**Rules docs.js never breaks** (test/docs.test.js, 68 checks): uploads use conflictBehavior=rename (never
+replace); nothing is renamed or moved; the ONE `DELETE` is fenced to items inside Home-Brace Documents and
+lands in the recycle bin; a linked file is only un-linked (hidden flag), never removed. Document updates
+notify by SECTION (`docLevel` in canSeeActivity). Sandbox keeps the old demo. "Only certain people" is
+hub-level: anyone in the group can still open the library in SharePoint, so truly private files (payroll)
+need a locked folder made in SharePoint - not built yet.
+
 **Feedback (2026-09-29, hc59):** the round button bottom-right is now "Tour & Feedback" (tour.js
 menu). *Send Feedback* (user.js `openFeedback`, classes `phfb-*`) writes ONE row to the SharePoint list
 **`HomeBraceFeedback`** (Title = email subject, `Details` = multi-line body) via
@@ -968,7 +985,7 @@ with zeros so it shows up and can be filled in, rather than silently ignoring it
 | `v1/production.html` | **Enter Production** — the few boxes a manager types each month. Writes back to the SharePoint workbook and **drives the dashboard**. Goals editable only with `manage`. |
 | `v1/schedule.html` | **Schedule** — weekly board: which office is open each day and which doctor is where. Enforced read-only for view-only roles. |
 | `v1/marketing.html` | **Marketing** — Kanban board (Ideas→Planned→In progress→Done, scored on arrival in Done) **plus a month calendar overview** at the bottom. |
-| `v1/documents.html` | **Documents** — persona-aware folder browser, **collapsed by default**. Add-a-document with audience control. Live two-way SharePoint sync demo. |
+| `v1/documents.html` | **Documents** — live: real SharePoint folders/files via `docs.js` (add, link, new folder, remove to recycle bin). Sandbox: the old demo (sample files, two-way sync viewer). **Collapsed by default.** |
 | `v1/team.html` | **Team** — who's-who directory built from the practice's REAL roster: photo, preferred name, role, office, brand, tap-to-call, tap-to-email. |
 | `v1/admin.html` | **Admin Console** — People · Teams & Access · Document Sections · Locations. |
 | `v1/user.js` | **The signed-in person.** SINGLE source of truth for people, permissions and the nav. Avatar + My Profile. |

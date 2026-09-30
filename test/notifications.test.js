@@ -159,10 +159,28 @@ t('a genuinely new update after a reload does show unread', R.unreadCount()===1)
   t('leadership does not get the office-manager-only notice', !has('Jane Smith joined'));
   t('leadership does not see refused saves (admins only)', !has('A save was refused'));
 
+
   // Admin: everything, including refused saves.
   asPerson({offices:'all', teams:['Admin'], can:Object.assign({}, P.me().can, {admin:'manage'})});
   t('admins see refused saves', has('A save was refused'));
   t('admins see the team-restricted items too', has('Jane Smith joined') && has('hit its September goal'));
+
+  /* Documents (30/09): an update follows the SECTION the file went into, by the same
+     rule the Documents page uses. A payroll file's name must never reach someone who
+     cannot open HR. */
+  P.logActivity({kind:'document', sec:'hr', title:'New in HR: Payroll Tracking.xlsx', teams:['Office Managers']});
+  P.logActivity({kind:'document', sec:'forms', title:'New in Office Forms \u00b7 FFO: DDS Referral.pdf', offices:['Hobbs','Carlsbad']});
+  P.logActivity({kind:'document', sec:'sec_training1', title:'New in Training: Sterilization.pdf'});
+  asPerson({offices:['Hobbs'], teams:['Office Managers'], can:{schedule:'view', team:'view', documents:'view', hr:'none', forms:'view', admin:'none'}});
+  t('a file in HR is not announced to someone who cannot open HR', !has('New in HR'));
+  t('a form for her office is announced to her', has('New in Office Forms'));
+  asPerson({offices:['Hobbs'], teams:['Office Managers'], can:{schedule:'view', team:'view', documents:'view', admin:'none'}});
+  t('a built-in section the grid does not mention follows her overall Documents access', has('New in HR'));
+  t('a section Admin made is announced only to teams the grid gives it', !has('New in Training'));
+  asPerson({offices:['Hobbs'], teams:['Office Managers'], can:{documents:'view', sec_training1:'view', admin:'none'}});
+  t('and is announced once the grid gives it', has('New in Training'));
+  asPerson({offices:['Hobbs'], teams:['TCs'], can:{documents:'view', hr:'view', admin:'none'}});
+  t('a file only for Office Managers is not announced to a TC who can open HR', !has('New in HR'));
   delete K.LS[MK];
 }
 
