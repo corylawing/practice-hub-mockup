@@ -151,8 +151,11 @@
   .pm.now{border-color:var(--teal)}
   .pm.on{background:var(--navy);color:#fff;border-color:var(--navy)}
   .mini{display:none}
-  .mday.flash{box-shadow:0 0 0 3px var(--teal) inset}
-  td.cell.flash{box-shadow:inset 0 0 0 3px var(--teal)}
+  /* Today: a ring that pulses twice, so it is seen even when the day was already on screen. */
+  @keyframes todaypulse{0%,100%{box-shadow:inset 0 0 0 3px var(--teal),0 0 0 0 rgba(20,155,150,0)}
+    50%{box-shadow:inset 0 0 0 3px var(--teal),0 0 0 7px rgba(20,155,150,.28)}}
+  .mday.flash{box-shadow:0 0 0 3px var(--teal) inset;background-color:var(--teal-soft,#E5F4F3);animation:todaypulse .8s ease-in-out 2}
+  td.cell.flash{box-shadow:inset 0 0 0 3px var(--teal);animation:todaypulse .8s ease-in-out 2}
   @media(max-width:640px){
     .mini{display:block;background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 10px 8px;margin:0 0 12px}
     .mmh,.mmg{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
@@ -1244,8 +1247,11 @@
   function today(){ anchor=mondayOf(new Date(TODAY)); mY=TODAY.getFullYear(); mM=TODAY.getMonth(); refresh(); landOnToday(); }
   /* "Today" has to be SEEN to do something, even when this month is already on screen -
      on a phone the month is a long list, so the button looked dead (Cory, 19/09). Scroll
-     to today, or the next working day on a weekend, and flash it; on a desktop the whole
-     month is in view, so just the flash. Looked up inside the timer: refresh() redraws. */
+     to today, or the next working day on a weekend, and flash it. A desktop month is NOT
+     all in view either - eight offices a day make it several screens tall - so the end
+     of the month flashed out of sight and the button "literally does nothing" (Cory,
+     30/09). Scroll there too when it is off screen. Looked up inside the timer:
+     refresh() redraws. */
   function landOnToday(){
     const t=iso(TODAY);
     const find=()=>document.querySelector('.mday.today, td.cell.today')
@@ -1254,8 +1260,11 @@
       const n=find(); if(!n || !n.isConnected) return;
       /* A smooth scroll from the 1st to the 20th is 7,000px and over a second long - it
          looks like nothing happened until it suddenly does. Jump when far, glide when near. */
-      if(isPhone()){ const far=Math.abs(n.getBoundingClientRect().top)>1500; n.scrollIntoView({block:'start',behavior:far?'auto':'smooth'}); }
-      n.classList.add('flash'); setTimeout(()=>n.classList.remove('flash'),1400);
+      const r=n.getBoundingClientRect(), vh=window.innerHeight||800;
+      if(isPhone()){ const far=Math.abs(r.top)>1500; n.scrollIntoView({block:'start',behavior:far?'auto':'smooth'}); }
+      else if(r.top<80 || r.bottom>vh-12){ const far=Math.abs(r.top)>2500; n.scrollIntoView({block:'center',behavior:far?'auto':'smooth'}); }
+      n.classList.remove('flash'); void n.offsetWidth;          // pressing Today twice replays it
+      n.classList.add('flash'); setTimeout(()=>n.classList.remove('flash'),1700);
     }, 60);
   }
   function setView(v){ view=v; refresh(); }
