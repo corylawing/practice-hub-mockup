@@ -1956,14 +1956,37 @@
     nav(NAV_ACTIVE);
     try{ document.dispatchEvent(new CustomEvent('ph-identity')); }catch(_){}
   }
+  /* WHILE WE DO NOT YET KNOW WHAT THIS PERSON MAY SEE, REFUSE NOTHING.
+     Two waits, each about a second on a phone, and both used to paint "You don't have
+     access" and then unlock - a flash of refusal on every tab change:
+       1. before sign-in has said who this is (held since 19/09 - but only until the
+          token existed, not until /me had answered), and
+       2. after sign-in, while their team and offices are still on their way from
+          SharePoint: the roster, the access grid, Admin's per-person settings. Anyone
+          whose team comes from the roster - most of the practice - was refused until
+          it landed. Heather saw it on hers; Melinda in San Angelo, 30/09, on every tab.
+     A page they CAN see opens at once. A refusal waits until those have landed, or 8
+     seconds have passed: SharePoint being down must not hold a page forever.
+     Pages ask PH.learning() before painting their own "no access" / "no office". */
+  var SIGNED_IN=false, LATE=0, LATE_GAVE_UP=false;
+  function stillLearning(){
+    if(!isLive()) return false;
+    if(!PROFILE && !SIGNED_IN) return true;
+    return SIGNED_IN && LATE>0 && !LATE_GAVE_UP;
+  }
+  function lateLanded(){ LATE=Math.max(0,LATE-1); identityChanged(); }
   document.addEventListener('ph-signed-in', function(){
+    SIGNED_IN=true; LATE=3; LATE_GAVE_UP=false;
+    const tm=setTimeout(function(){ if(LATE>0){ LATE_GAVE_UP=true; identityChanged(); } }, 8000);
+    if(tm && typeof tm.unref==='function') tm.unref();
     try{ syncTheme(); }catch(_){}
     identityChanged();
     // ...and again once each late source has landed.
     if(rosterReady && rosterReady.then)
-      rosterReady.then(function(){ return reloadRosterExtra(); }).then(identityChanged, identityChanged);
-    Promise.resolve(reloadAccess()).then(identityChanged, identityChanged);
-    Promise.resolve(reloadPeople()).then(identityChanged, identityChanged);
+      rosterReady.then(function(){ return reloadRosterExtra(); }).then(lateLanded, lateLanded);
+    else lateLanded();
+    Promise.resolve(reloadAccess()).then(lateLanded, lateLanded);
+    Promise.resolve(reloadPeople()).then(lateLanded, lateLanded);
   });
 
   /* One gate for every page.
@@ -1975,17 +1998,17 @@
     marketing:'Marketing board',documents:'Documents',team:'Team directory',admin:'Admin Console'};
   function guard(active){
     const entry=NAV.find(x=>x.k===active);
-    /* WHILE WE DO NOT YET KNOW WHO THIS IS, DECIDE NOTHING. On a phone the silent sign-in
-       takes about a second; this used to run at parse, see "nobody", paint "You don't
-       have access", and then unlock - a flash of refusal on every tab change. Hold the
-       page quietly instead and decide once identity lands (nav() re-runs then). */
-    if(isLive() && !PROFILE && !window.PH_AUTH && entry && entry.k!=='home'){
+    const allowed=!entry || entry.show();
+    /* WHILE WE DO NOT YET KNOW WHAT THIS PERSON MAY SEE, REFUSE NOTHING (see
+       stillLearning). Hold the page quietly - "One moment..." - and decide once identity
+       and their team have landed; nav() re-runs then. Allowed pages are never held. */
+    if(!allowed && stillLearning() && entry.k!=='home'){
       if(document.body){ document.body.classList.add('ph-pending'); document.body.classList.remove('ph-locked'); }
       const stale=document.querySelector('.ph-noaccess'); if(stale && stale.remove) stale.remove();
       return false;
     }
     if(document.body) document.body.classList.remove('ph-pending');
-    if(!entry || entry.show()){
+    if(allowed){
       /* Unlock AND take the panel away. It used to only drop the class and leave the
          "you don't have access" card sitting in the page - which never showed before,
          because guard() only ever ran once. Now that it runs again on sign-in, every
@@ -2301,6 +2324,6 @@
 
   window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK, notesHTML, searchHTML, saveFace, faceOf,
     setTheme, theme:()=>THEME, themes:()=>THEMES.map(t=>({k:t.k, n:t.n})), schemeTokens:k=>schemeTokens(themeOf(k)), contrast,
-    feedback:openFeedback, feedbackText, feedbackContext};
+    feedback:openFeedback, feedbackText, feedbackContext, learning:stillLearning};
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mount); else mount();
 })();

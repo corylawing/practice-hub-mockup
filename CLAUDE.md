@@ -511,10 +511,14 @@ and could open the file in Excel anyway. Real containment would need per-office 
   `PH_STORE.ready` fires as soon as `PH_AUTH` exists, before `/me` has said who this is, so
   the roster is usually read while `isAdmin()` still answers false. `rosterReady` must never run during user.js's own evaluation
   (`setTimeout(run,0)`): `isLive()` is declared below it.
-- **Before sign-in a live page is HELD, not refused** — `body.ph-pending` hides content, no
-  "You don't have access" card. Refusing at parse painted a one-second refusal on every tab change.
-  Hold only while `!PROFILE && !PH_AUTH`; a signed-in person with no profile (a failed `/me`) is
-  refused. Every page that stamps view-only (`schedule`, `marketing`) has a re-runnable
+- **A live page is HELD, never refused, until we know what the person may see** —
+  `body.ph-pending` ("One moment…"), no "You don't have access" card. Two waits: before `/me` has
+  answered (`!PROFILE && !SIGNED_IN` - the old check stopped at `PH_AUTH`, too early), and after
+  sign-in until the roster, access grid and people settings have landed (`LATE`, 3 sources) or 8 s
+  pass. Only REFUSALS wait; allowed pages open at once. 30/09: Melinda (San Angelo, new) saw "no
+  access" on every tab - most people's team comes from the roster, which lands after sign-in.
+  Pages with their own empty/no-access panel (Dashboard, Enter Production) ask `PH.learning()`
+  first. A failed `/me` is still refused, once the late sources settle. Every page that stamps view-only (`schedule`, `marketing`) has a re-runnable
   `applyPerms()` that goes **both ways** and restores what view-only hid (buttons, subtitles).
 - **Phone (≤640px):** dialogs are full-height sheets (`.ph-card`, `.ov > *`) with a scrolling body
   and pinned footer; footers wrap, notes hide, destructive buttons take their own row; the bell panel

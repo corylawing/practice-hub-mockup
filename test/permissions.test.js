@@ -18,6 +18,9 @@ const fs=require('fs'), vm=require('vm'), path=require('path');
 const V1=path.join(__dirname,'..','v1');
 const SECTIONS=['dashboard','production','schedule','marketing','documents','team','admin'];
 
+/* Checks that must wait for the late sources (roster, access grid, people) to land. */
+const later=[], tick=()=>new Promise(r=>setTimeout(r,40));
+
 function load(opts){
   opts=opts||{};
   const LS=opts.ls||{}, listeners={};
@@ -134,8 +137,15 @@ const t=(n,v)=>{ (v?ok:bad).push(n); };
   const C=load({page:'admin'});
   C.PH.nav('admin');
   C.signIn(JENNY);
-  t('Jenny on admin.html is locked out after sign-in', C.locked()===true);
+  /* 30/09: while her team and offices are still arriving from SharePoint the page is
+     HELD - "One moment" - never refused. That refusal-then-unlock was the flash on every
+     tab change for new people (Melinda, San Angelo). Once they land, she is refused. */
+  t('right after sign-in, while her team is still loading, admin.html is held, not refused',
+    C.pending()===true && C.locked()===false && C.wrap.children.every(c=>(c.innerHTML||'').indexOf('have access')<0));
   t('and the menu she is left with has no Admin link', C.menu().indexOf('admin.html')<0);
+  later.push(tick().then(()=>{
+    t('Jenny on admin.html is locked out once her team has landed', C.locked()===true && C.pending()===false);
+  }));
 }
 
 /* ---- 5. Impersonation must not be reachable before we know who is asking.
@@ -164,7 +174,9 @@ const t=(n,v)=>{ (v?ok:bad).push(n); };
   E.ctx.document.dispatchEvent(new E.ctx.CustomEvent('ph-signed-in'));   // ...but /me gave nothing
   t('a failed /me leaves the person with no access, not full access',
     E.PH.isAdmin()===false && SECTIONS.every(s=>E.PH.can(s)==='none'));
-  t('and admin.html is refused, not held forever', E.locked()===true && E.pending()===false);
+  later.push(tick().then(()=>{
+    t('and admin.html is refused, not held forever', E.locked()===true && E.pending()===false);
+  }));
 }
 
 /* ---- 6b. The people who SHOULD have access must still get it. Closing a fail-open is
@@ -245,7 +257,9 @@ const t=(n,v)=>{ (v?ok:bad).push(n); };
   t('a sandbox doctor does NOT get the Admin tab', S2.tabs().indexOf('admin')<0);
 }
 
-console.log(ok.map(s=>'  PASS  '+s).join('\n'));
-if(bad.length) console.log(bad.map(s=>'  FAIL  '+s).join('\n'));
-console.log('\n'+ok.length+' passed, '+bad.length+' failed');
-process.exit(bad.length?1:0);
+Promise.all(later).then(()=>{
+  console.log(ok.map(s=>'  PASS  '+s).join('\n'));
+  if(bad.length) console.log(bad.map(s=>'  FAIL  '+s).join('\n'));
+  console.log('\n'+ok.length+' passed, '+bad.length+' failed');
+  process.exit(bad.length?1:0);
+});
