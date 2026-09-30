@@ -281,6 +281,11 @@ have to be closed first. **Do not re-add the client call without closing those.*
 What follows from the decision: people who enter production **need the workbook shared
 with them**, and the share is all-or-nothing — anyone who can save through the hub can
 also open the file in Excel and change any office. The practice accepted that knowingly.
+**How it is shared (checked 30/09, Manage access on the file):** the **Home-Brace Members** group
+(the site's Microsoft 365 group) has **Can edit**, plus 20 people by name and 1 link. So being in
+the Home-Brace group IS workbook access - adding someone to the group in Entra (Groups -> Home-Brace
+-> Members) covers the Dashboard and Enter Production; nobody needs a separate share. Caution:
+everyone in the group can open the whole file in Excel, including TCs whose hub hides the numbers.
 
 ### What to do next
 1. **Rotate the deployment token.** It has been pasted into chat twice now. Azure -> Manage
