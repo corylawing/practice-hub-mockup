@@ -297,10 +297,10 @@
   }
 
 </style>
-<script src="user.js?v=hc62"></script>
+<script src="user.js?v=hc63"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc62"></script>
-  <script src="gate.js?v=hc62"></script>
+  <script src="store.js?v=hc63"></script>
+  <script src="gate.js?v=hc63"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — sample staff schedule for validation. Live version = one Microsoft List the practice maintains.</div>
@@ -983,34 +983,11 @@
       cell={ps:t.ps.slice(),s:t.s,e:t.e};
     }
     if(ev){ cell=cell||{}; cell.event=ev; }
-    const was=cellOf(l,d);
     setCell(l,d,cell);
-    tellAboutDay(l, d, was, cell);
+    /* No notification for a day. Heather, 30/09: "I don't think we need it to notify
+       people every time the calendar has a change to it. That is a ton of
+       notifications when I am entering calendars for the first time." */
     closeModal(); refresh();
-  }
-
-  /* WHO NEEDS TO KNOW about this day. The office's people hear their office changed;
-     the doctor hears about HER day wherever it is - a doctor rotates, so the office
-     filter would otherwise hide her own schedule from her. Doctors coming off a day
-     are told too: being quietly removed is the one that causes a missed clinic. */
-  function tellAboutDay(l, d, was, now){
-    if(!(window.PH && PH.logActivity && PH.isLive())) return;
-    const when=DOW[dowIdx(d)]+' '+(d.getMonth()+1)+'/'+d.getDate();
-    const before=docsOf(was).map(i=>people[i].n), after=docsOf(now).map(i=>people[i].n);
-    const off=after.filter(n=>before.indexOf(n)<0), on=before.filter(n=>after.indexOf(n)<0);
-    const ic='\u{1F4C5}', base={kind:'schedule', sec:'schedule', ic:ic, offices:[l.n]};
-    if(now && now.closed && !(was && was.closed))
-      return PH.logActivity(Object.assign({}, base, {title:l.n+' closed '+when, people:before}));
-    if(now && now.ydot && !(was && was.ydot))
-      return PH.logActivity(Object.assign({}, base, {title:l.n+' is a Yellow Dot Day on '+when+' (no doctor)', people:before}));
-    if(off.length)
-      PH.logActivity(Object.assign({}, base, {title:off.join(' and ')+' now at '+l.n+' on '+when, people:off}));
-    if(on.length)
-      PH.logActivity(Object.assign({}, base, {title:on.join(' and ')+' no longer at '+l.n+' on '+when, people:on}));
-    if(now && now.event && !(was && was.event===now.event))
-      PH.logActivity(Object.assign({}, base, {title:'\u2605 '+now.event+' \u2014 '+l.n+', '+when, people:after}));
-    if(!off.length && !on.length && after.length && was && (was.s!==now.s || was.e!==now.e))
-      PH.logActivity(Object.assign({}, base, {title:after.join(' and ')+' at '+l.n+' on '+when+' now '+fmt(now.s)+'\u2013'+fmt(now.e), people:after}));
   }
 
   /* ---------- office editor ---------- */
@@ -1414,7 +1391,7 @@
    machine is missing here until the next page load. */
 document.addEventListener('ph-locations-changed',function(){ if(window.PS&&PS.relocate)PS.relocate(); });
 PH.nav('schedule');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc62"></script>
+<script src="tour.js?v=hc63"></script>
 <script>
 Tour.init([
   {sel:'#viewseg', title:'Week or month', body:'<b>Week</b> is the day-to-day working view. <b>Month</b> shows the whole month at a glance, with every office in its own color.'},

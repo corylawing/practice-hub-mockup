@@ -88,6 +88,14 @@ multi-line-text column lives there for step 8; harmless to keep or delete.
 Entra groups to create (7 team + 8 office), the permission matrix, the per-office restriction, and
 the shared-account problem. Republish that same file to update it; do not create a second one.
 
+**Heather's two notes, 30/09 (hc63).** (1) **Calendar days no longer notify anyone** - "a ton of notifications
+when I am entering calendars for the first time". `saveDay` sends nothing (`tellAboutDay` is gone); `canSeeActivity`
+hides the ones already in the feed (kind `schedule` + the calendar icon) - hidden, never deleted. A new office, new
+hours, a doctor added to / taken off the list still notify. (2) **The Team page and the header search show what Admin >
+People changed** (role, offices, email, teams) via `PH.rosterView()`; Serenity's role edit never showed because both
+read the bare file. `rosterRows()` stays BARE on purpose - Admin keys each person's settings off it and sign-in matches
+against it; use `rosterView()` only for showing people.
+
 **Documents are real (2026-09-30, hc62).** Live Documents reads and writes the Home-Brace site's own library,
 folder **`Home-Brace Documents`**, one folder per section (per office / per brand inside for byLocation /
 byBrand) - all through **`v1/docs.js`** (`PH_DOCS`), as the signed-in person. Heather is master in the hub:
@@ -602,7 +610,7 @@ and could open the file in Excel anyway. Real containment would need per-office 
   a doctor whose day moved gets it even at an office she does not otherwise see), `teams[]` (the
   leadership-only items) and `kind` (schedule · production · document · promo · people · access ·
   blocked · goal · late). Two rules never bend: **nobody is told about an office they cannot see,**
-  and **a doctor is told about her own days across offices.** Raise the notification *where the
+  and **a doctor is told about her own days across offices** (moot for calendar days since hc63 - they no longer notify). Raise the notification *where the
   change is made*, naming the office and the doctor — a blanket "Schedule updated" to everyone told
   nobody anything. The old single `scope` still works; a comma-joined office scope used to match
   **no** office at all, so a two-office promo told nobody — use `offices[]`.

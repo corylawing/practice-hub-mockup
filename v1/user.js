@@ -234,6 +234,32 @@
   }
   /* Everyone currently on the books - the file plus the added, minus the removed. */
   function rosterRows(){ return (ROSTER_ROWS||[]).slice(); }
+  /* What Admin > People saved for one roster row, found in the same slots admin.html
+     reads (ovrKeysFor): the row's own key, then its email, then its employee id. */
+  function overrideForRow(row){
+    if(!PEOPLE_OVR || !row) return null;
+    const keys=[personKey(row), String(row.email||'').toLowerCase().trim(),
+                row.empId ? 'emp:'+String(row.empId).toLowerCase().trim() : ''];
+    for(let i=0;i<keys.length;i++){ const k=keys[i]; if(k && PEOPLE_OVR[k]) return PEOPLE_OVR[k]; }
+    return null;
+  }
+  /* EVERYONE AS THE DIRECTORY SHOULD SHOW THEM: the roster with what an admin changed
+     in Admin > People laid on top - role, offices, email, teams.
+     Heather, 30/09: "I updated Serenity's role on her profile to Clinical Asst and it
+     still shows as Clinic Lead" - the Team page and the search read the bare file.
+     For SHOWING people only. rosterRows() stays the bare roster: Admin keys each
+     person's settings off it, and sign-in matches people against it. */
+  function rosterView(){
+    return rosterRows().map(function(r){
+      const o=overrideForRow(r); if(!o) return r;
+      const v=Object.assign({}, r);
+      if(typeof o.role==='string') v.role=o.role;
+      if(Array.isArray(o.locs)) v.offices=o.locs.slice();
+      if(typeof o.email==='string') v.email=o.email;
+      if(Array.isArray(o.teams) && o.teams.length) v.teams=o.teams.slice();
+      return v;
+    });
+  }
   /* The people hidden by a removal, so it can be undone. */
   function removedRows(){
     const gone={};
@@ -1182,7 +1208,7 @@
     const pages=NAV.filter(function(x){ return x.show(); })
       .filter(function(x){ return hit(splitNav(x.n,x.k).label+' '+x.n); });
     const canTeam=atLeast('team','view');
-    const people=rosterRows().filter(function(r){
+    const people=rosterView().filter(function(r){
       return hit([r.name,r.role,(r.offices||[]).join(' '),(r.teams||[]).join(' '),r.email||''].join(' ')); }).slice(0,12);
     if(!pages.length && !people.length) return '<div class="nempty">Nothing matches \u201c'+escHTML(q)+'\u201d.</div>';
     const pg=pages.map(function(x){ const p=splitNav(x.n,x.k);
@@ -1735,8 +1761,17 @@
     if(c[k]!==undefined) return c[k]||'none';
     return DOC_KEYS.indexOf(k)>=0 ? (c.documents||'none') : 'none';
   }
+  /* A day saved on the Schedule used to tell people ("Dr. X now at Carlsbad on Mon
+     10/5"). Heather, 30/09: "I don't think we need it to notify people every time the
+     calendar has a change to it. That is a ton of notifications when I am entering
+     calendars for the first time." schedule.html no longer sends them; this hides the
+     ones already in the feed, and any still sent by a page opened before the change.
+     They are the only schedule entries with the calendar icon - a new office, new
+     hours or a doctor added to the list still come through. Nothing is deleted. */
+  const calendarDay=e=>e.kind==='schedule' && e.ic==='\u{1F4C5}';
   function canSeeActivity(e){
     if(!e) return false;
+    if(calendarDay(e)) return false;
     const m=me();
     const myName=name(m).toLowerCase().trim();
     const myTeams=(m.teams||[]).map(t=>String(t).toLowerCase());
@@ -2334,7 +2369,7 @@
   }
   const isLive=()=>env()==='live';
 
-  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK, notesHTML, searchHTML, saveFace, faceOf,
+  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, rosterView, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK, notesHTML, searchHTML, saveFace, faceOf,
     setTheme, theme:()=>THEME, themes:()=>THEMES.map(t=>({k:t.k, n:t.n})), schemeTokens:k=>schemeTokens(themeOf(k)), contrast,
     feedback:openFeedback, feedbackText, feedbackContext, learning:stillLearning};
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mount); else mount();

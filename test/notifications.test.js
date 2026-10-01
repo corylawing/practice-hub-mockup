@@ -247,6 +247,30 @@ delete E.LS[MEKEY];
   html=PH.notesHTML();
   t('with everything read the panel says so and lists nothing', html.indexOf('all caught up')>=0 && html.indexOf('class="ni')<0);
 }
+/* CALENDAR DAYS NO LONGER NOTIFY. Heather, 30/09: "I don't think we need it to notify
+   people every time the calendar has a change to it. That is a ton of notifications
+   when I am entering calendars for the first time." */
+{
+  const K=load({ph_viewas:'admin'}), P=K.PH;
+  const asPerson=o=>{ K.LS['ph_me_'+P.me().id]=JSON.stringify(o); };
+  // exactly what a saved day used to send (schedule.html, before 01/10)
+  P.logActivity({kind:'schedule', sec:'schedule', ic:'\u{1F4C5}', title:'Dr. Carla now at Carlsbad on Mon 10/5', offices:['Carlsbad'], people:['Dr. Carla']});
+  P.logActivity({kind:'schedule', sec:'schedule', ic:'\u{1F4C5}', title:'Hobbs closed Fri 10/9', offices:['Hobbs'], people:[]});
+  // the rare ones that stay
+  P.logActivity({kind:'schedule', sec:'schedule', ic:'\u{1F3E2}', title:'New office added: Roswell', scope:'everyone'});
+  P.logActivity({kind:'schedule', sec:'schedule', ic:'\u{1FA7A}', title:'Dr. Old removed from the doctor list', scope:'everyone', people:['Dr. Old']});
+  const has=x=>P.notifications().some(n=>n.title.indexOf(x)>=0);
+  t('an admin is no longer told about each calendar day', !has('now at Carlsbad on Mon 10/5') && !has('Hobbs closed Fri 10/9'));
+  asPerson({first:'Carla', last:'Coelho', dr:true, preferred:'', offices:['Hobbs'], teams:['Doctors'], can:Object.assign({}, P.me().can, {admin:'none'})});
+  t('nor is the doctor whose day it is', !has('now at Carlsbad on Mon 10/5'));
+  t('and they do not count toward the bell', P.notifications().every(n=>n.ic!=='\u{1F4C5}' || n.kind!=='schedule'));
+  t('a new office still comes through', has('New office added: Roswell'));
+  t('a doctor taken off the list still comes through', has('Dr. Old removed from the doctor list'));
+  t('the feed itself keeps them - hidden, not deleted', P.activity().filter(e=>e.kind==='schedule').length===4);
+  const SRC=require('fs').readFileSync(require('path').join(__dirname,'..','v1','schedule.html'),'utf8');
+  const save=SRC.slice(SRC.indexOf('function saveDay('), SRC.indexOf('/* ---------- office editor ---------- */'));
+  t('saving a day on the Schedule sends nothing', save.length>100 && save.indexOf('logActivity')<0 && SRC.indexOf('tellAboutDay')<0);
+}
 /* SEARCH in the header: the pages this person may open (people are covered in
    test/roster.test.js, where a roster is loaded). */
 {

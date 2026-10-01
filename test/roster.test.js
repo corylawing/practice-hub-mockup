@@ -170,6 +170,35 @@ const settle=()=>new Promise(r=>setTimeout(r,30));
     t('once the file stops being deployed, the roster still loads from SharePoint', R4.PH.rosterRows().length===FILE.people.length);
   }
 
+  /* (g) WHAT ADMIN CHANGED SHOWS ON THE TEAM PAGE. Heather, 30/09: "I updated Serenity's
+         role on her profile to Clinical Asst and it still shows as Clinic Lead" - Team and
+         the search read the bare file. People are picked from the file, never named here. */
+  {
+    const P=FILE.people;
+    const withMail=P.find(r=>r.email && r.role);
+    const empOnly=P.find(r=>!r.email && r.empId);
+    const neither=P.find(r=>!r.email && !r.empId) || null;
+    const nameKey=r=>'name:'+String(r.name).trim().toLowerCase().replace(/\s+/g,' ');
+    const OVR={};
+    OVR[withMail.email.toLowerCase()]={role:'Clinical Asst (test)', locs:['Hobbs'], teams:['TCs'], email:withMail.email, status:'Active'};
+    OVR['emp:'+String(empOnly.empId).toLowerCase()]={role:'Front Desk (test)'};
+    if(neither) OVR[nameKey(neither)]={role:'Doctor (test)', email:'someone@example.com'};
+    const G=load({ph_people:JSON.stringify(OVR)}, {});
+    await G.PH.rosterReady; await settle();
+    const view=n=>G.PH.rosterView().find(r=>r.name===n.name), raw=n=>G.PH.rosterRows().find(r=>r.name===n.name);
+    t('a role changed in Admin shows (keyed by email)', view(withMail).role==='Clinical Asst (test)');
+    t('...and so do the offices and team changed there', JSON.stringify(view(withMail).offices)==='["Hobbs"]' && JSON.stringify(view(withMail).teams)==='["TCs"]');
+    t('a person with only an employee id gets theirs too', view(empOnly).role==='Front Desk (test)');
+    t('...and keeps the offices nobody changed', JSON.stringify(view(empOnly).offices)===JSON.stringify(raw(empOnly).offices));
+    if(neither) t('a person with neither gets theirs by name', view(neither).role==='Doctor (test)' && view(neither).email==='someone@example.com');
+    t('the bare roster is untouched - Admin and sign-in still key off the file', raw(withMail).role===withMail.role && JSON.stringify(raw(withMail).offices)===JSON.stringify(withMail.offices||[]));
+    const other=P.find(r=>r!==withMail && r!==empOnly && r!==neither);
+    t('someone nobody changed looks exactly as in the file', JSON.stringify(view(other))===JSON.stringify(raw(other)));
+    t('the header search shows the changed role', G.PH.searchHTML(withMail.name.split(' ').pop().toLowerCase()).indexOf('Clinical Asst (test)')>=0);
+    const N=load({}, {}); await N.PH.rosterReady; await settle();
+    t('with nothing set in Admin, the view is the roster', JSON.stringify(N.PH.rosterView())===JSON.stringify(N.PH.rosterRows()));
+  }
+
   console.log(ok.map(s=>'  PASS  '+s).join('\n'));
   if(bad.length) console.log(bad.map(s=>'  FAIL  '+s).join('\n'));
   console.log('\n'+ok.length+' passed, '+bad.length+' failed');
