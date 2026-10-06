@@ -245,12 +245,12 @@
   }
 
 </style>
-<script src="user.js?v=hc72"></script>
+<script src="user.js?v=hc73"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="_staff.js?v=hc72"></script>
-  <script src="store.js?v=hc72"></script>
-  <script src="gate.js?v=hc72"></script>
-  <script src="docs.js?v=hc72"></script>
+  <script src="_staff.js?v=hc73"></script>
+  <script src="store.js?v=hc73"></script>
+  <script src="gate.js?v=hc73"></script>
+  <script src="docs.js?v=hc73"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — admin console concept for validation. Real build: people sync from Microsoft 365; access is managed here.</div>
@@ -311,6 +311,11 @@
     {k:'schedule',n:'Schedule',s:'Schedule',ic:'📅'},
     {k:'production',n:'Enter Production (type the numbers)',s:'Enter Prod',ic:'📝'},
     {k:'marketing',n:'Marketing board',s:'Marketing',ic:'📣'},
+    /* The Documents TAB, on or off per team (07/10). It was never a column, so a team with
+       saved settings had it off and there was no switch to turn it on when they're ready.
+       It only shows or hides the tab: the section columns decide what each team sees and
+       does inside - and who gets edit rights in SharePoint - whether the tab is on or not. */
+    {k:'documents',n:'Documents (open the page)',s:'Documents',ic:'📁'},
     {k:'team',n:'Team (who\u2019s who)',s:'Directory',ic:'👥'},
     {k:'admin',n:'Admin Console',s:'Admin',ic:'⚙️'}
   ];
@@ -361,11 +366,12 @@
     schedule:['none','view','edit'],
     marketing:['none','view','edit'],
     team:['none','view'],
+    documents:['none','view'],
     admin:['none','manage']
   };
   const levelsFor=k=>SEC_LEVELS[k]||LEVELS;   // document sections use the full ladder
   // short text in the grid square
-  const SEC_SHORT={production:{edit:'Enter',manage:'Enter + goals'},admin:{manage:'Full control'}};
+  const SEC_SHORT={production:{edit:'Enter',manage:'Enter + goals'},admin:{manage:'Full control'},documents:{view:'Can open'}};
   const shortFor=(k,l)=>((SEC_SHORT[k]||{})[l])||LVLNAME[l];
   // plain-English explanation in the picker
   const SEC_DESC={
@@ -374,6 +380,7 @@
     schedule:{view:'Can look at the rota, change nothing',edit:'Can assign doctors and set hours'},
     marketing:{view:'Can look at the board',edit:'Can move cards and score results'},
     team:{view:"Can see everyone's contact card"},
+    documents:{none:'No Documents tab yet',view:'Shows the Documents tab. What they see and can do inside is set in the section columns.'},
     admin:{manage:'Full control of the hub, including who sees what'}
   };
   const descFor=(k,l)=>((SEC_DESC[k]||{})[l])||LVLDESC[l];
@@ -1486,6 +1493,9 @@
       const all=(person.offices||[]).indexOf('All offices')>=0 || !!(PH.teamsSeeAll && PH.teamsSeeAll(teams));
       const offs=all ? names : (person.offices||[]).filter(o=>names.indexOf(o)>=0);
       let any=false;
+      /* The section columns alone decide this - NOT the Documents column, which only shows or
+         hides the tab (Cory, 07/10: "the sections should be controlled and when we are ready
+         we turn on that tab"). */
       DOCSECS.forEach(sec=>{
         if(rank[PH.levelForTeams(teams, sec.k)] < rank['add']) return;
         if(sec.locMode==='some' && !all && !offs.some(o=>(sec.locs||[]).indexOf(o)>=0)) return;
@@ -1703,7 +1713,7 @@
 })();
 </script>
 <script>PH.nav('admin');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(PH.loadPhotos)PH.loadPhotos().then(function(got){if(got&&window.AD&&AD.tab)AD.tab('users');});});</script>
-<script src="tour.js?v=hc72"></script>
+<script src="tour.js?v=hc73"></script>
 <script>
 Tour.init([
   {sel:'#tabs', title:'This is your control room', body:'Four tabs and you can run the whole hub: <b>People</b>, <b>Teams &amp; Access</b>, <b>Document Sections</b> and <b>Locations</b>. No developer, no consultant.', pre:()=>AD.tab('users')},

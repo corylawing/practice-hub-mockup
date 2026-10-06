@@ -88,6 +88,14 @@ multi-line-text column lives there for step 8; harmless to keep or delete.
 Entra groups to create (7 team + 8 office), the permission matrix, the per-office restriction, and
 the shared-account problem. Republish that same file to update it; do not create a second one.
 
+**Documents tab column + lock check fixed (07/10, hc73).** Teams & Access has a **Documents** app-tool column
+(None / Can open) = whether the team gets the Documents TAB. It was never a column, so teams with saved rows had it
+off with no switch - nobody, Heather included, could open Documents. It ONLY shows/hides the tab; the section columns
+alone decide what people see/do inside AND who gets SharePoint edit rights (Cory: "the sections should be controlled
+and when we are ready we turn on that tab"). `isLocked` now checks the Members GROUP by its own name: every user's
+sign-in name reads "i:0#.f|membership|...", so a JSON-wide /members/ match took Heather's own Edit for the group's
+and said "not locked" after Cory locked it. docs 97.
+
 **SharePoint editing follows Teams & Access (07/10, hc72).** One-time manual LOCK (an owner): Home-Brace Documents ->
 Manage access -> Advanced -> Stop Inheriting -> Home-Brace Members = Read (+ Heather Edit). After that Admin makes
 SharePoint match the grid on its own (runs in an admin's browser: on Admin open, grid cell change, person/team/

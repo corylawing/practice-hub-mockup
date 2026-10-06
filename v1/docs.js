@@ -457,14 +457,24 @@
      or shared by link, never anything above Home-Brace Documents. */
   function inBaseTree(p){ p = String(p || ''); return p === BASE || p.indexOf(BASE + '/') === 0; }
   function emailOk(em){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em); }
-  /* Has the lock been done? Not while Home-Brace Members can still edit Home-Brace Documents. */
+  /* Has the lock been done? Not while the Home-Brace Members GROUP can still edit Home-Brace
+     Documents. The group by its own name only: every person's sign-in name reads
+     "i:0#.f|membership|...", so looking for "members" anywhere took Heather's own Edit for
+     the group's, and said "not locked" when it was (Cory's screenshot, 07/10). */
+  function membersGroup(x){
+    var g = x.grantedToV2 || {}, names = [];
+    if(g.siteGroup) names.push(g.siteGroup.displayName || '');
+    if(g.group) names.push(g.group.displayName || '');
+    var old = (x.grantedTo && x.grantedTo.user) || null;              // the older shape: a group shows as a "user" with no email
+    if(!g.siteGroup && !g.group && !g.user && old && !old.email) names.push(old.displayName || '');
+    return names.some(function(n){ return /(^|\s)members$/i.test(String(n).trim()); });
+  }
   function isLocked(){
     return drive().then(function(d){
       return retry(function(){ return api('GET', '/drives/' + d.id + '/root:/' + enc(BASE) + ':/permissions'); });
     }).then(function(r){
       return !(r.value || []).some(function(x){
-        var who = JSON.stringify([x.grantedToV2, x.grantedTo, x.grantedToIdentitiesV2, x.grantedToIdentities]);
-        return /members/i.test(who) && (x.roles || []).some(function(role){ return role === 'write' || role === 'owner'; });
+        return membersGroup(x) && (x.roles || []).some(function(role){ return role === 'write' || role === 'owner'; });
       });
     }, function(e){ if(e.status === 404) return false; throw e; });
   }

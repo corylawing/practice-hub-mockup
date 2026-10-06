@@ -340,8 +340,12 @@ const calls=(sp,re,method)=>sp.calls.filter(c=>re.test(c.url)&&(!method||c.metho
   { const sp=SharePoint(), {D}=load(sp);
     const base=sp.add(sp.root,'Home-Brace Documents',true), pol=sp.add(base,'Policies & Handbook',true);
     t('not locked while Home-Brace Members can still edit', (await D.isLocked())===false);
-    sp.perms[base.id]=[{id:'M', roles:['read'], grantedToV2:{siteGroup:{displayName:'Home-Brace Members'}}},{id:'O', roles:['owner'], grantedToV2:{siteGroup:{displayName:'Home-Brace Owners'}}}];
-    t('locked once Members can only read', (await D.isLocked())===true);
+    sp.perms[base.id]=[{id:'M', roles:['read'], grantedToV2:{siteGroup:{displayName:'Home-Brace Members'}}},{id:'O', roles:['owner'], grantedToV2:{siteGroup:{displayName:'Home-Brace Owners'}}},
+      {id:'HB', roles:['write'], grantedToV2:{user:{displayName:'Heather Beal',email:'heather@example.com'}, siteUser:{loginName:'i:0#.f|membership|heather@example.com'}}, grantedTo:{user:{displayName:'Heather Beal',email:'heather@example.com'}}}];
+    t('locked once Members can only read - Heather\u2019s own Edit (her sign-in name says "membership") is not the group', (await D.isLocked())===true);
+    sp.perms[base.id][0].roles=['write'];
+    t('...and not locked again if the Members group gets Edit back', (await D.isLocked())===false);
+    sp.perms[base.id][0].roles=['read'];
     await D.grantEdit(D.path('Policies & Handbook'), ' Olivia@Example.com ');
     const inv=(sp.invites||[])[0]||{};
     t('a grant is Edit for one named person, with no email sent', inv.item===pol.id && JSON.stringify(inv.body.roles)==='["write"]' && inv.body.sendInvitation===false && inv.body.requireSignIn===true && inv.body.recipients.length===1 && inv.body.recipients[0].email==='olivia@example.com');
