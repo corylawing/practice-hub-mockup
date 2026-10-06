@@ -88,6 +88,12 @@ multi-line-text column lives there for step 8; harmless to keep or delete.
 Entra groups to create (7 team + 8 office), the permission matrix, the per-office restriction, and
 the shared-account problem. Republish that same file to update it; do not create a second one.
 
+**Documents: Move (07/10, hc70).** Managers get **Move** on files and folders: a "Where to?" list of every section
+(each office/brand root) they can add to, plus the folders one level inside; "Here now" and (for a folder) itself and
+its insides are greyed. `PH_DOCS.move()` = PATCH parentReference on the same item (same drive): history, link and
+ph_docmeta audience follow. Fenced both ends (inside Home-Brace Documents; destination must be a section folder or
+deeper, never the bare top folder); a taken name is refused in words (409) - nothing renamed/replaced. docs: 88.
+
 **Documents: Access per item (07/10, hc69).** Cory: "can I go to each file and choose who gets access?" Managers get
 **Access** on every file, folder and link: the same two choices as adding (Everyone who can open X / Only certain
 people), pre-filled with what is set; Everyone takes the item's entry off ph_docmeta (`PH_DOCS.clearAudience`, only

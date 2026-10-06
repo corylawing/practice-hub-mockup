@@ -91,6 +91,14 @@ function SharePoint(){
       const id=String(sp.next++); sp.sessions[id]={parent:m[1], name:m[2], got:0, total:0, pieces:0};
       sp.pendingTotal=id; return resp(200,{uploadUrl:'https://upload.test/s/'+id});
     }
+    if((m=/^\/drives\/D1\/items\/([^/:]+)$/.exec(p)) && method==='PATCH'){                       // a move: new parent, same item
+      const it=sp.items[m[1]]; if(!it || gone(it)) return resp(404,{error:{message:'itemNotFound'}});
+      const b=JSON.parse(o.body), to=b.parentReference && sp.items[b.parentReference.id];
+      if(!to || gone(to) || !to.folder) return resp(404,{error:{message:'itemNotFound'}});
+      if(taken(to, it.name)) return resp(409,{error:{code:'nameAlreadyExists',message:'exists'}});
+      const from=sp.items[it.parent]; from.children=from.children.filter(x=>x!==it.id); to.children.push(it.id); it.parent=to.id;
+      return resp(200, view(it));
+    }
     if((m=/^\/drives\/D1\/items\/([^/:]+)$/.exec(p)) && method==='DELETE'){
       const it=sp.items[m[1]]; if(!it || gone(it)) return resp(404,{error:{message:'itemNotFound'}});
       const par=sp.items[it.parent]; par.children=par.children.filter(x=>x!==it.id); sp.recycle.push(it);   // to the bin, not destroyed
@@ -279,6 +287,37 @@ const calls=(sp,re,method)=>sp.calls.filter(c=>re.test(c.url)&&(!method||c.metho
     t('only the same kind of file: a .docx can\u2019t replace a .pdf', e4 && e4.wrongType && sent()===n0 && sp.items[hb.id].versions===3);
     t('replace never deletes and never asks SharePoint to "replace" by name',
       !calls(sp,/./,'DELETE').length && !sp.calls.some(c=>/conflictBehavior/.test(c.url) && /items\/[^/:]+\/content/.test(c.url)) && !sp.calls.some(c=>/"replace"/.test(String(c.body||'')))); }
+
+  /* 6d. MOVE (07/10): to another section or a folder inside one - the same item, so its
+         history and "who can see it" go with it. Fenced at both ends. */
+  { const sp=SharePoint(), {D}=load(sp);
+    const base=sp.add(sp.root,'Home-Brace Documents',true), pol=sp.add(base,'Policies & Handbook',true), emp=sp.add(base,'Employee Forms',true);
+    const nm=sp.add(emp,'New Mexico New Hire',true); sp.add(nm,'Notices.pdf',false);
+    const up=sp.add(pol,'Uniform Policy.pdf',false), w4=sp.add(emp,'W-4.pdf',false);
+    const other=sp.add(sp.root,'Accounting',true), acc=sp.add(other,'Budget.pdf',false);
+    const r=await D.move(sp.view(up), D.path('Employee Forms'));
+    t('a file moves to another section - the same item, same name', r.id===up.id && !!sp.find('Home-Brace Documents/Employee Forms/Uniform Policy.pdf') && !sp.find('Home-Brace Documents/Policies & Handbook/Uniform Policy.pdf'));
+    await D.move(sp.view(nm), D.path('Policies & Handbook'));
+    t('a folder moves with everything in it', !!sp.find('Home-Brace Documents/Policies & Handbook/New Mexico New Hire/Notices.pdf') && !sp.find('Home-Brace Documents/Employee Forms/New Mexico New Hire'));
+    await D.move(sp.view(w4), D.path('Policies & Handbook','New Mexico New Hire'));
+    t('...and into a folder inside a section', !!sp.find('Home-Brace Documents/Policies & Handbook/New Mexico New Hire/W-4.pdf'));
+    const sent=()=>sp.calls.filter(c=>c.method!=='GET').length; let n0;
+    const tryMove=async(item,dest)=>{ n0=sent(); try{ await D.move(item,dest); return null; }catch(x){ return x; } };
+    const w4now=()=>sp.view(sp.find('Home-Brace Documents/Policies & Handbook/New Mexico New Hire/W-4.pdf'));
+    let e=await tryMove(sp.view(acc), D.path('Employee Forms'));
+    t('nothing from outside Home-Brace Documents can be moved', e && e.fenced && sent()===n0);
+    e=await tryMove(w4now(), 'Accounting');
+    t('nothing goes outside Home-Brace Documents', e && e.fenced && sent()===n0);
+    e=await tryMove(w4now(), D.path());
+    t('nothing goes loose in the top folder, where no section would show it', e && e.fenced && sent()===n0);
+    e=await tryMove(sp.view(sp.find('Home-Brace Documents/Policies & Handbook/New Mexico New Hire')), D.path('Policies & Handbook','New Mexico New Hire','Deeper'));
+    t('a folder can\u2019t go inside itself', e && e.loop && sent()===n0);
+    e=await tryMove(w4now(), D.path('Policies & Handbook','New Mexico New Hire'));
+    t('moving to where it already is says so', e && e.same && sent()===n0);
+    sp.add(emp,'W-4.pdf',false);
+    e=await tryMove(w4now(), D.path('Employee Forms'));
+    t('a name already taken there is refused - nothing renamed or replaced', e && e.exists && !!sp.find('Home-Brace Documents/Policies & Handbook/New Mexico New Hire/W-4.pdf'));
+    t('moving never deletes', !calls(sp,/./,'DELETE').length); }
 
   /* 7. Links to files kept elsewhere: checked, saved once, un-linked (never deleted). */
   { const sp=SharePoint(), {D,store}=load(sp);

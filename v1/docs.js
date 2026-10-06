@@ -18,7 +18,8 @@
        "policy 1.pdf". Nothing here sends "replace". The one way a file's content changes
        is Replace, which a manager chooses for ONE file and confirms: it writes a new
        VERSION of that file, and SharePoint keeps the old one in its version history.
-     - Rename or move anything.
+     - Rename anything. Move only when a manager chooses it for one item - move() below,
+       fenced at both ends to inside Home-Brace Documents.
      - Touch anything outside Home-Brace Documents. remove() is the one destructive call
        and it is fenced to items inside that folder; Microsoft moves them to the site's
        recycle bin (restorable for 93 days) rather than deleting them. A LINKED file -
@@ -410,6 +411,42 @@
     });
   }
 
+  /* MOVE (07/10 - Cory: "what if you want to move a file to another section or folder?").
+     A file or folder goes to another folder inside Home-Brace Documents. It is the SAME
+     item afterwards, so its version history, its link and its "who can see it" go with it.
+     Fenced at both ends: the item must be inside Home-Brace Documents, and the destination
+     must be a section folder or a folder inside one (never the top folder itself, where
+     no section would show it). A folder can't go inside itself. A name already taken
+     there is refused with a plain message - nothing is renamed or replaced. */
+  function parentRel(item){
+    var pr = (item && item.parentReference) || {}, at = String(pr.path || '');
+    try{ at = decodeURIComponent(at); }catch(_){}
+    var i = at.indexOf('root:/');
+    return i < 0 ? null : at.slice(i + 6);
+  }
+  function move(item, destPath){
+    return drive().then(function(d){
+      if(!item || !item.id || !insideBase(item, d.id))
+        throw fail(0, 'Only files and folders inside \u201c' + BASE + '\u201d can be moved from Home-Brace.', { fenced: true });
+      var dp = String(destPath || '');
+      if(dp.indexOf(BASE + '/') !== 0)
+        throw fail(0, 'It can only go into a section, or a folder inside one.', { fenced: true });
+      var here = parentRel(item);
+      if(here === dp) throw fail(0, 'It\u2019s already there.', { same: true });
+      if(item.folder){
+        var self = here + '/' + item.name;
+        if(dp === self || dp.indexOf(self + '/') === 0) throw fail(0, 'A folder can\u2019t go inside itself.', { loop: true });
+      }
+      return fresh(function(){ return ensureFolder(dp).then(function(parentId){
+        return retry(function(){ return api('PATCH', '/drives/' + d.id + '/items/' + item.id, { parentReference: { id: parentId } }); })
+          .catch(function(e){
+            if(e.status === 409) throw fail(409, 'There\u2019s already something called \u201c' + item.name + '\u201d there.', { exists: true });
+            throw e;
+          });
+      }); });
+    });
+  }
+
   /* ---- Files that live somewhere else, linked into a section. ---- */
   function b64url(s){
     var bytes = new TextEncoder().encode(s), bin = '';
@@ -516,7 +553,7 @@
     BASE: BASE, clean: clean, path: path, under: under, shareId: shareId,
     drive: drive, item: itemAt, list: list, ensureFolder: ensureFolder, newFolder: newFolder,
     upload: upload, uploadAll: uploadAll, fromInput: fromInput, fromDrop: fromDrop,
-    tally: tally, remove: remove, replace: replace, insideBase: insideBase,
+    tally: tally, remove: remove, replace: replace, move: move, insideBase: insideBase,
     resolveLink: resolveLink, whoCanOpen: whoCanOpen,
     links: links, addLink: addLink, unlink: unlink,
     meta: meta, setAudience: setAudience, clearAudience: clearAudience,
