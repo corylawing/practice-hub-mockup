@@ -88,6 +88,14 @@ multi-line-text column lives there for step 8; harmless to keep or delete.
 Entra groups to create (7 team + 8 office), the permission matrix, the per-office restriction, and
 the shared-account problem. Republish that same file to update it; do not create a second one.
 
+**Search finds documents - only what you could open (07/10, hc71).** The header search (live) adds a Documents
+group after Pages/People: SharePoint's own drive search under Home-Brace Documents (names AND contents) + linked
+files by name. `searchDocs()` shows an item only if the person could open it on the Documents page: section level
+(`docSecLevel` - grid, else overall Documents for built-ins, else the section's own audience), their own office/brand
+folder of a per-office/brand section, and "Only certain people" on the item OR any folder above it (folders with an
+audience are resolved once per page); managers see all; anything not inside a section is never shown. Section maps by
+the first path segment of webUrl (search results carry no parentReference.path). test/docsearch.test.js: 16 checks.
+
 **Documents: Move (07/10, hc70).** Managers get **Move** on files and folders: a "Where to?" list of every section
 (each office/brand root) they can add to, plus the folders one level inside; "Here now" and (for a folder) itself and
 its insides are greyed. `PH_DOCS.move()` = PATCH parentReference on the same item (same drive): history, link and

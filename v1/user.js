@@ -1185,11 +1185,27 @@
     closeSearch();
     spanel=document.createElement('div');
     spanel.className='ph-np ph-sp';
-    spanel.innerHTML='<div class="nph sph"><input class="sin" type="search" placeholder="Search people and pages\u2026" '+
+    spanel.innerHTML='<div class="nph sph"><input class="sin" type="search" placeholder="Search people, pages'+(isLive()?' and documents':'')+'\u2026" '+
       'autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" aria-label="Search"></div><div class="nlist sres"></div>';
     spanel.addEventListener('click',function(e){ e.stopPropagation(); if(e.target.closest('.sx')) closeSearch(); });
     const inp=spanel.querySelector('.sin'), res=spanel.querySelector('.sres');
-    inp.oninput=function(){ res.innerHTML=searchHTML(inp.value); };
+    let dt=null;
+    inp.oninput=function(){
+      const q=inp.value, base=searchHTML(q), docsToo=isLive() && String(q).trim().length>=2;
+      const none=base.indexOf('Nothing matches')>=0;
+      res.innerHTML=(docsToo && none ? '' : base)+(docsToo ? '<div class="sdocs"><div class="slab">Documents</div><div class="nempty">Searching documents\u2026</div></div>' : '');
+      clearTimeout(dt);
+      if(!docsToo) return;
+      dt=setTimeout(function(){
+        searchDocs(q).then(function(list){
+          if(inp.value!==q || !spanel) return;                      // they kept typing
+          const box=res.querySelector('.sdocs'); if(!box) return;
+          if(list.length){ box.innerHTML=searchDocsHTML(list); return; }
+          box.remove();
+          if(none) res.innerHTML=base;                              // nothing anywhere: say so once
+        }, function(){ const box=res.querySelector('.sdocs'); if(box) box.remove(); if(none && inp.value===q) res.innerHTML=base; });
+      }, 280);
+    };
     inp.onkeydown=function(e){ if(e.key==='Enter'){ const a=res.querySelector('a.ni'); if(a) location.href=a.getAttribute('href'); } };
     res.innerHTML=searchHTML('');
     wrap.appendChild(spanel);
@@ -1222,6 +1238,136 @@
         ? '<a class="ni sr" href="team.html?q='+encodeURIComponent(r.name)+'">'+inner+'</a>'
         : '<div class="ni sr">'+inner+'</div>'; }).join('');
     return (pages.length?'<div class="slab">Pages</div>'+pg:'')+(people.length?'<div class="slab">People</div>'+pp:'');
+  }
+  /* DOCUMENTS IN THE SEARCH (07/10 - Cory: "the search doesn't take into accounts these
+     documents and what the user does or does not have access too"). Files and folders in
+     Home-Brace Documents - by name and by what is in them, through SharePoint's own search
+     - and files linked in from elsewhere. Each is shown ONLY if this person could open it
+     on the Documents page: the section's level from the access grid; for a per-office or
+     per-brand section, only their offices' and brands' folders; and any "Only certain
+     people" on the item or on a folder it sits in (people who manage the section see
+     everything, as they do there). Anything not in a section is not shown. Live only. */
+  const DOC_BASE='Home-Brace Documents';
+  const DOC_DEFAULT_SECS=[{k:'hr',n:'HR'},{k:'officedocs',n:'Office Docs',structure:'byLocation'},{k:'forms',n:'Office Forms',structure:'byBrand'},
+    {k:'vendors',n:'Vendors'},{k:'filing',n:'Insurance / W-9'},{k:'eom',n:'End-of-Month Reporting'}];
+  const DOC_BRAND={FFO:'FFO',SUN:'Sunflower',LCO:'LCO'};
+  /* The folder a section's files live in - the same rule as docs.js clean(). */
+  function docFolderName(sec){
+    if(sec.folder) return sec.folder;
+    let x=String(sec.n||'').replace(/["*:<>?\/\\|]/g,'-').replace(/\s+/g,' ').trim().replace(/[.\s]+$/,'');
+    if(/^(con|prn|aux|nul|com\d|lpt\d)(\..*)?$/i.test(x) || /^_vti_/i.test(x)) x='_'+x;
+    return x || 'Untitled';
+  }
+  function docRel(webUrl){
+    let p=''; try{ p=decodeURIComponent(new URL(webUrl).pathname); }catch(_){ return null; }
+    const i=p.indexOf('/'+DOC_BASE+'/'); return i<0 ? null : p.slice(i+DOC_BASE.length+2);
+  }
+  let DOCX=null;
+  function docContext(){
+    if(DOCX) return DOCX;
+    if(!(isLive() && window.PH_AUTH && PH_AUTH.graph && window.PH_STORE)) return Promise.resolve(null);
+    const g=PH_AUTH.graph;
+    DOCX=Promise.all([
+      g('/sites/omegaorthodontics.sharepoint.com:/sites/Home-Brace').then(function(site){ return g('/sites/'+site.id+'/drive?$select=id'); })
+        .then(function(d){ return g('/drives/'+d.id+'/root:/'+encodeURIComponent(DOC_BASE)+'?$select=id').then(function(b){ return {driveId:d.id, baseId:b.id}; }); }),
+      PH_STORE.get('ph_docsecs').catch(function(){ return null; }),
+      PH_STORE.get('ph_docmeta').catch(function(){ return null; }),
+      PH_STORE.get('ph_doclinks').catch(function(){ return null; })
+    ]).then(function(r){
+      const meta=(r[2] && typeof r[2]==='object' && !Array.isArray(r[2])) ? r[2] : {};
+      const ctx={driveId:r[0].driveId, baseId:r[0].baseId,
+        secs:(Array.isArray(r[1]) && r[1].length) ? r[1].filter(function(x){ return x && x.k; }) : DOC_DEFAULT_SECS,
+        meta:meta, links:Array.isArray(r[3]) ? r[3] : [], restricted:[]};
+      /* Folders with their own audience: where they are, so what sits inside them follows it. */
+      return Promise.all(Object.keys(meta).filter(function(id){ return id.charAt(0)!=='L'; }).map(function(id){
+        return g('/drives/'+ctx.driveId+'/items/'+id+'?$select=id,webUrl,folder').then(function(it){
+          if(it && it.folder){ const rel=docRel(it.webUrl); if(rel) ctx.restricted.push({rel:rel, aud:meta[id]}); }
+        }, function(){});
+      })).then(function(){ return ctx; });
+    }).catch(function(e){ DOCX=null; throw e; });
+    return DOCX;
+  }
+  function docSecLevel(sec){
+    const m=me(), mine=offices();
+    if(sec.locMode==='some' && !isAdmin() && mine!=='all' && !(Array.isArray(mine) && mine.some(function(o){ return (sec.locs||[]).indexOf(o)>=0; }))) return 'none';
+    const c=m.can||{};
+    if(c[sec.k]!==undefined) return c[sec.k]||'none';
+    if(DOC_KEYS.indexOf(sec.k)>=0) return c.documents||'none';
+    /* A section someone made that the grid never mentions: its own audience. */
+    if((c.documents||'none')==='none') return 'none';
+    const myTeams=(m.teams||[]).map(function(t){ return String(t).toLowerCase(); });
+    const teamOk=sec.teamMode!=='some' || isAdmin() || (sec.teams||[]).some(function(t){ return myTeams.indexOf(String(t).toLowerCase())>=0; });
+    return teamOk ? (isAdmin()?'manage':'view') : 'none';
+  }
+  function docAudOk(a){
+    if(!a) return true;
+    const myTeams=(me().teams||[]).map(function(t){ return String(t).toLowerCase(); }), mine=offices();
+    const teamOk=!(a.teams||[]).length || a.teams.some(function(t){ return myTeams.indexOf(String(t).toLowerCase())>=0; });
+    const offOk=!(a.offices||[]).length || mine==='all' || (Array.isArray(mine) && a.offices.some(function(o){ return mine.indexOf(o)>=0; }));
+    return teamOk && offOk;
+  }
+  /* The office or brand folder of a per-office / per-brand section: is it one of theirs? */
+  function docSubOk(sec, sub){
+    if(sec.structure!=='byLocation' && sec.structure!=='byBrand') return true;
+    if(isAdmin() || offices()==='all') return true;
+    const mine=offices(); if(!Array.isArray(mine)) return false;
+    if(sec.structure==='byLocation') return mine.indexOf(sub)>=0;
+    return locations().some(function(l){ return mine.indexOf(l.n)>=0 && (DOC_BRAND[l.brand]||l.brand)===sub; });
+  }
+  function docIcon(n, folder){
+    if(folder) return '\u{1F4C1}';
+    const x=String(n).toLowerCase().split('.').pop();
+    return x==='pdf'?'\u{1F4D5}':['doc','docx','rtf','txt'].indexOf(x)>=0?'\u{1F4D8}':['xls','xlsx','xlsm','csv'].indexOf(x)>=0?'\u{1F4D7}':
+      ['ppt','pptx'].indexOf(x)>=0?'\u{1F4D9}':['png','jpg','jpeg','gif','heic','webp'].indexOf(x)>=0?'\u{1F5BC}\uFE0F':'\u{1F4C4}';
+  }
+  function searchDocs(q){
+    q=String(q||'').trim();
+    if(q.length<2) return Promise.resolve([]);
+    return docContext().then(function(ctx){
+      if(!ctx) return [];
+      const words=q.toLowerCase().split(/\s+/).filter(Boolean);
+      const out=[], seen={};
+      const place=function(sec, segs){ return [sec.n].concat(segs).join(' \u203a '); };
+      return PH_AUTH.graph('/drives/'+ctx.driveId+'/items/'+ctx.baseId+"/search(q='"+encodeURIComponent(q.replace(/'/g,"''"))+"')?$select=id,name,webUrl,file,folder&$top=50")
+        .then(function(r){
+          (r && r.value || []).forEach(function(it){
+            const rel=docRel(it.webUrl); if(!rel || seen[it.id]) return;
+            const segs=rel.split('/'), top=segs[0].toLowerCase();
+            const sec=ctx.secs.find(function(x){ return docFolderName(x).toLowerCase()===top; }); if(!sec) return;
+            const lvl=docSecLevel(sec); if(lvl==='none') return;
+            if(segs.length>1 && !docSubOk(sec, segs[1])) return;
+            if(lvl!=='manage'){
+              if(!docAudOk(ctx.meta[it.id])) return;
+              if(ctx.restricted.some(function(f){ return rel.indexOf(f.rel+'/')===0 && !docAudOk(f.aud); })) return;
+            }
+            seen[it.id]=1;
+            const isSection=segs.length===1 && !!it.folder;
+            out.push({name:isSection?sec.n:it.name, folder:!!it.folder,
+              href:it.folder ? 'documents.html#'+encodeURIComponent(sec.k) : it.webUrl, newTab:!it.folder,
+              where:isSection?'Section in Documents':place(sec, segs.slice(1, -1))});
+          });
+          /* Files linked in from elsewhere: matched by name, shown by the same rules. */
+          ctx.links.forEach(function(l){
+            if(!l || l.hidden || seen[l.id]) return;
+            const nm=String(l.name||'').toLowerCase(); if(!words.every(function(w){ return nm.indexOf(w)>=0; })) return;
+            const sec=ctx.secs.find(function(x){ return x.k===l.sec; }); if(!sec) return;
+            const lvl=docSecLevel(sec); if(lvl==='none') return;
+            if(l.sub && !docSubOk(sec, l.sub)) return;
+            if(lvl!=='manage' && !docAudOk(ctx.meta[l.id])) return;
+            if(!/^https:\/\//i.test(String(l.webUrl||''))) return;
+            seen[l.id]=1;
+            out.push({name:l.name, folder:false, href:l.webUrl, newTab:true, where:place(sec, l.sub?[l.sub]:[])+' \u00b7 linked'});
+          });
+          return out.slice(0,12);
+        });
+    });
+  }
+  function searchDocsHTML(list){
+    return '<div class="slab">Documents</div>'+list.map(function(d){
+      return '<a class="ni sr" href="'+escAttr(d.href)+'"'+(d.newTab?' target="_blank" rel="noopener"':'')+'>'+
+        '<span class="nic">'+docIcon(d.name, d.folder)+'</span>'+
+        '<div class="ntx"><div class="ntt">'+escHTML(d.name)+'</div><div class="nw">'+escHTML(d.where)+'</div></div></a>';
+    }).join('');
   }
   function bellBadge(){
     const b=document.querySelector('.ph-bell'); if(!b) return;
@@ -2418,7 +2564,7 @@
   }
   const isLive=()=>env()==='live';
 
-  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, rosterView, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK, notesHTML, searchHTML, saveFace, faceOf,
+  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, rosterView, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK, notesHTML, searchHTML, searchDocs, searchDocsHTML, saveFace, faceOf,
     setTheme, theme:()=>THEME, themes:()=>THEMES.map(t=>({k:t.k, n:t.n})), schemeTokens:k=>schemeTokens(themeOf(k)), contrast,
     feedback:openFeedback, feedbackText, feedbackContext, learning:stillLearning};
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mount); else mount();
