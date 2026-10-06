@@ -88,6 +88,12 @@ multi-line-text column lives there for step 8; harmless to keep or delete.
 Entra groups to create (7 team + 8 office), the permission matrix, the per-office restriction, and
 the shared-account problem. Republish that same file to update it; do not create a second one.
 
+**Enter Production: office first (06/10, hc66).** Heather: "they have to choose location first before they enter
+production numbers" - after a reload the page fell back to the first office on the list, and numbers went to the
+wrong office. Anyone with more than one office now gets "Which office are you entering numbers for?" (a button per
+office) and no boxes or Save until they pick; nothing is remembered between visits. One office: chosen for them.
+Save reads "Save <office> to workbook". `applyIdentity` no longer wipes the pick when identity lands in stages.
+
 **Guests: SharePoint refuses them until they open the site once (06/10, hc65).** Noemi's box (hc64) said
 `Graph 401: There has been an error authenticating the request` - Microsoft's known guest quirk: SharePoint does not
 fully know a B2B guest until they have opened the site in a browser once; until then every Graph call for them is

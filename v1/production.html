@@ -116,6 +116,12 @@
   /* Month buttons were 29px tall — too small to hit reliably with a thumb. */
   @media(max-width:760px){ .mchip{padding:9px 12px;min-height:40px;font-size:13.5px} }
   .noacc{background:#fff;border:1px dashed var(--line);border-radius:14px;padding:34px;text-align:center;color:var(--soft)}
+  .choose{background:#fff;border:1px solid var(--line);border-radius:14px;padding:24px 22px;box-shadow:var(--shadow);margin-top:18px}
+  .choose h2{margin:0 0 4px;font-size:19px;color:var(--navy)}
+  .choose .sub{color:var(--soft);font-size:13.5px;margin-bottom:16px}
+  .offbtns{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+  .offbtn{padding:14px 12px;border:1px solid var(--line);border-radius:12px;background:#fff;font:700 15px/1.2 inherit;color:var(--navy);cursor:pointer;text-align:left}
+  .offbtn:hover,.offbtn:focus-visible{border-color:var(--teal);background:var(--teal-soft,#E5F4F3);outline:none}
   .noacc b{color:var(--navy)}
   @media(max-width:760px){ .grid2{grid-template-columns:1fr} }
   /* Some people set "reduce motion" in Windows or macOS, often because movement makes
@@ -128,11 +134,11 @@
   }
 
 </style>
-<script src="user.js?v=hc65"></script>
+<script src="user.js?v=hc66"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="workbook.js?v=hc65"></script>
-  <script src="store.js?v=hc65"></script>
-  <script src="gate.js?v=hc65"></script>
+  <script src="workbook.js?v=hc66"></script>
+  <script src="store.js?v=hc66"></script>
+  <script src="gate.js?v=hc66"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — type the month's numbers here. In the real build this writes straight into the SharePoint workbook.</div>
@@ -252,7 +258,20 @@
       el('view').innerHTML='<div class="noacc"><b>This role can\'t enter production numbers.</b><br>Entering numbers needs <b>Edit</b> on the Dashboard section — set per team in <b>Admin → Teams &amp; Access</b>.</div>';
       return;
     }
-    if(!office || list.indexOf(office)<0) office=list[0];
+    /* CHOOSE THE OFFICE FIRST. This used to fall back to the first office on the list, so
+       after a reload the numbers went to whichever office came first unless she remembered
+       to switch (Heather, 06/10: "they have to choose location first"). One office: nothing
+       to get wrong, so it is chosen. Several: she picks, every visit - nothing remembered. */
+    if(office && list.indexOf(office)<0) office=null;
+    if(!office && list.length===1) office=list[0];
+    if(!office){
+      el('view').innerHTML=
+        '<div class="choose"><h2>Which office are you entering numbers for?</h2>'+
+          '<div class="sub">Pick one first. The boxes for its numbers open next.</div>'+
+          '<div class="offbtns">'+list.map(o=>'<button class="offbtn" type="button" data-office="'+o.replace(/"/g,'&quot;')+'">\u{1F4CD} '+o+'</button>').join('')+'</div></div>';
+      el('view').querySelectorAll('.offbtn').forEach(b=>b.onclick=function(){ setOffice(this.dataset.office); });
+      return;
+    }
     const b=BASE[office];
     const tc=val(office,month,'tc'), mds=val(office,month,'mds'), fee=val(office,month,'fee');
     const afee=val(office,month,'afee');
@@ -294,7 +313,7 @@
             : '<p style="font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--soft);margin:0 0 8px">Goals</p>'+
               '<div class="f"><label>Main production goal</label><div class="help">Set by leadership \u2014 you can\u2019t change this</div><input class="ro" value="$'+goal.toLocaleString('en-US')+'" readonly></div>'+
               '<div class="f"><label>Stretch goal</label><div class="help">Set by leadership \u2014 you can\u2019t change this</div><input class="ro" value="$'+str.toLocaleString('en-US')+'" readonly></div>')+
-          '<div class="savebar"><button class="btn" id="pushbtn" onclick="PROD.commit()">Save to workbook</button>'+
+          '<div class="savebar"><button class="btn" id="pushbtn" onclick="PROD.commit()">'+saveLabel()+'</button>'+
             '<button class="btn ghost" onclick="PROD.reset()">Undo my changes</button>'+
             '<span class="saved" id="saved">✓ Saved · dashboard &amp; Excel updated</span></div>'+
         '</div>'+
@@ -319,6 +338,7 @@
   }
   function line(k,v,cls){ return '<div class="rowline"><span class="k">'+k+'</span><span class="v '+(cls||'')+'">'+v+'</span></div>'; }
   function edit(f,v){
+    if(!office) return;
     if(f==='fee'||f==='afee'){ // a case fee applies to the whole office, every month
       for(let m=0;m<12;m++){ const kk=key(office,m); edits[kk]=edits[kk]||{}; edits[kk][f]=v===''?'':Number(v); }
     }
@@ -453,7 +473,7 @@
       btn.textContent=label;
       setTimeout(function(){
         btn.classList.remove('done','failed');
-        btn.textContent='Save to workbook';
+        btn.textContent=saveLabel();
       }, state==='done' ? 2600 : 4000);
     }
     // Flush the session so the workbook on disk reflects the writes.
@@ -509,9 +529,11 @@
           title:office+'\u2019s '+MO[month]+' numbers were entered '+daysLate+' days after month end'});
     }catch(_){}
   }
-  function commit(){ save(); pushToWorkbook(); const s=el('saved'); if(s){s.classList.add('on'); setTimeout(()=>s.classList.remove('on'),2600);} }
-  function reset(){ Object.keys(edits).forEach(k=>{ if(k.indexOf(office+'|')===0) delete edits[k]; }); save(); render(); }
-  function setOffice(o){ office=o; render(); }
+  function commit(){ if(!office) return; save(); pushToWorkbook(); const s=el('saved'); if(s){s.classList.add('on'); setTimeout(()=>s.classList.remove('on'),2600);} }
+  function reset(){ if(!office) return; Object.keys(edits).forEach(k=>{ if(k.indexOf(office+'|')===0) delete edits[k]; }); save(); render(); }
+  /* The button says WHICH office it saves, so a wrong one is plain before it is sent. */
+  function saveLabel(){ return office ? 'Save '+office+' to workbook' : 'Save to workbook'; }
+  function setOffice(o){ if(!o) return; office=o; render(); }
   function setMonth(m){ month=m; render(); }
   let booted=false;
   function set(id){
@@ -620,7 +642,11 @@
     const m=PH.me(); if(!m) return false;
     cur={ id:'me', name:(PH.name?PH.name(m):'')||'You',
           offices:(m.offices==='all'?'all':(m.offices||[])) };
-    office=null; render();
+    /* Who she is lands in stages (profile, then the access grid, then Admin's settings) -
+       still her each time. Keep the office she picked; render() drops it only if it is no
+       longer one of hers. It used to be wiped here, and with no default office any more
+       her choice would vanish a second after she made it. */
+    render();
     return true;
   }
   function boot(){ hydrate().then(()=>{ if(!applyIdentity()) set(saved); booted=true; }); }
@@ -629,11 +655,11 @@
 })();
 </script>
 <script>PH.nav('production');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(window.PROD&&PROD.identity)PROD.identity();});document.addEventListener('ph-identity',function(){if(window.PROD&&PROD.identity)PROD.identity();});</script>
-<script src="tour.js?v=hc65"></script>
+<script src="tour.js?v=hc66"></script>
 <script>
 Tour.init([
   {sel:'.syncbar', title:'One set of numbers', body:'Type here and it saves into the <b>same Excel workbook</b> on SharePoint. If someone types in Excel instead, it shows up here. There is never a second copy to reconcile.'},
-  {sel:'.pickrow', title:'Pick office and month', body:'Months that already have numbers are outlined in teal. You only see the offices you\u2019re responsible for.'},
+  {sel:'.pickrow, .choose', title:'Office first, then month', body:'Pick the office before anything else \u2014 the boxes open after. Months that already have numbers are outlined in teal. You only see the offices you\u2019re responsible for.'},
   {sel:'.grid2 .card', title:'Only four boxes', body:'Production, Medicaid (if your office bills it), adjustments, and days worked. That is genuinely everything a manager types each month.'},
   {sel:'.big', title:'The maths is automatic', body:'Totals, % of main goal, % of stretch and average per day update as you type \u2014 no formulas to copy, nothing to break.'},
   {sel:'.savebar', title:'Save, and it\u2019s everywhere', body:'<b>Save to workbook</b> writes it back and the <b>Dashboard updates immediately</b>. Got it wrong? <b>Undo my changes</b> puts it back.'}
