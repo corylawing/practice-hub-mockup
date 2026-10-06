@@ -88,6 +88,17 @@ multi-line-text column lives there for step 8; harmless to keep or delete.
 Entra groups to create (7 team + 8 office), the permission matrix, the per-office restriction, and
 the shared-account problem. Republish that same file to update it; do not create a second one.
 
+**SharePoint editing follows Teams & Access (07/10, hc72).** One-time manual LOCK (an owner): Home-Brace Documents ->
+Manage access -> Advanced -> Stop Inheriting -> Home-Brace Members = Read (+ Heather Edit). After that Admin makes
+SharePoint match the grid on its own (runs in an admin's browser: on Admin open, grid cell change, person/team/
+section changes): level Add files+ on a section -> Edit on that section's folder (their offices'/brands' folders for
+per-office/brand sections); Admin level Manage -> Edit on Home-Brace Documents itself (to make sections); lowered ->
+taken back. `PH_DOCS.isLocked/grantEdit/revokeEdit`: invite (roles write, sendInvitation false, requireSignIn) for ONE
+person; revoke deletes only that person's direct write grant - never group, inherited or link permissions; only
+inside Home-Brace Documents. What was given is in `ph_docgrants` (housekeeping in store.js - it shrinks by design);
+only those are ever taken back. Before the lock it does nothing and Admin shows the steps. `PH.levelForTeams`/
+`teamsSeeAll` mirror canForTeams/docLevel for any person. docs tests 96; browser rig 9/9.
+
 **Search finds documents - only what you could open (07/10, hc71).** The header search (live) adds a Documents
 group after Pages/People: SharePoint's own drive search under Home-Brace Documents (names AND contents) + linked
 files by name. `searchDocs()` shows an item only if the person could open it on the Documents page: section level

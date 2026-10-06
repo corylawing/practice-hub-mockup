@@ -1951,6 +1951,17 @@
      for the six built-in sections, their overall Documents level when it does not
      (asPersona() does the same). A section Admin created is 'none' unless the grid
      gives it. */
+  /* Any person's level on one section from their TEAMS - exactly what docLevel() and
+     canForTeams() answer for the signed-in person. Admin uses it to hand out (and take
+     back) SharePoint edit rights so they follow Teams & Access (07/10). */
+  function levelForTeams(teams, k){
+    const depts=(teams||[]).map(t=>String(t).trim().toLowerCase()).filter(Boolean);
+    const c=canForTeams(depts) || Object.assign({}, DEPT_CAN['staff']);
+    if(c[k]!==undefined) return c[k]||'none';
+    return DOC_KEYS.indexOf(k)>=0 ? (c.documents||'none') : 'none';
+  }
+  /* Does this team list see every office? The same rule fromProfile() applies. */
+  function teamsSeeAll(teams){ return (teams||[]).some(t=>ALL_OFFICE_DEPTS.indexOf(String(t).trim().toLowerCase())>=0); }
   function docLevel(k){
     const c=me().can||{};
     if(c[k]!==undefined) return c[k]||'none';
@@ -2564,7 +2575,7 @@
   }
   const isLive=()=>env()==='live';
 
-  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, rosterView, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK, notesHTML, searchHTML, searchDocs, searchDocsHTML, saveFace, faceOf,
+  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, rosterView, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK, notesHTML, searchHTML, searchDocs, searchDocsHTML, levelForTeams, teamsSeeAll, saveFace, faceOf,
     setTheme, theme:()=>THEME, themes:()=>THEMES.map(t=>({k:t.k, n:t.n})), schemeTokens:k=>schemeTokens(themeOf(k)), contrast,
     feedback:openFeedback, feedbackText, feedbackContext, learning:stillLearning};
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mount); else mount();

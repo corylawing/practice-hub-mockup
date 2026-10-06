@@ -187,6 +187,14 @@
   .docwarn{background:#FFF6E5;color:#7a4b00;border:1px solid #f0d9a8;border-radius:10px;padding:11px 14px;font-size:13.5px;line-height:1.5}
   .docerr{background:#FDECEC;color:#8a1c1c;border:1px solid #f3c4c4;border-radius:10px;padding:11px 14px;font-size:13.5px;margin-top:10px}
   .docwhere{font-size:13px;color:var(--soft);margin:8px 0 2px;line-height:1.5}
+  .editsync:empty{display:none}
+  .editsync{margin:0 0 14px;font-size:13.5px;line-height:1.55;border-radius:12px;padding:11px 14px;border:1px solid var(--line);background:#F7F9FB;color:var(--ink)}
+  .editsync.es-ok{background:#E7F4EE;border-color:#bfe3cf;color:#1d6b45}
+  .editsync.es-warn{background:#FFF6E5;border-color:#f0d9a8;color:#7a4b00}
+  .editsync.es-bad{background:#FDECEC;border-color:#f3c4c4;color:#8a1c1c}
+  .editsync details{margin-top:6px} .editsync summary{cursor:pointer;font-weight:700}
+  .editsync ol{margin:6px 0 4px 18px;padding:0} .editsync li{margin:3px 0}
+  .editsync .lnk{border:none;background:none;padding:0;color:inherit;font:inherit;font-weight:700;text-decoration:underline;cursor:pointer}
   .setupbox{background:var(--teal-soft,#E5F4F3);border:1px solid #bfe3df;border-radius:14px;padding:16px 18px;margin-bottom:18px}
   .setupbox h4{margin:0 0 6px;color:var(--navy);font-size:15.5px}
   .setupbox p{margin:0 0 12px;font-size:13.5px;line-height:1.55;color:var(--ink)}
@@ -237,12 +245,12 @@
   }
 
 </style>
-<script src="user.js?v=hc71"></script>
+<script src="user.js?v=hc72"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="_staff.js?v=hc71"></script>
-  <script src="store.js?v=hc71"></script>
-  <script src="gate.js?v=hc71"></script>
-  <script src="docs.js?v=hc71"></script>
+  <script src="_staff.js?v=hc72"></script>
+  <script src="store.js?v=hc72"></script>
+  <script src="gate.js?v=hc72"></script>
+  <script src="docs.js?v=hc72"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — admin console concept for validation. Real build: people sync from Microsoft 365; access is managed here.</div>
@@ -1045,7 +1053,7 @@
       list.map(x=>{ const lv=access[t][x.k]||'none';
         return '<div class="acc-line"><span>'+(x.ic?esc(x.ic)+' ':'')+esc(x.n)+'</span>'+
           '<button class="lvl '+lv+' accbtn" onclick="AD.pickLevel(event,\''+q(t)+'\',\''+x.k+'\')">'+shortFor(x.k,lv)+'</button></div>'; }).join('');
-    el('view').innerHTML=
+    el('view').innerHTML=editSyncHTML()+
       '<div class="intro"><b>One rule:</b> a person\'s <b>team</b> decides what they can do; their <b>location</b> decides which offices\' folders they see. On two teams? They get the <b>best</b> level of both. <b>Pick a team</b>, then <b>tap a level</b> to change it \u2014 each section only offers the choices that mean something there.</div>'+
       '<div class="toolrow"><div class="panel-lab" style="margin:0">'+TEAMS.length+' teams \u00b7 '+secs.length+' sections</div><span style="flex:1"></span>'+
         '<button class="btn ghost" onclick="AD.resetTeams()">Reset teams</button><button class="btn" onclick="AD.newTeam()">+ Add team</button></div>'+
@@ -1065,7 +1073,7 @@
     const rows=TEAMS.map(t=>'<tr><th class="team">'+t+
       '<button class="tedit" title="Rename or delete this team" onclick="AD.editTeam(\''+t.replace(/'/g,"\\'")+'\')">\u270e</button></th>'+secs.map(x=>{const lv=access[t][x.k]||'none';
       return '<td><button class="lvl '+lv+'" onclick="AD.pickLevel(event,\''+t+'\',\''+x.k+'\')">'+shortFor(x.k,lv)+'</button></td>';}).join('')+'</tr>').join('');
-    el('view').innerHTML=
+    el('view').innerHTML=editSyncHTML()+
       '<div class="intro"><b>One rule:</b> a person\'s <b>team</b> decides what they can do (below); their <b>location</b> decides which offices\' folders they see. On two teams? They get the <b>best</b> level of both. <b>Tap a cell</b> and pick \u2014 each section only offers the choices that actually mean something there.</div>'+
       '<div class="toolrow"><div class="panel-lab" style="margin:0">'+TEAMS.length+' teams \u00b7 '+secs.length+' sections</div><span style="flex:1"></span>'+
         '<button class="btn ghost" onclick="AD.resetTeams()">Reset teams</button><button class="btn" onclick="AD.newTeam()">+ Add team</button></div>'+
@@ -1207,7 +1215,7 @@
           '<button class="btn ghost mini-btn" onclick="event.stopPropagation();AD.editSec(\''+sec.k+'\')">Edit</button></div>'+
         '<div class="sec-b">'+body+addf+'</div></div>';
     }).join('');
-    el('view').innerHTML=
+    el('view').innerHTML=editSyncHTML()+
       '<div class="intro"><b>Two different things:</b> <b>App tools</b> (Dashboard, Schedule, Marketing) are built-in features — you only choose who gets them. <b>Document sections</b> below are the folders inside <b>Documents</b>, and you can <b>add as many as you want</b>.</div>'+
       '<div class="card" style="padding:14px 16px;margin-bottom:18px"><div class="panel-lab" style="margin-bottom:8px">App tools — built in, can\'t be added or removed</div>'+
         '<div class="chips">'+TOOLS.map(t=>'<span class="chip">'+t.ic+' '+t.n+'</span>').join('')+'</div>'+
@@ -1448,10 +1456,109 @@
         return empty.reduce((c,f)=>c.then(()=>PH_DOCS.remove(f.item).catch(()=>{})), Promise.resolve()).then(()=>kept);
       });
     }).then(kept=>{
-      SETUP=null; renderFiles();
+      SETUP=null; renderFiles(); syncEdit();
       docToast('\u2713 The five sections are ready in Documents.'+(kept.length?' Kept '+kept.map(x=>x.n).join(', ')+' \u2014 it already has files.':''));
     }, e=>{ SETUP={err:(e&&e.message)||'SharePoint didn\u2019t answer.'}; renderFiles(); });
   }
+
+  /* EDIT RIGHTS FOLLOW TEAMS & ACCESS (07/10). Cory: "it's a two step process and can't
+     be managed by homebrace which sucks." Once the one-time lock is done (Home-Brace
+     Members can only READ Home-Brace Documents), this page makes SharePoint match the
+     grid: everyone whose level on a section is Add files or more gets Edit on that
+     section's folder - their own offices' / brands' folders for a per-office or per-brand
+     section - and whoever runs Admin (Admin level Manage) gets Edit on Home-Brace
+     Documents itself, to make sections. When a level drops, the right goes. It acts as the
+     admin who has this page open, and takes back ONLY what it gave (ph_docgrants), never a
+     group's permission or anything inherited (docs.js). Until the lock, it changes nothing
+     and says so: everyone can edit then anyway. */
+  let EDITSYNC={state:'idle'}, editTimer=null, editAgain=false;
+  function syncEdit(){
+    if(!liveDocs() || !(window.PH && PH.isAdmin && PH.isAdmin())) return;
+    clearTimeout(editTimer); editTimer=setTimeout(runEditSync, 1200);
+  }
+  function editWanted(){
+    const want={}, noEmail=[];
+    const add=(pth,em)=>{ (want[pth]=want[pth]||new Set()).add(em); };
+    const names=LOCATIONS_OF();
+    const people=(window.PH && PH.rosterView) ? PH.rosterView() : [];
+    people.forEach(person=>{
+      const teams=person.teams||[], em=String(person.email||'').trim().toLowerCase();
+      const all=(person.offices||[]).indexOf('All offices')>=0 || !!(PH.teamsSeeAll && PH.teamsSeeAll(teams));
+      const offs=all ? names : (person.offices||[]).filter(o=>names.indexOf(o)>=0);
+      let any=false;
+      DOCSECS.forEach(sec=>{
+        if(rank[PH.levelForTeams(teams, sec.k)] < rank['add']) return;
+        if(sec.locMode==='some' && !all && !offs.some(o=>(sec.locs||[]).indexOf(o)>=0)) return;
+        const f=secFolder(sec);
+        const paths = sec.structure==='byLocation' ? offs.map(o=>PH_DOCS.path(f,o))
+          : sec.structure==='byBrand' ? [...new Set(LOCS.filter(l=>offs.indexOf(l.n)>=0).map(l=>BRAND_NAME[l.brand]||l.brand).filter(Boolean))].map(b=>PH_DOCS.path(f,b))
+          : [PH_DOCS.path(f)];
+        if(!paths.length) return;
+        any=true; if(em) paths.forEach(pth=>add(pth,em));
+      });
+      if(PH.levelForTeams(teams,'admin')==='manage'){ any=true; if(em) add(PH_DOCS.BASE, em); }
+      if(any && !em) noEmail.push(person.name);
+    });
+    return {want, noEmail};
+  }
+  function runEditSync(){
+    if(EDITSYNC.state==='busy'){ editAgain=true; return; }
+    EDITSYNC={state:'busy'}; paintEditSync();
+    Promise.all([PH.reloadAccess ? PH.reloadAccess() : null, PH.reloadPeople ? PH.reloadPeople() : null])
+      .then(()=>PH_DOCS.isLocked())
+      .then(locked=>{
+        if(!locked){ EDITSYNC={state:'notlocked'}; return; }
+        const w=editWanted(), want=w.want;
+        return PH_STORE.get('ph_docgrants').then(rec=>{
+          rec=(rec && typeof rec==='object' && !Array.isArray(rec)) ? rec : {};
+          const give=[], take=[];
+          Object.keys(want).forEach(pth=>want[pth].forEach(em=>{ if((rec[pth]||[]).indexOf(em)<0) give.push({pth,em}); }));
+          Object.keys(rec).forEach(pth=>(rec[pth]||[]).forEach(em=>{ if(!(want[pth] && want[pth].has(em))) take.push({pth,em}); }));
+          const done={gave:[], took:[], failed:[]};
+          const each=(list,fn,into,verb)=>list.reduce((c,g)=>c.then(()=>fn(g.pth,g.em).then(()=>{ into.push(g); },
+            e=>{ done.failed.push({verb, em:g.em, pth:g.pth, why:(e&&e.message)||'error'}); })), Promise.resolve());
+          return each(give, PH_DOCS.grantEdit, done.gave, 'give')
+            .then(()=>each(take, PH_DOCS.revokeEdit, done.took, 'take back'))
+            .then(()=>{
+              if(!done.gave.length && !done.took.length) return;
+              return PH_STORE.update('ph_docgrants', function(cur){
+                const next=(cur && typeof cur==='object' && !Array.isArray(cur)) ? JSON.parse(JSON.stringify(cur)) : {};
+                done.gave.forEach(g=>{ next[g.pth]=next[g.pth]||[]; if(next[g.pth].indexOf(g.em)<0) next[g.pth].push(g.em); });
+                done.took.forEach(g=>{ next[g.pth]=(next[g.pth]||[]).filter(x=>x!==g.em); if(!next[g.pth].length) delete next[g.pth]; });
+                return next;
+              });
+            })
+            .then(()=>{ EDITSYNC={state:'done', gave:done.gave.length, took:done.took.length, failed:done.failed, noEmail:w.noEmail}; });
+        });
+      })
+      .catch(e=>{ EDITSYNC={state:'error', why:(e&&e.message)||'SharePoint didn\u2019t answer.'}; })
+      .then(()=>{ paintEditSync(); if(editAgain){ editAgain=false; runEditSync(); } });
+  }
+  function editSyncNow(){ clearTimeout(editTimer); runEditSync(); }
+  function editSyncState(){
+    const S=EDITSYNC;
+    if(!liveDocs() || !(window.PH && PH.isAdmin && PH.isAdmin()) || S.state==='idle') return {cls:'', html:''};
+    if(S.state==='busy') return {cls:'', html:'Checking who can edit the documents in SharePoint\u2026'};
+    if(S.state==='notlocked') return {cls:'es-warn', html:
+      '<b>SharePoint editing isn\u2019t locked yet.</b> Until it is, everyone in Home-Brace can edit the documents in SharePoint, whatever this page says. '+
+      'Do the one-time lock, and from then on Home-Brace gives and takes back edit rights from Teams &amp; Access by itself.'+
+      '<details><summary>Show me how (one time, a site owner)</summary><ol>'+
+        '<li>Open <b>omegaorthodontics.sharepoint.com/sites/Home-Brace</b> and click <b>Documents</b>.</li>'+
+        '<li>Next to <b>Home-Brace Documents</b>: <b>\u22ef</b> \u2192 <b>Manage access</b> \u2192 <b>Advanced settings</b>.</li>'+
+        '<li><b>Stop Inheriting Permissions</b> \u2192 OK (not \u201cManage Parent\u201d).</li>'+
+        '<li>Tick <b>Home-Brace Members</b> \u2192 <b>Edit User Permissions</b> \u2192 <b>Read</b> only \u2192 OK.</li>'+
+      '</ol></details><button class="lnk" onclick="AD.editSyncNow()">I\u2019ve done it \u2014 check again</button>'};
+    if(S.state==='done'){
+      const n=[S.gave?S.gave+' given':'', S.took?S.took+' taken back':''].filter(Boolean).join(', ');
+      return {cls:S.failed.length?'es-warn':'es-ok', html:'\u2713 <b>SharePoint editing matches Teams &amp; Access.</b>'+(n?' ('+n+')':'')+
+        (S.failed.length?'<br>Couldn\u2019t '+S.failed.slice(0,5).map(f=>esc(f.verb)+' edit rights for '+esc(f.em)+' ('+esc(f.why)+')').join('; ')+
+          (S.failed.length>5?'; and '+(S.failed.length-5)+' more':'')+'. <button class="lnk" onclick="AD.editSyncNow()">Try again</button>':'')+
+        (S.noEmail.length?'<br>No email on file, so no edit rights in SharePoint for: '+esc(S.noEmail.join(', '))+'.':'')};
+    }
+    return {cls:'es-bad', html:'Couldn\u2019t check SharePoint editing: '+esc(S.why)+' <button class="lnk" onclick="AD.editSyncNow()">Try again</button>'};
+  }
+  function editSyncHTML(){ if(!liveDocs()) return ''; const x=editSyncState(); return '<div id="editsync" class="editsync '+x.cls+'">'+x.html+'</div>'; }
+  function paintEditSync(){ const box=document.getElementById('editsync'); if(!box) return; const x=editSyncState(); box.className='editsync '+x.cls; box.innerHTML=x.html; }
 
   let DEL=null;
   function delSec(k){
@@ -1481,7 +1588,7 @@
     const d=DEL; if(!d||d.busy||d.count===null||d.failed) return;
     d.busy=true; d.err=''; drawDel();
     (d.folder?PH_DOCS.remove(d.folder):Promise.resolve()).then(()=>{
-      DOCSECS=DOCSECS.filter(x=>x.k!==d.sec.k); saveSecs(); DEL=null; closeModal(); renderFiles();
+      DOCSECS=DOCSECS.filter(x=>x.k!==d.sec.k); saveSecs(); DEL=null; closeModal(); renderFiles(); syncEdit();
       docToast('Deleted the \u201c'+d.sec.n+'\u201d section.'+(d.folder?' Its folder is in the SharePoint recycle bin for 93 days.':''));
     }, e=>{ d.busy=false; d.err='Nothing was deleted: '+((e&&e.message)||'SharePoint didn\u2019t answer')+'.'; drawDel(); });
   }
@@ -1521,7 +1628,7 @@
        picker's callback runs. */
     const btn=ev.currentTarget;
     openPk(btn, levelsFor(k).map(l=>({value:l,label:(l==='none'?'None':shortFor(k,l)),desc:descFor(k,l),swatch:LVLSW[l],cur:(access[t][k]||'none')===l})),
-      v=>{ access[t][k]=v; saveAccess(t,k);
+      v=>{ access[t][k]=v; saveAccess(t,k); syncEdit();
            if(btn){ LEVELS.forEach(l=>btn.classList.remove(l)); btn.classList.add(v); btn.textContent=shortFor(k,v); }
            else renderAccess(); });
   }
@@ -1537,8 +1644,9 @@
   function openModal(h){ el('modalCard').innerHTML=h; el('modal').classList.add('open'); }
   function closeModal(){ el('modal').classList.remove('open'); }
 
-  window.AD={setupSecs,tab:tabSet,viewAs:doViewAs,newTeam,editTeam,saveTeam,delTeam,resetTeams,profile,whyNoAdd,
-    addPerson,npSet,npLoc,npTeam,saveNewPerson,accTeam:setAccTeam,removePerson,restorePerson,showRemoved,togTeam,togLoc,setStatus,saveUser,pickLevel,pickAud,setField,pickPhoto,photoChosen,clearPhoto,pickUserLevel,clearUserLevel,tog,addFile,noop,newSec,editSec,saveSec,delSec,delSecGo,resetSecs,setSecName,setSecIcon,setSecStruct,setSecLocMode,setSecTeamMode,togSecLoc,togSecTeam,saveFile,cd,useFile,clearFile,uploadFile,setFileTeamMode,setFileLocMode,togFileLoc,togFileTeam,renderLocs,newLoc,editLoc,saveLoc,delLoc,resetLocs,setLocBrand,setLocState,setLocTZ,close:closeModal};
+  const thenSync=f=>function(){ const r=f.apply(this,arguments); syncEdit(); return r; };
+  window.AD={setupSecs,editSyncNow,tab:tabSet,viewAs:doViewAs,newTeam,editTeam,saveTeam:thenSync(saveTeam),delTeam:thenSync(delTeam),resetTeams,profile,whyNoAdd,
+    addPerson,npSet,npLoc,npTeam,saveNewPerson:thenSync(saveNewPerson),accTeam:setAccTeam,removePerson:thenSync(removePerson),restorePerson:thenSync(restorePerson),showRemoved,togTeam,togLoc,setStatus,saveUser:thenSync(saveUser),pickLevel,pickAud,setField,pickPhoto,photoChosen,clearPhoto,pickUserLevel,clearUserLevel,tog,addFile,noop,newSec,editSec,saveSec:thenSync(saveSec),delSec,delSecGo,resetSecs,setSecName,setSecIcon,setSecStruct,setSecLocMode,setSecTeamMode,togSecLoc,togSecTeam,saveFile,cd,useFile,clearFile,uploadFile,setFileTeamMode,setFileLocMode,togFileLoc,togFileTeam,renderLocs,newLoc,editLoc,saveLoc,delLoc,resetLocs,setLocBrand,setLocState,setLocTZ,close:closeModal};
   el('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
   /* Load the real roster before the first paint. If it isn't there (the public
@@ -1588,13 +1696,14 @@
           if(Array.isArray(r[1]) && r[1].length && JSON.stringify(r[1])!==JSON.stringify(DOCSECS)){ DOCSECS=r[1]; changed=true; }
           if(r[2] && typeof r[2]==='object' && JSON.stringify(r[2])!==JSON.stringify(access)){ access=r[2]; changed=true; }
           if(changed){ ensureAccess(); const keep=holdScroll(); render(); keep(); }
+          syncEdit();     // SharePoint editing catches up with whatever changed since
         });
     }
   });
 })();
 </script>
 <script>PH.nav('admin');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(PH.loadPhotos)PH.loadPhotos().then(function(got){if(got&&window.AD&&AD.tab)AD.tab('users');});});</script>
-<script src="tour.js?v=hc71"></script>
+<script src="tour.js?v=hc72"></script>
 <script>
 Tour.init([
   {sel:'#tabs', title:'This is your control room', body:'Four tabs and you can run the whole hub: <b>People</b>, <b>Teams &amp; Access</b>, <b>Document Sections</b> and <b>Locations</b>. No developer, no consultant.', pre:()=>AD.tab('users')},

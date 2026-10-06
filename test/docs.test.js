@@ -60,6 +60,10 @@ function SharePoint(){
       const out={value:page}; if(skip+sp.pageSize<all.length) out['@odata.nextLink']='https://graph.microsoft.com'+u.pathname+'?skip='+(skip+sp.pageSize);
       return resp(200,out);
     }
+    if((m=/^\/drives\/D1\/root:\/(.+):\/permissions$/.exec(p)) && method==='GET'){
+      const it=find(m[1]); if(!it) return resp(404,{error:{message:'itemNotFound'}});
+      return resp(200,{value: sp.perms[it.id] || [{id:'INH', roles:['write'], grantedToV2:{siteGroup:{displayName:'Home-Brace Members'}}, inheritedFrom:{path:'/'}}]});
+    }
     if((m=/^\/drives\/D1\/root:\/(.+)$/.exec(p)) && method==='GET'){ const it=find(m[1]); return it?resp(200,view(it)):resp(404,{error:{message:'itemNotFound'}}); }
     if(p==='/drives/D1/root/children' || (m=/^\/drives\/D1\/items\/([^/:]+)\/children$/.exec(p))){
       const par=p==='/drives/D1/root/children'?root:sp.items[m[1]];
@@ -103,6 +107,16 @@ function SharePoint(){
       const it=sp.items[m[1]]; if(!it || gone(it)) return resp(404,{error:{message:'itemNotFound'}});
       const par=sp.items[it.parent]; par.children=par.children.filter(x=>x!==it.id); sp.recycle.push(it);   // to the bin, not destroyed
       return {status:204, ok:true, json:()=>Promise.resolve({})};
+    }
+    if((m=/^\/drives\/D1\/items\/([^/:]+)\/invite$/.exec(p)) && method==='POST'){
+      const it=sp.items[m[1]]; if(!it || gone(it)) return resp(404,{error:{message:'itemNotFound'}});
+      const b=JSON.parse(o.body), perm={id:'P'+(sp.next++), roles:b.roles.slice(), grantedToV2:{user:{email:b.recipients[0].email, displayName:'x'}}};
+      (sp.perms[it.id]=sp.perms[it.id]||[]).push(perm); (sp.invites=sp.invites||[]).push({item:it.id, body:b});
+      return resp(200,{value:[perm]});
+    }
+    if((m=/^\/drives\/D1\/items\/([^/:]+)\/permissions\/([^/]+)$/.exec(p)) && method==='DELETE'){
+      const list=sp.perms[m[1]]||[], i=list.findIndex(x=>x.id===m[2]); if(i<0) return resp(404,{error:{message:'itemNotFound'}});
+      list.splice(i,1); return {status:204, ok:true, json:()=>Promise.resolve({})};
     }
     if((m=/^\/shares\/([^/]+)\/driveItem$/.exec(p))){ const it=sp.shares[m[1]]; return it?resp(200,it):resp(404,{error:{message:'itemNotFound'}}); }
     if((m=/^\/drives\/([^/]+)\/items\/([^/]+)\/permissions$/.exec(p))){ const pr=sp.perms[m[2]]; return pr instanceof Error?resp(403,{error:{message:'denied'}}):resp(200,{value:pr||[]}); }
@@ -238,7 +252,9 @@ const calls=(sp,re,method)=>sp.calls.filter(c=>re.test(c.url)&&(!method||c.metho
     t('an item without its location is refused, not guessed at', e4 && e4.fenced && deletes()===before);
     t('looking a folder up never makes it', (await D.item(D.path('Nope')))===null && !sp.find('Home-Brace Documents/Nope'));
     t('looking a folder up finds it with its location', (it=>it && it.id===hr.id && D.insideBase(it,'D1'))(await D.item(D.path('HR'))));
-    t('the source has exactly one DELETE, and no permanent delete', (SRC.match(/'DELETE'/g)||[]).length===1 && !/permanentDelete/.test(SRC)); }
+    t('the source deletes only two things: an item, to the recycle bin (remove), and one person\u2019s edit grant (revokeEdit) - and nothing permanently',
+      (SRC.match(/'DELETE'/g)||[]).length===2 && SRC.indexOf("api('DELETE', '/drives/' + d.id + '/items/' + item.id)")>=0 &&
+      SRC.indexOf("'/permissions/' + encodeURIComponent(x.id)")>=0 && !/permanentDelete/.test(SRC)); }
 
   /* 6b. A folder the page already knew was removed since - here, or by someone in
          SharePoint itself. The next upload or new folder finds its way again. */
@@ -318,6 +334,34 @@ const calls=(sp,re,method)=>sp.calls.filter(c=>re.test(c.url)&&(!method||c.metho
     e=await tryMove(w4now(), D.path('Employee Forms'));
     t('a name already taken there is refused - nothing renamed or replaced', e && e.exists && !!sp.find('Home-Brace Documents/Policies & Handbook/New Mexico New Hire/W-4.pdf'));
     t('moving never deletes', !calls(sp,/./,'DELETE').length); }
+
+  /* 6e. EDIT RIGHTS FOLLOW TEAMS & ACCESS (07/10): one named person, Edit, on Home-Brace
+         Documents or a folder inside it; taken back the same way - nothing else touched. */
+  { const sp=SharePoint(), {D}=load(sp);
+    const base=sp.add(sp.root,'Home-Brace Documents',true), pol=sp.add(base,'Policies & Handbook',true);
+    t('not locked while Home-Brace Members can still edit', (await D.isLocked())===false);
+    sp.perms[base.id]=[{id:'M', roles:['read'], grantedToV2:{siteGroup:{displayName:'Home-Brace Members'}}},{id:'O', roles:['owner'], grantedToV2:{siteGroup:{displayName:'Home-Brace Owners'}}}];
+    t('locked once Members can only read', (await D.isLocked())===true);
+    await D.grantEdit(D.path('Policies & Handbook'), ' Olivia@Example.com ');
+    const inv=(sp.invites||[])[0]||{};
+    t('a grant is Edit for one named person, with no email sent', inv.item===pol.id && JSON.stringify(inv.body.roles)==='["write"]' && inv.body.sendInvitation===false && inv.body.requireSignIn===true && inv.body.recipients.length===1 && inv.body.recipients[0].email==='olivia@example.com');
+    const sent=()=>sp.calls.filter(c=>c.method!=='GET').length, n0=sent();
+    let e1=null; try{ await D.grantEdit('Accounting', 'x@example.com'); }catch(x){ e1=x; }
+    let e2=null; try{ await D.grantEdit('', 'x@example.com'); }catch(x){ e2=x; }
+    let e3=null; try{ await D.grantEdit(D.path('Policies & Handbook'), ''); }catch(x){ e3=x; }
+    t('never outside or above Home-Brace Documents, never without an email', e1&&e1.fenced && e2&&e2.fenced && e3&&e3.noEmail && sent()===n0);
+    // the folder now carries: Olivia's grant, someone else's, an inherited one, a group's, a link
+    sp.perms[pol.id].push({id:'Q', roles:['write'], grantedToV2:{user:{email:'sam@example.com'}}},
+      {id:'INH2', roles:['write'], grantedToV2:{user:{email:'olivia@example.com'}}, inheritedFrom:{path:'/x'}},
+      {id:'G', roles:['write'], grantedToV2:{siteGroup:{displayName:'Home-Brace Members'}}},
+      {id:'LNK', roles:['write'], link:{scope:'organization'}, grantedToV2:{user:{email:'olivia@example.com'}}});
+    const r=await D.revokeEdit(D.path('Policies & Handbook'), 'OLIVIA@example.com');
+    const left=sp.perms[pol.id].map(x=>x.id).sort().join(',');
+    t('taking back removes only that person\u2019s own Edit grant', r.removed===1 && left===['G','INH2','LNK','Q'].sort().join(','));
+    t('...again finds nothing more to take', (await D.revokeEdit(D.path('Policies & Handbook'), 'olivia@example.com')).removed===0);
+    t('a folder that has gone: nothing to take back, nothing sent', (await D.revokeEdit(D.path('Gone Section'), 'sam@example.com')).gone===true);
+    let e4=null; try{ await D.revokeEdit('Accounting', 'sam@example.com'); }catch(x){ e4=x; }
+    t('never takes anything back outside Home-Brace Documents', e4 && e4.fenced); }
 
   /* 7. Links to files kept elsewhere: checked, saved once, un-linked (never deleted). */
   { const sp=SharePoint(), {D,store}=load(sp);

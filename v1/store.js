@@ -438,7 +438,9 @@
      writing a feed over a copy we could not read would still drop other people's
      entries. When one of these is refused it stays quiet, because the next event
      writes it again anyway. */
-  var HOUSEKEEPING = ['ph_activity', 'ph_seen_', 'ph_photos'];
+  /* ph_docgrants: which SharePoint edit rights Home-Brace handed out (07/10) - it shrinks
+     every time a level is lowered, by design. */
+  var HOUSEKEEPING = ['ph_activity', 'ph_seen_', 'ph_photos', 'ph_docgrants'];
   function housekeeping(key){
     for(var i=0;i<HOUSEKEEPING.length;i++)
       if(key === HOUSEKEEPING[i] || key.indexOf(HOUSEKEEPING[i]) === 0) return true;

@@ -447,6 +447,64 @@
     });
   }
 
+  /* EDIT RIGHTS IN SHAREPOINT, HANDED OUT BY HOME-BRACE (07/10).
+     Cory: "it's a two step process and can't be managed by homebrace which sucks". After
+     the one-time lock (Home-Brace Members = Read on Home-Brace Documents), Admin gives the
+     people whose Teams & Access level on a section is Add files or more Edit on THAT
+     section's folder (their own offices' folders, for a per-office section), and takes it
+     back when the level drops. Only ever a direct grant to ONE named person, on Home-Brace
+     Documents or a folder inside it. Never a group's permission, never anything inherited
+     or shared by link, never anything above Home-Brace Documents. */
+  function inBaseTree(p){ p = String(p || ''); return p === BASE || p.indexOf(BASE + '/') === 0; }
+  function emailOk(em){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em); }
+  /* Has the lock been done? Not while Home-Brace Members can still edit Home-Brace Documents. */
+  function isLocked(){
+    return drive().then(function(d){
+      return retry(function(){ return api('GET', '/drives/' + d.id + '/root:/' + enc(BASE) + ':/permissions'); });
+    }).then(function(r){
+      return !(r.value || []).some(function(x){
+        var who = JSON.stringify([x.grantedToV2, x.grantedTo, x.grantedToIdentitiesV2, x.grantedToIdentities]);
+        return /members/i.test(who) && (x.roles || []).some(function(role){ return role === 'write' || role === 'owner'; });
+      });
+    }, function(e){ if(e.status === 404) return false; throw e; });
+  }
+  function grantEdit(p, email){
+    var em = String(email || '').trim().toLowerCase();
+    if(!inBaseTree(p)) return Promise.reject(fail(0, 'Edit rights only go on \u201c' + BASE + '\u201d or a folder inside it.', { fenced: true }));
+    if(!emailOk(em)) return Promise.reject(fail(0, 'There is no email address to give edit rights to.', { noEmail: true }));
+    return drive().then(function(d){
+      return fresh(function(){ return ensureFolder(p).then(function(id){
+        return retry(function(){ return api('POST', '/drives/' + d.id + '/items/' + id + '/invite',
+          { recipients: [{ email: em }], roles: ['write'], requireSignIn: true, sendInvitation: false }); });
+      }); });
+    });
+  }
+  function grantee(x){
+    var u = (x.grantedToV2 && x.grantedToV2.user) || (x.grantedTo && x.grantedTo.user) || null;
+    return u ? String(u.email || u.userPrincipalName || '').toLowerCase() : '';
+  }
+  function revokeEdit(p, email){
+    var em = String(email || '').trim().toLowerCase();
+    if(!inBaseTree(p)) return Promise.reject(fail(0, 'Edit rights are only taken back inside \u201c' + BASE + '\u201d.', { fenced: true }));
+    if(!emailOk(em)) return Promise.resolve({ removed: 0 });
+    return drive().then(function(d){
+      return itemAt(p).then(function(it){
+        if(!it || !it.folder) return { removed: 0, gone: true };         // the folder went: nothing to take back
+        return retry(function(){ return api('GET', '/drives/' + d.id + '/items/' + it.id + '/permissions'); }).then(function(r){
+          var mine = (r.value || []).filter(function(x){
+            var g = x.grantedToV2 || {};
+            return !x.inheritedFrom && !x.link && !g.group && !g.siteGroup &&
+                   (x.roles || []).indexOf('write') >= 0 && grantee(x) === em;
+          });
+          return mine.reduce(function(c, x){ return c.then(function(){
+            return retry(function(){ return api('DELETE', '/drives/' + d.id + '/items/' + it.id + '/permissions/' + encodeURIComponent(x.id)); })
+              .catch(function(e){ if(e.status !== 404) throw e; });
+          }); }, Promise.resolve()).then(function(){ return { removed: mine.length }; });
+        });
+      });
+    });
+  }
+
   /* ---- Files that live somewhere else, linked into a section. ---- */
   function b64url(s){
     var bytes = new TextEncoder().encode(s), bin = '';
@@ -554,6 +612,7 @@
     drive: drive, item: itemAt, list: list, ensureFolder: ensureFolder, newFolder: newFolder,
     upload: upload, uploadAll: uploadAll, fromInput: fromInput, fromDrop: fromDrop,
     tally: tally, remove: remove, replace: replace, move: move, insideBase: insideBase,
+    isLocked: isLocked, grantEdit: grantEdit, revokeEdit: revokeEdit,
     resolveLink: resolveLink, whoCanOpen: whoCanOpen,
     links: links, addLink: addLink, unlink: unlink,
     meta: meta, setAudience: setAudience, clearAudience: clearAudience,
