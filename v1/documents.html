@@ -175,6 +175,7 @@
   .lv-btn:hover{border-color:var(--teal);color:var(--teal-600)}
   .lv-rm{border:none;background:none;color:#b42318;font-weight:600;font-size:12px;cursor:pointer;font-family:inherit;padding:4px 2px;white-space:nowrap}
   .lv-rm:hover{text-decoration:underline}
+  .lv-rm.lv-rep{color:var(--teal-600)}
   .lv-fold{gap:6px}
   .lv-tw{flex:1;display:flex;align-items:center;gap:8px;border:none;background:none;font-family:inherit;font-size:14px;cursor:pointer;padding:0;text-align:left;color:var(--ink)}
   .lv-tw .car{font-size:11px;color:var(--soft);transition:transform .2s;display:inline-block}
@@ -229,11 +230,11 @@
   }
 
 </style>
-<script src="user.js?v=hc66"></script>
+<script src="user.js?v=hc67"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc66"></script>
-  <script src="gate.js?v=hc66"></script>
-  <script src="docs.js?v=hc66"></script>
+  <script src="store.js?v=hc67"></script>
+  <script src="gate.js?v=hc67"></script>
+  <script src="docs.js?v=hc67"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — Documents. You see only the folders your role, location &amp; team allow. Files open on the Microsoft drive.</div>
@@ -636,7 +637,8 @@
       rows.push('<div class="file"'+pad+'><span class="fic">'+fileIcon(f.name)+'</span>'+
         '<span class="nm"><a href="'+escH(safeUrl(f.webUrl))+'" target="_blank" rel="noopener">'+escH(f.name)+'</a><span class="lv-meta">'+escH(whenBy(f))+'</span></span>'+
         audChip(f.id)+'<a class="sp" href="'+escH(safeUrl(f.webUrl))+'" target="_blank" rel="noopener">Open ↗</a>'+
-        (ctx.canManage?'<button class="lv-rm"'+attr('act','rm')+attr('path',path)+attr('id',f.id)+'>Remove</button>':'')+'</div>');
+        (ctx.canManage?'<button class="lv-rm lv-rep"'+attr('act','rep')+attr('path',path)+attr('id',f.id)+attr('k',ctx.k)+attr('sub',ctx.sub)+'>Replace</button>'+
+          '<button class="lv-rm"'+attr('act','rm')+attr('path',path)+attr('id',f.id)+'>Remove</button>':'')+'</div>');
     });
     if(!rows.length) return depth ? '<div class="lv-msg"'+pad+'>Empty folder.</div>' : '';
     return rows.join('');
@@ -791,6 +793,25 @@
       const i=el('lvUrl'); if(i){ i.addEventListener('input',()=>{ d.url=i.value; }); i.addEventListener('keydown',e=>{ if(e.key==='Enter') linkFind(); }); if(!it) i.focus(); }
       return;
     }
+    if(d.kind==='rep'){
+      const it=d.item, x=extOf(it.name);
+      if(d.stage==='busy'){
+        card.innerHTML=top('Replacing \u201c'+escH(it.name)+'\u201d')+'<div class="dm-body"><div class="lv-prog"><b id="lvProgTxt">Uploading\u2026</b><div class="lv-bar"><i id="lvProgBar"></i></div>'+
+          '<div class="lv-note">Keep this page open until it finishes.</div></div></div>';
+        return;
+      }
+      card.innerHTML=top('Replace \u201c'+escH(it.name)+'\u201d')+'<div class="dm-body">'+
+        '<div class="lv-drop" id="lvDrop"><div>\u{1F4E5} <b>Drag the new version here</b></div>'+
+          '<div class="lv-acts"><button class="lv-btn"'+attr('act','rep-pick')+'>Choose file</button></div>'+
+          '<input type="file" id="lvRepFile"'+(x?' accept=".'+escH(x)+'"':'')+' hidden></div>'+
+        (d.file?'<div class="lv-chosen"><div><span>'+fileIcon(d.file.name)+'</span><span>'+escH(d.file.name)+'</span><small>'+sizeTxt(d.file.size)+'</small></div></div>':'')+
+        (d.err?'<div class="lv-bad">'+escH(d.err)+'</div>':'')+
+        '<div class="lv-note" style="font-size:13.5px">It keeps the <b>same name and place</b>, so links and bookmarks still work. '+
+          'The old version stays in SharePoint\u2019s version history and can be brought back.</div>'+
+        '</div>'+foot('<button class="simbtn"'+attr('act','close')+'>Cancel</button><button class="addbtn"'+attr('act','rep-go')+(d.file&&!d.err?'':' disabled')+'>Replace</button>');
+      const i=el('lvRepFile'); if(i) i.onchange=()=>{ if(i.files && i.files[0]) repChoose(i.files[0]); };
+      return;
+    }
     if(d.kind==='rm'){
       const it=d.item, folder=!!it.folder, c=d.count;
       const inside=!folder?'':(!c?'<div class="lv-note">Checking what’s inside…</div>'
@@ -887,6 +908,37 @@
     if(it.folder) PH_DOCS.tally(it).then(c=>{ d.count=c; if(DLG===d) drawDlg(); },
       ()=>{ d.count={files:0,folders:0,more:true,unknown:true}; if(DLG===d){ d.err='Couldn’t count what’s inside. Removing it still sends everything to the recycle bin.'; drawDlg(); } });
   }
+  /* REPLACE: a new version of one master file - Heather updates the handbook PDF and it
+     goes in place of the old one (07/10). docs.js fences it to files inside Home-Brace
+     Documents of the same type; SharePoint keeps the old version. */
+  const extOf=n=>{ const t=String(n||''), i=t.lastIndexOf('.'); return i>0 ? t.slice(i+1).toLowerCase() : ''; };
+  function repOpen(path,id,k,sub){
+    const it=itemIn(path,id); if(!it || it.folder) return;
+    const sr=secRoot(k,sub); if(!sr || sr.cap!=='manage') return;
+    openDlg({kind:'rep',s:sr.s,r:sr.r,k,at:inRoot(sr.r,path),path,item:it,file:null,err:'',stage:'pick'});
+  }
+  function repChoose(f){
+    const d=DLG; if(!d || d.kind!=='rep' || d.stage==='busy') return;
+    d.file=f;
+    d.err = extOf(f.name)===extOf(d.item.name) ? '' :
+      'That\u2019s a .'+(extOf(f.name)||'?')+' file. Pick a .'+(extOf(d.item.name)||'?')+' file to replace \u201c'+d.item.name+'\u201d.';
+    drawDlg();
+  }
+  function repGo(){
+    const d=DLG; if(!d || d.kind!=='rep' || !d.file || d.err || d.stage==='busy') return;
+    d.stage='busy'; drawDlg();
+    const bar=p=>{ const b=el('lvProgBar'), t=el('lvProgTxt'); const n=Math.round(Math.min(1,p||0)*100);
+      if(b) b.style.width=n+'%'; if(t) t.textContent='Uploading\u2026 '+n+'%'; };
+    PH_DOCS.replace(d.item, d.file, bar).then(()=>{
+      /* Tell the people who can see this file that it changed - by its own audience if it
+         has one ("Only certain people"), otherwise everyone who can open the section. */
+      const a=META[d.item.id];
+      try{ if(PH.logActivity) PH.logActivity({kind:'document', sec:d.k, ic:'\u{1F4C4}', scope:'everyone',
+        title:'Updated in '+where(d)+': '+d.item.name,
+        offices:(a&&(a.offices||[]).length)?a.offices:d.r.offices, teams:a?(a.teams||[]):[]}); }catch(_){}
+      forget(d.path); d.stage='done'; closeLive(); liveRender();
+    }, e=>{ d.stage='pick'; d.err=(e&&e.message)||'That didn\u2019t work. Nothing was changed.'; if(DLG===d) drawDlg(); });
+  }
   function rmGo(){
     const d=DLG; if(!d || d.kind!=='rm' || d.busy) return;
     d.busy=true; drawDlg();
@@ -900,7 +952,7 @@
       e=>{ d.busy=false; d.err=(e&&e.message)||'That didn’t work.'; drawDlg(); });
   }
   function closeLive(){
-    if(DLG && DLG.kind==='add' && DLG.stage==='busy') return false;   // never walk away from an upload
+    if(DLG && (DLG.kind==='add' || DLG.kind==='rep') && DLG.stage==='busy') return false;   // never walk away from an upload
     DLG=null; el('docmodal').classList.remove('open'); return true;
   }
 
@@ -915,6 +967,7 @@
     if(act==='newf'){ const sr=secRoot(b.dataset.k,b.dataset.sub); if(sr && canEditAt(sr.cap)) openDlg({kind:'newf',s:sr.s,r:sr.r,k:b.dataset.k,at:inRoot(sr.r,b.dataset.path),name:'',err:''}); return; }
     if(act==='link'){ const sr=secRoot(b.dataset.k,b.dataset.sub); if(sr && canAddAt(sr.cap)) openDlg({kind:'link',s:sr.s,r:sr.r,k:b.dataset.k,url:'',item:null,shared:null,aud:{mode:'all',teams:[],offices:[]},err:''}); return; }
     if(act==='rm'){ rmOpen(b.dataset.path,b.dataset.id); return; }
+    if(act==='rep'){ repOpen(b.dataset.path,b.dataset.id,b.dataset.k,b.dataset.sub); return; }
     if(act==='unlink'){ const l=LINKS.find(x=>x&&x.id===b.dataset.id); if(l) openDlg({kind:'unlink',link:l,err:''}); return; }
     if(act==='close'){ closeLive(); return; }
     if(!d) return;
@@ -924,6 +977,8 @@
     if(act==='aud-mode'){ d.aud.mode=b.value==='some'?'some':'all'; if(d.aud.mode==='all'){ d.aud.teams=[]; d.aud.offices=[]; } drawDlg(); return; }
     if(act==='aud-team'||act==='aud-off'){ const arr=act==='aud-team'?d.aud.teams:d.aud.offices, v=b.dataset.v, i=arr.indexOf(v); if(i>=0) arr.splice(i,1); else arr.push(v); drawDlg(); return; }
     if(act==='upload'){ uploadGo(); return; }
+    if(act==='rep-pick'){ const i=el('lvRepFile'); if(i) i.click(); return; }
+    if(act==='rep-go'){ repGo(); return; }
     if(act==='newf-go'){ newfGo(); return; }
     if(act==='link-find'){ linkFind(); return; }
     if(act==='link-go'){ linkGo(); return; }
@@ -940,7 +995,11 @@
     const got=PH_DOCS.fromDrop(e.dataTransfer);            // read NOW - the browser empties it after
     got.then(entries=>{
       if(!entries.length) return;
-      if(z.id==='lvDrop'){ if(DLG && DLG.kind==='add'){ DLG.entries=DLG.entries.concat(entries); DLG.err=''; drawDlg(); } return; }
+      if(z.id==='lvDrop'){
+        if(DLG && DLG.kind==='add'){ DLG.entries=DLG.entries.concat(entries); DLG.err=''; drawDlg(); }
+        else if(DLG && DLG.kind==='rep'){ const f=entries.find(x=>x.file); if(f) repChoose(f.file); }
+        return;
+      }
       if(DLG) return;                                        // one dialog at a time - never over an upload
       openAdd(z.dataset.k,z.dataset.sub,entries,z.dataset.path);
     });
@@ -952,7 +1011,7 @@
   /* Dropping a file anywhere else on the page must not open it in place of the hub. */
   window.addEventListener('dragover',e=>{ if(isLive()) e.preventDefault(); });
   window.addEventListener('drop',e=>{ if(isLive() && !dropTarget(e)) e.preventDefault(); });
-  window.addEventListener('beforeunload',e=>{ if(DLG && DLG.kind==='add' && DLG.stage==='busy'){ e.preventDefault(); e.returnValue=''; } });
+  window.addEventListener('beforeunload',e=>{ if(DLG && (DLG.kind==='add' || DLG.kind==='rep') && DLG.stage==='busy'){ e.preventDefault(); e.returnValue=''; } });
 
   el('persona').innerHTML=PERSONAS.map(p=>'<option value="'+p.id+'">'+p.name+'</option>').join('');
   window.DOCS={set,toggle,openDoc,sim,addDoc,setLoc,setTeam,tog,cd,useFile,clearFile,uploadFile,saveDoc,closeDoc,
@@ -980,7 +1039,7 @@ document.addEventListener('ph-identity',function(){
   });
 });
 PH.nav('documents');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc66"></script>
+<script src="tour.js?v=hc67"></script>
 <script>
 Tour.init([
   {sel:'.crumb', title:'Everything in one place', body:'This replaces \u201cwho has the latest copy?\u201d. Every policy, form and office file lives here \u2014 and people only ever see the folders meant for them.'},

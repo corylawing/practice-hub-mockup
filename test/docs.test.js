@@ -38,7 +38,7 @@ function SharePoint(){
   const resp=(status,body)=>({status, ok:status<300, json:()=>Promise.resolve(body)});
   sp.fetch=async (url,o)=>{
     const method=(o&&o.method)||'GET', headers=(o&&o.headers)||{};
-    sp.calls.push({method,url,headers});
+    sp.calls.push({method,url,headers,body:(o && typeof o.body==='string')?o.body:''});
     if(sp.fail.length && sp.fail[0].test(method,url)){ const f=sp.fail.shift(); return resp(f.status,{error:{message:'busy'}}); }
     let m;
     if((m=/^https:\/\/upload\.test\/s\/(\d+)$/.exec(url))){           // an upload session piece
@@ -47,6 +47,7 @@ function SharePoint(){
       if(!r || +r[1]!==s.got || +r[3]!==s.total || o.body.size!==(+r[2]-(+r[1])+1)) return resp(400,{error:{message:'bad range'}});
       s.got=+r[2]+1; s.pieces++;
       if(s.got<s.total) return resp(202,{nextExpectedRanges:[s.got+'-']});
+      if(s.replace){ const it=sp.items[s.replace]; it.size=s.total; it.versions=(it.versions||1)+1; return resp(200, view(it)); }   // a new version, same item
       const it=sp.add(sp.items[s.parent], free(sp.items[s.parent], s.name), false, {size:s.total});
       return resp(201, view(it));
     }
@@ -75,6 +76,14 @@ function SharePoint(){
       if(how!=='rename') return resp(400,{error:{message:'expected rename'}});
       const it=sp.add(par, free(par,m[2]), false, {size:o.body.size, type:headers['Content-Type']});
       return resp(201, view(it));
+    }
+    if((m=/^\/drives\/D1\/items\/([^/:]+)\/content$/.exec(p)) && method==='PUT'){            // new content for an existing file
+      const it=sp.items[m[1]]; if(!it || gone(it) || it.folder) return resp(404,{error:{message:'itemNotFound'}});
+      it.size=o.body.size; it.type=headers['Content-Type']; it.versions=(it.versions||1)+1; return resp(200, view(it));
+    }
+    if((m=/^\/drives\/D1\/items\/([^/:]+)\/createUploadSession$/.exec(p)) && method==='POST'){
+      const it=sp.items[m[1]]; if(!it || gone(it) || it.folder) return resp(404,{error:{message:'itemNotFound'}});
+      const id=String(sp.next++); sp.sessions[id]={replace:it.id, got:0, total:0, pieces:0}; return resp(200,{uploadUrl:'https://upload.test/s/'+id});
     }
     if((m=/^\/drives\/D1\/items\/([^/:]+):\/(.+):\/createUploadSession$/.exec(p)) && method==='POST'){
       if(!sp.items[m[1]] || gone(sp.items[m[1]])) return resp(404,{error:{message:'itemNotFound'}});
@@ -244,6 +253,32 @@ const calls=(sp,re,method)=>sp.calls.filter(c=>re.test(c.url)&&(!method||c.metho
     const r=await D.uploadAll(D.path('HR'), [{dir:'New Hire'},{file:file('d.pdf'), dir:'New Hire'}]);
     t('...and so does dropping a folder in', !r.failed.length && !!sp.find('Home-Brace Documents/HR/New Hire/d.pdf'));
     t('none of that ever sent a DELETE of its own', calls(sp,/./,'DELETE').length===1); }
+
+  /* 6c. REPLACE (07/10): Heather updates a master PDF - a new VERSION of that one file,
+         same name, same place; SharePoint keeps the old one. Only inside Home-Brace
+         Documents, only a file, only the same kind of file. */
+  { const sp=SharePoint(), {D}=load(sp);
+    const base=sp.add(sp.root,'Home-Brace Documents',true), pol=sp.add(base,'Policies & Handbook',true);
+    const hb=sp.add(pol,'Employee Handbook.pdf',false,{size:900}); sp.add(pol,'Uniform Policy.pdf',false,{size:300});
+    const other=sp.add(sp.root,'Accounting',true), acc=sp.add(other,'Budget.pdf',false);
+    const before=pol.children.length;
+    const r=await D.replace(sp.view(hb), file('Employee Handbook (Oct).pdf', 1200));
+    t('replacing gives the same file a new version', r.id===hb.id && sp.items[hb.id].versions===2 && sp.items[hb.id].size===1200);
+    t('...same name and place - nothing added beside it', sp.items[hb.id].name==='Employee Handbook.pdf' && pol.children.length===before);
+    const big=await D.replace(sp.view(hb), file('Handbook.pdf', 11*1024*1024));
+    const pieceCalls=calls(sp,/upload\.test/,'PUT');
+    t('a big new version goes up in pieces, with no Authorization header', big.id===hb.id && sp.items[hb.id].versions===3 && pieceCalls.length===3 && pieceCalls.every(c=>!c.headers.Authorization));
+    const sent=()=>sp.calls.filter(c=>c.method!=='GET').length, n0=sent();
+    let e1=null; try{ await D.replace(sp.view(pol), file('x.pdf')); }catch(x){ e1=x; }
+    t('a folder can never be replaced', e1 && e1.fenced && sent()===n0);
+    let e2=null; try{ await D.replace(sp.view(acc), file('Budget.pdf')); }catch(x){ e2=x; }
+    t('a file outside Home-Brace Documents can never be replaced', e2 && e2.fenced && sent()===n0);
+    let e3=null; try{ await D.replace({id:'OD1', name:'Dash.xlsx', parentReference:{driveId:'HEATHER-OD', path:'/drive/root:/Documents'}}, file('Dash.xlsx')); }catch(x){ e3=x; }
+    t('a file in someone\u2019s OneDrive can never be replaced from here', e3 && e3.fenced && sent()===n0);
+    let e4=null; try{ await D.replace(sp.view(hb), file('Employee Handbook.docx')); }catch(x){ e4=x; }
+    t('only the same kind of file: a .docx can\u2019t replace a .pdf', e4 && e4.wrongType && sent()===n0 && sp.items[hb.id].versions===3);
+    t('replace never deletes and never asks SharePoint to "replace" by name',
+      !calls(sp,/./,'DELETE').length && !sp.calls.some(c=>/conflictBehavior/.test(c.url) && /items\/[^/:]+\/content/.test(c.url)) && !sp.calls.some(c=>/"replace"/.test(String(c.body||'')))); }
 
   /* 7. Links to files kept elsewhere: checked, saved once, un-linked (never deleted). */
   { const sp=SharePoint(), {D,store}=load(sp);

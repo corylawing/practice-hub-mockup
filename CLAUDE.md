@@ -88,6 +88,13 @@ multi-line-text column lives there for step 8; harmless to keep or delete.
 Entra groups to create (7 team + 8 office), the permission matrix, the per-office restriction, and
 the shared-account problem. Republish that same file to update it; do not create a second one.
 
+**Documents: Replace (07/10, hc67).** Heather keeps master copies in Home-Brace and updates them. Managers get
+**Replace** beside Remove on every file (never folders or links): pick or drop the new version, same type only
+(.pdf for a .pdf), and `PH_DOCS.replace()` writes new CONTENT to the same item (PUT items/{id}/content, or an upload
+session on the item for big files) - same name, place and link; SharePoint keeps the old version in version
+history. Fenced like remove() (inside Home-Brace Documents only). Sends no conflictBehavior and never "replace";
+uploads still never overwrite. Notifies "Updated in <section>: <file>" to the file's own audience. docs tests: 76.
+
 **Enter Production: office first (06/10, hc66).** Heather: "they have to choose location first before they enter
 production numbers" - after a reload the page fell back to the first office on the list, and numbers went to the
 wrong office. Anyone with more than one office now gets "Which office are you entering numbers for?" (a button per

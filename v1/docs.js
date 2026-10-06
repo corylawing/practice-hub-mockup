@@ -15,7 +15,9 @@
 
    WHAT THIS NEVER DOES
      - Overwrite. Uploads use conflictBehavior=rename: a second "policy.pdf" arrives as
-       "policy 1.pdf". Nothing here sends "replace".
+       "policy 1.pdf". Nothing here sends "replace". The one way a file's content changes
+       is Replace, which a manager chooses for ONE file and confirms: it writes a new
+       VERSION of that file, and SharePoint keeps the old one in its version history.
      - Rename or move anything.
      - Touch anything outside Home-Brace Documents. remove() is the one destructive call
        and it is fenced to items inside that folder; Microsoft moves them to the site's
@@ -382,6 +384,32 @@
     });
   }
 
+  /* REPLACE: A NEW VERSION OF ONE FILE, ON PURPOSE.
+     07/10/2026 - Heather keeps her master copies here and updates them: a new PDF of the
+     handbook goes in place of the old one - same name, same place, same link. Not an
+     accident: a manager picks the file and confirms. SharePoint keeps the old one in the
+     file's version history, so it can be brought back. Fenced like remove(): only a FILE
+     inside Home-Brace Documents, and only with the same kind of file (.pdf for a .pdf),
+     so the name never lies about what is inside. Sends no conflictBehavior at all - the
+     file is addressed by its id, so there is nothing to clash with. */
+  function ext(n){ var s = String(n || ''), i = s.lastIndexOf('.'); return i > 0 ? s.slice(i + 1).toLowerCase() : ''; }
+  function replace(item, file, onProgress){
+    var prog = function(x){ try{ if(onProgress) onProgress(x); }catch(_){} };
+    return drive().then(function(d){
+      if(!item || !item.id || item.folder || !insideBase(item, d.id))
+        throw fail(0, 'Only a file inside \u201c' + BASE + '\u201d can be replaced from Home-Brace.', { fenced: true });
+      if(!file || ext(file.name) !== ext(item.name))
+        throw fail(0, 'Pick a .' + (ext(item.name) || '?') + ' file to replace \u201c' + item.name + '\u201d.', { wrongType: true });
+      var at = '/drives/' + d.id + '/items/' + item.id;
+      if(file.size <= SMALL){
+        return retry(function(){ return api('PUT', at + '/content', file, { 'Content-Type': file.type || 'application/octet-stream' }); })
+          .then(function(it){ prog(1); return it; });
+      }
+      return retry(function(){ return api('POST', at + '/createUploadSession', {}); })
+        .then(function(s){ return pieces(s.uploadUrl, file, prog); });
+    });
+  }
+
   /* ---- Files that live somewhere else, linked into a section. ---- */
   function b64url(s){
     var bytes = new TextEncoder().encode(s), bin = '';
@@ -473,7 +501,7 @@
     BASE: BASE, clean: clean, path: path, under: under, shareId: shareId,
     drive: drive, item: itemAt, list: list, ensureFolder: ensureFolder, newFolder: newFolder,
     upload: upload, uploadAll: uploadAll, fromInput: fromInput, fromDrop: fromDrop,
-    tally: tally, remove: remove, insideBase: insideBase,
+    tally: tally, remove: remove, replace: replace, insideBase: insideBase,
     resolveLink: resolveLink, whoCanOpen: whoCanOpen,
     links: links, addLink: addLink, unlink: unlink,
     meta: meta, setAudience: setAudience,
