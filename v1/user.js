@@ -1543,30 +1543,72 @@
     setTimeout(function(){ n.remove(); }, 6000);
   });
 
+  /* SHAREPOINT REFUSED THIS PERSON. 401 is the guest who has never opened the site in a
+     browser - SharePoint only fully knows a guest after that, and until then refuses
+     every app request for them (Noemi, 06/10). Opening it once fixes it for good, so the
+     box hands them the link and a Try again. 403 is no access at all: an admin's job. */
+  function accessHelpHTML(d, lead){
+    const said=(d&&d.said)?'<br><span style="font-weight:500;font-size:12px;opacity:.85">Microsoft said: '+escHTML(d.said)+'</span>':'';
+    const btn='display:inline-block;margin:10px 8px 0 0;padding:8px 14px;border-radius:9px;font:700 13.5px/1.2 inherit;cursor:pointer;text-decoration:none;';
+    if(d && d.status===401 && d.site)
+      return '<b>'+(lead||'One more step to finish setting up your access.')+'</b><br>'+
+        'Tap <b>Open SharePoint</b> and let the page load (sign in if it asks). Then come back here and tap <b>Try again</b>. '+
+        'You only need to do this once.'+said+'<br>'+
+        '<a href="'+escHTML(d.site)+'" target="_blank" rel="noopener" style="'+btn+'background:#7a4b00;color:#fff">Open SharePoint \u2197</a>'+
+        '<button type="button" data-ph-retry style="'+btn+'background:#fff;color:#7a4b00;border:1px solid #e3c98f">Try again</button>';
+    return '<b>'+(lead||'Your account can\u2019t open the hub\u2019s SharePoint yet.')+'</b><br>'+
+      'Nothing you change here can be saved until it can. <b>Send a screenshot of this to your admin</b> so they can check your access.'+said;
+  }
+  function boxAt(id, z){
+    const n=document.createElement('div'); n.id=id;
+    n.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:'+z+';'+
+      'width:max-content;max-width:min(580px,92vw);background:#FFF6E5;color:#7a4b00;border:1px solid #f0d9a8;'+
+      'border-radius:12px;padding:13px 16px;font:600 13.5px/1.55 inherit;'+
+      'box-shadow:0 8px 24px rgba(15,42,74,.18);display:flex;gap:10px;align-items:flex-start';
+    return n;
+  }
+  function wireBox(n){
+    n.querySelector('button[aria-label=Dismiss]').onclick=function(){ n.remove(); };
+    const r=n.querySelector('[data-ph-retry]'); if(r) r.onclick=function(){ location.reload(); };
+  }
+  document.addEventListener('ph-access-refused',function(e){
+    const d=(e&&e.detail)||{};
+    if(!document.body || document.getElementById('ph-accesshelp') || document.getElementById('ph-saveblock')) return;
+    const n=boxAt('ph-accesshelp', 9001);
+    n.innerHTML='<span>\u{1F511}</span><div>'+accessHelpHTML(d)+'</div><button aria-label="Dismiss" style="margin-left:auto;background:none;border:none;color:inherit;'+
+      'font-size:17px;cursor:pointer;line-height:1">\u00d7</button>';
+    wireBox(n);
+    document.body.appendChild(n);
+  });
+
   /* The store refused a save because it would have wiped out real work. This has to be
      loud and it has to say what to do, because the alternative is someone deciding the
      hub is broken and typing it all in again. */
   function warnSaveBlocked(d){
     if(document.getElementById('ph-saveblock')) return;
-    const n=document.createElement('div');
-    n.id='ph-saveblock';
-    /* width:max-content - centred with left:50%, a box may otherwise only use half the
-       screen, and on a phone this one became a tall, thin strip (Noemi's screenshot, 06/10). */
-    n.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:9001;'+
-      'width:max-content;max-width:min(580px,92vw);background:#FFF6E5;color:#7a4b00;border:1px solid #f0d9a8;'+
-      'border-radius:12px;padding:13px 16px;font:600 13.5px/1.55 inherit;'+
-      'box-shadow:0 8px 24px rgba(15,42,74,.18);display:flex;gap:10px;align-items:flex-start';
+    /* Refused access: the same way out as the access box, which this replaces. */
+    if(d && d.denied){
+      const old=document.getElementById('ph-accesshelp'); if(old) old.remove();
+      const b=boxAt('ph-saveblock', 9001);
+      b.innerHTML='<span>\u{1F6E1}\uFE0F</span><div>'+accessHelpHTML(d, d.status===401
+          ? 'Your change wasn\u2019t saved \u2014 one more step first.' : 'Your change wasn\u2019t saved.')+
+        ' Nothing already saved has been touched.</div><button aria-label="Dismiss" style="margin-left:auto;background:none;border:none;color:inherit;'+
+        'font-size:17px;cursor:pointer;line-height:1">\u00d7</button>';
+      wireBox(b);
+      document.body.appendChild(b);
+      return;
+    }
+    /* boxAt: width:max-content - centred with left:50%, a box may otherwise only use half
+       the screen, and on a phone this one became a tall, thin strip (Noemi, 06/10). */
+    const n=boxAt('ph-saveblock', 9001);
     /* What Microsoft actually said, small, so a screenshot of this box tells us WHY. */
     const said=(d&&d.said)?'<br><span style="font-weight:500;font-size:12px;opacity:.85">Microsoft said: '+escHTML(d.said)+'</span>':'';
     n.innerHTML='<span>\u{1F6E1}\uFE0F</span><div>'+
-      ((d&&d.denied)
-        ? '<b>Your change wasn\u2019t saved.</b><br>'+((d&&d.why)||'')+' Nothing already saved has been touched. '+
-          '<b>Send a screenshot of this to your admin</b> so they can check your access.'
-        : '<b>The hub stopped this from saving, on purpose.</b><br>'+((d&&d.why)||'')+' Nothing already saved has been touched. '+
-          '<b>Reload the page</b> to get the saved copy back, then make your change again.')+
-      said+'</div><button style="margin-left:auto;background:none;border:none;color:inherit;'+
-      'font-size:17px;cursor:pointer;line-height:1" aria-label="Dismiss">\u00d7</button>';
-    n.querySelector('button').onclick=function(){ n.remove(); };
+      '<b>The hub stopped this from saving, on purpose.</b><br>'+((d&&d.why)||'')+' Nothing already saved has been touched. '+
+      '<b>Reload the page</b> to get the saved copy back, then make your change again.'+
+      said+'</div><button aria-label="Dismiss" style="margin-left:auto;background:none;border:none;color:inherit;'+
+      'font-size:17px;cursor:pointer;line-height:1">\u00d7</button>';
+    wireBox(n);
     document.body.appendChild(n);
   }
   document.addEventListener('ph-save-blocked',function(e){

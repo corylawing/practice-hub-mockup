@@ -88,6 +88,14 @@ multi-line-text column lives there for step 8; harmless to keep or delete.
 Entra groups to create (7 team + 8 office), the permission matrix, the per-office restriction, and
 the shared-account problem. Republish that same file to update it; do not create a second one.
 
+**Guests: SharePoint refuses them until they open the site once (06/10, hc65).** Noemi's box (hc64) said
+`Graph 401: There has been an error authenticating the request` - Microsoft's known guest quirk: SharePoint does not
+fully know a B2B guest until they have opened the site in a browser once; until then every Graph call for them is
+401. Fix for her: open https://omegaorthodontics.sharepoint.com/sites/Home-Brace once. The hub now does this itself:
+`store.js` fires `ph-access-refused` once on a 401/403 read; user.js shows a box with **Open SharePoint** (the site)
+and **Try again** (reload) for 401, and "send a screenshot to your admin" for 403. Guard tests: 61. If a guest still
+gets 401 after opening the site, ask Adam about `Set-SPOTenant -EnableAzureADB2BIntegration $true`.
+
 **A refused save now says WHY (06/10, hc64).** Noemi (guest, sunflowerorthomansfield.com - in the Home-Brace group)
 had every save refused with "could not read the saved copy"; nobody could tell why and she can't run diagnostics.
 `store.js` keeps what Microsoft said when a read fails (`readError`) and the `ph-save-blocked` event carries it

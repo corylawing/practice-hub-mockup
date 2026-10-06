@@ -370,6 +370,33 @@ const t=(n,v)=>{ (v? ok:bad).push(n); };
     t('and Heather\u2019s page gets the merged year back to show', r.value['2026-09-22'].Carlsbad.p===3);
   }
 
+  /* SHAREPOINT REFUSES A GUEST (Noemi, 06/10): 401 "There has been an error
+     authenticating the request" on every read, until she has opened the site in a
+     browser once. The hub says so at once - with the site to open - and only once;
+     a passing 503 never does. */
+  {
+    // its own event catcher and storage - earlier blocks swap both out
+    const events=[], before=0, LS8={};
+    global.document={dispatchEvent:e=>events.push(e), addEventListener:()=>{}};
+    global.localStorage={getItem:k=>k in LS8?LS8[k]:null,setItem:(k,v)=>{LS8[k]=String(v)},removeItem:k=>{delete LS8[k]}};
+    global.PH_AUTH={ token:()=>Promise.resolve('t'), graph:()=>Promise.reject(new Error('Graph 401: There has been an error authenticating the request.')) };
+    delete require.cache[require.resolve(STORE)]; require(STORE); const G=window.PH_STORE;
+    G.setRetryWaits([1,1,1]);
+    await G.get('ph_me_noemi@example.com'); await G.get('ph_sched2');
+    const acc=events.slice(before).filter(e=>e.type==='ph-access-refused');
+    t('a guest SharePoint refuses is told at once, before trying to save', acc.length===1 && acc[0].detail.status===401);
+    t('...with the site to open', !!acc[0] && acc[0].detail.site==='https://omegaorthodontics.sharepoint.com/sites/Home-Brace');
+    const r=await G.set('ph_me_noemi@example.com', {theme:'peony'});
+    const blk=events.slice(before).filter(e=>e.type==='ph-save-blocked').pop();
+    t('her save is still refused, and its box gets the status and the site', r.blocked===true && !!blk && blk.detail.status===401 && /sites\/Home-Brace$/.test(blk.detail.site||''));
+    const b2=events.length;
+    global.PH_AUTH={ token:()=>Promise.resolve('t'), graph:()=>Promise.reject(new Error('Graph 503: service unavailable')) };
+    delete require.cache[require.resolve(STORE)]; require(STORE); const H=window.PH_STORE;
+    H.setRetryWaits([1,1,1]);
+    await H.get('ph_me_x@example.com');
+    t('a passing hiccup (503) never shows the access box', !events.slice(b2).some(e=>e.type==='ph-access-refused'));
+  }
+
   console.log(ok.map(s=>'  PASS  '+s).join('\n'));
   if(bad.length) console.log(bad.map(s=>'  FAIL  '+s).join('\n'));
   console.log('\n'+ok.length+' passed, '+bad.length+' failed');

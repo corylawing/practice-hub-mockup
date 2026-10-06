@@ -352,6 +352,7 @@
            screenshot says WHY (Noemi, 06/10 - a guest whose saves were all refused). */
         readFailed[key] = true;
         readError[key] = { status: statusOf(e), msg: String((e && e.message) || e || '').slice(0, 220) };
+        accessRefused(readError[key]);
         return parse(local(key));
       });
   }
@@ -451,6 +452,21 @@
     return weigh(value) < had * 0.25;
   }
 
+  /* SHAREPOINT REFUSED THIS PERSON (401/403) - say so once, at once, not only when they
+     try to save. Noemi, 06/10: a guest whose every read came back 401 "There has been an
+     error authenticating the request". SharePoint does not fully know a guest until they
+     have opened the site in a browser once; until then every app request for them is
+     refused. user.js shows the way out (open the site once, come back, try again). */
+  var accessToldOnce = false;
+  function accessRefused(re){
+    if(accessToldOnce || !re || (re.status !== 401 && re.status !== 403)) return;
+    accessToldOnce = true;
+    try{
+      document.dispatchEvent(new CustomEvent('ph-access-refused', {detail:{status:re.status, said:re.msg,
+        site:'https://' + hostname + SITE_PATH}}));
+    }catch(_){}
+  }
+
   /* Refused writes are kept, not dropped. If a guard ever fires wrongly the work is
      still here rather than gone, which is the whole point. */
   function refuse(key, value, why, more){
@@ -482,7 +498,8 @@
         return {result: refuse(key, value, denied
           ? 'Your account can\u2019t open the hub\u2019s SharePoint yet, so nothing you change can be saved.'
           : 'The hub could not read the saved copy when this page opened, so it will not write '+
-            'over it.', {denied: denied, said: re.msg || ''})};
+            'over it.', {denied: denied, status: re.status || 0, said: re.msg || '',
+                         site: 'https://' + hostname + SITE_PATH})};
       }
       if(wouldWipe(key, value))
         return {result: refuse(key, value,
