@@ -187,6 +187,10 @@
   .docwarn{background:#FFF6E5;color:#7a4b00;border:1px solid #f0d9a8;border-radius:10px;padding:11px 14px;font-size:13.5px;line-height:1.5}
   .docerr{background:#FDECEC;color:#8a1c1c;border:1px solid #f3c4c4;border-radius:10px;padding:11px 14px;font-size:13.5px;margin-top:10px}
   .docwhere{font-size:13px;color:var(--soft);margin:8px 0 2px;line-height:1.5}
+  .setupbox{background:var(--teal-soft,#E5F4F3);border:1px solid #bfe3df;border-radius:14px;padding:16px 18px;margin-bottom:18px}
+  .setupbox h4{margin:0 0 6px;color:var(--navy);font-size:15.5px}
+  .setupbox p{margin:0 0 12px;font-size:13.5px;line-height:1.55;color:var(--ink)}
+  .setupbox .names{font-weight:700;color:var(--navy)}
   .docwhere b{color:var(--navy)}
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:24px}
   /* Team and office chips need the FULL modal width — squeezed into a half-width column
@@ -233,12 +237,12 @@
   }
 
 </style>
-<script src="user.js?v=hc67"></script>
+<script src="user.js?v=hc68"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="_staff.js?v=hc67"></script>
-  <script src="store.js?v=hc67"></script>
-  <script src="gate.js?v=hc67"></script>
-  <script src="docs.js?v=hc67"></script>
+  <script src="_staff.js?v=hc68"></script>
+  <script src="store.js?v=hc68"></script>
+  <script src="gate.js?v=hc68"></script>
+  <script src="docs.js?v=hc68"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — admin console concept for validation. Real build: people sync from Microsoft 365; access is managed here.</div>
@@ -1208,6 +1212,7 @@
       '<div class="card" style="padding:14px 16px;margin-bottom:18px"><div class="panel-lab" style="margin-bottom:8px">App tools — built in, can\'t be added or removed</div>'+
         '<div class="chips">'+TOOLS.map(t=>'<span class="chip">'+t.ic+' '+t.n+'</span>').join('')+'</div>'+
         '<p class="mini" style="margin:9px 0 0">Choose who gets each one in <b>Teams &amp; Access</b>.</p></div>'+
+      (needsSetup()?setupHTML():'')+
       '<div class="toolrow"><div class="panel-lab" style="margin:0">Document sections — '+DOCSECS.length+' right now</div><span style="flex:1"></span>'+
         (liveDocs()?'':'<button class="btn ghost" onclick="AD.resetSecs()">Reset to defaults</button>')+'<button class="btn" onclick="AD.newSec()">+ New section</button></div>'+
       '<div class="secacc">'+secHtml+'</div>';
@@ -1369,6 +1374,85 @@
       .then(()=>docToast('\u{1F4C1} Folder ready in SharePoint: Home-Brace Documents \u203a '+f),
             e=>docToast('The section is saved. Its folder will be made when the first file goes in. ('+((e&&e.message)||'SharePoint didn\u2019t answer')+')',true));
   }
+  /* HEATHER'S FIVE STARTING SECTIONS (07/10). The six that shipped came from the mock-up.
+     Cory: "I want something clear ... what they could build on and move around". One
+     button swaps them: the five are created with their folders - everyone can view, only
+     Admin can change - and the demo ones go, unless one already holds files, which then
+     simply stays. A section somebody made themselves is never touched. Folders of demo
+     sections with no files go to the SharePoint recycle bin (93 days), like Delete does.
+     After this, sections are added, renamed and removed here exactly as before. */
+  const DEMO_KEYS=['hr','officedocs','forms','filing','eom'];
+  const START_SECS=[
+    {k:'policies',n:'Policies & Handbook',ic:'\u{1F4D8}'},
+    {k:'patientforms',n:'Patient Forms',ic:'\u{1F4DD}'},
+    {k:'employeeforms',n:'Employee Forms',ic:'\u{1F464}'},
+    {k:'medicaid',n:'Medicaid',ic:'\u{1F3E5}'},
+    {k:'vendors',n:'Vendors',ic:'\u{1F69A}'}
+  ];
+  let SETUP=null;                        // null | {busy:true} | {err:'...'}
+  function needsSetup(){
+    return liveDocs() && !!(window.PH && PH.isAdmin && PH.isAdmin()) &&
+      !DOCSECS.some(x=>x.k==='policies') && DOCSECS.some(x=>DEMO_KEYS.indexOf(x.k)>=0);
+  }
+  function setupHTML(){
+    const demoNames=DOCSECS.filter(x=>DEMO_KEYS.indexOf(x.k)>=0).map(x=>x.n).join(', ');
+    return '<div class="setupbox"><h4>Start with the five sections</h4>'+
+      '<p>Creates <span class="names">'+START_SECS.map(x=>esc(x.n)).join(', ')+'</span>. Everyone can view them; only Admin can change them. '+
+      'The demo sections (<b>'+esc(demoNames)+'</b>) are removed \u2014 any that already has files in it stays.</p>'+
+      (SETUP&&SETUP.err?'<div class="docerr" style="margin:0 0 10px">'+esc(SETUP.err)+' Nothing was removed \u2014 try again.</div>':'')+
+      '<button class="btn" onclick="AD.setupSecs()"'+(SETUP&&SETUP.busy?' disabled':'')+'>'+(SETUP&&SETUP.busy?'Setting up\u2026':'Set up these sections')+'</button></div>';
+  }
+  function setupSecs(){
+    if(!needsSetup() || (SETUP && SETUP.busy)) return;
+    SETUP={busy:true}; renderFiles();
+    const demo=DOCSECS.filter(x=>DEMO_KEYS.indexOf(x.k)>=0);
+    // 1. What is in each demo section's folder - read only.
+    Promise.all(demo.map(sec=>PH_DOCS.item(PH_DOCS.path(secFolder(sec))).then(it=>{
+      if(!(it && it.folder)) return {sec, item:null, files:0};
+      return PH_DOCS.tally(it).then(c=>({sec, item:it, files:(c.files||0)+(c.more?1:0)}));
+    }))).then(found=>{
+      const kept=found.filter(f=>f.files>0).map(f=>f.sec);
+      const oldVend=DOCSECS.find(x=>x.k==='vendors');
+      const fresh=START_SECS.map(x=>Object.assign({structure:'plain',locMode:'all',locs:[],teamMode:'all',teams:[],items:[]}, x,
+        (x.k==='vendors' && oldVend && oldVend.folder) ? {folder:oldVend.folder} : {}));   // the old Vendors folder carries on
+      const theirs=DOCSECS.filter(x=>DEMO_KEYS.indexOf(x.k)<0 && !START_SECS.some(y=>y.k===x.k));
+      // 2. The five folders in SharePoint (an existing one is simply used).
+      return fresh.reduce((c,sec)=>c.then(()=>PH_DOCS.ensureFolder(PH_DOCS.path(secFolder(sec)))), Promise.resolve()).then(()=>{
+        // 3. Access - just these cells, merged onto the shared grid: everyone views, Admin manages.
+        const cells={}; TEAMS.forEach(t=>{ cells[t]={}; fresh.forEach(sec=>{ cells[t][sec.k]= t==='Admin'?'manage':'view'; }); });
+        Object.keys(cells).forEach(t=>{ access[t]=Object.assign(access[t]||{}, cells[t]); });
+        /* A team's saved row is ALL it gets - user.js does not fall back to defaults for a
+           missing cell. So a team with no saved row yet must not get a row holding only
+           these five cells: it would lose every tool. Such a row starts from exactly what
+           the team gets today without one - user.js's defaults (DEPT_CAN; Staff's for a
+           team it does not know) - plus these cells. NOT this page's grid: for a team the
+           shared copy lacks, this page shows "None" everywhere. A team that has a row
+           keeps it, plus these cells. */
+        const w = (window.PH_STORE && PH_STORE.update) ? PH_STORE.update(ACCESS_KEY, function(remote){
+            const m=(remote && typeof remote==='object') ? Object.assign({}, remote) : {};
+            Object.keys(cells).forEach(t=>{
+              const have=Object.keys(m).find(k=>k.toLowerCase()===t.toLowerCase());
+              if(have) m[have]=Object.assign({}, m[have], cells[t]);
+              else { const D=(window.PH && PH.DEPT_CAN) || {};
+                m[t]=Object.assign({}, D[t.toLowerCase()] || D['staff'] || {}, cells[t]); }
+            });
+            return m;
+          }) : Promise.resolve({});
+        return w.then(r=>{ if(r && (r.blocked || r.error)) throw new Error('Who-can-see-what did not save ('+(r.why||r.error)+').'); });
+      }).then(()=>{
+        // 4. The section list itself.
+        DOCSECS=fresh.concat(theirs, kept); saveSecs(); ensureAccess();
+        if(window.PH && PH.reloadAccess) PH.reloadAccess();
+        // 5. Demo folders with no files: to the recycle bin, one at a time, each fenced by docs.js.
+        const empty=found.filter(f=>f.item && f.files===0);
+        return empty.reduce((c,f)=>c.then(()=>PH_DOCS.remove(f.item).catch(()=>{})), Promise.resolve()).then(()=>kept);
+      });
+    }).then(kept=>{
+      SETUP=null; renderFiles();
+      docToast('\u2713 The five sections are ready in Documents.'+(kept.length?' Kept '+kept.map(x=>x.n).join(', ')+' \u2014 it already has files.':''));
+    }, e=>{ SETUP={err:(e&&e.message)||'SharePoint didn\u2019t answer.'}; renderFiles(); });
+  }
+
   let DEL=null;
   function delSec(k){
     const sec=DOCSECS.find(x=>x.k===k); if(!sec) return;
@@ -1453,7 +1537,7 @@
   function openModal(h){ el('modalCard').innerHTML=h; el('modal').classList.add('open'); }
   function closeModal(){ el('modal').classList.remove('open'); }
 
-  window.AD={tab:tabSet,viewAs:doViewAs,newTeam,editTeam,saveTeam,delTeam,resetTeams,profile,whyNoAdd,
+  window.AD={setupSecs,tab:tabSet,viewAs:doViewAs,newTeam,editTeam,saveTeam,delTeam,resetTeams,profile,whyNoAdd,
     addPerson,npSet,npLoc,npTeam,saveNewPerson,accTeam:setAccTeam,removePerson,restorePerson,showRemoved,togTeam,togLoc,setStatus,saveUser,pickLevel,pickAud,setField,pickPhoto,photoChosen,clearPhoto,pickUserLevel,clearUserLevel,tog,addFile,noop,newSec,editSec,saveSec,delSec,delSecGo,resetSecs,setSecName,setSecIcon,setSecStruct,setSecLocMode,setSecTeamMode,togSecLoc,togSecTeam,saveFile,cd,useFile,clearFile,uploadFile,setFileTeamMode,setFileLocMode,togFileLoc,togFileTeam,renderLocs,newLoc,editLoc,saveLoc,delLoc,resetLocs,setLocBrand,setLocState,setLocTZ,close:closeModal};
   el('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
@@ -1510,7 +1594,7 @@
 })();
 </script>
 <script>PH.nav('admin');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(PH.loadPhotos)PH.loadPhotos().then(function(got){if(got&&window.AD&&AD.tab)AD.tab('users');});});</script>
-<script src="tour.js?v=hc67"></script>
+<script src="tour.js?v=hc68"></script>
 <script>
 Tour.init([
   {sel:'#tabs', title:'This is your control room', body:'Four tabs and you can run the whole hub: <b>People</b>, <b>Teams &amp; Access</b>, <b>Document Sections</b> and <b>Locations</b>. No developer, no consultant.', pre:()=>AD.tab('users')},

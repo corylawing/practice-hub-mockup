@@ -88,6 +88,17 @@ multi-line-text column lives there for step 8; harmless to keep or delete.
 Entra groups to create (7 team + 8 office), the permission matrix, the per-office restriction, and
 the shared-account problem. Republish that same file to update it; do not create a second one.
 
+**Documents: the five starting sections (07/10, hc68).** The six shipped sections were the mock-up's. Admin ->
+Document Sections shows a one-click **Set up these sections** box (live, full admins, only while demo sections
+remain and `policies` doesn't exist): creates Policies & Handbook / Patient Forms / Employee Forms / Medicaid /
+Vendors (keys policies, patientforms, employeeforms, medicaid, vendors - Vendors reuses its old folder) with
+folders; access cells everyone=view, Admin=manage merged onto the shared grid; removes demo sections (hr,
+officedocs, forms, filing, eom) unless their folder holds files (kept), and sends their EMPTY folders to the recycle
+bin. Sections people made themselves are untouched. **Danger found and fixed before shipping: a team's saved
+access row is ALL it gets (`accessForTeam(d) || DEPT_CAN[d]` - no per-cell fallback), so never write a row holding
+only a few cells - a missing row is seeded from `PH.DEPT_CAN` (Staff's for an unknown team), not from Admin's
+grid, which shows None for teams the shared copy lacks.** Browser rig: 17 checks incl. nobody loses a tool.
+
 **Documents: Replace (07/10, hc67).** Heather keeps master copies in Home-Brace and updates them. Managers get
 **Replace** beside Remove on every file (never folders or links): pick or drop the new version, same type only
 (.pdf for a .pdf), and `PH_DOCS.replace()` writes new CONTENT to the same item (PUT items/{id}/content, or an upload
