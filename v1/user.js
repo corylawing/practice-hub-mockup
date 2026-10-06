@@ -1550,14 +1550,21 @@
     if(document.getElementById('ph-saveblock')) return;
     const n=document.createElement('div');
     n.id='ph-saveblock';
+    /* width:max-content - centred with left:50%, a box may otherwise only use half the
+       screen, and on a phone this one became a tall, thin strip (Noemi's screenshot, 06/10). */
     n.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:9001;'+
-      'max-width:min(580px,92vw);background:#FFF6E5;color:#7a4b00;border:1px solid #f0d9a8;'+
+      'width:max-content;max-width:min(580px,92vw);background:#FFF6E5;color:#7a4b00;border:1px solid #f0d9a8;'+
       'border-radius:12px;padding:13px 16px;font:600 13.5px/1.55 inherit;'+
       'box-shadow:0 8px 24px rgba(15,42,74,.18);display:flex;gap:10px;align-items:flex-start';
-    n.innerHTML='<span>\u{1F6E1}\uFE0F</span><div><b>The hub stopped this from saving, on purpose.</b><br>'+
-      ((d&&d.why)||'')+' Nothing already saved has been touched. '+
-      '<b>Reload the page</b> to get the saved copy back, then make your change again.'+
-      '</div><button style="margin-left:auto;background:none;border:none;color:inherit;'+
+    /* What Microsoft actually said, small, so a screenshot of this box tells us WHY. */
+    const said=(d&&d.said)?'<br><span style="font-weight:500;font-size:12px;opacity:.85">Microsoft said: '+escHTML(d.said)+'</span>':'';
+    n.innerHTML='<span>\u{1F6E1}\uFE0F</span><div>'+
+      ((d&&d.denied)
+        ? '<b>Your change wasn\u2019t saved.</b><br>'+((d&&d.why)||'')+' Nothing already saved has been touched. '+
+          '<b>Send a screenshot of this to your admin</b> so they can check your access.'
+        : '<b>The hub stopped this from saving, on purpose.</b><br>'+((d&&d.why)||'')+' Nothing already saved has been touched. '+
+          '<b>Reload the page</b> to get the saved copy back, then make your change again.')+
+      said+'</div><button style="margin-left:auto;background:none;border:none;color:inherit;'+
       'font-size:17px;cursor:pointer;line-height:1" aria-label="Dismiss">\u00d7</button>';
     n.querySelector('button').onclick=function(){ n.remove(); };
     document.body.appendChild(n);

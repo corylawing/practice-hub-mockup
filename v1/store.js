@@ -26,6 +26,7 @@
   var siteId = null, listId = null, ready = null;
   var idCache = {};      // key -> SharePoint item id, so updates don't re-search
   var readFailed = {};   // key -> true when THIS session could not read the shared copy
+  var readError = {};    // key -> {status, msg}: what Microsoft said when that read failed
   var synced = {};       // key -> the payload SharePoint last held, as this session knows it
   function noop(){}
   function emit(type, detail){
@@ -304,7 +305,7 @@
            answer and a first save is allowed; a thrown request is not, and is caught
            below. Everything downstream depends on keeping those two apart. */
         if(!hit){
-          readFailed[key] = false;
+          readFailed[key] = false; delete readError[key];
           // The very first save of this key never landed: send it now (the row gets made).
           synced[key] = null;                      // known: SharePoint has nothing for it
           if(unsent(key)) return recover(key, '', null);
@@ -317,7 +318,7 @@
           /* Text that is there but will not read is a FAILED read, not an empty record.
              Treating it as empty is the 15 Sep path: blank year, then saved over. */
           if(raw && got === null) throw new Error('The saved copy of '+key+' could not be read.');
-          readFailed[key] = false;
+          readFailed[key] = false; delete readError[key];
           /* WHOSE COPY WINS.
 
              This used to compare one browser's clock against SharePoint's timestamp and
@@ -344,11 +345,13 @@
           return got;
         });
       })
-      .catch(function(){
+      .catch(function(e){
         /* Still never block the app on storage - but remember that we are now working
            from a guess, so set() below refuses to write this key over the copy we
-           could not see. */
+           could not see. Keep what Microsoft said: the banner shows it, so a
+           screenshot says WHY (Noemi, 06/10 - a guest whose saves were all refused). */
         readFailed[key] = true;
+        readError[key] = { status: statusOf(e), msg: String((e && e.message) || e || '').slice(0, 220) };
         return parse(local(key));
       });
   }
@@ -450,14 +453,16 @@
 
   /* Refused writes are kept, not dropped. If a guard ever fires wrongly the work is
      still here rather than gone, which is the whole point. */
-  function refuse(key, value, why){
+  function refuse(key, value, why, more){
     try{ setLocal(key + '__refused', JSON.stringify(value)); }catch(_){}
+    var detail = {key:key, why:why};
+    if(more) Object.keys(more).forEach(function(k){ detail[k] = more[k]; });
     if(!housekeeping(key)){
       try{
-        document.dispatchEvent(new CustomEvent('ph-save-blocked', {detail:{key:key, why:why}}));
+        document.dispatchEvent(new CustomEvent('ph-save-blocked', {detail:detail}));
       }catch(_){}
     }
-    return Promise.resolve({blocked:true, why:why});
+    return Promise.resolve({blocked:true, why:why, denied:!!detail.denied});
   }
 
   /* The guards and the local write - everything set() does before the network. Returns
@@ -470,10 +475,15 @@
       return {result:{blocked:true, notReady:true, why:'Not signed in yet.'}};
     }
     if(!(opts && opts.force)){
-      if(readFailed[key] === true)
-        return {result: refuse(key, value,
-          'The hub could not read the saved copy when this page opened, so it will not write '+
-          'over it.')};
+      if(readFailed[key] === true){
+        /* Refused access (401/403) is not a hiccup a reload fixes: this person's account
+           cannot reach the hub's SharePoint at all, and only an admin can change that. */
+        var re = readError[key] || {}, denied = re.status === 401 || re.status === 403;
+        return {result: refuse(key, value, denied
+          ? 'Your account can\u2019t open the hub\u2019s SharePoint yet, so nothing you change can be saved.'
+          : 'The hub could not read the saved copy when this page opened, so it will not write '+
+            'over it.', {denied: denied, said: re.msg || ''})};
+      }
       if(wouldWipe(key, value))
         return {result: refuse(key, value,
           'This would have emptied out something that had real content in it.')};

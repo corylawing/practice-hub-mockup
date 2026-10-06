@@ -233,12 +233,12 @@
   }
 
 </style>
-<script src="user.js?v=hc63"></script>
+<script src="user.js?v=hc64"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="_staff.js?v=hc63"></script>
-  <script src="store.js?v=hc63"></script>
-  <script src="gate.js?v=hc63"></script>
-  <script src="docs.js?v=hc63"></script>
+  <script src="_staff.js?v=hc64"></script>
+  <script src="store.js?v=hc64"></script>
+  <script src="gate.js?v=hc64"></script>
+  <script src="docs.js?v=hc64"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — admin console concept for validation. Real build: people sync from Microsoft 365; access is managed here.</div>
@@ -1356,7 +1356,7 @@
   function docToast(msg,bad){
     const old=document.getElementById('docToast'); if(old) old.remove();
     const n=document.createElement('div'); n.id='docToast';
-    n.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:22px;z-index:9000;max-width:min(520px,92vw);'+
+    n.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:22px;z-index:9000;width:max-content;max-width:min(520px,92vw);'+
       'border-radius:12px;padding:11px 16px;font-size:13.5px;font-weight:600;line-height:1.5;box-shadow:0 8px 24px rgba(15,42,74,.16);'+
       (bad?'background:#FFF6E5;color:#7a4b00;border:1px solid #f0d9a8':'background:#E7F4EE;color:#1d6b45;border:1px solid #bfe3cf');
     n.textContent=msg; document.body.appendChild(n); setTimeout(function(){ n.remove(); }, 6000);
@@ -1510,7 +1510,7 @@
 })();
 </script>
 <script>PH.nav('admin');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(PH.loadPhotos)PH.loadPhotos().then(function(got){if(got&&window.AD&&AD.tab)AD.tab('users');});});</script>
-<script src="tour.js?v=hc63"></script>
+<script src="tour.js?v=hc64"></script>
 <script>
 Tour.init([
   {sel:'#tabs', title:'This is your control room', body:'Four tabs and you can run the whole hub: <b>People</b>, <b>Teams &amp; Access</b>, <b>Document Sections</b> and <b>Locations</b>. No developer, no consultant.', pre:()=>AD.tab('users')},

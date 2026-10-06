@@ -14,12 +14,12 @@ const events=[]; global.document={dispatchEvent:e=>events.push(e)};
 global.CustomEvent=class{constructor(t,o){this.type=t;this.detail=o&&o.detail}};
 global.window=global;   // in a browser window IS the global
 
-let REMOTE=null, FAIL=false;   // the SharePoint side
+let REMOTE=null, FAIL=false, FAILMSG='Graph 503: service unavailable';   // the SharePoint side
 global.PH={isLive:()=>true};
 global.PH_AUTH={
   token:()=>Promise.resolve('t'),
   graph:p=>{
-    if(FAIL) return Promise.reject(new Error('Graph 503: service unavailable'));
+    if(FAIL) return Promise.reject(new Error(FAILMSG));
     if(/\/sites\/omega/.test(p)) return Promise.resolve({id:'site'});
     if(/lists\?/.test(p))        return Promise.resolve({value:[{id:'L',displayName:'HomeBraceData'}]});
     return Promise.resolve({value: REMOTE===null?[]:[{id:'1',lastModifiedDateTime:'2026-09-14T00:00:00Z',
@@ -62,6 +62,22 @@ const t=(n,v)=>{ (v? ok:bad).push(n); };
   t('the blank year is REFUSED', r.blocked===true);
   t('SharePoint still holds the real year', JSON.stringify(REMOTE)===saved);
   t('the refusal raises a banner event', events.some(e=>e.type==='ph-save-blocked'));
+  /* Noemi, 06/10: a guest whose every save was refused, with no way to tell why. The box
+     now carries what Microsoft said, and says plainly when the account is refused. */
+  const ev1=events.filter(e=>e.type==='ph-save-blocked').pop().detail;
+  t('the banner carries what Microsoft said', /Graph 503/.test(ev1.said||''));
+  t('a hiccup is not called an access problem - reload advice stands', ev1.denied===false && /could not read the saved copy/.test(ev1.why));
+  FAIL=true; FAILMSG='Graph 403: Access denied. You do not have permission to perform this action or access this resource.';
+  await S.get('ph_me_guest@example.com');
+  FAIL=false; FAILMSG='Graph 503: service unavailable';
+  const rg=await S.set('ph_me_guest@example.com', {theme:'peony'});
+  const ev2=events.filter(e=>e.type==='ph-save-blocked').pop().detail;
+  t('an account SharePoint refuses: the save is still refused', rg.blocked===true && rg.denied===true);
+  t('...and the banner says it is their access, with Microsoft\u2019s words', ev2.denied===true && /can\u2019t open the hub\u2019s SharePoint/.test(ev2.why) && /Graph 403/.test(ev2.said));
+  await S.get('ph_me_guest@example.com');
+  const keepRemote=REMOTE;   // this stand-in SharePoint has one slot - put the year back after
+  t('once the read works again, the old reason is forgotten', S.readFailed('ph_me_guest@example.com')===false && (await S.set('ph_me_guest@example.com', {theme:'peony'})).blocked!==true);
+  REMOTE=keepRemote;
 
   // --- the same wipe with a read that worked: rule 2 must still catch it
   const LS2={}; for(const k in LS) LS2[k]=LS[k];

@@ -88,6 +88,13 @@ multi-line-text column lives there for step 8; harmless to keep or delete.
 Entra groups to create (7 team + 8 office), the permission matrix, the per-office restriction, and
 the shared-account problem. Republish that same file to update it; do not create a second one.
 
+**A refused save now says WHY (06/10, hc64).** Noemi (guest, sunflowerorthomansfield.com - in the Home-Brace group)
+had every save refused with "could not read the saved copy"; nobody could tell why and she can't run diagnostics.
+`store.js` keeps what Microsoft said when a read fails (`readError`) and the `ph-save-blocked` event carries it
+(`said`, `denied`); the box shows "Microsoft said: ..." in small text, and a 401/403 reads "Your account can't open
+the hub's SharePoint yet ... send a screenshot to your admin" instead of "reload". Sign-in authority is the practice
+tenant only, so a signed-in guest IS their guest account. Guard tests: 57.
+
 **Heather's two notes, 30/09 (hc63).** (1) **Calendar days no longer notify anyone** - "a ton of notifications
 when I am entering calendars for the first time". `saveDay` sends nothing (`tellAboutDay` is gone); `canSeeActivity`
 hides the ones already in the feed (kind `schedule` + the calendar icon) - hidden, never deleted. A new office, new
