@@ -320,6 +320,15 @@ const calls=(sp,re,method)=>sp.calls.filter(c=>re.test(c.url)&&(!method||c.metho
     const w=store.writes; await D.setAudience(['I3'],{teams:[],offices:[]});
     t('"everyone who can open the folder" writes nothing', store.writes===w && !(await D.meta()).I3); }
 
+  /* 9. Who can see one item, changed later (07/10): set it, then back to everyone. */
+  { const sp=SharePoint(), {D,store}=load(sp);
+    await D.setAudience(['F1','F2'], {teams:['Office Managers'], offices:[]}, 'Heather Beal');
+    await D.clearAudience(['F1']);
+    const m=store.data.ph_docmeta;
+    t('back to everyone takes off only that item\u2019s entry', !m.F1 && m.F2 && m.F2.teams[0]==='Office Managers');
+    const w=store.writes; await D.clearAudience(['F1']); await D.clearAudience(['nope']); await D.clearAudience([]);
+    t('nothing to take off writes nothing', store.writes===w); }
+
   console.log(ok.map(s=>'  PASS  '+s).join('\n'));
   if(bad.length) console.log(bad.map(s=>'  FAIL  '+s).join('\n'));
   console.log('\n'+ok.length+' passed, '+bad.length+' failed');

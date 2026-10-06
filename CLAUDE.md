@@ -88,6 +88,11 @@ multi-line-text column lives there for step 8; harmless to keep or delete.
 Entra groups to create (7 team + 8 office), the permission matrix, the per-office restriction, and
 the shared-account problem. Republish that same file to update it; do not create a second one.
 
+**Documents: Access per item (07/10, hc69).** Cory: "can I go to each file and choose who gets access?" Managers get
+**Access** on every file, folder and link: the same two choices as adding (Everyone who can open X / Only certain
+people), pre-filled with what is set; Everyone takes the item's entry off ph_docmeta (`PH_DOCS.clearAudience`, only
+that id). File rows wrap their buttons under the name when space runs out (phones). docs tests: 78.
+
 **Documents: the five starting sections (07/10, hc68).** The six shipped sections were the mock-up's. Admin ->
 Document Sections shows a one-click **Set up these sections** box (live, full admins, only while demo sections
 remain and `policies` doesn't exist): creates Policies & Handbook / Patient Forms / Employee Forms / Medicaid /

@@ -496,6 +496,21 @@
       return next;
     }).then(function(r){ return saved(r, 'Who can see it'); });
   }
+  /* Back to "everyone who can open the section" (07/10 - Cory: "can I go to each file and
+     choose who gets access?"). Only that item's entry is taken off; nothing else in the
+     record changes and no file is touched. Nothing to take off: nothing is written. */
+  function clearAudience(itemIds){
+    var list = (itemIds || []).filter(Boolean);
+    if(!list.length) return Promise.resolve({ unchanged: true });
+    return store().update(META, function(cur){
+      if(!cur || typeof cur !== 'object' || Array.isArray(cur)) return undefined;
+      var hit = list.filter(function(id){ return Object.prototype.hasOwnProperty.call(cur, id); });
+      if(!hit.length) return undefined;
+      var next = Object.assign({}, cur);
+      hit.forEach(function(id){ delete next[id]; });
+      return next;
+    }).then(function(r){ return saved(r, 'Who can see it'); });
+  }
 
   global.PH_DOCS = {
     BASE: BASE, clean: clean, path: path, under: under, shareId: shareId,
@@ -504,7 +519,7 @@
     tally: tally, remove: remove, replace: replace, insideBase: insideBase,
     resolveLink: resolveLink, whoCanOpen: whoCanOpen,
     links: links, addLink: addLink, unlink: unlink,
-    meta: meta, setAudience: setAudience,
+    meta: meta, setAudience: setAudience, clearAudience: clearAudience,
     /* Tests shorten the waits and start from a clean slate. */
     setRetryWaits: function(w){ WAITS = w; },
     reset: function(){ driveP = null; ids = {}; }

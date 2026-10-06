@@ -176,6 +176,10 @@
   .lv-rm{border:none;background:none;color:#b42318;font-weight:600;font-size:12px;cursor:pointer;font-family:inherit;padding:4px 2px;white-space:nowrap}
   .lv-rm:hover{text-decoration:underline}
   .lv-rm.lv-rep{color:var(--teal-600)}
+  /* A file's name keeps its room: when Open, Access, Replace and Remove don't fit beside
+     it (a phone), they drop to a line under it instead of squeezing it to one word. */
+  #folders .file:not(.lv-fold){flex-wrap:wrap;row-gap:4px}
+  #folders .file:not(.lv-fold) .nm{flex:1 1 170px;min-width:170px}
   .lv-fold{gap:6px}
   .lv-tw{flex:1;display:flex;align-items:center;gap:8px;border:none;background:none;font-family:inherit;font-size:14px;cursor:pointer;padding:0;text-align:left;color:var(--ink)}
   .lv-tw .car{font-size:11px;color:var(--soft);transition:transform .2s;display:inline-block}
@@ -230,11 +234,11 @@
   }
 
 </style>
-<script src="user.js?v=hc68"></script>
+<script src="user.js?v=hc69"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc68"></script>
-  <script src="gate.js?v=hc68"></script>
-  <script src="docs.js?v=hc68"></script>
+  <script src="store.js?v=hc69"></script>
+  <script src="gate.js?v=hc69"></script>
+  <script src="docs.js?v=hc69"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — Documents. You see only the folders your role, location &amp; team allow. Files open on the Microsoft drive.</div>
@@ -628,7 +632,7 @@
       const here=attr('k',ctx.k)+attr('sub',ctx.sub)+attr('path',fp), ipad=' style="padding-left:'+((depth+1)*20)+'px"';
       rows.push('<div class="file lv-fold'+(open?' open':'')+(ctx.canAdd?' dropz':'')+'"'+(ctx.canAdd?here:'')+pad+'>'+
         '<button class="lv-tw"'+attr('act','openf')+attr('path',fp)+' aria-expanded="'+open+'"><span class="car">▶</span><span class="fic">\u{1F4C1}</span><span class="nm">'+escH(f.name)+'</span></button>'+
-        audChip(f.id)+(ctx.canManage?'<button class="lv-rm"'+attr('act','rm')+attr('path',path)+attr('id',f.id)+'>Remove</button>':'')+'</div>'+
+        audChip(f.id)+(ctx.canManage?'<button class="lv-rm lv-rep"'+attr('act','aud')+attr('id',f.id)+attr('k',ctx.k)+attr('sub',ctx.sub)+attr('path',path)+attr('name',f.name)+attr('kind','folder')+'>Access</button>'+'<button class="lv-rm"'+attr('act','rm')+attr('path',path)+attr('id',f.id)+'>Remove</button>':'')+'</div>'+
         (open?'<div class="lv-in'+(ctx.canAdd?' dropz':'')+'"'+(ctx.canAdd?here:'')+'>'+folderHTML(fp,depth+1,ctx)+
           (ctx.canAdd?'<div class="lv-sacts"'+ipad+'><button class="lv-link"'+attr('act','add')+here+'>+ Add files here</button>'+
             (ctx.canEdit?'<button class="lv-link"'+attr('act','newf')+here+'>+ New folder here</button>':'')+'</div>':'')+'</div>':''));
@@ -637,7 +641,7 @@
       rows.push('<div class="file"'+pad+'><span class="fic">'+fileIcon(f.name)+'</span>'+
         '<span class="nm"><a href="'+escH(safeUrl(f.webUrl))+'" target="_blank" rel="noopener">'+escH(f.name)+'</a><span class="lv-meta">'+escH(whenBy(f))+'</span></span>'+
         audChip(f.id)+'<a class="sp" href="'+escH(safeUrl(f.webUrl))+'" target="_blank" rel="noopener">Open ↗</a>'+
-        (ctx.canManage?'<button class="lv-rm lv-rep"'+attr('act','rep')+attr('path',path)+attr('id',f.id)+attr('k',ctx.k)+attr('sub',ctx.sub)+'>Replace</button>'+
+        (ctx.canManage?'<button class="lv-rm lv-rep"'+attr('act','aud')+attr('id',f.id)+attr('k',ctx.k)+attr('sub',ctx.sub)+attr('path',path)+attr('name',f.name)+attr('kind','file')+'>Access</button>'+'<button class="lv-rm lv-rep"'+attr('act','rep')+attr('path',path)+attr('id',f.id)+attr('k',ctx.k)+attr('sub',ctx.sub)+'>Replace</button>'+
           '<button class="lv-rm"'+attr('act','rm')+attr('path',path)+attr('id',f.id)+'>Remove</button>':'')+'</div>');
     });
     if(!rows.length) return depth ? '<div class="lv-msg"'+pad+'>Empty folder.</div>' : '';
@@ -665,7 +669,7 @@
           const linkRows=links.map(l=>'<div class="file"><span class="fic">\u{1F517}</span>'+
             '<span class="nm"><a href="'+escH(safeUrl(l.webUrl))+'" target="_blank" rel="noopener">'+escH(l.name)+'</a><span class="lv-meta">Linked — kept '+(l.shared===false?'elsewhere · ⚠ not shared with everyone yet':'elsewhere')+'</span></span>'+
             audChip(l.id)+'<a class="sp" href="'+escH(safeUrl(l.webUrl))+'" target="_blank" rel="noopener">Open ↗</a>'+
-            (manage?'<button class="lv-rm"'+attr('act','unlink')+attr('id',l.id)+'>Remove link</button>':'')+'</div>').join('');
+            (manage?'<button class="lv-rm lv-rep"'+attr('act','aud')+attr('id',l.id)+attr('k',s.k)+attr('sub',r.sub)+attr('name',l.name)+attr('kind','link')+'>Access</button>'+'<button class="lv-rm"'+attr('act','unlink')+attr('id',l.id)+'>Remove link</button>':'')+'</div>').join('');
           const acts=add?'<div class="lv-acts">'+
               '<button class="addbtn"'+attr('act','add')+attr('k',s.k)+attr('sub',r.sub)+'>+ Add files</button>'+
               (edit?'<button class="lv-btn"'+attr('act','newf')+attr('k',s.k)+attr('sub',r.sub)+'>+ New folder</button>':'')+
@@ -793,6 +797,13 @@
       const i=el('lvUrl'); if(i){ i.addEventListener('input',()=>{ d.url=i.value; }); i.addEventListener('keydown',e=>{ if(e.key==='Enter') linkFind(); }); if(!it) i.focus(); }
       return;
     }
+    if(d.kind==='aud'){
+      card.innerHTML=top('Who can see \u201c'+escH(d.name)+'\u201d?')+'<div class="dm-body">'+audHTML(d.aud,d.what,d)+
+        (d.err?'<div class="lv-bad">'+escH(d.err)+'</div>':'')+'</div>'+
+        foot('<button class="simbtn"'+attr('act','close')+'>Cancel</button><button class="addbtn"'+attr('act','aud-save')+(audOk(d.aud)&&!d.busy?'':' disabled')+'>'+(d.busy?'Saving\u2026':'Save')+'</button>',
+          whoSentence(d.aud,d.what,where(d)));
+      return;
+    }
     if(d.kind==='rep'){
       const it=d.item, x=extOf(it.name);
       if(d.stage==='busy'){
@@ -908,6 +919,23 @@
     if(it.folder) PH_DOCS.tally(it).then(c=>{ d.count=c; if(DLG===d) drawDlg(); },
       ()=>{ d.count={files:0,folders:0,more:true,unknown:true}; if(DLG===d){ d.err='Couldn’t count what’s inside. Removing it still sends everything to the recycle bin.'; drawDlg(); } });
   }
+  /* WHO CAN SEE ONE ITEM, changed after it went in (07/10 - Cory: "can I go to each file
+     and choose who gets access?"). The same two choices as adding. "Everyone who can
+     open ..." takes the item's own restriction off; nothing else changes. */
+  function audOpen(id,k,sub,path,name,kind){
+    const sr=secRoot(k,sub); if(!sr || sr.cap!=='manage' || !id) return;
+    const a=META[id];
+    openDlg({kind:'aud',s:sr.s,r:sr.r,k,at:path?inRoot(sr.r,path):sr.r.path,id,name:name||'this item',
+      what:kind==='folder'?'this folder':kind==='link'?'this link':'this file',
+      aud:a?{mode:'some',teams:(a.teams||[]).slice(),offices:(a.offices||[]).slice()}:{mode:'all',teams:[],offices:[]},err:'',busy:false});
+  }
+  function audSave(){
+    const d=DLG; if(!d || d.kind!=='aud' || d.busy || !audOk(d.aud)) return;
+    d.busy=true; drawDlg();
+    const run = d.aud.mode==='some' ? PH_DOCS.setAudience([d.id], audOf(d.aud), myName()) : PH_DOCS.clearAudience([d.id]);
+    run.then(()=>{ extras='no'; closeLive(); liveRender(); },
+      e=>{ d.busy=false; d.err=(e&&e.message)||'That didn\u2019t save. Try again.'; if(DLG===d) drawDlg(); });
+  }
   /* REPLACE: a new version of one master file - Heather updates the handbook PDF and it
      goes in place of the old one (07/10). docs.js fences it to files inside Home-Brace
      Documents of the same type; SharePoint keeps the old version. */
@@ -968,6 +996,7 @@
     if(act==='link'){ const sr=secRoot(b.dataset.k,b.dataset.sub); if(sr && canAddAt(sr.cap)) openDlg({kind:'link',s:sr.s,r:sr.r,k:b.dataset.k,url:'',item:null,shared:null,aud:{mode:'all',teams:[],offices:[]},err:''}); return; }
     if(act==='rm'){ rmOpen(b.dataset.path,b.dataset.id); return; }
     if(act==='rep'){ repOpen(b.dataset.path,b.dataset.id,b.dataset.k,b.dataset.sub); return; }
+    if(act==='aud'){ audOpen(b.dataset.id,b.dataset.k,b.dataset.sub,b.dataset.path,b.dataset.name,b.dataset.kind); return; }
     if(act==='unlink'){ const l=LINKS.find(x=>x&&x.id===b.dataset.id); if(l) openDlg({kind:'unlink',link:l,err:''}); return; }
     if(act==='close'){ closeLive(); return; }
     if(!d) return;
@@ -979,6 +1008,7 @@
     if(act==='upload'){ uploadGo(); return; }
     if(act==='rep-pick'){ const i=el('lvRepFile'); if(i) i.click(); return; }
     if(act==='rep-go'){ repGo(); return; }
+    if(act==='aud-save'){ audSave(); return; }
     if(act==='newf-go'){ newfGo(); return; }
     if(act==='link-find'){ linkFind(); return; }
     if(act==='link-go'){ linkGo(); return; }
@@ -1039,7 +1069,7 @@ document.addEventListener('ph-identity',function(){
   });
 });
 PH.nav('documents');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc68"></script>
+<script src="tour.js?v=hc69"></script>
 <script>
 Tour.init([
   {sel:'.crumb', title:'Everything in one place', body:'This replaces \u201cwho has the latest copy?\u201d. Every policy, form and office file lives here \u2014 and people only ever see the folders meant for them.'},
