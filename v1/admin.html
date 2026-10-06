@@ -245,12 +245,12 @@
   }
 
 </style>
-<script src="user.js?v=hc73"></script>
+<script src="user.js?v=hc74"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="_staff.js?v=hc73"></script>
-  <script src="store.js?v=hc73"></script>
-  <script src="gate.js?v=hc73"></script>
-  <script src="docs.js?v=hc73"></script>
+  <script src="_staff.js?v=hc74"></script>
+  <script src="store.js?v=hc74"></script>
+  <script src="gate.js?v=hc74"></script>
+  <script src="docs.js?v=hc74"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — admin console concept for validation. Real build: people sync from Microsoft 365; access is managed here.</div>
@@ -1538,7 +1538,9 @@
                 return next;
               });
             })
-            .then(()=>{ EDITSYNC={state:'done', gave:done.gave.length, took:done.took.length, failed:done.failed, noEmail:w.noEmail}; });
+            .then(()=>{ EDITSYNC={state:'done', gave:done.gave.length, took:done.took.length, failed:done.failed, noEmail:w.noEmail};
+              if(done.gave.length || done.took.length)
+                docToast('\u2713 SharePoint edit rights updated ('+[done.gave.length?done.gave.length+' given':'', done.took.length?done.took.length+' taken back':''].filter(Boolean).join(', ')+').'); });
         });
       })
       .catch(e=>{ EDITSYNC={state:'error', why:(e&&e.message)||'SharePoint didn\u2019t answer.'}; })
@@ -1548,7 +1550,7 @@
   function editSyncState(){
     const S=EDITSYNC;
     if(!liveDocs() || !(window.PH && PH.isAdmin && PH.isAdmin()) || S.state==='idle') return {cls:'', html:''};
-    if(S.state==='busy') return {cls:'', html:'Checking who can edit the documents in SharePoint\u2026'};
+    if(S.state==='busy') return {cls:'', html:''};                       // quiet while it checks
     if(S.state==='notlocked') return {cls:'es-warn', html:
       '<b>SharePoint editing isn\u2019t locked yet.</b> Until it is, everyone in Home-Brace can edit the documents in SharePoint, whatever this page says. '+
       'Do the one-time lock, and from then on Home-Brace gives and takes back edit rights from Teams &amp; Access by itself.'+
@@ -1559,8 +1561,11 @@
         '<li>Tick <b>Home-Brace Members</b> \u2192 <b>Edit User Permissions</b> \u2192 <b>Read</b> only \u2192 OK.</li>'+
       '</ol></details><button class="lnk" onclick="AD.editSyncNow()">I\u2019ve done it \u2014 check again</button>'};
     if(S.state==='done'){
+      /* All matched: nothing to say here (Cory, 07/10: "Do we need this message now?"). What
+         changed is a short note that goes away; only a problem stays on the page. */
+      if(!S.failed.length && !S.noEmail.length) return {cls:'', html:''};
       const n=[S.gave?S.gave+' given':'', S.took?S.took+' taken back':''].filter(Boolean).join(', ');
-      return {cls:S.failed.length?'es-warn':'es-ok', html:'\u2713 <b>SharePoint editing matches Teams &amp; Access.</b>'+(n?' ('+n+')':'')+
+      return {cls:'es-warn', html:'<b>SharePoint editing mostly matches Teams &amp; Access.</b>'+(n?' ('+n+')':'')+
         (S.failed.length?'<br>Couldn\u2019t '+S.failed.slice(0,5).map(f=>esc(f.verb)+' edit rights for '+esc(f.em)+' ('+esc(f.why)+')').join('; ')+
           (S.failed.length>5?'; and '+(S.failed.length-5)+' more':'')+'. <button class="lnk" onclick="AD.editSyncNow()">Try again</button>':'')+
         (S.noEmail.length?'<br>No email on file, so no edit rights in SharePoint for: '+esc(S.noEmail.join(', '))+'.':'')};
@@ -1713,7 +1718,7 @@
 })();
 </script>
 <script>PH.nav('admin');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(PH.loadPhotos)PH.loadPhotos().then(function(got){if(got&&window.AD&&AD.tab)AD.tab('users');});});</script>
-<script src="tour.js?v=hc73"></script>
+<script src="tour.js?v=hc74"></script>
 <script>
 Tour.init([
   {sel:'#tabs', title:'This is your control room', body:'Four tabs and you can run the whole hub: <b>People</b>, <b>Teams &amp; Access</b>, <b>Document Sections</b> and <b>Locations</b>. No developer, no consultant.', pre:()=>AD.tab('users')},
