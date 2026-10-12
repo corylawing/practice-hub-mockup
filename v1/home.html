@@ -117,10 +117,10 @@
   }
 
 </style>
-<script src="user.js?v=hc75"></script>
+<script src="user.js?v=hc76"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc75"></script>
-  <script src="gate.js?v=hc75"></script>
+  <script src="store.js?v=hc76"></script>
+  <script src="gate.js?v=hc76"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — this is the logged-in home. Use “Viewing as” to see how the app changes for each role.</div>
@@ -165,6 +165,7 @@
     {k:'schedule',n:'Schedule',ic:'📅',d:'Who works where this week',href:'schedule.html',kind:'tool'},
     {k:'marketing',n:'Marketing',ic:'📣',d:'Events & social post board',href:'marketing.html',kind:'tool'},
     {k:'production',n:'Enter Production',ic:'📝',d:"Type the month's numbers",href:'production.html',kind:'tool'},
+    {k:'tc',n:'TC Tracker',ic:'🗂️',d:'Log consults · today’s call list',href:'tc.html',kind:'tool'},
     {k:'documents',n:'Documents',ic:'📁',d:'Files, forms & policies',kind:'docs'},
     {k:'admin',n:'Admin',ic:'⚙️',d:'Manage people & access',href:'admin.html',kind:'tool',adminOnly:true}
   ];
@@ -180,16 +181,16 @@
   // Personas = capability profiles. cap per section, and per document-folder.
   const PERSONAS=[
     {id:'admin',name:'Administrator',sub:'Full access · all offices',scope:'all',state:'',brand:'',
-      sec:{dashboard:'manage',production:'edit',schedule:'manage',marketing:'manage',admin:'manage'},
+      sec:{dashboard:'manage',production:'edit',tc:'manage',schedule:'manage',marketing:'manage',admin:'manage'},
       doc:{hr:'manage',officedocs:'manage',forms:'manage',vendors:'manage',filing:'manage',eom:'manage'}},
     {id:'om',name:'Office Manager',sub:'Carlsbad',scope:'Carlsbad',state:'NM',brand:'FFO',
-      sec:{dashboard:'view',production:'edit',schedule:'edit',marketing:'view'},
+      sec:{dashboard:'view',production:'edit',tc:'view',schedule:'edit',marketing:'view'},
       doc:{hr:'view',officedocs:'edit',forms:'edit',vendors:'edit',filing:'edit',eom:'edit'}},
     {id:'doctor',name:'Doctor',sub:'Clinical · rotates NM offices',scope:'all',state:'NM',brand:'FFO',
       sec:{dashboard:'view',schedule:'view'},
       doc:{hr:'view',forms:'view'}},
     {id:'tc',name:'Treatment Coordinator',sub:'Front office · Carlsbad',scope:'Carlsbad',state:'NM',brand:'FFO',
-      sec:{schedule:'view'},
+      sec:{tc:'edit',schedule:'view'},
       doc:{hr:'view',forms:'add'}},
     {id:'staff',name:'Front Desk / Staff',sub:'General · Carlsbad',scope:'Carlsbad',state:'NM',brand:'FFO',
       sec:{schedule:'view'},
@@ -286,7 +287,9 @@
   function tileCap(c){ return '<span class="cap '+c+'">'+CAPTXT[c]+'</span>'; }
 
   function renderTiles(p){
-    const toolTiles=SECTIONS.filter(s=>s.kind==='tool' && (!s.adminOnly|| p.id==='admin') && p.sec[s.k]).map(s=>
+    // The TC Tracker tile follows the same sandbox-first switch as its tab (user.js tcOn).
+    const toolTiles=SECTIONS.filter(s=>s.kind==='tool' && (!s.adminOnly|| p.id==='admin') && p.sec[s.k] &&
+      (s.k!=='tc' || !(window.PH && PH.tcOn) || PH.tcOn())).map(s=>
       '<a class="tile '+(s.k==='admin'?'admin':'')+'" href="'+s.href+'"><div class="ic">'+s.ic+'</div><div class="tn">'+s.n+'</div><div class="td">'+s.d+'</div>'+tileCap(p.sec[s.k])+'</a>'
     );
     // documents tile
@@ -350,7 +353,7 @@
 })();
 </script>
 <script>PH.nav('home');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(PH.loadActivity)PH.loadActivity().then(function(){return PH.loadSeen?PH.loadSeen():null;}).then(function(){if(window.HOME&&HOME.refreshUpdates)HOME.refreshUpdates();if(PH.refreshBell)PH.refreshBell();});});</script>
-<script src="tour.js?v=hc75"></script>
+<script src="tour.js?v=hc76"></script>
 <script>
 Tour.init([
   {sel:'.ph-av', title:'This is you', body:'Your name and photo, top right. Tap it any time for <b>My profile</b> \u2014 your photo, preferred name, phone and \u201cAbout me\u201d. Those follow you between devices.'},

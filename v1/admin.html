@@ -245,12 +245,12 @@
   }
 
 </style>
-<script src="user.js?v=hc75"></script>
+<script src="user.js?v=hc76"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="_staff.js?v=hc75"></script>
-  <script src="store.js?v=hc75"></script>
-  <script src="gate.js?v=hc75"></script>
-  <script src="docs.js?v=hc75"></script>
+  <script src="_staff.js?v=hc76"></script>
+  <script src="store.js?v=hc76"></script>
+  <script src="gate.js?v=hc76"></script>
+  <script src="docs.js?v=hc76"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — admin console concept for validation. Real build: people sync from Microsoft 365; access is managed here.</div>
@@ -310,6 +310,9 @@
     {k:'dashboard',n:'Production Dashboard',s:'Dashboard',ic:'📊'},
     {k:'schedule',n:'Schedule',s:'Schedule',ic:'📅'},
     {k:'production',n:'Enter Production (type the numbers)',s:'Enter Prod',ic:'📝'},
+    /* TC Tracker (12/10/2026): Selene's consult spreadsheet as a page. Sandbox only until
+       the practice says go - user.js tcOn() keeps it off the live site whatever is set here. */
+    {k:'tc',n:'TC Tracker (consults & call list)',s:'TC Tracker',ic:'🗂️'},
     {k:'marketing',n:'Marketing board',s:'Marketing',ic:'📣'},
     /* The Documents TAB, on or off per team (07/10). It was never a column, so a team with
        saved settings had it off and there was no switch to turn it on when they're ready.
@@ -363,6 +366,7 @@
   const SEC_LEVELS={
     dashboard:['none','view'],
     production:['none','edit','manage'],
+    tc:['none','view','edit','manage'],
     schedule:['none','view','edit'],
     marketing:['none','view','edit'],
     team:['none','view'],
@@ -371,12 +375,15 @@
   };
   const levelsFor=k=>SEC_LEVELS[k]||LEVELS;   // document sections use the full ladder
   // short text in the grid square
-  const SEC_SHORT={production:{edit:'Enter',manage:'Enter + goals'},admin:{manage:'Full control'},documents:{view:'Can open'}};
+  const SEC_SHORT={production:{edit:'Enter',manage:'Enter + goals'},tc:{view:'See',edit:'Log + calls',manage:'Everything'},admin:{manage:'Full control'},documents:{view:'Can open'}};
   const shortFor=(k,l)=>((SEC_SHORT[k]||{})[l])||LVLNAME[l];
   // plain-English explanation in the picker
   const SEC_DESC={
     dashboard:{view:'Can see the numbers for their offices'},
     production:{edit:'Can type the monthly actuals',manage:'Can type actuals AND set the goals'},
+    tc:{none:'No TC Tracker tab',view:'Can see the consults, call list and numbers for their offices',
+        edit:'Can log consults, work the call list and set consult slots for their offices',
+        manage:'All of that, plus change the lists (consult types, pending reasons, lead sources) and download a month'},
     schedule:{view:'Can look at the rota, change nothing',edit:'Can assign doctors and set hours'},
     marketing:{view:'Can look at the board',edit:'Can move cards and score results'},
     team:{view:"Can see everyone's contact card"},
@@ -443,11 +450,11 @@
   let SAVED_ACCESS=null;
   try{ SAVED_ACCESS=JSON.parse(localStorage.getItem(ACCESS_KEY)); }catch(_){}
   allSections().forEach(x=>access['Admin'][x.k]='manage');
-  set('Executive Team',{production:'manage',dashboard:'manage',schedule:'view',marketing:'view',team:'view',admin:'view',hr:'edit',eom:'manage',officedocs:'view',forms:'view',vendors:'view',filing:'view'});
-  set('Leadership Team',{production:'manage',dashboard:'edit',schedule:'view',marketing:'view',team:'view',hr:'edit',eom:'edit',officedocs:'view',forms:'view',vendors:'view',filing:'view'});
-  set('Office Managers',{production:'edit',dashboard:'view',schedule:'edit',marketing:'view',team:'view',hr:'view',eom:'edit',officedocs:'edit',forms:'edit',vendors:'edit',filing:'edit'});
+  set('Executive Team',{tc:'manage',production:'manage',dashboard:'manage',schedule:'view',marketing:'view',team:'view',admin:'view',hr:'edit',eom:'manage',officedocs:'view',forms:'view',vendors:'view',filing:'view'});
+  set('Leadership Team',{tc:'manage',production:'manage',dashboard:'edit',schedule:'view',marketing:'view',team:'view',hr:'edit',eom:'edit',officedocs:'view',forms:'view',vendors:'view',filing:'view'});
+  set('Office Managers',{tc:'view',production:'edit',dashboard:'view',schedule:'edit',marketing:'view',team:'view',hr:'view',eom:'edit',officedocs:'edit',forms:'edit',vendors:'edit',filing:'edit'});
   set('Clinic Managers',{dashboard:'view',schedule:'edit',team:'view',hr:'view',officedocs:'view',forms:'edit'});
-  set('TCs',{schedule:'view',team:'view',hr:'view',forms:'add'});
+  set('TCs',{tc:'edit',schedule:'view',team:'view',hr:'view',forms:'add'});
   set('Doctors',{dashboard:'view',schedule:'view',team:'view',hr:'view',forms:'view'});
   set('Marketing Team',{marketing:'manage',team:'view',hr:'view',forms:'view'});
   set('Financial Coordinator Team',{production:'edit',dashboard:'view',team:'view',eom:'edit',vendors:'view',filing:'edit'});
@@ -1725,7 +1732,7 @@
 })();
 </script>
 <script>PH.nav('admin');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(PH.loadPhotos)PH.loadPhotos().then(function(got){if(got&&window.AD&&AD.tab)AD.tab('users');});});</script>
-<script src="tour.js?v=hc75"></script>
+<script src="tour.js?v=hc76"></script>
 <script>
 Tour.init([
   {sel:'#tabs', title:'This is your control room', body:'Four tabs and you can run the whole hub: <b>People</b>, <b>Teams &amp; Access</b>, <b>Document Sections</b> and <b>Locations</b>. No developer, no consultant.', pre:()=>AD.tab('users')},

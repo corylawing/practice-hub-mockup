@@ -14,29 +14,29 @@
      mail:'heather@farnsworthorthodontics.com',
      phone:'(575) 555-1002', emp:'E-1002', status:'Active', color:'#25456e', offices:'all',
      about:'COO. I look after the group and I\u2019m the administrator for this hub.',
-     can:{dashboard:'view',production:'manage',schedule:'edit',marketing:'edit',documents:'manage',team:'view',admin:'manage'}},
+     can:{dashboard:'view',production:'manage',schedule:'edit',marketing:'edit',documents:'manage',team:'view',admin:'manage',tc:'manage'}},
     {id:'om', first:'Lily', last:'Rico', role:'OM / Clinic Lead', title:'Office Manager \u00b7 Carlsbad',
      teams:['Office Managers','Clinic Managers'], loc:'Carlsbad', region:'NM', brand:'FFO',
      mail:'lily@farnsworthorthodontics.com',
      phone:'(575) 555-1010', emp:'E-1010', status:'Active', color:'#149B96', offices:['Carlsbad'],
      about:'Office manager and clinic lead at Carlsbad.',
-     can:{dashboard:'view',production:'edit',schedule:'edit',marketing:'view',documents:'edit',team:'view',admin:'none'}},
+     can:{dashboard:'view',production:'edit',schedule:'edit',marketing:'view',documents:'edit',team:'view',admin:'none',tc:'view'}},
     {id:'doctor', first:'Carla', last:'Coelho', role:'Associate Doctor', title:'Associate Doctor \u00b7 rotates', dr:true,
      teams:['Doctors'], loc:'Rotates', region:'NM', brand:'FFO',
      phone:'(575) 555-1020', emp:'E-1020', status:'Active', color:'#6b3fd0', offices:['Carlsbad','Hobbs'],
      about:'Associate doctor. I rotate between offices.',
-     can:{dashboard:'view',production:'none',schedule:'view',marketing:'none',documents:'view',team:'view',admin:'none'}},
+     can:{dashboard:'view',production:'none',schedule:'view',marketing:'none',documents:'view',team:'view',admin:'none',tc:'none'}},
     {id:'tc', first:'Elizabeth', last:'Reyes', role:'TC', title:'Treatment Coordinator \u00b7 Hobbs',
      teams:['TCs'], loc:'Hobbs', region:'NM', brand:'FFO',
      mail:'liz@farnsworthorthodontics.com',
      phone:'(575) 555-1030', emp:'E-1030', status:'Active', color:'#946011', offices:['Hobbs'],
      about:'Treatment coordinator at Hobbs.',
-     can:{dashboard:'none',production:'none',schedule:'view',marketing:'none',documents:'add',team:'view',admin:'none'}},
+     can:{dashboard:'none',production:'none',schedule:'view',marketing:'none',documents:'add',team:'view',admin:'none',tc:'edit'}},
     {id:'staff', first:'Serenity', last:'Gonzales', role:'Clinical Assistant', title:'Clinical Assistant \u00b7 Carlsbad',
      teams:['Staff'], loc:'Carlsbad', region:'NM', brand:'FFO',
      phone:'(575) 555-1055', emp:'E-1055', status:'Active', color:'#b03a63', offices:['Carlsbad'],
      about:'Clinical assistant at Carlsbad.',
-     can:{dashboard:'none',production:'none',schedule:'view',marketing:'none',documents:'view',team:'view',admin:'none'}}
+     can:{dashboard:'none',production:'none',schedule:'view',marketing:'none',documents:'view',team:'view',admin:'none',tc:'none'}}
   ];
   const COLORS=['#25456e','#149B96','#6b3fd0','#946011','#b03a63','#2E7D52','#1f6f9e','#b0442f'];
 
@@ -144,16 +144,16 @@
 
   // Department (Entra) -> what they can do. Keys are Heather's own ten team names, lowercased.
   const DEPT_CAN={
-    'admin':                      {dashboard:'view',production:'manage',schedule:'edit',marketing:'edit',documents:'manage',team:'view',admin:'manage'},
-    'executive team':             {dashboard:'view',production:'edit',  schedule:'edit',marketing:'edit',documents:'manage',team:'view',admin:'none'},
-    'leadership team':            {dashboard:'view',production:'edit',  schedule:'edit',marketing:'edit',documents:'manage',team:'view',admin:'none'},
-    'office managers':            {dashboard:'view',production:'edit',  schedule:'edit',marketing:'view',documents:'edit',  team:'view',admin:'none'},
-    'clinic managers':            {dashboard:'view',production:'view',  schedule:'edit',marketing:'view',documents:'edit',  team:'view',admin:'none'},
-    'doctors':                    {dashboard:'view',production:'none',  schedule:'view',marketing:'none',documents:'view',  team:'view',admin:'none'},
-    'tcs':                        {dashboard:'none',production:'none',  schedule:'view',marketing:'none',documents:'add',   team:'view',admin:'none'},
-    'marketing team':             {dashboard:'none',production:'none',  schedule:'view',marketing:'edit',documents:'edit',  team:'view',admin:'none'},
-    'financial coordinator team': {dashboard:'view',production:'edit',  schedule:'view',marketing:'none',documents:'view',  team:'view',admin:'none'},
-    'staff':                      {dashboard:'none',production:'none',  schedule:'view',marketing:'none',documents:'view',  team:'view',admin:'none'}
+    'admin':                      {dashboard:'view',production:'manage',schedule:'edit',marketing:'edit',documents:'manage',team:'view',admin:'manage',tc:'manage'},
+    'executive team':             {dashboard:'view',production:'edit',  schedule:'edit',marketing:'edit',documents:'manage',team:'view',admin:'none',tc:'manage'},
+    'leadership team':            {dashboard:'view',production:'edit',  schedule:'edit',marketing:'edit',documents:'manage',team:'view',admin:'none',tc:'manage'},
+    'office managers':            {dashboard:'view',production:'edit',  schedule:'edit',marketing:'view',documents:'edit',  team:'view',admin:'none',tc:'view'},
+    'clinic managers':            {dashboard:'view',production:'view',  schedule:'edit',marketing:'view',documents:'edit',  team:'view',admin:'none',tc:'none'},
+    'doctors':                    {dashboard:'view',production:'none',  schedule:'view',marketing:'none',documents:'view',  team:'view',admin:'none',tc:'none'},
+    'tcs':                        {dashboard:'none',production:'none',  schedule:'view',marketing:'none',documents:'add',   team:'view',admin:'none',tc:'edit'},
+    'marketing team':             {dashboard:'none',production:'none',  schedule:'view',marketing:'edit',documents:'edit',  team:'view',admin:'none',tc:'none'},
+    'financial coordinator team': {dashboard:'view',production:'edit',  schedule:'view',marketing:'none',documents:'view',  team:'view',admin:'none',tc:'none'},
+    'staff':                      {dashboard:'none',production:'none',  schedule:'view',marketing:'none',documents:'view',  team:'view',admin:'none',tc:'none'}
   };
   // Departments that legitimately see every office.
   const ALL_OFFICE_DEPTS=['admin','executive team','leadership team'];
@@ -690,7 +690,7 @@
      Until it is - sandbox, or the read not landed yet - a folder falls back to the
      person's overall Documents level, so the page and its own guard agree instead of
      one saying "Documents" and the other saying "0 folders". */
-  const TOOL_KEYS=['dashboard','production','schedule','marketing','team','admin'];
+  const TOOL_KEYS=['dashboard','production','tc','schedule','marketing','team','admin'];
   const DOC_KEYS=['hr','officedocs','forms','vendors','filing','eom'];
   function asPersona(){
     const m=me(), c=m.can||{};
@@ -1607,10 +1607,17 @@
 
   /* ONE nav for every page — identical order everywhere, so it never rearranges itself.
      A tab only appears if the person can actually open it. */
+  /* TC TRACKER - sandbox only until the practice says go (12/10/2026). Cory: "I want to do
+     it in the sandbox first before we push to production." On the live site the tab, the
+     page and the Home tile stay off whatever Teams & Access says, until this is true. Going
+     live also needs its own locked SharePoint list for the patient details (CLAUDE.md). */
+  const TC_LIVE=false;
+  const tcOn=()=>env()!=='live' || TC_LIVE;
   const NAV=[
     {k:'home',       n:'\ud83c\udfe0 Home',             href:'home.html',       show:()=>true},
     {k:'dashboard',  n:'\ud83d\udcca Production Dashboard',        href:'index.html',      show:()=>atLeast('dashboard','view')},
     {k:'production', n:'\ud83d\udcdd Enter Production',  href:'production.html', show:()=>atLeast('production','edit')},
+    {k:'tc',         n:'\ud83d\uddc2\ufe0f TC Tracker',        href:'tc.html',         show:()=>tcOn() && atLeast('tc','view')},
     {k:'schedule',   n:'\ud83d\udcc5 Schedule',          href:'schedule.html',   show:()=>atLeast('schedule','view')},
     {k:'marketing',  n:'\ud83d\udce3 Marketing',         href:'marketing.html',  show:()=>atLeast('marketing','view')},
     {k:'documents',  n:'\ud83d\udcc1 Documents',         href:'documents.html',  show:()=>atLeast('documents','view')},
@@ -2126,7 +2133,7 @@
      ("Production Dashboard", "Enter Production") truncated to "Produc..." and
      "Enter P..." - which reads as broken. Short forms for the bar; the sheet and the
      top nav keep the full names. */
-  const TAB_SHORT={home:'Home',dashboard:'Dashboard',production:'Enter Prod',schedule:'Schedule',
+  const TAB_SHORT={home:'Home',dashboard:'Dashboard',production:'Enter Prod',tc:'TC Tracker',schedule:'Schedule',
                    marketing:'Marketing',documents:'Documents',team:'Team',admin:'Admin'};
   /* Line icons for the phone bar instead of emoji - emoji render differently on every
      phone and read as casual. 24-unit grid, stroke follows the text colour. */
@@ -2135,6 +2142,7 @@
     dashboard:'<path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/>',
     production:'<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/>',
     schedule:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/>',
+    tc:'<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1"/><path d="M9 12.5l2 2 4-4.5"/>',
     marketing:'<path d="M3 11v2a1 1 0 001 1h2l5 4V6L6 10H4a1 1 0 00-1 1z"/><path d="M15 9a3 3 0 010 6"/><path d="M18 6a7 7 0 010 12"/>',
     documents:'<path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>',
     team:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0113 0"/><circle cx="17" cy="9" r="3"/><path d="M15.5 14.5A5.5 5.5 0 0122 20"/>',
@@ -2247,7 +2255,7 @@
      PH.nav('<key>'), so this runs everywhere for free and uses the SAME show() rule the
      nav does. The body class does the real work: even if the page's own script renders
      afterwards (or re-renders later), CSS keeps its content hidden. */
-  const SECNAME={dashboard:'Production Dashboard',production:'Enter Production',schedule:'Schedule',
+  const SECNAME={dashboard:'Production Dashboard',production:'Enter Production',tc:'TC Tracker',schedule:'Schedule',
     marketing:'Marketing board',documents:'Documents',team:'Team directory',admin:'Admin Console'};
   function guard(active){
     const entry=NAV.find(x=>x.k===active);
@@ -2575,7 +2583,7 @@
   }
   const isLive=()=>env()==='live';
 
-  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, rosterView, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK, notesHTML, searchHTML, searchDocs, searchDocsHTML, levelForTeams, teamsSeeAll, saveFace, faceOf,
+  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, rosterView, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK, notesHTML, searchHTML, searchDocs, searchDocsHTML, levelForTeams, teamsSeeAll, tcOn, saveFace, faceOf,
     setTheme, theme:()=>THEME, themes:()=>THEMES.map(t=>({k:t.k, n:t.n})), schemeTokens:k=>schemeTokens(themeOf(k)), contrast,
     feedback:openFeedback, feedbackText, feedbackContext, learning:stillLearning};
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mount); else mount();

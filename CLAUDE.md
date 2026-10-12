@@ -88,6 +88,24 @@ multi-line-text column lives there for step 8; harmless to keep or delete.
 Entra groups to create (7 team + 8 office), the permission matrix, the per-office restriction, and
 the shared-account problem. Republish that same file to update it; do not create a second one.
 
+**TC Tracker - SANDBOX ONLY (12/10, hc76).** Heather (cc Selene Brown, Marketing Director, Leadership Team - "more
+her baby") asked to replace the TC Consult Tracker Excel Selene emails out monthly
+(`FFO_TC_Consult_Tracker_Excel_Compatible.xlsx`, an empty template: Consult Log 28 cols, Follow-Up Queue, Daily
+Capacity, Dashboard, Monthly Totals). Cory: sandbox first. New tab `v1/tc.html` + logic `v1/tc.js` (node-tested,
+`test/tc.test.js` 109): Today (log a consult, one-tap outcome, only the questions that fit), Call list (the sheet's
+"Action needed" formula; buttons fill status/last contact/follow-up complete), Consults (log, edit, move, soft
+delete), Numbers (Dashboard + Monthly Totals formulas cell for cell, plus By office), Slots (usual number per office
+with history + Schedule closed days + per-day overrides). Cory's answers: **all the sheet's patient fields** (name,
+DOB, phone, chart #); **TCs + office managers see their own office, Selene/Heather/leadership all** - new access
+column `tc` (none/view/edit/manage; DEPT_CAN + demo personas + admin grid). Deliberate differences from the sheet are
+in `TC.WHAT_CHANGED` (shown on Numbers) - Selene to confirm. Storage: `ph_tclog_<office>_<YYYY-MM>` (one record per
+office-month), `ph_tcslots_<office>`, `ph_tclists`; nothing removed (deleted/moved markers). **Production is OFF:**
+`TC_LIVE=false` in user.js (`tcOn()`) hides tab, page and Home tile on the live site whatever the grid says.
+**Before going live:** the patient details are PHI - they must NOT go in HomeBraceData (every member can read it).
+Create a separate list (e.g. HomeBraceConsults, same two columns) with broken inheritance for TCs/OMs/leadership only,
+route `ph_tclog_`/`ph_tcslots_`/`ph_tclists` keys there in store.js, and make a failed `getAll` show as an error, not
+an empty tracker. Sandbox demo: made-up patients seeded once per browser (`ph_tc_demo`), "Reset sample data" button.
+
 **Documents tab column + lock check fixed (07/10, hc73).** Teams & Access has a **Documents** app-tool column
 (None / Can open) = whether the team gets the Documents TAB. It was never a column, so teams with saved rows had it
 off with no switch - nobody, Heather included, could open Documents. It ONLY shows/hides the tab; the section columns

@@ -190,7 +190,10 @@ const t=(n,v)=>{ (v?ok:bad).push(n); };
   t('the practice COO still gets Admin', H.PH.can('admin')==='manage');
   t('the COO is still an admin', H.PH.isAdmin()===true);
   t('admin.html is NOT locked for her', H.locked()===false);
-  t('and her menu still has every tab', H.tabs().length===H.PH.NAV.length);
+  /* Every tab but the TC Tracker, which stays off the live site until the practice says
+     go (12/10/2026, user.js tcOn) - whatever Teams & Access says. */
+  t('and her menu still has every tab', H.tabs().length===H.PH.NAV.filter(x=>x.k!=='tc').length);
+  t('the TC Tracker stays off the live site until it is switched on', H.PH.tcOn()===false && H.tabs().indexOf('tc')<0);
 
   const BOOT=load({page:'admin'});
   BOOT.PH.nav('admin');
@@ -251,6 +254,10 @@ const t=(n,v)=>{ (v?ok:bad).push(n); };
   S.PH.nav('team');
   t('sandbox still resolves its demo persona', S.PH.me().id==='admin');
   t('sandbox admin persona still has the Admin tab', S.tabs().indexOf('admin')>=0);
+  t('the sandbox has the TC Tracker (sandbox first)', S.PH.tcOn()===true && S.tabs().indexOf('tc')>=0);
+  const S3=load({ host:'corylawing.github.io', page:'team', ls:{ ph_viewas:'staff' } });
+  S3.PH.nav('team');
+  t('a sandbox staff persona does not get the TC Tracker (patient details)', S3.tabs().indexOf('tc')<0);
   const S2=load({ host:'corylawing.github.io', page:'team', ls:{ ph_viewas:'doctor' } });
   S2.PH.nav('team');
   t('sandbox honours the chosen persona', S2.PH.me().id==='doctor');

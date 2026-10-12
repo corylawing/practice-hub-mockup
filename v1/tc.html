@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Home-Brace · TC Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" href="../assets/favicon.png?v=2" type="image/png">
+<meta name="theme-color" content="#0F2A4A">
+<meta name="apple-mobile-web-app-title" content="Home-Brace">
+<link rel="apple-touch-icon" href="../assets/logo-mark.png">
+<meta name="robots" content="noindex">
+<style>
+  :root{
+    --navy:#0F2A4A; --navy2:#25456e; --teal:#149B96; --teal2:#2BC0B8; --teal-soft:#E5F4F3; --teal-600:#0F827E;
+    --ink:#1F2D3D; --soft:#56627A; --line:#E4E8EE; --canvas:#F4F6F8; --white:#fff;
+    --good:#2E9E6B; --good-soft:#E7F4EE; --bad:#D7503A; --bad-soft:#FBEAE7; --amber:#F2A03D; --amber-soft:#FFF4E2;
+    --blue:#1f6f9e; --blue-soft:#E3F0FA; --plum:#6b3fd0; --plum-soft:#F0EAFB;
+    --shadow:0 1px 2px rgba(15,42,74,.06),0 6px 18px rgba(15,42,74,.06);
+    --shadow-lg:0 10px 30px rgba(15,42,74,.12); --radius:14px; --maxw:1080px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--canvas);line-height:1.5;-webkit-font-smoothing:antialiased}
+  h1{color:var(--navy);margin:0}
+  button{font-family:inherit}
+  .ribbon{background:var(--amber);color:#3a2400;text-align:center;font-size:13px;font-weight:600;padding:6px 14px}
+  .hdr{background:var(--navy);color:#fff}
+  .hdr-in{max-width:var(--maxw);margin:0 auto;display:flex;align-items:center;gap:12px;padding:13px 20px}
+  .mark{width:34px;height:34px;flex:none;display:block}
+  .mark img{width:34px;height:34px;display:block;border-radius:50%}
+  .brand{font-weight:700;font-size:18px;color:#fff;line-height:1.1}
+  .brand i{font-style:normal;color:var(--teal2)}
+  .brand small{display:block;font-weight:500;font-size:12px;color:#9fb4d0}
+  .v1{background:rgba(255,255,255,.15);color:#eaf1fb;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;margin-left:6px}
+  .v1nav{background:var(--navy2)}
+  .v1nav-in{max-width:var(--maxw);margin:0 auto;display:flex;gap:2px;padding:0 12px;overflow-x:auto}
+  .v1nav a{color:#cdd9ea;font-size:14px;font-weight:600;padding:13px 15px;text-decoration:none;border-bottom:3px solid transparent;white-space:nowrap}
+  .v1nav a:hover{color:#fff;background:rgba(255,255,255,.05)}
+  .v1nav a.active{color:#fff;border-bottom-color:var(--teal)}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:22px 20px 90px}
+  .viewas{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:13px 16px;display:flex;align-items:center;gap:13px;flex-wrap:wrap;margin-bottom:16px;border-left:5px solid var(--teal)}
+  .viewas .lab{font-size:12px;color:var(--soft);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+  .viewas select{padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;font-weight:700;color:var(--navy);background:#fff}
+  .viewas .demo{margin-left:auto}
+  .page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap}
+  .page-head h1{font-size:25px}
+  .page-head p{margin:4px 0 0;color:var(--soft);font-size:14.5px;max-width:60ch}
+
+  /* Office first - the same rule as Enter Production. */
+  .offbar{display:flex;gap:6px;flex-wrap:wrap;margin:16px 0 0}
+  .ochip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;font-size:13.5px;font-weight:700;color:var(--navy);cursor:pointer}
+  .ochip.on{background:var(--navy);border-color:var(--navy);color:#fff}
+  .ochip.fixed{cursor:default;background:var(--teal-soft);border-color:#c4e6e3;color:#0c5b57}
+  .tabs{display:flex;gap:4px;margin:16px 0 18px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
+  .tabs::-webkit-scrollbar{display:none}
+  .tab{background:none;border:none;border-bottom:3px solid transparent;padding:11px 14px;font-size:14.5px;font-weight:700;color:var(--soft);cursor:pointer;white-space:nowrap}
+  .tab.on{color:var(--navy);border-bottom-color:var(--teal)}
+  .tab .n{display:inline-block;min-width:20px;padding:1px 7px;margin-left:6px;border-radius:999px;background:var(--bad);color:#fff;font-size:11.5px;line-height:18px;text-align:center}
+  .tab .n.z{background:var(--line);color:var(--soft)}
+
+  .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
+  .card h2{margin:0 0 3px;font-size:16px;color:var(--navy)}
+  .card .sub{font-size:12.5px;color:var(--soft);margin:0 0 12px}
+  .stack{display:flex;flex-direction:column;gap:16px}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .grow{flex:1}
+  .muted{color:var(--soft)}
+  .small{font-size:12.5px}
+  .btn{background:var(--teal);color:#fff;border:none;border-radius:10px;padding:11px 18px;font-weight:700;font-size:14.5px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;text-decoration:none}
+  .btn:hover{background:var(--teal-600)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .btn.big{padding:14px 22px;font-size:16px}
+  .btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--line);font-weight:600}
+  .btn.ghost:hover{border-color:var(--teal);background:var(--teal-soft)}
+  .btn.sm{padding:7px 11px;font-size:13px;border-radius:9px}
+  .btn.danger{background:#fff;color:var(--bad);border:1px solid #f0c7bf}
+  .btn.danger.solid{background:var(--bad);color:#fff;border-color:var(--bad)}
+  .link{background:none;border:none;color:var(--teal-600);font-weight:700;cursor:pointer;padding:0;font-size:inherit}
+  .note{border-radius:12px;padding:11px 14px;font-size:13.5px;line-height:1.5}
+  .note.warn{background:var(--amber-soft);border:1px solid #f3d7a6;color:#7a4b00}
+  .note.info{background:var(--blue-soft);border:1px solid #c3ddf2;color:#14496c}
+  .note.good{background:var(--good-soft);border:1px solid #bfe3cf;color:#1d6b47}
+  .empty{background:#fff;border:1px dashed var(--line);border-radius:14px;padding:28px;text-align:center;color:var(--soft)}
+
+  /* Outcome colours - the same six everywhere. */
+  .oc{display:inline-block;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:700;white-space:nowrap}
+  .oc-Started{background:var(--good-soft);color:#1d6b47}
+  .oc-Pending{background:var(--amber-soft);color:#7a4b00}
+  .oc-Observation{background:var(--plum-soft);color:#4b2a9a}
+  .oc-NoShow{background:var(--bad-soft);color:#9a2f1e}
+  .oc-Refused{background:#EEF1F5;color:#46546b}
+  .oc-Rescheduled{background:var(--blue-soft);color:#14496c}
+  .oc-none{background:#fff;color:var(--soft);border:1px dashed #c9d1dc}
+
+  /* Today */
+  .todayhead{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+  .todayhead h2{font-size:19px;margin:0;color:var(--navy)}
+  .capline{font-size:13.5px;color:var(--soft)}
+  .capline b{color:var(--navy)}
+  .clist{display:flex;flex-direction:column}
+  .crow{display:grid;grid-template-columns:62px 1fr auto;gap:12px;align-items:center;padding:12px 4px;border-bottom:1px solid var(--line)}
+  .crow:last-child{border-bottom:none}
+  .crow .tm{font-weight:800;color:var(--navy);font-size:14px;font-variant-numeric:tabular-nums}
+  .crow .who{min-width:0}
+  .crow .nm{font-weight:700;color:var(--ink);background:none;border:none;padding:0;cursor:pointer;text-align:left;font-size:15px}
+  .crow .nm:hover{color:var(--teal-600);text-decoration:underline}
+  .crow .meta{font-size:12.5px;color:var(--soft)}
+  .quick{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
+  .qb{border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 9px;font-size:12.5px;font-weight:700;color:var(--navy);cursor:pointer}
+  .qb:hover{border-color:var(--teal);background:var(--teal-soft)}
+  .duecard{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .duecard .big{font-size:30px;font-weight:800;color:var(--navy);line-height:1}
+
+  /* Call list */
+  .sect{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--soft);margin:4px 0 8px}
+  .fu{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:grid;grid-template-columns:1fr auto;gap:10px 16px;box-shadow:var(--shadow)}
+  .fu + .fu{margin-top:10px}
+  .fu .act{display:inline-block;font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;border-radius:6px;padding:3px 8px;margin-bottom:5px}
+  .act-due{background:var(--bad-soft);color:#9a2f1e}
+  .act-recall{background:var(--good-soft);color:#1d6b47}
+  .act-set{background:var(--amber-soft);color:#7a4b00}
+  .act-later{background:#EEF1F5;color:#46546b}
+  .fu .nm{font-weight:800;font-size:15.5px;color:var(--ink);background:none;border:none;padding:0;cursor:pointer;text-align:left}
+  .fu .nm:hover{color:var(--teal-600);text-decoration:underline}
+  .fu .facts{font-size:13px;color:var(--soft);display:flex;gap:4px 14px;flex-wrap:wrap;margin-top:3px}
+  .fu .facts b{color:var(--ink);font-weight:600}
+  .fu .notes{font-size:12.5px;color:var(--soft);margin-top:4px;font-style:italic}
+  .fu .btns{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;align-content:flex-start;max-width:330px}
+  .fu.called{opacity:.72}
+  .tag{display:inline-block;font-size:11px;font-weight:800;color:var(--good);margin-left:6px}
+  a.tel{color:var(--teal-600);font-weight:700;text-decoration:none}
+  details.later > summary{cursor:pointer;font-weight:700;color:var(--navy);list-style:none;padding:8px 0}
+  details.later > summary::-webkit-details-marker{display:none}
+
+  /* Consults */
+  .tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+  .mpick{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:10px;background:#fff;overflow:hidden}
+  .mpick button{background:none;border:none;padding:9px 12px;font-size:15px;font-weight:800;color:var(--navy);cursor:pointer}
+  .mpick button:hover{background:var(--teal-soft)}
+  .mpick span{font-weight:800;color:var(--navy);padding:0 6px;min-width:128px;text-align:center;font-size:14.5px}
+  .search{flex:1;min-width:180px;padding:10px 13px;border:1px solid var(--line);border-radius:10px;font-size:15px;font-family:inherit}
+  .sel{padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;font-weight:700;color:var(--navy);background:#fff}
+  .tblwrap{overflow-x:auto;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow)}
+  table.t{border-collapse:collapse;width:100%;font-size:13.5px;font-variant-numeric:tabular-nums}
+  table.t th{background:#F7F9FB;color:var(--soft);font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap;position:sticky;top:0}
+  table.t td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  table.t tr:last-child td{border-bottom:none}
+  table.t td.n, table.t th.n{text-align:right}
+  table.t td:first-child{white-space:nowrap}
+  table.t tr.click{cursor:pointer}
+  table.t tr.click:hover td{background:#FAFCFD}
+  table.t tr.total td{font-weight:800;color:var(--navy);background:#F7F9FB}
+  table.t tr.closed td{color:#9aa6b6}
+
+  /* Numbers */
+  .kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+  .kpi{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;box-shadow:var(--shadow)}
+  .kpi .k{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--soft)}
+  .kpi .v{font-size:24px;font-weight:800;color:var(--navy);line-height:1.2;font-variant-numeric:tabular-nums}
+  .kpi .s{font-size:12px;color:var(--soft)}
+  .three{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .mt{width:100%;border-collapse:collapse;font-size:13.5px;font-variant-numeric:tabular-nums}
+  .mt td{padding:7px 0;border-bottom:1px solid var(--line)}
+  .mt tr:last-child td{border-bottom:none}
+  .mt td.v{text-align:right;font-weight:800;color:var(--navy);padding-left:10px}
+  .mt td.r{text-align:right;color:var(--soft);width:56px}
+  .mt td.c{color:var(--soft);font-size:12px;padding-left:10px}
+  .mt tr.sub td:first-child{padding-left:14px;color:var(--soft)}
+  details.card > summary{cursor:pointer;font-weight:800;color:var(--navy);font-size:16px}
+  details.card[open] > summary{margin-bottom:12px}
+
+  /* Slots */
+  .cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+  .cal .dow{font-size:11.5px;font-weight:800;color:var(--soft);text-transform:uppercase;text-align:center;padding:4px 0}
+  .day{background:#fff;border:1px solid var(--line);border-radius:10px;padding:7px 8px;min-height:74px;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:2px}
+  .day:hover{border-color:var(--teal)}
+  .day[disabled]{cursor:default}
+  .day .d{font-size:12px;font-weight:700;color:var(--soft)}
+  .day .s{font-size:20px;font-weight:800;color:var(--navy);line-height:1.1}
+  .day .b{font-size:11.5px;color:var(--soft)}
+  .day.closed{background:#F7F9FB}
+  .day.closed .s{font-size:12.5px;color:#9aa6b6;font-weight:700}
+  .day.changed{border-color:var(--teal);box-shadow:inset 0 0 0 1px var(--teal)}
+  .day.today{outline:2px solid var(--navy);outline-offset:1px}
+  .day.blank{visibility:hidden}
+
+  /* Dialog */
+  .dm{position:fixed;inset:0;background:rgba(15,42,74,.45);display:none;align-items:flex-start;justify-content:center;padding:28px 14px;z-index:60;overflow-y:auto}
+  .dm.open{display:flex}
+  .dmc{background:#fff;border-radius:16px;box-shadow:var(--shadow-lg);width:100%;max-width:640px;display:flex;flex-direction:column}
+  .dmc.narrow{max-width:440px}
+  .dm-top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 20px;border-bottom:1px solid var(--line)}
+  .dm-top h3{margin:0;font-size:17px;color:var(--navy)}
+  .dm-top .x{background:none;border:none;font-size:24px;line-height:1;color:var(--soft);cursor:pointer;padding:2px 6px}
+  .dm-body{padding:16px 20px;display:flex;flex-direction:column;gap:14px}
+  .dm-foot{display:flex;gap:8px;align-items:center;justify-content:flex-end;padding:14px 20px;border-top:1px solid var(--line);flex-wrap:wrap}
+  .dm-foot .left{margin-right:auto}
+  .grp{border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+  .grp > .gl{font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--soft);margin-bottom:8px}
+  .fields{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px}
+  .fld{display:flex;flex-direction:column;gap:4px;min-width:0}
+  .fld.full{grid-column:1/-1}
+  .fld > label,.lab2{font-size:12.5px;font-weight:700;color:var(--ink)}
+  .fld input,.fld select,.fld textarea{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:15px;font-family:inherit;color:var(--ink);background:#fff}
+  .fld textarea{min-height:64px;resize:vertical}
+  .fld input:focus,.fld select:focus,.fld textarea:focus{outline:2px solid var(--teal);border-color:var(--teal)}
+  .fld input[readonly]{background:#fafbfc;color:var(--soft)}
+  .req{color:var(--bad)}
+  .chips{display:flex;gap:6px;flex-wrap:wrap}
+  .chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 12px;font-size:13.5px;font-weight:700;color:var(--navy);cursor:pointer}
+  .chip:hover{border-color:var(--teal)}
+  .chip.on{background:var(--teal);border-color:var(--teal);color:#fff}
+  .chip.oc-pick.on.o-Started{background:var(--good);border-color:var(--good)}
+  .chip.oc-pick.on.o-Pending{background:#c07a12;border-color:#c07a12}
+  .chip.oc-pick.on.o-Observation{background:var(--plum);border-color:var(--plum)}
+  .chip.oc-pick.on.o-NoShow{background:var(--bad);border-color:var(--bad)}
+  .chip.oc-pick.on.o-Refused{background:#5b687d;border-color:#5b687d}
+  .chip.oc-pick.on.o-Rescheduled{background:var(--blue);border-color:var(--blue)}
+  .then{background:#F7F9FB;border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+  .then .q{font-size:13.5px;font-weight:700;color:var(--navy)}
+  .err{background:var(--bad-soft);color:#9a2f1e;border-radius:10px;padding:9px 12px;font-size:13.5px;font-weight:600}
+  details.more > summary{cursor:pointer;font-weight:700;color:var(--teal-600);font-size:13.5px;padding:4px 0}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:11px 18px;border-radius:12px;font-weight:700;font-size:14px;box-shadow:var(--shadow-lg);z-index:80;opacity:0;pointer-events:none;transition:opacity .2s;width:max-content;max-width:calc(100vw - 32px)}
+  .toast.on{opacity:1}
+  .toast.bad{background:var(--bad)}
+
+  @media(max-width:860px){ .three{grid-template-columns:1fr} }
+  @media(max-width:640px){
+    .wrap{padding:16px 14px 90px}
+    .crow{grid-template-columns:52px 1fr}
+    .crow .quick{grid-column:1/-1;justify-content:flex-start}
+    .fu{grid-template-columns:1fr}
+    .fu .btns{justify-content:flex-start;max-width:none}
+    .fields{grid-template-columns:1fr}
+    .dm{padding:0}
+    .dmc{border-radius:0;min-height:100%}
+    .day{min-height:58px;padding:5px}
+    .day .s{font-size:16px}
+    .day .b{display:none}
+  }
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}
+  }
+</style>
+<script src="user.js?v=hc76"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
+  <script src="store.js?v=hc76"></script>
+  <script src="gate.js?v=hc76"></script>
+  <script src="_staff.js?v=hc76"></script>
+  <script src="tc.js?v=hc76"></script>
+</head>
+<body>
+<div class="ribbon">SANDBOX — made-up patients. Try it as a TC, an office manager or Heather with “Viewing as”.</div>
+<header class="hdr">
+  <div class="hdr-in">
+    <span class="mark" aria-label="Home-Brace"><img src="../assets/logo-mark.png?v=2" alt="" width="34" height="34"></span>
+    <span class="brand">Home-<i>Brace</i><small>TC Tracker</small></span>
+    <span class="v1">V1 preview</span>
+  </div>
+</header>
+<nav class="v1nav"><div class="v1nav-in" id="nav"></div></nav>
+
+<div class="wrap">
+  <div class="viewas">
+    <span class="lab">👤 Viewing as</span>
+    <select id="persona" aria-label="Viewing as"></select>
+    <button class="btn ghost sm demo" data-act="demo-reset" title="Put the made-up consults back to how they started">↺ Reset sample data</button>
+  </div>
+  <div class="page-head">
+    <div>
+      <h1>TC Tracker</h1>
+      <p>Every new-patient consult in one place. The call list and the month’s numbers build themselves &mdash; nothing to email.</p>
+    </div>
+  </div>
+  <div id="offbar" class="offbar"></div>
+  <div id="tabs" class="tabs" role="tablist"></div>
+  <div id="view"><div class="empty">Loading…</div></div>
+</div>
+
+<div class="dm" id="dlg" aria-modal="true" role="dialog"><div class="dmc" id="dlgcard"></div></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+  'use strict';
+  const el=id=>document.getElementById(id);
+  const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const attr=(k,v)=>' data-'+k+'="'+esc(v)+'"';
+  const LIVE=()=>!!(window.PH && PH.isLive && PH.isLive());
+  const RANK={none:0,view:1,add:2,edit:3,manage:4};
+  const level=()=>(window.PH && PH.can) ? PH.can('tc') : 'manage';
+  const canEdit=()=>RANK[level()]>=RANK.edit;
+  const canManage=()=>level()==='manage';
+  const today=()=>TC.iso();
+  const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const DOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const MO=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const fmtD=s=>{ const d=TC.parse(s); return d?DOW[d.getDay()]+', '+MO[d.getMonth()]+' '+d.getDate():''; };
+  const fmtS=s=>{ const d=TC.parse(s); return d?MO[d.getMonth()]+' '+d.getDate()+(d.getFullYear()!==new Date().getFullYear()?', '+d.getFullYear():''):''; };
+  const fmtM=ym=>MONTHS[+ym.slice(5,7)-1]+' '+ym.slice(0,4);
+  const fmtT=t=>{ if(!t) return ''; const [h,m]=t.split(':').map(Number); return ((h+11)%12+1)+':'+String(m).padStart(2,'0')+(h<12?'a':'p'); };
+  const pct=x=>x==null?'—':Math.round(x*100)+'%';
+  const ocClass=o=>'oc-'+(o==='No Show'?'NoShow':o==='Refused Treatment'?'Refused':o==='Rescheduled / Cancelled'?'Rescheduled':(o||'none'));
+  const ocShort=o=>o==='Refused Treatment'?'Refused':o==='Rescheduled / Cancelled'?'Rescheduled':o;
+  const ocBadge=o=>'<span class="oc '+ocClass(o)+'">'+esc(o?ocShort(o):'No outcome yet')+'</span>';
+
+  /* ---------------- who, and which offices ---------------- */
+  function me(){ return (window.PH && PH.me) ? PH.me() : {}; }
+  function myName(){ try{ return PH.name(me()); }catch(_){ return ''; } }
+  function myMail(){ const m=me(); return String(m.mail||m.email||'').toLowerCase(); }
+  function allOffices(){ return (window.PH && PH.officeNames) ? PH.officeNames() : []; }
+  /* The offices this person may see - the same rule as every other page: Admin,
+     Executive and Leadership see every office; everyone else sees their own. */
+  function myOffices(){
+    const all=allOffices(), mine=(window.PH && PH.offices) ? PH.offices() : 'all';
+    if(mine==='all') return all;
+    const list=(Array.isArray(mine)?mine:[]).filter(o=>all.indexOf(o)>=0);
+    return list.length?list:(Array.isArray(mine)?mine.slice():[]);
+  }
+  let office=null;                      // null = every office this person has
+  const inView=()=>office?[office]:myOffices();
+  /* TCs per office, for the TC box: the live roster, or the sandbox's shared list. */
+  function tcsFor(o){
+    const out=[];
+    const add=(name,mail)=>{ if(name && !out.some(x=>x.name===name)) out.push({name, mail:(mail||'').toLowerCase()}); };
+    if(LIVE() && PH.rosterView){
+      PH.rosterView().forEach(r=>{
+        const teams=(Array.isArray(r.teams)?r.teams:String(r.teams||'').split(/[;,]/)).map(t=>String(t).trim().toLowerCase());
+        const offs=Array.isArray(r.offices)?r.offices:String(r.offices||r.loc||'').split(',').map(x=>x.trim());
+        if((teams.indexOf('tcs')>=0 || /\bTC\b/.test(r.role||'')) && offs.indexOf(o)>=0) add(r.name||r.n, r.email||r.mail);
+      });
+    } else {
+      (window.STAFF||[]).forEach(s=>{
+        const where=s.loc==='Las Cruces' ? (s.brand==='LCO'?'Cruces LCO':'Cruces FFO') : s.loc;
+        if(/\bTC\b/.test(s.role||'') && where===o) add(s.n, s.mail);
+      });
+    }
+    return out;
+  }
+  const iAmTC=()=>(me().teams||[]).some(t=>String(t).toLowerCase()==='tcs') || /\bTC\b/.test(me().role||'');
+  function defaultTC(o){
+    if(iAmTC() || !tcsFor(o).length) return {name:myName(), mail:myMail()};
+    return tcsFor(o)[0];
+  }
+
+  /* ---------------- data ---------------- */
+  let ALL=[], SLOTS={}, LISTS=Object.assign({}, TC.DEFAULT_LISTS), SCHED=null, loaded=false, loadErr='';
+  const openFns={};
+  function isOpenFn(o){
+    if(!openFns[o]){ const loc=(PH.locations()||[]).find(l=>l.n===o)||{}; openFns[o]=TC.openFrom(o, loc.hours, SCHED); }
+    return openFns[o];
+  }
+  // The usual number reaches a month once it has arrived (tc.js slotsOn).
+  const until=()=>TC.lastDayOf(TC.monthOf(today()));
+  const slotsOn=d=>inView().reduce((a,o)=>a+TC.slotsOn(SLOTS[o]||{}, d, isOpenFn(o), until()),0);
+  const slotsMonth=ym=>inView().reduce((a,o)=>a+TC.slotsInMonth(SLOTS[o]||{}, ym, isOpenFn(o), until()),0);
+  function localRecords(prefix){
+    const out={};
+    try{
+      for(let i=0;i<localStorage.length;i++){
+        const k=localStorage.key(i);
+        if(k && k.indexOf(prefix)===0 && k.indexOf('__')<0){ try{ out[k]=JSON.parse(localStorage.getItem(k)); }catch(_){} }
+      }
+    }catch(_){}
+    return out;
+  }
+  /* SANDBOX ONLY: two months of made-up consults so there is something to look at. */
+  const DEMO_FLAG='ph_tc_demo';
+  function seedDemo(force){
+    if(LIVE()) return;
+    try{ if(!force && localStorage.getItem(DEMO_FLAG)==='v2') return; }catch(_){ return; }
+    let sched=null; try{ sched=JSON.parse(localStorage.getItem('ph_sched2')); }catch(_){}
+    const offs=(PH.locations()||[]).map(l=>({n:l.n, isOpen:TC.openFrom(l.n, l.hours, sched)}));
+    const from=TC.shiftMonth(TC.monthOf(today()),-1)+'-01';
+    const recs=TC.demo({today:today(), from, offices:offs,
+      tcFor:o=>tcsFor(o)[0]});
+    const byKey={};
+    recs.forEach(r=>{
+      const ym=TC.monthOf(r.date), k=TC.logKey(r.office, ym);
+      (byKey[k]=byKey[k]||{v:1, office:r.office, month:ym, consults:{}}).consults[r.id]=r;
+    });
+    try{
+      Object.keys(localRecords(TC.LOG_PREFIX)).forEach(k=>localStorage.removeItem(k));
+      Object.keys(byKey).forEach(k=>localStorage.setItem(k, JSON.stringify(byKey[k])));
+      (PH.locations()||[]).forEach((l,i)=>{ const n=TC.SLOT_CHOICES[i%3];
+        localStorage.setItem(TC.slotsKey(l.n), JSON.stringify({usual:n, hist:[{from, n}], days:{}})); });
+      localStorage.removeItem(TC.LISTS_KEY);
+      localStorage.setItem(DEMO_FLAG,'v2');
+    }catch(_){}
+  }
+  function load(){
+    const offs=myOffices();
+    seedDemo(false);
+    const logs=LIVE() ? PH_STORE.getAll(TC.LOG_PREFIX) : Promise.resolve(localRecords(TC.LOG_PREFIX));
+    const slots=Promise.all(offs.map(o=>PH_STORE.get(TC.slotsKey(o)).then(v=>[o,v], ()=>[o,null])));
+    return Promise.all([logs, slots, PH_STORE.get(TC.LISTS_KEY).catch(()=>null), PH_STORE.get('ph_sched2').catch(()=>null)])
+      .then(([L,S,Li,Sc])=>{
+        ALL=TC.consultsFrom(L).filter(r=>TC.live(r) && offs.indexOf(r.office)>=0);
+        SLOTS={}; S.forEach(([o,v])=>{ SLOTS[o]=(v && typeof v==='object')?v:{}; });
+        LISTS=Object.assign({}, TC.DEFAULT_LISTS, (Li && typeof Li==='object')?Li:{});
+        SCHED=(Sc && typeof Sc==='object')?Sc:null;
+        Object.keys(openFns).forEach(k=>delete openFns[k]);
+        loaded=true; loadErr=''; render();
+      }, e=>{ loaded=true; loadErr=(e && e.message)||'Could not read the tracker.'; render(); });
+  }
+  const strip=r=>{ const o=Object.assign({}, r); Object.keys(o).forEach(k=>{ if(o[k]===undefined) delete o[k]; }); return o; };
+  /* One consult to its office-and-month record. A consult whose date or office changed
+     leaves a "moved" marker in its old record (nothing is ever removed - see tc.js). */
+  function persist(rec, oldKey){
+    rec.upd=new Date().toISOString(); rec.updBy=myMail()||myName();
+    const ym=TC.monthOf(rec.date), key=TC.logKey(rec.office, ym);
+    const put=PH_STORE.update(key, cur=>{
+      const v=(cur && typeof cur==='object') ? Object.assign({}, cur) : {v:1, office:rec.office, month:ym, consults:{}};
+      v.consults=Object.assign({}, v.consults||{}); v.consults[rec.id]=strip(rec); return v;
+    });
+    const mv=(oldKey && oldKey!==key) ? PH_STORE.update(oldKey, cur=>{
+      if(!cur || !cur.consults || !cur.consults[rec.id]) return undefined;
+      const v=Object.assign({}, cur); v.consults=Object.assign({}, cur.consults);
+      v.consults[rec.id]={moved:true, to:key, upd:rec.upd}; return v;
+    }) : Promise.resolve({});
+    return Promise.all([put, mv]).then(rs=>{
+      const bad=rs.find(r=>r && (r.blocked || r.error));
+      if(bad) throw new Error(bad.why || bad.error || 'It didn’t save.');
+      const i=ALL.findIndex(x=>x.id===rec.id);
+      if(rec.deleted){ if(i>=0) ALL.splice(i,1); }
+      else if(i>=0) ALL[i]=Object.assign({}, rec); else ALL.push(Object.assign({}, rec));
+    });
+  }
+  const keyOf=r=>TC.logKey(r.office, TC.monthOf(r.date));
+  function saveSlots(o, mutate){
+    return PH_STORE.update(TC.slotsKey(o), cur=>{
+      const v=(cur && typeof cur==='object') ? Object.assign({}, cur) : {};
+      v.days=Object.assign({}, v.days||{}); mutate(v); return v;
+    }).then(r=>{ if(r && (r.blocked || r.error)) throw new Error(r.why || r.error); SLOTS[o]=r && r.value ? r.value : SLOTS[o]; });
+  }
+
+  /* ---------------- toast ---------------- */
+  let toastT=null;
+  function toast(msg, bad){
+    const t=el('toast'); t.textContent=msg; t.className='toast on'+(bad?' bad':'');
+    clearTimeout(toastT); toastT=setTimeout(()=>{ t.className='toast'+(bad?' bad':''); }, bad?5200:2400);
+  }
+
+  /* ---------------- page ---------------- */
+  let tab=null, month=TC.monthOf(today()), tcFilter='', q='', ocFilter='';
+  const TABS=[
+    {k:'today', n:'Today'},
+    {k:'calls', n:'Call list'},
+    {k:'log', n:'Consults'},
+    {k:'numbers', n:'Numbers'},
+    {k:'slots', n:'Slots'}
+  ];
+  // TCs open on Today; Selene, Heather and office managers on the numbers.
+  function defaultTab(){ return canEdit() && !canManage() ? 'today' : 'numbers'; }
+  const scoped=()=>ALL.filter(r=>inView().indexOf(r.office)>=0);
+  const scopedTC=()=>scoped().filter(r=>!tcFilter || r.tc===tcFilter);
+
+  function renderOffices(){
+    const offs=myOffices(), bar=el('offbar');
+    if(offs.length<=1){ bar.innerHTML=offs.length?'<span class="ochip fixed">📍 '+esc(offs[0])+'</span>':''; office=offs[0]||null; return; }
+    bar.innerHTML='<button class="ochip'+(office?'':' on')+'"'+attr('act','office')+attr('v','')+'>All '+(offs.length===allOffices().length?'offices':'my offices')+'</button>'+
+      offs.map(o=>'<button class="ochip'+(office===o?' on':'')+'"'+attr('act','office')+attr('v',o)+'>'+esc(o)+'</button>').join('');
+  }
+  function renderTabs(){
+    const due=TC.callList(scoped(), today()).filter(x=>TC.DUE.indexOf(x.a)>=0).length;
+    el('tabs').innerHTML=TABS.map(t=>'<button role="tab" class="tab'+(tab===t.k?' on':'')+'"'+attr('act','tab')+attr('v',t.k)+'>'+t.n+
+      (t.k==='calls'?'<span class="n'+(due?'':' z')+'">'+due+'</span>':'')+'</button>').join('');
+  }
+  function render(){
+    if(!(window.PH && PH.atLeast && PH.atLeast('tc','view'))){ el('view').innerHTML='<div class="empty">You don’t have the TC Tracker. Ask your administrator.</div>'; el('tabs').innerHTML=''; el('offbar').innerHTML=''; return; }
+    if(!tab) tab=defaultTab();
+    renderOffices(); renderTabs();
+    if(!loaded){ el('view').innerHTML='<div class="empty">Loading…</div>'; return; }
+    if(loadErr){ el('view').innerHTML='<div class="note warn">'+esc(loadErr)+' <button class="link" data-act="reload">Try again</button></div>'; return; }
+    const v=({today:viewToday, calls:viewCalls, log:viewLog, numbers:viewNumbers, slots:viewSlots})[tab]||viewToday;
+    el('view').innerHTML=v();
+  }
+
+  /* ---------------- Today ---------------- */
+  function viewToday(){
+    const d=today(), list=scoped().filter(r=>r.date===d).sort((a,b)=>(a.time||'99')<(b.time||'99')?-1:1);
+    const slots=slotsOn(d), missing=scoped().filter(r=>!r.outcome && r.date<d);
+    const due=TC.callList(scoped(), d).filter(x=>TC.DUE.indexOf(x.a)>=0);
+    const needDate=TC.callList(scoped(), d).filter(x=>TC.NEEDS_DATE.indexOf(x.a)>=0).length;
+    const multi=inView().length>1;
+    let h='<div class="stack">';
+    const noUsual=inView().some(o=>!TC.usualOn(SLOTS[o]||{}, d) && !((SLOTS[o]||{}).days||{})[d]);
+    const closedToday=!slots && inView().every(o=>!isOpenFn(o)(d));
+    h+='<div class="todayhead"><div><h2>'+esc(fmtD(d))+'</h2><div class="capline">'+
+      (slots?'<b>'+list.length+'</b> of <b>'+slots+'</b> consult slots booked':'<b>'+list.length+'</b> consult'+(list.length===1?'':'s')+' today')+
+      (slots?'':closedToday?' · closed today on the Schedule':noUsual?' · <button class="link" data-act="tab" data-v="slots">set your usual slots</button>':'')+'</div></div>'+
+      (canEdit()?'<button class="btn big" data-act="new">＋ Log a consult</button>':'')+'</div>';
+    if(missing.length) h+='<div class="note warn">⚠️ <b>'+missing.length+' earlier consult'+(missing.length===1?' has':'s have')+' no outcome.</b> '+
+      missing.slice(0,4).map(r=>'<button class="link"'+attr('act','open')+attr('id',r.id)+'>'+esc(r.name)+' ('+esc(fmtS(r.date))+')</button>').join(', ')+(missing.length>4?' …':'')+'</div>';
+    h+='<div class="card"><h2>Today’s consults</h2><p class="sub">'+(canEdit()?'Tap the outcome when the consult is done. Only the questions that fit that outcome come up.':'What’s been logged today.')+'</p>';
+    if(!list.length) h+='<div class="empty">Nothing logged for today yet.'+(canEdit()?' Use <b>Log a consult</b> for each new patient on the schedule, no-shows included.':'')+'</div>';
+    else h+='<div class="clist">'+list.map(r=>
+      '<div class="crow"><div class="tm">'+esc(fmtT(r.time)||'—')+'</div>'+
+      '<div class="who"><button class="nm"'+attr('act','open')+attr('id',r.id)+'>'+esc(r.name||'(no name)')+'</button>'+
+      '<div class="meta">'+[r.type, r.lead, multi?r.office:'', r.tc].filter(Boolean).map(esc).join(' · ')+'</div></div>'+
+      '<div class="quick">'+(r.outcome||!canEdit() ? ocBadge(r.outcome) :
+        TC.OUTCOMES.map(o=>'<button class="qb"'+attr('act','outcome')+attr('id',r.id)+attr('v',o)+'>'+esc(ocShort(o))+'</button>').join(''))+'</div></div>').join('')+'</div>';
+    h+='</div>';
+    h+='<div class="card duecard"><div class="big">'+due.length+'</div><div class="grow"><b>follow-up'+(due.length===1?'':'s')+' due</b>'+
+      (needDate?'<div class="small muted">and '+needDate+' waiting for a date</div>':'<div class="small muted">pending, no-show, observation and recall patients</div>')+'</div>'+
+      '<button class="btn ghost" data-act="tab" data-v="calls">Open the call list →</button></div>';
+    h+='</div>';
+    return h;
+  }
+
+  /* ---------------- Call list ---------------- */
+  function actClass(a){ return TC.DUE.indexOf(a)>=0 ? (a==='Recall ready'?'act-recall':'act-due') : TC.NEEDS_DATE.indexOf(a)>=0 ? 'act-set' : 'act-later'; }
+  function fuCard(x){
+    const r=x.r, a=x.a, d=today(), wait=TC.daysWaiting(r, d), calledToday=r.lastContact===d;
+    const B=(act,label)=>canEdit()?'<button class="btn sm '+(act==='declined'?'danger':'ghost')+'"'+attr('act','fu')+attr('id',r.id)+attr('v',act)+'>'+label+'</button>':'';
+    let btns='';
+    if(a==='Pending follow-up due' || a==='Pending - future follow-up' || a==='Recall ready')
+      btns=B('called','📞 Called')+B('scheduled','📅 Scheduled to start')+B('started','✅ Started')+B('declined','✖ Declined');
+    else if(a==='Set pending follow-up date' || a==='Set observation review date')
+      btns=B('setDate','📆 Set the date')+(a==='Set pending follow-up date'?B('started','✅ Started')+B('declined','✖ Declined'):B('ready','🟢 Ready now'));
+    else if(a==='No-show follow-up')
+      btns=B('called','📞 Called')+B('rebooked','🔁 Rebooked')+B('declined','✖ Not coming');
+    else if(a==='Observation review due' || a==='Observation - future review')
+      btns=B('reviewed','👁 Reviewed')+B('ready','🟢 Ready now')+B('declined','✖ Declined');
+    const facts=[
+      r.phone?'<span>📞 <a class="tel" href="tel:'+esc(String(r.phone).replace(/[^\d+]/g,''))+'">'+esc(r.phone)+'</a></span>':'',
+      '<span>Consult <b>'+esc(fmtS(r.date))+'</b></span>',
+      '<span>'+ocBadge(r.outcome)+(r.reason?' · '+esc(r.reason):'')+'</span>',
+      r.nextFU && r.outcome==='Pending'?'<span>Next call <b>'+esc(fmtS(r.nextFU))+'</b></span>':'',
+      r.obsReview && r.outcome==='Observation'?'<span>Review <b>'+esc(fmtS(r.obsReview))+'</b></span>':'',
+      r.lastContact?'<span>Last contact <b>'+esc(fmtS(r.lastContact))+'</b></span>':'',
+      wait!=null?'<span>Waiting <b>'+wait+'</b> day'+(wait===1?'':'s')+'</span>':'',
+      inView().length>1?'<span>📍 '+esc(r.office)+'</span>':'',
+      r.tc?'<span>'+esc(r.tc)+'</span>':''
+    ].filter(Boolean).join('');
+    return '<div class="fu'+(calledToday?' called':'')+'"><div><span class="act '+actClass(a)+'">'+esc(a)+'</span>'+
+      (calledToday?'<span class="tag">✓ contacted today</span>':'')+
+      '<div><button class="nm"'+attr('act','open')+attr('id',r.id)+'>'+esc(r.name||'(no name)')+'</button></div>'+
+      '<div class="facts">'+facts+'</div>'+(r.notes?'<div class="notes">“'+esc(r.notes)+'”</div>':'')+'</div>'+
+      '<div class="btns">'+btns+'</div></div>';
+  }
+  function viewCalls(){
+    const d=today(), all=TC.callList(scoped(), d);
+    // Already contacted today sinks to the bottom of its group - still listed, as in the sheet.
+    const sinkCalled=a=>a.slice().sort((x,y)=>(x.r.lastContact===d)-(y.r.lastContact===d));
+    const due=sinkCalled(all.filter(x=>TC.DUE.indexOf(x.a)>=0));
+    const set=all.filter(x=>TC.NEEDS_DATE.indexOf(x.a)>=0);
+    const later=all.filter(x=>TC.DUE.indexOf(x.a)<0 && TC.NEEDS_DATE.indexOf(x.a)<0);
+    let h='<div class="stack">';
+    h+='<div class="note info">The call list fills itself from the consults. The buttons fill in the follow-up columns (last contact, status, follow-up complete) for you.</div>';
+    h+='<div><div class="sect">Due now · '+due.length+'</div>'+(due.length?due.map(fuCard).join(''):'<div class="empty">Nobody is due. 🎉</div>')+'</div>';
+    if(set.length) h+='<div><div class="sect">Needs a date · '+set.length+'</div>'+set.map(fuCard).join('')+'</div>';
+    if(later.length) h+='<details class="later"><summary>▸ Coming up later · '+later.length+'</summary>'+later.map(fuCard).join('')+'</details>';
+    h+='</div>';
+    return h;
+  }
+
+  /* ---------------- Consults (the log) ---------------- */
+  function mpick(){ return '<span class="mpick"><button data-act="month" data-v="-1" aria-label="Previous month">‹</button><span>'+esc(fmtM(month))+'</span><button data-act="month" data-v="1" aria-label="Next month">›</button></span>'; }
+  function tcPick(){
+    const names=[...new Set(scoped().map(r=>r.tc).filter(Boolean))].sort();
+    if(names.length<2 && !tcFilter) return '';
+    return '<select class="sel" data-in="tcf" aria-label="TC"><option value="">All TCs</option>'+names.map(n=>'<option'+(n===tcFilter?' selected':'')+'>'+esc(n)+'</option>').join('')+'</select>';
+  }
+  function viewLog(){
+    const d=today(), qq=q.trim().toLowerCase();
+    let rows=scopedTC().filter(r=>TC.inMonth(r.date, month));
+    if(ocFilter) rows=rows.filter(r=>ocFilter==='none'?!r.outcome:r.outcome===ocFilter);
+    if(qq) rows=scopedTC().filter(r=>[r.name,r.phone,r.chart,r.notes].some(v=>String(v||'').toLowerCase().indexOf(qq)>=0) && (!ocFilter || (ocFilter==='none'?!r.outcome:r.outcome===ocFilter)));
+    rows.sort((a,b)=>(b.date+(b.time||''))<(a.date+(a.time||''))?-1:1);
+    const multi=inView().length>1;
+    let h='<div class="tools">'+mpick()+
+      '<input class="search" type="search" placeholder="Search name, phone or chart # (any month)" value="'+esc(q)+'" data-in="q" aria-label="Search consults">'+
+      '<select class="sel" data-in="ocf" aria-label="Outcome"><option value="">Every outcome</option>'+
+        TC.OUTCOMES.map(o=>'<option'+(o===ocFilter?' selected':'')+' value="'+esc(o)+'">'+esc(o)+'</option>').join('')+
+        '<option value="none"'+(ocFilter==='none'?' selected':'')+'>No outcome yet</option></select>'+tcPick()+
+      (canEdit()?'<button class="btn" data-act="new">＋ Log a consult</button>':'')+'</div>';
+    h+='<div class="tblwrap"><table class="t"><thead><tr><th>Date</th><th>Time</th><th>Patient</th><th>Type</th><th>Lead source</th><th>Outcome</th><th>Follow-up</th>'+(multi?'<th>Office</th>':'')+'<th>TC</th></tr></thead><tbody>'+
+      (rows.length?rows.map(r=>{ const a=TC.action(r, d);
+        return '<tr class="click"'+attr('act','open')+attr('id',r.id)+'><td>'+esc(fmtS(r.date))+'</td><td>'+esc(fmtT(r.time))+'</td><td><b>'+esc(r.name)+'</b>'+(r.chart?'<div class="small muted">'+esc(r.chart)+'</div>':'')+'</td>'+
+          '<td>'+esc(r.type)+'</td><td>'+esc(r.lead)+'</td><td>'+ocBadge(r.outcome)+'</td><td class="small">'+(a?'<span class="act '+actClass(a)+'" style="font-size:10.5px">'+esc(a)+'</span>':esc(r.fuStatus||''))+'</td>'+
+          (multi?'<td>'+esc(r.office)+'</td>':'')+'<td class="small">'+esc(r.tc)+'</td></tr>'; }).join('')
+        :'<tr><td colspan="9"><div class="empty" style="border:none">No consults '+(qq?'match that search':'in '+esc(fmtM(month)))+'.</div></td></tr>')+
+      '</tbody></table></div>';
+    h+='<div class="row" style="margin-top:10px"><span class="small muted grow">'+rows.length+' consult'+(rows.length===1?'':'s')+(qq?' found':' in '+esc(fmtM(month)))+'</span>'+
+      (canManage()?'<button class="btn ghost sm" data-act="lists">⚙ Edit the lists</button><button class="btn ghost sm" data-act="csv">⬇ Download '+esc(fmtM(month))+' for Excel</button>':'')+'</div>';
+    return h;
+  }
+
+  /* ---------------- Numbers (Dashboard + Monthly Totals) ---------------- */
+  function viewNumbers(){
+    const d=today(), list=scopedTC(), m=TC.monthStats(list, month, slotsMonth(month), d), w=TC.openWork(list, d);
+    const K=(k,v,s)=>'<div class="kpi"><div class="k">'+k+'</div><div class="v">'+v+'</div>'+(s?'<div class="s">'+s+'</div>':'')+'</div>';
+    const R=(k,v,r,cls)=>'<tr'+(cls?' class="'+cls+'"':'')+'><td>'+k+'</td><td class="v">'+v+'</td><td class="r">'+(r===undefined?'':pct(r))+'</td></tr>';
+    let h='<div class="tools">'+mpick()+tcPick()+'<span class="grow"></span><span class="small muted">'+esc(inView().length>1?(office?office:'All '+(myOffices().length===allOffices().length?'offices':'my offices')):inView()[0]||'')+(tcFilter?' · '+esc(tcFilter):'')+'</span></div>';
+    h+='<div class="stack">';
+    h+='<div class="kpis">'+K('Consults scheduled', m.scheduled, m.slots?pct(m.capacity)+' of '+m.slots+' slots':'no slots set')+
+      K('Case acceptance', pct(m.acceptance), m.started+' started of '+m.completed+' completed')+
+      K('Same-day contracts', m.sameDay, pct(m.sameDayRate)+' of completed')+
+      K('No-show rate', pct(m.noShowRate), m.noShow+' no-show'+(m.noShow===1?'':'s'))+
+      K('Follow-up completion', pct(m.fuRate), m.fuYes+' of '+(m.fuYes+m.fuNo)+' done')+
+      K('RPI sold', m.rpi, 'by sale date')+'</div>';
+    if(m.missing) h+='<div class="note warn">⚠️ <b>'+m.missing+' consult'+(m.missing===1?'':'s')+'</b> in '+esc(fmtM(month))+' still need'+(m.missing===1?'s':'')+' an outcome, so these numbers aren’t final.</div>';
+    h+='<div class="three">';
+    h+='<div class="card"><h2>Monthly results</h2><p class="sub">'+esc(fmtM(month))+'</p><table class="mt">'+
+      R('Available consult slots', m.slots)+R('Consults scheduled', m.scheduled)+R('Capacity scheduled', pct(m.capacity))+
+      R('Completed consults', m.completed, m.completedRate)+R('Started', m.started, m.startedRate, 'sub')+R('Pending', m.pending, m.pendingRate, 'sub')+
+      R('Observation', m.observation, m.observationRate, 'sub')+R('Refused treatment', m.refused, m.refusedRate, 'sub')+
+      R('No show', m.noShow, m.noShowRate)+R('Rescheduled / cancelled', m.rescheduled, m.rescheduledRate)+R('RPI Retainer Programs sold', m.rpi)+'</table></div>';
+    h+='<div class="card"><h2>Open work</h2><p class="sub">Right now, every month</p><table class="mt">'+
+      R('Open pending', w.openPending)+R('Current observation patients', w.observation)+R('Recall ready', w.recallReady)+
+      R('Observation review due', w.observationDue)+R('No-show follow-up', w.noShow)+R('Missing outcome', m.missing)+R('All open follow-ups', w.allOpen)+'</table>'+
+      (w.allOpen?'<button class="btn ghost sm" style="margin-top:10px" data-act="tab" data-v="calls">Open the call list →</button>':'')+'</div>';
+    const A=(k,v,c)=>'<tr><td>'+k+'</td><td class="v">'+v+'</td><td class="c">'+c+'</td></tr>';
+    h+='<div class="card"><h2>TC accountability</h2><p class="sub">'+esc(fmtM(month))+'</p><table class="mt">'+
+      A('Case acceptance rate', pct(m.acceptance), 'Started ÷ completed')+A('Same-day contract rate', pct(m.sameDayRate), 'Same-day ÷ completed')+
+      A('No-show rate', pct(m.noShowRate), 'No-shows ÷ scheduled')+A('Follow-up completion rate', pct(m.fuRate), 'Done ÷ all Yes/No follow-ups')+
+      A('Same-day contracts', m.sameDay, 'Count')+A('Follow-ups completed', m.fuYes, 'Count')+'</table></div>';
+    h+='</div>';
+    if(inView().length>1){
+      const offs=inView();
+      h+='<div class="card"><h2>By office</h2><p class="sub">'+esc(fmtM(month))+(tcFilter?' · '+esc(tcFilter):'')+'</p><div class="tblwrap" style="box-shadow:none"><table class="t"><thead><tr><th>Office</th><th class="n">Slots</th><th class="n">Scheduled</th><th class="n">Capacity</th><th class="n">Completed</th><th class="n">Started</th><th class="n">Acceptance</th><th class="n">Same-day</th><th class="n">No-show</th><th class="n">Follow-up</th><th class="n">RPI</th><th class="n">Open</th></tr></thead><tbody>'+
+        offs.map(o=>{ const L=list.filter(r=>r.office===o), s=TC.monthStats(L, month, TC.slotsInMonth(SLOTS[o]||{}, month, isOpenFn(o), until()), d), ow=TC.openWork(L, d);
+          return '<tr class="click"'+attr('act','office')+attr('v',o)+'><td><b>'+esc(o)+'</b></td><td class="n">'+s.slots+'</td><td class="n">'+s.scheduled+'</td><td class="n">'+pct(s.capacity)+'</td><td class="n">'+s.completed+'</td><td class="n">'+s.started+'</td><td class="n"><b>'+pct(s.acceptance)+'</b></td><td class="n">'+pct(s.sameDayRate)+'</td><td class="n">'+pct(s.noShowRate)+'</td><td class="n">'+pct(s.fuRate)+'</td><td class="n">'+s.rpi+'</td><td class="n">'+ow.allOpen+'</td></tr>'; }).join('')+
+        '</tbody></table></div></div>';
+    }
+    const days=TC.dailyView(list, month, slotsOn, d).filter(x=>x.scheduled || x.slots || x.rpi);
+    h+='<details class="card"><summary>Each day in '+esc(fmtM(month))+'</summary><div class="tblwrap" style="box-shadow:none"><table class="t"><thead><tr><th>Day</th><th class="n">Scheduled</th><th class="n">Slots</th><th class="n">Capacity</th><th class="n">Started</th><th class="n">Pending</th><th class="n">No show</th><th class="n">Follow-ups due</th><th class="n">RPI sold</th><th class="n">Same-day</th><th class="n">Follow-ups done</th></tr></thead><tbody>'+
+      (days.length?days.map(x=>'<tr><td>'+esc(fmtD(x.date))+'</td><td class="n">'+x.scheduled+'</td><td class="n">'+x.slots+'</td><td class="n">'+pct(x.capacity)+'</td><td class="n">'+x.started+'</td><td class="n">'+x.pending+'</td><td class="n">'+x.noShow+'</td><td class="n">'+x.fuDue+'</td><td class="n">'+x.rpi+'</td><td class="n">'+x.sameDay+'</td><td class="n">'+x.fuDone+'</td></tr>').join(''):'<tr><td colspan="11" class="muted">Nothing this month.</td></tr>')+
+      '</tbody></table></div></details>';
+    const year=+month.slice(0,4), y=TC.yearTotals(list, year, slotsMonth, d);
+    const MR=(r,label,cls)=>'<tr'+(cls?' class="'+cls+'"':'')+'><td>'+label+'</td><td class="n">'+r.slots+'</td><td class="n">'+r.scheduled+'</td><td class="n">'+pct(r.capacity)+'</td><td class="n">'+r.completed+'</td><td class="n">'+r.started+'</td><td class="n">'+pct(r.acceptance)+'</td><td class="n">'+r.pending+'</td><td class="n">'+r.observation+'</td><td class="n">'+r.noShow+'</td><td class="n">'+r.refused+'</td><td class="n">'+r.rescheduled+'</td><td class="n">'+r.rpi+'</td><td class="n">'+r.sameDay+'</td><td class="n">'+pct(r.sameDayRate)+'</td><td class="n">'+pct(r.noShowRate)+'</td><td class="n">'+r.fuYes+'</td><td class="n">'+pct(r.fuRate)+'</td></tr>';
+    h+='<details class="card"'+(canManage()?' open':'')+'><summary>Monthly totals · '+year+'</summary><div class="tblwrap" style="box-shadow:none"><table class="t"><thead><tr><th>Month</th><th class="n">Slots</th><th class="n">Scheduled</th><th class="n">Capacity</th><th class="n">Completed</th><th class="n">Started</th><th class="n">Acceptance</th><th class="n">Pending</th><th class="n">Observation</th><th class="n">No show</th><th class="n">Refused</th><th class="n">Resched.</th><th class="n">RPI</th><th class="n">Same-day</th><th class="n">Same-day %</th><th class="n">No-show %</th><th class="n">Follow-ups</th><th class="n">Follow-up %</th></tr></thead><tbody>'+
+      y.rows.map((r,i)=>MR(r, MO[i], r.ym===month?'':'' )).join('')+MR(y.total,'Year','total')+'</tbody></table></div></details>';
+    h+='<details class="card"><summary>How these numbers are worked out</summary>'+
+      '<p class="small" style="margin-top:0">The same formulas as the TC Consult Tracker workbook. <b>Completed</b> = started + pending + observation + refused. '+
+      'Case acceptance = started ÷ completed. Same-day contract rate = same-day ÷ completed. No-show rate = no-shows ÷ scheduled. '+
+      'Follow-up completion = follow-ups marked done ÷ every follow-up marked done or not done. RPI counts in the month it was sold.</p>'+
+      '<p class="small"><b>Different from the spreadsheet, on purpose:</b></p><ul class="small" style="margin:0;padding-left:18px">'+
+      TC.WHAT_CHANGED.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul></details>';
+    h+='</div>';
+    return h;
+  }
+
+  /* ---------------- Slots (Daily Capacity) ---------------- */
+  function viewSlots(){
+    if(inView().length!==1){
+      return '<div class="empty">Slots are set per office. Pick an office above.<div class="row" style="justify-content:center;margin-top:12px">'+
+        myOffices().map(o=>'<button class="btn ghost sm"'+attr('act','office')+attr('v',o)+'>'+esc(o)+'</button>').join('')+'</div></div>';
+    }
+    const o=inView()[0], rec=SLOTS[o]||{}, open=isOpenFn(o), d=today(), ed=canEdit(), u=until(), usual=Number(rec.usual)||TC.usualOn(rec, d);
+    const days=TC.monthDays(month), first=TC.parse(days[0]).getDay(), lead=(first+6)%7;   // Monday first
+    const booked=dt=>scoped().filter(r=>r.date===dt).length;
+    let h='<div class="stack"><div class="card"><h2>Usual slots on an open day</h2><p class="sub">Set it once. Every day '+esc(o)+' is open gets this number &mdash; change a day below only when it’s different. Days the Schedule marks closed get none.</p>'+
+      '<div class="chips">'+TC.SLOT_CHOICES.map(n=>'<button class="chip'+(usual===n?' on':'')+'"'+(ed?attr('act','usual')+attr('v',n):' disabled')+'>'+n+' slots</button>').join('')+
+      (usual && TC.SLOT_CHOICES.indexOf(usual)<0?'<span class="chip on">'+esc(usual)+' slots</span>':'')+
+      (ed?'<button class="chip"'+attr('act','usual-other')+'>Other…</button>':'')+'</div>'+
+      (!usual?'<div class="note warn" style="margin-top:10px">No usual number yet, so capacity shows blank. Pick one above.</div>':'')+
+      '<p class="small muted" style="margin:10px 0 0">Changing it counts from today &mdash; days already gone keep their number. A new month picks it up on the 1st.</p></div>';
+    h+='<div class="card"><div class="tools" style="margin-bottom:10px">'+mpick()+'<span class="grow"></span><span class="small muted"><b style="color:var(--navy)">'+TC.slotsInMonth(rec, month, open, u)+'</b> slots · <b style="color:var(--navy)">'+scoped().filter(r=>TC.inMonth(r.date, month)).length+'</b> booked</span></div>'+
+      '<div class="cal">'+['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(x=>'<div class="dow">'+x+'</div>').join('')+
+      '<div class="day blank"></div>'.repeat(lead)+
+      days.map(dt=>{ const n=TC.slotsOn(rec, dt, open, u), changed=rec.days && Object.prototype.hasOwnProperty.call(rec.days, dt), b=booked(dt);
+        const label=n?n:(!changed && dt>u && open(dt))?'—':'Closed';
+        return '<button class="day'+(n?'':' closed')+(changed?' changed':'')+(dt===d?' today':'')+'"'+(ed?attr('act','day')+attr('v',dt):' disabled')+' aria-label="'+esc(fmtD(dt)+': '+(n?n+' slots':label==='—'?'not set yet':'closed'))+'">'+
+          '<span class="d">'+(+dt.slice(8))+'</span><span class="s">'+label+'</span>'+(b?'<span class="b">'+b+' booked</span>':'')+'</button>'; }).join('')+'</div>'+
+      '<p class="small muted" style="margin:10px 0 0">A teal outline means the day was changed by hand. “—” is a month that hasn’t started: it gets the usual number on the 1st.'+(ed?' Tap a day to change it.':'')+'</p></div></div>';
+    return h;
+  }
+
+  /* ---------------- dialogs ---------------- */
+  let DLG=null;
+  function openDlg(d){ DLG=d; drawDlg(); el('dlg').classList.add('open'); document.body.style.overflow='hidden'; }
+  function closeDlg(){ DLG=null; el('dlg').classList.remove('open'); el('dlgcard').innerHTML=''; document.body.style.overflow=''; }
+  const top=t=>'<div class="dm-top"><h3>'+t+'</h3><button class="x" data-act="close" aria-label="Close">×</button></div>';
+  function chips(field, list, val, extraCls){
+    return '<div class="chips">'+list.map(v=>'<button type="button" class="chip'+(extraCls?' '+extraCls+' o-'+ocClass(v).slice(3):'')+(val===v?' on':'')+'"'+attr('act','pick')+attr('f',field)+attr('v',v)+'>'+esc(extraCls?ocShort(v):v)+'</button>').join('')+'</div>';
+  }
+  function yesNo(field, val){ return chips(field, ['Yes','No'], val); }
+  function quickDates(field, base, opts){
+    return '<div class="chips">'+opts.map(o=>'<button type="button" class="chip'+(DLG.rec[field]===o[1]?' on':'')+'"'+attr('act','pick')+attr('f',field)+attr('v',o[1])+'>'+esc(o[0])+'</button>').join('')+
+      '<input type="date" style="width:auto;padding:6px 10px;border:1px solid var(--line);border-radius:999px;font:inherit"'+attr('in','rec')+attr('f',field)+' value="'+esc(DLG.rec[field]||'')+'" aria-label="Pick a date"></div>';
+  }
+  const fuDates=b=>[['In 2 days',TC.addDays(b,2)],['In 1 week',TC.addDays(b,7)],['In 2 weeks',TC.addDays(b,14)]];
+  const obsDates=b=>[['3 months',TC.addMonths(b,3)],['6 months',TC.addMonths(b,6)],['12 months',TC.addMonths(b,12)]];
+  function field(label, f, type, opts){
+    opts=opts||{}; const v=DLG.rec[f]||'', ro=DLG.ro?' readonly':'';
+    const inp=type==='textarea' ? '<textarea'+attr('in','rec')+attr('f',f)+ro+'>'+esc(v)+'</textarea>'
+      : '<input type="'+type+'"'+attr('in','rec')+attr('f',f)+' value="'+esc(v)+'"'+ro+(opts.ph?' placeholder="'+esc(opts.ph)+'"':'')+(opts.auto?' autocomplete="'+opts.auto+'"':'')+'>';
+    return '<div class="fld'+(opts.full?' full':'')+'"><label>'+label+(opts.req?' <span class="req">*</span>':'')+'</label>'+inp+'</div>';
+  }
+  function select(label, f, list, opts){
+    opts=opts||{}; const v=DLG.rec[f]||'';
+    return '<div class="fld'+(opts.full?' full':'')+'"><label>'+label+'</label><select'+attr('in','rec')+attr('f',f)+(DLG.ro?' disabled':'')+'>'+
+      (opts.blank!==false?'<option value="">'+esc(opts.blank||'—')+'</option>':'')+list.map(x=>'<option'+(x===v?' selected':'')+'>'+esc(x)+'</option>').join('')+'</select></div>';
+  }
+  function consultForm(){
+    const d=DLG, r=d.rec, ro=d.ro, offs=myOffices();
+    const tcs=r.office?tcsFor(r.office):[];
+    if(r.tc && !tcs.some(x=>x.name===r.tc)) tcs.unshift({name:r.tc, mail:r.tcMail||''});
+    if(!ro && myName() && !tcs.some(x=>x.name===myName())) tcs.push({name:myName(), mail:myMail()});
+    let h=top(d.isNew?'Log a consult':esc(r.name||'Consult'))+'<div class="dm-body">';
+    if(d.err) h+='<div class="err">'+esc(d.err)+'</div>';
+    // Office first, then everything else - a consult always belongs to one office.
+    if(offs.length>1 || !r.office){
+      h+='<div class="grp"><div class="gl">Office <span class="req">*</span></div>'+(ro?'<b>'+esc(r.office)+'</b>':chips('office', offs, r.office))+'</div>';
+    }
+    h+='<div class="grp"><div class="gl">Patient</div><div class="fields">'+
+      field('Full name','name','text',{req:true, auto:'off'})+field('Date of birth','dob','date')+
+      field('Phone','phone','tel',{ph:'(575) 555-0123', auto:'off'})+field('Chart #','chart','text',{auto:'off'})+'</div></div>';
+    h+='<div class="grp"><div class="gl">Consult</div><div class="fields">'+
+      field('Consult date','date','date',{req:true})+field('Time','time','time')+
+      '<div class="fld full"><label>Consult type</label>'+(ro?'<b>'+esc(r.type||'—')+'</b>':chips('type', LISTS.types, r.type))+'</div>'+
+      '<div class="fld full"><label>Lead source</label>'+(ro?'<b>'+esc(r.lead||'—')+'</b>':chips('lead', LISTS.leads, r.lead))+'</div>'+
+      (r.office && tcs.length?'<div class="fld"><label>TC</label><select'+attr('in','rec')+attr('f','tc')+(ro?' disabled':'')+'>'+tcs.map(x=>'<option'+(x.name===r.tc?' selected':'')+'>'+esc(x.name)+'</option>').join('')+'</select></div>':'')+
+      '</div></div>';
+    h+='<div class="grp"><div class="gl">Outcome</div>'+(ro?ocBadge(r.outcome):
+      '<div class="chips"><button type="button" class="chip'+(r.outcome?'':' on')+'"'+attr('act','pick')+attr('f','outcome')+attr('v','')+'>Not yet</button></div>'+
+      '<div style="margin-top:6px">'+chips('outcome', TC.OUTCOMES, r.outcome, 'oc-pick')+'</div>');
+    // Only the questions that fit the outcome.
+    if(r.outcome==='Started'){
+      h+='<div class="then" style="margin-top:10px"><div><div class="q">Contract signed today? <span class="req">*</span></div>'+(ro?esc(r.sameDay||'—'):yesNo('sameDay', r.sameDay))+'</div>'+
+        '<div><div class="q">RPI Retainer Program sold?</div>'+(ro?esc(r.rpi||'—'):yesNo('rpi', r.rpi))+'</div>'+
+        (r.rpi==='Yes'?'<div class="fields">'+field('RPI sale date','rpiDate','date')+field('Treatment start date','startDate','date')+'</div>':'<div class="fields">'+field('Treatment start date','startDate','date')+'</div>')+'</div>';
+    } else if(r.outcome==='Pending'){
+      h+='<div class="then" style="margin-top:10px"><div><div class="q">Why pending? <span class="req">*</span></div>'+(ro?esc(r.reason||'—'):chips('reason', LISTS.reasons, r.reason))+'</div>'+
+        '<div><div class="q">Next follow-up</div>'+(ro?esc(fmtS(r.nextFU)||'—'):quickDates('nextFU', r.date||today(), fuDates(today())))+'</div></div>';
+    } else if(r.outcome==='Observation'){
+      h+='<div class="then" style="margin-top:10px"><div><div class="q">Next observation review</div>'+(ro?esc(fmtS(r.obsReview)||'—'):quickDates('obsReview', r.date||today(), obsDates(r.date||today())))+'</div></div>';
+    } else if(r.outcome==='No Show'){
+      h+='<div class="then" style="margin-top:10px"><div class="small muted">They’ll show up on the call list as a no-show follow-up.</div></div>';
+    } else if(r.outcome==='Rescheduled / Cancelled' && !ro){
+      h+='<div class="then" style="margin-top:10px"><div class="q">New consult date (optional)</div><div class="small muted">Adds the new consult for you.</div>'+
+        '<div class="fields"><div class="fld"><input type="date"'+attr('in','dlg')+attr('f','newDate')+' value="'+esc(d.newDate||'')+'" aria-label="New consult date"></div><div class="fld"><input type="time"'+attr('in','dlg')+attr('f','newTime')+' value="'+esc(d.newTime||'')+'" aria-label="New consult time"></div></div></div>';
+    }
+    h+='</div>';
+    // Everything else the sheet has, for the odd correction.
+    if(!d.isNew){
+      const a=TC.action(r, today()), wait=TC.daysWaiting(r, today());
+      h+='<details class="more"'+(d.moreOpen?' open':'')+'><summary>Follow-up details'+(a?' · '+esc(a):'')+'</summary><div class="grp" style="margin-top:8px"><div class="fields">'+
+        select('Follow-up status','fuStatus',TC.FU_STATUSES)+field('Last contact','lastContact','date')+
+        field('Next follow-up','nextFU','date')+field('Observation review','obsReview','date')+
+        select('Recall ready?','recallReady',['Yes','No'])+field('Recall-ready date','recallDate','date')+
+        field('Treatment start date','startDate','date')+select('Same-day contract?','sameDay',['Yes','No'])+
+        select('RPI sold?','rpi',['Yes','No'])+field('RPI sale date','rpiDate','date')+
+        select('Follow-up complete?','fuDone',['Yes','No'],{blank:'— (none needed)'})+field('Follow-up completion date','fuDoneDate','date')+
+        select('Pending reason','reason',LISTS.reasons)+
+        '<div class="fld"><label>Days waiting</label><input readonly value="'+(wait==null?'':wait)+'"></div>'+
+        '</div></div></details>';
+    }
+    h+='<div class="fields">'+field('Notes','notes','textarea',{full:true})+'</div>';
+    if(r.upd && !d.isNew) h+='<div class="small muted">Last changed '+esc(fmtS(String(r.upd).slice(0,10)))+(r.updBy && r.updBy!=='demo'?' by '+esc(r.updBy):'')+'</div>';
+    h+='</div>';
+    if(ro) h+='<div class="dm-foot"><button class="btn ghost" data-act="close">Close</button></div>';
+    else if(d.confirmDel) h+='<div class="dm-foot"><span class="left small"><b>Delete this consult?</b> It comes off every count.</span><button class="btn ghost" data-act="del-no">Keep it</button><button class="btn danger solid" data-act="del-yes">Delete</button></div>';
+    else h+='<div class="dm-foot">'+(d.isNew?'':'<button class="btn danger left" data-act="del">Delete</button>')+
+      '<button class="btn ghost" data-act="close">Cancel</button><button class="btn" data-act="save"'+(d.busy?' disabled':'')+'>'+(d.busy?'Saving…':(d.isNew?'Save consult':'Save'))+'</button></div>';
+    return h;
+  }
+  function problems(r){
+    if(!r.office) return 'Pick the office.';
+    if(!String(r.name||'').trim()) return 'Type the patient’s full name.';
+    if(!TC.parse(r.date)) return 'Pick the consult date.';
+    if(r.outcome==='Started' && !r.sameDay) return 'Say whether the contract was signed today.';
+    if(r.outcome==='Pending' && !r.reason) return 'Pick why it’s pending.';
+    return '';
+  }
+  function fuDlg(){
+    const d=DLG, r=ALL.find(x=>x.id===d.id)||{};
+    const T={called:'📞 Called', scheduled:'📅 Scheduled to start', started:'✅ Started', declined:'✖ Declined', rebooked:'🔁 Rebooked',
+             reviewed:'👁 Observation reviewed', ready:'🟢 Ready to start', setDate:'📆 Set the date'}[d.what]||'';
+    let h=top(T+' · '+esc(r.name||''))+'<div class="dm-body">';
+    if(d.err) h+='<div class="err">'+esc(d.err)+'</div>';
+    const base=today();
+    if(d.what==='called'){
+      if(r.outcome==='No Show') h+='<div class="small muted">They stay on the list as a no-show until you mark them rebooked or not coming.</div>';
+      else h+='<div><div class="q lab2">Next follow-up</div>'+quickDates(r.outcome==='Observation' && r.recallReady!=='Yes'?'obsReview':'nextFU', base, fuDates(base))+'</div>';
+    } else if(d.what==='setDate'){
+      const f=r.outcome==='Observation'?'obsReview':'nextFU';
+      h+='<div><div class="q lab2">'+(f==='obsReview'?'Next observation review':'Next follow-up')+'</div>'+quickDates(f, base, f==='obsReview'?obsDates(base):fuDates(base))+'</div>';
+    } else if(d.what==='reviewed'){
+      h+='<div><div class="q lab2">Next observation review</div>'+quickDates('obsReview', base, obsDates(base))+'</div>';
+    } else if(d.what==='started'){
+      h+='<div class="fields"><div class="fld"><label>Treatment start date</label><input type="date"'+attr('in','rec')+attr('f','startDate')+' value="'+esc(d.rec.startDate||base)+'"></div></div>'+
+        '<div><div class="q lab2">RPI Retainer Program sold?</div>'+yesNo('rpi', d.rec.rpi)+'</div>'+
+        '<div class="small muted">Their consult still counts as '+esc(r.outcome||'')+' for '+esc(fmtM(TC.monthOf(r.date)))+' &mdash; that month’s results don’t change.</div>';
+    } else if(d.what==='rebooked'){
+      h+='<div class="fields"><div class="fld"><label>New consult date <span class="req">*</span></label><input type="date"'+attr('in','rec')+attr('f','newDate')+' value="'+esc(d.rec.newDate||'')+'"></div>'+
+        '<div class="fld"><label>Time</label><input type="time"'+attr('in','rec')+attr('f','newTime')+' value="'+esc(d.rec.newTime||'')+'"></div></div>'+
+        '<div class="small muted">Adds the new consult with the same patient details.</div>';
+    } else {
+      h+='<div>'+({scheduled:'Marks them scheduled to start and the follow-up as done.', declined:'Closes the follow-up as declined.', ready:'Moves them to the top of the call list as recall ready.'}[d.what]||'')+'</div>';
+    }
+    h+='</div><div class="dm-foot"><button class="btn ghost" data-act="close">Cancel</button><button class="btn" data-act="fu-save"'+(d.busy?' disabled':'')+'>'+(d.busy?'Saving…':'Save')+'</button></div>';
+    return h;
+  }
+  function slotDlg(){
+    const d=DLG, rec=SLOTS[d.office]||{}, cur=TC.slotsOn(rec, d.date, isOpenFn(d.office), until());
+    let h=top(esc(fmtD(d.date))+' · '+esc(d.office))+'<div class="dm-body">';
+    if(d.err) h+='<div class="err">'+esc(d.err)+'</div>';
+    h+='<div class="q lab2">Consult slots this day</div><div class="chips">'+
+      '<button class="chip'+(cur===0?' on':'')+'"'+attr('act','slot-set')+attr('v','0')+'>Closed</button>'+
+      TC.SLOT_CHOICES.map(n=>'<button class="chip'+(cur===n?' on':'')+'"'+attr('act','slot-set')+attr('v',n)+'>'+n+'</button>').join('')+
+      '<input type="number" min="0" max="40" style="width:90px;padding:6px 10px;border:1px solid var(--line);border-radius:999px;font:inherit" placeholder="Other"'+attr('in','dlg')+attr('f','other')+' aria-label="Other number"></div>';
+    if(rec.days && Object.prototype.hasOwnProperty.call(rec.days, d.date)) h+='<button class="link" data-act="slot-reset">↺ Back to the usual ('+(isOpenFn(d.office)(d.date)?(d.date>until()?'set on the 1st':TC.usualOn(rec, d.date)+' slots'):'closed')+')</button>';
+    h+='</div><div class="dm-foot"><button class="btn ghost" data-act="close">Cancel</button><button class="btn" data-act="slot-other">Save other number</button></div>';
+    return h;
+  }
+  function listsDlg(){
+    const d=DLG;
+    const ta=(k,label)=>'<div class="fld full"><label>'+label+' <span class="small muted">(one per line)</span></label><textarea style="min-height:130px"'+attr('in','dlg')+attr('f',k)+'>'+esc(d[k])+'</textarea></div>';
+    return top('Edit the lists')+'<div class="dm-body">'+(d.err?'<div class="err">'+esc(d.err)+'</div>':'')+
+      '<div class="small muted">Outcomes and follow-up statuses are fixed &mdash; the numbers are worked out from them. These three are just labels.</div>'+
+      '<div class="fields">'+ta('types','Consult types')+ta('reasons','Pending reasons')+ta('leads','Lead sources')+'</div></div>'+
+      '<div class="dm-foot"><button class="btn ghost" data-act="close">Cancel</button><button class="btn" data-act="lists-save">Save lists</button></div>';
+  }
+  function drawDlg(){
+    if(!DLG) return;
+    const card=el('dlgcard'), y=el('dlg').scrollTop;
+    card.className='dmc'+(DLG.kind==='consult'?'':' narrow');
+    card.innerHTML=({consult:consultForm, fu:fuDlg, slot:slotDlg, lists:listsDlg, usual:usualDlg})[DLG.kind]();
+    el('dlg').scrollTop=y;
+  }
+  function newConsult(){
+    const offs=myOffices(), o=office || (offs.length===1?offs[0]:''), t=o?defaultTC(o):{name:'',mail:''};
+    openDlg({kind:'consult', isNew:true, rec:{id:TC.newId(), office:o, date:today(), time:'', name:'', dob:'', phone:'', chart:'',
+      type:'', lead:'', outcome:'', tc:t.name, tcMail:t.mail, notes:'', by:myMail()||myName(), at:new Date().toISOString()}});
+    setTimeout(()=>{ const n=document.querySelector('[data-f="name"]'); if(n && o) n.focus(); }, 30);
+  }
+  function openConsult(id, outcome){
+    const r=ALL.find(x=>x.id===id); if(!r) return;
+    const rec=Object.assign({}, r);
+    if(outcome){ TC.setOutcome(rec, outcome); if(outcome==='Started' && !rec.rpi) rec.rpi='No'; }
+    openDlg({kind:'consult', isNew:false, ro:!canEdit(), rec, origKey:keyOf(r), origOutcome:r.outcome||''});
+  }
+  function saveConsult(){
+    const d=DLG, r=d.rec;
+    r.name=String(r.name||'').trim();
+    const why=problems(r); if(why){ d.err=why; drawDlg(); return; }
+    d.busy=true; d.err=''; drawDlg();
+    const jobs=[persist(r, d.isNew?null:d.origKey)];
+    if(r.outcome==='Rescheduled / Cancelled' && d.newDate) jobs.push(persist(copyFor(r, d.newDate, d.newTime, 'Rescheduled from '+fmtS(r.date)), null));
+    Promise.all(jobs).then(()=>{ closeDlg(); render(); toast(d.isNew?'✓ Consult saved':'✓ Saved'); },
+      e=>{ d.busy=false; d.err='It didn’t save: '+((e && e.message)||'try again')+'. Nothing was lost - your typing is still here.'; drawDlg(); });
+  }
+  function copyFor(r, date, time, note){
+    const t=defaultTC(r.office);
+    return {id:TC.newId(), office:r.office, date, time:time||'', name:r.name, dob:r.dob||'', phone:r.phone||'', chart:r.chart||'',
+      type:r.type||'', lead:r.lead||'', outcome:'', tc:r.tc||t.name, tcMail:r.tcMail||t.mail, notes:note, by:myMail()||myName(), at:new Date().toISOString()};
+  }
+  function saveFu(){
+    const d=DLG, r=Object.assign({}, ALL.find(x=>x.id===d.id)||{}); if(!r.id) return closeDlg();
+    const t=today(), x=d.rec, jobs=[];
+    if(d.what==='called') TC.DO.called(r, t, x.nextFU||x.obsReview||'');
+    else if(d.what==='setDate'){ const v=x.nextFU||x.obsReview; if(!v){ d.err='Pick a date.'; return drawDlg(); } TC.DO.setDate(r, v); }
+    else if(d.what==='reviewed'){ if(!x.obsReview){ d.err='Pick the next review date.'; return drawDlg(); } TC.DO.reviewed(r, t, x.obsReview); }
+    else if(d.what==='started') TC.DO.started(r, t, x.startDate||t, x.rpi);
+    else if(d.what==='rebooked'){ if(!TC.parse(x.newDate)){ d.err='Pick the new consult date.'; return drawDlg(); } TC.DO.rebooked(r, t); jobs.push(persist(copyFor(r, x.newDate, x.newTime, 'Rebooked after no-show on '+fmtS(r.date)), null)); }
+    else TC.DO[d.what](r, t);
+    d.busy=true; d.err=''; drawDlg();
+    Promise.all([persist(r, keyOf(r))].concat(jobs)).then(()=>{ closeDlg(); render(); toast('✓ '+r.name+' updated'); },
+      e=>{ d.busy=false; d.err='It didn’t save: '+((e && e.message)||'try again'); drawDlg(); });
+  }
+  function download(){
+    const rows=scopedTC().filter(r=>TC.inMonth(r.date, month));
+    const blob=new Blob(['﻿'+TC.csv(rows, today())], {type:'text/csv;charset=utf-8'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+    a.download='TC Consults '+(office||'All offices')+' '+month+'.csv'; document.body.appendChild(a); a.click();
+    setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  }
+
+  /* ---------------- one handler for every button ---------------- */
+  document.addEventListener('click', e=>{
+    const b=e.target.closest('[data-act]'); if(!b) return;
+    if(b.tagName==='DETAILS') return;                 // the details toggle reports itself below
+    const act=b.dataset.act, v=b.dataset.v;
+    if(act==='tab'){ tab=v; render(); window.scrollTo({top:0}); return; }
+    if(act==='office'){ office=v||null; render(); return; }
+    if(act==='month'){ month=TC.shiftMonth(month, Number(v)); render(); return; }
+    if(act==='reload'){ loaded=false; render(); load(); return; }
+    if(act==='new'){ newConsult(); return; }
+    if(act==='open'){ openConsult(b.dataset.id); return; }
+    if(act==='outcome'){ openConsult(b.dataset.id, v); return; }
+    if(act==='fu'){
+      const r=ALL.find(x=>x.id===b.dataset.id); if(!r) return;
+      openDlg({kind:'fu', id:r.id, what:v, rec:{rpi:'', startDate:today()}}); return;
+    }
+    if(act==='close'){ closeDlg(); return; }
+    if(act==='pick' && DLG){
+      const f=b.dataset.f;
+      if(DLG.kind==='consult' && f==='outcome'){ TC.setOutcome(DLG.rec, v); if(v==='Started' && !DLG.rec.rpi) DLG.rec.rpi='No'; }
+      else if(DLG.kind==='consult' && f==='office'){ DLG.rec.office=v; const t=defaultTC(v); DLG.rec.tc=t.name; DLG.rec.tcMail=t.mail; }
+      else if(DLG.kind==='consult' && f==='rpi'){ DLG.rec.rpi=v; if(v==='Yes' && !DLG.rec.rpiDate) DLG.rec.rpiDate=DLG.rec.date||today(); if(v==='No') DLG.rec.rpiDate=''; }
+      else DLG.rec[f]=(DLG.rec[f]===v && f!=='outcome')?'':v;   // tap again to clear a choice
+      DLG.err=''; drawDlg(); return;
+    }
+    if(act==='save'){ saveConsult(); return; }
+    if(act==='del'){ DLG.confirmDel=true; drawDlg(); return; }
+    if(act==='del-no'){ DLG.confirmDel=false; drawDlg(); return; }
+    if(act==='del-yes'){
+      const r=Object.assign({}, DLG.rec, {deleted:true});
+      persist(r, DLG.origKey).then(()=>{ closeDlg(); render(); toast('Consult deleted'); }, e=>{ DLG.err='It didn’t delete: '+((e&&e.message)||'try again'); DLG.confirmDel=false; drawDlg(); });
+      return;
+    }
+    if(act==='fu-save'){ saveFu(); return; }
+    if(act==='usual'){ const o=inView()[0]; saveSlots(o, s=>{ TC.setUsual(s, Number(v), today()); }).then(()=>{ render(); toast('✓ '+v+' slots on an open day'); }, e=>toast('It didn’t save: '+e.message, true)); return; }
+    if(act==='usual-other'){ const o=inView()[0]; openDlg({kind:'usual', office:o, other:String((SLOTS[o]||{}).usual||'')}); return; }
+    if(act==='day'){ openDlg({kind:'slot', office:inView()[0], date:v}); return; }
+    if(act==='slot-set'){ setDay(Number(v)); return; }
+    if(act==='slot-other'){
+      const n=Number(DLG.other); if(!(n>=0 && n<=40) || DLG.other===undefined || DLG.other===''){ DLG.err='Type a number from 0 to 40.'; drawDlg(); return; }
+      if(DLG.kind==='usual'){ const d=DLG; saveSlots(d.office, s=>{ TC.setUsual(s, n, today()); }).then(()=>{ closeDlg(); render(); toast('✓ '+n+' slots on an open day'); }, e=>{ d.err=e.message; drawDlg(); }); return; }
+      setDay(n); return;
+    }
+    if(act==='slot-reset'){ const d=DLG; saveSlots(d.office, s=>{ delete s.days[d.date]; }).then(()=>{ closeDlg(); render(); }, e=>{ d.err=e.message; drawDlg(); }); return; }
+    if(act==='lists'){ openDlg({kind:'lists', types:LISTS.types.join('\n'), reasons:LISTS.reasons.join('\n'), leads:LISTS.leads.join('\n')}); return; }
+    if(act==='lists-save'){
+      const d=DLG, clean=t=>[...new Set(String(t||'').split('\n').map(x=>x.trim()).filter(Boolean))];
+      const next={types:clean(d.types), reasons:clean(d.reasons), leads:clean(d.leads)};
+      if(!next.types.length || !next.reasons.length || !next.leads.length){ d.err='Each list needs at least one line.'; drawDlg(); return; }
+      PH_STORE.set(TC.LISTS_KEY, next).then(r=>{ if(r && (r.blocked||r.error)) throw new Error(r.why||r.error); LISTS=Object.assign({}, TC.DEFAULT_LISTS, next); closeDlg(); render(); toast('✓ Lists saved'); },
+        e=>{ d.err='It didn’t save: '+e.message; drawDlg(); });
+      return;
+    }
+    if(act==='csv'){ download(); return; }
+    if(act==='demo-reset'){ if(LIVE()) return; seedDemo(true); loaded=false; render(); load().then(()=>toast('Sample data reset')); return; }
+  });
+  function usualDlg(){
+    const d=DLG;
+    return top('Usual slots · '+esc(d.office))+'<div class="dm-body">'+(d.err?'<div class="err">'+esc(d.err)+'</div>':'')+
+      '<div class="fld"><label>Consult slots on an open day</label><input type="number" min="0" max="40"'+attr('in','dlg')+attr('f','other')+' value="'+esc(d.other||'')+'"></div></div>'+
+      '<div class="dm-foot"><button class="btn ghost" data-act="close">Cancel</button><button class="btn" data-act="slot-other">Save</button></div>';
+  }
+  function setDay(n){
+    const d=DLG, o=d.office;
+    saveSlots(o, s=>{ s.days[d.date]=n; }).then(()=>{ closeDlg(); render(); toast('✓ '+fmtS(d.date)+': '+(n?n+' slots':'closed')); }, e=>{ d.err=e.message; drawDlg(); });
+  }
+  // Typing: kept in the dialog's state without redrawing, so the cursor stays put.
+  document.addEventListener('input', e=>{
+    const t=e.target, k=t.dataset && t.dataset.in; if(!k) return;
+    if(k==='q'){ q=t.value; const pos=t.selectionStart; render(); const n=document.querySelector('[data-in="q"]'); if(n){ n.focus(); try{ n.setSelectionRange(pos,pos); }catch(_){} } return; }
+    if(!DLG) return;
+    if(k==='rec') DLG.rec[t.dataset.f]=t.value;
+    else if(k==='dlg') DLG[t.dataset.f]=t.value;
+  });
+  document.addEventListener('change', e=>{
+    const t=e.target, k=t.dataset && t.dataset.in; if(!k) return;
+    if(k==='tcf'){ tcFilter=t.value; render(); return; }
+    if(k==='ocf'){ ocFilter=t.value; render(); return; }
+    if(k==='rec' && DLG && t.tagName==='SELECT'){ DLG.rec[t.dataset.f]=t.value; if(t.dataset.f==='tc'){ const x=tcsFor(DLG.rec.office).find(y=>y.name===t.value); DLG.rec.tcMail=x?x.mail:''; } drawDlg(); }
+  });
+  document.addEventListener('toggle', e=>{ if(DLG && e.target.matches && e.target.matches('details.more')) DLG.moreOpen=e.target.open; }, true);
+  document.addEventListener('keydown', e=>{ if(e.key==='Escape' && DLG) closeDlg(); });
+  el('dlg').addEventListener('click', e=>{ if(e.target===el('dlg')) closeDlg(); });
+
+  /* ---------------- sandbox persona ---------------- */
+  const PERSONAS=(window.PH?PH.PEOPLE:[]).map(p=>({id:p.id, name:PH.name(p)+' — '+p.title.split(' · ')[0]}));
+  el('persona').innerHTML=PERSONAS.map(p=>'<option value="'+p.id+'">'+esc(p.name)+'</option>').join('');
+  try{ el('persona').value=localStorage.getItem('ph_viewas')||'admin'; }catch(_){}
+  el('persona').addEventListener('change', function(){ try{ localStorage.setItem('ph_viewas', this.value); }catch(_){} location.reload(); });
+
+  /* ---------------- start ---------------- */
+  function boot(){ render(); load(); }
+  window.TCPAGE={render, reload:load, identity:()=>{ tab=null; office=null; render(); }};
+  if(!LIVE() || window.PH_AUTH) boot();
+  else document.addEventListener('ph-signed-in', boot, {once:true});
+})();
+</script>
+<script>PH.nav('tc');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(window.TCPAGE)TCPAGE.identity();});document.addEventListener('ph-identity',function(){if(window.TCPAGE)TCPAGE.identity();});</script>
+<script src="tour.js?v=hc76"></script>
+<script>
+Tour.init([
+  {sel:'#offbar', title:'Your office', body:'You see the offices you work at. Heather, Selene and leadership see every office and can pick one.'},
+  {sel:'[data-act="new"], .todayhead', title:'Log a consult', body:'One for every new patient on the schedule, no-shows included. Name, type, lead source, then the outcome after the consult — only the questions that fit that outcome come up.'},
+  {sel:'#tabs', title:'The call list builds itself', body:'Pending, no-show, observation and recall patients show up on the day they’re due. <b>Called</b>, <b>Started</b>, <b>Declined</b> fill in the follow-up columns for you.'},
+  {sel:'#tabs', title:'Numbers, live', body:'<b>Numbers</b> is the spreadsheet’s Dashboard and Monthly Totals, worked out as you go. Nothing to email at month-end.'}
+], {key:'tc', title:'TC Tracker', next:{label:'Home', href:'home.html'}});
+</script>
+</body>
+</html>
