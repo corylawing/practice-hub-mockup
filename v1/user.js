@@ -1617,7 +1617,9 @@
     {k:'home',       n:'\ud83c\udfe0 Home',             href:'home.html',       show:()=>true},
     {k:'dashboard',  n:'\ud83d\udcca Production Dashboard',        href:'index.html',      show:()=>atLeast('dashboard','view')},
     {k:'production', n:'\ud83d\udcdd Enter Production',  href:'production.html', show:()=>atLeast('production','edit')},
-    {k:'tc',         n:'\ud83d\uddc2\ufe0f TC Tracker',        href:'tc.html',         show:()=>tcOn() && atLeast('tc','view')},
+    /* Sandbox: everyone (made-up patients; the page has its own "Try it as"). Live: the
+       switch, then Teams & Access. */
+    {k:'tc',         n:'\ud83d\uddc2\ufe0f TC Tracker',        href:'tc.html',         show:()=>tcOn() && (env()!=='live' || atLeast('tc','view'))},
     {k:'schedule',   n:'\ud83d\udcc5 Schedule',          href:'schedule.html',   show:()=>atLeast('schedule','view')},
     {k:'marketing',  n:'\ud83d\udce3 Marketing',         href:'marketing.html',  show:()=>atLeast('marketing','view')},
     {k:'documents',  n:'\ud83d\udcc1 Documents',         href:'documents.html',  show:()=>atLeast('documents','view')},

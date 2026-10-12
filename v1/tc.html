@@ -251,7 +251,7 @@
   <script src="tc.js?v=hc76"></script>
 </head>
 <body>
-<div class="ribbon">SANDBOX — made-up patients. Try it as a TC, an office manager or Heather with “Viewing as”.</div>
+<div class="ribbon">SANDBOX — made-up patients. Use “Try it as” to see it as a TC, an office manager or Selene.</div>
 <header class="hdr">
   <div class="hdr-in">
     <span class="mark" aria-label="Home-Brace"><img src="../assets/logo-mark.png?v=2" alt="" width="34" height="34"></span>
@@ -263,8 +263,8 @@
 
 <div class="wrap">
   <div class="viewas">
-    <span class="lab">👤 Viewing as</span>
-    <select id="persona" aria-label="Viewing as"></select>
+    <span class="lab">👤 Try it as</span>
+    <select id="persona" aria-label="Try it as"></select>
     <button class="btn ghost sm demo" data-act="demo-reset" title="Put the made-up consults back to how they started">↺ Reset sample data</button>
   </div>
   <div class="page-head">
@@ -289,7 +289,18 @@
   const attr=(k,v)=>' data-'+k+'="'+esc(v)+'"';
   const LIVE=()=>!!(window.PH && PH.isLive && PH.isLive());
   const RANK={none:0,view:1,add:2,edit:3,manage:4};
-  const level=()=>(window.PH && PH.can) ? PH.can('tc') : 'manage';
+  /* SANDBOX: try it as a TC, an office manager or Selene, whoever is signed in. Everyone
+     on the sandbox is signed in as themselves, so the hub's own "Viewing as" never applies
+     there - and Selene's real access may not be set up on it. Live: the real person. */
+  const ROLES={
+    tc:{label:'A TC (Elizabeth Reyes, Hobbs)', level:'edit', offices:['Hobbs'], name:'Elizabeth Reyes', mail:'liz@farnsworthorthodontics.com', tc:true},
+    om:{label:'An office manager (Lily Rico, Carlsbad) — view only', level:'view', offices:['Carlsbad'], name:'Lily Rico', mail:'lily@farnsworthorthodontics.com'},
+    lead:{label:'Selene / leadership — every office', level:'manage', offices:'all', name:'Selene Brown', mail:''}
+  };
+  let tryAs=null;
+  if(!LIVE()){ try{ tryAs=localStorage.getItem('ph_tc_as'); }catch(_){} if(!ROLES[tryAs]) tryAs='lead'; }
+  const role=()=>tryAs?ROLES[tryAs]:null;
+  const level=()=>role() ? role().level : ((window.PH && PH.can) ? PH.can('tc') : 'none');
   const canEdit=()=>RANK[level()]>=RANK.edit;
   const canManage=()=>level()==='manage';
   const today=()=>TC.iso();
@@ -307,13 +318,13 @@
 
   /* ---------------- who, and which offices ---------------- */
   function me(){ return (window.PH && PH.me) ? PH.me() : {}; }
-  function myName(){ try{ return PH.name(me()); }catch(_){ return ''; } }
-  function myMail(){ const m=me(); return String(m.mail||m.email||'').toLowerCase(); }
+  function myName(){ if(role()) return role().name; try{ return PH.name(me()); }catch(_){ return ''; } }
+  function myMail(){ if(role()) return role().mail; const m=me(); return String(m.mail||m.email||'').toLowerCase(); }
   function allOffices(){ return (window.PH && PH.officeNames) ? PH.officeNames() : []; }
   /* The offices this person may see - the same rule as every other page: Admin,
      Executive and Leadership see every office; everyone else sees their own. */
   function myOffices(){
-    const all=allOffices(), mine=(window.PH && PH.offices) ? PH.offices() : 'all';
+    const all=allOffices(), mine=role() ? role().offices : ((window.PH && PH.offices) ? PH.offices() : 'all');
     if(mine==='all') return all;
     const list=(Array.isArray(mine)?mine:[]).filter(o=>all.indexOf(o)>=0);
     return list.length?list:(Array.isArray(mine)?mine.slice():[]);
@@ -338,7 +349,7 @@
     }
     return out;
   }
-  const iAmTC=()=>(me().teams||[]).some(t=>String(t).toLowerCase()==='tcs') || /\bTC\b/.test(me().role||'');
+  const iAmTC=()=>role() ? !!role().tc : ((me().teams||[]).some(t=>String(t).toLowerCase()==='tcs') || /\bTC\b/.test(me().role||''));
   function defaultTC(o){
     if(iAmTC() || !tcsFor(o).length) return {name:myName(), mail:myMail()};
     return tcsFor(o)[0];
@@ -468,7 +479,7 @@
       (t.k==='calls'?'<span class="n'+(due?'':' z')+'">'+due+'</span>':'')+'</button>').join('');
   }
   function render(){
-    if(!(window.PH && PH.atLeast && PH.atLeast('tc','view'))){ el('view').innerHTML='<div class="empty">You don’t have the TC Tracker. Ask your administrator.</div>'; el('tabs').innerHTML=''; el('offbar').innerHTML=''; return; }
+    if(RANK[level()]<RANK.view){ el('view').innerHTML='<div class="empty">You don’t have the TC Tracker. Ask your administrator.</div>'; el('tabs').innerHTML=''; el('offbar').innerHTML=''; return; }
     if(!tab) tab=defaultTab();
     renderOffices(); renderTabs();
     if(!loaded){ el('view').innerHTML='<div class="empty">Loading…</div>'; return; }
@@ -954,11 +965,13 @@
   document.addEventListener('keydown', e=>{ if(e.key==='Escape' && DLG) closeDlg(); });
   el('dlg').addEventListener('click', e=>{ if(e.target===el('dlg')) closeDlg(); });
 
-  /* ---------------- sandbox persona ---------------- */
-  const PERSONAS=(window.PH?PH.PEOPLE:[]).map(p=>({id:p.id, name:PH.name(p)+' — '+p.title.split(' · ')[0]}));
-  el('persona').innerHTML=PERSONAS.map(p=>'<option value="'+p.id+'">'+esc(p.name)+'</option>').join('');
-  try{ el('persona').value=localStorage.getItem('ph_viewas')||'admin'; }catch(_){}
-  el('persona').addEventListener('change', function(){ try{ localStorage.setItem('ph_viewas', this.value); }catch(_){} location.reload(); });
+  /* ---------------- sandbox: try it as ---------------- */
+  el('persona').innerHTML=Object.keys(ROLES).map(k=>'<option value="'+k+'"'+(k===tryAs?' selected':'')+'>'+esc(ROLES[k].label)+'</option>').join('');
+  el('persona').addEventListener('change', function(){
+    if(LIVE()) return;
+    tryAs=this.value; try{ localStorage.setItem('ph_tc_as', tryAs); }catch(_){}
+    tab=null; office=null; tcFilter=''; q=''; ocFilter=''; loaded=false; render(); load();
+  });
 
   /* ---------------- start ---------------- */
   function boot(){ render(); load(); }

@@ -257,7 +257,7 @@ const t=(n,v)=>{ (v?ok:bad).push(n); };
   t('the sandbox has the TC Tracker (sandbox first)', S.PH.tcOn()===true && S.tabs().indexOf('tc')>=0);
   const S3=load({ host:'corylawing.github.io', page:'team', ls:{ ph_viewas:'staff' } });
   S3.PH.nav('team');
-  t('a sandbox staff persona does not get the TC Tracker (patient details)', S3.tabs().indexOf('tc')<0);
+  t('the sandbox shows the TC Tracker to everyone (made-up patients; the page has its own "Try it as")', S3.tabs().indexOf('tc')>=0);
   const S2=load({ host:'corylawing.github.io', page:'team', ls:{ ph_viewas:'doctor' } });
   S2.PH.nav('team');
   t('sandbox honours the chosen persona', S2.PH.me().id==='doctor');

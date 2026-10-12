@@ -105,6 +105,8 @@ office-month), `ph_tcslots_<office>`, `ph_tclists`; nothing removed (deleted/mov
 Create a separate list (e.g. HomeBraceConsults, same two columns) with broken inheritance for TCs/OMs/leadership only,
 route `ph_tclog_`/`ph_tcslots_`/`ph_tclists` keys there in store.js, and make a failed `getAll` show as an error, not
 an empty tracker. Sandbox demo: made-up patients seeded once per browser (`ph_tc_demo`), "Reset sample data" button.
+On the sandbox the tab shows to everyone and the page has its own **"Try it as"** (TC Hobbs / OM Carlsbad view-only /
+Selene all offices): everyone there is signed in as themselves, so the hub's "Viewing as" personas never apply.
 
 **Documents tab column + lock check fixed (07/10, hc73).** Teams & Access has a **Documents** app-tool column
 (None / Can open) = whether the team gets the Documents TAB. It was never a column, so teams with saved rows had it
