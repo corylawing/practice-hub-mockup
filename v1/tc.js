@@ -73,6 +73,8 @@
        J reason  K nextFU  L lastContact  M fuStatus  N obsReview  O recallReady
        P recallDate  Q startDate  R lead  S rpi  T rpiDate  U sameDay  V fuDone
        W fuDoneDate  X notes  AB chart
+     S/T are the RIP Retainer Program. The sheet said "RPI" in places; the practice calls it
+     RIP (Heather, 13/10), so every label says RIP. The stored keys stay rpi / rpiDate.
      Y (month), Z (action needed) and AA (days waiting) are calculated, never stored. */
   const live=r=>!!r && !r.deleted && !r.moved;
 
@@ -167,7 +169,7 @@
       noShow, noShowRate:rate(noShow, scheduled),
       refused, refusedRate:rate(refused, completed),
       rescheduled, rescheduledRate:rate(rescheduled, scheduled),
-      // RPI counts by the SALE date, not the consult date (B16 / M6).
+      // RIP counts by the SALE date, not the consult date (B16 / M6).
       rpi:all.filter(r=>r.rpi==='Yes' && inMonth(r.rpiDate, ym)).length,
       acceptance:rate(started, completed),
       sameDay, sameDayRate:rate(sameDay, completed),
@@ -316,7 +318,7 @@
     ['Office','office'],['TC','tc'],['Consult type','type'],['Outcome','outcome'],['Pending reason','reason'],
     ['Next follow-up','nextFU'],['Last contact','lastContact'],['Follow-up status','fuStatus'],
     ['Observation review','obsReview'],['Recall ready?','recallReady'],['Recall-ready date','recallDate'],
-    ['Treatment start date','startDate'],['Lead source','lead'],['RPI sold?','rpi'],['RPI sale date','rpiDate'],
+    ['Treatment start date','startDate'],['Lead source','lead'],['RIP sold?','rpi'],['RIP sale date','rpiDate'],
     ['Same-day contract?','sameDay'],['Follow-up complete?','fuDone'],['Follow-up completion date','fuDoneDate'],
     ['Notes','notes'],['Month',null],['Action needed',null],['Days waiting',null],['Patient / chart ID','chart']
   ];

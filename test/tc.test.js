@@ -65,7 +65,7 @@ const C=[
   t('B10-B15 outcome counts', m.started===2 && m.pending===2 && m.observation===1 && m.noShow===2 && m.refused===1 && m.rescheduled===1);
   t('C10-C14 rates use completed, C13/C15 use scheduled',
     m.startedRate===2/6 && m.pendingRate===2/6 && m.observationRate===1/6 && m.refusedRate===1/6 && m.noShowRate===2/11 && m.rescheduledRate===1/11);
-  t('B16 RPI counts by SALE date (a September consult sold in October counts; an October consult sold in November does not)', m.rpi===2);
+  t('B16 RIP counts by SALE date (a September consult sold in October counts; an October consult sold in November does not)', m.rpi===2);
   t('F15 case acceptance = started / completed', m.acceptance===2/6);
   t('F19 same-day contracts = U Yes in the month', m.sameDay===1);
   t('F16 same-day rate = same-day / completed', m.sameDayRate===1/6);
@@ -76,7 +76,7 @@ const C=[
   t('B8 with no slots is blank, not a division by zero', TC.monthStats(C, '2026-10', 0, TODAY).capacity===null);
   t('An empty month gives blanks for every rate', (s=>s.acceptance===null && s.fuRate===null && s.scheduled===0)(TC.monthStats(C, '2026-03', 0, TODAY)));
   const n=TC.monthStats(C, '2026-11', 0, TODAY);
-  t('November gets the November RPI sale', n.rpi===1 && n.scheduled===0);
+  t('November gets the November RIP sale', n.rpi===1 && n.scheduled===0);
 }
 
 /* ---------- Open work: Dashboard F6-F12 ---------- */
@@ -96,8 +96,8 @@ const C=[
   const days=TC.dailyView(C, '2026-10', slots, TODAY);
   t('Daily view has every day of the month', days.length===31 && days[0].date==='2026-10-01' && days[30].date==='2026-10-31');
   const d5=days[4];
-  t('Daily view row: scheduled, slots, capacity, started, RPI, same-day', d5.scheduled===1 && d5.slots===9 && d5.capacity===1/9 && d5.started===1 && d5.rpi===1 && d5.sameDay===1);
-  t('Daily view: RPI on its SALE day', days[0].rpi===1 && days[0].scheduled===0);
+  t('Daily view row: scheduled, slots, capacity, started, RIP, same-day', d5.scheduled===1 && d5.slots===9 && d5.capacity===1/9 && d5.started===1 && d5.rpi===1 && d5.sameDay===1);
+  t('Daily view: RIP on its SALE day', days[0].rpi===1 && days[0].scheduled===0);
   t('Daily view: follow-ups due = consults that day with an action', days[6].fuDue===1 && days[9].fuDue===1 && days[10].fuDue===0);
   const y=TC.yearTotals(C, 2026, ym=>ym==='2026-10'?88:0, TODAY);
   t('Monthly Totals: twelve months', y.rows.length===12 && y.rows[9].ym==='2026-10');
@@ -124,7 +124,7 @@ const C=[
   t('Called: last contact today, Contacted - waiting, next follow-up set', c.lastContact===TODAY && c.fuStatus==='Contacted - waiting' && c.nextFU==='2026-10-27');
   t('Called an observation patient: the date is the next review', D.called({outcome:'Observation'}, TODAY, '2027-04-20').obsReview==='2027-04-20');
   const s=D.started({outcome:'Pending', fuDone:'No'}, TODAY, '2026-10-22', 'Yes');
-  t('Started: Closed - started, start date, V Yes + date, RPI sold that day',
+  t('Started: Closed - started, start date, V Yes + date, RIP sold that day',
     s.fuStatus==='Closed - started' && s.startDate==='2026-10-22' && s.fuDone==='Yes' && s.fuDoneDate===TODAY && s.rpi==='Yes' && s.rpiDate===TODAY);
   t('Started keeps the consult-day outcome (the month’s results do not change)', s.outcome==='Pending');
   t('Scheduled to start: status + V Yes', (r=>r.fuStatus==='Scheduled to start' && r.fuDone==='Yes')(D.scheduled({}, TODAY)));

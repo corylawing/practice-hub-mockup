@@ -243,12 +243,12 @@
     *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}
   }
 </style>
-<script src="user.js?v=hc76"></script>
+<script src="user.js?v=hc77"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc76"></script>
-  <script src="gate.js?v=hc76"></script>
-  <script src="_staff.js?v=hc76"></script>
-  <script src="tc.js?v=hc76"></script>
+  <script src="store.js?v=hc77"></script>
+  <script src="gate.js?v=hc77"></script>
+  <script src="_staff.js?v=hc77"></script>
+  <script src="tc.js?v=hc77"></script>
 </head>
 <body>
 <div class="ribbon">SANDBOX — made-up patients. Use “Try it as” to see it as a TC, an office manager or Selene.</div>
@@ -611,14 +611,14 @@
       K('Same-day contracts', m.sameDay, pct(m.sameDayRate)+' of completed')+
       K('No-show rate', pct(m.noShowRate), m.noShow+' no-show'+(m.noShow===1?'':'s'))+
       K('Follow-up completion', pct(m.fuRate), m.fuYes+' of '+(m.fuYes+m.fuNo)+' done')+
-      K('RPI sold', m.rpi, 'by sale date')+'</div>';
+      K('RIP sold', m.rpi, 'by sale date')+'</div>';
     if(m.missing) h+='<div class="note warn">⚠️ <b>'+m.missing+' consult'+(m.missing===1?'':'s')+'</b> in '+esc(fmtM(month))+' still need'+(m.missing===1?'s':'')+' an outcome, so these numbers aren’t final.</div>';
     h+='<div class="three">';
     h+='<div class="card"><h2>Monthly results</h2><p class="sub">'+esc(fmtM(month))+'</p><table class="mt">'+
       R('Available consult slots', m.slots)+R('Consults scheduled', m.scheduled)+R('Capacity scheduled', pct(m.capacity))+
       R('Completed consults', m.completed, m.completedRate)+R('Started', m.started, m.startedRate, 'sub')+R('Pending', m.pending, m.pendingRate, 'sub')+
       R('Observation', m.observation, m.observationRate, 'sub')+R('Refused treatment', m.refused, m.refusedRate, 'sub')+
-      R('No show', m.noShow, m.noShowRate)+R('Rescheduled / cancelled', m.rescheduled, m.rescheduledRate)+R('RPI Retainer Programs sold', m.rpi)+'</table></div>';
+      R('No show', m.noShow, m.noShowRate)+R('Rescheduled / cancelled', m.rescheduled, m.rescheduledRate)+R('RIP Retainer Programs sold', m.rpi)+'</table></div>';
     h+='<div class="card"><h2>Open work</h2><p class="sub">Right now, every month</p><table class="mt">'+
       R('Open pending', w.openPending)+R('Current observation patients', w.observation)+R('Recall ready', w.recallReady)+
       R('Observation review due', w.observationDue)+R('No-show follow-up', w.noShow)+R('Missing outcome', m.missing)+R('All open follow-ups', w.allOpen)+'</table>'+
@@ -631,23 +631,23 @@
     h+='</div>';
     if(inView().length>1){
       const offs=inView();
-      h+='<div class="card"><h2>By office</h2><p class="sub">'+esc(fmtM(month))+(tcFilter?' · '+esc(tcFilter):'')+'</p><div class="tblwrap" style="box-shadow:none"><table class="t"><thead><tr><th>Office</th><th class="n">Slots</th><th class="n">Scheduled</th><th class="n">Capacity</th><th class="n">Completed</th><th class="n">Started</th><th class="n">Acceptance</th><th class="n">Same-day</th><th class="n">No-show</th><th class="n">Follow-up</th><th class="n">RPI</th><th class="n">Open</th></tr></thead><tbody>'+
+      h+='<div class="card"><h2>By office</h2><p class="sub">'+esc(fmtM(month))+(tcFilter?' · '+esc(tcFilter):'')+'</p><div class="tblwrap" style="box-shadow:none"><table class="t"><thead><tr><th>Office</th><th class="n">Slots</th><th class="n">Scheduled</th><th class="n">Capacity</th><th class="n">Completed</th><th class="n">Started</th><th class="n">Acceptance</th><th class="n">Same-day</th><th class="n">No-show</th><th class="n">Follow-up</th><th class="n">RIP</th><th class="n">Open</th></tr></thead><tbody>'+
         offs.map(o=>{ const L=list.filter(r=>r.office===o), s=TC.monthStats(L, month, TC.slotsInMonth(SLOTS[o]||{}, month, isOpenFn(o), until()), d), ow=TC.openWork(L, d);
           return '<tr class="click"'+attr('act','office')+attr('v',o)+'><td><b>'+esc(o)+'</b></td><td class="n">'+s.slots+'</td><td class="n">'+s.scheduled+'</td><td class="n">'+pct(s.capacity)+'</td><td class="n">'+s.completed+'</td><td class="n">'+s.started+'</td><td class="n"><b>'+pct(s.acceptance)+'</b></td><td class="n">'+pct(s.sameDayRate)+'</td><td class="n">'+pct(s.noShowRate)+'</td><td class="n">'+pct(s.fuRate)+'</td><td class="n">'+s.rpi+'</td><td class="n">'+ow.allOpen+'</td></tr>'; }).join('')+
         '</tbody></table></div></div>';
     }
     const days=TC.dailyView(list, month, slotsOn, d).filter(x=>x.scheduled || x.slots || x.rpi);
-    h+='<details class="card"><summary>Each day in '+esc(fmtM(month))+'</summary><div class="tblwrap" style="box-shadow:none"><table class="t"><thead><tr><th>Day</th><th class="n">Scheduled</th><th class="n">Slots</th><th class="n">Capacity</th><th class="n">Started</th><th class="n">Pending</th><th class="n">No show</th><th class="n">Follow-ups due</th><th class="n">RPI sold</th><th class="n">Same-day</th><th class="n">Follow-ups done</th></tr></thead><tbody>'+
+    h+='<details class="card"><summary>Each day in '+esc(fmtM(month))+'</summary><div class="tblwrap" style="box-shadow:none"><table class="t"><thead><tr><th>Day</th><th class="n">Scheduled</th><th class="n">Slots</th><th class="n">Capacity</th><th class="n">Started</th><th class="n">Pending</th><th class="n">No show</th><th class="n">Follow-ups due</th><th class="n">RIP sold</th><th class="n">Same-day</th><th class="n">Follow-ups done</th></tr></thead><tbody>'+
       (days.length?days.map(x=>'<tr><td>'+esc(fmtD(x.date))+'</td><td class="n">'+x.scheduled+'</td><td class="n">'+x.slots+'</td><td class="n">'+pct(x.capacity)+'</td><td class="n">'+x.started+'</td><td class="n">'+x.pending+'</td><td class="n">'+x.noShow+'</td><td class="n">'+x.fuDue+'</td><td class="n">'+x.rpi+'</td><td class="n">'+x.sameDay+'</td><td class="n">'+x.fuDone+'</td></tr>').join(''):'<tr><td colspan="11" class="muted">Nothing this month.</td></tr>')+
       '</tbody></table></div></details>';
     const year=+month.slice(0,4), y=TC.yearTotals(list, year, slotsMonth, d);
     const MR=(r,label,cls)=>'<tr'+(cls?' class="'+cls+'"':'')+'><td>'+label+'</td><td class="n">'+r.slots+'</td><td class="n">'+r.scheduled+'</td><td class="n">'+pct(r.capacity)+'</td><td class="n">'+r.completed+'</td><td class="n">'+r.started+'</td><td class="n">'+pct(r.acceptance)+'</td><td class="n">'+r.pending+'</td><td class="n">'+r.observation+'</td><td class="n">'+r.noShow+'</td><td class="n">'+r.refused+'</td><td class="n">'+r.rescheduled+'</td><td class="n">'+r.rpi+'</td><td class="n">'+r.sameDay+'</td><td class="n">'+pct(r.sameDayRate)+'</td><td class="n">'+pct(r.noShowRate)+'</td><td class="n">'+r.fuYes+'</td><td class="n">'+pct(r.fuRate)+'</td></tr>';
-    h+='<details class="card"'+(canManage()?' open':'')+'><summary>Monthly totals · '+year+'</summary><div class="tblwrap" style="box-shadow:none"><table class="t"><thead><tr><th>Month</th><th class="n">Slots</th><th class="n">Scheduled</th><th class="n">Capacity</th><th class="n">Completed</th><th class="n">Started</th><th class="n">Acceptance</th><th class="n">Pending</th><th class="n">Observation</th><th class="n">No show</th><th class="n">Refused</th><th class="n">Resched.</th><th class="n">RPI</th><th class="n">Same-day</th><th class="n">Same-day %</th><th class="n">No-show %</th><th class="n">Follow-ups</th><th class="n">Follow-up %</th></tr></thead><tbody>'+
+    h+='<details class="card"'+(canManage()?' open':'')+'><summary>Monthly totals · '+year+'</summary><div class="tblwrap" style="box-shadow:none"><table class="t"><thead><tr><th>Month</th><th class="n">Slots</th><th class="n">Scheduled</th><th class="n">Capacity</th><th class="n">Completed</th><th class="n">Started</th><th class="n">Acceptance</th><th class="n">Pending</th><th class="n">Observation</th><th class="n">No show</th><th class="n">Refused</th><th class="n">Resched.</th><th class="n">RIP</th><th class="n">Same-day</th><th class="n">Same-day %</th><th class="n">No-show %</th><th class="n">Follow-ups</th><th class="n">Follow-up %</th></tr></thead><tbody>'+
       y.rows.map((r,i)=>MR(r, MO[i], r.ym===month?'':'' )).join('')+MR(y.total,'Year','total')+'</tbody></table></div></details>';
     h+='<details class="card"><summary>How these numbers are worked out</summary>'+
       '<p class="small" style="margin-top:0">The same formulas as the TC Consult Tracker workbook. <b>Completed</b> = started + pending + observation + refused. '+
       'Case acceptance = started ÷ completed. Same-day contract rate = same-day ÷ completed. No-show rate = no-shows ÷ scheduled. '+
-      'Follow-up completion = follow-ups marked done ÷ every follow-up marked done or not done. RPI counts in the month it was sold.</p>'+
+      'Follow-up completion = follow-ups marked done ÷ every follow-up marked done or not done. RIP counts in the month it was sold.</p>'+
       '<p class="small"><b>Different from the spreadsheet, on purpose:</b></p><ul class="small" style="margin:0;padding-left:18px">'+
       TC.WHAT_CHANGED.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul></details>';
     h+='</div>';
@@ -732,8 +732,8 @@
     // Only the questions that fit the outcome.
     if(r.outcome==='Started'){
       h+='<div class="then" style="margin-top:10px"><div><div class="q">Contract signed today? <span class="req">*</span></div>'+(ro?esc(r.sameDay||'—'):yesNo('sameDay', r.sameDay))+'</div>'+
-        '<div><div class="q">RPI Retainer Program sold?</div>'+(ro?esc(r.rpi||'—'):yesNo('rpi', r.rpi))+'</div>'+
-        (r.rpi==='Yes'?'<div class="fields">'+field('RPI sale date','rpiDate','date')+field('Treatment start date','startDate','date')+'</div>':'<div class="fields">'+field('Treatment start date','startDate','date')+'</div>')+'</div>';
+        '<div><div class="q">RIP Retainer Program sold?</div>'+(ro?esc(r.rpi||'—'):yesNo('rpi', r.rpi))+'</div>'+
+        (r.rpi==='Yes'?'<div class="fields">'+field('RIP sale date','rpiDate','date')+field('Treatment start date','startDate','date')+'</div>':'<div class="fields">'+field('Treatment start date','startDate','date')+'</div>')+'</div>';
     } else if(r.outcome==='Pending'){
       h+='<div class="then" style="margin-top:10px"><div><div class="q">Why pending? <span class="req">*</span></div>'+(ro?esc(r.reason||'—'):chips('reason', LISTS.reasons, r.reason))+'</div>'+
         '<div><div class="q">Next follow-up</div>'+(ro?esc(fmtS(r.nextFU)||'—'):quickDates('nextFU', r.date||today(), fuDates(today())))+'</div></div>';
@@ -754,7 +754,7 @@
         field('Next follow-up','nextFU','date')+field('Observation review','obsReview','date')+
         select('Recall ready?','recallReady',['Yes','No'])+field('Recall-ready date','recallDate','date')+
         field('Treatment start date','startDate','date')+select('Same-day contract?','sameDay',['Yes','No'])+
-        select('RPI sold?','rpi',['Yes','No'])+field('RPI sale date','rpiDate','date')+
+        select('RIP sold?','rpi',['Yes','No'])+field('RIP sale date','rpiDate','date')+
         select('Follow-up complete?','fuDone',['Yes','No'],{blank:'— (none needed)'})+field('Follow-up completion date','fuDoneDate','date')+
         select('Pending reason','reason',LISTS.reasons)+
         '<div class="fld"><label>Days waiting</label><input readonly value="'+(wait==null?'':wait)+'"></div>'+
@@ -794,7 +794,7 @@
       h+='<div><div class="q lab2">Next observation review</div>'+quickDates('obsReview', base, obsDates(base))+'</div>';
     } else if(d.what==='started'){
       h+='<div class="fields"><div class="fld"><label>Treatment start date</label><input type="date"'+attr('in','rec')+attr('f','startDate')+' value="'+esc(d.rec.startDate||base)+'"></div></div>'+
-        '<div><div class="q lab2">RPI Retainer Program sold?</div>'+yesNo('rpi', d.rec.rpi)+'</div>'+
+        '<div><div class="q lab2">RIP Retainer Program sold?</div>'+yesNo('rpi', d.rec.rpi)+'</div>'+
         '<div class="small muted">Their consult still counts as '+esc(r.outcome||'')+' for '+esc(fmtM(TC.monthOf(r.date)))+' &mdash; that month’s results don’t change.</div>';
     } else if(d.what==='rebooked'){
       h+='<div class="fields"><div class="fld"><label>New consult date <span class="req">*</span></label><input type="date"'+attr('in','rec')+attr('f','newDate')+' value="'+esc(d.rec.newDate||'')+'"></div>'+
@@ -981,7 +981,7 @@
 })();
 </script>
 <script>PH.nav('tc');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(window.TCPAGE)TCPAGE.identity();});document.addEventListener('ph-identity',function(){if(window.TCPAGE)TCPAGE.identity();});</script>
-<script src="tour.js?v=hc76"></script>
+<script src="tour.js?v=hc77"></script>
 <script>
 Tour.init([
   {sel:'#offbar', title:'Your office', body:'You see the offices you work at. Heather, Selene and leadership see every office and can pick one.'},
