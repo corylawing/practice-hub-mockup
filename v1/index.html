@@ -258,15 +258,15 @@
   }
 
 </style>
-<script src="user.js?v=hc77"></script>
-<script src="celebrate.js?v=hc77"></script>
+<script src="user.js?v=hc78"></script>
+<script src="celebrate.js?v=hc78"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="workbook.js?v=hc77"></script>
-  <script src="store.js?v=hc77"></script>
-  <script src="gate.js?v=hc77"></script>
+  <script src="workbook.js?v=hc78"></script>
+  <script src="store.js?v=hc78"></script>
+  <script src="gate.js?v=hc78"></script>
 </head>
 <body>
-<div class="ribbon">PROTOTYPE — real numbers from the 2026 Production Dashboard workbook. You only see the offices you have access to.</div>
+<div class="ribbon">SANDBOX — made-up numbers. The practice’s real workbook is never opened here.</div>
 <header class="hdr">
   <div class="hdr-in">
     <span class="mark" aria-label="Home-Brace"><img src="../assets/logo-mark.png?v=2" alt="" width="34" height="34"></span>
@@ -1095,6 +1095,15 @@ const OFFICES=[
     return '<b>Could not read the workbook.</b>'+detail;
   }
   async function hydrate(){
+    /* SANDBOX (13/10/2026, Cory): made-up numbers, never the practice's workbook. It used to
+       read Heather's real file here once signed in. workbook.js refuses on the sandbox too. */
+    if(!(window.PH && PH.isLive && PH.isLive())){
+      if(typeof PH_WB==='undefined' || !PH_WB.demo){ banner('<b>Sandbox.</b> Sample numbers are missing.', true); return false; }
+      const res=PH_WB.demo();
+      OFFICES.forEach(o=>{ const d=res.offices[o.n]; if(d) Object.keys(d).forEach(k=>{ o[k]=d[k]; }); });
+      banner('<span>\u25CF</span><span><b>Sandbox:</b> made-up numbers. The practice\'s real workbook is never opened here.</span>', false);
+      return true;
+    }
     if(typeof PH_WB==='undefined' || !window.PH_AUTH){
       banner('<b>Not signed in.</b> The dashboard shows live figures from the practice\'s workbook '+
              'and needs a Microsoft sign-in to read it.', true);
@@ -1168,7 +1177,7 @@ const OFFICES=[
 })();
 </script>
 <script>PH.nav('dashboard');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(window.DASH&&DASH.identity)DASH.identity();});document.addEventListener('ph-identity',function(){if(window.DASH&&DASH.identity)DASH.identity();if(window.DASH&&DASH.loadAudit)DASH.loadAudit();});</script>
-<script src="tour.js?v=hc77"></script>
+<script src="tour.js?v=hc78"></script>
 <script>
 Tour.init([
   {sel:'.viewas', title:'You only see your offices', body:'Everyone can see <b>All Offices</b> \u2014 the practice total as one number. What your location decides is which offices you can <b>open individually</b>. Switch to the Carlsbad manager: she keeps the group total, the leaderboard and Carlsbad, but can\u2019t open the other offices on their own.'},

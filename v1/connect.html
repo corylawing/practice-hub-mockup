@@ -224,7 +224,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-<script src="workbook.js?v=hc77"></script>
+<script src="workbook.js?v=hc78"></script>
 <script>
 (function(){
   'use strict';
@@ -314,7 +314,14 @@
     }
   }
 
+  /* THE SANDBOX NEVER OPENS THE PRACTICE'S WORKBOOK (13/10/2026) - the same rule as
+     workbook.js, repeated because this page loads no user.js. Steps that read the file's
+     cells refuse here; run them on the real Home-Brace. */
+  var SANDBOX = !( /[?&]env=live(&|$)/.test(location.search || '') ||
+                   /azurestaticapps\.net$/i.test(location.hostname) || /^hub\./i.test(location.hostname) );
   async function graph(path){
+    if (SANDBOX && /\/workbook(\/|\?|$)/.test(path))
+      throw new Error('This is the sandbox: it never opens the practice\u2019s workbook. Run this step on the real Home-Brace.');
     var t = await token();
     var res = await fetch('https://graph.microsoft.com/v1.0' + path, {
       headers: { Authorization: 'Bearer ' + t }

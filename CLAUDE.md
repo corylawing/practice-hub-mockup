@@ -88,6 +88,17 @@ multi-line-text column lives there for step 8; harmless to keep or delete.
 Entra groups to create (7 team + 8 office), the permission matrix, the per-office restriction, and
 the shared-account problem. Republish that same file to update it; do not create a second one.
 
+**Sandbox is NOT connected to the workbook (13/10, hc78).** Cory: the sandbox (GitHub) must not show the real numbers
+or be connected to the excel. It was: signed in, the sandbox dashboard read Heather's file and the sandbox's Enter
+Production could WRITE to it. Now `workbook.js` refuses every read/write on the sandbox (`PH_WB.sandbox()`: PH.env(),
+or the same host rule in connect.html, which loads no user.js; Node/API never sandbox) and both pages use
+`PH_WB.demo()` - seeded made-up numbers in exactly load()'s shape. Production.html's BASE monthly series are all 0 now
+(they were each office's real figures scaled - corr 1.00); fee/afee kept (live keeps BASE's when the workbook's is 0).
+Live path verified unchanged with a stand-in Graph (`?env=live`): dashboard reads 8 tabs, Enter Production writes.
+`test/sandboxwb.test.js` 27. Still exposed: old real figures in git HISTORY (v1/snapshot.json at ede7215, older
+production.html) - only making the repo private hides them (GitHub Pro keeps Pages). A future custom domain must be
+added to env() in user.js AND connect.html's SANDBOX line.
+
 **TC Tracker - SANDBOX ONLY (12/10, hc76).** Heather (cc Selene Brown, Marketing Director, Leadership Team - "more
 her baby") asked to replace the TC Consult Tracker Excel Selene emails out monthly
 (`FFO_TC_Consult_Tracker_Excel_Compatible.xlsx`, an empty template: Consult Log 28 cols, Follow-Up Queue, Daily

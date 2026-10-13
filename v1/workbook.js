@@ -128,6 +128,64 @@
 
   var CACHE_KEY = 'ph_wb_cache';
 
+  /* THE SANDBOX NEVER OPENS THE PRACTICE'S WORKBOOK (13/10/2026).
+     Cory: the sandbox (GitHub) must not show the real numbers or be connected to the excel.
+     It was: once signed in, the sandbox dashboard read Heather's file and the sandbox's
+     Enter Production could WRITE to it. Every read and write here now refuses on the
+     sandbox, and the pages show demo() instead. Which site is which: user.js env() when
+     the page has it; connect.html deliberately loads no user.js, so the same rule is
+     repeated - live is the Azure site, a hub.* domain, or ?env=live. Node (the API, the
+     tests) has no location and is never the sandbox. */
+  function sandbox(){
+    if (global.PH && typeof global.PH.env === 'function') return global.PH.env() !== 'live';
+    if (typeof location === 'undefined' || !location || !location.hostname) return false;
+    if (/[?&]env=live(&|$)/.test(location.search || '')) return false;
+    var h = location.hostname;
+    return !(/azurestaticapps\.net$/i.test(h) || /^hub\./i.test(h));
+  }
+  var SANDBOX_MSG = 'This is the sandbox: it never opens the practice\u2019s workbook. Made-up numbers only.';
+  function refuse(){ var e = new Error(SANDBOX_MSG); e.sandbox = true; return Promise.reject(e); }
+
+  /* Made-up figures in exactly the shape load() returns, so the sandbox runs the same page
+     code as the real site. Seeded, so everyone sees the same; drawn at random - NOT derived
+     from the practice's figures in any way. Months before this one are complete, this one
+     is part-way, later ones are empty, as in the real file. */
+  function demo(now){
+    now = now || new Date();
+    var cm = now.getMonth(), seed = 7919;
+    function rnd(){ seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; }
+    function r(a, b){ return a + rnd() * (b - a); }
+    function hundreds(v){ return Math.round(v / 100) * 100; }
+    try { if (typeof sessionStorage !== 'undefined') sessionStorage.removeItem(CACHE_KEY); } catch(_){}  // any real copy cached before
+    var out = {};
+    Object.keys(TABS).forEach(function(name){
+      var med = !!MEDICAID[name], size = r(110000, 320000), fee = med ? 4000 : 0, avgFee = 5500;
+      var o = { act:[], goal:[], stretch:[], ly:[], sAct:[], sGoal:[], mdStarts:[], lyStarts:[],
+                days:[], done:[], tc:[], adj:[] };
+      var ly24 = [], days24 = [], days25 = [];
+      for (var m = 0; m < 12; m++){
+        var goal = hundreds(size * (1 + 0.12 * Math.sin((m + 1) / 6 * Math.PI) + r(-0.06, 0.06)));
+        var days = Math.round(r(8, 14));
+        var part = m === cm ? Math.min(1, now.getDate() / 30) : (m < cm ? 1 : 0);
+        var done = Math.round(days * part);
+        var md = med ? Math.round(r(0, 8) * part) : 0;
+        var act = hundreds(goal * r(0.82, 1.12) * part);
+        var ly = hundreds(goal * r(0.85, 1.05)), perDay = r(2.2, 4.2);
+        o.goal.push(goal); o.stretch.push(hundreds(goal * r(1.08, 1.18)));
+        o.days.push(days); o.done.push(done); o.mdStarts.push(md); o.act.push(act);
+        o.tc.push(Math.max(0, act - md * fee)); o.adj.push(part === 1 ? -hundreds(r(0, 18000)) : 0);
+        o.ly.push(ly); o.lyStarts.push(Math.round(ly / avgFee));
+        o.sGoal.push(Math.round(perDay * days)); o.sAct.push(done > 0 ? Math.max(0, Math.round(perDay * done + r(-4, 4))) : 0);
+        ly24.push(hundreds(goal * r(0.75, 0.98))); days24.push(Math.round(r(8, 14))); days25.push(Math.round(r(8, 14)));
+      }
+      o.hist = { '2024': { act: ly24, days: days24 }, '2025': { act: o.ly.slice(), days: days25, sAct: o.lyStarts.slice() } };
+      o.fee = fee; o.avgFee = avgFee;
+      out[name] = o;
+    });
+    return { offices: out, errors: [], savedAt: new Date(now.getTime() - 3600000).toISOString(),
+             savedBy: 'Sample data', cached: false, demo: true };
+  }
+
   /* Three things keep this fast:
        1. the eight tabs are fetched IN PARALLEL, not one after another -- sequential
           round trips were the whole 7-10s;
@@ -136,6 +194,7 @@
           instant and still correct -- the moment she saves, the stamp changes and the
           cache is skipped. */
   function load(graph, driveId, itemId){
+    if (sandbox()) return refuse();
     var item = '/drives/' + driveId + '/items/' + itemId;
     var base = item + '/workbook';
     var names = Object.keys(TABS);
@@ -227,6 +286,7 @@
   var SESSION = null;            // browser only: one person, one workbook
 
   function call(token, method, path, body, sessionId){
+    if (sandbox()) return refuse();
     return token().then(function(t){
       var h = { Authorization:'Bearer '+t, 'Content-Type':'application/json' };
       var sid = sessionId || SESSION;
@@ -442,7 +502,7 @@
       });
   }
 
-  global.PH_WB = { load:load, office:office, TABS:TABS, MEDICAID:MEDICAID,
+  global.PH_WB = { load:load, office:office, TABS:TABS, MEDICAID:MEDICAID, demo:demo, sandbox:sandbox,
                    writeCell:writeCell, readCell:readCell, resolve:resolve, roundTrip:roundTrip,
                    openSession:openSession,
                    closeSession:closeSession, WRITE_ROWS:WRITE_ROWS, colLetters:colLetters };
