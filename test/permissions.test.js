@@ -258,6 +258,21 @@ const t=(n,v)=>{ (v?ok:bad).push(n); };
   const S3=load({ host:'corylawing.github.io', page:'team', ls:{ ph_viewas:'staff' } });
   S3.PH.nav('team');
   t('the sandbox shows the TC Tracker to everyone (made-up patients; the page has its own "Try it as")', S3.tabs().indexOf('tc')>=0);
+  /* 13/10/2026, Cory: "give doctor Jae access to the tc in the mockup". On the sandbox a
+     real person is signed in, and a doctor's team has no TC Tracker level - the tab and
+     the page must still open for them there (and only there). Made-up doctor. */
+  const SD=load({ host:'corylawing.github.io', page:'tc' });
+  SD.PH.nav('tc');
+  SD.signIn({ displayName:'Test Doctor', mail:'test.doctor@example.com', userPrincipalName:'test.doctor@example.com',
+              jobTitle:'Doctor', department:'Doctors', officeLocation:'Hobbs' });
+  t('a signed-in doctor on the sandbox has the TC Tracker tab and the page opens', SD.PH.can('tc')==='none' &&
+    SD.tabs().indexOf('tc')>=0 && SD.locked()===false);
+  const LD=load({ page:'tc' });
+  LD.PH.nav('tc');
+  LD.signIn({ displayName:'Test Doctor', mail:'test.doctor@example.com', userPrincipalName:'test.doctor@example.com',
+              jobTitle:'Doctor', department:'Doctors', officeLocation:'Hobbs' });
+  // Live: no tab, and the page is held (still learning who they are) or locked - never open.
+  t('...but not on the live site', LD.tabs().indexOf('tc')<0 && (LD.locked() || LD.pending()));
   const S2=load({ host:'corylawing.github.io', page:'team', ls:{ ph_viewas:'doctor' } });
   S2.PH.nav('team');
   t('sandbox honours the chosen persona', S2.PH.me().id==='doctor');
