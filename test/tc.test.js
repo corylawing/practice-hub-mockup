@@ -220,6 +220,15 @@ const C=[
   t('Every deliberate difference is written down for Selene', TC.WHAT_CHANGED.length===4);
 }
 
+/* ---------- Not on the live site until the practice says go ---------- */
+{
+  const fs=require('fs'), path=require('path');
+  const admin=fs.readFileSync(path.join(__dirname,'..','v1','admin.html'),'utf8');
+  const i=admin.indexOf("{k:'tc',n:'TC Tracker");
+  t('Admin\u2019s Teams & Access shows no TC Tracker column on the live site until it is switched on',
+    i>0 && admin.lastIndexOf('PH.tcOn && !PH.tcOn()', i)>admin.lastIndexOf('const TOOLS=[', i));
+}
+
 /* ---------- Sandbox demo ---------- */
 {
   const mk=()=>TC.demo({today:TODAY, from:'2026-09-01', seed:7,

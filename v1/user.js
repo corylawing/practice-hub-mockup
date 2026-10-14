@@ -1209,6 +1209,10 @@
     inp.onkeydown=function(e){ if(e.key==='Enter'){ const a=res.querySelector('a.ni'); if(a) location.href=a.getAttribute('href'); } };
     res.innerHTML=searchHTML('');
     wrap.appendChild(spanel);
+    /* Jessica, 14/10: "the search is a bit slow". The first document search on a page has to
+       find the library and the "only certain people" folders before it can search. Start that
+       now, while they type, instead of after. */
+    if(isLive() && window.PH_AUTH) docContext().catch(function(){});
     try{ inp.focus(); }catch(_){}
     setTimeout(function(){ try{ inp.focus(); }catch(_){} },30);   // again once the phone sheet has laid out
   }
@@ -1278,11 +1282,10 @@
       const ctx={driveId:r[0].driveId, baseId:r[0].baseId,
         secs:(Array.isArray(r[1]) && r[1].length) ? r[1].filter(function(x){ return x && x.k; }) : DOC_DEFAULT_SECS,
         meta:meta, links:Array.isArray(r[3]) ? r[3] : [], restricted:[]};
-      /* Folders with their own audience: where they are, so what sits inside them follows it. */
+      /* Folders with their own audience: where they are, so what sits inside them follows it.
+         Same lookup (and the same memory) as placing a search result by its folder. */
       return Promise.all(Object.keys(meta).filter(function(id){ return id.charAt(0)!=='L'; }).map(function(id){
-        return g('/drives/'+ctx.driveId+'/items/'+id+'?$select=id,webUrl,folder').then(function(it){
-          if(it && it.folder){ const rel=docRel(it.webUrl); if(rel) ctx.restricted.push({rel:rel, aud:meta[id]}); }
-        }, function(){});
+        return folderAt(ctx.driveId, id).then(function(rel){ if(rel) ctx.restricted.push({rel:rel, aud:meta[id]}); });
       })).then(function(){ return ctx; });
     }).catch(function(e){ DOCX=null; throw e; });
     return DOCX;
@@ -1320,6 +1323,29 @@
     return x==='pdf'?'\u{1F4D5}':['doc','docx','rtf','txt'].indexOf(x)>=0?'\u{1F4D8}':['xls','xlsx','xlsm','csv'].indexOf(x)>=0?'\u{1F4D7}':
       ['ppt','pptx'].indexOf(x)>=0?'\u{1F4D9}':['png','jpg','jpeg','gif','heic','webp'].indexOf(x)>=0?'\u{1F5BC}\uFE0F':'\u{1F4C4}';
   }
+  /* WHERE A SEARCH RESULT SITS, as a path inside Home-Brace Documents.
+     14/10/2026, Jessica: searching "hygiene", the oral hygiene form never came up. It is a
+     Word file, and SharePoint gives Word, Excel and PowerPoint files an address that opens
+     them in Office Online (.../_layouts/15/Doc.aspx?sourcedoc=...) - no folders in it. The
+     section was read from that address, so every Office file was dropped as "not in any
+     section". Those are placed by their FOLDER instead: a folder's address always carries
+     its path. One lookup per folder per page, however many results share it. */
+  const FOLDER_AT={}, PARENT_OF={};
+  function folderAt(driveId, id){
+    if(!FOLDER_AT[id]) FOLDER_AT[id]=PH_AUTH.graph('/drives/'+driveId+'/items/'+id+'?$select=id,webUrl,folder')
+      .then(function(f){ return (f && f.folder) ? docRel(f.webUrl) : null; }, function(){ delete FOLDER_AT[id]; return null; });
+    return FOLDER_AT[id];
+  }
+  function placeOf(ctx, it){
+    const rel=docRel(it.webUrl); if(rel) return Promise.resolve(rel);
+    const pid=it.parentReference && it.parentReference.id;
+    // A result that does not name its folder: ask once per file, then remember.
+    if(!pid && !PARENT_OF[it.id]) PARENT_OF[it.id]=PH_AUTH.graph('/drives/'+ctx.driveId+'/items/'+it.id+'?$select=id,parentReference')
+      .then(function(x){ return (x && x.parentReference && x.parentReference.id) || null; }, function(){ delete PARENT_OF[it.id]; return null; });
+    const parent=pid ? Promise.resolve(pid) : PARENT_OF[it.id];
+    return parent.then(function(id){ return id ? folderAt(ctx.driveId, id) : null; })
+      .then(function(at){ return at ? at+'/'+it.name : null; }, function(){ return null; });
+  }
   function searchDocs(q){
     q=String(q||'').trim();
     if(q.length<2) return Promise.resolve([]);
@@ -1328,10 +1354,20 @@
       const words=q.toLowerCase().split(/\s+/).filter(Boolean);
       const out=[], seen={};
       const place=function(sec, segs){ return [sec.n].concat(segs).join(' \u203a '); };
-      return PH_AUTH.graph('/drives/'+ctx.driveId+'/items/'+ctx.baseId+"/search(q='"+encodeURIComponent(q.replace(/'/g,"''"))+"')?$select=id,name,webUrl,file,folder&$top=50")
+      const at='/drives/'+ctx.driveId+'/items/'+ctx.baseId+"/search(q='"+encodeURIComponent(q.replace(/'/g,"''"))+"')";
+      /* Asking for parentReference saves a lookup per Office file. Should SharePoint ever
+         refuse it, search the way it always did - each file is then asked for its folder. */
+      return PH_AUTH.graph(at+'?$select=id,name,webUrl,file,folder,parentReference&$top=50')
+        .catch(function(e){ if(!/\b400\b/.test(String(e && e.message))) throw e;
+          return PH_AUTH.graph(at+'?$select=id,name,webUrl,file,folder&$top=50'); })
         .then(function(r){
-          (r && r.value || []).forEach(function(it){
-            const rel=docRel(it.webUrl); if(!rel || seen[it.id]) return;
+          const found=(r && r.value) || [];
+          return Promise.all(found.map(function(it){ return placeOf(ctx, it); }))
+            .then(function(rels){ return found.map(function(it, i){ return {it:it, rel:rels[i]}; }); });
+        })
+        .then(function(placed){
+          placed.forEach(function(p){
+            const it=p.it, rel=p.rel; if(!rel || seen[it.id]) return;
             const segs=rel.split('/'), top=segs[0].toLowerCase();
             const sec=ctx.secs.find(function(x){ return docFolderName(x).toLowerCase()===top; }); if(!sec) return;
             const lvl=docSecLevel(sec); if(lvl==='none') return;

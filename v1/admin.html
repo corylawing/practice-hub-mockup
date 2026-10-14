@@ -245,12 +245,12 @@
   }
 
 </style>
-<script src="user.js?v=hc78"></script>
+<script src="user.js?v=hc79"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="_staff.js?v=hc78"></script>
-  <script src="store.js?v=hc78"></script>
-  <script src="gate.js?v=hc78"></script>
-  <script src="docs.js?v=hc78"></script>
+  <script src="_staff.js?v=hc79"></script>
+  <script src="store.js?v=hc79"></script>
+  <script src="gate.js?v=hc79"></script>
+  <script src="docs.js?v=hc79"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — admin console concept for validation. Real build: people sync from Microsoft 365; access is managed here.</div>
@@ -311,8 +311,9 @@
     {k:'schedule',n:'Schedule',s:'Schedule',ic:'📅'},
     {k:'production',n:'Enter Production (type the numbers)',s:'Enter Prod',ic:'📝'},
     /* TC Tracker (12/10/2026): Selene's consult spreadsheet as a page. Sandbox only until
-       the practice says go - user.js tcOn() keeps it off the live site whatever is set here. */
-    {k:'tc',n:'TC Tracker (consults & call list)',s:'TC Tracker',ic:'🗂️'},
+       the practice says go - user.js tcOn() keeps it off the live site, and its column stays
+       off this grid there too, so nobody is shown a switch for a tab that does not exist yet. */
+    ...((window.PH && PH.tcOn && !PH.tcOn()) ? [] : [{k:'tc',n:'TC Tracker (consults & call list)',s:'TC Tracker',ic:'🗂️'}]),
     {k:'marketing',n:'Marketing board',s:'Marketing',ic:'📣'},
     /* The Documents TAB, on or off per team (07/10). It was never a column, so a team with
        saved settings had it off and there was no switch to turn it on when they're ready.
@@ -1732,7 +1733,7 @@
 })();
 </script>
 <script>PH.nav('admin');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(PH.loadPhotos)PH.loadPhotos().then(function(got){if(got&&window.AD&&AD.tab)AD.tab('users');});});</script>
-<script src="tour.js?v=hc78"></script>
+<script src="tour.js?v=hc79"></script>
 <script>
 Tour.init([
   {sel:'#tabs', title:'This is your control room', body:'Four tabs and you can run the whole hub: <b>People</b>, <b>Teams &amp; Access</b>, <b>Document Sections</b> and <b>Locations</b>. No developer, no consultant.', pre:()=>AD.tab('users')},

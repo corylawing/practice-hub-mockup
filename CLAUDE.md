@@ -88,6 +88,16 @@ multi-line-text column lives there for step 8; harmless to keep or delete.
 Entra groups to create (7 team + 8 office), the permission matrix, the per-office restriction, and
 the shared-account problem. Republish that same file to update it; do not create a second one.
 
+**Document search finds Word/Excel files; faster (14/10, hc79).** Jessica: searching "hygiene", the oral hygiene form
+(`Oral Hygiene Form[Editable].docx`) never came up, and search was slow. SharePoint gives Word/Excel/PowerPoint files an
+Office Online webUrl (`/_layouts/15/Doc.aspx?sourcedoc=...`, no folders), and searchDocs placed results by webUrl, so
+EVERY Office file (14 of the 36 uploaded) was dropped as "not in a section". Now `placeOf()`: webUrl if it has the path,
+else the result's parentReference.id -> the folder's webUrl (folders always carry their path); one lookup per folder per
+page (`FOLDER_AT`, shared with the "only certain people" folder lookups), item->parent asked once (`PARENT_OF`). Search
+asks for parentReference; if SharePoint ever refuses that $select (400) it retries the old way. Speed: docContext() now
+starts when the search box OPENS, not after typing. docsearch tests 23 (Office-address fixtures). TC Tracker column is
+also hidden from Admin's grid on the live site until TC_LIVE.
+
 **Sandbox is NOT connected to the workbook (13/10, hc78).** Cory: the sandbox (GitHub) must not show the real numbers
 or be connected to the excel. It was: signed in, the sandbox dashboard read Heather's file and the sandbox's Enter
 Production could WRITE to it. Now `workbook.js` refuses every read/write on the sandbox (`PH_WB.sandbox()`: PH.env(),
