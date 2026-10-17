@@ -515,6 +515,116 @@
     });
   }
 
+  /* THE TC TRACKER'S FOLDER (17/10/2026). Cory: "lets do it like we did for documents then as
+     long as its scalable". The TC Tracker's records (patient names, birth dates, phones -
+     tcstore.js) live in one folder BESIDE Home-Brace Documents, never inside it, so the
+     Documents page and the header search never reach them. One-time lock by hand: stop
+     inheriting, then remove Home-Brace Members AND Visitors (nobody else may read it, unlike
+     Home-Brace Documents where Members keep Read). After that Admin gives each TC Tracker person
+     access - edit, or read for "See" - and takes back only what it gave (ph_tcgrants). Fenced to
+     that one folder: these functions take no path at all. */
+  var TC_BASE = 'Home-Brace TC Tracker';
+  function visitorsGroup(x){
+    var g = x.grantedToV2 || {}, names = [];
+    if(g.siteGroup) names.push(g.siteGroup.displayName || '');
+    if(g.group) names.push(g.group.displayName || '');
+    var old = (x.grantedTo && x.grantedTo.user) || null;
+    if(!g.siteGroup && !g.group && !g.user && old && !old.email) names.push(old.displayName || '');
+    return names.some(function(n){ return /(^|\s)visitors$/i.test(String(n).trim()); });
+  }
+  // "Everyone" / "Everyone except external users": the whole organisation under one name.
+  function everyoneGrant(x){
+    var g = x.grantedToV2 || {}, who = [g.siteUser, g.user, g.group, g.siteGroup, x.grantedTo && x.grantedTo.user];
+    return who.some(function(u){
+      if(!u) return false;
+      return /^everyone( except external users)?$/i.test(String(u.displayName || '').trim()) ||
+             /spo-grid-all-users|^c:0\(\.s\|true$/i.test(String(u.loginName || ''));
+    });
+  }
+  // The folder, made if it is not there yet (an empty folder is harmless, and it must exist to be locked).
+  function tcFolder(){ return fresh(function(){ return ensureFolder(TC_BASE); }); }
+  /* Locked = nothing inherited, no Members or Visitors group (in ANY role - not even read),
+     no "Everyone", and no link that lets the whole organisation or anyone in. */
+  function tcLocked(){
+    return drive().then(function(d){
+      return retry(function(){ return api('GET', '/drives/' + d.id + '/root:/' + enc(TC_BASE) + ':/permissions'); });
+    }).then(function(r){
+      return !(r.value || []).some(function(x){
+        var sc = x.link && x.link.scope;
+        return !!x.inheritedFrom || membersGroup(x) || visitorsGroup(x) || everyoneGrant(x) || sc === 'organization' || sc === 'anonymous';
+      });
+    }, function(e){ if(e.status === 404) return false; throw e; });
+  }
+  function tcGrant(email, role){
+    var em = String(email || '').trim().toLowerCase(), r = role === 'read' ? 'read' : 'write';
+    if(!emailOk(em)) return Promise.reject(fail(0, 'There is no email address to give access to.', { noEmail: true }));
+    return drive().then(function(d){
+      return tcFolder().then(function(id){
+        return retry(function(){ return api('POST', '/drives/' + d.id + '/items/' + id + '/invite',
+          { recipients: [{ email: em }], roles: [r], requireSignIn: true, sendInvitation: false }); });
+      });
+    });
+  }
+  // Takes back this person's OWN grant of that role on the folder - never a group's, an inherited one or a link.
+  function tcRevoke(email, role){
+    var em = String(email || '').trim().toLowerCase(), r = role === 'read' ? 'read' : 'write';
+    if(!emailOk(em)) return Promise.resolve({ removed: 0 });
+    return drive().then(function(d){
+      return itemAt(TC_BASE).then(function(it){
+        if(!it || !it.folder) return { removed: 0, gone: true };
+        return retry(function(){ return api('GET', '/drives/' + d.id + '/items/' + it.id + '/permissions'); }).then(function(res){
+          var mine = (res.value || []).filter(function(x){
+            var g = x.grantedToV2 || {};
+            return !x.inheritedFrom && !x.link && !g.group && !g.siteGroup && (x.roles || []).indexOf(r) >= 0 && grantee(x) === em;
+          });
+          return mine.reduce(function(c, x){ return c.then(function(){
+            return retry(function(){ return api('DELETE', '/drives/' + d.id + '/items/' + it.id + '/permissions/' + encodeURIComponent(x.id)); })
+              .catch(function(e){ if(e.status !== 404) throw e; });
+          }); }, Promise.resolve()).then(function(){ return { removed: mine.length }; });
+        });
+      });
+    });
+  }
+  /* What to change, from who should have what (want: {email: 'write'|'read'}) and what
+     Home-Brace has given before (gave: {email: role}). Pure - tested. */
+  function tcPlan(want, gave){
+    want = want || {}; gave = (gave && typeof gave === 'object' && !Array.isArray(gave)) ? gave : {};
+    var give = [], take = [];
+    Object.keys(want).forEach(function(em){
+      if(gave[em] === want[em]) return;
+      give.push({ em: em, role: want[em] });
+      if(gave[em]) take.push({ em: em, role: gave[em] });
+    });
+    Object.keys(gave).forEach(function(em){ if(!want[em]) take.push({ em: em, role: gave[em] }); });
+    return { give: give, take: take };
+  }
+  /* Bring the folder in line. Take-backs go FIRST: SharePoint keeps one permission per person
+     on a folder, so a new role given before the old one was taken back would go with it (an
+     office manager moved from "Log + calls" to "See" would be left with nothing). One person
+     failing never stops the rest. Resolves {gave, took, failed}. */
+  function tcSync(want, gave){
+    var plan = tcPlan(want, gave), done = { gave: [], took: [], failed: [] };
+    function each(list, fn, into, verb){
+      return list.reduce(function(c, g){ return c.then(function(){
+        return fn(g.em, g.role).then(function(){ into.push(g); },
+          function(e){ done.failed.push({ verb: verb, em: g.em, role: g.role, why: (e && e.message) || 'error' }); });
+      }); }, Promise.resolve());
+    }
+    return each(plan.take, tcRevoke, done.took, 'take back')
+      .then(function(){ return each(plan.give, tcGrant, done.gave, 'give'); })
+      .then(function(){ return done; });
+  }
+  /* The record of what Home-Brace has given (ph_tcgrants), after a sync. A take-back that
+     failed stays on record - even over a new role given to the same person - so the next run
+     tries again rather than leave someone with more than the grid says. Pure - tested. */
+  function tcRecord(cur, done){
+    var next = (cur && typeof cur === 'object' && !Array.isArray(cur)) ? Object.assign({}, cur) : {};
+    (done.gave || []).forEach(function(g){ next[g.em] = g.role; });
+    (done.took || []).forEach(function(g){ if(next[g.em] === g.role) delete next[g.em]; });
+    (done.failed || []).forEach(function(f){ if(f.verb === 'take back') next[f.em] = f.role; });
+    return next;
+  }
+
   /* ---- Files that live somewhere else, linked into a section. ---- */
   function b64url(s){
     var bytes = new TextEncoder().encode(s), bin = '';
@@ -623,6 +733,8 @@
     upload: upload, uploadAll: uploadAll, fromInput: fromInput, fromDrop: fromDrop,
     tally: tally, remove: remove, replace: replace, move: move, insideBase: insideBase,
     isLocked: isLocked, grantEdit: grantEdit, revokeEdit: revokeEdit,
+    TC_BASE: TC_BASE, tcFolder: tcFolder, tcLocked: tcLocked, tcGrant: tcGrant, tcRevoke: tcRevoke, tcPlan: tcPlan,
+    tcSync: tcSync, tcRecord: tcRecord,
     resolveLink: resolveLink, whoCanOpen: whoCanOpen,
     links: links, addLink: addLink, unlink: unlink,
     meta: meta, setAudience: setAudience, clearAudience: clearAudience,

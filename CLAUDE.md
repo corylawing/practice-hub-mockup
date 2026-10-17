@@ -88,7 +88,7 @@ multi-line-text column lives there for step 8; harmless to keep or delete.
 Entra groups to create (7 team + 8 office), the permission matrix, the per-office restriction, and
 the shared-account problem. Republish that same file to update it; do not create a second one.
 
-**TC Tracker: Selene's rules + its own locked list (17/10, hc80) - still OFF for staff.** Selene (16/10) asked for:
+**TC Tracker: Selene's rules (17/10, hc80) - still OFF for staff.** Selene (16/10) asked for:
 outcomes **Pre-TX Hold** and **Submitted to Medicaid**; **Medicaid / Private pay** per consult at offices that take Medicaid
 (a setting, `ph_tclists.medicaid`, default Carlsbad, Clovis, Hobbs, Cruces LCO - every NM office but FFO Las Cruces);
 **conversion** = starts that month / consults that month per payer (consult = exam that happened, ONCE per patient -
@@ -98,19 +98,36 @@ an "All TCs" rates table (no patients). Patients by `TC.patients()` / `TC.conver
 attributes an exam to the record it happened on and a start to the record that started (two TCs never double count).
 "Needs dental work"/"Needs records" moved from Pending reasons to Pre-TX hold reasons. "Scheduled to start" patients get
 their own call-list group with a Started button (starts must be recorded for the rate). Selene OK'd: a Medicaid patient
-switching to private pay updates their exam month. **Storage:** consults (patient details) go to their own list
-**HomeBraceConsults** via `v1/tcstore.js` (separate file: touches only that list; read-modify-write with If-Match, retry
-on 412/409; never writes over a record it can't read; never deletes; packs with PH_STORE.pack); slots + settings stay in
-HomeBraceData via PH_STORE (no patient data). Sandbox: browser only, unchanged. Verified on the live path with a
-stand-in Graph: consult POSTed to HomeBraceConsults only, nothing in HomeBraceData. **DECIDED 17/10 by Cory: NO lock on HomeBraceConsults** - "they will do it on home-brace": the app controls who sees
-what, as for the rest of the hub (he did not want to add people by hand; a SharePoint group or an automatic folder-based
-sync were offered). Residual risk, stated and accepted: anyone in the Home-Brace group can open that list in SharePoint
-and read patient details. It is its own list, so locking it later is a settings change, no code. **Go-live, in order:**
-(1) the list exists (made by Cory 17/10, Title + Payload, inheriting the site's access); (2) an admin tests on the
-live site via `tc.html?tcpreview` (admins only,
-remembered per browser; `tcPreview()` in user.js); admins always get "manage" on the page; (3) Teams & Access: TC
-Tracker column (TCs Log + calls, OMs See, Exec/Leadership Everything - saved rows lack `tc`, so they must be set);
-(4) `TC_LIVE=true` + deploy. tests: tc 136, tcstore 14.
+switching to private pay updates their exam month. Storage and go-live: see the hc81 note just below.
+
+**TC Tracker patient data: a locked FOLDER, access follows Teams & Access (17/10, hc81) - still OFF for staff.** Cory
+first chose no lock, then: "lets do it like we did for documents then as long as its scalable" (no adding people by hand).
+Consults (names, DOB, phone, chart #) are JSON files, one per office-month (`ph_tclog_<office>_<YYYY-MM>.json`), in the
+folder **Home-Brace TC Tracker** at the root of the Home-Brace site's Documents library - BESIDE Home-Brace Documents,
+never inside it (the Documents page and header search never reach it). A folder, not a list: Graph can share a folder
+with a person, not a list. `v1/tcstore.js` touches only that folder: lists every page, reads each file through
+`@microsoft.graph.downloadUrl` (no auth header - /content redirects are refused by CORS), saves read-modify-write with
+If-Match (412/409 -> re-read, re-apply, up to 3x), a new month with conflictBehavior=fail, never writes over a file it
+couldn't read, never deletes; a failed read is an error on the page, never an empty tracker; locked out (GET 403, or
+404 then create 409/403 and still not visible) -> "doesn't have access ... ask your administrator". Slots + settings stay
+in HomeBraceData (no patient data). Sandbox: browser only, unchanged. **The HomeBraceConsults list Cory made on 17/10 is
+NOT used** (safe to delete). **Lock, one time, a site owner:** Documents -> ... next to Home-Brace TC Tracker -> Manage
+access -> Advanced settings -> Stop Inheriting -> remove Home-Brace Members AND Visitors. `PH_DOCS.tcLocked()` = nothing
+inherited, no Members/Visitors group in any role, no "Everyone", no organisation/anonymous link. **Automatic access**
+(admin.html `runTcSync`, called from `syncEdit`, so it runs when Admin opens and when Teams & Access changes, in an
+admin's browser, only when `PH.tcOn()`): `PH.tcRoleFor(teams)` -> write (admin, or TC edit/manage), read (TC view),
+none; `PH_DOCS.tcSync` takes back FIRST, then gives - SharePoint keeps ONE permission per person per item, so deleting
+an old role after giving the new one removes both (tested with a stand-in that behaves that way); `ph_tcgrants` =
+{email: role} Home-Brace gave (`tcRecord`: a failed take-back stays on record so the next run retries). Only direct
+named-person grants are ever removed - never a group, an inherited permission or a link. Status box on Teams & Access:
+"not locked yet" + steps + "I've done it - check again", or failures / people with no email. **Known limits:** the
+folder is one unit, so anyone with TC access could open OTHER offices' files directly in SharePoint (Home-Brace shows
+only their own) - per-office folders possible later, but the All-TCs rates table reads every office; every page load
+downloads every file (~100 a year) - fine for now, load by month if it gets slow. **Go-live, in order:** (1) Cory opens
+`tc.html?tcpreview` on live (admins only, remembered per browser; `tcPreview()`); (2) Admin -> Teams & Access shows
+"not locked yet" (the folder is made by then) -> do the lock -> "check again"; (3) Teams & Access TC Tracker column
+(TCs Log + calls, OMs See, Exec/Leadership Everything - saved rows lack `tc`, so they must be set) - Admin then gives
+folder access by itself; (4) `TC_LIVE=true` + deploy. Tests: tc 136, tcstore 18, docs 122.
 
 **Document search finds Word/Excel files; faster (14/10, hc79).** Jessica: searching "hygiene", the oral hygiene form
 (`Oral Hygiene Form[Editable].docx`) never came up, and search was slow. SharePoint gives Word/Excel/PowerPoint files an
@@ -146,7 +163,7 @@ column `tc` (none/view/edit/manage; DEPT_CAN + demo personas + admin grid). Deli
 in `TC.WHAT_CHANGED` (shown on Numbers) - Selene to confirm. Storage: `ph_tclog_<office>_<YYYY-MM>` (one record per
 office-month), `ph_tcslots_<office>`, `ph_tclists`; nothing removed (deleted/moved markers). **Production is OFF:**
 `TC_LIVE=false` in user.js (`tcOn()`) hides tab, page and Home tile on the live site whatever the grid says.
-**Before going live:** the patient details are PHI - they must NOT go in HomeBraceData (every member can read it).
+**Before going live (DONE differently in hc81 - a locked folder, see above):** the patient details are PHI - they must NOT go in HomeBraceData (every member can read it).
 Create a separate list (e.g. HomeBraceConsults, same two columns) with broken inheritance for TCs/OMs/leadership only,
 route `ph_tclog_`/`ph_tcslots_`/`ph_tclists` keys there in store.js, and make a failed `getAll` show as an error, not
 an empty tracker. Sandbox demo: made-up patients seeded once per browser (`ph_tc_demo`), "Reset sample data" button.

@@ -111,11 +111,17 @@ function SharePoint(){
     if((m=/^\/drives\/D1\/items\/([^/:]+)\/invite$/.exec(p)) && method==='POST'){
       const it=sp.items[m[1]]; if(!it || gone(it)) return resp(404,{error:{message:'itemNotFound'}});
       const b=JSON.parse(o.body), perm={id:'P'+(sp.next++), roles:b.roles.slice(), grantedToV2:{user:{email:b.recipients[0].email, displayName:'x'}}};
-      (sp.perms[it.id]=sp.perms[it.id]||[]).push(perm); (sp.invites=sp.invites||[]).push({item:it.id, body:b});
+      (sp.invites=sp.invites||[]).push({item:it.id, body:b});
+      // Real SharePoint keeps ONE permission per person on an item: a second grant joins the first.
+      const mine=sp.onePerPerson && (sp.perms[it.id]||[]).find(x=>!x.link && x.grantedToV2 && x.grantedToV2.user && x.grantedToV2.user.email===b.recipients[0].email);
+      if(mine){ b.roles.forEach(r=>{ if(mine.roles.indexOf(r)<0) mine.roles.push(r); }); return resp(200,{value:[mine]}); }
+      (sp.perms[it.id]=sp.perms[it.id]||[]).push(perm);
       return resp(200,{value:[perm]});
     }
     if((m=/^\/drives\/D1\/items\/([^/:]+)\/permissions\/([^/]+)$/.exec(p)) && method==='DELETE'){
       const list=sp.perms[m[1]]||[], i=list.findIndex(x=>x.id===m[2]); if(i<0) return resp(404,{error:{message:'itemNotFound'}});
+      const u=list[i].grantedToV2 && list[i].grantedToV2.user;
+      if(sp.denyDeleteFor && u && u.email===sp.denyDeleteFor) return resp(403,{error:{message:'accessDenied'}});
       list.splice(i,1); return {status:204, ok:true, json:()=>Promise.resolve({})};
     }
     if((m=/^\/shares\/([^/]+)\/driveItem$/.exec(p))){ const it=sp.shares[m[1]]; return it?resp(200,it):resp(404,{error:{message:'itemNotFound'}}); }
@@ -252,9 +258,9 @@ const calls=(sp,re,method)=>sp.calls.filter(c=>re.test(c.url)&&(!method||c.metho
     t('an item without its location is refused, not guessed at', e4 && e4.fenced && deletes()===before);
     t('looking a folder up never makes it', (await D.item(D.path('Nope')))===null && !sp.find('Home-Brace Documents/Nope'));
     t('looking a folder up finds it with its location', (it=>it && it.id===hr.id && D.insideBase(it,'D1'))(await D.item(D.path('HR'))));
-    t('the source deletes only two things: an item, to the recycle bin (remove), and one person\u2019s edit grant (revokeEdit) - and nothing permanently',
-      (SRC.match(/'DELETE'/g)||[]).length===2 && SRC.indexOf("api('DELETE', '/drives/' + d.id + '/items/' + item.id)")>=0 &&
-      SRC.indexOf("'/permissions/' + encodeURIComponent(x.id)")>=0 && !/permanentDelete/.test(SRC)); }
+    t('the source deletes only three things: an item, to the recycle bin (remove), and one person\u2019s own grant (revokeEdit; tcRevoke on the TC Tracker folder) - and nothing permanently',
+      (SRC.match(/'DELETE'/g)||[]).length===3 && SRC.indexOf("api('DELETE', '/drives/' + d.id + '/items/' + item.id)")>=0 &&
+      (SRC.match(/'\/permissions\/' \+ encodeURIComponent\(x\.id\)/g)||[]).length===2 && !/permanentDelete/.test(SRC)); }
 
   /* 6b. A folder the page already knew was removed since - here, or by someone in
          SharePoint itself. The next upload or new folder finds its way again. */
@@ -366,6 +372,75 @@ const calls=(sp,re,method)=>sp.calls.filter(c=>re.test(c.url)&&(!method||c.metho
     t('a folder that has gone: nothing to take back, nothing sent', (await D.revokeEdit(D.path('Gone Section'), 'sam@example.com')).gone===true);
     let e4=null; try{ await D.revokeEdit('Accounting', 'sam@example.com'); }catch(x){ e4=x; }
     t('never takes anything back outside Home-Brace Documents', e4 && e4.fenced); }
+
+  /* 6f. THE TC TRACKER'S FOLDER (17/10): beside Home-Brace Documents; locked = nothing inherited
+         and no Members / Visitors in ANY role (patient details); one named person's read or edit,
+         given and taken back - nothing else touched, and only on that one folder. */
+  { const sp=SharePoint(), {D}=load(sp);
+    sp.add(sp.root,'Home-Brace Documents',true);
+    t('TC folder: not locked before it exists', (await D.tcLocked())===false);
+    const id=await D.tcFolder(), tcf=sp.items[id];
+    t('TC folder is made beside Home-Brace Documents, not inside it', tcf && tcf.name==='Home-Brace TC Tracker' && tcf.parent==='ROOT');
+    t('...and is not locked while it inherits', (await D.tcLocked())===false);
+    const O={id:'O', roles:['owner'], grantedToV2:{siteGroup:{displayName:'Home-Brace Owners'}}};
+    sp.perms[id]=[{id:'M', roles:['read'], grantedToV2:{siteGroup:{displayName:'Home-Brace Members'}}}, O];
+    t('not locked while Members can still READ it', (await D.tcLocked())===false);
+    sp.perms[id]=[{id:'V', roles:['read'], grantedToV2:{siteGroup:{displayName:'Home-Brace Visitors'}}}, O];
+    t('...nor while Visitors can', (await D.tcLocked())===false);
+    sp.perms[id]=[O, {id:'L', roles:['read'], link:{scope:'organization'}}];
+    t('...nor with a link the whole organisation can use', (await D.tcLocked())===false);
+    sp.perms[id]=[O, {id:'E', roles:['read'], grantedToV2:{siteUser:{displayName:'Everyone except external users', loginName:'c:0-.f|rolemanager|spo-grid-all-users/abc'}}}];
+    t('...nor while "Everyone except external users" can read it', (await D.tcLocked())===false);
+    sp.perms[id]=[O, {id:'HB', roles:['write'], grantedToV2:{user:{displayName:'Hana Bell',email:'hana@example.com'}, siteUser:{loginName:'i:0#.f|membership|hana@example.com'}}}];
+    t('locked: Owners and named people only ("membership" in a sign-in name is not the group)', (await D.tcLocked())===true);
+    await D.tcGrant(' Tia@Example.com ', 'write'); await D.tcGrant('omar@example.com', 'read');
+    const inv=sp.invites||[];
+    t('a grant is one named person, edit or read, on the TC folder, with no email sent', inv.length===2 &&
+      inv.every(x=>x.item===id && x.body.sendInvitation===false && x.body.requireSignIn===true && x.body.recipients.length===1) &&
+      JSON.stringify(inv[0].body.roles)==='["write"]' && inv[0].body.recipients[0].email==='tia@example.com' && JSON.stringify(inv[1].body.roles)==='["read"]');
+    let e1=null; try{ await D.tcGrant('', 'write'); }catch(x){ e1=x; }
+    t('never without an email', e1 && e1.noEmail);
+    sp.perms[id].push({id:'INH', roles:['write'], grantedToV2:{user:{email:'tia@example.com'}}, inheritedFrom:{path:'/x'}},
+      {id:'G', roles:['write'], grantedToV2:{siteGroup:{displayName:'Home-Brace Members'}}},
+      {id:'LNK', roles:['write'], link:{scope:'users'}, grantedToV2:{user:{email:'tia@example.com'}}});
+    const before=sp.perms[id].map(x=>x.id), r=await D.tcRevoke('TIA@example.com', 'write'), left=sp.perms[id].map(x=>x.id);
+    t('taking back removes only that person\u2019s own grant of that role', r.removed===1 && left.length===before.length-1 &&
+      ['INH','G','LNK','HB','O'].every(k=>left.indexOf(k)>=0));
+    t('...a read grant goes only when read is asked for', (await D.tcRevoke('omar@example.com','write')).removed===0 && (await D.tcRevoke('omar@example.com','read')).removed===1);
+    const plan=D.tcPlan({'a@x.com':'write','b@x.com':'read','c@x.com':'write'}, {'b@x.com':'write','c@x.com':'write','d@x.com':'read'});
+    t('plan: give the new, change a role, take back only what Home-Brace gave',
+      JSON.stringify(plan.give)===JSON.stringify([{em:'a@x.com',role:'write'},{em:'b@x.com',role:'read'}]) &&
+      JSON.stringify(plan.take)===JSON.stringify([{em:'b@x.com',role:'write'},{em:'d@x.com',role:'read'}]));
+    t('plan from nothing given: nothing to take back', D.tcPlan({'a@x.com':'read'}, null).take.length===0); }
+
+  /* 6g. THE TC SYNC AGAINST REAL SHAREPOINT BEHAVIOUR: one permission per person on a folder,
+         so a changed role must be taken back BEFORE the new one is given - else the person is
+         left with nothing. Made-up people. */
+  { const sp=SharePoint(), {D}=load(sp); sp.onePerPerson=true;
+    sp.add(sp.root,'Home-Brace Documents',true);
+    const id=await D.tcFolder(), O={id:'O', roles:['owner'], grantedToV2:{siteGroup:{displayName:'Home-Brace Owners'}}};
+    sp.perms[id]=[O];
+    const roleOf=em=>{ const x=sp.perms[id].find(p=>p.grantedToV2 && p.grantedToV2.user && p.grantedToV2.user.email===em); return x ? x.roles.slice().sort().join('+') : 'none'; };
+    let rec=D.tcRecord(null, await D.tcSync({'tia@x.com':'write','omar@x.com':'read'}, null));
+    t('sync: first run gives each person their role', roleOf('tia@x.com')==='write' && roleOf('omar@x.com')==='read' &&
+      JSON.stringify(rec)===JSON.stringify({'tia@x.com':'write','omar@x.com':'read'}));
+    const d2=await D.tcSync({'tia@x.com':'read','omar@x.com':'write'}, rec); rec=D.tcRecord(rec, d2);
+    t('sync: a DOWNGRADE (Log + calls -> See) leaves read access, not nothing', roleOf('tia@x.com')==='read');
+    t('sync: an UPGRADE (See -> Log + calls) leaves edit access', roleOf('omar@x.com')==='write');
+    t('...and the record says so', rec['tia@x.com']==='read' && rec['omar@x.com']==='write' && !d2.failed.length);
+    const d3=await D.tcSync({'tia@x.com':'read'}, rec); rec=D.tcRecord(rec, d3);
+    t('sync: someone taken off the TC Tracker loses access; nobody else touched', roleOf('omar@x.com')==='none' && roleOf('tia@x.com')==='read' &&
+      sp.perms[id].some(p=>p.id==='O') && !('omar@x.com' in rec));
+    t('sync: nothing changed - nothing sent', (await D.tcSync({'tia@x.com':'read'}, rec)).gave.length===0 && sp.invites.length===4);
+    sp.denyDeleteFor='tia@x.com';
+    const d4=await D.tcSync({'tia@x.com':'write','new@x.com':'read'}, rec), rec4=D.tcRecord(rec, d4);
+    t('sync: one person failing never stops the rest', roleOf('new@x.com')==='read' && d4.failed.length===1 && d4.failed[0].verb==='take back');
+    t('...and a take-back that failed stays on record, so the next run tries again', rec4['tia@x.com']==='read' && rec4['new@x.com']==='read');
+    sp.denyDeleteFor=null;
+    const d5=await D.tcSync({'tia@x.com':'write','new@x.com':'read'}, rec4);
+    t('...which it does, and then it matches', roleOf('tia@x.com')==='write' && D.tcRecord(rec4, d5)['tia@x.com']==='write' && !d5.failed.length);
+    t('record: a give that failed is not recorded (so it is tried again)', !('z@x.com' in D.tcRecord({}, {gave:[], took:[], failed:[{verb:'give', em:'z@x.com', role:'read'}]})));
+    t('record: never takes the wrong role off the record', D.tcRecord({'a@x.com':'write'}, {took:[{em:'a@x.com', role:'read'}]})['a@x.com']==='write'); }
 
   /* 7. Links to files kept elsewhere: checked, saved once, un-linked (never deleted). */
   { const sp=SharePoint(), {D,store}=load(sp);

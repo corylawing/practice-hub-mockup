@@ -250,13 +250,13 @@
     *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}
   }
 </style>
-<script src="user.js?v=hc80"></script>
+<script src="user.js?v=hc81"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc80"></script>
-  <script src="gate.js?v=hc80"></script>
-  <script src="_staff.js?v=hc80"></script>
-  <script src="tc.js?v=hc80"></script>
-  <script src="tcstore.js?v=hc80"></script>
+  <script src="store.js?v=hc81"></script>
+  <script src="gate.js?v=hc81"></script>
+  <script src="_staff.js?v=hc81"></script>
+  <script src="tc.js?v=hc81"></script>
+  <script src="tcstore.js?v=hc81"></script>
 </head>
 <body>
 <div class="ribbon">SANDBOX — made-up patients. Use “Try it as” to see it as a TC, an office manager or Selene.</div>
@@ -418,7 +418,7 @@
   function load(){
     const offs=myOffices();
     seedDemo(false);
-    // Consults live in their own locked list on the live site (tcstore.js), the browser on the sandbox.
+    // Consults live in their own locked folder on the live site (tcstore.js), the browser on the sandbox.
     const logs=TCSTORE.getAll(TC.LOG_PREFIX);
     const slots=Promise.all(offs.map(o=>PH_STORE.get(TC.slotsKey(o)).then(v=>[o,v], ()=>[o,null])));
     return Promise.all([logs, slots, PH_STORE.get(TC.LISTS_KEY).catch(()=>null), PH_STORE.get('ph_sched2').catch(()=>null)])
@@ -1088,7 +1088,7 @@
 })();
 </script>
 <script>PH.nav('tc');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(window.TCPAGE)TCPAGE.identity();});document.addEventListener('ph-identity',function(){if(window.TCPAGE)TCPAGE.identity();});</script>
-<script src="tour.js?v=hc80"></script>
+<script src="tour.js?v=hc81"></script>
 <script>
 Tour.init([
   {sel:'#offbar', title:'Your office', body:'You see the offices you work at. Heather, Selene and leadership see every office and can pick one.'},

@@ -245,12 +245,12 @@
   }
 
 </style>
-<script src="user.js?v=hc80"></script>
+<script src="user.js?v=hc81"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="_staff.js?v=hc80"></script>
-  <script src="store.js?v=hc80"></script>
-  <script src="gate.js?v=hc80"></script>
-  <script src="docs.js?v=hc80"></script>
+  <script src="_staff.js?v=hc81"></script>
+  <script src="store.js?v=hc81"></script>
+  <script src="gate.js?v=hc81"></script>
+  <script src="docs.js?v=hc81"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — admin console concept for validation. Real build: people sync from Microsoft 365; access is managed here.</div>
@@ -306,14 +306,18 @@
   /* TWO KINDS OF THINGS — this is the whole mental model:
      TOOLS   = real app features (Dashboard, Schedule, Marketing). Fixed. You only choose WHO gets them.
      DOCSECS = document sections that live inside Documents (HR, Vendors, ...). Admin can CREATE these. */
+  function tcPreviewFlag(){ try{ return localStorage.getItem('ph_tc_preview')==='1'; }catch(_){ return false; } }
   const TOOLS=[
     {k:'dashboard',n:'Production Dashboard',s:'Dashboard',ic:'📊'},
     {k:'schedule',n:'Schedule',s:'Schedule',ic:'📅'},
     {k:'production',n:'Enter Production (type the numbers)',s:'Enter Prod',ic:'📝'},
     /* TC Tracker (12/10/2026): Selene's consult spreadsheet as a page. Sandbox only until
        the practice says go - user.js tcOn() keeps it off the live site, and its column stays
-       off this grid there too, so nobody is shown a switch for a tab that does not exist yet. */
-    ...((window.PH && PH.tcOn && !PH.tcOn()) ? [] : [{k:'tc',n:'TC Tracker (consults & call list)',s:'TC Tracker',ic:'🗂️'}]),
+       off this grid there too, so nobody is shown a switch for a tab that does not exist yet.
+       An admin previewing it (tc.html?tcpreview) gets the column, to set who has what before
+       go-live. This list is made before sign-in finishes, when tcOn() can't yet know the
+       person is an admin - so the preview flag alone counts here (this page is admins-only). */
+    ...((window.PH && PH.tcOn && !PH.tcOn() && !tcPreviewFlag()) ? [] : [{k:'tc',n:'TC Tracker (consults & call list)',s:'TC Tracker',ic:'🗂️'}]),
     {k:'marketing',n:'Marketing board',s:'Marketing',ic:'📣'},
     /* The Documents TAB, on or off per team (07/10). It was never a column, so a team with
        saved settings had it off and there was no switch to turn it on when they're ready.
@@ -1075,7 +1079,7 @@
       list.map(x=>{ const lv=access[t][x.k]||'none';
         return '<div class="acc-line"><span>'+(x.ic?esc(x.ic)+' ':'')+esc(x.n)+'</span>'+
           '<button class="lvl '+lv+' accbtn" onclick="AD.pickLevel(event,\''+q(t)+'\',\''+x.k+'\')">'+shortFor(x.k,lv)+'</button></div>'; }).join('');
-    el('view').innerHTML=editSyncHTML()+
+    el('view').innerHTML=editSyncHTML()+tcSyncHTML()+
       '<div class="intro"><b>One rule:</b> a person\'s <b>team</b> decides what they can do; their <b>location</b> decides which offices\' folders they see. On two teams? They get the <b>best</b> level of both. <b>Pick a team</b>, then <b>tap a level</b> to change it \u2014 each section only offers the choices that mean something there.</div>'+
       '<div class="toolrow"><div class="panel-lab" style="margin:0">'+TEAMS.length+' teams \u00b7 '+secs.length+' sections</div><span style="flex:1"></span>'+
         '<button class="btn ghost" onclick="AD.resetTeams()">Reset teams</button><button class="btn" onclick="AD.newTeam()">+ Add team</button></div>'+
@@ -1095,7 +1099,7 @@
     const rows=TEAMS.map(t=>'<tr><th class="team">'+t+
       '<button class="tedit" title="Rename or delete this team" onclick="AD.editTeam(\''+t.replace(/'/g,"\\'")+'\')">\u270e</button></th>'+secs.map(x=>{const lv=access[t][x.k]||'none';
       return '<td><button class="lvl '+lv+'" onclick="AD.pickLevel(event,\''+t+'\',\''+x.k+'\')">'+shortFor(x.k,lv)+'</button></td>';}).join('')+'</tr>').join('');
-    el('view').innerHTML=editSyncHTML()+
+    el('view').innerHTML=editSyncHTML()+tcSyncHTML()+
       '<div class="intro"><b>One rule:</b> a person\'s <b>team</b> decides what they can do (below); their <b>location</b> decides which offices\' folders they see. On two teams? They get the <b>best</b> level of both. <b>Tap a cell</b> and pick \u2014 each section only offers the choices that actually mean something there.</div>'+
       '<div class="toolrow"><div class="panel-lab" style="margin:0">'+TEAMS.length+' teams \u00b7 '+secs.length+' sections</div><span style="flex:1"></span>'+
         '<button class="btn ghost" onclick="AD.resetTeams()">Reset teams</button><button class="btn" onclick="AD.newTeam()">+ Add team</button></div>'+
@@ -1495,6 +1499,7 @@
      and says so: everyone can edit then anyway. */
   let EDITSYNC={state:'idle'}, editTimer=null, editAgain=false;
   function syncEdit(){
+    syncTc();          // the TC Tracker's folder follows the same changes (below)
     if(!liveDocs() || !(window.PH && PH.isAdmin && PH.isAdmin())) return;
     clearTimeout(editTimer); editTimer=setTimeout(runEditSync, 1200);
   }
@@ -1590,6 +1595,74 @@
   function editSyncHTML(){ if(!liveDocs()) return ''; const x=editSyncState(); return '<div id="editsync" class="editsync '+x.cls+'">'+x.html+'</div>'; }
   function paintEditSync(){ const box=document.getElementById('editsync'); if(!box) return; const x=editSyncState(); box.className='editsync '+x.cls; box.innerHTML=x.html; }
 
+  /* TC TRACKER ACCESS FOLLOWS TEAMS & ACCESS (17/10). Cory: "lets do it like we did for
+     documents then as long as its scalable". The TC Tracker's records - patient names, birth
+     dates, phones - are files in one folder, Home-Brace TC Tracker (tcstore.js). Once it is
+     locked by hand (Members AND Visitors removed: nobody else may even read it), this page
+     gives each TC Tracker person access from the grid - edit for Log + calls / Everything
+     (and admins), read for See - and takes back ONLY what it gave (ph_tcgrants), never a
+     group's permission or anything inherited (docs.js). Like the Documents sync it runs in the
+     browser of an admin with this page open, and only once the TC Tracker is on (or previewed). */
+  let TCSYNC={state:'idle'}, tcTimer=null, tcAgain=false;
+  const tcHere=()=>liveDocs() && !!(PH.tcOn && PH.tcOn()) && !!(PH.isAdmin && PH.isAdmin()) && !!PH_DOCS.tcLocked && !!PH.tcRoleFor;
+  function syncTc(){ if(!tcHere()) return; clearTimeout(tcTimer); tcTimer=setTimeout(runTcSync, 1500); }
+  function tcWanted(){
+    const want={}, noEmail=[];
+    ((window.PH && PH.rosterView) ? PH.rosterView() : []).forEach(person=>{
+      const role=PH.tcRoleFor(person.teams||[]); if(!role) return;
+      const em=String(person.email||'').trim().toLowerCase();
+      if(!em){ noEmail.push(person.name); return; }
+      if(want[em]!=='write') want[em]=role;
+    });
+    return {want, noEmail};
+  }
+  function runTcSync(){
+    if(TCSYNC.state==='busy'){ tcAgain=true; return; }
+    TCSYNC={state:'busy'}; paintTcSync();
+    Promise.all([PH.reloadAccess ? PH.reloadAccess() : null, PH.reloadPeople ? PH.reloadPeople() : null])
+      .then(()=>PH_DOCS.tcFolder())                 // it has to exist before it can be locked
+      .then(()=>PH_DOCS.tcLocked())
+      .then(locked=>{
+        if(!locked){ TCSYNC={state:'notlocked'}; return; }
+        const w=tcWanted();
+        return PH_STORE.get('ph_tcgrants').then(rec=>PH_DOCS.tcSync(w.want, rec)).then(done=>{
+          // take-backs first, then gives (docs.js says why); the record keeps any failed take-back
+          const save=(done.gave.length || done.took.length || done.failed.length)
+            ? PH_STORE.update('ph_tcgrants', cur=>PH_DOCS.tcRecord(cur, done)) : Promise.resolve();
+          return save
+            .then(()=>{ TCSYNC={state:'done', gave:done.gave.length, took:done.took.length, failed:done.failed, noEmail:w.noEmail};
+              if(done.gave.length || done.took.length)
+                docToast('\u2713 TC Tracker access updated in SharePoint ('+[done.gave.length?done.gave.length+' given':'', done.took.length?done.took.length+' taken back':''].filter(Boolean).join(', ')+').'); });
+        });
+      })
+      .catch(e=>{ TCSYNC={state:'error', why:(e&&e.message)||'SharePoint didn\u2019t answer.'}; })
+      .then(()=>{ paintTcSync(); if(tcAgain){ tcAgain=false; runTcSync(); } });
+  }
+  function tcSyncNow(){ clearTimeout(tcTimer); runTcSync(); }
+  function tcSyncState(){
+    const S=TCSYNC;
+    if(!tcHere() || S.state==='idle' || S.state==='busy') return {cls:'', html:''};
+    if(S.state==='notlocked') return {cls:'es-warn', html:
+      '<b>The TC Tracker\u2019s patient folder isn\u2019t locked yet.</b> Until it is, everyone in Home-Brace can open patient details in SharePoint. '+
+      'Lock it once, and from then on Home-Brace gives and takes back access from the TC Tracker column by itself.'+
+      '<details><summary>Show me how (one time, a site owner)</summary><ol>'+
+        '<li>Open <b>omegaorthodontics.sharepoint.com/sites/Home-Brace</b> and click <b>Documents</b>.</li>'+
+        '<li>Next to <b>Home-Brace TC Tracker</b>: <b>\u22ef</b> \u2192 <b>Manage access</b> \u2192 <b>Advanced settings</b>.</li>'+
+        '<li><b>Stop Inheriting Permissions</b> \u2192 OK.</li>'+
+        '<li>Tick <b>Home-Brace Members</b> and <b>Home-Brace Visitors</b> \u2192 <b>Remove User Permissions</b> \u2192 OK.</li>'+
+      '</ol></details><button class="lnk" onclick="AD.tcSyncNow()">I\u2019ve done it \u2014 check again</button>'};
+    if(S.state==='done'){
+      if(!S.failed.length && !S.noEmail.length) return {cls:'', html:''};
+      return {cls:'es-warn', html:'<b>TC Tracker access in SharePoint mostly matches Teams &amp; Access.</b>'+
+        (S.failed.length?'<br>Couldn\u2019t '+S.failed.slice(0,5).map(f=>esc(f.verb)+' access for '+esc(f.em)+' ('+esc(f.why)+')').join('; ')+
+          (S.failed.length>5?'; and '+(S.failed.length-5)+' more':'')+'. <button class="lnk" onclick="AD.tcSyncNow()">Try again</button>':'')+
+        (S.noEmail.length?'<br>No email on file, so no TC Tracker access in SharePoint for: '+esc(S.noEmail.join(', '))+'.':'')};
+    }
+    return {cls:'es-bad', html:'Couldn\u2019t check TC Tracker access: '+esc(S.why)+' <button class="lnk" onclick="AD.tcSyncNow()">Try again</button>'};
+  }
+  function tcSyncHTML(){ if(!tcHere()) return ''; const x=tcSyncState(); return '<div id="tcsync" class="editsync '+x.cls+'">'+x.html+'</div>'; }
+  function paintTcSync(){ const box=document.getElementById('tcsync'); if(!box) return; const x=tcSyncState(); box.className='editsync '+x.cls; box.innerHTML=x.html; }
+
   let DEL=null;
   function delSec(k){
     const sec=DOCSECS.find(x=>x.k===k); if(!sec) return;
@@ -1675,7 +1748,7 @@
   function closeModal(){ el('modal').classList.remove('open'); }
 
   const thenSync=f=>function(){ const r=f.apply(this,arguments); syncEdit(); return r; };
-  window.AD={setupSecs,editSyncNow,tab:tabSet,viewAs:doViewAs,newTeam,editTeam,saveTeam:thenSync(saveTeam),delTeam:thenSync(delTeam),resetTeams,profile,whyNoAdd,
+  window.AD={setupSecs,editSyncNow,tcSyncNow,tab:tabSet,viewAs:doViewAs,newTeam,editTeam,saveTeam:thenSync(saveTeam),delTeam:thenSync(delTeam),resetTeams,profile,whyNoAdd,
     addPerson,npSet,npLoc,npTeam,saveNewPerson:thenSync(saveNewPerson),accTeam:setAccTeam,removePerson:thenSync(removePerson),restorePerson:thenSync(restorePerson),showRemoved,togTeam,togLoc,setStatus,saveUser:thenSync(saveUser),pickLevel,pickAud,setField,pickPhoto,photoChosen,clearPhoto,pickUserLevel,clearUserLevel,tog,addFile,noop,newSec,editSec,saveSec:thenSync(saveSec),delSec,delSecGo,resetSecs,setSecName,setSecIcon,setSecStruct,setSecLocMode,setSecTeamMode,togSecLoc,togSecTeam,saveFile,cd,useFile,clearFile,uploadFile,setFileTeamMode,setFileLocMode,togFileLoc,togFileTeam,renderLocs,newLoc,editLoc,saveLoc,delLoc,resetLocs,setLocBrand,setLocState,setLocTZ,close:closeModal};
   el('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
@@ -1733,7 +1806,7 @@
 })();
 </script>
 <script>PH.nav('admin');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(PH.loadPhotos)PH.loadPhotos().then(function(got){if(got&&window.AD&&AD.tab)AD.tab('users');});});</script>
-<script src="tour.js?v=hc80"></script>
+<script src="tour.js?v=hc81"></script>
 <script>
 Tour.init([
   {sel:'#tabs', title:'This is your control room', body:'Four tabs and you can run the whole hub: <b>People</b>, <b>Teams &amp; Access</b>, <b>Document Sections</b> and <b>Locations</b>. No developer, no consultant.', pre:()=>AD.tab('users')},

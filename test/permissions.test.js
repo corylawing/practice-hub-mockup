@@ -284,6 +284,15 @@ const t=(n,v)=>{ (v?ok:bad).push(n); };
   PN.signIn({ displayName:'Test Doctor', mail:'test.doctor@example.com', userPrincipalName:'test.doctor@example.com',
               jobTitle:'Doctor', department:'Doctors', officeLocation:'Hobbs' });
   t('...but the preview flag does nothing for anyone who is not an admin', PN.PH.tcOn()===false && PN.tabs().indexOf('tc')<0);
+  /* 17/10: SharePoint access to the TC Tracker's patient folder follows Teams & Access. */
+  const R=PA.PH.tcRoleFor;
+  t('TC folder access: admins and Log + calls / Everything = edit, See = read, nothing = nothing',
+    R(['Admin'])==='write' && R(['TCs'])==='write' && R(['Leadership Team'])==='write' && R(['Executive Team'])==='write' &&
+    R(['Office Managers'])==='read' && R(['Staff'])==='' && R(['Doctors'])==='' && R([])==='');
+  t('...two teams get the better of the two (an OM who is also a TC can edit)', R(['Office Managers','TCs'])==='write');
+  const PG=load({ page:'tc', ls:{ ph_access:JSON.stringify({'TCs':{schedule:'view',team:'view',tc:'none'}, 'Office Managers':{schedule:'edit',team:'view'}}) } });
+  t('...and a team taken off in Teams & Access loses it (a saved row without the column = nothing)',
+    PG.PH.tcRoleFor(['TCs'])==='' && PG.PH.tcRoleFor(['Office Managers'])==='');
   const S2=load({ host:'corylawing.github.io', page:'team', ls:{ ph_viewas:'doctor' } });
   S2.PH.nav('team');
   t('sandbox honours the chosen persona', S2.PH.me().id==='doctor');

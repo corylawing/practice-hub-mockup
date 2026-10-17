@@ -440,7 +440,7 @@
      writes it again anyway. */
   /* ph_docgrants: which SharePoint edit rights Home-Brace handed out (07/10) - it shrinks
      every time a level is lowered, by design. */
-  var HOUSEKEEPING = ['ph_activity', 'ph_seen_', 'ph_photos', 'ph_docgrants'];
+  var HOUSEKEEPING = ['ph_activity', 'ph_seen_', 'ph_photos', 'ph_docgrants', 'ph_tcgrants'];
   function housekeeping(key){
     for(var i=0;i<HOUSEKEEPING.length;i++)
       if(key === HOUSEKEEPING[i] || key.indexOf(HOUSEKEEPING[i]) === 0) return true;
