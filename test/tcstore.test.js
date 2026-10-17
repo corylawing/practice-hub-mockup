@@ -36,6 +36,7 @@ function library(opts){
       sp.folder='F1'; return R(201,{id:'F1', folder:{}}); }
     let mm;
     if((mm=/^\/drives\/D1\/items\/F1\/children\?\$top=200(?:&page=(\d))?$/.exec(p))){
+      if(!sp.folder) return R(404,{error:{message:'itemNotFound'}});            // the folder has gone
       const all=Object.values(sp.files), pg=Number(mm[1]||0), size=2;
       return R(200,{value:all.slice(pg*size,pg*size+size).map(view), '@odata.nextLink': all.length>(pg+1)*size ? 'https://graph.microsoft.com/v1.0/drives/D1/items/F1/children?$top=200&page='+(pg+1) : undefined});
     }
@@ -44,6 +45,7 @@ function library(opts){
       if(opts.raceOnce && !sp.raced){ sp.raced=true; const cur=JSON.parse(f.text); cur.consults.other={id:'other', name:'Someone else'}; const before=view(f); f.text=JSON.stringify(cur); f.eTag='"e'+(sp.etagN++)+'"'; return R(200, before); }
       return R(200, view(f));
     }
+    if(m==='PUT' && opts.busyPuts && opts.busyPuts>0){ opts.busyPuts--; return R(503,{error:{message:'busy'}}); }
     if(m==='PUT' && (mm=/^\/drives\/D1\/items\/F1:\/([^:]+):\/content\?@microsoft\.graph\.conflictBehavior=fail$/.exec(p))){
       const name=decodeURIComponent(mm[1]); if(Object.values(sp.files).some(f=>f.name===name)) return R(409,{error:{message:'nameAlreadyExists'}});
       return R(201, view(add(name, await o.body.text())));
@@ -51,7 +53,9 @@ function library(opts){
     if(m==='PUT' && (mm=/^\/drives\/D1\/items\/(I\d+)\/content$/.exec(p))){
       const f=sp.files[mm[1]]; const im=o.headers && o.headers['If-Match'];
       if(im && im!==f.eTag) return R(412,{error:{message:'changed since you read it'}});
-      f.text=await o.body.text(); f.eTag='"e'+(sp.etagN++)+'"'; return R(200, view(f));
+      f.text=await o.body.text(); f.eTag='"e'+(sp.etagN++)+'"';
+      if(opts.lostReplyOnce && !sp.lost){ sp.lost=true; throw new TypeError('Failed to fetch'); }   // saved, but the answer never came back
+      return R(200, view(f));
     }
     return R(400,{error:{message:'unexpected '+m+' '+p}});
   };
@@ -124,6 +128,22 @@ const content=(sp,name)=>{ const f=Object.values(sp.files).find(x=>x.name===name
     for(let i=0;i<5;i++) await S.update('ph_tclog_hobbs_2026-10', addConsult('k'+i,'P'+i));
     await S.getAll('ph_tclog_');
     t('Nothing is ever deleted', !sp.calls.some(c=>/^DELETE/.test(c)) && Object.keys(content(sp,'ph_tclog_hobbs_2026-10.json').consults).length===5); }
+
+  { const sp=library({busyPuts:1}); sp.add('ph_tclog_hobbs_2026-10.json', rec('a','Ava')); const {S}=fresh(true, sp);
+    await S.update('ph_tclog_hobbs_2026-10', addConsult('b','Bo'));
+    const c=content(sp,'ph_tclog_hobbs_2026-10.json');
+    t('SharePoint busy for a moment while saving: tried again, saved, nothing lost', c.consults.a && c.consults.b && Object.keys(sp.files).length===1); }
+  { const sp=library({lostReplyOnce:true}); sp.add('ph_tclog_hobbs_2026-10.json', rec('a','Ava')); const {S}=fresh(true, sp);
+    await S.update('ph_tclog_hobbs_2026-10', addConsult('b','Bo'));
+    const c=content(sp,'ph_tclog_hobbs_2026-10.json'), puts=sp.calls.filter(x=>/^PUT/.test(x)).length;
+    t('Saved but the answer was lost: the repeat is refused, the file read again, the change applied once', c.consults.a && c.consults.b &&
+      Object.keys(c.consults).length===2 && Object.keys(sp.files).length===1 && puts===3); }
+  { const sp=library(); sp.add('ph_tclog_hobbs_2026-10.json', rec('a','Ava')); const {S}=fresh(true, sp);
+    await S.getAll('ph_tclog_'); const keep=sp.folder; sp.folder=null;
+    let err=null; try{ await S.getAll('ph_tclog_'); }catch(e){ err=e; }
+    sp.folder=keep;
+    const again=await S.getAll('ph_tclog_').catch(()=>null);
+    t('The folder went while the page was open: an error, and "Try again" looks for it again', err && again && again['ph_tclog_hobbs_2026-10'].consults.a); }
 
   /* ---------- sandbox ---------- */
   { const {S, LS}=fresh(false, null);

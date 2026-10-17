@@ -19,6 +19,9 @@
      - A file that cannot be read is never written over.
      - Two people saving the same file at once: the second is told "changed since you read it"
        by SharePoint (If-Match), reads again and re-applies its change.
+     - A busy SharePoint (429/503/504) or a dropped connection gets a few more tries, saves
+       included. Safe to repeat: if the first save did land, the repeat is refused (If-Match /
+       "fail"), the file is read again and the change - one consult, by its id - applied again.
      - Nothing is cached in the browser on the live site, and a read or save that fails says
        so. A tracker that quietly showed nothing would look like lost work.
    Sandbox: the browser, through PH_STORE, exactly as before. */
@@ -143,7 +146,10 @@
       }catch(_){}
       return Promise.resolve(out);
     }
-    return folder().then(files).then(function(list){
+    return folder().then(files).catch(function(e){
+      if(e.status === 404){ where = null; ids = {}; }      // the folder went: "Try again" looks again
+      throw e;
+    }).then(function(list){
       var out = {};
       return Promise.all(list.filter(function(f){ return f.name.indexOf(prefix) === 0 && /\.json$/i.test(f.name); }).map(function(f){
         var key = f.name.replace(/\.json$/i, '');
@@ -173,7 +179,7 @@
             var next = mutate(undefined);
             if(next === undefined) return { value: undefined, unchanged: true };
             // New file - and "fail" if someone made it a moment ago (then read theirs, change again).
-            return send('PUT', '/drives/' + F.drive + '/items/' + F.id + ':/' + encodeURIComponent(name) + ':/content?@microsoft.graph.conflictBehavior=fail', body(next))
+            return withRetry(function(){ return send('PUT', '/drives/' + F.drive + '/items/' + F.id + ':/' + encodeURIComponent(name) + ':/content?@microsoft.graph.conflictBehavior=fail', body(next)); })
               .then(function(made){ ids[name] = made.id; return { value: next }; });
           }
           return withRetry(function(){ return send('GET', '/drives/' + F.drive + '/items/' + id); }).then(function(item){
@@ -181,7 +187,8 @@
               var next = mutate(cur === null ? undefined : cur);
               if(next === undefined) return { value: cur, unchanged: true };
               var h = item.eTag ? { 'If-Match': item.eTag } : {};
-              return send('PUT', '/drives/' + F.drive + '/items/' + id + '/content', body(next), h).then(function(){ return { value: next }; });
+              return withRetry(function(){ return send('PUT', '/drives/' + F.drive + '/items/' + id + '/content', body(next), h); })
+                .then(function(){ return { value: next }; });
             }, function(){
               throw fail(422, 'The saved record ' + key + ' could not be read, so it was not written over. Nothing was changed.');
             });

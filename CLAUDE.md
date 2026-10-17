@@ -127,7 +127,13 @@ downloads every file (~100 a year) - fine for now, load by month if it gets slow
 `tc.html?tcpreview` on live (admins only, remembered per browser; `tcPreview()`); (2) Admin -> Teams & Access shows
 "not locked yet" (the folder is made by then) -> do the lock -> "check again"; (3) Teams & Access TC Tracker column
 (TCs Log + calls, OMs See, Exec/Leadership Everything - saved rows lack `tc`, so they must be set) - Admin then gives
-folder access by itself; (4) `TC_LIVE=true` + deploy. Tests: tc 136, tcstore 18, docs 122.
+folder access by itself; (4) `TC_LIVE=true` + deploy. Tests: tc 136, tcstore 21, docs 122.
+hc81 also: Admin's TOOLS list is built before sign-in finishes, when `tcOn()` can't know the person is an admin, so in
+live PREVIEW the TC column never showed - `tcPreviewFlag()` (the localStorage flag alone; Admin is admins-only) now
+counts there. hc82: tcstore saves (both PUTs) go through `withRetry` too - safe to repeat because If-Match /
+conflictBehavior=fail refuse a repeat of a save that landed, and the change (one consult by id) is re-applied; a 404
+on reading resets the cached folder so "Try again" looks again. Don't rename or move the folder: Home-Brace finds it
+by name, and would make a new empty one (Admin would then say "not locked yet").
 
 **Document search finds Word/Excel files; faster (14/10, hc79).** Jessica: searching "hygiene", the oral hygiene form
 (`Oral Hygiene Form[Editable].docx`) never came up, and search was slow. SharePoint gives Word/Excel/PowerPoint files an
