@@ -1648,14 +1648,23 @@
      page and the Home tile stay off whatever Teams & Access says, until this is true. Going
      live also needs its own locked SharePoint list for the patient details (CLAUDE.md). */
   const TC_LIVE=false;
-  const tcOn=()=>env()!=='live' || TC_LIVE;
+  /* Before everyone gets it, an ADMIN can try it on the live site: open tc.html?tcpreview once
+     (remembered in that browser). Cory, 17/10: test it on the real site first. Nobody else
+     sees anything until TC_LIVE is true. */
+  function tcPreview(){
+    try{
+      if(/[?&]tcpreview(=1)?(&|$)/.test(location.search||'')) localStorage.setItem('ph_tc_preview','1');
+      return localStorage.getItem('ph_tc_preview')==='1' && isAdmin(realMe());
+    }catch(_){ return false; }
+  }
+  const tcOn=()=>env()!=='live' || TC_LIVE || tcPreview();
   const NAV=[
     {k:'home',       n:'\ud83c\udfe0 Home',             href:'home.html',       show:()=>true},
     {k:'dashboard',  n:'\ud83d\udcca Production Dashboard',        href:'index.html',      show:()=>atLeast('dashboard','view')},
     {k:'production', n:'\ud83d\udcdd Enter Production',  href:'production.html', show:()=>atLeast('production','edit')},
     /* Sandbox: everyone (made-up patients; the page has its own "Try it as"). Live: the
        switch, then Teams & Access. */
-    {k:'tc',         n:'\ud83d\uddc2\ufe0f TC Tracker',        href:'tc.html',         show:()=>tcOn() && (env()!=='live' || atLeast('tc','view'))},
+    {k:'tc',         n:'\ud83d\uddc2\ufe0f TC Tracker',        href:'tc.html',         show:()=>tcOn() && (env()!=='live' || isAdmin(me()) || atLeast('tc','view'))},
     {k:'schedule',   n:'\ud83d\udcc5 Schedule',          href:'schedule.html',   show:()=>atLeast('schedule','view')},
     {k:'marketing',  n:'\ud83d\udce3 Marketing',         href:'marketing.html',  show:()=>atLeast('marketing','view')},
     {k:'documents',  n:'\ud83d\udcc1 Documents',         href:'documents.html',  show:()=>atLeast('documents','view')},

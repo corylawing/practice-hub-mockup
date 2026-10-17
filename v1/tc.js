@@ -15,24 +15,43 @@
   /* The sheet's Lists tab. Outcomes and follow-up statuses drive the formulas, so they are
      fixed here. Consult types, pending reasons and lead sources are only labels: a manager
      can change those on the page (ph_tclists). */
-  const OUTCOMES=['Started','Pending','Observation','No Show','Refused Treatment','Rescheduled / Cancelled'];
-  // "Completed consults" = Started + Pending + Observation + Refused (Dashboard B9, Monthly Totals E).
-  const COMPLETED=['Started','Pending','Observation','Refused Treatment'];
+  /* 16/10/2026, Selene: two more outcomes. "Pre-TX Hold" - waiting on dental clearance or
+     another requirement before treatment. "Submitted to Medicaid" - the authorization request
+     is in, waiting on a decision. Both are exams that happened, and both need follow-up. */
+  const OUTCOMES=['Started','Pending','Pre-TX Hold','Submitted to Medicaid','Observation','No Show','Refused Treatment','Rescheduled / Cancelled'];
+  // "Completed consults" = every exam that happened (Dashboard B9, Monthly Totals E) - the
+  // sheet's Started + Pending + Observation + Refused, plus the two new outcomes.
+  const COMPLETED=['Started','Pending','Pre-TX Hold','Submitted to Medicaid','Observation','Refused Treatment'];
+  // Outcomes that leave a follow-up open (column V starts at No).
+  const NEEDS_FU=['Pending','Pre-TX Hold','Submitted to Medicaid','No Show','Observation'];
   // CHANGE: "Rebooked" is new - see WHAT_CHANGED.
   const FU_STATUSES=['Open','Contacted - waiting','Scheduled to start','Closed - started','Closed - declined','Rebooked'];
   const OPEN_FU=['','Open','Contacted - waiting'];
   const CLOSED_FU=['Closed - started','Closed - declined'];
+  /* "Needs dental work" and "Needs records" were Pending reasons; they are what Pre-TX Hold
+     is for now, so they moved there. "Medicaid denied" is set by the call list when a
+     Medicaid patient carries on as private pay. All of these are labels a manager can edit. */
   const DEFAULT_LISTS={
     types:['Braces','Invisalign','Both','Phase I','Phase II','Other'],
-    reasons:['Financial','Decision-maker absent','Shopping / comparing','Insurance','Needs dental work','Needs records','Other'],
+    reasons:['Financial','Decision-maker absent','Shopping / comparing','Insurance','Medicaid denied','Other'],
+    holdReasons:['Dental clearance','Needs dental work','Needs records','Other'],
     leads:['Google','Meta / Facebook','Patient referral','Dental referral','Website','Walk-in','Community event','Other']
   };
+  /* MEDICAID, per office (Selene, 16/10): "All of our New Mexico offices currently accept
+     Medicaid except FFO Las Cruces, although that may change soon" - so it is a setting
+     (ph_tclists.medicaid), and these are only where it starts. */
+  const PAYERS=['Private pay','Medicaid'];
+  const DEFAULT_MEDICAID=['Carlsbad','Clovis','Hobbs','Cruces LCO'];
+  function medicaidOffices(settings){ return (settings && Array.isArray(settings.medicaid)) ? settings.medicaid : DEFAULT_MEDICAID; }
+  const takesMedicaid=(settings, office)=>medicaidOffices(settings).indexOf(office)>=0;
+  const payerOf=r=>(r && r.payer==='Medicaid') ? 'Medicaid' : 'Private pay';
   const SLOT_CHOICES=[8,9,10];
   // The Follow-Up Queue's "Action needed" values, most urgent first (the call list's order).
-  const ACTIONS=['Pending follow-up due','No-show follow-up','Observation review due','Recall ready',
-    'Set pending follow-up date','Set observation review date','Pending - future follow-up','Observation - future review'];
-  const DUE=['Pending follow-up due','No-show follow-up','Observation review due','Recall ready'];
-  const NEEDS_DATE=['Set pending follow-up date','Set observation review date'];
+  const ACTIONS=['Pending follow-up due','Pre-TX hold due','Medicaid decision due','No-show follow-up','Observation review due','Recall ready',
+    'Set pending follow-up date','Set pre-TX hold date','Set Medicaid check date','Set observation review date',
+    'Pending - future follow-up','Pre-TX hold - future','Waiting on Medicaid','Observation - future review'];
+  const DUE=['Pending follow-up due','Pre-TX hold due','Medicaid decision due','No-show follow-up','Observation review due','Recall ready'];
+  const NEEDS_DATE=['Set pending follow-up date','Set pre-TX hold date','Set Medicaid check date','Set observation review date'];
 
   const WHAT_CHANGED=[
     'A patient who started or declined leaves the call list, observation patients included. '+
@@ -92,6 +111,14 @@
       if(!r.nextFU) return 'Set pending follow-up date';
       return r.nextFU<=today ? 'Pending follow-up due' : 'Pending - future follow-up';
     }
+    if(r.outcome==='Pre-TX Hold' && OPEN_FU.indexOf(st)>=0){
+      if(!r.nextFU) return 'Set pre-TX hold date';
+      return r.nextFU<=today ? 'Pre-TX hold due' : 'Pre-TX hold - future';
+    }
+    if(r.outcome==='Submitted to Medicaid' && OPEN_FU.indexOf(st)>=0){
+      if(!r.nextFU) return 'Set Medicaid check date';
+      return r.nextFU<=today ? 'Medicaid decision due' : 'Waiting on Medicaid';
+    }
     if(r.outcome==='No Show' && OPEN_FU.indexOf(st)>=0) return 'No-show follow-up';
     return '';
   }
@@ -108,7 +135,7 @@
   function setOutcome(r, outcome){
     const was=r.outcome||'';
     r.outcome=outcome||'';
-    const needs = outcome==='Pending' || outcome==='No Show' || outcome==='Observation';
+    const needs = NEEDS_FU.indexOf(outcome)>=0;
     if(needs){
       if(!r.fuDone) r.fuDone='No';
       if(!r.fuStatus) r.fuStatus='Open';
@@ -143,20 +170,84 @@
     // An observation review done: the next one is booked. Still under observation.
     reviewed(r, today, next){ r.lastContact=today; if(next) r.obsReview=next; return r; },
     ready(r, today){ r.recallReady='Yes'; r.recallDate=today; return r; },
-    setDate(r, next){ if(r.outcome==='Observation') r.obsReview=next; else r.nextFU=next; return r; }
+    setDate(r, next){ if(r.outcome==='Observation') r.obsReview=next; else r.nextFU=next; return r; },
+    // Medicaid said yes: they are scheduled to start.
+    approved(r, today){ r.medicaidApproved=today; return DO.scheduled(r, today); },
+    /* Medicaid said no and they carry on as PRIVATE PAY (Selene: "include them in the
+       private-pay calculation using their existing exam record"). The same record changes
+       group - no second exam - and they become a pending private-pay patient. */
+    denied(r, today, next){
+      r.medicaidDenied=today; r.payer='Private pay'; r.outcome='Pending'; r.reason='Medicaid denied';
+      r.lastContact=today; r.fuStatus='Open'; if(r.fuDone!=='Yes') r.fuDone='No';
+      r.nextFU=next||addDays(today, 2);
+      return r;
+    }
   };
 
   /* ---------- the numbers ---------- */
   const rate=(a,b)=>b?a/b:null;
+
+  /* CONVERSION (Selene, 16/10/2026) - replaces the sheet's case acceptance.
+       Consult = a new-patient exam that happened, counted ONCE per patient, in the month of
+                 their first exam. Observation exams are not counted, nor any later visit
+                 of that patient; no-shows and reschedules were never exams.
+       Start   = counted once per patient, in the month treatment starts - even when the exam
+                 was in an earlier month, and for observation / recall patients too.
+       Rate    = starts that month / consults that month, separately for Private pay and
+                 Medicaid. Starts can come from earlier months' exams, so a month can pass 100%.
+     A Medicaid patient who goes private pay keeps their one exam; it moves to private pay.
+     A patient is their chart # at that office (or name + date of birth when there is no
+     chart #); with neither, each record stands alone. */
+  const normName=s=>String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+  function patientKey(r){
+    const chart=String(r && r.chart || '').trim().toLowerCase();
+    if(chart) return r.office+'|c:'+chart;
+    if(r && r.name && r.dob) return r.office+'|n:'+normName(r.name)+'|'+r.dob;
+    return 'id:'+(r && r.id);
+  }
+  // When treatment started: the date set by "Started", or the consult day when started at the consult.
+  const startOf=r=>(r.fuStatus==='Closed - started' || r.outcome==='Started') ? (r.startDate || (r.outcome==='Started' ? r.date : '')) : '';
+  function patients(consults){
+    const by={};
+    (consults||[]).filter(live).forEach(r=>{ const k=patientKey(r); (by[k]=by[k]||[]).push(r); });
+    return Object.keys(by).map(k=>{
+      const list=by[k].slice().sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);
+      const exam=list.find(r=>COMPLETED.indexOf(r.outcome)>=0) || null;
+      const st=list.map(r=>({r, d:startOf(r)})).filter(x=>x.d).sort((a,b)=>a.d<b.d?-1:a.d>b.d?1:0)[0] || null;
+      return {key:k, records:list, exam, counts:!!exam && exam.outcome!=='Observation', start:st ? {date:st.d, r:st.r} : null};
+    });
+  }
+  /* One month. `keep(record)` limits whose numbers they are (one TC, say): an exam belongs
+     to the record it happened on, a start to the record that started - so a patient seen by
+     one TC and started by another is never counted twice. */
+  function conversion(consults, ym, keep){
+    keep=keep||(()=>true);
+    const g={'Private pay':{consults:0, starts:0}, 'Medicaid':{consults:0, starts:0}};
+    patients(consults).forEach(p=>{
+      if(p.counts && inMonth(p.exam.date, ym) && keep(p.exam)) g[payerOf(p.exam)].consults++;
+      if(p.start && inMonth(p.start.date, ym) && keep(p.start.r)) g[payerOf(p.start.r)].starts++;
+    });
+    PAYERS.forEach(k=>{ g[k].rate=rate(g[k].starts, g[k].consults); });
+    const c=g['Private pay'].consults+g['Medicaid'].consults, s=g['Private pay'].starts+g['Medicaid'].starts;
+    g.total={consults:c, starts:s, rate:rate(s, c)};
+    return g;
+  }
+  // The consult this patient's exam is counted on, if an earlier record already is (for the form).
+  function earlierExam(consults, r){
+    const k=patientKey(r); if(k.indexOf('id:')===0) return null;
+    return (consults||[]).filter(live).filter(x=>x.id!==r.id && patientKey(x)===k && COMPLETED.indexOf(x.outcome)>=0 && x.date<=r.date)
+      .sort((a,b)=>a.date<b.date?-1:1)[0] || null;
+  }
   /* One month, as the Dashboard's "Monthly results" and "TC accountability metrics" show it,
      and as one row of Monthly Totals. `consults` is everyone in view; `slots` is that
      month's available consult slots (Daily Capacity). */
-  function monthStats(consults, ym, slots, today){
-    const all=(consults||[]).filter(live), m=all.filter(r=>inMonth(r.date, ym));
+  function monthStats(consults, ym, slots, today, keep){
+    keep=keep||(()=>true);
+    const all=(consults||[]).filter(live), mine=all.filter(keep), m=mine.filter(r=>inMonth(r.date, ym));
     const n=o=>m.filter(r=>r.outcome===o).length;
-    const started=n('Started'), pending=n('Pending'), observation=n('Observation'), noShow=n('No Show'),
-          refused=n('Refused Treatment'), rescheduled=n('Rescheduled / Cancelled');
-    const scheduled=m.length, completed=started+pending+observation+refused;
+    const started=n('Started'), pending=n('Pending'), hold=n('Pre-TX Hold'), submitted=n('Submitted to Medicaid'),
+          observation=n('Observation'), noShow=n('No Show'), refused=n('Refused Treatment'), rescheduled=n('Rescheduled / Cancelled');
+    const scheduled=m.length, completed=started+pending+hold+submitted+observation+refused;
     const sameDay=m.filter(r=>r.sameDay==='Yes').length;
     const fuYes=m.filter(r=>r.fuDone==='Yes').length, fuNo=m.filter(r=>r.fuDone==='No').length;
     slots=Number(slots)||0;
@@ -165,12 +256,15 @@
       completed, completedRate:rate(completed, scheduled),
       started, startedRate:rate(started, completed),
       pending, pendingRate:rate(pending, completed),
+      hold, holdRate:rate(hold, completed),
+      submitted, submittedRate:rate(submitted, completed),
       observation, observationRate:rate(observation, completed),
       noShow, noShowRate:rate(noShow, scheduled),
       refused, refusedRate:rate(refused, completed),
       rescheduled, rescheduledRate:rate(rescheduled, scheduled),
       // RIP counts by the SALE date, not the consult date (B16 / M6).
-      rpi:all.filter(r=>r.rpi==='Yes' && inMonth(r.rpiDate, ym)).length,
+      rpi:mine.filter(r=>r.rpi==='Yes' && inMonth(r.rpiDate, ym)).length,
+      conversion:conversion(all, ym, keep),
       acceptance:rate(started, completed),
       sameDay, sameDayRate:rate(sameDay, completed),
       fuYes, fuNo, fuRate:rate(fuYes, fuYes+fuNo),
@@ -184,6 +278,8 @@
     const c=a=>acts.filter(x=>x===a).length;
     return {
       openPending: all.filter(r=>r.outcome==='Pending' && CLOSED_FU.indexOf(r.fuStatus||'')<0).length,
+      onHold: all.filter(r=>r.outcome==='Pre-TX Hold' && CLOSED_FU.indexOf(r.fuStatus||'')<0).length,
+      waitingMedicaid: all.filter(r=>r.outcome==='Submitted to Medicaid' && CLOSED_FU.indexOf(r.fuStatus||'')<0).length,
       // CHANGE: started/declined observation patients are not "current" (the sheet: every Observation ever).
       observation: all.filter(r=>r.outcome==='Observation' && CLOSED_FU.indexOf(r.fuStatus||'')<0).length,
       recallReady: c('Recall ready'),
@@ -208,13 +304,18 @@
   }
   /* Monthly Totals: twelve rows and the year. Rates for the year come from the year's
      sums (the sheet left all but the follow-up rate blank on that row). */
-  function yearTotals(consults, year, slotsInMonth, today){
+  function yearTotals(consults, year, slotsInMonth, today, keep){
     const rows=[];
-    for(let i=1;i<=12;i++){ const ym=year+'-'+pad(i); rows.push(monthStats(consults, ym, slotsInMonth(ym), today)); }
+    for(let i=1;i<=12;i++){ const ym=year+'-'+pad(i); rows.push(monthStats(consults, ym, slotsInMonth(ym), today, keep)); }
     const sum=k=>rows.reduce((a,r)=>a+(r[k]||0),0);
     const t={ym:String(year)};
-    ['slots','scheduled','completed','started','pending','observation','noShow','refused','rescheduled','rpi','sameDay','fuYes','fuNo','missing']
+    ['slots','scheduled','completed','started','pending','hold','submitted','observation','noShow','refused','rescheduled','rpi','sameDay','fuYes','fuNo','missing']
       .forEach(k=>{ t[k]=sum(k); });
+    t.conversion={};
+    PAYERS.concat(['total']).forEach(g=>{
+      const c=rows.reduce((a,r)=>a+r.conversion[g].consults,0), s=rows.reduce((a,r)=>a+r.conversion[g].starts,0);
+      t.conversion[g]={consults:c, starts:s, rate:rate(s, c)};
+    });
     t.capacity=rate(t.scheduled,t.slots); t.completedRate=rate(t.completed,t.scheduled);
     t.acceptance=t.startedRate=rate(t.started,t.completed); t.sameDayRate=rate(t.sameDay,t.completed);
     t.noShowRate=rate(t.noShow,t.scheduled); t.fuRate=rate(t.fuYes,t.fuYes+t.fuNo);
@@ -320,7 +421,8 @@
     ['Observation review','obsReview'],['Recall ready?','recallReady'],['Recall-ready date','recallDate'],
     ['Treatment start date','startDate'],['Lead source','lead'],['RIP sold?','rpi'],['RIP sale date','rpiDate'],
     ['Same-day contract?','sameDay'],['Follow-up complete?','fuDone'],['Follow-up completion date','fuDoneDate'],
-    ['Notes','notes'],['Month',null],['Action needed',null],['Days waiting',null],['Patient / chart ID','chart']
+    ['Notes','notes'],['Month',null],['Action needed',null],['Days waiting',null],['Patient / chart ID','chart'],
+    ['Medicaid / Private pay',null]
   ];
   function csv(consults, today){
     const q=v=>{ v=v==null?'':String(v); return /[",\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
@@ -330,6 +432,7 @@
         if(c[0]==='Month') return monthOf(r.date);
         if(c[0]==='Action needed') return action(r, today);
         if(c[0]==='Days waiting'){ const d=daysWaiting(r, today); return d==null?'':d; }
+        if(c[0]==='Medicaid / Private pay') return payerOf(r);
         return r[c[1]]||'';
       }));
     });
@@ -349,7 +452,7 @@
     const LAST=['Garcia','Martinez','Lopez','Hernandez','Smith','Johnson','Ramirez','Torres','Flores','Rivera','Gomez','Diaz',
       'Reyes','Cruz','Morales','Ortiz','Gutierrez','Chavez','Ramos','Ruiz','Alvarez','Mendoza','Castillo','Jimenez','Vargas',
       'Romero','Herrera','Medina','Aguilar','Castro'];
-    const today=opts.today, start=opts.from, out=[];
+    const today=opts.today, start=opts.from, out=[], med=opts.medicaid||[];
     opts.offices.forEach((o, oi)=>{
       const usual=SLOT_CHOICES[oi % 3], tc=opts.tcFor(o.n) || {name:'Treatment Coordinator', mail:''};
       for(let d=start; d<=today; d=addDays(d,1)){
@@ -367,23 +470,50 @@
             lead:weighted([['Patient referral',26],['Dental referral',20],['Google',22],['Meta / Facebook',14],['Website',9],['Walk-in',4],['Community event',3],['Other',2]]),
             notes:'', by:'demo', upd:d+'T12:00:00'
           };
+          // Medicaid offices: some patients are Medicaid (Selene, 16/10).
+          if(med.indexOf(o.n)>=0) r.payer=rnd()<0.45 ? 'Medicaid' : 'Private pay';
           // Today's afternoon consults have not happened yet.
           if(!past && i>=booked/2){ out.push(r); continue; }
-          setOutcome(r, weighted([['Started',36],['Pending',24],['Observation',9],['No Show',11],['Refused Treatment',8],['Rescheduled / Cancelled',12]]));
+          setOutcome(r, r.payer==='Medicaid'
+            ? weighted([['Started',22],['Pending',8],['Submitted to Medicaid',26],['Pre-TX Hold',8],['Observation',10],['No Show',13],['Refused Treatment',3],['Rescheduled / Cancelled',10]])
+            : weighted([['Started',34],['Pending',22],['Pre-TX Hold',6],['Observation',9],['No Show',11],['Refused Treatment',8],['Rescheduled / Cancelled',10]]));
           if(r.outcome==='Started'){
             r.sameDay=rnd()<0.7?'Yes':'No'; r.startDate=r.sameDay==='Yes'?d:addDays(d, 7+Math.floor(rnd()*14));
             if(r.startDate>today) r.startDate='';
             if(rnd()<0.4){ r.rpi='Yes'; r.rpiDate=r.startDate||d; } else r.rpi='No';
           }
+          const age=daysBetween(d, today), when=n=>{ const w=addDays(d, n); return w<today?w:today; };
+          if(r.outcome==='Submitted to Medicaid'){
+            r.nextFU=addDays(d, 14);
+            if(age>14){
+              const end=weighted([['approved',55],['denied',25],['waiting',20]]);
+              if(end==='approved'){ DO.approved(r, when(12)); if(rnd()<0.8) DO.started(r, when(20), when(20)); }
+              else if(end==='denied'){ DO.denied(r, when(12), addDays(when(12), 3)); if(rnd()<0.5) DO.started(r, when(24), when(24)); }
+              else DO.called(r, when(14), addDays(today, Math.floor(rnd()*7)));
+            }
+          }
+          if(r.outcome==='Pre-TX Hold'){
+            r.reason=weighted([['Dental clearance',55],['Needs dental work',20],['Needs records',20],['Other',5]]);
+            r.nextFU=addDays(d, 10+Math.floor(rnd()*10));
+            if(age>12 && rnd()<0.55){ DO.scheduled(r, when(10)); if(rnd()<0.7) DO.started(r, when(18), when(18)); }
+          }
           if(r.outcome==='Pending'){
-            r.reason=weighted([['Financial',30],['Decision-maker absent',18],['Shopping / comparing',16],['Insurance',14],['Needs dental work',10],['Needs records',7],['Other',5]]);
+            r.reason=weighted([['Financial',34],['Decision-maker absent',20],['Shopping / comparing',18],['Insurance',16],['Other',6]]);
             r.nextFU=addDays(d, 3+Math.floor(rnd()*12));
-            const age=daysBetween(d, today);
+            // A few come back for a second visit and start there: still ONE exam (Selene's rule).
+            let back=addDays(d, 7); while(back<today && !o.isOpen(back)) back=addDays(back, 1);
+            if(age>16 && rnd()<0.08 && back<today && o.isOpen(back)){
+              out.push(Object.assign({}, r, {id:r.id+'-back', date:back, time:'10:00', outcome:'Started', sameDay:'Yes',
+                startDate:back, fuDone:'', fuStatus:'', reason:'', nextFU:'', notes:'Came back to start'}));
+              DO.called(r, addDays(d, 5), back);
+              out.push(r); continue;
+            }
             if(age>10 && rnd()<0.75){
-              const end=weighted([['started',45],['declined',20],['called',35]]), when=addDays(d, 5+Math.floor(rnd()*Math.min(age-4,20)));
-              if(end==='started'){ DO.started(r, when<today?when:today, when<today?when:today); if(rnd()<0.35){ r.rpi='Yes'; r.rpiDate=r.startDate; } }
-              else if(end==='declined') DO.declined(r, when<today?when:today);
-              else DO.called(r, when<today?when:today, addDays(today, Math.floor(rnd()*9)-3));
+              const end=weighted([['started',40],['scheduled',8],['declined',20],['called',32]]), w=when(5+Math.floor(rnd()*Math.min(age-4,20)));
+              if(end==='started'){ DO.started(r, w, w); if(rnd()<0.35){ r.rpi='Yes'; r.rpiDate=r.startDate; } }
+              else if(end==='scheduled') DO.scheduled(r, w);
+              else if(end==='declined') DO.declined(r, w);
+              else DO.called(r, w, addDays(today, Math.floor(rnd()*9)-3));
             }
           }
           if(r.outcome==='Observation'){
@@ -404,7 +534,8 @@
   }
 
   const TC={
-    OUTCOMES, COMPLETED, FU_STATUSES, OPEN_FU, CLOSED_FU, DEFAULT_LISTS, SLOT_CHOICES, ACTIONS, DUE, NEEDS_DATE, WHAT_CHANGED,
+    OUTCOMES, COMPLETED, NEEDS_FU, FU_STATUSES, OPEN_FU, CLOSED_FU, DEFAULT_LISTS, SLOT_CHOICES, ACTIONS, DUE, NEEDS_DATE, WHAT_CHANGED,
+    PAYERS, DEFAULT_MEDICAID, medicaidOffices, takesMedicaid, payerOf, patientKey, startOf, patients, conversion, earlierExam,
     iso, parse, addDays, addMonths, daysBetween, monthOf, inMonth, monthDays, shiftMonth,
     action, daysWaiting, setOutcome, DO, monthStats, openWork, dailyView, yearTotals, callList,
     slotsOn, slotsInMonth, usualOn, setUsual, lastDayOf, openFrom, slug, LOG_PREFIX, logKey, slotsKey, LISTS_KEY, newId, consultsFrom,

@@ -88,6 +88,28 @@ multi-line-text column lives there for step 8; harmless to keep or delete.
 Entra groups to create (7 team + 8 office), the permission matrix, the per-office restriction, and
 the shared-account problem. Republish that same file to update it; do not create a second one.
 
+**TC Tracker: Selene's rules + its own locked list (17/10, hc80) - still OFF for staff.** Selene (16/10) asked for:
+outcomes **Pre-TX Hold** and **Submitted to Medicaid**; **Medicaid / Private pay** per consult at offices that take Medicaid
+(a setting, `ph_tclists.medicaid`, default Carlsbad, Clovis, Hobbs, Cruces LCO - every NM office but FFO Las Cruces);
+**conversion** = starts that month / consults that month per payer (consult = exam that happened, ONCE per patient -
+chart # at that office, else name+DOB - in the month of the first exam, not Observation; start = once, in the month
+treatment begins, so >100% is possible; Medicaid denied -> same exam moves to private pay, `TC.DO.denied`); all TCs see
+an "All TCs" rates table (no patients). Patients by `TC.patients()` / `TC.conversion(consults, ym, keep)` - `keep`
+attributes an exam to the record it happened on and a start to the record that started (two TCs never double count).
+"Needs dental work"/"Needs records" moved from Pending reasons to Pre-TX hold reasons. "Scheduled to start" patients get
+their own call-list group with a Started button (starts must be recorded for the rate). Selene OK'd: a Medicaid patient
+switching to private pay updates their exam month. **Storage:** consults (patient details) go to their own list
+**HomeBraceConsults** via `v1/tcstore.js` (separate file: touches only that list; read-modify-write with If-Match, retry
+on 412/409; never writes over a record it can't read; never deletes; packs with PH_STORE.pack); slots + settings stay in
+HomeBraceData via PH_STORE (no patient data). Sandbox: browser only, unchanged. Verified on the live path with a
+stand-in Graph: consult POSTed to HomeBraceConsults only, nothing in HomeBraceData. **Go-live, in order:** (1) Cory makes
+the list by hand (New > List > "HomeBraceConsults", add "Payload" multiple lines of text; List settings > Permissions >
+Stop inheriting; remove Members/Visitors; grant Edit to the TC Tracker people - TCs incl. guests, office managers,
+Selene, Heather, Jessica, leadership); (2) an admin tests on the live site via `tc.html?tcpreview` (admins only,
+remembered per browser; `tcPreview()` in user.js); admins always get "manage" on the page; (3) Teams & Access: TC
+Tracker column (TCs Log + calls, OMs See, Exec/Leadership Everything - saved rows lack `tc`, so they must be set);
+(4) `TC_LIVE=true` + deploy. tests: tc 136, tcstore 14.
+
 **Document search finds Word/Excel files; faster (14/10, hc79).** Jessica: searching "hygiene", the oral hygiene form
 (`Oral Hygiene Form[Editable].docx`) never came up, and search was slow. SharePoint gives Word/Excel/PowerPoint files an
 Office Online webUrl (`/_layouts/15/Doc.aspx?sourcedoc=...`, no folders), and searchDocs placed results by webUrl, so

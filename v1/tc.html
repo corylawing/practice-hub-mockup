@@ -41,7 +41,7 @@
   .wrap{max-width:var(--maxw);margin:0 auto;padding:22px 20px 90px}
   .viewas{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:13px 16px;display:flex;align-items:center;gap:13px;flex-wrap:wrap;margin-bottom:16px;border-left:5px solid var(--teal)}
   .viewas .lab{font-size:12px;color:var(--soft);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
-  .viewas select{padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;font-weight:700;color:var(--navy);background:#fff}
+  .viewas select{padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;font-weight:700;color:var(--navy);background:#fff;max-width:100%;min-width:0}
   .viewas .demo{margin-left:auto}
   .page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap}
   .page-head h1{font-size:25px}
@@ -92,6 +92,9 @@
   .oc-Refused{background:#EEF1F5;color:#46546b}
   .oc-Rescheduled{background:var(--blue-soft);color:#14496c}
   .oc-none{background:#fff;color:var(--soft);border:1px dashed #c9d1dc}
+  .oc-Hold{background:#E4F4EF;color:#1b6b57}
+  .oc-Medicaid{background:#ECEDFC;color:#3b3f9e}
+  .pay{display:inline-block;border-radius:6px;padding:1px 7px;font-size:11px;font-weight:800;background:#ECEDFC;color:#3b3f9e;margin-left:6px;vertical-align:1px}
 
   /* Today */
   .todayhead{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
@@ -217,6 +220,10 @@
   .chip.oc-pick.on.o-NoShow{background:var(--bad);border-color:var(--bad)}
   .chip.oc-pick.on.o-Refused{background:#5b687d;border-color:#5b687d}
   .chip.oc-pick.on.o-Rescheduled{background:var(--blue);border-color:var(--blue)}
+  .chip.oc-pick.on.o-Hold{background:#2a8a70;border-color:#2a8a70}
+  .chip.oc-pick.on.o-Medicaid{background:#4a4fc0;border-color:#4a4fc0}
+  .chk{display:flex;gap:8px 14px;flex-wrap:wrap}
+  .chk label{display:flex;gap:6px;align-items:center;font-size:14px;font-weight:600;cursor:pointer}
   .then{background:#F7F9FB;border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
   .then .q{font-size:13.5px;font-weight:700;color:var(--navy)}
   .err{background:var(--bad-soft);color:#9a2f1e;border-radius:10px;padding:9px 12px;font-size:13.5px;font-weight:600}
@@ -243,12 +250,13 @@
     *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}
   }
 </style>
-<script src="user.js?v=hc79"></script>
+<script src="user.js?v=hc80"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc79"></script>
-  <script src="gate.js?v=hc79"></script>
-  <script src="_staff.js?v=hc79"></script>
-  <script src="tc.js?v=hc79"></script>
+  <script src="store.js?v=hc80"></script>
+  <script src="gate.js?v=hc80"></script>
+  <script src="_staff.js?v=hc80"></script>
+  <script src="tc.js?v=hc80"></script>
+  <script src="tcstore.js?v=hc80"></script>
 </head>
 <body>
 <div class="ribbon">SANDBOX — made-up patients. Use “Try it as” to see it as a TC, an office manager or Selene.</div>
@@ -300,7 +308,8 @@
   let tryAs=null;
   if(!LIVE()){ try{ tryAs=localStorage.getItem('ph_tc_as'); }catch(_){} if(!ROLES[tryAs]) tryAs='lead'; }
   const role=()=>tryAs?ROLES[tryAs]:null;
-  const level=()=>role() ? role().level : ((window.PH && PH.can) ? PH.can('tc') : 'none');
+  // Admins run the hub - they always have the whole tracker. Everyone else: Teams & Access.
+  const level=()=>role() ? role().level : !window.PH ? 'none' : (PH.isAdmin && PH.isAdmin(PH.me())) ? 'manage' : (PH.can ? PH.can('tc') : 'none');
   const canEdit=()=>RANK[level()]>=RANK.edit;
   const canManage=()=>level()==='manage';
   const today=()=>TC.iso();
@@ -312,7 +321,8 @@
   const fmtM=ym=>MONTHS[+ym.slice(5,7)-1]+' '+ym.slice(0,4);
   const fmtT=t=>{ if(!t) return ''; const [h,m]=t.split(':').map(Number); return ((h+11)%12+1)+':'+String(m).padStart(2,'0')+(h<12?'a':'p'); };
   const pct=x=>x==null?'—':Math.round(x*100)+'%';
-  const ocClass=o=>'oc-'+(o==='No Show'?'NoShow':o==='Refused Treatment'?'Refused':o==='Rescheduled / Cancelled'?'Rescheduled':(o||'none'));
+  const ocClass=o=>'oc-'+(o==='No Show'?'NoShow':o==='Refused Treatment'?'Refused':o==='Rescheduled / Cancelled'?'Rescheduled':
+    o==='Pre-TX Hold'?'Hold':o==='Submitted to Medicaid'?'Medicaid':(o||'none'));
   const ocShort=o=>o==='Refused Treatment'?'Refused':o==='Rescheduled / Cancelled'?'Rescheduled':o;
   const ocBadge=o=>'<span class="oc '+ocClass(o)+'">'+esc(o?ocShort(o):'No outcome yet')+'</span>';
 
@@ -356,7 +366,12 @@
   }
 
   /* ---------------- data ---------------- */
-  let ALL=[], SLOTS={}, LISTS=Object.assign({}, TC.DEFAULT_LISTS), SCHED=null, loaded=false, loadErr='';
+  // ALL = this person's offices. EVERY = every office, used only for the all-TCs rates table.
+  let ALL=[], EVERY=[], SLOTS={}, LISTS=Object.assign({}, TC.DEFAULT_LISTS), SCHED=null, loaded=false, loadErr='';
+  const takesMed=o=>TC.takesMedicaid(LISTS, o);
+  const payTag=r=>r.payer==='Medicaid'?'<span class="pay">Medicaid</span>':'';
+  // "Submitted to Medicaid" only for a Medicaid patient at an office that takes Medicaid.
+  const outcomesFor=r=>TC.OUTCOMES.filter(o=>o!=='Submitted to Medicaid' || (takesMed(r.office) && r.payer==='Medicaid'));
   const openFns={};
   function isOpenFn(o){
     if(!openFns[o]){ const loc=(PH.locations()||[]).find(l=>l.n===o)||{}; openFns[o]=TC.openFrom(o, loc.hours, SCHED); }
@@ -380,11 +395,11 @@
   const DEMO_FLAG='ph_tc_demo';
   function seedDemo(force){
     if(LIVE()) return;
-    try{ if(!force && localStorage.getItem(DEMO_FLAG)==='v2') return; }catch(_){ return; }
+    try{ if(!force && localStorage.getItem(DEMO_FLAG)==='v3') return; }catch(_){ return; }
     let sched=null; try{ sched=JSON.parse(localStorage.getItem('ph_sched2')); }catch(_){}
     const offs=(PH.locations()||[]).map(l=>({n:l.n, isOpen:TC.openFrom(l.n, l.hours, sched)}));
     const from=TC.shiftMonth(TC.monthOf(today()),-1)+'-01';
-    const recs=TC.demo({today:today(), from, offices:offs,
+    const recs=TC.demo({today:today(), from, offices:offs, medicaid:TC.DEFAULT_MEDICAID,
       tcFor:o=>tcsFor(o)[0]});
     const byKey={};
     recs.forEach(r=>{
@@ -397,17 +412,19 @@
       (PH.locations()||[]).forEach((l,i)=>{ const n=TC.SLOT_CHOICES[i%3];
         localStorage.setItem(TC.slotsKey(l.n), JSON.stringify({usual:n, hist:[{from, n}], days:{}})); });
       localStorage.removeItem(TC.LISTS_KEY);
-      localStorage.setItem(DEMO_FLAG,'v2');
+      localStorage.setItem(DEMO_FLAG,'v3');
     }catch(_){}
   }
   function load(){
     const offs=myOffices();
     seedDemo(false);
-    const logs=LIVE() ? PH_STORE.getAll(TC.LOG_PREFIX) : Promise.resolve(localRecords(TC.LOG_PREFIX));
+    // Consults live in their own locked list on the live site (tcstore.js), the browser on the sandbox.
+    const logs=TCSTORE.getAll(TC.LOG_PREFIX);
     const slots=Promise.all(offs.map(o=>PH_STORE.get(TC.slotsKey(o)).then(v=>[o,v], ()=>[o,null])));
     return Promise.all([logs, slots, PH_STORE.get(TC.LISTS_KEY).catch(()=>null), PH_STORE.get('ph_sched2').catch(()=>null)])
       .then(([L,S,Li,Sc])=>{
-        ALL=TC.consultsFrom(L).filter(r=>TC.live(r) && offs.indexOf(r.office)>=0);
+        EVERY=TC.consultsFrom(L).filter(TC.live);
+        ALL=EVERY.filter(r=>offs.indexOf(r.office)>=0);
         SLOTS={}; S.forEach(([o,v])=>{ SLOTS[o]=(v && typeof v==='object')?v:{}; });
         LISTS=Object.assign({}, TC.DEFAULT_LISTS, (Li && typeof Li==='object')?Li:{});
         SCHED=(Sc && typeof Sc==='object')?Sc:null;
@@ -421,21 +438,21 @@
   function persist(rec, oldKey){
     rec.upd=new Date().toISOString(); rec.updBy=myMail()||myName();
     const ym=TC.monthOf(rec.date), key=TC.logKey(rec.office, ym);
-    const put=PH_STORE.update(key, cur=>{
+    const put=TCSTORE.update(key, cur=>{
       const v=(cur && typeof cur==='object') ? Object.assign({}, cur) : {v:1, office:rec.office, month:ym, consults:{}};
       v.consults=Object.assign({}, v.consults||{}); v.consults[rec.id]=strip(rec); return v;
     });
-    const mv=(oldKey && oldKey!==key) ? PH_STORE.update(oldKey, cur=>{
+    const mv=(oldKey && oldKey!==key) ? TCSTORE.update(oldKey, cur=>{
       if(!cur || !cur.consults || !cur.consults[rec.id]) return undefined;
       const v=Object.assign({}, cur); v.consults=Object.assign({}, cur.consults);
       v.consults[rec.id]={moved:true, to:key, upd:rec.upd}; return v;
     }) : Promise.resolve({});
-    return Promise.all([put, mv]).then(rs=>{
-      const bad=rs.find(r=>r && (r.blocked || r.error));
-      if(bad) throw new Error(bad.why || bad.error || 'It didn’t save.');
-      const i=ALL.findIndex(x=>x.id===rec.id);
-      if(rec.deleted){ if(i>=0) ALL.splice(i,1); }
-      else if(i>=0) ALL[i]=Object.assign({}, rec); else ALL.push(Object.assign({}, rec));
+    return Promise.all([put, mv]).then(()=>{
+      [ALL, EVERY].forEach(arr=>{
+        const i=arr.findIndex(x=>x.id===rec.id);
+        if(rec.deleted){ if(i>=0) arr.splice(i,1); }
+        else if(i>=0) arr[i]=Object.assign({}, rec); else arr.push(Object.assign({}, rec));
+      });
     });
   }
   const keyOf=r=>TC.logKey(r.office, TC.monthOf(r.date));
@@ -508,20 +525,20 @@
     if(!list.length) h+='<div class="empty">Nothing logged for today yet.'+(canEdit()?' Use <b>Log a consult</b> for each new patient on the schedule, no-shows included.':'')+'</div>';
     else h+='<div class="clist">'+list.map(r=>
       '<div class="crow"><div class="tm">'+esc(fmtT(r.time)||'—')+'</div>'+
-      '<div class="who"><button class="nm"'+attr('act','open')+attr('id',r.id)+'>'+esc(r.name||'(no name)')+'</button>'+
+      '<div class="who"><button class="nm"'+attr('act','open')+attr('id',r.id)+'>'+esc(r.name||'(no name)')+'</button>'+payTag(r)+
       '<div class="meta">'+[r.type, r.lead, multi?r.office:'', r.tc].filter(Boolean).map(esc).join(' · ')+'</div></div>'+
       '<div class="quick">'+(r.outcome||!canEdit() ? ocBadge(r.outcome) :
-        TC.OUTCOMES.map(o=>'<button class="qb"'+attr('act','outcome')+attr('id',r.id)+attr('v',o)+'>'+esc(ocShort(o))+'</button>').join(''))+'</div></div>').join('')+'</div>';
+        outcomesFor(r).map(o=>'<button class="qb"'+attr('act','outcome')+attr('id',r.id)+attr('v',o)+'>'+esc(ocShort(o))+'</button>').join(''))+'</div></div>').join('')+'</div>';
     h+='</div>';
     h+='<div class="card duecard"><div class="big">'+due.length+'</div><div class="grow"><b>follow-up'+(due.length===1?'':'s')+' due</b>'+
-      (needDate?'<div class="small muted">and '+needDate+' waiting for a date</div>':'<div class="small muted">pending, no-show, observation and recall patients</div>')+'</div>'+
+      (needDate?'<div class="small muted">and '+needDate+' waiting for a date</div>':'<div class="small muted">pending, pre-TX hold, Medicaid, no-show, observation and recall patients</div>')+'</div>'+
       '<button class="btn ghost" data-act="tab" data-v="calls">Open the call list →</button></div>';
     h+='</div>';
     return h;
   }
 
   /* ---------------- Call list ---------------- */
-  function actClass(a){ return TC.DUE.indexOf(a)>=0 ? (a==='Recall ready'?'act-recall':'act-due') : TC.NEEDS_DATE.indexOf(a)>=0 ? 'act-set' : 'act-later'; }
+  function actClass(a){ return a==='Scheduled to start' ? 'act-recall' : TC.DUE.indexOf(a)>=0 ? (a==='Recall ready'?'act-recall':'act-due') : TC.NEEDS_DATE.indexOf(a)>=0 ? 'act-set' : 'act-later'; }
   function fuCard(x){
     const r=x.r, a=x.a, d=today(), wait=TC.daysWaiting(r, d), calledToday=r.lastContact===d;
     const B=(act,label)=>canEdit()?'<button class="btn sm '+(act==='declined'?'danger':'ghost')+'"'+attr('act','fu')+attr('id',r.id)+attr('v',act)+'>'+label+'</button>':'';
@@ -534,11 +551,21 @@
       btns=B('called','📞 Called')+B('rebooked','🔁 Rebooked')+B('declined','✖ Not coming');
     else if(a==='Observation review due' || a==='Observation - future review')
       btns=B('reviewed','👁 Reviewed')+B('ready','🟢 Ready now')+B('declined','✖ Declined');
+    else if(a==='Pre-TX hold due' || a==='Pre-TX hold - future')
+      btns=B('called','📞 Called')+B('scheduled','✅ Cleared · scheduled')+B('started','✅ Started')+B('declined','✖ Declined');
+    else if(a==='Set pre-TX hold date')
+      btns=B('setDate','📆 Set the date')+B('scheduled','✅ Cleared · scheduled')+B('declined','✖ Declined');
+    else if(a==='Medicaid decision due' || a==='Waiting on Medicaid')
+      btns=B('called','📞 Checked')+B('approved','👍 Approved')+B('denied','👎 Denied')+B('declined','✖ Declined');
+    else if(a==='Set Medicaid check date')
+      btns=B('setDate','📆 Set the date')+B('approved','👍 Approved')+B('denied','👎 Denied');
+    else if(a==='Scheduled to start')
+      btns=B('started','✅ Started')+B('declined','✖ Not starting');
     const facts=[
       r.phone?'<span>📞 <a class="tel" href="tel:'+esc(String(r.phone).replace(/[^\d+]/g,''))+'">'+esc(r.phone)+'</a></span>':'',
       '<span>Consult <b>'+esc(fmtS(r.date))+'</b></span>',
       '<span>'+ocBadge(r.outcome)+(r.reason?' · '+esc(r.reason):'')+'</span>',
-      r.nextFU && r.outcome==='Pending'?'<span>Next call <b>'+esc(fmtS(r.nextFU))+'</b></span>':'',
+      r.nextFU && ['Pending','Pre-TX Hold','Submitted to Medicaid'].indexOf(r.outcome)>=0?'<span>'+(r.outcome==='Submitted to Medicaid'?'Check with Medicaid':'Next call')+' <b>'+esc(fmtS(r.nextFU))+'</b></span>':'',
       r.obsReview && r.outcome==='Observation'?'<span>Review <b>'+esc(fmtS(r.obsReview))+'</b></span>':'',
       r.lastContact?'<span>Last contact <b>'+esc(fmtS(r.lastContact))+'</b></span>':'',
       wait!=null?'<span>Waiting <b>'+wait+'</b> day'+(wait===1?'':'s')+'</span>':'',
@@ -547,7 +574,7 @@
     ].filter(Boolean).join('');
     return '<div class="fu'+(calledToday?' called':'')+'"><div><span class="act '+actClass(a)+'">'+esc(a)+'</span>'+
       (calledToday?'<span class="tag">✓ contacted today</span>':'')+
-      '<div><button class="nm"'+attr('act','open')+attr('id',r.id)+'>'+esc(r.name||'(no name)')+'</button></div>'+
+      '<div><button class="nm"'+attr('act','open')+attr('id',r.id)+'>'+esc(r.name||'(no name)')+'</button>'+payTag(r)+'</div>'+
       '<div class="facts">'+facts+'</div>'+(r.notes?'<div class="notes">“'+esc(r.notes)+'”</div>':'')+'</div>'+
       '<div class="btns">'+btns+'</div></div>';
   }
@@ -558,10 +585,14 @@
     const due=sinkCalled(all.filter(x=>TC.DUE.indexOf(x.a)>=0));
     const set=all.filter(x=>TC.NEEDS_DATE.indexOf(x.a)>=0);
     const later=all.filter(x=>TC.DUE.indexOf(x.a)<0 && TC.NEEDS_DATE.indexOf(x.a)<0);
+    /* Scheduled to start: off the sheet's queue, but their start has to be recorded - the
+       conversion counts starts by the month treatment begins (Selene, 16/10). */
+    const sched=scoped().filter(r=>TC.live(r) && r.fuStatus==='Scheduled to start').map(r=>({r, a:'Scheduled to start'}));
     let h='<div class="stack">';
     h+='<div class="note info">The call list fills itself from the consults. The buttons fill in the follow-up columns (last contact, status, follow-up complete) for you.</div>';
     h+='<div><div class="sect">Due now · '+due.length+'</div>'+(due.length?due.map(fuCard).join(''):'<div class="empty">Nobody is due. 🎉</div>')+'</div>';
     if(set.length) h+='<div><div class="sect">Needs a date · '+set.length+'</div>'+set.map(fuCard).join('')+'</div>';
+    if(sched.length) h+='<div><div class="sect">Scheduled to start · '+sched.length+' · tap Started on the day they start</div>'+sched.map(fuCard).join('')+'</div>';
     if(later.length) h+='<details class="later"><summary>▸ Coming up later · '+later.length+'</summary>'+later.map(fuCard).join('')+'</details>';
     h+='</div>';
     return h;
@@ -589,64 +620,101 @@
       (canEdit()?'<button class="btn" data-act="new">＋ Log a consult</button>':'')+'</div>';
     h+='<div class="tblwrap"><table class="t"><thead><tr><th>Date</th><th>Time</th><th>Patient</th><th>Type</th><th>Lead source</th><th>Outcome</th><th>Follow-up</th>'+(multi?'<th>Office</th>':'')+'<th>TC</th></tr></thead><tbody>'+
       (rows.length?rows.map(r=>{ const a=TC.action(r, d);
-        return '<tr class="click"'+attr('act','open')+attr('id',r.id)+'><td>'+esc(fmtS(r.date))+'</td><td>'+esc(fmtT(r.time))+'</td><td><b>'+esc(r.name)+'</b>'+(r.chart?'<div class="small muted">'+esc(r.chart)+'</div>':'')+'</td>'+
+        return '<tr class="click"'+attr('act','open')+attr('id',r.id)+'><td>'+esc(fmtS(r.date))+'</td><td>'+esc(fmtT(r.time))+'</td><td><b>'+esc(r.name)+'</b>'+payTag(r)+(r.chart?'<div class="small muted">'+esc(r.chart)+'</div>':'')+'</td>'+
           '<td>'+esc(r.type)+'</td><td>'+esc(r.lead)+'</td><td>'+ocBadge(r.outcome)+'</td><td class="small">'+(a?'<span class="act '+actClass(a)+'" style="font-size:10.5px">'+esc(a)+'</span>':esc(r.fuStatus||''))+'</td>'+
           (multi?'<td>'+esc(r.office)+'</td>':'')+'<td class="small">'+esc(r.tc)+'</td></tr>'; }).join('')
         :'<tr><td colspan="9"><div class="empty" style="border:none">No consults '+(qq?'match that search':'in '+esc(fmtM(month)))+'.</div></td></tr>')+
       '</tbody></table></div>';
     h+='<div class="row" style="margin-top:10px"><span class="small muted grow">'+rows.length+' consult'+(rows.length===1?'':'s')+(qq?' found':' in '+esc(fmtM(month)))+'</span>'+
-      (canManage()?'<button class="btn ghost sm" data-act="lists">⚙ Edit the lists</button><button class="btn ghost sm" data-act="csv">⬇ Download '+esc(fmtM(month))+' for Excel</button>':'')+'</div>';
+      (canManage()?'<button class="btn ghost sm" data-act="lists">⚙ Settings</button><button class="btn ghost sm" data-act="csv">⬇ Download '+esc(fmtM(month))+' for Excel</button>':'')+'</div>';
     return h;
   }
 
   /* ---------------- Numbers (Dashboard + Monthly Totals) ---------------- */
   function viewNumbers(){
-    const d=today(), list=scopedTC(), m=TC.monthStats(list, month, slotsMonth(month), d), w=TC.openWork(list, d);
+    /* One TC picked: the counts are that TC's, but a patient is still worked out across the
+       whole office - so a patient one TC examined and another started counts once (tc.js). */
+    const d=today(), list=scoped(), keep=tcFilter ? (r=>r.tc===tcFilter) : null;
+    const m=TC.monthStats(list, month, slotsMonth(month), d, keep), w=TC.openWork(keep ? list.filter(keep) : list, d);
+    const cv=m.conversion, med=inView().some(takesMed), P=cv['Private pay'], M=cv.Medicaid;
     const K=(k,v,s)=>'<div class="kpi"><div class="k">'+k+'</div><div class="v">'+v+'</div>'+(s?'<div class="s">'+s+'</div>':'')+'</div>';
     const R=(k,v,r,cls)=>'<tr'+(cls?' class="'+cls+'"':'')+'><td>'+k+'</td><td class="v">'+v+'</td><td class="r">'+(r===undefined?'':pct(r))+'</td></tr>';
     let h='<div class="tools">'+mpick()+tcPick()+'<span class="grow"></span><span class="small muted">'+esc(inView().length>1?(office?office:'All '+(myOffices().length===allOffices().length?'offices':'my offices')):inView()[0]||'')+(tcFilter?' · '+esc(tcFilter):'')+'</span></div>';
     h+='<div class="stack">';
     h+='<div class="kpis">'+K('Consults scheduled', m.scheduled, m.slots?pct(m.capacity)+' of '+m.slots+' slots':'no slots set')+
-      K('Case acceptance', pct(m.acceptance), m.started+' started of '+m.completed+' completed')+
+      K('Conversion'+(med?' · private pay':''), pct(P.rate), P.starts+' start'+(P.starts===1?'':'s')+' ÷ '+P.consults+' consult'+(P.consults===1?'':'s'))+
+      (med?K('Conversion · Medicaid', pct(M.rate), M.starts+' start'+(M.starts===1?'':'s')+' ÷ '+M.consults+' consult'+(M.consults===1?'':'s')):'')+
       K('Same-day contracts', m.sameDay, pct(m.sameDayRate)+' of completed')+
       K('No-show rate', pct(m.noShowRate), m.noShow+' no-show'+(m.noShow===1?'':'s'))+
       K('Follow-up completion', pct(m.fuRate), m.fuYes+' of '+(m.fuYes+m.fuNo)+' done')+
       K('RIP sold', m.rpi, 'by sale date')+'</div>';
     if(m.missing) h+='<div class="note warn">⚠️ <b>'+m.missing+' consult'+(m.missing===1?'':'s')+'</b> in '+esc(fmtM(month))+' still need'+(m.missing===1?'s':'')+' an outcome, so these numbers aren’t final.</div>';
+    const CV=(label, g)=>'<tr><td>'+label+'</td><td class="n">'+g.consults+'</td><td class="n">'+g.starts+'</td><td class="n"><b>'+pct(g.rate)+'</b></td></tr>';
+    h+='<div class="card"><h2>Conversion</h2><p class="sub">'+esc(fmtM(month))+' &middot; each patient’s exam counts once, in the month of their first exam (not observation). '+
+      'A start counts in the month treatment begins, so a month can pass 100%.</p>'+
+      '<div class="tblwrap" style="box-shadow:none"><table class="t"><thead><tr><th></th><th class="n">Consults</th><th class="n">Starts</th><th class="n">Conversion</th></tr></thead><tbody>'+
+      CV('Private pay', P)+(med?CV('Medicaid', M)+'<tr class="total"><td>Total</td><td class="n">'+cv.total.consults+'</td><td class="n">'+cv.total.starts+'</td><td class="n">'+pct(cv.total.rate)+'</td></tr>':'')+
+      '</tbody></table></div></div>';
     h+='<div class="three">';
     h+='<div class="card"><h2>Monthly results</h2><p class="sub">'+esc(fmtM(month))+'</p><table class="mt">'+
       R('Available consult slots', m.slots)+R('Consults scheduled', m.scheduled)+R('Capacity scheduled', pct(m.capacity))+
       R('Completed consults', m.completed, m.completedRate)+R('Started', m.started, m.startedRate, 'sub')+R('Pending', m.pending, m.pendingRate, 'sub')+
+      R('Pre-TX hold', m.hold, m.holdRate, 'sub')+(med?R('Submitted to Medicaid', m.submitted, m.submittedRate, 'sub'):'')+
       R('Observation', m.observation, m.observationRate, 'sub')+R('Refused treatment', m.refused, m.refusedRate, 'sub')+
       R('No show', m.noShow, m.noShowRate)+R('Rescheduled / cancelled', m.rescheduled, m.rescheduledRate)+R('RIP Retainer Programs sold', m.rpi)+'</table></div>';
     h+='<div class="card"><h2>Open work</h2><p class="sub">Right now, every month</p><table class="mt">'+
-      R('Open pending', w.openPending)+R('Current observation patients', w.observation)+R('Recall ready', w.recallReady)+
+      R('Open pending', w.openPending)+R('On pre-TX hold', w.onHold)+(med?R('Waiting on Medicaid', w.waitingMedicaid):'')+
+      R('Current observation patients', w.observation)+R('Recall ready', w.recallReady)+
       R('Observation review due', w.observationDue)+R('No-show follow-up', w.noShow)+R('Missing outcome', m.missing)+R('All open follow-ups', w.allOpen)+'</table>'+
       (w.allOpen?'<button class="btn ghost sm" style="margin-top:10px" data-act="tab" data-v="calls">Open the call list →</button>':'')+'</div>';
     const A=(k,v,c)=>'<tr><td>'+k+'</td><td class="v">'+v+'</td><td class="c">'+c+'</td></tr>';
     h+='<div class="card"><h2>TC accountability</h2><p class="sub">'+esc(fmtM(month))+'</p><table class="mt">'+
-      A('Case acceptance rate', pct(m.acceptance), 'Started ÷ completed')+A('Same-day contract rate', pct(m.sameDayRate), 'Same-day ÷ completed')+
+      A('Conversion rate'+(med?' · private pay':''), pct(P.rate), 'Starts ÷ consults')+(med?A('Conversion rate · Medicaid', pct(M.rate), 'Starts ÷ consults'):'')+
+      A('Same-day contract rate', pct(m.sameDayRate), 'Same-day ÷ completed')+
       A('No-show rate', pct(m.noShowRate), 'No-shows ÷ scheduled')+A('Follow-up completion rate', pct(m.fuRate), 'Done ÷ all Yes/No follow-ups')+
       A('Same-day contracts', m.sameDay, 'Count')+A('Follow-ups completed', m.fuYes, 'Count')+'</table></div>';
     h+='</div>';
     if(inView().length>1){
       const offs=inView();
-      h+='<div class="card"><h2>By office</h2><p class="sub">'+esc(fmtM(month))+(tcFilter?' · '+esc(tcFilter):'')+'</p><div class="tblwrap" style="box-shadow:none"><table class="t"><thead><tr><th>Office</th><th class="n">Slots</th><th class="n">Scheduled</th><th class="n">Capacity</th><th class="n">Completed</th><th class="n">Started</th><th class="n">Acceptance</th><th class="n">Same-day</th><th class="n">No-show</th><th class="n">Follow-up</th><th class="n">RIP</th><th class="n">Open</th></tr></thead><tbody>'+
-        offs.map(o=>{ const L=list.filter(r=>r.office===o), s=TC.monthStats(L, month, TC.slotsInMonth(SLOTS[o]||{}, month, isOpenFn(o), until()), d), ow=TC.openWork(L, d);
-          return '<tr class="click"'+attr('act','office')+attr('v',o)+'><td><b>'+esc(o)+'</b></td><td class="n">'+s.slots+'</td><td class="n">'+s.scheduled+'</td><td class="n">'+pct(s.capacity)+'</td><td class="n">'+s.completed+'</td><td class="n">'+s.started+'</td><td class="n"><b>'+pct(s.acceptance)+'</b></td><td class="n">'+pct(s.sameDayRate)+'</td><td class="n">'+pct(s.noShowRate)+'</td><td class="n">'+pct(s.fuRate)+'</td><td class="n">'+s.rpi+'</td><td class="n">'+ow.allOpen+'</td></tr>'; }).join('')+
+      h+='<div class="card"><h2>By office</h2><p class="sub">'+esc(fmtM(month))+(tcFilter?' · '+esc(tcFilter):'')+'</p><div class="tblwrap" style="box-shadow:none"><table class="t"><thead><tr><th>Office</th><th class="n">Slots</th><th class="n">Scheduled</th><th class="n">Capacity</th><th class="n">Completed</th><th class="n">Consults</th><th class="n">Starts</th><th class="n">Conv. private</th>'+(med?'<th class="n">Conv. Medicaid</th>':'')+'<th class="n">Same-day</th><th class="n">No-show</th><th class="n">Follow-up</th><th class="n">RIP</th><th class="n">Open</th></tr></thead><tbody>'+
+        offs.map(o=>{ const L=list.filter(r=>r.office===o), s=TC.monthStats(L, month, TC.slotsInMonth(SLOTS[o]||{}, month, isOpenFn(o), until()), d, keep), ow=TC.openWork(keep?L.filter(keep):L, d), c=s.conversion;
+          return '<tr class="click"'+attr('act','office')+attr('v',o)+'><td><b>'+esc(o)+'</b></td><td class="n">'+s.slots+'</td><td class="n">'+s.scheduled+'</td><td class="n">'+pct(s.capacity)+'</td><td class="n">'+s.completed+'</td><td class="n">'+c.total.consults+'</td><td class="n">'+c.total.starts+'</td><td class="n"><b>'+pct(c['Private pay'].rate)+'</b></td>'+(med?'<td class="n">'+(takesMed(o)?pct(c.Medicaid.rate):'')+'</td>':'')+'<td class="n">'+pct(s.sameDayRate)+'</td><td class="n">'+pct(s.noShowRate)+'</td><td class="n">'+pct(s.fuRate)+'</td><td class="n">'+s.rpi+'</td><td class="n">'+ow.allOpen+'</td></tr>'; }).join('')+
         '</tbody></table></div></div>';
     }
-    const days=TC.dailyView(list, month, slotsOn, d).filter(x=>x.scheduled || x.slots || x.rpi);
+    /* EVERY TC, view only (Selene, 16/10): "all TCs to have view-only access to the TC
+       Accountability section so they can see progress and learn from one another" - rates and
+       counts only, no patients, nothing else from another office. */
+    if(iAmTC() || canManage()){
+      const names=[...new Set(EVERY.map(r=>r.tc).filter(Boolean))];
+      const rows=names.map(n=>{
+        const mineR=EVERY.filter(r=>r.tc===n), offs=[...new Set(mineR.map(r=>r.office))];
+        const s=TC.monthStats(EVERY.filter(r=>offs.indexOf(r.office)>=0), month, 0, d, r=>r.tc===n);
+        return {n, office:offs.join(', '), s};
+      }).filter(x=>x.s.scheduled || x.s.conversion.total.starts).sort((a,b)=>a.office<b.office?-1:a.office>b.office?1:(a.n<b.n?-1:1));
+      const anyMed=rows.some(x=>x.s.conversion.Medicaid.consults || x.s.conversion.Medicaid.starts);
+      h+='<div class="card"><h2>All TCs · TC accountability</h2><p class="sub">'+esc(fmtM(month))+' &middot; rates and counts only &mdash; no patient details. Everyone sees the same table.</p>'+
+        '<div class="tblwrap" style="box-shadow:none"><table class="t"><thead><tr><th>TC</th><th>Office</th><th class="n">Consults</th><th class="n">Starts</th><th class="n">Conv. private</th>'+(anyMed?'<th class="n">Conv. Medicaid</th>':'')+'<th class="n">Same-day</th><th class="n">No-show</th><th class="n">Follow-up</th></tr></thead><tbody>'+
+        (rows.length?rows.map(x=>{ const c=x.s.conversion;
+          return '<tr><td><b>'+esc(x.n)+'</b></td><td>'+esc(x.office)+'</td><td class="n">'+c.total.consults+'</td><td class="n">'+c.total.starts+'</td><td class="n"><b>'+pct(c['Private pay'].rate)+'</b></td>'+(anyMed?'<td class="n">'+(c.Medicaid.consults||c.Medicaid.starts?pct(c.Medicaid.rate):'')+'</td>':'')+
+            '<td class="n">'+pct(x.s.sameDayRate)+'</td><td class="n">'+pct(x.s.noShowRate)+'</td><td class="n">'+pct(x.s.fuRate)+'</td></tr>'; }).join('')
+          :'<tr><td colspan="9" class="muted">Nothing logged this month yet.</td></tr>')+
+        '</tbody></table></div></div>';
+    }
+    const days=TC.dailyView(keep?list.filter(keep):list, month, slotsOn, d).filter(x=>x.scheduled || x.slots || x.rpi);
     h+='<details class="card"><summary>Each day in '+esc(fmtM(month))+'</summary><div class="tblwrap" style="box-shadow:none"><table class="t"><thead><tr><th>Day</th><th class="n">Scheduled</th><th class="n">Slots</th><th class="n">Capacity</th><th class="n">Started</th><th class="n">Pending</th><th class="n">No show</th><th class="n">Follow-ups due</th><th class="n">RIP sold</th><th class="n">Same-day</th><th class="n">Follow-ups done</th></tr></thead><tbody>'+
       (days.length?days.map(x=>'<tr><td>'+esc(fmtD(x.date))+'</td><td class="n">'+x.scheduled+'</td><td class="n">'+x.slots+'</td><td class="n">'+pct(x.capacity)+'</td><td class="n">'+x.started+'</td><td class="n">'+x.pending+'</td><td class="n">'+x.noShow+'</td><td class="n">'+x.fuDue+'</td><td class="n">'+x.rpi+'</td><td class="n">'+x.sameDay+'</td><td class="n">'+x.fuDone+'</td></tr>').join(''):'<tr><td colspan="11" class="muted">Nothing this month.</td></tr>')+
       '</tbody></table></div></details>';
-    const year=+month.slice(0,4), y=TC.yearTotals(list, year, slotsMonth, d);
-    const MR=(r,label,cls)=>'<tr'+(cls?' class="'+cls+'"':'')+'><td>'+label+'</td><td class="n">'+r.slots+'</td><td class="n">'+r.scheduled+'</td><td class="n">'+pct(r.capacity)+'</td><td class="n">'+r.completed+'</td><td class="n">'+r.started+'</td><td class="n">'+pct(r.acceptance)+'</td><td class="n">'+r.pending+'</td><td class="n">'+r.observation+'</td><td class="n">'+r.noShow+'</td><td class="n">'+r.refused+'</td><td class="n">'+r.rescheduled+'</td><td class="n">'+r.rpi+'</td><td class="n">'+r.sameDay+'</td><td class="n">'+pct(r.sameDayRate)+'</td><td class="n">'+pct(r.noShowRate)+'</td><td class="n">'+r.fuYes+'</td><td class="n">'+pct(r.fuRate)+'</td></tr>';
-    h+='<details class="card"'+(canManage()?' open':'')+'><summary>Monthly totals · '+year+'</summary><div class="tblwrap" style="box-shadow:none"><table class="t"><thead><tr><th>Month</th><th class="n">Slots</th><th class="n">Scheduled</th><th class="n">Capacity</th><th class="n">Completed</th><th class="n">Started</th><th class="n">Acceptance</th><th class="n">Pending</th><th class="n">Observation</th><th class="n">No show</th><th class="n">Refused</th><th class="n">Resched.</th><th class="n">RIP</th><th class="n">Same-day</th><th class="n">Same-day %</th><th class="n">No-show %</th><th class="n">Follow-ups</th><th class="n">Follow-up %</th></tr></thead><tbody>'+
+    const year=+month.slice(0,4), y=TC.yearTotals(list, year, slotsMonth, d, keep);
+    const MR=(r,label,cls)=>'<tr'+(cls?' class="'+cls+'"':'')+'><td>'+label+'</td><td class="n">'+r.slots+'</td><td class="n">'+r.scheduled+'</td><td class="n">'+pct(r.capacity)+'</td><td class="n">'+r.completed+'</td><td class="n">'+r.conversion.total.consults+'</td><td class="n">'+r.conversion.total.starts+'</td><td class="n">'+pct(r.conversion['Private pay'].rate)+'</td>'+(med?'<td class="n">'+pct(r.conversion.Medicaid.rate)+'</td>':'')+'<td class="n">'+r.pending+'</td><td class="n">'+r.hold+'</td><td class="n">'+r.observation+'</td><td class="n">'+r.noShow+'</td><td class="n">'+r.refused+'</td><td class="n">'+r.rescheduled+'</td><td class="n">'+r.rpi+'</td><td class="n">'+r.sameDay+'</td><td class="n">'+pct(r.sameDayRate)+'</td><td class="n">'+pct(r.noShowRate)+'</td><td class="n">'+r.fuYes+'</td><td class="n">'+pct(r.fuRate)+'</td></tr>';
+    h+='<details class="card"'+(canManage()?' open':'')+'><summary>Monthly totals · '+year+'</summary><div class="tblwrap" style="box-shadow:none"><table class="t"><thead><tr><th>Month</th><th class="n">Slots</th><th class="n">Scheduled</th><th class="n">Capacity</th><th class="n">Completed</th><th class="n">Consults</th><th class="n">Starts</th><th class="n">Conv. private</th>'+(med?'<th class="n">Conv. Medicaid</th>':'')+'<th class="n">Pending</th><th class="n">Pre-TX</th><th class="n">Observation</th><th class="n">No show</th><th class="n">Refused</th><th class="n">Resched.</th><th class="n">RIP</th><th class="n">Same-day</th><th class="n">Same-day %</th><th class="n">No-show %</th><th class="n">Follow-ups</th><th class="n">Follow-up %</th></tr></thead><tbody>'+
       y.rows.map((r,i)=>MR(r, MO[i], r.ym===month?'':'' )).join('')+MR(y.total,'Year','total')+'</tbody></table></div></details>';
     h+='<details class="card"><summary>How these numbers are worked out</summary>'+
-      '<p class="small" style="margin-top:0">The same formulas as the TC Consult Tracker workbook. <b>Completed</b> = started + pending + observation + refused. '+
-      'Case acceptance = started ÷ completed. Same-day contract rate = same-day ÷ completed. No-show rate = no-shows ÷ scheduled. '+
+      '<p class="small" style="margin-top:0"><b>Conversion</b> (Selene, October 2026) = starts that month ÷ consults that month, for private pay and Medicaid separately. '+
+      'A <b>consult</b> is a new-patient exam that happened, counted once per patient (by chart #, else name + birth date) in the month of their first exam; '+
+      'observation exams, no-shows and reschedules are not consults, and a return visit never adds one. A <b>start</b> counts once, in the month treatment begins &mdash; '+
+      'even from an earlier month’s exam, and for observation and recall patients &mdash; so a month can pass 100%. A Medicaid patient who goes private pay keeps their one exam; it moves to private pay.</p>'+
+      '<p class="small">The rest are the TC Consult Tracker workbook’s formulas. <b>Completed</b> = every exam that happened (started, pending, pre-TX hold, submitted to Medicaid, observation, refused). '+
+      'Same-day contract rate = same-day ÷ completed. No-show rate = no-shows ÷ scheduled. '+
       'Follow-up completion = follow-ups marked done ÷ every follow-up marked done or not done. RIP counts in the month it was sold.</p>'+
       '<p class="small"><b>Different from the spreadsheet, on purpose:</b></p><ul class="small" style="margin:0;padding-left:18px">'+
       TC.WHAT_CHANGED.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul></details>';
@@ -695,6 +763,7 @@
   }
   const fuDates=b=>[['In 2 days',TC.addDays(b,2)],['In 1 week',TC.addDays(b,7)],['In 2 weeks',TC.addDays(b,14)]];
   const obsDates=b=>[['3 months',TC.addMonths(b,3)],['6 months',TC.addMonths(b,6)],['12 months',TC.addMonths(b,12)]];
+  const medDates=b=>[['In 1 week',TC.addDays(b,7)],['In 2 weeks',TC.addDays(b,14)],['In 30 days',TC.addDays(b,30)]];
   function field(label, f, type, opts){
     opts=opts||{}; const v=DLG.rec[f]||'', ro=DLG.ro?' readonly':'';
     const inp=type==='textarea' ? '<textarea'+attr('in','rec')+attr('f',f)+ro+'>'+esc(v)+'</textarea>'
@@ -717,9 +786,14 @@
     if(offs.length>1 || !r.office){
       h+='<div class="grp"><div class="gl">Office <span class="req">*</span></div>'+(ro?'<b>'+esc(r.office)+'</b>':chips('office', offs, r.office))+'</div>';
     }
+    const prev=(r.chart || (r.name && r.dob)) ? TC.earlierExam(ALL, r) : null;
     h+='<div class="grp"><div class="gl">Patient</div><div class="fields">'+
       field('Full name','name','text',{req:true, auto:'off'})+field('Date of birth','dob','date')+
-      field('Phone','phone','tel',{ph:'(575) 555-0123', auto:'off'})+field('Chart #','chart','text',{auto:'off'})+'</div></div>';
+      field('Phone','phone','tel',{ph:'(575) 555-0123', auto:'off'})+field('Chart #','chart','text',{auto:'off'})+'</div>'+
+      (takesMed(r.office)?'<div style="margin-top:10px"><div class="lab2">Medicaid or private pay? <span class="req">*</span></div>'+(ro?'<b>'+esc(TC.payerOf(r))+'</b>':chips('payer', TC.PAYERS, r.payer))+'</div>':'')+
+      // One exam per patient (Selene, 16/10): say so before it is saved, not after.
+      (prev?'<div class="note info" style="margin-top:10px">📎 <b>'+esc(prev.name)+'</b> already had an exam here on '+esc(fmtS(prev.date))+
+        '. This visit won’t count as a new consult &mdash; a start from it still counts.</div>':'')+'</div>';
     h+='<div class="grp"><div class="gl">Consult</div><div class="fields">'+
       field('Consult date','date','date',{req:true})+field('Time','time','time')+
       '<div class="fld full"><label>Consult type</label>'+(ro?'<b>'+esc(r.type||'—')+'</b>':chips('type', LISTS.types, r.type))+'</div>'+
@@ -728,15 +802,22 @@
       '</div></div>';
     h+='<div class="grp"><div class="gl">Outcome</div>'+(ro?ocBadge(r.outcome):
       '<div class="chips"><button type="button" class="chip'+(r.outcome?'':' on')+'"'+attr('act','pick')+attr('f','outcome')+attr('v','')+'>Not yet</button></div>'+
-      '<div style="margin-top:6px">'+chips('outcome', TC.OUTCOMES, r.outcome, 'oc-pick')+'</div>');
+      '<div style="margin-top:6px">'+chips('outcome', outcomesFor(r), r.outcome, 'oc-pick')+'</div>');
     // Only the questions that fit the outcome.
     if(r.outcome==='Started'){
       h+='<div class="then" style="margin-top:10px"><div><div class="q">Contract signed today? <span class="req">*</span></div>'+(ro?esc(r.sameDay||'—'):yesNo('sameDay', r.sameDay))+'</div>'+
         '<div><div class="q">RIP Retainer Program sold?</div>'+(ro?esc(r.rpi||'—'):yesNo('rpi', r.rpi))+'</div>'+
-        (r.rpi==='Yes'?'<div class="fields">'+field('RIP sale date','rpiDate','date')+field('Treatment start date','startDate','date')+'</div>':'<div class="fields">'+field('Treatment start date','startDate','date')+'</div>')+'</div>';
+        (r.rpi==='Yes'?'<div class="fields">'+field('RIP sale date','rpiDate','date')+field('Treatment start date','startDate','date')+'</div>':'<div class="fields">'+field('Treatment start date','startDate','date')+'</div>')+
+        '<div class="small muted">Leave the start date blank if treatment starts today; it counts as a start in the month it begins.</div></div>';
     } else if(r.outcome==='Pending'){
       h+='<div class="then" style="margin-top:10px"><div><div class="q">Why pending? <span class="req">*</span></div>'+(ro?esc(r.reason||'—'):chips('reason', LISTS.reasons, r.reason))+'</div>'+
         '<div><div class="q">Next follow-up</div>'+(ro?esc(fmtS(r.nextFU)||'—'):quickDates('nextFU', r.date||today(), fuDates(today())))+'</div></div>';
+    } else if(r.outcome==='Pre-TX Hold'){
+      h+='<div class="then" style="margin-top:10px"><div><div class="q">What are they waiting on? <span class="req">*</span></div>'+(ro?esc(r.reason||'—'):chips('reason', LISTS.holdReasons, r.reason))+'</div>'+
+        '<div><div class="q">Check back</div>'+(ro?esc(fmtS(r.nextFU)||'—'):quickDates('nextFU', r.date||today(), fuDates(today())))+'</div></div>';
+    } else if(r.outcome==='Submitted to Medicaid'){
+      h+='<div class="then" style="margin-top:10px"><div><div class="q">Check with Medicaid</div>'+(ro?esc(fmtS(r.nextFU)||'—'):quickDates('nextFU', r.date||today(), medDates(today())))+'</div>'+
+        '<div class="small muted">On the call list until Medicaid answers. If they’re denied and go private pay, their exam moves to private pay &mdash; it’s never counted twice.</div></div>';
     } else if(r.outcome==='Observation'){
       h+='<div class="then" style="margin-top:10px"><div><div class="q">Next observation review</div>'+(ro?esc(fmtS(r.obsReview)||'—'):quickDates('obsReview', r.date||today(), obsDates(r.date||today())))+'</div></div>';
     } else if(r.outcome==='No Show'){
@@ -756,7 +837,10 @@
         field('Treatment start date','startDate','date')+select('Same-day contract?','sameDay',['Yes','No'])+
         select('RIP sold?','rpi',['Yes','No'])+field('RIP sale date','rpiDate','date')+
         select('Follow-up complete?','fuDone',['Yes','No'],{blank:'— (none needed)'})+field('Follow-up completion date','fuDoneDate','date')+
-        select('Pending reason','reason',LISTS.reasons)+
+        select(r.outcome==='Pre-TX Hold'?'Pre-TX hold reason':'Pending reason','reason',[...new Set((r.outcome==='Pre-TX Hold'?LISTS.holdReasons:LISTS.reasons).concat(r.reason?[r.reason]:[]))])+
+        (takesMed(r.office)?select('Medicaid or private pay','payer',TC.PAYERS):'')+
+        (r.medicaidApproved?'<div class="fld"><label>Medicaid approved</label><input readonly value="'+esc(fmtS(r.medicaidApproved))+'"></div>':'')+
+        (r.medicaidDenied?'<div class="fld"><label>Medicaid denied</label><input readonly value="'+esc(fmtS(r.medicaidDenied))+'"></div>':'')+
         '<div class="fld"><label>Days waiting</label><input readonly value="'+(wait==null?'':wait)+'"></div>'+
         '</div></div></details>';
     }
@@ -775,33 +859,43 @@
     if(!TC.parse(r.date)) return 'Pick the consult date.';
     if(r.outcome==='Started' && !r.sameDay) return 'Say whether the contract was signed today.';
     if(r.outcome==='Pending' && !r.reason) return 'Pick why it’s pending.';
+    if(takesMed(r.office) && !r.payer) return 'Pick Medicaid or private pay.';
+    if(r.outcome==='Submitted to Medicaid' && r.payer!=='Medicaid') return '“Submitted to Medicaid” is only for Medicaid patients.';
+    if(r.outcome==='Pre-TX Hold' && !r.reason) return 'Pick what they’re waiting on.';
     return '';
   }
   function fuDlg(){
     const d=DLG, r=ALL.find(x=>x.id===d.id)||{};
     const T={called:'📞 Called', scheduled:'📅 Scheduled to start', started:'✅ Started', declined:'✖ Declined', rebooked:'🔁 Rebooked',
-             reviewed:'👁 Observation reviewed', ready:'🟢 Ready to start', setDate:'📆 Set the date'}[d.what]||'';
+             reviewed:'👁 Observation reviewed', ready:'🟢 Ready to start', setDate:'📆 Set the date', approved:'👍 Medicaid approved', denied:'👎 Medicaid denied'}[d.what]||'';
     let h=top(T+' · '+esc(r.name||''))+'<div class="dm-body">';
     if(d.err) h+='<div class="err">'+esc(d.err)+'</div>';
     const base=today();
     if(d.what==='called'){
       if(r.outcome==='No Show') h+='<div class="small muted">They stay on the list as a no-show until you mark them rebooked or not coming.</div>';
+      else if(r.outcome==='Submitted to Medicaid') h+='<div><div class="q lab2">Check with Medicaid again</div>'+quickDates('nextFU', base, medDates(base))+'</div>';
       else h+='<div><div class="q lab2">Next follow-up</div>'+quickDates(r.outcome==='Observation' && r.recallReady!=='Yes'?'obsReview':'nextFU', base, fuDates(base))+'</div>';
     } else if(d.what==='setDate'){
       const f=r.outcome==='Observation'?'obsReview':'nextFU';
-      h+='<div><div class="q lab2">'+(f==='obsReview'?'Next observation review':'Next follow-up')+'</div>'+quickDates(f, base, f==='obsReview'?obsDates(base):fuDates(base))+'</div>';
+      h+='<div><div class="q lab2">'+(f==='obsReview'?'Next observation review':r.outcome==='Submitted to Medicaid'?'Check with Medicaid':'Next follow-up')+'</div>'+
+        quickDates(f, base, f==='obsReview'?obsDates(base):r.outcome==='Submitted to Medicaid'?medDates(base):fuDates(base))+'</div>';
     } else if(d.what==='reviewed'){
       h+='<div><div class="q lab2">Next observation review</div>'+quickDates('obsReview', base, obsDates(base))+'</div>';
     } else if(d.what==='started'){
       h+='<div class="fields"><div class="fld"><label>Treatment start date</label><input type="date"'+attr('in','rec')+attr('f','startDate')+' value="'+esc(d.rec.startDate||base)+'"></div></div>'+
         '<div><div class="q lab2">RIP Retainer Program sold?</div>'+yesNo('rpi', d.rec.rpi)+'</div>'+
-        '<div class="small muted">Their consult still counts as '+esc(r.outcome||'')+' for '+esc(fmtM(TC.monthOf(r.date)))+' &mdash; that month’s results don’t change.</div>';
+        '<div class="small muted">Counts as a start in the month treatment begins. Their '+esc(fmtM(TC.monthOf(r.date)))+' consult isn’t counted again.</div>';
     } else if(d.what==='rebooked'){
       h+='<div class="fields"><div class="fld"><label>New consult date <span class="req">*</span></label><input type="date"'+attr('in','rec')+attr('f','newDate')+' value="'+esc(d.rec.newDate||'')+'"></div>'+
         '<div class="fld"><label>Time</label><input type="time"'+attr('in','rec')+attr('f','newTime')+' value="'+esc(d.rec.newTime||'')+'"></div></div>'+
         '<div class="small muted">Adds the new consult with the same patient details.</div>';
+    } else if(d.what==='denied'){
+      h+='<div>They carry on as a <b>private-pay</b> patient (Pending · Medicaid denied). Their exam moves to private pay &mdash; it isn’t counted twice. '+
+        'If they’re not going ahead at all, use <b>Declined</b> instead.</div><div><div class="q lab2">Next call</div>'+quickDates('nextFU', base, fuDates(base))+'</div>';
     } else {
-      h+='<div>'+({scheduled:'Marks them scheduled to start and the follow-up as done.', declined:'Closes the follow-up as declined.', ready:'Moves them to the top of the call list as recall ready.'}[d.what]||'')+'</div>';
+      h+='<div>'+({scheduled:'Marks them scheduled to start and the follow-up as done. They wait under “Scheduled to start” until you tap Started.',
+        approved:'Marks Medicaid approved and them scheduled to start. They wait under “Scheduled to start” until you tap Started.',
+        declined:'Closes the follow-up as declined.', ready:'Moves them to the top of the call list as recall ready.'}[d.what]||'')+'</div>';
     }
     h+='</div><div class="dm-foot"><button class="btn ghost" data-act="close">Cancel</button><button class="btn" data-act="fu-save"'+(d.busy?' disabled':'')+'>'+(d.busy?'Saving…':'Save')+'</button></div>';
     return h;
@@ -820,11 +914,14 @@
   }
   function listsDlg(){
     const d=DLG;
-    const ta=(k,label)=>'<div class="fld full"><label>'+label+' <span class="small muted">(one per line)</span></label><textarea style="min-height:130px"'+attr('in','dlg')+attr('f',k)+'>'+esc(d[k])+'</textarea></div>';
-    return top('Edit the lists')+'<div class="dm-body">'+(d.err?'<div class="err">'+esc(d.err)+'</div>':'')+
-      '<div class="small muted">Outcomes and follow-up statuses are fixed &mdash; the numbers are worked out from them. These three are just labels.</div>'+
-      '<div class="fields">'+ta('types','Consult types')+ta('reasons','Pending reasons')+ta('leads','Lead sources')+'</div></div>'+
-      '<div class="dm-foot"><button class="btn ghost" data-act="close">Cancel</button><button class="btn" data-act="lists-save">Save lists</button></div>';
+    const ta=(k,label)=>'<div class="fld full"><label>'+label+' <span class="small muted">(one per line)</span></label><textarea style="min-height:110px"'+attr('in','dlg')+attr('f',k)+'>'+esc(d[k])+'</textarea></div>';
+    return top('TC Tracker settings')+'<div class="dm-body">'+(d.err?'<div class="err">'+esc(d.err)+'</div>':'')+
+      '<div class="grp"><div class="gl">Offices that take Medicaid</div><div class="chk">'+allOffices().map(o=>
+        '<label><input type="checkbox"'+attr('act','med-toggle')+attr('v',o)+(d.medicaid.indexOf(o)>=0?' checked':'')+'> '+esc(o)+'</label>').join('')+'</div>'+
+        '<div class="small muted" style="margin-top:6px">These offices ask “Medicaid or private pay?” on every consult, and their numbers show both.</div></div>'+
+      '<div class="small muted">Outcomes and follow-up statuses are fixed &mdash; the numbers are worked out from them. These lists are just labels.</div>'+
+      '<div class="fields">'+ta('types','Consult types')+ta('reasons','Pending reasons')+ta('holdReasons','Pre-TX hold reasons')+ta('leads','Lead sources')+'</div></div>'+
+      '<div class="dm-foot"><button class="btn ghost" data-act="close">Cancel</button><button class="btn" data-act="lists-save">Save settings</button></div>';
   }
   function drawDlg(){
     if(!DLG) return;
@@ -836,7 +933,7 @@
   function newConsult(){
     const offs=myOffices(), o=office || (offs.length===1?offs[0]:''), t=o?defaultTC(o):{name:'',mail:''};
     openDlg({kind:'consult', isNew:true, rec:{id:TC.newId(), office:o, date:today(), time:'', name:'', dob:'', phone:'', chart:'',
-      type:'', lead:'', outcome:'', tc:t.name, tcMail:t.mail, notes:'', by:myMail()||myName(), at:new Date().toISOString()}});
+      type:'', lead:'', outcome:'', payer:'', tc:t.name, tcMail:t.mail, notes:'', by:myMail()||myName(), at:new Date().toISOString()}});
     setTimeout(()=>{ const n=document.querySelector('[data-f="name"]'); if(n && o) n.focus(); }, 30);
   }
   function openConsult(id, outcome){
@@ -858,7 +955,7 @@
   function copyFor(r, date, time, note){
     const t=defaultTC(r.office);
     return {id:TC.newId(), office:r.office, date, time:time||'', name:r.name, dob:r.dob||'', phone:r.phone||'', chart:r.chart||'',
-      type:r.type||'', lead:r.lead||'', outcome:'', tc:r.tc||t.name, tcMail:r.tcMail||t.mail, notes:note, by:myMail()||myName(), at:new Date().toISOString()};
+      type:r.type||'', lead:r.lead||'', outcome:'', payer:r.payer||'', tc:r.tc||t.name, tcMail:r.tcMail||t.mail, notes:note, by:myMail()||myName(), at:new Date().toISOString()};
   }
   function saveFu(){
     const d=DLG, r=Object.assign({}, ALL.find(x=>x.id===d.id)||{}); if(!r.id) return closeDlg();
@@ -868,6 +965,7 @@
     else if(d.what==='reviewed'){ if(!x.obsReview){ d.err='Pick the next review date.'; return drawDlg(); } TC.DO.reviewed(r, t, x.obsReview); }
     else if(d.what==='started') TC.DO.started(r, t, x.startDate||t, x.rpi);
     else if(d.what==='rebooked'){ if(!TC.parse(x.newDate)){ d.err='Pick the new consult date.'; return drawDlg(); } TC.DO.rebooked(r, t); jobs.push(persist(copyFor(r, x.newDate, x.newTime, 'Rebooked after no-show on '+fmtS(r.date)), null)); }
+    else if(d.what==='denied') TC.DO.denied(r, t, x.nextFU||'');
     else TC.DO[d.what](r, t);
     d.busy=true; d.err=''; drawDlg();
     Promise.all([persist(r, keyOf(r))].concat(jobs)).then(()=>{ closeDlg(); render(); toast('✓ '+r.name+' updated'); },
@@ -900,7 +998,12 @@
     if(act==='close'){ closeDlg(); return; }
     if(act==='pick' && DLG){
       const f=b.dataset.f;
-      if(DLG.kind==='consult' && f==='outcome'){ TC.setOutcome(DLG.rec, v); if(v==='Started' && !DLG.rec.rpi) DLG.rec.rpi='No'; }
+      if(DLG.kind==='consult' && f==='outcome'){
+        TC.setOutcome(DLG.rec, v); if(v==='Started' && !DLG.rec.rpi) DLG.rec.rpi='No';
+        // Pending and Pre-TX Hold have different reasons: keep one only if it belongs to the new outcome.
+        const list=v==='Pre-TX Hold'?LISTS.holdReasons:v==='Pending'?LISTS.reasons:null;
+        if(list && DLG.rec.reason && list.indexOf(DLG.rec.reason)<0) DLG.rec.reason='';
+      }
       else if(DLG.kind==='consult' && f==='office'){ DLG.rec.office=v; const t=defaultTC(v); DLG.rec.tc=t.name; DLG.rec.tcMail=t.mail; }
       else if(DLG.kind==='consult' && f==='rpi'){ DLG.rec.rpi=v; if(v==='Yes' && !DLG.rec.rpiDate) DLG.rec.rpiDate=DLG.rec.date||today(); if(v==='No') DLG.rec.rpiDate=''; }
       else DLG.rec[f]=(DLG.rec[f]===v && f!=='outcome')?'':v;   // tap again to clear a choice
@@ -925,13 +1028,17 @@
       setDay(n); return;
     }
     if(act==='slot-reset'){ const d=DLG; saveSlots(d.office, s=>{ delete s.days[d.date]; }).then(()=>{ closeDlg(); render(); }, e=>{ d.err=e.message; drawDlg(); }); return; }
-    if(act==='lists'){ openDlg({kind:'lists', types:LISTS.types.join('\n'), reasons:LISTS.reasons.join('\n'), leads:LISTS.leads.join('\n')}); return; }
+    if(act==='lists'){ openDlg({kind:'lists', types:LISTS.types.join('\n'), reasons:LISTS.reasons.join('\n'), holdReasons:LISTS.holdReasons.join('\n'),
+      leads:LISTS.leads.join('\n'), medicaid:TC.medicaidOffices(LISTS).slice()}); return; }
+    if(act==='med-toggle' && DLG && DLG.kind==='lists'){ const i=DLG.medicaid.indexOf(v); if(i>=0) DLG.medicaid.splice(i,1); else DLG.medicaid.push(v); return; }
     if(act==='lists-save'){
       const d=DLG, clean=t=>[...new Set(String(t||'').split('\n').map(x=>x.trim()).filter(Boolean))];
-      const next={types:clean(d.types), reasons:clean(d.reasons), leads:clean(d.leads)};
-      if(!next.types.length || !next.reasons.length || !next.leads.length){ d.err='Each list needs at least one line.'; drawDlg(); return; }
-      PH_STORE.set(TC.LISTS_KEY, next).then(r=>{ if(r && (r.blocked||r.error)) throw new Error(r.why||r.error); LISTS=Object.assign({}, TC.DEFAULT_LISTS, next); closeDlg(); render(); toast('✓ Lists saved'); },
-        e=>{ d.err='It didn’t save: '+e.message; drawDlg(); });
+      const next={types:clean(d.types), reasons:clean(d.reasons), holdReasons:clean(d.holdReasons), leads:clean(d.leads), medicaid:d.medicaid.slice()};
+      if(!next.types.length || !next.reasons.length || !next.holdReasons.length || !next.leads.length){ d.err='Each list needs at least one line.'; drawDlg(); return; }
+      // Laid over the saved settings, so a field this page doesn't know about is kept.
+      PH_STORE.update(TC.LISTS_KEY, cur=>Object.assign({}, (cur && typeof cur==='object')?cur:{}, next))
+        .then(r=>{ if(r && (r.blocked||r.error)) throw new Error(r.why||r.error); LISTS=Object.assign({}, TC.DEFAULT_LISTS, (r && r.value) || next); closeDlg(); render(); toast('✓ Settings saved'); },
+          e=>{ d.err='It didn’t save: '+e.message; drawDlg(); });
       return;
     }
     if(act==='csv'){ download(); return; }
@@ -981,7 +1088,7 @@
 })();
 </script>
 <script>PH.nav('tc');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(window.TCPAGE)TCPAGE.identity();});document.addEventListener('ph-identity',function(){if(window.TCPAGE)TCPAGE.identity();});</script>
-<script src="tour.js?v=hc79"></script>
+<script src="tour.js?v=hc80"></script>
 <script>
 Tour.init([
   {sel:'#offbar', title:'Your office', body:'You see the offices you work at. Heather, Selene and leadership see every office and can pick one.'},

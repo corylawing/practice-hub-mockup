@@ -273,6 +273,17 @@ const t=(n,v)=>{ (v?ok:bad).push(n); };
               jobTitle:'Doctor', department:'Doctors', officeLocation:'Hobbs' });
   // Live: no tab, and the page is held (still learning who they are) or locked - never open.
   t('...but not on the live site', LD.tabs().indexOf('tc')<0 && (LD.locked() || LD.pending()));
+  /* 17/10: before everyone gets it, an ADMIN can try it on the live site with ?tcpreview. */
+  const PA=load({ page:'tc', ls:{ ph_tc_preview:'1' } });
+  PA.PH.nav('tc');
+  PA.signIn({ displayName:'Heather Beal', mail:'heather@farnsworthorthodontics.com', userPrincipalName:'heather@farnsworthorthodontics.com',
+              jobTitle:'COO', department:'Admin', officeLocation:'' });
+  t('live preview: an admin who opened ?tcpreview gets the TC Tracker', PA.PH.tcOn()===true && PA.tabs().indexOf('tc')>=0);
+  const PN=load({ page:'tc', ls:{ ph_tc_preview:'1' } });
+  PN.PH.nav('tc');
+  PN.signIn({ displayName:'Test Doctor', mail:'test.doctor@example.com', userPrincipalName:'test.doctor@example.com',
+              jobTitle:'Doctor', department:'Doctors', officeLocation:'Hobbs' });
+  t('...but the preview flag does nothing for anyone who is not an admin', PN.PH.tcOn()===false && PN.tabs().indexOf('tc')<0);
   const S2=load({ host:'corylawing.github.io', page:'team', ls:{ ph_viewas:'doctor' } });
   S2.PH.nav('team');
   t('sandbox honours the chosen persona', S2.PH.me().id==='doctor');
