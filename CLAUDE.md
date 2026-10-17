@@ -102,10 +102,12 @@ switching to private pay updates their exam month. **Storage:** consults (patien
 **HomeBraceConsults** via `v1/tcstore.js` (separate file: touches only that list; read-modify-write with If-Match, retry
 on 412/409; never writes over a record it can't read; never deletes; packs with PH_STORE.pack); slots + settings stay in
 HomeBraceData via PH_STORE (no patient data). Sandbox: browser only, unchanged. Verified on the live path with a
-stand-in Graph: consult POSTed to HomeBraceConsults only, nothing in HomeBraceData. **Go-live, in order:** (1) Cory makes
-the list by hand (New > List > "HomeBraceConsults", add "Payload" multiple lines of text; List settings > Permissions >
-Stop inheriting; remove Members/Visitors; grant Edit to the TC Tracker people - TCs incl. guests, office managers,
-Selene, Heather, Jessica, leadership); (2) an admin tests on the live site via `tc.html?tcpreview` (admins only,
+stand-in Graph: consult POSTed to HomeBraceConsults only, nothing in HomeBraceData. **DECIDED 17/10 by Cory: NO lock on HomeBraceConsults** - "they will do it on home-brace": the app controls who sees
+what, as for the rest of the hub (he did not want to add people by hand; a SharePoint group or an automatic folder-based
+sync were offered). Residual risk, stated and accepted: anyone in the Home-Brace group can open that list in SharePoint
+and read patient details. It is its own list, so locking it later is a settings change, no code. **Go-live, in order:**
+(1) the list exists (made by Cory 17/10, Title + Payload, inheriting the site's access); (2) an admin tests on the
+live site via `tc.html?tcpreview` (admins only,
 remembered per browser; `tcPreview()` in user.js); admins always get "manage" on the page; (3) Teams & Access: TC
 Tracker column (TCs Log + calls, OMs See, Exec/Leadership Everything - saved rows lack `tc`, so they must be set);
 (4) `TC_LIVE=true` + deploy. tests: tc 136, tcstore 14.
