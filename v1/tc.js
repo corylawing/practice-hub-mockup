@@ -533,13 +533,52 @@
     return out;
   }
 
+  /* TALK TO TYPE (17/10/2026). Cory: the Notes box, "on both mobile and desktop", gets a button
+     that uses the computer or phone to record - talk -> text (he chose that over saving audio).
+     The browser turns the voice into words (its maker's speech service); only the words are
+     kept. These are the parts that can be tested without a microphone. */
+  // The words so far, from the browser's results [{t, final}]. Chrome sends one piece per phrase;
+  // Safari can repeat everything said so far in each result - kept once, never twice.
+  function talkText(list){
+    let fin='', int='';
+    (list||[]).forEach(r=>{
+      const s=String((r && r.t)||'').replace(/\s+/g,' ').trim(); if(!s) return;
+      if(r.final){
+        if(fin && s.toLowerCase().indexOf(fin.toLowerCase())===0) fin=s;
+        else fin=fin ? fin+' '+s : s;
+      } else int=int ? int+' '+s : s;
+    });
+    if(int && fin && int.toLowerCase().indexOf(fin.toLowerCase())===0) int=int.slice(fin.length).trim();
+    return {fin, int};
+  }
+  // What was said, added after what is already in Notes: one space between, a capital to start a sentence.
+  function joinTalk(base, said){
+    base=String(base==null?'':base); said=String(said==null?'':said).replace(/\s+/g,' ').trim();
+    if(!said) return base;
+    const sep=(!base || /\s$/.test(base)) ? '' : ' ';
+    if(!base.trim() || /[.!?]\s*$/.test(base) || /\n\s*$/.test(base)) said=said.charAt(0).toUpperCase()+said.slice(1);
+    return base+sep+said;
+  }
+  // The browser's error, in plain words.
+  function talkError(code){
+    switch(code){
+      case 'not-allowed': return 'The microphone is blocked for this site. Allow it (the \ud83d\udd12 or \ud83c\udfa4 by the web address), then tap Talk again.';
+      case 'service-not-allowed': return 'Talk-to-text is turned off on this device or browser. On an iPhone: Settings \u2192 General \u2192 Keyboard \u2192 Enable Dictation.';
+      case 'no-speech': return 'Didn\u2019t hear anything. Tap Talk and try again.';
+      case 'audio-capture': return 'No microphone found on this device.';
+      case 'network': return 'Couldn\u2019t reach the speech service. Check the connection, or type instead.';
+      case 'language-not-supported': return 'This browser can\u2019t do talk-to-text in English. Type instead.';
+      default: return 'Talk stopped. Tap Talk to try again, or type instead.';
+    }
+  }
+
   const TC={
     OUTCOMES, COMPLETED, NEEDS_FU, FU_STATUSES, OPEN_FU, CLOSED_FU, DEFAULT_LISTS, SLOT_CHOICES, ACTIONS, DUE, NEEDS_DATE, WHAT_CHANGED,
     PAYERS, DEFAULT_MEDICAID, medicaidOffices, takesMedicaid, payerOf, patientKey, startOf, patients, conversion, earlierExam,
     iso, parse, addDays, addMonths, daysBetween, monthOf, inMonth, monthDays, shiftMonth,
     action, daysWaiting, setOutcome, DO, monthStats, openWork, dailyView, yearTotals, callList,
     slotsOn, slotsInMonth, usualOn, setUsual, lastDayOf, openFrom, slug, LOG_PREFIX, logKey, slotsKey, LISTS_KEY, newId, consultsFrom,
-    SHEET_COLS, csv, demo, live
+    SHEET_COLS, csv, demo, live, talkText, joinTalk, talkError
   };
   global.TC=TC;
   if(typeof module!=='undefined' && module.exports) module.exports=TC;

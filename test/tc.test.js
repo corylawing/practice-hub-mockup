@@ -315,6 +315,23 @@ const C=[
   t('Demo month has a believable acceptance rate', s.acceptance>0.2 && s.acceptance<0.7);
 }
 
+/* ---------- Notes: talk to type (17/10) ---------- */
+{
+  const w1=TC.talkText([{t:'mom wants to think about it',final:true},{t:' call back Tuesday',final:true},{t:' worried about',final:false}]);
+  t('Talk: Chrome-style pieces join into one line, still-talking words kept apart', w1.fin==='mom wants to think about it call back Tuesday' && w1.int==='worried about');
+  const w2=TC.talkText([{t:'Mom wants',final:true},{t:'Mom wants to think about it',final:true},{t:'Mom wants to think about it call',final:false}]);
+  t('Talk: Safari-style repeats are kept once, never twice', w2.fin==='Mom wants to think about it' && w2.int==='call');
+  t('Talk: nothing said, nothing added', JSON.stringify(TC.talkText([]))==='{"fin":"","int":""}' && TC.talkText([{t:'  ',final:true}]).fin==='');
+  t('Talk: into empty Notes - a capital to start', TC.joinTalk('', 'mom wants to think about it')==='Mom wants to think about it');
+  t('Talk: after a full stop - a space and a capital', TC.joinTalk('Called mom.', 'she will call back')==='Called mom. She will call back');
+  t('Talk: mid-sentence - just a space', TC.joinTalk('Called mom', 'and dad')==='Called mom and dad');
+  t('Talk: after a new line - a capital, no extra space', TC.joinTalk('Line one\n', 'next')==='Line one\nNext');
+  t('Talk: what was typed before is never changed', TC.joinTalk('  Typed  text ', 'more').indexOf('  Typed  text ')===0);
+  t('Talk: silence leaves Notes as it was', TC.joinTalk('Keep me', '   ')==='Keep me' && TC.joinTalk(null, null)==='');
+  t('Talk: a blocked microphone says how to allow it', /microphone is blocked/i.test(TC.talkError('not-allowed')));
+  t('Talk: every other problem gets a plain sentence', ['service-not-allowed','no-speech','audio-capture','network','language-not-supported','???',''].every(c=>/\w/.test(TC.talkError(c)) && !/undefined/.test(TC.talkError(c))));
+}
+
 console.log(ok.map(s=>'  PASS  '+s).join('\n'));
 if(bad.length) console.log(bad.map(s=>'  FAIL  '+s).join('\n'));
 console.log('\n'+ok.length+' passed, '+bad.length+' failed');

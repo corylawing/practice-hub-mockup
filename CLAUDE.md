@@ -135,6 +135,19 @@ conflictBehavior=fail refuse a repeat of a save that landed, and the change (one
 on reading resets the cached folder so "Try again" looks again. Don't rename or move the folder: Home-Brace finds it
 by name, and would make a new empty one (Admin would then say "not locked yet").
 
+**TC Notes: talk to type (17/10, hc83).** Cory: Notes "on both mobile and desktop" should have a button that uses the
+computer or phone to record; he chose talk -> text (not saved audio), TC consult Notes only (not Marketing). A
+🎤 Talk pill on the Notes label row (`notesField()` in tc.html): Web Speech API (`SpeechRecognition` /
+`webkitSpeechRecognition`, en-US, continuous + interim), words written live into Notes after what was typed
+(`TC.talkText` merges results - Chrome sends pieces, Safari can repeat the whole utterance, kept once;
+`TC.joinTalk` adds one space and a capital after . ! ? or a new line); box read-only while listening; ■ Stop + red
+"Listening...". Save while talking waits for the last words (`talkFinish`, 2.5 s max); closing the form aborts.
+Errors in plain words (`TC.talkError`). No support (Firefox, some in-app browsers): no button; on touch devices a
+tip about the keyboard's own mic. Only text is stored. The browser's maker (Google/Apple/Microsoft) does the
+speech-to-text, like phone dictation - Cory chose it knowing that. Not done: Chrome's on-device mode
+(`processLocally`) - untestable here, could fail silently; add only with a real-device test. Verified with a fake
+engine in the browser pane (desktop + phone width); real voice needs a real device. tc tests 147.
+
 **Document search finds Word/Excel files; faster (14/10, hc79).** Jessica: searching "hygiene", the oral hygiene form
 (`Oral Hygiene Form[Editable].docx`) never came up, and search was slow. SharePoint gives Word/Excel/PowerPoint files an
 Office Online webUrl (`/_layouts/15/Doc.aspx?sourcedoc=...`, no folders), and searchDocs placed results by webUrl, so

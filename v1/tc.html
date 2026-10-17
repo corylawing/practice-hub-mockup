@@ -210,6 +210,17 @@
   .fld input:focus,.fld select:focus,.fld textarea:focus{outline:2px solid var(--teal);border-color:var(--teal)}
   .fld input[readonly]{background:#fafbfc;color:var(--soft)}
   .req{color:var(--bad)}
+  /* Notes: talk to type (17/10) */
+  .lab-row{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:26px}
+  .lab-row > label{font-size:12.5px;font-weight:700;color:var(--ink)}
+  .talk{border:1px solid var(--line);background:#fff;color:var(--navy);border-radius:999px;padding:4px 12px;font-size:12.5px;font-weight:700;cursor:pointer;line-height:1.45;white-space:nowrap}
+  .talk:hover{border-color:var(--teal);background:var(--teal-soft)}
+  .talk.on{background:var(--bad);border-color:var(--bad);color:#fff}
+  .talk-st{display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:var(--bad)}
+  .talk-st:empty{display:none}
+  .rec-dot{width:8px;height:8px;border-radius:50%;background:var(--bad);flex:none;animation:recpulse 1.2s ease-in-out infinite}
+  @keyframes recpulse{50%{opacity:.25}}
+  .fld textarea.listening{border-color:var(--bad);outline:2px solid var(--bad-soft)}
   .chips{display:flex;gap:6px;flex-wrap:wrap}
   .chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 12px;font-size:13.5px;font-weight:700;color:var(--navy);cursor:pointer}
   .chip:hover{border-color:var(--teal)}
@@ -240,6 +251,7 @@
     .fu{grid-template-columns:1fr}
     .fu .btns{justify-content:flex-start;max-width:none}
     .fields{grid-template-columns:1fr}
+    .talk{padding:8px 15px;font-size:14px}
     .dm{padding:0}
     .dmc{border-radius:0;min-height:100%}
     .day{min-height:58px;padding:5px}
@@ -250,13 +262,13 @@
     *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}
   }
 </style>
-<script src="user.js?v=hc82"></script>
+<script src="user.js?v=hc83"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc82"></script>
-  <script src="gate.js?v=hc82"></script>
-  <script src="_staff.js?v=hc82"></script>
-  <script src="tc.js?v=hc82"></script>
-  <script src="tcstore.js?v=hc82"></script>
+  <script src="store.js?v=hc83"></script>
+  <script src="gate.js?v=hc83"></script>
+  <script src="_staff.js?v=hc83"></script>
+  <script src="tc.js?v=hc83"></script>
+  <script src="tcstore.js?v=hc83"></script>
 </head>
 <body>
 <div class="ribbon">SANDBOX — made-up patients. Use “Try it as” to see it as a TC, an office manager or Selene.</div>
@@ -751,7 +763,7 @@
   /* ---------------- dialogs ---------------- */
   let DLG=null;
   function openDlg(d){ DLG=d; drawDlg(); el('dlg').classList.add('open'); document.body.style.overflow='hidden'; }
-  function closeDlg(){ DLG=null; el('dlg').classList.remove('open'); el('dlgcard').innerHTML=''; document.body.style.overflow=''; }
+  function closeDlg(){ talkAbort(); DLG=null; el('dlg').classList.remove('open'); el('dlgcard').innerHTML=''; document.body.style.overflow=''; }
   const top=t=>'<div class="dm-top"><h3>'+t+'</h3><button class="x" data-act="close" aria-label="Close">×</button></div>';
   function chips(field, list, val, extraCls){
     return '<div class="chips">'+list.map(v=>'<button type="button" class="chip'+(extraCls?' '+extraCls+' o-'+ocClass(v).slice(3):'')+(val===v?' on':'')+'"'+attr('act','pick')+attr('f',field)+attr('v',v)+'>'+esc(extraCls?ocShort(v):v)+'</button>').join('')+'</div>';
@@ -769,6 +781,63 @@
     const inp=type==='textarea' ? '<textarea'+attr('in','rec')+attr('f',f)+ro+'>'+esc(v)+'</textarea>'
       : '<input type="'+type+'"'+attr('in','rec')+attr('f',f)+' value="'+esc(v)+'"'+ro+(opts.ph?' placeholder="'+esc(opts.ph)+'"':'')+(opts.auto?' autocomplete="'+opts.auto+'"':'')+'>';
     return '<div class="fld'+(opts.full?' full':'')+'"><label>'+label+(opts.req?' <span class="req">*</span>':'')+'</label>'+inp+'</div>';
+  }
+  /* NOTES, WITH TALK (17/10). Cory: a button that uses their computer or phone to record - talk
+     -> text. Tap Talk, talk, the words type themselves into Notes (TC.talkText / joinTalk); tap
+     Stop, fix any word by typing. Only the words are kept, never audio. Chrome, Edge and Safari,
+     computers and phones; where the browser can't (Firefox, some in-app browsers) a phone gets a
+     tip about its keyboard's own microphone instead. */
+  const SR=()=>window.SpeechRecognition||window.webkitSpeechRecognition||null;
+  const touch=()=>('ontouchstart' in window)||navigator.maxTouchPoints>0;
+  let TALK=null;
+  const notesBox=()=>document.querySelector('#dlgcard [data-in="rec"][data-f="notes"]');
+  function notesField(){
+    const ro=DLG.ro, on=!!TALK, side=ro ? '' : SR()
+      ? '<button type="button" class="talk'+(on?' on':'')+'" data-act="talk" aria-pressed="'+on+'">'+(on?'\u25a0 Stop':'\ud83c\udfa4 Talk')+'</button>'
+      : (touch() ? '<span class="small muted">Tip: your keyboard\u2019s \ud83c\udfa4 works here</span>' : '');
+    return '<div class="fld full"><div class="lab-row"><label for="f-notes">Notes</label>'+side+'</div>'+
+      '<textarea id="f-notes"'+attr('in','rec')+attr('f','notes')+(ro||on?' readonly':'')+(on?' class="listening"':'')+'>'+esc(DLG.rec.notes||'')+'</textarea>'+
+      '<div class="talk-st" id="talkst" aria-live="polite">'+(on?'<span class="rec-dot"></span>Listening\u2026 talk now, then tap Stop.':'')+'</div></div>';
+  }
+  function talkWrite(){
+    const t=TALK; if(!t || !DLG) return;
+    const txt=TC.joinTalk(t.base, t.fin+' '+t.int);
+    DLG.rec.notes=txt;
+    const box=notesBox(); if(box && box.value!==txt){ box.value=txt; box.scrollTop=box.scrollHeight; }
+  }
+  function talkPaint(){
+    const on=!!TALK, b=document.querySelector('#dlgcard [data-act="talk"]'), st=el('talkst'), box=notesBox();
+    if(b){ b.classList.toggle('on', on); b.textContent=on?'\u25a0 Stop':'\ud83c\udfa4 Talk'; b.setAttribute('aria-pressed', String(on)); }
+    if(st) st.innerHTML=on?'<span class="rec-dot"></span>Listening\u2026 talk now, then tap Stop.':'';
+    if(box){ box.classList.toggle('listening', on); box.readOnly=on || !!(DLG && DLG.ro); }
+  }
+  function talkStart(){
+    const C=SR(); if(!C || !DLG || DLG.ro || TALK) return;
+    let rec; try{ rec=new C(); }catch(_){ toast(TC.talkError(''), true); return; }
+    rec.lang='en-US'; rec.continuous=true; rec.interimResults=true; rec.maxAlternatives=1;
+    const box=notesBox(), t={rec, base:box ? box.value : (DLG.rec.notes||''), fin:'', int:'', waits:[]};
+    rec.onresult=e=>{
+      if(TALK!==t) return;
+      const list=[]; for(let i=0;i<e.results.length;i++){ const x=e.results[i]; if(x && x[0]) list.push({t:x[0].transcript, final:!!x.isFinal}); }
+      const w=TC.talkText(list); t.fin=w.fin; t.int=w.int; talkWrite();
+    };
+    rec.onerror=e=>{ const c=e && e.error; if(c && c!=='aborted') toast(TC.talkError(c), true); };
+    rec.onend=()=>{ if(TALK!==t) return; t.int=''; talkWrite(); TALK=null; talkPaint(); t.waits.splice(0).forEach(f=>f()); };
+    TALK=t;
+    try{ rec.start(); }catch(_){ TALK=null; toast(TC.talkError(''), true); return; }
+    talkPaint();
+  }
+  function talkStop(){ if(TALK){ try{ TALK.rec.stop(); }catch(_){} } }
+  // Closing the form while talking: stop listening, keep nothing that wasn't saved.
+  function talkAbort(){
+    const t=TALK; if(!t) return; TALK=null;
+    try{ t.rec.onresult=null; t.rec.onend=null; t.rec.onerror=null; t.rec.abort(); }catch(_){}
+    t.waits.splice(0).forEach(f=>f());
+  }
+  // Save while talking: stop, wait for the last words (2.5 s at most), then save.
+  function talkFinish(){
+    const t=TALK; if(!t) return Promise.resolve();
+    return new Promise(res=>{ t.waits.push(res); talkStop(); setTimeout(res, 2500); });
   }
   function select(label, f, list, opts){
     opts=opts||{}; const v=DLG.rec[f]||'';
@@ -844,7 +913,7 @@
         '<div class="fld"><label>Days waiting</label><input readonly value="'+(wait==null?'':wait)+'"></div>'+
         '</div></div></details>';
     }
-    h+='<div class="fields">'+field('Notes','notes','textarea',{full:true})+'</div>';
+    h+='<div class="fields">'+notesField()+'</div>';
     if(r.upd && !d.isNew) h+='<div class="small muted">Last changed '+esc(fmtS(String(r.upd).slice(0,10)))+(r.updBy && r.updBy!=='demo'?' by '+esc(r.updBy):'')+'</div>';
     h+='</div>';
     if(ro) h+='<div class="dm-foot"><button class="btn ghost" data-act="close">Close</button></div>';
@@ -1009,7 +1078,9 @@
       else DLG.rec[f]=(DLG.rec[f]===v && f!=='outcome')?'':v;   // tap again to clear a choice
       DLG.err=''; drawDlg(); return;
     }
-    if(act==='save'){ saveConsult(); return; }
+    if(act==='talk'){ if(TALK) talkStop(); else talkStart(); return; }
+    if(act==='save'){ if(DLG.saving) return; DLG.saving=true; const d0=DLG;
+      talkFinish().then(()=>{ d0.saving=false; if(DLG===d0) saveConsult(); }); return; }
     if(act==='del'){ DLG.confirmDel=true; drawDlg(); return; }
     if(act==='del-no'){ DLG.confirmDel=false; drawDlg(); return; }
     if(act==='del-yes'){
@@ -1088,7 +1159,7 @@
 })();
 </script>
 <script>PH.nav('tc');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(window.TCPAGE)TCPAGE.identity();});document.addEventListener('ph-identity',function(){if(window.TCPAGE)TCPAGE.identity();});</script>
-<script src="tour.js?v=hc82"></script>
+<script src="tour.js?v=hc83"></script>
 <script>
 Tour.init([
   {sel:'#offbar', title:'Your office', body:'You see the offices you work at. Heather, Selene and leadership see every office and can pick one.'},
