@@ -161,6 +161,13 @@ dialog/pop-up is 50+), body padding-left, `.v1nav` hidden, header logo hidden an
 9 pages at 1024px (no sideways scroll; Admin's grid scrolls in its own box as before), a theme, 900px, phone, and back
 to top. Guide (start.html) points to the setting. Tests: test/layout.test.js (21) - in test/all.sh.
 
+**TCs see every office in "By office" (19/10, hc85).** Selene: "we do want the Treatment Coordinators to be able to see
+one another's results. Please make sure they can all view the 'By Office' box so they can see conversion rates across
+locations." viewNumbers(): for a TC (`iAmTC() && !canManage()`) the box lists `allOffices()` from EVERY (rates and
+counts only, no tcFilter), own office shaded "(yours)", only own-office rows clickable (and only if they have 2+);
+load() now reads every office's slots (no patient data) so Slots/Capacity show for all. Leaders: unchanged (offices in
+view, all rows open). Office managers (See): unchanged - own office only, no By office (Selene asked about TCs only).
+
 **Document search finds Word/Excel files; faster (14/10, hc79).** Jessica: searching "hygiene", the oral hygiene form
 (`Oral Hygiene Form[Editable].docx`) never came up, and search was slow. SharePoint gives Word/Excel/PowerPoint files an
 Office Online webUrl (`/_layouts/15/Doc.aspx?sourcedoc=...`, no folders), and searchDocs placed results by webUrl, so

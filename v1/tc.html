@@ -153,6 +153,7 @@
   table.t td:first-child{white-space:nowrap}
   table.t tr.click{cursor:pointer}
   table.t tr.click:hover td{background:#FAFCFD}
+  table.t tr.mine td{background:var(--teal-soft)}
   table.t tr.total td{font-weight:800;color:var(--navy);background:#F7F9FB}
   table.t tr.closed td{color:#9aa6b6}
 
@@ -262,13 +263,13 @@
     *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}
   }
 </style>
-<script src="user.js?v=hc84"></script>
+<script src="user.js?v=hc85"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc84"></script>
-  <script src="gate.js?v=hc84"></script>
-  <script src="_staff.js?v=hc84"></script>
-  <script src="tc.js?v=hc84"></script>
-  <script src="tcstore.js?v=hc84"></script>
+  <script src="store.js?v=hc85"></script>
+  <script src="gate.js?v=hc85"></script>
+  <script src="_staff.js?v=hc85"></script>
+  <script src="tc.js?v=hc85"></script>
+  <script src="tcstore.js?v=hc85"></script>
 </head>
 <body>
 <div class="ribbon">SANDBOX — made-up patients. Use “Try it as” to see it as a TC, an office manager or Selene.</div>
@@ -432,7 +433,8 @@
     seedDemo(false);
     // Consults live in their own locked folder on the live site (tcstore.js), the browser on the sandbox.
     const logs=TCSTORE.getAll(TC.LOG_PREFIX);
-    const slots=Promise.all(offs.map(o=>PH_STORE.get(TC.slotsKey(o)).then(v=>[o,v], ()=>[o,null])));
+    // Every office's slots (no patient details in them): TCs see every office in "By office".
+    const slots=Promise.all([...new Set(allOffices().concat(offs))].map(o=>PH_STORE.get(TC.slotsKey(o)).then(v=>[o,v], ()=>[o,null])));
     return Promise.all([logs, slots, PH_STORE.get(TC.LISTS_KEY).catch(()=>null), PH_STORE.get('ph_sched2').catch(()=>null)])
       .then(([L,S,Li,Sc])=>{
         EVERY=TC.consultsFrom(L).filter(TC.live);
@@ -686,11 +688,20 @@
       A('No-show rate', pct(m.noShowRate), 'No-shows ÷ scheduled')+A('Follow-up completion rate', pct(m.fuRate), 'Done ÷ all Yes/No follow-ups')+
       A('Same-day contracts', m.sameDay, 'Count')+A('Follow-ups completed', m.fuYes, 'Count')+'</table></div>';
     h+='</div>';
-    if(inView().length>1){
-      const offs=inView();
-      h+='<div class="card"><h2>By office</h2><p class="sub">'+esc(fmtM(month))+(tcFilter?' · '+esc(tcFilter):'')+'</p><div class="tblwrap" style="box-shadow:none"><table class="t"><thead><tr><th>Office</th><th class="n">Slots</th><th class="n">Scheduled</th><th class="n">Capacity</th><th class="n">Completed</th><th class="n">Consults</th><th class="n">Starts</th><th class="n">Conv. private</th>'+(med?'<th class="n">Conv. Medicaid</th>':'')+'<th class="n">Same-day</th><th class="n">No-show</th><th class="n">Follow-up</th><th class="n">RIP</th><th class="n">Open</th></tr></thead><tbody>'+
-        offs.map(o=>{ const L=list.filter(r=>r.office===o), s=TC.monthStats(L, month, TC.slotsInMonth(SLOTS[o]||{}, month, isOpenFn(o), until()), d, keep), ow=TC.openWork(keep?L.filter(keep):L, d), c=s.conversion;
-          return '<tr class="click"'+attr('act','office')+attr('v',o)+'><td><b>'+esc(o)+'</b></td><td class="n">'+s.slots+'</td><td class="n">'+s.scheduled+'</td><td class="n">'+pct(s.capacity)+'</td><td class="n">'+s.completed+'</td><td class="n">'+c.total.consults+'</td><td class="n">'+c.total.starts+'</td><td class="n"><b>'+pct(c['Private pay'].rate)+'</b></td>'+(med?'<td class="n">'+(takesMed(o)?pct(c.Medicaid.rate):'')+'</td>':'')+'<td class="n">'+pct(s.sameDayRate)+'</td><td class="n">'+pct(s.noShowRate)+'</td><td class="n">'+pct(s.fuRate)+'</td><td class="n">'+s.rpi+'</td><td class="n">'+ow.allOpen+'</td></tr>'; }).join('')+
+    /* BY OFFICE. Leaders: the offices in view, as before. TCs see EVERY office (Selene, 19/10:
+       "we do want the Treatment Coordinators to be able to see one another's results. Please
+       make sure they can all view the 'By Office' box so they can see conversion rates across
+       locations") - rates and counts only, no patients, the same table for every TC; their own
+       office is shaded, and only their own office's row opens anything. */
+    const everyOffice=iAmTC() && !canManage();
+    const boxOffs=everyOffice ? allOffices() : (inView().length>1 ? inView() : []);
+    if(boxOffs.length>1){
+      const src=everyOffice ? EVERY : list, k=everyOffice ? null : keep, medB=boxOffs.some(takesMed), mine=myOffices();
+      h+='<div class="card"><h2>By office</h2><p class="sub">'+esc(fmtM(month))+(everyOffice?' &middot; every office &middot; rates and counts only &mdash; no patient details. Every TC sees the same table.':(tcFilter?' · '+esc(tcFilter):''))+'</p><div class="tblwrap" style="box-shadow:none"><table class="t"><thead><tr><th>Office</th><th class="n">Slots</th><th class="n">Scheduled</th><th class="n">Capacity</th><th class="n">Completed</th><th class="n">Consults</th><th class="n">Starts</th><th class="n">Conv. private</th>'+(medB?'<th class="n">Conv. Medicaid</th>':'')+'<th class="n">Same-day</th><th class="n">No-show</th><th class="n">Follow-up</th><th class="n">RIP</th><th class="n">Open</th></tr></thead><tbody>'+
+        boxOffs.map(o=>{ const L=src.filter(r=>r.office===o), s=TC.monthStats(L, month, TC.slotsInMonth(SLOTS[o]||{}, month, isOpenFn(o), until()), d, k), ow=TC.openWork(k?L.filter(k):L, d), c=s.conversion;
+          const own=mine.indexOf(o)>=0, opens=!everyOffice || (own && mine.length>1);
+          const tr=opens ? '<tr class="click'+(everyOffice&&own?' mine':'')+'"'+attr('act','office')+attr('v',o)+'>' : '<tr'+(everyOffice&&own?' class="mine"':'')+'>';
+          return tr+'<td><b>'+esc(o)+'</b>'+(everyOffice&&own?' <span class="small muted">(yours)</span>':'')+'</td><td class="n">'+s.slots+'</td><td class="n">'+s.scheduled+'</td><td class="n">'+pct(s.capacity)+'</td><td class="n">'+s.completed+'</td><td class="n">'+c.total.consults+'</td><td class="n">'+c.total.starts+'</td><td class="n"><b>'+pct(c['Private pay'].rate)+'</b></td>'+(medB?'<td class="n">'+(takesMed(o)?pct(c.Medicaid.rate):'')+'</td>':'')+'<td class="n">'+pct(s.sameDayRate)+'</td><td class="n">'+pct(s.noShowRate)+'</td><td class="n">'+pct(s.fuRate)+'</td><td class="n">'+s.rpi+'</td><td class="n">'+ow.allOpen+'</td></tr>'; }).join('')+
         '</tbody></table></div></div>';
     }
     /* EVERY TC, view only (Selene, 16/10): "all TCs to have view-only access to the TC
@@ -1159,7 +1170,7 @@
 })();
 </script>
 <script>PH.nav('tc');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(window.TCPAGE)TCPAGE.identity();});document.addEventListener('ph-identity',function(){if(window.TCPAGE)TCPAGE.identity();});</script>
-<script src="tour.js?v=hc84"></script>
+<script src="tour.js?v=hc85"></script>
 <script>
 Tour.init([
   {sel:'#offbar', title:'Your office', body:'You see the offices you work at. Heather, Selene and leadership see every office and can pick one.'},
