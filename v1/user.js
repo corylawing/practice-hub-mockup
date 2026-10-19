@@ -133,6 +133,22 @@
   }
   try{ applyTheme(localStorage.getItem(THEME_KEY)||'homebrace'); }catch(_){}
 
+  /* MENU LAYOUT (19/10/2026). Cory: a profile setting for desktop - the tabs across the top
+     as they are today, "or like a more modern app the side bar is on the left". Per person,
+     exactly like the colours: on this device at once (before the page draws, so it never
+     jumps), saved in their own row, and theirs on any computer they sign in on. Computers
+     only (960px and wider); phones keep the bar along the bottom. Default: as today. */
+  const LAYOUT_KEY='ph_layout';
+  const LAYOUTS=[{k:'top',  n:'Tabs across the top', note:'As it is today'},
+                 {k:'side', n:'Sidebar on the left', note:'Like most apps'}];
+  let LAYOUT='top';
+  function applyLayout(k){
+    LAYOUT = k==='side' ? 'side' : 'top';
+    const c=document.documentElement && document.documentElement.classList;
+    if(c){ if(LAYOUT==='side') c.add('ph-lay-side'); else c.remove('ph-lay-side'); }
+  }
+  try{ applyLayout(localStorage.getItem(LAYOUT_KEY)); }catch(_){}
+
   /* ------------------------------------------------------------------
      WHO IS THIS?
      Sandbox: the "Viewing as" dropdown, so roles can be demonstrated.
@@ -1140,6 +1156,49 @@
   .ph-ok.on{opacity:1}
   .ph-ro-banner{background:#FFF6E9;border:1px solid #f0d9ae;color:#7a4d0a;border-radius:12px;padding:11px 15px;font-size:13.5px;font-weight:600;margin-bottom:16px;display:flex;align-items:center;gap:9px}
   @media(max-width:560px){ .ph-g{grid-template-columns:1fr} }
+
+  /* ---- SIDEBAR MENU, for whoever picks it (profile -> Menu on a computer). Only on pages
+          that have the menu, and only 960px and wider: below that nothing here applies and the
+          page is exactly as before - tabs across the top, or the phone bar. The header keeps
+          the bell, search and name; its logo moves to the top of the sidebar and the page's
+          name becomes the header's title. ---- */
+  .ph-sidenav{display:none}
+  @media(min-width:960px){
+    html.ph-lay-side body:has(.v1nav){padding-left:248px}
+    html.ph-lay-side body:has(.v1nav) .v1nav{display:none !important}
+    html.ph-lay-side .ph-sidenav{display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;width:248px;z-index:45;
+      background:var(--navy,#0F2A4A);border-right:1px solid rgba(255,255,255,.07)}
+    html.ph-lay-side body:has(.v1nav) .hdr .mark{display:none}
+    html.ph-lay-side body:has(.v1nav) .hdr .brand{font-size:0}
+    html.ph-lay-side body:has(.v1nav) .hdr .brand small{font-size:18px;font-weight:700;color:#fff;line-height:34px}
+  }
+  .ph-sidenav .ph-sb-brand{display:flex;align-items:center;gap:10px;height:60px;flex:none;padding:0 18px;
+    color:#fff;text-decoration:none;font-weight:700;font-size:18px}
+  .ph-sidenav .ph-sb-brand img{width:34px;height:34px;display:block}
+  .ph-sidenav .ph-sb-brand i{font-style:normal;color:var(--teal2,#2BC0B8)}
+  .ph-sidenav .ph-sb-list{display:flex;flex-direction:column;gap:2px;padding:10px;overflow-y:auto;flex:1}
+  .ph-sidenav .ph-sb-list a{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;position:relative;
+    color:var(--navy-mute,#B7C6DA);font-size:14.5px;font-weight:600;text-decoration:none;line-height:1.25}
+  .ph-sidenav .ph-sb-list a:hover{background:rgba(255,255,255,.06);color:#fff}
+  .ph-sidenav .ph-sb-list a.active{background:rgba(255,255,255,.11);color:#fff}
+  .ph-sidenav .ph-sb-list a.active::before{content:"";position:absolute;left:-10px;top:9px;bottom:9px;width:3px;
+    border-radius:0 3px 3px 0;background:var(--teal2,#2BC0B8)}
+  .ph-sidenav a:focus-visible{outline:2px solid var(--teal2,#2BC0B8);outline-offset:-2px}
+  .ph-sidenav .ti{width:20px;height:20px;flex:none;opacity:.8}
+  .ph-sidenav a.active .ti{opacity:1;color:var(--teal2,#2BC0B8)}
+  @media print{ .ph-sidenav{display:none !important} html.ph-lay-side body{padding-left:0 !important} }
+  /* the choice, in the profile - a little picture of each */
+  .ph-lays{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .ph-lay{display:flex;flex-direction:column;gap:6px;border:1.5px solid #E4E8EE;background:#fff;border-radius:12px;position:relative;
+    padding:7px 7px 8px;cursor:pointer;text-align:left;font-family:inherit;color:var(--ink,#1F2D3D)}
+  .ph-lay:hover{border-color:#CBD5E1}
+  .ph-lay.on{border-color:var(--teal-600,#0F827E);box-shadow:0 0 0 3px var(--teal-soft,#E5F4F3)}
+  .ph-laypic{display:grid;height:46px;border-radius:8px;overflow:hidden;border:1px solid rgba(15,42,74,.08);background:#F7F9FB}
+  .ph-laypic-top{grid-template-rows:10px 1fr}
+  .ph-laypic-side{grid-template-columns:18px 1fr}
+  .ph-laypic-b{background:var(--navy,#0F2A4A)}
+  .ph-laypic-c{background:linear-gradient(#DCE3EA,#DCE3EA) 7px 7px/52% 4px no-repeat,
+    linear-gradient(#E7ECF1,#E7ECF1) 7px 15px/72% 4px no-repeat,linear-gradient(#E7ECF1,#E7ECF1) 7px 23px/60% 4px no-repeat,#F7F9FB}
   `;
   const style=document.createElement('style'); style.textContent=css; document.head.appendChild(style);
 
@@ -1541,6 +1600,10 @@
           '<div class="ph-themes" id="ph-themes">'+themePicker()+'</div>'+
           '<div style="font-size:11.5px;color:#56627A;margin-top:6px">Just for you, on every device you sign in on. '+
           'Office colors on the schedule stay the same for everyone.</div></div>'+
+        '<div class="ph-f" style="margin-bottom:16px"><label>Menu on a computer</label>'+
+          '<div class="ph-lays" id="ph-lays">'+layoutPicker()+'</div>'+
+          '<div style="font-size:11.5px;color:#56627A;margin-top:6px">Just for you, on every computer you sign in on. '+
+          'Phones always keep the bar along the bottom.</div></div>'+
         '<div class="ph-f" style="margin-bottom:14px"><label>Preferred name</label>'+
           '<input class="ph-edit" id="ph-pref" value="'+((p.preferred||'')).replace(/"/g,'&quot;')+'" placeholder="'+p.first+'">'+
           '<div style="font-size:11.5px;color:#56627A;margin-top:4px">What you\u2019d like to be called \u2014 this is the name your team sees. Leave blank to use \u201c'+p.first+'\u201d.</div></div>'+
@@ -1601,7 +1664,11 @@
     const key=profileKey();
     const use=row=>{ const k=(row&&row.theme)||'homebrace';
       if(k!==THEME) applyTheme(k);
-      try{ localStorage.setItem(THEME_KEY, THEME); }catch(_){} };
+      try{ localStorage.setItem(THEME_KEY, THEME); }catch(_){}
+      // and their menu layout, the same way (a shared computer: theirs, not the last person's)
+      const lay=(row && row.layout)==='side' ? 'side' : 'top';
+      if(lay!==LAYOUT){ applyLayout(lay); sidenav(); }
+      try{ localStorage.setItem(LAYOUT_KEY, LAYOUT); }catch(_){} };
     let local=null; try{ local=JSON.parse(localStorage.getItem(key)); }catch(_){}
     if(local) use(local);
     if(window.PH_STORE && isLive() && window.PH_AUTH){
@@ -1610,6 +1677,22 @@
         use(row);
       }).catch(function(){});
     }
+  }
+  /* The menu layout: the same three steps as the colours. */
+  function setLayout(k){
+    applyLayout(k);
+    try{ localStorage.setItem(LAYOUT_KEY, LAYOUT); }catch(_){}
+    saveMine({layout:LAYOUT});
+    const box=document.getElementById('ph-lays'); if(box) box.innerHTML=layoutPicker();
+    sidenav();
+  }
+  function layoutPicker(){
+    return LAYOUTS.map(l=>{ const on=l.k===LAYOUT;
+      return '<button type="button" class="ph-lay'+(on?' on':'')+'" aria-pressed="'+on+'" onclick="PH.setLayout(\''+l.k+'\')">'+
+        '<span class="ph-laypic ph-laypic-'+l.k+'" aria-hidden="true"><span class="ph-laypic-b"></span><span class="ph-laypic-c"></span></span>'+
+        (on?'<span class="ph-thck" aria-hidden="true">\u2713</span>':'')+
+        '<span class="ph-thn">'+escHTML(l.n)+'</span><span class="ph-thnote">'+escHTML(l.note)+'</span></button>';
+    }).join('');
   }
   function themePicker(){
     return THEMES.map(th=>{
@@ -2174,7 +2257,19 @@
     if(host) host.innerHTML=NAV.filter(x=>x.show()).map(x=>
       '<a href="'+x.href+'"'+(x.k===NAV_ACTIVE?' class="active"':'')+'>'+x.n+'</a>').join('');
     tabbar();
+    sidenav();
     guard(NAV_ACTIVE);
+  }
+  /* THE SIDEBAR - the same list as the tabs (same show() rule, same order), full names and
+     the phone bar's line icons. Made on any page with the menu; CSS decides whether it shows
+     (Menu on a computer = Sidebar, and a wide enough screen). */
+  function sidenav(){
+    if(!document.body || !document.querySelector('.v1nav')) return;
+    let side=document.querySelector('.ph-sidenav');
+    if(!side){ side=document.createElement('aside'); side.className='ph-sidenav'; side.setAttribute('aria-label','Main menu'); document.body.appendChild(side); }
+    side.innerHTML='<a class="ph-sb-brand" href="home.html"><img src="../assets/logo-mark.png?v=2" alt="" width="34" height="34"><span>Home-<i>Brace</i></span></a>'+
+      '<nav class="ph-sb-list">'+NAV.filter(x=>x.show()).map(x=>{ const p=splitNav(x.n);
+        return '<a href="'+x.href+'"'+(x.k===NAV_ACTIVE?' class="active" aria-current="page"':'')+'>'+icon(x.k)+'<span>'+escHTML(p.label)+'</span></a>'; }).join('')+'</nav>';
   }
 
   /* The phone bar. Rendered from the SAME filtered list as the top nav, every time nav()
@@ -2639,7 +2734,7 @@
   const isLive=()=>env()==='live';
 
   window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, rosterView, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK, notesHTML, searchHTML, searchDocs, searchDocsHTML, levelForTeams, teamsSeeAll, tcOn, tcRoleFor, saveFace, faceOf,
-    setTheme, theme:()=>THEME, themes:()=>THEMES.map(t=>({k:t.k, n:t.n})), schemeTokens:k=>schemeTokens(themeOf(k)), contrast,
+    setTheme, theme:()=>THEME, setLayout, layout:()=>LAYOUT, layouts:()=>LAYOUTS.map(l=>({k:l.k, n:l.n})), themes:()=>THEMES.map(t=>({k:t.k, n:t.n})), schemeTokens:k=>schemeTokens(themeOf(k)), contrast,
     feedback:openFeedback, feedbackText, feedbackContext, learning:stillLearning};
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mount); else mount();
 })();

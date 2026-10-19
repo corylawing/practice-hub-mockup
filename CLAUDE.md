@@ -148,6 +148,19 @@ speech-to-text, like phone dictation - Cory chose it knowing that. Not done: Chr
 (`processLocally`) - untestable here, could fail silently; add only with a real-device test. Verified with a fake
 engine in the browser pane (desktop + phone width); real voice needs a real device. tc tests 147.
 
+**Menu on a computer: tabs on top or a sidebar (19/10, hc84).** Cory: a profile setting for desktop - tabs across the top
+as today, "or like a more modern app the side bar is on the left". Profile -> "Menu on a computer" (two picture cards,
+under Colors). Per person exactly like the colour scheme: `ph_layout` on the device, applied at parse (`applyLayout`,
+class `ph-lay-side` on <html>, no flash), saved in the person's own row (`saveMine({layout})`), re-applied for whoever
+signs in (`syncTheme`'s `use(row)` - a shared front-desk computer shows each person theirs). Default `top` = untouched.
+`sidenav()` (called from `nav()`) builds `<aside class="ph-sidenav">` from the SAME `NAV.filter(show)` list, full names +
+the phone bar's line icons, logo -> Home, active marked; only on pages with `.v1nav`. All the moving CSS is inside
+`@media(min-width:960px)` and gated by `html.ph-lay-side body:has(.v1nav)`: 248px fixed sidebar (z 45 - every
+dialog/pop-up is 50+), body padding-left, `.v1nav` hidden, header logo hidden and the brand shrunk to the page name
+(`.hdr .brand{font-size:0}` + its `small` at 18px). Under 960px it's the tabs; phones keep the bottom bar. Checked all
+9 pages at 1024px (no sideways scroll; Admin's grid scrolls in its own box as before), a theme, 900px, phone, and back
+to top. Guide (start.html) points to the setting. Tests: test/layout.test.js (21) - in test/all.sh.
+
 **Document search finds Word/Excel files; faster (14/10, hc79).** Jessica: searching "hygiene", the oral hygiene form
 (`Oral Hygiene Form[Editable].docx`) never came up, and search was slow. SharePoint gives Word/Excel/PowerPoint files an
 Office Online webUrl (`/_layouts/15/Doc.aspx?sourcedoc=...`, no folders), and searchDocs placed results by webUrl, so
