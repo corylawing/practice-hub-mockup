@@ -190,10 +190,9 @@ const t=(n,v)=>{ (v?ok:bad).push(n); };
   t('the practice COO still gets Admin', H.PH.can('admin')==='manage');
   t('the COO is still an admin', H.PH.isAdmin()===true);
   t('admin.html is NOT locked for her', H.locked()===false);
-  /* Every tab but the TC Tracker, which stays off the live site until the practice says
-     go (12/10/2026, user.js tcOn) - whatever Teams & Access says. */
-  t('and her menu still has every tab', H.tabs().length===H.PH.NAV.filter(x=>x.k!=='tc').length);
-  t('the TC Tracker stays off the live site until it is switched on', H.PH.tcOn()===false && H.tabs().indexOf('tc')<0);
+  /* Every tab - the TC Tracker included since it went live (19/10/2026, Cory: "yes on production"). */
+  t('and her menu has every tab', H.tabs().length===H.PH.NAV.length);
+  t('the TC Tracker is on on the live site', H.PH.tcOn()===true && H.tabs().indexOf('tc')>=0);
 
   const BOOT=load({page:'admin'});
   BOOT.PH.nav('admin');
@@ -283,7 +282,23 @@ const t=(n,v)=>{ (v?ok:bad).push(n); };
   PN.PH.nav('tc');
   PN.signIn({ displayName:'Test Doctor', mail:'test.doctor@example.com', userPrincipalName:'test.doctor@example.com',
               jobTitle:'Doctor', department:'Doctors', officeLocation:'Hobbs' });
-  t('...but the preview flag does nothing for anyone who is not an admin', PN.PH.tcOn()===false && PN.tabs().indexOf('tc')<0);
+  t('...and on the live site a doctor (no TC Tracker level) still has no TC tab, preview flag or not', PN.tabs().indexOf('tc')<0);
+  /* 19/10: live for everyone - the tab follows Teams & Access, like every other tab. Made-up people. */
+  const LT=load({ page:'tc' });
+  LT.PH.nav('tc');
+  LT.signIn({ displayName:'Test Coordinator', mail:'test.tc@example.com', userPrincipalName:'test.tc@example.com',
+              jobTitle:'Treatment Coordinator', department:'TCs', officeLocation:'Hobbs' });
+  t('live: a TC has the TC Tracker tab and the page opens', LT.PH.can('tc')==='edit' && LT.tabs().indexOf('tc')>=0 && LT.locked()===false);
+  const LO=load({ page:'tc' });
+  LO.PH.nav('tc');
+  LO.signIn({ displayName:'Test Manager', mail:'test.om@example.com', userPrincipalName:'test.om@example.com',
+              jobTitle:'Office Manager', department:'Office Managers', officeLocation:'Carlsbad' });
+  t('live: an office manager has it too (See)', LO.PH.can('tc')==='view' && LO.tabs().indexOf('tc')>=0 && LO.locked()===false);
+  const LX=load({ page:'tc', ls:{ ph_access:JSON.stringify({'TCs':{schedule:'view',team:'view',tc:'none'}}) } });
+  LX.PH.nav('tc');
+  LX.signIn({ displayName:'Test Coordinator', mail:'test.tc@example.com', userPrincipalName:'test.tc@example.com',
+              jobTitle:'Treatment Coordinator', department:'TCs', officeLocation:'Hobbs' });
+  t('live: a team set to nothing in Teams & Access has no tab and the page stays shut', LX.tabs().indexOf('tc')<0 && (LX.locked() || LX.pending()));
   /* 17/10: SharePoint access to the TC Tracker's patient folder follows Teams & Access. */
   const R=PA.PH.tcRoleFor;
   t('TC folder access: admins and Log + calls / Everything = edit, See = read, nothing = nothing',

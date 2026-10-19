@@ -166,7 +166,15 @@ one another's results. Please make sure they can all view the 'By Office' box so
 locations." viewNumbers(): for a TC (`iAmTC() && !canManage()`) the box lists `allOffices()` from EVERY (rates and
 counts only, no tcFilter), own office shaded "(yours)", only own-office rows clickable (and only if they have 2+);
 load() now reads every office's slots (no patient data) so Slots/Capacity show for all. Leaders: unchanged (offices in
-view, all rows open). Office managers (See): unchanged - own office only, no By office (Selene asked about TCs only).
+view, all rows open). Office managers: same as TCs since hc86 (Cory: "Same").
+
+**TC TRACKER IS LIVE FOR STAFF (19/10/2026, hc86).** Cory: "yes on production". `TC_LIVE=true` in user.js: on the live
+site the tab, page and Home tile follow Teams & Access (TC Tracker column) like every other tab; admins always see it;
+no TC level = no tab and the page stays shut (permissions tests 60). Admin's TC folder sync now runs for every admin
+with Admin open. `tcPreview` is now moot (left in, harmless). "By office" with every office: everyone below
+"Everything" (`!canManage()` - TCs, office managers). I could not check the folder lock myself (no access to the
+practice's SharePoint from here): Admin -> Teams & Access shows a yellow "not locked yet" box if it isn't - the first
+thing to look at if anything about TC access seems wrong.
 
 **Document search finds Word/Excel files; faster (14/10, hc79).** Jessica: searching "hygiene", the oral hygiene form
 (`Oral Hygiene Form[Editable].docx`) never came up, and search was slow. SharePoint gives Word/Excel/PowerPoint files an

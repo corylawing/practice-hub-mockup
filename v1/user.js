@@ -1729,8 +1729,11 @@
   /* TC TRACKER - sandbox only until the practice says go (12/10/2026). Cory: "I want to do
      it in the sandbox first before we push to production." On the live site the tab, the
      page and the Home tile stay off whatever Teams & Access says, until this is true. Going
-     live also needs its own locked SharePoint list for the patient details (CLAUDE.md). */
-  const TC_LIVE=false;
+     live also needs its own locked SharePoint list for the patient details (CLAUDE.md).
+     ON 19/10/2026 - Cory: "yes on production". From now on the tab, the page and the Home
+     tile follow Teams & Access (the TC Tracker column) like every other tab; the patient
+     details are in their own locked folder (tcstore.js), access given by Admin (docs.js). */
+  const TC_LIVE=true;
   /* Before everyone gets it, an ADMIN can try it on the live site: open tc.html?tcpreview once
      (remembered in that browser). Cory, 17/10: test it on the real site first. Nobody else
      sees anything until TC_LIVE is true. */

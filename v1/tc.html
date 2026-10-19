@@ -263,13 +263,13 @@
     *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}
   }
 </style>
-<script src="user.js?v=hc85"></script>
+<script src="user.js?v=hc86"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc85"></script>
-  <script src="gate.js?v=hc85"></script>
-  <script src="_staff.js?v=hc85"></script>
-  <script src="tc.js?v=hc85"></script>
-  <script src="tcstore.js?v=hc85"></script>
+  <script src="store.js?v=hc86"></script>
+  <script src="gate.js?v=hc86"></script>
+  <script src="_staff.js?v=hc86"></script>
+  <script src="tc.js?v=hc86"></script>
+  <script src="tcstore.js?v=hc86"></script>
 </head>
 <body>
 <div class="ribbon">SANDBOX — made-up patients. Use “Try it as” to see it as a TC, an office manager or Selene.</div>
@@ -688,16 +688,17 @@
       A('No-show rate', pct(m.noShowRate), 'No-shows ÷ scheduled')+A('Follow-up completion rate', pct(m.fuRate), 'Done ÷ all Yes/No follow-ups')+
       A('Same-day contracts', m.sameDay, 'Count')+A('Follow-ups completed', m.fuYes, 'Count')+'</table></div>';
     h+='</div>';
-    /* BY OFFICE. Leaders: the offices in view, as before. TCs see EVERY office (Selene, 19/10:
-       "we do want the Treatment Coordinators to be able to see one another's results. Please
-       make sure they can all view the 'By Office' box so they can see conversion rates across
-       locations") - rates and counts only, no patients, the same table for every TC; their own
-       office is shaded, and only their own office's row opens anything. */
-    const everyOffice=iAmTC() && !canManage();
+    /* BY OFFICE. Leaders: the offices in view, as before. Everyone else sees EVERY office
+       (Selene, 19/10: "we do want the Treatment Coordinators to be able to see one another's
+       results. Please make sure they can all view the 'By Office' box so they can see
+       conversion rates across locations"; Cory, same day: office managers too) - rates and
+       counts only, no patients, one table for all; their own office is shaded, and only
+       their own office's row opens anything. */
+    const everyOffice=!canManage();
     const boxOffs=everyOffice ? allOffices() : (inView().length>1 ? inView() : []);
     if(boxOffs.length>1){
       const src=everyOffice ? EVERY : list, k=everyOffice ? null : keep, medB=boxOffs.some(takesMed), mine=myOffices();
-      h+='<div class="card"><h2>By office</h2><p class="sub">'+esc(fmtM(month))+(everyOffice?' &middot; every office &middot; rates and counts only &mdash; no patient details. Every TC sees the same table.':(tcFilter?' · '+esc(tcFilter):''))+'</p><div class="tblwrap" style="box-shadow:none"><table class="t"><thead><tr><th>Office</th><th class="n">Slots</th><th class="n">Scheduled</th><th class="n">Capacity</th><th class="n">Completed</th><th class="n">Consults</th><th class="n">Starts</th><th class="n">Conv. private</th>'+(medB?'<th class="n">Conv. Medicaid</th>':'')+'<th class="n">Same-day</th><th class="n">No-show</th><th class="n">Follow-up</th><th class="n">RIP</th><th class="n">Open</th></tr></thead><tbody>'+
+      h+='<div class="card"><h2>By office</h2><p class="sub">'+esc(fmtM(month))+(everyOffice?' &middot; every office &middot; rates and counts only &mdash; no patient details. TCs and office managers all see the same table.':(tcFilter?' · '+esc(tcFilter):''))+'</p><div class="tblwrap" style="box-shadow:none"><table class="t"><thead><tr><th>Office</th><th class="n">Slots</th><th class="n">Scheduled</th><th class="n">Capacity</th><th class="n">Completed</th><th class="n">Consults</th><th class="n">Starts</th><th class="n">Conv. private</th>'+(medB?'<th class="n">Conv. Medicaid</th>':'')+'<th class="n">Same-day</th><th class="n">No-show</th><th class="n">Follow-up</th><th class="n">RIP</th><th class="n">Open</th></tr></thead><tbody>'+
         boxOffs.map(o=>{ const L=src.filter(r=>r.office===o), s=TC.monthStats(L, month, TC.slotsInMonth(SLOTS[o]||{}, month, isOpenFn(o), until()), d, k), ow=TC.openWork(k?L.filter(k):L, d), c=s.conversion;
           const own=mine.indexOf(o)>=0, opens=!everyOffice || (own && mine.length>1);
           const tr=opens ? '<tr class="click'+(everyOffice&&own?' mine':'')+'"'+attr('act','office')+attr('v',o)+'>' : '<tr'+(everyOffice&&own?' class="mine"':'')+'>';
@@ -1170,7 +1171,7 @@
 })();
 </script>
 <script>PH.nav('tc');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(window.TCPAGE)TCPAGE.identity();});document.addEventListener('ph-identity',function(){if(window.TCPAGE)TCPAGE.identity();});</script>
-<script src="tour.js?v=hc85"></script>
+<script src="tour.js?v=hc86"></script>
 <script>
 Tour.init([
   {sel:'#offbar', title:'Your office', body:'You see the offices you work at. Heather, Selene and leadership see every office and can pick one.'},
