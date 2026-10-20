@@ -1208,6 +1208,11 @@
           goes too (Cory, 20/10: "It stays and looks kind of funny"): its search, bell and name
           sit at the foot of the sidebar, the logo at its top, and each page's own heading
           names the page. ---- */
+  /* the tabs across the top: line icons sized to the text (20/10). A touch less space between
+     tabs, so an admin's full row (9 tabs) fits a laptop screen - it overflowed even with emoji. */
+  .v1nav .v1nav-in a{display:inline-flex;align-items:center;gap:6px;padding-left:9px;padding-right:9px}
+  .v1nav .v1nav-in a .ti{width:16px;height:16px;flex:none;opacity:.8}
+  .v1nav .v1nav-in a.active .ti{opacity:1;color:var(--teal2,#2BC0B8)}
   .ph-sidenav{display:none}
   @media(min-width:960px){
     html.ph-lay-side body:has(.v1nav){padding-left:248px}
@@ -2320,8 +2325,11 @@
   function nav(active){
     if(active!=null) NAV_ACTIVE=active;
     const host=document.getElementById('nav')||document.querySelector('.v1nav-in');
-    if(host) host.innerHTML=NAV.filter(x=>x.show()).map(x=>
-      '<a href="'+x.href+'"'+(x.k===NAV_ACTIVE?' class="active"':'')+'>'+x.n+'</a>').join('');
+    /* Line icons - the same ones as the phone bar and the sidebar - not emoji. Cory, 20/10:
+       "icons instead of emojis for the different tabs ... more professional". Emoji draw
+       differently on every computer and phone. */
+    if(host) host.innerHTML=NAV.filter(x=>x.show()).map(x=>{ const p=splitNav(x.n);
+      return '<a href="'+x.href+'"'+(x.k===NAV_ACTIVE?' class="active"':'')+'>'+icon(x.k)+'<span>'+escHTML(p.label)+'</span></a>'; }).join('');
     tabbar();
     sidenav();
     guard(NAV_ACTIVE);

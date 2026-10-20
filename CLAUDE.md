@@ -197,6 +197,12 @@ Verified against a fake SharePoint: not locked -> nothing added; lock -> grants;
 Staff doesn't (folder or search); removing the team takes back only their grants, file untouched; an outsider is flagged.
 Tests: docs 135, sensitive 23. Production deploy creates the (empty) folder the first time an admin opens Admin.
 
+**Tabs: line icons, not emoji (20/10, hc94).** Cory: "icons instead of emojis for the different tabs ... more
+professional". `nav()` now draws each top tab as `icon(k)` + the full label (the same ICON set as the phone bar and the
+sidebar; NAV names keep their emoji for search). Shared CSS: `.v1nav .v1nav-in a` inline-flex, gap 6px, padding 9px a
+side, 16px icons; active icon teal2. The spacing was trimmed so an admin's full row (9 tabs) fits the 1080px row - it
+already overflowed by ~36px with emoji. Home tiles and Documents section icons are still emoji (offered as a follow-up).
+
 **TCs see every office in "By office" (19/10, hc85).** Selene: "we do want the Treatment Coordinators to be able to see
 one another's results. Please make sure they can all view the 'By Office' box so they can see conversion rates across
 locations." viewNumbers(): for a TC (`iAmTC() && !canManage()`) the box lists `allOffices()` from EVERY (rates and
