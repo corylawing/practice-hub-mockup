@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Home-Brace · Academy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" href="../assets/favicon.png?v=2" type="image/png">
+<meta name="theme-color" content="#0F2A4A">
+<meta name="apple-mobile-web-app-title" content="Home-Brace">
+<link rel="apple-touch-icon" href="../assets/logo-mark.png">
+<meta name="robots" content="noindex">
+<!-- ACADEMY - A MOCK-UP for Selene (20/10/2026), sandbox only (user.js NAV: the tab and the page
+     are off on the live site). Selene asked about role-based training: short videos and resources
+     by role, assigned to new hires, quizzes with a passing score and retakes, completion that
+     managers can follow, lessons easy to update. Made-up people and sample lessons; progress is
+     kept in this browser only. Nothing here is the real design yet. -->
+<style>
+  :root{
+    --navy:#0F2A4A; --navy2:#25456e; --teal:#149B96; --teal2:#2BC0B8; --teal-soft:#E5F4F3; --teal-600:#0F827E;
+    --ink:#1F2D3D; --soft:#56627A; --line:#E4E8EE; --canvas:#F4F6F8; --white:#fff;
+    --good:#2E9E6B; --good-soft:#E7F4EE; --bad:#D7503A; --bad-soft:#FBEAE7; --amber:#F2A03D; --amber-soft:#FFF4E2;
+    --blue:#1f6f9e; --blue-soft:#E3F0FA; --plum:#6b3fd0; --plum-soft:#F0EAFB;
+    --shadow:0 1px 2px rgba(15,42,74,.06),0 6px 18px rgba(15,42,74,.06);
+    --shadow-lg:0 10px 30px rgba(15,42,74,.12); --radius:14px; --maxw:1080px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--canvas);line-height:1.5;-webkit-font-smoothing:antialiased}
+  h1{color:var(--navy);margin:0}
+  button{font-family:inherit}
+  .ribbon{background:var(--amber);color:#3a2400;text-align:center;font-size:13px;font-weight:600;padding:6px 14px}
+  .hdr{background:var(--navy);color:#fff}
+  .hdr-in{max-width:var(--maxw);margin:0 auto;display:flex;align-items:center;gap:12px;padding:13px 20px}
+  .mark{width:34px;height:34px;flex:none;display:block}
+  .mark img{width:34px;height:34px;display:block;border-radius:50%}
+  .brand{font-weight:700;font-size:18px;color:#fff;line-height:1.1}
+  .brand i{font-style:normal;color:var(--teal2)}
+  .brand small{display:block;font-weight:500;font-size:12px;color:var(--navy-mute,#9fb4d0)}
+  .v1{background:rgba(255,255,255,.15);color:#eaf1fb;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;margin-left:6px}
+  .v1nav{background:var(--navy2)}
+  .v1nav-in{max-width:var(--maxw);margin:0 auto;display:flex;gap:2px;padding:0 12px;overflow-x:auto}
+  .v1nav a{color:var(--navy-mute,#cdd9ea);font-size:14px;font-weight:600;padding:13px 15px;text-decoration:none;border-bottom:3px solid transparent;white-space:nowrap}
+  .v1nav a:hover{color:#fff;background:rgba(255,255,255,.05)}
+  .v1nav a.active{color:#fff;border-bottom-color:var(--teal)}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:22px 20px 90px}
+  .viewas{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:13px 16px;display:flex;align-items:center;gap:13px;flex-wrap:wrap;margin-bottom:16px;border-left:5px solid var(--teal)}
+  .viewas .lab{font-size:12px;color:var(--soft);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+  .viewas select{padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;font-weight:700;color:var(--navy);background:#fff;max-width:100%;min-width:0}
+  .viewas .demo{margin-left:auto}
+  .page-head h1{font-size:25px}
+  .page-head p{margin:4px 0 0;color:var(--soft);font-size:14.5px;max-width:62ch}
+  .tabs{display:flex;gap:4px;margin:16px 0 18px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
+  .tabs::-webkit-scrollbar{display:none}
+  .tab{background:none;border:none;border-bottom:3px solid transparent;padding:11px 14px;font-size:14.5px;font-weight:700;color:var(--soft);cursor:pointer;white-space:nowrap}
+  .tab.on{color:var(--navy);border-bottom-color:var(--teal)}
+  .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
+  .card h2{margin:0 0 3px;font-size:16px;color:var(--navy)}
+  .card .sub{font-size:12.5px;color:var(--soft);margin:0 0 12px}
+  .stack{display:flex;flex-direction:column;gap:16px}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .grow{flex:1}
+  .muted{color:var(--soft)}
+  .small{font-size:12.5px}
+  .btn{background:var(--teal);color:#fff;border:none;border-radius:10px;padding:11px 18px;font-weight:700;font-size:14.5px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;text-decoration:none}
+  .btn:hover{background:var(--teal-600)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--line);font-weight:600}
+  .btn.ghost:hover{border-color:var(--teal);background:var(--teal-soft)}
+  .btn.sm{padding:7px 11px;font-size:13px;border-radius:9px}
+  .link{background:none;border:none;color:var(--teal-600);font-weight:700;cursor:pointer;padding:0;font-size:inherit}
+  .note{border-radius:12px;padding:11px 14px;font-size:13.5px;line-height:1.5}
+  .note.info{background:var(--blue-soft);border:1px solid #c3ddf2;color:#14496c}
+  .note.good{background:var(--good-soft);border:1px solid #bfe3cf;color:#1d6b47}
+  .note.warn{background:var(--amber-soft);border:1px solid #f3d7a6;color:#7a4b00}
+  .tblwrap{overflow-x:auto;background:#fff;border:1px solid var(--line);border-radius:12px}
+  table.t{border-collapse:collapse;width:100%;font-size:13.5px;font-variant-numeric:tabular-nums}
+  table.t th{background:#F7F9FB;color:var(--soft);font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+  table.t td{padding:10px;border-bottom:1px solid var(--line);vertical-align:middle}
+  table.t tr:last-child td{border-bottom:none}
+  table.t td.n, table.t th.n{text-align:right}
+  table.t tr.mine td{background:var(--teal-soft)}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+  .kpi{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;box-shadow:var(--shadow)}
+  .kpi .k{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--soft)}
+  .kpi .v{font-size:24px;font-weight:800;color:var(--navy);line-height:1.2;font-variant-numeric:tabular-nums}
+  .kpi .s{font-size:12px;color:var(--soft)}
+  .chips{display:flex;gap:6px;flex-wrap:wrap}
+  .ochip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 13px;font-size:13px;font-weight:700;color:var(--navy);cursor:pointer}
+  .ochip.on{background:var(--navy);border-color:var(--navy);color:#fff}
+
+  /* ---- the academies ---- */
+  .acads{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+  .acad{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:18px;display:flex;flex-direction:column;gap:10px;text-align:left;font:inherit;color:inherit}
+  button.acad{cursor:pointer}
+  button.acad:hover{border-color:var(--teal);box-shadow:0 0 0 3px var(--teal-soft),var(--shadow)}
+  .acad .ic{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-size:22px;background:var(--teal-soft)}
+  .acad h3{margin:0;font-size:16.5px;color:var(--navy)}
+  .acad p{margin:0;font-size:13px;color:var(--soft)}
+  .acad.soon{opacity:.75}
+  .bar{height:8px;border-radius:999px;background:#EDF1F5;overflow:hidden}
+  .bar > span{display:block;height:100%;border-radius:999px;background:var(--teal)}
+  .pill{display:inline-block;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:700;white-space:nowrap}
+  .p-done{background:var(--good-soft);color:#1d6b47}
+  .p-go{background:var(--amber-soft);color:#7a4b00}
+  .p-new{background:#EEF1F5;color:#46546b}
+  .p-late{background:var(--bad-soft);color:#9a2f1e}
+  .p-soon{background:var(--plum-soft);color:#4b2a9a}
+
+  .lessons{display:flex;flex-direction:column}
+  .lesson{display:grid;grid-template-columns:40px 1fr auto;gap:14px;align-items:center;padding:14px 4px;border-bottom:1px solid var(--line)}
+  .lesson:last-child{border-bottom:none}
+  .lesson .num{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-weight:800;color:var(--navy);background:#EEF2F6}
+  .lesson .num.ok{background:var(--good);color:#fff}
+  .lesson .t{font-weight:700;color:var(--ink);font-size:15px}
+  .lesson .m{font-size:12.5px;color:var(--soft)}
+
+  .crumbs{font-size:13px;color:var(--soft);margin-bottom:12px}
+  .crumbs button{background:none;border:none;color:var(--teal-600);font-weight:700;cursor:pointer;padding:0;font-size:inherit}
+  .video{position:relative;aspect-ratio:16/9;max-width:100%;border-radius:14px;background:linear-gradient(135deg,#123257,#1d4a78);display:grid;place-items:center;color:#fff;overflow:hidden}
+  .video .play{width:68px;height:68px;border-radius:50%;background:rgba(255,255,255,.18);display:grid;place-items:center;font-size:26px;padding-left:5px}
+  .video .cap{position:absolute;left:16px;bottom:14px;right:16px;font-size:13px;color:#d5e3f3;display:flex;justify-content:space-between;gap:10px}
+  .two{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:16px;align-items:start}
+  .files{display:flex;flex-direction:column;gap:8px}
+  .file{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:13.5px;font-weight:600;color:var(--navy);background:#fff}
+  .file .fi{font-size:18px}
+  ul.keys{margin:6px 0 0;padding-left:18px;font-size:14px}
+  ul.keys li{margin:4px 0}
+
+  .q{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:#fff}
+  .q + .q{margin-top:10px}
+  .q .qt{font-weight:700;color:var(--ink);margin-bottom:8px}
+  .q label{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border-radius:9px;cursor:pointer;font-size:14px}
+  .q label:hover{background:#F7F9FB}
+  .q input{margin-top:3px;accent-color:var(--teal)}
+  .q.right{border-color:#bfe3cf;background:#FAFDFB}
+  .q.wrong{border-color:#f0c7bf;background:#FFFBFA}
+  .q .why{font-size:13px;margin-top:6px;font-weight:600}
+  .q.right .why{color:#1d6b47} .q.wrong .why{color:#9a2f1e}
+  .score{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .score .big{font-size:40px;font-weight:800;line-height:1;color:var(--navy)}
+
+  .dm{position:fixed;inset:0;background:rgba(15,42,74,.45);display:none;align-items:flex-start;justify-content:center;padding:28px 14px;z-index:60;overflow-y:auto}
+  .dm.open{display:flex}
+  .dmc{background:#fff;border-radius:16px;box-shadow:var(--shadow-lg);width:100%;max-width:560px}
+  .dm-top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 20px;border-bottom:1px solid var(--line)}
+  .dm-top h3{margin:0;font-size:17px;color:var(--navy)}
+  .dm-top .x{background:none;border:none;font-size:24px;line-height:1;color:var(--soft);cursor:pointer;padding:2px 6px}
+  .dm-body{padding:16px 20px;display:flex;flex-direction:column;gap:12px}
+  .dm-foot{display:flex;gap:8px;justify-content:flex-end;padding:14px 20px;border-top:1px solid var(--line);flex-wrap:wrap}
+  .fld{display:flex;flex-direction:column;gap:4px}
+  .fld label{font-size:12.5px;font-weight:700}
+  .fld input,.fld select{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:14.5px;font-family:inherit;color:var(--ink);background:#fff}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:11px 18px;border-radius:12px;font-weight:700;font-size:14px;box-shadow:var(--shadow-lg);z-index:80;opacity:0;pointer-events:none;transition:opacity .2s;width:max-content;max-width:calc(100vw - 32px)}
+  .toast.on{opacity:1}
+  @media(max-width:760px){ .two{grid-template-columns:1fr} }
+  @media(max-width:640px){
+    .wrap{padding:16px 14px 90px}
+    .lesson{grid-template-columns:36px 1fr}
+    .lesson .go{grid-column:1/-1}
+    .dm{padding:0} .dmc{border-radius:0;min-height:100%}
+  }
+</style>
+<script src="user.js?v=hc89"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
+  <script src="store.js?v=hc89"></script>
+  <script src="gate.js?v=hc89"></script>
+  <script src="_staff.js?v=hc89"></script>
+</head>
+<body>
+<div class="ribbon">MOCK-UP for Selene — made-up people and sample lessons. Use “Try it as” to see it as a new hire, an office manager or Selene.</div>
+<header class="hdr">
+  <div class="hdr-in">
+    <span class="mark" aria-label="Home-Brace"><img src="../assets/logo-mark.png?v=2" alt="" width="34" height="34"></span>
+    <span class="brand">Home-<i>Brace</i><small>Academy</small></span>
+    <span class="v1">V1 preview</span>
+  </div>
+</header>
+<nav class="v1nav"><div class="v1nav-in" id="nav"></div></nav>
+
+<div class="wrap">
+  <div class="viewas">
+    <span class="lab">👤 Try it as</span>
+    <select id="persona" aria-label="Try it as"></select>
+    <button class="btn ghost sm demo" data-act="reset" title="Clear the quiz results taken in this browser">↺ Reset sample data</button>
+  </div>
+  <div class="page-head">
+    <h1>Academy</h1>
+    <p>Short videos, handouts and a quiz for each part of the job — the same training at every office, ready to revisit any time.</p>
+  </div>
+  <div id="tabs" class="tabs" role="tablist"></div>
+  <div id="view"></div>
+</div>
+
+<div class="dm" id="dlg" role="dialog" aria-modal="true"><div class="dmc" id="dlgcard"></div></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+  'use strict';
+  const el=id=>document.getElementById(id);
+  const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const PASS=80;                                         // passing score, per lesson, set by Selene
+
+  /* ---------- sample content (Selene's team would write the real lessons and questions) ---------- */
+  const ACADEMIES=[
+    {k:'fd', n:'Front Desk Academy', ic:'📞', team:'Front Desk', d:'Patient calls, getting patients ready for consults, scheduling and follow-up.', lessons:[
+      {k:'calls', n:'Answering patient calls', min:'4 min', why:'The first call is the first impression of the practice.',
+        keys:['Greet with the office name and your name','Always take a name, phone number and how they heard about us','Ask before putting anyone on hold'],
+        files:['Phone greeting & call script (PDF)','New-patient call checklist'],
+        quiz:[
+          {q:'How should you answer the phone?', a:['“Hello?”','“Thank you for calling Farnsworth Orthodontics, this is Jordan — how can I help?”','“Ortho office, please hold.”'], c:1},
+          {q:'A caller asks how much braces cost. What’s the best first step?', a:['Quote the highest price so there are no surprises','Explain that it depends on the exam, and invite them to book a consultation','Ask them to call back later'], c:1},
+          {q:'Before putting a caller on hold, you should…', a:['Ask if they can hold, and say about how long','Press hold straight away','Hang up and call them back'], c:0},
+          {q:'What must you always write down for a new-patient caller?', a:['Only their first name','Their name, phone number and how they heard about us','Their card number'], c:1},
+          {q:'A caller is upset about a bill. You should…', a:['Explain they are wrong','Listen, apologise for the trouble, and get the right person to help','Transfer them without saying anything'], c:1}]},
+      {k:'prep', n:'Screening & preparing patients for consultations', min:'5 min', why:'A prepared patient means a better consult — and more starts.',
+        keys:['Send the new-patient forms as soon as the consult is booked','Make sure a parent or decision-maker can come','Check insurance or Medicaid before the visit'],
+        files:['Consult prep checklist','Insurance & Medicaid questions'],
+        quiz:[
+          {q:'When is the best time to send new-patient forms?', a:['As soon as the consultation is booked','On the day of the visit','After the consult'], c:0},
+          {q:'A child is coming for a consult. Who should come with them?', a:['A parent or guardian who can make decisions','Any adult','No one needs to'], c:0},
+          {q:'Before the consult, what should you check?', a:['Nothing','Their insurance or Medicaid details, so the TC knows the options','Their social media'], c:1},
+          {q:'The day before the consult, you should…', a:['Confirm the appointment','Wait and see if they come','Move them to another day'], c:0},
+          {q:'Who needs to know about a patient’s special needs before the visit?', a:['Nobody','The TC and the clinical team','Only the doctor'], c:1}]},
+      {k:'sched', n:'Scheduling', min:'5 min', why:'Full schedules, fewer gaps, happier patients.',
+        keys:['Offer two times, not an open question','If the times don’t work, offer another day or a nearby office','A cancellation gets a new time before the call ends'],
+        files:['Scheduling guide','Office hours & doctors by day'],
+        quiz:[
+          {q:'A caller can’t make any of the times you offered. You…', a:['Offer another day, or a nearby office','Tell them to call back','End the call'], c:0},
+          {q:'A patient doesn’t show up for their consult. What happens next?', a:['Nothing','They’re deleted from the schedule','They go on the follow-up call list'], c:2},
+          {q:'When booking a consult, tell the patient…', a:['Nothing more','About how long the visit takes and what to bring','Only the address'], c:1},
+          {q:'Double-booking a consult slot is…', a:['Always fine','Only with the office manager’s OK','Required every day'], c:1},
+          {q:'When a patient cancels, you should…', a:['Offer a new time right away','Wait for them to call','Remove them from the list'], c:0}]},
+      {k:'beacon', n:'Practice Beacon follow-up', min:'4 min', why:'Most patients who don’t start on day one start after a good follow-up.',
+        keys:['Follow up on the date set in the TC Tracker','Pass replies on to the TC','Never put health details in a message'],
+        files:['Follow-up message templates','Practice Beacon quick guide'],
+        quiz:[
+          {q:'Why do we follow up with patients who haven’t started?', a:['To answer questions and help them decide','To pressure them','We don’t follow up'], c:0},
+          {q:'When should the follow-up happen?', a:['Whenever there’s time','On the follow-up date set in the TC Tracker','Only once a year'], c:1},
+          {q:'A patient replies to a follow-up message. You…', a:['Ignore it','Note it and pass it on to the TC','Delete it'], c:1},
+          {q:'A patient asks to stop getting messages. You…', a:['Keep sending them','Respect it and mark them so they get no more','Call them instead'], c:1},
+          {q:'Follow-up messages should never include…', a:['The office phone number','Detailed health information','A friendly greeting'], c:1}]}
+    ]},
+    {k:'ml', n:'Marketing Liaison Academy', ic:'📣', team:'Marketing', d:'Community events, referral offices and promotions.', soon:true, lessons:[]},
+    {k:'tc', n:'Treatment Coordinator Academy', ic:'🗂️', team:'TCs', d:'The consult, financial options and the call list.', soon:true, lessons:[]}
+  ];
+  const FD=ACADEMIES[0], LESSONS=FD.lessons;
+
+  /* ---------- made-up people (never real names) ---------- */
+  const TEAM=[
+    {n:'Jordan Sample', o:'Clovis', team:'Front Desk', start:'2026-10-13', me:true},
+    {n:'Avery Example', o:'Clovis', team:'Front Desk', start:'2026-09-02', r:{calls:100, prep:80, sched:100, beacon:80}},
+    {n:'Riley Demo', o:'Clovis', team:'Front Desk', start:'2026-09-21', r:{calls:80, prep:60}},
+    {n:'Morgan Placeholder', o:'Carlsbad', team:'Front Desk', start:'2026-08-11', r:{calls:100, prep:100, sched:80, beacon:100}},
+    {n:'Taylor Testcase', o:'Carlsbad', team:'Front Desk', start:'2026-10-06', r:{}},
+    {n:'Casey Mockup', o:'Hobbs', team:'Front Desk', start:'2026-09-15', r:{calls:100, prep:80, sched:60}},
+    {n:'Quinn Sampleton', o:'Lubbock', team:'Front Desk', start:'2026-09-29', r:{calls:80}},
+    {n:'Drew Exampleson', o:'Mansfield', team:'Front Desk', start:'2026-07-20', r:{calls:100, prep:100, sched:100, beacon:100}}
+  ];
+  const ROLES={
+    hire:{label:'A new front desk hire (Jordan Sample, Clovis)', name:'Jordan Sample', kind:'learner', offices:['Clovis']},
+    om:{label:'An office manager (Clovis) — sees their office', kind:'manager', offices:['Clovis']},
+    lead:{label:'Selene / leadership — every office, can edit', kind:'lead', offices:'all'}
+  };
+  let as='hire'; try{ const v=localStorage.getItem('ph_acad_as'); if(ROLES[v]) as=v; }catch(_){}
+  const R=()=>ROLES[as];
+  const KEY='ph_acad_demo';
+  let MINE={}; try{ MINE=JSON.parse(localStorage.getItem(KEY))||{}; }catch(_){ MINE={}; }
+  const saveMine=()=>{ try{ localStorage.setItem(KEY, JSON.stringify(MINE)); }catch(_){} };
+  const best=k=>MINE[k] ? MINE[k].best : null;
+  const passed=k=>(best(k)||0)>=PASS;
+  const resultsOf=p=>p.me ? Object.fromEntries(LESSONS.filter(l=>best(l.k)!=null).map(l=>[l.k, best(l.k)])) : (p.r||{});
+  const passedOf=p=>LESSONS.filter(l=>(resultsOf(p)[l.k]||0)>=PASS).length;
+  const today='2026-10-20';
+  const dueOf=p=>{ const d=new Date(p.start+'T12:00:00'); d.setDate(d.getDate()+21); return d.toISOString().slice(0,10); };
+  const fmt=iso=>new Date(iso+'T12:00:00').toLocaleDateString('en-US',{month:'short', day:'numeric'});
+  function statusOf(p){
+    const n=passedOf(p), any=Object.keys(resultsOf(p)).length;
+    if(n===LESSONS.length) return ['Done','p-done'];
+    if(dueOf(p)<today) return ['Overdue','p-late'];
+    return any ? ['In progress','p-go'] : ['Not started','p-new'];
+  }
+
+  /* ---------- state ---------- */
+  let tab='mine', open=null, lesson=null, quiz=null, office=null;
+  function tabsFor(){
+    const k=R().kind;
+    return k==='learner' ? [['mine','My training']] : k==='manager' ? [['mine','Academies'],['team','Team progress']] : [['mine','Academies'],['team','Team progress'],['manage','Manage']];
+  }
+  function render(){
+    const T=tabsFor(); if(!T.some(t=>t[0]===tab)) tab='mine';
+    el('tabs').innerHTML=T.map(t=>'<button class="tab'+(t[0]===tab?' on':'')+'" data-act="tab" data-v="'+t[0]+'">'+t[1]+'</button>').join('');
+    el('view').innerHTML = tab==='team' ? viewTeam() : tab==='manage' ? viewManage() : quiz ? viewQuiz() : lesson ? viewLesson() : open ? viewAcademy() : viewHome();
+  }
+
+  /* ---------- the academies ---------- */
+  function progressHTML(){
+    const n=LESSONS.filter(l=>passed(l.k)).length, pct=Math.round(100*n/LESSONS.length);
+    return '<div class="row small"><span class="grow"><b>'+n+' of '+LESSONS.length+'</b> lessons passed</span><span class="muted">'+pct+'%</span></div><div class="bar"><span style="width:'+pct+'%"></span></div>';
+  }
+  function viewHome(){
+    const lr=R().kind==='learner';
+    let h='';
+    if(lr){
+      const me=TEAM.find(p=>p.me), done=passedOf(me)===LESSONS.length;
+      h+='<div class="note '+(done?'good':'info')+'" style="margin-bottom:16px">'+(done
+        ? '🎉 <b>You’ve finished the Front Desk Academy.</b> Your manager can see it. Come back any time to rewatch a lesson.'
+        : '👋 <b>Welcome, Jordan.</b> You’re on the Front Desk team, so the <b>Front Desk Academy</b> was given to you automatically. Finish it by <b>'+fmt(dueOf(me))+'</b> — about 20 minutes of video, plus a short quiz after each lesson.')+'</div>';
+    }
+    h+='<div class="acads">'+ACADEMIES.map(a=>{
+      if(a.soon) return '<div class="acad soon"><div class="ic">'+a.ic+'</div><h3>'+esc(a.n)+'</h3><p>'+esc(a.d)+'</p><div><span class="pill p-soon">Coming next</span></div></div>';
+      return '<button class="acad" data-act="academy" data-v="'+a.k+'"><div class="ic">'+a.ic+'</div><h3>'+esc(a.n)+'</h3><p>'+esc(a.d)+'</p>'+
+        (lr ? progressHTML() : '<div class="small muted">'+a.lessons.length+' lessons · for the '+esc(a.team)+' team · pass mark '+PASS+'%</div>')+'</button>';
+    }).join('')+'</div>';
+    return h;
+  }
+  function viewAcademy(){
+    const lr=R().kind==='learner';
+    let h='<div class="crumbs"><button data-act="home">Academy</button> › '+esc(FD.n)+'</div>';
+    h+='<div class="card"><div class="row" style="margin-bottom:6px"><h2 class="grow" style="font-size:19px">'+FD.ic+' '+esc(FD.n)+'</h2>'+(lr?'':'<span class="small muted">Given to everyone on the Front Desk team, at every office</span>')+'</div>'+
+      (lr?progressHTML():'')+'<div class="lessons" style="margin-top:8px">'+LESSONS.map((l,i)=>{
+        const b=best(l.k), ok=passed(l.k);
+        const st=!lr ? '' : ok ? '<span class="pill p-done">Passed · '+b+'%</span>' : b!=null ? '<span class="pill p-late">'+b+'% — retake</span>' : '<span class="pill p-new">Not started</span>';
+        return '<div class="lesson"><div class="num'+(ok?' ok':'')+'">'+(ok?'✓':i+1)+'</div><div><div class="t">'+esc(l.n)+'</div><div class="m">▶ Video · '+l.min+' &nbsp;·&nbsp; '+l.files.length+' handouts &nbsp;·&nbsp; 5-question quiz</div></div>'+
+          '<div class="row go">'+st+'<button class="btn '+(ok?'ghost ':'')+'sm" data-act="lesson" data-v="'+l.k+'">'+(ok?'Review':b!=null?'Retake':'Start')+'</button></div></div>';
+      }).join('')+'</div></div>';
+    return h;
+  }
+  function viewLesson(){
+    const l=LESSONS.find(x=>x.k===lesson), i=LESSONS.indexOf(l), b=best(l.k);
+    let h='<div class="crumbs"><button data-act="home">Academy</button> › <button data-act="academy" data-v="fd">'+esc(FD.n)+'</button> › Lesson '+(i+1)+'</div>';
+    h+='<div class="two"><div class="stack"><div class="video" role="img" aria-label="Lesson video"><div class="play">▶</div><div class="cap"><span>'+esc(l.n)+'</span><span>'+l.min+'</span></div></div>'+
+      '<div class="card"><h2 style="font-size:19px">'+esc(l.n)+'</h2><p class="sub" style="margin-bottom:6px">'+esc(l.why)+'</p><b class="small">Key points</b><ul class="keys">'+l.keys.map(k=>'<li>'+esc(k)+'</li>').join('')+'</ul></div></div>'+
+      '<div class="stack"><div class="card"><h2>Handouts</h2><p class="sub">Open, print or keep on your phone</p><div class="files">'+l.files.map(f=>'<div class="file"><span class="fi">📄</span>'+esc(f)+'</div>').join('')+'</div></div>'+
+      '<div class="card"><h2>Quiz</h2><p class="sub">5 questions · pass mark '+PASS+'% · retake as often as you need</p>'+
+        (b!=null?'<p class="small" style="margin:0 0 10px">Your best: <b>'+b+'%</b> '+(passed(l.k)?'— passed ✓':'— not passed yet')+(MINE[l.k]?' · '+MINE[l.k].tries+' tr'+(MINE[l.k].tries===1?'y':'ies'):'')+'</p>':'')+
+        (R().kind==='learner'?'<button class="btn" data-act="quiz" data-v="'+l.k+'">'+(b!=null?'Take it again':'Take the quiz')+'</button>':'<button class="btn ghost" data-act="quiz" data-v="'+l.k+'">Preview the quiz</button>')+'</div></div></div>';
+    return h;
+  }
+  function viewQuiz(){
+    const l=LESSONS.find(x=>x.k===quiz.k), i=LESSONS.indexOf(l), done=quiz.done;
+    let h='<div class="crumbs"><button data-act="home">Academy</button> › <button data-act="academy" data-v="fd">'+esc(FD.n)+'</button> › <button data-act="lesson" data-v="'+l.k+'">Lesson '+(i+1)+'</button> › Quiz</div>';
+    if(done){
+      const pct=quiz.score, ok=pct>=PASS;
+      h+='<div class="card" style="margin-bottom:14px"><div class="score"><div class="big">'+pct+'%</div><div class="grow"><b style="font-size:16px;color:'+(ok?'#1d6b47':'#9a2f1e')+'">'+(ok?'Passed ✓':'Not passed yet')+'</b><div class="small muted">'+(ok?'Nice work. It’s recorded, and your manager can see it.':'You need '+PASS+'% to pass. Have another look at the video, then try again.')+'</div></div>'+
+        (ok?'<button class="btn" data-act="academy" data-v="fd">Back to the lessons</button>':'<button class="btn" data-act="retake">Retake the quiz</button>')+'</div></div>';
+    } else {
+      h+='<div class="card" style="margin-bottom:14px"><h2>'+esc(l.n)+' — quiz</h2><p class="sub" style="margin:0">Pick one answer for each question. Pass mark '+PASS+'%. <i>Sample questions — Selene’s team would write the real ones.</i></p></div>';
+    }
+    h+=l.quiz.map((q,qi)=>{
+      const pick=quiz.ans[qi], cls=done ? (pick===q.c?' right':' wrong') : '';
+      return '<div class="q'+cls+'"><div class="qt">'+(qi+1)+'. '+esc(q.q)+'</div>'+q.a.map((a,ai)=>'<label><input type="radio" name="q'+qi+'" data-q="'+qi+'" data-a="'+ai+'"'+(pick===ai?' checked':'')+(done?' disabled':'')+'><span>'+esc(a)+'</span></label>').join('')+
+        (done?'<div class="why">'+(pick===q.c?'✓ Correct':'✗ The answer is: '+esc(q.a[q.c]))+'</div>':'')+'</div>';
+    }).join('');
+    if(!done) h+='<div class="row" style="margin-top:14px"><span class="grow small muted">'+quiz.ans.filter(x=>x!=null).length+' of '+l.quiz.length+' answered</span><button class="btn" data-act="submit"'+(quiz.ans.some(x=>x==null)?' disabled':'')+'>Submit answers</button></div>';
+    return h;
+  }
+
+  /* ---------- managers: who has done what ---------- */
+  function viewTeam(){
+    const all=R().offices==='all', offs=all ? [...new Set(TEAM.map(p=>p.o))] : R().offices;
+    const view=all && office ? [office] : offs;
+    const people=TEAM.filter(p=>view.indexOf(p.o)>=0);
+    const done=people.filter(p=>passedOf(p)===LESSONS.length).length, late=people.filter(p=>statusOf(p)[0]==='Overdue').length;
+    const scores=people.flatMap(p=>Object.values(resultsOf(p))), avg=scores.length?Math.round(scores.reduce((a,b)=>a+b,0)/scores.length):null;
+    let h='<div class="row" style="margin-bottom:12px"><b class="grow" style="color:var(--navy)">'+FD.ic+' '+esc(FD.n)+'</b><button class="btn ghost sm" data-act="assign">＋ Assign training</button></div>';
+    if(all) h+='<div class="chips" style="margin-bottom:12px"><button class="ochip'+(office?'':' on')+'" data-act="office" data-v="">All offices</button>'+offs.map(o=>'<button class="ochip'+(office===o?' on':'')+'" data-act="office" data-v="'+esc(o)+'">'+esc(o)+'</button>').join('')+'</div>';
+    h+='<div class="kpis" style="margin-bottom:14px"><div class="kpi"><div class="k">Finished</div><div class="v">'+done+' of '+people.length+'</div><div class="s">all '+LESSONS.length+' lessons passed</div></div>'+
+      '<div class="kpi"><div class="k">Average quiz score</div><div class="v">'+(avg==null?'—':avg+'%')+'</div><div class="s">best try per lesson</div></div>'+
+      '<div class="kpi"><div class="k">Overdue</div><div class="v" style="color:'+(late?'#9a2f1e':'var(--navy)')+'">'+late+'</div><div class="s">past the 3-week due date</div></div></div>';
+    h+='<div class="tblwrap"><table class="t"><thead><tr><th>Person</th>'+(all?'<th>Office</th>':'')+'<th>Started</th>'+LESSONS.map((l,i)=>'<th class="n" title="'+esc(l.n)+'">Lesson '+(i+1)+'</th>').join('')+'<th>Status</th><th></th></tr></thead><tbody>'+
+      people.map(p=>{ const r=resultsOf(p), st=statusOf(p);
+        return '<tr'+(p.me?' class="mine"':'')+'><td><b>'+esc(p.n)+'</b>'+(p.me?' <span class="small muted">(new hire)</span>':'')+'</td>'+(all?'<td>'+esc(p.o)+'</td>':'')+'<td class="small">'+fmt(p.start)+'</td>'+
+          LESSONS.map(l=>{ const s=r[l.k]; return '<td class="n">'+(s==null?'<span class="muted">—</span>':s>=PASS?'<b style="color:#1d6b47">'+s+'%</b>':'<b style="color:#9a2f1e">'+s+'%</b>')+'</td>'; }).join('')+
+          '<td><span class="pill '+st[1]+'">'+st[0]+'</span></td><td>'+(st[0]==='Done'?'':'<button class="btn ghost sm" data-act="remind" data-v="'+esc(p.n)+'">Remind</button>')+'</td></tr>'; }).join('')+
+      '</tbody></table></div><p class="small muted" style="margin-top:8px">Scores are the best try. Red = below the '+PASS+'% pass mark, so they retake it. Try the quiz as the new hire, then come back here — Jordan’s row updates.</p>';
+    return h;
+  }
+
+  /* ---------- Selene: keeping it up to date ---------- */
+  function viewManage(){
+    return '<div class="note info" style="margin-bottom:14px">Changing a lesson is like editing a document: swap the video, change a handout or a question, and everyone sees the new version straight away.</div>'+
+      ACADEMIES.map(a=>'<div class="card" style="margin-bottom:14px"><div class="row" style="margin-bottom:4px"><h2 class="grow">'+a.ic+' '+esc(a.n)+'</h2><span class="small muted">Given to: '+esc(a.team)+' team · every office</span></div>'+
+        (a.lessons.length ? '<div class="lessons">'+a.lessons.map((l,i)=>'<div class="lesson"><div class="num">'+(i+1)+'</div><div><div class="t">'+esc(l.n)+'</div><div class="m">Video '+l.min+' · '+l.files.length+' handouts · '+l.quiz.length+' questions · pass '+PASS+'%</div></div><button class="btn ghost sm go" data-act="edit" data-v="'+l.k+'">Edit</button></div>').join('')+'</div><div style="margin-top:10px"><button class="btn ghost sm" data-act="mock">＋ Add a lesson</button></div>'
+          : '<p class="small muted" style="margin:6px 0 10px">No lessons yet.</p><button class="btn ghost sm" data-act="mock">＋ Add the first lesson</button>')+'</div>').join('')+
+      '<button class="btn ghost sm" data-act="mock">＋ New academy</button>';
+  }
+
+  /* ---------- dialogs ---------- */
+  function openDlg(html){ el('dlgcard').innerHTML=html; el('dlg').classList.add('open'); }
+  function closeDlg(){ el('dlg').classList.remove('open'); el('dlgcard').innerHTML=''; }
+  const top=t=>'<div class="dm-top"><h3>'+t+'</h3><button class="x" data-act="close" aria-label="Close">×</button></div>';
+  function editDlg(k){
+    const l=LESSONS.find(x=>x.k===k);
+    openDlg(top('Edit lesson')+'<div class="dm-body">'+
+      '<div class="fld"><label>Title</label><input value="'+esc(l.n)+'"></div>'+
+      '<div class="fld"><label>Video</label><div class="file"><span class="fi">🎬</span>'+esc(l.n)+'.mp4 · '+l.min+'<span class="grow"></span><button class="btn ghost sm" data-act="mock">Replace</button></div></div>'+
+      '<div class="fld"><label>Handouts</label><div class="files">'+l.files.map(f=>'<div class="file"><span class="fi">📄</span>'+esc(f)+'</div>').join('')+'</div></div>'+
+      '<div class="fld"><label>Quiz</label><div class="file"><span class="fi">✅</span>'+l.quiz.length+' questions<span class="grow"></span><button class="btn ghost sm" data-act="mock">Edit questions</button></div></div>'+
+      '<div class="fld"><label>Pass mark</label><select><option>70%</option><option selected>80%</option><option>90%</option><option>100%</option></select></div>'+
+      '</div><div class="dm-foot"><span class="small muted" style="margin-right:auto">Mock-up: nothing is saved.</span><button class="btn ghost" data-act="close">Cancel</button><button class="btn" data-act="mocksave">Save</button></div>');
+  }
+  function assignDlg(){
+    const ppl=TEAM.filter(p=>R().offices==='all' || R().offices.indexOf(p.o)>=0);
+    openDlg(top('Assign training')+'<div class="dm-body"><p class="small muted" style="margin:0">Everyone on a team gets its academy automatically, new hires included. Use this for a one-off — a refresher, or someone covering another role.</p>'+
+      '<div class="fld"><label>Who</label><select>'+ppl.map(p=>'<option>'+esc(p.n)+' — '+esc(p.o)+'</option>').join('')+'</select></div>'+
+      '<div class="fld"><label>What</label><select><option>Front Desk Academy (all 4 lessons)</option>'+LESSONS.map(l=>'<option>Just: '+esc(l.n)+'</option>').join('')+'</select></div>'+
+      '<div class="fld"><label>Finish by</label><input type="date" value="2026-11-03"></div></div>'+
+      '<div class="dm-foot"><span class="small muted" style="margin-right:auto">Mock-up: nothing is sent.</span><button class="btn ghost" data-act="close">Cancel</button><button class="btn" data-act="mocksave">Assign</button></div>');
+  }
+  let toastT=null;
+  function toast(m){ const t=el('toast'); t.textContent=m; t.classList.add('on'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('on'), 2600); }
+
+  /* ---------- clicks ---------- */
+  document.addEventListener('click', e=>{
+    const b=e.target.closest('[data-act]'); if(!b) return;
+    const act=b.dataset.act, v=b.dataset.v;
+    if(act==='tab'){ tab=v; open=lesson=quiz=null; render(); window.scrollTo({top:0}); return; }
+    if(act==='home'){ open=lesson=quiz=null; render(); return; }
+    if(act==='academy'){ open=v; lesson=quiz=null; render(); window.scrollTo({top:0}); return; }
+    if(act==='lesson'){ open='fd'; lesson=v; quiz=null; render(); window.scrollTo({top:0}); return; }
+    if(act==='quiz'){ lesson=v; quiz={k:v, ans:LESSONS.find(x=>x.k===v).quiz.map(()=>null), done:false}; render(); window.scrollTo({top:0}); return; }
+    if(act==='retake'){ quiz={k:quiz.k, ans:quiz.ans.map(()=>null), done:false}; render(); window.scrollTo({top:0}); return; }
+    if(act==='submit' && quiz){
+      const l=LESSONS.find(x=>x.k===quiz.k), right=l.quiz.filter((q,i)=>quiz.ans[i]===q.c).length;
+      quiz.score=Math.round(100*right/l.quiz.length); quiz.done=true;
+      if(R().kind==='learner'){ const m=MINE[l.k]||{best:0, tries:0}; m.tries++; m.best=Math.max(m.best, quiz.score); MINE[l.k]=m; saveMine(); }
+      render(); window.scrollTo({top:0}); return;
+    }
+    if(act==='office'){ office=v||null; render(); return; }
+    if(act==='remind'){ toast('Reminder to '+v+' — mock-up, nothing is sent'); return; }
+    if(act==='assign'){ assignDlg(); return; }
+    if(act==='edit'){ editDlg(v); return; }
+    if(act==='close'){ closeDlg(); return; }
+    if(act==='mock'){ toast('In the real version this opens an editor'); return; }
+    if(act==='mocksave'){ closeDlg(); toast('Mock-up — nothing was changed'); return; }
+    if(act==='reset'){ MINE={}; saveMine(); open=lesson=quiz=null; render(); toast('Sample data reset'); return; }
+  });
+  document.addEventListener('change', e=>{
+    const t=e.target;
+    if(t.id==='persona'){ as=t.value; try{ localStorage.setItem('ph_acad_as', as); }catch(_){} tab='mine'; open=lesson=quiz=null; office=null; render(); return; }
+    if(t.dataset && t.dataset.q!=null && quiz && !quiz.done){ quiz.ans[+t.dataset.q]=+t.dataset.a; render(); }
+  });
+  document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeDlg(); });
+  el('dlg').addEventListener('click', e=>{ if(e.target===el('dlg')) closeDlg(); });
+  el('persona').innerHTML=Object.keys(ROLES).map(k=>'<option value="'+k+'"'+(k===as?' selected':'')+'>'+esc(ROLES[k].label)+'</option>').join('');
+  render();
+})();
+</script>
+<script>PH.nav('academy');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
+<script src="tour.js?v=hc89"></script>
+<script>
+Tour.init([
+  {sel:'#persona', title:'A mock-up', body:'Made-up people and sample lessons. Switch between a <b>new hire</b>, an <b>office manager</b> and <b>Selene</b> to see what each would see.'},
+  {sel:'#view', title:'Learn, then a quiz', body:'Each lesson is a short video and handouts, then a 5-question quiz with a pass mark. Retake it as often as needed.'},
+  {sel:'#tabs', title:'Managers follow up', body:'<b>Team progress</b> shows who has finished, their scores and who is overdue. <b>Manage</b> is where lessons are kept up to date.'}
+], {key:'academy', title:'Academy', next:{label:'Home', href:'home.html'}});
+</script>
+</body>
+</html>

@@ -166,6 +166,16 @@ padding-bottom:118px so the list never runs under it); logo/brand/V1 chip hidden
 the name chip full width below; `.ph-np` (bell + search panels) opens upwards; `openMenu` puts the name menu above
 the chip when there's no room below (generic). Search, bell and name now close each other's panels (one at a time).
 
+**Academy - a MOCK-UP for Selene (20/10, hc89), SANDBOX ONLY.** Selene asked (via Cory) about role-based training:
+short videos + resources by role, assigned to new hires, quizzes with a pass mark and retakes, completion managers can
+follow, easy updates (Front Desk Academy first; then Marketing Liaison, TC). Cory: suggest building it into Home-Brace
+(no new logins/fees; videos in SharePoint - storage is ~1 TB + 10 GB/license, a 5-min video ~50-150 MB). `v1/academy.html`:
+its own "Try it as" (new hire Jordan Sample / an office manager / Selene), Front Desk Academy with 4 sample lessons
+(video placeholder, handouts, key points, 5-question quiz, pass 80%, retake), Team progress (finished, average, overdue,
+per-lesson best scores; the new hire's row updates from this browser's quiz results), Manage (edit-lesson dialog; nothing
+saved). Made-up people only; progress in localStorage `ph_acad_demo`. NAV `academy` shows only when `env()!=='live'`, and
+the guard shuts the page on live (permissions tests 62). Nothing decided: no data model, no real videos, no SharePoint.
+
 **TCs see every office in "By office" (19/10, hc85).** Selene: "we do want the Treatment Coordinators to be able to see
 one another's results. Please make sure they can all view the 'By Office' box so they can see conversion rates across
 locations." viewNumbers(): for a TC (`iAmTC() && !canManage()`) the box lists `allOffices()` from EVERY (rates and

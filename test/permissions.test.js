@@ -191,7 +191,13 @@ const t=(n,v)=>{ (v?ok:bad).push(n); };
   t('the COO is still an admin', H.PH.isAdmin()===true);
   t('admin.html is NOT locked for her', H.locked()===false);
   /* Every tab - the TC Tracker included since it went live (19/10/2026, Cory: "yes on production"). */
-  t('and her menu has every tab', H.tabs().length===H.PH.NAV.length);
+  t('and her menu has every tab (the Academy is a sandbox mock-up)', H.tabs().length===H.PH.NAV.filter(x=>x.k!=='academy').length);
+  t('the Academy mock-up never shows on the live site', H.tabs().indexOf('academy')<0);
+  const AC=load({page:'academy'});
+  AC.PH.nav('academy');
+  AC.signIn({ displayName:'Test Admin', mail:'test.admin@example.com', userPrincipalName:'test.admin@example.com',
+              jobTitle:'COO', department:'Admin', officeLocation:'' });
+  t('...and its page stays shut there, even for an admin', AC.locked()===true || AC.pending()===true);
   t('the TC Tracker is on on the live site', H.PH.tcOn()===true && H.tabs().indexOf('tc')>=0);
 
   const BOOT=load({page:'admin'});

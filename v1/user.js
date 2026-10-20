@@ -1765,6 +1765,9 @@
     {k:'marketing',  n:'\ud83d\udce3 Marketing',         href:'marketing.html',  show:()=>atLeast('marketing','view')},
     {k:'documents',  n:'\ud83d\udcc1 Documents',         href:'documents.html',  show:()=>atLeast('documents','view')},
     {k:'team',       n:'\ud83d\udc65 Team',              href:'team.html',       show:()=>atLeast('team','view')},
+    /* A MOCK-UP for Selene (20/10/2026) - role-based training with quizzes. Sandbox only:
+       never on the live site, where the page is shut too (guard). */
+    {k:'academy',    n:'\ud83c\udf93 Academy',           href:'academy.html',    show:()=>env()!=='live'},
     {k:'admin',      n:'\u2699\ufe0f Admin',            href:'admin.html',      show:()=>atLeast('admin','view')}
   ];
   /* Production is not a prototype. Strip the demo chrome — the amber ribbon, the
@@ -2297,7 +2300,7 @@
      "Enter P..." - which reads as broken. Short forms for the bar; the sheet and the
      top nav keep the full names. */
   const TAB_SHORT={home:'Home',dashboard:'Dashboard',production:'Enter Prod',tc:'TC Tracker',schedule:'Schedule',
-                   marketing:'Marketing',documents:'Documents',team:'Team',admin:'Admin'};
+                   marketing:'Marketing',documents:'Documents',team:'Team',academy:'Academy',admin:'Admin'};
   /* Line icons for the phone bar instead of emoji - emoji render differently on every
      phone and read as casual. 24-unit grid, stroke follows the text colour. */
   const ICON={
@@ -2310,6 +2313,7 @@
     documents:'<path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>',
     team:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0113 0"/><circle cx="17" cy="9" r="3"/><path d="M15.5 14.5A5.5 5.5 0 0122 20"/>',
     admin:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 01-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 01-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 01-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 010-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 012.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 014 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 012.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 010 4h-.1a1.7 1.7 0 00-1.5 1z"/>',
+    academy:'<path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c0 1.4 2.7 3 6 3s6-1.6 6-3v-5"/><path d="M22 9v6"/>',
     more:'<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>'
   };
   function icon(k){ return '<svg class="ti" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(ICON[k]||ICON.more)+'</svg>'; }
