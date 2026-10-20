@@ -1159,18 +1159,27 @@
 
   /* ---- SIDEBAR MENU, for whoever picks it (profile -> Menu on a computer). Only on pages
           that have the menu, and only 960px and wider: below that nothing here applies and the
-          page is exactly as before - tabs across the top, or the phone bar. The header keeps
-          the bell, search and name; its logo moves to the top of the sidebar and the page's
-          name becomes the header's title. ---- */
+          page is exactly as before - tabs across the top, or the phone bar. The blue top bar
+          goes too (Cory, 20/10: "It stays and looks kind of funny"): its search, bell and name
+          sit at the foot of the sidebar, the logo at its top, and each page's own heading
+          names the page. ---- */
   .ph-sidenav{display:none}
   @media(min-width:960px){
     html.ph-lay-side body:has(.v1nav){padding-left:248px}
     html.ph-lay-side body:has(.v1nav) .v1nav{display:none !important}
     html.ph-lay-side .ph-sidenav{display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;width:248px;z-index:45;
-      background:var(--navy,#0F2A4A);border-right:1px solid rgba(255,255,255,.07)}
-    html.ph-lay-side body:has(.v1nav) .hdr .mark{display:none}
-    html.ph-lay-side body:has(.v1nav) .hdr .brand{font-size:0}
-    html.ph-lay-side body:has(.v1nav) .hdr .brand small{font-size:18px;font-weight:700;color:#fff;line-height:34px}
+      background:var(--navy,#0F2A4A);border-right:1px solid rgba(255,255,255,.07);padding-bottom:118px}
+    html.ph-lay-side body:has(.v1nav) .hdr{position:fixed;left:0;bottom:0;width:248px;z-index:46;background:var(--navy,#0F2A4A);
+      border-top:1px solid rgba(255,255,255,.08);border-right:1px solid rgba(255,255,255,.07)}
+    html.ph-lay-side body:has(.v1nav) .hdr-in{max-width:none;margin:0;padding:12px 12px 14px;flex-wrap:wrap;gap:8px}
+    html.ph-lay-side body:has(.v1nav) .hdr .mark,
+    html.ph-lay-side body:has(.v1nav) .hdr .brand,
+    html.ph-lay-side body:has(.v1nav) .hdr .v1{display:none}
+    html.ph-lay-side body:has(.v1nav) .hdr .ph-bw{margin-left:0}
+    html.ph-lay-side body:has(.v1nav) .hdr .ph-av{width:100%;margin-left:0}
+    html.ph-lay-side body:has(.v1nav) .hdr .ph-av .car{margin-left:auto}
+    /* the bell's and the search's panels open upwards from the foot of the sidebar */
+    html.ph-lay-side body:has(.v1nav) .hdr .ph-np{top:auto;bottom:calc(100% + 10px);left:0;right:auto}
   }
   .ph-sidenav .ph-sb-brand{display:flex;align-items:center;gap:10px;height:60px;flex:none;padding:0 18px;
     color:#fff;text-decoration:none;font-weight:700;font-size:18px}
@@ -1218,7 +1227,8 @@
         x.title.split(' · ')[0]+(x.id===p.id?'<span class="ck">✓</span>':'')+'</button>').join(''));
     document.body.appendChild(menu);
     const r=anchor.getBoundingClientRect(), m=menu.getBoundingClientRect();
-    menu.style.top=(r.bottom+8)+'px';
+    // Below the name, or above it when there's no room (the sidebar puts the name at the foot).
+    menu.style.top=(r.bottom+8+m.height<=window.innerHeight-8 ? r.bottom+8 : Math.max(8, r.top-8-m.height))+'px';
     menu.style.left=Math.max(8,Math.min(r.right-m.width,window.innerWidth-m.width-8))+'px';
   }
 
@@ -1536,13 +1546,13 @@
     const s=document.createElement('button');
     s.className='ph-bell ph-srch'; s.type='button'; s.title='Search'; s.setAttribute('aria-label','Search');
     s.innerHTML='<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg>';
-    s.onclick=function(e){ e.stopPropagation(); closeNotes(); spanel?closeSearch():openSearch(wrap); };
+    s.onclick=function(e){ e.stopPropagation(); closeNotes(); closeMenu(); spanel?closeSearch():openSearch(wrap); };
     wrap.appendChild(s);
     const b=document.createElement('button');
     b.className='ph-bell'; b.type='button'; b.title='Notifications';
     // A line icon like the search and the phone bar - "more modern and less emoji" (Cory).
     b.innerHTML='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 16V11a6 6 0 0112 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 004 0"/></svg>';
-    b.onclick=function(e){ e.stopPropagation(); closeSearch(); npanel?closeNotes():openNotes(wrap); };
+    b.onclick=function(e){ e.stopPropagation(); closeSearch(); closeMenu(); npanel?closeNotes():openNotes(wrap); };
     wrap.appendChild(b);
     bar.appendChild(wrap);
     bellBadge();
@@ -1561,7 +1571,7 @@
     const b=document.createElement('button'); b.className='ph-av';
     b.innerHTML='<span class="cir" style="'+faceStyle(p)+'">'+face(p)+'</span>'+
       '<span class="who"><b>'+name(p)+'</b><small>'+p.title.split(' · ')[0]+'</small></span><span class="car">▼</span>';
-    b.onclick=e=>{e.stopPropagation(); menu?closeMenu():openMenu(b);};
+    b.onclick=e=>{e.stopPropagation(); closeNotes(); closeSearch(); menu?closeMenu():openMenu(b);};   // one panel at a time
     bell();                       // bell first, so it sits left of the avatar
     bar.appendChild(b);
     if(!document.getElementById('ph-ov')){

@@ -159,7 +159,12 @@ the phone bar's line icons, logo -> Home, active marked; only on pages with `.v1
 dialog/pop-up is 50+), body padding-left, `.v1nav` hidden, header logo hidden and the brand shrunk to the page name
 (`.hdr .brand{font-size:0}` + its `small` at 18px). Under 960px it's the tabs; phones keep the bottom bar. Checked all
 9 pages at 1024px (no sideways scroll; Admin's grid scrolls in its own box as before), a theme, 900px, phone, and back
-to top. Guide (start.html) points to the setting. Tests: test/layout.test.js (21) - in test/all.sh.
+to top. Guide (start.html) points to the setting. Tests: test/layout.test.js (23) - in test/all.sh.
+hc88 (20/10, Cory's screenshot: the blue top bar "stays and looks kind of funny"): in sidebar mode the `.hdr` is no
+longer a top bar - CSS makes it `position:fixed` at the FOOT of the sidebar (248px, z 46, the aside has
+padding-bottom:118px so the list never runs under it); logo/brand/V1 chip hidden there, search + bell on one row and
+the name chip full width below; `.ph-np` (bell + search panels) opens upwards; `openMenu` puts the name menu above
+the chip when there's no room below (generic). Search, bell and name now close each other's panels (one at a time).
 
 **TCs see every office in "By office" (19/10, hc85).** Selene: "we do want the Treatment Coordinators to be able to see
 one another's results. Please make sure they can all view the 'By Office' box so they can see conversion rates across

@@ -100,6 +100,10 @@ t('no menu on the page, no sidebar made', !E.side());
     /padding-left:248px/.test(block) && /\.v1nav\{display:none !important\}/.test(block) && /\.ph-sidenav\{display:flex/.test(block) &&
     !/padding-left:248px/.test(css.replace(block,'')));
   t('only pages with the menu make room for it', /html\.ph-lay-side body:has\(\.v1nav\)\{padding-left:248px\}/.test(block));
+  t('the blue top bar goes: search, bell and name sit at the foot of the sidebar (computers only)',
+    /body:has\(\.v1nav\) \.hdr\{position:fixed;left:0;bottom:0;width:248px/.test(block) && /\.hdr \.brand,[\s\S]*\.hdr \.v1\{display:none\}/.test(block) &&
+    /\.hdr \.ph-np\{top:auto;bottom:calc\(100% \+ 10px\)/.test(block) && !/\.hdr\{position:fixed/.test(css.replace(block,'')));
+  t('the name menu opens upwards when there is no room below', /r\.bottom\+8\+m\.height<=window\.innerHeight-8 \? r\.bottom\+8 : Math\.max\(8, r\.top-8-m\.height\)/.test(SRC));
   t('it sits under every pop-up and dialog (they start at 50)', /z-index:45/.test(block));
 }
 
