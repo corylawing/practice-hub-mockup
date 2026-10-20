@@ -6,24 +6,24 @@
 <title>Scorecards &amp; KPIs — Home-Brace</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/styles.css?v=hb7">
+<link rel="stylesheet" href="assets/styles.css?v=hb8">
 <!-- social+favicon -->
 <link rel="icon" href="assets/favicon.png" type="image/png">
 <link rel="icon" href="assets/icons/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
 <meta name="theme-color" content="#0F2A4A">
-<meta name="description" content="Operational visibility across offices — production, collections, conversion, and starts.">
+<meta name="description" content="Explore a working operational scorecard with sample production, collections, conversion, and new-start data by location.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Home-Brace">
 <meta property="og:title" content="Scorecards &amp; KPIs · Home-Brace">
-<meta property="og:description" content="Operational visibility across offices — production, collections, conversion, and starts.">
+<meta property="og:description" content="Explore a working operational scorecard with sample production, collections, conversion, and new-start data by location.">
 <meta property="og:image" content="https://corylawing.github.io/practice-hub-mockup/assets/og-image.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:url" content="https://corylawing.github.io/practice-hub-mockup/scorecards.html">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Scorecards &amp; KPIs · Home-Brace">
-<meta name="twitter:description" content="Operational visibility across offices — production, collections, conversion, and starts.">
+<meta name="twitter:description" content="Explore a working operational scorecard with sample production, collections, conversion, and new-start data by location.">
 <meta name="twitter:image" content="https://corylawing.github.io/practice-hub-mockup/assets/og-image.png">
 </head>
 <body data-page="scorecards">
@@ -31,23 +31,45 @@
 
 <div class="wrap">
   <div class="breadcrumb"><a href="index.html">Home</a> › Scorecards &amp; KPIs</div>
-  <div class="page-head">
-    <h1>Scorecards &amp; KPIs <span class="badge future">Phase 2</span></h1>
-    <p>Operational visibility across offices. Shown here as a concept — see the recommendation below.</p>
+  <div class="page-head score-head">
+    <div>
+      <span class="score-head__eyebrow">Operations intelligence</span>
+      <h1>Practice performance</h1>
+      <p>Compare locations, spot changes, and move from monthly reporting to a clear operating view.</p>
+    </div>
+    <div class="score-head__status"><i></i><span>Sample data refreshed</span><strong>Today, 8:30 AM</strong></div>
   </div>
 
-  <div class="notice future"><b>My recommendation:</b> keep live dashboards out of Version 1. For launch, just <b>host the monthly KPI documents</b> here (an embedded Excel or PDF the COO already produces). Build automated dashboards later, once people are using the hub daily. The cards below are a sample of what Phase 2 could look like.</div>
-
-  <div class="section-title">Sample — practice this month</div>
-  <div class="kpi-grid">
-    <div class="kpi"><div class="label">Production</div><div class="val">$842k</div><div class="delta up">▲ 6.2% vs last month</div><div class="spark"><span style="height:40%"></span><span style="height:55%"></span><span style="height:48%"></span><span style="height:70%"></span><span style="height:62%"></span><span class="hi" style="height:85%"></span></div></div>
-    <div class="kpi"><div class="label">Collections</div><div class="val">$791k</div><div class="delta up">▲ 4.1%</div><div class="spark"><span style="height:50%"></span><span style="height:45%"></span><span style="height:60%"></span><span style="height:58%"></span><span style="height:66%"></span><span class="hi" style="height:78%"></span></div></div>
-    <div class="kpi"><div class="label">Conversion %</div><div class="val">68%</div><div class="delta down">▼ 2.0%</div><div class="spark"><span style="height:72%"></span><span style="height:80%"></span><span style="height:75%"></span><span style="height:70%"></span><span style="height:66%"></span><span class="hi" style="height:64%"></span></div></div>
-    <div class="kpi"><div class="label">New Starts</div><div class="val">214</div><div class="delta up">▲ 11</div><div class="spark"><span style="height:40%"></span><span style="height:50%"></span><span style="height:55%"></span><span style="height:60%"></span><span style="height:72%"></span><span class="hi" style="height:80%"></span></div></div>
+  <div class="score-toolbar card">
+    <div class="score-toolbar__copy"><strong>Performance view</strong><span>Use the filter to inspect one office or return to the practice rollup.</span></div>
+    <label>Office<select id="scoreOffice"><option value="all">All locations</option><option value="carlsbad">Carlsbad</option><option value="hobbs">Hobbs</option><option value="clovis">Clovis</option><option value="lubbock">Lubbock</option></select></label>
+    <button class="btn ghost" id="scoreReset" type="button">Reset view</button>
   </div>
 
-  <div class="section-title">By office</div>
-  <div class="card">
+  <div class="section-title">This month</div>
+  <div class="kpi-grid score-kpis">
+    <div class="kpi"><div class="label">Production</div><div class="val" data-score="production">$842k</div><div class="delta" data-delta="production">▲ 6.2% vs last month</div><div class="spark" data-spark="production"></div></div>
+    <div class="kpi"><div class="label">Collections</div><div class="val" data-score="collections">$791k</div><div class="delta" data-delta="collections">▲ 4.1% vs last month</div><div class="spark" data-spark="collections"></div></div>
+    <div class="kpi"><div class="label">Conversion</div><div class="val" data-score="conversion">68%</div><div class="delta" data-delta="conversion">▼ 2.0% vs last month</div><div class="spark" data-spark="conversion"></div></div>
+    <div class="kpi"><div class="label">New starts</div><div class="val" data-score="starts">214</div><div class="delta" data-delta="starts">▲ 11 vs last month</div><div class="spark" data-spark="starts"></div></div>
+  </div>
+
+  <div class="score-layout">
+    <section class="card score-chart-card">
+      <div class="score-card-head"><div><span class="score-head__eyebrow">Location comparison</span><h2>Production against target</h2></div><span class="score-legend"><i></i> Monthly target</span></div>
+      <div class="office-bars" id="officeBars"></div>
+    </section>
+    <section class="card score-signals">
+      <span class="score-head__eyebrow">What needs attention</span>
+      <h2>Operational signals</h2>
+      <div id="scoreInsights"></div>
+      <a class="score-action" href="forms.html">Open an action request <span>›</span></a>
+    </section>
+  </div>
+
+  <div class="section-title">Supporting scorecards</div>
+  <div class="card score-docs">
+    <div class="score-docs__intro"><strong>Monthly office files</strong><span>Open any row to preview the underlying scorecard.</span></div>
     <ul class="reslist">
       <li class="clickable" data-doc="kpi-template"><span class="fi xls">XLS</span><span class="name">Office Manager - Monthly KPI Scorecard - Carlsbad</span><span class="tag">Jun 2026</span></li>
       <li class="clickable" data-doc="kpi-template"><span class="fi xls">XLS</span><span class="name">Office Manager - Monthly KPI Scorecard - Hobbs</span><span class="tag">Jun 2026</span></li>
@@ -58,7 +80,7 @@
 </div>
 
 <div id="ftr"></div>
-<script src="assets/data.js?v=hb7"></script>
-<script src="assets/app.js?v=hb7"></script>
+<script src="assets/data.js?v=hb8"></script>
+<script src="assets/app.js?v=hb8"></script>
 </body>
 </html>

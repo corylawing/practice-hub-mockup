@@ -32,7 +32,7 @@ function buildHeader() {
     `<a href="${n.href}" class="${n.key===active?'active':''}">${n.label}</a>`).join("");
 
   const hdr = `
-  <div class="demo-ribbon">PROTOTYPE — sample content &amp; branding for discussion. Not a live system.</div>
+  <div class="demo-ribbon"><span>INTERACTIVE PORTFOLIO DEMO</span><span>Fictional data</span><span>No login required</span></div>
   <header class="site-header">
     <div class="hdr-inner">
       <a class="brand" href="index.html">
@@ -43,6 +43,7 @@ function buildHeader() {
         <input type="text" placeholder="Search PTO, expense, handbook, vendor…" readonly>
         <span class="s-icon">${ICONS.search}</span>
       </div>
+      <button class="demo-launcher" type="button" onclick="toggleDemoGuide(true)">Explore demo</button>
       <div class="hdr-spacer"></div>
       <button class="menu-toggle" aria-label="Menu" onclick="toggleNav()">${ICONS.menu}</button>
     </div>
@@ -63,6 +64,39 @@ function buildFooter() {
   </footer>`;
   const slot = document.getElementById("ftr");
   if (slot) slot.outerHTML = ftr;
+}
+
+function buildDemoGuide() {
+  const guide = document.createElement("aside");
+  guide.id = "demoGuide";
+  guide.className = "demo-guide";
+  guide.setAttribute("aria-hidden", "true");
+  guide.innerHTML = `
+    <button class="demo-guide__scrim" type="button" aria-label="Close demo guide" onclick="toggleDemoGuide(false)"></button>
+    <div class="demo-guide__panel" role="dialog" aria-modal="true" aria-labelledby="demoGuideTitle">
+      <div class="demo-guide__top">
+        <span class="demo-guide__eyebrow">Product walkthrough</span>
+        <button type="button" aria-label="Close demo guide" onclick="toggleDemoGuide(false)">×</button>
+      </div>
+      <h2 id="demoGuideTitle">See how Home-Brace works</h2>
+      <p>This demo uses fictional people and operational data. Pick a workflow and try it yourself.</p>
+      <div class="demo-guide__links">
+        <button type="button" onclick="toggleDemoGuide(false); runSearch('vacation')"><span>01</span><b>Search in plain language</b><small>“Vacation” finds the PTO policy.</small></button>
+        <a href="forms.html"><span>02</span><b>Submit a sample request</b><small>Open PTO, expense, IT, or maintenance forms.</small></a>
+        <a href="calendars.html"><span>03</span><b>Coordinate eight locations</b><small>Filter the weekly doctor and office schedule.</small></a>
+        <a href="scorecards.html"><span>04</span><b>Explore operating performance</b><small>Compare KPIs and location-level signals.</small></a>
+      </div>
+      <div class="demo-guide__note"><strong>What this demonstrates</strong><span>Product strategy, information architecture, responsive UX, workflow automation, and operational analytics.</span></div>
+    </div>`;
+  document.body.appendChild(guide);
+}
+
+function toggleDemoGuide(open) {
+  const guide = document.getElementById("demoGuide");
+  if (!guide) return;
+  guide.classList.toggle("open", !!open);
+  guide.setAttribute("aria-hidden", open ? "false" : "true");
+  document.body.classList.toggle("guide-open", !!open);
 }
 
 function toggleNav() { document.getElementById("primaryNav").classList.toggle("open"); }
@@ -294,6 +328,69 @@ function submitForm(key) {
   if (foot) foot.innerHTML = `<button class="btn" onclick="closeModal()">Done</button>`;
 }
 
+/* ---- Interactive scorecard demo ---- */
+const SCORECARD_DATA = {
+  all:       { name:"All locations", production:842, collections:791, conversion:68, starts:214, changes:[6.2,4.1,-2.0,11], spark:[[42,52,48,64,70,88],[45,50,56,60,69,82],[76,72,73,70,69,68],[43,49,55,61,70,84]] },
+  carlsbad:  { name:"Carlsbad", production:228, collections:219, conversion:74, starts:62, changes:[8.4,7.1,3.0,7], spark:[[35,48,44,61,72,92],[39,46,53,63,74,89],[62,65,68,69,72,78],[35,42,54,63,74,90]] },
+  hobbs:     { name:"Hobbs", production:196, collections:181, conversion:65, starts:48, changes:[3.2,1.8,-4.0,-2], spark:[[50,54,58,60,64,70],[53,55,58,62,64,68],[75,72,70,68,66,64],[62,58,61,56,54,50]] },
+  clovis:    { name:"Clovis", production:212, collections:199, conversion:69, starts:55, changes:[5.7,4.6,1.0,4], spark:[[42,47,55,57,68,82],[44,50,52,61,66,79],[63,65,66,68,67,72],[43,48,53,60,69,78]] },
+  lubbock:   { name:"Lubbock", production:206, collections:192, conversion:64, starts:49, changes:[4.9,3.5,-3.0,2], spark:[[48,52,56,63,66,76],[45,50,58,60,65,73],[73,71,69,67,65,63],[46,50,55,57,60,67]] }
+};
+
+function buildScorecards() {
+  const office = document.getElementById("scoreOffice");
+  if (!office) return;
+  const reset = document.getElementById("scoreReset");
+  const bars = document.getElementById("officeBars");
+  const insights = document.getElementById("scoreInsights");
+  const offices = ["carlsbad", "hobbs", "clovis", "lubbock"];
+
+  const renderBars = selected => {
+    bars.innerHTML = offices.map(key => {
+      const row = SCORECARD_DATA[key];
+      const pct = Math.min(100, Math.round(row.production / 230 * 100));
+      const isSelected = selected === key;
+      return `<button class="office-bar${isSelected ? " active" : ""}" type="button" data-office="${key}">
+        <span class="office-bar__name">${row.name}<small>${row.conversion}% conversion</small></span>
+        <span class="office-bar__track"><span style="width:${pct}%"></span><i style="left:91%"></i></span>
+        <strong>$${row.production}k</strong>
+      </button>`;
+    }).join("");
+    bars.querySelectorAll("[data-office]").forEach(button => button.addEventListener("click", () => { office.value = button.dataset.office; render(button.dataset.office); }));
+  };
+
+  const render = key => {
+    const row = SCORECARD_DATA[key];
+    const values = { production:`$${row.production}k`, collections:`$${row.collections}k`, conversion:`${row.conversion}%`, starts:String(row.starts) };
+    ["production","collections","conversion","starts"].forEach((metric, index) => {
+      document.querySelector(`[data-score="${metric}"]`).textContent = values[metric];
+      const delta = document.querySelector(`[data-delta="${metric}"]`);
+      const change = row.changes[index];
+      delta.className = "delta " + (change >= 0 ? "up" : "down");
+      delta.textContent = `${change >= 0 ? "▲" : "▼"} ${Math.abs(change)}${metric === "starts" ? "" : "%"} vs last month`;
+      const spark = document.querySelector(`[data-spark="${metric}"]`);
+      spark.innerHTML = row.spark[index].map((height, i) => `<span class="${i === row.spark[index].length - 1 ? "hi" : ""}" style="height:${height}%"></span>`).join("");
+    });
+    const signals = key === "all"
+      ? [
+          ["good", "Carlsbad leads conversion at 74%", "Use its consultation follow-up as the peer benchmark."],
+          ["watch", "Hobbs conversion is down 4 points", "Review no-show and unscheduled follow-up queues."],
+          ["info", "Collections remain at 94% of production", "The practice is inside the operating target range."]
+        ]
+      : [
+          [row.changes[0] >= 5 ? "good" : "info", `${row.name} production is ${row.changes[0] >= 0 ? "up" : "down"} ${Math.abs(row.changes[0])}%`, "Compare staffing, scheduling, and start volume before the manager review."],
+          [row.conversion >= 70 ? "good" : "watch", `Conversion is ${row.conversion}%`, row.conversion >= 70 ? "Performance is above the 70% operating threshold." : "This is below the 70% operating threshold and needs follow-up."],
+          ["info", `${row.starts} new starts this month`, "Open the source scorecard below for the supporting detail."]
+        ];
+    insights.innerHTML = signals.map(signal => `<div class="score-signal score-signal--${signal[0]}"><i></i><span><strong>${signal[1]}</strong><small>${signal[2]}</small></span></div>`).join("");
+    renderBars(key);
+  };
+
+  office.addEventListener("change", () => render(office.value));
+  reset.addEventListener("click", () => { office.value = "all"; render("all"); });
+  render("all");
+}
+
 /* Open any [data-doc] / [data-form] element */
 function handleDelegatedClick(e) {
   const docEl = e.target.closest("[data-doc]");
@@ -303,12 +400,12 @@ function handleDelegatedClick(e) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  buildHeader(); buildFooter(); buildSearchOverlay(); buildModal(); buildHomeTiles(); buildDirectory(); buildSchedule();
+  buildHeader(); buildFooter(); buildDemoGuide(); buildSearchOverlay(); buildModal(); buildHomeTiles(); buildDirectory(); buildSchedule(); buildScorecards();
   document.addEventListener("click", handleDelegatedClick);
   const si = document.getElementById("searchInput");
   if (si) si.addEventListener("input", e => renderSearch(e.target.value));
   document.addEventListener("keydown", e => {
-    if (e.key === "Escape") { closeSearch(); closeModal(); }
+    if (e.key === "Escape") { closeSearch(); closeModal(); toggleDemoGuide(false); }
     if ((e.metaKey||e.ctrlKey) && e.key === "k") { e.preventDefault(); openSearch(); }
   });
   const ov = document.getElementById("searchOverlay");
