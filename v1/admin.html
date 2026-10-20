@@ -195,6 +195,26 @@
   .editsync details{margin-top:6px} .editsync summary{cursor:pointer;font-weight:700}
   .editsync ol{margin:6px 0 4px 18px;padding:0} .editsync li{margin:3px 0}
   .editsync .lnk{border:none;background:none;padding:0;color:inherit;font:inherit;font-weight:700;text-decoration:underline;cursor:pointer}
+  /* Sensitive Material (20/10) */
+  .sens{padding:16px 18px;margin-bottom:18px;border-left:5px solid #b42318}
+  .sens-h{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+  .sens-h .sn{font-weight:700;color:var(--navy);font-size:16px}
+  .sens-big{font-size:24px;line-height:1}
+  .sens-row{display:flex;align-items:center;gap:10px;padding:9px 2px;border-top:1px solid var(--line);flex-wrap:wrap}
+  .sens-ic{width:22px;text-align:center;flex:none}
+  .sens-n{flex:1;min-width:180px;font-weight:600;color:var(--ink)}
+  .sens-l{font-size:12.5px;color:var(--soft);font-weight:600}
+  .sens-acts{display:flex;gap:6px}
+  .sens-add{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .sens-log{margin-top:12px;font-size:12.5px;color:var(--soft)}
+  .sens-log summary{cursor:pointer;font-weight:700;color:var(--navy)}
+  .sens-log div{padding:3px 0}
+  .sens-f{display:flex;flex-direction:column;gap:5px;margin-top:14px}
+  .sens-f label{font-size:12.5px;font-weight:700;color:var(--ink)}
+  .sens-f select,.sens-f input{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:15px;font-family:inherit;color:var(--ink);background:#fff}
+  .sens-opt{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--line);border-radius:10px;cursor:pointer;font-size:14px}
+  .sens-opt input{margin-top:3px;width:auto}
+  .sens-opt.on{border-color:var(--teal);background:var(--teal-soft)}
   .setupbox{background:var(--teal-soft,#E5F4F3);border:1px solid #bfe3df;border-radius:14px;padding:16px 18px;margin-bottom:18px}
   .setupbox h4{margin:0 0 6px;color:var(--navy);font-size:15.5px}
   .setupbox p{margin:0 0 12px;font-size:13.5px;line-height:1.55;color:var(--ink)}
@@ -245,12 +265,12 @@
   }
 
 </style>
-<script src="user.js?v=hc89"></script>
+<script src="user.js?v=hc91"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="_staff.js?v=hc89"></script>
-  <script src="store.js?v=hc89"></script>
-  <script src="gate.js?v=hc89"></script>
-  <script src="docs.js?v=hc89"></script>
+  <script src="_staff.js?v=hc91"></script>
+  <script src="store.js?v=hc91"></script>
+  <script src="gate.js?v=hc91"></script>
+  <script src="docs.js?v=hc91"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — admin console concept for validation. Real build: people sync from Microsoft 365; access is managed here.</div>
@@ -1247,6 +1267,7 @@
         '<div class="chips">'+TOOLS.map(t=>'<span class="chip">'+t.ic+' '+t.n+'</span>').join('')+'</div>'+
         '<p class="mini" style="margin:9px 0 0">Choose who gets each one in <b>Teams &amp; Access</b>.</p></div>'+
       (needsSetup()?setupHTML():'')+
+      sensHTML()+
       '<div class="toolrow"><div class="panel-lab" style="margin:0">Document sections — '+DOCSECS.length+' right now</div><span style="flex:1"></span>'+
         (liveDocs()?'':'<button class="btn ghost" onclick="AD.resetSecs()">Reset to defaults</button>')+'<button class="btn" onclick="AD.newSec()">+ New section</button></div>'+
       '<div class="secacc">'+secHtml+'</div>';
@@ -1366,6 +1387,8 @@
   function saveSec(){
     const d=secDraft; const nameEl=el('secName'); let made=null;
     const typed=(nameEl?nameEl.value:'').trim(); d.n=(typed||d.n||'').trim()||'New section';
+    if(d.n.toLowerCase().replace(/\s+/g,' ')==='sensitive material'){
+      docToast('\u201cSensitive Material\u201d is already a locked folder of its own \u2014 it\u2019s at the top of this page. Pick another name.', true); return; }
     if(d.isNew){
       d.k='sec_'+Math.abs(d.n.split('').reduce((a,c)=>a*31+c.charCodeAt(0)|0,7)).toString(36)+DOCSECS.length;
       const sec={k:d.k,n:d.n,ic:d.ic,structure:d.structure,locMode:d.locMode,locs:d.locs.slice(),teamMode:d.teamMode,teams:d.teams.slice()};
@@ -1500,6 +1523,7 @@
   let EDITSYNC={state:'idle'}, editTimer=null, editAgain=false;
   function syncEdit(){
     syncTc();          // the TC Tracker's folder follows the same changes (below)
+    syncSens();        // and so does Sensitive Material
     if(!liveDocs() || !(window.PH && PH.isAdmin && PH.isAdmin())) return;
     clearTimeout(editTimer); editTimer=setTimeout(runEditSync, 1200);
   }
@@ -1663,6 +1687,217 @@
   function tcSyncHTML(){ if(!tcHere()) return ''; const x=tcSyncState(); return '<div id="tcsync" class="editsync '+x.cls+'">'+x.html+'</div>'; }
   function paintTcSync(){ const box=document.getElementById('tcsync'); if(!box) return; const x=tcSyncState(); box.className='editsync '+x.cls; box.innerHTML=x.html; }
 
+  /* ================= SENSITIVE MATERIAL (20/10/2026) =================
+     Cory: "another Folder in Documents called Sensitive Material. Which needs a double
+     confirmation from any admin when adding a team or a specific user to that folder. This is
+     meant to hold doctor sensitive info, or company sensitive email." (Cory, same day: "company
+     sensitive information", not email.) Decided with him: every
+     admin sees it automatically; adding a team or a person = a warning, then the admin types the
+     name back. ONE list (ph_sensitive), only here - never in the Teams & Access grid, so there is
+     no second way to give it. Every change is kept in its history. The folder is locked in
+     SharePoint by hand once; then this page gives and takes back SharePoint access from the list
+     (docs.js SENS, ph_sensgrants) and tells Documents when it is safe to add files (locked). */
+  const SENS_KEY='ph_sensitive', SLVL={view:'Can open', edit:'Can add & edit'};
+  let SENSREC=null, SDLG=null, SENS_ROWS=[];
+  function sensLoad(){
+    const p=window.PH_STORE ? PH_STORE.get(SENS_KEY) : Promise.resolve(null);
+    return p.then(r=>{ SENSREC=(r && typeof r==='object' && !Array.isArray(r)) ? r : {}; return SENSREC; },
+                  ()=>{ SENSREC=SENSREC||{}; return SENSREC; });
+  }
+  function sensSave(mutate, logEntry){
+    const by=(window.PH && PH.name && PH.realMe) ? PH.name(PH.realMe()) : 'An admin';
+    const fn=cur=>{
+      const next=(cur && typeof cur==='object' && !Array.isArray(cur)) ? JSON.parse(JSON.stringify(cur)) : {};
+      next.teams=next.teams||{}; next.people=next.people||{}; next.log=Array.isArray(next.log)?next.log:[];
+      mutate(next);
+      if(logEntry) next.log.unshift(Object.assign({at:new Date().toISOString(), by:by}, logEntry));
+      next.log=next.log.slice(0,200);
+      return next;
+    };
+    return PH_STORE.update(SENS_KEY, fn).then(r=>{
+      if(r && (r.blocked || r.error)) throw new Error(r.why || r.error || 'It didn’t save.');
+      if(r && r.value) SENSREC=r.value;
+      if(PH.reloadSensitive) PH.reloadSensitive();
+      return r;
+    });
+  }
+  const sensWhen=iso=>{ try{ return new Date(iso).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}); }catch(_){ return ''; } };
+  function sensWhat(l){
+    const lv=SLVL[l.level]||'';
+    return l.what==='added' ? 'added '+l.who+(lv?' ('+lv+')':'') : l.what==='changed' ? 'changed '+l.who+' to '+lv : 'removed '+l.who;
+  }
+  function sensHTML(){
+    const r=SENSREC||{}, teams=Object.keys(r.teams||{}).sort(), people=Object.keys(r.people||{}).sort((a,b)=>String((r.people[a]||{}).name||a).localeCompare(String((r.people[b]||{}).name||b)));
+    SENS_ROWS=teams.map(t=>({kind:'team',key:t})).concat(people.map(em=>({kind:'person',key:em})));
+    const acts=i=>'<span class="sens-acts"><button class="btn ghost tiny" onclick="AD.sensChange('+i+')">Change</button><button class="btn ghost tiny" onclick="AD.sensRemove('+i+')">Remove</button></span>';
+    const rows=SENS_ROWS.map((x,i)=>{
+      if(x.kind==='team') return '<div class="sens-row"><span class="sens-ic">\u{1F465}</span><span class="sens-n">'+esc(x.key)+' <span class="mini">team</span></span><span class="sens-l">'+esc(SLVL[r.teams[x.key]]||'')+'</span>'+acts(i)+'</div>';
+      const p=r.people[x.key]||{}; return '<div class="sens-row"><span class="sens-ic">\u{1F464}</span><span class="sens-n">'+esc(p.name||x.key)+' <span class="mini">'+esc(x.key)+'</span></span><span class="sens-l">'+esc(SLVL[p.level]||'')+'</span>'+acts(i)+'</div>';
+    }).join('');
+    const log=(r.log||[]);
+    return '<div class="card sens" id="senspanel">'+
+      '<div class="sens-h"><span class="sens-big">\u{1F512}</span><div style="flex:1;min-width:220px"><div class="sn">Sensitive Material</div>'+
+        '<div class="mini">Doctor-sensitive and company-sensitive information. Only the people below can open it'+(liveDocs()?' — in Home-Brace and, once locked, in SharePoint.':'.')+'</div></div>'+
+        (liveDocs()?'<a class="btn ghost" href="documents.html#sensitive">Open in Documents →</a>':'')+'</div>'+
+      sensSyncHTML()+
+      '<div class="panel-lab" style="margin:12px 0 4px">Who can open it</div>'+
+      '<div class="sens-row"><span class="sens-ic">⚙️</span><span class="sens-n">Every admin</span><span class="sens-l">Can add &amp; edit · automatically</span></div>'+
+      rows+
+      (SENS_ROWS.length?'':'<p class="mini" style="margin:8px 0 0">No teams or people added yet — only admins can open it.</p>')+
+      '<div class="sens-add"><button class="btn ghost" onclick="AD.sensAdd(\'team\')">+ Add a team</button><button class="btn ghost" onclick="AD.sensAdd(\'person\')">+ Add a person</button></div>'+
+      (log.length?'<details class="sens-log"><summary>History ('+log.length+')</summary>'+log.slice(0,25).map(l=>'<div>'+esc(sensWhen(l.at))+' · <b>'+esc(l.by||'')+'</b> '+esc(sensWhat(l))+'</div>').join('')+'</details>':'')+
+      '</div>';
+  }
+  function paintSensPanel(){ const box=el('senspanel'); if(box) box.outerHTML=sensHTML(); }
+
+  /* ---- adding, changing, removing: the double confirmation ---- */
+  function sensTeams(){ const have=Object.keys((SENSREC||{}).teams||{}).map(t=>t.toLowerCase());
+    return TEAMS.filter(t=>t!=='Admin' && have.indexOf(t.toLowerCase())<0); }
+  function sensPeople(){ const have=Object.keys((SENSREC||{}).people||{});
+    return ((window.PH && PH.rosterView) ? PH.rosterView() : []).filter(p=>p && p.email && have.indexOf(String(p.email).toLowerCase())<0)
+      .map(p=>({name:p.name, email:String(p.email).trim().toLowerCase()})).sort((a,b)=>String(a.name).localeCompare(String(b.name))); }
+  function sensAdd(kind){
+    const list=kind==='team' ? sensTeams() : sensPeople();
+    SDLG={mode:'add', kind, step:1, level:'view', list, pick:list.length?0:-1, err:''}; drawSens();
+  }
+  function sensChange(i){ const x=SENS_ROWS[i]; if(!x) return; const r=SENSREC||{};
+    const cur=x.kind==='team' ? r.teams[x.key] : (r.people[x.key]||{}).level;
+    SDLG={mode:'change', kind:x.kind, key:x.key, name:x.kind==='team'?x.key:((r.people[x.key]||{}).name||x.key), was:cur, level:cur==='edit'?'view':'edit', step:1, err:''}; drawSens(); }
+  function sensRemove(i){ const x=SENS_ROWS[i]; if(!x) return; const r=SENSREC||{};
+    SDLG={mode:'remove', kind:x.kind, key:x.key, name:x.kind==='team'?x.key:((r.people[x.key]||{}).name||x.key), step:1, err:''}; drawSens(); }
+  function sensWho(){ const d=SDLG; if(d.mode!=='add') return {key:d.key, name:d.name};
+    const it=d.list[d.pick]; if(!it) return null; return d.kind==='team' ? {key:it, name:it} : {key:it.email, name:it.name}; }
+  const WARN='⚠️ Sensitive Material holds <b>doctor-sensitive and company-sensitive information</b>.';
+  function drawSens(){
+    const d=SDLG; if(!d) return;
+    const who=sensWho(), what=d.kind==='team'?'team':'person';
+    const head=t=>'<div class="m-top"><h3 style="margin:0">'+t+'</h3><button class="x" onclick="AD.sensClose()">×</button></div>';
+    const foot=b=>'<div class="m-foot"><span style="flex:1">'+(d.err?'<span style="color:#b42318;font-weight:600">'+esc(d.err)+'</span>':'')+'</span>'+b+'</div>';
+    const lvlPick='<div class="sens-f"><label>What '+(d.kind==='team'?'they':'they')+' can do</label>'+
+      ['view','edit'].map(l=>'<label class="sens-opt'+(d.level===l?' on':'')+'"><input type="radio" name="senslvl" '+(d.level===l?'checked ':'')+'onchange="AD.sensLevel(\''+l+'\')"><span><b>'+SLVL[l]+'</b><br><span class="mini">'+(l==='view'?'Open and download the files.':'Also add files and folders.')+'</span></span></label>').join('')+'</div>';
+    let h='';
+    if(d.mode==='remove'){
+      h=head('Remove from Sensitive Material')+'<div class="m-body"><p style="margin:0">Remove <b>'+esc(d.name)+'</b> ('+what+') from Sensitive Material? '+(d.kind==='team'?'Everyone on that team':'They')+' lose'+(d.kind==='team'?'s':'')+' access in Home-Brace right away, and in SharePoint the next time an admin opens Admin.</p></div>'+
+        foot('<button class="btn ghost" onclick="AD.sensClose()">Cancel</button><button class="btn danger" onclick="AD.sensGo()"'+(d.busy?' disabled':'')+'>'+(d.busy?'Removing…':'Remove')+'</button>');
+    } else if(d.step===1){
+      const pickBox = d.mode==='add'
+        ? (d.list.length
+            ? '<div class="sens-f"><label>'+(d.kind==='team'?'Team':'Person')+'</label><select onchange="AD.sensPick(this.value)">'+d.list.map((it,i)=>'<option value="'+i+'"'+(i===d.pick?' selected':'')+'>'+esc(d.kind==='team'?it:it.name+' — '+it.email)+'</option>').join('')+'</select>'+
+              (d.kind==='person'?'<span class="mini">Only people with an email on file can be added.</span>':'')+'</div>'
+            : '<p class="mini" style="margin:14px 0 0">'+(d.kind==='team'?'Every team is already on the list.':'Everyone with an email on file is already on the list.')+'</p>')
+        : '<p style="margin:14px 0 0"><b>'+esc(d.name)+'</b> ('+what+') — now: '+esc(SLVL[d.was]||'')+'.</p>';
+      const verb=d.mode==='add'?'Add a '+what+' to Sensitive Material':'Change access to Sensitive Material';
+      const widen=d.mode==='add' || (d.was==='view' && d.level==='edit');
+      h=head('\u{1F512} '+verb)+'<div class="m-body"><div class="docwarn">'+WARN+' '+(d.kind==='team'?'Everyone on the team you pick':'The person you pick')+' will be able to open every file in it.</div>'+pickBox+lvlPick+'</div>'+
+        foot('<button class="btn ghost" onclick="AD.sensClose()">Cancel</button><button class="btn" onclick="AD.sensNext()"'+((d.mode==='add'&&!who)?' disabled':'')+'>'+(widen?'Continue':'Save')+'</button>');
+    } else {
+      h=head('\u{1F512} Confirm — step 2 of 2')+'<div class="m-body"><p style="margin:0">You are giving <b>'+esc(who.name)+'</b> ('+what+') <b>'+esc(SLVL[d.level])+'</b> access to Sensitive Material.</p>'+
+        '<div class="sens-f"><label>To confirm, type <b>'+esc(who.name)+'</b></label><input id="sensType" autocomplete="off" spellcheck="false" oninput="AD.sensTyped(this.value)" value="'+esc(d.typed||'')+'"></div></div>'+
+        foot('<button class="btn ghost" onclick="AD.sensBack()">Back</button><button class="btn danger" id="sensGoBtn" onclick="AD.sensGo()"'+((PH.sensConfirmOk(d.typed,who.name)&&!d.busy)?'':' disabled')+'>'+(d.busy?'Saving…':'Give access')+'</button>');
+    }
+    openModal(h);
+    const t=el('sensType'); if(t){ t.focus(); try{ t.setSelectionRange(t.value.length,t.value.length); }catch(_){} }
+  }
+  function sensClose(){ if(SDLG && SDLG.busy) return; SDLG=null; closeModal(); }
+  function sensPick(v){ if(SDLG){ SDLG.pick=Number(v); SDLG.typed=''; drawSens(); } }
+  function sensLevel(l){ if(SDLG){ SDLG.level=l; drawSens(); } }
+  function sensTyped(v){ if(!SDLG) return; SDLG.typed=v; const b=el('sensGoBtn'), who=sensWho(); if(b && who) b.disabled=!PH.sensConfirmOk(v, who.name) || !!SDLG.busy; }
+  function sensBack(){ if(SDLG && !SDLG.busy){ SDLG.step=1; SDLG.err=''; drawSens(); } }
+  function sensNext(){
+    const d=SDLG; if(!d) return;
+    if(d.mode==='add' && !sensWho()) return;
+    const widen=d.mode==='add' || (d.was==='view' && d.level==='edit');
+    if(widen){ d.step=2; d.typed=''; d.err=''; drawSens(); return; }
+    sensGo();                                                    // a narrower level: one confirmation is enough
+  }
+  function sensGo(){
+    const d=SDLG; if(!d || d.busy) return;
+    const who=sensWho(); if(!who) return;
+    const widen=d.mode==='add' || (d.mode==='change' && d.was==='view' && d.level==='edit');
+    if(widen && !PH.sensConfirmOk(d.typed, who.name)) return;  // the second confirmation, checked again here
+    d.busy=true; d.err=''; drawSens();
+    const kind=d.kind, key=who.key, name=who.name, level=d.level;
+    const job = d.mode==='remove'
+      ? sensSave(n=>{ if(kind==='team') delete n.teams[key]; else delete n.people[key]; }, {what:'removed', kind, who:name})
+      : sensSave(n=>{ if(kind==='team') n.teams[key]=level; else n.people[key]={level, name}; }, {what:d.mode==='add'?'added':'changed', kind, who:name, level});
+    job.then(()=>{
+      SDLG=null; closeModal(); paintSensPanel(); syncSens();
+      docToast(d.mode==='remove' ? '✓ '+name+' removed from Sensitive Material.' : '✓ '+name+' — '+SLVL[level]+' — Sensitive Material.');
+    }, e=>{ d.busy=false; d.err=(e&&e.message)||'That didn’t save. Try again.'; drawSens(); });
+  }
+
+  /* ---- SharePoint follows the list (live) ---- */
+  let SENSSYNC={state:'idle'}, sensTimer=null, sensAgain=false;
+  const sensHere=()=>liveDocs() && !!(PH.isAdmin && PH.isAdmin()) && !!PH_DOCS.sensLocked;
+  function syncSens(){ if(!sensHere()) return; clearTimeout(sensTimer); sensTimer=setTimeout(runSensSync, 1600); }
+  /* Who should have what in SharePoint: every admin and anyone with "Can add & edit" = edit,
+     "Can open" = read - the better of what their teams and their own name give them. */
+  function sensWanted(){
+    const want={}, noEmail=[], r=SENSREC||{}, RK={read:1, write:2};
+    const tl={}; Object.keys(r.teams||{}).forEach(t=>{ tl[t.toLowerCase()]=r.teams[t]; });
+    const put=(em,role)=>{ if((RK[role]||0)>(RK[want[em]]||0)) want[em]=role; };
+    ((window.PH && PH.rosterView) ? PH.rosterView() : []).forEach(person=>{
+      const teams=person.teams||[], em=String(person.email||'').trim().toLowerCase();
+      let role=PH.levelForTeams(teams,'admin')==='manage' ? 'write' : '';
+      teams.forEach(t=>{ const l=tl[String(t).toLowerCase()], rr=l==='edit'?'write':l==='view'?'read':''; if((RK[rr]||0)>(RK[role]||0)) role=rr; });
+      if(!role) return;
+      if(!em){ noEmail.push(person.name); return; }
+      put(em, role);
+    });
+    Object.keys(r.people||{}).forEach(em=>{ const x=r.people[em], l=typeof x==='string'?x:(x&&x.level); put(String(em).toLowerCase(), l==='edit'?'write':'read'); });
+    return {want, noEmail};
+  }
+  function runSensSync(){
+    if(SENSSYNC.state==='busy'){ sensAgain=true; return; }
+    SENSSYNC={state:'busy'}; paintSensSync();
+    Promise.all([PH.reloadAccess ? PH.reloadAccess() : null, PH.reloadPeople ? PH.reloadPeople() : null, sensLoad()])
+      .then(()=>PH_DOCS.sensFolder())                                   // it has to exist before it can be locked
+      .then(()=>PH_DOCS.sensLocked())
+      .then(locked=>{
+        // Documents adds files only once this says locked - and stops again if it ever isn't.
+        const flag=(SENSREC.locked===locked) ? Promise.resolve() : sensSave(n=>{ n.locked=locked; n.lockChecked=new Date().toISOString(); }, null);
+        return flag.then(()=>{
+          if(!locked){ SENSSYNC={state:'notlocked'}; return; }
+          const w=sensWanted();
+          return PH_STORE.get('ph_sensgrants').then(rec=>PH_DOCS.sensSync(w.want, rec)).then(done=>{
+            const save=(done.gave.length || done.took.length || done.failed.length)
+              ? PH_STORE.update('ph_sensgrants', cur=>PH_DOCS.tcRecord(cur, done)) : Promise.resolve();
+            return save.then(()=>PH_DOCS.sensPeople()).then(have=>{
+              const others=have.filter(em=>!w.want[em]);
+              SENSSYNC={state:'done', gave:done.gave.length, took:done.took.length, failed:done.failed, noEmail:w.noEmail, others};
+              if(done.gave.length || done.took.length)
+                docToast('✓ Sensitive Material access updated in SharePoint ('+[done.gave.length?done.gave.length+' given':'', done.took.length?done.took.length+' taken back':''].filter(Boolean).join(', ')+').');
+            });
+          });
+        });
+      })
+      .catch(e=>{ SENSSYNC={state:'error', why:(e&&e.message)||'SharePoint didn’t answer.'}; })
+      .then(()=>{ paintSensSync(); if(sensAgain){ sensAgain=false; runSensSync(); } });
+  }
+  function sensSyncNow(){ clearTimeout(sensTimer); runSensSync(); }
+  function sensSyncState(){
+    const S=SENSSYNC;
+    if(!sensHere() || S.state==='idle' || S.state==='busy') return {cls:'', html:''};
+    if(S.state==='notlocked') return {cls:'es-warn', html:
+      '<b>Not locked yet — nothing can be added until it is.</b> Until then, everyone in Home-Brace could open its files in SharePoint, so Documents keeps it closed. '+
+      'Lock it once, and from then on Home-Brace gives and takes back access from this list by itself.'+
+      '<details><summary>Show me how (one time, a site owner)</summary><ol>'+
+        '<li>Open <b>omegaorthodontics.sharepoint.com/sites/Home-Brace</b> → <b>Documents</b> → <b>Home-Brace Documents</b>.</li>'+
+        '<li>Next to <b>Sensitive Material</b>: <b>⋯</b> → <b>Manage access</b> → <b>Advanced settings</b>.</li>'+
+        '<li><b>Stop Inheriting Permissions</b> → OK.</li>'+
+        '<li>Tick <b>Home-Brace Members</b> and <b>Home-Brace Visitors</b> → <b>Remove User Permissions</b> → OK.</li>'+
+      '</ol></details><button class="lnk" onclick="AD.sensSyncNow()">I’ve done it — check again</button>'};
+    if(S.state==='done'){
+      const probs=(S.failed.length?'<br>Couldn’t '+S.failed.slice(0,5).map(f=>esc(f.verb)+' access for '+esc(f.em)+' ('+esc(f.why)+')').join('; ')+'. <button class="lnk" onclick="AD.sensSyncNow()">Try again</button>':'')+
+        (S.noEmail.length?'<br>No email on file, so no SharePoint access for: '+esc(S.noEmail.join(', '))+'.':'')+
+        (S.others.length?'<br><b>Also able to open it in SharePoint, but not on this list:</b> '+esc(S.others.join(', '))+'. If they shouldn’t, a site owner removes them in SharePoint (Manage access).':'');
+      return probs ? {cls:'es-warn', html:'<b>Locked in SharePoint.</b>'+probs} : {cls:'es-ok', html:'✓ <b>Locked in SharePoint.</b> Access there matches this list.'};
+    }
+    return {cls:'es-bad', html:'Couldn’t check Sensitive Material in SharePoint: '+esc(S.why)+' <button class="lnk" onclick="AD.sensSyncNow()">Try again</button>'};
+  }
+  function sensSyncHTML(){ if(!sensHere()) return ''; const x=sensSyncState(); return '<div id="senssync" class="editsync '+x.cls+'">'+x.html+'</div>'; }
+  function paintSensSync(){ const box=el('senssync'); if(!box) return; const x=sensSyncState(); box.className='editsync '+x.cls; box.innerHTML=x.html; }
+
   let DEL=null;
   function delSec(k){
     const sec=DOCSECS.find(x=>x.k===k); if(!sec) return;
@@ -1748,7 +1983,7 @@
   function closeModal(){ el('modal').classList.remove('open'); }
 
   const thenSync=f=>function(){ const r=f.apply(this,arguments); syncEdit(); return r; };
-  window.AD={setupSecs,editSyncNow,tcSyncNow,tab:tabSet,viewAs:doViewAs,newTeam,editTeam,saveTeam:thenSync(saveTeam),delTeam:thenSync(delTeam),resetTeams,profile,whyNoAdd,
+  window.AD={setupSecs,editSyncNow,tcSyncNow,sensAdd,sensChange,sensRemove,sensClose,sensPick,sensLevel,sensTyped,sensBack,sensNext,sensGo,sensSyncNow,tab:tabSet,viewAs:doViewAs,newTeam,editTeam,saveTeam:thenSync(saveTeam),delTeam:thenSync(delTeam),resetTeams,profile,whyNoAdd,
     addPerson,npSet,npLoc,npTeam,saveNewPerson:thenSync(saveNewPerson),accTeam:setAccTeam,removePerson:thenSync(removePerson),restorePerson:thenSync(restorePerson),showRemoved,togTeam,togLoc,setStatus,saveUser:thenSync(saveUser),pickLevel,pickAud,setField,pickPhoto,photoChosen,clearPhoto,pickUserLevel,clearUserLevel,tog,addFile,noop,newSec,editSec,saveSec:thenSync(saveSec),delSec,delSecGo,resetSecs,setSecName,setSecIcon,setSecStruct,setSecLocMode,setSecTeamMode,togSecLoc,togSecTeam,saveFile,cd,useFile,clearFile,uploadFile,setFileTeamMode,setFileLocMode,togFileLoc,togFileTeam,renderLocs,newLoc,editLoc,saveLoc,delLoc,resetLocs,setLocBrand,setLocState,setLocTZ,close:closeModal};
   el('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
@@ -1792,6 +2027,7 @@
       LOCS=PH.locations(); if(tab==='locs'){ const keep=holdScroll(); render(); keep(); }
     });
     if(window.PH_STORE && PH.isLive()){
+      sensLoad().then(paintSensPanel);
       Promise.all([PH_STORE.get('ph_teams'), PH_STORE.get('ph_docsecs'), PH_STORE.get(ACCESS_KEY)])
         .then(function(r){
           var changed=false;
@@ -1806,7 +2042,7 @@
 })();
 </script>
 <script>PH.nav('admin');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(PH.loadPhotos)PH.loadPhotos().then(function(got){if(got&&window.AD&&AD.tab)AD.tab('users');});});</script>
-<script src="tour.js?v=hc89"></script>
+<script src="tour.js?v=hc91"></script>
 <script>
 Tour.init([
   {sel:'#tabs', title:'This is your control room', body:'Four tabs and you can run the whole hub: <b>People</b>, <b>Teams &amp; Access</b>, <b>Document Sections</b> and <b>Locations</b>. No developer, no consultant.', pre:()=>AD.tab('users')},

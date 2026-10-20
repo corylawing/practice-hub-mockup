@@ -442,6 +442,40 @@ const calls=(sp,re,method)=>sp.calls.filter(c=>re.test(c.url)&&(!method||c.metho
     t('record: a give that failed is not recorded (so it is tried again)', !('z@x.com' in D.tcRecord({}, {gave:[], took:[], failed:[{verb:'give', em:'z@x.com', role:'read'}]})));
     t('record: never takes the wrong role off the record', D.tcRecord({'a@x.com':'write'}, {took:[{em:'a@x.com', role:'read'}]})['a@x.com']==='write'); }
 
+  /* 6h. SENSITIVE MATERIAL (20/10): inside Home-Brace Documents, but locked like the TC folder;
+         access given and taken back only on that one folder; nothing moves in or out of it.
+         Made-up people. */
+  { const sp=SharePoint(), {D}=load(sp); sp.onePerPerson=true;
+    sp.add(sp.root,'Home-Brace Documents',true);
+    t('Sensitive Material sits inside Home-Brace Documents', D.SENS_PATH==='Home-Brace Documents/Sensitive Material' && D.inSens(D.SENS_PATH+'/Board') && !D.inSens(D.path('HR')));
+    t('not locked before it exists', (await D.sensLocked())===false);
+    const id=await D.sensFolder(), f=sp.items[id];
+    t('its folder is made where Documents shows it', f && f.name==='Sensitive Material' && sp.items[f.parent].name==='Home-Brace Documents');
+    t('...and is not locked while it inherits (everyone could read it)', (await D.sensLocked())===false);
+    const O={id:'O', roles:['owner'], grantedToV2:{siteGroup:{displayName:'Home-Brace Owners'}}};
+    sp.perms[id]=[O, {id:'M', roles:['read'], grantedToV2:{siteGroup:{displayName:'Home-Brace Members'}}}];
+    t('not locked while Members can read it', (await D.sensLocked())===false);
+    sp.perms[id]=[O, {id:'AD', roles:['write'], grantedToV2:{user:{email:'admin.one@example.com'}}}];
+    t('locked: Owners and named people only', (await D.sensLocked())===true);
+    const done=await D.sensSync({'admin.one@example.com':'write','dr.test@example.com':'read'}, null);
+    const roleOf=em=>{ const x=sp.perms[id].find(q=>q.grantedToV2 && q.grantedToV2.user && q.grantedToV2.user.email===em); return x?x.roles.slice().sort().join('+'):'none'; };
+    t('access is given on that folder only, no email sent', roleOf('dr.test@example.com')==='read' && (sp.invites||[]).every(x=>x.item===id && x.body.sendInvitation===false));
+    t('who has their own access (for "not on this list" warnings)', JSON.stringify((await D.sensPeople()).sort())===JSON.stringify(['admin.one@example.com','dr.test@example.com']));
+    const rec=D.tcRecord(null, done);
+    await D.sensSync({'admin.one@example.com':'write'}, rec);
+    t('taken off the list: their access goes; nobody else is touched', roleOf('dr.test@example.com')==='none' && roleOf('admin.one@example.com')==='write' && sp.perms[id].some(q=>q.id==='O'));
+    // nothing moves in or out
+    const hr=await D.ensureFolder(D.path('HR'));
+    const pol=sp.add(sp.items[hr],'policy.pdf',false), sec=sp.add(f,'agreement.pdf',false);
+    let e1=null; try{ await D.move(sp.view(sec), D.path('HR')); }catch(x){ e1=x; }
+    t('a sensitive file can never be moved out to another section', e1 && e1.sensitive && sp.items[sec.id].parent===f.id);
+    let e2=null; try{ await D.move(sp.view(pol), D.SENS_PATH); }catch(x){ e2=x; }
+    t('...nor anything moved in (add it there instead)', e2 && e2.sensitive && sp.items[pol.id].parent===hr);
+    const sub=await D.ensureFolder(D.SENS_PATH+'/Board');
+    const r=await D.move(sp.view(sec), D.SENS_PATH+'/Board');
+    t('moving within Sensitive Material is fine', sp.items[sec.id].parent===sub);
+    t('the TC Tracker folder is still its own (the shared code keeps them apart)', D.TC_BASE==='Home-Brace TC Tracker' && D.SENS_PATH!==D.TC_BASE); }
+
   /* 7. Links to files kept elsewhere: checked, saved once, un-linked (never deleted). */
   { const sp=SharePoint(), {D,store}=load(sp);
     let e=null; try{ await D.resolveLink('https://www.dropbox.com/s/abc/file.pdf'); }catch(x){ e=x; }

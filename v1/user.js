@@ -475,6 +475,51 @@
     }
     return Promise.resolve(ACCESS);
   }
+  /* SENSITIVE MATERIAL (20/10/2026) - doctor-sensitive and company-sensitive information,
+     in its own locked folder in Documents. Who may open it is ONE list, ph_sensitive, kept in
+     Admin: every admin automatically, plus teams and people an admin adds - each addition
+     confirmed twice (Cory: "double confirmation ... when adding a team or a specific user").
+       { teams:{'Leadership Team':'view'|'edit'}, people:{email:{level, name}}, locked, log:[...] }
+     Not in the Teams & Access grid, so there is no second way to give it. */
+  const SENS_KEY='ph_sensitive';
+  let SENS=null;
+  function sensRecord(){
+    if(SENS) return SENS;
+    try{ SENS=JSON.parse(localStorage.getItem(SENS_KEY))||null; }catch(_){ SENS=null; }
+    return SENS||{};
+  }
+  function reloadSensitive(){
+    if(window.PH_STORE && (!isLive() || window.PH_AUTH)){             // the store reads both: SharePoint, or this browser
+      return window.PH_STORE.get(SENS_KEY).then(function(r){
+        SENS=(r && typeof r==='object' && !Array.isArray(r)) ? r : {};
+        try{ localStorage.setItem(SENS_KEY, JSON.stringify(SENS)); }catch(_){}
+        return SENS;
+      }, function(){ return sensRecord(); });
+    }
+    SENS=null; return Promise.resolve(sensRecord());
+  }
+  /* 'manage' (every admin), 'edit', 'view', or '' - the best of what this person's teams and
+     their own name on the list give them. */
+  function sensLevelFor(p, rec){
+    p=p||me(); rec=rec||sensRecord()||{};
+    if(isAdmin(p)) return 'manage';
+    const R={view:1, edit:2}; let best='';
+    const mine=(p.teams||[]).map(function(t){ return String(t).trim().toLowerCase(); });
+    Object.keys(rec.teams||{}).forEach(function(t){
+      const l=rec.teams[t]; if(mine.indexOf(String(t).trim().toLowerCase())>=0 && (R[l]||0)>(R[best]||0)) best=l;
+    });
+    const em=String(p.mail||'').trim().toLowerCase(), pr=em && rec.people ? rec.people[em] : null;
+    const pl=pr ? (typeof pr==='string' ? pr : pr.level) : '';
+    if((R[pl]||0)>(R[best]||0)) best=pl;
+    return best;
+  }
+  function sensitiveLevel(){ return sensLevelFor(me()); }
+  // The second confirmation: the name typed back - same words, any capitals or spacing.
+  function sensConfirmOk(typed, expected){
+    const n=function(v){ return String(v==null?'':v).toLowerCase().replace(/\s+/g,' ').trim(); };
+    return !!n(expected) && n(typed)===n(expected);
+  }
+
   function accessForTeam(dept){
     if(!ACCESS) return null;
     const key=Object.keys(ACCESS).find(k=>k.toLowerCase()===dept);
@@ -1345,7 +1390,8 @@
         .then(function(d){ return g('/drives/'+d.id+'/root:/'+encodeURIComponent(DOC_BASE)+'?$select=id').then(function(b){ return {driveId:d.id, baseId:b.id}; }); }),
       PH_STORE.get('ph_docsecs').catch(function(){ return null; }),
       PH_STORE.get('ph_docmeta').catch(function(){ return null; }),
-      PH_STORE.get('ph_doclinks').catch(function(){ return null; })
+      PH_STORE.get('ph_doclinks').catch(function(){ return null; }),
+      reloadSensitive().catch(function(){ return null; })
     ]).then(function(r){
       const meta=(r[2] && typeof r[2]==='object' && !Array.isArray(r[2])) ? r[2] : {};
       const ctx={driveId:r[0].driveId, baseId:r[0].baseId,
@@ -1438,9 +1484,13 @@
           placed.forEach(function(p){
             const it=p.it, rel=p.rel; if(!rel || seen[it.id]) return;
             const segs=rel.split('/'), top=segs[0].toLowerCase();
-            const sec=ctx.secs.find(function(x){ return docFolderName(x).toLowerCase()===top; }); if(!sec) return;
-            const lvl=docSecLevel(sec); if(lvl==='none') return;
-            if(segs.length>1 && !docSubOk(sec, segs[1])) return;
+            let sec=ctx.secs.find(function(x){ return docFolderName(x).toLowerCase()===top; });
+            /* Sensitive Material is not one of Admin's sections: its own list decides, and anyone
+               not on it never sees so much as a file name (SharePoint itself hides it too, once locked). */
+            if(!sec && top==='sensitive material'){ if(!sensitiveLevel()) return; sec={k:'sensitive', n:'Sensitive Material', sensitive:true}; }
+            if(!sec) return;
+            const lvl=sec.sensitive ? 'manage' : docSecLevel(sec); if(lvl==='none') return;
+            if(!sec.sensitive && segs.length>1 && !docSubOk(sec, segs[1])) return;
             if(lvl!=='manage'){
               if(!docAudOk(ctx.meta[it.id])) return;
               if(ctx.restricted.some(function(f){ return rel.indexOf(f.rel+'/')===0 && !docAudOk(f.aud); })) return;
@@ -2751,6 +2801,7 @@
   const isLive=()=>env()==='live';
 
   window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, rosterView, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK, notesHTML, searchHTML, searchDocs, searchDocsHTML, levelForTeams, teamsSeeAll, tcOn, tcRoleFor, saveFace, faceOf,
+    sensRecord, reloadSensitive, sensLevelFor, sensitiveLevel, sensConfirmOk,
     setTheme, theme:()=>THEME, setLayout, layout:()=>LAYOUT, layouts:()=>LAYOUTS.map(l=>({k:l.k, n:l.n})), themes:()=>THEMES.map(t=>({k:t.k, n:t.n})), schemeTokens:k=>schemeTokens(themeOf(k)), contrast,
     feedback:openFeedback, feedbackText, feedbackContext, learning:stillLearning};
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mount); else mount();

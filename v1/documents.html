@@ -237,11 +237,11 @@
   }
 
 </style>
-<script src="user.js?v=hc89"></script>
+<script src="user.js?v=hc91"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc89"></script>
-  <script src="gate.js?v=hc89"></script>
-  <script src="docs.js?v=hc89"></script>
+  <script src="store.js?v=hc91"></script>
+  <script src="gate.js?v=hc91"></script>
+  <script src="docs.js?v=hc91"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — Documents. You see only the folders your role, location &amp; team allow. Files open on the Microsoft drive.</div>
@@ -328,8 +328,18 @@
     const locOk  = sec.locMode==='all'  || p.scope==='all' || myLocs.some(l=>(sec.locs||[]).includes(l));
     return (teamOk&&locOk) ? (p.id==='admin'?'manage':'view') : null;
   }
+  /* Sandbox: the same list decides, for the demo persona (made-up sample files). */
+  function demoSensCap(p){
+    if(p.id==='admin') return 'manage';
+    const rec=(window.PH && PH.sensRecord && PH.sensRecord())||{};
+    const lvl=PH.sensLevelFor ? PH.sensLevelFor({teams:(p.teams&&p.teams.length)?p.teams:[p.teamName], mail:'', can:{admin:'none'}}, rec) : '';
+    return lvl==='edit'||lvl==='view' ? lvl : null;
+  }
   function accessibleSections(p){
     const out=FOLDERS.filter(f=>p.doc[f.k]).map(f=>({f,cap:p.doc[f.k]}));
+    const sc=demoSensCap(p);
+    if(sc) out.push({f:{k:'sensitive',n:'Sensitive Material',ic:'\u{1F512}',sensitive:true,files:[
+      {n:'Sample \u2014 doctor agreement.pdf',scope:'everyone'},{n:'Sample \u2014 confidential email from the owners.pdf',scope:'everyone'}]},cap:sc});
     customSecs().forEach(sec=>{ const cap=customCap(sec,p); if(!cap)return;
       const perLoc=sec.structure==='byLocation', perBrand=sec.structure==='byBrand';
       const files = perLoc ? (sec.locItems||[]) : perBrand ? (sec.brandItems||[])
@@ -538,21 +548,36 @@
   const escH=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const myName=()=>{ try{ return PH.name(PH.me()); }catch(_){ return ''; } };
 
+  /* SENSITIVE MATERIAL (20/10/2026) - doctor-sensitive and company-sensitive information.
+     Not one of Admin's sections: who may open it is its own list (every admin, plus teams and
+     people added in Admin with a double confirmation - user.js sensitiveLevel), and its folder is
+     LOCKED in SharePoint. Nothing goes in until Admin has confirmed that lock (ph_sensitive.locked).
+     Inside it: no links, no "only certain people", nothing moves in or out, nothing in the bell. */
+  const SENS_SEC={k:'sensitive',n:'Sensitive Material',ic:'\u{1F512}',folder:'Sensitive Material',perLocation:false,perBrand:false,
+    locMode:'all',locs:[],teamMode:'some',teams:[],custom:false,sensitive:true};
+  const sensRec=()=>(window.PH && PH.sensRecord && PH.sensRecord())||{};
+  const sensLocked=()=>sensRec().locked===true;
+  function sensCap(){
+    const l=(window.PH && PH.sensitiveLevel) ? PH.sensitiveLevel() : '';
+    return l==='manage'||l==='edit'||l==='view' ? l : null;
+  }
   /* The sections: Admin's saved list when there is one (so a section Heather adds,
      renames or deletes there is what everyone sees), otherwise the six defaults. Each
      keeps the FOLDER it was made with: renaming a section in Admin never moves files. */
   function liveSecs(){
     let saved=null; try{ saved=JSON.parse(localStorage.getItem('ph_docsecs')); }catch(_){}
-    if(!(Array.isArray(saved) && saved.length))
-      return FOLDERS.map(f=>({k:f.k,n:f.n,ic:f.ic,folder:PH_DOCS.clean(f.n),perLocation:!!f.perLocation,perBrand:!!f.perBrand,
-        locMode:'all',locs:[],teamMode:'all',teams:[],custom:false}));
-    return saved.filter(x=>x&&x.k).map(x=>({k:x.k,n:x.n||'Untitled',ic:x.ic||'\u{1F4C1}',folder:x.folder||PH_DOCS.clean(x.n||'Untitled'),
-      perLocation:x.structure==='byLocation',perBrand:x.structure==='byBrand',
-      locMode:x.locMode||'all',locs:x.locs||[],teamMode:x.teamMode||'all',teams:x.teams||[],custom:!FOLDERS.some(f=>f.k===x.k)}));
+    const list=!(Array.isArray(saved) && saved.length)
+      ? FOLDERS.map(f=>({k:f.k,n:f.n,ic:f.ic,folder:PH_DOCS.clean(f.n),perLocation:!!f.perLocation,perBrand:!!f.perBrand,
+          locMode:'all',locs:[],teamMode:'all',teams:[],custom:false}))
+      : saved.filter(x=>x&&x.k&&x.k!=='sensitive').map(x=>({k:x.k,n:x.n||'Untitled',ic:x.ic||'\u{1F4C1}',folder:x.folder||PH_DOCS.clean(x.n||'Untitled'),
+          perLocation:x.structure==='byLocation',perBrand:x.structure==='byBrand',
+          locMode:x.locMode||'all',locs:x.locs||[],teamMode:x.teamMode||'all',teams:x.teams||[],custom:!FOLDERS.some(f=>f.k===x.k)}));
+    return list.concat([SENS_SEC]);
   }
   /* What this person can do in a section: the Teams & Access grid decides; a custom
      section nobody has set in the grid falls back to its own audience (customCap). */
   function liveCap(s,p){
+    if(s.sensitive) return sensCap();
     const admin=p.id==='admin';
     if(!admin && s.locMode==='some' && p.scope!=='all' && !(p.scopes||[p.scope]).some(l=>(s.locs||[]).includes(l))) return null;
     if(!s.custom) return (p.doc&&p.doc[s.k])||null;
@@ -635,7 +660,7 @@
       const here=attr('k',ctx.k)+attr('sub',ctx.sub)+attr('path',fp), ipad=' style="padding-left:'+((depth+1)*20)+'px"';
       rows.push('<div class="file lv-fold'+(open?' open':'')+(ctx.canAdd?' dropz':'')+'"'+(ctx.canAdd?here:'')+pad+'>'+
         '<button class="lv-tw"'+attr('act','openf')+attr('path',fp)+' aria-expanded="'+open+'"><span class="car">▶</span><span class="fic">\u{1F4C1}</span><span class="nm">'+escH(f.name)+'</span></button>'+
-        audChip(f.id)+(ctx.canManage?'<button class="lv-rm lv-rep"'+attr('act','aud')+attr('id',f.id)+attr('k',ctx.k)+attr('sub',ctx.sub)+attr('path',path)+attr('name',f.name)+attr('kind','folder')+'>Access</button>'+'<button class="lv-rm lv-rep"'+attr('act','mv')+attr('path',path)+attr('id',f.id)+attr('k',ctx.k)+attr('sub',ctx.sub)+'>Move</button>'+'<button class="lv-rm"'+attr('act','rm')+attr('path',path)+attr('id',f.id)+'>Remove</button>':'')+'</div>'+
+        audChip(f.id)+(ctx.canManage?(ctx.sensitive?'':'<button class="lv-rm lv-rep"'+attr('act','aud')+attr('id',f.id)+attr('k',ctx.k)+attr('sub',ctx.sub)+attr('path',path)+attr('name',f.name)+attr('kind','folder')+'>Access</button>'+'<button class="lv-rm lv-rep"'+attr('act','mv')+attr('path',path)+attr('id',f.id)+attr('k',ctx.k)+attr('sub',ctx.sub)+'>Move</button>')+'<button class="lv-rm"'+attr('act','rm')+attr('path',path)+attr('id',f.id)+'>Remove</button>':'')+'</div>'+
         (open?'<div class="lv-in'+(ctx.canAdd?' dropz':'')+'"'+(ctx.canAdd?here:'')+'>'+folderHTML(fp,depth+1,ctx)+
           (ctx.canAdd?'<div class="lv-sacts"'+ipad+'><button class="lv-link"'+attr('act','add')+here+'>+ Add files here</button>'+
             (ctx.canEdit?'<button class="lv-link"'+attr('act','newf')+here+'>+ New folder here</button>':'')+'</div>':'')+'</div>':''));
@@ -644,7 +669,7 @@
       rows.push('<div class="file"'+pad+'><span class="fic">'+fileIcon(f.name)+'</span>'+
         '<span class="nm"><a href="'+escH(safeUrl(f.webUrl))+'" target="_blank" rel="noopener">'+escH(f.name)+'</a><span class="lv-meta">'+escH(whenBy(f))+'</span></span>'+
         audChip(f.id)+'<a class="sp" href="'+escH(safeUrl(f.webUrl))+'" target="_blank" rel="noopener">Open ↗</a>'+
-        (ctx.canManage?'<button class="lv-rm lv-rep"'+attr('act','aud')+attr('id',f.id)+attr('k',ctx.k)+attr('sub',ctx.sub)+attr('path',path)+attr('name',f.name)+attr('kind','file')+'>Access</button>'+'<button class="lv-rm lv-rep"'+attr('act','mv')+attr('path',path)+attr('id',f.id)+attr('k',ctx.k)+attr('sub',ctx.sub)+'>Move</button>'+'<button class="lv-rm lv-rep"'+attr('act','rep')+attr('path',path)+attr('id',f.id)+attr('k',ctx.k)+attr('sub',ctx.sub)+'>Replace</button>'+
+        (ctx.canManage?(ctx.sensitive?'':'<button class="lv-rm lv-rep"'+attr('act','aud')+attr('id',f.id)+attr('k',ctx.k)+attr('sub',ctx.sub)+attr('path',path)+attr('name',f.name)+attr('kind','file')+'>Access</button>'+'<button class="lv-rm lv-rep"'+attr('act','mv')+attr('path',path)+attr('id',f.id)+attr('k',ctx.k)+attr('sub',ctx.sub)+'>Move</button>')+'<button class="lv-rm lv-rep"'+attr('act','rep')+attr('path',path)+attr('id',f.id)+attr('k',ctx.k)+attr('sub',ctx.sub)+'>Replace</button>'+
           '<button class="lv-rm"'+attr('act','rm')+attr('path',path)+attr('id',f.id)+'>Remove</button>':'')+'</div>');
     });
     if(!rows.length) return depth ? '<div class="lv-msg"'+pad+'>Empty folder.</div>' : '';
@@ -658,13 +683,14 @@
     if(openSet===null) openSet=new Set();
     if(secs.some(x=>openSet.has(x.s.k))) loadExtras();
     el('folders').innerHTML='<div class="folders">'+secs.map(({s,cap})=>{
-      const open=openSet.has(s.k), add=canAddAt(cap), edit=canEditAt(cap), manage=cap==='manage';
+      const shut=s.sensitive && !sensLocked();                   // Sensitive Material, not locked yet: look, don't add
+      const open=openSet.has(s.k), add=canAddAt(cap)&&!shut, edit=canEditAt(cap)&&!shut, manage=cap==='manage';
       const rs=roots(s,p);
       let body='', nFiles=0, nFolders=0, counted=true;
       if(open){
         body=rs.map(r=>{
-          const links=LINKS.filter(l=>l && !l.hidden && l.sec===s.k && (l.sub||'')===r.sub && seesItem(l.id,p,cap));
-          const ctx={k:s.k,sub:r.sub,cap,canManage:manage,canAdd:add,canEdit:edit};
+          const links=s.sensitive ? [] : LINKS.filter(l=>l && !l.hidden && l.sec===s.k && (l.sub||'')===r.sub && seesItem(l.id,p,cap));
+          const ctx={k:s.k,sub:r.sub,cap,canManage:manage,canAdd:add,canEdit:edit,sensitive:!!s.sensitive};
           const inner=folderHTML(r.path,0,ctx), n=NODES[r.path];
           if(n && n.state==='ok'){ nFiles+=n.files.filter(f=>seesItem(f.id,p,cap)).length+links.length; nFolders+=n.folders.filter(f=>seesItem(f.id,p,cap)).length; }
           else counted=false;
@@ -676,11 +702,14 @@
           const acts=add?'<div class="lv-acts">'+
               '<button class="addbtn"'+attr('act','add')+attr('k',s.k)+attr('sub',r.sub)+'>+ Add files</button>'+
               (edit?'<button class="lv-btn"'+attr('act','newf')+attr('k',s.k)+attr('sub',r.sub)+'>+ New folder</button>':'')+
-              '<button class="lv-btn"'+attr('act','link')+attr('k',s.k)+attr('sub',r.sub)+'>\u{1F517} Link a file</button></div>':'';
+              (s.sensitive?'':'<button class="lv-btn"'+attr('act','link')+attr('k',s.k)+attr('sub',r.sub)+'>\u{1F517} Link a file</button>')+'</div>':'';
           return (r.label?'<div class="subfold'+(s.perBrand?' brand':'')+'">'+escH(r.label)+'</div>':'')+
             '<div class="lv-root'+(add?' dropz':'')+'"'+attr('k',s.k)+attr('sub',r.sub)+'>'+linkRows+inner+
             (empty?'<div class="lv-msg">Nothing here yet.'+(add?' Drag files or folders here, or use <b>+ Add files</b>.':'')+'</div>':'')+acts+'</div>';
-        }).join('')+(cap==='view'?'<div class="readonly">You can open these, but not add or change them.</div>':'')+
+        }).join('')+(s.sensitive?(shut
+            ? '<div class="lv-warn">\u{1F512} <b>Not locked yet.</b> Nothing can be added until an admin finishes the one-time lock (Admin \u2192 Document Sections \u2192 Sensitive Material).</div>'
+            : '<div class="lv-note">\u{1F512} Locked: only the people on the Sensitive Material list can open this \u2014 here and in SharePoint.</div>'):'')+
+          (cap==='view'?'<div class="readonly">You can open these, but not add or change them.</div>':'')+
           '<div class="lv-acts" style="margin-top:8px"><button class="lv-link"'+attr('act','refresh')+attr('k',s.k)+'>↻ Refresh</button></div>';
       }
       const meta=open&&counted ? ([nFolders?nFolders+' folder'+(nFolders===1?'':'s'):'', nFiles?nFiles+' file'+(nFiles===1?'':'s'):''].filter(Boolean).join(' · ')||'Empty') : 'Tap to open';
@@ -768,11 +797,11 @@
         (any?'<div class="lv-chosen">'+(dirs.length?'<div><span>\u{1F4C1}</span><span>'+escH(dirs.join(', '))+'</span></div>':'')+list+'</div>'+
              '<div class="lv-acts lv-again"><button class="lv-link"'+attr('act','clear')+'>Start again</button></div>':'')+
         (d.err?'<div class="lv-bad">'+escH(d.err)+'</div>':'')+
-        (any?audHTML(d.aud,whatOf(d.entries),d):'')+
+        (any?(d.s&&d.s.sensitive?'<div class="lv-note">\u{1F512} Only the people on the Sensitive Material list will see '+(files.length===1?'it':'these')+'.</div>':audHTML(d.aud,whatOf(d.entries),d)):'')+
         '<div class="lv-note">Nothing is overwritten: a file with a name that’s already there is added as “name 1”. Private files like payroll belong in a locked folder — ask an admin.</div>'+
         '</div>'+foot('<button class="simbtn"'+attr('act','close')+'>Cancel</button>'+
           '<button class="addbtn"'+attr('act','upload')+(any&&audOk(d.aud)?'':' disabled')+'>'+(files.length?'Add '+files.length+' file'+(files.length===1?'':'s'):'Add')+'</button>',
-          any?whoSentence(d.aud,whatOf(d.entries),where(d)):'');
+          any?(d.s&&d.s.sensitive?'\u{1F512} Sensitive Material list only':whoSentence(d.aud,whatOf(d.entries),where(d))):'');
       wireChooser();
       return;
     }
@@ -871,6 +900,7 @@
   }
   function openAdd(k,sub,entries,path){
     const sr=secRoot(k,sub); if(!sr || !canAddAt(sr.cap)) return;
+    if(sr.s.sensitive && !sensLocked()) return;            // not locked yet: nothing goes in
     openDlg({kind:'add',s:sr.s,r:sr.r,k,at:inRoot(sr.r,path),entries:entries||[],aud:{mode:'all',teams:[],offices:[]},stage:'pick',err:''});
   }
   function progress(p){
@@ -881,6 +911,7 @@
   }
   function announce(d,count,firstName,ids){
     if(!count || !PH.logActivity) return;
+    if(d.s && d.s.sensitive) return;                       // the bell is for everyone: not even a file name
     const aud=audOf(d.aud);
     try{ PH.logActivity({kind:'document', sec:d.k, ic:'\u{1F4C4}', scope:'everyone',
       title:(count===1?'New in '+where(d)+': '+firstName:count+' new files in '+where(d)),
@@ -941,9 +972,9 @@
      folders one level inside. docs.js fences it to inside Home-Brace Documents. */
   function moveOpen(path,id,k,sub){
     const it=itemIn(path,id); if(!it) return;
-    const sr=secRoot(k,sub); if(!sr || sr.cap!=='manage') return;
+    const sr=secRoot(k,sub); if(!sr || sr.cap!=='manage' || sr.s.sensitive) return;
     const d={kind:'move',s:sr.s,r:sr.r,k,at:inRoot(sr.r,path),item:it,here:path,self:it.folder?path+'/'+it.name:null,opts:[],pick:null,err:'',busy:false};
-    liveSecs().forEach(s=>{ if(!canAddAt(liveCap(s,cur))) return;
+    liveSecs().forEach(s=>{ if(s.sensitive || !canAddAt(liveCap(s,cur))) return;
       roots(s,cur).forEach(r=>d.opts.push({k:s.k,label:s.n+(r.sub?' \u00b7 '+r.sub:''),path:r.path,depth:0,ic:s.ic})); });
     openDlg(d);
     d.opts.slice().forEach(o=>{
@@ -1036,8 +1067,8 @@
     if(act==='retry'){ delete NODES[b.dataset.path]; liveRender(); return; }
     if(act==='refresh'){ const s=liveSecs().find(x=>x.k===b.dataset.k); if(s) forget(PH_DOCS.path(s.folder)); extras='no'; liveRender(); return; }
     if(act==='add'){ openAdd(b.dataset.k,b.dataset.sub,null,b.dataset.path); return; }
-    if(act==='newf'){ const sr=secRoot(b.dataset.k,b.dataset.sub); if(sr && canEditAt(sr.cap)) openDlg({kind:'newf',s:sr.s,r:sr.r,k:b.dataset.k,at:inRoot(sr.r,b.dataset.path),name:'',err:''}); return; }
-    if(act==='link'){ const sr=secRoot(b.dataset.k,b.dataset.sub); if(sr && canAddAt(sr.cap)) openDlg({kind:'link',s:sr.s,r:sr.r,k:b.dataset.k,url:'',item:null,shared:null,aud:{mode:'all',teams:[],offices:[]},err:''}); return; }
+    if(act==='newf'){ const sr=secRoot(b.dataset.k,b.dataset.sub); if(sr && canEditAt(sr.cap) && !(sr.s.sensitive && !sensLocked())) openDlg({kind:'newf',s:sr.s,r:sr.r,k:b.dataset.k,at:inRoot(sr.r,b.dataset.path),name:'',err:''}); return; }
+    if(act==='link'){ const sr=secRoot(b.dataset.k,b.dataset.sub); if(sr && canAddAt(sr.cap) && !sr.s.sensitive) openDlg({kind:'link',s:sr.s,r:sr.r,k:b.dataset.k,url:'',item:null,shared:null,aud:{mode:'all',teams:[],offices:[]},err:''}); return; }
     if(act==='rm'){ rmOpen(b.dataset.path,b.dataset.id); return; }
     if(act==='rep'){ repOpen(b.dataset.path,b.dataset.id,b.dataset.k,b.dataset.sub); return; }
     if(act==='mv'){ moveOpen(b.dataset.path,b.dataset.id,b.dataset.k,b.dataset.sub); return; }
@@ -1105,7 +1136,11 @@
 /* Document sections were this-browser-only until 17/09: a section Heather created
    existed on her machine and nowhere else. Admin now saves them through the store;
    pull the shared copy when identity settles and redraw. */
+/* Sensitive Material's list (who may open it): now, and again whenever identity settles. */
+function phSensReload(){ if(PH.reloadSensitive) PH.reloadSensitive().then(function(){ if(window.DOCS && DOCS.refresh) DOCS.refresh(); }); }
+phSensReload();
 document.addEventListener('ph-identity',function(){
+  phSensReload();
   if(!(window.PH_STORE && PH.isLive())) return;
   PH_STORE.get('ph_docsecs').then(function(r){
     if(!Array.isArray(r)) return;
@@ -1116,7 +1151,7 @@ document.addEventListener('ph-identity',function(){
   });
 });
 PH.nav('documents');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc89"></script>
+<script src="tour.js?v=hc91"></script>
 <script>
 Tour.init([
   {sel:'.crumb', title:'Everything in one place', body:'This replaces \u201cwho has the latest copy?\u201d. Every policy, form and office file lives here \u2014 and people only ever see the folders meant for them.'},

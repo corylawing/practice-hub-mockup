@@ -176,6 +176,27 @@ per-lesson best scores; the new hire's row updates from this browser's quiz resu
 saved). Made-up people only; progress in localStorage `ph_acad_demo`. NAV `academy` shows only when `env()!=='live'`, and
 the guard shuts the page on live (permissions tests 62). Nothing decided: no data model, no real videos, no SharePoint.
 
+**Sensitive Material - a locked folder in Documents (20/10, hc91).** Cory: "another Folder in Documents called Sensitive
+Material. Which needs a double confirmation from any admin when adding a team or a specific user to that folder" - for
+doctor-sensitive and company-sensitive INFORMATION (he corrected "email"). Decided with him: every admin sees it;
+"double confirmation" = a warning, then the SAME admin types the team's/person's name back (`PH.sensConfirmOk`, checked
+again in `sensGo`). ONE list, `ph_sensitive` {teams:{name:'view'|'edit'}, people:{email:{level,name}}, locked, log[]} - kept
+only in Admin -> Document Sections (panel at the top), never in the Teams & Access grid. Widening a level (view->edit)
+asks for the name again; narrowing and removing = one confirm. Every change goes in its history (who, when). Folder:
+`Home-Brace Documents/Sensitive Material` (docs.js `SENS`), so it shows in Documents - but everyone can READ the rest of
+Home-Brace Documents in SharePoint, so it must be LOCKED by hand once (stop inheriting, remove Members + Visitors - the
+same steps as the TC folder). docs.js now has ONE `lockedFolder(PATH)` factory for both (TC + SENS; tc* names kept):
+locked/grant/revoke/people/sync, take-backs first. Admin `runSensSync` (from `syncEdit`): makes the folder, checks the
+lock, writes `locked` into ph_sensitive (Documents adds NOTHING until it's true), gives admins + edit people `write`,
+view people `read`, takes back only what it gave (`ph_sensgrants`, in HOUSEKEEPING), and lists anyone else with their own
+SharePoint access as "not on this list" - never removes them. Documents: the section is appended to liveSecs (k
+'sensitive'), cap from `PH.sensitiveLevel()`; no links, no per-file "only certain people", no Move (and docs.js move()
+refuses in/out of it), nothing announced in the bell. Search: shows its files only to people on the list (SharePoint hides
+them too once locked). Section name "Sensitive Material" is reserved. Sandbox: sample files for whoever the list lets in.
+Verified against a fake SharePoint: not locked -> nothing added; lock -> grants; upload lands, no bell; Doctor sees it,
+Staff doesn't (folder or search); removing the team takes back only their grants, file untouched; an outsider is flagged.
+Tests: docs 135, sensitive 23. Production deploy creates the (empty) folder the first time an admin opens Admin.
+
 **TCs see every office in "By office" (19/10, hc85).** Selene: "we do want the Treatment Coordinators to be able to see
 one another's results. Please make sure they can all view the 'By Office' box so they can see conversion rates across
 locations." viewNumbers(): for a TC (`iAmTC() && !canManage()`) the box lists `allOffices()` from EVERY (rates and
