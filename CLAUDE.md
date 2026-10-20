@@ -203,6 +203,14 @@ sidebar; NAV names keep their emoji for search). Shared CSS: `.v1nav .v1nav-in a
 side, 16px icons; active icon teal2. The spacing was trimmed so an admin's full row (9 tabs) fits the 1080px row - it
 already overflowed by ~36px with emoji. Home tiles and Documents section icons are still emoji (offered as a follow-up).
 
+**Tab icons in colour (20/10, hc95).** Cory found the plain icons "so basic" (the emoji "added a bit of life" but
+looked "a bit amateur"); from three mock-ups he picked "2": the same icons, one colour per section (`TAB_IC` in
+user.js, next to THEMES). Home-Brace's colours sit in the stylesheet (`--ic-<k>`); any other scheme re-fits them to its
+bar at 3:1 in applyTheme (Sage lightens them) and removes them again on the way back, so the theme tests' "no
+override on Home-Brace" still holds. `icon(k)` tags the svg with data-k; top tabs, sidebar and phone bar use
+`--ic`, the white phone More sheet a darker `--ic-l`. Search results keep plain icons. Same 16px size, so an admin's
+9-tab row still fits 1080/1080.
+
 **TCs see every office in "By office" (19/10, hc85).** Selene: "we do want the Treatment Coordinators to be able to see
 one another's results. Please make sure they can all view the 'By Office' box so they can see conversion rates across
 locations." viewNumbers(): for a TC (`iAmTC() && !canManage()`) the box lists `allOffices()` from EVERY (rates and

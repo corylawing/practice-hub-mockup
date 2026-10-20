@@ -82,6 +82,11 @@
        extra:{'--ink':'#0B0F14','--soft':'#2F3A48','--line':'#98A2B3','--canvas':'#FFFFFF'}}
   ];
   const THEME_KEY='ph_theme';
+  /* Each section's icon has its own colour (Cory, 20/10, picked "2" of three mock-ups: the emoji
+     "added a bit of life" but looked a bit amateur; plain line icons were too basic). A scheme
+     whose bar is light enough to wash a colour out gets it lightened until it reads (3:1). */
+  const TAB_IC={home:'#2BC0B8', dashboard:'#6CB4F5', production:'#F7A25E', tc:'#B49CFB', schedule:'#F48C7F',
+                marketing:'#F27FC0', documents:'#F5C85C', team:'#6FD39A', academy:'#8FA2FF', admin:'#AEBBD0'};
   const THEME_VARS=['--navy','--navy2','--navy-mute','--teal','--teal2','--teal-600','--teal-soft',
                     '--teal-line','--teal-ink','--teal-wash','--ink','--soft','--line','--canvas'];
   function hexRgb(h){ h=String(h).replace('#',''); if(h.length===3) h=h.split('').map(c=>c+c).join('');
@@ -126,6 +131,9 @@
       if(tok) Object.keys(tok).forEach(v=>st.setProperty(v,tok[v]));
     }
     if(root && root.setAttribute) root.setAttribute('data-scheme',th.k);
+    // Home-Brace's own icon colours sit in the stylesheet; another scheme re-fits them to its bar.
+    if(st && st.removeProperty) Object.keys(TAB_IC).forEach(k=>st.removeProperty('--ic-'+k));
+    if(tok && st && st.setProperty) Object.keys(TAB_IC).forEach(k=>st.setProperty('--ic-'+k, readable(TAB_IC[k],tok['--navy2'],3)));
     // The phone's address bar takes the bar colour too.
     let m=document.querySelector('meta[name="theme-color"]');
     if(!m && document.head){ m=document.createElement('meta'); m.name='theme-color'; document.head.appendChild(m); }
@@ -1246,6 +1254,11 @@
   .ph-sidenav .ti{width:20px;height:20px;flex:none;opacity:.8}
   .ph-sidenav a.active .ti{opacity:1;color:var(--teal2,#2BC0B8)}
   @media print{ .ph-sidenav{display:none !important} html.ph-lay-side body{padding-left:0 !important} }
+  /* each section in its own colour (TAB_IC), full strength; the white label and the teal
+     marker still say which page you're on */
+  :root{${Object.keys(TAB_IC).map(k=>'--ic-'+k+':'+readable(TAB_IC[k],'#25456E',3)+';--ic-'+k+'-l:'+readable(TAB_IC[k],'#FFFFFF',3)).join(';')}}
+  .v1nav .v1nav-in a .ti[data-k], .ph-sidenav .ph-sb-list a .ti[data-k], .ph-tabbar a .ti[data-k]{color:var(--ic);opacity:1;stroke-width:2}
+  .ph-more a .ti[data-k]{color:var(--ic-l);opacity:1}
   /* the choice, in the profile - a little picture of each */
   .ph-lays{display:grid;grid-template-columns:1fr 1fr;gap:8px}
   .ph-lay{display:flex;flex-direction:column;gap:6px;border:1.5px solid #E4E8EE;background:#fff;border-radius:12px;position:relative;
@@ -2374,7 +2387,8 @@
     academy:'<path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c0 1.4 2.7 3 6 3s6-1.6 6-3v-5"/><path d="M22 9v6"/>',
     more:'<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>'
   };
-  function icon(k){ return '<svg class="ti" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(ICON[k]||ICON.more)+'</svg>'; }
+  function icon(k){ const c=TAB_IC[k] ? ' data-k="'+k+'" style="--ic:var(--ic-'+k+');--ic-l:var(--ic-'+k+'-l)"' : '';
+    return '<svg class="ti"'+c+' viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(ICON[k]||ICON.more)+'</svg>'; }
   function splitNav(n,k){ const m=String(n).match(/^(\S+)\s+(.*)$/);
     return m?{ic:m[1],label:(k&&TAB_SHORT[k])||m[2]}:{ic:'',label:String(n)}; }
   function tabbar(){
