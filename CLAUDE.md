@@ -414,6 +414,12 @@ and it will go on and on", "make a straight forward guide for Heather".
   every month (Enter Production; December in January = choose last year), once a year (Set up, Plan each office),
   change your mind (Undo, History), the Excel, good to know. Example years fill themselves in (this year/next year).
   Linked from Plan the year ("Read the guide").
+**One home for each number (22/10/2026, hc106).** Cory asked if Enter Production's way to change Medicaid (the case
+fee) is still needed; recommendation accepted ("Do what you reccommend"). After the switch, Enter Production keeps the
+month's own boxes (TC Net Production, Medicaid starts, write-offs, completed production days); the Medicaid case fee,
+average case fee and goals show read-only, "Set in Admin -> Production data -> Plan the year" (yearlyHere()/roHelp()).
+Before the switch nothing changed: leadership still edits them there and they write into her Excel. Cory set up 2027
+on live 22/10/2026 (Heather to plan the offices).
 
 **TCs see every office in "By office" (19/10, hc85).** Selene: "we do want the Treatment Coordinators to be able to see
 one another's results. Please make sure they can all view the 'By Office' box so they can see conversion rates across

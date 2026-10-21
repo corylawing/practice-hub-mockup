@@ -134,13 +134,13 @@
   }
 
 </style>
-<script src="user.js?v=hc105"></script>
+<script src="user.js?v=hc106"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="workbook.js?v=hc105"></script>
-  <script src="prodbook.js?v=hc105"></script>
-  <script src="prodstore.js?v=hc105"></script>
-  <script src="store.js?v=hc105"></script>
-  <script src="gate.js?v=hc105"></script>
+  <script src="workbook.js?v=hc106"></script>
+  <script src="prodbook.js?v=hc106"></script>
+  <script src="prodstore.js?v=hc106"></script>
+  <script src="store.js?v=hc106"></script>
+  <script src="gate.js?v=hc106"></script>
 </head>
 <body>
 <div class="ribbon">SANDBOX — made-up numbers. Saving here stays in your browser; the real workbook is never touched.</div>
@@ -227,6 +227,11 @@
     offices:p.offices, can:PH.atLeast?null:null }));
   const canEnter=()=>!window.PH||PH.atLeast('production','edit');
   const canGoals=()=>!window.PH||PH.atLeast('production','manage');
+  /* After the switch a year's goals and case fees have ONE home: Admin -> Production data -> Plan the year
+     (Cory, 22/10/2026: "Do what you reccommend"). Here they show read-only; this page keeps the month's
+     own numbers. Before the switch they still write into her Excel, as they always have. */
+  const yearlyHere=()=>{ try{ return canGoals() && MODE.source!=='homebrace'; }catch(_){ return canGoals(); } };
+  const roHelp=()=>{ try{ if(canGoals() && MODE.source==='homebrace') return 'Set in Admin \u2192 Production data \u2192 Plan the year'; }catch(_){} return 'Set by leadership \u2014 you can\u2019t change this'; };
   const el=id=>document.getElementById(id);
   // month was hardcoded to 6 (July) and the page opened two months behind.
   let cur=PERSONAS[0], office=null, month=(new Date()).getMonth(), edits={};
@@ -304,25 +309,25 @@
           fld('TC Net Production','Total production minus discounts','tc',disp(office,month,'tc'))+
           (billsMedicaid
             ? fld('Medicaid starts','How many Medicaid cases started this month \u2014 a count, not dollars','mds',disp(office,month,'mds'),true)+
-              (canGoals()
+              (yearlyHere()
                 ? fld('Medicaid case fee','What one Medicaid case is worth. Applies to every month at this office.','fee',disp(office,month,'fee'))
-                : '<div class="f"><label>Medicaid case fee</label><div class="help">Set by leadership \u2014 you can\u2019t change this</div><input class="ro" value="$'+fee.toLocaleString('en-US')+'" readonly></div>')+
+                : '<div class="f"><label>Medicaid case fee</label><div class="help">'+roHelp()+'</div><input class="ro" value="$'+Math.round(fee).toLocaleString('en-US')+'" readonly></div>')+
               '<div class="calcline" id="calcline">'+mds+' starts \u00d7 '+money(fee)+' = <b>'+money(mdp)+'</b> Medicaid production</div>'
             : '')+
-          (canGoals()
+          (yearlyHere()
             ? fld('Average case fee','What a typical case is worth here. Turns production into a starts figure. Applies to every month at this office.','afee',disp(office,month,'afee'))
-            : '<div class="f"><label>Average case fee</label><div class="help">Set by leadership \u2014 you can\u2019t change this</div><input class="ro" value="$'+afee.toLocaleString('en-US')+'" readonly></div>')+
+            : '<div class="f"><label>Average case fee</label><div class="help">'+roHelp()+'</div><input class="ro" value="$'+Math.round(afee).toLocaleString('en-US')+'" readonly></div>')+
           (afee>0 ? '<div class="calcline" id="startline">'+money(tc)+' \u00f7 '+money(afee)+' \u2248 <b>'+Math.round(tc/afee)+'</b> starts</div>' : '')+
           fld('Write-offs &amp; other adjustments','Can be negative','adj',disp(office,month,'adj'))+
           fld('Completed production days','How many days you actually saw patients','dys',disp(office,month,'dys'),true)+
           '<div style="border-top:1px solid var(--line);margin:4px 0 14px"></div>'+
-          (canGoals()
+          (yearlyHere()
             ? '<p style="font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--soft);margin:0 0 10px">Goals <span style="background:#FFF6E9;color:#946011;font-size:10px;padding:2px 7px;border-radius:5px;letter-spacing:0">LEADERSHIP ONLY</span></p>'+
               fld('Main production goal','The number this office is held to','goal',disp(office,month,'goal'))+
               fld('Stretch goal','The reach number','str',disp(office,month,'str'))
             : '<p style="font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--soft);margin:0 0 8px">Goals</p>'+
-              '<div class="f"><label>Main production goal</label><div class="help">Set by leadership \u2014 you can\u2019t change this</div><input class="ro" value="$'+goal.toLocaleString('en-US')+'" readonly></div>'+
-              '<div class="f"><label>Stretch goal</label><div class="help">Set by leadership \u2014 you can\u2019t change this</div><input class="ro" value="$'+str.toLocaleString('en-US')+'" readonly></div>')+
+              '<div class="f"><label>Main production goal</label><div class="help">'+roHelp()+'</div><input class="ro" value="$'+Math.round(goal).toLocaleString('en-US')+'" readonly></div>'+
+              '<div class="f"><label>Stretch goal</label><div class="help">'+roHelp()+'</div><input class="ro" value="$'+Math.round(str).toLocaleString('en-US')+'" readonly></div>')+
           '<div class="savebar"><button class="btn" id="pushbtn" onclick="PROD.commit()">'+saveLabel()+'</button>'+
             '<button class="btn ghost" onclick="PROD.reset()">Undo my changes</button>'+
             '<span class="saved" id="saved">✓ Saved · dashboard &amp; Excel updated</span></div>'+
@@ -768,7 +773,7 @@
 })();
 </script>
 <script>PH.nav('production');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(window.PROD&&PROD.identity)PROD.identity();});document.addEventListener('ph-identity',function(){if(window.PROD&&PROD.identity)PROD.identity();});</script>
-<script src="tour.js?v=hc105"></script>
+<script src="tour.js?v=hc106"></script>
 <script>
 Tour.init([
   {sel:'.syncbar', title:'One set of numbers', body:'Type here and it saves into the <b>same Excel workbook</b> on SharePoint. If someone types in Excel instead, it shows up here. There is never a second copy to reconcile.'},
