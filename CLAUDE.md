@@ -471,8 +471,8 @@ do anythign about the staf." - leave both as they are; don't raise it again unle
 GitHub Pages had never served `_staff.js` (Jekyll hides files starting with "_"), so the public sandbox fell back
 to page-local copies.
 
-**Group 3, step 1: a page reads only the records it uses (22/10/2026, hc109 - pushed to the sandbox, NOT yet on the
-live site).** Cory: "Group 3 but be very very careful you don't delete or change any current data". store.js listing()
+**Group 3, step 1: a page reads only the records it uses (22/10/2026, hc109; LIVE with steps 2-4 in hc110 - deployed
+and verified byte for byte, 30 files + vendor/pako.min.js).** Cory: "Group 3 but be very very careful you don't delete or change any current data". store.js listing()
 used to fetch EVERY row's contents (schedule, every year's production data and history, everyone's photo) on every
 page just to map key -> item id. Now it asks for keys and ids only (`items?$select=id&$expand=fields($select=Title)`,
 falling back to `$expand=fields($select=Title)` and then the old full request on a 400/501 or an answer without
