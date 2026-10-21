@@ -228,6 +228,25 @@ session notes: what Team B / TC-OM / the J column (Extra/Phone/Sick/DIBS) are, w
 rows leave it out; Clovis and some Las Cruces rows include it), Las Cruces $0 bonuses, holiday $ vs hours, the due day,
 Zihua (leadership) rows, salaried doctors. Real build = sensitive data, so a locked SharePoint folder like the TC Tracker.
 
+**Production books: Home-Brace's own copy of the production workbook (21/10/2026, step 1 of the own-data plan).**
+Cory: "don't disconnect production dashboard for now, lets build our own data base and make it scalable ... produce an
+excel formatted exactly as they have" and "they may have to change calculations ... on different years that shouldn't
+impact other years". Design: ONE BOOK PER YEAR = that year's TEMPLATE (her workbook with the typed numbers taken out:
+tabs, labels, formatting, widths, merges, and that year's formulas) + that year's DATA (every typed number, by tab and
+cell). Home-Brace evaluates the formulas itself (`v1/prodbook.js`, PH_BOOK: zip read via DecompressionStream, stored-zip
+write, shared-formula expansion, evaluator for + - * / ( ) SUM AVERAGE ranges other-tab refs and #REF!/#DIV/0!; anything
+else = #NAME?, never guessed). Changing a year's calculations = that year's template only; "last year" rows are copies
+(as in her Excel), so correcting an old year never moves a newer year's goals. The Excel download = template + data
+(exportXlsx: only <c> elements change; styles etc. are her bytes; calcChain dropped, fullCalcOnLoad=1). `grid()` turns a
+book into rows for workbook.js office(), so the dashboard can later read a book exactly as it reads the Excel today.
+VERIFIED on Cory's Mac against "2026 PRODUCTION DASHBOARD (New)-7.xlsx" (scratchpad script, real numbers never in
+the repo): all 1,881 formulas reproduced bit-for-bit (largest gap 0), 937 typed numbers, template+data round trip exact,
+exported file re-read: 0 cells differ in value/formula/style, other parts byte-identical, all 8 offices' dashboard series
+identical, Quick Look renders it with their formatting. Tests: test/prodbook.test.js (27, made-up workbook). NEXT (not
+built): store books (template file + data record per year), copy-only sync from her Excel when it changes, Admin
+"Production data" (years kept, Download Excel, upload a changed layout for one year), "Start 2027" roll-forward, and only
+when Cory says: dashboard + Enter Production read/write the books.
+
 **TCs see every office in "By office" (19/10, hc85).** Selene: "we do want the Treatment Coordinators to be able to see
 one another's results. Please make sure they can all view the 'By Office' box so they can see conversion rates across
 locations." viewNumbers(): for a TC (`iAmTC() && !canManage()`) the box lists `allOffices()` from EVERY (rates and
