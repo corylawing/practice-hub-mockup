@@ -369,6 +369,31 @@ formula box (grows), Add a row (type part of a name, pick; Enter works), + - × 
 Tests: test/prodfx.test.js (39); the made-up workbook moved to test/madeup-workbook.js (shared; {yoy} adds the year
 table). Browser-checked on the sandbox incl. phone width.
 
+**Plan the year: her yearly routine in one card (21/10/2026, hc102).** Cory: "Is this the most user friendly way?
+I'm having a hard time following myself" -> mock-up -> "Yes build the Plan 2027 screen" ... "This all needs to come
+together and make sense and be easy for her year after year to continue". Admin -> Production data now reads in order:
+copy status, the switch, PLAN THE YEAR, Years kept, Advanced (closed: Goals box by box + Formulas), History.
+- Plan the year: year pills (this year, next year - "not started" until it is; default next year from October or once
+  started). Step 1 = Start <next> (the old Start card's preview, folded: "Things to look at", "Every row"); Create goes
+  straight on to step 2. Step 2 = office pills (✓ once planned, from 'plan' History entries) + three tiles: "Grow over
+  <last year> by 4 %" (Medicaid offices: a Medicaid % too), "The stretch is [the goal | last year] + 10 %", case fees
+  (average; Medicaid) + a month table (last year, Growth % / Medicaid % / Stretch % rows when "Different for some
+  months" is open - auto-open if any month differs; the goal; the stretch; Days with last year's days in grey and
+  "Use <last year>'s production days"). A month box takes a % (blank = the usual %), or a dollar goal ($40,000, or any
+  number >= 1000) that sits OVER her formula. Live preview (planSave preview, 250 ms); Save <office>'s plan; Undo; Next.
+- prodstore: planModel (rows via goalRowsOf + ruleOf; ly/lyMed/lyDays; fee boxes via cellFor 'afee'/'fee' month 0 =
+  column B), planDraft/planLine (usual % = the % most months share (2+), else none -> nothing changes until typed;
+  months: own % / amount / a note for other rules "70% of the stretch", "no goal yet"; `was` keeps untouched months
+  exactly as she wrote them; (TC goal + Medicaid goal) x m counts as "the goal" - Clovis), planPayload, planSave
+  (writes last year x m, goal x m, (lyNet+lyMed) x m; forces total = TC + Medicaid; days/fees as numbers) -> fxApply
+  (now exact before/after per box: f and d; a typed number sits over the formula; template re-saved only when a formula
+  changed). History 'plan' entries, Undo (formulaUndo takes 'formulas' and 'plan').
+- Her -7 file, 2027 (local plan27.js): saving each office unchanged = 0 boxes, except Cruces LCO (fills 8 empty stretch
+  months) and Mansfield (Jun-Sep goal was 70% of a stretch that is empty in 2027 -> the plan says so and uses last year
+  + %). FOUND AND FIXED on the way: Start next year skipped a "last year" row that had no boxes in her sheet (Cruces FFO
+  "Number of Production Days (2025)") - such rows now take this year's figures; stray non-box keys are ignored.
+Tests: test/prodplan.test.js (23).
+
 **TCs see every office in "By office" (19/10, hc85).** Selene: "we do want the Treatment Coordinators to be able to see
 one another's results. Please make sure they can all view the 'By Office' box so they can see conversion rates across
 locations." viewNumbers(): for a TC (`iAmTC() && !canManage()`) the box lists `allOffices()` from EVERY (rates and

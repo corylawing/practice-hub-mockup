@@ -526,27 +526,29 @@
       if(c - k >= 2 && L && L.s != null && !black[L.s]) return L.s; if(R && R.s != null && !black[R.s]) return R.s; }
     return s;
   }
-  /* edits: [{cell, f (Excel, or null = no formula), typed (number to put back, undo only)}] ->
-     preview (what each box gives, what else moves) or saved. */
+  /* edits: [{cell, f, d}] - what each box becomes: f = its formula (Excel; null = none), d = a number
+     typed over it (null = none); either left out = stays as it is. A typed number sits over her
+     formula, as in Excel, so emptying it brings the formula back. -> preview (what each box gives,
+     what else moves) or saved. Each change keeps the box's exact before and after, for Undo. */
   function fxApply(year, x, tab, edits, opts, from){
     var FX = global.PH_FX, tpl = x.tpl, cs = tpl.sheets[tab].cells, nt = Object.assign({}, cs);
     var data = JSON.parse(JSON.stringify(x.data)), d = data[tab] = data[tab] || {}, changes = [];
-    var ctx0 = {tpl:tpl, data:x.data};
+    var ctx0 = {tpl:tpl, data:x.data}, eff = function(f, v){ return v != null ? v : f != null ? '=' + f : null; };
     edits.forEach(function(e){
-      var cur = cs[e.cell], was = cur && cur.f != null ? '=' + cur.f : (x.data[tab] && x.data[tab][e.cell] != null ? x.data[tab][e.cell] : null);
-      var to = e.f != null ? '=' + e.f : (e.typed != null ? e.typed : null);
-      if(was === to) return;
+      var cur = cs[e.cell], f0 = cur && cur.f != null ? cur.f : null, d0 = x.data[tab] && x.data[tab][e.cell] != null ? x.data[tab][e.cell] : null;
+      var f1 = e.f === undefined ? f0 : e.f, d1 = e.d === undefined ? d0 : e.d;
+      if(f1 === f0 && d1 === d0) return;
       var p = /^([A-Z]+)(\d+)$/.exec(e.cell), row = +p[2], c = B().colNum(p[1]);
-      if(e.f != null){ nt[e.cell] = Object.assign({}, cur || {t:'n'}, {f:e.f, v:'', s:litStyle(tpl, cs, row, c)}); delete d[e.cell]; }
-      else { nt[e.cell] = Object.assign({}, cur || {t:'n'}, {f:null, v:''}); if(e.typed != null) d[e.cell] = e.typed; else delete d[e.cell]; }
-      changes.push({tab:tab, cell:e.cell, row:row, label:FX.rowName(tpl, tab, row), head:FX.colName(ctx0, tab, c, row), from:was, to:to,
-                    fromN:typeof was === 'string' ? safeNamed(ctx0, tab, e.cell, was.slice(1)) : null, typedFrom:typeof was === 'number' ? was : null});
+      if(f1 !== f0) nt[e.cell] = Object.assign({}, cur || {t:'n'}, {f:f1, v:''}, f1 != null ? {s:litStyle(tpl, cs, row, c)} : {});
+      if(d1 == null) delete d[e.cell]; else d[e.cell] = d1;
+      changes.push({tab:tab, cell:e.cell, row:row, label:FX.rowName(tpl, tab, row), head:FX.colName(ctx0, tab, c, row), from:eff(f0, d0), to:eff(f1, d1),
+                    fromF:f0, fromD:d0, toF:f1, toD:d1, fromN:f0 != null && d0 == null ? safeNamed(ctx0, tab, e.cell, f0) : null});
     });
     var t2 = {names:tpl.names, sheets:Object.assign({}, tpl.sheets), files:tpl.files, sst:tpl.sst};
     t2.sheets[tab] = {path:tpl.sheets[tab].path, cells:nt};
     var ctx1 = {tpl:t2, data:data};
-    changes.forEach(function(ch){ if(typeof ch.to === 'string') ch.toN = safeNamed(ctx1, tab, ch.cell, ch.to.slice(1)); });
-    changes.forEach(function(ch){ if(typeof ch.to === 'string' && FX.loops(t2, tab, ch.cell))
+    changes.forEach(function(ch){ if(ch.toF != null && ch.toD == null) ch.toN = safeNamed(ctx1, tab, ch.cell, ch.toF); });
+    changes.forEach(function(ch){ if(ch.toF != null && ch.toF !== ch.fromF && FX.loops(t2, tab, ch.cell))
       throw fail('That would work “' + ch.label + '” out from its own result (it goes round in a circle). Use a different row.'); });
     var ev0 = B().evaluate(B().withData(tpl, x.data)), ev1 = B().evaluate(B().withData(t2, data));
     var same = function(a, b){ return a === b || (typeof a === 'number' && typeof b === 'number' && Math.abs(a - b) <= 1e-9 * Math.max(1, Math.abs(a))); };
@@ -563,28 +565,26 @@
     var bad = boxes.filter(function(b){ return b.err && b.err !== '#DIV/0!'; });
     var sample = boxes.filter(function(b){ return !b.err; })[0] || boxes[0];
     var show = sample ? changes.filter(function(ch){ return ch.cell === sample.cell; })[0] : null;
-    var out = {year:+year, tab:tab, changes:changes, boxes:boxes, also:also,
+    var out = {year:+year, tab:tab, changes:changes, boxes:boxes, also:also, ev:ev1,
                explain:show && typeof show.to === 'string' ? {head:sample.head, text:FX.explain(ctxA, ev1, tab, show.cell, show.to.slice(1)), value:sample.after, excel:show.to} : null};
     if(opts.preview) return Promise.resolve(Object.assign(out, {preview:true, blocked:bad.length ? bad : null}));
     if(!changes.length) return Promise.resolve(Object.assign(out, {saved:false}));
     if(bad.length) return Promise.reject(fail('That gives ' + bad[0].err + ' in ' + bad.map(function(b){ return b.head; }).join(', ') + ' - check the rows it uses. Nothing was saved.'));
-    var at = nowISO(), touchData = changes.some(function(ch){ return typeof ch.from === 'number' || typeof ch.to === 'number'; });
-    return B().exportXlsxSmall(B().blank(t2), {}, null).then(function(bytes){ return putTemplate(year, bytes); }).then(function(sv){
-      delete tplCache[year];
-      return fingerprint(t2).then(function(fp){
-        var jobs = [
-          S().update(LOG + year, function(list){ return [{at:at, from:Object.assign({by:me(), copiedBy:me(), tab:tab}, from), changes:changes}].concat(Array.isArray(list) ? list : []).slice(0, LOG_KEEP); }),
-          S().update(INDEX, function(cur){ cur = (cur && cur.years) ? cur : {years:{}}; var y = cur.years[year] = cur.years[year] || {};
-            y.layout = fp; y.formulas = t2.names.reduce(function(n, s){ return n + Object.keys(t2.sheets[s].cells).filter(function(a){ return t2.sheets[s].cells[a].f != null; }).length; }, 0);
-            y.template = {name:sv.name, webUrl:sv.webUrl || '', savedAt:at}; return cur; })
-        ];
-        // only the boxes that held (or get back) a typed number - nobody else's numbers are touched
-        if(touchData) jobs.push(S().update(DATA + year, function(rec){
-          rec = (rec && rec.data) ? rec : {year:+year, data:{}}; var dd = rec.data[tab] = rec.data[tab] || {};
-          changes.forEach(function(ch){ if(typeof ch.to === 'number') dd[ch.cell] = ch.to; else delete dd[ch.cell]; });
-          rec.updatedAt = at; rec.updatedBy = me(); return rec; }));
-        return Promise.all(jobs);
-      });
+    var at = nowISO(), tplChanged = changes.some(function(ch){ return ch.toF !== ch.fromF; }), dataChanged = changes.some(function(ch){ return ch.toD !== ch.fromD; });
+    // the layout is saved again only when a formula changed; numbers alone are just numbers
+    var saveTpl = tplChanged ? B().exportXlsxSmall(B().blank(t2), {}, null).then(function(bytes){ return putTemplate(year, bytes); }).then(function(sv){
+      delete tplCache[year]; return fingerprint(t2).then(function(fp){ return {sv:sv, fp:fp}; }); }) : Promise.resolve(null);
+    return saveTpl.then(function(t){
+      var jobs = [S().update(LOG + year, function(list){ return [{at:at, from:Object.assign({by:me(), copiedBy:me(), tab:tab}, from), changes:changes}].concat(Array.isArray(list) ? list : []).slice(0, LOG_KEEP); })];
+      if(t) jobs.push(S().update(INDEX, function(cur){ cur = (cur && cur.years) ? cur : {years:{}}; var y = cur.years[year] = cur.years[year] || {};
+        y.layout = t.fp; y.formulas = t2.names.reduce(function(n, s){ return n + Object.keys(t2.sheets[s].cells).filter(function(a){ return t2.sheets[s].cells[a].f != null; }).length; }, 0);
+        y.template = {name:t.sv.name, webUrl:t.sv.webUrl || '', savedAt:at}; return cur; }));
+      // only the boxes whose typed number changed - nobody else's numbers are touched
+      if(dataChanged) jobs.push(S().update(DATA + year, function(rec){
+        rec = (rec && rec.data) ? rec : {year:+year, data:{}}; var dd = rec.data[tab] = rec.data[tab] || {};
+        changes.forEach(function(ch){ if(ch.toD === ch.fromD) return; if(ch.toD == null) delete dd[ch.cell]; else dd[ch.cell] = ch.toD; });
+        rec.updatedAt = at; rec.updatedBy = me(); return rec; }));
+      return Promise.all(jobs);
     }).then(function(res){
       var b2 = res.filter(function(r){ return r && (r.blocked || r.error); });
       if(b2.length) throw fail('Home-Brace could not save (' + (b2[0].why || b2[0].error) + ').');
@@ -604,7 +604,7 @@
       var edits = colsList.map(function(c){
         var a = B().colName(+c) + row, cur = cs[a];
         if(cur && cur.f == null && typeof cur.v === 'string' && cur.v.trim()) throw fail('That box holds text in her sheet, not a number.');
-        return {cell:a, f:FX.fromNamed(ctx, tab, a, text)};
+        return {cell:a, f:FX.fromNamed(ctx, tab, a, text), d:null};
       });
       return fxApply(year, x, tab, edits, opts, {how:'formulas'});
     });
@@ -613,16 +613,128 @@
   function formulaUndo(year, at){
     if(live() && !admin()) return Promise.reject(fail('Only admins can change formulas.'));
     return Promise.all([fxCtx(year), log(year)]).then(function(r){
-      var x = r[0], e = r[1].filter(function(z){ return z.at === at && z.from && z.from.how === 'formulas'; })[0];
+      var x = r[0], e = r[1].filter(function(z){ return z.at === at && z.from && (z.from.how === 'formulas' || z.from.how === 'plan'); })[0];
       if(!e) throw fail('That change isn’t in the history any more.');
       var tab = e.from.tab || (e.changes[0] && e.changes[0].tab), cs = x.tpl.sheets[tab] ? x.tpl.sheets[tab].cells : null;
       if(!cs) throw fail('There’s no tab called ' + tab + ' in ' + year + ' any more.');
       var edits = e.changes.map(function(ch){
-        var cur = cs[ch.cell], now = cur && cur.f != null ? '=' + cur.f : (x.data[tab] && x.data[tab][ch.cell] != null ? x.data[tab][ch.cell] : null);
+        var cur = cs[ch.cell], dv = x.data[tab] && x.data[tab][ch.cell] != null ? x.data[tab][ch.cell] : null;
+        var now = dv != null ? dv : cur && cur.f != null ? '=' + cur.f : null;
         if(now !== ch.to) throw fail('“' + ch.label + '” ' + ch.head + ' was changed again after that - undo the later change first.');
-        return typeof ch.from === 'string' && ch.from.charAt(0) === '=' ? {cell:ch.cell, f:ch.from.slice(1)} : {cell:ch.cell, f:null, typed:typeof ch.from === 'number' ? ch.from : null};
+        if(ch.fromF !== undefined) return {cell:ch.cell, f:ch.fromF, d:ch.fromD};
+        return typeof ch.from === 'string' && ch.from.charAt(0) === '=' ? {cell:ch.cell, f:ch.from.slice(1), d:null} : {cell:ch.cell, f:null, d:typeof ch.from === 'number' ? ch.from : null};
       });
-      return fxApply(year, x, tab, edits, {}, {how:'formulas', undo:at});
+      return fxApply(year, x, tab, edits, {}, {how:e.from.how, office:e.from.office, undo:at});
+    });
+  }
+
+  /* ------------------------------------------------------------------ PLAN A YEAR, OFFICE BY OFFICE
+     Cory, 21/10/2026: "Yes build the Plan 2027 screen" ... "This all needs to come together and make
+     sense and be easy for her year after year to continue". The year's goals asked as Heather thinks
+     of them - grow over last year by 4%, stretch 10% above the goal, the production days, the case
+     fee - and written as her own kind of formulas (last year x 1.04, goal x 1.1), so the Excel
+     download still reads like hers. A month can differ (Lubbock's November x 1.75) or be a dollar
+     goal typed in. Saved into that year only; History, with Undo. */
+  function rowAt(tpl, tab, pats){
+    var WB = global.PH_WB, rows = B().grid(tpl, {value:function(){ return ''; }}, tab);
+    var minR = Object.keys(tpl.sheets[tab].cells).reduce(function(m, a){ var r = +/\d+$/.exec(a)[0]; return r < m ? r : m; }, Infinity);
+    var i = WB.row(rows, pats); return i < 0 ? null : minR + i;
+  }
+  function planModel(year, officeName){
+    if(!global.PH_FX) return Promise.reject(fail('The formula reader is missing.'));
+    return fxCtx(year).then(function(x){
+      var tpl = x.tpl, G = goalRowsOf(tpl, officeName, year), R = G.rows, d = x.data[G.tab] || {}, cs = tpl.sheets[G.tab].cells;
+      var ev = B().evaluate(B().withData(tpl, x.data)), val = function(a){ var v = ev.value(G.tab, a); return typeof v === 'number' ? v : null; };
+      var row = function(k){ var r = R[k]; if(!r) return null;
+        return {row:r.row, label:r.label, months:MONTHS12.map(function(col){ var a = col + r.row;
+          return {cell:a, rule:k === 'days' ? {kind:'amount', value:d[a] != null ? d[a] : null} : ruleOf(cs[a], d[a], G), value:val(a)}; })}; };
+      var series = function(r){ return r ? MONTHS12.map(function(col){ return val(col + r); }) : null; };
+      var lyDaysRow = rowAt(tpl, G.tab, ['number of production days', '(' + (year - 1) + ')']);
+      var box = function(field){ try{ var c = cellFor(tpl, officeName, field, 0, year).cell; return {cell:c, value:d[c] != null ? d[c] : val(c)}; }catch(_){ return null; } };
+      var offices = Object.keys(global.PH_WB.TABS).filter(function(o){ return tpl.sheets[global.PH_WB.TABS[o]]; });
+      return log(year).then(function(L){
+        var planned = {};
+        L.forEach(function(e){ var f = e.from || {}; if(f.how === 'plan' && !f.undo && f.office && !planned[f.office]) planned[f.office] = {at:e.at, by:f.by || ''}; });
+        return {year:+year, office:officeName, tab:G.tab, med:G.med, offices:offices, planned:planned,
+                rows:{tc:row('tc'), md:row('md'), total:row('total'), stretch:row('stretch'), days:row('days')},
+                ly:series(R.lyNet && R.lyNet.row), lyMed:series(R.lyMed && R.lyMed.row), lyDays:series(lyDaysRow),
+                fee:box('afee'), mdFee:G.med ? box('fee') : null};
+      });
+    });
+  }
+  /* An office's year as the plan screen shows it: the usual growth (the % most months share), the
+     months that differ (their own %, or a dollar goal typed in), and - said in words - months worked
+     out some other way, which take the usual % once one is set. No usual % (no two months agree):
+     nothing changes until one is typed. */
+  var GWORD = {tc:'the TC goal', md:'the Medicaid goal', total:'the goal', 'tc+md':'the goal', stretch:'the stretch', lyNet:'last year', lyMed:'last year’s Medicaid', 'lyNet+lyMed':'last year'};
+  function planLine(model, key, base){
+    var r = model.rows[key]; if(!r) return null;
+    // (TC goal + Medicaid goal) x 1.14 is the goal x 1.14 - Clovis writes its stretch that way
+    var med = model.med, bases = key === 'tc' ? ['lyNet'] : key === 'md' ? ['lyMed'] : base === 'last' ? (med ? ['lyNet+lyMed'] : ['lyNet']) : (med ? ['total', 'tc+md'] : ['tc']);
+    var months = r.months.map(function(x){ var q = x.rule;
+      if(q.kind === 'times' && bases.indexOf(q.base) >= 0) return {pct:Math.round((q.mult - 1) * 1e6) / 1e4};
+      if(q.kind === 'amount' && q.value != null) return {amount:q.value};
+      return {note:q.kind === 'empty' ? 'no goal yet' : q.kind === 'times' ? Math.round(q.mult * 100) + '% of ' + (GWORD[q.base] || 'another row') : q.kind === 'sum' ? 'a total of two rows' : 'another formula'};
+    });
+    var count = {}, main = null, best = 0;
+    months.forEach(function(x){ if(x.pct != null) count[x.pct] = (count[x.pct] || 0) + 1; });
+    Object.keys(count).forEach(function(k){ if(count[k] > best){ best = count[k]; main = +k; } });
+    if(best < 2 && months.filter(function(x){ return x.pct != null; }).length !== 1) main = null;
+    // `was`: what the month is now, so a month nobody changed is left exactly as she wrote it
+    return {main:main, months:months.map(function(x){ return {own:x.pct != null && x.pct !== main ? x.pct : null, amount:x.amount != null ? x.amount : null, note:x.note || null,
+      was:x.pct != null ? x.pct : null, wasAmount:x.amount != null ? x.amount : null}; })};
+  }
+  function planDraft(model){
+    var R = model.rows, goalBase = model.med ? 'total' : 'tc', g = 0, l = 0;
+    (R.stretch ? R.stretch.months : []).forEach(function(x){ var q = x.rule; if(q.kind !== 'times') return; if(q.base === goalBase || q.base === 'tc+md') g++; else if(q.base === 'lyNet' || q.base === 'lyNet+lyMed') l++; });
+    var stBase = l > g ? 'last' : 'goal';
+    return {tc:planLine(model, 'tc'), md:model.med ? planLine(model, 'md') : null, st:planLine(model, 'stretch', stBase), stBase:stBase,
+            days:R.days ? R.days.months.map(function(x){ return x.rule.value; }) : null,
+            fee:model.fee ? model.fee.value : null, mdFee:model.mdFee ? model.mdFee.value : null};
+  }
+  /* The draft back into a plan for planSave: a month keeps its own % or dollar goal, the rest take the
+     usual % - or, with no usual % yet, stay as they are. */
+  function planPayload(draft){
+    var conv = function(L){ return L ? L.months.map(function(x){
+      if(x.amount != null) return x.amount === x.wasAmount ? null : {amount:x.amount};
+      var p = x.own != null ? x.own : L.main;
+      return p == null || (p === x.was && x.wasAmount == null) ? null : {pct:p};
+    }) : null; };
+    return {tc:conv(draft.tc), md:conv(draft.md), stretch:conv(draft.st), stretchBase:draft.stBase, days:draft.days, fee:draft.fee, mdFee:draft.mdFee};
+  }
+  /* plan: {tc:[12], md:[12], stretch:[12], stretchBase:'goal'|'last', days:[12], fee, mdFee}; a month is
+     {pct} (last year, or the goal, plus that %), {amount} (a dollar goal typed in) or null (left as it is). */
+  function planSave(year, officeName, plan, opts){
+    opts = opts || {};
+    if(!opts.preview && live() && !admin()) return Promise.reject(fail('Only admins can change the plan.'));
+    return fxCtx(year).then(function(x){
+      var tpl = x.tpl, G = goalRowsOf(tpl, officeName, year), R = G.rows, edits = [];
+      if(!R.tc || !R.lyNet) throw fail('Home-Brace can’t find ' + officeName + '’s goal rows for ' + year + '.');
+      var num = function(v, what){ var n = Number(v); if(!isFinite(n)) throw fail(what + ' isn’t a number.'); return n; };
+      var times = function(base, pct){ var p = num(pct, 'A growth %'); if(p <= -100 || p > 1000) throw fail('A growth of ' + p + '% doesn’t look right.');
+        var m = String(+(1 + p / 100).toFixed(6)); return base + (m === '1' ? '' : '*' + m); };
+      var ly = function(col){ return col + R.lyNet.row; };
+      var lyAll = function(col){ return R.lyMed ? '(' + col + R.lyNet.row + '+' + col + R.lyMed.row + ')' : col + R.lyNet.row; };
+      var goal = function(col){ return col + (G.med && R.total ? R.total.row : R.tc.row); };
+      var months = function(r, list, base){
+        if(!r || !list) return;
+        list.forEach(function(m, i){ if(!m) return; var col = MONTHS12[i], a = col + r.row;
+          if(m.amount != null) edits.push({cell:a, d:num(m.amount, 'A dollar goal')});          // her formula stays underneath
+          else if(m.pct != null) edits.push({cell:a, f:times(base(col), m.pct), d:null}); });
+      };
+      months(R.tc, plan.tc, ly);
+      if(G.med && R.md && R.lyMed) months(R.md, plan.md, function(col){ return col + R.lyMed.row; });
+      months(R.stretch, plan.stretch, plan.stretchBase === 'last' ? lyAll : goal);
+      // the total goal is always TC + Medicaid
+      if(G.med && R.total && R.md) MONTHS12.forEach(function(col){ edits.push({cell:col + R.total.row, f:col + R.tc.row + '+' + col + R.md.row, d:null}); });
+      if(R.days && plan.days) plan.days.forEach(function(v, i){ if(v === undefined) return; edits.push({cell:MONTHS12[i] + R.days.row, d:v === '' || v == null ? null : num(v, 'Production days')}); });
+      var put = function(field, v){ if(v === undefined) return; var c = cellFor(tpl, officeName, field, 0, year).cell; edits.push({cell:c, d:v === '' || v == null ? null : num(v, 'A case fee')}); };
+      put('afee', plan.fee); if(G.med) put('fee', plan.mdFee);
+      return fxApply(year, x, G.tab, edits, opts, {how:'plan', office:officeName}).then(function(out){
+        var ev = out.ev, v = function(r, col){ if(!r) return null; var z = ev.value(G.tab, col + r.row); return typeof z === 'number' ? z : null; };
+        out.months = MONTHS12.map(function(col){ return {goal:v(G.med && R.total ? R.total : R.tc, col), stretch:v(R.stretch, col), tc:v(R.tc, col), md:v(R.md, col)}; });
+        delete out.ev; return out;
+      });
     });
   }
 
@@ -775,10 +887,22 @@
         tpl.names.forEach(function(tab){
           var dr = dataRows(tpl, tab, data), all = rowsOf(tpl, tab), seen = {}, byLabel = {};
           all.forEach(function(rr){ var L = labelOfRow(tpl, tab, rr).toLowerCase(); if(L) (byLabel[L] = byLabel[L] || []).push(rr); });
+          /* A row of last year's (or the year before's) with nothing in it this year still takes this year's
+             figures next year - Cruces FFO's "Number of Production Days (2025)" was empty (it wasn't counted
+             in 2025), so 2027's "(2026)" row had nothing to show. Only when this year has a row to give it. */
+          all.forEach(function(rr){
+            if(dr[rr]) return;
+            var L = labelOfRow(tpl, tab, rr), ys = yearsIn(L), nl = B().shiftYearsText(L, from).toLowerCase();
+            if(!L || !ys.some(function(y){ return y >= from - 2 && y < from; }) || ys.indexOf(from) >= 0) return;
+            if(!(byLabel[nl] || []).some(function(x){ return x !== rr; })) return;
+            dr[rr] = {all:MONTHCOLS.split('').map(function(c){ return c + rr; }), had:[]};
+          });
           Object.keys(dr).map(Number).sort(function(a, b){ return a - b; }).forEach(function(rn){
             var R = dr[rn], cells = R.all.sort(function(a, b){ return B().colNum(colOf(a)) - B().colNum(colOf(b)); });
             var oldL = labelOfRow(tpl, tab, rn), newL = B().shiftYearsText(oldL, from), ys = yearsIn(oldL), lo = oldL.toLowerCase();
-            var single = R.had.length < 2, out = {action:'', source:'', flag:''}, put = {};
+            // one figure (a fee) = exactly one number this year; an empty row is copied month by month
+            // (Cruces FFO's "Number of Production Days (2025)" was empty in 2026 - it was taking an average into nowhere)
+            var single = R.had.length === 1, out = {action:'', source:'', flag:''}, put = {};
             var occ = (seen[lo] = (seen[lo] || 0) + 1);
             /* Copy a source row's values (worked out, so a sum typed into a cell counts too), month
                for month. Into a one-number row from a monthly row: the average, to be checked. */
@@ -869,6 +993,7 @@
       return Promise.all([B().exportXlsxSmall(B().blank(book), {}, null), fingerprint(book)]);
     }).then(function(x){
       return putTemplate(to, x[0]).then(function(saved){
+        Object.keys(pv.data).forEach(function(t){ Object.keys(pv.data[t]).forEach(function(a){ if(!/^[A-Z]{1,3}\d+$/.test(a)) delete pv.data[t][a]; }); });
         var n = count(pv.data), entry = {at:at, from:{how:'start', by:me(), copiedBy:me(), fromYear:pv.from}, first:true, numbers:n, layout:'new',
           started:{from:pv.from, rows:pv.rows.length, copied:pv.rows.filter(function(r){ return r.action === 'copied' || r.action === 'kept'; }).length, flags:pv.flags.slice(0, 40)}, changes:[]};
         delete tplCache[to];
@@ -914,6 +1039,7 @@
         Object.keys(L.cells).forEach(function(tab){
           if(!tpl.sheets[tab] || !pv.template.sheets[tab]) return;
           Object.keys(L.cells[tab]).forEach(function(a){
+            if(!/^[A-Z]{1,3}\d+$/.test(a)) return;
             var nv = pv.data[tab] && pv.data[tab][a], row = +/\d+$/.exec(a)[0];
             if(nv == null || nv === L.cells[tab][a]) return;
             if(labelOfRow(tpl, tab, row) !== labelOfRow(pv.template, tab, row)) return;
@@ -962,5 +1088,6 @@
     mode:mode, setMode:setMode, liveYear:liveYear, compareFromBytes:compareFromBytes, dashboardData:dashboardData,
     cellFor:cellFor, setValues:setValues, previewNextYear:previewNextYear, createNextYear:createNextYear, refreshNextYear:refreshNextYear,
     goalModel:goalModel, saveGoals:saveGoals, formulaModel:formulaModel, formulaChange:formulaChange, formulaUndo:formulaUndo,
+    planModel:planModel, planSave:planSave, planDraft:planDraft, planLine:planLine, planPayload:planPayload,
     reset:function(){ driveP = null; syncing = null; tplCache = {}; }};
 })(typeof window !== 'undefined' ? window : globalThis);

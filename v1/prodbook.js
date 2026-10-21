@@ -385,7 +385,7 @@
       Object.keys(cs).forEach(function(a){ var c = cs[a], label = c.f == null && typeof c.v === 'string' && c.v !== '';
         /* keeps the shared group and first formula, so exportXlsx writes the rest of the group in full */
         out[a] = (!label && d[a] != null) ? {v:d[a], f:null, t:'n', s:c.s, si:c.si, f0:c.f0} : c; });
-      Object.keys(d).forEach(function(a){ if(!out[a]) out[a] = {v:d[a], f:null, t:'n', s:null}; });
+      Object.keys(d).forEach(function(a){ if(!out[a] && /^[A-Z]{1,3}\d+$/.test(a)) out[a] = {v:d[a], f:null, t:'n', s:null}; });   // a box, never a stray key
       copy.sheets[s] = {path:template.sheets[s].path, cells:out};
     });
     return copy;
