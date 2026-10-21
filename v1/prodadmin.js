@@ -16,7 +16,7 @@
   var host = null, IDX = null, LOGS = {}, open = null, busy = '', msg = null, pending = null, MODE = null, sw = null, NEXT = null, nextOpen = {};
   var GY = null, GO = null, GM = null, GEDIT = {}, GPREV = {}, GERR = '', gTimer = null;
   var FY = null, FT = null, FM = null, FQ = '', FED = null, FMSG = null, fTimer = null, fLoading = false;   // Formulas
-  var PY = null, PO = null, PM = null, PD = null, PDIRTY = false, PPREV = null, PERR = '', PMSG = null, POPEN = {}, pTimer = null, pLoading = false, ADV = false;   // Plan, Advanced
+  var PSERR = '', PY = null, PO = null, PM = null, PD = null, PDIRTY = false, PPREV = null, PERR = '', PMSG = null, POPEN = {}, pTimer = null, pLoading = false, ADV = false;   // Plan, Advanced
 
   var CSS = '.pd{display:flex;flex-direction:column;gap:16px}'+
     '.pd .card{padding:18px}.pd h2{margin:0 0 4px;font-size:17px;color:var(--navy)}.pd .sub{margin:0 0 12px;color:var(--soft);font-size:13.5px;max-width:72ch}'+
@@ -271,20 +271,20 @@
     var Y = plYears(); if(!Y || !global.PH_FX) return '';
     if(!PY || Y.list.indexOf(+PY) < 0) PY = Y.def;
     var started = !!IDX.years[PY];
-    var h = '<div class="card" id="pdplan"><h2>Plan the year</h2><p class="sub">Each year has two steps: <b>start it</b> from the year before, then <b>plan each office</b> - '+
-      'how much to grow over last year, the stretch, production days and case fees. After that, offices enter their numbers each month in Enter Production.</p>';
+    var h = '<div class="card" id="pdplan"><h2>Plan the year</h2><p class="sub">Every year, when it’s time to set next year’s goals: <b>1. Set up the year</b> (one click), '+
+      '<b>2. Plan each office</b> - the growth over last year, the stretch goal, production days and case fees. A plan can be changed any time, and every save can be undone.</p>';
     h += '<div class="plsteps">'+Y.list.map(function(y){
-      var tag = y === Y.live ? 'this year' : y > Y.live ? (IDX.years[y] ? 'next year' : 'next year · not started') : '';
+      var tag = y === Y.live ? 'this year' : y > Y.live ? (IDX.years[y] ? 'next year' : 'next year · not set up') : '';
       return '<button type="button" class="plyr'+(y === +PY ? ' on' : '')+'" data-pd="plyear" data-y="'+y+'">'+y+(tag ? '<small>'+tag+'</small>' : '')+'</button>'; }).join('')+'</div>';
     if(!started){
-      h += '<div class="plstep">Step 1 · Start '+esc(PY)+'</div>'+nextBody()+'<div class="plstep" style="margin-top:14px;opacity:.6">Step 2 · Plan each office</div><div class="muted" style="font-size:13px">Once '+esc(PY)+' is started.</div>';
+      h += '<div class="plstep">Step 1 · Set up '+esc(PY)+'</div>'+nextBody()+'<div class="plstep" style="margin-top:14px;opacity:.6">Step 2 · Plan each office</div><div class="muted" style="font-size:13px">Once '+esc(PY)+' is set up.</div>';
       return h + '</div>';
     }
     var st = IDX.years[PY].started;
-    h += '<div class="plstep">'+(st ? 'Step 1 · ✓ Started from '+esc(st.from)+' on '+when(st.at)+(st.by ? ' by '+esc(st.by) : '') : esc(PY)+' is kept by Home-Brace')+'</div>';
+    h += '<div class="plstep">'+(st ? 'Step 1 · ✓ Set up from '+esc(st.from)+' on '+when(st.at)+(st.by ? ' by '+esc(st.by) : '') : esc(PY)+' is kept by Home-Brace')+'</div>';
     if(MODE && MODE.source !== 'homebrace' && IDX.source && +IDX.source.year === +PY)
       h += '<div class="stat warn" style="margin:6px 0 10px"><span>⚠️</span><span class="grow">'+esc(PY)+' is still copied from Heather’s Excel, so her next save puts her goals back. Plan here the year she doesn’t keep in Excel'+(Y.list.indexOf(Y.next) >= 0 ? ' ('+Y.next+')' : '')+', or after the switch.</span></div>';
-    h += '<div class="plstep">Step 2 · Plan each office</div>';
+    h += '<div class="plstep">Step 2 · Plan each office <span style="text-transform:none;letter-spacing:0;font-weight:600">- change it any time; every save can be undone</span></div>';
     if(!PM || PM.year !== +PY || (PO && PM.office !== PO)){ if(!pLoading) setTimeout(pLoad, 0); return h + '<div class="muted">Loading…</div></div>'; }
     if(PM.err) return h + '<div class="stat warn"><span>⚠️</span><span class="grow">'+esc(PM.err)+'</span></div></div>';
     h += '<div class="ploffs">'+PM.offices.map(function(o){ var done = PM.planned && PM.planned[o];
@@ -294,26 +294,28 @@
       (PMSG.next ? '<button class="btn tiny" data-pd="ploff" data-o="'+esc(PMSG.next)+'">Next: '+esc(PMSG.next)+' →</button>' : '')+'</div>';
     return h + planEditorHTML() + '</div>';
   }
-  /* Step 1, when the year isn't started: the preview of next year, as it was (moved in from its own card). */
+  /* Step 1, when the year isn't set up: one sentence, one button (Cory, 21/10: "She won't understand anything
+     in the what to look at"). The row-by-row preview stays behind "Technical details", for checking. */
   function nextBody(){
     var ys = IDX ? Object.keys(IDX.years).map(Number).sort(function(a, b){ return a - b; }) : [], last = ys[ys.length - 1], to = last + 1;
-    var h = '<p class="sub" style="margin-bottom:8px">Home-Brace sets up '+to+' from '+last+' the way Heather does each January: the year names move on one, '+last+'’s numbers become “last year”, and every goal starts as '+last+'’s production × her growth numbers - ready to plan. You see every row before anything is saved. '+
-      'It can be started before '+last+' is over: numbers entered later for '+last+' (December, typed in January) follow into '+to+' by themselves.</p>';
-    if(!NEXT) return h + '<button class="btn" data-pd="nextprev"'+(busy ? ' disabled' : '')+'>'+(busy === 'next' ? 'Working it out…' : 'Show me '+to)+'</button>';
+    var h = '<p class="sub" style="margin-bottom:10px">Copies '+last+'’s setup into a new '+to+' book - the same offices, rows and goal formulas - with '+last+'’s numbers as “last year”. '+
+      last+' isn’t changed, and nothing changes for the offices until January. Everything in '+to+' can be changed afterwards.</p>'+
+      (PSERR ? '<div class="stat warn" style="margin-bottom:10px"><span>⚠️</span><span class="grow">'+esc(PSERR)+'</span></div>' : '');
+    h += '<div class="acts" style="align-items:center"><button class="btn" data-pd="setup"'+(busy ? ' disabled' : '')+'>'+(busy === 'setup' ? 'Setting up '+to+'…' : 'Set up '+to)+'</button>'+
+      '<button type="button" class="pllink" style="margin:0 0 0 8px" data-pd="'+(NEXT ? 'nextclose' : 'nextprev')+'">'+(busy === 'next' ? 'Working it out…' : NEXT ? 'Hide technical details' : 'Technical details')+'</button></div>';
+    if(!NEXT) return h;
     var n = NEXT, c = {}; n.rows.forEach(function(r){ c[r.action] = (c[r.action] || 0) + 1; });
-    h += '<div class="stat '+(n.flags.length ? 'warn' : 'ok')+'"><span>'+(n.flags.length ? '👀' : '✓')+'</span><span class="grow"><b>'+esc(n.to)+' from '+esc(n.from)+'</b>: '+
-      Object.keys(ACT).filter(function(k){ return c[k]; }).map(function(k){ return c[k]+' row'+(c[k] > 1 ? 's' : '')+' '+ACT[k].toLowerCase(); }).join(' · ')+
-      (n.flags.length ? '. <b>'+n.flags.length+' thing'+(n.flags.length > 1 ? 's' : '')+' to look at</b> - most are settled in step 2.' : '.')+'</span></div>';
-    if(n.flags.length) h += '<details style="margin-top:8px"><summary style="cursor:pointer;font-weight:700;font-size:13.5px">Things to look at ('+n.flags.length+')</summary><div class="lg" style="margin-top:8px"><div class="e"><ul>'+
+    h += '<div class="muted" style="font-size:12.5px;margin-top:10px">For checking: '+esc(n.to)+' from '+esc(n.from)+' - '+
+      Object.keys(ACT).filter(function(k){ return c[k]; }).map(function(k){ return c[k]+' rows '+ACT[k].toLowerCase(); }).join(' · ')+'.</div>';
+    if(n.flags.length) h += '<details style="margin-top:8px"><summary style="cursor:pointer;font-weight:700;font-size:13px">Notes ('+n.flags.length+')</summary><div class="lg" style="margin-top:8px"><div class="e"><ul>'+
       n.flags.map(function(f){ return '<li><b>'+esc(f.tab)+'</b> · '+esc(f.label)+' — '+esc(f.flag)+'</li>'; }).join('')+'</ul></div></div></details>';
     var tabs = []; n.rows.forEach(function(r){ if(tabs.indexOf(r.tab) < 0) tabs.push(r.tab); });
-    h += '<details style="margin-top:8px"><summary style="cursor:pointer;font-weight:700;font-size:13.5px">Every row, tab by tab</summary><div style="margin-top:8px;display:flex;flex-direction:column;gap:6px">'+tabs.map(function(t){
+    h += '<details style="margin-top:8px"><summary style="cursor:pointer;font-weight:700;font-size:13px">Every row, tab by tab</summary><div style="margin-top:8px;display:flex;flex-direction:column;gap:6px">'+tabs.map(function(t){
       var rs = n.rows.filter(function(r){ return r.tab === t; });
       return '<details'+(nextOpen[t] ? ' open' : '')+' data-pdtab="'+esc(t)+'"><summary style="cursor:pointer;font-weight:700">'+esc(t)+' <span class="muted" style="font-weight:400">('+rs.length+' rows)</span></summary><div class="tw" style="margin-top:6px"><table><thead><tr><th>Row in '+esc(n.to)+'</th><th>What happens</th><th>Where from</th><th class="num">First values</th></tr></thead><tbody>'+
         rs.map(function(r){ return '<tr><td>'+esc(r.now || '(no name)')+'</td><td>'+esc(ACT[r.action] || r.action)+'</td><td>'+esc(r.source || '')+'</td><td class="num">'+r.sample.map(fmtVal).join(' · ')+'</td></tr>'; }).join('')+'</tbody></table></div></details>';
     }).join('')+'</div></details>';
-    return h + '<div class="acts" style="margin-top:12px">'+(n.exists ? '' : '<button class="btn" data-pd="nextgo"'+(busy ? ' disabled' : '')+'>'+(busy === 'nextgo' ? 'Creating…' : 'Create '+esc(n.to))+'</button>')+
-      '<button class="btn ghost" data-pd="nextdl"'+(busy ? ' disabled' : '')+'>'+(busy === 'nextdl' ? 'Building…' : '⬇ Preview as Excel')+'</button><button class="btn ghost" data-pd="nextclose">Close</button></div>';
+    return h + '<div class="acts" style="margin-top:10px"><button class="btn ghost tiny" data-pd="nextdl"'+(busy ? ' disabled' : '')+'>'+(busy === 'nextdl' ? 'Building…' : '⬇ Preview as Excel')+'</button></div>';
   }
   /* What a month box shows: its own %, a dollar goal, or nothing (it follows the usual %). */
   function plCellText(x){ return x.amount != null ? '$' + Math.round(x.amount).toLocaleString('en-US') : x.own != null ? String(x.own) : ''; }
@@ -782,6 +784,15 @@
       B.exportXlsxSmall(nb, NEXT.data, B.evaluate(nb)).then(function(bytes){
         save(new Blob([bytes], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}), NEXT.to+' PRODUCTION DASHBOARD (preview from Home-Brace).xlsx'); busy = ''; render();
       }, function(err){ busy = ''; say('warn','⚠️','Could not build the preview Excel: '+esc(err.message||err)); render(); });
+    }
+    if(act === 'setup'){
+      busy = 'setup'; PSERR = ''; render();
+      var ysx = Object.keys(IDX.years).map(Number).sort(function(a, b){ return a - b; });
+      P().previewNextYear(ysx[ysx.length - 1]).then(function(pv){ return P().createNextYear(pv); }).then(function(r){
+        busy = ''; NEXT = null; PY = r.year; PM = null; PO = null;
+        PMSG = {cls:'ok', html:'✓ <b>'+esc(r.year)+' is set up.</b> Now plan each office, starting with the first one below. You can change any of it later.'}; LOGS = {}; return refresh();
+      }, function(err){ busy = ''; PSERR = 'Not set up: '+((err && err.message) || err); render(); });
+      return;
     }
     if(act === 'nextgo' && NEXT){
       busy = 'nextgo'; render();

@@ -393,6 +393,11 @@ copy status, the switch, PLAN THE YEAR, Years kept, Advanced (closed: Goals box 
   + %). FOUND AND FIXED on the way: Start next year skipped a "last year" row that had no boxes in her sheet (Cruces FFO
   "Number of Production Days (2025)") - such rows now take this year's figures; stray non-box keys are ignored.
 Tests: test/prodplan.test.js (23).
+**Set up the year = one click (21/10/2026, hc104).** Cory: "very confusing to create a new year what will she do for
+2028 ... She won't understand anything in the what to look at ... she can always go back and change right". Step 1 is
+now one sentence + "Set up 2027" (previewNextYear + createNextYear in one go, straight on to step 2); the row-by-row
+preview and its notes are behind a small "Technical details" link (for checking). Wording: "set up" (not "start"),
+"next year · not set up". Next year she does the same: Set up 2028, plan each office.
 
 **TCs see every office in "By office" (19/10, hc85).** Selene: "we do want the Treatment Coordinators to be able to see
 one another's results. Please make sure they can all view the 'By Office' box so they can see conversion rates across
