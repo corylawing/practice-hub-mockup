@@ -1014,6 +1014,23 @@
     try{ return JSON.parse(raw); }catch(_){ return null; }
   }
 
+  /* The keys that exist and start with `prefix` - from the keys-only listing on the live site (no
+     contents read), from this browser on the sandbox. Used to find a year's history archive. */
+  function keys(prefix){
+    if(!live()){
+      var mine = [];
+      try{ for(var i = 0; i < localStorage.length; i++){ var k = localStorage.key(i); if(k && k.indexOf(prefix) === 0 && k.indexOf('__') < 0) mine.push(k); } }catch(_){}
+      return Promise.resolve(mine.sort());
+    }
+    return authReady.then(function(){ return withRetry(connect); })
+      .then(function(){ return listing(); })
+      .then(function(items){
+        var seen = {}, out = [];
+        items.forEach(function(i){ var t = i.fields && i.fields.Title; if(t && !seen[t] && t.indexOf(prefix) === 0){ seen[t] = 1; out.push(t); } });
+        return out.sort();
+      });
+  }
+
   /* A few at a time, not all at once: SharePoint throttles a burst. */
   function fewAtATime(list, n, job){
     var next = 0;
@@ -1097,11 +1114,12 @@
 
   /* What a record is, in words - for the size watch. */
   function recordName(k){
-    var m, NAMES = {ph_sched2:'Doctor schedule', ph_docs:'Doctor list', ph_people:'People settings', ph_access:'Teams & access',
+    var m, NAMES = {ph_sched2:'Doctor schedule (to 2027)', ph_docs:'Doctor list', ph_people:'People settings', ph_access:'Teams & access',
       ph_roster:'Staff roster', ph_roster_extra:'Staff added / removed', ph_locations:'Offices', ph_activity:'Notifications',
       ph_mktg:'Marketing board', ph_prodaudit:'Production entries — who and when', ph_prod_index:'Production years', ph_teams:'Teams'};
     if(NAMES[k]) return NAMES[k];
     if((m = /^ph_prod_log_(\d{4})$/.exec(k))) return 'Production history ' + m[1];
+    if((m = /^ph_sched_(\d{4})$/.exec(k))) return 'Doctor schedule ' + m[1];
     if((m = /^ph_prod_data_(\d{4})$/.exec(k))) return 'Production numbers ' + m[1];
     if((m = /^ph_prod_links_(\d{4})$/.exec(k))) return 'Production links ' + m[1];
     if(k.indexOf('ph_me_') === 0) return 'Profile — ' + k.slice(6);
@@ -1147,7 +1165,7 @@
   }
 
   global.PH_STORE = {
-    get:get, set:set, update:update, getAll:getAll, setup:setup,
+    get:get, set:set, update:update, getAll:getAll, keys:keys, setup:setup,
     /* One feedback message -> one new row on HomeBraceFeedback (see addFeedback). */
     addFeedback:addFeedback, FEEDBACK_LIST:FEEDBACK_LIST,
     mergeInto:mergeInto, mergeById:mergeById,

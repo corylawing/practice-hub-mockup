@@ -579,7 +579,7 @@ const ok=[],bad=[]; const t=(n,v)=>{ (v?ok:bad).push(n); };
     t('(size watch) every record, biggest first, as SharePoint stores it', list.length===3 && list[0].key==='ph_sched2' && sched.chars===sp.payload('ph_sched2').length);
     t('(size watch) a packed record is counted packed, and says so', !!sched && sched.packed===true && !list.find(r=>r.key==='ph_teams').packed);
     t('(size watch) and checking writes nothing', sp.writes===writes);
-    t('(size watch) records are named in words', A.S.recordName && A.S.recordName('ph_prod_log_2027')==='Production history 2027' && A.S.recordName('ph_sched2')==='Doctor schedule');
+    t('(size watch) records are named in words', A.S.recordName && A.S.recordName('ph_prod_log_2027')==='Production history 2027' && A.S.recordName('ph_sched2')==='Doctor schedule (to 2027)' && A.S.recordName('ph_sched_2028')==='Doctor schedule 2028');
   }
 
   console.log(ok.map(s=>'  PASS  '+s).join('\n'));

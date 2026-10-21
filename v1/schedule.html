@@ -312,10 +312,11 @@
   }
 
 </style>
-<script src="user.js?v=hc110"></script>
+<script src="user.js?v=hc111"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc110"></script>
-  <script src="gate.js?v=hc110"></script>
+  <script src="store.js?v=hc111"></script>
+  <script src="schedrec.js?v=hc111"></script>
+  <script src="gate.js?v=hc111"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — sample staff schedule for validation. Live version = one Microsoft List the practice maintains.</div>
@@ -485,31 +486,22 @@
     return cells;
   }
   let saving=false, again=false;
+  /* ONE RECORD PER YEAR FROM 2028 (22/10/2026 - schedrec.js). Each changed cell is laid onto
+     the shared copy of its own year's record: 2026 and 2027 onto 'ph_sched2' exactly as before,
+     2028 on onto 'ph_sched_2028' and so on, so no record ever fills up. */
   function sendCells(){
     const cells=dirtyCells();
     if(!cells.length) return;
     saving=true; again=false;
-    const sent={};                                   // 'day|office' -> what went (undefined = cleared)
-    PH_STORE.update('ph_sched2', function(remote){
-      Object.keys(sent).forEach(k=>{ delete sent[k]; });           // this may run again after a conflict
-      const out=Object.assign({}, (remote && typeof remote==='object') ? remote : {});
-      cells.forEach(([k,o])=>{
-        const v=sched[k] ? sched[k][o] : undefined;
-        const day=Object.assign({}, out[k]||{});
-        if(v===undefined) delete day[o]; else day[o]=v;
-        out[k]=day;
-        sent[k+'|'+o]=J(v);
-      });
-      out.__v=SCHED_VERSION; delete out.__demo;
-      return out;
-    }).then(function(r){
+    PH_SCHED.send(cells, (k,o)=>sched[k] ? sched[k][o] : undefined, SCHED_VERSION).then(function(res){
       saving=false;
       /* NOT SAVED MEANS NOT SAVED. This used to adopt the result and re-snapshot even
          when the send had failed - r.value is filled in either way - so the page forgot
          those cells were unsent. They stay changed now and go with the next save, and
-         the store holds them and sends them itself. No retry loop from here. */
-      if(r && !r.blocked && !r.error && r.value){
-        adoptSaved(r.value, sent);
+         the store holds them and sends them itself. No retry loop from here. A save
+         across years counts only when every year's record took its cells. */
+      if(res.ok){
+        adoptSaved(res.parts, res.sent);
         if(again || dirtyCells().length) save();
       } else if(again) save();
     }, function(){ saving=false; if(again) save(); });
@@ -523,7 +515,7 @@
      Wednesday was never changed, so it was never sent. Now the shared year comes in,
      every cell edited here since that save left is laid back on top, and it stays
      marked as changed so the next save carries it. */
-  function adoptSaved(merged, sent){
+  function adoptSaved(parts, sent){
     const keep=[], seen={};
     Object.keys(sched).filter(isDay).concat(Object.keys(snap)).forEach(k=>{
       if(seen[k]) return; seen[k]=1;
@@ -535,7 +527,7 @@
         if(now!==left) keep.push([k,o,cur[o]]);
       });
     });
-    sched=merged; takeSnap();
+    sched=PH_SCHED.adopt(sched, parts); takeSnap();
     keep.forEach(([k,o,v])=>{ const day=Object.assign({}, sched[k]||{}); if(v===undefined) delete day[o]; else day[o]=v; sched[k]=day; });
     refresh();
   }
@@ -1411,11 +1403,17 @@
        the read - which never fired, because PH_STORE.get() swallows its own errors by
        design so a storage hiccup can't take the page down. The store now records the
        failure and we ask it. */
-    Promise.all([ PH_STORE.get('ph_sched2'), PH_STORE.get('ph_docs') ])
+    /* 'ph_sched2' and every year record from 2028 (schedrec.js), as the one schedule. */
+    Promise.all([ PH_SCHED.load(), PH_STORE.get('ph_docs') ])
            .then(function(r){
-             const got = r[0] || local;
-             boot(got, r[1] || ldocs, PH_STORE.readFailed('ph_sched2') && !got,
+             const L = r[0], got = L.sched || local;
+             boot(got, r[1] || ldocs, L.baseFailed && !got,
                   PH_STORE.readFailed('ph_docs') && !r[1]);
+             if(L.failed.length)
+               warn('<b>The '+L.failed.map(k=>k.slice(PH_SCHED.PREFIX.length)).join(' and ')+' schedule could not be loaded just now.</b> '+
+                    'Those days are not shown \u2014 nothing has been lost, and nothing you change there will be saved over it. Reload the page in a moment.');
+             else if(L.unknown && new Date().getFullYear()>=PH_SCHED.CUT-1)
+               warn('<b>Days from '+PH_SCHED.CUT+' on could not be loaded just now.</b> Nothing has been lost. Reload the page in a moment.');
            })
            .catch(function(){ boot(local, ldocs, !local, !ldocs); });
   } else boot(local, ldocs, false, false);
@@ -1427,7 +1425,7 @@
    machine is missing here until the next page load. */
 document.addEventListener('ph-locations-changed',function(){ if(window.PS&&PS.relocate)PS.relocate(); });
 PH.nav('schedule');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc110"></script>
+<script src="tour.js?v=hc111"></script>
 <script>
 Tour.init([
   {sel:'#viewseg', title:'Week or month', body:'<b>Week</b> is the day-to-day working view. <b>Month</b> shows the whole month at a glance, with every office in its own color.'},

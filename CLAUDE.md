@@ -503,7 +503,25 @@ doctor names that were still in tests (and the History page's pre-filled search)
   once a year's log grows big its saves would be refused. Lowering the cap would DELETE existing entries, so it was
   left; proposed fix: roll the oldest entries into an archive record (ph_prod_log_<y>_old...) instead of dropping
   them. The size watch flags it at 70% first.
-Schedule split by year: not done (it would move current data).
+CORRECTION, same day: the production history will NOT fill - the measurement on her real file (comment above
+capLog: a busy year = 80 KB raw, 4 KB stored, ~6% of a record; each year its own record) stands; the simulation
+above used random numbers, which pack ~3x worse than hers. Nothing changed there.
+
+**The schedule: one record per year from 2028 (22/10/2026, hc111).** Cory: "they will need me if it ever gets
+full, its not self sustainable" -> "yes but only if it works otherwise screw it". 'ph_sched2' held every year:
+~8% of a record per year, full ~2033 (warning ~2031). `v1/schedrec.js` (PH_SCHED): a day from 2028 on is saved in
+'ph_sched_<year>' (made on its first save); 2026-2027 stay in 'ph_sched2' and go through the same steps as before
+(nothing moved). load() = 'ph_sched2' + every year record (PH_STORE.keys - keys-only listing) as one schedule; a
+day only an older page wrote into 'ph_sched2' still shows unless its year record has it. send() lays each changed
+cell onto its own year's record (the page's merge, record by record); ok only when every record took its cells -
+otherwise the cells stay changed for the next save, as before. adopt() = the page's copy with each saved record's
+days replaced. A year that will not read: the page says which, and nothing is written over it (the store refuses);
+'ph_sched2' failing is handled exactly as before. schedule.html (load, sendCells, adoptSaved) and tc.html (reads)
+use it; the sandbox schedule is unchanged (one local record). History lists year records; the size watch names
+them. Tests: test/schedsplit.test.js (28: today unchanged, 2028 to its own record and 2026-2027 untouched, across
+years, a stale page, an unreadable year, an older page's 2028 day, the seatbelt per year, 8 years = biggest record
+19%). Browser, live branch + stand-in: 350 days kept, a 2027 edit into 'ph_sched2', a 2028 day into a new
+'ph_sched_2028', reload shows both, TC Tracker reads both, sandbox unchanged, no console errors.
 
 **Payroll mock-up: Heather's answers (22/10/2026, hc109, sandbox only).** Her email, in short: Team B = the team
 reaching its goal (now "Goal"); TC/OM a bonus, not a set amount; DIBS and POG San Angelo only, Phone Lubbock only,

@@ -88,7 +88,7 @@
         <label for="key">Record</label>
         <select id="key">
           <option value="ph_docs">Doctor list (ph_docs)</option>
-          <option value="ph_sched2">Doctor schedule (ph_sched2)</option>
+          <option value="ph_sched2">Doctor schedule, to 2027 (ph_sched2)</option>
           <option value="ph_locations">Offices (ph_locations)</option>
           <option value="ph_people">People overrides (ph_people)</option>
           <option value="ph_access">Teams &amp; access (ph_access)</option>
@@ -118,10 +118,10 @@
   </div>
 </div>
 
-<script src="user.js?v=hc110"></script>
+<script src="user.js?v=hc111"></script>
 <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-<script src="store.js?v=hc110"></script>
-<script src="gate.js?v=hc110"></script>
+<script src="store.js?v=hc111"></script>
+<script src="gate.js?v=hc111"></script>
 <script>
 (function(){
   'use strict';
@@ -287,6 +287,19 @@
     }, function(e){ el('sizego').disabled=false; el('sizeout').innerHTML='<p class="hint">Could not read the sizes: '+esc((e&&e.message)||e)+'</p>'; });
   }
   el('sizego').onclick=checkSizes;
+  /* From 2028 each year of the schedule has its own record (schedrec.js): offer the ones there are. */
+  var waitYears=setInterval(function(){
+    if(!window.PH_AUTH || !window.PH_STORE || !PH_STORE.keys) return;
+    clearInterval(waitYears);
+    PH_STORE.keys('ph_sched_').then(function(ks){
+      var after=el('key').querySelector('option[value="ph_sched2"]');
+      ks.filter(function(k){ return /^ph_sched_\d{4}$/.test(k); }).reverse().forEach(function(k){
+        if(el('key').querySelector('option[value="'+k+'"]')) return;
+        var o=document.createElement('option'); o.value=k; o.textContent='Doctor schedule '+k.slice(9)+' ('+k+')';
+        after.parentNode.insertBefore(o, after.nextSibling);
+      });
+    }).catch(function(){});
+  }, 400);
   // From Admin's "getting full" notice: check straight away once signed in.
   if(location.hash==='#sizes'){
     var waitSizes=setInterval(function(){ if(window.PH_AUTH){ clearInterval(waitSizes); checkSizes(); } }, 300);

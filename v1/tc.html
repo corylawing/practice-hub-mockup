@@ -264,13 +264,14 @@
     *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}
   }
 </style>
-<script src="user.js?v=hc110"></script>
+<script src="user.js?v=hc111"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc110"></script>
-  <script src="gate.js?v=hc110"></script>
-  <script src="_staff.js?v=hc110"></script>
-  <script src="tc.js?v=hc110"></script>
-  <script src="tcstore.js?v=hc110"></script>
+  <script src="store.js?v=hc111"></script>
+  <script src="gate.js?v=hc111"></script>
+  <script src="_staff.js?v=hc111"></script>
+  <script src="tc.js?v=hc111"></script>
+  <script src="tcstore.js?v=hc111"></script>
+  <script src="schedrec.js?v=hc111"></script>
 </head>
 <body>
 <div class="ribbon">SANDBOX — made-up patients. Use “Try it as” to see it as a TC, an office manager or Selene.</div>
@@ -438,7 +439,7 @@
     const logs=TCSTORE.getAll(TC.LOG_PREFIX, {partial:true});
     // Every office's slots (no patient details in them): TCs see every office in "By office".
     const slots=Promise.all([...new Set(allOffices().concat(offs))].map(o=>PH_STORE.get(TC.slotsKey(o)).then(v=>[o,v], ()=>[o,null])));
-    return Promise.all([logs, slots, PH_STORE.get(TC.LISTS_KEY).catch(()=>null), PH_STORE.get('ph_sched2').catch(()=>null)])
+    return Promise.all([logs, slots, PH_STORE.get(TC.LISTS_KEY).catch(()=>null), (window.PH_SCHED ? PH_SCHED.load().then(L=>L.sched) : PH_STORE.get('ph_sched2')).catch(()=>null)])
       .then(([L,S,Li,Sc])=>{
         EVERY=TC.consultsFrom(L).filter(TC.live);
         UNREAD=(L && L.unread) || [];
@@ -1188,7 +1189,7 @@
 })();
 </script>
 <script>PH.nav('tc');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(window.TCPAGE)TCPAGE.identity();});document.addEventListener('ph-identity',function(){if(window.TCPAGE)TCPAGE.identity();});</script>
-<script src="tour.js?v=hc110"></script>
+<script src="tour.js?v=hc111"></script>
 <script>
 Tour.init([
   {sel:'#offbar', title:'Your office', body:'You see the offices you work at. Heather, Selene and leadership see every office and can pick one.'},
