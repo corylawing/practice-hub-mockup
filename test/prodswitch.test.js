@@ -19,7 +19,7 @@ function monthly(row, fn){ const o={}; COLS.forEach((c,i)=>{ const v=fn(c,i); if
 function sheets(year, opts){
   opts=opts||{}; const Y=year, L=year-1, P=year-2;
   const carl=Object.assign({A1:'CARLSBAD (FFO)'}, monthly(1,(c,i)=>MON[i]),
-    {A3:'TC Net Production (Total - Discounts)'}, monthly(3,(c,i)=>i<9?100000+i*5000:undefined),
+    {A3:'TC Net Production (Total - Discounts)'}, monthly(3,(c,i)=>i<9?100000+i*5000:(opts.dec&&i===11?opts.dec:undefined)),
     {A4:'Write-Offs and other Adjustments'}, monthly(4,(c,i)=>i<9?-1000:undefined),
     {A5:'Completed Number of Production Days'}, monthly(5,(c,i)=>i<9?9:undefined),
     {A6:'Number of Medicaid Starts'}, monthly(6,(c,i)=>i<9?2:undefined),
@@ -188,6 +188,24 @@ const P=global.PH_PROD;
   t('2026 is exactly as it was', JSON.stringify(d26.offices.Carlsbad.goal)===JSON.stringify(dd.offices.Carlsbad.goal));
   const x27=await B.open((await P.downloadYear(2027)).bytes);
   t('2027\'s Excel: its labels a year on, her formulas kept', x27.sheets['Carlsbad (FFO)'].cells.A12.v==='2027 TC Production Goal (Non-Medicaid)' && x27.sheets['Carlsbad (FFO)'].cells.B12.f==='B8*1.04' && x27.sheets['Carlsbad (FFO)'].cells.A8.v==='2026 Net Production (Non-Medicaid)');
+  // an office with no fee of this year's keeps the one its formulas divide by (Cory: keep the fee they use today)
+  t('no 2026 average case fee: 2027 keeps the fee 2026 used, and says so', DB['ph_prod_data_2027'].data['Carlsbad (FFO)'].B29===5000 && x27.sheets['Carlsbad (FFO)'].cells.A29.v==='2026 Average Case Fee' && pv.flags.some(f=>/kept the one 2026 used \(\$5,000\)/.test(f.flag)));
+  await P.saveGoals(2027,'Carlsbad',[{cell:'B21',set:'amount',value:9}]);       // 2027's production days, as Heather sets them
+  const v22=B.evaluate((await P.loadYear(2027)).book).value('Carlsbad (FFO)','B22');
+  t('...so 2027\'s starts per day work out, not #DIV/0!', typeof v22==='number' && isFinite(v22) && v22>0);
+
+  // 4b. December typed in January: 2026's late numbers follow into 2027's "last year"
+  const late=await P.setValues(2026,'Carlsbad',11,{tc:777777});
+  t('a number saved later for 2026 is carried into 2027\'s "last year"', DB['ph_prod_data_2027'].data['Carlsbad (FFO)'].M8===777777 && late.next && late.next.changes===1);
+  t('...the dashboard\'s 2027 "last year" has it', near((await P.dashboardData(2027)).offices.Carlsbad.ly[11], 777777));
+  t('...and it is in 2027\'s History, said as such', (await P.log(2027))[0].from.how==='lastyear' && (await P.log(2027))[0].changes[0].to===777777);
+  t('...2027\'s goals and formulas did not move', (await P.downloadYear(2027)).bytes && (await B.open((await P.downloadYear(2027)).bytes)).sheets['Carlsbad (FFO)'].cells.M12.f==='M8*1.04');
+  await P.copyFromBytes(workbook(2026,{dec:999999}), {how:'upload', name:'2026.xlsx'});
+  t('a copy of her Excel with December in it follows too', DB['ph_prod_data_2027'].data['Carlsbad (FFO)'].M8===999999);
+  DB['ph_prod_data_2027'].data['Carlsbad (FFO)'].L8=12345;                     // changed by hand in 2027
+  const late2=await P.setValues(2026,'Carlsbad',10,{tc:888888});
+  t('a copy changed by hand in 2027 is left alone', DB['ph_prod_data_2027'].data['Carlsbad (FFO)'].L8===12345 && late2.next.kept===1 && late2.next.changes===0);
+  t('a year with no next year started saves as before', (await P.setValues(2027,'Carlsbad',0,{tc:1})).next===null);
 
   // 5. Gaps and blacked-out months in a new year
   Object.keys(DB).forEach(k=>delete DB[k]); Object.keys(LS).forEach(k=>delete LS[k]); P.reset();

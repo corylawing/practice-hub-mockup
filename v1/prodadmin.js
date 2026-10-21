@@ -96,7 +96,7 @@
     h += '</div>';
     h += goalsHTML();
     h += nextHTML();
-    if(open) h += '<div class="card"><h2>'+esc(open)+' — history of changes</h2><p class="sub">Newest first. Every copy that changed something, and every layout change.</p>'+logHTML(open)+'</div>';
+    if(open) h += '<div class="card"><h2>'+esc(open)+' — history of changes</h2><p class="sub">Newest first: every change, who made it, and where it came from.</p>'+logHTML(open)+'</div>';
     host.innerHTML = h + '</div>';
   }
   /* ---------- the switch: where the dashboard and Enter Production get their numbers ---------- */
@@ -225,7 +225,7 @@
       var st = IDX.years[last].started;
       h += '<p class="sub">'+esc(last)+' was started from '+esc(st.from)+' on '+when(st.at)+(st.by ? ' by '+esc(st.by) : '')+'. Set its goals and production days in <b>Goals &amp; formulas</b> above (choose '+esc(last)+').</p>';
     }
-    h += '<p class="sub">Home-Brace sets up '+to+' from '+last+' the way Heather does each January: the year names move on one, '+last+'’s numbers become “last year”, '+to+'’s goals start as '+last+'’s actuals × her growth numbers, and everything typed each month starts empty. You see every row before anything is saved. Best done once '+last+' is complete; you can look any time.</p>';
+    h += '<p class="sub">Home-Brace sets up '+to+' from '+last+' the way Heather does each January: the year names move on one, '+last+'’s numbers become “last year”, '+to+'’s goals start as '+last+'’s actuals × her growth numbers, and everything typed each month starts empty. You see every row before anything is saved. It can be started before '+last+' is over: numbers entered later for '+last+' (December, typed in January) are carried into '+to+'’s “last year” by themselves.</p>';
     if(!NEXT){
       h += '<button class="btn" data-pd="nextprev"'+(busy ? ' disabled' : '')+'>'+(busy === 'next' ? 'Working it out…' : 'Show me '+to)+'</button>';
       return h + '</div>';
@@ -265,11 +265,17 @@
     if(!L) return '<div class="muted">Loading…</div>';
     if(!L.length) return '<div class="muted">Nothing changed yet.</div>';
     return '<div class="lg">'+L.map(function(e){
-      var f = e.from || {}, head = '<div class="when">'+when(e.at)+'</div><div class="muted">'+
+      // Say where each change came from - not every entry is a copy of her Excel.
+      var f = e.from || {}, who = f.by || f.copiedBy, by = who ? ' by '+esc(who) : '';
+      var head = '<div class="when">'+when(e.at)+'</div><div class="muted">'+
         (f.how === 'upload' ? 'Uploaded'+(f.copiedBy ? ' by '+esc(f.copiedBy) : '')+(f.name ? ' — '+esc(f.name) : '')
-                            : 'Copied from Heather’s Excel'+(f.modified ? ' (her save of '+when(f.modified)+(f.by ? ' by '+esc(f.by) : '')+')' : ''))+'</div>';
+        : f.how === 'enter' ? 'Entered in Enter Production'+by+(f.office ? ' — '+esc(f.office) : '')
+        : f.how === 'goals' ? 'Goals & formulas'+by+(f.office ? ' — '+esc(f.office) : '')
+        : f.how === 'start' ? 'Started from '+esc(f.fromYear)+by
+        : f.how === 'lastyear' ? esc(f.fromYear)+' numbers saved later, carried into “last year”'+by
+        : 'Copied from Heather’s Excel'+(f.modified ? ' (her save of '+when(f.modified)+(f.by ? ' by '+esc(f.by) : '')+')' : ''))+'</div>';
       var body = [];
-      if(e.first) body.push('<li>First copy: '+(e.numbers||0).toLocaleString('en-US')+' numbers.</li>');
+      if(e.first) body.push('<li>'+(f.how === 'start' ? 'Started with ' : 'First copy: ')+(e.numbers||0).toLocaleString('en-US')+' numbers.</li>');
       if(e.layout === 'new') body.push('<li>Layout and formulas saved.</li>');
       else if(e.layout) body.push('<li>Layout or formulas changed: '+e.layout.map(esc).join(', ')+'.</li>');
       if(e.kept) body.push('<li>'+e.kept.moved.toLocaleString('en-US')+' numbers moved into the new layout'+(e.kept.lost.length ? '; <b>'+e.kept.lost.length+' had no place in it</b>: '+e.kept.lost.slice(0,6).map(function(x){ return place(x)+' ('+fmtVal(x.value)+')'; }).join('; ') : '')+'.</li>');

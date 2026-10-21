@@ -27,7 +27,7 @@
 
   var HOST = 'omegaorthodontics.sharepoint.com', SITE = '/sites/Home-Brace', FOLDER = 'Home-Brace Production';
   var GRAPH = 'https://graph.microsoft.com/v1.0';
-  var INDEX = 'ph_prod_index', DATA = 'ph_prod_data_', LOG = 'ph_prod_log_', MODE = 'ph_prod_mode';
+  var INDEX = 'ph_prod_index', DATA = 'ph_prod_data_', LOG = 'ph_prod_log_', MODE = 'ph_prod_mode', LINKS = 'ph_prod_links_';
   var LOG_KEEP = 150, CHANGES_KEEP = 400;
   var B = function(){ return global.PH_BOOK; };
   var S = function(){ return global.PH_STORE; };
@@ -210,8 +210,10 @@
       return Promise.all(writes).then(function(res){
         var blocked = res.filter(function(x){ return x && (x.blocked || x.error); });
         if(blocked.length) throw fail('Home-Brace refused to save this copy (' + (blocked[0].why || blocked[0].error) + '). Nothing was changed.');
-        return {year:year, first:!prevData, changes:changes.length, layout:entry.layout, numbers:entry.numbers, kept:entry.kept,
-                check:{formulas:chk.formulas, differ:chk.differ, sample:chk.sample}};
+        return (changes.length ? followOn(year) : Promise.resolve(null)).then(function(next){
+          return {year:year, first:!prevData, changes:changes.length, layout:entry.layout, numbers:entry.numbers, kept:entry.kept,
+                  check:{formulas:chk.formulas, differ:chk.differ, sample:chk.sample}, next:next};
+        });
       });
     });
   }
@@ -378,8 +380,8 @@
         list = Array.isArray(list) ? list : [];
         list.unshift({at:nowISO(), from:{how:'enter', by:me(), copiedBy:me(), office:officeName}, changes:changes});
         return list.slice(0, LOG_KEEP);
-      });
-    }).then(function(){ return {saved:targets.map(function(t){ return {field:t.field, address:t.tab + '!' + t.cell, label:t.label}; }), changes:changes}; });
+      }).then(function(){ return followOn(year); });
+    }).then(function(next){ return {saved:targets.map(function(t){ return {field:t.field, address:t.tab + '!' + t.cell, label:t.label}; }), changes:changes, next:next || null}; });
   }
 
   /* ------------------------------------------------------------------ GOALS & FORMULAS, IN HOME-BRACE
@@ -687,6 +689,14 @@
               } else if(/average case fee/i.test(newL)){
                 var twin = (byLabel[lo] || []).filter(function(x){ return x !== rn; })[0];          // Carlsbad: the mislabelled second row
                 if(twin) copyFrom(twin, 'from ' + from + '\'s monthly fees (the second "' + oldL + '" row)');
+                /* No fee of this year's in her sheet (Cruces FFO/LCO, Mansfield in 2026): keep the one this
+                   year's formulas divide by, so next year works out the same until someone sets a new one
+                   (Cory, 21/10: keep the fee they use today). Never left blank: blank = #DIV/0! in the starts rows. */
+                else if(R.had.length){
+                  R.had.forEach(function(a){ put[a] = data[tab][a]; });
+                  out.action = 'kept'; out.source = 'the fee ' + from + ' used (her sheet has no ' + from + ' fee)';
+                  out.flag = 'No ' + from + ' average case fee in her sheet - kept the one ' + from + ' used (' + R.had.map(function(a){ return '$' + Number(data[tab][a]).toLocaleString('en-US'); }).join(', ') + '). Change it in Enter Production (Average case fee) when there is a new one.';
+                }
                 else { out.action = 'empty'; out.flag = 'Set ' + from + '\'s average case fee.'; }
               } else { out.action = 'empty'; out.flag = 'Nothing in ' + from + ' to fill "' + newL + '" from.'; }
             } else if(ys.length && ys.every(function(y){ return y < from - 2; })){
@@ -734,8 +744,14 @@
         var n = count(pv.data), entry = {at:at, from:{how:'start', by:me(), copiedBy:me(), fromYear:pv.from}, first:true, numbers:n, layout:'new',
           started:{from:pv.from, rows:pv.rows.length, copied:pv.rows.filter(function(r){ return r.action === 'copied' || r.action === 'kept'; }).length, flags:pv.flags.slice(0, 40)}, changes:[]};
         delete tplCache[to];
+        // What was copied from the year before ("last year" rows, fees, small tables), as copied - so a number
+        // entered there later can follow (refreshNextYear), and one changed here by hand is left alone.
+        var links = {};
+        pv.rows.forEach(function(r){ if(r.action !== 'copied') return;
+          Object.keys(pv.data[r.tab] || {}).forEach(function(a){ if(+/\d+$/.exec(a)[0] === r.row) (links[r.tab] = links[r.tab] || {})[a] = pv.data[r.tab][a]; }); });
         return Promise.all([
           S().set(DATA + to, {year:to, data:pv.data, from:{how:'start', fromYear:pv.from, copiedAt:at, copiedBy:me()}, updatedAt:at, updatedBy:me()}),
+          S().set(LINKS + to, {from:pv.from, at:at, cells:links}),
           S().update(LOG + to, function(list){ return [entry].concat(Array.isArray(list) ? list : []).slice(0, LOG_KEEP); }),
           S().update(INDEX, function(cur){
             cur = (cur && cur.years) ? cur : {years:{}};
@@ -755,11 +771,68 @@
   }
   function log(y){ return S().get(LOG + y).then(function(x){ return Array.isArray(x) ? x : []; }); }
 
+  /* A year started from the one before holds that year's numbers as copies ("last year", as in her
+     Excel). The new year is usually started before the old one is finished - December is typed in
+     January - so a number saved later for the old year is carried into those copies here, worked out
+     the same way Start did it. A copy someone changed by hand in the new year is theirs and is left
+     alone; so is anything whose row moved in a changed layout. Every update is in the new year's History.
+     Only numbers follow: the new year's formulas, goals and layout never move. */
+  function refreshNextYear(from){
+    from = +from; var to = from + 1;
+    return S().get(LINKS + to).then(function(L){
+      if(!L || +L.from !== from || !L.cells) return null;
+      return Promise.all([previewNextYear(from), templateBook(to)]).then(function(r){
+        var pv = r[0], tpl = r[1], upd = {}, n = 0;
+        Object.keys(L.cells).forEach(function(tab){
+          if(!tpl.sheets[tab] || !pv.template.sheets[tab]) return;
+          Object.keys(L.cells[tab]).forEach(function(a){
+            var nv = pv.data[tab] && pv.data[tab][a], row = +/\d+$/.exec(a)[0];
+            if(nv == null || nv === L.cells[tab][a]) return;
+            if(labelOfRow(tpl, tab, row) !== labelOfRow(pv.template, tab, row)) return;
+            (upd[tab] = upd[tab] || {})[a] = nv; n++;
+          });
+        });
+        if(!n) return {year:to, changes:0};
+        var changes = [], kept = 0;
+        return S().update(DATA + to, function(rec){
+          rec = (rec && rec.data) ? rec : {year:to, data:{}};
+          changes = []; kept = 0;
+          Object.keys(upd).forEach(function(tab){ var d = rec.data[tab] = rec.data[tab] || {};
+            Object.keys(upd[tab]).forEach(function(a){
+              var was = d[a] == null ? null : d[a];
+              if(was !== L.cells[tab][a]){ kept++; return; }                     // changed by hand in the new year
+              d[a] = upd[tab][a]; var w = B().labelAt(tpl, tab, a);
+              changes.push({tab:tab, cell:a, label:w.label, head:w.head, from:was, to:upd[tab][a]});
+            });
+          });
+          if(!changes.length) return undefined;
+          rec.updatedAt = nowISO(); rec.updatedBy = me();
+          return rec;
+        }).then(function(res){
+          if(res && (res.blocked || res.error)) throw fail('Home-Brace could not update ' + to + '\'s last year (' + (res.why || res.error) + ').');
+          if(!changes.length) return {year:to, changes:0, kept:kept};
+          return Promise.all([
+            S().update(LINKS + to, function(x){ x = (x && x.cells) ? x : L; changes.forEach(function(c){ (x.cells[c.tab] = x.cells[c.tab] || {})[c.cell] = c.to; }); return x; }),
+            S().update(LOG + to, function(list){
+              list = Array.isArray(list) ? list : [];
+              list.unshift({at:nowISO(), from:{how:'lastyear', fromYear:from, by:me(), copiedBy:me()}, changes:changes});
+              return list.slice(0, LOG_KEEP);
+            })
+          ]).then(function(){ return {year:to, changes:changes.length, kept:kept}; });
+        });
+      });
+    });
+  }
+  // After a year's numbers change: carry them into the next year's copies. Never fails the save itself.
+  function followOn(year){
+    return refreshNextYear(year).catch(function(e){ try{ console.warn('Next year\'s "last year" not updated:', (e && e.message) || e); }catch(_){} return null; });
+  }
+
   global.PH_PROD = {FOLDER:FOLDER, INDEX:INDEX, DATA:DATA, LOG:LOG, tplName:tplName,
     copyFromBytes:copyFromBytes, syncFromWorkbook:syncFromWorkbook, loadYear:loadYear, downloadYear:downloadYear,
     index:index, log:log, check:check, diff:diff, fingerprint:fingerprint, remap:remap,
     mode:mode, setMode:setMode, liveYear:liveYear, compareFromBytes:compareFromBytes, dashboardData:dashboardData,
-    cellFor:cellFor, setValues:setValues, previewNextYear:previewNextYear, createNextYear:createNextYear,
+    cellFor:cellFor, setValues:setValues, previewNextYear:previewNextYear, createNextYear:createNextYear, refreshNextYear:refreshNextYear,
     goalModel:goalModel, saveGoals:saveGoals,
     reset:function(){ driveP = null; syncing = null; tplCache = {}; }};
 })(typeof window !== 'undefined' ? window : globalThis);

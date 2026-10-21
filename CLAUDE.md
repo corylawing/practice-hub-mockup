@@ -323,7 +323,28 @@ PRODUCTION: deployed with the switch OFF ('excel' = everything as before; the on
 Cory: switch only after a parallel run, before 2027. Questions for Heather (Cory asks her, 21/10): Cruces FFO/LCO
 typed goals and odd multipliers, Mansfield stretch Jun-Sep typed and goal = stretch x 0.7, missing 2026 average case
 fees (Cruces FFO/LCO, Mansfield), the five unlabelled Dashboard numbers (B26:B30), Cruces Jan-Jun as "last year" for
-2027, #REF! YOY rows, San Angelo Feb x1.5.
+2027, #REF! YOY rows, San Angelo Feb x1.5. -> Cory, later 21/10: don't send them (they're happy with 2026); all 7 are
+2027 goal-setting she does each January anyway, handled by Start 2027 + Goals & formulas. Only the fee needed a default (below).
+
+**January-proof years + the case fee (21/10/2026, hc100).** Cory said "Yes" to both:
+- Start next year: an office with no fee of this year's (Cruces FFO/LCO, Mansfield in 2026) KEEPS the one this year's
+  formulas divide by (flagged), never blank - blank = #DIV/0! in its starts rows.
+- Late numbers follow: createNextYear saves what it copied in 'ph_prod_links_<to>' {from, cells:{tab:{cell:value}}};
+  setValues and copyFromBytes then run refreshNextYear(year) (followOn: never fails the save). It works the copies out
+  again exactly as Start did and updates the next year's cells that still hold what was copied - a copy changed by
+  hand there is left alone, a row whose label moved is skipped. Each update = a 'lastyear' History entry. The new
+  year's formulas, goals and layout never move.
+- Enter Production (after the switch): a Year choice when this year and the one before are kept (picking last year
+  opens December); unsaved boxes are kept per year (yr() in key()); the heading shows the year; the banner warns when
+  numbers go into an earlier year, including "2027 isn't started in Home-Brace yet, so numbers here go into 2026".
+- Admin History says where each entry came from (Enter Production, Goals & formulas, Started from, carried into last
+  year, Excel copy, upload).
+Verified: prodswitch 54; her -7 file locally (fees kept $4,601 / $6,000 / $4,750; late December for 3 offices moved only
+their 2027 last-year cells and one Dashboard table cell); browser with the stand-in SharePoint and a fake 5 Jan 2027
+clock (the warning, the year choice, Dec 2026 saved into 2026 and into 2027's last year, History).
+Cory asked "will they be able to enter objectives and change calculations?": goals = Goals & formulas (growth number,
+amount or back to formula; stretch; days) and Enter Production's goal boxes; any OTHER formula only via Download Excel
+-> change it -> Upload a changed layout for that year. Offered: a formula editor in Home-Brace for any row.
 
 **TCs see every office in "By office" (19/10, hc85).** Selene: "we do want the Treatment Coordinators to be able to see
 one another's results. Please make sure they can all view the 'By Office' box so they can see conversion rates across

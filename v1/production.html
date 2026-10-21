@@ -134,13 +134,13 @@
   }
 
 </style>
-<script src="user.js?v=hc99"></script>
+<script src="user.js?v=hc100"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="workbook.js?v=hc99"></script>
-  <script src="prodbook.js?v=hc99"></script>
-  <script src="prodstore.js?v=hc99"></script>
-  <script src="store.js?v=hc99"></script>
-  <script src="gate.js?v=hc99"></script>
+  <script src="workbook.js?v=hc100"></script>
+  <script src="prodbook.js?v=hc100"></script>
+  <script src="prodstore.js?v=hc100"></script>
+  <script src="store.js?v=hc100"></script>
+  <script src="gate.js?v=hc100"></script>
 </head>
 <body>
 <div class="ribbon">SANDBOX — made-up numbers. Saving here stays in your browser; the real workbook is never touched.</div>
@@ -232,7 +232,11 @@
   let cur=PERSONAS[0], office=null, month=(new Date()).getMonth(), edits={};
   try{ edits=JSON.parse(localStorage.getItem('ph_prod'))||{}; }catch(_){ edits={}; }
   const save=()=>{ try{ localStorage.setItem('ph_prod',JSON.stringify(edits)); }catch(_){} };
-  const key=(o,m)=>o+'|'+m;
+  /* After the switch a year can be chosen (December is typed in January), so unsaved boxes belong
+     to a year too. Before it, keys stay as they always were. */
+  const yr=()=>{ try{ return (MODE.source==='homebrace' && HB_YEAR) ? HB_YEAR+'|' : ''; }catch(_){ return ''; } };
+  const shownYear=()=>{ try{ return (MODE.source==='homebrace' && HB_YEAR) ? HB_YEAR : 2026; }catch(_){ return 2026; } };
+  const key=(o,m)=>yr()+o+'|'+m;
   /* An emptied box is NOT the same as an untouched one. '' means the person deliberately
      cleared it and wants that cell blank in the workbook, so it must not fall back to the
      figure already there -- otherwise a number typed into the wrong month can only be
@@ -292,10 +296,11 @@
     el('view').innerHTML=
       '<div class="pickrow">'+
         '<div class="pick"><label>Office</label><select onchange="PROD.office(this.value)">'+list.map(o=>'<option'+(o===office?' selected':'')+'>'+o+'</option>').join('')+'</select></div>'+
+        (HB_YEARS.length>1 ? '<div class="pick"><label>Year</label><select onchange="PROD.year(this.value)">'+HB_YEARS.map(y=>'<option'+(y===HB_YEAR?' selected':'')+'>'+y+'</option>').join('')+'</select></div>' : '')+
         '<div class="pick" style="flex:1"><label>Month</label><div class="months">'+mchips+'</div></div>'+
       '</div>'+
       '<div class="grid2">'+
-        '<div class="card"><h2>'+MOFULL[month]+' 2026 · '+office+'</h2><div class="sub">Only these few boxes. Everything else is worked out for you.</div>'+
+        '<div class="card"><h2>'+MOFULL[month]+' '+shownYear()+' · '+office+'</h2><div class="sub">Only these few boxes. Everything else is worked out for you.</div>'+
           fld('TC Net Production','Total production minus discounts','tc',disp(office,month,'tc'))+
           (billsMedicaid
             ? fld('Medicaid starts','How many Medicaid cases started this month \u2014 a count, not dollars','mds',disp(office,month,'mds'),true)+
@@ -462,7 +467,8 @@
         wbBanner('<b>Not saved.</b> '+failed.join(' \u00b7 ').replace(/</g,'&lt;'), true);
       } else if(saved && saved.changes.length){
         settle('done', 'Saved');
-        wbBanner('\u2713 Saved '+saved.changes.length+' value(s) in Home-Brace for '+office+' \u00b7 '+MO[month]+'.'+note, /NOT updated/.test(note));
+        const nx=saved.next&&saved.next.changes ? ' '+saved.next.year+'\u2019s \u201clast year\u201d updated too.' : '';
+        wbBanner('\u2713 Saved '+saved.changes.length+' value(s) in Home-Brace for '+office+' \u00b7 '+MO[month]+' '+HB_YEAR+'.'+nx+note, /NOT updated/.test(note));
         if(window.PH && PH.logActivity && PH.isLive()){
           PH.logActivity({kind:'production', sec:'production', ic:'\u{1F4DD}', title:'Production updated \u2014 '+office+' '+MO[month], offices:[office]});
           tellLeadership();
@@ -579,7 +585,7 @@
     }catch(_){}
   }
   function commit(){ if(!office) return; save(); pushToWorkbook(); const s=el('saved'); if(s){s.classList.add('on'); setTimeout(()=>s.classList.remove('on'),2600);} }
-  function reset(){ if(!office) return; Object.keys(edits).forEach(k=>{ if(k.indexOf(office+'|')===0) delete edits[k]; }); save(); render(); }
+  function reset(){ if(!office) return; const pre=yr()+office+'|'; Object.keys(edits).forEach(k=>{ if(k.indexOf(pre)===0) delete edits[k]; }); save(); render(); }
   /* The button says WHICH office it saves, so a wrong one is plain before it is sent. */
   function saveLabel(){ const where=MODE.source==='homebrace'?'':' to workbook'; return office ? 'Save '+office+where : 'Save'+(where||''); }
   function setOffice(o){ if(!o) return; office=o; render(); }
@@ -595,7 +601,7 @@
     render();
   }
   el('persona').innerHTML=PERSONAS.map(p=>'<option value="'+p.id+'">'+p.name+'</option>').join('');
-  window.PROD={set,office:setOffice,month:setMonth,edit,commit,reset,identity:applyIdentity};
+  window.PROD={set,office:setOffice,month:setMonth,year:(y)=>setYear(y),edit,commit,reset,identity:applyIdentity};
   let saved='admin'; try{ saved=localStorage.getItem('ph_viewas')||'admin'; }catch(_){}
   if(!PERSONAS.some(p=>p.id===saved)) saved='admin';
 
@@ -603,7 +609,7 @@
      these are the practice's real inputs, fetched after sign-in, so no figures live
      in this file. */
   let loadedStamp=null;   // the workbook's last-saved time when this page read it
-  let MODE={source:'excel', mirror:true}, HB_YEAR=null;   // the switch (Admin -> Production data)
+  let MODE={source:'excel', mirror:true}, HB_YEAR=null, HB_YEARS=[];   // the switch (Admin -> Production data); years to choose from
   // Single source in user.js - see PH.WORKBOOK there if the file is ever moved.
   const WB_DRIVE=(window.PH&&PH.WORKBOOK)?PH.WORKBOOK.drive:'';
   const WB_ITEM =(window.PH&&PH.WORKBOOK)?PH.WORKBOOK.item :'';
@@ -668,16 +674,32 @@
         wbBanner('Reading Home-Brace\u2019s production numbers\u2026');
         try{ res=await PH_PROD.dashboardData(); HB_YEAR=res.year; }
         catch(e){ wbBanner('<b>Could not read Home-Brace\u2019s production numbers.</b> '+String((e&&e.message)||e).replace(/[<>&]/g,''),true); return; }
+        // This year and the one before, when both are kept: last year's December is typed in January.
+        try{ const ix=await PH_PROD.index(); HB_YEARS=Object.keys(ix.years).map(Number).filter(y=>y<=HB_YEAR && y>=HB_YEAR-1).sort((a,b)=>b-a); }catch(_){ HB_YEARS=[]; }
       } else {
         wbBanner('Reading the live workbook…');
         try{ res=await PH_WB.load(PH_AUTH.graph,WB_DRIVE,WB_ITEM); }
         catch(e){ wbBanner(wbWhyNot(e),true); return; }
       }
     }
-    let n=0;
+    const n=fillBase(res,false);
+    loadedStamp=res.savedAt||null;
+    if(sandbox){ wbBanner('<b>Sandbox:</b> made-up numbers. Saving here stays in this browser \u2014 the practice\u2019s real workbook is never touched.',false); return; }
+    if(MODE.source==='homebrace'){ hbShow(res,n); return; }
+    const stamp=res.savedAt?new Date(res.savedAt).toLocaleString():'';
+    const who=String(res.savedBy||'').replace(/[<>&]/g,'');
+    wbBanner('\u25CF Live from the practice\u2019s workbook \u2014 '+n+' of '+Object.keys(BASE).length+
+             ' offices'+(stamp?(who?', '+who+' last saved it '+stamp:', last saved '+stamp):''),
+             res.errors.length>0);
+  }
+  /* The numbers on the page, from the workbook or a Home-Brace year. `reset` empties every office
+     first - another year must not keep this one's numbers where it has none. */
+  function fillBase(res, reset){
+    let n=0; const zero=()=>[0,0,0,0,0,0,0,0,0,0,0,0];
     Object.keys(BASE).forEach(name=>{
-      const L=res.offices[name]; if(!L) return;
       const b=BASE[name];
+      if(reset){ b.tc=zero(); b.adj=zero(); b.dys=zero(); b.sched=zero(); b.goal=zero(); b.str=zero(); b.mds=zero(); }
+      const L=res.offices[name]; if(!L) return;
       if(L.tc)      b.tc=L.tc.slice();
       if(L.adj)     b.adj=L.adj.slice();
       // The input asks "how many days you actually saw patients", so it must be the
@@ -692,23 +714,36 @@
       if(L.avgFee)  b.afee=L.avgFee;
       n++;
     });
-    loadedStamp=res.savedAt||null;
-    if(sandbox){ wbBanner('<b>Sandbox:</b> made-up numbers. Saving here stays in this browser \u2014 the practice\u2019s real workbook is never touched.',false); return; }
+    return n;
+  }
+  /* After the switch: say whose numbers these are, and loudly when they are an earlier year's - in
+     January, before the new year is started, "January" here would be last January. */
+  function hbShow(res,n){
     const stamp=res.savedAt?new Date(res.savedAt).toLocaleString():'';
     const who=String(res.savedBy||'').replace(/[<>&]/g,'');
-    if(MODE.source==='homebrace'){
-      wbBanner('\u25CF Home-Brace\u2019s production numbers for '+HB_YEAR+' \u2014 '+n+' of '+Object.keys(BASE).length+' offices'+
-               (stamp?(who?', '+who+' last saved '+stamp:', last saved '+stamp):'')+(MODE.mirror?' \u00b7 Heather\u2019s Excel is kept up to date too':''), res.errors.length>0);
+    const thisYear=(new Date()).getFullYear(), past=HB_YEAR<thisYear;
+    const warn=!past ? '' : HB_YEARS.some(y=>y>HB_YEAR)
+      ? '<b>You are entering numbers for '+HB_YEAR+'.</b> Pick '+Math.max.apply(null,HB_YEARS)+' above for this year. '
+      : '<b>'+thisYear+' isn\u2019t started in Home-Brace yet, so numbers here go into '+HB_YEAR+'.</b> Ask an admin to start '+thisYear+' (Admin \u2192 Production data). ';
+      wbBanner(warn+'\u25CF Home-Brace\u2019s production numbers for '+HB_YEAR+' \u2014 '+n+' of '+Object.keys(BASE).length+' offices'+
+               (stamp?(who?', '+who+' last saved '+stamp:', last saved '+stamp):'')+(MODE.mirror?' \u00b7 Heather\u2019s Excel is kept up to date too':''), past||res.errors.length>0);
       // The page's own explanation was written for her Excel ("it's the same file"); after the switch it is not.
       const sb=el('syncbar'); if(sb) sb.innerHTML='\u{1F504} <b>Home-Brace keeps the production numbers now.</b> Type here and it saves to Home-Brace'+
         (MODE.mirror?', and Heather\u2019s Excel is kept up to date too. Something typed in her Excel no longer shows up here \u2014 type it here instead.':'. Heather\u2019s Excel is not updated any more.');
       const hp=document.querySelector('.page-head p'); if(hp) hp.textContent='Type the month\u2019s numbers once. '+(MODE.mirror?'The dashboard and Heather\u2019s Excel both update.':'The dashboard updates.');
       const b=el('pushbtn'); if(b) b.textContent=saveLabel();
-      return;
-    }
-    wbBanner('\u25CF Live from the practice\u2019s workbook \u2014 '+n+' of '+Object.keys(BASE).length+
-             ' offices'+(stamp?(who?', '+who+' last saved it '+stamp:', last saved '+stamp):''),
-             res.errors.length>0);
+  }
+  /* Another kept year (this one or the one before), chosen above the boxes. */
+  async function setYear(y){
+    y=+y; if(!y || y===HB_YEAR || MODE.source!=='homebrace') return;
+    wbBanner('Reading Home-Brace\u2019s production numbers for '+y+'\u2026');
+    let res;
+    try{ res=await PH_PROD.dashboardData(y); }
+    catch(e){ wbBanner('<b>Could not read '+y+'.</b> '+String((e&&e.message)||e).replace(/[<>&]/g,''),true); render(); return; }
+    HB_YEAR=y;
+    const now=new Date(); month = y<now.getFullYear() ? 11 : now.getMonth();
+    const n=fillBase(res,true); loadedStamp=res.savedAt||null;
+    hbShow(res,n); render();
   }
 
   /* Same trap as the dashboard: PERSONAS is the sandbox's "View as" list, which
@@ -733,7 +768,7 @@
 })();
 </script>
 <script>PH.nav('production');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(window.PROD&&PROD.identity)PROD.identity();});document.addEventListener('ph-identity',function(){if(window.PROD&&PROD.identity)PROD.identity();});</script>
-<script src="tour.js?v=hc99"></script>
+<script src="tour.js?v=hc100"></script>
 <script>
 Tour.init([
   {sel:'.syncbar', title:'One set of numbers', body:'Type here and it saves into the <b>same Excel workbook</b> on SharePoint. If someone types in Excel instead, it shows up here. There is never a second copy to reconcile.'},
