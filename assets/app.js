@@ -18,7 +18,7 @@ const ICONS = {
   arrow:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>',
 };
 
-// The practice runs three brands (FFO/Farnsworth, Sunflower, LCO) with no umbrella
+// The public demo uses fictional brands and locations throughout.
 // name, so the chrome carries no practice name at all.
 const PRACTICE = "";
 
@@ -331,10 +331,10 @@ function submitForm(key) {
 /* ---- Interactive scorecard demo ---- */
 const SCORECARD_DATA = {
   all:       { name:"All locations", production:842, collections:791, conversion:68, starts:214, changes:[6.2,4.1,-2.0,11], spark:[[42,52,48,64,70,88],[45,50,56,60,69,82],[76,72,73,70,69,68],[43,49,55,61,70,84]] },
-  carlsbad:  { name:"Carlsbad", production:228, collections:219, conversion:74, starts:62, changes:[8.4,7.1,3.0,7], spark:[[35,48,44,61,72,92],[39,46,53,63,74,89],[62,65,68,69,72,78],[35,42,54,63,74,90]] },
-  hobbs:     { name:"Hobbs", production:196, collections:181, conversion:65, starts:48, changes:[3.2,1.8,-4.0,-2], spark:[[50,54,58,60,64,70],[53,55,58,62,64,68],[75,72,70,68,66,64],[62,58,61,56,54,50]] },
-  clovis:    { name:"Clovis", production:212, collections:199, conversion:69, starts:55, changes:[5.7,4.6,1.0,4], spark:[[42,47,55,57,68,82],[44,50,52,61,66,79],[63,65,66,68,67,72],[43,48,53,60,69,78]] },
-  lubbock:   { name:"Lubbock", production:206, collections:192, conversion:64, starts:49, changes:[4.9,3.5,-3.0,2], spark:[[48,52,56,63,66,76],[45,50,58,60,65,73],[73,71,69,67,65,63],[46,50,55,57,60,67]] }
+  cedar:     { name:"Cedar Grove", production:228, collections:219, conversion:74, starts:62, changes:[8.4,7.1,3.0,7], spark:[[35,48,44,61,72,92],[39,46,53,63,74,89],[62,65,68,69,72,78],[35,42,54,63,74,90]] },
+  lakeview:  { name:"Lakeview", production:196, collections:181, conversion:65, starts:48, changes:[3.2,1.8,-4.0,-2], spark:[[50,54,58,60,64,70],[53,55,58,62,64,68],[75,72,70,68,66,64],[62,58,61,56,54,50]] },
+  northpoint:{ name:"Northpoint", production:212, collections:199, conversion:69, starts:55, changes:[5.7,4.6,1.0,4], spark:[[42,47,55,57,68,82],[44,50,52,61,66,79],[63,65,66,68,67,72],[43,48,53,60,69,78]] },
+  westfield: { name:"Westfield", production:206, collections:192, conversion:64, starts:49, changes:[4.9,3.5,-3.0,2], spark:[[48,52,56,63,66,76],[45,50,58,60,65,73],[73,71,69,67,65,63],[46,50,55,57,60,67]] }
 };
 
 function buildScorecards() {
@@ -343,7 +343,7 @@ function buildScorecards() {
   const reset = document.getElementById("scoreReset");
   const bars = document.getElementById("officeBars");
   const insights = document.getElementById("scoreInsights");
-  const offices = ["carlsbad", "hobbs", "clovis", "lubbock"];
+  const offices = ["cedar", "lakeview", "northpoint", "westfield"];
 
   const renderBars = selected => {
     bars.innerHTML = offices.map(key => {
@@ -373,8 +373,8 @@ function buildScorecards() {
     });
     const signals = key === "all"
       ? [
-          ["good", "Carlsbad leads conversion at 74%", "Use its consultation follow-up as the peer benchmark."],
-          ["watch", "Hobbs conversion is down 4 points", "Review no-show and unscheduled follow-up queues."],
+          ["good", "Cedar Grove leads conversion at 74%", "Use its consultation follow-up as the peer benchmark."],
+          ["watch", "Lakeview conversion is down 4 points", "Review no-show and unscheduled follow-up queues."],
           ["info", "Collections remain at 94% of production", "The practice is inside the operating target range."]
         ]
       : [

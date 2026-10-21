@@ -134,27 +134,27 @@
   const DAYS=['Mon','Tue','Wed','Thu','Fri','Sat'];
   const FULL={h:'8:00a–5:00p',s:480,e:1020}, HALFD={h:'8:00a–1:00p',s:480,e:780};
   let people=[{n:'Dr. Chen',c:0},{n:'Dr. Rao',c:1},{n:'Dr. Mehta',c:3},{n:'Dr. Lopez',c:5},{n:'Dr. Ford',c:2}];
-  let locations=['Carlsbad','Clovis','Hobbs','San Angelo','Lubbock','Mansfield','Cruces LCO','Cruces Legacy'];
+  let locations=['Cedar Grove','Northpoint','Lakeview','Riverbend','Westfield','Meadow Park','Brookside','Hillcrest'];
   let sched={
-    'Carlsbad':[{p:0,...FULL},null,{p:1,...FULL},null,{p:0,...FULL},null],
-    'Clovis':[{p:1,...FULL},null,{p:0,...FULL},null,null,{p:3,...HALFD}],
-    'Hobbs':[null,{p:0,...FULL},null,{p:1,...FULL},null,null],
-    'San Angelo':[{p:2,...FULL},null,{p:3,...FULL},null,{p:1,...FULL},null],
-    'Lubbock':[null,{p:2,...FULL},null,{p:4,...FULL},{p:2,...FULL},null],
-    'Mansfield':[{p:3,...FULL},null,{p:2,...FULL},null,{p:4,...FULL},null],
-    'Cruces LCO':[null,{p:4,...FULL},null,{p:3,...FULL},null,null],
-    'Cruces Legacy':[null,null,{p:0,...FULL},null,null,{p:2,...HALFD}]
+    'Cedar Grove':[{p:0,...FULL},null,{p:1,...FULL},null,{p:0,...FULL},null],
+    'Northpoint':[{p:1,...FULL},null,{p:0,...FULL},null,null,{p:3,...HALFD}],
+    'Lakeview':[null,{p:0,...FULL},null,{p:1,...FULL},null,null],
+    'Riverbend':[{p:2,...FULL},null,{p:3,...FULL},null,{p:1,...FULL},null],
+    'Westfield':[null,{p:2,...FULL},null,{p:4,...FULL},{p:2,...FULL},null],
+    'Meadow Park':[{p:3,...FULL},null,{p:2,...FULL},null,{p:4,...FULL},null],
+    'Brookside':[null,{p:4,...FULL},null,{p:3,...FULL},null,null],
+    'Hillcrest':[null,null,{p:0,...FULL},null,null,{p:2,...HALFD}]
   };
   // office hours: which weekdays each location is open (Mon..Sat)
   let openH={
-    'Carlsbad':[true,false,true,true,true,false],
-    'Clovis':[true,false,true,false,true,true],
-    'Hobbs':[false,true,false,true,false,false],
-    'San Angelo':[true,false,true,false,true,false],
-    'Lubbock':[false,true,false,true,true,false],
-    'Mansfield':[true,false,true,false,true,false],
-    'Cruces LCO':[false,true,false,true,false,false],
-    'Cruces Legacy':[false,false,true,false,false,true]
+    'Cedar Grove':[true,false,true,true,true,false],
+    'Northpoint':[true,false,true,false,true,true],
+    'Lakeview':[false,true,false,true,false,false],
+    'Riverbend':[true,false,true,false,true,false],
+    'Westfield':[false,true,false,true,true,false],
+    'Meadow Park':[true,false,true,false,true,false],
+    'Brookside':[false,true,false,true,false,false],
+    'Hillcrest':[false,false,true,false,false,true]
   };
   let filterP=null, weekOffset=0, tmp={p:null,mode:'full',s:480,e:1020}, tmpC=0, tmpEdit=null, tmpLoc=null;
   const el=id=>document.getElementById(id);
