@@ -421,6 +421,35 @@ average case fee and goals show read-only, "Set in Admin -> Production data -> P
 Before the switch nothing changed: leadership still edits them there and they write into her Excel. Cory set up 2027
 on live 22/10/2026 (Heather to plan the offices).
 
+**Future-proofing, groups 1 and 2 (22/10/2026, hc107).** Cory: "This entire Home-Brace needs to be build to hold up in
+the future" -> a read-only check of the whole app (24 findings, verified the worst by hand) -> "yes start with 1 and 2".
+GROUP 1 (before January):
+- Enter Production, still on her Excel after 31 Dec: XL_YEAR=2026 in one place; once the calendar passes it the page
+  opens on December, says "This is the 2026 workbook - every month here is 2026", and every save asks first (a
+  "January" save would land on January 2026's actuals). Late 2026 numbers still go in.
+- Stale typed numbers: an edit now carries _at; a SAVED box is settled() (BASE takes the saved figure, the edit is
+  dropped) so it is never re-sent over a later correction; on the live site dropStale() at load keeps only unsaved
+  boxes typed in the last 12 hours (the sandbox keeps everything - it is its own store).
+- Leadership alerts: the "reached its goal" marker is per YEAR (ph_goalhit_<year>_<office>_<month>); "entered late"
+  measures from the end of that year's month (December typed in January = a few days, not -11 months).
+- Dashboard legend "Last year (2025)" -> LIVE_YEAR-1.
+GROUP 2 (data safety):
+- Schedule: a doctor who ever worked a day is never removed - "Has left" marks people[i].left (off the chips and the
+  day picker, still on every day, "Left: ... Bring back"); only a doctor with no days at all is removed (renumbering,
+  as before). Removing used to delete every day where they were the only doctor, in every year.
+- Notifications: logActivity merges into the shared feed with PH_STORE.update (it wrote this browser's stale copy over
+  everyone's - the copy was only refreshed on Home).
+- Office list: saveLocations merges with the shared list (keeps offices this page never knew - locsSeen - and drops only
+  ones it knew and no longer has); a page on the built-in defaults never saves them over the practice's list (alert).
+- Browser storage: store.js setLocal makes room when full - photo caches/other people's rows first, then __prev backups,
+  never anything unsent - instead of refusing every save; loadPhotos keeps only the signed-in person's own ph_me_ row
+  locally (everybody's photo was stored twice).
+Checked in the browser: Has left/Bring back with 209 of a doctor's days untouched; Enter Production (stand-in SharePoint)
+save -> typed entry cleared, saved figure shown after reload, goal alert keyed by year, notifications in the shared
+feed; a stale page's office save kept "Roswell" added elsewhere. NEXT: made-up sandbox people (Cory: "use made-up
+people"); then group 3 (load only what a page needs, split the schedule by year, TC Tracker recent months) and group 4
+(offices/teams from Admin, not code).
+
 **TCs see every office in "By office" (19/10, hc85).** Selene: "we do want the Treatment Coordinators to be able to see
 one another's results. Please make sure they can all view the 'By Office' box so they can see conversion rates across
 locations." viewNumbers(): for a TC (`iAmTC() && !canManage()`) the box lists `allOffices()` from EVERY (rates and

@@ -38,7 +38,32 @@
   /* Reports whether it worked. Browser storage fills up - usually on profile photos -
      and a save that silently didn't happen is how a screen full of changes reverts on
      the next reload with nobody any the wiser. */
-  function setLocal(k,v){ try{ localStorage.setItem(k,v); return true; }catch(_){ return false; } }
+  /* OUT OF ROOM. A browser holds about 5 MB; photos filled it, and from then on EVERY save from that device was
+     refused before it was sent (future-proofing check, 22/10/2026). Now, when a write doesn't fit, what can be
+     fetched again goes first - the photo caches and other people's profile rows, then the "previous copy"
+     backups (SharePoint keeps its own versions) - and the write is tried again. A change still waiting to be
+     sent is never touched. */
+  var EXPENDABLE = [[/^ph_photos$/, /^ph_faces$/, /^ph_me_/, /^ph_face_/], [/__prev$/]];
+  function makeRoom(except){
+    for(var stage = 0; stage < EXPENDABLE.length; stage++){
+      var freed = false;
+      try{
+        for(var i = localStorage.length - 1; i >= 0; i--){
+          var k = localStorage.key(i); if(!k || k === except || /__(unsent|at|w)$/.test(k)) continue;
+          if(!EXPENDABLE[stage].some(function(re){ return re.test(k); })) continue;
+          if(unsent(k.replace(/__prev$/, ''))) continue;
+          localStorage.removeItem(k); freed = true;
+        }
+      }catch(_){}
+      if(freed) return true;
+    }
+    return false;
+  }
+  function setLocal(k,v){
+    try{ localStorage.setItem(k,v); return true; }catch(_){}
+    for(var tries = 0; tries < 2 && makeRoom(k); tries++){ try{ localStorage.setItem(k,v); return true; }catch(_){} }
+    return false;
+  }
 
   /* ------------------------------------------------------------------
      A LIVE SITE THAT IS NOT SIGNED IN YET IS NOT THE SANDBOX.

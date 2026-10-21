@@ -134,13 +134,13 @@
   }
 
 </style>
-<script src="user.js?v=hc106"></script>
+<script src="user.js?v=hc107"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="workbook.js?v=hc106"></script>
-  <script src="prodbook.js?v=hc106"></script>
-  <script src="prodstore.js?v=hc106"></script>
-  <script src="store.js?v=hc106"></script>
-  <script src="gate.js?v=hc106"></script>
+  <script src="workbook.js?v=hc107"></script>
+  <script src="prodbook.js?v=hc107"></script>
+  <script src="prodstore.js?v=hc107"></script>
+  <script src="store.js?v=hc107"></script>
+  <script src="gate.js?v=hc107"></script>
 </head>
 <body>
 <div class="ribbon">SANDBOX — made-up numbers. Saving here stays in your browser; the real workbook is never touched.</div>
@@ -162,7 +162,7 @@
     <h1>Enter Production</h1>
     <p>Type the month's numbers once. The dashboard and the Excel workbook both update.</p>
   </div>
-  <div class="syncbar" id="syncbar">🔄 <b>One set of numbers, two places to work.</b> Type here and it saves to the <b>2026 Production Dashboard workbook on SharePoint</b>. If someone types in the Excel instead, it shows up here — it's the same file, not a copy.</div>
+  <div class="syncbar" id="syncbar">🔄 <b>One set of numbers, two places to work.</b> Type here and it saves to the <b>Production Dashboard workbook on SharePoint</b>. If someone types in the Excel instead, it shows up here — it's the same file, not a copy.</div>
   <script>/* The sandbox is not connected to the workbook (13/10/2026) - say so where the page explains saving. */
   if(window.PH && PH.isLive && !PH.isLive()){ document.getElementById('syncbar').innerHTML='🔄 <b>In the real Home-Brace</b>, typing here saves straight to the practice’s workbook, and changes made in the Excel show up here. <b>In this sandbox</b> the numbers are made up and saving stays in your browser.'; }</script>
   <div id="view"></div>
@@ -240,7 +240,9 @@
   /* After the switch a year can be chosen (December is typed in January), so unsaved boxes belong
      to a year too. Before it, keys stay as they always were. */
   const yr=()=>{ try{ return (MODE.source==='homebrace' && HB_YEAR) ? HB_YEAR+'|' : ''; }catch(_){ return ''; } };
-  const shownYear=()=>{ try{ return (MODE.source==='homebrace' && HB_YEAR) ? HB_YEAR : 2026; }catch(_){ return 2026; } };
+  /* Her Excel is the 2026 workbook (workbook.js reads 2026's rows); it is retired before 2027. */
+  const XL_YEAR=2026;
+  const shownYear=()=>{ try{ return (MODE.source==='homebrace' && HB_YEAR) ? HB_YEAR : XL_YEAR; }catch(_){ return XL_YEAR; } };
   const key=(o,m)=>yr()+o+'|'+m;
   /* An emptied box is NOT the same as an untouched one. '' means the person deliberately
      cleared it and wants that cell blank in the workbook, so it must not fall back to the
@@ -359,7 +361,7 @@
     if(f==='fee'||f==='afee'){ // a case fee applies to the whole office, every month
       for(let m=0;m<12;m++){ const kk=key(office,m); edits[kk]=edits[kk]||{}; edits[kk][f]=v===''?'':Number(v); }
     }
-    const k=key(office,month); edits[k]=edits[k]||{}; edits[k][f]=v===''?'':Number(v);
+    const k=key(office,month); edits[k]=edits[k]||{}; edits[k][f]=v===''?'':Number(v); edits[k]._at=Date.now();
     // store the resulting TOTAL so the dashboard never has to re-derive it
     const b=BASE[office];
     edits[k]._total = val(office,month,'tc') + medDollars(office,month);
@@ -471,6 +473,7 @@
         settle('failed', 'Didn\u2019t save');
         wbBanner('<b>Not saved.</b> '+failed.join(' \u00b7 ').replace(/</g,'&lt;'), true);
       } else if(saved && saved.changes.length){
+        settled(Object.keys(values));
         settle('done', 'Saved');
         const nx=saved.next&&saved.next.changes ? ' '+saved.next.year+'\u2019s \u201clast year\u201d updated too.' : '';
         wbBanner('\u2713 Saved '+saved.changes.length+' value(s) in Home-Brace for '+office+' \u00b7 '+MO[month]+' '+HB_YEAR+'.'+nx+note, /NOT updated/.test(note));
@@ -482,6 +485,16 @@
         settle('failed', 'Nothing changed');
         wbBanner('Nothing to save \u2014 no boxes were changed for '+office+' \u00b7 '+MO[month]+'.', true);
       }
+      return;
+    }
+
+    /* JANUARY, STILL ON THE EXCEL: her workbook is 2026's, so every month here is a 2026 month. Once 2027 has
+       begun, saving "January" would land on January 2026's actuals - ask first (late 2026 numbers are fine). */
+    if(new Date().getFullYear()>XL_YEAR &&
+       !confirm('This saves into '+MOFULL[month]+' '+XL_YEAR+' in the '+XL_YEAR+' workbook - not '+MOFULL[month]+' '+(XL_YEAR+1)+'.\n\n'+
+                'Is it a '+XL_YEAR+' number? (For '+(XL_YEAR+1)+', an admin first switches to Home-Brace: Admin \u2192 Production data.)')){
+      if(btn){ btn.classList.remove('saving'); btn.disabled=false; }
+      wbBanner('<b>Not saved.</b> '+(XL_YEAR+1)+'\u2019s numbers go into Home-Brace once an admin switches (Admin \u2192 Production data).', true);
       return;
     }
 
@@ -513,6 +526,7 @@
        a wasted request before every save, and a guess about whether the endpoint was
        really answering - a guess that could have fallen back to a direct write on an
        ordinary server hiccup. The code is still in api/ if it is ever wanted. */
+    const okFields=[];
     for(const f of fields){
       // '' tells writeCell to clear the cell (it uses Graph's clear action, since a
       // PATCH of null is ignored). Only genuinely absent values are skipped.
@@ -521,9 +535,10 @@
       if(!blank && (v===''||v===null||v===undefined)) continue;
       try{
         const r=await PH_WB.writeCell(PH_AUTH.token, WB_DRIVE, WB_ITEM, office, f, month, v);
-        done.push(f+' \u2192 '+r.address);
+        done.push(f+' \u2192 '+r.address); okFields.push(f);
       }catch(e){ failed.push(f+': '+((e&&e.message)||e)); }
     }
+    if(okFields.length) settled(okFields);
     /* Say what happened on the button itself, then return it to normal. */
     function settle(state, label){
       if(!btn) return;
@@ -565,6 +580,38 @@
     }
   }
 
+  /* SAVED = DONE. A saved box goes back to showing the saved figure, and is not sent again. It used to stay
+     in this browser as "typed" for good: it hid any later correction (Heather fixing it in Excel), and the
+     next save of that office and month sent it again, over the correction (future-proofing check, 22/10/2026). */
+  const BASEKEY={tc:'tc', adj:'adj', mds:'mds', dys:'dys', goal:'goal', str:'str'};
+  function settled(fields){
+    const b=BASE[office]; if(!b) return;
+    fields.forEach(f=>{
+      const v=cleared(office,month,f) ? 0 : (Number(val(office,month,f))||0);
+      if(f==='fee'||f==='afee'){ b[f]=v; for(let m=0;m<12;m++){ const e=edits[key(office,m)]; if(e) delete e[f]; } }
+      else if(BASEKEY[f]){ const arr=b[BASEKEY[f]]=(b[BASEKEY[f]]||[0,0,0,0,0,0,0,0,0,0,0,0]).slice(); arr[month]=v; const e=edits[key(office,month)]; if(e) delete e[f]; }
+    });
+    Object.keys(edits).forEach(k=>{ if(!Object.keys(edits[k]).some(x=>x.charAt(0)!=='_')) delete edits[k]; });
+    save();
+  }
+  /* On the live site the page starts from the saved figures. Only boxes typed in the last 12 hours and not
+     saved yet are kept (a quick trip to another page loses nothing); anything older, or already equal to
+     the saved figure, is dropped. The sandbox keeps everything: this browser is its only store. */
+  function dropStale(){
+    const now=Date.now();
+    Object.keys(edits).forEach(k=>{
+      const e=edits[k];
+      if(!e._at || now-e._at>12*3600*1000){ delete edits[k]; return; }
+      const p=k.split('|'), mine=(p.length>2)===!!yr() && (!yr() || k.indexOf(yr())===0);
+      const o=p.length>2?p[1]:p[0], m=+p[p.length-1], b=BASE[o]; if(!mine || !b) return;
+      Object.keys(e).forEach(f=>{ if(f.charAt(0)==='_') return;
+        const saved=(f==='fee'||f==='afee') ? b[f] : (b[BASEKEY[f]]||[])[m];
+        if(e[f]!=='' && Number(e[f])===Number(saved||0)) delete e[f]; });
+      if(!Object.keys(e).some(x=>x.charAt(0)!=='_')) delete edits[k];
+    });
+    save();
+  }
+
   /* THE TWO THINGS LEADERSHIP ASKED TO HEAR ABOUT, raised only when numbers have
      actually reached the workbook:
        - an office crossing its monthly goal - said once per office per month, with a
@@ -576,13 +623,13 @@
     try{
       const goal=val(office,month,'goal');
       const total=val(office,month,'tc')+val(office,month,'mds')*val(office,month,'fee');
-      const mark='ph_goalhit_'+office+'_'+month;
+      const yr0=shownYear(), mark='ph_goalhit_'+yr0+'_'+office+'_'+month;   // the year too: next January is a new January
       if(goal>0 && total>=goal && !localStorage.getItem(mark)){
         localStorage.setItem(mark,'1');
         PH.logActivity({kind:'goal', sec:'dashboard', ic:'\u{1F3AF}', offices:[office], teams:LEAD,
           title:office+' has reached its '+MO[month]+' goal'});
       }
-      const monthEnd=new Date(new Date().getFullYear(), month+1, 0);
+      const monthEnd=new Date(yr0, month+1, 0);                               // December typed in January is a few days late, not -11 months
       const daysLate=Math.floor((Date.now()-monthEnd.getTime())/86400000);
       if(daysLate>5)
         PH.logActivity({kind:'late', sec:'dashboard', ic:'\u23F0', offices:[office], teams:LEAD,
@@ -688,14 +735,18 @@
       }
     }
     const n=fillBase(res,false);
+    if(!sandbox) dropStale();
     loadedStamp=res.savedAt||null;
     if(sandbox){ wbBanner('<b>Sandbox:</b> made-up numbers. Saving here stays in this browser \u2014 the practice\u2019s real workbook is never touched.',false); return; }
     if(MODE.source==='homebrace'){ hbShow(res,n); return; }
     const stamp=res.savedAt?new Date(res.savedAt).toLocaleString():'';
     const who=String(res.savedBy||'').replace(/[<>&]/g,'');
-    wbBanner('\u25CF Live from the practice\u2019s workbook \u2014 '+n+' of '+Object.keys(BASE).length+
+    const after=new Date().getFullYear()>XL_YEAR;
+    if(after) month=11;                            // a new year, still on the old Excel: its last month, not "January"
+    wbBanner((after ? '<b>This is the '+XL_YEAR+' workbook - every month here is '+XL_YEAR+'.</b> '+(XL_YEAR+1)+'\u2019s numbers go into Home-Brace once an admin switches (Admin \u2192 Production data). ' : '')+
+             '\u25CF Live from the practice\u2019s workbook \u2014 '+n+' of '+Object.keys(BASE).length+
              ' offices'+(stamp?(who?', '+who+' last saved it '+stamp:', last saved '+stamp):''),
-             res.errors.length>0);
+             after || res.errors.length>0);
   }
   /* The numbers on the page, from the workbook or a Home-Brace year. `reset` empties every office
      first - another year must not keep this one's numbers where it has none. */
@@ -773,7 +824,7 @@
 })();
 </script>
 <script>PH.nav('production');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(window.PROD&&PROD.identity)PROD.identity();});document.addEventListener('ph-identity',function(){if(window.PROD&&PROD.identity)PROD.identity();});</script>
-<script src="tour.js?v=hc106"></script>
+<script src="tour.js?v=hc107"></script>
 <script>
 Tour.init([
   {sel:'.syncbar', title:'One set of numbers', body:'Type here and it saves into the <b>same Excel workbook</b> on SharePoint. If someone types in Excel instead, it shows up here. There is never a second copy to reconcile.'},

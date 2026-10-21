@@ -312,10 +312,10 @@
   }
 
 </style>
-<script src="user.js?v=hc106"></script>
+<script src="user.js?v=hc107"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc106"></script>
-  <script src="gate.js?v=hc106"></script>
+  <script src="store.js?v=hc107"></script>
+  <script src="gate.js?v=hc107"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — sample staff schedule for validation. Live version = one Microsoft List the practice maintains.</div>
@@ -615,10 +615,13 @@
     /* A doctor chip filters; the pencil renames or removes. editPerson() existed and was
        even exported, but nothing ever called it — so a doctor could be added and then
        never corrected. Dr. Brimhall wanting to be Dr. Jae had no way through. */
-    const docs=people.map((p,i)=>
+    const docs=people.map((p,i)=> p.left ? '' :
       '<span class="dwrap"><button class="dchip'+(fDocs.has(i)?' on':'')+'" onclick="PS.togDoc('+i+')">'+p.n+'</button>'+
       (canEdit()?'<button class="dedit" title="Rename or remove '+esc(p.n)+'" '+
-        'onclick="event.stopPropagation();PS.edit('+i+')">\u270E</button>':'')+'</span>').join('');
+        'onclick="event.stopPropagation();PS.edit('+i+')">\u270E</button>':'')+'</span>').join('')+
+      /* Doctors who left stay on every day they worked; only an editor sees them here, to bring one back. */
+      (canEdit() && people.some(p=>p.left) ? '<span class="hint" style="margin-left:6px">Left: '+people.map((p,i)=>p.left ?
+        esc(p.n)+' <button class="sbtn ghost tiny" onclick="PS.unleave('+i+')" title="Back on the doctor list">Bring back</button>' : '').filter(Boolean).join(' \u00b7 ')+'</span>' : '');
     const tog=(on,fn,dot,label)=>
       '<button class="tchip '+(on?'on':'off')+'" onclick="PS.'+fn+'()" aria-pressed="'+on+'">'+
         '<span class="sw"></span><span class="dot" style="background:'+dot+';width:11px;height:11px;border-radius:50%;display:inline-block"></span>'+label+'</button>';
@@ -806,7 +809,7 @@
     const maxDoc=Math.max(1,...people.map((p,i)=>Y.perDoc[i]||0));
     const maxLoc=Math.max(1,...locations.map(l=>Y.perLoc[l.n]||0));
     const mn=MOFULL[mM].slice(0,3);
-    const docRows=people.map((p,i)=>'<tr><td><b>'+p.n+'</b>'+
+    const docRows=people.map((p,i)=> p.left && !Y.perDoc[i] ? '' : '<tr><td><b>'+p.n+'</b>'+(p.left?' <small style="color:var(--soft)">(left)</small>':'')+
         '<div class="cbar"><i style="width:'+((Y.perDoc[i]||0)/maxDoc*100)+'%;background:var(--teal)"></i></div></td>'+
         '<td class="n">'+(M.perDoc[i]||0)+'</td><td class="n">'+(Y.perDoc[i]||0)+'</td></tr>').join('');
     const locRows=locations.map(l=>{const c=colOf(l.color);
@@ -930,11 +933,12 @@
     // across 8 offices a hard block made it impossible to ever put two in one office.
     const clashes=[];
     const picks=people.map((p,i)=>{
-      const busy=busyAt(cur.date,i,cur.loc);
       const on=t.ps.indexOf(i)>=0;
+      if(p.left && !on) return '';
+      const busy=busyAt(cur.date,i,cur.loc);
       if(busy && on) clashes.push(p.n+' is also at '+busy);
       return '<button class="pk'+(on?' on':'')+(busy?' alsoat':'')+'" onclick="PS.pickDoc('+i+')">'+
-        p.n+(busy?'<small>also at '+busy+'</small>':'')+'</button>';
+        p.n+(p.left?' <small>(left)</small>':'')+(busy?'<small>also at '+busy+'</small>':'')+'</button>';
     }).join('');
     openModal(
       '<div class="m-top"><span style="width:14px;height:14px;border-radius:50%;background:'+cc.dot+'"></span>'+
@@ -1123,7 +1127,8 @@
       '<div class="m-body"><div class="s-lab">Name</div>'+
         '<input class="s-input" id="pName" value="'+(tmpP.n||'').replace(/"/g,'&quot;')+'" placeholder="e.g. Dr. Smith">'+
         '<p class="hint">Doctors don\'t have their own color — a day takes the color of the <b>office</b>.</p></div>'+
-      '<div class="m-foot">'+(tmpP.i<0?'':'<button class="sbtn ghost" onclick="PS.delPerson()">Remove</button>')+
+      (tmpP.i>=0 && worked(tmpP.i) ? '<p class="hint" style="margin:0 16px 10px">“Has left” takes them off the doctor list. <b>Every day they worked stays on the schedule.</b></p>' : '')+
+      '<div class="m-foot">'+(tmpP.i<0?'':'<button class="sbtn ghost" onclick="PS.delPerson()">'+(worked(tmpP.i)?'Has left':'Remove')+'</button>')+
         '<span style="flex:1"></span><button class="sbtn ghost" onclick="PS.close()">Cancel</button>'+
         '<button class="sbtn" onclick="PS.savePerson()">Save</button></div>');
   }
@@ -1136,8 +1141,23 @@
         title: prev ? prev+' is now listed as '+nm : nm+' added to the doctor list'});
     save(); closeModal(); refresh();
   }
+  /* Has this doctor ever been on a day, past or future? */
+  function worked(i){ return Object.keys(sched).some(k=>isDay(k) && Object.keys(sched[k]).some(ln=>{ const c=sched[k][ln]; return c && docsOf(c).indexOf(i)>=0; })); }
+  /* A doctor who has worked here is never taken off the days - the schedule is the record of who was where
+     (Cory: "Do not delete any data on the schedule"). Removing one used to delete every day where they were
+     the only doctor, in every year, and renumber the rest (future-proofing check, 22/10/2026). Now they are
+     marked as left: off the chips and the day picker, still on every day, and they can be brought back.
+     Only a doctor who never worked a day (added by mistake) is removed outright. */
   function delPerson(){ if(docsBlocked())return;
     const i=tmpP.i;
+    if(worked(i)){
+      people[i]=Object.assign({}, people[i], {left:iso(new Date())});
+      fDocs.delete(i);
+      if(window.PH && PH.logActivity && PH.isLive())
+        PH.logActivity({kind:'schedule', sec:'schedule', ic:'\u{1FA7A}', scope:'everyone',
+          title: people[i].n+' has left the doctor list (every day they worked stays on the schedule)', people:[people[i].n]});
+      save(); closeModal(); refresh(); return;
+    }
     Object.keys(sched).forEach(k=>Object.keys(sched[k]).forEach(ln=>{
       const c=sched[k][ln]; if(!c) return;
       const ds=docsOf(c).filter(x=>x!==i).map(x=>x>i?x-1:x);
@@ -1264,6 +1284,7 @@
   function allLocs(){ if(fLoc.size===locations.length) fLoc.clear(); else locations.forEach(l=>fLoc.add(l.n)); refresh(); }
   function togDoc(i){ fDocs.has(i)?fDocs.delete(i):fDocs.add(i); refresh(); }
   function allDocs(){ fDocs.clear(); refresh(); }
+  function unleave(i){ if(docsBlocked())return; if(!canEdit() || !people[i]) return; const p=Object.assign({}, people[i]); delete p.left; people[i]=p; save(); refresh(); }
   function togYdot(){ fYdot=!fYdot; refresh(); }
   function togEvent(){ fEvent=!fEvent; refresh(); }
   function togClosed(){ fClosed=!fClosed; refresh(); }
@@ -1286,7 +1307,7 @@
   let booted=false;
   document.addEventListener('ph-identity', function(){ if(booted){ applyPerms(); refresh(); } });
 
-  window.PS={view:setView,step,today,togLoc,allLocs,togDoc,allDocs,togYdot,togClosed,togEvent,setEvent,open,addTo,quick,pickDoc,setT,halfDay,fullDay,markYdot,markClosed,
+  window.PS={view:setView,step,today,togLoc,allLocs,togDoc,allDocs,unleave,togYdot,togClosed,togEvent,setEvent,open,addTo,quick,pickDoc,setT,halfDay,fullDay,markYdot,markClosed,
     clearDay,saveDay,addLocation,editLoc,setColor,setTZ,dtog,dtime,lunchTog,lunchT,saveLoc,delLoc,
     relocate:function(){ locations=PH.locations(); locations.forEach(l=>fLoc.add(l.n)); refresh(); },
     pickMonth,goMonth,jumpTo,
@@ -1406,7 +1427,7 @@
    machine is missing here until the next page load. */
 document.addEventListener('ph-locations-changed',function(){ if(window.PS&&PS.relocate)PS.relocate(); });
 PH.nav('schedule');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc106"></script>
+<script src="tour.js?v=hc107"></script>
 <script>
 Tour.init([
   {sel:'#viewseg', title:'Week or month', body:'<b>Week</b> is the day-to-day working view. <b>Month</b> shows the whole month at a glance, with every office in its own color.'},

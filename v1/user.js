@@ -939,6 +939,9 @@
      can't wait for a network round trip, so this pulls the shared copy into this
      browser and tells the page it changed. */
   let locsPulled=false;
+  /* The office names this page has known (as loaded, as pulled, as saved) - so an office missing from its list
+     can be told apart: one it knew = deleted or renamed here; one it never knew = added elsewhere since. */
+  const locsSeen=new Set((function(){ try{ const st=JSON.parse(localStorage.getItem('ph_locations')); return Array.isArray(st) ? st.map(l=>l&&l.n).filter(Boolean) : []; }catch(_){ return []; } })());
   function reloadLocations(){
     if(locsPulled || !window.PH_STORE || !isLive()) return Promise.resolve(false);
     locsPulled=true;
@@ -946,6 +949,7 @@
       if(!Array.isArray(r) || !r.length) return false;
       const before=localStorage.getItem('ph_locations');
       const after=JSON.stringify(r);
+      r.forEach(l=>{ if(l && l.n) locsSeen.add(l.n); });
       if(before===after) return false;
       try{ localStorage.setItem('ph_locations', after); }catch(_){ return false; }
       try{ document.dispatchEvent(new CustomEvent('ph-locations-changed')); }catch(_){}
@@ -953,11 +957,34 @@
     }).catch(function(){ return false; });
   }
 
+  /* Saved as a CHANGE to the shared list as it is now (future-proofing check, 22/10/2026). It used to write this
+     page's whole list over the shared one: a Schedule page opened before Roswell was added deleted Roswell for
+     everyone the next time someone on it changed any office. Now an office this page never knew is kept; one
+     it knew and no longer has was deleted or renamed here and goes. And a page that only has the built-in
+     offices (the practice's list couldn't be read) never saves them over the practice's own. */
   function saveLocations(list){
+    let st=null; try{ st=JSON.parse(localStorage.getItem('ph_locations')); }catch(_){}
+    const onDefaults = isLive() && (!Array.isArray(st) || !st.length || st.some(l=>l.__v!==2));
     if(isLive()) list.forEach(l=>{ l.__v=2; });   // mark as the practice's own, not demo
-    /* Through the store - see saveMine above. */
     // Offices are shared practice-wide, so they belong in SharePoint, not one browser.
-    if(window.PH_STORE) window.PH_STORE.set('ph_locations', list);
+    if(!window.PH_STORE) return;
+    if(!window.PH_STORE.update){ window.PH_STORE.set('ph_locations', list); return; }
+    let refused=false;
+    window.PH_STORE.update('ph_locations', function(remote){
+      const theirs = Array.isArray(remote) ? remote.filter(l=>l && l.n) : [];
+      if(onDefaults && theirs.length){ refused=true; return undefined; }
+      const mine = list.slice(), have = new Set(mine.map(l=>l.n));
+      theirs.forEach(function(l){ if(!have.has(l.n) && !locsSeen.has(l.n)) mine.push(l); });   // added elsewhere since this page loaded
+      return mine;
+    }).then(function(r){
+      if(refused){ try{ alert('The practice\u2019s office list couldn\u2019t be loaded on this page, so nothing was saved.\n\nReload the page and try again.'); }catch(_){} return; }
+      list.forEach(l=>locsSeen.add(l.n));
+      const saved = r && Array.isArray(r.value) ? r.value : null;
+      if(saved && JSON.stringify(saved)!==JSON.stringify(list)){
+        try{ localStorage.setItem('ph_locations', JSON.stringify(saved)); }catch(_){}
+        try{ document.dispatchEvent(new CustomEvent('ph-locations-changed')); }catch(_){}
+      }
+    });
   }
   const officeNames=()=>locations().map(l=>l.n);
 
@@ -2053,17 +2080,24 @@
       by:((who.first||'')+' '+(who.last||'')).trim()||'Someone',
       at:new Date().toISOString()
     };
-    let list=activity();
     // Collapse a burst of edits to the same thing by the same person into one entry.
-    const recent=list[0];
-    if(recent && recent.title===entry.title && recent.by===entry.by &&
-       (Date.now()-new Date(recent.at)) < 5*60*1000){
-      entry.id = recent.id || entry.id;        // same event, so it stays read
-      list[0]=entry;
-    }
-    else list.unshift(entry);
-    list=fresh(list).slice(0,ACT_MAX);
-    if(window.PH_STORE) window.PH_STORE.set(ACT_KEY, list);
+    const add=function(list){
+      list=fresh(Array.isArray(list)?list:[]);
+      const recent=list[0];
+      if(recent && recent.title===entry.title && recent.by===entry.by &&
+         (Date.now()-new Date(recent.at)) < 5*60*1000){
+        entry.id = recent.id || entry.id;      // same event, so it stays read
+        list[0]=entry;
+      }
+      else list.unshift(entry);
+      return fresh(list).slice(0,ACT_MAX);
+    };
+    const list=add(activity());
+    /* Into the shared feed AS IT IS NOW. It used to be this browser's copy plus the new entry, written over the
+       shared one - and that copy was only refreshed on Home, so a save from any other page wiped everybody's
+       newer notifications (future-proofing check, 22/10/2026). */
+    if(window.PH_STORE && window.PH_STORE.update) window.PH_STORE.update(ACT_KEY, function(remote){ return add(Array.isArray(remote) ? remote : activity()); });
+    else if(window.PH_STORE) window.PH_STORE.set(ACT_KEY, list);
     else try{ localStorage.setItem(ACT_KEY,JSON.stringify(list)); }catch(_){}
     return list;
   }
@@ -2311,6 +2345,7 @@
      Resolves true when something changed, so the caller can re-render. */
   function loadPhotos(){
     if(!window.PH_STORE || !window.PH_STORE.getAll || !isLive()) return Promise.resolve(false);
+    const mine=(function(){ try{ return String(email(realMe())||'').toLowerCase(); }catch(_){ return ''; } })();
     return window.PH_STORE.getAll(['ph_me_', FACE_PRE]).then(function(rows){
       const cache=photoCache(); let changed=false;
       const faces=faceCache(); let facesChanged=false;
@@ -2324,8 +2359,10 @@
         const mail=k.slice('ph_me_'.length);
         const v=rows[k];
         if(v && v.photo && cache[mail]!==v.photo){ cache[mail]=v.photo; changed=true; }
-        // Keep each person's own row current on this device too.
-        try{ if(v) localStorage.setItem(k, JSON.stringify(v)); }catch(_){}
+        /* Only the signed-in person's own row is kept on this device (it shows instantly after they upload).
+           Everybody's used to be copied here as well - each photo stored twice, which is what filled browsers
+           up (future-proofing check, 22/10/2026). Their photo is in the cache above. */
+        try{ if(v && mail===mine) localStorage.setItem(k, JSON.stringify(v)); }catch(_){}
       });
       if(changed){ try{ localStorage.setItem(PHOTO_KEY, JSON.stringify(cache)); }catch(_){} }
       if(facesChanged){ try{ localStorage.setItem(FACE_KEY, JSON.stringify(faces)); }catch(_){} }

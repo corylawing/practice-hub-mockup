@@ -258,14 +258,14 @@
   }
 
 </style>
-<script src="user.js?v=hc106"></script>
-<script src="celebrate.js?v=hc106"></script>
+<script src="user.js?v=hc107"></script>
+<script src="celebrate.js?v=hc107"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="workbook.js?v=hc106"></script>
-  <script src="store.js?v=hc106"></script>
-  <script src="prodbook.js?v=hc106"></script>
-  <script src="prodstore.js?v=hc106"></script>
-  <script src="gate.js?v=hc106"></script>
+  <script src="workbook.js?v=hc107"></script>
+  <script src="store.js?v=hc107"></script>
+  <script src="prodbook.js?v=hc107"></script>
+  <script src="prodstore.js?v=hc107"></script>
+  <script src="gate.js?v=hc107"></script>
 </head>
 <body>
 <div class="ribbon">SANDBOX — made-up numbers. The practice’s real workbook is never opened here.</div>
@@ -780,7 +780,7 @@ const OFFICES=[
     return '<div class="card" id="bottomchart"><h2>Starts month by month</h2>'+
       '<div class="sub">Last year beside this year. <b>Dashed</b> = starts goal. \u2605 marks the best month.</div>'+
       chartToggle()+
-      '<div class="legend"><span><i class="sw" style="background:var(--ly)"></i> Last year (2025)</span>'+
+      '<div class="legend"><span><i class="sw" style="background:var(--ly)"></i> Last year ('+(LIVE_YEAR-1)+')</span>'+
         '<span><i class="sw" style="background:var(--good)"></i> '+LIVE_YEAR+' at/above goal</span>'+
         '<span><i class="sw" style="background:var(--bad)"></i> '+LIVE_YEAR+' under goal</span>'+
         '<span><i class="swline"></i> Starts goal</span>'+
@@ -808,7 +808,7 @@ const OFFICES=[
     return '<div class="card" id="bottomchart"><h2>Month by month</h2>'+
       '<div class="sub">Last year beside this year. <b>Dashed</b> = main goal, <b>dotted</b> = stretch. Hover any bar for exact figures. \u2605 = best month.</div>'+
       chartToggle()+
-      '<div class="legend"><span><i class="sw" style="background:var(--ly)"></i> Last year (2025)</span>'+
+      '<div class="legend"><span><i class="sw" style="background:var(--ly)"></i> Last year ('+(LIVE_YEAR-1)+')</span>'+
         '<span><i class="sw" style="background:var(--good)"></i> '+LIVE_YEAR+' at/above goal</span>'+
         '<span><i class="sw" style="background:var(--bad)"></i> '+LIVE_YEAR+' under goal</span>'+
         '<span><i class="swline"></i> Main goal</span><span><i class="swdot"></i> Stretch goal</span></div>'+
@@ -1208,7 +1208,7 @@ const OFFICES=[
 })();
 </script>
 <script>PH.nav('dashboard');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(window.DASH&&DASH.identity)DASH.identity();});document.addEventListener('ph-identity',function(){if(window.DASH&&DASH.identity)DASH.identity();if(window.DASH&&DASH.loadAudit)DASH.loadAudit();});</script>
-<script src="tour.js?v=hc106"></script>
+<script src="tour.js?v=hc107"></script>
 <script>
 Tour.init([
   {sel:'.viewas', title:'You only see your offices', body:'Everyone can see <b>All Offices</b> \u2014 the practice total as one number. What your location decides is which offices you can <b>open individually</b>. Switch to the Carlsbad manager: she keeps the group total, the leaderboard and Carlsbad, but can\u2019t open the other offices on their own.'},
