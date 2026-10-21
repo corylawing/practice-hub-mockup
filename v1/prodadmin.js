@@ -15,6 +15,7 @@
   var live = function(){ return !!(global.PH && global.PH.isLive && global.PH.isLive()); };
   var host = null, IDX = null, LOGS = {}, open = null, busy = '', msg = null, pending = null, MODE = null, sw = null, NEXT = null, nextOpen = {};
   var GY = null, GO = null, GM = null, GEDIT = {}, GPREV = {}, GERR = '', gTimer = null;
+  var FY = null, FT = null, FM = null, FQ = '', FED = null, FMSG = null, fTimer = null, fLoading = false;   // Formulas
 
   var CSS = '.pd{display:flex;flex-direction:column;gap:16px}'+
     '.pd .card{padding:18px}.pd h2{margin:0 0 4px;font-size:17px;color:var(--navy)}.pd .sub{margin:0 0 12px;color:var(--soft);font-size:13.5px;max-width:72ch}'+
@@ -35,6 +36,25 @@
     '.pd .gc.ch input{border-color:var(--teal);background:var(--teal-soft)}.pd .gc.ro{text-align:right}'+
     '.pd .gv{font-size:11.5px;color:var(--soft);text-align:right;margin-top:2px;font-variant-numeric:tabular-nums}.pd .gh{font-size:10.5px;color:#9AA5B5}'+
     '.pd .gall{margin-top:5px;width:120px;padding:4px 7px;border:1px dashed #C9D3DF;border-radius:7px;font:inherit;font-size:12px}';
+  CSS += '.pd .fxbar{align-items:center}.pd .fxbar input[type=search]{flex:1;min-width:180px;padding:7px 10px;border:1px solid var(--line);border-radius:9px;font:inherit;font-size:13.5px}'+
+    '.pd .fxlist{display:flex;flex-direction:column;margin-top:12px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}'+
+    '.pd .fxrow{padding:11px 14px;border-bottom:1px solid var(--line)}.pd .fxrow:last-child{border-bottom:0}.pd .fxrow.open{background:#F7FAFC}'+
+    '.pd .fxname{font-weight:700;color:var(--navy);font-size:14px;margin-bottom:3px}'+
+    '.pd .fxg{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;font-size:13.5px;padding:2px 0}'+
+    '.pd .fxw{min-width:70px;font-weight:700;color:var(--soft);font-size:12px}.pd .fxf{flex:1;min-width:200px;line-height:1.9}'+
+    '.pd .fxn{display:inline-block;padding:0 7px;border-radius:7px;background:#EEF4FA;border:1px solid #cfe0ef;color:#14496c;font-weight:600;font-size:12.5px;line-height:1.7}'+
+    '.pd .fxn .fxt{color:#5d7a93;font-weight:500}.pd .fxn .fxc{display:inline-block;margin-left:4px;padding:0 5px;border-radius:5px;background:#fff;border:1px solid #cfe0ef;font-size:11.5px}'+
+    '.pd .fxed{margin-top:10px;border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:#fff;display:flex;flex-direction:column;gap:8px}'+
+    '.pd .fxlab{font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--soft)}'+
+    '.pd .fxms{display:flex;flex-wrap:wrap;gap:6px;align-items:center}'+
+    '.pd .fxm{border:1px solid #D5DCE5;background:#fff;border-radius:8px;padding:4px 9px;font:inherit;font-size:12.5px;cursor:pointer;color:var(--ink)}.pd .fxm.on{background:var(--teal);border-color:var(--teal);color:#fff;font-weight:700}'+
+    '.pd #fxtext{width:100%;box-sizing:border-box;min-height:60px;padding:9px 11px;border:1.5px solid #C9D3DF;border-radius:10px;font:500 14px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;resize:vertical;color:var(--ink);background:#fff}'+
+    '.pd #fxtext:focus{outline:none;border-color:var(--teal)}'+
+    '.pd .fxtools{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.pd .fxtools input{flex:1;min-width:200px;padding:7px 10px;border:1px solid var(--line);border-radius:9px;font:inherit;font-size:13.5px}'+
+    '.pd .fxops{display:flex;gap:4px}.pd .fxops .btn{min-width:32px}.pd .fxhint{font-size:12px;color:var(--soft)}'+
+    '.pd .fxex{font-size:13.5px;padding:8px 11px;background:#F2F8F7;border-radius:9px}'+
+    '.pd table.fxtb td,.pd table.fxtb th{padding:5px 7px;font-size:12.5px}.pd table.fxtb td.ch{background:var(--teal-soft,#E5F4F3);font-weight:700}.pd table.fxtb td.bad{background:#FCEBE8;color:#93301f;font-weight:700}'+
+    '.pd .fxalso{font-size:13px}.pd .fxexcel{font-size:12px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}.pd .btn[disabled]{opacity:.45;cursor:not-allowed}';
 
   function when(iso){
     if(!iso) return '';
@@ -95,6 +115,7 @@
     if(pending) h += pendingHTML();
     h += '</div>';
     h += goalsHTML();
+    h += fxHTML();
     h += nextHTML();
     if(open) h += '<div class="card"><h2>'+esc(open)+' — history of changes</h2><p class="sub">Newest first: every change, who made it, and where it came from.</p>'+logHTML(open)+'</div>';
     host.innerHTML = h + '</div>';
@@ -150,7 +171,7 @@
     if(!ys.length || !global.PH_WB) return '';
     if(!GY || ys.indexOf(String(GY)) < 0) GY = ys[0];
     var offs = Object.keys(global.PH_WB.TABS); if(!GO) GO = offs[0];
-    var h = '<div class="card"><h2>Goals &amp; formulas</h2><p class="sub">Each office’s goals for a year, in Heather’s own terms. In a month, type a <b>growth number</b> (1.05 = last year + 5%) or a <b>dollar amount</b>; empty a month to go back to its formula. Changing one year never changes another, and the Excel download carries the new formulas.</p>'+
+    var h = '<div class="card"><h2>Goals</h2><p class="sub">Each office’s goals for a year, in Heather’s own terms. In a month, type a <b>growth number</b> (1.05 = last year + 5%) or a <b>dollar amount</b>; empty a month to go back to its formula. Changing one year never changes another, and the Excel download carries the new formulas. Any other calculation: <b>Formulas</b>, below.</p>'+
       '<div class="acts" style="align-items:center">Year <select data-pd="gy">'+ys.map(function(y){ return '<option'+(String(y) === String(GY) ? ' selected' : '')+'>'+esc(y)+'</option>'; }).join('')+'</select>'+
       'Office <select data-pd="go">'+offs.map(function(o){ return '<option'+(o === GO ? ' selected' : '')+'>'+esc(o)+'</option>'; }).join('')+'</select></div>';
     if(MODE && MODE.source !== 'homebrace' && IDX.source && +IDX.source.year === +GY)
@@ -215,6 +236,184 @@
     }, 350);
   }
 
+  /* ---------- formulas: every calculation, in plain words (Cory: "clear and easy ux so she can and
+     others can manage this") ---------- */
+  var nrm = function(v){ return String(v == null ? '' : v).toLowerCase().replace(/\s+/g, ' ').trim(); };
+  function fmtNum(v){
+    if(v === '' || v == null) return '—';
+    if(typeof v !== 'number') return esc(v);
+    return Math.abs(v) >= 100 ? Math.round(v).toLocaleString('en-US') : String(Math.round(v * 100) / 100);
+  }
+  /* A formula with its row names as chips: [Carlsbad (FFO) › Net Production · Jan] */
+  function pretty(named){
+    return esc(named).replace(/\[([^\]]*)\]/g, function(_, inner){
+      var k = inner.indexOf(' › '), tab = k >= 0 ? '<span class="fxt">'+inner.slice(0, k)+' ›</span> ' : '', rest = k >= 0 ? inner.slice(k + 3) : inner;
+      var d = rest.lastIndexOf(' · '), col = d >= 0 ? '<span class="fxc">'+rest.slice(d + 3)+'</span>' : '';
+      return '<span class="fxn">'+tab+(d >= 0 ? rest.slice(0, d) : rest)+col+'</span>';
+    }).replace(/\{([^}]*)\}/g, '<span class="fxn">$1</span>');
+  }
+  function fxRun(cols, row){
+    var heads = {}; ((FM && FM.rows.filter(function(r){ return r.row === row; })[0]) || {boxes:[]}).boxes.forEach(function(b){ heads[b.c] = b.head; });
+    var cs = cols.slice().sort(function(a, b){ return a - b; }), out = [], i = 0;
+    while(i < cs.length){ var j = i; while(j + 1 < cs.length && cs[j + 1] === cs[j] + 1) j++;
+      out.push(j > i ? (heads[cs[i]] || cs[i])+'–'+(heads[cs[j]] || cs[j]) : (heads[cs[i]] || cs[i])); i = j + 1; }
+    return out.join(', ');
+  }
+  function fxPickTexts(){
+    if(!FM) return [];
+    var order = function(p){ return (p.tab === FM.tab ? 0 : 1) * 1000 + FM.tabs.concat([p.tab]).indexOf(p.tab); };
+    return FM.picks.slice().sort(function(a, b){ return order(a) - order(b) || a.row - b.row; })
+      .map(function(p){ return '[' + (p.tab === FM.tab ? '' : p.tab + ' › ') + p.name + (p.one ? ' · ' + p.one : '') + ']'; });
+  }
+  function fxHTML(){
+    var ys = IDX ? Object.keys(IDX.years).sort().reverse() : [];
+    if(!ys.length || !global.PH_FX) return '';
+    if(!FY || ys.indexOf(String(FY)) < 0) FY = ys[0];
+    var h = '<div class="card" id="pdfx"><h2>Formulas</h2><p class="sub">How every number in a year’s book is worked out, in plain words. '+
+      'A row like <span class="fxn">2025 Net Production</span> means that row in the same month; one with a column, like <span class="fxn">2025 Average Case Fee<span class="fxc">Jan</span></span>, is that one box. '+
+      'Change a formula for one year - other years never change - and the Excel download carries it. Every change goes in History, with Undo.</p>';
+    h += '<div class="acts fxbar">Year <select data-pd="fy">'+ys.map(function(y){ return '<option'+(String(y) === String(FY) ? ' selected' : '')+'>'+esc(y)+'</option>'; }).join('')+'</select>';
+    if(FM && FM.tabs.length) h += 'Tab <select data-pd="ft">'+FM.tabs.map(function(x){ return '<option'+(x === FM.tab ? ' selected' : '')+'>'+esc(x)+'</option>'; }).join('')+'</select>';
+    h += '<input type="search" data-pd="fq" placeholder="Find a row…" value="'+esc(FQ)+'" autocomplete="off"></div>';
+    if(MODE && MODE.source !== 'homebrace' && IDX.source && +IDX.source.year === +FY)
+      h += '<div class="stat warn" style="margin-top:10px"><span>⚠️</span><span class="grow">'+esc(FY)+' is still copied from Heather’s Excel, so her next save puts her formulas back. Change formulas here for a year she doesn’t keep in Excel (start it below), or after the switch.</span></div>';
+    if(FMSG) h += '<div class="stat '+FMSG.cls+'" style="margin-top:10px"><span class="grow">'+FMSG.html+'</span>'+
+      (FMSG.at ? '<button class="btn ghost tiny" data-pd="fxundo" data-y="'+esc(FMSG.year)+'" data-at="'+esc(FMSG.at)+'"'+(busy ? ' disabled' : '')+'>Undo</button>' : '')+'</div>';
+    if(!FM || FM.year !== +FY || (FT && FM.tab !== FT)){ if(!fLoading) setTimeout(fLoad, 0); return h + '<div class="muted" style="margin-top:10px">Loading…</div></div>'; }
+    if(FM.err) return h + '<div class="stat warn" style="margin-top:10px"><span>⚠️</span><span class="grow">'+esc(FM.err)+'</span></div></div>';
+    h += '<div class="fxlist">'+fxRowsHTML()+'</div>';
+    h += '<datalist id="fxpicks">'+fxPickTexts().map(function(t){ return '<option value="'+esc(t)+'">'; }).join('')+'</datalist>';
+    return h + '</div>';
+  }
+  function fxRowsHTML(){
+    var q = nrm(FQ), rows = FM.rows.filter(function(r){ return !q || (FED && FED.row === r.row) || nrm(r.name).indexOf(q) >= 0 || r.groups.some(function(g){ return nrm(g.named).indexOf(q) >= 0; }); });
+    if(!rows.length) return '<div class="fxrow muted">No row matches “'+esc(FQ)+'”.</div>';
+    return rows.map(function(r){
+      var open = !!(FED && FED.row === r.row);
+      return '<div class="fxrow'+(open ? ' open' : '')+'"><div class="fxname">'+esc(r.name)+'</div>'+
+        r.groups.map(function(g, gi){
+          var typed = g.boxes.map(function(b){ return fmtNum(b.typed); });
+          var what = g.kind === 'formula' ? pretty(g.named) : g.kind === 'typed' ? '<span class="muted" title="'+esc(typed.join(' · '))+'">'+(typed.length > 3 ? 'typed in each month' : 'typed in: '+typed.join(' · '))+'</span>' : '<span class="muted">empty</span>';
+          return '<div class="fxg"><span class="fxw">'+esc(g.when)+'</span><span class="fxf">'+what+'</span>'+
+            (open ? '' : '<button class="btn ghost tiny" data-pd="fxedit" data-row="'+r.row+'" data-g="'+gi+'">'+(g.kind === 'formula' ? 'Change' : 'Give a formula')+'</button>')+'</div>';
+        }).join('')+(open ? fxEditorHTML(r) : '')+'</div>';
+    }).join('');
+  }
+  function fxEditorHTML(r){
+    var E = FED;
+    return '<div class="fxed">'+
+      '<div class="fxlab">Which months</div><div class="fxms">'+r.boxes.map(function(b){
+        return '<button type="button" class="fxm'+(E.cols.indexOf(b.c) >= 0 ? ' on' : '')+'" data-pd="fxcol" data-c="'+b.c+'" title="'+esc(b.kind === 'formula' ? b.named : b.kind === 'typed' ? 'typed in: ' + b.typed : 'empty')+'">'+esc(b.head)+'</button>'; }).join('')+
+        '<button type="button" class="btn ghost tiny" data-pd="fxcolall">All</button></div>'+
+      '<div class="fxlab">How it’s worked out</div>'+
+      '<textarea id="fxtext" rows="2" spellcheck="false" autocomplete="off" aria-label="How it’s worked out">'+esc(E.text)+'</textarea>'+
+      '<div class="fxtools"><input id="fxpick" list="fxpicks" placeholder="Add a row: type part of its name, pick it" autocomplete="off">'+
+        '<button type="button" class="btn tiny" data-pd="fxins">Add</button><span class="fxops">'+
+        ['+', '-', '×', '÷', '(', ')'].map(function(o){ return '<button type="button" class="btn ghost tiny" data-pd="fxop" data-op="'+o+'" title="Add '+o+'">'+o+'</button>'; }).join('')+'</span></div>'+
+      '<div class="fxhint">[A row] is that row in the same month · [A row · Jan] is one fixed box · numbers like 1.05 or 5%.</div>'+
+      '<div id="fxprev">'+fxPrevHTML()+'</div>'+
+      '<div class="acts"><button class="btn" id="fxsave" data-pd="fxsave"'+(fxCanSave() ? '' : ' disabled')+'>'+fxSaveLabel()+'</button><button class="btn ghost" data-pd="fxcancel">Cancel</button></div>'+
+    '</div>';
+  }
+  function fxCanSave(){ var E = FED; return !!(E && E.prev && E.prev.changes.length && !E.prev.blocked && !E.err && !busy); }
+  function fxSaveLabel(){ return busy === 'fxsave' ? 'Saving…' : FED && FED.cols.length ? 'Save · '+esc(fxRun(FED.cols, FED.row))+' '+esc(FY) : 'Save'; }
+  function fxPrevHTML(){
+    var E = FED; if(!E) return '';
+    if(E.err) return '<div class="stat warn"><span>⚠️</span><span class="grow">'+esc(E.err)+'</span></div>';
+    var p = E.prev;
+    if(!p) return '<div class="muted">'+(E.text.trim() ? 'Working it out…' : 'Type how it’s worked out, or add a row.')+'</div>';
+    if(!p.changes.length) return '<div class="muted">That’s how '+esc(fxRun(E.cols, E.row))+' '+(E.cols.length > 1 ? 'are' : 'is')+' worked out already.</div>';
+    var h = '';
+    if(p.blocked) h += '<div class="stat warn"><span>⚠️</span><span class="grow">That gives <b>'+esc(p.blocked[0].err)+'</b> in '+esc(p.blocked.map(function(b){ return b.head; }).join(', '))+
+      ' - usually a box holding text, or a row of another kind. It can’t be saved like this.</span></div>';
+    if(p.explain) h += '<div class="fxex"><b>'+esc(p.explain.head)+':</b> '+esc(p.explain.text)+' = <b>'+fmtNum(p.explain.value)+'</b></div>';
+    h += '<div class="tw"><table class="fxtb"><thead><tr><th></th>'+p.boxes.map(function(b){ return '<th class="num">'+esc(b.head)+'</th>'; }).join('')+'</tr></thead><tbody>'+
+      '<tr><td class="muted">Now</td>'+p.boxes.map(function(b){ return '<td class="num">'+fmtNum(b.before)+'</td>'; }).join('')+'</tr>'+
+      '<tr><td><b>New</b></td>'+p.boxes.map(function(b){ var moved = !(b.before === b.after || (typeof b.before === 'number' && typeof b.after === 'number' && Math.abs(b.before - b.after) < 1e-9));
+        return '<td class="num'+(b.err && b.err !== '#DIV/0!' ? ' bad' : moved ? ' ch' : '')+'"'+(b.err === '#DIV/0!' ? ' title="Divides by an empty box - fine for months not entered yet"' : '')+'>'+fmtNum(b.after)+'</td>'; }).join('')+'</tr></tbody></table></div>';
+    if(p.also.length) h += '<div class="fxalso">Also changes: '+p.also.slice(0, 8).map(function(a){ return esc((a.tab !== FM.tab ? a.tab + ' › ' : '') + a.name); }).join(', ')+(p.also.length > 8 ? ' and '+(p.also.length - 8)+' more' : '')+'.</div>';
+    if(p.explain) h += '<div class="fxexcel muted">In Excel ('+esc(p.explain.head)+'): '+esc(p.explain.excel)+'</div>';
+    return h;
+  }
+  /* While she types: only the preview, the month buttons and Save change - never the box she is in. */
+  function fGrow(){ var ta = host && host.querySelector('#fxtext'); if(ta){ ta.style.height = 'auto'; ta.style.height = (ta.scrollHeight + 4) + 'px'; } }
+  function fPaint(){
+    if(!host) return;
+    fGrow();
+    var box = host.querySelector('#fxprev'); if(box) box.innerHTML = fxPrevHTML();
+    var s = host.querySelector('#fxsave'); if(s){ s.disabled = !fxCanSave(); s.innerHTML = fxSaveLabel(); }
+    if(FED) host.querySelectorAll('.fxm').forEach(function(m){ m.classList.toggle('on', FED.cols.indexOf(+m.dataset.c) >= 0); });
+  }
+  function fLoad(){
+    if(fLoading) return; fLoading = true;
+    P().formulaModel(+FY, FT).then(function(m){ fLoading = false; FM = m; FT = m.tab; render(); },
+      function(e){ fLoading = false; FM = {year:+FY, tab:FT, tabs:[], rows:[], picks:[], err:'Could not read '+FY+': '+((e && e.message) || e)}; render(); });
+  }
+  function fPreview(){
+    clearTimeout(fTimer);
+    fTimer = setTimeout(function(){
+      var E = FED; if(!E) return;
+      if(!E.text.trim()){ E.prev = null; E.err = ''; fPaint(); return; }
+      if(!E.cols.length){ E.prev = null; E.err = 'Pick at least one month.'; fPaint(); return; }
+      var snap = E.text + '|' + E.cols.join(',');
+      P().formulaChange(+FY, FT, E.row, E.cols, E.text, {preview:true}).then(function(p){ if(FED !== E || snap !== E.text + '|' + E.cols.join(',')) return; E.prev = p; E.err = ''; fPaint(); },
+        function(e){ if(FED !== E) return; E.prev = null; E.err = (e && e.message) || String(e); fPaint(); });
+    }, 300);
+  }
+  function fxOpen(row, gi){
+    var r = FM && FM.rows.filter(function(x){ return x.row === row; })[0]; if(!r) return;
+    var g = r.groups[gi] || r.groups[0], first = r.groups.filter(function(x){ return x.kind === 'formula'; })[0];
+    FED = {row:row, cols:g.cols.slice(), text:g.kind === 'formula' ? g.named : (first ? first.named : ''), prev:null, err:''};
+    FMSG = null; render(); fGrow();
+    var ta = host.querySelector('#fxtext'); if(ta){ ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
+    fPreview();
+  }
+  function fxInsert(text){
+    var ta = host.querySelector('#fxtext'); if(!ta || !FED) return;
+    var a = ta.selectionStart != null ? ta.selectionStart : ta.value.length, b = ta.selectionEnd != null ? ta.selectionEnd : a;
+    var before = ta.value.slice(0, a), pad = before && !/\s$/.test(before) && !/^\s/.test(text) ? ' ' : '';
+    ta.value = before + pad + text + ta.value.slice(b); var at = a + pad.length + text.length;
+    ta.focus(); ta.setSelectionRange(at, at);
+    FED.text = ta.value; FED.prev = null; FED.err = ''; fPaint(); fPreview();
+  }
+  function fxInsertPick(){
+    var inp = host.querySelector('#fxpick'); if(!inp || !FED) return;
+    var v = inp.value.trim(); if(!v) return;
+    var all = fxPickTexts(), hit = all.indexOf(v) >= 0 ? v : all.filter(function(o){ return nrm(o).indexOf(nrm(v)) >= 0; })[0];
+    if(!hit){ FED.err = 'No row matches “'+v+'” - type part of its name and pick it from the list.'; fPaint(); return; }
+    inp.value = ''; fxInsert(hit);
+  }
+  function fxSave(){
+    var E = FED; if(!E || !fxCanSave()) return;
+    busy = 'fxsave'; fPaint();
+    P().formulaChange(+FY, FT, E.row, E.cols, E.text).then(function(r){
+      var name = (FM.rows.filter(function(x){ return x.row === E.row; })[0] || {}).name || '';
+      busy = ''; FED = null; LOGS = {};
+      FMSG = {cls:'ok', html:'✓ Saved: <b>'+esc(name)+'</b> · '+esc(fxRun(E.cols, E.row))+' '+esc(FY)+'.'+(r.next && r.next.changes ? ' '+esc(r.next.year)+'’s “last year” followed.' : ''), at:r.at, year:FY};
+      FM = null; fLoad();
+    }, function(e){ busy = ''; E.err = (e && e.message) || String(e); fPaint(); });
+  }
+  function fxUndo(y, at){
+    busy = 'fxundo'; render();
+    P().formulaUndo(+y, at).then(function(){
+      busy = ''; FED = null; FMSG = {cls:'ok', html:'↩ Undone - back to how it was (it’s in History).'}; LOGS = {};
+      if(open) P().log(open).then(function(l){ LOGS[open] = l; render(); });
+      if(String(y) === String(FY)){ FM = null; fLoad(); } else render();
+    }, function(e){ busy = ''; FMSG = {cls:'warn', html:'⚠️ '+esc((e && e.message) || e)}; render(); });
+  }
+  /* History: one line per row and run of months - "Feb–Dec: [last year] × 1.04 → × 1.06" */
+  function fxSide(n, v){ return n ? pretty(n) : typeof v === 'number' ? 'typed '+fmtVal(v) : v == null ? 'empty' : esc(v); }
+  function fxLines(chs){
+    var out = [], last = null;
+    chs.forEach(function(c){
+      var k = c.label + '|' + (c.fromN || c.from) + '|' + (c.toN || c.to);
+      if(last && last.k === k){ last.heads.push(c.head); return; }
+      last = {k:k, c:c, heads:[c.head]}; out.push(last);
+    });
+    return out.map(function(g){ var hd = g.heads.length > 1 ? g.heads[0]+'–'+g.heads[g.heads.length - 1] : g.heads[0];
+      return '<b>'+esc(g.c.label)+'</b> · '+esc(hd)+': '+fxSide(g.c.fromN, g.c.from)+' → '+fxSide(g.c.toN, g.c.to); });
+  }
+
   /* ---------- step 4: start next year ---------- */
   var ACT = {copied:'Copied in', kept:'Kept', empty:'Starts empty', format:'Look fixed'};
   function nextHTML(){
@@ -223,7 +422,7 @@
     var to = last + 1, have = IDX.years[to], h = '<div class="card"><h2>Start '+to+'</h2>';
     if(IDX.years[last] && IDX.years[last].started && ys.length > 1){
       var st = IDX.years[last].started;
-      h += '<p class="sub">'+esc(last)+' was started from '+esc(st.from)+' on '+when(st.at)+(st.by ? ' by '+esc(st.by) : '')+'. Set its goals and production days in <b>Goals &amp; formulas</b> above (choose '+esc(last)+').</p>';
+      h += '<p class="sub">'+esc(last)+' was started from '+esc(st.from)+' on '+when(st.at)+(st.by ? ' by '+esc(st.by) : '')+'. Set its goals and production days in <b>Goals</b> above (choose '+esc(last)+'), and any other calculation in <b>Formulas</b>.</p>';
     }
     h += '<p class="sub">Home-Brace sets up '+to+' from '+last+' the way Heather does each January: the year names move on one, '+last+'’s numbers become “last year”, '+to+'’s goals start as '+last+'’s actuals × her growth numbers, and everything typed each month starts empty. You see every row before anything is saved. It can be started before '+last+' is over: numbers entered later for '+last+' (December, typed in January) are carried into '+to+'’s “last year” by themselves.</p>';
     if(!NEXT){
@@ -264,13 +463,15 @@
     var L = LOGS[y];
     if(!L) return '<div class="muted">Loading…</div>';
     if(!L.length) return '<div class="muted">Nothing changed yet.</div>';
+    var undone = {}; L.forEach(function(e){ if(e.from && e.from.undo) undone[e.from.undo] = 1; });
     return '<div class="lg">'+L.map(function(e){
       // Say where each change came from - not every entry is a copy of her Excel.
       var f = e.from || {}, who = f.by || f.copiedBy, by = who ? ' by '+esc(who) : '';
       var head = '<div class="when">'+when(e.at)+'</div><div class="muted">'+
         (f.how === 'upload' ? 'Uploaded'+(f.copiedBy ? ' by '+esc(f.copiedBy) : '')+(f.name ? ' — '+esc(f.name) : '')
         : f.how === 'enter' ? 'Entered in Enter Production'+by+(f.office ? ' — '+esc(f.office) : '')
-        : f.how === 'goals' ? 'Goals & formulas'+by+(f.office ? ' — '+esc(f.office) : '')
+        : f.how === 'goals' ? 'Goals'+by+(f.office ? ' — '+esc(f.office) : '')
+        : f.how === 'formulas' ? (f.undo ? 'A formula change undone' : 'Formulas changed')+by+(f.tab ? ' — '+esc(f.tab) : '')
         : f.how === 'start' ? 'Started from '+esc(f.fromYear)+by
         : f.how === 'lastyear' ? esc(f.fromYear)+' numbers saved later, carried into “last year”'+by
         : 'Copied from Heather’s Excel'+(f.modified ? ' (her save of '+when(f.modified)+(f.by ? ' by '+esc(f.by) : '')+')' : ''))+'</div>';
@@ -279,7 +480,10 @@
       if(e.layout === 'new') body.push('<li>Layout and formulas saved.</li>');
       else if(e.layout) body.push('<li>Layout or formulas changed: '+e.layout.map(esc).join(', ')+'.</li>');
       if(e.kept) body.push('<li>'+e.kept.moved.toLocaleString('en-US')+' numbers moved into the new layout'+(e.kept.lost.length ? '; <b>'+e.kept.lost.length+' had no place in it</b>: '+e.kept.lost.slice(0,6).map(function(x){ return place(x)+' ('+fmtVal(x.value)+')'; }).join('; ') : '')+'.</li>');
-      (e.changes||[]).slice(0, 40).forEach(function(c){ body.push('<li>'+place(c)+': '+fmtVal(c.from)+' → <b>'+fmtVal(c.to)+'</b></li>'); });
+      if(f.how === 'formulas') fxLines(e.changes || []).forEach(function(l){ body.push('<li>'+l+'</li>'); });
+      else (e.changes||[]).slice(0, 40).forEach(function(c){ body.push('<li>'+place(c)+': '+fmtVal(c.from)+' → <b>'+fmtVal(c.to)+'</b></li>'); });
+      if(f.how === 'formulas' && !f.undo) body.push('<li style="list-style:none;margin-left:-18px">'+(undone[e.at] ? '<span class="muted">Undone.</span>'
+        : '<button class="btn ghost tiny" data-pd="fxundo" data-y="'+esc(y)+'" data-at="'+esc(e.at)+'"'+(busy ? ' disabled' : '')+'>Undo this change</button>')+'</li>');
       var more = Math.max(0, (e.changes||[]).length - 40) + (e.more||0);
       if(more) body.push('<li class="muted">…and '+more+' more.</li>');
       if(e.check && e.check.differ) body.push('<li>⚠️ '+e.check.differ+' formulas came out differently from her Excel.</li>');
@@ -346,6 +550,14 @@
       busy = 'mirror'; render();
       P().setMode({mirror:!(MODE && MODE.mirror)}).then(function(){ busy = ''; return refresh(); }, function(err){ busy = ''; say('warn','⚠️',esc(err.message||err)); render(); });
     }
+    if(act === 'fxedit'){ fxOpen(+b.dataset.row, +b.dataset.g); return; }
+    if(act === 'fxcol' && FED){ var fc = +b.dataset.c, fi = FED.cols.indexOf(fc); if(fi >= 0) FED.cols.splice(fi, 1); else FED.cols.push(fc); FED.prev = null; fPaint(); fPreview(); return; }
+    if(act === 'fxcolall' && FED){ var fr = FM.rows.filter(function(x){ return x.row === FED.row; })[0]; FED.cols = fr ? fr.boxes.map(function(x){ return x.c; }) : FED.cols; FED.prev = null; fPaint(); fPreview(); return; }
+    if(act === 'fxins'){ fxInsertPick(); return; }
+    if(act === 'fxop'){ fxInsert(b.dataset.op === '(' || b.dataset.op === ')' ? b.dataset.op : ' ' + b.dataset.op + ' '); return; }
+    if(act === 'fxcancel'){ FED = null; render(); return; }
+    if(act === 'fxsave'){ fxSave(); return; }
+    if(act === 'fxundo'){ fxUndo(b.dataset.y, b.dataset.at); return; }
     if(act === 'nextprev'){
       busy = 'next'; render();
       P().previewNextYear().then(function(pv){ busy = ''; NEXT = pv; nextOpen = {}; render(); }, function(err){ busy = ''; say('warn','⚠️','Could not work out next year: '+esc(err.message||err)); render(); });
@@ -381,6 +593,9 @@
   function onToggle(e){ var d = e.target; if(d && d.dataset && d.dataset.pdtab) nextOpen[d.dataset.pdtab] = d.open; }
   function onInput(e){
     var t = e.target; if(!t.dataset || !host.contains(t)) return;
+    if(t.id === 'fxtext' && FED){ FED.text = t.value; FED.prev = null; FED.err = ''; fPaint(); fPreview(); return; }
+    if(t.id === 'fxpick' && FED && fxPickTexts().indexOf(t.value) >= 0){ var pk = t.value; t.value = ''; fxInsert(pk); return; }   // picked from the list
+    if(t.dataset.pd === 'fq'){ FQ = t.value; var fl = host.querySelector('.fxlist'); if(fl && FM && !FED) fl.innerHTML = fxRowsHTML(); return; }
     if(t.dataset.gcell){ GEDIT[t.dataset.gcell] = {text:t.value, change:gChange(t.dataset.grow, t.dataset.gcell, t.value)}; t.parentNode.classList.add('ch'); gPreview(); }
   }
   function onChange(e){
@@ -391,6 +606,8 @@
       render(); gPreview(); return;
     }
     if(t.dataset && t.dataset.pd === 'gy'){ GY = t.value; gLoad(); return; }
+    if(t.dataset && t.dataset.pd === 'fy'){ FY = t.value; FED = null; FMSG = null; FM = null; render(); return; }
+    if(t.dataset && t.dataset.pd === 'ft'){ FT = t.value; FED = null; FMSG = null; FM = null; render(); return; }
     if(t.dataset && t.dataset.pd === 'go'){ GO = t.value; gLoad(); return; }
     if(!t.dataset || !t.dataset.pd || !host.contains(t)) return;
     if(t.dataset.pd === 'file'){
@@ -417,7 +634,8 @@
   }
   function mount(el){
     if(!host){ var st = document.createElement('style'); st.textContent = CSS; document.head.appendChild(st); }
-    if(host !== el){ host = el; host.addEventListener('click', onClick); host.addEventListener('change', onChange); host.addEventListener('input', onInput); host.addEventListener('toggle', onToggle, true); }
+    if(host !== el){ host = el; host.addEventListener('click', onClick); host.addEventListener('change', onChange); host.addEventListener('input', onInput); host.addEventListener('toggle', onToggle, true);
+      host.addEventListener('keydown', function(e){ if(e.key === 'Enter' && e.target && e.target.id === 'fxpick'){ e.preventDefault(); fxInsertPick(); } }); }
     render(); refresh();
   }
   global.PH_PRODUI = {mount:mount};

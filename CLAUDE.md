@@ -346,6 +346,29 @@ Cory asked "will they be able to enter objectives and change calculations?": goa
 amount or back to formula; stretch; days) and Enter Production's goal boxes; any OTHER formula only via Download Excel
 -> change it -> Upload a changed layout for that year. Offered: a formula editor in Home-Brace for any row.
 
+**Formulas screen: every calculation, in plain words (21/10/2026, hc101).** Cory: "Yes, build the formula screen
+remember clear and easy ux so she can and others can manage this". Admin -> Production data -> Formulas (the goals card
+is now just "Goals"). `v1/prodfx.js` (PH_FX) names every formula by her own row names and column headings:
+[2025 Net Production] × 1.04 = that row, same month; [2025 Average Case Fee · Jan] = one fixed box ($B$29);
+SUM([this row · Jan–Dec]); [Carlsbad (FFO) › Row] = another tab; "Row (row 41)" when a name is used twice; [row 22]
+when unnamed; {B10:M11} = Excel as-is (the one block range she has). "Same month" only where the formula sits under a
+month/Total heading and so does the box (the Dashboard's year tables say "[this row · 2026] - [this row · 2025]");
+year headings come from the year's numbers (they're typed, so in data, not the layout). fromNamed turns it back per
+column (same month = relative, a column = absolute); accepts × * x ÷ / %, a leading =, short office names, any case;
+friendly errors (no such row/tab/column, bare word, unclosed [, a box using itself). VERIFIED on her -7 file
+(scratchpad fxround.js, local only): all 1,881 formulas named and back - 0 errors, 0 results differ, stable.
+prodstore: formulaModel(year, tab) (rows with formulas, months grouped, "Add a row" picks: a row her formulas use
+as one box - the fee - goes in as that box), formulaChange(year, tab, row, cols, text, {preview}) (per box before/
+after, one month worked through "91,000 × 1.06 = 96,460", what else moves across the book, the Excel; refuses
+circles, #VALUE!/#NAME?/#REF! - #DIV/0! allowed, empty months; boxes holding text; admins only), saves that year's
+layout only (+ data only where a typed number is replaced/restored), History 'formulas' entries in plain words with
+Undo (formulaUndo: refused if those boxes changed since; hidden once undone); followOn so next year's copies follow.
+Black-out boxes getting a formula take the row's normal look. Screen: Year / Tab / Find a row; each row's months
+grouped ("Feb–Dec [..] × 1.04", "Jan typed in", "empty") with Change / Give a formula; editor = month buttons, the
+formula box (grows), Add a row (type part of a name, pick; Enter works), + - × ÷ ( ), live preview, Save · Feb–Dec 2026.
+Tests: test/prodfx.test.js (39); the made-up workbook moved to test/madeup-workbook.js (shared; {yoy} adds the year
+table). Browser-checked on the sandbox incl. phone width.
+
 **TCs see every office in "By office" (19/10, hc85).** Selene: "we do want the Treatment Coordinators to be able to see
 one another's results. Please make sure they can all view the 'By Office' box so they can see conversion rates across
 locations." viewNumbers(): for a TC (`iAmTC() && !canManage()`) the box lists `allOffices()` from EVERY (rates and

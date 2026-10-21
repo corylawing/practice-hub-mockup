@@ -498,6 +498,134 @@
     });
   }
 
+  /* ------------------------------------------------------------------ FORMULAS: EVERY CALCULATION, IN HOME-BRACE
+     Cory, 21/10/2026: "build the formula screen remember clear and easy ux so she can and others can
+     manage this". Any row's formula, for the months chosen, in plain words (prodfx.js) - shown first
+     with what it gives and what else moves, then saved into that YEAR's layout only. Every change is
+     in the year's History with what it was, and can be undone from there. Admins only. */
+  function fxCtx(year){
+    return Promise.all([templateBook(year), S().get(DATA + year)]).then(function(r){
+      var rec = r[1] || {year:year, data:{}};
+      return {tpl:r[0], rec:rec, data:rec.data || {}};
+    });
+  }
+  function fxTabs(tpl){ return tpl.names.filter(function(s){ var cs = tpl.sheets[s].cells; return Object.keys(cs).some(function(a){ return cs[a].f != null; }); }); }
+  function formulaModel(year, tab){
+    var FX = global.PH_FX; if(!FX) return Promise.reject(fail('The formula reader is missing.'));
+    return fxCtx(year).then(function(x){
+      var ctx = {tpl:x.tpl, data:x.data}, ev = B().evaluate(B().withData(x.tpl, x.data)), tabs = fxTabs(x.tpl);
+      if(!tab || tabs.indexOf(tab) < 0) tab = tabs[0];
+      return {year:+year, tab:tab, tabs:tabs, rows:tab ? FX.rowsOf(ctx, ev, tab) : [], picks:FX.picks(ctx)};
+    });
+  }
+  /* Black-out fill on a box getting a formula: take the look of the row's nearest box that isn't. */
+  function litStyle(tpl, cs, row, c){
+    var black = B().blackStyles(tpl), cur = cs[B().colName(c) + row], s = cur ? cur.s : null;
+    if(s == null || !black[s]) return s;
+    for(var k = 1; k < 14; k++){ var L = cs[B().colName(c - k) + row], R = cs[B().colName(c + k) + row];
+      if(c - k >= 2 && L && L.s != null && !black[L.s]) return L.s; if(R && R.s != null && !black[R.s]) return R.s; }
+    return s;
+  }
+  /* edits: [{cell, f (Excel, or null = no formula), typed (number to put back, undo only)}] ->
+     preview (what each box gives, what else moves) or saved. */
+  function fxApply(year, x, tab, edits, opts, from){
+    var FX = global.PH_FX, tpl = x.tpl, cs = tpl.sheets[tab].cells, nt = Object.assign({}, cs);
+    var data = JSON.parse(JSON.stringify(x.data)), d = data[tab] = data[tab] || {}, changes = [];
+    var ctx0 = {tpl:tpl, data:x.data};
+    edits.forEach(function(e){
+      var cur = cs[e.cell], was = cur && cur.f != null ? '=' + cur.f : (x.data[tab] && x.data[tab][e.cell] != null ? x.data[tab][e.cell] : null);
+      var to = e.f != null ? '=' + e.f : (e.typed != null ? e.typed : null);
+      if(was === to) return;
+      var p = /^([A-Z]+)(\d+)$/.exec(e.cell), row = +p[2], c = B().colNum(p[1]);
+      if(e.f != null){ nt[e.cell] = Object.assign({}, cur || {t:'n'}, {f:e.f, v:'', s:litStyle(tpl, cs, row, c)}); delete d[e.cell]; }
+      else { nt[e.cell] = Object.assign({}, cur || {t:'n'}, {f:null, v:''}); if(e.typed != null) d[e.cell] = e.typed; else delete d[e.cell]; }
+      changes.push({tab:tab, cell:e.cell, row:row, label:FX.rowName(tpl, tab, row), head:FX.colName(ctx0, tab, c, row), from:was, to:to,
+                    fromN:typeof was === 'string' ? safeNamed(ctx0, tab, e.cell, was.slice(1)) : null, typedFrom:typeof was === 'number' ? was : null});
+    });
+    var t2 = {names:tpl.names, sheets:Object.assign({}, tpl.sheets), files:tpl.files, sst:tpl.sst};
+    t2.sheets[tab] = {path:tpl.sheets[tab].path, cells:nt};
+    var ctx1 = {tpl:t2, data:data};
+    changes.forEach(function(ch){ if(typeof ch.to === 'string') ch.toN = safeNamed(ctx1, tab, ch.cell, ch.to.slice(1)); });
+    changes.forEach(function(ch){ if(typeof ch.to === 'string' && FX.loops(t2, tab, ch.cell))
+      throw fail('That would work “' + ch.label + '” out from its own result (it goes round in a circle). Use a different row.'); });
+    var ev0 = B().evaluate(B().withData(tpl, x.data)), ev1 = B().evaluate(B().withData(t2, data));
+    var same = function(a, b){ return a === b || (typeof a === 'number' && typeof b === 'number' && Math.abs(a - b) <= 1e-9 * Math.max(1, Math.abs(a))); };
+    var boxes = changes.map(function(ch){ var v0 = ev0.value(tab, ch.cell), v1 = ev1.value(tab, ch.cell);
+      return {cell:ch.cell, head:ch.head, before:v0, after:v1, err:B().isErr(v1) && !B().isErr(v0) ? v1 : (B().isErr(v1) ? v1 : '')}; });
+    var mine = {}; changes.forEach(function(ch){ mine[tab + '!' + ch.cell] = 1; });
+    var also = {}, ctxA = {tpl:t2, data:data};
+    Object.keys(ev1.all).forEach(function(k){
+      if(mine[k] || same(ev0.all[k], ev1.all[k])) return;
+      var i = k.lastIndexOf('!'), T = k.slice(0, i), r = +/\d+$/.exec(k.slice(i + 1))[0], key = T + '|' + r;
+      (also[key] = also[key] || {tab:T, row:r, name:FX.rowName(t2, T, r), n:0}).n++;
+    });
+    also = Object.keys(also).map(function(k){ return also[k]; });
+    var bad = boxes.filter(function(b){ return b.err && b.err !== '#DIV/0!'; });
+    var sample = boxes.filter(function(b){ return !b.err; })[0] || boxes[0];
+    var show = sample ? changes.filter(function(ch){ return ch.cell === sample.cell; })[0] : null;
+    var out = {year:+year, tab:tab, changes:changes, boxes:boxes, also:also,
+               explain:show && typeof show.to === 'string' ? {head:sample.head, text:FX.explain(ctxA, ev1, tab, show.cell, show.to.slice(1)), value:sample.after, excel:show.to} : null};
+    if(opts.preview) return Promise.resolve(Object.assign(out, {preview:true, blocked:bad.length ? bad : null}));
+    if(!changes.length) return Promise.resolve(Object.assign(out, {saved:false}));
+    if(bad.length) return Promise.reject(fail('That gives ' + bad[0].err + ' in ' + bad.map(function(b){ return b.head; }).join(', ') + ' - check the rows it uses. Nothing was saved.'));
+    var at = nowISO(), touchData = changes.some(function(ch){ return typeof ch.from === 'number' || typeof ch.to === 'number'; });
+    return B().exportXlsxSmall(B().blank(t2), {}, null).then(function(bytes){ return putTemplate(year, bytes); }).then(function(sv){
+      delete tplCache[year];
+      return fingerprint(t2).then(function(fp){
+        var jobs = [
+          S().update(LOG + year, function(list){ return [{at:at, from:Object.assign({by:me(), copiedBy:me(), tab:tab}, from), changes:changes}].concat(Array.isArray(list) ? list : []).slice(0, LOG_KEEP); }),
+          S().update(INDEX, function(cur){ cur = (cur && cur.years) ? cur : {years:{}}; var y = cur.years[year] = cur.years[year] || {};
+            y.layout = fp; y.formulas = t2.names.reduce(function(n, s){ return n + Object.keys(t2.sheets[s].cells).filter(function(a){ return t2.sheets[s].cells[a].f != null; }).length; }, 0);
+            y.template = {name:sv.name, webUrl:sv.webUrl || '', savedAt:at}; return cur; })
+        ];
+        // only the boxes that held (or get back) a typed number - nobody else's numbers are touched
+        if(touchData) jobs.push(S().update(DATA + year, function(rec){
+          rec = (rec && rec.data) ? rec : {year:+year, data:{}}; var dd = rec.data[tab] = rec.data[tab] || {};
+          changes.forEach(function(ch){ if(typeof ch.to === 'number') dd[ch.cell] = ch.to; else delete dd[ch.cell]; });
+          rec.updatedAt = at; rec.updatedBy = me(); return rec; }));
+        return Promise.all(jobs);
+      });
+    }).then(function(res){
+      var b2 = res.filter(function(r){ return r && (r.blocked || r.error); });
+      if(b2.length) throw fail('Home-Brace could not save (' + (b2[0].why || b2[0].error) + ').');
+      return followOn(+year).then(function(next){ return Object.assign(out, {saved:true, at:at, next:next}); });
+    });
+  }
+  function safeNamed(ctx, tab, a, f){ try{ return global.PH_FX.toNamed(ctx, tab, a, f); }catch(_){ return '{=' + f + '}'; } }
+  /* One row's formula, in plain words, for the boxes (columns) chosen. */
+  function formulaChange(year, tab, row, colsList, text, opts){
+    opts = opts || {};
+    var FX = global.PH_FX; if(!FX) return Promise.reject(fail('The formula reader is missing.'));
+    if(!opts.preview && live() && !admin()) return Promise.reject(fail('Only admins can change formulas.'));
+    return fxCtx(year).then(function(x){
+      if(!x.tpl.sheets[tab]) throw fail('There’s no tab called ' + tab + ' in ' + year + '.');
+      if(!colsList || !colsList.length) throw fail('Pick at least one month.');
+      var ctx = {tpl:x.tpl, data:x.data}, cs = x.tpl.sheets[tab].cells;
+      var edits = colsList.map(function(c){
+        var a = B().colName(+c) + row, cur = cs[a];
+        if(cur && cur.f == null && typeof cur.v === 'string' && cur.v.trim()) throw fail('That box holds text in her sheet, not a number.');
+        return {cell:a, f:FX.fromNamed(ctx, tab, a, text)};
+      });
+      return fxApply(year, x, tab, edits, opts, {how:'formulas'});
+    });
+  }
+  /* Back to what a change replaced - if nothing has changed those boxes since. */
+  function formulaUndo(year, at){
+    if(live() && !admin()) return Promise.reject(fail('Only admins can change formulas.'));
+    return Promise.all([fxCtx(year), log(year)]).then(function(r){
+      var x = r[0], e = r[1].filter(function(z){ return z.at === at && z.from && z.from.how === 'formulas'; })[0];
+      if(!e) throw fail('That change isn’t in the history any more.');
+      var tab = e.from.tab || (e.changes[0] && e.changes[0].tab), cs = x.tpl.sheets[tab] ? x.tpl.sheets[tab].cells : null;
+      if(!cs) throw fail('There’s no tab called ' + tab + ' in ' + year + ' any more.');
+      var edits = e.changes.map(function(ch){
+        var cur = cs[ch.cell], now = cur && cur.f != null ? '=' + cur.f : (x.data[tab] && x.data[tab][ch.cell] != null ? x.data[tab][ch.cell] : null);
+        if(now !== ch.to) throw fail('“' + ch.label + '” ' + ch.head + ' was changed again after that - undo the later change first.');
+        return typeof ch.from === 'string' && ch.from.charAt(0) === '=' ? {cell:ch.cell, f:ch.from.slice(1)} : {cell:ch.cell, f:null, typed:typeof ch.from === 'number' ? ch.from : null};
+      });
+      return fxApply(year, x, tab, edits, {}, {how:'formulas', undo:at});
+    });
+  }
+
   /* ------------------------------------------------------------------ STEP 4: START NEXT YEAR
      The new year's book from this year's, done the way Heather does it each January - but shown
      row by row before anything is saved:
@@ -833,6 +961,6 @@
     index:index, log:log, check:check, diff:diff, fingerprint:fingerprint, remap:remap,
     mode:mode, setMode:setMode, liveYear:liveYear, compareFromBytes:compareFromBytes, dashboardData:dashboardData,
     cellFor:cellFor, setValues:setValues, previewNextYear:previewNextYear, createNextYear:createNextYear, refreshNextYear:refreshNextYear,
-    goalModel:goalModel, saveGoals:saveGoals,
+    goalModel:goalModel, saveGoals:saveGoals, formulaModel:formulaModel, formulaChange:formulaChange, formulaUndo:formulaUndo,
     reset:function(){ driveP = null; syncing = null; tplCache = {}; }};
 })(typeof window !== 'undefined' ? window : globalThis);
