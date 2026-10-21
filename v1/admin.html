@@ -215,6 +215,13 @@
   .sens-opt{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--line);border-radius:10px;cursor:pointer;font-size:14px}
   .sens-opt input{margin-top:3px;width:auto}
   .sens-opt.on{border-color:var(--teal);background:var(--teal-soft)}
+  .sens-list{max-height:260px;overflow-y:auto;border:1px solid var(--line);border-radius:10px;background:#fff}
+  .sens-pick{display:flex;gap:10px;align-items:flex-start;padding:9px 12px;border-bottom:1px solid var(--line);cursor:pointer;font-size:14px}
+  .sens-pick:last-child{border-bottom:none}
+  .sens-pick:hover{background:#F7F9FB}
+  .sens-pick.on{background:var(--teal-soft)}
+  .sens-f .sens-pick input{width:auto;margin-top:3px;accent-color:var(--teal)}
+  ul.sens-who{margin:6px 0 0;padding-left:20px;max-height:180px;overflow-y:auto}
   .setupbox{background:var(--teal-soft,#E5F4F3);border:1px solid #bfe3df;border-radius:14px;padding:16px 18px;margin-bottom:18px}
   .setupbox h4{margin:0 0 6px;color:var(--navy);font-size:15.5px}
   .setupbox p{margin:0 0 12px;font-size:13.5px;line-height:1.55;color:var(--ink)}
@@ -265,15 +272,15 @@
   }
 
 </style>
-<script src="user.js?v=hc97"></script>
+<script src="user.js?v=hc98"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="_staff.js?v=hc97"></script>
-  <script src="store.js?v=hc97"></script>
-  <script src="gate.js?v=hc97"></script>
-  <script src="docs.js?v=hc97"></script>
-  <script src="prodbook.js?v=hc97"></script>
-  <script src="prodstore.js?v=hc97"></script>
-  <script src="prodadmin.js?v=hc97"></script>
+  <script src="_staff.js?v=hc98"></script>
+  <script src="store.js?v=hc98"></script>
+  <script src="gate.js?v=hc98"></script>
+  <script src="docs.js?v=hc98"></script>
+  <script src="prodbook.js?v=hc98"></script>
+  <script src="prodstore.js?v=hc98"></script>
+  <script src="prodadmin.js?v=hc98"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — admin console concept for validation. Real build: people sync from Microsoft 365; access is managed here.</div>
@@ -1716,7 +1723,8 @@
       const next=(cur && typeof cur==='object' && !Array.isArray(cur)) ? JSON.parse(JSON.stringify(cur)) : {};
       next.teams=next.teams||{}; next.people=next.people||{}; next.log=Array.isArray(next.log)?next.log:[];
       mutate(next);
-      if(logEntry) next.log.unshift(Object.assign({at:new Date().toISOString(), by:by}, logEntry));
+      const at=new Date().toISOString();
+      [].concat(logEntry||[]).slice().reverse().forEach(e=>next.log.unshift(Object.assign({at:at, by:by}, e)));
       next.log=next.log.slice(0,200);
       return next;
     };
@@ -1762,17 +1770,46 @@
   function sensPeople(){ const have=Object.keys((SENSREC||{}).people||{});
     return ((window.PH && PH.rosterView) ? PH.rosterView() : []).filter(p=>p && p.email && have.indexOf(String(p.email).toLowerCase())<0)
       .map(p=>({name:p.name, email:String(p.email).trim().toLowerCase()})).sort((a,b)=>String(a.name).localeCompare(String(b.name))); }
+  /* Adding: search and tick, as many as needed (Cory, 21/10: "it should be a search and check
+     especially if they want to add multiple"). One ticked = type their name to confirm, as
+     before; several = type "add 3 people". Each one gets its own line in the history. */
   function sensAdd(kind){
     const list=kind==='team' ? sensTeams() : sensPeople();
-    SDLG={mode:'add', kind, step:1, level:'view', list, pick:list.length?0:-1, err:''}; drawSens();
+    SDLG={mode:'add', kind, step:1, level:'view', list, sel:{}, q:'', err:''}; drawSens();
   }
+  const sensItem=(d,it)=>d.kind==='team' ? {key:it, name:it, sub:''} : {key:it.email, name:it.name, sub:it.email};
+  function sensMatches(d){
+    const words=String(d.q||'').toLowerCase().split(/\s+/).filter(Boolean);
+    return d.list.map((it,i)=>({it,i})).filter(x=>{ const t=sensItem(d,x.it), hay=(t.name+' '+t.sub).toLowerCase(); return words.every(w=>hay.indexOf(w)>=0); });
+  }
+  function sensListHTML(){
+    const d=SDLG, hits=sensMatches(d);
+    if(!hits.length) return '<div class="mini" style="padding:10px 12px">Nobody matches “'+esc(d.q)+'”.</div>';
+    return hits.map(x=>{ const t=sensItem(d,x.it), on=!!d.sel[x.i];
+      return '<label class="sens-pick'+(on?' on':'')+'"><input type="checkbox" '+(on?'checked ':'')+'onchange="AD.sensToggle('+x.i+',this.checked)"><span><b>'+esc(t.name)+'</b>'+(t.sub?' <span class="mini">'+esc(t.sub)+'</span>':'')+'</span></label>'; }).join('');
+  }
+  function sensCountHTML(){
+    const d=SDLG, n=Object.keys(d.sel).length, what=d.kind==='team'?(n===1?'team':'teams'):(n===1?'person':'people');
+    return n ? '<b>'+n+' '+what+' ticked</b> · <button class="lnk" onclick="AD.sensClear()">clear</button>' : 'Tick everyone to add.';
+  }
+  function sensQ(v){ const d=SDLG; if(!d) return; d.q=v; const L=el('sensList'); if(L) L.innerHTML=sensListHTML(); }
+  function sensToggle(i,on){ const d=SDLG; if(!d) return; if(on) d.sel[i]=1; else delete d.sel[i]; d.typed='';
+    const L=el('sensList'); if(L) L.innerHTML=sensListHTML();
+    const c=el('sensCount'); if(c) c.innerHTML=sensCountHTML();
+    const b=el('sensNextBtn'); if(b) b.disabled=!Object.keys(d.sel).length; }
+  function sensClear(){ const d=SDLG; if(!d) return; d.sel={}; sensToggle(-1,false); }
   function sensChange(i){ const x=SENS_ROWS[i]; if(!x) return; const r=SENSREC||{};
     const cur=x.kind==='team' ? r.teams[x.key] : (r.people[x.key]||{}).level;
     SDLG={mode:'change', kind:x.kind, key:x.key, name:x.kind==='team'?x.key:((r.people[x.key]||{}).name||x.key), was:cur, level:cur==='edit'?'view':'edit', step:1, err:''}; drawSens(); }
   function sensRemove(i){ const x=SENS_ROWS[i]; if(!x) return; const r=SENSREC||{};
     SDLG={mode:'remove', kind:x.kind, key:x.key, name:x.kind==='team'?x.key:((r.people[x.key]||{}).name||x.key), step:1, err:''}; drawSens(); }
-  function sensWho(){ const d=SDLG; if(d.mode!=='add') return {key:d.key, name:d.name};
-    const it=d.list[d.pick]; if(!it) return null; return d.kind==='team' ? {key:it, name:it} : {key:it.email, name:it.name}; }
+  /* Who the dialog is about: everyone ticked when adding, the one row otherwise. */
+  function sensWhoAll(){ const d=SDLG; if(d.mode!=='add') return [{key:d.key, name:d.name}];
+    return Object.keys(d.sel).map(Number).sort((a,b)=>a-b).map(i=>d.list[i]).filter(Boolean).map(it=>{ const t=sensItem(d,it); return {key:t.key, name:t.name}; }); }
+  function sensWho(){ const all=sensWhoAll(); return all.length ? all[0] : null; }
+  /* What has to be typed to confirm: the name for one, "add 3 people" for several. */
+  function sensPhrase(){ const d=SDLG, all=sensWhoAll();
+    return all.length===1 ? all[0].name : 'add '+all.length+' '+(d.kind==='team'?'teams':'people'); }
   const WARN='⚠️ Sensitive Material holds <b>doctor-sensitive and company-sensitive information</b>.';
   function drawSens(){
     const d=SDLG; if(!d) return;
@@ -1788,26 +1825,31 @@
     } else if(d.step===1){
       const pickBox = d.mode==='add'
         ? (d.list.length
-            ? '<div class="sens-f"><label>'+(d.kind==='team'?'Team':'Person')+'</label><select onchange="AD.sensPick(this.value)">'+d.list.map((it,i)=>'<option value="'+i+'"'+(i===d.pick?' selected':'')+'>'+esc(d.kind==='team'?it:it.name+' — '+it.email)+'</option>').join('')+'</select>'+
+            ? '<div class="sens-f"><label>'+(d.kind==='team'?'Teams':'People')+'</label>'+
+              '<input id="sensQ" type="search" autocomplete="off" spellcheck="false" placeholder="Search by '+(d.kind==='team'?'team name':'name or email')+'" value="'+esc(d.q||'')+'" oninput="AD.sensQ(this.value)">'+
+              '<div class="sens-list" id="sensList">'+sensListHTML()+'</div><span class="mini" id="sensCount">'+sensCountHTML()+'</span>'+
               (d.kind==='person'?'<span class="mini">Only people with an email on file can be added.</span>':'')+'</div>'
             : '<p class="mini" style="margin:14px 0 0">'+(d.kind==='team'?'Every team is already on the list.':'Everyone with an email on file is already on the list.')+'</p>')
         : '<p style="margin:14px 0 0"><b>'+esc(d.name)+'</b> ('+what+') — now: '+esc(SLVL[d.was]||'')+'.</p>';
-      const verb=d.mode==='add'?'Add a '+what+' to Sensitive Material':'Change access to Sensitive Material';
+      const verb=d.mode==='add'?'Add '+(d.kind==='team'?'teams':'people')+' to Sensitive Material':'Change access to Sensitive Material';
       const widen=d.mode==='add' || (d.was==='view' && d.level==='edit');
-      h=head('\u{1F512} '+verb)+'<div class="m-body"><div class="docwarn">'+WARN+' '+(d.kind==='team'?'Everyone on the team you pick':'The person you pick')+' will be able to open every file in it.</div>'+pickBox+lvlPick+'</div>'+
-        foot('<button class="btn ghost" onclick="AD.sensClose()">Cancel</button><button class="btn" onclick="AD.sensNext()"'+((d.mode==='add'&&!who)?' disabled':'')+'>'+(widen?'Continue':'Save')+'</button>');
+      const whom=d.mode==='add' ? (d.kind==='team'?'Everyone on the teams you tick':'Everyone you tick') : (d.kind==='team'?'Everyone on this team':'This person');
+      h=head('\u{1F512} '+verb)+'<div class="m-body"><div class="docwarn">'+WARN+' '+whom+' will be able to open every file in it.</div>'+pickBox+lvlPick+'</div>'+
+        foot('<button class="btn ghost" onclick="AD.sensClose()">Cancel</button><button class="btn" id="sensNextBtn" onclick="AD.sensNext()"'+((d.mode==='add'&&!who)?' disabled':'')+'>'+(widen?'Continue':'Save')+'</button>');
     } else {
-      h=head('\u{1F512} Confirm — step 2 of 2')+'<div class="m-body"><p style="margin:0">You are giving <b>'+esc(who.name)+'</b> ('+what+') <b>'+esc(SLVL[d.level])+'</b> access to Sensitive Material.</p>'+
-        '<div class="sens-f"><label>To confirm, type <b>'+esc(who.name)+'</b></label><input id="sensType" autocomplete="off" spellcheck="false" oninput="AD.sensTyped(this.value)" value="'+esc(d.typed||'')+'"></div></div>'+
-        foot('<button class="btn ghost" onclick="AD.sensBack()">Back</button><button class="btn danger" id="sensGoBtn" onclick="AD.sensGo()"'+((PH.sensConfirmOk(d.typed,who.name)&&!d.busy)?'':' disabled')+'>'+(d.busy?'Saving…':'Give access')+'</button>');
+      const all=sensWhoAll(), phrase=sensPhrase();
+      const toWhom=all.length===1 ? '<b>'+esc(who.name)+'</b> ('+what+')'
+        : '<b>'+all.length+' '+(d.kind==='team'?'teams':'people')+'</b>:<ul class="sens-who">'+all.map(x=>'<li>'+esc(x.name)+'</li>').join('')+'</ul>';
+      h=head('\u{1F512} Confirm — step 2 of 2')+'<div class="m-body"><p style="margin:0">You are giving '+toWhom+(all.length===1?' ':'')+'<b>'+esc(SLVL[d.level])+'</b> access to Sensitive Material.</p>'+
+        '<div class="sens-f"><label>To confirm, type <b>'+esc(phrase)+'</b></label><input id="sensType" autocomplete="off" spellcheck="false" oninput="AD.sensTyped(this.value)" value="'+esc(d.typed||'')+'"></div></div>'+
+        foot('<button class="btn ghost" onclick="AD.sensBack()">Back</button><button class="btn danger" id="sensGoBtn" onclick="AD.sensGo()"'+((PH.sensConfirmOk(d.typed,phrase)&&!d.busy)?'':' disabled')+'>'+(d.busy?'Saving…':'Give access')+'</button>');
     }
     openModal(h);
     const t=el('sensType'); if(t){ t.focus(); try{ t.setSelectionRange(t.value.length,t.value.length); }catch(_){} }
   }
   function sensClose(){ if(SDLG && SDLG.busy) return; SDLG=null; closeModal(); }
-  function sensPick(v){ if(SDLG){ SDLG.pick=Number(v); SDLG.typed=''; drawSens(); } }
   function sensLevel(l){ if(SDLG){ SDLG.level=l; drawSens(); } }
-  function sensTyped(v){ if(!SDLG) return; SDLG.typed=v; const b=el('sensGoBtn'), who=sensWho(); if(b && who) b.disabled=!PH.sensConfirmOk(v, who.name) || !!SDLG.busy; }
+  function sensTyped(v){ if(!SDLG) return; SDLG.typed=v; const b=el('sensGoBtn'), who=sensWho(); if(b && who) b.disabled=!PH.sensConfirmOk(v, sensPhrase()) || !!SDLG.busy; }
   function sensBack(){ if(SDLG && !SDLG.busy){ SDLG.step=1; SDLG.err=''; drawSens(); } }
   function sensNext(){
     const d=SDLG; if(!d) return;
@@ -1820,15 +1862,17 @@
     const d=SDLG; if(!d || d.busy) return;
     const who=sensWho(); if(!who) return;
     const widen=d.mode==='add' || (d.mode==='change' && d.was==='view' && d.level==='edit');
-    if(widen && !PH.sensConfirmOk(d.typed, who.name)) return;  // the second confirmation, checked again here
+    if(widen && !PH.sensConfirmOk(d.typed, sensPhrase())) return;  // the second confirmation, checked again here
     d.busy=true; d.err=''; drawSens();
-    const kind=d.kind, key=who.key, name=who.name, level=d.level;
+    const kind=d.kind, level=d.level, all=sensWhoAll(), name=who.name;
     const job = d.mode==='remove'
-      ? sensSave(n=>{ if(kind==='team') delete n.teams[key]; else delete n.people[key]; }, {what:'removed', kind, who:name})
-      : sensSave(n=>{ if(kind==='team') n.teams[key]=level; else n.people[key]={level, name}; }, {what:d.mode==='add'?'added':'changed', kind, who:name, level});
+      ? sensSave(n=>{ if(kind==='team') delete n.teams[who.key]; else delete n.people[who.key]; }, {what:'removed', kind, who:name})
+      : sensSave(n=>{ all.forEach(x=>{ if(kind==='team') n.teams[x.key]=level; else n.people[x.key]={level, name:x.name}; }); },
+                 all.map(x=>({what:d.mode==='add'?'added':'changed', kind, who:x.name, level})));
     job.then(()=>{
       SDLG=null; closeModal(); paintSensPanel(); syncSens();
-      docToast(d.mode==='remove' ? '✓ '+name+' removed from Sensitive Material.' : '✓ '+name+' — '+SLVL[level]+' — Sensitive Material.');
+      docToast(d.mode==='remove' ? '✓ '+name+' removed from Sensitive Material.'
+        : '✓ '+(all.length===1 ? name : all.length+' '+(kind==='team'?'teams':'people'))+' — '+SLVL[level]+' — Sensitive Material.');
     }, e=>{ d.busy=false; d.err=(e&&e.message)||'That didn’t save. Try again.'; drawSens(); });
   }
 
@@ -1989,7 +2033,7 @@
   function closeModal(){ el('modal').classList.remove('open'); }
 
   const thenSync=f=>function(){ const r=f.apply(this,arguments); syncEdit(); return r; };
-  window.AD={setupSecs,editSyncNow,tcSyncNow,sensAdd,sensChange,sensRemove,sensClose,sensPick,sensLevel,sensTyped,sensBack,sensNext,sensGo,sensSyncNow,tab:tabSet,viewAs:doViewAs,newTeam,editTeam,saveTeam:thenSync(saveTeam),delTeam:thenSync(delTeam),resetTeams,profile,whyNoAdd,
+  window.AD={setupSecs,editSyncNow,tcSyncNow,sensAdd,sensChange,sensRemove,sensClose,sensQ,sensToggle,sensClear,sensLevel,sensTyped,sensBack,sensNext,sensGo,sensSyncNow,tab:tabSet,viewAs:doViewAs,newTeam,editTeam,saveTeam:thenSync(saveTeam),delTeam:thenSync(delTeam),resetTeams,profile,whyNoAdd,
     addPerson,npSet,npLoc,npTeam,saveNewPerson:thenSync(saveNewPerson),accTeam:setAccTeam,removePerson:thenSync(removePerson),restorePerson:thenSync(restorePerson),showRemoved,togTeam,togLoc,setStatus,saveUser:thenSync(saveUser),pickLevel,pickAud,setField,pickPhoto,photoChosen,clearPhoto,pickUserLevel,clearUserLevel,tog,addFile,noop,newSec,editSec,saveSec:thenSync(saveSec),delSec,delSecGo,resetSecs,setSecName,setSecIcon,setSecStruct,setSecLocMode,setSecTeamMode,togSecLoc,togSecTeam,saveFile,cd,useFile,clearFile,uploadFile,setFileTeamMode,setFileLocMode,togFileLoc,togFileTeam,renderLocs,newLoc,editLoc,saveLoc,delLoc,resetLocs,setLocBrand,setLocState,setLocTZ,close:closeModal};
   el('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
@@ -2048,7 +2092,7 @@
 })();
 </script>
 <script>PH.nav('admin');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(PH.loadPhotos)PH.loadPhotos().then(function(got){if(got&&window.AD&&AD.tab)AD.tab('users');});});</script>
-<script src="tour.js?v=hc97"></script>
+<script src="tour.js?v=hc98"></script>
 <script>
 Tour.init([
   {sel:'#tabs', title:'This is your control room', body:'Four tabs and you can run the whole hub: <b>People</b>, <b>Teams &amp; Access</b>, <b>Document Sections</b> and <b>Locations</b>. No developer, no consultant.', pre:()=>AD.tab('users')},

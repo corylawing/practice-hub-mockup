@@ -64,8 +64,8 @@ t('nothing typed, or nothing to match, never confirms', !C('','Leadership Team')
   const admin=fs.readFileSync(path.join(V1,'admin.html'),'utf8'), docs=fs.readFileSync(path.join(V1,'documents.html'),'utf8');
   const userjs=fs.readFileSync(path.join(V1,'user.js'),'utf8');
   t('Admin asks for the typed name before giving access, and checks it again when saving',
-    (admin.match(/PH\.sensConfirmOk\(/g)||[]).length>=3 && /if\(widen && !PH\.sensConfirmOk\(d\.typed, who\.name\)\) return;/.test(admin));
-  t('every addition is written to the history (who, when, what)', /\{what:d\.mode==='add'\?'added':'changed', kind, who:name, level\}/.test(admin) && /next\.log\.unshift/.test(admin));
+    (admin.match(/PH\.sensConfirmOk\(/g)||[]).length>=3 && /if\(widen && !PH\.sensConfirmOk\(d\.typed, sensPhrase\(\)\)\) return;/.test(admin));
+  t('every addition is written to the history (who, when, what) - one line per person, even when several are added at once', /\{what:d\.mode==='add'\?'added':'changed', kind, who:x\.name, level\}/.test(admin) && /next\.log\.unshift/.test(admin));
   t('Sensitive Material is never in the Teams & Access grid (one way to give it)', !/k:'sensitive'/.test(admin.slice(admin.indexOf('const TOOLS=['), admin.indexOf('const DEFAULT_DOCSECS'))));
   t('a regular section can’t take its name', /==='sensitive material'/.test(admin));
   t('Documents adds nothing until the lock is confirmed', /const shut=s\.sensitive && !sensLocked\(\);/.test(docs) && /if\(sr\.s\.sensitive && !sensLocked\(\)\) return;/.test(docs));

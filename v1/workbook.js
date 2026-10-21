@@ -58,22 +58,26 @@
     return 0;
   }
 
-  /* Turn one office tab's grid into the series the dashboard needs. */
-  function office(rows, med){
+  /* Turn one office tab's grid into the series the dashboard needs.
+     `year` is the year the tab tracks (default 2026, her workbook today). Home-Brace's own
+     books (prodstore.js) carry on into 2027 and later with the same labels a year on, so the
+     years are worked out from it rather than written in. Same rows, same sums, for 2026. */
+  function office(rows, med, year){
+    var Y = String(year || 2026), L = String((year || 2026) - 1), P = String((year || 2026) - 2);
     var act = months(rows, med
-      ? row(rows, ['2026','actual','tc only','+','medicaid'])
+      ? row(rows, [Y,'actual','tc only','+','medicaid'])
       /* Medicaid tabs ALSO carry "2026 Actual TC Net Production (Non-Medicaid)" -- a subset,
          not the total. Excluded so it can never be picked up by mistake. */
-      : row(rows, ['2026','actual','tc net production'], ['non-medicaid']));
+      : row(rows, [Y,'actual','tc net production'], ['non-medicaid']));
 
-    var goal    = months(rows, med ? row(rows, ['2026','total production goal'])
-                                   : row(rows, ['2026','tc production goal'], ['non-medicaid']));
-    var stretch = months(rows, row(rows, ['2026','stretch production goal']));
-    var days    = months(rows, row(rows, ['number of production days','(2026)']));
+    var goal    = months(rows, med ? row(rows, [Y,'total production goal'])
+                                   : row(rows, [Y,'tc production goal'], ['non-medicaid']));
+    var stretch = months(rows, row(rows, [Y,'stretch production goal']));
+    var days    = months(rows, row(rows, ['number of production days','('+Y+')']));
     var done    = months(rows, row(rows, ['completed number of production days']));
 
-    var lyNet = months(rows, row(rows, ['2025','net production']));
-    var lyMed = med ? months(rows, row(rows, ['2025','medicaid production'])) : null;
+    var lyNet = months(rows, row(rows, [L,'net production']));
+    var lyMed = med ? months(rows, row(rows, [L,'medicaid production'])) : null;
     var ly = lyNet.map(function(v, i){ return v + (lyMed ? lyMed[i] : 0); });
 
     var mdStarts = months(rows, row(rows, ['number of medicaid starts']));
@@ -97,21 +101,20 @@
          avgFee = "2025 Average Case Fee"  -- reconstructs last year's starts
          mdFee  = "Medicaid Case Fee"      -- what the dashboard calls `fee` (0 on TC-only tabs)
        No last-year starts row exists, so it is derived from production / average fee. */
-    var avgFee = firstNonZero(months(rows, row(rows, ['2025 average case fee'])));
+    var avgFee = firstNonZero(months(rows, row(rows, [L+' average case fee'])));
     var mdFee  = firstNonZero(months(rows, row(rows, ['medicaid case fee'])));
     var lyStarts = ly.map(function(v){ return avgFee ? Math.round(v / avgFee) : 0; });
 
     /* Past years, for the year selector. 2025 production is the same figure as `ly`;
        kept separate because the dashboard addresses them differently. */
-    var hist = {
-      '2024': { act: months(rows, row(rows, ['2024','net production'])).map(function(v, i){
-                  var m = med ? months(rows, row(rows, ['2024','medicaid production'])) : null;
+    var hist = {};
+    hist[P] = { act: months(rows, row(rows, [P,'net production'])).map(function(v, i){
+                  var m = med ? months(rows, row(rows, [P,'medicaid production'])) : null;
                   return v + (m ? m[i] : 0);
                 }),
-                days: months(rows, row(rows, ['number of production days','(2024)'])) },
-      '2025': { act: ly.slice(), days: months(rows, row(rows, ['number of production days','(2025)'])),
-                sAct: lyStarts.slice() }
-    };
+                days: months(rows, row(rows, ['number of production days','('+P+')'])) };
+    hist[L] = { act: ly.slice(), days: months(rows, row(rows, ['number of production days','('+L+')'])),
+                sAct: lyStarts.slice() };
 
     /* Enter Production works from the raw inputs rather than the totals: TC net production
        and the write-offs line, both present on either tab layout. */
@@ -245,6 +248,17 @@
      ------------------------------------------------------------------ */
 
   // Which column-A label each editable field lives on. Two tab layouts, first match wins.
+  // writeRows(year) gives the same map a year on, for Home-Brace's own books (prodstore.js).
+  function writeRows(year){
+    var Y = String(year || 2026), L = String((year || 2026) - 1), out = {};
+    Object.keys(WRITE_ROWS).forEach(function(f){
+      out[f] = WRITE_ROWS[f].map(function(p){
+        var sw = function(a){ return (a || []).map(function(x){ return x.replace('2026', Y).replace('2025', L); }); };
+        return {all: sw(p.all), not: p.not ? sw(p.not) : undefined};
+      });
+    });
+    return out;
+  }
   var WRITE_ROWS = {
     tc:   [ {all:['tc net production']} ],
     adj:  [ {all:['write-offs']} ],
@@ -505,7 +519,7 @@
   global.PH_WB = { load:load, office:office, TABS:TABS, MEDICAID:MEDICAID, demo:demo, sandbox:sandbox,
                    writeCell:writeCell, readCell:readCell, resolve:resolve, roundTrip:roundTrip,
                    openSession:openSession,
-                   closeSession:closeSession, WRITE_ROWS:WRITE_ROWS, colLetters:colLetters };
+                   closeSession:closeSession, WRITE_ROWS:WRITE_ROWS, writeRows:writeRows, row:row, colLetters:colLetters };
 })(typeof globalThis!=='undefined' ? globalThis : window);
 
 /* Also usable from Node, so the SERVER parses the workbook with this exact code rather

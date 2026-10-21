@@ -281,6 +281,14 @@ the phone list) glows on a 3 s ease-in-out loop (`todayglow`, peak 0 0 22px 5px 
 color-mix, so it follows the theme); week-grid `td.cell.today` gets an inset version (`todaycell`). The jump-to-today flash
 (`.flash`, todaypulse) still wins while it runs. prefers-reduced-motion: no animation, the glow held still.
 
+**Sensitive Material: search and tick, several at once (21/10/2026, hc98).** Cory: "Drop down ... it should be a search
+and check especially if they want to add multiple". Admin's add dialog is a search box over a checkbox list (name or
+email; team name), ticks kept while searching, "N people ticked · clear". The double confirmation stays: one ticked =
+type their name; several = type "add 3 people" / "add 2 teams" (sensPhrase(), checked again in sensGo). One sensSave
+writes them all and the history gets ONE LINE PER PERSON (sensSave now takes an array of log entries).
+workbook.js: office(rows, med, year) and writeRows(year) follow the year (default 2026 = unchanged, verified identical on
+all 8 offices) - groundwork for Home-Brace's own 2027 book; exports writeRows and row.
+
 **TCs see every office in "By office" (19/10, hc85).** Selene: "we do want the Treatment Coordinators to be able to see
 one another's results. Please make sure they can all view the 'By Office' box so they can see conversion rates across
 locations." viewNumbers(): for a TC (`iAmTC() && !canManage()`) the box lists `allOffices()` from EVERY (rates and
