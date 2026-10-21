@@ -42,11 +42,22 @@ function SharePoint(){
     let m;
     if((m=/\/items\/(\d+)\/versions/.exec(p))){ const it=sp.items.find(i=>i.id===m[1]); return {value:it?it.versions.slice(0,10):[]}; }
     if((m=/\/items\/(\d+)\?/.exec(p))){ const it=sp.items.find(i=>i.id===m[1]); if(!it) throw err(404,'not found');
+      sp.byId=(sp.byId||0)+1;
+      if(sp.failById && sp.failById.title===it.Title && sp.failById.times-->0) throw err(sp.failById.status,'busy');
       return {id:it.id, lastModifiedDateTime:it.at, fields:{Title:it.Title, Payload:it.Payload}}; }
     if(/\/items\?/.test(p)){
+      // Like the real one: fields($select=Title) leaves the contents out, $select=id the rest of the row.
+      const short=/fields\(\$select=Title\)/.test(p), idOnly=/[?&]\$select=id(&|$)/.test(p);
+      sp.listings=(sp.listings||0)+1;
+      if(short && sp.refuseShort) throw err(400,'Invalid request');
       const skip=Number((/skip=(\d+)/.exec(p)||[])[1]||0);
-      const r={value:sp.items.slice(skip,skip+200).map(i=>({id:i.id,lastModifiedDateTime:i.at,fields:{Title:i.Title,Payload:i.Payload}}))};
-      if(skip+200<sp.items.length) r['@odata.nextLink']='https://graph.microsoft.com/v1.0/sites/site/lists/L/items?$expand=fields&$top=200&skip='+(skip+200);
+      const r={value:sp.items.slice(skip,skip+200).map(i=>{
+        if(short && sp.oddShort) return {id:i.id};
+        if(!short) sp.listedChars=(sp.listedChars||0)+i.Payload.length;
+        const f=short?{Title:i.Title}:{Title:i.Title,Payload:i.Payload};
+        return idOnly?{id:i.id,fields:f}:{id:i.id,lastModifiedDateTime:i.at,fields:f};
+      })};
+      if(skip+200<sp.items.length) r['@odata.nextLink']='https://graph.microsoft.com/v1.0'+p.split('&skip=')[0]+'&skip='+(skip+200);
       return r;
     }
     throw new Error('unexpected read '+p);
@@ -291,8 +302,8 @@ const ok=[],bad=[]; const t=(n,v)=>{ (v?ok:bad).push(n); };
   }
   {
     // The doctor list is positional (days point at doctors by index). A stale copy held on a
-    // device must never be sent over the shared one - the Dr. Lightheart case.
-    const sp=SharePoint(); sp.add('ph_docs',[{n:'Dr. A'},{n:'Dr. B'},{n:'Dr. C'},{n:'Dr. Lightheart'}],H);
+    // device must never be sent over the shared one - the new-doctor case of 17/09.
+    const sp=SharePoint(); sp.add('ph_docs',[{n:'Dr. A'},{n:'Dr. B'},{n:'Dr. C'},{n:'Dr. Penhallow'}],H);
     const G=Browser(sp,J);
     G.LS['ph_docs']=JSON.stringify([{n:'Dr. A'},{n:'Dr. B'},{n:'Dr. C'}]); G.LS['ph_docs__unsent']='1';
     await resend(G);
@@ -387,7 +398,7 @@ const ok=[],bad=[]; const t=(n,v)=>{ (v?ok:bad).push(n); };
     // A doctor added at the end, the tab closed before it landed: safe to send, nobody's position moves.
     const docs=[{n:'Dr. A'},{n:'Dr. B'},{n:'Dr. C'}];
     const sp=SharePoint(); sp.add('ph_docs',docs,H);
-    const A=Browser(sp,H); A.LS['ph_docs']=JSON.stringify(docs.concat([{n:'Dr. Lightheart'}])); A.LS['ph_docs__unsent']='1';
+    const A=Browser(sp,H); A.LS['ph_docs']=JSON.stringify(docs.concat([{n:'Dr. Penhallow'}])); A.LS['ph_docs__unsent']='1';
     await resend(A);
     t('(doctor list) a doctor added at the end is sent', JSON.parse(sp.payload('ph_docs')).length===4 && !A.S.unsent('ph_docs'));
     // ...but one REMOVED from the middle is not: the days after it would point at the wrong doctor.
@@ -460,6 +471,73 @@ const ok=[],bad=[]; const t=(n,v)=>{ (v?ok:bad).push(n); };
     const back=await A.S.get('ph_sched2');
     t('(old tab) the whole year is still there afterwards', Object.keys(full).every(k=>k in back));
     t('(old tab) and the old tab’s own change is in it', back['2026-10-05'] && back['2026-10-05'].Clovis && back['2026-10-05'].Clovis.ps[0]===1);
+  }
+
+  /* ---- 13. A PAGE READS ONLY THE ROWS IT USES ----------------------------------------
+     22/10/2026. Every page's first read used to bring the WHOLE list - the schedule, every
+     year's production numbers and history, everybody's photo - just to learn which row held
+     which key. The listing now carries keys only, and rows are read by id. The danger in
+     that: a key-only row has no Payload, and reading it as an empty record is the 15 Sep
+     path. These hold store.js to never doing that. */
+  {
+    const sp=SharePoint();
+    const sched=Object.assign({__v:2},year(2026,0.75,11));
+    sp.add('ph_sched2',sched,H);
+    for(let i=0;i<30;i++) sp.add('ph_me_p'+i+'@x.com',{photo:'data:image/jpeg;base64,'+'A'.repeat(4000),about:'p'+i},H);
+    sp.add('ph_prod_log_2026',{entries:[{a:1}]},H);
+    sp.add('ph_teams',['Staff','TCs'],H);
+    const A=Browser(sp,H);
+    const v=await A.S.get('ph_teams');
+    t('(keys only) a page gets its record in full', same(v,['Staff','TCs']) && !A.S.readFailed('ph_teams'));
+    t('(keys only) without anybody else’s contents coming with it', !sp.listedChars && sp.byId===1);
+    const s=await A.S.get('ph_sched2');
+    t('(keys only) a record found from the key list is read in full, never as empty', same(s,sched));
+    const all=await A.S.getAll('ph_me_');
+    t('(keys only) a bulk read still brings every profile row, contents and all',
+      Object.keys(all).length===30 && Object.keys(all).every(k=>all[k] && all[k].photo && all[k].photo.length>4000));
+    await A.S.set('ph_teams',['Staff','TCs','Doctors']);
+    t('(keys only) a save goes to the row that is there, not a new one',
+      sp.items.filter(i=>i.Title==='ph_teams').length===1 && JSON.parse(sp.payload('ph_teams')).length===3);
+  }
+  {
+    // A row the key list names, whose own read then fails: a FAILED read, and nothing is written over it.
+    const sp=SharePoint(); sp.add('ph_people',{a:{teams:['Staff']},b:{teams:['TCs']}},H);
+    sp.failById={title:'ph_people',status:503,times:99};
+    const A=Browser(sp,H);
+    await A.S.get('ph_people');
+    t('(keys only) a row that is listed but will not read is a failed read', A.S.readFailed('ph_people')===true);
+    const r=await A.S.set('ph_people',{});
+    t('(keys only) so nothing is written over it', r.blocked===true && /"b"/.test(sp.payload('ph_people')||''));
+  }
+  {
+    // A SharePoint that refuses the short request: the old, full one, and everything still reads.
+    const sp=SharePoint(); sp.refuseShort=true;
+    sp.add('ph_access',{Staff:{schedule:'view'}},H); sp.add('ph_me_a@x.com',{photo:'x'},H);
+    const A=Browser(sp,H);
+    const v=await A.S.get('ph_access');
+    t('(refused) a SharePoint that will not take the short form still reads', !!(v && v.Staff && v.Staff.schedule==='view'));
+    const all=await A.S.getAll('ph_me_');
+    t('(refused) and the bulk read still works', !!(all['ph_me_a@x.com'] && all['ph_me_a@x.com'].photo==='x'));
+    await A.S.set('ph_access',{Staff:{schedule:'edit'}});
+    const back=(()=>{ try{ return JSON.parse(sp.payload('ph_access')); }catch(_){ return null; } })();
+    t('(refused) a save still lands in place', sp.items.filter(i=>i.Title==='ph_access').length===1 && !!(back && back.Staff && back.Staff.schedule==='edit'));
+  }
+  {
+    // A key list that comes back without its keys is not believed: nothing is "not there yet" because of it.
+    const sp=SharePoint(); sp.oddShort=true; sp.add('ph_locations',[{n:'Hobbs'}],H);
+    const A=Browser(sp,H);
+    const v=await A.S.get('ph_locations');
+    t('(odd answer) a key list without keys is not taken as an empty list', Array.isArray(v) && v[0].n==='Hobbs');
+    await A.S.set('ph_locations',[{n:'Hobbs'},{n:'Clovis'}]);
+    t('(odd answer) and no second row is made', sp.items.filter(i=>i.Title==='ph_locations').length===1);
+  }
+  {
+    // history.html finds a row past the first 200, from the keys alone.
+    const sp=SharePoint(); for(let i=0;i<230;i++) sp.add('ph_seen_q'+i,['x'],H);
+    const late=sp.add('ph_prod_data_2027',{a:1},H);
+    const A=Browser(sp,H);
+    t('(history) the row for a key past the first 200 is found', A.S.idOf ? await A.S.idOf('ph_prod_data_2027')===late.id : false);
+    t('(history) and a key with no row says so', A.S.idOf ? await A.S.idOf('ph_nothing')===null : false);
   }
 
   console.log(ok.map(s=>'  PASS  '+s).join('\n'));

@@ -261,20 +261,59 @@
   /* The whole list, every page of it. The old read asked for 200 items and never
      followed on: with 70 people's profile and read-list rows the list passes that, and
      a key past the first page would have read as "not there yet" - and been created a
-     second time. One listing in flight is shared by everyone who asks. */
+     second time. One listing in flight is shared by everyone who asks.
+
+     KEYS AND IDS ONLY (future-proofing check, 22/10/2026). This used to bring every
+     row's contents as well - the schedule, every year's production numbers and their
+     history, everybody's profile photo - on every page, just to learn which row held
+     which key, and it grew every year. It now asks for each row's key and id; a page
+     then reads the rows it uses, one at a time, by id (readItem). A row's contents
+     NEVER come from a listing: a missing Payload there means "not asked for", and
+     reading that as an empty record is the 15 Sep path.
+
+     If SharePoint does not understand a shorter form, the next one is tried. The last
+     is exactly the old request. */
+  var LIST_FORMS = [
+    '?$select=id&$expand=fields($select=Title)&$top=200',
+    '?$expand=fields($select=Title)&$top=200',
+    '?$expand=fields&$top=200'
+  ];
+  var listForm = 0;
+  /* A short listing is trusted only when it plainly worked: every row has its id and
+     fields, and the keys are there. Otherwise the next form - never a guess. */
+  function understood(page){
+    if(listForm === LIST_FORMS.length - 1 || !page.length) return true;
+    var titled = 0;
+    for(var i=0;i<page.length;i++){
+      var it = page[i];
+      if(!it || it.id === undefined || it.id === null || !it.fields || typeof it.fields !== 'object') return false;
+      if(typeof it.fields.Title === 'string' && it.fields.Title) titled++;
+    }
+    return titled > 0;
+  }
   var listingP = null;
   function listing(){
     if(listingP) return listingP;
     var out = [];
     function one(p, n){
       return PH_AUTH.graph(p).then(function(r){
-        out = out.concat((r && r.value) || []);
+        var page = (r && r.value) || [];
+        if(!understood(page)){ var odd = new Error('The short list of keys did not come back as expected.'); odd.odd = true; throw odd; }
+        out = out.concat(page);
         var next = r && r['@odata.nextLink'];
         if(next && n < 40) return one(next.replace(GRAPH, ''), n+1);
         return out;
       });
     }
-    listingP = withRetry(function(){ out = []; return one(listPath()+'/items?$expand=fields&$top=200', 0); })
+    function tryForm(){
+      return withRetry(function(){ out = []; return one(listPath()+'/items'+LIST_FORMS[listForm], 0); })
+        .catch(function(e){
+          var st = statusOf(e);
+          if((e && e.odd || st === 400 || st === 501) && listForm < LIST_FORMS.length - 1){ listForm++; return tryForm(); }
+          throw e;
+        });
+    }
+    listingP = tryForm()
       .then(function(items){
         var seen = {};
         items.forEach(function(i){
@@ -285,21 +324,35 @@
       }, function(e){ listingP = null; throw e; });
     return listingP;
   }
-  function findHit(key){
+  /* The id of the row holding a key (the first, if there were ever two), or null when
+     the list has none. */
+  function findId(key){
     return listing().then(function(items){
-      for(var i=0;i<items.length;i++) if(items[i].fields && items[i].fields.Title === key) return items[i];
+      for(var i=0;i<items.length;i++) if(items[i].fields && items[i].fields.Title === key) return items[i].id;
       return null;
     });
   }
-  /* One item by id: one payload instead of the whole list's. */
+  function fetchItem(id){ return PH_AUTH.graph(listPath()+'/items/'+id+'?$expand=fields'); }
+  /* One row, contents and all, by id. Resolves null ONLY when the list has no row for
+     the key - "not there yet", a real answer. Anything else that goes wrong throws, and
+     readNow() treats a throw as a failed read, never an empty one. */
   function readItem(key){
-    if(!idCache[key]) return findHit(key);
-    return PH_AUTH.graph(listPath()+'/items/'+idCache[key]+'?$expand=fields').then(function(i){
-      if(!i || !i.fields || i.fields.Title !== key){ delete idCache[key]; return findHit(key); }
+    if(!idCache[key]) return readFresh(key);
+    return fetchItem(idCache[key]).then(function(i){
+      if(!i || !i.fields || i.fields.Title !== key){ delete idCache[key]; return readFresh(key); }
       return i;
     }, function(e){
-      if(statusOf(e) === 404){ delete idCache[key]; return findHit(key); }
+      if(statusOf(e) === 404){ delete idCache[key]; return readFresh(key); }
       throw e;
+    });
+  }
+  function readFresh(key){
+    return findId(key).then(function(id){
+      if(!id) return null;
+      return fetchItem(id).then(function(i){
+        if(i && i.fields && i.fields.Title === key){ idCache[key] = id; return i; }
+        throw new Error('The row for '+key+' could not be read.');
+      });
     });
   }
   function writeItem(key, pay){
@@ -310,8 +363,8 @@
           delete idCache[key]; return writeItem(key, pay);      // the row went; find or make it again
         });
     }
-    return findHit(key).then(function(hit){
-      if(hit){ idCache[key] = hit.id; return send('PATCH', listPath()+'/items/'+hit.id+'/fields', {Payload: pay}); }
+    return findId(key).then(function(id){
+      if(id){ idCache[key] = id; return send('PATCH', listPath()+'/items/'+id+'/fields', {Payload: pay}); }
       return send('POST', listPath()+'/items', {fields:{Title:key, Payload:pay}})
         .then(function(created){ idCache[key] = created.id; return created; });
     });
@@ -355,7 +408,7 @@
              local stamp stayed ahead of the remote one for good, and they never saw
              anybody else's changes again.
 
-             Reported 2026-09-17: Heather added Dr. Lightheart to the doctor list, and
+             Reported 2026-09-17: Heather added a new doctor to the doctor list, and
              Jenny's calendar carried on showing the four it had.
 
              So: the local copy counts ONLY when it is holding changes that never reached
@@ -937,11 +990,27 @@
     try{ return JSON.parse(raw); }catch(_){ return null; }
   }
 
+  /* A few at a time, not all at once: SharePoint throttles a burst. */
+  function fewAtATime(list, n, job){
+    var next = 0;
+    function lane(){
+      if(next >= list.length) return Promise.resolve();
+      var x = list[next++];
+      return Promise.resolve().then(function(){ return job(x); }).then(lane, lane);
+    }
+    var lanes = [];
+    for(var k=0;k<Math.min(n, list.length);k++) lanes.push(lane());
+    return Promise.all(lanes);
+  }
+
   /* Every row whose key starts with a prefix (or any of several), as { key: value }.
-     Used to pull everyone's profile row in one request instead of 70. A row this
-     browser is still holding unsent comes back as this browser has it - the caller
-     writes these rows into local storage, and must not put the old copy over the held
-     one. A row that will not read is left out, never reported empty. */
+     Used for everyone's profile row. A row this browser is still holding unsent comes
+     back as this browser has it - the caller writes these rows into local storage, and
+     must not put the old copy over the held one. A row that will not read is left out,
+     never reported empty.
+
+     The listing holds keys only now (see listing()), so each wanted row is read by id,
+     a few at a time, in its key's queue - after any save of it that is on its way. */
   function getAll(prefix){
     if(!live()) return Promise.resolve({});
     var pre = Array.isArray(prefix) ? prefix : [prefix];
@@ -949,19 +1018,26 @@
     return authReady.then(function(){ return withRetry(connect); })
       .then(function(){ return listing(); })
       .then(function(items){
-        var out = {}, seen = {}, jobs = [];
+        var out = {}, seen = {}, rows = [];
         items.forEach(function(i){
           var t = i.fields && i.fields.Title;
           if(!t || seen[t] || !wanted(t)) return;
-          seen[t] = 1;
-          if(unsent(t)){ out[t] = parse(local(t)); return; }
-          jobs.push(unpack(i.fields.Payload || '').then(function(raw){
-            var v = parse(raw);
-            if(raw && v === null) return;
-            readFailed[t] = false; synced[t] = raw; out[t] = v; rememberWeight(t, v);
-          }, noop));
+          seen[t] = 1; rows.push({t:t, id:i.id});
         });
-        return Promise.all(jobs).then(function(){ return out; });
+        return fewAtATime(rows, 6, function(r){
+          var t = r.t;
+          return inTurn(t, function(){
+            if(unsent(t)){ out[t] = parse(local(t)); return; }
+            return withRetry(function(){ return fetchItem(r.id); }).then(function(i){
+              if(!i || !i.fields || i.fields.Title !== t) return;          // not the row the listing named: left out
+              return unpack(i.fields.Payload || '').then(function(raw){
+                var v = parse(raw);
+                if(raw && v === null) return;
+                readFailed[t] = false; synced[t] = raw; out[t] = v; rememberWeight(t, v);
+              });
+            }).catch(noop);
+          });
+        }).then(function(){ return out; });
       })
       .catch(function(){ return {}; });
   }
@@ -1009,6 +1085,8 @@
     mergeInto:mergeInto, mergeById:mergeById,
     /* Packed payloads: history.html and restore.html read raw versions through these. */
     pack:pack, unpack:unpack, COL_MAX:COL_MAX,
+    /* The id of the row holding a key, or null - history.html reads that row's versions. */
+    idOf:function(key){ return authReady.then(function(){ return withRetry(connect); }).then(function(){ return findId(key); }); },
     /* Combining a held change with the shared copy - pure, tested in test/sync.test.js. */
     merge3:function(base, mine, theirs){ return merge3(base === undefined ? UNKNOWN : base, mine, theirs, 0); },
     /* Keys this browser is holding unsent, and "send them now". */

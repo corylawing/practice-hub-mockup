@@ -44,6 +44,9 @@ function load(ls, shared, opts){
     if(/lists\?/.test(p))        return Promise.resolve({value:[{id:'L',displayName:'HomeBraceData'}]});
     const vals=Object.keys(shared).filter(k=>k[0]!=='_').map((k,i)=>({id:String(i+1),
       lastModifiedDateTime:'2026-09-17T09:00:00Z', fields:{Title:k, Payload:shared[k]}}));
+    // One row by id - how store.js reads a row's contents - or the list.
+    const one=/\/items\/(\d+)\?/.exec(p);
+    if(one){ const it=vals.find(v=>v.id===one[1]); return it?Promise.resolve(it):Promise.reject(new Error('Graph 404: itemNotFound')); }
     return Promise.resolve({value:vals});
   }};
   vm.createContext(ctx);
@@ -72,18 +75,18 @@ const settle=()=>new Promise(r=>setTimeout(r,30));
   t('the roster loads from the file', before===FILE.people.length);
   t('nobody is removed to begin with', A.PH.removedRows().length===0);
 
-  /* ---- add Dr. Lightheart, who exists in the schedule but has no profile ---- */
+  /* ---- add Dr. Penhallow, who exists in the schedule but has no profile ---- */
   const r1=await A.PH.saveRosterExtra(function(ex){
-    ex.added.push({name:'Dr. Lightheart', role:'Associate Doctor', offices:['Hobbs'], teams:['Doctors'], email:'', empId:''});
+    ex.added.push({name:'Dr. Penhallow', role:'Associate Doctor', offices:['Hobbs'], teams:['Doctors'], email:'', empId:''});
     return ex;
   });
-  t('adding a person saves to the shared record', !!A.shared.ph_roster_extra && A.shared.ph_roster_extra.indexOf('Lightheart')>=0);
-  t('they appear in the roster straight away', A.PH.rosterRows().some(r=>r.name==='Dr. Lightheart'));
-  t('and are marked as added, not from the file', A.PH.rosterRows().find(r=>r.name==='Dr. Lightheart')._added===true);
+  t('adding a person saves to the shared record', !!A.shared.ph_roster_extra && A.shared.ph_roster_extra.indexOf('Penhallow')>=0);
+  t('they appear in the roster straight away', A.PH.rosterRows().some(r=>r.name==='Dr. Penhallow'));
+  t('and are marked as added, not from the file', A.PH.rosterRows().find(r=>r.name==='Dr. Penhallow')._added===true);
   t('the roster grew by exactly one', A.PH.rosterRows().length===before+1);
 
   /* ---- the added person signs in and gets their team's rights ---- */
-  A.signIn({displayName:'Dr. Lightheart', mail:'lightheart@example.com', userPrincipalName:'lightheart@example.com',
+  A.signIn({displayName:'Dr. Penhallow', mail:'penhallow@example.com', userPrincipalName:'penhallow@example.com',
             jobTitle:'', department:'', officeLocation:''});
   await settle();
   t('an added doctor gets the Doctors team when they sign in', (A.PH.me().teams||[]).indexOf('Doctors')>=0);
@@ -103,13 +106,13 @@ const settle=()=>new Promise(r=>setTimeout(r,30));
   t('with nobody left under removed', A.PH.removedRows().length===0);
 
   /* ---- two browsers: additions merge, they do not overwrite each other ---- */
-  const sharedB={ ph_roster_extra: JSON.stringify({added:[{name:'Dr. Gallagher', role:'Associate Doctor', offices:['Clovis'], teams:['Doctors']}], removed:[]}) };
-  const B=load({}, sharedB);                       // Heather's browser knows nothing of Gallagher yet
+  const sharedB={ ph_roster_extra: JSON.stringify({added:[{name:'Dr. Ravensworth', role:'Associate Doctor', offices:['Clovis'], teams:['Doctors']}], removed:[]}) };
+  const B=load({}, sharedB);                       // Heather's browser knows nothing of Ravensworth yet
   await B.PH.rosterReady; await settle();
-  await B.PH.saveRosterExtra(function(ex){ ex.added.push({name:'Dr. Lightheart', role:'Associate Doctor', offices:['Hobbs'], teams:['Doctors']}); return ex; });
+  await B.PH.saveRosterExtra(function(ex){ ex.added.push({name:'Dr. Penhallow', role:'Associate Doctor', offices:['Hobbs'], teams:['Doctors']}); return ex; });
   const merged=JSON.parse(sharedB.ph_roster_extra);
-  t('a second browser’s addition does not erase the first’s', merged.added.some(a=>a.name==='Dr. Gallagher'));
-  t('and its own addition landed', merged.added.some(a=>a.name==='Dr. Lightheart'));
+  t('a second browser’s addition does not erase the first’s', merged.added.some(a=>a.name==='Dr. Ravensworth'));
+  t('and its own addition landed', merged.added.some(a=>a.name==='Dr. Penhallow'));
 
   /* ---- THE ROSTER LIVES IN SHAREPOINT --------------------------------------------
      _people.json was public: every name, work email and office, no sign-in needed. The

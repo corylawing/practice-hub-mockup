@@ -119,7 +119,7 @@
            local stamp stayed ahead of the remote one for good, and they never saw
            anybody else's changes again.
 
-           Reported 2026-09-17: Heather added Dr. Lightheart to the doctor list, and
+           Reported 2026-09-17: Heather added a new doctor to the doctor list, and
            Jenny's calendar carried on showing the four it had.
 
            So: the local copy wins ONLY when it is holding changes that never reached

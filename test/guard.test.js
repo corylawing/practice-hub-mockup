@@ -15,6 +15,11 @@ global.CustomEvent=class{constructor(t,o){this.type=t;this.detail=o&&o.detail}};
 global.window=global;   // in a browser window IS the global
 
 let REMOTE=null, FAIL=false, FAILMSG='Graph 503: service unavailable';   // the SharePoint side
+/* store.js reads two ways: the list (keys and ids), then a row's contents by its id. Each
+   stand-in below holds one row and answers both, the way SharePoint does. */
+const answer=(p,row)=>/\/items\/[^/?]+\?/.test(p)
+  ? (row ? Promise.resolve(row) : Promise.reject(new Error('Graph 404: itemNotFound')))
+  : Promise.resolve({value: row ? [row] : []});
 global.PH={isLive:()=>true};
 global.PH_AUTH={
   token:()=>Promise.resolve('t'),
@@ -22,8 +27,8 @@ global.PH_AUTH={
     if(FAIL) return Promise.reject(new Error(FAILMSG));
     if(/\/sites\/omega/.test(p)) return Promise.resolve({id:'site'});
     if(/lists\?/.test(p))        return Promise.resolve({value:[{id:'L',displayName:'HomeBraceData'}]});
-    return Promise.resolve({value: REMOTE===null?[]:[{id:'1',lastModifiedDateTime:'2026-09-14T00:00:00Z',
-                                                      fields:{Title:'ph_sched2',Payload:JSON.stringify(REMOTE)}}]});
+    return answer(p, REMOTE===null?null:{id:'1',lastModifiedDateTime:'2026-09-14T00:00:00Z',
+                                         fields:{Title:'ph_sched2',Payload:JSON.stringify(REMOTE)}});
   }};
 /* Large payloads now arrive packed (see "A RECORD SHAREPOINT WILL TAKE" in store.js),
    so the stand-in SharePoint unpacks what it is sent, the way reading it back would. */
@@ -124,7 +129,7 @@ const t=(n,v)=>{ (v? ok:bad).push(n); };
   t('and that refusal stays quiet', banners()===quietBefore);
 
   /* ---- WHOSE COPY WINS -------------------------------------------------------
-     2026-09-17: Heather added Dr. Lightheart to the doctor list; Jenny's calendar
+     2026-09-17: Heather added a new doctor (here Dr. Penhallow, made up) to the doctor list; Jenny's calendar
      carried on showing the four it already had. get() was keeping whichever copy
      looked newer by clock - and every save on the schedule page rewrote ph_docs, so
      merely using the page stamped the local copy as newer without changing anything.
@@ -137,7 +142,7 @@ const t=(n,v)=>{ (v? ok:bad).push(n); };
     require(STORE); const J=window.PH_STORE;
 
     const HEATHERS=[{n:'Dr. Fairbanks'},{n:'Dr. Bramwell'},{n:'Dr. Coleman'},
-                    {n:'Dr. Merrick'},{n:'Dr. Lightheart'}];
+                    {n:'Dr. Merrick'},{n:'Dr. Penhallow'}];
     const JENNYS  =[{n:'Dr. Fairbanks'},{n:'Dr. Bramwell'},{n:'Dr. Coleman'},{n:'Dr. Merrick'}];
 
     // Jenny's browser holds the old four, stamped with her own clock, far in the future.
@@ -149,15 +154,15 @@ const t=(n,v)=>{ (v? ok:bad).push(n); };
     global.PH_AUTH.graph=p=>{
       if(/\/sites\/omega/.test(p)) return Promise.resolve({id:'site'});
       if(/lists\?/.test(p))        return Promise.resolve({value:[{id:'L',displayName:'HomeBraceData'}]});
-      return Promise.resolve({value:[{id:'1', lastModifiedDateTime:'2026-09-16T22:14:00Z',
-        fields:{Title:'ph_docs', Payload:JSON.stringify(HEATHERS)}}]});
+      return answer(p, {id:'1', lastModifiedDateTime:'2026-09-16T22:14:00Z',
+        fields:{Title:'ph_docs', Payload:JSON.stringify(HEATHERS)}});
     };
 
     const got=await J.get('ph_docs');
     t('a newer local clock no longer beats the shared copy',
       Array.isArray(got) && got.length===5);
-    t('Dr. Lightheart reaches the other browser',
-      (got||[]).some(d=>d.n==='Dr. Lightheart'));
+    t('Dr. Penhallow reaches the other browser',
+      (got||[]).some(d=>d.n==='Dr. Penhallow'));
 
     // But a change that genuinely never reached SharePoint must NOT be thrown away.
     global.fetch=()=>Promise.reject(new Error('403 accessDenied'));
@@ -212,8 +217,8 @@ const t=(n,v)=>{ (v? ok:bad).push(n); };
     global.PH_AUTH.graph=p=>{
       if(/\/sites\/omega/.test(p)) return Promise.resolve({id:'site'});
       if(/lists\?/.test(p))        return Promise.resolve({value:[{id:'L',displayName:'HomeBraceData'}]});
-      return Promise.resolve({value:[{id:'1', lastModifiedDateTime:'2026-09-16T21:43:35Z',
-        fields:{Title:'ph_sched2', Payload:JSON.stringify(HER)}}]});
+      return answer(p, {id:'1', lastModifiedDateTime:'2026-09-16T21:43:35Z',
+        fields:{Title:'ph_sched2', Payload:JSON.stringify(HER)}});
     };
     let STORED=JSON.stringify(HER);
     global.fetch=(u,o)=>{ const b=JSON.parse(o.body);
@@ -250,8 +255,8 @@ const t=(n,v)=>{ (v? ok:bad).push(n); };
     global.PH_AUTH.graph=p=>{
       if(/\/sites\/omega/.test(p)) return Promise.resolve({id:'site'});
       if(/lists\?/.test(p))        return Promise.resolve({value:[{id:'L',displayName:'HomeBraceData'}]});
-      return Promise.resolve({value:[{id:'1', lastModifiedDateTime:new Date().toISOString(),
-        fields:{Title:'ph_people', Payload:JSON.stringify(SHARED)}}]});
+      return answer(p, {id:'1', lastModifiedDateTime:new Date().toISOString(),
+        fields:{Title:'ph_people', Payload:JSON.stringify(SHARED)}});
     };
     global.fetch=(u,o)=>{ const b=JSON.parse(o.body);
       SHARED=JSON.parse(b.Payload!==undefined?b.Payload:b.fields.Payload);
@@ -316,8 +321,8 @@ const t=(n,v)=>{ (v? ok:bad).push(n); };
     global.PH_AUTH={ token:()=>Promise.resolve('t'), graph:p=>{
       if(/\/sites\/omega/.test(p)) return Promise.resolve({id:'site'});
       if(/lists\?/.test(p))        return Promise.resolve({value:[{id:'L',displayName:'HomeBraceData'}]});
-      return Promise.resolve({value:[{id:'1', lastModifiedDateTime:'2026-09-18T20:00:00Z',
-        fields:{Title:'ph_sched2', Payload:STORED}}]});
+      return answer(p, {id:'1', lastModifiedDateTime:'2026-09-18T20:00:00Z',
+        fields:{Title:'ph_sched2', Payload:STORED}});
     }};
     global.document.dispatchEvent({type:'ph-signed-in'});
     const got=await pending;
@@ -356,7 +361,7 @@ const t=(n,v)=>{ (v? ok:bad).push(n); };
     global.PH_AUTH={ token:()=>Promise.resolve('t'), graph:p=>{
       if(/\/sites\/omega/.test(p)) return Promise.resolve({id:'site'});
       if(/lists\?/.test(p))        return Promise.resolve({value:[{id:'L',displayName:'HomeBraceData'}]});
-      return Promise.resolve({value:[{id:'1', lastModifiedDateTime:new Date().toISOString(), fields:{Title:'ph_sched2', Payload:JSON.stringify(SHARED)}}]});
+      return answer(p, {id:'1', lastModifiedDateTime:new Date().toISOString(), fields:{Title:'ph_sched2', Payload:JSON.stringify(SHARED)}});
     }};
     global.fetch=(u,o)=>{ const b=JSON.parse(o.body); SHARED=JSON.parse(b.Payload!==undefined?b.Payload:b.fields.Payload);
       return Promise.resolve({status:200,ok:true,json:()=>Promise.resolve({id:'1'})}); };

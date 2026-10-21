@@ -227,6 +227,7 @@ Her two files were read from Downloads only (real names + hours; never in the re
 session notes: what Team B / TC-OM / the J column (Extra/Phone/Sick/DIBS) are, whether Reimburse belongs in Total (most
 rows leave it out; Clovis and some Las Cruces rows include it), Las Cruces $0 bonuses, holiday $ vs hours, the due day,
 Zihua (leadership) rows, salaried doctors. Real build = sensitive data, so a locked SharePoint folder like the TC Tracker.
+-> Heather answered most of these on 22/10: see "Payroll mock-up: Heather's answers" further down.
 
 **Production books: Home-Brace's own copy of the production workbook (21/10/2026, step 1 of the own-data plan).**
 Cory: "don't disconnect production dashboard for now, lets build our own data base and make it scalable ... produce an
@@ -465,6 +466,47 @@ deploy's strip step removes only about/phone, despite its comment). The roster i
 the file should stop being deployed once History shows a ph_roster record (the follow-up noted above). Asked Cory.
 On localhost the real file is present (gitignored), so the local sandbox still shows real names; the public sandbox
 (GitHub Pages) has no file and shows the made-up people.
+Cory, 22/10/2026, on the live `_people.json` and the old names in git history: "Its fine for now we don't need to
+do anythign about the staf." - leave both as they are; don't raise it again unless he does. Also added `.nojekyll`:
+GitHub Pages had never served `_staff.js` (Jekyll hides files starting with "_"), so the public sandbox fell back
+to page-local copies.
+
+**Group 3, step 1: a page reads only the records it uses (22/10/2026, hc109 - pushed to the sandbox, NOT yet on the
+live site).** Cory: "Group 3 but be very very careful you don't delete or change any current data". store.js listing()
+used to fetch EVERY row's contents (schedule, every year's production data and history, everyone's photo) on every
+page just to map key -> item id. Now it asks for keys and ids only (`items?$select=id&$expand=fields($select=Title)`,
+falling back to `$expand=fields($select=Title)` and then the old full request on a 400/501 or an answer without
+fields/keys - `understood()`); readItem() always fetches the row itself by id (readFresh); getAll() fetches each
+wanted row by id, 6 at a time, inside that key's queue. THE RULE: a row's contents never come from a listing (an
+absent Payload there would read as an empty record - the 15 Sep path); a row the listing names but whose own read
+fails is a FAILED read (writes refused). history.html finds its row through PH_STORE.idOf (all pages; it read only the
+first 200 rows). Tests: sync.test.js section 13 (keys only, listed-but-unreadable = failed read, refused short form,
+odd answer, history past 200 rows); the test stand-ins in guard/roster now answer "one row by id" as SharePoint does
+(they answered it with a list, which the old code happened to tolerate). Browser: Team page on the live branch with
+the stand-in SharePoint - one keys-only listing, 4 rows by id, photos and admin faces loaded, no errors. Also: real
+doctor names that were still in tests (and the History page's pre-filled search) replaced by made-up ones.
+NEXT in group 3: TC Tracker recent months first (one bad month must not break it), reading packed records on browsers
+without CompressionStream, Admin size watch; then ONE careful live deploy. Schedule split by year: not now (it would
+move current data).
+
+**Payroll mock-up: Heather's answers (22/10/2026, hc109, sandbox only).** Her email, in short: Team B = the team
+reaching its goal (now "Goal"); TC/OM a bonus, not a set amount; DIBS and POG San Angelo only, Phone Lubbock only,
+all bonuses; Extra = a special bonus; Sick = ONE Clovis person's grandfathered sick hours (she also gets holiday HOURS
+instead of holiday pay); reimbursements stay out of Total; the pay-period bonus is a set amount per person and the
+sender can take off a % or a $ amount; holiday $100, on call $50 a weekend, mileage = the IRS rate ($0.76 now);
+sheets due Tuesday by 2 pm Central, Monday when that week has a holiday; the TC sends Carlsbad's and "FOLC"'s sheet
+(read as Cruces FFO), the clinic lead Lubbock's, office managers the rest. Her asks, all built: "Wk 1"/"Wk 2"
+headings (dates in the period header); overtime in its own columns BY WEEK (Regular, OT Wk 1, OT Wk 2 - how the payroll
+software takes it), approved per week; wrapped headings; the column headings repeated at the top of every office on
+the combined sheet (with that office's own columns: Phone / Sick hrs / DIBS + POG); people listed "Last, First" by last
+name; the sender can add a new hire (Heather sets the bonus - "New people" flag), Heather adds / takes off / brings
+back people and sets bonuses in Settings (taking off never changes a sent sheet); doctors paid by the day: days worked
+Wk 1/Wk 2 per doctor, added and taken off on the sheet or in Settings, shown on the combined sheet and in the CSV.
+Goal, TC/OM, Phone, DIBS, POG and Extra are typed by Heather on the combined sheet (an assumption - the office form
+has none of them). CSV: her main sheet's order, one heading row per office, UTF-8 BOM. Page width 1480 (a spreadsheet
+page). Demo "today" is Tue 20 Oct 09:41 (due day). Old saved clicks (v1) still load. Doctors and people in the
+mock-up are made up (her real per-day doctors are added by her in the real build). OPEN: when the holiday IS the
+Monday (Labor Day), is the sheet still due that Monday?
 
 **TCs see every office in "By office" (19/10, hc85).** Selene: "we do want the Treatment Coordinators to be able to see
 one another's results. Please make sure they can all view the 'By Office' box so they can see conversion rates across
@@ -918,7 +960,7 @@ and could open the file in Excel anyway. Real containment would need per-office 
   SharePoint's `lastModifiedDateTime` — two clocks on two machines. And `saveNow()` rewrote
   `ph_docs` on *every* schedule save, so merely using the page stamped the local copy as newer
   without changing anything; once a browser's push failed, it stayed ahead for good and never saw
-  anyone else's changes again. Heather added Dr. Lightheart on 2026-09-16 and Jenny's calendar
+  anyone else's changes again. Heather added a new doctor on 2026-09-16 and Jenny's calendar
   kept showing four doctors. Now: `<key>__unsent` is set when a push fails and cleared when one
   lands, and that flag — not a timestamp — is the only reason to prefer the local copy.
 - **Only persist what actually changed.** `ph_docs` rode along on every schedule save; it now

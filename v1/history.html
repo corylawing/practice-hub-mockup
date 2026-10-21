@@ -94,7 +94,7 @@
       </div>
       <div>
         <label for="find">Word to find</label>
-        <input id="find" value="Lightheart" spellcheck="false" placeholder="e.g. Lightheart">
+        <input id="find" value="" spellcheck="false" placeholder="e.g. a doctor’s name">
       </div>
     </div>
     <button id="go">Search the history</button>
@@ -103,10 +103,10 @@
   </div>
 </div>
 
-<script src="user.js?v=hc108"></script>
+<script src="user.js?v=hc109"></script>
 <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-<script src="store.js?v=hc108"></script>
-<script src="gate.js?v=hc108"></script>
+<script src="store.js?v=hc109"></script>
+<script src="gate.js?v=hc109"></script>
 <script>
 (function(){
   'use strict';
@@ -270,12 +270,18 @@
         var hit=(r.value||[]).filter(function(l){ return l.displayName===LIST; })[0];
         if(!hit) throw new Error('No "'+LIST+'" list on '+SITE+'.');
         listId=hit.id;
-        return PH_AUTH.graph('/sites/'+siteId+'/lists/'+listId+'/items?$expand=fields&$top=200');
+        /* Which row holds the key, from the keys alone (store.js) - every page of the list.
+           This used to read the first 200 rows with all their contents, and a record past
+           those 200 showed as "no record yet". */
+        if(window.PH_STORE && PH_STORE.idOf) return PH_STORE.idOf(key);
+        return PH_AUTH.graph('/sites/'+siteId+'/lists/'+listId+'/items?$expand=fields&$top=200').then(function(r){
+          var row=(r.value||[]).filter(function(i){ return i.fields && i.fields.Title===key; })[0];
+          return row ? row.id : null;
+        });
       })
-      .then(function(r){
-        var hit=(r.value||[]).filter(function(i){ return i.fields && i.fields.Title===key; })[0];
-        if(!hit) throw new Error('There is no "'+key+'" record in the list yet.');
-        itemId=hit.id;
+      .then(function(id){
+        if(!id) throw new Error('There is no "'+key+'" record in the list yet.');
+        itemId=id;
         return loadNames().then(function(){
           return allVersions('/sites/'+siteId+'/lists/'+listId+'/items/'+itemId+'/versions?$top=200');
         });
