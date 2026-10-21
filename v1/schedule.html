@@ -171,6 +171,21 @@
   .mday.today{border-color:var(--teal);box-shadow:0 0 0 2px var(--teal-soft) inset}
   .mdnum{font-size:11.5px;font-weight:800;color:var(--soft);margin-bottom:4px}
   .mday.today .mdnum{color:var(--teal-600)}
+  /* Today breathes: a slow, soft glow so it is easy to find at a glance (Cory, 21/10/2026:
+     "suttle annimation glow on today"). In the scheme's own accent, so it follows the theme.
+     The jump-to-today flash still wins while it runs; anyone who asks their device for less
+     motion gets the glow held still instead. */
+  @keyframes todayglow{0%,100%{box-shadow:0 0 0 2px var(--teal-soft) inset,0 0 0 0 color-mix(in srgb,var(--teal) 0%,transparent)}
+    50%{box-shadow:0 0 0 2px var(--teal-soft) inset,0 0 22px 5px color-mix(in srgb,var(--teal) 48%,transparent)}}
+  @keyframes todaycell{0%,100%{box-shadow:inset 0 0 0 2px var(--teal2),inset 0 0 0 0 color-mix(in srgb,var(--teal2) 0%,transparent)}
+    50%{box-shadow:inset 0 0 0 2px var(--teal2),inset 0 0 18px 4px color-mix(in srgb,var(--teal2) 50%,transparent)}}
+  .mday.today{animation:todayglow 3s ease-in-out infinite}
+  td.cell.today{animation:todaycell 3s ease-in-out infinite}
+  .mday.today.flash, td.cell.today.flash{animation:todaypulse .8s ease-in-out 2}
+  @media (prefers-reduced-motion: reduce){
+    .mday.today{animation:none;box-shadow:0 0 0 2px var(--teal-soft) inset,0 0 12px 2px color-mix(in srgb,var(--teal) 26%,transparent)}
+    td.cell.today{animation:none;box-shadow:inset 0 0 0 2px var(--teal2),inset 0 0 12px 2px color-mix(in srgb,var(--teal2) 30%,transparent)}
+  }
   /* A solid bar in the office's REAL color. The pale fills we derived are only ~4 ΔE
      apart — two offices could look identical, and worse in some browsers. Her own colors
      are ~36 apart, so the bar is what you actually read. */
@@ -297,10 +312,10 @@
   }
 
 </style>
-<script src="user.js?v=hc96"></script>
+<script src="user.js?v=hc97"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc96"></script>
-  <script src="gate.js?v=hc96"></script>
+  <script src="store.js?v=hc97"></script>
+  <script src="gate.js?v=hc97"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — sample staff schedule for validation. Live version = one Microsoft List the practice maintains.</div>
@@ -1391,7 +1406,7 @@
    machine is missing here until the next page load. */
 document.addEventListener('ph-locations-changed',function(){ if(window.PS&&PS.relocate)PS.relocate(); });
 PH.nav('schedule');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc96"></script>
+<script src="tour.js?v=hc97"></script>
 <script>
 Tour.init([
   {sel:'#viewseg', title:'Week or month', body:'<b>Week</b> is the day-to-day working view. <b>Month</b> shows the whole month at a glance, with every office in its own color.'},

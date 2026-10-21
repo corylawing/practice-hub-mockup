@@ -268,6 +268,18 @@ not flagged; the Excel rebuilt from the kept copy matched her file cell for cell
 NOT YET: step 4 "Start <next year>" (roll-forward - needs Heather: is last year's "Net Production" the TC Net Production
 typed each month, how/when she sets next year's goals and days, Carlsbad's two "2025 Average Case Fee" rows). Step 5
 (dashboard + Enter Production on the books) waits for Cory after a parallel run.
+Cory, 21/10: "the current excel will go away ... only run on Home-Brace" - "before 2027". So her Excel is NOT rebuilt
+for 2027: Home-Brace starts 2027 itself (step 4) and the switch (step 5) lands before January, after the parallel run.
+Step 4 answers taken from her own file, no need to ask her: last year's "Net Production" = the TC Net Production typed
+monthly (her sheet calls the with-write-offs version "Adjusted Net Production"); last year's Medicaid = starts x fee
+(every 2025 Medicaid month on all 4 Medicaid tabs is an exact multiple of the $4,200 fee); Carlsbad's SECOND "2025
+Average Case Fee" (row 42) is 2026's fee mislabelled (same row, same monthly entries, same 12 formulas as Clovis/Hobbs's
+"2026 Average Case Fee"). Timing of goal-setting doesn't matter: Start 2027 is there whenever she is ready.
+
+**Schedule: today breathes (21/10/2026, hc97).** Cory: "suttle annimation glow on today". `.mday.today` (month cards, and
+the phone list) glows on a 3 s ease-in-out loop (`todayglow`, peak 0 0 22px 5px at 48% of the scheme accent via
+color-mix, so it follows the theme); week-grid `td.cell.today` gets an inset version (`todaycell`). The jump-to-today flash
+(`.flash`, todaypulse) still wins while it runs. prefers-reduced-motion: no animation, the glow held still.
 
 **TCs see every office in "By office" (19/10, hc85).** Selene: "we do want the Treatment Coordinators to be able to see
 one another's results. Please make sure they can all view the 'By Office' box so they can see conversion rates across
