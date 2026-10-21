@@ -507,6 +507,20 @@ CORRECTION, same day: the production history will NOT fill - the measurement on 
 capLog: a busy year = 80 KB raw, 4 KB stored, ~6% of a record; each year its own record) stands; the simulation
 above used random numbers, which pack ~3x worse than hers. Nothing changed there.
 
+**Same day, hc112 + guide.** (1) ADMIN COULD BRICK ITSELF: admin.html assumed every built-in team existed (line
+`access['Admin'][x.k]=...` and the `set('Executive Team',...)` starting values) - renaming or deleting ANY built-in
+team from the grid stopped Admin loading for everyone at the next visit (found when a test team list lacked them).
+Now `withAdmin()` keeps the Admin team in every list, the Admin team can't be renamed or deleted (its own little
+dialog), and starting values apply only to teams that exist. (2) Size watch said "Getting full: Profile -
+<a person>" at 70%: a profile row is just a person's photo, which never grows. user.js `avatar()` steps the JPEG
+quality (0.82 -> 0.52) then the size (256 -> 160) until the picture is under 30,000 characters (Admin's photo upload
+uses it too); the size watch skips ph_me_/ph_face_. The existing photo was left as it is. (3) The production guide
+(v1/guide-production.html, public, no sign-in): "Moving off the Excel" (switch, then Stop updating her Excel to cut
+the connection; every step undoable), the Formulas screen (why/when/how), and 12 pictures in v1/guide/ - taken on
+the LIVE branch with the stand-in SharePoint and the MADE-UP workbook (scratchpad wb7/scripts/mkdemo.js ->
+.demo2026.b64.tmp, fakesp-prod.js -> .fakesp.tmp.js; both deleted after), names "Sample Owner"/"Priya Tatum".
+Retake them the same way if a screen changes.
+
 **The schedule: one record per year from 2028 (22/10/2026, hc111).** Cory: "they will need me if it ever gets
 full, its not self sustainable" -> "yes but only if it works otherwise screw it". 'ph_sched2' held every year:
 ~8% of a record per year, full ~2033 (warning ~2031). `v1/schedrec.js` (PH_SCHED): a day from 2028 on is saved in
