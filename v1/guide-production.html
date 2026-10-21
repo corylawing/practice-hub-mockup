@@ -39,7 +39,7 @@
   .ui.go{background:var(--teal);border-color:var(--teal);color:#fff}
   .ui.pill{border-radius:999px}
   .mini{border:1px solid var(--line);border-radius:12px;padding:12px;background:#F8FAFC;margin-top:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;font-size:13.5px}
-  .mini div{background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 11px}
+  .mini>div{background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 11px}
   .mini .q{color:var(--soft);font-size:12.5px}.mini .a{font-weight:700;margin-top:3px}
   .box{display:inline-block;min-width:38px;text-align:right;border:1.5px solid #C9D3DF;border-radius:6px;padding:0 6px;background:#fff;font-weight:700}
   .faq dt{font-weight:800;margin-top:12px}.faq dd{margin:2px 0 0;color:#334155}
@@ -52,8 +52,23 @@
   <div class="top"><div class="brand">Home-<span>Brace</span></div><a href="admin.html">← Back to Home-Brace</a></div>
 
   <h1>Production in Home-Brace</h1>
-  <p class="lead">Home-Brace keeps the production numbers one year at a time. The offices type their numbers each month. You plan the goals once a year. That’s all there is to it.</p>
-  <p class="note"><b>For now</b>, Home-Brace still copies your Excel while the two run side by side. This guide is how it works once Home-Brace keeps the numbers on its own.</p>
+  <p class="lead">Home-Brace can now keep the production numbers itself, so the Excel workbook won’t be needed any more. The offices type their numbers each month, and you plan the goals once a year.</p>
+
+  <div class="card" id="switch">
+    <p class="when">Starting now · you · at your own pace</p>
+    <h2>Moving off the Excel</h2>
+    <p class="where">Nothing changes until <b>you</b> press the switch. Until then, everything works exactly as it does today.</p>
+    <ol class="steps">
+      <li><b>For now, keep using your Excel.</b> Each time you save it, Home-Brace makes its own copy and checks that every number comes out the same.
+        You can see it in <b>Admin → Production data</b>: a green ✓ means they match.</li>
+      <li><b>Plan 2027 in Home-Brace.</b> 2027 is already set up - go office by office in <b>Plan the year</b> (explained below).</li>
+      <li><b>When you feel ready - before January:</b> in <b>Admin → Production data</b>, under <b>Where the production numbers live</b>,
+        press <span class="ui go">Switch to Home-Brace…</span>, check that all three lines have a ✓, and press <span class="ui go">Switch now</span>.</li>
+    </ol>
+    <p class="tip"><b>After the switch:</b> the offices type their numbers in <b>Enter Production</b> the same way as today, and the dashboard shows Home-Brace’s numbers.
+      Leave <b>Keep Heather’s Excel up to date too</b> ticked and your Excel keeps getting every number, until you’re happy to stop using it.
+      Changed your mind? <span class="ui">Switch back to her Excel…</span> puts it back the way it was.</p>
+  </div>
 
   <div class="card">
     <p class="when">Every month · the offices</p>
@@ -72,7 +87,7 @@
     <h2>Plan next year</h2>
     <p class="where">In <b>Admin → Production data → Plan the year</b>.</p>
     <ol class="steps">
-      <li><b>Set up the year.</b> Choose next year and press <span class="ui go">Set up <span data-y="next">2027</span></span>. Home-Brace copies this year’s offices, rows and goal formulas, and this year’s numbers become “last year”. Nothing changes for the offices until January.</li>
+      <li><b>Set up the year.</b> Choose next year and press <span class="ui go">Set up <span data-y="next">2027</span></span>. Home-Brace copies this year’s set-up, and this year’s numbers become “last year”. The offices don’t see any change until January.</li>
       <li><b>Plan each office.</b> Click an office and answer three things:
         <ul class="list">
           <li><b>Grow over last year by</b> <span class="box">4</span> % - offices with Medicaid also have a Medicaid %.</li>
@@ -101,6 +116,36 @@
     </ul>
   </div>
 
+  <div class="card" id="formulas">
+    <p class="when">Rarely · you · when the plan doesn’t cover it</p>
+    <h2>Change how something is worked out</h2>
+    <p class="where">In <b>Admin → Production data → Advanced</b> → <span class="ui">Show</span> → <b>Formulas</b>.</p>
+    <p style="margin:0 0 10px"><b>Why it’s there:</b> so you can change any calculation yourself, for any year, without Excel or anyone’s help.
+      Each year keeps its own formulas, and the Excel download carries them.</p>
+    <p style="margin:0"><b>When you’d use it:</b> Plan the year already covers growth, the stretch goal, case fees and production days.
+      Use Formulas only when a row should be worked out a different way - for example:</p>
+    <ul class="list" style="margin-bottom:14px">
+      <li>a row shows <b>#REF!</b> and needs to point at the right rows again;</li>
+      <li>an office’s goal should come from its stretch goal for a few months (the stretch goal × 0.7);</li>
+      <li>a new number you want to follow, like production per day (production ÷ production days).</li>
+    </ul>
+    <ol class="steps">
+      <li><b>Find the row.</b> Pick the <span class="ui">Year</span> and the office’s <span class="ui">Tab</span>, then type part of the row’s name in <span class="ui">Find a row…</span></li>
+      <li>Press <span class="ui">Change</span> next to the months you want.</li>
+      <li><b>Pick the months</b> (or <span class="ui">All</span>), then write how it’s worked out: add a row with <span class="ui">Add a row</span> - type part of its name and pick it -
+        and the <span class="ui">+</span> <span class="ui">-</span> <span class="ui">×</span> <span class="ui">÷</span> buttons. Numbers like 1.05 or 5% work too.
+        <div class="mini" aria-hidden="true">
+          <div><div class="q"><span data-y="next">2027</span> Goal · Jun–Sep · how it’s worked out</div><div class="a"><span class="ui">Stretch Goal</span> × 0.7</div></div>
+          <div><div class="q">Before you save, every month shows</div><div class="a">Now $52,000 → New $48,300</div></div>
+        </div>
+      </li>
+      <li><b>Check before you save.</b> Each month shows <b>Now</b> and <b>New</b>, and <b>Also changes</b> lists anything else that follows from it.</li>
+      <li>Press <span class="ui go">Save · Jun–Sep <span data-y="next">2027</span></span>. It goes in History, with <span class="ui">Undo</span>.</li>
+    </ol>
+    <p class="tip"><b>Reading a formula:</b> a row on its own means that row in the same month · a row with a month (like “Average Case Fee · Jan”) is that one box.</p>
+    <p class="tip"><b>While a year is still copied from your Excel</b> (<span data-y="this">2026</span> right now), your next Excel save puts your Excel’s formulas back - so change formulas in <span data-y="next">2027</span>, or after the switch.</p>
+  </div>
+
   <div class="card">
     <p class="when">Whenever you need it</p>
     <h2>The Excel</h2>
@@ -113,11 +158,12 @@
       <dt>Can I plan next year before this year is over?</dt>
       <dd>Yes. Numbers entered later for this year (like December, typed in January) are carried into next year’s “last year” by themselves.</dd>
       <dt>What happens to old years?</dt>
-      <dd>They stay, each in its own book. Plan the year only shows this year and next year. Older years are under Years kept, ready to download.</dd>
+      <dd>They stay, each year on its own. Plan the year only shows this year and next year. Older years are under Years kept, ready to download.</dd>
       <dt>Who can change the plan?</dt>
       <dd>Admins. Office managers enter their own office’s numbers in Enter Production.</dd>
       <dt>What’s under Advanced?</dt>
-      <dd>Goals box by box, and every formula in plain words, for the rare change the plan doesn’t cover. You won’t usually need it.</dd>
+      <dd><b>Goals</b>, box by box: one office’s goal for one month, as a growth number (1.05 = last year + 5%) or a dollar amount.
+        And <b>Formulas</b>: see <a href="#formulas" style="color:var(--teal-600);font-weight:700">Change how something is worked out</a>, above.</dd>
       <dt>Something looks wrong?</dt>
       <dd>Check History first - it shows every change, who made it and when, with Undo. Or tell us with the <span class="ui pill">👋 Tour &amp; Feedback</span> button at the bottom right of any page.</dd>
     </dl>
