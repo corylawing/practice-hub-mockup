@@ -263,6 +263,8 @@
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
   <script src="workbook.js?v=hc96"></script>
   <script src="store.js?v=hc96"></script>
+  <script src="prodbook.js?v=hc96"></script>
+  <script src="prodstore.js?v=hc96"></script>
   <script src="gate.js?v=hc96"></script>
 </head>
 <body>
@@ -1140,6 +1142,12 @@ const OFFICES=[
     banner('<span>\u25CF</span><span>Showing the practice\'s live workbook'+when+
            (res.errors.length?' <b>&mdash; '+res.errors.length+' tab(s) unread</b>':'')+'</span>',
            res.errors.length>0);
+    /* Home-Brace's own copy of the workbook (prodstore.js, 21/10/2026) runs ALONGSIDE this,
+       never instead of it: once an admin has the numbers on screen, copy her Excel if she has
+       saved since the last copy. In the background - the dashboard never waits on it, and a
+       failure only shows in Admin -> Production data. Copy-only: her Excel is never written. */
+    if(window.PH_PROD && PH.isAdmin && PH.isAdmin())
+      PH_PROD.syncFromWorkbook({driveId:WB_DRIVE, itemId:WB_ITEM}).catch(function(e){ try{ console.warn('Production copy:', e && e.message || e); }catch(_){} });
     return true;
   }
 

@@ -74,6 +74,37 @@
     return out;
   }
 
+  /* The same, compressed - about a tenth of the size. The browser's own CompressionStream. */
+  function deflateRaw(bytes){
+    if(typeof CompressionStream === 'undefined') return Promise.resolve(null);
+    var s = new Blob([bytes]).stream().pipeThrough(new CompressionStream('deflate-raw'));
+    return new Response(s).arrayBuffer().then(function(ab){ return new Uint8Array(ab); });
+  }
+  function writeZipSmall(files){
+    var enc = new TextEncoder(), names = Object.keys(files);
+    var raw = names.map(function(n){ return typeof files[n] === 'string' ? enc.encode(files[n]) : files[n]; });
+    return Promise.all(raw.map(deflateRaw)).then(function(comp){
+      if(comp.some(function(c){ return !c; })) return writeZip(files);       // no CompressionStream: stored is fine
+      var parts = [], cd = [], off = 0;
+      function w16(a,v){ a.push(v & 255, (v>>>8) & 255); }
+      function w32(a,v){ a.push(v & 255, (v>>>8) & 255, (v>>>16) & 255, (v>>>24) & 255); }
+      names.forEach(function(name, i){
+        var d = raw[i], z = comp[i], nm = enc.encode(name), c = crc32(d), h = [];
+        w32(h,0x04034b50); w16(h,20); w16(h,0x0800); w16(h,8); w16(h,0); w16(h,0x21); w32(h,c); w32(h,z.length); w32(h,d.length); w16(h,nm.length); w16(h,0);
+        var head = new Uint8Array(h.length + nm.length); head.set(h); head.set(nm, h.length); parts.push(head, z);
+        var e = []; w32(e,0x02014b50); w16(e,20); w16(e,20); w16(e,0x0800); w16(e,8); w16(e,0); w16(e,0x21); w32(e,c); w32(e,z.length); w32(e,d.length);
+        w16(e,nm.length); w16(e,0); w16(e,0); w16(e,0); w16(e,0); w32(e,0); w32(e,off);
+        var ent = new Uint8Array(e.length + nm.length); ent.set(e); ent.set(nm, e.length); cd.push(ent);
+        off += head.length + z.length;
+      });
+      var cdLen = cd.reduce(function(a,x){ return a + x.length; }, 0), end = [];
+      w32(end,0x06054b50); w16(end,0); w16(end,0); w16(end,cd.length); w16(end,cd.length); w32(end,cdLen); w32(end,off); w16(end,0);
+      var all = parts.concat(cd, [new Uint8Array(end)]), out = new Uint8Array(all.reduce(function(a,x){ return a + x.length; }, 0)), at = 0;
+      all.forEach(function(x){ out.set(x, at); at += x.length; });
+      return out;
+    });
+  }
+
   /* ------------------------------------------------------------------ cell addresses */
   function colNum(s){ var n = 0; for(var i = 0; i < s.length; i++) n = n*26 + s.charCodeAt(i) - 64; return n; }
   function colName(n){ var s = ''; while(n > 0){ var r = (n-1) % 26; s = String.fromCharCode(65+r) + s; n = (n-1-r)/26; } return s; }
@@ -283,7 +314,7 @@
   /* Put a year's data into its template and give back the .xlsx bytes. Only the <c> elements of
      typed cells and the cached values of formula cells are touched; styles, widths, merges and
      everything else are the template's own bytes. Excel recalculates on open (fullCalcOnLoad). */
-  function exportXlsx(book, data, ev){
+  function exportFiles(book, data, ev){
     var files = {}, enc = new TextEncoder();
     Object.keys(book.files).forEach(function(n){ files[n] = book.files[n]; });
     delete files['xl/calcChain.xml'];          // Excel rebuilds it; a stale one makes it "repair" the file
@@ -322,8 +353,10 @@
       }).join('');
       files[sh.path] = enc.encode(head + '<sheetData>' + body + '</sheetData>' + tail);
     });
-    return writeZip(files);
+    return files;
   }
+  function exportXlsx(book, data, ev){ return writeZip(exportFiles(book, data, ev)); }
+  function exportXlsxSmall(book, data, ev){ return writeZipSmall(exportFiles(book, data, ev)); }
   /* The template: the same workbook with every typed number taken out. */
   function blank(book){
     var copy = {names:book.names.slice(), sheets:{}, files:book.files, sst:book.sst};
@@ -347,8 +380,38 @@
   }
   function open(bytes){ return readZip(bytes).then(parseBook); }
 
-  var API = {readZip:readZip, writeZip:writeZip, crc32:crc32, parseBook:parseBook, open:open, parse:parse, tokenize:tokenize,
-             evaluate:evaluate, dataOf:dataOf, grid:grid, exportXlsx:exportXlsx, blank:blank, withData:withData,
+  /* What a cell IS, in the workbook's own words: the row's label (column A) and the heading of
+     its column (the nearest text above it - "October"). For the history of changes. */
+  function labelAt(book, sheet, a){
+    var cs = book.sheets[sheet] ? book.sheets[sheet].cells : {}, p = split(a), label = '', head = '';
+    for(var c = p.c - 1; c >= 1 && !label; c--){ var x = cs[addr(c, p.r)]; if(x && typeof x.v === 'string' && x.f == null && x.v.trim()) label = x.v.trim(); }
+    for(var r = p.r - 1; r >= 1 && !head; r--){ var y = cs[addr(p.c, r)]; if(y && typeof y.v === 'string' && y.f == null && y.v.trim()) head = y.v.trim(); }
+    return {label:label, head:head};
+  }
+  /* The year a book is for: the year its goal rows are named after ("2026 TC Production Goal"). */
+  function yearOf(book){
+    var count = {};
+    book.names.forEach(function(s){ var cs = book.sheets[s].cells;
+      Object.keys(cs).forEach(function(a){ var v = cs[a].v; if(typeof v === 'string'){ var m = /\b(20\d\d)\b[^]*\bgoal\b/i.exec(v); if(m) count[m[1]] = (count[m[1]] || 0) + 1; } }); });
+    var best = null; Object.keys(count).forEach(function(y){ if(best == null || count[y] > count[best]) best = y; });
+    return best ? +best : null;
+  }
+  /* The layout, as text: every label, formula and cell format, tab by tab, plus the styles part.
+     Two saves of the same workbook give the same fingerprint even though Excel rewrites its
+     own save date - so "the layout changed" means a label, formula or format really changed. */
+  function layoutText(book){
+    var out = {};
+    book.names.forEach(function(s){ var cs = book.sheets[s].cells;
+      out[s] = Object.keys(cs).sort().map(function(a){ var c = cs[a];
+        return a + '|' + (c.f != null ? '=' + c.f : (typeof c.v === 'string' && c.v !== '' ? 'T' + c.v : '')) + '|' + (c.s == null ? '' : c.s); }).join('\n'); });
+    out['(styles)'] = book.files && book.files['xl/styles.xml'] ? txt(book.files['xl/styles.xml']) : '';
+    out['(tabs)'] = book.names.join('\n');
+    return out;
+  }
+
+  var API = {readZip:readZip, writeZip:writeZip, writeZipSmall:writeZipSmall, crc32:crc32, parseBook:parseBook, open:open, parse:parse, tokenize:tokenize,
+             evaluate:evaluate, dataOf:dataOf, grid:grid, exportFiles:exportFiles, exportXlsx:exportXlsx, exportXlsxSmall:exportXlsxSmall,
+             blank:blank, withData:withData, labelAt:labelAt, yearOf:yearOf, layoutText:layoutText,
              shift:shift, colNum:colNum, colName:colName, isErr:isErr};
   if(typeof module !== 'undefined' && module.exports) module.exports = API;
   global.PH_BOOK = API;

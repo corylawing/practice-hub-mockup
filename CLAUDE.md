@@ -247,6 +247,28 @@ built): store books (template file + data record per year), copy-only sync from 
 "Production data" (years kept, Download Excel, upload a changed layout for one year), "Start 2027" roll-forward, and only
 when Cory says: dashboard + Enter Production read/write the books.
 
+**Steps 1-3 built (21/10/2026, hc96): keep each year, copy her Excel, Admin -> Production data.** Cory: "I'm ok for
+1-4, but for 5 we need to wait and run them parrell for a bit" and "I want Home-Brace to be the data base in the future".
+`v1/prodstore.js` (PH_PROD): each year = template FILE "<year> production template.xlsx" in folder "Home-Brace
+Production" at the top of the site's Documents (versions kept by SharePoint; NOT under Home-Brace Documents, so the
+Documents page and header search never show it) + numbers in PH_STORE `ph_prod_data_<year>` + history `ph_prod_log_<year>`
+(150 entries; each change in the workbook's own words: tab, row label, column heading, from -> to, whose save) + index
+`ph_prod_index` (years, layout fingerprint per tab, formula check, last copy, `source` = her save last copied).
+COPY-ONLY: her workbook is only ever READ (GET item + downloadUrl; test asserts no write). Copies run for ADMINS only,
+in the background after the live dashboard has loaded (index.html hydrate) when her lastModifiedDateTime moved, and from
+Admin -> Production data "Copy now". Layout saved again only when the fingerprint (labels, formulas, formats, styles,
+tabs) changes - a plain re-save doesn't count. A layout uploaded for a year can KEEP Home-Brace's numbers: remap() moves
+each to the cell with the same tab + row label + column heading (duplicates keep order); unplaced ones are listed.
+Sandbox: her workbook never opened; "Choose a workbook" tries a file, kept in localStorage `ph_prod_tpl_<year>`.
+`v1/prodadmin.js` (PH_PRODUI) = the Admin tab: copy status, formula check (green / list of differences), years table with
+Download Excel (exportXlsxSmall: her layout + numbers, ~84 KB), History, Upload a changed layout (warns when the file is
+for another year, and that her next Excel copy wins for the year being copied). Checked on Cory's Mac with -6 then -7:
+first copy 937 numbers / 1,881 formulas / 0 differ; second copy found exactly the 8 October numbers that changed; layout
+not flagged; the Excel rebuilt from the kept copy matched her file cell for cell. Tests: test/prodstore.test.js (29).
+NOT YET: step 4 "Start <next year>" (roll-forward - needs Heather: is last year's "Net Production" the TC Net Production
+typed each month, how/when she sets next year's goals and days, Carlsbad's two "2025 Average Case Fee" rows). Step 5
+(dashboard + Enter Production on the books) waits for Cory after a parallel run.
+
 **TCs see every office in "By office" (19/10, hc85).** Selene: "we do want the Treatment Coordinators to be able to see
 one another's results. Please make sure they can all view the 'By Office' box so they can see conversion rates across
 locations." viewNumbers(): for a TC (`iAmTC() && !canManage()`) the box lists `allOffices()` from EVERY (rates and

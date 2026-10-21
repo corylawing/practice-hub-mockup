@@ -271,6 +271,9 @@
   <script src="store.js?v=hc96"></script>
   <script src="gate.js?v=hc96"></script>
   <script src="docs.js?v=hc96"></script>
+  <script src="prodbook.js?v=hc96"></script>
+  <script src="prodstore.js?v=hc96"></script>
+  <script src="prodadmin.js?v=hc96"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — admin console concept for validation. Real build: people sync from Microsoft 365; access is managed here.</div>
@@ -294,6 +297,7 @@
     <button class="tab" data-t="access" onclick="AD.tab('access')">Teams &amp; Access</button>
     <button class="tab" data-t="files" onclick="AD.tab('files')">Document Sections</button>
     <button class="tab" data-t="locs" onclick="AD.tab('locs')">Locations</button>
+    <button class="tab" data-t="prod" onclick="AD.tab('prod')">Production data</button>
   </div>
 
   <div id="view"></div>
@@ -702,7 +706,9 @@
   }
 
   function render(){ if(tab==='users')renderUsers(); else if(tab==='access')renderAccess();
-    else if(tab==='locs')renderLocs(); else renderFiles(); }
+    else if(tab==='locs')renderLocs(); else if(tab==='prod')renderProd(); else renderFiles(); }
+  /* Home-Brace's own copy of the production workbook, one book per year (prodadmin.js). */
+  function renderProd(){ const v=document.getElementById('view'); if(window.PH_PRODUI) PH_PRODUI.mount(v); else v.innerHTML='<div class="intro">Production data could not load.</div>'; }
 
   const esc=v=>String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
 
