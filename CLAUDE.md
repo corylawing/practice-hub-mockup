@@ -398,6 +398,22 @@ Tests: test/prodplan.test.js (23).
 now one sentence + "Set up 2027" (previewNextYear + createNextYear in one go, straight on to step 2); the row-by-row
 preview and its notes are behind a small "Technical details" link (for checking). Wording: "set up" (not "start"),
 "next year · not set up". Next year she does the same: Set up 2028, plan each office.
+**Holds up year after year (21/10/2026, hc105).** Cory: "how does she create other years.. Think scalable!!!", "What
+happens when this goes for lets say 10 years will it run out of space", "you'll have 2026 you now have 2027 square
+and it will go on and on", "make a straight forward guide for Heather".
+- Year pills by the CALENDAR (plYears): this year (and last year while it's still the one offices use), and the next
+  year to set up once it is this year or next - never more than 2-3. Old years live under Years kept (newest 3 shown,
+  "Show older years"). A year that has begun without being set up opens first, with a warning. Checked with a fake
+  clock: Oct 2026 = 2026 | *2027; Feb 2027 = *2027 | 2028 not set up; Jan 2028 (unset) = 2027 last year | 2028 this
+  year not set up + warning.
+- Space, measured on her -7 file in a busy year (every office planned + 192 Enter Production saves): numbers 10 KB,
+  History 80 KB raw / 4 KB stored, links 5 KB, index 2 KB (+~1 KB a year), the year's Excel 81 KB. ~100 KB a year;
+  each year is its own records. History now keeps up to 1,000 entries a year, trimmed from the oldest end before it
+  could pass 600,000 raw characters (~31,000 stored; SharePoint's record limit is 63,000) - capLog() everywhere.
+- `v1/guide-production.html`: the production guide for Heather, no sign-in (no data in it), plain steps in her words:
+  every month (Enter Production; December in January = choose last year), once a year (Set up, Plan each office),
+  change your mind (Undo, History), the Excel, good to know. Example years fill themselves in (this year/next year).
+  Linked from Plan the year ("Read the guide").
 
 **TCs see every office in "By office" (19/10, hc85).** Selene: "we do want the Treatment Coordinators to be able to see
 one another's results. Please make sure they can all view the 'By Office' box so they can see conversion rates across

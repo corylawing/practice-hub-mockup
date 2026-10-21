@@ -16,7 +16,7 @@
   var host = null, IDX = null, LOGS = {}, open = null, busy = '', msg = null, pending = null, MODE = null, sw = null, NEXT = null, nextOpen = {};
   var GY = null, GO = null, GM = null, GEDIT = {}, GPREV = {}, GERR = '', gTimer = null;
   var FY = null, FT = null, FM = null, FQ = '', FED = null, FMSG = null, fTimer = null, fLoading = false;   // Formulas
-  var PSERR = '', PY = null, PO = null, PM = null, PD = null, PDIRTY = false, PPREV = null, PERR = '', PMSG = null, POPEN = {}, pTimer = null, pLoading = false, ADV = false;   // Plan, Advanced
+  var OLDY = false, PSERR = '', PY = null, PO = null, PM = null, PD = null, PDIRTY = false, PPREV = null, PERR = '', PMSG = null, POPEN = {}, pTimer = null, pLoading = false, ADV = false;   // Plan, Advanced
 
   var CSS = '.pd{display:flex;flex-direction:column;gap:16px}'+
     '.pd .card{padding:18px}.pd h2{margin:0 0 4px;font-size:17px;color:var(--navy)}.pd .sub{margin:0 0 12px;color:var(--soft);font-size:13.5px;max-width:72ch}'+
@@ -119,7 +119,8 @@
     if(!years.length) h += '<div class="muted" style="font-size:14px">Nothing kept yet.</div>';
     else {
       h += '<div class="tw"><table><thead><tr><th>Year</th><th class="num">Numbers</th><th class="num">Formulas</th><th>Last copy</th><th></th></tr></thead><tbody>';
-      years.forEach(function(y){ var Y = IDX.years[y];
+      // newest three; the rest behind "Show older years" - the list grows a row a year
+      years.slice(0, OLDY ? years.length : 3).forEach(function(y){ var Y = IDX.years[y];
         h += '<tr><td><b>'+esc(y)+'</b></td><td class="num">'+(Y.numbers||0).toLocaleString('en-US')+'</td><td class="num">'+(Y.formulas||0).toLocaleString('en-US')+'</td>'+
           '<td>'+(Y.lastCopy ? when(Y.lastCopy.copiedAt)+(Y.lastCopy.how==='upload' ? ' · uploaded' : '') : '')+'</td>'+
           '<td><div class="acts"><button class="btn tiny" data-pd="dl" data-y="'+esc(y)+'"'+(busy?' disabled':'')+'>'+(busy==='dl'+y?'Building…':'⬇ Download Excel')+'</button>'+
@@ -127,6 +128,7 @@
           '<label class="btn ghost tiny" style="cursor:pointer">Upload a changed layout<input type="file" accept=".xlsx" data-pd="layout" data-y="'+esc(y)+'" hidden></label></div></td></tr>';
       });
       h += '</tbody></table></div>';
+      if(years.length > 3) h += '<button type="button" class="pllink" data-pd="oldy">'+(OLDY ? 'Show only the latest years' : 'Show older years ('+(years.length - 3)+')')+'</button>';
     }
     if(pending) h += pendingHTML();
     h += '</div>';
@@ -257,26 +259,30 @@
   var MO3 = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   var kfmt = function(v){ return typeof v === 'number' && isFinite(v) && v !== 0 ? (Math.abs(v) >= 1000 ? Math.round(v / 1000).toLocaleString('en-US') + 'k' : String(Math.round(v))) : '—'; };
   var usd = function(v){ return typeof v === 'number' && isFinite(v) ? '$' + Math.round(v).toLocaleString('en-US') : '—'; };
+  /* The years to show, by the calendar - the same in 2028, 2029, ... : this year (and last year while it is still
+     the one the offices use), and the next year to set up, once it is this year or next. Which one opens: a year
+     that has begun without being set up, first; else next year once it's set up, or from October; else this year. */
   function plYears(){
     var kept = IDX ? Object.keys(IDX.years).map(Number).sort(function(a, b){ return a - b; }) : [];
     if(!kept.length) return null;
-    var now = new Date(), live = P().liveYear(IDX) || kept[kept.length - 1], maxK = kept[kept.length - 1];
-    var list = kept.filter(function(y){ return y >= live; }), next = maxK <= live ? maxK + 1 : null;   // next year, until it is started
-    if(next) list.push(next);
-    // the year she is most likely here for: next year once it is started, or from October on; otherwise this one
-    var def = maxK > live ? maxK : now.getMonth() >= 9 ? next : live;
-    return {list:list, live:live, next:next || maxK, def:def};
+    var now = new Date(), cal = now.getFullYear(), maxK = kept[kept.length - 1], live = P().liveYear(IDX) || maxK;
+    var list = kept.filter(function(y){ return y >= Math.min(live, cal); }), next = maxK + 1, offer = next <= cal + 1;
+    if(offer) list.push(next);
+    var def = !IDX.years[cal] && offer && next <= cal ? next : maxK > cal ? maxK : now.getMonth() >= 9 && offer ? next : IDX.years[cal] ? cal : live;
+    return {list:list, live:live, cal:cal, next:offer ? next : null, def:def};
   }
   function planHTML(){
     var Y = plYears(); if(!Y || !global.PH_FX) return '';
     if(!PY || Y.list.indexOf(+PY) < 0) PY = Y.def;
     var started = !!IDX.years[PY];
     var h = '<div class="card" id="pdplan"><h2>Plan the year</h2><p class="sub">Every year, when it’s time to set next year’s goals: <b>1. Set up the year</b> (one click), '+
-      '<b>2. Plan each office</b> - the growth over last year, the stretch goal, production days and case fees. A plan can be changed any time, and every save can be undone.</p>';
+      '<b>2. Plan each office</b> - the growth over last year, the stretch goal, production days and case fees. A plan can be changed any time, and every save can be undone. '+
+      '<a href="guide-production.html" target="_blank" rel="noopener" style="font-weight:700;color:var(--teal-600,#0F827E)">Read the guide</a></p>';
     h += '<div class="plsteps">'+Y.list.map(function(y){
-      var tag = y === Y.live ? 'this year' : y > Y.live ? (IDX.years[y] ? 'next year' : 'next year · not set up') : '';
+      var tag = (y === Y.cal ? 'this year' : y === Y.cal + 1 ? 'next year' : y === Y.cal - 1 ? 'last year' : '') + (IDX.years[y] ? '' : ' · not set up');
       return '<button type="button" class="plyr'+(y === +PY ? ' on' : '')+'" data-pd="plyear" data-y="'+y+'">'+y+(tag ? '<small>'+tag+'</small>' : '')+'</button>'; }).join('')+'</div>';
     if(!started){
+      if(+PY <= Y.cal) h += '<div class="stat warn" style="margin-bottom:10px"><span>⚠️</span><span class="grow"><b>'+esc(PY)+' has begun and isn’t set up yet.</b> Set it up now, so the offices’ January numbers go into '+esc(PY)+'.</span></div>';
       h += '<div class="plstep">Step 1 · Set up '+esc(PY)+'</div>'+nextBody()+'<div class="plstep" style="margin-top:14px;opacity:.6">Step 2 · Plan each office</div><div class="muted" style="font-size:13px">Once '+esc(PY)+' is set up.</div>';
       return h + '</div>';
     }
@@ -758,6 +764,7 @@
       P().formulaUndo(PM ? PM.year : +PY, b.dataset.at).then(function(){ busy = ''; LOGS = {}; PMSG = {cls:'ok', html:'↩ Undone - the plan is back to how it was (it’s in History).'}; PM = null; pLoad(); },
         function(e){ busy = ''; PMSG = {cls:'warn', html:'⚠️ '+esc((e && e.message) || e)}; render(); }); return; }
     if(act === 'adv'){ ADV = !ADV; render(); return; }
+    if(act === 'oldy'){ OLDY = !OLDY; render(); return; }
     if(act === 'fxedit'){ fxOpen(+b.dataset.row, +b.dataset.g); return; }
     if(act === 'fxcol' && FED){ var fc = +b.dataset.c, fi = FED.cols.indexOf(fc); if(fi >= 0) FED.cols.splice(fi, 1); else FED.cols.push(fc); FED.prev = null; fPaint(); fPreview(); return; }
     if(act === 'fxcolall' && FED){ var fr = FM.rows.filter(function(x){ return x.row === FED.row; })[0]; FED.cols = fr ? fr.boxes.map(function(x){ return x.c; }) : FED.cols; FED.prev = null; fPaint(); fPreview(); return; }

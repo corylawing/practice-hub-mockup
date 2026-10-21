@@ -28,7 +28,16 @@
   var HOST = 'omegaorthodontics.sharepoint.com', SITE = '/sites/Home-Brace', FOLDER = 'Home-Brace Production';
   var GRAPH = 'https://graph.microsoft.com/v1.0';
   var INDEX = 'ph_prod_index', DATA = 'ph_prod_data_', LOG = 'ph_prod_log_', MODE = 'ph_prod_mode', LINKS = 'ph_prod_links_';
-  var LOG_KEEP = 150, CHANGES_KEEP = 400;
+  /* A year's History keeps a whole busy year (her -7 file, every office planned + 192 Enter Production saves =
+     80 KB, 4 KB as stored) - and is trimmed from the oldest end before it could ever outgrow a SharePoint
+     record (63,000 characters stored; 600,000 raw is about 31,000 stored at that rate). Each year has its
+     own, so years never add up. */
+  var LOG_KEEP = 1000, LOG_RAW_MAX = 600000, CHANGES_KEEP = 400;
+  function capLog(list){
+    list = list.slice(0, LOG_KEEP);
+    while(list.length > 1 && JSON.stringify(list).length > LOG_RAW_MAX) list.pop();
+    return list;
+  }
   var B = function(){ return global.PH_BOOK; };
   var S = function(){ return global.PH_STORE; };
 
@@ -197,7 +206,7 @@
       var writes = [];
       if(!prevData || changes.length) writes.push(store.set(DATA + year, {year:year, data:data, from:from}));
       if(entry.first || entry.layout || changes.length)
-        writes.push(store.update(LOG + year, function(list){ list = Array.isArray(list) ? list : []; list.unshift(entry); return list.slice(0, LOG_KEEP); }));
+        writes.push(store.update(LOG + year, function(list){ list = Array.isArray(list) ? list : []; list.unshift(entry); return capLog(list); }));
       writes.push(store.update(INDEX, function(cur){
         cur = (cur && cur.years) ? cur : {years:{}};
         var y = cur.years[year] = cur.years[year] || {};
@@ -379,7 +388,7 @@
       return S().update(LOG + year, function(list){
         list = Array.isArray(list) ? list : [];
         list.unshift({at:nowISO(), from:{how:'enter', by:me(), copiedBy:me(), office:officeName}, changes:changes});
-        return list.slice(0, LOG_KEEP);
+        return capLog(list);
       }).then(function(){ return followOn(year); });
     }).then(function(next){ return {saved:targets.map(function(t){ return {field:t.field, address:t.tab + '!' + t.cell, label:t.label}; }), changes:changes, next:next || null}; });
   }
@@ -487,7 +496,7 @@
       return saveTpl.then(function(t){
         rec.data = data; rec.updatedAt = at; rec.updatedBy = me();
         jobs.push(S().set(DATA + year, rec));
-        jobs.push(S().update(LOG + year, function(list){ return [{at:at, from:{how:'goals', by:me(), copiedBy:me(), office:officeName}, changes:log}].concat(Array.isArray(list) ? list : []).slice(0, LOG_KEEP); }));
+        jobs.push(S().update(LOG + year, function(list){ return capLog([{at:at, from:{how:'goals', by:me(), copiedBy:me(), office:officeName}, changes:log}].concat(Array.isArray(list) ? list : [])); }));
         if(t) jobs.push(S().update(INDEX, function(cur){ cur = (cur && cur.years) ? cur : {years:{}}; var y = cur.years[year] = cur.years[year] || {}; y.layout = t.fp; y.template = {name:t.sv.name, webUrl:t.sv.webUrl || '', savedAt:at}; return cur; }));
         return Promise.all(jobs);
       }).then(function(res){
@@ -575,7 +584,7 @@
     var saveTpl = tplChanged ? B().exportXlsxSmall(B().blank(t2), {}, null).then(function(bytes){ return putTemplate(year, bytes); }).then(function(sv){
       delete tplCache[year]; return fingerprint(t2).then(function(fp){ return {sv:sv, fp:fp}; }); }) : Promise.resolve(null);
     return saveTpl.then(function(t){
-      var jobs = [S().update(LOG + year, function(list){ return [{at:at, from:Object.assign({by:me(), copiedBy:me(), tab:tab}, from), changes:changes}].concat(Array.isArray(list) ? list : []).slice(0, LOG_KEEP); })];
+      var jobs = [S().update(LOG + year, function(list){ return capLog([{at:at, from:Object.assign({by:me(), copiedBy:me(), tab:tab}, from), changes:changes}].concat(Array.isArray(list) ? list : [])); })];
       if(t) jobs.push(S().update(INDEX, function(cur){ cur = (cur && cur.years) ? cur : {years:{}}; var y = cur.years[year] = cur.years[year] || {};
         y.layout = t.fp; y.formulas = t2.names.reduce(function(n, s){ return n + Object.keys(t2.sheets[s].cells).filter(function(a){ return t2.sheets[s].cells[a].f != null; }).length; }, 0);
         y.template = {name:t.sv.name, webUrl:t.sv.webUrl || '', savedAt:at}; return cur; }));
@@ -1005,7 +1014,7 @@
         return Promise.all([
           S().set(DATA + to, {year:to, data:pv.data, from:{how:'start', fromYear:pv.from, copiedAt:at, copiedBy:me()}, updatedAt:at, updatedBy:me()}),
           S().set(LINKS + to, {from:pv.from, at:at, cells:links}),
-          S().update(LOG + to, function(list){ return [entry].concat(Array.isArray(list) ? list : []).slice(0, LOG_KEEP); }),
+          S().update(LOG + to, function(list){ return capLog([entry].concat(Array.isArray(list) ? list : [])); }),
           S().update(INDEX, function(cur){
             cur = (cur && cur.years) ? cur : {years:{}};
             if(cur.years[to]) return undefined;
@@ -1070,7 +1079,7 @@
             S().update(LOG + to, function(list){
               list = Array.isArray(list) ? list : [];
               list.unshift({at:nowISO(), from:{how:'lastyear', fromYear:from, by:me(), copiedBy:me()}, changes:changes});
-              return list.slice(0, LOG_KEEP);
+              return capLog(list);
             })
           ]).then(function(){ return {year:to, changes:changes.length, kept:kept}; });
         });
