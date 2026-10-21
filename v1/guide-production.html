@@ -4,47 +4,56 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Home-Brace · Production guide</title>
-<meta name="description" content="How production works in Home-Brace: offices enter their numbers each month, and the goals are planned once a year.">
+<meta name="description" content="How production works in Home-Brace: moving off the Excel, entering the month's numbers, planning next year, and changing a calculation - step by step, with pictures.">
 <link rel="icon" href="../assets/favicon.png?v=2" type="image/png">
 <meta name="theme-color" content="#0F2A4A">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-<!-- The production guide (Cory, 21/10/2026: "make a straight forward guide for Heather"). Plain steps in her
-     sheet's words, no data in it, so it needs no sign-in. Linked from Admin -> Production data -> Plan the year. -->
+<!-- The production guide (Cory, 21/10/2026: "make a straight forward guide for Heather"; 22/10: "The guide needs
+     more photos and more clear"). Plain steps in her words, with pictures of the real screens taken with MADE-UP
+     numbers and names (the page is public: no sign-in, no real data). Linked from Admin -> Production data. -->
 <style>
-  :root{--navy:#0F2A4A;--teal:#149B96;--teal-600:#0F827E;--teal-soft:#E5F4F3;--line:#E4E9F0;--soft:#5B6B80;--warm:#FFF8E6;--maxw:780px}
+  :root{--navy:#0F2A4A;--teal:#149B96;--teal-600:#0F827E;--teal-soft:#E5F4F3;--line:#E4E9F0;--soft:#5B6B80;--warm:#FFF8E6;--maxw:820px}
   *{box-sizing:border-box}
   body{margin:0;background:#F4F6F9;font:15.5px/1.65 Inter,system-ui,-apple-system,Segoe UI,sans-serif;color:var(--navy)}
   .wrap{max-width:var(--maxw);margin:0 auto;padding:22px 16px 60px}
   .top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
   .top a{color:var(--teal-600);font-weight:700;text-decoration:none;font-size:14px}
   .brand{font-weight:800;font-size:15px}.brand span{color:var(--teal)}
-  h1{font-size:27px;line-height:1.2;margin:4px 0 8px;text-wrap:balance}
-  .lead{font-size:16.5px;color:var(--soft);margin:0 0 18px;max-width:62ch}
-  .note{background:var(--warm);border:1px solid #f2d99b;color:#6b4a00;border-radius:12px;padding:11px 14px;font-size:14px;margin:0 0 18px}
-  .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px 22px;margin-bottom:14px;box-shadow:0 1px 3px rgba(15,42,74,.05)}
+  h1{font-size:28px;line-height:1.2;margin:4px 0 8px;text-wrap:balance}
+  .lead{font-size:17px;color:var(--soft);margin:0 0 16px;max-width:62ch}
+  .toc{background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px 18px;margin:0 0 16px}
+  .toc b{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--soft);margin-bottom:6px}
+  .toc ol{margin:0;padding-left:20px;display:grid;gap:3px}
+  .toc a{color:var(--teal-600);font-weight:700;text-decoration:none}
+  .toc small{color:var(--soft);font-weight:400}
+  .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px 22px;margin-bottom:16px;box-shadow:0 1px 3px rgba(15,42,74,.05);scroll-margin-top:12px}
   .when{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--teal-600);margin:0 0 2px}
-  h2{font-size:19px;margin:0 0 4px}
-  .where{font-size:14px;color:var(--soft);margin:0 0 14px}
+  h2{font-size:20px;margin:0 0 4px}
+  .where{font-size:14.5px;color:var(--soft);margin:0 0 14px}
   .where b{color:var(--navy)}
-  ol.steps{list-style:none;counter-reset:s;padding:0;margin:0;display:flex;flex-direction:column;gap:12px}
+  ol.steps{list-style:none;counter-reset:s;padding:0;margin:0;display:flex;flex-direction:column;gap:16px}
   ol.steps>li{counter-increment:s;position:relative;padding-left:40px}
   ol.steps>li::before{content:counter(s);position:absolute;left:0;top:1px;width:27px;height:27px;border-radius:50%;background:var(--teal);color:#fff;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center}
   ol.steps>li b{color:var(--navy)}
   ul.list{margin:6px 0 0;padding-left:20px}ul.list li{margin:3px 0}
-  .tip{background:var(--teal-soft);border-radius:10px;padding:10px 13px;font-size:14px;margin-top:14px}
+  .tip{background:var(--teal-soft);border-radius:10px;padding:10px 13px;font-size:14px;margin:14px 0 0}
   .tip b{color:var(--teal-600)}
   /* small pictures of the real buttons, so she knows what to look for */
   .ui{display:inline-block;border:1px solid #cbd5e1;border-radius:8px;padding:1px 8px;font-size:13px;font-weight:700;background:#fff;white-space:nowrap}
   .ui.go{background:var(--teal);border-color:var(--teal);color:#fff}
   .ui.pill{border-radius:999px}
-  .mini{border:1px solid var(--line);border-radius:12px;padding:12px;background:#F8FAFC;margin-top:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;font-size:13.5px}
-  .mini>div{background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 11px}
-  .mini .q{color:var(--soft);font-size:12.5px}.mini .a{font-weight:700;margin-top:3px}
-  .box{display:inline-block;min-width:38px;text-align:right;border:1.5px solid #C9D3DF;border-radius:6px;padding:0 6px;background:#fff;font-weight:700}
+  /* pictures of the real screens (made-up numbers) */
+  figure.shot{margin:10px 0 0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff;box-shadow:0 1px 4px rgba(15,42,74,.06)}
+  figure.shot img{display:block;width:100%;height:auto}
+  figure.shot figcaption{font-size:13px;color:var(--soft);padding:8px 12px;border-top:1px solid var(--line);background:#F8FAFC}
+  figure.shot.small{max-width:460px}
+  figure.shot a{display:block;cursor:zoom-in}
+  @media(max-width:560px){ ol.steps>li figure.shot{margin-left:-40px} }   /* phones: the picture gets the card's full width */
+  .card a{color:var(--teal-600);font-weight:700}
   .faq dt{font-weight:800;margin-top:12px}.faq dd{margin:2px 0 0;color:#334155}
   .foot{color:var(--soft);font-size:13px;text-align:center;margin-top:22px}
-  @media print{body{background:#fff}.top a,.foot{display:none}.card{box-shadow:none;break-inside:avoid}}
+  @media print{body{background:#fff}.top a,.foot,.toc{display:none}.card{box-shadow:none;break-inside:avoid}}
 </style>
 </head>
 <body>
@@ -52,77 +61,90 @@
   <div class="top"><div class="brand">Home-<span>Brace</span></div><a href="admin.html">← Back to Home-Brace</a></div>
 
   <h1>Production in Home-Brace</h1>
-  <p class="lead">Home-Brace can now keep the production numbers itself, so the Excel workbook won’t be needed any more. The offices type their numbers each month, and you plan the goals once a year.</p>
+  <p class="lead">Home-Brace can now keep the production numbers itself, so the Excel workbook won’t be needed any more.
+    Every step is below, with a picture of the screen. The pictures use made-up numbers.</p>
+
+  <nav class="toc" aria-label="In this guide">
+    <b>In this guide</b>
+    <ol>
+      <li><a href="#switch">Moving off the Excel</a> <small>- once, when you’re ready</small></li>
+      <li><a href="#month">Enter the month’s numbers</a> <small>- every month, the offices</small></li>
+      <li><a href="#plan">Plan next year</a> <small>- once a year, you</small></li>
+      <li><a href="#formulas">Change how something is worked out</a> <small>- rarely</small></li>
+      <li><a href="#excel">Get the Excel</a> <small>- whenever you need it</small></li>
+      <li><a href="#faq">Good to know</a></li>
+    </ol>
+  </nav>
 
   <div class="card" id="switch">
-    <p class="when">Starting now · you · at your own pace</p>
-    <h2>Moving off the Excel</h2>
+    <p class="when">Once · you · when you’re ready</p>
+    <h2>1 · Moving off the Excel</h2>
     <p class="where">Nothing changes until <b>you</b> press the switch. Until then, everything works exactly as it does today.</p>
     <ol class="steps">
-      <li><b>For now, keep using your Excel.</b> Each time you save it, Home-Brace makes its own copy and checks that every number comes out the same.
-        You can see it in <b>Admin → Production data</b>: a green ✓ means they match.</li>
-      <li><b>Plan 2027 in Home-Brace.</b> 2027 is already set up - go office by office in <b>Plan the year</b> (explained below).</li>
-      <li><b>When you feel ready - before January:</b> in <b>Admin → Production data</b>, under <b>Where the production numbers live</b>,
-        press <span class="ui go">Switch to Home-Brace…</span>, check that all three lines have a ✓, leave <b>Keep Heather’s Excel up to date too</b> ticked,
-        and press <span class="ui go">Switch now</span>. The offices type their numbers in <b>Enter Production</b> the same way as today; the dashboard now shows
-        Home-Brace’s numbers, and your Excel still gets every number.</li>
-      <li><b>Cut the connection when you no longer need the Excel.</b> Same place: press <span class="ui">Stop updating her Excel</span>.
-        From then on your Excel gets nothing new and Home-Brace keeps everything. You can still get an Excel copy any time with
-        <span class="ui go">⬇ Download Excel</span> under <b>Years kept</b>.</li>
+      <li><b>For now, keep using your Excel.</b> Each time you save it, Home-Brace makes its own copy and checks that every number comes out the same.</li>
+      <li><b>Plan 2027 in Home-Brace.</b> 2027 is already set up - you just go office by office (see <a href="#plan">Plan next year</a>).</li>
+      <li><b>When you feel ready - before January:</b> go to <b>Admin → Production data</b>. In the box <b>Where the production numbers live</b>,
+        press <span class="ui go">Switch to Home-Brace…</span>
+        <figure class="shot"><a href="guide/switch-1.jpg?v=1" target="_blank" rel="noopener" title="Open the picture full size"><img src="guide/switch-1.jpg?v=1" width="772" height="146" loading="lazy" alt="The box Where the production numbers live, with the button Switch to Home-Brace"></a><figcaption>Before the switch: your Excel runs the dashboard.</figcaption></figure>
+      </li>
+      <li><b>Check, then switch.</b> All three lines should have a ✓. Leave <b>Keep Heather’s Excel up to date too</b> ticked. Press <span class="ui go">Switch now</span>.
+        <figure class="shot"><a href="guide/switch-2.jpg?v=1" target="_blank" rel="noopener" title="Open the picture full size"><img src="guide/switch-2.jpg?v=1" width="772" height="479" loading="lazy" alt="Switch to Home-Brace? Three checks with a tick, the box Keep Heather's Excel up to date too, and the button Switch now"></a><figcaption>The three ✓ mean Home-Brace has a full, matching copy of your Excel.</figcaption></figure>
+      </li>
+      <li><b>That’s it.</b> The offices type their numbers in <b>Enter Production</b> the same way as today. The dashboard now shows Home-Brace’s numbers, and your Excel still gets every number.
+        <figure class="shot"><a href="guide/switch-3.jpg?v=1" target="_blank" rel="noopener" title="Open the picture full size"><img src="guide/switch-3.jpg?v=1" width="778" height="147" loading="lazy" alt="After the switch: Home-Brace keeps the numbers, with the buttons Stop updating her Excel and Switch back to her Excel"></a><figcaption>After the switch. The two buttons are for the next step - and for changing your mind.</figcaption></figure>
+      </li>
+      <li><b>Cut the connection when you no longer need the Excel.</b> In the same box, press <span class="ui">Stop updating her Excel</span>.
+        Your Excel gets nothing new from then on, and Home-Brace keeps everything. You can still get an Excel copy any time (see <a href="#excel">Get the Excel</a>).</li>
     </ol>
-    <p class="tip"><b>Changed your mind?</b> Every step can be undone in the same place: <span class="ui">Keep her Excel up to date again</span>
+    <p class="tip"><b>Changed your mind?</b> Every step can be undone in the same box: <span class="ui">Keep her Excel up to date again</span>
       reconnects it, and <span class="ui">Switch back to her Excel…</span> puts everything back the way it was.</p>
   </div>
 
-  <div class="card">
+  <div class="card" id="month">
     <p class="when">Every month · the offices</p>
-    <h2>Enter the month’s numbers</h2>
-    <p class="where">In <b>Enter Production</b>.</p>
+    <h2>2 · Enter the month’s numbers</h2>
+    <p class="where">In <b>Enter Production</b>. This is the same before and after the switch.</p>
     <ol class="steps">
-      <li>Pick the <b>office</b> and the <b>month</b>.</li>
-      <li>Type the month’s numbers: <b>TC Net Production</b>, <b>Medicaid starts</b>, <b>write-offs</b> and <b>completed production days</b>.</li>
-      <li>Press <span class="ui go">Save</span>. The dashboard shows it right away.</li>
+      <li><b>Pick the office and the month.</b></li>
+      <li><b>Type the month’s numbers:</b> TC Net Production, Medicaid starts, write-offs and completed production days. Everything else is worked out, and the right side shows the result as you type.
+        <figure class="shot"><a href="guide/enter-1.jpg?v=1" target="_blank" rel="noopener" title="Open the picture full size"><img src="guide/enter-1.jpg?v=1" width="784" height="410" loading="lazy" alt="Enter Production: office Carlsbad, month September, the boxes TC Net Production and Medicaid starts, and the results on the right"></a><figcaption>Grey boxes (like the case fees and the goals) come from Plan the year - the offices don’t type them.</figcaption></figure>
+      </li>
+      <li><b>Press Save.</b> The dashboard shows it right away.
+        <figure class="shot small"><a href="guide/enter-2.jpg?v=1" target="_blank" rel="noopener" title="Open the picture full size"><img src="guide/enter-2.jpg?v=1" width="440" height="162" loading="lazy" alt="The buttons Save Carlsbad and Undo my changes"></a></figure>
+      </li>
     </ol>
     <p class="tip"><b>In January:</b> December’s numbers belong to last year. Choose last year in the <span class="ui">Year</span> box first, then December.</p>
   </div>
 
-  <div class="card">
+  <div class="card" id="plan">
     <p class="when">Once a year · you · usually in December</p>
-    <h2>Plan next year</h2>
+    <h2>3 · Plan next year</h2>
     <p class="where">In <b>Admin → Production data → Plan the year</b>.</p>
     <ol class="steps">
-      <li><b>Set up the year.</b> Choose next year and press <span class="ui go">Set up <span data-y="next">2027</span></span>. Home-Brace copies this year’s set-up, and this year’s numbers become “last year”. The offices don’t see any change until January.</li>
-      <li><b>Plan each office.</b> Click an office and answer three things:
-        <ul class="list">
-          <li><b>Grow over last year by</b> <span class="box">4</span> % - offices with Medicaid also have a Medicaid %.</li>
-          <li><b>The stretch goal is</b> the goal + <span class="box">10</span> %.</li>
-          <li><b>Case fees</b> - the average case fee (and the Medicaid case fee).</li>
-        </ul>
-        Then the <b>production days</b> for each month. The grey numbers are last year’s; <span class="ui">Use last year’s production days</span> fills them in.
-        <div class="mini" aria-hidden="true">
-          <div><div class="q">1 · Grow over <span data-y="this">2026</span> by</div><div class="a"><span class="box">4</span> % → <span data-y="next">2027</span> goal $1,283,880</div></div>
-          <div><div class="q">2 · The stretch goal is</div><div class="a">the goal + <span class="box">10</span> %</div></div>
-          <div><div class="q">3 · Case fees</div><div class="a">Average $<span class="box">5,000</span></div></div>
-        </div>
+      <li><b>Set up the year - one click.</b> Choose next year and press <span class="ui go">Set up <span data-y="next">2027</span></span>.
+        Home-Brace copies this year’s set-up, and this year’s numbers become “last year”. The offices don’t see any change until January.
+        <figure class="shot"><a href="guide/plan-1.jpg?v=1" target="_blank" rel="noopener" title="Open the picture full size"><img src="guide/plan-1.jpg?v=1" width="772" height="405" loading="lazy" alt="Plan the year: the years, and the button Set up 2027"></a><figcaption>For 2027 this is already done.</figcaption></figure>
       </li>
-      <li>Press <span class="ui go">Save Carlsbad’s plan</span>, then <span class="ui">Next: Clovis →</span>. A ✓ shows next to each office that’s done.</li>
+      <li><b>Plan each office.</b> Click an office at the top and answer three things:
+        <ul class="list">
+          <li><b>Grow over last year by</b> a % (offices with Medicaid also have a Medicaid %).</li>
+          <li><b>The stretch goal is</b> the goal + a %.</li>
+          <li><b>Case fees:</b> the average case fee (and the Medicaid case fee).</li>
+        </ul>
+        <figure class="shot"><a href="guide/plan-2.jpg?v=1" target="_blank" rel="noopener" title="Open the picture full size"><img src="guide/plan-2.jpg?v=1" width="760" height="395" loading="lazy" alt="Carlsbad 2027: grow over 2026 by 4 percent, stretch goal the goal plus 10 percent, average case fee 5000"></a><figcaption>The goals update as you type.</figcaption></figure>
+      </li>
+      <li><b>Fill in the production days, then save.</b> Type each month’s days, or press <span class="ui">Use last year’s production days</span>.
+        Then press <span class="ui go">Save Carlsbad’s plan</span> and <span class="ui">Next: …</span> for the next office. A ✓ shows next to each office that’s done.
+        <figure class="shot"><a href="guide/plan-3.jpg?v=1" target="_blank" rel="noopener" title="Open the picture full size"><img src="guide/plan-3.jpg?v=1" width="768" height="208" loading="lazy" alt="The months with last year, the new goal, the stretch goal and the production days, and the button Save Carlsbad's plan"></a></figure>
+      </li>
     </ol>
-    <p class="tip"><b>A month that’s different?</b> Click <span class="ui">Different growth for some months</span> and type that month’s % - or a dollar goal like <span class="box">$40,000</span>. Leave a month empty and it uses the usual %.</p>
-  </div>
-
-  <div class="card">
-    <p class="when">Any time</p>
-    <h2>Change your mind</h2>
-    <ul class="list">
-      <li>Open <b>Plan the year</b>, change what you need, and save again. Plans can be changed all year.</li>
-      <li>Every save shows <span class="ui">Undo</span>. Older saves: <b>Years kept → History → Undo this change</b>.</li>
-      <li>Changing one year never changes another.</li>
-    </ul>
+    <p class="tip"><b>A month that’s different?</b> Click <span class="ui">Different growth for some months</span> and type that month’s % - or a dollar goal like $40,000. A month left empty uses the usual %.</p>
+    <p class="tip"><b>Change your mind any time:</b> open Plan the year, change it, save again. Every save shows <span class="ui">Undo</span>, and older saves are in <b>History</b>. Changing one year never changes another.</p>
   </div>
 
   <div class="card" id="formulas">
     <p class="when">Rarely · you · when the plan doesn’t cover it</p>
-    <h2>Change how something is worked out</h2>
+    <h2>4 · Change how something is worked out</h2>
     <p class="where">In <b>Admin → Production data → Advanced</b> → <span class="ui">Show</span> → <b>Formulas</b>.</p>
     <p style="margin:0 0 10px"><b>Why it’s there:</b> so you can change any calculation yourself, for any year, without Excel or anyone’s help.
       Each year keeps its own formulas, and the Excel download carries them.</p>
@@ -131,32 +153,35 @@
     <ul class="list" style="margin-bottom:14px">
       <li>a row shows <b>#REF!</b> and needs to point at the right rows again;</li>
       <li>an office’s goal should come from its stretch goal for a few months (the stretch goal × 0.7);</li>
-      <li>a new number you want to follow, like production per day (production ÷ production days).</li>
+      <li>a goal should have a fixed amount added for a few months, say for a new doctor (like the picture below).</li>
     </ul>
     <ol class="steps">
-      <li><b>Find the row.</b> Pick the <span class="ui">Year</span> and the office’s <span class="ui">Tab</span>, then type part of the row’s name in <span class="ui">Find a row…</span></li>
-      <li>Press <span class="ui">Change</span> next to the months you want.</li>
-      <li><b>Pick the months</b> (or <span class="ui">All</span>), then write how it’s worked out: add a row with <span class="ui">Add a row</span> - type part of its name and pick it -
-        and the <span class="ui">+</span> <span class="ui">-</span> <span class="ui">×</span> <span class="ui">÷</span> buttons. Numbers like 1.05 or 5% work too.
-        <div class="mini" aria-hidden="true">
-          <div><div class="q"><span data-y="next">2027</span> Goal · Jun–Sep · how it’s worked out</div><div class="a"><span class="ui">Stretch Goal</span> × 0.7</div></div>
-          <div><div class="q">Before you save, every month shows</div><div class="a">Now $52,000 → New $48,300</div></div>
-        </div>
+      <li><b>Open Advanced.</b> At the bottom of Production data, press <span class="ui">Show</span>.
+        <figure class="shot"><a href="guide/adv-1.jpg?v=1" target="_blank" rel="noopener" title="Open the picture full size"><img src="guide/adv-1.jpg?v=1" width="778" height="81" loading="lazy" alt="The Advanced box with the button Show"></a></figure>
       </li>
-      <li><b>Check before you save.</b> Each month shows <b>Now</b> and <b>New</b>, and <b>Also changes</b> lists anything else that follows from it.</li>
-      <li>Press <span class="ui go">Save · Jun–Sep <span data-y="next">2027</span></span>. It goes in History, with <span class="ui">Undo</span>.</li>
+      <li><b>Find the row.</b> In <b>Formulas</b>, pick the <span class="ui">Year</span> and the office’s <span class="ui">Tab</span>, then type part of the row’s name in <span class="ui">Find a row…</span>
+        Each row says, in words, how it’s worked out. Press <span class="ui">Change</span> on the one you want.
+        <figure class="shot"><a href="guide/fx-1.jpg?v=1" target="_blank" rel="noopener" title="Open the picture full size"><img src="guide/fx-1.jpg?v=1" width="778" height="419" loading="lazy" alt="Formulas: year 2027, tab Carlsbad, and rows like 2027 TC Production Goal = 2026 Net Production times 1.04, each with a Change button"></a><figcaption>“2026 Net Production × 1.04” means: last year’s production, plus 4%.</figcaption></figure>
+      </li>
+      <li><b>Pick the months, write the new way, check it, save.</b> Choose the months (or <span class="ui">All</span>).
+        Write how it’s worked out - add a row with <span class="ui">Add a row</span> and the <span class="ui">+</span> <span class="ui">-</span> <span class="ui">×</span> <span class="ui">÷</span> buttons; numbers like 1.05 or 5% work too.
+        Before you save, each month shows <b>Now</b> and <b>New</b>, and <b>Also changes</b> lists anything else that follows. Then press <span class="ui go">Save</span>.
+        <figure class="shot"><a href="guide/fx-2.jpg?v=1" target="_blank" rel="noopener" title="Open the picture full size"><img src="guide/fx-2.jpg?v=1" width="744" height="479" loading="lazy" alt="Changing 2027 TC Production Goal for June to August to 2026 production times 1.04 plus 5000, with Now and New for each month"></a><figcaption>Example: June-August’s goal = last year × 1.04, <b>plus $5,000</b>. It goes in History, with Undo.</figcaption></figure>
+      </li>
     </ol>
-    <p class="tip"><b>Reading a formula:</b> a row on its own means that row in the same month · a row with a month (like “Average Case Fee · Jan”) is that one box.</p>
     <p class="tip"><b>While a year is still copied from your Excel</b> (<span data-y="this">2026</span> right now), your next Excel save puts your Excel’s formulas back - so change formulas in <span data-y="next">2027</span>, or after the switch.</p>
   </div>
 
-  <div class="card">
+  <div class="card" id="excel">
     <p class="when">Whenever you need it</p>
-    <h2>The Excel</h2>
-    <p style="margin:0">In <b>Admin → Production data → Years kept</b>, press <span class="ui go">⬇ Download Excel</span> next to the year. You get that year’s workbook, laid out like yours, with all its formulas.</p>
+    <h2>5 · Get the Excel</h2>
+    <p class="where">In <b>Admin → Production data → Years kept</b>.</p>
+    <p style="margin:0">Press <span class="ui go">⬇ Download Excel</span> next to the year. You get that year’s workbook, laid out like yours, with all its formulas.
+      <span class="ui">History</span> shows every change - who made it and when - with Undo.</p>
+    <figure class="shot"><a href="guide/excel-1.jpg?v=1" target="_blank" rel="noopener" title="Open the picture full size"><img src="guide/excel-1.jpg?v=1" width="778" height="198" loading="lazy" alt="Years kept: 2027 and 2026, each with Download Excel, History and Upload a changed layout"></a></figure>
   </div>
 
-  <div class="card faq">
+  <div class="card faq" id="faq">
     <h2>Good to know</h2>
     <dl>
       <dt>Can I plan next year before this year is over?</dt>
@@ -165,15 +190,14 @@
       <dd>They stay, each year on its own. Plan the year only shows this year and next year. Older years are under Years kept, ready to download.</dd>
       <dt>Who can change the plan?</dt>
       <dd>Admins. Office managers enter their own office’s numbers in Enter Production.</dd>
-      <dt>What’s under Advanced?</dt>
-      <dd><b>Goals</b>, box by box: one office’s goal for one month, as a growth number (1.05 = last year + 5%) or a dollar amount.
-        And <b>Formulas</b>: see <a href="#formulas" style="color:var(--teal-600);font-weight:700">Change how something is worked out</a>, above.</dd>
+      <dt>What else is under Advanced?</dt>
+      <dd><b>Goals</b>, box by box: one office’s goal for one month, as a growth number (1.05 = last year + 5%) or a dollar amount. Plan the year does the same more simply.</dd>
       <dt>Something looks wrong?</dt>
       <dd>Check History first - it shows every change, who made it and when, with Undo. Or tell us with the <span class="ui pill">👋 Tour &amp; Feedback</span> button at the bottom right of any page.</dd>
     </dl>
   </div>
 
-  <p class="foot">Home-Brace · production guide</p>
+  <p class="foot">Home-Brace · production guide · pictures use made-up numbers</p>
 </div>
 <script>/* The example years are always this year and next - the guide never goes out of date. */
 (function(){ var y = new Date().getFullYear();
