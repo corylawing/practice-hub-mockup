@@ -258,14 +258,14 @@
   }
 
 </style>
-<script src="user.js?v=hc98"></script>
-<script src="celebrate.js?v=hc98"></script>
+<script src="user.js?v=hc99"></script>
+<script src="celebrate.js?v=hc99"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="workbook.js?v=hc98"></script>
-  <script src="store.js?v=hc98"></script>
-  <script src="prodbook.js?v=hc98"></script>
-  <script src="prodstore.js?v=hc98"></script>
-  <script src="gate.js?v=hc98"></script>
+  <script src="workbook.js?v=hc99"></script>
+  <script src="store.js?v=hc99"></script>
+  <script src="prodbook.js?v=hc99"></script>
+  <script src="prodstore.js?v=hc99"></script>
+  <script src="gate.js?v=hc99"></script>
 </head>
 <body>
 <div class="ribbon">SANDBOX — made-up numbers. The practice’s real workbook is never opened here.</div>
@@ -378,13 +378,15 @@ const OFFICES=[
      Anything in an office's `hist` is a past year. The list is DISCOVERED from the data, so
      when the practice adds 2027 columns the picker gains 2027 with no code change. Years
      without goals still work — the UI drops the goal-dependent parts instead of breaking. */
-  const LIVE_YEAR=2026;
+  /* 2026 while the dashboard reads Heather's Excel; after the switch, the year Home-Brace's own
+     books are on (prodstore.js dashboardData) - 2027 and on with no code change. */
+  let LIVE_YEAR=2026;
   function allYears(){
     const set=new Set([LIVE_YEAR]);
     OFFICES.forEach(o=>Object.keys(o.hist||{}).forEach(y=>set.add(+y)));
     return [...set].sort((a,b)=>b-a);
   }
-  let year=LIVE_YEAR;
+  let year=LIVE_YEAR, FROM_HB=false;
   const Z=()=>Array(12).fill(0);
   const yearHasGoals=y=>y===LIVE_YEAR;
   // Return an office shaped exactly like the live year, whatever the selected year holds.
@@ -771,7 +773,7 @@ const OFFICES=[
       return '<div class="mo'+(i===best?' best':'')+'"><div class="bars">'+
         '<div class="gm" style="bottom:'+h(g)+'%"></div>'+
         '<div class="bar lyb" style="height:'+h(l)+'%" data-t="'+MO[i]+' last year: about '+Math.round(l)+' starts"></div>'+
-        '<div class="bar ab '+(a>=g?'over':'under')+'" style="height:'+h(a)+'%" data-t="'+MO[i]+' 2026: '+Math.round(a)+' starts \u00b7 goal '+Math.round(g)+'">'+
+        '<div class="bar ab '+(a>=g?'over':'under')+'" style="height:'+h(a)+'%" data-t="'+MO[i]+' '+LIVE_YEAR+': '+Math.round(a)+' starts \u00b7 goal '+Math.round(g)+'">'+
           '<span class="bval">'+Math.round(a)+'</span></div>'+
         '</div><div class="molab">'+MO[i]+(i===best?' \u2605':'')+'</div></div>';
     }).join('');
@@ -779,8 +781,8 @@ const OFFICES=[
       '<div class="sub">Last year beside this year. <b>Dashed</b> = starts goal. \u2605 marks the best month.</div>'+
       chartToggle()+
       '<div class="legend"><span><i class="sw" style="background:var(--ly)"></i> Last year (2025)</span>'+
-        '<span><i class="sw" style="background:var(--good)"></i> 2026 at/above goal</span>'+
-        '<span><i class="sw" style="background:var(--bad)"></i> 2026 under goal</span>'+
+        '<span><i class="sw" style="background:var(--good)"></i> '+LIVE_YEAR+' at/above goal</span>'+
+        '<span><i class="sw" style="background:var(--bad)"></i> '+LIVE_YEAR+' under goal</span>'+
         '<span><i class="swline"></i> Starts goal</span>'+
         '<span style="margin-left:auto;font-style:italic">last year\u2019s starts are worked out from the production figures</span></div>'+
       '<div class="chartwrap"><div class="plot">'+axis(max,false)+'<div class="chart">'+cols+'</div></div></div></div>';
@@ -799,7 +801,7 @@ const OFFICES=[
         '<div class="gm" style="bottom:'+h(o.goal[i])+'%"></div>'+
         '<div class="sm" style="bottom:'+h(o.stretch[i])+'%"></div>'+
         '<div class="bar lyb" style="height:'+h(o.ly[i])+'%" data-t="'+MO[i]+' last year: '+full(o.ly[i])+'"></div>'+
-        '<div class="bar ab '+cls+'" style="height:'+h(o.act[i])+'%" data-t="'+MO[i]+' 2026: '+full(o.act[i])+' \u00b7 main goal '+full(o.goal[i])+' \u00b7 stretch '+full(o.stretch[i])+'">'+
+        '<div class="bar ab '+cls+'" style="height:'+h(o.act[i])+'%" data-t="'+MO[i]+' '+LIVE_YEAR+': '+full(o.act[i])+' \u00b7 main goal '+full(o.goal[i])+' \u00b7 stretch '+full(o.stretch[i])+'">'+
           '<span class="bval">'+money(o.act[i])+'</span></div>'+
         '</div><div class="molab">'+MO[i]+(i===best?' \u2605':'')+'</div></div>';
     }).join('');
@@ -807,8 +809,8 @@ const OFFICES=[
       '<div class="sub">Last year beside this year. <b>Dashed</b> = main goal, <b>dotted</b> = stretch. Hover any bar for exact figures. \u2605 = best month.</div>'+
       chartToggle()+
       '<div class="legend"><span><i class="sw" style="background:var(--ly)"></i> Last year (2025)</span>'+
-        '<span><i class="sw" style="background:var(--good)"></i> 2026 at/above goal</span>'+
-        '<span><i class="sw" style="background:var(--bad)"></i> 2026 under goal</span>'+
+        '<span><i class="sw" style="background:var(--good)"></i> '+LIVE_YEAR+' at/above goal</span>'+
+        '<span><i class="sw" style="background:var(--bad)"></i> '+LIVE_YEAR+' under goal</span>'+
         '<span><i class="swline"></i> Main goal</span><span><i class="swdot"></i> Stretch goal</span></div>'+
       '<div class="chartwrap"><div class="plot">'+axis(max,true)+'<div class="chart">'+cols+'</div></div></div></div>';
   }
@@ -968,9 +970,10 @@ const OFFICES=[
        every other one-office person saw the group total with no table under it. It
        lists all eight now. A row opens that office only for someone who holds it. */
     if(isAll && !noFigures) html += leaderboard(OFFICES);
-    html += '<div class="foot"><b>Where these numbers come from:</b> the practice\u2019s 2026 Production '+
-      'Dashboard workbook on SharePoint \u2014 the hub reads it live, so there is no second copy to keep in '+
-      'sync. A month counts once it has <b>both</b> an actual and a goal (Mansfield has production from '+
+    html += '<div class="foot"><b>Where these numbers come from:</b> '+(FROM_HB
+      ? 'Home-Brace\u2019s own production records for '+LIVE_YEAR+' \u2014 entered in Enter Production and worked out with the practice\u2019s own formulas (Admin \u2192 Production data has the Excel). '
+      : 'the practice\u2019s '+LIVE_YEAR+' Production Dashboard workbook on SharePoint \u2014 the hub reads it live, so there is no second copy to keep in sync. ')+
+      'A month counts once it has <b>both</b> an actual and a goal (Mansfield has production from '+
       'January but goals from April), and the month in progress is kept separate from the year figure.<br><br>'+
       '<b>How the total is built:</b> the hub adds the eight office tabs itself \u2014 it never reads the '+
       'workbook\u2019s own \u201cDashboard\u201d tab \u2014 so each office is counted exactly once, and a '+
@@ -1111,6 +1114,26 @@ const OFFICES=[
              'and needs a Microsoft sign-in to read it.', true);
       return false;
     }
+    /* THE SWITCH (Admin -> Production data, 21/10/2026): once an admin moves the numbers to
+       Home-Brace, they come from Home-Brace's own books - same series, same sums (prodstore.js
+       dashboardData runs her formulas through workbook.js office()). Until then, her Excel. */
+    let mode={source:'excel'};
+    try{ if(window.PH_PROD) mode=await PH_PROD.mode(); }catch(_){}
+    if(mode.source==='homebrace'){
+      banner('Reading Home-Brace\u2019s production numbers\u2026');
+      let hb;
+      try{ hb=await PH_PROD.dashboardData(); }
+      catch(e){ banner('<b>Could not read Home-Brace\u2019s production numbers.</b> '+String((e&&e.message)||e).replace(/[<>&]/g,''), true); return false; }
+      if(hb.year!==LIVE_YEAR){ LIVE_YEAR=hb.year; year=LIVE_YEAR; }
+      FROM_HB=true;
+      OFFICES.forEach(o=>{ const d=hb.offices[o.n]; if(d) Object.keys(d).forEach(k=>{ o[k]=d[k]; }); });
+      let when2='';
+      if(hb.savedAt){ const who=String(hb.savedBy||'').replace(/[<>&]/g,''); when2=' <span title="'+new Date(hb.savedAt).toLocaleString()+'">&mdash; '+(who?who+' last saved':'last saved')+' '+new Date(hb.savedAt).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+'</span>'; }
+      banner('<span>\u25CF</span><span>Showing <b>Home-Brace\u2019s</b> production numbers'+when2+(hb.errors.length?' <b>&mdash; '+hb.errors.length+' office(s) missing</b>':'')+'</span>', hb.errors.length>0);
+      // Her Excel, while it is still around, is only compared from now on (admins, in the background).
+      if(PH.isAdmin && PH.isAdmin()) PH_PROD.syncFromWorkbook({driveId:WB_DRIVE, itemId:WB_ITEM}).catch(function(e){ try{ console.warn('Production compare:', e && e.message || e); }catch(_){} });
+      return true;
+    }
     banner('Reading the live workbook…');
     let res;
     try{ res = await PH_WB.load(PH_AUTH.graph, WB_DRIVE, WB_ITEM); }
@@ -1185,7 +1208,7 @@ const OFFICES=[
 })();
 </script>
 <script>PH.nav('dashboard');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(window.DASH&&DASH.identity)DASH.identity();});document.addEventListener('ph-identity',function(){if(window.DASH&&DASH.identity)DASH.identity();if(window.DASH&&DASH.loadAudit)DASH.loadAudit();});</script>
-<script src="tour.js?v=hc98"></script>
+<script src="tour.js?v=hc99"></script>
 <script>
 Tour.init([
   {sel:'.viewas', title:'You only see your offices', body:'Everyone can see <b>All Offices</b> \u2014 the practice total as one number. What your location decides is which offices you can <b>open individually</b>. Switch to the Carlsbad manager: she keeps the group total, the leaderboard and Carlsbad, but can\u2019t open the other offices on their own.'},

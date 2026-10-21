@@ -110,6 +110,17 @@ function deflatedZip(files){
     /fullCalcOnLoad="1"/.test(txt('xl/workbook.xml')) && !parts['xl/calcChain.xml'] && !/calcChain/.test(txt('[Content_Types].xml')) && !/calcChain/.test(txt('xl/_rels/workbook.xml.rels')));
   t('a book with the same data gives the same Excel twice', Buffer.compare(Buffer.from(out), Buffer.from(B.exportXlsx(filled,next,ev2)))===0);
 
+  // 4b. A number typed over the FIRST cell of an Excel "shared" formula (its master) must not
+  //     leave the rest of the group pointing at nothing - found on her real 2027 goals, 21/10/2026.
+  const over=JSON.parse(JSON.stringify(data)); over['Office (A)'].B5=99999;
+  const ob=B.withData(tpl,over), oback=await B.open(B.exportXlsx(ob,over,B.evaluate(ob)));
+  t('typing over a shared formula\'s first cell keeps the others\' formulas', oback.sheets['Office (A)'].cells.B5.v===99999 && oback.sheets['Office (A)'].cells.B5.f==null &&
+    oback.sheets['Office (A)'].cells.C5.f==='C3*1.04' && oback.sheets['Office (A)'].cells.D5.f==='D3*1.04');
+  // 4c. A formula changed in Home-Brace is written out, the rest of its group with it
+  const ed=B.blank(book); ed.sheets['Office (A)'].cells.B5=Object.assign({}, ed.sheets['Office (A)'].cells.B5, {f:'B3*1.1'});
+  const eback=await B.open(B.exportXlsx(ed,{},null));
+  t('a formula changed in Home-Brace is saved, and its shared group stays right', eback.sheets['Office (A)'].cells.B5.f==='B3*1.1' && eback.sheets['Office (A)'].cells.C5.f==='C3*1.04' && eback.sheets['Office (A)'].cells.D5.f==='D3*1.04');
+
   // 5. A grid the dashboard's reader understands
   const g=B.grid(filled,ev2,'Office (A)');
   t('the grid has the label in the first column and the months after it', g[2][0]==='TC Net Production' && g[2][2]===130000 && g[4][2]===135200);

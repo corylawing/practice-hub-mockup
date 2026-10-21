@@ -289,6 +289,42 @@ writes them all and the history gets ONE LINE PER PERSON (sensSave now takes an 
 workbook.js: office(rows, med, year) and writeRows(year) follow the year (default 2026 = unchanged, verified identical on
 all 8 offices) - groundwork for Home-Brace's own 2027 book; exports writeRows and row.
 
+**Step 4, the switch, Goals & formulas (21/10/2026, hc99).** Cory: "go ahead and build step 4 and the switch", "I want
+homebrace to be able to configure the formulas for future years", "the future would be for Home-Brace to manage the
+numbers, calculations, etc with just the option to download in excel". All in Admin -> Production data (prodadmin.js);
+logic in prodstore.js.
+- START NEXT YEAR: previewNextYear(from) shows every row's plan before anything is saved; createNextYear(pv) refuses if
+  the year exists. Template: years in labels +1, constant formulas (a sum typed as "=9*4200") cleared, blacked-out
+  months un-blacked (same-row style, else same column) and given the row's formula only where the row has uniform or
+  6+ clean formulas (never inside year tables), small year tables move on one. Data: "last year" rows = this year's
+  actuals (TC Net -> Net Production, Medicaid starts x fee -> Medicaid Production; the year before moves down a row;
+  older years kept), case fees kept, a one-figure average fee = average of the year's months (flagged), monthly inputs
+  and totals start empty. Flags list what to check (e.g. a "last year" month that isn't this year's actual).
+- THE SWITCH: PH_STORE 'ph_prod_mode' {source:'excel'|'homebrace', mirror, history}; admins only; reversible. Switching
+  copies her Excel one last time first (refused if formulas differ). 'homebrace': index.html hydrate -> dashboardData()
+  (her formulas through workbook.js office(); LIVE_YEAR = the kept year; footer + banner say Home-Brace); production.html
+  saves via setValues() (same cells as writeRows; every field in History) and writes her Excel too only when mirror is on
+  AND her Excel is the same year (a 2027 number never lands in her 2026 sheet); the page's "same file" text changes.
+  After the switch her Excel is only COMPARED (compareFromBytes: Admin lists the differences; never copied over).
+  Switching back: her Excel is copied again (a save that was only compared is re-copied - sync skips only a save handled
+  the same way), and the dialog says numbers only Home-Brace has would then live on in History alone.
+- GOALS & FORMULAS: goalModel/saveGoals per year + office. One box per month: a growth number (< 20 = x last year),
+  a dollar amount (>= 20), or empty = back to the formula; "x all months"; live preview of every goal row; saving changes
+  only that year's template (formulas) / data (amounts), refused if a rule gives an error. For a year still copied from
+  her Excel it warns that her next save wins.
+- EXPORT FIX: changed formulas are written in full and a whole shared-formula group is rewritten when any member changes;
+  withData keeps si/f0, so a number typed over a shared master no longer breaks the cells that follow it.
+Verified: test/prodswitch.test.js (45, made-up workbook in her layout); her -7 file on Cory's Mac (scratchpad, real
+numbers never in the repo): 2027 preview + Excel, goals edits, 2026 untouched; browser: sandbox editor, Start 2027,
+switch; the LIVE branches with a stand-in SharePoint (scratchpad fakesp-prod.js: copy -> switch -> dashboard from
+Home-Brace -> Enter Production saves to the right cells -> compare finds exactly those -> switch back). That run found
+and fixed: "Copy now" hung on "Copying..." after the switch (a compare has no .check), stale "same file" texts.
+PRODUCTION: deployed with the switch OFF ('excel' = everything as before; the one new call is the 'ph_prod_mode' read).
+Cory: switch only after a parallel run, before 2027. Questions for Heather (Cory asks her, 21/10): Cruces FFO/LCO
+typed goals and odd multipliers, Mansfield stretch Jun-Sep typed and goal = stretch x 0.7, missing 2026 average case
+fees (Cruces FFO/LCO, Mansfield), the five unlabelled Dashboard numbers (B26:B30), Cruces Jan-Jun as "last year" for
+2027, #REF! YOY rows, San Angelo Feb x1.5.
+
 **TCs see every office in "By office" (19/10, hc85).** Selene: "we do want the Treatment Coordinators to be able to see
 one another's results. Please make sure they can all view the 'By Office' box so they can see conversion rates across
 locations." viewNumbers(): for a TC (`iAmTC() && !canManage()`) the box lists `allOffices()` from EVERY (rates and

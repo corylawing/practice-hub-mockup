@@ -134,11 +134,13 @@
   }
 
 </style>
-<script src="user.js?v=hc98"></script>
+<script src="user.js?v=hc99"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="workbook.js?v=hc98"></script>
-  <script src="store.js?v=hc98"></script>
-  <script src="gate.js?v=hc98"></script>
+  <script src="workbook.js?v=hc99"></script>
+  <script src="prodbook.js?v=hc99"></script>
+  <script src="prodstore.js?v=hc99"></script>
+  <script src="store.js?v=hc99"></script>
+  <script src="gate.js?v=hc99"></script>
 </head>
 <body>
 <div class="ribbon">SANDBOX — made-up numbers. Saving here stays in your browser; the real workbook is never touched.</div>
@@ -335,6 +337,8 @@
       '</div>';
   }
   function fld(lab,help,f,v,isInt){
+    // A worked-out goal can carry float noise (111,280 x 1.1 = 122408.00000000001): money shows cents.
+    if(!isInt && typeof v==='number' && isFinite(v)) v=Math.round(v*100)/100;
     return '<div class="f"><label>'+lab+'</label><div class="help">'+help+'</div>'+
       (isInt? '<input type="number" value="'+v+'" oninput="PROD.edit(\''+f+'\',this.value)">'
             : '<div class="money"><span>$</span><input type="number" value="'+v+'" oninput="PROD.edit(\''+f+'\',this.value)"></div>')+'</div>';
@@ -431,6 +435,43 @@
         wbBanner('<b>Not saved.</b> Enter the number of days this office saw patients.', true);
         return;
       }
+    }
+
+    /* AFTER THE SWITCH: into Home-Brace's own numbers (prodstore.js setValues - the same field-to-row
+       matching as her Excel, every change in the year's history). Her Excel follows only when "keep it
+       up to date" is on AND it is the same year - a 2027 number must never land in her 2026 sheet -
+       and a failure there never undoes the Home-Brace save. */
+    if(MODE.source==='homebrace'){
+      const values={};
+      fields.forEach(f=>{ const blank=cleared(office,month,f); const v=blank?'':val(office,month,f); if(!blank && (v===''||v===null||v===undefined)) return; values[f]=v; });
+      let saved=null;
+      try{ saved=await PH_PROD.setValues(HB_YEAR, office, month, values); saved.saved.forEach(x=>done.push(x.field+' \u2192 '+x.address)); }
+      catch(e){ failed.push((e&&e.message)||String(e)); }
+      let note='';
+      if(saved && MODE.mirror && Object.keys(values).length){
+        let xl=null; try{ const ix=await PH_PROD.index(); xl=ix.source && +ix.source.year; }catch(_){}
+        if(xl===HB_YEAR && typeof PH_WB!=='undefined' && PH_WB.writeCell){
+          const miss=[];
+          for(const f of Object.keys(values)){ try{ await PH_WB.writeCell(PH_AUTH.token, WB_DRIVE, WB_ITEM, office, f, month, values[f]); }catch(e){ miss.push(f+': '+((e&&e.message)||e)); } }
+          try{ if(PH_WB.closeSession) await PH_WB.closeSession(PH_AUTH.token, WB_DRIVE, WB_ITEM); }catch(_){}
+          note = miss.length ? ' Heather\u2019s Excel was NOT updated: '+miss.join(' \u00b7 ').replace(/</g,'&lt;')+' (Home-Brace has the numbers).' : ' Heather\u2019s Excel updated too.';
+        } else if(xl) note=' Heather\u2019s Excel is for '+xl+', so it was left alone.';
+      }
+      if(failed.length){
+        settle('failed', 'Didn\u2019t save');
+        wbBanner('<b>Not saved.</b> '+failed.join(' \u00b7 ').replace(/</g,'&lt;'), true);
+      } else if(saved && saved.changes.length){
+        settle('done', 'Saved');
+        wbBanner('\u2713 Saved '+saved.changes.length+' value(s) in Home-Brace for '+office+' \u00b7 '+MO[month]+'.'+note, /NOT updated/.test(note));
+        if(window.PH && PH.logActivity && PH.isLive()){
+          PH.logActivity({kind:'production', sec:'production', ic:'\u{1F4DD}', title:'Production updated \u2014 '+office+' '+MO[month], offices:[office]});
+          tellLeadership();
+        }
+      } else {
+        settle('failed', 'Nothing changed');
+        wbBanner('Nothing to save \u2014 no boxes were changed for '+office+' \u00b7 '+MO[month]+'.', true);
+      }
+      return;
     }
 
     /* Has the workbook moved since we loaded it? If the owner has saved in Excel
@@ -540,7 +581,7 @@
   function commit(){ if(!office) return; save(); pushToWorkbook(); const s=el('saved'); if(s){s.classList.add('on'); setTimeout(()=>s.classList.remove('on'),2600);} }
   function reset(){ if(!office) return; Object.keys(edits).forEach(k=>{ if(k.indexOf(office+'|')===0) delete edits[k]; }); save(); render(); }
   /* The button says WHICH office it saves, so a wrong one is plain before it is sent. */
-  function saveLabel(){ return office ? 'Save '+office+' to workbook' : 'Save to workbook'; }
+  function saveLabel(){ const where=MODE.source==='homebrace'?'':' to workbook'; return office ? 'Save '+office+where : 'Save'+(where||''); }
   function setOffice(o){ if(!o) return; office=o; render(); }
   function setMonth(m){ month=m; render(); }
   let booted=false;
@@ -562,6 +603,7 @@
      these are the practice's real inputs, fetched after sign-in, so no figures live
      in this file. */
   let loadedStamp=null;   // the workbook's last-saved time when this page read it
+  let MODE={source:'excel', mirror:true}, HB_YEAR=null;   // the switch (Admin -> Production data)
   // Single source in user.js - see PH.WORKBOOK there if the file is ever moved.
   const WB_DRIVE=(window.PH&&PH.WORKBOOK)?PH.WORKBOOK.drive:'';
   const WB_ITEM =(window.PH&&PH.WORKBOOK)?PH.WORKBOOK.item :'';
@@ -618,9 +660,19 @@
       if(typeof PH_WB==='undefined' || !window.PH_AUTH){
         wbBanner('<b>Not signed in.</b> Showing placeholder figures until you sign in.',true); return;
       }
-      wbBanner('Reading the live workbook…');
-      try{ res=await PH_WB.load(PH_AUTH.graph,WB_DRIVE,WB_ITEM); }
-      catch(e){ wbBanner(wbWhyNot(e),true); return; }
+      /* THE SWITCH (Admin -> Production data): after it, the numbers come from Home-Brace's own
+         books and saving writes there (pushToWorkbook below); her Excel only if "keep it up to
+         date" is on. Same fields, found the same way. */
+      try{ if(window.PH_PROD) MODE=await PH_PROD.mode(); }catch(_){}
+      if(MODE.source==='homebrace'){
+        wbBanner('Reading Home-Brace\u2019s production numbers\u2026');
+        try{ res=await PH_PROD.dashboardData(); HB_YEAR=res.year; }
+        catch(e){ wbBanner('<b>Could not read Home-Brace\u2019s production numbers.</b> '+String((e&&e.message)||e).replace(/[<>&]/g,''),true); return; }
+      } else {
+        wbBanner('Reading the live workbook…');
+        try{ res=await PH_WB.load(PH_AUTH.graph,WB_DRIVE,WB_ITEM); }
+        catch(e){ wbBanner(wbWhyNot(e),true); return; }
+      }
     }
     let n=0;
     Object.keys(BASE).forEach(name=>{
@@ -644,6 +696,16 @@
     if(sandbox){ wbBanner('<b>Sandbox:</b> made-up numbers. Saving here stays in this browser \u2014 the practice\u2019s real workbook is never touched.',false); return; }
     const stamp=res.savedAt?new Date(res.savedAt).toLocaleString():'';
     const who=String(res.savedBy||'').replace(/[<>&]/g,'');
+    if(MODE.source==='homebrace'){
+      wbBanner('\u25CF Home-Brace\u2019s production numbers for '+HB_YEAR+' \u2014 '+n+' of '+Object.keys(BASE).length+' offices'+
+               (stamp?(who?', '+who+' last saved '+stamp:', last saved '+stamp):'')+(MODE.mirror?' \u00b7 Heather\u2019s Excel is kept up to date too':''), res.errors.length>0);
+      // The page's own explanation was written for her Excel ("it's the same file"); after the switch it is not.
+      const sb=el('syncbar'); if(sb) sb.innerHTML='\u{1F504} <b>Home-Brace keeps the production numbers now.</b> Type here and it saves to Home-Brace'+
+        (MODE.mirror?', and Heather\u2019s Excel is kept up to date too. Something typed in her Excel no longer shows up here \u2014 type it here instead.':'. Heather\u2019s Excel is not updated any more.');
+      const hp=document.querySelector('.page-head p'); if(hp) hp.textContent='Type the month\u2019s numbers once. '+(MODE.mirror?'The dashboard and Heather\u2019s Excel both update.':'The dashboard updates.');
+      const b=el('pushbtn'); if(b) b.textContent=saveLabel();
+      return;
+    }
     wbBanner('\u25CF Live from the practice\u2019s workbook \u2014 '+n+' of '+Object.keys(BASE).length+
              ' offices'+(stamp?(who?', '+who+' last saved it '+stamp:', last saved '+stamp):''),
              res.errors.length>0);
@@ -671,7 +733,7 @@
 })();
 </script>
 <script>PH.nav('production');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(window.PROD&&PROD.identity)PROD.identity();});document.addEventListener('ph-identity',function(){if(window.PROD&&PROD.identity)PROD.identity();});</script>
-<script src="tour.js?v=hc98"></script>
+<script src="tour.js?v=hc99"></script>
 <script>
 Tour.init([
   {sel:'.syncbar', title:'One set of numbers', body:'Type here and it saves into the <b>same Excel workbook</b> on SharePoint. If someone types in Excel instead, it shows up here. There is never a second copy to reconcile.'},

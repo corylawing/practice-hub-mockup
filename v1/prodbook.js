@@ -163,8 +163,10 @@
         if(fm){
           var fa = fm[1], ftext = fm[2] != null ? unxml(fm[2]) : '', si = /\bsi="(\d+)"/.exec(fa);
           if(/\bt="shared"/.test(fa) && si){
+            cell.si = +si[1];
             if(ftext){ masters[si[1]] = {at:a[1], f:ftext}; cell.f = ftext; } else deps.push({at:a[1], si:si[1]});
           } else cell.f = ftext;
+          cell.f0 = cell.f;
         }
         var vm = /<v>([\s\S]*?)<\/v>/.exec(body);
         if(t === 'inlineStr'){ var is = ''; body.replace(/<t(?:\s[^>]*)?>([\s\S]*?)<\/t>/g, function(__, q){ is += unxml(q); return __; }); cell.v = is; }
@@ -175,7 +177,7 @@
       deps.forEach(function(d){
         var m = masters[d.si]; if(!m) return;
         var p = split(m.at), q = split(d.at);
-        sh.cells[d.at].f = shift(m.f, q.c - p.c, q.r - p.r);
+        sh.cells[d.at].f = sh.cells[d.at].f0 = shift(m.f, q.c - p.c, q.r - p.r);
       });
     });
     return {names:names, sheets:sheets, files:files, sst:sst};
@@ -335,10 +337,16 @@
         rowsXml[r] = cells; return _;
       });
       function put(a, xml){ var r = split(a).r; (rowsXml[r] = rowsXml[r] || {})[a] = xml; if(!(r in rowAttrs)) rowAttrs[r] = ' r="' + r + '"'; }
+      /* A formula changed in Home-Brace (or new to the cell) is written out in full. When it belongs
+         to one of Excel's "shared" formulas, the whole group is, so no other cell keeps pointing at
+         a master that has moved on. An untouched formula keeps her file's own bytes. */
+      var changedGroups = {};
+      Object.keys(sh.cells).forEach(function(a){ var c = sh.cells[a]; if(c.si != null && c.f !== c.f0) changedGroups[c.si] = 1; });
       Object.keys(sh.cells).forEach(function(a){
         var c = sh.cells[a], sAttr = c.s != null ? ' s="' + c.s + '"' : '';
         if(c.f != null){
-          var old = (rowsXml[split(a).r]||{})[a] || '', fTag = (/<f\b[^>]*?(?:\/>|>[\s\S]*?<\/f>)/.exec(old) || ['<f>' + toxml(c.f) + '</f>'])[0];
+          var old = (rowsXml[split(a).r]||{})[a] || '', full = c.f0 === undefined || c.f !== c.f0 || (c.si != null && changedGroups[c.si]);
+          var fTag = full ? '<f>' + toxml(c.f) + '</f>' : (/<f\b[^>]*?(?:\/>|>[\s\S]*?<\/f>)/.exec(old) || ['<f>' + toxml(c.f) + '</f>'])[0];
           var v = ev ? ev.value(s, a) : '', tAttr = isErr(v) ? ' t="e"' : (typeof v === 'string' ? ' t="str"' : '');
           put(a, '<c r="' + a + '"' + sAttr + tAttr + '>' + fTag + (v === '' && !tAttr ? '' : '<v>' + toxml(typeof v === 'number' ? String(v) : v) + '</v>') + '</c>');
         } else if(c.t === 'n' || c.t == null){
@@ -367,18 +375,65 @@
     });
     return copy;
   }
-  /* A template with a year's data laid back in - what evaluate() and exportXlsx() work on. */
+  /* A template with a year's data laid back in - what evaluate() and exportXlsx() work on.
+     A number for a FORMULA cell wins over the formula, as typing over it in Excel does: that is
+     how a goal set by hand in Enter Production lands. Labels (text) are never replaced. */
   function withData(template, data){
     var copy = {names:template.names.slice(), sheets:{}, files:template.files, sst:template.sst};
     template.names.forEach(function(s){
       var cs = template.sheets[s].cells, d = (data && data[s]) || {}, out = {};
-      Object.keys(cs).forEach(function(a){ var c = cs[a]; out[a] = (c.f == null && (c.t === 'n' || c.t == null) && d[a] != null) ? {v:d[a], f:null, t:'n', s:c.s} : c; });
+      Object.keys(cs).forEach(function(a){ var c = cs[a], label = c.f == null && typeof c.v === 'string' && c.v !== '';
+        /* keeps the shared group and first formula, so exportXlsx writes the rest of the group in full */
+        out[a] = (!label && d[a] != null) ? {v:d[a], f:null, t:'n', s:c.s, si:c.si, f0:c.f0} : c; });
       Object.keys(d).forEach(function(a){ if(!out[a]) out[a] = {v:d[a], f:null, t:'n', s:null}; });
       copy.sheets[s] = {path:template.sheets[s].path, cells:out};
     });
     return copy;
   }
   function open(bytes){ return readZip(bytes).then(parseBook); }
+
+  /* A NEW YEAR'S LAYOUT. Every year the workbook names - "2026 TC Production Goal", "Number of
+     Production Days (2025)", "2026 Total" - moves on by one: this year, last year and the year
+     before (from-2 .. from). Older years stay as written ("Number of NPE (2022)" is a 2022 figure
+     whatever year it is). Formulas carry no years, so they are kept exactly. */
+  function shiftYearsText(t, from){
+    return String(t).replace(/\b(20\d\d)\b/g, function(m){ var y = +m; return (y >= from - 2 && y <= from) ? String(y + 1) : m; });
+  }
+  function shiftYears(book, from){
+    var enc = new TextEncoder(), files = {};
+    Object.keys(book.files).forEach(function(n){ files[n] = book.files[n]; });
+    var tags = /(<t(?:\s[^>]*)?>)([\s\S]*?)(<\/t>)/g;
+    if(files['xl/sharedStrings.xml']) files['xl/sharedStrings.xml'] = enc.encode(txt(files['xl/sharedStrings.xml']).replace(tags, function(_, a, b, c){ return a + shiftYearsText(b, from) + c; }));
+    book.names.forEach(function(s){
+      var p = book.sheets[s].path, x = files[p] ? txt(files[p]) : '';
+      if(x.indexOf('<is>') >= 0) files[p] = enc.encode(x.replace(/<is>[\s\S]*?<\/is>/g, function(is){ return is.replace(tags, function(_, a, b, c){ return a + shiftYearsText(b, from) + c; }); }));
+    });
+    var copy = {names:book.names.slice(), sheets:{}, files:files, sst:(book.sst || []).map(function(x){ return shiftYearsText(x, from); })};
+    book.names.forEach(function(s){
+      var cs = book.sheets[s].cells, out = {};
+      Object.keys(cs).forEach(function(a){ var c = cs[a]; out[a] = (c.f == null && typeof c.v === 'string') ? {v:shiftYearsText(c.v, from), f:null, t:c.t, s:c.s} : c; });
+      copy.sheets[s] = {path:book.sheets[s].path, cells:out};
+    });
+    return copy;
+  }
+
+  /* The cell formats that are a solid black fill - how her workbook blacks out the months before an
+     office counted ("theme 1", Excel's black, or plain black). Index into the workbook's formats. */
+  function blackStyles(book){
+    var x = book.files && book.files['xl/styles.xml'] ? txt(book.files['xl/styles.xml']) : '', out = {};
+    var fl = /<fills\b[^>]*>([\s\S]*?)<\/fills>/.exec(x), xf = /<cellXfs\b[^>]*>([\s\S]*?)<\/cellXfs>/.exec(x);
+    if(!fl || !xf) return out;
+    var fills = []; fl[1].replace(/<fill>([\s\S]*?)<\/fill>|<fill\/>/g, function(m, f){ fills.push(f || ''); return m; });
+    /* Black, or as good as: theme 1 untinted or barely lightened, or an RGB colour that dark. */
+    var black = fills.map(function(f){
+      if(!/patternType="solid"/.test(f)) return false;
+      var th = /<fgColor theme="1"(?:\s+tint="([-0-9.E]+)")?\s*\/>/i.exec(f); if(th) return !th[1] || Math.abs(parseFloat(th[1])) < 0.25;
+      var rgb = /<fgColor rgb="(?:FF)?([0-9A-F]{6})"/i.exec(f);
+      return !!rgb && [0, 2, 4].every(function(k){ return parseInt(rgb[1].substr(k, 2), 16) <= 0x33; });
+    });
+    var i = 0; xf[1].replace(/<xf\b[^>]*?(?:\/>|>[\s\S]*?<\/xf>)/g, function(m){ var f = /fillId="(\d+)"/.exec(m); if(f && black[+f[1]]) out[i] = true; i++; return m; });
+    return out;
+  }
 
   /* What a cell IS, in the workbook's own words: the row's label (column A) and the heading of
      its column (the nearest text above it - "October"). For the history of changes. */
@@ -411,7 +466,7 @@
 
   var API = {readZip:readZip, writeZip:writeZip, writeZipSmall:writeZipSmall, crc32:crc32, parseBook:parseBook, open:open, parse:parse, tokenize:tokenize,
              evaluate:evaluate, dataOf:dataOf, grid:grid, exportFiles:exportFiles, exportXlsx:exportXlsx, exportXlsxSmall:exportXlsxSmall,
-             blank:blank, withData:withData, labelAt:labelAt, yearOf:yearOf, layoutText:layoutText,
+             blank:blank, withData:withData, labelAt:labelAt, yearOf:yearOf, layoutText:layoutText, shiftYears:shiftYears, shiftYearsText:shiftYearsText, blackStyles:blackStyles,
              shift:shift, colNum:colNum, colName:colName, isErr:isErr};
   if(typeof module !== 'undefined' && module.exports) module.exports = API;
   global.PH_BOOK = API;
