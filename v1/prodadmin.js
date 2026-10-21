@@ -350,9 +350,9 @@
         (med ? '<span class="pair"><span class="muted">Medicaid</span> <input data-pl="mdmain" value="'+esc(D.md && D.md.main != null ? D.md.main : '')+'" inputmode="decimal" placeholder="?"> %</span>' : '')+'</div>'+
         '<div class="r">'+esc(m.year)+' goal: <b id="plgoal">'+usd(goalSum)+'</b></div>'+
         '<button type="button" class="pllink" data-pd="plopen" data-k="tc">'+(POPEN.tc ? 'Hide the months' : 'Different growth for some months'+(exc(D.tc) + exc(D.md) ? ' ('+(exc(D.tc) + exc(D.md))+')' : ''))+'</button></div>'+
-      '<div class="pltile"><div class="q">2 · The stretch is</div><div class="a"><select data-pl="stbase"><option value="goal"'+(D.stBase === 'goal' ? ' selected' : '')+'>the goal</option><option value="last"'+(D.stBase === 'last' ? ' selected' : '')+'>'+L+'</option></select> + '+
+      '<div class="pltile"><div class="q">2 · The stretch goal is</div><div class="a"><select data-pl="stbase"><option value="goal"'+(D.stBase === 'goal' ? ' selected' : '')+'>the goal</option><option value="last"'+(D.stBase === 'last' ? ' selected' : '')+'>'+L+'</option></select> + '+
         '<input data-pl="stmain" value="'+esc(D.st && D.st.main != null ? D.st.main : '')+'" inputmode="decimal" placeholder="?"> %</div>'+
-        '<div class="r">Stretch: <b id="plst">'+usd(stSum)+'</b></div>'+
+        '<div class="r">Stretch goal: <b id="plst">'+usd(stSum)+'</b></div>'+
         '<button type="button" class="pllink" data-pd="plopen" data-k="st">'+(POPEN.st ? 'Hide the months' : 'Different for some months'+(exc(D.st) ? ' ('+exc(D.st)+')' : ''))+'</button></div>'+
       '<div class="pltile"><div class="q">3 · Case fees</div><div class="a">Average $<input data-pl="fee" value="'+esc(D.fee == null ? '' : D.fee)+'" inputmode="decimal" style="width:96px"></div>'+
         (med ? '<div class="a" style="margin-top:6px">Medicaid $<input data-pl="mdfee" value="'+esc(D.mdFee == null ? '' : D.mdFee)+'" inputmode="decimal" style="width:96px"></div>' : '')+
@@ -367,8 +367,8 @@
                   if(med && D.md) t += row('Medicaid %', D.md.months.map(function(x, j){ return inp('md', j, x, D.md.main); })); }
     t += row(esc(m.year)+' goal', calc('g', function(j){ return kfmt(pv ? pv.months[j].goal : (med && m.rows.total ? m.rows.total : m.rows.tc).months[j].value); }), 'sum');
     if(POPEN.st && D.st) t += row('Stretch %', D.st.months.map(function(x, j){ return inp('st', j, x, D.st.main); }));
-    t += row('Stretch', calc('s', function(j){ return kfmt(pv ? pv.months[j].stretch : m.rows.stretch && m.rows.stretch.months[j].value); }));
-    if(D.days) t += row('Days', D.days.map(function(v, j){ return '<td><input data-pl="days" data-i="'+j+'" value="'+esc(v == null ? '' : v)+'" placeholder="'+esc(m.lyDays && m.lyDays[j] != null ? m.lyDays[j] : '')+'" inputmode="decimal" title="Production days in '+MO3[j]+' '+m.year+(m.lyDays && m.lyDays[j] != null ? ' (grey = '+L+')' : '')+'"></td>'; }));
+    t += row('Stretch goal', calc('s', function(j){ return kfmt(pv ? pv.months[j].stretch : m.rows.stretch && m.rows.stretch.months[j].value); }));
+    if(D.days) t += row('Production days', D.days.map(function(v, j){ return '<td><input data-pl="days" data-i="'+j+'" value="'+esc(v == null ? '' : v)+'" placeholder="'+esc(m.lyDays && m.lyDays[j] != null ? m.lyDays[j] : '')+'" inputmode="decimal" title="Production days in '+MO3[j]+' '+m.year+(m.lyDays && m.lyDays[j] != null ? ' (grey = '+L+')' : '')+'"></td>'; }));
     t += '</tbody></table></div>';
     h += t;
     if(D.days && m.lyDays && D.days.some(function(v){ return v == null; }) && m.lyDays.some(function(v){ return v != null; }))

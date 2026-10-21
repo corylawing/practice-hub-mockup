@@ -377,8 +377,8 @@ copy status, the switch, PLAN THE YEAR, Years kept, Advanced (closed: Goals box 
   started). Step 1 = Start <next> (the old Start card's preview, folded: "Things to look at", "Every row"); Create goes
   straight on to step 2. Step 2 = office pills (✓ once planned, from 'plan' History entries) + three tiles: "Grow over
   <last year> by 4 %" (Medicaid offices: a Medicaid % too), "The stretch is [the goal | last year] + 10 %", case fees
-  (average; Medicaid) + a month table (last year, Growth % / Medicaid % / Stretch % rows when "Different for some
-  months" is open - auto-open if any month differs; the goal; the stretch; Days with last year's days in grey and
+  (average; Medicaid) + a month table in her words (last year, Growth % / Medicaid % / Stretch % rows when "Different for some
+  months" is open - auto-open if any month differs; the goal; the Stretch goal; Production days with last year's days in grey and
   "Use <last year>'s production days"). A month box takes a % (blank = the usual %), or a dollar goal ($40,000, or any
   number >= 1000) that sits OVER her formula. Live preview (planSave preview, 250 ms); Save <office>'s plan; Undo; Next.
 - prodstore: planModel (rows via goalRowsOf + ruleOf; ly/lyMed/lyDays; fee boxes via cellFor 'afee'/'fee' month 0 =
