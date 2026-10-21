@@ -272,17 +272,17 @@
   }
 
 </style>
-<script src="user.js?v=hc109"></script>
+<script src="user.js?v=hc110"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="_staff.js?v=hc109"></script>
-  <script src="store.js?v=hc109"></script>
-  <script src="gate.js?v=hc109"></script>
-  <script src="docs.js?v=hc109"></script>
-  <script src="workbook.js?v=hc109"></script>
-  <script src="prodbook.js?v=hc109"></script>
-  <script src="prodfx.js?v=hc109"></script>
-  <script src="prodstore.js?v=hc109"></script>
-  <script src="prodadmin.js?v=hc109"></script>
+  <script src="_staff.js?v=hc110"></script>
+  <script src="store.js?v=hc110"></script>
+  <script src="gate.js?v=hc110"></script>
+  <script src="docs.js?v=hc110"></script>
+  <script src="workbook.js?v=hc110"></script>
+  <script src="prodbook.js?v=hc110"></script>
+  <script src="prodfx.js?v=hc110"></script>
+  <script src="prodstore.js?v=hc110"></script>
+  <script src="prodadmin.js?v=hc110"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — admin console concept for validation. Real build: people sync from Microsoft 365; access is managed here.</div>
@@ -300,6 +300,8 @@
     <h1>Admin Console</h1>
     <p>One simple rule: a person's <b>team</b> decides what they can do; their <b>location</b> decides which offices' stuff they see.</p>
   </div>
+  <!-- Size watch (22/10/2026): only there when a record is getting full - see sizeWatch() below -->
+  <div id="sizewatch" hidden style="background:#FFF4E2;border:1px solid #f3d7a6;color:#7a4b00;border-radius:12px;padding:11px 14px;font-size:13.5px;line-height:1.5;margin:0 0 14px"></div>
 
   <div class="tabs" id="tabs">
     <button class="tab active" data-t="users" onclick="AD.tab('users')">People</button>
@@ -2078,8 +2080,32 @@
   });
 })();
 </script>
-<script>PH.nav('admin');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(PH.loadPhotos)PH.loadPhotos().then(function(got){if(got&&window.AD&&AD.tab)AD.tab('users');});});</script>
-<script src="tour.js?v=hc109"></script>
+<script>PH.nav('admin');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(PH.loadPhotos)PH.loadPhotos().then(function(got){if(got&&window.AD&&AD.tab)AD.tab('users');});setTimeout(sizeWatch,4000);});
+/* SIZE WATCH (future-proofing check, 22/10/2026). One SharePoint record holds about 63,000 characters and one that
+   fills up starts refusing saves. At most once a day, quietly, for an admin: how full is each record? Say something
+   only when one passes 70%, with the way to the details (History). Reading only. */
+function sizeWatch(){
+  if(!window.PH_STORE || !PH_STORE.sizes || !PH.isLive() || !(PH.isAdmin && PH.isAdmin())) return;
+  const box=document.getElementById('sizewatch'), lim=PH_STORE.COL_MAX, warn=PH_STORE.SIZE_WARN;
+  const show=w=>{
+    const over=(w && w.over)||[];
+    if(!over.length){ box.hidden=true; return; }
+    box.innerHTML='⚠️ <b>Getting full:</b> '+over.map(r=>'<b>'+PH_STORE.recordName(r.key).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</b> is at '+Math.round(r.chars/lim*100)+'%').join(', ')+
+      ' of what one SharePoint record can hold. Nothing is lost - but tell Cory before it reaches 100%, when saving it would stop. '+
+      '<a href="history.html#sizes" style="color:inherit;font-weight:700">See every record’s size</a>';
+    box.hidden=false;
+  };
+  let last=null; try{ last=JSON.parse(localStorage.getItem('ph_sizewatch')||'null'); }catch(_){}
+  if(last) show(last);
+  if(last && Date.now()-last.at<86400000) return;
+  PH_STORE.sizes().then(list=>{
+    const w={at:Date.now(), over:list.filter(r=>r.chars>=lim*warn)};
+    try{ localStorage.setItem('ph_sizewatch', JSON.stringify(w)); }catch(_){}
+    show(w);
+  }).catch(()=>{});
+}
+</script>
+<script src="tour.js?v=hc110"></script>
 <script>
 Tour.init([
   {sel:'#tabs', title:'This is your control room', body:'Four tabs and you can run the whole hub: <b>People</b>, <b>Teams &amp; Access</b>, <b>Document Sections</b> and <b>Locations</b>. No developer, no consultant.', pre:()=>AD.tab('users')},

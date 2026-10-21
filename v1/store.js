@@ -198,6 +198,26 @@
            typeof Blob === 'function' && typeof Response === 'function' &&
            typeof btoa === 'function' && typeof atob === 'function';
   }
+  /* OLDER iPHONES AND iPADS (future-proofing check, 22/10/2026). Safari before 16.4 has no
+     CompressionStream, so there a packed record - the schedule above all - could not be read at
+     all (a failed read: the device's own copy shown, every save refused), and a big save could not
+     be packed to fit. pako (v1/vendor/pako.min.js, MIT, 2.1.0, checked against npm's published
+     hash) does the same zlib "deflate" in plain JavaScript, byte for byte compatible. Only a browser
+     that needs it fetches it. Resolves to pako, or null when the browser's own will do. */
+  var pakoP = null;
+  function zlib(){
+    if(canPack()) return Promise.resolve(null);
+    if(global.pako && global.pako.inflate) return Promise.resolve(global.pako);
+    if(pakoP) return pakoP;
+    pakoP = new Promise(function(res, rej){
+      var s = document.createElement('script');
+      s.src = 'vendor/pako.min.js?v=2.1.0';
+      s.onload = function(){ if(global.pako && global.pako.inflate) res(global.pako); else rej(new Error('The unpacker did not load.')); };
+      s.onerror = function(){ rej(new Error('The unpacker could not be loaded.')); };
+      (document.head || document.documentElement).appendChild(s);
+    }).catch(function(e){ pakoP = null; throw e; });       // the next read tries again
+    return pakoP;
+  }
   function toB64(bytes){
     var s = '', CH = 0x8000;
     for(var i=0;i<bytes.length;i+=CH) s += String.fromCharCode.apply(null, bytes.subarray(i, i+CH));
@@ -209,24 +229,28 @@
     return a;
   }
   function pack(raw){
-    if(typeof raw !== 'string' || raw.length <= PACK_OVER || !canPack()) return Promise.resolve(raw);
-    var z = new Blob([raw]).stream().pipeThrough(new CompressionStream('deflate'));
-    return new Response(z).arrayBuffer().then(function(buf){
-      var out = JSON.stringify({__packed: PACK_TAG + toB64(new Uint8Array(buf))});
-      return out.length < raw.length ? out : raw;
-    });
+    if(typeof raw !== 'string' || raw.length <= PACK_OVER) return Promise.resolve(raw);
+    function wrap(bytes){ var out = JSON.stringify({__packed: PACK_TAG + toB64(bytes)}); return out.length < raw.length ? out : raw; }
+    return zlib().then(function(pk){
+      if(pk) return wrap(pk.deflate(raw));
+      var z = new Blob([raw]).stream().pipeThrough(new CompressionStream('deflate'));
+      return new Response(z).arrayBuffer().then(function(buf){ return wrap(new Uint8Array(buf)); });
+    }, function(){ return raw; });         // no packer here at all: sent plain, and the size check says if it is too big
   }
   function inflate(blob){
-    var z = new Blob([fromB64(blob.slice(PACK_TAG.length))]).stream().pipeThrough(new DecompressionStream('deflate'));
-    return new Response(z).text();
+    var bytes = fromB64(blob.slice(PACK_TAG.length));
+    return zlib().then(function(pk){
+      if(pk) return pk.inflate(bytes, {to: 'string'});
+      var z = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate'));
+      return new Response(z).text();
+    });
   }
-  /* Resolves to the JSON text. Rejects when a packed payload cannot be read here, so
-     the caller treats it as a FAILED read - never as an empty one. */
+  /* Resolves to the JSON text. Rejects when a packed payload cannot be read here (not even
+     with pako), so the caller treats it as a FAILED read - never as an empty one. */
   function unpack(pay){
     if(typeof pay !== 'string') return Promise.resolve(pay);
     var bare = pay.indexOf(PACK_TAG) === 0, wrap = !bare && pay.indexOf('{"__packed":') === 0;
     if(!bare && !wrap) return Promise.resolve(pay);
-    if(!canPack()) return Promise.reject(new Error('This browser cannot read a packed record.'));
     try{
       if(bare) return inflate(pay);
       var w = JSON.parse(pay);
@@ -1042,6 +1066,50 @@
       .catch(function(){ return {}; });
   }
 
+  /* HOW FULL IS EACH RECORD (future-proofing check, 22/10/2026). One SharePoint text column holds
+     63,999 characters (COL_MAX keeps a margin) and a record that grows into it starts refusing
+     saves. This reads every row's contents ONCE - only when somebody asks (History, or Admin at most
+     once a day) - and reports each record as SharePoint stores it (a packed one counts packed).
+     Resolves [{key, chars, packed}], biggest first. Reads only; never writes. */
+  var SIZE_WARN = 0.7;
+  function sizes(){
+    if(!live()) return Promise.resolve([]);
+    var out = [];
+    function one(p, n){
+      return PH_AUTH.graph(p).then(function(r){
+        out = out.concat((r && r.value) || []);
+        var next = r && r['@odata.nextLink'];
+        return (next && n < 40) ? one(next.replace(GRAPH, ''), n+1) : out;
+      });
+    }
+    return authReady.then(function(){ return withRetry(connect); })
+      .then(function(){ return withRetry(function(){ out = []; return one(listPath()+'/items?$expand=fields&$top=200', 0); }); })
+      .then(function(items){
+        var seen = {}, list = [];
+        items.forEach(function(i){
+          var t = i.fields && i.fields.Title; if(!t || seen[t]) return; seen[t] = 1;
+          var pay = String((i.fields && i.fields.Payload) || '');
+          list.push({key: t, chars: pay.length, packed: pay.indexOf(PACK_TAG) === 0 || pay.indexOf('{"__packed":') === 0});
+        });
+        return list.sort(function(a, b){ return b.chars - a.chars; });
+      });
+  }
+
+  /* What a record is, in words - for the size watch. */
+  function recordName(k){
+    var m, NAMES = {ph_sched2:'Doctor schedule', ph_docs:'Doctor list', ph_people:'People settings', ph_access:'Teams & access',
+      ph_roster:'Staff roster', ph_roster_extra:'Staff added / removed', ph_locations:'Offices', ph_activity:'Notifications',
+      ph_mktg:'Marketing board', ph_prodaudit:'Production entries — who and when', ph_prod_index:'Production years', ph_teams:'Teams'};
+    if(NAMES[k]) return NAMES[k];
+    if((m = /^ph_prod_log_(\d{4})$/.exec(k))) return 'Production history ' + m[1];
+    if((m = /^ph_prod_data_(\d{4})$/.exec(k))) return 'Production numbers ' + m[1];
+    if((m = /^ph_prod_links_(\d{4})$/.exec(k))) return 'Production links ' + m[1];
+    if(k.indexOf('ph_me_') === 0) return 'Profile — ' + k.slice(6);
+    if(k.indexOf('ph_seen_') === 0) return 'Notifications read — ' + k.slice(8);
+    if(k.indexOf('ph_face_') === 0) return 'Photo — ' + k.slice(8);
+    return k;
+  }
+
   /* What a human has to do once, by hand, before live storage works. */
   function setup(){
     return 'On ' + SITE_PATH + ': New > List > Blank list, name it "' + LIST_NAME + '", ' +
@@ -1085,6 +1153,10 @@
     mergeInto:mergeInto, mergeById:mergeById,
     /* Packed payloads: history.html and restore.html read raw versions through these. */
     pack:pack, unpack:unpack, COL_MAX:COL_MAX,
+    /* pako on a browser without CompressionStream (older Safari), else null - prodbook.js unzips with it. */
+    zlib:zlib,
+    /* Every record's stored size, biggest first, for the size watch (History, Admin); SIZE_WARN of COL_MAX = "getting full". */
+    sizes:sizes, SIZE_WARN:SIZE_WARN, recordName:recordName,
     /* The id of the row holding a key, or null - history.html reads that row's versions. */
     idOf:function(key){ return authReady.then(function(){ return withRetry(connect); }).then(function(){ return findId(key); }); },
     /* Combining a held change with the shared copy - pure, tested in test/sync.test.js. */

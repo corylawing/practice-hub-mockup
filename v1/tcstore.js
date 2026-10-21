@@ -133,9 +133,31 @@
   }
   const nameOf = function(key){ return key + '.json'; };
 
+  /* A few files at a time, not all at once: a tracker with years of months in it is hundreds
+     of files, and SharePoint throttles a burst. */
+  function fewAtATime(list, n, job){
+    var next = 0;
+    function lane(){
+      if(next >= list.length) return Promise.resolve();
+      var x = list[next++];
+      return Promise.resolve().then(function(){ return job(x); }).then(lane);
+    }
+    var lanes = [];
+    for(var k = 0; k < Math.min(n, list.length); k++) lanes.push(lane());
+    return Promise.all(lanes);
+  }
   /* All records whose key starts with `prefix`: {key: value}. A file that cannot be read
-     stops the read - showing the rest would hide that something is wrong. */
-  function getAll(prefix){
+     stops the read - showing the rest would hide that something is wrong.
+
+     {partial: true} - the tracker page (future-proofing check, 22/10/2026): one unreadable
+     month used to blank the whole tracker for everyone, every month of every office. Now the
+     rest is shown and the result's `unread` (not one of its keys) names what could not be
+     read, so the page says so in red - and that month's file is still never written over
+     (update() reads it first). If NOTHING could be read it is still an error, never an
+     empty tracker. */
+  function getAll(prefix, opts){
+    var partial = !!(opts && opts.partial);
+    var mark = function(out, unread){ if(partial) Object.defineProperty(out, 'unread', { value: unread, enumerable: false }); return out; };
     if(!live()){
       var out = {};
       try{
@@ -144,19 +166,23 @@
           if(k && k.indexOf(prefix) === 0 && k.indexOf('__') < 0){ try{ out[k] = JSON.parse(localStorage.getItem(k)); }catch(_){} }
         }
       }catch(_){}
-      return Promise.resolve(out);
+      return Promise.resolve(mark(out, []));
     }
     return folder().then(files).catch(function(e){
       if(e.status === 404){ where = null; ids = {}; }      // the folder went: "Try again" looks again
       throw e;
     }).then(function(list){
-      var out = {};
-      return Promise.all(list.filter(function(f){ return f.name.indexOf(prefix) === 0 && /\.json$/i.test(f.name); }).map(function(f){
+      var out = {}, unread = [];
+      var mine = list.filter(function(f){ return f.name.indexOf(prefix) === 0 && /\.json$/i.test(f.name); });
+      return fewAtATime(mine, 8, function(f){
         var key = f.name.replace(/\.json$/i, '');
-        return readFile(f).then(function(v){ out[key] = v; }, function(){
-          throw fail(422, 'Part of the TC Tracker (' + key + ') could not be read, so nothing is shown rather than half of it.');
-        });
-      })).then(function(){ return out; });
+        return readFile(f).then(function(v){ out[key] = v; }, function(){ unread.push(key); });
+      }).then(function(){
+        unread.sort();
+        if(unread.length && (!partial || unread.length === mine.length))
+          throw fail(422, 'Part of the TC Tracker (' + unread.join(', ') + ') could not be read, so nothing is shown rather than half of it.');
+        return mark(out, unread);
+      });
     });
   }
 

@@ -23,6 +23,9 @@ function library(opts){
     if(url.indexOf('https://download.test/')===0){
       sp.calls.push('DOWNLOAD '+url.slice(22).split('?')[0]);
       if(o.headers && o.headers.Authorization) return R(400,'no auth header allowed on a download address');
+      sp.inflight=(sp.inflight||0)+1; sp.peak=Math.max(sp.peak||0, sp.inflight);
+      if(opts.slowReads) await new Promise(r=>setTimeout(r, 5));
+      sp.inflight--;
       const f=sp.files[url.slice(22).split('?')[0]]; return f ? R(200, f.text) : R(404,'gone');
     }
     const p=url.replace('https://graph.microsoft.com/v1.0',''); sp.calls.push(m+' '+p);
@@ -35,7 +38,7 @@ function library(opts){
       if(opts.madeMeanwhile){ sp.folder='F1'; return R(409,{error:{message:'nameAlreadyExists'}}); }   // someone else made it first
       sp.folder='F1'; return R(201,{id:'F1', folder:{}}); }
     let mm;
-    if((mm=/^\/drives\/D1\/items\/F1\/children\?\$top=200(?:&page=(\d))?$/.exec(p))){
+    if((mm=/^\/drives\/D1\/items\/F1\/children\?\$top=200(?:&page=(\d+))?$/.exec(p))){
       if(!sp.folder) return R(404,{error:{message:'itemNotFound'}});            // the folder has gone
       const all=Object.values(sp.files), pg=Number(mm[1]||0), size=2;
       return R(200,{value:all.slice(pg*size,pg*size+size).map(view), '@odata.nextLink': all.length>(pg+1)*size ? 'https://graph.microsoft.com/v1.0/drives/D1/items/F1/children?$top=200&page='+(pg+1) : undefined});
@@ -87,6 +90,24 @@ const content=(sp,name)=>{ const f=Object.values(sp.files).find(x=>x.name===name
   { const sp=library(); sp.add('ph_tclog_hobbs_2026-10.json', '{not json');
     const {S}=fresh(true, sp); let err=null; try{ await S.getAll('ph_tclog_'); }catch(e){ err=e; }
     t('A file that can’t be read stops the read and says so (no half tracker)', err && /could not be read/.test(err.message)); }
+  /* 22/10/2026: one month that will not read no longer blanks the whole tracker (the page asks for {partial:true}). */
+  { const sp=library(); sp.add('ph_tclog_hobbs_2026-10.json', '{not json'); sp.add('ph_tclog_hobbs_2026-09.json', rec('b','Ben'));
+    sp.add('ph_tclog_clovis_2026-10.json', rec('c','Cam'));
+    const {S}=fresh(true, sp); const all=await S.getAll('ph_tclog_', {partial:true});
+    t('One month that won’t read: the rest of the tracker is still shown', all['ph_tclog_hobbs_2026-09'].consults.b && all['ph_tclog_clovis_2026-10'].consults.c);
+    t('...and the page is told exactly which month did not read', Array.isArray(all.unread) && all.unread.length===1 && all.unread[0]==='ph_tclog_hobbs_2026-10');
+    t('...which is never mistaken for a month of the tracker', Object.keys(all).length===2 && Object.keys(all).indexOf('unread')<0);
+    let err=null; try{ await S.update('ph_tclog_hobbs_2026-10', addConsult('x','X')); }catch(e){ err=e; }
+    t('...and that month is still never written over', err && /was not written over/.test(err.message) &&
+      Object.values(sp.files).find(f=>f.name==='ph_tclog_hobbs_2026-10.json').text==='{not json' && !sp.calls.some(c=>/^PUT/.test(c))); }
+  { const sp=library(); sp.add('ph_tclog_hobbs_2026-10.json', '{not json'); sp.add('ph_tclog_hobbs_2026-09.json', '{also bad');
+    const {S}=fresh(true, sp); let err=null; try{ await S.getAll('ph_tclog_', {partial:true}); }catch(e){ err=e; }
+    t('Nothing at all would read: an error - never an empty tracker', err && /could not be read/.test(err.message)); }
+  { const sp=library({slowReads:true}); for(let i=0;i<30;i++) sp.add('ph_tclog_hobbs_20'+(20+Math.floor(i/12))+'-'+String(i%12+1).padStart(2,'0')+'.json', rec('k'+i,'P'+i));
+    const {S}=fresh(true, sp); const all=await S.getAll('ph_tclog_', {partial:true});
+    t('Years of months: every file read, a few at a time (SharePoint throttles a burst)', Object.keys(all).length===30 && sp.peak>1 && sp.peak<=8); }
+  { const {S}=fresh(false, null); const all=await S.getAll('ph_tclog_', {partial:true});
+    t('Sandbox: the same answer shape (nothing unread)', Array.isArray(all.unread) && all.unread.length===0); }
   { const sp=library({noFolder:true}); const {S}=fresh(true, sp); const all=await S.getAll('ph_tclog_');
     t('First use: the folder is made, the tracker starts empty', sp.folder==='F1' && Object.keys(all).length===0 && sp.calls.some(c=>c==='POST /drives/D1/root/children')); }
   { const sp=library({hidden:true}); const {S}=fresh(true, sp); let err=null; try{ await S.getAll('ph_tclog_'); }catch(e){ err=e; }

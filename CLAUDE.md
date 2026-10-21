@@ -485,9 +485,25 @@ odd answer, history past 200 rows); the test stand-ins in guard/roster now answe
 (they answered it with a list, which the old code happened to tolerate). Browser: Team page on the live branch with
 the stand-in SharePoint - one keys-only listing, 4 rows by id, photos and admin faces loaded, no errors. Also: real
 doctor names that were still in tests (and the History page's pre-filled search) replaced by made-up ones.
-NEXT in group 3: TC Tracker recent months first (one bad month must not break it), reading packed records on browsers
-without CompressionStream, Admin size watch; then ONE careful live deploy. Schedule split by year: not now (it would
-move current data).
+**Group 3, steps 2-4 (22/10/2026, hc110).**
+- TC Tracker: tcstore getAll reads files 8 at a time; with {partial:true} (tc.html) one unreadable office-month no
+  longer blanks the tracker - the rest shows, a red note names the month ("Carlsbad September 2026"), Try again;
+  that month is still never written over (update() reads first); if NOTHING reads it is still an error. "Recent
+  months first" was NOT done: the numbers count each patient's FIRST exam, which can be in any older month, so a
+  partial load would show wrong numbers. Next step if it ever gets slow (years of files): a yearly summary file.
+- Older iPhones/iPads (Safari < 16.4, no CompressionStream): pako 2.1.0 vendored at v1/vendor/pako.min.js (+ licence;
+  npm tarball checked against the registry's sha512) and fetched ONLY by such a browser (store.js zlib()). Packed
+  records read and write through it (byte-compatible both ways - checked in a real browser, accents and emoji);
+  prodbook.js unzips Excel with it. If it cannot load: a failed read, as before (never empty).
+- Size watch: PH_STORE.sizes() reads every row ONCE (the old full request) and only reads; History has "How full is
+  each record" (amber 70%, red 90%; history.html#sizes runs it); Admin checks at most once a day per admin browser
+  (localStorage ph_sizewatch) and shows a notice only when a record passes 70%.
+- FOUND, NOT CHANGED (needs Cory): the production history log is capped at 600,000 RAW characters (capLog). Packed,
+  that is ~77,000-110,000 (simulated with made-up entries in the real shape) - over the 63,000 a record holds, so
+  once a year's log grows big its saves would be refused. Lowering the cap would DELETE existing entries, so it was
+  left; proposed fix: roll the oldest entries into an archive record (ph_prod_log_<y>_old...) instead of dropping
+  them. The size watch flags it at 70% first.
+Schedule split by year: not done (it would move current data).
 
 **Payroll mock-up: Heather's answers (22/10/2026, hc109, sandbox only).** Her email, in short: Team B = the team
 reaching its goal (now "Goal"); TC/OM a bonus, not a set amount; DIBS and POG San Angelo only, Phone Lubbock only,

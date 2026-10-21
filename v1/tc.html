@@ -79,6 +79,7 @@
   .link{background:none;border:none;color:var(--teal-600);font-weight:700;cursor:pointer;padding:0;font-size:inherit}
   .note{border-radius:12px;padding:11px 14px;font-size:13.5px;line-height:1.5}
   .note.warn{background:var(--amber-soft);border:1px solid #f3d7a6;color:#7a4b00}
+  .note.bad{background:#FBEAE7;border:1px solid #f1c3b9;color:#8a2a1a}
   .note.info{background:var(--blue-soft);border:1px solid #c3ddf2;color:#14496c}
   .note.good{background:var(--good-soft);border:1px solid #bfe3cf;color:#1d6b47}
   .empty{background:#fff;border:1px dashed var(--line);border-radius:14px;padding:28px;text-align:center;color:var(--soft)}
@@ -263,13 +264,13 @@
     *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}
   }
 </style>
-<script src="user.js?v=hc109"></script>
+<script src="user.js?v=hc110"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc109"></script>
-  <script src="gate.js?v=hc109"></script>
-  <script src="_staff.js?v=hc109"></script>
-  <script src="tc.js?v=hc109"></script>
-  <script src="tcstore.js?v=hc109"></script>
+  <script src="store.js?v=hc110"></script>
+  <script src="gate.js?v=hc110"></script>
+  <script src="_staff.js?v=hc110"></script>
+  <script src="tc.js?v=hc110"></script>
+  <script src="tcstore.js?v=hc110"></script>
 </head>
 <body>
 <div class="ribbon">SANDBOX — made-up patients. Use “Try it as” to see it as a TC, an office manager or Selene.</div>
@@ -381,6 +382,8 @@
   /* ---------------- data ---------------- */
   // ALL = this person's offices. EVERY = every office, used only for the all-TCs rates table.
   let ALL=[], EVERY=[], SLOTS={}, LISTS=Object.assign({}, TC.DEFAULT_LISTS), SCHED=null, loaded=false, loadErr='';
+  // Months that would not read this time (tcstore.js {partial:true}): everything else is shown, and the page says which.
+  let UNREAD=[];
   const takesMed=o=>TC.takesMedicaid(LISTS, o);
   const payTag=r=>r.payer==='Medicaid'?'<span class="pay">Medicaid</span>':'';
   // "Submitted to Medicaid" only for a Medicaid patient at an office that takes Medicaid.
@@ -432,12 +435,13 @@
     const offs=myOffices();
     seedDemo(false);
     // Consults live in their own locked folder on the live site (tcstore.js), the browser on the sandbox.
-    const logs=TCSTORE.getAll(TC.LOG_PREFIX);
+    const logs=TCSTORE.getAll(TC.LOG_PREFIX, {partial:true});
     // Every office's slots (no patient details in them): TCs see every office in "By office".
     const slots=Promise.all([...new Set(allOffices().concat(offs))].map(o=>PH_STORE.get(TC.slotsKey(o)).then(v=>[o,v], ()=>[o,null])));
     return Promise.all([logs, slots, PH_STORE.get(TC.LISTS_KEY).catch(()=>null), PH_STORE.get('ph_sched2').catch(()=>null)])
       .then(([L,S,Li,Sc])=>{
         EVERY=TC.consultsFrom(L).filter(TC.live);
+        UNREAD=(L && L.unread) || [];
         ALL=EVERY.filter(r=>offs.indexOf(r.office)>=0);
         SLOTS={}; S.forEach(([o,v])=>{ SLOTS[o]=(v && typeof v==='object')?v:{}; });
         LISTS=Object.assign({}, TC.DEFAULT_LISTS, (Li && typeof Li==='object')?Li:{});
@@ -516,7 +520,20 @@
     if(!loaded){ el('view').innerHTML='<div class="empty">Loading…</div>'; return; }
     if(loadErr){ el('view').innerHTML='<div class="note warn">'+esc(loadErr)+' <button class="link" data-act="reload">Try again</button></div>'; return; }
     const v=({today:viewToday, calls:viewCalls, log:viewLog, numbers:viewNumbers, slots:viewSlots})[tab]||viewToday;
-    el('view').innerHTML=v();
+    el('view').innerHTML=unreadNote()+v();
+  }
+
+  /* One office-month that would not read: said plainly, at the top of every tab, until it reads again. */
+  function unreadLabel(key){
+    const m=/^ph_tclog_(.+)_(\d{4})-(\d{2})$/.exec(key); if(!m) return key;
+    const off=allOffices().find(o=>TC.slug(o)===m[1])||m[1];
+    return off+' '+new Date(+m[2], +m[3]-1, 1).toLocaleDateString('en-US',{month:'long', year:'numeric'});
+  }
+  function unreadNote(){
+    if(!UNREAD.length) return '';
+    return '<div class="note bad" style="margin-bottom:12px">⚠️ <b>Part of the TC Tracker could not be read: '+esc(UNREAD.map(unreadLabel).join(', '))+'.</b> '+
+      'Those consults aren’t shown and the numbers leave them out. Nothing in '+(UNREAD.length>1?'those months':'that month')+' can be saved until it reads again — nothing is lost. '+
+      '<button class="link" data-act="reload">Try again</button></div>';
   }
 
   /* ---------------- Today ---------------- */
@@ -1171,7 +1188,7 @@
 })();
 </script>
 <script>PH.nav('tc');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(window.TCPAGE)TCPAGE.identity();});document.addEventListener('ph-identity',function(){if(window.TCPAGE)TCPAGE.identity();});</script>
-<script src="tour.js?v=hc109"></script>
+<script src="tour.js?v=hc110"></script>
 <script>
 Tour.init([
   {sel:'#offbar', title:'Your office', body:'You see the offices you work at. Heather, Selene and leadership see every office and can pick one.'},

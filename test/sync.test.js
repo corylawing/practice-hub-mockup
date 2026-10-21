@@ -84,7 +84,7 @@ function SharePoint(){
   return sp;
 }
 
-function Browser(sp,who){
+function Browser(sp,who,opt){
   const LS={}, events=[];
   const ctx={console,Promise,JSON,Math,Date,Object,Array,String,Number,Error,RegExp,TypeError,Uint8Array,
     Blob,Response,CompressionStream,DecompressionStream,btoa,atob,setTimeout,clearTimeout,
@@ -96,6 +96,9 @@ function Browser(sp,who){
     PH_AUTH:{account:{username:who.email,name:who.displayName},token:()=>Promise.resolve('t'),graph:sp.graph(who)},
     fetch:sp.fetch(who)};
   ctx.window=ctx; ctx.globalThis=ctx;
+  // An older iPhone or iPad (Safari before 16.4): no CompressionStream. pako stands in when it loaded.
+  if(opt && opt.old){ ctx.CompressionStream=undefined; ctx.DecompressionStream=undefined; }
+  if(opt && opt.pako) ctx.pako=require(path.join(__dirname,'..','v1','vendor','pako.min.js'));
   vm.createContext(ctx); vm.runInContext(SRC,ctx,{filename:'store.js'});
   const S=ctx.PH_STORE;
   if(S.setRetryWaits) S.setRetryWaits([2,2,2]);
@@ -538,6 +541,45 @@ const ok=[],bad=[]; const t=(n,v)=>{ (v?ok:bad).push(n); };
     const A=Browser(sp,H);
     t('(history) the row for a key past the first 200 is found', A.S.idOf ? await A.S.idOf('ph_prod_data_2027')===late.id : false);
     t('(history) and a key with no row says so', A.S.idOf ? await A.S.idOf('ph_nothing')===null : false);
+  }
+
+  /* ---- 14. OLDER iPHONES AND iPADS: NO CompressionStream ----------------------------------
+     22/10/2026. Safari before 16.4. A packed record could not be read there at all (a failed read:
+     the device's copy shown, every save refused) and a big save could not be packed to fit. */
+  {
+    const sp=SharePoint();
+    const full=Object.assign({__v:2},year(2026,0.75,11),year(2027,0.3,12));
+    const A=Browser(sp,H); await A.S.set('ph_sched2',full);                        // a modern browser packs it
+    t('(old iPhone) setup: the schedule is stored packed', sp.payload('ph_sched2').indexOf('{"__packed":"~z1:')===0);
+    const O=Browser(sp,J,{old:true,pako:true});
+    const got=await O.S.get('ph_sched2');
+    t('(old iPhone) reads the packed schedule in full, through pako', same(got,full) && !O.S.readFailed('ph_sched2'));
+    const more=clone(full); more['2027-06-01']={Hobbs:{ps:[2],s:480,e:1020}};
+    const r=await O.S.update('ph_sched2',()=>more);
+    t('(old iPhone) and its own save is packed to fit, not refused', !!r && !r.error && !r.blocked && sp.payload('ph_sched2').indexOf('{"__packed":"~z1:')===0);
+    t('(old iPhone) which a modern browser reads back exactly', same(await unpacked(A,'ph_sched2',sp), more));
+    const N=Browser(sp,J,{old:true});                                              // the unpacker did not load
+    await N.S.get('ph_sched2');
+    t('(old iPhone, no unpacker) a packed record it cannot open is a failed read, never an empty one', N.S.readFailed('ph_sched2')===true);
+    const w=await N.S.set('ph_sched2',{__v:2});
+    t('(old iPhone, no unpacker) so nothing is written over it', w.blocked===true && same(await unpacked(A,'ph_sched2',sp), more));
+  }
+
+  /* ---- 15. HOW FULL IS EACH RECORD ------------------------------------------------------
+     22/10/2026. One SharePoint record holds ~63,000 characters; the size watch (History, Admin
+     once a day) reads every row ONCE and only reads. */
+  {
+    const sp=SharePoint();
+    const full=Object.assign({__v:2},year(2026,0.75,11),year(2027,0.3,12));
+    const A=Browser(sp,H); await A.S.set('ph_sched2',full);
+    sp.add('ph_teams',['Staff','TCs'],H); sp.add('ph_prod_log_2027',[{at:'2027-01-05',changes:[]}],H);
+    const writes=sp.writes;
+    const list=A.S.sizes ? await A.S.sizes() : [];
+    const sched=list.find(r=>r.key==='ph_sched2');
+    t('(size watch) every record, biggest first, as SharePoint stores it', list.length===3 && list[0].key==='ph_sched2' && sched.chars===sp.payload('ph_sched2').length);
+    t('(size watch) a packed record is counted packed, and says so', !!sched && sched.packed===true && !list.find(r=>r.key==='ph_teams').packed);
+    t('(size watch) and checking writes nothing', sp.writes===writes);
+    t('(size watch) records are named in words', A.S.recordName && A.S.recordName('ph_prod_log_2027')==='Production history 2027' && A.S.recordName('ph_sched2')==='Doctor schedule');
   }
 
   console.log(ok.map(s=>'  PASS  '+s).join('\n'));

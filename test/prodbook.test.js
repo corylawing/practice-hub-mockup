@@ -75,6 +75,18 @@ function deflatedZip(files){
   t('labels come from the shared strings', C('Office (A)','A3').v==='TC Net Production');
   t('a shared formula is expanded into every cell it covers', C('Office (A)','D5').f==='D3*1.04' && C('Office (A)','C5').f==='C3*1.04');
   t('a typed number is a number', C('Office (A)','B3').v===100000 && C('Office (A)','B3').f===null);
+  // 2b. An older iPhone or iPad (Safari before 16.4): no DecompressionStream, so pako - which store.js fetches - unzips.
+  {
+    const DS=globalThis.DecompressionStream, keep=globalThis.PH_STORE;
+    delete globalThis.DecompressionStream;
+    globalThis.PH_STORE={zlib:()=>Promise.resolve(require('../v1/vendor/pako.min.js'))};
+    const old=await B.open(zipped).catch(e=>e);
+    t('an older iPhone opens the same compressed .xlsx through pako', old && old.sheets && JSON.stringify(old.sheets)===JSON.stringify(book.sheets));
+    globalThis.PH_STORE=undefined;
+    const none=await B.open(zipped).then(()=>null, e=>e);
+    t('...and without any unzipper it says so, rather than showing a blank book', none && /cannot open Excel files/.test(none.message));
+    globalThis.DecompressionStream=DS; globalThis.PH_STORE=keep;
+  }
 
   // 3. Working the formulas out: every formula matches the result Excel saved
   const ev=B.evaluate(book); let n=0, miss=[];

@@ -63,6 +63,12 @@
        font:700 11.5px inherit;padding:5px 10px;cursor:pointer;margin:0;white-space:nowrap}
   .put:hover{background:#E8F6F4;border-color:var(--teal);color:var(--teal-600)}
   .now{font-size:10.5px;font-weight:800;color:var(--teal-600);letter-spacing:.03em}
+  /* How full is each record */
+  .bar{height:8px;background:#EEF1F5;border-radius:99px;overflow:hidden;min-width:120px}
+  .bar i{display:block;height:100%;background:var(--teal)}
+  .bar.warn i{background:#F2A03D}
+  .bar.bad i{background:#D7503A}
+  td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -101,12 +107,21 @@
     <div class="res" id="r"></div>
     <div id="out"></div>
   </div>
+
+  <div class="card" id="sizes">
+    <h2>How full is each record</h2>
+    <p class="hint">One SharePoint record holds about 63,000 characters, and a record that fills up starts refusing
+       saves. Big records are stored packed, and are counted packed here. Amber from 70%, red from 90%.
+       This only reads &mdash; it changes nothing.</p>
+    <button id="sizego">Check the sizes</button>
+    <div id="sizeout"></div>
+  </div>
 </div>
 
-<script src="user.js?v=hc109"></script>
+<script src="user.js?v=hc110"></script>
 <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-<script src="store.js?v=hc109"></script>
-<script src="gate.js?v=hc109"></script>
+<script src="store.js?v=hc110"></script>
+<script src="gate.js?v=hc110"></script>
 <script>
 (function(){
   'use strict';
@@ -255,6 +270,27 @@
       show('bad','<b>It did not save.</b> '+esc((e&&e.message)||e));
     });
   });
+
+  /* HOW FULL IS EACH RECORD (22/10/2026). Reads every record once; Admin links here when one passes 70%. */
+  function checkSizes(){
+    if(!window.PH_AUTH || !window.PH_STORE || !PH_STORE.sizes){ el('sizeout').innerHTML='<p class="hint">Not signed in. Reload the page and sign in first.</p>'; return; }
+    el('sizego').disabled=true; el('sizeout').innerHTML='<p class="hint">Reading every record once…</p>';
+    PH_STORE.sizes().then(function(list){
+      el('sizego').disabled=false;
+      var lim=PH_STORE.COL_MAX, warn=PH_STORE.SIZE_WARN, top=list.slice(0,30);
+      try{ localStorage.setItem('ph_sizewatch', JSON.stringify({at:Date.now(), over:list.filter(function(r){ return r.chars>=lim*warn; })})); }catch(_){}
+      el('sizeout').innerHTML='<table><thead><tr><th>Record</th><th style="text-align:right">Characters</th><th>How full</th><th></th></tr></thead><tbody>'+
+        top.map(function(r){ var pc=Math.min(100, Math.round(r.chars/lim*100)), cls=r.chars>=lim*0.9?'bad':r.chars>=lim*warn?'warn':'';
+          return '<tr><td><b>'+esc(PH_STORE.recordName(r.key))+'</b>'+(r.packed?' <span class="muted">(packed)</span>':'')+'<div class="muted" style="font-size:11.5px">'+esc(r.key)+'</div></td>'+
+            '<td class="n">'+r.chars.toLocaleString('en-US')+'</td><td><div class="bar '+cls+'"><i style="width:'+pc+'%"></i></div></td><td class="n">'+pc+'%</td></tr>'; }).join('')+
+        '</tbody></table>'+(list.length>top.length?'<p class="hint">…and '+(list.length-top.length)+' smaller ones.</p>':'');
+    }, function(e){ el('sizego').disabled=false; el('sizeout').innerHTML='<p class="hint">Could not read the sizes: '+esc((e&&e.message)||e)+'</p>'; });
+  }
+  el('sizego').onclick=checkSizes;
+  // From Admin's "getting full" notice: check straight away once signed in.
+  if(location.hash==='#sizes'){
+    var waitSizes=setInterval(function(){ if(window.PH_AUTH){ clearInterval(waitSizes); checkSizes(); } }, 300);
+  }
 
   el('go').onclick=function(){
     if(!window.PH_AUTH) return show('bad','<b>Not signed in.</b> Reload the page and sign in first.');

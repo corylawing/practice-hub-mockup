@@ -28,7 +28,15 @@
   function u16(b,o){ return b[o] | (b[o+1]<<8); }
   function u32(b,o){ return (b[o] | (b[o+1]<<8) | (b[o+2]<<16) | (b[o+3]<<24)) >>> 0; }
   function inflateRaw(bytes){
-    if(typeof DecompressionStream === 'undefined') return Promise.reject(new Error('This browser cannot open Excel files (no DecompressionStream).'));
+    if(typeof DecompressionStream === 'undefined'){
+      /* Older Safari (before 16.4): pako, which store.js fetches only when it is needed (22/10/2026). */
+      var z = global.PH_STORE && global.PH_STORE.zlib;
+      if(!z) return Promise.reject(new Error('This browser cannot open Excel files (no DecompressionStream).'));
+      return z().then(function(pk){
+        if(!pk) throw new Error('This browser cannot open Excel files (no DecompressionStream).');
+        return pk.inflateRaw(bytes);
+      });
+    }
     var s = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
     return new Response(s).arrayBuffer().then(function(ab){ return new Uint8Array(ab); });
   }
