@@ -6,33 +6,33 @@
 
   // Sample people for the demo. Real names/emails/photos come from Microsoft 365 at go-live;
   // teams & locations are placeholders until the practice sends their real groupings.
-  // REAL people and REAL roles from the practice's User Profile sheet (2026-07-28).
+  // Made-up people in the practice's real roles (the repo is public; the real roster is in SharePoint).
   // Note many staff hold DUAL roles — that's why `role` can be a combination.
   const PEOPLE=[
-    {id:'admin', first:'Heather', last:'Beal', role:'COO', title:'COO (Admin)',
+    {id:'admin', first:'Priya', last:'Tatum', role:'COO', title:'COO (Admin)',
      teams:['Admin','Executive Team'], loc:'All offices', region:'All', brand:'Group',
-     mail:'heather@farnsworthorthodontics.com',
+     mail:'priya@farnsworthorthodontics.com',
      phone:'(575) 555-1002', emp:'E-1002', status:'Active', color:'#25456e', offices:'all',
      about:'COO. I look after the group and I\u2019m the administrator for this hub.',
      can:{dashboard:'view',production:'manage',schedule:'edit',marketing:'edit',documents:'manage',team:'view',admin:'manage',tc:'manage'}},
-    {id:'om', first:'Lily', last:'Rico', role:'OM / Clinic Lead', title:'Office Manager \u00b7 Carlsbad',
+    {id:'om', first:'Gabriela', last:'Garrison', role:'OM / Clinic Lead', title:'Office Manager \u00b7 Carlsbad',
      teams:['Office Managers','Clinic Managers'], loc:'Carlsbad', region:'NM', brand:'FFO',
-     mail:'lily@farnsworthorthodontics.com',
+     mail:'gabriela@farnsworthorthodontics.com',
      phone:'(575) 555-1010', emp:'E-1010', status:'Active', color:'#149B96', offices:['Carlsbad'],
      about:'Office manager and clinic lead at Carlsbad.',
      can:{dashboard:'view',production:'edit',schedule:'edit',marketing:'view',documents:'edit',team:'view',admin:'none',tc:'view'}},
-    {id:'doctor', first:'Carla', last:'Coelho', role:'Associate Doctor', title:'Associate Doctor \u00b7 rotates', dr:true,
+    {id:'doctor', first:'Clara', last:'Coleman', role:'Associate Doctor', title:'Associate Doctor \u00b7 rotates', dr:true,
      teams:['Doctors'], loc:'Rotates', region:'NM', brand:'FFO',
      phone:'(575) 555-1020', emp:'E-1020', status:'Active', color:'#6b3fd0', offices:['Carlsbad','Hobbs'],
      about:'Associate doctor. I rotate between offices.',
      can:{dashboard:'view',production:'none',schedule:'view',marketing:'none',documents:'view',team:'view',admin:'none',tc:'none'}},
-    {id:'tc', first:'Elizabeth', last:'Reyes', role:'TC', title:'Treatment Coordinator \u00b7 Hobbs',
+    {id:'tc', first:'Quinn', last:'Quill', role:'TC', title:'Treatment Coordinator \u00b7 Hobbs',
      teams:['TCs'], loc:'Hobbs', region:'NM', brand:'FFO',
-     mail:'liz@farnsworthorthodontics.com',
+     mail:'quinn@farnsworthorthodontics.com',
      phone:'(575) 555-1030', emp:'E-1030', status:'Active', color:'#946011', offices:['Hobbs'],
      about:'Treatment coordinator at Hobbs.',
      can:{dashboard:'none',production:'none',schedule:'view',marketing:'none',documents:'add',team:'view',admin:'none',tc:'edit'}},
-    {id:'staff', first:'Serenity', last:'Gonzales', role:'Clinical Assistant', title:'Clinical Assistant \u00b7 Carlsbad',
+    {id:'staff', first:'Camila', last:'Calder', role:'Clinical Assistant', title:'Clinical Assistant \u00b7 Carlsbad',
      teams:['Staff'], loc:'Carlsbad', region:'NM', brand:'FFO',
      phone:'(575) 555-1055', emp:'E-1055', status:'Active', color:'#b03a63', offices:['Carlsbad'],
      about:'Clinical assistant at Carlsbad.',
@@ -394,7 +394,7 @@
   }
 
   /* GUESTS FROM ANOTHER TENANT.
-     A B2B guest signs in as jenny_lascrucessmiles.com#EXT#@<host>.onmicrosoft.com.
+     A B2B guest signs in as name_lascrucessmiles.com#EXT#@<host>.onmicrosoft.com.
      Graph usually also returns their real address in `mail`, but not always - and
      when it doesn't, nothing in the roster or the admin overrides matches, so the
      person lands as Staff with no access and the invite looks broken. Turn that UPN
@@ -678,7 +678,7 @@
   /* ------------------------------------------------------------------
      WHO WE ARE WHEN WE DO NOT YET KNOW.
 
-     Found 2026-09-17, from a screenshot of Jenny Whitefield - an external guest -
+     Found 2026-09-17, from a screenshot of an external guest's screen -
      looking at the full navigation including Admin.
 
      Every page calls PH.nav() the moment it parses. gate.js does not set PROFILE

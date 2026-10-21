@@ -89,11 +89,11 @@
   }
 
 </style>
-<script src="user.js?v=hc107"></script>
+<script src="user.js?v=hc108"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="_staff.js?v=hc107"></script>
-  <script src="store.js?v=hc107"></script>
-  <script src="gate.js?v=hc107"></script>
+  <script src="_staff.js?v=hc108"></script>
+  <script src="store.js?v=hc108"></script>
+  <script src="gate.js?v=hc108"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — everyone's contact card. In the real hub this list builds itself from Microsoft 365.</div>
@@ -121,78 +121,7 @@
 <script>
 (function(){
   const PAL=['#149B96','#25456e','#946011','#6b3fd0','#b03a63','#2E7D52','#1f6f9e','#b0442f'];
-  const STAFF=[
-   {n:"Alexandra (Lexi) Espinosa",mail:"",loc:"Carlsbad",st:"NM",brand:"FFO",role:"Clinical Asst",team:"Staff"},
-   {n:"Cyndal Gomez",mail:"",loc:"Carlsbad",st:"NM",brand:"FFO",role:"Clinical Asst",team:"Staff"},
-   {n:"Serenity Gonzales",mail:"",loc:"Carlsbad",st:"NM",brand:"FFO",role:"Clinical Asst",team:"Staff"},
-   {n:"Keyly Moran",mail:"",loc:"Carlsbad",st:"NM",brand:"FFO",role:"Front Desk",team:"Staff"},
-   {n:"Tayler Nesbit",mail:"",loc:"Carlsbad",st:"NM",brand:"FFO",role:"Clinical Asst",team:"Staff"},
-   {n:"Jennifer Peters",mail:"jennifer@farnsworthorthodontics.com",loc:"Carlsbad",st:"NM",brand:"FFO",role:"TC/Financial Coord",team:"Staff"},
-   {n:"Lily Rico",mail:"lily@farnsworthorthodontics.com",loc:"Carlsbad",st:"NM",brand:"FFO",role:"OM/Clinic Lead",team:"Staff"},
-   {n:"Alyssa Smith",mail:"",loc:"Carlsbad",st:"NM",brand:"FFO",role:"Clinical Asst/Mktg Liason",team:"Staff"},
-   {n:"Macayla Villegas",mail:"",loc:"Carlsbad",st:"NM",brand:"FFO",role:"Clinical Asst",team:"Staff"},
-   {n:"Mia Armenta",mail:"",loc:"Hobbs",st:"NM",brand:"FFO",role:"Clinical Asst",team:"Staff"},
-   {n:"Pamela Hernandez",mail:"",loc:"Hobbs",st:"NM",brand:"FFO",role:"Clinic Lead",team:"Staff"},
-   {n:"Linda Herrera",mail:"",loc:"Hobbs",st:"NM",brand:"FFO",role:"Clinical Asst",team:"Staff"},
-   {n:"Lucero Holguin",mail:"",loc:"Hobbs",st:"NM",brand:"FFO",role:"Front Desk/Mrkg Liason",team:"Staff"},
-   {n:"Hannah Lanier",mail:"",loc:"Hobbs",st:"NM",brand:"FFO",role:"Clinical Asst",team:"Staff"},
-   {n:"Melissa Medina",mail:"",loc:"Hobbs",st:"NM",brand:"FFO",role:"Front Desk/Mktg Liason",team:"Staff"},
-   {n:"Maria Pando",mail:"",loc:"Hobbs",st:"NM",brand:"FFO",role:"Clinical Asst",team:"Staff"},
-   {n:"Elizabeth Reyes",mail:"liz@farnsworthorthodontics.com",loc:"Hobbs",st:"NM",brand:"FFO",role:"TC",team:"Staff"},
-   {n:"Yessenia Romaniz",mail:"yessenia@farnsworthorthodontics.com",loc:"Hobbs",st:"NM",brand:"FFO",role:"OM/Clincal Asst",team:"Staff"},
-   {n:"Dr. Carla Coelho",mail:"",loc:"",st:"",brand:"",role:"Associate Doctor",team:"Staff"},
-   {n:"Rebecca Fluhman",mail:"becca@farnsworthorthodontics.com",loc:"Lubbock",st:"TX",brand:"FFO",role:"OM/TC",team:"Staff"},
-   {n:"Shayna Garza",mail:"",loc:"Lubbock",st:"TX",brand:"FFO",role:"Clinic Lead",team:"Staff"},
-   {n:"Melissa Hernandez",mail:"",loc:"Lubbock",st:"TX",brand:"FFO",role:"Clinical Asst",team:"Staff"},
-   {n:"Elizabeth James",mail:"",loc:"Lubbock",st:"TX",brand:"FFO",role:"Front Desk",team:"Staff"},
-   {n:"Lluvia Lujan",mail:"",loc:"Lubbock",st:"TX",brand:"FFO",role:"Clinical Asst/Mktg Liason",team:"Staff"},
-   {n:"Karen Qualls",mail:"karen@farnsworthorthodontics.com",loc:"Lubbock",st:"TX",brand:"FFO",role:"Financial Coord/Front Desk",team:"Staff"},
-   {n:"Patricia Tidwell",mail:"",loc:"Lubbock",st:"TX",brand:"FFO",role:"Clinical Asst",team:"Staff"},
-   {n:"Dr. Susan McBeth",mail:"drmcbeth@ffortho.com",loc:"",st:"",brand:"",role:"Associate Doctor",team:"Staff"},
-   {n:"Monika Flores-Aleman",mail:"",loc:"Clovis",st:"NM",brand:"FFO",role:"Clinic Lead",team:"Staff"},
-   {n:"Maria Honorato",mail:"",loc:"Clovis",st:"NM",brand:"FFO",role:"Front Desk",team:"Staff"},
-   {n:"Yulissa Martinez",mail:"",loc:"Clovis",st:"NM",brand:"FFO",role:"Clinical Asst",team:"Staff"},
-   {n:"Ashley Rodriguez",mail:"",loc:"Clovis",st:"NM",brand:"FFO",role:"Clinical Asst",team:"Staff"},
-   {n:"Latricia Sanchez",mail:"latricia@farnsworthorthodontics.com",loc:"Clovis",st:"NM",brand:"FFO",role:"OM/TC/Financial Coord",team:"Staff"},
-   {n:"Idaly Tarango",mail:"",loc:"Clovis",st:"NM",brand:"FFO",role:"Front Desk",team:"Staff"},
-   {n:"Rebekah White",mail:"",loc:"Clovis",st:"NM",brand:"FFO",role:"Clinical Asst/Mktg Liason",team:"Staff"},
-   {n:"Cacy Briseno",mail:"",loc:"San Angelo",st:"TX",brand:"FFO",role:"Front Desk",team:"Staff"},
-   {n:"Lyndsey Dunn",mail:"",loc:"San Angelo",st:"TX",brand:"FFO",role:"Clinical Asst",team:"Staff"},
-   {n:"Klorissa Garcia",mail:"",loc:"San Angelo",st:"TX",brand:"FFO",role:"Clinic Lead",team:"Staff"},
-   {n:"Alicyn \"Haley\" Gossett",mail:"haley@farnsworthorthodontics.com",loc:"San Angelo",st:"TX",brand:"FFO",role:"OM/Clinical Asst",team:"Staff"},
-   {n:"Elizabeth \"Liz\" Guerrero",mail:"",loc:"San Angelo",st:"TX",brand:"FFO",role:"Front Desk/Records Tech",team:"Staff"},
-   {n:"Samantha Molina",mail:"",loc:"San Angelo",st:"TX",brand:"FFO",role:"Clinical Asst",team:"Staff"},
-   {n:"Arianna Peacock",mail:"",loc:"San Angelo",st:"TX",brand:"FFO",role:"Clinical Asst",team:"Staff"},
-   {n:"Melinda Tavarez",mail:"melinda@farnsworthorthodontics.com",loc:"San Angelo",st:"TX",brand:"FFO",role:"TC/Financial Coord",team:"Staff"},
-   {n:"Amanda Vasquez",mail:"",loc:"San Angelo",st:"TX",brand:"FFO",role:"Clinical Asst",team:"Staff"},
-   {n:"Heather Beal",mail:"heather@farnsworthorthodontics.com",loc:"",st:"",brand:"",role:"COO",team:"Staff"},
-   {n:"Selene Brown",mail:"selene@farnsworthorthodontics.com",loc:"",st:"",brand:"",role:"Marketing Director",team:"Staff"},
-   {n:"Jessica Lynch",mail:"jessica@ffortho.com",loc:"",st:"",brand:"",role:"CSO",team:"Staff"},
-   {n:"Brenda Garcia",mail:"",loc:"Mansfield",st:"TX",brand:"Sunflower",role:"Clinical Asst",team:"Staff"},
-   {n:"Kandace Lain",mail:"",loc:"Mansfield",st:"TX",brand:"Sunflower",role:"Clinic Lead",team:"Staff"},
-   {n:"Erika Munoz",mail:"",loc:"Mansfield",st:"TX",brand:"Sunflower",role:"Clinical Asst",team:"Staff"},
-   {n:"Kim Partee",mail:"",loc:"Mansfield",st:"TX",brand:"Sunflower",role:"Clinical Asst/Mktg Liason",team:"Staff"},
-   {n:"Noemi Sanchez Torres",mail:"noemi@sunflowerorthomansfield.com",loc:"Mansfield",st:"TX",brand:"Sunflower",role:"OM/TC",team:"Staff"},
-   {n:"Tierney Whitesel",mail:"tierney@sunflowerorthomansfield.com",loc:"Mansfield",st:"TX",brand:"Sunflower",role:"Front Desk/Financial Coord",team:"Staff"},
-   {n:"Sirena Zamudio",mail:"",loc:"Mansfield",st:"TX",brand:"Sunflower",role:"Front Desk",team:"Staff"},
-   {n:"Karin Alons",mail:"",loc:"Las Cruces",st:"NM",brand:"FFO",role:"Clinical Asst",team:"Staff"},
-   {n:"Suzy Brown",mail:"suzy@fortholascruces.com",loc:"Las Cruces",st:"NM",brand:"FFO",role:"OM/Clinic Lead",team:"Staff"},
-   {n:"Michelle Eichleberger",mail:"",loc:"Las Cruces",st:"NM",brand:"FFO",role:"Front Desk",team:"Staff"},
-   {n:"Melissa Elliott",mail:"",loc:"Las Cruces",st:"NM",brand:"FFO",role:"Clinical Asst",team:"Staff"},
-   {n:"Cindy Peterson",mail:"cindy@fortholascruces.com",loc:"Las Cruces",st:"NM",brand:"FFO",role:"TC/Financial Coord",team:"Staff"},
-   {n:"Roma Powell",mail:"",loc:"Las Cruces",st:"NM",brand:"FFO",role:"Front Desk",team:"Staff"},
-   {n:"Yvonne Avalos",mail:"",loc:"Las Cruces",st:"NM",brand:"LCO",role:"Clinical Asst",team:"Staff"},
-   {n:"Yessenia Flores",mail:"",loc:"Las Cruces",st:"NM",brand:"LCO",role:"Front Desk",team:"Staff"},
-   {n:"Maria Hinojos",mail:"",loc:"Las Cruces",st:"NM",brand:"LCO",role:"Clinical Asst",team:"Staff"},
-   {n:"Erica Martinez",mail:"",loc:"Las Cruces",st:"NM",brand:"LCO",role:"Clinical Asst",team:"Staff"},
-   {n:"Anette Olvera",mail:"",loc:"Las Cruces",st:"NM",brand:"FFO/LCO",role:"Clinical Asst",team:"Staff"},
-   {n:"Tara Pacini",mail:"",loc:"Las Cruces",st:"NM",brand:"LCO",role:"Clinical Asst",team:"Staff"},
-   {n:"Joemily \"Emmy\" Prieto",mail:"",loc:"Las Cruces",st:"NM",brand:"LCO",role:"Front Desk",team:"Staff"},
-   {n:"Melissa Villalva",mail:"melissa@lascrucessmiles.com",loc:"Las Cruces",st:"NM",brand:"LCO",role:"TC",team:"Staff"},
-   {n:"Jenny Whitefield",mail:"jenny@lascrucessmiles.com",loc:"Las Cruces",st:"NM",brand:"LCO",role:"OM/Clincal Asst",team:"Staff"},
-   {n:"Dr. David Farnsworth",mail:"",loc:"",st:"",brand:"",role:"Owner/Doctor",team:"Staff"},
-   {n:"Dr. Jae Brimhall",mail:"drbrimhall@farnsworthorthodontics.com",loc:"",st:"",brand:"",role:"Owner/Doctor",team:"Staff"}
-  ];
+  const STAFF=window.STAFF||[];   // the sandbox's made-up people (_staff.js); live: the SharePoint roster, below
   // Their real sheet lists "Las Cruces" once and splits the two practices by brand.
   // Shared office list (user.js) UNION whatever offices the roster actually uses, so a
   // new office from Admin gets a chip and nobody already on the roster loses theirs.
@@ -209,8 +138,8 @@
     }));
     OFFICES=out;
   }
-  /* The real roster is a tenant-only data file (see admin.html); the built-in STAFF
-     list below is the public sandbox's stand-in. */
+  /* The real roster lives in SharePoint (ph_roster); STAFF (_staff.js, made-up people) is the public
+     sandbox's stand-in. */
   function buildPeople(rows){ return rows.map((r,i)=>{
     const isDoc=/^Dr\./.test(r.n);
     const clean=r.n.replace(/"[^"]*"/g,'').replace(/\([^)]*\)/g,'').replace(/\s+/g,' ').trim();
@@ -248,7 +177,7 @@
          Hobbs and Carlsbad, so she vanished from Doctors - Heather, 17/09.
        - It compared the whole office string. Somebody at two offices has the string
          "Hobbs, Carlsbad", which equals neither "Hobbs" nor "Carlsbad", so they
-         matched no office chip either. Dr. Carla and Anette Olvera were reachable
+         matched no office chip either. a doctor and a staff member were reachable
          only from "Everyone".
 
        Doctors now means a doctor, Leadership means a leader, and an office matches if
@@ -322,7 +251,7 @@
 })();
 </script>
 <script>PH.nav('team');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.loadPhotos)PH.loadPhotos().then(function(got){if(got&&window.TEAMPAGE&&TEAMPAGE.refresh)TEAMPAGE.refresh();});if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc107"></script>
+<script src="tour.js?v=hc108"></script>
 <script>
 Tour.init([
   {sel:'#q', title:'Find anyone fast', body:'Type a name, an office, or part of a phone number. This is the quickest way to reach the right person at the right office.'},

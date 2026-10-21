@@ -42,7 +42,7 @@ function load(ls){
     navigator:{userAgent:'node'},
     fetch:(u)=>String(u).indexOf('_people.json')>=0
       ? Promise.resolve({ok:true, json:()=>Promise.resolve(
-          JSON.parse(fs.readFileSync(path.join(V1,'_people.json'),'utf8')))})
+          JSON.parse(fs.readFileSync(path.join(__dirname,'fixtures','people.json'),'utf8')))})
       : Promise.reject(new Error('offline'))};
   ctx.window=ctx; ctx.globalThis=ctx; ctx.self=ctx; ctx.addEventListener=ctx.document.addEventListener;
   vm.createContext(ctx);
@@ -63,8 +63,8 @@ if(typeof PH.personKey!=='function'){
 }
 
 /* ---- 1. THE BUG: no email, no employee id. These are two different people. ---- */
-const ghost1={name:'Mia Armenta',    email:'', empId:''};
-const ghost2={name:'Linda Herrera',  email:'', empId:''};
+const ghost1={name:'Jolene Jessup',    email:'', empId:''};
+const ghost2={name:'Leah Langley',  email:'', empId:''};
 const k1=PH.personKey(ghost1), k2=PH.personKey(ghost2);
 t('two people with no email and no employee id get DIFFERENT slots', k1!==k2);
 t('neither slot is the shared bucket "emp:"', k1!=='emp:' && k2!=='emp:');
@@ -72,31 +72,31 @@ t('neither slot is empty', !!k1 && !!k2);
 
 /* ---- 2. The 21 entries already saved are keyed by email. They must still resolve. ---- */
 t('someone with an email keys to that email, as already stored',
-  PH.personKey({name:'Elizabeth Reyes', email:'liz@farnsworthorthodontics.com', empId:'ecmxzu'})
-    === 'liz@farnsworthorthodontics.com');
+  PH.personKey({name:'Quinn Quill', email:'quinn@farnsworthorthodontics.com', empId:'k3x9pa'})
+    === 'quinn@farnsworthorthodontics.com');
 t('and case and spacing do not make a second slot',
-  PH.personKey({name:'x', email:'  LIZ@Farnsworthorthodontics.COM '})
-    === 'liz@farnsworthorthodontics.com');
+  PH.personKey({name:'x', email:'  QUINN@Farnsworthorthodontics.COM '})
+    === 'quinn@farnsworthorthodontics.com');
 
 /* ---- 3. No email but a real employee id: their own slot, as before. ---- */
 t('employee id gives its own slot',
-  PH.personKey({name:'Mia Armenta', email:'', empId:'a7ab79'}) === 'emp:a7ab79');
+  PH.personKey({name:'Jolene Jessup', email:'', empId:'m2b7qe'}) === 'emp:m2b7qe');
 t('and six Hobbs staff get six different slots',
-  new Set(['a7ab79','tiq22z','8d4562','xmfmpi','7bbe20','isc6yt']
+  new Set(['m2b7qe','v8c1rt','p5d0wy','h6f3zn','t9g4us','w1j8lk']
     .map(id=>PH.personKey({name:'n'+id, email:'', empId:id}))).size === 6);
 
 /* ---- 4. Editing someone must not move their own slot. An override can change their
           email and employee id; the key was computed after that. ---- */
-const before=PH.personKey({name:'Dr. David Farnsworth', email:'', empId:''});
-const after =PH.personKey({name:'Dr. David Farnsworth', email:'', empId:''});
+const before=PH.personKey({name:'Dr. Daniel Fairbanks', email:'', empId:''});
+const after =PH.personKey({name:'Dr. Daniel Fairbanks', email:'', empId:''});
 t('the slot is stable for the same person', before===after);
 t('and it is derived from the roster, not from an edited field',
-  PH.personKey({name:'Dr. David Farnsworth', email:'', empId:''}) ===
-  PH.personKey({name:'Dr. David Farnsworth'}));
+  PH.personKey({name:'Dr. Daniel Fairbanks', email:'', empId:''}) ===
+  PH.personKey({name:'Dr. Daniel Fairbanks'}));
 
 /* ---- 5. Every one of the 70 real people gets a unique slot. ---- */
 {
-  const rows=JSON.parse(fs.readFileSync(path.join(V1,'_people.json'),'utf8')).people;
+  const rows=JSON.parse(fs.readFileSync(path.join(__dirname,'fixtures','people.json'),'utf8')).people;
   const keys=rows.map(r=>PH.personKey(r));
   t('all 70 real staff get a slot', keys.every(k=>!!k));
   t('all 70 slots are unique', new Set(keys).size===rows.length);
@@ -107,14 +107,14 @@ t('and it is derived from the roster, not from an edited field',
           has to reach what the person actually sees when they sign in - including when
           their roster row has no email and the slot is therefore not their address. ---- */
 function permissionsGap(){
-  const rows=JSON.parse(fs.readFileSync(path.join(V1,'_people.json'),'utf8')).people;
-  const mia=rows.find(r=>r.name==='Mia Armenta');
+  const rows=JSON.parse(fs.readFileSync(path.join(__dirname,'fixtures','people.json'),'utf8')).people;
+  const mia=rows.find(r=>r.name==='Jolene Jessup');
   const slot=PH.personKey(mia);
   const ovr={}; ovr[slot]={teams:['Office Managers'], locs:['Hobbs']};
   const E=load({ ph_people: JSON.stringify(ovr) });
   return E.PH.rosterReady.then(function(){
   // She signs in with a Microsoft address the roster does not list.
-  E.PH.setProfile({displayName:'Mia Armenta', mail:'marmenta@farnsworthorthodontics.com',
+  E.PH.setProfile({displayName:'Jolene Jessup', mail:'marmenta@farnsworthorthodontics.com',
                    userPrincipalName:'marmenta@farnsworthorthodontics.com',
                    jobTitle:'', department:'', officeLocation:''});
   t('an admin-set office reaches the person even when their slot is not their email',

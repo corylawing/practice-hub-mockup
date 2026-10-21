@@ -7,7 +7,7 @@
    SharePoint (ph_roster_extra) and are laid over the file for every reader. */
 const fs=require('fs'), vm=require('vm'), path=require('path');
 const V1=path.join(__dirname,'..','v1');
-const FILE=JSON.parse(fs.readFileSync(path.join(V1,'_people.json'),'utf8'));
+const FILE=JSON.parse(fs.readFileSync(path.join(__dirname,'fixtures','people.json'),'utf8'));
 
 function load(ls, shared, opts){
   const LS=ls||{}, listeners={}; shared=shared||{};
@@ -90,16 +90,16 @@ const settle=()=>new Promise(r=>setTimeout(r,30));
   t('and the office they were added to', JSON.stringify(A.PH.offices())==='["Hobbs"]');
 
   /* ---- remove somebody from the file: hidden, not deleted ---- */
-  const mia=FILE.people.find(p=>p.name==='Mia Armenta');
+  const mia=FILE.people.find(p=>p.name==='Jolene Jessup');
   const miaKey=A.PH.personKey(mia);
   await A.PH.saveRosterExtra(function(ex){ ex.removed.push(miaKey); return ex; });
-  t('a removed person leaves the roster', !A.PH.rosterRows().some(r=>r.name==='Mia Armenta'));
-  t('but is listed under removed, so it can be undone', A.PH.removedRows().some(r=>r.name==='Mia Armenta'));
-  t('the file itself is untouched', FILE.people.some(p=>p.name==='Mia Armenta'));
+  t('a removed person leaves the roster', !A.PH.rosterRows().some(r=>r.name==='Jolene Jessup'));
+  t('but is listed under removed, so it can be undone', A.PH.removedRows().some(r=>r.name==='Jolene Jessup'));
+  t('the file itself is untouched', FILE.people.some(p=>p.name==='Jolene Jessup'));
 
   /* ---- and undone ---- */
   await A.PH.saveRosterExtra(function(ex){ ex.removed=ex.removed.filter(k=>k!==miaKey); return ex; });
-  t('restoring puts them back', A.PH.rosterRows().some(r=>r.name==='Mia Armenta'));
+  t('restoring puts them back', A.PH.rosterRows().some(r=>r.name==='Jolene Jessup'));
   t('with nobody left under removed', A.PH.removedRows().length===0);
 
   /* ---- two browsers: additions merge, they do not overwrite each other ---- */
@@ -128,15 +128,15 @@ const settle=()=>new Promise(r=>setTimeout(r,30));
 
     // (b) no roster in SharePoint yet, an ADMIN opens the hub: the file is used and copied in.
     const S2={};
-    const R2=load({}, S2, {profile:{displayName:'Heather Beal', mail:'heather@farnsworthorthodontics.com',
-      userPrincipalName:'heather@farnsworthorthodontics.com', jobTitle:'COO', department:'Admin', officeLocation:''}});
+    const R2=load({}, S2, {profile:{displayName:'Priya Tatum', mail:'priya@farnsworthorthodontics.com',
+      userPrincipalName:'priya@farnsworthorthodontics.com', jobTitle:'COO', department:'Admin', officeLocation:''}});
     await R2.PH.rosterReady; await settle(); await settle();
     t('with no roster yet, the file is used', R2.PH.rosterRows().length===FILE.people.length);
     t('and an admin\u2019s browser seeds SharePoint with it', !!S2.ph_roster && JSON.parse(S2.ph_roster).length===FILE.people.length);
 
     // (c) same, but a plain staff member: read the file, seed nothing.
     const S3={};
-    const R3=load({}, S3, {profile:{displayName:'Mia Armenta', mail:'mia@x.com', userPrincipalName:'mia@x.com',
+    const R3=load({}, S3, {profile:{displayName:'Jolene Jessup', mail:'mia@x.com', userPrincipalName:'mia@x.com',
       jobTitle:'', department:'Staff', officeLocation:'Hobbs'}});
     await R3.PH.rosterReady; await settle(); await settle();
     t('a non-admin reads the file but never writes the roster', R3.PH.rosterRows().length>0 && !S3.ph_roster);
@@ -148,8 +148,8 @@ const settle=()=>new Promise(r=>setTimeout(r,30));
     const R5=load({}, S5);
     await R5.PH.rosterReady; await settle(); await settle();
     t('before the profile lands, nothing is written', !S5.ph_roster);
-    R5.signIn({displayName:'Heather Beal', mail:'heather@farnsworthorthodontics.com',
-      userPrincipalName:'heather@farnsworthorthodontics.com', jobTitle:'COO', department:'Admin', officeLocation:''});
+    R5.signIn({displayName:'Priya Tatum', mail:'priya@farnsworthorthodontics.com',
+      userPrincipalName:'priya@farnsworthorthodontics.com', jobTitle:'COO', department:'Admin', officeLocation:''});
     await settle(); await settle();
     t('an admin whose profile lands after the roster was read still seeds SharePoint',
       !!S5.ph_roster && JSON.parse(S5.ph_roster).length===FILE.people.length);

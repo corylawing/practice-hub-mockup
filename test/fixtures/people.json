@@ -1,0 +1,1199 @@
+{
+ "note": "MADE-UP test roster: the shape of the practice roster (offices, roles, teams) with invented names, emails and employee ids. Never real people.",
+ "people": [
+  {
+   "name": "Sample Person 1",
+   "email": "sample@farnsworthorthodontics.com",
+   "empId": "",
+   "offices": [],
+   "teams": [
+    "Admin"
+   ],
+   "role": "Consultant",
+   "brand": "Group",
+   "state": "",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Avery (Ave) Alder",
+   "email": "",
+   "empId": "33ef9d",
+   "offices": [
+    "Carlsbad"
+   ],
+   "teams": [
+    "Staff"
+   ],
+   "role": "Clinical Asst",
+   "brand": "FFO",
+   "state": "NM",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Brooke Barrow",
+   "email": "",
+   "empId": "f83fff",
+   "offices": [
+    "Carlsbad"
+   ],
+   "teams": [
+    "Staff"
+   ],
+   "role": "Clinical Asst",
+   "brand": "FFO",
+   "state": "NM",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Camila Calder",
+   "email": "camila@farnsworthorthodontics.com",
+   "empId": "b99f77",
+   "offices": [
+    "Carlsbad"
+   ],
+   "teams": [
+    "Staff"
+   ],
+   "role": "Clinical Lead",
+   "brand": "FFO",
+   "state": "NM",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Dana Dalton",
+   "email": "",
+   "empId": "a46888",
+   "offices": [
+    "Carlsbad"
+   ],
+   "teams": [
+    "Staff"
+   ],
+   "role": "Front Desk",
+   "brand": "FFO",
+   "state": "NM",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Elena Ellery",
+   "email": "",
+   "empId": "964c24",
+   "offices": [
+    "Carlsbad"
+   ],
+   "teams": [
+    "Staff"
+   ],
+   "role": "Clinical Asst",
+   "brand": "FFO",
+   "state": "NM",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Fiona Fairfax",
+   "email": "fiona@farnsworthorthodontics.com",
+   "empId": "33d008",
+   "offices": [
+    "Carlsbad"
+   ],
+   "teams": [
+    "TCs",
+    "Financial Coordinator Team"
+   ],
+   "role": "TC/Financial Coord",
+   "brand": "FFO",
+   "state": "NM",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Gabriela Garrison",
+   "email": "gabriela@farnsworthorthodontics.com",
+   "empId": "276705",
+   "offices": [
+    "Carlsbad"
+   ],
+   "teams": [
+    "Office Managers"
+   ],
+   "role": "OM/Clinic Lead",
+   "brand": "FFO",
+   "state": "NM",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Hazel Hollis",
+   "email": "hazel@ffortho.com",
+   "empId": "ff7fe9",
+   "offices": [
+    "Carlsbad"
+   ],
+   "teams": [
+    "Staff",
+    "Marketing Team"
+   ],
+   "role": "Clinical Asst/Mktg Liason",
+   "brand": "FFO",
+   "state": "NM",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Iris Irwin",
+   "email": "",
+   "empId": "a28035",
+   "offices": [
+    "Carlsbad"
+   ],
+   "teams": [
+    "Staff"
+   ],
+   "role": "Clinical Asst",
+   "brand": "FFO",
+   "state": "NM",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Jolene Jessup",
+   "email": "",
+   "empId": "e9b436",
+   "offices": [
+    "Hobbs"
+   ],
+   "teams": [
+    "Staff"
+   ],
+   "role": "Clinical Asst",
+   "brand": "FFO",
+   "state": "NM",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Leah Langley",
+   "email": "",
+   "empId": "7764ea",
+   "offices": [
+    "Hobbs"
+   ],
+   "teams": [
+    "Staff"
+   ],
+   "role": "Clinical Asst",
+   "brand": "FFO",
+   "state": "NM",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Mara Merritt",
+   "email": "",
+   "empId": "2aa3b3",
+   "offices": [
+    "Hobbs"
+   ],
+   "teams": [
+    "Staff",
+    "Marketing Team"
+   ],
+   "role": "Front Desk/Mrkg Liason",
+   "brand": "FFO",
+   "state": "NM",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Nadia Norwood",
+   "email": "",
+   "empId": "a77967",
+   "offices": [
+    "Hobbs"
+   ],
+   "teams": [
+    "Staff"
+   ],
+   "role": "Clinical Asst",
+   "brand": "FFO",
+   "state": "NM",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Olivia Oakley",
+   "email": "",
+   "empId": "968e3f",
+   "offices": [
+    "Hobbs"
+   ],
+   "teams": [
+    "Staff",
+    "Marketing Team"
+   ],
+   "role": "Front Desk/Mktg Liason",
+   "brand": "FFO",
+   "state": "NM",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Paige Prescott",
+   "email": "",
+   "empId": "77a178",
+   "offices": [
+    "Hobbs"
+   ],
+   "teams": [
+    "Staff"
+   ],
+   "role": "Clinical Asst",
+   "brand": "FFO",
+   "state": "NM",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Quinn Quill",
+   "email": "quinn@farnsworthorthodontics.com",
+   "empId": "f8692e",
+   "offices": [
+    "Hobbs"
+   ],
+   "teams": [
+    "TCs"
+   ],
+   "role": "TC",
+   "brand": "FFO",
+   "state": "NM",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Rosa Radley",
+   "email": "rosa@farnsworthorthodontics.com",
+   "empId": "250aba",
+   "offices": [
+    "Hobbs"
+   ],
+   "teams": [
+    "Office Managers",
+    "Financial Coordinator Team"
+   ],
+   "role": "OM/Clincal Asst",
+   "brand": "FFO",
+   "state": "NM",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Dr. Clara Coleman",
+   "email": "clara@ffortho.com",
+   "empId": "64ea0f",
+   "offices": [
+    "Hobbs",
+    "Carlsbad"
+   ],
+   "teams": [
+    "Doctors"
+   ],
+   "role": "Associate Doctor",
+   "brand": "",
+   "state": "",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Sierra Sterling",
+   "email": "sierra@farnsworthorthodontics.com",
+   "empId": "6eabab",
+   "offices": [
+    "Lubbock"
+   ],
+   "teams": [
+    "Office Managers",
+    "TCs"
+   ],
+   "role": "OM/TC",
+   "brand": "FFO",
+   "state": "TX",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Talia Thorne",
+   "email": "",
+   "empId": "cb4868",
+   "offices": [
+    "Lubbock"
+   ],
+   "teams": [
+    "Staff"
+   ],
+   "role": "Clinic Lead",
+   "brand": "FFO",
+   "state": "TX",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Uma Upton",
+   "email": "",
+   "empId": "0cf240",
+   "offices": [
+    "Lubbock"
+   ],
+   "teams": [
+    "Staff"
+   ],
+   "role": "Clinical Asst",
+   "brand": "FFO",
+   "state": "TX",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Vera Vance",
+   "email": "",
+   "empId": "ab0268",
+   "offices": [
+    "Lubbock"
+   ],
+   "teams": [
+    "Staff"
+   ],
+   "role": "Front Desk",
+   "brand": "FFO",
+   "state": "TX",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Wendy Whitlock",
+   "email": "wendy@farnsworthorthodontics.com",
+   "empId": "97bc85",
+   "offices": [
+    "Lubbock"
+   ],
+   "teams": [
+    "Staff",
+    "Marketing Team"
+   ],
+   "role": "Clinical Asst/Mktg Liason",
+   "brand": "FFO",
+   "state": "TX",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Ximena Yardley",
+   "email": "ximena@farnsworthorthodontics.com",
+   "empId": "0b03a5",
+   "offices": [
+    "Lubbock"
+   ],
+   "teams": [
+    "Staff"
+   ],
+   "role": "Financial Coord/Front Desk",
+   "brand": "FFO",
+   "state": "TX",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Yara Ainsley",
+   "email": "",
+   "empId": "110db3",
+   "offices": [
+    "Lubbock"
+   ],
+   "teams": [
+    "Staff"
+   ],
+   "role": "Clinical Asst",
+   "brand": "FFO",
+   "state": "TX",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Dr. Sylvia Merrick",
+   "email": "drmerrick@ffortho.com",
+   "empId": "612bf3",
+   "offices": [],
+   "teams": [
+    "Doctors"
+   ],
+   "role": "Associate Doctor",
+   "brand": "",
+   "state": "",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Zoe Brennan-Corbett",
+   "email": "",
+   "empId": "556803",
+   "offices": [
+    "Clovis"
+   ],
+   "teams": [
+    "Staff"
+   ],
+   "role": "Clinic Lead",
+   "brand": "FFO",
+   "state": "NM",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Adriana Darrow",
+   "email": "",
+   "empId": "8389b3",
+   "offices": [
+    "Clovis"
+   ],
+   "teams": [
+    "Staff"
+   ],
+   "role": "Front Desk",
+   "brand": "FFO",
+   "state": "NM",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Bianca Easton",
+   "email": "",
+   "empId": "65e90b",
+   "offices": [
+    "Clovis"
+   ],
+   "teams": [
+    "Staff"
+   ],
+   "role": "Clinical Asst",
+   "brand": "FFO",
+   "state": "NM",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Celia Fenwick",
+   "email": "",
+   "empId": "11cd12",
+   "offices": [
+    "Clovis"
+   ],
+   "teams": [
+    "Staff"
+   ],
+   "role": "Clinical Asst",
+   "brand": "FFO",
+   "state": "NM",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Delia Granger",
+   "email": "delia@farnsworthorthodontics.com",
+   "empId": "ea2700",
+   "offices": [
+    "Clovis"
+   ],
+   "teams": [
+    "Office Managers",
+    "TCs"
+   ],
+   "role": "OM/TC/Financial Coord",
+   "brand": "FFO",
+   "state": "NM",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Esme Hartwell",
+   "email": "",
+   "empId": "67e340",
+   "offices": [
+    "Clovis"
+   ],
+   "teams": [
+    "Staff"
+   ],
+   "role": "Front Desk",
+   "brand": "FFO",
+   "state": "NM",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Freya Ingram",
+   "email": "freya@ffortho.com",
+   "empId": "a37293",
+   "offices": [
+    "Clovis"
+   ],
+   "teams": [
+    "Staff",
+    "Marketing Team"
+   ],
+   "role": "Clinical Asst/Mktg Liason",
+   "brand": "FFO",
+   "state": "NM",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Greta Jarvis",
+   "email": "",
+   "empId": "024d0d",
+   "offices": [
+    "San Angelo"
+   ],
+   "teams": [
+    "Staff"
+   ],
+   "role": "Front Desk",
+   "brand": "FFO",
+   "state": "TX",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Helena Keating",
+   "email": "",
+   "empId": "07c06b",
+   "offices": [
+    "San Angelo"
+   ],
+   "teams": [
+    "Staff"
+   ],
+   "role": "Clinical Asst",
+   "brand": "FFO",
+   "state": "TX",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Ingrid Lowry",
+   "email": "ingrid@farnsworthorthodontics.com",
+   "empId": "9d2017",
+   "offices": [
+    "San Angelo"
+   ],
+   "teams": [
+    "Staff"
+   ],
+   "role": "Clinic Lead",
+   "brand": "FFO",
+   "state": "TX",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Joy \"Joy\" Marlow",
+   "email": "joy@farnsworthorthodontics.com",
+   "empId": "65d59a",
+   "offices": [
+    "San Angelo"
+   ],
+   "teams": [
+    "Office Managers"
+   ],
+   "role": "OM/Clinical Asst",
+   "brand": "FFO",
+   "state": "TX",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Kelsey \"Kel\" Nesbitt",
+   "email": "",
+   "empId": "c3b377",
+   "offices": [
+    "San Angelo"
+   ],
+   "teams": [
+    "Staff"
+   ],
+   "role": "Front Desk/Records Tech",
+   "brand": "FFO",
+   "state": "TX",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Lorena Orton",
+   "email": "",
+   "empId": "dda8aa",
+   "offices": [
+    "San Angelo"
+   ],
+   "teams": [
+    "Staff"
+   ],
+   "role": "Clinical Asst",
+   "brand": "FFO",
+   "state": "TX",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Marisol Pembroke",
+   "email": "",
+   "empId": "5431d9",
+   "offices": [
+    "San Angelo"
+   ],
+   "teams": [
+    "Staff"
+   ],
+   "role": "Clinical Asst",
+   "brand": "FFO",
+   "state": "TX",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Nora Rowan",
+   "email": "nora@farnsworthorthodontics.com",
+   "empId": "d0bd45",
+   "offices": [
+    "San Angelo"
+   ],
+   "teams": [
+    "TCs",
+    "Financial Coordinator Team"
+   ],
+   "role": "TC/Financial Coord",
+   "brand": "FFO",
+   "state": "TX",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Odette Sutton",
+   "email": "",
+   "empId": "9f4a6f",
+   "offices": [
+    "San Angelo"
+   ],
+   "teams": [
+    "Staff"
+   ],
+   "role": "Clinical Asst",
+   "brand": "FFO",
+   "state": "TX",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Priya Tatum",
+   "email": "priya@farnsworthorthodontics.com",
+   "empId": "6ba3f6",
+   "offices": [],
+   "teams": [
+    "Executive Team"
+   ],
+   "role": "COO",
+   "brand": "",
+   "state": "",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Raquel Underwood",
+   "email": "raquel@farnsworthorthodontics.com",
+   "empId": "51a464",
+   "offices": [],
+   "teams": [
+    "Leadership Team"
+   ],
+   "role": "Marketing Director",
+   "brand": "",
+   "state": "",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Sabrina Varga",
+   "email": "sabrina@ffortho.com",
+   "empId": "",
+   "offices": [],
+   "teams": [
+    "Executive Team"
+   ],
+   "role": "CSO",
+   "brand": "",
+   "state": "",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Tessa Winslow",
+   "email": "",
+   "empId": "a8d28e",
+   "offices": [
+    "Mansfield"
+   ],
+   "teams": [
+    "Staff"
+   ],
+   "role": "Clinical Asst",
+   "brand": "Sunflower",
+   "state": "TX",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Valeria Ashby",
+   "email": "valeria@sunflowerorthomansfield.com",
+   "empId": "cf87d5",
+   "offices": [
+    "Mansfield"
+   ],
+   "teams": [
+    "Staff"
+   ],
+   "role": "Clinic Lead",
+   "brand": "Sunflower",
+   "state": "TX",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Willa Bristow",
+   "email": "",
+   "empId": "c58356",
+   "offices": [
+    "Mansfield"
+   ],
+   "teams": [
+    "Staff"
+   ],
+   "role": "Clinical Asst",
+   "brand": "Sunflower",
+   "state": "TX",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Yvette Crane",
+   "email": "yvette@sunflowerorthomansfield.com",
+   "empId": "01bbf6",
+   "offices": [
+    "Mansfield"
+   ],
+   "teams": [
+    "Staff",
+    "Marketing Team"
+   ],
+   "role": "Clinical Asst/Mktg Liason",
+   "brand": "Sunflower",
+   "state": "TX",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Abril Delaney Emory",
+   "email": "abril@sunflowerorthomansfield.com",
+   "empId": "7cad8e",
+   "offices": [
+    "Mansfield"
+   ],
+   "teams": [
+    "Office Managers",
+    "TCs"
+   ],
+   "role": "OM/TC",
+   "brand": "Sunflower",
+   "state": "TX",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Beatriz Faulkner",
+   "email": "beatriz@sunflowerorthomansfield.com",
+   "empId": "4159d9",
+   "offices": [
+    "Mansfield"
+   ],
+   "teams": [
+    "Staff",
+    "Financial Coordinator Team"
+   ],
+   "role": "Front Desk/Financial Coord",
+   "brand": "Sunflower",
+   "state": "TX",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Carmen Gale",
+   "email": "carmen@sunflowerorthomansfield.com",
+   "empId": "2e164b",
+   "offices": [
+    "Mansfield"
+   ],
+   "teams": [
+    "Staff"
+   ],
+   "role": "Front Desk",
+   "brand": "Sunflower",
+   "state": "TX",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Daria Hadley",
+   "email": "",
+   "empId": "051f63",
+   "offices": [
+    "Cruces FFO"
+   ],
+   "teams": [
+    "Staff"
+   ],
+   "role": "Clinical Asst",
+   "brand": "FFO",
+   "state": "NM",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Estela Ives",
+   "email": "estela@fortholascruces.com",
+   "empId": "e2f403",
+   "offices": [
+    "Cruces FFO"
+   ],
+   "teams": [
+    "Office Managers"
+   ],
+   "role": "OM/Clinic Lead",
+   "brand": "FFO",
+   "state": "NM",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Flora Kerr",
+   "email": "",
+   "empId": "654ec6",
+   "offices": [
+    "Cruces FFO"
+   ],
+   "teams": [
+    "Staff"
+   ],
+   "role": "Front Desk",
+   "brand": "FFO",
+   "state": "NM",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Gloria Lyle",
+   "email": "",
+   "empId": "829e55",
+   "offices": [
+    "Cruces FFO"
+   ],
+   "teams": [
+    "Staff"
+   ],
+   "role": "Clinical Asst",
+   "brand": "FFO",
+   "state": "NM",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Holly Mercer",
+   "email": "holly@fortholascruces.com",
+   "empId": "b1611d",
+   "offices": [
+    "Cruces FFO"
+   ],
+   "teams": [
+    "TCs",
+    "Financial Coordinator Team"
+   ],
+   "role": "TC/Financial Coord",
+   "brand": "FFO",
+   "state": "NM",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Ivy Newell",
+   "email": "",
+   "empId": "15a159",
+   "offices": [
+    "Cruces FFO"
+   ],
+   "teams": [
+    "Staff"
+   ],
+   "role": "Front Desk",
+   "brand": "FFO",
+   "state": "NM",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Jada Oswin",
+   "email": "",
+   "empId": "479930",
+   "offices": [
+    "Cruces LCO"
+   ],
+   "teams": [
+    "Staff"
+   ],
+   "role": "Clinical Asst",
+   "brand": "LCO",
+   "state": "NM",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Kira Pruitt",
+   "email": "",
+   "empId": "8bb57f",
+   "offices": [
+    "Cruces LCO"
+   ],
+   "teams": [
+    "Staff"
+   ],
+   "role": "Front Desk",
+   "brand": "LCO",
+   "state": "NM",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Luz Ridley",
+   "email": "",
+   "empId": "963eca",
+   "offices": [
+    "Cruces LCO"
+   ],
+   "teams": [
+    "Staff"
+   ],
+   "role": "Clinical Asst",
+   "brand": "LCO",
+   "state": "NM",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Mila Stokes",
+   "email": "",
+   "empId": "69e0c4",
+   "offices": [
+    "Cruces LCO"
+   ],
+   "teams": [
+    "Staff"
+   ],
+   "role": "Clinical Asst",
+   "brand": "LCO",
+   "state": "NM",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Nina Thayer",
+   "email": "nina@ffortho.com",
+   "empId": "09f847",
+   "offices": [
+    "Cruces FFO",
+    "Cruces LCO"
+   ],
+   "teams": [
+    "Staff"
+   ],
+   "role": "Clinical Asst",
+   "brand": "FFO/LCO",
+   "state": "NM",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Opal Vail",
+   "email": "",
+   "empId": "a43e9d",
+   "offices": [
+    "Cruces LCO"
+   ],
+   "teams": [
+    "Staff"
+   ],
+   "role": "Clinical Asst",
+   "brand": "LCO",
+   "state": "NM",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Petra \"Pet\" Weller",
+   "email": "petra@lascrucessmiles.com",
+   "empId": "29b2eb",
+   "offices": [
+    "Cruces LCO"
+   ],
+   "teams": [
+    "Staff",
+    "Financial Coordinator Team"
+   ],
+   "role": "Front Desk",
+   "brand": "LCO",
+   "state": "NM",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Renata Yates",
+   "email": "renata@lascrucessmiles.com",
+   "empId": "b49142",
+   "offices": [
+    "Cruces LCO"
+   ],
+   "teams": [
+    "TCs"
+   ],
+   "role": "TC",
+   "brand": "LCO",
+   "state": "NM",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Selma Blaine",
+   "email": "selma@lascrucessmiles.com",
+   "empId": "612158",
+   "offices": [
+    "Cruces LCO"
+   ],
+   "teams": [
+    "Office Managers",
+    "Financial Coordinator Team"
+   ],
+   "role": "OM/Clincal Asst",
+   "brand": "LCO",
+   "state": "NM",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Dr. Daniel Fairbanks",
+   "email": "",
+   "empId": "",
+   "offices": [],
+   "teams": [
+    "Executive Team"
+   ],
+   "role": "Owner/Doctor",
+   "brand": "",
+   "state": "",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  },
+  {
+   "name": "Dr. Jay Bramwell",
+   "email": "drbramwell@farnsworthorthodontics.com",
+   "empId": "",
+   "offices": [],
+   "teams": [
+    "Executive Team"
+   ],
+   "role": "Owner/Doctor",
+   "brand": "",
+   "state": "",
+   "status": "Active",
+   "phone": "",
+   "about": ""
+  }
+ ]
+}

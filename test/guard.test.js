@@ -136,9 +136,9 @@ const t=(n,v)=>{ (v? ok:bad).push(n); };
     delete require.cache[require.resolve(STORE)];
     require(STORE); const J=window.PH_STORE;
 
-    const HEATHERS=[{n:'Dr. Farnsworth'},{n:'Dr. Brimhall'},{n:'Dr. Coelho'},
-                    {n:'Dr. McBeth'},{n:'Dr. Lightheart'}];
-    const JENNYS  =[{n:'Dr. Farnsworth'},{n:'Dr. Brimhall'},{n:'Dr. Coelho'},{n:'Dr. McBeth'}];
+    const HEATHERS=[{n:'Dr. Fairbanks'},{n:'Dr. Bramwell'},{n:'Dr. Coleman'},
+                    {n:'Dr. Merrick'},{n:'Dr. Lightheart'}];
+    const JENNYS  =[{n:'Dr. Fairbanks'},{n:'Dr. Bramwell'},{n:'Dr. Coleman'},{n:'Dr. Merrick'}];
 
     // Jenny's browser holds the old four, stamped with her own clock, far in the future.
     LS3['ph_docs']=JSON.stringify(JENNYS);
@@ -246,7 +246,7 @@ const t=(n,v)=>{ (v? ok:bad).push(n); };
     global.localStorage={getItem:k=>k in LS5?LS5[k]:null,setItem:(k,v)=>{LS5[k]=String(v)},
                          removeItem:k=>{delete LS5[k]}};
     global.document={dispatchEvent:()=>{}};
-    let SHARED={ 'liz@x.com':{locs:['Hobbs']}, 'emp:a7ab79':{locs:['Lubbock']} };
+    let SHARED={ 'liz@x.com':{locs:['Hobbs']}, 'emp:m2b7qe':{locs:['Lubbock']} };
     global.PH_AUTH.graph=p=>{
       if(/\/sites\/omega/.test(p)) return Promise.resolve({id:'site'});
       if(/lists\?/.test(p))        return Promise.resolve({value:[{id:'L',displayName:'HomeBraceData'}]});
@@ -263,10 +263,10 @@ const t=(n,v)=>{ (v? ok:bad).push(n); };
     SHARED['liz@x.com']={locs:['Carlsbad']};                 // Jessica's save landed
     const r=await U.update('ph_people', function(cur){       // Heather's page, stale
       const next=Object.assign({}, cur||{});
-      next['emp:a7ab79']={locs:['Hobbs']};
+      next['emp:m2b7qe']={locs:['Hobbs']};
       return next;
     });
-    t('update() writes the change', SHARED['emp:a7ab79'].locs[0]==='Hobbs');
+    t('update() writes the change', SHARED['emp:m2b7qe'].locs[0]==='Hobbs');
     t('and does NOT flatten the other person\u2019s newer save',
       SHARED['liz@x.com'].locs[0]==='Carlsbad');
     t('the caller gets the merged result back', r.value && r.value['liz@x.com'].locs[0]==='Carlsbad');

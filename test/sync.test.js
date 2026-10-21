@@ -113,8 +113,8 @@ function year(y,fill,seed){
   }
   return out;
 }
-const H={email:'heather@farnsworthorthodontics.com',displayName:'Heather Beal'};
-const J={email:'jenny@lascrucessmiles.com',displayName:'Jenny Whitefield'};
+const H={email:'priya@farnsworthorthodontics.com',displayName:'Priya Tatum'};
+const J={email:'selma@lascrucessmiles.com',displayName:'Selma Blaine'};
 
 const ok=[],bad=[]; const t=(n,v)=>{ (v?ok:bad).push(n); };
 

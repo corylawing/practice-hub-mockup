@@ -28,7 +28,7 @@ like for instance adding view as always need to go to mockup as well."* Data doe
 
 ### Who the people are
 - **Cory** — building it. Works at DentalMonitoring; this is a side project for a friend.
-- **Heather Beal** — the practice's **COO**. The decision-maker. She reviews the dashboard against
+- **Heather** — the practice's **COO**. The decision-maker. She reviews the dashboard against
   her Excel workbook and finds real bugs. Treat her feedback as authoritative; **the Excel is their
   bible**. She has been right and I have been wrong more than once.
 - **An external IT company** manages their Microsoft tenant(s).
@@ -450,6 +450,22 @@ feed; a stale page's office save kept "Roswell" added elsewhere. NEXT: made-up s
 people"); then group 3 (load only what a page needs, split the schedule by year, TC Tracker recent months) and group 4
 (offices/teams from Admin, not code).
 
+**Made-up sandbox people (22/10/2026, hc108).** Cory: "use made-up people". Every real staff name, work email and
+employee id is out of the code and tests: `_staff.js` (70 made-up people, same offices/roles/teams and the practice's
+email domains, invented names - e.g. the COO persona is "Priya Tatum"), and it is now the ONE built-in list (Team's
+own copy and Admin's ROSTER/DOCTOR_NAMES read it); personas in user.js and tc.html; the schedule's starting doctors
+(Dr. Fairbanks, Bramwell, Coleman, Merrick); comments. Tests no longer read the real `_people.json` (they looked
+people up by real name - and failed on any other machine): `test/fixtures/people.json` is a made-up roster with the
+real one's shape (offices, roles, teams; invented names, emails, employee ids). The mapping real -> made-up was kept
+in the scratchpad only. KEPT: "Farnsworth" (the business), Heather/Selene by first name where the product text
+means them, start.html's signed welcome, Cory's own consultant entry (BOOTSTRAP_ADMINS). Git HISTORY still has the
+old names (a rewrite or a fresh repo would remove them - Cory's call).
+FOUND: the LIVE site serves `v1/_people.json` publicly (70 names, 32 work emails, offices, roles, employee ids - the
+deploy's strip step removes only about/phone, despite its comment). The roster is in SharePoint (`ph_roster`), so
+the file should stop being deployed once History shows a ph_roster record (the follow-up noted above). Asked Cory.
+On localhost the real file is present (gitignored), so the local sandbox still shows real names; the public sandbox
+(GitHub Pages) has no file and shows the made-up people.
+
 **TCs see every office in "By office" (19/10, hc85).** Selene: "we do want the Treatment Coordinators to be able to see
 one another's results. Please make sure they can all view the 'By Office' box so they can see conversion rates across
 locations." viewNumbers(): for a TC (`iAmTC() && !canManage()`) the box lists `allOffices()` from EVERY (rates and
@@ -486,7 +502,7 @@ Live path verified unchanged with a stand-in Graph (`?env=live`): dashboard read
 production.html) - only making the repo private hides them (GitHub Pro keeps Pages). A future custom domain must be
 added to env() in user.js AND connect.html's SANDBOX line.
 
-**TC Tracker - SANDBOX ONLY (12/10, hc76).** Heather (cc Selene Brown, Marketing Director, Leadership Team - "more
+**TC Tracker - SANDBOX ONLY (12/10, hc76).** Heather (cc Selene, Marketing Director, Leadership Team - "more
 her baby") asked to replace the TC Consult Tracker Excel Selene emails out monthly
 (`FFO_TC_Consult_Tracker_Excel_Compatible.xlsx`, an empty template: Consult Log 28 cols, Follow-Up Queue, Daily
 Capacity, Dashboard, Monthly Totals). Cory: sandbox first. New tab `v1/tc.html` + logic `v1/tc.js` (node-tested,
@@ -842,7 +858,7 @@ everyone in the group can open the whole file in Excel, including TCs whose hub 
 `PERSONAS` in index.html / production.html is the **sandbox's "View as" list only**. `dechrome()`
 hides the picker in the live app, but for weeks both pages still *used* it, defaulting to persona
 #1 (**Administrator, offices:'all'**) — so **every signed-in person saw all eight offices'
-production figures**, whatever their team or location. Found when Cory asked why Jennifer Peters
+production figures**, whatever their team or location. Found when Cory asked why one staff member
 (Carlsbad) had all offices.
 
 Both pages now take offices from `PH.me()` via `applyIdentity()`, re-run on `ph-signed-in`, and the
@@ -1154,7 +1170,7 @@ and could open the file in Excel anyway. Real containment would need per-office 
   comparison was against the whole string, so someone at two offices ("Hobbs, Carlsbad") matched
   neither chip. Dr. Carla was reachable only from "Everyone".
 - **NEVER decide what someone can see before you know who they are.** Found 2026-09-17 from a
-  screenshot of Jenny Whitefield — an external guest — looking at the full nav including **Admin**.
+  screenshot of an external guest looking at the full nav including **Admin**.
   Nothing was wrong with how permissions were *calculated*; the problem was *when*. Every page
   calls `PH.nav()` as it parses, and gate.js does not set `PROFILE` until Graph answers `/me`. With
   no profile, `me()` and `realMe()` both fell through to the **sandbox `admin` persona** — Heather,
@@ -1582,11 +1598,11 @@ sheet). Note **many staff hold dual roles** — `role` is often a combination:
 
 | id | Person | Role | Access highlights |
 |---|---|---|---|
-| `admin` | **Heather Beal** | **COO (Admin)** | everything `manage` |
-| `om` | Lily Rico | OM / Clinic Lead, Carlsbad | production `edit`, schedule `edit` |
-| `doctor` | Dr. Carla Coelho | Associate Doctor, rotates | dashboard `view`, schedule **`view`** |
-| `tc` | Elizabeth Reyes | TC, Hobbs | schedule `view`, documents `add` |
-| `staff` | Serenity Gonzales | Clinical Assistant, Carlsbad | schedule `view`, documents `view` |
+| `admin` | **Priya Tatum** (made up) | **COO (Admin)** | everything `manage` |
+| `om` | Gabriela Garrison (made up) | OM / Clinic Lead, Carlsbad | production `edit`, schedule `edit` |
+| `doctor` | Dr. Clara Coleman (made up) | Associate Doctor, rotates | dashboard `view`, schedule **`view`** |
+| `tc` | Quinn Quill (made up) | TC, Hobbs | schedule `view`, documents `add` |
+| `staff` | Camila Calder (made up) | Clinical Assistant, Carlsbad | schedule `view`, documents `view` |
 
 Heather's title is exactly **"COO (Admin)"** — she is the COO *and* the app's administrator.
 Not "Practice Administrator". Don't relabel her.

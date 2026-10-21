@@ -272,17 +272,17 @@
   }
 
 </style>
-<script src="user.js?v=hc107"></script>
+<script src="user.js?v=hc108"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="_staff.js?v=hc107"></script>
-  <script src="store.js?v=hc107"></script>
-  <script src="gate.js?v=hc107"></script>
-  <script src="docs.js?v=hc107"></script>
-  <script src="workbook.js?v=hc107"></script>
-  <script src="prodbook.js?v=hc107"></script>
-  <script src="prodfx.js?v=hc107"></script>
-  <script src="prodstore.js?v=hc107"></script>
-  <script src="prodadmin.js?v=hc107"></script>
+  <script src="_staff.js?v=hc108"></script>
+  <script src="store.js?v=hc108"></script>
+  <script src="gate.js?v=hc108"></script>
+  <script src="docs.js?v=hc108"></script>
+  <script src="workbook.js?v=hc108"></script>
+  <script src="prodbook.js?v=hc108"></script>
+  <script src="prodfx.js?v=hc108"></script>
+  <script src="prodstore.js?v=hc108"></script>
+  <script src="prodadmin.js?v=hc108"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — admin console concept for validation. Real build: people sync from Microsoft 365; access is managed here.</div>
@@ -509,25 +509,10 @@
 
   const AUDLBL={everyone:'🌐 Everyone',location:'📍 By location / state',team:'👥 By team'};
 
-  // Real staff roster (imported). Doctors -> Doctors team; everyone else defaults to Staff
-  // as a neutral placeholder — the practice reassigns real teams/locations here.
-  const DOCTOR_NAMES=['Dr. Carla Coelho','Dr. Susan McBeth','Dr. David Farnsworth','Dr. Jae Brimhall'];
-  const ROSTER=[
-    'Corey Lawing',
-    'Alexandra (Lexi) Espinosa','Cyndal Gomez','Serenity Gonzales','Keyly Moran','Tayler Nesbit',
-    'Jennifer Peters','Lily Rico','Alyssa Smith','Macayla Villegas','Mia Armenta','Pamela Hernandez',
-    'Linda Herrera','Lucero Holguin','Hannah Lanier','Melissa Medina','Maria Pando','Elizabeth Reyes',
-    'Yessenia Romaniz','Dr. Carla Coelho','Rebecca Fluhman','Shayna Garza','Melissa Hernandez',
-    'Elizabeth James','Lluvia Lujan','Karen Qualls','Patricia Tidwell','Dr. Susan McBeth',
-    'Monika Flores-Aleman','Maria Honorato','Yulissa Martinez','Ashley Rodriguez','Latricia Sanchez',
-    'Idaly Tarango','Rebekah White','Cacy Briseno','Lyndsey Dunn','Klorissa Garcia',
-    'Alicyn "Haley" Gossett','Elizabeth "Liz" Guerrero','Samantha Molina','Arianna Peacock',
-    'Melinda Tavarez','Amanda Vasquez','Heather Beal','Selene Brown','Jessica Lynch','Brenda Garcia',
-    'Kandace Lain','Erika Munoz','Kim Partee','Noemi Sanchez Torres','Tierney Whitesel','Sirena Zamudio',
-    'Karin Alons','Suzy Brown','Michelle Eichleberger','Melissa Elliott','Cindy Peterson','Roma Powell',
-    'Yvonne Avalos','Yessenia Flores','Maria Hinojos','Erica Martinez','Anette Olvera','Tara Pacini',
-    'Joemily Prieto','Melissa Villalva','Jenny Whitefield','Dr. David Farnsworth','Dr. Jae Brimhall'
-  ];
+  // The sandbox's people (_staff.js, made up - the real roster lives in SharePoint, ph_roster). Doctors ->
+  // Doctors team; everyone else defaults to Staff as a neutral placeholder.
+  const ROSTER=(window.STAFF||[]).map(p=>p.n);
+  const DOCTOR_NAMES=ROSTER.filter(n=>/^Dr\.\s/.test(n));
   /* Per-person overrides the practice sets here. Keyed by email, saved locally and to
      SharePoint, and read by user.js — so changing someone's team or location in Admin
      actually changes what they can do, rather than only what this table shows. */
@@ -617,8 +602,8 @@
     const first=parts[0], last=parts.slice(1).join(' ');
     const handle=(first[0]+(last||first)).toLowerCase().replace(/[^a-z]/g,'');
     /* Use the person's REAL email from the shared roster. Inventing one meant per-person
-       access was saved under a key that never matched the address they sign in with —
-       Jessica Lynch is jessica@ffortho.com, not jlynch@farnsworthorthodontics.com. */
+       access was saved under a key that never matched the address they sign in with -
+       someone at another of the practice's domains is not first-initial-last@farnsworthorthodontics.com. */
     const known=(window.STAFF?STAFF:[]).find(x=>{
       const a=(x.n||'').replace(/^Dr\.\s*/,'').toLowerCase().trim();
       const b=clean.replace(/^Dr\.\s*/,'').toLowerCase().trim();
@@ -1030,7 +1015,7 @@
     openModal(
       '<div class="m-top"><h3 style="margin:0;font-size:17px;color:var(--navy)">Add a person</h3><button class="x" onclick="AD.close()">\u00d7</button></div>'+
       '<div class="m-body">'+
-        '<div class="fld"><label>Full name</label><input id="npName" value="'+esc(newP.name)+'" placeholder="e.g. Dr. Lightheart, or Jane Smith" oninput="AD.npSet(\'name\',this.value)"></div>'+
+        '<div class="fld"><label>Full name</label><input id="npName" value="'+esc(newP.name)+'" placeholder="e.g. Dr. Smith, or Jane Smith" oninput="AD.npSet(\'name\',this.value)"></div>'+
         '<div class="fld"><label>Role</label><input id="npRole" value="'+esc(newP.role)+'" placeholder="e.g. Clinical Asst, Associate Doctor" oninput="AD.npSet(\'role\',this.value)"></div>'+
         '<div class="fld"><label>Work email <span style="color:var(--soft);font-weight:400">(if they have one)</span></label><input id="npMail" value="'+esc(newP.email)+'" placeholder="name@farnsworthorthodontics.com" oninput="AD.npSet(\'email\',this.value)"></div>'+
         '<div class="fld"><label>Employee ID <span style="color:var(--soft);font-weight:400">(optional)</span></label><input id="npEmp" value="'+esc(newP.emp)+'" oninput="AD.npSet(\'emp\',this.value)"></div>'+
@@ -2094,7 +2079,7 @@
 })();
 </script>
 <script>PH.nav('admin');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(PH.loadPhotos)PH.loadPhotos().then(function(got){if(got&&window.AD&&AD.tab)AD.tab('users');});});</script>
-<script src="tour.js?v=hc107"></script>
+<script src="tour.js?v=hc108"></script>
 <script>
 Tour.init([
   {sel:'#tabs', title:'This is your control room', body:'Four tabs and you can run the whole hub: <b>People</b>, <b>Teams &amp; Access</b>, <b>Document Sections</b> and <b>Locations</b>. No developer, no consultant.', pre:()=>AD.tab('users')},

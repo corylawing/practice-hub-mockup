@@ -79,19 +79,19 @@ const ROW={Title:'Idea: bigger buttons \u2014 Jess, Schedule', Details:'IDEA\nbi
   const PH=ctx.PH;
   t('PH.feedback is there for the button to call', typeof PH.feedback==='function' && typeof PH.feedbackText==='function');
 
-  const C={name:'Jessica Lynch', email:'jessica@farnsworthorthodontics.com', role:'CSO', teams:'Leadership', offices:'All offices',
+  const C={name:'Sabrina Varga', email:'jessica@farnsworthorthodontics.com', role:'CSO', teams:'Leadership', offices:'All offices',
     page:'Schedule', url:'https://kind-hill/v1/schedule.html', looking:['Office: Carlsbad','Month'], device:'Phone \u00b7 Safari 18 on iPhone \u00b7 390\u00d7844',
     version:'hc57', colors:'Blush', online:true, trouble:[], when:'Tue Sep 29'};
   const A=PH.feedbackText(C,'problem','The 2027 dates will not save.\nTried twice.');
   t('the subject says what kind, the start of it, who, and which page',
-    A.Title==='Something\u2019s wrong: The 2027 dates will not save. Tried twice. \u2014 Jessica Lynch, Schedule');
+    A.Title==='Something\u2019s wrong: The 2027 dates will not save. Tried twice. \u2014 Sabrina Varga, Schedule');
   t('the body starts with the kind and the message exactly as written', A.Details.indexOf('SOMETHING\u2019S WRONG\nThe 2027 dates will not save.\nTried twice.\n\n')===0);
-  ['From: Jessica Lynch <jessica@farnsworthorthodontics.com>','Role: CSO','Team: Leadership','Offices: All offices','Page: Schedule',
+  ['From: Sabrina Varga <jessica@farnsworthorthodontics.com>','Role: CSO','Team: Leadership','Offices: All offices','Page: Schedule',
    'Had open: Office: Carlsbad \u00b7 Month','Link: https://kind-hill/v1/schedule.html','Device: Phone \u00b7 Safari 18 on iPhone \u00b7 390\u00d7844',
    'Home-Brace version: hc57 \u00b7 Colors: Blush','Recent errors on this page: none','Sent: Tue Sep 29']
     .forEach(l=>t('the body has "'+l+'"', A.Details.split('\n').indexOf(l)>=0));
   const long=PH.feedbackText(C,'idea','x'.repeat(500));
-  t('a long message is cut in the subject, never in the body', long.Title.length<=250 && /\u2026 \u2014 Jessica Lynch, Schedule$/.test(long.Title) && long.Details.indexOf('x'.repeat(500))>0);
+  t('a long message is cut in the subject, never in the body', long.Title.length<=250 && /\u2026 \u2014 Sabrina Varga, Schedule$/.test(long.Title) && long.Details.indexOf('x'.repeat(500))>0);
   const bare=PH.feedbackText({page:'Home', when:'now'},'nonsense','hi');
   t('an unknown kind is just "Feedback", and someone unknown is "Someone"', bare.Title==='Feedback: hi \u2014 Someone, Home');
   t('nothing blank is listed (no empty "Role:" line)', !/^(Role|Team|Offices|Had open|Link|Device):\s*$/m.test(bare.Details));

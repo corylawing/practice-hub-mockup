@@ -116,7 +116,7 @@ const names=list=>list.map(x=>x.name).sort();
       names(await PH.searchDocs('hygiene')).includes('Hygiene Bonus Sheet.xlsx'));
     t('...but still not Payroll, nor another office', !n.includes('Payroll 2026.xlsx') && !n.includes('Lease Carlsbad.pdf')); }
 
-  { const {PH,calls}=load(LIVE, person('Heather Beal','Admin','')); await settle();
+  { const {PH,calls}=load(LIVE, person('Priya Tatum','Admin','')); await settle();
     const n=names(await PH.searchDocs('uniform'));
     const hn=names(await PH.searchDocs('hygiene'));
     t('an admin finds the Word and Excel files too', ['Oral Hygiene Form.docx','Hygiene Checklist.docx','Hygiene Bonus Sheet.xlsx','Hygiene Hobbs Log.docx','Hygiene Carlsbad Log.docx'].every(x=>hn.includes(x)) && !hn.includes('Hygiene Outside.docx'));
@@ -126,7 +126,7 @@ const names=list=>list.map(x=>x.name).sort();
     t('an admin finds everything in Home-Brace Documents', ['Uniform Policy.pdf','Payroll 2026.xlsx','Lease Hobbs.pdf','Lease Carlsbad.pdf','Raise Policy.pdf','Bonus Policy.pdf','Uniform Carlsbad Sheet.xlsx'].every(x=>n.includes(x)));
     t('...but never what is outside it or un-linked', !n.includes('Outside.pdf') && !n.includes('Uniform Old.xlsx')); }
 
-  { const {PH,calls}=load(LIVE, person('Heather Beal','Admin',''), {refuseParent:true}); await settle();
+  { const {PH,calls}=load(LIVE, person('Priya Tatum','Admin',''), {refuseParent:true}); await settle();
     const hn=names(await PH.searchDocs('hygiene'));
     t('if SharePoint refuses the folder field, search still works (asked the old way)', hn.includes('Oral Hygiene Form.docx') && hn.includes('Hygiene Hobbs Log.docx') &&
       calls.filter(c=>/search\(q='hygiene'\)/.test(c)).length===2); }

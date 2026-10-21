@@ -24,7 +24,7 @@ function SharePoint(){
   const pathOf=it=>{ const parts=[]; let x=it; while(x && x.id!=='ROOT'){ parts.unshift(x.name); x=sp.items[x.parent]; } return parts.join('/'); };
   const view=it=>{ const par=sp.items[it.parent]; const pp=par.id==='ROOT'?'/drive/root:':'/drive/root:/'+pathOf(par).split('/').map(encodeURIComponent).join('/');
     const v={id:it.id, name:it.name, webUrl:'https://omegaorthodontics.sharepoint.com/sites/Home-Brace/Shared%20Documents/'+encodeURI(pathOf(it)),
-      size:it.size||0, lastModifiedDateTime:'2026-09-30T10:00:00Z', lastModifiedBy:{user:{displayName:'Heather Beal'}},
+      size:it.size||0, lastModifiedDateTime:'2026-09-30T10:00:00Z', lastModifiedBy:{user:{displayName:'Priya Tatum'}},
       parentReference:{driveId:'D1', id:par.id, path:pp}};
     if(it.folder) v.folder={childCount:it.children.length}; else v.file={mimeType:it.type||''};
     return v; };
@@ -347,7 +347,7 @@ const calls=(sp,re,method)=>sp.calls.filter(c=>re.test(c.url)&&(!method||c.metho
     const base=sp.add(sp.root,'Home-Brace Documents',true), pol=sp.add(base,'Policies & Handbook',true);
     t('not locked while Home-Brace Members can still edit', (await D.isLocked())===false);
     sp.perms[base.id]=[{id:'M', roles:['read'], grantedToV2:{siteGroup:{displayName:'Home-Brace Members'}}},{id:'O', roles:['owner'], grantedToV2:{siteGroup:{displayName:'Home-Brace Owners'}}},
-      {id:'HB', roles:['write'], grantedToV2:{user:{displayName:'Heather Beal',email:'heather@example.com'}, siteUser:{loginName:'i:0#.f|membership|heather@example.com'}}, grantedTo:{user:{displayName:'Heather Beal',email:'heather@example.com'}}}];
+      {id:'HB', roles:['write'], grantedToV2:{user:{displayName:'Priya Tatum',email:'heather@example.com'}, siteUser:{loginName:'i:0#.f|membership|heather@example.com'}}, grantedTo:{user:{displayName:'Priya Tatum',email:'heather@example.com'}}}];
     t('locked once Members can only read - Heather\u2019s own Edit (her sign-in name says "membership") is not the group', (await D.isLocked())===true);
     sp.perms[base.id][0].roles=['write'];
     t('...and not locked again if the Members group gets Edit back', (await D.isLocked())===false);
@@ -489,28 +489,28 @@ const calls=(sp,re,method)=>sp.calls.filter(c=>re.test(c.url)&&(!method||c.metho
     t('shared with the Home-Brace group: everyone can open it', (await D.whoCanOpen(item))===true);
     sp.perms.OD1=[{link:{scope:'organization'}, roles:['read']}];
     t('shared with the whole practice: everyone can open it', (await D.whoCanOpen(item))===true);
-    sp.perms.OD1=[{grantedToV2:{user:{displayName:'Jessica Lynch'}}, roles:['write']}];
+    sp.perms.OD1=[{grantedToV2:{user:{displayName:'Sabrina Varga'}}, roles:['write']}];
     t('shared with named people only: says so, so the page can warn', (await D.whoCanOpen(item))===false);
     sp.perms.OD1=new Error('nope');
     t('when the check itself is refused, it says "don\u2019t know", not "fine"', (await D.whoCanOpen(item))===null);
     t('a file already in the Home-Brace library needs no check', (await D.whoCanOpen({id:'z', parentReference:{driveId:'D1'}}))===true);
     let bad=null; try{ await D.resolveLink('https://omegaorthodontics.sharepoint.com/:w:/s/x/nothere'); }catch(x){ bad=x; }
     t('a link to something you cannot see says what to do', bad && bad.badLink && /share the file/.test(bad.message));
-    await D.addLink('hr','',item,true,'Heather Beal');
-    await D.addLink('hr','',item,true,'Heather Beal');
+    await D.addLink('hr','',item,true,'Priya Tatum');
+    await D.addLink('hr','',item,true,'Priya Tatum');
     const L=await D.links();
     t('the same link twice is one entry', L.length===1 && L[0].name===od.name && L[0].sec==='hr');
-    await D.unlink(L[0].id,'Heather Beal');
+    await D.unlink(L[0].id,'Priya Tatum');
     const L2=await D.links();
-    t('un-linking hides it and keeps the record - nothing deleted', L2.length===1 && L2[0].hidden===true && L2[0].hiddenBy==='Heather Beal');
-    await D.addLink('hr','',item,true,'Heather Beal');
+    t('un-linking hides it and keeps the record - nothing deleted', L2.length===1 && L2[0].hidden===true && L2[0].hiddenBy==='Priya Tatum');
+    await D.addLink('hr','',item,true,'Priya Tatum');
     t('linking it again brings it back', (await D.links())[0].hidden===false);
     const w=store.writes; await D.unlink('no-such-link');
     t('un-linking something that is not there writes nothing', store.writes===w); }
 
   /* 8. "Only certain people": saved for exactly the items, only when it says something. */
   { const sp=SharePoint(), {D,store}=load(sp);
-    await D.setAudience(['I1','I2'],{teams:['Office Managers'],offices:['Carlsbad']},'Heather Beal');
+    await D.setAudience(['I1','I2'],{teams:['Office Managers'],offices:['Carlsbad']},'Priya Tatum');
     const m=await D.meta();
     t('who can see it is saved for each item', m.I1 && m.I2 && m.I1.teams[0]==='Office Managers' && m.I2.offices[0]==='Carlsbad');
     const w=store.writes; await D.setAudience(['I3'],{teams:[],offices:[]});
@@ -518,7 +518,7 @@ const calls=(sp,re,method)=>sp.calls.filter(c=>re.test(c.url)&&(!method||c.metho
 
   /* 9. Who can see one item, changed later (07/10): set it, then back to everyone. */
   { const sp=SharePoint(), {D,store}=load(sp);
-    await D.setAudience(['F1','F2'], {teams:['Office Managers'], offices:[]}, 'Heather Beal');
+    await D.setAudience(['F1','F2'], {teams:['Office Managers'], offices:[]}, 'Priya Tatum');
     await D.clearAudience(['F1']);
     const m=store.data.ph_docmeta;
     t('back to everyone takes off only that item\u2019s entry', !m.F1 && m.F2 && m.F2.teams[0]==='Office Managers');

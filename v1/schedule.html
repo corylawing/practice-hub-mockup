@@ -312,10 +312,10 @@
   }
 
 </style>
-<script src="user.js?v=hc107"></script>
+<script src="user.js?v=hc108"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc107"></script>
-  <script src="gate.js?v=hc107"></script>
+  <script src="store.js?v=hc108"></script>
+  <script src="gate.js?v=hc108"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — sample staff schedule for validation. Live version = one Microsoft List the practice maintains.</div>
@@ -376,7 +376,7 @@
   const byName=(a,b)=>a.n.localeCompare(b.n);
   let locations=PH.locations().sort(byName);
   // Doctors have no color now — a day takes the color of its office.
-  let people=[{n:'Dr. Farnsworth'},{n:'Dr. Brimhall'},{n:'Dr. Coelho'},{n:'Dr. McBeth'}];
+  let people=[{n:'Dr. Fairbanks'},{n:'Dr. Bramwell'},{n:'Dr. Coleman'},{n:'Dr. Merrick'}];
 
   const TZS=['Eastern Time','Central Time','Mountain Time','Mountain Time (Arizona, no DST)','Pacific Time','Alaska Time','Hawaii Time'];
   // Mon–Fri only — five wide columns so all eight offices fit in a day without scrolling.
@@ -614,7 +614,7 @@
         '</span>';}).join('');
     /* A doctor chip filters; the pencil renames or removes. editPerson() existed and was
        even exported, but nothing ever called it — so a doctor could be added and then
-       never corrected. Dr. Brimhall wanting to be Dr. Jae had no way through. */
+       never corrected. A doctor who wanted to go by a different name had no way through. */
     const docs=people.map((p,i)=> p.left ? '' :
       '<span class="dwrap"><button class="dchip'+(fDocs.has(i)?' on':'')+'" onclick="PS.togDoc('+i+')">'+p.n+'</button>'+
       (canEdit()?'<button class="dedit" title="Rename or remove '+esc(p.n)+'" '+
@@ -990,7 +990,7 @@
   function saveDay(){
     const t=cur.tmp, l=loc(cur.loc), d=parseISO(cur.date);
     /* A special event is a LABEL on the day, not a state of its own, so it can sit on a
-       day that already has a doctor, a Yellow Dot or a closure - "Dr. Coelho in, plus a
+       day that already has a doctor, a Yellow Dot or a closure - "Dr. Coleman in, plus a
        team lunch at 4" is a real thing. It is also enough on its own to keep a day that
        would otherwise be cleared. */
     const ev=(t.event||'').trim().slice(0,60);
@@ -1369,7 +1369,7 @@
     if(Array.isArray(docs) && docs.length && docs.every(d=>d&&d.n)) people=docs;
     /* The four names in `people` above are a starting point, not the practice's list.
        When the shared list cannot be read they were shown anyway, with nothing to say
-       so - which is how Heather could add Dr. Lightheart and Jenny's calendar could
+       so - which is how Heather could add a new doctor and another person's calendar could
        carry on showing four doctors as though that were the truth. The names stay on
        screen because the day cells point at them by position, but nobody is told they
        are current when they are not. Saving the list back is refused while this is up:
@@ -1427,7 +1427,7 @@
    machine is missing here until the next page load. */
 document.addEventListener('ph-locations-changed',function(){ if(window.PS&&PS.relocate)PS.relocate(); });
 PH.nav('schedule');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc107"></script>
+<script src="tour.js?v=hc108"></script>
 <script>
 Tour.init([
   {sel:'#viewseg', title:'Week or month', body:'<b>Week</b> is the day-to-day working view. <b>Month</b> shows the whole month at a glance, with every office in its own color.'},

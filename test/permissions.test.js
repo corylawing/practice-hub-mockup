@@ -1,7 +1,7 @@
 /* Who is allowed to see what, and WHEN.
        node test/permissions.test.js
 
-   2026-09-17: a screenshot showed Jenny Whitefield - an external guest whose roster
+   2026-09-17: a screenshot showed Selma Blaine - an external guest whose roster
    entry is Office Managers at Cruces LCO - looking at the whole navigation, Admin tab
    included.
 
@@ -69,7 +69,7 @@ function load(opts){
            pending:()=>body.classList.contains('ph-pending') };
 }
 
-const JENNY={ displayName:'Jenny Whitefield', mail:null,
+const JENNY={ displayName:'Selma Blaine', mail:null,
   userPrincipalName:'jenny_lascrucessmiles.com#EXT#@OmegaOrthodontics.onmicrosoft.com',
   jobTitle:null, department:null, officeLocation:null };
 
@@ -109,7 +109,7 @@ const t=(n,v)=>{ (v?ok:bad).push(n); };
   B.signIn(JENNY);
   const afterMenu=B.menu();
   t('signing in rebuilds the menu', afterMenu!==beforeMenu || beforeMenu==='');
-  t('Jenny is recognised', (B.PH.me().first+' '+B.PH.me().last).trim()==='Jenny Whitefield');
+  t('Jenny is recognised', (B.PH.me().first+' '+B.PH.me().last).trim()==='Selma Blaine');
   t('Jenny is not an admin', B.PH.isAdmin()===false);
   /* My Profile prints me().teams and me().loc straight out. Pre-profile that was the
      'admin' persona, so a guest opening her own profile was shown
@@ -153,7 +153,7 @@ const t=(n,v)=>{ (v?ok:bad).push(n); };
           straight into localStorage was honoured for anybody. ---- */
 {
   const D=load({page:'team', ls:{ ph_impersonate: JSON.stringify(
-      { id:'admin', first:'Heather', last:'Beal', title:'COO',
+      { id:'admin', first:'Priya', last:'Tatum', title:'COO',
         can:{admin:'manage',dashboard:'view',production:'manage',schedule:'edit',
              marketing:'edit',documents:'manage',team:'view'}, offices:'all' }) }});
   t('an impersonation planted in localStorage is NOT honoured before sign-in',
@@ -184,8 +184,8 @@ const t=(n,v)=>{ (v?ok:bad).push(n); };
 {
   const H=load({page:'admin'});
   H.PH.nav('admin');
-  H.signIn({ displayName:'Heather Beal', mail:'heather@farnsworthorthodontics.com',
-             userPrincipalName:'heather@farnsworthorthodontics.com',
+  H.signIn({ displayName:'Priya Tatum', mail:'priya@farnsworthorthodontics.com',
+             userPrincipalName:'priya@farnsworthorthodontics.com',
              jobTitle:'COO', department:'Admin', officeLocation:'' });
   t('the practice COO still gets Admin', H.PH.can('admin')==='manage');
   t('the COO is still an admin', H.PH.isAdmin()===true);
@@ -217,8 +217,8 @@ const t=(n,v)=>{ (v?ok:bad).push(n); };
   // And an ordinary in-tenant member lands on their own team's rights, not nothing.
   const OM=load({page:'team'});
   OM.PH.nav('team');
-  OM.signIn({ displayName:'Suzy Brown', mail:'suzy@fortholascruces.com',
-              userPrincipalName:'suzy@fortholascruces.com',
+  OM.signIn({ displayName:'Estela Ives', mail:'estela@fortholascruces.com',
+              userPrincipalName:'estela@fortholascruces.com',
               jobTitle:'OM/Clinic Lead', department:'Office Managers', officeLocation:'Cruces FFO' });
   t('an office manager gets her team\u2019s rights', OM.PH.can('schedule')!=='none');
   t('an office manager gets her own office only',
@@ -251,8 +251,8 @@ const t=(n,v)=>{ (v?ok:bad).push(n); };
 
   const H=load({page:'home'});
   H.PH.nav('home');
-  H.signIn({ displayName:'Heather Beal', mail:'heather@farnsworthorthodontics.com',
-             userPrincipalName:'heather@farnsworthorthodontics.com',
+  H.signIn({ displayName:'Priya Tatum', mail:'priya@farnsworthorthodontics.com',
+             userPrincipalName:'priya@farnsworthorthodontics.com',
              jobTitle:'COO', department:'Admin', officeLocation:'' });
   const a=H.PH.asPersona();
   t('the COO\u2019s persona is the admin, sees all offices, gets the Admin tile',
@@ -287,7 +287,7 @@ const t=(n,v)=>{ (v?ok:bad).push(n); };
   /* 17/10: before everyone gets it, an ADMIN can try it on the live site with ?tcpreview. */
   const PA=load({ page:'tc', ls:{ ph_tc_preview:'1' } });
   PA.PH.nav('tc');
-  PA.signIn({ displayName:'Heather Beal', mail:'heather@farnsworthorthodontics.com', userPrincipalName:'heather@farnsworthorthodontics.com',
+  PA.signIn({ displayName:'Priya Tatum', mail:'priya@farnsworthorthodontics.com', userPrincipalName:'priya@farnsworthorthodontics.com',
               jobTitle:'COO', department:'Admin', officeLocation:'' });
   t('live preview: an admin who opened ?tcpreview gets the TC Tracker', PA.PH.tcOn()===true && PA.tabs().indexOf('tc')>=0);
   const PN=load({ page:'tc', ls:{ ph_tc_preview:'1' } });
