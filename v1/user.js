@@ -1730,16 +1730,25 @@
     wireDrop();
   }
   function pickPhoto(input){ const f=input.files&&input.files[0]; if(f) readPhoto(f); }
+  /* A PHOTO THAT ALWAYS FITS (22/10/2026). One SharePoint record holds ~63,000 characters, and a busy photo saved
+     at one fixed quality can come close - the size watch found a profile at 70%. The quality steps down until the
+     picture is under 30,000 characters, then the size too if it must. A plain face is still the 256 px it was. */
+  function avatar(img){
+    const m=Math.min(img.width,img.height); let out='';
+    for(const S of [256,192,160]){
+      const c=document.createElement('canvas'); c.width=S; c.height=S;
+      c.getContext('2d').drawImage(img,(img.width-m)/2,(img.height-m)/2,m,m,0,0,S,S);
+      for(const q of [0.82,0.72,0.62,0.52]){ out=c.toDataURL('image/jpeg',q); if(out.length<=30000) return out; }
+    }
+    return out;
+  }
   function readPhoto(file){
     if(!/^image\//.test(file.type)) return;
     const r=new FileReader();
     r.onload=e=>{
       const img=new Image();
       img.onload=()=>{ // shrink to a sensible avatar so it fits in storage
-        const S=256, c=document.createElement('canvas'); c.width=S; c.height=S;
-        const g=c.getContext('2d'), m=Math.min(img.width,img.height);
-        g.drawImage(img,(img.width-m)/2,(img.height-m)/2,m,m,0,0,S,S);
-        saveMine({photo:c.toDataURL('image/jpeg',0.82)});
+        saveMine({photo:avatar(img)});
         profile(); refreshFaces();
       };
       img.src=e.target.result;
@@ -2861,7 +2870,7 @@
   }
   const isLive=()=>env()==='live';
 
-  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, rosterView, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK, notesHTML, searchHTML, searchDocs, searchDocsHTML, levelForTeams, teamsSeeAll, tcOn, tcRoleFor, saveFace, faceOf,
+  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, rosterView, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK, notesHTML, searchHTML, searchDocs, searchDocsHTML, levelForTeams, teamsSeeAll, tcOn, tcRoleFor, saveFace, faceOf, avatar,
     sensRecord, reloadSensitive, sensLevelFor, sensitiveLevel, sensConfirmOk,
     setTheme, theme:()=>THEME, setLayout, layout:()=>LAYOUT, layouts:()=>LAYOUTS.map(l=>({k:l.k, n:l.n})), themes:()=>THEMES.map(t=>({k:t.k, n:t.n})), schemeTokens:k=>schemeTokens(themeOf(k)), contrast,
     feedback:openFeedback, feedbackText, feedbackContext, learning:stillLearning};

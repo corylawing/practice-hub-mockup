@@ -272,17 +272,17 @@
   }
 
 </style>
-<script src="user.js?v=hc111"></script>
+<script src="user.js?v=hc112"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="_staff.js?v=hc111"></script>
-  <script src="store.js?v=hc111"></script>
-  <script src="gate.js?v=hc111"></script>
-  <script src="docs.js?v=hc111"></script>
-  <script src="workbook.js?v=hc111"></script>
-  <script src="prodbook.js?v=hc111"></script>
-  <script src="prodfx.js?v=hc111"></script>
-  <script src="prodstore.js?v=hc111"></script>
-  <script src="prodadmin.js?v=hc111"></script>
+  <script src="_staff.js?v=hc112"></script>
+  <script src="store.js?v=hc112"></script>
+  <script src="gate.js?v=hc112"></script>
+  <script src="docs.js?v=hc112"></script>
+  <script src="workbook.js?v=hc112"></script>
+  <script src="prodbook.js?v=hc112"></script>
+  <script src="prodfx.js?v=hc112"></script>
+  <script src="prodstore.js?v=hc112"></script>
+  <script src="prodadmin.js?v=hc112"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — admin console concept for validation. Real build: people sync from Microsoft 365; access is managed here.</div>
@@ -393,7 +393,11 @@
   const allSections=()=>TOOLS.concat(DOCSECS);
 
   const DEFAULT_TEAMS=['Executive Team','Leadership Team','Office Managers','Clinic Managers','TCs','Doctors','Marketing Team','Financial Coordinator Team','Staff','Admin'];
-  function loadTeams(){ try{ const st=JSON.parse(localStorage.getItem('ph_teams')); if(Array.isArray(st)&&st.length)return st; }catch(_){} return DEFAULT_TEAMS.slice(); }
+  /* THE ADMIN TEAM IS BUILT IN (22/10/2026). The whole page - and who may run it - depends on a team called
+     "Admin"; a list without it (renamed, deleted, or an odd saved copy) stopped this page loading for everyone,
+     with no way back from the page itself. It is always there now, and it can't be renamed or deleted. */
+  const withAdmin=t=>t.indexOf('Admin')<0 ? t.concat(['Admin']) : t;
+  function loadTeams(){ try{ const st=JSON.parse(localStorage.getItem('ph_teams')); if(Array.isArray(st)&&st.length)return withAdmin(st); }catch(_){} return DEFAULT_TEAMS.slice(); }
   function saveTeams(){
     if(window.PH_STORE) window.PH_STORE.set('ph_teams', TEAMS);
     else try{ localStorage.setItem('ph_teams',JSON.stringify(TEAMS)); }catch(_){}
@@ -486,10 +490,12 @@
   function ensureAccess(){ TEAMS.forEach(t=>{ access[t]=access[t]||{}; allSections().forEach(x=>{ if(access[t][x.k]===undefined)access[t][x.k]='none'; }); }); }
   function applySecAudience(sec){ (sec.teamMode==='all'?TEAMS:(sec.teams||[])).forEach(t=>{ if(access[t]&&rank[access[t][sec.k]||'none']<1)access[t][sec.k]='view'; }); if(access['Admin'])access['Admin'][sec.k]='manage'; }
   ensureAccess();
-  const set=(t,o)=>Object.assign(access[t],o);
+  /* Starting values, for the teams that exist. Renaming or deleting one of these teams used to stop this page
+     loading for everyone at the next visit (22/10/2026): a team that isn't there is simply skipped now. */
+  const set=(t,o)=>{ if(access[t]) Object.assign(access[t],o); };
   let SAVED_ACCESS=null;
   try{ SAVED_ACCESS=JSON.parse(localStorage.getItem(ACCESS_KEY)); }catch(_){}
-  allSections().forEach(x=>access['Admin'][x.k]='manage');
+  allSections().forEach(x=>{ if(access['Admin']) access['Admin'][x.k]='manage'; });
   set('Executive Team',{tc:'manage',production:'manage',dashboard:'manage',schedule:'view',marketing:'view',team:'view',admin:'view',hr:'edit',eom:'manage',officedocs:'view',forms:'view',vendors:'view',filing:'view'});
   set('Leadership Team',{tc:'manage',production:'manage',dashboard:'edit',schedule:'view',marketing:'view',team:'view',hr:'edit',eom:'edit',officedocs:'view',forms:'view',vendors:'view',filing:'view'});
   set('Office Managers',{tc:'view',production:'edit',dashboard:'view',schedule:'edit',marketing:'view',team:'view',hr:'view',eom:'edit',officedocs:'edit',forms:'edit',vendors:'edit',filing:'edit'});
@@ -917,10 +923,11 @@
     r.onload=function(){
       const img=new Image();
       img.onload=function(){
-        const S=256, c=document.createElement('canvas'); c.width=S; c.height=S;
-        const g=c.getContext('2d'), m=Math.min(img.width,img.height);
-        g.drawImage(img,(img.width-m)/2,(img.height-m)/2,m,m,0,0,S,S);
-        tmpU.photo=c.toDataURL('image/jpeg',0.82);
+        if(window.PH && PH.avatar) tmpU.photo=PH.avatar(img);              // always small enough (user.js)
+        else { const S=256, c=document.createElement('canvas'); c.width=S; c.height=S;
+          const g=c.getContext('2d'), m=Math.min(img.width,img.height);
+          g.drawImage(img,(img.width-m)/2,(img.height-m)/2,m,m,0,0,S,S);
+          tmpU.photo=c.toDataURL('image/jpeg',0.82); }
         const face=el('fPhotoFace');
         if(face) face.innerHTML='<img class="face" src="'+tmpU.photo+'" alt="" style="width:34px;height:34px;border-radius:50%;object-fit:cover">';
       };
@@ -1136,6 +1143,13 @@
   function editTeam(t){ teamDraft={old:t,n:t}; renderTeamModal(); }
   function renderTeamModal(){
     const d=teamDraft, isNew=!d.old;
+    if(d.old==='Admin'){
+      openModal('<div class="m-top"><h3 style="margin:0;font-size:17px;color:var(--navy)">The Admin team</h3><button class="x" onclick="AD.close()">\u00d7</button></div>'+
+        '<div class="m-body"><div class="accessbox"><h4>Built in</h4>The <b>Admin</b> team is what lets people run this page, so it can\u2019t be renamed or deleted. '+
+        'What it can reach is set in the grid, like any team.</div></div>'+
+        '<div class="m-foot"><span style="flex:1"></span><button class="btn" onclick="AD.close()">OK</button></div>');
+      return;
+    }
     openModal(
       '<div class="m-top"><h3 style="margin:0;font-size:17px;color:var(--navy)">'+(isNew?'\u2795 New team':'Rename team')+'</h3><button class="x" onclick="AD.close()">\u00d7</button></div>'+
       '<div class="dm-banner" style="background:var(--teal-soft);border-bottom:1px solid var(--teal-line,#c4e6e3);color:var(--teal-ink,#0c5b57);font-size:12.5px;padding:10px 20px;line-height:1.5">A team is <b>what a group of people can do</b>. Create it here and it appears as a new row in the grid \u2014 then tick what it can reach.</div>'+
@@ -1148,6 +1162,7 @@
   }
   function saveTeam(){
     const nm=(el('teamName')?el('teamName').value:'').trim(); if(!nm)return;
+    if(teamDraft && teamDraft.old==='Admin') return;                    // built in: never renamed
     const d=teamDraft;
     if(!d.old){
       if(TEAMS.indexOf(nm)<0){ TEAMS.push(nm); access[nm]={}; allSections().forEach(x=>access[nm][x.k]='none'); }
@@ -1161,7 +1176,7 @@
     saveTeams(); ensureAccess(); clampAccess(); saveAccess(); closeModal(); renderAccess();
   }
   function delTeam(){
-    const t=teamDraft.old; if(!t)return;
+    const t=teamDraft.old; if(!t || t==='Admin')return;                 // built in: never deleted
     TEAMS=TEAMS.filter(x=>x!==t); delete access[t];
     users.forEach(u=>{ u.teams=u.teams.filter(x=>x!==t); });
     DOCSECS.forEach(sec=>{ if(sec.teams) sec.teams=sec.teams.filter(x=>x!==t); });
@@ -2070,7 +2085,7 @@
       Promise.all([PH_STORE.get('ph_teams'), PH_STORE.get('ph_docsecs'), PH_STORE.get(ACCESS_KEY)])
         .then(function(r){
           var changed=false;
-          if(Array.isArray(r[0]) && r[0].length && JSON.stringify(r[0])!==JSON.stringify(TEAMS)){ TEAMS=r[0]; changed=true; }
+          if(Array.isArray(r[0]) && r[0].length && JSON.stringify(withAdmin(r[0]))!==JSON.stringify(TEAMS)){ TEAMS=withAdmin(r[0]); changed=true; }
           if(Array.isArray(r[1]) && r[1].length && JSON.stringify(r[1])!==JSON.stringify(DOCSECS)){ DOCSECS=r[1]; changed=true; }
           if(r[2] && typeof r[2]==='object' && JSON.stringify(r[2])!==JSON.stringify(access)){ access=r[2]; changed=true; }
           if(changed){ ensureAccess(); const keep=holdScroll(); render(); keep(); }
@@ -2087,8 +2102,10 @@
 function sizeWatch(){
   if(!window.PH_STORE || !PH_STORE.sizes || !PH.isLive() || !(PH.isAdmin && PH.isAdmin())) return;
   const box=document.getElementById('sizewatch'), lim=PH_STORE.COL_MAX, warn=PH_STORE.SIZE_WARN;
+  // A profile or a photo doesn't grow - a new photo replaces the old one, and new photos are always small (user.js avatar).
+  const grows=k=>!/^ph_me_|^ph_face_/.test(k);
   const show=w=>{
-    const over=(w && w.over)||[];
+    const over=((w && w.over)||[]).filter(r=>grows(r.key));
     if(!over.length){ box.hidden=true; return; }
     box.innerHTML='⚠️ <b>Getting full:</b> '+over.map(r=>'<b>'+PH_STORE.recordName(r.key).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</b> is at '+Math.round(r.chars/lim*100)+'%').join(', ')+
       ' of what one SharePoint record can hold. Nothing is lost - but tell Cory before it reaches 100%, when saving it would stop. '+
@@ -2105,7 +2122,7 @@ function sizeWatch(){
   }).catch(()=>{});
 }
 </script>
-<script src="tour.js?v=hc111"></script>
+<script src="tour.js?v=hc112"></script>
 <script>
 Tour.init([
   {sel:'#tabs', title:'This is your control room', body:'Four tabs and you can run the whole hub: <b>People</b>, <b>Teams &amp; Access</b>, <b>Document Sections</b> and <b>Locations</b>. No developer, no consultant.', pre:()=>AD.tab('users')},
