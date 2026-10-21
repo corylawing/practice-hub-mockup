@@ -211,6 +211,23 @@ override on Home-Brace" still holds. `icon(k)` tags the svg with data-k; top tab
 `--ic`, the white phone More sheet a darker `--ic-l`. Search results keep plain icons. Same 16px size, so an admin's
 9-tab row still fits 1080/1080.
 
+**Payroll mock-up for Heather (21/10/2026, hc96, sandbox only).** Heather: every other week each office manager sends her
+a payroll sheet (an Excel form, one per office); she copies them into one main sheet, and wants Home-Brace to hold the
+records "kind of like the production sheet does". `v1/payroll.html` (NAV `payroll`, show only off live, like Academy;
+permissions test checks it never shows on live and the page stays shut there). Made-up people, amounts and rates;
+localStorage `ph_pay_demo` / `ph_pay_as`. What it shows: the office form's columns (Wk 1/Wk 2 hours, PTO, sick as its own
+column, on call, commutes + office, exception commuter $, marketing/other miles, missed green, bonus Full/Partial/None,
+notes) with her written rules as checks before sending (week over 40 needs "OT approved", partial bonus needs % and a note,
+other miles / exception pay need a note, missed green sets bonus to None); holiday pay automatic from start date + 90 days
+and a holiday calendar; Heather's side: who has sent, "worth a second look" (overtime, two-office combined hours, missed
+green, exception pay, mileage), a combined sheet grouped by company like her main sheet, CSV download in her column
+order, mark as entered (locks), reopen, every pay period kept, person lookup, settings. Pay periods: biweekly Mon-Sun, paid
+the Friday after, anchored on her sheet (#20 paid 2026-09-25, Labor Day in it); due day is a guess (end + 3).
+Her two files were read from Downloads only (real names + hours; never in the repo). Open questions for her are in the
+session notes: what Team B / TC-OM / the J column (Extra/Phone/Sick/DIBS) are, whether Reimburse belongs in Total (most
+rows leave it out; Clovis and some Las Cruces rows include it), Las Cruces $0 bonuses, holiday $ vs hours, the due day,
+Zihua (leadership) rows, salaried doctors. Real build = sensitive data, so a locked SharePoint folder like the TC Tracker.
+
 **TCs see every office in "By office" (19/10, hc85).** Selene: "we do want the Treatment Coordinators to be able to see
 one another's results. Please make sure they can all view the 'By Office' box so they can see conversion rates across
 locations." viewNumbers(): for a TC (`iAmTC() && !canManage()`) the box lists `allOffices()` from EVERY (rates and

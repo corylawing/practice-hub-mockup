@@ -191,8 +191,14 @@ const t=(n,v)=>{ (v?ok:bad).push(n); };
   t('the COO is still an admin', H.PH.isAdmin()===true);
   t('admin.html is NOT locked for her', H.locked()===false);
   /* Every tab - the TC Tracker included since it went live (19/10/2026, Cory: "yes on production"). */
-  t('and her menu has every tab (the Academy is a sandbox mock-up)', H.tabs().length===H.PH.NAV.filter(x=>x.k!=='academy').length);
+  t('and her menu has every tab (the Academy and Payroll are sandbox mock-ups)', H.tabs().length===H.PH.NAV.filter(x=>x.k!=='academy' && x.k!=='payroll').length);
   t('the Academy mock-up never shows on the live site', H.tabs().indexOf('academy')<0);
+  t('the Payroll mock-up never shows on the live site', H.tabs().indexOf('payroll')<0);
+  const PY=load({page:'payroll'});
+  PY.PH.nav('payroll');
+  PY.signIn({ displayName:'Test Admin', mail:'test.admin@example.com', userPrincipalName:'test.admin@example.com',
+              jobTitle:'COO', department:'Admin', officeLocation:'' });
+  t('...and the Payroll page stays shut there, even for an admin', PY.locked()===true || PY.pending()===true);
   const AC=load({page:'academy'});
   AC.PH.nav('academy');
   AC.signIn({ displayName:'Test Admin', mail:'test.admin@example.com', userPrincipalName:'test.admin@example.com',

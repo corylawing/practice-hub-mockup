@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Home-Brace · Payroll</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" href="../assets/favicon.png?v=2" type="image/png">
+<meta name="theme-color" content="#0F2A4A">
+<meta name="apple-mobile-web-app-title" content="Home-Brace">
+<link rel="apple-touch-icon" href="../assets/logo-mark.png">
+<meta name="robots" content="noindex">
+<!-- PAYROLL - A MOCK-UP for Heather (21/10/2026), sandbox only (user.js NAV: the tab and the page
+     are off on the live site). Heather: every other week each office manager sends her a payroll
+     sheet; she copies them into one main Excel sheet, and wants Home-Brace to keep the records "kind
+     of like the production sheet does" so she can go back to past weeks and months. Same columns as
+     her office form and her main sheet, with her written rules built into the form. Made-up people,
+     amounts and rates; nothing is saved anywhere but this browser. Not the real design yet. -->
+<style>
+  :root{
+    --navy:#0F2A4A; --navy2:#25456e; --teal:#149B96; --teal2:#2BC0B8; --teal-soft:#E5F4F3; --teal-600:#0F827E;
+    --ink:#1F2D3D; --soft:#56627A; --line:#E4E8EE; --canvas:#F4F6F8; --white:#fff;
+    --good:#2E9E6B; --good-soft:#E7F4EE; --bad:#D7503A; --bad-soft:#FBEAE7; --amber:#F2A03D; --amber-soft:#FFF4E2;
+    --blue-soft:#E3F0FA; --plum-soft:#F0EAFB;
+    --shadow:0 1px 2px rgba(15,42,74,.06),0 6px 18px rgba(15,42,74,.06);
+    --shadow-lg:0 10px 30px rgba(15,42,74,.12); --radius:14px; --maxw:1080px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--canvas);line-height:1.5;-webkit-font-smoothing:antialiased}
+  h1{color:var(--navy);margin:0}
+  button{font-family:inherit}
+  .ribbon{background:var(--amber);color:#3a2400;text-align:center;font-size:13px;font-weight:600;padding:6px 14px}
+  .hdr{background:var(--navy);color:#fff}
+  .hdr-in{max-width:var(--maxw);margin:0 auto;display:flex;align-items:center;gap:12px;padding:13px 20px}
+  .mark{width:34px;height:34px;flex:none;display:block}
+  .mark img{width:34px;height:34px;display:block;border-radius:50%}
+  .brand{font-weight:700;font-size:18px;color:#fff;line-height:1.1}
+  .brand i{font-style:normal;color:var(--teal2)}
+  .brand small{display:block;font-weight:500;font-size:12px;color:var(--navy-mute,#9fb4d0)}
+  .v1{background:rgba(255,255,255,.15);color:#eaf1fb;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;margin-left:6px}
+  .v1nav{background:var(--navy2)}
+  .v1nav-in{max-width:var(--maxw);margin:0 auto;display:flex;gap:2px;padding:0 12px;overflow-x:auto}
+  .v1nav a{color:var(--navy-mute,#cdd9ea);font-size:14px;font-weight:600;padding:13px 15px;text-decoration:none;border-bottom:3px solid transparent;white-space:nowrap}
+  .v1nav a:hover{color:#fff;background:rgba(255,255,255,.05)}
+  .v1nav a.active{color:#fff;border-bottom-color:var(--teal)}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:22px 20px 90px}
+  .viewas{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:13px 16px;display:flex;align-items:center;gap:13px;flex-wrap:wrap;margin-bottom:16px;border-left:5px solid var(--teal)}
+  .viewas .lab{font-size:12px;color:var(--soft);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+  .viewas select{padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;font-weight:700;color:var(--navy);background:#fff;max-width:100%;min-width:0}
+  .viewas .demo{margin-left:auto}
+  .page-head h1{font-size:25px}
+  .page-head p{margin:4px 0 0;color:var(--soft);font-size:14.5px;max-width:66ch}
+  .tabs{display:flex;gap:4px;margin:16px 0 18px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
+  .tabs::-webkit-scrollbar{display:none}
+  .tab{background:none;border:none;border-bottom:3px solid transparent;padding:11px 14px;font-size:14.5px;font-weight:700;color:var(--soft);cursor:pointer;white-space:nowrap}
+  .tab.on{color:var(--navy);border-bottom-color:var(--teal)}
+  .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
+  .card h2{margin:0 0 3px;font-size:16px;color:var(--navy)}
+  .card .sub{font-size:12.5px;color:var(--soft);margin:0 0 12px}
+  .stack{display:flex;flex-direction:column;gap:16px}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .grow{flex:1}
+  .muted{color:var(--soft)}
+  .small{font-size:12.5px}
+  .btn{background:var(--teal);color:#fff;border:none;border-radius:10px;padding:11px 18px;font-weight:700;font-size:14.5px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;text-decoration:none}
+  .btn:hover{background:var(--teal-600)}
+  .btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--line);font-weight:600}
+  .btn.ghost:hover{border-color:var(--teal);background:var(--teal-soft)}
+  .btn.sm{padding:7px 11px;font-size:13px;border-radius:9px}
+  .link{background:none;border:none;color:var(--teal-600);font-weight:700;cursor:pointer;padding:0;font-size:inherit}
+  .note{border-radius:12px;padding:11px 14px;font-size:13.5px;line-height:1.5}
+  .note.info{background:var(--blue-soft);border:1px solid #c3ddf2;color:#14496c}
+  .note.good{background:var(--good-soft);border:1px solid #bfe3cf;color:#1d6b47}
+  .note.warn{background:var(--amber-soft);border:1px solid #f3d7a6;color:#7a4b00}
+  .pill{display:inline-block;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:700;white-space:nowrap}
+  .p-done{background:var(--good-soft);color:#1d6b47}
+  .p-go{background:var(--amber-soft);color:#7a4b00}
+  .p-new{background:#EEF1F5;color:#46546b}
+  .p-late{background:var(--bad-soft);color:#9a2f1e}
+  .p-lock{background:var(--plum-soft);color:#4b2a9a}
+  .tblwrap{overflow-x:auto;background:#fff;border:1px solid var(--line);border-radius:12px}
+  table.t{border-collapse:collapse;width:100%;font-size:13.5px;font-variant-numeric:tabular-nums}
+  table.t th{background:#F7F9FB;color:var(--soft);font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+  table.t td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:middle;white-space:nowrap}
+  table.t tr:last-child td{border-bottom:none}
+  table.t td.n, table.t th.n{text-align:right}
+  .dm{position:fixed;inset:0;background:rgba(15,42,74,.45);display:none;align-items:flex-start;justify-content:center;padding:28px 14px;z-index:60;overflow-y:auto}
+  .dm.open{display:flex}
+  .dmc{background:#fff;border-radius:16px;box-shadow:var(--shadow-lg);width:100%;max-width:560px}
+  .dmc.wide{max-width:1040px}
+  .dm-top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 20px;border-bottom:1px solid var(--line)}
+  .dm-top h3{margin:0;font-size:17px;color:var(--navy)}
+  .dm-top .x{background:none;border:none;font-size:24px;line-height:1;color:var(--soft);cursor:pointer;padding:2px 6px}
+  .dm-body{padding:16px 20px;display:flex;flex-direction:column;gap:12px}
+  .dm-foot{display:flex;gap:8px;justify-content:flex-end;padding:14px 20px;border-top:1px solid var(--line);flex-wrap:wrap}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:11px 18px;border-radius:12px;font-weight:700;font-size:14px;box-shadow:var(--shadow-lg);opacity:0;transition:opacity .2s;pointer-events:none;z-index:80;max-width:calc(100% - 32px)}
+  .toast.on{opacity:1}
+
+  /* ---- the office manager's sheet ---- */
+  .perhead{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap}
+  .perhead .when{font-size:20px;font-weight:800;color:var(--navy);line-height:1.2}
+  .perhead select{padding:8px 10px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-size:13.5px;font-weight:600;color:var(--navy);background:#fff}
+  details.rules{border:1px solid var(--line);border-radius:12px;background:#FBFCFD;padding:10px 14px;font-size:13.5px}
+  details.rules summary{cursor:pointer;font-weight:700;color:var(--navy)}
+  details.rules ul{margin:8px 0 2px;padding-left:18px}
+  details.rules li{margin:4px 0}
+  table.sheet th.grp{background:#EEF3F8;color:var(--navy);text-align:center;font-size:11px;border-left:1px solid var(--line)}
+  table.sheet th.grp:first-child{border-left:none}
+  table.sheet td, table.sheet th{padding:7px 8px}
+  table.sheet .nm{position:sticky;left:0;background:#fff;z-index:1;font-weight:700;color:var(--navy);min-width:150px;box-shadow:1px 0 0 var(--line)}
+  table.sheet th.nm{background:#F7F9FB}
+  table.sheet .gl{border-left:1px solid var(--line)}
+  .in{font:inherit;font-size:13.5px;padding:6px 7px;border:1px solid #D5DCE5;border-radius:8px;background:#fff;color:var(--ink);font-variant-numeric:tabular-nums}
+  .in:focus{outline:2px solid var(--teal2);outline-offset:0;border-color:var(--teal)}
+  input.in[type=number]{text-align:right}
+  .in.bad{border-color:var(--bad);background:#FFF7F5}
+  .tot{font-weight:800;color:var(--navy)}
+  .otb{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 8px;margin-left:6px}
+  .otb.need{background:var(--bad-soft);color:#9a2f1e}
+  .otb.ok{background:var(--good-soft);color:#1d6b47}
+  .otb input{margin:0;accent-color:var(--teal)}
+  .ro{color:var(--ink)}
+  .ro.dim{color:#9AA5B5}
+  .checks{display:flex;flex-direction:column;gap:6px}
+  .check{display:flex;gap:9px;align-items:flex-start;font-size:13.5px;background:var(--amber-soft);border:1px solid #f3d7a6;color:#7a4b00;border-radius:10px;padding:8px 12px}
+  .check b{color:#5c3800}
+  .sendbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+
+  /* ---- Heather's side ---- */
+  .offs{display:grid;grid-template-columns:repeat(auto-fill,minmax(225px,1fr));gap:10px}
+  .off{border:1px solid var(--line);border-radius:12px;padding:11px 13px;background:#fff;display:flex;flex-direction:column;gap:6px}
+  .off .on{font-weight:800;color:var(--navy)}
+  .off .co{font-size:11.5px;color:var(--soft);line-height:1.35}
+  .flags{display:flex;flex-direction:column;gap:12px}
+  .fgrp h3{margin:0 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:var(--soft)}
+  .fl{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-bottom:1px dashed var(--line);font-size:13.5px}
+  .fl:last-child{border-bottom:none}
+  .fl .who{font-weight:700;color:var(--navy)}
+  table.comb td.co{background:#F2F6FA;color:var(--navy);font-weight:800;font-size:13px;white-space:normal}
+  table.comb tr.subt td{background:#FAFBFC;font-weight:700;color:var(--soft)}
+  table.comb tr.grand td{background:var(--navy);color:#fff;font-weight:800}
+  table.comb td.miss{color:#9a2f1e;font-style:italic}
+  .nt{cursor:help;border-bottom:1px dotted var(--soft)}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+  .kpi{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;box-shadow:var(--shadow)}
+  .kpi .k{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--soft)}
+  .kpi .v{font-size:22px;font-weight:800;color:var(--navy);line-height:1.2;font-variant-numeric:tabular-nums}
+  .kpi .s{font-size:12px;color:var(--soft)}
+  .look{padding:10px 12px;border:1px solid var(--line);border-radius:10px;font:inherit;font-size:14px;width:100%;max-width:360px}
+  .log{font-size:12.5px;color:var(--soft);display:flex;flex-direction:column;gap:3px}
+  @media(max-width:640px){
+    .wrap{padding:16px 14px 90px}
+    .dm{padding:0} .dmc{border-radius:0;min-height:100%}
+    .perhead .when{font-size:17px}
+  }
+</style>
+<script src="user.js?v=hc96"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
+  <script src="store.js?v=hc96"></script>
+  <script src="gate.js?v=hc96"></script>
+  <script src="_staff.js?v=hc96"></script>
+</head>
+<body>
+<div class="ribbon">MOCK-UP for Heather — made-up people, amounts and rates. Try it as an office manager first, then as Heather.</div>
+<header class="hdr">
+  <div class="hdr-in">
+    <span class="mark" aria-label="Home-Brace"><img src="../assets/logo-mark.png?v=2" alt="" width="34" height="34"></span>
+    <span class="brand">Home-<i>Brace</i><small>Payroll</small></span>
+    <span class="v1">V1 preview</span>
+  </div>
+</header>
+<nav class="v1nav"><div class="v1nav-in" id="nav"></div></nav>
+
+<div class="wrap">
+  <div class="viewas">
+    <span class="lab">👤 Try it as</span>
+    <select id="persona" aria-label="Try it as"></select>
+    <button class="btn ghost sm demo" data-act="reset" title="Put the sample sheets back the way they started">↺ Reset sample data</button>
+  </div>
+  <div class="page-head">
+    <h1>Payroll</h1>
+    <p id="lede"></p>
+  </div>
+  <div id="tabs" class="tabs" role="tablist"></div>
+  <div id="view"></div>
+</div>
+
+<div class="dm" id="dlg" role="dialog" aria-modal="true"><div class="dmc" id="dlgcard"></div></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+  'use strict';
+  const el=id=>document.getElementById(id);
+  const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const num=v=>{ const n=parseFloat(v); return isFinite(n)?n:0; };
+  const r2=n=>Math.round(n*100)/100;
+  const money=n=>n ? '$'+r2(n).toLocaleString('en-US',{minimumFractionDigits:(r2(n)%1?2:0), maximumFractionDigits:2}) : '—';
+  const hrs=n=>n ? r2(n).toFixed(2) : '—';
+  const pad=n=>String(n).padStart(2,'0');
+
+  /* ---------- sample settings (Heather would set the real ones) ---------- */
+  const RATE={onCall:50, holiday:100, mile:0.70};
+  const HOLIDAYS=[{d:'2026-01-01',n:'New Year’s Day'},{d:'2026-05-25',n:'Memorial Day'},{d:'2026-07-03',n:'Independence Day'},
+                  {d:'2026-09-07',n:'Labor Day'},{d:'2026-11-26',n:'Thanksgiving'},{d:'2026-12-25',n:'Christmas'}];
+  /* In the order of Heather's main sheet, one company each */
+  const OFFICES=[
+    {k:'carlsbad',  n:'Carlsbad',   co:'Farnsworth Orthodontics, PLLC (Carlsbad)'},
+    {k:'hobbs',     n:'Hobbs',      co:'Farnsworth Orthodontics Hobbs, PLLC'},
+    {k:'lubbock',   n:'Lubbock',    co:'Farnsworth Family Orthodontics, PLLC (Lubbock)'},
+    {k:'clovis',    n:'Clovis',     co:'David Farnsworth Orthodontics, P.C. (Clovis)'},
+    {k:'sanangelo', n:'San Angelo', co:'Farnsworth Orthodontics San Angelo, PLLC'},
+    {k:'mansfield', n:'Mansfield',  co:'Sunflower Orthodontics PLLC'},
+    {k:'crucesffo', n:'Cruces FFO', co:'Farnsworth Legacy – Farnsworth Orthodontics Las Cruces LLC'},
+    {k:'cruceslco', n:'Cruces LCO', co:'Las Cruces Orthodontics – Farnsworth Orthodontics LLC'}
+  ];
+  const OFF=Object.fromEntries(OFFICES.map(o=>[o.k,o]));
+  /* Made-up people: [offices, name, pay-period bonus, start date]. Harper is new (holiday pay comes
+     after the 90-day review); Elena works at both Las Cruces offices. */
+  const PEOPLE=[
+    [['carlsbad'],'Sofia Navarro',150,'2022-03-14'], [['carlsbad'],'Avery Brooks',125,'2023-06-05'], [['carlsbad'],'Jordan Ellis',125,'2021-09-20'],
+    [['carlsbad'],'Marisol Rios',100,'2024-01-08'], [['carlsbad'],'Harper Quinn',75,'2026-08-31'], [['carlsbad'],'Daniela Ortiz',150,'2020-02-03'],
+    [['hobbs'],'Gabriela Cruz',150,'2019-05-13'], [['hobbs'],'Riley Chen',125,'2022-08-01'], [['hobbs'],'Paola Mendez',75,'2025-02-10'],
+    [['hobbs'],'Morgan Hale',150,'2021-11-15'], [['hobbs'],'Lucia Ramos',100,'2023-03-27'],
+    [['lubbock'],'Casey Webb',150,'2020-07-06'], [['lubbock'],'Natalia Delgado',150,'2021-01-11'], [['lubbock'],'Reese Lowe',125,'2023-09-05'],
+    [['lubbock'],'Adriana Silva',50,'2025-06-16'], [['lubbock'],'Peyton Shaw',150,'2019-10-21'],
+    [['clovis'],'Valeria Castillo',150,'2020-04-20'], [['clovis'],'Jamie Foster',75,'2024-05-06'], [['clovis'],'Ximena Lara',75,'2025-01-13'],
+    [['clovis'],'Kendall Price',125,'2022-02-28'], [['clovis'],'Rowan Pierce',75,'2024-11-04'],
+    [['sanangelo'],'Skyler Bennett',200,'2018-06-04'], [['sanangelo'],'Camila Rojas',150,'2021-03-15'], [['sanangelo'],'Drew Mercer',50,'2025-08-18'],
+    [['sanangelo'],'Bailey Frost',150,'2020-09-14'], [['sanangelo'],'Noelia Vance',75,'2024-02-12'],
+    [['mansfield'],'Tatum Reed',100,'2022-05-02'], [['mansfield'],'Wren Hayes',100,'2023-01-30'], [['mansfield'],'Lena Morales',100,'2021-08-09'],
+    [['mansfield'],'Parker Sloan',100,'2024-04-15'], [['mansfield'],'Remy Ward',75,'2025-03-03'],
+    [['crucesffo','cruceslco'],'Elena Vega',100,'2022-10-03'],
+    [['crucesffo'],'Shea Cole',100,'2021-06-21'], [['crucesffo'],'Blake Rowe',75,'2024-07-08'], [['crucesffo'],'Maya Duarte',100,'2023-12-04'],
+    [['cruceslco'],'Logan Pratt',100,'2022-01-24'], [['cruceslco'],'Ines Salazar',75,'2024-09-16'], [['cruceslco'],'Hayden Moss',100,'2020-11-30'],
+    [['cruceslco'],'Carmen Ibarra',100,'2023-05-22']
+  ].map((x,i)=>({id:'p'+(i+1), offices:x[0], n:x[1], bonus:x[2], start:x[3]}));
+  const PER=Object.fromEntries(PEOPLE.map(p=>[p.id,p]));
+  const peopleAt=o=>PEOPLE.filter(p=>p.offices.indexOf(o)>=0);
+
+  /* ---------- pay periods: every other week, Monday to Sunday, paid the Friday after.
+     Anchored on Heather's own sheet: pay period #20 was paid Sept 25 (Labor Day fell in it). ---------- */
+  const ANCHOR={n:20, pay:'2026-09-25'}, CUR=22, TODAY='2026-10-21', NOW='2026-10-21T09:41';
+  const addDays=(iso,d)=>{ const t=new Date(iso+'T00:00:00Z'); t.setUTCDate(t.getUTCDate()+d); return t.toISOString().slice(0,10); };
+  const fmt=(iso,o)=>new Date(iso.slice(0,10)+'T12:00:00Z').toLocaleDateString('en-US',Object.assign({month:'short',day:'numeric',timeZone:'UTC'},o||{}));
+  const fmtT=iso=>{ const h=+iso.slice(11,13), m=iso.slice(14,16); return fmt(iso,{weekday:'short'})+', '+((h%12)||12)+':'+m+(h<12?' am':' pm'); };
+  function P(n){
+    const pay=addDays(ANCHOR.pay,(n-ANCHOR.n)*14), end=addDays(pay,-5), start=addDays(end,-13);
+    return {n, start, w1end:addDays(start,6), w2start:addDays(start,7), end, pay, due:addDays(end,3),
+            hol:HOLIDAYS.find(h=>h.d>=start && h.d<=end)||null};
+  }
+  const span=(a,b)=>fmt(a)+' – '+fmt(b);
+  const eligibleOn=p=>addDays(p.start,90);
+  const eligible=(p,d)=>eligibleOn(p)<=d;
+
+  /* ---------- sample sheets: the same numbers every time ---------- */
+  function seed(s){ let h=2166136261; for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619); } return (h>>>0)/4294967296; }
+  function sample(p,o,n){
+    const r=k=>seed(p.id+'|'+o+'|'+n+'|'+k), two=p.offices.length>1, share=two?(o===p.offices[0]?.55:.45):1;
+    const x={w1:r2((32+r('a')*7.5)*share), w2:r2((31+r('b')*8)*share), pto:0, sick:0, oncall:0, com:0, comTo:'', exc:0, mkt:0, oth:0,
+             mg:'N', bonus:'full', pct:0, ot:false, notes:''};
+    const say=t=>{ x.notes=x.notes?x.notes+' '+t:t; };
+    if(!two && r('ot')>.9){ x.w1=r2(40+r('x')*2.4); x.ot=true; say('Overtime approved by Heather for the community event.'); }
+    if(r('pto')>.82) x.pto=r('p2')>.5?8:4;
+    if(r('sick')>.94) x.sick=8;
+    if(r('oc')>.78) x.oncall=r('o2')>.85?2:1;
+    if(r('cm')>.86){ const others=OFFICES.filter(q=>q.k!==o); x.com=r('c2')>.7?2:1; x.comTo=others[Math.floor(r('c3')*others.length)].n; }
+    if(r('mk')>.87) x.mkt=Math.round(20+r('m2')*90);
+    if(r('mg')>.93){ x.mg='Y'; x.bonus='partial'; x.pct=10; say('Out 3 hours for a school event. Take 10% off the bonus.'); }
+    if(r('ex')>.975){ x.exc=75; say('The doctor asked her to help train at another office and to add $75.'); }
+    if(r('oth')>.96){ x.oth=30; say('30 other miles: picked the doctor up from the airport.'); }
+    return x;
+  }
+  const blank=()=>({w1:'',w2:'',pto:0,sick:0,oncall:0,com:0,comTo:'',exc:0,mkt:0,oth:0,mg:'N',bonus:'full',pct:0,ot:false,notes:''});
+  /* This pay period at Carlsbad: the demo's own sheet, mostly filled in, with a few things to catch */
+  const DEMO={
+    'Sofia Navarro':{w1:38.5, w2:36.25, mg:'Y', bonus:'partial', pct:10, notes:'Out 3 hours for a funeral. Take 10% off the bonus.'},
+    'Avery Brooks': {w1:41.33, w2:33.07},
+    'Jordan Ellis': {w1:37.75, w2:38.1, oth:30, notes:'30 other miles: picked the doctor up from the airport in the next town over.'},
+    'Marisol Rios': {w1:34.2, w2:35.6, oncall:1, pto:4},
+    'Harper Quinn': {w1:32, w2:30.5},
+    'Daniela Ortiz':{w1:39.5, w2:38, com:1, comTo:'Hobbs', mkt:64}
+  };
+  const SENTAT={hobbs:'2026-10-19T16:41', lubbock:'2026-10-20T09:05', clovis:'2026-10-20T11:30', sanangelo:'2026-10-20T15:12',
+                crucesffo:'2026-10-21T08:47', cruceslco:'2026-10-21T09:15'};
+  const BASE={};
+  function base(n,o){
+    const key=n+'|'+o; if(BASE[key]) return BASE[key];
+    const per=P(n), ppl=peopleAt(o), rows={};
+    let status='none', at=null;
+    if(n<CUR){ status='sent'; at=addDays(per.end,1+Math.floor(seed(key+'d')*2))+'T'+pad(8+Math.floor(seed(key+'h')*9))+':'+pad(Math.floor(seed(key+'m')*60)); }
+    else if(n===CUR){ if(o==='carlsbad') status='draft'; else if(SENTAT[o]){ status='sent'; at=SENTAT[o]; } }
+    if(status!=='none') ppl.forEach(p=>{ rows[p.id]=sample(p,o,n); });
+    if(n===CUR && o==='carlsbad') ppl.forEach(p=>{ rows[p.id]=Object.assign(blank(), DEMO[p.n]||{}); });
+    const s={status, at, rows, log:status==='sent'?[{at, t:'Sent by the '+OFF[o].n+' office manager'}]:[]};
+    if(n===CUR-1 && o==='hobbs'){            // what an edit after sending looks like
+      const lu=ppl.find(p=>p.n==='Lucia Ramos'), was=s.rows[lu.id].pto;
+      s.rows[lu.id].pto=8; s.log.push({at:addDays(per.end,2)+'T14:05', t:'Heather changed Lucia Ramos’s PTO from '+(was||0)+' to 8 hours (she called in on Friday)'});
+    }
+    return BASE[key]=s;
+  }
+
+  /* ---------- what this browser remembers (so the mock-up keeps your clicks) ---------- */
+  const KEY='ph_pay_demo';
+  let S=null; try{ S=JSON.parse(localStorage.getItem(KEY)); }catch(_){ S=null; }
+  if(!S || S.v!==1) S={v:1, subs:{}, entered:{}};
+  const save=()=>{ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(_){} };
+  const get=(n,o)=>(S.subs[n] && S.subs[n][o]) || base(n,o);
+  function mine(n,o){ S.subs[n]=S.subs[n]||{}; if(!S.subs[n][o]) S.subs[n][o]=JSON.parse(JSON.stringify(base(n,o))); return S.subs[n][o]; }
+  const enteredOf=n=>S.entered[n]!==undefined ? S.entered[n] : (n<CUR ? {at:addDays(P(n).pay,-2)+'T10:30', by:'Heather'} : null);
+  function nowISO(){ const d=new Date(); return TODAY+'T'+pad(d.getHours())+':'+pad(d.getMinutes()); }
+
+  /* ---------- the sums: one rule for every row ---------- */
+  function calc(p,x,per){
+    const hours=num(x.w1)+num(x.w2);
+    const factor=x.bonus==='full'?1:x.bonus==='partial'?Math.max(0,1-num(x.pct)/100):0;
+    const ppb=r2(p.bonus*factor), hol=(per.hol && eligible(p,per.hol.d))?RATE.holiday:0;
+    const oc=num(x.oncall)*RATE.onCall, extra=num(x.exc), reimb=r2((num(x.mkt)+num(x.oth))*RATE.mile);
+    return {hours, ppb, pto:num(x.pto), sick:num(x.sick), hol, oc, extra, reimb, total:r2(ppb+hol+oc+extra)};
+  }
+  function issues(n,o){
+    const s=get(n,o), out=[];
+    peopleAt(o).forEach(p=>{
+      const x=s.rows[p.id]; if(!x) return;
+      if(!(num(x.w1)+num(x.w2)) && !x.notes) out.push({p, t:'<b>'+esc(p.n)+'</b> has no hours. On leave or not working this period? Add a note.'});
+      [['w1',1],['w2',2]].forEach(w=>{ const h=num(x[w[0]]);
+        if(h>40 && !x.ot) out.push({p, t:'<b>'+esc(p.n)+'</b>: '+r2(h-40)+' hours of overtime in week '+w[1]+'. Overtime needs Heather’s OK first — tick “approved”, or fix the hours.'}); });
+      if(x.mg==='Y' && x.bonus==='full' && !x.notes) out.push({p, t:'<b>'+esc(p.n)+'</b> missed a green day but keeps the full bonus. That’s allowed for time off asked 3+ months ahead — say so in Notes.'});
+      if(x.bonus==='partial' && !num(x.pct)) out.push({p, t:'<b>'+esc(p.n)+'</b>: partial bonus — how much comes off?'});
+      if(x.bonus==='partial' && !x.notes) out.push({p, t:'<b>'+esc(p.n)+'</b>: partial bonus — add a note saying why.'});
+      if(num(x.oth)>0 && !x.notes) out.push({p, t:'<b>'+esc(p.n)+'</b>: other miles — say what they were for in Notes.'});
+      if(num(x.exc)>0 && !x.notes) out.push({p, t:'<b>'+esc(p.n)+'</b>: exception commuter pay — note which doctor asked for it.'});
+      if(num(x.com)>0 && !x.comTo) out.push({p, t:'<b>'+esc(p.n)+'</b>: commutes — which office did they go to?'});
+    });
+    return out;
+  }
+
+  /* ---------- who is looking ---------- */
+  const ROLES={
+    om:  {label:'Carlsbad office manager', kind:'om', office:'carlsbad'},
+    om2: {label:'Hobbs office manager', kind:'om', office:'hobbs'},
+    coo: {label:'Heather — COO, all offices', kind:'coo'}
+  };
+  let as='om'; try{ const a=localStorage.getItem('ph_pay_as'); if(ROLES[a]) as=a; }catch(_){}
+  const R=()=>ROLES[as];
+  let tab='sheet', per=CUR, look='';
+
+  function statusPill(n,o){
+    const s=get(n,o), e=enteredOf(n), pr=P(n);
+    if(e) return '<span class="pill p-lock">🔒 Entered in payroll</span>';
+    if(s.status==='sent') return '<span class="pill p-done">✓ Sent '+esc(fmtT(s.at))+'</span>';
+    if(TODAY>pr.due) return '<span class="pill p-late">Late — due '+esc(fmt(pr.due,{weekday:'short'}))+'</span>';
+    if(s.status==='draft') return '<span class="pill p-go">Started — not sent yet</span>';
+    return '<span class="pill p-new">Not started</span>';
+  }
+  const dueText=pr=>pr.due===TODAY ? 'due today' : (TODAY>pr.due ? 'was due '+fmt(pr.due,{weekday:'short'}) : 'due '+fmt(pr.due,{weekday:'short'}));
+
+  function render(){
+    const k=R().kind;
+    el('lede').innerHTML = k==='om'
+      ? 'Your office’s payroll sheet, every other week. The same columns as the Excel form — totals add themselves, and anything Heather would ask about is caught before you send it.'
+      : 'Every office’s sheet in one place: who has sent it, one combined sheet like your main Excel, the things worth a second look, and every past pay period kept.';
+    const T = k==='om' ? [['sheet','Payroll sheet'],['past','Past sheets']] : [['sheet','This pay period'],['past','History'],['settings','Settings']];
+    if(!T.some(t=>t[0]===tab)) tab='sheet';
+    el('tabs').innerHTML=T.map(t=>'<button class="tab'+(t[0]===tab?' on':'')+'" data-act="tab" data-v="'+t[0]+'">'+t[1]+'</button>').join('');
+    el('view').innerHTML = k==='om' ? (tab==='past' ? viewOmPast() : viewOmSheet()) : (tab==='past' ? viewHistory() : tab==='settings' ? viewSettings() : viewBoard());
+  }
+
+  /* ---------- the office manager's sheet ---------- */
+  function sheetTable(n,o,edit){
+    const pr=P(n), s=get(n,o), ppl=peopleAt(o);
+    const other=OFFICES.filter(q=>q.k!==o);
+    const cell=(p,f,w,val)=>edit
+      ? '<input class="in" style="width:'+w+'px" type="number" step="0.01" min="0" inputmode="decimal" data-p="'+p.id+'" data-f="'+f+'" value="'+(val===''||val==null||(val===0&&f!=='w1'&&f!=='w2')?'':esc(val))+'">'
+      : '<span class="ro'+(num(val)?'':' dim')+'">'+(num(val)?esc(val):'—')+'</span>';
+    const sel=(p,f,val,opts,w)=>edit
+      ? '<select class="in" style="width:'+w+'px" data-p="'+p.id+'" data-f="'+f+'">'+opts.map(x=>'<option value="'+x[0]+'"'+(x[0]===val?' selected':'')+'>'+x[1]+'</option>').join('')+'</select>'
+      : '<span class="ro">'+esc((opts.find(x=>x[0]===val)||['',val||'—'])[1])+'</span>';
+    const hol=!!pr.hol;
+    let h='<div class="tblwrap"><table class="t sheet"><thead><tr>'+
+      '<th class="grp nm"></th><th class="grp" colspan="3">Hours</th><th class="grp" colspan="'+(hol?3:2)+'">Time off</th><th class="grp" colspan="6">On call, travel &amp; extras</th><th class="grp" colspan="2">Pay-period bonus</th><th class="grp">Notes</th></tr><tr>'+
+      '<th class="nm">Employee</th>'+
+      '<th class="n gl" title="Hours worked, week 1">Wk 1 · '+esc(span(pr.start,pr.w1end))+'</th><th class="n" title="Hours worked, week 2">Wk 2 · '+esc(span(pr.w2start,pr.end))+'</th><th class="n">Total</th>'+
+      '<th class="n gl" title="Vacation / PTO hours">PTO hrs</th><th class="n" title="Sick hours - its own column now, instead of typing it into PTO">Sick hrs</th>'+
+      (hol?'<th class="gl" title="Home-Brace knows each person’s 90-day review date, so nobody fills this in">'+esc(pr.hol.n)+'</th>':'')+
+      '<th class="n gl" title="Count 1 for each weekend they were on call this pay period">On call</th>'+
+      '<th class="n" title="Round trips to another office (a round trip = 1). Don’t add commuter miles or road time - commuter pay is worked out from the federal rate.">Commutes</th><th title="Which office they commuted to">To</th>'+
+      '<th class="n" title="Rarely used: only when a doctor asks for an amount. Say which doctor in Notes.">Exception commuter $</th>'+
+      '<th class="n" title="Miles driven for marketing">Marketing mi</th><th class="n" title="Special events only, not office-to-office or marketing. Say what for in Notes.">Other mi</th>'+
+      '<th class="gl" title="Missed a doctor (green) day? Then no bonus - unless one of your exceptions applies">Missed green</th><th>Bonus</th>'+
+      '<th class="gl">Notes</th></tr></thead><tbody>';
+    ppl.forEach(p=>{
+      const x=s.rows[p.id]||blank(), w1=num(x.w1), w2=num(x.w2), over=w1>40||w2>40;
+      const ot = over ? (edit
+          ? '<label class="otb '+(x.ot?'ok':'need')+'"><input type="checkbox" data-p="'+p.id+'" data-f="ot"'+(x.ot?' checked':'')+'> OT approved</label>'
+          : '<span class="otb '+(x.ot?'ok':'need')+'">'+(x.ot?'OT approved':'OT not approved')+'</span>') : '';
+      h+='<tr data-row="'+p.id+'"><td class="nm">'+esc(p.n)+(p.offices.length>1?'<div class="small muted" style="font-weight:600">also '+esc(p.offices.filter(q=>q!==o).map(q=>OFF[q].n).join(', '))+'</div>':'')+'</td>'+
+        '<td class="n gl">'+cell(p,'w1',82,x.w1)+'</td><td class="n">'+cell(p,'w2',82,x.w2)+'</td>'+
+        '<td class="n" id="tot-'+p.id+'"><span class="tot">'+hrs(w1+w2)+'</span>'+ot+'</td>'+
+        '<td class="n gl">'+cell(p,'pto',66,x.pto)+'</td><td class="n">'+cell(p,'sick',66,x.sick)+'</td>'+
+        (hol?'<td class="gl small">'+(eligible(p,pr.hol.d)?'<span class="pill p-done">Paid</span>':'<span class="pill p-new">Not yet · 90 days on '+esc(fmt(eligibleOn(p)))+'</span>')+'</td>':'')+
+        '<td class="n gl">'+cell(p,'oncall',58,x.oncall)+'</td><td class="n">'+cell(p,'com',58,x.com)+'</td>'+
+        '<td>'+sel(p,'comTo',x.comTo,[['','—']].concat(other.map(q=>[q.n,q.n])),112)+'</td>'+
+        '<td class="n">'+cell(p,'exc',76,x.exc)+'</td><td class="n">'+cell(p,'mkt',66,x.mkt)+'</td><td class="n">'+cell(p,'oth',66,x.oth)+'</td>'+
+        '<td class="gl">'+sel(p,'mg',x.mg,[['N','No'],['Y','Yes']],64)+'</td>'+
+        '<td>'+sel(p,'bonus',x.bonus,[['full','Full'],['partial','Partial'],['none','None']],86)+
+          (x.bonus==='partial' ? (edit?' <input class="in" style="width:52px" type="number" min="0" max="100" step="5" data-p="'+p.id+'" data-f="pct" value="'+esc(x.pct||'')+'"> % off':' <span class="ro">'+esc(x.pct)+'% off</span>') : '')+'</td>'+
+        '<td class="gl">'+(edit?'<input class="in" style="width:290px" type="text" data-p="'+p.id+'" data-f="notes" value="'+esc(x.notes)+'" placeholder="What Heather should know">':'<span class="ro" style="white-space:normal;display:inline-block;min-width:240px">'+(x.notes?esc(x.notes):'—')+'</span>')+'</td></tr>';
+    });
+    return h+'</tbody></table></div>';
+  }
+  function checksHTML(n,o){
+    const list=issues(n,o);
+    if(!list.length) return '<div class="note good">✓ <b>Everything looks right.</b> Totals are added up and nothing is missing.</div>';
+    return '<div class="checks"><div class="small" style="font-weight:700;color:#7a4b00">'+list.length+' thing'+(list.length>1?'s':'')+' to check before sending</div>'+
+      list.map(i=>'<div class="check"><span>⚠️</span><span>'+i.t+'</span></div>').join('')+'</div>';
+  }
+  function periodPicker(id){
+    let h='<select id="'+id+'" aria-label="Pay period">';
+    for(let n=CUR;n>=CUR-8;n--){ const pr=P(n); h+='<option value="'+n+'"'+(n===per?' selected':'')+'>#'+n+' · '+esc(span(pr.start,pr.end))+(n===CUR?' (this one)':'')+'</option>'; }
+    return h+'</select>';
+  }
+  function viewOmSheet(){
+    const o=R().office, n=per, pr=P(n), s=get(n,o), e=enteredOf(n), edit=!e && n===CUR;
+    let h='<div class="stack"><div class="card"><div class="perhead"><div class="grow"><div class="small muted" style="font-weight:700;text-transform:uppercase;letter-spacing:.05em">'+esc(OFF[o].n)+' · pay period #'+n+'</div>'+
+      '<div class="when">'+esc(fmt(pr.start,{weekday:'short'}))+' – '+esc(fmt(pr.end,{weekday:'short'}))+'</div>'+
+      '<div class="small muted">Paid '+esc(fmt(pr.pay,{weekday:'long'}))+' · sheet '+dueText(pr)+'</div></div>'+
+      '<div class="row">'+statusPill(n,o)+periodPicker('perpick')+'</div></div></div>';
+    if(n===CUR && !e){
+      h+='<details class="rules"'+(s.status==='sent'?'':' open')+'><summary>Heather’s rules, in short</summary><ul>'+
+        '<li><b>Overtime</b> only when Heather approved it first. A week over 40 hours asks you to confirm.</li>'+
+        '<li><b>Holiday pay</b> starts after the 90-day review. Home-Brace knows the dates, so there’s nothing to fill in.</li>'+
+        '<li><b>On call:</b> 1 for each weekend on call. <b>Commutes:</b> round trips (1 each) and the office — no commuter miles or road time.</li>'+
+        '<li><b>Exception commuter pay</b> only when a doctor asks. <b>Other miles</b> are for special events — say what for in Notes.</li>'+
+        '<li><b>Missed a green day = no bonus.</b> Your exceptions: time off asked 3+ months ahead (full bonus is OK), or out a few hours for a funeral, school or appointment (take part of it off).</li>'+
+        '</ul></details>';
+    }
+    if(s.status==='none' && !edit) h+='<div class="note info">Nothing was sent for this pay period.</div>';
+    else h+=sheetTable(n,o,edit);
+    if(edit){
+      h+='<div id="checks">'+checksHTML(n,o)+'</div>';
+      h+='<div class="sendbar"><span class="small muted">'+(s.status==='sent'?'Already sent — you can still change it until Heather enters payroll.':'Saved as you type. Heather sees it once you send it.')+'</span>'+
+        '<button class="btn" data-act="send">'+(s.status==='sent'?'Send the changes to Heather':'Send to Heather')+'</button></div>';
+    } else if(s.log && s.log.length){
+      h+='<div class="log">'+s.log.map(l=>'<div>• '+esc(fmtT(l.at))+' — '+esc(l.t)+'</div>').join('')+(e?'<div>• '+esc(fmtT(e.at))+' — Entered in payroll by '+esc(e.by)+'</div>':'')+'</div>';
+    }
+    return h+'</div>';
+  }
+  function viewOmPast(){
+    const o=R().office;
+    let h='<div class="card"><h2>'+esc(OFF[o].n)+' — every sheet you’ve sent</h2><p class="sub">Kept for good. Open any one to see exactly what was sent, and any change made after.</p><div class="tblwrap"><table class="t"><thead><tr><th>Pay period</th><th>Dates</th><th>Paid</th><th>Status</th><th class="n">Hours</th><th></th></tr></thead><tbody>';
+    for(let n=CUR;n>=CUR-8;n--){
+      const pr=P(n), s=get(n,o), tot=Object.keys(s.rows).reduce((a,id)=>a+num(s.rows[id].w1)+num(s.rows[id].w2),0);
+      h+='<tr><td><b>#'+n+'</b></td><td>'+esc(span(pr.start,pr.end))+'</td><td>'+esc(fmt(pr.pay))+'</td><td>'+statusPill(n,o)+'</td><td class="n">'+hrs(tot)+'</td><td class="n"><button class="btn ghost sm" data-act="omopen" data-v="'+n+'">Open</button></td></tr>';
+    }
+    return h+'</tbody></table></div></div>';
+  }
+
+  /* ---------- Heather: this pay period ---------- */
+  function flags(n){
+    const pr=P(n), F={ot:[], two:[], green:[], pay:[], miles:[]};
+    OFFICES.forEach(o=>{ const s=get(n,o.k); if(s.status!=='sent') return;
+      peopleAt(o.k).forEach(p=>{ const x=s.rows[p.id]; if(!x) return;
+        [['w1',1],['w2',2]].forEach(w=>{ const hh=num(x[w[0]]); if(hh>40) F.ot.push({p,o,t:r2(hh-40)+' h over in week '+w[1]+(x.ot?' — marked approved':' — <b>not</b> marked approved'), bad:!x.ot}); });
+        if(x.mg==='Y'){ const c=calc(p,x,pr); F.green.push({p,o,t:'Missed a green day → '+(x.bonus==='none'?'no bonus':x.bonus==='partial'?num(x.pct)+'% off ('+money(c.ppb)+' of '+money(p.bonus)+')':'kept the full bonus')+(x.notes?' · “'+esc(x.notes)+'”':'')}); }
+        if(num(x.exc)>0) F.pay.push({p,o,t:'Exception commuter pay '+money(num(x.exc))+(x.notes?' · “'+esc(x.notes)+'”':'')});
+        if(num(x.mkt)+num(x.oth)>0) F.miles.push({p,o,t:(num(x.mkt)?num(x.mkt)+' marketing mi':'')+(num(x.mkt)&&num(x.oth)?' + ':'')+(num(x.oth)?num(x.oth)+' other mi':'')+' → '+money(r2((num(x.mkt)+num(x.oth))*RATE.mile))+' reimbursement'+(num(x.oth)&&x.notes?' · “'+esc(x.notes)+'”':'')});
+      }); });
+    PEOPLE.filter(p=>p.offices.length>1).forEach(p=>{
+      const parts=p.offices.map(k=>{ const s=get(n,k), x=s.status==='sent'&&s.rows[p.id]; return x?{k, w1:num(x.w1), w2:num(x.w2)}:null; }).filter(Boolean);
+      if(parts.length>1){ const w1=parts.reduce((a,q)=>a+q.w1,0), w2=parts.reduce((a,q)=>a+q.w2,0);
+        F.two.push({p, o:OFF[parts[0].k], t:'Worked at '+parts.map(q=>OFF[q.k].n+' ('+hrs(q.w1+q.w2)+' h)').join(' and ')+' → <b>'+hrs(w1+w2)+' h combined</b>'+(w1>40||w2>40?' — over 40 in a week once combined':' — no overtime once combined'), bad:w1>40||w2>40}); }
+    });
+    return F;
+  }
+  function combined(n){
+    const pr=P(n); let grand={hours:0,total:0,reimb:0};
+    let h='<div class="tblwrap"><table class="t comb"><thead><tr><th>Employee</th><th class="n">Hours</th><th class="n">PP bonus</th><th class="n">PTO</th><th class="n">Sick</th><th class="n">Holiday</th><th class="n">On call</th><th class="n">Extra</th><th class="n">Total</th><th class="n" title="Mileage reimbursement - kept out of Total, like most rows of your sheet">Reimburse</th><th>Notes</th></tr></thead><tbody>';
+    OFFICES.forEach(o=>{
+      const s=get(n,o.k);
+      h+='<tr><td class="co" colspan="11">'+esc(o.co)+' <span class="muted" style="font-weight:600">· '+esc(o.n)+'</span></td></tr>';
+      if(s.status!=='sent'){ h+='<tr><td class="miss" colspan="11">Not sent yet — '+esc(o.n)+'’s sheet will appear here when the office manager sends it.</td></tr>'; return; }
+      let sub={hours:0,total:0,reimb:0};
+      peopleAt(o.k).forEach(p=>{ const x=s.rows[p.id]; if(!x) return; const c=calc(p,x,pr);
+        sub.hours+=c.hours; sub.total+=c.total; sub.reimb+=c.reimb;
+        h+='<tr><td><b>'+esc(p.n)+'</b>'+(p.offices.length>1?' <span class="pill p-go" title="Combine hours across offices">2 offices</span>':'')+'</td><td class="n">'+hrs(c.hours)+'</td><td class="n">'+money(c.ppb)+'</td><td class="n">'+hrs(c.pto)+'</td><td class="n">'+hrs(c.sick)+'</td><td class="n">'+money(c.hol)+'</td><td class="n">'+money(c.oc)+'</td><td class="n">'+money(c.extra)+'</td><td class="n"><b>'+money(c.total)+'</b></td><td class="n">'+money(c.reimb)+'</td>'+
+          '<td>'+(x.notes?'<span class="nt" title="'+esc(x.notes)+'">📝 note</span>':'')+'</td></tr>'; });
+      grand.hours+=sub.hours; grand.total+=sub.total; grand.reimb+=sub.reimb;
+      h+='<tr class="subt"><td>'+esc(o.n)+' total</td><td class="n">'+hrs(sub.hours)+'</td><td colspan="6"></td><td class="n">'+money(sub.total)+'</td><td class="n">'+money(sub.reimb)+'</td><td></td></tr>';
+    });
+    h+='<tr class="grand"><td>All offices</td><td class="n">'+hrs(grand.hours)+'</td><td colspan="6"></td><td class="n">'+money(grand.total)+'</td><td class="n">'+money(grand.reimb)+'</td><td></td></tr>';
+    return h+'</tbody></table></div><p class="small muted" style="margin:8px 2px 0">Total = PP bonus + holiday + on call ('+money(RATE.onCall)+' a weekend) + extra. Mileage is paid at '+money(RATE.mile)+' a mile and kept out of Total — sample rates you’d set in Settings.</p>';
+  }
+  function viewBoard(){
+    const n=per, pr=P(n), e=enteredOf(n), sent=OFFICES.filter(o=>get(n,o.k).status==='sent').length, F=flags(n);
+    let h='<div class="stack"><div class="card"><div class="perhead"><div class="grow"><div class="small muted" style="font-weight:700;text-transform:uppercase;letter-spacing:.05em">Pay period #'+n+'</div>'+
+      '<div class="when">'+esc(fmt(pr.start,{weekday:'short'}))+' – '+esc(fmt(pr.end,{weekday:'short'}))+'</div>'+
+      '<div class="small muted">Paid '+esc(fmt(pr.pay,{weekday:'long'}))+' · office sheets '+dueText(pr)+(pr.hol?' · includes '+esc(pr.hol.n):'')+'</div></div>'+
+      '<div class="row">'+(e?'<span class="pill p-lock">🔒 Entered '+esc(fmtT(e.at))+'</span>':'<span class="pill '+(sent===OFFICES.length?'p-done':'p-go')+'">'+sent+' of '+OFFICES.length+' offices sent</span>')+periodPicker('perpick')+'</div></div>'+
+      '<div class="offs" style="margin-top:14px">'+OFFICES.map(o=>{ const s=get(n,o.k);
+        return '<div class="off"><div class="row"><span class="on grow">'+esc(o.n)+'</span>'+statusPill(n,o.k)+'</div><div class="co">'+esc(o.co)+'</div><div class="row">'+
+          (s.status==='sent'?'<button class="btn ghost sm" data-act="view" data-v="'+o.k+'">See what was sent</button>':(!e?'<button class="btn ghost sm" data-act="remind" data-v="'+o.k+'">Send a reminder</button>':''))+'</div></div>'; }).join('')+'</div></div>';
+    const groups=[['ot','⏱ Overtime'],['two','🏢 Working two offices — hours combined'],['green','🟢 Missed green days'],['pay','💵 Exception commuter pay'],['miles','🚗 Mileage']];
+    const count=groups.reduce((a,g)=>a+F[g[0]].length,0);
+    h+='<div class="card"><h2>Worth a second look'+(count?' ('+count+')':'')+'</h2><p class="sub">Found for you across every sheet that’s been sent — no more hunting through notes.</p>'+
+      (count?'<div class="flags">'+groups.filter(g=>F[g[0]].length).map(g=>'<div class="fgrp"><h3>'+g[1]+'</h3>'+F[g[0]].map(f=>'<div class="fl"><span class="who">'+esc(f.p.n)+'</span><span class="muted">'+esc(f.o.n)+'</span><span class="grow">'+f.t+'</span>'+(f.bad?'<span class="pill p-late">Check</span>':'')+'</div>').join('')+'</div>').join('')+'</div>'
+        :'<div class="note good">Nothing unusual so far.</div>')+'</div>';
+    h+='<div class="card"><div class="row" style="margin-bottom:10px"><div class="grow"><h2>Combined sheet</h2><div class="small muted">Laid out like your main Excel: one company at a time, the same columns, the sums done the same way for every row.</div></div>'+
+      '<button class="btn ghost sm" data-act="csv">⬇ Download for Excel</button>'+
+      (e?'<button class="btn ghost sm" data-act="reopen">Reopen</button>':'<button class="btn sm" data-act="enter"'+(sent<OFFICES.length?' title="Some offices haven’t sent yet"':'')+'>Mark as entered in payroll</button>')+'</div>'+combined(n)+'</div>';
+    return h+'</div>';
+  }
+
+  /* ---------- Heather: history ---------- */
+  function viewHistory(){
+    let h='<div class="stack"><div class="card"><h2>Look up a person</h2><p class="sub">Hours, time off and bonus for anyone, pay period by pay period.</p>'+
+      '<input class="look" id="look" list="names" placeholder="Type a name — try Marisol" value="'+esc(look)+'"><datalist id="names">'+PEOPLE.map(p=>'<option value="'+esc(p.n)+'">').join('')+'</datalist><div id="lookres" style="margin-top:12px">'+lookHTML()+'</div></div>';
+    h+='<div class="card"><h2>Every pay period, kept</h2><p class="sub">2026 so far. Nothing is ever overwritten: open one to see each office’s sheet as it was sent, and any change made after.</p><div class="tblwrap"><table class="t"><thead><tr><th>Pay period</th><th>Dates</th><th>Paid</th><th>Offices</th><th>Status</th><th class="n">Hours</th><th class="n">Total</th><th></th></tr></thead><tbody>';
+    for(let n=CUR;n>=1;n--){
+      const pr=P(n), e=enteredOf(n); let hours=0,total=0,sent=0;
+      OFFICES.forEach(o=>{ const s=get(n,o.k); if(s.status!=='sent') return; sent++; peopleAt(o.k).forEach(p=>{ const x=s.rows[p.id]; if(x){ const c=calc(p,x,pr); hours+=c.hours; total+=c.total; } }); });
+      h+='<tr><td><b>#'+n+'</b></td><td>'+esc(span(pr.start,pr.end))+(pr.hol?' <span class="pill p-new">'+esc(pr.hol.n)+'</span>':'')+'</td><td>'+esc(fmt(pr.pay))+'</td><td>'+sent+' of '+OFFICES.length+'</td><td>'+(e?'<span class="pill p-lock">🔒 Entered '+esc(fmt(e.at))+'</span>':'<span class="pill p-go">In progress</span>')+'</td><td class="n">'+hrs(hours)+'</td><td class="n">'+money(total)+'</td><td class="n"><button class="btn ghost sm" data-act="open" data-v="'+n+'">Open</button></td></tr>';
+    }
+    return h+'</tbody></table></div></div></div>';
+  }
+  function lookHTML(){
+    const p=PEOPLE.find(q=>q.n.toLowerCase()===String(look).trim().toLowerCase());
+    if(!p) return '<div class="small muted">Pick a name from the list.</div>';
+    let h='<div class="tblwrap"><table class="t"><thead><tr><th>Pay period</th><th>Office</th><th class="n">Hours</th><th class="n">PTO</th><th class="n">Sick</th><th class="n">PP bonus</th><th class="n">On call</th><th>Notes</th></tr></thead><tbody>';
+    for(let n=CUR;n>=CUR-9;n--){ const pr=P(n);
+      p.offices.forEach(k=>{ const s=get(n,k), x=s.status==='sent'&&s.rows[p.id]; if(!x) return; const c=calc(p,x,pr);
+        h+='<tr><td>#'+n+' · '+esc(span(pr.start,pr.end))+'</td><td>'+esc(OFF[k].n)+'</td><td class="n">'+hrs(c.hours)+'</td><td class="n">'+hrs(c.pto)+'</td><td class="n">'+hrs(c.sick)+'</td><td class="n">'+money(c.ppb)+'</td><td class="n">'+money(c.oc)+'</td><td style="white-space:normal">'+esc(x.notes||'')+'</td></tr>'; }); }
+    return h+'</tbody></table></div>';
+  }
+
+  /* ---------- Heather: settings ---------- */
+  function viewSettings(){
+    let h='<div class="stack"><div class="note info">In the real version you change these here, and every sheet from then on follows them. In this mock-up they’re samples, read-only.</div>';
+    h+='<div class="kpis"><div class="kpi"><div class="k">On call</div><div class="v">'+money(RATE.onCall)+'</div><div class="s">a weekend</div></div><div class="kpi"><div class="k">Holiday pay</div><div class="v">'+money(RATE.holiday)+'</div><div class="s">after the 90-day review</div></div><div class="kpi"><div class="k">Mileage</div><div class="v">'+money(RATE.mile)+'</div><div class="s">a mile</div></div></div>';
+    h+='<div class="card"><h2>Paid holidays</h2><p class="sub">A holiday column shows up by itself in the pay period it falls in.</p><div class="row">'+HOLIDAYS.map(x=>'<span class="pill p-new">'+esc(fmt(x.d))+' · '+esc(x.n)+'</span>').join('')+'</div></div>';
+    h+='<div class="card"><h2>People</h2><p class="sub">Their office (or offices), their pay-period bonus and when holiday pay starts. Names come from Home-Brace, so they’re spelled the same on every sheet.</p><div class="tblwrap"><table class="t"><thead><tr><th>Name</th><th>Office</th><th class="n">PP bonus</th><th>Started</th><th>Holiday pay from</th></tr></thead><tbody>'+
+      PEOPLE.map(p=>'<tr><td><b>'+esc(p.n)+'</b></td><td>'+esc(p.offices.map(k=>OFF[k].n).join(' + '))+'</td><td class="n">'+money(p.bonus)+'</td><td>'+esc(fmt(p.start,{year:'numeric'}))+'</td><td>'+esc(fmt(eligibleOn(p),{year:'numeric'}))+(eligibleOn(p)>TODAY?' <span class="pill p-go">soon</span>':'')+'</td></tr>').join('')+'</tbody></table></div></div>';
+    return h+'</div>';
+  }
+
+  /* ---------- dialogs, download, toast ---------- */
+  function openDlg(html, wide){ el('dlgcard').className='dmc'+(wide?' wide':''); el('dlgcard').innerHTML=html; el('dlg').classList.add('open'); }
+  function closeDlg(){ el('dlg').classList.remove('open'); }
+  let tt=null; function toast(m){ const t=el('toast'); t.textContent=m; t.classList.add('on'); clearTimeout(tt); tt=setTimeout(()=>t.classList.remove('on'),2600); }
+  function csv(n){
+    const pr=P(n), q=v=>{ v=String(v==null?'':v); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
+    const lines=[['Pay period #'+n+' - '+span(pr.start,pr.end)+', paid '+fmt(pr.pay,{year:'numeric'})], []];
+    OFFICES.forEach(o=>{ const s=get(n,o.k); lines.push([o.co]); lines.push(['Employee Name','Hours','PPBonus','PTO','Sick','Team B','TC/OM','Holiday','Reimburse','On Call','Extra','Total','Notes']);
+      if(s.status!=='sent'){ lines.push(['(not sent yet)']); lines.push([]); return; }
+      peopleAt(o.k).forEach(p=>{ const x=s.rows[p.id]; if(!x) return; const c=calc(p,x,pr);
+        lines.push([p.n, r2(c.hours), c.ppb||'', c.pto||'', c.sick||'', '', '', c.hol||'', c.reimb||'', c.oc||'', c.extra||'', c.total, x.notes||'']); });
+      lines.push([]); });
+    const blob=new Blob([lines.map(l=>l.map(q).join(',')).join('\r\n')],{type:'text/csv'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='Payroll #'+n+' ('+span(pr.start,pr.end).replace(/\s/g,' ')+').csv';
+    document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },500);
+  }
+
+  /* ---------- typing in the sheet: save, re-add, re-check - without redrawing what you're typing in ---------- */
+  function onField(t, redraw){
+    const o=R().office, n=per, s=mine(n,o), pid=t.dataset.p, f=t.dataset.f, x=s.rows[pid]=s.rows[pid]||blank();
+    if(f==='ot') x.ot=t.checked;
+    else if(f==='notes'||f==='comTo'||f==='mg'||f==='bonus') x[f]=t.value;
+    else x[f]=t.value===''?'':num(t.value);
+    if(f==='mg' && t.value==='Y' && x.bonus==='full'){ x.bonus='none'; toast('Missed a green day — bonus set to None. Change it if one of your exceptions applies.'); }
+    if(s.status==='sent') s.changed=true;
+    save();
+    if(redraw){ render(); return; }
+    const w1=num(x.w1), w2=num(x.w2), over=w1>40||w2>40, cellT=el('tot-'+pid);
+    if(cellT) cellT.innerHTML='<span class="tot">'+hrs(w1+w2)+'</span>'+(over?'<label class="otb '+(x.ot?'ok':'need')+'"><input type="checkbox" data-p="'+pid+'" data-f="ot"'+(x.ot?' checked':'')+'> OT approved</label>':'');
+    const c=el('checks'); if(c) c.innerHTML=checksHTML(n,o);
+  }
+  document.addEventListener('input', e=>{ const t=e.target; if(t.dataset && t.dataset.f && t.tagName==='INPUT' && t.type!=='checkbox') onField(t,false);
+    if(t.id==='look'){ look=t.value; const r=el('lookres'); if(r) r.innerHTML=lookHTML(); } });
+  document.addEventListener('change', e=>{ const t=e.target;
+    if(t.id==='persona'){ as=t.value; try{ localStorage.setItem('ph_pay_as', as); }catch(_){} tab='sheet'; per=CUR; render(); return; }
+    if(t.id==='perpick'){ per=+t.value; render(); return; }
+    if(t.dataset && t.dataset.f && (t.tagName==='SELECT' || t.type==='checkbox')) onField(t, t.tagName==='SELECT' || t.dataset.f==='ot'); });
+  document.addEventListener('click', e=>{
+    const b=e.target.closest('[data-act]'); if(!b) return;
+    const act=b.dataset.act, v=b.dataset.v;
+    if(act==='tab'){ tab=v; per=CUR; render(); return; }
+    if(act==='open'){ tab='sheet'; per=+v; render(); window.scrollTo({top:0}); return; }
+    if(act==='omopen'){ tab='sheet'; per=+v; render(); window.scrollTo({top:0}); return; }
+    if(act==='send'){
+      const o=R().office, list=issues(per,o);
+      if(list.length){ toast('Fix the '+list.length+' thing'+(list.length>1?'s':'')+' in yellow first'); const c=el('checks'); if(c) c.scrollIntoView({behavior:'smooth',block:'center'}); return; }
+      const pr=P(per), s=get(per,o);
+      openDlg('<div class="dm-top"><h3>Send to Heather?</h3><button class="x" data-act="close" aria-label="Close">×</button></div><div class="dm-body"><p style="margin:0">'+esc(OFF[o].n)+'’s payroll for <b>'+esc(span(pr.start,pr.end))+'</b> — '+peopleAt(o).length+' people, '+hrs(peopleAt(o).reduce((a,p)=>a+num((s.rows[p.id]||{}).w1)+num((s.rows[p.id]||{}).w2),0))+' hours.</p><div class="note info">Heather sees it straight away. You can still change it until she enters payroll — she’ll see what changed.</div></div><div class="dm-foot"><button class="btn ghost" data-act="close">Not yet</button><button class="btn" data-act="sendok">Send</button></div>');
+      return;
+    }
+    if(act==='sendok'){
+      const o=R().office, s=mine(per,o), at=nowISO(), again=s.status==='sent';
+      s.status='sent'; s.at=s.at||at; s.log=s.log||[]; s.log.push({at, t:again?'Changes sent by the '+OFF[o].n+' office manager':'Sent by the '+OFF[o].n+' office manager'}); delete s.changed;
+      save(); closeDlg(); render(); toast(again?'Changes sent to Heather':'Sent to Heather ✓'); return;
+    }
+    if(act==='view'){
+      const n=per, s=get(n,v), e=enteredOf(n);
+      openDlg('<div class="dm-top"><h3>'+esc(OFF[v].n)+' · pay period #'+n+' — as sent</h3><button class="x" data-act="close" aria-label="Close">×</button></div><div class="dm-body">'+sheetTable(n,v,false)+
+        '<div class="log">'+(s.log||[]).map(l=>'<div>• '+esc(fmtT(l.at))+' — '+esc(l.t)+'</div>').join('')+(e?'<div>• '+esc(fmtT(e.at))+' — Entered in payroll by '+esc(e.by)+'</div>':'')+'</div></div>', true);
+      return;
+    }
+    if(act==='remind'){ toast('Reminder to the '+OFF[v].n+' office manager — mock-up, nothing is sent'); return; }
+    if(act==='csv'){ csv(per); toast('Downloaded — opens in Excel'); return; }
+    if(act==='enter'){ S.entered[per]={at:nowISO(), by:'Heather'}; save(); render(); toast('Entered — office sheets for #'+per+' are locked'); return; }
+    if(act==='reopen'){ S.entered[per]=null; save(); render(); toast('Reopened — office managers can change their sheets again'); return; }
+    if(act==='close'){ closeDlg(); return; }
+    if(act==='reset'){ S={v:1, subs:{}, entered:{}}; save(); per=CUR; tab='sheet'; render(); toast('Sample data reset'); return; }
+  });
+  document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeDlg(); });
+  el('dlg').addEventListener('click', e=>{ if(e.target===el('dlg')) closeDlg(); });
+  el('persona').innerHTML=Object.keys(ROLES).map(k=>'<option value="'+k+'"'+(k===as?' selected':'')+'>'+esc(ROLES[k].label)+'</option>').join('');
+  render();
+})();
+</script>
+<script>PH.nav('payroll');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
+<script src="tour.js?v=hc96"></script>
+<script>
+Tour.init([
+  {sel:'#persona', title:'A mock-up', body:'Made-up people, amounts and rates. Start as the <b>Carlsbad office manager</b>, then switch to <b>Heather</b>.'},
+  {sel:'#view', title:'The same sheet, with the rules built in', body:'The columns from the Excel form. Totals add themselves, and overtime, missing notes or a missed green day are caught <b>before</b> it’s sent.'},
+  {sel:'#tabs', title:'Kept for good', body:'Every sheet is kept. Heather sees who has sent, one combined sheet like her main Excel, and any pay period or person from the past.'}
+], {key:'payroll', title:'Payroll', next:{label:'Home', href:'home.html'}});
+</script>
+</body>
+</html>
