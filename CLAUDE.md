@@ -573,7 +573,8 @@ off on live - permissions test). Unread count: chat.html writes sessionStorage `
 `chatBadge()` reads it (3 when unset = the demo's 2+1), so a new tab starts the demo again. On a phone the "V1 preview"
 pill hides when the chat button is in the header (it overflowed by 44px at 390). chat.html `fit()` ends the chat above
 the phone tab bar and the Tour & Feedback button (they covered Send); a phone gives an open conversation the whole
-screen. Also fixed: bellBadge() put its count on the first `.ph-bell` (the search button) - it only looked right because
+screen. Cory, "a bit compressed on desktop": the alert card sits beside the title, not on its own row (chat 300 -> 379px
+at 1000x700, 393 -> 479 at 1280x800). Also fixed: bellBadge() put its count on the first `.ph-bell` (the search button) - it only looked right because
 both sit in `.ph-bw`; it now targets the bell (`.ph-nb`), same look.
 
 **TCs see every office in "By office" (19/10, hc85).** Selene: "we do want the Treatment Coordinators to be able to see
