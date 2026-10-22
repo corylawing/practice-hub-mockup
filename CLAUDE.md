@@ -585,6 +585,15 @@ ringed; other devices are links under it. iPhone (not installed) = add to home s
 New chat turns alerts on/off any time (green dot when on). On a computer the sample alert comes in top right.
 REAL BUILD: chat avatars = `PH.photoFor(mail)` (the Home-Brace profile photo - their own upload or one an admin set),
 initials when there is none (Cory, 22/10: "Will it show users photos in the chat? ... for production it would").
+**Portfolio demo got Team Chat too (22/10/2026).** The REPO ROOT pages (index.html, calendars.html ... + assets/app.js,
+data.js, styles.css; ribbon "INTERACTIVE PORTFOLIO DEMO · Fictional data") are Cory's GitHub portfolio demo - NOT
+Home-Brace v1, never deployed as pages (production ships deploy/index.html + v1/ + assets/ + start.html; the demo's
+scripts in assets/ are unused there). Its world is fictional and anonymized (data.js: Cedar Grove, Lakeview...,
+Jordan Avery) - never put the practice's real offices or people in it. Cory: "add the chat to the interactive portfolio
+demo ... thats powerful": root `chat.html` (a port of v1/chat.html in that world, ME = Jordan Avery), media in
+`demo-chat/` (root, so the production deploy never ships it; trays.jpg redrawn for Lakeview - v1's says Hobbs), a header
+chat button with an unread count on every demo page (app.js chatBadge, sessionStorage `hb_chat_unread`; MODULES
+`nav:false` keeps it out of the nav), a home tile, demo card 05 and guide step 05, and a search entry. Demo cache stamp hb10.
 **Payroll: an "i" beside each pay column on Heather's combined sheet (22/10, hc113).** Cory: "for heathers columns there
 should be a i they can hover over to know what it means". PP bonus, Goal, TC/OM, Holiday, On call, the office's own
 columns (Phone, DIBS, POG, Sick hrs), Extra, Total, Reimburse: `info(label, text)` in combHead, worded from her rules and
