@@ -600,7 +600,17 @@ columns (Phone, DIBS, POG, Sick hrs), Extra, Total, Reimburse: `info(label, text
 calc() (no new facts - DIBS/POG are only "San Angelo's ... bonus"); shown on hover, keyboard focus or a tap (one fixed
 `.tipbox`, so the table's scroll box can't clip it). Then "yes add the i to the office sheet too": every office-sheet
 heading's old hover title is now the same "i" (same words), plus Bonus (Full / Partial / None, from issues()). No `<th
-title=` is left in payroll.html. info() keeps the "i" with the label's last word (or after a &shy;) so headings still wrap. Also fixed: bellBadge() put its count on the first `.ph-bell` (the search button) - it only looked right because
+title=` is left in payroll.html. info() keeps the "i" with the label's last word (or after a &shy;) so headings still wrap.
+**Payroll reminders (22/10, sandbox mock-up).** Heather: "How will they get reminders to send payroll? Is it through
+Home-Brace?" Shown in the mock-up: from the WORKDAY BEFORE the due day (workdayBefore(): a Monday due date -> Friday), the
+sender's sheet has a reminder strip (amber; red once late) with "See the phone reminder" (a sample alert, notifyPay); her
+board says reminders go out on their own (workday before, the morning it's due, 1 pm if not sent) and "Send a reminder"
+sends one now. REAL BUILD: the strip + the bell are plain Home-Brace (no server). Phone reminders ride on the chat's
+alerts (web push via the small function, VAPID keys only - never Microsoft app permissions). A timed push needs a trigger:
+SWA functions are HTTP only, and the function can't read SharePoint (no app permissions), so either the first Home-Brace
+visit of the morning sends the day's reminders with that person's own access (a "sent today" flag in SharePoint), or a
+free scheduled trigger; decide when alerts are built. Also 22/10: the chat's made-up reply comes back in 0.5 s (sandbox
+and portfolio; Cory: "make the sandbox one instant too"). Also fixed: bellBadge() put its count on the first `.ph-bell` (the search button) - it only looked right because
 both sit in `.ph-bw`; it now targets the bell (`.ph-nb`), same look.
 
 **TCs see every office in "By office" (19/10, hc85).** Selene: "we do want the Treatment Coordinators to be able to see
