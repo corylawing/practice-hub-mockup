@@ -585,6 +585,31 @@ ringed; other devices are links under it. iPhone (not installed) = add to home s
 New chat turns alerts on/off any time (green dot when on). On a computer the sample alert comes in top right.
 REAL BUILD: chat avatars = `PH.photoFor(mail)` (the Home-Brace profile photo - their own upload or one an admin set),
 initials when there is none (Cory, 22/10: "Will it show users photos in the chat? ... for production it would").
+**PHONE ALERTS, step 1: the pipeline (22/10/2026, sandbox + a test slot; LIVE UNTOUCHED).** Cory: "yes for phone
+alerts we need that", "go", and asked "are you just doing this in sandbox and not production?" - yes. Web Push, $0:
+- `api-push/` = the ALERT SENDER (Azure Functions, node 22, no dependencies): POST /api/push with
+  {sub, title, body, url, tag, delay} as text/plain JSON (no CORS preflight) -> encrypts for that ONE device (RFC 8291,
+  `webpush.js`, checked byte for byte against the RFC's example in test/push.test.js) and signs with its own alert key
+  (VAPID, RFC 8292). Holds NO Microsoft keys and reads NO practice data. Refuses other origins (ORIGINS: the sandbox and
+  localhost:8790 only - the live site joins when alerts go live), non-push-service endpoints, links off the site; cuts
+  text to size; delay <= 10 s (so a phone can be put away before the test arrives).
+- It runs in a TEST SLOT: the Static Web App's separate "alerts" environment,
+  https://kind-hill-00da87410-alerts.centralus.3.azurestaticapps.net (placeholder page + /api/push, nothing else).
+  `./deploy/deploy-alerts-test.sh <token>` (runs test/push.test.js first). New deployments take ~2 minutes to answer.
+- The alert key: `deploy/.vapid.json` on this Mac ONLY (gitignored, never in the repo); the deploy copies it into the
+  function folder as vapid.json and chmods it 644 (the function runs as another user - 600 made it unreadable).
+  Its public half is in v1/alerts.js. Lose the file = make a new pair, and every device turns alerts on again.
+- Client: `v1/sw.js` (service worker: shows the alert, a tap opens its page; no caching), `v1/alerts.js` (PH_ALERTS:
+  state install|unsupported|blocked|off|on, enable() from a tap, disable, send, refresh). In the sandbox this device's
+  alert address stays on this device; on the live site it will be kept with the person's profile in SharePoint.
+- `v1/alerts-test.html` + `alerts-test.webmanifest` ("HB Alerts"): no sign-in, no data, proves it on a real phone
+  (iPhone: add to home screen first - Apple's rule). deploy-production.sh EXCLUDES alerts-test.* from the live site.
+- Verified: a real Chrome subscribed through Google's push service and received the alert ("Arrived ✓").
+- Known for later: the live site's sign-in uses a POPUP (gate.js loginPopup); inside an iPhone home-screen app a popup
+  may not work - test before alerts go live; a redirect sign-in would need a new redirect URI in Entra (Adam).
+- Next: wire Chat and Payroll's samples to real alerts in the sandbox; then (Cory decides) live: subscriptions in
+  SharePoint, ORIGINS + the live site, reminders sent by the first visit after the time (no server clock).
+
 **Portfolio demo got Team Chat too (22/10/2026).** The REPO ROOT pages (index.html, calendars.html ... + assets/app.js,
 data.js, styles.css; ribbon "INTERACTIVE PORTFOLIO DEMO · Fictional data") are Cory's GitHub portfolio demo - NOT
 Home-Brace v1, never deployed as pages (production ships deploy/index.html + v1/ + assets/ + start.html; the demo's

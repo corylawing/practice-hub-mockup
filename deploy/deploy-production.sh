@@ -37,7 +37,8 @@ cp "$REPO/start.html" "$STAGE/start.html"
 # so it only exists on the machine that deploys. start.html hides the player if it is missing.
 if [ -d "$REPO/media" ]; then cp -R "$REPO/media" "$STAGE/media"; else echo "  note: no media/ folder - start.html will show no video"; fi
 cp -R "$REPO/assets" "$STAGE/assets"
-rsync -a --exclude 'snapshot.json' --exclude '_testgrids.json' "$REPO/v1/" "$STAGE/v1/"
+# alerts-test.* is the sandbox's phone-alerts test page (no sign-in): it never goes to the live site.
+rsync -a --exclude 'snapshot.json' --exclude '_testgrids.json' --exclude 'alerts-test.html' --exclude 'alerts-test.webmanifest' "$REPO/v1/" "$STAGE/v1/"
 
 # The roster is a STATIC file on a site whose pages are public (the sign-in gate is
 # drawn by JavaScript; it does not protect files). So anyone with the hub's URL can

@@ -1,0 +1,13 @@
+{
+  "name": "Home-Brace alerts test",
+  "short_name": "HB Alerts",
+  "start_url": "alerts-test.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0F2A4A",
+  "theme_color": "#0F2A4A",
+  "icons": [
+    { "src": "../assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "../assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

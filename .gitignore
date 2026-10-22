@@ -20,3 +20,8 @@ v1/_people.json
 # The launch video and its poster for start.html. It shows real staff names and the repo
 # is public, so it lives only on this machine and on their site (the deploy script copies it).
 media/
+
+# The alert sender's key (Web Push / VAPID). The private half signs every phone alert, so it never goes in this public
+# repo: it lives on this machine and is copied into the sender at deploy (deploy/deploy-alerts-test.sh).
+deploy/.vapid.json
+api-push/push/vapid.json
