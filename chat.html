@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Team Chat — Home-Brace</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/styles.css?v=hb10">
+<link rel="icon" href="assets/favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+<meta name="theme-color" content="#0F2A4A">
+<meta name="description" content="Message a person, a whole office or a team — with videos, photos and phone alerts, inside the practice's own hub.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Home-Brace">
+<meta property="og:title" content="Team Chat · Home-Brace">
+<meta property="og:description" content="Messages, videos and photos with anyone at the practice, plus phone alerts — all inside Home-Brace.">
+<meta property="og:image" content="https://corylawing.github.io/practice-hub-mockup/assets/og-image.png">
+<meta property="og:url" content="https://corylawing.github.io/practice-hub-mockup/chat.html">
+<!-- TEAM CHAT for the portfolio demo (22/10/2026). The same chat as the Home-Brace mock-up (v1/chat.html), set in this
+     demo's fictional world (data.js: Cedar Grove, Lakeview..., Jordan Avery). Fictional people, messages, videos and photo
+     (demo-chat/). Nothing is sent anywhere; a video you record or attach stays in this browser tab. -->
+<style>
+  :root{ --soft:#56627a; --teal2:#2BC0B8; --navy2:#25456e; }
+  .wrap{padding:16px 20px 0}
+  .btn{background:var(--teal);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-weight:700;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+  .btn:hover{background:var(--teal-600)}
+  .btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--line);font-weight:600}
+  .btn.ghost:hover{border-color:var(--teal);background:var(--teal-soft);color:var(--navy)}
+  .btn.sm{padding:7px 11px;font-size:13px;border-radius:9px}
+
+  /* alerts, in the chat list itself */
+  .alertbar{display:flex;align-items:center;gap:8px;background:var(--teal-soft);border-radius:10px;padding:6px 4px 6px 10px;font-size:13px;color:var(--navy)}
+  .alertbar[hidden]{display:none}
+  .alertbar .grow{flex:1;min-width:0}
+  .alertbar .btn.sm{padding:5px 10px;font-size:12.5px}
+  .alertbar .x{font-size:19px;width:26px;height:26px;padding:0;border-radius:8px;flex:none}
+  .alertbar .x:hover{background:rgba(15,42,74,.08)}
+  /* the bell beside New chat: alerts on / off, any time */
+  .ib.sm{width:34px;height:34px;border-radius:10px;position:relative}
+  .ib.sm svg{width:18px;height:18px}
+  .bellb.on{color:var(--teal-600);border-color:#9ED8D4}
+  .bellb.on::after{content:"";position:absolute;top:5px;right:6px;width:7px;height:7px;border-radius:50%;background:#2E9E6B;border:1.5px solid #fff}
+
+  /* the chat: the list beside the conversation (a phone shows one at a time), to the bottom of the screen */
+  .chatapp{display:grid;grid-template-columns:330px minmax(0,1fr);height:max(300px, calc(100vh - 190px));background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
+  .list{border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0;background:#FBFCFD}
+  .list-top{padding:14px 14px 10px;display:flex;flex-direction:column;gap:10px;border-bottom:1px solid var(--line);background:#fff}
+  .list-top .row{display:flex;align-items:center;gap:8px}
+  .list-top h1{margin:0;font-size:18px;color:var(--navy);flex:1}
+  .search{width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font:inherit;font-size:14px;background:#F7F9FB}
+  .search:focus{outline:2px solid var(--teal2);background:#fff}
+  .chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+  .chips::-webkit-scrollbar{display:none}
+  .chatapp .chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:4px 11px;font-size:12.5px;font-weight:600;color:var(--soft);cursor:pointer;white-space:nowrap}
+  .chatapp .chip:hover{background:#F2F6F9}
+  .chatapp .chip.on{background:var(--navy);border-color:var(--navy);color:#fff}
+  .items{overflow-y:auto;flex:1;min-height:0;overscroll-behavior:contain}
+  .ci{display:flex;gap:11px;align-items:center;width:100%;text-align:left;background:none;border:none;border-bottom:1px solid #EEF1F5;padding:11px 14px;cursor:pointer;font:inherit;color:inherit}
+  .ci:hover{background:#F2F6F9}
+  .ci.on{background:var(--teal-soft)}
+  .ci .mid{flex:1;min-width:0}
+  .ci .nm,.ci .pv{display:block}
+  .ci .nm{font-weight:700;color:var(--navy);font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ci .pv{font-size:13px;color:var(--soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ci.unread .pv{color:var(--ink);font-weight:600}
+  .ci .side{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:none}
+  .ci .tm{font-size:11.5px;color:var(--soft)}
+  .chatapp .badge{background:var(--teal);color:#fff;border-radius:999px;font-size:11.5px;font-weight:800;min-width:20px;height:20px;padding:0 6px;display:inline-flex;align-items:center;justify-content:center;letter-spacing:0}
+  .av{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:#fff;flex:none}
+  .av.sm{width:30px;height:30px;font-size:11.5px}
+  .av svg{width:20px;height:20px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+  .conv{display:flex;flex-direction:column;min-height:0;min-width:0}
+  .conv-top{display:flex;align-items:center;gap:11px;padding:11px 16px;border-bottom:1px solid var(--line);background:#fff}
+  .conv-top .who{flex:1;min-width:0}
+  .conv-top .who b{display:block;color:var(--navy);font-size:15.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .conv-top .who span{display:block;font-size:12.5px;color:var(--soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .back{display:none;background:none;border:none;font-size:24px;line-height:1;color:var(--navy);cursor:pointer;padding:2px 6px}
+  .msgs{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:16px 18px;display:flex;flex-direction:column;gap:6px;background:#F4F7FA}
+  .msgs .day{align-self:center;font-size:11.5px;font-weight:700;color:var(--soft);background:#E7EDF3;border-radius:999px;padding:3px 10px;margin:10px 0 4px;text-transform:uppercase;letter-spacing:.04em}
+  .m{display:flex;gap:8px;align-items:flex-end;max-width:78%}
+  .m.me{align-self:flex-end;flex-direction:row-reverse}
+  .m .col{display:flex;flex-direction:column;gap:3px;min-width:0}
+  .m.me .col{align-items:flex-end}
+  .m .from{font-size:12px;font-weight:700;color:var(--soft);margin:4px 0 0 2px}
+  .bub{background:#fff;border:1px solid var(--line);border-radius:16px 16px 16px 5px;padding:8px 12px;font-size:14.5px;color:var(--ink);white-space:pre-wrap;word-wrap:break-word;box-shadow:0 1px 1px rgba(15,42,74,.04)}
+  .m.me .bub{background:var(--teal);border-color:var(--teal);color:#fff;border-radius:16px 16px 5px 16px}
+  .m .meta{font-size:11px;color:var(--soft);margin:0 4px}
+  .media{position:relative;border-radius:14px;overflow:hidden;background:#0F2A4A;border:1px solid var(--line);max-width:260px;box-shadow:0 1px 2px rgba(15,42,74,.08)}
+  .media.wide{max-width:340px}
+  .media video,.media img{display:block;width:100%;height:auto;max-height:min(320px,45vh);object-fit:cover;background:#0F2A4A}
+  .media.tall{width:fit-content}
+  .media.tall video{width:auto;height:min(320px,45vh)}
+  .media .play{position:absolute;inset:0;margin:auto;width:58px;height:58px;border-radius:50%;border:none;background:rgba(15,42,74,.62);color:#fff;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding-left:4px}
+  .media .play:hover{background:rgba(20,155,150,.9)}
+  .media .dur{position:absolute;left:8px;bottom:8px;background:rgba(15,42,74,.72);color:#fff;font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 8px;display:flex;gap:5px;align-items:center}
+  .media.playing .play,.media.playing .dur{display:none}
+
+  .composer{display:flex;align-items:flex-end;gap:8px;padding:10px 12px;border-top:1px solid var(--line);background:#fff}
+  .composer textarea{flex:1;resize:none;border:1px solid var(--line);border-radius:12px;padding:9px 12px;font:inherit;font-size:14.5px;max-height:120px;min-height:40px;background:#F7F9FB}
+  .composer textarea:focus{outline:2px solid var(--teal2);background:#fff}
+  .ib{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none;color:var(--navy)}
+  .ib:hover{border-color:var(--teal);background:var(--teal-soft)}
+  .ib svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .ib.rec{color:#C2412D}
+  .ib.send{background:var(--teal);border-color:var(--teal);color:#fff}
+  .ib.send:hover{background:var(--teal-600)}
+  .empty{margin:auto;text-align:center;color:var(--soft);font-size:14px;max-width:320px}
+
+  /* dialogs, the alert, the toast */
+  .dm{position:fixed;inset:0;background:rgba(15,42,74,.5);display:none;align-items:flex-start;justify-content:center;padding:28px 14px;z-index:120;overflow-y:auto}
+  .dm.open{display:flex}
+  .dmc{background:#fff;border-radius:16px;box-shadow:var(--shadow-lg);width:100%;max-width:520px}
+  .dm-top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:15px 18px;border-bottom:1px solid var(--line)}
+  .dm-top h3{margin:0;font-size:17px;color:var(--navy)}
+  .x{background:none;border:none;font-size:24px;line-height:1;color:var(--soft);cursor:pointer;padding:2px 6px}
+  .dm-body{padding:16px 18px;display:flex;flex-direction:column;gap:12px;font-size:14.5px}
+  .dm-foot{display:flex;gap:8px;justify-content:flex-end;padding:13px 18px;border-top:1px solid var(--line);flex-wrap:wrap}
+  .cam{position:relative;background:#0F2A4A;border-radius:12px;overflow:hidden;aspect-ratio:3/4;max-height:56vh;display:flex;align-items:center;justify-content:center}
+  .cam video{width:100%;height:100%;object-fit:cover;display:block}
+  .cam .msg{color:#cdd9ea;text-align:center;padding:20px;font-size:14px}
+  .cam .clock{position:absolute;top:10px;left:10px;background:rgba(194,65,45,.92);color:#fff;font-weight:800;font-size:13px;border-radius:999px;padding:3px 10px;display:none}
+  .cam.recording .clock{display:block}
+  .steps{margin:0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:10px;counter-reset:s}
+  .steps li{counter-increment:s;position:relative;padding-left:34px}
+  .steps li::before{content:counter(s);position:absolute;left:0;top:0;width:24px;height:24px;border-radius:50%;background:var(--teal);color:#fff;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center}
+  .ui{display:inline-block;border:1px solid #cbd5e1;border-radius:7px;padding:0 7px;font-size:13px;font-weight:700;background:#fff;white-space:nowrap}
+  .ui svg{width:13px;height:13px;vertical-align:-2px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .note{background:var(--teal-soft);border-radius:10px;padding:9px 12px;font-size:13.5px;color:#0c5b57}
+  .dm .lead{color:var(--ink);line-height:1.5}
+  .other{font-size:12.5px;color:var(--soft)}
+  .other button{background:none;border:none;padding:0;font:inherit;font-weight:700;color:var(--teal-600);text-decoration:underline;cursor:pointer}
+  /* a picture of the question the browser / the phone asks, with Allow ringed */
+  .bp{margin-top:9px;max-width:290px;background:#fff;border:1px solid #D5DCE4;border-radius:12px;box-shadow:0 6px 18px rgba(15,42,74,.14);padding:12px 12px 10px;font-size:13px;color:#1f2937;line-height:1.4}
+  .bp-b{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}
+  .bp-b span{border:1px solid #cbd5e1;border-radius:8px;padding:4px 12px;font-weight:600;font-size:12.5px;color:#334155}
+  .bp-b .go{background:#1a73e8;border-color:#1a73e8;color:#fff;box-shadow:0 0 0 3px #fff,0 0 0 5px var(--teal2)}
+  .bp.ph{max-width:270px;background:#F2F2F7;border-radius:14px;padding:14px 0 0;text-align:center}
+  .bp.ph .bp-t{padding:0 16px}
+  .bp.ph .bp-b{display:grid;grid-template-columns:1fr 1fr;gap:0;margin-top:12px;border-top:1px solid #C6C6C8}
+  .bp.ph .bp-b span{border:none;border-radius:0;color:#007AFF;padding:10px 0;font-size:14px;font-weight:500}
+  .bp.ph .bp-b span+span{border-left:1px solid #C6C6C8}
+  .bp.ph .bp-b .go{background:none;color:#007AFF;font-weight:700;box-shadow:inset 0 0 0 2px var(--teal2);border-radius:0 0 14px 0}
+  .pick{display:flex;flex-direction:column;gap:2px;max-height:300px;overflow-y:auto;border:1px solid var(--line);border-radius:12px}
+  .pick button{display:flex;align-items:center;gap:10px;background:#fff;border:none;border-bottom:1px solid #EEF1F5;padding:9px 12px;cursor:pointer;text-align:left;font:inherit}
+  .pick button:hover{background:var(--teal-soft)}
+  .pick small{display:block;color:var(--soft);font-size:12px}
+  .pick .grp{font-size:11.5px;font-weight:800;color:var(--soft);text-transform:uppercase;letter-spacing:.05em;padding:8px 12px 4px;background:#F7F9FB}
+  /* the alert, as Home-Brace would send it (a phone: top; a computer: top right) */
+  .notif{position:fixed;top:12px;left:50%;transform:translate(-50%,-140%);width:min(380px,calc(100% - 24px));background:rgba(250,251,252,.97);backdrop-filter:blur(8px);border-radius:18px;box-shadow:0 12px 34px rgba(15,42,74,.28);padding:11px 14px;display:flex;gap:11px;align-items:flex-start;z-index:130;transition:transform .35s ease;cursor:pointer}
+  .notif.on{transform:translate(-50%,0)}
+  @media(min-width:761px){ .notif{left:auto;right:16px;transform:translateX(calc(100% + 30px))} .notif.on{transform:none} }
+  .notif img{width:36px;height:36px;border-radius:9px;flex:none}
+  .notif .t{font-size:12px;color:var(--soft);display:flex;justify-content:space-between;gap:8px}
+  .notif b{display:block;font-size:14px;color:#111}
+  .notif .x2{font-size:13.5px;color:#222}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);width:max-content;background:var(--navy);color:#fff;padding:11px 18px;border-radius:12px;font-weight:700;font-size:14px;box-shadow:var(--shadow-lg);opacity:0;transition:opacity .2s;pointer-events:none;z-index:125;max-width:calc(100% - 32px);text-align:center}
+  .toast.on{opacity:1}
+
+  @media(max-width:760px){
+    .wrap{padding:10px 10px 0}
+    .chatapp{grid-template-columns:minmax(0,1fr);height:max(280px, calc(100vh - 150px))}
+    .chatapp .conv{display:none}
+    .chatapp.open .list{display:none}
+    .chatapp.open .conv{display:flex}
+    .back{display:block}
+    .m{max-width:88%}
+  }
+</style>
+</head>
+<body data-page="chat">
+<div id="hdr"></div>
+
+<div class="wrap">
+  <div class="chatapp" id="app">
+    <aside class="list" aria-label="Your chats">
+      <div class="list-top">
+        <div class="row"><h1>Chats</h1><button class="ib sm bellb" id="bellb" data-act="alerts" title="Turn on alerts" aria-label="Turn on alerts"><svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0112 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 004 0"/></svg></button><button class="btn sm" data-act="new">＋ New chat</button></div>
+        <div class="alertbar" id="alertbar"></div>
+        <input class="search" id="q" type="search" placeholder="Search chats" autocomplete="off" aria-label="Search chats">
+        <div class="chips" id="chips"></div>
+      </div>
+      <div class="items" id="items"></div>
+    </aside>
+    <section class="conv" id="conv" aria-label="Conversation"></section>
+  </div>
+</div>
+
+<div id="ftr"></div>
+
+<div class="dm" id="dlg" role="dialog" aria-modal="true"><div class="dmc" id="dlgcard"></div></div>
+<div class="notif" id="notif" role="status" aria-live="polite"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<input type="file" id="file" accept="image/*,video/*" hidden>
+
+<script src="assets/data.js?v=hb10"></script>
+<script src="assets/app.js?v=hb10"></script>
+<script>
+(function(){
+  'use strict';
+  const el=id=>document.getElementById(id);
+  const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const ME='Jordan Avery';
+  const COLORS=['#149B96','#6CB4F5','#F7A25E','#B49CFB','#F48C7F','#F27FC0','#6FD39A','#8FA2FF','#E0A800','#5B8DEF'];
+  const colorOf=n=>{ let h=0; for(const c of n) h=(h*31+c.charCodeAt(0))>>>0; return COLORS[h%COLORS.length]; };
+  const initials=n=>n.replace(/^Dr\.\s*/,'').split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase();
+  const ICON={office:'<path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h1M14 9h1M9 13h1M14 13h1M9 17h6"/>',
+              team:'<circle cx="9" cy="8" r="3.2"/><circle cx="17" cy="9" r="2.6"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5M15 14.6c3 0 6 1.6 6 4.6"/>'};
+  function avatar(c, sm){
+    const cls='av'+(sm?' sm':'');
+    if(c.type==='office' || c.type==='team') return '<span class="'+cls+'" style="background:'+(c.type==='office'?'#25456E':'#0F827E')+'"><svg viewBox="0 0 24 24">'+ICON[c.type]+'</svg></span>';
+    return '<span class="'+cls+'" style="background:'+colorOf(c.name)+'">'+esc(initials(c.name))+'</span>';
+  }
+  const personAv=n=>'<span class="av sm" style="background:'+colorOf(n)+'">'+esc(initials(n))+'</span>';
+
+  /* ---------- fictional chats (data.js people and offices). Times are "minutes ago" so it always looks current. ---------- */
+  const now=Date.now(), ago=min=>now-min*60000;
+  const CHATS=[
+    {id:'c1', type:'office', name:'Cedar Grove office', members:['Tasha Brooks','Priya Nair','Dr. Maya Chen',ME], unread:2, msgs:[
+      {from:'Priya Nair', at:ago(1500), text:'Is anyone grabbing lunch for the team on Friday?'},
+      {from:ME, at:ago(1490), text:'I will - tacos again?'},
+      {from:'Tasha Brooks', at:ago(48), text:'Morning! Quick video on the new check-in steps before patients arrive 👇'},
+      {from:'Tasha Brooks', at:ago(47), video:'demo-chat/huddle.mp4', poster:'demo-chat/huddle.jpg', dur:'0:08', ar:'9/16'},
+      {from:'Priya Nair', at:ago(36), text:'Watched it. So the consent form comes first now?'},
+      {from:'Tasha Brooks', at:ago(31), text:'Yes - consent first, then the photos.'}]},
+    {id:'c2', type:'person', name:'Dr. Patel Rao', sub:'Owner Doctor · Lakeview', members:['Dr. Patel Rao',ME], unread:1, msgs:[
+      {from:ME, at:ago(1700), text:'Thanks for covering Westfield today.'},
+      {from:'Dr. Patel Rao', at:ago(62), text:'Here’s the new tray layout for Lakeview. What do you think?'},
+      {from:'Dr. Patel Rao', at:ago(61), photo:'demo-chat/trays.jpg', w:800, h:600}]},
+    {id:'c3', type:'team', name:'Doctors', members:['Dr. Maya Chen','Dr. Patel Rao','Dr. Lopez','Dr. Mehta','Dr. Ford',ME], unread:0, msgs:[
+      {from:ME, at:ago(1180), text:'November’s schedule is posted in Home-Brace.'},
+      {from:'Dr. Mehta', at:ago(1150), text:'Thanks! I’m off the 27th - already marked.'}]},
+    {id:'c4', type:'office', name:'Lakeview office', members:['Liam Ortiz','Rachel Goldberg','Dr. Patel Rao',ME], unread:0, msgs:[
+      {from:'Liam Ortiz', at:ago(2950), text:'Friday reminder for everyone 👇'},
+      {from:'Liam Ortiz', at:ago(2949), video:'demo-chat/reminder.mp4', poster:'demo-chat/reminder.jpg', dur:'0:06', wide:true, ar:'16/9'},
+      {from:'Rachel Goldberg', at:ago(2900), text:'Got it 👍'}]},
+    {id:'c5', type:'team', name:'Leadership Team', members:['Dana Kim','Tasha Brooks','Liam Ortiz','Carlos Mendez',ME], unread:0, msgs:[
+      {from:'Dana Kim', at:ago(4300), text:'Q4 priorities are posted - please look before Thursday’s meeting.'}]},
+    {id:'c6', type:'person', name:'Sam Whitfield', sub:'Clinic Lead · Westfield', members:['Sam Whitfield',ME], unread:0, msgs:[
+      {from:ME, at:ago(4500), text:'Can you cover Northpoint on Thursday?'},
+      {from:'Sam Whitfield', at:ago(4480), text:'Yes, I’ve got it.'}]}
+  ];
+  /* The header's chat button shows the same unread count, kept for this browser tab (app.js chatBadge). */
+  try{ const s=sessionStorage.getItem('hb_chat_unread'); if(s){ const m=JSON.parse(s)||{}; CHATS.forEach(c=>{ c.unread=Number(m[c.id])||0; }); } }catch(_){}
+  function saveUnread(){
+    const m={}; CHATS.forEach(c=>{ if(c.unread) m[c.id]=c.unread; });
+    try{ sessionStorage.setItem('hb_chat_unread', JSON.stringify(m)); }catch(_){}
+    if(window.hbChatBadge) window.hbChatBadge();
+  }
+  const REPLIES=['Got it, thanks!','👍','Perfect - see you there.','Watched it, makes sense.','On it.','Thank you!'];
+  let open=null, filter='all', q='', alertsOn=false, recState=null, objectUrls=[], stick=true, ro=null;
+  try{ alertsOn=localStorage.getItem('hb_chat_alerts')==='1'; }catch(_){}
+  /* which device this is, so the alert steps are only the ones for it; and whether they closed the strip */
+  const UA=navigator.userAgent||'';
+  const DEVICE=(/iPhone|iPad|iPod/.test(UA) || (/Macintosh/.test(UA) && navigator.maxTouchPoints>1)) ? 'iphone' : /Android/.test(UA) ? 'android' : 'computer';
+  const INSTALLED=navigator.standalone===true || !!(window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+  let alertsHidden=false; try{ alertsHidden=localStorage.getItem('hb_chat_alerts_hide')==='1'; }catch(_){}
+  const setAlerts=on=>{ alertsOn=on; try{ localStorage.setItem('hb_chat_alerts', on?'1':'0'); }catch(_){} renderAlertbar(); };
+
+  /* ---------- time, as a phone shows it ---------- */
+  const dayKey=t=>{ const d=new Date(t); return d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate(); };
+  const clock=t=>new Date(t).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  function when(t){
+    const d=new Date(t), today=new Date(), yest=new Date(); yest.setDate(today.getDate()-1);
+    if(dayKey(t)===dayKey(today)) return clock(t);
+    if(dayKey(t)===dayKey(yest)) return 'Yesterday';
+    return d.toLocaleDateString('en-US',{weekday:'short'});
+  }
+  function dayLabel(t){
+    const today=new Date(), yest=new Date(); yest.setDate(today.getDate()-1);
+    if(dayKey(t)===dayKey(today)) return 'Today';
+    if(dayKey(t)===dayKey(yest)) return 'Yesterday';
+    return new Date(t).toLocaleDateString('en-US',{weekday:'long', month:'short', day:'numeric'});
+  }
+  const last=c=>c.msgs[c.msgs.length-1];
+  function preview(m, c){
+    const short=n=>/^Dr\./.test(n) ? n : n.split(' ')[0];       // "Dr. Mehta", "Tasha"
+    const who=m.from===ME ? 'You: ' : (c.type==='person' ? '' : short(m.from)+': ');
+    return who+(m.video ? '🎥 Video' : m.photo ? '📷 Photo' : m.text);
+  }
+
+  /* ---------- the alerts strip: only while alerts are off, and it can be closed; the bell always works ---------- */
+  function renderAlertbar(){
+    const b=el('alertbar');
+    b.hidden=alertsOn || alertsHidden;
+    b.innerHTML='<span>🔔</span><span class="grow"><b>Get message alerts</b></span>'+
+      '<button class="btn sm" data-act="alerts">Turn on</button>'+
+      '<button class="x" data-act="hidealerts" title="Close (the bell next to New chat turns alerts on any time)" aria-label="Close">×</button>';
+    const bb=el('bellb'); if(bb){ bb.classList.toggle('on', alertsOn); bb.title=alertsOn?'Alerts are on':'Turn on alerts'; bb.setAttribute('aria-label', bb.title); }
+  }
+  /* The chat runs to the bottom of the screen, so the message box and Send are always in view.
+     A very short window keeps a minimum and lets the page scroll instead. */
+  function fit(){
+    const a=el('app'); if(!a || !a.offsetParent) return;
+    const phone=!window.matchMedia('(min-width:761px)').matches, room=phone?10:16;
+    const want=window.innerHeight-(a.getBoundingClientRect().top+window.scrollY)-room, min=phone?280:300;
+    a.style.height=Math.round(Math.max(min, want))+'px';
+    document.querySelector('.wrap').style.paddingBottom=(want<min ? room : 0)+'px';
+  }
+
+  /* ---------- the list ---------- */
+  function renderChips(){
+    const F=[['all','All'],['unread','Unread'],['office','Offices & teams'],['person','People']];
+    el('chips').innerHTML=F.map(f=>'<button class="chip'+(filter===f[0]?' on':'')+'" data-act="filter" data-v="'+f[0]+'">'+f[1]+'</button>').join('');
+  }
+  function renderList(){
+    const qq=q.trim().toLowerCase();
+    const list=CHATS.slice().sort((a,b)=>last(b).at-last(a).at).filter(c=>
+      (filter==='all' || (filter==='unread' && c.unread) || (filter==='office' && c.type!=='person') || (filter==='person' && c.type==='person')) &&
+      (!qq || c.name.toLowerCase().indexOf(qq)>=0 || c.members.some(m=>m.toLowerCase().indexOf(qq)>=0)));
+    el('items').innerHTML = list.length ? list.map(c=>{
+      const m=last(c);
+      return '<button class="ci'+(open===c.id?' on':'')+(c.unread?' unread':'')+'" data-act="open" data-v="'+c.id+'">'+avatar(c)+
+        '<span class="mid"><span class="nm">'+esc(c.name)+'</span><span class="pv">'+esc(preview(m,c))+'</span></span>'+
+        '<span class="side"><span class="tm">'+esc(when(m.at))+'</span>'+(c.unread?'<span class="badge">'+c.unread+'</span>':'')+'</span></button>';
+    }).join('') : '<div class="empty" style="padding:30px 16px">No chats match.</div>';
+    saveUnread();
+  }
+
+  /* ---------- a conversation ---------- */
+  function msgHTML(m, c, prev){
+    const mine=m.from===ME, group=c.type!=='person';
+    const showFrom=group && !mine && (!prev || prev.from!==m.from || dayKey(prev.at)!==dayKey(m.at));
+    let body;
+    if(m.video){
+      const tall=m.ar && (r=>r[0]<r[1])(String(m.ar).split('/').map(Number));      // a phone video, upright
+      body='<div class="media'+(m.wide?' wide':'')+(tall?' tall':'')+'"><video src="'+esc(m.video)+'"'+(m.poster?' poster="'+esc(m.poster)+'"':'')+(m.ar?' style="aspect-ratio:'+m.ar+'"':'')+' preload="metadata" playsinline></video>'+
+        '<button class="play" data-act="play" aria-label="Play the video">▶</button><span class="dur">🎥 '+esc(m.dur||'')+'</span></div>';
+    } else if(m.photo){
+      body='<div class="media wide"><img src="'+esc(m.photo)+'"'+(m.w?' width="'+m.w+'" height="'+m.h+'"':'')+' alt="A photo from '+esc(m.from)+'"></div>';
+    } else body='<div class="bub">'+esc(m.text)+'</div>';
+    return '<div class="m'+(mine?' me':'')+'">'+(group && !mine ? (showFrom ? personAv(m.from) : '<span style="width:30px;flex:none"></span>') : '')+
+      '<div class="col">'+(showFrom?'<div class="from">'+esc(m.from)+'</div>':'')+body+
+      '<div class="meta">'+esc(clock(m.at))+(mine && m.seen!==false ? ' · Seen' : '')+'</div></div></div>';
+  }
+  function renderConv(){
+    const c=CHATS.find(x=>x.id===open), box=el('conv');
+    if(!c){ box.innerHTML='<div class="empty">Pick a chat on the left, or start a new one.</div>'; return; }
+    const sub=c.type==='person' ? (c.sub||'') : c.members.length+' people · '+c.members.filter(n=>n!==ME).slice(0,4).join(', ')+(c.members.length>5?'…':'');
+    let h='<div class="conv-top"><button class="back" data-act="back" aria-label="Back to chats">‹</button>'+avatar(c)+
+      '<div class="who"><b>'+esc(c.name)+'</b><span>'+esc(sub)+'</span></div>'+
+      '<button class="btn ghost sm" data-act="call" title="Calls open Microsoft Teams">📞 Call</button></div><div class="msgs" id="msgs">';
+    let prev=null;
+    c.msgs.forEach(m=>{ if(!prev || dayKey(prev.at)!==dayKey(m.at)) h+='<div class="day">'+esc(dayLabel(m.at))+'</div>'; h+=msgHTML(m,c,prev); prev=m; });
+    h+='</div><div class="composer">'+
+      '<button class="ib" data-act="attach" title="Send a photo or a video from your phone or computer" aria-label="Send a photo or video"><svg viewBox="0 0 24 24"><path d="M21 11.5l-8.6 8.6a5.5 5.5 0 0 1-7.8-7.8l8.6-8.6a3.7 3.7 0 0 1 5.2 5.2l-8.6 8.6a1.8 1.8 0 0 1-2.6-2.6l7.9-7.9"/></svg></button>'+
+      '<button class="ib rec" data-act="record" title="Record a video (up to 5 minutes)" aria-label="Record a video"><svg viewBox="0 0 24 24"><rect x="2.5" y="6" width="13" height="12" rx="2.5"/><path d="M15.5 10.5l6-3.5v10l-6-3.5z"/></svg></button>'+
+      '<textarea id="txt" rows="1" placeholder="Message'+(window.matchMedia('(min-width:761px)').matches?' '+esc(c.name):'')+'…" aria-label="Message"></textarea>'+
+      '<button class="ib send" data-act="send" title="Send" aria-label="Send"><svg viewBox="0 0 24 24"><path d="M4 12l16-8-6 16-2.5-6.5z"/></svg></button></div>';
+    box.innerHTML=h;
+    const ms=el('msgs'); stick=true; ms.scrollTop=ms.scrollHeight;
+    ms.addEventListener('scroll', ()=>{ stick=ms.scrollTop+ms.clientHeight>=ms.scrollHeight-40; }, {passive:true});
+    // pictures and video frames arrive a moment later and push the newest message down: keep it in view unless they scrolled up
+    const follow=()=>{ if(stick) ms.scrollTop=ms.scrollHeight; };
+    ms.querySelectorAll('img,video').forEach(x=>{ if(x.tagName==='IMG' && x.complete) return;
+      x.addEventListener(x.tagName==='IMG'?'load':'loadedmetadata', follow, {once:true}); });
+    if(window.ResizeObserver){ if(ro) ro.disconnect(); ro=new ResizeObserver(follow); ro.observe(ms); }
+  }
+  /* show=false: select it without leaving the list (a phone shows one or the other) */
+  function openChat(id, show){
+    open=id; const c=CHATS.find(x=>x.id===id); if(c) c.unread=0;
+    if(show!==false) el('app').classList.add('open');
+    renderList(); renderConv(); fit();
+  }
+
+  /* ---------- sending, and a fictional reply a few seconds later ---------- */
+  function addMsg(c, m){
+    c.msgs.push(m);
+    if(open===c.id){ renderConv(); } else { c.unread=(c.unread||0)+1; }
+    renderList();
+  }
+  function send(m){
+    const c=CHATS.find(x=>x.id===open); if(!c) return;
+    addMsg(c, Object.assign({from:ME, at:Date.now()}, m));
+    const others=c.members.filter(n=>n!==ME); if(!others.length) return;
+    const who=others[Math.floor(Math.random()*others.length)];
+    setTimeout(()=>{
+      const r={from:who, at:Date.now(), text:REPLIES[Math.floor(Math.random()*REPLIES.length)]};
+      addMsg(c, r);
+      if(alertsOn) notify(c, r);
+    }, 3800);
+  }
+  /* the alert Home-Brace would send */
+  let nt=null;
+  function notify(c, m){
+    const n=el('notif');
+    n.innerHTML='<img src="assets/logo-mark.png" alt=""><div style="flex:1;min-width:0"><div class="t"><span>HOME-BRACE</span><span>now</span></div>'+
+      '<b>'+esc(c.type==='person' ? m.from : m.from+' · '+c.name)+'</b><div class="x2">'+esc(m.video?'🎥 Sent a video':m.photo?'📷 Sent a photo':m.text)+'</div></div>';
+    n.dataset.chat=c.id; n.classList.add('on'); clearTimeout(nt); nt=setTimeout(()=>n.classList.remove('on'), 4200);
+  }
+  let tt=null; function toast(t){ const x=el('toast'); x.textContent=t; x.classList.add('on'); clearTimeout(tt); tt=setTimeout(()=>x.classList.remove('on'), 3200); }
+
+  /* ---------- dialogs ---------- */
+  function openDlg(html){ el('dlgcard').innerHTML=html; el('dlg').classList.add('open'); }
+  function closeDlg(){ stopCamera(); el('dlg').classList.remove('open'); }
+  const top=t=>'<div class="dm-top"><h3>'+t+'</h3><button class="x" data-act="close" aria-label="Close">×</button></div>';
+  /* Turning alerts on: only the steps for the device in your hand, in plain words, with a picture of the question the
+     browser or phone asks. Another device's steps are a click away. */
+  let alertTab=DEVICE;
+  const SHARE='<svg viewBox="0 0 24 24"><path d="M12 15V3M8 7l4-4 4 4"/><path d="M7 11H5v10h14V11h-2"/></svg>';
+  function alertsDlg(){
+    if(alertsOn && alertTab===DEVICE) return alertsOnDlg();
+    const t=alertTab, mine=t===DEVICE, pc=t==='computer';
+    const name={iphone:'iPhone', android:'Android phone', computer:'computer'}[t];
+    const title=mine ? 'Get alerts on '+(pc?'this computer':'your '+name) : 'Alerts on '+(pc?'a computer':'an '+name);
+    const ask=pc ? '<div class="bp"><div class="bp-t">🔔 <b>Home-Brace</b> wants to<br>show notifications</div><div class="bp-b"><span>Block</span><span class="go">Allow</span></div></div>'
+                 : '<div class="bp ph"><div class="bp-t"><b>“Home-Brace” would like to send you notifications</b></div><div class="bp-b"><span>Don’t Allow</span><span class="go">Allow</span></div></div>';
+    let lead, steps, foot;
+    if(t==='iphone' && !(mine && INSTALLED)){
+      lead='Your iPhone shows a new message like a text, even when Home-Brace is closed. Apple only allows that for apps on the home screen, so first put Home-Brace there. You do this once.';
+      steps=['In Safari, tap the Share button <span class="ui">'+SHARE+'</span> at the bottom of the screen.',
+             'Tap <span class="ui">Add to Home Screen</span>, then <span class="ui">Add</span>.',
+             'Open Home-Brace from its new icon, go to Chat and tap <span class="ui">Turn on</span>. Your iPhone asks - tap <b>Allow</b>.'+ask];
+      foot='<button class="btn" data-act="close">Got it</button>';
+    } else {
+      lead=pc ? 'A small alert pops up in the corner of your screen when someone messages you - even while you’re in another window.'
+              : 'Your phone shows a new message like a text, even when Home-Brace is closed.';
+      steps=[(pc?'Click':'Tap')+' <span class="ui">Turn on alerts</span> below.',
+             (pc?'Your browser asks to show notifications. Click':'Your phone asks. Tap')+' <b>Allow</b>.'+ask];
+      foot=mine ? '<button class="btn ghost" data-act="close">Not now</button><button class="btn" data-act="alertson">Turn on alerts</button>'
+                : '<button class="btn" data-act="close">Got it</button>';
+    }
+    const others=['iphone','android','computer'].filter(x=>x!==t).map(x=>'<button data-act="atab" data-v="'+x+'">'+{iphone:'iPhone',android:'Android',computer:'Computer'}[x]+'</button>').join(' · ');
+    openDlg(top(title)+'<div class="dm-body"><div class="lead">'+lead+'</div><ol class="steps">'+steps.map(x=>'<li>'+x+'</li>').join('')+'</ol>'+
+      (t==='iphone'?'<div class="note">iPhones need iOS 16.4 or newer (from 2023 on).</div>':'')+
+      '<div class="other">Setting up a different device? '+others+'</div></div><div class="dm-foot">'+foot+'</div>');
+  }
+  function alertsOnDlg(){
+    openDlg(top('Alerts are on ✓')+'<div class="dm-body"><div class="lead">When someone messages you, '+
+      (DEVICE==='computer'?'an alert pops up in the corner of your screen.':'your phone shows it like a text.')+'</div>'+
+      '<div><button class="btn ghost" data-act="sample">Show me a sample</button></div>'+
+      '<div class="other">To turn them off later, click the bell next to New chat.</div></div>'+
+      '<div class="dm-foot"><button class="btn ghost" data-act="alertsoff">Turn alerts off</button><button class="btn" data-act="close">Done</button></div>');
+  }
+  function newChatDlg(){
+    const people=(typeof PEOPLE!=='undefined' ? PEOPLE : []).filter(p=>p[0]!==ME);
+    const offices=(typeof SCHEDULE!=='undefined' ? Object.keys(SCHEDULE) : []);
+    const teams=['Doctors','Treatment Coordinators','Office Managers','Leadership Team','Marketing'];
+    openDlg(top('New chat')+'<div class="dm-body"><input class="search" id="nq" placeholder="Search a person, an office or a team" autocomplete="off"><div class="pick" id="pick">'+
+      '<div class="grp">Offices - everyone who works there</div>'+offices.map(o=>'<button data-act="mk" data-t="office" data-v="'+esc(o)+' office">'+avatar({type:'office',name:o},true)+'<span>'+esc(o)+' office</span></button>').join('')+
+      '<div class="grp">Teams</div>'+teams.map(t=>'<button data-act="mk" data-t="team" data-v="'+esc(t)+'">'+avatar({type:'team',name:t},true)+'<span>'+esc(t)+'</span></button>').join('')+
+      '<div class="grp">People</div>'+people.map(p=>'<button data-act="mk" data-t="person" data-v="'+esc(p[0])+'" data-sub="'+esc(p[1]+' · '+p[2])+'">'+personAv(p[0])+'<span>'+esc(p[0])+'<small>'+esc(p[1]+' · '+p[2])+'</small></span></button>').join('')+
+      '</div></div>');
+    setTimeout(()=>{ const i=el('nq'); if(i) i.focus(); }, 30);
+  }
+
+  /* ---------- recording a video: the camera, up to 5 minutes, kept in this browser tab ---------- */
+  function stopCamera(){
+    if(recState){ try{ recState.rec && recState.rec.state!=='inactive' && recState.rec.stop(); }catch(_){}
+      if(recState.stream) recState.stream.getTracks().forEach(t=>t.stop()); clearInterval(recState.timer); recState=null; }
+  }
+  function recordDlg(){
+    openDlg(top('Record a video')+'<div class="dm-body"><div class="cam" id="cam"><div class="msg">Starting your camera…</div><span class="clock" id="clk">0:00</span></div>'+
+      '<div class="note" id="recnote">Up to 5 minutes, sent to <b>'+esc((CHATS.find(x=>x.id===open)||{}).name||'')+'</b>. In this demo it stays in your browser tab - nothing is uploaded.</div></div>'+
+      '<div class="dm-foot" id="recfoot"><button class="btn ghost" data-act="close">Cancel</button><button class="btn" id="recbtn" data-act="recgo" disabled>● Record</button></div>');
+    if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || typeof MediaRecorder==='undefined'){
+      el('cam').innerHTML='<div class="msg">This browser can’t use the camera here. On a phone or a computer with a camera, this is where you record.</div>'; return;
+    }
+    navigator.mediaDevices.getUserMedia({video:{facingMode:'user'}, audio:true}).then(stream=>{
+      recState={stream, chunks:[], rec:null, started:0, timer:null};
+      const cam=el('cam'); cam.innerHTML='<video id="live" autoplay muted playsinline></video><span class="clock" id="clk">0:00</span>';
+      el('live').srcObject=stream; el('recbtn').disabled=false;
+    }, ()=>{
+      el('cam').innerHTML='<div class="msg">The camera wasn’t allowed. Allow the camera for this site and try again - or press 📎 to send a video you already have.</div>';
+    });
+  }
+  function recGo(){
+    if(!recState) return;
+    const types=['video/mp4','video/webm;codecs=vp9,opus','video/webm'];
+    const type=types.find(t=>MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t))||'';
+    const rec=new MediaRecorder(recState.stream, type?{mimeType:type}:undefined);
+    recState.rec=rec; recState.chunks=[]; recState.started=Date.now();
+    rec.ondataavailable=e=>{ if(e.data && e.data.size) recState && recState.chunks.push(e.data); };
+    rec.onstop=()=>{
+      if(!recState) return;
+      const blob=new Blob(recState.chunks,{type:rec.mimeType||'video/webm'}), url=URL.createObjectURL(blob); objectUrls.push(url);
+      const secs=Math.max(1,Math.round((Date.now()-recState.started)/1000));
+      recState.done={url, dur:Math.floor(secs/60)+':'+String(secs%60).padStart(2,'0')};
+      recState.stream.getTracks().forEach(t=>t.stop());
+      el('cam').classList.remove('recording');
+      el('cam').innerHTML='<video src="'+url+'" controls playsinline></video>';
+      el('recfoot').innerHTML='<button class="btn ghost" data-act="retake">Record again</button><button class="btn" data-act="recsend">Send video</button>';
+    };
+    rec.start(250);
+    el('cam').classList.add('recording');
+    el('recfoot').innerHTML='<button class="btn" data-act="recstop">■ Stop</button>';
+    recState.timer=setInterval(()=>{
+      const s=Math.floor((Date.now()-recState.started)/1000), c=el('clk'); if(c) c.textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0')+' / 5:00';
+      if(s>=300) recState.rec.stop();
+    }, 250);
+  }
+
+  /* ---------- clicks, typing ---------- */
+  document.addEventListener('click', e=>{
+    const n=e.target.closest('#notif'); if(n && n.dataset.chat){ n.classList.remove('on'); openChat(n.dataset.chat); return; }
+    const b=e.target.closest('[data-act]'); if(!b) return;
+    const act=b.dataset.act, v=b.dataset.v;
+    if(act==='open') return openChat(v);
+    if(act==='back'){ el('app').classList.remove('open'); open=null; renderList(); fit(); return; }
+    if(act==='filter'){ filter=v; renderChips(); renderList(); return; }
+    if(act==='send'){ const t=el('txt'); const text=(t.value||'').trim(); if(!text) return; t.value=''; send({text}); return; }
+    if(act==='attach'){ el('file').click(); return; }
+    if(act==='record') return recordDlg();
+    if(act==='recgo') return recGo();
+    if(act==='recstop'){ if(recState && recState.rec) recState.rec.stop(); clearInterval(recState && recState.timer); return; }
+    if(act==='retake'){ stopCamera(); recordDlg(); return; }
+    if(act==='recsend'){ const d=recState && recState.done; closeDlg(); if(d) send({video:d.url, dur:d.dur}); toast('Video sent ✓'); return; }
+    if(act==='play'){ const box=b.closest('.media'), vid=box.querySelector('video'); box.classList.add('playing'); vid.controls=true; vid.play().catch(()=>{}); return; }
+    if(act==='call'){ toast('Calls open in Microsoft Teams - free with Microsoft 365. (Demo: nothing opens.)'); return; }
+    if(act==='alerts'){ alertTab=DEVICE; return alertsDlg(); }
+    if(act==='atab'){ alertTab=v; alertsDlg(); return; }
+    if(act==='alertson'){ setAlerts(true); alertsOnDlg(); setTimeout(()=>notify(CHATS[0], {from:'Tasha Brooks', video:true}), 900); return; }
+    if(act==='alertsoff'){ setAlerts(false); closeDlg(); toast('Alerts are off'); return; }
+    if(act==='hidealerts'){ alertsHidden=true; try{ localStorage.setItem('hb_chat_alerts_hide','1'); }catch(_){} renderAlertbar();
+      toast('Closed. The bell next to New chat turns alerts on any time.'); return; }
+    if(act==='sample'){ notify(CHATS[0], {from:'Tasha Brooks', video:true}); return; }
+    if(act==='new') return newChatDlg();
+    if(act==='mk'){
+      const t=b.dataset.t; let c=CHATS.find(x=>x.name===v);
+      if(!c){ c={id:'n'+Date.now(), type:t, name:v, sub:t==='person'?(b.dataset.sub||''):'', members:t==='person'?[v,ME]:[ME,'Tasha Brooks','Priya Nair','Liam Ortiz'], unread:0, msgs:[]};
+        CHATS.push(c); c.msgs.push({from:ME, at:Date.now(), text:'👋', seen:false}); }
+      closeDlg(); openChat(c.id); return;
+    }
+    if(act==='close') return closeDlg();
+  });
+  el('dlg').addEventListener('click', e=>{ if(e.target===el('dlg')) closeDlg(); });
+  document.addEventListener('keydown', e=>{
+    if(e.key==='Escape') closeDlg();
+    if(e.key==='Enter' && !e.shiftKey && e.target && e.target.id==='txt'){ e.preventDefault(); const text=(e.target.value||'').trim(); if(text){ e.target.value=''; send({text}); } }
+  });
+  document.addEventListener('input', e=>{
+    if(e.target.id==='q'){ q=e.target.value; renderList(); }
+    if(e.target.id==='nq'){ const qq=e.target.value.trim().toLowerCase(); document.querySelectorAll('#pick button').forEach(x=>{ x.style.display=!qq||x.textContent.toLowerCase().indexOf(qq)>=0?'':'none'; }); }
+    if(e.target.id==='txt'){ e.target.style.height='auto'; e.target.style.height=Math.min(120,e.target.scrollHeight)+'px'; }
+  });
+  el('file').addEventListener('change', e=>{
+    const f=e.target.files && e.target.files[0]; e.target.value=''; if(!f) return;
+    const url=URL.createObjectURL(f); objectUrls.push(url);
+    if(/^video\//.test(f.type)) send({video:url, dur:'video'}); else send({photo:url});
+    toast((/^video\//.test(f.type)?'Video':'Photo')+' sent ✓');
+  });
+  window.addEventListener('pagehide', ()=>{ stopCamera(); objectUrls.forEach(u=>URL.revokeObjectURL(u)); });
+
+  renderAlertbar(); renderChips(); renderList(); renderConv();
+  /* On a computer the newest chat is open beside the list; a phone starts at the list. */
+  const wide=window.matchMedia('(min-width:761px)');
+  const firstOpen=()=>{ if(wide.matches && !open) openChat(CHATS.slice().sort((a,b)=>last(b).at-last(a).at)[0].id, false); };
+  firstOpen(); if(wide.addEventListener) wide.addEventListener('change', firstOpen);
+  // again once the header is in, the page has loaded, or the window changes
+  document.addEventListener('DOMContentLoaded', fit); window.addEventListener('load', fit); window.addEventListener('resize', fit);
+  if(window.ResizeObserver) new ResizeObserver(fit).observe(document.body);
+})();
+</script>
+</body>
+</html>

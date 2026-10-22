@@ -16,6 +16,7 @@ const ICONS = {
   announce:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11v2a1 1 0 0 0 1 1h3l5 4V6L7 10H4a1 1 0 0 0-1 1z"/><path d="M16 9a4 4 0 0 1 0 6"/></svg>',
   menu:'<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>',
   arrow:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>',
+  chat:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-12.4 7.6L3 20.5l1.4-5.1A8.5 8.5 0 1 1 21 11.5z"/></svg>',
 };
 
 // The public demo uses fictional brands and locations throughout.
@@ -26,7 +27,7 @@ function buildHeader() {
   const active = document.body.dataset.page || "";
   const navItems = [
     {label:"Home", href:"index.html", key:"home"},
-    ...MODULES.map(m => ({label:m.label, href:m.href, key:m.key})),
+    ...MODULES.filter(m => m.nav !== false).map(m => ({label:m.label, href:m.href, key:m.key})),
   ];
   const nav = navItems.map(n =>
     `<a href="${n.href}" class="${n.key===active?'active':''}">${n.label}</a>`).join("");
@@ -45,6 +46,7 @@ function buildHeader() {
       </div>
       <button class="demo-launcher" type="button" onclick="toggleDemoGuide(true)">Explore demo</button>
       <div class="hdr-spacer"></div>
+      <a class="hdr-chat${active==='chat'?' on':''}" href="chat.html" title="Team chat" aria-label="Team chat">${ICONS.chat}<span class="dot" id="hdrChatDot" hidden></span></a>
       <button class="menu-toggle" aria-label="Menu" onclick="toggleNav()">${ICONS.menu}</button>
     </div>
     <nav class="nav" id="primaryNav"><div class="nav-inner">${nav}</div></nav>
@@ -53,6 +55,18 @@ function buildHeader() {
   const slot = document.getElementById("hdr");
   if (slot) slot.outerHTML = hdr;
 }
+
+/* The header's chat button: unread messages, kept for this browser tab (chat.html writes hb_chat_unread),
+   so every new visit starts the demo at 3 unread. */
+function chatBadge() {
+  const dot = document.getElementById("hdrChatDot");
+  if (!dot) return;
+  let n = 3;
+  try { const v = sessionStorage.getItem("hb_chat_unread"); if (v !== null) { const m = JSON.parse(v) || {}; n = Object.values(m).reduce((t, x) => t + (Number(x) || 0), 0); } } catch (_) {}
+  dot.hidden = !n; dot.textContent = n > 9 ? "9+" : String(n);
+  dot.parentNode.setAttribute("aria-label", n ? `Team chat, ${n} unread` : "Team chat");
+}
+window.hbChatBadge = chatBadge;
 
 function buildFooter() {
   const ftr = `
@@ -85,8 +99,9 @@ function buildDemoGuide() {
         <a href="forms.html"><span>02</span><b>Submit a sample request</b><small>Open PTO, expense, IT, or maintenance forms.</small></a>
         <a href="calendars.html"><span>03</span><b>Coordinate eight locations</b><small>Filter the weekly doctor and office schedule.</small></a>
         <a href="scorecards.html"><span>04</span><b>Explore operating performance</b><small>Compare KPIs and location-level signals.</small></a>
+        <a href="chat.html"><span>05</span><b>Message the team</b><small>Send a video or photo, reply, and see a phone alert arrive.</small></a>
       </div>
-      <div class="demo-guide__note"><strong>What this demonstrates</strong><span>Product strategy, information architecture, responsive UX, workflow automation, and operational analytics.</span></div>
+      <div class="demo-guide__note"><strong>What this demonstrates</strong><span>Product strategy, information architecture, responsive UX, team messaging, workflow automation, and operational analytics.</span></div>
     </div>`;
   document.body.appendChild(guide);
 }
@@ -400,7 +415,7 @@ function handleDelegatedClick(e) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  buildHeader(); buildFooter(); buildDemoGuide(); buildSearchOverlay(); buildModal(); buildHomeTiles(); buildDirectory(); buildSchedule(); buildScorecards();
+  buildHeader(); chatBadge(); buildFooter(); buildDemoGuide(); buildSearchOverlay(); buildModal(); buildHomeTiles(); buildDirectory(); buildSchedule(); buildScorecards();
   document.addEventListener("click", handleDelegatedClick);
   const si = document.getElementById("searchInput");
   if (si) si.addEventListener("input", e => renderSearch(e.target.value));

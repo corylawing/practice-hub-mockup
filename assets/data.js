@@ -7,6 +7,8 @@
 const MODULES = [
   { key: "office",   label: "Manage My Office", href: "manage-my-office.html", icon: "office",
     desc: "Your daily workspace — KPIs, expenses, vendors, supplies." },
+  { key: "chat",     label: "Team Chat",        href: "chat.html",            icon: "chat", nav: false,
+    desc: "Message a person, an office or a team — videos, photos and phone alerts." },
   { key: "hr",       label: "HR",               href: "hr.html",              icon: "hr",
     desc: "Handbook, PTO, benefits, policies & new-hire resources." },
   { key: "forms",    label: "Forms & Requests", href: "forms.html",           icon: "forms",
@@ -27,6 +29,8 @@ const MODULES = [
 
 /* Searchable resources across the hub */
 const RESOURCES = [
+  { t:"Team Chat", d:"Message a person, an office or a team", sec:"Chat", href:"chat.html", ic:"lnk",
+    syn:["chat","message","messages","text","video","photo","dm","talk","teams","alerts"] },
   { t:"Employee Handbook 2026", d:"Policies, conduct & expectations", sec:"HR", href:"hr.html", ic:"doc",
     syn:["handbook","rules","conduct","policy manual"] },
   { t:"PTO Policy 2026", d:"Paid time off, accrual & how to request", sec:"HR", href:"hr.html", ic:"doc",
