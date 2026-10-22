@@ -555,6 +555,11 @@ has none of them). CSV: her main sheet's order, one heading row per office, UTF-
 page). Demo "today" is Tue 20 Oct 09:41 (due day). Old saved clicks (v1) still load. Doctors and people in the
 mock-up are made up (her real per-day doctors are added by her in the real build). OPEN: when the holiday IS the
 Monday (Labor Day), is the sheet still due that Monday?
+Her answers, same day: (1) FOLC is Cruces FFO. (2) "I type in Goal, TC/OM and extra they type in Phone, DIBS, POG" -
+so the office's own columns are on the OFFICE sheet now ("<office> bonuses" group: Lubbock Phone $, San Angelo DIBS $ and
+POG $; Clovis's grandfathered Sick hrs were already there) and read-only on her combined sheet; Goal, TC/OM and Extra
+stay hers. (3) "No, it is only when the Holiday falls later than Monday" - due Monday only when a holiday is Tue-Fri of
+that week; a Monday holiday keeps Tuesday 2 pm (checked: #19 Labor Day -> Tue Sep 8; #14 July 3rd -> Mon Jun 29).
 
 **TCs see every office in "By office" (19/10, hc85).** Selene: "we do want the Treatment Coordinators to be able to see
 one another's results. Please make sure they can all view the 'By Office' box so they can see conversion rates across
