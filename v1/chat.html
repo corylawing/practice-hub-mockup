@@ -51,10 +51,17 @@
 
   /* the "turn on alerts" strip */
   /* alerts, in the chat list itself (Cory: "can't the turn on alerts be on the chat itself?") */
-  .alertbar{display:flex;align-items:center;gap:8px;background:var(--teal-soft);border-radius:10px;padding:6px 6px 6px 10px;font-size:13px;color:var(--navy)}
+  .alertbar{display:flex;align-items:center;gap:8px;background:var(--teal-soft);border-radius:10px;padding:6px 4px 6px 10px;font-size:13px;color:var(--navy)}
+  .alertbar[hidden]{display:none}
   .alertbar .grow{flex:1;min-width:0}
   .alertbar .btn.sm{padding:5px 10px;font-size:12.5px}
-  .alertbar.on{background:#E7F6EE}
+  .alertbar .x{font-size:19px;width:26px;height:26px;padding:0;border-radius:8px;flex:none}
+  .alertbar .x:hover{background:rgba(15,42,74,.08)}
+  /* the bell beside New chat: alerts on / off, any time (the strip above can be closed) */
+  .ib.sm{width:34px;height:34px;border-radius:10px;position:relative}
+  .ib.sm svg{width:18px;height:18px}
+  .bellb.on{color:var(--teal-600);border-color:#9ED8D4}
+  .bellb.on::after{content:"";position:absolute;top:5px;right:6px;width:7px;height:7px;border-radius:50%;background:#2E9E6B;border:1.5px solid #fff}
 
   /* the chat app: the list beside the conversation (a phone shows one at a time) */
   .chatapp{display:grid;grid-template-columns:330px minmax(0,1fr);height:max(300px, calc(100vh - 182px));background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
@@ -141,6 +148,21 @@
   .steps li::before{content:counter(s);position:absolute;left:0;top:0;width:24px;height:24px;border-radius:50%;background:var(--teal);color:#fff;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center}
   .ui{display:inline-block;border:1px solid #cbd5e1;border-radius:7px;padding:0 7px;font-size:13px;font-weight:700;background:#fff;white-space:nowrap}
   .note{background:var(--teal-soft);border-radius:10px;padding:9px 12px;font-size:13.5px;color:#0c5b57}
+  .lead{color:var(--ink);line-height:1.5}
+  .other{font-size:12.5px;color:var(--soft)}
+  .other button{background:none;border:none;padding:0;font:inherit;font-weight:700;color:var(--teal-600);text-decoration:underline;cursor:pointer}
+  .ui svg{width:13px;height:13px;vertical-align:-2px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  /* a picture of the question the browser / the phone asks, with Allow ringed */
+  .bp{margin-top:9px;max-width:290px;background:#fff;border:1px solid #D5DCE4;border-radius:12px;box-shadow:0 6px 18px rgba(15,42,74,.14);padding:12px 12px 10px;font-size:13px;color:#1f2937;line-height:1.4}
+  .bp-b{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}
+  .bp-b span{border:1px solid #cbd5e1;border-radius:8px;padding:4px 12px;font-weight:600;font-size:12.5px;color:#334155}
+  .bp-b .go{background:#1a73e8;border-color:#1a73e8;color:#fff;box-shadow:0 0 0 3px #fff,0 0 0 5px var(--teal2)}
+  .bp.ph{max-width:270px;background:#F2F2F7;border-radius:14px;padding:14px 0 0;text-align:center}
+  .bp.ph .bp-t{padding:0 16px}
+  .bp.ph .bp-b{display:grid;grid-template-columns:1fr 1fr;gap:0;margin-top:12px;border-top:1px solid #C6C6C8}
+  .bp.ph .bp-b span{border:none;border-radius:0;color:#007AFF;padding:10px 0;font-size:14px;font-weight:500}
+  .bp.ph .bp-b span+span{border-left:1px solid #C6C6C8}
+  .bp.ph .bp-b .go{background:none;color:#007AFF;font-weight:700;box-shadow:inset 0 0 0 2px var(--teal2);border-radius:0 0 14px 0}
   .pick{display:flex;flex-direction:column;gap:2px;max-height:300px;overflow-y:auto;border:1px solid var(--line);border-radius:12px}
   .pick button{display:flex;align-items:center;gap:10px;background:#fff;border:none;border-bottom:1px solid #EEF1F5;padding:9px 12px;cursor:pointer;text-align:left;font:inherit}
   .pick button:hover{background:var(--teal-soft)}
@@ -149,6 +171,7 @@
   /* a phone's alert, as Home-Brace would send it */
   .notif{position:fixed;top:12px;left:50%;transform:translate(-50%,-140%);width:min(380px,calc(100% - 24px));background:rgba(250,251,252,.97);backdrop-filter:blur(8px);border-radius:18px;box-shadow:0 12px 34px rgba(15,42,74,.28);padding:11px 14px;display:flex;gap:11px;align-items:flex-start;z-index:90;transition:transform .35s ease;cursor:pointer}
   .notif.on{transform:translate(-50%,0)}
+  @media(min-width:761px){ .notif{left:auto;right:16px;transform:translateX(calc(100% + 30px))} .notif.on{transform:none} }
   .notif img{width:36px;height:36px;border-radius:9px;flex:none}
   .notif .t{font-size:12px;color:var(--soft);display:flex;justify-content:space-between;gap:8px}
   .notif b{display:block;font-size:14px;color:#111}
@@ -189,7 +212,7 @@
   <div class="chatapp" id="app">
     <aside class="list" aria-label="Your chats">
       <div class="list-top">
-        <div class="row"><h1>Chats</h1><button class="btn sm" data-act="new">＋ New chat</button></div>
+        <div class="row"><h1>Chats</h1><button class="ib sm bellb" id="bellb" data-act="alerts" title="Turn on alerts" aria-label="Turn on alerts"><svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0112 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 004 0"/></svg></button><button class="btn sm" data-act="new">＋ New chat</button></div>
         <div class="alertbar" id="alertbar"></div>
         <input class="search" id="q" type="search" placeholder="Search chats" autocomplete="off" aria-label="Search chats">
         <div class="chips" id="chips"></div>
@@ -260,6 +283,12 @@
   const REPLIES=['Got it, thanks!','👍','Perfect - see you there.','Watched it, makes sense.','On it.','Thank you!'];
   let open=null, filter='all', q='', alertsOn=false, recState=null, objectUrls=[], stick=true, ro=null;
   try{ alertsOn=localStorage.getItem('ph_chat_alerts')==='1'; }catch(_){}
+  /* which device this is, so the alert steps are only the ones for it; and whether they closed the strip */
+  const UA=navigator.userAgent||'';
+  const DEVICE=(/iPhone|iPad|iPod/.test(UA) || (/Macintosh/.test(UA) && navigator.maxTouchPoints>1)) ? 'iphone' : /Android/.test(UA) ? 'android' : 'computer';
+  const INSTALLED=navigator.standalone===true || !!(window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+  let alertsHidden=false; try{ alertsHidden=localStorage.getItem('ph_chat_alerts_hide')==='1'; }catch(_){}
+  const setAlerts=on=>{ alertsOn=on; try{ localStorage.setItem('ph_chat_alerts', on?'1':'0'); }catch(_){} renderAlertbar(); };
 
   /* ---------- time, as a phone shows it ---------- */
   const dayKey=t=>{ const d=new Date(t); return d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate(); };
@@ -284,12 +313,15 @@
   }
 
   /* ---------- the alerts strip ---------- */
+  /* The strip only shows while alerts are off, and it can be closed for good (Cory, 22/10: "they should have the
+     ability to close that out and its not always there"). The bell beside New chat always works. */
   function renderAlertbar(){
     const b=el('alertbar');
-    b.className='alertbar'+(alertsOn?' on':'');
-    b.innerHTML = alertsOn
-      ? '<span>🔔</span><span class="grow"><b>Alerts are on</b></span><button class="btn ghost sm" data-act="sample" title="When someone sends you a message or a video, your phone shows it - like a text.">See a sample</button>'
-      : '<span>🔔</span><span class="grow"><b>Get alerts on your phone</b></span><button class="btn sm" data-act="alerts" title="When a message comes in, your phone shows it - like a text. It takes a minute, once.">Turn on</button>';
+    b.hidden=alertsOn || alertsHidden;
+    b.innerHTML='<span>🔔</span><span class="grow"><b>Get message alerts</b></span>'+
+      '<button class="btn sm" data-act="alerts">Turn on</button>'+
+      '<button class="x" data-act="hidealerts" title="Close (the bell next to New chat turns alerts on any time)" aria-label="Close">×</button>';
+    const bb=el('bellb'); if(bb){ bb.classList.toggle('on', alertsOn); bb.title=alertsOn?'Alerts are on':'Turn on alerts'; bb.setAttribute('aria-label', bb.title); }
   }
   /* The chat runs to the bottom of the screen (on a phone, to just above the tab bar), so the message box and
      Send are always in view. A very short window keeps a minimum and lets the page scroll instead. */
@@ -400,15 +432,43 @@
   function openDlg(html){ el('dlgcard').innerHTML=html; el('dlg').classList.add('open'); }
   function closeDlg(){ stopCamera(); el('dlg').classList.remove('open'); }
   const top=t=>'<div class="dm-top"><h3>'+t+'</h3><button class="x" data-act="close" aria-label="Close">×</button></div>';
-  let alertTab='iphone';
+  /* Turning alerts on (Cory, 22/10: "This isn't very clear"): only the steps for the device in your hand, in plain
+     words, with a picture of the question the browser or phone asks. Another device's steps are a click away. */
+  let alertTab=DEVICE;
+  const SHARE='<svg viewBox="0 0 24 24"><path d="M12 15V3M8 7l4-4 4 4"/><path d="M7 11H5v10h14V11h-2"/></svg>';
   function alertsDlg(){
-    const T={
-      iphone:'<ol class="steps"><li>Open Home-Brace in Safari and tap <span class="ui">Share ⎙</span> at the bottom.</li><li>Tap <span class="ui">Add to Home Screen</span>, then <span class="ui">Add</span>.</li><li>Open Home-Brace from the new icon on your home screen and tap <span class="ui">Allow</span> when it asks about notifications.</li></ol><div class="note">Apple only lets web apps send alerts once they’re on the home screen. iPhones need iOS 16.4 or newer (from 2023 on).</div>',
-      android:'<ol class="steps"><li>Open Home-Brace in Chrome.</li><li>Tap <span class="ui">Turn on alerts</span>, then <span class="ui">Allow</span>.</li></ol><div class="note">Optional: Chrome’s menu ⋮ → <b>Add to Home screen</b> gives Home-Brace its own icon.</div>',
-      computer:'<ol class="steps"><li>Open Home-Brace in Chrome, Edge or Safari.</li><li>Click <span class="ui">Turn on alerts</span>, then <span class="ui">Allow</span>.</li></ol>'};
-    openDlg(top('Turn on alerts')+'<div class="dm-body"><div>Once, on each phone or computer you use. Then a new message shows up like a text, even when Home-Brace is closed.</div>'+
-      '<div class="tabs">'+[['iphone','iPhone'],['android','Android'],['computer','Computer']].map(x=>'<button class="chip'+(alertTab===x[0]?' on':'')+'" data-act="atab" data-v="'+x[0]+'">'+x[1]+'</button>').join('')+'</div>'+
-      T[alertTab]+'</div><div class="dm-foot"><button class="btn ghost" data-act="close">Not now</button><button class="btn" data-act="alertson">Allow alerts</button></div>');
+    if(alertsOn && alertTab===DEVICE) return alertsOnDlg();
+    const t=alertTab, mine=t===DEVICE, pc=t==='computer';
+    const name={iphone:'iPhone', android:'Android phone', computer:'computer'}[t];
+    const title=mine ? 'Get alerts on '+(pc?'this computer':'your '+name) : 'Alerts on '+(pc?'a computer':'an '+name);
+    const ask=pc ? '<div class="bp"><div class="bp-t">🔔 <b>Home-Brace</b> wants to<br>show notifications</div><div class="bp-b"><span>Block</span><span class="go">Allow</span></div></div>'
+                 : '<div class="bp ph"><div class="bp-t"><b>“Home-Brace” would like to send you notifications</b></div><div class="bp-b"><span>Don’t Allow</span><span class="go">Allow</span></div></div>';
+    let lead, steps, foot;
+    if(t==='iphone' && !(mine && INSTALLED)){
+      lead='Your iPhone shows a new message like a text, even when Home-Brace is closed. Apple only allows that for apps on the home screen, so first put Home-Brace there. You do this once.';
+      steps=['In Safari, tap the Share button <span class="ui">'+SHARE+'</span> at the bottom of the screen.',
+             'Tap <span class="ui">Add to Home Screen</span>, then <span class="ui">Add</span>.',
+             'Open Home-Brace from its new icon, go to Chat and tap <span class="ui">Turn on</span>. Your iPhone asks - tap <b>Allow</b>.'+ask];
+      foot='<button class="btn" data-act="close">Got it</button>';
+    } else {
+      lead=pc ? 'A small alert pops up in the corner of your screen when someone messages you - even while you’re in another window.'
+              : 'Your phone shows a new message like a text, even when Home-Brace is closed.';
+      steps=[(pc?'Click':'Tap')+' <span class="ui">Turn on alerts</span> below.',
+             (pc?'Your browser asks to show notifications. Click':'Your phone asks. Tap')+' <b>Allow</b>.'+ask];
+      foot=mine ? '<button class="btn ghost" data-act="close">Not now</button><button class="btn" data-act="alertson">Turn on alerts</button>'
+                : '<button class="btn" data-act="close">Got it</button>';
+    }
+    const others=['iphone','android','computer'].filter(x=>x!==t).map(x=>'<button data-act="atab" data-v="'+x+'">'+{iphone:'iPhone',android:'Android',computer:'Computer'}[x]+'</button>').join(' · ');
+    openDlg(top(title)+'<div class="dm-body"><div class="lead">'+lead+'</div><ol class="steps">'+steps.map(x=>'<li>'+x+'</li>').join('')+'</ol>'+
+      (t==='iphone'?'<div class="note">iPhones need iOS 16.4 or newer (from 2023 on).</div>':'')+
+      '<div class="other">Setting up a different device? '+others+'</div></div><div class="dm-foot">'+foot+'</div>');
+  }
+  function alertsOnDlg(){
+    openDlg(top('Alerts are on ✓')+'<div class="dm-body"><div class="lead">When someone messages you, '+
+      (DEVICE==='computer'?'an alert pops up in the corner of your screen.':'your phone shows it like a text.')+'</div>'+
+      '<div><button class="btn ghost" data-act="sample">Show me a sample</button></div>'+
+      '<div class="other">To turn them off later, click the bell next to New chat.</div></div>'+
+      '<div class="dm-foot"><button class="btn ghost" data-act="alertsoff">Turn alerts off</button><button class="btn" data-act="close">Done</button></div>');
   }
   function newChatDlg(){
     const staff=(window.STAFF||[]).map(p=>p.n).filter(n=>n && n!==ME && !/Lawing/i.test(n)).slice(0,40);
@@ -485,10 +545,12 @@
     if(act==='recsend'){ const d=recState && recState.done; closeDlg(); if(d) send({video:d.url, dur:d.dur}); toast('Video sent ✓'); return; }
     if(act==='play'){ const box=b.closest('.media'), vid=box.querySelector('video'); box.classList.add('playing'); vid.controls=true; vid.play().catch(()=>{}); return; }
     if(act==='call'){ toast('Calls open in Microsoft Teams - free. (Mock-up: nothing opens.)'); return; }
-    if(act==='alerts') return alertsDlg();
+    if(act==='alerts'){ alertTab=DEVICE; return alertsDlg(); }
     if(act==='atab'){ alertTab=v; alertsDlg(); return; }
-    if(act==='alertson'){ alertsOn=true; try{ localStorage.setItem('ph_chat_alerts','1'); }catch(_){} closeDlg(); renderAlertbar(); toast('Alerts are on ✓');
-      setTimeout(()=>notify(CHATS[0], {from:'Gabriela Garrison', video:true}), 1200); return; }
+    if(act==='alertson'){ setAlerts(true); alertsOnDlg(); setTimeout(()=>notify(CHATS[0], {from:'Gabriela Garrison', video:true}), 900); return; }
+    if(act==='alertsoff'){ setAlerts(false); closeDlg(); toast('Alerts are off'); return; }
+    if(act==='hidealerts'){ alertsHidden=true; try{ localStorage.setItem('ph_chat_alerts_hide','1'); }catch(_){} renderAlertbar();
+      toast('Closed. The bell next to New chat turns alerts on any time.'); return; }
     if(act==='sample'){ notify(CHATS[0], {from:'Gabriela Garrison', video:true}); return; }
     if(act==='new') return newChatDlg();
     if(act==='mk'){

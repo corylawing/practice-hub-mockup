@@ -577,7 +577,14 @@ screen. Then Cory: "take off tour and feedback and make the chat go to the botto
 need a title and subtitle, and can't the turn on alerts be on the chat itself?" - so the chat page has NO page title, NO
 tour.js (no Tour & Feedback button there), the alerts strip sits in the chat list under "Chats", and fit() runs the chat
 to 16px above the bottom of the screen (a phone: 10px above the tab bar; body padding off there). Upright videos are
-capped at min(320px, 45vh) tall (`.media.tall`) so one doesn't fill the conversation.
+capped at min(320px, 45vh) tall (`.media.tall`) so one doesn't fill the conversation. Alerts (Cory: "This isn't very clear.. Plus they should
+have the ability to close that out and its not always there"): the dialog shows only THIS device's steps (DEVICE from the
+user agent; iPadOS counts as iPhone), in plain words, with a picture of the browser's / phone's own question and Allow
+ringed; other devices are links under it. iPhone (not installed) = add to home screen first, button "Got it". The strip
+("Get message alerts") shows only while alerts are off and has an x (localStorage `ph_chat_alerts_hide`); the bell beside
+New chat turns alerts on/off any time (green dot when on). On a computer the sample alert comes in top right.
+REAL BUILD: chat avatars = `PH.photoFor(mail)` (the Home-Brace profile photo - their own upload or one an admin set),
+initials when there is none (Cory, 22/10: "Will it show users photos in the chat? ... for production it would").
 **Payroll: an "i" beside each pay column on Heather's combined sheet (22/10, hc113).** Cory: "for heathers columns there
 should be a i they can hover over to know what it means". PP bonus, Goal, TC/OM, Holiday, On call, the office's own
 columns (Phone, DIBS, POG, Sick hrs), Extra, Total, Reimburse: `info(label, text)` in combHead, worded from her rules and
