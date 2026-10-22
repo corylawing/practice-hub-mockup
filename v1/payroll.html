@@ -512,18 +512,19 @@
     let h='<div class="tblwrap"><table class="t sheet"><thead><tr>'+
       '<th class="grp nm"></th><th class="grp" colspan="5">Hours</th><th class="grp" colspan="'+(1+(sickCol?1:0)+(hol?1:0))+'">Time off</th><th class="grp" colspan="6">On call, travel &amp; extras</th>'+(ownM.length?'<th class="grp" colspan="'+ownM.length+'">'+esc(OFF[o].n)+' bonuses</th>':'')+'<th class="grp" colspan="2">Pay-period bonus</th><th class="grp">Notes</th></tr><tr>'+
       '<th class="nm">Employee</th>'+
-      '<th class="n gl" title="Hours worked, '+esc(span(pr.start,pr.w1end))+'">Wk 1</th><th class="n" title="Hours worked, '+esc(span(pr.w2start,pr.end))+'">Wk 2</th>'+
-      '<th class="n" title="Regular hours: up to 40 in each week">Regular</th>'+
-      '<th class="n wr" title="Hours over 40 in week 1 ('+esc(span(pr.start,pr.w1end))+')">OT Wk 1</th><th class="n wr" title="Hours over 40 in week 2 ('+esc(span(pr.w2start,pr.end))+')">OT Wk 2</th>'+
-      '<th class="n gl wr" title="Vacation / PTO hours">PTO hrs</th>'+
-      (sickCol?'<th class="n wr" title="Sick hours - only for the person who kept them from before">Sick hrs</th>':'')+
-      (hol?'<th class="wr" title="Home-Brace knows each person’s 90-day review date, so nobody fills this in">'+esc(pr.hol.n)+'</th>':'')+
-      '<th class="n gl wr" title="Count 1 for each weekend they were on call this pay period">On call</th>'+
-      '<th class="n wr" title="Round trips to another office (a round trip = 1). Don’t add commuter miles or road time - commuter pay is worked out from the federal rate.">Com&shy;mutes</th><th title="Which office they commuted to">To</th>'+
-      '<th class="n wr" title="Rarely used: only when a doctor asks for an amount. Say which doctor in Notes.">Exception commuter $</th>'+
-      '<th class="n wr" title="Miles driven for marketing">Marketing mi</th><th class="n wr" title="Special events only, not office-to-office or marketing. Say what for in Notes.">Other mi</th>'+
-      ownM.map((c,i)=>'<th class="n wr'+(i?'':' gl')+'" title="A bonus only '+esc(OFF[o].n)+' has: the amount for this person, this pay period">'+esc(c.n)+' $</th>').join('')+
-      '<th class="gl wr" title="Missed a doctor (green) day? Then no bonus - unless one of your exceptions applies">Missed green</th><th>Bonus</th>'+
+      '<th class="n gl">'+info('Wk 1','Hours worked, '+span(pr.start,pr.w1end))+'</th><th class="n">'+info('Wk 2','Hours worked, '+span(pr.w2start,pr.end))+'</th>'+
+      '<th class="n">'+info('Regular','Regular hours: up to 40 in each week')+'</th>'+
+      '<th class="n wr">'+info('OT Wk 1','Hours over 40 in week 1 ('+span(pr.start,pr.w1end)+')')+'</th><th class="n wr">'+info('OT Wk 2','Hours over 40 in week 2 ('+span(pr.w2start,pr.end)+')')+'</th>'+
+      '<th class="n gl wr">'+info('PTO hrs','Vacation / PTO hours')+'</th>'+
+      (sickCol?'<th class="n wr">'+info('Sick hrs','Sick hours - only for the person who kept them from before')+'</th>':'')+
+      (hol?'<th class="wr">'+info(esc(pr.hol.n),'Home-Brace knows each person’s 90-day review date, so nobody fills this in')+'</th>':'')+
+      '<th class="n gl wr">'+info('On call','Count 1 for each weekend they were on call this pay period')+'</th>'+
+      '<th class="n wr">'+info('Com&shy;mutes','Round trips to another office (a round trip = 1). Don’t add commuter miles or road time - commuter pay is worked out from the federal rate.')+'</th><th>'+info('To','Which office they commuted to')+'</th>'+
+      '<th class="n wr">'+info('Exception commuter $','Rarely used: only when a doctor asks for an amount. Say which doctor in Notes.')+'</th>'+
+      '<th class="n wr">'+info('Marketing mi','Miles driven for marketing')+'</th><th class="n wr">'+info('Other mi','Special events only, not office-to-office or marketing. Say what for in Notes.')+'</th>'+
+      ownM.map((c,i)=>'<th class="n wr'+(i?'':' gl')+'">'+info(esc(c.n)+' $','A bonus only '+OFF[o].n+' has: the amount for this person, this pay period')+'</th>').join('')+
+      '<th class="gl wr">'+info('Missed green','Missed a doctor (green) day? Then no bonus - unless one of your exceptions applies')+'</th>'+
+      '<th>'+info('Bonus','Full, Partial or None. For Partial, put how much comes off (a % or a $ amount) and say why in Notes.')+'</th>'+
       '<th class="gl">Notes</th></tr></thead><tbody>';
     ppl.forEach(p=>{
       const x=s.rows[p.id]||blank(), c=calc(p,x,pr);
@@ -643,7 +644,9 @@
   /* The column headings again at the top of every office, the way her main sheet has them - and the office's own
      columns named there (Phone, DIBS, POG, Sick). Cory, 22/10: "for heathers columns there should be a i they can
      hover over to know what it means" - an "i" beside each pay column, worded from her rules and calc() above. */
-  const info=(label,t)=>'<span class="lbl">'+label+'<button type="button" class="info" data-tip="'+esc(t)+'" aria-label="'+esc('What '+label+' means: '+t)+'">i</button></span>';
+  const info=(label,t)=>{ const sh=label.lastIndexOf('&shy;'), i=Math.max(label.lastIndexOf(' ')+1, sh<0?0:sh+5);
+    return label.slice(0,i)+'<span class="lbl">'+label.slice(i)+'<button type="button" class="info" data-tip="'+esc(t)+'" aria-label="'+
+      esc('What '+label.replace(/&shy;/g,'')+' means: '+t)+'">i</button></span>'; };
   const ownTip=(o,c)=>c.hrs ? 'Sick hours kept from before - hours, not dollars. They come from '+OFF[o].n+'’s sheet.'
                             : OFF[o].n+'’s '+c.n+' bonus. It comes from '+OFF[o].n+'’s sheet.';
   const combHead=o=>'<tr class="hd"><th class="nm">Employee</th><th class="n">Regular hrs</th><th class="n">OT Wk 1</th><th class="n">OT Wk 2</th><th class="n">PTO</th>'+

@@ -582,7 +582,9 @@ capped at min(320px, 45vh) tall (`.media.tall`) so one doesn't fill the conversa
 should be a i they can hover over to know what it means". PP bonus, Goal, TC/OM, Holiday, On call, the office's own
 columns (Phone, DIBS, POG, Sick hrs), Extra, Total, Reimburse: `info(label, text)` in combHead, worded from her rules and
 calc() (no new facts - DIBS/POG are only "San Angelo's ... bonus"); shown on hover, keyboard focus or a tap (one fixed
-`.tipbox`, so the table's scroll box can't clip it). The office sheet already had hover titles without an "i". Also fixed: bellBadge() put its count on the first `.ph-bell` (the search button) - it only looked right because
+`.tipbox`, so the table's scroll box can't clip it). Then "yes add the i to the office sheet too": every office-sheet
+heading's old hover title is now the same "i" (same words), plus Bonus (Full / Partial / None, from issues()). No `<th
+title=` is left in payroll.html. info() keeps the "i" with the label's last word (or after a &shy;) so headings still wrap. Also fixed: bellBadge() put its count on the first `.ph-bell` (the search button) - it only looked right because
 both sit in `.ph-bw`; it now targets the bell (`.ph-nb`), same look.
 
 **TCs see every office in "By office" (19/10, hc85).** Selene: "we do want the Treatment Coordinators to be able to see
