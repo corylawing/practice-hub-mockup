@@ -7,14 +7,31 @@
 </head>
 <body>
 <!--
-  Deliberately blank. This page exists ONLY to be the sign-in popup's landing spot.
+  Deliberately blank. This page exists to be the sign-in popup's landing spot.
 
   Microsoft redirects the popup here with the auth response in the URL fragment, and
   the window that opened it reads that fragment. Anything that runs here risks
   consuming or clearing the fragment first, which surfaces as MSAL's
   "Hash value cannot be processed because it is empty".
 
-  So: no scripts, no styles, no fonts, no MSAL. Do not add any.
+  So: no styles, no fonts, no MSAL. The ONE script below never runs in a popup.
+
+  The exception (phone alerts, 22/10/2026): an iPhone home-screen app can't use the
+  popup, so there (sandbox only for now) gate.js sends the whole page to Microsoft and
+  back. That return lands here with no popup around it - no opener - and gate.js left
+  the address of the page that started (sessionStorage ph_signin_redirect). Hand the
+  answer straight back to that page, unread; its gate.js gives it to MSAL. A popup has
+  an opener, so the script stops at its first line and the fragment is left alone.
 -->
+<script>
+(function(){
+  try{
+    if (window.opener) return;
+    var back = sessionStorage.getItem('ph_signin_redirect');
+    if (!back || !location.hash || back.indexOf(location.origin + '/') !== 0) return;
+    location.replace(back.split('#')[0] + location.hash);
+  }catch(_){}
+})();
+</script>
 </body>
 </html>

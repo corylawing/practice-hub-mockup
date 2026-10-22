@@ -24,6 +24,24 @@
      meant Azure opened GitHub's page and then sat there blank forever. Every host this runs
      on needs its own /v1/auth.html registered as a redirect URI in Entra. */
   var REDIRECT = location.origin + location.pathname.replace(/\/[^\/]*$/, '/') + 'auth.html';
+  /* AN IPHONE HOME-SCREEN APP (phone alerts, 22/10/2026): Apple only sends alerts to Home-Brace once it is on the home
+     screen, and a home-screen app can't use the sign-in popup. There the whole page goes to Microsoft and back
+     instead: the answer lands on auth.html, which hands it straight back to the page that started (BACK below), and
+     handleRedirectPromise() reads it here. SANDBOX ONLY for now - on the live site every sign-in is still the popup. */
+  var STANDALONE = global.navigator.standalone === true ||
+    !!(global.matchMedia && global.matchMedia('(display-mode: standalone)').matches);
+  var LIVE = !!(global.PH && global.PH.isLive && global.PH.isLive());
+  var USE_REDIRECT = STANDALONE && !LIVE;
+  var BACK = 'ph_signin_redirect';
+  function returning(){
+    try{ return USE_REDIRECT && !!sessionStorage.getItem(BACK) && /[#&](code|error)=/.test(location.hash); }catch(_){ return false; }
+  }
+  function goSignIn(app, account){
+    try{ sessionStorage.setItem(BACK, location.href.split('#')[0]); }catch(_){}
+    var req = { scopes: SCOPES, redirectStartPage: location.href.split('#')[0] };
+    if (account) req.account = account;
+    return account ? app.acquireTokenRedirect(req) : app.loginRedirect(req);
+  }
 
   var CSS =
     '#phgate{position:fixed;inset:0;z-index:99999;background:#0F2A4A;color:#fff;display:flex;' +
@@ -175,6 +193,7 @@
         g.__err.textContent = 'Your Microsoft sign-in needs renewing.';
         g.__btn.onclick = function(){
           g.__btn.disabled = true;
+          if (USE_REDIRECT){ goSignIn(app, account); return; }
           app.acquireTokenPopup({ scopes: SCOPES, account: account })
             .then(function(){ location.reload(); })
             .catch(function(e){
@@ -195,7 +214,8 @@
        "interaction in progress" flag set, and every later attempt then dies with
        interaction_in_progress until the browser's storage is cleared by hand. On a fresh
        page load nothing can legitimately be in progress, so clear it. */
-    try{
+    var BACKFROM = returning();
+    if (!BACKFROM) try{
       [sessionStorage, localStorage].forEach(function(store){
         Object.keys(store).forEach(function(k){
           if (k.indexOf('interaction.status') >= 0) store.removeItem(k);
@@ -210,6 +230,22 @@
       cache: { cacheLocation: 'sessionStorage' }
     });
     app.initialize().then(function(){
+      if (!BACKFROM) return null;
+      /* Back from Microsoft (the home-screen app): read the answer, then tidy the address. */
+      return app.handleRedirectPromise().then(function(r){
+        try{ sessionStorage.removeItem(BACK); history.replaceState(null, '', location.href.split('#')[0]); }catch(_){}
+        return r;
+      }, function(e){
+        try{ sessionStorage.removeItem(BACK); history.replaceState(null, '', location.href.split('#')[0]); }catch(_){}
+        fail((e && (e.errorMessage || e.message)) || 'Sign-in failed. Try again.');
+        return 'failed';
+      });
+    }).then(function(back){
+      if (back === 'failed') return;
+      if (back && back.account){
+        if (app.setActiveAccount) app.setActiveAccount(back.account);
+        expose(app, back.account); open(gate); return;
+      }
       // Already signed in this session? Don't make them do it again on every page.
       var known = app.getAllAccounts();
       // Already signed in: never build the sign-in screen at all — painting it just to
@@ -228,6 +264,7 @@
       var g = ensureGate(), btn = g.__btn, err = g.__err;
       btn.onclick = function(){
         btn.disabled = true; err.textContent = '';
+        if (USE_REDIRECT){ goSignIn(app).catch(function(e){ fail((e && (e.errorMessage || e.message)) || 'Sign-in could not start.'); }); return; }
         app.loginPopup({ scopes: SCOPES }).then(function(r){
           if (app.setActiveAccount && r.account) app.setActiveAccount(r.account);
           expose(app, r.account);

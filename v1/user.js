@@ -2895,6 +2895,13 @@
   }
   const isLive=()=>env()==='live';
 
+  /* HOME-SCREEN APP (phone alerts, 22/10/2026): Apple only sends alerts to a web app added to the home screen, so the
+     sandbox says how Home-Brace looks there - its name, icon, and that it opens full-screen on Home. Sandbox only
+     for now; the live site gets it when alerts go live (Cory decides). */
+  if(!isLive() && document.head && !document.querySelector('link[rel="manifest"]')){
+    const m=document.createElement('link'); m.rel='manifest'; m.href='manifest.webmanifest'; document.head.appendChild(m);
+  }
+
   window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, rosterView, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, chatBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK, notesHTML, searchHTML, searchDocs, searchDocsHTML, levelForTeams, teamsSeeAll, tcOn, tcRoleFor, saveFace, faceOf, avatar,
     sensRecord, reloadSensitive, sensLevelFor, sensitiveLevel, sensConfirmOk,
     setTheme, theme:()=>THEME, setLayout, layout:()=>LAYOUT, layouts:()=>LAYOUTS.map(l=>({k:l.k, n:l.n})), themes:()=>THEMES.map(t=>({k:t.k, n:t.n})), schemeTokens:k=>schemeTokens(themeOf(k)), contrast,

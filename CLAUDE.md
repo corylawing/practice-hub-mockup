@@ -607,8 +607,27 @@ alerts we need that", "go", and asked "are you just doing this in sandbox and no
 - Verified: a real Chrome subscribed through Google's push service and received the alert ("Arrived ✓").
 - Known for later: the live site's sign-in uses a POPUP (gate.js loginPopup); inside an iPhone home-screen app a popup
   may not work - test before alerts go live; a redirect sign-in would need a new redirect URI in Entra (Adam).
-- Next: wire Chat and Payroll's samples to real alerts in the sandbox; then (Cory decides) live: subscriptions in
-  SharePoint, ORIGINS + the live site, reminders sent by the first visit after the time (no server clock).
+- Cory's iPhone got the HB Alerts test alert (22/10). He asked twice whether staff save "Home-Brace plus the alert
+  urls": NO - ONE icon, Home-Brace; alerts are built in; HB Alerts was only the test.
+**PHONE ALERTS, step 2 (22/10, sandbox, hc114): in Home-Brace itself.**
+- user.js adds `<link rel="manifest" href="manifest.webmanifest">` on sandbox pages (name Home-Brace, opens home.html,
+  standalone). Live: not yet.
+- SIGN-IN IN THE HOME-SCREEN APP: gate.js uses the popup everywhere EXCEPT a home-screen app on the sandbox
+  (USE_REDIRECT = STANDALONE && !LIVE): there the page goes to Microsoft (loginRedirect / acquireTokenRedirect,
+  redirect_uri still auth.html - no Entra change), auth.html's ONE script hands the answer back to the page that
+  started (sessionStorage ph_signin_redirect; only with no window.opener, same origin only), and gate.js calls
+  handleRedirectPromise() - skipping its "clear interaction.status" on that load, or MSAL would ignore the answer.
+  test/signin.test.js (10). Browser-checked: a normal tab still gets the popup; a stand-in home-screen app goes to
+  Microsoft as a full page; the return is handled (a fake answer is refused cleanly); a popup landing on auth.html is
+  left alone. NOT yet proven on a real iPhone (sign-in inside the app) - Cory's test.
+- Chat: alerts.js on the page; REAL = PH_ALERTS present; the bell/strip's "Turn on alerts" calls enable() (from the
+  tap) and sends a real test (5 s); "Send me a test alert"; "Turn alerts off" unsubscribes; blocked / can't get alerts
+  have their own words. Payroll: "See the phone reminder" and Heather's "Send a reminder" send a REAL alert to this
+  device when alerts are on (else the pretend banner + "Chat -> the bell -> Turn on alerts").
+- Verified in a real Chrome (localhost): Chat's turn-on delivered "Gabriela Garrison · Carlsbad office"; Payroll's
+  phone reminder delivered "Payroll sheet due today by 2 pm".
+- Then (Cory decides) live: subscriptions in SharePoint (per person, every device), ORIGINS + the live site, the
+  manifest and the home-screen sign-in on live, reminders sent by the first visit after the time (no server clock).
 
 **Portfolio demo got Team Chat too (22/10/2026).** The REPO ROOT pages (index.html, calendars.html ... + assets/app.js,
 data.js, styles.css; ribbon "INTERACTIVE PORTFOLIO DEMO · Fictional data") are Cory's GitHub portfolio demo - NOT

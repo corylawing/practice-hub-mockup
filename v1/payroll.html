@@ -207,11 +207,12 @@
     .perhead .when{font-size:17px}
   }
 </style>
-<script src="user.js?v=hc113"></script>
+<script src="user.js?v=hc114"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc113"></script>
-  <script src="gate.js?v=hc113"></script>
-  <script src="_staff.js?v=hc113"></script>
+  <script src="store.js?v=hc114"></script>
+  <script src="gate.js?v=hc114"></script>
+  <script src="alerts.js?v=hc114"></script>
+  <script src="_staff.js?v=hc114"></script>
 </head>
 <body>
 <div class="ribbon">MOCK-UP for Heather — made-up people and amounts. Try it as the Carlsbad TC first, then as Heather.</div>
@@ -925,9 +926,19 @@
         '<div class="log">'+(s.log||[]).map(l=>'<div>• '+esc(fmtT(l.at))+' — '+esc(l.t)+'</div>').join('')+(e?'<div>• '+esc(fmtT(e.at))+' — Entered in payroll by '+esc(e.by)+'</div>':'')+'</div></div>', true);
       return;
     }
-    if(act==='remind'){ toast('Reminder sent to '+sender(v)+' - in Home-Brace and on their phone. (Mock-up: nothing is sent.)'); return; }
-    if(act==='phrem'){ const o=R().office, pr=P(per);
-      notifyPay('Payroll sheet due '+(pr.due===TODAY?'today':fmt(pr.due,{weekday:'long'}))+' by 2 pm', OFF[o].n+' · pay period #'+per+' - tap to open it'); return; }
+    /* With alerts on for this device (Chat → the bell), these send a REAL alert - in the mock-up it comes to you. */
+    const realOn=()=>!!(window.PH_ALERTS && PH_ALERTS.state()==='on');
+    const realSend=(title, body)=>PH_ALERTS.send({title, body, url:PH_ALERTS.here('payroll.html'), tag:'hb-payroll-'+per, delay:5})
+      .then(()=>toast('Sent to your phone ✓ It arrives in about 5 seconds - lock your phone to see it.'), err=>toast('Couldn’t send: '+(err&&err.message)));
+    if(act==='remind'){
+      if(realOn()){ realSend('Reminder from Heather: payroll sheet due '+(P(per).due===TODAY?'today':fmt(P(per).due,{weekday:'long'}))+' by 2 pm', OFF[v].n+' · pay period #'+per+' - tap to open it'); return; }
+      toast('Reminder sent to '+sender(v)+' - in Home-Brace and on their phone. (Mock-up: nothing is sent.)'); return;
+    }
+    if(act==='phrem'){ const o=R().office, pr=P(per), title='Payroll sheet due '+(pr.due===TODAY?'today':fmt(pr.due,{weekday:'long'}))+' by 2 pm', body=OFF[o].n+' · pay period #'+per+' - tap to open it';
+      if(realOn()){ realSend(title, body); return; }
+      notifyPay(title, body);
+      if(window.PH_ALERTS) setTimeout(()=>toast('To get this on your phone: Chat → the bell → Turn on alerts.'), 1200);
+      return; }
     if(act==='csv'){ csv(per); toast('Downloaded — opens in Excel'); return; }
     if(act==='enter'){ S.entered[per]={at:nowISO(), by:'Heather'}; save(); render(); toast('Entered — office sheets for #'+per+' are locked'); return; }
     if(act==='reopen'){ S.entered[per]=null; save(); render(); toast('Reopened — office sheets can be changed again'); return; }
@@ -982,7 +993,7 @@
 })();
 </script>
 <script>PH.nav('payroll');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc113"></script>
+<script src="tour.js?v=hc114"></script>
 <script>
 Tour.init([
   {sel:'#persona', title:'A mock-up', body:'Made-up people and amounts. Start as the <b>Carlsbad TC</b>, who sends Carlsbad’s sheet, then switch to <b>Heather</b>.'},
