@@ -573,8 +573,16 @@ off on live - permissions test). Unread count: chat.html writes sessionStorage `
 `chatBadge()` reads it (3 when unset = the demo's 2+1), so a new tab starts the demo again. On a phone the "V1 preview"
 pill hides when the chat button is in the header (it overflowed by 44px at 390). chat.html `fit()` ends the chat above
 the phone tab bar and the Tour & Feedback button (they covered Send); a phone gives an open conversation the whole
-screen. Cory, "a bit compressed on desktop": the alert card sits beside the title, not on its own row (chat 300 -> 379px
-at 1000x700, 393 -> 479 at 1280x800). Also fixed: bellBadge() put its count on the first `.ph-bell` (the search button) - it only looked right because
+screen. Then Cory: "take off tour and feedback and make the chat go to the bottom of what you see ... I don't think we
+need a title and subtitle, and can't the turn on alerts be on the chat itself?" - so the chat page has NO page title, NO
+tour.js (no Tour & Feedback button there), the alerts strip sits in the chat list under "Chats", and fit() runs the chat
+to 16px above the bottom of the screen (a phone: 10px above the tab bar; body padding off there). Upright videos are
+capped at min(320px, 45vh) tall (`.media.tall`) so one doesn't fill the conversation.
+**Payroll: an "i" beside each pay column on Heather's combined sheet (22/10, hc113).** Cory: "for heathers columns there
+should be a i they can hover over to know what it means". PP bonus, Goal, TC/OM, Holiday, On call, the office's own
+columns (Phone, DIBS, POG, Sick hrs), Extra, Total, Reimburse: `info(label, text)` in combHead, worded from her rules and
+calc() (no new facts - DIBS/POG are only "San Angelo's ... bonus"); shown on hover, keyboard focus or a tap (one fixed
+`.tipbox`, so the table's scroll box can't clip it). The office sheet already had hover titles without an "i". Also fixed: bellBadge() put its count on the first `.ph-bell` (the search button) - it only looked right because
 both sit in `.ph-bw`; it now targets the bell (`.ph-nb`), same look.
 
 **TCs see every office in "By office" (19/10, hc85).** Selene: "we do want the Treatment Coordinators to be able to see

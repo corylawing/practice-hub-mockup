@@ -126,6 +126,14 @@
   .otwrap{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
   .otv{font-weight:800;color:#9a2f1e}
   .otv.ok{color:#1d6b47}
+  /* the "i" beside a column name on Heather's sheet: its meaning on hover, keyboard focus or a tap */
+  .lbl{white-space:nowrap}
+  .info{display:inline-grid;place-items:center;width:15px;height:15px;margin-left:4px;padding:0;border:none;border-radius:50%;
+    background:#DCE5EE;color:#25456E;font:italic 700 10.5px/1 Georgia,'Times New Roman',serif;text-transform:none;letter-spacing:0;
+    cursor:help;vertical-align:1px}
+  .info:hover,.info:focus-visible,.info.on{background:var(--teal);color:#fff;outline:none}
+  .tipbox{position:fixed;z-index:9000;display:none;max-width:260px;background:var(--navy);color:#fff;font-size:12.5px;line-height:1.45;
+    font-weight:500;padding:8px 11px;border-radius:9px;box-shadow:0 8px 24px rgba(15,42,74,.28);pointer-events:none}
   .otwrap .otb{margin-left:0}
   .cut{margin-top:5px;font-size:12px;color:var(--soft);display:flex;align-items:center;gap:5px}
   label.fld{display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight:700;color:var(--soft)}
@@ -633,11 +641,37 @@
     ? '<input class="in hin" type="number" min="0" step="1" inputmode="decimal" aria-label="'+esc(f)+' for '+esc(disp(p))+'" data-hf="'+f+'" data-o="'+o+'" data-p="'+p.id+'" value="'+(num(v)?esc(v):'')+'">'
     : money(num(v));
   /* The column headings again at the top of every office, the way her main sheet has them - and the office's own
-     columns named there (Phone, DIBS, POG, Sick). */
-  const combHead=o=>'<tr class="hd"><th class="nm">Employee</th><th class="n">Regular hrs</th><th class="n">OT Wk 1</th><th class="n">OT Wk 2</th><th class="n">PTO</th><th class="n">PP bonus</th>'+
-    '<th class="n" title="The team reached its goal">Goal</th><th class="n">TC/OM</th><th class="n">Holiday</th><th class="n">On call</th>'+
-    ownCols(o).map(c=>'<th class="n"'+(c&&c.hrs?' title="Sick hours kept from before - hours, not dollars"':'')+'>'+(c?esc(c.n):'')+'</th>').join('')+
-    '<th class="n" title="A special bonus, plus any exception commuter pay from the office">Extra</th><th class="n">Total</th><th class="n" title="Mileage - kept out of Total">Reimburse</th><th>Notes</th></tr>';
+     columns named there (Phone, DIBS, POG, Sick). Cory, 22/10: "for heathers columns there should be a i they can
+     hover over to know what it means" - an "i" beside each pay column, worded from her rules and calc() above. */
+  const info=(label,t)=>'<span class="lbl">'+label+'<button type="button" class="info" data-tip="'+esc(t)+'" aria-label="'+esc('What '+label+' means: '+t)+'">i</button></span>';
+  const ownTip=(o,c)=>c.hrs ? 'Sick hours kept from before - hours, not dollars. They come from '+OFF[o].n+'’s sheet.'
+                            : OFF[o].n+'’s '+c.n+' bonus. It comes from '+OFF[o].n+'’s sheet.';
+  const combHead=o=>'<tr class="hd"><th class="nm">Employee</th><th class="n">Regular hrs</th><th class="n">OT Wk 1</th><th class="n">OT Wk 2</th><th class="n">PTO</th>'+
+    '<th class="n">'+info('PP bonus','The pay-period bonus: a set amount per person (you set it in Settings). The office marks it Full, Partial (takes off a % or a $ amount) or None.')+'</th>'+
+    '<th class="n">'+info('Goal','The team reached its goal. You type it in - the offices don’t see it.')+'</th>'+
+    '<th class="n">'+info('TC/OM','A bonus for the TC or the office manager - not a set amount. You type it in - the offices don’t see it.')+'</th>'+
+    '<th class="n">'+info('Holiday','Holiday pay: '+money(RATE.holiday)+' when the pay period has a holiday, for anyone past their 90-day review ('+RATE.holidayHrs+' hours instead for anyone who gets holiday hours). Home-Brace works it out.')+'</th>'+
+    '<th class="n">'+info('On call',money(RATE.onCall)+' for each weekend on call. The office counts the weekends.')+'</th>'+
+    ownCols(o).map(c=>'<th class="n">'+(c?info(esc(c.n),ownTip(o,c)):'')+'</th>').join('')+
+    '<th class="n">'+info('Extra','A special bonus. You type it in - the offices don’t see it. Any exception commuter pay the office entered is added here too.')+'</th>'+
+    '<th class="n">'+info('Total','PP bonus + Goal + TC/OM + Holiday + On call + the office’s own bonuses + Extra. Reimburse isn’t in it.')+'</th>'+
+    '<th class="n">'+info('Reimburse','Mileage: marketing and other miles × '+money(RATE.mile)+' a mile (the IRS rate). Kept out of Total.')+'</th><th>Notes</th></tr>';
+  let tipEl=null, tipFor=null;
+  function showTip(b){
+    if(!tipEl){ tipEl=document.createElement('div'); tipEl.className='tipbox'; tipEl.setAttribute('role','tooltip'); document.body.appendChild(tipEl); }
+    if(tipFor && tipFor!==b) tipFor.classList.remove('on');
+    tipEl.textContent=b.dataset.tip; tipEl.style.display='block'; tipFor=b; b.classList.add('on');
+    const r=b.getBoundingClientRect(), w=tipEl.offsetWidth, h=tipEl.offsetHeight;
+    tipEl.style.left=Math.min(Math.max(8, r.left+r.width/2-w/2), window.innerWidth-w-8)+'px';
+    tipEl.style.top=(r.bottom+8+h>window.innerHeight-8 ? r.top-h-8 : r.bottom+8)+'px';
+  }
+  function hideTip(){ if(tipEl) tipEl.style.display='none'; if(tipFor) tipFor.classList.remove('on'); tipFor=null; }
+  document.addEventListener('mouseover', e=>{ const b=e.target.closest && e.target.closest('.info'); if(b) showTip(b); });
+  document.addEventListener('mouseout', e=>{ const b=e.target.closest && e.target.closest('.info'); if(b && !b.contains(e.relatedTarget)) hideTip(); });
+  document.addEventListener('focusin', e=>{ const b=e.target.closest && e.target.closest('.info'); if(b) showTip(b); });
+  document.addEventListener('focusout', e=>{ if(e.target.closest && e.target.closest('.info')) hideTip(); });
+  document.addEventListener('click', e=>{ const b=e.target.closest('.info'); if(b){ e.preventDefault(); showTip(b); } else if(tipFor) hideTip(); }, true);   // a tap shows it
+  window.addEventListener('scroll', hideTip, true);
   const NC=16;
   function combined(n){
     const pr=P(n), e=enteredOf(n); let grand={reg:0,ot1:0,ot2:0,total:0,reimb:0};

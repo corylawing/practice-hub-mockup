@@ -12,7 +12,8 @@
 <link rel="apple-touch-icon" href="../assets/logo-mark.png">
 <meta name="robots" content="noindex">
 <!-- CHAT - A MOCK-UP for Heather and Dr. Jae (22/10/2026), sandbox only (user.js NAV: the header's chat button and
-     the page are off on the live site). It opens from the chat button beside the bell, not a tab. Dr. Jae asked for "communications in Home-Brace" with videos; Cory: they want "the whole
+     the page are off on the live site). It opens from the chat button beside the bell, not a tab. The chat gets the
+     whole screen: no page title, alerts inside the chat list, no Tour & Feedback button (Cory, 22/10). Dr. Jae asked for "communications in Home-Brace" with videos; Cory: they want "the whole
      thing in Home-Brace" - replying to messages, sending and viewing videos, alerts. The plan it shows: Microsoft
      Teams as the engine underneath (free with their Microsoft 365, messages and videos kept in their own Microsoft
      365), everything done inside Home-Brace, phone alerts sent by Home-Brace itself, live calls opening Teams.
@@ -40,10 +41,7 @@
   .v1nav-in{max-width:var(--maxw);margin:0 auto;display:flex;gap:2px;padding:0 12px;overflow-x:auto}
   .v1nav a{color:#cdd9ea;font-size:14px;font-weight:600;padding:13px 15px;text-decoration:none;border-bottom:3px solid transparent;white-space:nowrap}
   .v1nav a.active{color:#fff;border-bottom-color:var(--teal)}
-  .wrap{max-width:var(--maxw);margin:0 auto;padding:20px 20px 90px}
-  .page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
-  .page-head h1{font-size:25px;color:var(--navy);margin:0}
-  .page-head p{margin:3px 0 0;color:var(--soft);font-size:14.5px;max-width:70ch}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:16px 20px 0}
   .btn{background:var(--teal);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-weight:700;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
   .btn:hover{background:var(--teal-600)}
   .btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--line);font-weight:600}
@@ -52,24 +50,25 @@
   .btn:disabled{opacity:.5;cursor:not-allowed}
 
   /* the "turn on alerts" strip */
-  .alertbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:#fff;border:1px solid var(--line);border-left:5px solid var(--teal);border-radius:12px;padding:10px 14px;margin-bottom:12px;box-shadow:var(--shadow);font-size:14px}
+  /* alerts, in the chat list itself (Cory: "can't the turn on alerts be on the chat itself?") */
+  .alertbar{display:flex;align-items:center;gap:8px;background:var(--teal-soft);border-radius:10px;padding:6px 6px 6px 10px;font-size:13px;color:var(--navy)}
   .alertbar .grow{flex:1;min-width:0}
-  .page-head .alertbar{margin:0;flex:none}
-  .alertbar.on{border-left-color:#2E9E6B}
+  .alertbar .btn.sm{padding:5px 10px;font-size:12.5px}
+  .alertbar.on{background:#E7F6EE}
 
   /* the chat app: the list beside the conversation (a phone shows one at a time) */
-  .chatapp{display:grid;grid-template-columns:330px minmax(0,1fr);height:clamp(300px, calc(100vh - 410px), 820px);background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
+  .chatapp{display:grid;grid-template-columns:330px minmax(0,1fr);height:max(300px, calc(100vh - 182px));background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
   .list{border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0;background:#FBFCFD}
   .list-top{padding:14px 14px 10px;display:flex;flex-direction:column;gap:10px;border-bottom:1px solid var(--line);background:#fff}
   .list-top .row{display:flex;align-items:center;gap:8px}
-  .list-top h2{margin:0;font-size:18px;color:var(--navy);flex:1}
+  .list-top h1{margin:0;font-size:18px;color:var(--navy);flex:1}
   .search{width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font:inherit;font-size:14px;background:#F7F9FB}
   .search:focus{outline:2px solid var(--teal2);background:#fff}
   .chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
   .chips::-webkit-scrollbar{display:none}
   .chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:4px 11px;font-size:12.5px;font-weight:600;color:var(--soft);cursor:pointer;white-space:nowrap}
   .chip.on{background:var(--navy);border-color:var(--navy);color:#fff}
-  .items{overflow-y:auto;flex:1;min-height:0}
+  .items{overflow-y:auto;flex:1;min-height:0;overscroll-behavior:contain}
   .ci{display:flex;gap:11px;align-items:center;width:100%;text-align:left;background:none;border:none;border-bottom:1px solid #EEF1F5;padding:11px 14px;cursor:pointer;font:inherit;color:inherit}
   .ci:hover{background:#F2F6F9}
   .ci.on{background:var(--teal-soft)}
@@ -91,7 +90,7 @@
   .conv-top .who b{display:block;color:var(--navy);font-size:15.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .conv-top .who span{display:block;font-size:12.5px;color:var(--soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .back{display:none;background:none;border:none;font-size:24px;line-height:1;color:var(--navy);cursor:pointer;padding:2px 6px}
-  .msgs{flex:1;min-height:0;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:6px;background:#F4F7FA}
+  .msgs{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:16px 18px;display:flex;flex-direction:column;gap:6px;background:#F4F7FA}
   .day{align-self:center;font-size:11.5px;font-weight:700;color:var(--soft);background:#E7EDF3;border-radius:999px;padding:3px 10px;margin:10px 0 4px;text-transform:uppercase;letter-spacing:.04em}
   .m{display:flex;gap:8px;align-items:flex-end;max-width:78%}
   .m.me{align-self:flex-end;flex-direction:row-reverse}
@@ -103,7 +102,9 @@
   .m .meta{font-size:11px;color:var(--soft);margin:0 4px}
   .media{position:relative;border-radius:14px;overflow:hidden;background:#0F2A4A;border:1px solid var(--line);max-width:260px;box-shadow:0 1px 2px rgba(15,42,74,.08)}
   .media.wide{max-width:340px}
-  .media video,.media img{display:block;width:100%;height:auto;max-height:420px;object-fit:cover;background:#0F2A4A}
+  .media video,.media img{display:block;width:100%;height:auto;max-height:min(320px,45vh);object-fit:cover;background:#0F2A4A}
+  .media.tall{width:fit-content}
+  .media.tall video{width:auto;height:min(320px,45vh)}
   .media .play{position:absolute;inset:0;margin:auto;width:58px;height:58px;border-radius:50%;border:none;background:rgba(15,42,74,.62);color:#fff;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding-left:4px}
   .media .play:hover{background:rgba(20,155,150,.9)}
   .media .dur{position:absolute;left:8px;bottom:8px;background:rgba(15,42,74,.72);color:#fff;font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 8px;display:flex;gap:5px;align-items:center}
@@ -156,12 +157,9 @@
   .toast.on{opacity:1}
 
   @media(max-width:760px){
-    .wrap{padding:14px 12px 40px}
-    .page-head p{display:none}
-    .chatapp{grid-template-columns:minmax(0,1fr);height:calc(100vh - 330px);min-height:280px}
-    .page-head .alertbar{flex:1 1 100%}
-    /* a phone gives an open conversation the whole screen, like any chat app */
-    body:has(.chatapp.open) .page-head{display:none}
+    .wrap{padding:10px 10px 0}
+    html body{padding-bottom:0 !important}   /* the chat stops above the tab bar itself (fit) */
+    .chatapp{grid-template-columns:minmax(0,1fr);height:max(280px, calc(100vh - 220px))}
     .toast{bottom:calc(84px + env(safe-area-inset-bottom, 0px))}   /* above the phone tab bar */
     .chatapp .conv{display:none}
     .chatapp.open .list{display:none}
@@ -188,14 +186,11 @@
 <nav class="v1nav"><div class="v1nav-in" id="nav"></div></nav>
 
 <div class="wrap">
-  <div class="page-head">
-    <div><h1>Chat</h1><p>Messages, videos and photos with anyone at the practice.</p></div>
-    <div class="alertbar" id="alertbar"></div>
-  </div>
   <div class="chatapp" id="app">
     <aside class="list" aria-label="Your chats">
       <div class="list-top">
-        <div class="row"><h2>Chats</h2><button class="btn sm" data-act="new">＋ New chat</button></div>
+        <div class="row"><h1>Chats</h1><button class="btn sm" data-act="new">＋ New chat</button></div>
+        <div class="alertbar" id="alertbar"></div>
         <input class="search" id="q" type="search" placeholder="Search chats" autocomplete="off" aria-label="Search chats">
         <div class="chips" id="chips"></div>
       </div>
@@ -293,20 +288,19 @@
     const b=el('alertbar');
     b.className='alertbar'+(alertsOn?' on':'');
     b.innerHTML = alertsOn
-      ? '<span>🔔</span><span class="grow"><b>Alerts are on</b></span><button class="btn ghost sm" data-act="sample" title="When someone sends you a message or a video, your phone shows it - like a text.">Show me a sample alert</button>'
-      : '<span>🔔</span><span class="grow"><b>Get alerts on your phone</b></span><button class="btn sm" data-act="alerts" title="When a message comes in, your phone shows it - like a text. It takes a minute, once.">Turn on alerts</button>';
-    fit();
+      ? '<span>🔔</span><span class="grow"><b>Alerts are on</b></span><button class="btn ghost sm" data-act="sample" title="When someone sends you a message or a video, your phone shows it - like a text.">See a sample</button>'
+      : '<span>🔔</span><span class="grow"><b>Get alerts on your phone</b></span><button class="btn sm" data-act="alerts" title="When a message comes in, your phone shows it - like a text. It takes a minute, once.">Turn on</button>';
   }
-  /* The chat reaches down to just above the phone's tab bar and the Tour & Feedback button (both stay at the
-     bottom of the screen), so the message box and Send are always in view and never underneath them. */
+  /* The chat runs to the bottom of the screen (on a phone, to just above the tab bar), so the message box and
+     Send are always in view. A very short window keeps a minimum and lets the page scroll instead. */
   function fit(){
     const a=el('app'); if(!a || !a.offsetParent) return;
-    const top=a.getBoundingClientRect().top+window.scrollY;
-    const below=sel=>{ const x=document.querySelector(sel); if(!x || getComputedStyle(x).display==='none') return 0;
-      const r=x.getBoundingClientRect(); return r.height ? window.innerHeight-r.top : 0; };
-    const room=Math.max(below('.ph-tabbar'), below('.tour-launch'), 16)+10;
     const phone=!window.matchMedia('(min-width:761px)').matches;
-    a.style.height=Math.round(Math.max(phone?280:300, Math.min(820, window.innerHeight-top-room)))+'px';
+    const bar=document.querySelector('.ph-tabbar'), b=bar && getComputedStyle(bar).display!=='none' ? bar.getBoundingClientRect() : null;
+    const room=(b && b.height ? window.innerHeight-b.top : 0)+(phone?10:16);
+    const want=window.innerHeight-(a.getBoundingClientRect().top+window.scrollY)-room, min=phone?280:300;
+    a.style.height=Math.round(Math.max(min, want))+'px';
+    document.querySelector('.wrap').style.paddingBottom=(want<min ? room : 0)+'px';
   }
 
   /* ---------- the list ---------- */
@@ -334,7 +328,8 @@
     const showFrom=group && !mine && (!prev || prev.from!==m.from || dayKey(prev.at)!==dayKey(m.at));
     let body;
     if(m.video){
-      body='<div class="media'+(m.wide?' wide':'')+'"><video src="'+esc(m.video)+'"'+(m.poster?' poster="'+esc(m.poster)+'"':'')+(m.ar?' style="aspect-ratio:'+m.ar+'"':'')+' preload="metadata" playsinline></video>'+
+      const tall=m.ar && (r=>r[0]<r[1])(String(m.ar).split('/').map(Number));      // a phone video, upright
+      body='<div class="media'+(m.wide?' wide':'')+(tall?' tall':'')+'"><video src="'+esc(m.video)+'"'+(m.poster?' poster="'+esc(m.poster)+'"':'')+(m.ar?' style="aspect-ratio:'+m.ar+'"':'')+' preload="metadata" playsinline></video>'+
         '<button class="play" data-act="play" aria-label="Play the video">▶</button><span class="dur">🎥 '+esc(m.dur||'')+'</span></div>';
     } else if(m.photo){
       body='<div class="media wide"><img src="'+esc(m.photo)+'"'+(m.w?' width="'+m.w+'" height="'+m.h+'"':'')+' alt="A photo from '+esc(m.from)+'"></div>';
@@ -527,18 +522,11 @@
   const wide=window.matchMedia('(min-width:761px)');
   const firstOpen=()=>{ if(wide.matches && !open) openChat(CHATS.slice().sort((a,b)=>last(b).at-last(a).at)[0].id, false); };
   firstOpen(); if(wide.addEventListener) wide.addEventListener('change', firstOpen);
-  // again once the page is showing (after sign-in), the Tour & Feedback button is in, or the window changes
+  // again once the page is showing (after sign-in), or the window changes
   window.addEventListener('resize', fit); window.addEventListener('load', fit);
   if(window.ResizeObserver) new ResizeObserver(fit).observe(document.body);
 })();
 </script>
 <script>PH.nav('chat');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc113"></script>
-<script>
-Tour.init([
-  {sel:'#app', title:'A mock-up', body:'Made-up people, messages and videos. Open a chat, reply, press the camera button to record a video, or 📎 to send a photo or video you already have.'},
-  {sel:'#alertbar', title:'Alerts from Home-Brace', body:'Once per phone: <b>Turn on alerts</b>. Then a new message shows up like a text - even when Home-Brace is closed.'}
-], {key:'chat', title:'Chat', next:{label:'Home', href:'home.html'}});
-</script>
 </body>
 </html>
