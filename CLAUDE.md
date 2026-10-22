@@ -561,6 +561,21 @@ POG $; Clovis's grandfathered Sick hrs were already there) and read-only on her 
 stay hers. (3) "No, it is only when the Holiday falls later than Monday" - due Monday only when a holiday is Tue-Fri of
 that week; a Monday holiday keeps Tuesday 2 pm (checked: #19 Labor Day -> Tue Sep 8; #14 July 3rd -> Mon Jun 29).
 
+**Chat mock-up for Heather and Dr. Jae (22/10/2026, hc113, sandbox only).** Dr. Jae (via Heather) asked for
+"communications in Home-Brace" with videos; Cory: they want "the whole thing in Home-Brace" - replying, sending and viewing
+videos, alerts - $0 setup, proposed with no surprises. `v1/chat.html` + `v1/chat-demo/` (made-up people, videos, photo;
+nothing is sent). The plan it shows: Microsoft Teams (their Microsoft 365) as the engine underneath, everything done inside
+Home-Brace, phone alerts sent by Home-Brace itself (web push; iPhone = add to home screen, iOS 16.4+), live calls open
+Teams (free). Not part of it: ACS calling (pay per minute), Azure Web PubSub (~$49/mo, only for instant updates).
+ENTRY = a chat button beside the bell, NOT a tab (Cory: "a tab or a button next to profile ... the most user friendly
+way"): NAV `chat` has `tab:false` (top nav, sidebar and phone bar skip it) and `show: env()!=='live'` (button and page
+off on live - permissions test). Unread count: chat.html writes sessionStorage `ph_chat_unread` ({chat id: n}), user.js
+`chatBadge()` reads it (3 when unset = the demo's 2+1), so a new tab starts the demo again. On a phone the "V1 preview"
+pill hides when the chat button is in the header (it overflowed by 44px at 390). chat.html `fit()` ends the chat above
+the phone tab bar and the Tour & Feedback button (they covered Send); a phone gives an open conversation the whole
+screen. Also fixed: bellBadge() put its count on the first `.ph-bell` (the search button) - it only looked right because
+both sit in `.ph-bw`; it now targets the bell (`.ph-nb`), same look.
+
 **TCs see every office in "By office" (19/10, hc85).** Selene: "we do want the Treatment Coordinators to be able to see
 one another's results. Please make sure they can all view the 'By Office' box so they can see conversion rates across
 locations." viewNumbers(): for a TC (`iAmTC() && !canManage()`) the box lists `allOffices()` from EVERY (rates and

@@ -60,7 +60,7 @@ t('choosing the sidebar switches the page at once', A.PH.layout()==='side' && A.
 t('it is remembered on this device', A.LS.ph_layout==='side');
 t('and saved in the person\u2019s own row (theirs on any computer)', /"layout":"side"/.test(A.LS[ROW]||''));
 const html=(A.side()||{}).innerHTML||'';
-const want=A.PH.NAV.filter(x=>x.show()).map(x=>x.href);
+const want=A.PH.NAV.filter(x=>x.show() && x.tab!==false).map(x=>x.href);   // the chat is a header button, not a tab
 const got=[...html.matchAll(/<nav class="ph-sb-list">([\s\S]*)<\/nav>/g)].map(m=>[...m[1].matchAll(/href="([^"]+)"/g)].map(x=>x[1]))[0]||[];
 t('the sidebar lists exactly the tabs this person has, in the same order', want.length>3 && JSON.stringify(got)===JSON.stringify(want));
 t('the page you are on is marked', /<a href="tc\.html" class="active" aria-current="page">/.test(html));

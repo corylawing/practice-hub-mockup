@@ -86,7 +86,7 @@
      "added a bit of life" but looked a bit amateur; plain line icons were too basic). A scheme
      whose bar is light enough to wash a colour out gets it lightened until it reads (3:1). */
   const TAB_IC={home:'#2BC0B8', dashboard:'#6CB4F5', production:'#F7A25E', tc:'#B49CFB', schedule:'#F48C7F',
-                marketing:'#F27FC0', documents:'#F5C85C', team:'#6FD39A', payroll:'#B6E36B', academy:'#8FA2FF', admin:'#AEBBD0'};
+                marketing:'#F27FC0', documents:'#F5C85C', team:'#6FD39A', chat:'#7FD4F0', payroll:'#B6E36B', academy:'#8FA2FF', admin:'#AEBBD0'};
   const THEME_VARS=['--navy','--navy2','--navy-mute','--teal','--teal2','--teal-600','--teal-soft',
                     '--teal-line','--teal-ink','--teal-wash','--ink','--soft','--line','--canvas'];
   function hexRgb(h){ h=String(h).replace('#',''); if(h.length===3) h=h.split('').map(c=>c+c).join('');
@@ -1043,6 +1043,11 @@
     border-radius:999px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.18);
     cursor:pointer;font-size:16px;line-height:1;color:#fff;font-family:inherit;flex:none}
   .ph-bell:hover{background:rgba(255,255,255,.18)}
+  .ph-bell.on{background:rgba(255,255,255,.26);border-color:rgba(255,255,255,.4)}
+  .ph-nb,.ph-chat{position:relative}
+  a.ph-bell{text-decoration:none}
+  /* Four round buttons with the chat one: on a phone the sandbox's "V1 preview" pill makes way (it is never on the live site). */
+  @media(max-width:560px){ .hdr-in:has(.ph-chat) .v1{display:none} }
   .ph-bell .dot{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;padding:0 5px;
     border-radius:999px;background:#D7503A;color:#fff;font-size:11px;font-weight:800;
     display:grid;place-items:center;border:2px solid var(--navy,#0F2A4A);box-sizing:content-box}
@@ -1570,7 +1575,7 @@
     }).join('');
   }
   function bellBadge(){
-    const b=document.querySelector('.ph-bell'); if(!b) return;
+    const b=document.querySelector('.ph-bell.ph-nb'); if(!b) return;
     const n=unreadCount();
     const dot=b.querySelector('.dot');
     if(!n){ if(dot) dot.remove(); b.setAttribute('aria-label','Notifications — nothing new'); return; }
@@ -1633,6 +1638,15 @@
     if(spanel && !e.target.closest('.ph-bw')) closeSearch();
   });
 
+  /* The chat button's unread count. The mock-up keeps it for this browser tab only (sessionStorage
+     ph_chat_unread = {chat id: unread}), so a fresh tab starts the demo again at chat.html's 3 unread. */
+  function chatBadge(){
+    const c=document.querySelector('.ph-chat'); if(!c) return;
+    let n=3; try{ const v=sessionStorage.getItem('ph_chat_unread'); if(v!==null){ const m=JSON.parse(v)||{}; n=Object.keys(m).reduce((t,k)=>t+(Number(m[k])||0),0); } }catch(_){}
+    let d=c.querySelector('.dot'); if(!n){ if(d) d.remove(); c.title='Chat'; return; }
+    if(!d){ d=document.createElement('span'); d.className='dot'; c.appendChild(d); }
+    d.textContent=n>9?'9+':String(n); c.title='Chat - '+n+' unread';
+  }
   function bell(){
     const bar=document.querySelector('.hdr-in'); if(!bar) return;
     const old=bar.querySelector('.ph-bw'); if(old) old.remove();
@@ -1643,14 +1657,23 @@
     s.innerHTML='<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg>';
     s.onclick=function(e){ e.stopPropagation(); closeNotes(); closeMenu(); spanel?closeSearch():openSearch(wrap); };
     wrap.appendChild(s);
+    /* CHAT sits beside the bell, not in the tabs (Cory, 22/10: "a tab or a button next to profile ... the most user
+       friendly way"): one tap from any page, its own unread count, always visible on a phone. Sandbox mock-up for now. */
+    const chatEntry=NAV.find(x=>x.k==='chat');
+    if(chatEntry && chatEntry.show()){
+      const c=document.createElement('a');
+      c.className='ph-bell ph-chat'+(/chat\.html$/.test(location.pathname)?' on':''); c.href='chat.html'; c.title='Chat'; c.setAttribute('aria-label','Chat');
+      c.innerHTML='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.5 8.5 0 0 1-12.4 7.6L3 20.5l1.4-5.1A8.5 8.5 0 1 1 21 11.5z"/></svg>';
+      wrap.appendChild(c);
+    }
     const b=document.createElement('button');
-    b.className='ph-bell'; b.type='button'; b.title='Notifications';
+    b.className='ph-bell ph-nb'; b.type='button'; b.title='Notifications';
     // A line icon like the search and the phone bar - "more modern and less emoji" (Cory).
     b.innerHTML='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 16V11a6 6 0 0112 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 004 0"/></svg>';
     b.onclick=function(e){ e.stopPropagation(); closeSearch(); closeMenu(); npanel?closeNotes():openNotes(wrap); };
     wrap.appendChild(b);
     bar.appendChild(wrap);
-    bellBadge();
+    bellBadge(); chatBadge();
     /* Their read list lives in SharePoint too, so something ticked off on a phone is
        still ticked off on the desktop. */
     loadSeen().then(function(){ bellBadge(); if(npanel) npanel.innerHTML=notesHTML(); });
@@ -1871,6 +1894,7 @@
     {k:'team',       n:'\ud83d\udc65 Team',              href:'team.html',       show:()=>atLeast('team','view')},
     /* A MOCK-UP for Selene (20/10/2026) - role-based training with quizzes. Sandbox only:
        never on the live site, where the page is shut too (guard). */
+    {k:'chat',       n:'\ud83d\udcac Chat',              href:'chat.html',       show:()=>env()!=='live', tab:false},   // mock-up (22/10/2026), sandbox only; the header's chat button, not a tab
     {k:'payroll',    n:'\ud83d\udcb5 Payroll',           href:'payroll.html',    show:()=>env()!=='live'},   // mock-up for Heather (21/10/2026): sandbox only
     {k:'academy',    n:'\ud83c\udf93 Academy',           href:'academy.html',    show:()=>env()!=='live'},
     {k:'admin',      n:'\u2699\ufe0f Admin',            href:'admin.html',      show:()=>atLeast('admin','view')}
@@ -2388,7 +2412,7 @@
     /* Line icons - the same ones as the phone bar and the sidebar - not emoji. Cory, 20/10:
        "icons instead of emojis for the different tabs ... more professional". Emoji draw
        differently on every computer and phone. */
-    if(host) host.innerHTML=NAV.filter(x=>x.show()).map(x=>{ const p=splitNav(x.n);
+    if(host) host.innerHTML=NAV.filter(x=>x.show() && x.tab!==false).map(x=>{ const p=splitNav(x.n);
       return '<a href="'+x.href+'"'+(x.k===NAV_ACTIVE?' class="active"':'')+'>'+icon(x.k)+'<span>'+escHTML(p.label)+'</span></a>'; }).join('');
     tabbar();
     sidenav();
@@ -2402,7 +2426,7 @@
     let side=document.querySelector('.ph-sidenav');
     if(!side){ side=document.createElement('aside'); side.className='ph-sidenav'; side.setAttribute('aria-label','Main menu'); document.body.appendChild(side); }
     side.innerHTML='<a class="ph-sb-brand" href="home.html"><img src="../assets/logo-mark.png?v=2" alt="" width="34" height="34"><span>Home-<i>Brace</i></span></a>'+
-      '<nav class="ph-sb-list">'+NAV.filter(x=>x.show()).map(x=>{ const p=splitNav(x.n);
+      '<nav class="ph-sb-list">'+NAV.filter(x=>x.show() && x.tab!==false).map(x=>{ const p=splitNav(x.n);
         return '<a href="'+x.href+'"'+(x.k===NAV_ACTIVE?' class="active" aria-current="page"':'')+'>'+icon(x.k)+'<span>'+escHTML(p.label)+'</span></a>'; }).join('')+'</nav>';
   }
 
@@ -2418,7 +2442,7 @@
      "Enter P..." - which reads as broken. Short forms for the bar; the sheet and the
      top nav keep the full names. */
   const TAB_SHORT={home:'Home',dashboard:'Dashboard',production:'Enter Prod',tc:'TC Tracker',schedule:'Schedule',
-                   marketing:'Marketing',documents:'Documents',team:'Team',payroll:'Payroll',academy:'Academy',admin:'Admin'};
+                   marketing:'Marketing',documents:'Documents',team:'Team',chat:'Chat',payroll:'Payroll',academy:'Academy',admin:'Admin'};
   /* Line icons for the phone bar instead of emoji - emoji render differently on every
      phone and read as casual. 24-unit grid, stroke follows the text colour. */
   const ICON={
@@ -2431,6 +2455,7 @@
     documents:'<path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>',
     team:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0113 0"/><circle cx="17" cy="9" r="3"/><path d="M15.5 14.5A5.5 5.5 0 0122 20"/>',
     admin:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 01-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 01-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 01-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 010-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 012.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 014 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 012.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 010 4h-.1a1.7 1.7 0 00-1.5 1z"/>',
+    chat:'<path d="M21 11.5a8.5 8.5 0 0 1-12.4 7.6L3 20.5l1.4-5.1A8.5 8.5 0 1 1 21 11.5z"/>',
     payroll:'<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.6"/><path d="M6 10v4M18 10v4"/>',
     academy:'<path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c0 1.4 2.7 3 6 3s6-1.6 6-3v-5"/><path d="M22 9v6"/>',
     more:'<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>'
@@ -2443,7 +2468,7 @@
     if(!document.body) return;
     let bar=document.querySelector('.ph-tabbar');
     if(!bar){ bar=document.createElement('nav'); bar.className='ph-tabbar'; bar.setAttribute('aria-label','Sections'); document.body.appendChild(bar); }
-    const items=NAV.filter(x=>x.show());
+    const items=NAV.filter(x=>x.show() && x.tab!==false);
     const primary=items.length>TAB_MAX ? items.slice(0,TAB_MAX) : items;
     const rest=items.length>TAB_MAX ? items.slice(TAB_MAX) : [];
     const link=x=>{ const p=splitNav(x.n,x.k);
@@ -2870,7 +2895,7 @@
   }
   const isLive=()=>env()==='live';
 
-  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, rosterView, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK, notesHTML, searchHTML, searchDocs, searchDocsHTML, levelForTeams, teamsSeeAll, tcOn, tcRoleFor, saveFace, faceOf, avatar,
+  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, rosterView, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, chatBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK, notesHTML, searchHTML, searchDocs, searchDocsHTML, levelForTeams, teamsSeeAll, tcOn, tcRoleFor, saveFace, faceOf, avatar,
     sensRecord, reloadSensitive, sensLevelFor, sensitiveLevel, sensConfirmOk,
     setTheme, theme:()=>THEME, setLayout, layout:()=>LAYOUT, layouts:()=>LAYOUTS.map(l=>({k:l.k, n:l.n})), themes:()=>THEMES.map(t=>({k:t.k, n:t.n})), schemeTokens:k=>schemeTokens(themeOf(k)), contrast,
     feedback:openFeedback, feedbackText, feedbackContext, learning:stillLearning};

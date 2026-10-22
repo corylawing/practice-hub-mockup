@@ -191,7 +191,14 @@ const t=(n,v)=>{ (v?ok:bad).push(n); };
   t('the COO is still an admin', H.PH.isAdmin()===true);
   t('admin.html is NOT locked for her', H.locked()===false);
   /* Every tab - the TC Tracker included since it went live (19/10/2026, Cory: "yes on production"). */
-  t('and her menu has every tab (the Academy and Payroll are sandbox mock-ups)', H.tabs().length===H.PH.NAV.filter(x=>x.k!=='academy' && x.k!=='payroll').length);
+  t('and her menu has every tab (the Academy, Payroll and Chat are sandbox mock-ups)', H.tabs().length===H.PH.NAV.filter(x=>x.k!=='academy' && x.k!=='payroll' && x.k!=='chat').length);
+  t('the Chat mock-up never shows on the live site', H.tabs().indexOf('chat')<0);
+  t('...and neither does its chat button beside the bell', H.PH.NAV.find(x=>x.k==='chat').show()===false);
+  const CH=load({page:'chat'});
+  CH.PH.nav('chat');
+  CH.signIn({ displayName:'Test Admin', mail:'test.admin@example.com', userPrincipalName:'test.admin@example.com',
+              jobTitle:'COO', department:'Admin', officeLocation:'' });
+  t('...and the Chat page stays shut there, even for an admin', CH.locked()===true || CH.pending()===true);
   t('the Academy mock-up never shows on the live site', H.tabs().indexOf('academy')<0);
   t('the Payroll mock-up never shows on the live site', H.tabs().indexOf('payroll')<0);
   const PY=load({page:'payroll'});
@@ -266,6 +273,9 @@ const t=(n,v)=>{ (v?ok:bad).push(n); };
   t('sandbox still resolves its demo persona', S.PH.me().id==='admin');
   t('sandbox admin persona still has the Admin tab', S.tabs().indexOf('admin')>=0);
   t('the sandbox has the TC Tracker (sandbox first)', S.PH.tcOn()===true && S.tabs().indexOf('tc')>=0);
+  /* 22/10/2026: the Chat mock-up opens from a chat button beside the bell, not from a tab. */
+  const chatNav=S.PH.NAV.find(x=>x.k==='chat');
+  t('the sandbox has the Chat mock-up, as the button beside the bell (not a tab)', chatNav.show()===true && chatNav.tab===false);
   const S3=load({ host:'corylawing.github.io', page:'team', ls:{ ph_viewas:'staff' } });
   S3.PH.nav('team');
   t('the sandbox shows the TC Tracker to everyone (made-up patients; the page has its own "Try it as")', S3.tabs().indexOf('tc')>=0);
