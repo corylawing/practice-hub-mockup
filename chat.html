@@ -375,11 +375,12 @@
     addMsg(c, Object.assign({from:ME, at:Date.now()}, m));
     const others=c.members.filter(n=>n!==ME); if(!others.length) return;
     const who=others[Math.floor(Math.random()*others.length)];
+    // the reply comes straight back (Cory, 22/10: "On the portfolio it should have a reply instant")
     setTimeout(()=>{
       const r={from:who, at:Date.now(), text:REPLIES[Math.floor(Math.random()*REPLIES.length)]};
       addMsg(c, r);
       if(alertsOn) notify(c, r);
-    }, 3800);
+    }, 500);
   }
   /* the alert Home-Brace would send */
   let nt=null;
