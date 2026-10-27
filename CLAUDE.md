@@ -12,6 +12,27 @@
 developer. Keep answers **short** — he has told me repeatedly that I write too much. Give the
 answer, not the reasoning behind every alternative.
 
+### TO-DO - Cory's list (added 27/10/2026 - "save this for to do list so we don't forget")
+Cross items off here when done; add new ones at the bottom.
+1. **Ask Heather what goes to production, in what order.** Sandbox-only today (live is hc112): Payroll (her answers,
+   reminders, "i" icons), phone alerts (step 2, hc114 - Cory's iPhone test of sign-in inside the home-screen app is
+   still to come), Chat (mock-up; real one needs IT to approve Teams chat permission). Message drafted 27/10.
+2. **Personnel files** - Heather's idea (27/10): a place where OMs upload documents, a folder for each employee on
+   their team (themselves included): W-2s, driver's license copy, SS card, write-ups, employment verification forms -
+   "personnel files for the entire company house on Home Brace". Today they are all on her OneDrive. Her reasons:
+   "1. make them own this and 2. make it to where I don't hold all the power of information."
+   Notes for the build: the most sensitive data in the app (SSNs, IDs). Files live in a SharePoint document library
+   in THEIR tenant - never in this public repo, never cached in the browser. An OM sees and uploads only their own
+   office's people; Heather sees all; nobody sees their own coworkers' files. Set the library and its permissions up
+   once by hand with Adam (the app can't create lists/libraries - Sites.ReadWrite.All). Moving her OneDrive files
+   in is hers to do. Log who opened what.
+3. **Production days from the Schedule** - Heather, Enter Production feedback (23/10): "can the # of production days
+   per office pull from the schedule in Home Brace and can the completed production days # on this screen pull from
+   that calendar as well once that day has passed?" Part of separating from the Excel. Days an office has a doctor
+   in the month = production days; those on or before today = completed. Scheduled and completed days are among the
+   44 series she verified (§9) - match her workbook's numbers first; hers are the reference.
+4. **Rotate the deployment token** when we're done (still the one pasted in chat).
+
 ### What this is
 A **live internal hub** for an 8-office orthodontic practice — no longer a mockup. Static
 HTML/CSS/JS (no framework, no build step), but every page sits behind Microsoft sign-in, reads and
