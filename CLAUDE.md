@@ -17,6 +17,8 @@ Cross items off here when done; add new ones at the bottom.
 1. **Ask Heather what goes to production, in what order.** Sandbox-only today (live is hc112): Payroll (her answers,
    reminders, "i" icons), phone alerts (step 2, hc114 - Cory's iPhone test of sign-in inside the home-screen app is
    still to come), Chat (mock-up; real one needs IT to approve Teams chat permission). Message drafted 27/10.
+   Cory, 27/10: Heather already OKed Payroll ("Perfect, as far as I can tell everything looks good") - it goes first.
+   Phone alerts ship WITH Chat as one thing (to her they're the same); payroll's in-app reminders don't wait for it.
 2. **Personnel files** - Heather's idea (27/10): a place where OMs upload documents, a folder for each employee on
    their team (themselves included): W-2s, driver's license copy, SS card, write-ups, employment verification forms -
    "personnel files for the entire company house on Home Brace". Today they are all on her OneDrive. Her reasons:
