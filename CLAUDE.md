@@ -26,11 +26,15 @@ Cross items off here when done; add new ones at the bottom.
    office's people; Heather sees all; nobody sees their own coworkers' files. Set the library and its permissions up
    once by hand with Adam (the app can't create lists/libraries - Sites.ReadWrite.All). Moving her OneDrive files
    in is hers to do. Log who opened what.
+   ASKED HEATHER (27/10): should an OM see their own folder (their own write-ups)? Who besides her sees everything
+   (Dr. Jae, other leaders)? When someone leaves, how long are files kept, and who can delete one?
 3. **Production days from the Schedule** - Heather, Enter Production feedback (23/10): "can the # of production days
    per office pull from the schedule in Home Brace and can the completed production days # on this screen pull from
    that calendar as well once that day has passed?" Part of separating from the Excel. Days an office has a doctor
    in the month = production days; those on or before today = completed. Scheduled and completed days are among the
    44 series she verified (§9) - match her workbook's numbers first; hers are the reference.
+   ASKED HEATHER (27/10): does a Saturday half day count as a full day? Does a day count if the office is open with no
+   doctor? If a day is cancelled, will someone change the Schedule (else "completed" counts a day not worked)?
 4. **Rotate the deployment token** when we're done (still the one pasted in chat).
 
 ### What this is
