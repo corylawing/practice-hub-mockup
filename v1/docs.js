@@ -632,6 +632,49 @@
   function tcRevoke(email, role){ return TC.revoke(email, role); }
   function tcSync(want, gave){ return TC.sync(want, gave); }
 
+  /* PAYROLL (01/11/2026). Heather: "We can go live with the payroll sheet." Pay is private, so payroll is files in
+     its own locked folder BESIDE Home-Brace Documents (paystore.js), one folder inside it per office:
+       Home-Brace Payroll            whoever manages payroll (Teams & Access: Payroll "Everything", and admins)
+       Home-Brace Payroll/<office>   those managers + that office's sender(s) (Payroll "Edit" at that office)
+       Home-Brace Payroll/Heather    NEVER given to anyone: it only inherits the locked folder's managers
+     One-time lock by hand of Home-Brace Payroll, like the TC Tracker's. Then Admin keeps every folder in step with
+     the grid and takes back only what it gave (ph_paygrants = {folder path: {email: role}}). Fenced: a path here is
+     always the payroll folder or one office folder directly inside it - never Heather's, never anything else. */
+  var PAY_BASE = 'Home-Brace Payroll', PAY_PRIVATE = 'Heather';
+  var PAY_ROOT = lockedFolder(PAY_BASE), PAY_OFFICES = {};
+  function payFolder(path){
+    path = String(path || '');
+    if(path === PAY_BASE) return PAY_ROOT;
+    var name = path.indexOf(PAY_BASE + '/') === 0 ? path.slice(PAY_BASE.length + 1) : '';
+    if(!name || /[\/\\]/.test(name) || name === PAY_PRIVATE || name === '.' || name === '..')
+      throw fail(0, 'Not a payroll office folder: ' + path, { fenced: true });
+    return PAY_OFFICES[name] || (PAY_OFFICES[name] = lockedFolder(path));
+  }
+  function payLocked(){ return PAY_ROOT.locked(); }
+  /* want / gave: {folder path: {email: role}}. Every folder that either names is brought in line, one after another
+     (one failing never stops the rest). Resolves {path: {gave, took, failed}}; a path that isn't a payroll folder is
+     reported as failed and never touched. */
+  function paySync(want, gave){
+    want = want || {}; gave = (gave && typeof gave === 'object' && !Array.isArray(gave)) ? gave : {};
+    var paths = Object.keys(want).concat(Object.keys(gave).filter(function(k){ return !(k in want); }));
+    paths.sort(function(a, b){ return a === PAY_BASE ? -1 : b === PAY_BASE ? 1 : a < b ? -1 : 1; });   // the folder itself first
+    var out = {};
+    return paths.reduce(function(c, path){ return c.then(function(){
+      var F; try{ F = payFolder(path); }catch(e){ out[path] = { gave: [], took: [], failed: [{ verb: 'give', em: '', role: '', why: e.message }] }; return; }
+      return F.sync(want[path] || {}, gave[path] || {}).then(function(done){ out[path] = done; },
+        function(e){ out[path] = { gave: [], took: [], failed: [{ verb: 'give', em: '', role: '', why: (e && e.message) || 'error' }] }; });
+    }); }, Promise.resolve()).then(function(){ return out; });
+  }
+  /* The record after a sync, folder by folder - the TC Tracker's rule in each (a failed take-back stays on record). */
+  function payRecord(cur, done){
+    var next = (cur && typeof cur === 'object' && !Array.isArray(cur)) ? JSON.parse(JSON.stringify(cur)) : {};
+    Object.keys(done || {}).forEach(function(path){
+      var r = tcRecord(next[path], done[path]);
+      if(Object.keys(r).length) next[path] = r; else delete next[path];
+    });
+    return next;
+  }
+
   /* SENSITIVE MATERIAL (20/10/2026). Cory: "another Folder in Documents called Sensitive
      Material ... meant to hold doctor sensitive info" and "company sensitive information". Inside
      Home-Brace Documents, so it shows in Documents - but LOCKED in SharePoint like the TC folder
@@ -777,6 +820,7 @@
     isLocked: isLocked, grantEdit: grantEdit, revokeEdit: revokeEdit,
     TC_BASE: TC_BASE, tcFolder: tcFolder, tcLocked: tcLocked, tcGrant: tcGrant, tcRevoke: tcRevoke, tcPlan: tcPlan,
     tcSync: tcSync, tcRecord: tcRecord,
+    PAY_BASE: PAY_BASE, PAY_PRIVATE: PAY_PRIVATE, payFolder: payFolder, payLocked: payLocked, paySync: paySync, payRecord: payRecord,
     SENS_NAME: SENS_NAME, SENS_PATH: SENS_PATH, inSens: inSens,
     sensFolder: SENS.folder, sensLocked: SENS.locked, sensGrant: SENS.grant, sensRevoke: SENS.revoke,
     sensPeople: SENS.people, sensSync: SENS.sync, tcPeople: TC.people,
