@@ -47,7 +47,6 @@ have not yet signed their contract." -> tc.js SCHED_START: a completed consult (
 until treatment begins; asks for the start appointment (nextFU, required); call list "Start appointment due /
 - future / Set start appointment date" with Started / New start date / Called / Not starting; its own line in
 Monthly results, Open work and the Monthly totals. test/tc.test.js +10.
-**Missing:** Cory's message had a reply "3." with nothing after it - ask him to paste it.
 
 ### What this is
 A **live internal hub** for an 8-office orthodontic practice — no longer a mockup. Static
