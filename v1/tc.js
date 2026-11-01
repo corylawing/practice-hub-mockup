@@ -18,12 +18,16 @@
   /* 16/10/2026, Selene: two more outcomes. "Pre-TX Hold" - waiting on dental clearance or
      another requirement before treatment. "Submitted to Medicaid" - the authorization request
      is in, waiting on a decision. Both are exams that happened, and both need follow-up. */
-  const OUTCOMES=['Started','Pending','Pre-TX Hold','Submitted to Medicaid','Observation','No Show','Refused Treatment','Rescheduled / Cancelled'];
+  /* 01/11/2026, Selene: "Pending – Scheduled to Start" - "patients who have completed their exam and scheduled a
+     future start appointment but have not yet signed their contract". An exam that happened (a consult), not a start
+     until treatment begins; on the call list until then, due on the start appointment (kept in nextFU). */
+  const SCHED_START='Pending – Scheduled to Start';
+  const OUTCOMES=['Started','Pending',SCHED_START,'Pre-TX Hold','Submitted to Medicaid','Observation','No Show','Refused Treatment','Rescheduled / Cancelled'];
   // "Completed consults" = every exam that happened (Dashboard B9, Monthly Totals E) - the
-  // sheet's Started + Pending + Observation + Refused, plus the two new outcomes.
-  const COMPLETED=['Started','Pending','Pre-TX Hold','Submitted to Medicaid','Observation','Refused Treatment'];
+  // sheet's Started + Pending + Observation + Refused, plus the new outcomes.
+  const COMPLETED=['Started','Pending',SCHED_START,'Pre-TX Hold','Submitted to Medicaid','Observation','Refused Treatment'];
   // Outcomes that leave a follow-up open (column V starts at No).
-  const NEEDS_FU=['Pending','Pre-TX Hold','Submitted to Medicaid','No Show','Observation'];
+  const NEEDS_FU=['Pending',SCHED_START,'Pre-TX Hold','Submitted to Medicaid','No Show','Observation'];
   // CHANGE: "Rebooked" is new - see WHAT_CHANGED.
   const FU_STATUSES=['Open','Contacted - waiting','Scheduled to start','Closed - started','Closed - declined','Rebooked'];
   const OPEN_FU=['','Open','Contacted - waiting'];
@@ -47,11 +51,11 @@
   const payerOf=r=>(r && r.payer==='Medicaid') ? 'Medicaid' : 'Private pay';
   const SLOT_CHOICES=[8,9,10];
   // The Follow-Up Queue's "Action needed" values, most urgent first (the call list's order).
-  const ACTIONS=['Pending follow-up due','Pre-TX hold due','Medicaid decision due','No-show follow-up','Observation review due','Recall ready',
-    'Set pending follow-up date','Set pre-TX hold date','Set Medicaid check date','Set observation review date',
-    'Pending - future follow-up','Pre-TX hold - future','Waiting on Medicaid','Observation - future review'];
-  const DUE=['Pending follow-up due','Pre-TX hold due','Medicaid decision due','No-show follow-up','Observation review due','Recall ready'];
-  const NEEDS_DATE=['Set pending follow-up date','Set pre-TX hold date','Set Medicaid check date','Set observation review date'];
+  const ACTIONS=['Start appointment due','Pending follow-up due','Pre-TX hold due','Medicaid decision due','No-show follow-up','Observation review due','Recall ready',
+    'Set start appointment date','Set pending follow-up date','Set pre-TX hold date','Set Medicaid check date','Set observation review date',
+    'Start appointment - future','Pending - future follow-up','Pre-TX hold - future','Waiting on Medicaid','Observation - future review'];
+  const DUE=['Start appointment due','Pending follow-up due','Pre-TX hold due','Medicaid decision due','No-show follow-up','Observation review due','Recall ready'];
+  const NEEDS_DATE=['Set start appointment date','Set pending follow-up date','Set pre-TX hold date','Set Medicaid check date','Set observation review date'];
 
   const WHAT_CHANGED=[
     'A patient who started or declined leaves the call list, observation patients included. '+
@@ -110,6 +114,10 @@
     if(r.outcome==='Pending' && OPEN_FU.indexOf(st)>=0){
       if(!r.nextFU) return 'Set pending follow-up date';
       return r.nextFU<=today ? 'Pending follow-up due' : 'Pending - future follow-up';
+    }
+    if(r.outcome===SCHED_START && OPEN_FU.indexOf(st)>=0){
+      if(!r.nextFU) return 'Set start appointment date';
+      return r.nextFU<=today ? 'Start appointment due' : 'Start appointment - future';
     }
     if(r.outcome==='Pre-TX Hold' && OPEN_FU.indexOf(st)>=0){
       if(!r.nextFU) return 'Set pre-TX hold date';
@@ -245,9 +253,9 @@
     keep=keep||(()=>true);
     const all=(consults||[]).filter(live), mine=all.filter(keep), m=mine.filter(r=>inMonth(r.date, ym));
     const n=o=>m.filter(r=>r.outcome===o).length;
-    const started=n('Started'), pending=n('Pending'), hold=n('Pre-TX Hold'), submitted=n('Submitted to Medicaid'),
+    const started=n('Started'), pending=n('Pending'), schedStart=n(SCHED_START), hold=n('Pre-TX Hold'), submitted=n('Submitted to Medicaid'),
           observation=n('Observation'), noShow=n('No Show'), refused=n('Refused Treatment'), rescheduled=n('Rescheduled / Cancelled');
-    const scheduled=m.length, completed=started+pending+hold+submitted+observation+refused;
+    const scheduled=m.length, completed=started+pending+schedStart+hold+submitted+observation+refused;
     const sameDay=m.filter(r=>r.sameDay==='Yes').length;
     const fuYes=m.filter(r=>r.fuDone==='Yes').length, fuNo=m.filter(r=>r.fuDone==='No').length;
     slots=Number(slots)||0;
@@ -256,6 +264,7 @@
       completed, completedRate:rate(completed, scheduled),
       started, startedRate:rate(started, completed),
       pending, pendingRate:rate(pending, completed),
+      schedStart, schedStartRate:rate(schedStart, completed),
       hold, holdRate:rate(hold, completed),
       submitted, submittedRate:rate(submitted, completed),
       observation, observationRate:rate(observation, completed),
@@ -278,6 +287,7 @@
     const c=a=>acts.filter(x=>x===a).length;
     return {
       openPending: all.filter(r=>r.outcome==='Pending' && CLOSED_FU.indexOf(r.fuStatus||'')<0).length,
+      schedStart: all.filter(r=>r.outcome===SCHED_START && CLOSED_FU.indexOf(r.fuStatus||'')<0).length,
       onHold: all.filter(r=>r.outcome==='Pre-TX Hold' && CLOSED_FU.indexOf(r.fuStatus||'')<0).length,
       waitingMedicaid: all.filter(r=>r.outcome==='Submitted to Medicaid' && CLOSED_FU.indexOf(r.fuStatus||'')<0).length,
       // CHANGE: started/declined observation patients are not "current" (the sheet: every Observation ever).
@@ -476,7 +486,7 @@
           if(!past && i>=booked/2){ out.push(r); continue; }
           setOutcome(r, r.payer==='Medicaid'
             ? weighted([['Started',22],['Pending',8],['Submitted to Medicaid',26],['Pre-TX Hold',8],['Observation',10],['No Show',13],['Refused Treatment',3],['Rescheduled / Cancelled',10]])
-            : weighted([['Started',34],['Pending',22],['Pre-TX Hold',6],['Observation',9],['No Show',11],['Refused Treatment',8],['Rescheduled / Cancelled',10]]));
+            : weighted([['Started',34],['Pending',16],[SCHED_START,6],['Pre-TX Hold',6],['Observation',9],['No Show',11],['Refused Treatment',8],['Rescheduled / Cancelled',10]]));
           if(r.outcome==='Started'){
             r.sameDay=rnd()<0.7?'Yes':'No'; r.startDate=r.sameDay==='Yes'?d:addDays(d, 7+Math.floor(rnd()*14));
             if(r.startDate>today) r.startDate='';
@@ -491,6 +501,10 @@
               else if(end==='denied'){ DO.denied(r, when(12), addDays(when(12), 3)); if(rnd()<0.5) DO.started(r, when(24), when(24)); }
               else DO.called(r, when(14), addDays(today, Math.floor(rnd()*7)));
             }
+          }
+          if(r.outcome===SCHED_START){
+            r.nextFU=addDays(d, 5+Math.floor(rnd()*16));                 // the start appointment
+            if(r.nextFU<today && rnd()<0.75) DO.started(r, r.nextFU, r.nextFU);
           }
           if(r.outcome==='Pre-TX Hold'){
             r.reason=weighted([['Dental clearance',55],['Needs dental work',20],['Needs records',20],['Other',5]]);
@@ -573,7 +587,7 @@
   }
 
   const TC={
-    OUTCOMES, COMPLETED, NEEDS_FU, FU_STATUSES, OPEN_FU, CLOSED_FU, DEFAULT_LISTS, SLOT_CHOICES, ACTIONS, DUE, NEEDS_DATE, WHAT_CHANGED,
+    OUTCOMES, SCHED_START, COMPLETED, NEEDS_FU, FU_STATUSES, OPEN_FU, CLOSED_FU, DEFAULT_LISTS, SLOT_CHOICES, ACTIONS, DUE, NEEDS_DATE, WHAT_CHANGED,
     PAYERS, DEFAULT_MEDICAID, medicaidOffices, takesMedicaid, payerOf, patientKey, startOf, patients, conversion, earlierExam,
     iso, parse, addDays, addMonths, daysBetween, monthOf, inMonth, monthDays, shiftMonth,
     action, daysWaiting, setOutcome, DO, monthStats, openWork, dailyView, yearTotals, callList,

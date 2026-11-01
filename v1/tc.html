@@ -95,6 +95,7 @@
   .oc-none{background:#fff;color:var(--soft);border:1px dashed #c9d1dc}
   .oc-Hold{background:#E4F4EF;color:#1b6b57}
   .oc-Medicaid{background:#ECEDFC;color:#3b3f9e}
+  .oc-SchedStart{background:#EEF6DD;color:#46661a}
   .pay{display:inline-block;border-radius:6px;padding:1px 7px;font-size:11px;font-weight:800;background:#ECEDFC;color:#3b3f9e;margin-left:6px;vertical-align:1px}
 
   /* Today */
@@ -235,6 +236,7 @@
   .chip.oc-pick.on.o-Rescheduled{background:var(--blue);border-color:var(--blue)}
   .chip.oc-pick.on.o-Hold{background:#2a8a70;border-color:#2a8a70}
   .chip.oc-pick.on.o-Medicaid{background:#4a4fc0;border-color:#4a4fc0}
+  .chip.oc-pick.on.o-SchedStart{background:#5f8a1f;border-color:#5f8a1f}
   .chk{display:flex;gap:8px 14px;flex-wrap:wrap}
   .chk label{display:flex;gap:6px;align-items:center;font-size:14px;font-weight:600;cursor:pointer}
   .then{background:#F7F9FB;border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
@@ -337,8 +339,8 @@
   const fmtT=t=>{ if(!t) return ''; const [h,m]=t.split(':').map(Number); return ((h+11)%12+1)+':'+String(m).padStart(2,'0')+(h<12?'a':'p'); };
   const pct=x=>x==null?'—':Math.round(x*100)+'%';
   const ocClass=o=>'oc-'+(o==='No Show'?'NoShow':o==='Refused Treatment'?'Refused':o==='Rescheduled / Cancelled'?'Rescheduled':
-    o==='Pre-TX Hold'?'Hold':o==='Submitted to Medicaid'?'Medicaid':(o||'none'));
-  const ocShort=o=>o==='Refused Treatment'?'Refused':o==='Rescheduled / Cancelled'?'Rescheduled':o;
+    o==='Pre-TX Hold'?'Hold':o==='Submitted to Medicaid'?'Medicaid':o===TC.SCHED_START?'SchedStart':(o||'none'));
+  const ocShort=o=>o==='Refused Treatment'?'Refused':o==='Rescheduled / Cancelled'?'Rescheduled':o===TC.SCHED_START?'Pending – scheduled to start':o;
   const ocBadge=o=>'<span class="oc '+ocClass(o)+'">'+esc(o?ocShort(o):'No outcome yet')+'</span>';
 
   /* ---------------- who, and which offices ---------------- */
@@ -583,6 +585,10 @@
       btns=B('called','📞 Called')+B('rebooked','🔁 Rebooked')+B('declined','✖ Not coming');
     else if(a==='Observation review due' || a==='Observation - future review')
       btns=B('reviewed','👁 Reviewed')+B('ready','🟢 Ready now')+B('declined','✖ Declined');
+    else if(a==='Start appointment due' || a==='Start appointment - future')
+      btns=B('started','✅ Started')+B('setDate','📆 New start date')+B('called','📞 Called')+B('declined','✖ Not starting');
+    else if(a==='Set start appointment date')
+      btns=B('setDate','📆 Set the date')+B('started','✅ Started')+B('declined','✖ Declined');
     else if(a==='Pre-TX hold due' || a==='Pre-TX hold - future')
       btns=B('called','📞 Called')+B('scheduled','✅ Cleared · scheduled')+B('started','✅ Started')+B('declined','✖ Declined');
     else if(a==='Set pre-TX hold date')
@@ -597,7 +603,7 @@
       r.phone?'<span>📞 <a class="tel" href="tel:'+esc(String(r.phone).replace(/[^\d+]/g,''))+'">'+esc(r.phone)+'</a></span>':'',
       '<span>Consult <b>'+esc(fmtS(r.date))+'</b></span>',
       '<span>'+ocBadge(r.outcome)+(r.reason?' · '+esc(r.reason):'')+'</span>',
-      r.nextFU && ['Pending','Pre-TX Hold','Submitted to Medicaid'].indexOf(r.outcome)>=0?'<span>'+(r.outcome==='Submitted to Medicaid'?'Check with Medicaid':'Next call')+' <b>'+esc(fmtS(r.nextFU))+'</b></span>':'',
+      r.nextFU && ['Pending',TC.SCHED_START,'Pre-TX Hold','Submitted to Medicaid'].indexOf(r.outcome)>=0?'<span>'+(r.outcome==='Submitted to Medicaid'?'Check with Medicaid':r.outcome===TC.SCHED_START?'Start appointment':'Next call')+' <b>'+esc(fmtS(r.nextFU))+'</b></span>':'',
       r.obsReview && r.outcome==='Observation'?'<span>Review <b>'+esc(fmtS(r.obsReview))+'</b></span>':'',
       r.lastContact?'<span>Last contact <b>'+esc(fmtS(r.lastContact))+'</b></span>':'',
       wait!=null?'<span>Waiting <b>'+wait+'</b> day'+(wait===1?'':'s')+'</span>':'',
@@ -690,12 +696,12 @@
     h+='<div class="three">';
     h+='<div class="card"><h2>Monthly results</h2><p class="sub">'+esc(fmtM(month))+'</p><table class="mt">'+
       R('Available consult slots', m.slots)+R('Consults scheduled', m.scheduled)+R('Capacity scheduled', pct(m.capacity))+
-      R('Completed consults', m.completed, m.completedRate)+R('Started', m.started, m.startedRate, 'sub')+R('Pending', m.pending, m.pendingRate, 'sub')+
+      R('Completed consults', m.completed, m.completedRate)+R('Started', m.started, m.startedRate, 'sub')+R('Pending', m.pending, m.pendingRate, 'sub')+R('Pending – scheduled to start', m.schedStart, m.schedStartRate, 'sub')+
       R('Pre-TX hold', m.hold, m.holdRate, 'sub')+(med?R('Submitted to Medicaid', m.submitted, m.submittedRate, 'sub'):'')+
       R('Observation', m.observation, m.observationRate, 'sub')+R('Refused treatment', m.refused, m.refusedRate, 'sub')+
       R('No show', m.noShow, m.noShowRate)+R('Rescheduled / cancelled', m.rescheduled, m.rescheduledRate)+R('RIP Retainer Programs sold', m.rpi)+'</table></div>';
     h+='<div class="card"><h2>Open work</h2><p class="sub">Right now, every month</p><table class="mt">'+
-      R('Open pending', w.openPending)+R('On pre-TX hold', w.onHold)+(med?R('Waiting on Medicaid', w.waitingMedicaid):'')+
+      R('Open pending', w.openPending)+R('Scheduled to start, contract not signed', w.schedStart)+R('On pre-TX hold', w.onHold)+(med?R('Waiting on Medicaid', w.waitingMedicaid):'')+
       R('Current observation patients', w.observation)+R('Recall ready', w.recallReady)+
       R('Observation review due', w.observationDue)+R('No-show follow-up', w.noShow)+R('Missing outcome', m.missing)+R('All open follow-ups', w.allOpen)+'</table>'+
       (w.allOpen?'<button class="btn ghost sm" style="margin-top:10px" data-act="tab" data-v="calls">Open the call list →</button>':'')+'</div>';
@@ -747,8 +753,8 @@
       (days.length?days.map(x=>'<tr><td>'+esc(fmtD(x.date))+'</td><td class="n">'+x.scheduled+'</td><td class="n">'+x.slots+'</td><td class="n">'+pct(x.capacity)+'</td><td class="n">'+x.started+'</td><td class="n">'+x.pending+'</td><td class="n">'+x.noShow+'</td><td class="n">'+x.fuDue+'</td><td class="n">'+x.rpi+'</td><td class="n">'+x.sameDay+'</td><td class="n">'+x.fuDone+'</td></tr>').join(''):'<tr><td colspan="11" class="muted">Nothing this month.</td></tr>')+
       '</tbody></table></div></details>';
     const year=+month.slice(0,4), y=TC.yearTotals(list, year, slotsMonth, d, keep);
-    const MR=(r,label,cls)=>'<tr'+(cls?' class="'+cls+'"':'')+'><td>'+label+'</td><td class="n">'+r.slots+'</td><td class="n">'+r.scheduled+'</td><td class="n">'+pct(r.capacity)+'</td><td class="n">'+r.completed+'</td><td class="n">'+r.conversion.total.consults+'</td><td class="n">'+r.conversion.total.starts+'</td><td class="n">'+pct(r.conversion['Private pay'].rate)+'</td>'+(med?'<td class="n">'+pct(r.conversion.Medicaid.rate)+'</td>':'')+'<td class="n">'+r.pending+'</td><td class="n">'+r.hold+'</td><td class="n">'+r.observation+'</td><td class="n">'+r.noShow+'</td><td class="n">'+r.refused+'</td><td class="n">'+r.rescheduled+'</td><td class="n">'+r.rpi+'</td><td class="n">'+r.sameDay+'</td><td class="n">'+pct(r.sameDayRate)+'</td><td class="n">'+pct(r.noShowRate)+'</td><td class="n">'+r.fuYes+'</td><td class="n">'+pct(r.fuRate)+'</td></tr>';
-    h+='<details class="card"'+(canManage()?' open':'')+'><summary>Monthly totals · '+year+'</summary><div class="tblwrap" style="box-shadow:none"><table class="t"><thead><tr><th>Month</th><th class="n">Slots</th><th class="n">Scheduled</th><th class="n">Capacity</th><th class="n">Completed</th><th class="n">Consults</th><th class="n">Starts</th><th class="n">Conv. private</th>'+(med?'<th class="n">Conv. Medicaid</th>':'')+'<th class="n">Pending</th><th class="n">Pre-TX</th><th class="n">Observation</th><th class="n">No show</th><th class="n">Refused</th><th class="n">Resched.</th><th class="n">RIP</th><th class="n">Same-day</th><th class="n">Same-day %</th><th class="n">No-show %</th><th class="n">Follow-ups</th><th class="n">Follow-up %</th></tr></thead><tbody>'+
+    const MR=(r,label,cls)=>'<tr'+(cls?' class="'+cls+'"':'')+'><td>'+label+'</td><td class="n">'+r.slots+'</td><td class="n">'+r.scheduled+'</td><td class="n">'+pct(r.capacity)+'</td><td class="n">'+r.completed+'</td><td class="n">'+r.conversion.total.consults+'</td><td class="n">'+r.conversion.total.starts+'</td><td class="n">'+pct(r.conversion['Private pay'].rate)+'</td>'+(med?'<td class="n">'+pct(r.conversion.Medicaid.rate)+'</td>':'')+'<td class="n">'+r.pending+'</td><td class="n">'+r.schedStart+'</td><td class="n">'+r.hold+'</td><td class="n">'+r.observation+'</td><td class="n">'+r.noShow+'</td><td class="n">'+r.refused+'</td><td class="n">'+r.rescheduled+'</td><td class="n">'+r.rpi+'</td><td class="n">'+r.sameDay+'</td><td class="n">'+pct(r.sameDayRate)+'</td><td class="n">'+pct(r.noShowRate)+'</td><td class="n">'+r.fuYes+'</td><td class="n">'+pct(r.fuRate)+'</td></tr>';
+    h+='<details class="card"'+(canManage()?' open':'')+'><summary>Monthly totals · '+year+'</summary><div class="tblwrap" style="box-shadow:none"><table class="t"><thead><tr><th>Month</th><th class="n">Slots</th><th class="n">Scheduled</th><th class="n">Capacity</th><th class="n">Completed</th><th class="n">Consults</th><th class="n">Starts</th><th class="n">Conv. private</th>'+(med?'<th class="n">Conv. Medicaid</th>':'')+'<th class="n">Pending</th><th class="n">Sched. start</th><th class="n">Pre-TX</th><th class="n">Observation</th><th class="n">No show</th><th class="n">Refused</th><th class="n">Resched.</th><th class="n">RIP</th><th class="n">Same-day</th><th class="n">Same-day %</th><th class="n">No-show %</th><th class="n">Follow-ups</th><th class="n">Follow-up %</th></tr></thead><tbody>'+
       y.rows.map((r,i)=>MR(r, MO[i], r.ym===month?'':'' )).join('')+MR(y.total,'Year','total')+'</tbody></table></div></details>';
     h+='<details class="card"><summary>How these numbers are worked out</summary>'+
       '<p class="small" style="margin-top:0"><b>Conversion</b> (Selene, October 2026) = starts that month ÷ consults that month, for private pay and Medicaid separately. '+
@@ -911,6 +917,9 @@
     } else if(r.outcome==='Pending'){
       h+='<div class="then" style="margin-top:10px"><div><div class="q">Why pending? <span class="req">*</span></div>'+(ro?esc(r.reason||'—'):chips('reason', LISTS.reasons, r.reason))+'</div>'+
         '<div><div class="q">Next follow-up</div>'+(ro?esc(fmtS(r.nextFU)||'—'):quickDates('nextFU', r.date||today(), fuDates(today())))+'</div></div>';
+    } else if(r.outcome===TC.SCHED_START){
+      h+='<div class="then" style="margin-top:10px"><div><div class="q">Start appointment <span class="req">*</span></div>'+(ro?esc(fmtS(r.nextFU)||'—'):field('','nextFU','date'))+'</div>'+
+        '<div class="small muted">Exam done, start booked, contract not signed yet. It counts as a start when treatment begins &mdash; on the start date they come up on the call list to mark Started.</div></div>';
     } else if(r.outcome==='Pre-TX Hold'){
       h+='<div class="then" style="margin-top:10px"><div><div class="q">What are they waiting on? <span class="req">*</span></div>'+(ro?esc(r.reason||'—'):chips('reason', LISTS.holdReasons, r.reason))+'</div>'+
         '<div><div class="q">Check back</div>'+(ro?esc(fmtS(r.nextFU)||'—'):quickDates('nextFU', r.date||today(), fuDates(today())))+'</div></div>';
@@ -958,6 +967,7 @@
     if(!TC.parse(r.date)) return 'Pick the consult date.';
     if(r.outcome==='Started' && !r.sameDay) return 'Say whether the contract was signed today.';
     if(r.outcome==='Pending' && !r.reason) return 'Pick why it’s pending.';
+    if(r.outcome===TC.SCHED_START && !TC.parse(r.nextFU)) return 'Add the start appointment date.';
     if(takesMed(r.office) && !r.payer) return 'Pick Medicaid or private pay.';
     if(r.outcome==='Submitted to Medicaid' && r.payer!=='Medicaid') return '“Submitted to Medicaid” is only for Medicaid patients.';
     if(r.outcome==='Pre-TX Hold' && !r.reason) return 'Pick what they’re waiting on.';
@@ -976,7 +986,7 @@
       else h+='<div><div class="q lab2">Next follow-up</div>'+quickDates(r.outcome==='Observation' && r.recallReady!=='Yes'?'obsReview':'nextFU', base, fuDates(base))+'</div>';
     } else if(d.what==='setDate'){
       const f=r.outcome==='Observation'?'obsReview':'nextFU';
-      h+='<div><div class="q lab2">'+(f==='obsReview'?'Next observation review':r.outcome==='Submitted to Medicaid'?'Check with Medicaid':'Next follow-up')+'</div>'+
+      h+='<div><div class="q lab2">'+(f==='obsReview'?'Next observation review':r.outcome==='Submitted to Medicaid'?'Check with Medicaid':r.outcome===TC.SCHED_START?'Start appointment':'Next follow-up')+'</div>'+
         quickDates(f, base, f==='obsReview'?obsDates(base):r.outcome==='Submitted to Medicaid'?medDates(base):fuDates(base))+'</div>';
     } else if(d.what==='reviewed'){
       h+='<div><div class="q lab2">Next observation review</div>'+quickDates('obsReview', base, obsDates(base))+'</div>';

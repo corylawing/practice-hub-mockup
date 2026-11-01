@@ -12,33 +12,42 @@
 developer. Keep answers **short** — he has told me repeatedly that I write too much. Give the
 answer, not the reasoning behind every alternative.
 
-### TO-DO - Cory's list (added 27/10/2026 - "save this for to do list so we don't forget")
+### TO-DO - Cory's list (started 27/10/2026 - "save this for to do list so we don't forget")
 Cross items off here when done; add new ones at the bottom.
-1. **Ask Heather what goes to production, in what order.** Sandbox-only today (live is hc112): Payroll (her answers,
-   reminders, "i" icons), phone alerts (step 2, hc114 - Cory's iPhone test of sign-in inside the home-screen app is
-   still to come), Chat (mock-up; real one needs IT to approve Teams chat permission). Message drafted 27/10.
-   Cory, 27/10: Heather already OKed the Payroll mock-up ("Perfect, as far as I can tell everything looks good");
-   the message ASKS her whether to put it into production now - don't build the live version until she says yes.
-   Phone alerts ship WITH Chat as one thing (to her they're the same); payroll's in-app reminders don't wait for it.
-2. **Personnel files** - Heather's idea (27/10): a place where OMs upload documents, a folder for each employee on
-   their team (themselves included): W-2s, driver's license copy, SS card, write-ups, employment verification forms -
-   "personnel files for the entire company house on Home Brace". Today they are all on her OneDrive. Her reasons:
-   "1. make them own this and 2. make it to where I don't hold all the power of information."
-   Notes for the build: the most sensitive data in the app (SSNs, IDs). Files live in a SharePoint document library
-   in THEIR tenant - never in this public repo, never cached in the browser. An OM sees and uploads only their own
-   office's people; Heather sees all; nobody sees their own coworkers' files. Set the library and its permissions up
-   once by hand with Adam (the app can't create lists/libraries - Sites.ReadWrite.All). Moving her OneDrive files
-   in is hers to do. Log who opened what.
-   ASKED HEATHER (27/10): should an OM see their own folder (their own write-ups)? Who besides her sees everything
-   (Dr. Jae, other leaders)? When someone leaves, how long are files kept, and who can delete one?
-3. **Production days from the Schedule** - Heather, Enter Production feedback (23/10): "can the # of production days
-   per office pull from the schedule in Home Brace and can the completed production days # on this screen pull from
-   that calendar as well once that day has passed?" Part of separating from the Excel. Days an office has a doctor
-   in the month = production days; those on or before today = completed. Scheduled and completed days are among the
-   44 series she verified (§9) - match her workbook's numbers first; hers are the reference.
-   ASKED HEATHER (27/10): does a Saturday half day count as a full day? Does a day count if the office is open with no
-   doctor? If a day is cancelled, will someone change the Schedule (else "completed" counts a day not worked)?
-4. **Rotate the deployment token** when we're done (still the one pasted in chat).
+**HEATHER'S ORDER (her reply, 01/11/2026):** "We can go live with the payroll sheet. After getting back from the summit,
+I can confidently say that the chat feature should go next. The production thing can be second" (i.e. after chat),
+"could you actually do the monthly monitor sheet 3rd? ... Then personnel can be last." So:
+1. **Payroll -> LIVE.** She OKed the mock-up. Real build: the live data (pay is private - follow the TC Tracker's locked
+   folder, access from Teams & Access; think per-office so one OM can't open another office's sheets), the real
+   people and who sends each office's sheet, her Settings, reminders in the bell (phone reminders come with #2).
+2. **Chat + phone alerts -> LIVE** (one thing to her). Needs IT (Adam) to approve the Teams chat permission; alerts:
+   subscriptions in SharePoint, the live origin in api-push ORIGINS, the home-screen sign-in on live (Cory's iPhone
+   test of sign-in inside the app still to come).
+3. **Production days from the Schedule.** Heather 23/10: "can the # of production days per office pull from the
+   schedule in Home Brace and can the completed production days # on this screen pull from that calendar as well once
+   that day has passed?" Her rules (01/11): a Friday (half day) counts as a whole day; a cancelled day - "the schedule
+   will be updated"; "If it is a yellow day or a virtual promo or any day the doctor is not present we will not count
+   it as a production day at this time" (may change "down the road"). Match her workbook's numbers first (scheduled +
+   completed days are among the 44 series she verified, §9) - hers are the reference.
+4. **The monthly monitor sheet.** Heather: "I think I sent it to you in a separate email, if you don't have it, let me
+   know." WE DON'T HAVE IT YET - Cory to get it from her email.
+5. **Personnel files (last).** Heather 27/10: OMs upload documents, a folder for each employee on their team
+   (themselves included): W-2s, driver's license copy, SS card, write-ups, employment verification forms - "personnel
+   files for the entire company house on Home Brace", today on her OneDrive; "1. make them own this and 2. make it to
+   where I don't hold all the power of information." Her rules (01/11): OMs may see their own file, but "the only
+   thing they can update in it is their forms of ID and they can't take out any sheets I drop in there"; "Besides me,
+   Dr. Jae, Dr. Farnworth and Jessica should see everything" (the executive team); when someone leaves, a former
+   employees folder only the executive team can see; never needs deleting, and only the executive team can delete.
+   Build notes: the most sensitive data in the app (SSNs, IDs) - a SharePoint library in THEIR tenant with locks set
+   up with Adam, never this public repo, never cached in the browser; log who opened what.
+6. **Rotate the deployment token** when we're done (still the one pasted in chat).
+**DONE in the sandbox, not live yet:** Selene (01/11) "Could we add “Pending – Scheduled to Start” as an additional TC
+outcome? This would apply to patients who have completed their exam and scheduled a future start appointment but
+have not yet signed their contract." -> tc.js SCHED_START: a completed consult (counts for conversion), not a start
+until treatment begins; asks for the start appointment (nextFU, required); call list "Start appointment due /
+- future / Set start appointment date" with Started / New start date / Called / Not starting; its own line in
+Monthly results, Open work and the Monthly totals. test/tc.test.js +10.
+**Missing:** Cory's message had a reply "3." with nothing after it - ask him to paste it.
 
 ### What this is
 A **live internal hub** for an 8-office orthodontic practice — no longer a mockup. Static

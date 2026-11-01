@@ -214,13 +214,34 @@ const C=[
 
 /* ---------- The lists match the sheet ---------- */
 {
-  t('Outcomes = the sheet’s six + Selene’s Pre-TX Hold and Submitted to Medicaid', eq(TC.OUTCOMES, ['Started','Pending','Pre-TX Hold','Submitted to Medicaid','Observation','No Show','Refused Treatment','Rescheduled / Cancelled']));
+  t('Outcomes = the sheet’s six + Selene’s Pre-TX Hold, Submitted to Medicaid and Pending – Scheduled to Start', eq(TC.OUTCOMES, ['Started','Pending','Pending – Scheduled to Start','Pre-TX Hold','Submitted to Medicaid','Observation','No Show','Refused Treatment','Rescheduled / Cancelled']));
   t('Follow-up statuses = the sheet’s five + Rebooked', eq(TC.FU_STATUSES.slice(0,5), ['Open','Contacted - waiting','Scheduled to start','Closed - started','Closed - declined']) && TC.FU_STATUSES[5]==='Rebooked');
   t('Lead sources and consult types = the sheet’s', TC.DEFAULT_LISTS.leads.length===8 && TC.DEFAULT_LISTS.types.length===6);
   t('"Needs dental work" / "Needs records" moved from Pending to Pre-TX Hold; "Medicaid denied" added to Pending',
     TC.DEFAULT_LISTS.reasons.indexOf('Needs dental work')<0 && TC.DEFAULT_LISTS.reasons.indexOf('Needs records')<0 &&
     TC.DEFAULT_LISTS.holdReasons.indexOf('Needs dental work')>=0 && TC.DEFAULT_LISTS.reasons.indexOf('Medicaid denied')>=0);
   t('Every deliberate difference is written down for Selene', TC.WHAT_CHANGED.length===4);
+}
+
+/* ---------- Selene, 01/11: "Pending – Scheduled to Start" - exam done, start booked, contract not signed ---------- */
+{
+  const S=TC.SCHED_START, A=r=>TC.action(Object.assign({date:'2026-10-01'}, r), TODAY);
+  t('Scheduled to start: her words exactly', S==='Pending – Scheduled to Start');
+  t('Scheduled to start: no date / due on the start appointment / before it', A({outcome:S})==='Set start appointment date' &&
+    A({outcome:S, nextFU:TODAY})==='Start appointment due' && A({outcome:S, nextFU:'2026-12-30'})==='Start appointment - future');
+  t('Scheduled to start: on the call list as due, and as needing a date', TC.DUE.indexOf('Start appointment due')>=0 && TC.NEEDS_DATE.indexOf('Set start appointment date')>=0);
+  t('Scheduled to start: an exam that needs follow-up, contract not signed', (r=>r.fuDone==='No' && r.fuStatus==='Open' && r.sameDay==='No')(TC.setOutcome({}, S)));
+  t('Scheduled to start: off the call list once started or declined', ['Closed - started','Closed - declined'].every(st=>A({outcome:S, fuStatus:st, nextFU:'2026-10-02'})===''));
+  const recs=[{id:'a', date:'2026-10-05', outcome:S, nextFU:'2026-10-20', chart:'111', office:'Carlsbad'},
+              {id:'b', date:'2026-10-06', outcome:'Pending', chart:'222', office:'Carlsbad'},
+              {id:'c', date:'2026-10-07', outcome:'Started', chart:'333', office:'Carlsbad'}];
+  const m=TC.monthStats(recs, '2026-10', 0, TODAY);
+  t('Scheduled to start: a completed consult, counted on its own line', m.completed===3 && m.schedStart===1 && m.pending===1 && Math.abs(m.schedStartRate-1/3)<1e-9);
+  t('Scheduled to start: a consult for conversion, not a start until treatment begins', m.conversion.total.consults===3 && m.conversion.total.starts===1);
+  const started=TC.DO.started(JSON.parse(JSON.stringify(recs[0])), '2026-10-20', '2026-10-20');
+  const m2=TC.monthStats([started, recs[1], recs[2]], '2026-10', 0, TODAY);
+  t('Scheduled to start: marked Started on the day -> a start, the exam still counted once', m2.conversion.total.consults===3 && m2.conversion.total.starts===2 && m2.schedStart===1);
+  t('Scheduled to start: in Open work until started', TC.openWork(recs, TODAY).schedStart===1 && TC.openWork([started], TODAY).schedStart===0);
 }
 
 /* ---------- Selene, 16/10: Pre-TX Hold, Submitted to Medicaid, Medicaid by office ---------- */
