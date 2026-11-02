@@ -1085,6 +1085,8 @@
   .ph-np .slab{font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#7A889B;padding:10px 15px 4px;background:#FAFBFC}
   .ph-np a.ni{text-decoration:none;color:inherit;cursor:pointer}
   .ph-np a.ni:hover{background:var(--teal-wash,#F7FBFB)}
+  .ph-np .ni.nrem{background:#FFF8EC;border-left:4px solid #E8A33A;padding-left:11px}
+  .ph-np .ni.nrem.late{background:#FDF0EE;border-left-color:#C2412D}
   .ph-np .sav{width:30px;height:30px;border-radius:50%;background:var(--teal-soft,#E8F6F4);color:var(--teal-600,#0F827E);font-size:12px;font-weight:800;display:grid;place-items:center;flex:none}
   .ph-np .sr .nic{display:grid;place-items:center;width:30px;height:30px;flex:none}
   .ph-np .sr .ti{width:20px;height:20px;display:block;color:var(--navy,#0F2A4A);opacity:.8}
@@ -1576,7 +1578,7 @@
   }
   function bellBadge(){
     const b=document.querySelector('.ph-bell.ph-nb'); if(!b) return;
-    const n=unreadCount();
+    const n=unreadCount()+payReminders().length;
     const dot=b.querySelector('.dot');
     if(!n){ if(dot) dot.remove(); b.setAttribute('aria-label','Notifications — nothing new'); return; }
     const txt=n>9?'9+':String(n);
@@ -1591,7 +1593,7 @@
   function notesHTML(){
     const list=notifications();
     const unreadList=list.filter(n=>!n.seen), readList=list.filter(n=>n.seen);
-    const shown=showRead?list:unreadList;
+    const shown=showRead?list:unreadList, rem=payReminders();
     const row=n=>'<div class="ni'+(n.seen?' read':'')+'" data-id="'+escAttr(n.id)+'">'+
       '<span class="nic">'+escHTML(n.ic||'\u{1F514}')+'</span>'+
       '<div class="ntx"><div class="ntt">'+escHTML(n.title)+'</div>'+
@@ -1601,9 +1603,13 @@
     return '<div class="nph"><b>Notifications</b>'+
       (unreadList.length ? '<button class="nall" type="button">Mark all as read</button>'
               : (list.length ? '<span class="nallok">\u2713 All caught up</span>' : ''))+'</div>'+
+      (rem.length ? '<div class="slab">Reminders</div>'+rem.map(function(r){
+          return '<a class="ni nrem'+(r.late?' late':'')+'" href="'+escAttr(r.href)+'"><span class="nic">'+escHTML(r.ic)+'</span>'+
+            '<div class="ntx"><div class="ntt">'+escHTML(r.title)+'</div><div class="nw">'+escHTML(r.sub)+'</div></div></a>'; }).join('')+
+          (shown.length ? '<div class="slab">Updates</div>' : '') : '')+
       (shown.length
         ? '<div class="nlist">'+shown.map(row).join('')+'</div>'
-        : '<div class="nempty">'+(list.length
+        : rem.length ? '' : '<div class="nempty">'+(list.length
             ? 'You\u2019re all caught up.'
             : 'Nothing new right now.<br>Updates show up here when someone '+
               'changes the schedule, enters production or posts something.')+'</div>')+
@@ -1677,6 +1683,7 @@
     /* Their read list lives in SharePoint too, so something ticked off on a phone is
        still ticked off on the desktop. */
     loadSeen().then(function(){ bellBadge(); if(npanel) npanel.innerHTML=notesHTML(); });
+    if(payOn() && payLevel()) reloadPayStatus();
   }
 
   function mount(){
@@ -1927,6 +1934,84 @@
     if(isAdmin(me()) || atLeast('payroll','edit')) return 'manage';
     if(atLeast('payroll','view')) return 'view';
     return paySenderOffices().length ? 'send' : '';
+  }
+  /* PAYROLL REMINDERS IN THE BELL (02/11/2026). Heather 22/10: "How will they get reminders to send payroll? Is it
+     through Home-Brace?" Worked out from today's date and ph_pay_status (the shared list: which office sent which
+     pay period, and when it was entered - times only, never pay), so nothing is stored per reminder and one stays
+     until its sheet is sent:
+       - whoever sends an office's sheet: from the workday before it's due ("due Tuesday by 2 pm"), the day itself,
+         then "late" until it's sent or Heather enters payroll;
+       - whoever manages payroll: from 2 pm on the due day, the offices still to send (only offices with a sender
+         chosen), then "all in - ready to enter" until she marks it entered.
+     The dates come from payrules.js, loaded when someone has Payroll. Phone reminders come with Chat's alerts. */
+  const PAY_STATUS_KEY='ph_pay_status';
+  let PAY_STATUS=null, PAY_RULES_P=null;
+  function payStatus(){
+    if(PAY_STATUS) return PAY_STATUS;
+    try{ PAY_STATUS=JSON.parse(localStorage.getItem(PAY_STATUS_KEY))||null; }catch(_){ PAY_STATUS=null; }
+    return PAY_STATUS||{p:{}};
+  }
+  function payRulesReady(){
+    if(window.PAYRULES) return Promise.resolve(window.PAYRULES);
+    if(PAY_RULES_P) return PAY_RULES_P;
+    PAY_RULES_P=new Promise(function(ok){
+      const me_=document.querySelector('script[src*="user.js"]'), sc=document.createElement('script');
+      sc.src=me_ ? me_.getAttribute('src').replace(/user\.js/, 'payrules.js') : 'payrules.js';
+      sc.onload=function(){ ok(window.PAYRULES||null); }; sc.onerror=function(){ ok(null); };
+      document.head.appendChild(sc);
+    });
+    return PAY_RULES_P;
+  }
+  function reloadPayStatus(){
+    if(!payOn() || !payLevel()) return Promise.resolve(null);
+    const got=window.PH_STORE ? window.PH_STORE.get(PAY_STATUS_KEY) : Promise.resolve(null);
+    return Promise.all([payRulesReady(), Promise.resolve(got).catch(function(){ return null; })]).then(function(r){
+      if(r[1] && typeof r[1]==='object' && r[1].p){ PAY_STATUS=r[1]; try{ localStorage.setItem(PAY_STATUS_KEY, JSON.stringify(PAY_STATUS)); }catch(_){} }
+      notifyChanged();
+      return PAY_STATUS;
+    });
+  }
+  /* One office's sheet sent / a pay period entered - the payroll page calls these. Keeps the last 6 pay periods. */
+  function payMark(key, fn){
+    const tidy=function(x){
+      x=(x && typeof x==='object' && x.p) ? x : {v:1, p:{}};
+      x.p[key]=x.p[key]||{sent:{}}; x.p[key].sent=x.p[key].sent||{};
+      fn(x.p[key]);
+      Object.keys(x.p).sort().slice(0, -6).forEach(function(k){ delete x.p[k]; });
+      return x;
+    };
+    PAY_STATUS=tidy(JSON.parse(JSON.stringify(payStatus())));
+    try{ localStorage.setItem(PAY_STATUS_KEY, JSON.stringify(PAY_STATUS)); }catch(_){}
+    notifyChanged();
+    if(!window.PH_STORE) return Promise.resolve(PAY_STATUS);
+    return window.PH_STORE.update(PAY_STATUS_KEY, tidy).then(function(r){ if(r && r.value) PAY_STATUS=r.value; notifyChanged(); return PAY_STATUS; });
+  }
+  function payReminders(now){
+    const R=window.PAYRULES; if(!R || !payOn()) return [];
+    const lv=payLevel(); if(!lv) return [];
+    now=now||new Date();
+    const pad=function(n){ return String(n).padStart(2,'0'); };
+    const today=R.todayISO(now), hm=pad(now.getHours())+':'+pad(now.getMinutes());
+    const per=R.period(R.currentIndex(today)), st=(payStatus().p||{})[per.key]||{}, sent=st.sent||{};
+    if(st.entered || today<R.workdayBefore(per.due)) return [];
+    const after=today>per.due || (today===per.due && hm>='14:00');
+    const wd=function(d){ return ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][R.dow(d)]; };
+    const num='#'+per.n, out=[];
+    paySenderOffices().filter(function(o){ return !sent[o]; }).forEach(function(o){
+      out.push({id:'pay-'+per.key+'-'+o, ic:after?'\u26A0\uFE0F':'\u23F0', late:after, href:'payroll.html',
+        title:after ? o+'\u2019s payroll sheet is late \u2014 it was due '+(today===per.due?'today':wd(per.due))+' by 2 pm'
+                    : o+'\u2019s payroll sheet is due '+(today===per.due?'today':wd(per.due))+' by 2 pm',
+        sub:'Pay period '+num+' \u00b7 tap to open it'});
+    });
+    if(lv==='manage' && after){
+      const off=paySenders().offices||{}, chosen=Object.keys(off).filter(function(o){ return (off[o]||[]).length; });
+      const missing=chosen.filter(function(o){ return !sent[o]; });
+      if(missing.length) out.push({id:'pay-'+per.key+'-wait', ic:'\u23F3', href:'payroll.html',
+        title:'Payroll '+num+': still waiting on '+missing.join(', '), sub:'Their sheets were due '+(today===per.due?'today':wd(per.due))+' by 2 pm'});
+      else if(chosen.length) out.push({id:'pay-'+per.key+'-in', ic:'\u2705', href:'payroll.html',
+        title:'Payroll '+num+': every sheet is in \u2014 ready to enter', sub:'Tap to open it'});
+    }
+    return out;
   }
   const NAV=[
     {k:'home',       n:'\ud83c\udfe0 Home',             href:'home.html',       show:()=>true},
@@ -2335,7 +2420,9 @@
     /* A document's update follows the SECTION it went into (HR, Office Docs...), by the
        same rule the Documents page uses - so a new payroll file's name never reaches
        someone who cannot open HR. */
-    if(e.sec && (e.kind==='document' && e.sec!=='documents' ? docLevel(e.sec) : can(e.sec))==='none') return false;
+    /* A payroll update (an office sent its sheet) is for whoever sees every office's payroll - not its sender. */
+    if(e.sec==='payroll'){ const pl=payLevel(); if(pl!=='manage' && pl!=='view') return false; }
+    else if(e.sec && (e.kind==='document' && e.sec!=='documents' ? docLevel(e.sec) : can(e.sec))==='none') return false;
     const offs=(e.offices||[]);
     if(offs.length && !offs.some(seesOffice)) return false;
     const teams=(e.teams||[]).map(t=>String(t).toLowerCase());
@@ -2608,7 +2695,7 @@
     else lateLanded();
     Promise.resolve(reloadAccess()).then(lateLanded, lateLanded);
     Promise.resolve(reloadPeople()).then(lateLanded, lateLanded);
-    if(payOn()) Promise.resolve(reloadPaySenders()).then(()=>identityChanged(), ()=>{});   // a sender's Payroll tab
+    if(payOn()) Promise.resolve(reloadPaySenders()).then(()=>{ identityChanged(); return reloadPayStatus(); }, ()=>{});   // a sender's Payroll tab
   });
 
   /* One gate for every page.
@@ -2951,7 +3038,7 @@
     const m=document.createElement('link'); m.rel='manifest'; m.href='manifest.webmanifest'; document.head.appendChild(m);
   }
 
-  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, rosterView, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, chatBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK, notesHTML, searchHTML, searchDocs, searchDocsHTML, levelForTeams, teamsSeeAll, tcOn, tcRoleFor, payOn, payRoleFor, paySenders, reloadPaySenders, paySenderOffices, payLevel, saveFace, faceOf, avatar,
+  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, rosterView, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, chatBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK, notesHTML, searchHTML, searchDocs, searchDocsHTML, levelForTeams, teamsSeeAll, tcOn, tcRoleFor, payOn, payRoleFor, paySenders, reloadPaySenders, paySenderOffices, payLevel, payReminders, payMark, reloadPayStatus, payRulesReady, saveFace, faceOf, avatar,
     sensRecord, reloadSensitive, sensLevelFor, sensitiveLevel, sensConfirmOk,
     setTheme, theme:()=>THEME, setLayout, layout:()=>LAYOUT, layouts:()=>LAYOUTS.map(l=>({k:l.k, n:l.n})), themes:()=>THEMES.map(t=>({k:t.k, n:t.n})), schemeTokens:k=>schemeTokens(themeOf(k)), contrast,
     feedback:openFeedback, feedbackText, feedbackContext, learning:stillLearning};

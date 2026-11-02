@@ -69,6 +69,22 @@ paySenders/reloadPaySenders/paySenderOffices, payLevel).
 - **Who sees what**: Admin team (and Payroll level Edit) = manage everything incl. Heather's columns; Payroll level
   View = read every office; a chosen sender = their own office's sheet only (no pay amounts). Saves are field-level,
   queued 0.7 s, badge "Saving… / Saved ✓", leave-page guard. Nothing saves until the folder is locked.
+- **Reminders (02/11, hc116)**: in the BELL, worked out from the date + shared-list `ph_pay_status`
+  ({p:{'2026-23':{sent:{Carlsbad:at}, entered:at}}}, last 6 periods, times only - never pay). A sender: from the
+  workday before the due day until sent ("Carlsbad's payroll sheet is due Tuesday by 2 pm", then "late"). Whoever
+  manages payroll: from 2 pm on the due day, "still waiting on X, Y" (offices with a sender chosen), then "every
+  sheet is in - ready to enter" until entered. "Carlsbad sent its payroll sheet" goes to the activity feed with
+  sec 'payroll' - only payLevel manage/view sees it, never the senders. user.js payReminders/payMark/
+  reloadPayStatus (loads payrules.js on demand); test/payremind.test.js (24). PHONE reminders come with Chat's
+  alerts (#2) - they need a server timer.
+- **Sandbox "Real version" (02/11)**: Cory: "Can I see it on Sandbox first". payroll.html switch "Mock-up | Real
+  version" (or ?real=1 / ?real=0, kept in localStorage ph_pay_real): the live code, today's date, the sandbox team
+  list, saved in the browser (paystore/store fall back to localStorage); no lock check, no SharePoint access sync.
+  "Try it as" = View As (signed in) - "You - Heather's side" or anyone on the team list, senders first. "Start over"
+  clears only the real version's keys. Mobile pass done at 390 px (headless, scratchpad pay-try.js): no sideways
+  scroll, Send clear of the floating button.
+- **Bug fixed 02/11**: the column "i" button's class `.info` (hc113) also matched `.note.info`, shrinking every blue
+  note on Payroll to 15 px of Georgia italic (the Send dialog). Renamed to `.ibtn`. Sandbox only - never live.
 - **Tested**: test/payrules (37), test/paystore (24), test/permissions (+4); full E2E in headless Chrome against a
   stand-in SharePoint (scratchpad fakesp-pay.js): lock guard, folders made, fill from team list, bonuses + start
   dates, senders -> only their folder granted (403 on another office), a sender types + sends, Heather's goal only in
