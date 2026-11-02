@@ -20,6 +20,8 @@ I can confidently say that the chat feature should go next. The production thing
 1. **Payroll -> LIVE.** She OKed the mock-up. Real build: the live data (pay is private - follow the TC Tracker's locked
    folder, access from Teams & Access; think per-office so one OM can't open another office's sheets), the real
    people and who sends each office's sheet, her Settings, reminders in the bell (phone reminders come with #2).
+   **STATUS 02/11: BUILT, sandbox only, OFF on live** (`PAY_LIVE=false` in user.js). Design + go-live steps:
+   "PAYROLL LIVE (02/11)" below. Waiting on Cory's OK to deploy.
 2. **Chat + phone alerts -> LIVE** (one thing to her). Needs IT (Adam) to approve the Teams chat permission; alerts:
    subscriptions in SharePoint, the live origin in api-push ORIGINS, the home-screen sign-in on live (Cory's iPhone
    test of sign-in inside the app still to come).
@@ -47,6 +49,39 @@ have not yet signed their contract." -> tc.js SCHED_START: a completed consult (
 until treatment begins; asks for the start appointment (nextFU, required); call list "Start appointment due /
 - future / Set start appointment date" with Started / New start date / Called / Not starting; its own line in
 Monthly results, Open work and the Monthly totals. test/tc.test.js +10.
+
+### PAYROLL LIVE (02/11/2026) - built, deployed nowhere live yet
+Files: `v1/payrules.js` (PAYRULES: offices in her sheet's order, rates, holidays 2026-27, pay periods, sums, who gets
+which folder), `v1/paystore.js` (PAYSTORE: JSON files in the payroll folders, read-modify-write with If-Match; sandbox
+= localStorage `ph_pay__<sub>__<key>`), `v1/docs.js` (payFolder/payLocked/paySync/payRecord - fenced to the payroll
+root and the eight office folders, NEVER `Heather`), `v1/payroll.html` (LIVEPAY mode), `v1/admin.html` (Payroll
+column in Teams & Access + "Payroll folders" sync box), `v1/user.js` (PAY_LIVE, payPreview, payOn, payRoleFor,
+paySenders/reloadPaySenders/paySenderOffices, payLevel).
+- **Storage**: SharePoint folder `Home-Brace Payroll` beside `Home-Brace Documents`; one folder per office (Carlsbad,
+  Hobbs, Lubbock, Clovis, San Angelo, Mansfield, Cruces FFO, Cruces LCO) + `Heather` (managers only - never granted to
+  anyone directly; it inherits the payroll folder's managers). `<Office>/people.json` (people + office docs; removing a
+  person only marks them `gone` / `mistake`, nothing is deleted), `<Office>/sheet_YYYY-NN.json` (status
+  none/draft/sent, rows, docs, log), `Heather/settings.json` (bonuses), `Heather/cols_YYYY-NN.json` (her Goal / TC-OM
+  / Extra per person - NEVER in the office files, so a sender never sees them). Who sends each office's sheet: shared
+  list `ph_pay_senders`; grants record: `ph_paygrants`.
+- **Pay periods**: anchored on her sheet (#20 paid 2026-09-25), numbered per pay-date year, key `YYYY-NN`; current =
+  the one that ended most recently; due Tue 2 pm Central (Mon when a holiday falls later that week).
+- **Who sees what**: Admin team (and Payroll level Edit) = manage everything incl. Heather's columns; Payroll level
+  View = read every office; a chosen sender = their own office's sheet only (no pay amounts). Saves are field-level,
+  queued 0.7 s, badge "Saving… / Saved ✓", leave-page guard. Nothing saves until the folder is locked.
+- **Tested**: test/payrules (37), test/paystore (24), test/permissions (+4); full E2E in headless Chrome against a
+  stand-in SharePoint (scratchpad fakesp-pay.js): lock guard, folders made, fill from team list, bonuses + start
+  dates, senders -> only their folder granted (403 on another office), a sender types + sends, Heather's goal only in
+  her folder, Mark as entered locks every office's sheet, a non-sender gets no tab, date rollover picks the next period.
+- **GO-LIVE STEPS (only when Cory says so)**: 1) deploy with PAY_LIVE=false (staff see nothing); 2) Cory (an admin)
+  opens `payroll.html?paypreview` on live once - the flag sticks for him; 3) Cory locks `Home-Brace Payroll` once in
+  SharePoint (Manage access -> Stop inheriting; like the TC folder) - the page shows those steps and refuses to save
+  until it's locked; 4) Admin -> Teams & Access -> "Payroll folders: Sync" (makes the folders, grants managers);
+  5) Payroll -> Settings: fill each office from the team list, bonuses, start dates, who sends each sheet; 6) flip
+  `PAY_LIVE=true`, deploy. OPEN QUESTION for Heather/Cory: everyone on the Admin team sees every office's pay (Cory
+  too) - is that right, and is Heather on the Admin team?
+- NOT the portfolio demo (Cory 02/11: "You don't have to keep updating the interactive profolio demo when doing this.
+  Just the sandbox and production when we agree to do so").
 
 ### What this is
 A **live internal hub** for an 8-office orthodontic practice — no longer a mockup. Static

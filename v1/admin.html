@@ -278,6 +278,7 @@
   <script src="store.js?v=hc115"></script>
   <script src="gate.js?v=hc115"></script>
   <script src="docs.js?v=hc115"></script>
+  <script src="payrules.js?v=hc115"></script>
   <script src="workbook.js?v=hc115"></script>
   <script src="prodbook.js?v=hc115"></script>
   <script src="prodfx.js?v=hc115"></script>
@@ -342,6 +343,7 @@
      TOOLS   = real app features (Dashboard, Schedule, Marketing). Fixed. You only choose WHO gets them.
      DOCSECS = document sections that live inside Documents (HR, Vendors, ...). Admin can CREATE these. */
   function tcPreviewFlag(){ try{ return localStorage.getItem('ph_tc_preview')==='1'; }catch(_){ return false; } }
+  function payPreviewFlag(){ try{ return localStorage.getItem('ph_pay_preview')==='1'; }catch(_){ return false; } }
   const TOOLS=[
     {k:'dashboard',n:'Production Dashboard',s:'Dashboard',ic:'📊'},
     {k:'schedule',n:'Schedule',s:'Schedule',ic:'📅'},
@@ -353,6 +355,10 @@
        go-live. This list is made before sign-in finishes, when tcOn() can't yet know the
        person is an admin - so the preview flag alone counts here (this page is admins-only). */
     ...((window.PH && PH.tcOn && !PH.tcOn() && !tcPreviewFlag()) ? [] : [{k:'tc',n:'TC Tracker (consults & call list)',s:'TC Tracker',ic:'🗂️'}]),
+    /* Payroll (01/11/2026): who sees EVERY office's sheets - Edit or Everything manages payroll (Heather's view and
+       Settings), See reads them all. Each office's sender is chosen on the Payroll page, not here. Off this grid on
+       the live site until Payroll is on there (or an admin previews it), like the TC Tracker. */
+    ...((window.PH && PH.payOn && !PH.payOn() && !payPreviewFlag()) ? [] : [{k:'payroll',n:'Payroll (every office’s sheets)',s:'Payroll',ic:'💵'}]),
     {k:'marketing',n:'Marketing board',s:'Marketing',ic:'📣'},
     /* The Documents TAB, on or off per team (07/10). It was never a column, so a team with
        saved settings had it off and there was no switch to turn it on when they're ready.
@@ -1108,7 +1114,7 @@
       list.map(x=>{ const lv=access[t][x.k]||'none';
         return '<div class="acc-line"><span>'+(x.ic?esc(x.ic)+' ':'')+esc(x.n)+'</span>'+
           '<button class="lvl '+lv+' accbtn" onclick="AD.pickLevel(event,\''+q(t)+'\',\''+x.k+'\')">'+shortFor(x.k,lv)+'</button></div>'; }).join('');
-    el('view').innerHTML=editSyncHTML()+tcSyncHTML()+
+    el('view').innerHTML=editSyncHTML()+tcSyncHTML()+paySyncHTML()+
       '<div class="intro"><b>One rule:</b> a person\'s <b>team</b> decides what they can do; their <b>location</b> decides which offices\' folders they see. On two teams? They get the <b>best</b> level of both. <b>Pick a team</b>, then <b>tap a level</b> to change it \u2014 each section only offers the choices that mean something there.</div>'+
       '<div class="toolrow"><div class="panel-lab" style="margin:0">'+TEAMS.length+' teams \u00b7 '+secs.length+' sections</div><span style="flex:1"></span>'+
         '<button class="btn ghost" onclick="AD.resetTeams()">Reset teams</button><button class="btn" onclick="AD.newTeam()">+ Add team</button></div>'+
@@ -1128,7 +1134,7 @@
     const rows=TEAMS.map(t=>'<tr><th class="team">'+t+
       '<button class="tedit" title="Rename or delete this team" onclick="AD.editTeam(\''+t.replace(/'/g,"\\'")+'\')">\u270e</button></th>'+secs.map(x=>{const lv=access[t][x.k]||'none';
       return '<td><button class="lvl '+lv+'" onclick="AD.pickLevel(event,\''+t+'\',\''+x.k+'\')">'+shortFor(x.k,lv)+'</button></td>';}).join('')+'</tr>').join('');
-    el('view').innerHTML=editSyncHTML()+tcSyncHTML()+
+    el('view').innerHTML=editSyncHTML()+tcSyncHTML()+paySyncHTML()+
       '<div class="intro"><b>One rule:</b> a person\'s <b>team</b> decides what they can do (below); their <b>location</b> decides which offices\' folders they see. On two teams? They get the <b>best</b> level of both. <b>Tap a cell</b> and pick \u2014 each section only offers the choices that actually mean something there.</div>'+
       '<div class="toolrow"><div class="panel-lab" style="margin:0">'+TEAMS.length+' teams \u00b7 '+secs.length+' sections</div><span style="flex:1"></span>'+
         '<button class="btn ghost" onclick="AD.resetTeams()">Reset teams</button><button class="btn" onclick="AD.newTeam()">+ Add team</button></div>'+
@@ -1540,6 +1546,7 @@
   let EDITSYNC={state:'idle'}, editTimer=null, editAgain=false;
   function syncEdit(){
     syncTc();          // the TC Tracker's folder follows the same changes (below)
+    syncPay();         // and so do the payroll folders
     syncSens();        // and so does Sensitive Material
     if(!liveDocs() || !(window.PH && PH.isAdmin && PH.isAdmin())) return;
     clearTimeout(editTimer); editTimer=setTimeout(runEditSync, 1200);
@@ -1703,6 +1710,63 @@
   }
   function tcSyncHTML(){ if(!tcHere()) return ''; const x=tcSyncState(); return '<div id="tcsync" class="editsync '+x.cls+'">'+x.html+'</div>'; }
   function paintTcSync(){ const box=document.getElementById('tcsync'); if(!box) return; const x=tcSyncState(); box.className='editsync '+x.cls; box.innerHTML=x.html; }
+
+  /* ================= PAYROLL'S FOLDERS (01/11/2026) =================
+     Heather: "We can go live with the payroll sheet." Payroll is files in "Home-Brace Payroll" (paystore.js), one folder
+     per office plus Heather's. Locked once by hand like the TC Tracker's; from then on this keeps every folder in step
+     (docs.js paySync): whoever manages payroll gets the payroll folder and every office's, See reads them, each
+     office's sender (Payroll page -> Settings -> Who sends each office's sheet) gets their own office's - and only
+     what Home-Brace gave is ever taken back (ph_paygrants). Runs in the browser of an admin with this page open, only
+     once Payroll is on there (or previewed). */
+  let PAYSYNC={state:'idle'}, payTimer=null, payAgain=false;
+  const payHere=()=>liveDocs() && !!(PH.payOn && PH.payOn()) && !!(PH.isAdmin && PH.isAdmin()) && !!PH_DOCS.paySync && !!window.PAYRULES;
+  function syncPay(){ if(!payHere()) return; clearTimeout(payTimer); payTimer=setTimeout(runPaySync, 1700); }
+  function runPaySync(){
+    if(PAYSYNC.state==='busy'){ payAgain=true; return; }
+    PAYSYNC={state:'busy'}; paintPaySync();
+    const offices=PAYRULES.OFFICES.map(o=>o.n), B=PH_DOCS.PAY_BASE;
+    Promise.all([PH.reloadAccess ? PH.reloadAccess() : null, PH.reloadPeople ? PH.reloadPeople() : null, PH.reloadPaySenders ? PH.reloadPaySenders() : null])
+      .then(()=>PH_DOCS.payFolder(B).folder())                       // it has to exist before it can be locked
+      .then(()=>offices.reduce((c,o)=>c.then(()=>PH_DOCS.payFolder(B+'/'+o).folder()), Promise.resolve()))
+      .then(()=>PH_DOCS.payLocked())
+      .then(locked=>{
+        if(!locked){ PAYSYNC={state:'notlocked'}; return; }
+        const w=PAYRULES.wanted(B, PH.rosterView ? PH.rosterView() : [], PH.payRoleFor, (PH.paySenders().offices)||{}, offices);
+        return PH_STORE.get('ph_paygrants').then(rec=>PH_DOCS.paySync(w.want, rec)).then(done=>{
+          const all=Object.keys(done).map(k=>done[k]), n=f=>all.reduce((t,d)=>t+d[f].length,0), failed=[].concat(...all.map(d=>d.failed));
+          const save=(n('gave') || n('took') || failed.length) ? PH_STORE.update('ph_paygrants', cur=>PH_DOCS.payRecord(cur, done)) : Promise.resolve();
+          return save.then(()=>{ PAYSYNC={state:'done', gave:n('gave'), took:n('took'), failed, noEmail:w.noEmail};
+            if(n('gave') || n('took'))
+              docToast('\u2713 Payroll access updated in SharePoint ('+[n('gave')?n('gave')+' given':'', n('took')?n('took')+' taken back':''].filter(Boolean).join(', ')+').'); });
+        });
+      })
+      .catch(e=>{ PAYSYNC={state:'error', why:(e&&e.message)||'SharePoint didn\u2019t answer.'}; })
+      .then(()=>{ paintPaySync(); if(payAgain){ payAgain=false; runPaySync(); } });
+  }
+  function paySyncNow(){ clearTimeout(payTimer); runPaySync(); }
+  function paySyncState(){
+    const S=PAYSYNC;
+    if(!payHere() || S.state==='idle' || S.state==='busy') return {cls:'', html:''};
+    if(S.state==='notlocked') return {cls:'es-warn', html:
+      '<b>The payroll folder isn\u2019t locked yet.</b> Until it is, nobody is given payroll access - lock it once, and from then on Home-Brace '+
+      'gives and takes back access by itself: whoever manages payroll gets every office, each office\u2019s sender their own.'+
+      '<details><summary>Show me how (one time, a site owner)</summary><ol>'+
+        '<li>Open <b>omegaorthodontics.sharepoint.com/sites/Home-Brace</b> and click <b>Documents</b>.</li>'+
+        '<li>Next to <b>Home-Brace Payroll</b>: <b>\u22ef</b> \u2192 <b>Manage access</b> \u2192 <b>Advanced settings</b>.</li>'+
+        '<li><b>Stop Inheriting Permissions</b> \u2192 OK.</li>'+
+        '<li>Tick <b>Home-Brace Members</b> and <b>Home-Brace Visitors</b> \u2192 <b>Remove User Permissions</b> \u2192 OK.</li>'+
+      '</ol></details><button class="lnk" onclick="AD.paySyncNow()">I\u2019ve done it \u2014 check again</button>'};
+    if(S.state==='done'){
+      if(!S.failed.length && !S.noEmail.length) return {cls:'', html:''};
+      return {cls:'es-warn', html:'<b>Payroll access in SharePoint mostly matches.</b>'+
+        (S.failed.length?'<br>Couldn\u2019t '+S.failed.slice(0,5).map(f=>esc(f.verb)+' access'+(f.em?' for '+esc(f.em):'')+' ('+esc(f.why)+')').join('; ')+
+          (S.failed.length>5?'; and '+(S.failed.length-5)+' more':'')+'. <button class="lnk" onclick="AD.paySyncNow()">Try again</button>':'')+
+        (S.noEmail.length?'<br>No email on file, so no payroll access in SharePoint for: '+esc(S.noEmail.join(', '))+'.':'')};
+    }
+    return {cls:'es-bad', html:'Couldn\u2019t check payroll access: '+esc(S.why)+' <button class="lnk" onclick="AD.paySyncNow()">Try again</button>'};
+  }
+  function paySyncHTML(){ if(!payHere()) return ''; const x=paySyncState(); return '<div id="paysync" class="editsync '+x.cls+'">'+x.html+'</div>'; }
+  function paintPaySync(){ const box=document.getElementById('paysync'); if(!box) return; const x=paySyncState(); box.className='editsync '+x.cls; box.innerHTML=x.html; }
 
   /* ================= SENSITIVE MATERIAL (20/10/2026) =================
      Cory: "another Folder in Documents called Sensitive Material. Which needs a double
@@ -2037,7 +2101,7 @@
   function closeModal(){ el('modal').classList.remove('open'); }
 
   const thenSync=f=>function(){ const r=f.apply(this,arguments); syncEdit(); return r; };
-  window.AD={setupSecs,editSyncNow,tcSyncNow,sensAdd,sensChange,sensRemove,sensClose,sensQ,sensToggle,sensClear,sensLevel,sensTyped,sensBack,sensNext,sensGo,sensSyncNow,tab:tabSet,viewAs:doViewAs,newTeam,editTeam,saveTeam:thenSync(saveTeam),delTeam:thenSync(delTeam),resetTeams,profile,whyNoAdd,
+  window.AD={setupSecs,editSyncNow,tcSyncNow,paySyncNow,sensAdd,sensChange,sensRemove,sensClose,sensQ,sensToggle,sensClear,sensLevel,sensTyped,sensBack,sensNext,sensGo,sensSyncNow,tab:tabSet,viewAs:doViewAs,newTeam,editTeam,saveTeam:thenSync(saveTeam),delTeam:thenSync(delTeam),resetTeams,profile,whyNoAdd,
     addPerson,npSet,npLoc,npTeam,saveNewPerson:thenSync(saveNewPerson),accTeam:setAccTeam,removePerson:thenSync(removePerson),restorePerson:thenSync(restorePerson),showRemoved,togTeam,togLoc,setStatus,saveUser:thenSync(saveUser),pickLevel,pickAud,setField,pickPhoto,photoChosen,clearPhoto,pickUserLevel,clearUserLevel,tog,addFile,noop,newSec,editSec,saveSec:thenSync(saveSec),delSec,delSecGo,resetSecs,setSecName,setSecIcon,setSecStruct,setSecLocMode,setSecTeamMode,togSecLoc,togSecTeam,saveFile,cd,useFile,clearFile,uploadFile,setFileTeamMode,setFileLocMode,togFileLoc,togFileTeam,renderLocs,newLoc,editLoc,saveLoc,delLoc,resetLocs,setLocBrand,setLocState,setLocTZ,close:closeModal};
   el('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});

@@ -168,7 +168,7 @@
 
   // Department (Entra) -> what they can do. Keys are Heather's own ten team names, lowercased.
   const DEPT_CAN={
-    'admin':                      {dashboard:'view',production:'manage',schedule:'edit',marketing:'edit',documents:'manage',team:'view',admin:'manage',tc:'manage'},
+    'admin':                      {dashboard:'view',production:'manage',schedule:'edit',marketing:'edit',documents:'manage',team:'view',admin:'manage',tc:'manage',payroll:'manage'},
     'executive team':             {dashboard:'view',production:'edit',  schedule:'edit',marketing:'edit',documents:'manage',team:'view',admin:'none',tc:'manage'},
     'leadership team':            {dashboard:'view',production:'edit',  schedule:'edit',marketing:'edit',documents:'manage',team:'view',admin:'none',tc:'manage'},
     'office managers':            {dashboard:'view',production:'edit',  schedule:'edit',marketing:'view',documents:'edit',  team:'view',admin:'none',tc:'view'},
@@ -1881,6 +1881,53 @@
     }catch(_){ return false; }
   }
   const tcOn=()=>env()!=='live' || TC_LIVE || tcPreview();
+  /* PAYROLL (01/11/2026). Heather: "We can go live with the payroll sheet." Off on the live site until PAY_LIVE; an
+     ADMIN can try it there first with payroll.html?paypreview (remembered in that browser), like the TC Tracker.
+     Who: whoever manages payroll (Teams & Access, Payroll: Edit or Everything - and admins) sees every office and her
+     Settings; Payroll: See reads every office; each office's sender(s) - Heather's "Who sends each office's sheet",
+     ph_pay_senders in the shared list (names only, no pay) - see and send their own office's sheet. The sheets
+     themselves are in the locked payroll folder (paystore.js), never the shared list. */
+  const PAY_LIVE=false;
+  function payPreview(){
+    try{
+      if(/[?&]paypreview(=1)?(&|$)/.test(location.search||'')) localStorage.setItem('ph_pay_preview','1');
+      return localStorage.getItem('ph_pay_preview')==='1' && isAdmin(realMe());
+    }catch(_){ return false; }
+  }
+  const payOn=()=>env()!=='live' || PAY_LIVE || payPreview();
+  // What a person gets on the payroll folders from their teams: 'write' manages payroll, 'read' sees every office.
+  function payRoleFor(teams){
+    if(levelForTeams(teams, 'admin')==='manage') return 'write';
+    const l=levelForTeams(teams, 'payroll');
+    return RANK[l]>=RANK.edit ? 'write' : RANK[l]>=RANK.view ? 'read' : '';
+  }
+  const PAY_SENDERS_KEY='ph_pay_senders';
+  let PAY_SENDERS=null;
+  function paySenders(){
+    if(PAY_SENDERS) return PAY_SENDERS;
+    try{ PAY_SENDERS=JSON.parse(localStorage.getItem(PAY_SENDERS_KEY))||null; }catch(_){ PAY_SENDERS=null; }
+    return PAY_SENDERS||{offices:{}};
+  }
+  function reloadPaySenders(){
+    if(!window.PH_STORE || !isLive() || !payOn()) return Promise.resolve(paySenders());
+    return window.PH_STORE.get(PAY_SENDERS_KEY).then(function(r){
+      PAY_SENDERS=(r && typeof r==='object' && r.offices && typeof r.offices==='object') ? r : {offices:{}};
+      try{ localStorage.setItem(PAY_SENDERS_KEY, JSON.stringify(PAY_SENDERS)); }catch(_){}
+      return PAY_SENDERS;
+    }).catch(function(){ return paySenders(); });
+  }
+  // The offices whose sheet this person sends (the signed-in person when no email is given).
+  function paySenderOffices(em){
+    em=String(em===undefined ? (email(me())||'') : em).trim().toLowerCase(); if(!em) return [];
+    const o=paySenders().offices||{};
+    return Object.keys(o).filter(k=>(o[k]||[]).some(e=>String(e||'').trim().toLowerCase()===em));
+  }
+  // The signed-in person: 'manage' (every office + Settings), 'view' (every office, read only), 'send' (their office), ''.
+  function payLevel(){
+    if(isAdmin(me()) || atLeast('payroll','edit')) return 'manage';
+    if(atLeast('payroll','view')) return 'view';
+    return paySenderOffices().length ? 'send' : '';
+  }
   const NAV=[
     {k:'home',       n:'\ud83c\udfe0 Home',             href:'home.html',       show:()=>true},
     {k:'dashboard',  n:'\ud83d\udcca Production Dashboard',        href:'index.html',      show:()=>atLeast('dashboard','view')},
@@ -1895,7 +1942,8 @@
     /* A MOCK-UP for Selene (20/10/2026) - role-based training with quizzes. Sandbox only:
        never on the live site, where the page is shut too (guard). */
     {k:'chat',       n:'\ud83d\udcac Chat',              href:'chat.html',       show:()=>env()!=='live', tab:false},   // mock-up (22/10/2026), sandbox only; the header's chat button, not a tab
-    {k:'payroll',    n:'\ud83d\udcb5 Payroll',           href:'payroll.html',    show:()=>env()!=='live'},   // mock-up for Heather (21/10/2026): sandbox only
+    /* Sandbox: the mock-up, everyone. Live: the switch (PAY_LIVE or an admin's preview), then payLevel(). */
+    {k:'payroll',    n:'\ud83d\udcb5 Payroll',           href:'payroll.html',    show:()=>env()!=='live' || (payOn() && !!payLevel())},
     {k:'academy',    n:'\ud83c\udf93 Academy',           href:'academy.html',    show:()=>env()!=='live'},
     {k:'admin',      n:'\u2699\ufe0f Admin',            href:'admin.html',      show:()=>atLeast('admin','view')}
   ];
@@ -2560,6 +2608,7 @@
     else lateLanded();
     Promise.resolve(reloadAccess()).then(lateLanded, lateLanded);
     Promise.resolve(reloadPeople()).then(lateLanded, lateLanded);
+    if(payOn()) Promise.resolve(reloadPaySenders()).then(()=>identityChanged(), ()=>{});   // a sender's Payroll tab
   });
 
   /* One gate for every page.
@@ -2902,7 +2951,7 @@
     const m=document.createElement('link'); m.rel='manifest'; m.href='manifest.webmanifest'; document.head.appendChild(m);
   }
 
-  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, rosterView, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, chatBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK, notesHTML, searchHTML, searchDocs, searchDocsHTML, levelForTeams, teamsSeeAll, tcOn, tcRoleFor, saveFace, faceOf, avatar,
+  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, rosterView, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, chatBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK, notesHTML, searchHTML, searchDocs, searchDocsHTML, levelForTeams, teamsSeeAll, tcOn, tcRoleFor, payOn, payRoleFor, paySenders, reloadPaySenders, paySenderOffices, payLevel, saveFace, faceOf, avatar,
     sensRecord, reloadSensitive, sensLevelFor, sensitiveLevel, sensConfirmOk,
     setTheme, theme:()=>THEME, setLayout, layout:()=>LAYOUT, layouts:()=>LAYOUTS.map(l=>({k:l.k, n:l.n})), themes:()=>THEMES.map(t=>({k:t.k, n:t.n})), schemeTokens:k=>schemeTokens(themeOf(k)), contrast,
     feedback:openFeedback, feedbackText, feedbackContext, learning:stillLearning};

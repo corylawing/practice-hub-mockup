@@ -305,6 +305,20 @@ const t=(n,v)=>{ (v?ok:bad).push(n); };
   PN.signIn({ displayName:'Test Doctor', mail:'test.doctor@example.com', userPrincipalName:'test.doctor@example.com',
               jobTitle:'Doctor', department:'Doctors', officeLocation:'Hobbs' });
   t('...and on the live site a doctor (no TC Tracker level) still has no TC tab, preview flag or not', PN.tabs().indexOf('tc')<0);
+  /* 01/11: PAYROLL on the live site - off for staff until PAY_LIVE; an admin can preview it with ?paypreview. The
+     tabs() helper lists what NAV would show; the payroll entry asks payOn() and the person's payroll level. */
+  const PP=load({ page:'payroll', ls:{ ph_pay_preview:'1' } });
+  PP.PH.nav('payroll');
+  PP.signIn({ displayName:'Priya Tatum', mail:'priya@farnsworthorthodontics.com', userPrincipalName:'priya@farnsworthorthodontics.com',
+              jobTitle:'COO', department:'Admin', officeLocation:'' });
+  t('payroll preview: an admin who opened ?paypreview gets Payroll, managing it', PP.PH.payOn()===true && PP.tabs().indexOf('payroll')>=0 && PP.PH.payLevel()==='manage');
+  const PQ=load({ page:'payroll', ls:{ ph_pay_preview:'1', ph_pay_senders:JSON.stringify({offices:{Hobbs:['test.om@example.com']}}) } });
+  PQ.PH.nav('payroll');
+  PQ.signIn({ displayName:'Test Manager', mail:'test.om@example.com', userPrincipalName:'test.om@example.com',
+              jobTitle:'Office Manager', department:'Office Managers', officeLocation:'Hobbs' });
+  t('...but not a non-admin, even one chosen to send a sheet, until Payroll is on for everyone', PQ.PH.payOn()===false && PQ.tabs().indexOf('payroll')<0);
+  t('...who would be a sender of Hobbs then', PQ.PH.paySenderOffices().join()==='Hobbs' && PQ.PH.payLevel()==='send');
+  t('payroll: an admin manages the payroll folders; a team with no Payroll level gets nothing', PP.PH.payRoleFor(['Admin'])==='write' && PP.PH.payRoleFor(['Office Managers'])==='');
   /* 19/10: live for everyone - the tab follows Teams & Access, like every other tab. Made-up people. */
   const LT=load({ page:'tc' });
   LT.PH.nav('tc');

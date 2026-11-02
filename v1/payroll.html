@@ -201,6 +201,14 @@
   .kpi .s{font-size:12px;color:var(--soft)}
   .look{padding:10px 12px;border:1px solid var(--line);border-radius:10px;font:inherit;font-size:14px;width:100%;max-width:360px}
   .log{font-size:12.5px;color:var(--soft);display:flex;flex-direction:column;gap:3px}
+  /* live: is it saved? */
+  .savebadge{position:fixed;left:16px;bottom:16px;z-index:85;background:var(--navy);color:#fff;font-size:13px;font-weight:700;border-radius:999px;padding:8px 14px;box-shadow:var(--shadow-lg)}
+  .savebadge[hidden]{display:none}
+  .savebadge.ok{background:#1d6b47}
+  .savebadge.bad{background:#9a2f1e}
+  .savebadge .link{color:#fff;text-decoration:underline;background:none;border:none;font:inherit;cursor:pointer;padding:0;margin-left:4px}
+  .sendchip{display:inline-flex;align-items:center;gap:6px;background:var(--teal-soft,#E5F4F3);color:var(--navy);border-radius:999px;padding:3px 6px 3px 10px;font-size:13px;font-weight:600;margin:2px 4px 2px 0}
+  .sendchip button{border:none;background:none;cursor:pointer;color:var(--soft);font-size:15px;line-height:1;padding:0 2px}
   @media(max-width:640px){
     .wrap{padding:16px 14px 90px}
     .dm{padding:0} .dmc{border-radius:0;min-height:100%}
@@ -213,6 +221,9 @@
   <script src="gate.js?v=hc115"></script>
   <script src="alerts.js?v=hc115"></script>
   <script src="_staff.js?v=hc115"></script>
+  <script src="payrules.js?v=hc115"></script>
+  <script src="paystore.js?v=hc115"></script>
+  <script src="docs.js?v=hc115"></script>
 </head>
 <body>
 <div class="ribbon">MOCK-UP for Heather — made-up people and amounts. Try it as the Carlsbad TC first, then as Heather.</div>
@@ -242,6 +253,7 @@
 <div class="dm" id="dlg" role="dialog" aria-modal="true"><div class="dmc" id="dlgcard"></div></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <div class="notif" id="notif" role="status" aria-live="polite"></div>
+<div class="savebadge" id="savebadge" role="status" aria-live="polite" hidden></div>
 
 <script>
 (function(){
@@ -253,13 +265,16 @@
   const money=n=>n ? '$'+r2(n).toLocaleString('en-US',{minimumFractionDigits:(r2(n)%1?2:0), maximumFractionDigits:2}) : '—';
   const hrs=n=>n ? r2(n).toFixed(2) : '—';
   const pad=n=>String(n).padStart(2,'0');
+  /* LIVE (01/11/2026, Heather: "We can go live with the payroll sheet"): on the live site the same page reads and
+     writes the payroll folders (paystore.js) for the real people and today's date. The sandbox keeps the mock-up. */
+  const LIVEPAY=!!(window.PH && PH.isLive && PH.isLive()), PR=window.PAYRULES;
 
   /* ---------- settings. Heather's answers (22/10/2026): holiday pay $100, on call $50 a weekend, mileage at the
      IRS rate ($0.76 now - it changes), sheets due Tuesday by 2 pm Central (Monday when a holiday falls later in that
      week - a Monday holiday like Labor Day keeps Tuesday: "only when the Holiday falls later than Monday", 22/10).
      The people and the doctors are made up. ---------- */
-  const RATE={onCall:50, holiday:100, holidayHrs:8, mile:0.76};
-  const HOLIDAYS=[{d:'2026-01-01',n:'New Year’s Day'},{d:'2026-05-25',n:'Memorial Day'},{d:'2026-07-03',n:'Independence Day'},
+  let RATE={onCall:50, holiday:100, holidayHrs:8, mile:0.76};
+  let HOLIDAYS=LIVEPAY ? PR.HOLIDAYS.slice() : [{d:'2026-01-01',n:'New Year’s Day'},{d:'2026-05-25',n:'Memorial Day'},{d:'2026-07-03',n:'Independence Day'},
                   {d:'2026-09-07',n:'Labor Day'},{d:'2026-11-26',n:'Thanksgiving'},{d:'2026-12-25',n:'Christmas'},{d:'2027-01-01',n:'New Year’s Day'}];
   /* In the order of Heather's main sheet, one company each. by = who sends the sheet: the TC in Carlsbad and
      Las Cruces ("FOLC" = Cruces FFO, Heather 22/10), the clinic lead in Lubbock, the office manager everywhere else.
@@ -283,7 +298,7 @@
   const ownCols=o=>{ const a=(OFF[o].own||[]).slice(0,2); while(a.length<2) a.push(null); return a; };
   /* Made-up people: [offices, name, pay-period bonus, start date]. Harper is new (holiday pay comes after the
      90-day review); Elena works at both Las Cruces offices. */
-  const PEOPLE=[
+  let PEOPLE=LIVEPAY ? [] : [
     [['carlsbad'],'Sofia Navarro',150,'2022-03-14'], [['carlsbad'],'Avery Brooks',125,'2023-06-05'], [['carlsbad'],'Jordan Ellis',125,'2021-09-20'],
     [['carlsbad'],'Marisol Rios',100,'2024-01-08'], [['carlsbad'],'Harper Quinn',75,'2026-08-31'], [['carlsbad'],'Daniela Ortiz',150,'2020-02-03'],
     [['hobbs'],'Gabriela Cruz',150,'2019-05-13'], [['hobbs'],'Riley Chen',125,'2022-08-01'], [['hobbs'],'Paola Mendez',75,'2025-02-10'],
@@ -305,15 +320,21 @@
   /* One Clovis person keeps sick hours from before (grandfathered), and gets holiday HOURS instead of holiday pay. */
   PEOPLE.filter(p=>p.n==='Valeria Castillo').forEach(p=>{ p.sick=true; p.holHrs=true; });
   /* Doctors paid by the day, not on salary: their days worked each week. Made-up names. */
-  const DOCS=[{id:'d1', office:'sanangelo', n:'Dr. Thornbury'}, {id:'d2', office:'cruceslco', n:'Dr. Ashcombe'}];
+  let DOCS=LIVEPAY ? [] : [{id:'d1', office:'sanangelo', n:'Dr. Thornbury'}, {id:'d2', office:'cruceslco', n:'Dr. Ashcombe'}];
 
   /* ---------- pay periods: every other week, Monday to Sunday, paid the Friday after.
      Anchored on Heather's own sheet: pay period #20 was paid Sept 25 (Labor Day fell in it). ---------- */
-  const ANCHOR={n:20, pay:'2026-09-25'}, CUR=22, TODAY='2026-10-20', NOW='2026-10-20T09:41';
+  /* n counts pay periods on from the anchor, #20 of 2026 (paid Sept 25). Live: today, and the period being filled in
+     now; its label is its own number in its year (lab: "#1 of 2027"). */
+  const ANCHOR={n:20, pay:'2026-09-25'};
+  const TODAY=LIVEPAY ? PR.todayISO() : '2026-10-20';
+  const NOW=LIVEPAY ? (d=>TODAY+'T'+pad(d.getHours())+':'+pad(d.getMinutes()))(new Date()) : '2026-10-20T09:41';
+  const CUR=LIVEPAY ? ANCHOR.n+PR.currentIndex(TODAY) : 22;
   const addDays=(iso,d)=>{ const t=new Date(iso+'T00:00:00Z'); t.setUTCDate(t.getUTCDate()+d); return t.toISOString().slice(0,10); };
   const fmt=(iso,o)=>new Date(iso.slice(0,10)+'T12:00:00Z').toLocaleDateString('en-US',Object.assign({month:'short',day:'numeric',timeZone:'UTC'},o||{}));
   const fmtT=iso=>{ const h=+iso.slice(11,13), m=iso.slice(14,16); return fmt(iso,{weekday:'short'})+', '+((h%12)||12)+':'+m+(h<12?' am':' pm'); };
   function P(n){
+    if(LIVEPAY){ const q=PR.period(n-ANCHOR.n, HOLIDAYS); return Object.assign({}, q, {n, num:q.n}); }
     const pay=addDays(ANCHOR.pay,(n-ANCHOR.n)*14), end=addDays(pay,-5), start=addDays(end,-13);
     /* Due Tuesday by 2 pm Central - Monday when a holiday falls LATER in that week (Tue-Fri). A Monday holiday
        keeps the Tuesday (Heather, 22/10: "only when the Holiday falls later than Monday"). */
@@ -322,18 +343,19 @@
             hol:HOLIDAYS.find(h=>h.d>=start && h.d<=end)||null};
   }
   const span=(a,b)=>fmt(a)+' – '+fmt(b);
-  const eligibleOn=p=>addDays(p.start,90);
-  const eligible=(p,d)=>eligibleOn(p)<=d;
+  const eligibleOn=p=>p.start ? addDays(p.start,90) : '';
+  const eligible=(p,d)=>!!p.start && eligibleOn(p)<=d;
+  const lab=n=>LIVEPAY ? '#'+P(n).num+(P(n).year!==+TODAY.slice(0,4)?' of '+P(n).year:'') : '#'+n;
 
   /* ---------- what this browser remembers (so the mock-up keeps your clicks) ---------- */
   const KEY='ph_pay_demo';
-  let S=null; try{ S=JSON.parse(localStorage.getItem(KEY)); }catch(_){ S=null; }
+  let S=null; if(!LIVEPAY) try{ S=JSON.parse(localStorage.getItem(KEY)); }catch(_){ S=null; }
   if(!S || (S.v!==1 && S.v!==2)) S={v:2, subs:{}, entered:{}};
   /* Sheets clicked through before Heather's answers (v1) are kept; people and doctors added start empty. */
   const fresh=()=>{ S.v=2; S.subs=S.subs||{}; S.entered=S.entered||{}; S.added=S.added||[]; S.removed=S.removed||{};
                     S.bonus=S.bonus||{}; S.docAdd=S.docAdd||[]; S.docGone=S.docGone||{}; };
   fresh();
-  const save=()=>{ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(_){} };
+  const save=()=>{ if(LIVEPAY) return; try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(_){} };   // live: saved field by field (LIVE below)
 
   /* ---------- people: by last name, the way the payroll software lists them ---------- */
   const everyone=()=>PEOPLE.concat(S.added);
@@ -388,6 +410,7 @@
   const BASE={};
   function base(n,o){
     const key=n+'|'+o; if(BASE[key]) return BASE[key];
+    if(LIVEPAY) return BASE[key]={status:'none', at:null, rows:{}, docs:{}, log:[]};   // nothing made up on the live site
     const per=P(n), ppl=basePeopleAt(o), rows={}, docs={};
     let status='none', at=null;
     if(n<CUR){ status='sent'; at=addDays(per.end,1+Math.floor(seed(key+'d')*2))+'T'+pad(8+Math.floor(seed(key+'h')*5))+':'+pad(Math.floor(seed(key+'m')*60)); }
@@ -406,8 +429,8 @@
   }
   const get=(n,o)=>(S.subs[n] && S.subs[n][o]) || base(n,o);
   function mine(n,o){ S.subs[n]=S.subs[n]||{}; if(!S.subs[n][o]) S.subs[n][o]=JSON.parse(JSON.stringify(base(n,o))); return S.subs[n][o]; }
-  const enteredOf=n=>S.entered[n]!==undefined ? S.entered[n] : (n<CUR ? {at:addDays(P(n).pay,-2)+'T10:30', by:'Heather'} : null);
-  function nowISO(){ const d=new Date(); return TODAY+'T'+pad(d.getHours())+':'+pad(d.getMinutes()); }
+  const enteredOf=n=>S.entered[n]!==undefined ? S.entered[n] : (!LIVEPAY && n<CUR ? {at:addDays(P(n).pay,-2)+'T10:30', by:'Heather'} : null);
+  function nowISO(){ const d=new Date(); return (LIVEPAY ? PR.todayISO(d) : TODAY)+'T'+pad(d.getHours())+':'+pad(d.getMinutes()); }
   /* Who is on a sheet. This pay period: everyone at the office now (plus anyone taken off who already has hours
      on it). A past one: exactly who was on it - taking someone off never changes a sheet already sent. */
   function rowPeople(n,o){
@@ -468,7 +491,16 @@
     coo: {label:'Heather — COO, all offices', kind:'coo'}
   };
   let as='om'; try{ const a=localStorage.getItem('ph_pay_as'); if(ROLES[a]) as=a; }catch(_){}
-  const R=()=>ROLES[as];
+  /* Live: who you are decides (PH.payLevel): 'manage' every office and Settings, 'view' every office read only, 'send'
+     their own office's sheet (a picker when they send more than one). */
+  const LEVEL=()=>LIVEPAY ? ((PH.payLevel && PH.payLevel())||'') : '';
+  const myOffices=()=>{ const names=(PH.paySenderOffices && PH.paySenderOffices())||[]; return OFFICES.filter(o=>names.indexOf(o.n)>=0).map(o=>o.k); };
+  let liveOffice=null;
+  const R=()=>{
+    if(!LIVEPAY) return ROLES[as];
+    if(LEVEL()==='send') return {kind:'om', office:liveOffice || myOffices()[0] || null};
+    return {kind:'coo', ro:LEVEL()!=='manage'};
+  };
   let tab='sheet', per=CUR, look='';
 
   function statusPill(n,o){
@@ -484,13 +516,23 @@
     (pr.dueHol?' (a Monday: '+pr.dueHol.n+' is that week)':'');
 
   function render(){
+    if(LIVEPAY && !LIVE.ready){
+      el('lede').innerHTML=''; el('tabs').innerHTML='';
+      el('view').innerHTML=LIVE.err ? '<div class="note warn"><b>Payroll couldn’t be opened.</b> '+esc(LIVE.err)+' <button class="btn ghost sm" data-act="reload">Try again</button></div>'
+                                    : '<div class="note info">Opening payroll…</div>';
+      return;
+    }
+    if(LIVEPAY && R().kind==='om' && !R().office){ el('lede').innerHTML=''; el('tabs').innerHTML='';
+      el('view').innerHTML='<div class="note info">You don’t send an office’s payroll sheet. Whoever manages payroll chooses who sends each one.</div>'; return; }
     const k=R().kind;
     el('lede').innerHTML = k==='om'
       ? 'Your office’s payroll sheet, every other week. The same columns as the Excel form — totals and overtime work themselves out, and anything Heather would ask about is caught before you send it.'
       : 'Every office’s sheet in one place: who has sent it, one combined sheet like your main Excel, the things worth a second look, and every past pay period kept.';
-    const T = k==='om' ? [['sheet','Payroll sheet'],['past','Past sheets']] : [['sheet','This pay period'],['past','History'],['settings','Settings']];
+    const T = k==='om' ? [['sheet','Payroll sheet'],['past','Past sheets']] : [['sheet','This pay period'],['past','History']].concat(R().ro?[]:[['settings','Settings']]);
     if(!T.some(t=>t[0]===tab)) tab='sheet';
-    el('tabs').innerHTML=T.map(t=>'<button class="tab'+(t[0]===tab?' on':'')+'" data-act="tab" data-v="'+t[0]+'">'+t[1]+'</button>').join('');
+    const offs=LIVEPAY && k==='om' ? myOffices() : [];
+    el('tabs').innerHTML=T.map(t=>'<button class="tab'+(t[0]===tab?' on':'')+'" data-act="tab" data-v="'+t[0]+'">'+t[1]+'</button>').join('')+
+      (offs.length>1 ? '<select class="in" id="offpick" style="margin-left:auto" aria-label="Office">'+offs.map(o=>'<option value="'+o+'"'+(o===R().office?' selected':'')+'>'+esc(OFF[o].n)+'</option>').join('')+'</select>' : '');
     el('view').innerHTML = k==='om' ? (tab==='past' ? viewOmPast() : viewOmSheet()) : (tab==='past' ? viewHistory() : tab==='settings' ? viewSettings() : viewBoard());
   }
 
@@ -504,6 +546,7 @@
       : '<span class="otb '+(ok?'ok':'need')+'">'+(ok?'Approved':'Not approved')+'</span>')+'</div>';
   }
   function holHTML(p,pr){
+    if(!p.start) return '<span class="pill p-new" title="Heather adds it in Settings">Start date needed</span>';
     if(!eligible(p,pr.hol.d)) return '<span class="pill p-new">Not yet · 90 days on '+esc(fmt(eligibleOn(p)))+'</span>';
     return p.holHrs ? '<span class="pill p-done" title="Holiday hours instead of holiday pay">'+RATE.holidayHrs+' hrs</span>' : '<span class="pill p-done">Paid</span>';
   }
@@ -587,12 +630,12 @@
   }
   function periodPicker(id){
     let h='<select id="'+id+'" aria-label="Pay period">';
-    for(let n=CUR;n>=CUR-8;n--){ const pr=P(n); h+='<option value="'+n+'"'+(n===per?' selected':'')+'>#'+n+' · '+esc(span(pr.start,pr.end))+(n===CUR?' (this one)':'')+'</option>'; }
+    for(let n=CUR;n>=CUR-8;n--){ const pr=P(n); h+='<option value="'+n+'"'+(n===per?' selected':'')+'>'+lab(n)+' · '+esc(span(pr.start,pr.end))+(n===CUR?' (this one)':'')+'</option>'; }
     return h+'</select>';
   }
   function viewOmSheet(){
     const o=R().office, n=per, pr=P(n), s=get(n,o), e=enteredOf(n), edit=!e && n===CUR;
-    let h='<div class="stack"><div class="card"><div class="perhead"><div class="grow"><div class="small muted" style="font-weight:700;text-transform:uppercase;letter-spacing:.05em">'+esc(OFF[o].n)+' · pay period #'+n+'</div>'+
+    let h='<div class="stack"><div class="card"><div class="perhead"><div class="grow"><div class="small muted" style="font-weight:700;text-transform:uppercase;letter-spacing:.05em">'+esc(OFF[o].n)+' · pay period '+lab(n)+'</div>'+
       '<div class="when">'+esc(fmt(pr.start,{weekday:'short'}))+' – '+esc(fmt(pr.end,{weekday:'short'}))+'</div>'+
       '<div class="small muted"><b>Wk 1</b> '+esc(span(pr.start,pr.w1end))+' · <b>Wk 2</b> '+esc(span(pr.w2start,pr.end))+'</div>'+
       '<div class="small muted">Paid '+esc(fmt(pr.pay,{weekday:'long'}))+' · sheet '+esc(dueText(pr))+'</div></div>'+
@@ -604,8 +647,8 @@
       h+='<div class="remind'+(late?' late':'')+'"><span style="font-size:20px" aria-hidden="true">'+(late?'⚠️':'⏰')+'</span><div class="grow"><b>'+
         (late ? 'This sheet was due '+esc(fmt(pr.due,{weekday:'long'}))+' at 2 pm. Please send it now.'
               : today ? 'Reminder: this sheet is due today by 2 pm Central.' : 'Heads-up: this sheet is due '+esc(fmt(pr.due,{weekday:'long'}))+' by 2 pm Central.')+
-        '</b><small>Home-Brace reminds you the workday before, the morning it’s due, and at 1 pm if it isn’t sent yet - here, and on your phone once alerts are on.</small></div>'+
-        '<button class="btn ghost sm" data-act="phrem">See the phone reminder</button></div>';
+        '</b><small>'+(LIVEPAY ? 'Home-Brace reminds you here from the workday before it’s due.' : 'Home-Brace reminds you the workday before, the morning it’s due, and at 1 pm if it isn’t sent yet - here, and on your phone once alerts are on.')+'</small></div>'+
+        (LIVEPAY ? '' : '<button class="btn ghost sm" data-act="phrem">See the phone reminder</button>')+'</div>';
     }
     if(n===CUR && !e){
       h+='<details class="rules"'+(s.status==='sent'?'':' open')+'><summary>Heather’s rules, in short</summary><ul>'+
@@ -638,7 +681,7 @@
     let h='<div class="card"><h2>'+esc(OFF[o].n)+' — every sheet you’ve sent</h2><p class="sub">Kept for good. Open any one to see exactly what was sent, and any change made after.</p><div class="tblwrap"><table class="t"><thead><tr><th>Pay period</th><th>Dates</th><th>Paid</th><th>Status</th><th class="n">Hours</th><th></th></tr></thead><tbody>';
     for(let n=CUR;n>=CUR-8;n--){
       const pr=P(n), s=get(n,o), tot=Object.keys(s.rows).reduce((a,id)=>a+num(s.rows[id].w1)+num(s.rows[id].w2),0);
-      h+='<tr><td><b>#'+n+'</b></td><td>'+esc(span(pr.start,pr.end))+'</td><td>'+esc(fmt(pr.pay))+'</td><td>'+statusPill(n,o)+'</td><td class="n">'+hrs(tot)+'</td><td class="n"><button class="btn ghost sm" data-act="omopen" data-v="'+n+'">Open</button></td></tr>';
+      h+='<tr><td><b>'+lab(n)+'</b></td><td>'+esc(span(pr.start,pr.end))+'</td><td>'+esc(fmt(pr.pay))+'</td><td>'+statusPill(n,o)+'</td><td class="n">'+hrs(tot)+'</td><td class="n"><button class="btn ghost sm" data-act="omopen" data-v="'+n+'">Open</button></td></tr>';
     }
     return h+'</tbody></table></div></div>';
   }
@@ -706,7 +749,7 @@
     const pr=P(n), e=enteredOf(n); let grand={reg:0,ot1:0,ot2:0,total:0,reimb:0};
     let h='<div class="tblwrap"><table class="t comb"><tbody>';
     OFFICES.forEach(o=>{
-      const s=get(n,o.k), on=!e && s.status==='sent', own=ownCols(o.k);
+      const s=get(n,o.k), on=!e && s.status==='sent' && !R().ro, own=ownCols(o.k);
       h+='<tr><td class="co" colspan="'+NC+'">'+esc(o.co)+' <span class="muted" style="font-weight:600">· '+esc(o.n)+'</span></td></tr>'+combHead(o.k);
       if(s.status!=='sent'){ h+='<tr><td class="miss" colspan="'+NC+'">Not sent yet — '+esc(o.n)+'’s sheet will appear here when '+esc(sender(o.k))+' sends it.</td></tr>'; return; }
       let sub={reg:0,ot1:0,ot2:0,total:0,reimb:0};
@@ -741,15 +784,17 @@
   }
   function viewBoard(){
     const n=per, pr=P(n), e=enteredOf(n), sent=OFFICES.filter(o=>get(n,o.k).status==='sent').length, F=flags(n);
-    let h='<div class="stack"><div class="card"><div class="perhead"><div class="grow"><div class="small muted" style="font-weight:700;text-transform:uppercase;letter-spacing:.05em">Pay period #'+n+'</div>'+
+    let h='<div class="stack"><div class="card"><div class="perhead"><div class="grow"><div class="small muted" style="font-weight:700;text-transform:uppercase;letter-spacing:.05em">Pay period '+lab(n)+'</div>'+
       '<div class="when">'+esc(fmt(pr.start,{weekday:'short'}))+' – '+esc(fmt(pr.end,{weekday:'short'}))+'</div>'+
       '<div class="small muted"><b>Wk 1</b> '+esc(span(pr.start,pr.w1end))+' · <b>Wk 2</b> '+esc(span(pr.w2start,pr.end))+'</div>'+
       '<div class="small muted">Paid '+esc(fmt(pr.pay,{weekday:'long'}))+' · office sheets '+esc(dueText(pr))+(pr.hol?' · includes '+esc(pr.hol.n):'')+'</div></div>'+
       '<div class="row">'+(e?'<span class="pill p-lock">🔒 Entered '+esc(fmtT(e.at))+'</span>':'<span class="pill '+(sent===OFFICES.length?'p-done':'p-go')+'">'+sent+' of '+OFFICES.length+' offices sent</span>')+periodPicker('perpick')+'</div></div>'+
       '<div class="offs" style="margin-top:14px">'+OFFICES.map(o=>{ const s=get(n,o.k);
         return '<div class="off"><div class="row"><span class="on grow">'+esc(o.n)+'</span>'+statusPill(n,o.k)+'</div><div class="co">'+esc(o.co)+'<br>Sent by the '+esc(o.by)+'</div><div class="row">'+
-          (s.status==='sent'?'<button class="btn ghost sm" data-act="view" data-v="'+o.k+'">See what was sent</button>':(!e?'<button class="btn ghost sm" data-act="remind" data-v="'+o.k+'">Send a reminder</button>':''))+'</div></div>'; }).join('')+'</div>'+
-      (!e?'<div class="small muted" style="margin-top:12px">⏰ Reminders go out on their own to whoever sends each sheet: the workday before, the morning it’s due, and at 1 pm if it isn’t sent yet - in Home-Brace, and on their phone once alerts are on. <b>Send a reminder</b> sends one right now.</div>':'')+'</div>';
+          (s.status==='sent'?'<button class="btn ghost sm" data-act="view" data-v="'+o.k+'">See what was sent</button>':(!e && !LIVEPAY?'<button class="btn ghost sm" data-act="remind" data-v="'+o.k+'">Send a reminder</button>':''))+'</div></div>'; }).join('')+'</div>'+
+      (!e?'<div class="small muted" style="margin-top:12px">'+(LIVEPAY
+        ? '⏰ Each office’s sender sees a reminder on their Payroll page from the workday before it’s due. Reminders on their phone come with Chat.'
+        : '⏰ Reminders go out on their own to whoever sends each sheet: the workday before, the morning it’s due, and at 1 pm if it isn’t sent yet - in Home-Brace, and on their phone once alerts are on. <b>Send a reminder</b> sends one right now.')+'</div>':'')+'</div>';
     const groups=[['add','🆕 New people'],['ot','⏱ Overtime'],['two','🏢 Working two offices — hours combined'],['green','🟢 Missed green days'],['pay','💵 Exception commuter pay'],['miles','🚗 Mileage']];
     const count=groups.reduce((a,g)=>a+F[g[0]].length,0);
     h+='<div class="card"><h2>Worth a second look'+(count?' ('+count+')':'')+'</h2><p class="sub">Found for you across every sheet that’s been sent — no more hunting through notes.</p>'+
@@ -757,7 +802,7 @@
         :'<div class="note good">Nothing unusual so far.</div>')+'</div>';
     h+='<div class="card"><div class="row" style="margin-bottom:10px"><div class="grow"><h2>Combined sheet</h2><div class="small muted">Laid out like your main Excel: one company at a time with its own column headings, the same sums for every row, overtime split by week the way the payroll software asks for it.</div></div>'+
       '<button class="btn ghost sm" data-act="csv">⬇ Download for Excel</button>'+
-      (e?'<button class="btn ghost sm" data-act="reopen">Reopen</button>':'<button class="btn sm" data-act="enter"'+(sent<OFFICES.length?' title="Some offices haven’t sent yet"':'')+'>Mark as entered in payroll</button>')+'</div>'+combined(n)+'</div>';
+      (R().ro ? '' : e?'<button class="btn ghost sm" data-act="reopen">Reopen</button>':'<button class="btn sm" data-act="enter"'+(sent<OFFICES.length?' title="Some offices haven’t sent yet"':'')+'>Mark as entered in payroll</button>')+'</div>'+combined(n)+'</div>';
     return h+'</div>';
   }
 
@@ -769,7 +814,7 @@
     for(let n=CUR;n>=1;n--){
       const pr=P(n), e=enteredOf(n); let hours=0,total=0,sent=0;
       OFFICES.forEach(o=>{ const s=get(n,o.k); if(s.status!=='sent') return; sent++; rowPeople(n,o.k).forEach(p=>{ const x=s.rows[p.id]; if(x){ const c=calc(p,x,pr); hours+=c.hours; total+=c.total; } }); });
-      h+='<tr><td><b>#'+n+'</b></td><td>'+esc(span(pr.start,pr.end))+(pr.hol?' <span class="pill p-new">'+esc(pr.hol.n)+'</span>':'')+'</td><td>'+esc(fmt(pr.pay))+'</td><td>'+sent+' of '+OFFICES.length+'</td><td>'+(e?'<span class="pill p-lock">🔒 Entered '+esc(fmt(e.at))+'</span>':'<span class="pill p-go">In progress</span>')+'</td><td class="n">'+hrs(hours)+'</td><td class="n">'+money(total)+'</td><td class="n"><button class="btn ghost sm" data-act="open" data-v="'+n+'">Open</button></td></tr>';
+      h+='<tr><td><b>'+lab(n)+'</b></td><td>'+esc(span(pr.start,pr.end))+(pr.hol?' <span class="pill p-new">'+esc(pr.hol.n)+'</span>':'')+'</td><td>'+esc(fmt(pr.pay))+'</td><td>'+sent+' of '+OFFICES.length+'</td><td>'+(e?'<span class="pill p-lock">🔒 Entered '+esc(fmt(e.at))+'</span>':'<span class="pill p-go">In progress</span>')+'</td><td class="n">'+hrs(hours)+'</td><td class="n">'+money(total)+'</td><td class="n"><button class="btn ghost sm" data-act="open" data-v="'+n+'">Open</button></td></tr>';
     }
     return h+'</tbody></table></div></div></div>';
   }
@@ -780,26 +825,38 @@
     let h='<div class="tblwrap"><table class="t"><thead><tr><th>Pay period</th><th>Office</th><th class="n">Regular</th><th class="n">OT</th><th class="n">PTO</th><th class="n">Sick</th><th class="n">PP bonus</th><th class="n">On call</th><th>Notes</th></tr></thead><tbody>';
     for(let n=CUR;n>=CUR-9;n--){ const pr=P(n);
       p.offices.forEach(k=>{ const s=get(n,k), x=s.status==='sent'&&s.rows[p.id]; if(!x) return; const c=calc(p,x,pr);
-        h+='<tr><td>#'+n+' · '+esc(span(pr.start,pr.end))+'</td><td>'+esc(OFF[k].n)+'</td><td class="n">'+hrs(c.reg)+'</td><td class="n">'+hrs(c.ot1+c.ot2)+'</td><td class="n">'+hrs(c.pto)+'</td><td class="n">'+hrs(c.sick)+'</td><td class="n">'+money(c.ppb)+'</td><td class="n">'+money(c.oc)+'</td><td style="white-space:normal">'+esc(x.notes||'')+'</td></tr>'; }); }
+        h+='<tr><td>'+lab(n)+' · '+esc(span(pr.start,pr.end))+'</td><td>'+esc(OFF[k].n)+'</td><td class="n">'+hrs(c.reg)+'</td><td class="n">'+hrs(c.ot1+c.ot2)+'</td><td class="n">'+hrs(c.pto)+'</td><td class="n">'+hrs(c.sick)+'</td><td class="n">'+money(c.ppb)+'</td><td class="n">'+money(c.oc)+'</td><td style="white-space:normal">'+esc(x.notes||'')+'</td></tr>'; }); }
     return h+'</tbody></table></div>';
   }
 
   /* ---------- Heather: settings ---------- */
   function viewSettings(){
-    let h='<div class="stack"><div class="note info">Your answers are in. Try adding or taking off people and doctors — in this mock-up it stays in your browser.</div>';
+    let h='<div class="stack">'+(LIVEPAY
+      ? (everyone().length ? '' : '<div class="note warn"><b>Start here.</b> Fill each office from the Home-Brace team list (below), then set each person’s pay-period bonus and start date, and choose who sends each office’s sheet.</div>')
+      : '<div class="note info">Your answers are in. Try adding or taking off people and doctors — in this mock-up it stays in your browser.</div>');
     h+='<div class="kpis"><div class="kpi"><div class="k">On call</div><div class="v">'+money(RATE.onCall)+'</div><div class="s">a weekend</div></div>'+
       '<div class="kpi"><div class="k">Holiday pay</div><div class="v">'+money(RATE.holiday)+'</div><div class="s">after the 90-day review ('+RATE.holidayHrs+' hours for anyone who gets holiday hours)</div></div>'+
       '<div class="kpi"><div class="k">Mileage</div><div class="v">'+money(RATE.mile)+'</div><div class="s">a mile — the IRS rate. Change it here when the IRS does.</div></div>'+
       '<div class="kpi"><div class="k">Sheets due</div><div class="v">Tue 2 pm</div><div class="s">Central — Monday when a holiday falls later that week</div></div></div>';
-    h+='<div class="card"><h2>Who sends each office’s sheet</h2><p class="sub">They’re the ones who see it and send it to you, along with you.</p><div class="tblwrap"><table class="t"><thead><tr><th>Office</th><th>Sent by</th><th>Its own columns (the office types them)</th></tr></thead><tbody>'+
-      OFFICES.map(o=>'<tr><td><b>'+esc(o.n)+'</b></td><td>The '+esc(o.by)+'</td><td>'+((o.own||[]).map(c=>esc(c.n)).join(', ')||'<span class="muted">—</span>')+'</td></tr>').join('')+'</tbody></table></div></div>';
+    const roster=LIVEPAY ? ((PH.rosterView && PH.rosterView())||[]).filter(r=>r.email) : [], sendersOf=o=>LIVEPAY ? ((PH.paySenders().offices||{})[o.n]||[]) : [];
+    const nameOf=em=>{ const r=roster.find(x=>String(x.email).toLowerCase()===String(em).toLowerCase()); return r ? r.name : em; };
+    h+='<div class="card"><h2>Who sends each office’s sheet</h2><p class="sub">'+(LIVEPAY ? 'They see their own office’s sheet and send it to you - no other office’s. Home-Brace gives them the tab and the access.' : 'They’re the ones who see it and send it to you, along with you.')+'</p><div class="tblwrap"><table class="t"><thead><tr><th>Office</th><th>Sent by</th><th>Its own columns (the office types them)</th></tr></thead><tbody>'+
+      OFFICES.map(o=>'<tr><td><b>'+esc(o.n)+'</b></td><td>'+(LIVEPAY
+        ? sendersOf(o).map(em=>'<span class="sendchip">'+esc(nameOf(em))+'<button data-act="sendrm" data-o="'+esc(o.n)+'" data-v="'+esc(em)+'" title="Take off" aria-label="Take '+esc(nameOf(em))+' off">×</button></span>').join('')+
+          '<select class="in" data-sendadd="'+esc(o.n)+'" style="max-width:220px" aria-label="Add who sends '+esc(o.n)+'’s sheet"><option value="">'+(sendersOf(o).length?'＋ Add another…':'Choose who sends it…')+'</option>'+
+            roster.slice().sort((a,b)=>((b.offices||[]).indexOf(o.n)>=0)-((a.offices||[]).indexOf(o.n)>=0) || String(a.name).localeCompare(String(b.name)))
+              .filter(r=>sendersOf(o).indexOf(String(r.email).toLowerCase())<0).map(r=>'<option value="'+esc(r.email)+'">'+esc(r.name)+((r.offices||[]).length?' · '+esc((r.offices||[]).join(', ')):'')+'</option>').join('')+'</select>'
+          + '<div class="small muted">Usually the '+esc(o.by)+'.</div>'
+        : 'The '+esc(o.by))+'</td><td>'+((o.own||[]).map(c=>esc(c.n)).join(', ')||'<span class="muted">—</span>')+'</td></tr>').join('')+'</tbody></table></div></div>';
     h+='<div class="card"><h2>Paid holidays</h2><p class="sub">A holiday column shows up by itself in the pay period it falls in.</p><div class="row">'+HOLIDAYS.map(x=>'<span class="pill p-new">'+esc(fmt(x.d,{year:'numeric'}))+' · '+esc(x.n)+'</span>').join('')+'</div></div>';
     const act=everyone().filter(p=>!S.removed[p.id]).sort(byLast), gone=everyone().filter(p=>S.removed[p.id]).sort(byLast);
     h+='<div class="card"><div class="row" style="margin-bottom:8px"><div class="grow"><h2>People</h2><p class="sub" style="margin:0">By last name, like the payroll software. Their office, their pay-period bonus, and when holiday pay starts.</p></div><button class="btn ghost sm" data-act="addp" data-v="">＋ Add a person</button></div>'+
+      (LIVEPAY ? '<div class="row" style="margin-bottom:10px;flex-wrap:wrap;gap:6px"><span class="small muted">Fill from the Home-Brace team list:</span>'+OFFICES.map(o=>'<button class="btn ghost sm" data-act="fill" data-v="'+o.k+'">＋ '+esc(o.n)+'</button>').join('')+'</div>' : '')+
       '<div class="tblwrap"><table class="t"><thead><tr><th>Name</th><th>Office</th><th class="n">PP bonus</th><th>Started</th><th>Holiday pay from</th><th></th><th></th></tr></thead><tbody>'+
       act.map(p=>'<tr><td><b>'+esc(disp(p))+'</b></td><td>'+esc(p.offices.map(k=>OFF[k].n).join(' + '))+'</td>'+
         '<td class="n">$ <input class="in" style="width:76px" type="number" min="0" step="5" inputmode="decimal" data-sb="'+p.id+'" value="'+(bonusOf(p)||'')+'" aria-label="Pay-period bonus for '+esc(disp(p))+'"></td>'+
-        '<td>'+esc(fmt(p.start,{year:'numeric'}))+'</td><td>'+esc(fmt(eligibleOn(p),{year:'numeric'}))+(eligibleOn(p)>TODAY?' <span class="pill p-go">soon</span>':'')+'</td>'+
+        '<td>'+(LIVEPAY ? '<input class="in" type="date" style="width:150px" data-start="'+p.id+'" value="'+esc(p.start||'')+'" aria-label="Start date for '+esc(disp(p))+'">' : esc(fmt(p.start,{year:'numeric'})))+'</td>'+
+        '<td>'+(p.start ? esc(fmt(eligibleOn(p),{year:'numeric'}))+(eligibleOn(p)>TODAY?' <span class="pill p-go">soon</span>':'') : '<span class="pill p-late">Add the start date</span>')+'</td>'+
         '<td class="small">'+(p.sick?'<span class="pill p-new">Sick hours from before · holiday hours</span>':'')+(p.byKind==='om'&&S.bonus[p.id]===undefined&&!num(p.bonus)?' <span class="pill p-go">New — set the bonus</span>':'')+'</td>'+
         '<td class="n"><button class="link small" data-act="rmp" data-v="'+p.id+'">Take off</button></td></tr>').join('')+
       gone.map(p=>'<tr class="gone"><td>'+esc(disp(p))+'</td><td>'+esc(p.offices.map(k=>OFF[k].n).join(' + '))+'</td><td colspan="4" class="small muted">Taken off '+esc(fmt(S.removed[p.id]))+' — their past sheets are kept</td><td class="n"><button class="link small" data-act="backp" data-v="'+p.id+'">Bring back</button></td></tr>').join('')+
@@ -845,7 +902,7 @@
   }
   function csv(n){
     const pr=P(n), q=v=>{ v=String(v==null?'':v); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
-    const lines=[['Pay period #'+n+' - '+span(pr.start,pr.end)+', paid '+fmt(pr.pay,{year:'numeric'})], ['Week 1: '+span(pr.start,pr.w1end)+'   Week 2: '+span(pr.w2start,pr.end)], []];
+    const lines=[['Pay period '+lab(n)+' - '+span(pr.start,pr.end)+', paid '+fmt(pr.pay,{year:'numeric'})], ['Week 1: '+span(pr.start,pr.w1end)+'   Week 2: '+span(pr.w2start,pr.end)], []];
     OFFICES.forEach(o=>{ const s=get(n,o.k), own=ownCols(o.k).filter(Boolean);
       lines.push([o.co]);
       lines.push(['Employee Name','Regular Hours','OT Wk 1','OT Wk 2','PPBonus','PTO','Goal','TC/OM','Holiday','Reimburse','On Call'].concat(own.map(c=>c.n),['Extra','Total','Notes']));
@@ -859,7 +916,7 @@
       lines.push([]); });
     // The BOM tells Excel it is UTF-8, so the dashes in the dates (and any accents in names) come out right
     const blob=new Blob(['\ufeff'+lines.map(l=>l.map(q).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'});
-    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='Payroll #'+n+' ('+span(pr.start,pr.end).replace(/\s/g,' ')+').csv';
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='Payroll '+lab(n)+' ('+span(pr.start,pr.end).replace(/\s/g,' ')+').csv';
     document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },500);
   }
 
@@ -869,8 +926,9 @@
     if(f==='ot1'||f==='ot2') x[f]=t.checked;
     else if(['notes','comTo','mg','bonus','cutBy'].indexOf(f)>=0) x[f]=t.value;
     else x[f]=t.value===''?'':num(t.value);
-    if(f==='mg' && t.value==='Y' && x.bonus==='full'){ x.bonus='none'; toast('Missed a green day — bonus set to None. Change it if one of your exceptions applies.'); }
+    if(f==='mg' && t.value==='Y' && x.bonus==='full'){ x.bonus='none'; toast('Missed a green day — bonus set to None. Change it if one of your exceptions applies.'); if(LIVEPAY) liveSheet(n,o,{row:pid, f:'bonus', v:'none'}); }
     if(s.status==='sent') s.changed=true;
+    if(LIVEPAY){ if(s.status==='none') s.status='draft'; liveSheet(n,o,{row:pid, f, v:x[f]}); if(s.changed) liveSheet(n,o,{set:{changed:true}}); }
     save();
     if(redraw){ render(); return; }
     const p=who(pid), c=calc(p,x,P(n));
@@ -883,6 +941,7 @@
     s.docs=s.docs||{}; const v=s.docs[d]=s.docs[d]||{};
     v[f]=t.value===''?'':num(t.value);
     if(s.status==='sent') s.changed=true;
+    if(LIVEPAY){ if(s.status==='none') s.status='draft'; liveSheet(per,o,{doc:d, f, v:v[f]}); if(s.changed) liveSheet(per,o,{set:{changed:true}}); }
     save();
     const c=el('dt-'+d); if(c) c.innerHTML='<span class="tot">'+daysText(v)+'</span>';
     const k=el('checks'); if(k) k.innerHTML=checksHTML(per,o);
@@ -890,17 +949,23 @@
   function onHeather(t){
     const s=mine(per,t.dataset.o), pid=t.dataset.p, x=s.rows[pid]=s.rows[pid]||blank();
     x[t.dataset.hf]=t.value===''?'':num(t.value);
+    if(LIVEPAY) liveCols(per, t.dataset.o, pid, t.dataset.hf, x[t.dataset.hf]);
     save(); combTotals(per);
   }
   document.addEventListener('input', e=>{ const t=e.target; if(!t.dataset) return;
     if(t.dataset.d){ onDoc(t); return; }
     if(t.dataset.hf){ onHeather(t); return; }
-    if(t.dataset.sb){ if(t.value==='') delete S.bonus[t.dataset.sb]; else S.bonus[t.dataset.sb]=num(t.value); save(); return; }
+    if(t.dataset.sb){ if(t.value==='') delete S.bonus[t.dataset.sb]; else S.bonus[t.dataset.sb]=num(t.value);
+      if(LIVEPAY){ const id=t.dataset.sb, v=S.bonus[id]; liveQueue('_h','settings', cur=>{ const x=cur||{v:1, bonus:{}}; x.bonus=x.bonus||{}; if(v===undefined) delete x.bonus[id]; else x.bonus[id]=v; return x; }); }
+      save(); return; }
+    if(t.dataset.start){ livePerson(t.dataset.start, q=>{ q.start=t.value; }); const pp=who(t.dataset.start); if(pp) pp.start=t.value; return; }
     if(t.dataset.f && t.tagName==='INPUT' && t.type!=='checkbox') onField(t,false);
     if(t.id==='look'){ look=t.value; const r=el('lookres'); if(r) r.innerHTML=lookHTML(); } });
   document.addEventListener('change', e=>{ const t=e.target;
     if(t.id==='persona'){ as=t.value; try{ localStorage.setItem('ph_pay_as', as); }catch(_){} tab='sheet'; per=CUR; render(); return; }
     if(t.id==='perpick'){ per=+t.value; render(); return; }
+    if(t.id==='offpick'){ liveOffice=t.value; per=CUR; render(); return; }
+    if(t.dataset && t.dataset.sendadd){ liveSenders(t.dataset.sendadd, t.value, true); return; }
     if(t.dataset && t.dataset.f && !t.dataset.d && (t.tagName==='SELECT' || t.type==='checkbox')) onField(t, true); });
   document.addEventListener('click', e=>{
     const b=e.target.closest('[data-act]'); if(!b) return;
@@ -917,12 +982,23 @@
     }
     if(act==='sendok'){
       const o=R().office, s=mine(per,o), at=nowISO(), again=s.status==='sent';
-      s.status='sent'; s.at=s.at||at; s.log=s.log||[]; s.log.push({at, t:(again?'Changes sent by ':'Sent by ')+sender(o)}); delete s.changed;
+      const who_=LIVEPAY ? ((PH.name && PH.name(PH.me())) || sender(o)) : sender(o), entry={at, t:(again?'Changes sent by ':'Sent by ')+who_};
+      if(LIVEPAY){
+        b.disabled=true; const n=per;
+        liveSheet(n,o,{set:{status:'sent', at:s.at||at, by:(PH.email && PH.email(PH.me()))||''}, unset:['changed'], log:entry});
+        liveFlushAll().then(okd=>{
+          if(!okd){ b.disabled=false; toast('Not sent — check the connection and press Send again.'); return; }
+          s.status='sent'; s.at=s.at||at; s.log=s.log||[]; s.log.push(entry); delete s.changed;
+          closeDlg(); render(); toast(again?'Changes sent to Heather':'Sent to Heather ✓');
+        });
+        return;
+      }
+      s.status='sent'; s.at=s.at||at; s.log=s.log||[]; s.log.push(entry); delete s.changed;
       save(); closeDlg(); render(); toast(again?'Changes sent to Heather':'Sent to Heather ✓'); return;
     }
     if(act==='view'){
       const n=per, s=get(n,v), e=enteredOf(n);
-      openDlg(top(esc(OFF[v].n)+' · pay period #'+n+' — as sent')+'<div class="dm-body">'+sheetTable(n,v,false)+docsHTML(n,v,false)+
+      openDlg(top(esc(OFF[v].n)+' · pay period '+lab(n)+' — as sent')+'<div class="dm-body">'+sheetTable(n,v,false)+docsHTML(n,v,false)+
         '<div class="log">'+(s.log||[]).map(l=>'<div>• '+esc(fmtT(l.at))+' — '+esc(l.t)+'</div>').join('')+(e?'<div>• '+esc(fmtT(e.at))+' — Entered in payroll by '+esc(e.by)+'</div>':'')+'</div></div>', true);
       return;
     }
@@ -931,17 +1007,32 @@
     const realSend=(title, body)=>PH_ALERTS.send({title, body, url:PH_ALERTS.here('payroll.html'), tag:'hb-payroll-'+per, delay:5})
       .then(()=>toast('Sent to your phone ✓ It arrives in about 5 seconds - lock your phone to see it.'), err=>toast('Couldn’t send: '+(err&&err.message)));
     if(act==='remind'){
-      if(realOn()){ realSend('Reminder from Heather: payroll sheet due '+(P(per).due===TODAY?'today':fmt(P(per).due,{weekday:'long'}))+' by 2 pm', OFF[v].n+' · pay period #'+per+' - tap to open it'); return; }
+      if(realOn()){ realSend('Reminder from Heather: payroll sheet due '+(P(per).due===TODAY?'today':fmt(P(per).due,{weekday:'long'}))+' by 2 pm', OFF[v].n+' · pay period '+lab(per)+' - tap to open it'); return; }
       toast('Reminder sent to '+sender(v)+' - in Home-Brace and on their phone. (Mock-up: nothing is sent.)'); return;
     }
-    if(act==='phrem'){ const o=R().office, pr=P(per), title='Payroll sheet due '+(pr.due===TODAY?'today':fmt(pr.due,{weekday:'long'}))+' by 2 pm', body=OFF[o].n+' · pay period #'+per+' - tap to open it';
+    if(act==='phrem'){ const o=R().office, pr=P(per), title='Payroll sheet due '+(pr.due===TODAY?'today':fmt(pr.due,{weekday:'long'}))+' by 2 pm', body=OFF[o].n+' · pay period '+lab(per)+' - tap to open it';
       if(realOn()){ realSend(title, body); return; }
       notifyPay(title, body);
       if(window.PH_ALERTS) setTimeout(()=>toast('To get this on your phone: Chat → the bell → Turn on alerts.'), 1200);
       return; }
     if(act==='csv'){ csv(per); toast('Downloaded — opens in Excel'); return; }
-    if(act==='enter'){ S.entered[per]={at:nowISO(), by:'Heather'}; save(); render(); toast('Entered — office sheets for #'+per+' are locked'); return; }
-    if(act==='reopen'){ S.entered[per]=null; save(); render(); toast('Reopened — office sheets can be changed again'); return; }
+    if(act==='enter' || act==='reopen'){
+      const val=act==='enter' ? {at:nowISO(), by:LIVEPAY ? ((PH.name && PH.name(PH.me())) || 'Heather') : 'Heather'} : null, n=per;
+      if(LIVEPAY){
+        b.disabled=true; OFFICES.forEach(o=>liveSheet(n, o.k, {set:{entered:val}}));
+        liveFlushAll().then(okd=>{
+          b.disabled=false;
+          if(!okd){ toast('Not saved — check the connection and try again.'); return; }
+          S.entered[n]=val; render(); toast(val ? 'Entered — office sheets for '+lab(n)+' are locked' : 'Reopened — office sheets can be changed again');
+        });
+        return;
+      }
+      S.entered[per]=val; save(); render(); toast(val ? 'Entered — office sheets for '+lab(per)+' are locked' : 'Reopened — office sheets can be changed again'); return;
+    }
+    if(act==='reload'){ location.reload(); return; }
+    if(act==='retry'){ liveFlushAll(); return; }
+    if(act==='fill'){ liveFill(v); return; }
+    if(act==='sendrm'){ liveSenders(b.dataset.o, v, false); return; }
     if(act==='close'){ closeDlg(); return; }
     if(act==='reset'){ S={v:2}; fresh(); save(); per=CUR; tab='sheet'; render(); toast('Sample data reset'); return; }
     if(act==='addp'){ addPersonDlg(v); return; }
@@ -949,16 +1040,23 @@
       const first=(el('nf').value||'').trim(), last=(el('nl').value||'').trim(), start=el('ns').value, o=v||(el('no')&&el('no').value);
       if(!first || !last){ el('nerr').textContent='Their first and last name, please.'; return; }
       if(!start){ el('nerr').textContent='Their start date, please — holiday pay counts from it.'; return; }
-      const heather=!v, p={id:'n'+Date.now().toString(36), offices:[o], first, last, n:first+' '+last, start,
+      const heather=!v, p={id:'n'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), offices:[o], first, last, n:first+' '+last, start,
         bonus:heather?num(el('nb').value):0, byKind:heather?'coo':'om', at:nowISO(), period:CUR};
       S.added.push(p);
       if(!heather){ const s=mine(CUR,o); s.rows[p.id]=blank(); if(s.status==='sent') s.changed=true; }
+      if(LIVEPAY){
+        livePeopleOf(o, f=>{ f.people.push({id:p.id, first, last, start, byKind:p.byKind, at:p.at, period:P(CUR).key, by:(PH.email && PH.email(PH.me()))||''}); });
+        if(heather && p.bonus){ S.bonus[p.id]=p.bonus; liveQueue('_h','settings', cur=>{ const x=cur||{v:1, bonus:{}}; x.bonus=x.bonus||{}; x.bonus[p.id]=p.bonus; return x; }); }
+        if(!heather){ const s=mine(CUR,o); if(s.status==='none') s.status='draft'; liveSheet(CUR,o,{row:p.id, f:'w1', v:''}); }
+        liveFlushAll();
+      }
       save(); closeDlg(); render(); toast(disp(p)+' added'+(heather?'':' — Heather sets their bonus')); return;
     }
     if(act==='unadd'){
       const p=who(v); if(!p) return;
-      S.added=S.added.filter(q=>q.id!==v);
-      p.offices.forEach(o=>{ const s=S.subs[CUR]&&S.subs[CUR][o]; if(s && s.rows) delete s.rows[v]; });
+      S.added=S.added.filter(q=>q.id!==v); PEOPLE=PEOPLE.filter(q=>q.id!==v);
+      p.offices.forEach(o=>{ const s=S.subs[CUR]&&S.subs[CUR][o]; if(s && s.rows) delete s.rows[v]; if(LIVEPAY) liveSheet(CUR,o,{drop:v}); });
+      if(LIVEPAY){ livePerson(v, q=>{ q.mistake=nowISO(); }); }   // kept in the file, marked: nothing is deleted
       save(); render(); toast(disp(p)+' taken off'); return;
     }
     if(act==='rmp'){
@@ -967,14 +1065,16 @@
         '<div class="dm-foot"><button class="btn ghost" data-act="close">Keep them</button><button class="btn" data-act="rmpok" data-v="'+esc(v)+'">Take them off</button></div>');
       return;
     }
-    if(act==='rmpok'){ S.removed[v]=TODAY; save(); closeDlg(); render(); toast('Taken off — past sheets kept'); return; }
-    if(act==='backp'){ delete S.removed[v]; save(); render(); toast('Back on the sheets'); return; }
+    if(act==='rmpok'){ S.removed[v]=TODAY; if(LIVEPAY) livePerson(v, q=>{ q.gone=TODAY; }); save(); closeDlg(); render(); toast('Taken off — past sheets kept'); return; }
+    if(act==='backp'){ delete S.removed[v]; if(LIVEPAY) livePerson(v, q=>{ delete q.gone; }); save(); render(); toast('Back on the sheets'); return; }
     if(act==='adddoc'){ addDocDlg(v); return; }
     if(act==='adddocok'){
       let name=(el('dn').value||'').trim(); const o=v||(el('do')&&el('do').value);
       if(!name){ el('derr').textContent='Their name, please.'; return; }
       if(!/^dr\.?\s/i.test(name)) name='Dr. '+name;
-      S.docAdd.push({id:'dn'+Date.now().toString(36), office:o, n:name});
+      const doc={id:'dn'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), office:o, n:name};
+      S.docAdd.push(doc);
+      if(LIVEPAY) livePeopleOf(o, f=>{ f.docs.push({id:doc.id, n:name, at:nowISO()}); }, true);
       save(); closeDlg(); render(); toast(name+' added'); return;
     }
     if(act==='deldoc'){
@@ -983,12 +1083,192 @@
         '<div class="dm-foot"><button class="btn ghost" data-act="close">Keep them</button><button class="btn" data-act="deldocok" data-v="'+esc(v)+'">Take them off</button></div>');
       return;
     }
-    if(act==='deldocok'){ S.docGone[v]=TODAY; save(); closeDlg(); render(); toast('Taken off — days already sent are kept'); return; }
-    if(act==='backdoc'){ delete S.docGone[v]; save(); render(); toast('Back on the sheet'); return; }
+    if(act==='deldocok'){ S.docGone[v]=TODAY; if(LIVEPAY) liveDoc(v, d=>{ d.gone=TODAY; }); save(); closeDlg(); render(); toast('Taken off — days already sent are kept'); return; }
+    if(act==='backdoc'){ delete S.docGone[v]; if(LIVEPAY) liveDoc(v, d=>{ delete d.gone; }); save(); render(); toast('Back on the sheet'); return; }
   });
   document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeDlg(); });
   el('dlg').addEventListener('click', e=>{ if(e.target===el('dlg')) closeDlg(); });
-  el('persona').innerHTML=Object.keys(ROLES).map(k=>'<option value="'+k+'"'+(k===as?' selected':'')+'>'+esc(ROLES[k].label)+'</option>').join('');
+  /* ==================== LIVE (01/11/2026) ====================
+     The same screens, on the live site: the payroll folders (paystore.js). Each office's people.json and
+     sheet_<YYYY-NN>.json; Heather's settings.json (bonus amounts) and cols_<YYYY-NN>.json (her own columns - Goal,
+     TC/OM, Extra - never in an office's file). A change is saved a field at a time onto the LATEST copy of its file
+     (two people at once both land), shortly after it's typed; the badge says Saving / Saved / not saved. */
+  const LIVE={ready:false, loading:false, err:'', firstN:null, unread:[], q:{}, timers:{}, busy:0, failed:''};
+  const folderOf=k=>k==='_h' ? PAYSTORE.PRIVATE : OFF[k].n;
+  const manages=()=>LEVEL()==='manage';
+  const store=k=>PAYSTORE.at(folderOf(k), manages());
+  const keyOf=n=>P(n).key;
+  const nOfKey=key=>{ const i=PR.indexOfKey(key); return i===null ? null : ANCHOR.n+i; };
+  const myEmail=()=>String((PH.email && PH.email(PH.me()))||'').toLowerCase();
+  const pending=()=>Object.keys(LIVE.q).some(id=>LIVE.q[id].length) || LIVE.busy>0;
+  function paintSave(){
+    const b=el('savebadge'); if(!b) return;
+    if(LIVE.failed){ b.hidden=false; b.className='savebadge bad'; b.innerHTML='Not saved: '+esc(LIVE.failed)+' <button class="link" data-act="retry">Try again</button>'; return; }
+    if(pending()){ b.hidden=false; b.className='savebadge'; b.textContent='Saving…'; return; }
+    b.className='savebadge ok'; b.textContent='Saved ✓'; clearTimeout(LIVE.hide); LIVE.hide=setTimeout(()=>{ if(!pending() && !LIVE.failed) b.hidden=true; }, 1500);
+  }
+  /* Queue a change to one file; it's written ~0.7 s after the last change to that file. fn(cur) -> the new value. */
+  function liveQueue(k, file, fn){
+    if(!LIVEPAY) return;
+    const id=k+'/'+file; (LIVE.q[id]=LIVE.q[id]||[]).push(fn);
+    clearTimeout(LIVE.timers[id]); LIVE.timers[id]=setTimeout(()=>liveFlush(id), 700);
+    paintSave();
+  }
+  function liveFlush(id){
+    const fns=LIVE.q[id]||[]; if(!fns.length) return Promise.resolve(true);
+    const at=id.indexOf('/'), k=id.slice(0,at), file=id.slice(at+1);
+    LIVE.q[id]=[]; LIVE.busy++; paintSave();
+    return store(k).update(file, cur=>fns.reduce((v,fn)=>fn(v), cur))
+      .then(()=>{ LIVE.busy--; if(!pending()) LIVE.failed=''; paintSave(); return true; },
+            e=>{ LIVE.q[id]=fns.concat(LIVE.q[id]||[]); LIVE.busy--; LIVE.failed=(e && e.message)||'SharePoint didn’t answer'; paintSave(); return false; });
+  }
+  function liveFlushAll(){
+    const ids=Object.keys(LIVE.q).filter(id=>LIVE.q[id].length);
+    ids.forEach(id=>clearTimeout(LIVE.timers[id]));
+    return Promise.all(ids.map(liveFlush)).then(r=>r.every(Boolean));
+  }
+  window.addEventListener('beforeunload', e=>{ if(LIVEPAY && pending()){ e.preventDefault(); e.returnValue=''; } });
+  /* One change to an office's sheet: {row, f, v} | {doc, f, v} | {drop: personId} | {set:{...}, unset:[...], log:{at,t}} */
+  function liveSheet(n, k, ch){
+    liveQueue(k, 'sheet_'+keyOf(n), cur=>{
+      const x=cur || {v:1, office:OFF[k].n, key:keyOf(n), status:'none', rows:{}, docs:{}, log:[]};
+      x.rows=x.rows||{}; x.docs=x.docs||{};
+      if(ch.row){ const r=x.rows[ch.row]=x.rows[ch.row]||{}; r[ch.f]=ch.v; }
+      if(ch.doc){ const d=x.docs[ch.doc]=x.docs[ch.doc]||{}; d[ch.f]=ch.v; }
+      if(ch.drop) delete x.rows[ch.drop];
+      if(ch.set) Object.assign(x, ch.set);
+      (ch.unset||[]).forEach(f=>{ delete x[f]; });
+      if(ch.log){ x.log=x.log||[]; x.log.push(ch.log); }
+      if(!x.status) x.status='none';
+      if(x.status==='none' && (ch.row || ch.doc)) x.status='draft';      // something typed: started (marking entered alone isn't)
+      x.upd=new Date().toISOString(); x.updBy=myEmail();
+      return x;
+    });
+  }
+  function liveCols(n, k, pid, f, v){
+    liveQueue('_h', 'cols_'+keyOf(n), cur=>{ const x=cur||{v:1, key:keyOf(n)}; x[k]=x[k]||{}; x[k][pid]=x[k][pid]||{}; x[k][pid][f]=v; return x; });
+  }
+  function livePeopleOf(k, fn, now){
+    liveQueue(k, 'people', cur=>{ const x=cur||{v:1, office:OFF[k].n, people:[], docs:[]}; x.people=x.people||[]; x.docs=x.docs||[]; fn(x); return x; });
+    if(now) liveFlushAll();
+  }
+  // A change to one person, in every office file they're listed in.
+  function livePerson(id, fn){
+    const p=who(id); if(!p) return;
+    p.offices.forEach(k=>livePeopleOf(k, x=>{ const q=x.people.find(y=>y.id===id); if(q) fn(q); }));
+    liveFlushAll();
+  }
+  function liveDoc(id, fn){
+    const d=everyDoc().find(x=>x.id===id); if(!d) return;
+    livePeopleOf(d.office, x=>{ const q=x.docs.find(y=>y.id===id); if(q) fn(q); }, true);
+  }
+  /* Fill an office from the Home-Brace team list (once, to start): everyone the roster puts at that office who isn't
+     a doctor and isn't on its list yet. Heather then sets bonuses and start dates, and takes off anyone who isn't paid
+     there. */
+  function liveFill(k){
+    const name=OFF[k].n, have={};
+    everyone().filter(p=>p.offices.indexOf(k)>=0).forEach(p=>{ have[(p.first+' '+p.last).toLowerCase()]=1; if(p.email) have[p.email]=1; });
+    const add=((PH.rosterView && PH.rosterView())||[]).filter(r=>(r.offices||[]).indexOf(name)>=0 && !(r.teams||[]).some(t=>/doctor/i.test(t)))
+      .filter(r=>!have[String(r.email||'').toLowerCase()] && !have[String(r.name||'').toLowerCase()]);
+    if(!add.length){ toast('Everyone on '+name+'’s team list is already here'); return; }
+    const made=add.map(r=>{ const nm=String(r.name||'').trim(), sp=nm.lastIndexOf(' ');
+      return {id:'n'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), first:sp>0?nm.slice(0,sp):nm, last:sp>0?nm.slice(sp+1):'',
+              email:String(r.email||'').toLowerCase(), start:'', byKind:'coo', at:nowISO(), from:'team list'}; });
+    livePeopleOf(k, x=>{ made.forEach(m=>x.people.push(m)); }, true);
+    made.forEach(m=>PEOPLE.push(Object.assign({}, m, {offices:[k], n:m.first+' '+m.last})));
+    render(); toast(made.length+' added to '+name+' — set their bonuses and start dates');
+  }
+  /* Who sends each office's sheet - the shared list (names only, no pay): Home-Brace shows them the tab and, from
+     Admin, gives them their office's folder. An admin's browser hands out that folder access right away. */
+  function liveSenders(office, em, add){
+    em=String(em||'').trim().toLowerCase(); if(!em) return;
+    PH_STORE.update('ph_pay_senders', cur=>{
+      const x=(cur && typeof cur==='object' && cur.offices) ? cur : {v:1, offices:{}};
+      const list=(x.offices[office]||[]).filter(e=>String(e).toLowerCase()!==em);
+      if(add) list.push(em);
+      x.offices[office]=list; x.upd=new Date().toISOString(); x.updBy=myEmail();
+      return x;
+    }).then(()=>PH.reloadPaySenders ? PH.reloadPaySenders() : null).then(()=>{
+      render();
+      if(window.PH_DOCS && PH_DOCS.paySync && PH.isAdmin && PH.isAdmin()){
+        toast('Saved — giving them access in SharePoint…');
+        paySyncHere().then(r=>toast(r==='notlocked' ? 'Saved. Access is given once the payroll folder is locked (Admin shows how).' : r ? 'Saved — access updated ✓' : 'Saved. Access couldn’t be updated - Admin will try again.'));
+      } else toast('Saved — they get access the next time an admin opens Admin');
+    }, e=>toast('Not saved: '+((e && e.message)||'SharePoint didn’t answer')));
+  }
+  function paySyncHere(){
+    const B=PH_DOCS.PAY_BASE, offices=OFFICES.map(o=>o.n);
+    return PH_DOCS.payLocked().then(locked=>{
+      if(!locked) return 'notlocked';
+      const w=PR.wanted(B, (PH.rosterView && PH.rosterView())||[], PH.payRoleFor, (PH.paySenders().offices)||{}, offices);
+      return PH_STORE.get('ph_paygrants').then(rec=>PH_DOCS.paySync(w.want, rec)).then(done=>
+        PH_STORE.update('ph_paygrants', cur=>PH_DOCS.payRecord(cur, done)).then(()=>Object.keys(done).every(k=>!done[k].failed.length)));
+    }).catch(()=>false);
+  }
+  /* Load what this person may see. A sender: their office's people and sheets. A manager (or See): every office, and
+     Heather's folder. A file that can't be read is said in red; a folder that can't be opened is an error, never an
+     empty payroll. */
+  function liveLoad(){
+    if(LIVE.loading || LIVE.ready) return;
+    if(PH.learning && PH.learning()){ render(); return; }                 // who this is isn't known yet: wait (ph-identity)
+    const lv=LEVEL();
+    if(!lv){ LIVE.err='Your account doesn’t have Payroll. Whoever manages payroll chooses who sends each office’s sheet; Admin → Teams & Access gives the rest.'; render(); return; }
+    LIVE.loading=true; LIVE.err=''; render();
+    const offs=lv==='send' ? myOffices() : OFFICES.map(o=>o.k), people={}, docs=[];
+    S.subs={}; S.entered={}; S.removed={}; S.docGone={}; S.bonus={}; S.added=[]; S.docAdd=[];
+    /* Nothing is read or written until the payroll folder is LOCKED: before that, everyone in Home-Brace could open it
+       in SharePoint. Whoever manages payroll is told how; a sender only ever gets access after it's locked anyway. */
+    (lv==='manage' ? PAYSTORE.ensure(OFFICES.map(o=>o.n)).then(()=>window.PH_DOCS && PH_DOCS.payLocked ? PH_DOCS.payLocked() : false).then(locked=>{
+        if(!locked) throw new Error('The payroll folder isn’t locked yet, so nothing is saved in it - until it is, everyone in Home-Brace could open it in SharePoint. '+
+          'Lock it once: SharePoint → Home-Brace → Documents → next to “Home-Brace Payroll”: ⋯ → Manage access → Advanced settings → Stop Inheriting Permissions, '+
+          'then remove Home-Brace Members and Home-Brace Visitors. Then press Try again.');
+      }) : Promise.resolve())
+      .then(()=>offs.reduce((c,k)=>c.then(()=>Promise.all([store(k).get('people'), store(k).getAll('sheet_', {partial:true})]).then(([pf, sh])=>{
+        pf=pf||{people:[], docs:[]};
+        (pf.people||[]).forEach(q=>{
+          if(q.mistake) return;
+          const was=people[q.id];
+          if(was){ if(was.offices.indexOf(k)<0) was.offices.push(k); }
+          else people[q.id]=Object.assign({}, q, {offices:[k], n:q.first+' '+q.last, period:q.period ? nOfKey(q.period) : undefined});
+          if(q.gone) S.removed[q.id]=q.gone;
+        });
+        (pf.docs||[]).forEach(d=>{ docs.push(Object.assign({}, d, {office:k})); if(d.gone) S.docGone[d.id]=d.gone; });
+        (sh.unread||[]).forEach(u=>LIVE.unread.push(OFF[k].n+' '+u));
+        Object.keys(sh).forEach(key=>{
+          const n=nOfKey(key.slice(6)); if(n===null) return;
+          const x=sh[key]||{}; x.rows=x.rows||{}; x.docs=x.docs||{}; x.log=x.log||[];
+          (S.subs[n]=S.subs[n]||{})[k]=x;
+          if(x.entered!==undefined) S.entered[n]=x.entered;
+          LIVE.firstN=LIVE.firstN===null ? n : Math.min(LIVE.firstN, n);
+        });
+      })), Promise.resolve()))
+      .then(()=>lv==='send' ? null : Promise.all([store('_h').get('settings'), store('_h').getAll('cols_', {partial:true})]).then(([st, cols])=>{
+        st=st||{};
+        S.bonus=st.bonus||{};
+        if(st.rates) RATE=Object.assign({}, RATE, st.rates);
+        if(Array.isArray(st.holidays) && st.holidays.length) HOLIDAYS=st.holidays;
+        (cols.unread||[]).forEach(u=>LIVE.unread.push('Heather '+u));
+        Object.keys(cols).forEach(key=>{
+          const n=nOfKey(key.slice(5)); if(n===null) return; const c=cols[key]||{};
+          Object.keys(c).forEach(k=>{ if(!OFF[k] || !c[k] || typeof c[k]!=='object') return;
+            const sh=mine(n,k);
+            Object.keys(c[k]).forEach(pid=>{ const x=sh.rows[pid]=sh.rows[pid]||blank(); ['goal','tcom','extra'].forEach(f=>{ if(c[k][pid][f]!==undefined) x[f]=c[k][pid][f]; }); });
+          });
+        });
+      }))
+      .then(()=>{
+        PEOPLE=Object.values(people); DOCS=docs;
+        if(lv==='send' && !liveOffice) liveOffice=myOffices()[0]||null;
+        LIVE.ready=true; LIVE.loading=false; per=CUR; render();
+        if(LIVE.unread.length) toast('Couldn’t read: '+LIVE.unread.join(', ')+' - it was left as it is');
+      }, e=>{ LIVE.loading=false; LIVE.err=(e && e.message)||'SharePoint didn’t answer.'; render(); });
+  }
+  if(LIVEPAY){
+    document.addEventListener('ph-signed-in', ()=>setTimeout(liveLoad, 0));
+    document.addEventListener('ph-identity', ()=>{ if(!LIVE.ready && !LIVE.loading){ LIVE.err=''; liveLoad(); } });
+  }
+
+  if(!LIVEPAY) el('persona').innerHTML=Object.keys(ROLES).map(k=>'<option value="'+k+'"'+(k===as?' selected':'')+'>'+esc(ROLES[k].label)+'</option>').join('');
   render();
 })();
 </script>
@@ -996,7 +1276,7 @@
 <script src="tour.js?v=hc115"></script>
 <script>
 Tour.init([
-  {sel:'#persona', title:'A mock-up', body:'Made-up people and amounts. Start as the <b>Carlsbad TC</b>, who sends Carlsbad’s sheet, then switch to <b>Heather</b>.'},
+  ...((window.PH && PH.isLive && PH.isLive()) ? [] : [{sel:'#persona', title:'A mock-up', body:'Made-up people and amounts. Start as the <b>Carlsbad TC</b>, who sends Carlsbad’s sheet, then switch to <b>Heather</b>.'}]),
   {sel:'#view', title:'The same sheet, with the rules built in', body:'The columns from the Excel form. Totals add themselves, overtime is split out by week, and missing notes or a missed green day are caught <b>before</b> it’s sent.'},
   {sel:'#tabs', title:'Kept for good', body:'Every sheet is kept. Heather sees who has sent, one combined sheet like her main Excel, and any pay period or person from the past.'}
 ], {key:'payroll', title:'Payroll', next:{label:'Home', href:'home.html'}});
