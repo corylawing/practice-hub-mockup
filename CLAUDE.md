@@ -78,8 +78,8 @@ paySenders/reloadPaySenders/paySenderOffices, payLevel).
   SharePoint (Manage access -> Stop inheriting; like the TC folder) - the page shows those steps and refuses to save
   until it's locked; 4) Admin -> Teams & Access -> "Payroll folders: Sync" (makes the folders, grants managers);
   5) Payroll -> Settings: fill each office from the team list, bonuses, start dates, who sends each sheet; 6) flip
-  `PAY_LIVE=true`, deploy. OPEN QUESTION for Heather/Cory: everyone on the Admin team sees every office's pay (Cory
-  too) - is that right, and is Heather on the Admin team?
+  `PAY_LIVE=true`, deploy. Heather is the app's administrator ("COO (Admin)"), so she manages Payroll automatically;
+  anyone else she adds herself in Teams & Access -> Payroll column. Don't ask Cory about this again (02/11).
 - NOT the portfolio demo (Cory 02/11: "You don't have to keep updating the interactive profolio demo when doing this.
   Just the sandbox and production when we agree to do so").
 
