@@ -2,8 +2,8 @@
    them to hand out folder access. 01/11/2026, Heather: "We can go live with the payroll sheet."
 
    Everything here is Heather's own: her main sheet's offices and companies (in its order), who sends each one, each
-   office's own columns, her pay periods (every other week, Monday to Sunday, paid the Friday after - anchored on her
-   sheet: pay period #20 was paid Sept 25, 2026), her due day (Tuesday by 2 pm Central; Monday when a holiday falls
+   office's own columns, her pay periods (every other week, Sunday to Saturday, paid the Friday after - anchored on her
+   sheet: pay period #20 was paid Sept 25, 2026; Heather 03/11: "the next pay period is Nov 1st - Nov 14th"), her due day (Tuesday by 2 pm Central; Monday when a holiday falls
    LATER that week - a Monday holiday keeps Tuesday, 22/10), and her sums (holiday pay $100 after the 90-day review,
    on call $50 a weekend, mileage at the IRS rate, reimbursements kept out of Total). */
 (function(global){
@@ -49,13 +49,13 @@
   }
   function period(i, holidays){
     holidays=holidays||HOLIDAYS;
-    const pay=payOf(i), end=addDays(pay,-5), start=addDays(end,-13), n=numberOf(pay), year=+pay.slice(0,4);
-    const mon=addDays(end,1), dueHol=holidays.find(h=>h.d>mon && h.d<=addDays(end,5))||null, due=dueHol?mon:addDays(end,2);
+    const pay=payOf(i), end=addDays(pay,-6), start=addDays(end,-13), n=numberOf(pay), year=+pay.slice(0,4);   // Sunday to Saturday
+    const mon=addDays(end,2), dueHol=holidays.find(h=>h.d>mon && h.d<=addDays(end,6))||null, due=dueHol?mon:addDays(end,3);
     return {i, n, year, key:year+'-'+pad(n), start, w1end:addDays(start,6), w2start:addDays(start,7), end, pay, due, dueAt:due+'T14:00', dueHol,
             hol:holidays.find(h=>h.d>=start && h.d<=end)||null};
   }
   /* The period whose sheet is being filled in: the one that ended most recently (its due day and pay day come after). */
-  function currentIndex(today){ const i=Math.floor(days(addDays(ANCHOR,-5), today)/14); return days(addDays(payOf(i),-5), today)>0 ? i : i-1; }
+  function currentIndex(today){ const i=Math.floor(days(addDays(ANCHOR,-6), today)/14); return days(addDays(payOf(i),-6), today)>0 ? i : i-1; }
   const indexOfKey=key=>{ const m=/^(\d{4})-(\d{2})$/.exec(String(key||'')); if(!m) return null;
     for(let i=currentIndex(m[1]+'-12-31')+1; i>-500; i--){ const p=period(i); if(p.key===key) return i; if(p.year<+m[1]) return null; } return null; };
 

@@ -11,10 +11,13 @@ const t=(name, ok)=>{ if(ok) pass++; else { fail++; console.log('  FAIL  '+name)
 /* ---- pay periods, from her sheet ---- */
 const p20=R.period(0), p22=R.period(2);
 t('#20 of 2026 was paid Sept 25 - her own sheet', p20.key==='2026-20' && p20.pay==='2026-09-25' && p20.n===20);
-t('#20 ran Mon Sept 7 - Sun Sept 20, Labor Day in it', p20.start==='2026-09-07' && p20.end==='2026-09-20' && p20.hol && p20.hol.n==='Labor Day');
+t('#20 ran Sun Sept 6 - Sat Sept 19, Labor Day in it', p20.start==='2026-09-06' && p20.end==='2026-09-19' && p20.hol && p20.hol.n==='Labor Day');
 t('...and was due Tue Sept 22 (a Monday holiday never moves it)', p20.due==='2026-09-22' && !p20.dueHol);
-t('#22: Oct 5-18, due Tue Oct 20 by 2 pm, paid Fri Oct 23 (the mock-up’s)', p22.start==='2026-10-05' && p22.end==='2026-10-18' && p22.dueAt==='2026-10-20T14:00' && p22.pay==='2026-10-23');
-t('week 1 / week 2', p22.w1end==='2026-10-11' && p22.w2start==='2026-10-12');
+t('#22: Oct 4-17, due Tue Oct 20 by 2 pm, paid Fri Oct 23 (the mock-up’s)', p22.start==='2026-10-04' && p22.end==='2026-10-17' && p22.dueAt==='2026-10-20T14:00' && p22.pay==='2026-10-23');
+t('week 1 / week 2', p22.w1end==='2026-10-10' && p22.w2start==='2026-10-11');
+const p24=R.period(4);
+t('#24 is Sun Nov 1 - Sat Nov 14 (Heather 03/11), due Tue Nov 17, paid Fri Nov 20', p24.key==='2026-24' && p24.start==='2026-11-01' && p24.end==='2026-11-14' && p24.due==='2026-11-17' && p24.pay==='2026-11-20');
+t('every period starts on a Sunday and ends on a Saturday', [-30,-1,0,4,7,20,40].every(i=>R.dow(R.period(i).start)===0 && R.dow(R.period(i).end)===6));
 t('#1 of 2026 was paid Jan 2', R.numberOf('2026-01-02')===1);
 t('the last of 2026 is #26, paid Dec 18', R.numberOf('2026-12-18')===26);
 const ny=R.period(7);
@@ -26,10 +29,10 @@ t('earlier periods work too (#19 paid Sept 11)', R.period(-1).key==='2026-19' &&
 t('a period found again from its key', R.indexOfKey('2026-22')===2 && R.indexOfKey('2027-01')===7 && R.indexOfKey('nonsense')===null);
 
 /* ---- which sheet is being filled in today ---- */
-t('the day after #22 ends, #22 is the one being filled in', R.currentIndex('2026-10-19')===2);
+t('the day after #22 ends, #22 is the one being filled in', R.currentIndex('2026-10-18')===2);
 t('its due day too', R.currentIndex('2026-10-20')===2);
-t('on its last day it hasn’t ended yet: still #21', R.currentIndex('2026-10-18')===1);
-t('two weeks on, #23', R.currentIndex('2026-11-02')===3);
+t('on its last day it hasn’t ended yet: still #21', R.currentIndex('2026-10-17')===1);
+t('two weeks on, #23', R.currentIndex('2026-11-01')===3 && R.currentIndex('2026-11-03')===3 && R.currentIndex('2026-11-14')===3 && R.currentIndex('2026-11-15')===4);
 t('a workday before Monday is Friday', R.workdayBefore('2026-12-28')==='2026-12-25' && R.workdayBefore('2026-10-20')==='2026-10-19');
 
 /* ---- the sums ---- */

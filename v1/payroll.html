@@ -224,15 +224,15 @@
     .perhead .when{font-size:17px}
   }
 </style>
-<script src="user.js?v=hc117"></script>
+<script src="user.js?v=hc118"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc117"></script>
-  <script src="gate.js?v=hc117"></script>
-  <script src="alerts.js?v=hc117"></script>
-  <script src="_staff.js?v=hc117"></script>
-  <script src="payrules.js?v=hc117"></script>
-  <script src="paystore.js?v=hc117"></script>
-  <script src="docs.js?v=hc117"></script>
+  <script src="store.js?v=hc118"></script>
+  <script src="gate.js?v=hc118"></script>
+  <script src="alerts.js?v=hc118"></script>
+  <script src="_staff.js?v=hc118"></script>
+  <script src="payrules.js?v=hc118"></script>
+  <script src="paystore.js?v=hc118"></script>
+  <script src="docs.js?v=hc118"></script>
 </head>
 <body>
 <div class="ribbon">MOCK-UP for Heather — made-up people and amounts. Try it as the Carlsbad TC first, then as Heather.</div>
@@ -347,7 +347,7 @@
   /* Doctors paid by the day, not on salary: their days worked each week. Made-up names. */
   let DOCS=LIVEPAY ? [] : [{id:'d1', office:'sanangelo', n:'Dr. Thornbury'}, {id:'d2', office:'cruceslco', n:'Dr. Ashcombe'}];
 
-  /* ---------- pay periods: every other week, Monday to Sunday, paid the Friday after.
+  /* ---------- pay periods: every other week, Sunday to Saturday, paid the Friday after (Heather 03/11: Nov 1 - 14).
      Anchored on Heather's own sheet: pay period #20 was paid Sept 25 (Labor Day fell in it). ---------- */
   /* n counts pay periods on from the anchor, #20 of 2026 (paid Sept 25). Live: today, and the period being filled in
      now; its label is its own number in its year (lab: "#1 of 2027"). */
@@ -360,10 +360,10 @@
   const fmtT=iso=>{ const h=+iso.slice(11,13), m=iso.slice(14,16); return fmt(iso,{weekday:'short'})+', '+((h%12)||12)+':'+m+(h<12?' am':' pm'); };
   function P(n){
     if(LIVEPAY){ const q=PR.period(n-ANCHOR.n, HOLIDAYS); return Object.assign({}, q, {n, num:q.n}); }
-    const pay=addDays(ANCHOR.pay,(n-ANCHOR.n)*14), end=addDays(pay,-5), start=addDays(end,-13);
+    const pay=addDays(ANCHOR.pay,(n-ANCHOR.n)*14), end=addDays(pay,-6), start=addDays(end,-13);
     /* Due Tuesday by 2 pm Central - Monday when a holiday falls LATER in that week (Tue-Fri). A Monday holiday
        keeps the Tuesday (Heather, 22/10: "only when the Holiday falls later than Monday"). */
-    const mon=addDays(end,1), dueHol=HOLIDAYS.find(h=>h.d>mon && h.d<=addDays(end,5))||null, due=dueHol?mon:addDays(end,2);
+    const mon=addDays(end,2), dueHol=HOLIDAYS.find(h=>h.d>mon && h.d<=addDays(end,6))||null, due=dueHol?mon:addDays(end,3);
     return {n, start, w1end:addDays(start,6), w2start:addDays(start,7), end, pay, due, dueAt:due+'T14:00', dueHol,
             hol:HOLIDAYS.find(h=>h.d>=start && h.d<=end)||null};
   }
@@ -448,7 +448,7 @@
     const s={status, at, rows, docs, log:status==='sent'?[{at, t:'Sent by '+sender(o)}]:[]};
     if(n===CUR-1 && o==='hobbs'){            // what an edit after sending looks like
       const lu=ppl.find(p=>p.n==='Lucia Ramos'), was=s.rows[lu.id].pto;
-      s.rows[lu.id].pto=8; s.log.push({at:addDays(per.end,2)+'T14:05', t:'Heather changed Lucia Ramos’s PTO from '+(was||0)+' to 8 hours (she called in on Friday)'});
+      s.rows[lu.id].pto=8; s.log.push({at:per.due+'T14:05', t:'Heather changed Lucia Ramos’s PTO from '+(was||0)+' to 8 hours (she called in on Friday)'});
     }
     return BASE[key]=s;
   }
@@ -1351,7 +1351,7 @@
 })();
 </script>
 <script>PH.nav('payroll');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc117"></script>
+<script src="tour.js?v=hc118"></script>
 <script>
 Tour.init([
   ...((window.PH && PH.isLive && PH.isLive()) || (()=>{ try{ return localStorage.getItem('ph_pay_real')==='1'; }catch(_){ return false; } })() ? [] : [{sel:'#persona', title:'A mock-up', body:'Made-up people and amounts. Start as the <b>Carlsbad TC</b>, who sends Carlsbad’s sheet, then switch to <b>Heather</b>.'}]),
