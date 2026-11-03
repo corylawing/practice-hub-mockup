@@ -124,6 +124,12 @@ like for instance adding view as always need to go to mockup as well."* Data doe
   her Excel workbook and finds real bugs. Treat her feedback as authoritative; **the Excel is their
   bible**. She has been right and I have been wrong more than once.
 - **An external IT company** manages their Microsoft tenant(s).
+- **Snider IT (11/2026)** is moving the practice "to Entra" and asked what Home-Brace depends on. Answer sent via Cory:
+  nothing on-prem (no server, database, file share or practice-management link); all in tenant edb81e45 (SWA, app
+  registration, the Home-Brace site, Heather's OneDrive workbook, the feedback flow). Risks named: a different tenant,
+  changed sign-in addresses (the app matches by email), accounts recreated instead of converted (group membership,
+  by-name shares, Heather's OneDrive = the workbook), Conditional Access, guests getting new accounts. Asked them:
+  same tenant? any address changes? cutover date (test Home-Brace that day).
 
 ### State of the build
 Eight V1 pages, all working and audited on desktop + mobile: Home, Production Dashboard, Enter
