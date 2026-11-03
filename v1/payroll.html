@@ -224,15 +224,15 @@
     .perhead .when{font-size:17px}
   }
 </style>
-<script src="user.js?v=hc116"></script>
+<script src="user.js?v=hc117"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc116"></script>
-  <script src="gate.js?v=hc116"></script>
-  <script src="alerts.js?v=hc116"></script>
-  <script src="_staff.js?v=hc116"></script>
-  <script src="payrules.js?v=hc116"></script>
-  <script src="paystore.js?v=hc116"></script>
-  <script src="docs.js?v=hc116"></script>
+  <script src="store.js?v=hc117"></script>
+  <script src="gate.js?v=hc117"></script>
+  <script src="alerts.js?v=hc117"></script>
+  <script src="_staff.js?v=hc117"></script>
+  <script src="payrules.js?v=hc117"></script>
+  <script src="paystore.js?v=hc117"></script>
+  <script src="docs.js?v=hc117"></script>
 </head>
 <body>
 <div class="ribbon">MOCK-UP for Heather — made-up people and amounts. Try it as the Carlsbad TC first, then as Heather.</div>
@@ -311,6 +311,7 @@
   ];
   const OFF=Object.fromEntries(OFFICES.map(o=>[o.k,o]));
   const sender=o=>'the '+OFF[o].n+' '+OFF[o].by;
+  const PHONE=()=>!!(window.PH_ALERTS && PH_ALERTS.ON);   // phone alerts are on here (the sandbox; live once ALERTS_LIVE)
   /* Who sends this office's sheet, by name when Home-Brace knows (live, or the sandbox's Real version); '' = nobody chosen. */
   const whoSends=o=>{
     if(!LIVEPAY){ const t=sender(o); return t.charAt(0).toUpperCase()+t.slice(1); }
@@ -671,7 +672,7 @@
       h+='<div class="remind'+(late?' late':'')+'"><span style="font-size:20px" aria-hidden="true">'+(late?'⚠️':'⏰')+'</span><div class="grow"><b>'+
         (late ? 'This sheet was due '+esc(fmt(pr.due,{weekday:'long'}))+' at 2 pm. Please send it now.'
               : today ? 'Reminder: this sheet is due today by 2 pm Central.' : 'Heads-up: this sheet is due '+esc(fmt(pr.due,{weekday:'long'}))+' by 2 pm Central.')+
-        '</b><small>'+(LIVEPAY ? 'Home-Brace reminds you in the bell (top right) from the workday before it’s due, until it’s sent. Reminders on your phone come with Chat.' : 'Home-Brace reminds you the workday before, the morning it’s due, and at 1 pm if it isn’t sent yet - here, and on your phone once alerts are on.')+'</small></div>'+
+        '</b><small>'+(LIVEPAY ? 'Home-Brace reminds you in the bell (top right) from the workday before it’s due, until it’s sent.'+(PHONE()?' To get them on your phone too: the bell → Turn on.':'') : 'Home-Brace reminds you the workday before, the morning it’s due, and at 1 pm if it isn’t sent yet - here, and on your phone once alerts are on.')+'</small></div>'+
         (LIVEPAY ? '' : '<button class="btn ghost sm" data-act="phrem">See the phone reminder</button>')+'</div>';
     }
     if(n===CUR && !e){
@@ -821,7 +822,7 @@
         return '<div class="off"><div class="row"><span class="on grow">'+esc(o.n)+'</span>'+statusPill(n,o.k)+'</div><div class="co">'+esc(o.co)+'<br>Sent by the '+esc(o.by)+'</div><div class="row">'+
           (s.status==='sent'?'<button class="btn ghost sm" data-act="view" data-v="'+o.k+'">See what was sent</button>':(!e && !LIVEPAY?'<button class="btn ghost sm" data-act="remind" data-v="'+o.k+'">Send a reminder</button>':''))+'</div></div>'; }).join('')+'</div>'+
       (!e?'<div class="small muted" style="margin-top:12px">'+(LIVEPAY
-        ? '⏰ Each office’s sender gets a reminder in their bell from the workday before it’s due, until it’s sent. At 2 pm on the due day your bell lists any still to come. Reminders on phones come with Chat.'
+        ? '⏰ Each office’s sender gets a reminder in their bell from the workday before it’s due, until it’s sent. At 2 pm on the due day your bell lists any still to come.'+(PHONE()?' Senders who turn alerts on (the bell → Turn on) get them on their phone too: the workday before at 9 am, the due day at 9 am and 1 pm.':' Reminders on phones come with Chat.')
         : '⏰ Reminders go out on their own to whoever sends each sheet: the workday before, the morning it’s due, and at 1 pm if it isn’t sent yet - in Home-Brace, and on their phone once alerts are on. <b>Send a reminder</b> sends one right now.')+'</div>':'')+'</div>';
     const groups=[['add','🆕 New people'],['ot','⏱ Overtime'],['two','🏢 Working two offices — hours combined'],['green','🟢 Missed green days'],['pay','💵 Exception commuter pay'],['miles','🚗 Mileage']];
     const count=groups.reduce((a,g)=>a+F[g[0]].length,0);
@@ -1038,7 +1039,7 @@
         '<div class="log">'+(s.log||[]).map(l=>'<div>• '+esc(fmtT(l.at))+' — '+esc(l.t)+'</div>').join('')+(e?'<div>• '+esc(fmtT(e.at))+' — Entered in payroll by '+esc(e.by)+'</div>':'')+'</div></div>', true);
       return;
     }
-    /* With alerts on for this device (Chat → the bell), these send a REAL alert - in the mock-up it comes to you. */
+    /* With alerts on for this device (the bell → Turn on), these send a REAL alert - in the mock-up it comes to you. */
     const realOn=()=>!!(window.PH_ALERTS && PH_ALERTS.state()==='on');
     const realSend=(title, body)=>PH_ALERTS.send({title, body, url:PH_ALERTS.here('payroll.html'), tag:'hb-payroll-'+per, delay:5})
       .then(()=>toast('Sent to your phone ✓ It arrives in about 5 seconds - lock your phone to see it.'), err=>toast('Couldn’t send: '+(err&&err.message)));
@@ -1049,7 +1050,7 @@
     if(act==='phrem'){ const o=R().office, pr=P(per), title='Payroll sheet due '+(pr.due===TODAY?'today':fmt(pr.due,{weekday:'long'}))+' by 2 pm', body=OFF[o].n+' · pay period '+lab(per)+' - tap to open it';
       if(realOn()){ realSend(title, body); return; }
       notifyPay(title, body);
-      if(window.PH_ALERTS) setTimeout(()=>toast('To get this on your phone: Chat → the bell → Turn on alerts.'), 1200);
+      if(window.PH_ALERTS) setTimeout(()=>toast('To get this on your phone: the bell (top right) → Turn on.'), 1200);
       return; }
     if(act==='csv'){ csv(per); toast('Downloaded — opens in Excel'); return; }
     if(act==='enter' || act==='reopen'){
@@ -1350,7 +1351,7 @@
 })();
 </script>
 <script>PH.nav('payroll');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc116"></script>
+<script src="tour.js?v=hc117"></script>
 <script>
 Tour.init([
   ...((window.PH && PH.isLive && PH.isLive()) || (()=>{ try{ return localStorage.getItem('ph_pay_real')==='1'; }catch(_){ return false; } })() ? [] : [{sel:'#persona', title:'A mock-up', body:'Made-up people and amounts. Start as the <b>Carlsbad TC</b>, who sends Carlsbad’s sheet, then switch to <b>Heather</b>.'}]),

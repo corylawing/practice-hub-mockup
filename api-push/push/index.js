@@ -1,15 +1,18 @@
 /* POST /api/push - Home-Brace's alert sender. For now it lives in a TEST SLOT of the Azure site and answers the sandbox
-   pages only; the live site joins ORIGINS when alerts go live (Cory decides).
+   pages; the live site is in ORIGINS ready for when alerts go live there (Cory decides).
    Body (JSON sent as text/plain, so a browser sends it without a CORS preflight):
-     {sub:{endpoint, keys:{p256dh, auth}}, title, body, url, tag, delay}
+     {idt, sub:{endpoint, keys:{p256dh, auth}}, title, body, url, tag, delay}
+   idt = the sender's Microsoft sign-in (ID token). Since 03/11 nothing is sent without a valid one (idtoken.js): only
+   people signed in to the practice can send an alert.
    It sends ONE alert to ONE device - the device whose alert address (subscription) the page sends. It holds no Microsoft
    keys and reads no practice data: only its own alert key, from vapid.json next to this file (copied in at deploy, never
    in git) or the VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY settings. */
 'use strict';
 const fs = require('fs'), path = require('path');
 const { send, okEndpoint } = require('../webpush');
+const { verify } = require('../idtoken');
 
-const ORIGINS = ['https://corylawing.github.io', 'http://localhost:8790'];
+const ORIGINS = ['https://corylawing.github.io', 'http://localhost:8790', 'https://kind-hill-00da87410.3.azurestaticapps.net'];
 const SUBJECT = 'https://corylawing.github.io/practice-hub-mockup/';
 function alertKey() {
   try { const k = JSON.parse(fs.readFileSync(path.join(__dirname, 'vapid.json'), 'utf8')); if (k.publicKey && k.privateKey) return k; } catch (_) {}
@@ -33,6 +36,8 @@ module.exports = async function (context, req) {
   let b;
   try { b = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body && typeof req.body === 'object' ? req.body : JSON.parse(req.rawBody || '{}')); }
   catch (_) { return reply(400, { ok: false, error: 'not JSON' }); }
+  try { await verify(b && b.idt); }
+  catch (e) { return reply(401, { ok: false, signin: true, error: clip(e && e.message, 80) }); }
   const sub = b && b.sub;
   if (!sub || !okEndpoint(sub.endpoint) || !sub.keys || !sub.keys.p256dh || !sub.keys.auth) return reply(400, { ok: false, error: 'bad subscription' });
   const message = { title: clip(b.title || 'Home-Brace', 80), body: clip(b.body, 240),

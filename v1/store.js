@@ -542,7 +542,9 @@
      writes it again anyway. */
   /* ph_docgrants: which SharePoint edit rights Home-Brace handed out (07/10) - it shrinks
      every time a level is lowered, by design. */
-  var HOUSEKEEPING = ['ph_activity', 'ph_seen_', 'ph_photos', 'ph_docgrants', 'ph_tcgrants', 'ph_sensgrants'];
+  /* ph_paygrants: the same record for the payroll folders (03/11). ph_alertdev_<email>: a person's alert devices
+     (alerts.js) - one going to none when they turn alerts off is the point, not a wipe. */
+  var HOUSEKEEPING = ['ph_activity', 'ph_seen_', 'ph_photos', 'ph_docgrants', 'ph_tcgrants', 'ph_sensgrants', 'ph_paygrants', 'ph_alertdev_'];
   function housekeeping(key){
     for(var i=0;i<HOUSEKEEPING.length;i++)
       if(key === HOUSEKEEPING[i] || key.indexOf(HOUSEKEEPING[i]) === 0) return true;

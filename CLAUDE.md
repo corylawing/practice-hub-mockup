@@ -23,7 +23,9 @@ I can confidently say that the chat feature should go next. The production thing
    **STATUS 03/11: ON LIVE (hc116), still OFF for staff** (`PAY_LIVE=false`). Go-live step 1 done; next Cory: steps 2-4
    (?paypreview, lock the folder, Teams & Access sync), Heather: step 5 (Settings, she opens ?paypreview too), then
    flip PAY_LIVE. Target: pay period #24 (Nov 2-15, sheets due Tue Nov 17). Steps: "PAYROLL LIVE (02/11)" below.
-2. **Chat + phone alerts -> LIVE** (one thing to her). Needs IT (Adam) to approve the Teams chat permission; alerts:
+2. **Chat + phone alerts -> LIVE** (one thing to her). STATUS 03/11: alerts step 3 built on the sandbox (every device,
+   signed-in only, payroll reminders on phones - "PHONE ALERTS, step 3"); Chat waits on Keanu (Chat.ReadWrite + Teams
+   licences, asked 03/11). Needs IT (Adam) to approve the Teams chat permission; alerts:
    subscriptions in SharePoint, the live origin in api-push ORIGINS, the home-screen sign-in on live (Cory's iPhone
    test of sign-in inside the app still to come).
 3. **Production days from the Schedule.** Heather 23/10: "can the # of production days per office pull from the
@@ -738,6 +740,31 @@ alerts we need that", "go", and asked "are you just doing this in sandbox and no
   phone reminder delivered "Payroll sheet due today by 2 pm".
 - Then (Cory decides) live: subscriptions in SharePoint (per person, every device), ORIGINS + the live site, the
   manifest and the home-screen sign-in on live, reminders sent by the first visit after the time (no server clock).
+
+**PHONE ALERTS, step 3 (03/11, hc117, sandbox + the test slot; LIVE OFF): every device, signed-in only, payroll on phones.**
+Cory "start chat" (Heather's #2). Chat itself waits on IT: Cory asked Keanu (Snider IT) on 03/11 to add + admin-consent
+delegated **Chat.ReadWrite** on the app registration and to confirm staff have Teams licences. Meanwhile, alerts:
+- `alerts.js`: each device is kept with the PERSON - `ph_alertdev_<email>` = {v:1, d:[{s:subscription, k:'iPhone', at}]},
+  newest first, max 6 (enable adds, disable/refresh/"gone" drop). `sendTo(emails, msg)` = one alert per device of each
+  person. Live: `ALERTS_LIVE=false` -> `ON` false, sends nothing, and the live SENDER is the site's own `/api/push` (not
+  deployed there yet); sandbox: the test slot, devices in this browser (View As someone + Turn on = on for them here).
+- The sender (api-push) now REFUSES anything without a valid Microsoft ID token (`api-push/idtoken.js`: RS256 against
+  the tenant's published keys, aud = client ID, tid/iss = the tenant, exp with 5 min skew, re-fetches keys at most every
+  5 min for an unknown kid). `gate.js` PH_AUTH.idToken() (renewed under 5 min left, forceRefresh). ORIGINS now include
+  the live host. alerts-test.html (no sign-in) can no longer send - it was only the first iPhone test.
+- Bell: last row "Get reminders on this <iPhone/Mac/...> - Turn on" / "Alerts are on - Turn off" / iPhone in Safari:
+  add to Home Screen first / blocked; a test alert on turning on. alerts.js is injected on demand (`PH.alertsReady`).
+- PAYROLL ON PHONES: `PH.payAlertPlan(now)` - Central time (`centralNow`, Intl America/Chicago): the workday before at
+  9:00, the due day at 9:00 and 13:00, to the senders of offices not sent yet; nothing from 14:00 or once entered.
+  `payAlertsTick()` after sign-in and when a tab comes back (10 min apart): no server clock, so the first visit after a
+  time sends it, claimed first in ph_pay_status.p[period].al[slot] = {at, by} via PH_STORE.update (two visits = one send).
+- store.js HOUSEKEEPING += `ph_paygrants` (a real Payroll fix: taking back access shrinks it - the wipe guard would have
+  refused it) and `ph_alertdev_`. test/alerts.test.js (22), payremind +15, push +9.
+- Staff guide `start.html`: "Get reminders on your phone" section, hidden on the live host until its own ALERTS_LIVE.
+- **TO PUT ALERTS LIVE (Cory decides):** flip ALERTS_LIVE in v1/alerts.js AND start.html; deploy api-push with the
+  production site (deploy-production.sh must copy api-push + deploy/.vapid.json like deploy-alerts-test.sh, as the API);
+  the manifest on live pages (user.js `!isLive()` check) and the home-screen redirect sign-in on live (gate.js
+  USE_REDIRECT `&& !LIVE`); Cory's iPhone test first (home-screen sign-in, Turn on, a payroll alert).
 
 **Portfolio demo got Team Chat too (22/10/2026).** The REPO ROOT pages (index.html, calendars.html ... + assets/app.js,
 data.js, styles.css; ribbon "INTERACTIVE PORTFOLIO DEMO · Fictional data") are Cory's GitHub portfolio demo - NOT

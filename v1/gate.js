@@ -115,6 +115,18 @@
           })
           .then(function(r){ return r.accessToken; });
       },
+      /* The Microsoft sign-in itself (the ID token, issued to Home-Brace). The alert sender checks it, so only people
+         signed in to the practice can send alerts (03/11/2026). It lasts an hour: renewed when under 5 minutes are left. */
+      idToken: function(){
+        var req = { scopes: SCOPES, account: account };
+        var fresh = function(r){ var c = r && r.idTokenClaims; return !!(r && r.idToken && c && c.exp * 1000 - Date.now() > 300000); };
+        return app.acquireTokenSilent(req)
+          .then(function(r){ return fresh(r) ? r : app.acquireTokenSilent({ scopes: SCOPES, account: account, forceRefresh: true }); })
+          .then(function(r){ return r.idToken; }, function(e){
+            requestSignIn(app, account, e);
+            throw new Error('Your Microsoft sign-in needs renewing — use the Sign in button.');
+          });
+      },
       graph: function(path){
         return global.PH_AUTH.token().then(function(t){
           return fetch('https://graph.microsoft.com/v1.0' + path, {

@@ -461,6 +461,34 @@
     </dl>
   </section>
 
+  <!-- PHONE ALERTS (03/11/2026, Cory: "make these things like turn on alerts in the onboarding document"). Hidden on the
+       live site until alerts are live there: flip ALERTS_LIVE below together with the one in v1/alerts.js. -->
+  <section id="alerts-guide" hidden>
+    <h2>Get reminders on your phone</h2>
+    <p class="why" style="margin-top:6px">Home-Brace can send you a reminder &mdash; like when your office&rsquo;s
+      payroll sheet is due &mdash; even when it&rsquo;s closed. Turn it on once on each phone or computer you use.</p>
+    <dl class="devices">
+      <div>
+        <dt>iPhone / iPad</dt>
+        <dd>First add Home-Brace to your Home Screen (just above) and open it from there &mdash; Apple only
+          allows alerts that way. Then tap the <b>bell</b> at the top right, tap <b>Turn on</b>, and
+          tap <b>Allow</b>.</dd>
+      </div>
+      <div>
+        <dt>Android</dt>
+        <dd>Open Home-Brace in Chrome, tap the <b>bell</b> at the top right, tap <b>Turn on</b>, and
+          tap <b>Allow</b>.</dd>
+      </div>
+      <div>
+        <dt>Computer</dt>
+        <dd>Open Home-Brace, click the <b>bell</b> at the top right, click <b>Turn on</b>, and
+          click <b>Allow</b>.</dd>
+      </div>
+    </dl>
+    <p class="why">A test alert arrives a few seconds later. To stop them, tap the bell and
+      <b>Turn off</b>.</p>
+  </section>
+
   <section class="invite">
     <h2>Please fill in your profile</h2>
     <p>There are around <b>70 of us across eight offices</b>, and most have never met.
@@ -507,6 +535,9 @@
 </div>
 
 <script>
+  // Phone alerts: shown on the sandbox; on the live site only once they're live there (and v1/alerts.js says so too).
+  (function(){ var ALERTS_LIVE=false, g=document.getElementById('alerts-guide');
+    if(g && (ALERTS_LIVE || !/azurestaticapps\.net$/.test(location.hostname))) g.hidden=false; })();
   // No video file (the sandbox copy): hide the section rather than show an empty player.
   (function(){ var v=document.getElementById('tour-video'); if(!v) return;
     function gone(){ var t=v.closest('.tour'); if(t) t.hidden=true; }

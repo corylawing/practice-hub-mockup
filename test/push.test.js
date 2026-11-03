@@ -7,6 +7,7 @@
    pages from elsewhere, alert addresses that aren't a real push service, links off the site. No network. */
 const crypto=require('crypto'), path=require('path');
 const W=require(path.join(__dirname,'..','api-push','webpush.js'));
+const ID=require(path.join(__dirname,'..','api-push','idtoken.js'));
 let pass=0, fail=0;
 const t=(name, ok)=>{ if(ok) pass++; else { fail++; console.log('  FAIL  '+name); } };
 const strip=s=>s.replace(/\s+/g,'');
@@ -77,9 +78,41 @@ t('junk is refused', !W.okEndpoint('not a url') && !W.okEndpoint(''));
   const fn=require(path.join(__dirname,'..','api-push','push','index.js'));
   const ua=crypto.createECDH('prime256v1'); ua.generateKeys(); const auth=crypto.randomBytes(16);
   const sub={endpoint:'https://web.push.apple.com/QAbc', keys:{p256dh:W.b64u(ua.getPublicKey()), auth:W.b64u(auth)}};
-  let sent=null; const realFetch=global.fetch;
-  global.fetch=async (url, o)=>{ sent={url, o}; return {status:201}; };
-  const call=async (origin, body, method)=>{ const ctx={}; await fn(ctx, {method:method||'POST', headers:origin?{origin}:{}, body:typeof body==='string'?body:JSON.stringify(body)}); return {status:ctx.res.status, headers:ctx.res.headers, body:JSON.parse(ctx.res.body)}; };
+  /* A stand-in for Microsoft: its own signing key, published at the tenant's keys address. */
+  const ms=crypto.generateKeyPairSync('rsa', {modulusLength:2048}), jwk=Object.assign(ms.publicKey.export({format:'jwk'}), {kid:'k1', use:'sig'});
+  const sign=(claims, o)=>{ o=o||{}; const h=W.b64u(Buffer.from(JSON.stringify({alg:'RS256', kid:o.kid||'k1', typ:'JWT'}))),
+    b=W.b64u(Buffer.from(JSON.stringify(Object.assign({aud:ID.CLIENT, tid:ID.TENANT, iss:ID.ISSUER, exp:Math.floor(Date.now()/1000)+3600,
+      preferred_username:'gabriela.garrison@farnsworthorthodontics.com', oid:'o-1'}, claims))));
+    return h+'.'+b+'.'+W.b64u(crypto.sign('RSA-SHA256', Buffer.from(h+'.'+b), o.key||ms.privateKey)); };
+  const idt=sign({});
+  let sent=null, keyGets=0; const realFetch=global.fetch;
+  const push=async (url, o)=>{ sent={url, o}; return {status:201}; };
+  global.fetch=async (url, o)=>{ if(url===ID.KEYS_URL){ keyGets++; return {ok:true, json:async ()=>({keys:[jwk]})}; } return push(url, o); };
+  const call=async (origin, body, method)=>{ const ctx={}; if(body && typeof body==='object' && !('idt' in body)) body=Object.assign({idt}, body);
+    await fn(ctx, {method:method||'POST', headers:origin?{origin}:{}, body:typeof body==='string'?body:JSON.stringify(body)}); return {status:ctx.res.status, headers:ctx.res.headers, body:JSON.parse(ctx.res.body)}; };
+
+  /* ---- 6. Only people signed in to the practice can send (idtoken.js, 03/11) ---- */
+  const SB='https://corylawing.github.io';
+  let r0=await call(SB, {sub, title:'x', idt:''});
+  t('no sign-in: refused (401), nothing sent', r0.status===401 && r0.body.signin===true && !sent);
+  r0=await call(SB, {sub, title:'x', idt:'not.a.token'});
+  t('junk instead of a sign-in: refused', r0.status===401 && !sent);
+  const other=crypto.generateKeyPairSync('rsa', {modulusLength:2048});
+  r0=await call(SB, {sub, title:'x', idt:sign({}, {key:other.privateKey})});
+  t('a sign-in signed with someone else\'s key: refused', r0.status===401 && !sent);
+  r0=await call(SB, {sub, title:'x', idt:sign({aud:'00000000-0000-0000-0000-000000000000'})});
+  t('a real sign-in for a different app: refused', r0.status===401 && !sent);
+  r0=await call(SB, {sub, title:'x', idt:sign({tid:'11111111-1111-1111-1111-111111111111'})});
+  t('a sign-in from a different tenant: refused', r0.status===401 && !sent);
+  r0=await call(SB, {sub, title:'x', idt:sign({exp:Math.floor(Date.now()/1000)-3600})});
+  t('an expired sign-in: refused', r0.status===401 && !sent);
+  r0=await call(SB, {sub, title:'x', idt:sign({exp:Math.floor(Date.now()/1000)-60})});
+  t('a minute past expiry is still fine (clocks differ)', r0.status===200 && !!sent);
+  sent=null;
+  const gets=keyGets; r0=await call(SB, {sub, title:'x', idt:sign({}, {kid:'k-unknown'})});
+  t('a key Microsoft doesn\'t list: refused, after checking for new keys once', r0.status===401 && !sent && keyGets===gets+1);
+  r0=await call(SB, {sub, title:'x', idt:sign({}, {kid:'k-unknown'})});
+  t('and it doesn\'t fetch the keys again straight away', r0.status===401 && keyGets===gets+1);
 
   let r=await call('https://evil.example', {sub, title:'x'});
   t('a page from anywhere else is refused (403)', r.status===403 && !sent);
@@ -98,7 +131,7 @@ t('junk is refused', !W.okEndpoint('not a url') && !W.okEndpoint(''));
   const m=JSON.parse(open(Buffer.from(sent.o.body), ua, auth));
   t('long text is cut to size', m.title.length===80 && m.body.length===240);
   t('a link off the site is dropped (only a path on the page\'s own site)', m.url==='');
-  global.fetch=async ()=>({status:410});
+  global.fetch=async (url)=>url===ID.KEYS_URL ? {ok:true, json:async ()=>({keys:[jwk]})} : {status:410};
   r=await call('https://corylawing.github.io', {sub, title:'x'});
   t('a device that turned alerts off is reported as gone', r.status===502 && r.body.gone===true);
   global.fetch=realFetch;

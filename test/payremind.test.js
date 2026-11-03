@@ -110,5 +110,48 @@ t('Gabriela (a sender) isn’t told about payroll updates', !G2.PH.notifications
 let Q2=as('tc', Object.assign({}, base, {ph_activity:A.LS.ph_activity}));
 t('...nor Quinn', !Q2.PH.notifications().some(n=>/payroll sheet/.test(n.title)));
 
-console.log(pass+' passed, '+fail+' failed');
-process.exit(fail?1:0);
+/* ---- PHONE REMINDERS (03/11/2026): when, to whom, and only once ---- */
+const ct=(d,h,m)=>new Date(Date.UTC(2026, 10, d, h+6, m||0));   // November 2026 is Central Standard Time (UTC-6)
+let Z=as('admin', base);
+t('Central time, wherever the device is', JSON.stringify(Z.PH.centralNow(ct(3,9)))==='{"date":"2026-11-03","hm":"09:00"}' &&
+  Z.PH.centralNow(new Date(Date.UTC(2026,10,3,5,30))).date==='2026-11-02');
+t('Monday 8:59 am: nothing yet', Z.PH.payAlertPlan(ct(2,8,59))===null);
+let pl=Z.PH.payAlertPlan(ct(2,9));
+t('Monday 9 am (the workday before): both senders, "due Tuesday by 2 pm"', !!pl && pl.slot==='eve' && pl.key==='2026-23' && pl.sends.length===2 &&
+  pl.sends[0].title==='Carlsbad’s payroll sheet is due Tuesday by 2 pm' && pl.sends[0].emails.join()==='gabriela@farnsworthorthodontics.com' && pl.sends[0].body==='Pay period #23 · tap to open it');
+pl=Z.PH.payAlertPlan(ct(3,9,30));
+t('Tuesday 9:30: "due today by 2 pm"', !!pl && pl.slot==='am' && /due today by 2 pm$/.test(pl.sends[1].title) && pl.sends[1].o==='Hobbs');
+pl=Z.PH.payAlertPlan(ct(3,13,5));
+t('Tuesday 1:05 pm: "an hour to go"', !!pl && pl.slot==='pm' && /due at 2 pm — an hour to go$/.test(pl.sends[0].title));
+t('Tuesday 2 pm: no more phone reminders (the bell says late)', Z.PH.payAlertPlan(ct(3,14))===null && Z.PH.payAlertPlan(ct(4,9))===null);
+let Z2=as('admin', Object.assign({}, base, {ph_pay_status:JSON.stringify({v:1, p:{'2026-22':done22.p['2026-22'], '2026-23':{sent:{Carlsbad:'2026-11-02T16:00'}}}})}));
+pl=Z2.PH.payAlertPlan(ct(3,9,30));
+t('an office that sent is left out', !!pl && pl.sends.length===1 && pl.sends[0].o==='Hobbs');
+let Z3=as('admin', Object.assign({}, base, {ph_pay_status:JSON.stringify({v:1, p:{'2026-23':{sent:{}, al:{am:{at:'x', by:'y'}}}}})}));
+t('a reminder already sent is not sent again', Z3.PH.payAlertPlan(ct(3,11))===null && !!Z3.PH.payAlertPlan(ct(3,13)));
+let Z4=as('admin', Object.assign({}, base, {ph_pay_status:JSON.stringify({v:1, p:{'2026-23':{sent:{}, entered:'2026-11-03T08:00'}}})}));
+t('entered: nothing', Z4.PH.payAlertPlan(ct(3,9,30))===null);
+t('no senders chosen: nothing', as('admin', {ph_pay_status:JSON.stringify(done22)}).PH.payAlertPlan(ct(3,9,30))===null);
+
+(async ()=>{
+  /* The claim: two visits at once send it once. A stand-in shared store and alert sender. */
+  const shared={ph_pay_status:{v:1, p:{'2026-22':done22.p['2026-22']}}}, sentTo=[];
+  const mkStore=()=>({ get:k=>Promise.resolve(shared[k]===undefined?null:JSON.parse(JSON.stringify(shared[k]))),
+    update:(k, fn)=>{ const cur=shared[k]===undefined?undefined:JSON.parse(JSON.stringify(shared[k])); const nx=fn(cur);
+      if(nx===undefined) return Promise.resolve({unchanged:true, value:cur}); shared[k]=JSON.parse(JSON.stringify(nx)); return Promise.resolve({value:nx}); } });
+  const mkAlerts=()=>({ON:true, here:p=>'/v1/'+p, sendTo:(ems, msg)=>{ sentTo.push({ems, title:msg.title, tag:msg.tag}); return Promise.resolve({sent:1}); }});
+  const V1=as('admin', base), V2=as('om', base);
+  [V1, V2].forEach(v=>{ v.ctx.PH_STORE=mkStore(); v.ctx.PH_ALERTS=mkAlerts(); });
+  const r1=await V1.PH.payAlertsTick(ct(3,9,30)), r2=await V2.PH.payAlertsTick(ct(3,9,40));
+  t('the first visit after 9 am sends one alert per office still to send', Array.isArray(r1) && r1.length===2 && sentTo.length===2 &&
+    sentTo[0].ems.join()==='gabriela@farnsworthorthodontics.com' && sentTo[0].tag==='hb-pay-2026-23-Carlsbad');
+  t('the next visit finds it claimed and sends nothing', r2===null && sentTo.length===2);
+  t('the claim says when and who, in the shared record', !!shared.ph_pay_status.p['2026-23'].al.am && /farnsworthorthodontics\.com$/.test(shared.ph_pay_status.p['2026-23'].al.am.by));
+  const r3=await V2.PH.payAlertsTick(ct(3,13,10));
+  t('1 pm is its own reminder', Array.isArray(r3) && sentTo.length===4 && /an hour to go/.test(sentTo[3].title));
+  const V3=as('admin', base); V3.ctx.PH_STORE=mkStore(); V3.ctx.PH_ALERTS={ON:false, sendTo:()=>{ sentTo.push('x'); return Promise.resolve({}); }};
+  shared.ph_pay_status.p['2026-23'].al={};
+  t('alerts not on (the live site until ALERTS_LIVE): nothing is claimed or sent', (await V3.PH.payAlertsTick(ct(3,9,30)))===null && sentTo.length===4 && !shared.ph_pay_status.p['2026-23'].al.am);
+  console.log(pass+' passed, '+fail+' failed');
+  process.exit(fail?1:0);
+})();

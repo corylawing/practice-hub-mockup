@@ -1087,6 +1087,11 @@
   .ph-np a.ni:hover{background:var(--teal-wash,#F7FBFB)}
   .ph-np .ni.nrem{background:#FFF8EC;border-left:4px solid #E8A33A;padding-left:11px}
   .ph-np .ni.nrem.late{background:#FDF0EE;border-left-color:#C2412D}
+  .ph-np .nalert{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;padding:11px 15px;border-top:1px solid #EEF1F5;background:#F7FBFB;font-size:12.5px;color:#46546b;line-height:1.45;flex:none}
+  .ph-np .nalert>span{flex:1;min-width:0}
+  .ph-np .nalert button{background:var(--teal,#149B96);color:#fff;border:none;border-radius:8px;font:700 12px inherit;font-family:inherit;padding:6px 11px;cursor:pointer;flex:none}
+  .ph-np .nalert.on button{background:#fff;color:#56627A;border:1px solid #CBD5E1}
+  .ph-np .nalert .nalnote{flex-basis:100%;font-size:12px;color:var(--teal-600,#0F827E);font-weight:600}
   .ph-np .sav{width:30px;height:30px;border-radius:50%;background:var(--teal-soft,#E8F6F4);color:var(--teal-600,#0F827E);font-size:12px;font-weight:800;display:grid;place-items:center;flex:none}
   .ph-np .sr .nic{display:grid;place-items:center;width:30px;height:30px;flex:none}
   .ph-np .sr .ti{width:20px;height:20px;display:block;color:var(--navy,#0F2A4A);opacity:.8}
@@ -1615,7 +1620,7 @@
               'changes the schedule, enters production or posts something.')+'</div>')+
       (readList.length
         ? '<button class="nshow" type="button">'+(showRead?'Hide read':'Show '+readList.length+' read')+'</button>'
-        : '');
+        : '')+alertsRow();
   }
   function openNotes(wrap){
     closeNotes();
@@ -1626,6 +1631,8 @@
       e.stopPropagation();
       if(e.target.classList.contains('nshow')){ showRead=!showRead; npanel.innerHTML=notesHTML(); return; }
       if(e.target.classList.contains('nall')){ markAllSeen(); return; }
+      if(e.target.classList.contains('nal-on')){ alertsTap(true); return; }
+      if(e.target.classList.contains('nal-off')){ alertsTap(false); return; }
       const ok=e.target.closest('.nok'); if(!ok) return;
       const row=ok.closest('.ni'); if(!row) return;
       markSeen({id:row.getAttribute('data-id')});
@@ -1684,6 +1691,7 @@
        still ticked off on the desktop. */
     loadSeen().then(function(){ bellBadge(); if(npanel) npanel.innerHTML=notesHTML(); });
     if(payOn() && payLevel()) reloadPayStatus();
+    alertsReady().then(function(A){ if(A && A.ON && npanel) npanel.innerHTML=notesHTML(); });
   }
 
   function mount(){
@@ -2013,6 +2021,111 @@
     }
     return out;
   }
+  /* ALERTS ON THIS DEVICE, FROM THE BELL (03/11/2026). alerts.js (PH_ALERTS) is loaded on every page when it's needed,
+     like payrules.js; the bell's last row turns alerts on or off for this phone or computer (an iPhone: add Home-Brace
+     to the home screen first - Apple's rule). Hidden where alerts aren't on yet (the live site until ALERTS_LIVE). */
+  let ALERTS_P=null, ALERT_NOTE='';
+  function alertsReady(){
+    if(window.PH_ALERTS) return Promise.resolve(window.PH_ALERTS);
+    if(ALERTS_P) return ALERTS_P;
+    ALERTS_P=new Promise(function(ok){
+      const me_=document.querySelector('script[src*="user.js"]'), sc=document.createElement('script');
+      sc.src=me_ ? me_.getAttribute('src').replace(/user\.js/, 'alerts.js') : 'alerts.js';
+      sc.onload=function(){ ok(window.PH_ALERTS||null); }; sc.onerror=function(){ ok(null); };
+      document.head.appendChild(sc);
+    });
+    return ALERTS_P;
+  }
+  function alertsRow(){
+    const A=window.PH_ALERTS; if(!A || !A.ON) return '';
+    const st=A.state(), dev=escHTML(A.KIND||'device');
+    if(st==='unsupported') return '';
+    const note=ALERT_NOTE ? '<div class="nalnote">'+escHTML(ALERT_NOTE)+'</div>' : '';
+    if(st==='on') return '<div class="nalert on"><span>📱 Alerts are on for this '+dev+'</span><button class="nal-off" type="button">Turn off</button>'+note+'</div>';
+    if(st==='install') return '<div class="nalert"><span>📱 To get alerts on this '+dev+': tap <b>Share</b>, then <b>Add to Home Screen</b>, and open Home-Brace from your home screen.</span></div>';
+    if(st==='blocked') return '<div class="nalert"><span>📱 Alerts are blocked for Home-Brace in this browser’s settings.</span>'+note+'</div>';
+    return '<div class="nalert"><span>📱 Get reminders on this '+dev+'</span><button class="nal-on" type="button">Turn on</button>'+note+'</div>';
+  }
+  function alertsTap(on){
+    const A=window.PH_ALERTS; if(!A) return;
+    const paint=function(){ if(npanel) npanel.innerHTML=notesHTML(); };
+    ALERT_NOTE=''; 
+    if(!on){ A.disable().then(function(){ ALERT_NOTE='Alerts are off on this '+(A.KIND||'device')+'.'; paint(); }); return; }
+    A.enable()                                     // straight from the tap: the browser only asks from one
+      .then(function(){ ALERT_NOTE='On ✓ A test alert is on its way.'; paint();
+        return A.send({title:'Alerts are on ✓', body:'Home-Brace reminders will come in like this.', url:A.here('home.html'), tag:'hb-test', delay:3}); })
+      .catch(function(e){ const m=(e && e.message)||'';
+        ALERT_NOTE=m==='blocked' ? 'This browser said no. You can allow alerts for this site in its settings.'
+          : m==='dismissed' ? 'Nothing changed - tap Turn on again and choose Allow.'
+          : m==='signin' ? 'Sign in again, then try once more.' : 'Couldn’t turn alerts on ('+m+').';
+        paint(); });
+  }
+
+  /* PAYROLL REMINDERS ON PHONES (03/11/2026). The bell's reminders (above), sent as alerts to every device each sender
+     turned on: the workday before it's due at 9 am, the due day at 9 am, and at 1 pm - Central, like the 2 pm deadline -
+     to the senders of offices that haven't sent yet. No server clock: the first Home-Brace visit after each time sends
+     it, from whoever's browser that is. It's claimed first in ph_pay_status (p[period].al[slot] = {at, by}), so two
+     visits at once still send it once; a visit that finds a later time already due sends only that one. Nothing after
+     2 pm (the bell says "late" from then). Off until alerts are on (PH_ALERTS.ON). */
+  function centralNow(now){
+    now=now||new Date();
+    try{
+      const p={}; new Intl.DateTimeFormat('en-US',{timeZone:'America/Chicago', year:'numeric', month:'2-digit', day:'2-digit',
+        hour:'2-digit', minute:'2-digit', hourCycle:'h23'}).formatToParts(now).forEach(function(x){ p[x.type]=x.value; });
+      return {date:p.year+'-'+p.month+'-'+p.day, hm:(p.hour==='24'?'00':p.hour)+':'+p.minute};
+    }catch(_){
+      const pad=function(n){ return String(n).padStart(2,'0'); };
+      return {date:now.getFullYear()+'-'+pad(now.getMonth()+1)+'-'+pad(now.getDate()), hm:pad(now.getHours())+':'+pad(now.getMinutes())};
+    }
+  }
+  function payAlertPlan(now){
+    const R=window.PAYRULES; if(!R || !payOn()) return null;
+    const c=centralNow(now), per=R.period(R.currentIndex(c.date)), st=(payStatus().p||{})[per.key]||{}, sent=st.sent||{}, al=st.al||{};
+    if(st.entered) return null;
+    if(c.date>per.due || (c.date===per.due && c.hm>='14:00')) return null;
+    const slots=[{k:'eve', d:R.workdayBefore(per.due), hm:'09:00'}, {k:'am', d:per.due, hm:'09:00'}, {k:'pm', d:per.due, hm:'13:00'}]
+      .filter(function(x){ return c.date>x.d || (c.date===x.d && c.hm>=x.hm); });
+    if(!slots.length) return null;
+    const slot=slots[slots.length-1].k; if(al[slot]) return null;
+    const off=paySenders().offices||{};
+    const todo=Object.keys(off).filter(function(o){ return (off[o]||[]).length && !sent[o]; });
+    if(!todo.length) return null;
+    const wd=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][R.dow(per.due)];
+    const when=slot==='eve' ? 'is due '+wd+' by 2 pm' : slot==='am' ? 'is due today by 2 pm' : 'is due at 2 pm — an hour to go';
+    return {key:per.key, n:per.n, slot:slot, sends:todo.map(function(o){
+      return {o:o, emails:off[o].slice(), title:o+'’s payroll sheet '+when, body:'Pay period #'+per.n+' · tap to open it'}; })};
+  }
+  let PAY_ALERT_BUSY=false, PAY_ALERT_AT=0;
+  function payAlertsTick(now){
+    if(PAY_ALERT_BUSY || !payOn() || !window.PH_STORE) return Promise.resolve(null);
+    PAY_ALERT_BUSY=true; PAY_ALERT_AT=Date.now();
+    const done=function(v){ PAY_ALERT_BUSY=false; return v; };
+    return alertsReady().then(function(A){
+      if(!A || !A.ON) return null;
+      return Promise.all([payRulesReady(), reloadPaySenders(), window.PH_STORE.get(PAY_STATUS_KEY).catch(function(){ return null; })]).then(function(r){
+        if(r[2] && typeof r[2]==='object' && r[2].p){ PAY_STATUS=r[2]; try{ localStorage.setItem(PAY_STATUS_KEY, JSON.stringify(PAY_STATUS)); }catch(_){} }
+        const plan=payAlertPlan(now); if(!plan) return null;
+        const stamp=new Date().toISOString()+'~'+Math.random().toString(36).slice(2,8);
+        const by=String(email(isLive() ? realMe() : me())||'').toLowerCase();
+        return window.PH_STORE.update(PAY_STATUS_KEY, function(cur){
+          cur=(cur && typeof cur==='object' && cur.p) ? cur : {v:1, p:{}};
+          const p=cur.p[plan.key]=cur.p[plan.key]||{sent:{}}; p.al=p.al||{};
+          if(p.al[plan.slot]) return undefined;              // someone else's visit sent it
+          p.al[plan.slot]={at:stamp, by:by}; return cur;
+        }).then(function(res){
+          const v=res && res.value, got=v && v.p && v.p[plan.key] && v.p[plan.key].al && v.p[plan.key].al[plan.slot];
+          if(!res || res.blocked || !got || got.at!==stamp) return null;
+          PAY_STATUS=v; try{ localStorage.setItem(PAY_STATUS_KEY, JSON.stringify(PAY_STATUS)); }catch(_){}
+          return plan.sends.reduce(function(c, x){ return c.then(function(acc){
+            return A.sendTo(x.emails, {title:x.title, body:x.body, url:A.here('payroll.html'), tag:'hb-pay-'+plan.key+'-'+x.o})
+              .then(function(o){ return acc.concat([{o:x.o, out:o}]); }, function(){ return acc; }); }); }, Promise.resolve([]));
+        });
+      });
+    }).then(done, function(){ return done(null); });
+  }
+  document.addEventListener('visibilitychange', function(){
+    if(document.visibilityState==='visible' && Date.now()-PAY_ALERT_AT>10*60e3 && SIGNED_IN && payOn()) payAlertsTick();
+  });
   const NAV=[
     {k:'home',       n:'\ud83c\udfe0 Home',             href:'home.html',       show:()=>true},
     {k:'dashboard',  n:'\ud83d\udcca Production Dashboard',        href:'index.html',      show:()=>atLeast('dashboard','view')},
@@ -2695,7 +2808,8 @@
     else lateLanded();
     Promise.resolve(reloadAccess()).then(lateLanded, lateLanded);
     Promise.resolve(reloadPeople()).then(lateLanded, lateLanded);
-    if(payOn()) Promise.resolve(reloadPaySenders()).then(()=>{ identityChanged(); return reloadPayStatus(); }, ()=>{});   // a sender's Payroll tab
+    if(payOn()) Promise.resolve(reloadPaySenders()).then(()=>{ identityChanged(); return reloadPayStatus(); }, ()=>{})   // a sender's Payroll tab
+      .then(()=>payAlertsTick(), ()=>{});                                                                                  // and any phone reminder that's due
   });
 
   /* One gate for every page.
@@ -3038,7 +3152,7 @@
     const m=document.createElement('link'); m.rel='manifest'; m.href='manifest.webmanifest'; document.head.appendChild(m);
   }
 
-  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, rosterView, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, chatBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK, notesHTML, searchHTML, searchDocs, searchDocsHTML, levelForTeams, teamsSeeAll, tcOn, tcRoleFor, payOn, payRoleFor, paySenders, reloadPaySenders, paySenderOffices, payLevel, payReminders, payMark, reloadPayStatus, payRulesReady, saveFace, faceOf, avatar,
+  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, rosterView, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, chatBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK, notesHTML, searchHTML, searchDocs, searchDocsHTML, levelForTeams, teamsSeeAll, tcOn, tcRoleFor, payOn, payRoleFor, paySenders, reloadPaySenders, paySenderOffices, payLevel, payReminders, payMark, reloadPayStatus, payRulesReady, payAlertPlan, payAlertsTick, centralNow, alertsReady, saveFace, faceOf, avatar,
     sensRecord, reloadSensitive, sensLevelFor, sensitiveLevel, sensConfirmOk,
     setTheme, theme:()=>THEME, setLayout, layout:()=>LAYOUT, layouts:()=>LAYOUTS.map(l=>({k:l.k, n:l.n})), themes:()=>THEMES.map(t=>({k:t.k, n:t.n})), schemeTokens:k=>schemeTokens(themeOf(k)), contrast,
     feedback:openFeedback, feedbackText, feedbackContext, learning:stillLearning};
