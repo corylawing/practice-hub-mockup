@@ -32,8 +32,18 @@ I can confidently say that the chat feature should go next. The production thing
    will be updated"; "If it is a yellow day or a virtual promo or any day the doctor is not present we will not count
    it as a production day at this time" (may change "down the road"). Match her workbook's numbers first (scheduled +
    completed days are among the 44 series she verified, §9) - hers are the reference.
-4. **The monthly monitor sheet.** Heather: "I think I sent it to you in a separate email, if you don't have it, let me
-   know." WE DON'T HAVE IT YET - Cory to get it from her email.
+4. **The monthly monitor sheet.** FILES RECEIVED 03/11 (Cory's Mac, real figures - NEVER commit, never in tests):
+   `~/Downloads/San Angelo Monitor Report 2026.xlsx` and `~/Downloads/Clovis Monitor Report 2026.xlsx`. Heather: "The
+   offices who don't take Medicaid will mirror the San Angelo report and the offices who do will mirror the Clovis report.
+   The ladies send me and the doctors these at the completion of the month." Medicaid: Clovis, Hobbs, Carlsbad, LCO; not:
+   San Angelo, Lubbock, Mansfield, FOLC (= Cruces FFO). One sheet per office, a row per month + quarter averages, YTD
+   totals, 2026 averages, a Goals row. Columns: Gross Production, Gross Collections, Collection % (goal 91-93%), Net
+   Production Adjustments, Adjustment % (7-9%), Net Production, Accounts Receivable, Ratio (A/R / production, 5.5-6x), #
+   of A/R, # Delinquent (30+), % Del. (5-7%), NP Exam, Comprehensive Case Starts, Case Acceptance % (>70%), Med Starts,
+   100% Discount, Limited/ReTX/50% off, Phase 1 Starts, Avg. Case Fee (= Net Production / (Comprehensive + Phase 1)).
+   The Clovis (Medicaid) one adds a "Production/Collection Breakdown" table: # Medicaid Submissions, Denials, Approvals,
+   Medicaid Bandings, Medicaid Production, Medicaid Collections, # of RIP Sold. Not started - after Chat and production
+   days (her order).
 5. **Personnel files (last).** Heather 27/10: OMs upload documents, a folder for each employee on their team
    (themselves included): W-2s, driver's license copy, SS card, write-ups, employment verification forms - "personnel
    files for the entire company house on Home Brace", today on her OneDrive; "1. make them own this and 2. make it to
