@@ -93,7 +93,8 @@ paySenders/reloadPaySenders/paySenderOffices, payLevel).
 - **GO-LIVE STEPS (only when Cory says so)**: 1) deploy with PAY_LIVE=false (staff see nothing); 2) Cory (an admin)
   opens `payroll.html?paypreview` on live once - the flag sticks for him; 3) Cory locks `Home-Brace Payroll` once in
   SharePoint (Manage access -> Stop inheriting; like the TC folder) - the page shows those steps and refuses to save
-  until it's locked; 4) Admin -> Teams & Access -> "Payroll folders: Sync" (makes the folders, grants managers);
+  until it's locked; 4) open Admin (the sync runs by itself when Admin opens - there is NO Sync button; a box shows on Teams & Access
+  only when something is wrong; check: SharePoint -> Home-Brace Payroll -> Manage access lists Heather);
   5) Payroll -> Settings: fill each office from the team list, bonuses, start dates, who sends each sheet; 6) flip
   `PAY_LIVE=true`, deploy. Heather is the app's administrator ("COO (Admin)"), so she manages Payroll automatically;
   anyone else she adds herself in Teams & Access -> Payroll column. Don't ask Cory about this again (02/11).
