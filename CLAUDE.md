@@ -50,7 +50,7 @@ until treatment begins; asks for the start appointment (nextFU, required); call 
 - future / Set start appointment date" with Started / New start date / Called / Not starting; its own line in
 Monthly results, Open work and the Monthly totals. test/tc.test.js +10.
 
-### PAYROLL LIVE (02/11/2026) - built, deployed nowhere live yet
+### PAYROLL LIVE (02/11/2026) - ON THE LIVE SITE SINCE 03/11 (hc116) WITH PAY_LIVE=false: staff see nothing; go-live step 1 done
 Files: `v1/payrules.js` (PAYRULES: offices in her sheet's order, rates, holidays 2026-27, pay periods, sums, who gets
 which folder), `v1/paystore.js` (PAYSTORE: JSON files in the payroll folders, read-modify-write with If-Match; sandbox
 = localStorage `ph_pay__<sub>__<key>`), `v1/docs.js` (payFolder/payLocked/paySync/payRecord - fenced to the payroll
@@ -96,6 +96,11 @@ paySenders/reloadPaySenders/paySenderOffices, payLevel).
   5) Payroll -> Settings: fill each office from the team list, bonuses, start dates, who sends each sheet; 6) flip
   `PAY_LIVE=true`, deploy. Heather is the app's administrator ("COO (Admin)"), so she manages Payroll automatically;
   anyone else she adds herself in Teams & Access -> Payroll column. Don't ask Cory about this again (02/11).
+- Heather's combined sheet, an office not sent yet (03/11, Cory's iPhone screenshot: "doesn't look very modern"): no
+  column headings over an empty sheet; a pill ("Not sent yet", or "Late — not sent" after 2 pm on the due day) + "<name>
+  sends it" (live: the chosen sender; none = "Nobody sends it yet — choose who in Settings"). Office names and that line
+  sit in `.stick` (sticky left, max 100cqw of `.tblwrap.cq`) so they stay in view and wrap while the table scrolls.
+  `html{-webkit-text-size-adjust:100%}` on payroll.html - iPhones were blowing up the wide table's long rows.
 - NOT the portfolio demo (Cory 02/11: "You don't have to keep updating the interactive profolio demo when doing this.
   Just the sandbox and production when we agree to do so").
 

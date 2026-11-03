@@ -31,6 +31,7 @@
     --shadow-lg:0 10px 30px rgba(15,42,74,.12); --radius:14px; --maxw:1480px;   /* a spreadsheet page: wider than the others */
   }
   *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%;text-size-adjust:100%}   /* iPhones blew up the wide table's long rows (Cory's screenshot, 03/11) */
   body{margin:0;font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--canvas);line-height:1.5;-webkit-font-smoothing:antialiased}
   h1{color:var(--navy);margin:0}
   button{font-family:inherit}
@@ -185,7 +186,11 @@
   table.comb td.co{background:#F2F6FA;color:var(--navy);font-weight:800;font-size:13px;white-space:normal}
   table.comb tr.subt td{background:#FAFBFC;font-weight:700;color:var(--soft)}
   table.comb tr.grand td{background:var(--navy);color:#fff;font-weight:800}
-  table.comb td.miss{color:#9a2f1e;font-style:italic}
+  /* An office row's words stay in view while the wide table scrolls sideways, and wrap inside the visible width. */
+  .tblwrap.cq{container-type:inline-size}
+  table.comb .stick{position:sticky;left:0;display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;max-width:calc(100vw - 64px);max-width:calc(100cqw - 16px)}
+  table.comb tr.wait td{background:#fff;padding:10px 8px 12px;border-bottom:1px solid var(--line)}
+  table.comb tr.wait .who{color:var(--soft);font-size:13px}
   /* The column headings again at the top of every office (Heather, 22/10) */
   table.comb tr.hd th{background:#F7F9FB;color:var(--soft);font-size:11px;text-transform:uppercase;letter-spacing:.04em;text-align:right;white-space:normal;vertical-align:bottom;line-height:1.25;padding:7px 8px;border-bottom:1px solid var(--line)}
   table.comb tr.hd th.nm, table.comb tr.hd th:last-child{text-align:left}
@@ -306,6 +311,12 @@
   ];
   const OFF=Object.fromEntries(OFFICES.map(o=>[o.k,o]));
   const sender=o=>'the '+OFF[o].n+' '+OFF[o].by;
+  /* Who sends this office's sheet, by name when Home-Brace knows (live, or the sandbox's Real version); '' = nobody chosen. */
+  const whoSends=o=>{
+    if(!LIVEPAY){ const t=sender(o); return t.charAt(0).toUpperCase()+t.slice(1); }
+    const ems=((PH.paySenders && PH.paySenders().offices)||{})[OFF[o].n]||[], ro=(PH.rosterView && PH.rosterView())||[];
+    return ems.map(em=>{ const r=ro.find(x=>String(x.email||'').toLowerCase()===String(em).toLowerCase()); return r ? r.name : em; }).join(' or ');
+  };
   /* Two columns of the combined sheet carry each office's own, their heading changing office by office - the
      way column J does on Heather's sheet. */
   const ownCols=o=>{ const a=(OFF[o].own||[]).slice(0,2); while(a.length<2) a.push(null); return a; };
@@ -760,11 +771,15 @@
   const NC=16;
   function combined(n){
     const pr=P(n), e=enteredOf(n); let grand={reg:0,ot1:0,ot2:0,total:0,reimb:0};
-    let h='<div class="tblwrap"><table class="t comb"><tbody>';
+    let h='<div class="tblwrap cq"><table class="t comb"><tbody>';
     OFFICES.forEach(o=>{
       const s=get(n,o.k), on=!e && s.status==='sent' && !R().ro, own=ownCols(o.k);
-      h+='<tr><td class="co" colspan="'+NC+'">'+esc(o.co)+' <span class="muted" style="font-weight:600">· '+esc(o.n)+'</span></td></tr>'+combHead(o.k);
-      if(s.status!=='sent'){ h+='<tr><td class="miss" colspan="'+NC+'">Not sent yet — '+esc(o.n)+'’s sheet will appear here when '+esc(sender(o.k))+' sends it.</td></tr>'; return; }
+      h+='<tr><td class="co" colspan="'+NC+'"><div class="stick"><span>'+esc(o.co)+' <span class="muted" style="font-weight:600">· '+esc(o.n)+'</span></span></div></td></tr>';
+      if(s.status!=='sent'){   // no column headings over an empty sheet - just where it stands and who sends it
+        const late=!e && NOW>pr.dueAt, who=whoSends(o.k);
+        h+='<tr class="wait"><td colspan="'+NC+'"><div class="stick"><span class="pill '+(late?'p-late':'p-go')+'">'+(late?'Late — not sent':'Not sent yet')+'</span>'+
+          '<span class="who">'+(who ? esc(who)+' sends it' : 'Nobody sends it yet — choose who in Settings')+'</span></div></td></tr>'; return; }
+      h+=combHead(o.k);
       let sub={reg:0,ot1:0,ot2:0,total:0,reimb:0};
       rowPeople(n,o.k).forEach(p=>{ const x=s.rows[p.id]; if(!x) return; const c=calc(p,x,pr);
         sub.reg+=c.reg; sub.ot1+=c.ot1; sub.ot2+=c.ot2; sub.total+=c.total; sub.reimb+=c.reimb;
