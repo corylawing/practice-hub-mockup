@@ -20,8 +20,9 @@ I can confidently say that the chat feature should go next. The production thing
 1. **Payroll -> LIVE.** She OKed the mock-up. Real build: the live data (pay is private - follow the TC Tracker's locked
    folder, access from Teams & Access; think per-office so one OM can't open another office's sheets), the real
    people and who sends each office's sheet, her Settings, reminders in the bell (phone reminders come with #2).
-   **STATUS 02/11: BUILT, sandbox only, OFF on live** (`PAY_LIVE=false` in user.js). Design + go-live steps:
-   "PAYROLL LIVE (02/11)" below. Waiting on Cory's OK to deploy.
+   **STATUS 03/11: ON LIVE (hc116), still OFF for staff** (`PAY_LIVE=false`). Go-live step 1 done; next Cory: steps 2-4
+   (?paypreview, lock the folder, Teams & Access sync), Heather: step 5 (Settings, she opens ?paypreview too), then
+   flip PAY_LIVE. Target: pay period #24 (Nov 2-15, sheets due Tue Nov 17). Steps: "PAYROLL LIVE (02/11)" below.
 2. **Chat + phone alerts -> LIVE** (one thing to her). Needs IT (Adam) to approve the Teams chat permission; alerts:
    subscriptions in SharePoint, the live origin in api-push ORIGINS, the home-screen sign-in on live (Cory's iPhone
    test of sign-in inside the app still to come).
