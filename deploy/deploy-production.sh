@@ -43,8 +43,10 @@ rsync -a --exclude 'snapshot.json' --exclude '_testgrids.json' --exclude 'alerts
 # The roster is a STATIC file on a site whose pages are public (the sign-in gate is
 # drawn by JavaScript; it does not protect files). So anyone with the hub's URL can
 # fetch it. The app only needs email -> teams/offices before sign-in, so strip the
-# fields it does not need that far: employee IDs and personal notes. Names, work
-# emails and offices remain, because identity matching needs them.
+# fields it does not need that far: personal notes and phone numbers. Names, work
+# emails, offices and employee IDs remain - identity matching needs them (the employee
+# ID is the stable person key, see CLAUDE.md). Locking the files behind a sign-in at the
+# hosting level is the real fix; Cory chose to leave it for now (22/10/2026).
 if [ -f "$STAGE/v1/_people.json" ]; then
   python3 - "$STAGE/v1/_people.json" <<'STRIP'
 import json,sys
@@ -52,10 +54,10 @@ p=sys.argv[1]; d=json.load(open(p))
 for row in d.get('people',[]):
     row.pop('about',None)
     row.pop('phone',None)
-d['_note']=('Published copy: employee IDs and personal notes are removed at deploy '
+d['_note']=('Published copy: personal notes and phone numbers are removed at deploy '
             'time because this file is served without a sign-in. See deploy-production.sh.')
 json.dump(d,open(p,'w'),indent=1,ensure_ascii=False)
-print('  roster: stripped employee IDs from the published copy')
+print('  roster: removed notes and phone numbers from the published copy (employee IDs stay)')
 STRIP
 fi
 
