@@ -27,7 +27,7 @@ I can confidently say that the chat feature should go next. The production thing
    signed-in only, payroll reminders on phones - "PHONE ALERTS, step 3"); Chat waits on Keanu (Chat.ReadWrite + Teams
    licences, asked 03/11). Needs IT (Adam) to approve the Teams chat permission; alerts:
    subscriptions in SharePoint, the live origin in api-push ORIGINS, the home-screen sign-in on live (Cory's iPhone
-   test of sign-in inside the app still to come).
+   test: Cory said 03/11 he tested alerts on his iPhone and they worked - before the sender began requiring a sign-in).
 3. **Production days from the Schedule.** Heather 23/10: "can the # of production days per office pull from the
    schedule in Home Brace and can the completed production days # on this screen pull from that calendar as well once
    that day has passed?" Her rules (01/11): a Friday (half day) counts as a whole day; a cancelled day - "the schedule
