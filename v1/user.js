@@ -2013,6 +2013,11 @@
     });
     if(lv==='manage' && after){
       const off=paySenders().offices||{}, chosen=Object.keys(off).filter(function(o){ return (off[o]||[]).length; });
+      if(chosen.length){                 // payroll is in use: Zihua Partners (nobody sends it - hers to fill in) counts too
+        const ord=(R.OFFICES||[]).map(function(x){ return x.n; }), at_=function(o){ const i=ord.indexOf(o); return i<0 ? 99 : i; };
+        (R.OFFICES||[]).forEach(function(x){ if(x.self && chosen.indexOf(x.n)<0) chosen.push(x.n); });
+        chosen.sort(function(a, b){ return at_(a)-at_(b); });
+      }
       const missing=chosen.filter(function(o){ return !sent[o]; });
       if(missing.length) out.push({id:'pay-'+per.key+'-wait', ic:'\u23F3', href:'payroll.html',
         title:'Payroll '+num+': still waiting on '+missing.join(', '), sub:'Their sheets were due '+(today===per.due?'today':wd(per.due))+' by 2 pm'});

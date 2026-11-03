@@ -16,6 +16,7 @@
     {k:'lubbock',   n:'Lubbock',    co:'Farnsworth Family Orthodontics, PLLC (Lubbock)', by:'clinic lead', own:[{k:'phone',n:'Phone'}]},
     {k:'clovis',    n:'Clovis',     co:'Farnsworth Orthodontics, P.C. (Clovis)', by:'office manager', own:[{k:'sick',n:'Sick hrs',hrs:true}]},
     {k:'sanangelo', n:'San Angelo', co:'Farnsworth Orthodontics San Angelo, PLLC', by:'office manager', own:[{k:'dibs',n:'DIBS'},{k:'pog',n:'POG'}]},
+    {k:'zihua',     n:'Zihua Partners', co:'Zihua Partners', by:'Heather', self:true},   // Heather fills it in herself (03/11)
     {k:'mansfield', n:'Mansfield',  co:'Sunflower Orthodontics PLLC', by:'office manager'},
     {k:'crucesffo', n:'Cruces FFO', co:'Farnsworth Legacy – Farnsworth Orthodontics Las Cruces LLC', by:'TC'},
     {k:'cruceslco', n:'Cruces LCO', co:'Las Cruces Orthodontics – Farnsworth Orthodontics LLC', by:'office manager'}
@@ -100,6 +101,7 @@
     });
     Object.keys(senders).forEach(o=>{
       if(offices.indexOf(o)<0) return;                         // an office payroll doesn't have: nothing to give
+      if(OFFICES.some(x=>x.n===o && x.self)) return;           // Zihua Partners: nobody sends it, so nobody is given it
       (senders[o]||[]).forEach(e=>{ const em=String(e||'').trim().toLowerCase(); if(em) put(base+'/'+o, em, 'write'); });
     });
     return {want, noEmail};

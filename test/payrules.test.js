@@ -63,7 +63,12 @@ t('an office payroll doesn’t have gives nothing', !w.want[B+'/Atlantis']);
 t('Heather’s folder is never handed out', !Object.keys(w.want).some(k=>/Heather$/.test(k)));
 t('someone with no email is listed, not given', w.noEmail.join()==='No Mail');
 t('every office has a folder entry (so a take-back still happens when the last person goes)', R.OFFICES.every(o=>w.want[B+'/'+o.n]));
-t('the offices are her sheet’s eight, in its order', R.OFFICES.map(o=>o.n).join()==='Carlsbad,Hobbs,Lubbock,Clovis,San Angelo,Mansfield,Cruces FFO,Cruces LCO');
+t('the offices are her sheet’s, in its order - Zihua Partners after San Angelo (03/11)', R.OFFICES.map(o=>o.n).join()==='Carlsbad,Hobbs,Lubbock,Clovis,San Angelo,Zihua Partners,Mansfield,Cruces FFO,Cruces LCO');
+t('Zihua Partners: nobody sends it - Heather fills it in', R.OFF.zihua.self===true && R.OFFICES.filter(o=>o.self).length===1);
+{ const w2=R.wanted(B, roster, roleOf, {'Carlsbad':['kim@x.test'], 'Zihua Partners':['kim@x.test']});
+  t('Zihua Partners’ folder: whoever manages payroll, never a sender', w2.want[B+'/Zihua Partners'] && w2.want[B+'/Zihua Partners']['pat@x.test']==='write' && !w2.want[B+'/Zihua Partners']['kim@x.test'] && w2.want[B+'/Carlsbad']['kim@x.test']==='write'); }
+t('payroll.html lists the same offices, in the same order', (src=>{ const m=src.slice(src.indexOf('const OFFICES=['), src.indexOf('];', src.indexOf('const OFFICES=[')));
+  return R.OFFICES.every((o,i,a)=>m.indexOf("k:'"+o.k+"'")>=0 && (i===0 || m.indexOf("k:'"+a[i-1].k+"'")<m.indexOf("k:'"+o.k+"'"))); })(require('fs').readFileSync(require('path').join(__dirname,'..','v1','payroll.html'),'utf8')));
 
 console.log(pass+' passed, '+fail+' failed');
 process.exit(fail?1:0);

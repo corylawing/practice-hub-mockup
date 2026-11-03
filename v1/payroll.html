@@ -224,15 +224,15 @@
     .perhead .when{font-size:17px}
   }
 </style>
-<script src="user.js?v=hc118"></script>
+<script src="user.js?v=hc119"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc118"></script>
-  <script src="gate.js?v=hc118"></script>
-  <script src="alerts.js?v=hc118"></script>
-  <script src="_staff.js?v=hc118"></script>
-  <script src="payrules.js?v=hc118"></script>
-  <script src="paystore.js?v=hc118"></script>
-  <script src="docs.js?v=hc118"></script>
+  <script src="store.js?v=hc119"></script>
+  <script src="gate.js?v=hc119"></script>
+  <script src="alerts.js?v=hc119"></script>
+  <script src="_staff.js?v=hc119"></script>
+  <script src="payrules.js?v=hc119"></script>
+  <script src="paystore.js?v=hc119"></script>
+  <script src="docs.js?v=hc119"></script>
 </head>
 <body>
 <div class="ribbon">MOCK-UP for Heather — made-up people and amounts. Try it as the Carlsbad TC first, then as Heather.</div>
@@ -298,19 +298,23 @@
      Las Cruces ("FOLC" = Cruces FFO, Heather 22/10), the clinic lead in Lubbock, the office manager everywhere else.
      own = the office's own columns on her main sheet: Phone (Lubbock), DIBS and POG (San Angelo), Sick (one Clovis
      person's grandfathered hours) - all typed BY THE OFFICE on its sheet (Heather, 22/10: "they type in Phone,
-     DIBS, POG"; she types Goal, TC/OM and Extra). */
+     DIBS, POG"; she types Goal, TC/OM and Extra). ZIHUA PARTNERS (03/11, Heather: "Zihua Partners is where me, Selene
+     and Jessica get paid out of" ... "I fill it in for Zihua"): self = nobody sends it - whoever manages payroll fills
+     it in from the board ("Fill it in"), in the spot it holds on her main sheet. */
   const OFFICES=[
     {k:'carlsbad',  n:'Carlsbad',   co:'Farnsworth Orthodontics, PLLC (Carlsbad)', by:'TC'},
     {k:'hobbs',     n:'Hobbs',      co:'Farnsworth Orthodontics Hobbs, PLLC', by:'office manager'},
     {k:'lubbock',   n:'Lubbock',    co:'Farnsworth Family Orthodontics, PLLC (Lubbock)', by:'clinic lead', own:[{k:'phone',n:'Phone'}]},
     {k:'clovis',    n:'Clovis',     co:'Farnsworth Orthodontics, P.C. (Clovis)', by:'office manager', own:[{k:'sick',n:'Sick hrs',hrs:true}]},
     {k:'sanangelo', n:'San Angelo', co:'Farnsworth Orthodontics San Angelo, PLLC', by:'office manager', own:[{k:'dibs',n:'DIBS'},{k:'pog',n:'POG'}]},
+    {k:'zihua',     n:'Zihua Partners', co:'Zihua Partners', by:'Heather', self:true},
     {k:'mansfield', n:'Mansfield',  co:'Sunflower Orthodontics PLLC', by:'office manager'},
     {k:'crucesffo', n:'Cruces FFO', co:'Farnsworth Legacy – Farnsworth Orthodontics Las Cruces LLC', by:'TC'},
     {k:'cruceslco', n:'Cruces LCO', co:'Las Cruces Orthodontics – Farnsworth Orthodontics LLC', by:'office manager'}
   ];
   const OFF=Object.fromEntries(OFFICES.map(o=>[o.k,o]));
-  const sender=o=>'the '+OFF[o].n+' '+OFF[o].by;
+  const sender=o=>OFF[o].self ? OFF[o].by : 'the '+OFF[o].n+' '+OFF[o].by;
+  const poss=n=>/s$/.test(n) ? n+'’' : n+'’s';      // Carlsbad’s, Zihua Partners’
   const PHONE=()=>!!(window.PH_ALERTS && PH_ALERTS.ON);   // phone alerts are on here (the sandbox; live once ALERTS_LIVE)
   /* Who sends this office's sheet, by name when Home-Brace knows (live, or the sandbox's Real version); '' = nobody chosen. */
   const whoSends=o=>{
@@ -339,7 +343,8 @@
     [['crucesffo','cruceslco'],'Elena Vega',100,'2022-10-03'],
     [['crucesffo'],'Shea Cole',100,'2021-06-21'], [['crucesffo'],'Blake Rowe',75,'2024-07-08'], [['crucesffo'],'Maya Duarte',100,'2023-12-04'],
     [['cruceslco'],'Logan Pratt',100,'2022-01-24'], [['cruceslco'],'Ines Salazar',75,'2024-09-16'], [['cruceslco'],'Hayden Moss',100,'2020-11-30'],
-    [['cruceslco'],'Carmen Ibarra',100,'2023-05-22']
+    [['cruceslco'],'Carmen Ibarra',100,'2023-05-22'],
+    [['zihua'],'Quinn Ashford',0,'2017-03-06'], [['zihua'],'Sloane Whitaker',0,'2019-07-15'], [['zihua'],'Marlowe Kent',0,'2020-10-05']
   ].map((x,i)=>{ const sp=x[1].lastIndexOf(' ');
     return {id:'p'+(i+1), offices:x[0], n:x[1], first:x[1].slice(0,sp), last:x[1].slice(sp+1), bonus:x[2], start:x[3]}; });
   /* One Clovis person keeps sick hours from before (grandfathered), and gets holiday HOURS instead of holiday pay. */
@@ -520,10 +525,11 @@
      their own office's sheet (a picker when they send more than one). */
   const LEVEL=()=>LIVEPAY ? ((PH.payLevel && PH.payLevel())||'') : '';
   const myOffices=()=>{ const names=(PH.paySenderOffices && PH.paySenderOffices())||[]; return OFFICES.filter(o=>names.indexOf(o.n)>=0).map(o=>o.k); };
-  let liveOffice=null;
+  let liveOffice=null, fillAs=null;      // fillAs: a sheet whoever manages payroll fills in themselves (Zihua Partners)
   const R=()=>{
-    if(!LIVEPAY) return ROLES[as];
+    if(!LIVEPAY) return (ROLES[as].kind==='coo' && fillAs) ? {kind:'om', office:fillAs, mgr:true} : ROLES[as];
     if(LEVEL()==='send') return {kind:'om', office:liveOffice || myOffices()[0] || null};
+    if(LEVEL()==='manage' && fillAs) return {kind:'om', office:fillAs, mgr:true};
     return {kind:'coo', ro:LEVEL()!=='manage'};
   };
   let tab='sheet', per=CUR, look='';
@@ -531,7 +537,7 @@
   function statusPill(n,o){
     const s=get(n,o), e=enteredOf(n), pr=P(n);
     if(e) return '<span class="pill p-lock">🔒 Entered in payroll</span>';
-    if(s.status==='sent') return '<span class="pill p-done">✓ Sent '+esc(fmtT(s.at))+'</span>';
+    if(s.status==='sent') return '<span class="pill p-done">✓ '+(OFF[o].self?'Done ':'Sent ')+esc(fmtT(s.at))+'</span>';
     if(NOW>pr.dueAt) return '<span class="pill p-late">Late — was due '+esc(fmt(pr.due,{weekday:'short'}))+' 2 pm</span>';
     if(s.status==='draft') return '<span class="pill p-go">Started — not sent yet</span>';
     return '<span class="pill p-new">Not started</span>';
@@ -550,13 +556,15 @@
     if(LIVEPAY && R().kind==='om' && !R().office){ el('lede').innerHTML=''; el('tabs').innerHTML='';
       el('view').innerHTML='<div class="note info">You don’t send an office’s payroll sheet. Whoever manages payroll chooses who sends each one.</div>'; return; }
     const k=R().kind;
-    el('lede').innerHTML = k==='om'
+    el('lede').innerHTML = R().mgr
+      ? esc(poss(OFF[R().office].n))+' payroll sheet - you fill this one in yourself. Mark it done and it joins the combined sheet with the offices.'
+      : k==='om'
       ? 'Your office’s payroll sheet, every other week. The same columns as the Excel form — totals and overtime work themselves out, and anything Heather would ask about is caught before you send it.'
       : 'Every office’s sheet in one place: who has sent it, one combined sheet like your main Excel, the things worth a second look, and every past pay period kept.';
     const T = k==='om' ? [['sheet','Payroll sheet'],['past','Past sheets']] : [['sheet','This pay period'],['past','History']].concat(R().ro?[]:[['settings','Settings']]);
     if(!T.some(t=>t[0]===tab)) tab='sheet';
     const offs=LIVEPAY && k==='om' ? myOffices() : [];
-    el('tabs').innerHTML=T.map(t=>'<button class="tab'+(t[0]===tab?' on':'')+'" data-act="tab" data-v="'+t[0]+'">'+t[1]+'</button>').join('')+
+    el('tabs').innerHTML=(R().mgr ? '<button class="btn ghost sm" data-act="unfill">← All offices</button>' : '')+T.map(t=>'<button class="tab'+(t[0]===tab?' on':'')+'" data-act="tab" data-v="'+t[0]+'">'+t[1]+'</button>').join('')+
       (offs.length>1 ? '<select class="in" id="offpick" style="margin-left:auto" aria-label="Office">'+offs.map(o=>'<option value="'+o+'"'+(o===R().office?' selected':'')+'>'+esc(OFF[o].n)+'</option>').join('')+'</select>' : '');
     el('view').innerHTML = k==='om' ? (tab==='past' ? viewOmPast() : viewOmSheet()) : (tab==='past' ? viewHistory() : tab==='settings' ? viewSettings() : viewBoard());
   }
@@ -667,7 +675,7 @@
       '<div class="row">'+statusPill(n,o)+periodPicker('perpick')+'</div></div></div>';
     /* Home-Brace reminds whoever sends the sheet: the workday before it's due, the morning it's due, and at 1 pm if it
        still isn't sent - on the sheet and in the bell, and on their phone once alerts are on (the chat's alerts). */
-    if(n===CUR && !e && s.status!=='sent' && TODAY>=workdayBefore(pr.due)){
+    if(n===CUR && !e && s.status!=='sent' && !OFF[o].self && TODAY>=workdayBefore(pr.due)){
       const late=NOW>pr.dueAt, today=pr.due===TODAY;
       h+='<div class="remind'+(late?' late':'')+'"><span style="font-size:20px" aria-hidden="true">'+(late?'⚠️':'⏰')+'</span><div class="grow"><b>'+
         (late ? 'This sheet was due '+esc(fmt(pr.due,{weekday:'long'}))+' at 2 pm. Please send it now.'
@@ -694,8 +702,11 @@
     }
     if(edit){
       h+='<div id="checks">'+checksHTML(n,o)+'</div>';
-      h+='<div class="sendbar"><span class="small muted">'+(s.status==='sent'?'Already sent — you can still change it until Heather enters payroll.':'Saved as you type. Heather sees it once you send it.')+'</span>'+
-        '<button class="btn" data-act="send">'+(s.status==='sent'?'Send the changes to Heather':'Send to Heather')+'</button></div>';
+      h+=R().mgr
+        ? '<div class="sendbar"><span class="small muted">'+(s.status==='sent'?'Done - you can still change it until you enter payroll.':'Saved as you type. Mark it done when it’s ready and it joins the combined sheet.')+'</span>'+
+          '<button class="btn" data-act="send">'+(s.status==='sent'?'Mark the changes done':'Mark as done')+'</button></div>'
+        : '<div class="sendbar"><span class="small muted">'+(s.status==='sent'?'Already sent — you can still change it until Heather enters payroll.':'Saved as you type. Heather sees it once you send it.')+'</span>'+
+          '<button class="btn" data-act="send">'+(s.status==='sent'?'Send the changes to Heather':'Send to Heather')+'</button></div>';
     } else if(s.log && s.log.length){
       h+='<div class="log">'+s.log.map(l=>'<div>• '+esc(fmtT(l.at))+' — '+esc(l.t)+'</div>').join('')+(e?'<div>• '+esc(fmtT(e.at))+' — Entered in payroll by '+esc(e.by)+'</div>':'')+'</div>';
     }
@@ -778,6 +789,8 @@
       h+='<tr><td class="co" colspan="'+NC+'"><div class="stick"><span>'+esc(o.co)+' <span class="muted" style="font-weight:600">· '+esc(o.n)+'</span></span></div></td></tr>';
       if(s.status!=='sent'){   // no column headings over an empty sheet - just where it stands and who sends it
         const late=!e && NOW>pr.dueAt, who=whoSends(o.k);
+        if(o.self){ h+='<tr class="wait"><td colspan="'+NC+'"><div class="stick"><span class="pill p-go">Not done yet</span><span class="who">Filled in by '+esc(o.by)+'</span>'+
+          (!e && n===CUR && !R().ro ? '<button class="btn ghost sm" data-act="fillin" data-v="'+o.k+'">Fill it in</button>' : '')+'</div></td></tr>'; return; }
         h+='<tr class="wait"><td colspan="'+NC+'"><div class="stick"><span class="pill '+(late?'p-late':'p-go')+'">'+(late?'Late — not sent':'Not sent yet')+'</span>'+
           '<span class="who">'+(who ? esc(who)+' sends it' : 'Nobody sends it yet — choose who in Settings')+'</span></div></td></tr>'; return; }
       h+=combHead(o.k);
@@ -819,6 +832,8 @@
       '<div class="small muted">Paid '+esc(fmt(pr.pay,{weekday:'long'}))+' · office sheets '+esc(dueText(pr))+(pr.hol?' · includes '+esc(pr.hol.n):'')+'</div></div>'+
       '<div class="row">'+(e?'<span class="pill p-lock">🔒 Entered '+esc(fmtT(e.at))+'</span>':'<span class="pill '+(sent===OFFICES.length?'p-done':'p-go')+'">'+sent+' of '+OFFICES.length+' offices sent</span>')+periodPicker('perpick')+'</div></div>'+
       '<div class="offs" style="margin-top:14px">'+OFFICES.map(o=>{ const s=get(n,o.k);
+        if(o.self) return '<div class="off"><div class="row"><span class="on grow">'+esc(o.n)+'</span>'+(s.status==='sent'||e?statusPill(n,o.k):'<span class="pill p-new">Not done yet</span>')+'</div><div class="co">'+esc(o.co)+'<br>Filled in by '+esc(o.by)+'</div><div class="row">'+
+          (!e && n===CUR && !R().ro ? '<button class="btn sm" data-act="fillin" data-v="'+o.k+'">'+(s.status==='sent'?'Open it':'Fill it in')+'</button>' : s.status==='sent'?'<button class="btn ghost sm" data-act="view" data-v="'+o.k+'">See what was done</button>':'')+'</div></div>';
         return '<div class="off"><div class="row"><span class="on grow">'+esc(o.n)+'</span>'+statusPill(n,o.k)+'</div><div class="co">'+esc(o.co)+'<br>Sent by the '+esc(o.by)+'</div><div class="row">'+
           (s.status==='sent'?'<button class="btn ghost sm" data-act="view" data-v="'+o.k+'">See what was sent</button>':(!e && !LIVEPAY?'<button class="btn ghost sm" data-act="remind" data-v="'+o.k+'">Send a reminder</button>':''))+'</div></div>'; }).join('')+'</div>'+
       (!e?'<div class="small muted" style="margin-top:12px">'+(LIVEPAY
@@ -870,7 +885,9 @@
     const roster=LIVEPAY ? ((PH.rosterView && PH.rosterView())||[]).filter(r=>r.email) : [], sendersOf=o=>LIVEPAY ? ((PH.paySenders().offices||{})[o.n]||[]) : [];
     const nameOf=em=>{ const r=roster.find(x=>String(x.email).toLowerCase()===String(em).toLowerCase()); return r ? r.name : em; };
     h+='<div class="card"><h2>Who sends each office’s sheet</h2><p class="sub">'+(LIVEPAY ? 'They see their own office’s sheet and send it to you - no other office’s. Home-Brace gives them the tab and the access.' : 'They’re the ones who see it and send it to you, along with you.')+'</p><div class="tblwrap"><table class="t"><thead><tr><th>Office</th><th>Sent by</th><th>Its own columns (the office types them)</th></tr></thead><tbody>'+
-      OFFICES.map(o=>'<tr><td><b>'+esc(o.n)+'</b></td><td>'+(LIVEPAY
+      OFFICES.map(o=>'<tr><td><b>'+esc(o.n)+'</b></td><td>'+(o.self
+        ? 'You fill it in - <b>This pay period</b> → '+esc(o.n)+' → <b>Fill it in</b>. Nobody sends it.'
+        : LIVEPAY
         ? sendersOf(o).map(em=>'<span class="sendchip">'+esc(nameOf(em))+'<button data-act="sendrm" data-o="'+esc(o.n)+'" data-v="'+esc(em)+'" title="Take off" aria-label="Take '+esc(nameOf(em))+' off">×</button></span>').join('')+
           '<select class="in" data-sendadd="'+esc(o.n)+'" style="max-width:220px" aria-label="Add who sends '+esc(o.n)+'’s sheet"><option value="">'+(sendersOf(o).length?'＋ Add another…':'Choose who sends it…')+'</option>'+
             roster.slice().sort((a,b)=>((b.offices||[]).indexOf(o.n)>=0)-((a.offices||[]).indexOf(o.n)>=0) || String(a.name).localeCompare(String(b.name)))
@@ -880,7 +897,8 @@
     h+='<div class="card"><h2>Paid holidays</h2><p class="sub">A holiday column shows up by itself in the pay period it falls in.</p><div class="row">'+HOLIDAYS.map(x=>'<span class="pill p-new">'+esc(fmt(x.d,{year:'numeric'}))+' · '+esc(x.n)+'</span>').join('')+'</div></div>';
     const act=everyone().filter(p=>!S.removed[p.id]).sort(byLast), gone=everyone().filter(p=>S.removed[p.id]).sort(byLast);
     h+='<div class="card"><div class="row" style="margin-bottom:8px"><div class="grow"><h2>People</h2><p class="sub" style="margin:0">By last name, like the payroll software. Their office, their pay-period bonus, and when holiday pay starts.</p></div><button class="btn ghost sm" data-act="addp" data-v="">＋ Add a person</button></div>'+
-      (LIVEPAY ? '<div class="row" style="margin-bottom:10px;flex-wrap:wrap;gap:6px"><span class="small muted">Fill from the Home-Brace team list:</span>'+OFFICES.map(o=>'<button class="btn ghost sm" data-act="fill" data-v="'+o.k+'">＋ '+esc(o.n)+'</button>').join('')+'</div>' : '')+
+      (LIVEPAY ? '<div class="row" style="margin-bottom:10px;flex-wrap:wrap;gap:6px"><span class="small muted">Fill from the Home-Brace team list:</span>'+OFFICES.filter(o=>!o.self).map(o=>'<button class="btn ghost sm" data-act="fill" data-v="'+o.k+'">＋ '+esc(o.n)+'</button>').join('')+
+        OFFICES.filter(o=>o.self).map(o=>'<span class="small muted">'+esc(o.n)+': add its people with <b>＋ Add a person</b>.</span>').join('')+'</div>' : '')+
       '<div class="tblwrap"><table class="t"><thead><tr><th>Name</th><th>Office</th><th class="n">PP bonus</th><th>Started</th><th>Holiday pay from</th><th></th><th></th></tr></thead><tbody>'+
       act.map(p=>'<tr><td><b>'+esc(disp(p))+'</b></td><td>'+esc(p.offices.map(k=>OFF[k].n).join(' + '))+'</td>'+
         '<td class="n">$ <input class="in" style="width:76px" type="number" min="0" step="5" inputmode="decimal" data-sb="'+p.id+'" value="'+(bonusOf(p)||'')+'" aria-label="Pay-period bonus for '+esc(disp(p))+'"></td>'+
@@ -912,7 +930,7 @@
   let tt=null; function toast(m){ const t=el('toast'); t.textContent=m; t.classList.add('on'); clearTimeout(tt); tt=setTimeout(()=>t.classList.remove('on'),2600); }
   const top=t=>'<div class="dm-top"><h3>'+t+'</h3><button class="x" data-act="close" aria-label="Close">×</button></div>';
   function addPersonDlg(o){
-    openDlg(top(o?'Add someone to '+esc(OFF[o].n)+'’s sheet':'Add a person')+'<div class="dm-body">'+
+    openDlg(top(o?'Add someone to '+esc(poss(OFF[o].n))+' sheet':'Add a person')+'<div class="dm-body">'+
       '<div class="row"><label class="fld grow">First name<input class="in" id="nf" autocomplete="off"></label><label class="fld grow">Last name<input class="in" id="nl" autocomplete="off"></label></div>'+
       '<div class="row"><label class="fld grow">Start date<input class="in" id="ns" type="date" value="'+TODAY+'"></label>'+
       (o?'':'<label class="fld grow">Office<select class="in" id="no">'+OFFICES.map(q=>'<option value="'+q.k+'">'+esc(q.n)+'</option>').join('')+'</select></label><label class="fld grow">Pay-period bonus ($)<input class="in" id="nb" type="number" min="0" step="5" inputmode="decimal"></label>')+'</div>'+
@@ -998,7 +1016,7 @@
         return;
       }
       try{ localStorage.setItem('ph_viewas', t.value); }catch(_){} location.reload(); return; }
-    if(t.id==='persona'){ as=t.value; try{ localStorage.setItem('ph_pay_as', as); }catch(_){} tab='sheet'; per=CUR; render(); return; }
+    if(t.id==='persona'){ as=t.value; fillAs=null; try{ localStorage.setItem('ph_pay_as', as); }catch(_){} tab='sheet'; per=CUR; render(); return; }
     if(t.id==='perpick'){ per=+t.value; render(); return; }
     if(t.id==='offpick'){ liveOffice=t.value; per=CUR; render(); return; }
     if(t.dataset && t.dataset.sendadd){ liveSenders(t.dataset.sendadd, t.value, true); return; }
@@ -1013,12 +1031,13 @@
       const o=R().office, list=issues(per,o);
       if(list.length){ toast('Fix the '+list.length+' thing'+(list.length>1?'s':'')+' in yellow first'); const c=el('checks'); if(c) c.scrollIntoView({behavior:'smooth',block:'center'}); return; }
       const pr=P(per), s=get(per,o), ppl=rowPeople(per,o);
-      openDlg(top('Send to Heather?')+'<div class="dm-body"><p style="margin:0">'+esc(OFF[o].n)+'’s payroll for <b>'+esc(span(pr.start,pr.end))+'</b> — '+ppl.length+' people, '+hrs(ppl.reduce((a,p)=>a+num((s.rows[p.id]||{}).w1)+num((s.rows[p.id]||{}).w2),0))+' hours.</p><div class="note info">Heather sees it straight away. You can still change it until she enters payroll — she’ll see what changed.</div></div><div class="dm-foot"><button class="btn ghost" data-act="close">Not yet</button><button class="btn" data-act="sendok">Send</button></div>');
+      const mgr=R().mgr;
+      openDlg(top(mgr?'Mark '+esc(OFF[o].n)+' as done?':'Send to Heather?')+'<div class="dm-body"><p style="margin:0">'+esc(poss(OFF[o].n))+' payroll for <b>'+esc(span(pr.start,pr.end))+'</b> — '+ppl.length+' people, '+hrs(ppl.reduce((a,p)=>a+num((s.rows[p.id]||{}).w1)+num((s.rows[p.id]||{}).w2),0))+' hours.</p><div class="note info">'+(mgr?'It joins the combined sheet with the offices. You can still change it until you enter payroll.':'Heather sees it straight away. You can still change it until she enters payroll — she’ll see what changed.')+'</div></div><div class="dm-foot"><button class="btn ghost" data-act="close">Not yet</button><button class="btn" data-act="sendok">'+(mgr?'Mark as done':'Send')+'</button></div>');
       return;
     }
     if(act==='sendok'){
       const o=R().office, s=mine(per,o), at=nowISO(), again=s.status==='sent';
-      const who_=LIVEPAY ? ((PH.name && PH.name(PH.me())) || sender(o)) : sender(o), entry={at, t:(again?'Changes sent by ':'Sent by ')+who_};
+      const mgr=R().mgr, who_=LIVEPAY ? ((PH.name && PH.name(PH.me())) || sender(o)) : sender(o), entry={at, t:(mgr?(again?'Changes done by ':'Done by '):(again?'Changes sent by ':'Sent by '))+who_};
       if(LIVEPAY){
         b.disabled=true; const n=per;
         liveSheet(n,o,{set:{status:'sent', at:s.at||at, by:(PH.email && PH.email(PH.me()))||''}, unset:['changed'], log:entry});
@@ -1026,12 +1045,12 @@
           if(!okd){ b.disabled=false; toast('Not sent — check the connection and press Send again.'); return; }
           s.status='sent'; s.at=s.at||at; s.log=s.log||[]; s.log.push(entry); delete s.changed;
           tellBell(n, o, again, at);
-          closeDlg(); render(); toast(again?'Changes sent to Heather':'Sent to Heather ✓');
+          closeDlg(); render(); toast(mgr?(again?'Changes done ✓':'Done ✓ - it’s on the combined sheet'):(again?'Changes sent to Heather':'Sent to Heather ✓'));
         });
         return;
       }
       s.status='sent'; s.at=s.at||at; s.log=s.log||[]; s.log.push(entry); delete s.changed;
-      save(); closeDlg(); render(); toast(again?'Changes sent to Heather':'Sent to Heather ✓'); return;
+      save(); closeDlg(); render(); toast(mgr?(again?'Changes done ✓':'Done ✓ - it’s on the combined sheet'):(again?'Changes sent to Heather':'Sent to Heather ✓')); return;
     }
     if(act==='view'){
       const n=per, s=get(n,v), e=enteredOf(n);
@@ -1070,6 +1089,8 @@
     if(act==='reload'){ location.reload(); return; }
     if(act==='retry'){ liveFlushAll(); return; }
     if(act==='fill'){ liveFill(v); return; }
+    if(act==='fillin' && OFF[v] && OFF[v].self){ fillAs=v; tab='sheet'; per=CUR; render(); window.scrollTo({top:0}); return; }
+    if(act==='unfill'){ fillAs=null; tab='sheet'; render(); window.scrollTo({top:0}); return; }
     if(act==='sendrm'){ liveSenders(b.dataset.o, v, false); return; }
     if(act==='close'){ closeDlg(); return; }
     if(act==='mode'){ try{ if(v==='1') localStorage.setItem('ph_pay_real','1'); else localStorage.removeItem('ph_pay_real'); }catch(_){}
@@ -1125,7 +1146,7 @@
     }
     if(act==='deldoc'){
       const d=everyDoc().find(x=>x.id===v); if(!d) return;
-      openDlg(top('Take '+esc(d.n)+' off?')+'<div class="dm-body"><p style="margin:0">They won’t be on '+esc(OFF[d.office].n)+'’s sheet from now on. Days already sent stay as they are, and they can be brought back.</p></div>'+
+      openDlg(top('Take '+esc(d.n)+' off?')+'<div class="dm-body"><p style="margin:0">They won’t be on '+esc(poss(OFF[d.office].n))+' sheet from now on. Days already sent stay as they are, and they can be brought back.</p></div>'+
         '<div class="dm-foot"><button class="btn ghost" data-act="close">Keep them</button><button class="btn" data-act="deldocok" data-v="'+esc(v)+'">Take them off</button></div>');
       return;
     }
@@ -1351,7 +1372,7 @@
 })();
 </script>
 <script>PH.nav('payroll');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc118"></script>
+<script src="tour.js?v=hc119"></script>
 <script>
 Tour.init([
   ...((window.PH && PH.isLive && PH.isLive()) || (()=>{ try{ return localStorage.getItem('ph_pay_real')==='1'; }catch(_){ return false; } })() ? [] : [{sel:'#persona', title:'A mock-up', body:'Made-up people and amounts. Start as the <b>Carlsbad TC</b>, who sends Carlsbad’s sheet, then switch to <b>Heather</b>.'}]),

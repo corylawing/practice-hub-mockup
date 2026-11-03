@@ -20,7 +20,8 @@ I can confidently say that the chat feature should go next. The production thing
 1. **Payroll -> LIVE.** She OKed the mock-up. Real build: the live data (pay is private - follow the TC Tracker's locked
    folder, access from Teams & Access; think per-office so one OM can't open another office's sheets), the real
    people and who sends each office's sheet, her Settings, reminders in the bell (phone reminders come with #2).
-   **STATUS 03/11: ON LIVE (hc116), still OFF for staff** (`PAY_LIVE=false`). Go-live step 1 done; next Cory: steps 2-4
+   **STATUS 03/11: ON LIVE (hc116), still OFF for staff** (`PAY_LIVE=false`). Heather 03/11: Settings done ("I think I have everything done on my
+   end"); her two fixes (Sun-Sat periods, Zihua Partners) are on the sandbox (hc119) - next production deploy. Go-live step 1 done; next Cory: steps 2-4
    (?paypreview, lock the folder, Teams & Access sync), Heather: step 5 (Settings, she opens ?paypreview too), then
    flip PAY_LIVE. Target: pay period #24 (Nov 2-15, sheets due Tue Nov 17). Steps: "PAYROLL LIVE (02/11)" below.
 2. **Chat + phone alerts -> LIVE** (one thing to her). STATUS 03/11: alerts step 3 built on the sandbox (every device,
@@ -80,6 +81,15 @@ paySenders/reloadPaySenders/paySenderOffices, payLevel).
   list `ph_pay_senders`; grants record: `ph_paygrants`.
 - **Pay periods**: anchored on her sheet (#20 paid 2026-09-25), numbered per pay-date year, key `YYYY-NN`; current =
   the one that ended most recently; due Tue 2 pm Central (Mon when a holiday falls later that week).
+- **03/11 (hc118-119, sandbox; NOT live yet), Heather's two feedback items:** (1) periods run **SUNDAY to SATURDAY** ("the
+  next pay period is Nov 1st - Nov 14th"): end = pay - 6, due = end + 3; pay days, due days and keys unchanged (#24 = Nov
+  1-14, due Tue Nov 17, paid Fri Nov 20). (2) **Zihua Partners** ("where me, Selene and Jessica get paid out of";
+  "I fill it in for Zihua"): a 9th entry `{k:'zihua', self:true}` in payroll.html AND payrules.js, between San Angelo and
+  Mansfield (her main sheet's order). self = nobody sends it: no sender select, no Fill-from-team-list (Add a person),
+  wanted() never grants it to a sender (managers only); whoever manages payroll uses the board's "Fill it in" (R() mgr
+  mode: the office sheet + "← All offices"; "Mark as done" = status sent; tile/pill "Done"). The manager's 2 pm bell
+  counts it once any sender is chosen ("still waiting on ..., Zihua Partners"). Browser-checked (mock-up as Heather,
+  Real version as an admin, 1280 + 390 px).
 - **Who sees what**: Admin team (and Payroll level Edit) = manage everything incl. Heather's columns; Payroll level
   View = read every office; a chosen sender = their own office's sheet only (no pay amounts). Saves are field-level,
   queued 0.7 s, badge "Saving… / Saved ✓", leave-page guard. Nothing saves until the folder is locked.
