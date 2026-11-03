@@ -27,7 +27,8 @@ I can confidently say that the chat feature should go next. The production thing
    signed-in only, payroll reminders on phones - "PHONE ALERTS, step 3"); Chat waits on Keanu (Chat.ReadWrite + Teams
    licences, asked 03/11). Needs IT (Adam) to approve the Teams chat permission; alerts:
    subscriptions in SharePoint, the live origin in api-push ORIGINS, the home-screen sign-in on live (Cory's iPhone
-   test: Cory said 03/11 he tested alerts on his iPhone and they worked - before the sender began requiring a sign-in).
+   test PASSED 03/11 on the sandbox, hc117: Home-Brace home-screen icon, Microsoft sign-in inside it, bell -> Turn on ->
+   the "Alerts are on" alert arrived through the sign-in-checking sender).
 3. **Production days from the Schedule.** Heather 23/10: "can the # of production days per office pull from the
    schedule in Home Brace and can the completed production days # on this screen pull from that calendar as well once
    that day has passed?" Her rules (01/11): a Friday (half day) counts as a whole day; a cancelled day - "the schedule
@@ -731,7 +732,7 @@ alerts we need that", "go", and asked "are you just doing this in sandbox and no
   handleRedirectPromise() - skipping its "clear interaction.status" on that load, or MSAL would ignore the answer.
   test/signin.test.js (10). Browser-checked: a normal tab still gets the popup; a stand-in home-screen app goes to
   Microsoft as a full page; the return is handled (a fake answer is refused cleanly); a popup landing on auth.html is
-  left alone. NOT yet proven on a real iPhone (sign-in inside the app) - Cory's test.
+  left alone. PROVEN on Cory's real iPhone 03/11 (hc117): signed in inside the home-screen app, Turn on, alert arrived.
 - Chat: alerts.js on the page; REAL = PH_ALERTS present; the bell/strip's "Turn on alerts" calls enable() (from the
   tap) and sends a real test (5 s); "Send me a test alert"; "Turn alerts off" unsubscribes; blocked / can't get alerts
   have their own words. Payroll: "See the phone reminder" and Heather's "Send a reminder" send a REAL alert to this
@@ -764,7 +765,8 @@ delegated **Chat.ReadWrite** on the app registration and to confirm staff have T
 - **TO PUT ALERTS LIVE (Cory decides):** flip ALERTS_LIVE in v1/alerts.js AND start.html; deploy api-push with the
   production site (deploy-production.sh must copy api-push + deploy/.vapid.json like deploy-alerts-test.sh, as the API);
   the manifest on live pages (user.js `!isLive()` check) and the home-screen redirect sign-in on live (gate.js
-  USE_REDIRECT `&& !LIVE`); Cory's iPhone test first (home-screen sign-in, Turn on, a payroll alert).
+  USE_REDIRECT `&& !LIVE`); after the live deploy, one iPhone retest on the live host (sandbox passed 03/11: home-screen
+  sign-in + Turn on + alert arrived through the sign-in-checking sender; a payroll alert not yet seen on a phone).
 
 **Portfolio demo got Team Chat too (22/10/2026).** The REPO ROOT pages (index.html, calendars.html ... + assets/app.js,
 data.js, styles.css; ribbon "INTERACTIVE PORTFOLIO DEMO · Fictional data") are Cory's GitHub portfolio demo - NOT
