@@ -7,12 +7,12 @@
    The sender only sends for someone signed in to the practice: every request carries their Microsoft sign-in (the ID
    token, PH_AUTH.idToken) and the sender checks it (api-push/idtoken.js).
    Sandbox: the sender is its TEST SLOT and the store is this browser, so "everyone" is whoever turned alerts on here
-   (View As someone, turn alerts on, and they're on for them on this device). Live: OFF until ALERTS_LIVE - the live
-   site's own /api/push isn't deployed yet.
+   (View As someone, turn alerts on, and they're on for them on this device). Live: ON since 04/11/2026 (Cory: "Phone
+   alerts can be on") - the live site's own /api/push (api-push, shipped by deploy-production.sh).
    iPhone: Apple only allows alerts for a web app added to the home screen (iOS 16.4 or newer). */
 (function(global){
   'use strict';
-  const ALERTS_LIVE=false;                                    // flip with the deploy that ships api-push to the live site
+  const ALERTS_LIVE=true;                                     // 04/11/2026: on - deploy-production.sh ships api-push as the site's API
   const LIVE=!!(global.PH && global.PH.isLive && global.PH.isLive());
   const SENDER=LIVE ? location.origin+'/api/push' : 'https://kind-hill-00da87410-alerts.centralus.3.azurestaticapps.net/api/push';
   const PUBLIC_KEY='BAUGXYt9Tf0seJ24ks7PIKITPkqbtlD_qe1ApKIqOvGM7EMCjdHTVurmF_d2mkYXu5hGVKcSh8tWLlFX5bke9XM';   // the sender's public half

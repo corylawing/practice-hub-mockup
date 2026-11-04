@@ -815,7 +815,12 @@ delegated **Chat.ReadWrite** on the app registration and to confirm staff have T
 - store.js HOUSEKEEPING += `ph_paygrants` (a real Payroll fix: taking back access shrinks it - the wipe guard would have
   refused it) and `ph_alertdev_`. test/alerts.test.js (22), payremind +15, push +9.
 - Staff guide `start.html`: "Get reminders on your phone" section, hidden on the live host until its own ALERTS_LIVE.
-- **TO PUT ALERTS LIVE (Cory decides):** flip ALERTS_LIVE in v1/alerts.js AND start.html; deploy api-push with the
+- **ALERTS LIVE 04/11/2026 (hc125, Cory: "Phone alerts can be on by the way").** ALERTS_LIVE=true (alerts.js + start.html),
+  the manifest on live pages, the home-screen redirect sign-in on live (USE_REDIRECT = STANDALONE), and
+  deploy-production.sh now ALWAYS ships api-push/ as the site's API (+ deploy/.vapid.json; refuses without it;
+  --with-api refused - api/ would need merging into api-push first). .webmanifest served as application/manifest+json.
+  Still to do: Cory's iPhone retest on the LIVE host (add the live site to the home screen, sign in, bell -> Turn on).
+- **(DONE 04/11, kept for the record) TO PUT ALERTS LIVE (Cory decides):** flip ALERTS_LIVE in v1/alerts.js AND start.html; deploy api-push with the
   production site (deploy-production.sh must copy api-push + deploy/.vapid.json like deploy-alerts-test.sh, as the API);
   the manifest on live pages (user.js `!isLive()` check) and the home-screen redirect sign-in on live (gate.js
   USE_REDIRECT `&& !LIVE`); after the live deploy, one iPhone retest on the live host (sandbox passed 03/11: home-screen

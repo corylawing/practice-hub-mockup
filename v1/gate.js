@@ -27,11 +27,11 @@
   /* AN IPHONE HOME-SCREEN APP (phone alerts, 22/10/2026): Apple only sends alerts to Home-Brace once it is on the home
      screen, and a home-screen app can't use the sign-in popup. There the whole page goes to Microsoft and back
      instead: the answer lands on auth.html, which hands it straight back to the page that started (BACK below), and
-     handleRedirectPromise() reads it here. SANDBOX ONLY for now - on the live site every sign-in is still the popup. */
+     handleRedirectPromise() reads it here. Live too since 04/11/2026 (alerts on): a normal browser tab keeps the popup. */
   var STANDALONE = global.navigator.standalone === true ||
     !!(global.matchMedia && global.matchMedia('(display-mode: standalone)').matches);
   var LIVE = !!(global.PH && global.PH.isLive && global.PH.isLive());
-  var USE_REDIRECT = STANDALONE && !LIVE;
+  var USE_REDIRECT = STANDALONE;
   var BACK = 'ph_signin_redirect';
   function returning(){
     try{ return USE_REDIRECT && !!sessionStorage.getItem(BACK) && /[#&](code|error)=/.test(location.hash); }catch(_){ return false; }

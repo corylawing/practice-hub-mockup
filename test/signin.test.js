@@ -27,7 +27,7 @@ t('nothing to hand back without an answer', run({store:{ph_signin_redirect:BACK}
 t('never to another site, whatever is stored', run({store:{ph_signin_redirect:'https://evil.example/x'}, hash:'#code=abc'})===null);
 t('a stored address with an old fragment is trimmed first', run({store:{ph_signin_redirect:BACK+'#old'}, hash:'#code=abc'})===BACK+'#code=abc');
 const gate=fs.readFileSync(path.join(__dirname,'..','v1','gate.js'),'utf8');
-t('gate.js: the home-screen sign-in is sandbox only for now (never on the live site)', /USE_REDIRECT = STANDALONE && !LIVE/.test(gate));
+t('gate.js: the home-screen app signs in by redirect, on the sandbox and the live site (04/11)', /USE_REDIRECT = STANDALONE;/.test(gate));
 t('gate.js: a normal browser still signs in with the popup', /app\.loginPopup\(\{ scopes: SCOPES \}\)/.test(gate) && /if \(USE_REDIRECT\)\{ goSignIn\(app\)/.test(gate));
 t('gate.js: on the way back the in-progress sign-in is not wiped before MSAL reads it', /var BACKFROM = returning\(\);\s*if \(!BACKFROM\) try\{/.test(gate));
 console.log(pass+' passed, '+fail+' failed');

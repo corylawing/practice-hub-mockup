@@ -9,7 +9,7 @@
 # snapshot.json and _testgrids.json are excluded: both hold the practice's real
 # figures, neither is used at runtime, and both are 404 in production today.
 #
-# Usage:  ./deploy/deploy-production.sh <deployment-token> [--with-api]
+# Usage:  ./deploy/deploy-production.sh <deployment-token>
 #   Token: Azure Portal -> Static Web App "kind-hill-00da87410"
 #          -> Manage deployment token. Never commit it.
 set -euo pipefail
@@ -62,27 +62,28 @@ STRIP
 fi
 
 # ---- the API (server side) -------------------------------------------------
-# Only deployed once it is configured. Without the app credentials it cannot do
-# anything, and the pages fall back to talking to Graph directly, so shipping it
-# half-configured would just add a broken endpoint.
-# Pass --with-api to include it. Off by default: it can do nothing until Adam has
-# granted the app permission and the settings are in place, and adding an /api route
-# to a working site for no benefit is not a risk worth taking on a normal deploy.
-API=""
-if [ "${2:-}" = "--with-api" ] && [ -d "$REPO/api" ]; then
-  API="$(dirname "$STAGE")/api"
-  rsync -a --exclude 'node_modules' "$REPO/api/" "$API/"
-  # The function needs the shared writer and the roster NEXT TO IT - the v1 folder
-  # is not deployed alongside the API.
-  cp "$REPO/v1/workbook.js" "$API/workbook.js"
-  [ -f "$REPO/v1/_people.json" ] && cp "$REPO/v1/_people.json" "$API/_people.json"
+# THE ALERT SENDER IS THE SITE'S API (04/11/2026, Cory: "Phone alerts can be on"). api-push/ answers /api/push: one
+# alert to one device, only for someone signed in to the practice (it checks their Microsoft ID token); it holds no
+# Microsoft keys and reads no practice data. Its alert key (deploy/.vapid.json, never in git) is copied next to it,
+# exactly as deploy-alerts-test.sh does. EVERY deploy ships it - a deploy without it would take /api/push off the
+# live site and every phone alert would stop.
+# api/ (the server-side workbook writer, never deployed - it waits on Adam) can't ALSO be the API: a Static Web App
+# has one. Merge it into api-push/ first if it is ever needed.
+if [ "${2:-}" = "--with-api" ]; then
+  echo "--with-api: api/ and api-push/ (the alert sender) would both need to be the site's API - merge them first. Nothing was deployed." >&2
+  exit 1
 fi
+[ -f "$REPO/deploy/.vapid.json" ] || { echo "deploy/.vapid.json is missing (the alert key - never in git). Nothing was deployed." >&2; exit 1; }
+API="$(dirname "$STAGE")/api"
+rsync -a --exclude 'vapid.json' "$REPO/api-push/" "$API/"
+cp "$REPO/deploy/.vapid.json" "$API/push/vapid.json"
+chmod 644 "$API/push/vapid.json"   # the copy here is locked to this Mac's user; the function runs as another user
 
 # The CLI refuses to run from inside the artifact folder, so deploy from its parent.
 cd "$(dirname "$STAGE")"
 SWA_CLI_DEPLOYMENT_TOKEN="$TOKEN" \
   npx --yes @azure/static-web-apps-cli@2.0.10 deploy ./swa --env production \
-    ${API:+--api-location ./api}
+    --api-location ./api --api-language node --api-version 22
 
 echo
 echo "Deployed. Verify the cache stamp actually changed:"

@@ -3158,9 +3158,9 @@
   const isLive=()=>env()==='live';
 
   /* HOME-SCREEN APP (phone alerts, 22/10/2026): Apple only sends alerts to a web app added to the home screen, so the
-     sandbox says how Home-Brace looks there - its name, icon, and that it opens full-screen on Home. Sandbox only
-     for now; the live site gets it when alerts go live (Cory decides). */
-  if(!isLive() && document.head && !document.querySelector('link[rel="manifest"]')){
+     site says how Home-Brace looks there - its name, icon, and that it opens full-screen on Home. On the live site
+     too since alerts went live there (04/11/2026). */
+  if(document.head && !document.querySelector('link[rel="manifest"]')){
     const m=document.createElement('link'); m.rel='manifest'; m.href='manifest.webmanifest'; document.head.appendChild(m);
   }
 

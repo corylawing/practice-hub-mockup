@@ -76,10 +76,9 @@ function load(opts){
   }
   {
     const {A, posted}=load({live:true, origin:'https://kind-hill-00da87410.3.azurestaticapps.net'});
-    const out=await A.sendTo(['quinn.quill@farnsworthorthodontics.com'], {title:'x'});
-    t('the live site sends nothing until ALERTS_LIVE', A.ON===false && out.devices===0 && !posted.length);
-    let threw=false; try{ await A.send({title:'x'}, sub(1)); }catch(e){ threw=e.message==='off'; }
-    t('and send() says "off" there', threw);
+    let err=''; try{ await A.send({title:'x'}, sub(1)); }catch(e){ err=e.message; }
+    t('the live site is on (ALERTS_LIVE, 04/11) and sends through its own /api/push, signed in', A.ON===true && !err && posted.length===1 &&
+      posted[0].url==='https://kind-hill-00da87410.3.azurestaticapps.net/api/push' && posted[0].b.idt==='ID-TOKEN');
   }
 
   /* ---- 3. The wipe guard leaves these records free to shrink ---- */

@@ -461,8 +461,8 @@
     </dl>
   </section>
 
-  <!-- PHONE ALERTS (03/11/2026, Cory: "make these things like turn on alerts in the onboarding document"). Hidden on the
-       live site until alerts are live there: flip ALERTS_LIVE below together with the one in v1/alerts.js. -->
+  <!-- PHONE ALERTS (03/11/2026, Cory: "make these things like turn on alerts in the onboarding document"). Live since
+       04/11/2026 (ALERTS_LIVE below, together with the one in v1/alerts.js). -->
   <section id="alerts-guide" hidden>
     <h2>Get reminders on your phone</h2>
     <p class="why" style="margin-top:6px">Home-Brace can send you a reminder &mdash; like when your office&rsquo;s
@@ -536,7 +536,7 @@
 
 <script>
   // Phone alerts: shown on the sandbox; on the live site only once they're live there (and v1/alerts.js says so too).
-  (function(){ var ALERTS_LIVE=false, g=document.getElementById('alerts-guide');
+  (function(){ var ALERTS_LIVE=true, g=document.getElementById('alerts-guide');
     if(g && (ALERTS_LIVE || !/azurestaticapps\.net$/.test(location.hostname))) g.hidden=false; })();
   // No video file (the sandbox copy): hide the section rather than show an empty player.
   (function(){ var v=document.getElementById('tour-video'); if(!v) return;
