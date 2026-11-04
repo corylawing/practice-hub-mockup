@@ -129,7 +129,10 @@
     '<b>Replies</b> (Multiple lines of text, plain text) and <b>ReplyTo</b> (Single line of text). Messages can be read meanwhile.</div>';
 
   /* ---------- Admin -> Feedback ---------- */
-  let FILTER='new';
+  /* Done grows for ever (Cory, 04/11: "probably better to just show the last 5 done or something like that"): Done shows
+     the 5 most recent and All the 20 most recent, newest first; "Show all" opens the rest until the filter changes. */
+  let FILTER='new', SHOWALL=false;
+  const CAP={done:5, all:20};
   function mountAdmin(el){
     styles();
     el.innerHTML='<div class="fbr-empty">Loading feedback…</div>';
@@ -137,7 +140,8 @@
   }
   function paintAdmin(el, d){
     const all=threads(d.items), n={new:all.filter(t=>t.isNew).length, done:all.filter(t=>t.done).length, all:all.length};
-    const shown=all.filter(t=>FILTER==='all' || (FILTER==='new' ? t.isNew : FILTER==='done' ? t.done : true));
+    const match=all.filter(t=>FILTER==='all' || (FILTER==='new' ? t.isNew : FILTER==='done' ? t.done : true));
+    const cap=CAP[FILTER], shown=(cap && !SHOWALL) ? match.slice(0, cap) : match;
     let h='<p style="margin:0 0 12px;font-size:14px;color:#5b6b7d">What people sent with <b>Tour &amp; Feedback</b>. Reply here: they see it in their bell (and on their phone if they turned alerts on), signed <b>'+TEAM+'</b>. Their answer back comes here, and to your email like before.</p>';
     if(!d.cols.replies || !d.cols.replyTo) h+=setupNote;
     h+='<div class="fbr-filters" role="group" aria-label="Show">'+[['new','New'],['all','All'],['done','Done']].map(f=>'<button type="button" data-f="'+f[0]+'" class="'+(FILTER===f[0]?'on':'')+'" aria-pressed="'+(FILTER===f[0])+'">'+f[1]+' ('+n[f[0]]+')</button>').join('')+
@@ -150,11 +154,13 @@
         '<div class="fbr-row"><button type="button" class="fbr-btn" data-send="'+esc(t.id)+'" disabled>Send reply</button>'+
         (d.cols.replies ? '<button type="button" class="fbr-btn ghost" data-done="'+esc(t.id)+'">'+(t.done?'Reopen':'Mark done')+'</button>' : '')+
         '<span class="fbr-err"></span></div></div></div>').join('')+'</div>'
+      + (shown.length<match.length ? '<div class="fbr-row" style="margin-top:12px"><button type="button" class="fbr-btn ghost" data-more="1">Show all '+match.length+(FILTER==='done'?' done':'')+'</button><span style="font-size:13px;color:#5b6b7d">Showing the '+shown.length+' most recent</span></div>' : '')
       : '<div class="fbr-empty">'+(FILTER==='new' ? 'Nothing new - you’re all caught up.' : 'Nothing here yet.')+'</div>';
     h+='<p style="margin:14px 2px 0;font-size:12.5px;color:#8291a3">Everyone’s messages show here, for Home-Brace admins. Staff only ever see their own, under My messages.</p>';
     el.innerHTML=h;
     el.onclick=e=>{
-      const f=e.target.closest('[data-f]'); if(f){ FILTER=f.dataset.f; paintAdmin(el, d); return; }
+      const f=e.target.closest('[data-f]'); if(f){ FILTER=f.dataset.f; SHOWALL=false; paintAdmin(el, d); return; }
+      if(e.target.closest('[data-more]')){ SHOWALL=true; paintAdmin(el, d); return; }
       if(e.target.closest('[data-re]')){ mountAdmin(el); return; }
       const s=e.target.closest('[data-send]'); if(s){ sendReply(el, d, s); return; }
       const dn=e.target.closest('[data-done]'); if(dn){ markDone(el, d, dn); return; }
