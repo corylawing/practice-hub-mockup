@@ -60,6 +60,31 @@
   .whoami .av{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;font-size:17px;background:var(--navy2)}
   .whoami h1{font-size:24px}
   .whoami .sub{font-size:14px;color:var(--soft)}
+  /* GOOD MORNING (04/11/2026, Cory: "Good Morning, Good Afternoon, and Working Late like we did in General KPI Dashboard
+     with animated icon based of hours of user"). The KPI dashboard's greeting and its little sun / moon, by this
+     device's clock: morning 5-12 (the sun rises), afternoon 12-18 (it glows), evening 18-22 and working late 22-5 (the
+     moon, with stars). */
+  .whoami .hi{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .whoami.morning{--dp-soft:#fff4dc} .whoami.afternoon{--dp-soft:#fff0cf} .whoami.evening{--dp-soft:#ecebff}
+  .dp{position:relative;flex:0 0 34px;width:34px;height:34px;border-radius:10px;overflow:hidden;background:var(--dp-soft)}
+  .dpi{position:absolute;left:0;top:0;width:72px;height:72px;transform:scale(.4722);transform-origin:0 0}
+  .dpi i{position:absolute;display:block}
+  .dpi .horizon{left:13px;right:13px;bottom:17px;height:2px;border-radius:99px;background:#efa83f;opacity:.6}
+  .dpi .sun{width:25px;height:25px;left:23px;top:24px;border-radius:50%;background:#ffba5c;box-shadow:0 0 0 7px rgba(255,186,92,.16)}
+  .whoami.morning .sun{animation:dp-rise 2.6s ease-in-out infinite}
+  .whoami.afternoon .sun{animation:dp-pulse 2.2s ease-in-out infinite}
+  .dpi .ray{left:35px;top:10px;width:3px;height:10px;border-radius:99px;background:#efa83f;transform-origin:1.5px 26px;animation:dp-glow 2.2s ease-in-out infinite}
+  .dpi .moon{left:23px;top:18px;width:31px;height:31px;border-radius:50%;background:#7b74e8;box-shadow:0 0 0 8px rgba(123,116,232,.12);animation:dp-float 3s ease-in-out infinite}
+  .dpi .moon::after{content:"";position:absolute;width:26px;height:26px;left:10px;top:-4px;border-radius:50%;background:#ecebff}
+  .dpi .spark{width:7px;height:7px;border-radius:50%;background:#fff;box-shadow:0 0 0 2px #afaaf5;opacity:0}
+  .dpi .spark.one{left:13px;top:15px;animation:dp-twinkle 2.4s .2s infinite}
+  .dpi .spark.two{right:13px;top:18px;animation:dp-twinkle 2.4s 1.1s infinite}
+  @keyframes dp-rise{0%,100%{transform:translateY(7px)}45%,65%{transform:translateY(-2px)}}
+  @keyframes dp-pulse{0%,100%{transform:scale(.94);box-shadow:0 0 0 6px rgba(255,186,92,.14)}50%{transform:scale(1.05);box-shadow:0 0 0 11px rgba(255,186,92,.08)}}
+  @keyframes dp-glow{0%,100%{opacity:.4}50%{opacity:1}}
+  @keyframes dp-float{0%,100%{transform:translateY(2px) rotate(-5deg)}50%{transform:translateY(-3px) rotate(3deg)}}
+  @keyframes dp-twinkle{0%,35%,100%{opacity:0;transform:scale(.5)}50%,72%{opacity:1;transform:scale(1)}}
+  @media (prefers-reduced-motion:reduce){.dpi i{animation:none}.dpi .spark{opacity:1}}
   .summary{font-size:14px;color:var(--soft);margin:2px 0 20px}
   .summary b{color:var(--navy)}
   /* tiles */
@@ -117,10 +142,10 @@
   }
 
 </style>
-<script src="user.js?v=hc125"></script>
+<script src="user.js?v=hc126"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc125"></script>
-  <script src="gate.js?v=hc125"></script>
+  <script src="store.js?v=hc126"></script>
+  <script src="gate.js?v=hc126"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — this is the logged-in home. Use “Viewing as” to see how the app changes for each role.</div>
@@ -140,7 +165,7 @@
     <span class="demo">Demo control — not a real login</span>
   </div>
 
-  <div class="whoami"><span class="av" id="who_av"></span><div><h1 id="who_name"></h1><div class="sub" id="who_sub"></div></div></div>
+  <div class="whoami" id="whoami"><span class="av" id="who_av"></span><div><div class="hi"><h1 id="who_name"></h1><span class="dp" id="who_dp" aria-hidden="true"></span></div><div class="sub" id="who_sub"></div></div></div>
   <div class="summary" id="summary"></div>
 
   <div class="updates" id="updates"></div>
@@ -321,6 +346,21 @@
   // A photo that lands after the first paint (SharePoint, or just uploaded) shows at once.
   document.addEventListener('ph:me-changed', function(){ try{ paintAvatar(); }catch(_){} });
 
+  /* Good morning / afternoon / evening, or "Working late?" - by this device's clock (GOOD MORNING, in the styles). The
+     live site greets the person by first name; the sandbox's personas are roles, so they keep the whole label. */
+  function daypart(){ const h=new Date().getHours(); return h>=5&&h<12 ? 'morning' : h>=12&&h<18 ? 'afternoon' : h>=18&&h<22 ? 'evening' : 'late'; }
+  function greet(){
+    if(!cur) return;
+    const dp=daypart(), live=!!(window.PH && PH.isLive && PH.isLive()), nm=live ? (String(cur.name||'').trim().split(/\s+/)[0]||'') : (cur.name||'');
+    el('who_name').textContent=dp==='late' ? 'Working late'+(nm?', '+nm:'')+'?' : 'Good '+dp+(nm?', '+nm:'');
+    el('who_name').title=cur.name||'';
+    el('whoami').className='whoami '+(dp==='late' ? 'evening' : dp);
+    el('who_dp').innerHTML='<span class="dpi">'+(dp==='morning'||dp==='afternoon'
+      ? (dp==='morning'?'<i class="horizon"></i>':'')+'<i class="sun"></i>'+[0,1,2,3,4,5,6,7].map(i=>'<i class="ray" style="transform:rotate('+(i*45)+'deg)"></i>').join('')
+      : '<i class="moon"></i><i class="spark one"></i><i class="spark two"></i>')+'</span>';
+  }
+  setInterval(greet, 5*60*1000);      // left open past noon, it says good afternoon
+
   function set(id){
     /* Production: the signed-in person, never a demo persona. The View-as dropdown is
        sandbox chrome (dechrome() hides it), so `id` is ignored there. */
@@ -330,7 +370,7 @@
       try{ localStorage.setItem('ph_viewas',cur.id); }catch(_){}
     }
     paintAvatar();
-    el('who_name').textContent=cur.name;
+    greet();
     el('who_sub').textContent=cur.sub;
     const nSec=SECTIONS.filter(s=>s.kind==='tool'&&(!s.adminOnly||cur.id==='admin')&&cur.sec[s.k]).length + (foldersFor(cur).length?1:0);
     const docScope = cur.scope==='all'?'all offices':('the '+(cur.scopes||[cur.scope]).join(', ')+' folder'+((cur.scopes||[]).length>1?'s':'')+' only');
@@ -353,7 +393,7 @@
 })();
 </script>
 <script>PH.nav('home');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(PH.loadActivity)PH.loadActivity().then(function(){return PH.loadSeen?PH.loadSeen():null;}).then(function(){if(window.HOME&&HOME.refreshUpdates)HOME.refreshUpdates();if(PH.refreshBell)PH.refreshBell();});});</script>
-<script src="tour.js?v=hc125"></script>
+<script src="tour.js?v=hc126"></script>
 <script>
 Tour.init([
   {sel:'.ph-av', title:'This is you', body:'Your name and photo, top right. Tap it any time for <b>My profile</b> \u2014 your photo, preferred name, phone and \u201cAbout me\u201d. Those follow you between devices.'},

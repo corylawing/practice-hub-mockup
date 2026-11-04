@@ -131,6 +131,11 @@ paySenders/reloadPaySenders/paySenderOffices, payLevel).
   and never took it down. Now `setupBar()` (user.js): only after sign-in, never while stillLearning(), and re-decided
   in identityChanged() (removes it when the late sources land). Reproduced on the old code with a stand-in whose
   Entra is blank and roster arrives 3 s late (bar stayed); gone with the fix; a truly blank profile still gets it.
+- **HOME GREETING (04/11, hc126, sandbox).** Cory: "Good Morning, Good Afternoon, and Working Late like we did in
+  General KPI Dashboard with animated icon based of hours of user". home.html greet(): device clock, morning 5-12 (rising
+  sun), afternoon 12-18 (glowing sun), evening 18-22 / "Working late, <first>?" 22-5 (moon + stars) - the KPI dashboard's
+  exact rules and CSS (dp-rise/pulse/glow/float/twinkle, reduced-motion off). Live: first name; sandbox personas keep the
+  role label. Re-checked every 5 min. Browser-checked at 8/14/19/23 h, 1280 + 390.
 - Asked 04/11, NOT built: a Settings screen where Heather picks per column "office types it / office sees it / only
   me" (~1 day). Today's split is fixed from her answers; her Goal/TC-OM/Extra live in her private folder. After go-live.
 - **Who sees what**: Admin team (and Payroll level Edit) = manage everything incl. Heather's columns; Payroll level
