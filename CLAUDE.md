@@ -101,7 +101,7 @@ paySenders/reloadPaySenders/paySenderOffices, payLevel).
   the other office's old entry is only MARKED `linked:<id>` (load skips it like `mistake`) and the kept id is added
   there - nothing deleted; refused if the other entry already has hours on an un-entered sheet). Mock-up: S.also.
   Browser-checked (mock-up + Real version: twins found, made one, reload = one row "Carlsbad + Hobbs", files right).
-- **NOTES DURING THE PAY PERIOD (04/11, hc121, sandbox).** Heather (OM meeting 03/11): "Some of them like to make
+- **NOTES DURING THE PAY PERIOD (04/11, hc121, LIVE 04/11 - verified stamp, PAY_LIVE=false, ALERTS_LIVE=false).** Heather (OM meeting 03/11): "Some of them like to make
   payroll notes throughout the pay period prior to the submission date. Are they able to make the notes and save them
   without submitting right away?" Saving was always as-you-type; but only CUR (ended most recently) was open. Now NEXT
   (= CUR+1, the one running) is open on the office's side too: picker "(in progress)", hours + notes save as they type,
