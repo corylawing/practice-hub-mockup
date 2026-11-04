@@ -168,6 +168,18 @@ paySenders/reloadPaySenders/paySenderOffices, payLevel).
   (no answer back while viewing); gate.js /me now asks for id; the admin's bell updates right after a reply.
   hc130: Feedback Done shows the 5 most recent, All the 20 most recent, + "Show all N" (Cory: "probably better to just
   show the last 5 done or something like that").
+- **TC: MEDICAID APPROVED / MEDICAID DENIED (04/11, hc133, LIVE 04/11 - Cory "just build it").** Selene: "could we include
+  a “Medicaid Denied” outcome? If a patient is denied but decides to move forward with private pay, would we then update
+  their payment type and outcome accordingly? For patients who are approved, should we keep them under “Medicaid
+  Approved” or “Medicaid Start”?" tc.js MED_OK / MED_NO (OUTCOMES, COMPLETED, NEEDS_FU; MED_OUTCOMES only for Medicaid
+  patients). 👍 Approved -> outcome Medicaid Approved + Scheduled to start; Started = a MEDICAID start (payer Medicaid) - no
+  "Medicaid Start". 👎 Denied -> outcome Medicaid Denied, payer stays Medicaid, call list "Private pay decision due"
+  (+2 days): 💵 Going private pay (DO.privatePay = the OLD denied: payer Private pay, Pending, reason Medicaid denied - the
+  exam moves to private pay), ✅ Started (private-pay start), ✖ Not going ahead (stays a Medicaid denial, no start).
+  Form-picked Approved/Denied are dated (setOutcome). monthStats medApproved / medDenied / wentPrivate (dates kept for
+  the monitor sheet's approvals / denials); openWork approvedWaiting / deniedDeciding; Monthly totals columns. Old
+  approved consults (Submitted to Medicaid + medicaidApproved) are SHOWN as Medicaid Approved (consultsFrom), stored
+  record unchanged until someone saves it. test/tc.test.js 167. Browser-checked on the sandbox's sample patients.
 - Asked 04/11, NOT built: a Settings screen where Heather picks per column "office types it / office sees it / only
   me" (~1 day). Today's split is fixed from her answers; her Goal/TC-OM/Extra live in her private folder. After go-live.
 - **Who sees what**: Admin team (and Payroll level Edit) = manage everything incl. Heather's columns; Payroll level

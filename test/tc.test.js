@@ -214,7 +214,7 @@ const C=[
 
 /* ---------- The lists match the sheet ---------- */
 {
-  t('Outcomes = the sheet’s six + Selene’s Pre-TX Hold, Submitted to Medicaid and Pending – Scheduled to Start', eq(TC.OUTCOMES, ['Started','Pending','Pending – Scheduled to Start','Pre-TX Hold','Submitted to Medicaid','Observation','No Show','Refused Treatment','Rescheduled / Cancelled']));
+  t('Outcomes = the sheet’s six + Selene’s Pre-TX Hold, Submitted to Medicaid, Pending – Scheduled to Start, Medicaid Approved and Medicaid Denied', eq(TC.OUTCOMES, ['Started','Pending','Pending – Scheduled to Start','Pre-TX Hold','Submitted to Medicaid','Medicaid Approved','Medicaid Denied','Observation','No Show','Refused Treatment','Rescheduled / Cancelled']));
   t('Follow-up statuses = the sheet’s five + Rebooked', eq(TC.FU_STATUSES.slice(0,5), ['Open','Contacted - waiting','Scheduled to start','Closed - started','Closed - declined']) && TC.FU_STATUSES[5]==='Rebooked');
   t('Lead sources and consult types = the sheet’s', TC.DEFAULT_LISTS.leads.length===8 && TC.DEFAULT_LISTS.types.length===6);
   t('"Needs dental work" / "Needs records" moved from Pending to Pre-TX Hold; "Medicaid denied" added to Pending',
@@ -255,11 +255,36 @@ const C=[
     .every(st=>A({outcome:'Pre-TX Hold', fuStatus:st, nextFU:'2026-10-02'})==='' && A({outcome:'Submitted to Medicaid', fuStatus:st, nextFU:'2026-10-02'})===''));
   t('Both are exams that need follow-up, with no same-day contract', ['Pre-TX Hold','Submitted to Medicaid'].every(o=>(r=>r.fuDone==='No' && r.fuStatus==='Open' && r.sameDay==='No')(TC.setOutcome({}, o))));
   t('Both count as completed consults', TC.monthStats([{id:'h', date:'2026-10-05', outcome:'Pre-TX Hold'},{id:'m', date:'2026-10-06', outcome:'Submitted to Medicaid'}], '2026-10', 0, TODAY).completed===2);
+  /* 04/11, Selene: a Medicaid Denied outcome, and Medicaid Approved (Started = a Medicaid start). */
   const d=TC.DO.denied({outcome:'Submitted to Medicaid', payer:'Medicaid', fuStatus:'Open', fuDone:'No'}, TODAY);
-  t('Medicaid denied: same record goes private pay and pending, follow-up in 2 days', d.payer==='Private pay' && d.outcome==='Pending' &&
-    d.reason==='Medicaid denied' && d.medicaidDenied===TODAY && d.nextFU==='2026-10-22' && d.fuDone==='No');
+  t('Medicaid denied: outcome Medicaid Denied, still Medicaid, on the call list in 2 days', d.outcome==='Medicaid Denied' && d.payer==='Medicaid' &&
+    d.medicaidDenied===TODAY && d.nextFU==='2026-10-22' && d.fuDone==='No' && d.fuStatus==='Open');
+  t('...the call list asks: will they go private pay? (no date / due / later)', A({outcome:'Medicaid Denied'})==='Set private pay follow-up date' &&
+    A({outcome:'Medicaid Denied', nextFU:TODAY})==='Private pay decision due' && A({outcome:'Medicaid Denied', nextFU:'2026-10-30'})==='Private pay - future follow-up');
+  const pp=TC.DO.privatePay(Object.assign({}, d), '2026-10-23');
+  t('Going private pay: payment type and outcome change for them - Pending, Medicaid denied, denial date kept', pp.payer==='Private pay' && pp.outcome==='Pending' &&
+    pp.reason==='Medicaid denied' && pp.medicaidDenied===TODAY && pp.nextFU==='2026-10-25' && A(pp)==='Pending - future follow-up');
+  const ds=TC.DO.started(Object.assign({}, d), '2026-10-24', '2026-10-24');
+  t('Started straight from Medicaid Denied = a private-pay start', ds.payer==='Private pay' && ds.outcome==='Pending' && ds.fuStatus==='Closed - started' && TC.startOf(ds)==='2026-10-24');
+  const dd=TC.DO.declined(Object.assign({}, d), '2026-10-24');
+  t('Not going ahead: closed, stays a Medicaid denial with no start', dd.outcome==='Medicaid Denied' && dd.payer==='Medicaid' && dd.fuStatus==='Closed - declined' && A(dd)==='');
   const ap=TC.DO.approved({outcome:'Submitted to Medicaid', payer:'Medicaid'}, TODAY);
-  t('Medicaid approved: scheduled to start, follow-up done', ap.medicaidApproved===TODAY && ap.fuStatus==='Scheduled to start' && ap.fuDone==='Yes');
+  t('Medicaid approved: outcome Medicaid Approved, scheduled to start, follow-up done', ap.outcome==='Medicaid Approved' && ap.medicaidApproved===TODAY && ap.fuStatus==='Scheduled to start' && ap.fuDone==='Yes');
+  const as=TC.DO.started(Object.assign({}, ap), '2026-10-28', '2026-10-28');
+  t('...Started then counts as a MEDICAID start - no separate "Medicaid Start"', as.payer==='Medicaid' && as.outcome==='Medicaid Approved' &&
+    TC.conversion([Object.assign({id:'ap', office:'Hobbs', date:'2026-10-02', name:'Ann'}, as)], '2026-10').Medicaid.starts===1);
+  t('Medicaid Approved set on the form, with no start appointment yet = "Set start appointment date"', A({outcome:'Medicaid Approved', fuStatus:'Open'})==='Set start appointment date');
+  t('Picking Approved / Denied on the form dates the decision', !!TC.setOutcome({}, 'Medicaid Approved').medicaidApproved && !!TC.setOutcome({}, 'Medicaid Denied').medicaidDenied &&
+    TC.setOutcome({medicaidDenied:'2026-10-01'}, 'Medicaid Denied').medicaidDenied==='2026-10-01');
+  t('Both are completed consults that need follow-up', ['Medicaid Approved','Medicaid Denied'].every(o=>TC.COMPLETED.indexOf(o)>=0 && TC.NEEDS_FU.indexOf(o)>=0));
+  const ms=TC.monthStats([{id:'1', date:'2026-10-05', outcome:'Medicaid Approved', payer:'Medicaid'},{id:'2', date:'2026-10-06', outcome:'Medicaid Denied', payer:'Medicaid'},
+    {id:'3', date:'2026-10-07', outcome:'Pending', payer:'Private pay', reason:'Medicaid denied', medicaidDenied:'2026-10-20'}], '2026-10', 0, TODAY);
+  t('The month: approved, denied, and denied-gone-private-pay counted', ms.completed===3 && ms.medApproved===1 && ms.medDenied===1 && ms.wentPrivate===1 && ms.pending===1);
+  const ow=TC.openWork([{id:'1', date:'2026-10-05', outcome:'Medicaid Approved', fuStatus:'Scheduled to start'},{id:'2', date:'2026-10-06', outcome:'Medicaid Denied', fuStatus:'Open'}], TODAY);
+  t('Open work: approved and not started, denied and deciding', ow.approvedWaiting===1 && ow.deniedDeciding===1);
+  const old=TC.consultsFrom({k:{consults:{x:{outcome:'Submitted to Medicaid', medicaidApproved:'2026-10-01', fuStatus:'Scheduled to start', upd:'a'},
+    y:{outcome:'Submitted to Medicaid', upd:'a'}}}});
+  t('Approved before this outcome existed: SHOWN as Medicaid Approved; still waiting ones unchanged', old.find(r=>r.id==='x').outcome==='Medicaid Approved' && old.find(r=>r.id==='y').outcome==='Submitted to Medicaid');
   t('Medicaid offices start as every New Mexico office but FFO Las Cruces', eq(TC.DEFAULT_MEDICAID, ['Carlsbad','Clovis','Hobbs','Cruces LCO']) &&
     TC.takesMedicaid(null,'Hobbs') && !TC.takesMedicaid(null,'Cruces FFO') && !TC.takesMedicaid(null,'Lubbock'));
   t('...and are a setting', TC.takesMedicaid({medicaid:['Cruces FFO']},'Cruces FFO') && !TC.takesMedicaid({medicaid:['Cruces FFO']},'Hobbs'));
@@ -287,7 +312,7 @@ const C=[
   t('...Cara (observation) is not a consult; Finn’s no-show is not an exam - he counts once',
     TC.patients(base).find(p=>p.key==='Hobbs|c:c3').counts===false && TC.patients(base).find(p=>p.key==='Hobbs|c:c6').exam.id==='finn2');
   t('...Gia’s September exam stays in September; her start counts in October', TC.conversion(base,'2026-09')['Private pay'].consults===1 && oct['Private pay'].starts===3);
-  const halDenied=base.map(r=>r.id==='hal' ? TC.DO.denied(Object.assign({}, r), '2026-10-30') : r);
+  const halDenied=base.map(r=>r.id==='hal' ? TC.DO.privatePay(TC.DO.denied(Object.assign({}, r), '2026-10-30'), '2026-10-31') : r);
   halDenied.find(r=>r.id==='hal').fuStatus='Closed - started'; halDenied.find(r=>r.id==='hal').startDate='2026-11-12';
   const oct2=TC.conversion(halDenied, '2026-10'), nov=TC.conversion(halDenied, '2026-11');
   t('Hal denied -> private pay: his ONE October exam moves to private pay (3/6 = 50%), never a second exam',

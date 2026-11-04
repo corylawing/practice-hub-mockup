@@ -95,6 +95,8 @@
   .oc-none{background:#fff;color:var(--soft);border:1px dashed #c9d1dc}
   .oc-Hold{background:#E4F4EF;color:#1b6b57}
   .oc-Medicaid{background:#ECEDFC;color:#3b3f9e}
+  .oc-MedOk{background:#E3F4EC;color:#1d6b46}
+  .oc-MedNo{background:#FBE9E7;color:#9a2f1e}
   .oc-SchedStart{background:#EEF6DD;color:#46661a}
   .pay{display:inline-block;border-radius:6px;padding:1px 7px;font-size:11px;font-weight:800;background:#ECEDFC;color:#3b3f9e;margin-left:6px;vertical-align:1px}
 
@@ -266,14 +268,14 @@
     *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}
   }
 </style>
-<script src="user.js?v=hc132"></script>
+<script src="user.js?v=hc133"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc132"></script>
-  <script src="gate.js?v=hc132"></script>
-  <script src="_staff.js?v=hc132"></script>
-  <script src="tc.js?v=hc132"></script>
-  <script src="tcstore.js?v=hc132"></script>
-  <script src="schedrec.js?v=hc132"></script>
+  <script src="store.js?v=hc133"></script>
+  <script src="gate.js?v=hc133"></script>
+  <script src="_staff.js?v=hc133"></script>
+  <script src="tc.js?v=hc133"></script>
+  <script src="tcstore.js?v=hc133"></script>
+  <script src="schedrec.js?v=hc133"></script>
 </head>
 <body>
 <div class="ribbon">SANDBOX — made-up patients. Use “Try it as” to see it as a TC, an office manager or Selene.</div>
@@ -339,7 +341,7 @@
   const fmtT=t=>{ if(!t) return ''; const [h,m]=t.split(':').map(Number); return ((h+11)%12+1)+':'+String(m).padStart(2,'0')+(h<12?'a':'p'); };
   const pct=x=>x==null?'—':Math.round(x*100)+'%';
   const ocClass=o=>'oc-'+(o==='No Show'?'NoShow':o==='Refused Treatment'?'Refused':o==='Rescheduled / Cancelled'?'Rescheduled':
-    o==='Pre-TX Hold'?'Hold':o==='Submitted to Medicaid'?'Medicaid':o===TC.SCHED_START?'SchedStart':(o||'none'));
+    o==='Pre-TX Hold'?'Hold':o==='Submitted to Medicaid'?'Medicaid':o===TC.MED_OK?'MedOk':o===TC.MED_NO?'MedNo':o===TC.SCHED_START?'SchedStart':(o||'none'));
   const ocShort=o=>o==='Refused Treatment'?'Refused':o==='Rescheduled / Cancelled'?'Rescheduled':o===TC.SCHED_START?'Pending – scheduled to start':o;
   const ocBadge=o=>'<span class="oc '+ocClass(o)+'">'+esc(o?ocShort(o):'No outcome yet')+'</span>';
 
@@ -389,8 +391,8 @@
   let UNREAD=[];
   const takesMed=o=>TC.takesMedicaid(LISTS, o);
   const payTag=r=>r.payer==='Medicaid'?'<span class="pay">Medicaid</span>':'';
-  // "Submitted to Medicaid" only for a Medicaid patient at an office that takes Medicaid.
-  const outcomesFor=r=>TC.OUTCOMES.filter(o=>o!=='Submitted to Medicaid' || (takesMed(r.office) && r.payer==='Medicaid'));
+  // "Submitted to Medicaid", "Medicaid Approved" and "Medicaid Denied" only for a Medicaid patient at an office that takes Medicaid.
+  const outcomesFor=r=>TC.OUTCOMES.filter(o=>TC.MED_OUTCOMES.indexOf(o)<0 || (takesMed(r.office) && r.payer==='Medicaid'));
   const openFns={};
   function isOpenFn(o){
     if(!openFns[o]){ const loc=(PH.locations()||[]).find(l=>l.n===o)||{}; openFns[o]=TC.openFrom(o, loc.hours, SCHED); }
@@ -597,13 +599,17 @@
       btns=B('called','📞 Checked')+B('approved','👍 Approved')+B('denied','👎 Denied')+B('declined','✖ Declined');
     else if(a==='Set Medicaid check date')
       btns=B('setDate','📆 Set the date')+B('approved','👍 Approved')+B('denied','👎 Denied');
+    else if(a==='Private pay decision due' || a==='Private pay - future follow-up')
+      btns=B('called','📞 Called')+B('privatePay','💵 Going private pay')+B('started','✅ Started')+B('declined','✖ Not going ahead');
+    else if(a==='Set private pay follow-up date')
+      btns=B('setDate','📆 Set the date')+B('privatePay','💵 Going private pay')+B('declined','✖ Not going ahead');
     else if(a==='Scheduled to start')
       btns=B('started','✅ Started')+B('declined','✖ Not starting');
     const facts=[
       r.phone?'<span>📞 <a class="tel" href="tel:'+esc(String(r.phone).replace(/[^\d+]/g,''))+'">'+esc(r.phone)+'</a></span>':'',
       '<span>Consult <b>'+esc(fmtS(r.date))+'</b></span>',
       '<span>'+ocBadge(r.outcome)+(r.reason?' · '+esc(r.reason):'')+'</span>',
-      r.nextFU && ['Pending',TC.SCHED_START,'Pre-TX Hold','Submitted to Medicaid'].indexOf(r.outcome)>=0?'<span>'+(r.outcome==='Submitted to Medicaid'?'Check with Medicaid':r.outcome===TC.SCHED_START?'Start appointment':'Next call')+' <b>'+esc(fmtS(r.nextFU))+'</b></span>':'',
+      r.nextFU && ['Pending',TC.SCHED_START,'Pre-TX Hold','Submitted to Medicaid',TC.MED_OK,TC.MED_NO].indexOf(r.outcome)>=0 && r.fuStatus!=='Scheduled to start'?'<span>'+(r.outcome==='Submitted to Medicaid'?'Check with Medicaid':(r.outcome===TC.SCHED_START || r.outcome===TC.MED_OK)?'Start appointment':'Next call')+' <b>'+esc(fmtS(r.nextFU))+'</b></span>':'',
       r.obsReview && r.outcome==='Observation'?'<span>Review <b>'+esc(fmtS(r.obsReview))+'</b></span>':'',
       r.lastContact?'<span>Last contact <b>'+esc(fmtS(r.lastContact))+'</b></span>':'',
       wait!=null?'<span>Waiting <b>'+wait+'</b> day'+(wait===1?'':'s')+'</span>':'',
@@ -697,11 +703,12 @@
     h+='<div class="card"><h2>Monthly results</h2><p class="sub">'+esc(fmtM(month))+'</p><table class="mt">'+
       R('Available consult slots', m.slots)+R('Consults scheduled', m.scheduled)+R('Capacity scheduled', pct(m.capacity))+
       R('Completed consults', m.completed, m.completedRate)+R('Started', m.started, m.startedRate, 'sub')+R('Pending', m.pending, m.pendingRate, 'sub')+R('Pending – scheduled to start', m.schedStart, m.schedStartRate, 'sub')+
-      R('Pre-TX hold', m.hold, m.holdRate, 'sub')+(med?R('Submitted to Medicaid', m.submitted, m.submittedRate, 'sub'):'')+
+      R('Pre-TX hold', m.hold, m.holdRate, 'sub')+(med?R('Submitted to Medicaid', m.submitted, m.submittedRate, 'sub')+R('Medicaid approved', m.medApproved, m.medApprovedRate, 'sub')+
+        R('Medicaid denied', m.medDenied, m.medDeniedRate, 'sub')+(m.wentPrivate?R('Denied, went private pay (in Pending / Started)', m.wentPrivate):''):'')+
       R('Observation', m.observation, m.observationRate, 'sub')+R('Refused treatment', m.refused, m.refusedRate, 'sub')+
       R('No show', m.noShow, m.noShowRate)+R('Rescheduled / cancelled', m.rescheduled, m.rescheduledRate)+R('RIP Retainer Programs sold', m.rpi)+'</table></div>';
     h+='<div class="card"><h2>Open work</h2><p class="sub">Right now, every month</p><table class="mt">'+
-      R('Open pending', w.openPending)+R('Scheduled to start, contract not signed', w.schedStart)+R('On pre-TX hold', w.onHold)+(med?R('Waiting on Medicaid', w.waitingMedicaid):'')+
+      R('Open pending', w.openPending)+R('Scheduled to start, contract not signed', w.schedStart)+R('On pre-TX hold', w.onHold)+(med?R('Waiting on Medicaid', w.waitingMedicaid)+R('Medicaid approved, not started', w.approvedWaiting)+R('Medicaid denied, deciding on private pay', w.deniedDeciding):'')+
       R('Current observation patients', w.observation)+R('Recall ready', w.recallReady)+
       R('Observation review due', w.observationDue)+R('No-show follow-up', w.noShow)+R('Missing outcome', m.missing)+R('All open follow-ups', w.allOpen)+'</table>'+
       (w.allOpen?'<button class="btn ghost sm" style="margin-top:10px" data-act="tab" data-v="calls">Open the call list →</button>':'')+'</div>';
@@ -753,15 +760,15 @@
       (days.length?days.map(x=>'<tr><td>'+esc(fmtD(x.date))+'</td><td class="n">'+x.scheduled+'</td><td class="n">'+x.slots+'</td><td class="n">'+pct(x.capacity)+'</td><td class="n">'+x.started+'</td><td class="n">'+x.pending+'</td><td class="n">'+x.noShow+'</td><td class="n">'+x.fuDue+'</td><td class="n">'+x.rpi+'</td><td class="n">'+x.sameDay+'</td><td class="n">'+x.fuDone+'</td></tr>').join(''):'<tr><td colspan="11" class="muted">Nothing this month.</td></tr>')+
       '</tbody></table></div></details>';
     const year=+month.slice(0,4), y=TC.yearTotals(list, year, slotsMonth, d, keep);
-    const MR=(r,label,cls)=>'<tr'+(cls?' class="'+cls+'"':'')+'><td>'+label+'</td><td class="n">'+r.slots+'</td><td class="n">'+r.scheduled+'</td><td class="n">'+pct(r.capacity)+'</td><td class="n">'+r.completed+'</td><td class="n">'+r.conversion.total.consults+'</td><td class="n">'+r.conversion.total.starts+'</td><td class="n">'+pct(r.conversion['Private pay'].rate)+'</td>'+(med?'<td class="n">'+pct(r.conversion.Medicaid.rate)+'</td>':'')+'<td class="n">'+r.pending+'</td><td class="n">'+r.schedStart+'</td><td class="n">'+r.hold+'</td><td class="n">'+r.observation+'</td><td class="n">'+r.noShow+'</td><td class="n">'+r.refused+'</td><td class="n">'+r.rescheduled+'</td><td class="n">'+r.rpi+'</td><td class="n">'+r.sameDay+'</td><td class="n">'+pct(r.sameDayRate)+'</td><td class="n">'+pct(r.noShowRate)+'</td><td class="n">'+r.fuYes+'</td><td class="n">'+pct(r.fuRate)+'</td></tr>';
-    h+='<details class="card"'+(canManage()?' open':'')+'><summary>Monthly totals · '+year+'</summary><div class="tblwrap" style="box-shadow:none"><table class="t"><thead><tr><th>Month</th><th class="n">Slots</th><th class="n">Scheduled</th><th class="n">Capacity</th><th class="n">Completed</th><th class="n">Consults</th><th class="n">Starts</th><th class="n">Conv. private</th>'+(med?'<th class="n">Conv. Medicaid</th>':'')+'<th class="n">Pending</th><th class="n">Sched. start</th><th class="n">Pre-TX</th><th class="n">Observation</th><th class="n">No show</th><th class="n">Refused</th><th class="n">Resched.</th><th class="n">RIP</th><th class="n">Same-day</th><th class="n">Same-day %</th><th class="n">No-show %</th><th class="n">Follow-ups</th><th class="n">Follow-up %</th></tr></thead><tbody>'+
+    const MR=(r,label,cls)=>'<tr'+(cls?' class="'+cls+'"':'')+'><td>'+label+'</td><td class="n">'+r.slots+'</td><td class="n">'+r.scheduled+'</td><td class="n">'+pct(r.capacity)+'</td><td class="n">'+r.completed+'</td><td class="n">'+r.conversion.total.consults+'</td><td class="n">'+r.conversion.total.starts+'</td><td class="n">'+pct(r.conversion['Private pay'].rate)+'</td>'+(med?'<td class="n">'+pct(r.conversion.Medicaid.rate)+'</td>':'')+'<td class="n">'+r.pending+'</td><td class="n">'+r.schedStart+'</td><td class="n">'+r.hold+'</td>'+(med?'<td class="n">'+r.submitted+'</td><td class="n">'+r.medApproved+'</td><td class="n">'+r.medDenied+'</td>':'')+'<td class="n">'+r.observation+'</td><td class="n">'+r.noShow+'</td><td class="n">'+r.refused+'</td><td class="n">'+r.rescheduled+'</td><td class="n">'+r.rpi+'</td><td class="n">'+r.sameDay+'</td><td class="n">'+pct(r.sameDayRate)+'</td><td class="n">'+pct(r.noShowRate)+'</td><td class="n">'+r.fuYes+'</td><td class="n">'+pct(r.fuRate)+'</td></tr>';
+    h+='<details class="card"'+(canManage()?' open':'')+'><summary>Monthly totals · '+year+'</summary><div class="tblwrap" style="box-shadow:none"><table class="t"><thead><tr><th>Month</th><th class="n">Slots</th><th class="n">Scheduled</th><th class="n">Capacity</th><th class="n">Completed</th><th class="n">Consults</th><th class="n">Starts</th><th class="n">Conv. private</th>'+(med?'<th class="n">Conv. Medicaid</th>':'')+'<th class="n">Pending</th><th class="n">Sched. start</th><th class="n">Pre-TX</th>'+(med?'<th class="n">Medicaid sub.</th><th class="n">Medicaid appr.</th><th class="n">Medicaid denied</th>':'')+'<th class="n">Observation</th><th class="n">No show</th><th class="n">Refused</th><th class="n">Resched.</th><th class="n">RIP</th><th class="n">Same-day</th><th class="n">Same-day %</th><th class="n">No-show %</th><th class="n">Follow-ups</th><th class="n">Follow-up %</th></tr></thead><tbody>'+
       y.rows.map((r,i)=>MR(r, MO[i], r.ym===month?'':'' )).join('')+MR(y.total,'Year','total')+'</tbody></table></div></details>';
     h+='<details class="card"><summary>How these numbers are worked out</summary>'+
       '<p class="small" style="margin-top:0"><b>Conversion</b> (Selene, October 2026) = starts that month ÷ consults that month, for private pay and Medicaid separately. '+
       'A <b>consult</b> is a new-patient exam that happened, counted once per patient (by chart #, else name + birth date) in the month of their first exam; '+
       'observation exams, no-shows and reschedules are not consults, and a return visit never adds one. A <b>start</b> counts once, in the month treatment begins &mdash; '+
-      'even from an earlier month’s exam, and for observation and recall patients &mdash; so a month can pass 100%. A Medicaid patient who goes private pay keeps their one exam; it moves to private pay.</p>'+
-      '<p class="small">The rest are the TC Consult Tracker workbook’s formulas. <b>Completed</b> = every exam that happened (started, pending, pre-TX hold, submitted to Medicaid, observation, refused). '+
+      'even from an earlier month’s exam, and for observation and recall patients &mdash; so a month can pass 100%. A Medicaid patient who goes private pay keeps their one exam; it moves to private pay. A <b>Medicaid Approved</b> patient’s start is a Medicaid start.</p>'+
+      '<p class="small">The rest are the TC Consult Tracker workbook’s formulas. <b>Completed</b> = every exam that happened (started, pending, pre-TX hold, submitted to Medicaid, Medicaid approved, Medicaid denied, observation, refused). '+
       'Same-day contract rate = same-day ÷ completed. No-show rate = no-shows ÷ scheduled. '+
       'Follow-up completion = follow-ups marked done ÷ every follow-up marked done or not done. RIP counts in the month it was sold.</p>'+
       '<p class="small"><b>Different from the spreadsheet, on purpose:</b></p><ul class="small" style="margin:0;padding-left:18px">'+
@@ -926,6 +933,12 @@
     } else if(r.outcome==='Submitted to Medicaid'){
       h+='<div class="then" style="margin-top:10px"><div><div class="q">Check with Medicaid</div>'+(ro?esc(fmtS(r.nextFU)||'—'):quickDates('nextFU', r.date||today(), medDates(today())))+'</div>'+
         '<div class="small muted">On the call list until Medicaid answers. If they’re denied and go private pay, their exam moves to private pay &mdash; it’s never counted twice.</div></div>';
+    } else if(r.outcome===TC.MED_OK){
+      h+='<div class="then" style="margin-top:10px"><div><div class="q">Start appointment</div>'+(ro?esc(fmtS(r.nextFU)||'—'):field('','nextFU','date'))+'</div>'+
+        '<div class="small muted">Medicaid said yes'+(r.medicaidApproved?' ('+esc(fmtS(r.medicaidApproved))+')':'')+'. When treatment begins, tap Started on the call list &mdash; it counts as a <b>Medicaid start</b>.</div></div>';
+    } else if(r.outcome===TC.MED_NO){
+      h+='<div class="then" style="margin-top:10px"><div><div class="q">Next call</div>'+(ro?esc(fmtS(r.nextFU)||'—'):quickDates('nextFU', r.date||today(), fuDates(today())))+'</div>'+
+        '<div class="small muted">Medicaid said no'+(r.medicaidDenied?' ('+esc(fmtS(r.medicaidDenied))+')':'')+'. On the call list until they decide: <b>💵 Going private pay</b> changes their payment type and outcome for you; <b>✖ Not going ahead</b> closes it.</div></div>';
     } else if(r.outcome==='Observation'){
       h+='<div class="then" style="margin-top:10px"><div><div class="q">Next observation review</div>'+(ro?esc(fmtS(r.obsReview)||'—'):quickDates('obsReview', r.date||today(), obsDates(r.date||today())))+'</div></div>';
     } else if(r.outcome==='No Show'){
@@ -969,14 +982,15 @@
     if(r.outcome==='Pending' && !r.reason) return 'Pick why it’s pending.';
     if(r.outcome===TC.SCHED_START && !TC.parse(r.nextFU)) return 'Add the start appointment date.';
     if(takesMed(r.office) && !r.payer) return 'Pick Medicaid or private pay.';
-    if(r.outcome==='Submitted to Medicaid' && r.payer!=='Medicaid') return '“Submitted to Medicaid” is only for Medicaid patients.';
+    if(TC.MED_OUTCOMES.indexOf(r.outcome)>=0 && r.payer!=='Medicaid') return '“'+r.outcome+'” is only for Medicaid patients. Going private pay? Make it Pending.';
     if(r.outcome==='Pre-TX Hold' && !r.reason) return 'Pick what they’re waiting on.';
     return '';
   }
   function fuDlg(){
     const d=DLG, r=ALL.find(x=>x.id===d.id)||{};
     const T={called:'📞 Called', scheduled:'📅 Scheduled to start', started:'✅ Started', declined:'✖ Declined', rebooked:'🔁 Rebooked',
-             reviewed:'👁 Observation reviewed', ready:'🟢 Ready to start', setDate:'📆 Set the date', approved:'👍 Medicaid approved', denied:'👎 Medicaid denied'}[d.what]||'';
+             reviewed:'👁 Observation reviewed', ready:'🟢 Ready to start', setDate:'📆 Set the date', approved:'👍 Medicaid approved', denied:'👎 Medicaid denied',
+             privatePay:'💵 Going private pay'}[d.what]||'';
     let h=top(T+' · '+esc(r.name||''))+'<div class="dm-body">';
     if(d.err) h+='<div class="err">'+esc(d.err)+'</div>';
     const base=today();
@@ -991,6 +1005,8 @@
     } else if(d.what==='reviewed'){
       h+='<div><div class="q lab2">Next observation review</div>'+quickDates('obsReview', base, obsDates(base))+'</div>';
     } else if(d.what==='started'){
+      if(r.outcome===TC.MED_NO) h+='<div class="note">Medicaid said no, so they start as <b>private pay</b>. Their exam moves to private pay &mdash; it isn’t counted twice.</div>';
+      else if(r.payer==='Medicaid') h+='<div class="small muted">Counts as a <b>Medicaid</b> start.</div>';
       h+='<div class="fields"><div class="fld"><label>Treatment start date</label><input type="date"'+attr('in','rec')+attr('f','startDate')+' value="'+esc(d.rec.startDate||base)+'"></div></div>'+
         '<div><div class="q lab2">RIP Retainer Program sold?</div>'+yesNo('rpi', d.rec.rpi)+'</div>'+
         '<div class="small muted">Counts as a start in the month treatment begins. Their '+esc(fmtM(TC.monthOf(r.date)))+' consult isn’t counted again.</div>';
@@ -999,12 +1015,16 @@
         '<div class="fld"><label>Time</label><input type="time"'+attr('in','rec')+attr('f','newTime')+' value="'+esc(d.rec.newTime||'')+'"></div></div>'+
         '<div class="small muted">Adds the new consult with the same patient details.</div>';
     } else if(d.what==='denied'){
-      h+='<div>They carry on as a <b>private-pay</b> patient (Pending · Medicaid denied). Their exam moves to private pay &mdash; it isn’t counted twice. '+
-        'If they’re not going ahead at all, use <b>Declined</b> instead.</div><div><div class="q lab2">Next call</div>'+quickDates('nextFU', base, fuDates(base))+'</div>';
+      h+='<div>Marks them <b>Medicaid Denied</b>. They stay on the call list until they decide: <b>💵 Going private pay</b>, <b>✅ Started</b>, or <b>✖ Not going ahead</b>.</div>'+
+        '<div><div class="q lab2">Call them about private pay</div>'+quickDates('nextFU', base, fuDates(base))+'</div>';
+    } else if(d.what==='privatePay'){
+      h+='<div>Their payment type changes to <b>private pay</b> and they become <b>Pending</b> (reason: Medicaid denied). Their exam moves to private pay &mdash; it isn’t counted twice.</div>'+
+        '<div><div class="q lab2">Next call</div>'+quickDates('nextFU', base, fuDates(base))+'</div>';
     } else {
       h+='<div>'+({scheduled:'Marks them scheduled to start and the follow-up as done. They wait under “Scheduled to start” until you tap Started.',
-        approved:'Marks Medicaid approved and them scheduled to start. They wait under “Scheduled to start” until you tap Started.',
-        declined:'Closes the follow-up as declined.', ready:'Moves them to the top of the call list as recall ready.'}[d.what]||'')+'</div>';
+        approved:'Marks them Medicaid Approved and scheduled to start. They wait under “Scheduled to start” until you tap Started &mdash; it counts as a Medicaid start.',
+        declined:(r.outcome===TC.MED_NO?'Closes it: they’re not going ahead. It stays a Medicaid denial with no start.':'Closes the follow-up as declined.'),
+        ready:'Moves them to the top of the call list as recall ready.'}[d.what]||'')+'</div>';
     }
     h+='</div><div class="dm-foot"><button class="btn ghost" data-act="close">Cancel</button><button class="btn" data-act="fu-save"'+(d.busy?' disabled':'')+'>'+(d.busy?'Saving…':'Save')+'</button></div>';
     return h;
@@ -1075,6 +1095,7 @@
     else if(d.what==='started') TC.DO.started(r, t, x.startDate||t, x.rpi);
     else if(d.what==='rebooked'){ if(!TC.parse(x.newDate)){ d.err='Pick the new consult date.'; return drawDlg(); } TC.DO.rebooked(r, t); jobs.push(persist(copyFor(r, x.newDate, x.newTime, 'Rebooked after no-show on '+fmtS(r.date)), null)); }
     else if(d.what==='denied') TC.DO.denied(r, t, x.nextFU||'');
+    else if(d.what==='privatePay') TC.DO.privatePay(r, t, x.nextFU||'');
     else TC.DO[d.what](r, t);
     d.busy=true; d.err=''; drawDlg();
     Promise.all([persist(r, keyOf(r))].concat(jobs)).then(()=>{ closeDlg(); render(); toast('✓ '+r.name+' updated'); },
@@ -1199,7 +1220,7 @@
 })();
 </script>
 <script>PH.nav('tc');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(window.TCPAGE)TCPAGE.identity();});document.addEventListener('ph-identity',function(){if(window.TCPAGE)TCPAGE.identity();});</script>
-<script src="tour.js?v=hc132"></script>
+<script src="tour.js?v=hc133"></script>
 <script>
 Tour.init([
   {sel:'#offbar', title:'Your office', body:'You see the offices you work at. Heather, Selene and leadership see every office and can pick one.'},
