@@ -131,7 +131,7 @@ paySenders/reloadPaySenders/paySenderOffices, payLevel).
   and never took it down. Now `setupBar()` (user.js): only after sign-in, never while stillLearning(), and re-decided
   in identityChanged() (removes it when the late sources land). Reproduced on the old code with a stand-in whose
   Entra is blank and roster arrives 3 s late (bar stayed); gone with the fix; a truly blank profile still gets it.
-- **HOME GREETING (04/11, hc126, sandbox).** Cory: "Good Morning, Good Afternoon, and Working Late like we did in
+- **HOME GREETING (04/11, hc126, LIVE 04/11 - Cory "Deploy greetings"; verified).** Cory: "Good Morning, Good Afternoon, and Working Late like we did in
   General KPI Dashboard with animated icon based of hours of user". home.html greet(): device clock, morning 5-12 (rising
   sun), afternoon 12-18 (glowing sun), evening 18-22 / "Working late, <first>?" 22-5 (moon + stars) - the KPI dashboard's
   exact rules and CSS (dp-rise/pulse/glow/float/twinkle, reduced-motion off). Live: first name; sandbox personas keep the
