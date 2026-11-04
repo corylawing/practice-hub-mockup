@@ -225,15 +225,15 @@
     .perhead .when{font-size:17px}
   }
 </style>
-<script src="user.js?v=hc122"></script>
+<script src="user.js?v=hc123"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc122"></script>
-  <script src="gate.js?v=hc122"></script>
-  <script src="alerts.js?v=hc122"></script>
-  <script src="_staff.js?v=hc122"></script>
-  <script src="payrules.js?v=hc122"></script>
-  <script src="paystore.js?v=hc122"></script>
-  <script src="docs.js?v=hc122"></script>
+  <script src="store.js?v=hc123"></script>
+  <script src="gate.js?v=hc123"></script>
+  <script src="alerts.js?v=hc123"></script>
+  <script src="_staff.js?v=hc123"></script>
+  <script src="payrules.js?v=hc123"></script>
+  <script src="paystore.js?v=hc123"></script>
+  <script src="docs.js?v=hc123"></script>
 </head>
 <body>
 <div class="ribbon">MOCK-UP for Heather — made-up people and amounts. Try it as the Carlsbad TC first, then as Heather.</div>
@@ -408,17 +408,41 @@
   if(!LIVEPAY) Object.keys(S.also).forEach(id=>{ const p=who(id); if(p) S.also[id].forEach(k=>{ if(OFF[k] && p.offices.indexOf(k)<0) p.offices.push(k); }); });
   const everyDoc=()=>DOCS.concat(S.docAdd);
 
+  /* ---------- EXTRA COLUMNS (04/11/2026, Cory: "The columns that the offices enter stuff in, I wanted the ability to
+     add columns for special circumstances if needed and take them away as needed"). Whoever manages payroll adds one in
+     Settings - for every office or one office - and it's on the sheets from the pay period still open. Taken off, it
+     leaves the sheets still being filled in; a sheet with something typed in it keeps showing it, and past sheets keep
+     theirs - nothing typed is ever deleted, and "Bring back" undoes it. Saved in each office's people.json (cols), so a
+     sender reads only their own office's. A row's value: x['sc_'+id]. Kinds: usd (added to Total), usdx (kept out of
+     Total), hrs, num (a count). ---------- */
+  let LIVECOLS={};
+  const cols=()=>LIVEPAY ? LIVECOLS : (S.cols=S.cols||{});
+  const KINDS=[['usd','Dollars - added to Total'],['usdx','Dollars - kept out of Total'],['hrs','Hours'],['num','A count']];
+  const KTIP={usd:'Dollars - added to Total.', usdx:'Dollars - kept out of Total.', hrs:'Hours.', num:'A count.'};
+  const KSHORT={usd:'dollars, added to Total', usdx:'dollars, kept out of Total', hrs:'hours', num:'a count'};
+  const pkey=n=>LIVEPAY ? P(n).key : 'm'+(1000+n);                                   // sorts like the pay periods do
+  const nOfP=k=>LIVEPAY ? nOfKey(k) : (+String(k).slice(1)-1000);
+  const plab=k=>{ const n=nOfP(k); return (n===null || !isFinite(n)) ? esc(String(k)) : lab(n); };
+  const openFrom=()=>pkey((!BEFORE && !enteredOf(CUR)) ? CUR : NEXT);                  // the first sheet still being filled in
+  const scHas=(s,id)=>Object.keys((s && s.rows)||{}).some(pid=>num((s.rows[pid]||{})['sc_'+id]));
+  function specCols(n,o){ const k=pkey(n), s=get(n,o); return (cols()[o]||[]).filter(c=>(c.from<=k && (!c.to || k<c.to)) || scHas(s,c.id)); }
+  const specDef=id=>{ const all=cols(); for(const k in all){ const d=(all[k]||[]).find(c=>c.id===id); if(d) return d; } return null; };
+  const specUsd=x=>Object.keys(x||{}).reduce((a,f)=>{ if(f.slice(0,3)!=='sc_') return a; const d=specDef(f.slice(3)); return a+(d && d.kind==='usd' ? num(x[f]) : 0); },0);
+  const specShow=(c,v)=>(c.kind==='usd'||c.kind==='usdx') ? money(num(v)) : c.kind==='hrs' ? hrs(num(v))+' h' : String(num(v));
+  const specLabel=c=>esc(c.n)+((c.kind==='usd'||c.kind==='usdx') ? (/\$/.test(c.n)?'':' $') : (c.kind==='hrs' && !/hour|hrs/i.test(c.n)) ? ' hrs' : '');
+
   /* ---------- sample sheets: the same numbers every time ---------- */
   function seed(s){ let h=2166136261; for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619); } return (h>>>0)/4294967296; }
   function sample(p,o,n){
     const r=k=>seed(p.id+'|'+o+'|'+n+'|'+k), two=p.offices.length>1, share=two?(o===p.offices[0]?.55:.45):1;
-    const x={w1:r2((32+r('a')*7.5)*share), w2:r2((31+r('b')*8)*share), pto:0, sick:0, oncall:0, com:0, comTo:'', exc:0, mkt:0, oth:0,
+    const x={w1:r2((32+r('a')*7.5)*share), w2:r2((31+r('b')*8)*share), pto:0, sick:0, oncall:0, ers:0, com:0, comTo:'', exc:0, mkt:0, oth:0,
              mg:'N', bonus:'full', cut:'', cutBy:'pct', ot1:false, ot2:false, notes:''};
     const say=t=>{ x.notes=x.notes?x.notes+' '+t:t; };
     if(!two && r('ot')>.9){ x.w1=r2(40+r('x')*2.4); x.ot1=true; say('Overtime approved by Heather for the community event.'); }
     if(r('pto')>.82) x.pto=r('p2')>.5?8:4;
     if(p.sick && r('sick')>.6) x.sick=r('s2')>.5?8:4;
     if(r('oc')>.78) x.oncall=r('o2')>.85?2:1;
+    if(x.oncall && r('er')>.55) x.ers=1+Math.floor(r('e2')*3);      // patients seen on an ER while on call
     if(r('cm')>.86){ const others=OFFICES.filter(q=>q.k!==o); x.com=r('c2')>.7?2:1; x.comTo=others[Math.floor(r('c3')*others.length)].n; }
     if(r('mk')>.87) x.mkt=Math.round(20+r('m2')*90);
     if(r('mg')>.93){ x.mg='Y'; x.bonus='partial';
@@ -436,13 +460,13 @@
     }
     return x;
   }
-  const blank=()=>({w1:'',w2:'',pto:0,sick:0,oncall:0,com:0,comTo:'',exc:0,mkt:0,oth:0,mg:'N',bonus:'full',cut:'',cutBy:'pct',ot1:false,ot2:false,notes:''});
+  const blank=()=>({w1:'',w2:'',pto:0,sick:0,oncall:0,ers:0,com:0,comTo:'',exc:0,mkt:0,oth:0,mg:'N',bonus:'full',cut:'',cutBy:'pct',ot1:false,ot2:false,notes:''});
   /* This pay period at Carlsbad: the demo's own sheet, mostly filled in, with a few things to catch */
   const DEMO={
     'Sofia Navarro':{w1:38.5, w2:36.25, mg:'Y', bonus:'partial', cut:10, cutBy:'pct', notes:'Out 3 hours for a funeral. Take 10% off the bonus.'},
     'Avery Brooks': {w1:41.33, w2:33.07},
     'Jordan Ellis': {w1:37.75, w2:38.1, oth:30, notes:'30 other miles: picked the doctor up from the airport in the next town over.'},
-    'Marisol Rios': {w1:34.2, w2:35.6, oncall:1, pto:4},
+    'Marisol Rios': {w1:34.2, w2:35.6, oncall:1, ers:2, pto:4},
     'Harper Quinn': {w1:32, w2:30.5},
     'Daniela Ortiz':{w1:39.5, w2:38, com:1, comTo:'Hobbs', mkt:64}
   };
@@ -498,10 +522,10 @@
     const w1=num(x.w1), w2=num(x.w2), ot1=Math.max(0,w1-40), ot2=Math.max(0,w2-40), b=bonusOf(p), cut=num(cutVal(x));
     const ppb=x.bonus==='none' ? 0 : x.bonus==='partial' ? r2(Math.max(0, cutBy(x)==='usd' ? b-cut : b*(1-cut/100))) : b;
     const holOn=!!(pr.hol && eligible(p,pr.hol.d)), hol=holOn&&!p.holHrs?RATE.holiday:0, holH=holOn&&p.holHrs?RATE.holidayHrs:0;
-    const oc=num(x.oncall)*RATE.onCall, own=num(x.phone)+num(x.dibs)+num(x.pog), extra=r2(num(x.extra)+num(x.exc));
+    const oc=num(x.oncall)*RATE.onCall, own=num(x.phone)+num(x.dibs)+num(x.pog), extra=r2(num(x.extra)+num(x.exc)), spec=r2(specUsd(x));
     return {hours:w1+w2, reg:r2(w1+w2-ot1-ot2), ot1:r2(ot1), ot2:r2(ot2), ppb, pto:num(x.pto), sick:num(x.sick), hol, holH, oc,
-            goal:num(x.goal), tcom:num(x.tcom), own, extra, exc:num(x.exc), reimb:r2((num(x.mkt)+num(x.oth))*RATE.mile),
-            total:r2(ppb+num(x.goal)+num(x.tcom)+hol+oc+own+extra)};
+            goal:num(x.goal), tcom:num(x.tcom), own, extra, exc:num(x.exc), ers:num(x.ers), spec, reimb:r2((num(x.mkt)+num(x.oth))*RATE.mile),
+            total:r2(ppb+num(x.goal)+num(x.tcom)+hol+oc+own+extra+spec)};
   }
   const daySet=v=>v!==undefined && v!==null && v!=='';
   const dayN=v=>daySet(v) ? num(v)+(num(v)===1?' day':' days') : '—';
@@ -600,6 +624,7 @@
     const other=OFFICES.filter(q=>q.k!==o);
     const sickCol=ppl.some(p=>p.sick || num((s.rows[p.id]||{}).sick)>0), hol=!!pr.hol;
     const ownM=(OFF[o].own||[]).filter(c=>!c.hrs);                     // this office's own bonuses, in dollars
+    const sp=specCols(n,o);                                            // the extra columns Heather added
     const cell=(p,f,w,val)=>edit
       ? '<input class="in" style="width:'+w+'px" type="number" step="0.01" min="0" inputmode="decimal" data-p="'+p.id+'" data-f="'+f+'" value="'+(val===''||val==null||(val===0&&f!=='w1'&&f!=='w2')?'':esc(val))+'">'
       : '<span class="ro'+(num(val)?'':' dim')+'">'+(num(val)?esc(val):'—')+'</span>';
@@ -613,7 +638,7 @@
           sel(p,'cutBy',cutBy(x),[['pct','%'],['usd','$']],48)+'</div>' : '');
     };
     let h='<div class="tblwrap"><table class="t sheet"><thead><tr>'+
-      '<th class="grp nm"></th><th class="grp" colspan="5">Hours</th><th class="grp" colspan="'+(1+(sickCol?1:0)+(hol?1:0))+'">Time off</th><th class="grp" colspan="6">On call, travel &amp; extras</th>'+(ownM.length?'<th class="grp" colspan="'+ownM.length+'">'+esc(OFF[o].n)+' bonuses</th>':'')+'<th class="grp" colspan="2">Pay-period bonus</th><th class="grp">Notes</th></tr><tr>'+
+      '<th class="grp nm"></th><th class="grp" colspan="5">Hours</th><th class="grp" colspan="'+(1+(sickCol?1:0)+(hol?1:0))+'">Time off</th><th class="grp" colspan="7">On call, travel &amp; extras</th>'+(ownM.length?'<th class="grp" colspan="'+ownM.length+'">'+esc(OFF[o].n)+' bonuses</th>':'')+(sp.length?'<th class="grp" colspan="'+sp.length+'">Extra columns</th>':'')+'<th class="grp" colspan="2">Pay-period bonus</th><th class="grp">Notes</th></tr><tr>'+
       '<th class="nm">Employee</th>'+
       '<th class="n gl">'+info('Wk 1','Hours worked, '+span(pr.start,pr.w1end))+'</th><th class="n">'+info('Wk 2','Hours worked, '+span(pr.w2start,pr.end))+'</th>'+
       '<th class="n">'+info('Regular','Regular hours: up to 40 in each week')+'</th>'+
@@ -622,10 +647,12 @@
       (sickCol?'<th class="n wr">'+info('Sick hrs','Sick hours - only for the person who kept them from before')+'</th>':'')+
       (hol?'<th class="wr">'+info(esc(pr.hol.n),'Home-Brace knows each person’s 90-day review date, so nobody fills this in')+'</th>':'')+
       '<th class="n gl wr">'+info('On call','Count 1 for each weekend they were on call this pay period')+'</th>'+
+      '<th class="n wr">'+info('# of ERs taken','Each patient seen on an ER = 1 hour of pay. Count the patients seen this pay period.')+'</th>'+
       '<th class="n wr">'+info('Com&shy;mutes','Round trips to another office (a round trip = 1). Don’t add commuter miles or road time - commuter pay is worked out from the federal rate.')+'</th><th>'+info('To','Which office they commuted to')+'</th>'+
       '<th class="n wr">'+info('Exception commuter $','Rarely used: only when a doctor asks for an amount. Say which doctor in Notes.')+'</th>'+
       '<th class="n wr">'+info('Marketing mi','Miles driven for marketing')+'</th><th class="n wr">'+info('Other mi','Special events only, not office-to-office or marketing. Say what for in Notes.')+'</th>'+
       ownM.map((c,i)=>'<th class="n wr'+(i?'':' gl')+'">'+info(esc(c.n)+' $','A bonus only '+OFF[o].n+' has: the amount for this person, this pay period')+'</th>').join('')+
+      sp.map((c,i)=>'<th class="n wr'+(i?'':' gl')+'">'+info(specLabel(c),(c.tip?c.tip+' ':'')+KTIP[c.kind]+(c.to?' Taken off - still here because something was typed in it.':''))+'</th>').join('')+
       '<th class="gl wr">'+info('Missed green','Missed a doctor (green) day? Then no bonus - unless one of your exceptions applies')+'</th>'+
       '<th>'+info('Bonus','Full, Partial or None. For Partial, put how much comes off (a % or a $ amount) and say why in Notes.')+'</th>'+
       '<th class="gl">Notes</th></tr></thead><tbody>';
@@ -639,10 +666,11 @@
         '<td class="n gl">'+cell(p,'pto',58,x.pto)+'</td>'+
         (sickCol?'<td class="n">'+(p.sick||num(x.sick)?cell(p,'sick',58,x.sick):'')+'</td>':'')+
         (hol?'<td class="small">'+holHTML(p,pr)+'</td>':'')+
-        '<td class="n gl">'+cell(p,'oncall',52,x.oncall)+'</td><td class="n">'+cell(p,'com',52,x.com)+'</td>'+
+        '<td class="n gl">'+cell(p,'oncall',52,x.oncall)+'</td><td class="n">'+cell(p,'ers',52,x.ers)+'</td><td class="n">'+cell(p,'com',52,x.com)+'</td>'+
         '<td>'+sel(p,'comTo',x.comTo,[['','—']].concat(other.map(q=>[q.n,q.n])),100)+'</td>'+
         '<td class="n">'+cell(p,'exc',66,x.exc)+'</td><td class="n">'+cell(p,'mkt',58,x.mkt)+'</td><td class="n">'+cell(p,'oth',58,x.oth)+'</td>'+
         ownM.map((c,i)=>'<td class="n'+(i?'':' gl')+'">'+cell(p,c.k,66,x[c.k])+'</td>').join('')+
+        sp.map((c,i)=>'<td class="n'+(i?'':' gl')+'">'+cell(p,'sc_'+c.id,66,x['sc_'+c.id])+'</td>').join('')+
         '<td class="gl">'+sel(p,'mg',x.mg,[['N','No'],['Y','Yes']],62)+'</td>'+
         '<td>'+bonusCell(p,x)+'</td>'+
         '<td class="gl">'+(edit?'<input class="in" style="width:210px" type="text" data-p="'+p.id+'" data-f="notes" value="'+esc(x.notes)+'" placeholder="What Heather should know" title="'+esc(x.notes)+'">':'<span class="ro" style="white-space:normal;display:inline-block;min-width:220px">'+(x.notes?esc(x.notes):'—')+'</span>')+'</td></tr>';
@@ -702,7 +730,9 @@
         ((OFF[o].own||[]).filter(c=>!c.hrs).length ? '<li><b>'+(OFF[o].own||[]).filter(c=>!c.hrs).map(c=>esc(c.n)).join(' and ')+':</b> type the amount for each person who gets it this pay period.</li>' : '')+
         '<li><b>Overtime</b> only when Heather approved it first. It’s worked out week by week — tick “Approved” for each week that has some.</li>'+
         '<li><b>Holiday pay</b> starts after the 90-day review. Home-Brace knows the dates, so there’s nothing to fill in.</li>'+
-        '<li><b>On call:</b> 1 for each weekend on call. <b>Commutes:</b> round trips (1 each) and the office — no commuter miles or road time.</li>'+
+        '<li><b>On call:</b> 1 for each weekend on call. <b># of ERs taken:</b> 1 for each patient seen on an ER - each is 1 hour of pay.</li>'+
+        '<li><b>Commutes:</b> round trips (1 each) and the office — no commuter miles or road time.</li>'+
+        specCols(n,o).filter(c=>!c.to).map(c=>'<li><b>'+esc(c.n)+':</b> '+(c.tip?esc(c.tip)+' ':'')+'('+KSHORT[c.kind]+')</li>').join('')+
         '<li><b>Exception commuter pay</b> only when a doctor asks. <b>Other miles</b> are for special events — say what for in Notes.</li>'+
         '<li><b>Missed a green day = no bonus.</b> Your exceptions: time off asked 3+ months ahead (full bonus is OK), or out a few hours for a funeral, school or appointment — take off a % or a $ amount.</li>'+
         '</ul></details>';
@@ -739,11 +769,12 @@
 
   /* ---------- Heather: this pay period ---------- */
   function flags(n){
-    const pr=P(n), F={ot:[], two:[], green:[], pay:[], miles:[], add:[]};
+    const pr=P(n), F={ot:[], er:[], two:[], green:[], pay:[], miles:[], add:[]};
     OFFICES.forEach(o=>{ const s=get(n,o.k); if(s.status!=='sent') return;
       rowPeople(n,o.k).forEach(p=>{ const x=s.rows[p.id]; if(!x) return;
         [1,2].forEach(w=>{ const hh=num(x['w'+w]); if(hh>40) F.ot.push({p,o,t:r2(hh-40)+' h of overtime in week '+w+(otOK(x,w)?' — marked approved':' — <b>not</b> marked approved'), bad:!otOK(x,w)}); });
         if(x.mg==='Y'){ const c=calc(p,x,pr); F.green.push({p,o,t:'Missed a green day → '+(x.bonus==='none'?'no bonus':x.bonus==='partial'?esc(cutText(x))+' off ('+money(c.ppb)+' of '+money(bonusOf(p))+')':'kept the full bonus')+(x.notes?' · “'+esc(x.notes)+'”':'')}); }
+        if(num(x.ers)>0) F.er.push({p,o,t:num(x.ers)+' ER'+(num(x.ers)>1?'s':'')+' taken → <b>'+num(x.ers)+' hour'+(num(x.ers)>1?'s':'')+' of pay</b>'+(num(x.oncall)?'':' · not marked on call')});
         if(num(x.exc)>0) F.pay.push({p,o,t:'Exception commuter pay '+money(num(x.exc))+(x.notes?' · “'+esc(x.notes)+'”':'')});
         if(num(x.mkt)+num(x.oth)>0) F.miles.push({p,o,t:(num(x.mkt)?num(x.mkt)+' marketing mi':'')+(num(x.mkt)&&num(x.oth)?' + ':'')+(num(x.oth)?num(x.oth)+' other mi':'')+' → '+money(r2((num(x.mkt)+num(x.oth))*RATE.mile))+' reimbursement'+(num(x.oth)&&x.notes?' · “'+esc(x.notes)+'”':'')});
       }); });
@@ -769,16 +800,18 @@
       esc('What '+label.replace(/&shy;/g,'')+' means: '+t)+'">i</button></span>'; };
   const ownTip=(o,c)=>c.hrs ? 'Sick hours kept from before - hours, not dollars. They come from '+OFF[o].n+'’s sheet.'
                             : OFF[o].n+'’s '+c.n+' bonus. It comes from '+OFF[o].n+'’s sheet.';
-  const combHead=o=>'<tr class="hd"><th class="nm">Employee</th><th class="n">Regular hrs</th><th class="n">OT Wk 1</th><th class="n">OT Wk 2</th><th class="n">PTO</th>'+
+  const combHead=(o,sp)=>'<tr class="hd"><th class="nm">Employee</th><th class="n">Regular hrs</th><th class="n">OT Wk 1</th><th class="n">OT Wk 2</th><th class="n">PTO</th>'+
     '<th class="n">'+info('PP bonus','The pay-period bonus: a set amount per person (you set it in Settings). The office marks it Full, Partial (takes off a % or a $ amount) or None.')+'</th>'+
     '<th class="n">'+info('Goal','The team reached its goal. You type it in - the offices don’t see it.')+'</th>'+
     '<th class="n">'+info('TC/OM','A bonus for the TC or the office manager - not a set amount. You type it in - the offices don’t see it.')+'</th>'+
     '<th class="n">'+info('Holiday','Holiday pay: '+money(RATE.holiday)+' when the pay period has a holiday, for anyone past their 90-day review ('+RATE.holidayHrs+' hours instead for anyone who gets holiday hours). Home-Brace works it out.')+'</th>'+
     '<th class="n">'+info('On call',money(RATE.onCall)+' for each weekend on call. The office counts the weekends.')+'</th>'+
+    '<th class="n">'+info('ER hrs','# of ERs taken: each patient seen = 1 hour of pay. Hours, not dollars - kept out of Total.')+'</th>'+
     ownCols(o).map(c=>'<th class="n">'+(c?info(esc(c.n),ownTip(o,c)):'')+'</th>').join('')+
     '<th class="n">'+info('Extra','A special bonus. You type it in - the offices don’t see it. Any exception commuter pay the office entered is added here too.')+'</th>'+
-    '<th class="n">'+info('Total','PP bonus + Goal + TC/OM + Holiday + On call + the office’s own bonuses + Extra. Reimburse isn’t in it.')+'</th>'+
-    '<th class="n">'+info('Reimburse','Mileage: marketing and other miles × '+money(RATE.mile)+' a mile (the IRS rate). Kept out of Total.')+'</th><th>Notes</th></tr>';
+    '<th class="n">'+info('Total','PP bonus + Goal + TC/OM + Holiday + On call + the office’s own bonuses + Extra + any extra $ column added to Total. Reimburse isn’t in it.')+'</th>'+
+    '<th class="n">'+info('Reimburse','Mileage: marketing and other miles × '+money(RATE.mile)+' a mile (the IRS rate). Kept out of Total.')+'</th>'+
+    (sp?'<th>'+info('Extra columns','The columns you added in Settings, as the office typed them. A $ column added to Total is in Total.')+'</th>':'')+'<th>Notes</th></tr>';
   let tipEl=null, tipFor=null;
   function showTip(b){
     if(!tipEl){ tipEl=document.createElement('div'); tipEl.className='tipbox'; tipEl.setAttribute('role','tooltip'); document.body.appendChild(tipEl); }
@@ -795,9 +828,10 @@
   document.addEventListener('focusout', e=>{ if(e.target.closest && e.target.closest('.ibtn')) hideTip(); });
   document.addEventListener('click', e=>{ const b=e.target.closest('.ibtn'); if(b){ e.preventDefault(); showTip(b); } else if(tipFor) hideTip(); }, true);   // a tap shows it
   window.addEventListener('scroll', hideTip, true);
-  const NC=16;
+  let NC=17;
   function combined(n){
     const pr=P(n), e=enteredOf(n); let grand={reg:0,ot1:0,ot2:0,total:0,reimb:0};
+    const anySp=OFFICES.some(o=>get(n,o.k).status==='sent' && specCols(n,o.k).length); NC=17+(anySp?1:0);
     let h='<div class="tblwrap cq"><table class="t comb"><tbody>';
     OFFICES.forEach(o=>{
       const s=get(n,o.k), on=!e && s.status==='sent' && !R().ro, own=ownCols(o.k);
@@ -808,7 +842,7 @@
           (!e && (n===CUR || n===NEXT) && !R().ro ? '<button class="btn ghost sm" data-act="fillin" data-v="'+o.k+'">Fill it in</button>' : '')+'</div></td></tr>'; return; }
         h+='<tr class="wait"><td colspan="'+NC+'"><div class="stick"><span class="pill '+(late?'p-late':'p-go')+'">'+(late?'Late — not sent':'Not sent yet')+'</span>'+
           '<span class="who">'+(who ? esc(who)+' sends it' : 'Nobody sends it yet — choose who in Settings')+'</span></div></td></tr>'; return; }
-      h+=combHead(o.k);
+      h+=combHead(o.k, anySp); const sp=specCols(n,o.k);
       let sub={reg:0,ot1:0,ot2:0,total:0,reimb:0};
       rowPeople(n,o.k).forEach(p=>{ const x=s.rows[p.id]; if(!x) return; const c=calc(p,x,pr);
         sub.reg+=c.reg; sub.ot1+=c.ot1; sub.ot2+=c.ot2; sub.total+=c.total; sub.reimb+=c.reimb;
@@ -816,18 +850,19 @@
           '<td class="n">'+hrs(c.reg)+'</td><td class="n">'+otCell(x,c,1)+'</td><td class="n">'+otCell(x,c,2)+'</td>'+
           '<td class="n">'+hrs(c.pto)+'</td><td class="n">'+money(c.ppb)+'</td>'+
           '<td class="n">'+hin(o.k,p,'goal',x.goal,on)+'</td><td class="n">'+hin(o.k,p,'tcom',x.tcom,on)+'</td>'+
-          '<td class="n">'+(c.holH?hrs(c.holH)+' h':money(c.hol))+'</td><td class="n">'+money(c.oc)+'</td>'+
+          '<td class="n">'+(c.holH?hrs(c.holH)+' h':money(c.hol))+'</td><td class="n">'+money(c.oc)+'</td><td class="n">'+(c.ers?c.ers:'—')+'</td>'+
           own.map(col=>'<td class="n">'+(!col?'':col.hrs?hrs(c.sick):money(num(x[col.k])))+'</td>').join('')+     // typed by the office
           '<td class="n">'+hin(o.k,p,'extra',x.extra,on)+(c.exc?'<div class="small muted">+ '+money(c.exc)+' commuter</div>':'')+'</td>'+
           '<td class="n"><b id="ct-'+o.k+'-'+p.id+'">'+money(c.total)+'</b></td><td class="n">'+money(c.reimb)+'</td>'+
+          (anySp?'<td class="small">'+sp.filter(cc=>num(x['sc_'+cc.id])).map(cc=>esc(cc.n)+': <b>'+specShow(cc,x['sc_'+cc.id])+'</b>').join('<br>')+'</td>':'')+
           '<td>'+(x.notes?'<span class="nt" title="'+esc(x.notes)+'">📝 note</span>':'')+'</td></tr>'; });
       ['reg','ot1','ot2','total','reimb'].forEach(k=>{ grand[k]+=sub[k]; });
-      h+='<tr class="subt"><td class="nm">'+esc(o.n)+' total</td><td class="n">'+hrs(sub.reg)+'</td><td class="n">'+hrs(sub.ot1)+'</td><td class="n">'+hrs(sub.ot2)+'</td><td colspan="9"></td><td class="n" id="cst-'+o.k+'">'+money(sub.total)+'</td><td class="n">'+money(sub.reimb)+'</td><td></td></tr>';
+      h+='<tr class="subt"><td class="nm">'+esc(o.n)+' total</td><td class="n">'+hrs(sub.reg)+'</td><td class="n">'+hrs(sub.ot1)+'</td><td class="n">'+hrs(sub.ot2)+'</td><td colspan="10"></td><td class="n" id="cst-'+o.k+'">'+money(sub.total)+'</td><td class="n">'+money(sub.reimb)+'</td>'+(anySp?'<td></td>':'')+'<td></td></tr>';
       docRows(n,o.k).forEach(d=>{ const v=(s.docs||{})[d.id]||{};
         h+='<tr class="docr"><td class="nm">'+esc(d.n)+'</td><td colspan="'+(NC-1)+'">Paid by the day: '+dayN(v.w1)+' in Wk 1 + '+dayN(v.w2)+' in Wk 2 = <b>'+daysText(v)+'</b></td></tr>'; });
     });
-    h+='<tr class="grand"><td class="nm">All offices</td><td class="n">'+hrs(grand.reg)+'</td><td class="n">'+hrs(grand.ot1)+'</td><td class="n">'+hrs(grand.ot2)+'</td><td colspan="9"></td><td class="n" id="cgt">'+money(grand.total)+'</td><td class="n">'+money(grand.reimb)+'</td><td></td></tr>';
-    return h+'</tbody></table></div><p class="small muted" style="margin:8px 2px 0">Total = PP bonus + Goal + TC/OM + holiday ('+money(RATE.holiday)+') + on call ('+money(RATE.onCall)+' a weekend) + Phone, DIBS, POG + Extra. '+
+    h+='<tr class="grand"><td class="nm">All offices</td><td class="n">'+hrs(grand.reg)+'</td><td class="n">'+hrs(grand.ot1)+'</td><td class="n">'+hrs(grand.ot2)+'</td><td colspan="10"></td><td class="n" id="cgt">'+money(grand.total)+'</td><td class="n">'+money(grand.reimb)+'</td>'+(anySp?'<td></td>':'')+'<td></td></tr>';
+    return h+'</tbody></table></div><p class="small muted" style="margin:8px 2px 0">Total = PP bonus + Goal + TC/OM + holiday ('+money(RATE.holiday)+') + on call ('+money(RATE.onCall)+' a weekend) + Phone, DIBS, POG + Extra'+(anySp?' + any extra $ column added to Total':'')+'. ER hrs: 1 hour of pay for each patient seen on an ER - hours, kept out of Total. '+
       'Reimburse is mileage at '+money(RATE.mile)+' a mile (the IRS rate) and stays out of Total. <b>Goal, TC/OM and Extra are yours to fill in</b> — the offices don’t see them. Phone, DIBS and POG come from the offices’ own sheets.</p>';
   }
   /* Totals follow as Heather types, without redrawing the box she is typing in. */
@@ -854,7 +889,7 @@
       (!e?'<div class="small muted" style="margin-top:12px">'+(LIVEPAY
         ? '⏰ Each office’s sender gets a reminder in their bell from the workday before it’s due, until it’s sent. At 2 pm on the due day your bell lists any still to come.'+(PHONE()?' Senders who turn alerts on (the bell → Turn on) get them on their phone too: the workday before at 9 am, the due day at 9 am and 1 pm.':' Reminders on phones come with Chat.')
         : '⏰ Reminders go out on their own to whoever sends each sheet: the workday before, the morning it’s due, and at 1 pm if it isn’t sent yet - in Home-Brace, and on their phone once alerts are on. <b>Send a reminder</b> sends one right now.')+'</div>':'')+'</div>';
-    const groups=[['add','🆕 New people'],['ot','⏱ Overtime'],['two','🏢 Working two offices — hours combined'],['green','🟢 Missed green days'],['pay','💵 Exception commuter pay'],['miles','🚗 Mileage']];
+    const groups=[['add','🆕 New people'],['ot','⏱ Overtime'],['er','🚑 ERs taken'],['two','🏢 Working two offices — hours combined'],['green','🟢 Missed green days'],['pay','💵 Exception commuter pay'],['miles','🚗 Mileage']];
     const count=groups.reduce((a,g)=>a+F[g[0]].length,0);
     h+='<div class="card"><h2>Worth a second look'+(count?' ('+count+')':'')+'</h2><p class="sub">Found for you across every sheet that’s been sent — no more hunting through notes.</p>'+
       (count?'<div class="flags">'+groups.filter(g=>F[g[0]].length).map(g=>'<div class="fgrp"><h3>'+g[1]+'</h3>'+F[g[0]].map(f=>'<div class="fl"><span class="who">'+esc(disp(f.p))+'</span><span class="muted">'+esc(f.o.n)+'</span><span class="grow">'+f.t+'</span>'+(f.bad?'<span class="pill p-late">Check</span>':'')+'</div>').join('')+'</div>').join('')+'</div>'
@@ -910,6 +945,7 @@
               .filter(r=>sendersOf(o).indexOf(String(r.email).toLowerCase())<0).map(r=>'<option value="'+esc(r.email)+'">'+esc(r.name)+((r.offices||[]).length?' · '+esc((r.offices||[]).join(', ')):'')+'</option>').join('')+'</select>'
           + '<div class="small muted">Usually the '+esc(o.by)+'.</div>'
         : 'The '+esc(o.by))+'</td><td>'+((o.own||[]).map(c=>esc(c.n)).join(', ')||'<span class="muted">—</span>')+'</td></tr>').join('')+'</tbody></table></div></div>';
+    h+=colsCard();
     h+='<div class="card"><h2>Paid holidays</h2><p class="sub">A holiday column shows up by itself in the pay period it falls in.</p><div class="row">'+HOLIDAYS.map(x=>'<span class="pill p-new">'+esc(fmt(x.d,{year:'numeric'}))+' · '+esc(x.n)+'</span>').join('')+'</div></div>';
     const act=everyone().filter(p=>!S.removed[p.id]).sort(byLast), gone=everyone().filter(p=>S.removed[p.id]).sort(byLast), tw=twins();
     if(tw.length) h+='<div class="note warn"><b>Listed twice?</b> These people are on two offices’ lists as two separate people, so their hours won’t add up. Make each one person and both offices still type their own hours.'+
@@ -936,6 +972,29 @@
           ? '<tr class="gone"><td>'+esc(d.n)+'</td><td>'+esc(OFF[d.office].n)+' <span class="small muted">· taken off '+esc(fmt(S.docGone[d.id]))+'</span></td><td class="n"><button class="link small" data-act="backdoc" data-v="'+d.id+'">Bring back</button></td></tr>'
           : '<tr><td><b>'+esc(d.n)+'</b></td><td>'+esc(OFF[d.office].n)+'</td><td class="n"><button class="link small" data-act="deldoc" data-v="'+d.id+'">Take off</button></td></tr>').join('')+'</tbody></table></div>'
         :'<div class="small muted">None yet.</div>')+'</div>';
+    return h+'</div>';
+  }
+
+  /* Settings: add a column for a special circumstance, take it off when it's over (EXTRA COLUMNS, above). */
+  function colsCard(){
+    const by={}, all=cols();
+    OFFICES.forEach(o=>(all[o.k]||[]).forEach(c=>{ const g=by[c.id]=by[c.id]||{c, ks:[]}; g.ks.push(o.k); }));
+    const list=Object.values(by).sort((a,b)=>String(a.c.at||'').localeCompare(String(b.c.at||''))), on=list.filter(g=>!g.c.to), off=list.filter(g=>g.c.to);
+    const where=g=>g.ks.length===OFFICES.length ? 'Every office' : g.ks.map(k=>OFF[k].n).join(', ');
+    const ro=R().ro;
+    let h='<div class="card"><h2>Extra columns</h2><p class="sub">For a special circumstance: add a column the offices fill in, and take it off when it’s over. What was typed in it stays on those sheets.</p>';
+    if(list.length) h+='<div class="tblwrap"><table class="t"><thead><tr><th>Column</th><th>What it is</th><th>Offices</th><th>On the sheets</th><th></th></tr></thead><tbody>'+
+      on.map(g=>'<tr><td><b>'+esc(g.c.n)+'</b></td><td class="small">'+(g.c.tip?esc(g.c.tip)+' ':'')+'<span class="muted">('+esc(KSHORT[g.c.kind]||'')+')</span></td><td>'+esc(where(g))+'</td><td>From '+plab(g.c.from)+'</td><td class="n">'+(ro?'':'<button class="link small" data-act="coloff" data-v="'+esc(g.c.id)+'">Take off</button>')+'</td></tr>').join('')+
+      off.map(g=>'<tr class="gone"><td>'+esc(g.c.n)+'</td><td class="small">'+esc(g.c.tip||'')+'</td><td>'+esc(where(g))+'</td><td class="small muted">Taken off from '+plab(g.c.to)+' - what was typed is kept</td><td class="n">'+(ro?'':'<button class="link small" data-act="colback" data-v="'+esc(g.c.id)+'">Bring back</button>')+'</td></tr>').join('')+
+      '</tbody></table></div>';
+    else h+='<div class="small muted">None yet.</div>';
+    if(!ro) h+='<div class="row" style="margin-top:12px;gap:8px;flex-wrap:wrap;align-items:flex-end">'+
+      '<label class="fld">Column name<input class="in" id="cn" maxlength="40" autocomplete="off" placeholder="e.g. Training hours" style="width:170px"></label>'+
+      '<label class="fld grow">What it means (the offices see this)<input class="in" id="ctip" maxlength="200" autocomplete="off" placeholder="e.g. Hours spent training at another office"></label>'+
+      '<label class="fld">Type<select class="in" id="ck">'+KINDS.map(k=>'<option value="'+k[0]+'">'+esc(k[1])+'</option>').join('')+'</select></label>'+
+      '<label class="fld">Offices<select class="in" id="co"><option value="">Every office</option>'+OFFICES.map(o=>'<option value="'+o.k+'">'+esc(o.n)+'</option>').join('')+'</select></label>'+
+      '<button class="btn sm" data-act="coladd">＋ Add column</button></div>'+
+      '<div class="small muted" style="margin-top:6px">It shows up on the sheets from '+plab(openFrom())+'.</div>';
     return h+'</div>';
   }
 
@@ -971,13 +1030,13 @@
   function csv(n){
     const pr=P(n), q=v=>{ v=String(v==null?'':v); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
     const lines=[['Pay period '+lab(n)+' - '+span(pr.start,pr.end)+', paid '+fmt(pr.pay,{year:'numeric'})], ['Week 1: '+span(pr.start,pr.w1end)+'   Week 2: '+span(pr.w2start,pr.end)], []];
-    OFFICES.forEach(o=>{ const s=get(n,o.k), own=ownCols(o.k).filter(Boolean);
+    OFFICES.forEach(o=>{ const s=get(n,o.k), own=ownCols(o.k).filter(Boolean), sp=specCols(n,o.k);
       lines.push([o.co]);
-      lines.push(['Employee Name','Regular Hours','OT Wk 1','OT Wk 2','PPBonus','PTO','Goal','TC/OM','Holiday','Reimburse','On Call'].concat(own.map(c=>c.n),['Extra','Total','Notes']));
+      lines.push(['Employee Name','Regular Hours','OT Wk 1','OT Wk 2','PPBonus','PTO','Goal','TC/OM','Holiday','Reimburse','On Call','ER Hours'].concat(own.map(c=>c.n),sp.map(c=>c.n+((c.kind==='usd'||c.kind==='usdx')?' ($)':c.kind==='hrs'?' (hrs)':'')),['Extra','Total','Notes']));
       if(s.status!=='sent'){ lines.push(['(not sent yet)']); lines.push([]); return; }
       rowPeople(n,o.k).forEach(p=>{ const x=s.rows[p.id]; if(!x) return; const c=calc(p,x,pr);
-        lines.push([disp(p), c.reg, c.ot1||'', c.ot2||'', c.ppb||'', c.pto||'', c.goal||'', c.tcom||'', c.holH?c.holH+' hrs':(c.hol||''), c.reimb||'', c.oc||'']
-          .concat(own.map(col=>col.hrs?(c.sick||''):(num(x[col.k])||'')), [c.extra||'', c.total, x.notes||''])); });
+        lines.push([disp(p), c.reg, c.ot1||'', c.ot2||'', c.ppb||'', c.pto||'', c.goal||'', c.tcom||'', c.holH?c.holH+' hrs':(c.hol||''), c.reimb||'', c.oc||'', c.ers||'']
+          .concat(own.map(col=>col.hrs?(c.sick||''):(num(x[col.k])||'')), sp.map(col=>num(x['sc_'+col.id])||''), [c.extra||'', c.total, x.notes||''])); });
       const ds=docRows(n,o.k);
       if(ds.length){ lines.push(['Doctor (paid by the day)','Days Wk 1','Days Wk 2','Total days']);
         ds.forEach(d=>{ const v=(s.docs||{})[d.id]||{}; lines.push([d.n, daySet(v.w1)?num(v.w1):'', daySet(v.w2)?num(v.w2):'', num(v.w1)+num(v.w2)]); }); }
@@ -1113,6 +1172,22 @@
     if(act==='retry'){ liveFlushAll(); return; }
     if(act==='fill'){ liveFill(v); return; }
     if(act==='oneperson'){ makeOne(v); return; }
+    if(act==='coladd' && !R().ro){
+      const nm=String(el('cn').value||'').trim().slice(0,40), tip=String(el('ctip').value||'').trim().slice(0,200), kind=el('ck').value, at=el('co').value;
+      if(!nm){ toast('Give the column a name'); el('cn').focus(); return; }
+      const ks=at ? [at] : OFFICES.map(o=>o.k), all=cols();
+      if(ks.some(k=>(all[k]||[]).some(c=>!c.to && c.n.toLowerCase()===nm.toLowerCase()))){ toast('There’s already a column called '+nm); return; }
+      const def={id:'c'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), n:nm, tip, kind:KTIP[kind]?kind:'num', from:openFrom(), by:(PH.email && PH.email(PH.me()))||'', at:nowISO()};
+      ks.forEach(k=>{ (all[k]=all[k]||[]).push(Object.assign({}, def)); if(LIVEPAY) livePeopleOf(k, x=>{ x.cols=x.cols||[]; if(!x.cols.some(c=>c.id===def.id)) x.cols.push(Object.assign({}, def)); }); });
+      if(LIVEPAY) liveFlushAll();
+      save(); render(); toast(nm+' added to '+(at ? poss(OFF[at].n)+' sheet' : 'every office’s sheet')+' from '+plab(def.from)); return; }
+    if((act==='coloff' || act==='colback') && !R().ro){
+      const to=act==='coloff' ? openFrom() : null, all=cols(), em=(PH.email && PH.email(PH.me()))||'';
+      const mark=c=>{ if(to){ c.to=to; c.toBy=em; c.toAt=nowISO(); } else { delete c.to; delete c.toBy; delete c.toAt; } };
+      Object.keys(all).forEach(k=>{ const c=(all[k]||[]).find(d=>d.id===v); if(!c) return; mark(c);
+        if(LIVEPAY) livePeopleOf(k, x=>{ const q=(x.cols||[]).find(d=>d.id===v); if(q) mark(q); }); });
+      if(LIVEPAY) liveFlushAll();
+      save(); render(); toast(to ? 'Taken off the sheets still being filled in - anything typed in it is kept' : 'Back on the sheets'); return; }
     if(act==='fillin' && OFF[v] && OFF[v].self){ fillAs=v; tab='sheet'; per=(per===NEXT ? NEXT : HOME()); render(); window.scrollTo({top:0}); return; }
     if(act==='unfill'){ fillAs=null; tab='sheet'; render(); window.scrollTo({top:0}); return; }
     if(act==='sendrm'){ liveSenders(b.dataset.o, v, false); return; }
@@ -1363,7 +1438,7 @@
     if(!lv){ LIVE.err='Your account doesn’t have Payroll. Whoever manages payroll chooses who sends each office’s sheet; Admin → Teams & Access gives the rest.'; render(); return; }
     LIVE.loading=true; LIVE.err=''; render();
     const offs=lv==='send' ? myOffices() : OFFICES.map(o=>o.k), people={}, docs=[];
-    S.subs={}; S.entered={}; S.removed={}; S.docGone={}; S.bonus={}; S.added=[]; S.docAdd=[];
+    S.subs={}; S.entered={}; S.removed={}; S.docGone={}; S.bonus={}; S.added=[]; S.docAdd=[]; LIVECOLS={};
     /* Nothing is read or written until the payroll folder is LOCKED: before that, everyone in Home-Brace could open it
        in SharePoint. Whoever manages payroll is told how; a sender only ever gets access after it's locked anyway. */
     (lv==='manage' && ONLIVE ? PAYSTORE.ensure(OFFICES.map(o=>o.n)).then(()=>window.PH_DOCS && PH_DOCS.payLocked ? PH_DOCS.payLocked() : false).then(locked=>{
@@ -1381,6 +1456,7 @@
           if(q.gone) S.removed[q.id]=q.gone;
         });
         (pf.docs||[]).forEach(d=>{ docs.push(Object.assign({}, d, {office:k})); if(d.gone) S.docGone[d.id]=d.gone; });
+        LIVECOLS[k]=(Array.isArray(pf.cols) ? pf.cols : []).filter(c=>c && c.id && c.n && c.from);    // the extra columns Heather added
         (sh.unread||[]).forEach(u=>LIVE.unread.push(OFF[k].n+' '+u));
         Object.keys(sh).forEach(key=>{
           const n=nOfKey(key.slice(6)); if(n===null) return;
@@ -1445,7 +1521,7 @@
 })();
 </script>
 <script>PH.nav('payroll');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc122"></script>
+<script src="tour.js?v=hc123"></script>
 <script>
 Tour.init([
   ...((window.PH && PH.isLive && PH.isLive()) || (()=>{ try{ return localStorage.getItem('ph_pay_real')==='1'; }catch(_){ return false; } })() ? [] : [{sel:'#persona', title:'A mock-up', body:'Made-up people and amounts. Start as the <b>Carlsbad TC</b>, who sends Carlsbad’s sheet, then switch to <b>Heather</b>.'}]),

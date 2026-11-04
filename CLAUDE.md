@@ -114,6 +114,18 @@ paySenders/reloadPaySenders/paySenderOffices, payLevel).
   (BEFORE = CUR < FIRST_N, live only) everyone lands on the one in progress (HOME()), pickers/past sheets/history list
   nothing earlier ("Nothing yet - the first pay period on Home-Brace is #24"), and payReminders/payAlertPlan skip any
   period before FIRST. test/payremind.test.js runs its #23 mechanics with FIRST moved earlier + 5 tests on the real one.
+- **# OF ERs TAKEN + EXTRA COLUMNS (04/11, hc123, sandbox; NOT on production until Cory says deploy).** Cory (from
+  Haley's office): next to On call, "# of ERs taken" - "the on call means they get the pay the number of ERs taken is so
+  we can pay them 1 hour of pay per pateint seen". Row field `ers` (a count = hours of pay; never in Total $, not in the
+  week hours/overtime); office sheet column after On call, rule line, combined sheet "ER hrs", CSV "ER Hours", Worth a
+  second look "ERs taken" (says "not marked on call" if On call is 0). And Cory: "the ability to add columns for special
+  circumstances if needed and take them away as needed": Settings -> **Extra columns** (manage only): name, what it
+  means (the offices see it), type (usd = added to Total, usdx = kept out, hrs, num), every office or one. Saved in each
+  office's people.json `cols:[{id,n,tip,kind,from,to?}]` (senders read their own office's only); row value
+  `x['sc_'+id]`. from/to = period keys from openFrom() (CUR if not entered and not BEFORE, else NEXT). Shown on period n
+  when from<=n<to OR the sheet has a value typed in it - "Take off" never hides typed data; "Bring back" clears `to`.
+  Combined sheet gets one "Extra columns" column (name: value lines) when any sent office has one. Browser-checked
+  (mock-up + Real version, 1280 + 390: add, dup refused, office sees it, typed + saved sc_ and ers, reload, take off).
 - Asked 04/11, NOT built: a Settings screen where Heather picks per column "office types it / office sees it / only
   me" (~1 day). Today's split is fixed from her answers; her Goal/TC-OM/Extra live in her private folder. After go-live.
 - **Who sees what**: Admin team (and Payroll level Edit) = manage everything incl. Heather's columns; Payroll level
