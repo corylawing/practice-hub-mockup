@@ -39,19 +39,22 @@ function load(reuse){
   vm.createContext(ctx);
   vm.runInContext(fs.readFileSync(path.join(V1,'_staff.js'),'utf8'), ctx, {filename:'_staff.js'});
   vm.runInContext(fs.readFileSync(path.join(V1,'payrules.js'),'utf8'), ctx, {filename:'payrules.js'});
+  /* These tests work the reminders through #23. Home-Brace payroll really begins with #24 (PAYRULES.FIRST) - checked
+     on its own at the end - so here it starts earlier. */
+  if(!REAL_FIRST) ctx.PAYRULES.FIRST='2026-01';
   vm.runInContext(fs.readFileSync(path.join(V1,'user.js'),'utf8'), ctx, {filename:'user.js'});
   return {PH:ctx.PH, LS, ctx};
 }
 
 
-let pass=0, fail=0;
+let pass=0, fail=0, REAL_FIRST=false;
 const t=(name, ok)=>{ if(ok) pass++; else { fail++; console.log('  FAIL  '+name); } };
 const SENDERS=JSON.stringify({offices:{Carlsbad:['gabriela@farnsworthorthodontics.com'], Hobbs:['Quinn@farnsworthorthodontics.com']}});
 const as=(who, ls)=>load(Object.assign({ph_viewas:who}, ls||{}));
 const at=(d,h,m)=>new Date(2026, 10, d, h, m||0);          // November 2026, local time
 const titles=r=>r.map(x=>x.title).join(' | ');
 
-/* Pay period #23: Oct 19 - Nov 1, due Tue Nov 3 by 2 pm, paid Fri Nov 6. #22 is entered (done). */
+/* Pay period #23: Oct 18 - Oct 31, due Tue Nov 3 by 2 pm, paid Fri Nov 6. #22 is entered (done). */
 const done22={v:1, p:{'2026-22':{sent:{}, entered:'2026-10-21T09:00'}}};
 const base={ph_pay_senders:SENDERS, ph_pay_status:JSON.stringify(done22)};
 
@@ -134,6 +137,17 @@ t('a reminder already sent is not sent again', Z3.PH.payAlertPlan(ct(3,11))===nu
 let Z4=as('admin', Object.assign({}, base, {ph_pay_status:JSON.stringify({v:1, p:{'2026-23':{sent:{}, entered:'2026-11-03T08:00'}}})}));
 t('entered: nothing', Z4.PH.payAlertPlan(ct(3,9,30))===null);
 t('no senders chosen: nothing', as('admin', {ph_pay_status:JSON.stringify(done22)}).PH.payAlertPlan(ct(3,9,30))===null);
+
+/* ---- THE FIRST PAY PERIOD ON HOME-BRACE (04/11/2026): #24. #23 was done the old way - no "late", no phone. ---- */
+REAL_FIRST=true;
+{ const F=as('om', base), FA=as('admin', base);
+  t('Home-Brace payroll begins with #24', F.ctx.PAYRULES.FIRST==='2026-24');
+  t('#23 (done the old way): no bell reminder, never "late"', F.PH.payReminders(at(2,10)).length===0 && F.PH.payReminders(at(5,9)).length===0 && FA.PH.payReminders(at(3,15)).length===0);
+  t('...and no phone reminder', FA.PH.payAlertPlan(ct(2,9))===null && FA.PH.payAlertPlan(ct(3,9,30))===null);
+  const r24=F.PH.payReminders(at(16,10)), p24=FA.PH.payAlertPlan(ct(17,9,30));
+  t('#24: Monday Nov 16 "due Tuesday by 2 pm"', r24.length===1 && /due Tuesday by 2 pm/.test(r24[0].title) && /Pay period #24/.test(r24[0].sub));
+  t('...and on phones Tuesday Nov 17, 9:30', !!p24 && p24.key==='2026-24' && p24.slot==='am'); }
+REAL_FIRST=false;
 
 (async ()=>{
   /* The claim: two visits at once send it once. A stand-in shared store and alert sender. */

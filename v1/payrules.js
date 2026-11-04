@@ -42,6 +42,9 @@
      dates of its pay date's YEAR - #1 is the first Friday paid in January - so #20 of 2026 is i=0, and 2027 starts
      again at #1. Its key, 'YYYY-NN', names its files (sheet_2026-23.json). */
   const ANCHOR='2026-09-25';
+  /* The first pay period on Home-Brace (Heather: go live with #24, Nov 1-14). Nothing before it is expected - no sheet,
+     no reminder, no "late" - those were done the old way. */
+  const FIRST='2026-24';
   const payOf=i=>addDays(ANCHOR, i*14);
   function numberOf(pay){
     // pay dates of that year before this one: step back 14 days while still in the same year
@@ -107,7 +110,7 @@
     return {want, noEmail};
   }
 
-  const api={OFFICES, OFF, RATES, HOLIDAYS, ANCHOR, addDays, dow, days, todayISO, workdayBefore, payOf, numberOf, period, currentIndex, indexOfKey,
+  const api={OFFICES, OFF, RATES, HOLIDAYS, ANCHOR, FIRST, addDays, dow, days, todayISO, workdayBefore, payOf, numberOf, period, currentIndex, indexOfKey,
     eligibleOn, eligible, num, r2, cutVal, cutBy, otOK, calc, wanted};
   global.PAYRULES=api;
   if(typeof module!=='undefined' && module.exports) module.exports=api;

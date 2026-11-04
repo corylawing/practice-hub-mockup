@@ -2001,6 +2001,7 @@
     const pad=function(n){ return String(n).padStart(2,'0'); };
     const today=R.todayISO(now), hm=pad(now.getHours())+':'+pad(now.getMinutes());
     const per=R.period(R.currentIndex(today)), st=(payStatus().p||{})[per.key]||{}, sent=st.sent||{};
+    if(R.FIRST && per.key<R.FIRST) return [];                    // before Home-Brace payroll began: done the old way
     if(st.entered || today<R.workdayBefore(per.due)) return [];
     const after=today>per.due || (today===per.due && hm>='14:00');
     const wd=function(d){ return ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][R.dow(d)]; };
@@ -2086,7 +2087,7 @@
   function payAlertPlan(now){
     const R=window.PAYRULES; if(!R || !payOn()) return null;
     const c=centralNow(now), per=R.period(R.currentIndex(c.date)), st=(payStatus().p||{})[per.key]||{}, sent=st.sent||{}, al=st.al||{};
-    if(st.entered) return null;
+    if(st.entered || (R.FIRST && per.key<R.FIRST)) return null;
     if(c.date>per.due || (c.date===per.due && c.hm>='14:00')) return null;
     const slots=[{k:'eve', d:R.workdayBefore(per.due), hm:'09:00'}, {k:'am', d:per.due, hm:'09:00'}, {k:'pm', d:per.due, hm:'13:00'}]
       .filter(function(x){ return c.date>x.d || (c.date===x.d && c.hm>=x.hm); });

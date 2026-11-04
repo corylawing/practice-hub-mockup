@@ -101,6 +101,17 @@ paySenders/reloadPaySenders/paySenderOffices, payLevel).
   the other office's old entry is only MARKED `linked:<id>` (load skips it like `mistake`) and the kept id is added
   there - nothing deleted; refused if the other entry already has hours on an un-entered sheet). Mock-up: S.also.
   Browser-checked (mock-up + Real version: twins found, made one, reload = one row "Carlsbad + Hobbs", files right).
+- **NOTES DURING THE PAY PERIOD (04/11, hc121, sandbox).** Heather (OM meeting 03/11): "Some of them like to make
+  payroll notes throughout the pay period prior to the submission date. Are they able to make the notes and save them
+  without submitting right away?" Saving was always as-you-type; but only CUR (ended most recently) was open. Now NEXT
+  (= CUR+1, the one running) is open on the office's side too: picker "(in progress)", hours + notes save as they type,
+  NO Send until it ends ("you can send it once it ends, Saturday ..."); a note on CUR's sheet points to it; a new hire
+  added there goes on that sheet. Heather's board can show it (pill "In progress", no Mark as entered).
+- **FIRST PAY PERIOD = #24 (PAYRULES.FIRST='2026-24').** Found while testing: turning payroll on before Nov 14 would
+  have shown #23 (done the old way) as "Late" to every sender, in the bell and on phones. Before FIRST has ended
+  (BEFORE = CUR < FIRST_N, live only) everyone lands on the one in progress (HOME()), pickers/past sheets/history list
+  nothing earlier ("Nothing yet - the first pay period on Home-Brace is #24"), and payReminders/payAlertPlan skip any
+  period before FIRST. test/payremind.test.js runs its #23 mechanics with FIRST moved earlier + 5 tests on the real one.
 - Asked 04/11, NOT built: a Settings screen where Heather picks per column "office types it / office sees it / only
   me" (~1 day). Today's split is fixed from her answers; her Goal/TC-OM/Extra live in her private folder. After go-live.
 - **Who sees what**: Admin team (and Payroll level Edit) = manage everything incl. Heather's columns; Payroll level
