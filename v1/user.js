@@ -3180,6 +3180,105 @@
     };
   }
 
+  /* TALK TO TYPE (04/11/2026, Cory: "All text boxes should have text to speech" ... "build the mic"). A 🎤 shows at the
+     right of whichever text box has the cursor: tap it and talk - the words go in where the cursor is, and the page
+     saves them like typing; tap it again (or click away) to stop. The browser's own speech service does the listening
+     (Chrome: Google, Safari: Apple, Edge: Microsoft), so it is NOT on the TC Tracker (patients' details - Cory can ask
+     for it) and never on number, date, email or password boxes; [data-nomic] turns it off for a box. A browser without
+     one (Firefox) shows no 🎤. */
+  const MIC_SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  let micBtn=null, micFor=null, micRec=null, micPad=null;
+  function micOK(el){
+    if(!MIC_SR || !el || el.readOnly || el.disabled) return false;
+    if(/(^|\/)tc\.html$/.test(location.pathname)) return false;
+    if(el.closest && el.closest('[data-nomic]')) return false;
+    if(el.tagName==='TEXTAREA') return true;
+    if(el.tagName!=='INPUT') return false;
+    const t=String(el.getAttribute('type')||'text').toLowerCase();
+    return t==='text' || t==='search';
+  }
+  function micStyles(){
+    if(document.getElementById('ph-mic-css')) return;
+    const st=document.createElement('style'); st.id='ph-mic-css';
+    st.textContent='.ph-mic{position:fixed;z-index:9450;width:26px;height:26px;border-radius:50%;border:0;padding:0;display:grid;place-items:center;'+
+      'background:#eef2f7;color:#33475b;cursor:pointer;box-shadow:0 1px 3px rgba(15,42,74,.18)}.ph-mic:hover{background:#e2e8f0}'+
+      '.ph-mic svg{width:15px;height:15px;display:block}.ph-mic.on{background:#d92d20;color:#fff;animation:ph-mic 1.2s ease-in-out infinite}'+
+      '@keyframes ph-mic{0%,100%{box-shadow:0 0 0 0 rgba(217,45,32,.45)}50%{box-shadow:0 0 0 7px rgba(217,45,32,0)}}'+
+      '@media (prefers-reduced-motion:reduce){.ph-mic.on{animation:none}}'+
+      '.ph-mic-t{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:9500;background:#0F2A4A;color:#fff;padding:10px 16px;border-radius:12px;font-size:14px;font-weight:700;max-width:90vw}';
+    document.head.appendChild(st);
+  }
+  function micToast(t){ const d=document.createElement('div'); d.className='ph-mic-t'; d.setAttribute('role','status'); d.textContent=t; document.body.appendChild(d); setTimeout(function(){ d.remove(); }, 4200); }
+  function micPaint(){
+    if(!micBtn) return; const on=!!micRec;
+    micBtn.classList.toggle('on', on); micBtn.setAttribute('aria-pressed', String(on));
+    micBtn.setAttribute('aria-label', on ? 'Stop talking to type' : 'Talk to type');
+    micBtn.title=on ? 'Listening… tap to stop' : 'Talk to type (no patient details)';
+  }
+  function micPlace(){
+    if(!micBtn || !micFor) return;
+    const r=micFor.getBoundingClientRect();
+    if(!r.width || r.bottom<0 || r.top>window.innerHeight){ micBtn.hidden=true; return; }
+    const ta=micFor.tagName==='TEXTAREA', sz=26;
+    micBtn.hidden=false;
+    micBtn.style.left=Math.round(r.right-sz-(ta?16:4))+'px';
+    micBtn.style.top=Math.round(ta ? r.bottom-sz-6 : r.top+(r.height-sz)/2)+'px';
+  }
+  function micShow(el){
+    micStyles();
+    if(!micBtn){
+      micBtn=document.createElement('button'); micBtn.type='button'; micBtn.className='ph-mic';
+      micBtn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
+      micBtn.addEventListener('mousedown', function(e){ e.preventDefault(); });          // the cursor stays in the box
+      micBtn.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); if(micRec) micStop(); else micStart(); });
+      document.body.appendChild(micBtn);
+    }
+    if(micFor!==el){ micStop(); micUnpad(); }
+    micFor=el;
+    /* room for the 🎤 at the end of a one-line box, without changing its size */
+    if(el.tagName==='INPUT' && getComputedStyle(el).boxSizing==='border-box' && micPad!==el){
+      micPad=el; el.dataset.micPad=el.style.paddingRight||''; el.style.paddingRight=(parseFloat(getComputedStyle(el).paddingRight)||0)+26+'px';
+    }
+    micPaint(); micPlace();
+  }
+  function micUnpad(){ if(micPad){ micPad.style.paddingRight=micPad.dataset.micPad||''; delete micPad.dataset.micPad; micPad=null; } }
+  function micHide(){ micStop(); micUnpad(); micFor=null; if(micBtn) micBtn.hidden=true; }
+  function micStart(){
+    const el=micFor; if(!el || !MIC_SR) return;
+    let rec; try{ rec=new MIC_SR(); }catch(_){ micToast('Talk to type isn’t available in this browser.'); return; }
+    rec.lang=navigator.language||'en-US'; rec.continuous=true; rec.interimResults=true;
+    const a=el.selectionStart!=null ? el.selectionStart : el.value.length, b=el.selectionEnd!=null ? el.selectionEnd : a;
+    const before=el.value.slice(0,a), after=el.value.slice(b);
+    rec.onresult=function(e){
+      let said='';
+      for(let i=0;i<e.results.length;i++) said+=e.results[i][0].transcript;
+      said=said.replace(/^\s+/,'');
+      if(said && (!before.trim() || /[.!?]\s*$/.test(before))) said=said.charAt(0).toUpperCase()+said.slice(1);   // a new sentence
+      const head=before+(before && said && !/\s$/.test(before) ? ' ' : '')+said;
+      let v=head+(after && said && !/^\s/.test(after) ? ' ' : '')+after;
+      if(el.maxLength>0 && v.length>el.maxLength) v=v.slice(0, el.maxLength);
+      el.value=v;
+      try{ el.setSelectionRange(Math.min(head.length, v.length), Math.min(head.length, v.length)); }catch(_){}
+      el.dispatchEvent(new Event('input', {bubbles:true}));
+    };
+    rec.onerror=function(e){
+      const er=e && e.error;
+      if(er==='not-allowed' || er==='service-not-allowed') micToast('The microphone is blocked for Home-Brace. Allow it in the browser’s settings for this site, then try again.');
+      else if(er==='network') micToast('Talk to type needs the internet.');
+      else if(er==='audio-capture') micToast('No microphone found on this device.');
+    };
+    rec.onend=function(){ if(micRec===rec){ micRec=null; micPaint(); try{ el.dispatchEvent(new Event('change', {bubbles:true})); }catch(_){} } };
+    micRec=rec; micPaint();
+    try{ rec.start(); }catch(_){ micRec=null; micPaint(); }
+  }
+  function micStop(){ const r=micRec; if(!r) return; try{ r.stop(); }catch(_){ micRec=null; micPaint(); } }
+  if(MIC_SR){
+    document.addEventListener('focusin', function(e){ const t=e.target; if(t===micBtn) return; if(micOK(t)) micShow(t); else if(micFor) micHide(); });
+    document.addEventListener('focusout', function(){ setTimeout(function(){ const a=document.activeElement; if(micFor && a!==micFor && a!==micBtn) micHide(); }, 0); });
+    window.addEventListener('scroll', micPlace, true);
+    window.addEventListener('resize', micPlace);
+  }
+
   /* WHERE ARE WE RUNNING?
        'live'    - the practice's real hub on Azure. Reads their workbook.
        'sandbox' - GitHub Pages or localhost. Demo numbers only, never real figures,

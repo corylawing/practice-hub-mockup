@@ -89,6 +89,7 @@
     .fbr-hd h3{margin:0;font-size:18px;color:#0F2A4A}.fbr-hd p{margin:3px 0 0;font-size:13px;color:#5b6b7d}
     .fbr-x{margin-left:auto;border:0;background:#f1f4f8;width:32px;height:32px;border-radius:50%;font-size:20px;line-height:1;cursor:pointer;color:#33475b}
     .fbr-body{overflow:auto;padding:14px 20px 18px;display:flex;flex-direction:column;gap:14px}
+    .fbr-list{display:flex;flex-direction:column;gap:18px}
     .fbr-th{border:1px solid #e3e8ef;border-radius:14px;padding:12px 14px;background:#fff}
     .fbr-th.new{border-color:#f0c36d;box-shadow:0 0 0 3px #fff4dc}
     .fbr-top{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;font-size:12.5px;color:#5b6b7d;margin-bottom:8px}
@@ -141,14 +142,14 @@
     if(!d.cols.replies || !d.cols.replyTo) h+=setupNote;
     h+='<div class="fbr-filters" role="group" aria-label="Show">'+[['new','New'],['all','All'],['done','Done']].map(f=>'<button type="button" data-f="'+f[0]+'" class="'+(FILTER===f[0]?'on':'')+'" aria-pressed="'+(FILTER===f[0])+'">'+f[1]+' ('+n[f[0]]+')</button>').join('')+
       '<button type="button" data-re="1" style="margin-left:auto">↻ Refresh</button></div>';
-    h+=shown.length ? shown.map(t=>'<div class="fbr-th'+(t.isNew?' new':'')+'" data-t="'+esc(t.id)+'"><div class="fbr-top"><b>'+esc(t.by.name||t.by.email||'Someone')+'</b>'+
+    h+=shown.length ? '<div class="fbr-list">'+shown.map(t=>'<div class="fbr-th'+(t.isNew?' new':'')+'" data-t="'+esc(t.id)+'"><div class="fbr-top"><b>'+esc(t.by.name||t.by.email||'Someone')+'</b>'+
         (t.offices?'<span>'+esc(t.offices)+'</span>':'')+(t.page?'<span>· '+esc(t.page)+'</span>':'')+kindPill(t.kind)+
         (t.isNew?'<span class="fbr-pill new">New</span>':t.done?'<span class="fbr-pill done">Done</span>':'<span class="fbr-pill">Replied</span>')+'</div>'+
         msgsHTML(t,'admin')+
         '<div class="fbr-reply"><textarea maxlength="4000" placeholder="Reply as '+TEAM+'…" aria-label="Reply to '+esc(t.by.name||'them')+'"'+(d.cols.replies?'':' disabled')+'></textarea>'+
         '<div class="fbr-row"><button type="button" class="fbr-btn" data-send="'+esc(t.id)+'" disabled>Send reply</button>'+
         (d.cols.replies ? '<button type="button" class="fbr-btn ghost" data-done="'+esc(t.id)+'">'+(t.done?'Reopen':'Mark done')+'</button>' : '')+
-        '<span class="fbr-err"></span></div></div></div>').join('')
+        '<span class="fbr-err"></span></div></div></div>').join('')+'</div>'
       : '<div class="fbr-empty">'+(FILTER==='new' ? 'Nothing new - you’re all caught up.' : 'Nothing here yet.')+'</div>';
     h+='<p style="margin:14px 2px 0;font-size:12.5px;color:#8291a3">Everyone’s messages show here, for Home-Brace admins. Staff only ever see their own, under My messages.</p>';
     el.innerHTML=h;

@@ -153,6 +153,14 @@ paySenders/reloadPaySenders/paySenderOffices, payLevel).
   own (sameAs), the Feedback tab is Admin-only - the same exposure as before replies existed. Cory + Heather are Owners.
   Sandbox: ph_fb_sandbox in this browser. test/fbreply.test.js (28). Browser-checked sandbox (two people) + live mode
   against a SharePoint stand-in (no columns / columns / "Reply To" with a space; Gabriela never sees Morgan's).
+- **TALK TO TYPE (04/11, hc129, sandbox).** Cory: "All text boxes should have text to speech" -> (speech-to-text, his
+  "build the mic"). user.js: a 🎤 at the right of the focused textarea / text / search box (fixed-position, follows
+  scroll; a one-line border-box input gets +26px right padding while focused), tap = the browser's SpeechRecognition
+  (continuous, interim) types at the cursor and fires input (so pages save it), tap again / click away = stop + change.
+  NOT on tc.html (patients - Chrome sends voice to Google; Cory may ask for it), not number/date/email/password,
+  [data-nomic] opts out; no API (Firefox) = no 🎤. Capitalises a new sentence. Errors: blocked mic / offline / no mic.
+  Browser-checked with a stand-in recogniser (headless needs Emulation.setFocusEmulationEnabled): payroll notes saved,
+  appended to typed text, feedback form, none on hours or TC, 1280 + 390. Feedback cards: 18px apart (.fbr-list).
 - Asked 04/11, NOT built: a Settings screen where Heather picks per column "office types it / office sees it / only
   me" (~1 day). Today's split is fixed from her answers; her Goal/TC-OM/Extra live in her private folder. After go-live.
 - **Who sees what**: Admin team (and Payroll level Edit) = manage everything incl. Heather's columns; Payroll level
