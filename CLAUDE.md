@@ -136,6 +136,21 @@ paySenders/reloadPaySenders/paySenderOffices, payLevel).
   sun), afternoon 12-18 (glowing sun), evening 18-22 / "Working late, <first>?" 22-5 (moon + stars) - the KPI dashboard's
   exact rules and CSS (dp-rise/pulse/glow/float/twinkle, reduced-motion off). Live: first name; sandbox personas keep the
   role label. Re-checked every 5 min. Browser-checked at 8/14/19/23 h, 1280 + 390.
+- **FEEDBACK REPLIES (04/11, hc127; LIVE 04/11 - Cory "Deploy greetings then the feedback").** Cory: "Would be nice as
+  me as an admin can respond to these that they submit from Home-Brace directly"; replies signed **"Home-Brace team"**
+  (his choice - the form never names him). `v1/fbreply.js` (PH_FBR, loaded on demand by user.js `PH.fbReady`): Admin ->
+  **Feedback** tab (New / All / Done, the conversation, Reply, Mark done / Reopen; `admin.html#feedback` opens it) and
+  the person's **My messages** (Tour & Feedback menu; the bell row "Home-Brace team replied to your feedback"; phone
+  alert "Open Home-Brace to read it." - never the words - to `home.html#myfeedback`). Admin bell: "N new feedback
+  messages". user.js `fbTick` after sign-in / tab back, 10 min apart; seen = localStorage ph_fb_seen.
+  Storage (store.js): the SAME HomeBraceFeedback list + two columns CORY ADDS BY HAND: **Replies** (multiple lines,
+  plain - JSON {v:1, doneAt, r:[{at,t,by}]} on the message) and **ReplyTo** (single line - an answer back is a NEW row
+  pointing at the first, so the existing email flow sends it). Found by name or display name (Reply_x0020_To ok); a
+  rich-text Replies is unwrapped. Without them: messages read, replies wait (setup note), answers back go without
+  ReplyTo. PRIVACY: list Advanced settings -> Item-level permissions "Read items that were created by the user" + "Create
+  items and edit items that were created by the user"; site OWNERS see all (whoever replies must be an owner).
+  Sandbox: ph_fb_sandbox in this browser. test/fbreply.test.js (28). Browser-checked sandbox (two people) + live mode
+  against a SharePoint stand-in (no columns / columns / "Reply To" with a space; Gabriela never sees Morgan's).
 - Asked 04/11, NOT built: a Settings screen where Heather picks per column "office types it / office sees it / only
   me" (~1 day). Today's split is fixed from her answers; her Goal/TC-OM/Extra live in her private folder. After go-live.
 - **Who sees what**: Admin team (and Payroll level Edit) = manage everything incl. Heather's columns; Payroll level

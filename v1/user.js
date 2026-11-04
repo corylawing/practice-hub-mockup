@@ -1583,7 +1583,7 @@
   }
   function bellBadge(){
     const b=document.querySelector('.ph-bell.ph-nb'); if(!b) return;
-    const n=unreadCount()+payReminders().length;
+    const n=unreadCount()+payReminders().length+fbReminders().length;
     const dot=b.querySelector('.dot');
     if(!n){ if(dot) dot.remove(); b.setAttribute('aria-label','Notifications — nothing new'); return; }
     const txt=n>9?'9+':String(n);
@@ -1598,7 +1598,7 @@
   function notesHTML(){
     const list=notifications();
     const unreadList=list.filter(n=>!n.seen), readList=list.filter(n=>n.seen);
-    const shown=showRead?list:unreadList, rem=payReminders();
+    const shown=showRead?list:unreadList, rem=payReminders().concat(fbReminders());
     const row=n=>'<div class="ni'+(n.seen?' read':'')+'" data-id="'+escAttr(n.id)+'">'+
       '<span class="nic">'+escHTML(n.ic||'\u{1F514}')+'</span>'+
       '<div class="ntx"><div class="ntt">'+escHTML(n.title)+'</div>'+
@@ -1609,7 +1609,7 @@
       (unreadList.length ? '<button class="nall" type="button">Mark all as read</button>'
               : (list.length ? '<span class="nallok">\u2713 All caught up</span>' : ''))+'</div>'+
       (rem.length ? '<div class="slab">Reminders</div>'+rem.map(function(r){
-          return '<a class="ni nrem'+(r.late?' late':'')+'" href="'+escAttr(r.href)+'"><span class="nic">'+escHTML(r.ic)+'</span>'+
+          return '<a class="ni nrem'+(r.late?' late':'')+'" href="'+escAttr(r.href||'#')+'"'+(r.fb?' data-fb="'+escAttr(r.fb)+'"':'')+'><span class="nic">'+escHTML(r.ic)+'</span>'+
             '<div class="ntx"><div class="ntt">'+escHTML(r.title)+'</div><div class="nw">'+escHTML(r.sub)+'</div></div></a>'; }).join('')+
           (shown.length ? '<div class="slab">Updates</div>' : '') : '')+
       (shown.length
@@ -1633,6 +1633,7 @@
       if(e.target.classList.contains('nall')){ markAllSeen(); return; }
       if(e.target.classList.contains('nal-on')){ alertsTap(true); return; }
       if(e.target.classList.contains('nal-off')){ alertsTap(false); return; }
+      const fb=e.target.closest('[data-fb]'); if(fb){ e.preventDefault(); closeNotes(); myFeedback(); return; }
       const ok=e.target.closest('.nok'); if(!ok) return;
       const row=ok.closest('.ni'); if(!row) return;
       markSeen({id:row.getAttribute('data-id')});
@@ -2030,6 +2031,43 @@
   /* ALERTS ON THIS DEVICE, FROM THE BELL (03/11/2026). alerts.js (PH_ALERTS) is loaded on every page when it's needed,
      like payrules.js; the bell's last row turns alerts on or off for this phone or computer (an iPhone: add Home-Brace
      to the home screen first - Apple's rule). Hidden where alerts aren't on yet (the live site until ALERTS_LIVE). */
+  /* FEEDBACK REPLIES (04/11/2026, fbreply.js): the person's "Home-Brace team replied" and an admin's "N new feedback
+     messages" sit with the bell's reminders. Looked up after sign-in and when a tab comes back, 10 minutes apart. */
+  let FB_P=null, FBR={mine:[], fresh:0}, FB_AT=0, FB_BUSY=false;
+  function fbReady(){
+    if(window.PH_FBR) return Promise.resolve(window.PH_FBR);
+    if(FB_P) return FB_P;
+    FB_P=new Promise(function(ok){
+      const me_=document.querySelector('script[src*="user.js"]'), sc=document.createElement('script');
+      sc.src=me_ ? me_.getAttribute('src').replace(/user\.js/, 'fbreply.js') : 'fbreply.js';
+      sc.onload=function(){ ok(window.PH_FBR||null); }; sc.onerror=function(){ FB_P=null; ok(null); };
+      document.head.appendChild(sc);
+    });
+    return FB_P;
+  }
+  function fbTick(force){
+    if(FB_BUSY || (!force && Date.now()-FB_AT<10*60e3)) return;
+    if(isLive() && (!SIGNED_IN || stillLearning())) return;
+    if(!window.PH_STORE || !PH_STORE.feedbackItems) return;
+    FB_BUSY=true; FB_AT=Date.now();
+    fbReady().then(function(F){ return F ? F.refresh() : null; }).then(function(r){
+      FB_BUSY=false; if(!r) return;
+      FBR=r; bellBadge(); if(npanel) npanel.innerHTML=notesHTML();
+      if(location.hash==='#myfeedback'){ try{ history.replaceState(null,'',location.pathname+location.search); }catch(_){} myFeedback(); }
+    }, function(){ FB_BUSY=false; });
+  }
+  function fbReminders(){
+    const out=(FBR.mine||[]).map(function(t){
+      const first=(t.msgs[0]&&t.msgs[0].text)||'', short=first.length>48?first.slice(0,46)+'…':first;
+      return {ic:'\u{1F4AC}', title:'Home-Brace team replied to your feedback', sub:'\u201c'+short+'\u201d \u00b7 '+ago(t.lastTeam.at), fb:t.id};
+    });
+    if(FBR.fresh) out.push({ic:'\u{1F4E5}', title:FBR.fresh+' new feedback message'+(FBR.fresh===1?'':'s'), sub:'Admin \u2192 Feedback', href:'admin.html#feedback'});
+    return out;
+  }
+  function myFeedback(){ fbReady().then(function(F){ if(F) F.openMine(); }); }
+  document.addEventListener('ph-fb-changed', function(){ fbTick(true); });
+  document.addEventListener('visibilitychange', function(){ if(document.visibilityState==='visible') fbTick(false); });
+
   let ALERTS_P=null, ALERT_NOTE='';
   function alertsReady(){
     if(window.PH_ALERTS) return Promise.resolve(window.PH_ALERTS);
@@ -2822,7 +2860,9 @@
     Promise.resolve(reloadPeople()).then(lateLanded, lateLanded);
     if(payOn()) Promise.resolve(reloadPaySenders()).then(()=>{ identityChanged(); return reloadPayStatus(); }, ()=>{})   // a sender's Payroll tab
       .then(()=>payAlertsTick(), ()=>{});                                                                                  // and any phone reminder that's due
+    setTimeout(function(){ fbTick(true); }, 2500);                                                                         // replies to their feedback
   });
+  setTimeout(function(){ if(!isLive()) fbTick(true); }, 1500);                                                        // the sandbox has no sign-in to wait for
 
   /* One gate for every page.
      Hiding a tab in the nav is NOT enough — anyone can type the URL. Each page calls
@@ -3167,6 +3207,6 @@
   window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, rosterView, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, chatBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK, notesHTML, searchHTML, searchDocs, searchDocsHTML, levelForTeams, teamsSeeAll, tcOn, tcRoleFor, payOn, payRoleFor, paySenders, reloadPaySenders, paySenderOffices, payLevel, payReminders, payMark, reloadPayStatus, payRulesReady, payAlertPlan, payAlertsTick, centralNow, alertsReady, saveFace, faceOf, avatar,
     sensRecord, reloadSensitive, sensLevelFor, sensitiveLevel, sensConfirmOk,
     setTheme, theme:()=>THEME, setLayout, layout:()=>LAYOUT, layouts:()=>LAYOUTS.map(l=>({k:l.k, n:l.n})), themes:()=>THEMES.map(t=>({k:t.k, n:t.n})), schemeTokens:k=>schemeTokens(themeOf(k)), contrast,
-    feedback:openFeedback, feedbackText, feedbackContext, learning:stillLearning};
+    feedback:openFeedback, feedbackText, feedbackContext, learning:stillLearning, fbReady, myFeedback, fbTick};
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mount); else mount();
 })();

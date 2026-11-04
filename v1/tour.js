@@ -58,13 +58,16 @@
     if(!menu){
       menu=document.createElement('div'); menu.className='tour-menu'; menu.setAttribute('role','menu');
       menu.addEventListener('click',e=>{ const b=e.target.closest('.tour-mi'); if(!b) return; closeMenu();
-        if(b.dataset.a==='fb') PH.feedback(); else show(0); });
+        if(b.dataset.a==='fb') PH.feedback(); else if(b.dataset.a==='mine') PH.myFeedback(); else show(0); });
       document.body.appendChild(menu);
     }
     menu.innerHTML='<button type="button" class="tour-mi" role="menuitem" data-a="tour"><span class="tmi-ic" aria-hidden="true">\u{1F44B}</span>'+
       '<span><b>'+(opts.launch||'Show me around')+'</b><small>Step by step, a minute or two</small></span></button>'+
       '<button type="button" class="tour-mi" role="menuitem" data-a="fb"><span class="tmi-ic" aria-hidden="true">\u{1F4AC}</span>'+
-      '<span><b>Send Feedback</b><small>Something wrong, or an idea? Tell us.</small></span></button>';
+      '<span><b>Send Feedback</b><small>Something wrong, or an idea? Tell us.</small></span></button>'+
+      /* FEEDBACK REPLIES (04/11/2026): what they sent, and the Home-Brace team's replies (fbreply.js). */
+      (window.PH&&PH.myFeedback ? '<button type="button" class="tour-mi" role="menuitem" data-a="mine"><span class="tmi-ic" aria-hidden="true">\u{1F4E8}</span>'+
+      '<span><b>My messages</b><small>What you sent, and our replies</small></span></button>' : '');
     const r=launch.getBoundingClientRect();
     menu.style.right=Math.max(10,window.innerWidth-r.right)+'px'; menu.style.bottom=(window.innerHeight-r.top+10)+'px';
     requestAnimationFrame(()=>menu.classList.add('open')); launch.setAttribute('aria-expanded','true');

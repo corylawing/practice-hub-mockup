@@ -272,18 +272,18 @@
   }
 
 </style>
-<script src="user.js?v=hc126"></script>
+<script src="user.js?v=hc127"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="_staff.js?v=hc126"></script>
-  <script src="store.js?v=hc126"></script>
-  <script src="gate.js?v=hc126"></script>
-  <script src="docs.js?v=hc126"></script>
-  <script src="payrules.js?v=hc126"></script>
-  <script src="workbook.js?v=hc126"></script>
-  <script src="prodbook.js?v=hc126"></script>
-  <script src="prodfx.js?v=hc126"></script>
-  <script src="prodstore.js?v=hc126"></script>
-  <script src="prodadmin.js?v=hc126"></script>
+  <script src="_staff.js?v=hc127"></script>
+  <script src="store.js?v=hc127"></script>
+  <script src="gate.js?v=hc127"></script>
+  <script src="docs.js?v=hc127"></script>
+  <script src="payrules.js?v=hc127"></script>
+  <script src="workbook.js?v=hc127"></script>
+  <script src="prodbook.js?v=hc127"></script>
+  <script src="prodfx.js?v=hc127"></script>
+  <script src="prodstore.js?v=hc127"></script>
+  <script src="prodadmin.js?v=hc127"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — admin console concept for validation. Real build: people sync from Microsoft 365; access is managed here.</div>
@@ -310,6 +310,7 @@
     <button class="tab" data-t="files" onclick="AD.tab('files')">Document Sections</button>
     <button class="tab" data-t="locs" onclick="AD.tab('locs')">Locations</button>
     <button class="tab" data-t="prod" onclick="AD.tab('prod')">Production data</button>
+    <button class="tab" data-t="fb" onclick="AD.tab('fb')">Feedback</button>
   </div>
 
   <div id="view"></div>
@@ -714,7 +715,10 @@
   }
 
   function render(){ if(tab==='users')renderUsers(); else if(tab==='access')renderAccess();
-    else if(tab==='locs')renderLocs(); else if(tab==='prod')renderProd(); else renderFiles(); }
+    else if(tab==='locs')renderLocs(); else if(tab==='prod')renderProd(); else if(tab==='fb')renderFb(); else renderFiles(); }
+  /* FEEDBACK REPLIES (04/11/2026, Cory: "as me as an admin can respond to these"): fbreply.js draws the inbox. */
+  function renderFb(){ const v=document.getElementById('view'); v.innerHTML='<div class="intro">Loading feedback…</div>';
+    PH.fbReady().then(F=>{ if(tab!=='fb') return; if(F) F.mountAdmin(v); else v.innerHTML='<div class="intro">Feedback could not load.</div>'; }); }
   /* Home-Brace's own copy of the production workbook, one book per year (prodadmin.js). */
   function renderProd(){ const v=document.getElementById('view'); if(window.PH_PRODUI) PH_PRODUI.mount(v); else v.innerHTML='<div class="intro">Production data could not load.</div>'; }
 
@@ -2101,7 +2105,8 @@
   function closeModal(){ el('modal').classList.remove('open'); }
 
   const thenSync=f=>function(){ const r=f.apply(this,arguments); syncEdit(); return r; };
-  window.AD={setupSecs,editSyncNow,tcSyncNow,paySyncNow,sensAdd,sensChange,sensRemove,sensClose,sensQ,sensToggle,sensClear,sensLevel,sensTyped,sensBack,sensNext,sensGo,sensSyncNow,tab:tabSet,viewAs:doViewAs,newTeam,editTeam,saveTeam:thenSync(saveTeam),delTeam:thenSync(delTeam),resetTeams,profile,whyNoAdd,
+  if(location.hash==='#feedback') setTimeout(()=>tabSet('fb'), 0);      // the bell's "new feedback" opens here
+  window.AD={tabNow:()=>tab,setupSecs,editSyncNow,tcSyncNow,paySyncNow,sensAdd,sensChange,sensRemove,sensClose,sensQ,sensToggle,sensClear,sensLevel,sensTyped,sensBack,sensNext,sensGo,sensSyncNow,tab:tabSet,viewAs:doViewAs,newTeam,editTeam,saveTeam:thenSync(saveTeam),delTeam:thenSync(delTeam),resetTeams,profile,whyNoAdd,
     addPerson,npSet,npLoc,npTeam,saveNewPerson:thenSync(saveNewPerson),accTeam:setAccTeam,removePerson:thenSync(removePerson),restorePerson:thenSync(restorePerson),showRemoved,togTeam,togLoc,setStatus,saveUser:thenSync(saveUser),pickLevel,pickAud,setField,pickPhoto,photoChosen,clearPhoto,pickUserLevel,clearUserLevel,tog,addFile,noop,newSec,editSec,saveSec:thenSync(saveSec),delSec,delSecGo,resetSecs,setSecName,setSecIcon,setSecStruct,setSecLocMode,setSecTeamMode,togSecLoc,togSecTeam,saveFile,cd,useFile,clearFile,uploadFile,setFileTeamMode,setFileLocMode,togFileLoc,togFileTeam,renderLocs,newLoc,editLoc,saveLoc,delLoc,resetLocs,setLocBrand,setLocState,setLocTZ,close:closeModal};
   el('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
@@ -2159,7 +2164,7 @@
   });
 })();
 </script>
-<script>PH.nav('admin');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(PH.loadPhotos)PH.loadPhotos().then(function(got){if(got&&window.AD&&AD.tab)AD.tab('users');});setTimeout(sizeWatch,4000);});
+<script>PH.nav('admin');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(PH.loadPhotos)PH.loadPhotos().then(function(got){if(got&&window.AD&&AD.tab&&AD.tabNow()==='users')AD.tab('users');});setTimeout(sizeWatch,4000);});
 /* SIZE WATCH (future-proofing check, 22/10/2026). One SharePoint record holds about 63,000 characters and one that
    fills up starts refusing saves. At most once a day, quietly, for an admin: how full is each record? Say something
    only when one passes 70%, with the way to the details (History). Reading only. */
@@ -2186,7 +2191,7 @@ function sizeWatch(){
   }).catch(()=>{});
 }
 </script>
-<script src="tour.js?v=hc126"></script>
+<script src="tour.js?v=hc127"></script>
 <script>
 Tour.init([
   {sel:'#tabs', title:'This is your control room', body:'Four tabs and you can run the whole hub: <b>People</b>, <b>Teams &amp; Access</b>, <b>Document Sections</b> and <b>Locations</b>. No developer, no consultant.', pre:()=>AD.tab('users')},

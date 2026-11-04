@@ -1149,8 +1149,7 @@
      A missing list is reported as missingList, so the form can say "not switched on
      yet" rather than "check your connection". */
   var FEEDBACK_LIST = 'HomeBraceFeedback', feedbackListId = null;
-  function addFeedback(fields){
-    if(!live()) return Promise.resolve({sandbox:true});
+  function feedbackList(){
     return authReady.then(connect).then(function(){
       if(feedbackListId) return feedbackListId;
       return PH_AUTH.graph('/sites/' + siteId + '/lists?$select=id,displayName').then(function(r){
@@ -1161,8 +1160,101 @@
         }
         return (feedbackListId = hit.id);
       });
-    }).then(function(id){
+    });
+  }
+  function addFeedback(fields){
+    if(!live()){ fbSandboxAdd(fields); return Promise.resolve({sandbox:true}); }
+    /* An answer back carries ReplyTo: written under the column's own name (feedbackColumns), or left off - with
+       "Reply:" in its title - if the list doesn't have that column yet. */
+    var ready = fields.ReplyTo === undefined ? feedbackList() : feedbackColumns().then(function(c){
+      fields = Object.assign({}, fields); var v = fields.ReplyTo; delete fields.ReplyTo;
+      if(c.replyTo) fields[c.tName] = String(v);
+      return feedbackListId;
+    });
+    return ready.then(function(id){
       return withRetry(function(){ return send('POST', '/sites/' + siteId + '/lists/' + id + '/items', {fields:fields}); });
+    });
+  }
+
+  /* FEEDBACK REPLIES (04/11/2026, Cory: "Would be nice as me as an admin can respond to these that they submit from
+     Home-Brace directly"). Two more columns on the same list, added by hand like the rest: "Replies" (multiple lines of
+     plain text - the team's answers, JSON {v:1, doneAt, r:[{at, t, by}]}, kept on the message itself) and "ReplyTo"
+     (single line of text - a person's answer back is a NEW row pointing at the first one, so the email flow tells us
+     about it like any message). Who wrote a row is SharePoint's own createdBy; with the list set to "Read items that
+     were created by the user", each person reads only their own and the site's owners read every one.
+     Sandbox: this browser (ph_fb_sandbox), each row marked with whoever is signed in / viewed as here. */
+  var FB_SBX = 'ph_fb_sandbox';
+  function fbSandbox(){ try{ var d = JSON.parse(localStorage.getItem(FB_SBX)); if(d && Array.isArray(d.items)) return d; }catch(_){} return {n:1, items:[]}; }
+  function fbSandboxSave(d){ try{ localStorage.setItem(FB_SBX, JSON.stringify(d)); }catch(_){} }
+  function fbSandboxWho(){
+    try{
+      var P = global.PH, m = (P && P.realMe && P.realMe()) || {}, nm = String(((m.first||'') + ' ' + (m.last||'')).trim() || m.name || '');
+      return {email: String(m.mail || (P && P.email && m.first ? P.email(m) : '') || '').toLowerCase(), name: nm, id: ''};
+    }catch(_){ return {email:'', name:'', id:''}; }
+  }
+  function fbSandboxAdd(fields){
+    var d = fbSandbox(), id = String(d.n++);
+    d.items.push({id:id, at:new Date().toISOString(), by:fbSandboxWho(), Title:fields.Title||'', Details:fields.Details||'', Replies:'', ReplyTo:fields.ReplyTo||''});
+    fbSandboxSave(d); return id;
+  }
+  /* Which of the two reply columns the list has: {replies, replyTo}. Without them messages still read; replies wait. */
+  /* Found by name or by what it shows as ("Reply To" typed with a space is stored as Reply_x0020_To): rName / tName are
+     the names to read and write them under. */
+  var fbColsP = null;
+  function feedbackColumns(){
+    if(!live()) return Promise.resolve({replies:true, replyTo:true, rName:'Replies', tName:'ReplyTo'});
+    if(fbColsP) return fbColsP;
+    fbColsP = feedbackList().then(function(id){
+      return withRetry(function(){ return send('GET', '/sites/' + siteId + '/lists/' + id + '/columns?$select=name,displayName'); });
+    }).then(function(r){
+      var flat = function(v){ return String(v||'').toLowerCase().replace(/_x0020_|\s+/g, ''); };
+      var find = function(want){ return (r.value||[]).filter(function(c){ return flat(c.name) === want || flat(c.displayName) === want; })[0]; };
+      var a = find('replies'), b = find('replyto');
+      var out = {replies:!!a, replyTo:!!b, rName:a ? a.name : 'Replies', tName:b ? b.name : 'ReplyTo'};
+      if(!out.replies || !out.replyTo) setTimeout(function(){ fbColsP = null; }, 60000);   // looked for again once added
+      return out;
+    }).catch(function(e){ fbColsP = null; throw e; });
+    return fbColsP;
+  }
+  function fbRow(it, cols){
+    var f = it.fields || {}, u = (it.createdBy && it.createdBy.user) || {};
+    return {id:String(it.id), at:it.createdDateTime || f.Created || '', by:{email:String(u.email||'').toLowerCase(), name:u.displayName||'', id:u.id||''},
+            Title:f.Title||'', Details:f.Details||'', Replies:cols.replies ? (f[cols.rName]||'') : '', ReplyTo:cols.replyTo ? String(f[cols.tName]||'') : ''};
+  }
+  /* Every message this person may read (SharePoint decides: their own, or all of them for a site owner), oldest first.
+     Up to 1,000 - five pages. */
+  function feedbackItems(){
+    if(!live()) return Promise.resolve(fbSandbox().items.slice());
+    var cols;
+    return feedbackColumns().then(function(c){
+      cols = c;
+      var sel = ['Title','Details'].concat(c.replies ? [c.rName] : [], c.replyTo ? [c.tName] : []).join(',');
+      var out = [], pages = 0;
+      function page(path){
+        return withRetry(function(){ return send('GET', path); }).then(function(r){
+          (r.value||[]).forEach(function(it){ out.push(fbRow(it, cols)); });
+          var next = r['@odata.nextLink'];
+          if(next && ++pages < 5 && next.indexOf(GRAPH) === 0) return page(next.slice(GRAPH.length));
+          return out;
+        });
+      }
+      return page('/sites/' + siteId + '/lists/' + feedbackListId + '/items?$expand=fields($select=' + sel + ')&$top=200');
+    }).then(function(rows){ return rows.sort(function(a, b){ return String(a.at).localeCompare(String(b.at)); }); });
+  }
+  /* The team's answers on one message: read it fresh, change(replies) -> replies, write it back. */
+  function feedbackReplies(id, change){
+    if(!live()){
+      var d = fbSandbox(), it = d.items.filter(function(x){ return x.id === String(id); })[0];
+      if(!it) return Promise.reject(new Error('That message is gone'));
+      it.Replies = JSON.stringify(change(it.Replies || '')); fbSandboxSave(d); return Promise.resolve(it.Replies);
+    }
+    return feedbackColumns().then(function(c){
+      if(!c.replies){ var e = new Error('The feedback list has no Replies column yet'); e.needsSetup = true; throw e; }
+      var base = '/sites/' + siteId + '/lists/' + feedbackListId + '/items/' + encodeURIComponent(id);
+      return withRetry(function(){ return send('GET', base + '?$expand=fields($select=' + c.rName + ')'); }).then(function(it){
+        var next = JSON.stringify(change((it.fields && it.fields[c.rName]) || '')), body = {}; body[c.rName] = next;
+        return withRetry(function(){ return send('PATCH', base + '/fields', body); }, true).then(function(){ return next; });
+      });
     });
   }
 
@@ -1170,6 +1262,8 @@
     get:get, set:set, update:update, getAll:getAll, keys:keys, setup:setup,
     /* One feedback message -> one new row on HomeBraceFeedback (see addFeedback). */
     addFeedback:addFeedback, FEEDBACK_LIST:FEEDBACK_LIST,
+    /* Replies to feedback (fbreply.js): what may be read, which reply columns exist, the team's answers on one message. */
+    feedbackItems:feedbackItems, feedbackColumns:feedbackColumns, feedbackReplies:feedbackReplies,
     mergeInto:mergeInto, mergeById:mergeById,
     /* Packed payloads: history.html and restore.html read raw versions through these. */
     pack:pack, unpack:unpack, COL_MAX:COL_MAX,
