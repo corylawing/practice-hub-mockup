@@ -2310,19 +2310,24 @@
     const css=document.createElement('style');
     css.textContent='.ph-live .ribbon,.ph-live .viewas,.ph-live .v1{display:none !important}';
     document.head.appendChild(css);
-    // If a person's Entra profile isn't filled in yet, say so plainly instead of
-    // silently showing them an empty app.
-    const m=me();
-    if(document.getElementById('ph-setupbar')) return;
-    if(m && m._needsSetup){
-      const b=document.createElement('div');
-      b.id='ph-setupbar';
-      b.style.cssText='background:#FFF6E5;color:#8a5a00;border-bottom:1px solid #f0d9a8;'+
-        'padding:8px 16px;font-size:13px;text-align:center';
-      b.innerHTML='Your profile isn\u2019t finished yet, so you may not see everything. '+
-        'Ask your administrator to set your <b>Department</b> and <b>Office location</b>.';
-      document.body.insertBefore(b, document.body.firstChild);
-    }
+    setupBar();
+  }
+  /* If a person's profile really isn't filled in, say so plainly instead of silently showing them an empty app.
+     Decided again whenever who-they-are changes (identityChanged), and never while it's still being learned:
+     04/11/2026, Haley (San Angelo OM, team and office both on the roster) kept the bar - it was decided at page load,
+     before the roster landed, and never taken down once her team and office arrived. */
+  function setupBar(){
+    if(!isLive() || !document.body) return;
+    const m=me(), old=document.getElementById('ph-setupbar');
+    if(!(m && m._needsSetup) || !SIGNED_IN || stillLearning()){ if(old) old.remove(); return; }
+    if(old) return;
+    const b=document.createElement('div');
+    b.id='ph-setupbar';
+    b.style.cssText='background:#FFF6E5;color:#8a5a00;border-bottom:1px solid #f0d9a8;'+
+      'padding:8px 16px;font-size:13px;text-align:center';
+    b.innerHTML='Your profile isn\u2019t finished yet, so you may not see everything. '+
+      'Ask your administrator to set your <b>Department</b> and <b>Office location</b>.';
+    document.body.insertBefore(b, document.body.firstChild);
   }
 
   /* ---------------------------------------------------------------
@@ -2781,6 +2786,7 @@
   function identityChanged(){
     seedRoster();                                // the admin may only now be known
     nav(NAV_ACTIVE);
+    try{ setupBar(); }catch(_){}
     try{ document.dispatchEvent(new CustomEvent('ph-identity')); }catch(_){}
   }
   /* WHILE WE DO NOT YET KNOW WHAT THIS PERSON MAY SEE, REFUSE NOTHING.

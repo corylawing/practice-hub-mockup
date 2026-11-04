@@ -126,6 +126,11 @@ paySenders/reloadPaySenders/paySenderOffices, payLevel).
   when from<=n<to OR the sheet has a value typed in it - "Take off" never hides typed data; "Bring back" clears `to`.
   Combined sheet gets one "Extra columns" column (name: value lines) when any sent office has one. Browser-checked
   (mock-up + Real version, 1280 + 390: add, dup refused, office sees it, typed + saved sc_ and ers, reload, take off).
+- **"PROFILE ISN'T FINISHED" BAR, STALE (04/11, hc124, sandbox).** Haley (San Angelo OM, feedback 04/11) had the bar
+  though her team + office come from the roster. dechrome() decided it once at page load, before the roster landed,
+  and never took it down. Now `setupBar()` (user.js): only after sign-in, never while stillLearning(), and re-decided
+  in identityChanged() (removes it when the late sources land). Reproduced on the old code with a stand-in whose
+  Entra is blank and roster arrives 3 s late (bar stayed); gone with the fix; a truly blank profile still gets it.
 - Asked 04/11, NOT built: a Settings screen where Heather picks per column "office types it / office sees it / only
   me" (~1 day). Today's split is fixed from her answers; her Goal/TC-OM/Extra live in her private folder. After go-live.
 - **Who sees what**: Admin team (and Payroll level Edit) = manage everything incl. Heather's columns; Payroll level
