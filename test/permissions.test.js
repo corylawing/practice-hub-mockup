@@ -191,7 +191,7 @@ const t=(n,v)=>{ (v?ok:bad).push(n); };
   t('the COO is still an admin', H.PH.isAdmin()===true);
   t('admin.html is NOT locked for her', H.locked()===false);
   /* Every tab - the TC Tracker included since it went live (19/10/2026, Cory: "yes on production"). */
-  t('and her menu has every tab (the Academy, Payroll and Chat are sandbox mock-ups)', H.tabs().length===H.PH.NAV.filter(x=>x.k!=='academy' && x.k!=='payroll' && x.k!=='chat').length);
+  t('and her menu has every tab, Payroll included since 04/11 (the Academy and Chat are sandbox mock-ups)', H.tabs().length===H.PH.NAV.filter(x=>x.k!=='academy' && x.k!=='chat').length);
   t('the Chat mock-up never shows on the live site', H.tabs().indexOf('chat')<0);
   t('...and neither does its chat button beside the bell', H.PH.NAV.find(x=>x.k==='chat').show()===false);
   const CH=load({page:'chat'});
@@ -200,12 +200,12 @@ const t=(n,v)=>{ (v?ok:bad).push(n); };
               jobTitle:'COO', department:'Admin', officeLocation:'' });
   t('...and the Chat page stays shut there, even for an admin', CH.locked()===true || CH.pending()===true);
   t('the Academy mock-up never shows on the live site', H.tabs().indexOf('academy')<0);
-  t('the Payroll mock-up never shows on the live site', H.tabs().indexOf('payroll')<0);
+  t('Payroll is on the live site for the COO (04/11/2026, live for staff)', H.tabs().indexOf('payroll')>=0 && H.PH.payLevel()==='manage');
   const PY=load({page:'payroll'});
   PY.PH.nav('payroll');
   PY.signIn({ displayName:'Test Admin', mail:'test.admin@example.com', userPrincipalName:'test.admin@example.com',
               jobTitle:'COO', department:'Admin', officeLocation:'' });
-  t('...and the Payroll page stays shut there, even for an admin', PY.locked()===true || PY.pending()===true);
+  t('...and the Payroll page opens for an admin there', PY.locked()===false);
   const AC=load({page:'academy'});
   AC.PH.nav('academy');
   AC.signIn({ displayName:'Test Admin', mail:'test.admin@example.com', userPrincipalName:'test.admin@example.com',
@@ -316,8 +316,13 @@ const t=(n,v)=>{ (v?ok:bad).push(n); };
   PQ.PH.nav('payroll');
   PQ.signIn({ displayName:'Test Manager', mail:'test.om@example.com', userPrincipalName:'test.om@example.com',
               jobTitle:'Office Manager', department:'Office Managers', officeLocation:'Hobbs' });
-  t('...but not a non-admin, even one chosen to send a sheet, until Payroll is on for everyone', PQ.PH.payOn()===false && PQ.tabs().indexOf('payroll')<0);
-  t('...who would be a sender of Hobbs then', PQ.PH.paySenderOffices().join()==='Hobbs' && PQ.PH.payLevel()==='send');
+  t('Payroll is on for everyone (04/11): someone chosen to send a sheet gets the tab, to send it', PQ.PH.payOn()===true && PQ.tabs().indexOf('payroll')>=0);
+  t('...as the sender of Hobbs, nothing more', PQ.PH.paySenderOffices().join()==='Hobbs' && PQ.PH.payLevel()==='send');
+  const PR_=load({ page:'payroll', ls:{ ph_pay_senders:JSON.stringify({offices:{Hobbs:['test.om@example.com']}}) } });
+  PR_.PH.nav('payroll');
+  PR_.signIn({ displayName:'Test Assistant', mail:'test.ca@example.com', userPrincipalName:'test.ca@example.com',
+              jobTitle:'Clinical Assistant', department:'Staff', officeLocation:'Hobbs' });
+  t('...and someone who doesn’t send one and has no Payroll level gets no tab', PR_.PH.payLevel()==='' && PR_.tabs().indexOf('payroll')<0);
   t('payroll: an admin manages the payroll folders; a team with no Payroll level gets nothing', PP.PH.payRoleFor(['Admin'])==='write' && PP.PH.payRoleFor(['Office Managers'])==='');
   /* 19/10: live for everyone - the tab follows Teams & Access, like every other tab. Made-up people. */
   const LT=load({ page:'tc' });

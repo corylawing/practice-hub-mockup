@@ -1902,7 +1902,7 @@
      Settings; Payroll: See reads every office; each office's sender(s) - Heather's "Who sends each office's sheet",
      ph_pay_senders in the shared list (names only, no pay) - see and send their own office's sheet. The sheets
      themselves are in the locked payroll folder (paystore.js), never the shared list. */
-  const PAY_LIVE=false;
+  const PAY_LIVE=true;                // ON for staff 04/11/2026 (Heather: "I did all the instructions, I think we are good to go"); first pay period #24
   function payPreview(){
     try{
       if(/[?&]paypreview(=1)?(&|$)/.test(location.search||'')) localStorage.setItem('ph_pay_preview','1');

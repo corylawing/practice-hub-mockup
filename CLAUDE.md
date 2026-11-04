@@ -20,7 +20,9 @@ I can confidently say that the chat feature should go next. The production thing
 1. **Payroll -> LIVE.** She OKed the mock-up. Real build: the live data (pay is private - follow the TC Tracker's locked
    folder, access from Teams & Access; think per-office so one OM can't open another office's sheets), the real
    people and who sends each office's sheet, her Settings, reminders in the bell (phone reminders come with #2).
-   **STATUS 03/11: ON LIVE (hc116), still OFF for staff** (`PAY_LIVE=false`). Heather 03/11: Settings done ("I think I have everything done on my
+   **STATUS 04/11: ON FOR STAFF (hc122, `PAY_LIVE=true`)** - Heather 04/11: "I did all the instructions, I think we are
+   good to go on this." First pay period on Home-Brace: #24 (Nov 1-14, due Tue Nov 17). Phone reminders still wait on
+   ALERTS_LIVE (bell reminders work). Earlier: ON LIVE (hc116) with `PAY_LIVE=false`. Heather 03/11: Settings done ("I think I have everything done on my
    end"); her two fixes (Sun-Sat periods, Zihua Partners) + one person at two offices are LIVE since 04/11
    (hc120, Cory "go and deploy"; verified: stamp, PAY_LIVE=false, ALERTS_LIVE=false, data files 404). Go-live step 1 done; next Cory: steps 2-4
    (?paypreview, lock the folder, Teams & Access sync), Heather: step 5 (Settings, she opens ?paypreview too), then
