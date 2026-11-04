@@ -161,6 +161,11 @@ paySenders/reloadPaySenders/paySenderOffices, payLevel).
   [data-nomic] opts out; no API (Firefox) = no 🎤. Capitalises a new sentence. Errors: blocked mic / offline / no mic.
   Browser-checked with a stand-in recogniser (headless needs Emulation.setFocusEmulationEnabled): payroll notes saved,
   appended to typed text, feedback form, none on hours or TC, 1280 + 390. Feedback cards: 18px apart (.fbr-list).
+  hc132 (LIVE 04/11): Feedback filters New / OPEN (= not done; Cory "All would be working") / Done + type chips (Something's
+  wrong / Ideas / Questions / Other); drawn ONCE then quiet refresh (Cory: "flashes three times" - admin redraws the tab
+  as sign-in/team list/access land), typed replies survive a repaint, its own .fbr-admin box (prodadmin.js uses data-k
+  too); admin.html opens straight on Feedback for #feedback; View As shows the person's replies in the bell + My messages
+  (no answer back while viewing); gate.js /me now asks for id; the admin's bell updates right after a reply.
   hc130: Feedback Done shows the 5 most recent, All the 20 most recent, + "Show all N" (Cory: "probably better to just
   show the last 5 done or something like that").
 - Asked 04/11, NOT built: a Settings screen where Heather picks per column "office types it / office sees it / only

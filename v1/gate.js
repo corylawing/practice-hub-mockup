@@ -80,7 +80,7 @@
      Office location decide what they can see, so the app must not paint until it knows. */
   function loadProfile(){
     if(!global.PH_AUTH) return Promise.resolve();
-    return global.PH_AUTH.graph('/me?$select=displayName,mail,userPrincipalName,jobTitle,department,officeLocation')
+    return global.PH_AUTH.graph('/me?$select=id,displayName,mail,userPrincipalName,jobTitle,department,officeLocation')
       .then(function(p){ if(global.PH && PH.setProfile) PH.setProfile(p); })
       .catch(function(){ /* proceed with least access rather than locking anyone out */ });
   }

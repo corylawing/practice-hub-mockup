@@ -73,7 +73,7 @@ const rows=[
 /* The page side: replies are signed by the team, never by a name */
 {
   const src=fs.readFileSync(path.join(__dirname,'..','v1','fbreply.js'),'utf8');
-  t('replies are signed "Home-Brace team"', /TEAM='Home-Brace team'/.test(src) && !/Cory/i.test(src.replace(/Cory: "[^"]*"|\(his choice[^)]*\)|Cory's|Cory,/g,'')));
+  t('replies are signed "Home-Brace team", and no name is ever on the page (comments aside)', /TEAM='Home-Brace team'/.test(src) && !/Cory/i.test(src.replace(/\/\*[\s\S]*?\*\//g,'').replace(/\/\/[^\n]*/g,'')));
   t('a phone alert never carries the words of the reply', /body:'Open Home-Brace to read it\.'/.test(src));
 }
 console.log(pass+' passed, '+fail+' failed'); if(fail) process.exit(1);

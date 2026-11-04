@@ -55,12 +55,16 @@
   const unread=(ths, seen)=>(ths||[]).filter(t=>t.lastTeam && t.lastTeam.at>String((seen||{})[t.id]||''));
 
   /* ---------- who is looking ---------- */
+  /* Who the page is for: the person signed in - or, while an admin uses View As, the person they're viewing as (Cory 04/11:
+     "I viewed as haley and didn't see a notifcation about my reply"). Matched by email, and by Microsoft id when it's
+     really them (gate.js asks /me for it). */
+  const viewing=()=>{ const P=global.PH||{}, imp=P.impersonating && P.impersonating(); return !!(imp && imp.first && P.isAdmin && P.isAdmin(P.realMe && P.realMe())); };
   function me(){
-    const P=global.PH||{}, m=(P.realMe && P.realMe())||{}, prof=(P.profileOf && P.profileOf())||{};
+    const P=global.PH||{}, v=viewing(), m=(v ? (P.me && P.me()) : (P.realMe && P.realMe()))||{}, prof=v ? {} : ((P.profileOf && P.profileOf())||{});
     const email=String(m.mail || prof.mail || (P.email && m.first ? P.email(m) : '') || '').toLowerCase();
     return {email, id:prof.id||'', name:((m.first||'')+' '+(m.last||'')).trim()};
   }
-  const isAdmin=()=>!!(global.PH && PH.isAdmin && PH.isAdmin(PH.realMe && PH.realMe()));
+  const isAdmin=()=>!!(global.PH && PH.isAdmin && PH.isAdmin(viewing() ? PH.me() : (PH.realMe && PH.realMe())));
   function seen(){ try{ return JSON.parse(localStorage.getItem(SEEN))||{}; }catch(_){ return {}; } }
   function markSeen(ths){ const s=seen(); (ths||[]).forEach(t=>{ if(t.lastTeam) s[t.id]=t.lastTeam.at; }); try{ localStorage.setItem(SEEN, JSON.stringify(s)); }catch(_){} }
 
@@ -111,6 +115,7 @@
     .fbr-note.warn{background:#fff6e5;color:#7a4b00}
     .fbr-empty{font-size:14px;color:#5b6b7d;padding:8px 2px}
     .fbr-filters{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
+    .fbr-kinds{margin-top:-4px}.fbr-kinds button{font-weight:600;padding:5px 12px}
     .fbr-filters button{border:1px solid #cfd8e3;background:#fff;border-radius:99px;padding:6px 13px;font:inherit;font-size:13px;font-weight:700;color:#33475b;cursor:pointer}
     .fbr-filters button.on{background:#0F2A4A;border-color:#0F2A4A;color:#fff}
     .fbr-err{color:#9a2f1e;font-size:13px;font-weight:700}
@@ -129,23 +134,49 @@
     '<b>Replies</b> (Multiple lines of text, plain text) and <b>ReplyTo</b> (Single line of text). Messages can be read meanwhile.</div>';
 
   /* ---------- Admin -> Feedback ---------- */
-  /* Done grows for ever (Cory, 04/11: "probably better to just show the last 5 done or something like that"): Done shows
-     the 5 most recent and All the 20 most recent, newest first; "Show all" opens the rest until the filter changes. */
+  /* New / Open / Done. Open = everything not marked done - new and replied (Cory, 04/11: "All shouldn't be all that would
+     be done I guess.. All would be working"). Done grows for ever ("probably better to just show the last 5 done"): Done
+     shows the 5 most recent and Open the 20 most recent, newest first; "Show all" opens the rest until the filter changes. */
   let FILTER='new', SHOWALL=false;
-  const CAP={done:5, all:20};
-  function mountAdmin(el){
+  const CAP={done:5, open:20};
+  /* Drawn ONCE; after that a call (Admin redraws its tab whenever sign-in, the team list or access land - Cory 04/11:
+     "when you load feedback it like flashes three times") refreshes quietly: no "Loading", and nothing repainted unless
+     the messages changed - and then what's typed in a reply box stays. */
+  let LAST='';
+  /* Everything lives in its own box (.fbr-admin) with its own click handling, so another Admin tab drawn into the same
+     place never gets Feedback's clicks (Production data uses data-k too). */
+  function mountAdmin(host, opts){
     styles();
-    el.innerHTML='<div class="fbr-empty">Loading feedback…</div>';
-    load().then(d=>paintAdmin(el, d), e=>{ el.innerHTML='<div class="fbr-note warn">Feedback couldn’t load: '+esc((e && e.message)||'SharePoint didn’t answer')+'</div>'; });
+    const force=!!(opts && opts.force);
+    let el=host.querySelector(':scope > .fbr-admin');
+    if(!el){ host.innerHTML='<div class="fbr-admin"><div class="fbr-empty">Loading feedback…</div></div>'; el=host.firstChild; LAST=''; }
+    if(el._busy && !force) return;                    // one look at a time; the redraws while it's out change nothing
+    el._busy=true;
+    load().then(d=>{ el._busy=false; if(!el.isConnected) return; const sig=JSON.stringify([d.items, d.cols]);
+        if(!force && sig===LAST && el.querySelector('.fbr-filters')) return; LAST=sig; paintAdmin(el, d); },
+      e=>{ el._busy=false; if(!el.isConnected || el.querySelector('.fbr-filters')) return; el.innerHTML='<div class="fbr-note warn">Feedback couldn’t load: '+esc((e && e.message)||'SharePoint didn’t answer')+'</div>'; });
   }
+  /* The kind of message, for the type filter (Cory 04/11: "add filters to see different types of the message, bug,
+     ideas etc"). */
+  const kindKey=k=>/WRONG/.test(k) ? 'bug' : /IDEA/.test(k) ? 'idea' : /QUESTION/.test(k) ? 'question' : 'other';
+  const KINDS=[['any','All types'],['bug','🐞 Something’s wrong'],['idea','💡 Ideas'],['question','❓ Questions'],['other','💬 Other']];
+  let KIND='any';
   function paintAdmin(el, d){
-    const all=threads(d.items), n={new:all.filter(t=>t.isNew).length, done:all.filter(t=>t.done).length, all:all.length};
-    const match=all.filter(t=>FILTER==='all' || (FILTER==='new' ? t.isNew : FILTER==='done' ? t.done : true));
+    /* what's typed in a reply box, and where the cursor was, survive a repaint */
+    const typed={}; let focusId=null;
+    el.querySelectorAll('.fbr-th').forEach(th=>{ const ta=th.querySelector('textarea'); if(ta && ta.value) typed[th.dataset.t]=ta.value; if(ta && document.activeElement===ta) focusId=th.dataset.t; });
+    const all=threads(d.items);
+    const ofKind=t=>KIND==='any' || kindKey(t.kind)===KIND, ofStatus=t=>FILTER==='new' ? t.isNew : FILTER==='done' ? t.done : !t.done;
+    const n={new:all.filter(t=>t.isNew && ofKind(t)).length, done:all.filter(t=>t.done && ofKind(t)).length, open:all.filter(t=>!t.done && ofKind(t)).length};
+    const nk=k=>all.filter(t=>ofStatus(t) && (k==='any' || kindKey(t.kind)===k)).length;
+    const match=all.filter(t=>ofStatus(t) && ofKind(t));
     const cap=CAP[FILTER], shown=(cap && !SHOWALL) ? match.slice(0, cap) : match;
     let h='<p style="margin:0 0 12px;font-size:14px;color:#5b6b7d">What people sent with <b>Tour &amp; Feedback</b>. Reply here: they see it in their bell (and on their phone if they turned alerts on), signed <b>'+TEAM+'</b>. Their answer back comes here, and to your email like before.</p>';
     if(!d.cols.replies || !d.cols.replyTo) h+=setupNote;
-    h+='<div class="fbr-filters" role="group" aria-label="Show">'+[['new','New'],['all','All'],['done','Done']].map(f=>'<button type="button" data-f="'+f[0]+'" class="'+(FILTER===f[0]?'on':'')+'" aria-pressed="'+(FILTER===f[0])+'">'+f[1]+' ('+n[f[0]]+')</button>').join('')+
+    h+='<div class="fbr-filters" role="group" aria-label="Show">'+[['new','New'],['open','Open'],['done','Done']].map(f=>'<button type="button" data-f="'+f[0]+'" class="'+(FILTER===f[0]?'on':'')+'" aria-pressed="'+(FILTER===f[0])+'">'+f[1]+' ('+n[f[0]]+')</button>').join('')+
       '<button type="button" data-re="1" style="margin-left:auto">↻ Refresh</button></div>';
+    h+='<div class="fbr-filters fbr-kinds" role="group" aria-label="Type">'+KINDS.filter(k=>k[0]!=='other' || nk('other') || KIND==='other')
+      .map(k=>'<button type="button" data-k="'+k[0]+'" class="'+(KIND===k[0]?'on':'')+'" aria-pressed="'+(KIND===k[0])+'">'+k[1]+' ('+nk(k[0])+')</button>').join('')+'</div>';
     h+=shown.length ? '<div class="fbr-list">'+shown.map(t=>'<div class="fbr-th'+(t.isNew?' new':'')+'" data-t="'+esc(t.id)+'"><div class="fbr-top"><b>'+esc(t.by.name||t.by.email||'Someone')+'</b>'+
         (t.offices?'<span>'+esc(t.offices)+'</span>':'')+(t.page?'<span>· '+esc(t.page)+'</span>':'')+kindPill(t.kind)+
         (t.isNew?'<span class="fbr-pill new">New</span>':t.done?'<span class="fbr-pill done">Done</span>':'<span class="fbr-pill">Replied</span>')+'</div>'+
@@ -155,13 +186,16 @@
         (d.cols.replies ? '<button type="button" class="fbr-btn ghost" data-done="'+esc(t.id)+'">'+(t.done?'Reopen':'Mark done')+'</button>' : '')+
         '<span class="fbr-err"></span></div></div></div>').join('')+'</div>'
       + (shown.length<match.length ? '<div class="fbr-row" style="margin-top:12px"><button type="button" class="fbr-btn ghost" data-more="1">Show all '+match.length+(FILTER==='done'?' done':'')+'</button><span style="font-size:13px;color:#5b6b7d">Showing the '+shown.length+' most recent</span></div>' : '')
-      : '<div class="fbr-empty">'+(FILTER==='new' ? 'Nothing new - you’re all caught up.' : 'Nothing here yet.')+'</div>';
+      : '<div class="fbr-empty">'+(FILTER==='new' && KIND==='any' ? 'Nothing new - you’re all caught up.' : 'Nothing here.')+'</div>';
     h+='<p style="margin:14px 2px 0;font-size:12.5px;color:#8291a3">Everyone’s messages show here, for Home-Brace admins. Staff only ever see their own, under My messages.</p>';
     el.innerHTML=h;
+    Object.keys(typed).forEach(id=>{ const th=el.querySelector('.fbr-th[data-t="'+(window.CSS && CSS.escape ? CSS.escape(id) : id)+'"]'); if(!th) return;
+      const ta=th.querySelector('textarea'), b=th.querySelector('[data-send]'); if(ta){ ta.value=typed[id]; if(b) b.disabled=!ta.value.trim(); if(id===focusId) try{ ta.focus(); }catch(_){} } });
     el.onclick=e=>{
       const f=e.target.closest('[data-f]'); if(f){ FILTER=f.dataset.f; SHOWALL=false; paintAdmin(el, d); return; }
+      const k=e.target.closest('[data-k]'); if(k){ KIND=k.dataset.k; SHOWALL=false; paintAdmin(el, d); return; }
       if(e.target.closest('[data-more]')){ SHOWALL=true; paintAdmin(el, d); return; }
-      if(e.target.closest('[data-re]')){ mountAdmin(el); return; }
+      if(e.target.closest('[data-re]')){ mountAdmin(el.parentNode, {force:true}); return; }
       const s=e.target.closest('[data-send]'); if(s){ sendReply(el, d, s); return; }
       const dn=e.target.closest('[data-done]'); if(dn){ markDone(el, d, dn); return; }
     };
@@ -174,14 +208,16 @@
     const t=threads(d.items).find(x=>x.id===id);
     PH_STORE.feedbackReplies(id, cur=>{ const r=parseReplies(cur); r.r.push({at:nowISO(), t:text.slice(0,4000), by:me().email}); return r; }).then(()=>{
       toast('Sent - they’ll see it in their bell');
+      try{ document.dispatchEvent(new CustomEvent('ph-fb-changed')); }catch(_){}        // your own bell: no longer new
       if(t && t.by.email) phone([t.by.email], id);
-      mountAdmin(el);
+      btn.closest('.fbr-reply').querySelector('textarea').value='';
+      mountAdmin(el.parentNode, {force:true});
     }, e=>{ btn.disabled=false; btn.textContent='Send reply'; err.textContent=(e && e.needsSetup) ? 'Needs the SharePoint setup above first.' : 'Not sent: '+((e && e.message)||'SharePoint didn’t answer')+' - your reply is still here.'; });
   }
   function markDone(el, d, btn){
     const id=btn.dataset.done, t=threads(d.items).find(x=>x.id===id), reopen=!!(t && t.done);
     btn.disabled=true;
-    PH_STORE.feedbackReplies(id, cur=>{ const r=parseReplies(cur); r.doneAt=reopen ? '' : nowISO(); return r; }).then(()=>{ toast(reopen ? 'Back in New' : 'Marked done'); mountAdmin(el); },
+    PH_STORE.feedbackReplies(id, cur=>{ const r=parseReplies(cur); r.doneAt=reopen ? '' : nowISO(); return r; }).then(()=>{ toast(reopen ? 'Back in New' : 'Marked done'); try{ document.dispatchEvent(new CustomEvent('ph-fb-changed')); }catch(_){} mountAdmin(el.parentNode, {force:true}); },
       e=>{ btn.disabled=false; const er=btn.parentNode.querySelector('.fbr-err'); if(er) er.textContent='Not saved: '+((e && e.message)||'SharePoint didn’t answer'); });
   }
   /* Their phone, if they turned alerts on - no words of the reply on a lock screen, just that there is one. */
@@ -207,8 +243,9 @@
       const mine=threads(d.items).filter(t=>sameAs(t.by, me())), unseen=unread(mine, seen()).map(t=>t.id);
       body.innerHTML=mine.length ? mine.map(t=>'<div class="fbr-th'+(unseen.indexOf(t.id)>=0?' new':'')+'"><div class="fbr-top">'+kindPill(t.kind)+(t.page?'<span>'+esc(t.page)+'</span>':'')+
           (unseen.indexOf(t.id)>=0?'<span class="fbr-pill new">New reply</span>':'')+'</div>'+msgsHTML(t,'mine')+
-          (t.lastTeam && d.cols.replyTo ? '<div class="fbr-reply"><textarea maxlength="4000" placeholder="Answer back…" aria-label="Answer back"></textarea><div class="fbr-row"><button type="button" class="fbr-btn" data-back="'+esc(t.id)+'" disabled>Send</button><span class="fbr-err"></span></div></div>' : '')+
+          (t.lastTeam && d.cols.replyTo && !viewing() ? '<div class="fbr-reply"><textarea maxlength="4000" placeholder="Answer back…" aria-label="Answer back"></textarea><div class="fbr-row"><button type="button" class="fbr-btn" data-back="'+esc(t.id)+'" disabled>Send</button><span class="fbr-err"></span></div></div>' : '')+
           '</div>').join('')
+        + (viewing() && mine.length ? '<div class="fbr-note">You’re viewing as '+esc(me().name||'them')+': you see their messages, but only they can answer back.</div>' : '')
         : '<div class="fbr-empty">Nothing yet. When you send feedback (Tour &amp; Feedback → Send Feedback), it and our replies show up here.</div>';
       markSeen(mine);
       try{ document.dispatchEvent(new CustomEvent('ph-fb-changed')); }catch(_){}

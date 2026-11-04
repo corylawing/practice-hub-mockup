@@ -272,18 +272,18 @@
   }
 
 </style>
-<script src="user.js?v=hc130"></script>
+<script src="user.js?v=hc132"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="_staff.js?v=hc130"></script>
-  <script src="store.js?v=hc130"></script>
-  <script src="gate.js?v=hc130"></script>
-  <script src="docs.js?v=hc130"></script>
-  <script src="payrules.js?v=hc130"></script>
-  <script src="workbook.js?v=hc130"></script>
-  <script src="prodbook.js?v=hc130"></script>
-  <script src="prodfx.js?v=hc130"></script>
-  <script src="prodstore.js?v=hc130"></script>
-  <script src="prodadmin.js?v=hc130"></script>
+  <script src="_staff.js?v=hc132"></script>
+  <script src="store.js?v=hc132"></script>
+  <script src="gate.js?v=hc132"></script>
+  <script src="docs.js?v=hc132"></script>
+  <script src="payrules.js?v=hc132"></script>
+  <script src="workbook.js?v=hc132"></script>
+  <script src="prodbook.js?v=hc132"></script>
+  <script src="prodfx.js?v=hc132"></script>
+  <script src="prodstore.js?v=hc132"></script>
+  <script src="prodadmin.js?v=hc132"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — admin console concept for validation. Real build: people sync from Microsoft 365; access is managed here.</div>
@@ -697,7 +697,8 @@
   try{ window.matchMedia('(max-width:640px)').addEventListener('change', function(){ render(); }); }catch(_){}
   const av=u=>PAL[u.c%PAL.length];
   const initials=u=>(u.f[0]+u.l[0]).toUpperCase();
-  let tab='users', search='', tmpU=null, openSecs=new Set(['managers','hr']);
+  let tab=location.hash==='#feedback'?'fb':'users', search='',     // the bell's "new feedback" opens straight on Feedback
+   tmpU=null, openSecs=new Set(['managers','hr']);
 
   function tabSet(t){ tab=t; [...document.querySelectorAll('.tab')].forEach(b=>b.classList.toggle('active',b.dataset.t===t)); render(); }
   /* Repainting a whole tab throws away where the person was. The access matrix is
@@ -717,7 +718,10 @@
   function render(){ if(tab==='users')renderUsers(); else if(tab==='access')renderAccess();
     else if(tab==='locs')renderLocs(); else if(tab==='prod')renderProd(); else if(tab==='fb')renderFb(); else renderFiles(); }
   /* FEEDBACK REPLIES (04/11/2026, Cory: "as me as an admin can respond to these"): fbreply.js draws the inbox. */
-  function renderFb(){ const v=document.getElementById('view'); v.innerHTML='<div class="intro">Loading feedback…</div>';
+  /* Admin redraws the tab when sign-in, the team list and access land: the Feedback view is kept and refreshed quietly
+     (fbreply.js), so it doesn't flash. */
+  function renderFb(){ const v=document.getElementById('view');
+    if(!v.querySelector(':scope > .fbr-admin')) v.innerHTML='<div class="fbr-admin"><div class="fbr-empty" style="font-size:14px;color:#5b6b7d;padding:8px 2px">Loading feedback…</div></div>';
     PH.fbReady().then(F=>{ if(tab!=='fb') return; if(F) F.mountAdmin(v); else v.innerHTML='<div class="intro">Feedback could not load.</div>'; }); }
   /* Home-Brace's own copy of the production workbook, one book per year (prodadmin.js). */
   function renderProd(){ const v=document.getElementById('view'); if(window.PH_PRODUI) PH_PRODUI.mount(v); else v.innerHTML='<div class="intro">Production data could not load.</div>'; }
@@ -2191,7 +2195,7 @@ function sizeWatch(){
   }).catch(()=>{});
 }
 </script>
-<script src="tour.js?v=hc130"></script>
+<script src="tour.js?v=hc132"></script>
 <script>
 Tour.init([
   {sel:'#tabs', title:'This is your control room', body:'Four tabs and you can run the whole hub: <b>People</b>, <b>Teams &amp; Access</b>, <b>Document Sections</b> and <b>Locations</b>. No developer, no consultant.', pre:()=>AD.tab('users')},
