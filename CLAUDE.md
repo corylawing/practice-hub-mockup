@@ -90,6 +90,18 @@ paySenders/reloadPaySenders/paySenderOffices, payLevel).
   mode: the office sheet + "← All offices"; "Mark as done" = status sent; tile/pill "Done"). The manager's 2 pm bell
   counts it once any sender is chosen ("still waiting on ..., Zihua Partners"). Browser-checked (mock-up as Heather,
   Real version as an admin, 1280 + 390 px).
+- **ONE PERSON, TWO OFFICES (04/11, hc120).** Cory: "Office managers puts hours in one and other. And that heather could
+  see both for the same employee." The SAME id goes into each office's people.json: each office's sheet lists them
+  ("also <office>"), each sender types only their office's hours, Heather's side adds them up ("2 offices" pill, "Working
+  two offices - hours combined", overtime on the total). How a person gets there: Fill from the team list links someone
+  already at another office by EMAIL (`elsewhere()` -> `addToOffice()`); Settings -> People: "+ Also works at..." per
+  row; people already listed twice (two ids, one email - made by filling each office before this) get a "Listed twice?"
+  note -> "Make them one person" (`makeOne`: keeps the entry with a start date/bonus, copies start/bonus over if missing,
+  the other office's old entry is only MARKED `linked:<id>` (load skips it like `mistake`) and the kept id is added
+  there - nothing deleted; refused if the other entry already has hours on an un-entered sheet). Mock-up: S.also.
+  Browser-checked (mock-up + Real version: twins found, made one, reload = one row "Carlsbad + Hobbs", files right).
+- Asked 04/11, NOT built: a Settings screen where Heather picks per column "office types it / office sees it / only
+  me" (~1 day). Today's split is fixed from her answers; her Goal/TC-OM/Extra live in her private folder. After go-live.
 - **Who sees what**: Admin team (and Payroll level Edit) = manage everything incl. Heather's columns; Payroll level
   View = read every office; a chosen sender = their own office's sheet only (no pay amounts). Saves are field-level,
   queued 0.7 s, badge "Saving… / Saved ✓", leave-page guard. Nothing saves until the folder is locked.

@@ -158,6 +158,7 @@
   label.fld .in{font-weight:400;font-size:14px;padding:8px 10px;width:100%}
   tr.gone td{color:#9AA5B5}
   .in{font:inherit;font-size:13.5px;padding:6px 7px;border:1px solid #D5DCE5;border-radius:8px;background:#fff;color:var(--ink);font-variant-numeric:tabular-nums}
+  select.alsoat{margin-top:5px;font-size:12.5px;padding:4px 6px;max-width:190px}
   .in:focus{outline:2px solid var(--teal2);outline-offset:0;border-color:var(--teal)}
   input.in[type=number]{text-align:right}
   .in.bad{border-color:var(--bad);background:#FFF7F5}
@@ -224,15 +225,15 @@
     .perhead .when{font-size:17px}
   }
 </style>
-<script src="user.js?v=hc119"></script>
+<script src="user.js?v=hc120"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc119"></script>
-  <script src="gate.js?v=hc119"></script>
-  <script src="alerts.js?v=hc119"></script>
-  <script src="_staff.js?v=hc119"></script>
-  <script src="payrules.js?v=hc119"></script>
-  <script src="paystore.js?v=hc119"></script>
-  <script src="docs.js?v=hc119"></script>
+  <script src="store.js?v=hc120"></script>
+  <script src="gate.js?v=hc120"></script>
+  <script src="alerts.js?v=hc120"></script>
+  <script src="_staff.js?v=hc120"></script>
+  <script src="payrules.js?v=hc120"></script>
+  <script src="paystore.js?v=hc120"></script>
+  <script src="docs.js?v=hc120"></script>
 </head>
 <body>
 <div class="ribbon">MOCK-UP for Heather — made-up people and amounts. Try it as the Carlsbad TC first, then as Heather.</div>
@@ -383,7 +384,7 @@
   if(!S || (S.v!==1 && S.v!==2)) S={v:2, subs:{}, entered:{}};
   /* Sheets clicked through before Heather's answers (v1) are kept; people and doctors added start empty. */
   const fresh=()=>{ S.v=2; S.subs=S.subs||{}; S.entered=S.entered||{}; S.added=S.added||[]; S.removed=S.removed||{};
-                    S.bonus=S.bonus||{}; S.docAdd=S.docAdd||[]; S.docGone=S.docGone||{}; };
+                    S.bonus=S.bonus||{}; S.docAdd=S.docAdd||[]; S.docGone=S.docGone||{}; S.also=S.also||{}; };
   fresh();
   const save=()=>{ if(LIVEPAY) return; try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(_){} };   // live: saved field by field (LIVE below)
 
@@ -395,6 +396,7 @@
   const bonusOf=p=>S.bonus[p.id]!==undefined ? num(S.bonus[p.id]) : num(p.bonus);
   const basePeopleAt=o=>PEOPLE.filter(p=>p.offices.indexOf(o)>=0).sort(byLast);
   const activeAt=o=>everyone().filter(p=>p.offices.indexOf(o)>=0 && !S.removed[p.id]).sort(byLast);
+  if(!LIVEPAY) Object.keys(S.also).forEach(id=>{ const p=who(id); if(p) S.also[id].forEach(k=>{ if(OFF[k] && p.offices.indexOf(k)<0) p.offices.push(k); }); });
   const everyDoc=()=>DOCS.concat(S.docAdd);
 
   /* ---------- sample sheets: the same numbers every time ---------- */
@@ -895,12 +897,17 @@
           + '<div class="small muted">Usually the '+esc(o.by)+'.</div>'
         : 'The '+esc(o.by))+'</td><td>'+((o.own||[]).map(c=>esc(c.n)).join(', ')||'<span class="muted">—</span>')+'</td></tr>').join('')+'</tbody></table></div></div>';
     h+='<div class="card"><h2>Paid holidays</h2><p class="sub">A holiday column shows up by itself in the pay period it falls in.</p><div class="row">'+HOLIDAYS.map(x=>'<span class="pill p-new">'+esc(fmt(x.d,{year:'numeric'}))+' · '+esc(x.n)+'</span>').join('')+'</div></div>';
-    const act=everyone().filter(p=>!S.removed[p.id]).sort(byLast), gone=everyone().filter(p=>S.removed[p.id]).sort(byLast);
+    const act=everyone().filter(p=>!S.removed[p.id]).sort(byLast), gone=everyone().filter(p=>S.removed[p.id]).sort(byLast), tw=twins();
+    if(tw.length) h+='<div class="note warn"><b>Listed twice?</b> These people are on two offices’ lists as two separate people, so their hours won’t add up. Make each one person and both offices still type their own hours.'+
+      tw.map(g=>'<div class="row" style="margin-top:8px;gap:8px;flex-wrap:wrap"><b>'+esc(disp(g[0]))+'</b><span class="small muted">'+esc(g.map(p=>p.offices.map(k=>OFF[k].n).join(' + ')).join(' · '))+'</span>'+
+        (R().ro ? '' : '<button class="btn sm" data-act="oneperson" data-v="'+esc(String(g[0].email).toLowerCase())+'">Make them one person</button>')+'</div>').join('')+'</div>';
     h+='<div class="card"><div class="row" style="margin-bottom:8px"><div class="grow"><h2>People</h2><p class="sub" style="margin:0">By last name, like the payroll software. Their office, their pay-period bonus, and when holiday pay starts.</p></div><button class="btn ghost sm" data-act="addp" data-v="">＋ Add a person</button></div>'+
       (LIVEPAY ? '<div class="row" style="margin-bottom:10px;flex-wrap:wrap;gap:6px"><span class="small muted">Fill from the Home-Brace team list:</span>'+OFFICES.filter(o=>!o.self).map(o=>'<button class="btn ghost sm" data-act="fill" data-v="'+o.k+'">＋ '+esc(o.n)+'</button>').join('')+
         OFFICES.filter(o=>o.self).map(o=>'<span class="small muted">'+esc(o.n)+': add its people with <b>＋ Add a person</b>.</span>').join('')+'</div>' : '')+
       '<div class="tblwrap"><table class="t"><thead><tr><th>Name</th><th>Office</th><th class="n">PP bonus</th><th>Started</th><th>Holiday pay from</th><th></th><th></th></tr></thead><tbody>'+
-      act.map(p=>'<tr><td><b>'+esc(disp(p))+'</b></td><td>'+esc(p.offices.map(k=>OFF[k].n).join(' + '))+'</td>'+
+      act.map(p=>'<tr><td><b>'+esc(disp(p))+'</b></td><td>'+esc(p.offices.map(k=>OFF[k].n).join(' + '))+
+        (R().ro ? '' : '<br><select class="in alsoat" data-alsoat="'+p.id+'" aria-label="Also works at another office: '+esc(disp(p))+'"><option value="">＋ Also works at…</option>'+
+          OFFICES.filter(o=>p.offices.indexOf(o.k)<0).map(o=>'<option value="'+o.k+'">'+esc(o.n)+'</option>').join('')+'</select>')+'</td>'+
         '<td class="n">$ <input class="in" style="width:76px" type="number" min="0" step="5" inputmode="decimal" data-sb="'+p.id+'" value="'+(bonusOf(p)||'')+'" aria-label="Pay-period bonus for '+esc(disp(p))+'"></td>'+
         '<td>'+(LIVEPAY ? '<input class="in" type="date" style="width:150px" data-start="'+p.id+'" value="'+esc(p.start||'')+'" aria-label="Start date for '+esc(disp(p))+'">' : esc(fmt(p.start,{year:'numeric'})))+'</td>'+
         '<td>'+(p.start ? esc(fmt(eligibleOn(p),{year:'numeric'}))+(eligibleOn(p)>TODAY?' <span class="pill p-go">soon</span>':'') : '<span class="pill p-late">Add the start date</span>')+'</td>'+
@@ -1009,6 +1016,8 @@
     if(t.dataset.f && t.tagName==='INPUT' && t.type!=='checkbox') onField(t,false);
     if(t.id==='look'){ look=t.value; const r=el('lookres'); if(r) r.innerHTML=lookHTML(); } });
   document.addEventListener('change', e=>{ const t=e.target;
+    if(t.dataset && t.dataset.alsoat){ const p=who(t.dataset.alsoat), k=t.value;
+      if(p && k && addToOffice(p, k)){ render(); toast(disp(p)+' is on '+poss(OFF[k].n)+' sheet too - each office types its own hours, you see them added up'); } return; }
     if(t.id==='persona' && TRY){
       if(PH.profileOf && PH.profileOf()){                 // signed in: look through someone else's eyes (View As)
         if(t.value==='me'){ PH.stopViewAs(); return; }
@@ -1089,6 +1098,7 @@
     if(act==='reload'){ location.reload(); return; }
     if(act==='retry'){ liveFlushAll(); return; }
     if(act==='fill'){ liveFill(v); return; }
+    if(act==='oneperson'){ makeOne(v); return; }
     if(act==='fillin' && OFF[v] && OFF[v].self){ fillAs=v; tab='sheet'; per=CUR; render(); window.scrollTo({top:0}); return; }
     if(act==='unfill'){ fillAs=null; tab='sheet'; render(); window.scrollTo({top:0}); return; }
     if(act==='sendrm'){ liveSenders(b.dataset.o, v, false); return; }
@@ -1242,15 +1252,62 @@
   function liveFill(k){
     const name=OFF[k].n, have={};
     everyone().filter(p=>p.offices.indexOf(k)>=0).forEach(p=>{ have[(p.first+' '+p.last).toLowerCase()]=1; if(p.email) have[p.email]=1; });
-    const add=((PH.rosterView && PH.rosterView())||[]).filter(r=>(r.offices||[]).indexOf(name)>=0 && !(r.teams||[]).some(t=>/doctor/i.test(t)))
+    let add=((PH.rosterView && PH.rosterView())||[]).filter(r=>(r.offices||[]).indexOf(name)>=0 && !(r.teams||[]).some(t=>/doctor/i.test(t)))
       .filter(r=>!have[String(r.email||'').toLowerCase()] && !have[String(r.name||'').toLowerCase()]);
     if(!add.length){ toast('Everyone on '+name+'’s team list is already here'); return; }
+    const linked=[];
+    add=add.filter(r=>{ const p=elsewhere(String(r.email||'').toLowerCase(), k); if(!p) return true; addToOffice(p, k); linked.push(p); return false; });
+    if(!add.length){ render(); toast(linked.map(disp).join(', ')+(linked.length>1?' are':' is')+' on '+name+'’s sheet too - one person, hours added up for you'); return; }
     const made=add.map(r=>{ const nm=String(r.name||'').trim(), sp=nm.lastIndexOf(' ');
       return {id:'n'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), first:sp>0?nm.slice(0,sp):nm, last:sp>0?nm.slice(sp+1):'',
               email:String(r.email||'').toLowerCase(), start:'', byKind:'coo', at:nowISO(), from:'team list'}; });
     livePeopleOf(k, x=>{ made.forEach(m=>x.people.push(m)); }, true);
     made.forEach(m=>PEOPLE.push(Object.assign({}, m, {offices:[k], n:m.first+' '+m.last})));
-    render(); toast(made.length+' added to '+name+' — set their bonuses and start dates');
+    render(); toast(made.length+' added to '+name+' — set their bonuses and start dates'+(linked.length?' ('+linked.map(disp).join(', ')+' also works at another office: one person)':''));
+  }
+  /* ONE PERSON, TWO OFFICES (04/11/2026, Cory: "Office managers puts hours in one and other. And that heather could
+     see both for the same employee"). The same person - the same id - goes into each office's list: each office's sheet
+     has them, each sender types only their own office's hours, and Heather's side adds them up (overtime on the total,
+     "2 offices", "Working two offices"). Nothing is ever deleted: an entry made one person with another is only marked. */
+  const elsewhere=(em, k)=>!em ? null : everyone().find(p=>String(p.email||'').toLowerCase()===em && p.offices.indexOf(k)<0 && !S.removed[p.id]) || null;
+  function addToOffice(p, k){
+    if(!p || !OFF[k] || p.offices.indexOf(k)>=0) return false;
+    p.offices.push(k);
+    if(LIVEPAY) livePeopleOf(k, x=>{
+      const q=x.people.find(y=>y.id===p.id && !y.mistake && !y.linked);
+      if(q) delete q.gone;
+      else x.people.push({id:p.id, first:p.first, last:p.last, email:p.email||'', start:p.start||'', byKind:'coo', at:nowISO(), from:'also works here', by:(PH.email && PH.email(PH.me()))||''});
+    }, true);
+    else { S.also[p.id]=(S.also[p.id]||[]).concat(k); save(); }
+    return true;
+  }
+  /* The same person (the same email) listed separately at two offices - before linking existed, filling each office
+     from the team list did that. Their hours wouldn't add up, so Settings offers "Make them one person". */
+  function twins(){
+    const by={};
+    everyone().filter(p=>p.email && !S.removed[p.id]).forEach(p=>{ const e=String(p.email).toLowerCase(); (by[e]=by[e]||[]).push(p); });
+    return Object.keys(by).filter(e=>by[e].length>1).map(e=>by[e]);
+  }
+  function makeOne(email){
+    const g=twins().find(a=>String(a[0].email).toLowerCase()===email); if(!g) return;
+    const rank=p=>(p.start?0:2)+(S.bonus[p.id]!==undefined||num(p.bonus)?0:1);
+    const keep=g.slice().sort((a,b)=>rank(a)-rank(b) || OFFICES.findIndex(o=>o.k===a.offices[0])-OFFICES.findIndex(o=>o.k===b.offices[0]))[0], rest=g.filter(p=>p!==keep);
+    // hours already typed on this pay period's sheet under the other entry would drop out of sight: not now
+    const busy=rest.find(q=>q.offices.some(k=>{ const x=get(CUR,k).rows[q.id]; return x && !enteredOf(CUR) && num(x.w1)+num(x.w2)>0; }));
+    if(busy){ toast(disp(busy)+' already has hours on this pay period’s sheet - make them one person after you enter payroll'); return; }
+    const start=keep.start || (rest.find(q=>q.start)||{}).start || '';
+    if(start && !keep.start){ keep.start=start; livePerson(keep.id, q=>{ q.start=start; }); }
+    if(S.bonus[keep.id]===undefined){ const b=rest.find(q=>S.bonus[q.id]!==undefined); if(b){ const v=S.bonus[b.id]; S.bonus[keep.id]=v;
+      liveQueue('_h','settings', cur=>{ const x=cur||{v:1, bonus:{}}; x.bonus=x.bonus||{}; x.bonus[keep.id]=v; return x; }); } }
+    rest.forEach(q=>q.offices.forEach(k=>{
+      if(keep.offices.indexOf(k)<0) keep.offices.push(k);
+      livePeopleOf(k, x=>{
+        const old=x.people.find(y=>y.id===q.id && !y.mistake && !y.linked); if(old){ old.linked=keep.id; old.linkedAt=nowISO(); }
+        if(!x.people.some(y=>y.id===keep.id && !y.mistake && !y.linked)) x.people.push({id:keep.id, first:keep.first, last:keep.last, email:keep.email||'', start, byKind:'coo', at:nowISO(), from:'one person (was listed twice)', by:(PH.email && PH.email(PH.me()))||''});
+      });
+    }));
+    PEOPLE=PEOPLE.filter(p=>rest.indexOf(p)<0); S.added=S.added.filter(p=>rest.indexOf(p)<0);
+    liveFlushAll(); render(); toast(disp(keep)+' is one person now - on the '+keep.offices.map(k=>OFF[k].n).join(' and ')+' sheets');
   }
   /* Who sends each office's sheet - the shared list (names only, no pay): Home-Brace shows them the tab and, from
      Admin, gives them their office's folder. An admin's browser hands out that folder access right away. */
@@ -1301,7 +1358,7 @@
       .then(()=>offs.reduce((c,k)=>c.then(()=>Promise.all([store(k).get('people'), store(k).getAll('sheet_', {partial:true})]).then(([pf, sh])=>{
         pf=pf||{people:[], docs:[]};
         (pf.people||[]).forEach(q=>{
-          if(q.mistake) return;
+          if(q.mistake || q.linked) return;           // linked: the same person under another id (kept, never deleted)
           const was=people[q.id];
           if(was){ if(was.offices.indexOf(k)<0) was.offices.push(k); }
           else people[q.id]=Object.assign({}, q, {offices:[k], n:q.first+' '+q.last, period:q.period ? nOfKey(q.period) : undefined});
@@ -1372,7 +1429,7 @@
 })();
 </script>
 <script>PH.nav('payroll');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc119"></script>
+<script src="tour.js?v=hc120"></script>
 <script>
 Tour.init([
   ...((window.PH && PH.isLive && PH.isLive()) || (()=>{ try{ return localStorage.getItem('ph_pay_real')==='1'; }catch(_){ return false; } })() ? [] : [{sel:'#persona', title:'A mock-up', body:'Made-up people and amounts. Start as the <b>Carlsbad TC</b>, who sends Carlsbad’s sheet, then switch to <b>Heather</b>.'}]),
