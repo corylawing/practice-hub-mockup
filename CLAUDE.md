@@ -114,7 +114,7 @@ paySenders/reloadPaySenders/paySenderOffices, payLevel).
   (BEFORE = CUR < FIRST_N, live only) everyone lands on the one in progress (HOME()), pickers/past sheets/history list
   nothing earlier ("Nothing yet - the first pay period on Home-Brace is #24"), and payReminders/payAlertPlan skip any
   period before FIRST. test/payremind.test.js runs its #23 mechanics with FIRST moved earlier + 5 tests on the real one.
-- **# OF ERs TAKEN + EXTRA COLUMNS (04/11, hc123, sandbox; NOT on production until Cory says deploy).** Cory (from
+- **# OF ERs TAKEN + EXTRA COLUMNS (04/11, hc123; LIVE 04/11 with hc124 - Cory "deply"; verified stamp, PAY_LIVE=true, ALERTS_LIVE=false, data files 404).** Cory (from
   Haley's office): next to On call, "# of ERs taken" - "the on call means they get the pay the number of ERs taken is so
   we can pay them 1 hour of pay per pateint seen". Row field `ers` (a count = hours of pay; never in Total $, not in the
   week hours/overtime); office sheet column after On call, rule line, combined sheet "ER hrs", CSV "ER Hours", Worth a
@@ -126,7 +126,7 @@ paySenders/reloadPaySenders/paySenderOffices, payLevel).
   when from<=n<to OR the sheet has a value typed in it - "Take off" never hides typed data; "Bring back" clears `to`.
   Combined sheet gets one "Extra columns" column (name: value lines) when any sent office has one. Browser-checked
   (mock-up + Real version, 1280 + 390: add, dup refused, office sees it, typed + saved sc_ and ers, reload, take off).
-- **"PROFILE ISN'T FINISHED" BAR, STALE (04/11, hc124, sandbox).** Haley (San Angelo OM, feedback 04/11) had the bar
+- **"PROFILE ISN'T FINISHED" BAR, STALE (04/11, hc124, LIVE 04/11).** Haley (San Angelo OM, feedback 04/11) had the bar
   though her team + office come from the roster. dechrome() decided it once at page load, before the roster landed,
   and never took it down. Now `setupBar()` (user.js): only after sign-in, never while stillLearning(), and re-decided
   in identityChanged() (removes it when the late sources land). Reproduced on the old code with a stand-in whose
