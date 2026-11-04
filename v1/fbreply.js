@@ -150,7 +150,7 @@
         (d.cols.replies ? '<button type="button" class="fbr-btn ghost" data-done="'+esc(t.id)+'">'+(t.done?'Reopen':'Mark done')+'</button>' : '')+
         '<span class="fbr-err"></span></div></div></div>').join('')
       : '<div class="fbr-empty">'+(FILTER==='new' ? 'Nothing new - you’re all caught up.' : 'Nothing here yet.')+'</div>';
-    h+='<p style="margin:14px 2px 0;font-size:12.5px;color:#8291a3">You see every message when you’re an owner of the Home-Brace SharePoint site; anyone else only sees their own.</p>';
+    h+='<p style="margin:14px 2px 0;font-size:12.5px;color:#8291a3">Everyone’s messages show here, for Home-Brace admins. Staff only ever see their own, under My messages.</p>';
     el.innerHTML=h;
     el.onclick=e=>{
       const f=e.target.closest('[data-f]'); if(f){ FILTER=f.dataset.f; paintAdmin(el, d); return; }

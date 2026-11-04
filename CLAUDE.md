@@ -147,8 +147,10 @@ paySenders/reloadPaySenders/paySenderOffices, payLevel).
   plain - JSON {v:1, doneAt, r:[{at,t,by}]} on the message) and **ReplyTo** (single line - an answer back is a NEW row
   pointing at the first, so the existing email flow sends it). Found by name or display name (Reply_x0020_To ok); a
   rich-text Replies is unwrapped. Without them: messages read, replies wait (setup note), answers back go without
-  ReplyTo. PRIVACY: list Advanced settings -> Item-level permissions "Read items that were created by the user" + "Create
-  items and edit items that were created by the user"; site OWNERS see all (whoever replies must be an owner).
+  ReplyTo. ITEM-LEVEL PERMISSIONS MUST STAY "Read all items" / "Create and edit all items" (04/11: Cory set "read own"
+  and Home-Brace - reading through Graph - got ONLY his own rows although he is in Home-Brace Owners and SharePoint's own
+  view showed them all; back to "all" and Haley's appeared). Privacy is the app's: My messages shows only the person's
+  own (sameAs), the Feedback tab is Admin-only - the same exposure as before replies existed. Cory + Heather are Owners.
   Sandbox: ph_fb_sandbox in this browser. test/fbreply.test.js (28). Browser-checked sandbox (two people) + live mode
   against a SharePoint stand-in (no columns / columns / "Reply To" with a space; Gabriela never sees Morgan's).
 - Asked 04/11, NOT built: a Settings screen where Heather picks per column "office types it / office sees it / only
