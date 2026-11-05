@@ -61,6 +61,9 @@ I can confidently say that the chat feature should go next. The production thing
    Build notes: the most sensitive data in the app (SSNs, IDs) - a SharePoint library in THEIR tenant with locks set
    up with Adam, never this public repo, never cached in the browser; log who opened what.
 6. **Rotate the deployment token** when we're done (still the one pasted in chat).
+7. **(Later, Cory 05/11: "leave it for now")** Home's updates list fills up with "Production numbers entered / Workbook
+   updated" notes (sec production, per office). Idea when he wants it: fold them into one line per day ("Production
+   updated: Carlsbad, Hobbs, Clovis") or show them to Leadership / Executive / Admin only.
 **LIVE 01/11/2026 (hc115, 36 files byte-checked, alerts-test 404 on live):** Selene (01/11) "Could we add “Pending – Scheduled to Start” as an additional TC
 outcome? This would apply to patients who have completed their exam and scheduled a future start appointment but
 have not yet signed their contract." -> tc.js SCHED_START: a completed consult (counts for conversion), not a start
