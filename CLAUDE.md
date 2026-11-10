@@ -220,8 +220,16 @@ paySenders/reloadPaySenders/paySenderOffices, payLevel).
   `.ph-tabbar` (phone) - the menu stays visible and clickable. While `body.phgated` (gate.js checking sign-in - it
   hides the whole page, menu too) it's the whole window, then slides (0.32 s) to the content area. Refit by a
   MutationObserver on body's class, ph-signed-in, ph-identity, resize. Checked headless (scratchpad geo.js): sidebar,
-  tabs on top, phone; a point in the menu hits the menu, not the loader. Not done: showing the menu during the gate's
-  first ~0.5 s (it isn't known yet which apps the person has, and the gate hides content on purpose).
+  tabs on top, phone; a point in the menu hits the menu, not the loader.
+  **Sidebar stays still (10/11, hc140).** Cory: "screen loads then side bar pops from the left. Would be good that side
+  bar stays still" (asked "Won't that increase load time?" - no: a navy box + the already-cached logo, nothing fetched;
+  timed the same). With the Sidebar menu (html.ph-lay-side, >=960px, page has .v1nav) the loader sits at left 248 from
+  its first paint and draws `#phload-side` (the sidebar's empty panel: navy, Home-Brace brand, nothing about anyone)
+  OVER the real sidebar (z 47) while body.phgated, then removes it a tick after the gate lifts (menu filled in by then):
+  the apps appear, nothing moves. FOUND: gate.js's hiding CSS (`body.phgated>*{display:none}`) is only injected by
+  paint(), i.e. when the sign-in SCREEN is needed - during a normal silent check the page is drawn underneath (a
+  sidebar with only "Home" and the name "UNDEFINED"); the loader covers it. Not a data leak (nothing is read before
+  sign-in) - left as it is. Tabs-on-top layout and phones: unchanged (full window during the check, then fits).
 - **PAYROLL OPENS FASTER (10/11, hc137).** Cory: Payroll's loading screen "takes at least 5-8 seconds". Cause: liveLoad
   read the offices ONE AFTER ANOTHER (8 x ~3-4 SharePoint round trips) after PAYSTORE.ensure checked 9 folders one
   after another - ~40 trips in a row. Now: ensure checks the folders together; every office and Heather's folder

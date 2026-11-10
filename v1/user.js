@@ -3385,7 +3385,7 @@
     clearTimeout(LOAD.cap);
     const el=LOAD.el; el.classList.add('out'); el.setAttribute('aria-busy','false');
     document.documentElement.classList.remove('ph-loading');
-    setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 420);
+    setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); loadSide(false); }, 420);
   }
   function loadCheck(){
     if(LOAD.gone || !LOAD.ready) return;
@@ -3399,17 +3399,48 @@
      header and the tabs across the top, and above the phone bar - so the menu stays in view and can be clicked.
      While sign-in is still being checked (gate.js hides the whole page, menu included: body.phgated) it is the whole
      window, as before; it is fitted again whenever that changes, and when the window is resized. */
+  /* THE SIDEBAR STAYS STILL (10/11/2026, Cory: "screen loads then side bar pops from the left. Would be good that
+     side bar stays still"). While sign-in is checked gate.js hides the whole page - the real sidebar too - and which
+     apps it lists isn't known yet. So with the Sidebar menu (a computer-wide window, a page with the menu) the loading
+     screen draws the sidebar's empty panel itself: the same navy, width and Home-Brace at the top, nothing about
+     anyone. It sits OVER the real sidebar (z 47, over its 45/46) while sign-in is checked - that one is drawn before
+     anyone is known ("Home" only, no name) - and steps aside once sign-in is done and the menu is filled in: the
+     items appear, nothing moves. */
+  const SIDE_W=248;
+  function sideWanted(){
+    try{
+      const r=document.documentElement;
+      return !!(r && r.classList && r.classList.contains('ph-lay-side')) && (window.innerWidth||0)>=960 &&
+        (!LOAD.parsed || !!document.querySelector('.v1nav'));          // before the page is read, assume it has the menu
+    }catch(_){ return false; }
+  }
+  function loadSide(on){
+    try{
+      let p=document.getElementById && document.getElementById('phload-side');
+      if(!on){ if(p && p.parentNode) p.parentNode.removeChild(p); return; }
+      if(p || !document.createElement) return;
+      p=document.createElement('div'); p.id='phload-side'; p.setAttribute('aria-hidden','true');
+      p.innerHTML='<div class="phls-brand"><img src="'+LOAD.logo+'" alt="" width="34" height="34"><span>Home-<i>Brace</i></span></div>';
+      document.documentElement.appendChild(p);
+    }catch(_){}
+  }
   function loadFit(){
-    const el=LOAD.el; if(!el || LOAD.gone || !document.body || !document.body.classList) return;
+    const el=LOAD.el; if(!el || LOAD.gone) return;
     try{
       let top=0, left=0, bottom=0;
-      if(!document.body.classList.contains('phgated')){
+      const body=document.body, gated=!body || !body.classList || body.classList.contains('phgated');
+      const wantSide=sideWanted();
+      // Steps aside a moment later (after the page has filled its menu in) - unless sign-in started checking meanwhile.
+      if(gated) loadSide(wantSide); else setTimeout(function(){ const b=document.body; if(b && b.classList && !b.classList.contains('phgated')) loadSide(false); }, 0);
+      if(gated){ if(wantSide) left=SIDE_W; }                                   // sign-in still being checked: the panel holds the sidebar's place
+      else {
         const H=window.innerHeight||0;
         const box=sel=>{ const e=document.querySelector(sel); if(!e || !e.getBoundingClientRect) return null; const r=e.getBoundingClientRect(); return (r.width>0 && r.height>0) ? r : null; };
         const side=box('.ph-sidenav'), bar=box('.ph-tabbar');
         if(side && side.left<=1 && side.height>=H*0.6) left=Math.round(side.right);                       // the sidebar
         else ['.hdr','.v1nav'].forEach(s=>{ const r=box(s); if(r && r.top<H/3) top=Math.max(top, Math.round(r.bottom)); });   // header + tabs on top
         if(bar && bar.top>H/2) bottom=Math.max(0, Math.round(H-bar.top));                                   // the phone bar
+        if(!left && wantSide) left=SIDE_W;
       }
       el.style.top=top+'px'; el.style.left=left+'px'; el.style.bottom=bottom+'px';
       // The first fit lands as it is; after that a change (the menu appearing once sign-in is done) slides.
@@ -3423,13 +3454,20 @@
     if(!root || typeof root.appendChild!=='function' || typeof document.createElement!=='function' || typeof window.addEventListener!=='function') return;
     if(document.getElementById && document.getElementById('phload')) return;
     let logo='../assets/logo-mark.png';
-    try{ const me=document.currentScript && document.currentScript.src; if(me) logo=new URL('../assets/logo-mark.png', me).href; }catch(_){}
+    LOAD.logo='../assets/logo-mark.png?v=2';
+    try{ const me=document.currentScript && document.currentScript.src; if(me){ logo=new URL('../assets/logo-mark.png', me).href; LOAD.logo=new URL('../assets/logo-mark.png?v=2', me).href; } }catch(_){}
     const st=document.createElement('style');
     st.textContent=
       '#phload{position:fixed;inset:0;z-index:99990;display:flex;align-items:center;justify-content:center;padding:24px;'+
         'background:var(--canvas,#F4F6F9);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;'+
         'transition:opacity .38s ease, visibility 0s linear .38s}'+
       '#phload.fit{transition:opacity .38s ease, visibility 0s linear .38s, top .32s ease, left .32s ease, bottom .32s ease}'+
+      '#phload-side{position:fixed;top:0;left:0;bottom:0;width:'+SIDE_W+'px;z-index:47;box-sizing:border-box;background:var(--navy,#0F2A4A);'+
+        'border-right:1px solid rgba(255,255,255,.07);font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}'+
+      '#phload-side .phls-brand{display:flex;align-items:center;gap:10px;height:60px;padding:0 18px;color:#fff;font-weight:700;font-size:18px;line-height:1.5}'+
+      '#phload-side .phls-brand img{width:34px;height:34px;display:block}'+
+      '#phload-side .phls-brand i{font-style:normal;color:var(--teal2,#2BC0B8)}'+
+      '@media print{#phload-side{display:none}}'+
       '#phload::before{content:"";position:absolute;inset:0;pointer-events:none;'+
         'background:radial-gradient(520px 360px at 50% 44%, color-mix(in srgb, var(--teal,#149B96) 14%, transparent), transparent 70%)}'+
       '#phload.out{opacity:0;visibility:hidden}'+
@@ -3476,10 +3514,10 @@
       '<div class="phl-msg">Opening Home-Brace…</div></div>';
     document.documentElement.appendChild(el);
     document.documentElement.classList.add('ph-loading');
-    LOAD.el=el; loadMsg();
+    LOAD.el=el; loadMsg(); loadFit();
     LOAD.cap=setTimeout(loadHide, LOAD_MAX);
     function onReady(){
-      LOAD.ready=true;
+      LOAD.ready=true; LOAD.parsed=true;
       // No sign-in on this page (or the sandbox): nobody to wait for.
       if(!isLive() || !document.querySelector('script[src*="gate.js"]')) loadDone('who');
       loadFit();

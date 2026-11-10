@@ -13,9 +13,14 @@ t('the sandbox (or a page without sign-in) does not wait for anyone', /if\(!isLi
 t('pages can hold it', /loadHold, loadDone\}/.test(U));
 // Only the page's own part (10/11/2026, Cory: "just the part of Home-Brace that will show the screen loads so you still see the apps").
 t('it covers the content only: right of the sidebar, under the top header and tabs, above the phone bar', /left=Math\.round\(side\.right\)/.test(U) && /\['\.hdr','\.v1nav'\]\.forEach/.test(U) && /bottom=Math\.max\(0, Math\.round\(H-bar\.top\)\)/.test(U));
-t('the whole window only while sign-in is checked (gate.js hides the menu then too)', /let top=0, left=0, bottom=0;\s*if\(!document\.body\.classList\.contains\('phgated'\)\)/.test(U));
+t('while sign-in is checked (body.phgated, or the page not read yet): the whole window - except the sidebar\'s place', /let top=0, left=0, bottom=0;\s*const body=document\.body, gated=!body \|\| !body\.classList \|\| body\.classList\.contains\('phgated'\);/.test(U) && /if\(gated\)\{ if\(wantSide\) left=SIDE_W; \}[^\n]*\n\s*else \{/.test(U));
 t('fitted again whenever gate.js shows or hides the page, after sign-in, and on resize', /new MutationObserver\(loadFit\)\.observe\(document\.body, \{attributes:true, attributeFilter:\['class'\]\}\)/.test(U) && /'ph-signed-in', function\(\)\{ loadMsg\(\); loadFit\(\);/.test(U) && /window\.addEventListener\('resize', loadFit\)/.test(U));
 t('a fit that goes wrong never breaks the page', /function loadFit\(\)\{[\s\S]{0,200}try\{[\s\S]*?\}catch\(_\)\{\}\s*\}/.test(U));
+// The sidebar stays still (10/11/2026, Cory: "screen loads then side bar pops from the left").
+t('with the Sidebar menu, the loading screen never covers the sidebar\'s place - not even while sign-in is checked', /if\(gated\)\{ if\(wantSide\) left=SIDE_W; \}/.test(U) && /if\(!left && wantSide\) left=SIDE_W;/.test(U) && /LOAD\.el=el; loadMsg\(\); loadFit\(\);/.test(U));
+t('...it draws the sidebar\'s empty panel over the not-yet-ready one (z 47 over 45/46), nothing about anyone in it', /#phload-side\{position:fixed;top:0;left:0;bottom:0;width:'\+SIDE_W\+'px;z-index:47;/.test(U) && /phls-brand"><img src="'\+LOAD\.logo\+'" alt="" width="34" height="34"><span>Home-<i>Brace<\/i><\/span><\/div>'/.test(U));
+t('...and steps aside once sign-in is done (not if it started again meanwhile), and goes with the loading screen', /if\(b && b\.classList && !b\.classList\.contains\('phgated'\)\) loadSide\(false\);/.test(U) && /removeChild\(el\); loadSide\(false\); \}, 420\)/.test(U));
+t('...only with the Sidebar menu on a wide window, on a page that has the menu', /classList\.contains\('ph-lay-side'\)\) && \(window\.innerWidth\|\|0\)>=960 &&\s*\(!LOAD\.parsed \|\| !!document\.querySelector\('\.v1nav'\)\)/.test(U));
 // Every page that reads the practice's data holds it, and lets go on success AND failure.
 const pages={
   'index.html':[/PH\.isLive\(\)\) PH\.loadHold\('page'/, /\.then\(pageDone, pageDone\)/],
