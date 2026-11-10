@@ -272,18 +272,18 @@
   }
 
 </style>
-<script src="user.js?v=hc133"></script>
+<script src="user.js?v=hc134"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="_staff.js?v=hc133"></script>
-  <script src="store.js?v=hc133"></script>
-  <script src="gate.js?v=hc133"></script>
-  <script src="docs.js?v=hc133"></script>
-  <script src="payrules.js?v=hc133"></script>
-  <script src="workbook.js?v=hc133"></script>
-  <script src="prodbook.js?v=hc133"></script>
-  <script src="prodfx.js?v=hc133"></script>
-  <script src="prodstore.js?v=hc133"></script>
-  <script src="prodadmin.js?v=hc133"></script>
+  <script src="_staff.js?v=hc134"></script>
+  <script src="store.js?v=hc134"></script>
+  <script src="gate.js?v=hc134"></script>
+  <script src="docs.js?v=hc134"></script>
+  <script src="payrules.js?v=hc134"></script>
+  <script src="workbook.js?v=hc134"></script>
+  <script src="prodbook.js?v=hc134"></script>
+  <script src="prodfx.js?v=hc134"></script>
+  <script src="prodstore.js?v=hc134"></script>
+  <script src="prodadmin.js?v=hc134"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — admin console concept for validation. Real build: people sync from Microsoft 365; access is managed here.</div>
@@ -311,6 +311,7 @@
     <button class="tab" data-t="locs" onclick="AD.tab('locs')">Locations</button>
     <button class="tab" data-t="prod" onclick="AD.tab('prod')">Production data</button>
     <button class="tab" data-t="fb" onclick="AD.tab('fb')">Feedback</button>
+    <button class="tab" data-t="use" onclick="AD.tab('use')">Usage</button>
   </div>
 
   <div id="view"></div>
@@ -697,7 +698,7 @@
   try{ window.matchMedia('(max-width:640px)').addEventListener('change', function(){ render(); }); }catch(_){}
   const av=u=>PAL[u.c%PAL.length];
   const initials=u=>(u.f[0]+u.l[0]).toUpperCase();
-  let tab=location.hash==='#feedback'?'fb':'users', search='',     // the bell's "new feedback" opens straight on Feedback
+  let tab=location.hash==='#feedback'?'fb':location.hash==='#usage'?'use':'users', search='',     // the bell's "new feedback" opens straight on Feedback
    tmpU=null, openSecs=new Set(['managers','hr']);
 
   function tabSet(t){ tab=t; [...document.querySelectorAll('.tab')].forEach(b=>b.classList.toggle('active',b.dataset.t===t)); render(); }
@@ -716,7 +717,11 @@
   }
 
   function render(){ if(tab==='users')renderUsers(); else if(tab==='access')renderAccess();
-    else if(tab==='locs')renderLocs(); else if(tab==='prod')renderProd(); else if(tab==='fb')renderFb(); else renderFiles(); }
+    else if(tab==='locs')renderLocs(); else if(tab==='prod')renderProd(); else if(tab==='fb')renderFb(); else if(tab==='use')renderUse(); else renderFiles(); }
+  /* USAGE (10/11/2026): the adoption dashboard - usage.js. Kept and refreshed quietly on Admin's redraws, like Feedback. */
+  function renderUse(){ const v=document.getElementById('view');
+    if(!v.querySelector(':scope > .use-admin')) v.innerHTML='<div class="use-admin"><div style="font-size:14px;color:#56627A;padding:8px 2px">Loading usage…</div></div>';
+    PH.usageReady().then(U=>{ if(tab!=='use') return; if(U) U.mountAdmin(v); else v.innerHTML='<div class="intro">Usage could not load.</div>'; }); }
   /* FEEDBACK REPLIES (04/11/2026, Cory: "as me as an admin can respond to these"): fbreply.js draws the inbox. */
   /* Admin redraws the tab when sign-in, the team list and access land: the Feedback view is kept and refreshed quietly
      (fbreply.js), so it doesn't flash. */
@@ -2109,7 +2114,8 @@
   function closeModal(){ el('modal').classList.remove('open'); }
 
   const thenSync=f=>function(){ const r=f.apply(this,arguments); syncEdit(); return r; };
-  if(location.hash==='#feedback') setTimeout(()=>tabSet('fb'), 0);      // the bell's "new feedback" opens here
+  if(location.hash==='#feedback') setTimeout(()=>tabSet('fb'), 0);
+  if(location.hash==='#usage') setTimeout(()=>tabSet('use'), 0);      // the bell's "new feedback" opens here
   window.AD={tabNow:()=>tab,setupSecs,editSyncNow,tcSyncNow,paySyncNow,sensAdd,sensChange,sensRemove,sensClose,sensQ,sensToggle,sensClear,sensLevel,sensTyped,sensBack,sensNext,sensGo,sensSyncNow,tab:tabSet,viewAs:doViewAs,newTeam,editTeam,saveTeam:thenSync(saveTeam),delTeam:thenSync(delTeam),resetTeams,profile,whyNoAdd,
     addPerson,npSet,npLoc,npTeam,saveNewPerson:thenSync(saveNewPerson),accTeam:setAccTeam,removePerson:thenSync(removePerson),restorePerson:thenSync(restorePerson),showRemoved,togTeam,togLoc,setStatus,saveUser:thenSync(saveUser),pickLevel,pickAud,setField,pickPhoto,photoChosen,clearPhoto,pickUserLevel,clearUserLevel,tog,addFile,noop,newSec,editSec,saveSec:thenSync(saveSec),delSec,delSecGo,resetSecs,setSecName,setSecIcon,setSecStruct,setSecLocMode,setSecTeamMode,togSecLoc,togSecTeam,saveFile,cd,useFile,clearFile,uploadFile,setFileTeamMode,setFileLocMode,togFileLoc,togFileTeam,renderLocs,newLoc,editLoc,saveLoc,delLoc,resetLocs,setLocBrand,setLocState,setLocTZ,close:closeModal};
   el('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal();});
@@ -2195,7 +2201,7 @@ function sizeWatch(){
   }).catch(()=>{});
 }
 </script>
-<script src="tour.js?v=hc133"></script>
+<script src="tour.js?v=hc134"></script>
 <script>
 Tour.init([
   {sel:'#tabs', title:'This is your control room', body:'Four tabs and you can run the whole hub: <b>People</b>, <b>Teams &amp; Access</b>, <b>Document Sections</b> and <b>Locations</b>. No developer, no consultant.', pre:()=>AD.tab('users')},

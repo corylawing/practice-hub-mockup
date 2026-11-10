@@ -183,6 +183,18 @@ paySenders/reloadPaySenders/paySenderOffices, payLevel).
   the monitor sheet's approvals / denials); openWork approvedWaiting / deniedDeciding; Monthly totals columns. Old
   approved consults (Submitted to Medicaid + medicaidApproved) are SHOWN as Medicaid Approved (consultsFrom), stored
   record unchanged until someone saves it. test/tc.test.js 167. Browser-checked on the sandbox's sample patients.
+- **ADMIN -> USAGE, the adoption dashboard (10/11, hc134, LIVE 10/11).** The practice via Cory: "put in ADMIN so
+  dashboard to see usage of Home-Brace (non admins). Who is logging in per different period"; "Make it a real adoption
+  dashboard. Not too much but very clear with a few tiles"; NO line in the staff guide (his call). user.js `useTick`:
+  each person's own record `ph_use_<email>` {v, email, name, rk (personKey of the team-list row sign-in matched - the 38
+  without an email), admin, first, last, d:{day:{n, p:{section:n}}}} - who / section / day, never content; once per
+  section per 30 min per device (localStorage ph_usegate_<email>_<section>), never while viewing as; 400 days kept;
+  'ph_use_' in store.js HOUSEKEEPING. `v1/usage.js` (PH_USAGE, PH.usageReady): periods Today / 7 / 30 days / This month
+  / Last month; tiles Adoption (active of team list) · Using it today · Days used (avg, active people) · Never signed in
+  (-> filters the table); people per day (bars, hover/focus values; Today shows the last 7 days); By office; What they
+  use (people per section); Everyone table (Using it / Quiet / Never; "Not on the team list" extras). Admins left out
+  unless "Include admins". `admin.html#usage` opens it. Counting STARTS 10/11 (nothing before). test/usage.test.js (30).
+  Browser-checked with a rebuilt sign-in stand-in (scratchpad fakesign.js + harness.js - macOS purged the old ones).
 - Asked 04/11, NOT built: a Settings screen where Heather picks per column "office types it / office sees it / only
   me" (~1 day). Today's split is fixed from her answers; her Goal/TC-OM/Extra live in her private folder. After go-live.
 - **Who sees what**: Admin team (and Payroll level Edit) = manage everything incl. Heather's columns; Payroll level

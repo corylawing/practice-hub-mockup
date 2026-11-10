@@ -2068,6 +2068,51 @@
   document.addEventListener('ph-fb-changed', function(){ fbTick(true); });
   document.addEventListener('visibilitychange', function(){ if(document.visibilityState==='visible') fbTick(false); });
 
+  /* USAGE - THE ADOPTION DASHBOARD (10/11/2026, Cory: the practice asked "to put in ADMIN so dashboard to see usage of
+     Home-Brace (non admins). Who is logging in per different period. Basic an adoption dashboard"; "Make it a real
+     adoption dashboard. Not too much but very clear with a few tiles"; no line in the staff guide). Each person's own
+     record, ph_use_<email> = {v:1, email, name, rk, admin, first, last, d:{'YYYY-MM-DD':{n, p:{home:2, payroll:1}}}}:
+     who, which section, which day (this device's calendar) - never what they typed or saw. rk = their team-list key
+     (personKey of the row sign-in matched them to), so the dashboard finds the 38 people the list has no email for.
+     Written by the person themselves, at most once per section per 30 minutes on a device, never while an admin is
+     viewing as someone. Admin -> Usage (usage.js) reads them all. */
+  const USE_GAP=30*60e3;
+  function useTick(){
+    if(!window.PH_STORE || !PH_STORE.update) return;
+    if(isLive() && (!SIGNED_IN || stillLearning())) return;
+    if(impersonating() && isAdmin(realMe())) return;                  // viewing as someone: not their visit
+    const m=realMe()||{}, em=String((PROFILE && (PROFILE.mail||PROFILE.userPrincipalName)) || m.mail || '').toLowerCase().trim();
+    if(!em || em.indexOf('@')<0) return;
+    const sec=NAV_ACTIVE||'other', gate='ph_usegate_'+em+'_'+sec;      // this device's 30-minute gate (not a record)
+    let was=0; try{ was=+localStorage.getItem(gate)||0; }catch(_){}
+    if(Date.now()-was<USE_GAP) return;
+    try{ localStorage.setItem(gate, String(Date.now())); }catch(_){}
+    const now=new Date(), day=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+    const row=rosterFor(em) || rosterByName(PROFILE && PROFILE.displayName), at=now.toISOString();
+    const name=String((PROFILE && PROFILE.displayName) || ((m.first||'')+' '+(m.last||''))).trim(), admin=!!isAdmin(realMe());
+    PH_STORE.update('ph_use_'+em, function(cur){
+      const x=(cur && typeof cur==='object') ? cur : {v:1, email:em, first:at, d:{}};
+      x.v=1; x.email=em; if(name) x.name=name; if(row) x.rk=personKey(row); x.admin=admin; x.last=at; if(!x.first) x.first=at;
+      x.d=(x.d && typeof x.d==='object') ? x.d : {};
+      const dd=x.d[day]=x.d[day]||{n:0, p:{}}; dd.n=(dd.n||0)+1; dd.p=dd.p||{}; dd.p[sec]=(dd.p[sec]||0)+1;
+      const days=Object.keys(x.d).sort(); while(days.length>400) delete x.d[days.shift()];   // about 13 months
+      return x;
+    }).catch(function(){ try{ localStorage.removeItem(gate); }catch(_){} });
+  }
+  document.addEventListener('visibilitychange', function(){ if(document.visibilityState==='visible') setTimeout(useTick, 1500); });
+  let USAGE_P=null;
+  function usageReady(){
+    if(window.PH_USAGE) return Promise.resolve(window.PH_USAGE);
+    if(USAGE_P) return USAGE_P;
+    USAGE_P=new Promise(function(ok){
+      const me_=document.querySelector('script[src*="user.js"]'), sc=document.createElement('script');
+      sc.src=me_ ? me_.getAttribute('src').replace(/user\.js/, 'usage.js') : 'usage.js';
+      sc.onload=function(){ ok(window.PH_USAGE||null); }; sc.onerror=function(){ USAGE_P=null; ok(null); };
+      document.head.appendChild(sc);
+    });
+    return USAGE_P;
+  }
+
   let ALERTS_P=null, ALERT_NOTE='';
   function alertsReady(){
     if(window.PH_ALERTS) return Promise.resolve(window.PH_ALERTS);
@@ -2861,8 +2906,9 @@
     if(payOn()) Promise.resolve(reloadPaySenders()).then(()=>{ identityChanged(); return reloadPayStatus(); }, ()=>{})   // a sender's Payroll tab
       .then(()=>payAlertsTick(), ()=>{});                                                                                  // and any phone reminder that's due
     setTimeout(function(){ fbTick(true); }, 2500);                                                                         // replies to their feedback
+    setTimeout(useTick, 4000);                                                                                             // this visit, for Admin -> Usage
   });
-  setTimeout(function(){ if(!isLive()) fbTick(true); }, 1500);                                                        // the sandbox has no sign-in to wait for
+  setTimeout(function(){ if(!isLive()){ fbTick(true); useTick(); } }, 1500);                                                        // the sandbox has no sign-in to wait for
 
   /* One gate for every page.
      Hiding a tab in the nav is NOT enough — anyone can type the URL. Each page calls
@@ -3306,6 +3352,6 @@
   window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, rosterView, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, chatBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK, notesHTML, searchHTML, searchDocs, searchDocsHTML, levelForTeams, teamsSeeAll, tcOn, tcRoleFor, payOn, payRoleFor, paySenders, reloadPaySenders, paySenderOffices, payLevel, payReminders, payMark, reloadPayStatus, payRulesReady, payAlertPlan, payAlertsTick, centralNow, alertsReady, saveFace, faceOf, avatar,
     sensRecord, reloadSensitive, sensLevelFor, sensitiveLevel, sensConfirmOk,
     setTheme, theme:()=>THEME, setLayout, layout:()=>LAYOUT, layouts:()=>LAYOUTS.map(l=>({k:l.k, n:l.n})), themes:()=>THEMES.map(t=>({k:t.k, n:t.n})), schemeTokens:k=>schemeTokens(themeOf(k)), contrast,
-    feedback:openFeedback, feedbackText, feedbackContext, learning:stillLearning, fbReady, myFeedback, fbTick};
+    feedback:openFeedback, feedbackText, feedbackContext, learning:stillLearning, fbReady, myFeedback, fbTick, usageReady, rosterName};
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mount); else mount();
 })();

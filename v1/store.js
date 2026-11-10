@@ -544,7 +544,8 @@
      every time a level is lowered, by design. */
   /* ph_paygrants: the same record for the payroll folders (03/11). ph_alertdev_<email>: a person's alert devices
      (alerts.js) - one going to none when they turn alerts off is the point, not a wipe. */
-  var HOUSEKEEPING = ['ph_activity', 'ph_seen_', 'ph_photos', 'ph_docgrants', 'ph_tcgrants', 'ph_sensgrants', 'ph_paygrants', 'ph_alertdev_'];
+  /* ph_use_<email>: a person's visits for Admin -> Usage (10/11) - trimmed to about 13 months, so it may shrink. */
+  var HOUSEKEEPING = ['ph_activity', 'ph_seen_', 'ph_photos', 'ph_docgrants', 'ph_tcgrants', 'ph_sensgrants', 'ph_paygrants', 'ph_alertdev_', 'ph_use_'];
   function housekeeping(key){
     for(var i=0;i<HOUSEKEEPING.length;i++)
       if(key === HOUSEKEEPING[i] || key.indexOf(HOUSEKEEPING[i]) === 0) return true;
