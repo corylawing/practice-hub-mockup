@@ -11,6 +11,11 @@ t('at least half a second, never more than 12', /LOAD_MIN=500, LOAD_MAX=12000/.t
 t('on live it waits for sign-in AND the team list / access', /if\(SIGNED_IN && !stillLearning\(\)\) loadDone\('who'\)/.test(U));
 t('the sandbox (or a page without sign-in) does not wait for anyone', /if\(!isLive\(\) \|\| !document\.querySelector\('script\[src\*="gate\.js"\]'\)\) loadDone\('who'\)/.test(U));
 t('pages can hold it', /loadHold, loadDone\}/.test(U));
+// Only the page's own part (10/11/2026, Cory: "just the part of Home-Brace that will show the screen loads so you still see the apps").
+t('it covers the content only: right of the sidebar, under the top header and tabs, above the phone bar', /left=Math\.round\(side\.right\)/.test(U) && /\['\.hdr','\.v1nav'\]\.forEach/.test(U) && /bottom=Math\.max\(0, Math\.round\(H-bar\.top\)\)/.test(U));
+t('the whole window only while sign-in is checked (gate.js hides the menu then too)', /let top=0, left=0, bottom=0;\s*if\(!document\.body\.classList\.contains\('phgated'\)\)/.test(U));
+t('fitted again whenever gate.js shows or hides the page, after sign-in, and on resize', /new MutationObserver\(loadFit\)\.observe\(document\.body, \{attributes:true, attributeFilter:\['class'\]\}\)/.test(U) && /'ph-signed-in', function\(\)\{ loadMsg\(\); loadFit\(\);/.test(U) && /window\.addEventListener\('resize', loadFit\)/.test(U));
+t('a fit that goes wrong never breaks the page', /function loadFit\(\)\{[\s\S]{0,200}try\{[\s\S]*?\}catch\(_\)\{\}\s*\}/.test(U));
 // Every page that reads the practice's data holds it, and lets go on success AND failure.
 const pages={
   'index.html':[/PH\.isLive\(\)\) PH\.loadHold\('page'/, /\.then\(pageDone, pageDone\)/],

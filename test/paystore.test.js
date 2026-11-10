@@ -200,6 +200,41 @@ const addRow=(id, w1)=>cur=>{ const v=cur?JSON.parse(JSON.stringify(cur)):{v:1, 
     t('speed: warming up only finds the library - no payroll file is touched', (await P.warm())===true && sp.calls.length===2 && sp.calls.every(c=>/^GET \/sites\//.test(c)));
     t('speed: nothing was ever deleted', !sp.calls.some(c=>/^DELETE/.test(c)));
   }
+  /* ---- Recent first (10/11/2026, Cory: "make this stable for the future"): Payroll reads the recent pay periods
+     when it opens and the older ones only when History needs them - so opening it doesn't slow down as sheets pile up ---- */
+  {
+    const sp=library({who:'manager'}); let {P}=fresh(true, sp);
+    await P.ensure(['Carlsbad']);
+    for(const k of ['2026-24','2026-25','2027-01','2027-02']) await P.at('Carlsbad', true).update('sheet_'+k, addRow('c'+k.replace('-',''), 30));
+    await P.at('Carlsbad', true).update('people', ()=>({people:[{id:'p1'}], docs:[]}));
+    const before=JSON.stringify(Object.values(sp.items).map(x=>[x.name, x.text]));
+    const recent=k=>k>='sheet_2027-01', older=k=>!recent(k);
+    ({P}=fresh(true, sp)); sp.calls=[];
+    const [pf, now]=await Promise.all([P.at('Carlsbad', true).get('people'), P.at('Carlsbad', true).getAll('sheet_', {partial:true, only:recent})]);
+    t('recent first: only the pay periods asked for come back', Object.keys(now).sort().join()==='sheet_2027-01,sheet_2027-02' && now['sheet_2027-02'].rows.c202702.w1===30);
+    t('recent first: the older sheets are not even opened (2 sheets + people read, not 5 files)', sp.calls.filter(c=>/^DOWNLOAD/.test(c)).length===3 && pf.people[0].id==='p1');
+    sp.calls=[];
+    const then=await P.at('Carlsbad', true).getAll('sheet_', {partial:true, only:older});
+    t('recent first: History gets the older ones, exactly as saved', Object.keys(then).sort().join()==='sheet_2026-24,sheet_2026-25' && then['sheet_2026-24'].rows.c202624.w1===30);
+    t('recent first: together they are every sheet, nothing twice', Object.keys(now).concat(Object.keys(then)).sort().join()===Object.keys(await P.at('Carlsbad', true).getAll('sheet_')).sort().join());
+    t('recent first: without it, every sheet is read as before', Object.keys(await P.at('Carlsbad', true).getAll('sheet_')).length===4);
+    t('recent first: nothing asked for = nothing read, and no error', Object.keys(await P.at('Carlsbad', true).getAll('sheet_', {partial:true, only:()=>false})).length===0);
+    t('recent first: a broken chooser reads nothing rather than failing', Object.keys(await P.at('Carlsbad', true).getAll('sheet_', {only:()=>{ throw new Error('x'); }})).length===0);
+    t('recent first: reading writes nothing and deletes nothing', JSON.stringify(Object.values(sp.items).map(x=>[x.name, x.text]))===before && !sp.calls.some(c=>/^(PUT|POST|DELETE)/.test(c)));
+    const sb=fresh(false, null);
+    for(const k of ['2026-24','2027-02']) await sb.P.at('Carlsbad').update('sheet_'+k, addRow('s', 8));
+    t('recent first: the sandbox (this browser) chooses the same way', Object.keys(await sb.P.at('Carlsbad').getAll('sheet_', {only:recent})).join()==='sheet_2027-02');
+  }
+  /* The page side: every screen except History stays inside the recent ten, and History waits for the older ones */
+  {
+    const src=require('fs').readFileSync(require('path').join(__dirname,'..','v1','payroll.html'),'utf8');
+    const backs=[...src.matchAll(/CUR-(\d+)/g)].map(m=>+m[1]);
+    t('recent first: the recent ten are CUR-9 on, and no screen but History reaches further back', /const RECENT=CUR-9;/.test(src) && Math.max(...backs)===9);
+    t('recent first: opening Payroll reads only the recent sheets and columns', /getAll\('sheet_', \{partial:true, only:isRecent\}\)/.test(src) && /getAll\('cols_', \{partial:true, only:isRecent\}\)/.test(src));
+    t('recent first: History reads the older ones, sheets before Heather’s columns', /only:isOlder\}\)\)\),\s*store\('_h'\)\.getAll\('cols_', \{partial:true, only:isOlder\}\)/.test(src) && /perOffice\.forEach\(\(sh, i\)=>takeSheets\(offs\[i\], sh, miss\)\);\s*takeCols\(cols, miss\);/.test(src));
+    t('recent first: an older row has no Open button until it is read', /if\(waiting\(n\)\)\{[^\n]*Loading…[^\n]*continue; \}/.test(src) && !/if\(waiting\(n\)\)\{[^\n]*data-act="open"/.test(src));
+    t('recent first: a sender never reads the older ones (no History)', /const hasOlder=\(\)=>LIVEPAY && LIVE\.ready && LEVEL\(\)!=='send' && RECENT>FIRST_N;/.test(src));
+  }
   console.log(ok.map(s=>'  PASS  '+s).join('\n'));
   if(bad.length) console.log(bad.map(s=>'  FAIL  '+s).join('\n'));
   console.log('\n'+ok.length+' passed, '+bad.length+' failed');

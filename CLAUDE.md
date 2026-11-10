@@ -214,6 +214,14 @@ paySenders/reloadPaySenders/paySenderOffices, payLevel).
   each releases on success AND failure. Min 500 ms, max 12 s (then the page shows with its own message). Uses the
   person's colour scheme tokens (--canvas/--navy/--teal). test/loading.test.js. Timing checked headless with a slow
   stand-in (scratchpad fake-slow.js + load-try.js): live ~2-3 s, sandbox ~0.6 s.
+  **Only the content area (10/11, hc139).** Cory: "I'd prefer that there isn't a complete other screen with the loading
+  animation just the part of Home-Brace that will show the screen loads so you still see the apps". `loadFit()` sets
+  #phload's top/left/bottom: right of `.ph-sidenav` (Sidebar layout), under `.hdr`/`.v1nav` (tabs on top), above
+  `.ph-tabbar` (phone) - the menu stays visible and clickable. While `body.phgated` (gate.js checking sign-in - it
+  hides the whole page, menu too) it's the whole window, then slides (0.32 s) to the content area. Refit by a
+  MutationObserver on body's class, ph-signed-in, ph-identity, resize. Checked headless (scratchpad geo.js): sidebar,
+  tabs on top, phone; a point in the menu hits the menu, not the loader. Not done: showing the menu during the gate's
+  first ~0.5 s (it isn't known yet which apps the person has, and the gate hides content on purpose).
 - **PAYROLL OPENS FASTER (10/11, hc137).** Cory: Payroll's loading screen "takes at least 5-8 seconds". Cause: liveLoad
   read the offices ONE AFTER ANOTHER (8 x ~3-4 SharePoint round trips) after PAYSTORE.ensure checked 9 folders one
   after another - ~40 trips in a row. Now: ensure checks the folders together; every office and Heather's folder
@@ -227,8 +235,15 @@ paySenders/reloadPaySenders/paySenderOffices, payLevel).
   own downloadUrl (as getAll always has), falling back to GET item if absent/failing. Bench (150 ms/trip, made-up
   data): 7.1 s (hc136) -> 1.7 s (hc137) -> 1.2 s. test/paystore.test.js "speed:" checks. NOT done (would change
   behaviour): caching payroll on the device (pay data on shared office PCs - no), starting before the person's
-  Payroll level is known. LATER: getAll('sheet_') reads every period's sheet each open - ~26 more per office per
-  year; if it slows down in 2027, read only recent periods first.
+  Payroll level is known. **RECENT FIRST (10/11, hc139)** - Cory: "maybe we should do that now to make this stable for
+  the future". Opening Payroll reads only pay periods >= `RECENT` (=CUR-9: the board's picker and Past sheets go back
+  8, Look up a person 9) - `getAll('sheet_'|'cols_', {partial, only:isRecent})` (paystore `only` = which keys to open;
+  the rest aren't downloaded). The older ones (FIRST_N..RECENT-1) are read once, when Heather's History tab is shown
+  (`loadOlder()`, manage/view only - senders have no History): every office's sheets, then her cols onto them (same
+  order as on open); only #histlist is redrawn (the Look-up box keeps focus); until in, those rows say "Loading…" with
+  no Open button; a failure says so with Try again. Changes nothing until ~Apr 2027 (RECENT <= FIRST_N before then).
+  Checked headless with a June-2027 clock + made-up sheets (scratchpad fake-2027.js/pay2027.js): 10 read on open, 6
+  older + Heather's Goal for History, all 16 rows right, the oldest opens. test/paystore.test.js "recent first:".
 - Asked 04/11, NOT built: a Settings screen where Heather picks per column "office types it / office sees it / only
   me" (~1 day). Today's split is fixed from her answers; her Goal/TC-OM/Extra live in her private folder. After go-live.
 - **Who sees what**: Admin team (and Payroll level Edit) = manage everything incl. Heather's columns; Payroll level

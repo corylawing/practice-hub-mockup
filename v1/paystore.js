@@ -187,16 +187,20 @@
     sub = String(sub || '').trim();
     if(!sub || /[\/\\]/.test(sub)) throw fail(0, 'Not a Payroll folder: ' + sub);
     /* All records whose key starts with `prefix`: {key: value}. A file that can't be read stops the read - or,
-       with {partial: true}, the rest is returned and `unread` (not one of the keys) names what couldn't be read. */
+       with {partial: true}, the rest is returned and `unread` (not one of the keys) names what couldn't be read.
+       {only: key => true/false} reads just the records it says yes to (10/11/2026: Payroll reads the recent pay
+       periods when it opens, the older ones only when History needs them); the others are not opened at all. */
     function getAll(prefix, opts){
       var partial = !!(opts && opts.partial);
+      var only = (opts && typeof opts.only === 'function') ? opts.only : null;
+      var want = function(key){ if(!only) return true; try{ return !!only(key); }catch(_){ return false; } };
       var mark = function(out, unread){ if(partial) Object.defineProperty(out, 'unread', { value: unread, enumerable: false }); return out; };
       if(!live()){
         var out = {}, pre = lsKey(sub, prefix);
         try{
           for(var i = 0; i < localStorage.length; i++){
             var k = localStorage.key(i);
-            if(k && k.indexOf(pre) === 0){ try{ out[k.slice(lsKey(sub, '').length)] = JSON.parse(localStorage.getItem(k)); }catch(_){} }
+            if(k && k.indexOf(pre) === 0 && want(k.slice(lsKey(sub, '').length))){ try{ out[k.slice(lsKey(sub, '').length)] = JSON.parse(localStorage.getItem(k)); }catch(_){} }
           }
         }catch(_){}
         return Promise.resolve(mark(out, []));
@@ -206,7 +210,7 @@
         throw e;
       }).then(function(list){
         var out = {}, unread = [];
-        var mine = list.filter(function(f){ return f.name.indexOf(prefix) === 0 && /\.json$/i.test(f.name); });
+        var mine = list.filter(function(f){ return f.name.indexOf(prefix) === 0 && /\.json$/i.test(f.name) && want(f.name.replace(/\.json$/i, '')); });
         return fewAtATime(mine, 6, function(f){
           var key = f.name.replace(/\.json$/i, '');
           return readFile(f).then(function(v){ out[key] = v; }, function(){ unread.push(key); });

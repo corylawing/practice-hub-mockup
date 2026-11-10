@@ -225,15 +225,15 @@
     .perhead .when{font-size:17px}
   }
 </style>
-<script src="user.js?v=hc138"></script>
+<script src="user.js?v=hc139"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc138"></script>
-  <script src="gate.js?v=hc138"></script>
-  <script src="alerts.js?v=hc138"></script>
-  <script src="_staff.js?v=hc138"></script>
-  <script src="payrules.js?v=hc138"></script>
-  <script src="paystore.js?v=hc138"></script>
-  <script src="docs.js?v=hc138"></script>
+  <script src="store.js?v=hc139"></script>
+  <script src="gate.js?v=hc139"></script>
+  <script src="alerts.js?v=hc139"></script>
+  <script src="_staff.js?v=hc139"></script>
+  <script src="payrules.js?v=hc139"></script>
+  <script src="paystore.js?v=hc139"></script>
+  <script src="docs.js?v=hc139"></script>
 </head>
 <body>
 <div class="ribbon">MOCK-UP for Heather — made-up people and amounts. Try it as the Carlsbad TC first, then as Heather.</div>
@@ -370,6 +370,13 @@
      the old way: nothing is expected of it - everyone starts on the one in progress, and nothing earlier is listed. */
   const FIRST_N=LIVEPAY ? ANCHOR.n+PR.indexOfKey(PR.FIRST) : -Infinity, BEFORE=CUR<FIRST_N;
   const HOME=()=>BEFORE ? NEXT : CUR;
+  /* RECENT FIRST (10/11/2026, Cory: "maybe we should do that now to make this stable for the future"). Opening Payroll
+     reads the pay periods a screen shows straight away: from RECENT (the last 10) on, the one in progress included -
+     the sheet's pay-period picker and Past sheets go back 9, Look up a person 10. About 26 sheets an office are added a
+     year, and reading every one on every open would slowly make Payroll slower. The older ones are read only when
+     History needs them (Heather's "Every pay period" list), once; until they're in, their rows say so and can't be
+     opened. Reads only - nothing saved changes. */
+  const RECENT=CUR-9;
   const addDays=(iso,d)=>{ const t=new Date(iso+'T00:00:00Z'); t.setUTCDate(t.getUTCDate()+d); return t.toISOString().slice(0,10); };
   const fmt=(iso,o)=>new Date(iso.slice(0,10)+'T12:00:00Z').toLocaleDateString('en-US',Object.assign({month:'short',day:'numeric',timeZone:'UTC'},o||{}));
   const fmtT=iso=>{ const h=+iso.slice(11,13), m=iso.slice(14,16); return fmt(iso,{weekday:'short'})+', '+((h%12)||12)+':'+m+(h<12?' am':' pm'); };
@@ -602,6 +609,7 @@
     el('tabs').innerHTML=(R().mgr ? '<button class="btn ghost sm" data-act="unfill">← All offices</button>' : '')+T.map(t=>'<button class="tab'+(t[0]===tab?' on':'')+'" data-act="tab" data-v="'+t[0]+'">'+t[1]+'</button>').join('')+
       (offs.length>1 ? '<select class="in" id="offpick" style="margin-left:auto" aria-label="Office">'+offs.map(o=>'<option value="'+o+'"'+(o===R().office?' selected':'')+'>'+esc(OFF[o].n)+'</option>').join('')+'</select>' : '');
     el('view').innerHTML = k==='om' ? (tab==='past' ? viewOmPast() : viewOmSheet()) : (tab==='past' ? viewHistory() : tab==='settings' ? viewSettings() : viewBoard());
+    if(k!=='om' && tab==='past' && LIVEPAY) loadOlder();          // RECENT FIRST: History is what needs the older pay periods
   }
 
   /* ---------- the office's sheet ---------- */
@@ -904,14 +912,21 @@
   function viewHistory(){
     let h='<div class="stack"><div class="card"><h2>Look up a person</h2><p class="sub">Hours, overtime, time off and bonus for anyone, pay period by pay period.</p>'+
       '<input class="look" id="look" list="names" placeholder="Type a name — try Rios" value="'+esc(look)+'"><datalist id="names">'+everyone().slice().sort(byLast).map(p=>'<option value="'+esc(disp(p))+'">').join('')+'</datalist><div id="lookres" style="margin-top:12px">'+lookHTML()+'</div></div>';
+    return h+'<div id="histlist">'+histList()+'</div></div>';
+  }
+  function histList(){
+    const waiting=n=>LIVEPAY && n<RECENT && LIVE.old!=='done';      // RECENT FIRST: an older pay period not read yet
+    let h='';
+    if(LIVEPAY && LIVE.old==='failed') h+='<div class="note warn" style="margin-bottom:12px"><b>The older pay periods couldn’t be read.</b> '+esc(LIVE.oldErr)+' <button class="btn ghost sm" data-act="oldretry">Try again</button></div>';
     h+='<div class="card"><h2>Every pay period, kept</h2><p class="sub">2026 so far. Nothing is ever overwritten: open one to see each office’s sheet as it was sent, and any change made after.</p><div class="tblwrap"><table class="t"><thead><tr><th>Pay period</th><th>Dates</th><th>Paid</th><th>Offices</th><th>Status</th><th class="n">Hours</th><th class="n">Total</th><th></th></tr></thead><tbody>';
     if(CUR<FIRST_N) h+='<tr><td colspan="7" class="muted">Nothing yet - the first pay period on Home-Brace is '+lab(FIRST_N)+' ('+esc(span(P(FIRST_N).start,P(FIRST_N).end))+').</td></tr>';
     for(let n=CUR;n>=Math.max(1, FIRST_N);n--){
       const pr=P(n), e=enteredOf(n); let hours=0,total=0,sent=0;
+      if(waiting(n)){ h+='<tr><td><b>'+lab(n)+'</b></td><td>'+esc(span(pr.start,pr.end))+(pr.hol?' <span class="pill p-new">'+esc(pr.hol.n)+'</span>':'')+'</td><td>'+esc(fmt(pr.pay))+'</td><td class="muted" colspan="4">'+(LIVE.old==='failed'?'Couldn’t be read':'Loading…')+'</td><td></td></tr>'; continue; }
       OFFICES.forEach(o=>{ const s=get(n,o.k); if(s.status!=='sent') return; sent++; rowPeople(n,o.k).forEach(p=>{ const x=s.rows[p.id]; if(x){ const c=calc(p,x,pr); hours+=c.hours; total+=c.total; } }); });
       h+='<tr><td><b>'+lab(n)+'</b></td><td>'+esc(span(pr.start,pr.end))+(pr.hol?' <span class="pill p-new">'+esc(pr.hol.n)+'</span>':'')+'</td><td>'+esc(fmt(pr.pay))+'</td><td>'+sent+' of '+OFFICES.length+'</td><td>'+(e?'<span class="pill p-lock">🔒 Entered '+esc(fmt(e.at))+'</span>':'<span class="pill p-go">In progress</span>')+'</td><td class="n">'+hrs(hours)+'</td><td class="n">'+money(total)+'</td><td class="n"><button class="btn ghost sm" data-act="open" data-v="'+n+'">Open</button></td></tr>';
     }
-    return h+'</tbody></table></div></div></div>';
+    return h+'</tbody></table></div></div>';
   }
   function lookHTML(){
     const q=String(look).trim().toLowerCase();
@@ -1108,6 +1123,7 @@
     const act=b.dataset.act, v=b.dataset.v;
     if(act==='tab'){ tab=v; per=HOME(); render(); return; }
     if(act==='open'){ tab='sheet'; per=+v; render(); window.scrollTo({top:0}); return; }
+    if(act==='oldretry'){ LIVE.old=null; paintHistList(); loadOlder(); return; }
     if(act==='omopen'){ tab='sheet'; per=+v; render(); window.scrollTo({top:0}); return; }
     if(act==='send'){
       const o=R().office, list=issues(per,o);
@@ -1261,12 +1277,16 @@
      sheet_<YYYY-NN>.json; Heather's settings.json (bonus amounts) and cols_<YYYY-NN>.json (her own columns - Goal,
      TC/OM, Extra - never in an office's file). A change is saved a field at a time onto the LATEST copy of its file
      (two people at once both land), shortly after it's typed; the badge says Saving / Saved / not saved. */
-  const LIVE={ready:false, loading:false, err:'', firstN:null, unread:[], q:{}, timers:{}, busy:0, failed:''};
+  const LIVE={ready:false, loading:false, err:'', firstN:null, unread:[], q:{}, timers:{}, busy:0, failed:'', old:null, oldErr:''};
   const folderOf=k=>k==='_h' ? PAYSTORE.PRIVATE : OFF[k].n;
   const manages=()=>LEVEL()==='manage';
   const store=k=>PAYSTORE.at(folderOf(k), manages());
   const keyOf=n=>P(n).key;
   const nOfKey=key=>{ const i=PR.indexOfKey(key); return i===null ? null : ANCHOR.n+i; };
+  // Which files a read opens (RECENT FIRST, above): 'sheet_2026-24' / 'cols_2026-24' -> its pay period.
+  const nOfFile=key=>nOfKey(String(key).replace(/^(sheet|cols)_/, ''));
+  const isRecent=key=>{ const n=nOfFile(key); return n!==null && n>=RECENT; };
+  const isOlder=key=>{ const n=nOfFile(key); return n!==null && n<RECENT && n>=FIRST_N; };
   const myEmail=()=>String((PH.email && PH.email(PH.me()))||'').toLowerCase();
   const pending=()=>Object.keys(LIVE.q).some(id=>LIVE.q[id].length) || LIVE.busy>0;
   function paintSave(){
@@ -1428,6 +1448,47 @@
         PH_STORE.update('ph_paygrants', cur=>PH_DOCS.payRecord(cur, done)).then(()=>Object.keys(done).every(k=>!done[k].failed.length)));
     }).catch(()=>false);
   }
+  /* One office's sheets, as read, into the page (the same for the recent ones and, later, the older ones). */
+  function takeSheets(k, sh, unread){
+    (sh.unread||[]).forEach(u=>unread.push(OFF[k].n+' '+u));
+    Object.keys(sh).forEach(key=>{
+      const n=nOfKey(key.slice(6)); if(n===null) return;
+      const x=sh[key]||{}; x.rows=x.rows||{}; x.docs=x.docs||{}; x.log=x.log||[];
+      (S.subs[n]=S.subs[n]||{})[k]=x;
+      if(x.entered!==undefined) S.entered[n]=x.entered;
+      LIVE.firstN=LIVE.firstN===null ? n : Math.min(LIVE.firstN, n);
+    });
+  }
+  /* Heather's own columns (Goal, TC/OM, Extra), onto the sheets already taken in. */
+  function takeCols(cols, unread){
+    (cols.unread||[]).forEach(u=>unread.push('Heather '+u));
+    Object.keys(cols).forEach(key=>{
+      const n=nOfKey(key.slice(5)); if(n===null) return; const c=cols[key]||{};
+      Object.keys(c).forEach(k=>{ if(!OFF[k] || !c[k] || typeof c[k]!=='object') return;
+        const sh=mine(n,k);
+        Object.keys(c[k]).forEach(pid=>{ const x=sh.rows[pid]=sh.rows[pid]||blank(); ['goal','tcom','extra'].forEach(f=>{ if(c[k][pid][f]!==undefined) x[f]=c[k][pid][f]; }); });
+      });
+    });
+  }
+  /* The older pay periods (before RECENT), read once, when History needs them. Every office's, then Heather's own
+     columns onto them - the same order as when Payroll opens. Only History's list is redrawn when they land, so
+     nothing being typed loses its place. Reads only. */
+  const hasOlder=()=>LIVEPAY && LIVE.ready && LEVEL()!=='send' && RECENT>FIRST_N;
+  function loadOlder(){
+    if(!hasOlder() || LIVE.old==='loading' || LIVE.old==='done') return;
+    const offs=OFFICES.map(o=>o.k), miss=[];
+    LIVE.old='loading'; LIVE.oldErr='';
+    Promise.all([
+      Promise.all(offs.map(k=>store(k).getAll('sheet_', {partial:true, only:isOlder}))),
+      store('_h').getAll('cols_', {partial:true, only:isOlder})
+    ]).then(([perOffice, cols])=>{
+      perOffice.forEach((sh, i)=>takeSheets(offs[i], sh, miss));
+      takeCols(cols, miss);
+      LIVE.old='done'; paintHistList();
+      if(miss.length) toast('Couldn’t read: '+miss.join(', ')+' - it was left as it is');
+    }, e=>{ LIVE.old='failed'; LIVE.oldErr=(e && e.message)||'SharePoint didn’t answer.'; paintHistList(); });
+  }
+  function paintHistList(){ const h=el('histlist'); if(h) h.innerHTML=histList(); }
   /* Load what this person may see. A sender: their office's people and sheets. A manager (or See): every office, and
      Heather's folder. A file that can't be read is said in red; a folder that can't be opened is an error, never an
      empty payroll. */
@@ -1438,7 +1499,7 @@
     if(!lv){ LIVE.err='Your account doesn’t have Payroll. Whoever manages payroll chooses who sends each office’s sheet; Admin → Teams & Access gives the rest.'; render(); payDone(); return; }
     LIVE.loading=true; LIVE.err=''; render();
     const offs=lv==='send' ? myOffices() : OFFICES.map(o=>o.k), people={}, docs=[];
-    S.subs={}; S.entered={}; S.removed={}; S.docGone={}; S.bonus={}; S.added=[]; S.docAdd=[]; LIVECOLS={};
+    S.subs={}; S.entered={}; S.removed={}; S.docGone={}; S.bonus={}; S.added=[]; S.docAdd=[]; LIVECOLS={}; LIVE.old=null; LIVE.oldErr='';
     /* Nothing is read or written until the payroll folder is LOCKED: before that, everyone in Home-Brace could open it
        in SharePoint. Whoever manages payroll is told how; a sender only ever gets access after it's locked anyway. */
     /* The lock is checked AT THE SAME TIME as the folders (10/11/2026, speed). Only if it doesn't look locked is it
@@ -1454,8 +1515,8 @@
          folder, are read AT THE SAME TIME - they used to be read one office after another. What comes back is still
          put together in office order, exactly as before. Reads only. */
       .then(()=>Promise.all([
-        Promise.all(offs.map(k=>Promise.all([store(k).get('people'), store(k).getAll('sheet_', {partial:true})]))),
-        lv==='send' ? null : Promise.all([store('_h').get('settings'), store('_h').getAll('cols_', {partial:true})])
+        Promise.all(offs.map(k=>Promise.all([store(k).get('people'), store(k).getAll('sheet_', {partial:true, only:isRecent})]))),
+        lv==='send' ? null : Promise.all([store('_h').get('settings'), store('_h').getAll('cols_', {partial:true, only:isRecent})])
       ]))
       .then(([perOffice, hers])=>{ perOffice.forEach(([pf, sh], i)=>{ const k=offs[i];
         pf=pf||{people:[], docs:[]};
@@ -1468,14 +1529,7 @@
         });
         (pf.docs||[]).forEach(d=>{ docs.push(Object.assign({}, d, {office:k})); if(d.gone) S.docGone[d.id]=d.gone; });
         LIVECOLS[k]=(Array.isArray(pf.cols) ? pf.cols : []).filter(c=>c && c.id && c.n && c.from);    // the extra columns Heather added
-        (sh.unread||[]).forEach(u=>LIVE.unread.push(OFF[k].n+' '+u));
-        Object.keys(sh).forEach(key=>{
-          const n=nOfKey(key.slice(6)); if(n===null) return;
-          const x=sh[key]||{}; x.rows=x.rows||{}; x.docs=x.docs||{}; x.log=x.log||[];
-          (S.subs[n]=S.subs[n]||{})[k]=x;
-          if(x.entered!==undefined) S.entered[n]=x.entered;
-          LIVE.firstN=LIVE.firstN===null ? n : Math.min(LIVE.firstN, n);
-        });
+        takeSheets(k, sh, LIVE.unread);
       });
       if(!hers) return;
       { let [st, cols]=hers;
@@ -1483,14 +1537,7 @@
         S.bonus=st.bonus||{};
         if(st.rates) RATE=Object.assign({}, RATE, st.rates);
         if(Array.isArray(st.holidays) && st.holidays.length) HOLIDAYS=st.holidays;
-        (cols.unread||[]).forEach(u=>LIVE.unread.push('Heather '+u));
-        Object.keys(cols).forEach(key=>{
-          const n=nOfKey(key.slice(5)); if(n===null) return; const c=cols[key]||{};
-          Object.keys(c).forEach(k=>{ if(!OFF[k] || !c[k] || typeof c[k]!=='object') return;
-            const sh=mine(n,k);
-            Object.keys(c[k]).forEach(pid=>{ const x=sh.rows[pid]=sh.rows[pid]||blank(); ['goal','tcom','extra'].forEach(f=>{ if(c[k][pid][f]!==undefined) x[f]=c[k][pid][f]; }); });
-          });
-        });
+        takeCols(cols, LIVE.unread);
       } })
       .then(()=>{
         PEOPLE=Object.values(people); DOCS=docs;
@@ -1538,7 +1585,7 @@
 })();
 </script>
 <script>PH.nav('payroll');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc138"></script>
+<script src="tour.js?v=hc139"></script>
 <script>
 Tour.init([
   ...((window.PH && PH.isLive && PH.isLive()) || (()=>{ try{ return localStorage.getItem('ph_pay_real')==='1'; }catch(_){ return false; } })() ? [] : [{sel:'#persona', title:'A mock-up', body:'Made-up people and amounts. Start as the <b>Carlsbad TC</b>, who sends Carlsbad’s sheet, then switch to <b>Heather</b>.'}]),

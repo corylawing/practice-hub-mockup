@@ -3393,6 +3393,29 @@
     const wait=LOAD_MIN-(Date.now()-LOAD.t0);
     if(wait>0) setTimeout(loadCheck, wait); else loadHide();
   }
+  /* ONLY THE PAGE'S OWN PART (10/11/2026, Cory: "I'd prefer that there isn't a complete other screen with the loading
+     animation just the part of Home-Brace that will show the screen loads so you still see the apps etc."). Once the
+     page shows, the loading screen covers only where the page's content goes - right of the sidebar, or under the
+     header and the tabs across the top, and above the phone bar - so the menu stays in view and can be clicked.
+     While sign-in is still being checked (gate.js hides the whole page, menu included: body.phgated) it is the whole
+     window, as before; it is fitted again whenever that changes, and when the window is resized. */
+  function loadFit(){
+    const el=LOAD.el; if(!el || LOAD.gone || !document.body || !document.body.classList) return;
+    try{
+      let top=0, left=0, bottom=0;
+      if(!document.body.classList.contains('phgated')){
+        const H=window.innerHeight||0;
+        const box=sel=>{ const e=document.querySelector(sel); if(!e || !e.getBoundingClientRect) return null; const r=e.getBoundingClientRect(); return (r.width>0 && r.height>0) ? r : null; };
+        const side=box('.ph-sidenav'), bar=box('.ph-tabbar');
+        if(side && side.left<=1 && side.height>=H*0.6) left=Math.round(side.right);                       // the sidebar
+        else ['.hdr','.v1nav'].forEach(s=>{ const r=box(s); if(r && r.top<H/3) top=Math.max(top, Math.round(r.bottom)); });   // header + tabs on top
+        if(bar && bar.top>H/2) bottom=Math.max(0, Math.round(H-bar.top));                                   // the phone bar
+      }
+      el.style.top=top+'px'; el.style.left=left+'px'; el.style.bottom=bottom+'px';
+      // The first fit lands as it is; after that a change (the menu appearing once sign-in is done) slides.
+      if(!LOAD.fitted){ LOAD.fitted=true; setTimeout(function(){ if(LOAD.el) LOAD.el.classList.add('fit'); }, 60); }
+    }catch(_){}
+  }
   function loadHold(k, label){ if(LOAD.gone || !k) return; LOAD.holds[k]=label||LOAD.holds[k]||''; loadMsg(); }
   function loadDone(k){ if(!(k in LOAD.holds)) return; delete LOAD.holds[k]; loadCheck(); }
   try{ (function loadScreen(){
@@ -3406,6 +3429,7 @@
       '#phload{position:fixed;inset:0;z-index:99990;display:flex;align-items:center;justify-content:center;padding:24px;'+
         'background:var(--canvas,#F4F6F9);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;'+
         'transition:opacity .38s ease, visibility 0s linear .38s}'+
+      '#phload.fit{transition:opacity .38s ease, visibility 0s linear .38s, top .32s ease, left .32s ease, bottom .32s ease}'+
       '#phload::before{content:"";position:absolute;inset:0;pointer-events:none;'+
         'background:radial-gradient(520px 360px at 50% 44%, color-mix(in srgb, var(--teal,#149B96) 14%, transparent), transparent 70%)}'+
       '#phload.out{opacity:0;visibility:hidden}'+
@@ -3458,11 +3482,15 @@
       LOAD.ready=true;
       // No sign-in on this page (or the sandbox): nobody to wait for.
       if(!isLive() || !document.querySelector('script[src*="gate.js"]')) loadDone('who');
+      loadFit();
+      // gate.js hides / shows the whole page with a class on <body>: fit again each time it does.
+      try{ if(typeof MutationObserver==='function' && document.body) new MutationObserver(loadFit).observe(document.body, {attributes:true, attributeFilter:['class']}); }catch(_){}
       loadCheck();
     }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', onReady, {once:true}); else setTimeout(onReady, 0);
-    document.addEventListener('ph-signed-in', loadMsg);
-    document.addEventListener('ph-identity', function(){ if(SIGNED_IN && !stillLearning()) loadDone('who'); else loadMsg(); });
+    document.addEventListener('ph-signed-in', function(){ loadMsg(); loadFit(); setTimeout(loadFit, 0); });
+    document.addEventListener('ph-identity', function(){ if(SIGNED_IN && !stillLearning()) loadDone('who'); else { loadMsg(); loadFit(); } });
+    window.addEventListener('resize', loadFit);
     // Back to a page the browser kept in memory: it is already loaded.
     window.addEventListener('pageshow', function(e){ if(e.persisted) loadHide(); });
   })(); }catch(_){ try{ if(LOAD.el && LOAD.el.parentNode) LOAD.el.parentNode.removeChild(LOAD.el); }catch(__){} LOAD.gone=true; }   // never let the loading screen break - or cover - a page
