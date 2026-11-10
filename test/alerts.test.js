@@ -96,6 +96,13 @@ function load(opts){
     const r3=await S.set('ph_pay_senders', {v:1});
     t('a record people typed (who sends each sheet) is still guarded', !!(r3 && r3.blocked));
   }
+  /* Admin -> a person -> Send a test alert (10/11/2026, Cory: "Can you send a test notification on production to heather") */
+  {
+    const A=require('fs').readFileSync(require('path').join(__dirname,'..','v1','admin.html'),'utf8');
+    t('Admin: a test alert goes only to the person whose card is open', /return A\.sendTo\(\[em\], \{title:'Test alert from Home-Brace'/.test(A) && /const em=String\(u\.email\|\|''\)\.trim\(\)\.toLowerCase\(\)/.test(A));
+    t('Admin: the sandbox never sends one', /if\(!\(PH\.isLive && PH\.isLive\(\)\)\)\{ say\('On the live site this sends '/.test(A));
+    t('Admin: says when they haven\'t turned alerts on yet', /hasn’t turned alerts on yet/.test(A));
+  }
   console.log(pass+' passed, '+fail+' failed');
   process.exit(fail?1:0);
 })().catch(e=>{ console.log('  FAIL  crashed: '+(e && e.stack || e)); process.exit(1); });

@@ -272,18 +272,18 @@
   }
 
 </style>
-<script src="user.js?v=hc141"></script>
+<script src="user.js?v=hc142"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="_staff.js?v=hc141"></script>
-  <script src="store.js?v=hc141"></script>
-  <script src="gate.js?v=hc141"></script>
-  <script src="docs.js?v=hc141"></script>
-  <script src="payrules.js?v=hc141"></script>
-  <script src="workbook.js?v=hc141"></script>
-  <script src="prodbook.js?v=hc141"></script>
-  <script src="prodfx.js?v=hc141"></script>
-  <script src="prodstore.js?v=hc141"></script>
-  <script src="prodadmin.js?v=hc141"></script>
+  <script src="_staff.js?v=hc142"></script>
+  <script src="store.js?v=hc142"></script>
+  <script src="gate.js?v=hc142"></script>
+  <script src="docs.js?v=hc142"></script>
+  <script src="payrules.js?v=hc142"></script>
+  <script src="workbook.js?v=hc142"></script>
+  <script src="prodbook.js?v=hc142"></script>
+  <script src="prodfx.js?v=hc142"></script>
+  <script src="prodstore.js?v=hc142"></script>
+  <script src="prodadmin.js?v=hc142"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — admin console concept for validation. Real build: people sync from Microsoft 365; access is managed here.</div>
@@ -878,6 +878,11 @@
           // About me sits here so the right column matches the height of the synced
           // fields on the left, instead of trailing off into empty space.
           '<div class="fld"><label>About me <span class="selfbadge">EMPLOYEE CAN EDIT</span></label><textarea class="tall">'+u.about+'</textarea></div>'+
+          /* TEST ALERT (10/11/2026, Cory: "Can you send a test notification on production to heather"). Sends one
+             alert to every phone/computer this person turned alerts on for - and says if they haven't yet. */
+          '<div class="fld"><label>Phone &amp; computer alerts</label><div class="photorow" style="flex-wrap:wrap">'+
+            '<button class="btn ghost mini-btn" id="fAlertBtn" onclick="AD.testAlert()">Send a test alert</button>'+
+            '<span id="fAlertNote" style="font-size:12.5px;color:var(--soft)" role="status" aria-live="polite"></span></div></div>'+
         '</div>'+
       '</div>'+
       '<div class="fullband">'+
@@ -888,6 +893,25 @@
       '</div>'+
       '<div class="m-foot"><button class="btn ghost" style="color:var(--bad)" onclick="AD.removePerson()">Remove from hub</button><span style="flex:1;font-size:12.5px;color:var(--soft)">Photo &amp; About me are self-service.</span><button class="btn ghost" onclick="AD.close()">Cancel</button><button class="btn" onclick="AD.saveUser()">Save</button></div>');
     refreshAccessPreview();
+  }
+  function testAlert(){
+    const u=users[tmpU.gi]; if(!u) return;
+    const em=String(u.email||'').trim().toLowerCase(), first=esc(u.f||'They');
+    const note=document.getElementById('fAlertNote'), btn=document.getElementById('fAlertBtn');
+    const say=h=>{ if(note) note.innerHTML=h; };
+    if(!em){ say('No email on file, so no alerts.'); return; }
+    if(!(PH.isLive && PH.isLive())){ say('On the live site this sends '+first+' a test alert.'); return; }
+    if(btn) btn.disabled=true; say('Sending…');
+    PH.alertsReady().then(A=>{
+      if(!A || !A.ON) throw new Error('alerts aren’t switched on in Home-Brace');
+      return A.sendTo([em], {title:'Test alert from Home-Brace', body:'Just checking alerts reach you - nothing to do.', url:A.here('home.html'), tag:'hb-test'});
+    }).then(r=>{
+      if(!r.people && !r.failed.length) say('<b>'+first+' hasn’t turned alerts on yet</b> on any phone or computer. They tap the bell 🔔 → <b>Turn on</b>.');
+      else if(r.sent) say('<b>Sent ✓</b> to '+r.sent+' '+(r.sent===1?'device':'devices')+(r.gone?' ('+r.gone+' had turned alerts off)':'')+(r.failed.length?' · '+r.failed.length+' didn’t go':'')+'.');
+      else if(r.gone && !r.failed.length) say(first+'’s '+(r.gone===1?'device has':'devices have')+' alerts turned off now. They tap the bell 🔔 → <b>Turn on</b> again.');
+      else if(r.failed.some(f=>/signin$/.test(f))) say('Couldn’t send - your Microsoft sign-in needs refreshing. Reload the page and try again.');
+      else say('Couldn’t send: '+esc(r.failed.map(f=>f.replace(/^[^:]*: /,'')).join('; ')||'no answer'));
+    }).catch(e=>say('Couldn’t send: '+esc((e && e.message)||'no answer'))).then(()=>{ if(btn) btn.disabled=false; });
   }
   function fldRO(lab,val){ return '<div class="fld ro"><label>'+lab+'</label><div class="val">'+(val||'—')+'</div></div>'; }
   /* What they can access is normally decided by their teams. An admin can now
@@ -2117,7 +2141,7 @@
   if(location.hash==='#feedback') setTimeout(()=>tabSet('fb'), 0);
   if(location.hash==='#usage') setTimeout(()=>tabSet('use'), 0);      // the bell's "new feedback" opens here
   window.AD={tabNow:()=>tab,setupSecs,editSyncNow,tcSyncNow,paySyncNow,sensAdd,sensChange,sensRemove,sensClose,sensQ,sensToggle,sensClear,sensLevel,sensTyped,sensBack,sensNext,sensGo,sensSyncNow,tab:tabSet,viewAs:doViewAs,newTeam,editTeam,saveTeam:thenSync(saveTeam),delTeam:thenSync(delTeam),resetTeams,profile,whyNoAdd,
-    addPerson,npSet,npLoc,npTeam,saveNewPerson:thenSync(saveNewPerson),accTeam:setAccTeam,removePerson:thenSync(removePerson),restorePerson:thenSync(restorePerson),showRemoved,togTeam,togLoc,setStatus,saveUser:thenSync(saveUser),pickLevel,pickAud,setField,pickPhoto,photoChosen,clearPhoto,pickUserLevel,clearUserLevel,tog,addFile,noop,newSec,editSec,saveSec:thenSync(saveSec),delSec,delSecGo,resetSecs,setSecName,setSecIcon,setSecStruct,setSecLocMode,setSecTeamMode,togSecLoc,togSecTeam,saveFile,cd,useFile,clearFile,uploadFile,setFileTeamMode,setFileLocMode,togFileLoc,togFileTeam,renderLocs,newLoc,editLoc,saveLoc,delLoc,resetLocs,setLocBrand,setLocState,setLocTZ,close:closeModal};
+    addPerson,npSet,npLoc,npTeam,saveNewPerson:thenSync(saveNewPerson),accTeam:setAccTeam,removePerson:thenSync(removePerson),restorePerson:thenSync(restorePerson),showRemoved,togTeam,togLoc,setStatus,saveUser:thenSync(saveUser),pickLevel,pickAud,setField,pickPhoto,photoChosen,clearPhoto,pickUserLevel,clearUserLevel,tog,addFile,noop,newSec,editSec,saveSec:thenSync(saveSec),delSec,delSecGo,resetSecs,setSecName,setSecIcon,setSecStruct,setSecLocMode,setSecTeamMode,togSecLoc,togSecTeam,saveFile,cd,useFile,clearFile,uploadFile,setFileTeamMode,setFileLocMode,togFileLoc,togFileTeam,renderLocs,newLoc,editLoc,saveLoc,delLoc,resetLocs,setLocBrand,setLocState,setLocTZ,testAlert,close:closeModal};
   el('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
   /* Load the real roster before the first paint. If it isn't there (the public
@@ -2201,7 +2225,7 @@ function sizeWatch(){
   }).catch(()=>{});
 }
 </script>
-<script src="tour.js?v=hc141"></script>
+<script src="tour.js?v=hc142"></script>
 <script>
 Tour.init([
   {sel:'#tabs', title:'This is your control room', body:'Four tabs and you can run the whole hub: <b>People</b>, <b>Teams &amp; Access</b>, <b>Document Sections</b> and <b>Locations</b>. No developer, no consultant.', pre:()=>AD.tab('users')},
