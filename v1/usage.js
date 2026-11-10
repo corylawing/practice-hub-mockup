@@ -192,9 +192,9 @@
         (x.state==='using'?'<span class="use-pill using">Using it</span>':x.state==='quiet'?'<span class="use-pill quiet">Quiet</span>':'<span class="use-pill never">Never</span>')+'</td></tr>').join('')
         : '<tr><td colspan="6" class="use-empty">No one here.</td></tr>')+'</tbody></table></div></div>';
     const myEm=P.useEmail ? P.useEmail() : '', mine=myEm && (DATA||[]).find(r=>r && String(r.email||'').toLowerCase()===myEm);
-    if(myEm && P.useTrackMe) h+='<p class="use-me">'+(mine && mine.off
-      ? '🔕 <b>Your own visits are not recorded.</b> You’re never in these numbers, even with “Include admins” ticked. <button type="button" data-me="on">Record me again</button>'
-      : 'Your own visits are recorded (you show only with “Include admins” ticked). <button type="button" data-me="off">Stop recording me</button>')+'</p>';
+    /* Only the person already switched off ever sees this line (Cory, 10/11: "I don't want anyone else to see that").
+       Nobody else is offered the switch, or told it exists. */
+    if(myEm && P.useTrackMe && mine && mine.off) h+='<p class="use-me">🔕 <b>Your own visits are not recorded.</b> You’re never in these numbers, even with “Include admins” ticked. <button type="button" data-me="on">Record me again</button></p>';
     el.innerHTML=h;
     el.onclick=e=>{
       const k=e.target.closest('[data-k]'); if(k){ KIND=k.dataset.k; paint(el); return; }

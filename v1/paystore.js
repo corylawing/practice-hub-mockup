@@ -123,7 +123,19 @@
 
   /* ---------- files in one folder ---------- */
   var ids = {};                        // sub -> {file name: item id}
+  /* SPEED (10/11/2026, Cory: Payroll took 5-8 seconds to open). A folder's list asked for twice at the same moment
+     (an office's people and its sheets are read together) is asked for once: the second caller shares the first
+     one's answer while it is on its way. Nothing is kept once it has landed, so a later read still asks again. */
+  var listing = {};                    // sub -> Promise of its file list, only while one is on its way
   function files(sub, F){
+    if(listing[sub]) return listing[sub];
+    var p = listOnce(sub, F);
+    listing[sub] = p;
+    var clear = function(){ if(listing[sub] === p) delete listing[sub]; };
+    p.then(clear, clear);
+    return p;
+  }
+  function listOnce(sub, F){
     var out = [];
     function page(url, n){
       return withRetry(function(){ return send('GET', url); }).then(function(r){
@@ -265,14 +277,15 @@
   function ensure(subNames){
     if(!live()) return Promise.resolve({});
     var out = {};
+    // Every folder at once (it used to be one after the other - nine trips to SharePoint in a row on every open).
     return root(true).then(function(){
-      return (subNames || []).concat([PRIVATE]).reduce(function(c, s){
-        return c.then(function(){ return folder(s, true).then(function(F){ out[s] = F.id; }); });
-      }, Promise.resolve());
+      return Promise.all((subNames || []).concat([PRIVATE]).map(function(s){
+        return folder(s, true).then(function(F){ out[s] = F.id; });
+      }));
     }).then(function(){ return out; });
   }
 
   global.PAYSTORE = { at: at, ensure: ensure, ROOT: ROOT, PRIVATE: PRIVATE,
-    _reset: function(){ driveP = null; rootP = null; subs = {}; ids = {}; } };
+    _reset: function(){ driveP = null; rootP = null; subs = {}; ids = {}; listing = {}; } };
   if(typeof module !== 'undefined' && module.exports) module.exports = global.PAYSTORE;
 })(typeof window !== 'undefined' ? window : globalThis);

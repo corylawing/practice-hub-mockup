@@ -225,15 +225,15 @@
     .perhead .when{font-size:17px}
   }
 </style>
-<script src="user.js?v=hc136"></script>
+<script src="user.js?v=hc137"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc136"></script>
-  <script src="gate.js?v=hc136"></script>
-  <script src="alerts.js?v=hc136"></script>
-  <script src="_staff.js?v=hc136"></script>
-  <script src="payrules.js?v=hc136"></script>
-  <script src="paystore.js?v=hc136"></script>
-  <script src="docs.js?v=hc136"></script>
+  <script src="store.js?v=hc137"></script>
+  <script src="gate.js?v=hc137"></script>
+  <script src="alerts.js?v=hc137"></script>
+  <script src="_staff.js?v=hc137"></script>
+  <script src="payrules.js?v=hc137"></script>
+  <script src="paystore.js?v=hc137"></script>
+  <script src="docs.js?v=hc137"></script>
 </head>
 <body>
 <div class="ribbon">MOCK-UP for Heather — made-up people and amounts. Try it as the Carlsbad TC first, then as Heather.</div>
@@ -1446,7 +1446,14 @@
           'Lock it once: SharePoint → Home-Brace → Documents → next to “Home-Brace Payroll”: ⋯ → Manage access → Advanced settings → Stop Inheriting Permissions, '+
           'then remove Home-Brace Members and Home-Brace Visitors. Then press Try again.');
       }) : Promise.resolve())
-      .then(()=>offs.reduce((c,k)=>c.then(()=>Promise.all([store(k).get('people'), store(k).getAll('sheet_', {partial:true})]).then(([pf, sh])=>{
+      /* SPEED (10/11/2026, Cory: "the loading screen takes at least 5-8 seconds"): every office, and Heather's own
+         folder, are read AT THE SAME TIME - they used to be read one office after another. What comes back is still
+         put together in office order, exactly as before. Reads only. */
+      .then(()=>Promise.all([
+        Promise.all(offs.map(k=>Promise.all([store(k).get('people'), store(k).getAll('sheet_', {partial:true})]))),
+        lv==='send' ? null : Promise.all([store('_h').get('settings'), store('_h').getAll('cols_', {partial:true})])
+      ]))
+      .then(([perOffice, hers])=>{ perOffice.forEach(([pf, sh], i)=>{ const k=offs[i];
         pf=pf||{people:[], docs:[]};
         (pf.people||[]).forEach(q=>{
           if(q.mistake || q.linked) return;           // linked: the same person under another id (kept, never deleted)
@@ -1465,8 +1472,9 @@
           if(x.entered!==undefined) S.entered[n]=x.entered;
           LIVE.firstN=LIVE.firstN===null ? n : Math.min(LIVE.firstN, n);
         });
-      })), Promise.resolve()))
-      .then(()=>lv==='send' ? null : Promise.all([store('_h').get('settings'), store('_h').getAll('cols_', {partial:true})]).then(([st, cols])=>{
+      });
+      if(!hers) return;
+      { let [st, cols]=hers;
         st=st||{};
         S.bonus=st.bonus||{};
         if(st.rates) RATE=Object.assign({}, RATE, st.rates);
@@ -1479,7 +1487,7 @@
             Object.keys(c[k]).forEach(pid=>{ const x=sh.rows[pid]=sh.rows[pid]||blank(); ['goal','tcom','extra'].forEach(f=>{ if(c[k][pid][f]!==undefined) x[f]=c[k][pid][f]; }); });
           });
         });
-      }))
+      } })
       .then(()=>{
         PEOPLE=Object.values(people); DOCS=docs;
         if(lv==='send' && !liveOffice) liveOffice=myOffices()[0]||null;
@@ -1524,7 +1532,7 @@
 })();
 </script>
 <script>PH.nav('payroll');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc136"></script>
+<script src="tour.js?v=hc137"></script>
 <script>
 Tour.init([
   ...((window.PH && PH.isLive && PH.isLive()) || (()=>{ try{ return localStorage.getItem('ph_pay_real')==='1'; }catch(_){ return false; } })() ? [] : [{sel:'#persona', title:'A mock-up', body:'Made-up people and amounts. Start as the <b>Carlsbad TC</b>, who sends Carlsbad’s sheet, then switch to <b>Heather</b>.'}]),

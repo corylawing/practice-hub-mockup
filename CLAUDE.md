@@ -200,7 +200,10 @@ paySenders/reloadPaySenders/paySenderOffices, payLevel).
   to {v, email, off:true, d:{}} (visits so far cleared); useTick returns undefined for an `off` record (nothing
   written); usage.js `people()` drops `off` records AND the team-list row matched to them, so they are in no number,
   even with Include admins. Kept in the shared record, so every device. NEVER put Cory's name/email in code (public
-  repo) - this is why it is a switch he flips, not a hard-coded exclusion. Cory must click it once on live.
+  repo) - this is why it is a switch he flips, not a hard-coded exclusion. Cory clicked it on live 10/11. Since
+  hc137 the line shows ONLY to someone already switched off ("Record me again") - Cory: "I don't want anyone else
+  to see that". Nobody else is offered "Stop recording me" any more (to switch someone else off: PH.useTrackMe(false)
+  run in their own signed-in browser console).
 - **LOADING SCREEN (10/11, hc136).** Cory: "When loading production dashboard (or anything that needs to grab our
   data) ... shows numbers as zeros first. Would be better if we had a great animated home-brace loading screen even if
   quickly". user.js (right after `isLive`): `#phload` on <html> (outside body, so gate.js `body.phgated` can't hide it),
@@ -211,6 +214,12 @@ paySenders/reloadPaySenders/paySenderOffices, payLevel).
   each releases on success AND failure. Min 500 ms, max 12 s (then the page shows with its own message). Uses the
   person's colour scheme tokens (--canvas/--navy/--teal). test/loading.test.js. Timing checked headless with a slow
   stand-in (scratchpad fake-slow.js + load-try.js): live ~2-3 s, sandbox ~0.6 s.
+- **PAYROLL OPENS FASTER (10/11, hc137).** Cory: Payroll's loading screen "takes at least 5-8 seconds". Cause: liveLoad
+  read the offices ONE AFTER ANOTHER (8 x ~3-4 SharePoint round trips) after PAYSTORE.ensure checked 9 folders one
+  after another - ~40 trips in a row. Now: ensure checks the folders together; every office and Heather's folder
+  are read together (put together in office order, same as before); paystore `files()` shares a folder listing
+  already on its way (get('people') + getAll('sheet_') used to list the same folder twice). Reads only - no change
+  to what is saved. The loading screen itself adds nothing (min 0.5 s; it covers the time the page needed anyway).
 - Asked 04/11, NOT built: a Settings screen where Heather picks per column "office types it / office sees it / only
   me" (~1 day). Today's split is fixed from her answers; her Goal/TC-OM/Extra live in her private folder. After go-live.
 - **Who sees what**: Admin team (and Payroll level Edit) = manage everything incl. Heather's columns; Payroll level
