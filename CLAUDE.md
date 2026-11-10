@@ -243,6 +243,12 @@ paySenders/reloadPaySenders/paySenderOffices, payLevel).
   `fit`; #phload-side goes UNDER (z 44) when NAVSNAP exists. No sliding any more (the .fit transition is gone).
   Checked headless (scratchpad navflash.js/navswap.js, every 50 ms on the 2nd page): sidebar 10 apps + name from 0.1 s
   to the end, tabs on top and phone bar too; another person on the tab -> theirs at 1.0 s (when /me answers).
+  **TEST ALERT FROM ADMIN (10/11, hc142).** Cory: "Can you send a test notification on production to heather" - I
+  can't (the sender needs someone signed in on live). Admin -> People -> tap a person -> "Phone & computer alerts:
+  Send a test alert" (admin.html `testAlert()`): PH.alertsReady() -> PH_ALERTS.sendTo([their email], {title:'Test
+  alert from Home-Brace', ...}) to every device they turned on; says "Sent ✓ to N devices" / "hasn't turned alerts on
+  yet ... bell -> Turn on" / "alerts turned off now" / sign-in needs refreshing. Sandbox: never sends. Also the way to
+  check the office managers turned alerts on before Tue Nov 17. test/alerts.test.js "Admin:".
   **SIDEBAR IS THE DEFAULT (10/11, hc141).** Cory: "I want everyone by default to have the sidebar on the left".
   applyLayout: anything but 'top' = side; syncTheme: a row without layout:'top' = side. Someone who picked "Tabs
   across the top" (row layout:'top', written only by setLayout) keeps them. Picker: Sidebar first ("the default").
