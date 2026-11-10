@@ -220,6 +220,15 @@ paySenders/reloadPaySenders/paySenderOffices, payLevel).
   are read together (put together in office order, same as before); paystore `files()` shares a folder listing
   already on its way (get('people') + getAll('sheet_') used to list the same folder twice). Reads only - no change
   to what is saved. The loading screen itself adds nothing (min 0.5 s; it covers the time the page needed anyway).
+  Cory 10/11: "much faster now, about 2 seconds. Anyway to speed it up without break anything" -> hc138: (1)
+  `PAYSTORE.warm()` + `PH_DOCS.warm()` look up the library (site + drive, 2 trips each) at ph-signed-in, while
+  identity is still settling - no payroll file touched; (2) the lock check runs alongside ensure, and is asked again
+  after ensure only if it didn't say locked (same deciding answer); (3) paystore `get()` reads through the listing's
+  own downloadUrl (as getAll always has), falling back to GET item if absent/failing. Bench (150 ms/trip, made-up
+  data): 7.1 s (hc136) -> 1.7 s (hc137) -> 1.2 s. test/paystore.test.js "speed:" checks. NOT done (would change
+  behaviour): caching payroll on the device (pay data on shared office PCs - no), starting before the person's
+  Payroll level is known. LATER: getAll('sheet_') reads every period's sheet each open - ~26 more per office per
+  year; if it slows down in 2027, read only recent periods first.
 - Asked 04/11, NOT built: a Settings screen where Heather picks per column "office types it / office sees it / only
   me" (~1 day). Today's split is fixed from her answers; her Goal/TC-OM/Extra live in her private folder. After go-live.
 - **Who sees what**: Admin team (and Payroll level Edit) = manage everything incl. Heather's columns; Payroll level

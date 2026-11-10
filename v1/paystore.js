@@ -222,11 +222,16 @@
     function get(key){
       if(!live()) return Promise.resolve(lsGet(sub, key));
       return folder(sub, canMake).then(function(F){
-        return files(sub, F).then(function(){
+        return files(sub, F).then(function(list){
           var id = ids[sub][key + '.json'];
           if(!id) return undefined;
-          return withRetry(function(){ return send('GET', '/drives/' + F.drive + '/items/' + id); }).then(readFile)
-            .then(function(v){ return v === null ? undefined : v; });
+          var byId = function(){ return withRetry(function(){ return send('GET', '/drives/' + F.drive + '/items/' + id); }).then(readFile); };
+          /* SPEED (10/11/2026): the folder's list, just fetched, already carries the file's download address (getAll
+             reads from it the same way), so the extra trip to ask for the file again is skipped. If the list had no
+             address, or reading through it fails, it asks for the file as before. */
+          var it = (list || []).filter(function(f){ return f.id === id; })[0];
+          var read = (it && it['@microsoft.graph.downloadUrl']) ? readFile(it).catch(byId) : byId();
+          return read.then(function(v){ return v === null ? undefined : v; });
         });
       });
     }
@@ -285,7 +290,11 @@
     }).then(function(){ return out; });
   }
 
-  global.PAYSTORE = { at: at, ensure: ensure, ROOT: ROOT, PRIVATE: PRIVATE,
+  /* Look up where the library is (two trips) while sign-in is still settling who this is, so Payroll does not wait
+     for it afterwards. Reads nothing of Payroll; a failure is forgotten and simply happens again when needed. */
+  function warm(){ return live() ? drive().then(function(){ return true; }, function(){ return false; }) : Promise.resolve(false); }
+
+  global.PAYSTORE = { at: at, ensure: ensure, warm: warm, ROOT: ROOT, PRIVATE: PRIVATE,
     _reset: function(){ driveP = null; rootP = null; subs = {}; ids = {}; listing = {}; } };
   if(typeof module !== 'undefined' && module.exports) module.exports = global.PAYSTORE;
 })(typeof window !== 'undefined' ? window : globalThis);

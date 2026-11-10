@@ -820,7 +820,7 @@
     isLocked: isLocked, grantEdit: grantEdit, revokeEdit: revokeEdit,
     TC_BASE: TC_BASE, tcFolder: tcFolder, tcLocked: tcLocked, tcGrant: tcGrant, tcRevoke: tcRevoke, tcPlan: tcPlan,
     tcSync: tcSync, tcRecord: tcRecord,
-    PAY_BASE: PAY_BASE, PAY_PRIVATE: PAY_PRIVATE, payFolder: payFolder, payLocked: payLocked, paySync: paySync, payRecord: payRecord,
+    PAY_BASE: PAY_BASE, PAY_PRIVATE: PAY_PRIVATE, payFolder: payFolder, payLocked: payLocked, warm: function(){ return drive().then(function(){ return true; }, function(){ return false; }); }, paySync: paySync, payRecord: payRecord,
     SENS_NAME: SENS_NAME, SENS_PATH: SENS_PATH, inSens: inSens,
     sensFolder: SENS.folder, sensLocked: SENS.locked, sensGrant: SENS.grant, sensRevoke: SENS.revoke,
     sensPeople: SENS.people, sensSync: SENS.sync, tcPeople: TC.people,

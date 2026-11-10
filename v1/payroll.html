@@ -225,15 +225,15 @@
     .perhead .when{font-size:17px}
   }
 </style>
-<script src="user.js?v=hc137"></script>
+<script src="user.js?v=hc138"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc137"></script>
-  <script src="gate.js?v=hc137"></script>
-  <script src="alerts.js?v=hc137"></script>
-  <script src="_staff.js?v=hc137"></script>
-  <script src="payrules.js?v=hc137"></script>
-  <script src="paystore.js?v=hc137"></script>
-  <script src="docs.js?v=hc137"></script>
+  <script src="store.js?v=hc138"></script>
+  <script src="gate.js?v=hc138"></script>
+  <script src="alerts.js?v=hc138"></script>
+  <script src="_staff.js?v=hc138"></script>
+  <script src="payrules.js?v=hc138"></script>
+  <script src="paystore.js?v=hc138"></script>
+  <script src="docs.js?v=hc138"></script>
 </head>
 <body>
 <div class="ribbon">MOCK-UP for Heather — made-up people and amounts. Try it as the Carlsbad TC first, then as Heather.</div>
@@ -1441,7 +1441,11 @@
     S.subs={}; S.entered={}; S.removed={}; S.docGone={}; S.bonus={}; S.added=[]; S.docAdd=[]; LIVECOLS={};
     /* Nothing is read or written until the payroll folder is LOCKED: before that, everyone in Home-Brace could open it
        in SharePoint. Whoever manages payroll is told how; a sender only ever gets access after it's locked anyway. */
-    (lv==='manage' && ONLIVE ? PAYSTORE.ensure(OFFICES.map(o=>o.n)).then(()=>window.PH_DOCS && PH_DOCS.payLocked ? PH_DOCS.payLocked() : false).then(locked=>{
+    /* The lock is checked AT THE SAME TIME as the folders (10/11/2026, speed). Only if it doesn't look locked is it
+       asked again once the folders are certainly there - the answer that decides is the same as before. */
+    const lockedNow=()=>window.PH_DOCS && PH_DOCS.payLocked ? PH_DOCS.payLocked() : false;
+    (lv==='manage' && ONLIVE ? Promise.all([PAYSTORE.ensure(OFFICES.map(o=>o.n)), Promise.resolve().then(lockedNow).catch(()=>false)])
+        .then(([, locked])=>locked ? true : lockedNow()).then(locked=>{
         if(!locked) throw new Error('The payroll folder isn’t locked yet, so nothing is saved in it - until it is, everyone in Home-Brace could open it in SharePoint. '+
           'Lock it once: SharePoint → Home-Brace → Documents → next to “Home-Brace Payroll”: ⋯ → Manage access → Advanced settings → Stop Inheriting Permissions, '+
           'then remove Home-Brace Members and Home-Brace Visitors. Then press Try again.');
@@ -1497,6 +1501,8 @@
   }
   function payDone(){ if(window.PH && PH.loadDone) PH.loadDone('page'); }
   if(LIVEPAY){
+    // Where the library is, looked up while sign-in is still working out who this is (no payroll data is read).
+    document.addEventListener('ph-signed-in', ()=>{ try{ if(window.PAYSTORE && PAYSTORE.warm) PAYSTORE.warm(); if(window.PH_DOCS && PH_DOCS.warm) PH_DOCS.warm(); }catch(_){} }, {once:true});
     if(window.PH && PH.loadHold) PH.loadHold('page', 'Opening payroll…');   // the loading screen stays up until the numbers are in (user.js)
 
     document.addEventListener('ph-signed-in', ()=>setTimeout(liveLoad, 0));
@@ -1532,7 +1538,7 @@
 })();
 </script>
 <script>PH.nav('payroll');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc137"></script>
+<script src="tour.js?v=hc138"></script>
 <script>
 Tour.init([
   ...((window.PH && PH.isLive && PH.isLive()) || (()=>{ try{ return localStorage.getItem('ph_pay_real')==='1'; }catch(_){ return false; } })() ? [] : [{sel:'#persona', title:'A mock-up', body:'Made-up people and amounts. Start as the <b>Carlsbad TC</b>, who sends Carlsbad’s sheet, then switch to <b>Heather</b>.'}]),

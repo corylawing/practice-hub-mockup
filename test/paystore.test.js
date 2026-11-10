@@ -182,6 +182,24 @@ const addRow=(id, w1)=>cur=>{ const v=cur?JSON.parse(JSON.stringify(cur)):{v:1, 
     let e=null; try{ P.at('../Hobbs'); }catch(x){ e=x; }
     t('a folder name can’t reach outside Payroll', !!e);
   }
+  /* ---- Speed (10/11/2026): the same answers with fewer trips ---- */
+  {
+    const sp=library({who:'manager'}); let {P}=fresh(true, sp);
+    await P.ensure(['Carlsbad','Hobbs']);
+    await P.at('Carlsbad', true).update('people', ()=>({people:[{id:'p1'}], docs:[]}));
+    await P.at('Carlsbad', true).update('sheet_2026-23', addRow('p1', 38));
+    ({P}=fresh(true, sp)); sp.calls=[];
+    const [pf, sh]=await Promise.all([P.at('Carlsbad', true).get('people'), P.at('Carlsbad', true).getAll('sheet_')]);
+    t('speed: people and sheets read together come back exactly as saved', pf.people[0].id==='p1' && sh['sheet_2026-23'].rows.p1.w1===38);
+    t('speed: the folder is listed once for both, not twice', sp.calls.filter(c=>/\/children\?\$top=200$/.test(c)).length===1);
+    t('speed: a file is read through the list’s own address - no second trip to ask for it', !sp.calls.some(c=>/^GET \/drives\/D1\/items\/I\d+$/.test(c)));
+    ({P}=fresh(true, sp)); sp.calls=[];
+    await P.ensure(['Carlsbad','Hobbs']);
+    t('speed: the folders are checked together, and opening again makes nothing', Object.values(sp.items).filter(x=>x.folder).length===4 && !sp.calls.some(c=>/^POST/.test(c)));
+    ({P}=fresh(true, sp)); sp.calls=[];
+    t('speed: warming up only finds the library - no payroll file is touched', (await P.warm())===true && sp.calls.length===2 && sp.calls.every(c=>/^GET \/sites\//.test(c)));
+    t('speed: nothing was ever deleted', !sp.calls.some(c=>/^DELETE/.test(c)));
+  }
   console.log(ok.map(s=>'  PASS  '+s).join('\n'));
   if(bad.length) console.log(bad.map(s=>'  FAIL  '+s).join('\n'));
   console.log('\n'+ok.length+' passed, '+bad.length+' failed');
