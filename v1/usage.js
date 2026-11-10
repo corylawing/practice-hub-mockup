@@ -33,7 +33,7 @@
      them under, then by email, then by name. Visits from people not on the list come back as extras. */
   function people(raw, view, records){
     view=view||raw||[]; raw=raw||view;
-    const recs=(records||[]).filter(r=>r && typeof r==='object' && r.d && typeof r.d==='object');
+    const recs=(records||[]).filter(r=>r && typeof r==='object' && (r.off || (r.d && typeof r.d==='object')));
     const byKey={}, byMail={}, byName={};
     recs.forEach(r=>{ if(r.rk) byKey[String(r.rk).toLowerCase()]=r; if(r.email) byMail[String(r.email).toLowerCase()]=r; const n=normName(r.name); if(n) byName[n]=r; });
     const used=new Set();
@@ -44,7 +44,7 @@
       return {name:v.name||'', email:String(v.email||'').toLowerCase(), offices:v.offices||[], teams:v.teams||[], admin:isAdminTeams(v.teams) || !!(rec && rec.admin), rec, listed:true};
     });
     recs.filter(r=>!used.has(r)).forEach(r=>list.push({name:r.name||r.email, email:r.email||'', offices:[], teams:[], admin:!!r.admin, rec:r, listed:false}));
-    return list;
+    return list.filter(x=>!(x.rec && x.rec.off));                     // asked not to be tracked: never in any number
   }
   /* One period: the tiles, people per day, by office, by section, and each person's line. */
   function summary(list, opts){
@@ -129,7 +129,9 @@
     .use-pill.never{background:var(--bad-soft,#FBEAE7);color:#9a2f1e}
     .use-pill.off{background:#eef2f7;color:#56627A}
     .use-tip{position:fixed;z-index:9500;background:var(--navy,#0F2A4A);color:#fff;font-size:12.5px;font-weight:600;padding:6px 10px;border-radius:8px;pointer-events:none;white-space:nowrap}
-    .use-empty{font-size:13.5px;color:var(--soft,#56627A);padding:6px 0}`;
+    .use-empty{font-size:13.5px;color:var(--soft,#56627A);padding:6px 0}
+    .use-me{font-size:13px;color:var(--soft,#56627A);margin:4px 2px 0}
+    .use-me button{border:0;background:none;padding:0;margin-left:4px;font:inherit;font-size:13px;color:var(--teal-600,#0F827E);font-weight:700;cursor:pointer;text-decoration:underline}`;
     document.head.appendChild(s);
   }
   const fmtDay=s=>{ const d=parseDay(String(s).slice(0,10)); return d ? d.toLocaleDateString([], {weekday:'short', month:'short', day:'numeric'}) : ''; };
@@ -189,9 +191,16 @@
         '<td>'+esc(lastSeen(x.last, today))+'</td><td class="n">'+(x.days||'—')+'</td><td>'+
         (x.state==='using'?'<span class="use-pill using">Using it</span>':x.state==='quiet'?'<span class="use-pill quiet">Quiet</span>':'<span class="use-pill never">Never</span>')+'</td></tr>').join('')
         : '<tr><td colspan="6" class="use-empty">No one here.</td></tr>')+'</tbody></table></div></div>';
+    const myEm=P.useEmail ? P.useEmail() : '', mine=myEm && (DATA||[]).find(r=>r && String(r.email||'').toLowerCase()===myEm);
+    if(myEm && P.useTrackMe) h+='<p class="use-me">'+(mine && mine.off
+      ? '🔕 <b>Your own visits are not recorded.</b> You’re never in these numbers, even with “Include admins” ticked. <button type="button" data-me="on">Record me again</button>'
+      : 'Your own visits are recorded (you show only with “Include admins” ticked). <button type="button" data-me="off">Stop recording me</button>')+'</p>';
     el.innerHTML=h;
     el.onclick=e=>{
       const k=e.target.closest('[data-k]'); if(k){ KIND=k.dataset.k; paint(el); return; }
+      const me=e.target.closest('[data-me]'); if(me){ me.disabled=true; me.textContent='Saving…';
+        P.useTrackMe(me.dataset.me==='on').then(()=>mountAdmin(el.parentNode, {force:true}),
+          err=>{ me.disabled=false; me.textContent='Didn’t save - try again'; }); return; }
       const w=e.target.closest('[data-who]'); if(w){ WHO=w.dataset.who; paint(el); if(w.closest('.use-tile')){ const t=el.querySelector('.use-tbl'); if(t) t.scrollIntoView({behavior:'smooth', block:'start'}); } return; }
     };
     el.onchange=e=>{ if(e.target.matches('[data-adm]')){ ADMINS=e.target.checked; paint(el); } };

@@ -74,4 +74,17 @@ const recs=[
   t('At most once per section per 30 minutes on a device', /USE_GAP=30\*60e3/.test(src) && /ph_usegate_/.test(body));
   t('Kept to about 13 months, and allowed to shrink', /days\.length>400/.test(body) && /'ph_use_'\]/.test(fs.readFileSync(path.join(__dirname,'..','v1','store.js'),'utf8')));
 }
+/* Not tracked: someone who switched their own recording off is never in any number */
+{
+  const off=recs.map(r=>r && r.email==='quinn.quill@farnsworthorthodontics.com' ? {v:1, email:r.email, off:true, d:{}} : r);
+  const L=U.people(roster, roster, off);
+  t('switched off: gone from the list (not even "Never signed in")', !L.some(x=>x.name==='Quinn Quill'));
+  const S=U.summary(L, {kind:'7d', today:TODAY, includeAdmins:true});
+  t('...and from every number, even with Include admins', S.total===4 && S.today===1 && !S.rows.some(x=>x.name==='Quinn Quill'));
+  const X=U.people(roster, roster, recs.concat([{v:1, email:'pat.off@elsewhere.com', name:'Pat Off', off:true, d:{}}]));
+  t('switched off and not on the team list: not an extra either', !X.some(x=>x.name==='Pat Off'));
+  const src=fs.readFileSync(path.join(__dirname,'..','v1','user.js'),'utf8');
+  t('a switched-off record is never written to by a visit', /if\(cur && cur\.off\) return undefined;/.test(src.slice(src.indexOf('function useTick'))));
+  t('switching off clears the visits so far', /return \{v:1, email:em, off:true, d:\{\}\};/.test(src));
+}
 console.log(pass+' passed, '+fail+' failed'); if(fail) process.exit(1);

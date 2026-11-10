@@ -2077,12 +2077,29 @@
      Written by the person themselves, at most once per section per 30 minutes on a device, never while an admin is
      viewing as someone. Admin -> Usage (usage.js) reads them all. */
   const USE_GAP=30*60e3;
+  /* The signed-in person's own email (never the person an admin is viewing as). */
+  function useEmail(){
+    const m=realMe()||{}, em=String((PROFILE && (PROFILE.mail||PROFILE.userPrincipalName)) || m.mail || '').toLowerCase().trim();
+    return em.indexOf('@')>0 ? em : '';
+  }
+  /* NOT TRACKED (10/11/2026, Cory: "Please don't include me in the include Admin. I am not to be tracked"): an admin
+     can switch their own recording off on Admin -> Usage. Their record keeps only {email, off:true} - the visits so
+     far are cleared - useTick never writes to it again, and the dashboard leaves them out entirely, even with
+     "Include admins" ticked. It is kept in the shared record (not on this device), so it holds on every device. No
+     name or email is written into this code. */
+  function useTrackMe(on){
+    const em=useEmail(); if(!em || !window.PH_STORE || !PH_STORE.update) return Promise.reject(new Error('Not signed in'));
+    return PH_STORE.update('ph_use_'+em, function(cur){
+      if(on){ if(!(cur && cur.off)) return undefined; const x=Object.assign({}, cur); delete x.off; x.d=(x.d && typeof x.d==='object') ? x.d : {}; return x; }
+      return {v:1, email:em, off:true, d:{}};
+    });
+  }
   function useTick(){
     if(!window.PH_STORE || !PH_STORE.update) return;
     if(isLive() && (!SIGNED_IN || stillLearning())) return;
     if(impersonating() && isAdmin(realMe())) return;                  // viewing as someone: not their visit
-    const m=realMe()||{}, em=String((PROFILE && (PROFILE.mail||PROFILE.userPrincipalName)) || m.mail || '').toLowerCase().trim();
-    if(!em || em.indexOf('@')<0) return;
+    const m=realMe()||{}, em=useEmail();
+    if(!em) return;
     const sec=NAV_ACTIVE||'other', gate='ph_usegate_'+em+'_'+sec;      // this device's 30-minute gate (not a record)
     let was=0; try{ was=+localStorage.getItem(gate)||0; }catch(_){}
     if(Date.now()-was<USE_GAP) return;
@@ -2091,6 +2108,7 @@
     const row=rosterFor(em) || rosterByName(PROFILE && PROFILE.displayName), at=now.toISOString();
     const name=String((PROFILE && PROFILE.displayName) || ((m.first||'')+' '+(m.last||''))).trim(), admin=!!isAdmin(realMe());
     PH_STORE.update('ph_use_'+em, function(cur){
+      if(cur && cur.off) return undefined;                            // they asked not to be tracked: nothing written
       const x=(cur && typeof cur==='object') ? cur : {v:1, email:em, first:at, d:{}};
       x.v=1; x.email=em; if(name) x.name=name; if(row) x.rk=personKey(row); x.admin=admin; x.last=at; if(!x.first) x.first=at;
       x.d=(x.d && typeof x.d==='object') ? x.d : {};
@@ -3352,6 +3370,6 @@
   window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, rosterView, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, chatBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK, notesHTML, searchHTML, searchDocs, searchDocsHTML, levelForTeams, teamsSeeAll, tcOn, tcRoleFor, payOn, payRoleFor, paySenders, reloadPaySenders, paySenderOffices, payLevel, payReminders, payMark, reloadPayStatus, payRulesReady, payAlertPlan, payAlertsTick, centralNow, alertsReady, saveFace, faceOf, avatar,
     sensRecord, reloadSensitive, sensLevelFor, sensitiveLevel, sensConfirmOk,
     setTheme, theme:()=>THEME, setLayout, layout:()=>LAYOUT, layouts:()=>LAYOUTS.map(l=>({k:l.k, n:l.n})), themes:()=>THEMES.map(t=>({k:t.k, n:t.n})), schemeTokens:k=>schemeTokens(themeOf(k)), contrast,
-    feedback:openFeedback, feedbackText, feedbackContext, learning:stillLearning, fbReady, myFeedback, fbTick, usageReady, rosterName};
+    feedback:openFeedback, feedbackText, feedbackContext, learning:stillLearning, fbReady, myFeedback, fbTick, usageReady, rosterName, useEmail, useTrackMe};
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mount); else mount();
 })();

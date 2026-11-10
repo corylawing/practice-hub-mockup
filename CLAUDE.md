@@ -195,6 +195,12 @@ paySenders/reloadPaySenders/paySenderOffices, payLevel).
   use (people per section); Everyone table (Using it / Quiet / Never; "Not on the team list" extras). Admins left out
   unless "Include admins". `admin.html#usage` opens it. Counting STARTS 10/11 (nothing before). test/usage.test.js (30).
   Browser-checked with a rebuilt sign-in stand-in (scratchpad fakesign.js + harness.js - macOS purged the old ones).
+  **NOT TRACKED (10/11, hc135)** - Cory: "Please don't include me in the include Admin. I am not to be tracked". Admin
+  -> Usage, bottom line: "Stop recording me" (any admin, for themselves). `PH.useTrackMe(false)` rewrites their record
+  to {v, email, off:true, d:{}} (visits so far cleared); useTick returns undefined for an `off` record (nothing
+  written); usage.js `people()` drops `off` records AND the team-list row matched to them, so they are in no number,
+  even with Include admins. Kept in the shared record, so every device. NEVER put Cory's name/email in code (public
+  repo) - this is why it is a switch he flips, not a hard-coded exclusion. Cory must click it once on live.
 - Asked 04/11, NOT built: a Settings screen where Heather picks per column "office types it / office sees it / only
   me" (~1 day). Today's split is fixed from her answers; her Goal/TC-OM/Extra live in her private folder. After go-live.
 - **Who sees what**: Admin team (and Payroll level Edit) = manage everything incl. Heather's columns; Payroll level
