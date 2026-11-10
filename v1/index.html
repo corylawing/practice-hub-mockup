@@ -258,14 +258,14 @@
   }
 
 </style>
-<script src="user.js?v=hc135"></script>
-<script src="celebrate.js?v=hc135"></script>
+<script src="user.js?v=hc136"></script>
+<script src="celebrate.js?v=hc136"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="workbook.js?v=hc135"></script>
-  <script src="store.js?v=hc135"></script>
-  <script src="prodbook.js?v=hc135"></script>
-  <script src="prodstore.js?v=hc135"></script>
-  <script src="gate.js?v=hc135"></script>
+  <script src="workbook.js?v=hc136"></script>
+  <script src="store.js?v=hc136"></script>
+  <script src="prodbook.js?v=hc136"></script>
+  <script src="prodstore.js?v=hc136"></script>
+  <script src="gate.js?v=hc136"></script>
 </head>
 <body>
 <div class="ribbon">SANDBOX — made-up numbers. The practice’s real workbook is never opened here.</div>
@@ -1202,13 +1202,15 @@ const OFFICES=[
   }
 
   // Wait for the workbook before the first paint, so nobody ever sees a screen of zeros.
-  function boot(){ hydrate().then(()=>{ if(!applyIdentity()) set(saved); }); }
+  const pageDone=()=>{ if(window.PH && PH.loadDone) PH.loadDone('page'); };
+  function boot(){ hydrate().then(()=>{ if(!applyIdentity()) set(saved); }).then(pageDone, pageDone); }
+  if(window.PH && PH.loadHold && PH.isLive()) PH.loadHold('page', 'Reading the production numbers…');   // the loading screen stays up until the numbers are in (user.js)
   if(window.PH_AUTH) boot();
   else document.addEventListener('ph-signed-in', boot, {once:true});
 })();
 </script>
 <script>PH.nav('dashboard');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(window.DASH&&DASH.identity)DASH.identity();});document.addEventListener('ph-identity',function(){if(window.DASH&&DASH.identity)DASH.identity();if(window.DASH&&DASH.loadAudit)DASH.loadAudit();});</script>
-<script src="tour.js?v=hc135"></script>
+<script src="tour.js?v=hc136"></script>
 <script>
 Tour.init([
   {sel:'.viewas', title:'You only see your offices', body:'Everyone can see <b>All Offices</b> \u2014 the practice total as one number. What your location decides is which offices you can <b>open individually</b>. Switch to the Carlsbad manager: she keeps the group total, the leaderboard and Carlsbad, but can\u2019t open the other offices on their own.'},

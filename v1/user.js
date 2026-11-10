@@ -3360,6 +3360,113 @@
   }
   const isLive=()=>env()==='live';
 
+  /* LOADING SCREEN (10/11/2026, Cory: "When loading production dashboard (or anything that needs to grab our data)
+     ... it takes a second to load but shows numbers as zeros first. Would be better if we had a great animated
+     home-brace loading screen even if quickly"). One screen for every page, up from the first paint: the logo with a
+     ring going round it and the brackets on the wire lighting up one after another (the braces in the logo), and a
+     line saying what it is waiting for. It lifts when everything the page waits for has landed:
+       'who'  - sign-in, then the team list / access / Admin's settings (until PH.learning() is false; at once on
+                the sandbox),
+       and anything a page holds with PH.loadHold(key, 'Reading the production numbers…') until PH.loadDone(key) -
+       the dashboard, Enter production, Payroll, Schedule, TC Tracker and Marketing do, so nobody sees zeros first.
+     At least half a second (so it reads as a screen, not a flicker), at most 12 seconds (SharePoint being slow must
+     never hold a page; whatever the page has by then shows, with its own message). It sits under the sign-in screen
+     (gate.js #phgate, z 99999), and outside <body>, so gate.js hiding the body's content doesn't hide it. */
+  const LOAD={holds:{who:''}, t0:Date.now(), el:null, gone:false, ready:false, cap:null};
+  const LOAD_MIN=500, LOAD_MAX=12000;
+  function loadMsg(){
+    if(!LOAD.el) return;
+    const k=Object.keys(LOAD.holds).find(x=>x!=='who' && LOAD.holds[x]);
+    const t=('who' in LOAD.holds) && isLive() ? (!SIGNED_IN ? 'Signing you in…' : 'Getting your offices…') : (k ? LOAD.holds[k] : 'Opening Home-Brace…');
+    const m=LOAD.el.querySelector('.phl-msg'); if(m && m.textContent!==t) m.textContent=t;
+  }
+  function loadHide(){
+    if(LOAD.gone || !LOAD.el) return; LOAD.gone=true;
+    clearTimeout(LOAD.cap);
+    const el=LOAD.el; el.classList.add('out'); el.setAttribute('aria-busy','false');
+    document.documentElement.classList.remove('ph-loading');
+    setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 420);
+  }
+  function loadCheck(){
+    if(LOAD.gone || !LOAD.ready) return;
+    if(Object.keys(LOAD.holds).length) return loadMsg();             // (the last line stays up while it fades)
+    const wait=LOAD_MIN-(Date.now()-LOAD.t0);
+    if(wait>0) setTimeout(loadCheck, wait); else loadHide();
+  }
+  function loadHold(k, label){ if(LOAD.gone || !k) return; LOAD.holds[k]=label||LOAD.holds[k]||''; loadMsg(); }
+  function loadDone(k){ if(!(k in LOAD.holds)) return; delete LOAD.holds[k]; loadCheck(); }
+  try{ (function loadScreen(){
+    const root=document.documentElement;                             // (the tests' stand-in document has none of this)
+    if(!root || typeof root.appendChild!=='function' || typeof document.createElement!=='function' || typeof window.addEventListener!=='function') return;
+    if(document.getElementById && document.getElementById('phload')) return;
+    let logo='../assets/logo-mark.png';
+    try{ const me=document.currentScript && document.currentScript.src; if(me) logo=new URL('../assets/logo-mark.png', me).href; }catch(_){}
+    const st=document.createElement('style');
+    st.textContent=
+      '#phload{position:fixed;inset:0;z-index:99990;display:flex;align-items:center;justify-content:center;padding:24px;'+
+        'background:var(--canvas,#F4F6F9);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;'+
+        'transition:opacity .38s ease, visibility 0s linear .38s}'+
+      '#phload::before{content:"";position:absolute;inset:0;pointer-events:none;'+
+        'background:radial-gradient(520px 360px at 50% 44%, color-mix(in srgb, var(--teal,#149B96) 14%, transparent), transparent 70%)}'+
+      '#phload.out{opacity:0;visibility:hidden}'+
+      '#phload.out .phl-box{transform:scale(1.04)}'+
+      '#phload .phl-box{position:relative;display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;'+
+        'transition:transform .38s ease;animation:phl-in .45s cubic-bezier(.2,.8,.2,1) both}'+
+      '#phload .phl-mark{position:relative;width:112px;height:112px;display:grid;place-items:center}'+
+      '#phload .phl-mark img{width:76px;height:76px;border-radius:50%;box-shadow:0 10px 30px color-mix(in srgb, var(--teal,#149B96) 35%, transparent);'+
+        'animation:phl-breathe 2.4s ease-in-out infinite}'+
+      '#phload .phl-ring{position:absolute;inset:0;animation:phl-spin 1.15s linear infinite}'+
+      '#phload .phl-ring circle{fill:none;stroke-width:3.5;stroke-linecap:round}'+
+      '#phload .phl-word{font-size:21px;font-weight:800;letter-spacing:-.01em;color:var(--navy,#0F2A4A);margin-top:2px}'+
+      '#phload .phl-wire{width:150px;height:34px;overflow:visible}'+
+      '#phload .phl-wire path{fill:none;stroke:var(--teal,#149B96);stroke-width:2;opacity:.45}'+
+      '#phload .phl-br{transform-box:fill-box;transform-origin:center;animation:phl-br 1.6s ease-in-out infinite}'+
+      '#phload .phl-br rect.b{fill:var(--canvas,#F4F6F9);stroke:var(--teal,#149B96);stroke-width:2}'+
+      '#phload .phl-br rect.s{fill:var(--teal,#149B96)}'+
+      '#phload .phl-br:nth-of-type(2){animation-delay:.16s}#phload .phl-br:nth-of-type(3){animation-delay:.32s}#phload .phl-br:nth-of-type(4){animation-delay:.48s}'+
+      '#phload .phl-msg{font-size:14px;font-weight:600;color:var(--soft,#56627A);min-height:20px}'+
+      '@keyframes phl-in{from{opacity:0;transform:translateY(8px) scale(.97)}to{opacity:1;transform:none}}'+
+      '@keyframes phl-spin{to{transform:rotate(360deg)}}'+
+      '@keyframes phl-breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.045)}}'+
+      '@keyframes phl-br{0%,60%,100%{transform:translateY(0)}25%{transform:translateY(-5px)}}'+
+      '@keyframes phl-fill{0%,60%,100%{fill:var(--canvas,#F4F6F9)}25%{fill:var(--teal,#149B96)}}'+
+      '@keyframes phl-slot{0%,60%,100%{fill:var(--teal,#149B96)}25%{fill:#fff}}'+
+      '#phload .phl-br rect.b{animation:phl-fill 1.6s ease-in-out infinite;animation-delay:inherit}'+
+      '#phload .phl-br rect.s{animation:phl-slot 1.6s ease-in-out infinite;animation-delay:inherit}'+
+      '@media (prefers-reduced-motion:reduce){#phload .phl-ring{animation-duration:2.4s}#phload .phl-mark img,#phload .phl-br,#phload .phl-br rect.b,#phload .phl-br rect.s,#phload .phl-box{animation:none}}';
+    (document.head||document.documentElement).appendChild(st);
+    // The brackets sit on the wire's curve (a quadratic from (4,10) through (66,22) to (128,10)).
+    const br=[0.2,0.4,0.6,0.8].map(function(t){
+      const x=4+124*t, y=10+24*t*(1-t);
+      return '<g class="phl-br"><rect class="b" x="'+(x-7)+'" y="'+(y-7)+'" width="14" height="14" rx="3.5"/><rect class="s" x="'+(x-1.5)+'" y="'+(y-4)+'" width="3" height="8" rx="1"/></g>';
+    }).join('');
+    const el=document.createElement('div');
+    el.id='phload'; el.setAttribute('role','status'); el.setAttribute('aria-live','polite'); el.setAttribute('aria-busy','true');
+    el.innerHTML='<div class="phl-box">'+
+      '<div class="phl-mark"><svg class="phl-ring" viewBox="0 0 112 112" aria-hidden="true">'+
+        '<circle cx="56" cy="56" r="52" style="stroke:color-mix(in srgb, var(--teal,#149B96) 16%, transparent)"/>'+
+        '<circle cx="56" cy="56" r="52" style="stroke:var(--teal,#149B96)" stroke-dasharray="82 245"/></svg>'+
+        '<img src="'+logo+'" alt=""></div>'+
+      '<div class="phl-word">Home-Brace</div>'+
+      '<svg class="phl-wire" viewBox="0 0 132 30" aria-hidden="true"><path d="M4 10 Q66 34 128 10"/>'+br+'</svg>'+
+      '<div class="phl-msg">Opening Home-Brace…</div></div>';
+    document.documentElement.appendChild(el);
+    document.documentElement.classList.add('ph-loading');
+    LOAD.el=el; loadMsg();
+    LOAD.cap=setTimeout(loadHide, LOAD_MAX);
+    function onReady(){
+      LOAD.ready=true;
+      // No sign-in on this page (or the sandbox): nobody to wait for.
+      if(!isLive() || !document.querySelector('script[src*="gate.js"]')) loadDone('who');
+      loadCheck();
+    }
+    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', onReady, {once:true}); else setTimeout(onReady, 0);
+    document.addEventListener('ph-signed-in', loadMsg);
+    document.addEventListener('ph-identity', function(){ if(SIGNED_IN && !stillLearning()) loadDone('who'); else loadMsg(); });
+    // Back to a page the browser kept in memory: it is already loaded.
+    window.addEventListener('pageshow', function(e){ if(e.persisted) loadHide(); });
+  })(); }catch(_){ try{ if(LOAD.el && LOAD.el.parentNode) LOAD.el.parentNode.removeChild(LOAD.el); }catch(__){} LOAD.gone=true; }   // never let the loading screen break - or cover - a page
+
   /* HOME-SCREEN APP (phone alerts, 22/10/2026): Apple only sends alerts to a web app added to the home screen, so the
      site says how Home-Brace looks there - its name, icon, and that it opens full-screen on Home. On the live site
      too since alerts went live there (04/11/2026). */
@@ -3370,6 +3477,6 @@
   window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, rosterView, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, chatBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK, notesHTML, searchHTML, searchDocs, searchDocsHTML, levelForTeams, teamsSeeAll, tcOn, tcRoleFor, payOn, payRoleFor, paySenders, reloadPaySenders, paySenderOffices, payLevel, payReminders, payMark, reloadPayStatus, payRulesReady, payAlertPlan, payAlertsTick, centralNow, alertsReady, saveFace, faceOf, avatar,
     sensRecord, reloadSensitive, sensLevelFor, sensitiveLevel, sensConfirmOk,
     setTheme, theme:()=>THEME, setLayout, layout:()=>LAYOUT, layouts:()=>LAYOUTS.map(l=>({k:l.k, n:l.n})), themes:()=>THEMES.map(t=>({k:t.k, n:t.n})), schemeTokens:k=>schemeTokens(themeOf(k)), contrast,
-    feedback:openFeedback, feedbackText, feedbackContext, learning:stillLearning, fbReady, myFeedback, fbTick, usageReady, rosterName, useEmail, useTrackMe};
+    feedback:openFeedback, feedbackText, feedbackContext, learning:stillLearning, fbReady, myFeedback, fbTick, usageReady, rosterName, useEmail, useTrackMe, loadHold, loadDone};
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mount); else mount();
 })();

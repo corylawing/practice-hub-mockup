@@ -225,15 +225,15 @@
     .perhead .when{font-size:17px}
   }
 </style>
-<script src="user.js?v=hc135"></script>
+<script src="user.js?v=hc136"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc135"></script>
-  <script src="gate.js?v=hc135"></script>
-  <script src="alerts.js?v=hc135"></script>
-  <script src="_staff.js?v=hc135"></script>
-  <script src="payrules.js?v=hc135"></script>
-  <script src="paystore.js?v=hc135"></script>
-  <script src="docs.js?v=hc135"></script>
+  <script src="store.js?v=hc136"></script>
+  <script src="gate.js?v=hc136"></script>
+  <script src="alerts.js?v=hc136"></script>
+  <script src="_staff.js?v=hc136"></script>
+  <script src="payrules.js?v=hc136"></script>
+  <script src="paystore.js?v=hc136"></script>
+  <script src="docs.js?v=hc136"></script>
 </head>
 <body>
 <div class="ribbon">MOCK-UP for Heather — made-up people and amounts. Try it as the Carlsbad TC first, then as Heather.</div>
@@ -1435,7 +1435,7 @@
     if(LIVE.loading || LIVE.ready) return;
     if(PH.learning && PH.learning()){ render(); return; }                 // who this is isn't known yet: wait (ph-identity)
     const lv=LEVEL();
-    if(!lv){ LIVE.err='Your account doesn’t have Payroll. Whoever manages payroll chooses who sends each office’s sheet; Admin → Teams & Access gives the rest.'; render(); return; }
+    if(!lv){ LIVE.err='Your account doesn’t have Payroll. Whoever manages payroll chooses who sends each office’s sheet; Admin → Teams & Access gives the rest.'; render(); payDone(); return; }
     LIVE.loading=true; LIVE.err=''; render();
     const offs=lv==='send' ? myOffices() : OFFICES.map(o=>o.k), people={}, docs=[];
     S.subs={}; S.entered={}; S.removed={}; S.docGone={}; S.bonus={}; S.added=[]; S.docAdd=[]; LIVECOLS={};
@@ -1483,11 +1483,14 @@
       .then(()=>{
         PEOPLE=Object.values(people); DOCS=docs;
         if(lv==='send' && !liveOffice) liveOffice=myOffices()[0]||null;
-        LIVE.ready=true; LIVE.loading=false; per=HOME(); render();
+        LIVE.ready=true; LIVE.loading=false; per=HOME(); render(); payDone();
         if(LIVE.unread.length) toast('Couldn’t read: '+LIVE.unread.join(', ')+' - it was left as it is');
-      }, e=>{ LIVE.loading=false; LIVE.err=(e && e.message)||'SharePoint didn’t answer.'; render(); });
+      }, e=>{ LIVE.loading=false; LIVE.err=(e && e.message)||'SharePoint didn’t answer.'; render(); payDone(); });
   }
+  function payDone(){ if(window.PH && PH.loadDone) PH.loadDone('page'); }
   if(LIVEPAY){
+    if(window.PH && PH.loadHold) PH.loadHold('page', 'Opening payroll…');   // the loading screen stays up until the numbers are in (user.js)
+
     document.addEventListener('ph-signed-in', ()=>setTimeout(liveLoad, 0));
     document.addEventListener('ph-identity', ()=>{ if(!LIVE.ready && !LIVE.loading){ LIVE.err=''; liveLoad(); } });
   }
@@ -1521,7 +1524,7 @@
 })();
 </script>
 <script>PH.nav('payroll');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc135"></script>
+<script src="tour.js?v=hc136"></script>
 <script>
 Tour.init([
   ...((window.PH && PH.isLive && PH.isLive()) || (()=>{ try{ return localStorage.getItem('ph_pay_real')==='1'; }catch(_){ return false; } })() ? [] : [{sel:'#persona', title:'A mock-up', body:'Made-up people and amounts. Start as the <b>Carlsbad TC</b>, who sends Carlsbad’s sheet, then switch to <b>Heather</b>.'}]),

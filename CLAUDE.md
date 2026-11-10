@@ -201,6 +201,16 @@ paySenders/reloadPaySenders/paySenderOffices, payLevel).
   written); usage.js `people()` drops `off` records AND the team-list row matched to them, so they are in no number,
   even with Include admins. Kept in the shared record, so every device. NEVER put Cory's name/email in code (public
   repo) - this is why it is a switch he flips, not a hard-coded exclusion. Cory must click it once on live.
+- **LOADING SCREEN (10/11, hc136).** Cory: "When loading production dashboard (or anything that needs to grab our
+  data) ... shows numbers as zeros first. Would be better if we had a great animated home-brace loading screen even if
+  quickly". user.js (right after `isLive`): `#phload` on <html> (outside body, so gate.js `body.phgated` can't hide it),
+  z 99990 (under #phgate 99999); logo + spinning teal ring + the logo's four brackets on a wire lighting up in a wave;
+  a line saying what it waits for. Holds: 'who' (live: until SIGNED_IN && !learning(); sandbox / no gate.js: none) +
+  pages' `PH.loadHold('page', label)` / `PH.loadDone('page')`: Dashboard + Enter production (live only - on the
+  sandbox their boot waits for a sign-in that may never come), Payroll (LIVEPAY), Schedule, TC Tracker, Marketing -
+  each releases on success AND failure. Min 500 ms, max 12 s (then the page shows with its own message). Uses the
+  person's colour scheme tokens (--canvas/--navy/--teal). test/loading.test.js. Timing checked headless with a slow
+  stand-in (scratchpad fake-slow.js + load-try.js): live ~2-3 s, sandbox ~0.6 s.
 - Asked 04/11, NOT built: a Settings screen where Heather picks per column "office types it / office sees it / only
   me" (~1 day). Today's split is fixed from her answers; her Goal/TC-OM/Extra live in her private folder. After go-live.
 - **Who sees what**: Admin team (and Payroll level Edit) = manage everything incl. Heather's columns; Payroll level
