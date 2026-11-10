@@ -145,13 +145,16 @@
      as they are today, "or like a more modern app the side bar is on the left". Per person,
      exactly like the colours: on this device at once (before the page draws, so it never
      jumps), saved in their own row, and theirs on any computer they sign in on. Computers
-     only (960px and wider); phones keep the bar along the bottom. Default: as today. */
+     only (960px and wider); phones keep the bar along the bottom.
+     DEFAULT: THE SIDEBAR (10/11/2026, Cory: "I want everyone by default to have the sidebar on the left"). Anyone who
+     never chose gets the sidebar; only someone who picked "Tabs across the top" in their profile keeps the tabs (their
+     row says layout:'top' - setLayout is the only thing that writes it there). */
   const LAYOUT_KEY='ph_layout';
-  const LAYOUTS=[{k:'top',  n:'Tabs across the top', note:'As it is today'},
-                 {k:'side', n:'Sidebar on the left', note:'Like most apps'}];
-  let LAYOUT='top';
+  const LAYOUTS=[{k:'side', n:'Sidebar on the left', note:'Like most apps - the default'},
+                 {k:'top',  n:'Tabs across the top', note:'The tabs from before'}];
+  let LAYOUT='side';
   function applyLayout(k){
-    LAYOUT = k==='side' ? 'side' : 'top';
+    LAYOUT = k==='top' ? 'top' : 'side';
     const c=document.documentElement && document.documentElement.classList;
     if(c){ if(LAYOUT==='side') c.add('ph-lay-side'); else c.remove('ph-lay-side'); }
   }
@@ -546,7 +549,15 @@
 
   // Set by gate.js once Graph /me comes back.
   let PROFILE=null;
-  function setProfile(p){ PROFILE=p; }
+  function setProfile(p){
+    PROFILE=p;
+    /* THE MENU STAYS PUT (NAVSNAP): kept for whoever was signed in on this tab. Someone else has signed in - forget it
+       at once and draw the menu from what is known of them (never another person's apps or name). */
+    try{
+      const em=String((p && (p.mail||p.userPrincipalName))||'').toLowerCase();
+      if(NAVSNAP && NAVSNAP.who!==em){ NAVSNAP=null; try{ sessionStorage.removeItem(NAVSNAP_KEY); }catch(_){} nav(NAV_ACTIVE); unsnapBar(); }
+    }catch(_){}
+  }
 
   /* Turn one or more team names into a permission set. Used by BOTH real sign-in and
      View as — they diverged once, and an admin impersonating another admin got locked
@@ -1665,6 +1676,7 @@
     const bar=document.querySelector('.hdr-in'); if(!bar) return;
     const old=bar.querySelector('.ph-bw'); if(old) old.remove();
     const wrap=document.createElement('span'); wrap.className='ph-bw';
+    if(snapping()) wrap.setAttribute('data-snap','1');
     /* Search sits left of the bell, on every page, desktop and phone. Cory, 19/09. */
     const s=document.createElement('button');
     s.className='ph-bell ph-srch'; s.type='button'; s.title='Search'; s.setAttribute('aria-label','Search');
@@ -1674,7 +1686,7 @@
     /* CHAT sits beside the bell, not in the tabs (Cory, 22/10: "a tab or a button next to profile ... the most user
        friendly way"): one tap from any page, its own unread count, always visible on a phone. Sandbox mock-up for now. */
     const chatEntry=NAV.find(x=>x.k==='chat');
-    if(chatEntry && chatEntry.show()){
+    if(chatEntry && navShown(true).indexOf(chatEntry)>=0){
       const c=document.createElement('a');
       c.className='ph-bell ph-chat'+(/chat\.html$/.test(location.pathname)?' on':''); c.href='chat.html'; c.title='Chat'; c.setAttribute('aria-label','Chat');
       c.innerHTML='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.5 8.5 0 0 1-12.4 7.6L3 20.5l1.4-5.1A8.5 8.5 0 1 1 21 11.5z"/></svg>';
@@ -1695,6 +1707,19 @@
     alertsReady().then(function(A){ if(A && A.ON && npanel) npanel.innerHTML=notesHTML(); });
   }
 
+  const avHTML=p=>'<span class="cir" style="'+faceStyle(p)+'">'+face(p)+'</span>'+
+    '<span class="who"><b>'+name(p)+'</b><small>'+p.title.split(' · ')[0]+'</small></span><span class="car">▼</span>';
+  /* Once this page knows who this is, whatever the header drew from the last page's menu (NAVSNAP) is drawn from the
+     real answer - the name button in place, the chat button only if that changed. */
+  function unsnapBar(){
+    try{
+      const bar=document.querySelector('.hdr-in'); if(!bar) return;
+      const av=bar.querySelector('.ph-av[data-snap]');
+      if(av){ const h=avHTML(me()); if(av.innerHTML!==h) av.innerHTML=h; av.removeAttribute('data-snap'); }
+      const bw=bar.querySelector('.ph-bw[data-snap]');
+      if(bw){ bw.removeAttribute('data-snap'); if(navShown(true).some(x=>x.k==='chat')!==!!bw.querySelector('.ph-chat')) bell(); }
+    }catch(_){}
+  }
   function mount(){
     reloadLocations();            // offices are shared; pull the practice's copy once
     const bar=document.querySelector('.hdr-in'); if(!bar)return;
@@ -1703,8 +1728,8 @@
     const old=bar.querySelector('.ph-av'); if(old) old.remove();
     const p=me();
     const b=document.createElement('button'); b.className='ph-av';
-    b.innerHTML='<span class="cir" style="'+faceStyle(p)+'">'+face(p)+'</span>'+
-      '<span class="who"><b>'+name(p)+'</b><small>'+p.title.split(' · ')[0]+'</small></span><span class="car">▼</span>';
+    if(snapping() && NAVSNAP.av){ b.innerHTML=NAVSNAP.av; b.setAttribute('data-snap','1'); }   // still finding out: the name the last page showed
+    else b.innerHTML=avHTML(p);
     b.onclick=e=>{e.stopPropagation(); closeNotes(); closeSearch(); menu?closeMenu():openMenu(b);};   // one panel at a time
     bell();                       // bell first, so it sits left of the avatar
     bar.appendChild(b);
@@ -1819,7 +1844,7 @@
       if(k!==THEME) applyTheme(k);
       try{ localStorage.setItem(THEME_KEY, THEME); }catch(_){}
       // and their menu layout, the same way (a shared computer: theirs, not the last person's)
-      const lay=(row && row.layout)==='side' ? 'side' : 'top';
+      const lay=(row && row.layout)==='top' ? 'top' : 'side';          // never chose: the sidebar (the default)
       if(lay!==LAYOUT){ applyLayout(lay); sidenav(); }
       try{ localStorage.setItem(LAYOUT_KEY, LAYOUT); }catch(_){} };
     let local=null; try{ local=JSON.parse(localStorage.getItem(key)); }catch(_){}
@@ -2233,6 +2258,36 @@
   document.addEventListener('visibilitychange', function(){
     if(document.visibilityState==='visible' && Date.now()-PAY_ALERT_AT>10*60e3 && SIGNED_IN && payOn()) payAlertsTick();
   });
+  /* THE MENU STAYS PUT BETWEEN PAGES (10/11/2026, Cory: "The app names still flash for a second once you click and
+     loading page loads.. It should work like a real app where nothing moves besides the content page with the loading
+     screen" - "the different tabs flash away for a second"). A page that has just opened doesn't know who this is until
+     sign-in has been checked again and the team list read (~0.5-1 s), so its menu showed only Home and no name, then
+     filled in. Now, once a page has settled, what its menu showed - which apps, and the name button - is kept for THIS
+     browser tab only (sessionStorage: gone when the tab closes; nothing about anyone else). The next page in the tab
+     draws that while it is still finding out, then redraws from what it learns - the same, so nothing moves. It only
+     changes what the menu SHOWS while loading - never what anyone may open (guard() and every page's own checks use
+     the real answer) - and the real answer replaces it as soon as it is known. Live only (the sandbox knows at once). */
+  const NAVSNAP_KEY='ph_navsnap';
+  let NAVSNAP=null;
+  try{ const v=JSON.parse(sessionStorage.getItem(NAVSNAP_KEY)||'null'); if(v && v.v===1 && v.who && Array.isArray(v.all) && v.all.length) NAVSNAP=v; }catch(_){ NAVSNAP=null; }
+  const snapping=()=>{ try{ return !!NAVSNAP && isLive() && stillLearning(); }catch(_){ return false; } };
+  // The apps the menu lists now: the real answer, or - while this page is still finding out - the last page's.
+  function navShown(withHidden){
+    let list=NAV.filter(x=>x.show());
+    if(snapping()){ const by={}; NAV.forEach(x=>{ by[x.k]=x; }); const l=NAVSNAP.all.map(k=>by[k]).filter(Boolean); if(l.length) list=l; }
+    return withHidden ? list : list.filter(x=>x.tab!==false);
+  }
+  // Kept once this page knows who this is (and its menu has been drawn from that).
+  function saveNavSnap(){
+    if(!isLive() || stillLearning()) return;
+    try{
+      const av=document.querySelector('.hdr-in .ph-av'); let avh=av ? av.innerHTML : '';
+      if(/blob:/i.test(avh) || avh.length>200000) avh='';                     // a photo that won't survive the next page
+      const who=String((PROFILE && (PROFILE.mail||PROFILE.userPrincipalName))||'').toLowerCase(); if(!who) return;
+      const snap={v:1, who, all:NAV.filter(x=>x.show()).map(x=>x.k), av:avh, fit:LOAD.lastFit||null};
+      sessionStorage.setItem(NAVSNAP_KEY, JSON.stringify(snap));
+    }catch(_){}
+  }
   const NAV=[
     {k:'home',       n:'\ud83c\udfe0 Home',             href:'home.html',       show:()=>true},
     {k:'dashboard',  n:'\ud83d\udcca Production Dashboard',        href:'index.html',      show:()=>atLeast('dashboard','view')},
@@ -2772,7 +2827,7 @@
     /* Line icons - the same ones as the phone bar and the sidebar - not emoji. Cory, 20/10:
        "icons instead of emojis for the different tabs ... more professional". Emoji draw
        differently on every computer and phone. */
-    if(host) host.innerHTML=NAV.filter(x=>x.show() && x.tab!==false).map(x=>{ const p=splitNav(x.n);
+    if(host) host.innerHTML=navShown().map(x=>{ const p=splitNav(x.n);
       return '<a href="'+x.href+'"'+(x.k===NAV_ACTIVE?' class="active"':'')+'>'+icon(x.k)+'<span>'+escHTML(p.label)+'</span></a>'; }).join('');
     tabbar();
     sidenav();
@@ -2786,7 +2841,7 @@
     let side=document.querySelector('.ph-sidenav');
     if(!side){ side=document.createElement('aside'); side.className='ph-sidenav'; side.setAttribute('aria-label','Main menu'); document.body.appendChild(side); }
     side.innerHTML='<a class="ph-sb-brand" href="home.html"><img src="../assets/logo-mark.png?v=2" alt="" width="34" height="34"><span>Home-<i>Brace</i></span></a>'+
-      '<nav class="ph-sb-list">'+NAV.filter(x=>x.show() && x.tab!==false).map(x=>{ const p=splitNav(x.n);
+      '<nav class="ph-sb-list">'+navShown().map(x=>{ const p=splitNav(x.n);
         return '<a href="'+x.href+'"'+(x.k===NAV_ACTIVE?' class="active" aria-current="page"':'')+'>'+icon(x.k)+'<span>'+escHTML(p.label)+'</span></a>'; }).join('')+'</nav>';
   }
 
@@ -2828,7 +2883,7 @@
     if(!document.body) return;
     let bar=document.querySelector('.ph-tabbar');
     if(!bar){ bar=document.createElement('nav'); bar.className='ph-tabbar'; bar.setAttribute('aria-label','Sections'); document.body.appendChild(bar); }
-    const items=NAV.filter(x=>x.show() && x.tab!==false);
+    const items=navShown();
     const primary=items.length>TAB_MAX ? items.slice(0,TAB_MAX) : items;
     const rest=items.length>TAB_MAX ? items.slice(TAB_MAX) : [];
     const link=x=>{ const p=splitNav(x.n,x.k);
@@ -2887,6 +2942,7 @@
   function identityChanged(){
     seedRoster();                                // the admin may only now be known
     nav(NAV_ACTIVE);
+    if(!snapping()){ unsnapBar(); if(isLive() && !stillLearning()) setTimeout(saveNavSnap, 0); }   // THE MENU STAYS PUT (above)
     try{ setupBar(); }catch(_){}
     try{ document.dispatchEvent(new CustomEvent('ph-identity')); }catch(_){}
   }
@@ -3420,6 +3476,7 @@
       if(!on){ if(p && p.parentNode) p.parentNode.removeChild(p); return; }
       if(p || !document.createElement) return;
       p=document.createElement('div'); p.id='phload-side'; p.setAttribute('aria-hidden','true');
+      if(NAVSNAP && isLive()) p.style.zIndex='44';           // the real menu is right from the start (NAVSNAP): the panel only fills in behind it
       p.innerHTML='<div class="phls-brand"><img src="'+LOAD.logo+'" alt="" width="34" height="34"><span>Home-<i>Brace</i></span></div>';
       document.documentElement.appendChild(p);
     }catch(_){}
@@ -3430,9 +3487,16 @@
       let top=0, left=0, bottom=0;
       const body=document.body, gated=!body || !body.classList || body.classList.contains('phgated');
       const wantSide=sideWanted();
+      // The page's own menu can show: signed in, or drawn from this tab's last page while sign-in is checked (NAVSNAP).
+      const menuOk=body && (!gated || (!!NAVSNAP && isLive()));
       // Steps aside a moment later (after the page has filled its menu in) - unless sign-in started checking meanwhile.
       if(gated) loadSide(wantSide); else setTimeout(function(){ const b=document.body; if(b && b.classList && !b.classList.contains('phgated')) loadSide(false); }, 0);
-      if(gated){ if(wantSide) left=SIDE_W; }                                   // sign-in still being checked: the panel holds the sidebar's place
+      if(!body && NAVSNAP && isLive()){                                      // the page isn't read yet: where it sat last time
+        const f=NAVSNAP.fit;                                                // (same window width and menu)
+        if(f && f.w===(window.innerWidth||0) && f.lay===LAYOUT){ top=+f.top||0; left=+f.left||0; bottom=+f.bottom||0; }
+        else if(wantSide) left=SIDE_W;
+      }
+      else if(!menuOk){ if(wantSide) left=SIDE_W; }                            // not yet: the panel holds the sidebar's place
       else {
         const H=window.innerHeight||0;
         const box=sel=>{ const e=document.querySelector(sel); if(!e || !e.getBoundingClientRect) return null; const r=e.getBoundingClientRect(); return (r.width>0 && r.height>0) ? r : null; };
@@ -3441,10 +3505,9 @@
         else ['.hdr','.v1nav'].forEach(s=>{ const r=box(s); if(r && r.top<H/3) top=Math.max(top, Math.round(r.bottom)); });   // header + tabs on top
         if(bar && bar.top>H/2) bottom=Math.max(0, Math.round(H-bar.top));                                   // the phone bar
         if(!left && wantSide) left=SIDE_W;
+        LOAD.lastFit={top, left, bottom, w:window.innerWidth||0, lay:LAYOUT};    // kept with the menu for the next page
       }
       el.style.top=top+'px'; el.style.left=left+'px'; el.style.bottom=bottom+'px';
-      // The first fit lands as it is; after that a change (the menu appearing once sign-in is done) slides.
-      if(!LOAD.fitted){ LOAD.fitted=true; setTimeout(function(){ if(LOAD.el) LOAD.el.classList.add('fit'); }, 60); }
     }catch(_){}
   }
   function loadHold(k, label){ if(LOAD.gone || !k) return; LOAD.holds[k]=label||LOAD.holds[k]||''; loadMsg(); }
@@ -3461,7 +3524,6 @@
       '#phload{position:fixed;inset:0;z-index:99990;display:flex;align-items:center;justify-content:center;padding:24px;'+
         'background:var(--canvas,#F4F6F9);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;'+
         'transition:opacity .38s ease, visibility 0s linear .38s}'+
-      '#phload.fit{transition:opacity .38s ease, visibility 0s linear .38s, top .32s ease, left .32s ease, bottom .32s ease}'+
       '#phload-side{position:fixed;top:0;left:0;bottom:0;width:'+SIDE_W+'px;z-index:47;box-sizing:border-box;background:var(--navy,#0F2A4A);'+
         'border-right:1px solid rgba(255,255,255,.07);font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}'+
       '#phload-side .phls-brand{display:flex;align-items:center;gap:10px;height:60px;padding:0 18px;color:#fff;font-weight:700;font-size:18px;line-height:1.5}'+

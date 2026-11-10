@@ -230,6 +230,23 @@ paySenders/reloadPaySenders/paySenderOffices, payLevel).
   paint(), i.e. when the sign-in SCREEN is needed - during a normal silent check the page is drawn underneath (a
   sidebar with only "Home" and the name "UNDEFINED"); the loader covers it. Not a data leak (nothing is read before
   sign-in) - left as it is. Tabs-on-top layout and phones: unchanged (full window during the check, then fits).
+  **Menu stays put between pages (10/11, hc141).** Cory: "The app names still flash for a second once you click ... It
+  should work like a real app where nothing moves besides the content page with the loading screen" / "the different
+  tabs flash away for a second". user.js NAVSNAP (right before NAV): once a page has settled (live, !stillLearning) it
+  keeps {who (PROFILE mail/UPN), all (NAV keys shown), av (the name button's HTML; dropped if a blob: photo), fit (where
+  the loader sat)} in **sessionStorage** `ph_navsnap` (this tab only). While the next page is still learning
+  (`snapping()` = NAVSNAP && live && stillLearning), `navShown()` - used by the top tabs, sidebar, phone bar and chat
+  button - and mount()'s name button draw from it; guard() and every page check still use the real show(). When
+  learning ends identityChanged -> `unsnapBar()` (real name button; bell() only if chat changed) + saveNavSnap.
+  setProfile: a different `who` -> forgotten at once + nav() redrawn (never another person's apps/name). Loader:
+  `menuOk` = signed in, or gated with a NAVSNAP -> measured fit (tabs on top/phone too), before body -> the saved
+  `fit`; #phload-side goes UNDER (z 44) when NAVSNAP exists. No sliding any more (the .fit transition is gone).
+  Checked headless (scratchpad navflash.js/navswap.js, every 50 ms on the 2nd page): sidebar 10 apps + name from 0.1 s
+  to the end, tabs on top and phone bar too; another person on the tab -> theirs at 1.0 s (when /me answers).
+  **SIDEBAR IS THE DEFAULT (10/11, hc141).** Cory: "I want everyone by default to have the sidebar on the left".
+  applyLayout: anything but 'top' = side; syncTheme: a row without layout:'top' = side. Someone who picked "Tabs
+  across the top" (row layout:'top', written only by setLayout) keeps them. Picker: Sidebar first ("the default").
+  Phones keep the bottom bar (<960px). All 12 pages fit 1280px with the sidebar (no sideways scroll).
 - **PAYROLL OPENS FASTER (10/11, hc137).** Cory: Payroll's loading screen "takes at least 5-8 seconds". Cause: liveLoad
   read the offices ONE AFTER ANOTHER (8 x ~3-4 SharePoint round trips) after PAYSTORE.ensure checked 9 folders one
   after another - ~40 trips in a row. Now: ensure checks the folders together; every office and Heather's folder

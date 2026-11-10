@@ -48,10 +48,13 @@ function load(LS, opts){
 const ok=[],bad=[]; const t=(n,v)=>{ (v?ok:bad).push(n); };
 const ROW='ph_me_admin';                                           // the sandbox persona's own row
 
-// 1. Nothing changes for anyone who doesn't choose it.
+// 1. The sidebar is the default (10/11/2026, Cory: "I want everyone by default to have the sidebar on the left").
 const A=load();
-t('two choices: tabs across the top (first), sidebar on the left', JSON.stringify(A.PH.layouts().map(l=>l.k))==='["top","side"]');
-t('with nothing chosen it is the tabs, as today', A.PH.layout()==='top' && !A.root.classList.contains('ph-lay-side'));
+t('two choices: sidebar on the left (first, the default), tabs across the top', JSON.stringify(A.PH.layouts().map(l=>l.k))==='["side","top"]');
+t('with nothing chosen it is the sidebar', A.PH.layout()==='side' && A.root.classList.contains('ph-lay-side'));
+A.PH.setLayout('top');
+t('choosing the tabs switches the page at once, and is remembered here and in their row', A.PH.layout()==='top' && !A.root.classList.contains('ph-lay-side') &&
+  A.LS.ph_layout==='top' && /"layout":"top"/.test(A.LS[ROW]||''));
 
 // 2. Choosing the sidebar.
 A.PH.nav('tc');
@@ -70,20 +73,24 @@ A.PH.setLayout('top');
 t('back to tabs undoes it, here and in their row', A.PH.layout()==='top' && !A.root.classList.contains('ph-lay-side') &&
   A.LS.ph_layout==='top' && /"layout":"top"/.test(A.LS[ROW]||''));
 A.PH.setLayout('sideways');
-t('anything unknown is the tabs', A.PH.layout()==='top' && !A.root.classList.contains('ph-lay-side'));
+t('anything unknown is the sidebar (the default)', A.PH.layout()==='side' && A.root.classList.contains('ph-lay-side'));
 
 // 3. Before the page draws: no flash of the tabs first.
 const B=load({ph_layout:'side'});
 t('a computer that has the sidebar puts it on as the page loads', B.PH.layout()==='side' && B.root.classList.contains('ph-lay-side'));
 
 // 4. A shared front-desk computer: the layout on the device is the last person's.
-const D=load({ph_layout:'side'});
+const D=load({ph_layout:'top'});
+t('a computer where the last person had the tabs starts with the tabs (no jump before sign-in)', D.PH.layout()==='top');
 D.LS[ROW]=JSON.stringify({preferred:'Jess'});                     // this person never chose one
 D.fire('ph-signed-in');
-t('when a person who never chose signs in, the last person\u2019s sidebar goes', D.PH.layout()==='top' && D.LS.ph_layout==='top' && !D.root.classList.contains('ph-lay-side'));
+t('when a person who never chose signs in, they get the sidebar (the default), not the last person\u2019s tabs', D.PH.layout()==='side' && D.LS.ph_layout==='side' && D.root.classList.contains('ph-lay-side'));
+D.LS[ROW]=JSON.stringify({preferred:'Jess', layout:'top'});
+D.fire('ph-signed-in');
+t('someone who picked the tabs keeps them when they sign in', D.PH.layout()==='top' && !D.root.classList.contains('ph-lay-side'));
 D.LS[ROW]=JSON.stringify({preferred:'Jess', layout:'side'});
 D.fire('ph-signed-in');
-t('and a person\u2019s own sidebar comes back when they sign in', D.PH.layout()==='side' && D.root.classList.contains('ph-lay-side'));
+t('and someone who picked the sidebar has it', D.PH.layout()==='side' && D.root.classList.contains('ph-lay-side'));
 
 // 5. Pages without the menu (sign-in, restore, history) never get a sidebar.
 const E=load({ph_layout:'side'}, {noMenu:true});
