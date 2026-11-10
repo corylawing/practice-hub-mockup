@@ -243,6 +243,11 @@ paySenders/reloadPaySenders/paySenderOffices, payLevel).
   `fit`; #phload-side goes UNDER (z 44) when NAVSNAP exists. No sliding any more (the .fit transition is gone).
   Checked headless (scratchpad navflash.js/navswap.js, every 50 ms on the 2nd page): sidebar 10 apps + name from 0.1 s
   to the end, tabs on top and phone bar too; another person on the tab -> theirs at 1.0 s (when /me answers).
+  **MIC NO LONGER FLOATS (10/11, hc143).** Cory: "The microphone seems to be floating around on some pages" (over Admin
+  -> Usage). The talk-to-type 🎤 is position:fixed beside the focused box and hid on focusout - but a page redraw that
+  removes the focused box fires no focusout, so it stayed over the new content. `micWatch()`: a requestAnimationFrame
+  loop only while it shows - box gone (!isConnected) or not focused (and not listening) -> micHide; else micPlace
+  (follows a box that moved). Checked headless (scratchpad mictest.js): follows a shift, hides on AD.tab('use').
   **TEST ALERT FROM ADMIN (10/11, hc142).** Cory: "Can you send a test notification on production to heather" - I
   can't (the sender needs someone signed in on live). Admin -> People -> tap a person -> "Phone & computer alerts:
   Send a test alert" (admin.html `testAlert()`): PH.alertsReady() -> PH_ALERTS.sendTo([their email], {title:'Test

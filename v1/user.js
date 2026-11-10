@@ -3307,7 +3307,7 @@
      for it) and never on number, date, email or password boxes; [data-nomic] turns it off for a box. A browser without
      one (Firefox) shows no 🎤. */
   const MIC_SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  let micBtn=null, micFor=null, micRec=null, micPad=null;
+  let micBtn=null, micFor=null, micRec=null, micPad=null, micRAF=0;
   function micOK(el){
     if(!MIC_SR || !el || el.readOnly || el.disabled) return false;
     if(/(^|\/)tc\.html$/.test(location.pathname)) return false;
@@ -3359,10 +3359,26 @@
     if(el.tagName==='INPUT' && getComputedStyle(el).boxSizing==='border-box' && micPad!==el){
       micPad=el; el.dataset.micPad=el.style.paddingRight||''; el.style.paddingRight=(parseFloat(getComputedStyle(el).paddingRight)||0)+26+'px';
     }
-    micPaint(); micPlace();
+    micPaint(); micPlace(); micWatch();
+  }
+  /* LEFT FLOATING (10/11/2026, Cory: "The microphone seems to be floating around on some pages" - over Admin -> Usage).
+     A page that redraws while the cursor is in a box removes that box, and the browser says nothing ("focusout" doesn't
+     fire), so the 🎤 stayed where the box had been, over whatever was drawn there next. Now, while it shows, it checks
+     each frame that its box is still on the page and still has the cursor (or is listening): if not, it goes; if the
+     box moved (the page above it grew), it follows. One box, only while it has the cursor - nothing to slow a page. */
+  function micWatch(){
+    if(typeof requestAnimationFrame!=='function') return;
+    cancelAnimationFrame(micRAF);
+    const tick=function(){
+      micRAF=0;
+      if(!micBtn || !micFor) return;
+      if(!micFor.isConnected || (document.activeElement!==micFor && !micRec)){ micHide(); return; }
+      micPlace(); micRAF=requestAnimationFrame(tick);
+    };
+    micRAF=requestAnimationFrame(tick);
   }
   function micUnpad(){ if(micPad){ micPad.style.paddingRight=micPad.dataset.micPad||''; delete micPad.dataset.micPad; micPad=null; } }
-  function micHide(){ micStop(); micUnpad(); micFor=null; if(micBtn) micBtn.hidden=true; }
+  function micHide(){ if(micRAF){ cancelAnimationFrame(micRAF); micRAF=0; } micStop(); micUnpad(); micFor=null; if(micBtn) micBtn.hidden=true; }
   function micStart(){
     const el=micFor; if(!el || !MIC_SR) return;
     let rec; try{ rec=new MIC_SR(); }catch(_){ micToast('Talk to type isn’t available in this browser.'); return; }

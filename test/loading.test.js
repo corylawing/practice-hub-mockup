@@ -29,6 +29,8 @@ t('it never decides what anyone may open (guard and the page checks use the real
 t('once known, the real menu and name replace it, and it is kept again', /if\(!snapping\(\)\)\{ unsnapBar\(\); if\(isLive\(\) && !stillLearning\(\)\) setTimeout\(saveNavSnap, 0\); \}/.test(U));
 t('someone else signs in on the tab: forgotten at once, never their apps or name', /if\(NAVSNAP && NAVSNAP\.who!==em\)\{ NAVSNAP=null; try\{ sessionStorage\.removeItem\(NAVSNAP_KEY\); \}catch\(_\)\{\} nav\(NAV_ACTIVE\); unsnapBar\(\); \}/.test(U));
 t('nothing slides: the loading screen keeps its place (no moving transition)', !/#phload\.fit\{/.test(U) && !/top \.32s ease, left \.32s ease/.test(U));
+// The 🎤 never floats (10/11/2026, Cory: "The microphone seems to be floating around on some pages").
+t('the mic goes when its box is redrawn away or loses the cursor (no focusout then), and follows the box', /if\(!micFor\.isConnected \|\| \(document\.activeElement!==micFor && !micRec\)\)\{ micHide\(\); return; \}/.test(U) && /micPaint\(\); micPlace\(\); micWatch\(\);/.test(U) && /function micHide\(\)\{ if\(micRAF\)\{ cancelAnimationFrame\(micRAF\); micRAF=0; \}/.test(U));
 // Every page that reads the practice's data holds it, and lets go on success AND failure.
 const pages={
   'index.html':[/PH\.isLive\(\)\) PH\.loadHold\('page'/, /\.then\(pageDone, pageDone\)/],
