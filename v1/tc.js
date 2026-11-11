@@ -51,7 +51,8 @@
     types:['Braces','Invisalign','Both','Phase I','Phase II','Other'],
     reasons:['Financial','Decision-maker absent','Shopping / comparing','Insurance','Medicaid denied','Other'],
     holdReasons:['Dental clearance','Needs dental work','Needs records','Other'],
-    leads:['Google','Meta / Facebook','Patient referral','Dental referral','Website','Walk-in','Community event','Other']
+    // "Sibling" (Selene, 11/11/2026). A list a manager has already saved replaces this one - add it in ⚙ Settings there.
+    leads:['Google','Meta / Facebook','Patient referral','Dental referral','Sibling','Website','Walk-in','Community event','Other']
   };
   /* MEDICAID, per office (Selene, 16/10): "All of our New Mexico offices currently accept
      Medicaid except FFO Las Cruces, although that may change soon" - so it is a setting
@@ -230,7 +231,8 @@
        Start   = counted once per patient, in the month treatment starts - even when the exam
                  was in an earlier month, and for observation / recall patients too.
        Rate    = starts that month / consults that month, separately for Private pay and
-                 Medicaid. Starts can come from earlier months' exams, so a month can pass 100%.
+                 Medicaid. The tracker SHOWS only the private pay rate (Selene, 11/11/2026: Medicaid approval is
+                 outside the TCs' control); Medicaid is still worked out here for its counts and the monitor sheet. Starts can come from earlier months' exams, so a month can pass 100%.
      A Medicaid patient who goes private pay keeps their one exam; it moves to private pay.
      A patient is their chart # at that office (or name + date of birth when there is no
      chart #); with neither, each record stands alone. */

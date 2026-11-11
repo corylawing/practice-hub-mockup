@@ -268,14 +268,14 @@
     *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}
   }
 </style>
-<script src="user.js?v=hc144"></script>
+<script src="user.js?v=hc145"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc144"></script>
-  <script src="gate.js?v=hc144"></script>
-  <script src="_staff.js?v=hc144"></script>
-  <script src="tc.js?v=hc144"></script>
-  <script src="tcstore.js?v=hc144"></script>
-  <script src="schedrec.js?v=hc144"></script>
+  <script src="store.js?v=hc145"></script>
+  <script src="gate.js?v=hc145"></script>
+  <script src="_staff.js?v=hc145"></script>
+  <script src="tc.js?v=hc145"></script>
+  <script src="tcstore.js?v=hc145"></script>
+  <script src="schedrec.js?v=hc145"></script>
 </head>
 <body>
 <div class="ribbon">SANDBOX — made-up patients. Use “Try it as” to see it as a TC, an office manager or Selene.</div>
@@ -686,18 +686,21 @@
     let h='<div class="tools">'+mpick()+tcPick()+'<span class="grow"></span><span class="small muted">'+esc(inView().length>1?(office?office:'All '+(myOffices().length===allOffices().length?'offices':'my offices')):inView()[0]||'')+(tcFilter?' · '+esc(tcFilter):'')+'</span></div>';
     h+='<div class="stack">';
     h+='<div class="kpis">'+K('Consults scheduled', m.scheduled, m.slots?pct(m.capacity)+' of '+m.slots+' slots':'no slots set')+
-      K('Conversion'+(med?' · private pay':''), pct(P.rate), P.starts+' start'+(P.starts===1?'':'s')+' ÷ '+P.consults+' consult'+(P.consults===1?'':'s'))+
-      (med?K('Conversion · Medicaid', pct(M.rate), M.starts+' start'+(M.starts===1?'':'s')+' ÷ '+M.consults+' consult'+(M.consults===1?'':'s')):'')+
+      K('Conversion', pct(P.rate), P.starts+' start'+(P.starts===1?'':'s')+' ÷ '+P.consults+' consult'+(P.consults===1?'':'s')+(med?' · private pay':''))+
       K('Same-day contracts', m.sameDay, pct(m.sameDayRate)+' of completed')+
       K('No-show rate', pct(m.noShowRate), m.noShow+' no-show'+(m.noShow===1?'':'s'))+
       K('Follow-up completion', pct(m.fuRate), m.fuYes+' of '+(m.fuYes+m.fuNo)+' done')+
       K('RIP sold', m.rpi, 'by sale date')+'</div>';
     if(m.missing) h+='<div class="note warn">⚠️ <b>'+m.missing+' consult'+(m.missing===1?'':'s')+'</b> in '+esc(fmtM(month))+' still need'+(m.missing===1?'s':'')+' an outcome, so these numbers aren’t final.</div>';
     const CV=(label, g)=>'<tr><td>'+label+'</td><td class="n">'+g.consults+'</td><td class="n">'+g.starts+'</td><td class="n"><b>'+pct(g.rate)+'</b></td></tr>';
+    /* MEDICAID IS NOT IN CONVERSION (Selene, 11/11/2026): "Could we exclude Medicaid Conversion while still tracking
+       their status? Medicaid approval is outside the TCs’ control." Conversion everywhere is private pay only; Medicaid
+       exams and starts still show here as counts (no rate), and every Medicaid status stays in Monthly results,
+       Open work, Monthly totals and the call list. tc.js still works Medicaid out - the monthly monitor sheet needs it. */
     h+='<div class="card"><h2>Conversion</h2><p class="sub">'+esc(fmtM(month))+' &middot; each patient’s exam counts once, in the month of their first exam (not observation). '+
-      'A start counts in the month treatment begins, so a month can pass 100%.</p>'+
+      'A start counts in the month treatment begins, so a month can pass 100%.'+(med?' Private pay only &mdash; Medicaid approval is outside the TC’s control, so Medicaid is tracked but not counted.':'')+'</p>'+
       '<div class="tblwrap" style="box-shadow:none"><table class="t"><thead><tr><th></th><th class="n">Consults</th><th class="n">Starts</th><th class="n">Conversion</th></tr></thead><tbody>'+
-      CV('Private pay', P)+(med?CV('Medicaid', M)+'<tr class="total"><td>Total</td><td class="n">'+cv.total.consults+'</td><td class="n">'+cv.total.starts+'</td><td class="n">'+pct(cv.total.rate)+'</td></tr>':'')+
+      CV(med?'Private pay':'All consults', P)+(med?'<tr class="muted"><td>Medicaid <span class="small">(tracked, not in conversion)</span></td><td class="n">'+M.consults+'</td><td class="n">'+M.starts+'</td><td class="n">&mdash;</td></tr>':'')+
       '</tbody></table></div></div>';
     h+='<div class="three">';
     h+='<div class="card"><h2>Monthly results</h2><p class="sub">'+esc(fmtM(month))+'</p><table class="mt">'+
@@ -714,7 +717,7 @@
       (w.allOpen?'<button class="btn ghost sm" style="margin-top:10px" data-act="tab" data-v="calls">Open the call list →</button>':'')+'</div>';
     const A=(k,v,c)=>'<tr><td>'+k+'</td><td class="v">'+v+'</td><td class="c">'+c+'</td></tr>';
     h+='<div class="card"><h2>TC accountability</h2><p class="sub">'+esc(fmtM(month))+'</p><table class="mt">'+
-      A('Conversion rate'+(med?' · private pay':''), pct(P.rate), 'Starts ÷ consults')+(med?A('Conversion rate · Medicaid', pct(M.rate), 'Starts ÷ consults'):'')+
+      A('Conversion rate', pct(P.rate), 'Starts ÷ consults'+(med?' (private pay)':''))+
       A('Same-day contract rate', pct(m.sameDayRate), 'Same-day ÷ completed')+
       A('No-show rate', pct(m.noShowRate), 'No-shows ÷ scheduled')+A('Follow-up completion rate', pct(m.fuRate), 'Done ÷ all Yes/No follow-ups')+
       A('Same-day contracts', m.sameDay, 'Count')+A('Follow-ups completed', m.fuYes, 'Count')+'</table></div>';
@@ -728,12 +731,12 @@
     const everyOffice=!canManage();
     const boxOffs=everyOffice ? allOffices() : (inView().length>1 ? inView() : []);
     if(boxOffs.length>1){
-      const src=everyOffice ? EVERY : list, k=everyOffice ? null : keep, medB=boxOffs.some(takesMed), mine=myOffices();
-      h+='<div class="card"><h2>By office</h2><p class="sub">'+esc(fmtM(month))+(everyOffice?' &middot; every office &middot; rates and counts only &mdash; no patient details. TCs and office managers all see the same table.':(tcFilter?' · '+esc(tcFilter):''))+'</p><div class="tblwrap" style="box-shadow:none"><table class="t"><thead><tr><th>Office</th><th class="n">Slots</th><th class="n">Scheduled</th><th class="n">Capacity</th><th class="n">Completed</th><th class="n">Consults</th><th class="n">Starts</th><th class="n">Conv. private</th>'+(medB?'<th class="n">Conv. Medicaid</th>':'')+'<th class="n">Same-day</th><th class="n">No-show</th><th class="n">Follow-up</th><th class="n">RIP</th><th class="n">Open</th></tr></thead><tbody>'+
+      const src=everyOffice ? EVERY : list, k=everyOffice ? null : keep, mine=myOffices();
+      h+='<div class="card"><h2>By office</h2><p class="sub">'+esc(fmtM(month))+(everyOffice?' &middot; every office &middot; rates and counts only &mdash; no patient details. TCs and office managers all see the same table.':(tcFilter?' · '+esc(tcFilter):''))+'</p><div class="tblwrap" style="box-shadow:none"><table class="t"><thead><tr><th>Office</th><th class="n">Slots</th><th class="n">Scheduled</th><th class="n">Capacity</th><th class="n">Completed</th><th class="n">Consults</th><th class="n">Starts</th><th class="n">Conversion</th><th class="n">Same-day</th><th class="n">No-show</th><th class="n">Follow-up</th><th class="n">RIP</th><th class="n">Open</th></tr></thead><tbody>'+
         boxOffs.map(o=>{ const L=src.filter(r=>r.office===o), s=TC.monthStats(L, month, TC.slotsInMonth(SLOTS[o]||{}, month, isOpenFn(o), until()), d, k), ow=TC.openWork(k?L.filter(k):L, d), c=s.conversion;
           const own=mine.indexOf(o)>=0, opens=!everyOffice || (own && mine.length>1);
           const tr=opens ? '<tr class="click'+(everyOffice&&own?' mine':'')+'"'+attr('act','office')+attr('v',o)+'>' : '<tr'+(everyOffice&&own?' class="mine"':'')+'>';
-          return tr+'<td><b>'+esc(o)+'</b>'+(everyOffice&&own?' <span class="small muted">(yours)</span>':'')+'</td><td class="n">'+s.slots+'</td><td class="n">'+s.scheduled+'</td><td class="n">'+pct(s.capacity)+'</td><td class="n">'+s.completed+'</td><td class="n">'+c.total.consults+'</td><td class="n">'+c.total.starts+'</td><td class="n"><b>'+pct(c['Private pay'].rate)+'</b></td>'+(medB?'<td class="n">'+(takesMed(o)?pct(c.Medicaid.rate):'')+'</td>':'')+'<td class="n">'+pct(s.sameDayRate)+'</td><td class="n">'+pct(s.noShowRate)+'</td><td class="n">'+pct(s.fuRate)+'</td><td class="n">'+s.rpi+'</td><td class="n">'+ow.allOpen+'</td></tr>'; }).join('')+
+          return tr+'<td><b>'+esc(o)+'</b>'+(everyOffice&&own?' <span class="small muted">(yours)</span>':'')+'</td><td class="n">'+s.slots+'</td><td class="n">'+s.scheduled+'</td><td class="n">'+pct(s.capacity)+'</td><td class="n">'+s.completed+'</td><td class="n">'+c['Private pay'].consults+'</td><td class="n">'+c['Private pay'].starts+'</td><td class="n"><b>'+pct(c['Private pay'].rate)+'</b></td><td class="n">'+pct(s.sameDayRate)+'</td><td class="n">'+pct(s.noShowRate)+'</td><td class="n">'+pct(s.fuRate)+'</td><td class="n">'+s.rpi+'</td><td class="n">'+ow.allOpen+'</td></tr>'; }).join('')+
         '</tbody></table></div></div>';
     }
     /* EVERY TC, view only (Selene, 16/10): "all TCs to have view-only access to the TC
@@ -746,11 +749,10 @@
         const s=TC.monthStats(EVERY.filter(r=>offs.indexOf(r.office)>=0), month, 0, d, r=>r.tc===n);
         return {n, office:offs.join(', '), s};
       }).filter(x=>x.s.scheduled || x.s.conversion.total.starts).sort((a,b)=>a.office<b.office?-1:a.office>b.office?1:(a.n<b.n?-1:1));
-      const anyMed=rows.some(x=>x.s.conversion.Medicaid.consults || x.s.conversion.Medicaid.starts);
       h+='<div class="card"><h2>All TCs · TC accountability</h2><p class="sub">'+esc(fmtM(month))+' &middot; rates and counts only &mdash; no patient details. Everyone sees the same table.</p>'+
-        '<div class="tblwrap" style="box-shadow:none"><table class="t"><thead><tr><th>TC</th><th>Office</th><th class="n">Consults</th><th class="n">Starts</th><th class="n">Conv. private</th>'+(anyMed?'<th class="n">Conv. Medicaid</th>':'')+'<th class="n">Same-day</th><th class="n">No-show</th><th class="n">Follow-up</th></tr></thead><tbody>'+
+        '<div class="tblwrap" style="box-shadow:none"><table class="t"><thead><tr><th>TC</th><th>Office</th><th class="n">Consults</th><th class="n">Starts</th><th class="n">Conversion</th><th class="n">Same-day</th><th class="n">No-show</th><th class="n">Follow-up</th></tr></thead><tbody>'+
         (rows.length?rows.map(x=>{ const c=x.s.conversion;
-          return '<tr><td><b>'+esc(x.n)+'</b></td><td>'+esc(x.office)+'</td><td class="n">'+c.total.consults+'</td><td class="n">'+c.total.starts+'</td><td class="n"><b>'+pct(c['Private pay'].rate)+'</b></td>'+(anyMed?'<td class="n">'+(c.Medicaid.consults||c.Medicaid.starts?pct(c.Medicaid.rate):'')+'</td>':'')+
+          return '<tr><td><b>'+esc(x.n)+'</b></td><td>'+esc(x.office)+'</td><td class="n">'+c['Private pay'].consults+'</td><td class="n">'+c['Private pay'].starts+'</td><td class="n"><b>'+pct(c['Private pay'].rate)+'</b></td>'+
             '<td class="n">'+pct(x.s.sameDayRate)+'</td><td class="n">'+pct(x.s.noShowRate)+'</td><td class="n">'+pct(x.s.fuRate)+'</td></tr>'; }).join('')
           :'<tr><td colspan="9" class="muted">Nothing logged this month yet.</td></tr>')+
         '</tbody></table></div></div>';
@@ -760,11 +762,11 @@
       (days.length?days.map(x=>'<tr><td>'+esc(fmtD(x.date))+'</td><td class="n">'+x.scheduled+'</td><td class="n">'+x.slots+'</td><td class="n">'+pct(x.capacity)+'</td><td class="n">'+x.started+'</td><td class="n">'+x.pending+'</td><td class="n">'+x.noShow+'</td><td class="n">'+x.fuDue+'</td><td class="n">'+x.rpi+'</td><td class="n">'+x.sameDay+'</td><td class="n">'+x.fuDone+'</td></tr>').join(''):'<tr><td colspan="11" class="muted">Nothing this month.</td></tr>')+
       '</tbody></table></div></details>';
     const year=+month.slice(0,4), y=TC.yearTotals(list, year, slotsMonth, d, keep);
-    const MR=(r,label,cls)=>'<tr'+(cls?' class="'+cls+'"':'')+'><td>'+label+'</td><td class="n">'+r.slots+'</td><td class="n">'+r.scheduled+'</td><td class="n">'+pct(r.capacity)+'</td><td class="n">'+r.completed+'</td><td class="n">'+r.conversion.total.consults+'</td><td class="n">'+r.conversion.total.starts+'</td><td class="n">'+pct(r.conversion['Private pay'].rate)+'</td>'+(med?'<td class="n">'+pct(r.conversion.Medicaid.rate)+'</td>':'')+'<td class="n">'+r.pending+'</td><td class="n">'+r.schedStart+'</td><td class="n">'+r.hold+'</td>'+(med?'<td class="n">'+r.submitted+'</td><td class="n">'+r.medApproved+'</td><td class="n">'+r.medDenied+'</td>':'')+'<td class="n">'+r.observation+'</td><td class="n">'+r.noShow+'</td><td class="n">'+r.refused+'</td><td class="n">'+r.rescheduled+'</td><td class="n">'+r.rpi+'</td><td class="n">'+r.sameDay+'</td><td class="n">'+pct(r.sameDayRate)+'</td><td class="n">'+pct(r.noShowRate)+'</td><td class="n">'+r.fuYes+'</td><td class="n">'+pct(r.fuRate)+'</td></tr>';
-    h+='<details class="card"'+(canManage()?' open':'')+'><summary>Monthly totals · '+year+'</summary><div class="tblwrap" style="box-shadow:none"><table class="t"><thead><tr><th>Month</th><th class="n">Slots</th><th class="n">Scheduled</th><th class="n">Capacity</th><th class="n">Completed</th><th class="n">Consults</th><th class="n">Starts</th><th class="n">Conv. private</th>'+(med?'<th class="n">Conv. Medicaid</th>':'')+'<th class="n">Pending</th><th class="n">Sched. start</th><th class="n">Pre-TX</th>'+(med?'<th class="n">Medicaid sub.</th><th class="n">Medicaid appr.</th><th class="n">Medicaid denied</th>':'')+'<th class="n">Observation</th><th class="n">No show</th><th class="n">Refused</th><th class="n">Resched.</th><th class="n">RIP</th><th class="n">Same-day</th><th class="n">Same-day %</th><th class="n">No-show %</th><th class="n">Follow-ups</th><th class="n">Follow-up %</th></tr></thead><tbody>'+
+    const MR=(r,label,cls)=>'<tr'+(cls?' class="'+cls+'"':'')+'><td>'+label+'</td><td class="n">'+r.slots+'</td><td class="n">'+r.scheduled+'</td><td class="n">'+pct(r.capacity)+'</td><td class="n">'+r.completed+'</td><td class="n">'+r.conversion['Private pay'].consults+'</td><td class="n">'+r.conversion['Private pay'].starts+'</td><td class="n">'+pct(r.conversion['Private pay'].rate)+'</td><td class="n">'+r.pending+'</td><td class="n">'+r.schedStart+'</td><td class="n">'+r.hold+'</td>'+(med?'<td class="n">'+r.submitted+'</td><td class="n">'+r.medApproved+'</td><td class="n">'+r.medDenied+'</td>':'')+'<td class="n">'+r.observation+'</td><td class="n">'+r.noShow+'</td><td class="n">'+r.refused+'</td><td class="n">'+r.rescheduled+'</td><td class="n">'+r.rpi+'</td><td class="n">'+r.sameDay+'</td><td class="n">'+pct(r.sameDayRate)+'</td><td class="n">'+pct(r.noShowRate)+'</td><td class="n">'+r.fuYes+'</td><td class="n">'+pct(r.fuRate)+'</td></tr>';
+    h+='<details class="card"'+(canManage()?' open':'')+'><summary>Monthly totals · '+year+'</summary><div class="tblwrap" style="box-shadow:none"><table class="t"><thead><tr><th>Month</th><th class="n">Slots</th><th class="n">Scheduled</th><th class="n">Capacity</th><th class="n">Completed</th><th class="n">Consults</th><th class="n">Starts</th><th class="n">Conversion</th><th class="n">Pending</th><th class="n">Sched. start</th><th class="n">Pre-TX</th>'+(med?'<th class="n">Medicaid sub.</th><th class="n">Medicaid appr.</th><th class="n">Medicaid denied</th>':'')+'<th class="n">Observation</th><th class="n">No show</th><th class="n">Refused</th><th class="n">Resched.</th><th class="n">RIP</th><th class="n">Same-day</th><th class="n">Same-day %</th><th class="n">No-show %</th><th class="n">Follow-ups</th><th class="n">Follow-up %</th></tr></thead><tbody>'+
       y.rows.map((r,i)=>MR(r, MO[i], r.ym===month?'':'' )).join('')+MR(y.total,'Year','total')+'</tbody></table></div></details>';
     h+='<details class="card"><summary>How these numbers are worked out</summary>'+
-      '<p class="small" style="margin-top:0"><b>Conversion</b> (Selene, October 2026) = starts that month ÷ consults that month, for private pay and Medicaid separately. '+
+      '<p class="small" style="margin-top:0"><b>Conversion</b> (Selene, October 2026) = starts that month ÷ consults that month, <b>private pay only</b>. Medicaid is tracked (its exams, starts, approvals and denials) but left out of conversion, because Medicaid approval is outside the TC’s control (Selene, November 2026). '+
       'A <b>consult</b> is a new-patient exam that happened, counted once per patient (by chart #, else name + birth date) in the month of their first exam; '+
       'observation exams, no-shows and reschedules are not consults, and a return visit never adds one. A <b>start</b> counts once, in the month treatment begins &mdash; '+
       'even from an earlier month’s exam, and for observation and recall patients &mdash; so a month can pass 100%. A Medicaid patient who goes private pay keeps their one exam; it moves to private pay. A <b>Medicaid Approved</b> patient’s start is a Medicaid start.</p>'+
@@ -1222,7 +1224,7 @@
 })();
 </script>
 <script>PH.nav('tc');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(window.TCPAGE)TCPAGE.identity();});document.addEventListener('ph-identity',function(){if(window.TCPAGE)TCPAGE.identity();});</script>
-<script src="tour.js?v=hc144"></script>
+<script src="tour.js?v=hc145"></script>
 <script>
 Tour.init([
   {sel:'#offbar', title:'Your office', body:'You see the offices you work at. Heather, Selene and leadership see every office and can pick one.'},

@@ -216,7 +216,18 @@ const C=[
 {
   t('Outcomes = the sheet’s six + Selene’s Pre-TX Hold, Submitted to Medicaid, Pending – Scheduled to Start, Medicaid Approved and Medicaid Denied', eq(TC.OUTCOMES, ['Started','Pending','Pending – Scheduled to Start','Pre-TX Hold','Submitted to Medicaid','Medicaid Approved','Medicaid Denied','Observation','No Show','Refused Treatment','Rescheduled / Cancelled']));
   t('Follow-up statuses = the sheet’s five + Rebooked', eq(TC.FU_STATUSES.slice(0,5), ['Open','Contacted - waiting','Scheduled to start','Closed - started','Closed - declined']) && TC.FU_STATUSES[5]==='Rebooked');
-  t('Lead sources and consult types = the sheet’s', TC.DEFAULT_LISTS.leads.length===8 && TC.DEFAULT_LISTS.types.length===6);
+  t('Lead sources = the sheet’s plus "Sibling" (Selene, 11/11); consult types = the sheet’s', TC.DEFAULT_LISTS.leads.length===9 && TC.DEFAULT_LISTS.leads.indexOf('Sibling')>=0 && TC.DEFAULT_LISTS.types.length===6);
+  /* Selene, 11/11/2026: "Could we exclude Medicaid Conversion while still tracking their status?" */
+  {
+    const H=require('fs').readFileSync(require('path').join(__dirname,'..','v1','tc.html'),'utf8');
+    t('Medicaid: no Medicaid conversion rate shown anywhere', !/Conversion · Medicaid|Conversion rate · Medicaid|Conv\. Medicaid|pct\(M\.rate\)|pct\(c\.Medicaid\.rate\)|conversion\.Medicaid\.rate/.test(H));
+    t('Medicaid: the conversion counts next to the rate are private pay too (they add up)', !/'\+(c|cv|r\.conversion|x\.s\.conversion)\.total\.(consults|starts)\+'/.test(H));
+    t('Medicaid: still tracked - exams and starts as counts, and every status in the results', /Medicaid <span class="small">\(tracked, not in conversion\)/.test(H) &&
+      /R\('Submitted to Medicaid'/.test(H) && /R\('Medicaid approved'/.test(H) && /R\('Medicaid denied'/.test(H) && /Waiting on Medicaid/.test(H));
+    const c=TC.conversion([{id:'a', office:'Hobbs', date:'2026-10-02', name:'Ann', chart:'1', outcome:'Started', payer:'Medicaid'},
+                           {id:'b', office:'Hobbs', date:'2026-10-03', name:'Bo', chart:'2', outcome:'Pending'}], '2026-10');
+    t('Medicaid: worked out separately, so private pay conversion ignores a Medicaid start', c['Private pay'].consults===1 && c['Private pay'].starts===0 && c.Medicaid.starts===1);
+  }
   t('"Needs dental work" / "Needs records" moved from Pending to Pre-TX Hold; "Medicaid denied" added to Pending',
     TC.DEFAULT_LISTS.reasons.indexOf('Needs dental work')<0 && TC.DEFAULT_LISTS.reasons.indexOf('Needs records')<0 &&
     TC.DEFAULT_LISTS.holdReasons.indexOf('Needs dental work')>=0 && TC.DEFAULT_LISTS.reasons.indexOf('Medicaid denied')>=0);

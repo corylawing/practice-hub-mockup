@@ -243,6 +243,15 @@ paySenders/reloadPaySenders/paySenderOffices, payLevel).
   `fit`; #phload-side goes UNDER (z 44) when NAVSNAP exists. No sliding any more (the .fit transition is gone).
   Checked headless (scratchpad navflash.js/navswap.js, every 50 ms on the 2nd page): sidebar 10 apps + name from 0.1 s
   to the end, tabs on top and phone bar too; another person on the tab -> theirs at 1.0 s (when /me answers).
+  **TC TRACKER - SELENE'S THREE (11/11, hc145).** (1) "Sibling" lead source: added to DEFAULT_LISTS.leads, but a list a
+  manager already SAVED replaces the defaults (LISTS = defaults + saved), so on live she may have to add it herself in
+  TC Tracker -> Consults -> ⚙ Settings -> Lead sources. (2) "exclude Medicaid Conversion while still tracking their
+  status": tc.html shows ONE conversion (private pay) everywhere - KPI, Conversion card, TC accountability, By office,
+  All TCs, Monthly totals; the Consults/Starts columns beside it are private pay too so they add up. Medicaid exams and
+  starts stay as counts ("tracked, not in conversion", no rate); every Medicaid status stays in Monthly results / Open
+  work / Monthly totals / call list. tc.js conversion() unchanged (still splits payers - the monitor sheet needs it).
+  tc tests 171. (3) Past RIP sales from before Home-Brace: NOT built - proposed a "Log a past RIP sale" entry (patient,
+  office, TC, sale date; counts in RIP sold for that month and TC, never a consult or start). Waiting on Cory/Selene.
   **STUCK AFTER THE AUTHENTICATOR (11/11, hc144).** Heather: Dr. Farnsworth "is getting stuck after the authenticator"
   (his roster row had no email; his address is on ffortho.com). Checked: ffortho.com and farnsworthorthodontics.com
   are BOTH tenant edb81e45 (public openid-configuration lookup), so anyone IT adds on either domain can sign in with no
