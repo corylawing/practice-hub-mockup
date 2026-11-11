@@ -1141,6 +1141,10 @@ fully know a B2B guest until they have opened the site in a browser once; until 
 `store.js` fires `ph-access-refused` once on a 401/403 read; user.js shows a box with **Open SharePoint** (the site)
 and **Try again** (reload) for 401, and "send a screenshot to your admin" for 403. Guard tests: 61. If a guest still
 gets 401 after opening the site, ask Adam about `Set-SPOTenant -EnableAzureADB2BIntegration $true`.
+**STILL OPEN (Cory 11/11/2026): "Noemi still can't sign in".** Never saw her screen. sunflowerorthomansfield.com is its
+OWN tenant (18896404-...), so cross-tenant access settings and MFA (she may be asked to set up Authenticator again
+for this tenant unless inbound MFA trust is on) are candidates, as are the 401 above and the phone popup (hc144).
+Asked Cory for a screenshot of what she sees after the hc144 update.
 
 **A refused save now says WHY (06/10, hc64).** Noemi (guest, sunflowerorthomansfield.com - in the Home-Brace group)
 had every save refused with "could not read the saved copy"; nobody could tell why and she can't run diagnostics.
