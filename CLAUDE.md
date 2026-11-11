@@ -243,6 +243,19 @@ paySenders/reloadPaySenders/paySenderOffices, payLevel).
   `fit`; #phload-side goes UNDER (z 44) when NAVSNAP exists. No sliding any more (the .fit transition is gone).
   Checked headless (scratchpad navflash.js/navswap.js, every 50 ms on the 2nd page): sidebar 10 apps + name from 0.1 s
   to the end, tabs on top and phone bar too; another person on the tab -> theirs at 1.0 s (when /me answers).
+  **STUCK AFTER THE AUTHENTICATOR (11/11, hc144).** Heather: Dr. Farnsworth "is getting stuck after the authenticator"
+  (his roster row had no email; his address is on ffortho.com). Checked: ffortho.com and farnsworthorthodontics.com
+  are BOTH tenant edb81e45 (public openid-configuration lookup), so anyone IT adds on either domain can sign in with no
+  Home-Brace step. Three fixes: (1) gate.js `PHONE` (iPhone/iPad/Android, or MacIntel + touch = iPadOS) -> USE_REDIRECT:
+  on a phone the popup is a 2nd tab; after the Authenticator app it lands on blank auth.html while the opener tab is
+  paused in the background, so nothing closes it. Same-tab redirect = the home-screen app's flow (live since 04/11).
+  Computers keep the popup. (2) auth.html is never a dead end: still there after 3 s -> "You're signed in. Go back to
+  the Home-Brace tab" (popup) or "Sign-in didn't finish. Open Home-Brace" (no opener/no BACK); text only, the hash is
+  untouched. (3) user.js `rosterMe(mail,name)` = roster email, then an email an ADMIN TYPED in Admin > People
+  (`rosterByAdminMail`, via overrideForRow) - before this, typing a missing address in Admin changed the Team page but
+  not who the person was at sign-in - then the name, now ignoring a leading "Dr." (no roster clash). Used by
+  overrideFor, fromProfile and usage. Tests: signin 18, peoplekey 19 (made-up doctor "Dr. Daniel Fairbanks").
+  Checked in the preview: phone UA -> same-tab to login.microsoftonline.com; desktop -> window.open (popup).
   **MIC NO LONGER FLOATS (10/11, hc143).** Cory: "The microphone seems to be floating around on some pages" (over Admin
   -> Usage). The talk-to-type 🎤 is position:fixed beside the focused box and hid on focusout - but a page redraw that
   removes the focused box fires no focusout, so it stayed over the new content. `micWatch()`: a requestAnimationFrame

@@ -22,13 +22,36 @@
   the address of the page that started (sessionStorage ph_signin_redirect). Hand the
   answer straight back to that page, unread; its gate.js gives it to MSAL. A popup has
   an opener, so the script stops at its first line and the fragment is left alone.
+
+  NEVER A DEAD END (11/11/2026, hc144). Dr. Farnsworth was "stuck after the authenticator":
+  a sign-in window left on this blank page, with nothing to say what to do. Normally the
+  Home-Brace page reads the answer and closes this window within a split second, so the
+  note below never shows. If this page is still here a few seconds later, say so in
+  words. Showing text never touches the address, so the answer is still there to read.
 -->
 <script>
 (function(){
+  function note(html){
+    setTimeout(function(){
+      try{
+        var d = document.createElement('div');
+        d.style.cssText = 'font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;' +
+          'max-width:420px;margin:15vh auto 0;padding:0 20px;color:#0F2A4A;text-align:center';
+        d.innerHTML = html;
+        document.body.appendChild(d);
+      }catch(_){}
+    }, 3000);
+  }
   try{
-    if (window.opener) return;
+    if (window.opener){
+      note('<b>You’re signed in.</b><br>Go back to the Home-Brace tab or window. You can close this one.');
+      return;
+    }
     var back = sessionStorage.getItem('ph_signin_redirect');
-    if (!back || !location.hash || back.indexOf(location.origin + '/') !== 0) return;
+    if (!back || !location.hash || back.indexOf(location.origin + '/') !== 0){
+      note('<b>Sign-in didn’t finish.</b><br><a href="home.html">Open Home-Brace</a> and sign in again.');
+      return;
+    }
     location.replace(back.split('#')[0] + location.hash);
   }catch(_){}
 })();

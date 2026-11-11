@@ -124,7 +124,41 @@ function permissionsGap(){
   });
 }
 
-Promise.resolve(permissionsGap()).then(function(){
+/* ---- 7. A DOCTOR THE ROSTER HAS NO EMAIL FOR (11/11/2026). The real case: the roster says "Dr. <name>" with no
+          address; Microsoft says "<name>" (no title); Heather types the address in Admin. Made-up doctor below. ---- */
+function doctorNoEmail(){
+  const rows=JSON.parse(fs.readFileSync(path.join(__dirname,'fixtures','people.json'),'utf8')).people;
+  const doc=rows.find(r=>r.name==='Dr. Daniel Fairbanks');
+  const profile=(name, mail)=>({displayName:name, mail, userPrincipalName:mail, jobTitle:'', department:'', officeLocation:''});
+  // a) Nothing typed in Admin: the name alone, without the "Dr.", finds the row.
+  const A=load({});
+  return A.PH.rosterReady.then(function(){
+    A.PH.setProfile(profile('Daniel Fairbanks', 'daniel@example.com'));
+    t('a doctor whose Microsoft name has no "Dr." still gets their roster team', (A.PH.me().teams||[]).indexOf('Executive Team')>=0);
+    // b) Microsoft's name doesn't match at all, but an admin typed the address in Admin > People.
+    const ovr={}; ovr[PH.personKey(doc)]={email:'dfairbanks@example.com'};
+    const B=load({ ph_people: JSON.stringify(ovr) });
+    return B.PH.rosterReady.then(function(){
+      B.PH.setProfile(profile('DF', 'DFairbanks@example.com'));
+      t('an email an admin typed in Admin links the person when they sign in', (B.PH.me().teams||[]).indexOf('Executive Team')>=0);
+      // c) ...and what the admin set for them comes with it.
+      const ovr2={}; ovr2[PH.personKey(doc)]={email:'dfairbanks@example.com', teams:['Executive Team'], locs:['All offices']};
+      const C=load({ ph_people: JSON.stringify(ovr2) });
+      return C.PH.rosterReady.then(function(){
+        C.PH.setProfile(profile('DF', 'dfairbanks@example.com'));
+        t('and so do the teams and offices the admin set', (C.PH.me().teams||[]).indexOf('Executive Team')>=0 && C.PH.offices()==='all');
+        // d) A stranger is still nobody: no roster email, no admin email, no name.
+        const D=load({ ph_people: JSON.stringify(ovr) });
+        return D.PH.rosterReady.then(function(){
+          D.PH.setProfile(profile('Nobody Known', 'nobody@example.com'));
+          t('someone the roster and Admin don\'t know still gets least access', JSON.stringify(D.PH.me().teams)==='["Staff"]');
+        });
+      });
+    });
+  });
+}
+
+Promise.resolve(permissionsGap()).then(doctorNoEmail).then(function(){
   console.log(ok.map(s=>'  PASS  '+s).join('\n'));
   if(bad.length) console.log(bad.map(s=>'  FAIL  '+s).join('\n'));
   console.log('\n'+ok.length+' passed, '+bad.length+' failed');

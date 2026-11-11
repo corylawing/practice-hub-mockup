@@ -30,8 +30,16 @@
      handleRedirectPromise() reads it here. Live too since 04/11/2026 (alerts on): a normal browser tab keeps the popup. */
   var STANDALONE = global.navigator.standalone === true ||
     !!(global.matchMedia && global.matchMedia('(display-mode: standalone)').matches);
+  /* PHONES AND TABLETS TOO (11/11/2026, hc144). Heather: Dr. Farnsworth "is getting stuck after the authenticator".
+     On a phone the sign-in "popup" is a second tab. He leaves for the Authenticator app, comes back to that tab, and
+     Microsoft sends it to the blank auth.html - while the Home-Brace tab that should read it and close it sits paused
+     in the background, so nothing happens. Signing in on the same tab (the home-screen app's way, live since 04/11)
+     has no second tab to get lost in. iPadOS calls itself a Mac, so a Mac with a touch screen counts too. */
+  var NAV = global.navigator || {};
+  var PHONE = /iPhone|iPad|iPod|Android/i.test(NAV.userAgent || '') ||
+    (NAV.platform === 'MacIntel' && NAV.maxTouchPoints > 1);
   var LIVE = !!(global.PH && global.PH.isLive && global.PH.isLive());
-  var USE_REDIRECT = STANDALONE;
+  var USE_REDIRECT = STANDALONE || PHONE;
   var BACK = 'ph_signin_redirect';
   function returning(){
     try{ return USE_REDIRECT && !!sessionStorage.getItem(BACK) && /[#&](code|error)=/.test(location.hash); }catch(_){ return false; }

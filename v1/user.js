@@ -376,9 +376,28 @@
      address is real but the roster does not record it, so the display name is the only
      link back to their row. Names are unique across the seventy; a miss returns null
      and the caller falls back to the default, so a mismatch costs nothing. */
+  /* "Dr." is a title, not part of the name (11/11/2026): the roster says "Dr. David Farnsworth", Microsoft may just
+     say "David Farnsworth". No two people on the roster differ only by the title, so dropping it is safe. */
   function rosterName(n){
     return String(n||'').replace(/"[^"]*"|\([^)]*\)/g,'')
-      .trim().toLowerCase().replace(/\s+/g,' ');
+      .trim().toLowerCase().replace(/\s+/g,' ').replace(/^dr\.?\s+/,'');
+  }
+  /* AN EMAIL AN ADMIN TYPED IN (11/11/2026). Admin > People lets Heather fill in a missing address - Dr. Farnsworth's
+     roster row has none - but sign-in only ever looked at the roster's own email, so typing it
+     in changed what the Team page showed and not who he was when he signed in. Now it counts too. The roster's own
+     address still wins (rosterFor runs first), so this can only find people the roster couldn't. */
+  function rosterByAdminMail(mail){
+    const m=String(mail||'').toLowerCase().trim();
+    if(!m || !PEOPLE_OVR || !ROSTER_ROWS) return null;
+    for(let i=0;i<ROSTER_ROWS.length;i++){
+      const o=overrideForRow(ROSTER_ROWS[i]);
+      if(o && typeof o.email==='string' && o.email.toLowerCase().trim()===m) return ROSTER_ROWS[i];
+    }
+    return null;
+  }
+  /* WHICH ROSTER ROW IS THE PERSON SIGNING IN: their roster email, then an email an admin typed, then their name. */
+  function rosterMe(mail, name){
+    return (mail && rosterFor(mail)) || (mail && rosterByAdminMail(mail)) || (name && rosterByName(name)) || null;
   }
   function rosterByName(name){
     if(!ROSTER_BY_MAIL && !ROSTER_ROWS) return null;
@@ -460,7 +479,7 @@
     if(!PEOPLE_OVR) return null;
     const m=String(mail||'').toLowerCase().trim();
     if(m && PEOPLE_OVR[m]) return PEOPLE_OVR[m];
-    const row=(m && rosterFor(m)) || (name && rosterByName(name)) || null;
+    const row=rosterMe(m, name);
     if(row){
       const k=personKey(row);
       if(k && PEOPLE_OVR[k]) return PEOPLE_OVR[k];
@@ -581,7 +600,7 @@
        them - which is 38 of the 70. Without this, half the practice signed in and got
        least-access no matter what team the roster gave them, and the Admin settings
        meant to correct it were looked up the same broken way. */
-    const ros=rosterFor(mailNow) || rosterByName(PROFILE && PROFILE.displayName);
+    const ros=rosterMe(mailNow, PROFILE && PROFILE.displayName);
     /* The hub's own setting wins; then Entra, if IT has filled it in; then the
        practice's own roster, which is what makes a brand-new guest work. */
     const deptSrc = (ovr && ovr.teams && ovr.teams.length)
@@ -2130,7 +2149,7 @@
     if(Date.now()-was<USE_GAP) return;
     try{ localStorage.setItem(gate, String(Date.now())); }catch(_){}
     const now=new Date(), day=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
-    const row=rosterFor(em) || rosterByName(PROFILE && PROFILE.displayName), at=now.toISOString();
+    const row=rosterMe(em, PROFILE && PROFILE.displayName), at=now.toISOString();
     const name=String((PROFILE && PROFILE.displayName) || ((m.first||'')+' '+(m.last||''))).trim(), admin=!!isAdmin(realMe());
     PH_STORE.update('ph_use_'+em, function(cur){
       if(cur && cur.off) return undefined;                            // they asked not to be tracked: nothing written
