@@ -1145,6 +1145,11 @@ gets 401 after opening the site, ask Adam about `Set-SPOTenant -EnableAzureADB2B
 OWN tenant (18896404-...), so cross-tenant access settings and MFA (she may be asked to set up Authenticator again
 for this tenant unless inbound MFA trust is on) are candidates, as are the 401 above and the phone popup (hc144).
 Asked Cory for a screenshot of what she sees after the hc144 update.
+Checked with Cory 11/11: her B2B invitation = Accepted; she is in Home-Brace Site members (with the other guests);
+site External file sharing = New and existing guests (so the org level allows guests too); Jenny and Melissa
+(lascrucessmiles.com guests) get in fine. So it is specific to Noemi or Sunflower's tenant: wrong address typed, or
+Sunflower's outbound cross-tenant / Conditional Access (their IT). Waiting on her screenshot. Cory's own Entra
+account has 1 role (SharePoint Administrator, can't consent / read sign-in logs).
 
 **A refused save now says WHY (06/10, hc64).** Noemi (guest, sunflowerorthomansfield.com - in the Home-Brace group)
 had every save refused with "could not read the saved copy"; nobody could tell why and she can't run diagnostics.
