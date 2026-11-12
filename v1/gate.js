@@ -44,9 +44,9 @@
   function returning(){
     try{ return USE_REDIRECT && !!sessionStorage.getItem(BACK) && /[#&](code|error)=/.test(location.hash); }catch(_){ return false; }
   }
-  function goSignIn(app, account){
+  function goSignIn(app, account, scopes){
     try{ sessionStorage.setItem(BACK, location.href.split('#')[0]); }catch(_){}
-    var req = { scopes: SCOPES, redirectStartPage: location.href.split('#')[0] };
+    var req = { scopes: scopes || SCOPES, redirectStartPage: location.href.split('#')[0] };
     if (account) req.account = account;
     return account ? app.acquireTokenRedirect(req) : app.loginRedirect(req);
   }
@@ -134,6 +134,19 @@
             requestSignIn(app, account, e);
             throw new Error('Your Microsoft sign-in needs renewing — use the Sign in button.');
           });
+      },
+      /* MORE THAN THE SIGN-IN ASKS FOR (real chat, 12/11/2026): a token that also carries `extra` - today only the
+         chat page's Chat.ReadWrite. SCOPES above never changes, so nobody's sign-in changes. Silent only: a refusal
+         (IT hasn't approved it yet) comes back to the page that asked, and the sign-in screen is NOT put up.
+         askFor() is the same from a person's own click (a popup; on a phone the whole page goes and comes back). */
+      tokenFor: function(extra){
+        return app.acquireTokenSilent({ scopes: SCOPES.concat(extra || []), account: account })
+          .then(function(r){ return r.accessToken; });
+      },
+      askFor: function(extra){
+        var scopes = SCOPES.concat(extra || []);
+        if (USE_REDIRECT) return goSignIn(app, account, scopes);
+        return app.acquireTokenPopup({ scopes: scopes, account: account }).then(function(r){ return r.accessToken; });
       },
       graph: function(path){
         return global.PH_AUTH.token().then(function(t){

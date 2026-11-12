@@ -18,7 +18,12 @@
      Teams as the engine underneath (free with their Microsoft 365, messages and videos kept in their own Microsoft
      365), everything done inside Home-Brace, phone alerts sent by Home-Brace itself, live calls opening Teams.
      Made-up people, messages, videos and photo (chat-demo/). Nothing is sent anywhere; a video you record stays
-     in this browser tab. -->
+     in this browser tab.
+     THE REAL CHAT (12/11/2026, Cory: "very important that nobody sees it until I've confirmed it works ... also the
+     ability to send videos"): the same page with Microsoft Teams underneath (chatgraph.js). Only an Admin on the
+     SANDBOX who presses "Test the real chat" (this device only) gets it; everyone else keeps this mock-up, and the
+     live site has neither (NAV + chatgraph CHAT_LIVE=false). While testing you can read your own Teams chats but
+     only send to your testers. Videos go the way Teams sends them (OneDrive + shared with the chat). -->
 <style>
   :root{
     --navy:#0F2A4A; --navy2:#25456e; --teal:#149B96; --teal2:#2BC0B8; --teal-soft:#E5F4F3; --teal-600:#0F827E;
@@ -179,6 +184,24 @@
   .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);width:max-content;background:var(--navy);color:#fff;padding:11px 18px;border-radius:12px;font-weight:700;font-size:14px;box-shadow:var(--shadow-lg);opacity:0;transition:opacity .2s;pointer-events:none;z-index:80;max-width:calc(100% - 32px);text-align:center}
   .toast.on{opacity:1}
 
+  /* REAL CHAT (12/11/2026): the test bar, photos in avatars, files, sending state, the test lock */
+  .ribbon button{margin-left:10px;background:rgba(58,36,0,.12);border:1px solid rgba(58,36,0,.28);color:#3a2400;border-radius:999px;padding:2px 10px;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer}
+  .ribbon button:hover{background:rgba(58,36,0,.22)}
+  .ribbon.real{background:#0F827E;color:#fff}
+  .ribbon.real button{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.45);color:#fff}
+  .ribbon.real button:hover{background:rgba(255,255,255,.28)}
+  .av img{width:100%;height:100%;border-radius:50%;object-fit:cover;display:block}
+  .file{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:9px 12px;font-size:14px;color:var(--navy);text-decoration:none;font-weight:600;max-width:260px;word-break:break-word}
+  .file:hover{border-color:var(--teal)}
+  .m .meta.bad{color:var(--bad);font-weight:700}
+  .more{align-self:center;margin:2px 0 8px}
+  .locked{padding:12px 14px;border-top:1px solid var(--line);background:#FFF8EC;color:#5b3d00;font-size:13.5px}
+  .media .wait{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#cdd9ea;font-size:13px;pointer-events:none}
+  .media.playing .wait{display:none}
+  .trow{display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid #EEF1F5;background:#fff}
+  .trow small,.pick button small{display:block;color:var(--soft);font-size:12px}
+  .trow .x{font-size:20px}
+
   @media(max-width:760px){
     .wrap{padding:10px 10px 0}
     html body{padding-bottom:0 !important}   /* the chat stops above the tab bar itself (fit) */
@@ -191,15 +214,16 @@
     .m{max-width:88%}
   }
 </style>
-<script src="user.js?v=hc145"></script>
+<script src="user.js?v=hc146"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc145"></script>
-  <script src="gate.js?v=hc145"></script>
-  <script src="_staff.js?v=hc145"></script>
-  <script src="alerts.js?v=hc145"></script>
+  <script src="store.js?v=hc146"></script>
+  <script src="gate.js?v=hc146"></script>
+  <script src="_staff.js?v=hc146"></script>
+  <script src="alerts.js?v=hc146"></script>
+  <script src="chatgraph.js?v=hc146"></script>
 </head>
 <body>
-<div class="ribbon">MOCK-UP for Heather and Dr. Jae — made-up people, messages and videos. Nothing is sent anywhere.</div>
+<div class="ribbon" id="ribbon">MOCK-UP for Heather and Dr. Jae — made-up people, messages and videos. Nothing is sent anywhere.</div>
 <header class="hdr">
   <div class="hdr-in">
     <span class="mark" aria-label="Home-Brace"><img src="../assets/logo-mark.png?v=2" alt="" width="34" height="34"></span>
@@ -234,7 +258,11 @@
   'use strict';
   const el=id=>document.getElementById(id);
   const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const ME='Priya Tatum';
+  let ME='Priya Tatum';
+  /* REAL CHAT (12/11/2026): the same page, with Microsoft Teams underneath - see chatgraph.js for who gets it
+     (an Admin on the sandbox who switched it on; never the live site until CHAT_LIVE). Everyone else: the mock-up. */
+  const CG=window.PH_CHATG||null;
+  let REALCHAT=false, MEID='';
   const COLORS=['#149B96','#6CB4F5','#F7A25E','#B49CFB','#F48C7F','#F27FC0','#6FD39A','#8FA2FF','#E0A800','#5B8DEF'];
   const colorOf=n=>{ let h=0; for(const c of n) h=(h*31+c.charCodeAt(0))>>>0; return COLORS[h%COLORS.length]; };
   const initials=n=>n.replace(/^Dr\.\s*/,'').split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase();
@@ -242,14 +270,17 @@
               team:'<circle cx="9" cy="8" r="3.2"/><circle cx="17" cy="9" r="2.6"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5M15 14.6c3 0 6 1.6 6 4.6"/>'};
   function avatar(c, sm){
     const cls='av'+(sm?' sm':'');
-    if(c.type==='office' || c.type==='team') return '<span class="'+cls+'" style="background:'+(c.type==='office'?'#25456E':'#0F827E')+'"><svg viewBox="0 0 24 24">'+ICON[c.type]+'</svg></span>';
+    if(c.type==='office' || c.type==='team' || c.type==='group') return '<span class="'+cls+'" style="background:'+(c.type==='office'?'#25456E':'#0F827E')+'"><svg viewBox="0 0 24 24">'+ICON[c.type==='office'?'office':'team']+'</svg></span>';
+    if(c.photo) return '<span class="'+cls+'"><img src="'+esc(c.photo)+'" alt=""></span>';
     return '<span class="'+cls+'" style="background:'+colorOf(c.name)+'">'+esc(initials(c.name))+'</span>';
   }
-  const personAv=n=>'<span class="av sm" style="background:'+colorOf(n)+'">'+esc(initials(n))+'</span>';
+  /* A person's Home-Brace profile photo when there is one (their own upload or one an admin set), else initials. */
+  const personAv=(n, em)=>{ const ph=em && window.PH && PH.photoFor ? PH.photoFor(em) : '';
+    return ph ? '<span class="av sm"><img src="'+esc(ph)+'" alt=""></span>' : '<span class="av sm" style="background:'+colorOf(n||'?')+'">'+esc(initials(n||'?'))+'</span>'; };
 
   /* ---------- made-up chats. Times are "minutes ago" so the mock-up always looks current. ---------- */
   const now=Date.now(), ago=min=>now-min*60000;
-  const CHATS=[
+  let CHATS=[
     {id:'c1', type:'office', name:'Carlsbad office', members:['Gabriela Garrison','Quinn Quill','Avery Brooks','Jordan Ellis','Sofia Navarro',ME], unread:2, msgs:[
       {from:'Jordan Ellis', at:ago(1500), text:'Is anyone grabbing lunch for the team on Friday?'},
       {from:ME, at:ago(1490), text:'I will - tacos again?'},
@@ -288,7 +319,8 @@
   const REAL=!!window.PH_ALERTS;
   if(REAL) alertsOn=PH_ALERTS.state()==='on';
   else try{ alertsOn=localStorage.getItem('ph_chat_alerts')==='1'; }catch(_){}
-  const SAMPLE=()=>({title:'Gabriela Garrison · Carlsbad office', body:'🎥 Sent a video', url:PH_ALERTS.here('chat.html'), tag:'hb-chat', delay:5});
+  const SAMPLE=()=>REALCHAT ? {title:'Home-Brace chat', body:'This is how a new message alert looks.', url:PH_ALERTS.here('chat.html'), tag:'hb-chat', delay:5}
+    : {title:'Gabriela Garrison · Carlsbad office', body:'🎥 Sent a video', url:PH_ALERTS.here('chat.html'), tag:'hb-chat', delay:5};
   /* which device this is, so the alert steps are only the ones for it; and whether they closed the strip */
   const UA=navigator.userAgent||'';
   const DEVICE=(/iPhone|iPad|iPod/.test(UA) || (/Macintosh/.test(UA) && navigator.maxTouchPoints>1)) ? 'iphone' : /Android/.test(UA) ? 'android' : 'computer';
@@ -311,11 +343,16 @@
     if(dayKey(t)===dayKey(yest)) return 'Yesterday';
     return new Date(t).toLocaleDateString('en-US',{weekday:'long', month:'short', day:'numeric'});
   }
-  const last=c=>c.msgs[c.msgs.length-1];
+  /* The newest message: the loaded ones, or (real chat) Teams' own preview when that's newer. */
+  const NONE={from:'', at:0, text:''};
+  const last=c=>{ const m=c.msgs[c.msgs.length-1], l=c.lastMsg; return (l && (!m || l.at>m.at)) ? l : (m||l||NONE); };
+  const mineOf=m=>m.mine!=null ? !!m.mine : m.from===ME;
   function preview(m, c){
-    const short=n=>/^Dr\./.test(n) ? n : n.split(' ')[0];       // "Dr. Thornbury", "Gabriela"
-    const who=m.from===ME ? 'You: ' : (c.type==='person' ? '' : short(m.from)+': ');
-    return who+(m.video ? '🎥 Video' : m.photo ? '📷 Photo' : m.text);
+    const short=n=>/^Dr\./.test(n) ? n : String(n||'').split(' ')[0];       // "Dr. Thornbury", "Gabriela"
+    const who=mineOf(m) ? 'You: ' : (c.type==='person' || !m.from ? '' : short(m.from)+': ');
+    const vid=m.video || m.localVideo || (m.files && m.files.some(f=>f.video));
+    const pic=m.photo || m.localImg || (!m.text && m.images && m.images.length);
+    return who+(vid ? '🎥 Video' : pic ? '📷 Photo' : (m.text || (m.files && m.files.length ? '📎 '+m.files[0].name : '')));
   }
 
   /* ---------- the alerts strip ---------- */
@@ -343,7 +380,7 @@
 
   /* ---------- the list ---------- */
   function renderChips(){
-    const F=[['all','All'],['unread','Unread'],['office','Offices & teams'],['person','People']];
+    const F=[['all','All'],['unread','Unread'],['office',REALCHAT?'Groups':'Offices & teams'],['person','People']];
     el('chips').innerHTML=F.map(f=>'<button class="chip'+(filter===f[0]?' on':'')+'" data-act="filter" data-v="'+f[0]+'">'+f[1]+'</button>').join('');
   }
   function renderList(){
@@ -362,9 +399,11 @@
 
   /* ---------- a conversation ---------- */
   function msgHTML(m, c, prev){
-    const mine=m.from===ME, group=c.type!=='person';
+    const mine=mineOf(m), group=c.type!=='person';
     const showFrom=group && !mine && (!prev || prev.from!==m.from || dayKey(prev.at)!==dayKey(m.at));
     let body;
+    if(REALCHAT) body=realBody(m);
+    else
     if(m.video){
       const tall=m.ar && (r=>r[0]<r[1])(String(m.ar).split('/').map(Number));      // a phone video, upright
       body='<div class="media'+(m.wide?' wide':'')+(tall?' tall':'')+'"><video src="'+esc(m.video)+'"'+(m.poster?' poster="'+esc(m.poster)+'"':'')+(m.ar?' style="aspect-ratio:'+m.ar+'"':'')+' preload="metadata" playsinline></video>'+
@@ -372,9 +411,28 @@
     } else if(m.photo){
       body='<div class="media wide"><img src="'+esc(m.photo)+'"'+(m.w?' width="'+m.w+'" height="'+m.h+'"':'')+' alt="A photo from '+esc(m.from)+'"></div>';
     } else body='<div class="bub">'+esc(m.text)+'</div>';
-    return '<div class="m'+(mine?' me':'')+'">'+(group && !mine ? (showFrom ? personAv(m.from) : '<span style="width:30px;flex:none"></span>') : '')+
-      '<div class="col">'+(showFrom?'<div class="from">'+esc(m.from)+'</div>':'')+body+
-      '<div class="meta">'+esc(clock(m.at))+(mine && m.seen!==false ? ' · Seen' : '')+'</div></div></div>';
+    const meta=m.failed ? '<div class="meta bad">Not sent - '+esc(m.failed)+'</div>'
+      : m.pending ? '<div class="meta">'+esc(m.progress!=null ? 'Uploading… '+Math.round(m.progress*100)+'%' : 'Sending…')+'</div>'
+      : '<div class="meta">'+esc(clock(m.at))+(!REALCHAT && mine && m.seen!==false ? ' · Seen' : '')+(m.edited ? ' · Edited' : '')+'</div>';
+    return '<div class="m'+(mine?' me':'')+'" data-mid="'+esc(m.id||'')+'">'+(group && !mine ? (showFrom ? personAv(m.from, m.fromEmail) : '<span style="width:30px;flex:none"></span>') : '')+
+      '<div class="col">'+(showFrom?'<div class="from">'+esc(m.from)+'</div>':'')+body+meta+'</div></div>';
+  }
+  /* A real message: its words (plain text - Teams' HTML never goes into the page), pictures, videos and files.
+     Pictures and videos are filled in a moment later (hydrate), with the sign-in. Only https addresses are used. */
+  const httpsOnly=u=>/^https:\/\//i.test(String(u||''));
+  function realBody(m){
+    let h='';
+    if(m.text) h+='<div class="bub">'+esc(m.text)+'</div>';
+    if(m.localImg) h+='<div class="media wide"><img src="'+esc(m.localImg)+'" alt="Your photo"></div>';
+    else (m.images||[]).forEach(u=>{ if(httpsOnly(u)) h+='<div class="media wide"><img data-hc="'+esc(u)+'" alt="A photo from '+esc(m.from)+'"></div>'; });
+    if(m.localVideo) h+='<div class="media"><video src="'+esc(m.localVideo)+'" preload="metadata" playsinline></video><button class="play" data-act="play" aria-label="Play the video">▶</button><span class="dur">🎥 Video</span></div>';
+    else (m.files||[]).forEach(f=>{
+      if(!httpsOnly(f.url)) return;
+      if(f.video) h+='<div class="media"><video data-ref="'+esc(f.url)+'" preload="metadata" playsinline></video><span class="wait">Loading video…</span><button class="play" data-act="play" aria-label="Play the video">▶</button><span class="dur">🎥 Video</span></div>';
+      else if(f.image) h+='<div class="media wide"><img data-ref="'+esc(f.url)+'" alt="'+esc(f.name)+'"></div>';
+      else h+='<a class="file" href="'+esc(f.url)+'" target="_blank" rel="noopener">📄 <span>'+esc(f.name)+'</span></a>';
+    });
+    return h || '<div class="bub">'+esc(m.deleted ? 'This message was deleted.' : '(nothing to show - open it in Teams)')+'</div>';
   }
   function renderConv(){
     const c=CHATS.find(x=>x.id===open), box=el('conv');
@@ -383,14 +441,19 @@
     let h='<div class="conv-top"><button class="back" data-act="back" aria-label="Back to chats">‹</button>'+avatar(c)+
       '<div class="who"><b>'+esc(c.name)+'</b><span>'+esc(sub)+'</span></div>'+
       '<button class="btn ghost sm" data-act="call" title="Calls open Microsoft Teams">📞 Call</button></div><div class="msgs" id="msgs">';
+    if(REALCHAT && c.next) h+='<button class="btn ghost sm more" data-act="more">Load earlier messages</button>';
+    if(REALCHAT && !c.loaded) h+='<div class="empty">Loading…</div>';
     let prev=null;
     c.msgs.forEach(m=>{ if(!prev || dayKey(prev.at)!==dayKey(m.at)) h+='<div class="day">'+esc(dayLabel(m.at))+'</div>'; h+=msgHTML(m,c,prev); prev=m; });
-    h+='</div><div class="composer">'+
+    /* THE TEST LOCK: in a chat with anyone who isn't a tester there is no message box at all (chatgraph.js checks again). */
+    if(REALCHAT && !CG.canSend(c, MEID)) h+='</div><div class="locked">🔒 <b>Test:</b> you can read this chat, but you can only send to your testers. Add them with <b>Testers</b> in the green bar.</div>';
+    else h+='</div><div class="composer">'+
       '<button class="ib" data-act="attach" title="Send a photo or a video from your phone or computer" aria-label="Send a photo or video"><svg viewBox="0 0 24 24"><path d="M21 11.5l-8.6 8.6a5.5 5.5 0 0 1-7.8-7.8l8.6-8.6a3.7 3.7 0 0 1 5.2 5.2l-8.6 8.6a1.8 1.8 0 0 1-2.6-2.6l7.9-7.9"/></svg></button>'+
       '<button class="ib rec" data-act="record" title="Record a video (up to 5 minutes)" aria-label="Record a video"><svg viewBox="0 0 24 24"><rect x="2.5" y="6" width="13" height="12" rx="2.5"/><path d="M15.5 10.5l6-3.5v10l-6-3.5z"/></svg></button>'+
       '<textarea id="txt" rows="1" placeholder="Message'+(window.matchMedia('(min-width:761px)').matches?' '+esc(c.name):'')+'…" aria-label="Message"></textarea>'+
       '<button class="ib send" data-act="send" title="Send" aria-label="Send"><svg viewBox="0 0 24 24"><path d="M4 12l16-8-6 16-2.5-6.5z"/></svg></button></div>';
     box.innerHTML=h;
+    if(REALCHAT) hydrate(box);
     const ms=el('msgs'); stick=true; ms.scrollTop=ms.scrollHeight;
     ms.addEventListener('scroll', ()=>{ stick=ms.scrollTop+ms.clientHeight>=ms.scrollHeight-40; }, {passive:true});
     /* Pictures and video frames arrive a moment later and push the newest message down, and the page can be
@@ -402,9 +465,13 @@
   }
   /* show=false: select it without leaving the list (a phone shows one or the other) */
   function openChat(id, show){
-    open=id; const c=CHATS.find(x=>x.id===id); if(c) c.unread=0;
+    open=id; const c=CHATS.find(x=>x.id===id); const had=c && c.unread; if(c) c.unread=0;
     if(show!==false) el('app').classList.add('open');
     renderList(); renderConv(); fit();
+    if(REALCHAT && c){
+      if(!c.loaded) loadChat(c);
+      if(had || show!==false) readIt(c, true);
+    }
   }
 
   /* ---------- sending, and a made-up reply a few seconds later ---------- */
@@ -414,6 +481,7 @@
     renderList();
   }
   function send(m){
+    if(REALCHAT) return sendReal(m);
     const c=CHATS.find(x=>x.id===open); if(!c) return;
     addMsg(c, Object.assign({from:ME, at:Date.now()}, m));
     const others=c.members.filter(n=>n!==ME); if(!others.length) return;
@@ -529,7 +597,9 @@
       if(!recState) return;
       const blob=new Blob(recState.chunks,{type:rec.mimeType||'video/webm'}), url=URL.createObjectURL(blob); objectUrls.push(url);
       const secs=Math.max(1,Math.round((Date.now()-recState.started)/1000));
-      recState.done={url, dur:Math.floor(secs/60)+':'+String(secs%60).padStart(2,'0')};
+      const ext=/mp4/.test(rec.mimeType||'') ? 'mp4' : 'webm';
+      recState.done={url, blob, dur:Math.floor(secs/60)+':'+String(secs%60).padStart(2,'0'),
+        name:'Home-Brace video '+new Date().toISOString().slice(0,16).replace('T',' ').replace(':','.')+'.'+ext};
       recState.stream.getTracks().forEach(t=>t.stop());
       el('cam').classList.remove('recording');
       el('cam').innerHTML='<video src="'+url+'" controls playsinline></video>';
@@ -542,6 +612,295 @@
       const s=Math.floor((Date.now()-recState.started)/1000), c=el('clk'); if(c) c.textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0')+' / 5:00';
       if(s>=300) recState.rec.stop();
     }, 250);
+  }
+
+  /* ================= THE REAL CHAT (12/11/2026) =================
+     Microsoft Teams underneath (chatgraph.js). The list refreshes every 20 seconds and the open chat every 5, only
+     while the page is on screen. New messages are added to the bottom - nothing playing is interrupted. */
+  const cur=()=>CHATS.find(x=>x.id===open)||null;
+  const adminNow=()=>{ try{ return !!(window.PH && PH.isAdmin && PH.isAdmin()); }catch(_){ return false; } };
+  const photoOf=em=>em && window.PH && PH.photoFor ? PH.photoFor(em) : '';
+  function myEmail(){ const P=window.PH && PH.profileOf && PH.profileOf(); return String((P && (P.mail||P.userPrincipalName))||'').toLowerCase(); }
+  function loading(){
+    el('items').innerHTML='<div class="empty" style="padding:30px 16px">Loading your Teams chats…</div>';
+    el('conv').innerHTML='<div class="empty">Loading…</div>';
+  }
+  function ribbon(){
+    const r=el('ribbon'); if(!r || !CG) return;
+    if(REALCHAT){
+      r.className='ribbon real';
+      r.innerHTML='REAL CHAT TEST - only you see this. Your real Teams chats; you can only send to your testers.'+
+        '<button data-act="testers">Testers ('+CG.testers().length+')</button><button data-act="mock">Back to the mock-up</button>';
+    } else if(!(window.PH && PH.isLive && PH.isLive()) && CG.signedIn() && adminNow() && !r.querySelector('[data-act="tryreal"]')){
+      r.insertAdjacentHTML('beforeend', '<button data-act="tryreal" title="Only you, on this device. Everyone else keeps seeing the mock-up.">Test the real chat</button>');
+    }
+  }
+  const hashChat=()=>{ const m=/[#&]chat=([^&]+)/.exec(location.hash||''); try{ return m ? decodeURIComponent(m[1]) : ''; }catch(_){ return ''; } };
+  /* who sent it, and their email for the photo */
+  function dress(m, c){
+    const p=(c.people||[]).find(x=>x.id===m.fromId);
+    m.fromEmail=p ? p.email : '';
+    if(m.mine) m.from=ME;
+    return m;
+  }
+
+  function startReal(){
+    REALCHAT=true;
+    const P=PH.profileOf ? PH.profileOf() : null;
+    MEID=(P && P.id)||''; ME=(P && P.displayName)||'You';
+    if(!MEID){ REALCHAT=false; return; }                 // never without knowing who this is (CG.mode checks too)
+    CHATS=[]; open=null; el('app').classList.remove('open');
+    ribbon(); renderChips(); loading();
+    loadList(true);
+    setInterval(()=>{ if(document.visibilityState!=='visible') return; tick++; pollOpen(); if(tick%4===0) loadList(false); }, 5000);
+    document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible'){ loadList(false); pollOpen(); } });
+    window.addEventListener('hashchange', ()=>{ const w=hashChat(); if(w && CHATS.some(c=>c.id===w)) openChat(w); });
+  }
+  let tick=0, listP=null, loadedOnce=false, openBusy=false;
+  function loadList(first){ if(listP) return listP; listP=doList(first).finally(()=>{ listP=null; }); return listP; }
+  async function doList(first){
+    let got;
+    try{ got=await CG.listChats(MEID); }
+    catch(e){ if(first || !CHATS.length) problem(e); return; }
+    const before={}; CHATS.forEach(c=>{ before[c.id]=c; });
+    CHATS=got.map(g=>{
+      const was=before[g.id], c=was||{msgs:[], loaded:false, next:'', unread:0};
+      const other=g.people.filter(p=>p.id!==MEID);
+      Object.assign(c, {id:g.id, type:g.type, name:g.name, people:g.people, members:g.people.map(p=>p.name), webUrl:g.webUrl, read:g.read,
+        sub:g.type==='person' ? ((other[0] && other[0].email)||'') : '',
+        photo:g.type==='person' && other[0] ? photoOf(other[0].email) : '',
+        lastMsg:{id:g.last.id, at:g.last.at, text:g.last.text, from:g.last.mine ? ME : g.last.from, mine:g.last.mine}});
+      const moved=!!(was && was._lastId && was._lastId!==g.last.id);
+      if(!g.unread) c.unread=0;
+      else if(g.id===open && document.visibilityState==='visible') { /* the open chat is read as it arrives (pollOpen) */ }
+      else c.unread=moved ? (c.unread||0)+1 : Math.max(1, c.unread||0);
+      // a new message from someone else in another chat: the little banner (phones get the real alert)
+      if(loadedOnce && moved && g.unread && g.id!==open) notify(c, {from:g.last.from, text:g.last.text});
+      c._lastId=g.last.id;
+      return c;
+    });
+    renderList();
+    if(first && !loadedOnce){
+      loadedOnce=true;
+      const want=hashChat();
+      if(want && CHATS.some(c=>c.id===want)) openChat(want);
+      else if(CHATS.length) firstOpen();
+      else el('conv').innerHTML='<div class="empty">No Teams chats yet. Start one with ＋ New chat.</div>';
+      countUnread();
+    }
+    const c=cur(); if(c && c.loaded && c._lastId && !c.msgs.some(m=>m.id===c._lastId)) pollOpen();
+  }
+  /* Exact unread numbers for the first few unread chats (their newest 20 messages, kept for when they're opened). */
+  async function countUnread(){
+    for(const c of CHATS.filter(x=>x.unread && !x.loaded && x.id!==open).slice(0,8)){
+      try{
+        const r=await CG.listMessages(c.id, MEID, null, 20);
+        if(!c.loaded){ c.msgs=r.msgs.map(m=>dress(m,c)); c.next=r.next; c.loaded=true; }
+        if(c.id!==open) c.unread=Math.max(1, c.msgs.filter(m=>!m.mine && m.at>c.read).length);
+      }catch(_){}
+    }
+    renderList();
+  }
+  async function loadChat(c){
+    try{
+      const r=await CG.listMessages(c.id, MEID);
+      c.msgs=r.msgs.map(m=>dress(m,c)).concat(c.msgs.filter(m=>m.pending)); c.next=r.next; c.loaded=true;
+      if(open===c.id) renderConv(); renderList();
+    }catch(e){
+      if(open===c.id){ const ms=el('msgs'); if(ms) ms.innerHTML='<div class="empty">'+esc('Couldn’t load this chat. Microsoft said: '+((e && e.message)||e))+'</div>'; }
+    }
+  }
+  /* The open chat: anything new goes on the bottom. Skipped while one of mine is still sending (no doubles). */
+  async function pollOpen(){
+    const c=cur(); if(!REALCHAT || !c || !c.loaded || openBusy || c.msgs.some(m=>m.pending)) return;
+    openBusy=true;
+    try{
+      const r=await CG.listMessages(c.id, MEID, null, 20);
+      if(open!==c.id || c.msgs.some(m=>m.pending)) return;
+      const have={}; c.msgs.forEach(m=>{ if(m.id) have[m.id]=1; });
+      const fresh=r.msgs.filter(m=>!have[m.id]).map(m=>dress(m,c));
+      if(fresh.length){
+        const prev=c.msgs[c.msgs.length-1]; c.msgs=c.msgs.concat(fresh); appendConv(c, fresh, prev);
+        if(fresh.some(m=>!m.mine)) readIt(c, true);
+        renderList();
+      }
+    }catch(_){} finally{ openBusy=false; }
+  }
+  function appendConv(c, list, prev){
+    const ms=el('msgs'); if(!ms || open!==c.id){ if(open===c.id) renderConv(); return; }
+    const was=stick; let h='';
+    list.forEach(m=>{ if(!prev || dayKey(prev.at)!==dayKey(m.at)) h+='<div class="day">'+esc(dayLabel(m.at))+'</div>'; h+=msgHTML(m,c,prev); prev=m; });
+    const e=ms.querySelector(':scope > .empty'); if(e) e.remove();
+    ms.insertAdjacentHTML('beforeend', h); hydrate(ms);
+    if(was) ms.scrollTop=ms.scrollHeight;
+  }
+  function msgEl(id){ const ms=el('msgs'); if(!ms) return null; const all=ms.querySelectorAll('[data-mid]'); for(let i=0;i<all.length;i++) if(all[i].dataset.mid===id) return all[i]; return null; }
+  function replaceEl(c, oldId, m, prev){
+    if(open!==c.id) return; const x=msgEl(oldId); if(!x) return;
+    x.outerHTML=msgHTML(m, c, prev); hydrate(el('msgs'));
+    if(stick){ const ms=el('msgs'); ms.scrollTop=ms.scrollHeight; }
+  }
+  function readIt(c, force){
+    if(!REALCHAT || !c || document.visibilityState!=='visible' || (!force && !c.unread)) return;
+    c.unread=0; c.read=Date.now(); renderList();
+    CG.markRead(c.id, MEID).catch(()=>{});
+  }
+  /* Pictures inside messages, and videos/pictures sent as files: filled in with the sign-in. One that can't be
+     fetched becomes a link to open it in Teams / SharePoint instead. */
+  function hydrate(root){
+    if(!REALCHAT || !root) return;
+    root.querySelectorAll('img[data-hc]:not([data-done])').forEach(img=>{
+      img.dataset.done='1';
+      CG.picture(img.dataset.hc).then(u=>{ img.src=u; }, ()=>{ const d=document.createElement('div'); d.className='bub'; d.textContent='(A picture that couldn’t be loaded - open it in Teams)'; (img.closest('.media')||img).replaceWith(d); });
+    });
+    root.querySelectorAll('[data-ref]:not([data-done])').forEach(x=>{
+      x.dataset.done='1';
+      CG.fileFor(x.dataset.ref).then(f=>{
+        if(!f.url) throw new Error('no address');
+        if(x.tagName==='VIDEO'){ if(f.thumb) x.poster=f.thumb; x.src=f.url; const w=x.parentNode && x.parentNode.querySelector('.wait'); if(w) w.remove(); }
+        else x.src=f.url;
+      }).catch(()=>{
+        const a=document.createElement('a'); a.className='file'; a.href=x.dataset.ref; a.target='_blank'; a.rel='noopener';
+        a.textContent=(x.tagName==='VIDEO'?'🎥 Open the video':'📷 Open the picture')+' in Teams / SharePoint';
+        (x.closest('.media')||x).replaceWith(a);
+      });
+    });
+  }
+
+  /* ---------- sending for real ---------- */
+  async function sendReal(m){
+    const c=cur(); if(!c) return;
+    if(!CG.canSend(c, MEID)){ toast('Test: you can only send to your testers.'); return; }
+    const kind=m.blob ? 'video' : m.b64 ? 'photo' : 'text';
+    const local={id:'local-'+Date.now(), at:Date.now(), from:ME, mine:true, pending:true, text:kind==='text' ? m.text : '', images:[], files:[],
+      localImg:kind==='photo' ? m.photo : '', localVideo:kind==='video' ? m.video : '', progress:kind==='video' ? 0 : null};
+    const prev=c.msgs[c.msgs.length-1]; c.msgs.push(local); c.loaded=true; appendConv(c, [local], prev); renderList();
+    try{
+      let res, warn='';
+      if(kind==='text') res=await CG.sendText(c, MEID, m.text);
+      else if(kind==='photo') res=await CG.sendPhoto(c, MEID, m.b64, m.w, m.h);
+      else {
+        const r=await CG.sendVideo(c, MEID, m.blob, m.name, f=>{ local.progress=f; const x=msgEl(local.id), mt=x && x.querySelector('.meta'); if(mt) mt.textContent='Uploading… '+Math.round(f*100)+'%'; });
+        res=r.message; if(!r.shared) warn='Sent - but sharing the video with them didn’t work, so they may not be able to open it.';
+      }
+      const got=CG._t.mapMessage(res, MEID) || {};
+      const done=Object.assign({}, local, got, {pending:false, progress:null, mine:true, from:ME, localImg:local.localImg, localVideo:local.localVideo});
+      if(kind==='text' && !done.text) done.text=m.text;
+      if(!done.at) done.at=local.at;
+      const i=c.msgs.indexOf(local); if(i>=0) c.msgs[i]=done;
+      replaceEl(c, local.id, done, c.msgs[i-1]);
+      c._lastId=done.id; c.lastMsg={id:done.id, at:done.at, text:done.text, mine:true, from:ME, video:kind==='video', photo:kind==='photo'};
+      renderList();
+      if(warn) toast(warn); else if(kind!=='text') toast((kind==='video'?'Video':'Photo')+' sent ✓');
+      chatAlert(c, kind, m.text||'');
+    }catch(e){
+      local.pending=false; local.failed=(e && e.message)||'error';
+      replaceEl(c, local.id, local, c.msgs[c.msgs.indexOf(local)-1]);
+      toast('Not sent: '+local.failed);
+    }
+  }
+  /* The phone alert, sent by Home-Brace to the others in the chat (every device they turned on). In the test, only
+     to testers. Messages written in Teams itself don't come through here - the Teams app alerts for those. */
+  function chatAlert(c, kind, text){
+    const A=window.PH_ALERTS; if(!A || !A.ON || !A.sendTo) return;
+    let to=(c.people||[]).filter(p=>p.id!==MEID && p.email).map(p=>p.email);
+    if(CG.TEST){ const ok=CG.testers().map(t=>t.email); to=to.filter(e=>ok.indexOf(e)>=0); }
+    if(!to.length) return;
+    A.sendTo(to, {title:c.type==='person' ? ME : ME+' · '+c.name, body:kind==='video' ? '🎥 Sent a video' : kind==='photo' ? '📷 Sent a photo' : String(text).slice(0,140),
+      url:A.here('chat.html')+'#chat='+encodeURIComponent(c.id), tag:'hb-chat'}).catch(()=>{});
+  }
+  /* Microsoft said no - in words. Before IT approves Chat.ReadWrite this is what shows. */
+  function problem(e){
+    const raw=String(((e && e.errorCode)||'')+' '+((e && e.message)||e||'')).trim();
+    const consent=/AADSTS65001|AADSTS90094|consent_required|interaction_required|invalid_grant|admin approval|InteractionRequired/i.test(raw);
+    const lic=!consent && /licen[cs]e/i.test(raw);
+    const msg=consent ? '<b>Chat isn’t approved by IT yet.</b><br>Microsoft hasn’t given Home-Brace the Teams chat permission (Chat.ReadWrite). Once Adam clicks <b>Grant admin consent</b>, press Try again.'
+      : lic ? '<b>No Teams licence.</b><br>Microsoft says this account can’t use Teams chat.<br><small>'+esc(raw.slice(0,200))+'</small>'
+      : '<b>Couldn’t load your Teams chats.</b><br><small>Microsoft said: '+esc(raw.slice(0,240))+'</small>';
+    el('items').innerHTML='<div class="empty" style="padding:24px 16px">'+msg+'<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px">'+
+      '<button class="btn sm" data-act="retry">Try again</button>'+(consent ? '<button class="btn ghost sm" data-act="askms">Sign in for chat</button>' : '')+
+      '<button class="btn ghost sm" data-act="mock">Back to the mock-up</button></div></div>';
+    el('conv').innerHTML='<div class="empty">'+(consent ? 'Waiting on IT to approve chat.' : '')+'</div>';
+  }
+
+  /* ---------- testers, new chats ---------- */
+  function testersDlg(){
+    const ts=CG.testers();
+    openDlg(top('Testers')+'<div class="dm-body"><div class="lead">While you test, the real chat only sends to these people - every other chat is locked. They get real Teams messages from you, so pick people who know you’re testing.</div>'+
+      '<div class="pick">'+(ts.length ? ts.map(t=>'<div class="trow">'+personAv(t.name, t.email)+'<span style="flex:1;min-width:0">'+esc(t.name)+'<small>'+esc(t.email)+'</small></span><button class="x" data-act="tdel" data-v="'+esc(t.email)+'" aria-label="Remove '+esc(t.name)+'">×</button></div>').join('')
+        : '<div class="grp">No testers yet</div>')+'</div>'+
+      '<input class="search" id="tq" placeholder="Add someone - type their name" autocomplete="off"><div class="pick" id="tres" hidden></div>'+
+      '<div class="other">Kept on this device only.</div></div><div class="dm-foot"><button class="btn" data-act="close">Done</button></div>');
+    setTimeout(()=>{ const i=el('tq'); if(i) i.focus(); }, 30);
+  }
+  function afterTesters(){ testersDlg(); ribbon(); if(cur()) renderConv(); }
+  function newChatDlgReal(){
+    if(CG.TEST){
+      const ts=CG.testers();
+      openDlg(top('New chat')+'<div class="dm-body"><div class="note">Test: you can start a chat with your testers only.</div><div class="pick">'+
+        (ts.length ? ts.map(t=>'<button data-act="mkreal" data-v="'+esc(t.email)+'">'+personAv(t.name, t.email)+'<span>'+esc(t.name)+'<small>'+esc(t.email)+'</small></span></button>').join('')+
+          (ts.length>1 ? '<button data-act="mkgroup">'+avatar({type:'group', name:'Testers'}, true)+'<span>All your testers<small>A group chat</small></span></button>' : '')
+          : '<div class="grp">No testers yet</div>')+
+        '</div><div><button class="btn ghost sm" data-act="testers">Add testers</button></div></div>');
+      return;
+    }
+    openDlg(top('New chat')+'<div class="dm-body"><input class="search" id="nqr" placeholder="Search for a person" autocomplete="off"><div class="pick" id="nres" hidden></div></div>');
+    setTimeout(()=>{ const i=el('nqr'); if(i) i.focus(); }, 30);
+  }
+  let psT=null;
+  function peopleSearch(inp){
+    clearTimeout(psT);
+    const box=el(inp.id==='tq' ? 'tres' : 'nres'); if(!box) return;
+    const q=inp.value.trim(); if(q.length<2){ box.hidden=true; box.innerHTML=''; return; }
+    psT=setTimeout(()=>{
+      CG.searchPeople(q).then(list=>{
+        if(inp.value.trim()!==q) return;
+        const act=inp.id==='tq' ? 'tadd' : 'mkreal';
+        box.hidden=false;
+        box.innerHTML=list.length ? list.map(u=>'<button data-act="'+act+'" data-v="'+esc(u.email)+'" data-email="'+esc(u.email)+'" data-name="'+esc(u.name)+'">'+personAv(u.name, u.email)+
+          '<span>'+esc(u.name)+'<small>'+esc(u.title ? u.title+' · '+u.email : u.email)+'</small></span></button>').join('') : '<div class="grp">No one found</div>';
+      }, e=>{ box.hidden=false; box.innerHTML='<div class="grp">'+esc('Search didn’t work: '+((e && e.message)||e))+'</div>'; });
+    }, 300);
+  }
+  async function startWith(emails, topic){
+    toast('Opening the chat…');
+    try{
+      const us=[]; for(const e of emails) us.push(await CG.userByEmail(e));
+      const ch=await CG.createChat(MEID, us.map(u=>u.id), us.length>1 ? topic : '');
+      closeDlg();
+      await loadList(false);
+      if(!CHATS.some(c=>c.id===ch.id)){
+        const people=[{id:MEID, name:ME, email:myEmail()}].concat(us);
+        CHATS.unshift({id:ch.id, type:us.length===1 ? 'person' : 'group', name:us.length===1 ? us[0].name : (topic||us.map(u=>u.name).join(', ')),
+          people, members:people.map(p=>p.name), msgs:[], loaded:true, next:'', unread:0, read:Date.now(),
+          sub:us.length===1 ? us[0].email : '', photo:us.length===1 ? photoOf(us[0].email) : '', lastMsg:{at:Date.now(), text:'', from:'', mine:true}});
+      }
+      openChat(ch.id);
+    }catch(e){ toast('Couldn’t start the chat: '+((e && e.message)||e)); }
+  }
+  /* The real chat's buttons. false = not one of these. */
+  function realAct(act, b, v){
+    if(act==='tryreal'){ CG.setSwitch(true); location.reload(); return; }
+    if(act==='mock'){ CG.setSwitch(false); location.hash=''; location.reload(); return; }
+    if(act==='retry'){ loading(); loadList(true); return; }
+    if(act==='askms'){ CG.ask().then(()=>{ loading(); loadList(true); }, e=>problem(e)); return; }
+    if(act==='testers') return testersDlg();
+    if(act==='tadd'){ CG.setTesters(CG.testers().concat([{email:b.dataset.email, name:b.dataset.name}])); afterTesters(); return; }
+    if(act==='tdel'){ CG.setTesters(CG.testers().filter(t=>t.email!==v)); afterTesters(); return; }
+    if(act==='mkreal'){ startWith([v]); return; }
+    if(act==='mkgroup'){ startWith(CG.testers().map(t=>t.email), 'Home-Brace test'); return; }
+    if(act==='more'){
+      const c=cur(); if(!c || !c.next) return;
+      b.disabled=true;
+      CG.listMessages(c.id, MEID, c.next).then(r=>{
+        const ms=el('msgs'), h0=ms ? ms.scrollHeight : 0, t0=ms ? ms.scrollTop : 0;
+        const have={}; c.msgs.forEach(m=>{ have[m.id]=1; });
+        c.msgs=r.msgs.filter(m=>!have[m.id]).map(m=>dress(m,c)).concat(c.msgs); c.next=r.next;
+        renderConv(); const ms2=el('msgs'); if(ms2){ stick=false; ms2.scrollTop=ms2.scrollHeight-h0+t0; }
+      }, e=>{ b.disabled=false; toast('Couldn’t load more: '+((e && e.message)||e)); });
+      return;
+    }
+    return false;
   }
 
   /* ---------- clicks, typing ---------- */
@@ -558,9 +917,12 @@
     if(act==='recgo') return recGo();
     if(act==='recstop'){ if(recState && recState.rec) recState.rec.stop(); clearInterval(recState && recState.timer); return; }
     if(act==='retake'){ stopCamera(); recordDlg(); return; }
-    if(act==='recsend'){ const d=recState && recState.done; closeDlg(); if(d) send({video:d.url, dur:d.dur}); toast('Video sent ✓'); return; }
-    if(act==='play'){ const box=b.closest('.media'), vid=box.querySelector('video'); box.classList.add('playing'); vid.controls=true; vid.play().catch(()=>{}); return; }
-    if(act==='call'){ toast('Calls open in Microsoft Teams - free. (Mock-up: nothing opens.)'); return; }
+    if(act==='recsend'){ const d=recState && recState.done; closeDlg(); if(d) send({video:d.url, dur:d.dur, blob:d.blob, name:d.name}); if(!REALCHAT) toast('Video sent ✓'); return; }
+    if(act==='play'){ const box=b.closest('.media'), vid=box.querySelector('video'); if(REALCHAT && !vid.getAttribute('src')){ toast('The video is still loading - one moment.'); return; }
+      box.classList.add('playing'); vid.controls=true; vid.play().catch(()=>{}); return; }
+    if(act==='call'){
+      if(REALCHAT){ const c=cur(), u=c && CG.callLink(c, MEID); if(u) window.open(u, '_blank', 'noopener'); else toast('No one to call in this chat.'); return; }
+      toast('Calls open in Microsoft Teams - free. (Mock-up: nothing opens.)'); return; }
     if(act==='alerts'){ alertTab=DEVICE; return alertsDlg(); }
     if(act==='atab'){ alertTab=v; alertsDlg(); return; }
     if(act==='alertson'){
@@ -579,7 +941,8 @@
       if(REAL && alertsOn){ PH_ALERTS.send(SAMPLE()).then(()=>toast('Sent ✓ It arrives in about 5 seconds.'), err=>{ if(PH_ALERTS.state()!=='on') setAlerts(false); toast('Couldn’t send: '+(err&&err.message)); }); return; }
       notify(CHATS[0], {from:'Gabriela Garrison', video:true}); return;
     }
-    if(act==='new') return newChatDlg();
+    if(act==='new') return REALCHAT ? newChatDlgReal() : newChatDlg();
+    if(REALCHAT || act==='tryreal'){ const r=realAct(act, b, v); if(r!==false) return; }
     if(act==='mk'){
       const t=b.dataset.t; let c=CHATS.find(x=>x.name===v);
       if(!c){ c={id:'n'+Date.now(), type:t, name:v, sub:t==='person'?'':'', members:t==='person'?[v,ME]:[ME,'Gabriela Garrison','Quinn Quill','Avery Brooks'], unread:0, msgs:[]};
@@ -595,22 +958,44 @@
   });
   document.addEventListener('input', e=>{
     if(e.target.id==='q'){ q=e.target.value; renderList(); }
+    if(e.target.id==='tq' || e.target.id==='nqr') peopleSearch(e.target);
     if(e.target.id==='nq'){ const qq=e.target.value.trim().toLowerCase(); document.querySelectorAll('#pick button').forEach(x=>{ x.style.display=!qq||x.textContent.toLowerCase().indexOf(qq)>=0?'':'none'; }); }
     if(e.target.id==='txt'){ e.target.style.height='auto'; e.target.style.height=Math.min(120,e.target.scrollHeight)+'px'; }
   });
   el('file').addEventListener('change', e=>{
     const f=e.target.files && e.target.files[0]; e.target.value=''; if(!f) return;
+    if(REALCHAT){
+      if(/^video\//.test(f.type) || /\.(mp4|mov|m4v|webm|3gp)$/i.test(f.name||'')){ const u=URL.createObjectURL(f); objectUrls.push(u); send({video:u, blob:f, name:f.name||'video.mp4'}); }
+      else CG.photo(f).then(p=>send({photo:p.dataUrl, b64:p.b64, w:p.w, h:p.h}), err=>toast((err && err.message) || 'That file could not be sent.'));
+      return;
+    }
     const url=URL.createObjectURL(f); objectUrls.push(url);
     if(/^video\//.test(f.type)) send({video:url, dur:'video'}); else send({photo:url});
     toast((/^video\//.test(f.type)?'Video':'Photo')+' sent ✓');
   });
   window.addEventListener('pagehide', ()=>{ stopCamera(); objectUrls.forEach(u=>URL.revokeObjectURL(u)); });
 
-  renderAlertbar(); renderChips(); renderList(); renderConv();
   /* On a computer the newest chat is open beside the list; a phone starts at the list. */
+  const DEMO=CHATS;
   const wide=window.matchMedia('(min-width:761px)');
-  const firstOpen=()=>{ if(wide.matches && !open) openChat(CHATS.slice().sort((a,b)=>last(b).at-last(a).at)[0].id, false); };
-  firstOpen(); if(wide.addEventListener) wide.addEventListener('change', firstOpen);
+  const firstOpen=()=>{ if(wide.matches && !open && CHATS.length) openChat(CHATS.slice().sort((a,b)=>last(b).at-last(a).at)[0].id, false); };
+  /* Someone who switched the real chat on doesn't see the made-up chats flash up first. */
+  const WANT_REAL=!!(CG && CG.switchedOn() && !(window.PH && PH.isLive && PH.isLive()));
+  let demoShown=!WANT_REAL;
+  renderAlertbar(); renderChips();
+  if(WANT_REAL){ CHATS=[]; loading(); } else { renderList(); renderConv(); firstOpen(); }
+  if(wide.addEventListener) wide.addEventListener('change', firstOpen);
+  /* Once signed in we know who this is: the real chat (an Admin who switched it on, sandbox only) or the mock-up. */
+  function startMode(){
+    if(!CG || !window.PH_AUTH) return;
+    if(CG.mode()==='real'){ if(!REALCHAT) startReal(); return; }
+    if(REALCHAT) return;
+    if(!demoShown){ demoShown=true; CHATS=DEMO; renderChips(); renderList(); renderConv(); firstOpen(); }
+    ribbon();
+  }
+  document.addEventListener('ph-signed-in', ()=>setTimeout(startMode, 0));
+  document.addEventListener('ph-identity', ()=>setTimeout(startMode, 0));
+  if(window.PH_AUTH) startMode();
   // again once the page is showing (after sign-in), or the window changes
   window.addEventListener('resize', fit); window.addEventListener('load', fit);
   if(window.ResizeObserver) new ResizeObserver(fit).observe(document.body);

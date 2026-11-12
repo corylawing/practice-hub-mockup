@@ -29,7 +29,9 @@ I can confidently say that the chat feature should go next. The production thing
    flip PAY_LIVE. Target: pay period #24 (Nov 2-15, sheets due Tue Nov 17). Steps: "PAYROLL LIVE (02/11)" below.
 2. **Chat + phone alerts -> LIVE** (one thing to her). STATUS 03/11: alerts step 3 built on the sandbox (every device,
    signed-in only, payroll reminders on phones - "PHONE ALERTS, step 3"); Chat waits on Keanu (Chat.ReadWrite + Teams
-   licences, asked 03/11). Needs IT (Adam) to approve the Teams chat permission; **12/11: Adam ADDED Chat.ReadWrite to the app but did NOT grant admin consent (API permissions Status column blank; the other 4 say Granted) - asked him to click Grant admin consent. Never request Chat.ReadWrite until it shows Granted: user consent is off here, so staff would hit 'Need admin approval'. Noemi: Adam says licensing; Sunflower is moving into the tenant.** alerts:
+   licences, asked 03/11). Needs IT (Adam) to approve the Teams chat permission; **12/11: Adam ADDED Chat.ReadWrite to the app but did NOT grant admin consent (API permissions Status column blank; the other 4 say Granted) - asked him to click Grant admin consent. Never request Chat.ReadWrite until it shows Granted: user consent is off here, so staff would hit 'Need admin approval'. Noemi: Adam says licensing; Sunflower is moving into the tenant.** **REAL CHAT BUILT 12/11 (hc146, sandbox only,
+   live OFF) - see "REAL CHAT (12/11/2026)" below. Next: Adam grants consent -> Cory tests on the sandbox -> his OK ->
+   CHAT_LIVE.** alerts:
    subscriptions in SharePoint, the live origin in api-push ORIGINS, the home-screen sign-in on live (Cory's iPhone
    test PASSED 03/11 on the sandbox, hc117: Home-Brace home-screen icon, Microsoft sign-in inside it, bell -> Turn on ->
    the "Alerts are on" alert arrived through the sign-in-checking sender).
@@ -64,6 +66,13 @@ I can confidently say that the chat feature should go next. The production thing
 7. **(Later, Cory 05/11: "leave it for now")** Home's updates list fills up with "Production numbers entered / Workbook
    updated" notes (sec production, per office). Idea when he wants it: fold them into one line per day ("Production
    updated: Carlsbad, Hobbs, Clovis") or show them to Leadership / Executive / Admin only.
+8. **Meeting Calendar -> Schedule (Cory 12/11/2026, "before I forget").** "connecting their Meeting Calendar which they
+   did in home-brace to schedule so they can see Team Meetings and Doctor Schedule (based on permissions and
+   everything). They should also be able to create a meeting from Home-Brace." Not started. First find out WHICH
+   calendar they made (nothing in v1/ says "meeting" today - likely an Outlook/Microsoft 365 group or SharePoint
+   calendar on the Home-Brace site; ask Cory for its name/link). Then: show its Team Meetings beside the Doctor
+   Schedule on schedule.html, following the same permissions; and "New meeting" from Home-Brace (probably needs
+   Calendars.ReadWrite / Group.ReadWrite.All - Adam would have to approve, like Chat.ReadWrite).
 **LIVE 01/11/2026 (hc115, 36 files byte-checked, alerts-test 404 on live):** Selene (01/11) "Could we add “Pending – Scheduled to Start” as an additional TC
 outcome? This would apply to patients who have completed their exam and scheduled a future start appointment but
 have not yet signed their contract." -> tc.js SCHED_START: a completed consult (counts for conversion), not a start
@@ -996,6 +1005,49 @@ delegated **Chat.ReadWrite** on the app registration and to confirm staff have T
   the manifest on live pages (user.js `!isLive()` check) and the home-screen redirect sign-in on live (gate.js
   USE_REDIRECT `&& !LIVE`); after the live deploy, one iPhone retest on the live host (sandbox passed 03/11: home-screen
   sign-in + Turn on + alert arrived through the sign-in-checking sender; a payroll alert not yet seen on a phone).
+
+**REAL CHAT (12/11/2026, hc146) - SANDBOX ONLY, LIVE OFF.** Cory: "Yes start. But very important that nobody sees it
+until I've confirmed it works. For them what we did in sandbox is very important, but also the ability to send videos."
+- `v1/chatgraph.js` (PH_CHATG) = Microsoft Teams through Graph, DELEGATED Chat.ReadWrite. `chat.html` = the same mock-up
+  page; REALCHAT swaps the data underneath (list, messages, send, photos, videos, alerts, new chat, call -> Teams).
+- THE LOCKS (all in test/chat.test.js): (1) live: `CHAT_LIVE=false` -> mode() 'off' (and NAV chat show stays
+  `env()!=='live'`, so the page is locked there anyway). (2) sandbox: everyone gets the mock-up; REAL only for an Admin
+  who pressed "Test the real chat" in the ribbon (localStorage `ph_chat_real`, this device) AND only once Graph /me has
+  answered (`signedIn()` = profileOf().id) - before that the sandbox runs on a stand-in person who IS an Admin; the
+  browser check caught a TC getting the real chat for a moment, fixed. (3) TEST (= !CHAT_LIVE): read any of your own
+  Teams chats, but SEND only where every other member is a tester (`ph_chat_testers`, this device; no email = not a
+  tester). Checked inside sendText/sendPhoto/sendVideo before any fetch, and the page shows no message box (a 🔒 note)
+  in other chats; new chats = testers only; phone alerts = testers only.
+- Sign-in unchanged: gate.js SCOPES never has Chat.ReadWrite. New `PH_AUTH.tokenFor(extra)` (silent, never puts the
+  sign-in screen up - the page says what Microsoft said) and `askFor(extra)` (from a click: popup, or redirect on
+  phones/home-screen; goSignIn now takes scopes). Not consented yet -> "Chat isn't approved by IT yet" + Try again.
+- VIDEOS the Teams way: upload to the sender's OneDrive "Microsoft Teams Chat Files" (<=4 MB one PUT; bigger = upload
+  session, 10 MiB pieces, NO auth header on the upload URL; 250 MB cap; conflictBehavior rename) -> /invite the other
+  members (read, requireSignIn, no email) -> message with a `reference` attachment (id = GUID from the eTag, contentUrl
+  = webUrl). Works with Sites.ReadWrite.All (no Files.* needed). Playing one: /shares/u!<b64url>/driveItem
+  ?$expand=thumbnails -> @microsoft.graph.downloadUrl as the <video> src (cached 40 min). Recorded videos keep their
+  blob (name "Home-Brace video <date>.mp4|webm").
+- PHOTOS: resized to 1600 px JPEG (drops location data) and sent inside the message (hostedContents temporaryId 1).
+  Pictures in others' messages (hostedContents URLs) are fetched with the token -> blob URL.
+- READING: Teams HTML -> plain text (`parts()`: br/p -> new lines, <emoji alt>, <at> -> @Name, entities, scripts/styles
+  dropped, only graph.microsoft.com hostedContents images kept) and always escaped; files only if https. Meeting and
+  hidden chats left out. Unread = last preview from someone else after viewpoint.lastMessageReadDateTime; exact counts
+  for up to 8 unread chats; markChatReadForUser on open / new incoming. Polls: open chat 5 s, list 20 s, only while
+  the page is visible; new messages are APPENDED (a playing video isn't interrupted); skipped while one of mine sends.
+  Header badge = the page's sessionStorage ph_chat_unread (other pages don't poll Graph yet).
+- Phone alerts: after a send, PH_ALERTS.sendTo(the others, testers only) with url chat.html#chat=<id> (opens that
+  chat). On the SANDBOX the device list is this browser's, so cross-device alerts need the live test (below).
+  Messages typed in Teams itself don't send Home-Brace alerts (the Teams app alerts for those).
+- Browser-checked (scratchpad fakechat.js = fakesign + a pretend Teams; chatreal.js / chatsend.js): list, names, 1:1 vs
+  group, unread, locks (group with a non-tester, non-tester 1:1), escaping (a <script> in a Teams message stays text,
+  "<b>" typed stays text), received video plays (8 s), picture loads, video send (PUT -> invite -> reference message),
+  photo send (800x600 hostedContents), not-approved message, non-Admin = mock-up with no button and 0 Graph calls,
+  ?env=live = locked, mode off, 0 chat calls. Phone 390: no sideways scroll.
+- NOT DONE / NEXT: (a) Adam must Grant admin consent (12/11: added but not granted). (b) Cory's test on the sandbox:
+  ribbon -> Test the real chat -> Testers -> add someone who knows -> New chat -> text, photo, record a video, and a
+  video from Teams back. (c) Offices & Teams group shortcuts (the mock-up's) - build for go-live from the roster
+  emails. (d) Going live: CHAT_LIVE=true (or a testers-only live pilot first, for cross-device phone alerts), and the
+  NAV chat show rule. (e) Teams licences: Adam says staff "should have it".
 
 **Portfolio demo got Team Chat too (22/10/2026).** The REPO ROOT pages (index.html, calendars.html ... + assets/app.js,
 data.js, styles.css; ribbon "INTERACTIVE PORTFOLIO DEMO · Fictional data") are Cory's GitHub portfolio demo - NOT
