@@ -101,30 +101,36 @@
   .sm{position:absolute;left:2%;right:2%;border-top:2px dotted #8a5cf5;pointer-events:none}
   .molab{position:absolute;bottom:-24px;left:0;right:0;text-align:center;font-size:11.5px;color:var(--soft);font-weight:700;white-space:nowrap}
   .mo.best .molab{color:var(--good)}
-  /* ON A PHONE (12/11/2026, Cory's iPhone screenshot: "Not looking so clean on mobile"). The chart was drawn 660px wide
-     inside a ~310px card, so it scrolled sideways, the amount over each bar ran into the goal lines and the next bar,
-     and the last one was cut off - and "hover for exact figures" can't happen on a phone. So on a phone: every month
-     fits the width, no amounts over the bars, and a TAP on a month shows its figures in a line under the chart (the
-     latest month to start with). Computers keep the chart exactly as it was. */
-  .readout,.tapnote{display:none}
+  /* ON A PHONE (12/11/2026, Cory's iPhone screenshot: "Not looking so clean on mobile", then of the first fix: "Even
+     your photos don't look super clean"). Eleven months of paired bars can't sit cleanly in a ~310px card: the amounts
+     ran into the goal lines and each other, and it scrolled sideways. So a phone gets the same figures as ONE ROW PER
+     MONTH, top to bottom: this year's bar (green at/above goal, red under, amber in progress), last year as a thin
+     grey bar under it, a navy tick at the main goal and a purple one at stretch, and the amount at the end of the
+     row - nothing overlaps. Tap a month for its full figures in a line under the list. Computers keep the chart. */
+  .mlist,.readout,.tapnote{display:none}
   @media(max-width:520px){
-    .chartwrap{overflow-x:visible}
-    .plot{min-width:0;padding-left:34px}
-    .grid{left:34px}
-    .grid .gl b{left:-36px;width:31px;font-size:9.5px}
-    .chart{gap:3px;height:190px}
-    .bars{gap:2px}
-    .bar{width:44%;border-radius:3px 3px 0 0}
-    .bval{display:none}
-    .gm,.sm{left:0;right:0}
-    .molab{font-size:10px;bottom:-22px}
-    .molab .star{display:none}
-    .mo.best::before{content:'\2605';position:absolute;top:-2px;left:0;right:0;text-align:center;font-size:11px;color:var(--good);z-index:1}
-    .mo{cursor:pointer;border-radius:6px}
-    .mo.sel{background:rgba(15,42,74,.07)}
+    #bottomchart .chartwrap{display:none}
+    .mlist{display:block;margin-top:4px}
+    .mrow{display:grid;grid-template-columns:44px 1fr 78px;align-items:center;gap:10px;padding:7px 6px;border-radius:8px;cursor:pointer}
+    .mrow + .mrow{border-top:1px solid #EEF1F5}
+    .mrow.sel{background:#F2F6FA;border-top-color:transparent}
+    .mrow.sel + .mrow{border-top-color:transparent}
+    .mrow .mm{font-size:13px;font-weight:700;color:var(--soft)}
+    .mrow.best .mm{color:var(--good)}
+    .mtrack{position:relative;height:20px}
+    .mtrack .ty{position:absolute;left:0;top:2px;height:11px;border-radius:0 4px 4px 0;background:var(--teal)}
+    .mtrack .ty.over{background:var(--good)} .mtrack .ty.under{background:var(--bad)} .mtrack .ty.mtd{background:var(--amber)}
+    .mtrack .ly{position:absolute;left:0;top:15px;height:4px;border-radius:0 2px 2px 0;background:var(--ly)}
+    .mtrack .tg,.mtrack .ts{position:absolute;top:0;height:20px;width:0;margin-left:-1px}
+    .mtrack .tg{border-left:2px solid var(--navy)}
+    .mtrack .ts{border-left:2px dotted #8a5cf5}
+    .mrow .mv{text-align:right;font-size:13.5px;font-weight:800;color:var(--navy);font-variant-numeric:tabular-nums;white-space:nowrap}
+    .mrow .mv small{display:block;font-size:10.5px;font-weight:700;color:var(--soft)}
     .hovnote{display:none}
     .tapnote{display:inline}
-    .readout{display:block;margin-top:16px;padding:10px 12px;border-radius:10px;background:#F2F6FA;font-size:13px;line-height:1.5;color:var(--navy)}
+    .readout{display:block;margin-top:12px;padding:10px 12px;border-radius:10px;background:#F2F6FA;font-size:13px;line-height:1.5;color:var(--navy)}
+    .legend .swline{width:2px;height:14px;border:0;background:var(--navy)}
+    .legend .swdot{width:0;height:14px;border:0;border-left:2px dotted #8a5cf5}
   }
   .tip{position:fixed;background:var(--navy);color:#fff;font-size:12px;padding:7px 10px;border-radius:8px;pointer-events:none;opacity:0;transition:opacity .12s;z-index:50;white-space:nowrap;box-shadow:var(--shadow-lg)}
   /* leaderboard */
@@ -283,14 +289,14 @@
   }
 
 </style>
-<script src="user.js?v=hc151"></script>
-<script src="celebrate.js?v=hc151"></script>
+<script src="user.js?v=hc152"></script>
+<script src="celebrate.js?v=hc152"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="workbook.js?v=hc151"></script>
-  <script src="store.js?v=hc151"></script>
-  <script src="prodbook.js?v=hc151"></script>
-  <script src="prodstore.js?v=hc151"></script>
-  <script src="gate.js?v=hc151"></script>
+  <script src="workbook.js?v=hc152"></script>
+  <script src="store.js?v=hc152"></script>
+  <script src="prodbook.js?v=hc152"></script>
+  <script src="prodstore.js?v=hc152"></script>
+  <script src="gate.js?v=hc152"></script>
 </head>
 <body>
 <div class="ribbon">SANDBOX — made-up numbers. The practice’s real workbook is never opened here.</div>
@@ -800,19 +806,27 @@ const OFFICES=[
         '<div class="bar lyb" style="height:'+h(l)+'%" data-t="'+MO[i]+' last year: about '+Math.round(l)+' starts"></div>'+
         '<div class="bar ab '+(a>=g?'over':'under')+'" style="height:'+h(a)+'%" data-t="'+MO[i]+' '+LIVE_YEAR+': '+Math.round(a)+' starts \u00b7 goal '+Math.round(g)+'">'+
           '<span class="bval">'+Math.round(a)+'</span></div>'+
-        '</div><div class="molab">'+MO[i]+(i===best?'<span class="star"> \u2605</span>':'')+'</div>'+
-        '<span class="ro" hidden><b>'+MOFULL[i]+' '+LIVE_YEAR+': '+Math.round(a)+' starts'+((o.done||[])[i]>0 && (o.done||[])[i]<(o.days||[])[i]?' so far':'')+'</b>'+(g?' \u00b7 goal '+Math.round(g)+(a>=g?' \u2713':''):'')+
+        '</div><div class="molab">'+MO[i]+(i===best?' \u2605':'')+'</div></div>';
+    }).join('');
+    // A PHONE: one row per month (see the CSS note above .mlist).
+    let rmax=0; L.forEach(i=>{ rmax=Math.max(rmax,sa[i]||0,sg[i]||0,sl[i]||0); }); rmax=rmax*1.03||1;   // the rows' own scale: the bars fill the row
+    const rows=L.map(i=>{
+      const a=sa[i]||0, g=sg[i]||0, l=sl[i]||0, w=v=>Math.min(100,Math.max(0,(v/rmax)*100)), prog=(o.done||[])[i]>0 && (o.done||[])[i]<(o.days||[])[i];
+      return '<div class="mrow'+(i===best?' best':'')+'"><span class="mm">'+MO[i]+(i===best?' \u2605':'')+'</span>'+
+        '<span class="mtrack"><i class="ty '+(prog?'mtd':a>=g?'over':'under')+'" style="width:'+w(a)+'%"></i><i class="ly" style="width:'+w(l)+'%"></i>'+(g?'<i class="tg" style="left:'+w(g)+'%"></i>':'')+'</span>'+
+        '<span class="mv">'+Math.round(a)+(g?'<small>'+Math.round(a/g*100)+'% of goal</small>':'')+'</span>'+
+        '<span class="ro" hidden><b>'+MOFULL[i]+' '+LIVE_YEAR+': '+Math.round(a)+' starts'+(prog?' so far':'')+'</b>'+(g?' \u00b7 goal '+Math.round(g)+(a>=g?' \u2713':''):'')+
           ' \u00b7 '+(LIVE_YEAR-1)+': about '+Math.round(l)+(i===best?' \u00b7 \u2605 best month':'')+'</span></div>';
     }).join('');
     return '<div class="card" id="bottomchart"><h2>Starts month by month</h2>'+
-      '<div class="sub">Last year beside this year. <b>Dashed</b> = starts goal. \u2605 marks the best month.<span class="tapnote"> Tap a month for its figures.</span></div>'+
+      '<div class="sub"><span class="hovnote">Last year beside this year. <b>Dashed</b> = starts goal.</span><span class="tapnote">This year\u2019s bar, last year\u2019s thin grey one under it. <b>Navy line</b> = starts goal. Tap a month for its figures.</span> \u2605 marks the best month.</div>'+
       chartToggle()+
       '<div class="legend"><span><i class="sw" style="background:var(--ly)"></i> Last year ('+(LIVE_YEAR-1)+')</span>'+
         '<span><i class="sw" style="background:var(--good)"></i> '+LIVE_YEAR+' at/above goal</span>'+
         '<span><i class="sw" style="background:var(--bad)"></i> '+LIVE_YEAR+' under goal</span>'+
         '<span><i class="swline"></i> Starts goal</span>'+
         '<span style="margin-left:auto;font-style:italic">last year\u2019s starts are worked out from the production figures</span></div>'+
-      '<div class="chartwrap"><div class="plot">'+axis(max,false)+'<div class="chart">'+cols+'</div></div></div><div class="readout" id="readout"></div></div>';
+      '<div class="chartwrap"><div class="plot">'+axis(max,false)+'<div class="chart">'+cols+'</div></div></div><div class="mlist">'+rows+'</div><div class="readout" id="readout"></div></div>';
   }
   function chart(o){
     const L=plotMonths(o); if(!L.length) return '';
@@ -830,19 +844,28 @@ const OFFICES=[
         '<div class="bar lyb" style="height:'+h(o.ly[i])+'%" data-t="'+MO[i]+' last year: '+full(o.ly[i])+'"></div>'+
         '<div class="bar ab '+cls+'" style="height:'+h(o.act[i])+'%" data-t="'+MO[i]+' '+LIVE_YEAR+': '+full(o.act[i])+' \u00b7 main goal '+full(o.goal[i])+' \u00b7 stretch '+full(o.stretch[i])+'">'+
           '<span class="bval">'+money(o.act[i])+'</span></div>'+
-        '</div><div class="molab">'+MO[i]+(i===best?'<span class="star"> \u2605</span>':'')+'</div>'+
-        '<span class="ro" hidden><b>'+MOFULL[i]+' '+LIVE_YEAR+': '+money(o.act[i])+(inProg?' so far':'')+'</b>'+
-          (o.goal[i]?' \u00b7 goal '+money(o.goal[i])+(o.act[i]>=o.goal[i]?' \u2713':'')+(o.stretch[i]?' \u00b7 stretch '+money(o.stretch[i]):''):'')+
+        '</div><div class="molab">'+MO[i]+(i===best?' \u2605':'')+'</div></div>';
+    }).join('');
+    // A PHONE: one row per month (see the CSS note above .mlist).
+    let rmax=0; L.forEach(i=>{ rmax=Math.max(rmax,o.act[i]||0,o.goal[i]||0,o.stretch[i]||0,o.ly[i]||0); }); rmax=rmax*1.03||1;   // the rows' own scale
+    const rows=L.map(i=>{
+      const inProg=o.done[i]>0&&o.done[i]<o.days[i], a=o.act[i], g=o.goal[i], st=o.stretch[i], w=v=>Math.min(100,Math.max(0,(v/rmax)*100));
+      return '<div class="mrow'+(i===best?' best':'')+'"><span class="mm">'+MO[i]+(i===best?' \u2605':'')+'</span>'+
+        '<span class="mtrack"><i class="ty '+(inProg?'mtd':a>=g?'over':'under')+'" style="width:'+w(a)+'%"></i><i class="ly" style="width:'+w(o.ly[i])+'%"></i>'+
+          (g?'<i class="tg" style="left:'+w(g)+'%"></i>':'')+(st?'<i class="ts" style="left:'+w(st)+'%"></i>':'')+'</span>'+
+        '<span class="mv">'+money(a)+(g?'<small>'+Math.round(a/g*100)+'% of goal</small>':'')+'</span>'+
+        '<span class="ro" hidden><b>'+MOFULL[i]+' '+LIVE_YEAR+': '+money(a)+(inProg?' so far':'')+'</b>'+
+          (g?' \u00b7 goal '+money(g)+(a>=g?' \u2713':'')+(st?' \u00b7 stretch '+money(st):''):'')+
           ' \u00b7 '+(LIVE_YEAR-1)+': '+money(o.ly[i])+(i===best?' \u00b7 \u2605 best month':'')+'</span></div>';
     }).join('');
     return '<div class="card" id="bottomchart"><h2>Month by month</h2>'+
-      '<div class="sub">Last year beside this year. <b>Dashed</b> = main goal, <b>dotted</b> = stretch. <span class="hovnote">Hover any bar for exact figures.</span><span class="tapnote">Tap a month for its figures.</span> \u2605 = best month.</div>'+
+      '<div class="sub"><span class="hovnote">Last year beside this year. <b>Dashed</b> = main goal, <b>dotted</b> = stretch. Hover any bar for exact figures.</span><span class="tapnote">This year\u2019s bar, last year\u2019s thin grey one under it. <b>Navy line</b> = main goal, <b>purple dots</b> = stretch. Tap a month for its figures.</span> \u2605 = best month.</div>'+
       chartToggle()+
       '<div class="legend"><span><i class="sw" style="background:var(--ly)"></i> Last year ('+(LIVE_YEAR-1)+')</span>'+
         '<span><i class="sw" style="background:var(--good)"></i> '+LIVE_YEAR+' at/above goal</span>'+
         '<span><i class="sw" style="background:var(--bad)"></i> '+LIVE_YEAR+' under goal</span>'+
         '<span><i class="swline"></i> Main goal</span><span><i class="swdot"></i> Stretch goal</span></div>'+
-      '<div class="chartwrap"><div class="plot">'+axis(max,true)+'<div class="chart">'+cols+'</div></div></div><div class="readout" id="readout"></div></div>';
+      '<div class="chartwrap"><div class="plot">'+axis(max,true)+'<div class="chart">'+cols+'</div></div></div><div class="mlist">'+rows+'</div><div class="readout" id="readout"></div></div>';
   }
   function axis(max,money$){
     const steps=4, lines=[];
@@ -1020,7 +1043,7 @@ const OFFICES=[
       b.onmouseleave=()=>{tip.style.opacity='0';};
     });
     // A phone: tap a month to read its figures under the chart (CSS shows the line only on a phone).
-    const ro=el('readout'), mos=[...document.querySelectorAll('#bottomchart .mo')];
+    const ro=el('readout'), mos=[...document.querySelectorAll('#bottomchart .mrow')];
     if(ro && mos.length){
       const show=m=>{ mos.forEach(x=>x.classList.toggle('sel', x===m)); const r=m.querySelector('.ro'); ro.innerHTML=r ? r.innerHTML : ''; };
       mos.forEach(m=>{ m.onclick=()=>show(m); });
@@ -1247,7 +1270,7 @@ const OFFICES=[
 })();
 </script>
 <script>PH.nav('dashboard');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(window.DASH&&DASH.identity)DASH.identity();});document.addEventListener('ph-identity',function(){if(window.DASH&&DASH.identity)DASH.identity();if(window.DASH&&DASH.loadAudit)DASH.loadAudit();});</script>
-<script src="tour.js?v=hc151"></script>
+<script src="tour.js?v=hc152"></script>
 <script>
 Tour.init([
   {sel:'.viewas', title:'You only see your offices', body:'Everyone can see <b>All Offices</b> \u2014 the practice total as one number. What your location decides is which offices you can <b>open individually</b>. Switch to the Carlsbad manager: she keeps the group total, the leaderboard and Carlsbad, but can\u2019t open the other offices on their own.'},

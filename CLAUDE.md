@@ -340,11 +340,15 @@ paySenders/reloadPaySenders/paySenderOffices, payLevel).
   (PH_STORE.readFailed) or an empty roster = change NO access, say which list (Admin's TC/Payroll/Sensitive syncs and
   payroll.html paySyncHere). test/docs.test.js +13. Zihua Partners inherits the managers (no own grants) - fine.
 
-- **DASHBOARD CHART ON A PHONE (12/11/2026, hc151, sandbox).** Cory's iPhone screenshot: "Not looking so clean on
+- **DASHBOARD CHART ON A PHONE (12/11/2026, hc152, sandbox).** Cory's iPhone screenshot: "Not looking so clean on
   mobile" - index.html "Month by month" (and Starts) was 660px min-width in a ~310px card: sideways scroll, $ labels
-  over the goal lines and neighbours, last one cut off, and hover-only figures. <=520px: fits the width (no scroll),
-  no bar labels, the best month's star above its bars, TAP a month -> a line under the chart (latest month first:
-  "November 2026: $569K so far · goal $1.47M · stretch $1.66M · 2025: $1.42M"). Computers unchanged (readout hidden).
+  over the goal lines and neighbours, last one cut off, hover-only figures. First fix (hc151: squeeze 11 months of
+  paired bars into the width, tap readout) -> Cory: "Even your photos don't look super clean". Now (hc152) <=520px
+  shows ONE ROW PER MONTH (.mlist/.mrow; the column chart is hidden): this year's bar (green/red/amber in progress),
+  last year as a thin grey bar under it, navy tick = main goal, purple dotted tick = stretch, amount + "% of goal" at
+  the row end; rows scaled to their own max (x1.03) so bars fill the row; tap a row -> readout line (latest month
+  first). Phone wording in .tapnote, computer wording in .hovnote. Computers unchanged. Sharp checks: scratchpad
+  harness3x.js (DPR 3) + dash-m3.js (card-only shots).
 - **ADD TO PAYROLL (12/11/2026, hc150; LIVE 12/11).** Heather (twice - Cory's first reply went to the wrong message): "a
   place to write it so I don't forget to add it to their payroll" - team-goal bonuses, a TC's pilot bonus, other
   special pay; "add things to all of the office payrolls as well". Cory: "i want it to be in production before I write
