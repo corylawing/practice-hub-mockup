@@ -340,6 +340,11 @@ paySenders/reloadPaySenders/paySenderOffices, payLevel).
   (PH_STORE.readFailed) or an empty roster = change NO access, say which list (Admin's TC/Payroll/Sensitive syncs and
   payroll.html paySyncHere). test/docs.test.js +13. Zihua Partners inherits the managers (no own grants) - fine.
 
+- **DASHBOARD CHART ON A PHONE (12/11/2026, hc151, sandbox).** Cory's iPhone screenshot: "Not looking so clean on
+  mobile" - index.html "Month by month" (and Starts) was 660px min-width in a ~310px card: sideways scroll, $ labels
+  over the goal lines and neighbours, last one cut off, and hover-only figures. <=520px: fits the width (no scroll),
+  no bar labels, the best month's star above its bars, TAP a month -> a line under the chart (latest month first:
+  "November 2026: $569K so far · goal $1.47M · stretch $1.66M · 2025: $1.42M"). Computers unchanged (readout hidden).
 - **ADD TO PAYROLL (12/11/2026, hc150; LIVE 12/11).** Heather (twice - Cory's first reply went to the wrong message): "a
   place to write it so I don't forget to add it to their payroll" - team-goal bonuses, a TC's pilot bonus, other
   special pay; "add things to all of the office payrolls as well". Cory: "i want it to be in production before I write
