@@ -29,7 +29,7 @@ I can confidently say that the chat feature should go next. The production thing
    flip PAY_LIVE. Target: pay period #24 (Nov 2-15, sheets due Tue Nov 17). Steps: "PAYROLL LIVE (02/11)" below.
 2. **Chat + phone alerts -> LIVE** (one thing to her). STATUS 03/11: alerts step 3 built on the sandbox (every device,
    signed-in only, payroll reminders on phones - "PHONE ALERTS, step 3"); Chat waits on Keanu (Chat.ReadWrite + Teams
-   licences, asked 03/11). Needs IT (Adam) to approve the Teams chat permission; alerts:
+   licences, asked 03/11). Needs IT (Adam) to approve the Teams chat permission; **12/11: Adam ADDED Chat.ReadWrite to the app but did NOT grant admin consent (API permissions Status column blank; the other 4 say Granted) - asked him to click Grant admin consent. Never request Chat.ReadWrite until it shows Granted: user consent is off here, so staff would hit 'Need admin approval'. Noemi: Adam says licensing; Sunflower is moving into the tenant.** alerts:
    subscriptions in SharePoint, the live origin in api-push ORIGINS, the home-screen sign-in on live (Cory's iPhone
    test PASSED 03/11 on the sandbox, hc117: Home-Brace home-screen icon, Microsoft sign-in inside it, bell -> Turn on ->
    the "Alerts are on" alert arrived through the sign-in-checking sender).
