@@ -106,6 +106,8 @@ const names=list=>list.map(x=>x.name).sort();
     // Jessica's report: Word / Excel files have an Office Online address with no folders in it.
     const h=await PH.searchDocs('hygiene'), hn=names(h), w=h.find(x=>x.name==='Oral Hygiene Form.docx');
     t('a Word file in a section they can open is found (placed by its folder)', !!w && w.where==='Policies & Handbook' && /Doc\.aspx/.test(w.href) && w.newTab);
+    t('...and opens to LOOK, not to edit (editing locks the file - Heather, 12/11)', !!w && /[?&]action=view(&|$)/.test(w.href) && !/action=default/.test(w.href) &&
+      /sourcedoc=%7BW%7D/.test(w.href) && /mobileredirect=true/.test(w.href));
     t('...even when SharePoint\u2019s result does not name the folder', (h.find(x=>x.name==='Hygiene Hobbs Log.docx')||{}).where==='Office Docs \u203a Hobbs');
     t('Word / Excel files follow the same rules: restricted folder, other office, outside', !hn.includes('Hygiene Bonus Sheet.xlsx') &&
       !hn.includes('Hygiene Carlsbad Log.docx') && !hn.includes('Hygiene Outside.docx')); }
@@ -140,6 +142,20 @@ const names=list=>list.map(x=>x.name).sort();
     await PH.searchDocs("o'brien policy");
     const q=calls.find(c=>/search\(q=/.test(c))||'';
     t('a quote in what is typed is escaped for SharePoint', q.indexOf("o''brien")>=0 || q.indexOf(encodeURIComponent("o''brien"))>=0); }
+
+  /* viewLink (12/11/2026): only Microsoft's Office-viewer links change, and only their action=. */
+  { const {PH}=load(LIVE, person('Sam Staff','Staff','Hobbs')); await settle(); const V=PH.viewLink;
+    const doc='https://omegaorthodontics.sharepoint.com/sites/Home-Brace/_layouts/15/Doc.aspx?sourcedoc=%7BAB%7D&file=Form.docx&action=default&mobileredirect=true';
+    t('viewLink: a Word link opens in view mode, everything else in it kept', V(doc)===doc.replace('action=default','action=view'));
+    t('viewLink: an "edit" link too', V(doc.replace('action=default','action=edit'))===doc.replace('action=default','action=view'));
+    t('viewLink: a link with no action gets one (before any #)', V('https://x-my.sharepoint.com/personal/p/_layouts/15/Doc.aspx?sourcedoc=%7BA%7D&file=B.xlsx#s')==='https://x-my.sharepoint.com/personal/p/_layouts/15/Doc.aspx?sourcedoc=%7BA%7D&file=B.xlsx&action=view#s');
+    t('viewLink: a PDF or picture link is left exactly as it is', V(U('Patient Forms/LCO/Form.pdf'))===U('Patient Forms/LCO/Form.pdf'));
+    t('viewLink: never touches another site, a non-https link, or nothing', V('https://evil.example/_layouts/15/Doc.aspx?action=default')==='https://evil.example/_layouts/15/Doc.aspx?action=default' &&
+      V('http://omegaorthodontics.sharepoint.com/_layouts/15/Doc.aspx?action=default')==='http://omegaorthodontics.sharepoint.com/_layouts/15/Doc.aspx?action=default' && V('')==='' && V(null)==='');
+    t('viewLink: a file NAMED "action=default" is not mistaken for the setting', V('https://a.sharepoint.com/sites/H/_layouts/15/Doc.aspx?sourcedoc=%7BA%7D&file=action%3Ddefault.docx&action=default')
+      ==='https://a.sharepoint.com/sites/H/_layouts/15/Doc.aspx?sourcedoc=%7BA%7D&file=action%3Ddefault.docx&action=view'); }
+  { const D=fs.readFileSync(path.join(__dirname,'..','v1','documents.html'),'utf8');
+    t('Documents: every file and linked-file link opens through viewLink', (D.match(/escH\(openUrl\([fl]\.webUrl\)\)/g)||[]).length===4 && !/escH\(safeUrl\([fl]\.webUrl\)\)/.test(D) && /PH\.viewLink/.test(D)); }
 
   console.log(ok.map(s=>'  PASS  '+s).join('\n'));
   if(bad.length) console.log(bad.map(s=>'  FAIL  '+s).join('\n'));

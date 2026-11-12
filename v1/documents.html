@@ -237,11 +237,11 @@
   }
 
 </style>
-<script src="user.js?v=hc148"></script>
+<script src="user.js?v=hc149"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc148"></script>
-  <script src="gate.js?v=hc148"></script>
-  <script src="docs.js?v=hc148"></script>
+  <script src="store.js?v=hc149"></script>
+  <script src="gate.js?v=hc149"></script>
+  <script src="docs.js?v=hc149"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — Documents. You see only the folders your role, location &amp; team allow. Files open on the Microsoft drive.</div>
@@ -545,6 +545,8 @@
   let LINKS=[], META={}, extras='no', LIVE_TEAMS=null;   // extras: 'no' | 'loading' | 'yes'
   /* Only real web links become links - never a javascript: one from a tampered record. */
   const safeUrl=u=>/^https:\/\//i.test(String(u||''))?String(u):'#';
+  // Word, Excel and PowerPoint open to LOOK, not to edit - editing locks the file (user.js viewLink, 12/11/2026).
+  const openUrl=u=>safeUrl(PH.viewLink ? PH.viewLink(u) : u);
   const escH=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const myName=()=>{ try{ return PH.name(PH.me()); }catch(_){ return ''; } };
 
@@ -667,8 +669,8 @@
     });
     n.files.filter(f=>seesItem(f.id,cur,ctx.cap)).forEach(f=>{
       rows.push('<div class="file"'+pad+'><span class="fic">'+fileIcon(f.name)+'</span>'+
-        '<span class="nm"><a href="'+escH(safeUrl(f.webUrl))+'" target="_blank" rel="noopener">'+escH(f.name)+'</a><span class="lv-meta">'+escH(whenBy(f))+'</span></span>'+
-        audChip(f.id)+'<a class="sp" href="'+escH(safeUrl(f.webUrl))+'" target="_blank" rel="noopener">Open ↗</a>'+
+        '<span class="nm"><a href="'+escH(openUrl(f.webUrl))+'" target="_blank" rel="noopener">'+escH(f.name)+'</a><span class="lv-meta">'+escH(whenBy(f))+'</span></span>'+
+        audChip(f.id)+'<a class="sp" href="'+escH(openUrl(f.webUrl))+'" target="_blank" rel="noopener">Open ↗</a>'+
         (ctx.canManage?(ctx.sensitive?'':'<button class="lv-rm lv-rep"'+attr('act','aud')+attr('id',f.id)+attr('k',ctx.k)+attr('sub',ctx.sub)+attr('path',path)+attr('name',f.name)+attr('kind','file')+'>Access</button>'+'<button class="lv-rm lv-rep"'+attr('act','mv')+attr('path',path)+attr('id',f.id)+attr('k',ctx.k)+attr('sub',ctx.sub)+'>Move</button>')+'<button class="lv-rm lv-rep"'+attr('act','rep')+attr('path',path)+attr('id',f.id)+attr('k',ctx.k)+attr('sub',ctx.sub)+'>Replace</button>'+
           '<button class="lv-rm"'+attr('act','rm')+attr('path',path)+attr('id',f.id)+'>Remove</button>':'')+'</div>');
     });
@@ -696,8 +698,8 @@
           else counted=false;
           const empty=n && n.state==='ok' && !inner && !links.length;
           const linkRows=links.map(l=>'<div class="file"><span class="fic">\u{1F517}</span>'+
-            '<span class="nm"><a href="'+escH(safeUrl(l.webUrl))+'" target="_blank" rel="noopener">'+escH(l.name)+'</a><span class="lv-meta">Linked — kept '+(l.shared===false?'elsewhere · ⚠ not shared with everyone yet':'elsewhere')+'</span></span>'+
-            audChip(l.id)+'<a class="sp" href="'+escH(safeUrl(l.webUrl))+'" target="_blank" rel="noopener">Open ↗</a>'+
+            '<span class="nm"><a href="'+escH(openUrl(l.webUrl))+'" target="_blank" rel="noopener">'+escH(l.name)+'</a><span class="lv-meta">Linked — kept '+(l.shared===false?'elsewhere · ⚠ not shared with everyone yet':'elsewhere')+'</span></span>'+
+            audChip(l.id)+'<a class="sp" href="'+escH(openUrl(l.webUrl))+'" target="_blank" rel="noopener">Open ↗</a>'+
             (manage?'<button class="lv-rm lv-rep"'+attr('act','aud')+attr('id',l.id)+attr('k',s.k)+attr('sub',r.sub)+attr('name',l.name)+attr('kind','link')+'>Access</button>'+'<button class="lv-rm"'+attr('act','unlink')+attr('id',l.id)+'>Remove link</button>':'')+'</div>').join('');
           const acts=add?'<div class="lv-acts">'+
               '<button class="addbtn"'+attr('act','add')+attr('k',s.k)+attr('sub',r.sub)+'>+ Add files</button>'+
@@ -1151,7 +1153,7 @@ document.addEventListener('ph-identity',function(){
   });
 });
 PH.nav('documents');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc148"></script>
+<script src="tour.js?v=hc149"></script>
 <script>
 Tour.init([
   {sel:'.crumb', title:'Everything in one place', body:'This replaces \u201cwho has the latest copy?\u201d. Every policy, form and office file lives here \u2014 and people only ever see the folders meant for them.'},

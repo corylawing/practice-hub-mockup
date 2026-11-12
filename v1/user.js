@@ -1463,6 +1463,19 @@
     if(/^(con|prn|aux|nul|com\d|lpt\d)(\..*)?$/i.test(x) || /^_vti_/i.test(x)) x='_'+x;
     return x || 'Untitled';
   }
+  /* OPEN TO LOOK, NOT TO EDIT (12/11/2026). Heather couldn't remove a form from Patient Forms: opening it from
+     Home-Brace had put her in Word's EDITING mode (SharePoint's own link says action=default), and a Word file being
+     edited is locked - no Remove, no Replace - until a while after it's closed. Word, Excel and PowerPoint files now
+     open in VIEW mode: looking never locks, nobody changes a master form by accident, and Edit is one click in Word's
+     own bar for anyone allowed. Only Microsoft's Office-viewer links (…sharepoint.com/…/_layouts/15/Doc.aspx or
+     WopiFrame.aspx) are touched, and only their action=; a PDF, a picture or any other link is returned exactly. */
+  function viewLink(u){
+    const s=String(u==null?'':u);
+    if(!/^https:\/\/[a-z0-9-]+\.sharepoint\.com(\/[^?#]*)?\/_layouts\/15\/(Doc|WopiFrame2?)\.aspx\?/i.test(s)) return s;
+    const hash=s.indexOf('#'), base=hash<0?s:s.slice(0,hash), tail=hash<0?'':s.slice(hash);
+    if(/[?&]action=[^&]*/i.test(base)) return base.replace(/([?&])action=[^&]*/i, '$1action=view')+tail;
+    return base+'&action=view'+tail;
+  }
   function docRel(webUrl){
     let p=''; try{ p=decodeURIComponent(new URL(webUrl).pathname); }catch(_){ return null; }
     const i=p.indexOf('/'+DOC_BASE+'/'); return i<0 ? null : p.slice(i+DOC_BASE.length+2);
@@ -1585,7 +1598,7 @@
             seen[it.id]=1;
             const isSection=segs.length===1 && !!it.folder;
             out.push({name:isSection?sec.n:it.name, folder:!!it.folder,
-              href:it.folder ? 'documents.html#'+encodeURIComponent(sec.k) : it.webUrl, newTab:!it.folder,
+              href:it.folder ? 'documents.html#'+encodeURIComponent(sec.k) : viewLink(it.webUrl), newTab:!it.folder,
               where:isSection?'Section in Documents':place(sec, segs.slice(1, -1))});
           });
           /* Files linked in from elsewhere: matched by name, shown by the same rules. */
@@ -1598,7 +1611,7 @@
             if(lvl!=='manage' && !docAudOk(ctx.meta[l.id])) return;
             if(!/^https:\/\//i.test(String(l.webUrl||''))) return;
             seen[l.id]=1;
-            out.push({name:l.name, folder:false, href:l.webUrl, newTab:true, where:place(sec, l.sub?[l.sub]:[])+' \u00b7 linked'});
+            out.push({name:l.name, folder:false, href:viewLink(l.webUrl), newTab:true, where:place(sec, l.sub?[l.sub]:[])+' \u00b7 linked'});
           });
           return out.slice(0,12);
         });
@@ -3637,7 +3650,7 @@
     const m=document.createElement('link'); m.rel='manifest'; m.href='manifest.webmanifest'; document.head.appendChild(m);
   }
 
-  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, rosterView, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, chatBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK, notesHTML, searchHTML, searchDocs, searchDocsHTML, levelForTeams, teamsSeeAll, tcOn, tcRoleFor, payOn, payRoleFor, paySenders, reloadPaySenders, paySenderOffices, payLevel, payReminders, payMark, reloadPayStatus, payRulesReady, payAlertPlan, payAlertsTick, centralNow, alertsReady, saveFace, faceOf, avatar,
+  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, rosterView, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, chatBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK, notesHTML, searchHTML, searchDocs, searchDocsHTML, levelForTeams, teamsSeeAll, tcOn, tcRoleFor, payOn, payRoleFor, paySenders, reloadPaySenders, paySenderOffices, payLevel, payReminders, payMark, reloadPayStatus, payRulesReady, payAlertPlan, payAlertsTick, centralNow, alertsReady, saveFace, faceOf, avatar, viewLink,
     sensRecord, reloadSensitive, sensLevelFor, sensitiveLevel, sensConfirmOk,
     setTheme, theme:()=>THEME, setLayout, layout:()=>LAYOUT, layouts:()=>LAYOUTS.map(l=>({k:l.k, n:l.n})), themes:()=>THEMES.map(t=>({k:t.k, n:t.n})), schemeTokens:k=>schemeTokens(themeOf(k)), contrast,
     feedback:openFeedback, feedbackText, feedbackContext, learning:stillLearning, fbReady, myFeedback, fbTick, usageReady, rosterName, useEmail, useTrackMe, loadHold, loadDone};

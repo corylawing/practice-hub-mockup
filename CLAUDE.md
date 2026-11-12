@@ -318,6 +318,11 @@ paySenders/reloadPaySenders/paySenderOffices, payLevel).
   checked out (publication: published) - SharePoint's 423 lock because it was open in Word. docs.js api(): 423 /
   resourceLocked -> "It's open in Word, Excel or PowerPoint right now ... Close it ..., wait a few minutes, then try
   again. Nothing was changed." (e.locked). test/docs.test.js +2.
+  Cory: "Well it shouldn't do that should it?" -> "go" (12/11, hc149): the lock came from Home-Brace itself - SharePoint's
+  webUrl for Word/Excel/PowerPoint is Doc.aspx?...&action=default = EDITING mode for anyone who can edit. user.js
+  `PH.viewLink(u)`: only https *.sharepoint.com .../_layouts/15/Doc.aspx|WopiFrame(2).aspx links, only action= -> view
+  (added if missing, before any #); PDFs/pictures/anything else untouched. Used by Documents (files + linked files:
+  documents.html openUrl) and the header search results. Edit = Word's own Edit button. test/docsearch.test.js +8.
 - **8 OFFICE SENDERS LOST THEIR PAYROLL FOLDERS (12/11/2026, hc147 sandbox; production NOT yet).** Haley (San Angelo
   OM, feedback 8:18 AM): "My payroll won't open". Checked through Cory's live Admin in Safari (osascript `do JavaScript`,
   needs Safari Settings -> Developer -> Allow JavaScript from Apple Events; the script targets ONLY the tab whose URL is
