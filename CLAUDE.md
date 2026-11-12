@@ -353,7 +353,12 @@ paySenders/reloadPaySenders/paySenderOffices, payLevel).
   dashboard turns to 2027 on Jan 1 by itself; rows start with January; grey = 2026; ticks/% from Plan the year (none
   until an office is planned - no tick, no %). ph_prod_mode in Cory's browser copy: source 'homebrace' since
   03/11/2026 16:20 (Jessica Lynch) - his Safari token had expired, so not re-read live; NOT yet checked whether
-  Heather has planned 2027. Open: Leaderboard table still scrolls sideways on a phone (offered).
+  Heather has planned 2027.
+- **LEADERBOARD ON A PHONE (12/11/2026, hc153, sandbox).** Cory: "Fix 1 if you think but I don't see the issue" - the
+  table (min-width 680px) showed 4 of 8 columns on a phone; vs last yr, Starts, starts % and Days left sat off to the
+  right with no cue. <=520px: rank, office, production, "% goal" (header word "of" hidden), and a line under each
+  office (tr.lb-sub, hidden on computers): "vs last yr 42% · Starts 12 (36% of goal) · 8 days left" (each piece kept
+  whole). <=380px tighter padding; <=359px headers/names may wrap. Fits 353/360/390, computers unchanged.
 - **ADD TO PAYROLL (12/11/2026, hc150; LIVE 12/11).** Heather (twice - Cory's first reply went to the wrong message): "a
   place to write it so I don't forget to add it to their payroll" - team-goal bonuses, a TC's pilot bonus, other
   special pay; "add things to all of the office payrolls as well". Cory: "i want it to be in production before I write

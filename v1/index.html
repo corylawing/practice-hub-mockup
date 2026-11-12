@@ -154,6 +154,33 @@
   .pbar i.b{background:var(--bad)} .pbar i.a{background:var(--amber)}
   .num{font-weight:700} .num.g{color:var(--good)} .num.b{color:var(--bad)}
   .dleft{font-weight:700;color:var(--navy)}
+  table.lb tr.lb-sub{display:none}
+  @media(max-width:520px){
+    table.lb{min-width:0}
+    table.lb tr:not(.lb-sub) > :nth-child(n+5){display:none}
+    table.lb th, table.lb td{padding-left:6px;padding-right:6px}
+    table.lb tbody tr:not(.lb-sub) td{border-bottom:none;padding-bottom:4px}
+    table.lb tr.lb-sub{display:table-row}
+    table.lb tr.lb-sub td{padding-top:0;padding-bottom:12px;font-size:12.5px;color:var(--soft);line-height:1.45}
+    table.lb tr.lb-sub b{color:var(--navy)} table.lb tr.lb-sub b.g{color:var(--good)} table.lb tr.lb-sub b.b{color:var(--bad)}
+    table.lb tr:last-child td{border-bottom:none}
+    table.lb tr.lb-sub .nb{white-space:nowrap}
+    table.lb th{white-space:nowrap;font-size:10.5px}
+    table.lb th .lbx{display:none}
+    .onm .on1{white-space:nowrap}
+  }
+  @media(max-width:380px){
+    table.lb th, table.lb td{padding-left:4px;padding-right:4px}
+    table.lb td{font-size:13px}
+    .rk{width:20px}
+    .pbar{min-width:0}
+  }
+  @media(max-width:359px){
+    table.lb th{white-space:normal}
+    .onm .on1{white-space:normal}
+    .rk{width:26px}
+    .pbar{min-width:60px}
+  }
   .periodbar{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin:4px 0 6px}
   .pchip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 15px;font-size:13.5px;font-weight:700;color:var(--navy);cursor:pointer;font-family:inherit;box-shadow:var(--shadow)}
   .pchip:hover{border-color:var(--teal);color:var(--teal-600)}
@@ -289,14 +316,14 @@
   }
 
 </style>
-<script src="user.js?v=hc152"></script>
-<script src="celebrate.js?v=hc152"></script>
+<script src="user.js?v=hc153"></script>
+<script src="celebrate.js?v=hc153"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="workbook.js?v=hc152"></script>
-  <script src="store.js?v=hc152"></script>
-  <script src="prodbook.js?v=hc152"></script>
-  <script src="prodstore.js?v=hc152"></script>
-  <script src="gate.js?v=hc152"></script>
+  <script src="workbook.js?v=hc153"></script>
+  <script src="store.js?v=hc153"></script>
+  <script src="prodbook.js?v=hc153"></script>
+  <script src="prodstore.js?v=hc153"></script>
+  <script src="gate.js?v=hc153"></script>
 </head>
 <body>
 <div class="ribbon">SANDBOX — made-up numbers. The practice’s real workbook is never opened here.</div>
@@ -909,7 +936,7 @@ const OFFICES=[
       const canOpen=allowed.some(a=>a.n===r.o.n);
       return '<tr'+(canOpen?' class="go" onclick="DASH.pick(\''+r.o.n+'\')" title="Open '+r.o.n+'"':'')+'>'+
         '<td class="rk'+(i===0&&anyProduction?' top':'')+'">'+((i===0&&anyProduction)?'🏆':i+1)+'</td>'+
-        '<td><div class="onm">'+r.o.n+'<span class="br">'+r.o.brand+'</span></div>'+
+        '<td><div class="onm"><span class="on1">'+r.o.n+'</span><span class="br">'+r.o.brand+'</span></div>'+
           '<div class="pbar"><i class="'+cls+'" style="width:'+pctw+'%"></i></div>'+
           officeAudit(r.o.n)+'</td>'+
         '<td class="num big">'+full(t.a)+'</td>'+
@@ -917,7 +944,13 @@ const OFFICES=[
         '<td class="num '+(t.yoy>=1?'g':'b')+'">'+((t.l&&t.a>0)?pc(t.yoy):'\u2014')+'</td>'+
         '<td class="num big">'+Math.round(r.s.a)+'</td>'+
         '<td class="num">'+(r.o.noGoals||!r.s.g?'\u2014':pc(r.s.pct))+'</td>'+
-        '<td class="dleft">'+(t.daysLeft||'\u2014')+'</td></tr>';
+        '<td class="dleft">'+(t.daysLeft||'\u2014')+'</td></tr>'+
+        /* A PHONE (12/11/2026): the last four columns don't fit, and were hidden off to the right with nothing to say
+           so. On a phone they're this line under the office instead (CSS hides it on a computer). */
+        '<tr class="lb-sub'+(canOpen?' go':'')+'"'+(canOpen?' onclick="DASH.pick(\''+r.o.n+'\')"':'')+'><td></td><td colspan="3">'+
+          [ (t.l&&t.a>0) ? 'vs last yr <b class="'+(t.yoy>=1?'g':'b')+'">'+pc(t.yoy)+'</b>' : '',
+            'Starts <b>'+Math.round(r.s.a)+'</b>'+((r.o.noGoals||!r.s.g) ? '' : ' (<b>'+pc(r.s.pct)+'</b> of goal)'),
+            t.daysLeft ? '<b>'+t.daysLeft+'</b> days left' : '' ].filter(Boolean).map(x=>'<span class="nb">'+x+'</span>').join(' \u00b7 ')+'</td></tr>';
     }).join('');
     // Who last entered numbers in the app, so leadership can see entries are current.
     let audit='';
@@ -936,7 +969,7 @@ const OFFICES=[
       '<div class="sub">Ranked by <b>% of production goal</b> \u2014 top of the table is the leader. '+
         '\u201cDays left\u201d = production days scheduled minus days worked, for whatever period is selected above.</div>'+
       '<div class="lb-scroll"><table class="lb"><thead><tr><th></th><th>Office</th>'+
-        '<th>Production</th><th>% of goal</th><th>vs last yr</th>'+
+        '<th>Production</th><th>%<span class="lbx"> of</span> goal</th><th>vs last yr</th>'+
         '<th>Starts</th><th>% of goal</th><th>Days left</th></tr></thead>'+
       '<tbody>'+body+'</tbody></table></div></div>';
   }
@@ -1270,7 +1303,7 @@ const OFFICES=[
 })();
 </script>
 <script>PH.nav('dashboard');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(window.DASH&&DASH.identity)DASH.identity();});document.addEventListener('ph-identity',function(){if(window.DASH&&DASH.identity)DASH.identity();if(window.DASH&&DASH.loadAudit)DASH.loadAudit();});</script>
-<script src="tour.js?v=hc152"></script>
+<script src="tour.js?v=hc153"></script>
 <script>
 Tour.init([
   {sel:'.viewas', title:'You only see your offices', body:'Everyone can see <b>All Offices</b> \u2014 the practice total as one number. What your location decides is which offices you can <b>open individually</b>. Switch to the Carlsbad manager: she keeps the group total, the leaderboard and Carlsbad, but can\u2019t open the other offices on their own.'},
