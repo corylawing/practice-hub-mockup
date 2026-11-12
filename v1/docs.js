@@ -65,8 +65,14 @@
     }).then(function(res){
       if(res.status === 204) return {};
       return res.json().catch(function(){ return {}; }).then(function(j){
+        var code = j.error && j.error.code;
+        /* LOCKED (12/11/2026). Heather tried to remove a form from Patient Forms -> FFO and got Microsoft's own words
+           that it "is locked": the file was open in Word (she had just opened it to look). Say that plainly. */
+        if(res.status === 423 || code === 'resourceLocked')
+          throw fail(res.status, 'It’s open in Word, Excel or PowerPoint right now (by you or someone else), so SharePoint has it locked. ' +
+            'Close it wherever it’s open, wait a few minutes, then try again. Nothing was changed.', { code: code, locked: true });
         if(!res.ok) throw fail(res.status, (j.error && j.error.message) || ('Graph ' + res.status),
-                               { code: j.error && j.error.code });
+                               { code: code });
         return j;
       });
     });

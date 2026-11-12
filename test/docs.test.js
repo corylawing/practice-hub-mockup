@@ -256,6 +256,14 @@ const calls=(sp,re,method)=>sp.calls.filter(c=>re.test(c.url)&&(!method||c.metho
     t('a file in someone\u2019s OneDrive can never be removed from here', e3 && e3.fenced && deletes()===before);
     let e4=null; try{ await D.remove({id:'x'}); }catch(x){ e4=x; }
     t('an item without its location is refused, not guessed at', e4 && e4.fenced && deletes()===before);
+    /* 12/11/2026, Heather: removing a form "says it is locked" - it was open in Word. Plain words, nothing removed. */
+    const form=sp.add(hr,'Referral.docx',false);
+    sp.fail.push({test:(m,u)=>m==='DELETE', status:423});
+    let e5=null; try{ await D.remove(sp.view(form)); }catch(x){ e5=x; }
+    t('a file open in Word (SharePoint says locked): plain words, nothing removed', e5 && e5.locked && /open in Word/.test(e5.message) &&
+      /Nothing was changed/.test(e5.message) && !!sp.find('Home-Brace Documents/HR/Referral.docx') && !sp.recycle.some(x=>x.id===form.id));
+    await D.remove(sp.view(form));
+    t('...and once it is closed, Remove works', !sp.find('Home-Brace Documents/HR/Referral.docx') && sp.recycle.some(x=>x.id===form.id));
     t('looking a folder up never makes it', (await D.item(D.path('Nope')))===null && !sp.find('Home-Brace Documents/Nope'));
     t('looking a folder up finds it with its location', (it=>it && it.id===hr.id && D.insideBase(it,'D1'))(await D.item(D.path('HR'))));
     t('the source deletes only three things: an item, to the recycle bin (remove), and one person\u2019s own grant (revokeEdit; tcRevoke on the TC Tracker folder) - and nothing permanently',
