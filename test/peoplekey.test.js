@@ -158,7 +158,44 @@ function doctorNoEmail(){
   });
 }
 
-Promise.resolve(permissionsGap()).then(doctorNoEmail).then(function(){
+/* ---- 8. A ROLE'S NAME, NOT A PERSON'S (12/11/2026). The real case: a mailbox Microsoft calls "Clovis Treatment
+          Coordinator" is one person's own address on the staff list, and the dashboard said "Clovis Treatment
+          Coordinator last saved". Made-up people below. ---- */
+function roleName(){
+  const rows=JSON.parse(fs.readFileSync(path.join(__dirname,'fixtures','people.json'),'utf8')).people;
+  const profile=(name, mail)=>({displayName:name, mail, userPrincipalName:mail, jobTitle:'', department:'', officeLocation:''});
+  const A=load({});
+  return A.PH.rosterReady.then(function(){
+    A.PH.setProfile(profile('Carlsbad Treatment Coordinator', 'gabriela@farnsworthorthodontics.com'));
+    const me=A.PH.me();
+    t('a mailbox Microsoft names after the role shows the staff list’s name', A.PH.name(me)==='Gabriela Garrison' && me.first==='Gabriela');
+    t('...and only the name changes: same teams and office as before', (me.teams||[]).indexOf('Office Managers')>=0 && JSON.stringify(A.PH.offices())==='["Carlsbad"]');
+    const B=load({});
+    return B.PH.rosterReady.then(function(){
+      B.PH.setProfile(profile('Gabriela Smith', 'gabriela@farnsworthorthodontics.com'));
+      t('a Microsoft name that shares a word with the list is kept (it may be the newer one)', B.PH.name(B.PH.me())==='Gabriela Smith');
+      const C=load({});
+      return C.PH.rosterReady.then(function(){
+        C.PH.setProfile(profile('Lubbock Clinic', 'front.desk@example.com'));
+        t('an account the staff list doesn’t have keeps Microsoft’s name', C.PH.name(C.PH.me())==='Lubbock Clinic');
+        const kel=rows.find(r=>/"Kel"/.test(r.name)), ovr={}; ovr[PH.personKey(kel)]={email:'kel.desk@example.com'};
+        const D=load({ ph_people: JSON.stringify(ovr) });
+        return D.PH.rosterReady.then(function(){
+          D.PH.setProfile(profile('Hobbs Front Desk', 'kel.desk@example.com'));
+          t('an email an admin typed counts too, and a nickname in quotes is the first name', D.PH.name(D.PH.me())==='Kel Nesbitt');
+          const doc=rows.find(r=>r.name==='Dr. Daniel Fairbanks'), o2={}; o2[PH.personKey(doc)]={email:'dfairbanks@example.com'};
+          const E=load({ ph_people: JSON.stringify(o2) });
+          return E.PH.rosterReady.then(function(){
+            E.PH.setProfile(profile('DF', 'dfairbanks@example.com'));
+            t('"Dr." never becomes the first name', E.PH.me().first==='Daniel' && E.PH.name(E.PH.me())==='Daniel Fairbanks');
+          });
+        });
+      });
+    });
+  });
+}
+
+Promise.resolve(permissionsGap()).then(doctorNoEmail).then(roleName).then(function(){
   console.log(ok.map(s=>'  PASS  '+s).join('\n'));
   if(bad.length) console.log(bad.map(s=>'  FAIL  '+s).join('\n'));
   console.log('\n'+ok.length+' passed, '+bad.length+' failed');

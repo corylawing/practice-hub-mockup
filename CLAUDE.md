@@ -354,6 +354,14 @@ paySenders/reloadPaySenders/paySenderOffices, payLevel).
   until an office is planned - no tick, no %). ph_prod_mode in Cory's browser copy: source 'homebrace' since
   03/11/2026 16:20 (Jessica Lynch) - his Safari token had expired, so not re-read live; NOT yet checked whether
   Heather has planned 2027.
+- **A ROLE'S NAME, NOT A PERSON'S (12/11/2026, hc154, sandbox).** Cory, of the dashboard banner "Clovis Treatment
+  Coordinator last saved": "Why isn't there a name?" Microsoft names some mailboxes after the role (Clovis / Lubbock /
+  Carlsbad Treatment Coordinator = latricia@ / becca@ / jennifer@ on the staff list - Latricia Sanchez, Rebecca
+  Fluhman, Jennifer Peters); likely deliberate (patients see it), so NOT asking Adam to rename. user.js staffName():
+  the staff list has this address (rosterFor or an admin-typed email) AND Microsoft's name shares no word with the
+  list's -> the list's name (nickname in quotes/brackets = first name, leading "Dr." dropped) is me()'s first/last,
+  so it's shown AND saved. Shares a word (Haley Haynes / Alicyn "Haley" Gossett) -> Microsoft's kept. Identity,
+  teams, offices unchanged. Names already saved (the banner, History) change at the next save. test/peoplekey +6.
 - **LEADERBOARD ON A PHONE (12/11/2026, hc153, sandbox).** Cory: "Fix 1 if you think but I don't see the issue" - the
   table (min-width 680px) showed 4 of 8 columns on a phone; vs last yr, Starts, starts % and Days left sat off to the
   right with no cue. <=520px: rank, office, production, "% goal" (header word "of" hidden), and a line under each

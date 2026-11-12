@@ -399,6 +399,26 @@
   function rosterMe(mail, name){
     return (mail && rosterFor(mail)) || (mail && rosterByAdminMail(mail)) || (name && rosterByName(name)) || null;
   }
+  /* A ROLE'S NAME, NOT A PERSON'S (12/11/2026). Cory, of the dashboard's "Clovis Treatment Coordinator last saved ...":
+     "Why isn't there a name?" Some practice mailboxes carry the ROLE as their Microsoft name - Clovis, Lubbock and
+     Carlsbad Treatment Coordinator, likely on purpose (it's what patients see) - though each is one person's own
+     address on the staff list. So when the staff list has THIS address (its own email, or one an admin typed) and
+     Microsoft's name shares no word with the staff list's, the staff list's name is the one shown and saved: "Latricia
+     Sanchez last saved". A Microsoft name that shares a word ("Haley Haynes" / Alicyn "Haley" Gossett) is left as it
+     is - it's theirs, maybe newer than the list. A nickname in quotes or brackets is the first name ("Haley Gossett");
+     a leading "Dr." is left off so it never becomes the first name. Only the NAME changes - who they are,
+     their teams and offices are worked out exactly as before. '' = keep Microsoft's name. */
+  function staffName(mail, msName){
+    const m=String(mail||'').toLowerCase().trim(); if(!m) return '';
+    const row=rosterFor(m) || rosterByAdminMail(m); if(!row || !row.name) return '';
+    const raw=String(row.name), nick=((raw.match(/"([^"]*)"/)||raw.match(/\(([^)]*)\)/)||[])[1]||'').trim();
+    const clean=raw.replace(/"[^"]*"|\([^)]*\)/g,' ').replace(/^\s*dr\.?\s+/i,'').replace(/\s+/g,' ').trim();
+    const words=x=>String(x||'').toLowerCase().replace(/[^a-z\s]/g,' ').split(/\s+/).filter(w=>w.length>1);
+    const theirs=words(clean+' '+nick); if(!theirs.length) return '';
+    if(words(String(msName||'').replace(/^\s*dr\.?\s+/i,'')).some(w=>theirs.indexOf(w)>=0)) return '';
+    const bits=clean.split(' '); if(nick && bits.length>1) bits[0]=nick;
+    return bits.join(' ');
+  }
   function rosterByName(name){
     if(!ROSTER_BY_MAIL && !ROSTER_ROWS) return null;
     const want=rosterName(name); if(!want) return null;
@@ -644,7 +664,7 @@
       : rosLocs ? rosLocs.slice()
       : (loc?[loc]:[]));
 
-    const full=String(PROFILE.displayName||PROFILE.mail||'').trim();
+    const full=staffName(mailNow, PROFILE.displayName) || String(PROFILE.displayName||PROFILE.mail||'').trim();   // a role's name -> the person's
     const bits=full.split(/\s+/);
     return {
       id:'me', first:bits[0]||'', last:bits.slice(1).join(' '),
