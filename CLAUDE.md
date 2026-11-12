@@ -68,11 +68,13 @@ I can confidently say that the chat feature should go next. The production thing
    updated: Carlsbad, Hobbs, Clovis") or show them to Leadership / Executive / Admin only.
 8. **Meeting Calendar -> Schedule (Cory 12/11/2026, "before I forget").** "connecting their Meeting Calendar which they
    did in home-brace to schedule so they can see Team Meetings and Doctor Schedule (based on permissions and
-   everything). They should also be able to create a meeting from Home-Brace." Not started. First find out WHICH
-   calendar they made (nothing in v1/ says "meeting" today - likely an Outlook/Microsoft 365 group or SharePoint
-   calendar on the Home-Brace site; ask Cory for its name/link). Then: show its Team Meetings beside the Doctor
-   Schedule on schedule.html, following the same permissions; and "New meeting" from Home-Brace (probably needs
-   Calendars.ReadWrite / Group.ReadWrite.All - Adam would have to approve, like Chat.ReadWrite).
+   everything). They should also be able to create a meeting from Home-Brace." Not started. WHICH CALENDAR (Cory
+   12/11): "the Teams Meetings calendar on the Home-Brace site" (/sites/Home-Brace). First check what kind it is: a
+   SharePoint LIST named "Teams Meetings" with a calendar view (Site contents) -> read/add with Sites.ReadWrite.All,
+   which we already have, no IT; or the site's Microsoft 365 GROUP (Outlook) calendar -> needs Group/Calendars
+   permissions that Adam must approve. Then: its meetings beside the Doctor Schedule on schedule.html, same
+   permissions; and "New meeting" from Home-Brace (a real Teams meeting link + invites needs Calendars.ReadWrite or
+   OnlineMeetings.ReadWrite - IT approval, like Chat.ReadWrite).
 **LIVE 01/11/2026 (hc115, 36 files byte-checked, alerts-test 404 on live):** Selene (01/11) "Could we add “Pending – Scheduled to Start” as an additional TC
 outcome? This would apply to patients who have completed their exam and scheduled a future start appointment but
 have not yet signed their contract." -> tc.js SCHED_START: a completed consult (counts for conversion), not a start
