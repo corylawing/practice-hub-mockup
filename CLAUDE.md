@@ -340,6 +340,20 @@ paySenders/reloadPaySenders/paySenderOffices, payLevel).
   (PH_STORE.readFailed) or an empty roster = change NO access, say which list (Admin's TC/Payroll/Sensitive syncs and
   payroll.html paySyncHere). test/docs.test.js +13. Zihua Partners inherits the managers (no own grants) - fine.
 
+- **ADD TO PAYROLL (12/11/2026, hc150; LIVE 12/11).** Heather (twice - Cory's first reply went to the wrong message): "a
+  place to write it so I don't forget to add it to their payroll" - team-goal bonuses, a TC's pilot bonus, other
+  special pay; "add things to all of the office payrolls as well". Cory: "i want it to be in production before I write
+  her". Board card **Add to payroll** (after the pay period's card): + Add = who (one person at an office / everyone at
+  an office incl. Zihua / everyone at the 8 offices - NOT Zihua), what for (80), amount PER PERSON, column Goal|TC/OM|Extra,
+  pay period (first not entered .. NEXT+7). Saved in Heather's folder `adds.json` {v:1, items:[{id,key,to:{k,o?,pid?},
+  col,amt,what,by,byEm,at,gone?,goneBy?}]} (mock-up: S.adds). NEVER written into rows: `withAdds(n,o,p,x)` adds them when
+  Heather's side sums (combined sheet, combTotals, History totals, CSV - Notes gets "[Added to payroll: ...]"); a line
+  "+ $100 · Team hit goal" under the column; office sheets never. "Everyone" for someone at two offices: once, on the
+  first office's row (sheet order) whose sheet is in. Where it stands: On the sheet ✓ · N people · $ / Waits for X's
+  sheet / Not on the sheet X sent - check. Take off = gone (Bring back); entered period = locked. Read-only (See) = no
+  buttons. No bell reminder (it lands by itself). test/payadds.test.js (10). Browser-checked mock-up + Real version
+  (made-up people): +$400 exactly, two-office once, reload kept, 390 px no sideways scroll, office view sees nothing.
+
 - Asked 04/11, NOT built: a Settings screen where Heather picks per column "office types it / office sees it / only
   me" (~1 day). Today's split is fixed from her answers; her Goal/TC-OM/Extra live in her private folder. After go-live.
 - **Who sees what**: Admin team (and Payroll level Edit) = manage everything incl. Heather's columns; Payroll level

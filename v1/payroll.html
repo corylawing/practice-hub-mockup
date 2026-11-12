@@ -196,6 +196,7 @@
   table.comb tr.hd th{background:#F7F9FB;color:var(--soft);font-size:11px;text-transform:uppercase;letter-spacing:.04em;text-align:right;white-space:normal;vertical-align:bottom;line-height:1.25;padding:7px 8px;border-bottom:1px solid var(--line)}
   table.comb tr.hd th.nm, table.comb tr.hd th:last-child{text-align:left}
   table.comb td, table.comb th{padding:7px 8px}
+  .addl{display:block;max-width:170px;margin:3px 0 0 auto;font-size:11.5px;font-weight:700;color:var(--soft);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   table.comb .nm{position:sticky;left:0;z-index:1;background:#fff;box-shadow:1px 0 0 var(--line);min-width:150px;white-space:normal}
   table.comb tr.hd .nm{background:#F7F9FB}
   table.comb tr.subt .nm{background:#FAFBFC}
@@ -225,15 +226,15 @@
     .perhead .when{font-size:17px}
   }
 </style>
-<script src="user.js?v=hc149"></script>
+<script src="user.js?v=hc150"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc149"></script>
-  <script src="gate.js?v=hc149"></script>
-  <script src="alerts.js?v=hc149"></script>
-  <script src="_staff.js?v=hc149"></script>
-  <script src="payrules.js?v=hc149"></script>
-  <script src="paystore.js?v=hc149"></script>
-  <script src="docs.js?v=hc149"></script>
+  <script src="store.js?v=hc150"></script>
+  <script src="gate.js?v=hc150"></script>
+  <script src="alerts.js?v=hc150"></script>
+  <script src="_staff.js?v=hc150"></script>
+  <script src="payrules.js?v=hc150"></script>
+  <script src="paystore.js?v=hc150"></script>
+  <script src="docs.js?v=hc150"></script>
 </head>
 <body>
 <div class="ribbon">MOCK-UP for Heather — made-up people and amounts. Try it as the Carlsbad TC first, then as Heather.</div>
@@ -518,6 +519,51 @@
     return everyDoc().filter(d=>d.office===o && (!S.docGone[d.id] || (had(d) && num(s.docs[d.id].w1)+num(s.docs[d.id].w2)>0)))
       .sort((a,b)=>a.n.localeCompare(b.n));
   }
+
+  /* ---------- ADD TO PAYROLL (12/11/2026). Heather: "Is there a way I can add things to all of the office payrolls as
+     well? When the team hits goal they get a special bonus and I need a place to write it so I don't forget to add it
+     to their payroll. I also add other things like special bonuses/compensation for things." Before, her Goal, TC/OM
+     and Extra could only be typed once an office had sent its sheet, with nowhere to say what for. Now whoever manages
+     payroll writes one down the moment they know: who (one person, everyone at an office, or everyone at every office
+     but Zihua Partners), what for, the amount per person, which column, which pay period. It LANDS by itself on that
+     pay period's combined sheet - worked out when the sheet is drawn, never written into anyone's row - so it's in
+     Total and the download, shown under the column with what it's for. Kept in Heather's own folder (adds.json), next
+     to her columns: the offices never see it. Taking one off only marks it (gone) and it can be brought back; a pay
+     period marked entered can't be changed (reopen it first). Someone working two offices gets an "everyone" item
+     once: on the first office's row (the sheet's order) whose sheet is in. ---------- */
+  let LIVEADDS=[];
+  const adds=()=>LIVEPAY ? LIVEADDS : (S.adds=S.adds||[]);
+  const ADD_COLS=[['goal','Goal'],['tcom','TC/OM'],['extra','Extra']];
+  const addColName=c=>(ADD_COLS.find(x=>x[0]===c)||[c,c])[1];
+  const addsFor=n=>adds().filter(a=>a && !a.gone && a.key && nOfP(a.key)===n && num(a.amt)>0 && ADD_COLS.some(x=>x[0]===a.col));
+  const homeRow=(n,p)=>{ const o=OFFICES.find(o=>!o.self && p.offices.indexOf(o.k)>=0 && get(n,o.k).status==='sent' && get(n,o.k).rows[p.id]); return o ? o.k : null; };
+  function addsOn(n,o,p){
+    return addsFor(n).filter(a=>{ const t=a.to||{};
+      if(t.k==='person') return t.o===o && t.pid===p.id;
+      if(t.k==='office') return t.o===o;
+      if(t.k==='all') return !!OFF[o] && !OFF[o].self && homeRow(n,p)===o;
+      return false; });
+  }
+  /* The row as Heather's side adds it up: her typed Goal / TC/OM / Extra plus what's written down for this person. */
+  function withAdds(n,o,p,x){
+    const list=addsOn(n,o,p); if(!list.length) return x;
+    const y=Object.assign({}, x);
+    list.forEach(a=>{ y[a.col]=r2(num(y[a.col])+num(a.amt)); });
+    return y;
+  }
+  const addLines=(n,o,p,col)=>addsOn(n,o,p).filter(a=>a.col===col).map(a=>'<span class="addl" title="'+esc('Added to payroll: '+a.what+' - '+money(num(a.amt)))+'">+ '+money(num(a.amt))+' · '+esc(a.what)+'</span>').join('');
+  const addWho=a=>{ const t=a.to||{}, p=t.k==='person' ? who(t.pid) : null;
+    return t.k==='all' ? 'Everyone, every office' : t.k==='office' ? 'Everyone at '+(OFF[t.o] ? OFF[t.o].n : '?') : (p ? disp(p) : 'Someone no longer listed')+(OFF[t.o] ? ' · '+OFF[t.o].n : ''); };
+  /* Where one stands: how many rows it's on so far, and which offices' sheets it's still waiting for. */
+  function landedOf(a,n){
+    const t=a.to||{}, ks=t.k==='all' ? OFFICES.filter(o=>!o.self).map(o=>o.k) : [t.o];
+    let count=0; const waiting=[];
+    ks.forEach(k=>{ if(!OFF[k]) return; const s=get(n,k);
+      if(s.status!=='sent'){ waiting.push(OFF[k].n); return; }
+      rowPeople(n,k).forEach(p=>{ if(s.rows[p.id] && addsOn(n,k,p).indexOf(a)>=0) count++; }); });
+    return {count, waiting};
+  }
+  const addsNote=(n,o,p)=>addsOn(n,o,p).map(a=>addColName(a.col)+' '+money(num(a.amt))+': '+a.what).join('; ');
 
   /* ---------- the sums: one rule for every row ---------- */
   const cutVal=x=>(x.cut!==undefined && x.cut!=='') ? x.cut : (x.pct||'');
@@ -852,15 +898,15 @@
           '<span class="who">'+(who ? esc(who)+' sends it' : 'Nobody sends it yet — choose who in Settings')+'</span></div></td></tr>'; return; }
       h+=combHead(o.k, anySp); const sp=specCols(n,o.k);
       let sub={reg:0,ot1:0,ot2:0,total:0,reimb:0};
-      rowPeople(n,o.k).forEach(p=>{ const x=s.rows[p.id]; if(!x) return; const c=calc(p,x,pr);
+      rowPeople(n,o.k).forEach(p=>{ const x=s.rows[p.id]; if(!x) return; const c=calc(p,withAdds(n,o.k,p,x),pr);
         sub.reg+=c.reg; sub.ot1+=c.ot1; sub.ot2+=c.ot2; sub.total+=c.total; sub.reimb+=c.reimb;
         h+='<tr><td class="nm"><b>'+esc(disp(p))+'</b>'+(p.offices.length>1?' <span class="pill p-go" title="Combine hours across offices">2 offices</span>':'')+'</td>'+
           '<td class="n">'+hrs(c.reg)+'</td><td class="n">'+otCell(x,c,1)+'</td><td class="n">'+otCell(x,c,2)+'</td>'+
           '<td class="n">'+hrs(c.pto)+'</td><td class="n">'+money(c.ppb)+'</td>'+
-          '<td class="n">'+hin(o.k,p,'goal',x.goal,on)+'</td><td class="n">'+hin(o.k,p,'tcom',x.tcom,on)+'</td>'+
+          '<td class="n">'+hin(o.k,p,'goal',x.goal,on)+addLines(n,o.k,p,'goal')+'</td><td class="n">'+hin(o.k,p,'tcom',x.tcom,on)+addLines(n,o.k,p,'tcom')+'</td>'+
           '<td class="n">'+(c.holH?hrs(c.holH)+' h':money(c.hol))+'</td><td class="n">'+money(c.oc)+'</td><td class="n">'+(c.ers?c.ers:'—')+'</td>'+
           own.map(col=>'<td class="n">'+(!col?'':col.hrs?hrs(c.sick):money(num(x[col.k])))+'</td>').join('')+     // typed by the office
-          '<td class="n">'+hin(o.k,p,'extra',x.extra,on)+(c.exc?'<div class="small muted">+ '+money(c.exc)+' commuter</div>':'')+'</td>'+
+          '<td class="n">'+hin(o.k,p,'extra',x.extra,on)+addLines(n,o.k,p,'extra')+(c.exc?'<div class="small muted">+ '+money(c.exc)+' commuter</div>':'')+'</td>'+
           '<td class="n"><b id="ct-'+o.k+'-'+p.id+'">'+money(c.total)+'</b></td><td class="n">'+money(c.reimb)+'</td>'+
           (anySp?'<td class="small">'+sp.filter(cc=>num(x['sc_'+cc.id])).map(cc=>esc(cc.n)+': <b>'+specShow(cc,x['sc_'+cc.id])+'</b>').join('<br>')+'</td>':'')+
           '<td>'+(x.notes?'<span class="nt" title="'+esc(x.notes)+'">📝 note</span>':'')+'</td></tr>'; });
@@ -870,14 +916,14 @@
         h+='<tr class="docr"><td class="nm">'+esc(d.n)+'</td><td colspan="'+(NC-1)+'">Paid by the day: '+dayN(v.w1)+' in Wk 1 + '+dayN(v.w2)+' in Wk 2 = <b>'+daysText(v)+'</b></td></tr>'; });
     });
     h+='<tr class="grand"><td class="nm">All offices</td><td class="n">'+hrs(grand.reg)+'</td><td class="n">'+hrs(grand.ot1)+'</td><td class="n">'+hrs(grand.ot2)+'</td><td colspan="10"></td><td class="n" id="cgt">'+money(grand.total)+'</td><td class="n">'+money(grand.reimb)+'</td>'+(anySp?'<td></td>':'')+'<td></td></tr>';
-    return h+'</tbody></table></div><p class="small muted" style="margin:8px 2px 0">Total = PP bonus + Goal + TC/OM + holiday ('+money(RATE.holiday)+') + on call ('+money(RATE.onCall)+' a weekend) + Phone, DIBS, POG + Extra'+(anySp?' + any extra $ column added to Total':'')+'. ER hrs: 1 hour of pay for each patient seen on an ER - hours, kept out of Total. '+
+    return h+'</tbody></table></div><p class="small muted" style="margin:8px 2px 0">Total = PP bonus + Goal + TC/OM + holiday ('+money(RATE.holiday)+') + on call ('+money(RATE.onCall)+' a weekend) + Phone, DIBS, POG + Extra'+(anySp?' + any extra $ column added to Total':'')+'. A line under Goal, TC/OM or Extra (“+ $100 · Team hit goal”) is from <b>Add to payroll</b> - it’s in Total. ER hrs: 1 hour of pay for each patient seen on an ER - hours, kept out of Total. '+
       'Reimburse is mileage at '+money(RATE.mile)+' a mile (the IRS rate) and stays out of Total. <b>Goal, TC/OM and Extra are yours to fill in</b> — the offices don’t see them. Phone, DIBS and POG come from the offices’ own sheets.</p>';
   }
   /* Totals follow as Heather types, without redrawing the box she is typing in. */
   function combTotals(n){
     const pr=P(n); let gt=0;
     OFFICES.forEach(o=>{ const s=get(n,o.k); if(s.status!=='sent') return; let st=0;
-      rowPeople(n,o.k).forEach(p=>{ const x=s.rows[p.id]; if(!x) return; const c=calc(p,x,pr); st+=c.total;
+      rowPeople(n,o.k).forEach(p=>{ const x=s.rows[p.id]; if(!x) return; const c=calc(p,withAdds(n,o.k,p,x),pr); st+=c.total;
         const cl=el('ct-'+o.k+'-'+p.id); if(cl) cl.textContent=money(c.total); });
       gt+=st; const sc=el('cst-'+o.k); if(sc) sc.textContent=money(st); });
     const g=el('cgt'); if(g) g.textContent=money(gt);
@@ -897,6 +943,7 @@
       (!e?'<div class="small muted" style="margin-top:12px">'+(LIVEPAY
         ? '⏰ Each office’s sender gets a reminder in their bell from the workday before it’s due, until it’s sent. At 2 pm on the due day your bell lists any still to come.'+(PHONE()?' Senders who turn alerts on (the bell → Turn on) get them on their phone too: the workday before at 9 am, the due day at 9 am and 1 pm.':' Reminders on phones come with Chat.')
         : '⏰ Reminders go out on their own to whoever sends each sheet: the workday before, the morning it’s due, and at 1 pm if it isn’t sent yet - in Home-Brace, and on their phone once alerts are on. <b>Send a reminder</b> sends one right now.')+'</div>':'')+'</div>';
+    h+=addsCard(n);
     const groups=[['add','🆕 New people'],['ot','⏱ Overtime'],['er','🚑 ERs taken'],['two','🏢 Working two offices — hours combined'],['green','🟢 Missed green days'],['pay','💵 Exception commuter pay'],['miles','🚗 Mileage']];
     const count=groups.reduce((a,g)=>a+F[g[0]].length,0);
     h+='<div class="card"><h2>Worth a second look'+(count?' ('+count+')':'')+'</h2><p class="sub">Found for you across every sheet that’s been sent — no more hunting through notes.</p>'+
@@ -906,6 +953,66 @@
       '<button class="btn ghost sm" data-act="csv">⬇ Download for Excel</button>'+
       (R().ro || n===NEXT ? '' : e?'<button class="btn ghost sm" data-act="reopen">Reopen</button>':'<button class="btn sm" data-act="enter"'+(sent<OFFICES.length?' title="Some offices haven’t sent yet"':'')+'>Mark as entered in payroll</button>')+'</div>'+combined(n)+'</div>';
     return h+'</div>';
+  }
+
+  /* ADD TO PAYROLL: what's written down for this pay period, where each stands, and the ones for later pay periods. */
+  function addsCard(n){
+    const e=enteredOf(n), ro=R().ro, all=adds().filter(a=>a && a.key && nOfP(a.key)===n), on=all.filter(a=>!a.gone), off=all.filter(a=>a.gone);
+    const later={}; adds().forEach(a=>{ if(!a || a.gone || !a.key) return; const m=nOfP(a.key); if(m!==null && m>n) later[m]=(later[m]||0)+1; });
+    let h='<div class="card" id="addscard"><div class="row" style="margin-bottom:8px"><div class="grow"><h2>Add to payroll</h2><p class="sub" style="margin:0">A bonus or anything extra - write it down as soon as you know. It lands on this pay period’s combined sheet by itself, in the column you pick, and it’s in Total and the download. The offices never see this.</p></div>'+
+      (ro || e ? '' : '<button class="btn sm" data-act="addnew">＋ Add</button>')+'</div>';
+    if(e) h+='<div class="note info" style="margin-bottom:8px">This pay period is entered in payroll, so these can’t change. Reopen it to change them.</div>';
+    if(on.length){
+      h+='<div class="tblwrap"><table class="t"><thead><tr><th>Who</th><th>For</th><th>Column</th><th class="n">Amount</th><th>Where it stands</th><th></th></tr></thead><tbody>'+
+        on.map(a=>{ const L=landedOf(a,n), t=a.to||{}, each=t.k!=='person';
+          const st=L.waiting.length
+            ? (L.count ? '<span class="pill p-done">On '+L.count+' '+(L.count===1?'row':'rows')+' so far</span> ' : '')+'<span class="pill p-go">Waits for '+esc(L.waiting.length===1 ? poss(L.waiting[0])+' sheet' : L.waiting.length+' offices’ sheets')+'</span>'
+            : L.count ? '<span class="pill p-done">On the sheet ✓'+(each?' · '+L.count+' '+(L.count===1?'person':'people')+' · '+money(L.count*num(a.amt)):'')+'</span>'
+            : '<span class="pill p-late">Not on the sheet '+esc(t.k==='all'?'the offices':(OFF[t.o]?OFF[t.o].n:''))+' sent - check</span>';
+          return '<tr><td style="white-space:normal"><b>'+esc(addWho(a))+'</b></td><td style="white-space:normal">'+esc(a.what)+'</td><td>'+esc(addColName(a.col))+'</td><td class="n">'+money(num(a.amt))+(each?' <span class="small muted">each</span>':'')+'</td><td style="white-space:normal">'+st+'</td>'+
+            '<td class="n">'+(ro||e?'':'<button class="link small" data-act="addrm" data-v="'+esc(a.id)+'">Take off</button>')+'</td></tr>'; }).join('')+
+        off.map(a=>'<tr class="gone"><td>'+esc(addWho(a))+'</td><td>'+esc(a.what)+'</td><td>'+esc(addColName(a.col))+'</td><td class="n">'+money(num(a.amt))+'</td><td class="small muted">Taken off</td><td class="n">'+(ro||e?'':'<button class="link small" data-act="addback" data-v="'+esc(a.id)+'">Bring back</button>')+'</td></tr>').join('')+
+        '</tbody></table></div>';
+    } else h+=(off.length ? '<div class="tblwrap"><table class="t"><tbody>'+off.map(a=>'<tr class="gone"><td>'+esc(addWho(a))+'</td><td>'+esc(a.what)+'</td><td class="n">'+money(num(a.amt))+'</td><td class="small muted">Taken off</td><td class="n">'+(ro||e?'':'<button class="link small" data-act="addback" data-v="'+esc(a.id)+'">Bring back</button>')+'</td></tr>').join('')+'</tbody></table></div>' : '<div class="small muted">Nothing written down for this pay period.</div>');
+    const ls=Object.keys(later).map(Number).sort((a,b)=>a-b);
+    if(ls.length) h+='<div class="small muted" style="margin-top:10px">Also written down for later: '+ls.map(m=>'<button class="link small" data-act="addper" data-v="'+m+'">'+esc(lab(m))+' ('+later[m]+')</button>').join(' · ')+'</div>';
+    return h+'</div>';
+  }
+  /* The pay periods something can still be written down for: from the first one not entered, eight ahead. */
+  function addPeriods(){ const out=[]; for(let m=(BEFORE?NEXT:CUR); m<=NEXT+7; m++){ if(!enteredOf(m)) out.push(m); } return out; }
+  function addDlg(){
+    const ps=addPeriods(), def=ps.indexOf(per)>=0 ? per : ps[0];
+    const ppl=k=>activeAt(k);
+    openDlg(top('Add to payroll')+'<div class="dm-body"><div class="stack" style="gap:12px">'+
+      '<label class="fld">Who<select class="in" id="aw"><option value="all">Everyone, every office (not Zihua Partners)</option>'+
+        OFFICES.map(o=>'<optgroup label="'+esc(o.n)+'"><option value="office:'+o.k+'">Everyone at '+esc(o.n)+' ('+ppl(o.k).length+')</option>'+
+          ppl(o.k).map(p=>'<option value="person:'+o.k+':'+esc(p.id)+'">'+esc(disp(p))+'</option>').join('')+'</optgroup>').join('')+'</select></label>'+
+      '<label class="fld">What it’s for<input class="in" id="awhat" maxlength="80" autocomplete="off" placeholder="e.g. Team hit goal, pilot bonus"></label>'+
+      '<div class="row" style="gap:10px;flex-wrap:wrap;align-items:flex-end">'+
+        '<label class="fld">Amount per person<input class="in" id="aa" type="number" min="0" step="0.01" inputmode="decimal" placeholder="$" style="width:130px"></label>'+
+        '<label class="fld">Column<select class="in" id="ac">'+ADD_COLS.map(c=>'<option value="'+c[0]+'"'+(c[0]==='extra'?' selected':'')+'>'+esc(c[1])+'</option>').join('')+'</select></label>'+
+        '<label class="fld">Pay period<select class="in" id="ap">'+ps.map(m=>'<option value="'+m+'"'+(m===def?' selected':'')+'>'+esc(lab(m))+' · '+esc(span(P(m).start,P(m).end))+(m===NEXT?' (in progress)':'')+'</option>').join('')+'</select></label></div>'+
+      '<div class="note info" id="aprev" style="margin:0">Pick who and the amount.</div>'+
+      '</div></div><div class="dm-foot"><button class="btn ghost" data-act="close">Cancel</button><button class="btn" data-act="addok">Add to payroll</button></div>');
+    paintAddPrev(); const f=el('awhat'); if(f) f.focus();
+  }
+  function addRead(){
+    const w=String((el('aw')||{}).value||''), bits=w.split(':'), amt=r2(num((el('aa')||{}).value)), col=(el('ac')||{}).value, n=+((el('ap')||{}).value), what=String((el('awhat')||{}).value||'').trim().slice(0,80);
+    const to=bits[0]==='all' ? {k:'all'} : bits[0]==='office' && OFF[bits[1]] ? {k:'office', o:bits[1]} : bits[0]==='person' && OFF[bits[1]] && who(bits.slice(2).join(':')) ? {k:'person', o:bits[1], pid:bits.slice(2).join(':')} : null;
+    const howMany=!to ? 0 : to.k==='person' ? 1 : to.k==='office' ? activeAt(to.o).length : (()=>{ const seen={}; OFFICES.filter(o=>!o.self).forEach(o=>activeAt(o.k).forEach(p=>{ seen[p.id]=1; })); return Object.keys(seen).length; })();
+    return {to, amt, col, n, what, howMany};
+  }
+  function paintAddPrev(){
+    const b=el('aprev'); if(!b) return; const r=addRead();
+    if(!r.to || !(r.amt>0)){ b.textContent='Pick who and the amount.'; return; }
+    b.innerHTML=r.to.k==='person'
+      ? esc(addWho({to:r.to}))+' gets <b>'+money(r.amt)+'</b> in '+esc(addColName(r.col))+' on '+esc(lab(r.n))+'.'
+      : money(r.amt)+' each × about '+r.howMany+' '+(r.howMany===1?'person':'people')+' = <b>about '+money(r.amt*r.howMany)+'</b> in '+esc(addColName(r.col))+' on '+esc(lab(r.n))+
+        '. <span class="muted">Exactly who: everyone on '+(r.to.k==='all'?'each office’s':esc(poss(OFF[r.to.o].n)))+' sheet when it comes in.</span>';
+  }
+  function liveAdds(fn){
+    liveQueue('_h', 'adds', cur=>{ const x=(cur && typeof cur==='object' && Array.isArray(cur.items)) ? cur : {v:1, items:[]}; fn(x.items); x.upd=new Date().toISOString(); x.updBy=myEmail(); return x; });
+    return liveFlushAll();
   }
 
   /* ---------- Heather: history ---------- */
@@ -923,7 +1030,7 @@
     for(let n=CUR;n>=Math.max(1, FIRST_N);n--){
       const pr=P(n), e=enteredOf(n); let hours=0,total=0,sent=0;
       if(waiting(n)){ h+='<tr><td><b>'+lab(n)+'</b></td><td>'+esc(span(pr.start,pr.end))+(pr.hol?' <span class="pill p-new">'+esc(pr.hol.n)+'</span>':'')+'</td><td>'+esc(fmt(pr.pay))+'</td><td class="muted" colspan="4">'+(LIVE.old==='failed'?'Couldn’t be read':'Loading…')+'</td><td></td></tr>'; continue; }
-      OFFICES.forEach(o=>{ const s=get(n,o.k); if(s.status!=='sent') return; sent++; rowPeople(n,o.k).forEach(p=>{ const x=s.rows[p.id]; if(x){ const c=calc(p,x,pr); hours+=c.hours; total+=c.total; } }); });
+      OFFICES.forEach(o=>{ const s=get(n,o.k); if(s.status!=='sent') return; sent++; rowPeople(n,o.k).forEach(p=>{ const x=s.rows[p.id]; if(x){ const c=calc(p,withAdds(n,o.k,p,x),pr); hours+=c.hours; total+=c.total; } }); });
       h+='<tr><td><b>'+lab(n)+'</b></td><td>'+esc(span(pr.start,pr.end))+(pr.hol?' <span class="pill p-new">'+esc(pr.hol.n)+'</span>':'')+'</td><td>'+esc(fmt(pr.pay))+'</td><td>'+sent+' of '+OFFICES.length+'</td><td>'+(e?'<span class="pill p-lock">🔒 Entered '+esc(fmt(e.at))+'</span>':'<span class="pill p-go">In progress</span>')+'</td><td class="n">'+hrs(hours)+'</td><td class="n">'+money(total)+'</td><td class="n"><button class="btn ghost sm" data-act="open" data-v="'+n+'">Open</button></td></tr>';
     }
     return h+'</tbody></table></div></div>';
@@ -1049,9 +1156,9 @@
       lines.push([o.co]);
       lines.push(['Employee Name','Regular Hours','OT Wk 1','OT Wk 2','PPBonus','PTO','Goal','TC/OM','Holiday','Reimburse','On Call','ER Hours'].concat(own.map(c=>c.n),sp.map(c=>c.n+((c.kind==='usd'||c.kind==='usdx')?' ($)':c.kind==='hrs'?' (hrs)':'')),['Extra','Total','Notes']));
       if(s.status!=='sent'){ lines.push(['(not sent yet)']); lines.push([]); return; }
-      rowPeople(n,o.k).forEach(p=>{ const x=s.rows[p.id]; if(!x) return; const c=calc(p,x,pr);
+      rowPeople(n,o.k).forEach(p=>{ const x=s.rows[p.id]; if(!x) return; const c=calc(p,withAdds(n,o.k,p,x),pr), an=addsNote(n,o.k,p);
         lines.push([disp(p), c.reg, c.ot1||'', c.ot2||'', c.ppb||'', c.pto||'', c.goal||'', c.tcom||'', c.holH?c.holH+' hrs':(c.hol||''), c.reimb||'', c.oc||'', c.ers||'']
-          .concat(own.map(col=>col.hrs?(c.sick||''):(num(x[col.k])||'')), sp.map(col=>num(x['sc_'+col.id])||''), [c.extra||'', c.total, x.notes||''])); });
+          .concat(own.map(col=>col.hrs?(c.sick||''):(num(x[col.k])||'')), sp.map(col=>num(x['sc_'+col.id])||''), [c.extra||'', c.total, [x.notes||'', an ? '[Added to payroll: '+an+']' : ''].filter(Boolean).join(' ')])); });
       const ds=docRows(n,o.k);
       if(ds.length){ lines.push(['Doctor (paid by the day)','Days Wk 1','Days Wk 2','Total days']);
         ds.forEach(d=>{ const v=(s.docs||{})[d.id]||{}; lines.push([d.n, daySet(v.w1)?num(v.w1):'', daySet(v.w2)?num(v.w2):'', num(v.w1)+num(v.w2)]); }); }
@@ -1095,6 +1202,7 @@
     save(); combTotals(per);
   }
   document.addEventListener('input', e=>{ const t=e.target; if(!t.dataset) return;
+    if(t.id==='aa' || t.id==='awhat'){ paintAddPrev(); return; }
     if(t.dataset.d){ onDoc(t); return; }
     if(t.dataset.hf){ onHeather(t); return; }
     if(t.dataset.sb){ if(t.value==='') delete S.bonus[t.dataset.sb]; else S.bonus[t.dataset.sb]=num(t.value);
@@ -1114,6 +1222,7 @@
       }
       try{ localStorage.setItem('ph_viewas', t.value); }catch(_){} location.reload(); return; }
     if(t.id==='persona'){ as=t.value; fillAs=null; try{ localStorage.setItem('ph_pay_as', as); }catch(_){} tab='sheet'; per=HOME(); render(); return; }
+    if(t.id==='aw' || t.id==='ac' || t.id==='ap'){ paintAddPrev(); return; }
     if(t.id==='perpick'){ per=+t.value; render(); return; }
     if(t.id==='offpick'){ liveOffice=t.value; per=HOME(); render(); return; }
     if(t.dataset && t.dataset.sendadd){ liveSenders(t.dataset.sendadd, t.value, true); return; }
@@ -1207,6 +1316,37 @@
     if(act==='fillin' && OFF[v] && OFF[v].self){ fillAs=v; tab='sheet'; per=(per===NEXT ? NEXT : HOME()); render(); window.scrollTo({top:0}); return; }
     if(act==='unfill'){ fillAs=null; tab='sheet'; render(); window.scrollTo({top:0}); return; }
     if(act==='sendrm'){ liveSenders(b.dataset.o, v, false); return; }
+    if(act==='addnew' && !R().ro){ if(!addPeriods().length){ toast('Nothing can be added - every pay period is entered'); return; } addDlg(); return; }
+    if(act==='addper'){ per=+v; render(); const c=el('addscard'); if(c) c.scrollIntoView({block:'start'}); return; }
+    if(act==='addok' && !R().ro){
+      const r=addRead();
+      if(!r.to){ toast('Pick who it’s for'); return; }
+      if(!r.what){ toast('Say what it’s for'); const f=el('awhat'); if(f) f.focus(); return; }
+      if(!(r.amt>0) || r.amt>100000){ toast('Put the amount per person'); const f=el('aa'); if(f) f.focus(); return; }
+      if(!ADD_COLS.some(c=>c[0]===r.col) || addPeriods().indexOf(r.n)<0){ toast('Pick the column and the pay period'); return; }
+      const item={id:'a'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), key:pkey(r.n), to:r.to, col:r.col, amt:r.amt, what:r.what,
+        by:LIVEPAY ? ((PH.name && PH.name(PH.me())) || '') : 'Heather', byEm:LIVEPAY ? myEmail() : '', at:nowISO()};
+      const done=()=>{ closeDlg(); per=r.n; render(); toast('Added to '+lab(r.n)+' ✓ - '+r.what); };
+      if(LIVEPAY){ b.disabled=true;
+        LIVEADDS.push(item);
+        liveAdds(list=>{ if(!list.some(i=>i.id===item.id)) list.push(item); }).then(okd=>{
+          b.disabled=false;
+          if(!okd){ LIVEADDS=LIVEADDS.filter(i=>i.id!==item.id); toast('Not saved — check the connection and try again.'); return; }
+          done(); });
+        return; }
+      adds().push(item); save(); done(); return; }
+    if((act==='addrm' || act==='addback') && !R().ro){
+      const a=adds().find(i=>i && i.id===v); if(!a) return;
+      const n=nOfP(a.key); if(n!==null && enteredOf(n)){ toast('That pay period is entered - reopen it first'); return; }
+      const gone=act==='addrm' ? nowISO() : null, by=LIVEPAY ? ((PH.name && PH.name(PH.me())) || '') : 'Heather';
+      const mark=i=>{ if(gone){ i.gone=gone; i.goneBy=by; } else { delete i.gone; delete i.goneBy; } };
+      if(LIVEPAY){ b.disabled=true;
+        liveAdds(list=>{ const i=list.find(q=>q && q.id===v); if(i) mark(i); }).then(okd=>{
+          b.disabled=false;
+          if(!okd){ toast('Not saved — check the connection and try again.'); return; }
+          mark(a); render(); toast(gone ? 'Taken off - '+a.what+' (Bring back undoes it)' : 'Back on - '+a.what); });
+        return; }
+      mark(a); save(); render(); toast(gone ? 'Taken off - '+a.what+' (Bring back undoes it)' : 'Back on - '+a.what); return; }
     if(act==='close'){ closeDlg(); return; }
     if(act==='mode'){ try{ if(v==='1') localStorage.setItem('ph_pay_real','1'); else localStorage.removeItem('ph_pay_real'); }catch(_){}
       location.href=location.pathname; return; }
@@ -1519,7 +1659,7 @@
          put together in office order, exactly as before. Reads only. */
       .then(()=>Promise.all([
         Promise.all(offs.map(k=>Promise.all([store(k).get('people'), store(k).getAll('sheet_', {partial:true, only:isRecent})]))),
-        lv==='send' ? null : Promise.all([store('_h').get('settings'), store('_h').getAll('cols_', {partial:true, only:isRecent})])
+        lv==='send' ? null : Promise.all([store('_h').get('settings'), store('_h').getAll('cols_', {partial:true, only:isRecent}), store('_h').get('adds')])
       ]))
       .then(([perOffice, hers])=>{ perOffice.forEach(([pf, sh], i)=>{ const k=offs[i];
         pf=pf||{people:[], docs:[]};
@@ -1535,7 +1675,8 @@
         takeSheets(k, sh, LIVE.unread);
       });
       if(!hers) return;
-      { let [st, cols]=hers;
+      { let [st, cols, ad]=hers;
+        LIVEADDS=(ad && Array.isArray(ad.items)) ? ad.items.filter(a=>a && typeof a==='object' && a.id) : [];   // ADD TO PAYROLL
         st=st||{};
         S.bonus=st.bonus||{};
         if(st.rates) RATE=Object.assign({}, RATE, st.rates);
@@ -1588,7 +1729,7 @@
 })();
 </script>
 <script>PH.nav('payroll');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc149"></script>
+<script src="tour.js?v=hc150"></script>
 <script>
 Tour.init([
   ...((window.PH && PH.isLive && PH.isLive()) || (()=>{ try{ return localStorage.getItem('ph_pay_real')==='1'; }catch(_){ return false; } })() ? [] : [{sel:'#persona', title:'A mock-up', body:'Made-up people and amounts. Start as the <b>Carlsbad TC</b>, who sends Carlsbad’s sheet, then switch to <b>Heather</b>.'}]),
