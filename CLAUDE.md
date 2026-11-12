@@ -354,6 +354,11 @@ paySenders/reloadPaySenders/paySenderOffices, payLevel).
   until an office is planned - no tick, no %). ph_prod_mode in Cory's browser copy: source 'homebrace' since
   03/11/2026 16:20 (Jessica Lynch) - his Safari token had expired, so not re-read live; NOT yet checked whether
   Heather has planned 2027.
+- **USAGE STARTS WHERE COUNTING BEGAN (12/11/2026, hc155, sandbox).** Cory (iPhone, Admin -> Usage, 30 days = 27 empty
+  days + 3 bars): "Probably don't need to show the months before this was live". usage.js countedFrom() = the local day
+  of the earliest `first` in any record; summary() starts every period there (chart, Days used "of 3", offices,
+  sections; Today's 7-day chart too); a period wholly before it is empty (before:true) and paint() doesn't offer it
+  (Last month hidden until there is one); labels say "since 10 Nov" when cut. test/usage +5.
 - **A ROLE'S NAME, NOT A PERSON'S (12/11/2026, hc154, sandbox).** Cory, of the dashboard banner "Clovis Treatment
   Coordinator last saved": "Why isn't there a name?" Microsoft names some mailboxes after the role (Clovis / Lubbock /
   Carlsbad Treatment Coordinator = latricia@ / becca@ / jennifer@ on the staff list - Latricia Sanchez, Rebecca

@@ -47,14 +47,21 @@
     return list.filter(x=>!(x.rec && x.rec.off));                     // asked not to be tracked: never in any number
   }
   /* One period: the tiles, people per day, by office, by section, and each person's line. */
+  /* COUNTING STARTS THE DAY IT WENT LIVE (12/11/2026). Cory, of "30 days" drawn as 27 empty days and 3 bars: "Probably
+     don't need to show the months before this was live". A period now starts no earlier than the first visit Home-Brace
+     ever counted (anyone's): the chart, Days used ("of 3", not "of 30"), the office and section counts all start there.
+     A period wholly before it is empty (and Admin doesn't offer it - see paint). */
+  const dayOf=iso=>{ const d=new Date(iso); return isNaN(d) ? String(iso||'').slice(0,10) : isoDay(d); };
+  function countedFrom(list){ const f=(list||[]).map(x=>x.rec && x.rec.first).filter(Boolean).sort()[0]; return f ? dayOf(f) : ''; }
   function summary(list, opts){
-    const today=opts.today, p=period(opts.kind, today), days=daysIn(p.from, p.to), inc=opts.includeAdmins;
+    const today=opts.today, p0=period(opts.kind, today), inc=opts.includeAdmins, since=countedFrom(list);
+    const p={from:(since && since>p0.from) ? since : p0.from, to:p0.to}, days=p.from<=p.to ? daysIn(p.from, p.to) : [];
     const ppl=list.filter(x=>inc || !x.admin);
     const daysUsed=x=>!x.rec ? 0 : days.filter(d=>x.rec.d[d] && x.rec.d[d].n>0).length;
     const rows=ppl.map(x=>{ const du=daysUsed(x);
       return Object.assign({}, x, {days:du, last:x.rec ? x.rec.last||'' : '', state:du ? 'using' : x.rec ? 'quiet' : 'never'}); });
     const listed=rows.filter(x=>x.listed), active=listed.filter(x=>x.days>0);
-    const chartDays=opts.kind==='today' ? daysIn(addDays(today,-6), today) : days;
+    const chartFrom=addDays(today,-6), chartDays=opts.kind==='today' ? daysIn((since && since>chartFrom) ? since : chartFrom, today) : days;
     const perDay=chartDays.map(d=>({d, n:rows.filter(x=>x.rec && x.rec.d[d] && x.rec.d[d].n>0).length}));
     const offices=[...new Set([].concat(opts.offices||[], ...listed.map(x=>x.offices)))].filter(Boolean);
     const byOffice=offices.map(o=>{ const at=listed.filter(x=>x.offices.indexOf(o)>=0); return {o, total:at.length, active:at.filter(x=>x.days>0).length}; })
@@ -63,7 +70,7 @@
     rows.forEach(x=>{ if(!x.rec) return; const seen=new Set(); days.forEach(d=>{ const e=x.rec.d[d]; if(e && e.p) Object.keys(e.p).forEach(k=>seen.add(k)); }); seen.forEach(k=>{ secs[k]=(secs[k]||0)+1; }); });
     const bySection=Object.keys(secs).map(k=>({k, n:secs[k]})).sort((a,b)=>b.n-a.n);
     const firstEver=list.map(x=>x.rec && x.rec.first).filter(Boolean).sort()[0]||'';
-    return {from:p.from, to:p.to, days:days.length, rows, perDay, byOffice, bySection, firstEver,
+    return {from:p.from, to:p.to, days:days.length, rows, perDay, byOffice, bySection, firstEver, since, before:!days.length,
       total:listed.length, active:active.length, adoption:listed.length ? active.length/listed.length : null,
       today:listed.filter(x=>x.rec && x.rec.d[today] && x.rec.d[today].n>0).length,
       avgDays:active.length ? active.reduce((a,x)=>a+x.days,0)/active.length : null,
@@ -161,11 +168,14 @@
   function paint(el){
     const P=global.PH||{}, today=isoDay(new Date());
     const list=people(P.rosterRows ? P.rosterRows() : [], P.rosterView ? P.rosterView() : [], DATA||[]);
+    const since=countedFrom(list), offered=PERIODS.filter(p=>!since || p[0]==='today' || period(p[0], today).to>=since);
+    if(!offered.some(p=>p[0]===KIND)) KIND='30d';
     const S=summary(list, {kind:KIND, today, includeAdmins:ADMINS, offices:P.officeNames ? P.officeNames() : []});
-    const label=(PERIODS.find(p=>p[0]===KIND)||[])[1]||'';
-    let h='<div class="use-top" role="group" aria-label="Period">'+PERIODS.map(p=>'<button type="button" class="chip'+(KIND===p[0]?' on':'')+'" data-k="'+p[0]+'" aria-pressed="'+(KIND===p[0])+'">'+p[1]+'</button>').join('')+
+    const cut=!!(S.since && KIND!=='today' && S.since>period(KIND, today).from);           // the period starts where counting began
+    const label=cut ? 'since '+fmtShort(S.since) : ((PERIODS.find(p=>p[0]===KIND)||[])[1]||'');
+    let h='<div class="use-top" role="group" aria-label="Period">'+offered.map(p=>'<button type="button" class="chip'+(KIND===p[0]?' on':'')+'" data-k="'+p[0]+'" aria-pressed="'+(KIND===p[0])+'">'+p[1]+'</button>').join('')+
       '<label><input type="checkbox" data-adm'+(ADMINS?' checked':'')+'> Include admins</label></div>';
-    h+='<p class="use-since"><b>'+esc(fmtDay(S.from))+(S.from!==S.to?' – '+esc(fmtDay(S.to)):'')+'</b>'+(S.firstEver ? ' · Home-Brace has counted visits since '+esc(fmtShort(S.firstEver))+'.' : ' · Nothing counted yet - visits count from the day this went live.')+'</p>';
+    h+='<p class="use-since"><b>'+esc(fmtDay(S.from))+(S.from!==S.to?' – '+esc(fmtDay(S.to)):'')+'</b>'+(S.since ? ' · Home-Brace has counted visits since '+esc(fmtShort(S.since))+(S.since>period(KIND, today).from && KIND!=='today' ? ', so this starts there' : '')+'.' : ' · Nothing counted yet - visits count from the day this went live.')+'</p>';
     h+='<div class="use-tiles">'+
       '<div class="use-tile"><div class="k">Adoption · '+esc(label)+'</div><div class="v">'+pct(S.adoption)+'</div><div class="s">'+S.active+' of '+S.total+' people used Home-Brace</div><div class="use-meter" aria-hidden="true"><i style="width:'+Math.round((S.adoption||0)*100)+'%"></i></div></div>'+
       '<div class="use-tile"><div class="k">Using it today</div><div class="v">'+S.today+'</div><div class="s">'+(S.today===1?'person':'people')+' so far today</div></div>'+
@@ -176,7 +186,7 @@
     h+='<div class="use-card"><h3>People using it each day</h3><p class="sub">'+(KIND==='today'?'The last 7 days':'Each day of the period')+(ADMINS?'':', admins left out')+'.</p>'+
       '<div class="use-chart" role="img" aria-label="People using Home-Brace each day"><span class="ymax">'+max+'</span>'+
       S.perDay.map(x=>'<span class="b'+(x.n?'':' zero')+'" tabindex="0" data-tip="'+esc(fmtDay(x.d))+': '+x.n+' '+(x.n===1?'person':'people')+'" aria-label="'+esc(fmtDay(x.d))+': '+x.n+'"><i style="height:'+Math.max(2, Math.round(x.n/max*100))+'%"></i></span>').join('')+'</div>'+
-      '<div class="use-x"><span>'+esc(fmtShort(S.perDay[0].d))+'</span>'+(S.perDay.length>2?'<span>'+esc(fmtShort(S.perDay[Math.floor(S.perDay.length/2)].d))+'</span>':'')+'<span>'+esc(fmtShort(S.perDay[S.perDay.length-1].d))+'</span></div></div>';
+      (S.perDay.length ? '<div class="use-x"><span>'+esc(fmtShort(S.perDay[0].d))+'</span>'+(S.perDay.length>2?'<span>'+esc(fmtShort(S.perDay[Math.floor(S.perDay.length/2)].d))+'</span>':'')+(S.perDay.length>1?'<span>'+esc(fmtShort(S.perDay[S.perDay.length-1].d))+'</span>':'')+'</div>' : '')+'</div>';
     h+='<div class="use-two"><div class="use-card"><h3>By office</h3><p class="sub">People on the team list who used it, '+esc(label.toLowerCase())+'.</p><div class="use-bars">'+
       (S.byOffice.length ? S.byOffice.map(r=>'<div class="use-bar"><span>'+esc(r.o)+'</span><span class="t"><i style="width:'+Math.round(r.active/r.total*100)+'%"></i></span><span class="n"><b>'+r.active+'</b> of '+r.total+' · '+pct(r.active/r.total)+'</span></div>').join('') : '<div class="use-empty">No offices on the team list.</div>')+'</div></div>'+
       '<div class="use-card"><h3>What they use</h3><p class="sub">How many people opened each section, '+esc(label.toLowerCase())+'.</p><div class="use-bars">'+
@@ -216,5 +226,5 @@
     el.querySelectorAll('[data-tip]').forEach(b=>{ b.onmouseenter=()=>show(b); b.onfocus=()=>show(b); b.onmouseleave=hide; b.onblur=hide; });
   }
 
-  global.PH_USAGE={mountAdmin, _pure:{period, daysIn, people, summary, normName, keyOf}};
+  global.PH_USAGE={mountAdmin, _pure:{period, daysIn, people, summary, normName, keyOf, countedFrom}};
 })(typeof window!=='undefined' ? window : globalThis);

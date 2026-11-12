@@ -65,6 +65,19 @@ const recs=[
   t('Counting since the first visit anyone made', S.firstEver==='2026-11-01T15:00:00Z');
   const E=U.summary(U.people(roster, roster, []), {kind:'30d', today:TODAY, includeAdmins:false});
   t('Nothing recorded yet: 0%, no averages, everyone never', E.adoption===0 && E.avgDays===null && E.never===4 && E.firstEver==='');
+  /* 12/11/2026, Cory: "Probably don't need to show the months before this was live". Counting began on a day; a period
+     starts no earlier than that day. Made-up people. */
+  { const late=(email, name, days)=>rec(email, name, days, {first:days[0]+'T15:00:00'});
+    const L2=U.people(roster, roster, [late('avery.brooks@farnsworthorthodontics.com','Avery Brooks',['2026-11-08','2026-11-09','2026-11-10']), late('quinn.quill@farnsworthorthodontics.com','Quinn Quill',['2026-11-10'])]);
+    const M=U.summary(L2, {kind:'30d', today:TODAY, includeAdmins:true});
+    t('30 days, counting began Nov 8: the period is Nov 8 - Nov 10', M.from==='2026-11-08' && M.to==='2026-11-10' && M.days===3 && M.perDay.length===3);
+    t('...and Days used is out of the 3 counted days, not 30', M.avgDays===2 && M.since==='2026-11-08');
+    const W=U.summary(L2, {kind:'today', today:TODAY, includeAdmins:true});
+    t('Today’s little chart starts there too', W.perDay.length===3 && W.perDay[0].d==='2026-11-08');
+    const B=U.summary(L2, {kind:'last', today:TODAY, includeAdmins:true});
+    t('A period wholly before counting began is empty, not made of zeros', B.before===true && B.perDay.length===0 && B.days===0);
+    const body=fs.readFileSync(path.join(__dirname,'..','v1','usage.js'),'utf8');
+    t('Admin doesn’t offer a period that ended before counting began', /offered=PERIODS\.filter\(p=>!since \|\| p\[0\]==='today' \|\| period\(p\[0\], today\)\.to>=since\)/.test(body)); }
 }
 /* What is recorded (user.js) */
 {
