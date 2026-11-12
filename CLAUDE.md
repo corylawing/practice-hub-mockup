@@ -340,7 +340,7 @@ paySenders/reloadPaySenders/paySenderOffices, payLevel).
   (PH_STORE.readFailed) or an empty roster = change NO access, say which list (Admin's TC/Payroll/Sensitive syncs and
   payroll.html paySyncHere). test/docs.test.js +13. Zihua Partners inherits the managers (no own grants) - fine.
 
-- **DASHBOARD CHART ON A PHONE (12/11/2026, hc152, sandbox).** Cory's iPhone screenshot: "Not looking so clean on
+- **DASHBOARD CHART ON A PHONE (12/11/2026, hc152; LIVE 12/11 - Cory "Deploy"; verified).** Cory's iPhone screenshot: "Not looking so clean on
   mobile" - index.html "Month by month" (and Starts) was 660px min-width in a ~310px card: sideways scroll, $ labels
   over the goal lines and neighbours, last one cut off, hover-only figures. First fix (hc151: squeeze 11 months of
   paired bars into the width, tap readout) -> Cory: "Even your photos don't look super clean". Now (hc152) <=520px
@@ -349,6 +349,11 @@ paySenders/reloadPaySenders/paySenderOffices, payLevel).
   the row end; rows scaled to their own max (x1.03) so bars fill the row; tap a row -> readout line (latest month
   first). Phone wording in .tapnote, computer wording in .hovnote. Computers unchanged. Sharp checks: scratchpad
   harness3x.js (DPR 3) + dash-m3.js (card-only shots).
+  2027 (Cory asked): prodstore liveYear() = the calendar year once it's in ph_prod_index (2027 set up 22/10) -> the
+  dashboard turns to 2027 on Jan 1 by itself; rows start with January; grey = 2026; ticks/% from Plan the year (none
+  until an office is planned - no tick, no %). ph_prod_mode in Cory's browser copy: source 'homebrace' since
+  03/11/2026 16:20 (Jessica Lynch) - his Safari token had expired, so not re-read live; NOT yet checked whether
+  Heather has planned 2027. Open: Leaderboard table still scrolls sideways on a phone (offered).
 - **ADD TO PAYROLL (12/11/2026, hc150; LIVE 12/11).** Heather (twice - Cory's first reply went to the wrong message): "a
   place to write it so I don't forget to add it to their payroll" - team-goal bonuses, a TC's pilot bonus, other
   special pay; "add things to all of the office payrolls as well". Cory: "i want it to be in production before I write
