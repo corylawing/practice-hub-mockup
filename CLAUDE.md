@@ -313,7 +313,7 @@ paySenders/reloadPaySenders/paySenderOffices, payLevel).
   no Open button; a failure says so with Try again. Changes nothing until ~Apr 2027 (RECENT <= FIRST_N before then).
   Checked headless with a June-2027 clock + made-up sheets (scratchpad fake-2027.js/pay2027.js): 10 read on open, 6
   older + Heather's Goal for History, all 16 rows right, the oldest opens. test/paystore.test.js "recent first:".
-- **"IT SAYS IT IS LOCKED" (12/11/2026, hc148 sandbox).** Heather (feedback 10:55 CST): removing the DDS Referral form
+- **"IT SAYS IT IS LOCKED" (12/11/2026, hc148-149; LIVE 12/11 with hc149).** Heather (feedback 10:55 CST): removing the DDS Referral form
   from Patient Forms -> FFO "says it is locked". The file: DDS Referral-Farnsworth.docx (Cory's 06/10 upload), NOT
   checked out (publication: published) - SharePoint's 423 lock because it was open in Word. docs.js api(): 423 /
   resourceLocked -> "It's open in Word, Excel or PowerPoint right now ... Close it ..., wait a few minutes, then try
@@ -323,7 +323,7 @@ paySenders/reloadPaySenders/paySenderOffices, payLevel).
   `PH.viewLink(u)`: only https *.sharepoint.com .../_layouts/15/Doc.aspx|WopiFrame(2).aspx links, only action= -> view
   (added if missing, before any #); PDFs/pictures/anything else untouched. Used by Documents (files + linked files:
   documents.html openUrl) and the header search results. Edit = Word's own Edit button. test/docsearch.test.js +8.
-- **8 OFFICE SENDERS LOST THEIR PAYROLL FOLDERS (12/11/2026, hc147 sandbox; production NOT yet).** Haley (San Angelo
+- **8 OFFICE SENDERS LOST THEIR PAYROLL FOLDERS (12/11/2026, hc147; LIVE 12/11 with hc149 - Cory "deply"; verified).** Haley (San Angelo
   OM, feedback 8:18 AM): "My payroll won't open". Checked through Cory's live Admin in Safari (osascript `do JavaScript`,
   needs Safari Settings -> Developer -> Allow JavaScript from Apple Events; the script targets ONLY the tab whose URL is
   the live site - Cory switched the front tab to Gmail mid-way). Found: ph_pay_senders right (Haley = San Angelo),
