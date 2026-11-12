@@ -178,6 +178,10 @@ function roleName(){
       return C.PH.rosterReady.then(function(){
         C.PH.setProfile(profile('Lubbock Clinic', 'front.desk@example.com'));
         t('an account the staff list doesn’t have keeps Microsoft’s name', C.PH.name(C.PH.me())==='Lubbock Clinic');
+        const C2=load({});
+        return C2.PH.rosterReady.then(function(){
+        C2.PH.setProfile(profile('Carlsbad Clinic', 'gabriela@farnsworthorthodontics.com'));
+        t('a clinic login keeps its own name even when the staff list has its address (likely shared)', C2.PH.name(C2.PH.me())==='Carlsbad Clinic');
         const kel=rows.find(r=>/"Kel"/.test(r.name)), ovr={}; ovr[PH.personKey(kel)]={email:'kel.desk@example.com'};
         const D=load({ ph_people: JSON.stringify(ovr) });
         return D.PH.rosterReady.then(function(){
@@ -189,6 +193,7 @@ function roleName(){
             E.PH.setProfile(profile('DF', 'dfairbanks@example.com'));
             t('"Dr." never becomes the first name', E.PH.me().first==='Daniel' && E.PH.name(E.PH.me())==='Daniel Fairbanks');
           });
+        });
         });
       });
     });

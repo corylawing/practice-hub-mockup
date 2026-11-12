@@ -354,20 +354,24 @@ paySenders/reloadPaySenders/paySenderOffices, payLevel).
   until an office is planned - no tick, no %). ph_prod_mode in Cory's browser copy: source 'homebrace' since
   03/11/2026 16:20 (Jessica Lynch) - his Safari token had expired, so not re-read live; NOT yet checked whether
   Heather has planned 2027.
-- **USAGE STARTS WHERE COUNTING BEGAN (12/11/2026, hc155, sandbox).** Cory (iPhone, Admin -> Usage, 30 days = 27 empty
+- **USAGE STARTS WHERE COUNTING BEGAN (12/11/2026, hc155; LIVE 12/11 with hc156).** Cory (iPhone, Admin -> Usage, 30 days = 27 empty
   days + 3 bars): "Probably don't need to show the months before this was live". usage.js countedFrom() = the local day
   of the earliest `first` in any record; summary() starts every period there (chart, Days used "of 3", offices,
   sections; Today's 7-day chart too); a period wholly before it is empty (before:true) and paint() doesn't offer it
   (Last month hidden until there is one); labels say "since 10 Nov" when cut. test/usage +5.
-- **A ROLE'S NAME, NOT A PERSON'S (12/11/2026, hc154, sandbox).** Cory, of the dashboard banner "Clovis Treatment
+- **A ROLE'S NAME, NOT A PERSON'S (12/11/2026, hc154-156; LIVE 12/11 with hc156).** Cory, of the dashboard banner "Clovis Treatment
   Coordinator last saved": "Why isn't there a name?" Microsoft names some mailboxes after the role (Clovis / Lubbock /
   Carlsbad Treatment Coordinator = latricia@ / becca@ / jennifer@ on the staff list - Latricia Sanchez, Rebecca
   Fluhman, Jennifer Peters); likely deliberate (patients see it), so NOT asking Adam to rename. user.js staffName():
   the staff list has this address (rosterFor or an admin-typed email) AND Microsoft's name shares no word with the
   list's -> the list's name (nickname in quotes/brackets = first name, leading "Dr." dropped) is me()'s first/last,
   so it's shown AND saved. Shares a word (Haley Haynes / Alicyn "Haley" Gossett) -> Microsoft's kept. Identity,
-  teams, offices unchanged. Names already saved (the banner, History) change at the next save. test/peoplekey +6.
-- **LEADERBOARD ON A PHONE (12/11/2026, hc153, sandbox).** Cory: "Fix 1 if you think but I don't see the issue" - the
+  teams, offices unchanged. Names already saved (the banner, History) change at the next save. test/peoplekey +7.
+  Checked on live 12/11 (Cory's Safari, read-only, Graph $batch over 33 staff-list emails): 10 would change; Cory "do
+  what you feel" -> CLINIC logins keep their name (/\bclinic\b/: Lubbock Clinic, CL Clinic, SA clinic - likely shared
+  at the front desk). The 7 that change: the Carlsbad / Lubbock / Clovis / San Angelo Treatment Coordinator, Financial
+  Coordinator Lubbock, Lubbock Marketing and "marketing" mailboxes -> the person on the staff list.
+- **LEADERBOARD ON A PHONE (12/11/2026, hc153; LIVE 12/11 with hc156).** Cory: "Fix 1 if you think but I don't see the issue" - the
   table (min-width 680px) showed 4 of 8 columns on a phone; vs last yr, Starts, starts % and Days left sat off to the
   right with no cue. <=520px: rank, office, production, "% goal" (header word "of" hidden), and a line under each
   office (tr.lb-sub, hidden on computers): "vs last yr 42% · Starts 12 (36% of goal) · 8 days left" (each piece kept

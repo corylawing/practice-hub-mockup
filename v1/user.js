@@ -407,9 +407,13 @@
      Sanchez last saved". A Microsoft name that shares a word ("Haley Haynes" / Alicyn "Haley" Gossett) is left as it
      is - it's theirs, maybe newer than the list. A nickname in quotes or brackets is the first name ("Haley Gossett");
      a leading "Dr." is left off so it never becomes the first name. Only the NAME changes - who they are,
-     their teams and offices are worked out exactly as before. '' = keep Microsoft's name. */
+     their teams and offices are worked out exactly as before. '' = keep Microsoft's name.
+     A CLINIC login keeps its own name (Cory checked the live list 12/11 - "Lubbock Clinic", "CL Clinic", "SA clinic"
+     each sit on one person's staff-list row, but a clinic login is likely shared at the front desk, and one person's
+     name on everyone's saves would be wrong). */
   function staffName(mail, msName){
     const m=String(mail||'').toLowerCase().trim(); if(!m) return '';
+    if(/\bclinic\b/i.test(String(msName||''))) return '';
     const row=rosterFor(m) || rosterByAdminMail(m); if(!row || !row.name) return '';
     const raw=String(row.name), nick=((raw.match(/"([^"]*)"/)||raw.match(/\(([^)]*)\)/)||[])[1]||'').trim();
     const clean=raw.replace(/"[^"]*"|\([^)]*\)/g,' ').replace(/^\s*dr\.?\s+/i,'').replace(/\s+/g,' ').trim();
