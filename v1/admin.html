@@ -272,18 +272,18 @@
   }
 
 </style>
-<script src="user.js?v=hc146"></script>
+<script src="user.js?v=hc147"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="_staff.js?v=hc146"></script>
-  <script src="store.js?v=hc146"></script>
-  <script src="gate.js?v=hc146"></script>
-  <script src="docs.js?v=hc146"></script>
-  <script src="payrules.js?v=hc146"></script>
-  <script src="workbook.js?v=hc146"></script>
-  <script src="prodbook.js?v=hc146"></script>
-  <script src="prodfx.js?v=hc146"></script>
-  <script src="prodstore.js?v=hc146"></script>
-  <script src="prodadmin.js?v=hc146"></script>
+  <script src="_staff.js?v=hc147"></script>
+  <script src="store.js?v=hc147"></script>
+  <script src="gate.js?v=hc147"></script>
+  <script src="docs.js?v=hc147"></script>
+  <script src="payrules.js?v=hc147"></script>
+  <script src="workbook.js?v=hc147"></script>
+  <script src="prodbook.js?v=hc147"></script>
+  <script src="prodfx.js?v=hc147"></script>
+  <script src="prodstore.js?v=hc147"></script>
+  <script src="prodadmin.js?v=hc147"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — admin console concept for validation. Real build: people sync from Microsoft 365; access is managed here.</div>
@@ -1710,7 +1710,10 @@
       .then(locked=>{
         if(!locked){ TCSYNC={state:'notlocked'}; return; }
         const w=tcWanted();
-        return PH_STORE.get('ph_tcgrants').then(rec=>PH_DOCS.tcSync(w.want, rec)).then(done=>{
+        return PH_STORE.get('ph_tcgrants').then(rec=>{
+          // a list that didn't read = this browser's old copy: change nothing (docs.js syncBlocked, 12/11/2026)
+          const stop=PH_DOCS.syncBlocked && PH_DOCS.syncBlocked(['ph_access','ph_people','ph_tcgrants']); if(stop) throw stop;
+          return PH_DOCS.tcSync(w.want, rec); }).then(done=>{
           // take-backs first, then gives (docs.js says why); the record keeps any failed take-back
           const save=(done.gave.length || done.took.length || done.failed.length)
             ? PH_STORE.update('ph_tcgrants', cur=>PH_DOCS.tcRecord(cur, done)) : Promise.resolve();
@@ -1769,7 +1772,11 @@
       .then(locked=>{
         if(!locked){ PAYSYNC={state:'notlocked'}; return; }
         const w=PAYRULES.wanted(B, PH.rosterView ? PH.rosterView() : [], PH.payRoleFor, (PH.paySenders().offices)||{}, offices);
-        return PH_STORE.get('ph_paygrants').then(rec=>PH_DOCS.paySync(w.want, rec)).then(done=>{
+        return PH_STORE.get('ph_paygrants').then(rec=>{
+          /* 12/11/2026: 8 office managers lost their payroll folders - a sync worked from an old copy of "who sends
+             each sheet" when the shared list didn't read. Now a list that didn't read = change nothing. */
+          const stop=PH_DOCS.syncBlocked && PH_DOCS.syncBlocked(['ph_access','ph_people','ph_pay_senders','ph_paygrants']); if(stop) throw stop;
+          return PH_DOCS.paySync(w.want, rec); }).then(done=>{
           const all=Object.keys(done).map(k=>done[k]), n=f=>all.reduce((t,d)=>t+d[f].length,0), failed=[].concat(...all.map(d=>d.failed));
           const save=(n('gave') || n('took') || failed.length) ? PH_STORE.update('ph_paygrants', cur=>PH_DOCS.payRecord(cur, done)) : Promise.resolve();
           return save.then(()=>{ PAYSYNC={state:'done', gave:n('gave'), took:n('took'), failed, noEmail:w.noEmail};
@@ -2014,7 +2021,9 @@
         return flag.then(()=>{
           if(!locked){ SENSSYNC={state:'notlocked'}; return; }
           const w=sensWanted();
-          return PH_STORE.get('ph_sensgrants').then(rec=>PH_DOCS.sensSync(w.want, rec)).then(done=>{
+          return PH_STORE.get('ph_sensgrants').then(rec=>{
+            const stop=PH_DOCS.syncBlocked && PH_DOCS.syncBlocked(['ph_access','ph_people',SENS_KEY,'ph_sensgrants']); if(stop) throw stop;
+            return PH_DOCS.sensSync(w.want, rec); }).then(done=>{
             const save=(done.gave.length || done.took.length || done.failed.length)
               ? PH_STORE.update('ph_sensgrants', cur=>PH_DOCS.tcRecord(cur, done)) : Promise.resolve();
             return save.then(()=>PH_DOCS.sensPeople()).then(have=>{
@@ -2225,7 +2234,7 @@ function sizeWatch(){
   }).catch(()=>{});
 }
 </script>
-<script src="tour.js?v=hc146"></script>
+<script src="tour.js?v=hc147"></script>
 <script>
 Tour.init([
   {sel:'#tabs', title:'This is your control room', body:'Four tabs and you can run the whole hub: <b>People</b>, <b>Teams &amp; Access</b>, <b>Document Sections</b> and <b>Locations</b>. No developer, no consultant.', pre:()=>AD.tab('users')},

@@ -225,15 +225,15 @@
     .perhead .when{font-size:17px}
   }
 </style>
-<script src="user.js?v=hc146"></script>
+<script src="user.js?v=hc147"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc146"></script>
-  <script src="gate.js?v=hc146"></script>
-  <script src="alerts.js?v=hc146"></script>
-  <script src="_staff.js?v=hc146"></script>
-  <script src="payrules.js?v=hc146"></script>
-  <script src="paystore.js?v=hc146"></script>
-  <script src="docs.js?v=hc146"></script>
+  <script src="store.js?v=hc147"></script>
+  <script src="gate.js?v=hc147"></script>
+  <script src="alerts.js?v=hc147"></script>
+  <script src="_staff.js?v=hc147"></script>
+  <script src="payrules.js?v=hc147"></script>
+  <script src="paystore.js?v=hc147"></script>
+  <script src="docs.js?v=hc147"></script>
 </head>
 <body>
 <div class="ribbon">MOCK-UP for Heather — made-up people and amounts. Try it as the Carlsbad TC first, then as Heather.</div>
@@ -1444,7 +1444,10 @@
     return PH_DOCS.payLocked().then(locked=>{
       if(!locked) return 'notlocked';
       const w=PR.wanted(B, (PH.rosterView && PH.rosterView())||[], PH.payRoleFor, (PH.paySenders().offices)||{}, offices);
-      return PH_STORE.get('ph_paygrants').then(rec=>PH_DOCS.paySync(w.want, rec)).then(done=>
+      return PH_STORE.get('ph_paygrants').then(rec=>{
+        // a shared list that didn't read = an old copy: change no access (docs.js syncBlocked, 12/11/2026)
+        const stop=PH_DOCS.syncBlocked && PH_DOCS.syncBlocked(['ph_access','ph_people','ph_pay_senders','ph_paygrants']); if(stop) throw stop;
+        return PH_DOCS.paySync(w.want, rec); }).then(done=>
         PH_STORE.update('ph_paygrants', cur=>PH_DOCS.payRecord(cur, done)).then(()=>Object.keys(done).every(k=>!done[k].failed.length)));
     }).catch(()=>false);
   }
@@ -1585,7 +1588,7 @@
 })();
 </script>
 <script>PH.nav('payroll');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc146"></script>
+<script src="tour.js?v=hc147"></script>
 <script>
 Tour.init([
   ...((window.PH && PH.isLive && PH.isLive()) || (()=>{ try{ return localStorage.getItem('ph_pay_real')==='1'; }catch(_){ return false; } })() ? [] : [{sel:'#persona', title:'A mock-up', body:'Made-up people and amounts. Start as the <b>Carlsbad TC</b>, who sends Carlsbad’s sheet, then switch to <b>Heather</b>.'}]),

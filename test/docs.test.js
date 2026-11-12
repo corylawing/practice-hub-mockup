@@ -140,7 +140,7 @@ function load(sp){
     PH_AUTH:{token:()=>Promise.resolve('tok')}, PH_STORE:store, fetch:sp.fetch};
   ctx.window=ctx; vm.createContext(ctx); vm.runInContext(SRC,ctx,{filename:'docs.js'});
   ctx.PH_DOCS.setRetryWaits([2,2,2]);
-  return {D:ctx.PH_DOCS, store, sp};
+  return {D:ctx.PH_DOCS, store, sp, ctx};
 }
 const file=(name,size,type)=>new File([new Uint8Array(size||10)], name, {type:type||'application/pdf'});
 const calls=(sp,re,method)=>sp.calls.filter(c=>re.test(c.url)&&(!method||c.method===method));
@@ -442,6 +442,59 @@ const calls=(sp,re,method)=>sp.calls.filter(c=>re.test(c.url)&&(!method||c.metho
     t('record: a give that failed is not recorded (so it is tried again)', !('z@x.com' in D.tcRecord({}, {gave:[], took:[], failed:[{verb:'give', em:'z@x.com', role:'read'}]})));
     t('record: never takes the wrong role off the record', D.tcRecord({'a@x.com':'write'}, {took:[{em:'a@x.com', role:'read'}]})['a@x.com']==='write'); }
 
+  /* 6g2. THE RECORD SAYS GIVEN, SHAREPOINT DOESN'T HAVE THEM (12/11/2026). Haley's real case: Payroll wouldn't open
+          because her grant on her office folder was gone while Home-Brace's record still said "given" - so no sync
+          ever gave it again. Now the sync checks the folder itself. Made-up people. */
+  { const sp=SharePoint(), {D}=load(sp); sp.onePerPerson=true;
+    sp.add(sp.root,'Home-Brace Documents',true);
+    const id=await D.tcFolder(), O={id:'O', roles:['owner'], grantedToV2:{siteGroup:{displayName:'Home-Brace Owners'}}};
+    sp.perms[id]=[O, {id:'K', roles:['write'], grantedToV2:{user:{email:'Kept.One@x.com'}}}];
+    const roleOf=em=>{ const x=sp.perms[id].find(p=>p.grantedToV2 && p.grantedToV2.user && String(p.grantedToV2.user.email).toLowerCase()===em); return x ? x.roles.slice().sort().join('+') : 'none'; };
+    const rec={'kept.one@x.com':'write', 'lost.sender@x.com':'write', 'left.long.ago@x.com':'read'};
+    const want={'kept.one@x.com':'write', 'lost.sender@x.com':'write'};
+    const n0=(sp.invites||[]).length, done=await D.tcSync(want, rec), rec2=D.tcRecord(rec, done);
+    t('heal: someone the record says was given but SharePoint lost is given access again', roleOf('lost.sender@x.com')==='write' &&
+      done.gave.length===1 && done.gave[0].em==='lost.sender@x.com' && !done.failed.length);
+    t('heal: someone who still has it is not sent again (email case ignored)', (sp.invites||[]).length===n0+1 && roleOf('kept.one@x.com')==='write');
+    t('heal: someone on record but no longer wanted is only cleared from the record - nothing given', roleOf('left.long.ago@x.com')==='none' &&
+      !('left.long.ago@x.com' in rec2) && rec2['lost.sender@x.com']==='write' && rec2['kept.one@x.com']==='write');
+    t('heal: the record passed in is not changed under the caller', rec['lost.sender@x.com']==='write' && Object.keys(rec).length===3);
+    const again=await D.tcSync(want, rec2);
+    t('heal: next run, all in step - nothing sent', again.gave.length===0 && again.took.length===0 && (sp.invites||[]).length===n0+1);
+  }
+  { const sp=SharePoint(), {D}=load(sp);
+    sp.add(sp.root,'Home-Brace Documents',true);
+    const id=await D.tcFolder();
+    sp.perms[id]=[{id:'O', roles:['owner'], grantedToV2:{siteGroup:{displayName:'Home-Brace Owners'}}}];
+    sp.fail.push({test:(m,u)=>m==='GET' && /:\/permissions$/.test(u), status:403});
+    const done=await D.tcSync({'a@x.com':'write'}, {'a@x.com':'write'});
+    t('heal: if SharePoint’s list can’t be read, the record is used as before (nothing sent, nothing taken)', done.gave.length===0 && done.took.length===0 && !(sp.invites||[]).length); }
+
+  /* 6g3. A SHARED LIST THAT DIDN'T READ = CHANGE NO ACCESS (12/11/2026). The store hands back this browser's old copy
+          when a read fails; a sync working from it took 8 office managers' payroll folders away. */
+  { const sp=SharePoint(), {D,store,ctx}=load(sp), failed={};
+    let roster=[{name:'Made Up', email:'made.up@x.com', teams:['Admin']}];
+    store.readFailed=k=>!!failed[k];
+    ctx.PH={rosterView:()=>roster};
+    const K=['ph_access','ph_people','ph_pay_senders','ph_paygrants'];
+    t('guard: every list read - the sync may go ahead', D.unreadForSync(K).length===0 && D.syncBlocked(K)===null);
+    failed.ph_pay_senders=true;
+    const e=D.syncBlocked(K);
+    t('guard: "who sends each sheet" didn\u2019t read - stop, and say which', e instanceof Error && /who sends each office/.test(e.message) &&
+      /no access was changed/.test(e.message) && e.unread.length===1);
+    failed.ph_pay_senders=false; failed.ph_paygrants=true;
+    t('guard: the access record didn\u2019t read - stop', /record of payroll access/.test((D.syncBlocked(K)||{}).message||''));
+    failed.ph_paygrants=false; roster=[];
+    t('guard: an empty team list - stop (it would take every manager away)', /the team list/.test((D.syncBlocked(K)||{}).message||''));
+    roster=[{name:'Made Up', email:'made.up@x.com'}]; failed.ph_other=true;
+    t('guard: only the lists asked about count', D.syncBlocked(K)===null);
+    delete ctx.PH;
+    t('guard: no Home-Brace identity loaded at all - stop', /the team list/.test((D.syncBlocked(K)||{}).message||'')); }
+  { const AD=fs.readFileSync(path.join(__dirname,'..','v1','admin.html'),'utf8'), PAY=fs.readFileSync(path.join(__dirname,'..','v1','payroll.html'),'utf8');
+    const before=(src, sync)=>{ const i=src.indexOf(sync), g=src.lastIndexOf('syncBlocked(', i); return i>0 && g>0 && i-g<400; };
+    t('guard is asked before every access sync: TC, Payroll and Sensitive Material in Admin, Payroll\u2019s own Settings',
+      before(AD,'PH_DOCS.tcSync(w.want') && before(AD,'PH_DOCS.paySync(w.want') && before(AD,'PH_DOCS.sensSync(w.want') && before(PAY,'PH_DOCS.paySync(w.want') &&
+      /syncBlocked\(\['ph_access','ph_people','ph_pay_senders','ph_paygrants'\]\)/.test(AD) && /syncBlocked\(\['ph_access','ph_people','ph_pay_senders','ph_paygrants'\]\)/.test(PAY)); }
   /* 6h. SENSITIVE MATERIAL (20/10): inside Home-Brace Documents, but locked like the TC folder;
          access given and taken back only on that one folder; nothing moves in or out of it.
          Made-up people. */

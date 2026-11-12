@@ -611,7 +611,19 @@
        on a folder, so a new role given before the old one was taken back would go with it (an
        office manager moved from "Log + calls" to "See" would be left with nothing). One person
        failing never stops the rest. Resolves {gave, took, failed}. */
+    /* CHECKED AGAINST SHAREPOINT, NOT ONLY THE RECORD (12/11/2026). Haley (San Angelo) couldn't open Payroll: the
+       record said Home-Brace had given her the San Angelo folder, but SharePoint no longer had her - and because the
+       record said "given", no sync ever gave it again (8 office senders were in the same state). So before planning,
+       anyone the record says was given access but who is NOT on the folder in SharePoint, and who should have it, is
+       given it again. If SharePoint's list can't be read, the record is used as before. */
     function sync(want, gave){
+      return people().then(function(onIt){
+        var rec = (gave && typeof gave === 'object' && !Array.isArray(gave)) ? Object.assign({}, gave) : {};
+        Object.keys(rec).forEach(function(em){ if(want && want[em] === rec[em] && onIt.indexOf(em) < 0) delete rec[em]; });
+        return syncFrom(want, rec);
+      }, function(){ return syncFrom(want, gave); });
+    }
+    function syncFrom(want, gave){
       var plan = tcPlan(want, gave), done = { gave: [], took: [], failed: [] };
       function each(list, fn, into, verb){
         return list.reduce(function(c, g){ return c.then(function(){
@@ -685,6 +697,26 @@
   var SENS_NAME = 'Sensitive Material', SENS_PATH = BASE + '/' + SENS_NAME;
   var SENS = lockedFolder(SENS_PATH);
   function inSens(p){ p = String(p || ''); return p === SENS_PATH || p.indexOf(SENS_PATH + '/') === 0; }
+
+  /* SAFE TO SYNC? (12/11/2026) The access syncs (TC Tracker, Payroll) work out who should have each folder from
+     Home-Brace's shared lists. When one of those lists can't be read, the store hands back this browser's old copy
+     without failing - and a sync working from an old or empty copy takes access away from the people missing from
+     it. That is how 8 office managers lost their payroll folders (12/11). So a sync first asks this: the lists it
+     needs that DIDN'T read just now (named for the screen), plus "the team list" if the roster is empty. Anything in
+     it = change nothing and say so. */
+  var SYNC_LIST_NAMES = { ph_access: 'Teams & Access', ph_people: 'Admin \u2192 People', ph_pay_senders: 'who sends each office\u2019s sheet',
+    ph_paygrants: 'the record of payroll access', ph_tcgrants: 'the record of TC Tracker access', ph_sensgrants: 'the record of Sensitive Material access' };
+  function unreadForSync(keys){
+    var S = global.PH_STORE, P = global.PH, out = [];
+    (keys || []).forEach(function(k){ if(S && S.readFailed && S.readFailed(k)) out.push(SYNC_LIST_NAMES[k] || k); });
+    var ros = []; try{ ros = (P && P.rosterView) ? (P.rosterView() || []) : []; }catch(_){ ros = []; }
+    if(!ros.length) out.push('the team list');
+    return out;
+  }
+  function syncBlocked(keys){
+    var bad = unreadForSync(keys);
+    return bad.length ? fail(0, 'Part of Home-Brace didn\u2019t load (' + bad.join(', ') + '), so no access was changed. Try again in a moment.', { unread: bad }) : null;
+  }
 
   /* What to change, from who should have what (want: {email: 'write'|'read'}) and what
      Home-Brace has given before (gave: {email: role}). Pure - tested. */
@@ -819,7 +851,7 @@
     tally: tally, remove: remove, replace: replace, move: move, insideBase: insideBase,
     isLocked: isLocked, grantEdit: grantEdit, revokeEdit: revokeEdit,
     TC_BASE: TC_BASE, tcFolder: tcFolder, tcLocked: tcLocked, tcGrant: tcGrant, tcRevoke: tcRevoke, tcPlan: tcPlan,
-    tcSync: tcSync, tcRecord: tcRecord,
+    tcSync: tcSync, tcRecord: tcRecord, unreadForSync: unreadForSync, syncBlocked: syncBlocked,
     PAY_BASE: PAY_BASE, PAY_PRIVATE: PAY_PRIVATE, payFolder: payFolder, payLocked: payLocked, warm: function(){ return drive().then(function(){ return true; }, function(){ return false; }); }, paySync: paySync, payRecord: payRecord,
     SENS_NAME: SENS_NAME, SENS_PATH: SENS_PATH, inSens: inSens,
     sensFolder: SENS.folder, sensLocked: SENS.locked, sensGrant: SENS.grant, sensRevoke: SENS.revoke,

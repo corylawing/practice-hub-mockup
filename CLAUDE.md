@@ -313,6 +313,23 @@ paySenders/reloadPaySenders/paySenderOffices, payLevel).
   no Open button; a failure says so with Try again. Changes nothing until ~Apr 2027 (RECENT <= FIRST_N before then).
   Checked headless with a June-2027 clock + made-up sheets (scratchpad fake-2027.js/pay2027.js): 10 read on open, 6
   older + Heather's Goal for History, all 16 rows right, the oldest opens. test/paystore.test.js "recent first:".
+- **8 OFFICE SENDERS LOST THEIR PAYROLL FOLDERS (12/11/2026, hc147 sandbox; production NOT yet).** Haley (San Angelo
+  OM, feedback 8:18 AM): "My payroll won't open". Checked through Cory's live Admin in Safari (osascript `do JavaScript`,
+  needs Safari Settings -> Developer -> Allow JavaScript from Apple Events; the script targets ONLY the tab whose URL is
+  the live site - Cory switched the front tab to Gmail mid-way). Found: ph_pay_senders right (Haley = San Angelo),
+  ph_paygrants said "given", but SharePoint had NO grant on her office folder - same for Latricia, Yessenia, Lily, Becca,
+  Suzy, Jenny, Noemi; only the FIRST sender chosen at three offices (Jennifer, the Lubbock clinic account, Cindy) still had theirs.
+  Haley's sheet_2026-24.json was intact (made 04/11, last saved by her 09/11) - lost between 09/11 and 12/11; her
+  account id unchanged. Likely cause: an Admin sync ran from an OLD copy of "who sends each sheet" (store.get hands
+  back the browser's copy when a read fails - reloadPaySenders swallowed it) and took the others back; the record
+  wasn't updated, so no later sync ever gave them again. FIXED BY HAND 12/11 (Cory "Ok"): each of the 8 given their own
+  office folder only (PH_DOCS.payFolder(path).grant, the app's own call), verified every folder now matches the record.
+  CODE (hc147): (1) docs.js lockedFolder sync() reads the folder's own people() first - someone the record says was given,
+  still wanted, but not on the folder is given again (if that read fails: the record as before); used by TC, Payroll and
+  Sensitive Material. (2) `PH_DOCS.syncBlocked(keys)` / `unreadForSync`: any of the lists the sync needs that didn't read
+  (PH_STORE.readFailed) or an empty roster = change NO access, say which list (Admin's TC/Payroll/Sensitive syncs and
+  payroll.html paySyncHere). test/docs.test.js +13. Zihua Partners inherits the managers (no own grants) - fine.
+
 - Asked 04/11, NOT built: a Settings screen where Heather picks per column "office types it / office sees it / only
   me" (~1 day). Today's split is fixed from her answers; her Goal/TC-OM/Extra live in her private folder. After go-live.
 - **Who sees what**: Admin team (and Payroll level Edit) = manage everything incl. Heather's columns; Payroll level
