@@ -179,6 +179,15 @@
   .off{border:1px solid var(--line);border-radius:12px;padding:11px 13px;background:#fff;display:flex;flex-direction:column;gap:6px}
   .off .on{font-weight:800;color:var(--navy)}
   .off .co{font-size:11.5px;color:var(--soft);line-height:1.35}
+  /* The "Entered in payroll" tick on an office (board + combined sheet). */
+  .entk{display:inline-flex;align-items:center;gap:7px;background:#fff;border:1px solid var(--line);border-radius:9px;padding:6px 11px 6px 8px;
+    font:inherit;font-size:13px;font-weight:600;color:var(--navy);cursor:pointer;white-space:nowrap;min-height:32px}
+  .entk .bx{width:17px;height:17px;border:1.5px solid #9AA6B8;border-radius:5px;display:inline-grid;place-items:center;font-size:11px;font-weight:900;line-height:1;color:transparent;background:#fff;flex:none}
+  .entk:hover{border-color:#c9b8ef}
+  .entk.on{background:var(--plum-soft);border-color:#d9cbf5;color:#4b2a9a}
+  .entk.on .bx{background:#6b46c1;border-color:#6b46c1;color:#fff}
+  .entk:disabled{opacity:.6;cursor:wait}
+  table.comb .stick .entk{font-size:12.5px;min-height:28px;padding:4px 10px 4px 7px}
   .flags{display:flex;flex-direction:column;gap:12px}
   .fgrp h3{margin:0 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:var(--soft)}
   .fl{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-bottom:1px dashed var(--line);font-size:13.5px}
@@ -226,15 +235,15 @@
     .perhead .when{font-size:17px}
   }
 </style>
-<script src="user.js?v=hc157"></script>
+<script src="user.js?v=hc158"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc157"></script>
-  <script src="gate.js?v=hc157"></script>
-  <script src="alerts.js?v=hc157"></script>
-  <script src="_staff.js?v=hc157"></script>
-  <script src="payrules.js?v=hc157"></script>
-  <script src="paystore.js?v=hc157"></script>
-  <script src="docs.js?v=hc157"></script>
+  <script src="store.js?v=hc158"></script>
+  <script src="gate.js?v=hc158"></script>
+  <script src="alerts.js?v=hc158"></script>
+  <script src="_staff.js?v=hc158"></script>
+  <script src="payrules.js?v=hc158"></script>
+  <script src="paystore.js?v=hc158"></script>
+  <script src="docs.js?v=hc158"></script>
 </head>
 <body>
 <div class="ribbon">MOCK-UP for Heather — made-up people and amounts. Try it as the Carlsbad TC first, then as Heather.</div>
@@ -398,9 +407,9 @@
   /* ---------- what this browser remembers (so the mock-up keeps your clicks) ---------- */
   const KEY='ph_pay_demo';
   let S=null; if(!LIVEPAY) try{ S=JSON.parse(localStorage.getItem(KEY)); }catch(_){ S=null; }
-  if(!S || (S.v!==1 && S.v!==2)) S={v:2, subs:{}, entered:{}};
+  if(!S || (S.v!==1 && S.v!==2)) S={v:2, subs:{}, entered:{}, entOff:{}};
   /* Sheets clicked through before Heather's answers (v1) are kept; people and doctors added start empty. */
-  const fresh=()=>{ S.v=2; S.subs=S.subs||{}; S.entered=S.entered||{}; S.added=S.added||[]; S.removed=S.removed||{};
+  const fresh=()=>{ S.v=2; S.subs=S.subs||{}; S.entered=S.entered||{}; S.entOff=S.entOff||{}; S.added=S.added||[]; S.removed=S.removed||{};
                     S.bonus=S.bonus||{}; S.docAdd=S.docAdd||[]; S.docGone=S.docGone||{}; S.also=S.also||{}; };
   fresh();
   const save=()=>{ if(LIVEPAY) return; try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(_){} };   // live: saved field by field (LIVE below)
@@ -502,7 +511,28 @@
   }
   const get=(n,o)=>(S.subs[n] && S.subs[n][o]) || base(n,o);
   function mine(n,o){ S.subs[n]=S.subs[n]||{}; if(!S.subs[n][o]) S.subs[n][o]=JSON.parse(JSON.stringify(base(n,o))); return S.subs[n][o]; }
-  const enteredOf=n=>S.entered[n]!==undefined ? S.entered[n] : (!LIVEPAY && n<CUR ? {at:addDays(P(n).pay,-2)+'T10:30', by:'Heather'} : null);
+  /* ENTERED, ONE OFFICE AT A TIME (16/11/2026). Heather: "When I submit payroll for an office, can you have a check box
+     or something so I can mark that office as completed." She enters each office (its own company) into the payroll
+     software one after another; "Mark as entered in payroll" locked all of them at once, offices still to send included
+     (16/11 she pressed it and had to reopen). Each office's sheet already carries its own `entered` - now it is read
+     per office: entOff(n,k) = that office is entered (its sheet locked); enteredOf(n) = the whole pay period = every
+     office this person has is entered (the latest time). Older pay periods were entered all at once: same answer. */
+  S.entOff=S.entOff||{};
+  const entOff=(n,k)=>{ const m=S.entOff[n]; if(m && m[k]!==undefined) return m[k];
+    return S.entered[n]!==undefined ? S.entered[n] : (!LIVEPAY && n<CUR ? {at:addDays(P(n).pay,-2)+'T10:30', by:'Heather'} : null); };
+  const entKeys=()=>(LIVEPAY && LEVEL()==='send') ? myOffices() : OFFICES.map(o=>o.k);
+  const enteredOf=n=>{ const ks=entKeys(); let last=null; if(!ks.length) return null;
+    for(const k of ks){ const v=entOff(n,k); if(!v) return null; if(!last || String(v.at||'')>String(last.at||'')) last=v; }
+    return last; };
+  const enteredCount=n=>OFFICES.filter(o=>entOff(n,o.k)).length;
+  /* The tick on an office (the board and the combined sheet): once its sheet is in, or to untick it. */
+  function entTick(n,k){
+    if(n===NEXT || R().ro || !OFF[k]) return '';
+    const en=entOff(n,k); if(!en && get(n,k).status!=='sent') return '';
+    return '<button class="entk'+(en?' on':'')+'" role="checkbox" aria-checked="'+(en?'true':'false')+'" data-act="entoff" data-v="'+k+'" title="'+
+      (en?'Entered '+esc(fmtT(en.at))+(en.by?' by '+esc(en.by):'')+' - tap to reopen this office':'Tick when you’ve entered '+esc(OFF[k].n)+' in payroll - it locks its sheet')+'">'+
+      '<span class="bx" aria-hidden="true">✓</span>Entered in payroll</button>';
+  }
   function nowISO(){ const d=new Date(); return (LIVEPAY ? PR.todayISO(d) : TODAY)+'T'+pad(d.getHours())+':'+pad(d.getMinutes()); }
   /* Who is on a sheet. This pay period: everyone at the office now (plus anyone taken off who already has hours
      on it). A past one: exactly who was on it - taking someone off never changes a sheet already sent. */
@@ -623,8 +653,8 @@
   let tab='sheet', per=HOME(), look='';
 
   function statusPill(n,o){
-    const s=get(n,o), e=enteredOf(n), pr=P(n);
-    if(e) return '<span class="pill p-lock">🔒 Entered in payroll</span>';
+    const s=get(n,o), e=entOff(n,o), pr=P(n);
+    if(e) return '<span class="pill p-lock">🔒 Entered'+(e.at?' '+esc(fmtT(e.at)):' in payroll')+'</span>';
     if(s.status==='sent') return '<span class="pill p-done">✓ '+(OFF[o].self?'Done ':'Sent ')+esc(fmtT(s.at))+'</span>';
     if(NOW>pr.dueAt) return '<span class="pill p-late">Late — was due '+esc(fmt(pr.due,{weekday:'short'}))+' 2 pm</span>';
     if(s.status==='draft') return '<span class="pill p-go">Started — not sent yet</span>';
@@ -760,7 +790,7 @@
     return h+'</select>';
   }
   function viewOmSheet(){
-    const o=R().office, n=per, pr=P(n), s=get(n,o), e=enteredOf(n), edit=!e && (n===NEXT || (n===CUR && !BEFORE)), early=n===NEXT;
+    const o=R().office, n=per, pr=P(n), s=get(n,o), e=entOff(n,o), edit=!e && (n===NEXT || (n===CUR && !BEFORE)), early=n===NEXT;
     let h='<div class="stack"><div class="card"><div class="perhead"><div class="grow"><div class="small muted" style="font-weight:700;text-transform:uppercase;letter-spacing:.05em">'+esc(OFF[o].n)+' · pay period '+lab(n)+'</div>'+
       '<div class="when">'+esc(fmt(pr.start,{weekday:'short'}))+' – '+esc(fmt(pr.end,{weekday:'short'}))+'</div>'+
       '<div class="small muted"><b>Wk 1</b> '+esc(span(pr.start,pr.w1end))+' · <b>Wk 2</b> '+esc(span(pr.w2start,pr.end))+'</div>'+
@@ -888,12 +918,12 @@
     const anySp=OFFICES.some(o=>get(n,o.k).status==='sent' && specCols(n,o.k).length); NC=17+(anySp?1:0);
     let h='<div class="tblwrap cq"><table class="t comb"><tbody>';
     OFFICES.forEach(o=>{
-      const s=get(n,o.k), on=!e && s.status==='sent' && !R().ro, own=ownCols(o.k);
-      h+='<tr><td class="co" colspan="'+NC+'"><div class="stick"><span>'+esc(o.co)+' <span class="muted" style="font-weight:600">· '+esc(o.n)+'</span></span></div></td></tr>';
+      const s=get(n,o.k), on=!entOff(n,o.k) && s.status==='sent' && !R().ro, own=ownCols(o.k);
+      h+='<tr><td class="co" colspan="'+NC+'"><div class="stick"><span>'+esc(o.co)+' <span class="muted" style="font-weight:600">· '+esc(o.n)+'</span></span>'+entTick(n,o.k)+'</div></td></tr>';
       if(s.status!=='sent'){   // no column headings over an empty sheet - just where it stands and who sends it
-        const late=!e && NOW>pr.dueAt, who=whoSends(o.k);
+        const oe=entOff(n,o.k), late=!oe && NOW>pr.dueAt, who=whoSends(o.k);
         if(o.self){ h+='<tr class="wait"><td colspan="'+NC+'"><div class="stick"><span class="pill p-go">Not done yet</span><span class="who">Filled in by '+esc(o.by)+'</span>'+
-          (!e && (n===CUR || n===NEXT) && !R().ro ? '<button class="btn ghost sm" data-act="fillin" data-v="'+o.k+'">Fill it in</button>' : '')+'</div></td></tr>'; return; }
+          (!oe && (n===CUR || n===NEXT) && !R().ro ? '<button class="btn ghost sm" data-act="fillin" data-v="'+o.k+'">Fill it in</button>' : '')+'</div></td></tr>'; return; }
         h+='<tr class="wait"><td colspan="'+NC+'"><div class="stick"><span class="pill '+(late?'p-late':'p-go')+'">'+(late?'Late — not sent':'Not sent yet')+'</span>'+
           '<span class="who">'+(who ? esc(who)+' sends it' : 'Nobody sends it yet — choose who in Settings')+'</span></div></td></tr>'; return; }
       h+=combHead(o.k, anySp); const sp=specCols(n,o.k);
@@ -934,12 +964,12 @@
       '<div class="when">'+esc(fmt(pr.start,{weekday:'short'}))+' – '+esc(fmt(pr.end,{weekday:'short'}))+'</div>'+
       '<div class="small muted"><b>Wk 1</b> '+esc(span(pr.start,pr.w1end))+' · <b>Wk 2</b> '+esc(span(pr.w2start,pr.end))+'</div>'+
       '<div class="small muted">Paid '+esc(fmt(pr.pay,{weekday:'long'}))+' · office sheets '+esc(dueText(pr))+(pr.hol?' · includes '+esc(pr.hol.n):'')+'</div></div>'+
-      '<div class="row">'+(n===NEXT?'<span class="pill p-go">In progress — ends '+esc(fmt(pr.end,{weekday:'short'}))+'</span>':e?'<span class="pill p-lock">🔒 Entered '+esc(fmtT(e.at))+'</span>':'<span class="pill '+(sent===OFFICES.length?'p-done':'p-go')+'">'+sent+' of '+OFFICES.length+' offices sent</span>')+periodPicker('perpick')+'</div></div>'+
+      '<div class="row">'+(n===NEXT?'<span class="pill p-go">In progress — ends '+esc(fmt(pr.end,{weekday:'short'}))+'</span>':e?'<span class="pill p-lock">🔒 Entered '+esc(fmtT(e.at))+'</span>':'<span class="pill '+(sent===OFFICES.length?'p-done':'p-go')+'">'+sent+' of '+OFFICES.length+' offices sent</span>'+(enteredCount(n)?'<span class="pill p-lock">🔒 '+enteredCount(n)+' entered</span>':''))+periodPicker('perpick')+'</div></div>'+
       '<div class="offs" style="margin-top:14px">'+OFFICES.map(o=>{ const s=get(n,o.k);
         if(o.self) return '<div class="off"><div class="row"><span class="on grow">'+esc(o.n)+'</span>'+(s.status==='sent'||e?statusPill(n,o.k):'<span class="pill p-new">Not done yet</span>')+'</div><div class="co">'+esc(o.co)+'<br>Filled in by '+esc(o.by)+'</div><div class="row">'+
-          (!e && (n===CUR || n===NEXT) && !R().ro ? '<button class="btn sm" data-act="fillin" data-v="'+o.k+'">'+(s.status==='sent'?'Open it':'Fill it in')+'</button>' : s.status==='sent'?'<button class="btn ghost sm" data-act="view" data-v="'+o.k+'">See what was done</button>':'')+'</div></div>';
+          (!entOff(n,o.k) && (n===CUR || n===NEXT) && !R().ro ? '<button class="btn sm" data-act="fillin" data-v="'+o.k+'">'+(s.status==='sent'?'Open it':'Fill it in')+'</button>' : s.status==='sent'?'<button class="btn ghost sm" data-act="view" data-v="'+o.k+'">See what was done</button>':'')+entTick(n,o.k)+'</div></div>';
         return '<div class="off"><div class="row"><span class="on grow">'+esc(o.n)+'</span>'+statusPill(n,o.k)+'</div><div class="co">'+esc(o.co)+'<br>Sent by the '+esc(o.by)+'</div><div class="row">'+
-          (s.status==='sent'?'<button class="btn ghost sm" data-act="view" data-v="'+o.k+'">See what was sent</button>':(!e && !LIVEPAY?'<button class="btn ghost sm" data-act="remind" data-v="'+o.k+'">Send a reminder</button>':''))+'</div></div>'; }).join('')+'</div>'+
+          (s.status==='sent'?'<button class="btn ghost sm" data-act="view" data-v="'+o.k+'">See what was sent</button>':(!entOff(n,o.k) && !LIVEPAY?'<button class="btn ghost sm" data-act="remind" data-v="'+o.k+'">Send a reminder</button>':''))+entTick(n,o.k)+'</div></div>'; }).join('')+'</div>'+
       (!e?'<div class="small muted" style="margin-top:12px">'+(LIVEPAY
         ? '⏰ Each office’s sender gets a reminder in their bell from the workday before it’s due, until it’s sent. At 2 pm on the due day your bell lists any still to come.'+(PHONE()?' Senders who turn alerts on (the bell → Turn on) get them on their phone too: the workday before at 9 am, the due day at 9 am and 1 pm.':' Reminders on phones come with Chat.')
         : '⏰ Reminders go out on their own to whoever sends each sheet: the workday before, the morning it’s due, and at 1 pm if it isn’t sent yet - in Home-Brace, and on their phone once alerts are on. <b>Send a reminder</b> sends one right now.')+'</div>':'')+'</div>';
@@ -951,7 +981,7 @@
         :'<div class="note good">Nothing unusual so far.</div>')+'</div>';
     h+='<div class="card"><div class="row" style="margin-bottom:10px"><div class="grow"><h2>Combined sheet</h2><div class="small muted">Laid out like your main Excel: one company at a time with its own column headings, the same sums for every row, overtime split by week the way the payroll software asks for it.</div></div>'+
       '<button class="btn ghost sm" data-act="csv">⬇ Download for Excel</button>'+
-      (R().ro || n===NEXT ? '' : e?'<button class="btn ghost sm" data-act="reopen">Reopen</button>':'<button class="btn sm" data-act="enter"'+(sent<OFFICES.length?' title="Some offices haven’t sent yet"':'')+'>Mark as entered in payroll</button>')+'</div>'+combined(n)+'</div>';
+      (R().ro || n===NEXT ? '' : e?'<button class="btn ghost sm" data-act="reopen">Reopen</button>':'<button class="btn sm" data-act="enter"'+(sent<OFFICES.length?' title="Some offices haven’t sent yet"':'')+'>'+(enteredCount(n)?'Mark the rest as entered':'Mark all as entered in payroll')+'</button>')+'</div>'+combined(n)+'</div>';
     return h+'</div>';
   }
 
@@ -1260,7 +1290,7 @@
       save(); closeDlg(); render(); toast(mgr?(again?'Changes done ✓':'Done ✓ - it’s on the combined sheet'):(again?'Changes sent to Heather':'Sent to Heather ✓')); return;
     }
     if(act==='view'){
-      const n=per, s=get(n,v), e=enteredOf(n);
+      const n=per, s=get(n,v), e=entOff(n,v);
       openDlg(top(esc(OFF[v].n)+' · pay period '+lab(n)+' — as sent')+'<div class="dm-body">'+sheetTable(n,v,false)+docsHTML(n,v,false)+
         '<div class="log">'+(s.log||[]).map(l=>'<div>• '+esc(fmtT(l.at))+' — '+esc(l.t)+'</div>').join('')+(e?'<div>• '+esc(fmtT(e.at))+' — Entered in payroll by '+esc(e.by)+'</div>':'')+'</div></div>', true);
       return;
@@ -1279,19 +1309,34 @@
       if(window.PH_ALERTS) setTimeout(()=>toast('To get this on your phone: the bell (top right) → Turn on.'), 1200);
       return; }
     if(act==='csv'){ csv(per); toast('Downloaded — opens in Excel'); return; }
-    if(act==='enter' || act==='reopen'){
-      const val=act==='enter' ? {at:nowISO(), by:LIVEPAY ? ((PH.name && PH.name(PH.me())) || 'Heather') : 'Heather'} : null, n=per;
+    /* Entered: one office (the tick), the rest at once (offices already ticked keep their own time), or reopen them all.
+       The bell's "entered" (ph_pay_status) follows the whole pay period. */
+    if(act==='enter' || act==='reopen' || act==='entoff'){
+      if(R().ro) return;
+      const n=per, val=(act==='enter' || (act==='entoff' && !entOff(n,v))) ? {at:nowISO(), by:LIVEPAY ? ((PH.name && PH.name(PH.me())) || 'Heather') : 'Heather'} : null;
+      const ks=act==='entoff' ? (OFF[v] ? [v] : []) : OFFICES.map(o=>o.k).filter(k=>act==='reopen' || !entOff(n,k));
+      if(!ks.length) return;
+      const wasAll=!!enteredOf(n);
+      const done=()=>{
+        const m=S.entOff[n]=S.entOff[n]||{};
+        OFFICES.forEach(o=>{ if(m[o.k]===undefined) m[o.k]=entOff(n,o.k); });      // an older all-at-once mark, kept per office
+        ks.forEach(k=>{ m[k]=val; }); delete S.entered[n];
+        const nowAll=enteredOf(n);
+        render();
+        toast(act==='entoff' ? (val ? OFF[v].n+' entered ✓ - its sheet is locked' : OFF[v].n+' reopened - its sheet can be changed again')
+          : val ? 'Entered — office sheets for '+lab(n)+' are locked' : 'Reopened — office sheets can be changed again');
+        if(LIVEPAY && PH.payMark && !!nowAll!==wasAll) PH.payMark(keyOf(n), x=>{ if(nowAll) x.entered=nowAll.at; else delete x.entered; }).catch(()=>{});
+      };
       if(LIVEPAY){
-        b.disabled=true; OFFICES.forEach(o=>liveSheet(n, o.k, {set:{entered:val}}));
+        b.disabled=true; ks.forEach(k=>liveSheet(n, k, {set:{entered:val}}));
         liveFlushAll().then(okd=>{
           b.disabled=false;
           if(!okd){ toast('Not saved — check the connection and try again.'); return; }
-          S.entered[n]=val; render(); toast(val ? 'Entered — office sheets for '+lab(n)+' are locked' : 'Reopened — office sheets can be changed again');
-          if(PH.payMark) PH.payMark(keyOf(n), x=>{ if(val) x.entered=val.at; else delete x.entered; }).catch(()=>{});
+          done();
         });
         return;
       }
-      S.entered[per]=val; save(); render(); toast(val ? 'Entered — office sheets for '+lab(per)+' are locked' : 'Reopened — office sheets can be changed again'); return;
+      done(); save(); return;
     }
     if(act==='reload'){ location.reload(); return; }
     if(act==='retry'){ liveFlushAll(); return; }
@@ -1598,7 +1643,7 @@
       const n=nOfKey(key.slice(6)); if(n===null) return;
       const x=sh[key]||{}; x.rows=x.rows||{}; x.docs=x.docs||{}; x.log=x.log||[];
       (S.subs[n]=S.subs[n]||{})[k]=x;
-      if(x.entered!==undefined) S.entered[n]=x.entered;
+      if(x.entered!==undefined) (S.entOff[n]=S.entOff[n]||{})[k]=x.entered;
       LIVE.firstN=LIVE.firstN===null ? n : Math.min(LIVE.firstN, n);
     });
   }
@@ -1642,7 +1687,7 @@
     if(!lv){ LIVE.err='Your account doesn’t have Payroll. Whoever manages payroll chooses who sends each office’s sheet; Admin → Teams & Access gives the rest.'; render(); payDone(); return; }
     LIVE.loading=true; LIVE.err=''; render();
     const offs=lv==='send' ? myOffices() : OFFICES.map(o=>o.k), people={}, docs=[];
-    S.subs={}; S.entered={}; S.removed={}; S.docGone={}; S.bonus={}; S.added=[]; S.docAdd=[]; LIVECOLS={}; LIVE.old=null; LIVE.oldErr='';
+    S.subs={}; S.entered={}; S.entOff={}; S.removed={}; S.docGone={}; S.bonus={}; S.added=[]; S.docAdd=[]; LIVECOLS={}; LIVE.old=null; LIVE.oldErr='';
     /* Nothing is read or written until the payroll folder is LOCKED: before that, everyone in Home-Brace could open it
        in SharePoint. Whoever manages payroll is told how; a sender only ever gets access after it's locked anyway. */
     /* The lock is checked AT THE SAME TIME as the folders (10/11/2026, speed). Only if it doesn't look locked is it
@@ -1729,7 +1774,7 @@
 })();
 </script>
 <script>PH.nav('payroll');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc157"></script>
+<script src="tour.js?v=hc158"></script>
 <script>
 Tour.init([
   ...((window.PH && PH.isLive && PH.isLive()) || (()=>{ try{ return localStorage.getItem('ph_pay_real')==='1'; }catch(_){ return false; } })() ? [] : [{sel:'#persona', title:'A mock-up', body:'Made-up people and amounts. Start as the <b>Carlsbad TC</b>, who sends Carlsbad’s sheet, then switch to <b>Heather</b>.'}]),

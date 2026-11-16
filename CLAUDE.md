@@ -101,13 +101,29 @@ I can confidently say that the chat feature should go next. The production thing
    per-person overrides, so app and folders disagree for anyone given Admin (or Payroll) one person at a time.
    Heather 16/11: "I did not mean to make her one. It was an accident" -> she (or Cory) taps the reset arrow on
    Jenny's Admin line (Admin -> People -> Jenny) and saves; nothing to deploy for Jenny.
-   Cory: "we should have a confirmation when giving someone admin access" -> hc157 (SANDBOX): admin.html isAdm /
+   Cory: "we should have a confirmation when giving someone admin access" -> hc157 (LIVE 16/11 - Cory "You can deploy"; verified): admin.html isAdm /
    adminWith / sureAdmin - a native confirm() (same as Remove person) before anyone becomes a full Admin: a person's
    own Admin line (pickUserLevel), adding them to a team that is Admin (togTeam; their own setting counted), a new
    person's teams (npTeam), a whole team's Admin column (pickLevel, says how many people). Cancel = nothing changes;
    taking Admin away never asks. test/adminsure.test.js (11). Browser-checked on the sandbox, all four.
    STILL OPEN (later, ask Cory): per-person Admin/Payroll/TC overrides aren't given the SharePoint folders (syncs are
    teams-only) - either make the syncs honour them or stop offering those lines per person.
+11. **Entered, one office at a time (16/11/2026, hc158 SANDBOX; deploy only on Cory's OK).** Heather's idea (feedback
+   #19, 16/11 10:26 CST): "When I submit payroll for an office, can you have a check box or something so I can mark that
+   office as completed." What existed: ONE "Mark as entered in payroll" for the whole pay period, locking all 9 sheets
+   (16/11 11:44 CST she pressed it and reopened - Clovis, Mansfield, Lubbock, Cruces LCO hadn't sent; live #24 sheets
+   all carry entered:null since). Now: an "Entered in payroll" tick (button role=checkbox, plum like the lock pill) on
+   each office tile on her board AND each company header on the combined sheet, shown once that office's sheet is
+   sent/done (or to untick); not on the running pay period, not for Payroll: See. Tick = that office's sheet gets
+   `entered` (the field every sheet already had) -> its pill "Entered <time>", its sender's sheet locks, Heather's
+   Goal/TC-OM/Extra lock for that office. payroll.html: S.entOff[n][k], entOff(n,k) (falls back to the old
+   all-at-once S.entered / mock-up default), enteredOf(n) = every office this person has (senders: their own) = the
+   whole period (latest time), enteredCount, entTick(n,k); act 'entoff'; 'enter' = "Mark the rest as entered" once
+   some are ticked (keeps their times), Reopen = all. takeSheets reads per office (used to be the last sheet read for
+   all). ph_pay_status entered (the bell) only changes when the whole period does. Add to payroll still locks only
+   when the whole period is entered. test/payentered.test.js (16). Browser-checked: mock-up as Heather (1024 + 375 px),
+   the San Angelo sender's sheet locking, Real version on the sandbox store (only that office's file written, reload,
+   untick).
 **LIVE 01/11/2026 (hc115, 36 files byte-checked, alerts-test 404 on live):** Selene (01/11) "Could we add “Pending – Scheduled to Start” as an additional TC
 outcome? This would apply to patients who have completed their exam and scheduled a future start appointment but
 have not yet signed their contract." -> tc.js SCHED_START: a completed consult (counts for conversion), not a start
