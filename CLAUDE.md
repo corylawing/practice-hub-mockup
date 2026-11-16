@@ -92,6 +92,22 @@ I can confidently say that the chat feature should go next. The production thing
    Edge Cloud - ask Heather/Adam), what each offers to connect with (an API, reports/exports, or nothing), who holds the
    accounts, and what Home-Brace would take from each (e.g. production, starts, collections, A/R for the monitor sheet
    #4, payments from OrthoFi). Patient data = the most careful handling (like the TC Tracker's locked folder).
+10. **Jenny can't open Payroll (16/11/2026, WAITING ON HEATHER).** Jenny Whitefield (Cruces LCO OM, lascrucessmiles
+   guest, LCO's only sender) sees paystore NO_ACCESS ("... ask your administrator"). Checked live read-only (Safari):
+   her LCO folder grant is right (write, bound to her guest account, same as Cindy who saved FFO today) and she's in
+   ph_pay_senders. CAUSE: ph_people gives her a PER-PERSON override `access.admin:'manage'` (the only one in the
+   practice) -> isAdmin -> payLevel 'manage' -> payroll.html opens EVERY office + Heather's folder -> SharePoint 403.
+   The SharePoint syncs (PAYRULES.wanted/payRoleFor, tcRoleFor, Documents BASE, Sensitive) use TEAMS ONLY and ignore
+   per-person overrides, so app and folders disagree for anyone given Admin (or Payroll) one person at a time.
+   Heather 16/11: "I did not mean to make her one. It was an accident" -> she (or Cory) taps the reset arrow on
+   Jenny's Admin line (Admin -> People -> Jenny) and saves; nothing to deploy for Jenny.
+   Cory: "we should have a confirmation when giving someone admin access" -> hc157 (SANDBOX): admin.html isAdm /
+   adminWith / sureAdmin - a native confirm() (same as Remove person) before anyone becomes a full Admin: a person's
+   own Admin line (pickUserLevel), adding them to a team that is Admin (togTeam; their own setting counted), a new
+   person's teams (npTeam), a whole team's Admin column (pickLevel, says how many people). Cancel = nothing changes;
+   taking Admin away never asks. test/adminsure.test.js (11). Browser-checked on the sandbox, all four.
+   STILL OPEN (later, ask Cory): per-person Admin/Payroll/TC overrides aren't given the SharePoint folders (syncs are
+   teams-only) - either make the syncs honour them or stop offering those lines per person.
 **LIVE 01/11/2026 (hc115, 36 files byte-checked, alerts-test 404 on live):** Selene (01/11) "Could we add “Pending – Scheduled to Start” as an additional TC
 outcome? This would apply to patients who have completed their exam and scheduled a future start appointment but
 have not yet signed their contract." -> tc.js SCHED_START: a completed consult (counts for conversion), not a start

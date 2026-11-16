@@ -272,18 +272,18 @@
   }
 
 </style>
-<script src="user.js?v=hc156"></script>
+<script src="user.js?v=hc157"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="_staff.js?v=hc156"></script>
-  <script src="store.js?v=hc156"></script>
-  <script src="gate.js?v=hc156"></script>
-  <script src="docs.js?v=hc156"></script>
-  <script src="payrules.js?v=hc156"></script>
-  <script src="workbook.js?v=hc156"></script>
-  <script src="prodbook.js?v=hc156"></script>
-  <script src="prodfx.js?v=hc156"></script>
-  <script src="prodstore.js?v=hc156"></script>
-  <script src="prodadmin.js?v=hc156"></script>
+  <script src="_staff.js?v=hc157"></script>
+  <script src="store.js?v=hc157"></script>
+  <script src="gate.js?v=hc157"></script>
+  <script src="docs.js?v=hc157"></script>
+  <script src="payrules.js?v=hc157"></script>
+  <script src="workbook.js?v=hc157"></script>
+  <script src="prodbook.js?v=hc157"></script>
+  <script src="prodfx.js?v=hc157"></script>
+  <script src="prodstore.js?v=hc157"></script>
+  <script src="prodadmin.js?v=hc157"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — admin console concept for validation. Real build: people sync from Microsoft 365; access is managed here.</div>
@@ -938,13 +938,28 @@
       '<p class="acc-sub">From their team(s). Tap a level to set it for '+esc(u.f)+
       ' alone \u2014 that overrides the team, and \u21ba puts it back.</p>'+lines;
   }
+  /* GIVING SOMEONE ADMIN ASKS FIRST (16/11/2026). Heather made Jenny (an office manager) a full Admin by accident -
+     one tap on Jenny's Admin line - and Payroll then tried to open every office for her. Every way of making someone a
+     full Admin now asks first: their own Admin line, adding them to a team that is Admin, a new person's teams, and a
+     whole team's Admin column. Cancel = nothing changes. Taking Admin away never asks. */
+  const isAdm=lv=>lv==='manage';
+  function adminWith(teams, over){ return isAdm((over && over.admin!==undefined) ? over.admin : userAccess({teams:teams||[]}).admin); }
+  function sureAdmin(who, team){
+    const n=team ? users.filter(u=>(u.teams||[]).indexOf(who)>=0).length : 0;
+    return confirm((team ? 'Make everyone on the '+who+' team ('+n+(n===1?' person':' people')+') a full Admin?'
+                         : 'Make '+(who||'this person')+' a full Admin?')+'\n\n'+
+      'A full Admin can see and change everything in Home-Brace, for every office \u2014 including everyone\u2019s access.\n\n'+
+      'Only do this on purpose.');
+  }
   function pickUserLevel(ev,k){
     ev.stopPropagation();
     const base=userAccess({teams:tmpU.teams})[k]||'none';
     const cur=(tmpU.access&&tmpU.access[k]!==undefined)?tmpU.access[k]:base;
+    const u=users[tmpU.gi]||{};
     openPk(ev.currentTarget, levelsFor(k).map(l=>({value:l,
       label:(l==='none'?'None':shortFor(k,l)), desc:descFor(k,l), swatch:LVLSW[l], cur:cur===l})),
       function(v){
+        if(k==='admin' && isAdm(v) && !isAdm(cur) && !sureAdmin([u.f,u.l].filter(Boolean).join(' '))) return;
         tmpU.access=tmpU.access||{};
         if(v===base) delete tmpU.access[k]; else tmpU.access[k]=v;
         refreshAccessPreview();
@@ -1011,7 +1026,10 @@
     }
     const lp=document.getElementById('locpick'); if(lp)lp.innerHTML=locChips();
   }
-  function togTeam(t){ const i=tmpU.teams.indexOf(t); if(i>=0)tmpU.teams.splice(i,1); else tmpU.teams.push(t);
+  function togTeam(t){ const i=tmpU.teams.indexOf(t);
+    if(i<0 && !adminWith(tmpU.teams, tmpU.access) && adminWith(tmpU.teams.concat([t]), tmpU.access)){
+      const u=users[tmpU.gi]||{}; if(!sureAdmin([u.f,u.l].filter(Boolean).join(' '))) return; }
+    if(i>=0)tmpU.teams.splice(i,1); else tmpU.teams.push(t);
     [...document.querySelectorAll('#teampick .tp')].forEach(b=>b.classList.toggle('on',tmpU.teams.includes(b.textContent))); refreshAccessPreview(); }
   function setStatus(v){tmpU.status=v;}
   function saveUser(){
@@ -1079,7 +1097,9 @@
   }
   function npSet(k,v){ if(newP) newP[k]=v; }
   function npLoc(l){ const i=newP.locs.indexOf(l); if(i>=0) newP.locs.splice(i,1); else newP.locs.push(l); renderAddPerson(); }
-  function npTeam(t){ const i=newP.teams.indexOf(t); if(i>=0) newP.teams.splice(i,1); else newP.teams.push(t); renderAddPerson(); }
+  function npTeam(t){ const i=newP.teams.indexOf(t);
+    if(i<0 && !adminWith(newP.teams) && adminWith(newP.teams.concat([t])) && !sureAdmin(String(newP.name||'').trim())) return;
+    if(i>=0) newP.teams.splice(i,1); else newP.teams.push(t); renderAddPerson(); }
   function saveNewPerson(){
     const name=(newP.name||'').trim();
     if(!name){ alert('Type their name first.'); return; }
@@ -2130,7 +2150,8 @@
        picker's callback runs. */
     const btn=ev.currentTarget;
     openPk(btn, levelsFor(k).map(l=>({value:l,label:(l==='none'?'None':shortFor(k,l)),desc:descFor(k,l),swatch:LVLSW[l],cur:(access[t][k]||'none')===l})),
-      v=>{ access[t][k]=v; saveAccess(t,k); syncEdit();
+      v=>{ if(k==='admin' && isAdm(v) && !isAdm(access[t][k]||'none') && !sureAdmin(t, true)) return;
+           access[t][k]=v; saveAccess(t,k); syncEdit();
            if(btn){ LEVELS.forEach(l=>btn.classList.remove(l)); btn.classList.add(v); btn.textContent=shortFor(k,v); }
            else renderAccess(); });
   }
@@ -2234,7 +2255,7 @@ function sizeWatch(){
   }).catch(()=>{});
 }
 </script>
-<script src="tour.js?v=hc156"></script>
+<script src="tour.js?v=hc157"></script>
 <script>
 Tour.init([
   {sel:'#tabs', title:'This is your control room', body:'Four tabs and you can run the whole hub: <b>People</b>, <b>Teams &amp; Access</b>, <b>Document Sections</b> and <b>Locations</b>. No developer, no consultant.', pre:()=>AD.tab('users')},
