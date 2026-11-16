@@ -393,6 +393,44 @@
     }).then(function(next){ return {saved:targets.map(function(t){ return {field:t.field, address:t.tab + '!' + t.cell, label:t.label}; }), changes:changes, next:next || null}; });
   }
 
+  /* PRODUCTION DAYS FROM THE SCHEDULE (16/11/2026, proddays.js). list: [{office, month, field:'sched'|'dys', to}].
+     Same as Enter Production's save (one change at a time on top of what's there, the shared store merges), but every
+     office and month of one sync in one save and one History entry: "Production days from the Schedule". */
+  function setDays(year, list){
+    var changes = [], targets;
+    return templateBook(year).then(function(tpl){
+      targets = (list || []).map(function(c){
+        if(c.field !== 'sched' && c.field !== 'dys') throw fail('Only production days can be set from the Schedule.');
+        var at = cellFor(tpl, c.office, c.field, c.month, year), n = c.to == null ? null : Number(c.to);
+        if(n !== null && !(isFinite(n) && n >= 0 && n <= 31)) throw fail('Not a number of days: ' + c.to);
+        var where = B().labelAt(tpl, at.tab, at.cell);
+        return {field:c.field, office:c.office, tab:at.tab, cell:at.cell, label:where.label, head:where.head, value:n};
+      });
+      if(!targets.length) return null;
+      return S().update(DATA + year, function(rec){
+        rec = (rec && rec.data) ? rec : {year:year, data:{}};
+        changes = [];
+        targets.forEach(function(t){
+          var d = rec.data[t.tab] = rec.data[t.tab] || {}, was = d[t.cell] == null ? null : d[t.cell];
+          if(was === t.value) return;
+          if(t.value === null) delete d[t.cell]; else d[t.cell] = t.value;
+          changes.push({tab:t.tab, cell:t.cell, label:t.label, head:t.head, from:was, to:t.value, field:t.field});
+        });
+        if(!changes.length) return undefined;
+        rec.updatedAt = nowISO(); rec.updatedBy = me();
+        return rec;
+      });
+    }).then(function(r){
+      if(r && (r.blocked || r.error)) throw fail('Home-Brace could not save (' + (r.why || r.error) + ').');
+      if(!changes.length) return null;
+      return S().update(LOG + year, function(list){
+        list = Array.isArray(list) ? list : [];
+        list.unshift({at:nowISO(), from:{how:'schedule', by:me()}, changes:changes});
+        return capLog(list);
+      }).then(function(){ return followOn(year); });
+    }).then(function(){ return {changes:changes}; });
+  }
+
   /* ------------------------------------------------------------------ GOALS & FORMULAS, IN HOME-BRACE
      Cory, 21/10/2026: "I want homebrace to be able to configure the formulas for future years" -
      "Home-Brace to manage the numbers, calculations, etc with just the option to download in excel".
@@ -1095,7 +1133,7 @@
     copyFromBytes:copyFromBytes, syncFromWorkbook:syncFromWorkbook, loadYear:loadYear, downloadYear:downloadYear,
     index:index, log:log, check:check, diff:diff, fingerprint:fingerprint, remap:remap,
     mode:mode, setMode:setMode, liveYear:liveYear, compareFromBytes:compareFromBytes, dashboardData:dashboardData,
-    cellFor:cellFor, setValues:setValues, previewNextYear:previewNextYear, createNextYear:createNextYear, refreshNextYear:refreshNextYear,
+    cellFor:cellFor, setValues:setValues, setDays:setDays, previewNextYear:previewNextYear, createNextYear:createNextYear, refreshNextYear:refreshNextYear,
     goalModel:goalModel, saveGoals:saveGoals, formulaModel:formulaModel, formulaChange:formulaChange, formulaUndo:formulaUndo,
     planModel:planModel, planSave:planSave, planDraft:planDraft, planLine:planLine, planPayload:planPayload,
     reset:function(){ driveP = null; syncing = null; tplCache = {}; }};

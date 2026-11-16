@@ -50,7 +50,23 @@ I can confidently say that the chat feature should go next. The production thing
    Mansfield 8->7, San Angelo 9->10 (Cruces FFO 5, LCO 6, Lubbock 8 same) - ask Heather which is right; the starts goal
    = starts per day x production days, so it moves with them. 2027: no production days in the books yet (all 0); the
    Schedule has Jan/Feb/Mar = Carlsbad 8/8/10, Clovis 10/7/11, Cruces FFO 4/3/4, Cruces LCO 8/7/7, Hobbs 8/8/9, Lubbock
-   8/7/8, Mansfield 7/8/8, San Angelo 9/9/10. Not built yet.
+   8/7/8, Mansfield 7/8/8, San Angelo 9/9/10.
+   **HEATHER 16/11: "Schedules changed. ... when we enter production goals for next years and we enter the number of
+   days the office will be open then a doctor changes their schedule, we will want that to automatically update on the
+   goal production side."** -> BUILT hc160 (SANDBOX; deploy only on Cory's OK): `v1/proddays.js` (PH_PRODDAYS: month,
+   yearOf, changesFor, sync, covered, whenReady, soon). Rule above; months from 2026-09 that the Schedule has filled in
+   for that office (fewer than half the weekdays empty - unfilled months keep what she typed); completed = before today
+   (Central) for past months + this month, later months left alone. Writes via prodstore.setDays (sched + dys rows, one
+   save + one History entry how:'schedule' per year, followOn -> next year's "last year"). Runs in the background on the
+   Dashboard, Enter Production and Plan the year (before the plan opens) for admins / production edit / schedule edit,
+   at most every 10 min per device (gate ph_daysync_at; a Schedule save clears it). NOTHING written when: not live,
+   her Excel is the master, the Schedule (ph_sched2, any year record, or the list of them), ph_docs or the production
+   index didn't read, or > 300 changes in a year. Enter Production: completed days read-only for those months ("From
+   the Schedule"); Plan the year: those months' days read-only (📅), "Use last year's days" skips them.
+   DRY RUN ON LIVE 16/11 (read-only, nothing written) = what the first sync will write: 2026 only December (Carlsbad
+   9->11, Clovis 9->8, Hobbs 9->11, Mansfield 8->7, San Angelo 9->10); 2027 production days 0 -> the Schedule's count
+   for every month already scheduled (most offices Jan-Aug, Clovis + Lubbock Jan-Dec, Cruces FFO/LCO Jan-May): 63
+   boxes. test/proddays.test.js (32).
 4. **The monthly monitor sheet.** FILES RECEIVED 03/11 (Cory's Mac, real figures - NEVER commit, never in tests):
    `~/Downloads/San Angelo Monitor Report 2026.xlsx` and `~/Downloads/Clovis Monitor Report 2026.xlsx`. Heather: "The
    offices who don't take Medicaid will mirror the San Angelo report and the offices who do will mirror the Clovis report.

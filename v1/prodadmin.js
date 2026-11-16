@@ -16,6 +16,7 @@
   var host = null, IDX = null, LOGS = {}, open = null, busy = '', msg = null, pending = null, MODE = null, sw = null, NEXT = null, nextOpen = {};
   var GY = null, GO = null, GM = null, GEDIT = {}, GPREV = {}, GERR = '', gTimer = null;
   var FY = null, FT = null, FM = null, FQ = '', FED = null, FMSG = null, fTimer = null, fLoading = false;   // Formulas
+  var PCOV = null;   // {office: [12 x true when the Schedule decides that month's production days]}
   var OLDY = false, PSERR = '', PY = null, PO = null, PM = null, PD = null, PDIRTY = false, PPREV = null, PERR = '', PMSG = null, POPEN = {}, pTimer = null, pLoading = false, ADV = false;   // Plan, Advanced
 
   var CSS = '.pd{display:flex;flex-direction:column;gap:16px}'+
@@ -69,6 +70,7 @@
     '.pd table.pltb td,.pd table.pltb th{padding:4px 4px;font-size:12.5px}.pd table.pltb td.lab{white-space:nowrap;color:var(--soft);font-weight:700;font-size:12px}'+
     '.pd table.pltb input{width:100%;min-width:54px;box-sizing:border-box;padding:4px 5px;border:1px solid #D5DCE5;border-radius:6px;text-align:right;font:inherit;font-size:12.5px;background:#fff;color:var(--ink)}'+
     '.pd table.pltb td.own input{border-color:var(--teal);background:var(--teal-soft,#E5F4F3);font-weight:700}.pd table.pltb tr.sum td{font-weight:700;color:var(--navy)}'+
+    '.pd table.pltb input.plsch{background:#F4F6F8;border-color:#E4E8EE;color:var(--navy);font-weight:700;cursor:default}.pd .plschm{font-size:10px;text-align:center;line-height:1;margin-top:1px}'+
     '.pd .plnote{font-size:12.5px;color:var(--soft);margin-top:6px}.pd .pltile .pair{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}';
 
   function when(iso){
@@ -376,7 +378,11 @@
     t += row(esc(m.year)+' goal', calc('g', function(j){ return kfmt(pv ? pv.months[j].goal : (med && m.rows.total ? m.rows.total : m.rows.tc).months[j].value); }), 'sum');
     if(POPEN.st && D.st) t += row('Stretch %', D.st.months.map(function(x, j){ return inp('st', j, x, D.st.main); }));
     t += row('Stretch goal', calc('s', function(j){ return kfmt(pv ? pv.months[j].stretch : m.rows.stretch && m.rows.stretch.months[j].value); }));
-    if(D.days) t += row('Production days', D.days.map(function(v, j){ return '<td><input data-pl="days" data-i="'+j+'" value="'+esc(v == null ? '' : v)+'" placeholder="'+esc(m.lyDays && m.lyDays[j] != null ? m.lyDays[j] : '')+'" inputmode="decimal" title="Production days in '+MO3[j]+' '+m.year+(m.lyDays && m.lyDays[j] != null ? ' (grey = '+L+')' : '')+'"></td>'; }));
+    var fromSch = function(j){ return !!(PCOV && PCOV[m.office] && PCOV[m.office][j]); };
+    if(D.days) t += row('Production days'+(D.days.some(function(v, j){ return fromSch(j); }) ? ' <span class="muted" style="font-weight:600">· 📅 = from the Schedule</span>' : ''), D.days.map(function(v, j){
+      return fromSch(j)
+        ? '<td><input class="plsch" value="'+esc(v == null ? '' : v)+'" readonly tabindex="-1" title="From the Schedule: weekdays with a doctor in '+MO3[j]+' '+m.year+' (not Closed, not Yellow Dot). Change the Schedule and this follows."><div class="plschm">📅</div></td>'
+        : '<td><input data-pl="days" data-i="'+j+'" value="'+esc(v == null ? '' : v)+'" placeholder="'+esc(m.lyDays && m.lyDays[j] != null ? m.lyDays[j] : '')+'" inputmode="decimal" title="Production days in '+MO3[j]+' '+m.year+(m.lyDays && m.lyDays[j] != null ? ' (grey = '+L+')' : '')+'"></td>'; }));
     t += '</tbody></table></div>';
     h += t;
     if(D.days && m.lyDays && D.days.some(function(v){ return v == null; }) && m.lyDays.some(function(v){ return v != null; }))
@@ -403,7 +409,11 @@
   function pLoad(){
     if(pLoading) return; pLoading = true;
     var o = PO || (PM && PM.office) || Object.keys(global.PH_WB.TABS)[0];
-    P().planModel(+PY, o).then(function(m){ pLoading = false; PM = m; PO = m.office; PD = P().planDraft(m); PDIRTY = false; PPREV = null; PERR = ''; POPEN = {}; render(); },
+    /* Production days from the Schedule (proddays.js, 16/11/2026): brought up to date first, and the months the
+       Schedule decides are shown read-only. Neither can stop the plan from opening. */
+    var PDY = global.PH_PRODDAYS;
+    (PDY ? PDY.sync().catch(function(){ return null; }).then(function(){ return PDY.covered(+PY); }) : Promise.resolve(null))
+    .then(function(cov){ PCOV = cov; return P().planModel(+PY, o); }).then(function(m){ pLoading = false; PM = m; PO = m.office; PD = P().planDraft(m); PDIRTY = false; PPREV = null; PERR = ''; POPEN = {}; render(); },
       function(e){ pLoading = false; PM = {year:+PY, office:o, err:'Could not read '+o+' '+PY+': '+((e && e.message) || e), offices:[]}; render(); });
   }
   /* While she types: the worked-out rows, the totals, the notes and Save change - never the box she is in. */
@@ -673,6 +683,7 @@
       var head = '<div class="when">'+when(e.at)+'</div><div class="muted">'+
         (f.how === 'upload' ? 'Uploaded'+(f.copiedBy ? ' by '+esc(f.copiedBy) : '')+(f.name ? ' — '+esc(f.name) : '')
         : f.how === 'enter' ? 'Entered in Enter Production'+by+(f.office ? ' — '+esc(f.office) : '')
+        : f.how === 'schedule' ? 'Production days from the Schedule'+(who ? ' (on '+esc(who)+'’s visit)' : '')
         : f.how === 'goals' ? 'Goals'+by+(f.office ? ' — '+esc(f.office) : '')
         : f.how === 'formulas' ? (f.undo ? 'A formula change undone' : 'Formulas changed')+by+(f.tab ? ' — '+esc(f.tab) : '')
         : f.how === 'plan' ? (f.undo ? 'A plan change undone' : 'Plan saved')+by+(f.office ? ' — '+esc(f.office) : '')
@@ -759,7 +770,7 @@
     if(act === 'plopen'){ POPEN[b.dataset.k] = !POPEN[b.dataset.k]; render(); return; }
     if(act === 'plsave'){ plSave(); return; }
     if(act === 'pldiscard'){ PD = P().planDraft(PM); PDIRTY = false; PPREV = null; PERR = ''; render(); return; }
-    if(act === 'pldays' && PD && PM.lyDays){ PD.days = PD.days.map(function(v, i){ return v == null ? PM.lyDays[i] : v; }); PDIRTY = true; PPREV = null; render(); pPreview(); return; }
+    if(act === 'pldays' && PD && PM.lyDays){ PD.days = PD.days.map(function(v, i){ return (v == null && !(PCOV && PCOV[PM.office] && PCOV[PM.office][i])) ? PM.lyDays[i] : v; }); PDIRTY = true; PPREV = null; render(); pPreview(); return; }
     if(act === 'plundo'){ busy = 'plundo'; render();
       P().formulaUndo(PM ? PM.year : +PY, b.dataset.at).then(function(){ busy = ''; LOGS = {}; PMSG = {cls:'ok', html:'↩ Undone - the plan is back to how it was (it’s in History).'}; PM = null; pLoad(); },
         function(e){ busy = ''; PMSG = {cls:'warn', html:'⚠️ '+esc((e && e.message) || e)}; render(); }); return; }

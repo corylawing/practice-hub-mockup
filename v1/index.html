@@ -316,14 +316,16 @@
   }
 
 </style>
-<script src="user.js?v=hc159"></script>
-<script src="celebrate.js?v=hc159"></script>
+<script src="user.js?v=hc160"></script>
+<script src="celebrate.js?v=hc160"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="workbook.js?v=hc159"></script>
-  <script src="store.js?v=hc159"></script>
-  <script src="prodbook.js?v=hc159"></script>
-  <script src="prodstore.js?v=hc159"></script>
-  <script src="gate.js?v=hc159"></script>
+  <script src="workbook.js?v=hc160"></script>
+  <script src="store.js?v=hc160"></script>
+  <script src="prodbook.js?v=hc160"></script>
+  <script src="prodstore.js?v=hc160"></script>
+<script src="schedrec.js?v=hc160"></script>
+<script src="proddays.js?v=hc160"></script>
+  <script src="gate.js?v=hc160"></script>
 </head>
 <body>
 <div class="ribbon">SANDBOX — made-up numbers. The practice’s real workbook is never opened here.</div>
@@ -1223,6 +1225,7 @@ const OFFICES=[
       let when2='';
       if(hb.savedAt){ const who=String(hb.savedBy||'').replace(/[<>&]/g,''); when2=' <span title="'+new Date(hb.savedAt).toLocaleString()+'">&mdash; '+(who?who+' last saved':'last saved')+' '+new Date(hb.savedAt).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+'</span>'; }
       banner('<span>\u25CF</span><span>Showing <b>Home-Brace\u2019s</b> production numbers'+when2+(hb.errors.length?' <b>&mdash; '+hb.errors.length+' office(s) missing</b>':'')+'</span>', hb.errors.length>0);
+      daysFromSchedule();
       // Her Excel, while it is still around, is only compared from now on (admins, in the background).
       if(PH.isAdmin && PH.isAdmin()) PH_PROD.syncFromWorkbook({driveId:WB_DRIVE, itemId:WB_ITEM}).catch(function(e){ try{ console.warn('Production compare:', e && e.message || e); }catch(_){} });
       return true;
@@ -1267,6 +1270,16 @@ const OFFICES=[
     return true;
   }
 
+  /* PRODUCTION DAYS FROM THE SCHEDULE (proddays.js, 16/11/2026): kept in step in the background by anyone who may
+     change production numbers or the Schedule; when it changed something, the dashboard repaints with it. */
+  function daysFromSchedule(){
+    const PDY=window.PH_PRODDAYS; if(!PDY || !window.PH_PROD) return;
+    PDY.whenReady().then(()=>PDY.sync()).then(r=>{
+      if(!(r && r.wrote)) return;
+      return PH_PROD.dashboardData().then(hb=>{ OFFICES.forEach(o=>{ const d=hb.offices[o.n]; if(d) Object.keys(d).forEach(k=>{ o[k]=d[k]; }); }); render(); });
+    }).catch(e=>{ try{ console.warn('Production days from the Schedule:', (e&&e.message)||e); }catch(_){} });
+  }
+
   /* WHO IS ACTUALLY LOOKING.
      PERSONAS is the sandbox's "View as" toy. dechrome() hides that picker in the
      real app, but this page was still USING it - and it defaults to Administrator,
@@ -1303,7 +1316,7 @@ const OFFICES=[
 })();
 </script>
 <script>PH.nav('dashboard');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(window.DASH&&DASH.identity)DASH.identity();});document.addEventListener('ph-identity',function(){if(window.DASH&&DASH.identity)DASH.identity();if(window.DASH&&DASH.loadAudit)DASH.loadAudit();});</script>
-<script src="tour.js?v=hc159"></script>
+<script src="tour.js?v=hc160"></script>
 <script>
 Tour.init([
   {sel:'.viewas', title:'You only see your offices', body:'Everyone can see <b>All Offices</b> \u2014 the practice total as one number. What your location decides is which offices you can <b>open individually</b>. Switch to the Carlsbad manager: she keeps the group total, the leaderboard and Carlsbad, but can\u2019t open the other offices on their own.'},

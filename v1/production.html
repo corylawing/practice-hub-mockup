@@ -134,13 +134,15 @@
   }
 
 </style>
-<script src="user.js?v=hc159"></script>
+<script src="user.js?v=hc160"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="workbook.js?v=hc159"></script>
-  <script src="prodbook.js?v=hc159"></script>
-  <script src="prodstore.js?v=hc159"></script>
-  <script src="store.js?v=hc159"></script>
-  <script src="gate.js?v=hc159"></script>
+  <script src="workbook.js?v=hc160"></script>
+  <script src="prodbook.js?v=hc160"></script>
+  <script src="prodstore.js?v=hc160"></script>
+<script src="schedrec.js?v=hc160"></script>
+<script src="proddays.js?v=hc160"></script>
+  <script src="store.js?v=hc160"></script>
+  <script src="gate.js?v=hc160"></script>
 </head>
 <body>
 <div class="ribbon">SANDBOX — made-up numbers. Saving here stays in your browser; the real workbook is never touched.</div>
@@ -321,7 +323,9 @@
             : '<div class="f"><label>Average case fee</label><div class="help">'+roHelp()+'</div><input class="ro" value="$'+Math.round(afee).toLocaleString('en-US')+'" readonly></div>')+
           (afee>0 ? '<div class="calcline" id="startline">'+money(tc)+' \u00f7 '+money(afee)+' \u2248 <b>'+Math.round(tc/afee)+'</b> starts</div>' : '')+
           fld('Write-offs &amp; other adjustments','Can be negative','adj',disp(office,month,'adj'))+
-          fld('Completed production days','How many days you actually saw patients','dys',disp(office,month,'dys'),true)+
+          (fromSch(office,month)
+            ? '<div class="f"><label>Completed production days</label><div class="help">\u{1F4C5} From the Schedule: each weekday with a doctor counts once it has passed. To change it, change the Schedule.</div><input class="ro" value="'+disp(office,month,'dys')+'" readonly></div>'
+            : fld('Completed production days','How many days you actually saw patients','dys',disp(office,month,'dys'),true))+
           '<div style="border-top:1px solid var(--line);margin:4px 0 14px"></div>'+
           (yearlyHere()
             ? '<p style="font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--soft);margin:0 0 10px">Goals <span style="background:#FFF6E9;color:#946011;font-size:10px;padding:2px 7px;border-radius:5px;letter-spacing:0">LEADERSHIP ONLY</span></p>'+
@@ -738,7 +742,7 @@
     if(!sandbox) dropStale();
     loadedStamp=res.savedAt||null;
     if(sandbox){ wbBanner('<b>Sandbox:</b> made-up numbers. Saving here stays in this browser \u2014 the practice\u2019s real workbook is never touched.',false); return; }
-    if(MODE.source==='homebrace'){ hbShow(res,n); return; }
+    if(MODE.source==='homebrace'){ hbShow(res,n); daysFromSchedule(); return; }
     const stamp=res.savedAt?new Date(res.savedAt).toLocaleString():'';
     const who=String(res.savedBy||'').replace(/[<>&]/g,'');
     const after=new Date().getFullYear()>XL_YEAR;
@@ -747,6 +751,20 @@
              '\u25CF Live from the practice\u2019s workbook \u2014 '+n+' of '+Object.keys(BASE).length+
              ' offices'+(stamp?(who?', '+who+' last saved it '+stamp:', last saved '+stamp):''),
              after || res.errors.length>0);
+  }
+  /* PRODUCTION DAYS FROM THE SCHEDULE (proddays.js, 16/11/2026). Heather: completed production days should "pull from
+     that calendar as well once that day has passed". A month the Schedule decides shows them read-only; the numbers
+     are kept in step in the background and the page repaints when they changed. */
+  let COVER=null;
+  const fromSch=(o,m)=>!!(COVER && COVER[o] && COVER[o][m]);
+  function daysFromSchedule(){
+    const PDY=window.PH_PRODDAYS; if(!PDY) return;
+    const y=HB_YEAR;
+    PDY.covered(y).then(c=>{ if(y===HB_YEAR){ COVER=c; render(); } });
+    PDY.whenReady().then(()=>PDY.sync()).then(r=>{
+      if(!(r && r.wrote) || y!==HB_YEAR) return;
+      return PH_PROD.dashboardData(y).then(res=>{ if(y!==HB_YEAR) return; fillBase(res,false); render(); });
+    }).catch(e=>{ try{ console.warn('Production days from the Schedule:', (e&&e.message)||e); }catch(_){} });
   }
   /* The numbers on the page, from the workbook or a Home-Brace year. `reset` empties every office
      first - another year must not keep this one's numbers where it has none. */
@@ -799,7 +817,8 @@
     HB_YEAR=y;
     const now=new Date(); month = y<now.getFullYear() ? 11 : now.getMonth();
     const n=fillBase(res,true); loadedStamp=res.savedAt||null;
-    hbShow(res,n); render();
+    COVER=null; hbShow(res,n); render();
+    if(window.PH_PRODDAYS) PH_PRODDAYS.covered(y).then(c=>{ if(y===HB_YEAR){ COVER=c; render(); } });
   }
 
   /* Same trap as the dashboard: PERSONAS is the sandbox's "View as" list, which
@@ -826,7 +845,7 @@
 })();
 </script>
 <script>PH.nav('production');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(window.PROD&&PROD.identity)PROD.identity();});document.addEventListener('ph-identity',function(){if(window.PROD&&PROD.identity)PROD.identity();});</script>
-<script src="tour.js?v=hc159"></script>
+<script src="tour.js?v=hc160"></script>
 <script>
 Tour.init([
   {sel:'.syncbar', title:'One set of numbers', body:'Type here and it saves into the <b>same Excel workbook</b> on SharePoint. If someone types in Excel instead, it shows up here. There is never a second copy to reconcile.'},
