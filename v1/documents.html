@@ -237,11 +237,11 @@
   }
 
 </style>
-<script src="user.js?v=hc158"></script>
+<script src="user.js?v=hc159"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc158"></script>
-  <script src="gate.js?v=hc158"></script>
-  <script src="docs.js?v=hc158"></script>
+  <script src="store.js?v=hc159"></script>
+  <script src="gate.js?v=hc159"></script>
+  <script src="docs.js?v=hc159"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — Documents. You see only the folders your role, location &amp; team allow. Files open on the Microsoft drive.</div>
@@ -547,6 +547,8 @@
   const safeUrl=u=>/^https:\/\//i.test(String(u||''))?String(u):'#';
   // Word, Excel and PowerPoint open to LOOK, not to edit - editing locks the file (user.js viewLink, 12/11/2026).
   const openUrl=u=>safeUrl(PH.viewLink ? PH.viewLink(u) : u);
+  /* A Word file opens as the PDF Word would print (user.js, 16/11/2026); its link stays the Word one for a fallback. */
+  const wordA=f=>(PH.wordAttrs && f && f.file!==false) ? PH.wordAttrs(f.name, f.id) : '';
   const escH=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const myName=()=>{ try{ return PH.name(PH.me()); }catch(_){ return ''; } };
 
@@ -669,8 +671,9 @@
     });
     n.files.filter(f=>seesItem(f.id,cur,ctx.cap)).forEach(f=>{
       rows.push('<div class="file"'+pad+'><span class="fic">'+fileIcon(f.name)+'</span>'+
-        '<span class="nm"><a href="'+escH(openUrl(f.webUrl))+'" target="_blank" rel="noopener">'+escH(f.name)+'</a><span class="lv-meta">'+escH(whenBy(f))+'</span></span>'+
-        audChip(f.id)+'<a class="sp" href="'+escH(openUrl(f.webUrl))+'" target="_blank" rel="noopener">Open ↗</a>'+
+        '<span class="nm"><a href="'+escH(openUrl(f.webUrl))+'" target="_blank" rel="noopener"'+wordA(f)+'>'+escH(f.name)+'</a><span class="lv-meta">'+escH(whenBy(f))+'</span></span>'+
+        audChip(f.id)+'<a class="sp" href="'+escH(openUrl(f.webUrl))+'" target="_blank" rel="noopener"'+wordA(f)+'>Open ↗</a>'+
+        (ctx.canEdit && wordA(f) ? '<a class="sp" href="'+escH(safeUrl(f.webUrl))+'" target="_blank" rel="noopener" title="Opens it in Word to change it - it’s locked for moving or removing while it’s open">Edit ↗</a>' : '')+
         (ctx.canManage?(ctx.sensitive?'':'<button class="lv-rm lv-rep"'+attr('act','aud')+attr('id',f.id)+attr('k',ctx.k)+attr('sub',ctx.sub)+attr('path',path)+attr('name',f.name)+attr('kind','file')+'>Access</button>'+'<button class="lv-rm lv-rep"'+attr('act','mv')+attr('path',path)+attr('id',f.id)+attr('k',ctx.k)+attr('sub',ctx.sub)+'>Move</button>')+'<button class="lv-rm lv-rep"'+attr('act','rep')+attr('path',path)+attr('id',f.id)+attr('k',ctx.k)+attr('sub',ctx.sub)+'>Replace</button>'+
           '<button class="lv-rm"'+attr('act','rm')+attr('path',path)+attr('id',f.id)+'>Remove</button>':'')+'</div>');
     });
@@ -1153,7 +1156,7 @@ document.addEventListener('ph-identity',function(){
   });
 });
 PH.nav('documents');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc158"></script>
+<script src="tour.js?v=hc159"></script>
 <script>
 Tour.init([
   {sel:'.crumb', title:'Everything in one place', body:'This replaces \u201cwho has the latest copy?\u201d. Every policy, form and office file lives here \u2014 and people only ever see the folders meant for them.'},

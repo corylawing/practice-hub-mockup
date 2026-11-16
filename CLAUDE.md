@@ -124,6 +124,21 @@ I can confidently say that the chat feature should go next. The production thing
    when the whole period is entered. test/payentered.test.js (16). Browser-checked: mock-up as Heather (1024 + 375 px),
    the San Angelo sender's sheet locking, Real version on the sandbox store (only that office's file written, reload,
    untick).
+12. **Word files open as they print (16/11/2026, hc159 SANDBOX; deploy only on Cory's OK).** Heather (feedback #18
+   thread, 16/11): "some word documents show up formatted weird in Home Brace but when I put them in as pdfs they are
+   correct." Cory: "Word documents should show up good." Checked read-only (Safari): the Word files are forms built
+   from text boxes/anchored shapes/100+ inline checkbox pictures (FFO MEDICAL HISTORY), Lucida Grande (a Mac font) in
+   the Sunflower Oral Hygiene form; Microsoft's own PDF of each (Graph /content?format=pdf, 1-3 s, the .doc packet too)
+   and its preview picture matched the page; Word for the web lays such forms out loosely. user.js: isWordName,
+   wordAttrs(name,id,drive) -> data-word/data-drive/data-name on the link; a document click handler on a[data-word]
+   opens a new tab at once ("Opening <name>...") and fills it with the PDF (blob); anything wrong -> that tab goes to
+   the Word link (view). Not used on phones/tablets (UA or no fine pointer), the home-screen app (standalone), the
+   sandbox, or a Cmd/Ctrl/Shift/middle click - those get the Word link as before. Documents: file name + Open carry it;
+   "Edit" (Word itself, editing) next to Word files for people who can edit there; linked files untouched. Header
+   search results carry it too. test/wordpdf.test.js (17). Headless Chrome: the click opens one new tab at a blob: PDF.
+   (The built-in browser pane blocks window.open, so it can't show this.) The Invisalign/Retainer "locked" report
+   (#18, 12/11) was already sorted: Heather deleted both .docx 12/11 21:45Z (recycle bin) and put PDFs in; she does NOT
+   want the Retainer sheet back ("we are going to change some pricing").
 **LIVE 01/11/2026 (hc115, 36 files byte-checked, alerts-test 404 on live):** Selene (01/11) "Could we add “Pending – Scheduled to Start” as an additional TC
 outcome? This would apply to patients who have completed their exam and scheduled a future start appointment but
 have not yet signed their contract." -> tc.js SCHED_START: a completed consult (counts for conversion), not a start

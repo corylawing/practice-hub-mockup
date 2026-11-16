@@ -1500,6 +1500,54 @@
     if(/[?&]action=[^&]*/i.test(base)) return base.replace(/([?&])action=[^&]*/i, '$1action=view')+tail;
     return base+'&action=view'+tail;
   }
+  /* WORD FILES OPEN AS THEY PRINT (16/11/2026). Heather: "some word documents show up formatted weird in Home Brace but
+     when I put them in as pdfs they are correct." Word for the web lays out forms built from text boxes and tight lines
+     loosely (the FFO Medical History, one page on paper, ran on for pages there); Microsoft's own PDF of the same file
+     (Graph /content?format=pdf - what Word prints) matched it page for page. So a Word file opened from Home-Brace
+     (Documents, the header search) opens as that PDF in a new tab. Its link still points at Word for the web (view):
+     that is used when the PDF can't be made, for a Ctrl/Cmd-click, on a phone or tablet, and in the home-screen app,
+     where a new tab can't show it. Editing: "Edit" next to it in Documents, for people who can edit there. */
+  const WORD_RX=/\.(docx?|dotx?|rtf|odt)$/i;
+  const isWordName=n=>WORD_RX.test(String(n||''));
+  function wordPdfHere(){
+    try{
+      if(!isLive() || !window.PH_AUTH || !PH_AUTH.token) return false;
+      if((window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone===true) return false;
+      if(window.matchMedia && !matchMedia('(pointer: fine)').matches) return false;          // phones and tablets: as before
+      return !/iPhone|iPad|iPod|Android/i.test(navigator.userAgent||'');
+    }catch(_){ return false; }
+  }
+  /* Fill a tab already opened (w) with the PDF of one file; anything wrong = that tab goes to the Word link instead. */
+  function wordPdfInto(w, driveId, itemId, name, fallback){
+    try{ w.document.title=String(name||'Opening…');
+      w.document.body.innerHTML='<p style="font:16px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;margin:48px auto;max-width:520px;color:#56627A;text-align:center">Opening <b style="color:#0F2A4A">'+
+        escHTML(name||'the file')+'</b>…</p>'; }catch(_){}
+    const drv=driveId ? Promise.resolve(driveId) : docContext().then(function(c){ if(!c) throw new Error('no drive'); return c.driveId; });
+    return drv.then(function(d){ return PH_AUTH.token().then(function(t){
+        return fetch('https://graph.microsoft.com/v1.0/drives/'+encodeURIComponent(d)+'/items/'+encodeURIComponent(itemId)+'/content?format=pdf',
+          {headers:{Authorization:'Bearer '+t}}); }); })
+      .then(function(r){ if(!r.ok) throw new Error('PDF '+r.status); return r.blob(); })
+      .then(function(b){
+        if(!b || !b.size) throw new Error('empty PDF');
+        const u=URL.createObjectURL(new Blob([b], {type:'application/pdf'}));
+        w.location.replace(u);
+        setTimeout(function(){ try{ URL.revokeObjectURL(u); }catch(_){} }, 30*60*1000);
+        return 'pdf';
+      })
+      .catch(function(){ try{ w.location.replace(fallback); }catch(_){} return 'word'; });
+  }
+  document.addEventListener('click', function(e){
+    const a=e.target && e.target.closest ? e.target.closest('a[data-word]') : null; if(!a) return;
+    if(e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || !wordPdfHere()) return;   // the link itself
+    const w=window.open('', '_blank'); if(!w) return;                                                    // blocked: the link itself
+    e.preventDefault();
+    wordPdfInto(w, a.getAttribute('data-drive')||'', a.getAttribute('data-word'), a.getAttribute('data-name')||a.textContent, a.href);
+  });
+  /* The attributes a Word file's link carries (empty for anything else). */
+  function wordAttrs(name, itemId, driveId){
+    if(!isWordName(name) || !itemId) return '';
+    return ' data-word="'+escAttr(itemId)+'"'+(driveId?' data-drive="'+escAttr(driveId)+'"':'')+' data-name="'+escAttr(name)+'"';
+  }
   function docRel(webUrl){
     let p=''; try{ p=decodeURIComponent(new URL(webUrl).pathname); }catch(_){ return null; }
     const i=p.indexOf('/'+DOC_BASE+'/'); return i<0 ? null : p.slice(i+DOC_BASE.length+2);
@@ -1623,6 +1671,7 @@
             const isSection=segs.length===1 && !!it.folder;
             out.push({name:isSection?sec.n:it.name, folder:!!it.folder,
               href:it.folder ? 'documents.html#'+encodeURIComponent(sec.k) : viewLink(it.webUrl), newTab:!it.folder,
+              word:(!it.folder && isWordName(it.name)) ? {item:it.id, drive:ctx.driveId} : null,
               where:isSection?'Section in Documents':place(sec, segs.slice(1, -1))});
           });
           /* Files linked in from elsewhere: matched by name, shown by the same rules. */
@@ -1643,7 +1692,7 @@
   }
   function searchDocsHTML(list){
     return '<div class="slab">Documents</div>'+list.map(function(d){
-      return '<a class="ni sr" href="'+escAttr(d.href)+'"'+(d.newTab?' target="_blank" rel="noopener"':'')+'>'+
+      return '<a class="ni sr" href="'+escAttr(d.href)+'"'+(d.newTab?' target="_blank" rel="noopener"':'')+(d.word?wordAttrs(d.name, d.word.item, d.word.drive):'')+'>'+
         '<span class="nic">'+docIcon(d.name, d.folder)+'</span>'+
         '<div class="ntx"><div class="ntt">'+escHTML(d.name)+'</div><div class="nw">'+escHTML(d.where)+'</div></div></a>';
     }).join('');
@@ -3674,7 +3723,7 @@
     const m=document.createElement('link'); m.rel='manifest'; m.href='manifest.webmanifest'; document.head.appendChild(m);
   }
 
-  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, rosterView, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, chatBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK, notesHTML, searchHTML, searchDocs, searchDocsHTML, levelForTeams, teamsSeeAll, tcOn, tcRoleFor, payOn, payRoleFor, paySenders, reloadPaySenders, paySenderOffices, payLevel, payReminders, payMark, reloadPayStatus, payRulesReady, payAlertPlan, payAlertsTick, centralNow, alertsReady, saveFace, faceOf, avatar, viewLink,
+  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, rosterView, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, chatBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK, notesHTML, searchHTML, searchDocs, searchDocsHTML, levelForTeams, teamsSeeAll, tcOn, tcRoleFor, payOn, payRoleFor, paySenders, reloadPaySenders, paySenderOffices, payLevel, payReminders, payMark, reloadPayStatus, payRulesReady, payAlertPlan, payAlertsTick, centralNow, alertsReady, saveFace, faceOf, avatar, viewLink, isWordName, wordAttrs, wordPdfInto,
     sensRecord, reloadSensitive, sensLevelFor, sensitiveLevel, sensConfirmOk,
     setTheme, theme:()=>THEME, setLayout, layout:()=>LAYOUT, layouts:()=>LAYOUTS.map(l=>({k:l.k, n:l.n})), themes:()=>THEMES.map(t=>({k:t.k, n:t.n})), schemeTokens:k=>schemeTokens(themeOf(k)), contrast,
     feedback:openFeedback, feedbackText, feedbackContext, learning:stillLearning, fbReady, myFeedback, fbTick, usageReady, rosterName, useEmail, useTrackMe, loadHold, loadDone};
