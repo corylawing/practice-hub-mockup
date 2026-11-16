@@ -108,7 +108,7 @@ I can confidently say that the chat feature should go next. The production thing
    taking Admin away never asks. test/adminsure.test.js (11). Browser-checked on the sandbox, all four.
    STILL OPEN (later, ask Cory): per-person Admin/Payroll/TC overrides aren't given the SharePoint folders (syncs are
    teams-only) - either make the syncs honour them or stop offering those lines per person.
-11. **Entered, one office at a time (16/11/2026, hc158 SANDBOX; deploy only on Cory's OK).** Heather's idea (feedback
+11. **Entered, one office at a time (16/11/2026, hc158; LIVE 16/11 - Cory "deploy"; verified).** Heather's idea (feedback
    #19, 16/11 10:26 CST): "When I submit payroll for an office, can you have a check box or something so I can mark that
    office as completed." What existed: ONE "Mark as entered in payroll" for the whole pay period, locking all 9 sheets
    (16/11 11:44 CST she pressed it and reopened - Clovis, Mansfield, Lubbock, Cruces LCO hadn't sent; live #24 sheets
