@@ -155,7 +155,10 @@ const names=list=>list.map(x=>x.name).sort();
     t('viewLink: a file NAMED "action=default" is not mistaken for the setting', V('https://a.sharepoint.com/sites/H/_layouts/15/Doc.aspx?sourcedoc=%7BA%7D&file=action%3Ddefault.docx&action=default')
       ==='https://a.sharepoint.com/sites/H/_layouts/15/Doc.aspx?sourcedoc=%7BA%7D&file=action%3Ddefault.docx&action=view'); }
   { const D=fs.readFileSync(path.join(__dirname,'..','v1','documents.html'),'utf8');
-    t('Documents: every file and linked-file link opens through viewLink', (D.match(/escH\(openUrl\([fl]\.webUrl\)\)/g)||[]).length===4 && !/escH\(safeUrl\([fl]\.webUrl\)\)/.test(D) && /PH\.viewLink/.test(D)); }
+    t('Documents: every file and linked-file link opens through viewLink', (D.match(/escH\(openUrl\([fl]\.webUrl\)\)/g)||[]).length===4 && /PH\.viewLink/.test(D));
+    /* 16/11/2026: the ONE link that opens Word to edit on purpose - "Edit", for Word files, for people who can edit. */
+    t('…the only editing link is "Edit", for Word files, for people who can edit there',
+      (D.match(/escH\(safeUrl\([fl]\.webUrl\)\)/g)||[]).length===1 && /\(ctx\.canEdit && wordA\(f\) \? '<a class="sp" href="'\+escH\(safeUrl\(f\.webUrl\)\)\+'"[^>]*>Edit ↗<\/a>' : ''\)/.test(D)); }
 
   console.log(ok.map(s=>'  PASS  '+s).join('\n'));
   if(bad.length) console.log(bad.map(s=>'  FAIL  '+s).join('\n'));
