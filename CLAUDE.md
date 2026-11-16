@@ -41,6 +41,16 @@ I can confidently say that the chat feature should go next. The production thing
    will be updated"; "If it is a yellow day or a virtual promo or any day the doctor is not present we will not count
    it as a production day at this time" (may change "down the road"). Match her workbook's numbers first (scheduled +
    completed days are among the 44 series she verified, §9) - hers are the reference.
+   **CHECKED ON LIVE 16/11/2026 (read-only, Cory's Safari; ph_sched2 + year records via schedrec.js, ph_docs,
+   PH_PROD.dashboardData):** rule = a weekday with >=1 doctor, not Closed, not Yellow Dot (a Friday counts whole; a
+   "Virtual Promo Day" has no doctor so it isn't counted by itself; an in-person "Promo Day" has a doctor and counts).
+   SCHEDULED: Sep, Oct, Nov 2026 match the books EXACTLY for all 8 offices. COMPLETED (doctor days up to the 13th): Nov
+   matches all 8 exactly (5/6/3/4/7/4/4/4). Aug 2026 doesn't (the Schedule was blank in early August) -> never pull
+   months before Sep 2026. DECEMBER 2026 differs (books -> schedule): Carlsbad 9->11, Clovis 9->8, Hobbs 9->11,
+   Mansfield 8->7, San Angelo 9->10 (Cruces FFO 5, LCO 6, Lubbock 8 same) - ask Heather which is right; the starts goal
+   = starts per day x production days, so it moves with them. 2027: no production days in the books yet (all 0); the
+   Schedule has Jan/Feb/Mar = Carlsbad 8/8/10, Clovis 10/7/11, Cruces FFO 4/3/4, Cruces LCO 8/7/7, Hobbs 8/8/9, Lubbock
+   8/7/8, Mansfield 7/8/8, San Angelo 9/9/10. Not built yet.
 4. **The monthly monitor sheet.** FILES RECEIVED 03/11 (Cory's Mac, real figures - NEVER commit, never in tests):
    `~/Downloads/San Angelo Monitor Report 2026.xlsx` and `~/Downloads/Clovis Monitor Report 2026.xlsx`. Heather: "The
    offices who don't take Medicaid will mirror the San Angelo report and the offices who do will mirror the Clovis report.
