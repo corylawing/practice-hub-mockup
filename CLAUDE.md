@@ -75,6 +75,13 @@ I can confidently say that the chat feature should go next. The production thing
    permissions that Adam must approve. Then: its meetings beside the Doctor Schedule on schedule.html, same
    permissions; and "New meeting" from Home-Brace (a real Teams meeting link + invites needs Calendars.ReadWrite or
    OnlineMeetings.ReadWrite - IT approval, like Chat.ReadWrite).
+   UPDATE 12/11: the calendar Cory meant is the Home-Brace M365 GROUP's Outlook calendar (Outlook -> Groups ->
+   Home-Brace) -> needs delegated Group.ReadWrite.All (Adam: add + Grant admin consent; email drafted for Cory 12/11).
+9. **Connect to OrthoFi and their practice-management system (Cory 16/11/2026: "connect to orthofi and orthoedge (or
+   what ever their PMS is)").** Not started. First: confirm which PMS they actually use ("OrthoEdge" is probably Ortho2's
+   Edge Cloud - ask Heather/Adam), what each offers to connect with (an API, reports/exports, or nothing), who holds the
+   accounts, and what Home-Brace would take from each (e.g. production, starts, collections, A/R for the monitor sheet
+   #4, payments from OrthoFi). Patient data = the most careful handling (like the TC Tracker's locked folder).
 **LIVE 01/11/2026 (hc115, 36 files byte-checked, alerts-test 404 on live):** Selene (01/11) "Could we add “Pending – Scheduled to Start” as an additional TC
 outcome? This would apply to patients who have completed their exam and scheduled a future start appointment but
 have not yet signed their contract." -> tc.js SCHED_START: a completed consult (counts for conversion), not a start
