@@ -89,11 +89,11 @@
   }
 
 </style>
-<script src="user.js?v=hc172"></script>
+<script src="user.js?v=hc173"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="_staff.js?v=hc172"></script>
-  <script src="store.js?v=hc172"></script>
-  <script src="gate.js?v=hc172"></script>
+  <script src="_staff.js?v=hc173"></script>
+  <script src="store.js?v=hc173"></script>
+  <script src="gate.js?v=hc173"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — everyone's contact card. In the real hub this list builds itself from Microsoft 365.</div>
@@ -140,7 +140,11 @@
   }
   /* The real roster lives in SharePoint (ph_roster); STAFF (_staff.js, made-up people) is the public
      sandbox's stand-in. */
-  function buildPeople(rows){ return rows.map((r,i)=>{
+  function buildPeople(rows){
+    /* Colours by place in the list as it was before new hires were grouped with their office (hc170): the starting list
+       first, then added people - so nobody's colour moved. */
+    const nb=rows.filter(r=>!r.added).length; let bi=0, ai=0; const slot=rows.map(r=>r.added ? nb+(ai++) : bi++);
+    return rows.map((r,i)=>{
     const isDoc=/^Dr\./.test(r.n);
     const clean=r.n.replace(/"[^"]*"/g,'').replace(/\([^)]*\)/g,'').replace(/\s+/g,' ').trim();
     const parts=clean.replace(/^Dr\.\s*/,'').split(' ');
@@ -153,7 +157,7 @@
       // No invented addresses or numbers: blank is honest, a made-up mailto is not.
       email:r.mail||'', realMail:!!r.mail,
       phone:r.phone||'',
-      color:PAL[i%PAL.length], nick:(r.n.match(/"([^"]*)"/)||r.n.match(/\(([^)]*)\)/)||[])[1]||null};
+      color:PAL[slot[i]%PAL.length], nick:(r.n.match(/"([^"]*)"/)||r.n.match(/\(([^)]*)\)/)||[])[1]||null};
   }); }
   let PEOPLE=buildPeople(STAFF);
   rebuildOffices();
@@ -239,7 +243,7 @@
       PEOPLE=buildPeople(rows.map(function(x){
         return { n:x.name, mail:x.email||'', loc:(x.offices||[]).join(', '),
                  st:x.state||'', brand:x.brand||'', role:x.role||'',
-                 team:(x.teams||[]).join(', '), phone:x.phone||'' };
+                 team:(x.teams||[]).join(', '), phone:x.phone||'', added:!!x._added };
       }));
     }
     rebuildOffices();
@@ -251,7 +255,7 @@
 })();
 </script>
 <script>PH.nav('team');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.loadPhotos)PH.loadPhotos().then(function(got){if(got&&window.TEAMPAGE&&TEAMPAGE.refresh)TEAMPAGE.refresh();});if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc172"></script>
+<script src="tour.js?v=hc173"></script>
 <script>
 Tour.init([
   {sel:'#q', title:'Find anyone fast', body:'Type a name, an office, or part of a phone number. This is the quickest way to reach the right person at the right office.'},

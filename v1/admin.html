@@ -272,20 +272,20 @@
   }
 
 </style>
-<script src="user.js?v=hc172"></script>
+<script src="user.js?v=hc173"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="_staff.js?v=hc172"></script>
-  <script src="store.js?v=hc172"></script>
-  <script src="gate.js?v=hc172"></script>
-  <script src="docs.js?v=hc172"></script>
-  <script src="payrules.js?v=hc172"></script>
-  <script src="workbook.js?v=hc172"></script>
-  <script src="prodbook.js?v=hc172"></script>
-  <script src="prodfx.js?v=hc172"></script>
-  <script src="prodstore.js?v=hc172"></script>
-<script src="schedrec.js?v=hc172"></script>
-<script src="proddays.js?v=hc172"></script>
-  <script src="prodadmin.js?v=hc172"></script>
+  <script src="_staff.js?v=hc173"></script>
+  <script src="store.js?v=hc173"></script>
+  <script src="gate.js?v=hc173"></script>
+  <script src="docs.js?v=hc173"></script>
+  <script src="payrules.js?v=hc173"></script>
+  <script src="workbook.js?v=hc173"></script>
+  <script src="prodbook.js?v=hc173"></script>
+  <script src="prodfx.js?v=hc173"></script>
+  <script src="prodstore.js?v=hc173"></script>
+<script src="schedrec.js?v=hc173"></script>
+<script src="proddays.js?v=hc173"></script>
+  <script src="prodadmin.js?v=hc173"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — admin console concept for validation. Real build: people sync from Microsoft 365; access is managed here.</div>
@@ -595,6 +595,10 @@
      so the sandbox still works. Loaded before first paint by boot(). */
   let ROSTER_ROWS=null;
   function usersFromRoster(rows){
+    /* Colours go by place in the list AS IT WAS before new hires were grouped with their office (hc170): the starting
+       list first, then added people in the order added - so grouping them moved nobody's colour. */
+    const nb=rows.filter(r=>!(r && r._added)).length; let bi=0, ai=0;
+    const slot=rows.map(r=>(r && r._added) ? nb+(ai++) : bi++);
     return rows.map(function(r,i){
       const full=String(r.name||'').trim();
       const isDoc=/^Dr\.\s/.test(full) || (r.teams||[]).indexOf('Doctors')>=0;
@@ -610,7 +614,7 @@
         emp:r.empId||'', role:r.role||'',
         loc:(r.offices&&r.offices.length)?r.offices.join(', '):'Unassigned',
         teams:(r.teams&&r.teams.length)?r.teams.slice():[isDoc?'Doctors':'Staff'],
-        phone:r.phone||'\u2014', about:r.about||'', status:r.status||'Active', c:i%PAL.length };
+        phone:r.phone||'\u2014', about:r.about||'', status:r.status||'Active', c:slot[i]%PAL.length };
     });
   }
   let users=ROSTER.map((full,i)=>{
@@ -2262,7 +2266,7 @@ function sizeWatch(){
   }).catch(()=>{});
 }
 </script>
-<script src="tour.js?v=hc172"></script>
+<script src="tour.js?v=hc173"></script>
 <script>
 Tour.init([
   {sel:'#tabs', title:'This is your control room', body:'Four tabs and you can run the whole hub: <b>People</b>, <b>Teams &amp; Access</b>, <b>Document Sections</b> and <b>Locations</b>. No developer, no consultant.', pre:()=>AD.tab('users')},

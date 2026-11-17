@@ -185,6 +185,20 @@ const NEW=[
   t('Add a person keeps that email, links the same person at another office like Fill does',
     /const em=el\('nem'\) \? String\(el\('nem'\)\.value\|\|''\)\.trim\(\)\.toLowerCase\(\) : '';/.test(H) && /const twin=em \? elsewhere\(em, o\) : null;/.test(H) && /em \? \{email:em, from:'team list'\} : \{\}/.test(H));
 
+  /* Nobody's colour moved (hc173). Admin -> People and Team pick an initials colour by place in the list; grouping
+     the new hires with their office moved everyone after that office along by one colour. The colour now goes by the
+     order before grouping: the starting list first, then added people in the order added. */
+  const A=fs.readFileSync(path.join(V1,'admin.html'),'utf8'), T=fs.readFileSync(path.join(V1,'team.html'),'utf8');
+  const runSlot=(src, re, rows)=>{ const m=src.match(re); return m ? new Function('rows', m[0]+' return slot;')(rows) : null; };
+  const grouped=[{n:'A'},{n:'B'},{n:'New1',_added:true,added:true},{n:'New2',_added:true,added:true},{n:'C'},{n:'D'}];
+  const aS=runSlot(A, /const nb=rows\.filter\(r=>!\(r && r\._added\)\)\.length;[^\n]*\n\s*const slot=[^\n]*/, grouped);
+  const tS=runSlot(T, /const nb=rows\.filter\(r=>!r\.added\)\.length;[^\n]*/, grouped);
+  t('colours: the starting list keeps the colours it had (0,1,2,3) and the two added people come after (4,5) - in Admin and Team',
+    aS && aS.join()==='0,1,4,5,2,3' && tS && tS.join()==='0,1,4,5,2,3' && /c:slot\[i\]%PAL\.length/.test(A) && /color:PAL\[slot\[i\]%PAL\.length\]/.test(T) &&
+    !/c:i%PAL\.length \};/.test(A.slice(A.indexOf('function usersFromRoster'), A.indexOf('function usersFromRoster')+1500)) && /added:!!x\._added \}/.test(T));
+  t('…with nobody added, every colour is exactly the list position, as always', (runSlot(A, /const nb=rows\.filter\(r=>!\(r && r\._added\)\)\.length;[^\n]*\n\s*const slot=[^\n]*/, [{},{},{}])||[]).join()==='0,1,2' &&
+    runSlot(T, /const nb=rows\.filter\(r=>!r\.added\)\.length;[^\n]*/, [{},{},{}]).join()==='0,1,2');
+
   console.log(ok.map(s=>'  PASS  '+s).join('\n'));
   if(bad.length) console.log(bad.map(s=>'  FAIL  '+s).join('\n'));
   console.log('\n'+ok.length+' passed, '+bad.length+' failed');

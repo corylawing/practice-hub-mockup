@@ -235,6 +235,13 @@ I can confidently say that the chat feature should go next. The production thing
    a made-up 4500 -> Excel reads it and works the formulas. Sandbox UI: card -> confirm -> added -> History "Newtown
    added - set up like Carlsbad" -> dashboard data has it -> Take it out -> layout back to the original tabs; sandbox
    restored after. Deployed with #16 + #17 as hc172 (Cory: "push production offices").
+   hc172 LIVE 17/11 (with #16 + #17; verified: stamps, PAY_LIVE/NEWHIRES_LIVE true, CHAT_LIVE false, changed files
+   byte-identical). Cory: "make sure it was done correctly because the other session didn't have our context" -> found:
+   Admin -> People and Team colour each initials circle by PLACE in the list (c:i%PAL), so grouping new hires with their
+   office (#17) moved the colour of everyone after that office (38 of 72 on the real list). hc173: the colour goes by the
+   order before grouping (starting list first, then added people) - browser-checked on the real list: all 72 colours as
+   before, the 2 added right after Clovis. test/newhires.test.js +2. Also took the new hires' real names out of code
+   comments and the test (made-up names only - public repo).
    Heather wording fix (Cory): Home-Brace doesn't PAY - Settings now says "each one on its actual day". DONE:
    payroll stripes read Admin -> Locations colors live; proddays.js reads its offices from workbook.js TABS (hc163).
 16. **Add a person never saved - "Pick who it's for" (Heather, 17/11/2026 9:50 CST; FIXED hc169, pushed from a cloud
