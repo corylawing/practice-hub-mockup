@@ -94,7 +94,7 @@ const chatWith=(...people)=>({id:'19:abc@thread.v2', type:people.length>2?'group
       /CHATPILOT=failed \? \(CHATPILOT\|\|\[\]\) : cleanChatPilot\(x\);/.test(USER) && /var CHAT_GUESTS=false;/.test(USER));
     t('user.js: the header re-checks the chat button whenever who-this-is changes (a pilot member had none on Home: the list lands after the header)',
       /const bw=bar\.querySelector\('\.ph-bw'\);\n\s*if\(bw\)\{ bw\.removeAttribute\('data-snap'\); if\(navShown\(true\)\.some\(x=>x\.k==='chat'\)!==!!bw\.querySelector\('\.ph-chat'\)\) bell\(\); \}/.test(USER));
-    t('user.js: the page waits for the pilot list before saying "no access" (one more late source on live)', /if\(isLive\(\)\)\{ LATE\+\+; Promise\.resolve\(reloadChatPilot\(\)\)\.then\(lateLanded, lateLanded\); \}/.test(USER));
+    t('user.js: the page waits for the pilot list before saying "no access" (one more late source on live)', /if\(isLive\(\)\)\{ LATE\+\+; Promise\.resolve\(reloadChatPilot\(\)\)\.then\(lateLanded, lateLanded\)/.test(USER));
     t('chat.html: the live site never shows the made-up chats - not even while loading', /const WANT_REAL=!!\(CG && \(ONLIVE \|\| CG\.switchedOn\(\)\)\);/.test(CHAT) &&
       /if\(ONLIVE\)\{ CHATS=\[\]; el\('items'\)\.innerHTML=''; el\('conv'\)\.innerHTML='<div class="empty">'/.test(CHAT));
     t('chat.html: waits for who this is, then the pilot list, then decides', /if\(ONLIVE && !CG\.signedIn\(\)\) return;/.test(CHAT) && /if\(!CG\.pilotKnown\(\)\)\{ CG\.loadPilot\(\)\.then\(startMode, startMode\); return; \}/.test(CHAT));

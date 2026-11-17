@@ -74,10 +74,15 @@ if [ "${2:-}" = "--with-api" ]; then
   exit 1
 fi
 [ -f "$REPO/deploy/.vapid.json" ] || { echo "deploy/.vapid.json is missing (the alert key - never in git). Nothing was deployed." >&2; exit 1; }
+# INSTANT CHAT ALERTS (18/11/2026): /api/chatseal + /api/chatnote need the chat certificate's private key
+# (deploy/.chatcert.json, never in git - see api-push/chatkeys.js). Without it every instant chat alert would stop.
+[ -f "$REPO/deploy/.chatcert.json" ] || { echo "deploy/.chatcert.json is missing (the chat alert certificate - never in git). Nothing was deployed." >&2; exit 1; }
 API="$(dirname "$STAGE")/api"
-rsync -a --exclude 'vapid.json' "$REPO/api-push/" "$API/"
+rsync -a --exclude 'vapid.json' --exclude 'chatcert.json' "$REPO/api-push/" "$API/"
 cp "$REPO/deploy/.vapid.json" "$API/push/vapid.json"
 chmod 644 "$API/push/vapid.json"   # the copy here is locked to this Mac's user; the function runs as another user
+cp "$REPO/deploy/.chatcert.json" "$API/chatcert.json"
+chmod 644 "$API/chatcert.json"
 
 # The CLI refuses to run from inside the artifact folder, so deploy from its parent.
 cd "$(dirname "$STAGE")"

@@ -81,9 +81,12 @@
     const reg=await registration();
     let sub=await reg.pushManager.getSubscription();
     if(!sub) sub=await reg.pushManager.subscribe({userVisibleOnly:true, applicationServerKey:keyBytes(PUBLIC_KEY)});
-    const j=sub.toJSON(); keep(j); await saveMine(j); return j;
+    const j=sub.toJSON(); keep(j); await saveMine(j);
+    chatLink();                                                // instant chat alerts for a pilot member (quietly)
+    return j;
   }
   async function disable(){
+    await chatUnlink();                                        // Microsoft stops telling the sender about this device
     const old=saved();
     try{ const reg=await navigator.serviceWorker.getRegistration(); const s=reg && await reg.pushManager.getSubscription(); if(s) await s.unsubscribe(); }catch(_){}
     keep(null);
@@ -145,11 +148,72 @@
     }
     return out;
   }
+  /* INSTANT CHAT ALERTS (18/11/2026, Cory: "build instant chat alerts") - the server side is api-push/chatkeys.js.
+     This device asks Microsoft, with the person's OWN sign-in (Chat.ReadWrite, delegated), to tell Home-Brace's alert
+     sender about every new message in their Teams chats - so a message typed in the Teams app alerts here too, within
+     seconds, and their own messages never do. Only: the live site, someone in the chat pilot (PH.chatPilotMe - a
+     member, never a guest) with alerts on, on this device. Microsoft keeps it up to 3 days; a visit with less than 2
+     days left renews it. Turning alerts off here, or leaving the pilot, removes it. Kept on this device: ph_chat_link
+     {id, exp, ep}. Fails quietly: the alerts Home-Brace already sends carry on as before (same tag 'hb-chat', so the
+     two never stack). */
+  const CHAT_INSTANT=true;
+  const LINK_KEY='ph_chat_link', G='https://graph.microsoft.com/v1.0', DAY=864e5;
+  const linkGet=()=>{ try{ return JSON.parse(localStorage.getItem(LINK_KEY)||'null'); }catch(_){ return null; } };
+  const linkSet=v=>{ try{ v ? localStorage.setItem(LINK_KEY, JSON.stringify(v)) : localStorage.removeItem(LINK_KEY); }catch(_){} };
+  const pilotKnown=()=>!!(global.PH && PH.chatPilotKnown && PH.chatPilotKnown());
+  function chatLinkWanted(){ return ON && LIVE && CHAT_INSTANT && !!(global.PH && PH.chatPilotMe && PH.chatPilotMe()) && state()==='on' && !!saved(); }
+  async function graph(method, path, body, tok){
+    const r=await fetch(G+path, {method, headers:Object.assign({Authorization:'Bearer '+tok}, body ? {'Content-Type':'application/json'} : {}), body:body ? JSON.stringify(body) : undefined});
+    const j=(r.status===204 || r.status===202) ? {} : await r.json().catch(()=>({}));
+    if(!r.ok){ const e=new Error((j.error && j.error.message) || ('Microsoft said '+r.status)); e.status=r.status; throw e; }
+    return j;
+  }
+  let linkBusy=null;
+  function chatLink(){
+    if(linkBusy) return linkBusy;
+    linkBusy=(async()=>{
+      const cur=linkGet();
+      if(!chatLinkWanted()){
+        /* Not (or no longer) for this device: once we KNOW - signed in, the pilot list read - take any link away. */
+        if(cur && cur.id && LIVE && global.PH_AUTH && pilotKnown()){ await chatUnlink(); return 'removed'; }
+        return 'off';
+      }
+      const sub=saved(), now=Date.now();
+      if(cur && cur.id && cur.ep===sub.endpoint && cur.exp-now>2*DAY) return 'fine';
+      const A=global.PH_AUTH; if(!A || !A.tokenFor) return 'nosignin';
+      const me=(global.PH && PH.profileOf && PH.profileOf()) || {}; if(!me.id) return 'nosignin';
+      const tok=await A.tokenFor(['Chat.ReadWrite']);
+      const exp=new Date(now+3*DAY-15*60e3).toISOString();         // just under Microsoft's longest (3 days)
+      if(cur && cur.id){
+        if(cur.ep===sub.endpoint){
+          try{ const j=await graph('PATCH', '/subscriptions/'+encodeURIComponent(cur.id), {expirationDateTime:exp}, tok);
+               linkSet({id:cur.id, exp:Date.parse(j.expirationDateTime||exp), ep:sub.endpoint}); return 'renewed'; }
+          catch(e){ if(e.status!==404) throw e; }                    // it had run out: make a new one below
+        } else { try{ await graph('DELETE', '/subscriptions/'+encodeURIComponent(cur.id), null, tok); }catch(_){} }   // this device's address changed
+        linkSet(null);
+      }
+      const r=await fetch(location.origin+'/api/chatseal', {method:'POST', headers:{'Content-Type':'text/plain'}, body:JSON.stringify({idt:await idToken(), sub})});
+      const s=await r.json().catch(()=>({}));
+      if(!r.ok || !s.ok) throw new Error(s.error || ('the alert sender said '+r.status));
+      const j=await graph('POST', '/subscriptions', {changeType:'created', notificationUrl:s.url, lifecycleNotificationUrl:s.url+'&l=1',
+        resource:'/users/'+me.id+'/chats/getAllMessages', includeResourceData:true, encryptionCertificate:s.cert, encryptionCertificateId:s.certId,
+        expirationDateTime:exp, clientState:s.clientState}, tok);
+      linkSet({id:j.id, exp:Date.parse(j.expirationDateTime||exp), ep:sub.endpoint});
+      return 'made';
+    })().catch(e=>{ try{ console.warn('Instant chat alerts:', e && e.message); }catch(_){} return 'failed'; })
+      .then(x=>{ linkBusy=null; return x; });
+    return linkBusy;
+  }
+  async function chatUnlink(){
+    const cur=linkGet(); linkSet(null); if(!cur || !cur.id) return;
+    try{ const A=global.PH_AUTH; if(A && A.tokenFor) await graph('DELETE', '/subscriptions/'+encodeURIComponent(cur.id), null, await A.tokenFor(['Chat.ReadWrite'])); }catch(_){}
+  }
   const here=p=>new URL(p, location.href).pathname;          // the path an alert opens, on this site
   if(supported()){
     refresh();
     document.addEventListener('ph-signed-in', ()=>{ refresh(); });   // the shared copy can only be written once signed in
+    document.addEventListener('ph-identity', ()=>{ if(LIVE) chatLink(); });   // the pilot list has landed: make / renew / remove the instant link
   }
-  global.PH_ALERTS={state, enable, disable, send, sendTo, saved, here, refresh, IOS, INSTALLED, KIND, ON, supported,
+  global.PH_ALERTS={state, enable, disable, send, sendTo, saved, here, refresh, chatLink, chatUnlink, CHAT_INSTANT, IOS, INSTALLED, KIND, ON, supported,
     _rec:{keyFor, devices, addDevice, dropDevice, MAX_DEVICES}};
 })(window);

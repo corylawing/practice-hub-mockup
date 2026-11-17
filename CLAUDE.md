@@ -393,6 +393,31 @@ I can confidently say that the chat feature should go next. The production thing
    amount per day and it will do the math for me." -> a per-day rate per doctor kept in HER folder (settings.json - the
    offices never read it), days x rate on the combined sheet/download (and an override box), effective from a pay period
    like the rates (never changes an entered one). Senders keep typing only the days. Sandbox first behind a switch.
+25. **INSTANT CHAT ALERTS (18/11/2026; hc185, needs the live site - nothing changes on the sandbox).** Cory: "Anyway to
+   have them turn off microsoft alerts and only get alerts through Home-Brace?" -> "build instant chat alerts". Before:
+   Home-Brace only alerted for messages sent FROM Home-Brace; one typed in the Teams app alerted only in Teams. Now
+   Microsoft tells Home-Brace's alert sender about EVERY new message in a pilot member's chats (avg < 10 s, max 1 min).
+   ALL DELEGATED, no secret, no app permission, nothing stored on the server (Microsoft docs checked 18/11:
+   /users/{id}/chats/getAllMessages supports delegated Chat.Read/Chat.ReadWrite with resource data; chatMessage
+   subscriptions up to 4,320 min (3 days) if lifecycleNotificationUrl is given; 10 per user; Graph's own Web Push
+   delivery (vapidPublicKey...) is BETA - not used). HOW: v1/alerts.js chatLink() (live, PH.chatPilotMe, alerts on on
+   this device) -> POST /api/chatseal {idt, sub} -> api-push/chatseal: checks the ID token, returns url=/api/chatnote?d=
+   <this device's alert address + their oid, SEALED AES-256-GCM with a key derived (HKDF) from the alert key>, clientState
+   (HMAC), our PUBLIC cert -> the page POSTs /subscriptions with the person's own token (changeType created,
+   includeResourceData, encryptionCertificate, lifecycleNotificationUrl=url&l=1, expiry 3 days - 15 min) -> kept in
+   localStorage ph_chat_link {id, exp, ep}; a visit with < 2 days left PATCHes; 404 -> new; address changed -> DELETE +
+   new; alerts off (disable) or not in the pilot (known) -> DELETE. api-push/chatnote: echoes validationToken; opens the
+   sealed d (tampered = nothing), checks clientState + tenant, decrypts (RSA-OAEP SHA-1 key, AES-256-CBC, HMAC check),
+   created messageType 'message' only, SKIPS the person's own (from.user.id === sealed oid), sends one push (title =
+   sender, body = words / "📷 Sent a photo"..., url /v1/chat.html#chat=, tag 'hb-chat' = same as the alerts sent from a
+   Home-Brace send, so they never stack); always 202 within ~2.5 s. CERT: deploy/.chatcert.json (made on Cory's Mac
+   18/11 with openssl, certId hb-chat-2026-11, 10 years; NEVER in git - .gitignore) copied to api/chatcert.json by
+   deploy-production.sh, which now refuses without it. user.js: PH.chatPilotKnown; after the pilot list lands, a member's
+   page loads alerts.js and calls chatLink (any page). test/chatinstant.test.js (30: real crypto both ways, own/other/
+   wrong clientState/bad signature/other tenant/edit/system note/lifecycle/tampered; page make/fine/renew/run-out/
+   address-changed/left-pilot). NOT YET PROVEN END TO END: needs the live site + Cory's phone (alerts on) + Heather
+   typing in the Teams app. QUEUED after Heather's ideas: emoji reactions; a "chat alerts: Home-Brace / Teams" choice;
+   click a photo -> big view "exactly like slack does" (Cory 18/11).
 **LIVE 01/11/2026 (hc115, 36 files byte-checked, alerts-test 404 on live):** Selene (01/11) "Could we add “Pending – Scheduled to Start” as an additional TC
 outcome? This would apply to patients who have completed their exam and scheduled a future start appointment but
 have not yet signed their contract." -> tc.js SCHED_START: a completed consult (counts for conversion), not a start

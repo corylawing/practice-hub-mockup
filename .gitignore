@@ -25,3 +25,8 @@ media/
 # repo: it lives on this machine and is copied into the sender at deploy (deploy/deploy-alerts-test.sh).
 deploy/.vapid.json
 api-push/push/vapid.json
+
+# The instant-chat-alert certificate's PRIVATE key (deploy/.chatcert.json): only Home-Brace's alert sender can read the
+# messages Microsoft sends it. Never in this public repo; copied into the sender at deploy (deploy-production.sh).
+deploy/.chatcert.json
+api-push/chatcert.json
