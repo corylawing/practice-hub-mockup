@@ -247,15 +247,15 @@
     .perhead .when{font-size:17px}
   }
 </style>
-<script src="user.js?v=hc165"></script>
+<script src="user.js?v=hc166"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc165"></script>
-  <script src="gate.js?v=hc165"></script>
-  <script src="alerts.js?v=hc165"></script>
-  <script src="_staff.js?v=hc165"></script>
-  <script src="payrules.js?v=hc165"></script>
-  <script src="paystore.js?v=hc165"></script>
-  <script src="docs.js?v=hc165"></script>
+  <script src="store.js?v=hc166"></script>
+  <script src="gate.js?v=hc166"></script>
+  <script src="alerts.js?v=hc166"></script>
+  <script src="_staff.js?v=hc166"></script>
+  <script src="payrules.js?v=hc166"></script>
+  <script src="paystore.js?v=hc166"></script>
+  <script src="docs.js?v=hc166"></script>
 </head>
 <body>
 <div class="ribbon">MOCK-UP for Heather — made-up people and amounts. Try it as the Carlsbad TC first, then as Heather.</div>
@@ -328,18 +328,10 @@
      DIBS, POG"; she types Goal, TC/OM and Extra). ZIHUA PARTNERS (03/11, Heather: "Zihua Partners is where me, Selene
      and Jessica get paid out of" ... "I fill it in for Zihua"): self = nobody sends it - whoever manages payroll fills
      it in from the board ("Fill it in"), in the spot it holds on her main sheet. */
-  const OFFICES=[
-    {k:'carlsbad',  n:'Carlsbad',   co:'Farnsworth Orthodontics, PLLC (Carlsbad)', by:'TC'},
-    {k:'hobbs',     n:'Hobbs',      co:'Farnsworth Orthodontics Hobbs, PLLC', by:'office manager'},
-    {k:'lubbock',   n:'Lubbock',    co:'Farnsworth Family Orthodontics, PLLC (Lubbock)', by:'clinic lead', own:[{k:'phone',n:'Phone'}]},
-    {k:'clovis',    n:'Clovis',     co:'Farnsworth Orthodontics, P.C. (Clovis)', by:'office manager', own:[{k:'sick',n:'Sick hrs',hrs:true}]},
-    {k:'sanangelo', n:'San Angelo', co:'Farnsworth Orthodontics San Angelo, PLLC', by:'office manager', own:[{k:'dibs',n:'DIBS',each:'dibs'},{k:'pog',n:'POG'}]},
-    {k:'zihua',     n:'Zihua Partners', co:'Zihua Partners', by:'Heather', self:true},
-    {k:'mansfield', n:'Mansfield',  co:'Sunflower Orthodontics PLLC', by:'office manager'},
-    {k:'crucesffo', n:'Cruces FFO', co:'Farnsworth Legacy – Farnsworth Orthodontics Las Cruces LLC', by:'TC'},
-    {k:'cruceslco', n:'Cruces LCO', co:'Las Cruces Orthodontics – Farnsworth Orthodontics LLC', by:'office manager'}
-  ];
-  const OFF=Object.fromEntries(OFFICES.map(o=>[o.k,o]));
+  /* The offices = payrules.js (one list for the whole of Payroll): the 9 above as they always were, plus any office
+     added in Settings from Admin -> Locations (17/11/2026 - see payrules.js BASE_OFFICES / setOffices). */
+  let OFFICES=PR.OFFICES.slice(), OFF=Object.fromEntries(OFFICES.map(o=>[o.k,o]));
+  function useOffices(rec){ PR.setOffices(rec); OFFICES=PR.OFFICES.slice(); OFF=Object.fromEntries(OFFICES.map(o=>[o.k,o])); }
   const sender=o=>OFF[o].self ? OFF[o].by : 'the '+OFF[o].n+' '+OFF[o].by;
   const poss=n=>/s$/.test(n) ? n+'’' : n+'’s';      // Carlsbad’s, Zihua Partners’
   const PHONE=()=>!!(window.PH_ALERTS && PH_ALERTS.ON);   // phone alerts are on here (the sandbox; live once ALERTS_LIVE)
@@ -435,7 +427,7 @@
   const fresh=()=>{ S.v=2; S.subs=S.subs||{}; S.entered=S.entered||{}; S.entOff=S.entOff||{}; S.added=S.added||[]; S.removed=S.removed||{};
                     S.bonus=S.bonus||{}; S.docAdd=S.docAdd||[]; S.docGone=S.docGone||{}; S.also=S.also||{}; };
   fresh();
-  if(!LIVEPAY){ PR.setHolidayEdits(S.holEdits); HOLIDAYS=PR.HOLIDAYS.slice(); }   // the mock-up keeps Heather's holiday changes here
+  if(!LIVEPAY){ PR.setHolidayEdits(S.holEdits); HOLIDAYS=PR.HOLIDAYS.slice(); useOffices(S.offExtra); }   // the mock-up keeps Heather's holiday changes and added offices here   // the mock-up keeps Heather's holiday changes here
   const save=()=>{ if(LIVEPAY) return; try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(_){} };   // live: saved field by field (LIVE below)
 
   /* ---------- people: by last name, the way the payroll software lists them ---------- */
@@ -1133,6 +1125,31 @@
       (can ? '<div class="hadd"><input type="date" id="hadd_d" min="'+esc(from)+'" aria-label="Date"><input id="hadd_n" maxlength="60" placeholder="What it is - e.g. Day after Thanksgiving" aria-label="What it is">'+
         '<button class="btn sm" data-act="holadd">+ Add a paid day</button></div>' : '')+'</div>';
   }
+  /* A NEW OFFICE (17/11/2026, payrules.js). An office in Admin -> Locations that Payroll doesn't have yet shows here;
+     whoever manages payroll adds it with its company name and who usually sends its sheet. From then on it has its own
+     sheet, its place on the combined sheet, a sender to choose above and its own locked folder - and it stays (the
+     shared list 'ph_pay_offices'), whatever happens to Locations. */
+  function newOfficeNames(){ try{ return PR.newOffices(((PH.locations && PH.locations())||[]).map(l=>l && l.n)); }catch(_){ return []; } }
+  function newOfficeCard(){
+    if(!holCan()) return '';
+    const names=newOfficeNames(); if(!names.length) return '';
+    return '<div class="card"><h2>New in Admin → Locations</h2><p class="sub">'+(names.length>1?'These offices aren’t':'This office isn’t')+' in Payroll yet. Add it and it gets its own sheet, its place on your combined sheet, someone to send it (choose them above once it’s in) and its own locked folder.</p>'+
+      names.map((n,i)=>PR.SAFE_NAME.test(n)
+        ? '<div class="hrow"><span class="hd">'+esc(n)+'</span><span class="hn" style="display:flex;gap:8px;flex-wrap:wrap">'+
+            '<input class="in" id="nof_co_'+i+'" maxlength="120" style="flex:1;min-width:220px;padding:8px 10px" placeholder="Its company name, as on your main sheet" aria-label="'+esc(n)+' company name">'+
+            '<select class="in" id="nof_by_'+i+'" aria-label="Who usually sends '+esc(n)+'’s sheet">'+PR.BYS.map(b=>'<option value="'+esc(b)+'">Usually the '+esc(b)+'</option>').join('')+'</select></span>'+
+            '<button class="btn sm" data-act="offadd" data-i="'+i+'" data-v="'+esc(n)+'">Add to Payroll</button></div>'
+        : '<div class="hrow"><span class="hd">'+esc(n)+'</span><span class="hn muted">Its name has a character SharePoint can’t use for a folder (" * : &lt; &gt; ? / \\ | # %) - change it in Admin → Locations first.</span></div>').join('')+'</div>';
+  }
+  function addOffice(n, co, by){
+    const ok=x=>{ useOffices(x); render(); toast(n+' is in Payroll ✓ - choose who sends its sheet above'); };
+    const put=cur=>{ const x=PR.cleanOffices(cur); if(!x.add.some(o=>o.n.toLowerCase()===n.toLowerCase())) x.add.push({k:PR.keyFor(n), n, co:co||n, by}); return x; };
+    if(!LIVEPAY){ S.offExtra=put(S.offExtra); save(); ok(S.offExtra); return; }
+    PH_STORE.update(PR.OFF_KEY, cur=>{ const x=put(cur); x.upd=new Date().toISOString(); x.updBy=myEmail(); return x; })
+      .then(r=>{ if(!r || r.blocked || r.error) throw new Error((r && (r.why || r.error)) || 'no answer'); ok(r.value);
+        if(ONLIVE && window.PAYSTORE && PAYSTORE.ensure) PAYSTORE.ensure([n]).catch(()=>{}); },   // its folder now, inside the locked payroll folder
+        e=>toast('Not added - '+((e && e.message) || 'check the connection')+'. Nothing changed.'));
+  }
   function holSave(change, done){
     const after=x=>{ PR.setHolidayEdits(x); HOLIDAYS=PR.HOLIDAYS.slice(); render(); toast(done); };
     if(!LIVEPAY){ const e=PR.cleanEdits(S.holEdits); change(e); S.holEdits=PR.cleanEdits(e); save(); after(S.holEdits); return; }
@@ -1161,6 +1178,7 @@
               .filter(r=>sendersOf(o).indexOf(String(r.email).toLowerCase())<0).map(r=>'<option value="'+esc(r.email)+'">'+esc(r.name)+((r.offices||[]).length?' · '+esc((r.offices||[]).join(', ')):'')+'</option>').join('')+'</select>'
           + '<div class="small muted">Usually the '+esc(o.by)+'.</div>'
         : 'The '+esc(o.by))+'</td><td>'+((o.own||[]).map(c=>esc(c.n)).join(', ')||'<span class="muted">—</span>')+'</td></tr>').join('')+'</tbody></table></div></div>';
+    h+=newOfficeCard();
     h+=colsCard();
     h+=holCard();
     const act=everyone().filter(p=>!S.removed[p.id]).sort(byLast), gone=everyone().filter(p=>S.removed[p.id]).sort(byLast), tw=twins();
@@ -1372,6 +1390,13 @@
       notifyPay(title, body);
       if(window.PH_ALERTS) setTimeout(()=>toast('To get this on your phone: the bell (top right) → Turn on.'), 1200);
       return; }
+    if(act==='offadd'){
+      if(!holCan()) return;
+      const n=v||'', i=b.dataset.i, co=((el('nof_co_'+i)||{}).value||'').trim(), by=(el('nof_by_'+i)||{}).value||'office manager';
+      if(newOfficeNames().indexOf(n)<0 || !PR.SAFE_NAME.test(n)) return;
+      if(!co){ toast('Type its company name first - it heads its part of your combined sheet'); return; }
+      b.disabled=true; addOffice(n, co, by); return;
+    }
     if(act==='holoff' || act==='holon' || act==='holdel' || act==='holadd'){
       if(!holCan()) return;
       const from=holFrom(); let d=v||'', nm='';
@@ -1707,13 +1732,14 @@
   }
   function paySyncHere(){
     if(TRY) return Promise.resolve('sandbox');
-    const B=PH_DOCS.PAY_BASE, offices=OFFICES.map(o=>o.n);
+    const B=PH_DOCS.PAY_BASE;
     return PH_DOCS.payLocked().then(locked=>{
       if(!locked) return 'notlocked';
-      const w=PR.wanted(B, (PH.rosterView && PH.rosterView())||[], PH.payRoleFor, (PH.paySenders().offices)||{}, offices);
-      return PH_STORE.get('ph_paygrants').then(rec=>{
+      return Promise.all([PH_STORE.get('ph_paygrants'), loadOffices()]).then(([rec])=>{
         // a shared list that didn't read = an old copy: change no access (docs.js syncBlocked, 12/11/2026)
-        const stop=PH_DOCS.syncBlocked && PH_DOCS.syncBlocked(['ph_access','ph_people','ph_pay_senders','ph_paygrants']); if(stop) throw stop;
+        const stop=PH_DOCS.syncBlocked && PH_DOCS.syncBlocked(['ph_access','ph_people','ph_pay_senders','ph_paygrants', PR.OFF_KEY]); if(stop) throw stop;
+        // every office Payroll has AND every folder access was ever given on - none drops out of the sync (17/11/2026)
+        const w=PR.wanted(B, (PH.rosterView && PH.rosterView())||[], PH.payRoleFor, (PH.paySenders().offices)||{}, PR.syncOffices(B, rec, PH_DOCS.PAY_PRIVATE));
         return PH_DOCS.paySync(w.want, rec); }).then(done=>
         PH_STORE.update('ph_paygrants', cur=>PH_DOCS.payRecord(cur, done)).then(()=>Object.keys(done).every(k=>!done[k].failed.length)));
     }).catch(()=>false);
@@ -1768,6 +1794,13 @@
     const lv=LEVEL();
     if(!lv){ LIVE.err='Your account doesn’t have Payroll. Whoever manages payroll chooses who sends each office’s sheet; Admin → Teams & Access gives the rest.'; render(); payDone(); return; }
     LIVE.loading=true; LIVE.err=''; render();
+    loadOffices().then(()=>liveLoadNow(lv));
+  }
+  /* Payroll's offices (a new one added in Settings) before anything is read - its folder is one of them. */
+  function loadOffices(){
+    return Promise.resolve(window.PH_STORE ? PH_STORE.get(PR.OFF_KEY) : null).then(x=>{ useOffices(x); }, ()=>{});
+  }
+  function liveLoadNow(lv){
     const offs=lv==='send' ? myOffices() : OFFICES.map(o=>o.k), people={}, docs=[];
     S.subs={}; S.entered={}; S.entOff={}; S.removed={}; S.docGone={}; S.bonus={}; S.added=[]; S.docAdd=[]; LIVECOLS={}; LIVE.old=null; LIVE.oldErr='';
     /* Nothing is read or written until the payroll folder is LOCKED: before that, everyone in Home-Brace could open it
@@ -1856,7 +1889,7 @@
 })();
 </script>
 <script>PH.nav('payroll');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc165"></script>
+<script src="tour.js?v=hc166"></script>
 <script>
 Tour.init([
   ...((window.PH && PH.isLive && PH.isLive()) || (()=>{ try{ return localStorage.getItem('ph_pay_real')==='1'; }catch(_){ return false; } })() ? [] : [{sel:'#persona', title:'A mock-up', body:'Made-up people and amounts. Start as the <b>Carlsbad TC</b>, who sends Carlsbad’s sheet, then switch to <b>Heather</b>.'}]),

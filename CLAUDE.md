@@ -184,8 +184,18 @@ I can confidently say that the chat feature should go next. The production thing
    9->11, Mansfield 8->7, San Angelo 9->10 + Nov completed Carlsbad 5->6, Lubbock 4->5 (the 16th passed); 2027 = 66 days
    boxes (null -> the Schedule), exactly the dry run.
 15. **Still fixed lists - a 9th office or a new year would NOT flow through (found 17/11/2026, not started; ask Cory).**
-   (a) Payroll offices: payrules.js + payroll.html OFFICES (company name, who sends, own columns) - a new office isn't
-   in Payroll; its folder/grants follow the list. (b) DONE hc165 (SANDBOX; deploy on Cory's OK) - Payroll holidays
+   (a) DONE hc166 (SANDBOX; deploy on Cory's OK) - Payroll offices: ONE list (payrules.js; payroll.html's identical copy
+   removed - verified identical first). BASE_OFFICES = the 9, unchanged keys/order. A new office in Admin -> Locations
+   shows in Payroll -> Settings "New in Admin -> Locations" (managers only): company name (required) + who usually
+   sends it -> "Add to Payroll" -> shared list 'ph_pay_offices' {add:[{k:'x'+name letters/digits, n, co, by}]}, never
+   dropped on its own; its folder made at once (PAYSTORE.ensure). cleanOffices refuses one of the 9's names, a
+   folder-unsafe name, a wrong key, a repeat. Loaded before any folder is read (payroll.html loadOffices -> liveLoadNow),
+   by Admin's runPaySync and user.js reloadPayStatus. SAFETY (the 12/11 lesson): docs.js paySync takes access back on
+   any recorded folder missing from `want`, so both syncs now pass PR.syncOffices(B, rec, 'Heather') = every office +
+   every folder ever given access on, and syncBlocked includes 'ph_pay_offices'. Mock-up: S.offExtra.
+   test/payoffices.test.js (16); payrules/paydibs/docs tests updated to the one list (docs "before" window 400 -> 800).
+   Headless Chrome (file://, made-up "Newtown"): card, company name required, added -> Settings row, board tile,
+   combined heading, survives reload, first 9 unchanged, no errors. (b) DONE hc165 (LIVE 17/11 - Cory "deploy"; verified) - Payroll holidays
    worked out by rule (payrules.js holidaysFor/holidaysThrough/holIn/holDates): New Year's, last Mon of May, July 4,
    first Mon of Sep, 4th Thu of Nov, Christmas; Sat -> Fri before, Sun -> Mon after. Gives EXACTLY the 12 typed 2026-27
    dates; list = 2026..this year+2. New: Fri 2027-12-31 "New Year's Day 2028" (Jan 1 2028 is a Saturday - same rule

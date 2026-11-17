@@ -10,7 +10,7 @@
   'use strict';
 
   /* In the order of her main sheet. by = who sends it; own = the office's own columns (typed by the office). */
-  const OFFICES=[
+  const BASE_OFFICES=[
     {k:'carlsbad',  n:'Carlsbad',   co:'Farnsworth Orthodontics, PLLC (Carlsbad)', by:'TC'},
     {k:'hobbs',     n:'Hobbs',      co:'Farnsworth Orthodontics Hobbs, PLLC', by:'office manager'},
     {k:'lubbock',   n:'Lubbock',    co:'Farnsworth Family Orthodontics, PLLC (Lubbock)', by:'clinic lead', own:[{k:'phone',n:'Phone'}]},
@@ -21,6 +21,47 @@
     {k:'crucesffo', n:'Cruces FFO', co:'Farnsworth Legacy – Farnsworth Orthodontics Las Cruces LLC', by:'TC'},
     {k:'cruceslco', n:'Cruces LCO', co:'Las Cruces Orthodontics – Farnsworth Orthodontics LLC', by:'office manager'}
   ];
+  /* A NEW OFFICE (17/11/2026). Cory: "If another office is added it would have to add to the entire workflow" -
+     "be very careful we don't mess anything up". The 9 above never change (their keys name every file). An office
+     added in Admin -> Locations shows up in Payroll -> Settings as new; whoever manages payroll adds it there with its
+     company name, and from then on it is in Payroll everywhere (its sheet, the combined sheet, who sends it, its
+     folder and access) - kept in the shared list 'ph_pay_offices' {add:[{k, n, co, by}]}, never dropped on its own.
+     Its key is 'x' + its name in letters and digits, so it can't take one of the 9's. */
+  const SAFE_NAME=/^[^"*:<>?\/\\|#%]{1,60}$/;
+  const BYS=['office manager', 'TC', 'clinic lead'];
+  function keyFor(n){ return 'x' + String(n).toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 30); }
+  function cleanOffices(rec){
+    rec=(rec && typeof rec==='object') ? rec : {};
+    const taken=new Set(BASE_OFFICES.map(o=>o.n.toLowerCase())), keys=new Set(BASE_OFFICES.map(o=>o.k)), add=[];
+    (Array.isArray(rec.add) ? rec.add : []).forEach(o=>{
+      const n=String((o && o.n) || '').trim(), k=String((o && o.k) || '');
+      if(!n || !SAFE_NAME.test(n) || n.trim()!==n || /^\.|\.$/.test(n) || taken.has(n.toLowerCase())) return;
+      if(k!==keyFor(n) || k.length<2 || keys.has(k)) return;
+      taken.add(n.toLowerCase()); keys.add(k);
+      add.push({k, n, co:String(o.co || n).trim().slice(0, 120) || n, by:BYS.indexOf(o.by)>=0 ? o.by : 'office manager'});
+    });
+    return {add};
+  }
+  let OFFICES=BASE_OFFICES.slice(), OFFEXTRA=cleanOffices(null);
+  function setOffices(rec){
+    OFFEXTRA=cleanOffices(rec);
+    OFFICES=BASE_OFFICES.concat(OFFEXTRA.add);
+    if(typeof api!=='undefined'){ api.OFFICES=OFFICES; api.OFF=Object.fromEntries(OFFICES.map(o=>[o.k, o])); api.OFFEXTRA=OFFEXTRA; }
+    return OFFICES;
+  }
+  /* Offices in Admin -> Locations that Payroll doesn't have yet (names). */
+  function newOffices(locNames){
+    const have=new Set(OFFICES.map(o=>o.n.toLowerCase()));
+    return (locNames || []).map(n=>String(n || '').trim()).filter((n, i, a)=>n && a.indexOf(n)===i && !have.has(n.toLowerCase()));
+  }
+  /* The office folders a sync must look at: every office Payroll has, AND every office folder access was ever given on
+     (the record) - a folder never drops out of the sync just because a list didn't have it, so nobody's access is
+     taken back that way. Heather's own folder is never one of them. */
+  function syncOffices(base, record, priv){
+    const out=OFFICES.map(o=>o.n);
+    Object.keys(record || {}).forEach(p=>{ if(p.indexOf(base + '/')===0){ const n=p.slice(base.length + 1); if(n && n!==priv && !/[\/\\]/.test(n) && out.indexOf(n)<0) out.push(n); } });
+    return out;
+  }
   const OFF=Object.fromEntries(OFFICES.map(o=>[o.k,o]));
   const RATES={onCall:50, holiday:100, holidayHrs:8, mile:0.76, dibs:10};      // dibs: $ each - San Angelo types a count (17/11/2026)
   /* Until Heather keeps her own list in Settings. */
@@ -157,7 +198,7 @@
     return {want, noEmail};
   }
 
-  const api={OFFICES, OFF, RATES, HOLIDAYS, EDITS, holidaysFor, holidaysThrough, holIn, holDates, cleanEdits, withEdits, setHolidayEdits, HOL_KEY:'ph_pay_holidays', ANCHOR, FIRST, addDays, dow, days, todayISO, workdayBefore, payOf, numberOf, period, currentIndex, indexOfKey,
+  const api={OFFICES, OFF, OFFEXTRA, BASE_OFFICES, BYS, keyFor, cleanOffices, setOffices, newOffices, syncOffices, OFF_KEY:'ph_pay_offices', SAFE_NAME, RATES, HOLIDAYS, EDITS, holidaysFor, holidaysThrough, holIn, holDates, cleanEdits, withEdits, setHolidayEdits, HOL_KEY:'ph_pay_holidays', ANCHOR, FIRST, addDays, dow, days, todayISO, workdayBefore, payOf, numberOf, period, currentIndex, indexOfKey,
     eligibleOn, eligible, num, r2, cutVal, cutBy, otOK, calc, wanted};
   global.PAYRULES=api;
   if(typeof module!=='undefined' && module.exports) module.exports=api;

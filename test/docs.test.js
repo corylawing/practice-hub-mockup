@@ -499,10 +499,11 @@ const calls=(sp,re,method)=>sp.calls.filter(c=>re.test(c.url)&&(!method||c.metho
     delete ctx.PH;
     t('guard: no Home-Brace identity loaded at all - stop', /the team list/.test((D.syncBlocked(K)||{}).message||'')); }
   { const AD=fs.readFileSync(path.join(__dirname,'..','v1','admin.html'),'utf8'), PAY=fs.readFileSync(path.join(__dirname,'..','v1','payroll.html'),'utf8');
-    const before=(src, sync)=>{ const i=src.indexOf(sync), g=src.lastIndexOf('syncBlocked(', i); return i>0 && g>0 && i-g<400; };
+    // 17/11/2026: 800 (was 400) - the Payroll syncs now also keep every folder ever given access on, a few lines between
+    const before=(src, sync)=>{ const i=src.indexOf(sync), g=src.lastIndexOf('syncBlocked(', i); return i>0 && g>0 && i-g<800; };
     t('guard is asked before every access sync: TC, Payroll and Sensitive Material in Admin, Payroll\u2019s own Settings',
       before(AD,'PH_DOCS.tcSync(w.want') && before(AD,'PH_DOCS.paySync(w.want') && before(AD,'PH_DOCS.sensSync(w.want') && before(PAY,'PH_DOCS.paySync(w.want') &&
-      /syncBlocked\(\['ph_access','ph_people','ph_pay_senders','ph_paygrants'\]\)/.test(AD) && /syncBlocked\(\['ph_access','ph_people','ph_pay_senders','ph_paygrants'\]\)/.test(PAY)); }
+      /syncBlocked\(\['ph_access','ph_people','ph_pay_senders','ph_paygrants', PAYRULES\.OFF_KEY\]\)/.test(AD) && /syncBlocked\(\['ph_access','ph_people','ph_pay_senders','ph_paygrants', PR\.OFF_KEY\]\)/.test(PAY)); }   // + Payroll's own office list (17/11/2026)
   /* 6h. SENSITIVE MATERIAL (20/10): inside Home-Brace Documents, but locked like the TC folder;
          access given and taken back only on that one folder; nothing moves in or out of it.
          Made-up people. */

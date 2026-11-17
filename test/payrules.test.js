@@ -67,8 +67,8 @@ t('the offices are her sheet’s, in its order - Zihua Partners after San Angelo
 t('Zihua Partners: nobody sends it - Heather fills it in', R.OFF.zihua.self===true && R.OFFICES.filter(o=>o.self).length===1);
 { const w2=R.wanted(B, roster, roleOf, {'Carlsbad':['kim@x.test'], 'Zihua Partners':['kim@x.test']});
   t('Zihua Partners’ folder: whoever manages payroll, never a sender', w2.want[B+'/Zihua Partners'] && w2.want[B+'/Zihua Partners']['pat@x.test']==='write' && !w2.want[B+'/Zihua Partners']['kim@x.test'] && w2.want[B+'/Carlsbad']['kim@x.test']==='write'); }
-t('payroll.html lists the same offices, in the same order', (src=>{ const m=src.slice(src.indexOf('const OFFICES=['), src.indexOf('];', src.indexOf('const OFFICES=[')));
-  return R.OFFICES.every((o,i,a)=>m.indexOf("k:'"+o.k+"'")>=0 && (i===0 || m.indexOf("k:'"+a[i-1].k+"'")<m.indexOf("k:'"+o.k+"'"))); })(require('fs').readFileSync(require('path').join(__dirname,'..','v1','payroll.html'),'utf8')));
+// 17/11/2026: payroll.html has no list of its own any more - it uses this one (one list for the whole of Payroll)
+t('payroll.html uses this same office list (no copy of its own)', (src=>/let OFFICES=PR\.OFFICES\.slice\(\), OFF=/.test(src) && src.indexOf("{k:'carlsbad',  n:'Carlsbad'")<0)(require('fs').readFileSync(require('path').join(__dirname,'..','v1','payroll.html'),'utf8')));
 
 console.log(pass+' passed, '+fail+' failed');
 process.exit(fail?1:0);

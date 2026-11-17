@@ -15,7 +15,7 @@ t('3 DIBS = $30 (it was $3)', c({dibs:3}).own===30 && c({dibs:3}).total===30);
 t('POG and Phone are still dollars', c({pog:25}).own===25 && c({phone:40}).own===40);
 t('all three together: 2 DIBS + $25 POG = $45', c({dibs:2, pog:25}).own===45);
 t('$10 each unless Settings says otherwise', R.RATES.dibs===10 && R.calc(p, {dibs:3}, per, Object.assign({}, R.RATES, {dibs:12}), 0, {}).own===36 && R.calc(p, {dibs:3}, per, {onCall:50, holiday:100, holidayHrs:8, mile:0.76}, 0, {}).own===30);
-t('San Angelo’s DIBS column is a count; POG isn’t', /\{k:'dibs',n:'DIBS',each:'dibs'\},\{k:'pog',n:'POG'\}/.test(fs.readFileSync(path.join(__dirname,'..','v1','payrules.js'),'utf8')) && /\{k:'dibs',n:'DIBS',each:'dibs'\},\{k:'pog',n:'POG'\}/.test(H));
+t('San Angelo’s DIBS column is a count; POG isn’t (one office list, payrules.js)', /\{k:'dibs',n:'DIBS',each:'dibs'\},\{k:'pog',n:'POG'\}/.test(fs.readFileSync(path.join(__dirname,'..','v1','payrules.js'),'utf8')) && R.OFF.sanangelo.own[0].each==='dibs' && !R.OFF.sanangelo.own[1].each);
 
 t('the page works it out the same way', /own=r2\(num\(x\.phone\)\+num\(x\.dibs\)\*num\(RATE\.dibs\)\+num\(x\.pog\)\)/.test(H) && /let RATE=\{onCall:50, holiday:100, holidayHrs:8, mile:0\.76, dibs:10\};/.test(H));
 t('the office’s sheet asks "how many" (DIBS #) and shows the dollars under it', /info\(esc\(c\.n\)\+' #','How many '/.test(H) && /'<div class="small muted">= '\+money\(ownUsd\(c,x\)\)\+'<\/div>'/.test(H));
