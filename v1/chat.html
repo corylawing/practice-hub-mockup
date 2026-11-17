@@ -65,7 +65,7 @@
   /* the bell beside New chat: alerts on / off, any time (the strip above can be closed) */
   .ib.sm{width:34px;height:34px;border-radius:10px;position:relative}
   .ib.sm svg{width:18px;height:18px}
-  .bellb.on{color:var(--teal-600);border-color:#9ED8D4}
+  .bellb.on{color:var(--teal-600);border-color:var(--teal-line,#9ED8D4)}
   .bellb.on::after{content:"";position:absolute;top:5px;right:6px;width:7px;height:7px;border-radius:50%;background:#2E9E6B;border:1.5px solid #fff}
 
   /* the chat app: the list beside the conversation (a phone shows one at a time) */
@@ -152,7 +152,7 @@
   .steps li{counter-increment:s;position:relative;padding-left:34px}
   .steps li::before{content:counter(s);position:absolute;left:0;top:0;width:24px;height:24px;border-radius:50%;background:var(--teal);color:#fff;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center}
   .ui{display:inline-block;border:1px solid #cbd5e1;border-radius:7px;padding:0 7px;font-size:13px;font-weight:700;background:#fff;white-space:nowrap}
-  .note{background:var(--teal-soft);border-radius:10px;padding:9px 12px;font-size:13.5px;color:#0c5b57}
+  .note{background:var(--teal-soft);border-radius:10px;padding:9px 12px;font-size:13.5px;color:var(--teal-ink,#0c5b57)}
   .lead{color:var(--ink);line-height:1.5}
   .other{font-size:12.5px;color:var(--soft)}
   .other button{background:none;border:none;padding:0;font:inherit;font-weight:700;color:var(--teal-600);text-decoration:underline;cursor:pointer}
@@ -187,8 +187,8 @@
   /* REAL CHAT (12/11/2026): the test bar, photos in avatars, files, sending state, the test lock */
   .ribbon button{margin-left:10px;background:rgba(58,36,0,.12);border:1px solid rgba(58,36,0,.28);color:#3a2400;border-radius:999px;padding:2px 10px;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer}
   .ribbon button:hover{background:rgba(58,36,0,.22)}
-  .ribbon.real{background:#0F827E;color:#fff}
-  .pilotbar{background:#0F827E;color:#fff;text-align:center;font-size:13px;font-weight:600;padding:6px 14px}
+  .ribbon.real{background:var(--teal-600,#0F827E);color:#fff}   /* the person's colour scheme, like the rest of the page */
+  .pilotbar{background:var(--teal-600,#0F827E);color:#fff;text-align:center;font-size:13px;font-weight:600;padding:6px 14px}
   .pilotbar button{margin-left:10px;font:inherit;font-size:12px;font-weight:700;cursor:pointer;border-radius:999px;padding:3px 11px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.45);color:#fff}
   .ribbon.real button{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.45);color:#fff}
   .ribbon.real button:hover{background:rgba(255,255,255,.28)}
@@ -216,13 +216,13 @@
     .m{max-width:88%}
   }
 </style>
-<script src="user.js?v=hc182"></script>
+<script src="user.js?v=hc183"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc182"></script>
-  <script src="gate.js?v=hc182"></script>
-  <script src="_staff.js?v=hc182"></script>
-  <script src="alerts.js?v=hc182"></script>
-  <script src="chatgraph.js?v=hc182"></script>
+  <script src="store.js?v=hc183"></script>
+  <script src="gate.js?v=hc183"></script>
+  <script src="_staff.js?v=hc183"></script>
+  <script src="alerts.js?v=hc183"></script>
+  <script src="chatgraph.js?v=hc183"></script>
 </head>
 <body>
 <div class="ribbon" id="ribbon">MOCK-UP for Heather and Dr. Jae — made-up people, messages and videos. Nothing is sent anywhere.</div>
@@ -273,7 +273,7 @@
               team:'<circle cx="9" cy="8" r="3.2"/><circle cx="17" cy="9" r="2.6"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5M15 14.6c3 0 6 1.6 6 4.6"/>'};
   function avatar(c, sm){
     const cls='av'+(sm?' sm':'');
-    if(c.type==='office' || c.type==='team' || c.type==='group') return '<span class="'+cls+'" style="background:'+(c.type==='office'?'#25456E':'#0F827E')+'"><svg viewBox="0 0 24 24">'+ICON[c.type==='office'?'office':'team']+'</svg></span>';
+    if(c.type==='office' || c.type==='team' || c.type==='group') return '<span class="'+cls+'" style="background:'+(c.type==='office'?'var(--navy2,#25456E)':'var(--teal-600,#0F827E)')+'"><svg viewBox="0 0 24 24">'+ICON[c.type==='office'?'office':'team']+'</svg></span>';
     if(c.photo) return '<span class="'+cls+'"><img src="'+esc(c.photo)+'" alt=""></span>';
     return '<span class="'+cls+'" style="background:'+colorOf(c.name)+'">'+esc(initials(c.name))+'</span>';
   }

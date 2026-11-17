@@ -37,6 +37,9 @@ t('lists drawn later (and in a tab in the background) are picked up: straight fr
   /new MutationObserver\(later\)\.observe\(document\.documentElement, \{childList:true, subtree:true\}\)/.test(U) && !/requestAnimationFrame/.test(fnOf(U,'later')) &&
   !/phpkin/.test(U));
 t('a value set in code without a "change" still shows: every picker refreshes on page changes, redrawing only what changed', /document\.querySelectorAll\('select\[data-pk\]'\)\.forEach\(paint\)/.test(fnOf(U,'later')) && /if\(sel\._pkSig===sig\) return; sel\._pkSig=sig;/.test(fnOf(U,'paint')));
+t('no talk-to-type 🎤 on the picker’s search box, and the Enter that picks doesn’t re-open it (Cory 18/11)', /pop\.setAttribute\('data-nomic',''\);/.test(U) &&
+  /if\(Date\.now\(\)-closedAt<350\) return;/.test(U) && /const o=OPEN; OPEN=null; closedAt=Date\.now\(\);/.test(U));
+t('a 🎤 told to hide really hides on every page (its own display:grid beat the browser’s "hidden" on Admin)', /st\.textContent='\.ph-mic\[hidden\]\{display:none!important\}\.ph-mic\{/.test(U));
 t('what people typed is never put in as HTML (text only)', !/innerHTML=[^;]*o\.text/.test(U) && /tt\.textContent=t;/.test(U) && /v\.textContent=L\.t;/.test(U));
 t('the test stand-in (no real browser) skips it', /typeof window\.addEventListener!=='function'/.test(U));
 

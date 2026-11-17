@@ -363,6 +363,13 @@ I can confidently say that the chat feature should go next. The production thing
    the list / list failed -> no button, page locked, 0 Teams calls; no page errors. Admin -> Chat checked on the local
    sandbox (add + take out, confirms, stored). NEXT (Cory): deploy -> Admin -> Chat -> add Cory, Heather, Jessica ->
    test (text, photo, video, from Teams back) -> then guests (one guest test) -> CHAT_LIVE for everyone.
+   hc182 LIVE 18/11 (Cory "deploy chat pilot"; verified). Cory added himself (pilot bar showed "Who's in it (1)").
+   hc183 (18/11): (1) THE FLOATING 🎤 (Cory: "Why is microphone sign just sitting there"): .ph-mic{display:grid} beat the
+   browser's [hidden], so on a page with no [hidden] rule (Admin) a 🎤 told to hide stayed painted -> .ph-mic[hidden]
+   {display:none!important}; and the picker's search box has no 🎤 (data-nomic on .phpk-pop). (2) The picker: the Enter
+   that picks no longer re-opens it (closedAt, 350 ms). (3) Chat colours: Cory asked if chat follows the scheme - it does
+   (his is the default; Heather's is Peony, checked: pink buttons, plum chips); the pilot bar, .ribbon.real, .note,
+   .bellb.on and group avatars had fixed teal -> theme variables. Browser-checked (local, hc183).
 24. **QUEUED - Heather's two doctor/contractor ideas (feedback 17/11 4:26 + 4:30 pm CST). Cory: "Add after chat pilot
    deploy and first test".** (a) "Can you make the doctor that needs to get paid more visible somehow. Right now Dr.
    Lightheart kind of blends in with the sheet and I almost forgot to pay him. Any doctor or contractor I add could be

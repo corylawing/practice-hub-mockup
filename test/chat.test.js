@@ -100,6 +100,9 @@ const chatWith=(...people)=>({id:'19:abc@thread.v2', type:people.length>2?'group
     t('chat.html: waits for who this is, then the pilot list, then decides', /if\(ONLIVE && !CG\.signedIn\(\)\) return;/.test(CHAT) && /if\(!CG\.pilotKnown\(\)\)\{ CG\.loadPilot\(\)\.then\(startMode, startMode\); return; \}/.test(CHAT));
     t('chat.html: a green pilot bar on live (the amber ribbon is hidden there); who’s in it is read-only (Admin -> Chat changes it)',
       /b\.className='pilotbar'/.test(CHAT) && /Admin → Chat changes who’s in it\./.test(CHAT) && /\(ONLIVE \? '' : '<div><button class="btn ghost sm" data-act="testers">Add testers<\/button><\/div>'\)/.test(CHAT));
+    t('chat.html: the pilot bar, the test ribbon, notes and group pictures follow the person’s colour scheme (no fixed teal)',
+      /\.pilotbar\{background:var\(--teal-600,#0F827E\)/.test(CHAT) && /\.ribbon\.real\{background:var\(--teal-600,#0F827E\)/.test(CHAT) &&
+      /'var\(--navy2,#25456E\)':'var\(--teal-600,#0F827E\)'/.test(CHAT) && !/background:#0F827E/.test(CHAT));
     const ADM=R('admin.html');
     t('admin.html: Admin -> Chat lists the pilot; adding or taking out asks first; a list that didn’t read can’t be changed',
       /data-t="chat" onclick="AD\.tab\('chat'\)">Chat</.test(ADM) && /if\(!confirm\('Give '\+nm\+' the real Teams chat in Home-Brace\?/.test(ADM) &&

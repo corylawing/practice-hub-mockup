@@ -3486,7 +3486,9 @@
   function micStyles(){
     if(document.getElementById('ph-mic-css')) return;
     const st=document.createElement('style'); st.id='ph-mic-css';
-    st.textContent='.ph-mic{position:fixed;z-index:9450;width:26px;height:26px;border-radius:50%;border:0;padding:0;display:grid;place-items:center;'+
+    /* .ph-mic[hidden]: its own display:grid beat the browser's "hidden", so on a page without a [hidden] rule (Admin) a 🎤
+       told to hide stayed painted where its box had been (Cory 18/11: "Why is microphone sign just sitting there"). */
+    st.textContent='.ph-mic[hidden]{display:none!important}.ph-mic{position:fixed;z-index:9450;width:26px;height:26px;border-radius:50%;border:0;padding:0;display:grid;place-items:center;'+
       'background:#eef2f7;color:#33475b;cursor:pointer;box-shadow:0 1px 3px rgba(15,42,74,.18)}.ph-mic:hover{background:#e2e8f0}'+
       '.ph-mic svg{width:15px;height:15px;display:block}.ph-mic.on{background:#d92d20;color:#fff;animation:ph-mic 1.2s ease-in-out infinite}'+
       '@keyframes ph-mic{0%,100%{box-shadow:0 0 0 0 rgba(217,45,32,.45)}50%{box-shadow:0 0 0 7px rgba(217,45,32,0)}}'+
@@ -3837,7 +3839,7 @@
       '@media (max-width:560px){.phpk-pop{left:8px!important;right:8px!important;width:auto!important;top:auto!important;bottom:8px!important;max-height:72vh!important;border-radius:16px}}';
     const CHEV='<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
     const LOUPE='<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10.4 10.4L14 14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
-    let OPEN=null, seq=0;
+    let OPEN=null, seq=0, closedAt=0;
     function styles(){ if(document.getElementById('phpk-css')) return; const s=document.createElement('style'); s.id='phpk-css'; s.textContent=CSSX; document.head.appendChild(s); }
     function label(sel){
       const chosen=[...sel.options].filter(o=>o.selected && !(sel.multiple && o.value==='')), ph=sel.getAttribute('data-ph')||'Choose…';
@@ -3868,7 +3870,7 @@
       sel.parentNode.insertBefore(b, sel); sel.classList.add('phpk-hid');
       paint(sel);
       sel.addEventListener('change', ()=>paint(sel));
-      b.addEventListener('click', e=>{ e.preventDefault(); e.stopPropagation(); if(OPEN && OPEN.sel===sel) close(); else open(sel); });
+      b.addEventListener('click', e=>{ e.preventDefault(); e.stopPropagation(); if(Date.now()-closedAt<350) return; if(OPEN && OPEN.sel===sel) close(); else open(sel); });   // the Enter that picked doesn't re-open it
       b.addEventListener('keydown', e=>{
         if(e.key==='ArrowDown' || e.key==='ArrowUp' || (e.key===' ' && !OPEN)){ e.preventDefault(); open(sel); return; }
         if(e.key.length===1 && !e.ctrlKey && !e.metaKey && !e.altKey && !OPEN){ e.preventDefault(); open(sel, e.key); }
@@ -3883,6 +3885,7 @@
       close(); styles();
       const b=sel._pkBtn, multi=sel.multiple, id='phpk'+(++seq);
       const pop=document.createElement('div'); pop.className='phpk-pop'; pop.setAttribute('role','dialog');
+      pop.setAttribute('data-nomic','');   // no talk-to-type 🎤 on a two-letter search (Cory 18/11: it was left "just sitting there" under the list)
       const search=sel.options.length>=PICK_MIN || multi;
       const qw=document.createElement('div'); qw.className='phpk-qw'; qw.innerHTML=LOUPE;
       const q=document.createElement('input'); q.className='phpk-q'; q.type='text'; q.placeholder='Type to search…'; q.setAttribute('autocomplete','off');
@@ -3957,7 +3960,7 @@
       if(below>=260 || below>=above){ p.style.top=(r.bottom+6)+'px'; p.style.bottom='auto'; p.style.maxHeight=Math.max(160, Math.min(420, below-6))+'px'; }
       else { p.style.top='auto'; p.style.bottom=(H-r.top+6)+'px'; p.style.maxHeight=Math.max(160, Math.min(420, above-6))+'px'; }
     }
-    function close(){ if(!OPEN) return; const o=OPEN; OPEN=null; o.btn.setAttribute('aria-expanded','false'); if(o.pop.parentNode) o.pop.parentNode.removeChild(o.pop); }
+    function close(){ if(!OPEN) return; const o=OPEN; OPEN=null; closedAt=Date.now(); o.btn.setAttribute('aria-expanded','false'); if(o.pop.parentNode) o.pop.parentNode.removeChild(o.pop); }
     document.addEventListener('pointerdown', e=>{ if(OPEN && !OPEN.pop.contains(e.target) && !OPEN.btn.contains(e.target)) close(); }, true);
     window.addEventListener('resize', ()=>place());
     window.addEventListener('scroll', e=>{ if(OPEN && !OPEN.pop.contains(e.target)) place(); }, true);
