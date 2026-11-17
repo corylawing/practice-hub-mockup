@@ -48,7 +48,7 @@ t('the payroll page uses the same holidays (the mock-up too) and pays each one i
   /const holN=PR\.holDates\(pr\.hol\)\.filter\(d=>eligible\(p,d\)\)\.length, hol=!p\.holHrs\?holN\*RATE\.holiday:0, holH=p\.holHrs\?holN\*RATE\.holidayHrs:0;/.test(H));
 t('the holiday box says "Both paid" / "1 of 2 paid" when there are two', /'<span class="pill p-done">Both paid<\/span>'/.test(H) && /paidN\+' of '\+hds\.length\+' paid<\/span>'/.test(H));
 t('Settings lists this year’s and next year’s holidays (not every year there is) and says how they’re worked out',
-  /const hy=\+TODAY\.slice\(0,4\), inYrs=d=>\+d\.slice\(0,4\)>=hy && \+d\.slice\(0,4\)<=hy\+1/.test(H) && /each one paid on its actual day, whatever day of the week it falls on/.test(H));
+  /const hy=\+TODAY\.slice\(0,4\), inYrs=d=>\+d\.slice\(0,4\)>=hy && \+d\.slice\(0,4\)<=hy\+1/.test(H) && /each one on its actual day, whatever day of the week it falls on/.test(H));
 
 /* Heather can change them (Cory: "give nobody the ability to modify or change things" isn't scalable). */
 const U=fs.readFileSync(path.join(__dirname,'..','v1','user.js'),'utf8');

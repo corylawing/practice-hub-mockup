@@ -214,13 +214,13 @@
     .m{max-width:88%}
   }
 </style>
-<script src="user.js?v=hc167"></script>
+<script src="user.js?v=hc168"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc167"></script>
-  <script src="gate.js?v=hc167"></script>
-  <script src="_staff.js?v=hc167"></script>
-  <script src="alerts.js?v=hc167"></script>
-  <script src="chatgraph.js?v=hc167"></script>
+  <script src="store.js?v=hc168"></script>
+  <script src="gate.js?v=hc168"></script>
+  <script src="_staff.js?v=hc168"></script>
+  <script src="alerts.js?v=hc168"></script>
+  <script src="chatgraph.js?v=hc168"></script>
 </head>
 <body>
 <div class="ribbon" id="ribbon">MOCK-UP for Heather and Dr. Jae — made-up people, messages and videos. Nothing is sent anywhere.</div>
@@ -556,8 +556,11 @@
   }
   function newChatDlg(){
     const staff=(window.STAFF||[]).map(p=>p.n).filter(n=>n && n!==ME && !/Lawing/i.test(n)).slice(0,40);
-    const offices=['Carlsbad','Clovis','Hobbs','Lubbock','San Angelo','Mansfield','Cruces FFO','Cruces LCO'];
-    const teams=['Doctors','TCs','Office Managers','Leadership Team','Marketing Team'];
+    /* The offices and teams as Admin has them (Locations; Teams & Access) - a new office or team shows up here by itself
+       (17/11/2026, "Everything we build needs to be scalable"). The lists below only if Admin's haven't been read yet. */
+    const fromAdmin=f=>{ try{ const x=(window.PH && PH[f]) ? PH[f]() : []; return Array.isArray(x) ? x.filter(Boolean) : []; }catch(_){ return []; } };
+    const offices=fromAdmin('officeNames').length ? fromAdmin('officeNames') : ['Carlsbad','Clovis','Hobbs','Lubbock','San Angelo','Mansfield','Cruces FFO','Cruces LCO'];
+    const teams=fromAdmin('teamNames').length ? fromAdmin('teamNames') : ['Doctors','TCs','Office Managers','Leadership Team','Marketing Team'];
     openDlg(top('New chat')+'<div class="dm-body"><input class="search" id="nq" placeholder="Search a person, an office or a team" autocomplete="off"><div class="pick" id="pick">'+
       '<div class="grp">Offices - everyone who works there</div>'+offices.map(o=>'<button data-act="mk" data-t="office" data-v="'+esc(o)+' office">'+avatar({type:'office',name:o},true)+'<span>'+esc(o)+' office</span></button>').join('')+
       '<div class="grp">Teams</div>'+teams.map(t=>'<button data-act="mk" data-t="team" data-v="'+esc(t)+'">'+avatar({type:'team',name:t},true)+'<span>'+esc(t)+'</span></button>').join('')+

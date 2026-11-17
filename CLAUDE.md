@@ -212,7 +212,11 @@ I can confidently say that the chat feature should go next. The production thing
    setHolidayEdits (bell reminders' due-Monday weeks); mock-up: S.holEdits. payrules cleanEdits/withEdits/
    setHolidayEdits/HOL_KEY. test/payholidays.test.js (24). Browser-checked in the mock-up as Heather. (c) Production book
    offices: workbook.js TABS + MEDICAID (tied to her Excel tabs; a new office = a new tab in the year's book - Set up the
-   year could add one). (d) chat.html office list (line ~559). (e) tc.js DEFAULT_MEDICAID (a default only). DONE:
+   year could add one). (d) DONE hc168 (SANDBOX) - Chat's New chat: offices = PH.officeNames() (Admin -> Locations),
+   teams = PH.teamNames() (new in user.js: the access grid's teams, Admin -> Teams & Access); the typed lists only
+   until Admin's have been read. test/chatlists.test.js (4); browser-checked incl. a made-up new team. (e) tc.js
+   DEFAULT_MEDICAID (a default only). hc166+hc167 (offices, actual-day holidays) LIVE 17/11 - Cory "deploy"; verified.
+   Heather wording fix (Cory): Home-Brace doesn't PAY - Settings now says "each one on its actual day". DONE:
    payroll stripes read Admin -> Locations colors live; proddays.js reads its offices from workbook.js TABS (hc163).
 **LIVE 01/11/2026 (hc115, 36 files byte-checked, alerts-test 404 on live):** Selene (01/11) "Could we add “Pending – Scheduled to Start” as an additional TC
 outcome? This would apply to patients who have completed their exam and scheduled a future start appointment but
