@@ -283,7 +283,7 @@ I can confidently say that the chat feature should go next. The production thing
    added to blank(). test/payspecial.test.js (19); payholidays regex for the extra read. Browser-checked (mock-up, local
    preview): TC types $75 -> "say what it's for" -> reason -> sent; Heather: 🎁 line, Extra "+ $75 special", Total
    $125+$75=$200; category added (repeat in other case refused) -> TC sees the picker and must pick; no page errors.
-   TO TURN ON LIVE: SPECIAL_LIVE=true + deploy, on Cory's OK.
+   ON FOR LIVE hc175 (Cory 17/11: "special bonus live"): SPECIAL_LIVE=true. false = off again.
 **LIVE 01/11/2026 (hc115, 36 files byte-checked, alerts-test 404 on live):** Selene (01/11) "Could we add “Pending – Scheduled to Start” as an additional TC
 outcome? This would apply to patients who have completed their exam and scheduled a future start appointment but
 have not yet signed their contract." -> tc.js SCHED_START: a completed consult (counts for conversion), not a start

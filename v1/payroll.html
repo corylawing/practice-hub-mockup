@@ -247,15 +247,15 @@
     .perhead .when{font-size:17px}
   }
 </style>
-<script src="user.js?v=hc174"></script>
+<script src="user.js?v=hc175"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc174"></script>
-  <script src="gate.js?v=hc174"></script>
-  <script src="alerts.js?v=hc174"></script>
-  <script src="_staff.js?v=hc174"></script>
-  <script src="payrules.js?v=hc174"></script>
-  <script src="paystore.js?v=hc174"></script>
-  <script src="docs.js?v=hc174"></script>
+  <script src="store.js?v=hc175"></script>
+  <script src="gate.js?v=hc175"></script>
+  <script src="alerts.js?v=hc175"></script>
+  <script src="_staff.js?v=hc175"></script>
+  <script src="payrules.js?v=hc175"></script>
+  <script src="paystore.js?v=hc175"></script>
+  <script src="docs.js?v=hc175"></script>
 </head>
 <body>
 <div class="ribbon">MOCK-UP for Heather — made-up people and amounts. Try it as the Carlsbad TC first, then as Heather.</div>
@@ -327,7 +327,7 @@
      categories), starting EMPTY - the Category picker only shows once she adds one, and from then on the office picks one. Shared list
      'ph_pay_spbtypes' {list:[name], upd, updBy} (names only), read by the senders too. Off = the live site exactly as
      before; whatever was typed in it always still counts and still shows. */
-  const SPECIAL_LIVE=false;
+  const SPECIAL_LIVE=true;    // ON for the live site 17/11/2026 (hc175) - Cory: "special bonus live". false = off again.
   const SPBON=()=>SPECIAL_LIVE || !(window.PH && PH.isLive && PH.isLive());
   const SPB_KEY='ph_pay_spbtypes';
   let SPBTYPES=[];
@@ -2020,7 +2020,7 @@
 })();
 </script>
 <script>PH.nav('payroll');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc174"></script>
+<script src="tour.js?v=hc175"></script>
 <script>
 Tour.init([
   ...((window.PH && PH.isLive && PH.isLive()) || (()=>{ try{ return localStorage.getItem('ph_pay_real')==='1'; }catch(_){ return false; } })() ? [] : [{sel:'#persona', title:'A mock-up', body:'Made-up people and amounts. Start as the <b>Carlsbad TC</b>, who sends Carlsbad’s sheet, then switch to <b>Heather</b>.'}]),

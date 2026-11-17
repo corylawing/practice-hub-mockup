@@ -11,8 +11,8 @@ const ok=[],bad=[]; const t=(n,v)=>{ (v?ok:bad).push(n); };
 const fn=name=>{ const i=H.indexOf('function '+name+'('); if(i<0) return ''; let d=0, j=H.indexOf('{', i);
   for(let k=j;k<H.length;k++){ if(H[k]==='{') d++; else if(H[k]==='}'){ d--; if(!d) return H.slice(i, k+1); } } return ''; };
 
-t('OFF on the live site: SPECIAL_LIVE is false and the switch is "not the live site" (the sandbox has it)',
-  /const SPECIAL_LIVE=false;/.test(H) && /const SPBON=\(\)=>SPECIAL_LIVE \|\| !\(window\.PH && PH\.isLive && PH\.isLive\(\)\);/.test(H));
+t('ON for the live site (hc175, Cory: "special bonus live"); setting SPECIAL_LIVE false again leaves only the sandbox with it',
+  /const SPECIAL_LIVE=true;/.test(H) && /const SPBON=\(\)=>SPECIAL_LIVE \|\| !\(window\.PH && PH\.isLive && PH\.isLive\(\)\);/.test(H));
 
 const per={hol:null}, p={start:'2020-01-01'};
 const c=x=>R.calc(p, x, per, undefined, 0, {});
