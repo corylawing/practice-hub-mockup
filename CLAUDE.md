@@ -170,7 +170,7 @@ I can confidently say that the chat feature should go next. The production thing
    test/paydibs.test.js (10). hc160 (Word PDFs + production days from the Schedule) LIVE 16/11 - Cory "deploy"; verified.
    BEFORE DEPLOYING: check live San Angelo sheets' dibs values are counts (a dollar figure typed there would become x10);
    Safari sign-in had expired 17/11.
-14. **Payroll rows striped in the office's color (17/11/2026, hc163 SANDBOX; deploy only on Cory's OK).** Heather (feedback
+14. **Payroll rows striped in the office's color (17/11/2026, hc163; LIVE 17/11 - Cory "deploy"; verified).** Heather (feedback
    16/11 5:05 PM): "every other person's line could be a different color. I want to be able to follow a line easily when
    I am looking back and forth entering payroll." Cory: use the office colors from the Schedule - "Visually it tells you
    two things: separation between white line and colored line and the office you are currently looking at." (A one-color
@@ -185,9 +185,13 @@ I can confidently say that the chat feature should go next. The production thing
    boxes (null -> the Schedule), exactly the dry run.
 15. **Still fixed lists - a 9th office or a new year would NOT flow through (found 17/11/2026, not started; ask Cory).**
    (a) Payroll offices: payrules.js + payroll.html OFFICES (company name, who sends, own columns) - a new office isn't
-   in Payroll; its folder/grants follow the list. (b) Payroll HOLIDAYS stop at 2027-12-24 (payrules.js; Settings can
-   hold st.holidays) - 2028 holiday pay would silently be missing: work them out by rule (New Year's, last Mon of May,
-   July 4 observed, first Mon of Sep, 4th Thu of Nov, Dec 25 observed - 2026/2027 dates match that). (c) Production book
+   in Payroll; its folder/grants follow the list. (b) DONE hc164 (SANDBOX; deploy on Cory's OK) - Payroll holidays
+   worked out by rule (payrules.js holidaysFor/holidaysThrough/holIn/holDates): New Year's, last Mon of May, July 4,
+   first Mon of Sep, 4th Thu of Nov, Christmas; Sat -> Fri before, Sun -> Mon after. Gives EXACTLY the 12 typed 2026-27
+   dates; list = 2026..this year+2. New: Fri 2027-12-31 "New Year's Day 2028" (Jan 1 2028 is a Saturday - same rule
+   as Christmas 2027 -> Dec 24; ask Heather). Two holidays in one pay period (Christmas + New Year's, Dec 2028) = one
+   entry naming both, each paid ("Both paid" / "1 of 2 paid", holiday hours x2). Settings shows this + next year.
+   Live Heather/settings.json has no holidays override (only bonus) - checked 17/11. test/payholidays.test.js (16). (c) Production book
    offices: workbook.js TABS + MEDICAID (tied to her Excel tabs; a new office = a new tab in the year's book - Set up the
    year could add one). (d) chat.html office list (line ~559). (e) tc.js DEFAULT_MEDICAID (a default only). DONE:
    payroll stripes read Admin -> Locations colors live; proddays.js reads its offices from workbook.js TABS (hc163).

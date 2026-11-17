@@ -24,10 +24,31 @@
   const OFF=Object.fromEntries(OFFICES.map(o=>[o.k,o]));
   const RATES={onCall:50, holiday:100, holidayHrs:8, mile:0.76, dibs:10};      // dibs: $ each - San Angelo types a count (17/11/2026)
   /* Until Heather keeps her own list in Settings. */
-  const HOLIDAYS=[{d:'2026-01-01',n:'New Year’s Day'},{d:'2026-05-25',n:'Memorial Day'},{d:'2026-07-03',n:'Independence Day'},
-    {d:'2026-09-07',n:'Labor Day'},{d:'2026-11-26',n:'Thanksgiving'},{d:'2026-12-25',n:'Christmas'},
-    {d:'2027-01-01',n:'New Year’s Day'},{d:'2027-05-31',n:'Memorial Day'},{d:'2027-07-05',n:'Independence Day'},
-    {d:'2027-09-06',n:'Labor Day'},{d:'2027-11-25',n:'Thanksgiving'},{d:'2027-12-24',n:'Christmas'}];
+  /* PAID HOLIDAYS, WORKED OUT EVERY YEAR (17/11/2026). The list used to be typed in and stopped at Christmas 2027 - from
+     2028 holiday pay would quietly have gone missing. Cory: "Everything we build needs to be scalable". The six paid
+     holidays by their rule - New Year's Day, Memorial Day (last Monday of May), Independence Day, Labor Day (first
+     Monday of September), Thanksgiving (fourth Thursday of November), Christmas - and, like the practice already does
+     (July 4 2026 -> Fri Jul 3, Christmas 2027 -> Fri Dec 24, July 4 2027 -> Mon Jul 5), one on a Saturday is taken the
+     Friday before and one on a Sunday the Monday after. The rule gives exactly the 12 dates of 2026 and 2027 that were
+     typed in (test/payholidays.test.js). Years 2026 to two years ahead of today; no list to keep up to date. */
+  function iso(dt){ return dt.toISOString().slice(0, 10); }
+  function observed(y, m, d){ const w = new Date(Date.UTC(y, m - 1, d)).getUTCDay(); return iso(new Date(Date.UTC(y, m - 1, d + (w === 6 ? -1 : w === 0 ? 1 : 0)))); }
+  function nthDay(y, m, wd, n){ const first = new Date(Date.UTC(y, m - 1, 1)).getUTCDay(); return iso(new Date(Date.UTC(y, m - 1, 1 + ((wd - first + 7) % 7) + (n - 1) * 7))); }
+  function lastDay(y, m, wd){ const last = new Date(Date.UTC(y, m, 0)); return iso(new Date(Date.UTC(y, m - 1, last.getUTCDate() - ((last.getUTCDay() - wd + 7) % 7)))); }
+  function holidaysFor(y){
+    const ny = observed(y, 1, 1);           // a Saturday Jan 1 is taken on Fri Dec 31 of the year before - say which year it's for
+    return [{d:ny, n:ny.slice(0, 4) === String(y) ? 'New Year’s Day' : 'New Year’s Day ' + y}, {d:lastDay(y, 5, 1), n:'Memorial Day'}, {d:observed(y, 7, 4), n:'Independence Day'},
+            {d:nthDay(y, 9, 1, 1), n:'Labor Day'}, {d:nthDay(y, 11, 4, 4), n:'Thanksgiving'}, {d:observed(y, 12, 25), n:'Christmas'}];
+  }
+  function holidaysThrough(toYear){ let out = []; for(let y = 2026; y <= toYear; y++) out = out.concat(holidaysFor(y)); return out.sort((a, b) => a.d < b.d ? -1 : a.d > b.d ? 1 : 0); }
+  const HOLIDAYS=holidaysThrough(new Date().getFullYear() + 2);
+  /* The holiday(s) in a stretch of days. Two can share a pay period (Christmas and New Year's Day, December 2028): then
+     one entry for both - name "Christmas + New Year’s Day", ds = both dates - and each is paid. */
+  function holIn(holidays, start, end){
+    const hs = (holidays || HOLIDAYS).filter(h => h.d >= start && h.d <= end);
+    return !hs.length ? null : hs.length === 1 ? hs[0] : {d:hs[0].d, n:hs.map(h => h.n).join(' + '), ds:hs.map(h => h.d)};
+  }
+  const holDates=hol => !hol ? [] : (hol.ds || [hol.d]);
 
   /* ---------- dates: 'YYYY-MM-DD' strings ---------- */
   const pad=n=>String(n).padStart(2,'0');
@@ -56,7 +77,7 @@
     const pay=payOf(i), end=addDays(pay,-6), start=addDays(end,-13), n=numberOf(pay), year=+pay.slice(0,4);   // Sunday to Saturday
     const mon=addDays(end,2), dueHol=holidays.find(h=>h.d>mon && h.d<=addDays(end,6))||null, due=dueHol?mon:addDays(end,3);
     return {i, n, year, key:year+'-'+pad(n), start, w1end:addDays(start,6), w2start:addDays(start,7), end, pay, due, dueAt:due+'T14:00', dueHol,
-            hol:holidays.find(h=>h.d>=start && h.d<=end)||null};
+            hol:holIn(holidays, start, end)};
   }
   /* The period whose sheet is being filled in: the one that ended most recently (its due day and pay day come after). */
   function currentIndex(today){ const i=Math.floor(days(addDays(ANCHOR,-6), today)/14); return days(addDays(payOf(i),-6), today)>0 ? i : i-1; }
@@ -79,7 +100,7 @@
     rates=rates||RATES; cols=cols||{}; x=x||{};
     const w1=num(x.w1), w2=num(x.w2), ot1=Math.max(0,w1-40), ot2=Math.max(0,w2-40), b=num(bonus), cut=num(cutVal(x));
     const ppb=x.bonus==='none' ? 0 : x.bonus==='partial' ? r2(Math.max(0, cutBy(x)==='usd' ? b-cut : b*(1-cut/100))) : b;
-    const holOn=!!(per.hol && eligible(p.start, per.hol.d)), hol=holOn&&!p.holHrs?rates.holiday:0, holH=holOn&&p.holHrs?rates.holidayHrs:0;
+    const holN=holDates(per.hol).filter(d=>eligible(p.start, d)).length, hol=!p.holHrs?holN*rates.holiday:0, holH=p.holHrs?holN*rates.holidayHrs:0;
     const oc=num(x.oncall)*rates.onCall, own=r2(num(x.phone)+num(x.dibs)*num(rates.dibs==null ? RATES.dibs : rates.dibs)+num(x.pog)), extra=r2(num(cols.extra)+num(x.exc));
     return {hours:w1+w2, reg:r2(w1+w2-ot1-ot2), ot1:r2(ot1), ot2:r2(ot2), ppb, pto:num(x.pto), sick:num(x.sick), hol, holH, oc,
             goal:num(cols.goal), tcom:num(cols.tcom), own, extra, exc:num(x.exc), reimb:r2((num(x.mkt)+num(x.oth))*rates.mile),
@@ -110,7 +131,7 @@
     return {want, noEmail};
   }
 
-  const api={OFFICES, OFF, RATES, HOLIDAYS, ANCHOR, FIRST, addDays, dow, days, todayISO, workdayBefore, payOf, numberOf, period, currentIndex, indexOfKey,
+  const api={OFFICES, OFF, RATES, HOLIDAYS, holidaysFor, holidaysThrough, holIn, holDates, ANCHOR, FIRST, addDays, dow, days, todayISO, workdayBefore, payOf, numberOf, period, currentIndex, indexOfKey,
     eligibleOn, eligible, num, r2, cutVal, cutBy, otOK, calc, wanted};
   global.PAYRULES=api;
   if(typeof module!=='undefined' && module.exports) module.exports=api;
