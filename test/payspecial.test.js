@@ -35,7 +35,7 @@ t('categories: trimmed, once each (any case), 40 letters at most, 30 at most, ju
   clean({list:['  Patient   referral ','patient referral','', null, 'x'.repeat(80), 7]}).join('|')==='Patient referral|'+'x'.repeat(40)+'|7' &&
   clean(null).length===0 && clean({list:'nope'}).length===0 && clean({list:Array.from({length:40},(_,i)=>'k'+i)}).length===30);
 t('categories start EMPTY and live in the shared list ph_pay_spbtypes (read by the senders too, with the holidays)',
-  /const SPB_KEY='ph_pay_spbtypes';\n\s*let SPBTYPES=\[\];/.test(H) && /loadHolEdits\(\),\n\s*loadSpbTypes\(\),\n\s*lv==='send' \? null/.test(H));
+  /const SPB_KEY='ph_pay_spbtypes';\n\s*let SPBTYPES=\[\];/.test(H) && /loadHolEdits\(\),\n\s*loadSpbTypes\(\),\n\s*loadRates\(\),\n\s*lv==='send' \? null/.test(H));
 
 const T=fn('sheetTable');
 t('the office sheet: Special bonus $ + What it’s for - shown when the switch is on, or whenever an amount was typed',

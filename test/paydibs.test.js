@@ -17,12 +17,12 @@ t('all three together: 2 DIBS + $25 POG = $45', c({dibs:2, pog:25}).own===45);
 t('$10 each unless Settings says otherwise', R.RATES.dibs===10 && R.calc(p, {dibs:3}, per, Object.assign({}, R.RATES, {dibs:12}), 0, {}).own===36 && R.calc(p, {dibs:3}, per, {onCall:50, holiday:100, holidayHrs:8, mile:0.76}, 0, {}).own===30);
 t('San Angelo’s DIBS column is a count; POG isn’t (one office list, payrules.js)', /\{k:'dibs',n:'DIBS',each:'dibs'\},\{k:'pog',n:'POG'\}/.test(fs.readFileSync(path.join(__dirname,'..','v1','payrules.js'),'utf8')) && R.OFF.sanangelo.own[0].each==='dibs' && !R.OFF.sanangelo.own[1].each);
 
-t('the page works it out the same way', /own=r2\(num\(x\.phone\)\+num\(x\.dibs\)\*num\(RATE\.dibs\)\+num\(x\.pog\)\)/.test(H) && /let RATE=\{onCall:50, holiday:100, holidayHrs:8, mile:0\.76, dibs:10\};/.test(H));
-t('the office’s sheet asks "how many" (DIBS #) and shows the dollars under it', /info\(esc\(c\.n\)\+' #','How many '/.test(H) && /'<div class="small muted">= '\+money\(ownUsd\(c,x\)\)\+'<\/div>'/.test(H));
-t('its instructions say "type how many - each one is $10"', /type how many each person did - each one is '\+money\(RATE\[c\.each\]\)/.test(H));
+t('the page works it out the same way', /own=r2\(num\(x\.phone\)\+num\(x\.dibs\)\*num\(RT\.dibs\)\+num\(x\.pog\)\)/.test(H) && /const RT=rt\(pr\.start\);/.test(H) && /let RATE=\{onCall:50, holiday:100, holidayHrs:8, mile:0\.76, dibs:10\};/.test(H));
+t('the office’s sheet asks "how many" (DIBS #) and shows the dollars under it', /info\(esc\(c\.n\)\+' #','How many '/.test(H) && /'<div class="small muted">= '\+money\(ownUsd\(c,x,RATE\)\)\+'<\/div>'/.test(H));
+t('its instructions say "type how many - each one is $10"', /type how many each person did - each one is '\+money\(rtN\(n\)\[c\.each\]\)/.test(H));
 t('Heather’s combined sheet and the download show dollars (with "3 × $10" under it on the sheet)',
-  /money\(ownUsd\(col,x\)\)\+\(ownEach\(col\) && num\(x\[col\.k\]\) \? '<div class="small muted">'\+esc\(num\(x\[col\.k\]\)\)\+' × '/.test(H) && /own\.map\(col=>col\.hrs\?\(c\.sick\|\|''\):\(ownUsd\(col,x\)\|\|''\)\)/.test(H));
-t('Settings shows the DIBS rate', /<div class="k">DIBS<\/div><div class="v">'\+money\(RATE\.dibs\)/.test(H));
+  /money\(ownUsd\(col,x,RATE\)\)\+\(ownEach\(col\) && num\(x\[col\.k\]\) \? '<div class="small muted">'\+esc\(num\(x\[col\.k\]\)\)\+' × '/.test(H) && /own\.map\(col=>col\.hrs\?\(c\.sick\|\|''\):\(ownUsd\(col,x,RATE\)\|\|''\)\)/.test(H));
+t('Settings shows the DIBS rate', /\['dibs','DIBS','each - San Angelo types how many'\]/.test(H) && /'<\/div><div class="v">'\+rateFmt\(r\[0\],now\[r\[0\]\]\)/.test(H));
 
 console.log(ok.map(s=>'  PASS  '+s).join('\n'));
 if(bad.length) console.log(bad.map(s=>'  FAIL  '+s).join('\n'));

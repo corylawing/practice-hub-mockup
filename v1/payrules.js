@@ -64,6 +64,26 @@
   }
   const OFF=Object.fromEntries(OFFICES.map(o=>[o.k,o]));
   const RATES={onCall:50, holiday:100, holidayHrs:8, mile:0.76, dibs:10};      // dibs: $ each - San Angelo types a count (17/11/2026)
+  /* RATES THAT CHANGE (17/11/2026). Heather: the mileage rate says "change it here" but nothing could change it. Cory:
+     "build rates". A change says which pay period it starts in (from = that pay period's first day); every pay period
+     before it keeps the rate it was paid at. Kept in the shared list 'ph_pay_rates' {changes:[{id, from, r:{mile:0.7},
+     at, by}]} - amounts only. Applied in order of their start (the later one wins when two start together). */
+  const RATE_LIMITS={onCall:[0,2000], holiday:[0,5000], holidayHrs:[0,24], mile:[0,5], dibs:[0,1000]};
+  function cleanRates(x){
+    const out=[]; ((x && Array.isArray(x.changes)) ? x.changes : []).forEach(c=>{
+      if(!c || typeof c!=='object' || !/^\d{4}-\d{2}-\d{2}$/.test(String(c.from||''))) return;
+      const r={}; Object.keys(RATE_LIMITS).forEach(k=>{ const v=c.r && c.r[k]; if(v===undefined || v===null || v==='') return;
+        const n=Number(v); if(isFinite(n) && n>=RATE_LIMITS[k][0] && n<=RATE_LIMITS[k][1]) r[k]=Math.round(n*100)/100; });
+      if(!Object.keys(r).length) return;
+      out.push({id:String(c.id||('r'+out.length)).slice(0,40), from:c.from, r, at:String(c.at||'').slice(0,40), by:String(c.by||'').slice(0,120)});
+    });
+    return out.slice(-200).sort((a,b)=>a.from<b.from?-1:a.from>b.from?1:0);    // sort is stable: same start keeps the order made
+  }
+  function ratesOn(base, changes, day){
+    const out=Object.assign({}, base||RATES);
+    (changes||[]).forEach(c=>{ if(c && c.from<=day) Object.assign(out, c.r); });
+    return out;
+  }
   /* Until Heather keeps her own list in Settings. */
   /* PAID HOLIDAYS, WORKED OUT EVERY YEAR (17/11/2026). The list used to be typed in and stopped at Christmas 2027 - from
      2028 holiday pay would quietly have gone missing. Cory: "Everything we build needs to be scalable". The six paid
@@ -198,7 +218,7 @@
     return {want, noEmail};
   }
 
-  const api={OFFICES, OFF, OFFEXTRA, BASE_OFFICES, BYS, keyFor, cleanOffices, setOffices, newOffices, syncOffices, OFF_KEY:'ph_pay_offices', SAFE_NAME, RATES, HOLIDAYS, EDITS, holidaysFor, holidaysThrough, holIn, holDates, cleanEdits, withEdits, setHolidayEdits, HOL_KEY:'ph_pay_holidays', ANCHOR, FIRST, addDays, dow, days, todayISO, workdayBefore, payOf, numberOf, period, currentIndex, indexOfKey,
+  const api={OFFICES, OFF, OFFEXTRA, BASE_OFFICES, BYS, keyFor, cleanOffices, setOffices, newOffices, syncOffices, OFF_KEY:'ph_pay_offices', SAFE_NAME, RATES, RATE_LIMITS, RATE_KEY:'ph_pay_rates', cleanRates, ratesOn, HOLIDAYS, EDITS, holidaysFor, holidaysThrough, holIn, holDates, cleanEdits, withEdits, setHolidayEdits, HOL_KEY:'ph_pay_holidays', ANCHOR, FIRST, addDays, dow, days, todayISO, workdayBefore, payOf, numberOf, period, currentIndex, indexOfKey,
     eligibleOn, eligible, num, r2, cutVal, cutBy, otOK, calc, wanted};
   global.PAYRULES=api;
   if(typeof module!=='undefined' && module.exports) module.exports=api;

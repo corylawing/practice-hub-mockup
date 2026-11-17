@@ -284,6 +284,20 @@ I can confidently say that the chat feature should go next. The production thing
    preview): TC types $75 -> "say what it's for" -> reason -> sent; Heather: 🎁 line, Extra "+ $75 special", Total
    $125+$75=$200; category added (repeat in other case refused) -> TC sees the picker and must pick; no page errors.
    ON FOR LIVE hc175 (Cory 17/11: "special bonus live"): SPECIAL_LIVE=true. false = off again.
+19. **Rates that change (Heather 16/11: mileage "says 'change it here' but it does not have the ability"; Cory 17/11 "build
+   rates"; hc176 SANDBOX ONLY - payroll.html RATES_LIVE=false).** payrules.js cleanRates/ratesOn/RATE_LIMITS/RATE_KEY:
+   shared list 'ph_pay_rates' {changes:[{id, from (a pay period's first day), r:{mile|onCall|holiday|holidayHrs|dibs},
+   at, by}]} - amounts only, read by senders too (loadRates, live only when RATESON). rt(start) = RATE (starting rates,
+   + Heather's old settings.json st.rates if any) + every change whose start <= that day, in start order. EVERY sum and
+   "$x each" uses its own pay period's: calc (RT), sheetTable/combined/csv/flags/holHTML (local RATE=rt(pr.start)),
+   combHead/ownTip/ownUsd take it, office rules rtN(n). Settings: tiles = the rates for the pay period running now, "Change"
+   (holCan) -> dialog: amount + "Starting with pay period" = rateStarts() (from the last pay period with ANY office
+   entered, on - never an entered one) -> "Rate changes" list with Undo while its pay period isn't entered. Off on live:
+   no editor, the list isn't read (sums exactly as before); the mileage tile no longer says "Change it here". Bug caught in
+   the browser before it shipped: a trailing comment swallowed combined()'s "let grand" (board stopped drawing) - fixed +
+   test. test/payrates.test.js (14); paydibs/payholidays/payspecial regexes moved to the period rates. Browser (mock-up):
+   mileage $0.70 from #22 -> #22 88 mi = $61.60, #21 35 mi = $26.60 (0.76); Undo; no page errors on every tab.
+   TO TURN ON LIVE: RATES_LIVE=true + deploy, on Cory's OK.
 **LIVE 01/11/2026 (hc115, 36 files byte-checked, alerts-test 404 on live):** Selene (01/11) "Could we add “Pending – Scheduled to Start” as an additional TC
 outcome? This would apply to patients who have completed their exam and scheduled a future start appointment but
 have not yet signed their contract." -> tc.js SCHED_START: a completed consult (counts for conversion), not a start
