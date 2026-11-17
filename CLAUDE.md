@@ -271,6 +271,19 @@ I can confidently say that the chat feature should go next. The production thing
    public sandbox has no staff file, so Admin there shows the built-in list and Real version has no added people - check
    on the Mac's local preview, which has the real file): Admin order, card, Add (start date required; holiday pay from
    +90 days), Skip / Put back, reload, 390 px no sideways scroll, mock-up mode unchanged, no page errors.
+18. **Special bonus (Haley's idea; Cory 17/11/2026 "build it"; hc174 SANDBOX ONLY - payroll.html SPECIAL_LIVE=false).**
+   The office types it on its own sheet: "Special bonus" group = Special bonus $ (x.spb) + What it's for (x.spbWhy, 200
+   max, REQUIRED - issues() blocks Send) + Category (x.spbType, picker only once Heather has categories, then required).
+   Counts at once: calc extra += spb (payrules.js calc mirrors it), so Heather's Extra + Total; combined sheet "+ $75
+   special" under Extra (category/why on hover); Worth a second look "🎁 Special bonuses"; download Notes "[Special bonus
+   $75 - Category: why]"; the office's "Heather's rules" line. Categories: Settings -> "Special bonus categories" (Cory:
+   "Add a kind is strange language" ... "yah Categories"), whoever manages payroll (holCan); shared list 'ph_pay_spbtypes'
+   {list, upd, updBy}, names only, read with the holidays (senders too); empty to start; taking one off leaves it on rows
+   that used it. Switch off on live = exactly as before (columns only show there if an amount was ever typed). Nothing
+   added to blank(). test/payspecial.test.js (19); payholidays regex for the extra read. Browser-checked (mock-up, local
+   preview): TC types $75 -> "say what it's for" -> reason -> sent; Heather: 🎁 line, Extra "+ $75 special", Total
+   $125+$75=$200; category added (repeat in other case refused) -> TC sees the picker and must pick; no page errors.
+   TO TURN ON LIVE: SPECIAL_LIVE=true + deploy, on Cory's OK.
 **LIVE 01/11/2026 (hc115, 36 files byte-checked, alerts-test 404 on live):** Selene (01/11) "Could we add “Pending – Scheduled to Start” as an additional TC
 outcome? This would apply to patients who have completed their exam and scheduled a future start appointment but
 have not yet signed their contract." -> tc.js SCHED_START: a completed consult (counts for conversion), not a start

@@ -247,15 +247,15 @@
     .perhead .when{font-size:17px}
   }
 </style>
-<script src="user.js?v=hc173"></script>
+<script src="user.js?v=hc174"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc173"></script>
-  <script src="gate.js?v=hc173"></script>
-  <script src="alerts.js?v=hc173"></script>
-  <script src="_staff.js?v=hc173"></script>
-  <script src="payrules.js?v=hc173"></script>
-  <script src="paystore.js?v=hc173"></script>
-  <script src="docs.js?v=hc173"></script>
+  <script src="store.js?v=hc174"></script>
+  <script src="gate.js?v=hc174"></script>
+  <script src="alerts.js?v=hc174"></script>
+  <script src="_staff.js?v=hc174"></script>
+  <script src="payrules.js?v=hc174"></script>
+  <script src="paystore.js?v=hc174"></script>
+  <script src="docs.js?v=hc174"></script>
 </head>
 <body>
 <div class="ribbon">MOCK-UP for Heather — made-up people and amounts. Try it as the Carlsbad TC first, then as Heather.</div>
@@ -320,6 +320,28 @@
   let RATE={onCall:50, holiday:100, holidayHrs:8, mile:0.76, dibs:10};
   const ownEach=c=>!!(c && c.each);                                     // a column typed as a count, paid at a rate each
   const ownUsd=(c,x)=>ownEach(c) ? r2(num(x[c.k])*num(RATE[c.each])) : num(x[c.k]);
+  /* SPECIAL BONUS (Haley's idea, 17/11/2026) - SANDBOX ONLY until SPECIAL_LIVE is true. Cory: "build it".
+     A one-off bonus the OFFICE types on its own sheet: a Special bonus $ box per person and, required with it, what it's
+     for. It counts at once: it goes into Heather's Extra (like exception commuter pay) and so into Total, shows in
+     "Worth a second look", on the combined sheet and in the download. CATEGORIES: Heather's own list (Settings → Special bonus
+     categories), starting EMPTY - the Category picker only shows once she adds one, and from then on the office picks one. Shared list
+     'ph_pay_spbtypes' {list:[name], upd, updBy} (names only), read by the senders too. Off = the live site exactly as
+     before; whatever was typed in it always still counts and still shows. */
+  const SPECIAL_LIVE=false;
+  const SPBON=()=>SPECIAL_LIVE || !(window.PH && PH.isLive && PH.isLive());
+  const SPB_KEY='ph_pay_spbtypes';
+  let SPBTYPES=[];
+  function cleanSpbTypes(x){
+    const out=[]; ((x && Array.isArray(x.list)) ? x.list : []).forEach(v=>{ const t=String(v==null?'':v).replace(/\s+/g,' ').trim().slice(0,40);
+      if(t && out.length<30 && !out.some(q=>q.toLowerCase()===t.toLowerCase())) out.push(t); });
+    return out;
+  }
+  const spbTypes=()=>LIVEPAY ? SPBTYPES : (S.spbTypes||[]);
+  function loadSpbTypes(){
+    return Promise.resolve(window.PH_STORE ? PH_STORE.get(SPB_KEY) : null).then(x=>{ SPBTYPES=cleanSpbTypes(x); }, ()=>{});
+  }
+  const spbHas=x=>num((x||{}).spb)>0;
+  const spbLine=x=>money(num(x.spb))+(x.spbType?' · '+esc(x.spbType):'')+(String(x.spbWhy||'').trim()?' · “'+esc(String(x.spbWhy).trim())+'”':'');
   let HOLIDAYS=PR.HOLIDAYS.slice();      // worked out every year (payrules.js holidaysFor) - the mock-up uses the same ones
   /* In the order of Heather's main sheet, one company each. by = who sends the sheet: the TC in Carlsbad and
      Las Cruces ("FOLC" = Cruces FFO, Heather 22/10), the clinic lead in Lubbock, the office manager everywhere else.
@@ -621,9 +643,9 @@
     const w1=num(x.w1), w2=num(x.w2), ot1=Math.max(0,w1-40), ot2=Math.max(0,w2-40), b=bonusOf(p), cut=num(cutVal(x));
     const ppb=x.bonus==='none' ? 0 : x.bonus==='partial' ? r2(Math.max(0, cutBy(x)==='usd' ? b-cut : b*(1-cut/100))) : b;
     const holN=PR.holDates(pr.hol).filter(d=>eligible(p,d)).length, hol=!p.holHrs?holN*RATE.holiday:0, holH=p.holHrs?holN*RATE.holidayHrs:0;   // two in one pay period: both paid
-    const oc=num(x.oncall)*RATE.onCall, own=r2(num(x.phone)+num(x.dibs)*num(RATE.dibs)+num(x.pog)), extra=r2(num(x.extra)+num(x.exc)), spec=r2(specUsd(x));
+    const oc=num(x.oncall)*RATE.onCall, own=r2(num(x.phone)+num(x.dibs)*num(RATE.dibs)+num(x.pog)), extra=r2(num(x.extra)+num(x.exc)+num(x.spb)), spec=r2(specUsd(x));   // spb: the office's special bonus
     return {hours:w1+w2, reg:r2(w1+w2-ot1-ot2), ot1:r2(ot1), ot2:r2(ot2), ppb, pto:num(x.pto), sick:num(x.sick), hol, holH, oc,
-            goal:num(x.goal), tcom:num(x.tcom), own, extra, exc:num(x.exc), ers:num(x.ers), spec, reimb:r2((num(x.mkt)+num(x.oth))*RATE.mile),
+            goal:num(x.goal), tcom:num(x.tcom), own, extra, exc:num(x.exc), spb:num(x.spb), ers:num(x.ers), spec, reimb:r2((num(x.mkt)+num(x.oth))*RATE.mile),
             total:r2(ppb+num(x.goal)+num(x.tcom)+hol+oc+own+extra+spec)};
   }
   const daySet=v=>v!==undefined && v!==null && v!=='';
@@ -642,6 +664,8 @@
       if(num(x.oth)>0 && !x.notes) out.push({p, t:'<b>'+nm+'</b>: other miles — say what they were for in Notes.'});
       if(num(x.exc)>0 && !x.notes) out.push({p, t:'<b>'+nm+'</b>: exception commuter pay — note which doctor asked for it.'});
       if(num(x.com)>0 && !x.comTo) out.push({p, t:'<b>'+nm+'</b>: commutes — which office did they go to?'});
+      if(spbHas(x) && !String(x.spbWhy||'').trim()) out.push({p, t:'<b>'+nm+'</b>: special bonus of '+money(num(x.spb))+' — say what it’s for.'});
+      if(spbHas(x) && spbTypes().length && !x.spbType) out.push({p, t:'<b>'+nm+'</b>: special bonus — pick its category.'});
     });
     if(n===CUR) docRows(n,o).forEach(d=>{ const v=(s.docs||{})[d.id]||{};
       if(!daySet(v.w1) || !daySet(v.w2)) out.push({t:'<b>'+esc(d.n)+'</b>: how many days in week 1 and in week 2? Put 0 for a week they didn’t work.'}); });
@@ -728,6 +752,14 @@
     const sickCol=ppl.some(p=>p.sick || num((s.rows[p.id]||{}).sick)>0), hol=!!pr.hol;
     const ownM=(OFF[o].own||[]).filter(c=>!c.hrs);                     // this office's own bonuses, in dollars
     const sp=specCols(n,o);                                            // the extra columns Heather added
+    const spbCol=SPBON() || ppl.some(p=>spbHas(s.rows[p.id])), kinds=spbTypes();   // SPECIAL BONUS (always shown once typed in)
+    const spbWhy=(p,x)=>{
+      if(!edit) return '<span class="ro" style="white-space:normal;display:inline-block;min-width:160px">'+(spbHas(x) ? (x.spbType?'<b>'+esc(x.spbType)+'</b> · ':'')+(String(x.spbWhy||'').trim()?esc(x.spbWhy):'—') : '—')+'</span>';
+      const ks=kinds.slice(); if(x.spbType && ks.indexOf(x.spbType)<0) ks.push(x.spbType);   // a kind since taken off stays on what was typed
+      return (ks.length ? '<select class="in" style="width:170px;margin-bottom:4px;display:block" data-p="'+p.id+'" data-f="spbType" aria-label="Special bonus category: '+esc(disp(p))+'"><option value="">Category…</option>'+
+          ks.map(k=>'<option value="'+esc(k)+'"'+(k===x.spbType?' selected':'')+'>'+esc(k)+'</option>').join('')+'</select>' : '')+
+        '<input class="in" style="width:170px" type="text" maxlength="200" data-p="'+p.id+'" data-f="spbWhy" value="'+esc(x.spbWhy||'')+'" placeholder="What it’s for" aria-label="What the special bonus is for: '+esc(disp(p))+'" title="'+esc(x.spbWhy||'')+'">';
+    };
     const cell=(p,f,w,val)=>edit
       ? '<input class="in" style="width:'+w+'px" type="number" step="0.01" min="0" inputmode="decimal" data-p="'+p.id+'" data-f="'+f+'" value="'+(val===''||val==null||(val===0&&f!=='w1'&&f!=='w2')?'':esc(val))+'">'
       : '<span class="ro'+(num(val)?'':' dim')+'">'+(num(val)?esc(val):'—')+'</span>';
@@ -741,7 +773,7 @@
           sel(p,'cutBy',cutBy(x),[['pct','%'],['usd','$']],48)+'</div>' : '');
     };
     let h='<div class="tblwrap"><table class="t sheet"><thead><tr>'+
-      '<th class="grp nm"></th><th class="grp" colspan="5">Hours</th><th class="grp" colspan="'+(1+(sickCol?1:0)+(hol?1:0))+'">Time off</th><th class="grp" colspan="7">On call, travel &amp; extras</th>'+(ownM.length?'<th class="grp" colspan="'+ownM.length+'">'+esc(OFF[o].n)+' bonuses</th>':'')+(sp.length?'<th class="grp" colspan="'+sp.length+'">Extra columns</th>':'')+'<th class="grp" colspan="2">Pay-period bonus</th><th class="grp">Notes</th></tr><tr>'+
+      '<th class="grp nm"></th><th class="grp" colspan="5">Hours</th><th class="grp" colspan="'+(1+(sickCol?1:0)+(hol?1:0))+'">Time off</th><th class="grp" colspan="7">On call, travel &amp; extras</th>'+(ownM.length?'<th class="grp" colspan="'+ownM.length+'">'+esc(OFF[o].n)+' bonuses</th>':'')+(sp.length?'<th class="grp" colspan="'+sp.length+'">Extra columns</th>':'')+(spbCol?'<th class="grp" colspan="2">Special bonus</th>':'')+'<th class="grp" colspan="2">Pay-period bonus</th><th class="grp">Notes</th></tr><tr>'+
       '<th class="nm">Employee</th>'+
       '<th class="n gl">'+info('Wk 1','Hours worked, '+span(pr.start,pr.w1end))+'</th><th class="n">'+info('Wk 2','Hours worked, '+span(pr.w2start,pr.end))+'</th>'+
       '<th class="n">'+info('Regular','Regular hours: up to 40 in each week')+'</th>'+
@@ -758,6 +790,8 @@
         ? info(esc(c.n)+' #','How many '+esc(c.n)+' this person did this pay period - each one is '+money(RATE[c.each])+'. Home-Brace works out the dollars.')
         : info(esc(c.n)+' $','A bonus only '+OFF[o].n+' has: the amount for this person, this pay period'))+'</th>').join('')+
       sp.map((c,i)=>'<th class="n wr'+(i?'':' gl')+'">'+info(specLabel(c),(c.tip?c.tip+' ':'')+KTIP[c.kind]+(c.to?' Taken off - still here because something was typed in it.':''))+'</th>').join('')+
+      (spbCol ? '<th class="n gl wr">'+info('Special bonus $','A one-off bonus for this person, this pay period: the amount. It goes into Heather’s Extra and the Total.')+'</th>'+
+        '<th class="wr">'+info('What it’s for',(kinds.length?'Pick the category, then say':'Say')+' what this special bonus is for - required when there’s an amount.')+'</th>' : '')+
       '<th class="gl wr">'+info('Missed green','Missed a doctor (green) day? Then no bonus - unless one of your exceptions applies')+'</th>'+
       '<th>'+info('Bonus','Full, Partial or None. For Partial, put how much comes off (a % or a $ amount) and say why in Notes.')+'</th>'+
       '<th class="gl">Notes</th></tr></thead><tbody>';
@@ -777,6 +811,7 @@
         '<td class="n">'+cell(p,'exc',66,x.exc)+'</td><td class="n">'+cell(p,'mkt',58,x.mkt)+'</td><td class="n">'+cell(p,'oth',58,x.oth)+'</td>'+
         ownM.map((c,i)=>'<td class="n'+(i?'':' gl')+'">'+cell(p,c.k,ownEach(c)?52:66,x[c.k])+(ownEach(c) && num(x[c.k]) ? '<div class="small muted">= '+money(ownUsd(c,x))+'</div>' : '')+'</td>').join('')+
         sp.map((c,i)=>'<td class="n'+(i?'':' gl')+'">'+cell(p,'sc_'+c.id,66,x['sc_'+c.id])+'</td>').join('')+
+        (spbCol ? '<td class="n gl">'+cell(p,'spb',66,x.spb)+'</td><td>'+spbWhy(p,x)+'</td>' : '')+
         '<td class="gl">'+sel(p,'mg',x.mg,[['N','No'],['Y','Yes']],62)+'</td>'+
         '<td>'+bonusCell(p,x)+'</td>'+
         '<td class="gl">'+(edit?'<input class="in" style="width:210px" type="text" data-p="'+p.id+'" data-f="notes" value="'+esc(x.notes)+'" placeholder="What Heather should know" title="'+esc(x.notes)+'">':'<span class="ro" style="white-space:normal;display:inline-block;min-width:220px">'+(x.notes?esc(x.notes):'—')+'</span>')+'</td></tr>';
@@ -840,6 +875,7 @@
         '<li><b>On call:</b> 1 for each weekend on call. <b># of ERs taken:</b> 1 for each patient seen on an ER - each is 1 hour of pay.</li>'+
         '<li><b>Commutes:</b> round trips (1 each) and the office — no commuter miles or road time.</li>'+
         specCols(n,o).filter(c=>!c.to).map(c=>'<li><b>'+esc(c.n)+':</b> '+(c.tip?esc(c.tip)+' ':'')+'('+KSHORT[c.kind]+')</li>').join('')+
+        (SPBON() ? '<li><b>Special bonus:</b> a one-off amount for someone this pay period - '+(spbTypes().length?'pick the category and ':'')+'say what it’s for (required). It goes to Heather with the sheet.</li>' : '')+
         '<li><b>Exception commuter pay</b> only when a doctor asks. <b>Other miles</b> are for special events — say what for in Notes.</li>'+
         '<li><b>Missed a green day = no bonus.</b> Your exceptions: time off asked 3+ months ahead (full bonus is OK), or out a few hours for a funeral, school or appointment — take off a % or a $ amount.</li>'+
         '</ul></details>';
@@ -876,12 +912,13 @@
 
   /* ---------- Heather: this pay period ---------- */
   function flags(n){
-    const pr=P(n), F={ot:[], er:[], two:[], green:[], pay:[], miles:[], add:[]};
+    const pr=P(n), F={ot:[], er:[], two:[], green:[], pay:[], spb:[], miles:[], add:[]};
     OFFICES.forEach(o=>{ const s=get(n,o.k); if(s.status!=='sent') return;
       rowPeople(n,o.k).forEach(p=>{ const x=s.rows[p.id]; if(!x) return;
         [1,2].forEach(w=>{ const hh=num(x['w'+w]); if(hh>40) F.ot.push({p,o,t:r2(hh-40)+' h of overtime in week '+w+(otOK(x,w)?' — marked approved':' — <b>not</b> marked approved'), bad:!otOK(x,w)}); });
         if(x.mg==='Y'){ const c=calc(p,x,pr); F.green.push({p,o,t:'Missed a green day → '+(x.bonus==='none'?'no bonus':x.bonus==='partial'?esc(cutText(x))+' off ('+money(c.ppb)+' of '+money(bonusOf(p))+')':'kept the full bonus')+(x.notes?' · “'+esc(x.notes)+'”':'')}); }
         if(num(x.ers)>0) F.er.push({p,o,t:num(x.ers)+' ER'+(num(x.ers)>1?'s':'')+' taken → <b>'+num(x.ers)+' hour'+(num(x.ers)>1?'s':'')+' of pay</b>'+(num(x.oncall)?'':' · not marked on call')});
+        if(spbHas(x)) F.spb.push({p,o,t:'Special bonus '+spbLine(x)});
         if(num(x.exc)>0) F.pay.push({p,o,t:'Exception commuter pay '+money(num(x.exc))+(x.notes?' · “'+esc(x.notes)+'”':'')});
         if(num(x.mkt)+num(x.oth)>0) F.miles.push({p,o,t:(num(x.mkt)?num(x.mkt)+' marketing mi':'')+(num(x.mkt)&&num(x.oth)?' + ':'')+(num(x.oth)?num(x.oth)+' other mi':'')+' → '+money(r2((num(x.mkt)+num(x.oth))*RATE.mile))+' reimbursement'+(num(x.oth)&&x.notes?' · “'+esc(x.notes)+'”':'')});
       }); });
@@ -916,7 +953,7 @@
     '<th class="n">'+info('On call',money(RATE.onCall)+' for each weekend on call. The office counts the weekends.')+'</th>'+
     '<th class="n">'+info('ER hrs','# of ERs taken: each patient seen = 1 hour of pay. Hours, not dollars - kept out of Total.')+'</th>'+
     ownCols(o).map(c=>'<th class="n">'+(c?info(esc(c.n),ownTip(o,c)):'')+'</th>').join('')+
-    '<th class="n">'+info('Extra','A special bonus. You type it in - the offices don’t see it. Any exception commuter pay the office entered is added here too.')+'</th>'+
+    '<th class="n">'+info('Extra','A special bonus. You type it in - the offices don’t see it. Any exception commuter pay'+(SPBON()?' or special bonus':'')+' the office entered is added here too.')+'</th>'+
     '<th class="n">'+info('Total','PP bonus + Goal + TC/OM + Holiday + On call + the office’s own bonuses + Extra + any extra $ column added to Total. Reimburse isn’t in it.')+'</th>'+
     '<th class="n">'+info('Reimburse','Mileage: marketing and other miles × '+money(RATE.mile)+' a mile (the IRS rate). Kept out of Total.')+'</th>'+
     (sp?'<th>'+info('Extra columns','The columns you added in Settings, as the office typed them. A $ column added to Total is in Total.')+'</th>':'')+'<th>Notes</th></tr>';
@@ -960,7 +997,7 @@
           '<td class="n">'+hin(o.k,p,'goal',x.goal,on)+addLines(n,o.k,p,'goal')+'</td><td class="n">'+hin(o.k,p,'tcom',x.tcom,on)+addLines(n,o.k,p,'tcom')+'</td>'+
           '<td class="n">'+(c.holH?hrs(c.holH)+' h':money(c.hol))+'</td><td class="n">'+money(c.oc)+'</td><td class="n">'+(c.ers?c.ers:'—')+'</td>'+
           own.map(col=>'<td class="n">'+(!col?'':col.hrs?hrs(c.sick):money(ownUsd(col,x))+(ownEach(col) && num(x[col.k]) ? '<div class="small muted">'+esc(num(x[col.k]))+' × '+money(RATE[col.each])+'</div>' : ''))+'</td>').join('')+     // typed by the office
-          '<td class="n">'+hin(o.k,p,'extra',x.extra,on)+addLines(n,o.k,p,'extra')+(c.exc?'<div class="small muted">+ '+money(c.exc)+' commuter</div>':'')+'</td>'+
+          '<td class="n">'+hin(o.k,p,'extra',x.extra,on)+addLines(n,o.k,p,'extra')+(c.exc?'<div class="small muted">+ '+money(c.exc)+' commuter</div>':'')+(c.spb?'<div class="small muted" title="'+esc('Special bonus: '+(x.spbType?x.spbType+' - ':'')+String(x.spbWhy||''))+'">+ '+money(c.spb)+' special'+(x.spbType?' · '+esc(x.spbType):'')+'</div>':'')+'</td>'+
           '<td class="n"><b id="ct-'+o.k+'-'+p.id+'">'+money(c.total)+'</b></td><td class="n">'+money(c.reimb)+'</td>'+
           (anySp?'<td class="small">'+sp.filter(cc=>num(x['sc_'+cc.id])).map(cc=>esc(cc.n)+': <b>'+specShow(cc,x['sc_'+cc.id])+'</b>').join('<br>')+'</td>':'')+
           '<td>'+(x.notes?'<span class="nt" title="'+esc(x.notes)+'">📝 note</span>':'')+'</td></tr>'; });
@@ -998,7 +1035,7 @@
         ? '⏰ Each office’s sender gets a reminder in their bell from the workday before it’s due, until it’s sent. At 2 pm on the due day your bell lists any still to come.'+(PHONE()?' Senders who turn alerts on (the bell → Turn on) get them on their phone too: the workday before at 9 am, the due day at 9 am and 1 pm.':' Reminders on phones come with Chat.')
         : '⏰ Reminders go out on their own to whoever sends each sheet: the workday before, the morning it’s due, and at 1 pm if it isn’t sent yet - in Home-Brace, and on their phone once alerts are on. <b>Send a reminder</b> sends one right now.')+'</div>':'')+'</div>';
     h+=addsCard(n);
-    const groups=[['add','🆕 New people'],['ot','⏱ Overtime'],['er','🚑 ERs taken'],['two','🏢 Working two offices — hours combined'],['green','🟢 Missed green days'],['pay','💵 Exception commuter pay'],['miles','🚗 Mileage']];
+    const groups=[['add','🆕 New people'],['ot','⏱ Overtime'],['er','🚑 ERs taken'],['two','🏢 Working two offices — hours combined'],['green','🟢 Missed green days'],['pay','💵 Exception commuter pay'],['spb','🎁 Special bonuses'],['miles','🚗 Mileage']];
     const count=groups.reduce((a,g)=>a+F[g[0]].length,0);
     h+='<div class="card"><h2>Worth a second look'+(count?' ('+count+')':'')+'</h2><p class="sub">Found for you across every sheet that’s been sent — no more hunting through notes.</p>'+
       (count?'<div class="flags">'+groups.filter(g=>F[g[0]].length).map(g=>'<div class="fgrp"><h3>'+g[1]+'</h3>'+F[g[0]].map(f=>'<div class="fl"><span class="who">'+esc(disp(f.p))+'</span><span class="muted">'+esc(f.o.n)+'</span><span class="grow">'+f.t+'</span>'+(f.bad?'<span class="pill p-late">Check</span>':'')+'</div>').join('')+'</div>').join('')+'</div>'
@@ -1111,6 +1148,24 @@
     return Promise.resolve(window.PH_STORE ? PH_STORE.get(PR.HOL_KEY) : null)
       .then(x=>{ PR.setHolidayEdits(x); HOLIDAYS=PR.HOLIDAYS.slice(); }, ()=>{});
   }
+  /* SPECIAL BONUS CATEGORIES (see SPECIAL_LIVE): Heather's list, empty to start. Whoever manages payroll changes it. */
+  function spbCard(){
+    if(!SPBON()) return '';
+    const ks=spbTypes(), can=holCan();
+    return '<div class="card"><h2>Special bonus categories</h2><p class="sub">Each office sheet has a <b>Special bonus $</b> box per person, and the office must say what it’s for. '+
+      (ks.length ? 'The offices also pick one of these categories.' : 'Add categories here and the offices will pick one too - until then they just say what it’s for.')+'</p>'+
+      (ks.length ? ks.map(k=>'<div class="hrow"><span class="hn"><span class="hnm">'+esc(k)+'</span></span>'+(can?'<button class="btn ghost sm" data-act="spbdel" data-v="'+esc(k)+'">Take off</button>':'')+'</div>').join('')
+                 : '<div class="small muted">None yet.</div>')+
+      (can ? '<div class="hadd"><input id="spb_n" maxlength="40" placeholder="A category - e.g. Patient referral" aria-label="A special bonus category"><button class="btn sm" data-act="spbadd">+ Add a category</button></div>'+
+        (ks.length ? '<div class="small muted" style="margin-top:6px">Taking a category off leaves it on the sheets that already used it.</div>' : '') : '')+'</div>';
+  }
+  function spbSave(change, done){
+    const after=list=>{ SPBTYPES=list; render(); toast(done); };
+    if(!LIVEPAY){ const l=cleanSpbTypes({list:S.spbTypes||[]}); S.spbTypes=cleanSpbTypes({list:change(l)}); save(); after(S.spbTypes); return; }
+    PH_STORE.update(SPB_KEY, cur=>({list:cleanSpbTypes({list:change(cleanSpbTypes(cur))}), upd:new Date().toISOString(), updBy:myEmail()}))
+      .then(r=>{ if(!r || r.blocked || r.error) throw new Error((r && (r.why || r.error)) || 'no answer'); after(cleanSpbTypes(r.value)); },
+            e=>toast('Not saved - '+((e && e.message) || 'check the connection')+'. Nothing changed.'));
+  }
   function holCard(){
     const hy=+TODAY.slice(0,4), inYrs=d=>+d.slice(0,4)>=hy && +d.slice(0,4)<=hy+1, ed=PR.EDITS||{off:[], add:[]}, from=holFrom(), can=holCan();
     const rows=PR.holidaysThrough(hy+2).filter(h=>inYrs(h.d)).map(h=>({d:h.d, n:h.n, off:ed.off.indexOf(h.d)>=0}))
@@ -1180,6 +1235,7 @@
         : 'The '+esc(o.by))+'</td><td>'+((o.own||[]).map(c=>esc(c.n)).join(', ')||'<span class="muted">—</span>')+'</td></tr>').join('')+'</tbody></table></div></div>';
     h+=newOfficeCard();
     h+=colsCard();
+    h+=spbCard();
     h+=holCard();
     const act=everyone().filter(p=>!S.removed[p.id]).sort(byLast), gone=everyone().filter(p=>S.removed[p.id]).sort(byLast), tw=twins();
     if(tw.length) h+='<div class="note warn"><b>Listed twice?</b> These people are on two offices’ lists as two separate people, so their hours won’t add up. Make each one person and both offices still type their own hours.'+
@@ -1275,7 +1331,7 @@
       if(s.status!=='sent'){ lines.push(['(not sent yet)']); lines.push([]); return; }
       rowPeople(n,o.k).forEach(p=>{ const x=s.rows[p.id]; if(!x) return; const c=calc(p,withAdds(n,o.k,p,x),pr), an=addsNote(n,o.k,p);
         lines.push([disp(p), c.reg, c.ot1||'', c.ot2||'', c.ppb||'', c.pto||'', c.goal||'', c.tcom||'', c.holH?c.holH+' hrs':(c.hol||''), c.reimb||'', c.oc||'', c.ers||'']
-          .concat(own.map(col=>col.hrs?(c.sick||''):(ownUsd(col,x)||'')), sp.map(col=>num(x['sc_'+col.id])||''), [c.extra||'', c.total, [x.notes||'', an ? '[Added to payroll: '+an+']' : ''].filter(Boolean).join(' ')])); });
+          .concat(own.map(col=>col.hrs?(c.sick||''):(ownUsd(col,x)||'')), sp.map(col=>num(x['sc_'+col.id])||''), [c.extra||'', c.total, [x.notes||'', an ? '[Added to payroll: '+an+']' : '', spbHas(x) ? '[Special bonus '+money(num(x.spb))+(x.spbType?' - '+x.spbType:'')+': '+String(x.spbWhy||'').trim()+']' : ''].filter(Boolean).join(' ')])); });
       const ds=docRows(n,o.k);
       if(ds.length){ lines.push(['Doctor (paid by the day)','Days Wk 1','Days Wk 2','Total days']);
         ds.forEach(d=>{ const v=(s.docs||{})[d.id]||{}; lines.push([d.n, daySet(v.w1)?num(v.w1):'', daySet(v.w2)?num(v.w2):'', num(v.w1)+num(v.w2)]); }); }
@@ -1290,7 +1346,7 @@
   function onField(t, redraw){
     const o=R().office, n=per, s=mine(n,o), pid=t.dataset.p, f=t.dataset.f, x=s.rows[pid]=s.rows[pid]||blank();
     if(f==='ot1'||f==='ot2') x[f]=t.checked;
-    else if(['notes','comTo','mg','bonus','cutBy'].indexOf(f)>=0) x[f]=t.value;
+    else if(['notes','comTo','mg','bonus','cutBy','spbWhy','spbType'].indexOf(f)>=0) x[f]=f==='spbWhy' ? String(t.value).slice(0,200) : t.value;
     else x[f]=t.value===''?'':num(t.value);
     if(f==='mg' && t.value==='Y' && x.bonus==='full'){ x.bonus='none'; toast('Missed a green day — bonus set to None. Change it if one of your exceptions applies.'); if(LIVEPAY) liveSheet(n,o,{row:pid, f:'bonus', v:'none'}); }
     if(s.status==='sent') s.changed=true;
@@ -1401,6 +1457,15 @@
       if(newOfficeNames().indexOf(n)<0 || !PR.SAFE_NAME.test(n)) return;
       if(!co){ toast('Type its company name first - it heads its part of your combined sheet'); return; }
       b.disabled=true; addOffice(n, co, by); return;
+    }
+    if((act==='spbadd' || act==='spbdel') && SPBON()){
+      if(!holCan()) return;
+      const nm=act==='spbadd' ? String((el('spb_n')||{}).value||'').replace(/\s+/g,' ').trim().slice(0,40) : String(v||'');
+      if(!nm){ toast('Type it first - e.g. Patient referral'); return; }
+      if(act==='spbadd' && spbTypes().some(k=>k.toLowerCase()===nm.toLowerCase())){ toast(nm+' is already on the list'); return; }
+      if(act==='spbadd' && spbTypes().length>=30){ toast('That’s 30 categories already - take one off first'); return; }
+      spbSave(l=>act==='spbadd' ? l.concat([nm]) : l.filter(k=>k!==nm), act==='spbadd' ? nm+' added ✓' : nm+' taken off ✓ - sheets that used it keep it');
+      return;
     }
     if(act==='holoff' || act==='holon' || act==='holdel' || act==='holadd'){
       if(!holCan()) return;
@@ -1884,9 +1949,10 @@
       .then(()=>Promise.all([
         Promise.all(offs.map(k=>Promise.all([store(k).get('people'), store(k).getAll('sheet_', {partial:true, only:isRecent})]))),
         loadHolEdits(),
+        loadSpbTypes(),
         lv==='send' ? null : Promise.all([store('_h').get('settings'), store('_h').getAll('cols_', {partial:true, only:isRecent}), store('_h').get('adds')])
       ]))
-      .then(([perOffice, , hers])=>{ perOffice.forEach(([pf, sh], i)=>{ const k=offs[i];
+      .then(([perOffice, , , hers])=>{ perOffice.forEach(([pf, sh], i)=>{ const k=offs[i];
         pf=pf||{people:[], docs:[]};
         (pf.people||[]).forEach(q=>{
           if(q.mistake || q.linked) return;           // linked: the same person under another id (kept, never deleted)
@@ -1954,7 +2020,7 @@
 })();
 </script>
 <script>PH.nav('payroll');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc173"></script>
+<script src="tour.js?v=hc174"></script>
 <script>
 Tour.init([
   ...((window.PH && PH.isLive && PH.isLive()) || (()=>{ try{ return localStorage.getItem('ph_pay_real')==='1'; }catch(_){ return false; } })() ? [] : [{sel:'#persona', title:'A mock-up', body:'Made-up people and amounts. Start as the <b>Carlsbad TC</b>, who sends Carlsbad’s sheet, then switch to <b>Heather</b>.'}]),

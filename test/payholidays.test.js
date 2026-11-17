@@ -63,7 +63,7 @@ t('junk is ignored (a bad date, a duplicate, a 200-letter name)', (()=>{ const e
 R.setHolidayEdits(null);
 t('no changes = the rule exactly', JSON.stringify(R.HOLIDAYS)===JSON.stringify(R.holidaysThrough(new Date().getFullYear()+2)));
 t('kept in the shared list "ph_pay_holidays" (dates and names only) so every sheet and reminder follows',
-  R.HOL_KEY==='ph_pay_holidays' && /loadHolEdits\(\),/.test(H) && /\.then\(\(\[perOffice, , hers\]\)=>/.test(H) && /PH_STORE\.get\('ph_pay_holidays'\)/.test(U) && /r\[0\]\.setHolidayEdits\(r\[2\]\)/.test(U));
+  R.HOL_KEY==='ph_pay_holidays' && /loadHolEdits\(\),/.test(H) && /\.then\(\(\[perOffice, , , hers\]\)=>/.test(H) && /PH_STORE\.get\('ph_pay_holidays'\)/.test(U) && /r\[0\]\.setHolidayEdits\(r\[2\]\)/.test(U));
 t('only whoever manages payroll can change them, and only from the first pay period not entered yet - paid ones stay as they were',
   /const holCan=\(\)=>!R\(\)\.ro && \(!LIVEPAY \|\| LEVEL\(\)==='manage'\);/.test(H) && /const holFrom=\(\)=>P\(enteredCount\(CUR\) \? NEXT : CUR\)\.start;/.test(H) &&
   /\(can && x\.d>=from \?/.test(H) && /if\(!holCan\(\)\) return;/.test(H) && /if\(d<from\)\{ toast\('That pay period is already done/.test(H));
