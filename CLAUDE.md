@@ -363,6 +363,15 @@ I can confidently say that the chat feature should go next. The production thing
    the list / list failed -> no button, page locked, 0 Teams calls; no page errors. Admin -> Chat checked on the local
    sandbox (add + take out, confirms, stored). NEXT (Cory): deploy -> Admin -> Chat -> add Cory, Heather, Jessica ->
    test (text, photo, video, from Teams back) -> then guests (one guest test) -> CHAT_LIVE for everyone.
+24. **QUEUED - Heather's two doctor/contractor ideas (feedback 17/11 4:26 + 4:30 pm CST). Cory: "Add after chat pilot
+   deploy and first test".** (a) "Can you make the doctor that needs to get paid more visible somehow. Right now Dr.
+   Lightheart kind of blends in with the sheet and I almost forgot to pay him. Any doctor or contractor I add could be
+   highlighted or bold" -> the "Paid by the day" rows (docRows / tr.docr on the combined sheet + the office sheet + the
+   download). (b) "Can I have a box so I can enter in the dollar amount they will get paid. I only want it to be visible
+   to me. Or ... an amount per doctor per day worked so when Jenny says Dr. Lightheart works 2 days I can set a dollar
+   amount per day and it will do the math for me." -> a per-day rate per doctor kept in HER folder (settings.json - the
+   offices never read it), days x rate on the combined sheet/download (and an override box), effective from a pay period
+   like the rates (never changes an entered one). Senders keep typing only the days. Sandbox first behind a switch.
 **LIVE 01/11/2026 (hc115, 36 files byte-checked, alerts-test 404 on live):** Selene (01/11) "Could we add “Pending – Scheduled to Start” as an additional TC
 outcome? This would apply to patients who have completed their exam and scheduled a future start appointment but
 have not yet signed their contract." -> tc.js SCHED_START: a completed consult (counts for conversion), not a start
