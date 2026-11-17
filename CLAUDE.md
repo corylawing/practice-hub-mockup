@@ -155,7 +155,7 @@ I can confidently say that the chat feature should go next. The production thing
    (The built-in browser pane blocks window.open, so it can't show this.) The Invisalign/Retainer "locked" report
    (#18, 12/11) was already sorted: Heather deleted both .docx 12/11 21:45Z (recycle bin) and put PDFs in; she does NOT
    want the Retainer sheet back ("we are going to change some pricing").
-13. **DIBS is a count x $10 (17/11/2026, hc161 SANDBOX; deploy only on Cory's OK).** Heather (feedback, 16/11 4:56 PM CST,
+13. **DIBS is a count x $10 (17/11/2026, hc161; LIVE 17/11 - Cory "deploy"; verified; live San Angelo #24 dibs were 1 and 3 = counts).** Heather (feedback, 16/11 4:56 PM CST,
    hc158): "the "DIBS" column is supposed to be whatever number she puts in x $10 but it is converting it to $1 ... Amanda
    did the Dibs and it should be worth $30 but it is worth $3". payrules.js + payroll.html: RATES/RATE.dibs = 10 (Settings
    rates can override), San Angelo own col {k:'dibs', each:'dibs'}; calc own = phone + dibs x rate + pog; ownEach/ownUsd;
@@ -164,6 +164,14 @@ I can confidently say that the chat feature should go next. The production thing
    test/paydibs.test.js (10). hc160 (Word PDFs + production days from the Schedule) LIVE 16/11 - Cory "deploy"; verified.
    BEFORE DEPLOYING: check live San Angelo sheets' dibs values are counts (a dollar figure typed there would become x10);
    Safari sign-in had expired 17/11.
+14. **Payroll rows striped in the office's color (17/11/2026, hc162 SANDBOX; deploy only on Cory's OK).** Heather (feedback
+   16/11 5:05 PM): "every other person's line could be a different color. I want to be able to follow a line easily when
+   I am looking back and forth entering payroll." Cory: use the office colors from the Schedule; "She isn't talking just
+   hover ... for her to tell the difference". payroll.html offTint(o) = --obg/--odot from PH.colorForOffice (Admin ->
+   Locations palette bg/dot; neutral for Zihua). Every second person row (tr.pr.alt) = color-mix(dot 14%, bg) - always
+   on, combined sheet AND the office's own sheet, name column included; the row under the pointer = stronger + a line of
+   the office color above and below; each office heading on the combined sheet = a 5px strip of its color.
+   test/paystripes.test.js (5). Browser-checked (lime, yellow, sky blue, slate offices).
 **LIVE 01/11/2026 (hc115, 36 files byte-checked, alerts-test 404 on live):** Selene (01/11) "Could we add “Pending – Scheduled to Start” as an additional TC
 outcome? This would apply to patients who have completed their exam and scheduled a future start appointment but
 have not yet signed their contract." -> tc.js SCHED_START: a completed consult (counts for conversion), not a start
