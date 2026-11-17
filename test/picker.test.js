@@ -14,7 +14,7 @@ const fnOf=(src,name)=>{ const i=src.indexOf('function '+name+'('); if(i<0) retu
 const P=new Function(line(U,/const PICK_MIN=\d+;/)+'\n'+line(U,/const pickNorm=[^\n]*/)+'\n'+line(U,/const pickSplit=[^\n]*/)+'\n'+line(U,/const pickHit=[^\n]*/)+'\n'+
   line(U,/const pickWants=sel=>[^\n]*\n[^\n]*/)+'\nreturn {PICK_MIN, pickNorm, pickSplit, pickHit, pickWants};')();
 
-t('OFF on the live site until Cory says so; on everywhere else (the sandbox)', /const PICK_LIVE=false;/.test(U) && /function pickOn\(\)\{ return PICK_LIVE \|\| env\(\)!=='live'; \}/.test(U) &&
+t('ON for the live site (hc181, Cory: "pickers live"); PICK_LIVE false again = every list as before', /const PICK_LIVE=true;/.test(U) && /function pickOn\(\)\{ return PICK_LIVE \|\| env\(\)!=='live'; \}/.test(U) &&
   /if\(typeof document==='undefined' \|\| typeof window==='undefined' \|\| !pickOn\(\)\) return;/.test(U) && /window\.PH=\{PEOPLE,newHiresOn,pickOn,/.test(U));
 t('typing narrows it down: any word, any order, any case, accents ignored, the office in grey counts too',
   P.pickHit('Alyssa Smith · Carlsbad','carl aly') && P.pickHit('Joemily "Emmy" Prieto · Cruces LCO','emmy') && P.pickHit('Ramírez, José','jose ramirez') &&
@@ -36,6 +36,7 @@ t('several at once: tick boxes, "N chosen", Clear and Done; an "Everyone at …"
 t('lists drawn later (and in a tab in the background) are picked up: straight from the page-change callback, no animation frames',
   /new MutationObserver\(later\)\.observe\(document\.documentElement, \{childList:true, subtree:true\}\)/.test(U) && !/requestAnimationFrame/.test(fnOf(U,'later')) &&
   !/phpkin/.test(U));
+t('a value set in code without a "change" still shows: every picker refreshes on page changes, redrawing only what changed', /document\.querySelectorAll\('select\[data-pk\]'\)\.forEach\(paint\)/.test(fnOf(U,'later')) && /if\(sel\._pkSig===sig\) return; sel\._pkSig=sig;/.test(fnOf(U,'paint')));
 t('what people typed is never put in as HTML (text only)', !/innerHTML=[^;]*o\.text/.test(U) && /tt\.textContent=t;/.test(U) && /v\.textContent=L\.t;/.test(U));
 t('the test stand-in (no real browser) skips it', /typeof window\.addEventListener!=='function'/.test(U));
 

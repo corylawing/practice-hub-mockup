@@ -3762,7 +3762,7 @@
      and fires its 'change' - so every page works exactly as before. Short lists (Yes/No, Full/Partial/None) stay as
      they are; data-native keeps any list as it is. Off = every list exactly as before.
      ------------------------------------------------------------------ */
-  const PICK_LIVE=false;
+  const PICK_LIVE=true;    // ON for the live site 17/11/2026 (hc181) - Cory: "pickers live". false = every list as before.
   function pickOn(){ return PICK_LIVE || env()!=='live'; }
   const PICK_MIN=8;
   const pickNorm=s=>String(s==null?'':s).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
@@ -3820,6 +3820,7 @@
     }
     function paint(sel){
       const b=sel._pkBtn; if(!b) return; const L=label(sel), v=b.querySelector('.phpk-v');
+      const sig=L.t+'|'+(L.s||'')+'|'+L.ph+'|'+sel.disabled; if(sel._pkSig===sig) return; sel._pkSig=sig;   // only when it changed (no endless redraw)
       v.className='phpk-v'+(L.ph?' ph':''); v.textContent=L.t;
       if(L.s){ const sm=document.createElement('small'); sm.textContent=L.s; v.appendChild(sm); }
       b.disabled=sel.disabled; b.title=L.t+(L.s?' · '+L.s:'');
@@ -3845,7 +3846,7 @@
     function scan(){ document.querySelectorAll('select:not([data-pk]):not([data-native])').forEach(s=>{ if(!s.closest('.phpk-pop')) enhance(s); }); }
     /* Straight from the page-change callback (it already comes once per batch of changes): animation frames don't run in
        a tab that's in the background, so lists drawn there would stay plain. */
-    function later(){ try{ scan(); if(OPEN && !OPEN.btn.isConnected) close(); }catch(_){} }
+    function later(){ try{ scan(); document.querySelectorAll('select[data-pk]').forEach(paint); if(OPEN && !OPEN.btn.isConnected) close(); }catch(_){} }   // a value set in code without a 'change' shows too
     function fire(sel){ sel.dispatchEvent(new Event('input',{bubbles:true})); sel.dispatchEvent(new Event('change',{bubbles:true})); }
     function open(sel, typed){
       close(); styles();

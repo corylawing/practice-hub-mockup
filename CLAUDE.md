@@ -340,7 +340,7 @@ I can confidently say that the chat feature should go next. The production thing
    addsOn/landedOf/addWho/addsCard/preview know it); "Everyone at X"/"Everyone, every office" are data-solo. test/
    picker.test.js (13). Browser (mock-up): 45 of 47 Payroll lists became pickers; "cru" -> the two Cruces; 3 Carlsbad
    people ticked -> $40 each = $120, on exactly those 3 rows once Carlsbad sent; 13 other pages load with no errors.
-   TO TURN ON LIVE: PICK_LIVE=true + deploy, on Cory's OK.
+   ON FOR LIVE hc181 (Cory 17/11: "pickers live"): PICK_LIVE=true; labels refresh on any page change (paint only when changed).
 **LIVE 01/11/2026 (hc115, 36 files byte-checked, alerts-test 404 on live):** Selene (01/11) "Could we add “Pending – Scheduled to Start” as an additional TC
 outcome? This would apply to patients who have completed their exam and scheduled a future start appointment but
 have not yet signed their contract." -> tc.js SCHED_START: a completed consult (counts for conversion), not a start
