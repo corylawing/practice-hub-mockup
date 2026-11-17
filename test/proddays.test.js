@@ -49,6 +49,11 @@ ch=D.changesFor(2026, D.yearOf(S, docs, 2026, '2027-01-05'), book, '2027-01-05')
 t('a past month: completed = all its production days', ch.some(c=>c.month===11 && c.field==='dys' && c.to===19));
 t('the same numbers: nothing to change', D.changesFor(2026, want, {Carlsbad:{days:[0,0,0,0,0,0,0,0,10,10,9,19], done:[0,0,0,0,0,0,0,0,10,10,9,7]}}, '2026-12-16').length===0);
 
+global.PH_WB={TABS:{'Carlsbad':'Carlsbad (FFO)','Newtown':'Newtown (FFO)'}};
+t('the offices are the production book’s offices - a new one is followed as soon as it has its place in the book',
+  D.offices().join()==='Carlsbad,Newtown' && Object.keys(D.yearOf({}, docs, 2027, '2026-12-16')).join()==='Carlsbad,Newtown');
+delete global.PH_WB;
+t('…and the 8 if the book’s list isn’t loaded', D.offices().length===8);
 /* sync(): when it writes, and when it doesn't. */
 (async()=>{
   function env(o){

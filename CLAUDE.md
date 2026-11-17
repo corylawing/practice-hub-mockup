@@ -8,6 +8,12 @@
 
 ## 0. WHERE WE ARE RIGHT NOW (read before anything else)
 
+**BUILD EVERYTHING SCALABLE (Cory 17/11/2026: "Everything we build needs to be scalable to the best that we can do";
+"if the office colors ever change, than it would have to change here. If another office is added it would have to add
+to the entire workflow").** Never hard-code offices, their colors, years, rates or people - read the one place the
+practice manages them (Admin -> Locations = offices + colors; the production book's tabs; Settings = rates). Before
+finishing anything, answer "a 9th office? a new color? next year?" - and say it in the reply. See to-do #15.
+
 **The user is Cory Lawing.** He is building this for a friend's orthodontic practice. He is not a
 developer. Keep answers **short** — he has told me repeatedly that I write too much. Give the
 answer, not the reasoning behind every alternative.
@@ -177,6 +183,14 @@ I can confidently say that the chat feature should go next. The production thing
    Production days sync RAN ON LIVE 17/11 10:49Z (Cory's Dashboard visit): 2026 = Dec Carlsbad 9->11, Clovis 9->8, Hobbs
    9->11, Mansfield 8->7, San Angelo 9->10 + Nov completed Carlsbad 5->6, Lubbock 4->5 (the 16th passed); 2027 = 66 days
    boxes (null -> the Schedule), exactly the dry run.
+15. **Still fixed lists - a 9th office or a new year would NOT flow through (found 17/11/2026, not started; ask Cory).**
+   (a) Payroll offices: payrules.js + payroll.html OFFICES (company name, who sends, own columns) - a new office isn't
+   in Payroll; its folder/grants follow the list. (b) Payroll HOLIDAYS stop at 2027-12-24 (payrules.js; Settings can
+   hold st.holidays) - 2028 holiday pay would silently be missing: work them out by rule (New Year's, last Mon of May,
+   July 4 observed, first Mon of Sep, 4th Thu of Nov, Dec 25 observed - 2026/2027 dates match that). (c) Production book
+   offices: workbook.js TABS + MEDICAID (tied to her Excel tabs; a new office = a new tab in the year's book - Set up the
+   year could add one). (d) chat.html office list (line ~559). (e) tc.js DEFAULT_MEDICAID (a default only). DONE:
+   payroll stripes read Admin -> Locations colors live; proddays.js reads its offices from workbook.js TABS (hc163).
 **LIVE 01/11/2026 (hc115, 36 files byte-checked, alerts-test 404 on live):** Selene (01/11) "Could we add “Pending – Scheduled to Start” as an additional TC
 outcome? This would apply to patients who have completed their exam and scheduled a future start appointment but
 have not yet signed their contract." -> tc.js SCHED_START: a completed consult (counts for conversion), not a start

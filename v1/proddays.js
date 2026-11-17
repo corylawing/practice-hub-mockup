@@ -24,7 +24,10 @@
 (function(global){
   'use strict';
   var FROM = '2026-09', DOCS = 'ph_docs', GATE = 'ph_daysync_at', GAP = 10 * 60 * 1000, MAX = 300;
-  var OFFICES = ['Carlsbad', 'Clovis', 'Cruces FFO', 'Cruces LCO', 'Hobbs', 'Lubbock', 'Mansfield', 'San Angelo'];
+  /* The offices = the production book's offices (workbook.js TABS), so a new office is followed here as soon as it
+     has its place in the book - no list of its own to keep up to date. The 8 below only if that isn't loaded. */
+  var FALLBACK = ['Carlsbad', 'Clovis', 'Cruces FFO', 'Cruces LCO', 'Hobbs', 'Lubbock', 'Mansfield', 'San Angelo'];
+  function offices(){ var W = global.PH_WB; return (W && W.TABS && Object.keys(W.TABS).length) ? Object.keys(W.TABS) : FALLBACK; }
   function pad(n){ return (n < 10 ? '0' : '') + n; }
   function ym(y, m){ return y + '-' + pad(m + 1); }
 
@@ -51,7 +54,7 @@
   /* What the Schedule says for one year, every office: {office: [12 x {covered, sched, done}]}. */
   function yearOf(sched, docs, y, today){
     var out = {};
-    OFFICES.forEach(function(o){ out[o] = []; for(var m = 0; m < 12; m++) out[o].push(month(sched, docs, o, y, m, today)); });
+    offices().forEach(function(o){ out[o] = []; for(var m = 0; m < 12; m++) out[o].push(month(sched, docs, o, y, m, today)); });
     return out;
   }
 
@@ -59,7 +62,7 @@
   function changesFor(y, want, book, today){
     var out = [], nowYM = today.slice(0, 7);
     var num = function(v){ return (v === '' || v == null || !isFinite(+v)) ? null : +v; };
-    OFFICES.forEach(function(o){
+    Object.keys(want).forEach(function(o){
       var b = book[o]; if(!b) return;
       for(var m = 0; m < 12; m++){
         var w = want[o][m], at = ym(y, m); if(!w.covered) continue;
@@ -144,11 +147,11 @@
       var L = r[0], docs = r[1];
       if(!L || !L.sched || L.baseFailed || !Array.isArray(docs)) return null;
       var want = yearOf(L.sched, docs, +y, todayHere()), out = {};
-      OFFICES.forEach(function(o){ out[o] = want[o].map(function(w){ return w.covered; }); });
+      Object.keys(want).forEach(function(o){ out[o] = want[o].map(function(w){ return w.covered; }); });
       return out;
     }).catch(function(){ return null; });
   }
 
-  global.PH_PRODDAYS = {FROM:FROM, OFFICES:OFFICES, month:month, yearOf:yearOf, changesFor:changesFor, sync:sync, covered:covered, mayWrite:mayWrite, whenReady:whenReady, soon:soon};
+  global.PH_PRODDAYS = {FROM:FROM, offices:offices, month:month, yearOf:yearOf, changesFor:changesFor, sync:sync, covered:covered, mayWrite:mayWrite, whenReady:whenReady, soon:soon};
   if(typeof module !== 'undefined' && module.exports) module.exports = global.PH_PRODDAYS;
 })(typeof window !== 'undefined' ? window : globalThis);
