@@ -425,7 +425,14 @@ I can confidently say that the chat feature should go next. The production thing
    boxes under 16px: chat's message box + searches 16px on touch screens (pointer:coarse or <=760px), the picker search
    too; + no sideways pan on phones (html,body overflow-x hidden), long links wrap (overflow-wrap:anywhere), the toast
    never wider than the screen. NOTE: other pages' boxes are 13.5-14px too (Payroll etc.) - the same zoom on iPhones;
-   not changed yet (layout of the office sheets on phones) - ask Cory. QUEUED after Heather's ideas: emoji reactions; a "chat alerts: Home-Brace / Teams" choice;
+   not changed yet (layout of the office sheets on phones) - ask Cory.
+   hc186 LIVE 18/11 (Cory "deploy"; verified). QUEUED CHAT v2 (after Heather's doctor ideas): (1) a SLACK-STYLE MESSAGE
+   BOX (Cory 18/11 + screenshot): a formatting bar - bold, italic, underline, strikethrough, link, numbered + bullet
+   list, quote ("don't add the code stuff") - and a bottom row: + (attach), Aa (show/hide the bar), emoji, @mention,
+   record video, the talk-to-type 🎤 ("microphone is below", not floating at the box end), Send on the right; Teams
+   HTML both ways (b/i/u/s/a/ol/ul/blockquote; @mentions = Graph mentions[]). (2) emoji REACTIONS on a message
+   (setReaction/unsetReaction). (3) tap a photo -> big view "exactly like slack does". (4) a "chat alerts: Home-Brace /
+   Teams" choice. QUEUED after Heather's ideas: emoji reactions; a "chat alerts: Home-Brace / Teams" choice;
    click a photo -> big view "exactly like slack does" (Cory 18/11).
 **LIVE 01/11/2026 (hc115, 36 files byte-checked, alerts-test 404 on live):** Selene (01/11) "Could we add “Pending – Scheduled to Start” as an additional TC
 outcome? This would apply to patients who have completed their exam and scheduled a future start appointment but
