@@ -119,6 +119,9 @@ const chatWith=(...people)=>({id:'19:abc@thread.v2', type:people.length>2?'group
       /if\(!c\.loaded\)\{ if\(!c\._loading\)\{ c\._loading=true; loadChat\(c\)\.finally/.test(CHAT) && /if\(\(openBusy && Date\.now\(\)-openBusy<15000\) \|\| c\.msgs\.some\(m=>m\.pending\)\) return;/.test(CHAT));
     t('chat.html: opens at the newest message and stays there while pictures arrive (every load in the chat, also ones filled in later)',
       /ms\.addEventListener\('load', follow, true\);/.test(CHAT) && /ms\.addEventListener\('loadedmetadata', follow, true\);/.test(CHAT));
+    t('chat.html: a phone never zooms when you tap to type (16px boxes on touch screens) and the page never slides sideways (Cory 18/11)',
+      /@media \(max-width:760px\), \(pointer:coarse\)\{\n\s*\.composer textarea, \.search\{font-size:16px\}/.test(CHAT) && /html,body\{overflow-x:hidden;overscroll-behavior-x:none\}/.test(CHAT) &&
+      /overflow-wrap:anywhere/.test(CHAT) && /max-width:calc\(100vw - 32px\);white-space:normal/.test(CHAT) && /@media \(pointer:coarse\)\{\.phpk-q\{font-size:16px\}\}/.test(USER));
     const ADM=R('admin.html');
     t('admin.html: Admin -> Chat lists the pilot; adding or taking out asks first; a list that didn’t read can’t be changed',
       /data-t="chat" onclick="AD\.tab\('chat'\)">Chat</.test(ADM) && /if\(!confirm\('Give '\+nm\+' the real Teams chat in Home-Brace\?/.test(ADM) &&

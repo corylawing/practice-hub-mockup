@@ -109,7 +109,7 @@
   .m .col{display:flex;flex-direction:column;gap:3px;min-width:0}
   .m.me .col{align-items:flex-end}
   .m .from{font-size:12px;font-weight:700;color:var(--soft);margin:4px 0 0 2px}
-  .bub{background:#fff;border:1px solid var(--line);border-radius:16px 16px 16px 5px;padding:8px 12px;font-size:14.5px;color:var(--ink);white-space:pre-wrap;word-wrap:break-word;box-shadow:0 1px 1px rgba(15,42,74,.04)}
+  .bub{background:#fff;border:1px solid var(--line);border-radius:16px 16px 16px 5px;padding:8px 12px;font-size:14.5px;color:var(--ink);white-space:pre-wrap;word-wrap:break-word;overflow-wrap:anywhere;box-shadow:0 1px 1px rgba(15,42,74,.04)}
   .m.me .bub{background:var(--teal);border-color:var(--teal);color:#fff;border-radius:16px 16px 5px 16px}
   .m .meta{font-size:11px;color:var(--soft);margin:0 4px}
   .media{position:relative;border-radius:14px;overflow:hidden;background:#0F2A4A;border:1px solid var(--line);max-width:260px;box-shadow:0 1px 2px rgba(15,42,74,.08)}
@@ -188,7 +188,7 @@
   .notif .t{font-size:12px;color:var(--soft);display:flex;justify-content:space-between;gap:8px}
   .notif b{display:block;font-size:14px;color:#111}
   .notif .x2{font-size:13.5px;color:#222}
-  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);width:max-content;background:var(--navy);color:#fff;padding:11px 18px;border-radius:12px;font-weight:700;font-size:14px;box-shadow:var(--shadow-lg);opacity:0;transition:opacity .2s;pointer-events:none;z-index:80;max-width:calc(100% - 32px);text-align:center}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);width:max-content;max-width:calc(100vw - 32px);white-space:normal;text-align:center;background:var(--navy);color:#fff;padding:11px 18px;border-radius:12px;font-weight:700;font-size:14px;box-shadow:var(--shadow-lg);opacity:0;transition:opacity .2s;pointer-events:none;z-index:80;max-width:calc(100% - 32px);text-align:center}
   .toast.on{opacity:1}
 
   /* REAL CHAT (12/11/2026): the test bar, photos in avatars, files, sending state, the test lock */
@@ -221,15 +221,27 @@
     .chatapp.open .conv{display:flex}
     .back{display:block}
     .m{max-width:88%}
+    /* NO SIDEWAYS SLIDING ON A PHONE (Cory 18/11: "on mobile you can slide the chat from side to side which is weird"):
+       nothing may reach past the screen edge - not a long link in a message, not the hidden pop-up message - and the
+       page itself never pans sideways. */
+    html,body{overflow-x:hidden;overscroll-behavior-x:none}
+    .msgs{overflow-x:hidden}
+    .m .col{min-width:0}
+  }
+  /* NO ZOOM WHEN YOU TAP TO TYPE (Cory 18/11: "once you click to type, it zooms in ... once you are done it zooms out and
+     then you can move side to side"). An iPhone/iPad zooms into any box whose text is under 16px and doesn't come back
+     cleanly. At 16px it doesn't zoom at all - the message box and the searches, on any touch screen. */
+  @media (max-width:760px), (pointer:coarse){
+    .composer textarea, .search{font-size:16px}
   }
 </style>
-<script src="user.js?v=hc185"></script>
+<script src="user.js?v=hc186"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc185"></script>
-  <script src="gate.js?v=hc185"></script>
-  <script src="_staff.js?v=hc185"></script>
-  <script src="alerts.js?v=hc185"></script>
-  <script src="chatgraph.js?v=hc185"></script>
+  <script src="store.js?v=hc186"></script>
+  <script src="gate.js?v=hc186"></script>
+  <script src="_staff.js?v=hc186"></script>
+  <script src="alerts.js?v=hc186"></script>
+  <script src="chatgraph.js?v=hc186"></script>
 </head>
 <body>
 <div class="ribbon" id="ribbon">MOCK-UP for Heather and Dr. Jae — made-up people, messages and videos. Nothing is sent anywhere.</div>

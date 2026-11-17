@@ -3837,6 +3837,7 @@
       '.phpk-foot button{font:inherit;cursor:pointer;border-radius:9px;padding:7px 14px}'+
       '.phpk-clear{background:none;border:0;color:#56627A;text-decoration:underline}'+
       '.phpk-done{font-weight:700;background:var(--teal,#0F766E);color:#fff;border:0}'+
+      '@media (pointer:coarse){.phpk-q{font-size:16px}}'+   /* a touch screen doesn't zoom into the search (it does under 16px) */
       '@media (max-width:560px){.phpk-pop{left:8px!important;right:8px!important;width:auto!important;top:auto!important;bottom:8px!important;max-height:72vh!important;border-radius:16px}}';
     const CHEV='<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
     const LOUPE='<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10.4 10.4L14 14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';

@@ -418,7 +418,14 @@ I can confidently say that the chat feature should go next. The production thing
    address-changed/left-pilot). NOT YET PROVEN END TO END: needs the live site + Cory's phone (alerts on) + Heather
    typing in the Teams app. hc185 LIVE 18/11 (Cory "deploy"). Checked on live: /api/chatnote echoes validationToken (200
    text/plain), a made-up notification -> 202 nothing; /api/chatseal: other origin 403, live origin + no sign-in 401 (=
-   the certificate loaded); /api/push OPTIONS 204; chatcert.json 404 everywhere; files byte-identical. QUEUED after Heather's ideas: emoji reactions; a "chat alerts: Home-Brace / Teams" choice;
+   the certificate loaded); /api/push OPTIONS 204; chatcert.json 404 everywhere; files byte-identical.
+   18/11: Cory's own alerts didn't come - checked read-only (his Safari tab): his alert devices = his Mac only (Nov 10);
+   his iPhone had never been turned on ("ah right I didn't have notifications turned on"). hc186 (phone): "once you
+   click to type, it zooms in ... once you are done it zooms out and then you can move side to side" - iOS zooms into
+   boxes under 16px: chat's message box + searches 16px on touch screens (pointer:coarse or <=760px), the picker search
+   too; + no sideways pan on phones (html,body overflow-x hidden), long links wrap (overflow-wrap:anywhere), the toast
+   never wider than the screen. NOTE: other pages' boxes are 13.5-14px too (Payroll etc.) - the same zoom on iPhones;
+   not changed yet (layout of the office sheets on phones) - ask Cory. QUEUED after Heather's ideas: emoji reactions; a "chat alerts: Home-Brace / Teams" choice;
    click a photo -> big view "exactly like slack does" (Cory 18/11).
 **LIVE 01/11/2026 (hc115, 36 files byte-checked, alerts-test 404 on live):** Selene (01/11) "Could we add “Pending – Scheduled to Start” as an additional TC
 outcome? This would apply to patients who have completed their exam and scheduled a future start appointment but
