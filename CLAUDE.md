@@ -298,7 +298,9 @@ I can confidently say that the chat feature should go next. The production thing
    test. test/payrates.test.js (14); paydibs/payholidays/payspecial regexes moved to the period rates. Browser (mock-up):
    mileage $0.70 from #22 -> #22 88 mi = $61.60, #21 35 mi = $26.60 (0.76); Undo; no page errors on every tab.
    ON FOR LIVE hc177 (Cory 17/11: "rates live"): RATES_LIVE=true; a list that didn't read -> "Couldn't read: the rates".
-20. **Cory has admin rights in the practice's tenant (Adam, 17/11/2026).** So Cory can now do what waited on Adam - HE
+20. **Cory has admin rights in the practice's tenant (Adam, 17/11/2026). DONE 17/11: Cory added User.Invite.All,
+   GroupMember.ReadWrite.All, Group.ReadWrite.All (all Delegated) and granted admin consent - all 8 rows Granted, incl.
+   Chat.ReadWrite (screenshot). Next: Cory's sandbox chat test; build Invite button + Meeting Calendar (sandbox first).** So Cory can now do what waited on Adam - HE
    clicks, never Claude (tenant security settings). In Entra -> App registrations -> Home-Brace (2122a06f-...) -> API
    permissions: DELEGATED Microsoft Graph only (never Application; never a client secret): Chat.ReadWrite (already
    added 12/11, not granted), + User.Invite.All, GroupMember.ReadWrite.All (Invite button, not built), + Group.ReadWrite.All
