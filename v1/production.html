@@ -134,15 +134,15 @@
   }
 
 </style>
-<script src="user.js?v=hc171"></script>
+<script src="user.js?v=hc172"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="workbook.js?v=hc171"></script>
-  <script src="prodbook.js?v=hc171"></script>
-  <script src="prodstore.js?v=hc171"></script>
-<script src="schedrec.js?v=hc171"></script>
-<script src="proddays.js?v=hc171"></script>
-  <script src="store.js?v=hc171"></script>
-  <script src="gate.js?v=hc171"></script>
+  <script src="workbook.js?v=hc172"></script>
+  <script src="prodbook.js?v=hc172"></script>
+  <script src="prodstore.js?v=hc172"></script>
+<script src="schedrec.js?v=hc172"></script>
+<script src="proddays.js?v=hc172"></script>
+  <script src="store.js?v=hc172"></script>
+  <script src="gate.js?v=hc172"></script>
 </head>
 <body>
 <div class="ribbon">SANDBOX — made-up numbers. Saving here stays in your browser; the real workbook is never touched.</div>
@@ -266,7 +266,10 @@
   const money=v=>'$'+Math.round(v).toLocaleString('en-US');
   const pc=v=>Math.round(v*100)+'%';
 
-  function offices(){ return cur.offices==='all'?Object.keys(BASE):cur.offices.filter(o=>BASE[o]); }
+  /* After the switch: only the offices the year's numbers have (an office added in Admin -> Production data included,
+     17/11/2026) - an office with no place in that year can't be saved into, so it isn't offered. */
+  let HB_OFFS=null;
+  function offices(){ const all=Object.keys(BASE).filter(o=>!HB_OFFS || HB_OFFS.indexOf(o)>=0); return cur.offices==='all'?all:cur.offices.filter(o=>all.indexOf(o)>=0); }
   function render(){
 
     const list=offices();
@@ -770,6 +773,8 @@
      first - another year must not keep this one's numbers where it has none. */
   function fillBase(res, reset){
     let n=0; const zero=()=>[0,0,0,0,0,0,0,0,0,0,0,0];
+    Object.keys(res.offices||{}).forEach(name=>{ if(!BASE[name]) BASE[name]={fee:0, afee:0, tc:zero(), mds:zero(), adj:zero(), dys:zero(), goal:zero(), str:zero()}; });
+    HB_OFFS = res.source==='homebrace' ? Object.keys(res.offices||{}) : null;
     Object.keys(BASE).forEach(name=>{
       const b=BASE[name];
       if(reset){ b.tc=zero(); b.adj=zero(); b.dys=zero(); b.sched=zero(); b.goal=zero(); b.str=zero(); b.mds=zero(); }
@@ -845,7 +850,7 @@
 })();
 </script>
 <script>PH.nav('production');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(window.PROD&&PROD.identity)PROD.identity();});document.addEventListener('ph-identity',function(){if(window.PROD&&PROD.identity)PROD.identity();});</script>
-<script src="tour.js?v=hc171"></script>
+<script src="tour.js?v=hc172"></script>
 <script>
 Tour.init([
   {sel:'.syncbar', title:'One set of numbers', body:'Type here and it saves into the <b>same Excel workbook</b> on SharePoint. If someone types in Excel instead, it shows up here. There is never a second copy to reconcile.'},

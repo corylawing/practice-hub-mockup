@@ -216,6 +216,25 @@ I can confidently say that the chat feature should go next. The production thing
    teams = PH.teamNames() (new in user.js: the access grid's teams, Admin -> Teams & Access); the typed lists only
    until Admin's have been read. test/chatlists.test.js (4); browser-checked incl. a made-up new team. (e) tc.js
    DEFAULT_MEDICAID (a default only). hc166+hc167 (offices, actual-day holidays) LIVE 17/11 - Cory "deploy"; verified.
+   hc168 (Chat lists) LIVE 17/11 - Cory "Deploy"; verified.
+   (c) hc172 (built as hc169 on its own branch; renumbered when merged after the cloud session's hc169-171). Cory 17/11:
+   "if you are touching production stuff you cannot push until we are 100% certain its good" -> then "push production offices". A new office in the production numbers: Admin -> Production data card
+   "A new office" (homebrace mode only, admins, confirm first) for each office in Locations that a kept year (this year
+   on) doesn't have -> "Set it up like <office>" -> prodstore.addOffice(y, n, like): prodbook.copySheet copies that
+   office's tab (layout/styles/formulas, no numbers; self-references renamed; title cell -> the new name as an inline
+   string; drawings/tables/links left off) to a new tab at the end - EVERY other part of the file byte-identical; the
+   old layout kept beside it ("<y> production template - before <office> <stamp>.xlsx"); 'ph_prod_offices'
+   {add:[{n, tab, med, like}]} (if that save fails the layout is put back); History how:'office'. removeOffice while no
+   number is typed (never one of the 8). workbook.js BASE/isBase/addOffices (the 8 never change; her Excel only ever
+   read for the 8); dashboardData skips an added office in a year without its tab; index.html takeHB (an added office
+   after the 8, brand from Locations); production.html HB_OFFS (only offices the year's numbers have); prodadmin goals
+   list filtered; proddays follows via TABS. test/prodoffices.test.js (29). VERIFIED: the real live 2027 layout (copied
+   read-only to scratchpad/realtpl, never committed): + "Newtown" like Carlsbad -> every other part byte-identical, 259
+   formulas identical, none still pointing at Carlsbad, title NEWTOWN, reads as an office; opened in real Microsoft
+   Excel on Cory's Mac: 10 tabs, no repair, Excel's own comparison 0 differing cells besides the title; the download with
+   a made-up 4500 -> Excel reads it and works the formulas. Sandbox UI: card -> confirm -> added -> History "Newtown
+   added - set up like Carlsbad" -> dashboard data has it -> Take it out -> layout back to the original tabs; sandbox
+   restored after. Deployed with #16 + #17 as hc172 (Cory: "push production offices").
    Heather wording fix (Cory): Home-Brace doesn't PAY - Settings now says "each one on its actual day". DONE:
    payroll stripes read Admin -> Locations colors live; proddays.js reads its offices from workbook.js TABS (hc163).
 16. **Add a person never saved - "Pick who it's for" (Heather, 17/11/2026 9:50 CST; FIXED hc169, pushed from a cloud
@@ -224,8 +243,8 @@ I can confidently say that the chat feature should go next. The production thing
    payroll's handler (`act==='addok' && !R().ro`) came first - so Add a person (Heather's, and an office's "Add someone
    new") always said "Pick who it's for" and never saved. Add to payroll's button + handler are now `addpayok`.
    test/payadds.test.js +1 (fails on the old file). Browser-checked in the mock-up: a made-up person saves; Add to
-   payroll still works. ALSO REPORTED (Jamy Aguilar + Trinity Moccabee, Clovis): -> #17.
-17. **New hires: with their office + "New on the team list" on Payroll (17/11/2026, hc170; SWITCH ON hc171 - Cory: "push heathers pick who it is. also Jamy and trinity thing"; pushed from a cloud session, DEPLOY FROM THE MAC with #16).** Cory: "yes
+   payroll still works. ALSO REPORTED (two new hires at Clovis): -> #17.
+17. **New hires: with their office + "New on the team list" on Payroll (17/11/2026, hc170; SWITCH ON hc171 - Cory: "push heathers pick who it is. also [the two Clovis new hires]"; pushed from a cloud session, DEPLOY FROM THE MAC with #16).** Cory: "yes
    build both on the sandbox" / "Be very careful". ONE switch: user.js `NEWHIRES_LIVE=false` (PH.newHiresOn() = it ||
    env()!=='live'); off = the live site exactly as before. NOW true (hc171); setting it false again restores the old order + no card.
    (1) user.js applyExtra: someone added in Admin -> People goes in after the last roster row whose FIRST office is

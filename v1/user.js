@@ -244,9 +244,9 @@
      ------------------------------------------------------------------ */
   let ROSTER_FILE=null, ROSTER_EXTRA={added:[],removed:[]};
   const EXTRA_KEY='ph_roster_extra';
-  /* NEW HIRES (17/11/2026, hc170; ON for the live site hc171 - Cory: "push ... Jamy and trinity thing").
+  /* NEW HIRES (17/11/2026, hc170; ON for the live site hc171 - Cory: "push ... the new hires").
      false = the live site goes back to exactly how it was before (the sandbox keeps it either way).
-     Heather added Jamy Aguilar and Trinity Moccabee to Clovis in Admin -> People: they sat at the very bottom of the
+     Heather added two new hires to Clovis in Admin -> People: they sat at the very bottom of the
      list instead of with Clovis, and Payroll never knew about them. With this on: (1) someone added here goes in
      after the last person at their (first) office, so every list that reads the roster shows them with their office;
      (2) Payroll -> This pay period offers "New on the team list" (payroll.html newOnList). Off = exactly as before.

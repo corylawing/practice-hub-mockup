@@ -117,6 +117,7 @@
 
     h += switchHTML();
     h += planHTML();
+    h += officesHTML();
     h += '<div class="card"><h2>Years kept</h2><p class="sub">Each year stands alone: changing one year’s layout or formulas never changes another year.</p>';
     if(!years.length) h += '<div class="muted" style="font-size:14px">Nothing kept yet.</div>';
     else {
@@ -184,11 +185,45 @@
   var MO = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   var GLAB = {tc:'TC goal', md:'Medicaid goal', total:'Total goal', stretch:'Stretch goal', days:'Production days'};
   var money = function(v){ return typeof v === 'number' && isFinite(v) ? '$' + Math.round(v).toLocaleString('en-US') : ''; };
+  /* A NEW OFFICE IN THE PRODUCTION NUMBERS (17/11/2026, prodstore.js addOffice). An office in Admin -> Locations that a
+     year's numbers don't have shows here, for this year and any later year kept: "Set it up like" another office ->
+     its tab is a copy of that office's (rows, formulas, look; no numbers). Shown only when there is something to do. */
+  var OFF2 = {};      // year -> {missing, added, likes} | 'loading' | {err}
+  function officeYears(){ var now = new Date().getFullYear(); return IDX ? Object.keys(IDX.years).map(Number).filter(function(y){ return y >= now; }).sort() : []; }
+  function loadOff2(){
+    var names = (global.PH && PH.officeNames) ? PH.officeNames() : [];
+    officeYears().forEach(function(y){
+      if(OFF2[y]) return; OFF2[y] = 'loading';
+      P().officesToAdd(y, names).then(function(r){ OFF2[y] = r; render(); }, function(e){ OFF2[y] = {err:(e && e.message) || String(e)}; render(); });
+    });
+  }
+  function officesHTML(){
+    if(!IDX || !P().officesToAdd || MODE && MODE.source !== 'homebrace') return '';
+    loadOff2();
+    var ys = officeYears().filter(function(y){ var r = OFF2[y]; return r && r !== 'loading' && !r.err && (r.missing.length || r.added.length); });
+    if(!ys.length) return '';
+    var can = !!(global.PH && PH.isAdmin && PH.isAdmin());
+    var h = '<div class="card"><h2>A new office</h2><p class="sub">An office in Admin → Locations that a year’s numbers don’t have yet. Set it up like one of the offices: '+
+      'it gets its own tab - that office’s rows, formulas and look, with no numbers - and from then on it’s on the Dashboard, in Enter Production, in Plan the year and in the Excel. Nothing else changes, and the layout as it was is kept beside it.</p>';
+    ys.forEach(function(y){ var r = OFF2[y];
+      r.missing.forEach(function(n){
+        var id = 'offlike_'+y+'_'+n.replace(/[^A-Za-z0-9]/g, '');
+        h += '<div class="stat info" style="margin-top:8px"><span>🏢</span><span class="grow"><b>'+esc(n)+'</b> isn’t in the '+esc(y)+' numbers yet.'+
+          (can ? ' Set it up like <select id="'+id+'">'+r.likes.map(function(o){ return '<option>'+esc(o)+'</option>'; }).join('')+'</select> '+
+            '<button class="btn tiny" data-pd="offadd" data-y="'+esc(y)+'" data-n="'+esc(n)+'" data-sel="'+id+'"'+(busy ? ' disabled' : '')+'>'+(busy === 'offadd'+y+n ? 'Adding…' : 'Add to '+esc(y))+'</button>' : ' An admin can add it.')+'</span></div>';
+      });
+      r.added.forEach(function(n){
+        h += '<div class="stat ok" style="margin-top:8px"><span>✓</span><span class="grow"><b>'+esc(n)+'</b> is in the '+esc(y)+' numbers (added in Home-Brace).'+
+          (can ? ' <button class="btn ghost tiny" data-pd="offrm" data-y="'+esc(y)+'" data-n="'+esc(n)+'"'+(busy ? ' disabled' : '')+'>Take it out of '+esc(y)+'</button> <span class="muted">(only while no number has been typed for it)</span>' : '')+'</span></div>';
+      });
+    });
+    return h+'</div>';
+  }
   function goalsHTML(){
     var ys = IDX ? Object.keys(IDX.years).sort().reverse() : [];
     if(!ys.length || !global.PH_WB) return '';
     if(!GY || ys.indexOf(String(GY)) < 0) GY = ys[0];
-    var offs = Object.keys(global.PH_WB.TABS); if(!GO) GO = offs[0];
+    var offs = Object.keys(global.PH_WB.TABS).filter(function(o){ return global.PH_WB.isBase(o) || !OFF2[GY] || !OFF2[GY].added || OFF2[GY].added.indexOf(o) >= 0; }); if(!GO || offs.indexOf(GO) < 0) GO = offs[0];
     var h = '<div class="card"><h2>Goals</h2><p class="sub">Each office’s goals for a year, in Heather’s own terms. In a month, type a <b>growth number</b> (1.05 = last year + 5%) or a <b>dollar amount</b>; empty a month to go back to its formula. Changing one year never changes another, and the Excel download carries the new formulas. Any other calculation: <b>Formulas</b>, below.</p>'+
       '<div class="acts" style="align-items:center">Year <select data-pd="gy">'+ys.map(function(y){ return '<option'+(String(y) === String(GY) ? ' selected' : '')+'>'+esc(y)+'</option>'; }).join('')+'</select>'+
       'Office <select data-pd="go">'+offs.map(function(o){ return '<option'+(o === GO ? ' selected' : '')+'>'+esc(o)+'</option>'; }).join('')+'</select></div>';
@@ -684,6 +719,7 @@
         (f.how === 'upload' ? 'Uploaded'+(f.copiedBy ? ' by '+esc(f.copiedBy) : '')+(f.name ? ' — '+esc(f.name) : '')
         : f.how === 'enter' ? 'Entered in Enter Production'+by+(f.office ? ' — '+esc(f.office) : '')
         : f.how === 'schedule' ? 'Production days from the Schedule'+(who ? ' (on '+esc(who)+'’s visit)' : '')
+        : f.how === 'office' ? (f.removed ? esc(f.office)+' taken out' : esc(f.office)+' added - set up like '+esc(f.like))+by
         : f.how === 'goals' ? 'Goals'+by+(f.office ? ' — '+esc(f.office) : '')
         : f.how === 'formulas' ? (f.undo ? 'A formula change undone' : 'Formulas changed')+by+(f.tab ? ' — '+esc(f.tab) : '')
         : f.how === 'plan' ? (f.undo ? 'A plan change undone' : 'Plan saved')+by+(f.office ? ' — '+esc(f.office) : '')
@@ -733,6 +769,18 @@
         else say(r.check.differ ? 'warn' : 'ok', r.check.differ ? '⚠️' : '✓', summary(r));
         LOGS = {}; return refresh();
       }).catch(function(err){ busy = ''; say('warn','⚠️','That did not work: '+esc(err.message||err)+' Nothing was changed.'); render(); });
+    }
+    if(act === 'offadd' || act === 'offrm'){
+      var n = b.dataset.n, like = act === 'offadd' ? ((document.getElementById(b.dataset.sel) || {}).value || '') : '';
+      if(act === 'offadd' && !confirm('Add '+n+' to the '+y+' production numbers, set up like '+like+'?\n\nIt gets its own tab: '+like+'’s rows, formulas and look, with no numbers. Nothing else changes, and the layout as it was is kept beside it.')) return;
+      if(act === 'offrm' && !confirm('Take '+n+' out of the '+y+' production numbers?\n\nOnly while no number has been typed for it. The layout as it was is kept beside it.')) return;
+      busy = act+y+n; msg = null; render();
+      (act === 'offadd' ? P().addOffice(y, n, like) : P().removeOffice(y, n)).then(function(){
+        busy = ''; OFF2 = {}; LOGS = {};
+        say('ok', '✓', act === 'offadd' ? '<b>'+esc(n)+'</b> is in the '+esc(y)+' numbers, set up like '+esc(like)+'. Plan its goals in Plan the year; its numbers go in through Enter Production.' : '<b>'+esc(n)+'</b> is out of the '+esc(y)+' numbers.');
+        return refresh();
+      }).catch(function(err){ busy = ''; var m = String((err && err.message) || err); say('warn', '⚠️', 'That didn’t work: '+esc(m)+(/put back as it was/.test(m) ? '' : ' Nothing was changed.')); render(); });
+      return;
     }
     if(act === 'dl'){
       busy = 'dl'+y; render();

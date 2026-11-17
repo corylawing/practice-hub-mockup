@@ -26,6 +26,19 @@
   };
   // Tabs carrying Medicaid rows. The others are TC-only and label things differently.
   var MEDICAID = { 'Carlsbad':1, 'Clovis':1, 'Hobbs':1, 'Cruces LCO':1 };
+  /* A NEW OFFICE (17/11/2026). The 8 above never change - her Excel has exactly those tabs. An office added in Admin ->
+     Production data (prodstore.js addOffice: a copy of another office's tab in Home-Brace's own book) joins these two
+     lists - the SAME objects everyone already holds, so every page that reads TABS sees it. Never one of the 8's names. */
+  var BASE = Object.keys(TABS);
+  function isBase(n){ return BASE.indexOf(n) >= 0; }
+  function addOffices(list){
+    (list || []).forEach(function(o){
+      if(!o || typeof o.n !== 'string' || typeof o.tab !== 'string' || !o.n || !o.tab || isBase(o.n)) return;
+      if(BASE.some(function(b){ return TABS[b] === o.tab; })) return;          // never one of the 8's tabs
+      TABS[o.n] = o.tab; if(o.med) MEDICAID[o.n] = 1; else delete MEDICAID[o.n];
+    });
+    return TABS;
+  }
 
   function norm(v){ return String(v == null ? '' : v).toLowerCase().replace(/\s+/g,' ').trim(); }
 
@@ -200,7 +213,7 @@
     if (sandbox()) return refuse();
     var item = '/drives/' + driveId + '/items/' + itemId;
     var base = item + '/workbook';
-    var names = Object.keys(TABS);
+    var names = BASE.slice();              // her Excel has the 8 tabs; an office added in Home-Brace lives only there
 
     // Ask WHO saved it too — assuming it's always Heather would be wrong the first time
     // anyone else touches the file.
@@ -516,7 +529,7 @@
       });
   }
 
-  global.PH_WB = { load:load, office:office, TABS:TABS, MEDICAID:MEDICAID, demo:demo, sandbox:sandbox,
+  global.PH_WB = { load:load, office:office, TABS:TABS, MEDICAID:MEDICAID, BASE:BASE, isBase:isBase, addOffices:addOffices, demo:demo, sandbox:sandbox,
                    writeCell:writeCell, readCell:readCell, resolve:resolve, roundTrip:roundTrip,
                    openSession:openSession,
                    closeSession:closeSession, WRITE_ROWS:WRITE_ROWS, writeRows:writeRows, row:row, colLetters:colLetters };

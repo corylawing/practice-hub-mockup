@@ -270,7 +270,17 @@
       });
     });
   }
-  function index(){ return S().get(INDEX).then(function(x){ return (x && x.years) ? x : {years:{}}; }); }
+  /* ADDED OFFICES (17/11/2026): 'ph_prod_offices' {add:[{n, tab, med, like, at, by}]} - an office added in Admin ->
+     Production data. Read once per page, before anything is read of the numbers, into workbook.js's lists. */
+  var OFFS = 'ph_prod_offices', offsP = null;
+  function offices(){
+    if(!offsP) offsP = Promise.resolve(S().get(OFFS)).then(function(x){
+      if(x && Array.isArray(x.add)) global.PH_WB.addOffices(x.add);
+      return (x && Array.isArray(x.add)) ? x : {add:[]};
+    }, function(){ offsP = null; return {add:[]}; });
+    return offsP;
+  }
+  function index(){ return Promise.all([S().get(INDEX), offices()]).then(function(r){ var x = r[0]; return (x && x.years) ? x : {years:{}}; }); }
 
   /* ------------------------------------------------------------------ THE SWITCH
      Where the production numbers live. 'excel' (today): the dashboard and Enter Production use
@@ -331,7 +341,7 @@
         var ev = B().evaluate(Y.book), out = {}, errors = [];
         Object.keys(WB.TABS).forEach(function(name){
           var tab = WB.TABS[name];
-          if(!Y.book.sheets[tab]){ errors.push(name + ': no tab "' + tab + '" in ' + y); return; }
+          if(!Y.book.sheets[tab]){ if(WB.isBase(name)) errors.push(name + ': no tab "' + tab + '" in ' + y); return; }   // an added office: only the years it was added to
           out[name] = WB.office(B().grid(Y.book, ev, tab), !!WB.MEDICAID[name], y);
         });
         var rec = Y.rec || {}, from = rec.from || {};
@@ -342,7 +352,7 @@
 
   /* ------------------------------------------------------------------ Enter Production into Home-Brace */
   var tplCache = {};
-  function templateBook(y){ if(!tplCache[y]) tplCache[y] = getTemplate(y).then(B().open).catch(function(e){ delete tplCache[y]; throw e; }); return tplCache[y]; }
+  function templateBook(y){ if(!tplCache[y]) tplCache[y] = offices().then(function(){ return getTemplate(y); }).then(B().open).catch(function(e){ delete tplCache[y]; throw e; }); return tplCache[y]; }
   /* The cell a field and month land in - found the way Enter Production finds it in her Excel
      (workbook.js writeRows: the row by its label, first match; the month's column, January = B). */
   function cellFor(tpl, officeName, field, monthIndex, year){
@@ -429,6 +439,94 @@
         return capLog(list);
       }).then(function(){ return followOn(year); });
     }).then(function(){ return {changes:changes}; });
+  }
+
+  /* ------------------------------------------------------------------ A NEW OFFICE (17/11/2026)
+     Cory: "If another office is added it would have to add to the entire workflow" - "be very careful we don't mess
+     anything up". addOffice(year, name, like): the year's layout gets a copy of `like`'s tab (its rows, formulas and
+     look; no numbers) named after the office, at the end - prodbook.js copySheet changes nothing else in the file. The
+     layout as it was is kept beside it first ("<year> production template - before <office>.xlsx"). The office joins
+     'ph_prod_offices' (its tab, and Medicaid like `like`), and History says so. From then on the Dashboard, Enter
+     Production, Plan the year, production days and the Excel download have it - for that year, and every year set up
+     from it. No numbers are touched. removeOffice takes the tab out again while no number has been typed in it. */
+  function officeName(n){ return String(n == null ? '' : n).trim(); }
+  function addOffice(year, name, like){
+    var WB = global.PH_WB, n = officeName(name), y = +year;
+    if(!admin()) return Promise.reject(fail('Only admins can add an office to the production numbers.'));
+    if(!B().tabNameOk(n)) return Promise.reject(fail('"' + n + '" can’t be a tab name in Excel (31 characters at most, none of [ ] : * ? / \\).'));
+    var bytesWas, tabs;
+    return offices().then(function(){
+      if(Object.keys(WB.TABS).some(function(o){ return o.toLowerCase() === n.toLowerCase() && WB.isBase(o); })) throw fail(n + ' is already one of the offices.');
+      if(!WB.TABS[like]) throw fail('Pick an office to set it up like.');
+      return getTemplate(y);
+    }).then(function(bytes){ bytesWas = bytes; return B().readZip(bytes); }).then(function(files){
+      tabs = B().parseBook(files);
+      if(tabs.names.some(function(t){ return t.toLowerCase() === n.toLowerCase(); })) throw fail(y + ' already has a tab called "' + n + '".');
+      if(!tabs.sheets[WB.TABS[like]]) throw fail(y + ' has no ' + like + ' tab to copy.');
+      var r = B().copySheet(files, WB.TABS[like], n, {from:[WB.TABS[like], like], to:n});
+      var book = B().parseBook(r.files);
+      // the copy must read as an office before anything is saved
+      var ev = B().evaluate(book), o = WB.office(B().grid(book, ev, n), !!WB.MEDICAID[like], y);
+      if(!o || !Array.isArray(o.days) || o.days.length !== 12) throw fail('The copy didn’t read as an office - nothing was saved.');
+      return B().writeZip(r.files);
+    }).then(function(bytes){
+      return keepCopy(y, bytesWas, n).then(function(){ return putTemplate(y, bytes); });
+    }).then(function(){
+      delete tplCache[y];
+      return S().update(OFFS, function(cur){
+        var x = (cur && Array.isArray(cur.add)) ? cur : {add:[]};
+        if(!x.add.some(function(o){ return o && o.n === n; })) x.add.push({n:n, tab:n, med:!!WB.MEDICAID[like], like:like, at:nowISO(), by:me()});
+        return x;
+      });
+    }).then(function(r){
+      // the list didn't save: put the layout back as it was, so nothing is half done
+      if(!r || r.blocked || r.error) return putTemplate(y, bytesWas).then(function(){ delete tplCache[y];
+        throw fail('The list of offices didn’t save (' + ((r && (r.why || r.error)) || 'no answer') + '), so the ' + y + ' layout was put back as it was.'); });
+      WB.addOffices([{n:n, tab:n, med:!!WB.MEDICAID[like]}]); offsP = null;
+      return S().update(LOG + y, function(list){
+        list = Array.isArray(list) ? list : [];
+        list.unshift({at:nowISO(), from:{how:'office', office:n, like:like, by:me()}, changes:[]});
+        return capLog(list);
+      });
+    }).then(function(){ return {year:y, office:n, like:like}; });
+  }
+  /* The layout as it was, beside it (live only) - one more way back, whatever happens. */
+  function keepCopy(y, bytes, n){
+    if(!live()) return Promise.resolve();
+    var stamp = nowISO().slice(0, 16).replace(/[:T]/g, '-');
+    return ensureFolder().then(function(d){
+      return api('PUT', '/drives/' + d.id + '/root:/' + enc(FOLDER + '/' + y + ' production template - before ' + n.replace(/[^A-Za-z0-9 ]/g, '') + ' ' + stamp + '.xlsx') + ':/content',
+                 new Blob([bytes]), 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    });
+  }
+  function removeOffice(year, name){
+    var WB = global.PH_WB, n = officeName(name), y = +year;
+    if(!admin()) return Promise.reject(fail('Only admins can take an office out of the production numbers.'));
+    if(WB.isBase(n)) return Promise.reject(fail(n + ' is one of the original offices - it can’t be taken out.'));
+    var bytesWas;
+    return Promise.all([offices(), S().get(DATA + y)]).then(function(r){
+      var tab = WB.TABS[n], d = r[1] && r[1].data && r[1].data[tab];
+      if(!tab) throw fail(n + ' isn’t one of the offices.');
+      if(d && Object.keys(d).length) throw fail(n + ' already has numbers in ' + y + ' - it stays.');
+      return getTemplate(y);
+    }).then(function(bytes){ bytesWas = bytes; return B().readZip(bytes); }).then(function(files){
+      return B().writeZip(B().removeSheet(files, WB.TABS[n]).files);
+    }).then(function(bytes){ return keepCopy(y, bytesWas, n).then(function(){ return putTemplate(y, bytes); }); })
+      .then(function(){ delete tplCache[y];
+        return S().update(LOG + y, function(list){ list = Array.isArray(list) ? list : []; list.unshift({at:nowISO(), from:{how:'office', office:n, removed:true, by:me()}, changes:[]}); return capLog(list); }); })
+      .then(function(){ return {year:y, office:n, removed:true}; });
+  }
+  /* Offices the Schedule's Locations have that a year's numbers don't: [{name, tabs}] for the Admin card. */
+  function officesToAdd(year, locNames){
+    return Promise.all([offices(), templateBook(year)]).then(function(r){
+      var tpl = r[1], WB = global.PH_WB, have = tpl.names.map(function(t){ return t.toLowerCase(); });
+      var extra = (r[0].add || []).map(function(o){ return o.n; });
+      var names = (locNames || []).concat(extra).map(officeName).filter(function(n, i, a){ return n && a.indexOf(n) === i && !WB.isBase(n); });
+      var tabOf = function(n){ return (WB.TABS[n] || n).toLowerCase(); };
+      return {missing:names.filter(function(n){ return have.indexOf(tabOf(n)) < 0; }),
+              added:extra.filter(function(n){ return have.indexOf(tabOf(n)) >= 0; }),
+              likes:Object.keys(WB.TABS).filter(function(o){ return tpl.sheets[WB.TABS[o]]; })};
+    });
   }
 
   /* ------------------------------------------------------------------ GOALS & FORMULAS, IN HOME-BRACE
@@ -1136,5 +1234,6 @@
     cellFor:cellFor, setValues:setValues, setDays:setDays, previewNextYear:previewNextYear, createNextYear:createNextYear, refreshNextYear:refreshNextYear,
     goalModel:goalModel, saveGoals:saveGoals, formulaModel:formulaModel, formulaChange:formulaChange, formulaUndo:formulaUndo,
     planModel:planModel, planSave:planSave, planDraft:planDraft, planLine:planLine, planPayload:planPayload,
-    reset:function(){ driveP = null; syncing = null; tplCache = {}; }};
+    offices:offices, addOffice:addOffice, removeOffice:removeOffice, officesToAdd:officesToAdd, OFFS:OFFS,
+    reset:function(){ driveP = null; syncing = null; tplCache = {}; offsP = null; }};
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -472,10 +472,81 @@
     return out;
   }
 
+  /* ------------------------------------------------------------------ A NEW OFFICE'S TAB (17/11/2026)
+     Cory: "If another office is added it would have to add to the entire workflow" ... "be very careful we don't mess
+     anything up". A new office's tab is a COPY of another office's tab - its layout, styles and formulas; numbers are
+     never in the layout - under the new name, added at the end. Nothing else in the file changes: no other tab, no
+     style, no other formula. Its own references to itself ('Carlsbad (FFO)'!B5 inside Carlsbad's tab) point at the new
+     tab; anything the copy can't own on its own (pictures, comments, tables, links - none in her book) is left off.
+     Works on the file's parts (readZip); the caller writes them back (writeZip). */
+  var TAB_BAD = /[\[\]:*?\/\\]/;
+  function tabNameOk(n){ n = String(n == null ? '' : n); return n.length >= 1 && n.length <= 31 && !TAB_BAD.test(n) && n.charAt(0) !== "'" && n.charAt(n.length - 1) !== "'" && n.trim() === n; }
+  function sheetTags(wb){ var out = []; wb.replace(/<sheet\b[^>]*?\/?>/g, function(t){ out.push(t); return t; }); return out; }
+  function attr(tag, a){ var m = new RegExp('\\b' + a + '="([^"]*)"').exec(tag); return m ? unxml(m[1]) : null; }
+  function refName(n){ return "'" + String(n).replace(/'/g, "''") + "'"; }
+  function escRe(s){ return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+  function copySheet(files, src, dst, titles){
+    if(!tabNameOk(dst)) throw new Error('"' + dst + '" can’t be a tab name in Excel (31 characters at most, none of [ ] : * ? / \\).');
+    var enc = new TextEncoder(), out = {}; Object.keys(files).forEach(function(k){ out[k] = files[k]; });
+    var wb = txt(out['xl/workbook.xml']), relsPath = 'xl/_rels/workbook.xml.rels', rl = txt(out[relsPath]), tags = sheetTags(wb);
+    if(tags.some(function(t){ return String(attr(t, 'name')).toLowerCase() === dst.toLowerCase(); })) throw new Error('There is already a tab called "' + dst + '".');
+    var st = tags.filter(function(t){ return attr(t, 'name') === src; })[0]; if(!st) throw new Error('No tab called "' + src + '" to copy.');
+    var rid = attr(st, 'r:id') || attr(st, 'id'), srcPath = rels(out, 'xl/workbook.xml')[rid];
+    if(!srcPath || !out[srcPath]) throw new Error('The "' + src + '" tab’s part is missing from the file.');
+    var relTag = (rl.match(/<Relationship\b[^>]*>/g) || []).filter(function(t){ return attr(t, 'Id') === rid; })[0], target = attr(relTag, 'Target');
+    // the new part: the next free sheetN.xml beside the source; a new relationship id; the next sheetId
+    var dir = srcPath.replace(/[^/]*$/, ''), n = 1; Object.keys(out).forEach(function(k){ var m = /sheet(\d+)\.xml$/.exec(k); if(m && k.indexOf(dir) === 0 && +m[1] >= n) n = +m[1] + 1; });
+    var newPath = dir + 'sheet' + n + '.xml', newTarget = target.replace(/[^/]*$/, 'sheet' + n + '.xml');
+    var ids = (rl.match(/\bId="([^"]+)"/g) || []).map(function(x){ return x.slice(4, -1); }), k = 1, newRid; do { newRid = 'rIdHB' + k++; } while(ids.indexOf(newRid) >= 0);
+    var sheetId = tags.reduce(function(m, t){ return Math.max(m, +attr(t, 'sheetId') || 0); }, 0) + 1;
+    var rAttr = /\br:id=/.test(st) ? 'r:id' : 'id';
+    wb = wb.replace('</sheets>', '<sheet name="' + toxml(dst).replace(/"/g, '&quot;') + '" sheetId="' + sheetId + '" ' + rAttr + '="' + newRid + '"/></sheets>');
+    rl = rl.replace('</Relationships>', '<Relationship Id="' + newRid + '" Type="' + attr(relTag, 'Type') + '" Target="' + newTarget + '"/></Relationships>');
+    out['xl/workbook.xml'] = enc.encode(wb); out[relsPath] = enc.encode(rl);
+    var ct = out['[Content_Types].xml'] ? txt(out['[Content_Types].xml']) : null;
+    if(ct){ var ov = (ct.match(/<Override\b[^>]*>/g) || []).filter(function(t){ return attr(t, 'PartName') === '/' + srcPath; })[0];
+      if(ov) out['[Content_Types].xml'] = enc.encode(ct.replace('</Types>', '<Override PartName="/' + newPath + '" ContentType="' + attr(ov, 'ContentType') + '"/></Types>')); }
+    // the tab itself: not "selected", nothing that would need a part of its own, references to itself renamed
+    var x = txt(out[srcPath]);
+    x = x.replace(/\s+tabSelected="1"/g, '')
+         .replace(/<(drawing|legacyDrawing|legacyDrawingHF|picture)\b[^>]*\/>/g, '')
+         .replace(/<(hyperlinks|tableParts|oleObjects|controls)\b[\s\S]*?<\/\1>/g, '').replace(/<(tableParts)\b[^>]*\/>/g, '')
+         .replace(/\s+r:id="[^"]*"/g, '');
+    var quoted = new RegExp(escRe(toxml(refName(src))) + '!|' + escRe(refName(src)) + '!|' + escRe(refName(src).replace(/'/g, '&apos;')) + '!', 'g');
+    var plain = /^[A-Za-z_][A-Za-z0-9_.]*$/.test(src) ? new RegExp('(^|[^A-Za-z0-9_.\'])' + escRe(src) + '!', 'g') : null;
+    x = x.replace(/(<f\b[^>]*>)([\s\S]*?)(<\/f>)/g, function(_, a, f, b){
+      f = f.replace(quoted, toxml(refName(dst)) + '!'); if(plain) f = f.replace(plain, function(m, pre){ return pre + toxml(refName(dst)) + '!'; });
+      return a + f + b; });
+    /* Its title: a label cell that says the old office's name ("CARLSBAD (FFO)", "Carlsbad") says the new one, in the
+       same capitals - written in the cell itself, so no other tab's words change. */
+    var sst = sharedStrings(out), want = {};
+    (titles && titles.from || [src]).forEach(function(t){ if(t) want[String(t).toLowerCase()] = 1; });
+    var newTitle = (titles && titles.to) || dst;
+    x = x.replace(/<c\b([^>]*?)>(<v>(\d+)<\/v>)<\/c>/g, function(m, attrs, vtag, i){
+      if(!/\bt="s"/.test(attrs)) return m;
+      var text = sst[+i]; if(text == null || !want[String(text).trim().toLowerCase()]) return m;
+      var shown = text === text.toUpperCase() ? newTitle.toUpperCase() : newTitle;
+      return '<c' + attrs.replace(/\bt="s"/, 't="inlineStr"') + '><is><t>' + toxml(shown) + '</t></is></c>'; });
+    out[newPath] = enc.encode(x);
+    return {files:out, path:newPath, sheetId:sheetId, rid:newRid};
+  }
+  /* Take an added tab out again - the reverse of copySheet, for a tab Home-Brace added and no number was typed in. */
+  function removeSheet(files, name){
+    var enc = new TextEncoder(), out = {}; Object.keys(files).forEach(function(k){ out[k] = files[k]; });
+    var wb = txt(out['xl/workbook.xml']), relsPath = 'xl/_rels/workbook.xml.rels', rl = txt(out[relsPath]);
+    var st = sheetTags(wb).filter(function(t){ return attr(t, 'name') === name; })[0]; if(!st) throw new Error('No tab called "' + name + '".');
+    var rid = attr(st, 'r:id') || attr(st, 'id'), path = rels(out, 'xl/workbook.xml')[rid];
+    out['xl/workbook.xml'] = enc.encode(wb.replace(st, ''));
+    out[relsPath] = enc.encode(rl.replace((rl.match(/<Relationship\b[^>]*>/g) || []).filter(function(t){ return attr(t, 'Id') === rid; })[0] || '\u0000', ''));
+    if(out['[Content_Types].xml']) out['[Content_Types].xml'] = enc.encode(txt(out['[Content_Types].xml']).replace((txt(out['[Content_Types].xml']).match(/<Override\b[^>]*>/g) || []).filter(function(t){ return attr(t, 'PartName') === '/' + path; })[0] || '\u0000', ''));
+    if(path) delete out[path];
+    return {files:out};
+  }
+
   var API = {readZip:readZip, writeZip:writeZip, writeZipSmall:writeZipSmall, crc32:crc32, parseBook:parseBook, open:open, parse:parse, tokenize:tokenize,
              evaluate:evaluate, dataOf:dataOf, grid:grid, exportFiles:exportFiles, exportXlsx:exportXlsx, exportXlsxSmall:exportXlsxSmall,
              blank:blank, withData:withData, labelAt:labelAt, yearOf:yearOf, layoutText:layoutText, shiftYears:shiftYears, shiftYearsText:shiftYearsText, blackStyles:blackStyles,
-             shift:shift, colNum:colNum, colName:colName, isErr:isErr};
+             shift:shift, colNum:colNum, colName:colName, isErr:isErr, copySheet:copySheet, removeSheet:removeSheet, tabNameOk:tabNameOk};
   if(typeof module !== 'undefined' && module.exports) module.exports = API;
   global.PH_BOOK = API;
 })(typeof window !== 'undefined' ? window : globalThis);
