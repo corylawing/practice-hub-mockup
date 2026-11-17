@@ -68,7 +68,7 @@ const message=(fromId, name, html, extra)=>Object.assign({id:'1', messageType:'m
   t('note: Teams’ own "X added Y" notes -> no alert', sent.length===0);
   r=await post([n(message('u-q','Quinn Quill','hi'))], {l:'1'});
   t('note: a lifecycle notice ("renew me", "removed") -> answered, nothing sent (the page renews on the next visit)', r.status===202 && sent.length===0);
-  r=await post([n(message('u-q','Quinn Quill','hi'))], {d:'x'+d.slice(1)});
+  r=await post([n(message('u-q','Quinn Quill','hi'))], {d:(d[0]==='x'?'y':'x')+d.slice(1)});   // always a different first character (it's random)
   t('note: a tampered address -> nothing', r.status===202 && sent.length===0);
   t('preview: emoji, line breaks and entities read as words; a photo says so; long words are cut',
     K_.preview(message('u','x','Done <emoji alt="👍"></emoji><br>ok&nbsp;now'))==='Done 👍 ok now' &&
