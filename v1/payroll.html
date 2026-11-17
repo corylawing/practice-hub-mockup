@@ -247,15 +247,15 @@
     .perhead .when{font-size:17px}
   }
 </style>
-<script src="user.js?v=hc179"></script>
+<script src="user.js?v=hc180"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc179"></script>
-  <script src="gate.js?v=hc179"></script>
-  <script src="alerts.js?v=hc179"></script>
-  <script src="_staff.js?v=hc179"></script>
-  <script src="payrules.js?v=hc179"></script>
-  <script src="paystore.js?v=hc179"></script>
-  <script src="docs.js?v=hc179"></script>
+  <script src="store.js?v=hc180"></script>
+  <script src="gate.js?v=hc180"></script>
+  <script src="alerts.js?v=hc180"></script>
+  <script src="_staff.js?v=hc180"></script>
+  <script src="payrules.js?v=hc180"></script>
+  <script src="paystore.js?v=hc180"></script>
+  <script src="docs.js?v=hc180"></script>
 </head>
 <body>
 <div class="ribbon">MOCK-UP for Heather — made-up people and amounts. Try it as the Carlsbad TC first, then as Heather.</div>
@@ -626,6 +626,7 @@
   function addsOn(n,o,p){
     return addsFor(n).filter(a=>{ const t=a.to||{};
       if(t.k==='person') return t.o===o && t.pid===p.id;
+      if(t.k==='some') return (t.ps||[]).some(q=>q && q.o===o && q.pid===p.id);   // several people (Heather 17/11)
       if(t.k==='office') return t.o===o;
       if(t.k==='all') return !!OFF[o] && !OFF[o].self && homeRow(n,p)===o;
       return false; });
@@ -639,10 +640,12 @@
   }
   const addLines=(n,o,p,col)=>addsOn(n,o,p).filter(a=>a.col===col).map(a=>'<span class="addl" title="'+esc('Added to payroll: '+a.what+' - '+money(num(a.amt)))+'">+ '+money(num(a.amt))+' · '+esc(a.what)+'</span>').join('');
   const addWho=a=>{ const t=a.to||{}, p=t.k==='person' ? who(t.pid) : null;
+    if(t.k==='some'){ const ps=(t.ps||[]).filter(q=>q && OFF[q.o]), nm=ps.map(q=>{ const x=who(q.pid); return x ? disp(x) : 'someone no longer listed'; }), offs=[...new Set(ps.map(q=>OFF[q.o].n))];
+      return (nm.length<=3 ? nm.join('; ') : nm.slice(0,2).join('; ')+' and '+(nm.length-2)+' more')+(offs.length===1 ? ' · '+offs[0] : offs.length ? ' · '+offs.length+' offices' : ''); }
     return t.k==='all' ? 'Everyone, every office' : t.k==='office' ? 'Everyone at '+(OFF[t.o] ? OFF[t.o].n : '?') : (p ? disp(p) : 'Someone no longer listed')+(OFF[t.o] ? ' · '+OFF[t.o].n : ''); };
   /* Where one stands: how many rows it's on so far, and which offices' sheets it's still waiting for. */
   function landedOf(a,n){
-    const t=a.to||{}, ks=t.k==='all' ? OFFICES.filter(o=>!o.self).map(o=>o.k) : [t.o];
+    const t=a.to||{}, ks=t.k==='all' ? OFFICES.filter(o=>!o.self).map(o=>o.k) : t.k==='some' ? [...new Set((t.ps||[]).map(q=>q && q.o).filter(k=>OFF[k]))] : [t.o];
     let count=0; const waiting=[];
     ks.forEach(k=>{ if(!OFF[k]) return; const s=get(n,k);
       if(s.status!=='sent'){ waiting.push(OFF[k].n); return; }
@@ -1171,7 +1174,7 @@
           const st=L.waiting.length
             ? (L.count ? '<span class="pill p-done">On '+L.count+' '+(L.count===1?'row':'rows')+' so far</span> ' : '')+'<span class="pill p-go">Waits for '+esc(L.waiting.length===1 ? poss(L.waiting[0])+' sheet' : L.waiting.length+' offices’ sheets')+'</span>'
             : L.count ? '<span class="pill p-done">On the sheet ✓'+(each?' · '+L.count+' '+(L.count===1?'person':'people')+' · '+money(L.count*num(a.amt)):'')+'</span>'
-            : '<span class="pill p-late">Not on the sheet '+esc(t.k==='all'?'the offices':(OFF[t.o]?OFF[t.o].n:''))+' sent - check</span>';
+            : '<span class="pill p-late">Not on the sheet '+esc(t.k==='all' || t.k==='some' ? 'the offices' : (OFF[t.o]?OFF[t.o].n:''))+' sent - check</span>';
           return '<tr><td style="white-space:normal"><b>'+esc(addWho(a))+'</b></td><td style="white-space:normal">'+esc(a.what)+'</td><td>'+esc(addColName(a.col))+'</td><td class="n">'+money(num(a.amt))+(each?' <span class="small muted">each</span>':'')+'</td><td style="white-space:normal">'+st+'</td>'+
             '<td class="n">'+(ro||e?'':'<button class="link small" data-act="addrm" data-v="'+esc(a.id)+'">Take off</button>')+'</td></tr>'; }).join('')+
         off.map(a=>'<tr class="gone"><td>'+esc(addWho(a))+'</td><td>'+esc(a.what)+'</td><td>'+esc(addColName(a.col))+'</td><td class="n">'+money(num(a.amt))+'</td><td class="small muted">Taken off</td><td class="n">'+(ro||e?'':'<button class="link small" data-act="addback" data-v="'+esc(a.id)+'">Bring back</button>')+'</td></tr>').join('')+
@@ -1187,8 +1190,10 @@
     const ps=addPeriods(), def=ps.indexOf(per)>=0 ? per : ps[0];
     const ppl=k=>activeAt(k);
     openDlg(top('Add to payroll')+'<div class="dm-body"><div class="stack" style="gap:12px">'+
-      '<label class="fld">Who<select class="in" id="aw"><option value="all">Everyone, every office (not Zihua Partners)</option>'+
-        OFFICES.map(o=>'<optgroup label="'+esc(o.n)+'"><option value="office:'+o.k+'">Everyone at '+esc(o.n)+' ('+ppl(o.k).length+')</option>'+
+      /* SEVERAL PEOPLE (Heather 17/11: "select multiple people from an office but not everyone") - with the new picker
+         (PH.pickOn): tick as many as you like; "Everyone at ..." and "Everyone, every office" stand alone. */
+      '<label class="fld">Who<select class="in" id="aw"'+(MULTI() ? ' multiple data-pick data-ph="Pick who - one person, several, or everyone"' : '')+'><option value="all"'+(MULTI()?' data-solo':'')+'>Everyone, every office (not Zihua Partners)</option>'+
+        OFFICES.map(o=>'<optgroup label="'+esc(o.n)+'"><option value="office:'+o.k+'"'+(MULTI()?' data-solo':'')+'>Everyone at '+esc(o.n)+' ('+ppl(o.k).length+')</option>'+
           ppl(o.k).map(p=>'<option value="person:'+o.k+':'+esc(p.id)+'">'+esc(disp(p))+'</option>').join('')+'</optgroup>').join('')+'</select></label>'+
       '<label class="fld">What it’s for<input class="in" id="awhat" maxlength="80" autocomplete="off" placeholder="e.g. Team hit goal, pilot bonus"></label>'+
       '<div class="row" style="gap:10px;flex-wrap:wrap;align-items:flex-end">'+
@@ -1199,8 +1204,15 @@
       '</div></div><div class="dm-foot"><button class="btn ghost" data-act="close">Cancel</button><button class="btn" data-act="addpayok">Add to payroll</button></div>');
     paintAddPrev(); const f=el('awhat'); if(f) f.focus();
   }
+  const MULTI=()=>!!(window.PH && PH.pickOn && PH.pickOn());
   function addRead(){
-    const w=String((el('aw')||{}).value||''), bits=w.split(':'), amt=r2(num((el('aa')||{}).value)), col=(el('ac')||{}).value, n=+((el('ap')||{}).value), what=String((el('awhat')||{}).value||'').trim().slice(0,80);
+    const sel=el('aw'), picked=sel && sel.multiple ? [...sel.options].filter(o=>o.selected).map(o=>o.value) : null;
+    if(picked && picked.length>1 && picked.every(v=>/^person:/.test(v))){        // several people
+      const ps=picked.map(v=>{ const b=v.split(':'); return {o:b[1], pid:b.slice(2).join(':')}; }).filter(q=>OFF[q.o] && who(q.pid));
+      const amt=r2(num((el('aa')||{}).value)), col=(el('ac')||{}).value, n=+((el('ap')||{}).value), what=String((el('awhat')||{}).value||'').trim().slice(0,80);
+      return {to:ps.length>1 ? {k:'some', ps} : ps.length ? {k:'person', o:ps[0].o, pid:ps[0].pid} : null, amt, col, n, what, howMany:ps.length};
+    }
+    const w=picked ? String(picked[0]||'') : String((el('aw')||{}).value||''), bits=w.split(':'), amt=r2(num((el('aa')||{}).value)), col=(el('ac')||{}).value, n=+((el('ap')||{}).value), what=String((el('awhat')||{}).value||'').trim().slice(0,80);
     const to=bits[0]==='all' ? {k:'all'} : bits[0]==='office' && OFF[bits[1]] ? {k:'office', o:bits[1]} : bits[0]==='person' && OFF[bits[1]] && who(bits.slice(2).join(':')) ? {k:'person', o:bits[1], pid:bits.slice(2).join(':')} : null;
     const howMany=!to ? 0 : to.k==='person' ? 1 : to.k==='office' ? activeAt(to.o).length : (()=>{ const seen={}; OFFICES.filter(o=>!o.self).forEach(o=>activeAt(o.k).forEach(p=>{ seen[p.id]=1; })); return Object.keys(seen).length; })();
     return {to, amt, col, n, what, howMany};
@@ -1210,6 +1222,8 @@
     if(!r.to || !(r.amt>0)){ b.textContent='Pick who and the amount.'; return; }
     b.innerHTML=r.to.k==='person'
       ? esc(addWho({to:r.to}))+' gets <b>'+money(r.amt)+'</b> in '+esc(addColName(r.col))+' on '+esc(lab(r.n))+'.'
+      : r.to.k==='some'
+      ? money(r.amt)+' each × '+r.howMany+' people = <b>'+money(r.amt*r.howMany)+'</b> in '+esc(addColName(r.col))+' on '+esc(lab(r.n))+'. <span class="muted">'+esc(addWho({to:r.to}))+'</span>'
       : money(r.amt)+' each × about '+r.howMany+' '+(r.howMany===1?'person':'people')+' = <b>about '+money(r.amt*r.howMany)+'</b> in '+esc(addColName(r.col))+' on '+esc(lab(r.n))+
         '. <span class="muted">Exactly who: everyone on '+(r.to.k==='all'?'each office’s':esc(poss(OFF[r.to.o].n)))+' sheet when it comes in.</span>';
   }
@@ -2237,7 +2251,7 @@
 })();
 </script>
 <script>PH.nav('payroll');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc179"></script>
+<script src="tour.js?v=hc180"></script>
 <script>
 Tour.init([
   ...((window.PH && PH.isLive && PH.isLive()) || (()=>{ try{ return localStorage.getItem('ph_pay_real')==='1'; }catch(_){ return false; } })() ? [] : [{sel:'#persona', title:'A mock-up', body:'Made-up people and amounts. Start as the <b>Carlsbad TC</b>, who sends Carlsbad’s sheet, then switch to <b>Heather</b>.'}]),

@@ -326,6 +326,21 @@ I can confidently say that the chat feature should go next. The production thing
    29.14 = 68.72 h, one $100 bonus; Separate -> bonus only on FFO's row ("on Cruces FFO's row"); Enter together back;
    no page errors. NOT CHECKED: whether live Yvonne/Erica are one person (linked) or two entries - if two, Settings ->
    Listed twice? -> Make them one person. ON FOR LIVE hc179 (Cory 17/11: "together live"): TOGETHER_LIVE=true.
+22. **Modern picklists + several people in Add to payroll (17/11/2026; hc180 SANDBOX ONLY - user.js PICK_LIVE=false).**
+   Cory: "Can we make more modern picklists please? Also ability to type to narrow down list?" (screenshot: Payroll ->
+   Settings -> Add who sends). Heather (feedback 17/11 0:30): "select multiple people from an office but not everyone".
+   (1) user.js picker (one place, every page): any <select> with PICK_MIN (8)+ options, `multiple`, or data-pick ->
+   a button + pop-up list: type to narrow (pickHit: every word, any order, accents ignored, the optgroup label counts),
+   "Name · Office" second part in grey, arrows/Enter/Esc, ticks + "N chosen"/Clear/Done for multiple, data-solo choices
+   stand alone. The page's own select stays (hidden, .phpk-hid) and keeps the value; picking fires its input+change, so
+   every page's handlers are untouched. data-native opts out; short lists stay native. MutationObserver calls scan
+   directly (requestAnimationFrame doesn't run in a background tab - found in the browser check: nothing was picked up);
+   no open animation (it stalled half-faded in a hidden tab). Phone (<=560px): a bottom sheet. Text only, never HTML.
+   (2) payroll Add to payroll: with the picker on, Who is `multiple`; 2+ people -> {k:'some', ps:[{o,pid}]} (addRead;
+   addsOn/landedOf/addWho/addsCard/preview know it); "Everyone at X"/"Everyone, every office" are data-solo. test/
+   picker.test.js (13). Browser (mock-up): 45 of 47 Payroll lists became pickers; "cru" -> the two Cruces; 3 Carlsbad
+   people ticked -> $40 each = $120, on exactly those 3 rows once Carlsbad sent; 13 other pages load with no errors.
+   TO TURN ON LIVE: PICK_LIVE=true + deploy, on Cory's OK.
 **LIVE 01/11/2026 (hc115, 36 files byte-checked, alerts-test 404 on live):** Selene (01/11) "Could we add “Pending – Scheduled to Start” as an additional TC
 outcome? This would apply to patients who have completed their exam and scheduled a future start appointment but
 have not yet signed their contract." -> tc.js SCHED_START: a completed consult (counts for conversion), not a start

@@ -3753,7 +3753,187 @@
     const m=document.createElement('link'); m.rel='manifest'; m.href='manifest.webmanifest'; document.head.appendChild(m);
   }
 
-  window.PH={PEOPLE,newHiresOn,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,teamNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, rosterView, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, chatBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK, notesHTML, searchHTML, searchDocs, searchDocsHTML, levelForTeams, teamsSeeAll, tcOn, tcRoleFor, payOn, payRoleFor, paySenders, reloadPaySenders, paySenderOffices, payLevel, payReminders, payMark, reloadPayStatus, payRulesReady, payAlertPlan, payAlertsTick, centralNow, alertsReady, saveFace, faceOf, avatar, viewLink, isWordName, wordAttrs, wordPdfInto,
+  /* ------------------------------------------------------------------
+     MODERN PICKLISTS (17/11/2026) - SANDBOX ONLY until PICK_LIVE is true. Cory: "Can we make more modern picklists
+     please? Also ability to type to narrow down list?" Every long list on every page (PICK_MIN choices or more, one
+     that takes several, or one marked data-pick) becomes a picker: a box that opens a list you can type into to narrow
+     it down (any word, any order, accents ignored), arrow keys + Enter, Esc to close, and the second part of a choice
+     ("Alyssa Smith · Carlsbad") in grey. The page's own <select> stays underneath and keeps the value - picking sets it
+     and fires its 'change' - so every page works exactly as before. Short lists (Yes/No, Full/Partial/None) stay as
+     they are; data-native keeps any list as it is. Off = every list exactly as before.
+     ------------------------------------------------------------------ */
+  const PICK_LIVE=false;
+  function pickOn(){ return PICK_LIVE || env()!=='live'; }
+  const PICK_MIN=8;
+  const pickNorm=s=>String(s==null?'':s).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+  const pickSplit=t=>{ const s=String(t||''), i=s.indexOf(' · '); return i>0 ? [s.slice(0,i), s.slice(i+3)] : [s, '']; };
+  const pickHit=(hay, q)=>{ const h=pickNorm(hay); return pickNorm(q).split(/\s+/).filter(Boolean).every(w=>h.indexOf(w)>=0); };
+  const pickWants=sel=>!!sel && sel.tagName==='SELECT' && !sel.hasAttribute('data-native') && !sel.hasAttribute('data-pk') &&
+    (sel.multiple || sel.hasAttribute('data-pick') || sel.options.length>=PICK_MIN);
+  (function picker(){
+    if(typeof document==='undefined' || typeof window==='undefined' || !pickOn()) return;
+    if(typeof document.addEventListener!=='function' || typeof window.addEventListener!=='function' || typeof document.querySelectorAll!=='function') return;   // not a real browser (the tests' stand-in)
+    const CSSX='.phpk-hid{display:none!important}'+
+      '.phpk-btn{display:inline-flex;align-items:center;justify-content:space-between;gap:8px;text-align:left;cursor:pointer;max-width:100%;min-width:0;background-color:#fff;color:inherit;font:inherit}'+
+      '.phpk-btn:not(.in){border:1px solid #D5DCE5;border-radius:10px;padding:7px 10px;font-size:14px;min-height:36px}'+
+      '.phpk-btn:hover:not(:disabled){border-color:var(--teal-line,#9fd9d4)}'+
+      '.phpk-btn:focus-visible{outline:2px solid var(--teal2,#2BC0B8);outline-offset:1px}'+
+      '.phpk-btn:disabled{opacity:.55;cursor:default}'+
+      '.phpk-btn .phpk-v{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'+
+      '.phpk-btn .phpk-v.ph{color:#7b8797}.phpk-btn .phpk-v small{color:#7b8797;font-size:.92em;margin-left:6px}'+
+      '.phpk-btn svg{flex:none;width:14px;height:14px;opacity:.55;transition:transform .15s}.phpk-btn[aria-expanded="true"] svg{transform:rotate(180deg)}'+
+      '.phpk-pop{position:fixed;z-index:100001;background:#fff;border:1px solid #DCE3EC;border-radius:14px;box-shadow:0 18px 48px rgba(15,42,74,.18),0 2px 8px rgba(15,42,74,.08);'+
+        'display:flex;flex-direction:column;overflow:hidden;font-size:14px;color:#1f2a37}'+
+      '.phpk-qw{position:relative;margin:8px 8px 4px}.phpk-qw svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:15px;height:15px;opacity:.5;pointer-events:none}'+
+      '.phpk-q{width:100%;box-sizing:border-box;padding:9px 12px 9px 34px;border:1px solid #DCE3EC;border-radius:10px;font:inherit;font-size:14px;outline:none;background:#F6F8FB;color:inherit}'+
+      '.phpk-q:focus{border-color:var(--teal,#0F766E);background:#fff;box-shadow:0 0 0 3px var(--teal-wash,#e6f6f5)}'+
+      '.phpk-list{overflow:auto;padding:4px 6px 8px;overscroll-behavior:contain}'+
+      '.phpk-g{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#7b8797;padding:10px 10px 4px}'+
+      '.phpk-o{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:9px;cursor:pointer;line-height:1.3}'+
+      '.phpk-o .phpk-t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}'+
+      '.phpk-o .phpk-s{color:#7b8797;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:50%}'+
+      '.phpk-o.on{background:var(--teal-wash,#eef8f7)}'+
+      '.phpk-o[aria-selected="true"] .phpk-t{font-weight:650;color:var(--teal-600,#0F766E)}'+
+      '.phpk-o .phpk-k{width:16px;flex:none;color:var(--teal-600,#0F766E);font-weight:700;text-align:center}'+
+      '.phpk-o .phpk-box{width:18px;height:18px;border:1.5px solid #B8C3D1;border-radius:5px;flex:none;display:grid;place-items:center;font-size:12px;line-height:1;color:transparent}'+
+      '.phpk-o[aria-selected="true"] .phpk-box{background:var(--teal,#0F766E);border-color:var(--teal,#0F766E);color:#fff}'+
+      '.phpk-o.dis{opacity:.45;cursor:default}'+
+      '.phpk-none{padding:14px 12px;color:#7b8797}'+
+      '.phpk-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 10px;border-top:1px solid #EEF2F6;font-size:13px;color:#56627A}'+
+      '.phpk-foot button{font:inherit;cursor:pointer;border-radius:9px;padding:7px 14px}'+
+      '.phpk-clear{background:none;border:0;color:#56627A;text-decoration:underline}'+
+      '.phpk-done{font-weight:700;background:var(--teal,#0F766E);color:#fff;border:0}'+
+      '@media (max-width:560px){.phpk-pop{left:8px!important;right:8px!important;width:auto!important;top:auto!important;bottom:8px!important;max-height:72vh!important;border-radius:16px}}';
+    const CHEV='<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    const LOUPE='<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10.4 10.4L14 14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
+    let OPEN=null, seq=0;
+    function styles(){ if(document.getElementById('phpk-css')) return; const s=document.createElement('style'); s.id='phpk-css'; s.textContent=CSSX; document.head.appendChild(s); }
+    function label(sel){
+      const chosen=[...sel.options].filter(o=>o.selected && !(sel.multiple && o.value==='')), ph=sel.getAttribute('data-ph')||'Choose…';
+      if(sel.multiple){
+        if(!chosen.length) return {t:ph, ph:true};
+        const names=chosen.map(o=>pickSplit(o.text)[0]);
+        return {t:names.length===1 ? names[0] : names[0]+' + '+(names.length-1)+' more', ph:false};   // names are often "Last, First": no comma lists
+      }
+      const o=sel.options[sel.selectedIndex]; if(!o) return {t:ph, ph:true};
+      const [t,s]=pickSplit(o.text); return {t, s, ph:o.value===''};
+    }
+    function paint(sel){
+      const b=sel._pkBtn; if(!b) return; const L=label(sel), v=b.querySelector('.phpk-v');
+      v.className='phpk-v'+(L.ph?' ph':''); v.textContent=L.t;
+      if(L.s){ const sm=document.createElement('small'); sm.textContent=L.s; v.appendChild(sm); }
+      b.disabled=sel.disabled; b.title=L.t+(L.s?' · '+L.s:'');
+    }
+    function enhance(sel){
+      if(!pickWants(sel)) return;
+      sel.setAttribute('data-pk','1');
+      const b=document.createElement('button'); b.type='button';
+      b.className=(sel.className||'')+' phpk-btn'; if(sel.getAttribute('style')) b.setAttribute('style', sel.getAttribute('style'));
+      b.setAttribute('aria-haspopup','listbox'); b.setAttribute('aria-expanded','false');
+      const al=sel.getAttribute('aria-label'); if(al) b.setAttribute('aria-label', al);
+      b.innerHTML='<span class="phpk-v"></span>'+CHEV;
+      sel._pkBtn=b; b._pkSel=sel;
+      sel.parentNode.insertBefore(b, sel); sel.classList.add('phpk-hid');
+      paint(sel);
+      sel.addEventListener('change', ()=>paint(sel));
+      b.addEventListener('click', e=>{ e.preventDefault(); e.stopPropagation(); if(OPEN && OPEN.sel===sel) close(); else open(sel); });
+      b.addEventListener('keydown', e=>{
+        if(e.key==='ArrowDown' || e.key==='ArrowUp' || (e.key===' ' && !OPEN)){ e.preventDefault(); open(sel); return; }
+        if(e.key.length===1 && !e.ctrlKey && !e.metaKey && !e.altKey && !OPEN){ e.preventDefault(); open(sel, e.key); }
+      });
+    }
+    function scan(){ document.querySelectorAll('select:not([data-pk]):not([data-native])').forEach(s=>{ if(!s.closest('.phpk-pop')) enhance(s); }); }
+    /* Straight from the page-change callback (it already comes once per batch of changes): animation frames don't run in
+       a tab that's in the background, so lists drawn there would stay plain. */
+    function later(){ try{ scan(); if(OPEN && !OPEN.btn.isConnected) close(); }catch(_){} }
+    function fire(sel){ sel.dispatchEvent(new Event('input',{bubbles:true})); sel.dispatchEvent(new Event('change',{bubbles:true})); }
+    function open(sel, typed){
+      close(); styles();
+      const b=sel._pkBtn, multi=sel.multiple, id='phpk'+(++seq);
+      const pop=document.createElement('div'); pop.className='phpk-pop'; pop.setAttribute('role','dialog');
+      const search=sel.options.length>=PICK_MIN || multi;
+      const qw=document.createElement('div'); qw.className='phpk-qw'; qw.innerHTML=LOUPE;
+      const q=document.createElement('input'); q.className='phpk-q'; q.type='text'; q.placeholder='Type to search…'; q.setAttribute('autocomplete','off');
+      q.setAttribute('role','combobox'); q.setAttribute('aria-controls', id); q.setAttribute('aria-expanded','true'); q.setAttribute('aria-label', 'Search '+(b.getAttribute('aria-label')||'the list'));
+      qw.appendChild(q); if(search) pop.appendChild(qw);
+      const list=document.createElement('div'); list.className='phpk-list'; list.id=id; list.setAttribute('role','listbox'); if(multi) list.setAttribute('aria-multiselectable','true');
+      pop.appendChild(list);
+      const items=[]; let n=0;
+      const add=(o, grp, gEl)=>{
+        if(o.hidden) return;
+        const [t,s]=pickSplit(o.text), el=document.createElement('div'); el.className='phpk-o'+(o.disabled?' dis':''); el.id=id+'-'+(n++); el.setAttribute('role','option');
+        const mark=document.createElement('span'); mark.className=multi ? 'phpk-box' : 'phpk-k'; mark.textContent=multi ? '✓' : ''; el.appendChild(mark);
+        const tt=document.createElement('span'); tt.className='phpk-t'; tt.textContent=t; el.appendChild(tt);
+        if(s){ const ss=document.createElement('span'); ss.className='phpk-s'; ss.textContent=s; el.appendChild(ss); }
+        items.push({o, el, hay:o.text+' '+(grp||''), g:gEl});
+      };
+      [...sel.children].forEach(c=>{
+        if(c.tagName==='OPTGROUP'){ const g=document.createElement('div'); g.className='phpk-g'; g.textContent=c.label; g._items=[]; list.appendChild(g);
+          [...c.children].forEach(o=>{ add(o, c.label, g); const it=items[items.length-1]; if(it && it.o===o){ list.appendChild(it.el); g._items.push(it); } }); }
+        else if(c.tagName==='OPTION'){ add(c, '', null); const it=items[items.length-1]; if(it && it.o===c) list.appendChild(it.el); }
+      });
+      const none=document.createElement('div'); none.className='phpk-none'; none.textContent='Nothing matches'; none.style.display='none'; list.appendChild(none);
+      let foot=null, count=null;
+      if(multi){ foot=document.createElement('div'); foot.className='phpk-foot'; count=document.createElement('span');
+        const clr=document.createElement('button'); clr.type='button'; clr.className='phpk-clear'; clr.textContent='Clear';
+        const done=document.createElement('button'); done.type='button'; done.className='phpk-done'; done.textContent='Done';
+        const right=document.createElement('span'); right.style.display='flex'; right.style.gap='6px'; right.appendChild(clr); right.appendChild(done);
+        foot.appendChild(count); foot.appendChild(right); pop.appendChild(foot);
+        clr.addEventListener('click', ()=>{ [...sel.options].forEach(o=>{ o.selected=false; }); fire(sel); marks(); });
+        done.addEventListener('click', ()=>{ close(); b.focus(); }); }
+      let act=-1;
+      const vis=()=>items.filter(it=>it.el.style.display!=='none' && !it.o.disabled);
+      function marks(){ items.forEach(it=>{ it.el.setAttribute('aria-selected', it.o.selected && !(multi && it.o.value==='') && !(!multi && it.o.value==='' ) ? 'true' : 'false');
+          if(!multi) it.el.querySelector('.phpk-k').textContent=it.o.selected && it.o.value!=='' ? '✓' : ''; });
+        if(count){ const k=[...sel.options].filter(o=>o.selected && o.value!=='').length; count.textContent=k ? k+' chosen' : 'Pick one or more'; } }
+      function hi(i){ const v=vis(); items.forEach(it=>it.el.classList.remove('on')); act=Math.max(0, Math.min(i, v.length-1));
+        const it=v[act]; if(it){ it.el.classList.add('on'); q.setAttribute('aria-activedescendant', it.el.id); it.el.scrollIntoView({block:'nearest'}); } }
+      function filter(){ const t=q.value; let any=false;
+        items.forEach(it=>{ const ok=!t.trim() || pickHit(it.hay, t); it.el.style.display=ok?'':'none'; if(ok) any=true; });
+        list.querySelectorAll('.phpk-g').forEach(g=>{ g.style.display=g._items.some(it=>it.el.style.display!=='none') ? '' : 'none'; });
+        none.style.display=any?'none':''; hi(0); }
+      function choose(it){
+        if(!it || it.o.disabled) return;
+        if(!multi){ const was=sel.value; it.o.selected=true; if(sel.value!==was) fire(sel); close(); b.focus(); return; }
+        const on=!it.o.selected; it.o.selected=on;
+        if(on && it.o.hasAttribute('data-solo')) [...sel.options].forEach(o=>{ if(o!==it.o) o.selected=false; });
+        if(on && !it.o.hasAttribute('data-solo')) [...sel.options].forEach(o=>{ if(o.hasAttribute('data-solo')) o.selected=false; });
+        fire(sel); marks();
+      }
+      list.addEventListener('mousedown', e=>e.preventDefault());       // keep the typing box focused
+      list.addEventListener('click', e=>{ const el=e.target.closest('.phpk-o'); if(!el) return; choose(items.find(it=>it.el===el)); });
+      list.addEventListener('mousemove', e=>{ const el=e.target.closest('.phpk-o'); if(!el) return; const i=vis().findIndex(it=>it.el===el); if(i>=0 && i!==act) hi(i); });
+      q.addEventListener('input', filter);
+      q.addEventListener('keydown', e=>{
+        if(e.key==='ArrowDown'){ e.preventDefault(); hi(act+1); }
+        else if(e.key==='ArrowUp'){ e.preventDefault(); hi(act-1); }
+        else if(e.key==='Enter'){ e.preventDefault(); choose(vis()[act]); }
+        else if(e.key==='Escape'){ e.preventDefault(); close(); b.focus(); }
+        else if(e.key==='Tab'){ close(); }
+      });
+      pop.addEventListener('keydown', e=>{ if(e.key==='Escape'){ e.preventDefault(); close(); b.focus(); } });
+      document.body.appendChild(pop);
+      OPEN={sel, btn:b, pop}; b.setAttribute('aria-expanded','true');
+      place(); marks();
+      const cur=vis().findIndex(it=>it.o.selected && it.o.value!==''); hi(cur>=0 ? cur : 0);
+      if(search){ if(typed){ q.value=typed; filter(); } q.focus({preventScroll:true}); } else pop.setAttribute('tabindex','-1'), pop.focus({preventScroll:true});
+    }
+    function place(){
+      if(!OPEN) return; const r=OPEN.btn.getBoundingClientRect(), p=OPEN.pop, W=window.innerWidth, H=window.innerHeight;
+      const w=Math.min(Math.max(r.width, 280), W-16), left=Math.max(8, Math.min(r.left, W-w-8)), below=H-r.bottom-8, above=r.top-8;
+      p.style.width=w+'px'; p.style.left=left+'px';
+      if(below>=260 || below>=above){ p.style.top=(r.bottom+6)+'px'; p.style.bottom='auto'; p.style.maxHeight=Math.max(160, Math.min(420, below-6))+'px'; }
+      else { p.style.top='auto'; p.style.bottom=(H-r.top+6)+'px'; p.style.maxHeight=Math.max(160, Math.min(420, above-6))+'px'; }
+    }
+    function close(){ if(!OPEN) return; const o=OPEN; OPEN=null; o.btn.setAttribute('aria-expanded','false'); if(o.pop.parentNode) o.pop.parentNode.removeChild(o.pop); }
+    document.addEventListener('pointerdown', e=>{ if(OPEN && !OPEN.pop.contains(e.target) && !OPEN.btn.contains(e.target)) close(); }, true);
+    window.addEventListener('resize', ()=>place());
+    window.addEventListener('scroll', e=>{ if(OPEN && !OPEN.pop.contains(e.target)) place(); }, true);
+    function start(){ styles(); scan(); try{ new MutationObserver(later).observe(document.documentElement, {childList:true, subtree:true}); }catch(_){} }
+    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', start, {once:true}); else setTimeout(start, 0);
+  })();
+
+  window.PH={PEOPLE,newHiresOn,pickOn,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,teamNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, rosterView, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, chatBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK, notesHTML, searchHTML, searchDocs, searchDocsHTML, levelForTeams, teamsSeeAll, tcOn, tcRoleFor, payOn, payRoleFor, paySenders, reloadPaySenders, paySenderOffices, payLevel, payReminders, payMark, reloadPayStatus, payRulesReady, payAlertPlan, payAlertsTick, centralNow, alertsReady, saveFace, faceOf, avatar, viewLink, isWordName, wordAttrs, wordPdfInto,
     sensRecord, reloadSensitive, sensLevelFor, sensitiveLevel, sensConfirmOk,
     setTheme, theme:()=>THEME, setLayout, layout:()=>LAYOUT, layouts:()=>LAYOUTS.map(l=>({k:l.k, n:l.n})), themes:()=>THEMES.map(t=>({k:t.k, n:t.n})), schemeTokens:k=>schemeTokens(themeOf(k)), contrast,
     feedback:openFeedback, feedbackText, feedbackContext, learning:stillLearning, fbReady, myFeedback, fbTick, usageReady, rosterName, useEmail, useTrackMe, loadHold, loadDone};
