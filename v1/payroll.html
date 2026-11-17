@@ -247,15 +247,15 @@
     .perhead .when{font-size:17px}
   }
 </style>
-<script src="user.js?v=hc178"></script>
+<script src="user.js?v=hc179"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc178"></script>
-  <script src="gate.js?v=hc178"></script>
-  <script src="alerts.js?v=hc178"></script>
-  <script src="_staff.js?v=hc178"></script>
-  <script src="payrules.js?v=hc178"></script>
-  <script src="paystore.js?v=hc178"></script>
-  <script src="docs.js?v=hc178"></script>
+  <script src="store.js?v=hc179"></script>
+  <script src="gate.js?v=hc179"></script>
+  <script src="alerts.js?v=hc179"></script>
+  <script src="_staff.js?v=hc179"></script>
+  <script src="payrules.js?v=hc179"></script>
+  <script src="paystore.js?v=hc179"></script>
+  <script src="docs.js?v=hc179"></script>
 </head>
 <body>
 <div class="ribbon">MOCK-UP for Heather — made-up people and amounts. Try it as the Carlsbad TC first, then as Heather.</div>
@@ -1006,7 +1006,7 @@
      (it was on every office's row): the strictest of their offices' marks (None > Partial > Full), on their first
      office's row; the other row says where it is. (3) "Make them one person" also offers two entries with the same name
      at different offices (she confirms). Off = exactly as before. */
-  const TOGETHER_LIVE=false;
+  const TOGETHER_LIVE=true;   // ON for the live site 17/11/2026 (hc179) - Cory: "together live". false = off again.
   const TOGON=()=>TOGETHER_LIVE || !(window.PH && PH.isLive && PH.isLive());
   const TOG_DEFAULT=[['crucesffo','cruceslco']];    // Heather's ask - her own list (Settings) replaces it once saved
   let TOGETHER=null;                                // live: settings.json `together` (null = never set)
@@ -2237,7 +2237,7 @@
 })();
 </script>
 <script>PH.nav('payroll');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc178"></script>
+<script src="tour.js?v=hc179"></script>
 <script>
 Tour.init([
   ...((window.PH && PH.isLive && PH.isLive()) || (()=>{ try{ return localStorage.getItem('ph_pay_real')==='1'; }catch(_){ return false; } })() ? [] : [{sel:'#persona', title:'A mock-up', body:'Made-up people and amounts. Start as the <b>Carlsbad TC</b>, who sends Carlsbad’s sheet, then switch to <b>Heather</b>.'}]),

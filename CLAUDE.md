@@ -325,7 +325,7 @@ I can confidently say that the chat feature should go next. The production thing
    payadds/payentered/payrates regexes moved to sections. Browser (mock-up): Cruces one list A-Z, made-up Elena Vega 39.58 +
    29.14 = 68.72 h, one $100 bonus; Separate -> bonus only on FFO's row ("on Cruces FFO's row"); Enter together back;
    no page errors. NOT CHECKED: whether live Yvonne/Erica are one person (linked) or two entries - if two, Settings ->
-   Listed twice? -> Make them one person. TO TURN ON LIVE: TOGETHER_LIVE=true + deploy, on Cory's OK.
+   Listed twice? -> Make them one person. ON FOR LIVE hc179 (Cory 17/11: "together live"): TOGETHER_LIVE=true.
 **LIVE 01/11/2026 (hc115, 36 files byte-checked, alerts-test 404 on live):** Selene (01/11) "Could we add “Pending – Scheduled to Start” as an additional TC
 outcome? This would apply to patients who have completed their exam and scheduled a future start appointment but
 have not yet signed their contract." -> tc.js SCHED_START: a completed consult (counts for conversion), not a start

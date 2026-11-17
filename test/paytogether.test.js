@@ -42,7 +42,7 @@ t('groups: real offices only, never Zihua (nobody sends it), once each, in her s
   JSON.stringify(env.cleanTogether([['b','a','a','nope'],['z','a'],['b'],'junk']))==='[["a","b"]]' && env.cleanTogether(undefined)===null && env.cleanTogether([]).length===0);
 
 /* the page */
-t('OFF on the live site until Cory says so; off = every office its own list and the bonus as before', /const TOGETHER_LIVE=false;/.test(H) &&
+t('ON for the live site (hc179, Cory: "together live"); false again = every office its own list and the bonus as before', /const TOGETHER_LIVE=true;/.test(H) &&
   /const TOGON=\(\)=>TOGETHER_LIVE \|\| !\(window\.PH && PH\.isLive && PH\.isLive\(\)\);/.test(H) && /if\(!TOGON\(\)\) return \[\];/.test(fn('togGroups')) &&
   /if\(!TOGON\(\) \|\| !p \|\| \(p\.offices\|\|\[\]\)\.length<2\) return null;/.test(fn('oneBonus')));
 t('until she saves her own list, the two Cruces offices are entered together (her ask); her list in settings.json replaces it',
