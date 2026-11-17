@@ -247,15 +247,15 @@
     .perhead .when{font-size:17px}
   }
 </style>
-<script src="user.js?v=hc169"></script>
+<script src="user.js?v=hc170"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc169"></script>
-  <script src="gate.js?v=hc169"></script>
-  <script src="alerts.js?v=hc169"></script>
-  <script src="_staff.js?v=hc169"></script>
-  <script src="payrules.js?v=hc169"></script>
-  <script src="paystore.js?v=hc169"></script>
-  <script src="docs.js?v=hc169"></script>
+  <script src="store.js?v=hc170"></script>
+  <script src="gate.js?v=hc170"></script>
+  <script src="alerts.js?v=hc170"></script>
+  <script src="_staff.js?v=hc170"></script>
+  <script src="payrules.js?v=hc170"></script>
+  <script src="paystore.js?v=hc170"></script>
+  <script src="docs.js?v=hc170"></script>
 </head>
 <body>
 <div class="ribbon">MOCK-UP for Heather — made-up people and amounts. Try it as the Carlsbad TC first, then as Heather.</div>
@@ -984,7 +984,7 @@
   }
   function viewBoard(){
     const n=per, pr=P(n), e=enteredOf(n), sent=OFFICES.filter(o=>get(n,o.k).status==='sent').length, F=flags(n);
-    let h='<div class="stack"><div class="card"><div class="perhead"><div class="grow"><div class="small muted" style="font-weight:700;text-transform:uppercase;letter-spacing:.05em">Pay period '+lab(n)+'</div>'+
+    let h='<div class="stack">'+newOnCard()+'<div class="card"><div class="perhead"><div class="grow"><div class="small muted" style="font-weight:700;text-transform:uppercase;letter-spacing:.05em">Pay period '+lab(n)+'</div>'+
       '<div class="when">'+esc(fmt(pr.start,{weekday:'short'}))+' – '+esc(fmt(pr.end,{weekday:'short'}))+'</div>'+
       '<div class="small muted"><b>Wk 1</b> '+esc(span(pr.start,pr.w1end))+' · <b>Wk 2</b> '+esc(span(pr.w2start,pr.end))+'</div>'+
       '<div class="small muted">Paid '+esc(fmt(pr.pay,{weekday:'long'}))+' · office sheets '+esc(dueText(pr))+(pr.hol?' · includes '+esc(pr.hol.n):'')+'</div></div>'+
@@ -1187,7 +1187,7 @@
         (R().ro ? '' : '<button class="btn sm" data-act="oneperson" data-v="'+esc(String(g[0].email).toLowerCase())+'">Make them one person</button>')+'</div>').join('')+'</div>';
     h+='<div class="card"><div class="row" style="margin-bottom:8px"><div class="grow"><h2>People</h2><p class="sub" style="margin:0">By last name, like the payroll software. Their office, their pay-period bonus, and when holiday pay starts.</p></div><button class="btn ghost sm" data-act="addp" data-v="">＋ Add a person</button></div>'+
       (LIVEPAY ? '<div class="row" style="margin-bottom:10px;flex-wrap:wrap;gap:6px"><span class="small muted">Fill from the Home-Brace team list:</span>'+OFFICES.filter(o=>!o.self).map(o=>'<button class="btn ghost sm" data-act="fill" data-v="'+o.k+'">＋ '+esc(o.n)+'</button>').join('')+
-        OFFICES.filter(o=>o.self).map(o=>'<span class="small muted">'+esc(o.n)+': add its people with <b>＋ Add a person</b>.</span>').join('')+'</div>' : '')+
+        OFFICES.filter(o=>o.self).map(o=>'<span class="small muted">'+esc(o.n)+': add its people with <b>＋ Add a person</b>.</span>').join('')+'</div>' : '')+skippedHTML()+
       '<div class="tblwrap"><table class="t"><thead><tr><th>Name</th><th>Office</th><th class="n">PP bonus</th><th>Started</th><th>Holiday pay from</th><th></th><th></th></tr></thead><tbody>'+
       act.map(p=>'<tr><td><b>'+esc(disp(p))+'</b></td><td>'+esc(p.offices.map(k=>OFF[k].n).join(' + '))+
         (R().ro ? '' : '<br><select class="in alsoat" data-alsoat="'+p.id+'" aria-label="Also works at another office: '+esc(disp(p))+'"><option value="">＋ Also works at…</option>'+
@@ -1243,15 +1243,20 @@
   }
   let tt=null; function toast(m){ const t=el('toast'); t.textContent=m; t.classList.add('on'); clearTimeout(tt); tt=setTimeout(()=>t.classList.remove('on'),2600); }
   const top=t=>'<div class="dm-top"><h3>'+t+'</h3><button class="x" data-act="close" aria-label="Close">×</button></div>';
-  function addPersonDlg(o){
-    openDlg(top(o?'Add someone to '+esc(poss(OFF[o].n))+' sheet':'Add a person')+'<div class="dm-body">'+
-      '<div class="row"><label class="fld grow">First name<input class="in" id="nf" autocomplete="off"></label><label class="fld grow">Last name<input class="in" id="nl" autocomplete="off"></label></div>'+
-      '<div class="row"><label class="fld grow">Start date<input class="in" id="ns" type="date" value="'+TODAY+'"></label>'+
-      (o?'':'<label class="fld grow">Office<select class="in" id="no">'+OFFICES.map(q=>'<option value="'+q.k+'">'+esc(q.n)+'</option>').join('')+'</select></label><label class="fld grow">Pay-period bonus ($)<input class="in" id="nb" type="number" min="0" step="5" inputmode="decimal"></label>')+'</div>'+
-      '<div class="note info">They go in alphabetically by last name, like the payroll software.'+(o?' Heather sets their pay-period bonus.':'')+' Holiday pay starts 90 days after the start date.</div>'+
+  function addPersonDlg(o, pre){
+    /* pre = someone from "New on the team list" (newOnList): their name filled in, their office chosen, the start date
+       left empty so it's typed (holiday pay counts from it), their email carried along (#nem) like Fill does. */
+    const pf=(!o && pre && OFF[pre.k]) ? pre : null, sp=pf ? pf.nm.lastIndexOf(' ') : -1;
+    const f0=pf ? (sp>0 ? pf.nm.slice(0,sp) : pf.nm) : '', l0=pf && sp>0 ? pf.nm.slice(sp+1) : '';
+    openDlg(top(o?'Add someone to '+esc(poss(OFF[o].n))+' sheet':pf?'Add '+esc(pf.nm)+' to '+esc(poss(OFF[pf.k].n))+' sheet':'Add a person')+'<div class="dm-body">'+
+      '<div class="row"><label class="fld grow">First name<input class="in" id="nf" autocomplete="off"'+(pf?' value="'+esc(f0)+'"':'')+'></label><label class="fld grow">Last name<input class="in" id="nl" autocomplete="off"'+(pf?' value="'+esc(l0)+'"':'')+'></label></div>'+
+      '<div class="row"><label class="fld grow">Start date<input class="in" id="ns" type="date" value="'+(pf?'':TODAY)+'"></label>'+
+      (o?'':'<label class="fld grow">Office<select class="in" id="no">'+OFFICES.map(q=>'<option value="'+q.k+'"'+(pf && q.k===pf.k?' selected':'')+'>'+esc(q.n)+'</option>').join('')+'</select></label><label class="fld grow">Pay-period bonus ($)<input class="in" id="nb" type="number" min="0" step="5" inputmode="decimal"></label>')+'</div>'+
+      (pf?'<input type="hidden" id="nem" value="'+esc(pf.em)+'">':'')+
+      '<div class="note info">'+(pf?'From the team list (added in Admin → People). Type their start date. ':'')+'They go in alphabetically by last name, like the payroll software.'+(o?' Heather sets their pay-period bonus.':'')+' Holiday pay starts 90 days after the start date.</div>'+
       '<div id="nerr" class="small" style="color:#9a2f1e;font-weight:700"></div></div>'+
       '<div class="dm-foot"><button class="btn ghost" data-act="close">Cancel</button><button class="btn" data-act="addok" data-v="'+(o||'')+'">Add</button></div>');
-    setTimeout(()=>{ const f=el('nf'); if(f) f.focus(); },30);
+    setTimeout(()=>{ const f=el(pf ? 'ns' : 'nf'); if(f) f.focus(); },30);
   }
   function addDocDlg(o){
     openDlg(top('Add a doctor paid by the day')+'<div class="dm-body">'+
@@ -1510,17 +1515,23 @@
       location.reload(); return; }
     if(act==='reset'){ S={v:2}; fresh(); save(); per=HOME(); tab='sheet'; render(); toast('Sample data reset'); return; }
     if(act==='addp'){ addPersonDlg(v); return; }
+    if(act==='newadd' && NEWON()){ const x=newOnList().find(q=>q.k===v && q.key===b.dataset.i); if(x) addPersonDlg('', x); return; }
+    if((act==='newskip' || act==='newback') && NEWON()){ skipNew(v, b.dataset.i, act==='newskip'); return; }
     if(act==='addok'){
       const first=(el('nf').value||'').trim(), last=(el('nl').value||'').trim(), start=el('ns').value, o=v||(el('no')&&el('no').value);
+      const em=el('nem') ? String(el('nem').value||'').trim().toLowerCase() : '';   // only from "New on the team list"
+      const twin=em ? elsewhere(em, o) : null;
+      if(twin){ addToOffice(twin, o); save(); closeDlg(); render(); toast(disp(twin)+' is on '+poss(OFF[o].n)+' sheet too - one person, hours added up for you'); return; }
       if(!first || !last){ el('nerr').textContent='Their first and last name, please.'; return; }
       if(!start){ el('nerr').textContent='Their start date, please — holiday pay counts from it.'; return; }
       const pn=(v && per===NEXT) ? NEXT : CUR;   // added on the sheet in progress: it goes on that one
       const heather=!v, p={id:'n'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), offices:[o], first, last, n:first+' '+last, start,
         bonus:heather?num(el('nb').value):0, byKind:heather?'coo':'om', at:nowISO(), period:pn};
+      if(em) p.email=em;
       S.added.push(p);
       if(!heather){ const s=mine(pn,o); s.rows[p.id]=blank(); if(s.status==='sent') s.changed=true; }
       if(LIVEPAY){
-        livePeopleOf(o, f=>{ f.people.push({id:p.id, first, last, start, byKind:p.byKind, at:p.at, period:P(pn).key, by:(PH.email && PH.email(PH.me()))||''}); });
+        livePeopleOf(o, f=>{ f.people.push(Object.assign({id:p.id, first, last, start, byKind:p.byKind, at:p.at, period:P(pn).key, by:(PH.email && PH.email(PH.me()))||''}, em ? {email:em, from:'team list'} : {})); });
         if(heather && p.bonus){ S.bonus[p.id]=p.bonus; liveQueue('_h','settings', cur=>{ const x=cur||{v:1, bonus:{}}; x.bonus=x.bonus||{}; x.bonus[p.id]=p.bonus; return x; }); }
         if(!heather){ const s=mine(pn,o); if(s.status==='none') s.status='draft'; liveSheet(pn,o,{row:p.id, f:'w1', v:''}); }
         liveFlushAll();
@@ -1648,6 +1659,59 @@
   function liveDoc(id, fn){
     const d=everyDoc().find(x=>x.id===id); if(!d) return;
     livePeopleOf(d.office, x=>{ const q=x.docs.find(y=>y.id===id); if(q) fn(q); }, true);
+  }
+  /* NEW ON THE TEAM LIST (17/11/2026, hc170) - SANDBOX ONLY until user.js NEWHIRES_LIVE is true (PH.newHiresOn()).
+     Heather added Jamy Aguilar and Trinity Moccabee to Clovis in Admin -> People; Payroll never knew - its people are
+     its own private list, filled from the team list only by "Fill from the Home-Brace team list". Now anyone ADDED in
+     Admin -> People (r._added - not the starting staff list: that was filled at go-live, and whoever was left out was
+     left out on purpose) who isn't on their office's payroll list is offered on her board: "Add to <office>'s sheet"
+     (Add a person, filled in - she types the start date and the bonus) or "Skip" (kept in her own folder,
+     settings.json notPaid {officeKey:[personKey]}, listed in Settings -> People with Put back). Matched like Fill:
+     same email or same "first last". Doctors left out (Fill leaves them out). Offices = OFFICES, so a new office from
+     Admin -> Locations is included; senders and Payroll: See never get it. Nothing is written until she presses one. */
+  const NEWON=()=>LIVEPAY && !!(window.PH && PH.newHiresOn && PH.newHiresOn()) && !R().ro;
+  const rkey=r=>(window.PH && PH.personKey) ? PH.personKey(r) : String((r && (r.email||r.name))||'').toLowerCase();
+  function cleanNotPaid(x){
+    const out={}; if(!x || typeof x!=='object') return out;
+    Object.keys(x).forEach(k=>{ if(Array.isArray(x[k])) out[k]=x[k].filter(v=>typeof v==='string' && v); });
+    return out;
+  }
+  function newOnList(){
+    if(!NEWON()) return [];
+    const ro=((PH.rosterView && PH.rosterView())||[]).filter(r=>r && r._added && String(r.name||'').trim() && !(r.teams||[]).some(t=>/doctor/i.test(t)));
+    if(!ro.length) return [];
+    const out=[];
+    OFFICES.filter(o=>!o.self).forEach(o=>{
+      const have={}, skip=(S.notPaid && S.notPaid[o.k])||[];
+      everyone().filter(p=>p.offices.indexOf(o.k)>=0).forEach(p=>{ have[(p.first+' '+p.last).toLowerCase()]=1; if(p.email) have[String(p.email).toLowerCase()]=1; });
+      ro.filter(r=>(r.offices||[]).indexOf(o.n)>=0).forEach(r=>{
+        const em=String(r.email||'').toLowerCase(), nm=String(r.name||'').trim(), key=rkey(r);
+        if((em && have[em]) || have[nm.toLowerCase()] || !key || skip.indexOf(key)>=0) return;
+        out.push({k:o.k, key, em, nm});
+      });
+    });
+    return out;
+  }
+  function newOnCard(){
+    const L=newOnList(); if(!L.length) return '';
+    return '<div class="card"><h2>🆕 New on the team list ('+L.length+')</h2><p class="sub">Added in Admin → People and not on their office’s payroll yet. Add them to the sheet, or skip anyone who isn’t paid there (or is already on it under another name).</p>'+
+      L.map(x=>'<div class="row" style="gap:8px;flex-wrap:wrap;padding:10px 0;border-top:1px solid var(--line)"><span class="grow" style="min-width:140px"><b>'+esc(x.nm)+'</b><br><span class="small muted">'+esc(OFF[x.k].n)+'</span></span>'+
+        '<span style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm" data-act="newadd" data-v="'+esc(x.k)+'" data-i="'+esc(x.key)+'">Add to '+esc(poss(OFF[x.k].n))+' sheet</button>'+
+        '<button class="btn ghost sm" data-act="newskip" data-v="'+esc(x.k)+'" data-i="'+esc(x.key)+'">Skip</button></span></div>').join('')+'</div>';
+  }
+  function skipNew(k, key, on){
+    if(!OFF[k] || !key) return;
+    const put=l=>{ const y=(Array.isArray(l) ? l : []).filter(q=>q!==key); if(on) y.push(key); return y; };
+    S.notPaid=S.notPaid||{}; S.notPaid[k]=put(S.notPaid[k]);
+    liveQueue('_h','settings', cur=>{ const x=cur||{v:1, bonus:{}}; x.notPaid=x.notPaid||{}; x.notPaid[k]=put(x.notPaid[k]); return x; });
+    render(); toast(on ? 'Skipped - Settings → People lists them if you change your mind' : 'Back on “New on the team list”');
+  }
+  function skippedHTML(){
+    if(!NEWON()) return '';
+    const byKey={}; ((PH.rosterView && PH.rosterView())||[]).forEach(r=>{ byKey[rkey(r)]=r; });
+    const L=[]; Object.keys(S.notPaid||{}).forEach(k=>{ if(OFF[k]) (S.notPaid[k]||[]).forEach(key=>L.push({k, key, nm:(byKey[key] && byKey[key].name) || key})); });
+    if(!L.length) return '';
+    return '<div class="small muted" style="margin:-2px 0 10px">Skipped from “New on the team list”: '+L.map(x=>'<span style="white-space:nowrap">'+esc(x.nm)+' ('+esc(OFF[x.k].n)+') <button class="link small" data-act="newback" data-v="'+esc(x.k)+'" data-i="'+esc(x.key)+'">Put back</button></span>').join(' · ')+'</div>';
   }
   /* Fill an office from the Home-Brace team list (once, to start): everyone the roster puts at that office who isn't
      a doctor and isn't on its list yet. Heather then sets bonuses and start dates, and takes off anyone who isn't paid
@@ -1802,7 +1866,7 @@
   }
   function liveLoadNow(lv){
     const offs=lv==='send' ? myOffices() : OFFICES.map(o=>o.k), people={}, docs=[];
-    S.subs={}; S.entered={}; S.entOff={}; S.removed={}; S.docGone={}; S.bonus={}; S.added=[]; S.docAdd=[]; LIVECOLS={}; LIVE.old=null; LIVE.oldErr='';
+    S.subs={}; S.entered={}; S.entOff={}; S.removed={}; S.docGone={}; S.bonus={}; S.notPaid={}; S.added=[]; S.docAdd=[]; LIVECOLS={}; LIVE.old=null; LIVE.oldErr='';
     /* Nothing is read or written until the payroll folder is LOCKED: before that, everyone in Home-Brace could open it
        in SharePoint. Whoever manages payroll is told how; a sender only ever gets access after it's locked anyway. */
     /* The lock is checked AT THE SAME TIME as the folders (10/11/2026, speed). Only if it doesn't look locked is it
@@ -1840,6 +1904,7 @@
         LIVEADDS=(ad && Array.isArray(ad.items)) ? ad.items.filter(a=>a && typeof a==='object' && a.id) : [];   // ADD TO PAYROLL
         st=st||{};
         S.bonus=st.bonus||{};
+        S.notPaid=cleanNotPaid(st.notPaid);
         if(st.rates) RATE=Object.assign({}, RATE, st.rates);
         takeCols(cols, LIVE.unread);
       } })
@@ -1889,7 +1954,7 @@
 })();
 </script>
 <script>PH.nav('payroll');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc169"></script>
+<script src="tour.js?v=hc170"></script>
 <script>
 Tour.init([
   ...((window.PH && PH.isLive && PH.isLive()) || (()=>{ try{ return localStorage.getItem('ph_pay_real')==='1'; }catch(_){ return false; } })() ? [] : [{sel:'#persona', title:'A mock-up', body:'Made-up people and amounts. Start as the <b>Carlsbad TC</b>, who sends Carlsbad’s sheet, then switch to <b>Heather</b>.'}]),

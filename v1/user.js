@@ -244,10 +244,30 @@
      ------------------------------------------------------------------ */
   let ROSTER_FILE=null, ROSTER_EXTRA={added:[],removed:[]};
   const EXTRA_KEY='ph_roster_extra';
+  /* NEW HIRES (17/11/2026, hc170) - SANDBOX ONLY until Cory says deploy: flip this to true.
+     Heather added Jamy Aguilar and Trinity Moccabee to Clovis in Admin -> People: they sat at the very bottom of the
+     list instead of with Clovis, and Payroll never knew about them. With this on: (1) someone added here goes in
+     after the last person at their (first) office, so every list that reads the roster shows them with their office;
+     (2) Payroll -> This pay period offers "New on the team list" (payroll.html newOnList). Off = exactly as before.
+     Here, not further down: applyExtra can run while this file is still being read. */
+  const NEWHIRES_LIVE=false;
+  function newHiresOn(){ return NEWHIRES_LIVE || env()!=='live'; }
+  /* Where an added row goes: after the last row whose first office is theirs, else the last row that has their office
+     at all, else the end (as before). Several added at one office keep the order they were added in. */
+  function officeSpot(rows, row){
+    const o=String(((row && row.offices)||[])[0]||'').trim();
+    if(!o) return -1;
+    let at=-1;
+    rows.forEach(function(x, i){ if(String(((x && x.offices)||[])[0]||'').trim()===o) at=i; });
+    if(at<0) rows.forEach(function(x, i){ if(((x && x.offices)||[]).indexOf(o)>=0) at=i; });
+    return at<0 ? -1 : at+1;
+  }
   function applyExtra(){
-    const base=(ROSTER_FILE||[]).slice();
+    const base=(ROSTER_FILE||[]).slice(), grouped=newHiresOn();
     (ROSTER_EXTRA.added||[]).forEach(function(r){
-      if(r && r.name) base.push(Object.assign({_added:true}, r));
+      if(!(r && r.name)) return;
+      const row=Object.assign({_added:true}, r), at=grouped ? officeSpot(base, row) : -1;
+      if(at<0) base.push(row); else base.splice(at, 0, row);
     });
     const gone={};
     (ROSTER_EXTRA.removed||[]).forEach(function(k){ gone[String(k||'').toLowerCase()]=1; });
@@ -3732,7 +3752,7 @@
     const m=document.createElement('link'); m.rel='manifest'; m.href='manifest.webmanifest'; document.head.appendChild(m);
   }
 
-  window.PH={PEOPLE,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,teamNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, rosterView, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, chatBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK, notesHTML, searchHTML, searchDocs, searchDocsHTML, levelForTeams, teamsSeeAll, tcOn, tcRoleFor, payOn, payRoleFor, paySenders, reloadPaySenders, paySenderOffices, payLevel, payReminders, payMark, reloadPayStatus, payRulesReady, payAlertPlan, payAlertsTick, centralNow, alertsReady, saveFace, faceOf, avatar, viewLink, isWordName, wordAttrs, wordPdfInto,
+  window.PH={PEOPLE,newHiresOn,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,teamNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, rosterView, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, chatBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK, notesHTML, searchHTML, searchDocs, searchDocsHTML, levelForTeams, teamsSeeAll, tcOn, tcRoleFor, payOn, payRoleFor, paySenders, reloadPaySenders, paySenderOffices, payLevel, payReminders, payMark, reloadPayStatus, payRulesReady, payAlertPlan, payAlertsTick, centralNow, alertsReady, saveFace, faceOf, avatar, viewLink, isWordName, wordAttrs, wordPdfInto,
     sensRecord, reloadSensitive, sensLevelFor, sensitiveLevel, sensConfirmOk,
     setTheme, theme:()=>THEME, setLayout, layout:()=>LAYOUT, layouts:()=>LAYOUTS.map(l=>({k:l.k, n:l.n})), themes:()=>THEMES.map(t=>({k:t.k, n:t.n})), schemeTokens:k=>schemeTokens(themeOf(k)), contrast,
     feedback:openFeedback, feedbackText, feedbackContext, learning:stillLearning, fbReady, myFeedback, fbTick, usageReady, rosterName, useEmail, useTrackMe, loadHold, loadDone};

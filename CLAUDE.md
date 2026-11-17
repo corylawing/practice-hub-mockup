@@ -224,9 +224,24 @@ I can confidently say that the chat feature should go next. The production thing
    payroll's handler (`act==='addok' && !R().ro`) came first - so Add a person (Heather's, and an office's "Add someone
    new") always said "Pick who it's for" and never saved. Add to payroll's button + handler are now `addpayok`.
    test/payadds.test.js +1 (fails on the old file). Browser-checked in the mock-up: a made-up person saves; Add to
-   payroll still works. ALSO REPORTED, NOT FIXED (ask Cory): people added in Admin -> People sit at the bottom of the
-   list, not with their office (user.js applyExtra appends ROSTER_EXTRA.added after the file); and Payroll never picks
-   them up by itself - only Payroll -> Settings "Fill from the Home-Brace team list" does.
+   payroll still works. ALSO REPORTED (Jamy Aguilar + Trinity Moccabee, Clovis): -> #17.
+17. **New hires: with their office + "New on the team list" on Payroll (17/11/2026, hc170) - SANDBOX ONLY.** Cory: "yes
+   build both on the sandbox" / "Be very careful". ONE switch: user.js `NEWHIRES_LIVE=false` (PH.newHiresOn() = it ||
+   env()!=='live'); off = the live site exactly as before. TO PUT IT LIVE (Cory's OK): set it true, tests, deploy.
+   (1) user.js applyExtra: someone added in Admin -> People goes in after the last roster row whose FIRST office is
+   theirs (else the last row that has it, else the end, as before - officeSpot); order added kept; Admin, Team, search
+   all read rosterRows(), so they all show it. Nothing stored changes - only the order things are listed in.
+   (2) payroll.html: "New on the team list (N)" card at the TOP of Heather's board (LIVEPAY, manage/edit, not See,
+   never senders): roster rows with `_added` (not the starting list - filled at go-live, gaps there on purpose), not
+   doctors (like Fill), at each office in OFFICES (a new office from Locations included; not Zihua) and not on that
+   office's payroll by email or "first last" (taken-off people count as on it). "Add to <office>'s sheet" = Add a
+   person filled in (name, office; start date EMPTY so she types it; email carried as #nem -> people.json email +
+   from:'team list'; same email at another office -> linked like Fill, elsewhere/addToOffice). "Skip" = Heather's own
+   settings.json `notPaid {officeKey:[PH.personKey]}` (cleanNotPaid on read); Settings -> People lists them with Put back.
+   test/newhires.test.js (36, in all.sh). Browser-checked on the local sandbox, Real version, made-up people (the
+   public sandbox has no staff file, so Admin there shows the built-in list and Real version has no added people - check
+   on the Mac's local preview, which has the real file): Admin order, card, Add (start date required; holiday pay from
+   +90 days), Skip / Put back, reload, 390 px no sideways scroll, mock-up mode unchanged, no page errors.
 **LIVE 01/11/2026 (hc115, 36 files byte-checked, alerts-test 404 on live):** Selene (01/11) "Could we add “Pending – Scheduled to Start” as an additional TC
 outcome? This would apply to patients who have completed their exam and scheduled a future start appointment but
 have not yet signed their contract." -> tc.js SCHED_START: a completed consult (counts for conversion), not a start
