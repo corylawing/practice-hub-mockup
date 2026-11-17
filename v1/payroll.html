@@ -247,15 +247,15 @@
     .perhead .when{font-size:17px}
   }
 </style>
-<script src="user.js?v=hc166"></script>
+<script src="user.js?v=hc167"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc166"></script>
-  <script src="gate.js?v=hc166"></script>
-  <script src="alerts.js?v=hc166"></script>
-  <script src="_staff.js?v=hc166"></script>
-  <script src="payrules.js?v=hc166"></script>
-  <script src="paystore.js?v=hc166"></script>
-  <script src="docs.js?v=hc166"></script>
+  <script src="store.js?v=hc167"></script>
+  <script src="gate.js?v=hc167"></script>
+  <script src="alerts.js?v=hc167"></script>
+  <script src="_staff.js?v=hc167"></script>
+  <script src="payrules.js?v=hc167"></script>
+  <script src="paystore.js?v=hc167"></script>
+  <script src="docs.js?v=hc167"></script>
 </head>
 <body>
 <div class="ribbon">MOCK-UP for Heather — made-up people and amounts. Try it as the Carlsbad TC first, then as Heather.</div>
@@ -1118,7 +1118,7 @@
       .sort((a,b)=>a.d<b.d?-1:a.d>b.d?1:0);
     const btn=(act,d,t)=>'<button class="btn ghost sm" data-act="'+act+'" data-v="'+esc(d)+'">'+t+'</button>';
     return '<div class="card"><h2>Paid holidays</h2><p class="sub">A holiday column shows up by itself in the pay period it falls in. Home-Brace works them out every year - '+
-      'a holiday on a Saturday is the Friday before, on a Sunday the Monday after'+(can?'. Change any of them here: everyone’s sheets follow. The ones already paid stay as they were.':'.')+'</p>'+
+      'each one paid on its actual day, whatever day of the week it falls on'+(can?'. Change any of them here: everyone’s sheets follow. The ones already paid stay as they were.':'.')+'</p>'+
       rows.map(x=>'<div class="hrow'+(x.off?' off':'')+'"><span class="hd">'+esc(fmt(x.d,{weekday:'short', year:'numeric'}))+'</span><span class="hn"><span class="hnm">'+esc(x.n)+'</span>'+
         (x.added?' <span class="pill p-go">Added</span>':'')+(x.off?' <span class="pill p-new">Not paid</span>':'')+'</span>'+
         (can && x.d>=from ? (x.added ? btn('holdel',x.d,'Take off') : x.off ? btn('holon',x.d,'Put back') : btn('holoff',x.d,'Not paid this year')) : '')+'</div>').join('')+
@@ -1889,7 +1889,7 @@
 })();
 </script>
 <script>PH.nav('payroll');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc166"></script>
+<script src="tour.js?v=hc167"></script>
 <script>
 Tour.init([
   ...((window.PH && PH.isLive && PH.isLive()) || (()=>{ try{ return localStorage.getItem('ph_pay_real')==='1'; }catch(_){ return false; } })() ? [] : [{sel:'#persona', title:'A mock-up', body:'Made-up people and amounts. Start as the <b>Carlsbad TC</b>, who sends Carlsbad’s sheet, then switch to <b>Heather</b>.'}]),

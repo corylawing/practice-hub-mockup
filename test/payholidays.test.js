@@ -15,18 +15,22 @@ const TYPED=[{d:'2026-01-01',n:'New Year’s Day'},{d:'2026-05-25',n:'Memorial D
   {d:'2027-01-01',n:'New Year’s Day'},{d:'2027-05-31',n:'Memorial Day'},{d:'2027-07-05',n:'Independence Day'},
   {d:'2027-09-06',n:'Labor Day'},{d:'2027-11-25',n:'Thanksgiving'},{d:'2027-12-24',n:'Christmas'}];
 const two=R.holidaysFor(2026).concat(R.holidaysFor(2027));
-t('2026 and 2027 come out exactly as they were typed in (all 12 dates and names)', JSON.stringify(two)===JSON.stringify(TYPED));
-t('2028: New Year’s Day is a Saturday -> Friday Dec 31, 2027; Memorial May 29; July 4 (a Tuesday); Labor Sep 4; Thanksgiving Nov 23; Christmas Dec 25 (a Monday)',
-  R.holidaysFor(2028).map(h=>h.d).join()==='2027-12-31,2028-05-29,2028-07-04,2028-09-04,2028-11-23,2028-12-25');
-t('…and it says which year it’s for ("New Year’s Day 2028")', R.holidaysFor(2028)[0].n==='New Year’s Day 2028');
-t('a Sunday holiday is the Monday after (Christmas 2033 -> Mon Dec 26)', R.holidaysFor(2033).find(h=>h.n==='Christmas').d==='2033-12-26');
+/* Heather 17/11: "We pay the Holiday no matter what day it falls on ... pay it out on the actual day". */
+t('paid on the ACTUAL day: July 4 2026 (a Saturday), July 4 2027 (a Sunday), Christmas 2027 (a Saturday) - the rest as typed',
+  two.map(h=>h.d).join()==='2026-01-01,2026-05-25,2026-07-04,2026-09-07,2026-11-26,2026-12-25,2027-01-01,2027-05-31,2027-07-04,2027-09-06,2027-11-25,2027-12-25' &&
+  two.map(h=>h.n).join()===TYPED.map(h=>h.n).join());
+t('…and each actual day is in the SAME pay period as the date typed before (pay periods run Sunday to Saturday)',
+  two.every((h,i)=>{ for(let k=-30;k<80;k++){ const p=R.period(k, []); if(p.start<=TYPED[i].d && p.end>=TYPED[i].d) return p.start<=h.d && p.end>=h.d; } return false; }));
+t('2028: New Year’s Day (a Saturday) Jan 1; Memorial May 29; July 4 (a Tuesday); Labor Sep 4; Thanksgiving Nov 23; Christmas Dec 25',
+  R.holidaysFor(2028).map(h=>h.d).join()==='2028-01-01,2028-05-29,2028-07-04,2028-09-04,2028-11-23,2028-12-25' && R.holidaysFor(2028)[0].n==='New Year’s Day');
+t('a Sunday holiday is paid on the Sunday (Christmas 2033 -> Dec 25)', R.holidaysFor(2033).find(h=>h.n==='Christmas').d==='2033-12-25');
 t('the fourth Thursday and the last Monday land right in any year (2031: Thanksgiving Nov 27, Memorial May 26)',
   R.holidaysFor(2031).find(h=>h.n==='Thanksgiving').d==='2031-11-27' && R.holidaysFor(2031).find(h=>h.n==='Memorial Day').d==='2031-05-26');
 const thisY=new Date().getFullYear();
 t('the list always reaches two years past today, from 2026, in date order, with no list to keep up to date',
   R.HOLIDAYS[0].d==='2026-01-01' && R.HOLIDAYS.some(h=>h.d.slice(0,4)===String(thisY+2)) && R.HOLIDAYS.every((h,i,a)=>!i || a[i-1].d<=h.d));
-t('every pay period up to Dec 2027 finds the same holiday it did before',
-  (()=>{ for(let i=-5;i<40;i++){ const a=R.period(i, TYPED), b=R.period(i); if(b.pay>'2027-12-20') break; if(JSON.stringify(a.hol)!==JSON.stringify(b.hol) || a.due!==b.due) return false; } return true; })());
+t('every pay period up to Dec 2027 has the same holiday (by name) and the SAME due day as before',
+  (()=>{ for(let i=-5;i<40;i++){ const a=R.period(i, TYPED), b=R.period(i); if(b.pay>'2028-01-05') break; if(((a.hol||{}).n||'')!==((b.hol||{}).n||'') || a.due!==b.due) return false; } return true; })());
 
 // December 2028: Christmas (Mon Dec 25) and New Year's Day 2029 (Mon Jan 1) in one pay period
 const ALL=R.holidaysThrough(2029);
@@ -44,13 +48,13 @@ t('the payroll page uses the same holidays (the mock-up too) and pays each one i
   /const holN=PR\.holDates\(pr\.hol\)\.filter\(d=>eligible\(p,d\)\)\.length, hol=!p\.holHrs\?holN\*RATE\.holiday:0, holH=p\.holHrs\?holN\*RATE\.holidayHrs:0;/.test(H));
 t('the holiday box says "Both paid" / "1 of 2 paid" when there are two', /'<span class="pill p-done">Both paid<\/span>'/.test(H) && /paidN\+' of '\+hds\.length\+' paid<\/span>'/.test(H));
 t('Settings lists this year’s and next year’s holidays (not every year there is) and says how they’re worked out',
-  /const hy=\+TODAY\.slice\(0,4\), inYrs=d=>\+d\.slice\(0,4\)>=hy && \+d\.slice\(0,4\)<=hy\+1/.test(H) && /a holiday on a Saturday is the Friday before, on a Sunday the Monday after/.test(H));
+  /const hy=\+TODAY\.slice\(0,4\), inYrs=d=>\+d\.slice\(0,4\)>=hy && \+d\.slice\(0,4\)<=hy\+1/.test(H) && /each one paid on its actual day, whatever day of the week it falls on/.test(H));
 
 /* Heather can change them (Cory: "give nobody the ability to modify or change things" isn't scalable). */
 const U=fs.readFileSync(path.join(__dirname,'..','v1','user.js'),'utf8');
 let L=R.setHolidayEdits({off:['2026-12-25'], add:[{d:'2026-11-27', n:'Day after Thanksgiving'}]});
 t('"not paid this year" takes that one off; a paid day added goes in - the rest still from the rule',
-  !L.some(h=>h.d==='2026-12-25') && L.some(h=>h.d==='2026-11-27' && h.n==='Day after Thanksgiving' && h.added) && L.some(h=>h.d==='2027-12-24') && R.HOLIDAYS===L);
+  !L.some(h=>h.d==='2026-12-25') && L.some(h=>h.d==='2026-11-27' && h.n==='Day after Thanksgiving' && h.added) && L.some(h=>h.d==='2027-12-25') && R.HOLIDAYS===L);
 let pp=null; for(let i=0;i<20 && !pp;i++){ const p=R.period(i); if(p.start<='2026-11-26' && p.end>='2026-11-27') pp=p; }
 t('…pay periods and the "due Monday" weeks follow: Thanksgiving + the day after are both paid that pay period',
   pp && pp.hol && pp.hol.ds && pp.hol.ds.join()==='2026-11-26,2026-11-27' && R.calc({start:'2020-01-01'}, {}, pp, R.RATES, 0, {}).hol===200);

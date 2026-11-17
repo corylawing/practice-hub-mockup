@@ -184,6 +184,7 @@ I can confidently say that the chat feature should go next. The production thing
    9->11, Mansfield 8->7, San Angelo 9->10 + Nov completed Carlsbad 5->6, Lubbock 4->5 (the 16th passed); 2027 = 66 days
    boxes (null -> the Schedule), exactly the dry run.
 15. **Still fixed lists - a 9th office or a new year would NOT flow through (found 17/11/2026, not started; ask Cory).**
+   POG = a dollar amount the office types (Heather 17/11) - already so.
    (a) DONE hc166 (SANDBOX; deploy on Cory's OK) - Payroll offices: ONE list (payrules.js; payroll.html's identical copy
    removed - verified identical first). BASE_OFFICES = the 9, unchanged keys/order. A new office in Admin -> Locations
    shows in Payroll -> Settings "New in Admin -> Locations" (managers only): company name (required) + who usually
@@ -197,9 +198,10 @@ I can confidently say that the chat feature should go next. The production thing
    Headless Chrome (file://, made-up "Newtown"): card, company name required, added -> Settings row, board tile,
    combined heading, survives reload, first 9 unchanged, no errors. (b) DONE hc165 (LIVE 17/11 - Cory "deploy"; verified) - Payroll holidays
    worked out by rule (payrules.js holidaysFor/holidaysThrough/holIn/holDates): New Year's, last Mon of May, July 4,
-   first Mon of Sep, 4th Thu of Nov, Christmas; Sat -> Fri before, Sun -> Mon after. Gives EXACTLY the 12 typed 2026-27
-   dates; list = 2026..this year+2. New: Fri 2027-12-31 "New Year's Day 2028" (Jan 1 2028 is a Saturday - same rule
-   as Christmas 2027 -> Dec 24; ask Heather). Two holidays in one pay period (Christmas + New Year's, Dec 2028) = one
+   first Mon of Sep, 4th Thu of Nov, Christmas; list = 2026..this year+2. ON THE ACTUAL DAY (hc167, Heather 17/11:
+   "We pay the Holiday no matter what day it falls on. It would be ideal for Home Brace to pay it out on the actual
+   day") - no Sat->Fri / Sun->Mon (the typed 2026-27 list had Jul 3 2026, Jul 5 2027, Dec 24 2027; periods run Sun-Sat
+   so each is in the same pay period as its actual day - tested; due days for every period through 2027 identical). Two holidays in one pay period (Christmas + New Year's, Dec 2028) = one
    entry naming both, each paid ("Both paid" / "1 of 2 paid", holiday hours x2). Settings shows this + next year.
    Live Heather/settings.json has no holidays override (only bonus) - checked 17/11; the old st.holidays override is gone.
    CHANGEABLE (hc165, Cory: "its never very scalable to just do a few years and give nobody the ability to modify or

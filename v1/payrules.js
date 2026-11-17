@@ -68,18 +68,18 @@
   /* PAID HOLIDAYS, WORKED OUT EVERY YEAR (17/11/2026). The list used to be typed in and stopped at Christmas 2027 - from
      2028 holiday pay would quietly have gone missing. Cory: "Everything we build needs to be scalable". The six paid
      holidays by their rule - New Year's Day, Memorial Day (last Monday of May), Independence Day, Labor Day (first
-     Monday of September), Thanksgiving (fourth Thursday of November), Christmas - and, like the practice already does
-     (July 4 2026 -> Fri Jul 3, Christmas 2027 -> Fri Dec 24, July 4 2027 -> Mon Jul 5), one on a Saturday is taken the
-     Friday before and one on a Sunday the Monday after. The rule gives exactly the 12 dates of 2026 and 2027 that were
-     typed in (test/payholidays.test.js). Years 2026 to two years ahead of today; no list to keep up to date. */
+     Monday of September), Thanksgiving (fourth Thursday of November), Christmas. PAID ON THE ACTUAL DAY (Heather,
+     17/11/2026: "We pay the Holiday no matter what day it falls on. It would be ideal for Home Brace to pay it out on
+     the actual day") - July 4 is July 4 even on a Saturday, for the pay AND for the "sheets due Monday" week. (Pay
+     periods run Sunday to Saturday, so the Friday-before / Monday-after dates typed in before were always in the same
+     pay period anyway.) Years 2026 to two years ahead of today; no list to keep up to date. */
   function iso(dt){ return dt.toISOString().slice(0, 10); }
-  function observed(y, m, d){ const w = new Date(Date.UTC(y, m - 1, d)).getUTCDay(); return iso(new Date(Date.UTC(y, m - 1, d + (w === 6 ? -1 : w === 0 ? 1 : 0)))); }
   function nthDay(y, m, wd, n){ const first = new Date(Date.UTC(y, m - 1, 1)).getUTCDay(); return iso(new Date(Date.UTC(y, m - 1, 1 + ((wd - first + 7) % 7) + (n - 1) * 7))); }
   function lastDay(y, m, wd){ const last = new Date(Date.UTC(y, m, 0)); return iso(new Date(Date.UTC(y, m - 1, last.getUTCDate() - ((last.getUTCDay() - wd + 7) % 7)))); }
+  function fixed(y, m, d, n){ return {d:iso(new Date(Date.UTC(y, m - 1, d))), n}; }
   function holidaysFor(y){
-    const ny = observed(y, 1, 1);           // a Saturday Jan 1 is taken on Fri Dec 31 of the year before - say which year it's for
-    return [{d:ny, n:ny.slice(0, 4) === String(y) ? 'New Year’s Day' : 'New Year’s Day ' + y}, {d:lastDay(y, 5, 1), n:'Memorial Day'}, {d:observed(y, 7, 4), n:'Independence Day'},
-            {d:nthDay(y, 9, 1, 1), n:'Labor Day'}, {d:nthDay(y, 11, 4, 4), n:'Thanksgiving'}, {d:observed(y, 12, 25), n:'Christmas'}];
+    return [fixed(y, 1, 1, 'New Year’s Day'), {d:lastDay(y, 5, 1), n:'Memorial Day'}, fixed(y, 7, 4, 'Independence Day'),
+            {d:nthDay(y, 9, 1, 1), n:'Labor Day'}, {d:nthDay(y, 11, 4, 4), n:'Thanksgiving'}, fixed(y, 12, 25, 'Christmas')];
   }
   function holidaysThrough(toYear){ let out = []; for(let y = 2026; y <= toYear; y++) out = out.concat(holidaysFor(y)); return out.sort((a, b) => a.d < b.d ? -1 : a.d > b.d ? 1 : 0); }
   /* HEATHER CAN CHANGE THEM (17/11/2026). Cory: "its never very scalable to just do a few years and give nobody the
