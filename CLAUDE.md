@@ -416,7 +416,9 @@ I can confidently say that the chat feature should go next. The production thing
    page loads alerts.js and calls chatLink (any page). test/chatinstant.test.js (30: real crypto both ways, own/other/
    wrong clientState/bad signature/other tenant/edit/system note/lifecycle/tampered; page make/fine/renew/run-out/
    address-changed/left-pilot). NOT YET PROVEN END TO END: needs the live site + Cory's phone (alerts on) + Heather
-   typing in the Teams app. QUEUED after Heather's ideas: emoji reactions; a "chat alerts: Home-Brace / Teams" choice;
+   typing in the Teams app. hc185 LIVE 18/11 (Cory "deploy"). Checked on live: /api/chatnote echoes validationToken (200
+   text/plain), a made-up notification -> 202 nothing; /api/chatseal: other origin 403, live origin + no sign-in 401 (=
+   the certificate loaded); /api/push OPTIONS 204; chatcert.json 404 everywhere; files byte-identical. QUEUED after Heather's ideas: emoji reactions; a "chat alerts: Home-Brace / Teams" choice;
    click a photo -> big view "exactly like slack does" (Cory 18/11).
 **LIVE 01/11/2026 (hc115, 36 files byte-checked, alerts-test 404 on live):** Selene (01/11) "Could we add “Pending – Scheduled to Start” as an additional TC
 outcome? This would apply to patients who have completed their exam and scheduled a future start appointment but
