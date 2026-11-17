@@ -218,6 +218,15 @@ I can confidently say that the chat feature should go next. The production thing
    DEFAULT_MEDICAID (a default only). hc166+hc167 (offices, actual-day holidays) LIVE 17/11 - Cory "deploy"; verified.
    Heather wording fix (Cory): Home-Brace doesn't PAY - Settings now says "each one on its actual day". DONE:
    payroll stripes read Admin -> Locations colors live; proddays.js reads its offices from workbook.js TABS (hc163).
+16. **Add a person never saved - "Pick who it's for" (Heather, 17/11/2026 9:50 CST; FIXED hc169, pushed from a cloud
+   session - it can't deploy: no token, no media/, _people.json, _promos.json or deploy/.vapid.json there. DEPLOY FROM THE MAC).**
+   Since hc150 (Add to payroll, 12/11) its dialog's button and Add a person's both used data-act="addok", and Add to
+   payroll's handler (`act==='addok' && !R().ro`) came first - so Add a person (Heather's, and an office's "Add someone
+   new") always said "Pick who it's for" and never saved. Add to payroll's button + handler are now `addpayok`.
+   test/payadds.test.js +1 (fails on the old file). Browser-checked in the mock-up: a made-up person saves; Add to
+   payroll still works. ALSO REPORTED, NOT FIXED (ask Cory): people added in Admin -> People sit at the bottom of the
+   list, not with their office (user.js applyExtra appends ROSTER_EXTRA.added after the file); and Payroll never picks
+   them up by itself - only Payroll -> Settings "Fill from the Home-Brace team list" does.
 **LIVE 01/11/2026 (hc115, 36 files byte-checked, alerts-test 404 on live):** Selene (01/11) "Could we add “Pending – Scheduled to Start” as an additional TC
 outcome? This would apply to patients who have completed their exam and scheduled a future start appointment but
 have not yet signed their contract." -> tc.js SCHED_START: a completed consult (counts for conversion), not a start

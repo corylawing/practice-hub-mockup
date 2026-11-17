@@ -247,15 +247,15 @@
     .perhead .when{font-size:17px}
   }
 </style>
-<script src="user.js?v=hc168"></script>
+<script src="user.js?v=hc169"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc168"></script>
-  <script src="gate.js?v=hc168"></script>
-  <script src="alerts.js?v=hc168"></script>
-  <script src="_staff.js?v=hc168"></script>
-  <script src="payrules.js?v=hc168"></script>
-  <script src="paystore.js?v=hc168"></script>
-  <script src="docs.js?v=hc168"></script>
+  <script src="store.js?v=hc169"></script>
+  <script src="gate.js?v=hc169"></script>
+  <script src="alerts.js?v=hc169"></script>
+  <script src="_staff.js?v=hc169"></script>
+  <script src="payrules.js?v=hc169"></script>
+  <script src="paystore.js?v=hc169"></script>
+  <script src="docs.js?v=hc169"></script>
 </head>
 <body>
 <div class="ribbon">MOCK-UP for Heather — made-up people and amounts. Try it as the Carlsbad TC first, then as Heather.</div>
@@ -1047,7 +1047,7 @@
         '<label class="fld">Column<select class="in" id="ac">'+ADD_COLS.map(c=>'<option value="'+c[0]+'"'+(c[0]==='extra'?' selected':'')+'>'+esc(c[1])+'</option>').join('')+'</select></label>'+
         '<label class="fld">Pay period<select class="in" id="ap">'+ps.map(m=>'<option value="'+m+'"'+(m===def?' selected':'')+'>'+esc(lab(m))+' · '+esc(span(P(m).start,P(m).end))+(m===NEXT?' (in progress)':'')+'</option>').join('')+'</select></label></div>'+
       '<div class="note info" id="aprev" style="margin:0">Pick who and the amount.</div>'+
-      '</div></div><div class="dm-foot"><button class="btn ghost" data-act="close">Cancel</button><button class="btn" data-act="addok">Add to payroll</button></div>');
+      '</div></div><div class="dm-foot"><button class="btn ghost" data-act="close">Cancel</button><button class="btn" data-act="addpayok">Add to payroll</button></div>');
     paintAddPrev(); const f=el('awhat'); if(f) f.focus();
   }
   function addRead(){
@@ -1470,7 +1470,7 @@
     if(act==='sendrm'){ liveSenders(b.dataset.o, v, false); return; }
     if(act==='addnew' && !R().ro){ if(!addPeriods().length){ toast('Nothing can be added - every pay period is entered'); return; } addDlg(); return; }
     if(act==='addper'){ per=+v; render(); const c=el('addscard'); if(c) c.scrollIntoView({block:'start'}); return; }
-    if(act==='addok' && !R().ro){
+    if(act==='addpayok' && !R().ro){   /* its own name: 'addok' is the Add a person button, further down */
       const r=addRead();
       if(!r.to){ toast('Pick who it’s for'); return; }
       if(!r.what){ toast('Say what it’s for'); const f=el('awhat'); if(f) f.focus(); return; }
@@ -1889,7 +1889,7 @@
 })();
 </script>
 <script>PH.nav('payroll');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc168"></script>
+<script src="tour.js?v=hc169"></script>
 <script>
 Tour.init([
   ...((window.PH && PH.isLive && PH.isLive()) || (()=>{ try{ return localStorage.getItem('ph_pay_real')==='1'; }catch(_){ return false; } })() ? [] : [{sel:'#persona', title:'A mock-up', body:'Made-up people and amounts. Start as the <b>Carlsbad TC</b>, who sends Carlsbad’s sheet, then switch to <b>Heather</b>.'}]),

@@ -28,6 +28,13 @@ t('"everyone" means the 8 offices, once per person (the first office’s row who
 t('only Goal, TC/OM or Extra, only a positive amount, and what it’s for is escaped wherever it shows',
   /ADD_COLS=\[\['goal','Goal'\],\['tcom','TC\/OM'\],\['extra','Extra'\]\]/.test(H) && /num\(a\.amt\)>0 && ADD_COLS\.some/.test(H) && /esc\(a\.what\)/.test(H) && !/\+a\.what\+'</.test(H));
 
+/* 17/11/2026, Heather: "it says 'pick who it's for' but I did select the proper office" - Add to payroll's button shared
+   'addok' with Add a person, so its handler ran first and Add a person could never save (broken since hc150). */
+t('Add to payroll and Add a person have their own buttons: adding someone new is never caught by Add to payroll',
+  /data-act="addpayok">Add to payroll</.test(fn('addDlg')) && /data-act="addok" data-v="/.test(fn('addPersonDlg')) &&
+  (H.match(/act==='addok'/g)||[]).length===1 && (H.match(/act==='addpayok'/g)||[]).length===1 &&
+  H.indexOf("act==='addpayok'")>0 && !/act==='addok' && !R\(\)\.ro/.test(H));
+
 console.log(ok.map(s=>'  PASS  '+s).join('\n'));
 if(bad.length) console.log(bad.map(s=>'  FAIL  '+s).join('\n'));
 console.log('\n'+ok.length+' passed, '+bad.length+' failed');
