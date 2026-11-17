@@ -2104,7 +2104,10 @@
   function reloadPayStatus(){
     if(!payOn() || !payLevel()) return Promise.resolve(null);
     const got=window.PH_STORE ? window.PH_STORE.get(PAY_STATUS_KEY) : Promise.resolve(null);
-    return Promise.all([payRulesReady(), Promise.resolve(got).catch(function(){ return null; })]).then(function(r){
+    // Heather's holiday changes (payrules.js, 17/11/2026): the reminders' "due Monday" weeks follow them too
+    const hol=window.PH_STORE ? window.PH_STORE.get('ph_pay_holidays') : Promise.resolve(null);
+    return Promise.all([payRulesReady(), Promise.resolve(got).catch(function(){ return null; }), Promise.resolve(hol).catch(function(){ return null; })]).then(function(r){
+      if(r[0] && r[0].setHolidayEdits) r[0].setHolidayEdits(r[2]);
       if(r[1] && typeof r[1]==='object' && r[1].p){ PAY_STATUS=r[1]; try{ localStorage.setItem(PAY_STATUS_KEY, JSON.stringify(PAY_STATUS)); }catch(_){} }
       notifyChanged();
       return PAY_STATUS;

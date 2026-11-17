@@ -185,13 +185,20 @@ I can confidently say that the chat feature should go next. The production thing
    boxes (null -> the Schedule), exactly the dry run.
 15. **Still fixed lists - a 9th office or a new year would NOT flow through (found 17/11/2026, not started; ask Cory).**
    (a) Payroll offices: payrules.js + payroll.html OFFICES (company name, who sends, own columns) - a new office isn't
-   in Payroll; its folder/grants follow the list. (b) DONE hc164 (SANDBOX; deploy on Cory's OK) - Payroll holidays
+   in Payroll; its folder/grants follow the list. (b) DONE hc165 (SANDBOX; deploy on Cory's OK) - Payroll holidays
    worked out by rule (payrules.js holidaysFor/holidaysThrough/holIn/holDates): New Year's, last Mon of May, July 4,
    first Mon of Sep, 4th Thu of Nov, Christmas; Sat -> Fri before, Sun -> Mon after. Gives EXACTLY the 12 typed 2026-27
    dates; list = 2026..this year+2. New: Fri 2027-12-31 "New Year's Day 2028" (Jan 1 2028 is a Saturday - same rule
    as Christmas 2027 -> Dec 24; ask Heather). Two holidays in one pay period (Christmas + New Year's, Dec 2028) = one
    entry naming both, each paid ("Both paid" / "1 of 2 paid", holiday hours x2). Settings shows this + next year.
-   Live Heather/settings.json has no holidays override (only bonus) - checked 17/11. test/payholidays.test.js (16). (c) Production book
+   Live Heather/settings.json has no holidays override (only bonus) - checked 17/11; the old st.holidays override is gone.
+   CHANGEABLE (hc165, Cory: "its never very scalable to just do a few years and give nobody the ability to modify or
+   change things"): Payroll -> Settings -> Paid holidays: "Not paid this year" / "Put back" / "+ Add a paid day" (date +
+   what it is) / "Take off" - whoever manages payroll only (holCan), only from the first pay period not entered yet on
+   (holFrom; paid ones stay as they were). Shared list 'ph_pay_holidays' {off:[date], add:[{d,n}], upd, updBy} (dates +
+   names only) - payroll.html loadHolEdits() in liveLoad (senders too), user.js reloadPayStatus -> PAYRULES.
+   setHolidayEdits (bell reminders' due-Monday weeks); mock-up: S.holEdits. payrules cleanEdits/withEdits/
+   setHolidayEdits/HOL_KEY. test/payholidays.test.js (24). Browser-checked in the mock-up as Heather. (c) Production book
    offices: workbook.js TABS + MEDICAID (tied to her Excel tabs; a new office = a new tab in the year's book - Set up the
    year could add one). (d) chat.html office list (line ~559). (e) tc.js DEFAULT_MEDICAID (a default only). DONE:
    payroll stripes read Admin -> Locations colors live; proddays.js reads its offices from workbook.js TABS (hc163).

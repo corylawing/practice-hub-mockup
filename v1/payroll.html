@@ -187,6 +187,14 @@
   .entk.on{background:var(--plum-soft);border-color:#d9cbf5;color:#4b2a9a}
   .entk.on .bx{background:#6b46c1;border-color:#6b46c1;color:#fff}
   .entk:disabled{opacity:.6;cursor:wait}
+  /* Paid holidays in Settings (17/11/2026) */
+  .hrow{display:flex;align-items:center;gap:6px 12px;flex-wrap:wrap;padding:8px 0;border-bottom:1px solid var(--line)}
+  .hrow .hd{min-width:150px;font-weight:700;color:var(--navy);font-variant-numeric:tabular-nums}
+  .hrow .hn{flex:1;min-width:160px}
+  .hrow.off .hd, .hrow.off .hnm{text-decoration:line-through;color:var(--soft)}
+  .hadd{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .hadd input{padding:8px 10px;border:1px solid var(--line);border-radius:9px;font:inherit;font-size:14px;min-width:0}
+  .hadd #hadd_n{flex:1;min-width:200px}
   table.comb .stick .entk{font-size:12.5px;min-height:28px;padding:4px 10px 4px 7px}
   .flags{display:flex;flex-direction:column;gap:12px}
   .fgrp h3{margin:0 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:var(--soft)}
@@ -239,15 +247,15 @@
     .perhead .when{font-size:17px}
   }
 </style>
-<script src="user.js?v=hc164"></script>
+<script src="user.js?v=hc165"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc164"></script>
-  <script src="gate.js?v=hc164"></script>
-  <script src="alerts.js?v=hc164"></script>
-  <script src="_staff.js?v=hc164"></script>
-  <script src="payrules.js?v=hc164"></script>
-  <script src="paystore.js?v=hc164"></script>
-  <script src="docs.js?v=hc164"></script>
+  <script src="store.js?v=hc165"></script>
+  <script src="gate.js?v=hc165"></script>
+  <script src="alerts.js?v=hc165"></script>
+  <script src="_staff.js?v=hc165"></script>
+  <script src="payrules.js?v=hc165"></script>
+  <script src="paystore.js?v=hc165"></script>
+  <script src="docs.js?v=hc165"></script>
 </head>
 <body>
 <div class="ribbon">MOCK-UP for Heather — made-up people and amounts. Try it as the Carlsbad TC first, then as Heather.</div>
@@ -427,6 +435,7 @@
   const fresh=()=>{ S.v=2; S.subs=S.subs||{}; S.entered=S.entered||{}; S.entOff=S.entOff||{}; S.added=S.added||[]; S.removed=S.removed||{};
                     S.bonus=S.bonus||{}; S.docAdd=S.docAdd||[]; S.docGone=S.docGone||{}; S.also=S.also||{}; };
   fresh();
+  if(!LIVEPAY){ PR.setHolidayEdits(S.holEdits); HOLIDAYS=PR.HOLIDAYS.slice(); }   // the mock-up keeps Heather's holiday changes here
   const save=()=>{ if(LIVEPAY) return; try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(_){} };   // live: saved field by field (LIVE below)
 
   /* ---------- people: by last name, the way the payroll software lists them ---------- */
@@ -1100,6 +1109,37 @@
   }
 
   /* ---------- Heather: settings ---------- */
+  /* PAID HOLIDAYS (payrules.js): this year and next, from the rule plus Heather's changes (Cory 17/11: nobody could
+     change them). Whoever manages payroll can say a holiday isn't paid this year, put it back, or add a paid day - from
+     the first pay period not entered yet on; the ones already paid stay as they were. Every sheet and reminder follows
+     (the shared list 'ph_pay_holidays'). */
+  const holFrom=()=>P(enteredCount(CUR) ? NEXT : CUR).start;
+  const holCan=()=>!R().ro && (!LIVEPAY || LEVEL()==='manage');
+  function loadHolEdits(){
+    return Promise.resolve(window.PH_STORE ? PH_STORE.get(PR.HOL_KEY) : null)
+      .then(x=>{ PR.setHolidayEdits(x); HOLIDAYS=PR.HOLIDAYS.slice(); }, ()=>{});
+  }
+  function holCard(){
+    const hy=+TODAY.slice(0,4), inYrs=d=>+d.slice(0,4)>=hy && +d.slice(0,4)<=hy+1, ed=PR.EDITS||{off:[], add:[]}, from=holFrom(), can=holCan();
+    const rows=PR.holidaysThrough(hy+2).filter(h=>inYrs(h.d)).map(h=>({d:h.d, n:h.n, off:ed.off.indexOf(h.d)>=0}))
+      .concat(ed.add.filter(a=>inYrs(a.d) && !PR.holidaysThrough(hy+2).some(h=>h.d===a.d)).map(a=>({d:a.d, n:a.n, added:true})))
+      .sort((a,b)=>a.d<b.d?-1:a.d>b.d?1:0);
+    const btn=(act,d,t)=>'<button class="btn ghost sm" data-act="'+act+'" data-v="'+esc(d)+'">'+t+'</button>';
+    return '<div class="card"><h2>Paid holidays</h2><p class="sub">A holiday column shows up by itself in the pay period it falls in. Home-Brace works them out every year - '+
+      'a holiday on a Saturday is the Friday before, on a Sunday the Monday after'+(can?'. Change any of them here: everyone’s sheets follow. The ones already paid stay as they were.':'.')+'</p>'+
+      rows.map(x=>'<div class="hrow'+(x.off?' off':'')+'"><span class="hd">'+esc(fmt(x.d,{weekday:'short', year:'numeric'}))+'</span><span class="hn"><span class="hnm">'+esc(x.n)+'</span>'+
+        (x.added?' <span class="pill p-go">Added</span>':'')+(x.off?' <span class="pill p-new">Not paid</span>':'')+'</span>'+
+        (can && x.d>=from ? (x.added ? btn('holdel',x.d,'Take off') : x.off ? btn('holon',x.d,'Put back') : btn('holoff',x.d,'Not paid this year')) : '')+'</div>').join('')+
+      (can ? '<div class="hadd"><input type="date" id="hadd_d" min="'+esc(from)+'" aria-label="Date"><input id="hadd_n" maxlength="60" placeholder="What it is - e.g. Day after Thanksgiving" aria-label="What it is">'+
+        '<button class="btn sm" data-act="holadd">+ Add a paid day</button></div>' : '')+'</div>';
+  }
+  function holSave(change, done){
+    const after=x=>{ PR.setHolidayEdits(x); HOLIDAYS=PR.HOLIDAYS.slice(); render(); toast(done); };
+    if(!LIVEPAY){ const e=PR.cleanEdits(S.holEdits); change(e); S.holEdits=PR.cleanEdits(e); save(); after(S.holEdits); return; }
+    PH_STORE.update(PR.HOL_KEY, cur=>{ const e=PR.cleanEdits(cur); change(e); const x=PR.cleanEdits(e); x.upd=new Date().toISOString(); x.updBy=myEmail(); return x; })
+      .then(r=>{ if(!r || r.blocked || r.error) throw new Error((r && (r.why || r.error)) || 'no answer'); after(r.value); },
+            e=>toast('Not saved - '+((e && e.message) || 'check the connection')+'. Nothing changed.'));
+  }
   function viewSettings(){
     let h='<div class="stack">'+(LIVEPAY
       ? (everyone().length ? '' : '<div class="note warn"><b>Start here.</b> Fill each office from the Home-Brace team list (below), then set each person’s pay-period bonus and start date, and choose who sends each office’s sheet.</div>')
@@ -1122,8 +1162,7 @@
           + '<div class="small muted">Usually the '+esc(o.by)+'.</div>'
         : 'The '+esc(o.by))+'</td><td>'+((o.own||[]).map(c=>esc(c.n)).join(', ')||'<span class="muted">—</span>')+'</td></tr>').join('')+'</tbody></table></div></div>';
     h+=colsCard();
-    const hy=+TODAY.slice(0,4);
-    h+='<div class="card"><h2>Paid holidays</h2><p class="sub">A holiday column shows up by itself in the pay period it falls in. Home-Brace works them out every year: a holiday on a Saturday is the Friday before, on a Sunday the Monday after.</p><div class="row">'+HOLIDAYS.filter(x=>+x.d.slice(0,4)>=hy && +x.d.slice(0,4)<=hy+1).map(x=>'<span class="pill p-new">'+esc(fmt(x.d,{year:'numeric'}))+' · '+esc(x.n)+'</span>').join('')+'</div></div>';
+    h+=holCard();
     const act=everyone().filter(p=>!S.removed[p.id]).sort(byLast), gone=everyone().filter(p=>S.removed[p.id]).sort(byLast), tw=twins();
     if(tw.length) h+='<div class="note warn"><b>Listed twice?</b> These people are on two offices’ lists as two separate people, so their hours won’t add up. Make each one person and both offices still type their own hours.'+
       tw.map(g=>'<div class="row" style="margin-top:8px;gap:8px;flex-wrap:wrap"><b>'+esc(disp(g[0]))+'</b><span class="small muted">'+esc(g.map(p=>p.offices.map(k=>OFF[k].n).join(' + ')).join(' · '))+'</span>'+
@@ -1333,6 +1372,24 @@
       notifyPay(title, body);
       if(window.PH_ALERTS) setTimeout(()=>toast('To get this on your phone: the bell (top right) → Turn on.'), 1200);
       return; }
+    if(act==='holoff' || act==='holon' || act==='holdel' || act==='holadd'){
+      if(!holCan()) return;
+      const from=holFrom(); let d=v||'', nm='';
+      if(act==='holadd'){
+        d=(el('hadd_d')||{}).value||''; nm=((el('hadd_n')||{}).value||'').trim();
+        if(!/^\d{4}-\d{2}-\d{2}$/.test(d)){ toast('Pick the date first'); return; }
+        if(d<from){ toast('That pay period is already done - pick a day from '+fmt(from)+' on'); return; }
+        if(!nm){ toast('Say what it is - e.g. Day after Thanksgiving'); return; }
+      } else if(!/^\d{4}-\d{2}-\d{2}$/.test(d) || d<from) return;
+      const day=fmt(d,{weekday:'short', year:'numeric'});
+      holSave(e=>{
+        if(act==='holoff'){ if(e.off.indexOf(d)<0) e.off.push(d); }
+        else if(act==='holon') e.off=e.off.filter(x=>x!==d);
+        else if(act==='holdel') e.add=e.add.filter(x=>x.d!==d);
+        else { e.off=e.off.filter(x=>x!==d); e.add=e.add.filter(x=>x.d!==d); if(!PR.holidaysThrough(+d.slice(0,4)+1).some(h=>h.d===d)) e.add.push({d, n:nm}); }
+      }, act==='holoff' ? day+' isn’t paid this year ✓' : act==='holon' ? day+' is paid again ✓' : act==='holdel' ? day+' taken off ✓' : nm+' ('+day+') added ✓');
+      return;
+    }
     if(act==='csv'){ csv(per); toast('Downloaded — opens in Excel'); return; }
     /* Entered: one office (the tick), the rest at once (offices already ticked keep their own time), or reopen them all.
        The bell's "entered" (ph_pay_status) follows the whole pay period. */
@@ -1729,9 +1786,10 @@
          put together in office order, exactly as before. Reads only. */
       .then(()=>Promise.all([
         Promise.all(offs.map(k=>Promise.all([store(k).get('people'), store(k).getAll('sheet_', {partial:true, only:isRecent})]))),
+        loadHolEdits(),
         lv==='send' ? null : Promise.all([store('_h').get('settings'), store('_h').getAll('cols_', {partial:true, only:isRecent}), store('_h').get('adds')])
       ]))
-      .then(([perOffice, hers])=>{ perOffice.forEach(([pf, sh], i)=>{ const k=offs[i];
+      .then(([perOffice, , hers])=>{ perOffice.forEach(([pf, sh], i)=>{ const k=offs[i];
         pf=pf||{people:[], docs:[]};
         (pf.people||[]).forEach(q=>{
           if(q.mistake || q.linked) return;           // linked: the same person under another id (kept, never deleted)
@@ -1750,7 +1808,6 @@
         st=st||{};
         S.bonus=st.bonus||{};
         if(st.rates) RATE=Object.assign({}, RATE, st.rates);
-        if(Array.isArray(st.holidays) && st.holidays.length) HOLIDAYS=st.holidays;
         takeCols(cols, LIVE.unread);
       } })
       .then(()=>{
@@ -1799,7 +1856,7 @@
 })();
 </script>
 <script>PH.nav('payroll');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc164"></script>
+<script src="tour.js?v=hc165"></script>
 <script>
 Tour.init([
   ...((window.PH && PH.isLive && PH.isLive()) || (()=>{ try{ return localStorage.getItem('ph_pay_real')==='1'; }catch(_){ return false; } })() ? [] : [{sel:'#persona', title:'A mock-up', body:'Made-up people and amounts. Start as the <b>Carlsbad TC</b>, who sends Carlsbad’s sheet, then switch to <b>Heather</b>.'}]),

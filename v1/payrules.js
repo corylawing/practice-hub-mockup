@@ -41,7 +41,33 @@
             {d:nthDay(y, 9, 1, 1), n:'Labor Day'}, {d:nthDay(y, 11, 4, 4), n:'Thanksgiving'}, {d:observed(y, 12, 25), n:'Christmas'}];
   }
   function holidaysThrough(toYear){ let out = []; for(let y = 2026; y <= toYear; y++) out = out.concat(holidaysFor(y)); return out.sort((a, b) => a.d < b.d ? -1 : a.d > b.d ? 1 : 0); }
-  const HOLIDAYS=holidaysThrough(new Date().getFullYear() + 2);
+  /* HEATHER CAN CHANGE THEM (17/11/2026). Cory: "its never very scalable to just do a few years and give nobody the
+     ability to modify or change things." Payroll -> Settings: take a holiday off (the practice doesn't pay it that
+     year), or add a paid day (the day after Thanksgiving; a holiday moved = one taken off + one added). Kept in the
+     shared list 'ph_pay_holidays' {off:[date], add:[{d, n}]} - dates and names only - so every sheet and reminder
+     follows, not only Heather's. Everything else keeps coming from the rule, year after year. */
+  const DAY=/^\d{4}-\d{2}-\d{2}$/;
+  function cleanEdits(ed){
+    ed=(ed && typeof ed==='object') ? ed : {};
+    const off=[...new Set((Array.isArray(ed.off) ? ed.off : []).map(String).filter(d=>DAY.test(d)))].sort();
+    const seen={}, add=(Array.isArray(ed.add) ? ed.add : []).filter(h=>h && DAY.test(String(h.d)) && !seen[h.d] && (seen[h.d]=1))
+      .map(h=>({d:String(h.d), n:String(h.n||'').trim().slice(0, 60) || 'Paid holiday'})).sort((a, b)=>a.d < b.d ? -1 : 1);
+    return {off, add};
+  }
+  function withEdits(list, ed){
+    ed=cleanEdits(ed);
+    const kept=list.filter(h=>ed.off.indexOf(h.d) < 0);
+    return kept.concat(ed.add.filter(a=>!kept.some(h=>h.d===a.d)).map(a=>({d:a.d, n:a.n, added:true})))
+      .sort((a, b)=>a.d < b.d ? -1 : a.d > b.d ? 1 : 0);
+  }
+  let EDITS=cleanEdits(null);
+  let HOLIDAYS=holidaysThrough(new Date().getFullYear() + 2);
+  function setHolidayEdits(ed){
+    EDITS=cleanEdits(ed);
+    HOLIDAYS=withEdits(holidaysThrough(new Date().getFullYear() + 2), EDITS);
+    api.HOLIDAYS=HOLIDAYS; api.EDITS=EDITS;
+    return HOLIDAYS;
+  }
   /* The holiday(s) in a stretch of days. Two can share a pay period (Christmas and New Year's Day, December 2028): then
      one entry for both - name "Christmas + New Year’s Day", ds = both dates - and each is paid. */
   function holIn(holidays, start, end){
@@ -73,7 +99,7 @@
     return n;
   }
   function period(i, holidays){
-    holidays=holidays||HOLIDAYS;
+    holidays=holidays||HOLIDAYS;      // the current list, Heather's changes included (setHolidayEdits)
     const pay=payOf(i), end=addDays(pay,-6), start=addDays(end,-13), n=numberOf(pay), year=+pay.slice(0,4);   // Sunday to Saturday
     const mon=addDays(end,2), dueHol=holidays.find(h=>h.d>mon && h.d<=addDays(end,6))||null, due=dueHol?mon:addDays(end,3);
     return {i, n, year, key:year+'-'+pad(n), start, w1end:addDays(start,6), w2start:addDays(start,7), end, pay, due, dueAt:due+'T14:00', dueHol,
@@ -131,7 +157,7 @@
     return {want, noEmail};
   }
 
-  const api={OFFICES, OFF, RATES, HOLIDAYS, holidaysFor, holidaysThrough, holIn, holDates, ANCHOR, FIRST, addDays, dow, days, todayISO, workdayBefore, payOf, numberOf, period, currentIndex, indexOfKey,
+  const api={OFFICES, OFF, RATES, HOLIDAYS, EDITS, holidaysFor, holidaysThrough, holIn, holDates, cleanEdits, withEdits, setHolidayEdits, HOL_KEY:'ph_pay_holidays', ANCHOR, FIRST, addDays, dow, days, todayISO, workdayBefore, payOf, numberOf, period, currentIndex, indexOfKey,
     eligibleOn, eligible, num, r2, cutVal, cutBy, otOK, calc, wanted};
   global.PAYRULES=api;
   if(typeof module!=='undefined' && module.exports) module.exports=api;

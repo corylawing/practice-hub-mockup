@@ -44,7 +44,27 @@ t('the payroll page uses the same holidays (the mock-up too) and pays each one i
   /const holN=PR\.holDates\(pr\.hol\)\.filter\(d=>eligible\(p,d\)\)\.length, hol=!p\.holHrs\?holN\*RATE\.holiday:0, holH=p\.holHrs\?holN\*RATE\.holidayHrs:0;/.test(H));
 t('the holiday box says "Both paid" / "1 of 2 paid" when there are two', /'<span class="pill p-done">Both paid<\/span>'/.test(H) && /paidN\+' of '\+hds\.length\+' paid<\/span>'/.test(H));
 t('Settings lists this year’s and next year’s holidays (not every year there is) and says how they’re worked out',
-  /HOLIDAYS\.filter\(x=>\+x\.d\.slice\(0,4\)>=hy && \+x\.d\.slice\(0,4\)<=hy\+1\)/.test(H) && /a holiday on a Saturday is the Friday before, on a Sunday the Monday after/.test(H));
+  /const hy=\+TODAY\.slice\(0,4\), inYrs=d=>\+d\.slice\(0,4\)>=hy && \+d\.slice\(0,4\)<=hy\+1/.test(H) && /a holiday on a Saturday is the Friday before, on a Sunday the Monday after/.test(H));
+
+/* Heather can change them (Cory: "give nobody the ability to modify or change things" isn't scalable). */
+const U=fs.readFileSync(path.join(__dirname,'..','v1','user.js'),'utf8');
+let L=R.setHolidayEdits({off:['2026-12-25'], add:[{d:'2026-11-27', n:'Day after Thanksgiving'}]});
+t('"not paid this year" takes that one off; a paid day added goes in - the rest still from the rule',
+  !L.some(h=>h.d==='2026-12-25') && L.some(h=>h.d==='2026-11-27' && h.n==='Day after Thanksgiving' && h.added) && L.some(h=>h.d==='2027-12-24') && R.HOLIDAYS===L);
+let pp=null; for(let i=0;i<20 && !pp;i++){ const p=R.period(i); if(p.start<='2026-11-26' && p.end>='2026-11-27') pp=p; }
+t('…pay periods and the "due Monday" weeks follow: Thanksgiving + the day after are both paid that pay period',
+  pp && pp.hol && pp.hol.ds && pp.hol.ds.join()==='2026-11-26,2026-11-27' && R.calc({start:'2020-01-01'}, {}, pp, R.RATES, 0, {}).hol===200);
+t('junk is ignored (a bad date, a duplicate, a 200-letter name)', (()=>{ const e=R.cleanEdits({off:['x','2026-12-25','2026-12-25'], add:[{d:'nope'},{d:'2026-11-27',n:'a'.repeat(200)},{d:'2026-11-27',n:'twice'}]});
+  return e.off.join()==='2026-12-25' && e.add.length===1 && e.add[0].n.length===60; })());
+R.setHolidayEdits(null);
+t('no changes = the rule exactly', JSON.stringify(R.HOLIDAYS)===JSON.stringify(R.holidaysThrough(new Date().getFullYear()+2)));
+t('kept in the shared list "ph_pay_holidays" (dates and names only) so every sheet and reminder follows',
+  R.HOL_KEY==='ph_pay_holidays' && /loadHolEdits\(\),/.test(H) && /\.then\(\(\[perOffice, , hers\]\)=>/.test(H) && /PH_STORE\.get\('ph_pay_holidays'\)/.test(U) && /r\[0\]\.setHolidayEdits\(r\[2\]\)/.test(U));
+t('only whoever manages payroll can change them, and only from the first pay period not entered yet - paid ones stay as they were',
+  /const holCan=\(\)=>!R\(\)\.ro && \(!LIVEPAY \|\| LEVEL\(\)==='manage'\);/.test(H) && /const holFrom=\(\)=>P\(enteredCount\(CUR\) \? NEXT : CUR\)\.start;/.test(H) &&
+  /\(can && x\.d>=from \?/.test(H) && /if\(!holCan\(\)\) return;/.test(H) && /if\(d<from\)\{ toast\('That pay period is already done/.test(H));
+t('a save that doesn’t reach SharePoint changes nothing and says so', /e=>toast\('Not saved - '\+\(\(e && e\.message\) \|\| 'check the connection'\)\+'\. Nothing changed\.'\)/.test(H));
+t('the old "holidays in settings" override is gone (one place for them)', !/st\.holidays/.test(H));
 t('no typed-in holiday list is left in the payroll page', !/\{d:'2026-05-25',n:'Memorial Day'\}/.test(H) && !/\{d:'2026-05-25',n:'Memorial Day'\}/.test(fs.readFileSync(path.join(__dirname,'..','v1','payrules.js'),'utf8')));
 
 console.log(ok.map(s=>'  PASS  '+s).join('\n'));
