@@ -297,7 +297,7 @@ I can confidently say that the chat feature should go next. The production thing
    the browser before it shipped: a trailing comment swallowed combined()'s "let grand" (board stopped drawing) - fixed +
    test. test/payrates.test.js (14); paydibs/payholidays/payspecial regexes moved to the period rates. Browser (mock-up):
    mileage $0.70 from #22 -> #22 88 mi = $61.60, #21 35 mi = $26.60 (0.76); Undo; no page errors on every tab.
-   TO TURN ON LIVE: RATES_LIVE=true + deploy, on Cory's OK.
+   ON FOR LIVE hc177 (Cory 17/11: "rates live"): RATES_LIVE=true; a list that didn't read -> "Couldn't read: the rates".
 **LIVE 01/11/2026 (hc115, 36 files byte-checked, alerts-test 404 on live):** Selene (01/11) "Could we add “Pending – Scheduled to Start” as an additional TC
 outcome? This would apply to patients who have completed their exam and scheduled a future start appointment but
 have not yet signed their contract." -> tc.js SCHED_START: a completed consult (counts for conversion), not a start

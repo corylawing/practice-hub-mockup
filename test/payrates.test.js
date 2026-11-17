@@ -11,8 +11,8 @@ const ok=[],bad=[]; const t=(n,v)=>{ (v?ok:bad).push(n); };
 const fn=name=>{ const i=H.indexOf('function '+name+'('); if(i<0) return ''; let d=0, j=H.indexOf('{', i);
   for(let k=j;k<H.length;k++){ if(H[k]==='{') d++; else if(H[k]==='}'){ d--; if(!d) return H.slice(i, k+1); } } return ''; };
 
-t('OFF on the live site: RATES_LIVE is false, the live site doesn’t even read the list, and nobody there can change a rate',
-  /const RATES_LIVE=false;/.test(H) && /const RATESON=\(\)=>RATES_LIVE \|\| !\(window\.PH && PH\.isLive && PH\.isLive\(\)\);/.test(H) &&
+t('ON for the live site (hc177, Cory: "rates live"); RATES_LIVE false again = no editor and the list not read',
+  /const RATES_LIVE=true;/.test(H) && /const RATESON=\(\)=>RATES_LIVE \|\| !\(window\.PH && PH\.isLive && PH\.isLive\(\)\);/.test(H) &&
   /if\(!RATESON\(\)\) return Promise\.resolve\(\);/.test(fn('loadRates')) && /const rateCh=\(\)=>!RATESON\(\) \? \[\]/.test(H) && /const rateCan=\(\)=>RATESON\(\) && holCan\(\);/.test(H));
 
 /* the rule */
@@ -52,6 +52,7 @@ t('a save that doesn’t reach SharePoint changes nothing and says so; the list 
   /loadSpbTypes\(\),\n\s*loadRates\(\),\n\s*lv==='send' \? null/.test(H));
 t('Settings: the rates for the pay period running now, Change for whoever manages payroll, a change coming up shown under it',
   /const now=rt\(P\(CUR\)\.start\)/.test(fn('ratesHTML')) && /can && st\.length\?'<button class="link small" data-act="rateedit"/.test(fn('ratesHTML')) && /' from '\+\(m===null\?/.test(fn('ratesHTML')));
+t('a rate list that didn’t read is reported ("Couldn’t read: the rates"), never quietly treated as no changes', /PH_STORE\.readFailed\(PR\.RATE_KEY\) && LIVE\.unread\.indexOf\('the rates'\)<0\) LIVE\.unread\.push\('the rates'\)/.test(fn('loadRates')));
 t('the combined sheet still starts its grand total (a comment once swallowed it - Heather’s board stopped drawing)', /RATE=rt\(pr\.start\); let grand=\{reg:0,ot1:0,ot2:0,total:0,reimb:0\};/.test(fn('combined')));
 t('Heather’s wording is gone: no "Change it here" where nothing can be changed', !/Change it here when the IRS does/.test(H) && /Press Change when the IRS changes it\./.test(H));
 

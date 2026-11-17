@@ -247,15 +247,15 @@
     .perhead .when{font-size:17px}
   }
 </style>
-<script src="user.js?v=hc176"></script>
+<script src="user.js?v=hc177"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc176"></script>
-  <script src="gate.js?v=hc176"></script>
-  <script src="alerts.js?v=hc176"></script>
-  <script src="_staff.js?v=hc176"></script>
-  <script src="payrules.js?v=hc176"></script>
-  <script src="paystore.js?v=hc176"></script>
-  <script src="docs.js?v=hc176"></script>
+  <script src="store.js?v=hc177"></script>
+  <script src="gate.js?v=hc177"></script>
+  <script src="alerts.js?v=hc177"></script>
+  <script src="_staff.js?v=hc177"></script>
+  <script src="payrules.js?v=hc177"></script>
+  <script src="paystore.js?v=hc177"></script>
+  <script src="docs.js?v=hc177"></script>
 </head>
 <body>
 <div class="ribbon">MOCK-UP for Heather — made-up people and amounts. Try it as the Carlsbad TC first, then as Heather.</div>
@@ -324,7 +324,7 @@
      entered for yet, and every pay period before it keeps the rate it was paid at - so a sheet already done never
      moves. rt(start) = the rates in force for the pay period starting that day; every sum and every "$x each" uses it.
      Shared list 'ph_pay_rates' (amounts only), read by the senders too, so an office sheet shows the same rate. */
-  const RATES_LIVE=false;
+  const RATES_LIVE=true;     // ON for the live site 17/11/2026 (hc177) - Cory: "rates live". false = off again.
   const RATESON=()=>RATES_LIVE || !(window.PH && PH.isLive && PH.isLive());
   let RATECH=[];
   const rateCh=()=>!RATESON() ? [] : LIVEPAY ? RATECH : PR.cleanRates({changes:S.rateCh||[]});
@@ -332,7 +332,9 @@
   const rtN=n=>rt(P(n).start);
   function loadRates(){
     if(!RATESON()) return Promise.resolve();
-    return Promise.resolve(window.PH_STORE ? PH_STORE.get(PR.RATE_KEY) : null).then(x=>{ RATECH=PR.cleanRates(x); }, ()=>{});
+    return Promise.resolve(window.PH_STORE ? PH_STORE.get(PR.RATE_KEY) : null).then(x=>{ RATECH=PR.cleanRates(x);
+      /* Didn't read: say so (the toast after loading), never quietly show the starting rates as if nothing had changed. */
+      if(PH_STORE.readFailed && PH_STORE.readFailed(PR.RATE_KEY) && LIVE.unread.indexOf('the rates')<0) LIVE.unread.push('the rates'); }, ()=>{ if(LIVE.unread.indexOf('the rates')<0) LIVE.unread.push('the rates'); });
   }
   const ownEach=c=>!!(c && c.each);                                     // a column typed as a count, paid at a rate each
   const ownUsd=(c,x,R_)=>ownEach(c) ? r2(num(x[c.k])*num((R_||RATE)[c.each])) : num(x[c.k]);   // R_ = that pay period's rates
@@ -2097,7 +2099,7 @@
 })();
 </script>
 <script>PH.nav('payroll');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc176"></script>
+<script src="tour.js?v=hc177"></script>
 <script>
 Tour.init([
   ...((window.PH && PH.isLive && PH.isLive()) || (()=>{ try{ return localStorage.getItem('ph_pay_real')==='1'; }catch(_){ return false; } })() ? [] : [{sel:'#persona', title:'A mock-up', body:'Made-up people and amounts. Start as the <b>Carlsbad TC</b>, who sends Carlsbad’s sheet, then switch to <b>Heather</b>.'}]),
