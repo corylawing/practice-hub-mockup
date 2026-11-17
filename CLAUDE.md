@@ -183,7 +183,10 @@ I can confidently say that the chat feature should go next. The production thing
    Production days sync RAN ON LIVE 17/11 10:49Z (Cory's Dashboard visit): 2026 = Dec Carlsbad 9->11, Clovis 9->8, Hobbs
    9->11, Mansfield 8->7, San Angelo 9->10 + Nov completed Carlsbad 5->6, Lubbock 4->5 (the 16th passed); 2027 = 66 days
    boxes (null -> the Schedule), exactly the dry run.
-15. **Still fixed lists - a 9th office or a new year would NOT flow through (found 17/11/2026, not started; ask Cory).**
+15. **Fixed lists made to follow Admin (found 17/11/2026) - ALL DONE + LIVE 17/11 (hc166-hc173).** (a) Payroll offices,
+   (b) holidays, (c) production book offices, (d) Chat lists - live. (e) tc.js DEFAULT_MEDICAID is only the default before
+   TC Tracker -> Settings -> "Offices that take Medicaid" is saved; those checkboxes list Admin -> Locations, so a new
+   office can be ticked there - nothing to build.
    POG = a dollar amount the office types (Heather 17/11) - already so.
    (a) DONE hc166 (SANDBOX; deploy on Cory's OK) - Payroll offices: ONE list (payrules.js; payroll.html's identical copy
    removed - verified identical first). BASE_OFFICES = the 9, unchanged keys/order. A new office in Admin -> Locations
@@ -240,7 +243,7 @@ I can confidently say that the chat feature should go next. The production thing
    Admin -> People and Team colour each initials circle by PLACE in the list (c:i%PAL), so grouping new hires with their
    office (#17) moved the colour of everyone after that office (38 of 72 on the real list). hc173: the colour goes by the
    order before grouping (starting list first, then added people) - browser-checked on the real list: all 72 colours as
-   before, the 2 added right after Clovis. test/newhires.test.js +2. Also took the new hires' real names out of code
+   before, the 2 added right after Clovis. test/newhires.test.js +2. hc173 LIVE 17/11 (Cory: "deploy color fix"; verified). Also took the new hires' real names out of code
    comments and the test (made-up names only - public repo).
    Heather wording fix (Cory): Home-Brace doesn't PAY - Settings now says "each one on its actual day". DONE:
    payroll stripes read Admin -> Locations colors live; proddays.js reads its offices from workbook.js TABS (hc163).
