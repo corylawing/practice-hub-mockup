@@ -122,7 +122,14 @@
   .media .dur{position:absolute;left:8px;bottom:8px;background:rgba(15,42,74,.72);color:#fff;font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 8px;display:flex;gap:5px;align-items:center}
   .media.playing .play,.media.playing .dur{display:none}
 
-  .composer{display:flex;align-items:flex-end;gap:8px;padding:10px 12px;border-top:1px solid var(--line);background:#fff}
+  .composer{display:flex;flex-wrap:wrap;align-items:flex-end;gap:8px;padding:10px 12px;border-top:1px solid var(--line);background:#fff}
+  /* A photo or video waiting to go, with room to type under it (Cory 18/11, "like Slack") */
+  .staged{flex-basis:100%;display:flex;align-items:center;gap:10px;padding:2px 2px 4px}
+  .staged .thumb{position:relative;width:76px;height:76px;border-radius:12px;overflow:hidden;background:#0F2A4A;border:1px solid var(--line);flex:none}
+  .staged .thumb img,.staged .thumb video{width:100%;height:100%;object-fit:cover;display:block}
+  .staged .thumb .x{position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:50%;border:0;background:rgba(15,42,74,.78);color:#fff;font-size:15px;line-height:24px;cursor:pointer;padding:0}
+  .staged .thumb .kind{position:absolute;left:5px;bottom:4px;font-size:11px;font-weight:700;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.6)}
+  .staged .hint{font-size:13px;color:var(--soft);line-height:1.4}
   .composer textarea{flex:1;resize:none;border:1px solid var(--line);border-radius:12px;padding:9px 12px;font:inherit;font-size:14.5px;max-height:120px;min-height:40px;background:#F7F9FB}
   .composer textarea:focus{outline:2px solid var(--teal2);background:#fff}
   .ib{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none;color:var(--navy)}
@@ -216,13 +223,13 @@
     .m{max-width:88%}
   }
 </style>
-<script src="user.js?v=hc183"></script>
+<script src="user.js?v=hc184"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc183"></script>
-  <script src="gate.js?v=hc183"></script>
-  <script src="_staff.js?v=hc183"></script>
-  <script src="alerts.js?v=hc183"></script>
-  <script src="chatgraph.js?v=hc183"></script>
+  <script src="store.js?v=hc184"></script>
+  <script src="gate.js?v=hc184"></script>
+  <script src="_staff.js?v=hc184"></script>
+  <script src="alerts.js?v=hc184"></script>
+  <script src="chatgraph.js?v=hc184"></script>
 </head>
 <body>
 <div class="ribbon" id="ribbon">MOCK-UP for Heather and Dr. Jae — made-up people, messages and videos. Nothing is sent anywhere.</div>
@@ -409,10 +416,10 @@
     else
     if(m.video){
       const tall=m.ar && (r=>r[0]<r[1])(String(m.ar).split('/').map(Number));      // a phone video, upright
-      body='<div class="media'+(m.wide?' wide':'')+(tall?' tall':'')+'"><video src="'+esc(m.video)+'"'+(m.poster?' poster="'+esc(m.poster)+'"':'')+(m.ar?' style="aspect-ratio:'+m.ar+'"':'')+' preload="metadata" playsinline></video>'+
+      body=(m.text?'<div class="bub">'+esc(m.text)+'</div>':'')+'<div class="media'+(m.wide?' wide':'')+(tall?' tall':'')+'"><video src="'+esc(m.video)+'"'+(m.poster?' poster="'+esc(m.poster)+'"':'')+(m.ar?' style="aspect-ratio:'+m.ar+'"':'')+' preload="metadata" playsinline></video>'+
         '<button class="play" data-act="play" aria-label="Play the video">▶</button><span class="dur">🎥 '+esc(m.dur||'')+'</span></div>';
     } else if(m.photo){
-      body='<div class="media wide"><img src="'+esc(m.photo)+'"'+(m.w?' width="'+m.w+'" height="'+m.h+'"':'')+' alt="A photo from '+esc(m.from)+'"></div>';
+      body=(m.text?'<div class="bub">'+esc(m.text)+'</div>':'')+'<div class="media wide"><img src="'+esc(m.photo)+'"'+(m.w?' width="'+m.w+'" height="'+m.h+'"':'')+' alt="A photo from '+esc(m.from)+'"></div>';
     } else body='<div class="bub">'+esc(m.text)+'</div>';
     const meta=m.failed ? '<div class="meta bad">Not sent - '+esc(m.failed)+'</div>'
       : m.pending ? '<div class="meta">'+esc(m.progress!=null ? 'Uploading… '+Math.round(m.progress*100)+'%' : 'Sending…')+'</div>'
@@ -450,20 +457,60 @@
     c.msgs.forEach(m=>{ if(!prev || dayKey(prev.at)!==dayKey(m.at)) h+='<div class="day">'+esc(dayLabel(m.at))+'</div>'; h+=msgHTML(m,c,prev); prev=m; });
     /* THE TEST LOCK: in a chat with anyone who isn't a tester there is no message box at all (chatgraph.js checks again). */
     if(REALCHAT && !CG.canSend(c, MEID)) h+='</div><div class="locked">🔒 '+(ONLIVE ? '<b>Pilot:</b> you can read this chat, but for now you can only send to the others in the pilot group.' : '<b>Test:</b> you can read this chat, but you can only send to your testers. Add them with <b>Testers</b> in the green bar.')+'</div>';
-    else h+='</div><div class="composer">'+
+    else h+='</div>'+composerHTML(c);
+    box.innerHTML=h;
+    afterConv(c, box);
+  }
+  /* THE MESSAGE BOX. A photo or video picked (or pasted, or recorded) WAITS above it - you can type a message under it
+     and one Send sends both together, as one message (Cory 18/11: "like in slack you can add the photo and put text
+     under it before you send"). One waiting attachment per chat; × takes it off. */
+  const STAGED={};
+  function composerHTML(c){
+    const st=STAGED[c.id];
+    return '<div class="composer">'+
+      (st ? '<div class="staged"><div class="thumb">'+(st.photo ? '<img src="'+esc(st.photo)+'" alt="The photo you’re sending">' : '<video src="'+esc(st.video)+'" muted playsinline preload="metadata"></video><span class="kind">🎥 Video</span>')+
+        '<button class="x" data-act="unstage" aria-label="Don’t send this '+(st.photo?'photo':'video')+'" title="Remove">×</button></div>'+
+        '<div class="hint">Add a message if you like, then press <b>Send</b> - they go together.</div></div>' : '')+
       '<button class="ib" data-act="attach" title="Send a photo or a video from your phone or computer" aria-label="Send a photo or video"><svg viewBox="0 0 24 24"><path d="M21 11.5l-8.6 8.6a5.5 5.5 0 0 1-7.8-7.8l8.6-8.6a3.7 3.7 0 0 1 5.2 5.2l-8.6 8.6a1.8 1.8 0 0 1-2.6-2.6l7.9-7.9"/></svg></button>'+
       '<button class="ib rec" data-act="record" title="Record a video (up to 5 minutes)" aria-label="Record a video"><svg viewBox="0 0 24 24"><rect x="2.5" y="6" width="13" height="12" rx="2.5"/><path d="M15.5 10.5l6-3.5v10l-6-3.5z"/></svg></button>'+
-      '<textarea id="txt" rows="1" placeholder="Message'+(window.matchMedia('(min-width:761px)').matches?' '+esc(c.name):'')+'…" aria-label="Message"></textarea>'+
+      '<textarea id="txt" rows="1" placeholder="'+(st ? 'Add a message…' : 'Message'+(window.matchMedia('(min-width:761px)').matches?' '+esc(c.name):'')+'…')+'" aria-label="Message"></textarea>'+
       '<button class="ib send" data-act="send" title="Send" aria-label="Send"><svg viewBox="0 0 24 24"><path d="M4 12l16-8-6 16-2.5-6.5z"/></svg></button></div>';
-    box.innerHTML=h;
-    if(REALCHAT) hydrate(box);
-    const ms=el('msgs'); stick=true; ms.scrollTop=ms.scrollHeight;
-    ms.addEventListener('scroll', ()=>{ stick=ms.scrollTop+ms.clientHeight>=ms.scrollHeight-40; }, {passive:true});
-    /* Pictures and video frames arrive a moment later and push the newest message down, and the page can be
-       shown only after sign-in (or the window resized): keep the newest message in view, unless they scrolled up. */
+  }
+  /* Redraw only the message box, keeping what's typed in it. */
+  function paintComposer(focus){
+    const c=cur(), box=el('conv') && el('conv').querySelector('.composer'); if(!c || !box) return;
+    const t=el('txt'), v=t ? t.value : '';
+    box.outerHTML=composerHTML(c);
+    const t2=el('txt'); if(t2){ t2.value=v; t2.style.height='auto'; t2.style.height=Math.min(120,t2.scrollHeight)+'px'; if(focus) t2.focus(); }
+  }
+  function stage(m){
+    const c=cur(); if(!c){ toast('Open a chat first.'); return; }
+    if(REALCHAT && !CG.canSend(c, MEID)){ toast(ONLIVE ? 'Pilot: you can only send to the pilot group for now.' : 'Test: you can only send to your testers.'); return; }
+    STAGED[c.id]=m; paintComposer(true);
+  }
+  /* Send what's typed, with the waiting photo/video if there is one. */
+  function sendNow(){
+    const c=cur(), t=el('txt'); if(!c || !t) return;
+    const text=(t.value||'').trim(), st=STAGED[c.id];
+    if(!text && !st) return;
+    t.value=''; t.style.height='auto';
+    if(st){ delete STAGED[c.id]; paintComposer(true); send(Object.assign({}, st, {text})); }
+    else send({text});
+  }
+  function afterConv(c, box){
+    const ms=el('msgs');
+    if(!ms){ if(REALCHAT) hydrate(box); return; }
+    /* OPENS AT THE NEWEST MESSAGE, AND STAYS THERE (Cory 18/11: "when clicking on chat it should go to the bottom of the
+       chat right away"). Teams pictures are filled in a moment after the chat opens (hydrate), and each one pushed the
+       newest messages down out of sight - only pictures already there were watched. Now EVERY picture or video frame
+       that loads in the chat, whenever it loads, brings the bottom back - unless they scrolled up themselves. */
+    stick=true;
     const follow=()=>{ if(stick) ms.scrollTop=ms.scrollHeight; };
-    ms.querySelectorAll('img,video').forEach(x=>{ if(x.tagName==='IMG' && x.complete) return;
-      x.addEventListener(x.tagName==='IMG'?'load':'loadedmetadata', follow, {once:true}); });
+    ms.addEventListener('load', follow, true);
+    ms.addEventListener('loadedmetadata', follow, true);
+    ms.addEventListener('scroll', ()=>{ stick=ms.scrollTop+ms.clientHeight>=ms.scrollHeight-40; }, {passive:true});
+    if(REALCHAT) hydrate(box);
+    follow(); setTimeout(follow, 0); setTimeout(follow, 250);
     if(window.ResizeObserver){ if(ro) ro.disconnect(); ro=new ResizeObserver(follow); ro.observe(ms); }
   }
   /* show=false: select it without leaving the list (a phone shows one or the other) */
@@ -609,7 +656,7 @@
       recState.stream.getTracks().forEach(t=>t.stop());
       el('cam').classList.remove('recording');
       el('cam').innerHTML='<video src="'+url+'" controls playsinline></video>';
-      el('recfoot').innerHTML='<button class="btn ghost" data-act="retake">Record again</button><button class="btn" data-act="recsend">Send video</button>';
+      el('recfoot').innerHTML='<button class="btn ghost" data-act="retake">Record again</button><button class="btn" data-act="recsend">Use this video</button>';
     };
     rec.start(250);
     el('cam').classList.add('recording');
@@ -663,11 +710,19 @@
     CHATS=[]; open=null; el('app').classList.remove('open');
     ribbon(); renderChips(); loading();
     loadList(true);
-    setInterval(()=>{ if(document.visibilityState!=='visible') return; tick++; pollOpen(); if(tick%4===0) loadList(false); }, 5000);
+    /* SPEED (Cory 18/11: "how long it takes before they receive the message. I want it to be as quick as possible"): the
+       open chat is checked every 2 seconds while you're looking at it (every 6 when the window is visible but in the
+       background), the chat list every 10, and at once when you come back to the window. Nothing while the page isn't
+       visible. Microsoft's "slow down" (429) is obeyed in chatgraph.js call(). Was 5 s / 20 s. */
+    setInterval(()=>{ if(document.visibilityState!=='visible') return; tick++;
+      const looking=!document.hasFocus || document.hasFocus();
+      if(looking || tick%3===0) pollOpen();
+      if(tick%5===0) loadList(false); }, 2000);
     document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible'){ loadList(false); pollOpen(); } });
+    window.addEventListener('focus', ()=>{ pollOpen(); if(tick%5!==0) loadList(false); });
     window.addEventListener('hashchange', ()=>{ const w=hashChat(); if(w && CHATS.some(c=>c.id===w)) openChat(w); });
   }
-  let tick=0, listP=null, loadedOnce=false, openBusy=false;
+  let tick=0, listP=null, loadedOnce=false, openBusy=0;
   function loadList(first){ if(listP) return listP; listP=doList(first).finally(()=>{ listP=null; }); return listP; }
   async function doList(first){
     let got;
@@ -690,6 +745,12 @@
       c._lastId=g.last.id;
       return c;
     });
+    /* NEVER DROP THE OPEN CHAT (Cory 18/11: "it seems like I have to refresh the page to see the next message"). Teams
+       leaves a chat with no message in it yet out of its list, so a chat just made here vanished at the next refresh -
+       and the open chat stopped looking for new messages. A chat made here (local) or the one that's open stays until
+       Teams lists it. */
+    Object.keys(before).forEach(id=>{ const c=before[id]; if(!CHATS.some(x=>x.id===id) && (c.local || id===open)) CHATS.unshift(c); });
+    CHATS.forEach(c=>{ if(c.local && got.some(g=>g.id===c.id)) delete c.local; });
     renderList();
     if(first && !loadedOnce){
       loadedOnce=true;
@@ -723,8 +784,10 @@
   }
   /* The open chat: anything new goes on the bottom. Skipped while one of mine is still sending (no doubles). */
   async function pollOpen(){
-    const c=cur(); if(!REALCHAT || !c || !c.loaded || openBusy || c.msgs.some(m=>m.pending)) return;
-    openBusy=true;
+    const c=cur(); if(!REALCHAT || !c) return;
+    if(!c.loaded){ if(!c._loading){ c._loading=true; loadChat(c).finally(()=>{ c._loading=false; }); } return; }   // heals itself, never goes quiet
+    if((openBusy && Date.now()-openBusy<15000) || c.msgs.some(m=>m.pending)) return;   // a look that hung for 15 s doesn't block the next
+    openBusy=Date.now();
     try{
       const r=await CG.listMessages(c.id, MEID, null, 20);
       if(open!==c.id || c.msgs.some(m=>m.pending)) return;
@@ -735,7 +798,7 @@
         if(fresh.some(m=>!m.mine)) readIt(c, true);
         renderList();
       }
-    }catch(_){} finally{ openBusy=false; }
+    }catch(_){} finally{ openBusy=0; }
   }
   function appendConv(c, list, prev){
     const ms=el('msgs'); if(!ms || open!==c.id){ if(open===c.id) renderConv(); return; }
@@ -783,20 +846,20 @@
     const c=cur(); if(!c) return;
     if(!CG.canSend(c, MEID)){ toast(ONLIVE ? 'Pilot: you can only send to the pilot group for now.' : 'Test: you can only send to your testers.'); return; }
     const kind=m.blob ? 'video' : m.b64 ? 'photo' : 'text';
-    const local={id:'local-'+Date.now(), at:Date.now(), from:ME, mine:true, pending:true, text:kind==='text' ? m.text : '', images:[], files:[],
+    const local={id:'local-'+Date.now(), at:Date.now(), from:ME, mine:true, pending:true, text:m.text||'', images:[], files:[],
       localImg:kind==='photo' ? m.photo : '', localVideo:kind==='video' ? m.video : '', progress:kind==='video' ? 0 : null};
     const prev=c.msgs[c.msgs.length-1]; c.msgs.push(local); c.loaded=true; appendConv(c, [local], prev); renderList();
     try{
       let res, warn='';
       if(kind==='text') res=await CG.sendText(c, MEID, m.text);
-      else if(kind==='photo') res=await CG.sendPhoto(c, MEID, m.b64, m.w, m.h);
+      else if(kind==='photo') res=await CG.sendPhoto(c, MEID, m.b64, m.w, m.h, m.text||'');
       else {
-        const r=await CG.sendVideo(c, MEID, m.blob, m.name, f=>{ local.progress=f; const x=msgEl(local.id), mt=x && x.querySelector('.meta'); if(mt) mt.textContent='Uploading… '+Math.round(f*100)+'%'; });
+        const r=await CG.sendVideo(c, MEID, m.blob, m.name, f=>{ local.progress=f; const x=msgEl(local.id), mt=x && x.querySelector('.meta'); if(mt) mt.textContent='Uploading… '+Math.round(f*100)+'%'; }, m.text||'');
         res=r.message; if(!r.shared) warn='Sent - but sharing the video with them didn’t work, so they may not be able to open it.';
       }
       const got=CG._t.mapMessage(res, MEID) || {};
       const done=Object.assign({}, local, got, {pending:false, progress:null, mine:true, from:ME, localImg:local.localImg, localVideo:local.localVideo});
-      if(kind==='text' && !done.text) done.text=m.text;
+      if(!done.text && m.text) done.text=m.text;
       if(!done.at) done.at=local.at;
       const i=c.msgs.indexOf(local); if(i>=0) c.msgs[i]=done;
       replaceEl(c, local.id, done, c.msgs[i-1]);
@@ -889,7 +952,7 @@
       if(!CHATS.some(c=>c.id===ch.id)){
         const people=[{id:MEID, name:ME, email:myEmail()}].concat(us);
         CHATS.unshift({id:ch.id, type:us.length===1 ? 'person' : 'group', name:us.length===1 ? us[0].name : (topic||us.map(u=>u.name).join(', ')),
-          people, members:people.map(p=>p.name), msgs:[], loaded:true, next:'', unread:0, read:Date.now(),
+          people, members:people.map(p=>p.name), msgs:[], loaded:true, next:'', unread:0, read:Date.now(), local:true,
           sub:us.length===1 ? us[0].email : '', photo:us.length===1 ? photoOf(us[0].email) : '', lastMsg:{at:Date.now(), text:'', from:'', mine:true}});
       }
       openChat(ch.id);
@@ -928,13 +991,14 @@
     if(act==='open') return openChat(v);
     if(act==='back'){ el('app').classList.remove('open'); open=null; renderList(); fit(); return; }
     if(act==='filter'){ filter=v; renderChips(); renderList(); return; }
-    if(act==='send'){ const t=el('txt'); const text=(t.value||'').trim(); if(!text) return; t.value=''; send({text}); return; }
+    if(act==='send'){ sendNow(); return; }
+    if(act==='unstage'){ const c=cur(); if(c){ delete STAGED[c.id]; paintComposer(true); } return; }
     if(act==='attach'){ el('file').click(); return; }
     if(act==='record') return recordDlg();
     if(act==='recgo') return recGo();
     if(act==='recstop'){ if(recState && recState.rec) recState.rec.stop(); clearInterval(recState && recState.timer); return; }
     if(act==='retake'){ stopCamera(); recordDlg(); return; }
-    if(act==='recsend'){ const d=recState && recState.done; closeDlg(); if(d) send({video:d.url, dur:d.dur, blob:d.blob, name:d.name}); if(!REALCHAT) toast('Video sent ✓'); return; }
+    if(act==='recsend'){ const d=recState && recState.done; closeDlg(); if(d) stage({video:d.url, dur:d.dur, blob:d.blob, name:d.name}); return; }   // waits in the box: add a message, then Send
     if(act==='play'){ const box=b.closest('.media'), vid=box.querySelector('video'); if(REALCHAT && !vid.getAttribute('src')){ toast('The video is still loading - one moment.'); return; }
       box.classList.add('playing'); vid.controls=true; vid.play().catch(()=>{}); return; }
     if(act==='call'){
@@ -971,7 +1035,7 @@
   el('dlg').addEventListener('click', e=>{ if(e.target===el('dlg')) closeDlg(); });
   document.addEventListener('keydown', e=>{
     if(e.key==='Escape') closeDlg();
-    if(e.key==='Enter' && !e.shiftKey && e.target && e.target.id==='txt'){ e.preventDefault(); const text=(e.target.value||'').trim(); if(text){ e.target.value=''; send({text}); } }
+    if(e.key==='Enter' && !e.shiftKey && e.target && e.target.id==='txt'){ e.preventDefault(); sendNow(); }
   });
   document.addEventListener('input', e=>{
     if(e.target.id==='q'){ q=e.target.value; renderList(); }
@@ -982,13 +1046,20 @@
   el('file').addEventListener('change', e=>{
     const f=e.target.files && e.target.files[0]; e.target.value=''; if(!f) return;
     if(REALCHAT){
-      if(/^video\//.test(f.type) || /\.(mp4|mov|m4v|webm|3gp)$/i.test(f.name||'')){ const u=URL.createObjectURL(f); objectUrls.push(u); send({video:u, blob:f, name:f.name||'video.mp4'}); }
-      else CG.photo(f).then(p=>send({photo:p.dataUrl, b64:p.b64, w:p.w, h:p.h}), err=>toast((err && err.message) || 'That file could not be sent.'));
+      if(/^video\//.test(f.type) || /\.(mp4|mov|m4v|webm|3gp)$/i.test(f.name||'')){ const u=URL.createObjectURL(f); objectUrls.push(u); stage({video:u, blob:f, name:f.name||'video.mp4'}); }
+      else CG.photo(f).then(p=>stage({photo:p.dataUrl, b64:p.b64, w:p.w, h:p.h}), err=>toast((err && err.message) || 'That file could not be sent.'));
       return;
     }
     const url=URL.createObjectURL(f); objectUrls.push(url);
-    if(/^video\//.test(f.type)) send({video:url, dur:'video'}); else send({photo:url});
-    toast((/^video\//.test(f.type)?'Video':'Photo')+' sent ✓');
+    if(/^video\//.test(f.type)) stage({video:url, dur:'video'}); else stage({photo:url});
+  });
+  /* PASTE a picture straight into the message box (like Slack): it waits there like a picked one. */
+  document.addEventListener('paste', e=>{
+    if(!e.target || e.target.id!=='txt') return;
+    const f=[...((e.clipboardData && e.clipboardData.files) || [])].find(x=>/^image\//.test(x.type)); if(!f) return;
+    e.preventDefault();
+    if(REALCHAT) CG.photo(f).then(p=>stage({photo:p.dataUrl, b64:p.b64, w:p.w, h:p.h}), err=>toast((err && err.message) || 'That picture could not be used.'));
+    else { const url=URL.createObjectURL(f); objectUrls.push(url); stage({photo:url}); }
   });
   window.addEventListener('pagehide', ()=>{ stopCamera(); objectUrls.forEach(u=>URL.revokeObjectURL(u)); });
 

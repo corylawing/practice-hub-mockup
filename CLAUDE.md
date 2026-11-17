@@ -370,6 +370,20 @@ I can confidently say that the chat feature should go next. The production thing
    that picks no longer re-opens it (closedAt, 350 ms). (3) Chat colours: Cory asked if chat follows the scheme - it does
    (his is the default; Heather's is Peony, checked: pink buttons, plum chips); the pilot bar, .ribbon.real, .note,
    .bellb.on and group avatars had fixed teal -> theme variables. Browser-checked (local, hc183).
+   hc183 LIVE 18/11 (Cory "deploy"; verified). hc184 (18/11, SANDBOX until Cory's deploy) - from Cory's pilot test:
+   (1) PHOTO + TEXT AS ONE MESSAGE ("like in slack you can add the photo and put text under it before you send"): a
+   picked / pasted / recorded photo or video WAITS in the message box (STAGED per chat, × removes, "Use this video"),
+   one Send = CG.sendPhoto/sendVideo(..., text) - one Teams message. (2) SPEED ("as quick as possible"): open chat every
+   2 s while looking (6 s visible-in-background), list every 10 s, at once on window focus (was 5 s / 20 s). (3) BUG
+   ("I have to refresh the page to see the next message"): Teams doesn't list a chat with no message yet, so a NEW chat
+   was dropped at the next list refresh - the open chat went quiet AND THE NEXT MESSAGE DIDN'T SEND (proved on the hc183
+   code in the live-mode harness: firstSend 0, reply never shown; fixed: sent + reply shown). Fix: a chat made here
+   (local) or the open one is never dropped; pollOpen reloads an unloaded chat; a hung look doesn't block. (4) BOTTOM
+   ("go to the bottom of the chat right away"): every picture/video load in the chat (capture listener) keeps the newest
+   message in view unless they scrolled up (couldn't reproduce a difference in the harness; kept as hardening).
+   Harness: scratchpad fakelive.js (+ fake_nochats, fake_long, POST /chats, /users, hostedContents images, __incoming),
+   chatstage-run.js, chatnew-run2.js, chatbottom-run.js. QUEUED: emoji reactions on a message (Cory 18/11, "like slack
+   ... WhatsApp does the same") - Graph setReaction/unsetReaction (Chat.ReadWrite), message.reactions.
 24. **QUEUED - Heather's two doctor/contractor ideas (feedback 17/11 4:26 + 4:30 pm CST). Cory: "Add after chat pilot
    deploy and first test".** (a) "Can you make the doctor that needs to get paid more visible somehow. Right now Dr.
    Lightheart kind of blends in with the sheet and I almost forgot to pay him. Any doctor or contractor I add could be

@@ -103,6 +103,22 @@ const chatWith=(...people)=>({id:'19:abc@thread.v2', type:people.length>2?'group
     t('chat.html: the pilot bar, the test ribbon, notes and group pictures follow the person’s colour scheme (no fixed teal)',
       /\.pilotbar\{background:var\(--teal-600,#0F827E\)/.test(CHAT) && /\.ribbon\.real\{background:var\(--teal-600,#0F827E\)/.test(CHAT) &&
       /'var\(--navy2,#25456E\)':'var\(--teal-600,#0F827E\)'/.test(CHAT) && !/background:#0F827E/.test(CHAT));
+    t('chat.html: a picked, pasted or recorded photo/video WAITS in the message box; one Send sends it with the text, as one message (Cory 18/11, "like Slack")',
+      /const STAGED=\{\};/.test(CHAT) && /stage\(\{photo:p\.dataUrl, b64:p\.b64, w:p\.w, h:p\.h\}\)/.test(CHAT) && /stage\(\{video:u, blob:f, name:f\.name\|\|'video\.mp4'\}\)/.test(CHAT) &&
+      /if\(d\) stage\(\{video:d\.url, dur:d\.dur, blob:d\.blob, name:d\.name\}\)/.test(CHAT) && /document\.addEventListener\('paste', e=>\{/.test(CHAT) &&
+      /if\(st\)\{ delete STAGED\[c\.id\]; paintComposer\(true\); send\(Object\.assign\(\{\}, st, \{text\}\)\); \}/.test(CHAT) &&
+      /CG\.sendPhoto\(c, MEID, m\.b64, m\.w, m\.h, m\.text\|\|''\)/.test(CHAT) && /\}, m\.text\|\|''\);/.test(CHAT) && /data-act="unstage"/.test(CHAT));
+    t('chat.html: a waiting photo is only for a chat you can send to (the pilot lock)', /if\(REALCHAT && !CG\.canSend\(c, MEID\)\)\{ toast\(ONLIVE \? 'Pilot: you can only send to the pilot group for now\.'/.test(CHAT));
+    t('chat.html: SPEED - the open chat every 2 s while you look at it, the list every 10 s, at once on coming back; nothing while hidden',
+      /if\(document\.visibilityState!=='visible'\) return; tick\+\+;/.test(CHAT) && /if\(looking \|\| tick%3===0\) pollOpen\(\);/.test(CHAT) && /if\(tick%5===0\) loadList\(false\); \}, 2000\);/.test(CHAT) &&
+      /window\.addEventListener\('focus', \(\)=>\{ pollOpen\(\);/.test(CHAT));
+    t('chat.html: a NEW chat (no message yet, so Teams doesn’t list it) or the open chat is never dropped by a list refresh - it vanished and the next message didn’t send (Cory 18/11)',
+      /Object\.keys\(before\)\.forEach\(id=>\{ const c=before\[id\]; if\(!CHATS\.some\(x=>x\.id===id\) && \(c\.local \|\| id===open\)\) CHATS\.unshift\(c\); \}\);/.test(CHAT) &&
+      /read:Date\.now\(\), local:true,/.test(CHAT));
+    t('chat.html: the open chat heals itself (reloads instead of going quiet) and a look that hung doesn’t block the next',
+      /if\(!c\.loaded\)\{ if\(!c\._loading\)\{ c\._loading=true; loadChat\(c\)\.finally/.test(CHAT) && /if\(\(openBusy && Date\.now\(\)-openBusy<15000\) \|\| c\.msgs\.some\(m=>m\.pending\)\) return;/.test(CHAT));
+    t('chat.html: opens at the newest message and stays there while pictures arrive (every load in the chat, also ones filled in later)',
+      /ms\.addEventListener\('load', follow, true\);/.test(CHAT) && /ms\.addEventListener\('loadedmetadata', follow, true\);/.test(CHAT));
     const ADM=R('admin.html');
     t('admin.html: Admin -> Chat lists the pilot; adding or taking out asks first; a list that didn’t read can’t be changed',
       /data-t="chat" onclick="AD\.tab\('chat'\)">Chat</.test(ADM) && /if\(!confirm\('Give '\+nm\+' the real Teams chat in Home-Brace\?/.test(ADM) &&
