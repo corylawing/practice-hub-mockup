@@ -235,15 +235,15 @@
     .perhead .when{font-size:17px}
   }
 </style>
-<script src="user.js?v=hc160"></script>
+<script src="user.js?v=hc161"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc160"></script>
-  <script src="gate.js?v=hc160"></script>
-  <script src="alerts.js?v=hc160"></script>
-  <script src="_staff.js?v=hc160"></script>
-  <script src="payrules.js?v=hc160"></script>
-  <script src="paystore.js?v=hc160"></script>
-  <script src="docs.js?v=hc160"></script>
+  <script src="store.js?v=hc161"></script>
+  <script src="gate.js?v=hc161"></script>
+  <script src="alerts.js?v=hc161"></script>
+  <script src="_staff.js?v=hc161"></script>
+  <script src="payrules.js?v=hc161"></script>
+  <script src="paystore.js?v=hc161"></script>
+  <script src="docs.js?v=hc161"></script>
 </head>
 <body>
 <div class="ribbon">MOCK-UP for Heather — made-up people and amounts. Try it as the Carlsbad TC first, then as Heather.</div>
@@ -302,7 +302,12 @@
      IRS rate ($0.76 now - it changes), sheets due Tuesday by 2 pm Central (Monday when a holiday falls later in that
      week - a Monday holiday like Labor Day keeps Tuesday: "only when the Holiday falls later than Monday", 22/10).
      The people and the doctors are made up. ---------- */
-  let RATE={onCall:50, holiday:100, holidayHrs:8, mile:0.76};
+  /* DIBS IS A COUNT (17/11/2026). Heather: "the "DIBS" column is supposed to be whatever number she puts in x $10 but it
+     is converting it to $1 - Amanda did the Dibs and it should be worth $30 but it is worth $3". San Angelo types how
+     many; pay = that x RATE.dibs. Phone and POG stay dollar amounts. */
+  let RATE={onCall:50, holiday:100, holidayHrs:8, mile:0.76, dibs:10};
+  const ownEach=c=>!!(c && c.each);                                     // a column typed as a count, paid at a rate each
+  const ownUsd=(c,x)=>ownEach(c) ? r2(num(x[c.k])*num(RATE[c.each])) : num(x[c.k]);
   let HOLIDAYS=LIVEPAY ? PR.HOLIDAYS.slice() : [{d:'2026-01-01',n:'New Year’s Day'},{d:'2026-05-25',n:'Memorial Day'},{d:'2026-07-03',n:'Independence Day'},
                   {d:'2026-09-07',n:'Labor Day'},{d:'2026-11-26',n:'Thanksgiving'},{d:'2026-12-25',n:'Christmas'},{d:'2027-01-01',n:'New Year’s Day'}];
   /* In the order of Heather's main sheet, one company each. by = who sends the sheet: the TC in Carlsbad and
@@ -317,7 +322,7 @@
     {k:'hobbs',     n:'Hobbs',      co:'Farnsworth Orthodontics Hobbs, PLLC', by:'office manager'},
     {k:'lubbock',   n:'Lubbock',    co:'Farnsworth Family Orthodontics, PLLC (Lubbock)', by:'clinic lead', own:[{k:'phone',n:'Phone'}]},
     {k:'clovis',    n:'Clovis',     co:'Farnsworth Orthodontics, P.C. (Clovis)', by:'office manager', own:[{k:'sick',n:'Sick hrs',hrs:true}]},
-    {k:'sanangelo', n:'San Angelo', co:'Farnsworth Orthodontics San Angelo, PLLC', by:'office manager', own:[{k:'dibs',n:'DIBS'},{k:'pog',n:'POG'}]},
+    {k:'sanangelo', n:'San Angelo', co:'Farnsworth Orthodontics San Angelo, PLLC', by:'office manager', own:[{k:'dibs',n:'DIBS',each:'dibs'},{k:'pog',n:'POG'}]},
     {k:'zihua',     n:'Zihua Partners', co:'Zihua Partners', by:'Heather', self:true},
     {k:'mansfield', n:'Mansfield',  co:'Sunflower Orthodontics PLLC', by:'office manager'},
     {k:'crucesffo', n:'Cruces FFO', co:'Farnsworth Legacy – Farnsworth Orthodontics Las Cruces LLC', by:'TC'},
@@ -469,7 +474,7 @@
     if(r('oth')>.96){ x.oth=30; say('30 other miles: picked the doctor up from the airport.'); }
     /* The office's own bonuses, typed by the office */
     if(o==='lubbock' && r('ph')>.6) x.phone=25;
-    if(o==='sanangelo'){ if(r('di')>.7) x.dibs=40; if(r('po')>.75) x.pog=25; }
+    if(o==='sanangelo'){ if(r('di')>.7) x.dibs=4; if(r('po')>.75) x.pog=25; }
     /* Heather's own columns, on the sheets she has already entered */
     if(n<CUR){
       if(seed(o+'|'+n+'|goal')>.55) x.goal=50;                       // the team reached its goal
@@ -605,7 +610,7 @@
     const w1=num(x.w1), w2=num(x.w2), ot1=Math.max(0,w1-40), ot2=Math.max(0,w2-40), b=bonusOf(p), cut=num(cutVal(x));
     const ppb=x.bonus==='none' ? 0 : x.bonus==='partial' ? r2(Math.max(0, cutBy(x)==='usd' ? b-cut : b*(1-cut/100))) : b;
     const holOn=!!(pr.hol && eligible(p,pr.hol.d)), hol=holOn&&!p.holHrs?RATE.holiday:0, holH=holOn&&p.holHrs?RATE.holidayHrs:0;
-    const oc=num(x.oncall)*RATE.onCall, own=num(x.phone)+num(x.dibs)+num(x.pog), extra=r2(num(x.extra)+num(x.exc)), spec=r2(specUsd(x));
+    const oc=num(x.oncall)*RATE.onCall, own=r2(num(x.phone)+num(x.dibs)*num(RATE.dibs)+num(x.pog)), extra=r2(num(x.extra)+num(x.exc)), spec=r2(specUsd(x));
     return {hours:w1+w2, reg:r2(w1+w2-ot1-ot2), ot1:r2(ot1), ot2:r2(ot2), ppb, pto:num(x.pto), sick:num(x.sick), hol, holH, oc,
             goal:num(x.goal), tcom:num(x.tcom), own, extra, exc:num(x.exc), ers:num(x.ers), spec, reimb:r2((num(x.mkt)+num(x.oth))*RATE.mile),
             total:r2(ppb+num(x.goal)+num(x.tcom)+hol+oc+own+extra+spec)};
@@ -735,7 +740,9 @@
       '<th class="n wr">'+info('Com&shy;mutes','Round trips to another office (a round trip = 1). Don’t add commuter miles or road time - commuter pay is worked out from the federal rate.')+'</th><th>'+info('To','Which office they commuted to')+'</th>'+
       '<th class="n wr">'+info('Exception commuter $','Rarely used: only when a doctor asks for an amount. Say which doctor in Notes.')+'</th>'+
       '<th class="n wr">'+info('Marketing mi','Miles driven for marketing')+'</th><th class="n wr">'+info('Other mi','Special events only, not office-to-office or marketing. Say what for in Notes.')+'</th>'+
-      ownM.map((c,i)=>'<th class="n wr'+(i?'':' gl')+'">'+info(esc(c.n)+' $','A bonus only '+OFF[o].n+' has: the amount for this person, this pay period')+'</th>').join('')+
+      ownM.map((c,i)=>'<th class="n wr'+(i?'':' gl')+'">'+(ownEach(c)
+        ? info(esc(c.n)+' #','How many '+esc(c.n)+' this person did this pay period - each one is '+money(RATE[c.each])+'. Home-Brace works out the dollars.')
+        : info(esc(c.n)+' $','A bonus only '+OFF[o].n+' has: the amount for this person, this pay period'))+'</th>').join('')+
       sp.map((c,i)=>'<th class="n wr'+(i?'':' gl')+'">'+info(specLabel(c),(c.tip?c.tip+' ':'')+KTIP[c.kind]+(c.to?' Taken off - still here because something was typed in it.':''))+'</th>').join('')+
       '<th class="gl wr">'+info('Missed green','Missed a doctor (green) day? Then no bonus - unless one of your exceptions applies')+'</th>'+
       '<th>'+info('Bonus','Full, Partial or None. For Partial, put how much comes off (a % or a $ amount) and say why in Notes.')+'</th>'+
@@ -753,7 +760,7 @@
         '<td class="n gl">'+cell(p,'oncall',52,x.oncall)+'</td><td class="n">'+cell(p,'ers',52,x.ers)+'</td><td class="n">'+cell(p,'com',52,x.com)+'</td>'+
         '<td>'+sel(p,'comTo',x.comTo,[['','—']].concat(other.map(q=>[q.n,q.n])),100)+'</td>'+
         '<td class="n">'+cell(p,'exc',66,x.exc)+'</td><td class="n">'+cell(p,'mkt',58,x.mkt)+'</td><td class="n">'+cell(p,'oth',58,x.oth)+'</td>'+
-        ownM.map((c,i)=>'<td class="n'+(i?'':' gl')+'">'+cell(p,c.k,66,x[c.k])+'</td>').join('')+
+        ownM.map((c,i)=>'<td class="n'+(i?'':' gl')+'">'+cell(p,c.k,ownEach(c)?52:66,x[c.k])+(ownEach(c) && num(x[c.k]) ? '<div class="small muted">= '+money(ownUsd(c,x))+'</div>' : '')+'</td>').join('')+
         sp.map((c,i)=>'<td class="n'+(i?'':' gl')+'">'+cell(p,'sc_'+c.id,66,x['sc_'+c.id])+'</td>').join('')+
         '<td class="gl">'+sel(p,'mg',x.mg,[['N','No'],['Y','Yes']],62)+'</td>'+
         '<td>'+bonusCell(p,x)+'</td>'+
@@ -811,7 +818,8 @@
     if((n===CUR || early) && !e){
       h+='<details class="rules"'+(s.status==='sent'?'':' open')+'><summary>Heather’s rules, in short</summary><ul>'+
         '<li><b>Due Tuesday by 2 pm Central</b> — Monday when a holiday falls later in that week.</li>'+
-        ((OFF[o].own||[]).filter(c=>!c.hrs).length ? '<li><b>'+(OFF[o].own||[]).filter(c=>!c.hrs).map(c=>esc(c.n)).join(' and ')+':</b> type the amount for each person who gets it this pay period.</li>' : '')+
+        ((OFF[o].own||[]).filter(c=>!c.hrs && !ownEach(c)).length ? '<li><b>'+(OFF[o].own||[]).filter(c=>!c.hrs && !ownEach(c)).map(c=>esc(c.n)).join(' and ')+':</b> type the amount for each person who gets it this pay period.</li>' : '')+
+        (OFF[o].own||[]).filter(ownEach).map(c=>'<li><b>'+esc(c.n)+':</b> type how many each person did - each one is '+money(RATE[c.each])+'.</li>').join('')+
         '<li><b>Overtime</b> only when Heather approved it first. It’s worked out week by week — tick “Approved” for each week that has some.</li>'+
         '<li><b>Holiday pay</b> starts after the 90-day review. Home-Brace knows the dates, so there’s nothing to fill in.</li>'+
         '<li><b>On call:</b> 1 for each weekend on call. <b># of ERs taken:</b> 1 for each patient seen on an ER - each is 1 hour of pay.</li>'+
@@ -883,6 +891,7 @@
     return label.slice(0,i)+'<span class="lbl">'+label.slice(i)+'<button type="button" class="ibtn" data-tip="'+esc(t)+'" aria-label="'+
       esc('What '+label.replace(/&shy;/g,'')+' means: '+t)+'">i</button></span>'; };
   const ownTip=(o,c)=>c.hrs ? 'Sick hours kept from before - hours, not dollars. They come from '+OFF[o].n+'’s sheet.'
+                            : ownEach(c) ? OFF[o].n+'’s '+c.n+': how many they did x '+money(RATE[c.each])+' each. The count comes from '+OFF[o].n+'’s sheet.'
                             : OFF[o].n+'’s '+c.n+' bonus. It comes from '+OFF[o].n+'’s sheet.';
   const combHead=(o,sp)=>'<tr class="hd"><th class="nm">Employee</th><th class="n">Regular hrs</th><th class="n">OT Wk 1</th><th class="n">OT Wk 2</th><th class="n">PTO</th>'+
     '<th class="n">'+info('PP bonus','The pay-period bonus: a set amount per person (you set it in Settings). The office marks it Full, Partial (takes off a % or a $ amount) or None.')+'</th>'+
@@ -935,7 +944,7 @@
           '<td class="n">'+hrs(c.pto)+'</td><td class="n">'+money(c.ppb)+'</td>'+
           '<td class="n">'+hin(o.k,p,'goal',x.goal,on)+addLines(n,o.k,p,'goal')+'</td><td class="n">'+hin(o.k,p,'tcom',x.tcom,on)+addLines(n,o.k,p,'tcom')+'</td>'+
           '<td class="n">'+(c.holH?hrs(c.holH)+' h':money(c.hol))+'</td><td class="n">'+money(c.oc)+'</td><td class="n">'+(c.ers?c.ers:'—')+'</td>'+
-          own.map(col=>'<td class="n">'+(!col?'':col.hrs?hrs(c.sick):money(num(x[col.k])))+'</td>').join('')+     // typed by the office
+          own.map(col=>'<td class="n">'+(!col?'':col.hrs?hrs(c.sick):money(ownUsd(col,x))+(ownEach(col) && num(x[col.k]) ? '<div class="small muted">'+esc(num(x[col.k]))+' × '+money(RATE[col.each])+'</div>' : ''))+'</td>').join('')+     // typed by the office
           '<td class="n">'+hin(o.k,p,'extra',x.extra,on)+addLines(n,o.k,p,'extra')+(c.exc?'<div class="small muted">+ '+money(c.exc)+' commuter</div>':'')+'</td>'+
           '<td class="n"><b id="ct-'+o.k+'-'+p.id+'">'+money(c.total)+'</b></td><td class="n">'+money(c.reimb)+'</td>'+
           (anySp?'<td class="small">'+sp.filter(cc=>num(x['sc_'+cc.id])).map(cc=>esc(cc.n)+': <b>'+specShow(cc,x['sc_'+cc.id])+'</b>').join('<br>')+'</td>':'')+
@@ -1083,6 +1092,7 @@
       : '<div class="note info">Your answers are in. Try adding or taking off people and doctors — in this mock-up it stays in your browser.</div>');
     h+='<div class="kpis"><div class="kpi"><div class="k">On call</div><div class="v">'+money(RATE.onCall)+'</div><div class="s">a weekend</div></div>'+
       '<div class="kpi"><div class="k">Holiday pay</div><div class="v">'+money(RATE.holiday)+'</div><div class="s">after the 90-day review ('+RATE.holidayHrs+' hours for anyone who gets holiday hours)</div></div>'+
+      '<div class="kpi"><div class="k">DIBS</div><div class="v">'+money(RATE.dibs)+'</div><div class="s">each - San Angelo types how many</div></div>'+
       '<div class="kpi"><div class="k">Mileage</div><div class="v">'+money(RATE.mile)+'</div><div class="s">a mile — the IRS rate. Change it here when the IRS does.</div></div>'+
       '<div class="kpi"><div class="k">Sheets due</div><div class="v">Tue 2 pm</div><div class="s">Central — Monday when a holiday falls later that week</div></div></div>';
     const roster=LIVEPAY ? ((PH.rosterView && PH.rosterView())||[]).filter(r=>r.email) : [], sendersOf=o=>LIVEPAY ? ((PH.paySenders().offices||{})[o.n]||[]) : [];
@@ -1188,7 +1198,7 @@
       if(s.status!=='sent'){ lines.push(['(not sent yet)']); lines.push([]); return; }
       rowPeople(n,o.k).forEach(p=>{ const x=s.rows[p.id]; if(!x) return; const c=calc(p,withAdds(n,o.k,p,x),pr), an=addsNote(n,o.k,p);
         lines.push([disp(p), c.reg, c.ot1||'', c.ot2||'', c.ppb||'', c.pto||'', c.goal||'', c.tcom||'', c.holH?c.holH+' hrs':(c.hol||''), c.reimb||'', c.oc||'', c.ers||'']
-          .concat(own.map(col=>col.hrs?(c.sick||''):(num(x[col.k])||'')), sp.map(col=>num(x['sc_'+col.id])||''), [c.extra||'', c.total, [x.notes||'', an ? '[Added to payroll: '+an+']' : ''].filter(Boolean).join(' ')])); });
+          .concat(own.map(col=>col.hrs?(c.sick||''):(ownUsd(col,x)||'')), sp.map(col=>num(x['sc_'+col.id])||''), [c.extra||'', c.total, [x.notes||'', an ? '[Added to payroll: '+an+']' : ''].filter(Boolean).join(' ')])); });
       const ds=docRows(n,o.k);
       if(ds.length){ lines.push(['Doctor (paid by the day)','Days Wk 1','Days Wk 2','Total days']);
         ds.forEach(d=>{ const v=(s.docs||{})[d.id]||{}; lines.push([d.n, daySet(v.w1)?num(v.w1):'', daySet(v.w2)?num(v.w2):'', num(v.w1)+num(v.w2)]); }); }
@@ -1774,7 +1784,7 @@
 })();
 </script>
 <script>PH.nav('payroll');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc160"></script>
+<script src="tour.js?v=hc161"></script>
 <script>
 Tour.init([
   ...((window.PH && PH.isLive && PH.isLive()) || (()=>{ try{ return localStorage.getItem('ph_pay_real')==='1'; }catch(_){ return false; } })() ? [] : [{sel:'#persona', title:'A mock-up', body:'Made-up people and amounts. Start as the <b>Carlsbad TC</b>, who sends Carlsbad’s sheet, then switch to <b>Heather</b>.'}]),

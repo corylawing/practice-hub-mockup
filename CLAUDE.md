@@ -53,7 +53,7 @@ I can confidently say that the chat feature should go next. The production thing
    8/7/8, Mansfield 7/8/8, San Angelo 9/9/10.
    **HEATHER 16/11: "Schedules changed. ... when we enter production goals for next years and we enter the number of
    days the office will be open then a doctor changes their schedule, we will want that to automatically update on the
-   goal production side."** -> BUILT hc160 (SANDBOX; deploy only on Cory's OK): `v1/proddays.js` (PH_PRODDAYS: month,
+   goal production side."** -> BUILT hc160 (LIVE 16/11 - Cory "deploy"; verified): `v1/proddays.js` (PH_PRODDAYS: month,
    yearOf, changesFor, sync, covered, whenReady, soon). Rule above; months from 2026-09 that the Schedule has filled in
    for that office (fewer than half the weekdays empty - unfilled months keep what she typed); completed = before today
    (Central) for past months + this month, later months left alone. Writes via prodstore.setDays (sched + dys rows, one
@@ -140,7 +140,7 @@ I can confidently say that the chat feature should go next. The production thing
    when the whole period is entered. test/payentered.test.js (16). Browser-checked: mock-up as Heather (1024 + 375 px),
    the San Angelo sender's sheet locking, Real version on the sandbox store (only that office's file written, reload,
    untick).
-12. **Word files open as they print (16/11/2026, hc159 SANDBOX; deploy only on Cory's OK).** Heather (feedback #18
+12. **Word files open as they print (16/11/2026, hc159; LIVE 16/11 with hc160 - Cory "deploy").** Heather (feedback #18
    thread, 16/11): "some word documents show up formatted weird in Home Brace but when I put them in as pdfs they are
    correct." Cory: "Word documents should show up good." Checked read-only (Safari): the Word files are forms built
    from text boxes/anchored shapes/100+ inline checkbox pictures (FFO MEDICAL HISTORY), Lucida Grande (a Mac font) in
@@ -155,6 +155,15 @@ I can confidently say that the chat feature should go next. The production thing
    (The built-in browser pane blocks window.open, so it can't show this.) The Invisalign/Retainer "locked" report
    (#18, 12/11) was already sorted: Heather deleted both .docx 12/11 21:45Z (recycle bin) and put PDFs in; she does NOT
    want the Retainer sheet back ("we are going to change some pricing").
+13. **DIBS is a count x $10 (17/11/2026, hc161 SANDBOX; deploy only on Cory's OK).** Heather (feedback, 16/11 4:56 PM CST,
+   hc158): "the "DIBS" column is supposed to be whatever number she puts in x $10 but it is converting it to $1 ... Amanda
+   did the Dibs and it should be worth $30 but it is worth $3". payrules.js + payroll.html: RATES/RATE.dibs = 10 (Settings
+   rates can override), San Angelo own col {k:'dibs', each:'dibs'}; calc own = phone + dibs x rate + pog; ownEach/ownUsd;
+   office sheet "DIBS #" + "= $30" under the box, its rules "type how many - each one is $10"; combined sheet + CSV in
+   dollars ("3 x $10" under it); Settings tile "DIBS $10 each". Phone and POG stay dollars (POG not asked about).
+   test/paydibs.test.js (10). hc160 (Word PDFs + production days from the Schedule) LIVE 16/11 - Cory "deploy"; verified.
+   BEFORE DEPLOYING: check live San Angelo sheets' dibs values are counts (a dollar figure typed there would become x10);
+   Safari sign-in had expired 17/11.
 **LIVE 01/11/2026 (hc115, 36 files byte-checked, alerts-test 404 on live):** Selene (01/11) "Could we add “Pending – Scheduled to Start” as an additional TC
 outcome? This would apply to patients who have completed their exam and scheduled a future start appointment but
 have not yet signed their contract." -> tc.js SCHED_START: a completed consult (counts for conversion), not a start

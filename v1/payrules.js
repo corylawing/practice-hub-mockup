@@ -15,14 +15,14 @@
     {k:'hobbs',     n:'Hobbs',      co:'Farnsworth Orthodontics Hobbs, PLLC', by:'office manager'},
     {k:'lubbock',   n:'Lubbock',    co:'Farnsworth Family Orthodontics, PLLC (Lubbock)', by:'clinic lead', own:[{k:'phone',n:'Phone'}]},
     {k:'clovis',    n:'Clovis',     co:'Farnsworth Orthodontics, P.C. (Clovis)', by:'office manager', own:[{k:'sick',n:'Sick hrs',hrs:true}]},
-    {k:'sanangelo', n:'San Angelo', co:'Farnsworth Orthodontics San Angelo, PLLC', by:'office manager', own:[{k:'dibs',n:'DIBS'},{k:'pog',n:'POG'}]},
+    {k:'sanangelo', n:'San Angelo', co:'Farnsworth Orthodontics San Angelo, PLLC', by:'office manager', own:[{k:'dibs',n:'DIBS',each:'dibs'},{k:'pog',n:'POG'}]},
     {k:'zihua',     n:'Zihua Partners', co:'Zihua Partners', by:'Heather', self:true},   // Heather fills it in herself (03/11)
     {k:'mansfield', n:'Mansfield',  co:'Sunflower Orthodontics PLLC', by:'office manager'},
     {k:'crucesffo', n:'Cruces FFO', co:'Farnsworth Legacy – Farnsworth Orthodontics Las Cruces LLC', by:'TC'},
     {k:'cruceslco', n:'Cruces LCO', co:'Las Cruces Orthodontics – Farnsworth Orthodontics LLC', by:'office manager'}
   ];
   const OFF=Object.fromEntries(OFFICES.map(o=>[o.k,o]));
-  const RATES={onCall:50, holiday:100, holidayHrs:8, mile:0.76};
+  const RATES={onCall:50, holiday:100, holidayHrs:8, mile:0.76, dibs:10};      // dibs: $ each - San Angelo types a count (17/11/2026)
   /* Until Heather keeps her own list in Settings. */
   const HOLIDAYS=[{d:'2026-01-01',n:'New Year’s Day'},{d:'2026-05-25',n:'Memorial Day'},{d:'2026-07-03',n:'Independence Day'},
     {d:'2026-09-07',n:'Labor Day'},{d:'2026-11-26',n:'Thanksgiving'},{d:'2026-12-25',n:'Christmas'},
@@ -80,7 +80,7 @@
     const w1=num(x.w1), w2=num(x.w2), ot1=Math.max(0,w1-40), ot2=Math.max(0,w2-40), b=num(bonus), cut=num(cutVal(x));
     const ppb=x.bonus==='none' ? 0 : x.bonus==='partial' ? r2(Math.max(0, cutBy(x)==='usd' ? b-cut : b*(1-cut/100))) : b;
     const holOn=!!(per.hol && eligible(p.start, per.hol.d)), hol=holOn&&!p.holHrs?rates.holiday:0, holH=holOn&&p.holHrs?rates.holidayHrs:0;
-    const oc=num(x.oncall)*rates.onCall, own=num(x.phone)+num(x.dibs)+num(x.pog), extra=r2(num(cols.extra)+num(x.exc));
+    const oc=num(x.oncall)*rates.onCall, own=r2(num(x.phone)+num(x.dibs)*num(rates.dibs==null ? RATES.dibs : rates.dibs)+num(x.pog)), extra=r2(num(cols.extra)+num(x.exc));
     return {hours:w1+w2, reg:r2(w1+w2-ot1-ot2), ot1:r2(ot1), ot2:r2(ot2), ppb, pto:num(x.pto), sick:num(x.sick), hol, holH, oc,
             goal:num(cols.goal), tcom:num(cols.tcom), own, extra, exc:num(x.exc), reimb:r2((num(x.mkt)+num(x.oth))*rates.mile),
             total:r2(ppb+num(cols.goal)+num(cols.tcom)+hol+oc+own+extra)};
