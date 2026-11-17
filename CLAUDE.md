@@ -307,6 +307,25 @@ I can confidently say that the chat feature should go next. The production thing
    features that use them, and CHAT_LIVE stays false until Cory's sandbox test + OK. He can also read Noemi's sign-in
    failure himself (Entra -> Users -> her -> Sign-in logs). If "Grant admin consent" is greyed, his role isn't enough
    (needs Cloud Application Administrator or Global Administrator).
+21. **Entered together + ONE pay-period bonus (Heather 17/11/2026 1:51 pm; hc178 SANDBOX ONLY - payroll.html
+   TOGETHER_LIVE=false).** Heather: the 2 Las Cruces offices send separate sheets but are entered as ONE location (same
+   tax ID) - "listed ... under one in alphabetical order"; "the hours do not add together when they work in 2 offices
+   (Yvonne)"; "they should not qualify for a pay period bonus for each location just one bonus (Erica)". FOUND: a person
+   on two offices' sheets (one id, p.offices>1) got the PP bonus on EVERY office's row, and hours/OT stayed per office.
+   Built: (1) Settings -> "Entered together" (holCan): her settings.json `together` [[officeKey,...]]; never set ->
+   TOG_DEFAULT [['crucesffo','cruceslco']] (her ask; NB their company names differ in BASE_OFFICES so it can't be by
+   company). sections(): the combined sheet, its live totals (combTotals) and the download (csv) go section by section -
+   a group is ONE list (combEntries, A-Z), one row per person: mergeX adds every number (w1/w2 too -> OT on the combined
+   week), notes "Office: ...", strictest bonus mark; each office keeps its own Entered tick + Not sent yet; Heather's
+   Goal/TC/OM/Extra go into the first office's row (others' typed values shown under it, counted). (2) oneBonus(n,p): on
+   2+ offices' SENT sheets -> ONE bonus = min of their rows' ppb (None > Partial > Full), on the first office's row
+   (OFFICES order); other rows 0 + "on X's row" - in combined, combTotals, csv, histList, lookHTML (calc(p,x,pr,ppbOver)).
+   (3) twins(): also the same name at DIFFERENT offices with no two different emails -> "Listed twice?" -> Make them one
+   person (key = the entries' ids, twinKey) - she confirms. test/paytogether.test.js (18, runs the page's own calc/mergeX);
+   payadds/payentered/payrates regexes moved to sections. Browser (mock-up): Cruces one list A-Z, made-up Elena Vega 39.58 +
+   29.14 = 68.72 h, one $100 bonus; Separate -> bonus only on FFO's row ("on Cruces FFO's row"); Enter together back;
+   no page errors. NOT CHECKED: whether live Yvonne/Erica are one person (linked) or two entries - if two, Settings ->
+   Listed twice? -> Make them one person. TO TURN ON LIVE: TOGETHER_LIVE=true + deploy, on Cory's OK.
 **LIVE 01/11/2026 (hc115, 36 files byte-checked, alerts-test 404 on live):** Selene (01/11) "Could we add “Pending – Scheduled to Start” as an additional TC
 outcome? This would apply to patients who have completed their exam and scheduled a future start appointment but
 have not yet signed their contract." -> tc.js SCHED_START: a completed consult (counts for conversion), not a start

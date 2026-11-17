@@ -34,7 +34,7 @@ t('the sums use the rates of the pay period they’re for (holiday, on call, DIB
 t('…and so does what’s shown: the office sheet, its rules, the combined sheet, the download, the holiday box, the second look',
   /RATE=rt\(pr\.start\)/.test(fn('sheetTable')) && /RATE=rt\(pr\.start\)/.test(fn('combined')) && /RATE=rt\(pr\.start\)/.test(fn('csv')) &&
   /const RATE=rt\(pr\.start\);/.test(fn('holHTML')) && /RATE=rt\(pr\.start\)/.test(fn('flags')) && /money\(rtN\(n\)\[c\.each\]\)/.test(H) &&
-  /combHead\(o\.k, anySp, RATE\)/.test(H) && /ownTip\(o,c,RATE\)/.test(H));
+  /combHead\(sentKs\[0\], anySp, RATE, own, sentKs\)/.test(H) && /ownTip\(ks \? ownerOf\(ks,c\) : o,c,RATE\)/.test(H));
 
 /* a change never reaches a pay period that's been entered */
 const rs=fn('rateStarts');

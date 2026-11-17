@@ -13,8 +13,9 @@ const ok=[],bad=[]; const t=(n,v)=>{ (v?ok:bad).push(n); };
 const fn=name=>{ const i=H.indexOf('function '+name+'('); if(i<0) return ''; const j=H.indexOf('\n  function ', i+10), k=H.indexOf('\n  /* ', i+10); return H.slice(i, Math.min(j<0?1e9:j, k<0?1e9:k)); };
 
 t('Heather’s side adds it up with the list: the combined sheet, its running totals, History and the download',
-  /calc\(p,withAdds\(n,o\.k,p,x\),pr\);\n        sub\.reg/.test(H) && /calc\(p,withAdds\(n,o\.k,p,x\),pr\); st\+=c\.total/.test(fn('combTotals')) &&
-  /calc\(p,withAdds\(n,o\.k,p,x\),pr\); hours\+=/.test(fn('histList')) && /calc\(p,withAdds\(n,o\.k,p,x\),pr\), an=addsNote/.test(fn('csv')));
+  /by\[p\.id\]\.parts\.push\(\{k, x:withAdds\(n,k,p,x\), raw:x\}\)/.test(fn('combEntries')) && /combEntries\(n, sentKs\)\.forEach\(en=>\{ const p=en\.p, r=entryCalc\(n,pr,en\)/.test(fn('combined')) &&
+  /combEntries\(n, sentKs\)\.forEach\(en=>\{ const c=entryCalc\(n,pr,en\)\.c; st\+=c\.total/.test(fn('combTotals')) &&
+  /c=calc\(p,withAdds\(n,o\.k,p,x\),pr, ob \? \(o\.k===ob\.home \? ob\.amt : 0\) : undefined\); hours\+=/.test(fn('histList')) && /an=en\.parts\.map\(q=>addsNote\(n,q\.k,p\)\)/.test(fn('csv')));
 t('an office’s own sheet never does (they never see pay added on Heather’s side)', /const x=s\.rows\[p\.id\]\|\|blank\(\), c=calc\(p,x,pr\);/.test(fn('sheetTable')) && !/withAdds|addLines|addsCard/.test(fn('sheetTable')+fn('viewOmSheet')+fn('viewOmPast')));
 t('the list is read from Heather’s folder, and only when this person isn’t a sender',
   /lv==='send' \? null : Promise\.all\(\[store\('_h'\)\.get\('settings'\), store\('_h'\)\.getAll\('cols_', \{partial:true, only:isRecent\}\), store\('_h'\)\.get\('adds'\)\]\)/.test(H));

@@ -39,9 +39,10 @@ t('a fresh load starts with no marks', /S\.subs=\{\}; S\.entered=\{\}; S\.entOff
 t('an office’s pill, its sender’s sheet and its "as sent" log follow that office',
   /const s=get\(n,o\), e=entOff\(n,o\), pr=P\(n\);/.test(fn('statusPill')) && /s=get\(n,o\), e=entOff\(n,o\), edit=!e &&/.test(fn('viewOmSheet')) && /const n=per, s=get\(n,v\), e=entOff\(n,v\);/.test(H));
 t('the combined sheet: Heather’s columns lock per office; "Fill it in" and "late" per office',
-  /on=!entOff\(n,o\.k\) && s\.status==='sent' && !R\(\)\.ro/.test(fn('combined')) && /const oe=entOff\(n,o\.k\), late=!oe && NOW>pr\.dueAt/.test(fn('combined')) && /\(!oe && \(n===CUR \|\| n===NEXT\) && !R\(\)\.ro \?/.test(fn('combined')));
+  /const on=!entOff\(n,hk\) && !R\(\)\.ro;/.test(fn('combined')) && /const sentKs=ks\.filter\(k=>get\(n,k\)\.status==='sent'\)/.test(fn('combined')) &&
+  /const oe=entOff\(n,q\.k\), late=!oe && NOW>pr\.dueAt/.test(fn('combined')) && /\(!oe && \(n===CUR \|\| n===NEXT\) && !R\(\)\.ro \?/.test(fn('combined')));
 t('the tick: on each office tile and each company on the combined sheet',
-  (fn('viewBoard').match(/entTick\(n,o\.k\)/g)||[]).length===2 && /entTick\(n,o\.k\)\+'<\/div><\/td><\/tr>'/.test(fn('combined')));
+  (fn('viewBoard').match(/entTick\(n,o\.k\)/g)||[]).length===2 && /: entTick\(n,o\.k\)\)\+'<\/div><\/td><\/tr>'/.test(fn('combined')) && /os\.map\(q=>\{ const t=entTick\(n,q\.k\);/.test(fn('combined')));
 t('the tick shows once the sheet is in (or to untick) - never on the running pay period or for See-only',
   /if\(n===NEXT \|\| R\(\)\.ro \|\| !OFF\[k\]\) return '';/.test(fn('entTick')) && /if\(!en && get\(n,k\)\.status!=='sent'\) return '';/.test(fn('entTick')) && /role="checkbox" aria-checked=/.test(fn('entTick')));
 const act=H.slice(H.indexOf("if(act==='enter' || act==='reopen' || act==='entoff'){"), H.indexOf("if(act==='reload')"));
