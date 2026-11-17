@@ -225,9 +225,9 @@ I can confidently say that the chat feature should go next. The production thing
    new") always said "Pick who it's for" and never saved. Add to payroll's button + handler are now `addpayok`.
    test/payadds.test.js +1 (fails on the old file). Browser-checked in the mock-up: a made-up person saves; Add to
    payroll still works. ALSO REPORTED (Jamy Aguilar + Trinity Moccabee, Clovis): -> #17.
-17. **New hires: with their office + "New on the team list" on Payroll (17/11/2026, hc170) - SANDBOX ONLY.** Cory: "yes
+17. **New hires: with their office + "New on the team list" on Payroll (17/11/2026, hc170; SWITCH ON hc171 - Cory: "push heathers pick who it is. also Jamy and trinity thing"; pushed from a cloud session, DEPLOY FROM THE MAC with #16).** Cory: "yes
    build both on the sandbox" / "Be very careful". ONE switch: user.js `NEWHIRES_LIVE=false` (PH.newHiresOn() = it ||
-   env()!=='live'); off = the live site exactly as before. TO PUT IT LIVE (Cory's OK): set it true, tests, deploy.
+   env()!=='live'); off = the live site exactly as before. NOW true (hc171); setting it false again restores the old order + no card.
    (1) user.js applyExtra: someone added in Admin -> People goes in after the last roster row whose FIRST office is
    theirs (else the last row that has it, else the end, as before - officeSpot); order added kept; Admin, Team, search
    all read rosterRows(), so they all show it. Nothing stored changes - only the order things are listed in.

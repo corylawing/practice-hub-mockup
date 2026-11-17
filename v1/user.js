@@ -244,13 +244,14 @@
      ------------------------------------------------------------------ */
   let ROSTER_FILE=null, ROSTER_EXTRA={added:[],removed:[]};
   const EXTRA_KEY='ph_roster_extra';
-  /* NEW HIRES (17/11/2026, hc170) - SANDBOX ONLY until Cory says deploy: flip this to true.
+  /* NEW HIRES (17/11/2026, hc170; ON for the live site hc171 - Cory: "push ... Jamy and trinity thing").
+     false = the live site goes back to exactly how it was before (the sandbox keeps it either way).
      Heather added Jamy Aguilar and Trinity Moccabee to Clovis in Admin -> People: they sat at the very bottom of the
      list instead of with Clovis, and Payroll never knew about them. With this on: (1) someone added here goes in
      after the last person at their (first) office, so every list that reads the roster shows them with their office;
      (2) Payroll -> This pay period offers "New on the team list" (payroll.html newOnList). Off = exactly as before.
      Here, not further down: applyExtra can run while this file is still being read. */
-  const NEWHIRES_LIVE=false;
+  const NEWHIRES_LIVE=true;
   function newHiresOn(){ return NEWHIRES_LIVE || env()!=='live'; }
   /* Where an added row goes: after the last row whose first office is theirs, else the last row that has their office
      at all, else the end (as before). Several added at one office keep the order they were added in. */

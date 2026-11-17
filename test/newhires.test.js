@@ -16,7 +16,7 @@ const ok=[],bad=[]; const t=(n,v)=>{ (v?ok:bad).push(n); };
 const settle=()=>new Promise(r=>setTimeout(r,30));
 
 /* user.js in a stand-in browser (the same shape as roster.test.js), on a host of our choosing */
-function load(host, ls, shared){
+function load(host, ls, shared, src){
   const LS=ls||{}, listeners={}; shared=shared||{};
   const mk=()=>({style:{},classList:{add(){},remove(){},contains(){return false}},children:[],
     appendChild(c){this.children.push(c);return c},remove(){},setAttribute(){},getAttribute(){return null},
@@ -52,7 +52,7 @@ function load(host, ls, shared){
   vm.createContext(ctx);
   vm.runInContext(fs.readFileSync(path.join(V1,'_staff.js'),'utf8'),ctx,{filename:'_staff.js'});
   vm.runInContext(fs.readFileSync(path.join(V1,'store.js'),'utf8'),ctx,{filename:'store.js'});
-  vm.runInContext(USER,ctx,{filename:'user.js'});
+  vm.runInContext(src||USER,ctx,{filename:'user.js'});
   const origFetch=ctx.fetch;
   ctx.fetch=(u,o)=>{ const m=String(u).match(/items\/(\d+)\/fields/);
     if(m){ const keys=Object.keys(shared).filter(k=>k[0]!=='_'); shared.__lastKey=keys[Number(m[1])-1]; }
@@ -67,18 +67,28 @@ const NEW=[
 
 (async()=>{
   /* ---- the switch ---- */
-  t('the switch is OFF in the code (live unchanged until Cory says deploy)', /const NEWHIRES_LIVE=false;/.test(USER));
+  t('the switch is ON in the code (Cory 17/11: put it live)', /const NEWHIRES_LIVE=true;/.test(USER));
   t('it is decided where applyExtra can see it (before applyExtra, not further down the file)',
     USER.indexOf('const NEWHIRES_LIVE=') > 0 && USER.indexOf('const NEWHIRES_LIVE=') < USER.indexOf('function applyExtra('));
 
-  /* ---- the live site: exactly as before - added people at the end ---- */
+  /* ---- the live site with the switch ON: added people go with their office ---- */
   const L=load('kind-hill-00da87410.3.azurestaticapps.net', {}, {});
   await L.PH.rosterReady; await settle();
-  t('live: PH.newHiresOn() is false', L.PH.newHiresOn()===false);
+  t('live: PH.newHiresOn() is true', L.PH.newHiresOn()===true);
   await L.PH.saveRosterExtra(ex=>{ NEW.forEach(r=>ex.added.push(Object.assign({}, r))); return ex; });
-  const lr=L.PH.rosterRows(), ln=lr.length;
-  t('live: the file comes first, untouched and in its order', lr.slice(0, FILE.people.length).every((r,i)=>r.name===FILE.people[i].name));
-  t('live: added people stay at the end, in the order added', lr[ln-3].name===NEW[0].name && lr[ln-2].name===NEW[1].name && lr[ln-1].name===NEW[2].name);
+  { const lr=L.PH.rosterRows(), ia=lr.findIndex(r=>r.name===NEW[0].name), lastC=FILE.people.map(first).lastIndexOf('Clovis');
+    t('live: the Clovis hires go in right after the last Clovis person, in the order added', ia===lastC+1 && lr[ia+1].name===NEW[1].name);
+    t('live: the file\'s own people keep their order', lr.filter(r=>!r._added).every((r,i)=>r.name===FILE.people[i].name)); }
+
+  /* ---- the switch OFF still means exactly as before (so it stays a real off switch) ---- */
+  const OFF=USER.replace('const NEWHIRES_LIVE=true;', 'const NEWHIRES_LIVE=false;');
+  const L0=load('kind-hill-00da87410.3.azurestaticapps.net', {}, {}, OFF);
+  await L0.PH.rosterReady; await settle();
+  t('switch off, live: PH.newHiresOn() is false', L0.PH.newHiresOn()===false);
+  await L0.PH.saveRosterExtra(ex=>{ NEW.forEach(r=>ex.added.push(Object.assign({}, r))); return ex; });
+  const lr=L0.PH.rosterRows(), ln=lr.length;
+  t('switch off, live: the file comes first, untouched and in its order', lr.slice(0, FILE.people.length).every((r,i)=>r.name===FILE.people[i].name));
+  t('switch off, live: added people stay at the end, in the order added', lr[ln-3].name===NEW[0].name && lr[ln-2].name===NEW[1].name && lr[ln-1].name===NEW[2].name);
 
   /* ---- the sandbox: with their office ---- */
   const S=load('corylawing.github.io', {ph_roster_extra:JSON.stringify({added:NEW, removed:[]})}, {});
