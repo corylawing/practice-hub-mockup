@@ -65,7 +65,7 @@ I can confidently say that the chat feature should go next. The production thing
    the Schedule"); Plan the year: those months' days read-only (📅), "Use last year's days" skips them.
    DRY RUN ON LIVE 16/11 (read-only, nothing written) = what the first sync will write: 2026 only December (Carlsbad
    9->11, Clovis 9->8, Hobbs 9->11, Mansfield 8->7, San Angelo 9->10); 2027 production days 0 -> the Schedule's count
-   for every month already scheduled (most offices Jan-Aug, Clovis + Lubbock Jan-Dec, Cruces FFO/LCO Jan-May): 63
+   for every month already scheduled (most offices Jan-Aug, Clovis + Lubbock Jan-Dec, Cruces FFO/LCO Jan-May): 66
    boxes. test/proddays.test.js (32).
 4. **The monthly monitor sheet.** FILES RECEIVED 03/11 (Cory's Mac, real figures - NEVER commit, never in tests):
    `~/Downloads/San Angelo Monitor Report 2026.xlsx` and `~/Downloads/Clovis Monitor Report 2026.xlsx`. Heather: "The
@@ -164,14 +164,19 @@ I can confidently say that the chat feature should go next. The production thing
    test/paydibs.test.js (10). hc160 (Word PDFs + production days from the Schedule) LIVE 16/11 - Cory "deploy"; verified.
    BEFORE DEPLOYING: check live San Angelo sheets' dibs values are counts (a dollar figure typed there would become x10);
    Safari sign-in had expired 17/11.
-14. **Payroll rows striped in the office's color (17/11/2026, hc162 SANDBOX; deploy only on Cory's OK).** Heather (feedback
+14. **Payroll rows striped in the office's color (17/11/2026, hc163 SANDBOX; deploy only on Cory's OK).** Heather (feedback
    16/11 5:05 PM): "every other person's line could be a different color. I want to be able to follow a line easily when
-   I am looking back and forth entering payroll." Cory: use the office colors from the Schedule; "She isn't talking just
-   hover ... for her to tell the difference". payroll.html offTint(o) = --obg/--odot from PH.colorForOffice (Admin ->
-   Locations palette bg/dot; neutral for Zihua). Every second person row (tr.pr.alt) = color-mix(dot 14%, bg) - always
-   on, combined sheet AND the office's own sheet, name column included; the row under the pointer = stronger + a line of
-   the office color above and below; each office heading on the combined sheet = a 5px strip of its color.
-   test/paystripes.test.js (5). Browser-checked (lime, yellow, sky blue, slate offices).
+   I am looking back and forth entering payroll." Cory: use the office colors from the Schedule - "Visually it tells you
+   two things: separation between white line and colored line and the office you are currently looking at." (A one-color
+   Excel version was tried and dropped - he wants the office's color.) payroll.html offTint(o) = --obg/--odot from
+   PH.colorForOffice (Admin -> Locations palette bg/dot; neutral for Zihua). White, office color, white... (tr.pr.alt =
+   color-mix(dot 14%, bg)) on the combined sheet AND the office's own sheet; row under the pointer stronger + a line of
+   the office color above/below; each office heading on the combined sheet = a 5px strip of its color on the sticky
+   .stick (stays in view scrolling across); the name column was already sticky (Cory asked "the name to stay as she
+   scrolls over" - it does). test/paystripes.test.js (6). Browser-checked incl. scrolled to Total.
+   Production days sync RAN ON LIVE 17/11 10:49Z (Cory's Dashboard visit): 2026 = Dec Carlsbad 9->11, Clovis 9->8, Hobbs
+   9->11, Mansfield 8->7, San Angelo 9->10 + Nov completed Carlsbad 5->6, Lubbock 4->5 (the 16th passed); 2027 = 66 days
+   boxes (null -> the Schedule), exactly the dry run.
 **LIVE 01/11/2026 (hc115, 36 files byte-checked, alerts-test 404 on live):** Selene (01/11) "Could we add “Pending – Scheduled to Start” as an additional TC
 outcome? This would apply to patients who have completed their exam and scheduled a future start appointment but
 have not yet signed their contract." -> tc.js SCHED_START: a completed consult (counts for conversion), not a start

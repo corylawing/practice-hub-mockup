@@ -208,10 +208,10 @@
   .addl{display:block;max-width:170px;margin:3px 0 0 auto;font-size:11.5px;font-weight:700;color:var(--soft);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   table.comb .nm{position:sticky;left:0;z-index:1;background:#fff;box-shadow:1px 0 0 var(--line);min-width:150px;white-space:normal}
   table.comb tr.hd .nm{background:#F7F9FB}
-  /* Every other person in the office's light shade; the row under the pointer stronger (Heather, 17/11). */
+  /* Every other person in the office's color; the row under the pointer stronger, with a line of it above and below. */
   table.t tr.pr.alt td, table.t tr.pr.alt .nm{background:color-mix(in srgb, var(--odot,#94a3b8) 14%, var(--obg,#F4F6F8))}
   table.t tr.pr:hover td, table.t tr.pr:hover .nm{background:color-mix(in srgb, var(--odot,#94a3b8) 30%, #fff);box-shadow:inset 0 2px 0 var(--odot,#94a3b8), inset 0 -2px 0 var(--odot,#94a3b8)}
-  table.comb td.co{box-shadow:inset 5px 0 0 var(--odot,transparent)}
+  table.comb td.co .stick{border-left:5px solid var(--odot,transparent);margin-left:-8px;padding-left:8px}   /* the office's color strip stays in view while the sheet scrolls sideways */
   table.comb tr.subt .nm{background:#FAFBFC}
   table.comb tr.grand .nm{background:var(--navy)}
   table.comb tr.docr td{background:#FBFCFD;font-size:12.5px;color:var(--soft);white-space:normal}
@@ -239,15 +239,15 @@
     .perhead .when{font-size:17px}
   }
 </style>
-<script src="user.js?v=hc162"></script>
+<script src="user.js?v=hc163"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc162"></script>
-  <script src="gate.js?v=hc162"></script>
-  <script src="alerts.js?v=hc162"></script>
-  <script src="_staff.js?v=hc162"></script>
-  <script src="payrules.js?v=hc162"></script>
-  <script src="paystore.js?v=hc162"></script>
-  <script src="docs.js?v=hc162"></script>
+  <script src="store.js?v=hc163"></script>
+  <script src="gate.js?v=hc163"></script>
+  <script src="alerts.js?v=hc163"></script>
+  <script src="_staff.js?v=hc163"></script>
+  <script src="payrules.js?v=hc163"></script>
+  <script src="paystore.js?v=hc163"></script>
+  <script src="docs.js?v=hc163"></script>
 </head>
 <body>
 <div class="ribbon">MOCK-UP for Heather — made-up people and amounts. Try it as the Carlsbad TC first, then as Heather.</div>
@@ -345,9 +345,10 @@
   /* Two columns of the combined sheet carry each office's own, their heading changing office by office - the
      way column J does on Heather's sheet. */
   /* EVERY OTHER PERSON IN THE OFFICE'S COLOR (17/11/2026). Heather: "every other person's line could be a different
-     color. I want to be able to follow a line easily when I am looking back and forth entering payroll." Cory: use the
-     office's color from the Schedule (Admin -> Locations). Every second row takes its light shade, the row under the
-     pointer a stronger one, and the office's heading on the combined sheet a strip of it. */
+     color. I want to be able to follow a line easily when I am looking back and forth entering payroll." Cory: white,
+     the office's color, white, the office's color (its Schedule color, Admin -> Locations) - "Visually it tells you two
+     things: separation between white line and colored line and the office you are currently looking at." The office's
+     heading on the combined sheet carries a strip of it too; the name column stays put while the sheet scrolls across. */
   const offTint=o=>{ const c=(window.PH && PH.colorForOffice) ? PH.colorForOffice(OFF[o] ? OFF[o].n : o) : null;
     return '--obg:'+((c && c.bg) || '#F1F5F9')+';--odot:'+((c && c.dot) || '#94a3b8'); };
   const ownCols=o=>{ const a=(OFF[o].own||[]).slice(0,2); while(a.length<2) a.push(null); return a; };
@@ -1795,7 +1796,7 @@
 })();
 </script>
 <script>PH.nav('payroll');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc162"></script>
+<script src="tour.js?v=hc163"></script>
 <script>
 Tour.init([
   ...((window.PH && PH.isLive && PH.isLive()) || (()=>{ try{ return localStorage.getItem('ph_pay_real')==='1'; }catch(_){ return false; } })() ? [] : [{sel:'#persona', title:'A mock-up', body:'Made-up people and amounts. Start as the <b>Carlsbad TC</b>, who sends Carlsbad’s sheet, then switch to <b>Heather</b>.'}]),
