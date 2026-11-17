@@ -32,6 +32,17 @@
   const CHUNK=320*1024*32;                                       // 10 MiB - must be a multiple of 320 KiB
   const MAX_VIDEO=250*1024*1024;
   const TEST=!CHAT_LIVE;
+  /* THE LIVE PILOT (17/11/2026). Cory: "start with chat but its important only people in this tenant can use it, and only
+     me heather, jessica can use it first until we verify its good". On the live site, while CHAT_LIVE is false: the real
+     chat ONLY for someone on Admin -> Chat's list (the shared list 'ph_chat_pilot' - names and emails, never in this
+     public code) and NEVER for a guest (a sign-in name with #EXT#: someone from another company's Microsoft account) -
+     here and on the sandbox. While it's a pilot, the testers ARE that list: they can only send to each other. */
+  const CHAT_PILOT=true;
+  /* GUESTS (Cory 17/11: "If there is no problem using chat with the guest users and they can chat then we go live with
+     the rest"): OFF until one guest (e.g. a Cruces LCO or Mansfield person) has tried it in the pilot and it works. */
+  const CHAT_GUESTS=false;
+  const PILOT_KEY='ph_chat_pilot';
+  let PILOT=null;                                                // null = not read yet; a read that failed = [] (closed)
 
   const lc=s=>String(s||'').trim().toLowerCase();
   const P=()=>global.PH||{};
@@ -46,17 +57,36 @@
      who IS an Admin - so nothing is decided before this (found 12/11 in the browser check: a TC got the real chat
      for a moment while sign-in was still finishing). */
   function signedIn(){ try{ const p=P().profileOf && P().profileOf(); return !!(p && p.id); }catch(_){ return false; } }
+  const meP=()=>{ try{ return (P().profileOf && P().profileOf()) || null; }catch(_){ return null; } };
+  function guest(){ const p=meP(); return !CHAT_GUESTS && /#ext#/i.test(String((p && p.userPrincipalName)||'')); }   // a guest - and guests aren't allowed yet
+  function myEmails(){ const p=meP()||{}; return [lc(p.mail), lc(p.userPrincipalName)].filter(Boolean); }
+  function cleanPilot(x){
+    const seen={}, out=[];
+    ((x && Array.isArray(x.list)) ? x.list : []).forEach(t=>{ const e=lc(t && t.email);
+      if(e && /@/.test(e) && (CHAT_GUESTS || !/#ext#/.test(e)) && !seen[e]){ seen[e]=1; out.push({email:e, name:String((t && t.name)||e).slice(0,80)}); } });
+    return out;
+  }
+  const pilotLive=()=>isLive() && !CHAT_LIVE && CHAT_PILOT;
+  function pilotKnown(){ return !pilotLive() || PILOT!==null; }
+  function loadPilot(){
+    const S=global.PH_STORE;
+    if(!S || !S.get){ PILOT=[]; return Promise.resolve(PILOT); }
+    return S.get(PILOT_KEY).then(x=>{ PILOT=(S.readFailed && S.readFailed(PILOT_KEY)) ? [] : cleanPilot(x); return PILOT; }, ()=>{ PILOT=[]; return PILOT; });
+  }
+  function onPilot(){ const mine=myEmails(); return !!PILOT && PILOT.some(t=>mine.indexOf(t.email)>=0); }
   /* 'real' | 'demo' (the sandbox mock-up) | 'off' (the live site, while CHAT_LIVE is false). The page asks again
      once signed in, and again when who-they-are is filled in (ph-identity). */
   function mode(){
-    if(isLive()) return CHAT_LIVE && signedIn() ? 'real' : 'off';
+    if(guest()) return isLive() ? 'off' : 'demo';                // only the practice's own people, live or sandbox
+    if(isLive()){ if(!signedIn()) return 'off'; if(CHAT_LIVE) return 'real'; return CHAT_PILOT && onPilot() ? 'real' : 'off'; }
     return switchedOn() && signedIn() && adminHere() ? 'real' : 'demo';
   }
   function setSwitch(on){ lsSet(MODE_KEY, on ? '1' : null); }
 
   /* The testers on this device: [{email, name}] */
-  function testers(){ try{ const a=JSON.parse(ls(TESTERS_KEY)||'[]'); return Array.isArray(a) ? a.filter(x=>x && x.email) : []; }catch(_){ return []; } }
+  function testers(){ if(pilotLive()) return (PILOT||[]).slice(); try{ const a=JSON.parse(ls(TESTERS_KEY)||'[]'); return Array.isArray(a) ? a.filter(x=>x && x.email) : []; }catch(_){ return []; } }
   function setTesters(list){
+    if(pilotLive()) return testers();                            // the pilot list is changed in Admin -> Chat, not here
     const seen={}, out=[];
     (list||[]).forEach(x=>{ const e=lc(x && x.email); if(e && !seen[e]){ seen[e]=1; out.push({email:e, name:String(x.name||e)}); } });
     lsSet(TESTERS_KEY, JSON.stringify(out)); return out;
@@ -342,7 +372,7 @@
     return ems.length ? 'https://teams.microsoft.com/l/call/0/0?users='+ems.map(encodeURIComponent).join(',') : (chat.webUrl||'');
   }
 
-  global.PH_CHATG={CHAT_LIVE, TEST, mode, setSwitch, switchedOn, signedIn, testers, setTesters, canSend, ask, token,
+  global.PH_CHATG={CHAT_LIVE, CHAT_PILOT, CHAT_GUESTS, PILOT_KEY, pilotLive, pilotKnown, loadPilot, cleanPilot, guest, TEST, mode, setSwitch, switchedOn, signedIn, testers, setTesters, canSend, ask, token,
     listChats, listMessages, markRead, createChat, searchPeople, userByEmail,
     sendText, sendPhoto, sendVideo, upload, share, sendFile, fileFor, picture, photo, callLink,
     _t:{parts, decode, mapMessage, mapChat, etagGuid, shareId, safeName, textHTML, call, CHUNK, SMALL, MAX_VIDEO, FOLDER, TENANT}};

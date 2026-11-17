@@ -343,6 +343,26 @@ I can confidently say that the chat feature should go next. The production thing
    picker.test.js (13). Browser (mock-up): 45 of 47 Payroll lists became pickers; "cru" -> the two Cruces; 3 Carlsbad
    people ticked -> $40 each = $120, on exactly those 3 rows once Carlsbad sent; 13 other pages load with no errors.
    ON FOR LIVE hc181 (Cory 17/11: "pickers live"): PICK_LIVE=true; labels refresh on any page change (paint only when changed).
+23. **CHAT PILOT ON LIVE (17-18/11/2026; hc182).** Cory: "start with chat but its important only people in this tenant can
+   use it, and only me heather, jessica can use it first until we verify its good"; "Be perfect on the chat"; on guests:
+   "If there is no problem using chat with the guest users and they can chat then we go live with the rest". Consent is
+   granted (#20). CHAT_LIVE stays false. NEW: CHAT_PILOT=true - on live the real Teams chat ONLY for someone on Admin ->
+   Chat's list (SharePoint 'ph_chat_pilot' {list:[{email,name}], upd, updBy}; names/emails never in code) and never a
+   guest (UPN #EXT#) - CHAT_GUESTS=false in chatgraph.js AND user.js (flip both after a guest has tried it in the pilot).
+   While a pilot the testers = that list (send only into chats where everyone else is on it; checked in every send).
+   user.js: chatPilotMe/chatGuest/reloadChatPilot (one more LATE source on live, a failed read = nobody), NAV chat show
+   `env()!=='live' || chatPilotMe()`, unsnapBar re-checks the chat button on every identity change (BUG FOUND: a pilot
+   member had no chat button on Home - the list lands after the header). chat.html: live never shows the made-up chats
+   (WANT_REAL on live), waits for sign-in then the list, a closed message otherwise, a green .pilotbar (the amber
+   .ribbon is hidden on live), "Who's in it" read-only, no "Add testers". Admin -> Chat tab: the list, add (searchable
+   picker of the roster) / Take out, each asks first; a list that didn't read can't be changed; shows whether YOU match.
+   test/chat.test.js 113 (pilot: on list -> real; not on list / guest / read failed / refused / before /me -> off;
+   outsider send stops before any call). LIVE-MODE BROWSER CHECK (headless Chrome, ?env=live on localhost, scratchpad
+   fakelive.js = pretend MSAL + Graph + pilot list, made-up people): member -> chat button on Home + chat page, pilot bar,
+   chats, send to a pilot member reached Graph, chat with an outsider = 🔒 note and nothing sent; not listed / guest on
+   the list / list failed -> no button, page locked, 0 Teams calls; no page errors. Admin -> Chat checked on the local
+   sandbox (add + take out, confirms, stored). NEXT (Cory): deploy -> Admin -> Chat -> add Cory, Heather, Jessica ->
+   test (text, photo, video, from Teams back) -> then guests (one guest test) -> CHAT_LIVE for everyone.
 **LIVE 01/11/2026 (hc115, 36 files byte-checked, alerts-test 404 on live):** Selene (01/11) "Could we add “Pending – Scheduled to Start” as an additional TC
 outcome? This would apply to patients who have completed their exam and scheduled a future start appointment but
 have not yet signed their contract." -> tc.js SCHED_START: a completed consult (counts for conversion), not a start

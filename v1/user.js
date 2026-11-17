@@ -1846,7 +1846,9 @@
       const bar=document.querySelector('.hdr-in'); if(!bar) return;
       const av=bar.querySelector('.ph-av[data-snap]');
       if(av){ const h=avHTML(me()); if(av.innerHTML!==h) av.innerHTML=h; av.removeAttribute('data-snap'); }
-      const bw=bar.querySelector('.ph-bw[data-snap]');
+      /* The chat button follows who this is - also when it changes LATER (the chat pilot list lands after the header is
+         drawn: found 17/11 in the live-mode browser check - a pilot member had no chat button on Home). */
+      const bw=bar.querySelector('.ph-bw');
       if(bw){ bw.removeAttribute('data-snap'); if(navShown(true).some(x=>x.k==='chat')!==!!bw.querySelector('.ph-chat')) bell(); }
     }catch(_){}
   }
@@ -2436,7 +2438,7 @@
     {k:'team',       n:'\ud83d\udc65 Team',              href:'team.html',       show:()=>atLeast('team','view')},
     /* A MOCK-UP for Selene (20/10/2026) - role-based training with quizzes. Sandbox only:
        never on the live site, where the page is shut too (guard). */
-    {k:'chat',       n:'\ud83d\udcac Chat',              href:'chat.html',       show:()=>env()!=='live', tab:false},   // mock-up (22/10/2026), sandbox only; the header's chat button, not a tab
+    {k:'chat',       n:'\ud83d\udcac Chat',              href:'chat.html',       show:()=>env()!=='live' || chatPilotMe(), tab:false},   // live: the chat pilot only (chatPilotMe)   // mock-up (22/10/2026), sandbox only; the header's chat button, not a tab
     /* Sandbox: the mock-up, everyone. Live: the switch (PAY_LIVE or an admin's preview), then payLevel(). */
     {k:'payroll',    n:'\ud83d\udcb5 Payroll',           href:'payroll.html',    show:()=>env()!=='live' || (payOn() && !!payLevel())},
     {k:'academy',    n:'\ud83c\udf93 Academy',           href:'academy.html',    show:()=>env()!=='live'},
@@ -3093,6 +3095,34 @@
      A page they CAN see opens at once. A refusal waits until those have landed, or 8
      seconds have passed: SharePoint being down must not hold a page forever.
      Pages ask PH.learning() before painting their own "no access" / "no office". */
+  /* THE CHAT PILOT (17/11/2026). Cory: "start with chat but its important only people in this tenant can use it, and only
+     me heather, jessica can use it first until we verify its good". On the live site the chat button and page are there
+     only for someone on Admin -> Chat's list (the shared list 'ph_chat_pilot' - names and emails, never in this public
+     code) and never for a guest (a sign-in name with #EXT#: someone from another company's Microsoft account).
+     chatgraph.js applies the same rule again before any real chat. A list that didn't read = nobody (fails closed). */
+  var CHAT_PILOT_KEY='ph_chat_pilot';
+  var CHATPILOT=null;     // var, not let: the menu can ask before this line has run - then it's simply "not yet"
+  function cleanChatPilot(x){
+    const seen={}, out=[];
+    ((x && Array.isArray(x.list)) ? x.list : []).forEach(function(t){ const e=String((t && t.email)||'').trim().toLowerCase();
+      if(e && /@/.test(e) && !/#ext#/.test(e) && !seen[e]){ seen[e]=1; out.push({email:e, name:String((t && t.name)||e).slice(0,80)}); } });
+    return out;
+  }
+  var CHAT_GUESTS=false;   // guests: off until one has tried it in the pilot (Cory 17/11) - chatgraph.js has the same switch
+  function chatGuest(){ return !CHAT_GUESTS && /#ext#/i.test(String((PROFILE && PROFILE.userPrincipalName)||'')); }
+  function chatPilotMe(){
+    if(!CHATPILOT || !PROFILE || !PROFILE.id || chatGuest()) return false;
+    const mine=[PROFILE.mail, PROFILE.userPrincipalName].map(function(v){ return String(v||'').trim().toLowerCase(); }).filter(Boolean);
+    return CHATPILOT.some(function(t){ return mine.indexOf(t.email)>=0; });
+  }
+  function reloadChatPilot(){
+    if(!window.PH_STORE || !window.PH_STORE.get) return Promise.resolve();
+    return window.PH_STORE.get(CHAT_PILOT_KEY).then(function(x){
+      const failed=!!(window.PH_STORE.readFailed && window.PH_STORE.readFailed(CHAT_PILOT_KEY)), was=JSON.stringify(CHATPILOT);
+      CHATPILOT=failed ? (CHATPILOT||[]) : cleanChatPilot(x);
+      if(JSON.stringify(CHATPILOT)!==was) identityChanged();
+    }, function(){ if(CHATPILOT===null) CHATPILOT=[]; });
+  }
   var SIGNED_IN=false, LATE=0, LATE_GAVE_UP=false;
   function stillLearning(){
     if(!isLive()) return false;
@@ -3112,6 +3142,7 @@
     else lateLanded();
     Promise.resolve(reloadAccess()).then(lateLanded, lateLanded);
     Promise.resolve(reloadPeople()).then(lateLanded, lateLanded);
+    if(isLive()){ LATE++; Promise.resolve(reloadChatPilot()).then(lateLanded, lateLanded); }   // the chat pilot list (Admin -> Chat)
     if(payOn()) Promise.resolve(reloadPaySenders()).then(()=>{ identityChanged(); return reloadPayStatus(); }, ()=>{})   // a sender's Payroll tab
       .then(()=>payAlertsTick(), ()=>{});                                                                                  // and any phone reminder that's due
     setTimeout(function(){ fbTick(true); }, 2500);                                                                         // replies to their feedback
@@ -3934,7 +3965,7 @@
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', start, {once:true}); else setTimeout(start, 0);
   })();
 
-  window.PH={PEOPLE,newHiresOn,pickOn,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,teamNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, rosterView, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, chatBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK, notesHTML, searchHTML, searchDocs, searchDocsHTML, levelForTeams, teamsSeeAll, tcOn, tcRoleFor, payOn, payRoleFor, paySenders, reloadPaySenders, paySenderOffices, payLevel, payReminders, payMark, reloadPayStatus, payRulesReady, payAlertPlan, payAlertsTick, centralNow, alertsReady, saveFace, faceOf, avatar, viewLink, isWordName, wordAttrs, wordPdfInto,
+  window.PH={PEOPLE,newHiresOn,pickOn,chatPilotMe,chatGuest,reloadChatPilot,cleanChatPilot,CHAT_PILOT_KEY,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,teamNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, rosterView, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, chatBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK, notesHTML, searchHTML, searchDocs, searchDocsHTML, levelForTeams, teamsSeeAll, tcOn, tcRoleFor, payOn, payRoleFor, paySenders, reloadPaySenders, paySenderOffices, payLevel, payReminders, payMark, reloadPayStatus, payRulesReady, payAlertPlan, payAlertsTick, centralNow, alertsReady, saveFace, faceOf, avatar, viewLink, isWordName, wordAttrs, wordPdfInto,
     sensRecord, reloadSensitive, sensLevelFor, sensitiveLevel, sensConfirmOk,
     setTheme, theme:()=>THEME, setLayout, layout:()=>LAYOUT, layouts:()=>LAYOUTS.map(l=>({k:l.k, n:l.n})), themes:()=>THEMES.map(t=>({k:t.k, n:t.n})), schemeTokens:k=>schemeTokens(themeOf(k)), contrast,
     feedback:openFeedback, feedbackText, feedbackContext, learning:stillLearning, fbReady, myFeedback, fbTick, usageReady, rosterName, useEmail, useTrackMe, loadHold, loadDone};

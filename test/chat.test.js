@@ -24,7 +24,8 @@ function load(opts){
     setTimeout:f=>{ f(); return 0; }, clearTimeout(){},
     btoa:s=>Buffer.from(s,'binary').toString('base64'), URL:{createObjectURL:()=>'blob:x'} };
   w.window=w;
-  w.PH={isLive:()=>!!opts.live, isAdmin:()=>!!opts.admin, profileOf:()=>opts.noProfile ? null : {id:'u-me', displayName:'Priya Tatum'}};
+  w.PH={isLive:()=>!!opts.live, isAdmin:()=>!!opts.admin, profileOf:()=>opts.noProfile ? null : (opts.profile || {id:'u-me', displayName:'Priya Tatum'})};
+  if(opts.store) w.PH_STORE=opts.store;
   w.PH_AUTH={tokenFor:extra=>{ scopes.push(extra); return Promise.resolve('TOK'); }};
   const replies=opts.replies||[];
   w.fetch=async (url, o)=>{
@@ -55,6 +56,55 @@ const chatWith=(...people)=>({id:'19:abc@thread.v2', type:people.length>2?'group
     C.setSwitch(false); t('switching off removes it', !('ph_chat_real' in LS));
     t('while CHAT_LIVE is false it is a test (send to testers only)', C.TEST===true);
   }
+  /* ---- 1b. THE LIVE PILOT (17/11/2026) - Cory: "only people in this tenant can use it, and only me heather, jessica can
+     use it first until we verify its good". Admin -> Chat's list (SharePoint 'ph_chat_pilot'), never a guest. ---- */
+  {
+    t('pilot on, guests off, CHAT_LIVE still false (in the source)', /const CHAT_PILOT=true;/.test(SRC) && /const CHAT_GUESTS=false;/.test(SRC) && /const CHAT_LIVE=false;/.test(SRC));
+    const meP={id:'u-me', displayName:'Priya Tatum', mail:ME.email, userPrincipalName:ME.email};
+    const guestP={id:'u-g', displayName:'Gina Guest', mail:'gina@othercompany.example', userPrincipalName:'gina_othercompany.example#EXT#@practice.onmicrosoft.com'};
+    const store=(list, how)=>({get:k=>{ store.asked=(store.asked||[]).concat(k); return how==='reject' ? Promise.reject(new Error('no')) : Promise.resolve(list ? {list} : null); },
+      readFailed:k=>how==='failed'});
+    const pl=[{email:ME.email, name:ME.name}, {email:QUINN.email, name:QUINN.name}];
+    let x=load({live:true, profile:meP, store:store(pl)});
+    t('live, before the list has been read: off', x.C.mode()==='off' && x.C.pilotKnown()===false);
+    await x.C.loadPilot();
+    t('live, on the pilot list: the real chat', x.C.pilotKnown()===true && x.C.mode()==='real');
+    t('…the list is read from SharePoint (ph_chat_pilot), not from this device', (store.asked||[]).indexOf('ph_chat_pilot')>=0);
+    t('…its testers ARE the pilot list, and this device can’t change them', x.C.testers().map(p=>p.email).join()===pl.map(p=>p.email).join() && x.C.setTesters([{email:AVERY.email}]).length===2 && !('ph_chat_testers' in x.LS));
+    t('…can send to someone else in the pilot', x.C.canSend(chatWith(ME, QUINN), ME.id)===true);
+    t('…NOT to someone outside it, nor to a group with one outsider', x.C.canSend(chatWith(ME, AVERY), ME.id)===false && x.C.canSend(chatWith(ME, QUINN, AVERY), ME.id)===false);
+    let e1=null; try{ await x.C.sendText(chatWith(ME, AVERY), ME.id, 'hi'); }catch(e){ e1=e; }
+    t('…a send to an outsider stops before anything leaves (no call to Microsoft)', !!e1 && x.calls.length===0);
+    x=load({live:true, profile:meP, store:store([{email:QUINN.email, name:QUINN.name}])}); await x.C.loadPilot();
+    t('live, NOT on the list: off', x.C.mode()==='off');
+    x=load({live:true, profile:guestP, store:store([{email:'gina@othercompany.example', name:'Gina'}])}); await x.C.loadPilot();
+    t('live, a GUEST even on the list: off (guests aren’t allowed yet)', x.C.guest()===true && x.C.mode()==='off');
+    x=load({live:true, profile:meP, store:store(pl, 'failed')}); await x.C.loadPilot();
+    t('live, the list didn’t read (local copy only): off - fails closed', x.C.mode()==='off' && x.C.testers().length===0);
+    x=load({live:true, profile:meP, store:store(pl, 'reject')}); await x.C.loadPilot();
+    t('live, SharePoint refused: off', x.C.mode()==='off');
+    x=load({live:true, noProfile:true, store:store(pl)}); await x.C.loadPilot();
+    t('live, before Microsoft says who this is: off', x.C.mode()==='off');
+    x=load({admin:true, profile:guestP, ls:{ph_chat_real:'1'}});
+    t('sandbox, a guest Admin who switched it on: the mock-up, never the real chat', x.C.mode()==='demo');
+    x=load({admin:true, profile:meP, ls:{ph_chat_real:'1'}});
+    t('sandbox, unchanged: an Admin who switched it on gets the real test (testers on this device)', x.C.mode()==='real' && x.C.pilotKnown()===true);
+    t('user.js: the chat button on live only for the pilot (same rule: on the list, signed in, not a guest; a list that didn’t read = nobody)',
+      /\{k:'chat',[^\n]*show:\(\)=>env\(\)!=='live' \|\| chatPilotMe\(\)/.test(USER) && /if\(!CHATPILOT \|\| !PROFILE \|\| !PROFILE\.id \|\| chatGuest\(\)\) return false;/.test(USER) &&
+      /CHATPILOT=failed \? \(CHATPILOT\|\|\[\]\) : cleanChatPilot\(x\);/.test(USER) && /var CHAT_GUESTS=false;/.test(USER));
+    t('user.js: the header re-checks the chat button whenever who-this-is changes (a pilot member had none on Home: the list lands after the header)',
+      /const bw=bar\.querySelector\('\.ph-bw'\);\n\s*if\(bw\)\{ bw\.removeAttribute\('data-snap'\); if\(navShown\(true\)\.some\(x=>x\.k==='chat'\)!==!!bw\.querySelector\('\.ph-chat'\)\) bell\(\); \}/.test(USER));
+    t('user.js: the page waits for the pilot list before saying "no access" (one more late source on live)', /if\(isLive\(\)\)\{ LATE\+\+; Promise\.resolve\(reloadChatPilot\(\)\)\.then\(lateLanded, lateLanded\); \}/.test(USER));
+    t('chat.html: the live site never shows the made-up chats - not even while loading', /const WANT_REAL=!!\(CG && \(ONLIVE \|\| CG\.switchedOn\(\)\)\);/.test(CHAT) &&
+      /if\(ONLIVE\)\{ CHATS=\[\]; el\('items'\)\.innerHTML=''; el\('conv'\)\.innerHTML='<div class="empty">'/.test(CHAT));
+    t('chat.html: waits for who this is, then the pilot list, then decides', /if\(ONLIVE && !CG\.signedIn\(\)\) return;/.test(CHAT) && /if\(!CG\.pilotKnown\(\)\)\{ CG\.loadPilot\(\)\.then\(startMode, startMode\); return; \}/.test(CHAT));
+    t('chat.html: a green pilot bar on live (the amber ribbon is hidden there); who’s in it is read-only (Admin -> Chat changes it)',
+      /b\.className='pilotbar'/.test(CHAT) && /Admin → Chat changes who’s in it\./.test(CHAT) && /\(ONLIVE \? '' : '<div><button class="btn ghost sm" data-act="testers">Add testers<\/button><\/div>'\)/.test(CHAT));
+    const ADM=R('admin.html');
+    t('admin.html: Admin -> Chat lists the pilot; adding or taking out asks first; a list that didn’t read can’t be changed',
+      /data-t="chat" onclick="AD\.tab\('chat'\)">Chat</.test(ADM) && /if\(!confirm\('Give '\+nm\+' the real Teams chat in Home-Brace\?/.test(ADM) &&
+      /if\(!confirm\('Take '\+x\.name\+' out of the chat pilot\?/.test(ADM) && /if\(!em \|\| !CHATP\) return;/.test(ADM) && /\(CHATP \? '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:14px"><select id="chatAddSel"/.test(ADM));
+  }
   /* ---- 2. Sign-in never asks for chat ---- */
   {
     t('the sign-in scopes are unchanged (no Chat.ReadWrite)', /var SCOPES = \['User\.Read','Sites\.ReadWrite\.All','User\.ReadBasic\.All'\];/.test(GATE));
@@ -66,7 +116,7 @@ const chatWith=(...people)=>({id:'19:abc@thread.v2', type:people.length>2?'group
     const {C, scopes}=load({admin:true, ls:Object.assign({ph_chat_real:'1'}, testersLS([QUINN]))});
     await C.sendText(chatWith(ME, QUINN), ME.id, 'hi');
     t('chat asks for Chat.ReadWrite through tokenFor', scopes.length===1 && JSON.stringify(scopes[0])==='["Chat.ReadWrite"]');
-    t('user.js: the chat button and page stay off on the live site', /\{k:'chat',[^\n]*show:\(\)=>env\(\)!=='live'/.test(USER));
+    t('user.js: the chat button and page stay off on the live site (except the pilot - above)', /\{k:'chat',[^\n]*show:\(\)=>env\(\)!=='live' \|\| chatPilotMe\(\)/.test(USER));
   }
   /* ---- 3. The test lock ---- */
   {

@@ -272,20 +272,20 @@
   }
 
 </style>
-<script src="user.js?v=hc181"></script>
+<script src="user.js?v=hc182"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="_staff.js?v=hc181"></script>
-  <script src="store.js?v=hc181"></script>
-  <script src="gate.js?v=hc181"></script>
-  <script src="docs.js?v=hc181"></script>
-  <script src="payrules.js?v=hc181"></script>
-  <script src="workbook.js?v=hc181"></script>
-  <script src="prodbook.js?v=hc181"></script>
-  <script src="prodfx.js?v=hc181"></script>
-  <script src="prodstore.js?v=hc181"></script>
-<script src="schedrec.js?v=hc181"></script>
-<script src="proddays.js?v=hc181"></script>
-  <script src="prodadmin.js?v=hc181"></script>
+  <script src="_staff.js?v=hc182"></script>
+  <script src="store.js?v=hc182"></script>
+  <script src="gate.js?v=hc182"></script>
+  <script src="docs.js?v=hc182"></script>
+  <script src="payrules.js?v=hc182"></script>
+  <script src="workbook.js?v=hc182"></script>
+  <script src="prodbook.js?v=hc182"></script>
+  <script src="prodfx.js?v=hc182"></script>
+  <script src="prodstore.js?v=hc182"></script>
+<script src="schedrec.js?v=hc182"></script>
+<script src="proddays.js?v=hc182"></script>
+  <script src="prodadmin.js?v=hc182"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — admin console concept for validation. Real build: people sync from Microsoft 365; access is managed here.</div>
@@ -312,6 +312,7 @@
     <button class="tab" data-t="files" onclick="AD.tab('files')">Document Sections</button>
     <button class="tab" data-t="locs" onclick="AD.tab('locs')">Locations</button>
     <button class="tab" data-t="prod" onclick="AD.tab('prod')">Production data</button>
+    <button class="tab" data-t="chat" onclick="AD.tab('chat')">Chat</button>
     <button class="tab" data-t="fb" onclick="AD.tab('fb')">Feedback</button>
     <button class="tab" data-t="use" onclick="AD.tab('use')">Usage</button>
   </div>
@@ -723,7 +724,61 @@
   }
 
   function render(){ if(tab==='users')renderUsers(); else if(tab==='access')renderAccess();
-    else if(tab==='locs')renderLocs(); else if(tab==='prod')renderProd(); else if(tab==='fb')renderFb(); else if(tab==='use')renderUse(); else renderFiles(); }
+    else if(tab==='locs')renderLocs(); else if(tab==='prod')renderProd(); else if(tab==='fb')renderFb(); else if(tab==='use')renderUse(); else if(tab==='chat')renderChat(); else renderFiles(); }
+  /* CHAT PILOT (17/11/2026). Cory: "start with chat but its important only people in this tenant can use it, and only me
+     heather, jessica can use it first until we verify its good". While chat is a pilot, the real Teams chat on the live
+     site is only for the people on this list - the shared list 'ph_chat_pilot' {list:[{email,name}], upd, updBy}
+     (user.js shows them the chat button; chatgraph.js lets only them in and only lets them send to each other). A guest
+     never gets it, even if listed. Admins change it here; each change asks first. A list that didn't read can't be
+     changed (nothing is overwritten). */
+  let CHATP=null, CHATP_ERR='';
+  function loadChatPilot(){
+    CHATP_ERR='';
+    if(!window.PH_STORE || !PH.CHAT_PILOT_KEY){ CHATP=[]; return Promise.resolve(); }
+    return PH_STORE.get(PH.CHAT_PILOT_KEY).then(x=>{
+      if(PH_STORE.readFailed && PH_STORE.readFailed(PH.CHAT_PILOT_KEY)){ CHATP=null; CHATP_ERR='The list didn’t load, so it can’t be changed right now.'; }
+      else CHATP=PH.cleanChatPilot(x);
+    }, e=>{ CHATP=null; CHATP_ERR='The list didn’t load: '+((e && e.message) || 'SharePoint didn’t answer')+'.'; });
+  }
+  function renderChat(){
+    const v=document.getElementById('view');
+    if(CHATP===null && !CHATP_ERR){ v.innerHTML='<div class="intro">Loading the chat pilot…</div>'; loadChatPilot().then(()=>{ if(tab==='chat') renderChat(); }); return; }
+    const list=CHATP||[], have=list.map(x=>x.email), me=PH.profileOf && PH.profileOf(), mine=[me && me.mail, me && me.userPrincipalName].map(x=>String(x||'').toLowerCase()).filter(Boolean);
+    const inIt=list.some(x=>mine.indexOf(x.email)>=0), guestMe=!!(PH.chatGuest && PH.chatGuest());
+    const roster=((PH.rosterView && PH.rosterView())||[]).filter(r=>r && r.email && have.indexOf(String(r.email).toLowerCase())<0).sort((a,b)=>String(a.name).localeCompare(String(b.name)));
+    v.innerHTML='<div class="card" style="padding:18px 20px;max-width:780px">'+
+      '<h2 style="margin:0 0 6px;font-size:18px">Chat pilot</h2>'+
+      '<p style="margin:0 0 12px;color:#56627A;font-size:14px;line-height:1.5">While you try the real Teams chat, it’s only for the people below - on the live site, and they can only message each other. '+
+        'Only people in the practice’s own Microsoft account: a guest (someone from another company, like Sunflower) won’t get it even if they’re listed.</p>'+
+      (CHATP_ERR ? '<div class="intro" style="background:#FFF4E2;border-color:#f3d7a6;color:#7a4b00">'+esc(CHATP_ERR)+' <button class="btn ghost sm" onclick="AD.chatRetry()">Try again</button></div>' : '')+
+      (mine.length ? '<div style="font-size:13px;margin:0 0 10px;color:'+(inIt && !guestMe ? '#1d6b46' : '#56627A')+'">You’re signed in as <b>'+esc(mine[0])+'</b> - '+
+        (guestMe ? 'a guest, so not you.' : inIt ? 'you’re in the pilot ✓' : 'you’re not in it yet.')+'</div>' : '')+
+      (list.length ? list.map(x=>'<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line)"><span style="flex:1;min-width:0"><b>'+esc(x.name)+'</b><br><span style="font-size:12.5px;color:#56627A">'+esc(x.email)+'</span></span>'+
+          (CHATP ? '<button class="btn ghost sm" data-e="'+esc(x.email)+'" onclick="AD.chatDel(this.dataset.e)">Take out</button>' : '')+'</div>').join('')
+        : '<div style="padding:9px 0;border-top:1px solid var(--line);color:#56627A;font-size:14px">Nobody yet - chat is off for everyone on the live site.</div>')+
+      (CHATP ? '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:14px"><select id="chatAddSel" data-pick data-ph="Add someone - type their name" aria-label="Add someone to the chat pilot" style="min-width:260px;max-width:100%"><option value="">Add someone - type their name</option>'+
+          roster.map(r=>'<option value="'+esc(String(r.email).toLowerCase())+'">'+esc(r.name)+((r.offices||[]).length ? ' · '+esc((r.offices||[]).join(', ')) : '')+'</option>').join('')+'</select>'+
+          '<button class="btn" onclick="AD.chatAdd()">Add to the pilot</button></div>' : '')+
+      '</div>';
+  }
+  function chatSave(change, done){
+    PH_STORE.update(PH.CHAT_PILOT_KEY, cur=>({list:PH.cleanChatPilot({list:change(PH.cleanChatPilot(cur))}), upd:new Date().toISOString(), updBy:String((PH.email && PH.email(PH.me()))||'')}))
+      .then(r=>{ if(!r || r.blocked || r.error) throw new Error((r && (r.why || r.error)) || 'no answer');
+          CHATP=PH.cleanChatPilot(r.value); if(tab==='chat') renderChat(); if(PH.reloadChatPilot) PH.reloadChatPilot(); setTimeout(()=>alert(done), 0); },
+        e=>alert('Not saved - '+((e && e.message) || 'check the connection')+'. Nothing changed.'));
+  }
+  function chatAdd(){
+    const s=document.getElementById('chatAddSel'), em=String((s && s.value)||'').trim().toLowerCase(); if(!em || !CHATP) return;
+    const r=((PH.rosterView && PH.rosterView())||[]).find(x=>String(x.email||'').toLowerCase()===em), nm=(r && r.name) || em;
+    if(!confirm('Give '+nm+' the real Teams chat in Home-Brace?\n\nThey’ll see their own Teams chats there and can message the others in the pilot - nobody else.')) return;
+    chatSave(l=>l.concat([{email:em, name:nm}]), nm+' is in the chat pilot. They see the chat button next time a page opens.');
+  }
+  function chatDel(em){
+    const x=(CHATP||[]).find(t=>t.email===em); if(!x) return;
+    if(!confirm('Take '+x.name+' out of the chat pilot?\n\nTheir Teams chats stay in Teams - Home-Brace just stops showing them.')) return;
+    chatSave(l=>l.filter(t=>t.email!==em), x.name+' is out of the chat pilot.');
+  }
+  function chatRetry(){ CHATP=null; CHATP_ERR=''; renderChat(); }
   /* USAGE (10/11/2026): the adoption dashboard - usage.js. Kept and refreshed quietly on Admin's redraws, like Feedback. */
   function renderUse(){ const v=document.getElementById('view');
     if(!v.querySelector(':scope > .use-admin')) v.innerHTML='<div class="use-admin"><div style="font-size:14px;color:#56627A;padding:8px 2px">Loading usage…</div></div>';
@@ -2181,7 +2236,7 @@
   const thenSync=f=>function(){ const r=f.apply(this,arguments); syncEdit(); return r; };
   if(location.hash==='#feedback') setTimeout(()=>tabSet('fb'), 0);
   if(location.hash==='#usage') setTimeout(()=>tabSet('use'), 0);      // the bell's "new feedback" opens here
-  window.AD={tabNow:()=>tab,setupSecs,editSyncNow,tcSyncNow,paySyncNow,sensAdd,sensChange,sensRemove,sensClose,sensQ,sensToggle,sensClear,sensLevel,sensTyped,sensBack,sensNext,sensGo,sensSyncNow,tab:tabSet,viewAs:doViewAs,newTeam,editTeam,saveTeam:thenSync(saveTeam),delTeam:thenSync(delTeam),resetTeams,profile,whyNoAdd,
+  window.AD={chatAdd,chatDel,chatRetry,tabNow:()=>tab,setupSecs,editSyncNow,tcSyncNow,paySyncNow,sensAdd,sensChange,sensRemove,sensClose,sensQ,sensToggle,sensClear,sensLevel,sensTyped,sensBack,sensNext,sensGo,sensSyncNow,tab:tabSet,viewAs:doViewAs,newTeam,editTeam,saveTeam:thenSync(saveTeam),delTeam:thenSync(delTeam),resetTeams,profile,whyNoAdd,
     addPerson,npSet,npLoc,npTeam,saveNewPerson:thenSync(saveNewPerson),accTeam:setAccTeam,removePerson:thenSync(removePerson),restorePerson:thenSync(restorePerson),showRemoved,togTeam,togLoc,setStatus,saveUser:thenSync(saveUser),pickLevel,pickAud,setField,pickPhoto,photoChosen,clearPhoto,pickUserLevel,clearUserLevel,tog,addFile,noop,newSec,editSec,saveSec:thenSync(saveSec),delSec,delSecGo,resetSecs,setSecName,setSecIcon,setSecStruct,setSecLocMode,setSecTeamMode,togSecLoc,togSecTeam,saveFile,cd,useFile,clearFile,uploadFile,setFileTeamMode,setFileLocMode,togFileLoc,togFileTeam,renderLocs,newLoc,editLoc,saveLoc,delLoc,resetLocs,setLocBrand,setLocState,setLocTZ,testAlert,close:closeModal};
   el('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
@@ -2266,7 +2321,7 @@ function sizeWatch(){
   }).catch(()=>{});
 }
 </script>
-<script src="tour.js?v=hc181"></script>
+<script src="tour.js?v=hc182"></script>
 <script>
 Tour.init([
   {sel:'#tabs', title:'This is your control room', body:'Four tabs and you can run the whole hub: <b>People</b>, <b>Teams &amp; Access</b>, <b>Document Sections</b> and <b>Locations</b>. No developer, no consultant.', pre:()=>AD.tab('users')},

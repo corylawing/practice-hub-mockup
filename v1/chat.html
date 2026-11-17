@@ -188,6 +188,8 @@
   .ribbon button{margin-left:10px;background:rgba(58,36,0,.12);border:1px solid rgba(58,36,0,.28);color:#3a2400;border-radius:999px;padding:2px 10px;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer}
   .ribbon button:hover{background:rgba(58,36,0,.22)}
   .ribbon.real{background:#0F827E;color:#fff}
+  .pilotbar{background:#0F827E;color:#fff;text-align:center;font-size:13px;font-weight:600;padding:6px 14px}
+  .pilotbar button{margin-left:10px;font:inherit;font-size:12px;font-weight:700;cursor:pointer;border-radius:999px;padding:3px 11px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.45);color:#fff}
   .ribbon.real button{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.45);color:#fff}
   .ribbon.real button:hover{background:rgba(255,255,255,.28)}
   .av img{width:100%;height:100%;border-radius:50%;object-fit:cover;display:block}
@@ -214,13 +216,13 @@
     .m{max-width:88%}
   }
 </style>
-<script src="user.js?v=hc181"></script>
+<script src="user.js?v=hc182"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc181"></script>
-  <script src="gate.js?v=hc181"></script>
-  <script src="_staff.js?v=hc181"></script>
-  <script src="alerts.js?v=hc181"></script>
-  <script src="chatgraph.js?v=hc181"></script>
+  <script src="store.js?v=hc182"></script>
+  <script src="gate.js?v=hc182"></script>
+  <script src="_staff.js?v=hc182"></script>
+  <script src="alerts.js?v=hc182"></script>
+  <script src="chatgraph.js?v=hc182"></script>
 </head>
 <body>
 <div class="ribbon" id="ribbon">MOCK-UP for Heather and Dr. Jae — made-up people, messages and videos. Nothing is sent anywhere.</div>
@@ -263,6 +265,7 @@
      (an Admin on the sandbox who switched it on; never the live site until CHAT_LIVE). Everyone else: the mock-up. */
   const CG=window.PH_CHATG||null;
   let REALCHAT=false, MEID='';
+  const ONLIVE=!!(window.PH && PH.isLive && PH.isLive());          // the live site: the chat PILOT only (chatgraph.js), never the made-up chats
   const COLORS=['#149B96','#6CB4F5','#F7A25E','#B49CFB','#F48C7F','#F27FC0','#6FD39A','#8FA2FF','#E0A800','#5B8DEF'];
   const colorOf=n=>{ let h=0; for(const c of n) h=(h*31+c.charCodeAt(0))>>>0; return COLORS[h%COLORS.length]; };
   const initials=n=>n.replace(/^Dr\.\s*/,'').split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase();
@@ -446,7 +449,7 @@
     let prev=null;
     c.msgs.forEach(m=>{ if(!prev || dayKey(prev.at)!==dayKey(m.at)) h+='<div class="day">'+esc(dayLabel(m.at))+'</div>'; h+=msgHTML(m,c,prev); prev=m; });
     /* THE TEST LOCK: in a chat with anyone who isn't a tester there is no message box at all (chatgraph.js checks again). */
-    if(REALCHAT && !CG.canSend(c, MEID)) h+='</div><div class="locked">🔒 <b>Test:</b> you can read this chat, but you can only send to your testers. Add them with <b>Testers</b> in the green bar.</div>';
+    if(REALCHAT && !CG.canSend(c, MEID)) h+='</div><div class="locked">🔒 '+(ONLIVE ? '<b>Pilot:</b> you can read this chat, but for now you can only send to the others in the pilot group.' : '<b>Test:</b> you can read this chat, but you can only send to your testers. Add them with <b>Testers</b> in the green bar.')+'</div>';
     else h+='</div><div class="composer">'+
       '<button class="ib" data-act="attach" title="Send a photo or a video from your phone or computer" aria-label="Send a photo or video"><svg viewBox="0 0 24 24"><path d="M21 11.5l-8.6 8.6a5.5 5.5 0 0 1-7.8-7.8l8.6-8.6a3.7 3.7 0 0 1 5.2 5.2l-8.6 8.6a1.8 1.8 0 0 1-2.6-2.6l7.9-7.9"/></svg></button>'+
       '<button class="ib rec" data-act="record" title="Record a video (up to 5 minutes)" aria-label="Record a video"><svg viewBox="0 0 24 24"><rect x="2.5" y="6" width="13" height="12" rx="2.5"/><path d="M15.5 10.5l6-3.5v10l-6-3.5z"/></svg></button>'+
@@ -630,6 +633,11 @@
   }
   function ribbon(){
     const r=el('ribbon'); if(!r || !CG) return;
+    if(REALCHAT && ONLIVE){
+      let b=el('pilotbar'); if(!b){ b=document.createElement('div'); b.id='pilotbar'; b.className='pilotbar'; r.parentNode.insertBefore(b, r); }
+      b.innerHTML='CHAT PILOT - only the pilot group has this for now. You can message the others in it.<button data-act="testers">Who’s in it ('+CG.testers().length+')</button>';
+      return;
+    }
     if(REALCHAT){
       r.className='ribbon real';
       r.innerHTML='REAL CHAT TEST - only you see this. Your real Teams chats; you can only send to your testers.'+
@@ -773,7 +781,7 @@
   /* ---------- sending for real ---------- */
   async function sendReal(m){
     const c=cur(); if(!c) return;
-    if(!CG.canSend(c, MEID)){ toast('Test: you can only send to your testers.'); return; }
+    if(!CG.canSend(c, MEID)){ toast(ONLIVE ? 'Pilot: you can only send to the pilot group for now.' : 'Test: you can only send to your testers.'); return; }
     const kind=m.blob ? 'video' : m.b64 ? 'photo' : 'text';
     const local={id:'local-'+Date.now(), at:Date.now(), from:ME, mine:true, pending:true, text:kind==='text' ? m.text : '', images:[], files:[],
       localImg:kind==='photo' ? m.photo : '', localVideo:kind==='video' ? m.video : '', progress:kind==='video' ? 0 : null};
@@ -829,6 +837,12 @@
   /* ---------- testers, new chats ---------- */
   function testersDlg(){
     const ts=CG.testers();
+    if(ONLIVE){
+      openDlg(top('The pilot group')+'<div class="dm-body"><div class="lead">For now the real chat is just for these people, and you can only send to them.</div>'+
+        '<div class="pick">'+(ts.length ? ts.map(t=>'<div class="trow">'+personAv(t.name, t.email)+'<span style="flex:1;min-width:0">'+esc(t.name)+'<small>'+esc(t.email)+'</small></span></div>').join('') : '<div class="grp">Nobody yet</div>')+'</div>'+
+        '<div class="other">Admin → Chat changes who’s in it.</div></div><div class="dm-foot"><button class="btn" data-act="close">Done</button></div>');
+      return;
+    }
     openDlg(top('Testers')+'<div class="dm-body"><div class="lead">While you test, the real chat only sends to these people - every other chat is locked. They get real Teams messages from you, so pick people who know you’re testing.</div>'+
       '<div class="pick">'+(ts.length ? ts.map(t=>'<div class="trow">'+personAv(t.name, t.email)+'<span style="flex:1;min-width:0">'+esc(t.name)+'<small>'+esc(t.email)+'</small></span><button class="x" data-act="tdel" data-v="'+esc(t.email)+'" aria-label="Remove '+esc(t.name)+'">×</button></div>').join('')
         : '<div class="grp">No testers yet</div>')+'</div>'+
@@ -840,11 +854,11 @@
   function newChatDlgReal(){
     if(CG.TEST){
       const ts=CG.testers();
-      openDlg(top('New chat')+'<div class="dm-body"><div class="note">Test: you can start a chat with your testers only.</div><div class="pick">'+
+      openDlg(top('New chat')+'<div class="dm-body"><div class="note">'+(ONLIVE ? 'Pilot: you can start a chat with the pilot group only.' : 'Test: you can start a chat with your testers only.')+'</div><div class="pick">'+
         (ts.length ? ts.map(t=>'<button data-act="mkreal" data-v="'+esc(t.email)+'">'+personAv(t.name, t.email)+'<span>'+esc(t.name)+'<small>'+esc(t.email)+'</small></span></button>').join('')+
           (ts.length>1 ? '<button data-act="mkgroup">'+avatar({type:'group', name:'Testers'}, true)+'<span>All your testers<small>A group chat</small></span></button>' : '')
           : '<div class="grp">No testers yet</div>')+
-        '</div><div><button class="btn ghost sm" data-act="testers">Add testers</button></div></div>');
+        '</div>'+(ONLIVE ? '' : '<div><button class="btn ghost sm" data-act="testers">Add testers</button></div>')+'</div>');
       return;
     }
     openDlg(top('New chat')+'<div class="dm-body"><input class="search" id="nqr" placeholder="Search for a person" autocomplete="off"><div class="pick" id="nres" hidden></div></div>');
@@ -983,7 +997,7 @@
   const wide=window.matchMedia('(min-width:761px)');
   const firstOpen=()=>{ if(wide.matches && !open && CHATS.length) openChat(CHATS.slice().sort((a,b)=>last(b).at-last(a).at)[0].id, false); };
   /* Someone who switched the real chat on doesn't see the made-up chats flash up first. */
-  const WANT_REAL=!!(CG && CG.switchedOn() && !(window.PH && PH.isLive && PH.isLive()));
+  const WANT_REAL=!!(CG && (ONLIVE || CG.switchedOn()));          // live: never the made-up chats, not even for a moment
   let demoShown=!WANT_REAL;
   renderAlertbar(); renderChips();
   if(WANT_REAL){ CHATS=[]; loading(); } else { renderList(); renderConv(); firstOpen(); }
@@ -991,8 +1005,11 @@
   /* Once signed in we know who this is: the real chat (an Admin who switched it on, sandbox only) or the mock-up. */
   function startMode(){
     if(!CG || !window.PH_AUTH) return;
+    if(ONLIVE && !CG.signedIn()) return;                           // who this is first (ph-identity asks again)
+    if(!CG.pilotKnown()){ CG.loadPilot().then(startMode, startMode); return; }
     if(CG.mode()==='real'){ if(!REALCHAT) startReal(); return; }
     if(REALCHAT) return;
+    if(ONLIVE){ CHATS=[]; el('items').innerHTML=''; el('conv').innerHTML='<div class="empty">'+(CG.guest() ? 'Chat is for people in the practice’s own Microsoft account.' : 'Chat isn’t open to everyone yet - a few people are trying it first.')+'</div>'; return; }
     if(!demoShown){ demoShown=true; CHATS=DEMO; renderChips(); renderList(); renderConv(); firstOpen(); }
     ribbon();
   }
