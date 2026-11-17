@@ -298,6 +298,15 @@ I can confidently say that the chat feature should go next. The production thing
    test. test/payrates.test.js (14); paydibs/payholidays/payspecial regexes moved to the period rates. Browser (mock-up):
    mileage $0.70 from #22 -> #22 88 mi = $61.60, #21 35 mi = $26.60 (0.76); Undo; no page errors on every tab.
    ON FOR LIVE hc177 (Cory 17/11: "rates live"): RATES_LIVE=true; a list that didn't read -> "Couldn't read: the rates".
+20. **Cory has admin rights in the practice's tenant (Adam, 17/11/2026).** So Cory can now do what waited on Adam - HE
+   clicks, never Claude (tenant security settings). In Entra -> App registrations -> Home-Brace (2122a06f-...) -> API
+   permissions: DELEGATED Microsoft Graph only (never Application; never a client secret): Chat.ReadWrite (already
+   added 12/11, not granted), + User.Invite.All, GroupMember.ReadWrite.All (Invite button, not built), + Group.ReadWrite.All
+   (Meeting Calendar, not built) -> "Grant admin consent" -> all Status = Granted. Granting changes nothing for staff by
+   itself: sign-in still asks only User.Read/Sites.ReadWrite.All/User.ReadBasic.All; the rest are asked for only by the
+   features that use them, and CHAT_LIVE stays false until Cory's sandbox test + OK. He can also read Noemi's sign-in
+   failure himself (Entra -> Users -> her -> Sign-in logs). If "Grant admin consent" is greyed, his role isn't enough
+   (needs Cloud Application Administrator or Global Administrator).
 **LIVE 01/11/2026 (hc115, 36 files byte-checked, alerts-test 404 on live):** Selene (01/11) "Could we add “Pending – Scheduled to Start” as an additional TC
 outcome? This would apply to patients who have completed their exam and scheduled a future start appointment but
 have not yet signed their contract." -> tc.js SCHED_START: a completed consult (counts for conversion), not a start
