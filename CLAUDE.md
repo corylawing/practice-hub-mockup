@@ -489,6 +489,12 @@ I can confidently say that the chat feature should go next. The production thing
    do Medicaid ... they do need it" - stays on the Medicaid list.
    CHAT PHOTOS (Cory 18/11, like Slack): hovering a photo shows a round magnifier with a + and darkens it a little (mouse
    only; phones tap). test/party checks it.
+40. **DROPPED 19/11 - don't propose again unless Cory brings them back:** a PRACTICE MAP (the 8 offices on a map of TX/NM,
+   tap for today's doctor / month pace / report status - a "The practice today" card on Home for leadership) and a MONTH
+   REPLAY (offices racing day by day to their monthly goal on the Production Dashboard). Both mocked up 19/11; Cory: "For
+   the mockup I don't see the use case for this" - they repeat what the Dashboard and Monthly Report already show.
+   STREAKS STRIP RECOLOURED (hc217; Cory: "A tad off brand I think like the animated flame though"): navy -> navy2 with a
+   soft teal glow, white numbers, the flame kept as the one warm accent; the office banner teal-soft.
 39. **MONTHLY REPORT STREAKS (19/11/2026; hc216; sandbox with the report).** Cory: "Streaks on the Monthly Report ... Ok
    as long as its animation motion art"; "build the monthly report streaks now". monthly.js onTarget(v) = Collection % >=
    the bottom of its target AND Adjustment % and Delinquent % <= the top of theirs (A/R ratio is a range - not part of
