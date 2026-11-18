@@ -73,7 +73,7 @@ const fails=async f=>{ try{ await f(); return ''; }catch(e){ return e.message; }
   t('"＋ New group" first in every New chat (mock-up, pilot, everyone); the old fixed "All your testers" group only without it', (CHAT.match(/data-act="grpnew"/g)||[]).length>=3 && /ts\.length>1 && !GROUPS\(\) \? '<button data-act="mkgroup">/.test(CHAT));
   t('a group’s name (or 👥 N) opens its settings: rename, people, ＋ Add people, take out (×), Leave group - each change asks first', /data-act="grpinfo" role="button"/.test(CHAT) && CHAT.indexOf("👥 '+(c.members||[]).length")>=0 &&
     /data-act="grpren"/.test(fnOf(CHAT,'grpInfo')) && /data-act="grpadd"/.test(fnOf(CHAT,'grpInfo')) && /data-act="grprmok"/.test(fnOf(CHAT,'grpInfo')) && /data-act="grpleaveok"/.test(fnOf(CHAT,'grpInfo')));
-  t('…× and Leave only once ChatMember.ReadWrite is granted (it says so); changes only where you may send (pilot note)', /can && mng && !p\.me \?/.test(fnOf(CHAT,'grpInfo')) && /mng \? '<button class="btn warn" data-act="grpleave">/.test(fnOf(CHAT,'grpInfo')) &&
+  t('…× and Leave only once ChatMember.ReadWrite is granted (it says so); changes only where you may send (pilot note)', /boss && mng && !p\.me \?/.test(fnOf(CHAT,'grpInfo')) && /mng \? '<button class="btn warn" data-act="grpleave">/.test(fnOf(CHAT,'grpInfo')) &&
     /ChatMember\.ReadWrite permission is granted/.test(fnOf(CHAT,'grpInfo')) && /const can=!REALCHAT \|\| CG\.canSend\(c, MEID\)/.test(fnOf(CHAT,'grpInfo')));
   const ST=new Function('REALCHAT','MEID','ME', 'const KNOWN={"u-j":"Jordan Ellis"}; const lookUp=()=>{};\n'+fnOf(CHAT,'sysText')+'\nreturn sysText;');
   const st=ST(true, 'u-me', 'Priya Tatum'), c={name:'Front desk', people:[{id:'u-me', name:'Priya Tatum'}, {id:'u-q', name:'Quinn Quill'}]};
@@ -81,6 +81,37 @@ const fails=async f=>{ try{ await f(); return ''; }catch(e){ return e.message; }
     st({kind:'added', by:{id:'u-me'}, who:[{id:'u-me'}, {id:'u-q'}]}, c)==='You added Quinn Quill' && st({kind:'removed', by:{id:'u-q'}, who:[{id:'u-j'}]}, c)==='Quinn Quill took Jordan Ellis out' &&
     st({kind:'removed', by:{id:'u-q'}, who:[{id:'u-q'}]}, c)==='Quinn Quill left the group' && st({kind:'renamed', by:{id:'u-me'}, topic:'Front desk'}, c)==='You named the group “Front desk”' &&
     st({kind:'added', by:{id:'u-x'}, who:[{id:'u-y'}]}, c)==='Someone added Someone');
+  /* ---- OWNERS (Cory 18/11: "The person who starts the group can be the owner of the group or assign ownership to someone else. Same as slack") ---- */
+  const OW=new Function('REALCHAT','MEID','ME','PH_STORE', "const window={PH_STORE};\n"+/const OWN_PRE='ph_chatgrp_';/.exec(CHAT)[0]+'\n'+/const ownKey=id=>\{[^\n]*\};/.exec(CHAT)[0]+'\n'+fnOf(CHAT,'cleanOwn')+'\n'+
+    /const meKey=\(\)=>[^\n]*/.exec(CHAT)[0]+'\n'+/const memberKeys=c=>[^\n]*/.exec(CHAT)[0]+'\nasync '+fnOf(CHAT,'ownersOf')+'\nreturn {ownKey, cleanOwn, ownersOf};');
+  const store=(rec, fail)=>({get:()=>Promise.resolve(rec), readFailed:()=>!!fail});
+  const gc={id:'19:g1@thread.v2', people:[{id:'u-me'}, {id:'u-q'}, {id:'u-j'}]};
+  const O1=OW(true, 'u-me', 'Priya Tatum', store({chat:gc.id, owners:['u-q']}));
+  t('owners are kept one record per group (a short, safe key), only for THAT chat, ids only, no repeats',
+    /^ph_chatgrp_[0-9a-z]+$/.test(O1.ownKey(gc.id)) && O1.ownKey(gc.id)===O1.ownKey(gc.id) && O1.ownKey(gc.id)!==O1.ownKey('19:g2@thread.v2') &&
+    O1.cleanOwn({chat:'other', owners:['u-q']}, gc.id)===null && JSON.stringify(O1.cleanOwn({chat:gc.id, owners:['u-q','u-q',5,'']}, gc.id).owners)==='["u-q"]');
+  let o=await O1.ownersOf(gc);
+  t('not an owner: can’t rename / take out / change owners', o.known && !o.none && !o.mine && o.owners.join()==='u-q');
+  o=await OW(true, 'u-me', 'Priya Tatum', store({chat:gc.id, owners:['u-me','u-gone']})).ownersOf(gc);
+  t('an owner: can; an owner who has left the group no longer counts', o.mine && o.owners.join()==='u-me');
+  o=await OW(true, 'u-me', 'Priya Tatum', store({chat:gc.id, owners:['u-gone']})).ownersOf(gc);
+  const o2=await OW(true, 'u-me', 'Priya Tatum', store(null)).ownersOf(gc);
+  t('no owner left (or a group made in Teams / before owners): anyone in it can manage it', o.none && o.mine && o2.none && o2.mine);
+  o=await OW(true, 'u-me', 'Priya Tatum', store(null, true)).ownersOf(gc);
+  t('owners that couldn’t be read are NEVER treated as "no owner" - the owner-only buttons are off and it says so', !o.known && !o.mine && !o.none &&
+    /Couldn’t check who owns this group/.test(fnOf(CHAT,'grpInfo')));
+  const gi=fnOf(CHAT,'grpInfo'), ga=fnOf(CHAT,'grpAct');
+  t('the group screen: "Owner" badges; for owners Rename, ×, Make owner, Remove owner / Step down (never the last owner); for others it says only owners can',
+    /const isOwn=id=>O\.owners\.indexOf\(id\)>=0, boss=can && O\.mine;/.test(gi) && /<span class="ownb">Owner<\/span>/.test(gi) && /boss \? '<button class="btn ghost sm" data-act="grpren">Rename/.test(gi) &&
+    /boss && mng && !p\.me \?/.test(gi) && /O\.owners\.length>1 \?/.test(gi) && /'Step down' : 'Remove owner'/.test(gi) && /Only the group’s owners can rename it and take people out/.test(gi));
+  t('…every owner-only change checks the owners AGAIN before anything is sent (an old screen can’t sneak a rename through)',
+    /await ownerOnly\('rename it'\); if\(REALCHAT\) await CG\.renameGroup/.test(ga) && /await ownerOnly\('take people out'\); if\(REALCHAT\) await CG\.removePerson/.test(ga) &&
+    /const O=await ownerOnly\('change its owners'\);/.test(ga) && /throw new Error\('a group keeps at least one owner'\)/.test(ga));
+  t('…the one who makes a group is its owner; someone taken out or leaving stops being one; the last owner is warned before leaving',
+    /ownSave\(made, \(\)=>\[MEID\]\)/.test(fnOf(CHAT,'grpMake')) && /c\.owners=\[ME\];/.test(fnOf(CHAT,'grpMake')) && /ownSave\(c, list=>list\.filter\(x=>x!==v\)\)/.test(ga) &&
+    /ownSave\(c, list=>list\.filter\(x=>x!==me\)\)/.test(ga) && /You’re its only owner\. Make someone else an owner first/.test(gi));
+  t('…saved with PH_STORE.update (never over someone else’s change); a save that didn’t land says so', /return PH_STORE\.update\(ownKey\(c\.id\), cur=>/.test(fnOf(CHAT,'ownSave')) &&
+    /if\(!r \|\| r\.blocked \|\| r\.error\) throw new Error/.test(fnOf(CHAT,'ownSave')) && /saving you as its owner didn’t work/.test(fnOf(CHAT,'grpMake')));
   const ini=new Function(/const initials=n=>\{[^\n]*\};/.exec(CHAT)[0]+' return initials;')();
   t('initials skip a nickname in brackets or quotes ("Avery (Ave) Alder" = AA)', ini('Avery (Ave) Alder')==='AA' && ini('Joemily "Emmy" Prieto')==='JP' && ini('Dr. Clara Coleman')==='CC' && ini('Quinn Quill')==='QQ');
   t('nothing typed goes in as HTML (names and group names are escaped)', /<b>'\+esc\(c\.name\)\+'<\/b>/.test(fnOf(CHAT,'grpInfo')) && /esc\(tx\)/.test(fnOf(CHAT,'msgHTML')) && !/innerHTML=[^;]*\.value/.test(fnOf(CHAT,'grpInfo')));

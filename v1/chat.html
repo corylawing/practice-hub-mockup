@@ -304,6 +304,10 @@
   .btn.warn:hover{background:#FDF0EE}
   .btn.red{background:#C4321C}
   .btn.red:hover{background:#A82A17}
+  .ownb{display:inline-block;margin-left:6px;font-size:11px;font-weight:800;letter-spacing:.03em;color:var(--teal-ink,#0c5b57);background:var(--teal-soft);border-radius:999px;padding:1px 8px;vertical-align:1px}
+  .trow .own{margin-left:auto;border:1px solid var(--line);background:#fff;color:var(--navy);border-radius:8px;padding:4px 9px;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap}
+  .trow .own:hover{border-color:var(--teal);background:var(--teal-soft)}
+  .trow .own + .x{margin-left:4px !important}
   .pick .trow .x{margin-left:auto;border:0;background:none;padding:2px 8px;border-radius:8px}
   .pick .trow .x:hover{background:#FDF0EE;color:#b42318}
   /* THE EMOJI PICKER (Cory 18/11 + his Slack screenshot) */
@@ -343,13 +347,13 @@
   .lb .lbnav.p{left:14px}.lb .lbnav.n{right:14px}
   .lb .lbnav[hidden]{display:none}
 </style>
-<script src="user.js?v=hc195"></script>
+<script src="user.js?v=hc196"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc195"></script>
-  <script src="gate.js?v=hc195"></script>
-  <script src="_staff.js?v=hc195"></script>
-  <script src="alerts.js?v=hc195"></script>
-  <script src="chatgraph.js?v=hc195"></script>
+  <script src="store.js?v=hc196"></script>
+  <script src="gate.js?v=hc196"></script>
+  <script src="_staff.js?v=hc196"></script>
+  <script src="alerts.js?v=hc196"></script>
+  <script src="chatgraph.js?v=hc196"></script>
 </head>
 <body>
 <div class="ribbon" id="ribbon">MOCK-UP for Heather and Dr. Jae — made-up people, messages and videos. Nothing is sent anywhere.</div>
@@ -678,7 +682,7 @@
   function emoLoad(){
     if(window.PH_EMOJI) return Promise.resolve(window.PH_EMOJI);
     if(emoP) return emoP;
-    emoP=new Promise((res, rej)=>{ const sc=document.createElement('script'); sc.src='emoji.js?v=hc195'; sc.async=true;
+    emoP=new Promise((res, rej)=>{ const sc=document.createElement('script'); sc.src='emoji.js?v=hc196'; sc.async=true;
       sc.onload=()=>window.PH_EMOJI ? res(window.PH_EMOJI) : rej(new Error('no emoji')); sc.onerror=()=>{ emoP=null; sc.remove(); rej(new Error('no emoji')); };
       document.head.appendChild(sc); });
     return emoP;
@@ -1462,7 +1466,7 @@
     if(!REALCHAT){
       const id='g'+Date.now(), c={id, type:'group', name, members:[ME].concat(ps.map(p=>p.name)), unread:0, msgs:[{id:id+'-0', system:true, kind:'made', by:{name:ME}, who:[], topic:name, at:Date.now()},
         {id:id+'-1', system:true, kind:'added', by:{name:ME}, who:ps.map(p=>({name:p.name})), at:Date.now()}]};
-      CHATS.unshift(c); closeDlg(); openChat(id); toast('Group made ✓'); return;
+      c.owners=[ME]; CHATS.unshift(c); closeDlg(); openChat(id); toast('Group made ✓'); return;
     }
     btn.disabled=true; gErr('');
     try{
@@ -1473,25 +1477,72 @@
         CHATS.unshift({id:ch.id, type:'group', name, topic:name, people, members:people.map(p=>p.name), msgs:[], loaded:true, next:'', unread:0, read:Date.now(), local:true,
           sub:'', photo:'', lastMsg:{at:Date.now(), text:'', from:'', mine:true}});
       }
-      openChat(ch.id); toast('Group made ✓');
+      openChat(ch.id);
+      const made=CHATS.find(x=>x.id===ch.id) || {id:ch.id, people:[{id:MEID}]};
+      ownSave(made, ()=>[MEID]).then(()=>toast('Group made ✓ You’re its owner.'), ()=>toast('Group made ✓ - but saving you as its owner didn’t work. Make yourself owner in its settings.'));
     }catch(e){ btn.disabled=false; gErr('Not made: '+((e && e.message)||e)); }
+  }
+  /* GROUP OWNERS (Cory 18/11: "The person who starts the group can be the owner of the group or assign ownership to
+     someone else. Same as slack"). Whoever makes a group owns it; an owner can make others owners or step down (never
+     the last one). Only owners rename the group or take people out; anyone in it can add people and leave. A group with
+     no owner left (or made in Teams / before this) = anyone in it can do everything, and anyone can make someone owner.
+     Kept in Home-Brace's shared list, one record per group: ph_chatgrp_<short hash of the chat id> {chat, owners:[user
+     ids], upd, updBy} - changed with PH_STORE.update (never over someone else's change). Teams itself has no owners in a
+     group chat: in the Teams app anyone in it can still rename or take people out - this rule is Home-Brace's own. */
+  const OWN_PRE='ph_chatgrp_';
+  const ownKey=id=>{ let h=0x811c9dc5; for(const ch of String(id||'')){ h^=ch.codePointAt(0); h=Math.imul(h, 0x01000193)>>>0; } return OWN_PRE+h.toString(36); };
+  function cleanOwn(rec, chatId){
+    if(!rec || typeof rec!=='object' || rec.chat!==chatId) return null;
+    const o=(Array.isArray(rec.owners) ? rec.owners : []).filter(x=>typeof x==='string' && x && x.length<=200);
+    return {chat:chatId, owners:o.filter((x,i)=>o.indexOf(x)===i).slice(0,50)};
+  }
+  const meKey=()=>REALCHAT ? MEID : ME;
+  const memberKeys=c=>REALCHAT ? (c.people||[]).map(p=>p.id).filter(Boolean) : (c.members||[]).slice();
+  /* {known, owners (still in the group), none (no owner = anyone can manage), mine} */
+  async function ownersOf(c){
+    let list=null, known=true;
+    if(!REALCHAT) list=Array.isArray(c.owners) ? c.owners : null;
+    else if(window.PH_STORE){
+      const k=ownKey(c.id); let v=null;
+      try{ v=await PH_STORE.get(k); }catch(_){ known=false; }
+      if(PH_STORE.readFailed && PH_STORE.readFailed(k)) known=false;
+      const r=cleanOwn(v, c.id); list=r ? r.owners : null;
+    }
+    const inIt=memberKeys(c), owners=(list||[]).filter(x=>inIt.indexOf(x)>=0), none=known && !owners.length;
+    return {known, owners, none, mine:known && (none || owners.indexOf(meKey())>=0)};
+  }
+  function ownSave(c, change){
+    if(!REALCHAT){ c.owners=change((c.owners||[]).slice()); return Promise.resolve(c.owners); }
+    if(!window.PH_STORE) return Promise.reject(new Error('Home-Brace’s shared list isn’t ready'));
+    return PH_STORE.update(ownKey(c.id), cur=>{ const r=cleanOwn(cur, c.id); return {chat:c.id, owners:change(r ? r.owners.slice() : []), upd:new Date().toISOString(), updBy:meKey()}; })
+      .then(r=>{ if(!r || r.blocked || r.error) throw new Error((r && (r.why || r.error)) || 'no answer'); return (cleanOwn(r.value, c.id)||{owners:[]}).owners; });
   }
   /* A group's settings */
   async function grpInfo(view){
     const c=cur(); if(!c || c.type!=='group') return;
-    const can=!REALCHAT || CG.canSend(c, MEID), mng=REALCHAT ? await CG.canManageMembers() : true;
+    const can=!REALCHAT || CG.canSend(c, MEID), mng=REALCHAT ? await CG.canManageMembers() : true, O=await ownersOf(c);
+    if(cur()!==c) return;
+    const isOwn=id=>O.owners.indexOf(id)>=0, boss=can && O.mine;          // boss = may rename, take out, change owners
     const ppl=REALCHAT ? (c.people||[]).map(p=>({id:p.id, name:p.name||p.email||'Someone', email:p.email, me:p.id===MEID}))
       : (c.members||[]).map(n=>({id:n, name:n, email:'', me:n===ME}));
-    ppl.sort((a,b)=>(b.me-a.me) || a.name.localeCompare(b.name));
+    ppl.sort((a,b)=>(b.me-a.me) || (isOwn(b.id)-isOwn(a.id)) || a.name.localeCompare(b.name));
     let body;
     if(view==='rename') body='<label class="lab2">Group name<input class="search" id="gname" maxlength="80" value="'+esc(c.name)+'" autocomplete="off" data-nomic></label><div class="gerr" id="gerr"></div>';
     else if(view==='add'){ GP={mode:'add', chat:c, picked:{}}; body=grpPickHTML(); }
     else if(view && view.rm) body='<div>Take <b>'+esc(view.rm.name)+'</b> out of “'+esc(c.name)+'”? They stop getting its messages. Someone in the group can add them back.</div><div class="gerr" id="gerr"></div>';
-    else if(view==='leave') body='<div>Leave “'+esc(c.name)+'”? You stop getting its messages. Someone in the group can add you back.</div><div class="gerr" id="gerr"></div>';
-    else body='<div class="gname"><b>'+esc(c.name)+'</b>'+(can ? '<button class="btn ghost sm" data-act="grpren">Rename</button>' : '')+'</div>'+
-      '<div class="pick"><div class="grp">People ('+ppl.length+')</div>'+ppl.map(p=>'<div class="trow">'+personAv(p.name, p.email)+'<span style="flex:1;min-width:0">'+esc(p.name)+(p.me?' <small style="display:inline">(you)</small>':'')+(p.email?'<small>'+esc(p.email)+'</small>':'')+'</span>'+
-        (can && mng && !p.me ? '<button class="x" data-act="grprm" data-v="'+esc(p.id)+'" data-name="'+esc(p.name)+'" aria-label="Take '+esc(p.name)+' out" title="Take out of the group">×</button>' : '')+'</div>').join('')+'</div>'+
+    else if(view==='leave'){ const last=O.owners.length===1 && isOwn(meKey()) && ppl.length>1;
+      body='<div>Leave “'+esc(c.name)+'”? You stop getting its messages. Someone in the group can add you back.</div>'+
+        (last ? '<div class="note">You’re its only owner. Make someone else an owner first - or the group will have no owner, and anyone in it can rename it and take people out.</div>' : '')+'<div class="gerr" id="gerr"></div>'; }
+    else body='<div class="gname"><b>'+esc(c.name)+'</b>'+(boss ? '<button class="btn ghost sm" data-act="grpren">Rename</button>' : '')+'</div>'+
+      '<div class="pick"><div class="grp">People ('+ppl.length+')</div>'+ppl.map(p=>{ const own=isOwn(p.id);
+        const ob=!boss ? '' : own ? (O.owners.length>1 ? '<button class="own" data-act="grpunown" data-v="'+esc(p.id)+'" data-name="'+esc(p.name)+'">'+(p.me ? 'Step down' : 'Remove owner')+'</button>' : '')
+          : '<button class="own" data-act="grpown" data-v="'+esc(p.id)+'" data-name="'+esc(p.name)+'">Make owner</button>';
+        return '<div class="trow">'+personAv(p.name, p.email)+'<span style="flex:1;min-width:0">'+esc(p.name)+(p.me?' <small style="display:inline">(you)</small>':'')+(own?'<span class="ownb">Owner</span>':'')+(p.email?'<small>'+esc(p.email)+'</small>':'')+'</span>'+ob+
+        (boss && mng && !p.me ? '<button class="x" data-act="grprm" data-v="'+esc(p.id)+'" data-name="'+esc(p.name)+'" aria-label="Take '+esc(p.name)+' out" title="Take out of the group">×</button>' : '')+'</div>'; }).join('')+'</div>'+
       (can ? '<div><button class="btn ghost sm" data-act="grpadd">＋ Add people</button></div>' : '')+
+      (!O.known ? '<div class="note">Couldn’t check who owns this group - renaming, taking people out and owners are off until it can. Close and open it again.</div>'
+        : O.none ? '<div class="small" style="color:var(--soft)">No owner yet - anyone in the group can rename it and take people out. Make someone an owner to change that.</div>'
+        : !O.mine ? '<div class="small" style="color:var(--soft)">Only the group’s owners can rename it and take people out.</div>' : '')+
       (REALCHAT && !mng ? '<div class="small" style="color:var(--soft)">Taking people out and leaving turn on once Microsoft’s ChatMember.ReadWrite permission is granted.</div>' : '')+
       (!can ? '<div class="note">'+(ONLIVE ? 'Pilot: only the pilot group can change a group for now.' : 'Test: only your testers can change a group.')+'</div>' : '');
     const foot=view==='rename' ? '<button class="btn ghost" data-act="grpinfo">Cancel</button><button class="btn" data-act="grprenok">Save</button>'
@@ -1509,7 +1560,7 @@
     else { await loadList(false); setTimeout(()=>{ pollOpen(); }, 1200); }
     renderList(); if(open===c.id) renderConv(); if(msg) toast(msg);
   }
-  async function grpDo(btn, fn){ btn.disabled=true; gErr(''); try{ await fn(); }catch(e){ btn.disabled=false; gErr('Not done: '+((e && e.message)||e)); } }
+  async function grpDo(btn, fn){ btn.disabled=true; gErr(''); try{ await fn(); }catch(e){ btn.disabled=false; const m='Not done: '+((e && e.message)||e); if(el('gerr')) gErr(m); else toast(m); } }
   function grpAct(act, b, v){
     const c=cur();
     if(act==='grpnew'){ grpNew(); return true; }
@@ -1522,16 +1573,26 @@
     if(act==='grpadd'){ grpInfo('add'); return true; }
     if(act==='grprm'){ grpInfo({rm:{id:v, name:b.dataset.name||'them'}}); return true; }
     if(act==='grpleave'){ grpInfo('leave'); return true; }
+    const ownerOnly=async what=>{ const O=await ownersOf(c); if(!O.known) throw new Error('couldn’t check who owns this group - try again'); if(!O.mine) throw new Error('only the group’s owners can '+what); return O; };
+    if(act==='grpown' || act==='grpunown'){ const nm=b.dataset.name||'them', meIt=v===meKey();
+      grpDo(b, async ()=>{ const O=await ownerOnly('change its owners');
+        await ownSave(c, list=>{ let o=list.filter(x=>memberKeys(c).indexOf(x)>=0);
+          if(act==='grpown'){ if(o.indexOf(v)<0) o.push(v); }
+          else { if(o.length<=1) throw new Error('a group keeps at least one owner'); o=o.filter(x=>x!==v); }
+          return o; });
+        grpInfo(); toast(act==='grpown' ? nm+' is now an owner' : meIt ? 'You’re no longer an owner' : nm+' is no longer an owner'); }); return true; }
     if(act==='grprenok'){ const nm=String((el('gname')||{}).value||'').trim(); if(!nm){ gErr('Give the group a name.'); return true; }
-      grpDo(b, async ()=>{ if(REALCHAT) await CG.renameGroup(c, MEID, nm); c.name=nm; c.topic=nm; closeDlg(); await grpAfter(c, {kind:'renamed', topic:nm}, 'Renamed ✓'); }); return true; }
+      grpDo(b, async ()=>{ await ownerOnly('rename it'); if(REALCHAT) await CG.renameGroup(c, MEID, nm); c.name=nm; c.topic=nm; closeDlg(); await grpAfter(c, {kind:'renamed', topic:nm}, 'Renamed ✓'); }); return true; }
     if(act==='grpaddok'){ const ps=Object.values((GP && GP.picked)||{}); if(!ps.length){ gErr('Pick who to add.'); return true; }
       grpDo(b, async ()=>{ if(REALCHAT) await CG.addPeople(c, MEID, await idsOf(ps)); else c.members=c.members.concat(ps.map(p=>p.name));
         closeDlg(); await grpAfter(c, {kind:'added', who:ps.map(p=>({name:p.name}))}, ps.length===1 ? ps[0].name+' added ✓' : ps.length+' people added ✓'); }); return true; }
     if(act==='grprmok'){ const nm=b.dataset.name||'them';
-      grpDo(b, async ()=>{ if(REALCHAT) await CG.removePerson(c, MEID, v); else c.members=c.members.filter(n=>n!==v);
+      grpDo(b, async ()=>{ await ownerOnly('take people out'); if(REALCHAT) await CG.removePerson(c, MEID, v); else c.members=c.members.filter(n=>n!==v);
+        ownSave(c, list=>list.filter(x=>x!==v)).catch(()=>{});                 // no longer in it = no longer an owner
         closeDlg(); await grpAfter(c, {kind:'removed', who:[{name:nm}]}, nm+' taken out ✓'); }); return true; }
     if(act==='grpleaveok'){
       grpDo(b, async ()=>{ if(REALCHAT) await CG.leaveGroup(c, MEID);
+        const me=meKey(); ownSave(c, list=>list.filter(x=>x!==me)).catch(()=>{});
         closeDlg(); CHATS=CHATS.filter(x=>x.id!==c.id); open=null; el('app').classList.remove('open'); renderList(); renderConv(); fit(); toast('You left “'+c.name+'”'); }); return true; }
     return false;
   }

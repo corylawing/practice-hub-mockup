@@ -461,10 +461,17 @@ I can confidently say that the chat feature should go next. The production thing
    events, a JWT with fake_scp): live without the switch = no New group; pool = pilot only; errors for no name / 1
    person; body right; rename; no × / Leave without the permission (+ note); outsider refused; with it: take out + leave
    (gone after refresh); names right.
-   ON FOR LIVE hc194 (Cory 18/11: "groups live"); chat itself still pilot-only. NEXT (Cory 18/11): group OWNERS like Slack -
-   "The person who starts the group can be the owner of the group or assign ownership to someone else" (Teams group chats
-   have no owner rule - every member can rename/add/remove in the Teams app; Home-Brace can only enforce it in its own
-   screens + needs a shared place to keep owners).
+   ON FOR LIVE hc194 (Cory 18/11: "groups live"); chat itself still pilot-only.
+   GROUP OWNERS (Cory 18/11: "The person who starts the group can be the owner of the group or assign ownership to someone
+   else. Same as slack" -> "build owners and deploy"; hc196 LIVE): the maker owns it; owners: Rename, × take out, Make
+   owner, Remove owner / Step down (never the last owner); everyone: ＋ Add people, Leave. No owner left / group made in
+   Teams or before hc196 = anyone in it can manage it and make someone owner. Owners that couldn't be read = owner buttons
+   OFF + a note (never treated as "no owner"). Every owner-only action re-checks (ownerOnly) before sending. Kept in
+   HomeBraceData (staff can write it - profiles/photos/seen already do): ph_chatgrp_<FNV hash of chat id> {chat, owners:
+   [user ids], upd, updBy} via PH_STORE.update. LIMIT (told Cory): Teams has no owners in a group chat - in the Teams app
+   anyone in it can still rename / take out; and anyone with list access could edit the record (same trust as Teams).
+   Browser: mock-up + live-mode harness (scratchpad chatowners-run.js; fakelive keeps ph_chatgrp_ in W.__own, __ownFail).
+   test/chatgroups (27).
    MICROSOFT PERMISSIONS (18/11, Cory has admin for ~1 week only): asked him to add + grant (Delegated) ChatMember.ReadWrite,
    Presence.Read.All, Calendars.ReadWrite, Calendars.ReadWrite.Shared, OnlineMeetings.ReadWrite, Mail.Send, User.Read.All,
    User.ReadWrite.All, Sites.Manage.All, Files.ReadWrite.All, ChannelMessage.Send, ChannelMessage.Read.All, Tasks.ReadWrite,
