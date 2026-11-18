@@ -201,6 +201,36 @@
   .setrow input[type=number]{width:90px;padding:8px 10px;border:1px solid var(--line);border-radius:9px;font-weight:700;font-size:14px;font-family:inherit;color:var(--navy)}
   .checks{display:flex;flex-wrap:wrap;gap:8px}
   .checks label{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:6px 11px;font-size:13.5px;font-weight:600;cursor:pointer}
+  /* switches - the Schedule's show/hide toggle */
+  .tchip{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:7px 13px;font-size:13.5px;font-weight:700;color:var(--navy);cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:8px}
+  .tchip .sw{width:30px;height:17px;border-radius:999px;background:#cbd5e1;position:relative;transition:background .12s;flex:none}
+  .tchip .sw::after{content:'';position:absolute;top:2px;left:2px;width:13px;height:13px;border-radius:50%;background:#fff;transition:transform .12s}
+  .tchip.on .sw{background:var(--teal)} .tchip.on .sw::after{transform:translateX(13px)} .tchip.on{border-color:var(--teal)}
+  .tchip.off{color:var(--soft)}
+  .tchip .odot{width:9px;height:9px;border-radius:50%;display:inline-block}
+  .tchip:focus-visible,.sel:focus-visible,.drop:focus-within{outline:2px solid var(--teal);outline-offset:2px}
+  /* targets */
+  .tgts{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+  .tgt{border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+  .tgt .tl b{display:block;color:var(--navy);font-size:14.5px} .tgt .tl span{font-size:12.5px;color:var(--soft)}
+  .tgt .tr{display:flex;align-items:center;gap:8px}
+  .tin{position:relative;display:inline-block}
+  .tin input{width:92px;padding:8px 26px 8px 10px;border:1px solid var(--line);border-radius:9px;font-weight:700;font-size:15px;font-family:inherit;color:var(--navy);font-variant-numeric:tabular-nums}
+  .tin input:focus{outline:2px solid var(--teal);border-color:var(--teal)}
+  .tin i{position:absolute;right:9px;top:50%;transform:translateY(-50%);font-style:normal;font-weight:700;color:var(--soft);pointer-events:none}
+  .gbar.tb{grid-column:auto}
+  .tgt .tx{font-size:12px;color:var(--soft)}
+  .sel{padding:8px 30px 8px 11px;border:1px solid var(--line);border-radius:9px;font-weight:700;font-size:14px;font-family:inherit;color:var(--navy);background:#fff;cursor:pointer}
+  .sel.need{border-color:var(--amber);background:var(--amber-soft)}
+  .duesel{display:inline-flex;align-items:center;gap:8px;font-weight:600;flex-wrap:wrap}
+  /* the Excel drop zone */
+  .drop{display:flex;flex-direction:column;align-items:center;gap:3px;border:2px dashed #cdd6e0;border-radius:14px;padding:22px 16px;text-align:center;cursor:pointer;background:#fafcfd;transition:background .12s,border-color .12s}
+  .drop:hover,.drop.over{border-color:var(--teal);background:var(--teal-soft)}
+  .drop .dico{font-size:26px} .drop b{color:var(--navy);font-size:15px}
+  .drop input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+  .btn.saving{position:relative;color:transparent}
+  .btn.saving::after{content:'';position:absolute;inset:0;margin:auto;width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:btnspin .6s linear infinite}
+  @keyframes btnspin{to{transform:rotate(360deg)}}
   .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:11px 18px;border-radius:12px;font-size:14px;font-weight:600;box-shadow:0 10px 30px rgba(15,42,74,.25);z-index:50}
   @media(max-width:640px){
     .talk li{grid-template-columns:1fr auto} .talk li .opill{grid-column:1/-1}
@@ -211,12 +241,12 @@
   }
   @media (prefers-reduced-motion: reduce){ *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important} }
 </style>
-<script src="user.js?v=hc206"></script>
+<script src="user.js?v=hc207"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc206"></script>
-  <script src="gate.js?v=hc206"></script>
-  <script src="prodbook.js?v=hc206"></script>
-  <script src="monthly.js?v=hc206"></script>
+  <script src="store.js?v=hc207"></script>
+  <script src="gate.js?v=hc207"></script>
+  <script src="prodbook.js?v=hc207"></script>
+  <script src="monthly.js?v=hc207"></script>
 </head>
 <body>
 <div class="ribbon">MOCK-UP for Heather — made-up numbers. Try it as an office manager first, then as Heather.</div>
@@ -598,18 +628,47 @@
   }
 
   /* ---------- SETTINGS (Heather): which offices bill Medicaid, the targets, the due day ---------- */
+  /* SETTINGS - like the rest of Home-Brace (Cory 18/11: "very ux friendly like the rest of the app"): plain cards, each
+     change saves the moment it's made and says so (no Save button to forget), switches instead of tick boxes. */
+  const TGT=[
+    {k:'col',   n:'Collection %',      how:'Collected ÷ produced',                unit:'%',  step:0.5, ex:'An office collecting less than the first number is “Off target”.'},
+    {k:'adj',   n:'Adjustment %',      how:'Written off ÷ produced',              unit:'%',  step:0.5, ex:'More than the second number is “Off target”.'},
+    {k:'ratio', n:'A/R ratio',         how:'Owed ÷ a month’s production',         unit:'×',  step:0.1, ex:'Outside the range is worth a look either way.'},
+    {k:'del',   n:'Late over 30 days', how:'Late accounts ÷ accounts receivable', unit:'%',  step:0.5, ex:'More than the second number is “Off target”.'}];
+  const ord=n=>n+(n%10===1&&n!==11?'st':n%10===2&&n!==12?'nd':n%10===3&&n!==13?'rd':'th');
   function settingsHTML(){
     const offs=PH.officeNames(), G=SET.goals;
-    const g=(k,label,unit)=>'<div class="setrow"><b>'+label+'</b><span><input type="number" step="0.1" id="g_'+k+'_0" value="'+G[k][0]+'"> to <input type="number" step="0.1" id="g_'+k+'_1" value="'+G[k][1]+'"> '+unit+'</span></div>';
-    return '<div class="stack">'+importCard()+
-      '<div class="card"><h2>Who reads the reports</h2><label class="checks" style="cursor:pointer"><span><input type="checkbox" id="everyone" '+(SET.everyone?'checked':'')+'> Everyone who can open the Monthly Report reads <b>every</b> office</span></label>'+
-      '<div class="sub" style="margin-top:8px">Office managers and TCs see the whole practice, like your email today. Only each office’s own people (and you) can type its numbers. Who can open it at all is set in Admin → Teams &amp; Access.</div></div>'+
-      '<div class="card"><h2>Offices that bill Medicaid</h2><div class="sub">These offices get the Medicaid section. A new office added in Admin shows up here.</div><div class="checks">'+
-      offs.map(o=>'<label><input type="checkbox" class="medchk" value="'+esc(o)+'" '+(SET.medicaid.indexOf(o)>=0?'checked':'')+'> '+esc(o)+'</label>').join('')+'</div></div>'+
-      '<div class="card"><h2>Targets</h2><div class="sub">The same for every office. Every colour and “worth a conversation” line uses these.</div>'+
-      g('col','Collection %','% of production')+g('adj','Adjustment %','% of production')+g('ratio','A/R ratio','× production')+g('del','Late over 30 days','% of accounts')+'</div>'+
-      '<div class="card"><h2>Due day</h2><div class="setrow"><b>Reports are due on the</b><span><input type="number" min="1" max="28" id="dueday" value="'+SET.due+'"> of the next month</span></div></div>'+
-      '<div><button class="btn" onclick="MONTHLY.saveSettings()">Save settings</button></div></div>';
+    const sw=(on,act,label,extra)=>'<button type="button" class="tchip'+(on?' on':' off')+'" role="switch" aria-checked="'+on+'" onclick="'+act+'"'+(extra||'')+'><span class="sw"></span>'+label+'</button>';
+    let h='<div class="stack">'+importCard();
+    h+='<div class="card"><h2>Who reads the reports</h2><div class="sub">Like your email to the office managers and TCs today — without the email.</div>'+
+      sw(SET.everyone, "MONTHLY.setEveryone("+(!SET.everyone)+")", SET.everyone ? 'Everyone reads every office' : 'Each office reads only its own')+
+      '<div class="note" style="margin-top:10px">Only each office’s own people (and you) can type its numbers. Who can open the Monthly Report at all is set in Admin → Teams &amp; Access.</div></div>';
+    h+='<div class="card"><h2>Targets</h2><div class="sub">The same for every office. Every colour and every “worth a conversation” line uses these. Changes save as you go.</div><div class="tgts">'+
+      TGT.map(t=>{ const g=G[t.k], lo=Math.max(0, g[0]-(g[1]-g[0]||1)*3), hi=g[1]+(g[1]-g[0]||1)*3, X=x=>(x-lo)/(hi-lo)*100;
+        return '<div class="tgt"><div class="tl"><b>'+t.n+'</b><span>'+t.how+'</span></div>'+
+          '<div class="tr"><span class="tin"><input type="number" inputmode="decimal" step="'+t.step+'" value="'+g[0]+'" aria-label="'+t.n+' from" onchange="MONTHLY.setTarget(\''+t.k+'\',0,this)"><i>'+t.unit+'</i></span>'+
+          '<span class="soft">to</span><span class="tin"><input type="number" inputmode="decimal" step="'+t.step+'" value="'+g[1]+'" aria-label="'+t.n+' to" onchange="MONTHLY.setTarget(\''+t.k+'\',1,this)"><i>'+t.unit+'</i></span></div>'+
+          '<div class="gbar tb" aria-hidden="true"><span class="band" style="left:'+X(g[0])+'%;width:'+(X(g[1])-X(g[0]))+'%"></span></div><div class="tx">'+t.ex+'</div></div>'; }).join('')+
+      '</div></div>';
+    h+='<div class="card"><h2>Offices that bill Medicaid</h2><div class="sub">These offices get the Medicaid boxes. A new office added in Admin → Locations shows up here by itself.</div><div class="ochips">'+
+      offs.map(o=>{ const on=SET.medicaid.indexOf(o)>=0, c=(PH.colorForOffice(o)||{}).dot||'#94a3b8';
+        return sw(on, "MONTHLY.setMed(this.dataset.o)", '<i class="odot" style="background:'+esc(c)+'"></i>'+esc(o), ' data-o="'+esc(o)+'"'); }).join('')+'</div></div>';
+    h+='<div class="card"><h2>When reports are due</h2><div class="sub">Offices see the due date on their report, and you see who’s late.</div>'+
+      '<label class="duesel">Due on the <select class="sel" onchange="MONTHLY.setDue(+this.value)" aria-label="Due day">'+
+      Array.from({length:28},(_, i)=>i+1).map(d=>'<option value="'+d+'" '+(d===SET.due?'selected':'')+'>'+ord(d)+'</option>').join('')+'</select> of the next month</label></div>';
+    return h+'</div>';
+  }
+  /* one setting changed: merged into whatever is saved now (another admin's change is kept), then said */
+  async function saveSet(patch, said){
+    try{ let next=null;
+      await PH_STORE.update(M.SET_KEY, cur=>{ next=M.cleanSettings(Object.assign({}, M.cleanSettings(cur||SET), patch)); return Object.assign({}, next, {upd:new Date().toISOString(), updBy:by()}); });
+      SET=next||M.cleanSettings(Object.assign({}, SET, patch)); toast(said); render(); }
+    catch(e){ toast('Not saved — check the connection. Nothing changed.'); render(); }
+  }
+  function setTarget(k, i, inp){
+    const v=+inp.value, g=SET.goals[k].slice(); if(inp.value==='' || !isFinite(v) || v<0){ toast('Type a number'); render(); return; }
+    g[i]=v; if(g[0]>g[1]){ toast('The first number is the lower one'); render(); return; }
+    const goals=Object.assign({}, SET.goals, {[k]:g}); saveSet({goals}, (TGT.find(t=>t.k===k)||{}).n+' target saved: '+g[0]+'–'+g[1]+(k==='ratio'?'×':'%'));
   }
 
   /* ---------- PAST MONTHS FROM THE OLD EXCEL (Heather: "I would love the past months to be put in") ----------
@@ -622,18 +681,21 @@
     return hits.length===1 ? hits[0] : ''; }
   function importCard(){
     let h='<div class="card"><h2>Bring in past months from Excel</h2><div class="sub">Choose the offices’ monitor report files (all at once is fine). Home-Brace reads the numbers, shows you what it found and anything that doesn’t add up, and only fills boxes that are still empty — nothing already here is replaced.</div>'+
-      '<input type="file" id="impfiles" accept=".xlsx" multiple onchange="MONTHLY.impRead(this.files)">';
+      '<label class="drop" id="impdrop" ondragover="MONTHLY.impDrag(event,1)" ondragleave="MONTHLY.impDrag(event,0)" ondrop="MONTHLY.impDrop(event)">'+
+        '<span class="dico" aria-hidden="true">📄</span><b>Drop the Excel files here</b><span class="soft">or <u>choose them</u> — all eight at once is fine</span>'+
+        '<input type="file" id="impfiles" accept=".xlsx" multiple onchange="MONTHLY.impRead(this.files)"></label>';
     if(IMP.length){
       const yrs=[NOW_Y-2, NOW_Y-1, NOW_Y];
       h+='<div class="tablewrap" style="margin-top:12px"><table class="imp"><thead><tr><th>File</th><th>Office</th><th>Year</th><th>Months found</th><th>Medicaid</th><th>Worth a look</th></tr></thead><tbody>'+
         IMP.map((x,i)=>'<tr><td style="white-space:normal">'+esc(x.file)+(x.err?'<div class="soft">'+esc(x.err)+'</div>':'')+'</td>'+
-          '<td><select onchange="MONTHLY.impSet('+i+',\'office\',this.value)"><option value="">Which office?</option>'+PH.officeNames().map(o=>'<option '+(o===x.office?'selected':'')+'>'+esc(o)+'</option>').join('')+'</select></td>'+
-          '<td><select onchange="MONTHLY.impSet('+i+',\'year\',+this.value)">'+yrs.map(y=>'<option '+(y===x.year?'selected':'')+'>'+y+'</option>').join('')+'</select></td>'+
+          '<td><select class="sel'+(x.office?'':' need')+'" onchange="MONTHLY.impSet('+i+',\'office\',this.value)"><option value="">Which office?</option>'+PH.officeNames().map(o=>'<option '+(o===x.office?'selected':'')+'>'+esc(o)+'</option>').join('')+'</select></td>'+
+          '<td><select class="sel" onchange="MONTHLY.impSet('+i+',\'year\',+this.value)">'+yrs.map(y=>'<option '+(y===x.year?'selected':'')+'>'+y+'</option>').join('')+'</select></td>'+
           '<td style="white-space:normal">'+(x.r ? Object.keys(x.r.months).sort().map(k=>MON[+k-1]).join(', ')||'none' : '')+'</td>'+
           '<td>'+(x.r && x.r.medicaid ? 'Yes' : 'No')+(x.r && x.office && x.r.medicaid!==(SET.medicaid.indexOf(x.office)>=0) ? '<div class="soft" style="white-space:normal">'+(x.r.medicaid?'Not in your Medicaid list':'In your Medicaid list, no Medicaid section')+'</div>' : '')+'</td>'+
           '<td style="white-space:normal;text-align:left">'+(x.r && x.r.checks.length ? x.r.checks.map(c=>'<div>△ '+esc(c.text)+'</div>').join('') : (x.r?'<span class="soft">Adds up</span>':''))+'</td></tr>').join('')+'</tbody></table></div>';
       const ready=IMP.filter(x=>x.r && x.office && Object.keys(x.r.months).length).length;
-      h+='<div class="savebar"><button class="btn" '+(ready?'':'disabled')+' onclick="MONTHLY.impGo()">Bring in '+ready+' file'+(ready===1?'':'s')+'</button><button class="btn ghost" onclick="MONTHLY.impClear()">Clear</button>'+
+      const need=IMP.filter(x=>x.r && !x.office).length;
+      h+='<div class="savebar"><button class="btn" id="impgo" '+(ready?'':'disabled')+' onclick="MONTHLY.impGo()">Bring in '+ready+' file'+(ready===1?'':'s')+'</button>'+(need?'<span class="warnbox">Pick the office for '+need+' file'+(need>1?'s':'')+' (in orange) to bring '+(need>1?'them':'it')+' in too.</span>':'')+'<button class="btn ghost" onclick="MONTHLY.impClear()">Clear</button>'+
         '<span class="note">Months come in as “sent”; mark them final when you’re happy.</span></div>';
     }
     return h+'</div>';
@@ -652,6 +714,7 @@
   }
   async function impGo(){
     const todo=IMP.filter(x=>x.r && x.office && Object.keys(x.r.months).length); if(!todo.length || BUSY) return; BUSY=true;
+    const b=el('impgo'); if(b){ b.classList.add('saving'); b.disabled=true; }
     let filled=0, kept=0; const stamp=new Date().toISOString();
     try{
       for(const x of todo){
@@ -691,14 +754,6 @@
   async function addNote(){ const t=(el('newnote')||{}).value||''; if(!t.trim()) return;
     const ok=await write(x=>{ x.notes.push({t:t.trim().slice(0,1000), by:by(), at:new Date().toISOString()}); }); if(ok){ toast('Note added'); render(); } }
   async function useOf(k){ const ok=await write(x=>{ if(x.ofv[k]!==undefined){ x.v[k]=x.ofv[k]; x.src[k]='orthofi'; x.at[k]=x.of||new Date().toISOString(); x.by[k]='OrthoFi'; } }); if(ok){ delete EDIT[k]; render(); } }
-  async function saveSettings(){
-    const med=[...document.querySelectorAll('.medchk')].filter(c=>c.checked).map(c=>c.value), goals={};
-    Object.keys(M.DEF_GOALS).forEach(k=>{ goals[k]=[+el('g_'+k+'_0').value, +el('g_'+k+'_1').value]; });
-    const next=M.cleanSettings({medicaid:med, goals, due:+el('dueday').value, everyone:!!(el('everyone')||{}).checked});
-    try{ await PH_STORE.update(M.SET_KEY, ()=>Object.assign({}, next, {upd:new Date().toISOString(), updBy:by()})); SET=next; toast('Settings saved'); render(); }
-    catch(e){ toast('Could not save the settings'); }
-  }
-
   /* ---------- OrthoFi's numbers in (the nightly job calls this; it never touches a typed number or a final month) ---------- */
   async function importOrthofi(y, m, byOffice, stamp){
     let changed=0;
@@ -719,8 +774,13 @@
     all(){ SHOWALL=!SHOWALL; render(); },
     typed(inp){ EDIT[inp.dataset.k]=inp.value; inp.classList.toggle('empty', inp.value.trim()===''); const n=el('savenote'); if(n) n.textContent='Not saved yet'; glance(); },
     correct(k){ CORRECT[k]=true; render(); },
+    setEveryone(on){ saveSet({everyone:!!on}, on ? 'Everyone now reads every office' : 'Each office now reads only its own'); },
+    setMed(o){ const on=SET.medicaid.indexOf(o)<0, med=on ? SET.medicaid.concat([o]) : SET.medicaid.filter(x=>x!==o); saveSet({medicaid:med}, on ? o+' now has the Medicaid boxes' : o+' no longer has the Medicaid boxes'); },
+    setDue(d){ saveSet({due:d}, 'Reports are now due on the '+ord(d)); }, setTarget,
+    impDrag(e, on){ e.preventDefault(); const z=el('impdrop'); if(z) z.classList.toggle('over', !!on); },
+    impDrop(e){ e.preventDefault(); const z=el('impdrop'); if(z) z.classList.remove('over'); impRead([...(e.dataTransfer.files||[])].filter(f=>/\.xlsx$/i.test(f.name))); },
     impRead, impGo, impSet(i,k,v){ if(IMP[i]){ IMP[i][k]=v; render(); } }, impClear(){ IMP=[]; render(); },
-    save:()=>save(), send, final:markFinal, unask(){ SENDASK=false; render(); }, note:addNote, useOf, copy, csv, saveSettings, importOrthofi
+    save:()=>save(), send, final:markFinal, unask(){ SENDASK=false; render(); }, note:addNote, useOf, copy, csv, importOrthofi
   };
   /* leaving typed numbers behind by changing month or office - keep them unless they say otherwise */
   let LEAVE_OK=false;
@@ -743,7 +803,7 @@
 })();
 </script>
 <script>PH.nav('monthly');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc206"></script>
+<script src="tour.js?v=hc207"></script>
 <script>
 Tour.init([
   {sel:'.statusline, .openbanner', title:'Who has sent it', body:'Every office’s report for the month, in one line: final, waiting for you, or late. No chasing eight Excel files.'},

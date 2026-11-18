@@ -126,6 +126,11 @@ t('people read "target", never "goal" (the old sheet\u2019s word - Heather didn\
   !/(On|Off|Better than) goal|% goal|\(goal |the goal|goal is|Goals<|>goal |collection goal/.test(P) && !/% goal|the goal\.|\(goal |goal is under|above goal/.test(read('monthly.js')) &&
   /On target/.test(P) && /target is under/.test(read('monthly.js')));
 
+/* Settings like the rest of the app (Cory 18/11: "very ux friendly like the rest of the app") */
+t('Settings: every change saves the moment it is made and says so - switches, target boxes, a due-day picker, a drop zone; no Save button',
+  /async function saveSet\(patch, said\)/.test(P) && /M\.cleanSettings\(Object\.assign\(\{\}, M\.cleanSettings\(cur\|\|SET\), patch\)\)/.test(P) && /role="switch"/.test(P) &&
+  /class="drop" id="impdrop"/.test(P) && /ondrop="MONTHLY\.impDrop\(event\)"/.test(P) && !/Save settings/.test(P) && /The first number is the lower one/.test(P));
+
 /* switches and permissions */
 t('OFF on the live site until Cory says "monthly live" (an admin can preview with ?monthlypreview)', /const MONTHLY_LIVE=false;/.test(U) && /function monthlyOn\(\)/.test(U) && /monthlypreview/.test(U));
 t('a tab: everyone in the sandbox; live = the switch, then Teams & Access (or an admin)',

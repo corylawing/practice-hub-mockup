@@ -516,6 +516,16 @@ I can confidently say that the chat feature should go next. The production thing
    Collection % = Sep only, Q4 averages use rows Sep..Dec incl. the Q3 row, YTD totals contain #REF! and leave October
    out, 2026 averages wrong; Lubbock Feb delinquent % blank (no formula); FOLC Q3 averages of # A/R and # delinquent
    missing (and no Q2 row formulas); Carlsbad Sep avg case fee / Phase 1 YTD #REF! (dropped columns).
+   SETTINGS LIKE THE REST OF THE APP (Cory 18/11: "very ux friendly like the rest of the app"; hc207): cards in plain
+   words; every change saves the moment it's made (saveSet = PH_STORE.update merging the patch into the saved copy) and a
+   toast says what changed - no Save button; switches (the Schedule's .tchip) for "Everyone reads every office" and each
+   Medicaid office (office colour dots); Targets as four cards ("from __ to __", what it divides, a band bar, what counts
+   as off target; the lower number must come first); due day as a picker (1st..28th); the Excel import is a drag-and-drop
+   zone (or choose files), office/year as styled pickers (an office it couldn't guess is orange), "Bring in" spins.
+   WHY EXCEL WHEN ORTHOFI HAS HISTORY (Cory 18/11): OrthoFi's API can backfill its own numbers, but (1) Medicaid history
+   (and RIP in the Medicaid sheets) is only in the Excel - it comes from Ortho2; (2) month-end balances AS REPORTED (A/R,
+   # accounts, # late) - OrthoFi is current-state and can change history; (3) the import works today. When OrthoFi
+   connects its numbers sit beside the Excel ones (ofv) and differences are flagged.
 36. **CHAT MESSAGE TOOLBAR like Slack + FORWARD (18/11; hc204).** Cory: "Its hard to scroll over to emoji now and it flashes
    off. Look at what slack does" (the ☺+ / 🗑 floated beside the bubble with a gap -> hover lost) + "The delete can be there
    as well also forward is a good option" + "Delete should have a confirmation screen" (it already had: "Delete this
