@@ -81,7 +81,61 @@
       'jules.jensen@example.com':{name:'Jules Jensen', first:'Jules', office:'San Angelo', role:'Financial Coordinator', started:st(5,1)},
       'rory.reyes@example.com':{name:'Rory Reyes', first:'Rory', office:'Mansfield', role:'Clinical Assistant', bday:md(6), no:{bday:false, anniv:false}}}};
   }
-  const RULES={cleanBday, cleanStart, dayIn, celebrations, cleanRecord, peopleFrom, demo, headline, ordinal, wishText, yearsWord, KEY:'ph_celebrate'};
+  /* HEATHER'S "Hire Dates and Birthdays" EXCEL (18/11/2026: "Birthday and Hire Date, if it says original hire date you can
+     use those instead of the hire date that was when the practice was purchased"). Read in the ADMIN'S browser only
+     (Admin -> People), never kept in the code. One tab, a section per office: a label row ("Carlsbad Office"), a header
+     row (Employee Name | Date of Hire | Birthday | Actual/Original Hire Date), then people. Found BY LABELS. A birthday is
+     words ("March 14th") - only the month and day are kept, whatever else is written. The start date: the actual /
+     original hire date when there is one; a bare year there ("2015") is not a date - the person is listed to fill in. */
+  const MON3=['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+  const xlDate=v=>{ if(typeof v==='number' && v>20000 && v<80000){ const d=new Date(Math.round((v-25569)*864e5)); return {y:d.getUTCFullYear(), m:d.getUTCMonth()+1, d:d.getUTCDate()}; }
+    if(v instanceof Date && !isNaN(v)) return {y:v.getFullYear(), m:v.getMonth()+1, d:v.getDate()};
+    const s=String(v==null?'':v).trim(); let m=/^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(s); if(m) return {y:+m[1], m:+m[2], d:+m[3]};
+    m=/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/.exec(s); if(m) return {y:+m[3]<100 ? 2000+(+m[3]) : +m[3], m:+m[1], d:+m[2]}; return null; };
+  const p2=n=>String(n).padStart(2,'0');
+  function parseBday(v){
+    const x=xlDate(v); if(x) return cleanBday(p2(x.m)+'-'+p2(x.d));
+    const s=String(v==null?'':v).toLowerCase().trim(); let m=/^([a-z]+)\.?\s+(\d{1,2})(st|nd|rd|th)?\b/.exec(s);
+    if(m){ const i=MON3.indexOf(m[1].slice(0,3)); return i<0 ? '' : cleanBday(p2(i+1)+'-'+p2(+m[2])); }
+    m=/^(\d{1,2})\/(\d{1,2})$/.exec(s); return m ? cleanBday(p2(+m[1])+'-'+p2(+m[2])) : '';
+  }
+  function parseStart(v){ const x=xlDate(v); return x ? cleanStart(x.y+'-'+p2(x.m)+'-'+p2(x.d)) : ''; }
+  function fromHireSheet(cells){
+    cells=cells||{}; const at=(c,r)=>{ const x=cells[String.fromCharCode(64+c)+r]; return x ? x.v : undefined; }, txt=v=>String(v==null?'':v).replace(/\s+/g,' ').trim();
+    let maxR=0; Object.keys(cells).forEach(k=>{ const r=+(/\d+$/.exec(k)||[0])[0]; if(r>maxR) maxR=r; });
+    const out=[]; let cols=null, section='';
+    for(let r=1;r<=Math.min(maxR, 2000);r++){
+      const a=txt(at(1,r)), heads=[1,2,3,4,5,6].map(c=>txt(at(c,r)).toLowerCase());
+      if(heads.some(h=>/hire/.test(h)) && heads.some(h=>/birth/.test(h))){
+        cols={}; heads.forEach((h,i)=>{ const c=i+1; if(/name/.test(h)) cols.name=c; else if(/(actual|original).*hire|hire.*(actual|original)/.test(h)) cols.orig=c; else if(/hire/.test(h)) cols.hire=c; else if(/birth/.test(h)) cols.bday=c; });
+        continue; }
+      if(a && [2,3,4].every(c=>at(c,r)==null || txt(at(c,r))==='')){ section=a.replace(/\s+office$/i,'').trim(); continue; }
+      if(!cols || !cols.name || !a) continue;
+      const row={name:txt(at(cols.name,r)).slice(0,120), section, bday:'', started:'', from:'', notes:[]};
+      if(!row.name) continue;
+      const bv=cols.bday ? at(cols.bday,r) : null; row.bday=parseBday(bv); if(bv!=null && txt(bv) && !row.bday) row.notes.push('Birthday not understood');
+      const ov=cols.orig ? at(cols.orig,r) : null, hv=cols.hire ? at(cols.hire,r) : null;
+      const o=ov!=null && txt(ov) ? parseStart(ov) : '';
+      if(o){ row.started=o; row.from='original'; }
+      else { row.started=hv!=null && txt(hv) ? parseStart(hv) : ''; row.from=row.started ? 'hire' : '';
+        if(ov!=null && txt(ov)) row.notes.push(/^\d{4}$/.test(txt(ov)) ? 'Original hire is only a year ('+txt(ov)+') — type the full date in Admin → People' : 'Original hire date not understood'); }
+      if(!row.started && !(ov!=null && txt(ov))) row.notes.push(hv!=null && txt(hv) ? 'Hire date not understood' : 'No hire date');
+      out.push(row);
+    }
+    return out;
+  }
+  /* a name from the sheet -> one person in Home-Brace (their email), or '' when none or more than one could be them.
+     "Alexandra (Lexi) Espinosa" matches "Alexandra Espinosa" or "Lexi Espinosa"; case, accents and punctuation ignored. */
+  const fold=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+  function nameKeys(n){ n=fold(n); const nick=(/\(([^)]+)\)/.exec(n)||[])[1]||''; const base=n.replace(/\([^)]*\)/g,' ').replace(/[^a-z\s'-]/g,' ').replace(/\s+/g,' ').trim();
+    const t=base.split(' ').filter(Boolean); if(!t.length) return []; const last=t[t.length-1], keys=[t[0]+' '+last];
+    nick.split(/[\s,/]+/).filter(Boolean).forEach(k=>keys.push(k.replace(/[^a-z'-]/g,'')+' '+last)); return keys; }
+  function matchPerson(name, roster){
+    const want=nameKeys(name); if(!want.length) return '';
+    const hits=(roster||[]).filter(p=>p && p.email && nameKeys(p.name).some(k=>want.indexOf(k)>=0));
+    const emails=[...new Set(hits.map(p=>String(p.email).toLowerCase()))]; return emails.length===1 ? emails[0] : '';
+  }
+  const RULES={cleanBday, cleanStart, dayIn, celebrations, cleanRecord, peopleFrom, demo, headline, ordinal, wishText, yearsWord, parseBday, parseStart, fromHireSheet, matchPerson, KEY:'ph_celebrate'};
   if(typeof window==='undefined'){ global.PH_PARTY=RULES; return; }
 
 
@@ -246,8 +300,21 @@
     '.pp-cake .stick::before{content:"";position:absolute;left:50%;top:-6px;width:2px;height:7px;margin-left:-1px;background:#3b2a1a;border-radius:1px}'+
     '.pp-cake .fl{position:absolute;left:50%;bottom:40px;width:16px;height:27px;margin-left:-8px;border-radius:50% 50% 45% 45%/65% 65% 35% 35%;background:radial-gradient(ellipse at 50% 78%,#fff 0 18%,#FFE9A8 30%,#FFB547 55%,rgba(255,90,40,.85) 80%,rgba(255,90,40,0) 100%);filter:drop-shadow(0 0 10px rgba(255,180,80,.95));transform-origin:50% 100%;animation:pp-flicker 1.1s ease-in-out infinite}'+
     '.pp-cake .cand:hover .fl{filter:drop-shadow(0 0 16px rgba(255,200,100,1))}'+
-    '.pp-cake .cand.out .fl{animation:pp-out .45s ease-in forwards}'+
-    '.pp-hint{font-size:13.5px;font-weight:700;color:#FFE29A;margin-top:8px;letter-spacing:.01em}'+
+    '.pp-cake .cand.out .fl{animation:pp-blow .6s cubic-bezier(.4,0,.7,1) forwards}'+
+    '.pp-cake .cand.out .stick::before{animation:pp-ember 1.8s ease-out forwards}'+
+    '.pp-cake .smk{position:absolute;left:50%;bottom:36px;width:34px;height:110px;margin-left:-17px;opacity:0;overflow:visible;pointer-events:none}'+
+    '.pp-cake .smk path{fill:none;stroke:rgba(228,233,242,.8);stroke-width:3.4;stroke-linecap:round;stroke-dasharray:170;stroke-dashoffset:170;filter:blur(1.1px)}'+
+    '.pp-cake .smk path.b{stroke:rgba(210,218,232,.55);stroke-width:2.2;filter:blur(1.6px)}'+
+    '.pp-cake .cand.out .smk{animation:pp-smk 2.8s ease-out .25s forwards}'+
+    '.pp-cake .cand.out .smk path{animation:pp-draw 2.4s ease-out .25s forwards}.pp-cake .cand.out .smk path.b{animation-delay:.45s}'+
+    '@keyframes pp-blow{0%{transform:none;opacity:1}25%{transform:rotate(-28deg) skewX(-18deg) scale(1.05,.85) translateX(-2px)}55%{transform:rotate(-48deg) skewX(-26deg) scale(.55,.4) translateX(-4px);opacity:.8}100%{transform:rotate(-55deg) scale(0);opacity:0}}'+
+    '@keyframes pp-ember{0%{background:#FF8A3D;box-shadow:0 0 8px 2px rgba(255,138,61,.9)}60%{background:#C2410C;box-shadow:0 0 4px 1px rgba(255,138,61,.4)}100%{background:#3b2a1a;box-shadow:none}}'+
+    '@keyframes pp-smk{0%{opacity:0;transform:translateY(4px) scaleX(.6)}12%{opacity:.95}70%{opacity:.5}100%{opacity:0;transform:translateY(-46px) scaleX(1.5)}}'+
+    '@keyframes pp-draw{to{stroke-dashoffset:0}}'+
+    '.pp-make{margin:16px 0 0;font-size:26px;font-weight:900;letter-spacing:.01em;background:linear-gradient(100deg,#B45309 0%,#F59E0B 18%,#FFF3C4 34%,#FFD27A 50%,#F59E0B 66%,#FFF3C4 82%,#B45309 100%);background-size:220% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 14px rgba(255,200,90,.55));animation:pp-gold 3s linear infinite,pp-goldglow 2.2s ease-in-out infinite}'+
+    '.pp-make.made{font-size:30px;animation:pp-gold 2s linear infinite,pp-goldglow 1.4s ease-in-out infinite,pp-pop .7s cubic-bezier(.16,1.4,.3,1)}'+
+    '@keyframes pp-gold{to{background-position:-220% 0}}@keyframes pp-goldglow{0%,100%{filter:drop-shadow(0 0 10px rgba(255,200,90,.45))}50%{filter:drop-shadow(0 0 24px rgba(255,210,122,.9))}}'+
+    '.pp-hint{font-size:13.5px;font-weight:600;color:rgba(255,255,255,.75);margin-top:8px;letter-spacing:.01em}'+
     /* keyframes */
     '@keyframes pp-in{from{opacity:0}to{opacity:1}}@keyframes pp-pop{from{opacity:0;transform:translateY(40px) scale(.9);filter:blur(10px)}to{opacity:1;transform:none;filter:none}}'+
     '@keyframes pp-spin{to{transform:rotate(360deg)}}@keyframes pp-bob{0%,100%{transform:translateY(0) rotate(-8deg)}50%{transform:translateY(-7px) rotate(8deg)}}'+
@@ -284,7 +351,7 @@
     '.pp-home.mine{box-shadow:0 0 0 2px rgba(255,210,122,.6),0 22px 60px rgba(124,92,255,.45)}'+
     '.pp-home.mine h2{font-size:15px;color:#FFE29A}'+
     '.pp-demo{margin-top:12px;font-size:12px;color:rgba(255,255,255,.7)}.pp-demo button{background:none;border:0;color:#fff;text-decoration:underline;font:inherit;cursor:pointer;padding:0 4px}'+
-    '@media (prefers-reduced-motion: reduce){#ph-party,.pp-card,.pp-title span,.pp-av .ring,.pp-av .badge,.pp-years b,.pp-years b::after,.pp-years::before,.pp-cake .fl,.pp-cake .glow,.pp-home .aur,.pp-home .bok i,.pp-it .mini::before,.pp-it .tx b,.pp-it .go,.pp-home h2 .spark{animation:none!important}}'+
+    '@media (prefers-reduced-motion: reduce){#ph-party,.pp-card,.pp-title span,.pp-av .ring,.pp-av .badge,.pp-years b,.pp-years b::after,.pp-years::before,.pp-cake .fl,.pp-cake .glow,.pp-cake .smk,.pp-cake .smk path,.pp-make,.pp-home .aur,.pp-home .bok i,.pp-it .mini::before,.pp-it .tx b,.pp-it .go,.pp-home h2 .spark{animation:none!important}}'+
     '@media (max-width:520px){.pp-title{font-size:36px}.pp-years b{font-size:120px}.pp-card{padding:30px 18px 20px}}';
     document.head.appendChild(st);
   }
@@ -332,7 +399,8 @@
     const n=5, xs=[-44,-22,0,22,44], spr=[[18,64,'#FFE29A',20],[40,74,'#5EEAD4',-30],[70,66,'#B49CFF',45],[100,76,'#FFFFFF',10],[126,64,'#FFE29A',-15],[150,72,'#5EEAD4',30],[58,88,'#FFFFFF',-40],[112,90,'#B49CFF',15],[32,96,'#FFFFFF',60],[140,94,'#FFE29A',-50]];
     return '<div class="pp-cake" id="pp-cake" role="group" aria-label="Your birthday cake - blow out the candles">'+
       '<span class="glow" aria-hidden="true"></span>'+
-      xs.slice(0,n).map((x,i)=>'<button type="button" class="cand" style="left:calc(50% + '+x+'px - 11px)" aria-label="Blow out candle '+(i+1)+'"><span class="fl" style="animation-delay:-'+(i*0.23).toFixed(2)+'s"></span><span class="stick"></span></button>').join('')+
+      xs.slice(0,n).map((x,i)=>'<button type="button" class="cand" style="left:calc(50% + '+x+'px - 11px)" aria-label="Blow out candle '+(i+1)+'"><span class="fl" style="animation-delay:-'+(i*0.23).toFixed(2)+'s"></span><span class="stick"></span>'+
+        '<svg class="smk" viewBox="0 0 40 120" aria-hidden="true"><path d="M20 118 C 10 102, 30 88, 19 72 S 7 44, 23 30 S 31 10, 17 2"/><path class="b" d="M21 118 C 28 104, 12 92, 22 78 S 33 52, 18 38 S 9 16, 24 6"/></svg></button>').join('')+
       '<span class="tier t2" aria-hidden="true"><span class="drip"></span></span>'+
       '<span class="tier t1" aria-hidden="true"><span class="drip"></span>'+spr.map(p=>'<i style="left:'+p[0]+'px;top:'+(p[1]-50)+'px;background:'+p[2]+';transform:rotate('+p[3]+'deg)"></i>').join('')+'</span>'+
       '<span class="plate" aria-hidden="true"></span></div>';
@@ -344,7 +412,7 @@
       '<div class="pp-pre">'+(bday ? 'Happy birthday' : 'Happy '+ordinal(it.years)+' Workiversary')+'</div>'+
       '<h2 class="pp-title">'+letters(it.first+'!', 0.25)+'</h2>'+
       '<div class="pp-sub">'+(bday ? 'Have a wonderful day 🎉' : 'Thank you for '+yearsWord(it.years)+' with us 💛')+'</div>'+
-      (bday ? cakeHTML()+'<div class="pp-hint" id="pp-hint">Make a wish — blow out the candles ✨</div>' : yearsHTML(it))+
+      (bday ? '<div class="pp-make" id="pp-make">✨ Make a wish ✨</div>'+cakeHTML()+'<div class="pp-hint" id="pp-hint">Tap each candle to blow it out</div>' : yearsHTML(it))+
       '<div class="pp-btns">'+(LIST.length>1 ? '<button class="pp-btn g" id="pp-next">Next →</button>' : '')+'<button class="pp-btn" id="pp-close">Thank you! 💛</button></div>'+
       (LIST.length>1 ? '<div class="pp-dots">'+LIST.map((_,i)=>'<i class="'+(i===AT?'on':'')+'"></i>').join('')+'</div>' : '');
     const nx=document.getElementById('pp-next'); if(nx) nx.onclick=()=>{ AT=(AT+1)%LIST.length; show(); };
@@ -356,9 +424,9 @@
       cands.forEach(b=>b.onclick=()=>{ if(b.classList.contains('out')) return; b.classList.add('out'); b.setAttribute('aria-pressed','true');
         const f=b.querySelector('.fl').getBoundingClientRect(); puff(f.left+f.width/2, f.top+f.height*0.3);
         const left=cands.filter(x=>!x.classList.contains('out')), h=document.getElementById('pp-hint');
-        if(left.length){ if(h) h.textContent=left.length+' to go…'; left[0].focus({preventScroll:true}); return; }
+        if(left.length){ if(h) h.textContent=left.length===1 ? 'One more…' : left.length+' to go…'; left[0].focus({preventScroll:true}); return; }
         cake.classList.add('done'); const r=cake.getBoundingClientRect(); setTimeout(()=>pop(r.left+r.width/2, r.top+r.height*0.25), 350);
-        if(h) setTimeout(()=>{ h.textContent='✨ Wish made! Happy birthday, '+it.first+'!'; }, 700);
+        setTimeout(()=>{ const mk=document.getElementById('pp-make'); if(mk){ mk.textContent='✨ Wish made! ✨'; mk.classList.add('made'); } if(h) h.textContent='Happy birthday, '+it.first+'!'; }, 700);
         setTimeout(()=>{ const c2=document.getElementById('pp-close'); if(c2) c2.focus({preventScroll:true}); }, 800); });
       cands[0].focus({preventScroll:true}); }
     else document.getElementById('pp-close').focus({preventScroll:true});

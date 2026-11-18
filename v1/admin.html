@@ -272,20 +272,21 @@
   }
 
 </style>
-<script src="user.js?v=hc210"></script>
+<script src="user.js?v=hc211"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="_staff.js?v=hc210"></script>
-  <script src="store.js?v=hc210"></script>
-  <script src="gate.js?v=hc210"></script>
-  <script src="docs.js?v=hc210"></script>
-  <script src="payrules.js?v=hc210"></script>
-  <script src="workbook.js?v=hc210"></script>
-  <script src="prodbook.js?v=hc210"></script>
-  <script src="prodfx.js?v=hc210"></script>
-  <script src="prodstore.js?v=hc210"></script>
-<script src="schedrec.js?v=hc210"></script>
-<script src="proddays.js?v=hc210"></script>
-  <script src="prodadmin.js?v=hc210"></script>
+  <script src="_staff.js?v=hc211"></script>
+  <script src="store.js?v=hc211"></script>
+  <script src="gate.js?v=hc211"></script>
+  <script src="docs.js?v=hc211"></script>
+  <script src="payrules.js?v=hc211"></script>
+  <script src="workbook.js?v=hc211"></script>
+  <script src="prodbook.js?v=hc211"></script>
+  <script src="party.js?v=hc211"></script>
+  <script src="prodfx.js?v=hc211"></script>
+  <script src="prodstore.js?v=hc211"></script>
+<script src="schedrec.js?v=hc211"></script>
+<script src="proddays.js?v=hc211"></script>
+  <script src="prodadmin.js?v=hc211"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — admin console concept for validation. Real build: people sync from Microsoft 365; access is managed here.</div>
@@ -820,7 +821,7 @@
     const restore=holdScroll();
     el('view').innerHTML=
       '<div class="intro"><b>People are created in Microsoft \u2014 never here.</b> As soon as IT sets up someone\'s Microsoft account they appear in this list, with <b>no access</b> until you give them a team. What they can then reach is decided <b>here in the hub</b>: set their <b>team(s), location &amp; status</b>. They look after their own <b>photo, preferred name, phone &amp; \u201cAbout me\u201d</b>. <b>Tap a person</b> to open their profile.</div>'+
-      '<div class="toolrow"><input class="search" id="usearch" placeholder="Search people, email, team, location…" value="'+search.replace(/"/g,'&quot;')+'"><button class="btn ghost" onclick="AD.showRemoved()">'+removedLabel()+'</button><button class="btn" onclick="AD.addPerson()">+ Add person</button></div>'+
+      '<div class="toolrow"><input class="search" id="usearch" placeholder="Search people, email, team, location…" value="'+search.replace(/"/g,'&quot;')+'"><button class="btn ghost" onclick="AD.showRemoved()">'+removedLabel()+'</button>'+((window.PH && PH.partyOn && PH.partyOn()) ? '<button class="btn ghost" onclick="AD.hireOpen()">🎂 Birthdays &amp; hire dates from Excel</button>' : '')+'<button class="btn" onclick="AD.addPerson()">+ Add person</button></div>'+
       (isPhone() ? '<div class="cards" id="ucards"></div>' :
       '<div class="tbl-scroll"><table class="u"><thead><tr><th>Person</th><th>Team(s) — what they can do</th><th>Location — where</th><th>Status</th>'+
         (PH.isAdmin()?'<th></th>':'')+'</tr></thead><tbody></tbody></table></div>')+
@@ -1005,6 +1006,63 @@
       const x=Object.assign({}, rec.p[e]||{}, {bday, started:st, name:(u.f+' '+u.l).trim(), first:u.f||'', office:(parseLoc(u.loc)[0]||''), role:u.role||'', upd:new Date().toISOString()});
       if(!x.bday) delete x.bday; if(!x.started) delete x.started; rec.p[e]=x; return rec; })
       .then(()=>say('Saved ✓'), ()=>say('Not saved — check the connection'));
+  }
+  /* BIRTHDAYS & HIRE DATES FROM HEATHER'S EXCEL (18/11/2026). Read in this browser (PH_BOOK + PH_PARTY.fromHireSheet) -
+     the file is never kept or sent anywhere; each name is matched to a person (PH_PARTY.matchPerson) or picked here;
+     "Save" fills the shared ph_celebrate record - only empty dates (a date already set here is kept and counted). The
+     birthday's year is never read; the original hire date is used when the sheet has one. */
+  let HIRE=null;
+  function hireRoster(){ return users.filter(u=>u.email && u.status!=='Inactive').map(u=>({name:(u.f+' '+u.l).trim(), email:String(u.email).toLowerCase(), u})); }
+  const fmtB=b=>b ? MONTHN[+b.slice(0,2)-1].slice(0,3)+' '+(+b.slice(3,5)) : '—';
+  const fmtS=st=>{ if(!st) return '—'; const d=new Date(st+'T12:00:00'); return d.toLocaleDateString('en-US',{month:'short', day:'numeric', year:'numeric'}); };
+  function hireOpen(){ HIRE=null; hireDraw(); }
+  function hireDraw(){
+    let h='<div class="m-top"><h3 style="margin:0;font-size:17px;color:var(--navy)">🎂 Birthdays &amp; hire dates from Excel</h3><button class="x" onclick="AD.close()">×</button></div><div class="m-body">';
+    if(!HIRE){
+      h+='<p style="margin:0 0 12px;color:var(--soft);font-size:14px">Choose the “Hire Dates and Birthdays” file. Home-Brace reads it here in your browser, matches each name to a person and shows you everything before saving. Only the day and month of a birthday are kept — never the year. Where the sheet has an original (actual) hire date, that’s the one used.</p>'+
+        '<label style="display:flex;flex-direction:column;align-items:center;gap:4px;border:2px dashed #cdd6e0;border-radius:14px;padding:26px;cursor:pointer;background:#fafcfd" ondragover="event.preventDefault()" ondrop="event.preventDefault();AD.hireRead(event.dataTransfer.files)">'+
+        '<span style="font-size:26px">📄</span><b style="color:var(--navy)">Drop the Excel file here</b><span style="color:var(--soft);font-size:13px">or <u>choose it</u></span>'+
+        '<input type="file" accept=".xlsx" hidden onchange="AD.hireRead(this.files)"></label>';
+    } else if(HIRE.err){ h+='<p style="color:var(--bad)">'+esc(HIRE.err)+'</p><button class="btn ghost" onclick="AD.hireOpen()">Choose another file</button>';
+    } else {
+      const R=HIRE.rows, matched=R.filter(r=>r.email), roster=hireRoster().slice().sort((a,b)=>a.name.localeCompare(b.name));
+      h+='<p style="margin:0 0 10px;font-size:14px"><b>'+R.length+' people</b> in the file · <b>'+matched.length+'</b> matched to someone in Home-Brace'+(R.length-matched.length ? ' · <b style="color:#B45309">'+(R.length-matched.length)+' to pick</b> (orange)' : '')+'</p>'+
+        '<div style="max-height:52vh;overflow:auto;border:1px solid var(--line);border-radius:12px"><table style="width:100%;border-collapse:collapse;font-size:13px">'+
+        '<thead><tr style="background:#fafbfc;position:sticky;top:0">'+['Name in the file','Office','Birthday','Started','Home-Brace person','To look at'].map(x=>'<th style="text-align:left;padding:8px 10px;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--soft)">'+x+'</th>').join('')+'</tr></thead><tbody>'+
+        R.map((r,i)=>'<tr style="border-top:1px solid var(--line)'+(r.email?'':';background:#FFF7EB')+'"><td style="padding:7px 10px;font-weight:600">'+esc(r.name)+'</td><td style="padding:7px 10px">'+esc(r.section)+'</td>'+
+          '<td style="padding:7px 10px;white-space:nowrap">'+fmtB(r.bday)+'</td><td style="padding:7px 10px;white-space:nowrap">'+fmtS(r.started)+(r.from==='original'?' <span class="chip" style="font-size:10px">original</span>':'')+'</td>'+
+          '<td style="padding:5px 10px"><select onchange="AD.hireSet('+i+',this.value)" style="max-width:220px;padding:5px 8px;border-radius:8px;border:1px solid '+(r.email?'var(--line)':'#F2A03D')+'"><option value="">'+(r.email?'—':'Pick who this is…')+'</option>'+
+            roster.map(p=>'<option value="'+esc(p.email)+'" '+(p.email===r.email?'selected':'')+'>'+esc(p.name)+'</option>').join('')+'<option value="-" '+(r.skip?'selected':'')+'>Not in Home-Brace — skip</option></select></td>'+
+          '<td style="padding:7px 10px;color:#8a5208;font-size:12px">'+esc(r.notes.join(' · '))+'</td></tr>').join('')+'</tbody></table></div>';
+      const n=R.filter(r=>r.email && (r.bday||r.started)).length;
+      h+='<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px"><button class="btn" id="hireGo" '+(n?'':'disabled')+' onclick="AD.hireSave()">Save '+n+' '+(n===1?'person':'people')+'</button><button class="btn ghost" onclick="AD.hireOpen()">Choose another file</button>'+
+        '<span id="hireNote" style="font-size:12.5px;color:var(--soft)">Only empty dates are filled — a date already set in Home-Brace is kept.</span></div>';
+    }
+    openModal(h+'</div>');
+  }
+  async function hireRead(files){
+    const f=(files||[])[0]; if(!f) return;
+    try{ const book=await PH_BOOK.open(new Uint8Array(await f.arrayBuffer())); let rows=[];
+      book.names.some(nm=>{ rows=PH_PARTY.fromHireSheet(book.sheets[nm].cells); return rows.length; });
+      if(!rows.length){ HIRE={err:'No people found — is this the Hire Dates and Birthdays file?'}; return hireDraw(); }
+      const roster=hireRoster(); rows.forEach(r=>{ r.email=PH_PARTY.matchPerson(r.name, roster); });
+      HIRE={rows}; hireDraw();
+    }catch(e){ HIRE={err:'Couldn’t read that file.'}; hireDraw(); }
+  }
+  function hireSet(i, v){ const r=HIRE && HIRE.rows[i]; if(!r) return; r.skip=v==='-'; r.email=v && v!=='-' ? v : ''; hireDraw(); }
+  function hireSave(){
+    const todo=HIRE.rows.filter(r=>r.email && (r.bday||r.started)), by={}; hireRoster().forEach(p=>{ by[p.email]=p.u; });
+    const b=document.getElementById('hireGo'); if(b){ b.disabled=true; b.textContent='Saving…'; }
+    let filled=0, kept=0;
+    PH_STORE.update(PH.PARTY_KEY, cur=>{ const rec=cur && typeof cur==='object' && cur.p ? cur : {v:1, p:{}}; filled=0; kept=0;
+      todo.forEach(r=>{ const u=by[r.email]||{}, x=Object.assign({}, rec.p[r.email]||{});
+        if(r.bday){ if(!x.bday){ x.bday=r.bday; filled++; } else if(x.bday!==r.bday) kept++; }
+        if(r.started){ if(!x.started){ x.started=r.started; filled++; } else if(x.started!==r.started) kept++; }
+        x.name=((u.f||'')+' '+(u.l||'')).trim()||x.name||r.name; x.first=u.f||x.first||''; x.office=(parseLoc(u.loc||'')[0]||x.office||''); x.role=u.role||x.role||''; x.upd=new Date().toISOString();
+        rec.p[r.email]=x; });
+      return rec; })
+      .then(()=>{ const n=document.getElementById('hireNote'); if(b) b.textContent='Saved ✓'; if(n) n.innerHTML='<b>'+filled+' dates saved</b>'+(kept?' · '+kept+' already set here and kept':'')+'. Home will celebrate them on the day.'; },
+            ()=>{ if(b){ b.disabled=false; b.textContent='Try again'; } const n=document.getElementById('hireNote'); if(n) n.textContent='Not saved — check the connection. Nothing changed.'; });
   }
   function testAlert(){
     const u=users[tmpU.gi]; if(!u) return;
@@ -2288,7 +2346,7 @@
   if(location.hash==='#feedback') setTimeout(()=>tabSet('fb'), 0);
   if(location.hash==='#usage') setTimeout(()=>tabSet('use'), 0);      // the bell's "new feedback" opens here
   window.AD={chatAdd,chatDel,chatRetry,tabNow:()=>tab,setupSecs,editSyncNow,tcSyncNow,paySyncNow,sensAdd,sensChange,sensRemove,sensClose,sensQ,sensToggle,sensClear,sensLevel,sensTyped,sensBack,sensNext,sensGo,sensSyncNow,tab:tabSet,viewAs:doViewAs,newTeam,editTeam,saveTeam:thenSync(saveTeam),delTeam:thenSync(delTeam),resetTeams,profile,whyNoAdd,
-    addPerson,npSet,npLoc,npTeam,saveNewPerson:thenSync(saveNewPerson),accTeam:setAccTeam,removePerson:thenSync(removePerson),restorePerson:thenSync(restorePerson),showRemoved,togTeam,togLoc,setStatus,saveUser:thenSync(saveUser),pickLevel,pickAud,setField,pickPhoto,photoChosen,clearPhoto,pickUserLevel,clearUserLevel,tog,addFile,noop,newSec,editSec,saveSec:thenSync(saveSec),delSec,delSecGo,resetSecs,setSecName,setSecIcon,setSecStruct,setSecLocMode,setSecTeamMode,togSecLoc,togSecTeam,saveFile,cd,useFile,clearFile,uploadFile,setFileTeamMode,setFileLocMode,togFileLoc,togFileTeam,renderLocs,newLoc,editLoc,saveLoc,delLoc,resetLocs,setLocBrand,setLocState,setLocTZ,testAlert,setCeleb,close:closeModal};
+    addPerson,npSet,npLoc,npTeam,saveNewPerson:thenSync(saveNewPerson),accTeam:setAccTeam,removePerson:thenSync(removePerson),restorePerson:thenSync(restorePerson),showRemoved,togTeam,togLoc,setStatus,saveUser:thenSync(saveUser),pickLevel,pickAud,setField,pickPhoto,photoChosen,clearPhoto,pickUserLevel,clearUserLevel,tog,addFile,noop,newSec,editSec,saveSec:thenSync(saveSec),delSec,delSecGo,resetSecs,setSecName,setSecIcon,setSecStruct,setSecLocMode,setSecTeamMode,togSecLoc,togSecTeam,saveFile,cd,useFile,clearFile,uploadFile,setFileTeamMode,setFileLocMode,togFileLoc,togFileTeam,renderLocs,newLoc,editLoc,saveLoc,delLoc,resetLocs,setLocBrand,setLocState,setLocTZ,testAlert,setCeleb,hireOpen,hireRead,hireSet,hireSave,close:closeModal};
   el('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
   /* Load the real roster before the first paint. If it isn't there (the public
@@ -2372,7 +2430,7 @@ function sizeWatch(){
   }).catch(()=>{});
 }
 </script>
-<script src="tour.js?v=hc210"></script>
+<script src="tour.js?v=hc211"></script>
 <script>
 Tour.init([
   {sel:'#tabs', title:'This is your control room', body:'Four tabs and you can run the whole hub: <b>People</b>, <b>Teams &amp; Access</b>, <b>Document Sections</b> and <b>Locations</b>. No developer, no consultant.', pre:()=>AD.tab('users')},
