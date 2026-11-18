@@ -241,21 +241,21 @@
   @keyframes fl-flick{0%,100%{transform:scale(1,1) skewX(0)}25%{transform:scale(.96,1.05) skewX(-2deg)}50%{transform:scale(1.03,.96) skewX(1.5deg)}75%{transform:scale(.98,1.03) skewX(-1deg)}}
   @keyframes fl-in{from{transform:scale(.92,.9)}to{transform:scale(1.06,1.1)}}
   @keyframes fl-ember{0%{opacity:0;transform:translate(0,0)}15%{opacity:1}100%{opacity:0;transform:translate(var(--x,2px),-26px)}}
-  .streaks{position:relative;overflow:hidden;border-radius:var(--radius);padding:16px 18px;color:#fff;background:linear-gradient(120deg,#2a1406 0%,#5a2a0c 45%,#0F2A4A 100%);box-shadow:var(--shadow)}
-  .streaks::before{content:'';position:absolute;inset:-40%;background:radial-gradient(closest-side,rgba(245,158,11,.35),transparent 70%) 15% 70%/45% 60% no-repeat,radial-gradient(closest-side,rgba(229,72,43,.3),transparent 70%) 60% 30%/50% 60% no-repeat;filter:blur(20px);animation:sk-glow 8s ease-in-out infinite alternate;pointer-events:none}
+  .streaks{position:relative;overflow:hidden;border-radius:var(--radius);padding:16px 18px;color:#fff;background:linear-gradient(120deg,var(--navy) 0%,var(--navy2) 70%,#1f5a6e 100%);box-shadow:var(--shadow)}
+  .streaks::before{content:'';position:absolute;inset:-40%;background:radial-gradient(closest-side,rgba(43,192,184,.32),transparent 70%) 70% 40%/55% 70% no-repeat,radial-gradient(closest-side,rgba(245,158,11,.16),transparent 70%) 8% 30%/30% 40% no-repeat;filter:blur(20px);animation:sk-glow 8s ease-in-out infinite alternate;pointer-events:none}
   @keyframes sk-glow{to{transform:translate(4%,-3%) scale(1.08)}}
   .streaks .skh{position:relative;display:flex;align-items:center;gap:12px}
-  .streaks .skh b{display:block;font-size:17px}.streaks .skh span{font-size:12.5px;color:#f5d9b8}
+  .streaks .skh b{display:block;font-size:17px}.streaks .skh span{font-size:12.5px;color:#cfe0f2}
   .streaks .skl{position:relative;display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
   .sk{display:flex;align-items:center;gap:8px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);border-radius:14px;padding:8px 13px 8px 10px;color:#fff;font-family:inherit;cursor:pointer;backdrop-filter:blur(6px)}
   .sk:hover{background:rgba(255,255,255,.15)}
-  .sk .n{font-size:22px;font-weight:900;font-variant-numeric:tabular-nums;background:linear-gradient(180deg,#FFF3C4,#FDBA74 60%,#F97316);-webkit-background-clip:text;background-clip:text;color:transparent}
-  .sk .w{display:flex;flex-direction:column;text-align:left;line-height:1.15}.sk .w b{font-size:13.5px}.sk .w small{font-size:11.5px;color:#f5d9b8}
-  .streaks .ended{position:relative;margin-top:10px;font-size:12.5px;color:#f5d9b8}
-  .skmini{display:inline-flex;align-items:center;gap:2px;margin-left:6px;font-weight:800;font-size:12px;color:#c2410c;vertical-align:middle}
+  .sk .n{font-size:22px;font-weight:900;font-variant-numeric:tabular-nums;color:#fff}
+  .sk .w{display:flex;flex-direction:column;text-align:left;line-height:1.15}.sk .w b{font-size:13.5px}.sk .w small{font-size:11.5px;color:#cfe0f2}
+  .streaks .ended{position:relative;margin-top:10px;font-size:12.5px;color:#cfe0f2}
+  .skmini{display:inline-flex;align-items:center;gap:2px;margin-left:6px;font-weight:800;font-size:12px;color:var(--teal-600);vertical-align:middle}
   .skmini .flame{width:13px;height:17px;vertical-align:-3px}
-  .skban{display:flex;align-items:center;gap:12px;margin-top:12px;padding:10px 14px;border-radius:12px;background:linear-gradient(90deg,#FFF4E5,#FFFBEB);border:1px solid #FCD9A8;position:relative;overflow:visible}
-  .skban b{color:#9a3412;font-size:15px}.skban span{color:#8a5208;font-size:12.5px;display:block}
+  .skban{display:flex;align-items:center;gap:12px;margin-top:12px;padding:10px 14px;border-radius:12px;background:var(--teal-soft);border:1px solid #c4e6e3;position:relative;overflow:visible}
+  .skban b{color:var(--navy);font-size:15px}.skban span{color:var(--soft);font-size:12.5px;display:block}
   .burst{position:absolute;left:22px;top:50%;width:0;height:0;pointer-events:none}
   .burst i{position:absolute;left:0;top:0;width:6px;height:6px;margin:-3px;border-radius:50%;background:var(--c,#F59E0B);animation:sk-burst .9s cubic-bezier(.2,.8,.3,1) forwards;transform:rotate(var(--a)) translateY(0)}
   @keyframes sk-burst{0%{opacity:1;transform:rotate(var(--a)) translateY(0) scale(1)}100%{opacity:0;transform:rotate(var(--a)) translateY(-46px) scale(.4)}}
@@ -270,12 +270,12 @@
   }
   @media (prefers-reduced-motion: reduce){ *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important} }
 </style>
-<script src="user.js?v=hc216"></script>
+<script src="user.js?v=hc217"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc216"></script>
-  <script src="gate.js?v=hc216"></script>
-  <script src="prodbook.js?v=hc216"></script>
-  <script src="monthly.js?v=hc216"></script>
+  <script src="store.js?v=hc217"></script>
+  <script src="gate.js?v=hc217"></script>
+  <script src="prodbook.js?v=hc217"></script>
+  <script src="monthly.js?v=hc217"></script>
 </head>
 <body>
 <div class="ribbon">MOCK-UP for Heather — made-up numbers. Try it as an office manager first, then as Heather.</div>
@@ -868,7 +868,7 @@
 })();
 </script>
 <script>PH.nav('monthly');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc216"></script>
+<script src="tour.js?v=hc217"></script>
 <script>
 Tour.init([
   {sel:'.statusline, .openbanner', title:'Who has sent it', body:'Every office’s report for the month, in one line: final, waiting for you, or late. No chasing eight Excel files.'},
