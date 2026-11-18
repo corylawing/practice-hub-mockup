@@ -440,6 +440,15 @@ I can confidently say that the chat feature should go next. The production thing
    localStorage ph_chat_emoji_recent (18 defaults). Used by the message box (emoji button) and "More emoji" on a
    reaction. All 1,425 toned sequences checked against Unicode's list. test/chatv2.test.js (42).
    STILL QUEUED: a "chat alerts: Home-Brace / Teams" choice.
+32. **CHAT: Hide a chat + Delete my message (18/11/2026; hc201, sandbox).** Cory (from pilot feedback "we don't have the
+   ability to delete a chat"): Teams doesn't let staff delete a whole chat (IT only; history kept) -> "yes build hide chat
+   and delete message". chatgraph.js hideChat(chat, me, back) = POST /chats/{id}/hideForUser|unhideForUser {user:{id,
+   tenantId}} (comes back by itself when someone writes); deleteMessage(chat, me, msg, back) = POST /users/{me}/chats/{id}/
+   messages/{mid}/softDelete|undoSoftDelete - own messages only, pilot lock checked inside. Both Chat.ReadWrite only.
+   chat.html: ⋯ in the conversation bar -> "Hide this chat"; 🗑 on hover on MY messages (+ "Delete message" in the phone
+   hold menu) -> "Delete this message?" -> "This message was deleted."; Undo toast for both (#utoast). test/chathide (6).
+   Browser (mock-up) + live-mode harness (scratchpad hidedel-run.js; fakelive handles hide/unhide/softDelete/undo).
+   Also noted for Cory: no feedback button on chat because he had it removed (it covered Send) - offered a small link.
 31. **MEETINGS on the Schedule (18/11/2026; hc200; SANDBOX ONLY until meetings.js MEET_LIVE is true; one live device:
    localStorage ph_meet_try=1).** Item 8 below (Meeting Calendar -> Schedule). Cory: "it should be a permission to give to
    make meetings but I believe its office managers. Build it please and I'll show it to jessica"; "It needs to be really

@@ -304,6 +304,20 @@
     const p=(chat.people||[]).find(x=>x.id===meId); if(!p || !p.mid) throw new Error('You’re not in this group any more.');
     await call('DELETE', '/chats/'+encodeURIComponent(chat.id)+'/members/'+encodeURIComponent(p.mid));
   }
+  /* HIDE A CHAT / DELETE MY MESSAGE (Cory 18/11: "yes build hide chat and delete message"). Teams doesn't let staff
+     delete a whole chat (only IT can, and the history is kept); Hide takes it off your own list until someone writes
+     again - like Teams' own Hide. A message: only your own, it stays in the chat as "This message was deleted." Both need
+     only Chat.ReadWrite (granted). Each can be undone. */
+  function hideChat(chat, meId, back){
+    if(!chat || !chat.id || !meId) throw new Error('No chat picked.');
+    return call('POST', '/chats/'+encodeURIComponent(chat.id)+'/'+(back ? 'unhideForUser' : 'hideForUser'), {user:{id:meId, tenantId:TENANT}});
+  }
+  async function deleteMessage(chat, meId, msg, back){
+    allowed(chat, meId);
+    if(!msg || !msg.id || /^local-/.test(String(msg.id))) throw new Error('That message isn’t sent yet.');
+    if(!msg.mine) throw new Error('You can only delete your own messages.');
+    return call('POST', '/users/'+encodeURIComponent(meId)+'/chats/'+encodeURIComponent(chat.id)+'/messages/'+encodeURIComponent(msg.id)+'/'+(back ? 'undoSoftDelete' : 'softDelete'));
+  }
   /* People in the practice's own Microsoft 365 (Adam, 12/11: current tenant only - guests are left out). */
   async function searchPeople(q){
     const s=String(q||'').trim().replace(/'/g, "''"); if(s.length<2) return [];
@@ -512,7 +526,7 @@
   }
 
   global.PH_CHATG={CHAT_LIVE, CHAT_PILOT, CHAT_GUESTS, PILOT_KEY, pilotLive, pilotKnown, loadPilot, cleanPilot, guest, TEST, mode, setSwitch, switchedOn, signedIn, testers, setTesters, canSend, ask, token,
-    listChats, listMessages, markRead, createChat, searchPeople, userByEmail, createGroup, renameGroup, addPeople, removePerson, leaveGroup, canManageMembers, userById,
+    listChats, listMessages, markRead, createChat, searchPeople, userByEmail, createGroup, renameGroup, addPeople, removePerson, leaveGroup, canManageMembers, userById, hideChat, deleteMessage,
     sendText, sendPhoto, sendVideo, upload, share, sendFile, fileFor, picture, photo, callLink, cleanRich, react, REACT_NAMES,
     _t:{parts, decode, mapMessage, mapChat, etagGuid, shareId, safeName, textHTML, call, CHUNK, SMALL, MAX_VIDEO, FOLDER, TENANT, richOf, reactionsOf, teamsBody, safeHref, mapEvent}};
 })(window);

@@ -284,6 +284,15 @@
   .m:hover .reacts .radd,.m:focus-within .reacts .radd,.reacts .radd:focus{opacity:1}
   /* phones: hold a message to react (like WhatsApp); the ＋ only shows next to reactions already there */
   @media (pointer:coarse){ .reacts .radd{display:none} .reacts .rc ~ .radd{display:inline-flex;opacity:1} body.v2 .m .bub{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none} }
+  .reacts .rdel{font-size:12px}
+  .reacts .rdel:hover{border-color:#F1C4BE;color:#b42318}
+  .reacts:not(:has(.rc)) .rdel{display:none}
+  .m:hover .reacts:not(:has(.rc)) .rdel{display:inline-flex}
+  .m.me .reacts:not(:has(.rc)){display:flex;gap:4px}
+  .m.del .bub{font-style:italic;opacity:.75}
+  .utoast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);display:none;align-items:center;gap:14px;max-width:calc(100% - 32px);background:var(--navy);color:#fff;padding:10px 12px 10px 18px;border-radius:12px;font-weight:700;font-size:14px;box-shadow:var(--shadow-lg);z-index:85}
+  .utoast.on{display:flex}
+  .utoast button{border:0;background:rgba(255,255,255,.16);color:#fff;font:inherit;font-weight:800;padding:6px 12px;border-radius:9px;cursor:pointer}
   .pop .copy{display:block;width:100%;margin-top:6px;border:0;border-top:1px solid #EDF1F5;background:none;padding:9px 6px 3px;font:inherit;font-size:14px;color:var(--ink);text-align:left;cursor:pointer}
   /* GROUPS (Cory 18/11) */
   .lab2{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:700;color:var(--ink)}
@@ -352,13 +361,13 @@
   .lb .lbnav.p{left:14px}.lb .lbnav.n{right:14px}
   .lb .lbnav[hidden]{display:none}
 </style>
-<script src="user.js?v=hc200"></script>
+<script src="user.js?v=hc201"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc200"></script>
-  <script src="gate.js?v=hc200"></script>
-  <script src="_staff.js?v=hc200"></script>
-  <script src="alerts.js?v=hc200"></script>
-  <script src="chatgraph.js?v=hc200"></script>
+  <script src="store.js?v=hc201"></script>
+  <script src="gate.js?v=hc201"></script>
+  <script src="_staff.js?v=hc201"></script>
+  <script src="alerts.js?v=hc201"></script>
+  <script src="chatgraph.js?v=hc201"></script>
 </head>
 <body>
 <div class="ribbon" id="ribbon">MOCK-UP for Heather and Dr. Jae — made-up people, messages and videos. Nothing is sent anywhere.</div>
@@ -577,7 +586,7 @@
     const meta=m.failed ? '<div class="meta bad">Not sent - '+esc(m.failed)+'</div>'
       : m.pending ? '<div class="meta">'+esc(m.progress!=null ? 'Uploading… '+Math.round(m.progress*100)+'%' : 'Sending…')+'</div>'
       : '<div class="meta">'+esc(clock(m.at))+(!REALCHAT && mine && m.seen!==false ? ' · Seen' : '')+(m.edited ? ' · Edited' : '')+'</div>';
-    return '<div class="m'+(mine?' me':'')+'" data-mid="'+esc(m.id||'')+'">'+(group && !mine ? (showFrom ? personAv(m.from, m.fromEmail) : '<span style="width:30px;flex:none"></span>') : '')+
+    return '<div class="m'+(mine?' me':'')+(m.deleted?' del':'')+'" data-mid="'+esc(m.id||'')+'">'+(group && !mine ? (showFrom ? personAv(m.from, m.fromEmail) : '<span style="width:30px;flex:none"></span>') : '')+
       '<div class="col">'+(showFrom?'<div class="from">'+esc(m.from)+'</div>':'')+body+reactsHTML(m)+meta+'</div></div>';
   }
   /* A real message: its words (plain text - Teams' HTML never goes into the page), pictures, videos and files.
@@ -606,7 +615,8 @@
     let h='<div class="conv-top"><button class="back" data-act="back" aria-label="Back to chats">‹</button>'+avatar(c)+
       '<div class="who'+(isGrp?' grpw" data-act="grpinfo" role="button" tabindex="0" title="Group settings':'')+'"><b>'+esc(c.name)+'</b><span>'+esc(sub)+'</span></div>'+
       (isGrp ? '<button class="btn ghost sm" data-act="grpinfo" title="People and settings">👥 '+(c.members||[]).length+'</button>' : '')+
-      '<button class="btn ghost sm" data-act="call" title="Calls open Microsoft Teams">📞 Call</button></div><div class="msgs" id="msgs">';
+      '<button class="btn ghost sm" data-act="call" title="Calls open Microsoft Teams">📞 Call</button>'+
+      (V2() ? '<button class="btn ghost sm" data-act="chatmenu" title="More" aria-label="More">⋯</button>' : '')+'</div><div class="msgs" id="msgs">';
     if(REALCHAT && c.next) h+='<button class="btn ghost sm more" data-act="more">Load earlier messages</button>';
     if(REALCHAT && !c.loaded) h+='<div class="empty">Loading…</div>';
     let prev=null;
@@ -704,7 +714,7 @@
   function emoLoad(){
     if(window.PH_EMOJI) return Promise.resolve(window.PH_EMOJI);
     if(emoP) return emoP;
-    emoP=new Promise((res, rej)=>{ const sc=document.createElement('script'); sc.src='emoji.js?v=hc200'; sc.async=true;
+    emoP=new Promise((res, rej)=>{ const sc=document.createElement('script'); sc.src='emoji.js?v=hc201'; sc.async=true;
       sc.onload=()=>window.PH_EMOJI ? res(window.PH_EMOJI) : rej(new Error('no emoji')); sc.onerror=()=>{ emoP=null; sc.remove(); rej(new Error('no emoji')); };
       document.head.appendChild(sc); });
     return emoP;
@@ -842,7 +852,8 @@
     const chips=Object.keys(by).map(e=>{ const rs=by[e], mine=rs.some(r=>r.userId===(REALCHAT?MEID:'me'));
       return '<button type="button" class="rc'+(mine?' mine':'')+'"'+(can?' data-act="react" data-v="'+esc(e)+'" data-m="'+esc(m.id)+'"':' disabled')+' title="'+esc(rs.map(r=>r.name||'Someone').join(', '))+'">'+e+' <span>'+rs.length+'</span></button>'; }).join('');
     if(!chips && !can) return '';
-    return '<div class="reacts">'+chips+(can?'<button type="button" class="radd" data-act="reactadd" data-m="'+esc(m.id)+'" title="Add a reaction" aria-label="Add a reaction">'+ICO.smile+'+</button>':'')+'</div>';
+    const del=can && mineOf(m) ? '<button type="button" class="radd rdel" data-act="msgdel" data-m="'+esc(m.id)+'" title="Delete this message" aria-label="Delete this message">🗑</button>' : '';
+    return '<div class="reacts">'+chips+(can?'<button type="button" class="radd" data-act="reactadd" data-m="'+esc(m.id)+'" title="Add a reaction" aria-label="Add a reaction">'+ICO.smile+'+</button>':'')+del+'</div>';
   }
   async function reactToggle(msgId, emoji, onOnly){
     const c=cur(); if(!c) return; const m=c.msgs.find(x=>String(x.id)===String(msgId)); if(!m) return;
@@ -1625,7 +1636,8 @@
   let reactFor='';
   const quickHTML=(m)=>'<div class="quick">'+QUICK.map(x=>{ const y=(x==='👍' || x==='🙏') ? toned([x,'','',1], skinGet()) : x; return '<button type="button" data-act="reactpick" data-v="'+y+'" aria-label="React '+y+'">'+y+'</button>'; }).join('')+
     '<button type="button" data-act="reactmore" aria-label="More emoji" title="More emoji" style="font-size:16px;color:#7b8797">'+ICO.smile.replace('<svg','<svg style="width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2"')+'</button></div>'+
-    (m && m.text && !m.deleted ? '<button type="button" class="copy" data-act="copytext">Copy text</button>' : '');
+    (m && m.text && !m.deleted ? '<button type="button" class="copy" data-act="copytext">Copy text</button>' : '')+
+    (m && !m.deleted && mineOf(m) ? '<button type="button" class="copy" data-act="msgdel" data-m="'+esc(m.id)+'" style="color:#b42318">Delete message</button>' : '');
   function v2Click(e, b, act, v){
     if(act==='cmd'){ edRestore(); document.execCommand(v, false, null); edEmptyMark(el('txt')); edSave(); fmtPaint(); return true; }
     if(act==='link'){ linkDlg(); return true; }
@@ -1651,9 +1663,48 @@
     if(act==='reactpick'){ popClose(); if(reactFor) reactToggle(reactFor, v, true); return true; }
     if(act==='reactmore'){ const a=popEl; const r=a ? a.getBoundingClientRect() : null; popClose();
       emojiPicker({getBoundingClientRect:()=>r || b.getBoundingClientRect()}, 'react'); return true; }
+    if(act==='chatmenu'){ const p=popOpen(b, '<div class="ppl"><button type="button" data-act="hidechat"><span style="font-size:18px">🙈</span><span>Hide this chat<small style="display:block;color:#7b8797;font-size:12px">Off your list until someone writes again. Nothing is deleted.</small></span></button></div>'); p.dataset.by='chatmenu'; return true; }
+    if(act==='hidechat'){ popClose(); hideChatNow(); return true; }
+    if(act==='msgdel'){ popClose(); msgDelAsk(b.dataset.m || reactFor); return true; }
+    if(act==='msgdelok'){ msgDelNow(b.dataset.m, b); return true; }
     if(act==='copytext'){ popClose(); const c=cur(), m=c && c.msgs.find(x=>String(x.id)===reactFor);
       if(m && m.text && navigator.clipboard) navigator.clipboard.writeText(m.text).then(()=>toast('Copied'), ()=>toast('Couldn’t copy')); return true; }
     return false;
+  }
+  /* HIDE A CHAT, DELETE MY MESSAGE (Cory 18/11) - both with Undo. */
+  let utT=null;
+  function undoToast(text, fn){
+    let x=el('utoast'); if(!x){ x=document.createElement('div'); x.id='utoast'; x.className='utoast'; document.body.appendChild(x); }
+    x.innerHTML='<span>'+esc(text)+'</span>'+(fn?'<button type="button">Undo</button>':''); x.classList.add('on');
+    const b=x.querySelector('button'); if(b) b.onclick=()=>{ x.classList.remove('on'); fn(); };
+    clearTimeout(utT); utT=setTimeout(()=>x.classList.remove('on'), 7000);
+  }
+  async function hideChatNow(){
+    const c=cur(); if(!c) return;
+    try{ if(REALCHAT) await CG.hideChat(c, MEID); }
+    catch(e){ toast('Not hidden: '+((e && e.message)||'Microsoft didn’t answer')); return; }
+    const at=CHATS.indexOf(c); CHATS=CHATS.filter(x=>x!==c); open=null; el('app').classList.remove('open'); renderList(); renderConv(); fit();
+    undoToast('“'+c.name+'” hidden - it comes back if someone writes.', async ()=>{
+      try{ if(REALCHAT){ await CG.hideChat(c, MEID, true); await loadList(false); } if(!CHATS.some(x=>x.id===c.id)) CHATS.splice(Math.max(0,at), 0, c); openChat(c.id); }
+      catch(e){ toast('Couldn’t bring it back: '+((e && e.message)||e)); } });
+  }
+  function msgDelAsk(id){
+    const c=cur(), m=c && c.msgs.find(x=>String(x.id)===String(id)); if(!m || !mineOf(m)) return;
+    openDlg(top('Delete this message?')+'<div class="dm-body"><div>Everyone in the chat will see <i>This message was deleted.</i> instead - here and in Teams.</div>'+
+      (m.text ? '<div class="note" style="white-space:pre-wrap;max-height:120px;overflow:auto">'+esc(String(m.text).slice(0,300))+'</div>' : '')+'</div>'+
+      '<div class="dm-foot"><button class="btn ghost" data-act="close">Keep it</button><button class="btn" style="background:#C4321C" data-act="msgdelok" data-m="'+esc(m.id)+'">Delete</button></div>');
+  }
+  async function msgDelNow(id, btn){
+    const c=cur(), m=c && c.msgs.find(x=>String(x.id)===String(id)); if(!m) return; if(btn) btn.disabled=true;
+    try{ if(REALCHAT) await CG.deleteMessage(c, MEID, m); }
+    catch(e){ if(btn) btn.disabled=false; toast('Not deleted: '+((e && e.message)||'Microsoft didn’t answer')); return; }
+    closeDlg();
+    const before=Object.assign({}, m);
+    Object.assign(m, {deleted:true, text:'This message was deleted.', rich:'', richHtml:'', images:[], files:[], reactions:[], photo:'', video:'', localImg:'', localVideo:''});
+    const i=c.msgs.indexOf(m); replaceEl(c, m.id, m, c.msgs[i-1]); renderList();
+    undoToast('Message deleted.', async ()=>{
+      try{ if(REALCHAT) await CG.deleteMessage(c, MEID, before, true); Object.keys(m).forEach(k=>delete m[k]); Object.assign(m, before); const j=c.msgs.indexOf(m); replaceEl(c, m.id, m, c.msgs[j-1]); renderList(); }
+      catch(e){ toast('Couldn’t undo: '+((e && e.message)||e)); } });
   }
   /* the B / I / U / S buttons light up for the words the cursor is in */
   function fmtPaint(){
