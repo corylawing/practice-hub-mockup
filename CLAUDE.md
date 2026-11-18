@@ -440,6 +440,17 @@ I can confidently say that the chat feature should go next. The production thing
    localStorage ph_chat_emoji_recent (18 defaults). Used by the message box (emoji button) and "More emoji" on a
    reaction. All 1,425 toned sequences checked against Unicode's list. test/chatv2.test.js (42).
    STILL QUEUED: a "chat alerts: Home-Brace / Teams" choice.
+30. **PAYROLL "Worth a second look" redone + the phone app icon (18/11; hc197, sandbox).** Cory: "I don't like the layout
+   its not userfriendly" -> mock-up (show_widget) -> "build it". flags() items now also carry w (what happened), g (the
+   pay-effect tag), k (bad/cut/ok/info -> p-late/p-go/p-done/p-info), nt (note), on (two offices), btn (doc: Set rate);
+   t kept unchanged. Board: chips (All + each kind with a count; FLT kept while working; the list stays put on a switch),
+   rows = 210px who+office | what + grey one-line note (full on hover) | 250px tag + button; one column under 640px.
+   test/payflags (8). Browser (mock-up as Heather): columns aligned, chips filter, Set rate on doctors.
+   PHONE ICON (Cory: "on mobile app it doesn't fit the entire shape of an app ... Its circular"): apple-touch-icon was
+   assets/logo-mark.png (the CIRCLE, transparent corners -> iOS fills them black). Now every v1 page + start.html use
+   assets/icons/apple-touch-icon.png?v=3 = icon-512.png (the existing square full-bleed artwork, not redrawn) resized to
+   180, RGB; manifest also lists icon-512 as "maskable". iOS keeps the old icon until the home-screen app is removed and
+   added again (then alerts must be turned on again on that phone).
 29. **SCHEDULE: month arrows on the counts (Heather 18/11 IDEA: "I find that I have to go back up to the top to scroll through
    the months then go down the page halfway to look at this chart"; hc195, sandbox).** A "Doctor days and coverage" bar
    with ‹ November 2026 › right above the counts (renderCounters); PS.countStep(n) moves the whole page a month (also in
@@ -476,7 +487,8 @@ I can confidently say that the chat feature should go next. The production thing
    Presence.Read.All, Calendars.ReadWrite, Calendars.ReadWrite.Shared, OnlineMeetings.ReadWrite, Mail.Send, User.Read.All,
    User.ReadWrite.All, Sites.Manage.All, Files.ReadWrite.All, ChannelMessage.Send, ChannelMessage.Read.All, Tasks.ReadWrite,
    AuditLog.Read.All; + while admin: Department/Office location for everyone, Teams licences, the SharePoint B2B setting,
-   optionally himself as Owner of the app registration (check with Adam). NOT CONFIRMED DONE YET.
+   optionally himself as Owner of the app registration (check with Adam). 18/11 Cory: "I have granted all access" (no
+   screenshot seen). New scopes reach a person's token only when MSAL gets a fresh one (~1 h, or sign out and in).
 26. **Add to payroll after "entered" (Heather 18/11: "Once I click on all payroll entered ... it takes away the ability for
    me to add a bonus to another payroll. I just had a team hit goal this afternoon"; hc189).** addsCard hid ＋ Add on an
    entered pay period although the dialog only ever offers pay periods still open (addPeriods). Now ＋ Add shows while

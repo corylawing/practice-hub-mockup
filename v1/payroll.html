@@ -9,7 +9,7 @@
 <link rel="icon" href="../assets/favicon.png?v=2" type="image/png">
 <meta name="theme-color" content="#0F2A4A">
 <meta name="apple-mobile-web-app-title" content="Home-Brace">
-<link rel="apple-touch-icon" href="../assets/logo-mark.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../assets/icons/apple-touch-icon.png?v=3">
 <meta name="robots" content="noindex">
 <!-- PAYROLL - A MOCK-UP for Heather (21/10/2026), sandbox only (user.js NAV: the tab and the page
      are off on the live site). Heather: every other week each office manager sends her a payroll
@@ -196,9 +196,24 @@
   .hadd input{padding:8px 10px;border:1px solid var(--line);border-radius:9px;font:inherit;font-size:14px;min-width:0}
   .hadd #hadd_n{flex:1;min-width:200px}
   table.comb .stick .entk{font-size:12.5px;min-height:28px;padding:4px 10px 4px 7px}
-  .flags{display:flex;flex-direction:column;gap:12px}
-  .fgrp h3{margin:0 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:var(--soft)}
-  .fl{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-bottom:1px dashed var(--line);font-size:13.5px}
+  .flags{display:flex;flex-direction:column;gap:16px}
+  .fgrp h3{margin:0;padding:0 0 6px;font-size:14px;color:var(--navy);border-bottom:1px solid var(--line)}
+  .fgrp h3 .muted{font-weight:600}
+  .fchips{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 14px}
+  .fchip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 12px;font:inherit;font-size:13px;color:var(--navy);cursor:pointer}
+  .fchip b{margin-left:2px}
+  .fchip:hover{border-color:var(--teal)}
+  .fchip.on{background:var(--teal-soft,#E5F4F3);border-color:var(--teal);color:var(--teal-600,#0F827E)}
+  .fl{display:grid;grid-template-columns:210px minmax(0,1fr) 250px;gap:14px;align-items:center;padding:9px 0;border-bottom:1px solid #EEF1F5;font-size:13.5px}
+  @media(max-width:980px){ .fl{grid-template-columns:170px minmax(0,1fr) 200px} }
+  .fl:last-child{border-bottom:none}
+  .fwho{display:flex;flex-direction:column;min-width:0}
+  .fwho .muted{font-size:12px}
+  .fwhat{min-width:0;color:var(--ink)}
+  .fnote{font-size:12.5px;color:var(--soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+  .ftag{display:flex;align-items:center;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+  .p-info{background:var(--teal-soft,#E5F4F3);color:var(--teal-ink,#0c5b57)}
+  @media(max-width:640px){ .fl{grid-template-columns:1fr;gap:4px} .ftag{justify-content:flex-start} .fnote{white-space:normal} }
   .fl:last-child{border-bottom:none}
   .fl .who{font-weight:700;color:var(--navy)}
   table.comb td.co{background:#F2F6FA;color:var(--navy);font-weight:800;font-size:13px;white-space:normal}
@@ -251,15 +266,15 @@
     .perhead .when{font-size:17px}
   }
 </style>
-<script src="user.js?v=hc196"></script>
+<script src="user.js?v=hc197"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc196"></script>
-  <script src="gate.js?v=hc196"></script>
-  <script src="alerts.js?v=hc196"></script>
-  <script src="_staff.js?v=hc196"></script>
-  <script src="payrules.js?v=hc196"></script>
-  <script src="paystore.js?v=hc196"></script>
-  <script src="docs.js?v=hc196"></script>
+  <script src="store.js?v=hc197"></script>
+  <script src="gate.js?v=hc197"></script>
+  <script src="alerts.js?v=hc197"></script>
+  <script src="_staff.js?v=hc197"></script>
+  <script src="payrules.js?v=hc197"></script>
+  <script src="paystore.js?v=hc197"></script>
+  <script src="docs.js?v=hc197"></script>
 </head>
 <body>
 <div class="ribbon">MOCK-UP for Heather — made-up people and amounts. Try it as the Carlsbad TC first, then as Heather.</div>
@@ -743,7 +758,7 @@
     if(LEVEL()==='manage' && fillAs) return {kind:'om', office:fillAs, mgr:true};
     return {kind:'coo', ro:LEVEL()!=='manage'};
   };
-  let tab='sheet', per=HOME(), look='';
+  let tab='sheet', per=HOME(), look='', FLT='all';     // FLT: which kind "Worth a second look" shows (its chips)
 
   function statusPill(n,o){
     const s=get(n,o), e=entOff(n,o), pr=P(n);
@@ -969,25 +984,33 @@
     const pr=P(n), RATE=rt(pr.start), F={ot:[], er:[], two:[], green:[], pay:[], spb:[], miles:[], add:[], doc:[]};
     OFFICES.forEach(o=>{ const s=get(n,o.k); if(s.status!=='sent') return;
       rowPeople(n,o.k).forEach(p=>{ const x=s.rows[p.id]; if(!x) return;
-        [1,2].forEach(w=>{ const hh=num(x['w'+w]); if(hh>40) F.ot.push({p,o,t:r2(hh-40)+' h of overtime in week '+w+(otOK(x,w)?' — marked approved':' — <b>not</b> marked approved'), bad:!otOK(x,w)}); });
-        if(x.mg==='Y'){ const c=calc(p,x,pr); F.green.push({p,o,t:'Missed a green day → '+(x.bonus==='none'?'no bonus':x.bonus==='partial'?esc(cutText(x))+' off ('+money(c.ppb)+' of '+money(bonusOf(p))+')':'kept the full bonus')+(x.notes?' · “'+esc(x.notes)+'”':'')}); }
-        if(num(x.ers)>0) F.er.push({p,o,t:num(x.ers)+' ER'+(num(x.ers)>1?'s':'')+' taken → <b>'+num(x.ers)+' hour'+(num(x.ers)>1?'s':'')+' of pay</b>'+(num(x.oncall)?'':' · not marked on call')});
-        if(spbHas(x)) F.spb.push({p,o,t:'Special bonus '+spbLine(x)});
-        if(num(x.exc)>0) F.pay.push({p,o,t:'Exception commuter pay '+money(num(x.exc))+(x.notes?' · “'+esc(x.notes)+'”':'')});
-        if(num(x.mkt)+num(x.oth)>0) F.miles.push({p,o,t:(num(x.mkt)?num(x.mkt)+' marketing mi':'')+(num(x.mkt)&&num(x.oth)?' + ':'')+(num(x.oth)?num(x.oth)+' other mi':'')+' → '+money(r2((num(x.mkt)+num(x.oth))*RATE.mile))+' reimbursement'+(num(x.oth)&&x.notes?' · “'+esc(x.notes)+'”':'')});
+        [1,2].forEach(w=>{ const hh=num(x['w'+w]); if(hh>40) F.ot.push({p,o,t:r2(hh-40)+' h of overtime in week '+w+(otOK(x,w)?' — marked approved':' — <b>not</b> marked approved'), bad:!otOK(x,w),
+          w:hrs(hh-40)+' h overtime, week '+w, g:otOK(x,w)?'Approved':'Not approved', k:otOK(x,w)?'ok':'bad'}); });
+        if(x.mg==='Y'){ const c=calc(p,x,pr); F.green.push({p,o,t:'Missed a green day → '+(x.bonus==='none'?'no bonus':x.bonus==='partial'?esc(cutText(x))+' off ('+money(c.ppb)+' of '+money(bonusOf(p))+')':'kept the full bonus')+(x.notes?' · “'+esc(x.notes)+'”':''),
+          w:'Missed a green day', g:x.bonus==='none'?'No bonus':x.bonus==='partial'?'−'+cutText(x)+' · '+money(c.ppb)+' of '+money(bonusOf(p)):'Full bonus kept', k:x.bonus==='none'?'bad':x.bonus==='partial'?'cut':'ok', nt:x.notes||''}); }
+        if(num(x.ers)>0) F.er.push({p,o,t:num(x.ers)+' ER'+(num(x.ers)>1?'s':'')+' taken → <b>'+num(x.ers)+' hour'+(num(x.ers)>1?'s':'')+' of pay</b>'+(num(x.oncall)?'':' · not marked on call'),
+          w:num(x.ers)+' ER'+(num(x.ers)>1?'s':'')+' taken', g:'+'+num(x.ers)+' h pay', k:'info', nt:num(x.oncall)?'':'Not marked on call'});
+        if(spbHas(x)) F.spb.push({p,o,t:'Special bonus '+spbLine(x), w:'Special bonus'+(x.spbType?' · '+x.spbType:''), g:money(num(x.spb)), k:'info', nt:String(x.spbWhy||'').trim()});
+        if(num(x.exc)>0) F.pay.push({p,o,t:'Exception commuter pay '+money(num(x.exc))+(x.notes?' · “'+esc(x.notes)+'”':''), w:'Exception commuter pay', g:money(num(x.exc)), k:'info', nt:x.notes||''});
+        if(num(x.mkt)+num(x.oth)>0) F.miles.push({p,o,t:(num(x.mkt)?num(x.mkt)+' marketing mi':'')+(num(x.mkt)&&num(x.oth)?' + ':'')+(num(x.oth)?num(x.oth)+' other mi':'')+' → '+money(r2((num(x.mkt)+num(x.oth))*RATE.mile))+' reimbursement'+(num(x.oth)&&x.notes?' · “'+esc(x.notes)+'”':''),
+          w:(num(x.mkt)?num(x.mkt)+' marketing mi':'')+(num(x.mkt)&&num(x.oth)?' + ':'')+(num(x.oth)?num(x.oth)+' other mi':''), g:money(r2((num(x.mkt)+num(x.oth))*RATE.mile)), k:'info', nt:num(x.oth)&&x.notes?x.notes:''});
       }); });
     /* DOCPAY: every doctor with days on a sheet that's in - and what to pay them (Heather: "I almost forgot to pay him") */
     if(DOCPAYON()) OFFICES.forEach(o=>{ const s=get(n,o.k); if(s.status!=='sent') return;
       docRows(n,o.k).forEach(d=>{ const v=(s.docs||{})[d.id]||{}, dp=docPay(n,d,v); if(!(dp.days>0) && dp.over===null) return;
-        F.doc.push({who:d.n, o, t:esc(dayN(dp.days))+(dp.pay!==null ? ' → pay <b>'+(money(dp.pay)||'$0')+'</b>'+(dp.over!==null ? ' (typed in)' : ' ('+money(dp.rate)+' a day)') : ' · <b>no day rate yet</b> - Settings → Doctors paid by the day'), bad:dp.pay===null}); }); });
+        F.doc.push({who:d.n, o, t:esc(dayN(dp.days))+(dp.pay!==null ? ' → pay <b>'+(money(dp.pay)||'$0')+'</b>'+(dp.over!==null ? ' (typed in)' : ' ('+money(dp.rate)+' a day)') : ' · <b>no day rate yet</b> - Settings → Doctors paid by the day'), bad:dp.pay===null,
+          w:dayN(dp.days)+' worked', g:dp.pay!==null ? 'Pay '+(money(dp.pay)||'$0') : 'No day rate yet', k:dp.pay!==null ? 'info' : 'bad', nt:dp.pay===null ? '' : dp.over!==null ? 'Typed in' : money(dp.rate)+' a day',
+          btn:dp.pay===null && holCan() && rateStarts().length ? '<button class="btn ghost sm" data-act="docrate" data-v="'+esc(d.id)+'">Set rate</button>' : ''}); }); });
     everyone().filter(p=>p.offices.length>1).forEach(p=>{
       const parts=p.offices.map(k=>{ const s=get(n,k), x=s.status==='sent'&&s.rows[p.id]; return x?{k, w1:num(x.w1), w2:num(x.w2)}:null; }).filter(Boolean);
       if(parts.length>1){ const w1=parts.reduce((a,q)=>a+q.w1,0), w2=parts.reduce((a,q)=>a+q.w2,0);
-        F.two.push({p, o:OFF[parts[0].k], t:'Worked at '+parts.map(q=>OFF[q.k].n+' ('+hrs(q.w1+q.w2)+' h)').join(' and ')+' → <b>'+hrs(w1+w2)+' h combined</b>'+(w1>40||w2>40?' — over 40 in a week once combined':' — no overtime once combined'), bad:w1>40||w2>40}); }
+        F.two.push({p, o:OFF[parts[0].k], t:'Worked at '+parts.map(q=>OFF[q.k].n+' ('+hrs(q.w1+q.w2)+' h)').join(' and ')+' → <b>'+hrs(w1+w2)+' h combined</b>'+(w1>40||w2>40?' — over 40 in a week once combined':' — no overtime once combined'), bad:w1>40||w2>40,
+          on:parts.map(q=>OFF[q.k].n).join(' + '), w:parts.map(q=>hrs(q.w1+q.w2)+' h').join(' + '), g:hrs(w1+w2)+' h combined', k:w1>40||w2>40?'bad':'info', nt:w1>40||w2>40?'Over 40 in a week once combined':'No overtime once combined'}); }
     });
     if(n===CUR) S.added.filter(p=>p.byKind==='om' && S.bonus[p.id]===undefined && !num(p.bonus) && !S.removed[p.id]).forEach(p=>{
       const o=OFF[p.offices[0]];
-      F.add.push({p, o, t:'Added by '+esc(sender(o.k))+', started '+esc(fmt(p.start))+'. Set their pay-period bonus in Settings.', bad:true}); });
+      F.add.push({p, o, t:'Added by '+esc(sender(o.k))+', started '+esc(fmt(p.start))+'. Set their pay-period bonus in Settings.', bad:true,
+        w:'Added by '+sender(o.k)+', started '+fmt(p.start), g:'Set their bonus', k:'bad', nt:'Settings → their pay-period bonus'}); });
     return F;
   }
   const otCell=(x,c,w)=>c['ot'+w] ? '<span class="otv'+(otOK(x,w)?' ok':'')+'" title="'+(otOK(x,w)?'Approved':'Not marked approved')+'">'+hrs(c['ot'+w])+'</span>' : '—';
@@ -1192,8 +1215,19 @@
     h+=addsCard(n);
     const groups=[['doc','🩺 Doctors to pay (paid by the day)'],['add','🆕 New people'],['ot','⏱ Overtime'],['er','🚑 ERs taken'],['two','🏢 Working two offices — hours combined'],['green','🟢 Missed green days'],['pay','💵 Exception commuter pay'],['spb','🎁 Special bonuses'],['miles','🚗 Mileage']];
     const count=groups.reduce((a,g)=>a+F[g[0]].length,0);
+    /* EASIER TO READ (Cory 18/11: "I don't like the layout its not userfriendly" -> the mock-up -> "build it"): chips at
+       the top show one kind at a time; each row is who + office | what happened (a note in grey under it) | the pay
+       effect as a coloured tag (red = needs you / no bonus, amber = a cut, green = kept / approved, teal = extra pay or
+       hours) and any button that fixes it. */
+    const shown=groups.filter(g=>F[g[0]].length); if(FLT!=='all' && !F[FLT] || FLT!=='all' && !F[FLT].length) FLT='all';
+    const tag={bad:'p-late', cut:'p-go', ok:'p-done', info:'p-info'};
     h+='<div class="card"><h2>Worth a second look'+(count?' ('+count+')':'')+'</h2><p class="sub">Found for you across every sheet that’s been sent — no more hunting through notes.</p>'+
-      (count?'<div class="flags">'+groups.filter(g=>F[g[0]].length).map(g=>'<div class="fgrp"><h3>'+g[1]+'</h3>'+F[g[0]].map(f=>'<div class="fl"><span class="who">'+esc(f.who || disp(f.p))+'</span><span class="muted">'+esc(f.o.n)+'</span><span class="grow">'+f.t+'</span>'+(f.bad?'<span class="pill p-late">Check</span>':'')+'</div>').join('')+'</div>').join('')+'</div>'
+      (count?'<div class="fchips" role="group" aria-label="Show">'+[['all','All',count]].concat(shown.map(g=>[g[0], g[1].replace(/ \(.*\)$/,'').replace(/ — .*$/,''), F[g[0]].length])).map(c=>
+          '<button type="button" class="fchip'+(FLT===c[0]?' on':'')+'" data-act="flt" data-v="'+c[0]+'" aria-pressed="'+(FLT===c[0])+'">'+esc(c[1])+' <b>'+c[2]+'</b></button>').join('')+'</div>'+
+        '<div class="flags">'+shown.filter(g=>FLT==='all' || FLT===g[0]).map(g=>'<div class="fgrp"><h3>'+g[1]+' <span class="muted">· '+F[g[0]].length+'</span></h3>'+F[g[0]].map(f=>
+          '<div class="fl"><div class="fwho"><span class="who">'+esc(f.who || disp(f.p))+'</span><span class="muted">'+esc(f.on || f.o.n)+'</span></div>'+
+          '<div class="fwhat">'+esc(f.w || '')+(f.nt ? '<div class="fnote" title="'+esc(f.nt)+'">'+esc(/^Not |^No |^Over |^Settings|^Typed|a day$/.test(f.nt) ? f.nt : '“'+f.nt+'”')+'</div>' : '')+'</div>'+
+          '<div class="ftag"><span class="pill '+(tag[f.k]||'p-info')+'">'+esc(f.g || '')+'</span>'+(f.btn||'')+'</div></div>').join('')+'</div>').join('')+'</div>'
         :'<div class="note good">Nothing unusual so far.</div>')+'</div>';
     h+='<div class="card"><div class="row" style="margin-bottom:10px"><div class="grow"><h2>Combined sheet</h2><div class="small muted">Laid out like your main Excel: one company at a time with its own column headings, the same sums for every row, overtime split by week the way the payroll software asks for it.</div></div>'+
       '<button class="btn ghost sm" data-act="csv">⬇ Download for Excel</button>'+
@@ -1737,6 +1771,7 @@
       return;
     }
     if(act==='docrate' && DOCPAYON() && holCan()){ docRateDlg(v); return; }
+    if(act==='flt'){ FLT=v||'all'; const y=b.getBoundingClientRect().top; render(); const nb=document.querySelector('.fchip[data-v="'+FLT+'"]'); if(nb) window.scrollBy(0, nb.getBoundingClientRect().top-y); return; }
     if(act==='docrateok' && DOCPAYON() && holCan()){
       const raw=String((el('drv')||{}).value||'').trim(), amt=Number(raw), m=+((el('drf')||{}).value), d=everyDoc().find(x=>x.id===v);
       const err=t=>{ const e=el('drerr'); if(e) e.textContent=t; };
@@ -2342,7 +2377,7 @@
 })();
 </script>
 <script>PH.nav('payroll');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc196"></script>
+<script src="tour.js?v=hc197"></script>
 <script>
 Tour.init([
   ...((window.PH && PH.isLive && PH.isLive()) || (()=>{ try{ return localStorage.getItem('ph_pay_real')==='1'; }catch(_){ return false; } })() ? [] : [{sel:'#persona', title:'A mock-up', body:'Made-up people and amounts. Start as the <b>Carlsbad TC</b>, who sends Carlsbad’s sheet, then switch to <b>Heather</b>.'}]),

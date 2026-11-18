@@ -48,7 +48,7 @@ t('typing in them is saved like Notes (text, 200 letters at most)', /\['notes','
 t('the office’s "Heather’s rules" mention it only when it’s on', /\(SPBON\(\) \? '<li><b>Special bonus:<\/b>/.test(H));
 
 t('Heather: "Worth a second look" lists every special bonus (amount, type, what for)',
-  /if\(spbHas\(x\)\) F\.spb\.push\(\{p,o,t:'Special bonus '\+spbLine\(x\)\}\);/.test(fn('flags')) && /\['spb','🎁 Special bonuses'\]/.test(H) &&
+  /if\(spbHas\(x\)\) F\.spb\.push\(\{p,o,t:'Special bonus '\+spbLine\(x\), w:'Special bonus'\+\(x\.spbType\?' · '\+x\.spbType:''\), g:money\(num\(x\.spb\)\), k:'info', nt:String\(x\.spbWhy\|\|''\)\.trim\(\)\}\);/.test(fn('flags')) && /\['spb','🎁 Special bonuses'\]/.test(H) &&
   /const spbLine=x=>money\(num\(x\.spb\)\)\+\(x\.spbType\?' · '\+esc\(x\.spbType\):''\)\+\(String\(x\.spbWhy\|\|''\)\.trim\(\)\?' · “'\+esc\(/.test(H));
 t('…the combined sheet shows "+ $75 special" under Extra (what for on hover), and the download’s Notes say it',
   /\(c\.spb\?'<div class="small muted" title="'\+esc\('Special bonus: '/.test(fn('combined')) &&
