@@ -427,6 +427,7 @@ I can confidently say that the chat feature should go next. The production thing
    stays words, like/unset, Quinn's reactions appear and go, non-pilot chat locked. Bugs caught on the way: @ list
    re-opened while the picked name went in (left "@G"); a blank reaction entry crashed reactionsOf; the second clean
    dropped the @ highlight; the hint was centred (class clash); the phone 16px rule lost to the later 14.5px.
+   ON FOR LIVE hc191 (Cory 18/11: "chat v2 live"): CHAT_V2_LIVE=true (chat itself is still pilot-only).
    STILL QUEUED: a "chat alerts: Home-Brace / Teams" choice.
 26. **Add to payroll after "entered" (Heather 18/11: "Once I click on all payroll entered ... it takes away the ability for
    me to add a bonus to another payroll. I just had a team hit goal this afternoon"; hc189).** addsCard hid ＋ Add on an

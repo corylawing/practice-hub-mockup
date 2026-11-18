@@ -89,7 +89,7 @@ t('a message carries its reactions and its formatting', (()=>{ const m=T.mapMess
   t('without the new box (v1, the live site today) a message is sent exactly as before', calls[0].body.body.content.indexOf('&lt;b&gt;')>=0 && !calls[0].body.mentions);
 
   /* ---- the page ---- */
-  t('OFF on the live site (CHAT_V2_LIVE false); on in the sandbox; one live device can try it (ph_chat_v2 = 1)', /const CHAT_V2_LIVE=false;/.test(CHAT) &&
+  t('ON for the live site (hc191, Cory: "chat v2 live"); CHAT_V2_LIVE false again = the v1 box (one device can still opt in with ph_chat_v2 = 1)', /const CHAT_V2_LIVE=true;/.test(CHAT) &&
     /const V2=\(\)=>\{ if\(CHAT_V2_LIVE \|\| !ONLIVE\) return true; try\{ return localStorage\.getItem\('ph_chat_v2'\)==='1'; \}catch\(_\)\{ return false; \} \};/.test(CHAT) &&
     /if\(V2\(\)\) return composerHTML2\(c\);/.test(fnOf(CHAT,'composerHTML')));
   const box=fnOf(CHAT,'composerHTML2');

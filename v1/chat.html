@@ -296,13 +296,13 @@
   .lb .lbnav.p{left:14px}.lb .lbnav.n{right:14px}
   .lb .lbnav[hidden]{display:none}
 </style>
-<script src="user.js?v=hc190"></script>
+<script src="user.js?v=hc191"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc190"></script>
-  <script src="gate.js?v=hc190"></script>
-  <script src="_staff.js?v=hc190"></script>
-  <script src="alerts.js?v=hc190"></script>
-  <script src="chatgraph.js?v=hc190"></script>
+  <script src="store.js?v=hc191"></script>
+  <script src="gate.js?v=hc191"></script>
+  <script src="_staff.js?v=hc191"></script>
+  <script src="alerts.js?v=hc191"></script>
+  <script src="chatgraph.js?v=hc191"></script>
 </head>
 <body>
 <div class="ribbon" id="ribbon">MOCK-UP for Heather and Dr. Jae — made-up people, messages and videos. Nothing is sent anywhere.</div>
@@ -548,7 +548,7 @@
      have is well layed out", "add an emoji to their message ... the message they sent and its under it", "Clicking on
      photo in chat that brings up bigger view exactly like slack does". SANDBOX ONLY until CHAT_V2_LIVE is true; on the
      live site one device can try it first (localStorage ph_chat_v2 = '1'). */
-  const CHAT_V2_LIVE=false;
+  const CHAT_V2_LIVE=true;     // ON for the live site 18/11 (Cory: "chat v2 live"); false = the v1 box again
   const V2=()=>{ if(CHAT_V2_LIVE || !ONLIVE) return true; try{ return localStorage.getItem('ph_chat_v2')==='1'; }catch(_){ return false; } };
   const SR=window.SpeechRecognition || window.webkitSpeechRecognition || null;
   const FMT_KEY='ph_chat_fmt';
