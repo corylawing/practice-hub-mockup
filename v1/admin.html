@@ -272,20 +272,20 @@
   }
 
 </style>
-<script src="user.js?v=hc205"></script>
+<script src="user.js?v=hc206"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="_staff.js?v=hc205"></script>
-  <script src="store.js?v=hc205"></script>
-  <script src="gate.js?v=hc205"></script>
-  <script src="docs.js?v=hc205"></script>
-  <script src="payrules.js?v=hc205"></script>
-  <script src="workbook.js?v=hc205"></script>
-  <script src="prodbook.js?v=hc205"></script>
-  <script src="prodfx.js?v=hc205"></script>
-  <script src="prodstore.js?v=hc205"></script>
-<script src="schedrec.js?v=hc205"></script>
-<script src="proddays.js?v=hc205"></script>
-  <script src="prodadmin.js?v=hc205"></script>
+  <script src="_staff.js?v=hc206"></script>
+  <script src="store.js?v=hc206"></script>
+  <script src="gate.js?v=hc206"></script>
+  <script src="docs.js?v=hc206"></script>
+  <script src="payrules.js?v=hc206"></script>
+  <script src="workbook.js?v=hc206"></script>
+  <script src="prodbook.js?v=hc206"></script>
+  <script src="prodfx.js?v=hc206"></script>
+  <script src="prodstore.js?v=hc206"></script>
+<script src="schedrec.js?v=hc206"></script>
+<script src="proddays.js?v=hc206"></script>
+  <script src="prodadmin.js?v=hc206"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — admin console concept for validation. Real build: people sync from Microsoft 365; access is managed here.</div>
@@ -523,7 +523,7 @@
   set('Leadership Team',{monthly:'view',tc:'manage',production:'manage',dashboard:'edit',schedule:'view',marketing:'view',team:'view',hr:'edit',eom:'edit',officedocs:'view',forms:'view',vendors:'view',filing:'view'});
   set('Office Managers',{monthly:'edit',meetings:'edit',tc:'view',production:'edit',dashboard:'view',schedule:'edit',marketing:'view',team:'view',hr:'view',eom:'edit',officedocs:'edit',forms:'edit',vendors:'edit',filing:'edit'});
   set('Clinic Managers',{dashboard:'view',schedule:'edit',team:'view',hr:'view',officedocs:'view',forms:'edit'});
-  set('TCs',{tc:'edit',schedule:'view',team:'view',hr:'view',forms:'add'});
+  set('TCs',{monthly:'view',tc:'edit',schedule:'view',team:'view',hr:'view',forms:'add'});
   set('Doctors',{dashboard:'view',schedule:'view',team:'view',hr:'view',forms:'view'});
   set('Marketing Team',{marketing:'manage',team:'view',hr:'view',forms:'view'});
   set('Financial Coordinator Team',{production:'edit',dashboard:'view',team:'view',eom:'edit',vendors:'view',filing:'edit'});
@@ -2333,7 +2333,7 @@ function sizeWatch(){
   }).catch(()=>{});
 }
 </script>
-<script src="tour.js?v=hc205"></script>
+<script src="tour.js?v=hc206"></script>
 <script>
 Tour.init([
   {sel:'#tabs', title:'This is your control room', body:'Four tabs and you can run the whole hub: <b>People</b>, <b>Teams &amp; Access</b>, <b>Document Sections</b> and <b>Locations</b>. No developer, no consultant.', pre:()=>AD.tab('users')},

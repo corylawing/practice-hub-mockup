@@ -112,6 +112,7 @@
   tbody tr.click{cursor:pointer} tbody tr.click:hover td{background:#f6fafa}
   tr.tot td{font-weight:800;background:#f3f6f9;color:var(--navy);border-bottom:0}
   tr.q td{background:#f7f9fb;font-weight:700;color:var(--navy2)}
+  table.imp th,table.imp td{text-align:left;vertical-align:top}
   tr.goals td{background:#fff8ee;color:var(--amber-ink);font-weight:600;font-size:12px;white-space:normal}
   td.ok{color:var(--ink)} td.bad{color:var(--bad);font-weight:700} td.good{color:var(--good);font-weight:700} td.watch{color:var(--amber-ink);font-weight:700}
   td .dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;vertical-align:middle;background:currentColor}
@@ -210,11 +211,12 @@
   }
   @media (prefers-reduced-motion: reduce){ *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important} }
 </style>
-<script src="user.js?v=hc205"></script>
+<script src="user.js?v=hc206"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc205"></script>
-  <script src="gate.js?v=hc205"></script>
-  <script src="monthly.js?v=hc205"></script>
+  <script src="store.js?v=hc206"></script>
+  <script src="gate.js?v=hc206"></script>
+  <script src="prodbook.js?v=hc206"></script>
+  <script src="monthly.js?v=hc206"></script>
 </head>
 <body>
 <div class="ribbon">MOCK-UP for Heather — made-up numbers. Try it as an office manager first, then as Heather.</div>
@@ -277,7 +279,9 @@
     return {id:p.id, level:p.level, offices:p.offices, name:p.name, email:p.name};
   }
   const at=l=>RANK[(WHO&&WHO.level)||'none']>=RANK[l];
-  function myOffices(){ const all=PH.officeNames(); if(WHO.offices==='all') return all; return all.filter(o=>WHO.offices.indexOf(o)>=0); }
+  /* Heather 18/11: "All office managers can see all offices" - Settings "everyone" (on by default). Typing stays with
+     each office's own people (mine) and Heather (manage). */
+  function myOffices(){ const all=PH.officeNames(); if(WHO.offices==='all' || SET.everyone) return all; return all.filter(o=>WHO.offices.indexOf(o)>=0); }
   const seesMany=()=>myOffices().length>1;
   const mine=o=>WHO.offices==='all' || WHO.offices.indexOf(o)>=0;
   const isOpen=(y,m)=>y===NOW_Y && m===NOW_M;
@@ -297,10 +301,12 @@
         let col=colBase+(R()-0.5)*0.05, adjp=0.06+R()*0.04, del=3.5+R()*4;
         if(o==='Hobbs' && y===NOW_Y && m>=LM.m-2 && m<=LM.m){ col=0.935-(m-LM.m+3)*0.025; del=8.6+R(); }   // the story: Hobbs slipping
         if(o==='Lubbock' && y===NOW_Y && m===LM.m) adjp=0.112;
-        const v={gp, gc:gp*col, adj:-gp*adjp, ar:full*arx*(0.97+R()*0.06), arn:accts+Math.round((R()-0.5)*40), del,
+        const arn=accts+Math.round((R()-0.5)*40);
+        const v={gp, gc:gp*col, adj:-gp*adjp, ar:full*arx*(0.97+R()*0.06), arn, deln:Math.round(del/100*arn),
                  npe:Math.round((40+R()*70)*frac), act:pts+Math.round((R()-0.5)*30), disc:gp*(0.01+R()*0.02)};
         v.np=v.gp+v.adj; v.ar90=v.ar*(0.012+R()*0.035);
-        if(!open){ v.rip=Math.round(4+R()*20); v.oecd=5+R()*12; v.cmf=62+R()*30;
+        v.rip=Math.round((4+R()*20)*frac);
+        if(!open){ v.oecd=5+R()*12; v.cmf=62+R()*30;
           if(med.indexOf(o)>=0){ v.mds=Math.round(8+R()*26); v.mdd=Math.round(v.mds*(0.05+R()*0.22)); v.mda=Math.max(0,v.mds-v.mdd-Math.round(R()*3));
             v.mdb=Math.round(v.mda*(0.6+R()*0.35)); v.mdp=25000+R()*85000; v.mdc=v.mdp*(0.75+R()*0.25); } }
         const r={v:{}, src:{}, at:{}, by:{}, ofv:{}, notes:[]}, stamp=new Date(y, m, Math.min(3, 28), 6).toISOString();
@@ -348,7 +354,7 @@
   const MON=M.MONTHS.map(x=>x.slice(0,3));
   const day=iso=>{ if(!iso) return ''; const d=new Date(iso); return isNaN(d) ? '' : d.getDate()+' '+MON[d.getMonth()]; };
   const goalTxt=k=>{ const g=SET.goals[k]; return k==='ratio' ? g[0]+'–'+g[1]+'×' : g[0]+'–'+g[1]+'%'; };
-  const TONE_TXT={ok:'On goal', bad:'Off goal', good:'Better than goal', watch:'Outside range'};
+  const TONE_TXT={ok:'On target', bad:'Off target', good:'Better than target', watch:'Outside range'};
   const toneChip=(k,v)=>{ const t=M.tone(k,v,SET.goals); return t ? '<span class="tn '+t+'">'+TONE_TXT[t]+'</span>' : ''; };
   const ICON={bad:'!', watch:'△', good:'✓', info:'i'};
   const STATUS={final:'✓ Final', sent:'Sent', late:'Late', open:'So far', started:'Started', '':'Not started'};
@@ -361,7 +367,7 @@
   function opill(o){ const c=PH.colorForOffice(o)||{}; return '<span class="opill"><i style="background:'+esc(c.dot||'#94a3b8')+'"></i>'+esc(o)+'</span>'; }
   function toast(t){ const d=document.createElement('div'); d.className='toast'; d.textContent=t; document.body.appendChild(d); setTimeout(()=>d.remove(), 2600); }
 
-  /* a small line: the last n months, the goal band behind it, the last point marked */
+  /* a small line: the last n months, the target band behind it, the last point marked */
   function spark(series, band, opts){
     opts=opts||{}; const W=opts.w||240, H=opts.h||64, P=6; const pts=series.map((v,i)=>({i,v})).filter(p=>p.v!=null && isFinite(p.v));
     if(pts.length<2) return '<svg viewBox="0 0 '+W+' '+H+'" aria-hidden="true"><text x="'+W/2+'" y="'+H/2+'" text-anchor="middle" font-size="11" fill="#8a96aa">Not enough months yet</text></svg>';
@@ -376,7 +382,7 @@
   }
 
   /* ---------- tabs and the month ---------- */
-  function tabsFor(){ const t=[]; if(seesMany()) t.push(['overview','Overview']); t.push(['office', seesMany()?'One office':'My report']); t.push(['year','Year sheet']); if(at('manage')) t.push(['settings','Settings']); return t; }
+  function tabsFor(){ const t=[]; if(seesMany()) t.push(['overview','Overview']); t.push(['office', at('manage') || !at('edit') ? 'One office' : 'My report']); t.push(['year','Year sheet']); if(at('manage')) t.push(['settings','Settings']); return t; }
   function renderBar(){
     const tabs=tabsFor(); if(!tabs.some(t=>t[0]===TAB)) TAB=tabs[0][0];
     el('tabs').innerHTML=tabs.map(t=>'<button role="tab" class="'+(t[0]===TAB?'on':'')+'" aria-selected="'+(t[0]===TAB)+'" onclick="MONTHLY.tab(\''+t[0]+'\')">'+t[1]+'</button>').join('');
@@ -413,19 +419,19 @@
     const T=offTotals(offs,y,m), PT=offTotals(offs,p.y,p.m);
     if(!T){ return h+'<div class="empty">No numbers for '+M.MONTHS[m-1]+' '+y+' yet.</div></div>'; }
     const c=M.calc(T);
-    /* the size of it, said once: what the offices below goal would have collected at the goal */
+    /* the size of it, said once: what the offices below target would have collected at the target */
     let short=0, shortN=0;
     rows.forEach(x=>{ if(!x.v) return; const cc=M.calc(x.v); if(cc.colpct!==null && cc.colpct<SET.goals.col[0]){ short+=SET.goals.col[0]/100*x.v.gp-x.v.gc; shortN++; } });
     if(!open){
-      h+= shortN ? '<div class="headline"><div class="big">'+fmt('$',short)+'</div><div><b>still to collect to reach the '+SET.goals.col[0]+'% goal</b> at '+shortN+' office'+(shortN>1?'s':'')+' in '+M.MONTHS[m-1]+'.<p>That’s the gap between what these offices produced and what they collected — the first thing to chase.</p></div></div>'
+      h+= shortN ? '<div class="headline"><div class="big">'+fmt('$',short)+'</div><div><b>still to collect to reach the '+SET.goals.col[0]+'% target</b> at '+shortN+' office'+(shortN>1?'s':'')+' in '+M.MONTHS[m-1]+'.<p>That’s the gap between what these offices produced and what they collected — the first thing to chase.</p></div></div>'
                  : '<div class="headline ok"><div class="big">✓</div><div><b>Every office collected at least '+SET.goals.col[0]+'% of production in '+M.MONTHS[m-1]+'.</b><p>Nothing to chase on collections this month.</p></div></div>';
     }
     h+='<div class="tiles">'+
       tile('Produced', fmt('$',T.gp,true), delta(T.gp, PT&&PT.gp))+
       tile('Collected', fmt('$',T.gc,true), (c.colpct!=null?fmt('%',c.colpct)+' of production ':'')+toneChip('col',c.colpct))+
-      tile('Adjustments', fmt('%',c.adjpct), toneChip('adj',c.adjpct)+' <span class="soft">goal '+goalTxt('adj')+'</span>')+
+      tile('Adjustments', fmt('%',c.adjpct), toneChip('adj',c.adjpct)+' <span class="soft">target '+goalTxt('adj')+'</span>')+
       tile('A/R ratio', fmt('x',c.ratio), fmt('$',T.ar,true)+' owed '+toneChip('ratio',c.ratio))+
-      tile('Late over 30 days', fmt('%',T.del), toneChip('del',T.del)+' <span class="soft">goal '+goalTxt('del')+'</span>')+
+      tile('Late over 30 days', fmt('%',c.delpct), toneChip('del',c.delpct)+' <span class="soft">target '+goalTxt('del')+'</span>')+
       tile('New patient exams', fmt('#',T.npe), delta(T.npe, PT&&PT.npe))+'</div>';
     /* what needs a conversation */
     let all=[]; rows.forEach(x=>{ if(!x.v) return; M.insights(x.v,{goals:SET.goals, prev:valsOf(x.o,p.y,p.m), hist:histOf(x.o,y,m,3)}).forEach(i=>all.push(Object.assign({o:x.o}, i))); });
@@ -435,16 +441,16 @@
     h+='<div class="card"><h2>Worth a conversation</h2><div class="sub">Worked out from the numbers, biggest dollar gap first. Open an office to see why — its manager can leave a note.</div>';
     h+= talk.length ? '<ul class="talk">'+show.map(i=>'<li class="t-'+i.tone+'">'+opill(i.o)+'<span><span class="ico">'+ICON[i.tone]+'</span>'+esc(i.text)+'</span><button class="lnk" onclick="MONTHLY.open(\''+esc(i.o)+'\')">Open</button></li>').join('')+'</ul>'+
         (talk.length>6 ? '<button class="lnk more" onclick="MONTHLY.all()">'+(SHOWALL?'Show fewer':'Show all '+talk.length)+'</button>' : '')
-      : '<div class="note">Nothing off goal this month.</div>';
-    if(good.length) h+='<div class="note" style="margin-top:10px"><b class="up">✓ Above the collection goal:</b> '+good.map(i=>esc(i.o)).join(', ')+'</div>';
+      : '<div class="note">Nothing off target this month.</div>';
+    if(good.length) h+='<div class="note" style="margin-top:10px"><b class="up">✓ Above the collection target:</b> '+good.map(i=>esc(i.o)).join(', ')+'</div>';
     h+='</div>';
     /* every office side by side */
-    h+='<div class="tablewrap"><table><thead><tr><th>Office</th><th>Report</th><th>Produced</th><th>Collected</th><th>Collection %<small>goal '+goalTxt('col')+'</small></th><th>Adjustment %<small>goal '+goalTxt('adj')+'</small></th><th>A/R ratio<small>goal '+goalTxt('ratio')+'</small></th><th>Late 30+ %<small>goal '+goalTxt('del')+'</small></th><th>NP exams</th><th>Collection %, 6 months</th></tr></thead><tbody>';
+    h+='<div class="tablewrap"><table><thead><tr><th>Office</th><th>Report</th><th>Produced</th><th>Collected</th><th>Collection %<small>target '+goalTxt('col')+'</small></th><th>Adjustment %<small>target '+goalTxt('adj')+'</small></th><th>A/R ratio<small>target '+goalTxt('ratio')+'</small></th><th>Late 30+ %<small>target '+goalTxt('del')+'</small></th><th>NP exams</th><th>Collection %, 6 months</th></tr></thead><tbody>';
     rows.forEach(x=>{ const v=x.v||{}, cc=M.calc(v), r=x.r;
       const ser=[]; for(let i=5;i>=0;i--){ const q=step(y,m,-i); const vv=valsOf(x.o,q.y,q.m); ser.push(vv?M.calc(vv).colpct:null); }
       h+='<tr class="click" onclick="MONTHLY.open(\''+esc(x.o)+'\')"><td>'+opill(x.o)+'</td><td>'+stChip(r,y,m)+'</td><td>'+fmt('$',v.gp)+'</td><td>'+fmt('$',v.gc)+'</td>'+
-        cell('col',cc.colpct,'%')+cell('adj',cc.adjpct,'%')+cell('ratio',cc.ratio,'x')+cell('del',v.del,'%')+'<td>'+fmt('#',v.npe)+'</td><td style="width:130px">'+spark(ser, SET.goals.col, {w:120,h:26,label:'Collection % for 6 months'})+'</td></tr>'; });
-    h+='<tr class="tot"><td>Whole practice</td><td></td><td>'+fmt('$',T.gp)+'</td><td>'+fmt('$',T.gc)+'</td>'+cell('col',c.colpct,'%')+cell('adj',c.adjpct,'%')+cell('ratio',c.ratio,'x')+cell('del',T.del,'%')+'<td>'+fmt('#',T.npe)+'</td><td></td></tr>';
+        cell('col',cc.colpct,'%')+cell('adj',cc.adjpct,'%')+cell('ratio',cc.ratio,'x')+cell('del',cc.delpct,'%')+'<td>'+fmt('#',v.npe)+'</td><td style="width:130px">'+spark(ser, SET.goals.col, {w:120,h:26,label:'Collection % for 6 months'})+'</td></tr>'; });
+    h+='<tr class="tot"><td>Whole practice</td><td></td><td>'+fmt('$',T.gp)+'</td><td>'+fmt('$',T.gc)+'</td>'+cell('col',c.colpct,'%')+cell('adj',c.adjpct,'%')+cell('ratio',c.ratio,'x')+cell('del',c.delpct,'%')+'<td>'+fmt('#',T.npe)+'</td><td></td></tr>';
     return h+'</tbody></table></div></div>';
   }
   const tile=(k,v,d)=>'<div class="tile"><span class="k">'+k+'</span><span class="v">'+v+'</span><span class="d">'+(d||'&nbsp;')+'</span></div>';
@@ -455,7 +461,7 @@
     const offs=myOffices(), y=Y, m=MO, p=step(y,m,-1), T=offTotals(offs,y,m); if(!T) return '';
     const c=M.calc(T), L=[];
     L.push('Monthly Report — '+M.MONTHS[m-1]+' '+y+' ('+offs.length+' offices)','');
-    L.push('Whole practice: produced '+fmt('$',T.gp)+', collected '+fmt('$',T.gc)+' ('+fmt('%',c.colpct)+'; goal '+goalTxt('col')+'). Adjustments '+fmt('%',c.adjpct)+' (goal '+goalTxt('adj')+'). A/R '+fmt('x',c.ratio)+' (goal '+goalTxt('ratio')+'). Late over 30 days '+fmt('%',T.del)+'. New patient exams '+fmt('#',T.npe)+'.');
+    L.push('Whole practice: produced '+fmt('$',T.gp)+', collected '+fmt('$',T.gc)+' ('+fmt('%',c.colpct)+'; target '+goalTxt('col')+'). Adjustments '+fmt('%',c.adjpct)+' (target '+goalTxt('adj')+'). A/R '+fmt('x',c.ratio)+' (target '+goalTxt('ratio')+'). Late over 30 days '+fmt('%',c.delpct)+'. New patient exams '+fmt('#',T.npe)+'.');
     const talk=[]; offs.forEach(o=>{ const v=valsOf(o,y,m); if(!v) return; M.insights(v,{goals:SET.goals, prev:valsOf(o,p.y,p.m), hist:histOf(o,y,m,3)}).filter(i=>i.tone==='bad'||i.tone==='watch').forEach(i=>talk.push(Object.assign({o}, i))); });
     talk.sort(M.byWeight);
     if(talk.length){ L.push('','Worth a conversation:'); talk.slice(0,10).forEach(t=>L.push('• '+t.o+' — '+t.text)); }
@@ -472,7 +478,7 @@
   /* ---------- ONE OFFICE: fill in, see why, talk about it ---------- */
   function canType(o,r){ if(!at('edit') || !mine(o) || isOpen(Y,MO) || isFuture(Y,MO)) return false; if(r && r.final && !at('manage')) return false; return true; }
   function officeHTML(){
-    const offs=myOffices(); if(!OFF || offs.indexOf(OFF)<0) OFF=offs[0];
+    const offs=myOffices(); if(!OFF || offs.indexOf(OFF)<0) OFF=offs.find(x=>WHO.offices!=='all' && WHO.offices.indexOf(x)>=0) || offs[0];
     const o=OFF, y=Y, m=MO, r=recOf(o,y,m)||M.cleanMonth(null), typ=canType(o,r), fields=M.fieldsFor(o,SET), s=M.status(r,y,m,SET,NOW), due=M.dueDate(y,m,SET);
     let h='';
     if(offs.length>1) h+='<div class="ochips" style="margin-bottom:14px">'+offs.map(x=>'<button class="ochip '+(x===o?'on':'')+'" onclick="MONTHLY.office(\''+esc(x)+'\')"><i style="background:'+esc((PH.colorForOffice(x)||{}).dot||'#94a3b8')+'"></i>'+esc(x)+'</button>').join('')+'</div>';
@@ -490,12 +496,12 @@
     if(ofs.length) h+='<div class="grp"><h3>From OrthoFi</h3><div class="gsub">'+(ORTHOFI_CONNECTED ? 'Filled in every night'+(r.of?' — last on '+day(r.of):'')+'. Nothing to type.' : 'Filled in from OrthoFi.')+'</div><div class="ofgrid">'+
       ofs.map(f=>'<div class="oft"><span class="k">'+esc(f.n)+'</span><span class="v">'+fmt(f.t,r.v[f.k])+'</span>'+(typ && at('manage') ? '<button class="lnk" onclick="MONTHLY.correct(\''+f.k+'\')">Correct it</button>' : '')+'</div>').join('')+'</div></div>';
     h+=actionsHTML(o,r,s,typ,fields);
-    h+='</div><div class="stack"><div class="card"><h2>At a glance</h2><div class="sub">Worked out from the numbers on the left, against the practice’s goals.</div><div id="glance" class="glance"></div></div>'+notesHTML(o,r)+'</div></div>';
+    h+='</div><div class="stack"><div class="card"><h2>At a glance</h2><div class="sub">Worked out from the numbers on the left, against the practice’s targets.</div><div id="glance" class="glance"></div></div>'+notesHTML(o,r)+'</div></div>';
     /* the last 12 months */
     const series=k=>{ const a=[]; for(let i=11;i>=0;i--){ const q=step(y,m,-i), v=valsOf(o,q.y,q.m); a.push(v ? (k in M.BY ? v[k] : M.calc(v)[k]) : null); } return a; };
     const first=step(y,m,-11);
-    const SM=[['Gross production','gp','$',null],['Collection %','colpct','%','col'],['Adjustment %','adjpct','%','adj'],['A/R ratio','ratio','x','ratio'],['Late over 30 days','del','%','del'],['New patient exams','npe','#',null]];
-    h+='<h2 style="font-size:16px;color:var(--navy);margin:22px 0 10px">The last 12 months <span class="soft" style="font-weight:500;font-size:13px">— the green band is the goal</span></h2><div class="smalls">'+
+    const SM=[['Gross production','gp','$',null],['Collection %','colpct','%','col'],['Adjustment %','adjpct','%','adj'],['A/R ratio','ratio','x','ratio'],['Late over 30 days','delpct','%','del'],['New patient exams','npe','#',null]];
+    h+='<h2 style="font-size:16px;color:var(--navy);margin:22px 0 10px">The last 12 months <span class="soft" style="font-weight:500;font-size:13px">— the green band is the target</span></h2><div class="smalls">'+
       SM.map(x=>{ const a=series(x[1]), last=a[a.length-1]; return '<div class="sm"><div class="k">'+x[0]+'</div><div class="v">'+fmt(x[2],last)+'</div>'+spark(a, x[3]?SET.goals[x[3]]:null, {label:x[0]+' for 12 months'})+
         '<div class="ax"><span>'+MON[first.m-1]+' '+String(first.y).slice(2)+'</span><span>'+MON[m-1]+' '+String(y).slice(2)+'</span></div></div>'; }).join('')+'</div>';
     return h;
@@ -541,11 +547,11 @@
   function glance(){
     const g=el('glance'); if(!g) return; const v=liveVals(), c=M.calc(v), p=step(Y,MO,-1);
     const row=(name,val,t,gk)=>{ const G=SET.goals[gk], w=Math.max(G[1]-G[0], 0.5), lo=Math.max(0, Math.min(G[0]-w*2.5, val==null?G[0]:val-w*0.5)), hi=Math.max(G[1]+w*2.5, val==null?G[1]:val+w*0.5), X=x=>(x-lo)/(hi-lo)*100;
-      return '<div class="gl"><span class="k">'+name+'</span><span class="v">'+fmt(t,val)+'</span><span class="g">goal '+goalTxt(gk)+' '+toneChip(gk,val)+'</span><span></span>'+
+      return '<div class="gl"><span class="k">'+name+'</span><span class="v">'+fmt(t,val)+'</span><span class="g">target '+goalTxt(gk)+' '+toneChip(gk,val)+'</span><span></span>'+
         '<div class="gbar"><span class="band" style="left:'+X(G[0])+'%;width:'+(X(G[1])-X(G[0]))+'%"></span>'+(val!=null?'<span class="pin" style="left:'+Math.max(0,Math.min(100,X(val)))+'%"></span>':'')+'</div></div>'; };
-    let h=row('Collection %',c.colpct,'%','col')+row('Adjustment %',c.adjpct,'%','adj')+row('A/R ratio',c.ratio,'x','ratio')+row('Late over 30 days',v.del!=null?v.del:null,'%','del');
+    let h=row('Collection %',c.colpct,'%','col')+row('Adjustment %',c.adjpct,'%','adj')+row('A/R ratio',c.ratio,'x','ratio')+row('Late over 30 days',c.delpct,'%','del');
     const ins=M.insights(v,{goals:SET.goals, prev:valsOf(OFF,p.y,p.m), hist:histOf(OFF,Y,MO,3)}).filter(i=>!(i.k==='col' && i.tone==='good'));
-    h+= ins.length ? '<ul class="ins">'+ins.map(i=>'<li class="t-'+i.tone+'"><span class="ico">'+ICON[i.tone]+'</span><span>'+esc(i.text)+'</span></li>').join('')+'</ul>' : '<div class="note">Everything with a goal is on goal.</div>';
+    h+= ins.length ? '<ul class="ins">'+ins.map(i=>'<li class="t-'+i.tone+'"><span class="ico">'+ICON[i.tone]+'</span><span>'+esc(i.text)+'</span></li>').join('')+'</ul>' : '<div class="note">Everything with a target is on target.</div>';
     g.innerHTML=h;
   }
   function notesHTML(o,r){
@@ -560,8 +566,8 @@
     const offs=myOffices(); if(OFF===null || (OFF!=='__all' && offs.indexOf(OFF)<0)) OFF=offs[0];
     const all=OFF==='__all', y=Y, settings=all ? {medicaid:SET.medicaid} : SET;
     const vals=m=>{ if(isFuture(y,m)) return null; const v=all ? offTotals(offs,y,m) : valsOf(OFF,y,m); return v ? Object.assign({}, v, M.calc(v)) : null; };
-    const main=[['gp','$'],['gc','$'],['colpct','%'],['adj','$'],['adjpct','%'],['np','$'],['ar','$'],['ratio','x'],['arn','#'],['del','%'],['ar90','$'],['npe','#'],['act','#'],['disc','$'],['rip','#'],['oecd','%'],['cmf','%']]
-      .map(([k,t])=>({k,t,n:(M.BY[k]||M.CALC.find(c=>c.k===k)).n, flow:!!(M.BY[k]&&M.BY[k].flow), goal:({colpct:'col',adjpct:'adj',ratio:'ratio',del:'del'})[k]}));
+    const main=[['gp','$'],['gc','$'],['colpct','%'],['adj','$'],['adjpct','%'],['np','$'],['ar','$'],['ratio','x'],['arn','#'],['deln','#'],['delpct','%'],['ar90','$'],['npe','#'],['act','#'],['disc','$'],['rip','#'],['oecd','%'],['cmf','%']]
+      .map(([k,t])=>({k,t,n:(M.BY[k]||M.CALC.find(c=>c.k===k)).n, flow:!!(M.BY[k]&&M.BY[k].flow), goal:({colpct:'col',adjpct:'adj',ratio:'ratio',delpct:'del'})[k]}));
     const medF=M.FIELDS.filter(f=>f.medicaid).map(f=>({k:f.k,t:f.t,n:f.n,flow:true}));
     const hasMed=all ? offs.some(o=>SET.medicaid.indexOf(o)>=0) : SET.medicaid.indexOf(OFF)>=0;
     let h='<div class="ochips" style="margin-bottom:14px">'+(offs.length>1?'<button class="ochip '+(all?'on':'')+'" onclick="MONTHLY.office(\'__all\')">All offices together</button>':'')+
@@ -578,7 +584,7 @@
     Rr.months.forEach((mo,i)=>{ h+= isFuture(y,mo.m) ? '<tr><td>'+M.MONTHS[mo.m-1]+'</td>'+cols.map(()=>'<td class="future">—</td>').join('')+'</tr>' : line(M.MONTHS[mo.m-1]+(isOpen(y,mo.m)?' <span class="st open">so far</span>':''), mo.v);
       if(i%3===2) h+=line(['1st','2nd','3rd','4th'][Math.floor(i/3)]+' quarter average', Rr.quarters[Math.floor(i/3)].v, 'q'); });
     h+=line('Year to date', Rr.ytd, 'tot')+line(y+' average', Rr.avg, 'q');
-    if(withGoals) h+='<tr class="goals"><td>Goals</td>'+cols.map(c=>'<td>'+(c.goal ? goalTxt(c.goal)+(c.goal==='ratio'?' production':'') : '')+'</td>').join('')+'</tr>';
+    if(withGoals) h+='<tr class="goals"><td>Targets</td>'+cols.map(c=>'<td>'+(c.goal ? goalTxt(c.goal)+(c.goal==='ratio'?' production':'') : '')+'</td>').join('')+'</tr>';
     return h+'</tbody></table></div>';
   }
   function csv(){
@@ -591,16 +597,71 @@
     a.href=URL.createObjectURL(blob); a.download='Monthly Report '+(all?'All offices':OFF)+' '+y+'.csv'; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 500);
   }
 
-  /* ---------- SETTINGS (Heather): which offices bill Medicaid, the goals, the due day ---------- */
+  /* ---------- SETTINGS (Heather): which offices bill Medicaid, the targets, the due day ---------- */
   function settingsHTML(){
     const offs=PH.officeNames(), G=SET.goals;
     const g=(k,label,unit)=>'<div class="setrow"><b>'+label+'</b><span><input type="number" step="0.1" id="g_'+k+'_0" value="'+G[k][0]+'"> to <input type="number" step="0.1" id="g_'+k+'_1" value="'+G[k][1]+'"> '+unit+'</span></div>';
-    return '<div class="stack"><div class="card"><h2>Offices that bill Medicaid</h2><div class="sub">These offices get the Medicaid section. A new office added in Admin shows up here.</div><div class="checks">'+
+    return '<div class="stack">'+importCard()+
+      '<div class="card"><h2>Who reads the reports</h2><label class="checks" style="cursor:pointer"><span><input type="checkbox" id="everyone" '+(SET.everyone?'checked':'')+'> Everyone who can open the Monthly Report reads <b>every</b> office</span></label>'+
+      '<div class="sub" style="margin-top:8px">Office managers and TCs see the whole practice, like your email today. Only each office’s own people (and you) can type its numbers. Who can open it at all is set in Admin → Teams &amp; Access.</div></div>'+
+      '<div class="card"><h2>Offices that bill Medicaid</h2><div class="sub">These offices get the Medicaid section. A new office added in Admin shows up here.</div><div class="checks">'+
       offs.map(o=>'<label><input type="checkbox" class="medchk" value="'+esc(o)+'" '+(SET.medicaid.indexOf(o)>=0?'checked':'')+'> '+esc(o)+'</label>').join('')+'</div></div>'+
-      '<div class="card"><h2>Goals</h2><div class="sub">From the old sheet’s goals row. Every colour and “worth a conversation” line uses these.</div>'+
+      '<div class="card"><h2>Targets</h2><div class="sub">The same for every office. Every colour and “worth a conversation” line uses these.</div>'+
       g('col','Collection %','% of production')+g('adj','Adjustment %','% of production')+g('ratio','A/R ratio','× production')+g('del','Late over 30 days','% of accounts')+'</div>'+
       '<div class="card"><h2>Due day</h2><div class="setrow"><b>Reports are due on the</b><span><input type="number" min="1" max="28" id="dueday" value="'+SET.due+'"> of the next month</span></div></div>'+
       '<div><button class="btn" onclick="MONTHLY.saveSettings()">Save settings</button></div></div>';
+  }
+
+  /* ---------- PAST MONTHS FROM THE OLD EXCEL (Heather: "I would love the past months to be put in") ----------
+     Choose the offices' monitor sheets -> each is read in this browser (PH_BOOK), shown with what it found and anything
+     that doesn't add up -> "Bring them in" fills EMPTY boxes only (mergeImport). Nothing leaves the browser except the
+     numbers saved into Home-Brace; the file itself is not kept. */
+  let IMP=[];
+  function guessOffice(name){ const toks=String(name).toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+    const hits=PH.officeNames().filter(o=>{ const ot=o.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean); return ot.every(t=>toks.indexOf(t)>=0) || (ot.length>1 && ot.some(t=>t.length>2 && toks.indexOf(t)>=0 && PH.officeNames().filter(x=>x.toLowerCase().split(/[^a-z0-9]+/).indexOf(t)>=0).length===1)); });
+    return hits.length===1 ? hits[0] : ''; }
+  function importCard(){
+    let h='<div class="card"><h2>Bring in past months from Excel</h2><div class="sub">Choose the offices’ monitor report files (all at once is fine). Home-Brace reads the numbers, shows you what it found and anything that doesn’t add up, and only fills boxes that are still empty — nothing already here is replaced.</div>'+
+      '<input type="file" id="impfiles" accept=".xlsx" multiple onchange="MONTHLY.impRead(this.files)">';
+    if(IMP.length){
+      const yrs=[NOW_Y-2, NOW_Y-1, NOW_Y];
+      h+='<div class="tablewrap" style="margin-top:12px"><table class="imp"><thead><tr><th>File</th><th>Office</th><th>Year</th><th>Months found</th><th>Medicaid</th><th>Worth a look</th></tr></thead><tbody>'+
+        IMP.map((x,i)=>'<tr><td style="white-space:normal">'+esc(x.file)+(x.err?'<div class="soft">'+esc(x.err)+'</div>':'')+'</td>'+
+          '<td><select onchange="MONTHLY.impSet('+i+',\'office\',this.value)"><option value="">Which office?</option>'+PH.officeNames().map(o=>'<option '+(o===x.office?'selected':'')+'>'+esc(o)+'</option>').join('')+'</select></td>'+
+          '<td><select onchange="MONTHLY.impSet('+i+',\'year\',+this.value)">'+yrs.map(y=>'<option '+(y===x.year?'selected':'')+'>'+y+'</option>').join('')+'</select></td>'+
+          '<td style="white-space:normal">'+(x.r ? Object.keys(x.r.months).sort().map(k=>MON[+k-1]).join(', ')||'none' : '')+'</td>'+
+          '<td>'+(x.r && x.r.medicaid ? 'Yes' : 'No')+(x.r && x.office && x.r.medicaid!==(SET.medicaid.indexOf(x.office)>=0) ? '<div class="soft" style="white-space:normal">'+(x.r.medicaid?'Not in your Medicaid list':'In your Medicaid list, no Medicaid section')+'</div>' : '')+'</td>'+
+          '<td style="white-space:normal;text-align:left">'+(x.r && x.r.checks.length ? x.r.checks.map(c=>'<div>△ '+esc(c.text)+'</div>').join('') : (x.r?'<span class="soft">Adds up</span>':''))+'</td></tr>').join('')+'</tbody></table></div>';
+      const ready=IMP.filter(x=>x.r && x.office && Object.keys(x.r.months).length).length;
+      h+='<div class="savebar"><button class="btn" '+(ready?'':'disabled')+' onclick="MONTHLY.impGo()">Bring in '+ready+' file'+(ready===1?'':'s')+'</button><button class="btn ghost" onclick="MONTHLY.impClear()">Clear</button>'+
+        '<span class="note">Months come in as “sent”; mark them final when you’re happy.</span></div>';
+    }
+    return h+'</div>';
+  }
+  async function impRead(files){
+    IMP=[]; if(!window.PH_BOOK){ toast('The Excel reader didn’t load — refresh the page'); return; }
+    for(const f of Array.from(files||[])){
+      const x={file:f.name, office:'', year:(+((/20\d\d/.exec(f.name)||[])[0]))||NOW_Y, r:null, err:''};
+      try{ const book=await PH_BOOK.open(new Uint8Array(await f.arrayBuffer())); const nm=book.names[0];
+        x.r=M.fromSheet(book.sheets[nm].cells); x.office=guessOffice(f.name+' '+nm);
+        if(!Object.keys(x.r.months).length) x.err='No months found — is this a monitor report?'; }
+      catch(e){ x.err='Could not read this file'; }
+      IMP.push(x);
+    }
+    render();
+  }
+  async function impGo(){
+    const todo=IMP.filter(x=>x.r && x.office && Object.keys(x.r.months).length); if(!todo.length || BUSY) return; BUSY=true;
+    let filled=0, kept=0; const stamp=new Date().toISOString();
+    try{
+      for(const x of todo){
+        await PH_STORE.update(M.KEY(x.year), cur=>{ const res=M.mergeImport(cur && cur.o ? cur : DATA[x.year], x.office, x.r.months, stamp, 'Excel import ('+by()+')'); filled+=res.filled; kept+=res.kept.length; return res.rec; });
+        if(x.r.medicaid && SET.medicaid.indexOf(x.office)<0){ const next=M.cleanSettings(Object.assign({}, SET, {medicaid:SET.medicaid.concat([x.office])})); await PH_STORE.update(M.SET_KEY, ()=>next); SET=next; }
+        await loadYear(x.year, true);
+      }
+      toast('Brought in '+filled+' numbers'+(kept?' · '+kept+' already here, kept':'')); IMP=[]; render();
+    } catch(e){ toast('Stopped — '+String((e&&e.message)||e).slice(0,80)); }
+    finally{ BUSY=false; }
   }
 
   /* ---------- saving: only what changed, merged into whatever is saved now ---------- */
@@ -633,7 +694,7 @@
   async function saveSettings(){
     const med=[...document.querySelectorAll('.medchk')].filter(c=>c.checked).map(c=>c.value), goals={};
     Object.keys(M.DEF_GOALS).forEach(k=>{ goals[k]=[+el('g_'+k+'_0').value, +el('g_'+k+'_1').value]; });
-    const next=M.cleanSettings({medicaid:med, goals, due:+el('dueday').value});
+    const next=M.cleanSettings({medicaid:med, goals, due:+el('dueday').value, everyone:!!(el('everyone')||{}).checked});
     try{ await PH_STORE.update(M.SET_KEY, ()=>Object.assign({}, next, {upd:new Date().toISOString(), updBy:by()})); SET=next; toast('Settings saved'); render(); }
     catch(e){ toast('Could not save the settings'); }
   }
@@ -653,11 +714,12 @@
     tab(t){ if(TAB==='year' && t!=='year' && OFF==='__all') OFF=null; if(TAB!=='year' && t==='year') Y=Math.min(Y, NOW_Y); TAB=t; SENDASK=false; try{ localStorage.setItem('ph_monthly_tab', t); }catch(_){} render(); },
     move(n){ if(Object.keys(EDIT).length && !confirmLeave()) return; EDIT={}; CORRECT={}; SENDASK=false;
       if(TAB==='year'){ Y=Math.min(NOW_Y, Y+n); } else { const p=step(Y,MO,n); if(isFuture(p.y,p.m)) return; Y=p.y; MO=p.m; } render(); },
-    open(o){ OFF=o; TAB='office'; EDIT={}; CORRECT={}; render(); window.scrollTo({top:0, behavior:'smooth'}); },
+    open(o){ OFF=o; TAB='office'; SENDASK=false; EDIT={}; CORRECT={}; render(); window.scrollTo({top:0, behavior:'smooth'}); },
     office(o){ if(Object.keys(EDIT).length && !confirmLeave()) return; OFF=o; EDIT={}; CORRECT={}; SENDASK=false; render(); },
     all(){ SHOWALL=!SHOWALL; render(); },
     typed(inp){ EDIT[inp.dataset.k]=inp.value; inp.classList.toggle('empty', inp.value.trim()===''); const n=el('savenote'); if(n) n.textContent='Not saved yet'; glance(); },
     correct(k){ CORRECT[k]=true; render(); },
+    impRead, impGo, impSet(i,k,v){ if(IMP[i]){ IMP[i][k]=v; render(); } }, impClear(){ IMP=[]; render(); },
     save:()=>save(), send, final:markFinal, unask(){ SENDASK=false; render(); }, note:addNote, useOf, copy, csv, saveSettings, importOrthofi
   };
   /* leaving typed numbers behind by changing month or office - keep them unless they say otherwise */
@@ -681,13 +743,13 @@
 })();
 </script>
 <script>PH.nav('monthly');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc205"></script>
+<script src="tour.js?v=hc206"></script>
 <script>
 Tour.init([
   {sel:'.statusline, .openbanner', title:'Who has sent it', body:'Every office’s report for the month, in one line: final, waiting for you, or late. No chasing eight Excel files.'},
-  {sel:'.headline', title:'The gap, in dollars', body:'What the offices below the collection goal would have collected at the goal. The first thing to chase.'},
+  {sel:'.headline', title:'The gap, in dollars', body:'What the offices below the collection target would have collected at the target. The first thing to chase.'},
   {sel:'.talk, .card', title:'Worth a conversation', body:'Worked out from the numbers, biggest dollar gap first. Open an office to see its numbers, its last 12 months and its manager’s notes.'},
-  {sel:'.tablewrap', title:'Every office side by side', body:'Coloured against the practice’s goals. The little line is each office’s collection % for the last 6 months.'},
+  {sel:'.tablewrap', title:'Every office side by side', body:'Coloured against the practice’s targets. The little line is each office’s collection % for the last 6 months.'},
   {sel:'#tabs', title:'Year sheet', body:'Heather’s sheet, kept: every month, the quarters and the year — for one office or all of them together. Download it for Excel any time.'}
 ], {key:'monthly', title:'Monthly Report', next:{label:'the Schedule', href:'schedule.html'}});
 </script>

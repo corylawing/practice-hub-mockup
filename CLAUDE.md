@@ -477,6 +477,45 @@ I can confidently say that the chat feature should go next. The production thing
    secret goes into Azure app settings typed by Cory (never chat, never the repo, never the Entra app); a small server
    piece pulls OrthoFi (nightly data ready 4 AM ET = 10 AM France) and the page/importOrthofi() writes it with the merge
    rule above. RIP: email 2 does not put it on the PMS side, but no OrthoFi RIP field is known - typed until confirmed.
+   HEATHER'S ANSWERS (18/11, hc206): (1) RIP sold = a COUNT, "comes from Orthofi but you can't run a report for it" - it
+   is the "Retainer Insurance Program" line in a contract's itemization (her screenshot: Braces + Retainer Insurance
+   Program = Treatment Cost). OrthoFi's API (spec read 18/11) has /v1/practice-locations/treatments with productLine (=
+   the add-on's name) and a product-lines filter, contracts with totalAdditionalExpenses -> the nightly pull can COUNT it
+   (confirm the add-on's exact name once credentials are in). RIP is now from:'orthofi'. (2) Offices shouldn't do
+   percentages: "Maybe Home Brace could calculate it based off some numbers we ask them to enter" -> the delinquent COUNT
+   (deln) is kept and Delinquent % = deln / # A/R is calculated (old sheet K and L=K/J); over-estimated completion date %
+   shows in Ortho2 already (typed as %); COMFORT % does NOT - ASKED which two numbers make it (typed % until then). Due
+   the 5th - fine. Office managers type (Heather can teach them). (3) "All office managers can see all offices. I currently
+   send this as an email to all OMs and TCs" -> settings.everyone (default on): everyone with the report reads every office,
+   typing stays with each office's own people; TCs get monthly:'view' (DEPT_CAN + Admin grid). (4) Case acceptance: leave
+   off - Selene's TC Tracker reports it. (5) A/R = patient A/R + insurance A/R (OrthoFi: patient-accounts-receivable +
+   insurance-accounts-receivable). (6) Targets the same for every office. (7) Past months wanted; some offices only from
+   this year. Their PMS is Ortho2 (Cory 18/11, not "OrthoEdge").
+   WORDING (Heather 18/11 IDEA: "change the wording to target instead of goal ... I was not the original creator of
+   that"): everything people read says TARGET (On target / Off target / Better than target / Targets row / Settings
+   Targets); the code keeps its names (goals, DEF_GOALS). test/monthly guards it.
+   ADJUSTMENTS ARE SIGNED: Adjustment % = -adj / gross (write-offs positive); a month whose adjustments ADD to production
+   is below zero, never "a write-off" (was abs()).
+   PAST MONTHS FROM EXCEL (Settings -> "Bring in past months from Excel", manage): files read IN THE BROWSER with PH_BOOK
+   (prodbook.js, now loaded on monthly.html); M.fromSheet(cells) finds headers in row 1 and months in column A BY LABEL,
+   the Medicaid block by its own header row; reads only the mapped numeric columns (never the names typed beside the
+   Medicaid block); works out each sheet's adjustment SIGN from net vs gross +/- adjustments and stores minus = written
+   off; lists checks (net not gross +/- adjustments; collections <30% or >150% of production). Preview per file: office
+   (guessed from file/sheet name by office-name tokens; otherwise "Which office?"), year, months found, Medicaid section vs
+   the Medicaid list, "Worth a look". M.mergeImport fills EMPTY boxes only (differences listed, kept), never touches a
+   FINAL month, marks imported months sent. Verified 18/11 on the 8 real files LOCALLY (headless, profile deleted
+   after; nothing committed): every office's months, and Gross Production / Collections / Adjustments / Net Production /
+   NP exams / all 7 Medicaid columns add up EXACTLY to each sheet's own YTD / TOTALS row (Mansfield's YTD row is broken,
+   see below); 7 of 8 offices guessed by name (FOLC = sheet "Legacy" -> Cruces FFO needs one pick); running it twice
+   changes nothing.
+   THE 8 SHEETS (18/11; no figures): same layout. Medicaid blocks: Carlsbad, Clovis, Hobbs - Cruces LCO is in the Medicaid
+   list but its sheet has NO Medicaid block (ask). Adjustment sign: six sheets net = gross + adj (write-off typed minus);
+   FOLC (Cruces FFO) types write-offs as plus and subtracts; Lubbock January the other way from its other months; Cruces
+   LCO net production is neither gross + nor - adjustments in 5 of 6 months. Collections >150% of production: Clovis Sep,
+   LCO Sep; Mansfield Jul (first month). Formula errors in her sheets: MANSFIELD - Sep Collection % =#REF!/#REF!, Q3
+   Collection % = Sep only, Q4 averages use rows Sep..Dec incl. the Q3 row, YTD totals contain #REF! and leave October
+   out, 2026 averages wrong; Lubbock Feb delinquent % blank (no formula); FOLC Q3 averages of # A/R and # delinquent
+   missing (and no Q2 row formulas); Carlsbad Sep avg case fee / Phase 1 YTD #REF! (dropped columns).
 36. **CHAT MESSAGE TOOLBAR like Slack + FORWARD (18/11; hc204).** Cory: "Its hard to scroll over to emoji now and it flashes
    off. Look at what slack does" (the ☺+ / 🗑 floated beside the bubble with a gap -> hover lost) + "The delete can be there
    as well also forward is a good option" + "Delete should have a confirmation screen" (it already had: "Delete this

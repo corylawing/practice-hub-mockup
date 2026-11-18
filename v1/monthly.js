@@ -5,6 +5,8 @@
    reporting will come from the PMS manually entered" - the rest from OrthoFi (filled in nightly once connected).
    Cory: "It has to be more than just her excel" - so beyond the sheet: the gap to goal in DOLLARS, what needs a
    conversation, the month so far every morning, a mismatch flag when a typed number and OrthoFi disagree, notes.
+   WORDING (Heather 18/11 IDEA: "change the wording to target instead of goal. I know it may have said that on the sheets
+   ... but I was not the original creator of that"): everything people READ says "target"; the code keeps its names.
    Kept in Home-Brace's shared list: one record per year  ph_monthly_<year>  {v:1, o:{<office>:{<mm>:<month>}}}
      <month> = {v:{field:number}, src:{field:'orthofi'|'typed'}, at:{field:iso}, by:{field:who},
                 ofv:{field:OrthoFi's latest number}, of:iso (OrthoFi's last refresh), sent:{at,by}, final:{at,by},
@@ -24,12 +26,17 @@
     {k:'np',   n:'Net production',                     t:'$', from:'orthofi', flow:true},
     {k:'ar',   n:'Accounts receivable',                t:'$', from:'orthofi'},
     {k:'arn',  n:'Number of accounts receivable',      t:'#', from:'orthofi'},
-    {k:'del',  n:'Delinquent accounts past 30 days',   t:'%', from:'orthofi'},
+    /* Heather 18/11: "Instead of them doing the math to find the percentage. Maybe Home Brace could calculate it" - so the
+       COUNT is kept (as the old sheet's column K) and the % of accounts is worked out (CALC delpct, the old L = K/J). */
+    {k:'deln', n:'Delinquent accounts past 30 days',   t:'#', from:'orthofi'},
     {k:'ar90', n:'$ 90+ days past due',                t:'$', from:'orthofi'},
     {k:'npe',  n:'New patient exams',                  t:'#', from:'orthofi', flow:true},
     {k:'act',  n:'Active patients',                    t:'#', from:'orthofi'},
     {k:'disc', n:'Total discounts',                    t:'$', from:'orthofi', flow:true},
-    {k:'rip',  n:'RIP sold',                           t:'#', from:'pms', flow:true},
+    /* Heather 18/11: a COUNT, and it "comes from Orthofi but you can't run a report for it" - it is the "Retainer Insurance
+       Program" line on a contract's itemization; OrthoFi's API lists each treatment's add-on (productLine), so the nightly
+       pull can count it. Typed until then. */
+    {k:'rip',  n:'RIP sold (Retainer Insurance Program)', t:'#', from:'orthofi', flow:true},
     {k:'oecd', n:'Over estimated completion date',     t:'%', from:'pms'},
     {k:'cmf',  n:'Comfort percentage',                 t:'%', from:'pms'},
     {k:'mds',  n:'Medicaid submissions',               t:'#', from:'pms', flow:true, medicaid:true},
@@ -42,8 +49,11 @@
   /* worked out, never typed - the old sheet's ratios, against Heather's goals */
   const CALC=[
     {k:'colpct', n:'Collection %',  t:'%', of:v=>v.gp ? v.gc/v.gp*100 : null, goal:'col'},
-    {k:'adjpct', n:'Adjustment %',  t:'%', of:v=>v.gp && v.adj!=null ? Math.abs(v.adj)/v.gp*100 : null, goal:'adj'},
-    {k:'ratio',  n:'A/R ratio',     t:'x', of:v=>v.gp && v.ar!=null ? v.ar/v.gp : null, goal:'ratio'}];
+    /* write-offs as a share of production: adjustments are signed (minus = written off, as in OrthoFi and six of the eight
+       sheets), so a month whose adjustments ADD to production shows below zero rather than as a write-off */
+    {k:'adjpct', n:'Adjustment %',  t:'%', of:v=>v.gp && v.adj!=null ? -v.adj/v.gp*100 : null, goal:'adj'},
+    {k:'ratio',  n:'A/R ratio',     t:'x', of:v=>v.gp && v.ar!=null ? v.ar/v.gp : null, goal:'ratio'},
+    {k:'delpct', n:'Delinquent %',  t:'%', of:v=>v.arn && v.deln!=null ? v.deln/v.arn*100 : null, goal:'del'}];
   /* the old sheet's goals row. Heather's email 2 (the list below is exactly hers) narrowed what the report shows -
      case starts and case acceptance (>70%) were on the old sheet and are NOT on her list, so they are not here. */
   const DEF_GOALS={col:[91,93], adj:[7,9], ratio:[5.5,6], del:[5,7]};
@@ -83,7 +93,9 @@
     const med=Array.isArray(s.medicaid) ? s.medicaid.filter(x=>typeof x==='string' && x.trim()).map(x=>x.trim().slice(0,80)) : DEF_MEDICAID.slice();
     const g={}; Object.keys(DEF_GOALS).forEach(k=>{ const a=(s.goals||{})[k]; g[k]=Array.isArray(a) && a.length===2 && a.every(x=>x!=='' && x!==null && isFinite(+x)) && +a[0]<=+a[1] ? [+a[0], +a[1]] : DEF_GOALS[k].slice(); });
     const due=Math.min(28, Math.max(1, Math.round(+s.due)||5));
-    return {medicaid:[...new Set(med)], goals:g, due};
+    /* Heather 18/11: "All office managers can see all offices. I currently send this as an email to all OMs and TCs" -
+       so by default everyone who can open the report reads every office (typing stays with each office's own people). */
+    return {medicaid:[...new Set(med)], goals:g, due, everyone:s.everyone!==false};
   }
   const fieldsFor=(office, settings)=>FIELDS.filter(f=>!f.medicaid || ((settings||{}).medicaid||[]).indexOf(office)>=0);
   /* the calculated ratios of one month's numbers */
@@ -108,14 +120,13 @@
     const ytd={}, avg={}; fields.forEach(f=>{ ytd[f.k]=f.flow ? sumOf(months, f.k) : null; avg[f.k]=avgOf(months, f.k); });
     return {months, quarters, ytd, avg};
   }
-  /* THE WHOLE PRACTICE for a month: activity and balances add up; the delinquent % is weighted by each office's number
-     of accounts (a small office's 20% is not the practice's 20%); the PMS percents are a plain average. */
+  /* THE WHOLE PRACTICE for a month: activity, balances and counts add up (so the practice's delinquent % is worked out
+     from the practice's own counts - a small office's 20% is not the practice's 20%); the typed percents are averaged. */
   function practiceTotals(list){
     list=(list||[]).filter(Boolean); if(!list.length) return null;
     const out={}; let any=false;
     FIELDS.forEach(f=>{ const xs=list.map(v=>v[f.k]).filter(x=>x!==null && x!==undefined); if(!xs.length) return; any=true;
       if(f.t!=='%'){ out[f.k]=r2(xs.reduce((a,b)=>a+b,0)); return; }
-      if(f.k==='del'){ let w=0, s=0; list.forEach(v=>{ if(v.del!=null && v.arn){ w+=v.arn; s+=v.del*v.arn; } }); out.del=w ? r2(s/w) : r2(xs.reduce((a,b)=>a+b,0)/xs.length); return; }
       out[f.k]=r2(xs.reduce((a,b)=>a+b,0)/xs.length); });
     return any ? out : null;
   }
@@ -128,20 +139,19 @@
     const out=[]; if(!v) return out; const c=calc(v);
     if(c.colpct!==null){
       const g=goals.col, t=tone('col', c.colpct, goals);
-      if(t==='bad'){ const usd=r2(g[0]/100*v.gp - v.gc); out.push({k:'col', tone:'bad', usd, text:'Collected '+c.colpct.toFixed(1)+'% of what it produced — about '+money(usd)+' short of the '+g[0]+'% goal.'}); }
-      else if(t==='good') out.push({k:'col', tone:'good', usd:0, text:'Collected '+c.colpct.toFixed(1)+'% of what it produced — above goal.'});
+      if(t==='bad'){ const usd=r2(g[0]/100*v.gp - v.gc); out.push({k:'col', tone:'bad', usd, text:'Collected '+c.colpct.toFixed(1)+'% of what it produced — about '+money(usd)+' short of the '+g[0]+'% target.'}); }
+      else if(t==='good') out.push({k:'col', tone:'good', usd:0, text:'Collected '+c.colpct.toFixed(1)+'% of what it produced — above target.'});
     }
     if(c.adjpct!==null && tone('adj', c.adjpct, goals)==='bad'){
-      const g=goals.adj, usd=r2(Math.abs(v.adj) - g[1]/100*v.gp);
-      out.push({k:'adj', tone:'bad', usd, text:'Adjustments were '+c.adjpct.toFixed(1)+'% of production — about '+money(usd)+' more than the '+g[1]+'% goal allows.'});
+      const g=goals.adj, usd=r2(-v.adj - g[1]/100*v.gp);
+      out.push({k:'adj', tone:'bad', usd, text:'Adjustments were '+c.adjpct.toFixed(1)+'% of production — about '+money(usd)+' more than the '+g[1]+'% target allows.'});
     }
     if(c.ratio!==null){ const g=goals.ratio, w=onGoal('ratio', c.ratio, goals);
-      if(w==='hi'){ const usd=r2(v.ar - g[1]*v.gp); out.push({k:'ratio', tone:'watch', usd, text:'A/R is '+c.ratio.toFixed(1)+'× a month’s production (goal '+g[0]+'–'+g[1]+'×) — about '+money(usd)+' more owed than the goal.'}); }
-      else if(w==='lo') out.push({k:'ratio', tone:'watch', usd:0, text:'A/R is '+c.ratio.toFixed(1)+'× a month’s production, under the '+g[0]+'× goal — fewer contracts on the books than usual?'});
+      if(w==='hi'){ const usd=r2(v.ar - g[1]*v.gp); out.push({k:'ratio', tone:'watch', usd, text:'A/R is '+c.ratio.toFixed(1)+'× a month’s production (target '+g[0]+'–'+g[1]+'×) — about '+money(usd)+' more owed than the target.'}); }
+      else if(w==='lo') out.push({k:'ratio', tone:'watch', usd:0, text:'A/R is '+c.ratio.toFixed(1)+'× a month’s production, under the '+g[0]+'× target — fewer contracts on the books than usual?'});
     }
-    if(v.del!=null && tone('del', v.del, goals)==='bad'){
-      const fam=v.arn ? Math.round(v.del/100*v.arn) : null;
-      out.push({k:'del', tone:'bad', usd:0, text:v.del.toFixed(1)+'% of accounts are more than 30 days late'+(fam?' (about '+fam+' families)':'')+' — goal is under '+goals.del[1]+'%.'});
+    if(c.delpct!==null && tone('del', c.delpct, goals)==='bad'){
+      out.push({k:'del', tone:'bad', usd:0, text:c.delpct.toFixed(1)+'% of accounts are more than 30 days late ('+v.deln+' of '+v.arn+') — target is under '+goals.del[1]+'%.'});
     }
     if(v.ar90 && v.ar && v.ar90/v.ar>=0.05) out.push({k:'ar90', tone:'watch', usd:v.ar90, text:money(v.ar90)+' is more than 90 days past due ('+(v.ar90/v.ar*100).toFixed(1)+'% of A/R).'});
     /* three months running: this month's collection % below the last, which was below the one before, and so on */
@@ -177,6 +187,69 @@
     r.of=at; rec.o[office][key]=r;
     return {rec, changed};
   }
+  /* PAST MONTHS FROM THE OLD EXCEL (Heather 18/11: "I would love the past months to be put in, Some of these offices will
+     not have a full history since we got them this year"). One office's sheet -> its months. Found by LABELS, never by row
+     numbers (row 1 headers, column A month names, the Medicaid block's own header row). Only the numbers of the columns
+     below are read - nothing else on the sheet (the Medicaid area of some sheets has patient names typed beside it).
+     cells: {A1:{v}, ...} (PH_BOOK's parse). Returns {months:{mm:{field:number}}, medicaid:bool, checks:[{m,text}], sign}.
+     ADJUSTMENTS' SIGN: most sheets type a write-off as a minus (net = gross + adjustments); one types it as a plus and
+     subtracts it. Each sheet's own way is read from its months (net vs gross +/- adjustments) and turned into Home-Brace's
+     (minus = written off). A month where net production is neither is kept as typed and listed as a check. */
+  const XL_MAIN={'gross production':'gp','gross collections':'gc','net production adjustments':'adj','net production':'np',
+    'accounts receivable':'ar','# of accounts receivable':'arn','# of delinquent accounts (pts. 30+)':'deln','np exam':'npe'};
+  const XL_MED={'# of medicaid submission':'mds','# of medicaid submissions':'mds','# of medicaid denials':'mdd','# medicaid approvals':'mda',
+    'medicaid bandings':'mdb','medicaid production':'mdp','medicaid collections':'mdc','# of rip sold':'rip'};
+  const norm=t=>String(t==null?'':t).replace(/\s+/g,' ').trim().toLowerCase();
+  function colL(n){ let s=''; while(n>0){ const r=(n-1)%26; s=String.fromCharCode(65+r)+s; n=(n-1-r)/26; } return s; }
+  function fromSheet(cells){
+    cells=cells||{}; const at=(c,r)=>{ const x=cells[colL(c)+r]; return x ? x.v : undefined; };
+    const isNum=x=>typeof x==='number' && isFinite(x);
+    const out={months:{}, medicaid:false, checks:[], sign:'+'};
+    const headCols=(row, map)=>{ const m={}; for(let c=1;c<=40;c++){ const k=map[norm(at(c,row))]; if(k && !m[k]) m[k]=c; } return m; };
+    const monthRows=(from, to)=>{ const m={}; for(let r=from;r<=to;r++){ const i=MONTHS.findIndex(n=>n.toLowerCase()===norm(at(1,r))); if(i>=0 && !m[i+1]) m[i+1]=r; } return m; };
+    const main=headCols(1, XL_MAIN); if(!main.gp) return out;
+    let goalsRow=60; for(let r=2;r<=80;r++){ if(/^goals/.test(norm(at(1,r)))){ goalsRow=r; break; } }
+    const rows=monthRows(2, goalsRow);
+    let plus=0, minus=0;
+    Object.keys(rows).forEach(m=>{ const r=rows[m], v={};
+      Object.keys(main).forEach(k=>{ const x=at(main[k], r); if(isNum(x)) v[k]=x; });
+      if(!Object.keys(v).length || !v.gp) return;
+      if(v.adj!==undefined && v.np!==undefined && v.adj!==0){ if(Math.abs(v.np-(v.gp+v.adj))<1) plus++; else if(Math.abs(v.np-(v.gp-v.adj))<1) minus++; }
+      out.months[mm(m)]=v; });
+    out.sign=minus>plus ? '-' : '+';
+    Object.keys(out.months).forEach(k=>{ const v=out.months[k], m=+k;
+      if(v.adj!==undefined){ const typed=v.adj; if(out.sign==='-') v.adj=-v.adj;
+        if(v.np!==undefined && Math.abs(v.np-(v.gp+v.adj))>=1){
+          const way=Math.abs(v.np-(v.gp-v.adj))<1 ? 'the other way round from the rest of this sheet' : 'neither plus nor minus the adjustments';
+          out.checks.push({m, text:MONTHS[m-1]+': net production is gross production '+way+' (gross '+money(v.gp)+', adjustments '+(typed<0?'−':'')+money(typed)+', net '+money(v.np)+').'}); } }
+      if(v.gc!==undefined && v.gp && (v.gc/v.gp>1.5 || v.gc/v.gp<0.3)) out.checks.push({m, text:MONTHS[m-1]+': collections are '+Math.round(v.gc/v.gp*100)+'% of production — worth a look.'});
+    });
+    /* the Medicaid block: the row whose cells name the Medicaid columns */
+    for(let r=goalsRow+1;r<=goalsRow+40;r++){
+      const med=headCols(r, XL_MED); if(!med.mds) continue;
+      out.medicaid=true; const mr=monthRows(r+1, r+16);
+      Object.keys(mr).forEach(m=>{ const v={}; Object.keys(med).forEach(k=>{ const x=at(med[k], mr[m]); if(isNum(x)) v[k]=x; });
+        if(!Object.keys(v).length) return; out.months[mm(m)]=Object.assign(out.months[mm(m)]||{}, v); });
+      break;
+    }
+    return out;
+  }
+  /* put a sheet's months in: EMPTY boxes only - a number already in Home-Brace (typed, or OrthoFi's) is never replaced,
+     and where the sheet says something different it is listed; a month marked FINAL is not touched at all. The months count as sent (Heather already has them).
+     np (net production) is not one of Heather's 20 boxes - FIELDS has it - so it comes in like the rest. */
+  function mergeImport(yearRec, office, months, stamp, who){
+    const rec=cleanYear(yearRec); let filled=0; const kept=[], skipped=[];
+    stamp=typeof stamp==='string' ? stamp.slice(0,40) : new Date().toISOString(); who=String(who||'Excel import').slice(0,120);
+    rec.o[office]=rec.o[office]||{};
+    Object.keys(months||{}).forEach(k=>{ if(!/^(0[1-9]|1[0-2])$/.test(k)) return; const r=cleanMonth(rec.o[office][k]); let any=false;
+      if(r.final){ skipped.push(+k); return; }                                   // a month marked final is never touched
+      Object.keys(months[k]).forEach(f=>{ if(!BY[f]) return; const n=cleanVal(f, months[k][f]); if(n===null) return;
+        if(r.v[f]!==undefined){ if(Math.abs(r.v[f]-n)>=0.5) kept.push({m:+k, k:f, have:r.v[f], sheet:n}); return; }
+        r.v[f]=n; r.src[f]='typed'; r.at[f]=stamp; r.by[f]=who; filled++; any=true; });
+      if(any && !r.sent) r.sent={at:stamp, by:who};
+      rec.o[office][k]=cleanMonth(r); });
+    return {rec, filled, kept, skipped};
+  }
   /* a typed number that OrthoFi disagrees with (worth a second look - a typo, or a correction OrthoFi doesn't know) */
   function mismatches(r){ r=r||{}; const out=[]; Object.keys(r.ofv||{}).forEach(k=>{ const v=(r.v||{})[k];
     if((r.src||{})[k]==='typed' && v!==undefined && Math.abs(v-r.ofv[k])>=Math.max(1, Math.abs(r.ofv[k])*0.001)) out.push({k, typed:v, orthofi:r.ofv[k]}); }); return out; }
@@ -195,5 +268,5 @@
     }
     return r && Object.keys(r.v||{}).length ? 'started' : '';
   }
-  global.PH_MONTHLY={KEY, SET_KEY, FIELDS, BY, CALC, DEF_GOALS, GOAL_NAMES, DEF_MEDICAID, MONTHS, mm, num, money, cleanVal, cleanMonth, cleanYear, cleanSettings, fieldsFor, calc, onGoal, tone, yearRows, practiceTotals, insights, byWeight, mergeOrthofi, mismatches, lastMonth, dueDate, status};
+  global.PH_MONTHLY={KEY, SET_KEY, FIELDS, BY, CALC, DEF_GOALS, GOAL_NAMES, DEF_MEDICAID, MONTHS, mm, num, money, cleanVal, cleanMonth, cleanYear, cleanSettings, fieldsFor, calc, onGoal, tone, yearRows, practiceTotals, insights, byWeight, mergeOrthofi, fromSheet, mergeImport, mismatches, lastMonth, dueDate, status};
 })(typeof window!=='undefined' ? window : globalThis);
