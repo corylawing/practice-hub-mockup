@@ -34,9 +34,21 @@ const fails=async f=>{ try{ await f(); return ''; }catch(e){ return e.message; }
   t('the page: ⋯ on the chat -> "Hide this chat" (nothing is deleted); it leaves the list and Undo brings it back', /data-act="chatmenu"/.test(CHAT) && /Hide this chat/.test(CHAT) &&
     /await CG\.hideChat\(c, MEID\)/.test(fnOf(CHAT,'hideChatNow')) && /CG\.hideChat\(c, MEID, true\)/.test(fnOf(CHAT,'hideChatNow')));
   t('…🗑 only on MY messages (desktop hover; "Delete message" in the hold menu on a phone), asks first, shows "This message was deleted.", Undo',
-    /const del=can && mineOf\(m\) \?/.test(fnOf(CHAT,'reactsHTML')) && /mineOf\(m\) \? '<button type="button" class="copy" data-act="msgdel"/.test(CHAT) && /Delete this message\?/.test(fnOf(CHAT,'msgDelAsk')) &&
+    /\(can && mineOf\(m\) \? b\('msgdel','Delete',ICO\.trash,'del'\) : ''\)/.test(fnOf(CHAT,'msgBar')) && /mineOf\(m\) \? '<button type="button" class="copy" data-act="msgdel"/.test(CHAT) && /Delete this message\?/.test(fnOf(CHAT,'msgDelAsk')) &&
     /text:'This message was deleted\.'/.test(fnOf(CHAT,'msgDelNow')) && /CG\.deleteMessage\(c, MEID, before, true\)/.test(fnOf(CHAT,'msgDelNow')));
   t('…the message shown in the "are you sure" is plain text (escaped)', /esc\(String\(m\.text\)\.slice\(0,300\)\)/.test(fnOf(CHAT,'msgDelAsk')) && /'<span>'\+esc\(text\)\+'<\/span>'/.test(fnOf(CHAT,'undoToast')));
+  /* the message toolbar, like Slack (Cory 18/11: "Its hard to scroll over to emoji now and it flashes off. Look at what slack does" + "also forward") */
+  const MB=fnOf(CHAT,'msgBar');
+  t('THE TOOLBAR: over the message’s top corner while you’re on it (it overlaps the bubble, so moving onto it never loses it): React, Forward, Copy, Delete (yours) - phones hold instead',
+    /'<div class="mbar">'\+\(can \? b\('reactadd','Add a reaction'/.test(MB) && /b\('fwd','Forward',ICO\.fwd\)/.test(MB) && /b\('copytext','Copy text',ICO\.copy\)/.test(MB) &&
+    /\.mbar\{position:absolute;top:-27px;/.test(CHAT) && /@media \(hover:hover\)\{ \.m:hover \.mbar,\.mbar:focus-within\{display:flex\} \}/.test(CHAT) && /'<div class="col">'\+msgBar\(m\)/.test(CHAT));
+  t('…reactions keep a ☺+ right after them (always there, not hover-only)', /if\(!chips\) return '';/.test(fnOf(CHAT,'reactsHTML')) && /class="radd" data-act="reactadd"/.test(fnOf(CHAT,'reactsHTML')) && !/\.reacts \.radd\{[^}]*opacity:0/.test(CHAT));
+  const FN=fnOf(CHAT,'fwdNow');
+  t('FORWARD: pick a chat you may send to (search), add a note if you like; arrives as "Forwarded from <name>" + the words (formatting kept) + the photo; files as their links',
+    /const list=CHATS\.filter\(x=>!REALCHAT \|\| CG\.canSend\(x, MEID\)\);/.test(fnOf(CHAT,'fwdDlg')) && /Pick a chat to forward it to\./.test(FN) && /<i>Forwarded from '\+esc\(who\)\+'<\/i>/.test(FN) &&
+    /CG\.sendPhoto\(t, MEID, p\.b64, p\.w, p\.h, text, \{html, mentions:\[\]\}\)/.test(FN) && /CG\.sendText\(t, MEID, text, \{html, mentions:\[\]\}\)/.test(FN) && /f=>\/\^https:\\\/\\\/\/i\.test\(f\.url\)/.test(FN));
+  t('…what’s forwarded is cleaned / escaped (never raw HTML); the note is plain text', /CG\.cleanRich\(m\.rich\)/.test(FN) && /'<p>'\+esc\(note\)\+'<\/p>'/.test(FN) && /esc\(m\.text\|\|''\)/.test(FN));
+  t('DELETE asks first: "Delete this message?" - Keep it / Delete', /Delete this message\?/.test(fnOf(CHAT,'msgDelAsk')) && />Keep it<\/button>/.test(fnOf(CHAT,'msgDelAsk')) && /data-act="msgdelok"/.test(fnOf(CHAT,'msgDelAsk')));
   console.log(ok.map(s=>'  PASS  '+s).join('\n'));
   if(bad.length) console.log(bad.map(s=>'  FAIL  '+s).join('\n'));
   console.log('\n'+ok.length+' passed, '+bad.length+' failed');

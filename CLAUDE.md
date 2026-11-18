@@ -440,6 +440,17 @@ I can confidently say that the chat feature should go next. The production thing
    localStorage ph_chat_emoji_recent (18 defaults). Used by the message box (emoji button) and "More emoji" on a
    reaction. All 1,425 toned sequences checked against Unicode's list. test/chatv2.test.js (42).
    STILL QUEUED: a "chat alerts: Home-Brace / Teams" choice.
+36. **CHAT MESSAGE TOOLBAR like Slack + FORWARD (18/11; hc204).** Cory: "Its hard to scroll over to emoji now and it flashes
+   off. Look at what slack does" (the ☺+ / 🗑 floated beside the bubble with a gap -> hover lost) + "The delete can be there
+   as well also forward is a good option" + "Delete should have a confirmation screen" (it already had: "Delete this
+   message?" Keep it / Delete). msgBar(m): .mbar inside .col, absolute top:-27px over the bubble's top corner (right on
+   theirs, left on mine) -> overlaps the bubble so moving onto it keeps :hover; shown on (hover:hover) only; React (quick
+   bar), Forward, Copy text, Delete (mine + canSend). Reactions row = chips + an always-there ☺+ (no row without chips).
+   Phones: hold menu adds Forward. FORWARD (fwdDlg/fwdNow): pick a chat you can send to (search), optional note; sends
+   rich '<p>note</p><blockquote><p><i>Forwarded from X</i></p>…</blockquote>' (cleanRich'd / escaped), the photo re-sent
+   via CG.photo(blob of the shown <img>) + sendPhoto, files as https links; mock-up appends to the demo chat.
+   test/chathide (11). Harness (scratchpad fwd-run.js): text + photo forward (hostedContents 1). NOTE: fakelive's
+   hostedContents answer was shadowed by the /chats/.../messages route (returned JSON) - fixed 18/11.
 35. **FEEDBACK NAME (Cory 18/11: "melinda stills says treatment coordinator in feedback"; hc203).** The inbox showed the
    SharePoint row's createdBy = her Microsoft account's display name "San Angelo Treatment Coordinator"; the email's "From:"
    already used Home-Brace's own name (roster). fbreply.js threads(): by.name = the Details "From:" name (minus <email>),

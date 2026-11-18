@@ -277,18 +277,26 @@
   .reacts .rc{display:inline-flex;align-items:center;gap:4px;border:1px solid #DCE3EA;background:#fff;border-radius:999px;padding:1px 8px;font:inherit;font-size:13px;cursor:pointer;color:#33475b;line-height:22px}
   .reacts .rc.mine{border-color:var(--teal2);background:var(--teal-wash,#eef8f7);color:var(--teal-600);font-weight:700}
   .m .col{position:relative}
-  .reacts:not(:has(.rc)){position:absolute;left:100%;bottom:16px;margin:0 0 0 6px}
-  .m.me .reacts:not(:has(.rc)){left:auto;right:100%;margin:0 6px 0 0}
-  .reacts .radd{display:inline-flex;align-items:center;gap:1px;border:1px solid #DCE3EA;background:#fff;border-radius:999px;padding:0 7px;height:24px;font:inherit;font-size:12px;font-weight:700;cursor:pointer;color:#7b8797;opacity:0;transition:opacity .12s}
+  .reacts .radd{display:inline-flex;align-items:center;gap:1px;border:1px solid #DCE3EA;background:#fff;border-radius:999px;padding:0 7px;height:24px;font:inherit;font-size:12px;font-weight:700;cursor:pointer;color:#7b8797}
+  .reacts .radd:hover{border-color:var(--teal2);color:var(--teal-600)}
   .reacts .radd svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
-  .m:hover .reacts .radd,.m:focus-within .reacts .radd,.reacts .radd:focus{opacity:1}
+  /* THE MESSAGE TOOLBAR, like Slack (Cory 18/11: "Its hard to scroll over to emoji now and it flashes off. Look at what
+     slack does"): over the message's top corner while the pointer is on the message - it overlaps the bubble, so moving
+     onto it never loses it. React, Forward, Copy, Delete (your own). Phones: hold the message instead. */
+  .m .col{position:relative}
+  .mbar{position:absolute;top:-27px;right:-6px;display:none;gap:1px;background:#fff;border:1px solid #DCE3EA;border-radius:10px;box-shadow:0 4px 14px rgba(15,42,74,.13);padding:2px;z-index:4}
+  .m.me .mbar{right:auto;left:-6px}
+  .mbar button{width:32px;height:30px;border:0;background:none;border-radius:8px;cursor:pointer;color:#4b5a6b;display:inline-flex;align-items:center;justify-content:center;padding:0;font:inherit}
+  .mbar button:hover{background:#EEF2F6;color:var(--navy)}
+  .mbar button.del:hover{background:#FDF0EE;color:#b42318}
+  .mbar svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .mbar small{font-size:11px;font-weight:800;margin-left:-1px}
+  @media (hover:hover){ .m:hover .mbar,.mbar:focus-within{display:flex} }
+  .fwdq{border-left:3px solid #c9d3df;padding:4px 0 4px 10px;color:#4b5a6b;font-size:13.5px;max-height:90px;overflow:hidden;white-space:pre-wrap}
+  #fwlist{max-height:240px;overflow:auto}
+  #fwlist button.on{background:var(--teal-soft)}
   /* phones: hold a message to react (like WhatsApp); the ＋ only shows next to reactions already there */
-  @media (pointer:coarse){ .reacts .radd{display:none} .reacts .rc ~ .radd{display:inline-flex;opacity:1} body.v2 .m .bub{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none} }
-  .reacts .rdel{font-size:12px}
-  .reacts .rdel:hover{border-color:#F1C4BE;color:#b42318}
-  .reacts:not(:has(.rc)) .rdel{display:none}
-  .m:hover .reacts:not(:has(.rc)) .rdel{display:inline-flex}
-  .m.me .reacts:not(:has(.rc)){display:flex;gap:4px}
+  @media (pointer:coarse){ body.v2 .m .bub{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none} }
   .m.del .bub{font-style:italic;opacity:.75}
   .utoast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);display:none;align-items:center;gap:14px;max-width:calc(100% - 32px);background:var(--navy);color:#fff;padding:10px 12px 10px 18px;border-radius:12px;font-weight:700;font-size:14px;box-shadow:var(--shadow-lg);z-index:85}
   .utoast.on{display:flex}
@@ -361,13 +369,13 @@
   .lb .lbnav.p{left:14px}.lb .lbnav.n{right:14px}
   .lb .lbnav[hidden]{display:none}
 </style>
-<script src="user.js?v=hc203"></script>
+<script src="user.js?v=hc204"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc203"></script>
-  <script src="gate.js?v=hc203"></script>
-  <script src="_staff.js?v=hc203"></script>
-  <script src="alerts.js?v=hc203"></script>
-  <script src="chatgraph.js?v=hc203"></script>
+  <script src="store.js?v=hc204"></script>
+  <script src="gate.js?v=hc204"></script>
+  <script src="_staff.js?v=hc204"></script>
+  <script src="alerts.js?v=hc204"></script>
+  <script src="chatgraph.js?v=hc204"></script>
 </head>
 <body>
 <div class="ribbon" id="ribbon">MOCK-UP for Heather and Dr. Jae — made-up people, messages and videos. Nothing is sent anywhere.</div>
@@ -587,7 +595,7 @@
       : m.pending ? '<div class="meta">'+esc(m.progress!=null ? 'Uploading… '+Math.round(m.progress*100)+'%' : 'Sending…')+'</div>'
       : '<div class="meta">'+esc(clock(m.at))+(!REALCHAT && mine && m.seen!==false ? ' · Seen' : '')+(m.edited ? ' · Edited' : '')+'</div>';
     return '<div class="m'+(mine?' me':'')+(m.deleted?' del':'')+'" data-mid="'+esc(m.id||'')+'">'+(group && !mine ? (showFrom ? personAv(m.from, m.fromEmail) : '<span style="width:30px;flex:none"></span>') : '')+
-      '<div class="col">'+(showFrom?'<div class="from">'+esc(m.from)+'</div>':'')+body+reactsHTML(m)+meta+'</div></div>';
+      '<div class="col">'+msgBar(m)+(showFrom?'<div class="from">'+esc(m.from)+'</div>':'')+body+reactsHTML(m)+meta+'</div></div>';
   }
   /* A real message: its words (plain text - Teams' HTML never goes into the page), pictures, videos and files.
      Pictures and videos are filled in a moment later (hydrate), with the sign-in. Only https addresses are used. */
@@ -649,6 +657,8 @@
     plus:SVG('<path d="M12 5v14M5 12h14"/>'), smile:SVG('<circle cx="12" cy="12" r="9"/><path d="M8.5 14.5a4.5 4.5 0 0 0 7 0"/><path d="M9 9.5h.01M15 9.5h.01"/>'),
     video:SVG('<rect x="2.5" y="6" width="13" height="12" rx="2.5"/><path d="M15.5 10.5l6-3.5v10l-6-3.5z"/>'),
     mic:SVG('<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>'),
+    fwd:SVG('<path d="M15 5l6 6-6 6"/><path d="M21 11H11a7 7 0 0 0-7 7v1"/>'), copy:SVG('<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/>'),
+    trash:SVG('<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>'),
     send:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.4 20.4L21 12 3.4 3.6 3.3 10.2 15 12 3.3 13.8z"/></svg>'};
   const tb=(act, v, label, inner, on, cls)=>'<button type="button" class="tb'+(on?' on':'')+(cls?' '+cls:'')+'" data-act="'+act+'"'+(v?' data-v="'+v+'"':'')+' title="'+esc(label)+'" aria-label="'+esc(label)+'"'+(on!==undefined && on!==null && act==='fmt'?' aria-pressed="'+(on?'true':'false')+'"':'')+'>'+inner+'</button>';
   function stagedHTML(st){
@@ -714,7 +724,7 @@
   function emoLoad(){
     if(window.PH_EMOJI) return Promise.resolve(window.PH_EMOJI);
     if(emoP) return emoP;
-    emoP=new Promise((res, rej)=>{ const sc=document.createElement('script'); sc.src='emoji.js?v=hc203'; sc.async=true;
+    emoP=new Promise((res, rej)=>{ const sc=document.createElement('script'); sc.src='emoji.js?v=hc204'; sc.async=true;
       sc.onload=()=>window.PH_EMOJI ? res(window.PH_EMOJI) : rej(new Error('no emoji')); sc.onerror=()=>{ emoP=null; sc.remove(); rej(new Error('no emoji')); };
       document.head.appendChild(sc); });
     return emoP;
@@ -851,9 +861,16 @@
     list.forEach(r=>{ (by[r.emoji]=by[r.emoji]||[]).push(r); });
     const chips=Object.keys(by).map(e=>{ const rs=by[e], mine=rs.some(r=>r.userId===(REALCHAT?MEID:'me'));
       return '<button type="button" class="rc'+(mine?' mine':'')+'"'+(can?' data-act="react" data-v="'+esc(e)+'" data-m="'+esc(m.id)+'"':' disabled')+' title="'+esc(rs.map(r=>r.name||'Someone').join(', '))+'">'+e+' <span>'+rs.length+'</span></button>'; }).join('');
-    if(!chips && !can) return '';
-    const del=can && mineOf(m) ? '<button type="button" class="radd rdel" data-act="msgdel" data-m="'+esc(m.id)+'" title="Delete this message" aria-label="Delete this message">🗑</button>' : '';
-    return '<div class="reacts">'+chips+(can?'<button type="button" class="radd" data-act="reactadd" data-m="'+esc(m.id)+'" title="Add a reaction" aria-label="Add a reaction">'+ICO.smile+'+</button>':'')+del+'</div>';
+    if(!chips) return '';
+    return '<div class="reacts">'+chips+(can?'<button type="button" class="radd" data-act="reactadd" data-m="'+esc(m.id)+'" title="Add a reaction" aria-label="Add a reaction">'+ICO.smile+'+</button>':'')+'</div>';
+  }
+  /* the toolbar over a message (desktop hover) */
+  function msgBar(m){
+    const c=cur(); if(!V2() || m.pending || m.failed || m.deleted || !m.id || /^local-/.test(String(m.id))) return '';
+    const can=!REALCHAT || (c && CG.canSend(c, MEID));
+    const b=(act, label, inner, cls)=>'<button type="button"'+(cls?' class="'+cls+'"':'')+' data-act="'+act+'" data-m="'+esc(m.id)+'" title="'+esc(label)+'" aria-label="'+esc(label)+'">'+inner+'</button>';
+    return '<div class="mbar">'+(can ? b('reactadd','Add a reaction',ICO.smile+'<small>+</small>') : '')+b('fwd','Forward',ICO.fwd)+
+      (m.text ? b('copytext','Copy text',ICO.copy) : '')+(can && mineOf(m) ? b('msgdel','Delete',ICO.trash,'del') : '')+'</div>';
   }
   async function reactToggle(msgId, emoji, onOnly){
     const c=cur(); if(!c) return; const m=c.msgs.find(x=>String(x.id)===String(msgId)); if(!m) return;
@@ -1636,6 +1653,7 @@
   let reactFor='';
   const quickHTML=(m)=>'<div class="quick">'+QUICK.map(x=>{ const y=(x==='👍' || x==='🙏') ? toned([x,'','',1], skinGet()) : x; return '<button type="button" data-act="reactpick" data-v="'+y+'" aria-label="React '+y+'">'+y+'</button>'; }).join('')+
     '<button type="button" data-act="reactmore" aria-label="More emoji" title="More emoji" style="font-size:16px;color:#7b8797">'+ICO.smile.replace('<svg','<svg style="width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2"')+'</button></div>'+
+    (m && !m.deleted ? '<button type="button" class="copy" data-act="fwd" data-m="'+esc(m.id)+'">Forward</button>' : '')+
     (m && m.text && !m.deleted ? '<button type="button" class="copy" data-act="copytext">Copy text</button>' : '')+
     (m && !m.deleted && mineOf(m) ? '<button type="button" class="copy" data-act="msgdel" data-m="'+esc(m.id)+'" style="color:#b42318">Delete message</button>' : '');
   function v2Click(e, b, act, v){
@@ -1667,9 +1685,51 @@
     if(act==='hidechat'){ popClose(); hideChatNow(); return true; }
     if(act==='msgdel'){ popClose(); msgDelAsk(b.dataset.m || reactFor); return true; }
     if(act==='msgdelok'){ msgDelNow(b.dataset.m, b); return true; }
-    if(act==='copytext'){ popClose(); const c=cur(), m=c && c.msgs.find(x=>String(x.id)===reactFor);
+    if(act==='fwd'){ popClose(); fwdDlg(b.dataset.m || reactFor); return true; }
+    if(act==='fwdto'){ document.querySelectorAll('#fwlist button').forEach(x=>x.classList.toggle('on', x===b)); if(FWD) FWD.to=b.dataset.v; gErr(''); return true; }
+    if(act==='fwdok'){ fwdNow(b); return true; }
+    if(act==='copytext'){ popClose(); const c=cur(), m=c && c.msgs.find(x=>String(x.id)===String(b.dataset.m || reactFor));
       if(m && m.text && navigator.clipboard) navigator.clipboard.writeText(m.text).then(()=>toast('Copied'), ()=>toast('Couldn’t copy')); return true; }
     return false;
+  }
+  /* FORWARD A MESSAGE (Cory 18/11: "also forward is a good option as well") - to any chat you may send to, with a note
+     if you like. It arrives as "Forwarded from <name>" + the words (formatting kept) + a photo it had; a video or file goes
+     as its link. Teams can't attach the original, so it's a new message in that chat. */
+  let FWD=null;
+  function fwdDlg(id){
+    const c=cur(), m=c && c.msgs.find(x=>String(x.id)===String(id)); if(!m || m.deleted) return;
+    FWD={c, m, to:''};
+    const list=CHATS.filter(x=>!REALCHAT || CG.canSend(x, MEID));
+    const pv=(m.text ? esc(String(m.text).slice(0,240)) : '')+((m.photo || m.localImg || (m.images||[]).length) ? (m.text?'\n':'')+'📷 Photo' : '')+((m.video || m.localVideo || (m.files||[]).length) ? (m.text?'\n':'')+'📎 '+(m.video||m.localVideo?'Video':'File') : '');
+    openDlg(top('Forward message')+'<div class="dm-body"><div class="fwdq"><b>'+esc(mineOf(m)?'You':m.from)+'</b>\n'+pv+'</div>'+
+      '<input class="search" id="fwq" placeholder="Search chats" autocomplete="off" data-nomic>'+
+      '<div class="pick" id="fwlist">'+(list.length ? list.map(x=>'<button type="button" data-act="fwdto" data-v="'+esc(x.id)+'">'+avatar(x,true)+'<span>'+esc(x.name)+'</span></button>').join('') : '<div class="grp">No chats you can send to</div>')+'</div>'+
+      '<label class="lab2">Add a message (optional)<input class="search" id="fwmsg" maxlength="2000" placeholder="FYI…" autocomplete="off" data-nomic></label><div class="gerr" id="gerr"></div></div>'+
+      '<div class="dm-foot"><button class="btn ghost" data-act="close">Cancel</button><button class="btn" data-act="fwdok">Forward</button></div>');
+    setTimeout(()=>{ const i=el('fwq'); if(i) i.focus(); }, 30);
+  }
+  async function fwdNow(btn){
+    if(!FWD) return; const t=CHATS.find(x=>x.id===FWD.to); if(!t){ gErr('Pick a chat to forward it to.'); return; }
+    const m=FWD.m, who=mineOf(m) ? ME : m.from, note=String((el('fwmsg')||{}).value||'').trim();
+    const bodyHtml=m.rich ? (CG ? CG.cleanRich(m.rich) : '') : esc(m.text||'').replace(/\n/g,'<br>');
+    const links=(m.files||[]).filter(f=>/^https:\/\//i.test(f.url)).map(f=>'<a href="'+esc(f.url)+'">📎 '+esc(f.name||'File')+'</a>').join('<br>');
+    const html=(note ? '<p>'+esc(note)+'</p>' : '')+'<blockquote><p><i>Forwarded from '+esc(who)+'</i></p>'+(bodyHtml ? '<p>'+bodyHtml+'</p>' : '')+(links ? '<p>'+links+'</p>' : '')+'</blockquote>';
+    const text=(note ? note+'\n\n' : '')+'Forwarded from '+who+':\n'+(m.text||'');
+    btn.disabled=true; gErr('');
+    try{
+      if(!REALCHAT){
+        t.msgs.push({id:t.id+'-'+Date.now(), from:ME, at:Date.now(), text, richHtml:CG ? CG.cleanRich(html) : '', photo:m.photo||'', w:m.w, h:m.h});
+      } else {
+        const img=msgEl(m.id) && msgEl(m.id).querySelector('.media img[src]');
+        if(img && /^(blob:|data:image)/.test(img.src)){
+          const blob=await (await fetch(img.src)).blob(), p=await CG.photo(new File([blob], 'photo.jpg', {type:blob.type||'image/jpeg'}));
+          await CG.sendPhoto(t, MEID, p.b64, p.w, p.h, text, {html, mentions:[]});
+        } else await CG.sendText(t, MEID, text, {html, mentions:[]});
+      }
+      closeDlg(); renderList(); if(open===t.id) renderConv();
+      undoToast('Forwarded to '+t.name+' ✓', null);
+      if(REALCHAT) loadList(false);
+    }catch(e){ btn.disabled=false; gErr('Not forwarded: '+((e && e.message)||e)); }
   }
   /* HIDE A CHAT, DELETE MY MESSAGE (Cory 18/11) - both with Undo. */
   let utT=null;
@@ -1815,6 +1875,7 @@
     if(e.target.id==='nq'){ const qq=e.target.value.trim().toLowerCase(); document.querySelectorAll('#pick button').forEach(x=>{ x.style.display=!qq||x.textContent.toLowerCase().indexOf(qq)>=0?'':'none'; }); }
     if(e.target.id==='emq'){ empSearch(); return; }
     if(e.target.id==='gq'){ grpSearch(e.target); return; }
+    if(e.target.id==='fwq'){ const qq=e.target.value.trim().toLowerCase(); document.querySelectorAll('#fwlist button').forEach(x=>{ x.style.display=!qq || x.textContent.toLowerCase().indexOf(qq)>=0 ? '' : 'none'; }); return; }
     if(e.target.id==='txt' && isEd(e.target)){ edEmptyMark(e.target); edSave(); typedMention(e.target); fmtPaint(); }
     else if(e.target.id==='txt'){ e.target.style.height='auto'; e.target.style.height=Math.min(120,e.target.scrollHeight)+'px'; }
   });
