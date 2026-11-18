@@ -164,7 +164,8 @@ const chatWith=(...people)=>({id:'19:abc@thread.v2', type:people.length>2?'group
     t('chat.html: no message box at all in a locked chat', /if\(REALCHAT && !CG\.canSend\(c, MEID\)\) h\+='<\/div><div class="locked">/.test(CHAT));
     t('chat.html: sendReal checks the lock first', /async function sendReal\(m\)\{\s*const c=cur\(\); if\(!c\) return;\s*if\(!CG\.canSend\(c, MEID\)\)/.test(CHAT));
     t('chat.html: phone alerts only to testers while testing', /if\(CG\.TEST\)\{ const ok=CG\.testers\(\)\.map\(t=>t\.email\); to=to\.filter\(e=>ok\.indexOf\(e\)>=0\); \}/.test(CHAT));
-    t('chat.html: new chats in the test are with testers only', /if\(CG\.TEST\)\{\s*const ts=CG\.testers\(\);\s*openDlg\(top\('New chat'\)/.test(CHAT));
+    t('chat.html: new chats in the test are with testers only (a new group too)', /if\(CG\.TEST\)\{\s*const ts=CG\.testers\(\);\s*const meE=myEmail\(\), others=ts\.filter[^\n]*\n\s*openDlg\(top\('New chat'\)/.test(CHAT) &&
+      /return CG\.TEST \? CG\.testers\(\)\.filter/.test(CHAT));
   }
   /* ---- 4. Sending ---- */
   {

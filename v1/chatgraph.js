@@ -167,7 +167,18 @@
     return {text:s, images};
   }
   const VIDEO_RE=/\.(mp4|m4v|mov|webm|3gp)$/i, IMAGE_RE=/\.(jpe?g|png|gif|heic|webp)$/i;
+  /* A group's own notes (Teams writes them): added, taken out / left, renamed. Names are filled in by the page (Teams
+     often leaves them blank) from the chat's people. */
+  function mapEvent(m){
+    const d=(m && m.eventDetail) || {}, t=String(d['@odata.type']||'');
+    const kind=/membersAdded/i.test(t) ? 'added' : /membersDeleted|membersLeft/i.test(t) ? 'removed' : /chatRenamed/i.test(t) ? 'renamed' : '';
+    if(!kind) return null;
+    const by=(d.initiator && d.initiator.user) || {};
+    return {id:m.id, at:Date.parse(m.createdDateTime)||0, system:true, kind, by:{id:String(by.id||''), name:String(by.displayName||'')},
+      who:(d.members||[]).map(x=>({id:String((x && x.id)||''), name:String((x && x.displayName)||'')})), topic:String(d.chatDisplayName||'')};
+  }
   function mapMessage(m, meId){
+    if(m && m.messageType==='systemEventMessage') return mapEvent(m);
     if(!m || m.messageType!=='message') return null;
     const fromU=(m.from && m.from.user) || null;
     const p=parts(m.body), files=[];
@@ -186,7 +197,7 @@
   function mapChat(c, meId){
     if(!c || (c.chatType!=='oneOnOne' && c.chatType!=='group')) return null;
     if(c.viewpoint && c.viewpoint.isHidden) return null;
-    const people=(c.members||[]).map(x=>({id:x.userId||'', name:x.displayName||'', email:lc(x.email)}));
+    const people=(c.members||[]).map(x=>({id:x.userId||'', name:x.displayName||'', email:lc(x.email), mid:x.id||''}));
     const others=people.filter(x=>x.id!==meId);
     const name=c.topic || others.map(x=>x.name).filter(Boolean).join(', ') || 'Chat';
     const lp=c.lastMessagePreview||null, lpFrom=lp && lp.from && lp.from.user;
@@ -237,12 +248,72 @@
     if(body.chatType==='group' && topic) body.topic=String(topic).slice(0,250);
     return call('POST', '/chats', body);
   }
+  /* GROUPS (Cory 18/11: "Flexibility to create their own group" - like Slack channels; called Groups because that's what
+     they are in Teams: invite-only group chats). Create / rename / add need Chat.ReadWrite (granted); taking someone out
+     or leaving needs ChatMember.ReadWrite - only offered once Microsoft's token says it's granted (canManageMembers). While
+     testing / in the pilot, only testers can be put in a group (checked here, before anything leaves). */
+  const HISTORY_ALL='0001-01-01T00:00:00Z';
+  function testersOnly(users){
+    if(!TEST) return;
+    const ok={}; testers().forEach(x=>{ ok[lc(x.email)]=1; });
+    if((users||[]).some(u=>!u || !ok[lc(u.email)])) throw new Error(pilotLive() ? 'Pilot: only people in the pilot group can be added for now.' : 'Test: only your testers can be added.');
+  }
+  function createGroup(meId, users, name){
+    const nm=String(name||'').trim().slice(0,250);
+    if(!nm) throw new Error('Give the group a name.');
+    const list=(users||[]).filter(u=>u && u.id && u.id!==meId);
+    if(list.length<2) throw new Error('Pick at least 2 people for a group.');
+    testersOnly(list);
+    return createChat(meId, list.map(u=>u.id), nm);
+  }
+  async function renameGroup(chat, meId, name){
+    allowed(chat, meId);
+    const nm=String(name||'').trim().slice(0,250); if(!nm) throw new Error('Give the group a name.');
+    if(chat.type!=='group') throw new Error('Only a group can have a name.');
+    await call('PATCH', '/chats/'+encodeURIComponent(chat.id), {topic:nm});
+    return nm;
+  }
+  async function addPeople(chat, meId, users){
+    allowed(chat, meId);
+    if(chat.type!=='group') throw new Error('People can only be added to a group.');
+    const have={}; (chat.people||[]).forEach(p=>{ have[p.id]=1; });
+    const list=(users||[]).filter(u=>u && u.id && !have[u.id]); if(!list.length) throw new Error('They’re already in the group.');
+    testersOnly(list);
+    for(const u of list) await call('POST', '/chats/'+encodeURIComponent(chat.id)+'/members', {'@odata.type':'#microsoft.graph.aadUserConversationMember',
+      'user@odata.bind':G+"/users('"+u.id+"')", roles:['owner'], visibleHistoryStartDateTime:HISTORY_ALL});   // they see the whole conversation, like Slack
+    return list.length;
+  }
+  /* Does Microsoft let Home-Brace take people out of groups? (ChatMember.ReadWrite in the token's granted list.) */
+  let manageOK=null;
+  async function canManageMembers(){
+    if(manageOK!==null) return manageOK;
+    try{ const t=await token(), p=JSON.parse(decodeURIComponent(escape(global.atob(String(t).split('.')[1].replace(/-/g,'+').replace(/_/g,'/')))));
+      manageOK=String(p.scp||'').split(' ').indexOf('ChatMember.ReadWrite')>=0; }
+    catch(_){ manageOK=false; }
+    return manageOK;
+  }
+  async function removePerson(chat, meId, personId){
+    allowed(chat, meId);
+    if(chat.type!=='group') throw new Error('Only people in a group can be taken out.');
+    if(personId===meId) throw new Error('Use Leave group to take yourself out.');
+    const p=(chat.people||[]).find(x=>x.id===personId); if(!p || !p.mid) throw new Error('They’re not in this group any more.');
+    await call('DELETE', '/chats/'+encodeURIComponent(chat.id)+'/members/'+encodeURIComponent(p.mid));
+  }
+  async function leaveGroup(chat, meId){
+    if(!chat || chat.type!=='group') throw new Error('You can only leave a group.');
+    const p=(chat.people||[]).find(x=>x.id===meId); if(!p || !p.mid) throw new Error('You’re not in this group any more.');
+    await call('DELETE', '/chats/'+encodeURIComponent(chat.id)+'/members/'+encodeURIComponent(p.mid));
+  }
   /* People in the practice's own Microsoft 365 (Adam, 12/11: current tenant only - guests are left out). */
   async function searchPeople(q){
     const s=String(q||'').trim().replace(/'/g, "''"); if(s.length<2) return [];
     const f="startswith(displayName,'"+s+"') or startswith(givenName,'"+s+"') or startswith(surname,'"+s+"') or startswith(mail,'"+s+"')";
     const j=await call('GET', '/users?$top=15&$select=id,displayName,mail,userPrincipalName,jobTitle&$filter='+encodeURIComponent(f));
     return (j.value||[]).filter(u=>u && !/#EXT#/i.test(u.userPrincipalName||'')).map(u=>({id:u.id, name:u.displayName||'', email:lc(u.mail||u.userPrincipalName), title:u.jobTitle||''}));
+  }
+  async function userById(id){
+    const u=await call('GET', '/users/'+encodeURIComponent(String(id||''))+'?$select=id,displayName');
+    return {id:u.id, name:u.displayName||''};
   }
   async function userByEmail(email){
     const u=await call('GET', '/users/'+encodeURIComponent(lc(email))+'?$select=id,displayName,mail,userPrincipalName');
@@ -441,7 +512,7 @@
   }
 
   global.PH_CHATG={CHAT_LIVE, CHAT_PILOT, CHAT_GUESTS, PILOT_KEY, pilotLive, pilotKnown, loadPilot, cleanPilot, guest, TEST, mode, setSwitch, switchedOn, signedIn, testers, setTesters, canSend, ask, token,
-    listChats, listMessages, markRead, createChat, searchPeople, userByEmail,
+    listChats, listMessages, markRead, createChat, searchPeople, userByEmail, createGroup, renameGroup, addPeople, removePerson, leaveGroup, canManageMembers, userById,
     sendText, sendPhoto, sendVideo, upload, share, sendFile, fileFor, picture, photo, callLink, cleanRich, react, REACT_NAMES,
-    _t:{parts, decode, mapMessage, mapChat, etagGuid, shareId, safeName, textHTML, call, CHUNK, SMALL, MAX_VIDEO, FOLDER, TENANT, richOf, reactionsOf, teamsBody, safeHref}};
+    _t:{parts, decode, mapMessage, mapChat, etagGuid, shareId, safeName, textHTML, call, CHUNK, SMALL, MAX_VIDEO, FOLDER, TENANT, richOf, reactionsOf, teamsBody, safeHref, mapEvent}};
 })(window);

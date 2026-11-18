@@ -285,6 +285,27 @@
   /* phones: hold a message to react (like WhatsApp); the ＋ only shows next to reactions already there */
   @media (pointer:coarse){ .reacts .radd{display:none} .reacts .rc ~ .radd{display:inline-flex;opacity:1} body.v2 .m .bub{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none} }
   .pop .copy{display:block;width:100%;margin-top:6px;border:0;border-top:1px solid #EDF1F5;background:none;padding:9px 6px 3px;font:inherit;font-size:14px;color:var(--ink);text-align:left;cursor:pointer}
+  /* GROUPS (Cory 18/11) */
+  .lab2{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:700;color:var(--ink)}
+  .sys{align-self:center;max-width:90%;text-align:center;font-size:12.5px;color:var(--soft);background:#EEF2F6;border-radius:999px;padding:4px 12px;margin:4px 0}
+  .conv-top .who.grpw{cursor:pointer;border-radius:8px}
+  .conv-top .who.grpw:hover b{text-decoration:underline}
+  .gchips{display:flex;flex-wrap:wrap;gap:6px}
+  .gchips:empty{display:none}
+  .gchip{display:inline-flex;align-items:center;gap:6px;background:var(--teal-soft);color:var(--teal-ink,#0c5b57);border-radius:999px;padding:3px 4px 3px 10px;font-size:13px;font-weight:600}
+  .gchip button{border:0;background:none;font-size:16px;line-height:1;cursor:pointer;color:inherit;padding:0 4px}
+  .pick button .tick{margin-left:auto;width:22px;height:22px;border-radius:6px;border:2px solid #C9D3DF;display:inline-flex;align-items:center;justify-content:center;font-size:14px;color:#fff;flex:none}
+  .pick button.on .tick{background:var(--teal);border-color:var(--teal)}
+  .gerr{color:#b42318;font-weight:700;font-size:13px}
+  .gerr:empty{display:none}
+  .gname{display:flex;align-items:center;gap:10px;font-size:16px}
+  .gname b{flex:1;min-width:0;overflow-wrap:anywhere}
+  .btn.warn{background:#fff;color:#b42318;border:1px solid #F1C4BE}
+  .btn.warn:hover{background:#FDF0EE}
+  .btn.red{background:#C4321C}
+  .btn.red:hover{background:#A82A17}
+  .pick .trow .x{margin-left:auto;border:0;background:none;padding:2px 8px;border-radius:8px}
+  .pick .trow .x:hover{background:#FDF0EE;color:#b42318}
   /* THE EMOJI PICKER (Cory 18/11 + his Slack screenshot) */
   .pop.emp{padding:0;width:356px;max-width:calc(100vw - 16px);display:flex;flex-direction:column;overflow:hidden}
   .emtabs{display:flex;justify-content:space-between;padding:6px 8px;border-bottom:1px solid #EDF1F5}
@@ -322,13 +343,13 @@
   .lb .lbnav.p{left:14px}.lb .lbnav.n{right:14px}
   .lb .lbnav[hidden]{display:none}
 </style>
-<script src="user.js?v=hc192"></script>
+<script src="user.js?v=hc193"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc192"></script>
-  <script src="gate.js?v=hc192"></script>
-  <script src="_staff.js?v=hc192"></script>
-  <script src="alerts.js?v=hc192"></script>
-  <script src="chatgraph.js?v=hc192"></script>
+  <script src="store.js?v=hc193"></script>
+  <script src="gate.js?v=hc193"></script>
+  <script src="_staff.js?v=hc193"></script>
+  <script src="alerts.js?v=hc193"></script>
+  <script src="chatgraph.js?v=hc193"></script>
 </head>
 <body>
 <div class="ribbon" id="ribbon">MOCK-UP for Heather and Dr. Jae — made-up people, messages and videos. Nothing is sent anywhere.</div>
@@ -374,7 +395,8 @@
   const ONLIVE=!!(window.PH && PH.isLive && PH.isLive());          // the live site: the chat PILOT only (chatgraph.js), never the made-up chats
   const COLORS=['#149B96','#6CB4F5','#F7A25E','#B49CFB','#F48C7F','#F27FC0','#6FD39A','#8FA2FF','#E0A800','#5B8DEF'];
   const colorOf=n=>{ let h=0; for(const c of n) h=(h*31+c.charCodeAt(0))>>>0; return COLORS[h%COLORS.length]; };
-  const initials=n=>n.replace(/^Dr\.\s*/,'').split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase();
+  /* first and last name - a nickname in brackets or quotes is skipped ("Avery (Ave) Alder" = AA, not "A(") */
+  const initials=n=>{ const w=String(n||'').replace(/^Dr\.\s*/,'').split(/\s+/).filter(x=>/^[\p{L}\p{N}]/u.test(x)); return ((w[0]||'?')[0]+(w.length>1 ? w[w.length-1][0] : '')).toUpperCase(); };
   const ICON={office:'<path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h1M14 9h1M9 13h1M14 13h1M9 17h6"/>',
               team:'<circle cx="9" cy="8" r="3.2"/><circle cx="17" cy="9" r="2.6"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5M15 14.6c3 0 6 1.6 6 4.6"/>'};
   function avatar(c, sm){
@@ -460,6 +482,7 @@
   const last=c=>{ const m=c.msgs[c.msgs.length-1], l=c.lastMsg; return (l && (!m || l.at>m.at)) ? l : (m||l||NONE); };
   const mineOf=m=>m.mine!=null ? !!m.mine : m.from===ME;
   function preview(m, c){
+    if(m.system) return sysText(m, c);
     const short=n=>/^Dr\./.test(n) ? n : String(n||'').split(' ')[0];       // "Dr. Thornbury", "Gabriela"
     const who=mineOf(m) ? 'You: ' : (c.type==='person' || !m.from ? '' : short(m.from)+': ');
     const vid=m.video || m.localVideo || (m.files && m.files.some(f=>f.video));
@@ -511,6 +534,7 @@
 
   /* ---------- a conversation ---------- */
   function msgHTML(m, c, prev){
+    if(m.system){ const tx=sysText(m, c); return tx ? '<div class="sys" data-mid="'+esc(m.id||'')+'">'+esc(tx)+'</div>' : ''; }
     const mine=mineOf(m), group=c.type!=='person';
     const showFrom=group && !mine && (!prev || prev.from!==m.from || dayKey(prev.at)!==dayKey(m.at));
     let body;
@@ -552,8 +576,10 @@
     const c=CHATS.find(x=>x.id===open), box=el('conv');
     if(!c){ box.innerHTML='<div class="empty">Pick a chat on the left, or start a new one.</div>'; return; }
     const sub=c.type==='person' ? (c.sub||'') : c.members.length+' people · '+c.members.filter(n=>n!==ME).slice(0,4).join(', ')+(c.members.length>5?'…':'');
+    const isGrp=GROUPS() && c.type==='group';
     let h='<div class="conv-top"><button class="back" data-act="back" aria-label="Back to chats">‹</button>'+avatar(c)+
-      '<div class="who"><b>'+esc(c.name)+'</b><span>'+esc(sub)+'</span></div>'+
+      '<div class="who'+(isGrp?' grpw" data-act="grpinfo" role="button" tabindex="0" title="Group settings':'')+'"><b>'+esc(c.name)+'</b><span>'+esc(sub)+'</span></div>'+
+      (isGrp ? '<button class="btn ghost sm" data-act="grpinfo" title="People and settings">👥 '+(c.members||[]).length+'</button>' : '')+
       '<button class="btn ghost sm" data-act="call" title="Calls open Microsoft Teams">📞 Call</button></div><div class="msgs" id="msgs">';
     if(REALCHAT && c.next) h+='<button class="btn ghost sm more" data-act="more">Load earlier messages</button>';
     if(REALCHAT && !c.loaded) h+='<div class="empty">Loading…</div>';
@@ -652,7 +678,7 @@
   function emoLoad(){
     if(window.PH_EMOJI) return Promise.resolve(window.PH_EMOJI);
     if(emoP) return emoP;
-    emoP=new Promise((res, rej)=>{ const sc=document.createElement('script'); sc.src='emoji.js?v=hc192'; sc.async=true;
+    emoP=new Promise((res, rej)=>{ const sc=document.createElement('script'); sc.src='emoji.js?v=hc193'; sc.async=true;
       sc.onload=()=>window.PH_EMOJI ? res(window.PH_EMOJI) : rej(new Error('no emoji')); sc.onerror=()=>{ emoP=null; sc.remove(); rej(new Error('no emoji')); };
       document.head.appendChild(sc); });
     return emoP;
@@ -976,6 +1002,7 @@
     const offices=fromAdmin('officeNames').length ? fromAdmin('officeNames') : ['Carlsbad','Clovis','Hobbs','Lubbock','San Angelo','Mansfield','Cruces FFO','Cruces LCO'];
     const teams=fromAdmin('teamNames').length ? fromAdmin('teamNames') : ['Doctors','TCs','Office Managers','Leadership Team','Marketing Team'];
     openDlg(top('New chat')+'<div class="dm-body"><input class="search" id="nq" placeholder="Search a person, an office or a team" autocomplete="off"><div class="pick" id="pick">'+
+      (GROUPS() ? '<button data-act="grpnew">'+avatar({type:'group', name:'New group'}, true)+'<span><b>＋ New group</b><small>Give it a name and pick the people</small></span></button>' : '')+
       '<div class="grp">Offices - everyone who works there</div>'+offices.map(o=>'<button data-act="mk" data-t="office" data-v="'+esc(o)+' office">'+avatar({type:'office',name:o},true)+'<span>'+esc(o)+' office</span></button>').join('')+
       '<div class="grp">Teams</div>'+teams.map(t=>'<button data-act="mk" data-t="team" data-v="'+esc(t)+'">'+avatar({type:'team',name:t},true)+'<span>'+esc(t)+'</span></button>').join('')+
       '<div class="grp">People</div>'+staff.map(n=>'<button data-act="mk" data-t="person" data-v="'+esc(n)+'">'+personAv(n)+'<span>'+esc(n)+'</span></button>').join('')+
@@ -1095,6 +1122,7 @@
     const before={}; CHATS.forEach(c=>{ before[c.id]=c; });
     CHATS=got.map(g=>{
       const was=before[g.id], c=was||{msgs:[], loaded:false, next:'', unread:0};
+      know(g.people);
       const other=g.people.filter(p=>p.id!==MEID);
       Object.assign(c, {id:g.id, type:g.type, name:g.name, people:g.people, members:g.people.map(p=>p.name), webUrl:g.webUrl, read:g.read,
         sub:g.type==='person' ? ((other[0] && other[0].email)||'') : '',
@@ -1285,14 +1313,17 @@
   function newChatDlgReal(){
     if(CG.TEST){
       const ts=CG.testers();
+      const meE=myEmail(), others=ts.filter(t=>String(t.email||'').toLowerCase()!==meE);
       openDlg(top('New chat')+'<div class="dm-body"><div class="note">'+(ONLIVE ? 'Pilot: you can start a chat with the pilot group only.' : 'Test: you can start a chat with your testers only.')+'</div><div class="pick">'+
+        (GROUPS() && others.length>1 ? '<button data-act="grpnew">'+avatar({type:'group', name:'New group'}, true)+'<span><b>＋ New group</b><small>Give it a name and pick the people</small></span></button>' : '')+
         (ts.length ? ts.map(t=>'<button data-act="mkreal" data-v="'+esc(t.email)+'">'+personAv(t.name, t.email)+'<span>'+esc(t.name)+'<small>'+esc(t.email)+'</small></span></button>').join('')+
-          (ts.length>1 ? '<button data-act="mkgroup">'+avatar({type:'group', name:'Testers'}, true)+'<span>All your testers<small>A group chat</small></span></button>' : '')
+          (ts.length>1 && !GROUPS() ? '<button data-act="mkgroup">'+avatar({type:'group', name:'Testers'}, true)+'<span>All your testers<small>A group chat</small></span></button>' : '')
           : '<div class="grp">No testers yet</div>')+
         '</div>'+(ONLIVE ? '' : '<div><button class="btn ghost sm" data-act="testers">Add testers</button></div>')+'</div>');
       return;
     }
-    openDlg(top('New chat')+'<div class="dm-body"><input class="search" id="nqr" placeholder="Search for a person" autocomplete="off"><div class="pick" id="nres" hidden></div></div>');
+    openDlg(top('New chat')+'<div class="dm-body">'+(GROUPS() ? '<div class="pick"><button data-act="grpnew">'+avatar({type:'group', name:'New group'}, true)+'<span><b>＋ New group</b><small>Give it a name and pick the people</small></span></button></div>' : '')+
+      '<input class="search" id="nqr" placeholder="Search for a person" autocomplete="off"><div class="pick" id="nres" hidden></div></div>');
     setTimeout(()=>{ const i=el('nqr'); if(i) i.focus(); }, 30);
   }
   let psT=null;
@@ -1348,6 +1379,160 @@
       }, e=>{ b.disabled=false; toast('Couldn’t load more: '+((e && e.message)||e)); });
       return;
     }
+    return false;
+  }
+
+  /* ---------- GROUPS (18/11/2026, Cory: "Flexibility to create their own group" - like Slack channels; "Groups"
+     because in Teams they're invite-only group chats, and a Teams "channel" is something else). ＋ New group: a name
+     and at least 2 people. Tap a group's name (or 👥) for: rename, add people, take someone out, leave. Every change
+     shows in the conversation ("Priya added Quinn") and in Teams. Real chat: chatgraph.js createGroup / renameGroup /
+     addPeople / removePerson / leaveGroup (pilot: testers only, checked there); taking out / leaving only once Microsoft's
+     ChatMember.ReadWrite permission is granted. SANDBOX ONLY until GROUPS_LIVE is true (one live device: ph_chat_groups=1). */
+  const GROUPS_LIVE=false;
+  const GROUPS=()=>{ if(GROUPS_LIVE || !ONLIVE) return true; try{ return localStorage.getItem('ph_chat_groups')==='1'; }catch(_){ return false; } };
+  let GP=null;                 // the people being picked: {mode:'new'|'add', chat, picked:{key:{id,name,email}}}
+  /* Names Teams leaves out of its notes (someone taken out is no longer in the chat's people): remembered from every
+     chat seen this visit, else looked up once and the conversation redrawn. */
+  const KNOWN={}, ASKED={};
+  const know=list=>(list||[]).forEach(p=>{ if(p && p.id && p.name) KNOWN[p.id]=p.name; });
+  let knownT=null;
+  function lookUp(id){
+    if(!REALCHAT || !id || ASKED[id] || !CG.userById) return; ASKED[id]=1;
+    CG.userById(id).then(u=>{ if(u && u.name){ KNOWN[id]=u.name; clearTimeout(knownT); knownT=setTimeout(()=>{ const c=cur(); if(c && !c.msgs.some(m=>m.pending)) renderConv(); renderList(); }, 150); } }, ()=>{});
+  }
+  function sysText(m, c){
+    const isMe=x=>!!x && (REALCHAT ? (x.id && x.id===MEID) : x.name===ME);
+    const nameOf=x=>{ if(!x) return 'Someone'; if(isMe(x)) return 'You'; if(x.name) return x.name; const p=(c.people||[]).find(q=>q.id && q.id===x.id);
+      if(p && p.name) return p.name; if(x.id && KNOWN[x.id]) return KNOWN[x.id]; lookUp(x.id); return 'Someone'; };
+    const and=a=>a.length<=1 ? (a[0]||'') : a.slice(0,-1).join(', ')+' and '+a[a.length-1];
+    const by=nameOf(m.by), who=(m.who||[]).filter(x=>!(x.id ? x.id===(m.by||{}).id : x.name===(m.by||{}).name));
+    if(m.kind==='made') return by+' made the group “'+(m.topic||c.name)+'”';
+    if(m.kind==='added') return who.length ? by+' added '+and(who.map(nameOf)) : '';
+    if(m.kind==='removed') return !who.length ? by+' left the group' : by+' took '+and(who.map(nameOf))+' out';
+    if(m.kind==='renamed') return by+' named the group “'+(m.topic||c.name)+'”';
+    return '';
+  }
+  function grpPool(){                 // who can be picked without searching: the testers (pilot), or the made-up staff
+    if(REALCHAT){ const me=myEmail(); return CG.TEST ? CG.testers().filter(t=>String(t.email||'').toLowerCase()!==me).map(t=>({id:'', name:t.name||t.email, email:String(t.email||'').toLowerCase()})) : null; }
+    return (window.STAFF||[]).map(p=>p.n).filter(n=>n && n!==ME && !/Lawing/i.test(n)).slice(0,60).map(n=>({id:'', name:n, email:''}));
+  }
+  const gKey=p=>(p.email||p.name||'').toLowerCase();
+  function grpChips(){ const b=el('gchips'); if(!b || !GP) return; b.innerHTML=Object.values(GP.picked).map(p=>'<span class="gchip">'+esc(p.name)+'<button type="button" data-act="gunpick" data-k="'+esc(gKey(p))+'" aria-label="Take '+esc(p.name)+' off">×</button></span>').join(''); }
+  function grpRows(list){
+    const inChat={}; if(GP && GP.chat) (REALCHAT ? (GP.chat.people||[]).map(p=>p.email) : (GP.chat.members||[]).map(n=>n.toLowerCase())).forEach(k=>{ if(k) inChat[String(k).toLowerCase()]=1; });
+    const rows=list.filter(p=>!inChat[gKey(p)]);
+    return rows.length ? rows.map(p=>{ const on=!!(GP && GP.picked[gKey(p)]);
+      return '<button type="button" class="'+(on?'on':'')+'" data-act="gpick" data-k="'+esc(gKey(p))+'" data-id="'+esc(p.id||'')+'" data-name="'+esc(p.name)+'" data-email="'+esc(p.email||'')+'">'+personAv(p.name, p.email)+
+        '<span>'+esc(p.name)+(p.email ? '<small>'+esc(p.email)+'</small>' : '')+'</span><span class="tick">'+(on?'✓':'')+'</span></button>'; }).join('')
+      : '<div class="grp">'+(list.length ? 'Everyone here is already in it' : 'No one found')+'</div>';
+  }
+  function grpPickHTML(){
+    const pool=grpPool();
+    return '<div class="lab2">People</div><div class="gchips" id="gchips"></div>'+
+      '<input class="search" id="gq" placeholder="'+(pool ? 'Type to narrow the list' : 'Search for a person')+'" autocomplete="off" data-nomic>'+
+      (REALCHAT && CG.TEST ? '<div class="note">'+(ONLIVE ? 'Pilot: only people in the pilot group can be added for now.' : 'Test: only your testers can be added.')+'</div>' : '')+
+      '<div class="pick" id="gres"'+(pool ? '' : ' hidden')+'>'+(pool ? grpRows(pool) : '')+'</div><div class="gerr" id="gerr"></div>';
+  }
+  const gErr=t=>{ const e=el('gerr'); if(e) e.textContent=t||''; };
+  function grpNew(){
+    GP={mode:'new', chat:null, picked:{}};
+    openDlg(top('New group')+'<div class="dm-body"><label class="lab2">Group name<input class="search" id="gname" maxlength="80" placeholder="e.g. Front desk leads" autocomplete="off" data-nomic></label>'+grpPickHTML()+'</div>'+
+      '<div class="dm-foot"><button class="btn ghost" data-act="close">Cancel</button><button class="btn" data-act="grpmake">Create group</button></div>');
+    grpChips(); setTimeout(()=>{ const i=el('gname'); if(i) i.focus(); }, 30);
+  }
+  let gsT=null;
+  function grpSearch(inp){
+    const box=el('gres'), pool=grpPool(), q=inp.value.trim().toLowerCase(); if(!box) return;
+    if(pool){ box.innerHTML=grpRows(pool.filter(p=>!q || (p.name+' '+p.email).toLowerCase().indexOf(q)>=0)); return; }
+    clearTimeout(gsT); if(q.length<2){ box.hidden=true; box.innerHTML=''; return; }
+    gsT=setTimeout(()=>{ CG.searchPeople(q).then(list=>{ if(inp.value.trim().toLowerCase()!==q) return; box.hidden=false; box.innerHTML=grpRows(list.filter(u=>u.id!==MEID)); },
+      e=>{ box.hidden=false; box.innerHTML='<div class="grp">'+esc('Search didn’t work: '+((e && e.message)||e))+'</div>'; }); }, 300);
+  }
+  function grpPickToggle(b){
+    if(!GP) return; const k=b.dataset.k;
+    if(GP.picked[k]) delete GP.picked[k]; else GP.picked[k]={id:b.dataset.id||'', name:b.dataset.name||'', email:b.dataset.email||''};
+    b.classList.toggle('on', !!GP.picked[k]); const tk=b.querySelector('.tick'); if(tk) tk.textContent=GP.picked[k] ? '✓' : '';
+    grpChips(); gErr('');
+  }
+  async function idsOf(list){ const us=[]; for(const p of list) us.push(p.id ? p : await CG.userByEmail(p.email)); return us; }
+  async function grpMake(btn){
+    const name=String((el('gname')||{}).value||'').trim(), ps=Object.values((GP && GP.picked)||{});
+    if(!name){ gErr('Give the group a name.'); return; }
+    if(ps.length<2){ gErr('Pick at least 2 people - a chat with one person is a normal chat.'); return; }
+    if(!REALCHAT){
+      const id='g'+Date.now(), c={id, type:'group', name, members:[ME].concat(ps.map(p=>p.name)), unread:0, msgs:[{id:id+'-0', system:true, kind:'made', by:{name:ME}, who:[], topic:name, at:Date.now()},
+        {id:id+'-1', system:true, kind:'added', by:{name:ME}, who:ps.map(p=>({name:p.name})), at:Date.now()}]};
+      CHATS.unshift(c); closeDlg(); openChat(id); toast('Group made ✓'); return;
+    }
+    btn.disabled=true; gErr('');
+    try{
+      const us=await idsOf(ps), ch=await CG.createGroup(MEID, us, name);
+      closeDlg(); await loadList(false);
+      if(!CHATS.some(c=>c.id===ch.id)){
+        const people=[{id:MEID, name:ME, email:myEmail()}].concat(us);
+        CHATS.unshift({id:ch.id, type:'group', name, topic:name, people, members:people.map(p=>p.name), msgs:[], loaded:true, next:'', unread:0, read:Date.now(), local:true,
+          sub:'', photo:'', lastMsg:{at:Date.now(), text:'', from:'', mine:true}});
+      }
+      openChat(ch.id); toast('Group made ✓');
+    }catch(e){ btn.disabled=false; gErr('Not made: '+((e && e.message)||e)); }
+  }
+  /* A group's settings */
+  async function grpInfo(view){
+    const c=cur(); if(!c || c.type!=='group') return;
+    const can=!REALCHAT || CG.canSend(c, MEID), mng=REALCHAT ? await CG.canManageMembers() : true;
+    const ppl=REALCHAT ? (c.people||[]).map(p=>({id:p.id, name:p.name||p.email||'Someone', email:p.email, me:p.id===MEID}))
+      : (c.members||[]).map(n=>({id:n, name:n, email:'', me:n===ME}));
+    ppl.sort((a,b)=>(b.me-a.me) || a.name.localeCompare(b.name));
+    let body;
+    if(view==='rename') body='<label class="lab2">Group name<input class="search" id="gname" maxlength="80" value="'+esc(c.name)+'" autocomplete="off" data-nomic></label><div class="gerr" id="gerr"></div>';
+    else if(view==='add'){ GP={mode:'add', chat:c, picked:{}}; body=grpPickHTML(); }
+    else if(view && view.rm) body='<div>Take <b>'+esc(view.rm.name)+'</b> out of “'+esc(c.name)+'”? They stop getting its messages. Someone in the group can add them back.</div><div class="gerr" id="gerr"></div>';
+    else if(view==='leave') body='<div>Leave “'+esc(c.name)+'”? You stop getting its messages. Someone in the group can add you back.</div><div class="gerr" id="gerr"></div>';
+    else body='<div class="gname"><b>'+esc(c.name)+'</b>'+(can ? '<button class="btn ghost sm" data-act="grpren">Rename</button>' : '')+'</div>'+
+      '<div class="pick"><div class="grp">People ('+ppl.length+')</div>'+ppl.map(p=>'<div class="trow">'+personAv(p.name, p.email)+'<span style="flex:1;min-width:0">'+esc(p.name)+(p.me?' <small style="display:inline">(you)</small>':'')+(p.email?'<small>'+esc(p.email)+'</small>':'')+'</span>'+
+        (can && mng && !p.me ? '<button class="x" data-act="grprm" data-v="'+esc(p.id)+'" data-name="'+esc(p.name)+'" aria-label="Take '+esc(p.name)+' out" title="Take out of the group">×</button>' : '')+'</div>').join('')+'</div>'+
+      (can ? '<div><button class="btn ghost sm" data-act="grpadd">＋ Add people</button></div>' : '')+
+      (REALCHAT && !mng ? '<div class="small" style="color:var(--soft)">Taking people out and leaving turn on once Microsoft’s ChatMember.ReadWrite permission is granted.</div>' : '')+
+      (!can ? '<div class="note">'+(ONLIVE ? 'Pilot: only the pilot group can change a group for now.' : 'Test: only your testers can change a group.')+'</div>' : '');
+    const foot=view==='rename' ? '<button class="btn ghost" data-act="grpinfo">Cancel</button><button class="btn" data-act="grprenok">Save</button>'
+      : view==='add' ? '<button class="btn ghost" data-act="grpinfo">Cancel</button><button class="btn" data-act="grpaddok">Add</button>'
+      : view && view.rm ? '<button class="btn ghost" data-act="grpinfo">Cancel</button><button class="btn red" data-act="grprmok" data-v="'+esc(view.rm.id)+'" data-name="'+esc(view.rm.name)+'">Take out</button>'
+      : view==='leave' ? '<button class="btn ghost" data-act="grpinfo">Cancel</button><button class="btn red" data-act="grpleaveok">Leave group</button>'
+      : (mng ? '<button class="btn warn" data-act="grpleave">Leave group</button>' : '')+'<button class="btn" data-act="close">Done</button>';
+    openDlg(top(view==='add' ? 'Add people' : view==='rename' ? 'Rename the group' : view==='leave' ? 'Leave the group' : view && view.rm ? 'Take someone out' : 'Group')+'<div class="dm-body">'+body+'</div><div class="dm-foot">'+foot+'</div>');
+    if(view==='add') grpChips();
+    if(view==='rename') setTimeout(()=>{ const i=el('gname'); if(i){ i.focus(); i.select(); } }, 30);
+  }
+  /* after a change: the made-up chat notes it; the real one re-reads the list (Teams writes its own note) */
+  async function grpAfter(c, note, msg){
+    if(!REALCHAT){ c.msgs.push(Object.assign({id:c.id+'-'+Date.now(), system:true, at:Date.now(), by:{name:ME}}, note)); }
+    else { await loadList(false); setTimeout(()=>{ pollOpen(); }, 1200); }
+    renderList(); if(open===c.id) renderConv(); if(msg) toast(msg);
+  }
+  async function grpDo(btn, fn){ btn.disabled=true; gErr(''); try{ await fn(); }catch(e){ btn.disabled=false; gErr('Not done: '+((e && e.message)||e)); } }
+  function grpAct(act, b, v){
+    const c=cur();
+    if(act==='grpnew'){ grpNew(); return true; }
+    if(act==='gpick'){ grpPickToggle(b); return true; }
+    if(act==='gunpick'){ if(GP){ delete GP.picked[b.dataset.k]; grpChips(); const r=document.querySelector('#gres [data-k="'+CSS.escape(b.dataset.k)+'"]'); if(r){ r.classList.remove('on'); const tk=r.querySelector('.tick'); if(tk) tk.textContent=''; } } return true; }
+    if(act==='grpmake'){ grpMake(b); return true; }
+    if(!c || c.type!=='group') return false;
+    if(act==='grpinfo'){ grpInfo(); return true; }
+    if(act==='grpren'){ grpInfo('rename'); return true; }
+    if(act==='grpadd'){ grpInfo('add'); return true; }
+    if(act==='grprm'){ grpInfo({rm:{id:v, name:b.dataset.name||'them'}}); return true; }
+    if(act==='grpleave'){ grpInfo('leave'); return true; }
+    if(act==='grprenok'){ const nm=String((el('gname')||{}).value||'').trim(); if(!nm){ gErr('Give the group a name.'); return true; }
+      grpDo(b, async ()=>{ if(REALCHAT) await CG.renameGroup(c, MEID, nm); c.name=nm; c.topic=nm; closeDlg(); await grpAfter(c, {kind:'renamed', topic:nm}, 'Renamed ✓'); }); return true; }
+    if(act==='grpaddok'){ const ps=Object.values((GP && GP.picked)||{}); if(!ps.length){ gErr('Pick who to add.'); return true; }
+      grpDo(b, async ()=>{ if(REALCHAT) await CG.addPeople(c, MEID, await idsOf(ps)); else c.members=c.members.concat(ps.map(p=>p.name));
+        closeDlg(); await grpAfter(c, {kind:'added', who:ps.map(p=>({name:p.name}))}, ps.length===1 ? ps[0].name+' added ✓' : ps.length+' people added ✓'); }); return true; }
+    if(act==='grprmok'){ const nm=b.dataset.name||'them';
+      grpDo(b, async ()=>{ if(REALCHAT) await CG.removePerson(c, MEID, v); else c.members=c.members.filter(n=>n!==v);
+        closeDlg(); await grpAfter(c, {kind:'removed', who:[{name:nm}]}, nm+' taken out ✓'); }); return true; }
+    if(act==='grpleaveok'){
+      grpDo(b, async ()=>{ if(REALCHAT) await CG.leaveGroup(c, MEID);
+        closeDlg(); CHATS=CHATS.filter(x=>x.id!==c.id); open=null; el('app').classList.remove('open'); renderList(); renderConv(); fit(); toast('You left “'+c.name+'”'); }); return true; }
     return false;
   }
 
@@ -1426,6 +1611,7 @@
     const b=e.target.closest('[data-act]'); if(!b) return;
     const act=b.dataset.act, v=b.dataset.v;
     if(V2() && v2Click(e, b, act, v)) return;
+    if(GROUPS() && /^(grp|gpick|gunpick)/.test(act) && grpAct(act, b, v)) return;
     if(act==='open') return openChat(v);
     if(act==='back'){ el('app').classList.remove('open'); open=null; renderList(); fit(); return; }
     if(act==='filter'){ filter=v; renderChips(); renderList(); return; }
@@ -1474,6 +1660,8 @@
   document.addEventListener('keydown', e=>{
     if(e.key==='Escape'){ if(lb) return; if(popEl){ const back=popEl.dataset.purpose==='compose'; popClose(); if(back) edRestore(); return; } closeDlg(); }
     if(e.key==='Enter' && e.target && (e.target.id==='lkurl' || e.target.id==='lktx')){ e.preventDefault(); linkOk(); return; }
+    if(e.key==='Enter' && e.target && e.target.id==='gname'){ e.preventDefault(); const b=document.querySelector('#dlg [data-act="grprenok"]'); if(b) b.click(); else { const q=el('gq'); if(q) q.focus(); } return; }
+    if(e.key==='Enter' && e.target && e.target.classList && e.target.classList.contains('grpw')){ e.preventDefault(); e.target.click(); return; }
     if(e.key==='Enter' && e.target && e.target.id==='emq'){ e.preventDefault(); const f=document.querySelector('#embody [data-act="empick"]'); if(f) f.click(); return; }
     if(e.key==='Enter' && !e.shiftKey && !e.isComposing && e.target && e.target.id==='txt'){
       if(isEd(e.target)){
@@ -1491,6 +1679,7 @@
     if(e.target.id==='tq' || e.target.id==='nqr') peopleSearch(e.target);
     if(e.target.id==='nq'){ const qq=e.target.value.trim().toLowerCase(); document.querySelectorAll('#pick button').forEach(x=>{ x.style.display=!qq||x.textContent.toLowerCase().indexOf(qq)>=0?'':'none'; }); }
     if(e.target.id==='emq'){ empSearch(); return; }
+    if(e.target.id==='gq'){ grpSearch(e.target); return; }
     if(e.target.id==='txt' && isEd(e.target)){ edEmptyMark(e.target); edSave(); typedMention(e.target); fmtPaint(); }
     else if(e.target.id==='txt'){ e.target.style.height='auto'; e.target.style.height=Math.min(120,e.target.scrollHeight)+'px'; }
   });

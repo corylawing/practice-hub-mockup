@@ -440,6 +440,27 @@ I can confidently say that the chat feature should go next. The production thing
    localStorage ph_chat_emoji_recent (18 defaults). Used by the message box (emoji button) and "More emoji" on a
    reaction. All 1,425 toned sequences checked against Unicode's list. test/chatv2.test.js (42).
    STILL QUEUED: a "chat alerts: Home-Brace / Teams" choice.
+28. **CHAT GROUPS (18/11/2026; hc193; SANDBOX ONLY until chat.html GROUPS_LIVE is true; one live device: ph_chat_groups=1).**
+   Cory: "Flexibility to create their own group" - like Slack channels; named "Groups" (in Teams they're invite-only group
+   chats; a Teams "channel" is something else). ＋ New group first in every New chat (mock-up / pilot / everyone): a name
+   + at least 2 people (pilot: the pilot list only; everyone: search) -> Teams group chat (topic = name, all owners).
+   Tap the group's name or 👥 N: Rename (PATCH topic), ＋ Add people (POST members, whole history visible), × take out
+   and Leave group (DELETE membership) - each asks first. chatgraph.js createGroup/renameGroup/addPeople/removePerson/
+   leaveGroup/canManageMembers/userById; testersOnly() = the pilot lock inside. Take out / Leave need ChatMember.ReadWrite:
+   offered only when the Graph token's scp has it (canManageMembers decodes the token), else a note says so. Teams' own
+   notes (systemEventMessage: membersAdded / membersDeleted / chatRenamed -> mapEvent) show as grey lines ("You added
+   Quinn Quill", "… took … out", "… left the group", "You named the group “…”"); names Teams leaves blank come from
+   KNOWN (every chat's people this visit) or one /users/{id} look-up. Chat initials skip nicknames ("Avery (Ave) Alder" =
+   AA). test/chatgroups.test.js (18). Browser: mock-up (make, rename, add, take out, leave, notes); live-mode harness
+   with pretend Microsoft (scratchpad chatgroups-run.js; fakelive: group POST /chats, PATCH topic, members POST/DELETE,
+   events, a JWT with fake_scp): live without the switch = no New group; pool = pilot only; errors for no name / 1
+   person; body right; rename; no × / Leave without the permission (+ note); outsider refused; with it: take out + leave
+   (gone after refresh); names right.
+   MICROSOFT PERMISSIONS (18/11, Cory has admin for ~1 week only): asked him to add + grant (Delegated) ChatMember.ReadWrite,
+   Presence.Read.All, Calendars.ReadWrite, Calendars.ReadWrite.Shared, OnlineMeetings.ReadWrite, Mail.Send, User.Read.All,
+   User.ReadWrite.All, Sites.Manage.All, Files.ReadWrite.All, ChannelMessage.Send, ChannelMessage.Read.All, Tasks.ReadWrite,
+   AuditLog.Read.All; + while admin: Department/Office location for everyone, Teams licences, the SharePoint B2B setting,
+   optionally himself as Owner of the app registration (check with Adam). NOT CONFIRMED DONE YET.
 26. **Add to payroll after "entered" (Heather 18/11: "Once I click on all payroll entered ... it takes away the ability for
    me to add a bonus to another payroll. I just had a team hit goal this afternoon"; hc189).** addsCard hid ＋ Add on an
    entered pay period although the dialog only ever offers pay periods still open (addPeriods). Now ＋ Add shows while
