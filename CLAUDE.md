@@ -472,6 +472,22 @@ I can confidently say that the chat feature should go next. The production thing
    (Cory has an OrthoFi login). Excel seen 18/11 (Downloads: San Angelo = no Medicaid, Clovis = Medicaid): one row per
    month + quarter averages, YTD, year averages, goals row (Collection 91-93%, Adjustments 7-9%, A/R 5.5-6x, delinquent
    5-7%, case acceptance >70%); the Medicaid block also has PATIENT NAMES (PHI) - Home-Brace stores numbers only.
+   ORTHOFI LOOKED AT 18/11 (Cory's Safari, read-only, his OK; no patient rows read; NO FIGURES WRITTEN HERE - public repo):
+   portal.orthofi.com (menus: Dashboard, Patients, Team Management, Insurance, Reports, Document Center, My Account - no
+   API/integrations page seen); Reports -> business-intelligence.orthofi.com: Dashboard (Business Health Summary /
+   Dashboard, Insurance A/R Summary/Details - Tableau via posh.orthofi.com), Accounting (Monthly Balance Sheet, Patient A/R
+   [LOCKED for Cory's login], Production Adjustments, Discounts, Misc Charges, Patient Account Summary, Interest Accrual),
+   Practice Performance (Starts [LOCKED], Kept NPE, Outcomes, Conversions, Conversions by Month, Referral Sources),
+   Collections (Summary, Details, Collections & Charges, Day Sheet), Admin (Delinquent, Insurance Reconciliation, Goals).
+   Classic report page = portal.orthofi.com/ReportingNew/Index#<id>/Month/<yyyymm>/... (Monthly Balance Sheet id 19);
+   filters PracticeId (483 Farnsworth Orthodontics = Lubbock 1001, Clovis 1002, Hobbs 1003, Carlsbad 1004, San Angelo 1607,
+   Las Cruces 2630; 1181 Sunflower Orthodontics PLLC; 1206 Las Cruces Orthodontics), PracticeLocationId, month/year;
+   buttons Run Report / EXPORT / EXPORT PDF. MATCH: San Angelo Sep 2026 Monthly Balance Sheet = Heather's Excel EXACTLY
+   for Gross Production (= "Production"), Gross Collections (= "Collections Total"), Net Production Adjustments (=
+   "Adjustments Total", not the production-adjustments subtotal) and Net Production (= "Adjusted Production"). A/R does
+   NOT match the balance sheet's Ending Balance (Excel lower) - probably Patient A/R + Insurance A/R from other reports;
+   to check. # A/R accounts, # delinquent, NP exams, active patients, discounts, 90+ = Patient A/R / Delinquent / Kept
+   NPE / Discounts / Business Health (to map).
    OrthoFi (web 18/11): no public API (partner-only; Gaidge integration; some connectors need "API access" from OrthoFi);
    reports export as CSV/PDF (Collections & Charges, Patient A/R delinquency, Insurance A/R summary, Business Health
    dashboard). Plan put to Cory: ask OrthoFi for API access; meanwhile a monthly "upload the OrthoFi exports" that fills
