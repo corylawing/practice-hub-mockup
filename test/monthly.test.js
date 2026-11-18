@@ -132,6 +132,19 @@ t('Settings: every change saves the moment it is made and says so - switches, ta
   /async function saveSet\(patch, said\)/.test(P) && /M\.cleanSettings\(Object\.assign\(\{\}, M\.cleanSettings\(cur\|\|SET\), patch\)\)/.test(P) && /role="switch"/.test(P) &&
   /class="drop" id="impdrop"/.test(P) && /ondrop="MONTHLY\.impDrop\(event\)"/.test(P) && !/Save settings/.test(P) && /The first number is the lower one/.test(P));
 
+/* STREAKS (Cory 18/11: "Streaks on the Monthly Report ... as long as its animation motion art") */
+const ON={gp:100, gc:93, adj:-7, arn:100, deln:5}, OFFC={gp:100, gc:85, adj:-7}, OFFA={gp:100, gc:93, adj:-12}, OFFD={gp:100, gc:93, adj:-7, arn:100, deln:9};
+t('a month is on target only when collection, adjustments and late accounts all are (A/R ratio is not part of it); no numbers = no answer',
+  M.onTarget(ON)===true && M.onTarget(OFFC)===false && M.onTarget(OFFA)===false && M.onTarget(OFFD)===false && M.onTarget(Object.assign({ar:900}, ON))===true && M.onTarget(null)===null && M.onTarget({gc:5})===null);
+const RUN={'2025-12':ON, '2026-1':ON, '2026-2':ON, '2026-3':OFFC, '2026-4':ON}, at=(y,m)=>RUN[y+'-'+m];
+t('a streak counts back month by month, across the new year, and stops at a miss or an empty month',
+  M.streak(at, 2026, 2)===3 && M.streak(at, 2026, 3)===0 && M.streak(at, 2026, 4)===1 && M.streak(at, 2026, 5)===0);
+t('milestones that burst: 3, 6, 12, 24 months', JSON.stringify(M.MILESTONES)==='[3,6,12,24]');
+t('the page: an "On a roll" strip (longest first, a run that ended this month said), a flame in the table, a banner on the office - motion art, still for "less motion"',
+  /<b>On a roll<\/b>/.test(P) && /run ended in '/.test(P) && /class="skmini"/.test(P) && /class="skban"/.test(P) && /@keyframes fl-flick/.test(P) && /@keyframes fl-ember/.test(P) &&
+  /function freshMilestone\(o, y, m, n\)/.test(P) && /\.flame svg,\.flame svg \.in,\.flame \.em,\.streaks::before,\.burst i\{animation:none!important\}/.test(P));
+t('a month still going counts the run up to the month before', /function runAt\(o, y, m\)\{ const p=isOpen\(y,m\) \? step\(y,m,-1\) : \{y,m\};/.test(P));
+
 /* switches and permissions */
 t('OFF on the live site until Cory says "monthly live" (an admin can preview with ?monthlypreview)', /const MONTHLY_LIVE=false;/.test(U) && /function monthlyOn\(\)/.test(U) && /monthlypreview/.test(U));
 t('a tab: everyone in the sandbox; live = the switch, then Teams & Access (or an admin)',

@@ -231,6 +231,35 @@
   .btn.saving{position:relative;color:transparent}
   .btn.saving::after{content:'';position:absolute;inset:0;margin:auto;width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:btnspin .6s linear infinite}
   @keyframes btnspin{to{transform:rotate(360deg)}}
+  /* STREAKS: a flame that flickers, glows and throws embers; numbers count up; milestones burst */
+  .flame{position:relative;display:inline-block;width:20px;height:26px;flex:none;vertical-align:-6px}
+  .flame svg{width:100%;height:100%;overflow:visible;transform-origin:50% 100%;filter:drop-shadow(0 0 5px rgba(245,158,11,.55));animation:fl-flick 1.15s ease-in-out infinite}
+  .flame svg .in{transform-origin:50% 100%;animation:fl-in .7s ease-in-out infinite alternate}
+  .flame .em{position:absolute;left:50%;bottom:55%;width:3px;height:3px;margin-left:-1.5px;border-radius:50%;background:#FDBA74;opacity:0;animation:fl-ember 1.7s linear infinite}
+  .flame .em:nth-of-type(2){animation-delay:.55s;--x:5px}.flame .em:nth-of-type(3){animation-delay:1.1s;--x:-5px}
+  .flame.big{width:44px;height:56px}.flame.big .em{width:4px;height:4px}
+  @keyframes fl-flick{0%,100%{transform:scale(1,1) skewX(0)}25%{transform:scale(.96,1.05) skewX(-2deg)}50%{transform:scale(1.03,.96) skewX(1.5deg)}75%{transform:scale(.98,1.03) skewX(-1deg)}}
+  @keyframes fl-in{from{transform:scale(.92,.9)}to{transform:scale(1.06,1.1)}}
+  @keyframes fl-ember{0%{opacity:0;transform:translate(0,0)}15%{opacity:1}100%{opacity:0;transform:translate(var(--x,2px),-26px)}}
+  .streaks{position:relative;overflow:hidden;border-radius:var(--radius);padding:16px 18px;color:#fff;background:linear-gradient(120deg,#2a1406 0%,#5a2a0c 45%,#0F2A4A 100%);box-shadow:var(--shadow)}
+  .streaks::before{content:'';position:absolute;inset:-40%;background:radial-gradient(closest-side,rgba(245,158,11,.35),transparent 70%) 15% 70%/45% 60% no-repeat,radial-gradient(closest-side,rgba(229,72,43,.3),transparent 70%) 60% 30%/50% 60% no-repeat;filter:blur(20px);animation:sk-glow 8s ease-in-out infinite alternate;pointer-events:none}
+  @keyframes sk-glow{to{transform:translate(4%,-3%) scale(1.08)}}
+  .streaks .skh{position:relative;display:flex;align-items:center;gap:12px}
+  .streaks .skh b{display:block;font-size:17px}.streaks .skh span{font-size:12.5px;color:#f5d9b8}
+  .streaks .skl{position:relative;display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+  .sk{display:flex;align-items:center;gap:8px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);border-radius:14px;padding:8px 13px 8px 10px;color:#fff;font-family:inherit;cursor:pointer;backdrop-filter:blur(6px)}
+  .sk:hover{background:rgba(255,255,255,.15)}
+  .sk .n{font-size:22px;font-weight:900;font-variant-numeric:tabular-nums;background:linear-gradient(180deg,#FFF3C4,#FDBA74 60%,#F97316);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sk .w{display:flex;flex-direction:column;text-align:left;line-height:1.15}.sk .w b{font-size:13.5px}.sk .w small{font-size:11.5px;color:#f5d9b8}
+  .streaks .ended{position:relative;margin-top:10px;font-size:12.5px;color:#f5d9b8}
+  .skmini{display:inline-flex;align-items:center;gap:2px;margin-left:6px;font-weight:800;font-size:12px;color:#c2410c;vertical-align:middle}
+  .skmini .flame{width:13px;height:17px;vertical-align:-3px}
+  .skban{display:flex;align-items:center;gap:12px;margin-top:12px;padding:10px 14px;border-radius:12px;background:linear-gradient(90deg,#FFF4E5,#FFFBEB);border:1px solid #FCD9A8;position:relative;overflow:visible}
+  .skban b{color:#9a3412;font-size:15px}.skban span{color:#8a5208;font-size:12.5px;display:block}
+  .burst{position:absolute;left:22px;top:50%;width:0;height:0;pointer-events:none}
+  .burst i{position:absolute;left:0;top:0;width:6px;height:6px;margin:-3px;border-radius:50%;background:var(--c,#F59E0B);animation:sk-burst .9s cubic-bezier(.2,.8,.3,1) forwards;transform:rotate(var(--a)) translateY(0)}
+  @keyframes sk-burst{0%{opacity:1;transform:rotate(var(--a)) translateY(0) scale(1)}100%{opacity:0;transform:rotate(var(--a)) translateY(-46px) scale(.4)}}
+  @media (prefers-reduced-motion: reduce){.flame svg,.flame svg .in,.flame .em,.streaks::before,.burst i{animation:none!important}.flame .em{display:none}}
   .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:11px 18px;border-radius:12px;font-size:14px;font-weight:600;box-shadow:0 10px 30px rgba(15,42,74,.25);z-index:50}
   @media(max-width:640px){
     .talk li{grid-template-columns:1fr auto} .talk li .opill{grid-column:1/-1}
@@ -241,12 +270,12 @@
   }
   @media (prefers-reduced-motion: reduce){ *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important} }
 </style>
-<script src="user.js?v=hc215"></script>
+<script src="user.js?v=hc216"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc215"></script>
-  <script src="gate.js?v=hc215"></script>
-  <script src="prodbook.js?v=hc215"></script>
-  <script src="monthly.js?v=hc215"></script>
+  <script src="store.js?v=hc216"></script>
+  <script src="gate.js?v=hc216"></script>
+  <script src="prodbook.js?v=hc216"></script>
+  <script src="monthly.js?v=hc216"></script>
 </head>
 <body>
 <div class="ribbon">MOCK-UP for Heather — made-up numbers. Try it as an office manager first, then as Heather.</div>
@@ -259,6 +288,10 @@
 </header>
 <nav class="v1nav"><div class="v1nav-in" id="nav"></div></nav>
 
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <linearGradient id="flO" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#DC2626"/><stop offset=".55" stop-color="#F97316"/><stop offset="1" stop-color="#FDE68A"/></linearGradient>
+  <linearGradient id="flI" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#FDBA74"/><stop offset=".6" stop-color="#FEF3C7"/><stop offset="1" stop-color="#FFFFFF"/></linearGradient>
+</defs></svg>
 <div class="wrap">
   <div class="viewas" id="tryas">
     <span class="lab">👤 Try it as</span>
@@ -331,6 +364,7 @@
         let col=colBase+(R()-0.5)*0.05, adjp=0.06+R()*0.04, del=3.5+R()*4;
         if(o==='Hobbs' && y===NOW_Y && m>=LM.m-2 && m<=LM.m){ col=0.935-(m-LM.m+3)*0.025; del=8.6+R(); }   // the story: Hobbs slipping
         if(o==='Lubbock' && y===NOW_Y && m===LM.m) adjp=0.112;
+        if(y===NOW_Y && m<=LM.m && m>=LM.m-5 && (o==='Clovis' || o==='San Angelo' || (o==='Lubbock' && m<LM.m) || (o==='Mansfield' && m>=LM.m-2))){ col=0.932+R()*0.012; if(!(o==='Lubbock' && m===LM.m)) adjp=0.062+R()*0.02; del=3.8+R()*2; }
         const arn=accts+Math.round((R()-0.5)*40);
         const v={gp, gc:gp*col, adj:-gp*adjp, ar:full*arx*(0.97+R()*0.06), arn, deln:Math.round(del/100*arn),
                  npe:Math.round((40+R()*70)*frac), act:pts+Math.round((R()-0.5)*30), disc:gp*(0.01+R()*0.02)};
@@ -358,9 +392,12 @@
     });
     return M.cleanYear(rec);
   }
+  /* the sandbox's made-up years are remade when their story changes (DEMO_V) - real years never */
+  const DEMO_V='3';
   async function loadYear(y, fresh){
     if(DATA[y] && !fresh) return DATA[y];
     let rec=null; try{ rec=await PH_STORE.get(M.KEY(y)); }catch(_){}
+    if(!LIVE){ let v=''; try{ v=localStorage.getItem('ph_monthly_demo_v_'+y)||''; }catch(_){} if(v!==DEMO_V){ rec=null; try{ localStorage.setItem('ph_monthly_demo_v_'+y, DEMO_V); }catch(_){} } }
     if(!LIVE && (!rec || !rec.o || !Object.keys(rec.o).length) && y>=NOW_Y-1 && y<=NOW_Y){
       rec=demoYear(y); try{ await PH_STORE.set(M.KEY(y), rec); }catch(_){}
     }
@@ -397,6 +434,19 @@
   function opill(o){ const c=PH.colorForOffice(o)||{}; return '<span class="opill"><i style="background:'+esc(c.dot||'#94a3b8')+'"></i>'+esc(o)+'</span>'; }
   function toast(t){ const d=document.createElement('div'); d.className='toast'; d.textContent=t; document.body.appendChild(d); setTimeout(()=>d.remove(), 2600); }
 
+  /* STREAKS - months in a row on every target (monthly.js onTarget/streak) */
+  const FLAME='<svg viewBox="0 0 32 40" aria-hidden="true"><path fill="url(#flO)" d="M16 1C19 9 29 13 28 25c-.6 8-6 13-12 13S4 33 4 25c0-7 5-10 7-17 1 4 3 6 5 6 1-4 0-8 0-13z"/><path class="in" fill="url(#flI)" d="M16 17c3 4 7 7 6 12-.6 4-3 7-6 7s-6-3-6-7c0-4 3-6 6-12z"/></svg><i class="em"></i><i class="em"></i><i class="em"></i>';
+  const flame=big=>'<span class="flame'+(big?' big':'')+'">'+FLAME+'</span>';
+  /* the run that a month's report continues: a month still going counts up to the month before */
+  function runAt(o, y, m){ const p=isOpen(y,m) ? step(y,m,-1) : {y,m}; return M.streak((yy,mm)=>valsOf(o,yy,mm), p.y, p.m, SET.goals); }
+  function countUps(){ if(matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    document.querySelectorAll('[data-count]').forEach(n=>{ const to=+n.dataset.count, t0=performance.now(), dur=600+to*60; n.textContent='0';
+      const st=now=>{ const k=Math.min(1,(now-t0)/dur), e=1-Math.pow(1-k,3); n.textContent=Math.round(e*to); if(k<1) requestAnimationFrame(st); }; requestAnimationFrame(st); }); }
+  function burstHTML(){ const C=['#F59E0B','#F97316','#FDE68A','#DC2626','#FFFFFF']; return '<span class="burst" aria-hidden="true">'+Array.from({length:14},(_,i)=>'<i style="--a:'+(i*360/14)+'deg;--c:'+C[i%C.length]+';animation-delay:'+(i%3)*40+'ms"></i>').join('')+'</span>'; }
+  /* a milestone (3, 6, 12, 24 months) bursts the first time this device sees it */
+  function freshMilestone(o, y, m, n){ if(M.MILESTONES.indexOf(n)<0) return false; const k='ph_monthly_ms', id=o+':'+y+'-'+m+':'+n;
+    try{ const seen=JSON.parse(localStorage.getItem(k)||'[]'); if(seen.indexOf(id)>=0) return false; seen.push(id); localStorage.setItem(k, JSON.stringify(seen.slice(-200))); return true; }catch(_){ return false; } }
+
   /* a small line: the last n months, the target band behind it, the last point marked */
   function spark(series, band, opts){
     opts=opts||{}; const W=opts.w||240, H=opts.h||64, P=6; const pts=series.map((v,i)=>({i,v})).filter(p=>p.v!=null && isFinite(p.v));
@@ -432,6 +482,7 @@
     else if(TAB==='year') v.innerHTML=yearHTML();
     else v.innerHTML=settingsHTML();
     if(TAB==='office') glance();
+    countUps();
   }
 
   /* ---------- OVERVIEW: the whole practice's month, read in a minute ---------- */
@@ -463,6 +514,16 @@
       tile('A/R ratio', fmt('x',c.ratio), fmt('$',T.ar,true)+' owed '+toneChip('ratio',c.ratio))+
       tile('Late over 30 days', fmt('%',c.delpct), toneChip('del',c.delpct)+' <span class="soft">target '+goalTxt('del')+'</span>')+
       tile('New patient exams', fmt('#',T.npe), delta(T.npe, PT&&PT.npe))+'</div>';
+    /* ON A ROLL - every office on a run of 2+, longest first; a run of 3+ that ended this month is said too */
+    const runs=offs.map(o=>({o, n:runAt(o,y,m)})), pr=step(y,m,-1);
+    const rolling=runs.filter(r=>r.n>=2).sort((a,b)=>b.n-a.n || a.o.localeCompare(b.o));
+    const ended=open ? [] : offs.filter(o=>runAt(o,y,m)===0).map(o=>({o, n:M.streak((yy,mm)=>valsOf(o,yy,mm), pr.y, pr.m, SET.goals)})).filter(r=>r.n>=3);
+    if(rolling.length || ended.length){
+      h+='<div class="streaks"><div class="skh">'+flame(true)+'<div><b>On a roll</b><span>Months in a row on every target — collection, adjustments and late accounts'+(open?' (through '+M.MONTHS[pr.m-1]+')':'')+'</span></div></div>'+
+        (rolling.length ? '<div class="skl">'+rolling.map(r=>'<button class="sk" onclick="MONTHLY.open(\''+esc(r.o)+'\')" title="Open '+esc(r.o)+'">'+flame()+'<span class="n" data-count="'+r.n+'">'+r.n+'</span><span class="w"><b>'+esc(r.o)+'</b><small>'+(r.n===1?'month':'months')+' in a row</small></span></button>').join('')+'</div>'
+          : '<div class="ended" style="margin-top:12px">No office is on a run right now — two months in a row on every target starts one.</div>')+
+        (ended.length ? '<div class="ended">'+ended.map(r=>esc(r.o)+'’s '+r.n+'-month run ended in '+M.MONTHS[m-1]).join(' · ')+'.</div>' : '')+'</div>';
+    }
     /* what needs a conversation */
     let all=[]; rows.forEach(x=>{ if(!x.v) return; M.insights(x.v,{goals:SET.goals, prev:valsOf(x.o,p.y,p.m), hist:histOf(x.o,y,m,3)}).forEach(i=>all.push(Object.assign({o:x.o}, i))); });
     all.sort(M.byWeight);
@@ -478,7 +539,8 @@
     h+='<div class="tablewrap"><table><thead><tr><th>Office</th><th>Report</th><th>Produced</th><th>Collected</th><th>Collection %<small>target '+goalTxt('col')+'</small></th><th>Adjustment %<small>target '+goalTxt('adj')+'</small></th><th>A/R ratio<small>target '+goalTxt('ratio')+'</small></th><th>Late 30+ %<small>target '+goalTxt('del')+'</small></th><th>NP exams</th><th>Collection %, 6 months</th></tr></thead><tbody>';
     rows.forEach(x=>{ const v=x.v||{}, cc=M.calc(v), r=x.r;
       const ser=[]; for(let i=5;i>=0;i--){ const q=step(y,m,-i); const vv=valsOf(x.o,q.y,q.m); ser.push(vv?M.calc(vv).colpct:null); }
-      h+='<tr class="click" onclick="MONTHLY.open(\''+esc(x.o)+'\')"><td>'+opill(x.o)+'</td><td>'+stChip(r,y,m)+'</td><td>'+fmt('$',v.gp)+'</td><td>'+fmt('$',v.gc)+'</td>'+
+      const rn=runAt(x.o,y,m);
+      h+='<tr class="click" onclick="MONTHLY.open(\''+esc(x.o)+'\')"><td>'+opill(x.o)+(rn>=2?'<span class="skmini" title="'+rn+' months in a row on every target">'+flame()+rn+'</span>':'')+'</td><td>'+stChip(r,y,m)+'</td><td>'+fmt('$',v.gp)+'</td><td>'+fmt('$',v.gc)+'</td>'+
         cell('col',cc.colpct,'%')+cell('adj',cc.adjpct,'%')+cell('ratio',cc.ratio,'x')+cell('del',cc.delpct,'%')+'<td>'+fmt('#',v.npe)+'</td><td style="width:130px">'+spark(ser, SET.goals.col, {w:120,h:26,label:'Collection % for 6 months'})+'</td></tr>'; });
     h+='<tr class="tot"><td>Whole practice</td><td></td><td>'+fmt('$',T.gp)+'</td><td>'+fmt('$',T.gc)+'</td>'+cell('col',c.colpct,'%')+cell('adj',c.adjpct,'%')+cell('ratio',c.ratio,'x')+cell('del',c.delpct,'%')+'<td>'+fmt('#',T.npe)+'</td><td></td></tr>';
     return h+'</tbody></table></div></div>';
@@ -515,6 +577,9 @@
     const auto=fields.filter(f=>f.from==='orthofi' && r.src[f.k]==='orthofi').length, toType=fields.filter(f=>!(f.from==='orthofi' && r.src[f.k]==='orthofi')).length;
     h+='<div class="grid2"><div class="card"><div class="ohead"><div><h2>'+esc(o)+' · '+M.MONTHS[m-1]+' '+y+'</h2><div class="note" style="margin-top:4px">'+stChip(r,y,m)+' '+statusWords(r,s,due)+'</div></div>'+
        (auto ? '<div class="saver">⚡ OrthoFi filled '+auto+' of '+fields.length+' — '+(toType?toType+' to type':'nothing to type')+'</div>' : '')+'</div>';
+    const rn=runAt(o,y,m), ms=rn>=3 && freshMilestone(o,y,m,rn);
+    if(rn>=1) h+='<div class="skban">'+(ms?burstHTML():'')+flame(rn>=3)+'<div><b><span data-count="'+rn+'">'+rn+'</span> '+(rn===1?'month':'months')+' in a row on every target'+(M.MILESTONES.indexOf(rn)>=0?' 🎉':'')+'</b>'+
+      '<span>'+(isOpen(y,m) ? 'Through '+M.MONTHS[step(y,m,-1).m-1]+' — keep '+M.MONTHS[m-1]+' on target to make it '+(rn+1)+'.' : rn===1 ? 'One more month on target starts a run.' : 'Collection, adjustments and late accounts all on target.')+'</span></div></div>';
     /* WHAT TO TYPE FIRST (Cory: "saving time"): a box OrthoFi has filled is not a box - it goes in the grid below. */
     const locked=f=>f.from==='orthofi' && r.src[f.k]==='orthofi' && !CORRECT[f.k];
     const groups=[
@@ -803,7 +868,7 @@
 })();
 </script>
 <script>PH.nav('monthly');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc215"></script>
+<script src="tour.js?v=hc216"></script>
 <script>
 Tour.init([
   {sel:'.statusline, .openbanner', title:'Who has sent it', body:'Every office’s report for the month, in one line: final, waiting for you, or late. No chasing eight Excel files.'},

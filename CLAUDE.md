@@ -489,6 +489,16 @@ I can confidently say that the chat feature should go next. The production thing
    do Medicaid ... they do need it" - stays on the Medicaid list.
    CHAT PHOTOS (Cory 18/11, like Slack): hovering a photo shows a round magnifier with a + and darkens it a little (mouse
    only; phones tap). test/party checks it.
+39. **MONTHLY REPORT STREAKS (19/11/2026; hc216; sandbox with the report).** Cory: "Streaks on the Monthly Report ... Ok
+   as long as its animation motion art"; "build the monthly report streaks now". monthly.js onTarget(v) = Collection % >=
+   the bottom of its target AND Adjustment % and Delinquent % <= the top of theirs (A/R ratio is a range - not part of
+   it; no numbers = null); streak(valsAt, y, m) counts back month by month (across years) until a miss or an empty month;
+   MILESTONES 3/6/12/24. monthly.html: Overview "On a roll" strip (ember-glow background, an animated SVG flame that
+   flickers and throws embers, gold numbers counting up, longest run first; "X's N-month run ended in <month>" for a run
+   of 3+ that ended that month); a small flame + number by the office in the table; on One office a banner ("N months in
+   a row on every target", a burst of sparks the first time a milestone is seen on a device - ph_monthly_ms); a month still
+   going counts the run through the month before (runAt). Sandbox story remade (DEMO_V '3'): Clovis/San Angelo/Mansfield
+   runs, Lubbock's run ends in the month just finished. Still for "less motion". test/monthly.
 37. **MONTHLY REPORT (Heather's monitor report, item 34c; 18/11/2026; hc205; SANDBOX ONLY until user.js MONTHLY_LIVE is
    true - an admin can preview live with monthly.html?monthlypreview).** Cory: "build it"; "It has to be more than just her
    excel. You have to think of a practice and why this is important"; "It needs to be smart where its saving time for

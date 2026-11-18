@@ -257,6 +257,19 @@
   /* a typed number that OrthoFi disagrees with (worth a second look - a typo, or a correction OrthoFi doesn't know) */
   function mismatches(r){ r=r||{}; const out=[]; Object.keys(r.ofv||{}).forEach(k=>{ const v=(r.v||{})[k];
     if((r.src||{})[k]==='typed' && v!==undefined && Math.abs(v-r.ofv[k])>=Math.max(1, Math.abs(r.ofv[k])*0.001)) out.push({k, typed:v, orthofi:r.ofv[k]}); }); return out; }
+  /* STREAKS (Cory 18/11: "Streaks on the Monthly Report ... as long as its animation motion art"). A month is ON TARGET when
+     every target that can be worked out is met: Collection % at least the bottom of its range, Adjustment % and Delinquent %
+     no more than the top of theirs (the A/R ratio is a range to sit in - not part of it). A month with no numbers breaks
+     the run. streak(valsAt, y, m) counts back from (y, m). */
+  function onTarget(v, goals){
+    if(!v || !v.gp) return null; const c=calc(v), g=goals||DEF_GOALS, chk=[];
+    if(c.colpct!==null) chk.push(c.colpct>=g.col[0]); if(c.adjpct!==null) chk.push(c.adjpct<=g.adj[1]); if(c.delpct!==null) chk.push(c.delpct<=g.del[1]);
+    return chk.length ? chk.every(Boolean) : null;
+  }
+  function streak(valsAt, y, m, goals, max){
+    let n=0; for(let i=0;i<(max||36);i++){ let mm2=m-i, yy=y; while(mm2<1){ mm2+=12; yy--; } if(onTarget(valsAt(yy, mm2), goals)!==true) break; n++; } return n;
+  }
+  const MILESTONES=[3,6,12,24];
   /* the month just finished (what an office reports at the start of a month) */
   function lastMonth(now){ const d=now ? new Date(now) : new Date(); const y=d.getMonth()===0 ? d.getFullYear()-1 : d.getFullYear(), m=d.getMonth()===0 ? 12 : d.getMonth(); return {y, m}; }
   /* the day a month's report is due: settings.due of the next month, end of that day */
@@ -272,5 +285,5 @@
     }
     return r && Object.keys(r.v||{}).length ? 'started' : '';
   }
-  global.PH_MONTHLY={KEY, SET_KEY, FIELDS, BY, CALC, DEF_GOALS, GOAL_NAMES, DEF_MEDICAID, MONTHS, mm, num, money, cleanVal, cleanMonth, cleanYear, cleanSettings, fieldsFor, calc, onGoal, tone, yearRows, practiceTotals, insights, byWeight, mergeOrthofi, fromSheet, mergeImport, mismatches, lastMonth, dueDate, status};
+  global.PH_MONTHLY={KEY, SET_KEY, FIELDS, BY, CALC, DEF_GOALS, GOAL_NAMES, DEF_MEDICAID, MONTHS, mm, num, money, cleanVal, cleanMonth, cleanYear, cleanSettings, fieldsFor, calc, onGoal, tone, yearRows, practiceTotals, insights, byWeight, mergeOrthofi, fromSheet, mergeImport, onTarget, streak, MILESTONES, mismatches, lastMonth, dueDate, status};
 })(typeof window!=='undefined' ? window : globalThis);
