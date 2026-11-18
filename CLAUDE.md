@@ -428,6 +428,17 @@ I can confidently say that the chat feature should go next. The production thing
    re-opened while the picked name went in (left "@G"); a blank reaction entry crashed reactionsOf; the second clean
    dropped the @ highlight; the hint was centred (class clash); the phone 16px rule lost to the later 14.5px.
    ON FOR LIVE hc191 (Cory 18/11: "chat v2 live"): CHAT_V2_LIVE=true (chat itself is still pilot-only).
+   EMOJI PICKER like Slack (Cory 18/11 + screenshot: "All emojis categories and they can search ... Plus skin tone
+   selector"; no GIFs; hc192): v1/emoji.js = 1,849 emoji up to Emoji 14.0 (newer = empty boxes on many PCs/phones), built
+   from Unicode emoji-test.txt 15.1 + CLDR English annotations (downloaded with Cory's OK 18/11; Unicode License v3, notice
+   in the file; build script was in the session scratchpad - rebuild = parse "fully-qualified" lines, groups -> Slack's
+   8 categories, skip "skin tone" names, keywords = CLDR default minus words already in the name, skin 1 = tone after the
+   first code point (FE0F there dropped) else the 5 sequences listed). Loaded by chat.html only (2.5 s after it opens,
+   or on first use; emoLoad). Picker (emojiPicker/empHTML): tabs Frequently used + 8 categories (scroll-spy), "Search all
+   emoji" (every word starts a word of the name or keywords; everyday ones first; Enter picks the first), hover preview
+   with the name, Skin tone (6 hands; localStorage ph_chat_skin; quick 👍 🙏 reactions follow it), Frequently used =
+   localStorage ph_chat_emoji_recent (18 defaults). Used by the message box (emoji button) and "More emoji" on a
+   reaction. All 1,425 toned sequences checked against Unicode's list. test/chatv2.test.js (42).
    STILL QUEUED: a "chat alerts: Home-Brace / Teams" choice.
 26. **Add to payroll after "entered" (Heather 18/11: "Once I click on all payroll entered ... it takes away the ability for
    me to add a bonus to another payroll. I just had a team hit goal this afternoon"; hc189).** addsCard hid ＋ Add on an

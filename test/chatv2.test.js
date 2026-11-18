@@ -117,6 +117,36 @@ t('a message carries its reactions and its formatting', (()=>{ const m=T.mapMess
     /const im=e\.target\.closest\('#msgs \.media img'\); if\(im && V2\(\) && im\.getAttribute\('src'\)\)\{ lbOpen\(im\); return; \}/.test(CHAT) &&
     /ArrowRight/.test(lbo) && /ArrowLeft/.test(lbo) && /Escape/.test(lbo) && /touchend/.test(lbo) && /Open full size/.test(lbo) && /data-lb="x"/.test(lbo) && /' of '\+list\.length/.test(lbo));
   t('…only photos already shown (https or this device’s own), nothing typed goes in as HTML', /esc\(x\.src\)/.test(lbo) && !/innerHTML=[^;]*m\.text/.test(lbo));
+  /* ---- the emoji picker (Cory 18/11 + Slack screenshot): every category, search, skin tone; no GIFs ---- */
+  const EW={}; new Function('window', fs.readFileSync(path.join(__dirname,'..','v1','emoji.js'),'utf8'))(EW); const ED=EW.PH_EMOJI;
+  const all=[].concat(...ED.cats.map(c=>c.e));
+  t('the list: Unicode’s emoji (up to Emoji 14.0) in Slack’s 8 categories, each once, with names and everyday search words',
+    ED.cats.map(c=>c.n).join('|')==='Smileys & People|Nature|Food & Drink|Activity|Travel & Places|Objects|Symbols|Flags' && all.length>1800 &&
+    new Set(all.map(x=>x[0])).size===all.length && all.every(x=>x[0] && x[1]) && /\+1/.test(all.find(x=>x[1]==='thumbs up')[2]) && /good/.test(all.find(x=>x[1]==='thumbs up')[2]) &&
+    !all.some(x=>/skin tone/.test(x[1])) && /Unicode License/.test(fs.readFileSync(path.join(__dirname,'..','v1','emoji.js'),'utf8')));
+  const MODS=['\u{1F3FB}','\u{1F3FC}','\u{1F3FD}','\u{1F3FE}','\u{1F3FF}'];
+  const toned=new Function('MODS', fnOf(CHAT,'toned')+' return toned;')(MODS);
+  const E=n=>all.find(x=>x[1]===n);
+  t('skin tone: the right sequence for every kind (checked against all of Unicode’s 1,425 on 18/11; these are samples)',
+    toned(E('thumbs up'),2)==='👍🏽' && toned(E('index pointing up'),0)==='☝🏻' && toned(E('woman technologist'),4)==='👩🏿‍💻' &&
+    toned(E('people holding hands'),1)==='🧑🏼‍🤝‍🧑🏼' && toned(E('man running'),3)==='🏃🏾‍♂️' && toned(E('grinning face'),2)==='😀' && toned(E('thumbs up'),-1)==='👍');
+  const LS2={}; const finder=new Function('localStorage','D','q', "const DEFAULT_RECENT="+JSON.stringify(['👍','❤️','🙏','😂','🎉','✅','👀','🔥','💯','👏','😊','🙌','💪','😍','🤔','😅','👋','⭐'])+";\nconst RECENT_KEY='ph_chat_emoji_recent';\n"+
+    fnOf(CHAT,'recentGet')+'\n'+fnOf(CHAT,'emoFind')+'\nreturn emoFind(D,q);');
+  const ls2={getItem:k=>k in LS2?LS2[k]:null, setItem:(k,v)=>{LS2[k]=String(v);}};
+  const S=q=>(finder(ls2, ED, q)||[]).map(x=>x[0]);
+  t('search: by name or everyday word, any order, the everyday ones first ("good" -> 👍 first; ":tada:" works; nothing found = says so)',
+    S('good')[0]==='👍' && S('thumbs')[0]==='👍' && S(':tada:')[0]==='🎉' && S('heart').indexOf('❤️')>=0 && S('face cat').length>0 && S('zzqx').length===0 &&
+    finder(ls2, ED, '  ')===null && /No emoji match/.test(fnOf(CHAT,'empSearch')));
+  t('picker: Frequently used + the 8 category tabs, "Search all emoji", the emoji under the pointer with its name, Skin tone (6 choices, kept on this device) - no GIFs',
+    /\['recent','Frequently used'\]/.test(fnOf(CHAT,'empHTML')) && /placeholder="Search all emoji"/.test(fnOf(CHAT,'empHTML')) && /id="empv"/.test(fnOf(CHAT,'empHTML')) &&
+    /\[-1,0,1,2,3,4\]\.map/.test(CHAT) && /const SKIN_KEY='ph_chat_skin', RECENT_KEY='ph_chat_emoji_recent';/.test(CHAT) && !/gif/i.test(fnOf(CHAT,'empHTML')));
+  t('…for the message box and for "More emoji" on a reaction; what’s picked goes first in Frequently used; the 👍 🙏 quick reactions wear the skin tone',
+    /emojiPicker\(boxAnchor\(b\), 'compose'\)/.test(CHAT) && /emojiPicker\(\{getBoundingClientRect:/.test(CHAT) && /recentAdd\(b\.dataset\.b\); popClose\(\);/.test(CHAT) &&
+    /if\(pur==='react'\)\{ if\(reactFor\) reactToggle\(reactFor, v, true\); \} else edInsertText\(v\);/.test(CHAT) && /toned\(\[x,'','',1\], skinGet\(\)\)/.test(CHAT));
+  t('…the list loads only on the chat page (a moment after it opens); if it can’t load, the small set still works; a phone’s keyboard stays down until Search is tapped',
+    /sc\.src='emoji\.js\?v=hc\d+'/.test(fnOf(CHAT,'emoLoad')) && /if\(V2\(\)\) setTimeout\(\(\)=>\{ emoLoad\(\)\.catch/.test(CHAT) &&
+    /p\.innerHTML=emojiGrid\(purpose==='react' \? 'reactpick' : 'emojipick'\)/.test(fnOf(CHAT,'emojiPicker')) && /\(pointer:coarse\)'\)\.matches\) el\('emq'\)\.focus\(\)/.test(fnOf(CHAT,'emojiPicker')) &&
+    /\.emsearch input\{font-size:16px\}/.test(CHAT));
   t('the phone never zooms on the new box either (16px)', /\.composer textarea, \.search, \.composer \.ed\{font-size:16px\}/.test(CHAT));
 
   console.log(ok.map(s=>'  PASS  '+s).join('\n'));

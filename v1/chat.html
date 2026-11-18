@@ -285,6 +285,32 @@
   /* phones: hold a message to react (like WhatsApp); the ＋ only shows next to reactions already there */
   @media (pointer:coarse){ .reacts .radd{display:none} .reacts .rc ~ .radd{display:inline-flex;opacity:1} body.v2 .m .bub{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none} }
   .pop .copy{display:block;width:100%;margin-top:6px;border:0;border-top:1px solid #EDF1F5;background:none;padding:9px 6px 3px;font:inherit;font-size:14px;color:var(--ink);text-align:left;cursor:pointer}
+  /* THE EMOJI PICKER (Cory 18/11 + his Slack screenshot) */
+  .pop.emp{padding:0;width:356px;max-width:calc(100vw - 16px);display:flex;flex-direction:column;overflow:hidden}
+  .emtabs{display:flex;justify-content:space-between;padding:6px 8px;border-bottom:1px solid #EDF1F5}
+  .emtabs button{width:34px;height:34px;border:0;background:none;border-radius:8px;color:#7b8797;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0}
+  .emtabs button:hover{color:var(--navy);background:#F3F6F9}
+  .emtabs button.on{background:#EEF2F6;color:var(--navy)}
+  .emtabs svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .emsearch{padding:8px 10px 2px}
+  .emsearch input{width:100%;border:1px solid #C9D3DF;border-radius:9px;padding:8px 10px;font:inherit;font-size:14px;outline:none;color:var(--ink);background:#fff}
+  .emsearch input:focus{border-color:var(--teal2);box-shadow:0 0 0 3px var(--teal-wash,#eef8f7)}
+  .embody{position:relative;height:300px;overflow-y:auto;padding:0 8px 8px;overscroll-behavior:contain}
+  .emh{font-size:13px;font-weight:700;color:var(--ink);padding:10px 4px 4px;position:sticky;top:0;background:#fff;z-index:1}
+  .emg2{display:grid;grid-template-columns:repeat(auto-fill,36px);justify-content:space-between}
+  .emg2 button,.emskins button{width:36px;height:36px;border:0;background:none;border-radius:8px;font-size:24px;line-height:1;cursor:pointer;padding:0;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif}
+  .emg2 button:hover,.emskins button:hover{background:#EEF2F6}
+  .emnone{padding:24px 8px;text-align:center;color:var(--soft);font-size:14px}
+  .emfoot{display:flex;align-items:center;gap:8px;border-top:1px solid #EDF1F5;padding:6px 10px;min-height:48px}
+  .empv{flex:1;min-width:0;display:flex;align-items:center;gap:8px;font-size:13px;color:#4b5a6b;overflow:hidden;white-space:nowrap}
+  .empv b{font-size:26px;font-weight:400;line-height:1}
+  .empv span{overflow:hidden;text-overflow:ellipsis}
+  .emskinb{border:1px solid #DCE3EA;background:#fff;border-radius:9px;padding:4px 10px;font:inherit;font-size:13px;cursor:pointer;color:var(--ink);display:inline-flex;gap:6px;align-items:center;white-space:nowrap}
+  .emskinb b{font-size:18px;font-weight:400}
+  .emskins{display:flex;gap:2px;align-items:center;flex-wrap:wrap}
+  .emskins button.on{background:var(--teal-soft);box-shadow:inset 0 0 0 2px var(--teal2)}
+  .emload{padding:30px 40px;color:var(--soft);font-size:14px}
+  @media (max-width:760px), (pointer:coarse){ .emsearch input{font-size:16px} .embody{height:min(300px,40vh)} }
   .media img{cursor:zoom-in}
   .lb{position:fixed;inset:0;z-index:10001;background:rgba(10,18,30,.92);display:flex;align-items:center;justify-content:center;touch-action:pan-y pinch-zoom}
   .lb img{max-width:92vw;max-height:84vh;object-fit:contain;border-radius:6px;box-shadow:0 10px 40px rgba(0,0,0,.4);cursor:default}
@@ -296,13 +322,13 @@
   .lb .lbnav.p{left:14px}.lb .lbnav.n{right:14px}
   .lb .lbnav[hidden]{display:none}
 </style>
-<script src="user.js?v=hc191"></script>
+<script src="user.js?v=hc192"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc191"></script>
-  <script src="gate.js?v=hc191"></script>
-  <script src="_staff.js?v=hc191"></script>
-  <script src="alerts.js?v=hc191"></script>
-  <script src="chatgraph.js?v=hc191"></script>
+  <script src="store.js?v=hc192"></script>
+  <script src="gate.js?v=hc192"></script>
+  <script src="_staff.js?v=hc192"></script>
+  <script src="alerts.js?v=hc192"></script>
+  <script src="chatgraph.js?v=hc192"></script>
 </head>
 <body>
 <div class="ribbon" id="ribbon">MOCK-UP for Heather and Dr. Jae — made-up people, messages and videos. Nothing is sent anywhere.</div>
@@ -614,6 +640,95 @@
   const EMOJI='😀 😃 😄 😁 😆 😅 😂 🙂 😉 😊 😍 🥰 😘 😎 🤩 🥳 🤔 😐 😴 😮 😢 😭 😡 🙄 😬 😷 🤒 👍 👎 👏 🙌 🙏 💪 👋 🤝 👌 ✌️ 🤞 👀 ❤️ 💙 💚 💛 🧡 💜 💯 🔥 ⭐ ✨ 🎉 🎂 🎁 ✅ ❌ ⚠️ ❓ 📅 ⏰ 📞 📷 🎥 📎 🦷 😁 🪥 💰 ☕ 🍕 🌮 🌵 ☀️ 🌧️ 🏠 🚗'.split(' ').filter((x,i,a)=>x && a.indexOf(x)===i);
   const QUICK=['👍','❤️','😆','😮','😢','🙏'];
   const emojiGrid=act=>'<div class="emg">'+EMOJI.map(e=>'<button type="button" data-act="'+act+'" data-v="'+e+'" aria-label="'+e+'">'+e+'</button>').join('')+'</div>';
+  /* THE EMOJI PICKER - like Slack (Cory 18/11 + screenshot: "All emojis categories and they can search ... Plus skin
+     tone selector"; no GIFs). Tabs for Frequently used + Unicode's 8 categories, "Search all emoji" (names and everyday
+     words: "good" finds 👍), the emoji under the pointer and its name at the bottom, Skin tone (kept on this device).
+     The list (emoji.js, 1,849 emoji, Unicode's own data) loads a moment after the chat opens, or when first needed.
+     Used for the message box and for "More emoji" on a reaction. */
+  const SKIN_KEY='ph_chat_skin', RECENT_KEY='ph_chat_emoji_recent';
+  const MODS=['\u{1F3FB}','\u{1F3FC}','\u{1F3FD}','\u{1F3FE}','\u{1F3FF}'];
+  const DEFAULT_RECENT=['👍','❤️','🙏','😂','🎉','✅','👀','🔥','💯','👏','😊','🙌','💪','😍','🤔','😅','👋','⭐'];
+  let emoP=null, EMO_IX=null;
+  function emoLoad(){
+    if(window.PH_EMOJI) return Promise.resolve(window.PH_EMOJI);
+    if(emoP) return emoP;
+    emoP=new Promise((res, rej)=>{ const sc=document.createElement('script'); sc.src='emoji.js?v=hc192'; sc.async=true;
+      sc.onload=()=>window.PH_EMOJI ? res(window.PH_EMOJI) : rej(new Error('no emoji')); sc.onerror=()=>{ emoP=null; sc.remove(); rej(new Error('no emoji')); };
+      document.head.appendChild(sc); });
+    return emoP;
+  }
+  const emoIndex=D=>{ if(!EMO_IX){ EMO_IX={}; D.cats.forEach(c=>c.e.forEach(x=>{ EMO_IX[x[0]]=x; })); } return EMO_IX; };
+  const skinGet=()=>{ try{ const v=localStorage.getItem(SKIN_KEY); const n=v===null ? -1 : parseInt(v,10); return n>=0 && n<5 ? n : -1; }catch(_){ return -1; } };
+  /* the emoji in the chosen skin tone: 1 = the tone goes right after its first character (an FE0F there dropped); a
+     list = Unicode's own five spelled out (people holding hands, kisses, couples) */
+  function toned(ent, t){
+    if(t<0 || !ent || !ent[3]) return ent ? ent[0] : '';
+    if(Array.isArray(ent[3])) return ent[3][t] || ent[0];
+    const cps=Array.from(ent[0]); let rest=cps.slice(1); if(rest[0]==='️') rest=rest.slice(1);
+    return cps[0]+MODS[t]+rest.join('');
+  }
+  function recentGet(){ try{ const a=JSON.parse(localStorage.getItem(RECENT_KEY)||'null'); if(Array.isArray(a) && a.length) return a.filter(x=>typeof x==='string' && x.length<=16).slice(0,27); }catch(_){} return DEFAULT_RECENT.slice(); }
+  function recentAdd(base){ if(!base) return; const a=recentGet().filter(x=>x!==base); a.unshift(base); try{ localStorage.setItem(RECENT_KEY, JSON.stringify(a.slice(0,27))); }catch(_){} }
+  const EMO_ICONS={recent:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>', people:'<circle cx="12" cy="12" r="9"/><path d="M8.5 14.5a4.5 4.5 0 0 0 7 0"/><path d="M9 9.5h.01M15 9.5h.01"/>',
+    nature:'<path d="M5 19c0-8 5-13 14-14-1 9-6 14-14 14z"/><path d="M5 19l7-7"/>', food:'<path d="M4 11a8 6 0 0 1 16 0z"/><path d="M4 14h16M5 17.5h14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z"/>',
+    activity:'<ellipse cx="12" cy="12" rx="9.5" ry="6" transform="rotate(-45 12 12)"/><path d="M9.5 14.5l5-5M11 11.5l1.5 1.5M12.5 10l1.5 1.5"/>',
+    travel:'<path d="M10.5 13.5L4 11l1.5-1.5 7 1 4-4.5c1-1 2.5-1.2 3-.5s.5 2-.5 3l-4.5 4 1 7L13 21l-2.5-6.5z"/>', objects:'<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/>',
+    symbols:'<circle cx="12" cy="12" r="9"/><path d="M12 3v18M12 12l-6.4 6.4M12 12l6.4 6.4"/>', flags:'<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>'};
+  const empBtn=(ent, t)=>{ const v=toned(ent, t); return '<button type="button" data-act="empick" data-v="'+esc(v)+'" data-b="'+esc(ent[0])+'" aria-label="'+esc(ent[1])+'">'+v+'</button>'; };
+  const empCache={};
+  function empSections(D, t){
+    const ix=emoIndex(D), rec=recentGet().map(b=>ix[b] || [b, '', '']);
+    const cats=empCache[t] || (empCache[t]=D.cats.map(c=>'<div class="emsec" data-k="'+c.k+'"><div class="emh">'+esc(c.n)+'</div><div class="emg2">'+c.e.map(x=>empBtn(x, t)).join('')+'</div></div>').join(''));
+    return '<div class="emsec" data-k="recent"><div class="emh">Frequently used</div><div class="emg2">'+rec.map(x=>empBtn(x, t)).join('')+'</div></div>'+cats;
+  }
+  const skinBtn=t=>'<button type="button" class="emskinb" data-act="emskin" title="Skin tone">'+'<b>'+(t<0 ? '✋' : '✋'+MODS[t])+'</b>Skin tone</button>';
+  function empHTML(D){
+    const t=skinGet(), tabs=[['recent','Frequently used']].concat(D.cats.map(c=>[c.k, c.n]));
+    return '<div class="emtabs" role="tablist">'+tabs.map((x,i)=>'<button type="button" data-act="emtab" data-v="'+x[0]+'" title="'+esc(x[1])+'" aria-label="'+esc(x[1])+'"'+(i?'':' class="on"')+'><svg viewBox="0 0 24 24" aria-hidden="true">'+EMO_ICONS[x[0]]+'</svg></button>').join('')+'</div>'+
+      '<div class="emsearch"><input id="emq" type="search" placeholder="Search all emoji" autocomplete="off" spellcheck="false" data-nomic aria-label="Search all emoji"></div>'+
+      '<div class="embody" id="embody">'+empSections(D, t)+'</div>'+
+      '<div class="emfoot"><span class="empv" id="empv"></span>'+skinBtn(t)+'</div>';
+  }
+  /* search: every word must start a word of the name or its everyday words ("thumbs", "good", "+1", ":tada:" works too) */
+  function emoFind(D, q){
+    const ws=String(q||'').toLowerCase().replace(/[:_]/g,' ').split(/\s+/).filter(Boolean); if(!ws.length) return null;
+    const out=[], pop={}; recentGet().concat(DEFAULT_RECENT).forEach((b,i)=>{ if(pop[b]===undefined) pop[b]=i; });
+    D.cats.forEach(c=>c.e.forEach(x=>{
+      const nm=x[1].toLowerCase(), toks=(nm+' '+x[2].toLowerCase()).split(/[\s:,\-“”"()]+/);
+      if(!ws.every(w=>toks.some(k=>k.indexOf(w)===0))) return;
+      const nmt=nm.split(/[\s:,\-]+/);
+      let rank=nm.indexOf(ws.join(' '))===0 ? 0 : ws.every(w=>nmt.some(k=>k.indexOf(w)===0)) ? 2 : ws.every(w=>toks.indexOf(w)>=0) ? 4 : 6;
+      if(pop[x[0]]!==undefined) rank-=1.5;                     // the everyday ones first: "good" -> 👍 before 🫡
+      out.push([rank, out.length, x]); }));
+    return out.sort((a,b)=>a[0]-b[0] || a[1]-b[1]).slice(0,240).map(r=>r[2]);
+  }
+  function empSearch(){
+    const p=popEl, q=el('emq'), body=el('embody'); if(!p || !q || !body || !window.PH_EMOJI) return;
+    const D=window.PH_EMOJI, hits=emoFind(D, q.value), t=skinGet();
+    if(!hits){ body.innerHTML=empSections(D, t); body.scrollTop=0; empSpy(); return; }
+    body.innerHTML=hits.length ? '<div class="emsec" data-k="search"><div class="emh">Search results</div><div class="emg2">'+hits.map(x=>empBtn(x, t)).join('')+'</div></div>'
+      : '<div class="emnone">No emoji match “'+esc(q.value.trim())+'”</div>';
+    body.scrollTop=0;
+  }
+  function empSpy(){
+    const body=el('embody'); if(!body || !popEl) return; let k='recent';
+    body.querySelectorAll('.emsec').forEach(x=>{ if(x.offsetTop-body.scrollTop<=12) k=x.dataset.k; });
+    popEl.querySelectorAll('.emtabs button').forEach(b=>b.classList.toggle('on', b.dataset.v===k));
+  }
+  function emojiPicker(anchor, purpose){
+    const p=popOpen(anchor, '<div class="emload">Loading emoji…</div>'); p.classList.add('emp'); p.dataset.purpose=purpose;
+    if(purpose==='react') p.dataset.kind='react'; else p.dataset.by='emoji';
+    emoLoad().then(D=>{
+      if(popEl!==p) return;
+      p.innerHTML=empHTML(D); popPlace();
+      const body=el('embody');
+      body.addEventListener('scroll', empSpy, {passive:true});
+      body.addEventListener('mouseover', e=>{ const b=e.target.closest && e.target.closest('[data-act="empick"]'), pv=el('empv'); if(b && pv) pv.innerHTML='<b>'+esc(b.dataset.v)+'</b><span>'+esc(b.getAttribute('aria-label')||'')+'</span>'; });
+      body.addEventListener('mouseleave', ()=>{ const pv=el('empv'); if(pv) pv.innerHTML=''; });
+      if(!window.matchMedia('(pointer:coarse)').matches) el('emq').focus();           // a phone keeps its keyboard down until they tap Search
+    }, ()=>{ if(popEl!==p) return; p.classList.remove('emp'); p.innerHTML=emojiGrid(purpose==='react' ? 'reactpick' : 'emojipick'); popPlace(); });
+    return p;
+  }
   /* TALK TO TYPE - the 🎤 in the bottom row (Cory: "microphone is below"), into the message box where the cursor is. */
   let micRec=null;
   function micToggle(){
@@ -1240,7 +1355,7 @@
   /* CHAT v2: keep the cursor in the message box while its buttons are pressed (bold, emoji, @, ...) */
   document.addEventListener('mousedown', e=>{ if(e.target.closest && e.target.closest('.cbox button, .pop button')) e.preventDefault(); });
   let reactFor='';
-  const quickHTML=(m)=>'<div class="quick">'+QUICK.map(x=>'<button type="button" data-act="reactpick" data-v="'+x+'" aria-label="React '+x+'">'+x+'</button>').join('')+
+  const quickHTML=(m)=>'<div class="quick">'+QUICK.map(x=>{ const y=(x==='👍' || x==='🙏') ? toned([x,'','',1], skinGet()) : x; return '<button type="button" data-act="reactpick" data-v="'+y+'" aria-label="React '+y+'">'+y+'</button>'; }).join('')+
     '<button type="button" data-act="reactmore" aria-label="More emoji" title="More emoji" style="font-size:16px;color:#7b8797">'+ICO.smile.replace('<svg','<svg style="width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2"')+'</button></div>'+
     (m && m.text && !m.deleted ? '<button type="button" class="copy" data-act="copytext">Copy text</button>' : '');
   function v2Click(e, b, act, v){
@@ -1249,7 +1364,16 @@
     if(act==='linkok'){ linkOk(); return true; }
     if(act==='quote'){ quoteToggle(); fmtPaint(); return true; }
     if(act==='fmt'){ const on=!fmtOn(); try{ localStorage.setItem(FMT_KEY, on?'1':'0'); }catch(_){} edSave(); paintComposer(true); return true; }
-    if(act==='emoji'){ edSave(); const p=popOpen(boxAnchor(b), emojiGrid('emojipick')); p.dataset.by='emoji'; return true; }
+    if(act==='emoji'){ edSave(); emojiPicker(boxAnchor(b), 'compose'); return true; }
+    if(act==='empick'){ const pur=popEl && popEl.dataset.purpose; recentAdd(b.dataset.b); popClose();
+      if(pur==='react'){ if(reactFor) reactToggle(reactFor, v, true); } else edInsertText(v); return true; }
+    if(act==='emtab'){ const q=el('emq'); if(q && q.value){ q.value=''; empSearch(); } const body=el('embody'), sec=body && body.querySelector('.emsec[data-k="'+v+'"]');
+      if(sec) body.scrollTop=sec.offsetTop; empSpy(); return true; }
+    if(act==='emskin'){ const f=b.closest('.emfoot'), t=skinGet();
+      f.innerHTML='<span class="small" style="color:var(--soft);margin-right:4px">Skin tone</span><span class="emskins">'+[-1,0,1,2,3,4].map(i=>'<button type="button" data-act="emtone" data-v="'+i+'"'+(i===t?' class="on"':'')+' aria-label="'+(i<0?'Default':['Light','Medium-light','Medium','Medium-dark','Dark'][i])+' skin tone">✋'+(i<0?'':MODS[i])+'</button>').join('')+'</span>';
+      return true; }
+    if(act==='emtone'){ const t=parseInt(v,10); try{ if(t<0) localStorage.removeItem(SKIN_KEY); else localStorage.setItem(SKIN_KEY, String(t)); }catch(_){}
+      const f=b.closest('.emfoot'); f.innerHTML='<span class="empv" id="empv"></span>'+skinBtn(skinGet()); empSearch(); return true; }
     if(act==='emojipick'){ popClose(); edInsertText(v); return true; }
     if(act==='mention'){ edSave(); mentionPop(boxAnchor(b), false); if(popEl) popEl.dataset.by='mention'; return true; }
     if(act==='mentionpick'){ mentionPick(b.dataset.uid||'', b.dataset.name||''); return true; }
@@ -1258,7 +1382,7 @@
     if(act==='reactadd'){ reactFor=b.dataset.m; const p=popOpen(b, quickHTML(null)); p.dataset.by='reactadd'; p.dataset.kind='react'; return true; }
     if(act==='reactpick'){ popClose(); if(reactFor) reactToggle(reactFor, v, true); return true; }
     if(act==='reactmore'){ const a=popEl; const r=a ? a.getBoundingClientRect() : null; popClose();
-      const p=popOpen({getBoundingClientRect:()=>r || b.getBoundingClientRect()}, emojiGrid('reactpick')); p.dataset.kind='react'; return true; }
+      emojiPicker({getBoundingClientRect:()=>r || b.getBoundingClientRect()}, 'react'); return true; }
     if(act==='copytext'){ popClose(); const c=cur(), m=c && c.msgs.find(x=>String(x.id)===reactFor);
       if(m && m.text && navigator.clipboard) navigator.clipboard.writeText(m.text).then(()=>toast('Copied'), ()=>toast('Couldn’t copy')); return true; }
     return false;
@@ -1348,8 +1472,9 @@
   });
   el('dlg').addEventListener('click', e=>{ if(e.target===el('dlg')) closeDlg(); });
   document.addEventListener('keydown', e=>{
-    if(e.key==='Escape'){ if(lb) return; if(popEl){ popClose(); return; } closeDlg(); }
+    if(e.key==='Escape'){ if(lb) return; if(popEl){ const back=popEl.dataset.purpose==='compose'; popClose(); if(back) edRestore(); return; } closeDlg(); }
     if(e.key==='Enter' && e.target && (e.target.id==='lkurl' || e.target.id==='lktx')){ e.preventDefault(); linkOk(); return; }
+    if(e.key==='Enter' && e.target && e.target.id==='emq'){ e.preventDefault(); const f=document.querySelector('#embody [data-act="empick"]'); if(f) f.click(); return; }
     if(e.key==='Enter' && !e.shiftKey && !e.isComposing && e.target && e.target.id==='txt'){
       if(isEd(e.target)){
         if(popEl && popEl.dataset.by==='typed'){ const f=[...popEl.querySelectorAll('[data-act="mentionpick"]')].find(x=>x.style.display!=='none'); if(f){ e.preventDefault(); mentionPick(f.dataset.uid||'', f.dataset.name||''); return; } }
@@ -1365,6 +1490,7 @@
     if(e.target.id==='q'){ q=e.target.value; renderList(); }
     if(e.target.id==='tq' || e.target.id==='nqr') peopleSearch(e.target);
     if(e.target.id==='nq'){ const qq=e.target.value.trim().toLowerCase(); document.querySelectorAll('#pick button').forEach(x=>{ x.style.display=!qq||x.textContent.toLowerCase().indexOf(qq)>=0?'':'none'; }); }
+    if(e.target.id==='emq'){ empSearch(); return; }
     if(e.target.id==='txt' && isEd(e.target)){ edEmptyMark(e.target); edSave(); typedMention(e.target); fmtPaint(); }
     else if(e.target.id==='txt'){ e.target.style.height='auto'; e.target.style.height=Math.min(120,e.target.scrollHeight)+'px'; }
   });
@@ -1416,6 +1542,7 @@
   const WANT_REAL=!!(CG && (ONLIVE || CG.switchedOn()));          // live: never the made-up chats, not even for a moment
   let demoShown=!WANT_REAL;
   document.body.classList.toggle('v2', V2());
+  if(V2()) setTimeout(()=>{ emoLoad().catch(()=>{}); }, 2500);
   renderAlertbar(); renderChips();
   if(WANT_REAL){ CHATS=[]; loading(); } else { renderList(); renderConv(); firstOpen(); }
   if(wide.addEventListener) wide.addEventListener('change', firstOpen);
