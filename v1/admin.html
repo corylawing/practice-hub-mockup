@@ -272,20 +272,20 @@
   }
 
 </style>
-<script src="user.js?v=hc207"></script>
+<script src="user.js?v=hc210"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="_staff.js?v=hc207"></script>
-  <script src="store.js?v=hc207"></script>
-  <script src="gate.js?v=hc207"></script>
-  <script src="docs.js?v=hc207"></script>
-  <script src="payrules.js?v=hc207"></script>
-  <script src="workbook.js?v=hc207"></script>
-  <script src="prodbook.js?v=hc207"></script>
-  <script src="prodfx.js?v=hc207"></script>
-  <script src="prodstore.js?v=hc207"></script>
-<script src="schedrec.js?v=hc207"></script>
-<script src="proddays.js?v=hc207"></script>
-  <script src="prodadmin.js?v=hc207"></script>
+  <script src="_staff.js?v=hc210"></script>
+  <script src="store.js?v=hc210"></script>
+  <script src="gate.js?v=hc210"></script>
+  <script src="docs.js?v=hc210"></script>
+  <script src="payrules.js?v=hc210"></script>
+  <script src="workbook.js?v=hc210"></script>
+  <script src="prodbook.js?v=hc210"></script>
+  <script src="prodfx.js?v=hc210"></script>
+  <script src="prodstore.js?v=hc210"></script>
+<script src="schedrec.js?v=hc210"></script>
+<script src="proddays.js?v=hc210"></script>
+  <script src="prodadmin.js?v=hc210"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — admin console concept for validation. Real build: people sync from Microsoft 365; access is managed here.</div>
@@ -962,10 +962,49 @@
         '<div class="fld"><label>Team(s) — <b>what</b> they can see &amp; do</label><div class="teampick" id="teampick">'+teamChips+'</div></div>'+
         '<div class="fld"><label>Location(s) — <b>which offices\'</b> stuff they see</label><div class="teampick" id="locpick">'+locChips()+'</div></div>'+
       '</div>'+
+      celebHTML(u)+
       '<div class="accessbox" id="accpreview"></div>'+
       '</div>'+
       '<div class="m-foot"><button class="btn ghost" style="color:var(--bad)" onclick="AD.removePerson()">Remove from hub</button><span style="flex:1;font-size:12.5px;color:var(--soft)">Photo &amp; About me are self-service.</span><button class="btn ghost" onclick="AD.close()">Cancel</button><button class="btn" onclick="AD.saveUser()">Save</button></div>');
     refreshAccessPreview();
+  }
+  /* BIRTHDAY & START DATE (Cory 18/11: "something the admin can do in profile set up for birthday and start date (it
+     should be hidden to other users)"). Only on this admin screen; saved straight away into the shared ph_celebrate
+     record (merged - nobody else's dates are touched). The birthday is the day and month only: the year is never asked,
+     so nobody's age is kept. Home shows them only as the celebration on the day (party.js). */
+  const MONTHN=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  function celebHTML(u){
+    if(!(window.PH && PH.partyOn && PH.partyOn())) return '';
+    const e=String(u.email||'').toLowerCase().trim();
+    let x={}; try{ x=((JSON.parse(localStorage.getItem(PH.PARTY_KEY))||{}).p||{})[e]||{}; }catch(_){}
+    const bm=x.bday ? +x.bday.slice(0,2) : 0, bd=x.bday ? +x.bday.slice(3,5) : 0, no=x.no||{};
+    if(window.PH_STORE && e) PH_STORE.get(PH.PARTY_KEY).catch(()=>null);      // freshen the local copy for next time
+    return '<div class="fullband"><div class="fld"><label>Birthday &amp; start date <span class="msbadge" style="background:#FBEAE7;color:#B23A26">ONLY ADMINS SEE THESE</span></label>'+
+      (e ? '<div class="photorow" style="flex-wrap:wrap;gap:10px;align-items:center">'+
+        '<span style="font-size:13px;font-weight:600">🎂 Birthday</span>'+
+        '<select id="fBm" onchange="AD.setCeleb()" aria-label="Birth month"><option value="">Month…</option>'+MONTHN.map((m,i)=>'<option value="'+(i+1)+'" '+(bm===i+1?'selected':'')+'>'+m+'</option>').join('')+'</select>'+
+        '<select id="fBd" onchange="AD.setCeleb()" aria-label="Birth day"><option value="">Day…</option>'+Array.from({length:31},(_,i)=>'<option '+(bd===i+1?'selected':'')+'>'+(i+1)+'</option>').join('')+'</select>'+
+        '<span style="font-size:13px;font-weight:600;margin-left:8px">🏆 Started</span>'+
+        '<input type="date" id="fStart" value="'+esc(x.started||'')+'" onchange="AD.setCeleb()" aria-label="Start date" style="max-width:170px">'+
+        '<span id="fCelNote" style="font-size:12.5px;color:var(--soft)" role="status" aria-live="polite"></span></div>'+
+        '<div style="font-size:12px;color:var(--soft);margin-top:6px">Home-Brace celebrates them on the day. The day and month of a birthday only — never the year.'+
+          (no.bday||no.anniv ? ' <b>'+esc(u.f)+' has switched off '+(no.bday&&no.anniv?'both celebrations':no.bday?'the birthday celebration':'the Workiversary celebration')+'</b> in their profile.' : '')+'</div>'
+        : '<div style="font-size:12.5px;color:var(--soft)">Add an email address first — the celebration is matched by it.</div>')+
+      '</div></div>';
+  }
+  function setCeleb(){
+    const u=users[tmpU.gi]; if(!u) return; const e=String(u.email||'').toLowerCase().trim(); if(!e) return;
+    const m=+(document.getElementById('fBm')||{}).value||0, d=+(document.getElementById('fBd')||{}).value||0, st=(document.getElementById('fStart')||{}).value||'';
+    const note=document.getElementById('fCelNote'), say=t=>{ if(note) note.textContent=t; };
+    const dim=[31,29,31,30,31,30,31,31,30,31,30,31];
+    if((m && !d) || (!m && d)) { say('Pick the month and the day'); return; }
+    if(m && d>dim[m-1]){ say(MONTHN[m-1]+' has '+dim[m-1]+' days'); return; }
+    if(st && (st>new Date().toISOString().slice(0,10) || st<'1950-01-01')){ say('That start date doesn’t look right'); return; }
+    const bday=m ? String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0') : '';
+    PH_STORE.update(PH.PARTY_KEY, cur=>{ const rec=cur && typeof cur==='object' && cur.p ? cur : {v:1, p:{}};
+      const x=Object.assign({}, rec.p[e]||{}, {bday, started:st, name:(u.f+' '+u.l).trim(), first:u.f||'', office:(parseLoc(u.loc)[0]||''), role:u.role||'', upd:new Date().toISOString()});
+      if(!x.bday) delete x.bday; if(!x.started) delete x.started; rec.p[e]=x; return rec; })
+      .then(()=>say('Saved ✓'), ()=>say('Not saved — check the connection'));
   }
   function testAlert(){
     const u=users[tmpU.gi]; if(!u) return;
@@ -2249,7 +2288,7 @@
   if(location.hash==='#feedback') setTimeout(()=>tabSet('fb'), 0);
   if(location.hash==='#usage') setTimeout(()=>tabSet('use'), 0);      // the bell's "new feedback" opens here
   window.AD={chatAdd,chatDel,chatRetry,tabNow:()=>tab,setupSecs,editSyncNow,tcSyncNow,paySyncNow,sensAdd,sensChange,sensRemove,sensClose,sensQ,sensToggle,sensClear,sensLevel,sensTyped,sensBack,sensNext,sensGo,sensSyncNow,tab:tabSet,viewAs:doViewAs,newTeam,editTeam,saveTeam:thenSync(saveTeam),delTeam:thenSync(delTeam),resetTeams,profile,whyNoAdd,
-    addPerson,npSet,npLoc,npTeam,saveNewPerson:thenSync(saveNewPerson),accTeam:setAccTeam,removePerson:thenSync(removePerson),restorePerson:thenSync(restorePerson),showRemoved,togTeam,togLoc,setStatus,saveUser:thenSync(saveUser),pickLevel,pickAud,setField,pickPhoto,photoChosen,clearPhoto,pickUserLevel,clearUserLevel,tog,addFile,noop,newSec,editSec,saveSec:thenSync(saveSec),delSec,delSecGo,resetSecs,setSecName,setSecIcon,setSecStruct,setSecLocMode,setSecTeamMode,togSecLoc,togSecTeam,saveFile,cd,useFile,clearFile,uploadFile,setFileTeamMode,setFileLocMode,togFileLoc,togFileTeam,renderLocs,newLoc,editLoc,saveLoc,delLoc,resetLocs,setLocBrand,setLocState,setLocTZ,testAlert,close:closeModal};
+    addPerson,npSet,npLoc,npTeam,saveNewPerson:thenSync(saveNewPerson),accTeam:setAccTeam,removePerson:thenSync(removePerson),restorePerson:thenSync(restorePerson),showRemoved,togTeam,togLoc,setStatus,saveUser:thenSync(saveUser),pickLevel,pickAud,setField,pickPhoto,photoChosen,clearPhoto,pickUserLevel,clearUserLevel,tog,addFile,noop,newSec,editSec,saveSec:thenSync(saveSec),delSec,delSecGo,resetSecs,setSecName,setSecIcon,setSecStruct,setSecLocMode,setSecTeamMode,togSecLoc,togSecTeam,saveFile,cd,useFile,clearFile,uploadFile,setFileTeamMode,setFileLocMode,togFileLoc,togFileTeam,renderLocs,newLoc,editLoc,saveLoc,delLoc,resetLocs,setLocBrand,setLocState,setLocTZ,testAlert,setCeleb,close:closeModal};
   el('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
   /* Load the real roster before the first paint. If it isn't there (the public
@@ -2333,7 +2372,7 @@ function sizeWatch(){
   }).catch(()=>{});
 }
 </script>
-<script src="tour.js?v=hc207"></script>
+<script src="tour.js?v=hc210"></script>
 <script>
 Tour.init([
   {sel:'#tabs', title:'This is your control room', body:'Four tabs and you can run the whole hub: <b>People</b>, <b>Teams &amp; Access</b>, <b>Document Sections</b> and <b>Locations</b>. No developer, no consultant.', pre:()=>AD.tab('users')},

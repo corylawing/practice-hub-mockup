@@ -440,6 +440,30 @@ I can confidently say that the chat feature should go next. The production thing
    localStorage ph_chat_emoji_recent (18 defaults). Used by the message box (emoji button) and "More emoji" on a
    reaction. All 1,425 toned sequences checked against Unicode's list. test/chatv2.test.js (42).
    STILL QUEUED: a "chat alerts: Home-Brace / Teams" choice.
+38. **CELEBRATIONS - birthdays + WORKIVERSARIES on Home (18/11/2026; hc210; SANDBOX ONLY until user.js PARTY_LIVE).**
+   Cory: "Birthdays and work anniversaries on Home ... awesome animated motion art celebration put in sandbox to show
+   Heather"; "something the admin can do in profile set up for birthday and start date (it should be hidden to other
+   users)"; "The persons birthday or workaversary ... should be extra special animated on their home-brace, others should
+   have a nice animated which catches their eye"; "The banner for others should have a reach out ... message that
+   automatically opens a chat"; "more modern wow motion art"; "a cake with multiple candles to blow out"; "I don't think
+   you need to say everyone at the practice can see"; "In American English they now call it Workiversary" (so every word
+   people read says Workiversary). DATES: Admin -> People, a band marked ONLY ADMINS SEE THESE: birthday month + day (the
+   YEAR is never asked or kept) and the start date; saved at once into the shared record ph_celebrate {v:1,p:{email:{bday,
+   started,name,first,office,role,no:{bday,anniv}}}} (PH_STORE.update merge). Shown nowhere else - not profiles, not Team.
+   My profile: two switches, "Celebrate my birthday" / "Celebrate my Workiversary" (off = no). v1/party.js (PH_PARTY):
+   rules (cleanBday/cleanStart/dayIn - 29 Feb on the 28th; celebrations(): today, Monday also the weekend, coming up =
+   next 7 days; cleanRecord/peopleFrom - the team list wins for name/office; demo() = made-up @example.com people with
+   something today) + the art: dark aurora (4 drifting blobs, 'lighter'), bokeh at depths, light-trail ribbons, fireworks
+   with streaks, comets, a shockwave, glossy 3D balloons; frosted-glass card, gradient name rising letter by letter;
+   Workiversary: a huge gold number with a light sweep and rays, a ring of light orbiting the card. YOUR DAY (it.mine):
+   opens by itself once a day per device, bigger show; birthday = a glossy two-tier cake, FIVE candles each blown out on
+   its own (smoke puff), the last one = burst + "Wish made!"; Workiversary = the gold count-up + "Thank you for N years".
+   EVERYONE ELSE: the Home card only (live aurora, glass tiles, pulsing Celebrate) - never takes over the screen; "💬 Send
+   X a message" = chat.html#to=<email>&name=&say= (Home-Brace Chat for anyone who has it - chat.html openFromLink() finds
+   or starts the one-to-one chat and puts the text in the box, nothing sent by itself; Teams' deep link otherwise).
+   Sandbox: "see what Avery / Dana sees today" links. Still for "less motion". test/party (24).
+   CHAT PHOTOS (Cory 18/11, like Slack): hovering a photo shows a round magnifier with a + and darkens it a little (mouse
+   only; phones tap). test/party checks it.
 37. **MONTHLY REPORT (Heather's monitor report, item 34c; 18/11/2026; hc205; SANDBOX ONLY until user.js MONTHLY_LIVE is
    true - an admin can preview live with monthly.html?monthlypreview).** Cory: "build it"; "It has to be more than just her
    excel. You have to think of a practice and why this is important"; "It needs to be smart where its saving time for

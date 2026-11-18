@@ -1955,6 +1955,11 @@
           '<div style="font-size:11.5px;color:#56627A;margin-top:4px">Microsoft doesn\'t hold this — keep it current so your team can reach you.</div></div>'+
         '<div class="ph-f" style="margin-bottom:18px"><label>About me</label>'+
           '<textarea class="ph-edit" id="ph-about" placeholder="A line about what you do…">'+(p.about||'')+'</textarea></div>'+
+        (partyOn() ? (function(){ const x=partyRec().p[String(email(p)||'').toLowerCase()]||{}, no=x.no||{};
+          return '<div class="ph-f" style="margin-bottom:18px"><label>Celebrations on Home-Brace</label>'+
+            '<label style="display:flex;gap:8px;align-items:center;font-size:14px;margin:4px 0"><input type="checkbox" '+(no.bday?'':'checked')+' onchange="PH.partyPref(\'bday\',this.checked)"> Celebrate my birthday 🎂</label>'+
+            '<label style="display:flex;gap:8px;align-items:center;font-size:14px;margin:4px 0"><input type="checkbox" '+(no.anniv?'':'checked')+' onchange="PH.partyPref(\'anniv\',this.checked)"> Celebrate my Workiversary 🏆</label>'+
+            '<div style="font-size:11.5px;color:#56627A;margin-top:4px">Your admin adds the dates. Only the day is ever shown — never your age. Saves as you tick.</div></div>'; })() : '')+
         '<p class="ph-lab">From Microsoft 365 <span class="ph-tag ms">SYNCED — CAN\'T EDIT HERE</span></p>'+
         '<div class="ph-g">'+ro('First name',p.first)+ro('Last name',p.last)+ro('Email',email(p))+ro('Employee ID',p.emp)+'</div>'+
         '<p class="ph-lab">Set by your admin <span class="ph-tag adm">ADMIN ONLY</span></p>'+
@@ -2105,6 +2110,20 @@
   /* MONTHLY REPORT (18/11/2026): the offices' month-end numbers (Heather's monitor report). Sandbox first - false keeps
      it off the live site until Cory says "monthly live". An admin can preview it there with monthly.html?monthlypreview. */
   const MONTHLY_LIVE=false;
+  /* CELEBRATIONS (18/11/2026): birthdays + work anniversaries on Home (party.js). Sandbox first; false keeps it off the
+     live site (no Home card, no admin dates, no profile switches) until Cory says "celebrations live". */
+  const PARTY_LIVE=false;
+  const PARTY_KEY='ph_celebrate';
+  function partyOn(){ return env()!=='live' || PARTY_LIVE; }
+  function partyRec(){ try{ const r=JSON.parse(localStorage.getItem(PARTY_KEY)); return r && typeof r==='object' && r.p ? r : {v:1, p:{}}; }catch(_){ return {v:1, p:{}}; } }
+  /* My profile: a person switches their own birthday / anniversary celebration off (or back on). Merged into the shared
+     record (PH_STORE.update), so nobody else's dates are touched. */
+  function partyPref(kind, on){
+    const e=String(email(me())||'').toLowerCase().trim(); if(!e || (kind!=='bday' && kind!=='anniv') || !window.PH_STORE) return;
+    window.PH_STORE.update(PARTY_KEY, cur=>{ const rec=cur && typeof cur==='object' && cur.p ? cur : {v:1, p:{}}; const x=Object.assign({}, rec.p[e]||{});
+      const no=Object.assign({}, x.no||{}); no[kind]=!on; x.no=no; rec.p[e]=x; return rec; });
+    const ok=document.getElementById('ph-ok'); if(ok){ ok.classList.add('on'); setTimeout(()=>ok.classList.remove('on'),1800); }
+  }
   function monthlyOn(){ if(env()!=='live' || MONTHLY_LIVE) return true;
     try{ if(/[?&]monthlypreview\b/.test(location.search||'')) sessionStorage.setItem('ph_monthly_preview','1'); return sessionStorage.getItem('ph_monthly_preview')==='1' && isAdmin(realMe()); }catch(_){ return false; } }
   const PAY_LIVE=true;                // ON for staff 04/11/2026 (Heather: "I did all the instructions, I think we are good to go"); first pay period #24
@@ -4020,7 +4039,7 @@
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', start, {once:true}); else setTimeout(start, 0);
   })();
 
-  window.PH={PEOPLE,newHiresOn,pickOn,chatPilotMe,chatPilotKnown:()=>CHATPILOT!==null,chatGuest,reloadChatPilot,cleanChatPilot,CHAT_PILOT_KEY,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,teamNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, rosterView, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, chatBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK, notesHTML, searchHTML, searchDocs, searchDocsHTML, levelForTeams, teamsSeeAll, tcOn, tcRoleFor, payOn, monthlyOn, payRoleFor, paySenders, reloadPaySenders, paySenderOffices, payLevel, payReminders, payMark, reloadPayStatus, payRulesReady, payAlertPlan, payAlertsTick, centralNow, alertsReady, saveFace, faceOf, avatar, viewLink, isWordName, wordAttrs, wordPdfInto,
+  window.PH={PEOPLE,newHiresOn,pickOn,chatPilotMe,chatPilotKnown:()=>CHATPILOT!==null,chatGuest,reloadChatPilot,cleanChatPilot,CHAT_PILOT_KEY,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,teamNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, rosterView, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, chatBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK, notesHTML, searchHTML, searchDocs, searchDocsHTML, levelForTeams, teamsSeeAll, tcOn, tcRoleFor, payOn, monthlyOn, partyOn, partyPref, PARTY_KEY, payRoleFor, paySenders, reloadPaySenders, paySenderOffices, payLevel, payReminders, payMark, reloadPayStatus, payRulesReady, payAlertPlan, payAlertsTick, centralNow, alertsReady, saveFace, faceOf, avatar, viewLink, isWordName, wordAttrs, wordPdfInto,
     sensRecord, reloadSensitive, sensLevelFor, sensitiveLevel, sensConfirmOk,
     setTheme, theme:()=>THEME, setLayout, layout:()=>LAYOUT, layouts:()=>LAYOUTS.map(l=>({k:l.k, n:l.n})), themes:()=>THEMES.map(t=>({k:t.k, n:t.n})), schemeTokens:k=>schemeTokens(themeOf(k)), contrast,
     feedback:openFeedback, feedbackText, feedbackContext, learning:stillLearning, fbReady, myFeedback, fbTick, usageReady, rosterName, useEmail, useTrackMe, loadHold, loadDone};

@@ -142,10 +142,11 @@
   }
 
 </style>
-<script src="user.js?v=hc207"></script>
+<script src="user.js?v=hc210"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc207"></script>
-  <script src="gate.js?v=hc207"></script>
+  <script src="store.js?v=hc210"></script>
+  <script src="gate.js?v=hc210"></script>
+  <script src="party.js?v=hc210"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — this is the logged-in home. Use “Viewing as” to see how the app changes for each role.</div>
@@ -167,6 +168,8 @@
 
   <div class="whoami" id="whoami"><span class="av" id="who_av"></span><div><div class="hi"><h1 id="who_name"></h1><span class="dp" id="who_dp" aria-hidden="true"></span></div><div class="sub" id="who_sub"></div></div></div>
   <div class="summary" id="summary"></div>
+
+  <div id="party" hidden></div>
 
   <div class="updates" id="updates"></div>
 
@@ -386,6 +389,20 @@
   /* Identity settles in stages after sign-in (profile, then roster, then the access
      grid). Each stage can change which tiles this person gets, so redraw on each. */
   document.addEventListener('ph-identity', function(){ try{ set(cur&&cur.id); }catch(_){} });
+  /* CELEBRATIONS (party.js): birthdays and work anniversaries an admin set in Admin -> People. Live: the shared record and
+     today's team list. Sandbox: made-up people with something on today, plus anyone given dates in the sandbox's Admin. */
+  function renderParty(){
+    if(!(window.PH && PH.partyOn && PH.partyOn()) || !window.PH_PARTY) return;
+    const host=el('party'), live=PH.isLive && PH.isLive();
+    const me=String((PH.email && PH.me && PH.email(PH.me()))||'').toLowerCase();
+    const roster=(PH.rosterView && PH.rosterView())||[];
+    const draw=rec=>{ try{ PH_PARTY.card(host, PH_PARTY.peopleFrom(rec, roster, PH.photoFor), {me, demo:!live}); }catch(e){ if(host) host.hidden=true; } };
+    if(!live){ let mine=null; try{ mine=JSON.parse(localStorage.getItem(PH.PARTY_KEY)); }catch(_){}
+      const d=PH_PARTY.demo(); draw({v:1, p:Object.assign({}, d.p, (mine && mine.p)||{})}); return; }
+    if(window.PH_STORE) PH_STORE.get(PH.PARTY_KEY).then(r=>draw(r||{}), ()=>{});
+  }
+  renderParty();
+  document.addEventListener('ph-identity', function(){ try{ renderParty(); }catch(_){} });
   window.HOME={set, refreshUpdates};
   let saved='admin'; try{ saved=localStorage.getItem('ph_viewas')||'admin'; }catch(_){}
   if(!PERSONAS.some(p=>p.id===saved)) saved='admin';
@@ -393,7 +410,7 @@
 })();
 </script>
 <script>PH.nav('home');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(PH.loadActivity)PH.loadActivity().then(function(){return PH.loadSeen?PH.loadSeen():null;}).then(function(){if(window.HOME&&HOME.refreshUpdates)HOME.refreshUpdates();if(PH.refreshBell)PH.refreshBell();});});</script>
-<script src="tour.js?v=hc207"></script>
+<script src="tour.js?v=hc210"></script>
 <script>
 Tour.init([
   {sel:'.ph-av', title:'This is you', body:'Your name and photo, top right. Tap it any time for <b>My profile</b> \u2014 your photo, preferred name, phone and \u201cAbout me\u201d. Those follow you between devices.'},
