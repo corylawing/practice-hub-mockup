@@ -110,7 +110,7 @@ I can confidently say that the chat feature should go next. The production thing
    UPDATE 12/11: the calendar Cory meant is the Home-Brace M365 GROUP's Outlook calendar (Outlook -> Groups ->
    Home-Brace) -> needs delegated Group.ReadWrite.All (Adam: add + Grant admin consent; email drafted for Cory 12/11).
 9. **Connect to OrthoFi and their practice-management system (Cory 16/11/2026: "connect to orthofi and orthoedge (or
-   what ever their PMS is)").** Not started. First: confirm which PMS they actually use ("OrthoEdge" is probably Ortho2's
+   what ever their PMS is)"; 18/11 Cory: "It was Ortho2 not OrthoEdge" - their PMS is Ortho2).** Not started. First: confirm which PMS they actually use ("OrthoEdge" is probably Ortho2's
    Edge Cloud - ask Heather/Adam), what each offers to connect with (an API, reports/exports, or nothing), who holds the
    accounts, and what Home-Brace would take from each (e.g. production, starts, collections, A/R for the monitor sheet
    #4, payments from OrthoFi). Patient data = the most careful handling (like the TC Tracker's locked folder).
