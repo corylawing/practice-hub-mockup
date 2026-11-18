@@ -1800,10 +1800,47 @@
      ph_chat_unread = {chat id: unread}), so a fresh tab starts the demo again at chat.html's 3 unread. */
   function chatBadge(){
     const c=document.querySelector('.ph-chat'); if(!c) return;
-    let n=3; try{ const v=sessionStorage.getItem('ph_chat_unread'); if(v!==null){ const m=JSON.parse(v)||{}; n=Object.keys(m).reduce((t,k)=>t+(Number(m[k])||0),0); } }catch(_){}
+    let n=env()==='live' ? 0 : 3;            // the live site never shows the mock-up's made-up 3
+    try{ const v=sessionStorage.getItem('ph_chat_unread'); if(v!==null){ const m=JSON.parse(v)||{}; n=Object.keys(m).reduce((t,k)=>t+(Number(m[k])||0),0); } }catch(_){}
     let d=c.querySelector('.dot'); if(!n){ if(d) d.remove(); c.title='Chat'; return; }
     if(!d){ d=document.createElement('span'); d.className='dot'; c.appendChild(d); }
     d.textContent=n>9?'9+':String(n); c.title='Chat - '+n+' unread';
+  }
+  /* THE CHAT COUNT ON EVERY PAGE (Heather 18/11: "Since I have Home Brace open, I do not see a number next to my messages
+     when you send me one"). The count used to be only what the Chat page last saw in this browser tab - so with Home open
+     it never moved, and a fresh tab showed the mock-up's 3. Now, on the live site, for anyone who has chat: Microsoft is
+     asked which chats have something unread (as the Chat page decides it: the newest message isn't yours, isn't deleted,
+     and is newer than when you last read that chat; hidden chats don't count) - when the page opens, every minute while
+     it's on screen, when you come back to it, and 1.5 s after a chat alert arrives on this device. The Chat page itself
+     keeps its own count. Delegated Chat.ReadWrite (the chat's own permission). */
+  let cuT=null, cuBusy=false;
+  async function chatUnreadCheck(){
+    if(env()!=='live' || !chatPilotMe() || /chat\.html$/.test(location.pathname) || !PROFILE || !PROFILE.id || !window.PH_AUTH || !PH_AUTH.tokenFor) return;
+    if(cuBusy || document.visibilityState!=='visible') return; cuBusy=true;
+    try{
+      const t=await PH_AUTH.tokenFor(['Chat.ReadWrite']);
+      const r=await fetch('https://graph.microsoft.com/v1.0/me/chats?$top=50&$orderby=lastMessagePreview/createdDateTime%20desc&$expand=lastMessagePreview', {headers:{Authorization:'Bearer '+t}});
+      if(!r.ok) return;
+      const j=await r.json(), m={};
+      (j.value||[]).forEach(function(c){
+        if(!c || (c.chatType!=='oneOnOne' && c.chatType!=='group') || (c.viewpoint && c.viewpoint.isHidden)) return;
+        const lp=c.lastMessagePreview; if(!lp || lp.isDeleted) return;
+        const from=lp.from && lp.from.user; if(from && from.id===PROFILE.id) return;
+        const at=Date.parse(lp.createdDateTime)||0, read=c.viewpoint && c.viewpoint.lastMessageReadDateTime ? Date.parse(c.viewpoint.lastMessageReadDateTime)||0 : 0;
+        if(at>read) m[c.id]=1;
+      });
+      try{ sessionStorage.setItem('ph_chat_unread', JSON.stringify(m)); }catch(_){}
+      chatBadge();
+    }catch(_){} finally{ cuBusy=false; }
+  }
+  function chatUnreadStart(){
+    if(cuT || env()!=='live' || typeof window.addEventListener!=='function') return;
+    cuT=setInterval(chatUnreadCheck, 60000);
+    document.addEventListener('visibilitychange', function(){ if(document.visibilityState==='visible') chatUnreadCheck(); });
+    window.addEventListener('focus', chatUnreadCheck);
+    try{ if(navigator.serviceWorker) navigator.serviceWorker.addEventListener('message', function(e){ const d=e.data||{};
+      if(d.type==='ph-alert' && d.message && d.message.tag==='hb-chat') setTimeout(chatUnreadCheck, 1500); }); }catch(_){}
+    chatUnreadCheck();
   }
   function bell(){
     const bar=document.querySelector('.hdr-in'); if(!bar) return;
@@ -3146,7 +3183,7 @@
     Promise.resolve(reloadAccess()).then(lateLanded, lateLanded);
     Promise.resolve(reloadPeople()).then(lateLanded, lateLanded);
     if(isLive()){ LATE++; Promise.resolve(reloadChatPilot()).then(lateLanded, lateLanded)
-      .then(function(){ if(chatPilotMe()) alertsReady().then(function(A){ if(A && A.chatLink) A.chatLink(); }); }); }   // the chat pilot list (Admin -> Chat); a member's instant chat alerts
+      .then(function(){ if(chatPilotMe()){ alertsReady().then(function(A){ if(A && A.chatLink) A.chatLink(); }); chatUnreadStart(); } }); }   // the chat pilot list (Admin -> Chat); a member's instant chat alerts + the chat count on every page
     if(payOn()) Promise.resolve(reloadPaySenders()).then(()=>{ identityChanged(); return reloadPayStatus(); }, ()=>{})   // a sender's Payroll tab
       .then(()=>payAlertsTick(), ()=>{});                                                                                  // and any phone reminder that's due
     setTimeout(function(){ fbTick(true); }, 2500);                                                                         // replies to their feedback

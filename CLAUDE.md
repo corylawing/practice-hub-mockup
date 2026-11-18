@@ -440,6 +440,18 @@ I can confidently say that the chat feature should go next. The production thing
    localStorage ph_chat_emoji_recent (18 defaults). Used by the message box (emoji button) and "More emoji" on a
    reaction. All 1,425 toned sequences checked against Unicode's list. test/chatv2.test.js (42).
    STILL QUEUED: a "chat alerts: Home-Brace / Teams" choice.
+33. **THE CHAT COUNT ON EVERY PAGE (Heather 18/11 QUESTION: "Since I have Home Brace open, I do not see a number next to
+   my messages when you send me one. If I don't have it open I think it does put the number next to the chat icon";
+   hc202, sandbox).** The header chat button's number was only sessionStorage ph_chat_unread written by chat.html - stale
+   on every other page, and a fresh tab showed the MOCK-UP's default 3 on live. Now user.js chatUnreadCheck (live, a chat
+   pilot member, not on chat.html, page visible): GET /me/chats?$top=50&$expand=lastMessagePreview with Chat.ReadWrite;
+   unread chat = newest message not mine, not deleted, newer than viewpoint.lastMessageReadDateTime, not hidden, not a
+   meeting chat -> {chatId:1} into ph_chat_unread -> chatBadge (counts CHATS with something new). Runs when the pilot list
+   lands (chatUnreadStart), every 60 s, on visibility/focus, and 1.5 s after the service worker's 'ph-alert' message with
+   tag hb-chat. Live default 0, never 3. test/chatbadge (4); chatinstant pattern updated. Harness: Home shows "2".
+   MELINDA 18/11 QUESTION (Enter Production: "Am I able to change the number of completed production days?"): by design
+   (hc160) - read-only for months the Schedule fills in; the screen already says "From the Schedule ... To change it,
+   change the Schedule." Reply drafted for Cory.
 32. **CHAT: Hide a chat + Delete my message (18/11/2026; hc201, sandbox).** Cory (from pilot feedback "we don't have the
    ability to delete a chat"): Teams doesn't let staff delete a whole chat (IT only; history kept) -> "yes build hide chat
    and delete message". chatgraph.js hideChat(chat, me, back) = POST /chats/{id}/hideForUser|unhideForUser {user:{id,

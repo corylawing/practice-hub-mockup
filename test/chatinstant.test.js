@@ -129,7 +129,7 @@ const message=(fromId, name, html, extra)=>Object.assign({id:'1', messageType:'m
   const AL=SRC, U=fs.readFileSync(path.join(__dirname,'..','v1','user.js'),'utf8');
   t('page: turning alerts off removes the link first; turning them on makes it; every page keeps it up for a pilot member',
     /async function disable\(\)\{\n\s*await chatUnlink\(\);/.test(AL) && /await saveMine\(j\);\n\s*chatLink\(\);/.test(AL) &&
-    /if\(chatPilotMe\(\)\) alertsReady\(\)\.then\(function\(A\)\{ if\(A && A\.chatLink\) A\.chatLink\(\); \}\);/.test(U) && /chatPilotKnown:\(\)=>CHATPILOT!==null/.test(U));
+    /if\(chatPilotMe\(\)\)\{ alertsReady\(\)\.then\(function\(A\)\{ if\(A && A\.chatLink\) A\.chatLink\(\); \}\); chatUnreadStart\(\); \}/.test(U) && /chatPilotKnown:\(\)=>CHATPILOT!==null/.test(U));
   t('page: the live site only; only with alerts on on this device', /function chatLinkWanted\(\)\{ return ON && LIVE && CHAT_INSTANT && !!\(global\.PH && PH\.chatPilotMe && PH\.chatPilotMe\(\)\) && state\(\)==='on' && !!saved\(\); \}/.test(AL));
   const DEP=fs.readFileSync(path.join(__dirname,'..','deploy','deploy-production.sh'),'utf8'), GI=fs.readFileSync(path.join(__dirname,'..','.gitignore'),'utf8');
   t('deploy: ships the certificate next to the sender and refuses without it; the private key is never in git',
