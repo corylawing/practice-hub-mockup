@@ -171,10 +171,10 @@
 
   // Department (Entra) -> what they can do. Keys are Heather's own ten team names, lowercased.
   const DEPT_CAN={
-    'admin':                      {dashboard:'view',production:'manage',schedule:'edit',marketing:'edit',documents:'manage',team:'view',admin:'manage',tc:'manage',payroll:'manage'},
+    'admin':                      {dashboard:'view',production:'manage',schedule:'edit',marketing:'edit',documents:'manage',team:'view',admin:'manage',tc:'manage',payroll:'manage',meetings:'edit'},
     'executive team':             {dashboard:'view',production:'edit',  schedule:'edit',marketing:'edit',documents:'manage',team:'view',admin:'none',tc:'manage'},
     'leadership team':            {dashboard:'view',production:'edit',  schedule:'edit',marketing:'edit',documents:'manage',team:'view',admin:'none',tc:'manage'},
-    'office managers':            {dashboard:'view',production:'edit',  schedule:'edit',marketing:'view',documents:'edit',  team:'view',admin:'none',tc:'view'},
+    'office managers':            {dashboard:'view',production:'edit',  schedule:'edit',marketing:'view',documents:'edit',  team:'view',admin:'none',tc:'view',meetings:'edit'},
     'clinic managers':            {dashboard:'view',production:'view',  schedule:'edit',marketing:'view',documents:'edit',  team:'view',admin:'none',tc:'none'},
     'doctors':                    {dashboard:'view',production:'none',  schedule:'view',marketing:'none',documents:'view',  team:'view',admin:'none',tc:'none'},
     'tcs':                        {dashboard:'none',production:'none',  schedule:'view',marketing:'none',documents:'add',   team:'view',admin:'none',tc:'edit'},
@@ -629,7 +629,10 @@
   function canForTeams(depts){
     let can=null;
     depts.forEach(d=>{
-      const c=accessForTeam(d) || DEPT_CAN[d]; if(!c) return;
+      let c=accessForTeam(d) || DEPT_CAN[d]; if(!c) return;
+      /* MEETINGS (18/11/2026) is newer than the saved Teams & Access grid: until an admin sets that column for a team,
+         the team's starting value counts (Office Managers + Admin can make meetings - Cory: "I believe its office managers"). */
+      if(c.meetings===undefined && DEPT_CAN[d] && DEPT_CAN[d].meetings) c=Object.assign({}, c, {meetings:DEPT_CAN[d].meetings});
       if(!can){ can=Object.assign({},c); return; }
       Object.keys(c).forEach(k=>{ if(RANK[c[k]]>RANK[can[k]]) can[k]=c[k]; });
     });

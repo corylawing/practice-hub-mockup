@@ -272,20 +272,20 @@
   }
 
 </style>
-<script src="user.js?v=hc199"></script>
+<script src="user.js?v=hc200"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="_staff.js?v=hc199"></script>
-  <script src="store.js?v=hc199"></script>
-  <script src="gate.js?v=hc199"></script>
-  <script src="docs.js?v=hc199"></script>
-  <script src="payrules.js?v=hc199"></script>
-  <script src="workbook.js?v=hc199"></script>
-  <script src="prodbook.js?v=hc199"></script>
-  <script src="prodfx.js?v=hc199"></script>
-  <script src="prodstore.js?v=hc199"></script>
-<script src="schedrec.js?v=hc199"></script>
-<script src="proddays.js?v=hc199"></script>
-  <script src="prodadmin.js?v=hc199"></script>
+  <script src="_staff.js?v=hc200"></script>
+  <script src="store.js?v=hc200"></script>
+  <script src="gate.js?v=hc200"></script>
+  <script src="docs.js?v=hc200"></script>
+  <script src="payrules.js?v=hc200"></script>
+  <script src="workbook.js?v=hc200"></script>
+  <script src="prodbook.js?v=hc200"></script>
+  <script src="prodfx.js?v=hc200"></script>
+  <script src="prodstore.js?v=hc200"></script>
+<script src="schedrec.js?v=hc200"></script>
+<script src="proddays.js?v=hc200"></script>
+  <script src="prodadmin.js?v=hc200"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — admin console concept for validation. Real build: people sync from Microsoft 365; access is managed here.</div>
@@ -365,6 +365,9 @@
        the live site until Payroll is on there (or an admin previews it), like the TC Tracker. */
     ...((window.PH && PH.payOn && !PH.payOn() && !payPreviewFlag()) ? [] : [{k:'payroll',n:'Payroll (every office’s sheets)',s:'Payroll',ic:'💵'}]),
     {k:'marketing',n:'Marketing board',s:'Marketing',ic:'📣'},
+    /* MEETINGS (18/11/2026, Cory: "it should be a permission to give to make meetings but I believe its office managers"):
+       everyone who sees the Schedule sees the shared meetings; this column is who can MAKE one (invites go out from them). */
+    {k:'meetings',n:'Meetings (make meetings)',s:'Meetings',ic:'🗓️'},
     /* The Documents TAB, on or off per team (07/10). It was never a column, so a team with
        saved settings had it off and there was no switch to turn it on when they're ready.
        It only shows or hides the tab: the section columns decide what each team sees and
@@ -423,6 +426,7 @@
     production:['none','edit','manage'],
     tc:['none','view','edit','manage'],
     schedule:['none','view','edit'],
+    meetings:['none','edit'],
     marketing:['none','view','edit'],
     team:['none','view'],
     documents:['none','view'],
@@ -430,7 +434,7 @@
   };
   const levelsFor=k=>SEC_LEVELS[k]||LEVELS;   // document sections use the full ladder
   // short text in the grid square
-  const SEC_SHORT={production:{edit:'Enter',manage:'Enter + goals'},tc:{view:'See',edit:'Log + calls',manage:'Everything'},admin:{manage:'Full control'},documents:{view:'Can open'}};
+  const SEC_SHORT={meetings:{edit:'Can make'},production:{edit:'Enter',manage:'Enter + goals'},tc:{view:'See',edit:'Log + calls',manage:'Everything'},admin:{manage:'Full control'},documents:{view:'Can open'}};
   const shortFor=(k,l)=>((SEC_SHORT[k]||{})[l])||LVLNAME[l];
   // plain-English explanation in the picker
   const SEC_DESC={
@@ -440,6 +444,7 @@
         edit:'Can log consults, work the call list and set consult slots for their offices',
         manage:'All of that, plus change the lists (consult types, pending reasons, lead sources) and download a month'},
     schedule:{view:'Can look at the rota, change nothing',edit:'Can assign doctors and set hours'},
+    meetings:{none:'Sees the meetings on the Schedule, can’t make one',edit:'Can make meetings from the Schedule (the invites go out from them)'},
     marketing:{view:'Can look at the board',edit:'Can move cards and score results'},
     team:{view:"Can see everyone's contact card"},
     documents:{none:'No Documents tab yet',view:'Shows the Documents tab. What they see and can do inside is set in the section columns.'},
@@ -509,7 +514,7 @@
   allSections().forEach(x=>{ if(access['Admin']) access['Admin'][x.k]='manage'; });
   set('Executive Team',{tc:'manage',production:'manage',dashboard:'manage',schedule:'view',marketing:'view',team:'view',admin:'view',hr:'edit',eom:'manage',officedocs:'view',forms:'view',vendors:'view',filing:'view'});
   set('Leadership Team',{tc:'manage',production:'manage',dashboard:'edit',schedule:'view',marketing:'view',team:'view',hr:'edit',eom:'edit',officedocs:'view',forms:'view',vendors:'view',filing:'view'});
-  set('Office Managers',{tc:'view',production:'edit',dashboard:'view',schedule:'edit',marketing:'view',team:'view',hr:'view',eom:'edit',officedocs:'edit',forms:'edit',vendors:'edit',filing:'edit'});
+  set('Office Managers',{meetings:'edit',tc:'view',production:'edit',dashboard:'view',schedule:'edit',marketing:'view',team:'view',hr:'view',eom:'edit',officedocs:'edit',forms:'edit',vendors:'edit',filing:'edit'});
   set('Clinic Managers',{dashboard:'view',schedule:'edit',team:'view',hr:'view',officedocs:'view',forms:'edit'});
   set('TCs',{tc:'edit',schedule:'view',team:'view',hr:'view',forms:'add'});
   set('Doctors',{dashboard:'view',schedule:'view',team:'view',hr:'view',forms:'view'});
@@ -2321,7 +2326,7 @@ function sizeWatch(){
   }).catch(()=>{});
 }
 </script>
-<script src="tour.js?v=hc199"></script>
+<script src="tour.js?v=hc200"></script>
 <script>
 Tour.init([
   {sel:'#tabs', title:'This is your control room', body:'Four tabs and you can run the whole hub: <b>People</b>, <b>Teams &amp; Access</b>, <b>Document Sections</b> and <b>Locations</b>. No developer, no consultant.', pre:()=>AD.tab('users')},

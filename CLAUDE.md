@@ -440,6 +440,27 @@ I can confidently say that the chat feature should go next. The production thing
    localStorage ph_chat_emoji_recent (18 defaults). Used by the message box (emoji button) and "More emoji" on a
    reaction. All 1,425 toned sequences checked against Unicode's list. test/chatv2.test.js (42).
    STILL QUEUED: a "chat alerts: Home-Brace / Teams" choice.
+31. **MEETINGS on the Schedule (18/11/2026; hc200; SANDBOX ONLY until meetings.js MEET_LIVE is true; one live device:
+   localStorage ph_meet_try=1).** Item 8 below (Meeting Calendar -> Schedule). Cory: "it should be a permission to give to
+   make meetings but I believe its office managers. Build it please and I'll show it to jessica"; "It needs to be really
+   easy to switch from doctor schedule to meeting schedule ... They cannot live on each other". CALENDAR = the Home-Brace
+   M365 group's calendar (Cory's tab, read-only 18/11: group "Home-Brace" Unified with mail; his token already had
+   Calendars.ReadWrite + Group.ReadWrite.All; 7 Teams meetings this + next month). v1/meetings.js (PH_MEET, delegated):
+   group by displayName (cached ph_meet_group); list = /groups/{id}/calendarView (UTC); NEW = POST /me/events (organizer's
+   calendar) with the invited people + the group as an optional attendee (-> on the shared calendar; Microsoft sends the
+   invites) + isOnlineMeeting teamsForBusiness, times sent as UTC; CHANGE (subject/time/where) / CANCEL (with a message)
+   via the organizer's own copy found by iCalUId (others: "Only the person who made this meeting..."); byName finds a
+   roster person with no email. Mock-up: made-up meetings in localStorage ph_meet_demo. schedule.html: a big switch under
+   the title "🩺 Doctor schedule | 🗓 Meetings" (ph_sched_mode; #meetings opens it; hidden where meetings are off); Meetings
+   mode hides the doctor filters/status/key/counters/add-office and shows its own 7-day Month / Week calendar (＋ Meeting on
+   a day; phone = only days with meetings), "＋ New meeting" (who: Everyone / Everyone at an office / a team / people, one
+   searchable multi-pick), a meeting card (when, where, made by, who's going, Join the Teams meeting, Open in Outlook,
+   Change / Cancel for the maker). PERMISSION: Teams & Access "Meetings: Can make" (admin.html TOOLS meetings
+   ['none','edit']); DEPT_CAN office managers + admin meetings:'edit'; canForTeams fills meetings from DEPT_CAN when the saved
+   grid predates it. test/meetings.test.js (16). Browser: mock-up desktop + phone (switch, month, week, make 14 invites,
+   change, cancel, someone else's has no buttons); live-mode harness (scratchpad meet-run.js; fakelive: groups filter,
+   calendarView, POST/PATCH/cancel /me/events, /users byName): live off by default; OM: make/change/cancel; Staff: sees,
+   can't make; nothing on the doctor board. NOT YET against real Microsoft (the real calendar is only on the live site).
 30. **PAYROLL "Worth a second look" redone + the phone app icon (18/11; hc197, sandbox).** Cory: "I don't like the layout
    its not userfriendly" -> mock-up (show_widget) -> "build it". flags() items now also carry w (what happened), g (the
    pay-effect tag), k (bad/cut/ok/info -> p-late/p-go/p-done/p-info), nt (note), on (two offices), btn (doc: Set rate);

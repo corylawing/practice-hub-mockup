@@ -244,6 +244,69 @@
      "pink means doctor on site" — every other swatch in this row IS its literal color. */
   .kmulti{display:inline-flex;gap:3px}
   .hint{font-size:12.5px;color:var(--soft);margin-top:10px}
+  /* DOCTOR SCHEDULE | MEETINGS (Cory 18/11: "It needs to be really easy to switch from doctor schedule to meeting
+     schedule ... They cannot live on each other") - two separate calendars, one switch */
+  .modeseg{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:#e9edf2;border-radius:16px;padding:5px;margin:0 0 16px;max-width:620px}
+  .modeseg[hidden]{display:none}
+  .modeseg button{display:flex;align-items:center;gap:10px;border:0;background:none;border-radius:12px;padding:10px 14px;cursor:pointer;font-family:inherit;text-align:left;color:var(--navy)}
+  .modeseg button .mi{font-size:22px;line-height:1}
+  .modeseg button b{display:block;font-size:15px}
+  .modeseg button small{display:block;font-size:12px;color:var(--soft);font-weight:600;margin-top:1px}
+  .modeseg button.on{background:#fff;box-shadow:var(--shadow)}
+  .modeseg button:not(.on):hover{background:rgba(255,255,255,.55)}
+  body.mode-meet #filters, body.mode-meet #status, body.mode-meet .keyrow, body.mode-meet #counters, body.mode-meet #tourNotice,
+  body.mode-meet #addLocBtn, body.mode-meet #addDocBtn, body.mode-meet #hint, body.mode-meet .ph-ro-banner{display:none !important}
+  body:not(.mode-meet) #newMeetBtn, body:not(.mode-meet) #meetnote{display:none !important}
+  .mmonth{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+  .mmonth .dow{font-size:11.5px;font-weight:800;color:var(--soft);text-transform:uppercase;letter-spacing:.05em;padding:0 4px 4px}
+  .mmday{background:#fff;border:1px solid var(--line);border-radius:10px;min-height:104px;padding:6px 7px;display:flex;flex-direction:column}
+  .mmday.out{background:transparent;border-color:transparent}
+  .mmday.wkend{background:#fafbfc}
+  .mmday.today{border-color:#2563EB;box-shadow:0 0 0 2px rgba(37,99,235,.15)}
+  .mmday .mdnum{font-size:12.5px;font-weight:800;color:var(--navy);margin-bottom:5px}
+  .mmday .mtg,.mweek .mtg{flex-direction:column;align-items:flex-start;gap:1px;padding:5px 7px}
+  .mmday .mtg .ms,.mweek .mtg .ms{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:12px}
+  .mmday .mtg .mt,.mweek .mtg .mt{font-size:11px;color:#3B5BA9}
+  .mmday .madd{margin-top:auto;border:1px dashed #C7D7F4;background:none;color:#1E3A8A;border-radius:7px;padding:3px 6px;font:inherit;font-size:11px;font-weight:700;cursor:pointer;opacity:0;transition:opacity .12s}
+  .mmday:hover .madd,.mmday .madd:focus{opacity:1}
+  .mweek{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
+  .mweek .wd{background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px;min-height:220px;display:flex;flex-direction:column}
+  .mweek .wd.today{border-color:#2563EB}
+  .mweek .wh{font-size:12.5px;font-weight:800;color:var(--navy);margin-bottom:8px}
+  .mweek .mtg{flex-direction:column;align-items:flex-start;gap:1px;padding:7px 8px}
+  .mweek .mtg .mw{font-size:11px;font-weight:600;color:#3B5BA9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+  .mempty{background:#fff;border:1px dashed var(--line);border-radius:12px;padding:26px 16px;text-align:center;color:var(--soft);font-size:14px;margin-top:10px}
+  @media (hover:none){ .mmday .madd{opacity:1} }
+  @media(max-width:760px){
+    .modeseg{max-width:none} .modeseg button{padding:9px 10px} .modeseg button small{display:none}
+    .mmonth,.mweek{grid-template-columns:1fr} .mmonth .dow{display:none} .mmday.out,.mmday.none{display:none}
+    .mmday,.mweek .wd{min-height:0} .mmday .madd{display:none} .mweek .wd.none{display:none}
+  }
+  /* MEETINGS (18/11/2026) - the Home-Brace group calendar on the Schedule */
+  .mtg{display:flex;align-items:center;gap:6px;width:100%;text-align:left;border:1px solid #C7D7F4;background:#EEF4FF;color:#1E3A8A;border-radius:8px;padding:4px 7px;margin:0 0 4px;font:inherit;font-size:11.5px;font-weight:700;cursor:pointer;line-height:1.25}
+  .mtg:hover{border-color:#2563EB}
+  .mtg .mt{font-weight:800;white-space:nowrap}
+  .mtg .ms{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  tr.mrow th.loc .locname{color:#1E3A8A}
+  tr.mrow td{vertical-align:top;padding:5px}
+  #meetnote:empty{display:none}
+  #meetnote{background:#EEF4FF;border:1px solid #C7D7F4;color:#1E3A8A;border-radius:10px;padding:9px 12px;font-size:13px;margin:0 0 12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .mdl{display:grid;grid-template-columns:22px 1fr;gap:8px 10px;font-size:14px;color:var(--ink)}
+  .mdl .ic{text-align:center}
+  .mppl{display:flex;flex-direction:column;gap:5px;margin-top:4px}
+  .mppl div{display:flex;gap:8px;align-items:center;font-size:13.5px}
+  .mppl .r{margin-left:auto;font-size:12px;font-weight:700;border-radius:999px;padding:1px 8px}
+  .r.yes{background:#E7F4EE;color:#1d6b47}.r.no{background:#FBEAE7;color:#9a2f1e}.r.may{background:#FFF4E2;color:#7a4b00}.r.none{background:#F1F4F7;color:#56627A}
+  .mform label{display:block;font-size:12.5px;font-weight:700;color:var(--navy);margin:12px 0 5px}
+  .mform label:first-child{margin-top:0}
+  .mform .row2{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:8px}
+  .mform input[type=date],.mform input[type=time]{width:100%;padding:8px 9px;border:1px solid var(--line);border-radius:9px;font-size:14px;font-family:inherit}
+  .mform textarea{width:100%;min-height:70px;padding:9px 11px;border:1px solid var(--line);border-radius:9px;font-size:14px;font-family:inherit;resize:vertical}
+  .merr{color:#b42318;font-weight:700;font-size:13px;margin-top:10px}
+  .mform .phpk-btn,.mform select{display:flex;width:100%}
+  .merr:empty{display:none}
+  .mcount{font-size:12.5px;color:var(--soft);margin-top:6px}
+  @media (max-width:760px), (pointer:coarse){ .mform input,.mform textarea{font-size:16px} .mform .row2{grid-template-columns:1fr 1fr} .mform .row2 > :first-child{grid-column:1 / -1} }
   .ov{position:fixed;inset:0;background:rgba(15,42,74,.5);z-index:120;display:none;align-items:flex-start;justify-content:center;padding:22px 14px;overflow:auto}
   .ov.open{display:flex}
   .modal{background:#fff;width:100%;max-width:560px;border-radius:16px;box-shadow:var(--shadow-lg);margin:auto;overflow:hidden}
@@ -318,11 +381,12 @@
   }
 
 </style>
-<script src="user.js?v=hc199"></script>
+<script src="user.js?v=hc200"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc199"></script>
-  <script src="schedrec.js?v=hc199"></script>
-  <script src="gate.js?v=hc199"></script>
+  <script src="store.js?v=hc200"></script>
+  <script src="schedrec.js?v=hc200"></script>
+  <script src="gate.js?v=hc200"></script>
+  <script src="meetings.js?v=hc200"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — sample staff schedule for validation. Live version = one Microsoft List the practice maintains.</div>
@@ -337,8 +401,12 @@
 
 <div class="wrap">
   <div class="page-head">
-    <h1>Schedule — Who's Where</h1>
-    <p>Which office is open each day and which doctor is working there.</p>
+    <h1 id="schedTitle">Schedule — Who's Where</h1>
+    <p id="schedSub">Which office is open each day and which doctor is working there.</p>
+  </div>
+  <div class="modeseg" id="modeseg" role="tablist" aria-label="What to show" hidden>
+    <button type="button" role="tab" data-m="docs" onclick="PS.mode('docs')"><span class="mi">🩺</span><span><b>Doctor schedule</b><small>Who’s at which office</small></span></button>
+    <button type="button" role="tab" data-m="meet" onclick="PS.mode('meet')"><span class="mi">🗓</span><span><b>Meetings</b><small>Team meetings and Teams calls</small></span></button>
   </div>
   <div class="notice" id="tourNotice"><b>Every office has its own color.</b> Tap any day to put a doctor in it, mark it a <b>Yellow Dot Day</b> (open, no doctor) or close it. Work in <b>Month</b> view and tap <b>+ Add</b> on any day to put an office and doctor on it.</div>
 
@@ -346,12 +414,14 @@
     <div class="seg" id="viewseg"></div>
     <div class="nav2"><button onclick="PS.step(-1)" aria-label="Previous">‹</button><button class="lab" id="perlab" type="button" onclick="PS.pickMonth()" title="Jump to a month" data-fb-view></button><button onclick="PS.step(1)" aria-label="Next">›</button></div>
     <button class="sbtn ghost" onclick="PS.today()">Today</button>
+    <button class="sbtn" id="newMeetBtn" onclick="PS.newMeet()" style="display:none">＋ New meeting</button>
     <span style="flex:1"></span>
     <button class="sbtn ghost" id="addLocBtn" onclick="PS.addLocation()">+ Add office</button>
     <button class="sbtn ghost" id="addDocBtn" onclick="PS.addPerson()">+ Add doctor</button>
   </div>
 
   <div class="filters" id="filters"></div>
+  <div id="meetnote"></div>
   <div id="status"></div>
   <div class="keyrow">
     <span class="keyitem"><span class="kmulti"><i class="kbox" style="background:#FFE1EF;border-color:#F0378F"></i><i class="kbox" style="background:#DFF3FE;border-color:#38BDF8"></i><i class="kbox" style="background:#ECFACC;border-color:#84CC16"></i></span> <b>Doctor on site</b> — shown in that office's own color</span>
@@ -1191,7 +1261,7 @@
       ? 'Tap any day to set a doctor, a Yellow Dot Day, or close it · every office has its own color · today is outlined.'
       : 'Filter by office or doctor to find what you need · today is outlined.';
   }
-  function refresh(){ renderBar(); renderFilters(); renderStatus(); view==='week'?renderWeek():renderMonth(); renderCounters(); renderKey(); }
+  function refresh(){ renderBar(); renderMode(); renderFilters(); renderStatus(); MODE==='meet' ? (view==='week'?renderMeetWeek():renderMeetMonth()) : (view==='week'?renderWeek():renderMonth()); renderCounters(); renderKey(); loadMeets(); }
   // Don't explain a color that isn't on screen — the legend follows the Show toggles.
   function renderKey(){
     el('keyYdot').style.display = fYdot ? '' : 'none';
@@ -1303,6 +1373,173 @@
   function togEvent(){ fEvent=!fEvent; refresh(); }
   function togClosed(){ fClosed=!fClosed; refresh(); }
   function openModal(h){ el('modalCard').innerHTML=h; el('modal').classList.add('open'); }
+
+  /* ---------- MEETINGS (18/11/2026) ----------------------------------------------------------------------------------
+     Cory: "connecting their Meeting Calendar ... so they can see Team Meetings and Doctor Schedule" and "it should be a
+     permission to give to make meetings but I believe its office managers". The Home-Brace group's calendar (meetings.js)
+     shows on each day (and as a row on top in Week view) for everyone who sees the Schedule; "Meetings" in Show hides it.
+     ＋ New meeting only for whoever has Meetings = Can make in Admin -> Teams & Access (Office Managers + Admin to start):
+     a name, the day and time, where, a Teams link (on by default), and who's invited - people, a whole office or a
+     team. Microsoft sends the invites and puts it on the shared calendar. The one who made it can change or cancel it. */
+  const meetOn=()=>!!(window.PH_MEET && PH_MEET.on());
+  const canMeet=()=>!window.PH || PH.atLeast('meetings','edit') || !!(PH.isAdmin && PH.isAdmin(PH.me()));
+  const myMail=()=>{ const P=window.PH && PH.profileOf && PH.profileOf(); return String((P && (P.mail||P.userPrincipalName))||'').toLowerCase(); };
+  let MEETS=[], MKEY='', MAT=0, MERR='', MASK=false;
+  function meetRange(){
+    if(view==='week'){ const d=weekDays(); return [new Date(d[0].getFullYear(), d[0].getMonth(), d[0].getDate()), new Date(d[0].getFullYear(), d[0].getMonth(), d[0].getDate()+7)]; }
+    return [new Date(mY,mM,1), new Date(mY,mM+1,1)];
+  }
+  function loadMeets(force){
+    if(!meetOn()){ MEETS=[]; return; }
+    const r=meetRange(), key=r[0].getTime()+'-'+r[1].getTime();
+    if(!force && key===MKEY && Date.now()-MAT<5*60000) return;
+    MKEY=key; MAT=Date.now();
+    PH_MEET.list(r[0], r[1], myMail()).then(list=>{ if(key!==MKEY) return; MEETS=list; MERR=''; MASK=false; meetNote(); redrawBoard(); },
+      e=>{ if(key!==MKEY) return; MKEY=''; MEETS=[];
+        const raw=String(((e && e.errorCode)||'')+' '+((e && e.message)||e||''));
+        MASK=/consent|interaction_required|AADSTS65001|InteractionRequired/i.test(raw);
+        MERR=/Not signed in yet/.test(raw) ? '' : raw.trim(); meetNote(); redrawBoard(); });
+  }
+  function meetNote(){
+    const n=el('meetnote'); if(!n) return;
+    n.innerHTML=!MERR ? '' : '🗓 '+(MASK ? 'Team meetings need one more Microsoft sign-in step.' : 'Couldn’t load the team meetings - '+escH(MERR.slice(0,160)))+
+      ' <button class="sbtn ghost tiny" onclick="PS.meetAsk()">'+(MASK?'Sign in for meetings':'Try again')+'</button>';
+  }
+  function meetAsk(){ if(MASK && PH_MEET.ask) PH_MEET.ask().then(()=>loadMeets(true), ()=>{}); else loadMeets(true); }
+  function redrawBoard(){ if(MODE!=='meet') return; const y=window.scrollY; view==='week'?renderMeetWeek():renderMeetMonth(); window.scrollTo(0, y); }
+  /* THE SWITCH: Doctor schedule | Meetings - remembered on this device; a link with #meetings opens Meetings */
+  let MODE=(()=>{ if(/#meetings/.test(location.hash||'')) return 'meet'; try{ return localStorage.getItem('ph_sched_mode')==='meet' ? 'meet' : 'docs'; }catch(_){ return 'docs'; } })();
+  function mode(m){ MODE=m==='meet' && meetOn() ? 'meet' : 'docs'; try{ localStorage.setItem('ph_sched_mode', MODE); }catch(_){} refresh(); window.scrollTo({top:0}); }
+  function renderMode(){
+    if(MODE==='meet' && !meetOn()) MODE='docs';
+    const seg=el('modeseg'); if(seg){ seg.hidden=!meetOn(); seg.querySelectorAll('button').forEach(b=>{ const on=b.dataset.m===MODE; b.classList.toggle('on', on); b.setAttribute('aria-selected', on); }); }
+    document.body.classList.toggle('mode-meet', MODE==='meet');
+    el('schedTitle').textContent=MODE==='meet' ? 'Schedule — Meetings' : 'Schedule — Who\'s Where';
+    el('schedSub').textContent=MODE==='meet' ? 'The practice’s team meetings, from the Home-Brace calendar in Outlook.' : 'Which office is open each day and which doctor is working there.';
+    const nm=el('newMeetBtn'); if(nm) nm.style.display=MODE==='meet' && meetOn() && canMeet() ? '' : 'none';
+  }
+  const MSTATE=()=>MERR ? '' : (MKEY ? '' : '<div class="mempty">Loading the meetings…</div>');
+  const D7=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  function emptyNote(){ return '<div class="mempty">No meetings '+(view==='week'?'this week':'in '+MOFULL[mM])+'.'+(canMeet()?' <button class="sbtn ghost tiny" onclick="PS.newMeet()">＋ New meeting</button>':'')+'</div>'; }
+  function meetLine(m, long){ return '<button type="button" class="mtg" data-mi="'+MEETS.indexOf(m)+'" title="'+escH(m.subject)+'"><span class="mt">'+(m.allDay?'All day':hm12(m.start)+(long?' – '+hm12(m.end):''))+'</span><span class="ms">'+(m.join?'🎥 ':'')+escH(m.subject)+'</span>'+(long && m.where?'<span class="mw">📍 '+escH(m.where)+'</span>':'')+'</button>'; }
+  function renderMeetMonth(){
+    const first=new Date(mY,mM,1), dim=new Date(mY,mM+1,0).getDate(), lead=dowIdx(first); let cells='';
+    for(let i=0;i<lead;i++) cells+='<div class="mmday out"></div>';
+    for(let dn=1; dn<=dim; dn++){ const d=new Date(mY,mM,dn), ms=meetsOn(d), isT=iso(d)===iso(TODAY);
+      cells+='<div class="mmday'+(isT?' today':'')+(dowIdx(d)>4?' wkend':'')+(ms.length?'':' none')+'"><div class="mdnum">'+D7[dowIdx(d)]+' '+dn+(isT?' · today':'')+'</div>'+ms.map(m=>meetLine(m)).join('')+
+        (canMeet()?'<button type="button" class="madd" onclick="PS.newMeet(\''+iso(d)+'\')">＋ Meeting</button>':'')+'</div>'; }
+    const any=MEETS.some(m=>{ const s=new Date(m.start); return s.getFullYear()===mY && s.getMonth()===mM; });
+    el('board').innerHTML=MSTATE()+(MKEY && !MERR && !any ? emptyNote() : '')+'<div class="mscroll"><div class="mmonth">'+D7.map(x=>'<div class="dow">'+x+'</div>').join('')+cells+'</div></div>';
+  }
+  function renderMeetWeek(){
+    const d0=weekDays()[0], days=[...Array(7)].map((_,i)=>new Date(d0.getFullYear(), d0.getMonth(), d0.getDate()+i));
+    const any=days.some(d=>meetsOn(d).length);
+    el('board').innerHTML=MSTATE()+(MKEY && !MERR && !any ? emptyNote() : '')+'<div class="mweek">'+days.map(d=>{ const ms=meetsOn(d), isT=iso(d)===iso(TODAY);
+      return '<div class="wd'+(isT?' today':'')+(ms.length?'':' none')+'"><div class="wh">'+D7[dowIdx(d)]+' '+(d.getMonth()+1)+'/'+d.getDate()+(isT?' · today':'')+'</div>'+ms.map(m=>meetLine(m, true)).join('')+
+        (canMeet()?'<button type="button" class="sbtn ghost tiny" style="margin-top:auto" onclick="PS.newMeet(\''+iso(d)+'\')">＋ Meeting</button>':'')+'</div>'; }).join('')+'</div>';
+  }
+  const hm12=t=>{ const d=new Date(t); let h=d.getHours(); const m=d.getMinutes(), ap=h>=12?'p':'a'; h=((h+11)%12)+1; return h+(m?':'+two(m):'')+ap; };
+  function meetsOn(d){ const a=new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime(), b=a+86400000; return MEETS.filter(m=>m.start<b && m.end>a); }
+  document.addEventListener('click', e=>{ const b=e.target.closest && e.target.closest('.mtg[data-mi]'); if(!b) return; e.stopPropagation(); meetShow(MEETS[+b.dataset.mi]); }, true);
+  const whenText=m=>{ const s=new Date(m.start), e=new Date(m.end), day=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][dowIdx(s)]+' '+(s.getMonth()+1)+'/'+s.getDate();
+    return m.allDay ? day+' · all day' : day+' · '+hm12(m.start)+' – '+hm12(m.end)+(iso(s)!==iso(new Date(m.end-1)) ? ' ('+(e.getMonth()+1)+'/'+e.getDate()+')' : ''); };
+  let MCUR=null;
+  function meetShow(m){
+    if(!m) return; MCUR=m;
+    const said={accepted:['yes','Going'], tentativelyAccepted:['may','Maybe'], declined:['no','Not going'], none:['none','No answer'], notResponded:['none','No answer'], organizer:['yes','Organizer']};
+    const ppl=m.people.map(p=>{ const r=said[p.said]||said.none; return '<div><span>'+escH(p.name||p.email)+'</span><span class="r '+r[0]+'">'+r[1]+'</span></div>'; }).join('');
+    const mineCan=m.mine && canMeet();
+    openModal('<div class="m-top"><span style="font-size:18px">🗓</span><h3>'+escH(m.subject)+'</h3><button class="x" onclick="PS.close()">×</button></div>'+
+      '<div class="m-body"><div class="mdl"><span class="ic">🕒</span><span>'+escH(whenText(m))+'</span>'+
+        (m.where?'<span class="ic">📍</span><span>'+escH(m.where)+'</span>':'')+
+        (m.by.name||m.by.email?'<span class="ic">👤</span><span>Made by '+escH(m.mine?'you':(m.by.name||m.by.email))+'</span>':'')+
+        (m.note?'<span class="ic">📝</span><span style="white-space:pre-wrap">'+escH(m.note)+'</span>':'')+'</div>'+
+        (m.people.length?'<div class="s-lab" style="margin-top:16px">Invited ('+m.people.length+')</div><div class="mppl">'+ppl+'</div>':'')+'</div>'+
+      '<div class="m-foot">'+(m.join?'<a class="sbtn" href="'+escH(m.join)+'" target="_blank" rel="noopener">🎥 Join the Teams meeting</a>':'')+
+        (m.web?'<a class="sbtn ghost" href="'+escH(m.web)+'" target="_blank" rel="noopener">Open in Outlook</a>':'')+'<span style="flex:1"></span>'+
+        (mineCan?'<button class="sbtn ghost" onclick="PS.meetChange()">Change</button><button class="sbtn ghost" style="color:#b42318" onclick="PS.meetCancelAsk()">Cancel meeting</button>':'')+'</div>');
+  }
+  /* who can be invited: whole offices, teams, and people - from Home-Brace's own list (a new office or team shows up by itself) */
+  let MWHO=[];
+  function whoList(){
+    const rows=(window.PH && PH.rosterView ? PH.rosterView() : []).filter(r=>r && r.name);
+    const P=rows.map(r=>({name:String(r.name), email:String(r.email||'').trim().toLowerCase(), offices:(r.offices||[]).map(String), teams:(r.teams||[]).map(String)}));
+    const offs=locations.map(l=>l.n), fromAdmin=(window.PH && PH.teamNames ? PH.teamNames() : []).filter(Boolean);
+    const teams=fromAdmin.length ? fromAdmin : [...new Set([].concat(...P.map(p=>p.teams)).filter(Boolean))].sort();      // Admin's teams, else the ones people are on
+    return {P, offs, teams};
+  }
+  function newMeet(day, edit){
+    if(!meetOn() || !canMeet()) return;
+    const W=whoList(); MWHO=W.P;
+    const d0=day ? parseISO(day) : (()=>{ let d=new Date(TODAY); d.setDate(d.getDate()+1); while(dowIdx(d)>4) d.setDate(d.getDate()+1); return d; })();
+    const e=edit||null, sd=e?new Date(e.start):null, ed=e?new Date(e.end):null;
+    const tv=d=>two(d.getHours())+':'+two(d.getMinutes());
+    const opts=!e ? '<option value="all">Everyone ('+W.P.length+' people)</option>'+
+      W.offs.map(o=>{ const n=W.P.filter(p=>p.offices.indexOf(o)>=0).length; return n?'<option value="o:'+escH(o)+'">Everyone at '+escH(o)+' ('+n+')</option>':''; }).join('')+
+      W.teams.map(t=>{ const n=W.P.filter(p=>p.teams.some(x=>x.toLowerCase()===t.toLowerCase())).length; return n?'<option value="t:'+escH(t)+'">'+escH(t)+(/team$/i.test(t)?'':' team')+' ('+n+')</option>':''; }).join('')+
+      W.P.map((p,i)=>'<option value="p:'+i+'">'+escH(p.name)+(p.offices[0]?' · '+escH(p.offices[0]):'')+'</option>').join('') : '';
+    openModal('<div class="m-top"><span style="font-size:18px">🗓</span><h3>'+(e?'Change the meeting':'New meeting')+'</h3><button class="x" onclick="PS.close()">×</button></div>'+
+      '<div class="m-body mform"><label>Meeting name<input class="s-input" id="mname" maxlength="200" value="'+escH(e?e.subject:'')+'" placeholder="Office managers’ meeting" autocomplete="off" data-nomic></label>'+
+        '<div class="row2"><label>Day<input type="date" id="mday" value="'+iso(e?sd:d0)+'"></label><label>From<input type="time" id="mfrom" value="'+(e?tv(sd):'09:00')+'" step="300"></label><label>To<input type="time" id="mto" value="'+(e?tv(ed):'09:30')+'" step="300"></label></div>'+
+        '<label>Where<input class="s-input" id="mwhere" maxlength="200" value="'+escH(e?e.where:'')+'" placeholder="Carlsbad office, or leave blank for Teams only" autocomplete="off" data-nomic></label>'+
+        (e?'':'<label class="sw" style="font-weight:600;margin-top:12px"><input type="checkbox" id="mteams" checked> Add a Teams meeting link</label>'+
+          '<label for="mwho">Who’s invited</label><select id="mwho" multiple data-pick data-ph="People, a whole office or a team">'+opts+'</select><div class="mcount" id="mcount">Nobody yet.</div>'+
+          '<label>Note (optional)<textarea id="mnote" maxlength="4000" placeholder="What it’s about"></textarea></label>')+
+        (e?'<div class="mcount">To change who’s invited, open it in Outlook. Everyone invited gets the new time.</div>':'')+
+        '<div class="merr" id="merr"></div></div>'+
+      '<div class="m-foot"><span style="flex:1"></span><button class="sbtn ghost" onclick="PS.close()">Cancel</button><button class="sbtn" id="msave" onclick="PS.meetSave()">'+(e?'Save the change':'Send the invites')+'</button></div>');
+    MCUR=e;
+    const who=el('mwho'); if(who) who.addEventListener('change', meetCount);
+    const fr=el('mfrom'), to=el('mto'); let len=(e?(e.end-e.start):30*60000);
+    if(fr && to){ fr.addEventListener('change', ()=>{ const a=hm(fr.value||'09:00'); to.value=fmt24(Math.min(23*60+55, a+Math.round(len/60000))); });
+      to.addEventListener('change', ()=>{ len=Math.max(5, hm(to.value||'00:00')-hm(fr.value||'00:00'))*60000; }); }
+    setTimeout(()=>{ const i=el('mname'); if(i) i.focus(); }, 30);
+  }
+  function meetPicked(){
+    const sel=el('mwho'); if(!sel) return [];
+    const vals=[...sel.selectedOptions].map(o=>o.value), out=[], seen={};
+    const add=p=>{ const k=p.email||('n:'+p.name.toLowerCase()); if(seen[k]) return; seen[k]=1; out.push(p); };
+    vals.forEach(v=>{
+      if(v==='all') MWHO.forEach(add);
+      else if(v.indexOf('o:')===0) MWHO.filter(p=>p.offices.indexOf(v.slice(2))>=0).forEach(add);
+      else if(v.indexOf('t:')===0) MWHO.filter(p=>p.teams.some(x=>x.toLowerCase()===v.slice(2).toLowerCase())).forEach(add);
+      else if(v.indexOf('p:')===0 && MWHO[+v.slice(2)]) add(MWHO[+v.slice(2)]);
+    });
+    const me=myMail(); return out.filter(p=>!me || p.email!==me);
+  }
+  function meetCount(){ const n=meetPicked().length, c=el('mcount'); if(c) c.textContent=n ? n+' '+(n===1?'person':'people')+' invited' : 'Nobody yet.'; }
+  async function meetSave(){
+    const err=t=>{ const x=el('merr'); if(x) x.textContent=t||''; }, b=el('msave');
+    const day=(el('mday')||{}).value, f=(el('mfrom')||{}).value, t=(el('mto')||{}).value;
+    const d=day ? parseISO(day) : null, start=d && f ? new Date(d.getFullYear(), d.getMonth(), d.getDate(), +f.split(':')[0], +f.split(':')[1]).getTime() : NaN,
+      end=d && t ? new Date(d.getFullYear(), d.getMonth(), d.getDate(), +t.split(':')[0], +t.split(':')[1]).getTime() : NaN;
+    const m={subject:(el('mname')||{}).value, where:(el('mwhere')||{}).value, note:(el('mnote')||{}).value||'', start, end, teams:!el('mteams') || el('mteams').checked};
+    err(''); b.disabled=true;
+    try{
+      if(MCUR){ await PH_MEET.change(MCUR, m); closeModal(); toast('Changed ✓ Everyone invited gets the new details.'); loadMeets(true); return; }
+      let ppl=meetPicked(), missing=[];
+      if(PH_MEET.real()){ const fixed=[]; for(const p of ppl){ if(p.email){ fixed.push(p); continue; } const u=await PH_MEET.byName(p.name).catch(()=>null); if(u) fixed.push(u); else missing.push(p.name); } ppl=fixed; }
+      else ppl=ppl.map(p=>p.email ? p : Object.assign({}, p, {email:p.name.toLowerCase().replace(/[^a-z]+/g,'.').replace(/^\.|\.$/g,'')+'@example.test'}));
+      await PH_MEET.create(Object.assign(m, {people:ppl}));
+      closeModal(); toast('Meeting made ✓ '+ppl.length+' invite'+(ppl.length===1?'':'s')+' sent'+(missing.length?' - not found in Microsoft: '+missing.slice(0,3).join(', ')+(missing.length>3?' and '+(missing.length-3)+' more':''):''));
+      loadMeets(true);
+    }catch(e2){ b.disabled=false; err((e2 && e2.message)||'That didn’t work - try again.'); }
+  }
+  function meetChange(){ if(MCUR) newMeet(null, MCUR); }
+  function meetCancelAsk(){
+    const m=MCUR; if(!m) return;
+    openModal('<div class="m-top"><h3>Cancel “'+escH(m.subject)+'”?</h3><button class="x" onclick="PS.close()">×</button></div>'+
+      '<div class="m-body mform"><div>'+escH(whenText(m))+'. Everyone invited gets a cancellation from Microsoft.</div><label>Message to them (optional)<textarea id="mcmt" maxlength="1000" placeholder="Sorry - moving this to next week."></textarea></label><div class="merr" id="merr"></div></div>'+
+      '<div class="m-foot"><span style="flex:1"></span><button class="sbtn ghost" onclick="PS.close()">Keep it</button><button class="sbtn" style="background:#C4321C" id="msave" onclick="PS.meetCancel()">Cancel the meeting</button></div>');
+  }
+  async function meetCancel(){
+    const m=MCUR, b=el('msave'); if(!m) return; b.disabled=true;
+    try{ await PH_MEET.cancel(m, (el('mcmt')||{}).value||''); closeModal(); toast('Cancelled ✓ Everyone invited was told.'); loadMeets(true); }
+    catch(e){ b.disabled=false; const x=el('merr'); if(x) x.textContent=(e && e.message)||'That didn’t work.'; }
+  }
+  let toastT=null;
+  function toast(t){ let x=el('mtoast'); if(!x){ x=document.createElement('div'); x.id='mtoast'; x.style.cssText='position:fixed;left:50%;bottom:24px;transform:translateX(-50%);max-width:calc(100% - 32px);background:var(--navy,#0F2A4A);color:#fff;padding:11px 18px;border-radius:12px;font-weight:700;font-size:14px;z-index:200;text-align:center'; document.body.appendChild(x); }
+    x.textContent=t; x.style.display='block'; clearTimeout(toastT); toastT=setTimeout(()=>{ x.style.display='none'; }, 4500); }
   function closeModal(){ el('modal').classList.remove('open'); }
 
   /* Re-runnable. Identity settles in stages after sign-in - profile, then roster, then
@@ -1315,6 +1552,7 @@
     document.querySelectorAll('.ph-ro-banner').forEach(n=>n.remove());
     if(!edit && window.PH) PH.readOnlyBanner('.wrap','schedule');
     ['addLocBtn','addDocBtn'].forEach(id=>{const b=el(id); if(b)b.style.display=edit?'':'none';});
+    renderMode();
     const n=el('tourNotice');
     if(n && !edit)n.innerHTML='<b>Every office has its own color.</b> Grey = closed, <b>Yellow Dot Day</b> = open with no doctor on site. Use the filters to find an office or a doctor.';
   }
@@ -1324,7 +1562,7 @@
   window.PS={view:setView,step,today,togLoc,allLocs,togDoc,allDocs,unleave,togYdot,togClosed,togEvent,setEvent,open,addTo,quick,pickDoc,setT,halfDay,fullDay,markYdot,markClosed,
     clearDay,saveDay,addLocation,editLoc,setColor,setTZ,dtog,dtime,lunchTog,lunchT,saveLoc,delLoc,
     relocate:function(){ locations=PH.locations(); locations.forEach(l=>fLoc.add(l.n)); refresh(); },
-    pickMonth,goMonth,jumpTo,countStep,
+    pickMonth,goMonth,jumpTo,countStep,mode,newMeet,meetSave,meetCancelAsk,meetCancel,meetChange,meetAsk,
     addPerson,edit:editPerson,savePerson,delPerson,close:closeModal};
 
   el('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal();});
@@ -1449,7 +1687,7 @@
    machine is missing here until the next page load. */
 document.addEventListener('ph-locations-changed',function(){ if(window.PS&&PS.relocate)PS.relocate(); });
 PH.nav('schedule');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc199"></script>
+<script src="tour.js?v=hc200"></script>
 <script>
 Tour.init([
   {sel:'#viewseg', title:'Week or month', body:'<b>Week</b> is the day-to-day working view. <b>Month</b> shows the whole month at a glance, with every office in its own color.'},
