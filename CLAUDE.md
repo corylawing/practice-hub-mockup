@@ -440,6 +440,26 @@ I can confidently say that the chat feature should go next. The production thing
    localStorage ph_chat_emoji_recent (18 defaults). Used by the message box (emoji button) and "More emoji" on a
    reaction. All 1,425 toned sequences checked against Unicode's list. test/chatv2.test.js (42).
    STILL QUEUED: a "chat alerts: Home-Brace / Teams" choice.
+34. **QUEUED 18/11 (Cory: "we have other projects first").** (a) SELENE (email 18/11 8:23 pm): add "Cancelled" as a
+   consultation outcome in the TC Tracker; a NOTES field on the call list so the team can log each outreach attempt
+   (conversation, outcome, follow-up needed) - i.e. a dated log per call, not one overwritten box. (b) Cory: "Put in notes
+   to do to add an admin way to add things like this, this should be part of scalability that they can adjust the
+   platform to their needs" -> admin-editable option lists (consult outcomes and similar fixed lists) in Admin / the
+   tool's own settings, the way TC "manage" already edits consult types, pending reasons, lead sources.
+   (c) MONTHLY MONITOR REPORT (Heather): each office sends last month's monitor report at the start of the month (Excel;
+   Medicaid offices have an extra section); she wants it in Home-Brace with every month and past/present/future years.
+   After a meeting, email 2 = the list: Gross Production, Gross Collections, Net Production Adjustments, Net Production,
+   A/R $, # of A/R accounts, % delinquent accounts past 30 days, # New Patient Exams, Over Estimated Completion Date %, RIP
+   sold, Comfort %, $ 90+ days past due, # Active Patients, total $ of discounts; Medicaid: # submissions, # denials,
+   # approvals, bandings, Medicaid production, Medicaid collections. "All Medicaid, overestimated completion date and
+   comfort percentage reporting will come from the PMS manually entered"; the rest from OrthoFi, automated if possible
+   (Cory has an OrthoFi login). Excel seen 18/11 (Downloads: San Angelo = no Medicaid, Clovis = Medicaid): one row per
+   month + quarter averages, YTD, year averages, goals row (Collection 91-93%, Adjustments 7-9%, A/R 5.5-6x, delinquent
+   5-7%, case acceptance >70%); the Medicaid block also has PATIENT NAMES (PHI) - Home-Brace stores numbers only.
+   OrthoFi (web 18/11): no public API (partner-only; Gaidge integration; some connectors need "API access" from OrthoFi);
+   reports export as CSV/PDF (Collections & Charges, Patient A/R delinquency, Insurance A/R summary, Business Health
+   dashboard). Plan put to Cory: ask OrthoFi for API access; meanwhile a monthly "upload the OrthoFi exports" that fills
+   the OrthoFi numbers automatically; manual boxes for the PMS ones; questions for Jess/Heather.
 33. **THE CHAT COUNT ON EVERY PAGE (Heather 18/11 QUESTION: "Since I have Home Brace open, I do not see a number next to
    my messages when you send me one. If I don't have it open I think it does put the number next to the chat icon";
    hc202, sandbox).** The header chat button's number was only sessionStorage ph_chat_unread written by chat.html - stale
