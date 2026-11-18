@@ -402,6 +402,11 @@ I can confidently say that the chat feature should go next. The production thing
    Heather): rows highlighted; $500 from #22 -> "4 days x $500 a day = $2,000"; typed 1800 -> "pay $1,800 (typed in)",
    kept; bad amount refused; no page errors. NOTE: anyone with Payroll "See" also sees her side (like Goal/TC/OM).
    ON FOR LIVE hc188 (Cory 18/11: "doctors live"): DOCPAY_LIVE=true.
+26. **Add to payroll after "entered" (Heather 18/11: "Once I click on all payroll entered ... it takes away the ability for
+   me to add a bonus to another payroll. I just had a team hit goal this afternoon"; hc189).** addsCard hid ＋ Add on an
+   entered pay period although the dialog only ever offers pay periods still open (addPeriods). Now ＋ Add shows while
+   addPeriods() has any; the entered note adds "＋ Add puts something on a later pay period"; the dialog starts at the
+   first open one; items on the entered pay period stay locked (no Take off). test/payadds.test.js +1. Browser (mock-up).
 25. **INSTANT CHAT ALERTS (18/11/2026; hc185, needs the live site - nothing changes on the sandbox).** Cory: "Anyway to
    have them turn off microsoft alerts and only get alerts through Home-Brace?" -> "build instant chat alerts". Before:
    Home-Brace only alerted for messages sent FROM Home-Brace; one typed in the Teams app alerted only in Teams. Now

@@ -23,7 +23,12 @@ t('it is saved in Heather’s folder only (adds.json), never in an office file',
 t('withAdds never changes the row it is given (a copy is added up)', /const y=Object\.assign\(\{\}, x\);/.test(fn('withAdds')) && !/x\[a\.col\]\s*=/.test(fn('withAdds')));
 t('taking one off only marks it - nothing is deleted', /i\.gone=gone; i\.goneBy=by;/.test(H) && !/\.items\.splice|items=.*filter\(/.test(H.slice(H.indexOf('function liveAdds'), H.indexOf('function liveAdds')+600)));
 t('a pay period marked entered can’t be changed', /if\(n!==null && enteredOf\(n\)\)\{ toast\('That pay period is entered - reopen it first'\)/.test(H) && /if\(!enteredOf\(m\)\) out\.push\(m\)/.test(fn('addPeriods')));
-t('read-only payroll (See) gets the list without any buttons', /\(ro \|\| e \? '' : '<button class="btn sm" data-act="addnew">/.test(fn('addsCard')) && /\(ro\|\|e\?'':'<button class="link small" data-act="addrm"/.test(fn('addsCard')));
+t('read-only payroll (See) gets the list without any buttons', /\(ro \|\| !addPeriods\(\)\.length \? '' : '<button class="btn sm" data-act="addnew">/.test(fn('addsCard')) && /\(ro\|\|e\?'':'<button class="link small" data-act="addrm"/.test(fn('addsCard')));
+/* Heather 18/11: "Once I click on all payroll entered ... it takes away the ability for me to add a bonus to another payroll" */
+t('＋ Add stays while ANY pay period is still open - also on an entered one (it goes on a later pay period); bonuses already on an entered one stay locked',
+  /\(ro \|\| !addPeriods\(\)\.length \? '' : '<button class="btn sm" data-act="addnew">＋ Add<\/button>'\)/.test(fn('addsCard')) && /<b>＋ Add<\/b> puts something on a later pay period\./.test(fn('addsCard')) &&
+  /\(ro\|\|e\?'':'<button class="link small" data-act="addrm"/.test(fn('addsCard')) && /const ps=addPeriods\(\), def=ps\.indexOf\(per\)>=0 \? per : ps\[0\];/.test(H) &&
+  /function addPeriods\(\)\{ const out=\[\]; for\(let m=\(BEFORE\?NEXT:CUR\); m<=NEXT\+7; m\+\+\)\{ if\(!enteredOf\(m\)\) out\.push\(m\); \} return out; \}/.test(H));
 t('"everyone" means the 8 offices, once per person (the first office’s row whose sheet is in) - not Zihua Partners',
   /OFFICES\.find\(o=>!o\.self && p\.offices\.indexOf\(o\.k\)>=0 && get\(n,o\.k\)\.status==='sent' && get\(n,o\.k\)\.rows\[p\.id\]\)/.test(H) && /if\(t\.k==='all'\) return !!OFF\[o\] && !OFF\[o\]\.self && homeRow\(n,p\)===o;/.test(H));
 t('only Goal, TC/OM or Extra, only a positive amount, and what it’s for is escaped wherever it shows',

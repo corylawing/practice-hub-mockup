@@ -251,15 +251,15 @@
     .perhead .when{font-size:17px}
   }
 </style>
-<script src="user.js?v=hc188"></script>
+<script src="user.js?v=hc189"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc188"></script>
-  <script src="gate.js?v=hc188"></script>
-  <script src="alerts.js?v=hc188"></script>
-  <script src="_staff.js?v=hc188"></script>
-  <script src="payrules.js?v=hc188"></script>
-  <script src="paystore.js?v=hc188"></script>
-  <script src="docs.js?v=hc188"></script>
+  <script src="store.js?v=hc189"></script>
+  <script src="gate.js?v=hc189"></script>
+  <script src="alerts.js?v=hc189"></script>
+  <script src="_staff.js?v=hc189"></script>
+  <script src="payrules.js?v=hc189"></script>
+  <script src="paystore.js?v=hc189"></script>
+  <script src="docs.js?v=hc189"></script>
 </head>
 <body>
 <div class="ribbon">MOCK-UP for Heather — made-up people and amounts. Try it as the Carlsbad TC first, then as Heather.</div>
@@ -1206,8 +1206,11 @@
     const e=enteredOf(n), ro=R().ro, all=adds().filter(a=>a && a.key && nOfP(a.key)===n), on=all.filter(a=>!a.gone), off=all.filter(a=>a.gone);
     const later={}; adds().forEach(a=>{ if(!a || a.gone || !a.key) return; const m=nOfP(a.key); if(m!==null && m>n) later[m]=(later[m]||0)+1; });
     let h='<div class="card" id="addscard"><div class="row" style="margin-bottom:8px"><div class="grow"><h2>Add to payroll</h2><p class="sub" style="margin:0">A bonus or anything extra - write it down as soon as you know. It lands on this pay period’s combined sheet by itself, in the column you pick, and it’s in Total and the download. The offices never see this.</p></div>'+
-      (ro || e ? '' : '<button class="btn sm" data-act="addnew">＋ Add</button>')+'</div>';
-    if(e) h+='<div class="note info" style="margin-bottom:8px">This pay period is entered in payroll, so these can’t change. Reopen it to change them.</div>';
+      /* ALWAYS THERE while any pay period is still open (Heather 18/11: "Once I click on all payroll entered ... it takes away
+         the ability for me to add a bonus to another payroll. I just had a team hit goal this afternoon"): on an entered
+         pay period it goes on a later one (the dialog starts at the first one still open). */
+      (ro || !addPeriods().length ? '' : '<button class="btn sm" data-act="addnew">＋ Add</button>')+'</div>';
+    if(e) h+='<div class="note info" style="margin-bottom:8px">This pay period is entered in payroll, so these can’t change. Reopen it to change them.'+(!ro && addPeriods().length ? ' <b>＋ Add</b> puts something on a later pay period.' : '')+'</div>';
     if(on.length){
       h+='<div class="tblwrap"><table class="t"><thead><tr><th>Who</th><th>For</th><th>Column</th><th class="n">Amount</th><th>Where it stands</th><th></th></tr></thead><tbody>'+
         on.map(a=>{ const L=landedOf(a,n), t=a.to||{}, each=t.k!=='person';
@@ -2339,7 +2342,7 @@
 })();
 </script>
 <script>PH.nav('payroll');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc188"></script>
+<script src="tour.js?v=hc189"></script>
 <script>
 Tour.init([
   ...((window.PH && PH.isLive && PH.isLive()) || (()=>{ try{ return localStorage.getItem('ph_pay_real')==='1'; }catch(_){ return false; } })() ? [] : [{sel:'#persona', title:'A mock-up', body:'Made-up people and amounts. Start as the <b>Carlsbad TC</b>, who sends Carlsbad’s sheet, then switch to <b>Heather</b>.'}]),
