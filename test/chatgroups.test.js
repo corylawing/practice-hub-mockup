@@ -112,6 +112,9 @@ const fails=async f=>{ try{ await f(); return ''; }catch(e){ return e.message; }
     /ownSave\(c, list=>list\.filter\(x=>x!==me\)\)/.test(ga) && /You’re its only owner\. Make someone else an owner first/.test(gi));
   t('…saved with PH_STORE.update (never over someone else’s change); a save that didn’t land says so', /return PH_STORE\.update\(ownKey\(c\.id\), cur=>/.test(fnOf(CHAT,'ownSave')) &&
     /if\(!r \|\| r\.blocked \|\| r\.error\) throw new Error/.test(fnOf(CHAT,'ownSave')) && /saving you as its owner didn’t work/.test(fnOf(CHAT,'grpMake')));
+  t('the Groups tab has "＋ New group" at the top (and "No groups yet." when empty) - not only inside New chat (Cory 18/11)',
+    /const mayGroup=GROUPS\(\) && filter==='office' && !qq/.test(fnOf(CHAT,'renderList')) && /class="ci newgrp" data-act="grpnew"/.test(fnOf(CHAT,'renderList')) &&
+    /\(mayGroup \? 'No groups yet\.' : 'No chats match\.'\)/.test(fnOf(CHAT,'renderList')));
   const ini=new Function(/const initials=n=>\{[^\n]*\};/.exec(CHAT)[0]+' return initials;')();
   t('initials skip a nickname in brackets or quotes ("Avery (Ave) Alder" = AA)', ini('Avery (Ave) Alder')==='AA' && ini('Joemily "Emmy" Prieto')==='JP' && ini('Dr. Clara Coleman')==='CC' && ini('Quinn Quill')==='QQ');
   t('nothing typed goes in as HTML (names and group names are escaped)', /<b>'\+esc\(c\.name\)\+'<\/b>/.test(fnOf(CHAT,'grpInfo')) && /esc\(tx\)/.test(fnOf(CHAT,'msgHTML')) && !/innerHTML=[^;]*\.value/.test(fnOf(CHAT,'grpInfo')));

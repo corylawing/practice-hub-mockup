@@ -483,6 +483,8 @@ I can confidently say that the chat feature should go next. The production thing
    anyone in it can still rename / take out; and anyone with list access could edit the record (same trust as Teams).
    Browser: mock-up + live-mode harness (scratchpad chatowners-run.js; fakelive keeps ph_chatgrp_ in W.__own, __ownFail).
    test/chatgroups (27).
+   18/11 Cory couldn't find it ("I still don't see in production how to add groups") - he looked on the Groups tab; it was
+   only inside ＋ New chat. hc198: the Groups tab starts with a "＋ New group" row ("No groups yet." when empty).
    MICROSOFT PERMISSIONS (18/11, Cory has admin for ~1 week only): asked him to add + grant (Delegated) ChatMember.ReadWrite,
    Presence.Read.All, Calendars.ReadWrite, Calendars.ReadWrite.Shared, OnlineMeetings.ReadWrite, Mail.Send, User.Read.All,
    User.ReadWrite.All, Sites.Manage.All, Files.ReadWrite.All, ChannelMessage.Send, ChannelMessage.Read.All, Tasks.ReadWrite,

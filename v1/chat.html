@@ -287,6 +287,7 @@
   .pop .copy{display:block;width:100%;margin-top:6px;border:0;border-top:1px solid #EDF1F5;background:none;padding:9px 6px 3px;font:inherit;font-size:14px;color:var(--ink);text-align:left;cursor:pointer}
   /* GROUPS (Cory 18/11) */
   .lab2{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:700;color:var(--ink)}
+  .ci.newgrp .nm{color:var(--teal-600)}
   .sys{align-self:center;max-width:90%;text-align:center;font-size:12.5px;color:var(--soft);background:#EEF2F6;border-radius:999px;padding:4px 12px;margin:4px 0}
   .conv-top .who.grpw{cursor:pointer;border-radius:8px}
   .conv-top .who.grpw:hover b{text-decoration:underline}
@@ -347,13 +348,13 @@
   .lb .lbnav.p{left:14px}.lb .lbnav.n{right:14px}
   .lb .lbnav[hidden]{display:none}
 </style>
-<script src="user.js?v=hc197"></script>
+<script src="user.js?v=hc198"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc197"></script>
-  <script src="gate.js?v=hc197"></script>
-  <script src="_staff.js?v=hc197"></script>
-  <script src="alerts.js?v=hc197"></script>
-  <script src="chatgraph.js?v=hc197"></script>
+  <script src="store.js?v=hc198"></script>
+  <script src="gate.js?v=hc198"></script>
+  <script src="_staff.js?v=hc198"></script>
+  <script src="alerts.js?v=hc198"></script>
+  <script src="chatgraph.js?v=hc198"></script>
 </head>
 <body>
 <div class="ribbon" id="ribbon">MOCK-UP for Heather and Dr. Jae — made-up people, messages and videos. Nothing is sent anywhere.</div>
@@ -527,12 +528,15 @@
     const list=CHATS.slice().sort((a,b)=>last(b).at-last(a).at).filter(c=>
       (filter==='all' || (filter==='unread' && c.unread) || (filter==='office' && c.type!=='person') || (filter==='person' && c.type==='person')) &&
       (!qq || c.name.toLowerCase().indexOf(qq)>=0 || c.members.some(m=>m.toLowerCase().indexOf(qq)>=0)));
-    el('items').innerHTML = list.length ? list.map(c=>{
+    /* ＋ New group on the Groups tab too (Cory 18/11: on Groups it said "No chats match" and there was no way to make one) */
+    const mayGroup=GROUPS() && filter==='office' && !qq && (!REALCHAT || !CG.TEST || CG.testers().filter(t=>String(t.email||'').toLowerCase()!==myEmail()).length>1);
+    const newRow=mayGroup ? '<button class="ci newgrp" data-act="grpnew">'+avatar({type:'group', name:'New group'})+'<span class="mid"><span class="nm">＋ New group</span><span class="pv">Give it a name and pick the people</span></span></button>' : '';
+    el('items').innerHTML = newRow + (list.length ? list.map(c=>{
       const m=last(c);
       return '<button class="ci'+(open===c.id?' on':'')+(c.unread?' unread':'')+'" data-act="open" data-v="'+c.id+'">'+avatar(c)+
         '<span class="mid"><span class="nm">'+esc(c.name)+'</span><span class="pv">'+esc(preview(m,c))+'</span></span>'+
         '<span class="side"><span class="tm">'+esc(when(m.at))+'</span>'+(c.unread?'<span class="badge">'+c.unread+'</span>':'')+'</span></button>';
-    }).join('') : '<div class="empty" style="padding:30px 16px">No chats match.</div>';
+    }).join('') : '<div class="empty" style="padding:30px 16px">'+(mayGroup ? 'No groups yet.' : 'No chats match.')+'</div>');
     saveUnread();
   }
 
@@ -682,7 +686,7 @@
   function emoLoad(){
     if(window.PH_EMOJI) return Promise.resolve(window.PH_EMOJI);
     if(emoP) return emoP;
-    emoP=new Promise((res, rej)=>{ const sc=document.createElement('script'); sc.src='emoji.js?v=hc197'; sc.async=true;
+    emoP=new Promise((res, rej)=>{ const sc=document.createElement('script'); sc.src='emoji.js?v=hc198'; sc.async=true;
       sc.onload=()=>window.PH_EMOJI ? res(window.PH_EMOJI) : rej(new Error('no emoji')); sc.onerror=()=>{ emoP=null; sc.remove(); rej(new Error('no emoji')); };
       document.head.appendChild(sc); });
     return emoP;
