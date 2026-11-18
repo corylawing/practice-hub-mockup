@@ -476,8 +476,18 @@ I can confidently say that the chat feature should go next. The production thing
    (6 rows) is not made into a date - listed to type in Admin -> People; 2 rows have no hire date). Each name matched to a
    person (matchPerson: first + last, the (nickname) too; two people with one name = no match) or picked from a list;
    Save fills EMPTY dates only. Checked 18/11 on the real file locally (counts only, test profile deleted): 73 people,
-   71 birthdays, 71 start dates (21 original).
- hovering a photo shows a round magnifier with a + and darkens it a little (mouse
+   71 birthdays, 71 start dates (21 original). Missing (told Heather 19/11): 2 birthdays, 2 hire dates, 6 Mansfield
+   original hire dates that are only a year.
+   ANY PAGE (Cory 19/11: "make it play on whatever page they open first"): user.js partyMine() - on every page but Home
+   (which has its own card) and the sign-in/system pages, once we know who this is, if their own ph_celebrate entry has a
+   date, party.js is loaded (same ?v stamp) and PH_PARTY.autoMine() plays THEIR celebration (today's, a weekend one on
+   Monday, or a missed one from the last week) - once (seenToday on the device, seen in the record via PH.partySeen).
+   PACE (Cory 19/11: "Probably just 15% faster than original"): motion is time-based (K = frame time x PACE 1.15) so a
+   slow screen no longer slows it; text and card timings ~15% quicker than the first version. Aurora is CSS (GPU).
+   COMFORT % (Heather 18/11): "The X is number of total appts and the Y is number of comfort appts" -> Monthly Report
+   types Total appointments + Comfort appointments; Comfort % = comfort / total (monthly.js CALC cmfpct). LCO: "LCO does
+   do Medicaid ... they do need it" - stays on the Medicaid list.
+   CHAT PHOTOS (Cory 18/11, like Slack): hovering a photo shows a round magnifier with a + and darkens it a little (mouse
    only; phones tap). test/party checks it.
 37. **MONTHLY REPORT (Heather's monitor report, item 34c; 18/11/2026; hc205; SANDBOX ONLY until user.js MONTHLY_LIVE is
    true - an admin can preview live with monthly.html?monthlypreview).** Cory: "build it"; "It has to be more than just her
