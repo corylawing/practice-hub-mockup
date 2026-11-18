@@ -31,7 +31,7 @@ S.dpay[E.dpayKey(22,'d9')]='';
 t('…and an emptied box goes back to the maths', E.docPay(22, doc, {w1:2, w2:'1.5'}).pay===1750);
 t('no day rate and nothing typed: no amount (it says so, never $0 by accident)', E.docPay(21, doc, {w1:1}).pay===null);
 
-t('OFF on the live site until Cory says so', /const DOCPAY_LIVE=false;/.test(H) && /const DOCPAYON=\(\)=>DOCPAY_LIVE \|\| !\(window\.PH && PH\.isLive && PH\.isLive\(\)\);/.test(H));
+t('ON for the live site (hc188, Cory: "doctors live"); false again = off', /const DOCPAY_LIVE=true;/.test(H) && /const DOCPAYON=\(\)=>DOCPAY_LIVE \|\| !\(window\.PH && PH\.isLive && PH\.isLive\(\)\);/.test(H));
 t('STANDS OUT on the combined sheet: highlighted, 🩺, "Pay separately", and days x rate on the row',
   /h\+='<tr class="docr'\+\(dp\?' pay':''\)\+'"><td class="nm">'\+\(dp\?'🩺 ':''\)/.test(fn('combined')) && /Pay separately/.test(fn('combined')) &&
   /table\.comb tr\.docr\.pay td\{background:#FFF4E2 !important/.test(H) && /' × '\+money\(dp\.rate\)\+' a day = <b>'/.test(fn('combined')));

@@ -401,7 +401,7 @@ I can confidently say that the chat feature should go next. The production thing
    a staff row. Not in Total. test/paydoctors.test.js (13, runs cleanDocRate/docRateAt/docPay). Browser (mock-up, as
    Heather): rows highlighted; $500 from #22 -> "4 days x $500 a day = $2,000"; typed 1800 -> "pay $1,800 (typed in)",
    kept; bad amount refused; no page errors. NOTE: anyone with Payroll "See" also sees her side (like Goal/TC/OM).
-   TO TURN ON LIVE: DOCPAY_LIVE=true + deploy, on Cory's OK.
+   ON FOR LIVE hc188 (Cory 18/11: "doctors live"): DOCPAY_LIVE=true.
 25. **INSTANT CHAT ALERTS (18/11/2026; hc185, needs the live site - nothing changes on the sandbox).** Cory: "Anyway to
    have them turn off microsoft alerts and only get alerts through Home-Brace?" -> "build instant chat alerts". Before:
    Home-Brace only alerted for messages sent FROM Home-Brace; one typed in the Teams app alerted only in Teams. Now

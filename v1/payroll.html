@@ -251,15 +251,15 @@
     .perhead .when{font-size:17px}
   }
 </style>
-<script src="user.js?v=hc187"></script>
+<script src="user.js?v=hc188"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc187"></script>
-  <script src="gate.js?v=hc187"></script>
-  <script src="alerts.js?v=hc187"></script>
-  <script src="_staff.js?v=hc187"></script>
-  <script src="payrules.js?v=hc187"></script>
-  <script src="paystore.js?v=hc187"></script>
-  <script src="docs.js?v=hc187"></script>
+  <script src="store.js?v=hc188"></script>
+  <script src="gate.js?v=hc188"></script>
+  <script src="alerts.js?v=hc188"></script>
+  <script src="_staff.js?v=hc188"></script>
+  <script src="payrules.js?v=hc188"></script>
+  <script src="paystore.js?v=hc188"></script>
+  <script src="docs.js?v=hc188"></script>
 </head>
 <body>
 <div class="ribbon">MOCK-UP for Heather — made-up people and amounts. Try it as the Carlsbad TC first, then as Heather.</div>
@@ -375,7 +375,7 @@
      box on the row OVERRIDES it for that pay period. Kept in HER folder (settings.json docRate {docId:[{from, amt}]};
      cols_<period> {office:{docId:{dpay}}}) - an office's sender never reads it. Not added into Total (that's the
      staff's bonuses; a doctor's day pay is its own line). */
-  const DOCPAY_LIVE=false;
+  const DOCPAY_LIVE=true;    // ON for the live site 18/11/2026 (hc188) - Cory: "doctors live". false = off again.
   const DOCPAYON=()=>DOCPAY_LIVE || !(window.PH && PH.isLive && PH.isLive());
   function cleanDocRate(x){
     const out={}; if(!x || typeof x!=='object') return out;
@@ -2339,7 +2339,7 @@
 })();
 </script>
 <script>PH.nav('payroll');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc187"></script>
+<script src="tour.js?v=hc188"></script>
 <script>
 Tour.init([
   ...((window.PH && PH.isLive && PH.isLive()) || (()=>{ try{ return localStorage.getItem('ph_pay_real')==='1'; }catch(_){ return false; } })() ? [] : [{sel:'#persona', title:'A mock-up', body:'Made-up people and amounts. Start as the <b>Carlsbad TC</b>, who sends Carlsbad’s sheet, then switch to <b>Heather</b>.'}]),
