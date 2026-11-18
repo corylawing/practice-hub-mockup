@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Home-Brace · Monthly Report</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" href="../assets/favicon.png?v=2" type="image/png">
+<meta name="theme-color" content="#0F2A4A">
+<meta name="apple-mobile-web-app-title" content="Home-Brace">
+<link rel="apple-touch-icon" sizes="180x180" href="../assets/icons/apple-touch-icon.png?v=3">
+<meta name="description" content="The practice’s central hub — schedule, production, documents and team, in one place. Farnsworth · Sunflower · Las Cruces.">
+<style>
+  :root{
+    --navy:#0F2A4A; --navy2:#25456e; --teal:#149B96; --teal2:#2BC0B8; --teal-soft:#E5F4F3; --teal-600:#0F827E;
+    --ink:#1F2D3D; --soft:#56627A; --line:#E4E8EE; --canvas:#F4F6F8; --white:#fff;
+    --good:#2E9E6B; --good-soft:#E7F4EE; --bad:#D7503A; --bad-soft:#FBEAE7; --amber:#F2A03D; --amber-soft:#FDF1E1; --amber-ink:#8a5208;
+    --blue:#1f6f9e; --blue-soft:#E3F0FA;
+    --shadow:0 1px 2px rgba(15,42,74,.06),0 6px 18px rgba(15,42,74,.06);
+    --radius:14px; --maxw:1120px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--canvas);line-height:1.5;-webkit-font-smoothing:antialiased}
+  h1{color:var(--navy);margin:0}
+  .ribbon{background:var(--amber);color:#3a2400;text-align:center;font-size:13px;font-weight:600;padding:6px 14px}
+  .hdr{background:var(--navy);color:#fff}
+  .hdr-in{max-width:var(--maxw);margin:0 auto;display:flex;align-items:center;gap:12px;padding:13px 20px}
+  .mark{width:34px;height:34px;flex:none;display:block}
+  .mark img{width:34px;height:34px;display:block;border-radius:50%}
+  .brand{font-weight:700;font-size:18px;color:#fff;line-height:1.1}
+  .brand i{font-style:normal;color:var(--teal2)}
+  .brand small{display:block;font-weight:500;font-size:12px;color:var(--navy-mute,#9fb4d0)}
+  .v1{background:rgba(255,255,255,.15);color:#eaf1fb;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;margin-left:6px}
+  .v1nav{background:var(--navy2)}
+  .v1nav-in{max-width:var(--maxw);margin:0 auto;display:flex;gap:2px;padding:0 12px;overflow-x:auto}
+  .v1nav a{color:var(--navy-mute,#cdd9ea);font-size:14px;font-weight:600;padding:13px 15px;text-decoration:none;border-bottom:3px solid transparent;white-space:nowrap}
+  .v1nav a:hover{color:#fff;background:rgba(255,255,255,.05)}
+  .v1nav a.active{color:#fff;border-bottom-color:var(--teal)}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:22px 20px 90px}
+  .viewas{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:13px 16px;display:flex;align-items:center;gap:13px;flex-wrap:wrap;margin-bottom:16px;border-left:5px solid var(--teal)}
+  .viewas .lab{font-size:12px;color:var(--soft);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+  .viewas select{padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;font-weight:700;color:var(--navy);background:#fff;max-width:100%}
+  .page-head{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap}
+  .page-head h1{font-size:25px;text-wrap:balance}
+  .page-head p{margin:4px 0 0;color:var(--soft);font-size:14.5px;max-width:640px}
+  .ofstate{font-size:12.5px;font-weight:600;color:var(--soft);background:#fff;border:1px solid var(--line);border-radius:999px;padding:6px 12px;display:flex;align-items:center;gap:7px}
+  .ofstate i{width:8px;height:8px;border-radius:50%;background:var(--amber);display:inline-block}
+  .ofstate.on i{background:var(--good)}
+
+  /* tabs + month bar */
+  .bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:18px 0 14px}
+  .tabs{display:flex;gap:4px;background:#e9edf2;border-radius:12px;padding:4px;flex-wrap:wrap}
+  .tabs button{border:0;background:none;border-radius:9px;padding:8px 14px;font-weight:600;font-size:14px;font-family:inherit;line-height:1.2;color:var(--navy);cursor:pointer}
+  .tabs button.on{background:#fff;box-shadow:0 1px 3px rgba(15,42,74,.12);font-weight:700}
+  .mnav{display:flex;align-items:center;gap:4px;margin-left:auto;background:#fff;border:1px solid var(--line);border-radius:12px;padding:3px}
+  .mnav button{border:0;background:none;width:34px;height:34px;border-radius:9px;font-size:18px;color:var(--navy);cursor:pointer}
+  .mnav button:hover:not(:disabled){background:var(--teal-soft)}
+  .mnav button:disabled{opacity:.3;cursor:default}
+  .mnav b{min-width:148px;text-align:center;font-size:15px;color:var(--navy)}
+  .mnav b small{display:block;font-size:11px;font-weight:600;color:var(--soft);line-height:1.1}
+
+  .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
+  .card h2{margin:0 0 3px;font-size:16px;color:var(--navy)}
+  .card .sub{font-size:12.5px;color:var(--soft);margin-bottom:12px}
+  .stack{display:flex;flex-direction:column;gap:16px}
+
+  /* the month's state across offices */
+  .statusline{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#fff;border:1px solid var(--line);border-radius:12px;padding:11px 14px;font-size:14px}
+  .statusline .prog{flex:1;min-width:140px;height:8px;background:#edf1f5;border-radius:99px;overflow:hidden;display:flex}
+  .statusline .prog span{display:block;height:100%}
+  .statusline .prog .f{background:var(--navy)} .statusline .prog .s{background:var(--teal)}
+  .soft{color:var(--soft)}
+  .openbanner{background:var(--blue-soft);border:1px solid #c3ddf2;border-radius:12px;padding:11px 15px;font-size:13.5px;color:#14496c}
+
+  /* whole-practice tiles */
+  .tiles{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
+  @media(max-width:1180px){ .tiles{grid-template-columns:repeat(3,1fr)} }
+  @media(max-width:560px){ .tiles{grid-template-columns:repeat(2,1fr)} }
+  .tile{background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 14px;display:flex;flex-direction:column;gap:3px}
+  .tile .k{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--soft)}
+  .tile .v{font-size:24px;font-weight:800;color:var(--navy);line-height:1.15;font-variant-numeric:tabular-nums}
+  .tile .d{font-size:12.5px;color:var(--soft);font-variant-numeric:tabular-nums}
+  .up{color:var(--good)} .down{color:var(--bad)}
+
+  /* the gap, said once */
+  .headline{display:flex;gap:14px;align-items:flex-start;background:var(--navy);color:#fff;border-radius:var(--radius);padding:16px 18px}
+  .headline .big{font-size:28px;font-weight:800;line-height:1.1;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .headline p{margin:2px 0 0;font-size:14px;color:#d6e2f2;max-width:620px}
+  .headline b{color:#fff}
+  .headline.ok{background:var(--good)}
+
+  /* talk list */
+  .talk{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+  .talk li{display:grid;grid-template-columns:130px 1fr auto;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--line);font-size:14px}
+  .talk li:first-child{border-top:0}
+  .opill{display:inline-flex;align-items:center;gap:7px;font-weight:700;color:var(--navy);font-size:13.5px;min-width:0}
+  .opill i{width:10px;height:10px;border-radius:50%;flex:none}
+  .ico{display:inline-block;width:20px;text-align:center;font-weight:800}
+  .t-bad .ico{color:var(--bad)} .t-watch .ico{color:var(--amber-ink)} .t-good .ico{color:var(--good)} .t-info .ico{color:var(--blue)}
+  .lnk{border:0;background:none;color:var(--teal-600);font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;padding:4px 6px;border-radius:6px;white-space:nowrap}
+  .lnk:hover{background:var(--teal-soft)}
+  .more{margin-top:6px}
+
+  /* score table */
+  .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:#fff}
+  table{border-collapse:collapse;width:100%;font-size:13.5px;font-variant-numeric:tabular-nums}
+  th,td{padding:9px 11px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+  th{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--soft);background:#fafbfc;position:sticky;top:0;white-space:normal;min-width:92px;vertical-align:bottom;line-height:1.3}
+  th:first-child,td:first-child{text-align:left}
+  th small{display:block;text-transform:none;letter-spacing:0;font-weight:600;color:#8a96aa}
+  tbody tr.click{cursor:pointer} tbody tr.click:hover td{background:#f6fafa}
+  tr.tot td{font-weight:800;background:#f3f6f9;color:var(--navy);border-bottom:0}
+  tr.q td{background:#f7f9fb;font-weight:700;color:var(--navy2)}
+  tr.goals td{background:#fff8ee;color:var(--amber-ink);font-weight:600;font-size:12px;white-space:normal}
+  td.ok{color:var(--ink)} td.bad{color:var(--bad);font-weight:700} td.good{color:var(--good);font-weight:700} td.watch{color:var(--amber-ink);font-weight:700}
+  td .dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;vertical-align:middle;background:currentColor}
+  td.ok .dot{background:#c5ced9}
+  tr.q td.bad,tr.tot td.bad{color:var(--bad)} tr.q td.good,tr.tot td.good{color:var(--good)} tr.q td.watch,tr.tot td.watch{color:var(--amber-ink)}
+  td.future{color:#b6c0cc}
+
+  .st{display:inline-block;font-size:11.5px;font-weight:700;border-radius:999px;padding:3px 9px;white-space:nowrap}
+  .st.final{background:var(--navy);color:#fff} .st.sent{background:var(--teal-soft);color:var(--teal-600)}
+  .st.late{background:var(--bad-soft);color:var(--bad)} .st.open{background:var(--blue-soft);color:var(--blue)}
+  .st.started{background:#eef1f5;color:var(--soft)} .st.none{background:#f3f4f6;color:#8a96aa}
+
+  .tn{display:inline-block;font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 8px;white-space:nowrap}
+  .tn.ok{background:#eef1f5;color:var(--soft)} .tn.good{background:var(--good-soft);color:var(--good)}
+  .tn.bad{background:var(--bad-soft);color:var(--bad)} .tn.watch{background:var(--amber-soft);color:var(--amber-ink)}
+
+  /* office: chips */
+  .ochips{display:flex;gap:6px;flex-wrap:wrap}
+  .ochip{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 12px;font-weight:600;font-size:13.5px;font-family:inherit;line-height:1;color:var(--navy);cursor:pointer}
+  .ochip i{width:9px;height:9px;border-radius:50%}
+  .ochip.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .ochip .st{margin-left:2px}
+  .grid2{display:grid;grid-template-columns:1.1fr .9fr;gap:16px;align-items:start}
+  @media(max-width:860px){ .grid2{grid-template-columns:1fr} }
+  .ohead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+  .ohead h2{font-size:20px;margin:0;color:var(--navy)}
+  .saver{background:var(--teal-soft);color:var(--teal-600);border-radius:10px;padding:8px 12px;font-size:13px;font-weight:600}
+  .grp{margin-top:16px}
+  .grp h3{margin:0 0 2px;font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:var(--soft)}
+  .grp .gsub{font-size:12.5px;color:var(--soft);margin-bottom:6px}
+  .frow{display:grid;grid-template-columns:1fr minmax(150px,190px);gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+  .frow:first-of-type{border-top:0}
+  .frow label{font-size:14px;font-weight:600;color:var(--ink)}
+  .frow label small{display:block;font-weight:500;font-size:12px;color:var(--soft)}
+  .fv{display:flex;flex-direction:column;align-items:flex-end;gap:2px;text-align:right}
+  .fv .val{font-size:16px;font-weight:800;color:var(--navy);font-variant-numeric:tabular-nums}
+  .src{font-size:11px;font-weight:700;color:var(--teal-600);background:var(--teal-soft);border-radius:999px;padding:1px 8px}
+  .src.typed{background:#eef1f5;color:var(--soft)}
+  .inp{position:relative;width:100%}
+  .inp input{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:9px;font-weight:700;font-size:15px;font-family:inherit;color:var(--navy);text-align:right;background:#fff;font-variant-numeric:tabular-nums}
+  .inp.pre input{padding-left:24px} .inp.suf input{padding-right:26px}
+  .inp .a{position:absolute;top:50%;transform:translateY(-50%);color:var(--soft);font-weight:700;font-size:14px;pointer-events:none}
+  .inp.pre .a{left:10px} .inp.suf .a{right:10px}
+  .inp input:focus{outline:2px solid var(--teal);border-color:var(--teal)}
+  .inp input.empty{background:#fffaf2;border-color:#f3d7ae}
+  .mis{font-size:12px;color:var(--amber-ink);background:var(--amber-soft);border-radius:8px;padding:4px 8px;text-align:right}
+  .ofgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px}
+  .oft{background:#f7f9fb;border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:1px}
+  .oft .k{font-size:12px;font-weight:600;color:var(--soft);line-height:1.3}
+  .oft .v{font-size:15.5px;font-weight:800;color:var(--navy);font-variant-numeric:tabular-nums}
+  .oft .lnk{align-self:flex-start;padding:0;font-size:12px}
+  .oft.warn{background:var(--amber-soft)}
+  .savebar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+  .btn{background:var(--teal);color:#fff;border:none;border-radius:10px;padding:11px 18px;font-weight:700;font-size:14.5px;font-family:inherit;cursor:pointer}
+  .btn:hover{background:var(--teal-600)}
+  .btn:disabled{opacity:.5;cursor:default}
+  .btn.navy{background:var(--navy)} .btn.navy:hover{background:var(--navy2)}
+  .btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--line);font-weight:600}
+  .btn.ghost:hover{background:#f6f8fa}
+  .note{font-size:13px;color:var(--soft)}
+  .warnbox{background:var(--amber-soft);border:1px solid #f1d3a6;color:var(--amber-ink);border-radius:10px;padding:9px 12px;font-size:13px}
+  .glance{display:flex;flex-direction:column;gap:10px}
+  .gl{display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center}
+  .gl .k{font-size:13.5px;font-weight:600}
+  .gl .v{font-size:20px;font-weight:800;color:var(--navy);text-align:right;font-variant-numeric:tabular-nums}
+  .gl .g{font-size:12px;color:var(--soft)}
+  .gbar{grid-column:1/-1;position:relative;height:8px;background:#edf1f5;border-radius:99px}
+  .gbar .band{position:absolute;top:0;bottom:0;background:#cdeee9;border-radius:99px}
+  .gbar .pin{position:absolute;top:-3px;width:4px;height:14px;border-radius:2px;background:var(--navy);transform:translateX(-2px)}
+  .ins{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+  .ins li{display:flex;gap:6px;font-size:13.5px;line-height:1.45}
+  .notes{display:flex;flex-direction:column;gap:8px;max-height:280px;overflow:auto}
+  .nt{background:#f6f8fa;border-radius:10px;padding:8px 11px;font-size:13.5px}
+  .nt .who{font-size:11.5px;color:var(--soft);font-weight:600}
+  .addnote{display:flex;gap:8px;margin-top:8px}
+  .addnote textarea{flex:1;min-height:42px;resize:vertical;border:1px solid var(--line);border-radius:10px;padding:9px 11px;font-weight:500;font-size:14px;font-family:inherit}
+  .smalls{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+  .sm{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 13px}
+  .sm .k{font-size:12.5px;font-weight:700;color:var(--soft)}
+  .sm .v{font-size:18px;font-weight:800;color:var(--navy);font-variant-numeric:tabular-nums}
+  .sm svg{display:block;width:100%;height:64px;margin-top:4px}
+  .sm .ax{display:flex;justify-content:space-between;font-size:11px;color:#8a96aa}
+  .empty{background:#fff;border:1px dashed var(--line);border-radius:14px;padding:30px;text-align:center;color:var(--soft)}
+  .setrow{display:grid;grid-template-columns:200px 1fr;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+  .setrow:first-of-type{border-top:0}
+  .setrow input[type=number]{width:90px;padding:8px 10px;border:1px solid var(--line);border-radius:9px;font-weight:700;font-size:14px;font-family:inherit;color:var(--navy)}
+  .checks{display:flex;flex-wrap:wrap;gap:8px}
+  .checks label{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:6px 11px;font-size:13.5px;font-weight:600;cursor:pointer}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:11px 18px;border-radius:12px;font-size:14px;font-weight:600;box-shadow:0 10px 30px rgba(15,42,74,.25);z-index:50}
+  @media(max-width:640px){
+    .talk li{grid-template-columns:1fr auto} .talk li .opill{grid-column:1/-1}
+    .frow{grid-template-columns:1fr} .fv{align-items:stretch;text-align:left}
+    .tabs{width:100%;display:grid;grid-auto-flow:column;grid-auto-columns:1fr} .tabs button{padding:8px 4px;font-size:13px}
+    .mnav{margin-left:0;width:100%;justify-content:space-between} .setrow{grid-template-columns:1fr}
+    .headline{flex-direction:column}
+  }
+  @media (prefers-reduced-motion: reduce){ *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important} }
+</style>
+<script src="user.js?v=hc205"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
+  <script src="store.js?v=hc205"></script>
+  <script src="gate.js?v=hc205"></script>
+  <script src="monthly.js?v=hc205"></script>
+</head>
+<body>
+<div class="ribbon">MOCK-UP for Heather — made-up numbers. Try it as an office manager first, then as Heather.</div>
+<header class="hdr">
+  <div class="hdr-in">
+    <span class="mark" aria-label="Home-Brace"><img src="../assets/logo-mark.png?v=2" alt="" width="34" height="34"></span>
+    <span class="brand">Home-<i>Brace</i><small>Monthly Report</small></span>
+    <span class="v1">V1 preview</span>
+  </div>
+</header>
+<nav class="v1nav"><div class="v1nav-in" id="nav"></div></nav>
+
+<div class="wrap">
+  <div class="viewas" id="tryas">
+    <span class="lab">👤 Try it as</span>
+    <select id="persona" onchange="MONTHLY.as(this.value)"></select>
+  </div>
+  <div class="page-head">
+    <div>
+      <h1>Monthly Report</h1>
+      <p id="lede">Every office’s month-end numbers in one place. OrthoFi’s numbers fill themselves in every night, so offices only type what comes from the practice software.</p>
+    </div>
+    <span class="ofstate" id="ofstate"><i></i><span>OrthoFi: credentials on the way</span></span>
+  </div>
+  <div class="bar">
+    <div class="tabs" id="tabs" role="tablist"></div>
+    <div class="mnav" id="mnav"></div>
+  </div>
+  <div id="view"><div class="empty">Reading the reports…</div></div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  const M=window.PH_MONTHLY, LIVE=!!(window.PH && PH.isLive && PH.isLive());
+  const el=id=>document.getElementById(id);
+  const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const NOW=new Date(), NOW_Y=NOW.getFullYear(), NOW_M=NOW.getMonth()+1;
+  const LM=M.lastMonth(NOW);
+  const RANK={none:0,view:1,add:2,edit:3,manage:4};
+  /* OrthoFi's nightly numbers (18/11/2026: OrthoFi is making the practice's API credentials). Until they are in, offices
+     type every number; the moment they are, OrthoFi's boxes fill themselves and lock. */
+  const ORTHOFI_LIVE=false;                       // the live site: true once the credentials are in Azure and the nightly pull runs
+  const ORTHOFI_CONNECTED=LIVE ? ORTHOFI_LIVE : true;   // the sandbox shows how it will work, with made-up OrthoFi numbers
+  let Y=LM.y, MO=LM.m, TAB=null, OFF=null, SHOWALL=false;
+  const DATA={}; let SET=M.cleanSettings(null), WHO=null;
+  let EDIT={}, CORRECT={}, BUSY=false, SENDASK=false;
+
+  /* SANDBOX "Try it as" - four people in the report's story. Live: the signed-in person and Teams & Access. */
+  const PERSONAS=[
+    {id:'heather', n:'Heather — every office, can mark a month final', level:'manage', offices:'all', name:'Heather'},
+    {id:'lead',    n:'Leadership — reads every office', level:'view', offices:'all', name:'Leadership'},
+    {id:'om',      n:'Carlsbad office manager — has Medicaid', level:'edit', offices:['Carlsbad'], name:'Gabriela (Carlsbad)'},
+    {id:'om2',     n:'San Angelo office manager — no Medicaid', level:'edit', offices:['San Angelo'], name:'Sam (San Angelo)'}];
+  function who(){
+    if(LIVE){ const m=PH.me()||{}; const lvl=PH.isAdmin(m) ? 'manage' : PH.can('monthly');
+      return {level:lvl, offices:m.offices==='all' ? 'all' : (m.offices||[]), name:(PH.name && PH.name(m))||'', email:String((PH.email && PH.email(m))||'')}; }
+    let id='heather'; try{ id=localStorage.getItem('ph_monthly_as')||'heather'; }catch(_){}
+    const p=PERSONAS.find(x=>x.id===id)||PERSONAS[0];
+    return {id:p.id, level:p.level, offices:p.offices, name:p.name, email:p.name};
+  }
+  const at=l=>RANK[(WHO&&WHO.level)||'none']>=RANK[l];
+  function myOffices(){ const all=PH.officeNames(); if(WHO.offices==='all') return all; return all.filter(o=>WHO.offices.indexOf(o)>=0); }
+  const seesMany=()=>myOffices().length>1;
+  const mine=o=>WHO.offices==='all' || WHO.offices.indexOf(o)>=0;
+  const isOpen=(y,m)=>y===NOW_Y && m===NOW_M;
+  const isFuture=(y,m)=>y>NOW_Y || (y===NOW_Y && m>NOW_M);
+
+  /* ---------- reading and the made-up sandbox year ---------- */
+  function rng(seed){ return function(){ seed=seed+0x6D2B79F5|0; let t=Math.imul(seed^seed>>>15,1|seed); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+  function hash(s){ let h=2166136261; for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619); } return h>>>0; }
+  function demoYear(y){
+    const rec={v:1,o:{}}, last=y<NOW_Y ? 12 : NOW_M, med=M.DEF_MEDICAID;
+    PH.officeNames().forEach((o,i)=>{
+      const R=rng(hash(o+':'+y)), base=170000+R()*250000, colBase=0.895+R()*0.06, arx=5.3+R()*0.8, accts=500+Math.round(R()*800), pts=700+Math.round(R()*1300);
+      rec.o[o]={};
+      for(let m=1;m<=last;m++){
+        const open=isOpen(y,m), frac=open ? Math.min(1, Math.max(0.2, NOW.getDate()/30)) : 1;
+        const season=1+0.07*Math.sin((m+i)/12*2*Math.PI), full=base*season*(0.93+R()*0.14), gp=full*frac;
+        let col=colBase+(R()-0.5)*0.05, adjp=0.06+R()*0.04, del=3.5+R()*4;
+        if(o==='Hobbs' && y===NOW_Y && m>=LM.m-2 && m<=LM.m){ col=0.935-(m-LM.m+3)*0.025; del=8.6+R(); }   // the story: Hobbs slipping
+        if(o==='Lubbock' && y===NOW_Y && m===LM.m) adjp=0.112;
+        const v={gp, gc:gp*col, adj:-gp*adjp, ar:full*arx*(0.97+R()*0.06), arn:accts+Math.round((R()-0.5)*40), del,
+                 npe:Math.round((40+R()*70)*frac), act:pts+Math.round((R()-0.5)*30), disc:gp*(0.01+R()*0.02)};
+        v.np=v.gp+v.adj; v.ar90=v.ar*(0.012+R()*0.035);
+        if(!open){ v.rip=Math.round(4+R()*20); v.oecd=5+R()*12; v.cmf=62+R()*30;
+          if(med.indexOf(o)>=0){ v.mds=Math.round(8+R()*26); v.mdd=Math.round(v.mds*(0.05+R()*0.22)); v.mda=Math.max(0,v.mds-v.mdd-Math.round(R()*3));
+            v.mdb=Math.round(v.mda*(0.6+R()*0.35)); v.mdp=25000+R()*85000; v.mdc=v.mdp*(0.75+R()*0.25); } }
+        const r={v:{}, src:{}, at:{}, by:{}, ofv:{}, notes:[]}, stamp=new Date(y, m, Math.min(3, 28), 6).toISOString();
+        M.FIELDS.forEach(f=>{ if(v[f.k]===undefined) return; r.v[f.k]=v[f.k]; r.src[f.k]=f.from==='orthofi' ? 'orthofi' : 'typed'; r.at[f.k]=stamp; r.by[f.k]=f.from==='orthofi' ? 'OrthoFi' : 'Office manager';
+          if(f.from==='orthofi') r.ofv[f.k]=v[f.k]; });
+        if(open) r.of=NOW.toISOString();
+        const lastDone=y===LM.y && m===LM.m;
+        if(!open && !lastDone) r.final={at:new Date(y, m, 8).toISOString(), by:'Heather'};
+        if(lastDone){
+          if(['Carlsbad','San Angelo','Cruces FFO'].indexOf(o)>=0){ M.FIELDS.forEach(f=>{ if(f.from==='pms'){ delete r.v[f.k]; delete r.src[f.k]; } }); }
+          else if(['Clovis','Mansfield'].indexOf(o)>=0) r.final={at:new Date(y, m, 6).toISOString(), by:'Heather'};
+          else r.sent={at:new Date(y, m, 3+i%3, 10).toISOString(), by:'Office manager'};
+          if(o==='Lubbock'){ r.src.gp='typed'; r.v.gp=Math.round(r.v.gp/1000)*1000+4500; r.by.gp='Office manager'; }
+          if(o==='Hobbs') r.notes.push({t:'Two of our biggest payers moved to a payment plan this month, and our financial coordinator was out a week. Calls are booked for the week of the 10th.', by:'Hobbs office manager', at:new Date(y, m, 4, 9).toISOString()});
+          if(o==='Lubbock') r.notes.push({t:'The adjustments include a one-time write-off of old insurance balances we cleaned up.', by:'Lubbock office manager', at:new Date(y, m, 3, 15).toISOString()});
+        }
+        rec.o[o][M.mm(m)]=r;
+      }
+    });
+    return M.cleanYear(rec);
+  }
+  async function loadYear(y, fresh){
+    if(DATA[y] && !fresh) return DATA[y];
+    let rec=null; try{ rec=await PH_STORE.get(M.KEY(y)); }catch(_){}
+    if(!LIVE && (!rec || !rec.o || !Object.keys(rec.o).length) && y>=NOW_Y-1 && y<=NOW_Y){
+      rec=demoYear(y); try{ await PH_STORE.set(M.KEY(y), rec); }catch(_){}
+    }
+    DATA[y]=M.cleanYear(rec); return DATA[y];
+  }
+  async function loadSettings(){ try{ SET=M.cleanSettings(await PH_STORE.get(M.SET_KEY)); }catch(_){ SET=M.cleanSettings(null); } }
+
+  const recOf=(o,y,m)=>((DATA[y]||{o:{}}).o[o]||{})[M.mm(m)]||null;
+  const valsOf=(o,y,m)=>{ const r=recOf(o,y,m); return r && Object.keys(r.v).length ? r.v : null; };
+  function step(y,m,n){ m+=n; while(m<1){ m+=12; y--; } while(m>12){ m-=12; y++; } return {y,m}; }
+  function histOf(o,y,m,n){ const out=[]; for(let i=n;i>=1;i--){ const p=step(y,m,-i); out.push(valsOf(o,p.y,p.m)); } return out; }
+  const offTotals=(offs,y,m)=>M.practiceTotals(offs.map(o=>valsOf(o,y,m)));
+
+  /* ---------- words and numbers ---------- */
+  function fmt(t,v,short){ if(v===null || v===undefined || !isFinite(v)) return '—';
+    if(t==='$'){ const a=Math.abs(v), s=v<0?'−':'';
+      if(short && a>=1e6) return s+'$'+(a/1e6).toFixed(2)+'M'; if(short && a>=1e4) return s+'$'+Math.round(a/1e3)+'k';
+      return s+'$'+Math.round(a).toLocaleString('en-US'); }
+    if(t==='%') return v.toFixed(1)+'%'; if(t==='x') return v.toFixed(1)+'×';
+    return Math.round(v).toLocaleString('en-US'); }
+  const MON=M.MONTHS.map(x=>x.slice(0,3));
+  const day=iso=>{ if(!iso) return ''; const d=new Date(iso); return isNaN(d) ? '' : d.getDate()+' '+MON[d.getMonth()]; };
+  const goalTxt=k=>{ const g=SET.goals[k]; return k==='ratio' ? g[0]+'–'+g[1]+'×' : g[0]+'–'+g[1]+'%'; };
+  const TONE_TXT={ok:'On goal', bad:'Off goal', good:'Better than goal', watch:'Outside range'};
+  const toneChip=(k,v)=>{ const t=M.tone(k,v,SET.goals); return t ? '<span class="tn '+t+'">'+TONE_TXT[t]+'</span>' : ''; };
+  const ICON={bad:'!', watch:'△', good:'✓', info:'i'};
+  const STATUS={final:'✓ Final', sent:'Sent', late:'Late', open:'So far', started:'Started', '':'Not started'};
+  function stChip(r,y,m,plain){ const s=M.status(r,y,m,SET,NOW); let t=STATUS[s];
+    if(s==='sent' && r.sent && !plain) t='Sent '+day(r.sent.at); if(s==='final' && r.final) t='✓ Final';
+    return '<span class="st '+(s||'none')+'">'+t+'</span>'; }
+  function delta(cur, prev, t){ if(cur==null || prev==null || !prev) return '';
+    const p=(cur-prev)/Math.abs(prev)*100; if(Math.abs(p)<0.5) return '<span class="soft">same as '+MON[step(Y,MO,-1).m-1]+'</span>';
+    return '<span class="'+(p>0?'up':'down')+'">'+(p>0?'▲ ':'▼ ')+Math.abs(p).toFixed(0)+'%</span> <span class="soft">vs '+MON[step(Y,MO,-1).m-1]+'</span>'; }
+  function opill(o){ const c=PH.colorForOffice(o)||{}; return '<span class="opill"><i style="background:'+esc(c.dot||'#94a3b8')+'"></i>'+esc(o)+'</span>'; }
+  function toast(t){ const d=document.createElement('div'); d.className='toast'; d.textContent=t; document.body.appendChild(d); setTimeout(()=>d.remove(), 2600); }
+
+  /* a small line: the last n months, the goal band behind it, the last point marked */
+  function spark(series, band, opts){
+    opts=opts||{}; const W=opts.w||240, H=opts.h||64, P=6; const pts=series.map((v,i)=>({i,v})).filter(p=>p.v!=null && isFinite(p.v));
+    if(pts.length<2) return '<svg viewBox="0 0 '+W+' '+H+'" aria-hidden="true"><text x="'+W/2+'" y="'+H/2+'" text-anchor="middle" font-size="11" fill="#8a96aa">Not enough months yet</text></svg>';
+    let lo=Math.min(...pts.map(p=>p.v)), hi=Math.max(...pts.map(p=>p.v));
+    if(band){ lo=Math.min(lo, band[0]); hi=Math.max(hi, band[1]); } const pad=(hi-lo)*0.12||1; lo-=pad; hi+=pad;
+    const X=i=>P+i*(W-2*P)/Math.max(1,series.length-1), Yv=v=>H-P-(v-lo)/(hi-lo)*(H-2*P);
+    let s='<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" role="img" aria-label="'+esc(opts.label||'trend')+'">';
+    if(band) s+='<rect x="0" y="'+Yv(band[1]).toFixed(1)+'" width="'+W+'" height="'+Math.max(1,Yv(band[0])-Yv(band[1])).toFixed(1)+'" fill="#d9f1ee"/>';
+    s+='<polyline fill="none" stroke="#0F2A4A" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke" points="'+pts.map(p=>X(p.i).toFixed(1)+','+Yv(p.v).toFixed(1)).join(' ')+'"/>';
+    const L=pts[pts.length-1]; s+='<circle cx="'+X(L.i).toFixed(1)+'" cy="'+Yv(L.v).toFixed(1)+'" r="3.5" fill="#149B96" stroke="#fff" stroke-width="1.5"/>';
+    return s+'</svg>';
+  }
+
+  /* ---------- tabs and the month ---------- */
+  function tabsFor(){ const t=[]; if(seesMany()) t.push(['overview','Overview']); t.push(['office', seesMany()?'One office':'My report']); t.push(['year','Year sheet']); if(at('manage')) t.push(['settings','Settings']); return t; }
+  function renderBar(){
+    const tabs=tabsFor(); if(!tabs.some(t=>t[0]===TAB)) TAB=tabs[0][0];
+    el('tabs').innerHTML=tabs.map(t=>'<button role="tab" class="'+(t[0]===TAB?'on':'')+'" aria-selected="'+(t[0]===TAB)+'" onclick="MONTHLY.tab(\''+t[0]+'\')">'+t[1]+'</button>').join('');
+    const yearly=TAB==='year', canNext=yearly ? Y<NOW_Y : !isOpen(Y,MO);
+    el('mnav').hidden=TAB==='settings';
+    el('mnav').innerHTML='<button aria-label="Earlier" onclick="MONTHLY.move(-1)">‹</button><b>'+(yearly ? Y : M.MONTHS[MO-1]+' '+Y)+
+      '<small>'+(yearly ? 'the whole year' : isOpen(Y,MO) ? 'so far — still going' : (Y===LM.y && MO===LM.m ? 'last month' : ''))+'</small></b>'+
+      '<button aria-label="Later" onclick="MONTHLY.move(1)" '+(canNext?'':'disabled')+'>›</button>';
+  }
+  async function render(){
+    WHO=WHO||who(); renderBar();
+    await Promise.all([loadYear(Y), loadYear(Y-1)]);
+    const v=el('view');
+    if(!myOffices().length){ v.innerHTML='<div class="empty">No offices are set for you yet. An administrator can add yours in Admin → People.</div>'; return; }
+    if(TAB==='overview') v.innerHTML=overviewHTML();
+    else if(TAB==='office') v.innerHTML=officeHTML();
+    else if(TAB==='year') v.innerHTML=yearHTML();
+    else v.innerHTML=settingsHTML();
+    if(TAB==='office') glance();
+  }
+
+  /* ---------- OVERVIEW: the whole practice's month, read in a minute ---------- */
+  function overviewHTML(){
+    const offs=myOffices(), y=Y, m=MO, open=isOpen(y,m), p=step(y,m,-1);
+    const rows=offs.map(o=>({o, r:recOf(o,y,m), v:valsOf(o,y,m), s:M.status(recOf(o,y,m),y,m,SET,NOW)}));
+    const fin=rows.filter(x=>x.s==='final').length, sent=rows.filter(x=>x.s==='sent').length, late=rows.filter(x=>x.s==='late'), n=rows.length;
+    const due=M.dueDate(y,m,SET);
+    let h='<div class="stack">';
+    if(open) h+='<div class="openbanner"><b>'+M.MONTHS[m-1]+' so far.</b> OrthoFi’s numbers as of this morning, refreshed every night — so a slipping office shows up mid-month, not on the 5th of next month. Offices send the report from 1 '+MON[m%12]+'.</div>';
+    else h+='<div class="statusline"><b>'+(fin+sent)+' of '+n+' reports in</b><span class="prog" aria-hidden="true"><span class="f" style="width:'+(fin/n*100)+'%"></span><span class="s" style="width:'+(sent/n*100)+'%"></span></span>'+
+      '<span class="soft">'+fin+' final · '+sent+(at('manage')?' waiting for you':' sent, not final yet')+' · due '+due.getDate()+' '+MON[due.getMonth()]+'</span>'+
+      (late.length ? '<span class="st late">Late: '+late.map(x=>esc(x.o)).join(', ')+'</span>' : '')+
+      (seesMany() ? '<button class="btn ghost" style="margin-left:auto" onclick="MONTHLY.copy()">📋 Copy the summary</button>' : '')+'</div>';
+    const T=offTotals(offs,y,m), PT=offTotals(offs,p.y,p.m);
+    if(!T){ return h+'<div class="empty">No numbers for '+M.MONTHS[m-1]+' '+y+' yet.</div></div>'; }
+    const c=M.calc(T);
+    /* the size of it, said once: what the offices below goal would have collected at the goal */
+    let short=0, shortN=0;
+    rows.forEach(x=>{ if(!x.v) return; const cc=M.calc(x.v); if(cc.colpct!==null && cc.colpct<SET.goals.col[0]){ short+=SET.goals.col[0]/100*x.v.gp-x.v.gc; shortN++; } });
+    if(!open){
+      h+= shortN ? '<div class="headline"><div class="big">'+fmt('$',short)+'</div><div><b>still to collect to reach the '+SET.goals.col[0]+'% goal</b> at '+shortN+' office'+(shortN>1?'s':'')+' in '+M.MONTHS[m-1]+'.<p>That’s the gap between what these offices produced and what they collected — the first thing to chase.</p></div></div>'
+                 : '<div class="headline ok"><div class="big">✓</div><div><b>Every office collected at least '+SET.goals.col[0]+'% of production in '+M.MONTHS[m-1]+'.</b><p>Nothing to chase on collections this month.</p></div></div>';
+    }
+    h+='<div class="tiles">'+
+      tile('Produced', fmt('$',T.gp,true), delta(T.gp, PT&&PT.gp))+
+      tile('Collected', fmt('$',T.gc,true), (c.colpct!=null?fmt('%',c.colpct)+' of production ':'')+toneChip('col',c.colpct))+
+      tile('Adjustments', fmt('%',c.adjpct), toneChip('adj',c.adjpct)+' <span class="soft">goal '+goalTxt('adj')+'</span>')+
+      tile('A/R ratio', fmt('x',c.ratio), fmt('$',T.ar,true)+' owed '+toneChip('ratio',c.ratio))+
+      tile('Late over 30 days', fmt('%',T.del), toneChip('del',T.del)+' <span class="soft">goal '+goalTxt('del')+'</span>')+
+      tile('New patient exams', fmt('#',T.npe), delta(T.npe, PT&&PT.npe))+'</div>';
+    /* what needs a conversation */
+    let all=[]; rows.forEach(x=>{ if(!x.v) return; M.insights(x.v,{goals:SET.goals, prev:valsOf(x.o,p.y,p.m), hist:histOf(x.o,y,m,3)}).forEach(i=>all.push(Object.assign({o:x.o}, i))); });
+    all.sort(M.byWeight);
+    const talk=all.filter(i=>i.tone==='bad' || i.tone==='watch'), good=all.filter(i=>i.tone==='good' && i.k==='col');
+    const show=SHOWALL ? talk : talk.slice(0,6);
+    h+='<div class="card"><h2>Worth a conversation</h2><div class="sub">Worked out from the numbers, biggest dollar gap first. Open an office to see why — its manager can leave a note.</div>';
+    h+= talk.length ? '<ul class="talk">'+show.map(i=>'<li class="t-'+i.tone+'">'+opill(i.o)+'<span><span class="ico">'+ICON[i.tone]+'</span>'+esc(i.text)+'</span><button class="lnk" onclick="MONTHLY.open(\''+esc(i.o)+'\')">Open</button></li>').join('')+'</ul>'+
+        (talk.length>6 ? '<button class="lnk more" onclick="MONTHLY.all()">'+(SHOWALL?'Show fewer':'Show all '+talk.length)+'</button>' : '')
+      : '<div class="note">Nothing off goal this month.</div>';
+    if(good.length) h+='<div class="note" style="margin-top:10px"><b class="up">✓ Above the collection goal:</b> '+good.map(i=>esc(i.o)).join(', ')+'</div>';
+    h+='</div>';
+    /* every office side by side */
+    h+='<div class="tablewrap"><table><thead><tr><th>Office</th><th>Report</th><th>Produced</th><th>Collected</th><th>Collection %<small>goal '+goalTxt('col')+'</small></th><th>Adjustment %<small>goal '+goalTxt('adj')+'</small></th><th>A/R ratio<small>goal '+goalTxt('ratio')+'</small></th><th>Late 30+ %<small>goal '+goalTxt('del')+'</small></th><th>NP exams</th><th>Collection %, 6 months</th></tr></thead><tbody>';
+    rows.forEach(x=>{ const v=x.v||{}, cc=M.calc(v), r=x.r;
+      const ser=[]; for(let i=5;i>=0;i--){ const q=step(y,m,-i); const vv=valsOf(x.o,q.y,q.m); ser.push(vv?M.calc(vv).colpct:null); }
+      h+='<tr class="click" onclick="MONTHLY.open(\''+esc(x.o)+'\')"><td>'+opill(x.o)+'</td><td>'+stChip(r,y,m)+'</td><td>'+fmt('$',v.gp)+'</td><td>'+fmt('$',v.gc)+'</td>'+
+        cell('col',cc.colpct,'%')+cell('adj',cc.adjpct,'%')+cell('ratio',cc.ratio,'x')+cell('del',v.del,'%')+'<td>'+fmt('#',v.npe)+'</td><td style="width:130px">'+spark(ser, SET.goals.col, {w:120,h:26,label:'Collection % for 6 months'})+'</td></tr>'; });
+    h+='<tr class="tot"><td>Whole practice</td><td></td><td>'+fmt('$',T.gp)+'</td><td>'+fmt('$',T.gc)+'</td>'+cell('col',c.colpct,'%')+cell('adj',c.adjpct,'%')+cell('ratio',c.ratio,'x')+cell('del',T.del,'%')+'<td>'+fmt('#',T.npe)+'</td><td></td></tr>';
+    return h+'</tbody></table></div></div>';
+  }
+  const tile=(k,v,d)=>'<div class="tile"><span class="k">'+k+'</span><span class="v">'+v+'</span><span class="d">'+(d||'&nbsp;')+'</span></div>';
+  function cell(g,v,t){ const tn=M.tone(g,v,SET.goals); return '<td class="'+(tn||'')+'" title="'+(tn?TONE_TXT[tn]:'')+'">'+(v!=null?'<span class="dot"></span>':'')+fmt(t,v)+'</td>'; }
+
+  /* the summary for leadership, ready to paste into Teams or an email */
+  function summaryText(){
+    const offs=myOffices(), y=Y, m=MO, p=step(y,m,-1), T=offTotals(offs,y,m); if(!T) return '';
+    const c=M.calc(T), L=[];
+    L.push('Monthly Report — '+M.MONTHS[m-1]+' '+y+' ('+offs.length+' offices)','');
+    L.push('Whole practice: produced '+fmt('$',T.gp)+', collected '+fmt('$',T.gc)+' ('+fmt('%',c.colpct)+'; goal '+goalTxt('col')+'). Adjustments '+fmt('%',c.adjpct)+' (goal '+goalTxt('adj')+'). A/R '+fmt('x',c.ratio)+' (goal '+goalTxt('ratio')+'). Late over 30 days '+fmt('%',T.del)+'. New patient exams '+fmt('#',T.npe)+'.');
+    const talk=[]; offs.forEach(o=>{ const v=valsOf(o,y,m); if(!v) return; M.insights(v,{goals:SET.goals, prev:valsOf(o,p.y,p.m), hist:histOf(o,y,m,3)}).filter(i=>i.tone==='bad'||i.tone==='watch').forEach(i=>talk.push(Object.assign({o}, i))); });
+    talk.sort(M.byWeight);
+    if(talk.length){ L.push('','Worth a conversation:'); talk.slice(0,10).forEach(t=>L.push('• '+t.o+' — '+t.text)); }
+    const late=offs.filter(o=>M.status(recOf(o,y,m),y,m,SET,NOW)==='late'); if(late.length) L.push('','Still to send: '+late.join(', ')+'.');
+    L.push('','Details: Home-Brace → Monthly Report.');
+    return L.join('\n');
+  }
+  async function copy(){
+    const t=summaryText(); if(!t) return;
+    try{ await navigator.clipboard.writeText(t); toast('Summary copied — paste it into Teams or an email'); }
+    catch(_){ const ta=document.createElement('textarea'); ta.value=t; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); toast('Summary copied'); }catch(__){} ta.remove(); }
+  }
+
+  /* ---------- ONE OFFICE: fill in, see why, talk about it ---------- */
+  function canType(o,r){ if(!at('edit') || !mine(o) || isOpen(Y,MO) || isFuture(Y,MO)) return false; if(r && r.final && !at('manage')) return false; return true; }
+  function officeHTML(){
+    const offs=myOffices(); if(!OFF || offs.indexOf(OFF)<0) OFF=offs[0];
+    const o=OFF, y=Y, m=MO, r=recOf(o,y,m)||M.cleanMonth(null), typ=canType(o,r), fields=M.fieldsFor(o,SET), s=M.status(r,y,m,SET,NOW), due=M.dueDate(y,m,SET);
+    let h='';
+    if(offs.length>1) h+='<div class="ochips" style="margin-bottom:14px">'+offs.map(x=>'<button class="ochip '+(x===o?'on':'')+'" onclick="MONTHLY.office(\''+esc(x)+'\')"><i style="background:'+esc((PH.colorForOffice(x)||{}).dot||'#94a3b8')+'"></i>'+esc(x)+'</button>').join('')+'</div>';
+    const auto=fields.filter(f=>f.from==='orthofi' && r.src[f.k]==='orthofi').length, toType=fields.filter(f=>!(f.from==='orthofi' && r.src[f.k]==='orthofi')).length;
+    h+='<div class="grid2"><div class="card"><div class="ohead"><div><h2>'+esc(o)+' · '+M.MONTHS[m-1]+' '+y+'</h2><div class="note" style="margin-top:4px">'+stChip(r,y,m)+' '+statusWords(r,s,due)+'</div></div>'+
+       (auto ? '<div class="saver">⚡ OrthoFi filled '+auto+' of '+fields.length+' — '+(toType?toType+' to type':'nothing to type')+'</div>' : '')+'</div>';
+    /* WHAT TO TYPE FIRST (Cory: "saving time"): a box OrthoFi has filled is not a box - it goes in the grid below. */
+    const locked=f=>f.from==='orthofi' && r.src[f.k]==='orthofi' && !CORRECT[f.k];
+    const groups=[
+      {t: typ ? 'Type these' : 'From the practice software', s: typ ? 'From the practice software'+(fields.some(f=>f.from==='orthofi' && !locked(f)) ? ', plus anything OrthoFi hasn’t filled in yet.' : '.') : 'Typed by the office.',
+        f:fields.filter(f=>!f.medicaid && !locked(f))},
+      {t:'Medicaid', s:'Numbers only — never a patient’s name.', f:fields.filter(f=>f.medicaid && !locked(f))}];
+    groups.forEach(g=>{ if(!g.f.length) return; h+='<div class="grp"><h3>'+g.t+'</h3><div class="gsub">'+g.s+'</div>'+g.f.map(f=>fieldRow(f,r,typ)).join('')+'</div>'; });
+    const ofs=fields.filter(locked);
+    if(ofs.length) h+='<div class="grp"><h3>From OrthoFi</h3><div class="gsub">'+(ORTHOFI_CONNECTED ? 'Filled in every night'+(r.of?' — last on '+day(r.of):'')+'. Nothing to type.' : 'Filled in from OrthoFi.')+'</div><div class="ofgrid">'+
+      ofs.map(f=>'<div class="oft"><span class="k">'+esc(f.n)+'</span><span class="v">'+fmt(f.t,r.v[f.k])+'</span>'+(typ && at('manage') ? '<button class="lnk" onclick="MONTHLY.correct(\''+f.k+'\')">Correct it</button>' : '')+'</div>').join('')+'</div></div>';
+    h+=actionsHTML(o,r,s,typ,fields);
+    h+='</div><div class="stack"><div class="card"><h2>At a glance</h2><div class="sub">Worked out from the numbers on the left, against the practice’s goals.</div><div id="glance" class="glance"></div></div>'+notesHTML(o,r)+'</div></div>';
+    /* the last 12 months */
+    const series=k=>{ const a=[]; for(let i=11;i>=0;i--){ const q=step(y,m,-i), v=valsOf(o,q.y,q.m); a.push(v ? (k in M.BY ? v[k] : M.calc(v)[k]) : null); } return a; };
+    const first=step(y,m,-11);
+    const SM=[['Gross production','gp','$',null],['Collection %','colpct','%','col'],['Adjustment %','adjpct','%','adj'],['A/R ratio','ratio','x','ratio'],['Late over 30 days','del','%','del'],['New patient exams','npe','#',null]];
+    h+='<h2 style="font-size:16px;color:var(--navy);margin:22px 0 10px">The last 12 months <span class="soft" style="font-weight:500;font-size:13px">— the green band is the goal</span></h2><div class="smalls">'+
+      SM.map(x=>{ const a=series(x[1]), last=a[a.length-1]; return '<div class="sm"><div class="k">'+x[0]+'</div><div class="v">'+fmt(x[2],last)+'</div>'+spark(a, x[3]?SET.goals[x[3]]:null, {label:x[0]+' for 12 months'})+
+        '<div class="ax"><span>'+MON[first.m-1]+' '+String(first.y).slice(2)+'</span><span>'+MON[m-1]+' '+String(y).slice(2)+'</span></div></div>'; }).join('')+'</div>';
+    return h;
+  }
+  function statusWords(r,s,due){
+    if(s==='final') return 'Marked final by '+esc(r.final.by)+' on '+day(r.final.at)+'.';
+    if(s==='sent') return 'Sent by '+esc(r.sent.by)+' on '+day(r.sent.at)+'.';
+    if(s==='open') return 'The month is still going — these are the numbers so far.';
+    if(s==='late') return 'Was due '+due.getDate()+' '+MON[due.getMonth()]+'.';
+    return 'Due '+due.getDate()+' '+MON[due.getMonth()]+'.';
+  }
+  function fieldRow(f,r,typ){
+    const v=r.v[f.k], src=r.src[f.k], lockedAuto=f.from==='orthofi' && src==='orthofi' && !CORRECT[f.k];
+    const label='<label for="f_'+f.k+'">'+esc(f.n)+(f.help?'<small>'+esc(f.help)+'</small>':'')+'</label>';
+    let right;
+    if(lockedAuto || !typ){
+      right='<div class="fv"><span class="val">'+fmt(f.t,v)+'</span>'+(v!==undefined ? (src==='orthofi' ? '<span class="src">OrthoFi · '+day(r.at[f.k]||r.of)+'</span>' : '<span class="src typed">typed</span>') : '')+
+        (lockedAuto && typ && at('manage') ? '<button class="lnk" onclick="MONTHLY.correct(\''+f.k+'\')">Correct it</button>' : '')+'</div>';
+    } else {
+      const cur=EDIT[f.k]!==undefined ? EDIT[f.k] : (v!==undefined ? String(v) : '');
+      const kind=f.t==='$' ? 'pre' : f.t==='%' ? 'suf' : '';
+      right='<div class="fv"><div class="inp '+kind+'">'+(kind==='pre'?'<span class="a">$</span>':'')+'<input id="f_'+f.k+'" data-k="'+f.k+'" inputmode="decimal" autocomplete="off" class="'+(cur===''?'empty':'')+'" value="'+esc(cur)+'" oninput="MONTHLY.typed(this)" aria-label="'+esc(f.n)+'">'+(kind==='suf'?'<span class="a">%</span>':'')+'</div></div>';
+    }
+    const mis=M.mismatches(r).find(x=>x.k===f.k);
+    const misHTML=mis ? '<div class="mis" style="grid-column:1/-1">OrthoFi says <b>'+fmt(f.t,mis.orthofi)+'</b> — '+fmt(f.t,mis.typed)+' was typed.'+(typ?' <button class="lnk" onclick="MONTHLY.useOf(\''+f.k+'\')">Use OrthoFi’s</button>':'')+'</div>' : '';
+    return '<div class="frow">'+label+right+misHTML+'</div>';
+  }
+  function actionsHTML(o,r,s,typ,fields){
+    if(isOpen(Y,MO)) return '<div class="savebar"><span class="note">You can send '+M.MONTHS[MO-1]+'’s report from 1 '+MON[MO%12]+'.</span></div>';
+    if(!typ) return r.final && at('edit') && mine(o) ? '<div class="savebar"><span class="note">This month is final. Ask Heather if a number needs changing.</span></div>' : '';
+    const empty=fields.filter(f=>{ const e=EDIT[f.k]; const has=e!==undefined ? M.num(e)!==null : r.v[f.k]!==undefined; return !has; });
+    let h='<div class="savebar">';
+    h+='<button class="btn ghost" id="savebtn" onclick="MONTHLY.save()">Save</button>';
+    if(!r.final && !r.sent) h+= SENDASK && empty.length
+      ? '<span class="warnbox">'+empty.length+' still empty: '+empty.map(f=>esc(f.n)).join(', ')+'. <button class="lnk" onclick="MONTHLY.send(true)">Send anyway</button> <button class="lnk" onclick="MONTHLY.unask()">Keep typing</button></span>'
+      : '<button class="btn" onclick="MONTHLY.send()">Send the report</button>';
+    if(at('manage')) h+= r.final ? '<button class="btn ghost" onclick="MONTHLY.final(false)">Reopen the month</button>' : '<button class="btn navy" onclick="MONTHLY.final(true)">✓ Mark final</button>';
+    h+='<span class="note" id="savenote">'+(empty.length && !SENDASK ? empty.length+' box'+(empty.length>1?'es':'')+' still empty' : '')+'</span></div>';
+    return h;
+  }
+  /* the right-hand panel, redrawn as numbers are typed */
+  function liveVals(){ const r=recOf(OFF,Y,MO)||M.cleanMonth(null), v=Object.assign({}, r.v); Object.keys(EDIT).forEach(k=>{ const n=M.cleanVal(k,EDIT[k]); if(n===null) delete v[k]; else v[k]=n; }); return v; }
+  function glance(){
+    const g=el('glance'); if(!g) return; const v=liveVals(), c=M.calc(v), p=step(Y,MO,-1);
+    const row=(name,val,t,gk)=>{ const G=SET.goals[gk], w=Math.max(G[1]-G[0], 0.5), lo=Math.max(0, Math.min(G[0]-w*2.5, val==null?G[0]:val-w*0.5)), hi=Math.max(G[1]+w*2.5, val==null?G[1]:val+w*0.5), X=x=>(x-lo)/(hi-lo)*100;
+      return '<div class="gl"><span class="k">'+name+'</span><span class="v">'+fmt(t,val)+'</span><span class="g">goal '+goalTxt(gk)+' '+toneChip(gk,val)+'</span><span></span>'+
+        '<div class="gbar"><span class="band" style="left:'+X(G[0])+'%;width:'+(X(G[1])-X(G[0]))+'%"></span>'+(val!=null?'<span class="pin" style="left:'+Math.max(0,Math.min(100,X(val)))+'%"></span>':'')+'</div></div>'; };
+    let h=row('Collection %',c.colpct,'%','col')+row('Adjustment %',c.adjpct,'%','adj')+row('A/R ratio',c.ratio,'x','ratio')+row('Late over 30 days',v.del!=null?v.del:null,'%','del');
+    const ins=M.insights(v,{goals:SET.goals, prev:valsOf(OFF,p.y,p.m), hist:histOf(OFF,Y,MO,3)}).filter(i=>!(i.k==='col' && i.tone==='good'));
+    h+= ins.length ? '<ul class="ins">'+ins.map(i=>'<li class="t-'+i.tone+'"><span class="ico">'+ICON[i.tone]+'</span><span>'+esc(i.text)+'</span></li>').join('')+'</ul>' : '<div class="note">Everything with a goal is on goal.</div>';
+    g.innerHTML=h;
+  }
+  function notesHTML(o,r){
+    const can=mine(o) || at('manage');
+    return '<div class="card"><h2>Notes</h2><div class="sub">Explain a number, or ask about one. Everyone who sees this report sees these.</div><div class="notes">'+
+      (r.notes.length ? r.notes.map(n=>'<div class="nt">'+esc(n.t)+'<div class="who">'+esc(n.by)+' · '+day(n.at)+'</div></div>').join('') : '<div class="note">No notes for this month.</div>')+'</div>'+
+      (can ? '<div class="addnote"><textarea id="newnote" maxlength="1000" placeholder="e.g. Two big refunds this month — back to normal in December"></textarea><button class="btn ghost" onclick="MONTHLY.note()">Add</button></div>' : '')+'</div>';
+  }
+
+  /* ---------- YEAR SHEET: Heather's sheet, kept for her - every month, the quarters, the year ---------- */
+  function yearHTML(){
+    const offs=myOffices(); if(OFF===null || (OFF!=='__all' && offs.indexOf(OFF)<0)) OFF=offs[0];
+    const all=OFF==='__all', y=Y, settings=all ? {medicaid:SET.medicaid} : SET;
+    const vals=m=>{ if(isFuture(y,m)) return null; const v=all ? offTotals(offs,y,m) : valsOf(OFF,y,m); return v ? Object.assign({}, v, M.calc(v)) : null; };
+    const main=[['gp','$'],['gc','$'],['colpct','%'],['adj','$'],['adjpct','%'],['np','$'],['ar','$'],['ratio','x'],['arn','#'],['del','%'],['ar90','$'],['npe','#'],['act','#'],['disc','$'],['rip','#'],['oecd','%'],['cmf','%']]
+      .map(([k,t])=>({k,t,n:(M.BY[k]||M.CALC.find(c=>c.k===k)).n, flow:!!(M.BY[k]&&M.BY[k].flow), goal:({colpct:'col',adjpct:'adj',ratio:'ratio',del:'del'})[k]}));
+    const medF=M.FIELDS.filter(f=>f.medicaid).map(f=>({k:f.k,t:f.t,n:f.n,flow:true}));
+    const hasMed=all ? offs.some(o=>SET.medicaid.indexOf(o)>=0) : SET.medicaid.indexOf(OFF)>=0;
+    let h='<div class="ochips" style="margin-bottom:14px">'+(offs.length>1?'<button class="ochip '+(all?'on':'')+'" onclick="MONTHLY.office(\'__all\')">All offices together</button>':'')+
+      offs.map(x=>'<button class="ochip '+(x===OFF?'on':'')+'" onclick="MONTHLY.office(\''+esc(x)+'\')"><i style="background:'+esc((PH.colorForOffice(x)||{}).dot||'#94a3b8')+'"></i>'+esc(x)+'</button>').join('')+
+      '<button class="btn ghost" style="margin-left:auto" onclick="MONTHLY.csv()">⬇ Download for Excel</button></div>';
+    h+=sheet(main, vals, y, true);
+    if(hasMed) h+='<h2 style="font-size:16px;color:var(--navy);margin:22px 0 10px">Medicaid'+(all?' — the Medicaid offices together':'')+'</h2>'+sheet(medF, vals, y, false);
+    return h+'<p class="note" style="margin-top:10px">Quarter and year rows average the months, like the old sheet; the YTD row adds up the month’s activity (balances and percentages aren’t added). Ratios update the moment a number changes.</p>';
+  }
+  function sheet(cols, vals, y, withGoals){
+    const Rr=M.yearRows(vals, cols);
+    let h='<div class="tablewrap"><table><thead><tr><th>'+y+'</th>'+cols.map(c=>'<th>'+esc(c.n)+'</th>').join('')+'</tr></thead><tbody>';
+    const line=(lab,v,cls)=>'<tr class="'+(cls||'')+'"><td>'+lab+'</td>'+cols.map(c=>{ const x=v?v[c.k]:null; return c.goal ? cell(c.goal,x,c.t) : '<td>'+fmt(c.t,x)+'</td>'; }).join('')+'</tr>';
+    Rr.months.forEach((mo,i)=>{ h+= isFuture(y,mo.m) ? '<tr><td>'+M.MONTHS[mo.m-1]+'</td>'+cols.map(()=>'<td class="future">—</td>').join('')+'</tr>' : line(M.MONTHS[mo.m-1]+(isOpen(y,mo.m)?' <span class="st open">so far</span>':''), mo.v);
+      if(i%3===2) h+=line(['1st','2nd','3rd','4th'][Math.floor(i/3)]+' quarter average', Rr.quarters[Math.floor(i/3)].v, 'q'); });
+    h+=line('Year to date', Rr.ytd, 'tot')+line(y+' average', Rr.avg, 'q');
+    if(withGoals) h+='<tr class="goals"><td>Goals</td>'+cols.map(c=>'<td>'+(c.goal ? goalTxt(c.goal)+(c.goal==='ratio'?' production':'') : '')+'</td>').join('')+'</tr>';
+    return h+'</tbody></table></div>';
+  }
+  function csv(){
+    const offs=myOffices(), all=OFF==='__all', y=Y, cols=M.FIELDS.filter(f=>!f.medicaid || (all ? true : SET.medicaid.indexOf(OFF)>=0));
+    const q=s=>'"'+String(s).replace(/"/g,'""')+'"';
+    const lines=[[q('Month')].concat(cols.map(c=>q(c.n)), M.CALC.map(c=>q(c.n))).join(',')];
+    for(let m=1;m<=12;m++){ const v=all ? offTotals(offs,y,m) : valsOf(OFF,y,m); if(!v) continue; const c=M.calc(v);
+      lines.push([q(M.MONTHS[m-1]+' '+y)].concat(cols.map(f=>v[f.k]==null?'':v[f.k]), M.CALC.map(k=>c[k.k]==null?'':c[k.k])).join(',')); }
+    const blob=new Blob([lines.join('\r\n')], {type:'text/csv'}), a=document.createElement('a');
+    a.href=URL.createObjectURL(blob); a.download='Monthly Report '+(all?'All offices':OFF)+' '+y+'.csv'; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  }
+
+  /* ---------- SETTINGS (Heather): which offices bill Medicaid, the goals, the due day ---------- */
+  function settingsHTML(){
+    const offs=PH.officeNames(), G=SET.goals;
+    const g=(k,label,unit)=>'<div class="setrow"><b>'+label+'</b><span><input type="number" step="0.1" id="g_'+k+'_0" value="'+G[k][0]+'"> to <input type="number" step="0.1" id="g_'+k+'_1" value="'+G[k][1]+'"> '+unit+'</span></div>';
+    return '<div class="stack"><div class="card"><h2>Offices that bill Medicaid</h2><div class="sub">These offices get the Medicaid section. A new office added in Admin shows up here.</div><div class="checks">'+
+      offs.map(o=>'<label><input type="checkbox" class="medchk" value="'+esc(o)+'" '+(SET.medicaid.indexOf(o)>=0?'checked':'')+'> '+esc(o)+'</label>').join('')+'</div></div>'+
+      '<div class="card"><h2>Goals</h2><div class="sub">From the old sheet’s goals row. Every colour and “worth a conversation” line uses these.</div>'+
+      g('col','Collection %','% of production')+g('adj','Adjustment %','% of production')+g('ratio','A/R ratio','× production')+g('del','Late over 30 days','% of accounts')+'</div>'+
+      '<div class="card"><h2>Due day</h2><div class="setrow"><b>Reports are due on the</b><span><input type="number" min="1" max="28" id="dueday" value="'+SET.due+'"> of the next month</span></div></div>'+
+      '<div><button class="btn" onclick="MONTHLY.saveSettings()">Save settings</button></div></div>';
+  }
+
+  /* ---------- saving: only what changed, merged into whatever is saved now ---------- */
+  function by(){ return WHO.name || WHO.email || 'Someone'; }
+  async function write(mutate){
+    if(BUSY) return false; BUSY=true;
+    try{ await PH_STORE.update(M.KEY(Y), cur=>{ const rec=M.cleanYear(cur && cur.o ? cur : DATA[Y]); rec.o[OFF]=rec.o[OFF]||{}; const k=M.mm(MO);
+        const r=M.cleanMonth(rec.o[OFF][k]); mutate(r); rec.o[OFF][k]=M.cleanMonth(r); return rec; });
+      await loadYear(Y, true); return true; }
+    catch(e){ toast('Could not save — '+String((e&&e.message)||e).slice(0,80)); return false; }
+    finally{ BUSY=false; }
+  }
+  function applyEdits(r){ const now=new Date().toISOString();
+    Object.keys(EDIT).forEach(k=>{ const n=M.cleanVal(k, EDIT[k]);
+      if(n===null){ if(String(EDIT[k]).trim()===''){ delete r.v[k]; delete r.src[k]; delete r.at[k]; delete r.by[k]; } return; }
+      if(r.v[k]===n && r.src[k]==='typed') return; r.v[k]=n; r.src[k]='typed'; r.at[k]=now; r.by[k]=by(); }); }
+  async function save(quiet){ const ok=await write(r=>applyEdits(r)); if(ok){ EDIT={}; CORRECT={}; if(!quiet) toast('Saved'); render(); } return ok; }
+  async function send(force){
+    const r=recOf(OFF,Y,MO)||M.cleanMonth(null), fields=M.fieldsFor(OFF,SET);
+    const empty=fields.filter(f=>{ const e=EDIT[f.k]; return e!==undefined ? M.num(e)===null : r.v[f.k]===undefined; });
+    if(empty.length && !force){ SENDASK=true; render(); return; }
+    SENDASK=false; const ok=await write(x=>{ applyEdits(x); x.sent={at:new Date().toISOString(), by:by()}; });
+    if(ok){ EDIT={}; toast(M.MONTHS[MO-1]+' sent — Heather can see it now'); render(); }
+  }
+  async function markFinal(on){ const ok=await write(x=>{ applyEdits(x); if(on){ x.final={at:new Date().toISOString(), by:by()}; if(!x.sent) x.sent={at:x.final.at, by:by()}; } else delete x.final; });
+    if(ok){ EDIT={}; toast(on ? M.MONTHS[MO-1]+' marked final' : 'Reopened'); render(); } }
+  async function addNote(){ const t=(el('newnote')||{}).value||''; if(!t.trim()) return;
+    const ok=await write(x=>{ x.notes.push({t:t.trim().slice(0,1000), by:by(), at:new Date().toISOString()}); }); if(ok){ toast('Note added'); render(); } }
+  async function useOf(k){ const ok=await write(x=>{ if(x.ofv[k]!==undefined){ x.v[k]=x.ofv[k]; x.src[k]='orthofi'; x.at[k]=x.of||new Date().toISOString(); x.by[k]='OrthoFi'; } }); if(ok){ delete EDIT[k]; render(); } }
+  async function saveSettings(){
+    const med=[...document.querySelectorAll('.medchk')].filter(c=>c.checked).map(c=>c.value), goals={};
+    Object.keys(M.DEF_GOALS).forEach(k=>{ goals[k]=[+el('g_'+k+'_0').value, +el('g_'+k+'_1').value]; });
+    const next=M.cleanSettings({medicaid:med, goals, due:+el('dueday').value});
+    try{ await PH_STORE.update(M.SET_KEY, ()=>Object.assign({}, next, {upd:new Date().toISOString(), updBy:by()})); SET=next; toast('Settings saved'); render(); }
+    catch(e){ toast('Could not save the settings'); }
+  }
+
+  /* ---------- OrthoFi's numbers in (the nightly job calls this; it never touches a typed number or a final month) ---------- */
+  async function importOrthofi(y, m, byOffice, stamp){
+    let changed=0;
+    await PH_STORE.update(M.KEY(y), cur=>{ let rec=cur; Object.keys(byOffice||{}).forEach(o=>{ const x=M.mergeOrthofi(rec, o, m, byOffice[o], stamp); rec=x.rec; changed+=x.changed; }); return M.cleanYear(rec); });
+    await loadYear(y, true); render(); return changed;
+  }
+
+  /* ---------- wiring ---------- */
+  function persona(){ const s=el('persona'); if(!s) return; let id='heather'; try{ id=localStorage.getItem('ph_monthly_as')||'heather'; }catch(_){}
+    s.innerHTML=PERSONAS.map(p=>'<option value="'+p.id+'" '+(p.id===id?'selected':'')+'>'+esc(p.n)+'</option>').join(''); }
+  window.MONTHLY={
+    as(id){ try{ localStorage.setItem('ph_monthly_as', id); }catch(_){} WHO=null; WHO=who(); TAB=null; OFF=null; EDIT={}; CORRECT={}; SENDASK=false; render(); },
+    tab(t){ if(TAB==='year' && t!=='year' && OFF==='__all') OFF=null; if(TAB!=='year' && t==='year') Y=Math.min(Y, NOW_Y); TAB=t; SENDASK=false; try{ localStorage.setItem('ph_monthly_tab', t); }catch(_){} render(); },
+    move(n){ if(Object.keys(EDIT).length && !confirmLeave()) return; EDIT={}; CORRECT={}; SENDASK=false;
+      if(TAB==='year'){ Y=Math.min(NOW_Y, Y+n); } else { const p=step(Y,MO,n); if(isFuture(p.y,p.m)) return; Y=p.y; MO=p.m; } render(); },
+    open(o){ OFF=o; TAB='office'; EDIT={}; CORRECT={}; render(); window.scrollTo({top:0, behavior:'smooth'}); },
+    office(o){ if(Object.keys(EDIT).length && !confirmLeave()) return; OFF=o; EDIT={}; CORRECT={}; SENDASK=false; render(); },
+    all(){ SHOWALL=!SHOWALL; render(); },
+    typed(inp){ EDIT[inp.dataset.k]=inp.value; inp.classList.toggle('empty', inp.value.trim()===''); const n=el('savenote'); if(n) n.textContent='Not saved yet'; glance(); },
+    correct(k){ CORRECT[k]=true; render(); },
+    save:()=>save(), send, final:markFinal, unask(){ SENDASK=false; render(); }, note:addNote, useOf, copy, csv, saveSettings, importOrthofi
+  };
+  /* leaving typed numbers behind by changing month or office - keep them unless they say otherwise */
+  let LEAVE_OK=false;
+  function confirmLeave(){ if(LEAVE_OK){ LEAVE_OK=false; return true; } toast('You have unsaved numbers — press Save first (or press again to leave them)'); LEAVE_OK=true; setTimeout(()=>{ LEAVE_OK=false; }, 4000); return false; }
+  window.addEventListener('beforeunload', e=>{ if(Object.keys(EDIT).length){ e.preventDefault(); e.returnValue=''; } });
+
+  async function boot(){
+    WHO=who();
+    if(LIVE){ const t=el('tryas'); if(t) t.remove(); } else persona();
+    if(ORTHOFI_CONNECTED){ el('ofstate').classList.add('on'); el('ofstate').querySelector('span').textContent=LIVE ? 'OrthoFi: connected · refreshed every night' : 'OrthoFi: made-up numbers here · refreshed every night once live'; }
+    try{ TAB=localStorage.getItem('ph_monthly_tab'); }catch(_){}
+    await loadSettings();
+    await render();
+    if(window.PH && PH.loadDone) PH.loadDone('page');
+  }
+  if(window.PH && PH.loadHold && LIVE) PH.loadHold('page', 'Reading the monthly reports…');
+  if(!LIVE || window.PH_AUTH) boot();
+  else document.addEventListener('ph-signed-in', boot, {once:true});
+  document.addEventListener('ph-identity', ()=>{ if(LIVE){ WHO=who(); render(); } });
+})();
+</script>
+<script>PH.nav('monthly');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
+<script src="tour.js?v=hc205"></script>
+<script>
+Tour.init([
+  {sel:'.statusline, .openbanner', title:'Who has sent it', body:'Every office’s report for the month, in one line: final, waiting for you, or late. No chasing eight Excel files.'},
+  {sel:'.headline', title:'The gap, in dollars', body:'What the offices below the collection goal would have collected at the goal. The first thing to chase.'},
+  {sel:'.talk, .card', title:'Worth a conversation', body:'Worked out from the numbers, biggest dollar gap first. Open an office to see its numbers, its last 12 months and its manager’s notes.'},
+  {sel:'.tablewrap', title:'Every office side by side', body:'Coloured against the practice’s goals. The little line is each office’s collection % for the last 6 months.'},
+  {sel:'#tabs', title:'Year sheet', body:'Heather’s sheet, kept: every month, the quarters and the year — for one office or all of them together. Download it for Excel any time.'}
+], {key:'monthly', title:'Monthly Report', next:{label:'the Schedule', href:'schedule.html'}});
+</script>
+</body>
+</html>

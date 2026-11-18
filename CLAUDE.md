@@ -440,6 +440,43 @@ I can confidently say that the chat feature should go next. The production thing
    localStorage ph_chat_emoji_recent (18 defaults). Used by the message box (emoji button) and "More emoji" on a
    reaction. All 1,425 toned sequences checked against Unicode's list. test/chatv2.test.js (42).
    STILL QUEUED: a "chat alerts: Home-Brace / Teams" choice.
+37. **MONTHLY REPORT (Heather's monitor report, item 34c; 18/11/2026; hc205; SANDBOX ONLY until user.js MONTHLY_LIVE is
+   true - an admin can preview live with monthly.html?monthlypreview).** Cory: "build it"; "It has to be more than just her
+   excel. You have to think of a practice and why this is important"; "It needs to be smart where its saving time for
+   leadership and heather"; "Remember the second email where they narrowed down what the monthly report should show" ->
+   the fields are EXACTLY email 2's 20 (case starts / case acceptance from the old sheet are NOT on it, so not here).
+   v1/monthly.js (PH_MONTHLY, the rules, test/monthly 40): FIELDS (from 'orthofi' | 'pms'; Medicaid 6 only for the
+   settings' Medicaid offices), CALC = the old sheet's own D=C/B, F=E/B, I=H/B (Collection %, Adjustment %, A/R ratio),
+   goals = the old sheet's goals row; insights() = plain-English "worth a conversation" with the gap in DOLLARS (e.g. 91% of
+   production minus collections), late families, 90+ share, 3-months-falling (only below the goal's top and down 2+
+   points), NPE swings, Medicaid line; practiceTotals() (late % weighted by # accounts); mergeOrthofi() = the nightly
+   import's rule: OrthoFi's own fields only, never a FINAL month, never over a number a PERSON typed (OrthoFi's kept beside
+   it in ofv -> mismatches() -> "OrthoFi says $X - Use OrthoFi's"); status final/sent/open(month so far)/late(after the due
+   day)/started. Storage: PH_STORE ph_monthly_<year> {v:1,o:{office:{mm:{v,src,at,by,ofv,of,sent,final,notes}}}} and
+   ph_monthly_settings {medicaid, goals, due}; saves are PH_STORE.update merges of only what changed.
+   v1/monthly.html: Overview (who has sent / late, the collection gap in dollars across offices, practice tiles, "Worth a
+   conversation" sorted by tone then dollars, every office side by side with goal colours + 6-month sparkline, "Copy the
+   summary" for Teams/email), One office / My report (boxes to TYPE first, OrthoFi's as a compact grid below, "OrthoFi
+   filled N of M", At a glance goal bars that move as you type, notes thread, Send the report (asks about empty boxes),
+   Mark final / Reopen for manage, last 12 months small multiples), Year sheet (her sheet's layout: months, quarter
+   averages, YTD of activity only, year average, goals; one office or all together; Medicaid table; Download for Excel
+   CSV), Settings (manage: Medicaid offices from Admin's own office list, goals, due day). Permission 'monthly' (none/See/
+   Fill in/Everything): Admin manage, Executive + Leadership view, Office Managers edit (DEPT_CAN + Admin grid; canForTeams
+   counts it until the grid sets it). Sandbox: its own "Try it as" (Heather / Leadership / Carlsbad OM with Medicaid / San
+   Angelo OM) and a made-up 2025-2026 made in the browser (never on live). ORTHOFI_LIVE=false in the page: the live site
+   says "credentials on the way" until the nightly pull is wired.
+   THE TWO EXCEL FILES COMPARED 18/11 (Cory: "spot any differences"; no figures here): same 19-column main table, same
+   formulas and goals in both; Clovis (Medicaid) adds a Medicaid block (submissions, denials, approvals, bandings, Medicaid
+   production, Medicaid collections AND # of RIP sold - RIP lives only in the Medicaid file today, email 2 asks it of every
+   office) and has patient names typed beside it (never in Home-Brace); the old sheet's case starts, case acceptance
+   (>70%), Med starts, 100% discount, Limited/ReTX/50% off, Phase 1 starts, avg case fee (= net production / (comprehensive
+   + phase 1 starts)) are dropped by email 2; delinquent was a COUNT with the % worked out (email 2 asks the %); the "100%
+   Discount" column has no quarter/YTD/average formulas in either file (a gap in the old sheet).
+   ORTHOFI API (18/11, OrthoFi to Heather): credentials being generated, "full access to all our API endpoints and for all
+   your practices and locations"; docs https://api.data.orthofi.com/v1/openapi. So NO Safari bot (throwaway). Plan: the
+   secret goes into Azure app settings typed by Cory (never chat, never the repo, never the Entra app); a small server
+   piece pulls OrthoFi (nightly data ready 4 AM ET = 10 AM France) and the page/importOrthofi() writes it with the merge
+   rule above. RIP: email 2 does not put it on the PMS side, but no OrthoFi RIP field is known - typed until confirmed.
 36. **CHAT MESSAGE TOOLBAR like Slack + FORWARD (18/11; hc204).** Cory: "Its hard to scroll over to emoji now and it flashes
    off. Look at what slack does" (the ☺+ / 🗑 floated beside the bubble with a gap -> hover lost) + "The delete can be there
    as well also forward is a good option" + "Delete should have a confirmation screen" (it already had: "Delete this

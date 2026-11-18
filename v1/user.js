@@ -86,7 +86,7 @@
      "added a bit of life" but looked a bit amateur; plain line icons were too basic). A scheme
      whose bar is light enough to wash a colour out gets it lightened until it reads (3:1). */
   const TAB_IC={home:'#2BC0B8', dashboard:'#6CB4F5', production:'#F7A25E', tc:'#B49CFB', schedule:'#F48C7F',
-                marketing:'#F27FC0', documents:'#F5C85C', team:'#6FD39A', chat:'#7FD4F0', payroll:'#B6E36B', academy:'#8FA2FF', admin:'#AEBBD0'};
+                marketing:'#F27FC0', documents:'#F5C85C', team:'#6FD39A', chat:'#7FD4F0', payroll:'#B6E36B', monthly:'#F9E26B', academy:'#8FA2FF', admin:'#AEBBD0'};
   const THEME_VARS=['--navy','--navy2','--navy-mute','--teal','--teal2','--teal-600','--teal-soft',
                     '--teal-line','--teal-ink','--teal-wash','--ink','--soft','--line','--canvas'];
   function hexRgb(h){ h=String(h).replace('#',''); if(h.length===3) h=h.split('').map(c=>c+c).join('');
@@ -171,10 +171,10 @@
 
   // Department (Entra) -> what they can do. Keys are Heather's own ten team names, lowercased.
   const DEPT_CAN={
-    'admin':                      {dashboard:'view',production:'manage',schedule:'edit',marketing:'edit',documents:'manage',team:'view',admin:'manage',tc:'manage',payroll:'manage',meetings:'edit'},
-    'executive team':             {dashboard:'view',production:'edit',  schedule:'edit',marketing:'edit',documents:'manage',team:'view',admin:'none',tc:'manage'},
-    'leadership team':            {dashboard:'view',production:'edit',  schedule:'edit',marketing:'edit',documents:'manage',team:'view',admin:'none',tc:'manage'},
-    'office managers':            {dashboard:'view',production:'edit',  schedule:'edit',marketing:'view',documents:'edit',  team:'view',admin:'none',tc:'view',meetings:'edit'},
+    'admin':                      {dashboard:'view',production:'manage',schedule:'edit',marketing:'edit',documents:'manage',team:'view',admin:'manage',tc:'manage',payroll:'manage',meetings:'edit',monthly:'manage'},
+    'executive team':             {dashboard:'view',production:'edit',  schedule:'edit',marketing:'edit',documents:'manage',team:'view',admin:'none',tc:'manage',monthly:'view'},
+    'leadership team':            {dashboard:'view',production:'edit',  schedule:'edit',marketing:'edit',documents:'manage',team:'view',admin:'none',tc:'manage',monthly:'view'},
+    'office managers':            {dashboard:'view',production:'edit',  schedule:'edit',marketing:'view',documents:'edit',  team:'view',admin:'none',tc:'view',meetings:'edit',monthly:'edit'},
     'clinic managers':            {dashboard:'view',production:'view',  schedule:'edit',marketing:'view',documents:'edit',  team:'view',admin:'none',tc:'none'},
     'doctors':                    {dashboard:'view',production:'none',  schedule:'view',marketing:'none',documents:'view',  team:'view',admin:'none',tc:'none'},
     'tcs':                        {dashboard:'none',production:'none',  schedule:'view',marketing:'none',documents:'add',   team:'view',admin:'none',tc:'edit'},
@@ -633,6 +633,8 @@
       /* MEETINGS (18/11/2026) is newer than the saved Teams & Access grid: until an admin sets that column for a team,
          the team's starting value counts (Office Managers + Admin can make meetings - Cory: "I believe its office managers"). */
       if(c.meetings===undefined && DEPT_CAN[d] && DEPT_CAN[d].meetings) c=Object.assign({}, c, {meetings:DEPT_CAN[d].meetings});
+      /* MONTHLY REPORT (18/11/2026) - the same: newer than the saved grid, so the team's starting value counts until set. */
+      if(c.monthly===undefined && DEPT_CAN[d] && DEPT_CAN[d].monthly) c=Object.assign({}, c, {monthly:DEPT_CAN[d].monthly});
       if(!can){ can=Object.assign({},c); return; }
       Object.keys(c).forEach(k=>{ if(RANK[c[k]]>RANK[can[k]]) can[k]=c[k]; });
     });
@@ -2100,6 +2102,11 @@
      Settings; Payroll: See reads every office; each office's sender(s) - Heather's "Who sends each office's sheet",
      ph_pay_senders in the shared list (names only, no pay) - see and send their own office's sheet. The sheets
      themselves are in the locked payroll folder (paystore.js), never the shared list. */
+  /* MONTHLY REPORT (18/11/2026): the offices' month-end numbers (Heather's monitor report). Sandbox first - false keeps
+     it off the live site until Cory says "monthly live". An admin can preview it there with monthly.html?monthlypreview. */
+  const MONTHLY_LIVE=false;
+  function monthlyOn(){ if(env()!=='live' || MONTHLY_LIVE) return true;
+    try{ if(/[?&]monthlypreview\b/.test(location.search||'')) sessionStorage.setItem('ph_monthly_preview','1'); return sessionStorage.getItem('ph_monthly_preview')==='1' && isAdmin(realMe()); }catch(_){ return false; } }
   const PAY_LIVE=true;                // ON for staff 04/11/2026 (Heather: "I did all the instructions, I think we are good to go"); first pay period #24
   function payPreview(){
     try{
@@ -2480,6 +2487,8 @@
        never on the live site, where the page is shut too (guard). */
     {k:'chat',       n:'\ud83d\udcac Chat',              href:'chat.html',       show:()=>env()!=='live' || chatPilotMe(), tab:false},   // live: the chat pilot only (chatPilotMe)   // mock-up (22/10/2026), sandbox only; the header's chat button, not a tab
     /* Sandbox: the mock-up, everyone. Live: the switch (PAY_LIVE or an admin's preview), then payLevel(). */
+    /* Sandbox: everyone (made-up numbers; the page has its own "Try it as"). Live: the switch, then Teams & Access. */
+    {k:'monthly',    n:'\ud83d\udcc8 Monthly Report',    href:'monthly.html',    show:()=>env()!=='live' || (monthlyOn() && (isAdmin(me()) || atLeast('monthly','view')))},
     {k:'payroll',    n:'\ud83d\udcb5 Payroll',           href:'payroll.html',    show:()=>env()!=='live' || (payOn() && !!payLevel())},
     {k:'academy',    n:'\ud83c\udf93 Academy',           href:'academy.html',    show:()=>env()!=='live'},
     {k:'admin',      n:'\u2699\ufe0f Admin',            href:'admin.html',      show:()=>atLeast('admin','view')}
@@ -3034,7 +3043,7 @@
      "Enter P..." - which reads as broken. Short forms for the bar; the sheet and the
      top nav keep the full names. */
   const TAB_SHORT={home:'Home',dashboard:'Dashboard',production:'Enter Prod',tc:'TC Tracker',schedule:'Schedule',
-                   marketing:'Marketing',documents:'Documents',team:'Team',chat:'Chat',payroll:'Payroll',academy:'Academy',admin:'Admin'};
+                   marketing:'Marketing',documents:'Documents',team:'Team',chat:'Chat',payroll:'Payroll',monthly:'Monthly',academy:'Academy',admin:'Admin'};
   /* Line icons for the phone bar instead of emoji - emoji render differently on every
      phone and read as casual. 24-unit grid, stroke follows the text colour. */
   const ICON={
@@ -3049,6 +3058,7 @@
     admin:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 01-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 01-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 01-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 010-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 012.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 014 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 012.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 010 4h-.1a1.7 1.7 0 00-1.5 1z"/>',
     chat:'<path d="M21 11.5a8.5 8.5 0 0 1-12.4 7.6L3 20.5l1.4-5.1A8.5 8.5 0 1 1 21 11.5z"/>',
     payroll:'<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.6"/><path d="M6 10v4M18 10v4"/>',
+    monthly:'<path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/><path d="M3 21h18"/>',
     academy:'<path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c0 1.4 2.7 3 6 3s6-1.6 6-3v-5"/><path d="M22 9v6"/>',
     more:'<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>'
   };
@@ -4010,7 +4020,7 @@
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', start, {once:true}); else setTimeout(start, 0);
   })();
 
-  window.PH={PEOPLE,newHiresOn,pickOn,chatPilotMe,chatPilotKnown:()=>CHATPILOT!==null,chatGuest,reloadChatPilot,cleanChatPilot,CHAT_PILOT_KEY,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,teamNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, rosterView, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, chatBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK, notesHTML, searchHTML, searchDocs, searchDocsHTML, levelForTeams, teamsSeeAll, tcOn, tcRoleFor, payOn, payRoleFor, paySenders, reloadPaySenders, paySenderOffices, payLevel, payReminders, payMark, reloadPayStatus, payRulesReady, payAlertPlan, payAlertsTick, centralNow, alertsReady, saveFace, faceOf, avatar, viewLink, isWordName, wordAttrs, wordPdfInto,
+  window.PH={PEOPLE,newHiresOn,pickOn,chatPilotMe,chatPilotKnown:()=>CHATPILOT!==null,chatGuest,reloadChatPilot,cleanChatPilot,CHAT_PILOT_KEY,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,teamNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, rosterView, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, chatBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK, notesHTML, searchHTML, searchDocs, searchDocsHTML, levelForTeams, teamsSeeAll, tcOn, tcRoleFor, payOn, monthlyOn, payRoleFor, paySenders, reloadPaySenders, paySenderOffices, payLevel, payReminders, payMark, reloadPayStatus, payRulesReady, payAlertPlan, payAlertsTick, centralNow, alertsReady, saveFace, faceOf, avatar, viewLink, isWordName, wordAttrs, wordPdfInto,
     sensRecord, reloadSensitive, sensLevelFor, sensitiveLevel, sensConfirmOk,
     setTheme, theme:()=>THEME, setLayout, layout:()=>LAYOUT, layouts:()=>LAYOUTS.map(l=>({k:l.k, n:l.n})), themes:()=>THEMES.map(t=>({k:t.k, n:t.n})), schemeTokens:k=>schemeTokens(themeOf(k)), contrast,
     feedback:openFeedback, feedbackText, feedbackContext, learning:stillLearning, fbReady, myFeedback, fbTick, usageReady, rosterName, useEmail, useTrackMe, loadHold, loadDone};

@@ -82,8 +82,8 @@ const fails=async f=>{ try{ await f(); return ''; }catch(e){ return e.message; }
   t('…the meeting’s card: when, where, who made it, who’s going, Join the Teams meeting, Open in Outlook; Change / Cancel only for the one who made it (cancelling asks first)',
     /Join the Teams meeting/.test(fnOf(SCH,'meetShow')) && /Open in Outlook/.test(fnOf(SCH,'meetShow')) && /const mineCan=m\.mine && canMeet\(\);/.test(fnOf(SCH,'meetShow')) && /Everyone invited gets a cancellation/.test(fnOf(SCH,'meetCancelAsk')));
   t('THE PERMISSION: Teams & Access has "Meetings: Can make"; Office Managers and Admin to start; a saved grid that predates it uses those starting values',
-    /\{k:'meetings',n:'Meetings \(make meetings\)',s:'Meetings',ic:'🗓️'\}/.test(ADM) && /meetings:\['none','edit'\]/.test(ADM) && /set\('Office Managers',\{meetings:'edit',/.test(ADM) &&
-    /'office managers':[^\n]*meetings:'edit'\}/.test(USER) && /'admin':[^\n]*meetings:'edit'\}/.test(USER) && !/'staff':[^\n]*meetings/.test(USER) &&
+    /\{k:'meetings',n:'Meetings \(make meetings\)',s:'Meetings',ic:'🗓️'\}/.test(ADM) && /meetings:\['none','edit'\]/.test(ADM) && /set\('Office Managers',\{[^)]*meetings:'edit',/.test(ADM) &&
+    /'office managers':[^\n]*meetings:'edit'[,}]/.test(USER) && /'admin':[^\n]*meetings:'edit'[,}]/.test(USER) && !/'staff':[^\n]*meetings/.test(USER) &&
     /if\(c\.meetings===undefined && DEPT_CAN\[d\] && DEPT_CAN\[d\]\.meetings\) c=Object\.assign\(\{\}, c, \{meetings:DEPT_CAN\[d\]\.meetings\}\);/.test(USER));
 
   console.log(ok.map(s=>'  PASS  '+s).join('\n'));

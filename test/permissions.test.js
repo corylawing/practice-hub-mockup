@@ -191,7 +191,8 @@ const t=(n,v)=>{ (v?ok:bad).push(n); };
   t('the COO is still an admin', H.PH.isAdmin()===true);
   t('admin.html is NOT locked for her', H.locked()===false);
   /* Every tab - the TC Tracker included since it went live (19/10/2026, Cory: "yes on production"). */
-  t('and her menu has every tab, Payroll included since 04/11 (the Academy and Chat are sandbox mock-ups)', H.tabs().length===H.PH.NAV.filter(x=>x.k!=='academy' && x.k!=='chat').length);
+  /* Monthly Report (18/11/2026) waits for its own switch (MONTHLY_LIVE) - monthly.test.js checks that. */
+  t('and her menu has every tab, Payroll included since 04/11 (the Academy and Chat are sandbox mock-ups; the Monthly Report waits for its switch)', H.tabs().length===H.PH.NAV.filter(x=>x.k!=='academy' && x.k!=='chat' && x.k!=='monthly').length);
   t('the Chat mock-up never shows on the live site', H.tabs().indexOf('chat')<0);
   t('...and neither does its chat button beside the bell', H.PH.NAV.find(x=>x.k==='chat').show()===false);
   const CH=load({page:'chat'});
