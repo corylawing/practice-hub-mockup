@@ -384,7 +384,7 @@ I can confidently say that the chat feature should go next. The production thing
    Harness: scratchpad fakelive.js (+ fake_nochats, fake_long, POST /chats, /users, hostedContents images, __incoming),
    chatstage-run.js, chatnew-run2.js, chatbottom-run.js. QUEUED: emoji reactions on a message (Cory 18/11, "like slack
    ... WhatsApp does the same") - Graph setReaction/unsetReaction (Chat.ReadWrite), message.reactions.
-24. **QUEUED - Heather's two doctor/contractor ideas (feedback 17/11 4:26 + 4:30 pm CST). Cory: "Add after chat pilot
+24. **BUILT hc187 (SANDBOX ONLY - payroll.html DOCPAY_LIVE=false) - Heather's two doctor/contractor ideas (feedback 17/11 4:26 + 4:30 pm CST). Cory: "Add after chat pilot
    deploy and first test".** (a) "Can you make the doctor that needs to get paid more visible somehow. Right now Dr.
    Lightheart kind of blends in with the sheet and I almost forgot to pay him. Any doctor or contractor I add could be
    highlighted or bold" -> the "Paid by the day" rows (docRows / tr.docr on the combined sheet + the office sheet + the
@@ -393,6 +393,15 @@ I can confidently say that the chat feature should go next. The production thing
    amount per day and it will do the math for me." -> a per-day rate per doctor kept in HER folder (settings.json - the
    offices never read it), days x rate on the combined sheet/download (and an override box), effective from a pay period
    like the rates (never changes an entered one). Senders keep typing only the days. Sandbox first behind a switch.
+   DONE (18/11): combined sheet tr.docr.pay (amber, orange bar, 🩺, "Pay separately"), days x rate on the row + a box
+   "Pay this pay period" (data-df -> onDocPay -> S.dpay + liveCols(office, docId, 'dpay')) while that office isn't
+   entered; "Worth a second look" first group "🩺 Doctors to pay" (every doctor with days: pay, "(typed in)" or "no day
+   rate yet"); Settings -> Doctors paid by the day: "Day rate · only you see it" + Set it / Change (docRateDlg: amount +
+   starting pay period = rateStarts) -> settings.json docRate; download: Rate per day + Pay. takeCols: dpay never makes
+   a staff row. Not in Total. test/paydoctors.test.js (13, runs cleanDocRate/docRateAt/docPay). Browser (mock-up, as
+   Heather): rows highlighted; $500 from #22 -> "4 days x $500 a day = $2,000"; typed 1800 -> "pay $1,800 (typed in)",
+   kept; bad amount refused; no page errors. NOTE: anyone with Payroll "See" also sees her side (like Goal/TC/OM).
+   TO TURN ON LIVE: DOCPAY_LIVE=true + deploy, on Cory's OK.
 25. **INSTANT CHAT ALERTS (18/11/2026; hc185, needs the live site - nothing changes on the sandbox).** Cory: "Anyway to
    have them turn off microsoft alerts and only get alerts through Home-Brace?" -> "build instant chat alerts". Before:
    Home-Brace only alerted for messages sent FROM Home-Brace; one typed in the Teams app alerted only in Teams. Now

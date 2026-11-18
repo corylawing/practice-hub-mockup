@@ -222,6 +222,10 @@
   table.comb td.co .stick{border-left:5px solid var(--odot,transparent);margin-left:-8px;padding-left:8px}   /* the office's color strip stays in view while the sheet scrolls sideways */
   table.comb tr.subt .nm{background:#FAFBFC}
   table.comb tr.grand .nm{background:var(--navy)}
+  /* a doctor to pay, on Heather's combined sheet (DOCPAY): can't be missed */
+  table.comb tr.docr.pay td{background:#FFF4E2 !important;color:#5b3d00;font-size:13px}
+  table.comb tr.docr.pay .nm{background:#FFF4E2 !important;box-shadow:inset 5px 0 0 #F2A03D;color:#5b3d00}
+  table.comb tr.docr .dpin{width:100px;margin-left:4px}
   table.comb tr.docr td{background:#FBFCFD;font-size:12.5px;color:var(--soft);white-space:normal}
   table.comb tr.docr .nm{background:#FBFCFD;color:var(--navy);font-weight:700}
   .hin{width:64px;padding:4px 6px;font-size:13px}
@@ -247,15 +251,15 @@
     .perhead .when{font-size:17px}
   }
 </style>
-<script src="user.js?v=hc186"></script>
+<script src="user.js?v=hc187"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc186"></script>
-  <script src="gate.js?v=hc186"></script>
-  <script src="alerts.js?v=hc186"></script>
-  <script src="_staff.js?v=hc186"></script>
-  <script src="payrules.js?v=hc186"></script>
-  <script src="paystore.js?v=hc186"></script>
-  <script src="docs.js?v=hc186"></script>
+  <script src="store.js?v=hc187"></script>
+  <script src="gate.js?v=hc187"></script>
+  <script src="alerts.js?v=hc187"></script>
+  <script src="_staff.js?v=hc187"></script>
+  <script src="payrules.js?v=hc187"></script>
+  <script src="paystore.js?v=hc187"></script>
+  <script src="docs.js?v=hc187"></script>
 </head>
 <body>
 <div class="ribbon">MOCK-UP for Heather — made-up people and amounts. Try it as the Carlsbad TC first, then as Heather.</div>
@@ -360,6 +364,33 @@
   }
   const spbHas=x=>num((x||{}).spb)>0;
   const spbLine=x=>money(num(x.spb))+(x.spbType?' · '+esc(x.spbType):'')+(String(x.spbWhy||'').trim()?' · “'+esc(String(x.spbWhy).trim())+'”':'');
+  /* DOCTORS PAID BY THE DAY - STAND OUT, AND THEIR PAY (Heather 17/11/2026) - SANDBOX ONLY until DOCPAY_LIVE is true.
+     Heather: "Can you make the doctor that needs to get paid more visible somehow. Right now Dr. Lightheart kind of blends
+     in with the sheet and I almost forgot to pay him" and "Can I have a box so I can enter in the dollar amount they will
+     get paid. I only want it to be visible to me. Or ... an amount per doctor per day worked so when Jenny says Dr.
+     Lightheart works 2 days I can set a dollar amount per day and it will do the math for me."
+     (1) On her combined sheet a doctor's row is highlighted (🩺, "Pay separately") and "Worth a second look" lists every
+     doctor with days. (2) A DAY RATE per doctor (Settings -> Doctors), starting with a pay period no office has been
+     entered for (like the rates - an entered one never changes); days x rate on the doctor's row and in the download; a
+     box on the row OVERRIDES it for that pay period. Kept in HER folder (settings.json docRate {docId:[{from, amt}]};
+     cols_<period> {office:{docId:{dpay}}}) - an office's sender never reads it. Not added into Total (that's the
+     staff's bonuses; a doctor's day pay is its own line). */
+  const DOCPAY_LIVE=false;
+  const DOCPAYON=()=>DOCPAY_LIVE || !(window.PH && PH.isLive && PH.isLive());
+  function cleanDocRate(x){
+    const out={}; if(!x || typeof x!=='object') return out;
+    Object.keys(x).forEach(id=>{ const l=(Array.isArray(x[id]) ? x[id] : []).filter(c=>c && /^\d{4}-\d{2}-\d{2}$/.test(String(c.from||'')) && c.amt!=='' && c.amt!==null && isFinite(Number(c.amt)) && Number(c.amt)>=0 && Number(c.amt)<=20000)
+      .map(c=>({from:c.from, amt:Math.round(Number(c.amt)*100)/100})).sort((a,b)=>a.from<b.from?-1:a.from>b.from?1:0);
+      if(l.length) out[id]=l.slice(-50); });
+    return out;
+  }
+  const docRateAt=(id, start)=>{ let a=null; ((S.docRate||{})[id]||[]).forEach(c=>{ if(c.from<=start) a=c.amt; }); return a; };   // the later of two that start together wins
+  const dpayKey=(n,id)=>n+'|'+id;
+  function docPay(n, d, v){
+    const days=num((v||{}).w1)+num((v||{}).w2), rate=docRateAt(d.id, P(n).start), o=(S.dpay||{})[dpayKey(n,d.id)];
+    const over=(o===undefined || o===null || o==='') ? null : num(o);
+    return {days, rate, over, pay:over!==null ? over : (rate!==null ? r2(days*rate) : null)};
+  }
   let HOLIDAYS=PR.HOLIDAYS.slice();      // worked out every year (payrules.js holidaysFor) - the mock-up uses the same ones
   /* In the order of Heather's main sheet, one company each. by = who sends the sheet: the TC in Carlsbad and
      Las Cruces ("FOLC" = Cruces FFO, Heather 22/10), the clinic lead in Lubbock, the office manager everywhere else.
@@ -935,7 +966,7 @@
 
   /* ---------- Heather: this pay period ---------- */
   function flags(n){
-    const pr=P(n), RATE=rt(pr.start), F={ot:[], er:[], two:[], green:[], pay:[], spb:[], miles:[], add:[]};
+    const pr=P(n), RATE=rt(pr.start), F={ot:[], er:[], two:[], green:[], pay:[], spb:[], miles:[], add:[], doc:[]};
     OFFICES.forEach(o=>{ const s=get(n,o.k); if(s.status!=='sent') return;
       rowPeople(n,o.k).forEach(p=>{ const x=s.rows[p.id]; if(!x) return;
         [1,2].forEach(w=>{ const hh=num(x['w'+w]); if(hh>40) F.ot.push({p,o,t:r2(hh-40)+' h of overtime in week '+w+(otOK(x,w)?' — marked approved':' — <b>not</b> marked approved'), bad:!otOK(x,w)}); });
@@ -945,6 +976,10 @@
         if(num(x.exc)>0) F.pay.push({p,o,t:'Exception commuter pay '+money(num(x.exc))+(x.notes?' · “'+esc(x.notes)+'”':'')});
         if(num(x.mkt)+num(x.oth)>0) F.miles.push({p,o,t:(num(x.mkt)?num(x.mkt)+' marketing mi':'')+(num(x.mkt)&&num(x.oth)?' + ':'')+(num(x.oth)?num(x.oth)+' other mi':'')+' → '+money(r2((num(x.mkt)+num(x.oth))*RATE.mile))+' reimbursement'+(num(x.oth)&&x.notes?' · “'+esc(x.notes)+'”':'')});
       }); });
+    /* DOCPAY: every doctor with days on a sheet that's in - and what to pay them (Heather: "I almost forgot to pay him") */
+    if(DOCPAYON()) OFFICES.forEach(o=>{ const s=get(n,o.k); if(s.status!=='sent') return;
+      docRows(n,o.k).forEach(d=>{ const v=(s.docs||{})[d.id]||{}, dp=docPay(n,d,v); if(!(dp.days>0) && dp.over===null) return;
+        F.doc.push({who:d.n, o, t:esc(dayN(dp.days))+(dp.pay!==null ? ' → pay <b>'+(money(dp.pay)||'$0')+'</b>'+(dp.over!==null ? ' (typed in)' : ' ('+money(dp.rate)+' a day)') : ' · <b>no day rate yet</b> - Settings → Doctors paid by the day'), bad:dp.pay===null}); }); });
     everyone().filter(p=>p.offices.length>1).forEach(p=>{
       const parts=p.offices.map(k=>{ const s=get(n,k), x=s.status==='sent'&&s.rows[p.id]; return x?{k, w1:num(x.w1), w2:num(x.w2)}:null; }).filter(Boolean);
       if(parts.length>1){ const w1=parts.reduce((a,q)=>a+q.w1,0), w2=parts.reduce((a,q)=>a+q.w2,0);
@@ -1120,7 +1155,12 @@
       ['reg','ot1','ot2','total','reimb'].forEach(k=>{ grand[k]+=sub[k]; });
       h+='<tr class="subt"><td class="nm">'+os.map(q=>esc(q.n)).join(' + ')+' total</td><td class="n">'+hrs(sub.reg)+'</td><td class="n">'+hrs(sub.ot1)+'</td><td class="n">'+hrs(sub.ot2)+'</td><td colspan="10"></td><td class="n" id="cst-'+gid+'">'+money(sub.total)+'</td><td class="n">'+money(sub.reimb)+'</td>'+(anySp?'<td></td>':'')+'<td></td></tr>';
       sentKs.forEach(k=>{ const s=get(n,k); docRows(n,k).forEach(d=>{ const v=(s.docs||{})[d.id]||{};
-        h+='<tr class="docr"><td class="nm">'+esc(d.n)+(many?' <span class="small muted">· '+esc(OFF[k].n)+'</span>':'')+'</td><td colspan="'+(NC-1)+'">Paid by the day: '+dayN(v.w1)+' in Wk 1 + '+dayN(v.w2)+' in Wk 2 = <b>'+daysText(v)+'</b></td></tr>'; }); });
+        const dp=DOCPAYON() ? docPay(n,d,v) : null, onD=!entOff(n,k) && !R().ro;
+        h+='<tr class="docr'+(dp?' pay':'')+'"><td class="nm">'+(dp?'🩺 ':'')+esc(d.n)+(many?' <span class="small muted">· '+esc(OFF[k].n)+'</span>':'')+(dp?' <span class="pill p-late" style="margin-left:4px">Pay separately</span>':'')+'</td>'+
+          '<td colspan="'+(NC-1)+'">Paid by the day: '+dayN(v.w1)+' in Wk 1 + '+dayN(v.w2)+' in Wk 2 = <b>'+daysText(v)+'</b>'+
+          (dp ? (dp.rate!==null ? ' × '+money(dp.rate)+' a day = <b>'+(money(r2(dp.days*dp.rate))||'$0')+'</b>' : ' · <span class="muted">no day rate yet (Settings → Doctors paid by the day)</span>')+
+            ' · Pay this pay period: '+(onD ? '<input class="in dpin" type="number" min="0" step="1" inputmode="decimal" data-df="'+esc(d.id)+'" data-o="'+k+'" placeholder="'+(dp.rate!==null ? esc('$'+r2(dp.days*dp.rate)) : '$')+'" value="'+(dp.over!==null ? esc(dp.over) : '')+'" aria-label="'+esc('Pay this pay period: '+d.n)+'" title="Leave empty to use days × the day rate">'
+              : '<b>'+(dp.pay!==null ? (money(dp.pay)||'$0') : '—')+'</b>') : '')+'</td></tr>'; }); });
     });
     h+='<tr class="grand"><td class="nm">All offices</td><td class="n">'+hrs(grand.reg)+'</td><td class="n">'+hrs(grand.ot1)+'</td><td class="n">'+hrs(grand.ot2)+'</td><td colspan="10"></td><td class="n" id="cgt">'+money(grand.total)+'</td><td class="n">'+money(grand.reimb)+'</td>'+(anySp?'<td></td>':'')+'<td></td></tr>';
     return h+'</tbody></table></div><p class="small muted" style="margin:8px 2px 0">Total = PP bonus + Goal + TC/OM + holiday ('+money(RATE.holiday)+') + on call ('+money(RATE.onCall)+' a weekend) + Phone, DIBS, POG + Extra'+(anySp?' + any extra $ column added to Total':'')+'. A line under Goal, TC/OM or Extra (“+ $100 · Team hit goal”) is from <b>Add to payroll</b> - it’s in Total. ER hrs: 1 hour of pay for each patient seen on an ER - hours, kept out of Total. '+
@@ -1150,10 +1190,10 @@
         ? '⏰ Each office’s sender gets a reminder in their bell from the workday before it’s due, until it’s sent. At 2 pm on the due day your bell lists any still to come.'+(PHONE()?' Senders who turn alerts on (the bell → Turn on) get them on their phone too: the workday before at 9 am, the due day at 9 am and 1 pm.':' Reminders on phones come with Chat.')
         : '⏰ Reminders go out on their own to whoever sends each sheet: the workday before, the morning it’s due, and at 1 pm if it isn’t sent yet - in Home-Brace, and on their phone once alerts are on. <b>Send a reminder</b> sends one right now.')+'</div>':'')+'</div>';
     h+=addsCard(n);
-    const groups=[['add','🆕 New people'],['ot','⏱ Overtime'],['er','🚑 ERs taken'],['two','🏢 Working two offices — hours combined'],['green','🟢 Missed green days'],['pay','💵 Exception commuter pay'],['spb','🎁 Special bonuses'],['miles','🚗 Mileage']];
+    const groups=[['doc','🩺 Doctors to pay (paid by the day)'],['add','🆕 New people'],['ot','⏱ Overtime'],['er','🚑 ERs taken'],['two','🏢 Working two offices — hours combined'],['green','🟢 Missed green days'],['pay','💵 Exception commuter pay'],['spb','🎁 Special bonuses'],['miles','🚗 Mileage']];
     const count=groups.reduce((a,g)=>a+F[g[0]].length,0);
     h+='<div class="card"><h2>Worth a second look'+(count?' ('+count+')':'')+'</h2><p class="sub">Found for you across every sheet that’s been sent — no more hunting through notes.</p>'+
-      (count?'<div class="flags">'+groups.filter(g=>F[g[0]].length).map(g=>'<div class="fgrp"><h3>'+g[1]+'</h3>'+F[g[0]].map(f=>'<div class="fl"><span class="who">'+esc(disp(f.p))+'</span><span class="muted">'+esc(f.o.n)+'</span><span class="grow">'+f.t+'</span>'+(f.bad?'<span class="pill p-late">Check</span>':'')+'</div>').join('')+'</div>').join('')+'</div>'
+      (count?'<div class="flags">'+groups.filter(g=>F[g[0]].length).map(g=>'<div class="fgrp"><h3>'+g[1]+'</h3>'+F[g[0]].map(f=>'<div class="fl"><span class="who">'+esc(f.who || disp(f.p))+'</span><span class="muted">'+esc(f.o.n)+'</span><span class="grow">'+f.t+'</span>'+(f.bad?'<span class="pill p-late">Check</span>':'')+'</div>').join('')+'</div>').join('')+'</div>'
         :'<div class="note good">Nothing unusual so far.</div>')+'</div>';
     h+='<div class="card"><div class="row" style="margin-bottom:10px"><div class="grow"><h2>Combined sheet</h2><div class="small muted">Laid out like your main Excel: one company at a time with its own column headings, the same sums for every row, overtime split by week the way the payroll software asks for it.</div></div>'+
       '<button class="btn ghost sm" data-act="csv">⬇ Download for Excel</button>'+
@@ -1365,6 +1405,31 @@
           (can && min && c.from>=min ? '<button class="btn ghost sm" data-act="rateundo" data-v="'+esc(c.id)+'">Undo</button>' : '')+'</div>'; }).join('')+'</div>';
     return h;
   }
+  /* DOCPAY: a doctor's day rate in Settings - now, any change coming, and Change (whoever manages payroll). */
+  function docRateCell(d){
+    const now=docRateAt(d.id, P(CUR).start), later=((S.docRate||{})[d.id]||[]).filter(c=>c.from>P(CUR).start), nx=later[later.length-1];
+    return (now!==null ? '<b>'+(money(now)||'$0')+'</b> a day' : '<span class="muted">Not set</span>')+
+      (nx ? ' <span class="small muted">· '+(money(nx.amt)||'$0')+' from '+(nOfStart(nx.from)===null ? esc(fmt(nx.from)) : lab(nOfStart(nx.from)))+'</span>' : '')+
+      (holCan() && rateStarts().length ? ' <button class="link small" data-act="docrate" data-v="'+esc(d.id)+'">'+(now!==null||nx?'Change':'Set it')+'</button>' : '');
+  }
+  function docRateDlg(id){
+    const d=everyDoc().find(x=>x.id===id), st=rateStarts(); if(!d || !st.length) return;
+    const cur=docRateAt(id, P(st[0]).start);
+    openDlg(top('Day rate · '+esc(d.n))+'<div class="dm-body">'+
+      '<div class="row"><label class="fld">Paid per day worked ($)<input class="in" id="drv" type="number" min="0" step="1" inputmode="decimal" style="width:130px"></label>'+
+      '<label class="fld grow">Starting with pay period<select class="in" id="drf">'+st.map(m=>'<option value="'+m+'">'+esc(lab(m))+' · '+esc(span(P(m).start,P(m).end))+(m===NEXT?' (in progress)':'')+'</option>').join('')+'</select></label></div>'+
+      '<div class="note info">'+(cur!==null ? 'Now '+(money(cur)||'$0')+' a day. ' : '')+'Only you see this - '+esc(OFF[d.office].n)+' only types the days. Pay periods already entered keep what they were.</div>'+
+      '<div id="drerr" class="small" style="color:#9a2f1e;font-weight:700"></div></div>'+
+      '<div class="dm-foot"><button class="btn ghost" data-act="close">Cancel</button><button class="btn" data-act="docrateok" data-v="'+esc(id)+'">Save</button></div>');
+    setTimeout(()=>{ const f=el('drv'); if(f) f.focus(); },30);
+  }
+  function docRateSave(id, entry, done){
+    const add=all=>{ const x=cleanDocRate(all); x[id]=(x[id]||[]).concat([entry]); return cleanDocRate(x); };
+    S.docRate=add(S.docRate);
+    if(!LIVEPAY){ save(); closeDlg(); render(); toast(done); return; }
+    liveQueue('_h','settings', cur=>{ const x=cur||{v:1, bonus:{}}; x.docRate=add(x.docRate); return x; });
+    liveFlushAll().then(ok=>{ closeDlg(); render(); toast(ok ? done : 'Not saved yet - Home-Brace keeps trying'); });
+  }
   function rateDlg(k){
     const st=rateStarts(); if(!st.length || !RATE_ROWS.some(r=>r[0]===k)) return;
     const cur=rt(P(st[0]).start)[k];
@@ -1444,10 +1509,10 @@
       '</tbody></table></div></div>';
     const docs=everyDoc().slice().sort((a,b)=>(OFF[a.office].n+a.n).localeCompare(OFF[b.office].n+b.n));
     h+='<div class="card"><div class="row" style="margin-bottom:8px"><div class="grow"><h2>Doctors paid by the day</h2><p class="sub" style="margin:0">Not on salary: their office enters their days worked each week. Doctors on salary aren’t listed.</p></div><button class="btn ghost sm" data-act="adddoc" data-v="">＋ Add a doctor</button></div>'+
-      (docs.length?'<div class="tblwrap"><table class="t"><thead><tr><th>Doctor</th><th>Office</th><th></th></tr></thead><tbody>'+
+      (docs.length?'<div class="tblwrap"><table class="t"><thead><tr><th>Doctor</th><th>Office</th>'+(DOCPAYON()?'<th>Day rate <span class="small muted" style="font-weight:600;text-transform:none;letter-spacing:0">· only you see it</span></th>':'')+'<th></th></tr></thead><tbody>'+
         docs.map(d=>S.docGone[d.id]
-          ? '<tr class="gone"><td>'+esc(d.n)+'</td><td>'+esc(OFF[d.office].n)+' <span class="small muted">· taken off '+esc(fmt(S.docGone[d.id]))+'</span></td><td class="n"><button class="link small" data-act="backdoc" data-v="'+d.id+'">Bring back</button></td></tr>'
-          : '<tr><td><b>'+esc(d.n)+'</b></td><td>'+esc(OFF[d.office].n)+'</td><td class="n"><button class="link small" data-act="deldoc" data-v="'+d.id+'">Take off</button></td></tr>').join('')+'</tbody></table></div>'
+          ? '<tr class="gone"><td>'+esc(d.n)+'</td><td>'+esc(OFF[d.office].n)+' <span class="small muted">· taken off '+esc(fmt(S.docGone[d.id]))+'</span></td>'+(DOCPAYON()?'<td></td>':'')+'<td class="n"><button class="link small" data-act="backdoc" data-v="'+d.id+'">Bring back</button></td></tr>'
+          : '<tr><td><b>'+esc(d.n)+'</b></td><td>'+esc(OFF[d.office].n)+'</td>'+(DOCPAYON()?'<td>'+docRateCell(d)+'</td>':'')+'<td class="n"><button class="link small" data-act="deldoc" data-v="'+d.id+'">Take off</button></td></tr>').join('')+'</tbody></table></div>'
         :'<div class="small muted">None yet.</div>')+'</div>';
     return h+'</div>';
   }
@@ -1523,8 +1588,9 @@
           .concat(own.map(col=>col.hrs?(c.sick||''):(ownUsd(col,x,RATE)||'')), sp.map(col=>num(x['sc_'+col.id])||''), [c.extra||'', c.total, [x.notes||'', an ? '[Added to payroll: '+an+']' : '', spbHas(x) ? '[Special bonus '+money(num(x.spb))+(x.spbType?' - '+x.spbType:'')+': '+String(x.spbWhy||'').trim()+']' : '',
             en.parts.length>1 ? '[Hours added: '+en.parts.map(q=>OFF[q.k].n+' '+hrs(num(q.raw.w1)+num(q.raw.w2))+' h').join(' + ')+']' : '', r.ob && !r.here ? '[PP bonus on '+poss(OFF[r.ob.home].n)+' row]' : ''].filter(Boolean).join(' ')])); });
       sentKs.forEach(k=>{ const s=get(n,k), ds=docRows(n,k);
-        if(ds.length){ lines.push(['Doctor (paid by the day)'+(ks.length>1?' - '+OFF[k].n:''),'Days Wk 1','Days Wk 2','Total days']);
-          ds.forEach(d=>{ const v=(s.docs||{})[d.id]||{}; lines.push([d.n, daySet(v.w1)?num(v.w1):'', daySet(v.w2)?num(v.w2):'', num(v.w1)+num(v.w2)]); }); } });
+        if(ds.length){ lines.push(['Doctor (paid by the day)'+(ks.length>1?' - '+OFF[k].n:''),'Days Wk 1','Days Wk 2','Total days'].concat(DOCPAYON() ? ['Rate per day','Pay'] : []));
+          ds.forEach(d=>{ const v=(s.docs||{})[d.id]||{}, dp=DOCPAYON() ? docPay(n,d,v) : null;
+            lines.push([d.n, daySet(v.w1)?num(v.w1):'', daySet(v.w2)?num(v.w2):'', num(v.w1)+num(v.w2)].concat(dp ? [dp.rate!==null ? dp.rate : '', dp.pay!==null ? dp.pay : ''] : [])); }); } });
       lines.push([]); });
     // The BOM tells Excel it is UTF-8, so the dashes in the dates (and any accents in names) come out right
     const blob=new Blob(['\ufeff'+lines.map(l=>l.map(q).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'});
@@ -1558,6 +1624,13 @@
     const c=el('dt-'+d); if(c) c.innerHTML='<span class="tot">'+daysText(v)+'</span>';
     const k=el('checks'); if(k) k.innerHTML=checksHTML(per,o);
   }
+  /* Her own amount for a doctor this pay period (DOCPAY) - empty = days x the day rate. Her folder only. */
+  function onDocPay(t){
+    S.dpay=S.dpay||{}; const k=dpayKey(per, t.dataset.df), v=t.value==='' ? '' : num(t.value);
+    if(v==='') delete S.dpay[k]; else S.dpay[k]=v;
+    if(LIVEPAY) liveCols(per, t.dataset.o, t.dataset.df, 'dpay', v);
+    save();
+  }
   function onHeather(t){
     const s=mine(per,t.dataset.o), pid=t.dataset.p, x=s.rows[pid]=s.rows[pid]||blank();
     x[t.dataset.hf]=t.value===''?'':num(t.value);
@@ -1567,6 +1640,7 @@
   document.addEventListener('input', e=>{ const t=e.target; if(!t.dataset) return;
     if(t.id==='aa' || t.id==='awhat'){ paintAddPrev(); return; }
     if(t.dataset.d){ onDoc(t); return; }
+    if(t.dataset.df){ onDocPay(t); return; }
     if(t.dataset.hf){ onHeather(t); return; }
     if(t.dataset.sb){ if(t.value==='') delete S.bonus[t.dataset.sb]; else S.bonus[t.dataset.sb]=num(t.value);
       if(LIVEPAY){ const id=t.dataset.sb, v=S.bonus[id]; liveQueue('_h','settings', cur=>{ const x=cur||{v:1, bonus:{}}; x.bonus=x.bonus||{}; if(v===undefined) delete x.bonus[id]; else x.bonus[id]=v; return x; }); }
@@ -1657,6 +1731,16 @@
       const merged=[...new Set([].concat(...hit, [a, b]))];
       const out=cleanTogether(rest.concat([merged]))||[];
       togSave(out, out.find(g=>g.indexOf(a)>=0).map(k=>OFF[k].n).join(' + ')+' are entered together ✓');
+      return;
+    }
+    if(act==='docrate' && DOCPAYON() && holCan()){ docRateDlg(v); return; }
+    if(act==='docrateok' && DOCPAYON() && holCan()){
+      const raw=String((el('drv')||{}).value||'').trim(), amt=Number(raw), m=+((el('drf')||{}).value), d=everyDoc().find(x=>x.id===v);
+      const err=t=>{ const e=el('drerr'); if(e) e.textContent=t; };
+      if(!d) return;
+      if(raw==='' || !isFinite(amt) || amt<0 || amt>20000){ err('Type the amount paid per day worked.'); return; }
+      if(rateStarts().indexOf(m)<0){ err('Pick a pay period that hasn’t been entered yet.'); return; }
+      docRateSave(v, {from:P(m).start, amt:Math.round(amt*100)/100}, d.n+': '+(money(amt)||'$0')+' a day from pay period '+lab(m)+' ✓');
       return;
     }
     if(act==='rateedit' && rateCan()){ rateDlg(v); return; }
@@ -2120,7 +2204,10 @@
       const n=nOfKey(key.slice(5)); if(n===null) return; const c=cols[key]||{};
       Object.keys(c).forEach(k=>{ if(!OFF[k] || !c[k] || typeof c[k]!=='object') return;
         const sh=mine(n,k);
-        Object.keys(c[k]).forEach(pid=>{ const x=sh.rows[pid]=sh.rows[pid]||blank(); ['goal','tcom','extra'].forEach(f=>{ if(c[k][pid][f]!==undefined) x[f]=c[k][pid][f]; }); });
+        Object.keys(c[k]).forEach(pid=>{ const v=c[k][pid]||{};
+          if(v.dpay!==undefined && v.dpay!=='' ){ S.dpay=S.dpay||{}; S.dpay[dpayKey(n,pid)]=v.dpay; }       // a doctor's pay this pay period (DOCPAY)
+          if(Object.keys(v).every(f=>f==='dpay')) return;                                                 // only that: not a staff row
+          const x=sh.rows[pid]=sh.rows[pid]||blank(); ['goal','tcom','extra'].forEach(f=>{ if(v[f]!==undefined) x[f]=v[f]; }); });
       });
     });
   }
@@ -2160,7 +2247,7 @@
   }
   function liveLoadNow(lv){
     const offs=lv==='send' ? myOffices() : OFFICES.map(o=>o.k), people={}, docs=[];
-    S.subs={}; S.entered={}; S.entOff={}; S.removed={}; S.docGone={}; S.bonus={}; S.notPaid={}; S.added=[]; S.docAdd=[]; LIVECOLS={}; LIVE.old=null; LIVE.oldErr='';
+    S.subs={}; S.entered={}; S.entOff={}; S.removed={}; S.docGone={}; S.bonus={}; S.notPaid={}; S.dpay={}; S.docRate={}; S.added=[]; S.docAdd=[]; LIVECOLS={}; LIVE.old=null; LIVE.oldErr='';
     /* Nothing is read or written until the payroll folder is LOCKED: before that, everyone in Home-Brace could open it
        in SharePoint. Whoever manages payroll is told how; a sender only ever gets access after it's locked anyway. */
     /* The lock is checked AT THE SAME TIME as the folders (10/11/2026, speed). Only if it doesn't look locked is it
@@ -2201,6 +2288,7 @@
         st=st||{};
         S.bonus=st.bonus||{};
         S.notPaid=cleanNotPaid(st.notPaid);
+        S.docRate=cleanDocRate(st.docRate);     // each doctor's day rate (DOCPAY) - her folder only
         TOGETHER=cleanTogether(st.together);     // offices entered together (null = never set: Heather's ask)
         if(st.rates) RATE=Object.assign({}, RATE, st.rates);
         takeCols(cols, LIVE.unread);
@@ -2251,7 +2339,7 @@
 })();
 </script>
 <script>PH.nav('payroll');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc186"></script>
+<script src="tour.js?v=hc187"></script>
 <script>
 Tour.init([
   ...((window.PH && PH.isLive && PH.isLive()) || (()=>{ try{ return localStorage.getItem('ph_pay_real')==='1'; }catch(_){ return false; } })() ? [] : [{sel:'#persona', title:'A mock-up', body:'Made-up people and amounts. Start as the <b>Carlsbad TC</b>, who sends Carlsbad’s sheet, then switch to <b>Heather</b>.'}]),
