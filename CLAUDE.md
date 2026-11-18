@@ -402,6 +402,32 @@ I can confidently say that the chat feature should go next. The production thing
    Heather): rows highlighted; $500 from #22 -> "4 days x $500 a day = $2,000"; typed 1800 -> "pay $1,800 (typed in)",
    kept; bad amount refused; no page errors. NOTE: anyone with Payroll "See" also sees her side (like Goal/TC/OM).
    ON FOR LIVE hc188 (Cory 18/11: "doctors live"): DOCPAY_LIVE=true.
+27. **CHAT v2 (18/11/2026; hc190; SANDBOX ONLY until chat.html CHAT_V2_LIVE is true).** Cory: "it should be like slack
+   where microphone is below (don't add the code stuff, but basic bold and links and everything they have is well layed
+   out", "add an emoji to their message ... the message they sent and its under it", "Clicking on photo in chat that
+   brings up bigger view exactly like slack does". V2() = CHAT_V2_LIVE || not live || localStorage ph_chat_v2='1' (one
+   live device can try it first; live without it = v1 exactly, checked). MESSAGE BOX (composerHTML2): staged photo/video
+   on top; formatting bar B I U S | link, numbered, bullets | quote (no code) - Aa shows/hides it (ph_chat_fmt; default
+   on for wide screens, off on phones); a contenteditable box (#txt.ed, class "blank" when empty - NOT "empty", that's
+   the page's centred-message class); bottom row ＋ Aa emoji @ | record video, 🎤 talk to type (in the row, data-nomic on
+   the box) ... Send. Enter sends, Shift+Enter new line, Enter in a list = next point (Ctrl/Cmd+Enter sends); paste =
+   plain words (a pasted picture waits as before); a dropped file goes through the file picker; links must pass
+   CG._t.safeHref (https/http/mailto). @: the chat's people only (typing @ + letters narrows; Enter picks) -> <at id="n">
+   + Graph mentions[] (teamsBody renumbers; a mention without a real id becomes words). 16px on touch screens (rule
+   placed AFTER the 14.5px one). SHOWING: Teams HTML -> CG.cleanRich (b/i/u/s/a/ol/ul/li/blockquote/p/br, <at> -> <span
+   class="at">@; links https/http/mailto only, new tab) and cleaned AGAIN in realBody; span only class="at" survives.
+   REACTIONS: chips under the message (count, mine highlighted, names in the tooltip); tap = add/take back; ☺+ on hover
+   (desktop) or HOLD a message (phones, 450 ms: 👍 ❤️ 😆 😮 😢 🙏 + more + Copy text); only where CG.canSend (pilot lock,
+   inside CG.react too); 👍 etc. go as Teams' own names (like/heart/laugh/surprised/sad/angry), taking one back uses the
+   saved name (raw); optimistic, undone + toast on refusal; pollOpen compares reactions/words of shown messages (6 s
+   quiet after my own tap). PHOTO VIEWER (lbOpen): tap a photo -> full screen, sender + time + "n of N", ‹ › / arrows /
+   swipe, Esc / ✕ / tap outside, Open full size. test/chatv2.test.js (36). Browser: mock-up desktop + phone (bold, link,
+   emoji, @, lists, Aa, reactions, hold, viewer, no sideways scroll); live-mode harness with pretend Microsoft
+   (scratchpad chatv2-run.js + fakelive setReaction/unsetReaction/__react): formatted + mention sent right, script text
+   stays words, like/unset, Quinn's reactions appear and go, non-pilot chat locked. Bugs caught on the way: @ list
+   re-opened while the picked name went in (left "@G"); a blank reaction entry crashed reactionsOf; the second clean
+   dropped the @ highlight; the hint was centred (class clash); the phone 16px rule lost to the later 14.5px.
+   STILL QUEUED: a "chat alerts: Home-Brace / Teams" choice.
 26. **Add to payroll after "entered" (Heather 18/11: "Once I click on all payroll entered ... it takes away the ability for
    me to add a bonus to another payroll. I just had a team hit goal this afternoon"; hc189).** addsCard hid ＋ Add on an
    entered pay period although the dialog only ever offers pay periods still open (addPeriods). Now ＋ Add shows while

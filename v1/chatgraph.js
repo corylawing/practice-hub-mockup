@@ -179,7 +179,8 @@
     });
     return {id:m.id, at:Date.parse(m.createdDateTime)||0, fromId:fromU ? fromU.id : '', from:(fromU && fromU.displayName) || 'Someone',
       mine:!!(fromU && fromU.id===meId), deleted:!!m.deletedDateTime, edited:!!m.lastEditedDateTime,
-      text:m.deletedDateTime ? 'This message was deleted.' : p.text, images:m.deletedDateTime?[]:p.images, files:m.deletedDateTime?[]:files};
+      text:m.deletedDateTime ? 'This message was deleted.' : p.text, images:m.deletedDateTime?[]:p.images, files:m.deletedDateTime?[]:files,
+      rich:m.deletedDateTime ? '' : richOf(m.body), reactions:m.deletedDateTime ? [] : reactionsOf(m.reactions)};
   }
   /* A chat as the list needs it. Meeting chats and chats hidden in Teams are left out. */
   function mapChat(c, meId){
@@ -251,22 +252,88 @@
   /* ---------------- sending ---------------- */
   const escH=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const textHTML=t=>escH(String(t||'').trim()).replace(/\r?\n/g,'<br>');
+
+  /* ---------------- CHAT v2 (18/11/2026): formatting both ways, @mentions, reactions ----------------
+     Cory: "like slack ... basic bold and links and everything they have is well layed out (just don't need coding stuff)".
+     RICH TEXT, SAFELY: HTML (Teams', or the message box's) -> a small allowed set REBUILT FROM SCRATCH: only these tags,
+     no attribute but a checked link address (https/http/mailto), every bit of text escaped again, scripts/styles dropped
+     with what's in them, every tag closed. Pure string work - the page's HTML parser never sees Teams' own. */
+  const RICH_TAGS={b:'b', strong:'b', i:'i', em:'i', u:'u', s:'s', strike:'s', del:'s', ol:'ol', ul:'ul', li:'li', blockquote:'blockquote', p:'p', div:'p', br:'br', a:'a', at:'at', span:'span'};
+  function safeHref(h){ h=String(h||'').trim(); return /^(https?:\/\/|mailto:)[^\s"'<>]+$/i.test(h) ? h : ''; }
+  function cleanRich(html, out_){
+    const toTeams=out_==='teams';
+    let s=String(html==null?'':html)
+      .replace(/<(script|style|head|title|template|textarea|iframe|object)\b[\s\S]*?<\/\1\s*>/gi, '').replace(/<!--[\s\S]*?-->/g, '')
+      .replace(/<emoji\b[^>]*>[\s\S]*?<\/emoji>/gi, m=>escH(attr(m,'alt')))
+      .replace(/<img\b[^>]*>/gi, m=>(/emoji/i.test(m) ? escH(attr(m,'alt')) : ''))          // pictures are shown on their own
+      .replace(/<attachment\b[^>]*>[\s\S]*?<\/attachment>/gi, '');
+    let out='', stack=[];
+    const re=/<(\/?)([a-zA-Z][a-zA-Z0-9-]*)\b((?:[^>"']|"[^"]*"|'[^']*')*)>|([^<]+)|</g; let m;
+    while((m=re.exec(s))){
+      if(m[4]!==undefined){ out+=escH(decode(m[4])); continue; }
+      if(m[2]===undefined){ out+='&lt;'; continue; }
+      const closing=m[1]==='/', t=RICH_TAGS[m[2].toLowerCase()];
+      if(!t) continue;                                                       // any other tag: dropped, its words kept
+      if(t==='br'){ out+='<br>'; continue; }
+      if(closing){ const i=stack.lastIndexOf(t); if(i<0) continue; while(stack.length>i){ const x=stack.pop(); out+=x===''?'':(x==='at' ? (toTeams?'</at>':'</span>') : '</'+x+'>'); } continue; }
+      if(t==='a'){ const h=safeHref(attr(' '+m[3],'href')); if(!h){ stack.push(''); continue; }
+        out+='<a href="'+escH(h)+'"'+(toTeams ? '' : ' target="_blank" rel="noopener noreferrer"')+'>'; stack.push('a'); continue; }
+      if(t==='at'){ const id=String(attr(' '+m[3],'id')); if(toTeams && /^\d{1,3}$/.test(id)){ out+='<at id="'+id+'">'; } else out+=toTeams ? '' : '<span class="at">@'; stack.push(toTeams && /^\d{1,3}$/.test(id) ? 'at' : (toTeams ? '' : 'at')); continue; }
+      if(t==='span'){ const keep=!toTeams && String(attr(' '+m[3],'class'))==='at'; out+=keep ? '<span class="at">' : ''; stack.push(keep ? 'span' : ''); continue; }   // only our own @mention highlight
+      out+='<'+t+'>'; stack.push(t);
+    }
+    while(stack.length){ const x=stack.pop(); out+=x===''?'':(x==='at' ? (toTeams?'</at>':'</span>') : '</'+x+'>'); }
+    return out.replace(/(<p>\s*<\/p>)+$/,'').trim();
+  }
+  /* What a Teams message shows (its words, formatted) - '' when it has no formatting worth keeping (then the plain words). */
+  function richOf(body){
+    if(!body || lc(body.contentType)!=='html') return '';
+    const r=cleanRich(body.content);
+    return /<(b|i|u|s|a|ol|ul|blockquote|span)\b/.test(r) ? r : '';
+  }
+  /* Reactions: Teams' names for its classic six, or the emoji itself. [{emoji, userId, name}] */
+  const REACT_NAMES={like:'👍', heart:'❤️', laugh:'😆', surprised:'😮', sad:'😢', angry:'😡'};
+  function reactionsOf(list){
+    return (Array.isArray(list) ? list : []).map(r=>{ const t=String((r && r.reactionType)||''), u=(r && r.user && r.user.user) || {};
+      return {emoji:REACT_NAMES[t.toLowerCase()] || t, raw:t, userId:String(u.id||''), name:String((r && r.displayName)||u.displayName||'')}; }).filter(r=>r.emoji && r.emoji.length<=16);
+  }
+  /* The name Teams knows a reaction by: its classic six by their names (what the Teams app itself uses), any other emoji as itself. */
+  const REACT_TYPE={}; Object.keys(REACT_NAMES).forEach(k=>{ REACT_TYPE[REACT_NAMES[k]]=k; });
+  /* The message box's HTML -> Teams: mentions become <at id="n">, everything else the allowed set. mentions = [{id, name}]. */
+  function teamsBody(html, mentions){
+    const keep={}, list=[];
+    (mentions||[]).forEach((x,i)=>{ if(x && x.id && list.length<20){ keep[i]=list.length; list.push(x); } });
+    /* every <at id> matches one mention in the list (renumbered), or it's left as plain words - Teams refuses a mismatch */
+    const content=cleanRich(html, 'teams').replace(/<at id="(\d{1,3})">([\s\S]*?)<\/at>/g, (all, i, inner)=>keep[i]!=null ? '<at id="'+keep[i]+'">'+inner+'</at>' : inner);
+    return {content, mentions:list.map((x,i)=>({id:i, mentionText:String(x.name||'').slice(0,80),
+      mentioned:{user:{id:x.id, displayName:String(x.name||'').slice(0,80), userIdentityType:'aadUser'}}}))};
+  }
+  /* Add or take back MY reaction on a message (only where I may send - the pilot lock). */
+  async function react(chat, meId, msgId, emoji, on, raw){
+    allowed(chat, meId);
+    if(!msgId || !emoji) throw new Error('Nothing to react to.');
+    const type=String(raw || REACT_TYPE[emoji] || emoji);               // taking one back: the exact name it was saved under
+    return call('POST', '/chats/'+encodeURIComponent(chat.id)+'/messages/'+encodeURIComponent(msgId)+'/'+(on ? 'setReaction' : 'unsetReaction'), {reactionType:type});
+  }
   /* Every send checks the test lock itself, before anything leaves - not only the page's buttons. */
   function allowed(chat, meId){
     if(!chat || !chat.id) throw new Error('No chat picked.');
     if(!canSend(chat, meId)) throw new Error('Test: you can only send to your testers.');
   }
-  async function sendText(chat, meId, text){
+  async function sendText(chat, meId, text, rich){
     allowed(chat, meId);
+    if(rich && rich.html){ const tb=teamsBody(rich.html, rich.mentions);
+      return call('POST', '/chats/'+encodeURIComponent(chat.id)+'/messages', Object.assign({body:{contentType:'html', content:tb.content}}, tb.mentions.length ? {mentions:tb.mentions} : {})); }
     return call('POST', '/chats/'+encodeURIComponent(chat.id)+'/messages', {body:{contentType:'html', content:textHTML(text)}});
   }
   /* A photo inside the message. b64 = the JPEG's bytes as base64 (already resized - photo() below). */
-  async function sendPhoto(chat, meId, b64, w, h, text){
+  async function sendPhoto(chat, meId, b64, w, h, text, rich){
     allowed(chat, meId);
     const img='<img src="../hostedContents/1/$value" width="'+(w|0)+'" height="'+(h|0)+'" style="vertical-align:bottom; width:'+(w|0)+'px; height:'+(h|0)+'px">';
-    return call('POST', '/chats/'+encodeURIComponent(chat.id)+'/messages', {
-      body:{contentType:'html', content:(text?'<p>'+textHTML(text)+'</p>':'')+'<div><span>'+img+'</span></div>'},
-      hostedContents:[{'@microsoft.graph.temporaryId':'1', contentBytes:b64, contentType:'image/jpeg'}]});
+    const tb=rich && rich.html ? teamsBody(rich.html, rich.mentions) : null;
+    return call('POST', '/chats/'+encodeURIComponent(chat.id)+'/messages', Object.assign({
+      body:{contentType:'html', content:(tb ? tb.content : (text?'<p>'+textHTML(text)+'</p>':''))+'<div><span>'+img+'</span></div>'},
+      hostedContents:[{'@microsoft.graph.temporaryId':'1', contentBytes:b64, contentType:'image/jpeg'}]}, tb && tb.mentions.length ? {mentions:tb.mentions} : {}));
   }
   /* The GUID in a OneDrive file's eTag ("{GUID},n") - Teams uses it as the attachment's id. */
   function etagGuid(etag){ const m=/\{?([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\}?/i.exec(String(etag||'')); return m ? m[1].toLowerCase() : ''; }
@@ -306,20 +373,21 @@
     if(!recipients.length) return Promise.resolve({});
     return call('POST', '/me/drive/items/'+encodeURIComponent(itemId)+'/invite', {requireSignIn:true, sendInvitation:false, roles:['read'], recipients});
   }
-  async function sendFile(chatId, item, text){
+  async function sendFile(chatId, item, text, rich){
     const id=etagGuid(item.eTag);
     if(!id || !item.webUrl) throw new Error('The video uploaded, but Microsoft did not say where it is.');
-    return call('POST', '/chats/'+encodeURIComponent(chatId)+'/messages', {
-      body:{contentType:'html', content:(text?textHTML(text)+' ':'')+'<attachment id="'+id+'"></attachment>'},
-      attachments:[{id, contentType:'reference', contentUrl:item.webUrl, name:item.name}]});
+    const tb=rich && rich.html ? teamsBody(rich.html, rich.mentions) : null;
+    return call('POST', '/chats/'+encodeURIComponent(chatId)+'/messages', Object.assign({
+      body:{contentType:'html', content:(tb ? tb.content+' ' : (text?textHTML(text)+' ':''))+'<attachment id="'+id+'"></attachment>'},
+      attachments:[{id, contentType:'reference', contentUrl:item.webUrl, name:item.name}]}, tb && tb.mentions.length ? {mentions:tb.mentions} : {}));
   }
   /* The whole video send. chat = a mapChat() chat. Resolves {message, item, shared:true|false}. */
-  async function sendVideo(chat, meId, blob, name, onProgress, text){
+  async function sendVideo(chat, meId, blob, name, onProgress, text, rich){
     allowed(chat, meId);
     const item=await upload(blob, name, onProgress);
     let shared=true;
     try{ await share(item.id, (chat.people||[]).filter(p=>p.id!==meId)); }catch(_){ shared=false; }
-    const message=await sendFile(chat.id, item, text);
+    const message=await sendFile(chat.id, item, text, rich);
     return {message, item, shared};
   }
 
@@ -374,6 +442,6 @@
 
   global.PH_CHATG={CHAT_LIVE, CHAT_PILOT, CHAT_GUESTS, PILOT_KEY, pilotLive, pilotKnown, loadPilot, cleanPilot, guest, TEST, mode, setSwitch, switchedOn, signedIn, testers, setTesters, canSend, ask, token,
     listChats, listMessages, markRead, createChat, searchPeople, userByEmail,
-    sendText, sendPhoto, sendVideo, upload, share, sendFile, fileFor, picture, photo, callLink,
-    _t:{parts, decode, mapMessage, mapChat, etagGuid, shareId, safeName, textHTML, call, CHUNK, SMALL, MAX_VIDEO, FOLDER, TENANT}};
+    sendText, sendPhoto, sendVideo, upload, share, sendFile, fileFor, picture, photo, callLink, cleanRich, react, REACT_NAMES,
+    _t:{parts, decode, mapMessage, mapChat, etagGuid, shareId, safeName, textHTML, call, CHUNK, SMALL, MAX_VIDEO, FOLDER, TENANT, richOf, reactionsOf, teamsBody, safeHref}};
 })(window);

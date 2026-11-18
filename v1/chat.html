@@ -232,16 +232,77 @@
      then you can move side to side"). An iPhone/iPad zooms into any box whose text is under 16px and doesn't come back
      cleanly. At 16px it doesn't zoom at all - the message box and the searches, on any touch screen. */
   @media (max-width:760px), (pointer:coarse){
-    .composer textarea, .search{font-size:16px}
+    .composer textarea, .search, .composer .ed{font-size:16px}
   }
+  /* ---------- CHAT v2 (18/11/2026): the Slack-style message box, formatting, reactions, the photo viewer ---------- */
+  .composer.v2{display:block;padding:10px 12px}
+  .composer.v2 .staged{margin-bottom:8px}
+  .cbox{border:1px solid var(--line);border-radius:12px;background:#fff;overflow:hidden}
+  .cbox:focus-within{border-color:var(--teal2);box-shadow:0 0 0 3px var(--teal-wash,#eef8f7)}
+  .cbox .fmt{display:flex;align-items:center;gap:2px;padding:4px 6px;background:#F6F8FB;border-bottom:1px solid #EDF1F5;flex-wrap:wrap}
+  .cbox .cbar{display:flex;align-items:center;gap:2px;padding:4px 6px 6px}
+  .cbox button.tb{width:32px;height:32px;border-radius:8px;border:0;background:none;color:#4b5a6b;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font:inherit;font-size:15px;padding:0}
+  .cbox button.tb:hover{background:#EEF2F6;color:var(--navy)}
+  .cbox button.tb.on{background:var(--teal-wash,#e6f6f5);color:var(--teal-600)}
+  .cbox button.tb svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .cbox button.tb b,.cbox button.tb i,.cbox button.tb u,.cbox button.tb s{font-size:16px;font-family:Georgia,serif}
+  .cbox button.tb.mic.on{background:#d92d20;color:#fff}
+  .cbox .sep{width:1px;height:20px;background:#DCE3EA;margin:0 4px}
+  .cbox .grow{flex:1}
+  .cbox .sendb{height:34px;min-width:44px;padding:0 12px;border-radius:9px;border:0;background:var(--teal);color:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+  .cbox .sendb:hover{background:var(--teal-600)}
+  .cbox .sendb svg{width:18px;height:18px;fill:currentColor}
+  .composer .ed{min-height:40px;max-height:160px;overflow-y:auto;padding:10px 12px;font-size:14.5px;line-height:1.45;outline:none;color:var(--ink);word-wrap:break-word;overflow-wrap:anywhere;white-space:pre-wrap}
+  .composer .ed.blank:before{content:attr(data-ph);color:#98a3b3;pointer-events:none}
+  @media (max-width:760px), (pointer:coarse){ .composer .ed{font-size:16px} }      /* after the 14.5px above: an iPhone never zooms into it */
+  .ed p,.bub.rich p{margin:0}
+  .ed ul,.ed ol,.bub.rich ul,.bub.rich ol{margin:2px 0;padding-left:22px}
+  .ed blockquote,.bub.rich blockquote{margin:2px 0;padding:0 0 0 9px;border-left:3px solid #c9d3df;color:#4b5a6b}
+  .m.me .bub.rich blockquote{border-left-color:rgba(255,255,255,.6);color:#fff}
+  .bub.rich{white-space:normal}
+  .bub.rich a,.ed a{color:inherit;text-decoration:underline}
+  .ed .mention,.bub .at{background:var(--teal-soft);color:var(--teal-600);border-radius:4px;padding:0 3px;font-weight:600}
+  .m.me .bub .at{background:rgba(255,255,255,.25);color:#fff}
+  .pop{position:fixed;z-index:10000;background:#fff;border:1px solid #DCE3EC;border-radius:12px;box-shadow:0 14px 40px rgba(15,42,74,.18);padding:8px;max-width:calc(100vw - 16px)}
+  .pop .emg{display:grid;grid-template-columns:repeat(8,34px);gap:2px;max-height:240px;overflow-y:auto}
+  .pop .emg button{width:34px;height:34px;border:0;background:none;border-radius:8px;font-size:20px;cursor:pointer;padding:0}
+  .pop .emg button:hover{background:#EEF2F6}
+  .pop .ppl button{display:flex;align-items:center;gap:8px;width:100%;border:0;background:none;padding:7px 8px;border-radius:8px;font:inherit;font-size:14px;cursor:pointer;text-align:left;color:var(--ink)}
+  .pop .ppl button:hover{background:#EEF2F6}
+  .pop .quick{display:flex;gap:2px}
+  .pop .quick button{width:38px;height:38px;border:0;background:none;border-radius:10px;font-size:22px;cursor:pointer;padding:0}
+  .pop .quick button:hover{background:#EEF2F6}
+  .reacts{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+  .m.me .reacts{justify-content:flex-end}
+  .reacts .rc{display:inline-flex;align-items:center;gap:4px;border:1px solid #DCE3EA;background:#fff;border-radius:999px;padding:1px 8px;font:inherit;font-size:13px;cursor:pointer;color:#33475b;line-height:22px}
+  .reacts .rc.mine{border-color:var(--teal2);background:var(--teal-wash,#eef8f7);color:var(--teal-600);font-weight:700}
+  .m .col{position:relative}
+  .reacts:not(:has(.rc)){position:absolute;left:100%;bottom:16px;margin:0 0 0 6px}
+  .m.me .reacts:not(:has(.rc)){left:auto;right:100%;margin:0 6px 0 0}
+  .reacts .radd{display:inline-flex;align-items:center;gap:1px;border:1px solid #DCE3EA;background:#fff;border-radius:999px;padding:0 7px;height:24px;font:inherit;font-size:12px;font-weight:700;cursor:pointer;color:#7b8797;opacity:0;transition:opacity .12s}
+  .reacts .radd svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+  .m:hover .reacts .radd,.m:focus-within .reacts .radd,.reacts .radd:focus{opacity:1}
+  /* phones: hold a message to react (like WhatsApp); the ＋ only shows next to reactions already there */
+  @media (pointer:coarse){ .reacts .radd{display:none} .reacts .rc ~ .radd{display:inline-flex;opacity:1} body.v2 .m .bub{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none} }
+  .pop .copy{display:block;width:100%;margin-top:6px;border:0;border-top:1px solid #EDF1F5;background:none;padding:9px 6px 3px;font:inherit;font-size:14px;color:var(--ink);text-align:left;cursor:pointer}
+  .media img{cursor:zoom-in}
+  .lb{position:fixed;inset:0;z-index:10001;background:rgba(10,18,30,.92);display:flex;align-items:center;justify-content:center;touch-action:pan-y pinch-zoom}
+  .lb img{max-width:92vw;max-height:84vh;object-fit:contain;border-radius:6px;box-shadow:0 10px 40px rgba(0,0,0,.4);cursor:default}
+  .lb .lbtop{position:fixed;top:0;left:0;right:0;display:flex;align-items:center;gap:12px;padding:12px 14px calc(12px);color:#fff;font-size:14px;padding-top:calc(12px + env(safe-area-inset-top, 0px))}
+  .lb .lbtop .who{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .lb .lbtop .who small{color:#b8c4d3;margin-left:8px}
+  .lb .lbtop a,.lb .lbtop button{color:#fff;background:rgba(255,255,255,.12);border:0;border-radius:10px;padding:8px 12px;font:inherit;font-size:14px;cursor:pointer;text-decoration:none}
+  .lb .lbnav{position:fixed;top:50%;transform:translateY(-50%);width:46px;height:46px;border-radius:50%;border:0;background:rgba(255,255,255,.14);color:#fff;font-size:24px;cursor:pointer}
+  .lb .lbnav.p{left:14px}.lb .lbnav.n{right:14px}
+  .lb .lbnav[hidden]{display:none}
 </style>
-<script src="user.js?v=hc189"></script>
+<script src="user.js?v=hc190"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc189"></script>
-  <script src="gate.js?v=hc189"></script>
-  <script src="_staff.js?v=hc189"></script>
-  <script src="alerts.js?v=hc189"></script>
-  <script src="chatgraph.js?v=hc189"></script>
+  <script src="store.js?v=hc190"></script>
+  <script src="gate.js?v=hc190"></script>
+  <script src="_staff.js?v=hc190"></script>
+  <script src="alerts.js?v=hc190"></script>
+  <script src="chatgraph.js?v=hc190"></script>
 </head>
 <body>
 <div class="ribbon" id="ribbon">MOCK-UP for Heather and Dr. Jae — made-up people, messages and videos. Nothing is sent anywhere.</div>
@@ -327,6 +388,9 @@
       {from:ME, at:ago(4500), text:'Can you cover Clovis on Thursday?'},
       {from:'Quinn Quill', at:ago(4480), text:'Yes, I’ve got it.'}]}
   ];
+  CHATS.forEach(c=>c.msgs.forEach((m,i)=>{ m.id=c.id+'-'+i; }));
+  CHATS[0].msgs[5].reactions=[{emoji:'👍', userId:'qq', name:'Quinn Quill'}, {emoji:'👍', userId:'ae', name:'Avery Brooks'}, {emoji:'🙏', userId:'je', name:'Jordan Ellis'}];
+  CHATS[1].msgs[2].reactions=[{emoji:'❤️', userId:'me', name:'You'}];
   /* The header's chat button shows the same unread count, kept for this browser tab (user.js chatBadge). */
   try{ const s=sessionStorage.getItem('ph_chat_unread'); if(s){ const m=JSON.parse(s)||{}; CHATS.forEach(c=>{ c.unread=Number(m[c.id])||0; }); } }catch(_){}
   function saveUnread(){
@@ -433,18 +497,20 @@
     } else if(m.photo){
       body=(m.text?'<div class="bub">'+esc(m.text)+'</div>':'')+'<div class="media wide"><img src="'+esc(m.photo)+'"'+(m.w?' width="'+m.w+'" height="'+m.h+'"':'')+' alt="A photo from '+esc(m.from)+'"></div>';
     } else body='<div class="bub">'+esc(m.text)+'</div>';
+    if(!REALCHAT && m.richHtml && V2()) body=body.replace(/^<div class="bub">[\s\S]*?<\/div>/, '<div class="bub rich">'+m.richHtml+'</div>');
     const meta=m.failed ? '<div class="meta bad">Not sent - '+esc(m.failed)+'</div>'
       : m.pending ? '<div class="meta">'+esc(m.progress!=null ? 'Uploading… '+Math.round(m.progress*100)+'%' : 'Sending…')+'</div>'
       : '<div class="meta">'+esc(clock(m.at))+(!REALCHAT && mine && m.seen!==false ? ' · Seen' : '')+(m.edited ? ' · Edited' : '')+'</div>';
     return '<div class="m'+(mine?' me':'')+'" data-mid="'+esc(m.id||'')+'">'+(group && !mine ? (showFrom ? personAv(m.from, m.fromEmail) : '<span style="width:30px;flex:none"></span>') : '')+
-      '<div class="col">'+(showFrom?'<div class="from">'+esc(m.from)+'</div>':'')+body+meta+'</div></div>';
+      '<div class="col">'+(showFrom?'<div class="from">'+esc(m.from)+'</div>':'')+body+reactsHTML(m)+meta+'</div></div>';
   }
   /* A real message: its words (plain text - Teams' HTML never goes into the page), pictures, videos and files.
      Pictures and videos are filled in a moment later (hydrate), with the sign-in. Only https addresses are used. */
   const httpsOnly=u=>/^https:\/\//i.test(String(u||''));
   function realBody(m){
     let h='';
-    if(m.text) h+='<div class="bub">'+esc(m.text)+'</div>';
+    if(m.rich && V2() && CG) h+='<div class="bub rich">'+CG.cleanRich(m.rich)+'</div>';      // cleaned again here: only the safe set ever reaches the page
+    else if(m.text) h+='<div class="bub">'+esc(m.text)+'</div>';
     if(m.localImg) h+='<div class="media wide"><img src="'+esc(m.localImg)+'" alt="Your photo"></div>';
     else (m.images||[]).forEach(u=>{ if(httpsOnly(u)) h+='<div class="media wide"><img data-hc="'+esc(u)+'" alt="A photo from '+esc(m.from)+'"></div>'; });
     if(m.localVideo) h+='<div class="media"><video src="'+esc(m.localVideo)+'" preload="metadata" playsinline></video><button class="play" data-act="play" aria-label="Play the video">▶</button><span class="dur">🎥 Video</span></div>';
@@ -477,7 +543,173 @@
      and one Send sends both together, as one message (Cory 18/11: "like in slack you can add the photo and put text
      under it before you send"). One waiting attachment per chat; × takes it off. */
   const STAGED={};
+  /* CHAT v2 (18/11/2026) - the Slack-style message box, formatting, @mentions, reactions, the photo viewer. Cory: "it
+     should be like slack where microphone is below (don't add the code stuff, but basic bold and links and everything they
+     have is well layed out", "add an emoji to their message ... the message they sent and its under it", "Clicking on
+     photo in chat that brings up bigger view exactly like slack does". SANDBOX ONLY until CHAT_V2_LIVE is true; on the
+     live site one device can try it first (localStorage ph_chat_v2 = '1'). */
+  const CHAT_V2_LIVE=false;
+  const V2=()=>{ if(CHAT_V2_LIVE || !ONLIVE) return true; try{ return localStorage.getItem('ph_chat_v2')==='1'; }catch(_){ return false; } };
+  const SR=window.SpeechRecognition || window.webkitSpeechRecognition || null;
+  const FMT_KEY='ph_chat_fmt';
+  const fmtOn=()=>{ try{ const v=localStorage.getItem(FMT_KEY); return v===null ? window.matchMedia('(min-width:761px)').matches : v==='1'; }catch(_){ return true; } };
+  const SVG=p=>'<svg viewBox="0 0 24 24" aria-hidden="true">'+p+'</svg>';
+  const ICO={link:SVG('<path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1 1"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1-1"/>'),
+    ol:SVG('<path d="M10 6h10M10 12h10M10 18h10"/><path d="M4 5h1.5v4M4 9h3M4 14.5c.4-.6 1-1 1.7-1 .8 0 1.3.5 1.3 1.1 0 1.2-3 1.8-3 3.4h3"/>'),
+    ul:SVG('<path d="M10 6h10M10 12h10M10 18h10"/><circle cx="5" cy="6" r="1.2"/><circle cx="5" cy="12" r="1.2"/><circle cx="5" cy="18" r="1.2"/>'),
+    quote:SVG('<path d="M5 5v14"/><path d="M10 7h9M10 12h9M10 17h6"/>'),
+    plus:SVG('<path d="M12 5v14M5 12h14"/>'), smile:SVG('<circle cx="12" cy="12" r="9"/><path d="M8.5 14.5a4.5 4.5 0 0 0 7 0"/><path d="M9 9.5h.01M15 9.5h.01"/>'),
+    video:SVG('<rect x="2.5" y="6" width="13" height="12" rx="2.5"/><path d="M15.5 10.5l6-3.5v10l-6-3.5z"/>'),
+    mic:SVG('<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>'),
+    send:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.4 20.4L21 12 3.4 3.6 3.3 10.2 15 12 3.3 13.8z"/></svg>'};
+  const tb=(act, v, label, inner, on, cls)=>'<button type="button" class="tb'+(on?' on':'')+(cls?' '+cls:'')+'" data-act="'+act+'"'+(v?' data-v="'+v+'"':'')+' title="'+esc(label)+'" aria-label="'+esc(label)+'"'+(on!==undefined && on!==null && act==='fmt'?' aria-pressed="'+(on?'true':'false')+'"':'')+'>'+inner+'</button>';
+  function stagedHTML(st){
+    return st ? '<div class="staged"><div class="thumb">'+(st.photo ? '<img src="'+esc(st.photo)+'" alt="The photo you’re sending">' : '<video src="'+esc(st.video)+'" muted playsinline preload="metadata"></video><span class="kind">🎥 Video</span>')+
+      '<button class="x" data-act="unstage" aria-label="Don’t send this '+(st.photo?'photo':'video')+'" title="Remove">×</button></div>'+
+      '<div class="hint">Add a message if you like, then press <b>Send</b> - they go together.</div></div>' : '';
+  }
+  function composerHTML2(c){
+    const st=STAGED[c.id], ph=st ? 'Add a message…' : 'Message '+c.name+'…';
+    return '<div class="composer v2">'+stagedHTML(st)+'<div class="cbox">'+
+      (fmtOn() ? '<div class="fmt" role="toolbar" aria-label="Formatting">'+
+        tb('cmd','bold','Bold','<b>B</b>')+tb('cmd','italic','Italic','<i>I</i>')+tb('cmd','underline','Underline','<u>U</u>')+tb('cmd','strikeThrough','Strikethrough','<s>S</s>')+'<span class="sep"></span>'+
+        tb('link','','Link',ICO.link)+tb('cmd','insertOrderedList','Numbered list',ICO.ol)+tb('cmd','insertUnorderedList','Bulleted list',ICO.ul)+'<span class="sep"></span>'+tb('quote','','Quote',ICO.quote)+'</div>' : '')+
+      '<div id="txt" class="ed blank" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Message" data-ph="'+esc(ph)+'" data-nomic spellcheck="true"></div>'+
+      '<div class="cbar">'+tb('attach','','Add a photo or video',ICO.plus)+tb('fmt','','Formatting','<span style="text-decoration:underline;font-weight:600">Aa</span>',fmtOn())+
+        tb('emoji','','Emoji',ICO.smile)+tb('mention','','Mention someone','<span style="font-size:17px;font-weight:600">@</span>')+'<span class="sep"></span>'+
+        tb('record','','Record a video',ICO.video)+(SR ? tb('mic','','Talk to type',ICO.mic,!!micRec,'mic') : '')+
+        '<span class="grow"></span><button type="button" class="sendb" data-act="send" title="Send (Enter) · new line: Shift+Enter" aria-label="Send">'+ICO.send+'</button></div>'+
+      '</div></div>';
+  }
+  /* The message box's contents: {text, html, mentions} - mentions become <at id="n">Name</at> for Teams. */
+  const isEd=t=>!!(t && t.isContentEditable);
+  function edGet(t){
+    if(!isEd(t)) return {text:String((t && t.value)||'').trim()};
+    const clone=t.cloneNode(true), mentions=[];
+    clone.querySelectorAll('.mention').forEach(sp=>{ const i=mentions.length; mentions.push({id:sp.dataset.uid||'', name:sp.dataset.name||''});
+      const at=document.createElement('at'); at.setAttribute('id', String(i)); at.textContent=sp.dataset.name||''; sp.replaceWith(at); });
+    const text=String(t.innerText||'').replace(/ /g,' ').trim();
+    return {text, html:text || mentions.length ? clone.innerHTML : '', mentions};
+  }
+  function edClear(t){ if(isEd(t)){ t.innerHTML=''; t.classList.add('blank'); } else if(t){ t.value=''; t.style.height='auto'; } }
+  function edEmptyMark(t){ if(isEd(t)) t.classList.toggle('blank', !String(t.innerText||'').replace(/ /g,' ').trim() && !t.querySelector('.mention,li,blockquote')); }
+  let edRange=null;
+  function edSave(){ const t=el('txt'), s=window.getSelection(); if(t && isEd(t) && s.rangeCount && t.contains(s.getRangeAt(0).commonAncestorContainer)) edRange=s.getRangeAt(0).cloneRange(); }
+  function edRestore(){ const t=el('txt'); if(!t) return; t.focus(); if(edRange && t.contains(edRange.commonAncestorContainer)){ const s=window.getSelection(); s.removeAllRanges(); s.addRange(edRange); } }
+  function edInsertText(txt){ edRestore(); document.execCommand('insertText', false, txt); edEmptyMark(el('txt')); edSave(); }
+  /* a small pop-up by a button (emoji, @mention, reactions) */
+  let popEl=null;
+  function popClose(){ if(popEl){ popEl.remove(); popEl=null; } }
+  function popOpen(anchor, html){
+    popClose(); const p=document.createElement('div'); p.className='pop'; p.innerHTML=html; document.body.appendChild(p); popEl=p; p._a=anchor;
+    popPlace(); return p;
+  }
+  /* emoji and @ lists sit just above the whole message box (never over what's being typed), lined up with their button */
+  const boxAnchor=b=>({getBoundingClientRect(){ const r=b.getBoundingClientRect(), c=((b.closest && b.closest('.cbox')) || document.querySelector('.cbox') || b).getBoundingClientRect(); return {left:r.left, right:r.right, top:c.top, bottom:c.bottom}; }});
+  function popPlace(){
+    const p=popEl; if(!p) return; const r=p._a.getBoundingClientRect(), w=p.offsetWidth, h=p.offsetHeight;
+    let left=Math.max(8, Math.min(r.left, window.innerWidth-w-8)), top=r.top-h-8; if(top<8) top=Math.min(window.innerHeight-h-8, r.bottom+8);
+    p.style.left=left+'px'; p.style.top=Math.max(8, top)+'px';
+  }
+  const EMOJI='😀 😃 😄 😁 😆 😅 😂 🙂 😉 😊 😍 🥰 😘 😎 🤩 🥳 🤔 😐 😴 😮 😢 😭 😡 🙄 😬 😷 🤒 👍 👎 👏 🙌 🙏 💪 👋 🤝 👌 ✌️ 🤞 👀 ❤️ 💙 💚 💛 🧡 💜 💯 🔥 ⭐ ✨ 🎉 🎂 🎁 ✅ ❌ ⚠️ ❓ 📅 ⏰ 📞 📷 🎥 📎 🦷 😁 🪥 💰 ☕ 🍕 🌮 🌵 ☀️ 🌧️ 🏠 🚗'.split(' ').filter((x,i,a)=>x && a.indexOf(x)===i);
+  const QUICK=['👍','❤️','😆','😮','😢','🙏'];
+  const emojiGrid=act=>'<div class="emg">'+EMOJI.map(e=>'<button type="button" data-act="'+act+'" data-v="'+e+'" aria-label="'+e+'">'+e+'</button>').join('')+'</div>';
+  /* TALK TO TYPE - the 🎤 in the bottom row (Cory: "microphone is below"), into the message box where the cursor is. */
+  let micRec=null;
+  function micToggle(){
+    if(micRec){ try{ micRec.stop(); }catch(_){} return; }
+    const t=el('txt'); if(!t || !SR) return;
+    let r; try{ r=new SR(); }catch(_){ toast('Talk to type isn’t available in this browser.'); return; }
+    r.lang=navigator.language||'en-US'; r.continuous=true; r.interimResults=false;
+    r.onresult=e=>{ for(let i=e.resultIndex;i<e.results.length;i++){ if(!e.results[i].isFinal) continue; let said=e.results[i][0].transcript.trim(); if(!said) continue;
+      const before=String(t.innerText||''); if(before && !/\s$/.test(before)) said=' '+said; edInsertText(said); } };
+    r.onerror=e=>{ const er=e && e.error; if(er==='not-allowed' || er==='service-not-allowed') toast('The microphone is blocked for Home-Brace - allow it in the browser’s settings for this site.'); };
+    r.onend=()=>{ if(micRec===r){ micRec=null; const b=document.querySelector('.cbox .tb.mic'); if(b) b.classList.remove('on'); } };
+    micRec=r; edRestore();
+    try{ r.start(); const b=document.querySelector('.cbox .tb.mic'); if(b) b.classList.add('on'); }catch(_){ micRec=null; }
+  }
+  function linkDlg(){
+    edSave(); const sel=window.getSelection(), has=!!(edRange && !edRange.collapsed);
+    openDlg(top('Add a link')+'<div class="dm-body">'+(has?'':'<label class="lab2">Text<input class="search" id="lktx" placeholder="What it says" autocomplete="off"></label>')+
+      '<label class="lab2">Link<input class="search" id="lkurl" placeholder="https://…" autocomplete="off" inputmode="url"></label><div id="lkerr" class="small" style="color:#b42318;font-weight:700;margin-top:6px"></div></div>'+
+      '<div class="dm-foot"><button class="btn ghost" data-act="close">Cancel</button><button class="btn" data-act="linkok">Add link</button></div>');
+    const fo=()=>{ const f=el(has?'lkurl':'lktx'); if(f && document.activeElement!==f && !(document.activeElement && document.activeElement.closest && document.activeElement.closest('#dlg'))) f.focus(); };
+    fo(); setTimeout(fo, 30);
+  }
+  function linkOk(){
+    let u=String((el('lkurl')||{}).value||'').trim(); const tx=String((el('lktx')||{}).value||'').trim();
+    if(u && !/^[a-z]+:/i.test(u)) u=(/^[^\s@]+@[^\s@]+$/.test(u) ? 'mailto:' : 'https://')+u;
+    if(!CG || !CG._t.safeHref(u)){ const e=el('lkerr'); if(e) e.textContent='That doesn’t look like a web address.'; return; }
+    closeDlg(); edRestore();
+    if(edRange && !edRange.collapsed) document.execCommand('createLink', false, u);
+    else document.execCommand('insertHTML', false, '<a href="'+esc(u)+'">'+esc(tx||u)+'</a>&nbsp;');
+    edEmptyMark(el('txt')); edSave();
+  }
+  function quoteToggle(){
+    edRestore(); const s=window.getSelection(); let n=s.rangeCount ? s.getRangeAt(0).startContainer : null, inQ=false;
+    while(n && n!==el('txt')){ if(n.nodeName==='BLOCKQUOTE'){ inQ=true; break; } n=n.parentNode; }
+    document.execCommand('formatBlock', false, inQ ? '<div>' : '<blockquote>'); edEmptyMark(el('txt')); edSave();
+  }
+  function mentionPop(anchor, typedAt){
+    const c=cur(); if(!c) return;
+    const people=(REALCHAT ? (c.people||[]).filter(p=>p.id!==MEID).map(p=>({id:p.id, name:p.name})) : (c.members||[]).filter(n=>n!==ME).map(n=>({id:'', name:n})));
+    if(!people.length){ toast('Nobody else in this chat to mention.'); return; }
+    mentionTyped=typedAt ? 1 : 0;
+    popOpen(anchor, '<div class="ppl">'+people.map(p=>'<button type="button" data-act="mentionpick" data-uid="'+esc(p.id)+'" data-name="'+esc(p.name)+'">'+personAv(p.name, '')+'<span>'+esc(p.name)+'</span></button>').join('')+'</div>');
+  }
+  let mentionTyped=0, edBusy=false;
+  function mentionPick(uid, name){
+    popClose(); edRestore();
+    const n=mentionTyped; mentionTyped=0; edBusy=true;                   // our own edits don't re-open the list
+    try{
+      for(let k=0;k<n;k++) document.execCommand('delete', false);          // the @ and the letters they typed
+      document.execCommand('insertHTML', false, '<span class="mention" contenteditable="false" data-uid="'+esc(uid)+'" data-name="'+esc(name)+'">@'+esc(name)+'</span>&nbsp;');
+    } finally { edBusy=false; }
+    edEmptyMark(el('txt')); edSave();
+  }
+  /* REACTIONS under a message (Cory: "add an emoji to their message ... not another message ... its under it"). */
+  function reactsHTML(m){
+    const list=m.reactions||[], c=cur(); if(!V2() || m.pending || m.failed || m.deleted || !m.id || /^local-/.test(String(m.id))) return '';
+    const can=!REALCHAT || (c && CG.canSend(c, MEID)), by={};
+    list.forEach(r=>{ (by[r.emoji]=by[r.emoji]||[]).push(r); });
+    const chips=Object.keys(by).map(e=>{ const rs=by[e], mine=rs.some(r=>r.userId===(REALCHAT?MEID:'me'));
+      return '<button type="button" class="rc'+(mine?' mine':'')+'"'+(can?' data-act="react" data-v="'+esc(e)+'" data-m="'+esc(m.id)+'"':' disabled')+' title="'+esc(rs.map(r=>r.name||'Someone').join(', '))+'">'+e+' <span>'+rs.length+'</span></button>'; }).join('');
+    if(!chips && !can) return '';
+    return '<div class="reacts">'+chips+(can?'<button type="button" class="radd" data-act="reactadd" data-m="'+esc(m.id)+'" title="Add a reaction" aria-label="Add a reaction">'+ICO.smile+'+</button>':'')+'</div>';
+  }
+  async function reactToggle(msgId, emoji, onOnly){
+    const c=cur(); if(!c) return; const m=c.msgs.find(x=>String(x.id)===String(msgId)); if(!m) return;
+    const me=REALCHAT ? MEID : 'me', mineR=(m.reactions||[]).find(r=>r.emoji===emoji && r.userId===me), had=!!mineR, on=onOnly ? true : !had;
+    if(on && had) return;
+    const before=(m.reactions||[]).slice(); m._rb=Date.now();
+    m.reactions=on ? before.concat([{emoji, userId:me, name:'You'}]) : before.filter(r=>!(r.emoji===emoji && r.userId===me));
+    const i=c.msgs.indexOf(m); replaceEl(c, m.id, m, c.msgs[i-1]);
+    if(!REALCHAT) return;
+    try{ await CG.react(c, MEID, m.id, emoji, on, on ? '' : (mineR && mineR.raw) || ''); m._rb=Date.now(); }
+    catch(e){ m._rb=0; m.reactions=before; const j=c.msgs.indexOf(m); replaceEl(c, m.id, m, c.msgs[j-1]); toast('Not saved: '+((e && e.message)||'Microsoft didn’t answer')); }
+  }
+  /* THE PHOTO VIEWER (Cory: "Clicking on photo in chat that brings up bigger view exactly like slack does"):
+     full screen, who sent it and when, ← → (and swipe) between the chat's photos, Esc or × to close. */
+  let lb=null;
+  function lbOpen(img){
+    const list=[...el('msgs').querySelectorAll('.media img[src]')].filter(x=>x.src); let i=Math.max(0, list.indexOf(img));
+    lbClose(); lb=document.createElement('div'); lb.className='lb'; lb.setAttribute('role','dialog'); lb.setAttribute('aria-label','Photo');
+    const paint=()=>{ const x=list[i], mEl=x.closest('[data-mid]'), c=cur(), m=c && mEl ? c.msgs.find(z=>String(z.id)===mEl.dataset.mid) : null;
+      lb.innerHTML='<div class="lbtop"><span class="who">'+esc(m ? (mineOf(m)?'You':m.from) : '')+'<small>'+esc(m ? dayLabel(m.at)+' · '+clock(m.at) : '')+(list.length>1?' · '+(i+1)+' of '+list.length:'')+'</small></span>'+
+        '<a href="'+esc(x.src)+'" target="_blank" rel="noopener">Open full size</a><button type="button" data-lb="x" aria-label="Close">✕</button></div>'+
+        '<button type="button" class="lbnav p" data-lb="p" aria-label="Previous photo"'+(i>0?'':' hidden')+'>‹</button><img src="'+esc(x.src)+'" alt="'+esc(x.alt||'Photo')+'">'+
+        '<button type="button" class="lbnav n" data-lb="n" aria-label="Next photo"'+(i<list.length-1?'':' hidden')+'>›</button>'; };
+    const go=d=>{ const j=i+d; if(j<0 || j>=list.length) return; i=j; paint(); };
+    paint(); document.body.appendChild(lb);
+    lb.addEventListener('click', e=>{ const b=e.target.closest('[data-lb]'); if(b){ e.preventDefault(); if(b.dataset.lb==='x') lbClose(); else go(b.dataset.lb==='n'?1:-1); return; } if(e.target===lb) lbClose(); });
+    let sx=null; lb.addEventListener('touchstart', e=>{ sx=e.touches.length===1 ? e.touches[0].clientX : null; }, {passive:true});
+    lb.addEventListener('touchend', e=>{ if(sx==null) return; const dx=e.changedTouches[0].clientX-sx; sx=null; if(Math.abs(dx)>50) go(dx<0?1:-1); }, {passive:true});
+    lb._key=e=>{ if(e.key==='Escape') lbClose(); else if(e.key==='ArrowRight') go(1); else if(e.key==='ArrowLeft') go(-1); };
+    document.addEventListener('keydown', lb._key);
+  }
+  function lbClose(){ if(!lb) return; document.removeEventListener('keydown', lb._key); lb.remove(); lb=null; }
   function composerHTML(c){
+    if(V2()) return composerHTML2(c);
     const st=STAGED[c.id];
     return '<div class="composer">'+
       (st ? '<div class="staged"><div class="thumb">'+(st.photo ? '<img src="'+esc(st.photo)+'" alt="The photo you’re sending">' : '<video src="'+esc(st.video)+'" muted playsinline preload="metadata"></video><span class="kind">🎥 Video</span>')+
@@ -491,9 +723,11 @@
   /* Redraw only the message box, keeping what's typed in it. */
   function paintComposer(focus){
     const c=cur(), box=el('conv') && el('conv').querySelector('.composer'); if(!c || !box) return;
-    const t=el('txt'), v=t ? t.value : '';
+    const t=el('txt'), v=t ? (isEd(t) ? t.innerHTML : t.value) : '';
     box.outerHTML=composerHTML(c);
-    const t2=el('txt'); if(t2){ t2.value=v; t2.style.height='auto'; t2.style.height=Math.min(120,t2.scrollHeight)+'px'; if(focus) t2.focus(); }
+    const t2=el('txt'); if(t2){ if(isEd(t2)){ if(t && isEd(t)) t2.innerHTML=v; else if(v) t2.textContent=v; edEmptyMark(t2); }
+      else { t2.value=t && isEd(t) ? String(t.innerText||'') : v; t2.style.height='auto'; t2.style.height=Math.min(120,t2.scrollHeight)+'px'; }
+      if(focus){ t2.focus(); if(isEd(t2)){ const r=document.createRange(); r.selectNodeContents(t2); r.collapse(false); const sl=window.getSelection(); sl.removeAllRanges(); sl.addRange(r); } } }
   }
   function stage(m){
     const c=cur(); if(!c){ toast('Open a chat first.'); return; }
@@ -503,11 +737,11 @@
   /* Send what's typed, with the waiting photo/video if there is one. */
   function sendNow(){
     const c=cur(), t=el('txt'); if(!c || !t) return;
-    const text=(t.value||'').trim(), st=STAGED[c.id];
-    if(!text && !st) return;
-    t.value=''; t.style.height='auto';
-    if(st){ delete STAGED[c.id]; paintComposer(true); send(Object.assign({}, st, {text})); }
-    else send({text});
+    const v=edGet(t), text=v.text, st=STAGED[c.id], rich=v.html ? {html:v.html, mentions:v.mentions||[]} : null;
+    if(!text && !st && !(rich && rich.mentions.length)) return;
+    edClear(t); popClose();
+    if(st){ delete STAGED[c.id]; paintComposer(true); send(Object.assign({}, st, {text, rich})); }
+    else send({text, rich});
   }
   function afterConv(c, box){
     const ms=el('msgs');
@@ -545,12 +779,15 @@
   function send(m){
     if(REALCHAT) return sendReal(m);
     const c=CHATS.find(x=>x.id===open); if(!c) return;
-    addMsg(c, Object.assign({from:ME, at:Date.now()}, m));
+    const mm=Object.assign({from:ME, at:Date.now(), id:'d'+Date.now()}, m);
+    if(m.rich && m.rich.html && CG) mm.richHtml=CG.cleanRich(m.rich.html.replace(/<at id="\d+">/g,'<at>'));
+    delete mm.rich;
+    addMsg(c, mm);
     const others=c.members.filter(n=>n!==ME); if(!others.length) return;
     const who=others[Math.floor(Math.random()*others.length)];
     // the reply comes straight back (Cory, 22/10: "make the sandbox one instant too")
     setTimeout(()=>{
-      const r={from:who, at:Date.now(), text:REPLIES[Math.floor(Math.random()*REPLIES.length)]};
+      const r={from:who, at:Date.now(), id:'d'+Date.now()+'r', text:REPLIES[Math.floor(Math.random()*REPLIES.length)]};
       addMsg(c, r);
       if(alertsOn) notify(c, r);
     }, 500);
@@ -805,6 +1042,9 @@
       if(open!==c.id || c.msgs.some(m=>m.pending)) return;
       const have={}; c.msgs.forEach(m=>{ if(m.id) have[m.id]=1; });
       const fresh=r.msgs.filter(m=>!have[m.id]).map(m=>dress(m,c));
+      const rk=x=>(x.reactions||[]).map(q=>q.emoji+'|'+q.userId).sort().join(',');
+      r.msgs.forEach(n=>{ if(!have[n.id]) return; const i=c.msgs.findIndex(x=>x.id===n.id), o=c.msgs[i];
+        if(o && !o.pending && !(o._rb && Date.now()-o._rb<6000) && (rk(o)!==rk(n) || (o.rich||'')!==(n.rich||'') || o.text!==n.text)){ o.reactions=n.reactions; o.rich=n.rich; o.text=n.text; o.edited=n.edited; replaceEl(c, o.id, o, c.msgs[i-1]); } });
       if(fresh.length){
         const prev=c.msgs[c.msgs.length-1]; c.msgs=c.msgs.concat(fresh); appendConv(c, fresh, prev);
         if(fresh.some(m=>!m.mine)) readIt(c, true);
@@ -858,15 +1098,16 @@
     const c=cur(); if(!c) return;
     if(!CG.canSend(c, MEID)){ toast(ONLIVE ? 'Pilot: you can only send to the pilot group for now.' : 'Test: you can only send to your testers.'); return; }
     const kind=m.blob ? 'video' : m.b64 ? 'photo' : 'text';
-    const local={id:'local-'+Date.now(), at:Date.now(), from:ME, mine:true, pending:true, text:m.text||'', images:[], files:[],
+    const rich=m.rich && m.rich.html ? m.rich : null;
+    const local={id:'local-'+Date.now(), at:Date.now(), from:ME, mine:true, pending:true, text:m.text||'', images:[], files:[], rich:rich ? CG.cleanRich(rich.html) : '', reactions:[],
       localImg:kind==='photo' ? m.photo : '', localVideo:kind==='video' ? m.video : '', progress:kind==='video' ? 0 : null};
     const prev=c.msgs[c.msgs.length-1]; c.msgs.push(local); c.loaded=true; appendConv(c, [local], prev); renderList();
     try{
       let res, warn='';
-      if(kind==='text') res=await CG.sendText(c, MEID, m.text);
-      else if(kind==='photo') res=await CG.sendPhoto(c, MEID, m.b64, m.w, m.h, m.text||'');
+      if(kind==='text') res=await CG.sendText(c, MEID, m.text, rich);
+      else if(kind==='photo') res=await CG.sendPhoto(c, MEID, m.b64, m.w, m.h, m.text||'', rich);
       else {
-        const r=await CG.sendVideo(c, MEID, m.blob, m.name, f=>{ local.progress=f; const x=msgEl(local.id), mt=x && x.querySelector('.meta'); if(mt) mt.textContent='Uploading… '+Math.round(f*100)+'%'; }, m.text||'');
+        const r=await CG.sendVideo(c, MEID, m.blob, m.name, f=>{ local.progress=f; const x=msgEl(local.id), mt=x && x.querySelector('.meta'); if(mt) mt.textContent='Uploading… '+Math.round(f*100)+'%'; }, m.text||'', rich);
         res=r.message; if(!r.shared) warn='Sent - but sharing the video with them didn’t work, so they may not be able to open it.';
       }
       const got=CG._t.mapMessage(res, MEID) || {};
@@ -996,10 +1237,71 @@
   }
 
   /* ---------- clicks, typing ---------- */
+  /* CHAT v2: keep the cursor in the message box while its buttons are pressed (bold, emoji, @, ...) */
+  document.addEventListener('mousedown', e=>{ if(e.target.closest && e.target.closest('.cbox button, .pop button')) e.preventDefault(); });
+  let reactFor='';
+  const quickHTML=(m)=>'<div class="quick">'+QUICK.map(x=>'<button type="button" data-act="reactpick" data-v="'+x+'" aria-label="React '+x+'">'+x+'</button>').join('')+
+    '<button type="button" data-act="reactmore" aria-label="More emoji" title="More emoji" style="font-size:16px;color:#7b8797">'+ICO.smile.replace('<svg','<svg style="width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2"')+'</button></div>'+
+    (m && m.text && !m.deleted ? '<button type="button" class="copy" data-act="copytext">Copy text</button>' : '');
+  function v2Click(e, b, act, v){
+    if(act==='cmd'){ edRestore(); document.execCommand(v, false, null); edEmptyMark(el('txt')); edSave(); fmtPaint(); return true; }
+    if(act==='link'){ linkDlg(); return true; }
+    if(act==='linkok'){ linkOk(); return true; }
+    if(act==='quote'){ quoteToggle(); fmtPaint(); return true; }
+    if(act==='fmt'){ const on=!fmtOn(); try{ localStorage.setItem(FMT_KEY, on?'1':'0'); }catch(_){} edSave(); paintComposer(true); return true; }
+    if(act==='emoji'){ edSave(); const p=popOpen(boxAnchor(b), emojiGrid('emojipick')); p.dataset.by='emoji'; return true; }
+    if(act==='emojipick'){ popClose(); edInsertText(v); return true; }
+    if(act==='mention'){ edSave(); mentionPop(boxAnchor(b), false); if(popEl) popEl.dataset.by='mention'; return true; }
+    if(act==='mentionpick'){ mentionPick(b.dataset.uid||'', b.dataset.name||''); return true; }
+    if(act==='mic'){ micToggle(); return true; }
+    if(act==='react'){ reactToggle(b.dataset.m, v); return true; }
+    if(act==='reactadd'){ reactFor=b.dataset.m; const p=popOpen(b, quickHTML(null)); p.dataset.by='reactadd'; p.dataset.kind='react'; return true; }
+    if(act==='reactpick'){ popClose(); if(reactFor) reactToggle(reactFor, v, true); return true; }
+    if(act==='reactmore'){ const a=popEl; const r=a ? a.getBoundingClientRect() : null; popClose();
+      const p=popOpen({getBoundingClientRect:()=>r || b.getBoundingClientRect()}, emojiGrid('reactpick')); p.dataset.kind='react'; return true; }
+    if(act==='copytext'){ popClose(); const c=cur(), m=c && c.msgs.find(x=>String(x.id)===reactFor);
+      if(m && m.text && navigator.clipboard) navigator.clipboard.writeText(m.text).then(()=>toast('Copied'), ()=>toast('Couldn’t copy')); return true; }
+    return false;
+  }
+  /* the B / I / U / S buttons light up for the words the cursor is in */
+  function fmtPaint(){
+    const t=el('txt'); if(!t || !isEd(t)) return;
+    document.querySelectorAll('.cbox .fmt [data-act="cmd"]').forEach(x=>{ let on=false; try{ on=document.queryCommandState(x.dataset.v); }catch(_){} x.classList.toggle('on', !!on); });
+  }
+  document.addEventListener('selectionchange', ()=>{ const t=el('txt'), sl=window.getSelection(); if(t && isEd(t) && sl.rangeCount && t.contains(sl.getRangeAt(0).commonAncestorContainer)){ edSave(); fmtPaint(); } });
+  /* PHONES: hold a message for a moment to react (or copy its words) - like WhatsApp */
+  let lp=null, lpAt=0;
+  /* lifting the finger after a hold isn't a tap: no click closes the reactions, no phone menu pops up */
+  document.addEventListener('touchend', e=>{ if(lpAt && Date.now()-lpAt<1500 && e.target.closest && e.target.closest('#msgs')){ lpAt=0; lpLift=Date.now(); if(e.cancelable) e.preventDefault(); } }, {passive:false});
+  document.addEventListener('contextmenu', e=>{ if(Date.now()-Math.max(lpAt, lpLift)<1500 && e.target.closest && e.target.closest('#msgs')) e.preventDefault(); });
+  let lpLift=0;
+  document.addEventListener('touchstart', e=>{
+    if(!V2() || e.touches.length!==1) return;
+    const col=e.target.closest && e.target.closest('#msgs .m .col'); if(!col || e.target.closest('button,a,video,.reacts')) return;
+    const mEl=col.closest('[data-mid]'), id=mEl && mEl.dataset.mid, c=cur(); if(!id || !c) return;
+    const m=c.msgs.find(x=>String(x.id)===id); if(!m || m.pending || m.failed || /^local-/.test(id)) return;
+    const can=!REALCHAT || CG.canSend(c, MEID);
+    const x0=e.touches[0].clientX, y0=e.touches[0].clientY;
+    clearTimeout(lp && lp.t);
+    lp={x0, y0, t:setTimeout(()=>{ lp=null; lpAt=Date.now(); reactFor=id; if(navigator.vibrate) try{ navigator.vibrate(10); }catch(_){}
+      const anchor=col.querySelector('.bub, .media') || col;
+      const p=popOpen(anchor, can ? quickHTML(m) : (m.text ? '<button type="button" class="copy" data-act="copytext" style="margin:0;border:0;padding:6px">Copy text</button>' : '<div class="small" style="padding:4px">Nothing to copy.</div>'));
+      p.dataset.kind='react'; }, 450)};
+  }, {passive:true});
+  const lpCancel=e=>{ if(!lp) return; if(e.type==='touchmove'){ const t=e.touches[0]; if(Math.abs(t.clientX-lp.x0)<10 && Math.abs(t.clientY-lp.y0)<10) return; } clearTimeout(lp.t); lp=null; };
+  document.addEventListener('touchmove', lpCancel, {passive:true});
+  document.addEventListener('touchend', lpCancel, {passive:true});
+  document.addEventListener('touchcancel', lpCancel, {passive:true});
+  document.addEventListener('scroll', e=>{ if(popEl && popEl.dataset.kind==='react' && !(e.target && e.target.closest && e.target.closest('.pop'))) popClose(); }, true);
   document.addEventListener('click', e=>{
     const n=e.target.closest('#notif'); if(n && n.dataset.chat){ n.classList.remove('on'); openChat(n.dataset.chat); return; }
+    /* a click outside the little pop-up closes it; the same button again just closes it */
+    if(lpLift && Date.now()-lpLift<700 && !e.target.closest('.pop')) return;          // the lift after a hold
+    if(popEl && !e.target.closest('.pop')){ const by=popEl.dataset.by, ob=e.target.closest('[data-act]'); popClose(); if(ob && by && ob.dataset.act===by) return; }
+    const im=e.target.closest('#msgs .media img'); if(im && V2() && im.getAttribute('src')){ lbOpen(im); return; }
     const b=e.target.closest('[data-act]'); if(!b) return;
     const act=b.dataset.act, v=b.dataset.v;
+    if(V2() && v2Click(e, b, act, v)) return;
     if(act==='open') return openChat(v);
     if(act==='back'){ el('app').classList.remove('open'); open=null; renderList(); fit(); return; }
     if(act==='filter'){ filter=v; renderChips(); renderList(); return; }
@@ -1039,22 +1341,46 @@
     if(act==='mk'){
       const t=b.dataset.t; let c=CHATS.find(x=>x.name===v);
       if(!c){ c={id:'n'+Date.now(), type:t, name:v, sub:t==='person'?'':'', members:t==='person'?[v,ME]:[ME,'Gabriela Garrison','Quinn Quill','Avery Brooks'], unread:0, msgs:[]};
-        CHATS.push(c); c.msgs.push({from:ME, at:Date.now(), text:'👋', seen:false}); }
+        CHATS.push(c); c.msgs.push({id:c.id+'-0', from:ME, at:Date.now(), text:'👋', seen:false}); }
       closeDlg(); openChat(c.id); return;
     }
     if(act==='close') return closeDlg();
   });
   el('dlg').addEventListener('click', e=>{ if(e.target===el('dlg')) closeDlg(); });
   document.addEventListener('keydown', e=>{
-    if(e.key==='Escape') closeDlg();
-    if(e.key==='Enter' && !e.shiftKey && e.target && e.target.id==='txt'){ e.preventDefault(); sendNow(); }
+    if(e.key==='Escape'){ if(lb) return; if(popEl){ popClose(); return; } closeDlg(); }
+    if(e.key==='Enter' && e.target && (e.target.id==='lkurl' || e.target.id==='lktx')){ e.preventDefault(); linkOk(); return; }
+    if(e.key==='Enter' && !e.shiftKey && !e.isComposing && e.target && e.target.id==='txt'){
+      if(isEd(e.target)){
+        if(popEl && popEl.dataset.by==='typed'){ const f=[...popEl.querySelectorAll('[data-act="mentionpick"]')].find(x=>x.style.display!=='none'); if(f){ e.preventDefault(); mentionPick(f.dataset.uid||'', f.dataset.name||''); return; } }
+        /* in a bulleted or numbered list Enter starts the next point (Enter on an empty point ends the list), like Slack; Ctrl/Cmd+Enter sends */
+        const sl=window.getSelection(); let n=sl.rangeCount ? sl.getRangeAt(0).startContainer : null, inLi=false;
+        while(n && n!==e.target){ if(n.nodeName==='LI'){ inLi=true; break; } n=n.parentNode; }
+        if(inLi && !(e.ctrlKey || e.metaKey)) return;
+      }
+      e.preventDefault(); sendNow();
+    }
   });
   document.addEventListener('input', e=>{
     if(e.target.id==='q'){ q=e.target.value; renderList(); }
     if(e.target.id==='tq' || e.target.id==='nqr') peopleSearch(e.target);
     if(e.target.id==='nq'){ const qq=e.target.value.trim().toLowerCase(); document.querySelectorAll('#pick button').forEach(x=>{ x.style.display=!qq||x.textContent.toLowerCase().indexOf(qq)>=0?'':'none'; }); }
-    if(e.target.id==='txt'){ e.target.style.height='auto'; e.target.style.height=Math.min(120,e.target.scrollHeight)+'px'; }
+    if(e.target.id==='txt' && isEd(e.target)){ edEmptyMark(e.target); edSave(); typedMention(e.target); fmtPaint(); }
+    else if(e.target.id==='txt'){ e.target.style.height='auto'; e.target.style.height=Math.min(120,e.target.scrollHeight)+'px'; }
   });
+  /* typing @ (at the start or after a space) offers the people in the chat; more letters narrow it down */
+  function typedMention(t){
+    if(edBusy) return;
+    const sl=window.getSelection(); if(!sl.rangeCount || !sl.isCollapsed){ if(popEl && popEl.dataset.by==='typed') popClose(); return; }
+    const r=sl.getRangeAt(0), node=r.startContainer;
+    const before=node.nodeType===3 ? node.textContent.slice(0, r.startOffset) : '';
+    const m=/(^|[\s\u00a0])@([^\s@]{0,24})$/.exec(before);
+    if(!m){ if(popEl && popEl.dataset.by==='typed') popClose(); return; }
+    if(!popEl || popEl.dataset.by!=='typed'){ const a=document.querySelector('.cbox [data-act="mention"]') || t; mentionPop(boxAnchor(a), true); if(!popEl) return; popEl.dataset.by='typed'; }
+    const q=m[2].toLowerCase(); let any=false;
+    popEl.querySelectorAll('[data-act="mentionpick"]').forEach(x=>{ const hit=!q || (x.dataset.name||'').toLowerCase().split(/\s+/).some(w=>w.indexOf(q)===0) || (x.dataset.name||'').toLowerCase().indexOf(q)===0; x.style.display=hit?'':'none'; if(hit) any=true; });
+    if(!any) popClose(); else { mentionTyped=m[2].length+1; popPlace(); }
+  }
   el('file').addEventListener('change', e=>{
     const f=e.target.files && e.target.files[0]; e.target.value=''; if(!f) return;
     if(REALCHAT){
@@ -1067,13 +1393,20 @@
   });
   /* PASTE a picture straight into the message box (like Slack): it waits there like a picked one. */
   document.addEventListener('paste', e=>{
-    if(!e.target || e.target.id!=='txt') return;
-    const f=[...((e.clipboardData && e.clipboardData.files) || [])].find(x=>/^image\//.test(x.type)); if(!f) return;
+    const tg=e.target && (e.target.nodeType===1 ? e.target : e.target.parentElement), box=tg && tg.closest && tg.closest('#txt'); if(!box) return;
+    const f=[...((e.clipboardData && e.clipboardData.files) || [])].find(x=>/^image\//.test(x.type));
+    if(!f){ if(isEd(box)){ e.preventDefault(); const tx=(e.clipboardData && e.clipboardData.getData('text/plain')) || ''; if(tx) document.execCommand('insertText', false, tx); edEmptyMark(box); } return; }
     e.preventDefault();
     if(REALCHAT) CG.photo(f).then(p=>stage({photo:p.dataUrl, b64:p.b64, w:p.w, h:p.h}), err=>toast((err && err.message) || 'That picture could not be used.'));
     else { const url=URL.createObjectURL(f); objectUrls.push(url); stage({photo:url}); }
   });
-  window.addEventListener('pagehide', ()=>{ stopCamera(); objectUrls.forEach(u=>URL.revokeObjectURL(u)); });
+  document.addEventListener('drop', e=>{
+    const tg=e.target && e.target.closest && e.target.closest('#txt'); if(!tg || !isEd(tg)) return;
+    e.preventDefault();                                                    // never a raw file dropped inside the words
+    const f=e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]; if(!f) return;
+    const dt=new DataTransfer(); dt.items.add(f); el('file').files=dt.files; el('file').dispatchEvent(new Event('change'));
+  });
+  window.addEventListener('pagehide', ()=>{ stopCamera(); try{ if(micRec) micRec.stop(); }catch(_){} objectUrls.forEach(u=>URL.revokeObjectURL(u)); });
 
   /* On a computer the newest chat is open beside the list; a phone starts at the list. */
   const DEMO=CHATS;
@@ -1082,6 +1415,7 @@
   /* Someone who switched the real chat on doesn't see the made-up chats flash up first. */
   const WANT_REAL=!!(CG && (ONLIVE || CG.switchedOn()));          // live: never the made-up chats, not even for a moment
   let demoShown=!WANT_REAL;
+  document.body.classList.toggle('v2', V2());
   renderAlertbar(); renderChips();
   if(WANT_REAL){ CHATS=[]; loading(); } else { renderList(); renderConv(); firstOpen(); }
   if(wide.addEventListener) wide.addEventListener('change', firstOpen);

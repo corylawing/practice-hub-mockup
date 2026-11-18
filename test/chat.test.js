@@ -106,8 +106,8 @@ const chatWith=(...people)=>({id:'19:abc@thread.v2', type:people.length>2?'group
     t('chat.html: a picked, pasted or recorded photo/video WAITS in the message box; one Send sends it with the text, as one message (Cory 18/11, "like Slack")',
       /const STAGED=\{\};/.test(CHAT) && /stage\(\{photo:p\.dataUrl, b64:p\.b64, w:p\.w, h:p\.h\}\)/.test(CHAT) && /stage\(\{video:u, blob:f, name:f\.name\|\|'video\.mp4'\}\)/.test(CHAT) &&
       /if\(d\) stage\(\{video:d\.url, dur:d\.dur, blob:d\.blob, name:d\.name\}\)/.test(CHAT) && /document\.addEventListener\('paste', e=>\{/.test(CHAT) &&
-      /if\(st\)\{ delete STAGED\[c\.id\]; paintComposer\(true\); send\(Object\.assign\(\{\}, st, \{text\}\)\); \}/.test(CHAT) &&
-      /CG\.sendPhoto\(c, MEID, m\.b64, m\.w, m\.h, m\.text\|\|''\)/.test(CHAT) && /\}, m\.text\|\|''\);/.test(CHAT) && /data-act="unstage"/.test(CHAT));
+      /if\(st\)\{ delete STAGED\[c\.id\]; paintComposer\(true\); send\(Object\.assign\(\{\}, st, \{text, rich\}\)\); \}/.test(CHAT) &&
+      /CG\.sendPhoto\(c, MEID, m\.b64, m\.w, m\.h, m\.text\|\|'', rich\)/.test(CHAT) && /\}, m\.text\|\|'', rich\);/.test(CHAT) && /data-act="unstage"/.test(CHAT));
     t('chat.html: a waiting photo is only for a chat you can send to (the pilot lock)', /if\(REALCHAT && !CG\.canSend\(c, MEID\)\)\{ toast\(ONLIVE \? 'Pilot: you can only send to the pilot group for now\.'/.test(CHAT));
     t('chat.html: SPEED - the open chat every 2 s while you look at it, the list every 10 s, at once on coming back; nothing while hidden',
       /if\(document\.visibilityState!=='visible'\) return; tick\+\+;/.test(CHAT) && /if\(looking \|\| tick%3===0\) pollOpen\(\);/.test(CHAT) && /if\(tick%5===0\) loadList\(false\); \}, 2000\);/.test(CHAT) &&
@@ -120,7 +120,7 @@ const chatWith=(...people)=>({id:'19:abc@thread.v2', type:people.length>2?'group
     t('chat.html: opens at the newest message and stays there while pictures arrive (every load in the chat, also ones filled in later)',
       /ms\.addEventListener\('load', follow, true\);/.test(CHAT) && /ms\.addEventListener\('loadedmetadata', follow, true\);/.test(CHAT));
     t('chat.html: a phone never zooms when you tap to type (16px boxes on touch screens) and the page never slides sideways (Cory 18/11)',
-      /@media \(max-width:760px\), \(pointer:coarse\)\{\n\s*\.composer textarea, \.search\{font-size:16px\}/.test(CHAT) && /html,body\{overflow-x:hidden;overscroll-behavior-x:none\}/.test(CHAT) &&
+      /@media \(max-width:760px\), \(pointer:coarse\)\{\n\s*\.composer textarea, \.search, \.composer \.ed\{font-size:16px\}/.test(CHAT) && /html,body\{overflow-x:hidden;overscroll-behavior-x:none\}/.test(CHAT) &&
       /overflow-wrap:anywhere/.test(CHAT) && /max-width:calc\(100vw - 32px\);white-space:normal/.test(CHAT) && /@media \(pointer:coarse\)\{\.phpk-q\{font-size:16px\}\}/.test(USER));
     const ADM=R('admin.html');
     t('admin.html: Admin -> Chat lists the pilot; adding or taking out asks first; a list that didn’t read can’t be changed',
