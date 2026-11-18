@@ -122,19 +122,33 @@
 
   /* Call list */
   .sect{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--soft);margin:4px 0 8px}
-  .fu{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:grid;grid-template-columns:1fr auto;gap:10px 16px;box-shadow:var(--shadow)}
+  /* A CLEANER CARD (19/11/2026, Cory: "Love the call list but anyway to make it cleaner?" - the mockup he called
+     "Perfect"): what's due as a coloured dot + words, days waiting top right; the name; every fact on one line; the
+     patient note on one line (tap for the rest); the latest call note small; ALL actions still one click, on one row
+     along the bottom - the likely next step filled, the rest light, "Not starting"/"Declined" pushed to the right. */
+  .fu{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow)}
   .fu + .fu{margin-top:10px}
-  .fu .act{display:inline-block;font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;border-radius:6px;padding:3px 8px;margin-bottom:5px}
-  .act-due{background:var(--bad-soft);color:#9a2f1e}
-  .act-recall{background:var(--good-soft);color:#1d6b47}
-  .act-set{background:var(--amber-soft);color:#7a4b00}
-  .act-later{background:#EEF1F5;color:#46546b}
+  .fu .ftop{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .fu .act{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:800}
+  .fu .act::before{content:'';width:8px;height:8px;border-radius:50%;background:currentColor;flex:none}
+  .fu .wait{margin-left:auto;font-size:12.5px;color:var(--soft);white-space:nowrap}
+  .fu .wait b{color:var(--ink)}
+  .act-due{color:#b4321f}
+  .act-recall{color:#1d7a4f}
+  .act-set{color:#9a5b00}
+  .act-later{color:#5b687d}
   .fu .nm{font-weight:800;font-size:15.5px;color:var(--ink);background:none;border:none;padding:0;cursor:pointer;text-align:left}
   .fu .nm:hover{color:var(--teal-600);text-decoration:underline}
-  .fu .facts{font-size:13px;color:var(--soft);display:flex;gap:4px 14px;flex-wrap:wrap;margin-top:3px}
+  .fu .facts{font-size:13px;color:var(--soft);margin-top:2px;line-height:1.55}
   .fu .facts b{color:var(--ink);font-weight:600}
-  .fu .notes{font-size:12.5px;color:var(--soft);margin-top:4px;font-style:italic}
-  .fu .btns{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;align-content:flex-start;max-width:330px}
+  .fu .facts .sep{margin:0 6px;color:#c3cad5}
+  .fu .notes{font-size:13px;color:var(--ink);margin-top:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;background:none;border:0;padding:0;font-family:inherit;text-align:left;display:block;width:100%}
+  .fu .notes.open{white-space:normal}
+  .fu .btns{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}
+  .fu .btns .btn.sm{padding:6px 11px;font-size:13px}
+  .fu .btns .btn.main{background:var(--teal);color:#fff;border:1px solid var(--teal)}
+  .fu .btns .btn.main:hover{background:var(--teal-600)}
+  .fu .btns .push{margin-left:auto}
   .fu.called{opacity:.72}
   .tag{display:inline-block;font-size:11px;font-weight:800;color:var(--good);margin-left:6px}
   a.tel{color:var(--teal-600);font-weight:700;text-decoration:none}
@@ -240,6 +254,9 @@
   /* the call log (18/11) */
   .calls{margin-top:8px;display:flex;flex-direction:column;gap:5px}
   .call{font-size:12.5px;line-height:1.45;background:#F6F8FA;border-radius:9px;padding:6px 10px;color:var(--ink)}
+  .fu .calls{margin-top:5px;gap:4px}
+  .fu .calls .call{background:none;padding:0;color:var(--soft)}
+  .fu .calls .call b{color:var(--soft);font-weight:700}
   .call b{color:var(--navy)}.call .w{color:var(--soft)}
   .calls details summary{cursor:pointer;font-size:12.5px;font-weight:700;color:var(--teal-600);list-style:none}
   .calls details summary::-webkit-details-marker{display:none}
@@ -263,8 +280,7 @@
     .wrap{padding:16px 14px 90px}
     .crow{grid-template-columns:52px 1fr}
     .crow .quick{grid-column:1/-1;justify-content:flex-start}
-    .fu{grid-template-columns:1fr}
-    .fu .btns{justify-content:flex-start;max-width:none}
+    .fu .btns .push{margin-left:0}
     .fields{grid-template-columns:1fr}
     .talk{padding:8px 15px;font-size:14px}
     .dm{padding:0}
@@ -277,14 +293,14 @@
     *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}
   }
 </style>
-<script src="user.js?v=hc218"></script>
+<script src="user.js?v=hc219"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc218"></script>
-  <script src="gate.js?v=hc218"></script>
-  <script src="_staff.js?v=hc218"></script>
-  <script src="tc.js?v=hc218"></script>
-  <script src="tcstore.js?v=hc218"></script>
-  <script src="schedrec.js?v=hc218"></script>
+  <script src="store.js?v=hc219"></script>
+  <script src="gate.js?v=hc219"></script>
+  <script src="_staff.js?v=hc219"></script>
+  <script src="tc.js?v=hc219"></script>
+  <script src="tcstore.js?v=hc219"></script>
+  <script src="schedrec.js?v=hc219"></script>
 </head>
 <body>
 <div class="ribbon">SANDBOX — made-up patients. Use “Try it as” to see it as a TC, an office manager or Selene.</div>
@@ -586,54 +602,49 @@
   function actClass(a){ return a==='Scheduled to start' ? 'act-recall' : TC.DUE.indexOf(a)>=0 ? (a==='Recall ready'?'act-recall':'act-due') : TC.NEEDS_DATE.indexOf(a)>=0 ? 'act-set' : 'act-later'; }
   function fuCard(x){
     const r=x.r, a=x.a, d=today(), wait=TC.daysWaiting(r, d), calledToday=r.lastContact===d;
-    const B=(act,label)=>canEdit()?'<button class="btn sm '+(act==='declined'?'danger':'ghost')+'"'+attr('act','fu')+attr('id',r.id)+attr('v',act)+'>'+label+'</button>':'';
-    let btns='';
-    if(a==='Pending follow-up due' || a==='Pending - future follow-up' || a==='Recall ready')
-      btns=B('called','📞 Called')+B('scheduled','📅 Scheduled to start')+B('started','✅ Started')+B('declined','✖ Declined');
-    else if(a==='Set pending follow-up date' || a==='Set observation review date')
-      btns=B('setDate','📆 Set the date')+(a==='Set pending follow-up date'?B('started','✅ Started')+B('declined','✖ Declined'):B('ready','🟢 Ready now'));
-    else if(a==='No-show follow-up')
-      btns=B('called','📞 Called')+B('rebooked','🔁 Rebooked')+B('declined','✖ Not coming');
-    else if(a==='Observation review due' || a==='Observation - future review')
-      btns=B('reviewed','👁 Reviewed')+B('ready','🟢 Ready now')+B('declined','✖ Declined');
-    else if(a==='Start appointment due' || a==='Start appointment - future')
-      btns=B('started','✅ Started')+B('setDate','📆 New start date')+B('called','📞 Called')+B('declined','✖ Not starting');
-    else if(a==='Set start appointment date')
-      btns=B('setDate','📆 Set the date')+B('started','✅ Started')+B('declined','✖ Declined');
-    else if(a==='Pre-TX hold due' || a==='Pre-TX hold - future')
-      btns=B('called','📞 Called')+B('scheduled','✅ Cleared · scheduled')+B('started','✅ Started')+B('declined','✖ Declined');
-    else if(a==='Set pre-TX hold date')
-      btns=B('setDate','📆 Set the date')+B('scheduled','✅ Cleared · scheduled')+B('declined','✖ Declined');
-    else if(a==='Medicaid decision due' || a==='Waiting on Medicaid')
-      btns=B('called','📞 Checked')+B('approved','👍 Approved')+B('denied','👎 Denied')+B('declined','✖ Declined');
-    else if(a==='Set Medicaid check date')
-      btns=B('setDate','📆 Set the date')+B('approved','👍 Approved')+B('denied','👎 Denied');
-    else if(a==='Private pay decision due' || a==='Private pay - future follow-up')
-      btns=B('called','📞 Called')+B('privatePay','💵 Going private pay')+B('started','✅ Started')+B('declined','✖ Not going ahead');
-    else if(a==='Set private pay follow-up date')
-      btns=B('setDate','📆 Set the date')+B('privatePay','💵 Going private pay')+B('declined','✖ Not going ahead');
-    else if(a==='Scheduled to start')
-      btns=B('started','✅ Started')+B('declined','✖ Not starting');
-    if(canEdit()) btns+=B('note','📝 Add a note');
-    const calls=TC.cleanCalls(r.calls), callRow=e=>'<div class="call">'+esc(TC.callLine(e)).replace(/^([^:]*)/, '<b>$1</b>')+'</div>';
-    const callsHTML=calls.length ? '<div class="calls">'+calls.slice(-2).reverse().map(callRow).join('')+
-      (calls.length>2 ? '<details><summary>▸ All '+calls.length+' notes</summary>'+calls.slice(0,-2).reverse().map(callRow).join('')+'</details>' : '')+'</div>' : '';
+    /* the actions for this step, the likely next one first and the "no" last - all one click */
+    let L=[], no=null;
+    if(a==='Pending follow-up due' || a==='Pending - future follow-up' || a==='Recall ready'){ L=[['called','📞 Called'],['scheduled','📅 Scheduled to start'],['started','✅ Started']]; no=['declined','✖ Declined']; }
+    else if(a==='Set pending follow-up date'){ L=[['setDate','📆 Set the date'],['started','✅ Started']]; no=['declined','✖ Declined']; }
+    else if(a==='Set observation review date'){ L=[['setDate','📆 Set the date'],['ready','🟢 Ready now']]; }
+    else if(a==='No-show follow-up'){ L=[['called','📞 Called'],['rebooked','🔁 Rebooked']]; no=['declined','✖ Not coming']; }
+    else if(a==='Observation review due' || a==='Observation - future review'){ L=[['reviewed','👁 Reviewed'],['ready','🟢 Ready now']]; no=['declined','✖ Declined']; }
+    else if(a==='Start appointment due' || a==='Start appointment - future'){ L=[['started','✅ Started'],['called','📞 Called'],['setDate','📆 New start date']]; no=['declined','✖ Not starting']; }
+    else if(a==='Set start appointment date'){ L=[['setDate','📆 Set the date'],['started','✅ Started']]; no=['declined','✖ Declined']; }
+    else if(a==='Pre-TX hold due' || a==='Pre-TX hold - future'){ L=[['called','📞 Called'],['scheduled','✅ Cleared · scheduled'],['started','✅ Started']]; no=['declined','✖ Declined']; }
+    else if(a==='Set pre-TX hold date'){ L=[['setDate','📆 Set the date'],['scheduled','✅ Cleared · scheduled']]; no=['declined','✖ Declined']; }
+    else if(a==='Medicaid decision due' || a==='Waiting on Medicaid'){ L=[['called','📞 Checked'],['approved','👍 Approved'],['denied','👎 Denied']]; no=['declined','✖ Declined']; }
+    else if(a==='Set Medicaid check date'){ L=[['setDate','📆 Set the date'],['approved','👍 Approved'],['denied','👎 Denied']]; }
+    else if(a==='Private pay decision due' || a==='Private pay - future follow-up'){ L=[['called','📞 Called'],['privatePay','💵 Going private pay'],['started','✅ Started']]; no=['declined','✖ Not going ahead']; }
+    else if(a==='Set private pay follow-up date'){ L=[['setDate','📆 Set the date'],['privatePay','💵 Going private pay']]; no=['declined','✖ Not going ahead']; }
+    else if(a==='Scheduled to start'){ L=[['started','✅ Started']]; no=['declined','✖ Not starting']; }
+    const B=(act,label,cls)=>'<button class="btn sm '+cls+'"'+attr('act','fu')+attr('id',r.id)+attr('v',act)+'>'+label+'</button>';
+    const btns=canEdit() ? L.map((x,i)=>B(x[0], x[1], i===0 ? 'main' : 'ghost')).join('')+B('note','📝 Note','ghost')+(no ? B(no[0], no[1], 'danger push') : '') : '';
+    /* every fact on one line: phone · consult · the date that matters for this step · office · TC */
+    const step=r.nextFU && ['Pending',TC.SCHED_START,'Pre-TX Hold','Submitted to Medicaid',TC.MED_OK,TC.MED_NO].indexOf(r.outcome)>=0 && r.fuStatus!=='Scheduled to start'
+      ? (r.outcome==='Submitted to Medicaid' ? 'Check with Medicaid' : (r.outcome===TC.SCHED_START || r.outcome===TC.MED_OK) ? 'Start' : 'Next follow-up')+' <b>'+esc(fmtS(r.nextFU))+'</b>'
+      : (r.fuStatus==='Scheduled to start' && r.nextFU ? 'Start <b>'+esc(fmtS(r.nextFU))+'</b>' : '');
+    const calls=TC.cleanCalls(r.calls);
     const facts=[
-      r.phone?'<span>📞 <a class="tel" href="tel:'+esc(String(r.phone).replace(/[^\d+]/g,''))+'">'+esc(r.phone)+'</a></span>':'',
-      '<span>Consult <b>'+esc(fmtS(r.date))+'</b></span>',
-      '<span>'+ocBadge(r.outcome)+(r.reason?' · '+esc(r.reason):'')+'</span>',
-      r.nextFU && ['Pending',TC.SCHED_START,'Pre-TX Hold','Submitted to Medicaid',TC.MED_OK,TC.MED_NO].indexOf(r.outcome)>=0 && r.fuStatus!=='Scheduled to start'?'<span>'+(r.outcome==='Submitted to Medicaid'?'Check with Medicaid':(r.outcome===TC.SCHED_START || r.outcome===TC.MED_OK)?'Start appointment':'Next call')+' <b>'+esc(fmtS(r.nextFU))+'</b></span>':'',
-      r.obsReview && r.outcome==='Observation'?'<span>Review <b>'+esc(fmtS(r.obsReview))+'</b></span>':'',
-      r.lastContact?'<span>Last contact <b>'+esc(fmtS(r.lastContact))+'</b></span>':'',
-      wait!=null?'<span>Waiting <b>'+wait+'</b> day'+(wait===1?'':'s')+'</span>':'',
-      inView().length>1?'<span>📍 '+esc(r.office)+'</span>':'',
-      r.tc?'<span>'+esc(r.tc)+'</span>':''
-    ].filter(Boolean).join('');
-    return '<div class="fu'+(calledToday?' called':'')+'"><div><span class="act '+actClass(a)+'">'+esc(a)+'</span>'+
+      r.phone?'📞 <a class="tel" href="tel:'+esc(String(r.phone).replace(/[^\d+]/g,''))+'">'+esc(r.phone)+'</a>':'',
+      'Consult <b>'+esc(fmtS(r.date))+'</b>',
+      r.reason?esc(r.reason):'',
+      step,
+      r.obsReview && r.outcome==='Observation'?'Review <b>'+esc(fmtS(r.obsReview))+'</b>':'',
+      r.lastContact && !calls.length?'Last contact <b>'+esc(fmtS(r.lastContact))+'</b>':'',
+      inView().length>1?esc(r.office):'',
+      r.tc?esc(r.tc):''
+    ].filter(Boolean).join('<span class="sep">·</span>');
+    const callRow=e=>'<div class="call">'+esc(TC.callLine(e)).replace(/^([^:]*)/, '<b>$1</b>')+'</div>';
+    const callsHTML=calls.length ? '<div class="calls">'+callRow(calls[calls.length-1])+
+      (calls.length>1 ? '<details><summary>▸ All '+calls.length+' notes</summary>'+calls.slice(0,-1).reverse().map(callRow).join('')+'</details>' : '')+'</div>' : '';
+    return '<div class="fu'+(calledToday?' called':'')+'"><div class="ftop"><span class="act '+actClass(a)+'">'+esc(a)+'</span>'+
       (calledToday?'<span class="tag">✓ contacted today</span>':'')+
-      '<div><button class="nm"'+attr('act','open')+attr('id',r.id)+'>'+esc(r.name||'(no name)')+'</button>'+payTag(r)+'</div>'+
-      '<div class="facts">'+facts+'</div>'+(r.notes?'<div class="notes">“'+esc(r.notes)+'”</div>':'')+callsHTML+'</div>'+
-      '<div class="btns">'+btns+'</div></div>';
+      (wait!=null?'<span class="wait"><b>'+wait+'</b> day'+(wait===1?'':'s')+' waiting</span>':'')+'</div>'+
+      '<div style="margin-top:3px"><button class="nm"'+attr('act','open')+attr('id',r.id)+'>'+esc(r.name||'(no name)')+'</button>'+payTag(r)+'</div>'+
+      '<div class="facts">'+facts+'</div>'+
+      (r.notes?'<button type="button" class="notes" data-act="clamp" title="Tap to read it all">“'+esc(r.notes)+'”</button>':'')+callsHTML+
+      (btns?'<div class="btns">'+btns+'</div>':'')+'</div>';
   }
   function viewCalls(){
     const d=today(), all=TC.callList(scoped(), d);
@@ -1146,6 +1157,7 @@
     if(b.tagName==='DETAILS') return;                 // the details toggle reports itself below
     const act=b.dataset.act, v=b.dataset.v;
     if(act==='tab'){ tab=v; render(); window.scrollTo({top:0}); return; }
+    if(act==='clamp'){ b.classList.toggle('open'); return; }
     if(act==='office'){ office=v||null; render(); return; }
     if(act==='month'){ month=TC.shiftMonth(month, Number(v)); render(); return; }
     if(act==='reload'){ loaded=false; render(); load(); return; }
@@ -1253,7 +1265,7 @@
 })();
 </script>
 <script>PH.nav('tc');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(window.TCPAGE)TCPAGE.identity();});document.addEventListener('ph-identity',function(){if(window.TCPAGE)TCPAGE.identity();});</script>
-<script src="tour.js?v=hc218"></script>
+<script src="tour.js?v=hc219"></script>
 <script>
 Tour.init([
   {sel:'#offbar', title:'Your office', body:'You see the offices you work at. Heather, Selene and leadership see every office and can pick one.'},

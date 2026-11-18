@@ -407,7 +407,10 @@ const C=[
   t('at most 200 lines kept on one consult', many.calls.length===200 && many.calls[199].note==='n229');
   const csvOut=TC.csv([{id:'c1', date:'2026-11-10', name:'A Patient', outcome:'Pending', calls:r.calls}], '2026-11-20');
   t('the download carries the call log in its own last column', /17 Nov · Selene · 📞 Called: Left a voicemail \(next 2026-11-20\) \| 18 Nov · Selene · 📝 Note: Mom will call back after payday/.test(csvOut));
-  t('the call list: "📝 Add a note" on every card, the newest two notes shown, the rest one tap away', /btns\+=B\('note','📝 Add a note'\)/.test(HT) && /calls\.slice\(-2\)\.reverse\(\)/.test(HT) && /▸ All '\+calls\.length\+' notes/.test(HT));
+  t('the call list: "📝 Note" on every card, the latest note shown small, the rest one tap away', /B\('note','📝 Note','ghost'\)/.test(HT) && /callRow\(calls\[calls\.length-1\]\)/.test(HT) && /▸ All '\+calls\.length\+' notes/.test(HT));
+  /* the cleaner card (Cory 19/11, "Perfect") */
+  t('cleaner card: every action still one click on one row - the likely next step filled, the "no" pushed right', /i===0 \? 'main' : 'ghost'/.test(HT) && /B\(no\[0\], no\[1\], 'danger push'\)/.test(HT) && /\.fu \.btns \.push\{margin-left:auto\}/.test(HT));
+  t('cleaner card: the repeated outcome badge is gone; every fact on one line; days waiting top right; the note one line, tap for all', !/ocBadge\(r\.outcome\)/.test(HT.slice(HT.indexOf('function fuCard'), HT.indexOf('function viewCalls'))) && /class="wait"/.test(HT) && /data-act="clamp"/.test(HT) && /if\(act==='clamp'\)\{ b\.classList\.toggle\('open'\); return; \}/.test(HT));
   t('every call-list action can take a note about the call - with the same 🎤 Talk, beside the box', /h\+=noteField\('callNote'/.test(HT) && /textarea id="f-'\+f\+'" data-talkbox/.test(HT) && /DLG\.rec\[t\.f\|\|'notes'\]=txt;/.test(HT));
   t('saving a call adds its line; "Add a note" alone changes nothing else and needs words', /TC\.addCall\(r, \{at:new Date\(\)\.toISOString\(\), day:t, by:myName\(\)\|\|myMail\(\), what:W/.test(HT) && /d\.err='Write or say the note first\.'/.test(HT));
   t('Save while talking waits for the last words', /if\(act==='fu-save'\)\{ if\(TALK\)\{ const d0=DLG; talkFinish\(\)\.then/.test(HT));

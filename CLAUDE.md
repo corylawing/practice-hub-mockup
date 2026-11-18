@@ -504,6 +504,13 @@ I can confidently say that the chat feature should go next. The production thing
    Notes (noteField(f) - Talk types into whichever box has data-talkbox; Save while talking waits for the last words).
    Cory: no privacy reminder under the box ("I don't need that reminder please don't put it"). Saving adds fields only
    (persist/strip keep every field; consultsFrom reads every field). test/tc (185).
+42. **TC CALL LIST - CLEANER CARD (19/11/2026; hc219; LIVE).** Cory: "Love the call list but anyway to make it cleaner?" ->
+   a mockup hiding actions under ⋯; Cory: "its extra clicks ... What do you think" -> kept EVERY action one click; Cory:
+   "Perfect". fuCard: what's due as a coloured dot + words (no pill), days waiting top right; the name; every fact on ONE
+   line (phone · consult · the step's date · reason · office · TC; "Last contact" only when there's no call log); the
+   repeated outcome badge removed from the card (still on the consult); the patient note one line, tap for all
+   (data-act clamp); the latest call note small, "▸ All N notes"; ALL actions on one row along the bottom - the likely next
+   step filled teal (.main), the rest light, "📝 Note" on every card, "✖ Not starting / Declined" pushed right (.push).
 40. **DROPPED 19/11 - don't propose again unless Cory brings them back:** a PRACTICE MAP (the 8 offices on a map of TX/NM,
    tap for today's doctor / month pace / report status - a "The practice today" card on Home for leadership) and a MONTH
    REPLAY (offices racing day by day to their monthly goal on the Production Dashboard). Both mocked up 19/11; Cory: "For
