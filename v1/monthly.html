@@ -241,12 +241,12 @@
   }
   @media (prefers-reduced-motion: reduce){ *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important} }
 </style>
-<script src="user.js?v=hc211"></script>
+<script src="user.js?v=hc213"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc211"></script>
-  <script src="gate.js?v=hc211"></script>
-  <script src="prodbook.js?v=hc211"></script>
-  <script src="monthly.js?v=hc211"></script>
+  <script src="store.js?v=hc213"></script>
+  <script src="gate.js?v=hc213"></script>
+  <script src="prodbook.js?v=hc213"></script>
+  <script src="monthly.js?v=hc213"></script>
 </head>
 <body>
 <div class="ribbon">MOCK-UP for Heather — made-up numbers. Try it as an office manager first, then as Heather.</div>
@@ -336,7 +336,7 @@
                  npe:Math.round((40+R()*70)*frac), act:pts+Math.round((R()-0.5)*30), disc:gp*(0.01+R()*0.02)};
         v.np=v.gp+v.adj; v.ar90=v.ar*(0.012+R()*0.035);
         v.rip=Math.round((4+R()*20)*frac);
-        if(!open){ v.oecd=5+R()*12; v.cmf=62+R()*30;
+        if(!open){ v.oecd=5+R()*12; v.appts=Math.round(600+R()*500); v.cmfa=Math.round(v.appts*(0.03+R()*0.06));
           if(med.indexOf(o)>=0){ v.mds=Math.round(8+R()*26); v.mdd=Math.round(v.mds*(0.05+R()*0.22)); v.mda=Math.max(0,v.mds-v.mdd-Math.round(R()*3));
             v.mdb=Math.round(v.mda*(0.6+R()*0.35)); v.mdp=25000+R()*85000; v.mdc=v.mdp*(0.75+R()*0.25); } }
         const r={v:{}, src:{}, at:{}, by:{}, ofv:{}, notes:[]}, stamp=new Date(y, m, Math.min(3, 28), 6).toISOString();
@@ -596,7 +596,7 @@
     const offs=myOffices(); if(OFF===null || (OFF!=='__all' && offs.indexOf(OFF)<0)) OFF=offs[0];
     const all=OFF==='__all', y=Y, settings=all ? {medicaid:SET.medicaid} : SET;
     const vals=m=>{ if(isFuture(y,m)) return null; const v=all ? offTotals(offs,y,m) : valsOf(OFF,y,m); return v ? Object.assign({}, v, M.calc(v)) : null; };
-    const main=[['gp','$'],['gc','$'],['colpct','%'],['adj','$'],['adjpct','%'],['np','$'],['ar','$'],['ratio','x'],['arn','#'],['deln','#'],['delpct','%'],['ar90','$'],['npe','#'],['act','#'],['disc','$'],['rip','#'],['oecd','%'],['cmf','%']]
+    const main=[['gp','$'],['gc','$'],['colpct','%'],['adj','$'],['adjpct','%'],['np','$'],['ar','$'],['ratio','x'],['arn','#'],['deln','#'],['delpct','%'],['ar90','$'],['npe','#'],['act','#'],['disc','$'],['rip','#'],['oecd','%'],['appts','#'],['cmfa','#'],['cmfpct','%']]
       .map(([k,t])=>({k,t,n:(M.BY[k]||M.CALC.find(c=>c.k===k)).n, flow:!!(M.BY[k]&&M.BY[k].flow), goal:({colpct:'col',adjpct:'adj',ratio:'ratio',delpct:'del'})[k]}));
     const medF=M.FIELDS.filter(f=>f.medicaid).map(f=>({k:f.k,t:f.t,n:f.n,flow:true}));
     const hasMed=all ? offs.some(o=>SET.medicaid.indexOf(o)>=0) : SET.medicaid.indexOf(OFF)>=0;
@@ -803,7 +803,7 @@
 })();
 </script>
 <script>PH.nav('monthly');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc211"></script>
+<script src="tour.js?v=hc213"></script>
 <script>
 Tour.init([
   {sel:'.statusline, .openbanner', title:'Who has sent it', body:'Every office’s report for the month, in one line: final, waiting for you, or late. No chasing eight Excel files.'},

@@ -38,7 +38,10 @@
        pull can count it. Typed until then. */
     {k:'rip',  n:'RIP sold (Retainer Insurance Program)', t:'#', from:'orthofi', flow:true},
     {k:'oecd', n:'Over estimated completion date',     t:'%', from:'pms'},
-    {k:'cmf',  n:'Comfort percentage',                 t:'%', from:'pms'},
+    /* COMFORT % (Heather 18/11: "The X is number of total appts and the Y is number of comfort appts"): Ortho2 doesn't show
+       the %, so the office types the two counts and Home-Brace works it out (CALC cmfpct = comfort / total). */
+    {k:'appts', n:'Total appointments',                t:'#', from:'pms', flow:true},
+    {k:'cmfa',  n:'Comfort appointments',              t:'#', from:'pms', flow:true},
     {k:'mds',  n:'Medicaid submissions',               t:'#', from:'pms', flow:true, medicaid:true},
     {k:'mdd',  n:'Medicaid denials',                   t:'#', from:'pms', flow:true, medicaid:true},
     {k:'mda',  n:'Medicaid approvals',                 t:'#', from:'pms', flow:true, medicaid:true},
@@ -53,7 +56,8 @@
        sheets), so a month whose adjustments ADD to production shows below zero rather than as a write-off */
     {k:'adjpct', n:'Adjustment %',  t:'%', of:v=>v.gp && v.adj!=null ? -v.adj/v.gp*100 : null, goal:'adj'},
     {k:'ratio',  n:'A/R ratio',     t:'x', of:v=>v.gp && v.ar!=null ? v.ar/v.gp : null, goal:'ratio'},
-    {k:'delpct', n:'Delinquent %',  t:'%', of:v=>v.arn && v.deln!=null ? v.deln/v.arn*100 : null, goal:'del'}];
+    {k:'delpct', n:'Delinquent %',  t:'%', of:v=>v.arn && v.deln!=null ? v.deln/v.arn*100 : null, goal:'del'},
+    {k:'cmfpct', n:'Comfort %',     t:'%', of:v=>v.appts && v.cmfa!=null ? v.cmfa/v.appts*100 : null}];
   /* the old sheet's goals row. Heather's email 2 (the list below is exactly hers) narrowed what the report shows -
      case starts and case acceptance (>70%) were on the old sheet and are NOT on her list, so they are not here. */
   const DEF_GOALS={col:[91,93], adj:[7,9], ratio:[5.5,6], del:[5,7]};

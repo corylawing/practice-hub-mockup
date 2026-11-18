@@ -12,17 +12,18 @@ const near=(a,b)=>Math.abs(a-b)<0.011;
 
 /* the list - exactly Heather's email 2, nothing more */
 const HEATHER=['Gross production','Gross collections','Net production adjustments','Net production','Accounts receivable','Number of accounts receivable',
-  'Delinquent accounts past 30 days','$ 90+ days past due','New patient exams','Active patients','Total discounts','RIP sold (Retainer Insurance Program)','Over estimated completion date','Comfort percentage',
+  'Delinquent accounts past 30 days','$ 90+ days past due','New patient exams','Active patients','Total discounts','RIP sold (Retainer Insurance Program)','Over estimated completion date','Total appointments','Comfort appointments',
   'Medicaid submissions','Medicaid denials','Medicaid approvals','Medicaid bandings','Medicaid production','Medicaid collections'];
-t('the report asks for exactly the 20 things in Heather’s email 2 (case starts / case acceptance from the old sheet are not on it)',
-  M.FIELDS.length===20 && HEATHER.every(n=>M.FIELDS.some(f=>f.n===n)) && !M.FIELDS.some(f=>/start|accept/i.test(f.n)));
+t('the report asks for exactly the things in Heather’s email 2 - comfort % as its two counts (case starts / case acceptance from the old sheet are not on it)',
+  M.FIELDS.length===21 && HEATHER.every(n=>M.FIELDS.some(f=>f.n===n)) && !M.FIELDS.some(f=>/start|accept/i.test(f.n)));
 t('\u2026Medicaid, over-estimated completion date and comfort % are typed from the practice software (her words); the rest is OrthoFi\u2019s - RIP too (Heather 18/11: "It comes from Orthofi")',
-  M.FIELDS.filter(f=>f.medicaid).every(f=>f.from==='pms') && M.BY.oecd.from==='pms' && M.BY.cmf.from==='pms' && M.BY.gp.from==='orthofi' && M.BY.deln.from==='orthofi' && M.BY.rip.from==='orthofi');
+  M.FIELDS.filter(f=>f.medicaid).every(f=>f.from==='pms') && M.BY.oecd.from==='pms' && M.BY.appts.from==='pms' && M.BY.cmfa.from==='pms' && M.BY.gp.from==='orthofi' && M.BY.deln.from==='orthofi' && M.BY.rip.from==='orthofi');
 t('nobody types a percentage that can be worked out: the delinquent COUNT is kept, the % is calculated (Heather: "Instead of them doing the math")',
   M.BY.deln.t==='#' && !M.BY.del && M.calc({arn:200, deln:12}).delpct===6);
 t('…the 6 Medicaid numbers only for the Medicaid offices (Heather can change which in Settings)',
-  M.fieldsFor('Clovis', M.cleanSettings(null)).length===20 && M.fieldsFor('San Angelo', M.cleanSettings(null)).length===14 &&
-  M.fieldsFor('San Angelo', M.cleanSettings({medicaid:['San Angelo']})).length===20);
+  M.fieldsFor('Clovis', M.cleanSettings(null)).length===21 && M.fieldsFor('San Angelo', M.cleanSettings(null)).length===15 &&
+  M.fieldsFor('San Angelo', M.cleanSettings({medicaid:['San Angelo']})).length===21 && M.fieldsFor('Cruces LCO', M.cleanSettings(null)).length===21);
+t('comfort % is worked out: comfort appointments \u00f7 total appointments (Heather: "total appts" and "comfort appts"); LCO has the Medicaid boxes (Heather: "they do need it")', M.calc({appts:800, cmfa:40}).cmfpct===5 && M.calc({cmfa:40}).cmfpct===null);
 
 /* the maths - the old sheet's own formulas (D=C/B, F=E/B, I=H/B) and its goals row */
 const v={gp:300000, gc:270000, adj:-30000, np:270000, ar:1800000, arn:900, deln:72, ar90:120000, npe:60};
@@ -72,8 +73,8 @@ x=M.mergeOrthofi(null, 'Lubbock', 11, {gp:'$12,345.678', deln:'41'});
 t('\u2026a brand-new month is made, and "$12,345.678" / "41" are read as numbers', x.rec.o.Lubbock['11'].v.gp===12345.68 && x.rec.o.Lubbock['11'].v.deln===41);
 
 /* keeping it clean */
-const cm=M.cleanMonth({v:{gp:'abc', npe:3.6, cmf:5000, mds:-2}, notes:[{t:'  hi  ', by:'x'}, {t:''}, 7], extra:'<script>'});
-t('junk is dropped: words in a number box, a 5000% percent, a negative count; counts are whole', cm.v.gp===undefined && cm.v.npe===4 && cm.v.cmf===undefined && cm.v.mds===undefined && cm.extra===undefined);
+const cm=M.cleanMonth({v:{gp:'abc', npe:3.6, oecd:5000, mds:-2}, notes:[{t:'  hi  ', by:'x'}, {t:''}, 7], extra:'<script>'});
+t('junk is dropped: words in a number box, a 5000% percent, a negative count; counts are whole', cm.v.gp===undefined && cm.v.npe===4 && cm.v.oecd===undefined && cm.v.mds===undefined && cm.extra===undefined);
 t('notes keep only real text (trimmed), at most 50', cm.notes.length===1 && cm.notes[0].t==='hi' && M.cleanMonth({notes:Array.from({length:70},(_, i)=>({t:'n'+i}))}).notes.length===50);
 const s=M.cleanSettings({medicaid:['Hobbs','Hobbs',' '], goals:{col:[95,90], adj:[6,8]}, due:40});
 t('settings: a goal the wrong way round falls back to the sheet’s, the due day stays 1–28, no duplicate offices',

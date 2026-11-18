@@ -36,6 +36,7 @@
     Object.keys(p).slice(0,1000).forEach(k=>{ const e=String(k).toLowerCase().trim(); if(!/^[^\s@]+@[^\s@]+$/.test(e)) return; const x=p[k]||{};
       const o={bday:cleanBday(x.bday), started:cleanStart(x.started), name:s120(x.name), first:s120(x.first,60), office:s120(x.office), role:s120(x.role)};
       const no=x.no && typeof x.no==='object' ? x.no : {}; if(no.bday===true || no.anniv===true) o.no={bday:no.bday===true, anniv:no.anniv===true};
+      const sn=x.seen && typeof x.seen==='object' ? x.seen : {}; const seen={}; ['bday','anniv'].forEach(k=>{ if(cleanStart(sn[k])) seen[k]=sn[k]; }); if(seen.bday||seen.anniv) o.seen=seen;
       if(o.bday || o.started || o.no) out.p[e]=o; });
     return out;
   }
@@ -45,29 +46,34 @@
     const r=cleanRecord(rec), by={}; (roster||[]).forEach(x=>{ if(x && x.email) by[String(x.email).toLowerCase()]=x; });
     return Object.keys(r.p).map(e=>{ const x=r.p[e], ro=by[e]||{}, nm=ro.name||x.name; if(!nm) return null;
       return {email:e, name:nm, first:x.first||String(nm).split(' ')[0], office:(ro.offices&&ro.offices[0])||ro.loc||x.office, role:ro.role||x.role,
-        photo:photoFor ? photoFor(e) : '', bday:x.bday, bdayOn:!!x.bday && !(x.no&&x.no.bday), started:(x.no&&x.no.anniv) ? '' : x.started}; }).filter(Boolean);
+        photo:photoFor ? photoFor(e) : '', bday:x.bday, bdayOn:!!x.bday && !(x.no&&x.no.bday), started:(x.no&&x.no.anniv) ? '' : x.started, seen:x.seen||null}; }).filter(Boolean);
   }
   /* people: [{email, name, first, office, role, photo, bday, bdayOn, started}] -> {today:[...], soon:[...]} */
   function celebrations(people, now){
     now=now ? new Date(now) : new Date(); const t0=new Date(now.getFullYear(), now.getMonth(), now.getDate()), Y=t0.getFullYear();
-    const diff=d=>Math.round((d-t0)/864e5), out={today:[], soon:[]}, monday=t0.getDay()===1;
+    const diff=d=>Math.round((d-t0)/864e5), out={today:[], soon:[], recent:[]}, monday=t0.getDay()===1;
+    const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
     (people||[]).forEach(p=>{
       if(!p || !p.name) return; const ev=[];
       const b=p.bdayOn===true ? cleanBday(p.bday) : '';
       if(b) [Y-1, Y, Y+1].forEach(y=>ev.push({kind:'bday', d:dayIn(y, b)}));
       const s=cleanStart(p.started);
       if(s){ const sy=+s.slice(0,4); [Y-1, Y, Y+1].forEach(y=>{ if(y-sy>=1) ev.push({kind:'anniv', d:dayIn(y, s.slice(5)), years:y-sy}); }); }
-      ev.forEach(e=>{ const n=diff(e.d); if(n<-2 || n>7) return;
-        const it={kind:e.kind, years:e.years||0, in:n, day:DAYS[e.d.getDay()], date:e.d.getDate()+' '+MONTHS[e.d.getMonth()].slice(0,3),
+      ev.forEach(e=>{ const n=diff(e.d); if(n<-7 || n>7) return;          // a belated one: a week at most (Cory 18/11)
+        const it={kind:e.kind, years:e.years||0, in:n, on:iso(e.d), seen:!!(p.seen && p.seen[e.kind]===iso(e.d)), day:DAYS[e.d.getDay()], date:e.d.getDate()+' '+MONTHS[e.d.getMonth()].slice(0,3),
           email:String(p.email||''), name:String(p.name), first:String(p.first||String(p.name).split(' ')[0]), office:String(p.office||''), role:String(p.role||''), photo:p.photo||''};
-        if(n===0 || (monday && n<0)) out.today.push(it); else if(n>0) out.soon.push(it); });
+        if(n===0 || (monday && n>=-2 && n<0)) out.today.push(it); else if(n>0) out.soon.push(it); else out.recent.push(it); });
     });
     out.today.sort((a,b)=>b.in-a.in || a.name.localeCompare(b.name));
     out.soon.sort((a,b)=>a.in-b.in || a.name.localeCompare(b.name));
+    out.recent.sort((a,b)=>b.in-a.in || a.name.localeCompare(b.name));
     return out;
   }
   const yearsWord=n=>n+' year'+(n===1?'':'s');
-  function headline(it){ return it.kind==='bday' ? 'Happy birthday, '+it.first+'!' : 'Happy '+ordinal(it.years)+' Workiversary, '+it.first+'!'; }
+  function headline(it){ const late=it.belated ? 'belated ' : '';
+    return it.kind==='bday' ? 'Happy '+late+'birthday, '+it.first+'!' : 'Happy '+late+ordinal(it.years)+' Workiversary, '+it.first+'!'; }
+  /* "We celebrated you on Tuesday" - "a week ago" on the 7th day (the same weekday as today would read oddly) */
+  function whenWas(it){ return it.in>=-6 ? 'on '+it.day : 'a week ago'; }
   function ordinal(n){ const s=n%100>=11 && n%100<=13 ? 'th' : ({1:'st',2:'nd',3:'rd'})[n%10]||'th'; return n+s; }
   function wishText(it){ return it.kind==='bday' ? 'Happy birthday, '+it.first+'! 🎂🎉' : 'Happy '+ordinal(it.years)+' Workiversary, '+it.first+'! Thank you for everything 🎉'; }
   /* THE SANDBOX'S STORY for Heather (made-up people, dates around today so there is always something to see) */
@@ -79,7 +85,8 @@
       'dana.dorsey@example.com':{name:'Dana Dorsey', first:'Dana', office:'Hobbs', role:'Office Manager', started:st(0,5)},
       'maya.mercer@example.com':{name:'Maya Mercer', first:'Maya', office:'Lubbock', role:'Treatment Coordinator', bday:md(2)},
       'jules.jensen@example.com':{name:'Jules Jensen', first:'Jules', office:'San Angelo', role:'Financial Coordinator', started:st(5,1)},
-      'rory.reyes@example.com':{name:'Rory Reyes', first:'Rory', office:'Mansfield', role:'Clinical Assistant', bday:md(6), no:{bday:false, anniv:false}}}};
+      'rory.reyes@example.com':{name:'Rory Reyes', first:'Rory', office:'Mansfield', role:'Clinical Assistant', bday:md(-3)},
+      'theo.tran@example.com':{name:'Theo Tran', first:'Theo', office:'Clovis', role:'Clinical Assistant', bday:md(6)}}};
   }
   /* HEATHER'S "Hire Dates and Birthdays" EXCEL (18/11/2026: "Birthday and Hire Date, if it says original hire date you can
      use those instead of the hire date that was when the practice was purchased"). Read in the ADMIN'S browser only
@@ -135,7 +142,7 @@
     const hits=(roster||[]).filter(p=>p && p.email && nameKeys(p.name).some(k=>want.indexOf(k)>=0));
     const emails=[...new Set(hits.map(p=>String(p.email).toLowerCase()))]; return emails.length===1 ? emails[0] : '';
   }
-  const RULES={cleanBday, cleanStart, dayIn, celebrations, cleanRecord, peopleFrom, demo, headline, ordinal, wishText, yearsWord, parseBday, parseStart, fromHireSheet, matchPerson, KEY:'ph_celebrate'};
+  const RULES={cleanBday, cleanStart, dayIn, celebrations, cleanRecord, peopleFrom, demo, headline, whenWas, ordinal, wishText, yearsWord, parseBday, parseStart, fromHireSheet, matchPerson, KEY:'ph_celebrate'};
   if(typeof window==='undefined'){ global.PH_PARTY=RULES; return; }
 
 
@@ -408,10 +415,12 @@
   function mineCard(card, it){
     const bday=it.kind==='bday';
     card.innerHTML='<div class="pp-av"><span class="ring"></span><span class="face">'+faceHTML(it)+'</span><span class="badge" aria-hidden="true">'+(bday?'🥳':'🏆')+'</span></div>'+
-      '<div class="pp-kick">✨ It’s your day</div>'+
-      '<div class="pp-pre">'+(bday ? 'Happy birthday' : 'Happy '+ordinal(it.years)+' Workiversary')+'</div>'+
+      '<div class="pp-kick">'+(it.belated ? '✨ We missed you on your day' : '✨ It’s your day')+'</div>'+
+      '<div class="pp-pre">'+(bday ? 'Happy '+(it.belated?'belated ':'')+'birthday' : 'Happy '+(it.belated?'belated ':'')+ordinal(it.years)+' Workiversary')+'</div>'+
       '<h2 class="pp-title">'+letters(it.first+'!', 0.25)+'</h2>'+
-      '<div class="pp-sub">'+(bday ? 'Have a wonderful day 🎉' : 'Thank you for '+yearsWord(it.years)+' with us 💛')+'</div>'+
+      '<div class="pp-sub">'+(it.belated
+          ? (bday ? 'Your birthday was '+whenWas(it)+' — we saved your cake 🎂' : 'Your Workiversary was '+whenWas(it)+' — thank you for '+yearsWord(it.years)+' with us 💛')
+          : (bday ? 'Have a wonderful day 🎉' : 'Thank you for '+yearsWord(it.years)+' with us 💛'))+'</div>'+
       (bday ? '<div class="pp-make" id="pp-make">✨ Make a wish ✨</div>'+cakeHTML()+'<div class="pp-hint" id="pp-hint">Tap each candle to blow it out</div>' : yearsHTML(it))+
       '<div class="pp-btns">'+(LIST.length>1 ? '<button class="pp-btn g" id="pp-next">Next →</button>' : '')+'<button class="pp-btn" id="pp-close">Thank you! 💛</button></div>'+
       (LIST.length>1 ? '<div class="pp-dots">'+LIST.map((_,i)=>'<i class="'+(i===AT?'on':'')+'"></i>').join('')+'</div>' : '');
@@ -426,7 +435,7 @@
         const left=cands.filter(x=>!x.classList.contains('out')), h=document.getElementById('pp-hint');
         if(left.length){ if(h) h.textContent=left.length===1 ? 'One more…' : left.length+' to go…'; left[0].focus({preventScroll:true}); return; }
         cake.classList.add('done'); const r=cake.getBoundingClientRect(); setTimeout(()=>pop(r.left+r.width/2, r.top+r.height*0.25), 350);
-        setTimeout(()=>{ const mk=document.getElementById('pp-make'); if(mk){ mk.textContent='✨ Wish made! ✨'; mk.classList.add('made'); } if(h) h.textContent='Happy birthday, '+it.first+'!'; }, 700);
+        setTimeout(()=>{ const mk=document.getElementById('pp-make'); if(mk){ mk.textContent='✨ Wish made! ✨'; mk.classList.add('made'); } if(h) h.textContent='Happy '+(it.belated?'belated ':'')+'birthday, '+it.first+'!'; }, 700);
         setTimeout(()=>{ const c2=document.getElementById('pp-close'); if(c2) c2.focus({preventScroll:true}); }, 800); });
       cands[0].focus({preventScroll:true}); }
     else document.getElementById('pp-close').focus({preventScroll:true});
@@ -455,31 +464,43 @@
   function seenToday(list){ const d=new Date().toDateString(), ids=list.map(it=>it.kind+':'+it.email+':'+it.name).join('|');
     try{ const s=JSON.parse(localStorage.getItem(SEEN)||'{}'); return s.d===d && s.ids===ids; }catch(_){ return true; } }
   function markSeen(list){ try{ localStorage.setItem(SEEN, JSON.stringify({d:new Date().toDateString(), ids:list.map(it=>it.kind+':'+it.email+':'+it.name).join('|')})); }catch(_){} }
+  /* BELATED (Cory 18/11: "should show if the user didn't log in the day of their birthday or workiversary. Lots of people
+     take the Birthday off so it should come next time they log in but the message should be a bit different"): YOUR OWN
+     celebration from the last 7 days (Cory: "It shouldn't run for more than a week after their birthday") that you haven't had yet (seen - kept in the shared record, so any device counts)
+     plays the next time you open Home, as "Happy belated ...". Nobody else is shown it again after the day. */
   function card(host, people, opts){
     opts=opts||{}; if(!host) return; const me=String(opts.me||'').toLowerCase(), c=celebrations(people, opts.now); css();
-    c.today.forEach(it=>{ it.mine=!!me && it.email.toLowerCase()===me; }); c.today.sort((a,b)=>(b.mine-a.mine));
-    if(!c.today.length && !c.soon.length){ host.innerHTML=''; host.hidden=true; return; }
+    const isMe=it=>!!me && it.email.toLowerCase()===me;
+    c.today.forEach(it=>{ it.mine=isMe(it); }); c.today.sort((a,b)=>(b.mine-a.mine));
+    const late=c.recent.filter(it=>isMe(it) && !it.seen).map(it=>Object.assign(it, {mine:true, belated:true}));
+    const mineAll=late.concat(c.today.filter(it=>it.mine)), shown=late.concat(c.today);
+    if(!shown.length && !c.soon.length){ host.innerHTML=''; host.hidden=true; return; }
     host.hidden=false;
-    const mine=c.today.filter(it=>it.mine), others=c.today.filter(it=>!it.mine), onlyAnniv=c.today.length && c.today.every(it=>it.kind==='anniv');
+    const others=c.today.filter(it=>!it.mine), onlyAnniv=shown.length && shown.every(it=>it.kind==='anniv');
     const bok=RM ? '' : '<div class="bok" aria-hidden="true">'+Array.from({length:14},(_,i)=>{ const s=3+(i*7)%9; return '<i style="left:'+((i*37)%100)+'%;width:'+s+'px;height:'+s+'px;animation-duration:'+(9+(i*5)%9)+'s;animation-delay:-'+((i*1.7)%9).toFixed(1)+'s"></i>'; }).join('')+'</div>';
     const soonTxt=it=>'<span><b>'+esc(it.day)+'</b> · '+esc(it.first)+'’s '+(it.kind==='bday' ? 'birthday 🎂' : ordinal(it.years)+' Workiversary 🏆')+'</span>';
     const item=(it,i)=>'<div class="pp-it"><span class="mini">'+faceHTML(it)+'</span>'+
-        '<div class="tx"><b>'+(it.mine ? (it.kind==='bday' ? 'Happy birthday, '+esc(it.first)+'! 🥳' : 'Happy '+ordinal(it.years)+' Workiversary, '+esc(it.first)+'! 🏆')
+        '<div class="tx"><b>'+(it.mine ? esc(headline(it))+(it.kind==='bday' ? ' 🥳' : ' 🏆')
                          : esc(it.kind==='bday' ? it.first+'’s birthday 🎂' : it.first+' · '+yearsWord(it.years)+' with us 🏆'))+'</b>'+
-        '<span>'+esc(it.mine ? 'Tap to see your celebration again' : [it.in<0?it.day:'', it.role, it.office].filter(Boolean).join(' · '))+'</span></div>'+
+        '<span>'+esc(it.belated ? 'It was '+whenWas(it)+' — tap to see your celebration' : it.mine ? 'Tap to see your celebration again' : [it.in<0?it.day:'', it.role, it.office].filter(Boolean).join(' · '))+'</span></div>'+
         '<span class="acts">'+(it.mine ? '' : '<button class="say" data-w="'+i+'">💬 Send '+esc(it.first)+' a message</button>')+
         '<button class="go" data-i="'+i+'">'+(it.mine?'✨ My celebration':'🎉 Celebrate')+'</button></span></div>';
-    const demoLinks=opts.demo ? '<div class="pp-demo">Sandbox: see what '+others.map((it,i)=>'<button data-as="'+i+'">'+esc(it.first)+'</button>').join(' or ')+' sees today (it’s their day)</div>' : '';
-    host.innerHTML='<div class="pp-home'+(mine.length?' mine':'')+(onlyAnniv?' anniv':'')+'"><div class="aur" aria-hidden="true"></div>'+bok+
-      '<h2><span class="spark">✨</span>'+(mine.length ? 'It’s your day!' : c.today.length ? 'Celebrating today' : 'Coming up this week')+'</h2>'+
-      (c.today.length ? '<div class="pp-today">'+c.today.map(item).join('')+'</div>' : '')+
-      (c.soon.length ? '<div class="pp-soon">'+(c.today.length?'<span><b>Coming up</b></span>':'')+c.soon.map(soonTxt).join('')+'</div>' : '')+
-      (others.length ? demoLinks : '')+'</div>';
-    host.querySelectorAll('.go').forEach(b=>b.onclick=()=>open(c.today, +b.dataset.i));
-    host.querySelectorAll('.say').forEach(b=>b.onclick=()=>wish(c.today[+b.dataset.w]));
+    const pastOther=opts.demo ? c.recent.find(it=>!isMe(it)) : null;
+    const demoLinks=opts.demo && (others.length || pastOther) ? '<div class="pp-demo">Sandbox: see what '+others.map((it,i)=>'<button data-as="'+i+'">'+esc(it.first)+'</button>').join(' or ')+' sees today (it’s their day)'+
+      (pastOther ? ' · or a belated one: <button data-late="1">'+esc(pastOther.first)+'</button> was off '+esc(whenWas(pastOther).replace(/^on /,''))+' and opens Home-Brace today' : '')+'</div>' : '';
+    host.innerHTML='<div class="pp-home'+(mineAll.length?' mine':'')+(onlyAnniv?' anniv':'')+'"><div class="aur" aria-hidden="true"></div>'+bok+
+      '<h2><span class="spark">✨</span>'+(late.length && !c.today.some(it=>it.mine) ? 'We missed you on your day!' : mineAll.length ? 'It’s your day!' : c.today.length ? 'Celebrating today' : 'Coming up this week')+'</h2>'+
+      (shown.length ? '<div class="pp-today">'+shown.map(item).join('')+'</div>' : '')+
+      (c.soon.length ? '<div class="pp-soon">'+(shown.length?'<span><b>Coming up</b></span>':'')+c.soon.map(soonTxt).join('')+'</div>' : '')+
+      demoLinks+'</div>';
+    const seenIt=list=>{ list.filter(it=>it.mine).forEach(it=>{ it.seen=true; if(opts.onSeen) try{ opts.onSeen(it); }catch(_){} }); };
+    host.querySelectorAll('.go').forEach(b=>b.onclick=()=>{ seenIt([shown[+b.dataset.i]]); open(shown, +b.dataset.i); });
+    host.querySelectorAll('.say').forEach(b=>b.onclick=()=>wish(shown[+b.dataset.w]));
     host.querySelectorAll('[data-as]').forEach(b=>b.onclick=()=>{ const it=others[+b.dataset.as]; open([Object.assign({}, it, {mine:true})], 0); });
-    /* only YOUR day opens by itself - once a day on this device */
-    if(mine.length && opts.auto!==false && !seenToday(mine)){ markSeen(mine); setTimeout(()=>open(c.today, 0), 700); }
+    host.querySelectorAll('[data-late]').forEach(b=>b.onclick=()=>{ open([Object.assign({}, pastOther, {mine:true, belated:true})], 0); });
+    /* your day (or the one you missed) opens by itself - once: not on this device today, and not if you've had it on any device */
+    const auto=mineAll.filter(it=>!it.seen);
+    if(auto.length && opts.auto!==false && !seenToday(auto)){ markSeen(auto); seenIt(auto); setTimeout(()=>open(auto.concat(shown.filter(it=>auto.indexOf(it)<0)), 0), 700); }
   }
   global.PH_PARTY=Object.assign({}, RULES, {open, close, card, play});
 })(typeof window!=='undefined' ? window : globalThis);

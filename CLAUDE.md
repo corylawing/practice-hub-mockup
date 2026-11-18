@@ -462,7 +462,22 @@ I can confidently say that the chat feature should go next. The production thing
    X a message" = chat.html#to=<email>&name=&say= (Home-Brace Chat for anyone who has it - chat.html openFromLink() finds
    or starts the one-to-one chat and puts the text in the box, nothing sent by itself; Teams' deep link otherwise).
    Sandbox: "see what Avery / Dana sees today" links. Still for "less motion". test/party (24).
-   CHAT PHOTOS (Cory 18/11, like Slack): hovering a photo shows a round magnifier with a + and darkens it a little (mouse
+   BELATED (Cory 18/11: "Lots of people take the Birthday off so it should come next time they log in but the message
+   should be a bit different"; "It shouldn't run for more than a week after"): YOUR OWN celebration from the last 7 days
+   you haven't had plays the next time you open Home: "We missed you on your day" / "Happy belated birthday" / "Your
+   birthday was on Monday - we saved your cake" (the cake still works). Had it = seen {bday|anniv: 'YYYY-MM-DD'} in your
+   own entry of ph_celebrate (home.html onSeen, PH_STORE.update) - so once, on any device. Nobody else sees it after the
+   day. Sandbox: "or a belated one: Rory" (made-up, 3 days ago).
+   HEATHER'S "Hire Dates and Birthdays" EXCEL (18/11; NEVER in the repo - real people): Admin -> People -> "🎂 Birthdays &
+   hire dates from Excel": read in the admin's browser (PH_BOOK + PH_PARTY.fromHireSheet: one tab, a section per office
+   - label row, header row Employee Name | Date of Hire | Birthday | Actual Hire Date - found by labels; "March 14th" ->
+   03-14, the birth year never read; the ACTUAL/original hire date wins (Heather: "if it says original hire date you can
+   use those instead of the hire date that was when the practice was purchased"); an original hire that is only a year
+   (6 rows) is not made into a date - listed to type in Admin -> People; 2 rows have no hire date). Each name matched to a
+   person (matchPerson: first + last, the (nickname) too; two people with one name = no match) or picked from a list;
+   Save fills EMPTY dates only. Checked 18/11 on the real file locally (counts only, test profile deleted): 73 people,
+   71 birthdays, 71 start dates (21 original).
+ hovering a photo shows a round magnifier with a + and darkens it a little (mouse
    only; phones tap). test/party checks it.
 37. **MONTHLY REPORT (Heather's monitor report, item 34c; 18/11/2026; hc205; SANDBOX ONLY until user.js MONTHLY_LIVE is
    true - an admin can preview live with monthly.html?monthlypreview).** Cory: "build it"; "It has to be more than just her
@@ -508,7 +523,8 @@ I can confidently say that the chat feature should go next. The production thing
    (confirm the add-on's exact name once credentials are in). RIP is now from:'orthofi'. (2) Offices shouldn't do
    percentages: "Maybe Home Brace could calculate it based off some numbers we ask them to enter" -> the delinquent COUNT
    (deln) is kept and Delinquent % = deln / # A/R is calculated (old sheet K and L=K/J); over-estimated completion date %
-   shows in Ortho2 already (typed as %); COMFORT % does NOT - ASKED which two numbers make it (typed % until then). Due
+   shows in Ortho2 already (typed as %); COMFORT % does NOT - Heather 18/11: total appointments and comfort appointments ->
+   two typed counts (appts, cmfa) and Comfort % = comfort / total (CALC cmfpct). Due
    the 5th - fine. Office managers type (Heather can teach them). (3) "All office managers can see all offices. I currently
    send this as an email to all OMs and TCs" -> settings.everyone (default on): everyone with the report reads every office,
    typing stays with each office's own people; TCs get monthly:'view' (DEPT_CAN + Admin grid). (4) Case acceptance: leave
