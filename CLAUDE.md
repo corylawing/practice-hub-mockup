@@ -440,6 +440,11 @@ I can confidently say that the chat feature should go next. The production thing
    localStorage ph_chat_emoji_recent (18 defaults). Used by the message box (emoji button) and "More emoji" on a
    reaction. All 1,425 toned sequences checked against Unicode's list. test/chatv2.test.js (42).
    STILL QUEUED: a "chat alerts: Home-Brace / Teams" choice.
+29. **SCHEDULE: month arrows on the counts (Heather 18/11 IDEA: "I find that I have to go back up to the top to scroll through
+   the months then go down the page halfway to look at this chart"; hc195, sandbox).** A "Doctor days and coverage" bar
+   with ‹ November 2026 › right above the counts (renderCounters); PS.countStep(n) moves the whole page a month (also in
+   Week view: that month's first week), then scrollBy keeps the counts at the same spot on the screen. test/schedcounts.
+   Browser (mock-up): Nov -> Dec -> Oct, counts stayed at the same place, top label followed.
 28. **CHAT GROUPS (18/11/2026; hc193; SANDBOX ONLY until chat.html GROUPS_LIVE is true; one live device: ph_chat_groups=1).**
    Cory: "Flexibility to create their own group" - like Slack channels; named "Groups" (in Teams they're invite-only group
    chats; a Teams "channel" is something else). ＋ New group first in every New chat (mock-up / pilot / everyone): a name

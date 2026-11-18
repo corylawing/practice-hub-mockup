@@ -215,6 +215,12 @@
     padding:3px 6px;font-size:10.5px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:2px}
   .mday:hover .addday{border-color:var(--teal);color:var(--teal-600)}
   .counts{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px}
+  /* the counts' own month arrows (Heather 18/11) */
+  .cntbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:22px}
+  .cntbar h2{margin:0;font-size:17px;color:var(--navy);flex:1;min-width:0}
+  .cntbar + .counts{margin-top:12px}
+  .cntbar .nav2 .lab{cursor:default}
+  .cntbar .nav2 .lab:hover{background:none}
   .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
   .card h2{margin:0 0 3px;font-size:16px;color:var(--navy)}
   .card .sub{font-size:12.5px;color:var(--soft);margin-bottom:12px}
@@ -312,11 +318,11 @@
   }
 
 </style>
-<script src="user.js?v=hc194"></script>
+<script src="user.js?v=hc195"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc194"></script>
-  <script src="schedrec.js?v=hc194"></script>
-  <script src="gate.js?v=hc194"></script>
+  <script src="store.js?v=hc195"></script>
+  <script src="schedrec.js?v=hc195"></script>
+  <script src="gate.js?v=hc195"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — sample staff schedule for validation. Live version = one Microsoft List the practice maintains.</div>
@@ -816,7 +822,13 @@
       pairRows.push('<tr><td>'+p.n+'</td><td><span class="pilldot"><i style="background:'+c.dot+'"></i>'+l.n+'</span></td>'+
         '<td class="n">'+(M.perPair[i+'|'+l.n]||0)+'</td><td class="n">'+y+'</td></tr>');
     }));
-    el('counters').innerHTML='<div class="counts">'+
+    /* MONTH ARROWS RIGHT HERE (Heather 18/11: "I often need to see the chart of the days covered per office and scroll
+       through the months. I find that I have to go back up to the top ... then go down the page halfway"). They move the
+       whole page a month, like the ones at the top, and keep these counts where they are on the screen. */
+    el('counters').innerHTML='<div class="cntbar"><h2>Doctor days and coverage</h2><div class="nav2">'+
+        '<button onclick="PS.countStep(-1)" aria-label="Previous month" title="Previous month">‹</button><span class="lab">'+MOFULL[mM]+' '+mY+'</span>'+
+        '<button onclick="PS.countStep(1)" aria-label="Next month" title="Next month">›</button></div></div>'+
+      '<div class="counts">'+
       '<div class="card"><h2>🧑‍⚕️ Doctor days</h2><div class="sub">Days each doctor is scheduled to work.</div>'+
         '<table class="cnt"><thead><tr><th>Doctor</th><th style="text-align:right">'+mn+'</th><th style="text-align:right">'+mY+'</th></tr></thead><tbody>'+docRows+'</tbody></table></div>'+
       '<div class="card"><h2>🏢 Days covered per office</h2><div class="sub">Days with a doctor on site.</div>'+
@@ -1249,6 +1261,15 @@
   }
   function step(n){ if(view==='week'){ anchor=addDays(anchor,7*n); mY=anchor.getFullYear(); mM=anchor.getMonth(); }
     else { mM+=n; if(mM<0){mM=11;mY--;} if(mM>11){mM=0;mY++;} } refresh(); }
+  /* the counts' arrows: a whole month in either view, and the counts stay put on the screen (the calendar above changes
+     height from month to month - 4, 5 or 6 weeks - which would otherwise push them away) */
+  function countStep(n){
+    const box=el('counters'), y0=box.getBoundingClientRect().top;
+    let y=mY, m=mM+n; if(m<0){ m=11; y--; } if(m>11){ m=0; y++; }
+    mY=y; mM=m; if(view==='week') anchor=mondayOf(new Date(y,m,1));
+    refresh();
+    window.scrollBy(0, el('counters').getBoundingClientRect().top-y0);
+  }
   function today(){ anchor=mondayOf(new Date(TODAY)); mY=TODAY.getFullYear(); mM=TODAY.getMonth(); refresh(); landOnToday(); }
   /* "Today" has to be SEEN to do something, even when this month is already on screen -
      on a phone the month is a long list, so the button looked dead (Cory, 19/09). Scroll
@@ -1303,7 +1324,7 @@
   window.PS={view:setView,step,today,togLoc,allLocs,togDoc,allDocs,unleave,togYdot,togClosed,togEvent,setEvent,open,addTo,quick,pickDoc,setT,halfDay,fullDay,markYdot,markClosed,
     clearDay,saveDay,addLocation,editLoc,setColor,setTZ,dtog,dtime,lunchTog,lunchT,saveLoc,delLoc,
     relocate:function(){ locations=PH.locations(); locations.forEach(l=>fLoc.add(l.n)); refresh(); },
-    pickMonth,goMonth,jumpTo,
+    pickMonth,goMonth,jumpTo,countStep,
     addPerson,edit:editPerson,savePerson,delPerson,close:closeModal};
 
   el('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal();});
@@ -1428,7 +1449,7 @@
    machine is missing here until the next page load. */
 document.addEventListener('ph-locations-changed',function(){ if(window.PS&&PS.relocate)PS.relocate(); });
 PH.nav('schedule');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc194"></script>
+<script src="tour.js?v=hc195"></script>
 <script>
 Tour.init([
   {sel:'#viewseg', title:'Week or month', body:'<b>Week</b> is the day-to-day working view. <b>Month</b> shows the whole month at a glance, with every office in its own color.'},
