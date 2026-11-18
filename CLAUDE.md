@@ -456,6 +456,10 @@ I can confidently say that the chat feature should go next. The production thing
    events, a JWT with fake_scp): live without the switch = no New group; pool = pilot only; errors for no name / 1
    person; body right; rename; no × / Leave without the permission (+ note); outsider refused; with it: take out + leave
    (gone after refresh); names right.
+   ON FOR LIVE hc194 (Cory 18/11: "groups live"); chat itself still pilot-only. NEXT (Cory 18/11): group OWNERS like Slack -
+   "The person who starts the group can be the owner of the group or assign ownership to someone else" (Teams group chats
+   have no owner rule - every member can rename/add/remove in the Teams app; Home-Brace can only enforce it in its own
+   screens + needs a shared place to keep owners).
    MICROSOFT PERMISSIONS (18/11, Cory has admin for ~1 week only): asked him to add + grant (Delegated) ChatMember.ReadWrite,
    Presence.Read.All, Calendars.ReadWrite, Calendars.ReadWrite.Shared, OnlineMeetings.ReadWrite, Mail.Send, User.Read.All,
    User.ReadWrite.All, Sites.Manage.All, Files.ReadWrite.All, ChannelMessage.Send, ChannelMessage.Read.All, Tasks.ReadWrite,

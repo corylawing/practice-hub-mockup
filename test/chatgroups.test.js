@@ -68,7 +68,7 @@ const fails=async f=>{ try{ await f(); return ''; }catch(e){ return e.message; }
   t('Teams’ own notes come through: added, taken out / left, renamed (others are left out)', ea.system && ea.kind==='added' && ea.who[0].id==='u-q' && ea.by.id==='u-me' && er.kind==='removed' && en.kind==='renamed' && en.topic==='Front desk' && ex===null);
 
   /* ---- the page ---- */
-  t('OFF on the live site (GROUPS_LIVE false); on in the sandbox; one live device can try it (ph_chat_groups = 1)', /const GROUPS_LIVE=false;/.test(CHAT) &&
+  t('ON for the live site (hc194, Cory: "groups live"); GROUPS_LIVE false again = no groups (one device can still opt in: ph_chat_groups = 1)', /const GROUPS_LIVE=true;/.test(CHAT) &&
     /const GROUPS=\(\)=>\{ if\(GROUPS_LIVE \|\| !ONLIVE\) return true; try\{ return localStorage\.getItem\('ph_chat_groups'\)==='1'; \}catch\(_\)\{ return false; \} \};/.test(CHAT));
   t('"＋ New group" first in every New chat (mock-up, pilot, everyone); the old fixed "All your testers" group only without it', (CHAT.match(/data-act="grpnew"/g)||[]).length>=3 && /ts\.length>1 && !GROUPS\(\) \? '<button data-act="mkgroup">/.test(CHAT));
   t('a group’s name (or 👥 N) opens its settings: rename, people, ＋ Add people, take out (×), Leave group - each change asks first', /data-act="grpinfo" role="button"/.test(CHAT) && CHAT.indexOf("👥 '+(c.members||[]).length")>=0 &&
