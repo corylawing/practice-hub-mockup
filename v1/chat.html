@@ -287,7 +287,11 @@
   .pop .copy{display:block;width:100%;margin-top:6px;border:0;border-top:1px solid #EDF1F5;background:none;padding:9px 6px 3px;font:inherit;font-size:14px;color:var(--ink);text-align:left;cursor:pointer}
   /* GROUPS (Cory 18/11) */
   .lab2{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:700;color:var(--ink)}
-  .ci.newgrp .nm{color:var(--teal-600)}
+  .lsec{display:flex;align-items:center;gap:6px;width:100%;border:0;background:#F7F9FB;border-bottom:1px solid #EEF1F5;padding:9px 14px 7px;font:inherit;font-size:12.5px;font-weight:800;color:var(--soft);cursor:pointer;text-align:left;letter-spacing:.01em}
+  .lsec:hover{color:var(--navy)}
+  .lsec .car{display:inline-block;transition:transform .15s;font-size:11px}
+  .lsec.folded .car{transform:rotate(-90deg)}
+  .lsec .cnt{margin-left:auto;font-weight:700;font-size:11.5px;color:var(--soft)}
   .sys{align-self:center;max-width:90%;text-align:center;font-size:12.5px;color:var(--soft);background:#EEF2F6;border-radius:999px;padding:4px 12px;margin:4px 0}
   .conv-top .who.grpw{cursor:pointer;border-radius:8px}
   .conv-top .who.grpw:hover b{text-decoration:underline}
@@ -348,13 +352,13 @@
   .lb .lbnav.p{left:14px}.lb .lbnav.n{right:14px}
   .lb .lbnav[hidden]{display:none}
 </style>
-<script src="user.js?v=hc198"></script>
+<script src="user.js?v=hc199"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc198"></script>
-  <script src="gate.js?v=hc198"></script>
-  <script src="_staff.js?v=hc198"></script>
-  <script src="alerts.js?v=hc198"></script>
-  <script src="chatgraph.js?v=hc198"></script>
+  <script src="store.js?v=hc199"></script>
+  <script src="gate.js?v=hc199"></script>
+  <script src="_staff.js?v=hc199"></script>
+  <script src="alerts.js?v=hc199"></script>
+  <script src="chatgraph.js?v=hc199"></script>
 </head>
 <body>
 <div class="ribbon" id="ribbon">MOCK-UP for Heather and Dr. Jae — made-up people, messages and videos. Nothing is sent anywhere.</div>
@@ -523,20 +527,34 @@
     const F=[['all','All'],['unread','Unread'],['office',REALCHAT?'Groups':'Offices & teams'],['person','People']];
     el('chips').innerHTML=F.map(f=>'<button class="chip'+(filter===f[0]?' on':'')+'" data-act="filter" data-v="'+f[0]+'">'+f[1]+'</button>').join('');
   }
+  const SEC_KEY='ph_chat_sections';
+  function secFolded(){ try{ const v=JSON.parse(localStorage.getItem(SEC_KEY)||'{}'); return v && typeof v==='object' ? v : {}; }catch(_){ return {}; } }
+  function secToggle(k){ const v=secFolded(); v[k]=!v[k]; try{ localStorage.setItem(SEC_KEY, JSON.stringify(v)); }catch(_){} renderList(); }
   function renderList(){
     const qq=q.trim().toLowerCase();
     const list=CHATS.slice().sort((a,b)=>last(b).at-last(a).at).filter(c=>
       (filter==='all' || (filter==='unread' && c.unread) || (filter==='office' && c.type!=='person') || (filter==='person' && c.type==='person')) &&
       (!qq || c.name.toLowerCase().indexOf(qq)>=0 || c.members.some(m=>m.toLowerCase().indexOf(qq)>=0)));
-    /* ＋ New group on the Groups tab too (Cory 18/11: on Groups it said "No chats match" and there was no way to make one) */
-    const mayGroup=GROUPS() && filter==='office' && !qq && (!REALCHAT || !CG.TEST || CG.testers().filter(t=>String(t.email||'').toLowerCase()!==myEmail()).length>1);
-    const newRow=mayGroup ? '<button class="ci newgrp" data-act="grpnew">'+avatar({type:'group', name:'New group'})+'<span class="mid"><span class="nm">＋ New group</span><span class="pv">Give it a name and pick the people</span></span></button>' : '';
-    el('items').innerHTML = newRow + (list.length ? list.map(c=>{
-      const m=last(c);
+    const row=c=>{ const m=last(c);
       return '<button class="ci'+(open===c.id?' on':'')+(c.unread?' unread':'')+'" data-act="open" data-v="'+c.id+'">'+avatar(c)+
         '<span class="mid"><span class="nm">'+esc(c.name)+'</span><span class="pv">'+esc(preview(m,c))+'</span></span>'+
-        '<span class="side"><span class="tm">'+esc(when(m.at))+'</span>'+(c.unread?'<span class="badge">'+c.unread+'</span>':'')+'</span></button>';
-    }).join('') : '<div class="empty" style="padding:30px 16px">'+(mayGroup ? 'No groups yet.' : 'No chats match.')+'</div>');
+        '<span class="side"><span class="tm">'+esc(when(m.at))+'</span>'+(c.unread?'<span class="badge">'+c.unread+'</span>':'')+'</span></button>'; };
+    /* GROUPS AND DIRECT MESSAGES APART, like Slack (Cory 18/11: "Like Slack there should be a seperation between DMs and
+       Channels (or groups)"). On All and Unread: a "Groups" section, then "Direct messages", newest first in each. A
+       section folds away with its heading (kept on this device); a folded one still shows its unread chats and the one
+       that's open. The Groups / People chips still show just one kind. */
+    let html='';
+    if(!list.length) html='<div class="empty" style="padding:30px 16px">No chats match.</div>';
+    else if(filter==='all' || filter==='unread'){
+      const fold=secFolded();
+      [['groups', REALCHAT ? 'Groups' : 'Offices, teams and groups', list.filter(c=>c.type!=='person')], ['dms', 'Direct messages', list.filter(c=>c.type==='person')]].forEach(sx=>{
+        if(!sx[2].length) return;
+        const f=!!fold[sx[0]], unr=sx[2].reduce((a,c)=>a+(c.unread?1:0),0), shown=f ? sx[2].filter(c=>c.unread || c.id===open) : sx[2];
+        html+='<button type="button" class="lsec'+(f?' folded':'')+'" data-act="lsec" data-v="'+sx[0]+'" aria-expanded="'+(!f)+'"><span class="car">▾</span>'+esc(sx[1])+
+          '<span class="cnt">'+(f && unr ? unr+' unread' : sx[2].length)+'</span></button>'+shown.map(row).join('');
+      });
+    } else html=list.map(row).join('');
+    el('items').innerHTML=html;
     saveUnread();
   }
 
@@ -686,7 +704,7 @@
   function emoLoad(){
     if(window.PH_EMOJI) return Promise.resolve(window.PH_EMOJI);
     if(emoP) return emoP;
-    emoP=new Promise((res, rej)=>{ const sc=document.createElement('script'); sc.src='emoji.js?v=hc198'; sc.async=true;
+    emoP=new Promise((res, rej)=>{ const sc=document.createElement('script'); sc.src='emoji.js?v=hc199'; sc.async=true;
       sc.onload=()=>window.PH_EMOJI ? res(window.PH_EMOJI) : rej(new Error('no emoji')); sc.onerror=()=>{ emoP=null; sc.remove(); rej(new Error('no emoji')); };
       document.head.appendChild(sc); });
     return emoP;
@@ -1680,6 +1698,7 @@
     if(act==='open') return openChat(v);
     if(act==='back'){ el('app').classList.remove('open'); open=null; renderList(); fit(); return; }
     if(act==='filter'){ filter=v; renderChips(); renderList(); return; }
+    if(act==='lsec'){ secToggle(v); return; }
     if(act==='send'){ sendNow(); return; }
     if(act==='unstage'){ const c=cur(); if(c){ delete STAGED[c.id]; paintComposer(true); } return; }
     if(act==='attach'){ el('file').click(); return; }

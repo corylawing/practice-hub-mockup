@@ -484,7 +484,11 @@ I can confidently say that the chat feature should go next. The production thing
    Browser: mock-up + live-mode harness (scratchpad chatowners-run.js; fakelive keeps ph_chatgrp_ in W.__own, __ownFail).
    test/chatgroups (27).
    18/11 Cory couldn't find it ("I still don't see in production how to add groups") - he looked on the Groups tab; it was
-   only inside ＋ New chat. hc198: the Groups tab starts with a "＋ New group" row ("No groups yet." when empty).
+   only inside ＋ New chat. hc198 added a "＋ New group" row on the Groups tab - REMOVED again in hc199 (Cory: "Don't need the
+   group button I figured it out"). hc199 (Cory: "Like Slack there should be a seperation between DMs and Channels (or
+   groups)"): on All / Unread the list is two sections, "Groups" (mock-up: "Offices, teams and groups") then "Direct
+   messages", each newest first; a heading click folds it (localStorage ph_chat_sections); folded = still shows its unread
+   chats + the open one; the count shows "N unread" when folded. Groups / People chips unchanged.
    MICROSOFT PERMISSIONS (18/11, Cory has admin for ~1 week only): asked him to add + grant (Delegated) ChatMember.ReadWrite,
    Presence.Read.All, Calendars.ReadWrite, Calendars.ReadWrite.Shared, OnlineMeetings.ReadWrite, Mail.Send, User.Read.All,
    User.ReadWrite.All, Sites.Manage.All, Files.ReadWrite.All, ChannelMessage.Send, ChannelMessage.Read.All, Tasks.ReadWrite,
