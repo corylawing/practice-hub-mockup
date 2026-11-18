@@ -34,7 +34,10 @@
      denials. Consults approved before this kept "Submitted to Medicaid"; they are SHOWN as Medicaid Approved
      (consultsFrom) and their stored record only changes when someone next saves it. */
   const MED_OK='Medicaid Approved', MED_NO='Medicaid Denied', MED_OUTCOMES=['Submitted to Medicaid', MED_OK, MED_NO];
-  const OUTCOMES=['Started','Pending',SCHED_START,'Pre-TX Hold','Submitted to Medicaid',MED_OK,MED_NO,'Observation','No Show','Refused Treatment','Rescheduled / Cancelled'];
+  /* 18/11/2026, Selene: "Cancelled" as its own outcome. The old "Rescheduled / Cancelled" (shown as "Rescheduled" - it offers
+     the new date) stays exactly as it is, so no consult already saved changes; a cancelled consult is not completed and
+     not on the call list, like a rescheduled one, and has its own line in the month's numbers. */
+  const OUTCOMES=['Started','Pending',SCHED_START,'Pre-TX Hold','Submitted to Medicaid',MED_OK,MED_NO,'Observation','No Show','Refused Treatment','Rescheduled / Cancelled','Cancelled'];
   // "Completed consults" = every exam that happened (Dashboard B9, Monthly Totals E) - the
   // sheet's Started + Pending + Observation + Refused, plus the new outcomes.
   const COMPLETED=['Started','Pending',SCHED_START,'Pre-TX Hold','Submitted to Medicaid',MED_OK,MED_NO,'Observation','Refused Treatment'];
@@ -179,6 +182,15 @@
     return r;
   }
   /* The call list's buttons. Each sets the columns a TC would have typed in the sheet. */
+  /* THE CALL LOG (18/11/2026, Selene: a notes field on the call list "so the team can log each outreach attempt" - the
+     conversation, how it went, the follow-up needed). Every call-list action - and "Add a note" on its own - adds one
+     dated line to the consult's own list (r.calls); nothing is ever overwritten. Newest last; at most 200 kept. */
+  function cleanCalls(list){ return (Array.isArray(list) ? list : []).filter(x=>x && typeof x==='object' && (x.note || x.what))
+    .map(x=>({at:String(x.at||'').slice(0,40), day:/^\d{4}-\d{2}-\d{2}$/.test(String(x.day||'')) ? x.day : '', by:String(x.by||'').slice(0,120), what:String(x.what||'').slice(0,60), note:String(x.note||'').slice(0,2000), next:String(x.next||'').slice(0,10)})); }
+  function addCall(r, e){ r.calls=cleanCalls(r.calls).concat(cleanCalls([e])).slice(-200); return r; }
+  /* the line's day: the practice's own day when it was saved (tc.html today()), not world time */
+  function callLine(e){ const d=parse(e.day || String(e.at||'').slice(0,10)); const day=d ? d.getDate()+' '+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()] : '';
+    return [day, e.by, e.what].filter(Boolean).join(' · ')+(e.note?': '+e.note:'')+(e.next?' (next '+e.next+')':''); }
   const DO={
     // Spoke or left a message. Pending/no-show: still waiting. The next date, if given,
     // is the next follow-up (or the next review for an observation patient).
@@ -285,7 +297,7 @@
     const n=o=>m.filter(r=>r.outcome===o).length;
     const started=n('Started'), pending=n('Pending'), schedStart=n(SCHED_START), hold=n('Pre-TX Hold'), submitted=n('Submitted to Medicaid'),
           medApproved=n(MED_OK), medDenied=n(MED_NO),
-          observation=n('Observation'), noShow=n('No Show'), refused=n('Refused Treatment'), rescheduled=n('Rescheduled / Cancelled');
+          observation=n('Observation'), noShow=n('No Show'), refused=n('Refused Treatment'), rescheduled=n('Rescheduled / Cancelled'), cancelled=n('Cancelled');
     const scheduled=m.length, completed=started+pending+schedStart+hold+submitted+medApproved+medDenied+observation+refused;
     // Denied by Medicaid and gone private pay: counted under Pending / Started now, still a Medicaid denial.
     const wentPrivate=m.filter(r=>r.medicaidDenied && r.payer==='Private pay').length;
@@ -306,6 +318,7 @@
       noShow, noShowRate:rate(noShow, scheduled),
       refused, refusedRate:rate(refused, completed),
       rescheduled, rescheduledRate:rate(rescheduled, scheduled),
+      cancelled, cancelledRate:rate(cancelled, scheduled),
       // RIP counts by the SALE date, not the consult date (B16 / M6).
       rpi:mine.filter(r=>r.rpi==='Yes' && inMonth(r.rpiDate, ym)).length,
       conversion:conversion(all, ym, keep),
@@ -472,7 +485,7 @@
     ['Treatment start date','startDate'],['Lead source','lead'],['RIP sold?','rpi'],['RIP sale date','rpiDate'],
     ['Same-day contract?','sameDay'],['Follow-up complete?','fuDone'],['Follow-up completion date','fuDoneDate'],
     ['Notes','notes'],['Month',null],['Action needed',null],['Days waiting',null],['Patient / chart ID','chart'],
-    ['Medicaid / Private pay',null]
+    ['Medicaid / Private pay',null],['Call log',null]
   ];
   function csv(consults, today){
     const q=v=>{ v=v==null?'':String(v); return /[",\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
@@ -483,6 +496,7 @@
         if(c[0]==='Action needed') return action(r, today);
         if(c[0]==='Days waiting'){ const d=daysWaiting(r, today); return d==null?'':d; }
         if(c[0]==='Medicaid / Private pay') return payerOf(r);
+        if(c[0]==='Call log') return cleanCalls(r.calls).map(callLine).join(' | ');
         return r[c[1]]||'';
       }));
     });
@@ -632,7 +646,7 @@
     iso, parse, addDays, addMonths, daysBetween, monthOf, inMonth, monthDays, shiftMonth,
     action, daysWaiting, setOutcome, DO, monthStats, openWork, dailyView, yearTotals, callList,
     slotsOn, slotsInMonth, usualOn, setUsual, lastDayOf, openFrom, slug, LOG_PREFIX, logKey, slotsKey, LISTS_KEY, newId, consultsFrom,
-    SHEET_COLS, csv, demo, live, talkText, joinTalk, talkError
+    SHEET_COLS, csv, demo, live, talkText, joinTalk, talkError, cleanCalls, addCall, callLine
   };
   global.TC=TC;
   if(typeof module!=='undefined' && module.exports) module.exports=TC;

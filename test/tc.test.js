@@ -207,14 +207,14 @@ const C=[
 {
   const lines=TC.csv([{date:'2026-10-07', name:'Doe, Jane', outcome:'Pending', nextFU:'2026-10-19', chart:'C1'}], TODAY).split('\r\n');
   const head=lines[0].split(',');
-  t('Download has the Consult Log’s 28 columns in order, then Medicaid / Private pay', head.length===29 && head[0]==='Consult date' && head[24]==='Month' && head[27]==='Patient / chart ID' && head[28]==='Medicaid / Private pay');
+  t('Download has the Consult Log’s 28 columns in order, then Medicaid / Private pay, then the call log (Selene 18/11) - her columns never move', head.length===30 && head[0]==='Consult date' && head[24]==='Month' && head[27]==='Patient / chart ID' && head[28]==='Medicaid / Private pay' && head[29]==='Call log');
   t('A comma in a name is quoted', lines[1].indexOf('"Doe, Jane"')>0);
   t('Calculated columns are filled', lines[1].indexOf('2026-10,Pending follow-up due,13,C1,Private pay')>0);
 }
 
 /* ---------- The lists match the sheet ---------- */
 {
-  t('Outcomes = the sheet’s six + Selene’s Pre-TX Hold, Submitted to Medicaid, Pending – Scheduled to Start, Medicaid Approved and Medicaid Denied', eq(TC.OUTCOMES, ['Started','Pending','Pending – Scheduled to Start','Pre-TX Hold','Submitted to Medicaid','Medicaid Approved','Medicaid Denied','Observation','No Show','Refused Treatment','Rescheduled / Cancelled']));
+  t('Outcomes = the sheet’s six + Selene’s Pre-TX Hold, Submitted to Medicaid, Pending – Scheduled to Start, Medicaid Approved, Medicaid Denied and Cancelled (18/11)', eq(TC.OUTCOMES, ['Started','Pending','Pending – Scheduled to Start','Pre-TX Hold','Submitted to Medicaid','Medicaid Approved','Medicaid Denied','Observation','No Show','Refused Treatment','Rescheduled / Cancelled','Cancelled']));
   t('Follow-up statuses = the sheet’s five + Rebooked', eq(TC.FU_STATUSES.slice(0,5), ['Open','Contacted - waiting','Scheduled to start','Closed - started','Closed - declined']) && TC.FU_STATUSES[5]==='Rebooked');
   t('Lead sources = the sheet’s plus "Sibling" (Selene, 11/11); consult types = the sheet’s', TC.DEFAULT_LISTS.leads.length===9 && TC.DEFAULT_LISTS.leads.indexOf('Sibling')>=0 && TC.DEFAULT_LISTS.types.length===6);
   /* Selene, 11/11/2026: "Could we exclude Medicaid Conversion while still tracking their status?" */
@@ -387,6 +387,31 @@ const C=[
   t('Talk: silence leaves Notes as it was', TC.joinTalk('Keep me', '   ')==='Keep me' && TC.joinTalk(null, null)==='');
   t('Talk: a blocked microphone says how to allow it', /microphone is blocked/i.test(TC.talkError('not-allowed')));
   t('Talk: every other problem gets a plain sentence', ['service-not-allowed','no-speech','audio-capture','network','language-not-supported','???',''].every(c=>/\w/.test(TC.talkError(c)) && !/undefined/.test(TC.talkError(c))));
+}
+
+/* SELENE 18/11/2026: "Cancelled" as an outcome; a notes log on the call list (each outreach attempt) */
+{
+  const HT=require('fs').readFileSync(require('path').join(__dirname,'..','v1','tc.html'),'utf8');
+  t('Cancelled is its own outcome; "Rescheduled / Cancelled" stays as it is (no saved consult changes)', TC.OUTCOMES.indexOf('Cancelled')>=0 && TC.OUTCOMES.indexOf('Rescheduled / Cancelled')>=0);
+  t('Cancelled is not a completed consult and not on the call list', TC.COMPLETED.indexOf('Cancelled')<0 && TC.NEEDS_FU.indexOf('Cancelled')<0 &&
+    TC.action({id:'x', date:'2026-10-10', outcome:'Cancelled'}, '2026-10-20')===TC.action({id:'y', date:'2026-10-10', outcome:'Rescheduled / Cancelled'}, '2026-10-20'));
+  const M=TC.monthStats([{id:'a', date:'2026-10-02', outcome:'Cancelled'}, {id:'b', date:'2026-10-03', outcome:'Rescheduled / Cancelled'}, {id:'c', date:'2026-10-04', outcome:'Started'}, {id:'d', date:'2026-10-05', outcome:'Cancelled'}], '2026-10', 10, '2026-10-20');
+  t('the month counts Cancelled on its own line (of everyone booked), separate from Rescheduled', M.cancelled===2 && M.rescheduled===1 && M.completed===1 && M.scheduled===4 && /R\('Cancelled', m\.cancelled, m\.cancelledRate\)/.test(HT));
+  t('the outcome picker shows Cancelled, with its own colour and a line on what it means', /o==='Cancelled'\?'Cancelled'/.test(HT) && /\.oc-Cancelled\{/.test(HT) && /Cancelled, with no new date/.test(HT));
+  const r={id:'z', calls:[{at:'2026-11-17T15:00:00Z', by:'Selene', what:'📞 Called', note:'Left a voicemail', next:'2026-11-20'}, 'junk', {}]};
+  TC.addCall(r, {at:'2026-11-18T10:00:00Z', by:'Selene', what:'📝 Note', note:'Mom will call back after payday', next:''});
+  t('the call log keeps every attempt, newest last, junk dropped - never overwritten', r.calls.length===2 && r.calls[0].note==='Left a voicemail' && r.calls[1].what==='📝 Note');
+  t('a call line: day, who, what, the note, the next date', TC.callLine(r.calls[0])==='17 Nov · Selene · 📞 Called: Left a voicemail (next 2026-11-20)');
+  t('…the day is the practice\u2019s own day when it was saved (not world time)', TC.callLine({at:'2026-11-19T02:00:00Z', day:'2026-11-18', what:'📞 Called'})==='18 Nov · 📞 Called' && /day:t, by:myName\(\)/.test(HT));
+  const many={id:'m'}; for(let i=0;i<230;i++) TC.addCall(many, {at:'2026-11-18', what:'📞 Called', note:'n'+i});
+  t('at most 200 lines kept on one consult', many.calls.length===200 && many.calls[199].note==='n229');
+  const csvOut=TC.csv([{id:'c1', date:'2026-11-10', name:'A Patient', outcome:'Pending', calls:r.calls}], '2026-11-20');
+  t('the download carries the call log in its own last column', /17 Nov · Selene · 📞 Called: Left a voicemail \(next 2026-11-20\) \| 18 Nov · Selene · 📝 Note: Mom will call back after payday/.test(csvOut));
+  t('the call list: "📝 Add a note" on every card, the newest two notes shown, the rest one tap away', /btns\+=B\('note','📝 Add a note'\)/.test(HT) && /calls\.slice\(-2\)\.reverse\(\)/.test(HT) && /▸ All '\+calls\.length\+' notes/.test(HT));
+  t('every call-list action can take a note about the call - with the same 🎤 Talk, beside the box', /h\+=noteField\('callNote'/.test(HT) && /textarea id="f-'\+f\+'" data-talkbox/.test(HT) && /DLG\.rec\[t\.f\|\|'notes'\]=txt;/.test(HT));
+  t('saving a call adds its line; "Add a note" alone changes nothing else and needs words', /TC\.addCall\(r, \{at:new Date\(\)\.toISOString\(\), day:t, by:myName\(\)\|\|myMail\(\), what:W/.test(HT) && /d\.err='Write or say the note first\.'/.test(HT));
+  t('Save while talking waits for the last words', /if\(act==='fu-save'\)\{ if\(TALK\)\{ const d0=DLG; talkFinish\(\)\.then/.test(HT));
+  t('the consult itself shows its whole call log under Notes', /function notesField\(\)\{ return noteField\('notes', 'Notes'\)\+callLogHTML\(DLG\.rec\); \}/.test(HT));
 }
 
 console.log(ok.map(s=>'  PASS  '+s).join('\n'));

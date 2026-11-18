@@ -92,6 +92,7 @@
   .oc-NoShow{background:var(--bad-soft);color:#9a2f1e}
   .oc-Refused{background:#EEF1F5;color:#46546b}
   .oc-Rescheduled{background:var(--blue-soft);color:#14496c}
+  .oc-Cancelled{background:#F3F4F6;color:#4B5563;border:1px solid #E5E7EB}
   .oc-none{background:#fff;color:var(--soft);border:1px dashed #c9d1dc}
   .oc-Hold{background:#E4F4EF;color:#1b6b57}
   .oc-Medicaid{background:#ECEDFC;color:#3b3f9e}
@@ -235,6 +236,14 @@
   .chip.oc-pick.on.o-Observation{background:var(--plum);border-color:var(--plum)}
   .chip.oc-pick.on.o-NoShow{background:var(--bad);border-color:var(--bad)}
   .chip.oc-pick.on.o-Refused{background:#5b687d;border-color:#5b687d}
+  .chip.oc-pick.on.o-Cancelled{background:#6B7280;border-color:#6B7280}
+  /* the call log (18/11) */
+  .calls{margin-top:8px;display:flex;flex-direction:column;gap:5px}
+  .call{font-size:12.5px;line-height:1.45;background:#F6F8FA;border-radius:9px;padding:6px 10px;color:var(--ink)}
+  .call b{color:var(--navy)}.call .w{color:var(--soft)}
+  .calls details summary{cursor:pointer;font-size:12.5px;font-weight:700;color:var(--teal-600);list-style:none}
+  .calls details summary::-webkit-details-marker{display:none}
+  .calls details[open] summary{margin-bottom:5px}
   .chip.oc-pick.on.o-Rescheduled{background:var(--blue);border-color:var(--blue)}
   .chip.oc-pick.on.o-Hold{background:#2a8a70;border-color:#2a8a70}
   .chip.oc-pick.on.o-Medicaid{background:#4a4fc0;border-color:#4a4fc0}
@@ -268,14 +277,14 @@
     *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}
   }
 </style>
-<script src="user.js?v=hc217"></script>
+<script src="user.js?v=hc218"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc217"></script>
-  <script src="gate.js?v=hc217"></script>
-  <script src="_staff.js?v=hc217"></script>
-  <script src="tc.js?v=hc217"></script>
-  <script src="tcstore.js?v=hc217"></script>
-  <script src="schedrec.js?v=hc217"></script>
+  <script src="store.js?v=hc218"></script>
+  <script src="gate.js?v=hc218"></script>
+  <script src="_staff.js?v=hc218"></script>
+  <script src="tc.js?v=hc218"></script>
+  <script src="tcstore.js?v=hc218"></script>
+  <script src="schedrec.js?v=hc218"></script>
 </head>
 <body>
 <div class="ribbon">SANDBOX — made-up patients. Use “Try it as” to see it as a TC, an office manager or Selene.</div>
@@ -340,7 +349,7 @@
   const fmtM=ym=>MONTHS[+ym.slice(5,7)-1]+' '+ym.slice(0,4);
   const fmtT=t=>{ if(!t) return ''; const [h,m]=t.split(':').map(Number); return ((h+11)%12+1)+':'+String(m).padStart(2,'0')+(h<12?'a':'p'); };
   const pct=x=>x==null?'—':Math.round(x*100)+'%';
-  const ocClass=o=>'oc-'+(o==='No Show'?'NoShow':o==='Refused Treatment'?'Refused':o==='Rescheduled / Cancelled'?'Rescheduled':
+  const ocClass=o=>'oc-'+(o==='No Show'?'NoShow':o==='Refused Treatment'?'Refused':o==='Rescheduled / Cancelled'?'Rescheduled':o==='Cancelled'?'Cancelled':
     o==='Pre-TX Hold'?'Hold':o==='Submitted to Medicaid'?'Medicaid':o===TC.MED_OK?'MedOk':o===TC.MED_NO?'MedNo':o===TC.SCHED_START?'SchedStart':(o||'none'));
   const ocShort=o=>o==='Refused Treatment'?'Refused':o==='Rescheduled / Cancelled'?'Rescheduled':o===TC.SCHED_START?'Pending – scheduled to start':o;
   const ocBadge=o=>'<span class="oc '+ocClass(o)+'">'+esc(o?ocShort(o):'No outcome yet')+'</span>';
@@ -605,6 +614,10 @@
       btns=B('setDate','📆 Set the date')+B('privatePay','💵 Going private pay')+B('declined','✖ Not going ahead');
     else if(a==='Scheduled to start')
       btns=B('started','✅ Started')+B('declined','✖ Not starting');
+    if(canEdit()) btns+=B('note','📝 Add a note');
+    const calls=TC.cleanCalls(r.calls), callRow=e=>'<div class="call">'+esc(TC.callLine(e)).replace(/^([^:]*)/, '<b>$1</b>')+'</div>';
+    const callsHTML=calls.length ? '<div class="calls">'+calls.slice(-2).reverse().map(callRow).join('')+
+      (calls.length>2 ? '<details><summary>▸ All '+calls.length+' notes</summary>'+calls.slice(0,-2).reverse().map(callRow).join('')+'</details>' : '')+'</div>' : '';
     const facts=[
       r.phone?'<span>📞 <a class="tel" href="tel:'+esc(String(r.phone).replace(/[^\d+]/g,''))+'">'+esc(r.phone)+'</a></span>':'',
       '<span>Consult <b>'+esc(fmtS(r.date))+'</b></span>',
@@ -619,7 +632,7 @@
     return '<div class="fu'+(calledToday?' called':'')+'"><div><span class="act '+actClass(a)+'">'+esc(a)+'</span>'+
       (calledToday?'<span class="tag">✓ contacted today</span>':'')+
       '<div><button class="nm"'+attr('act','open')+attr('id',r.id)+'>'+esc(r.name||'(no name)')+'</button>'+payTag(r)+'</div>'+
-      '<div class="facts">'+facts+'</div>'+(r.notes?'<div class="notes">“'+esc(r.notes)+'”</div>':'')+'</div>'+
+      '<div class="facts">'+facts+'</div>'+(r.notes?'<div class="notes">“'+esc(r.notes)+'”</div>':'')+callsHTML+'</div>'+
       '<div class="btns">'+btns+'</div></div>';
   }
   function viewCalls(){
@@ -709,7 +722,7 @@
       R('Pre-TX hold', m.hold, m.holdRate, 'sub')+(med?R('Submitted to Medicaid', m.submitted, m.submittedRate, 'sub')+R('Medicaid approved', m.medApproved, m.medApprovedRate, 'sub')+
         R('Medicaid denied', m.medDenied, m.medDeniedRate, 'sub')+(m.wentPrivate?R('Denied, went private pay (in Pending / Started)', m.wentPrivate):''):'')+
       R('Observation', m.observation, m.observationRate, 'sub')+R('Refused treatment', m.refused, m.refusedRate, 'sub')+
-      R('No show', m.noShow, m.noShowRate)+R('Rescheduled / cancelled', m.rescheduled, m.rescheduledRate)+R('RIP Retainer Programs sold', m.rpi)+'</table></div>';
+      R('No show', m.noShow, m.noShowRate)+R('Rescheduled', m.rescheduled, m.rescheduledRate)+R('Cancelled', m.cancelled, m.cancelledRate)+R('RIP Retainer Programs sold', m.rpi)+'</table></div>';
     h+='<div class="card"><h2>Open work</h2><p class="sub">Right now, every month</p><table class="mt">'+
       R('Open pending', w.openPending)+R('Scheduled to start, contract not signed', w.schedStart)+R('On pre-TX hold', w.onHold)+(med?R('Waiting on Medicaid', w.waitingMedicaid)+R('Medicaid approved, not started', w.approvedWaiting)+R('Medicaid denied, deciding on private pay', w.deniedDeciding):'')+
       R('Current observation patients', w.observation)+R('Recall ready', w.recallReady)+
@@ -835,19 +848,25 @@
   const SR=()=>window.SpeechRecognition||window.webkitSpeechRecognition||null;
   const touch=()=>('ontouchstart' in window)||navigator.maxTouchPoints>0;
   let TALK=null;
-  const notesBox=()=>document.querySelector('#dlgcard [data-in="rec"][data-f="notes"]');
-  function notesField(){
+  /* the box Talk types into: the consult's Notes, or (18/11, Cory: "Notes should have our recorder (well placed)") the
+     note about a call on the call list - the same 🎤 Talk, beside the box's label */
+  const notesBox=()=>document.querySelector('#dlgcard textarea[data-talkbox]');
+  function noteField(f, label, ph){
     const ro=DLG.ro, on=!!TALK, side=ro ? '' : SR()
       ? '<button type="button" class="talk'+(on?' on':'')+'" data-act="talk" aria-pressed="'+on+'">'+(on?'\u25a0 Stop':'\ud83c\udfa4 Talk')+'</button>'
       : (touch() ? '<span class="small muted">Tip: your keyboard\u2019s \ud83c\udfa4 works here</span>' : '');
-    return '<div class="fld full"><div class="lab-row"><label for="f-notes">Notes</label>'+side+'</div>'+
-      '<textarea id="f-notes"'+attr('in','rec')+attr('f','notes')+(ro||on?' readonly':'')+(on?' class="listening"':'')+'>'+esc(DLG.rec.notes||'')+'</textarea>'+
+    return '<div class="fld full"><div class="lab-row"><label for="f-'+f+'">'+label+'</label>'+side+'</div>'+
+      '<textarea id="f-'+f+'" data-talkbox'+attr('in','rec')+attr('f',f)+(ph?' placeholder="'+esc(ph)+'"':'')+(ro||on?' readonly':'')+(on?' class="listening"':'')+'>'+esc(DLG.rec[f]||'')+'</textarea>'+
       '<div class="talk-st" id="talkst" aria-live="polite">'+(on?'<span class="rec-dot"></span>Listening\u2026 talk now, then tap Stop.':'')+'</div></div>';
   }
+  function notesField(){ return noteField('notes', 'Notes')+callLogHTML(DLG.rec); }
+  /* the consult's whole call log, newest first - read only, under Notes */
+  function callLogHTML(r){ const calls=TC.cleanCalls(r && r.calls); if(!calls.length) return '';
+    return '<div class="fld full"><label>Call log · '+calls.length+'</label><div class="calls" style="margin-top:2px">'+calls.slice().reverse().map(e=>'<div class="call">'+esc(TC.callLine(e)).replace(/^([^:]*)/, '<b>$1</b>')+'</div>').join('')+'</div></div>'; }
   function talkWrite(){
     const t=TALK; if(!t || !DLG) return;
     const txt=TC.joinTalk(t.base, t.fin+' '+t.int);
-    DLG.rec.notes=txt;
+    DLG.rec[t.f||'notes']=txt;
     const box=notesBox(); if(box && box.value!==txt){ box.value=txt; box.scrollTop=box.scrollHeight; }
   }
   function talkPaint(){
@@ -860,7 +879,7 @@
     const C=SR(); if(!C || !DLG || DLG.ro || TALK) return;
     let rec; try{ rec=new C(); }catch(_){ toast(TC.talkError(''), true); return; }
     rec.lang='en-US'; rec.continuous=true; rec.interimResults=true; rec.maxAlternatives=1;
-    const box=notesBox(), t={rec, base:box ? box.value : (DLG.rec.notes||''), fin:'', int:'', waits:[]};
+    const box=notesBox(), f=(box && box.dataset.f)||'notes', t={rec, f, base:box ? box.value : (DLG.rec[f]||''), fin:'', int:'', waits:[]};
     rec.onresult=e=>{
       if(TALK!==t) return;
       const list=[]; for(let i=0;i<e.results.length;i++){ const x=e.results[i]; if(x && x[0]) list.push({t:x[0].transcript, final:!!x.isFinal}); }
@@ -945,6 +964,8 @@
       h+='<div class="then" style="margin-top:10px"><div><div class="q">Next observation review</div>'+(ro?esc(fmtS(r.obsReview)||'—'):quickDates('obsReview', r.date||today(), obsDates(r.date||today())))+'</div></div>';
     } else if(r.outcome==='No Show'){
       h+='<div class="then" style="margin-top:10px"><div class="small muted">They’ll show up on the call list as a no-show follow-up.</div></div>';
+    } else if(r.outcome==='Cancelled'){
+      h+='<div class="then" style="margin-top:10px"><div class="small muted">Cancelled, with no new date. Not counted as a completed consult and not on the call list. If they rebook, pick <b>Rescheduled</b> instead to add the new consult.</div></div>';
     } else if(r.outcome==='Rescheduled / Cancelled' && !ro){
       h+='<div class="then" style="margin-top:10px"><div class="q">New consult date (optional)</div><div class="small muted">Adds the new consult for you.</div>'+
         '<div class="fields"><div class="fld"><input type="date"'+attr('in','dlg')+attr('f','newDate')+' value="'+esc(d.newDate||'')+'" aria-label="New consult date"></div><div class="fld"><input type="time"'+attr('in','dlg')+attr('f','newTime')+' value="'+esc(d.newTime||'')+'" aria-label="New consult time"></div></div></div>';
@@ -992,7 +1013,7 @@
     const d=DLG, r=ALL.find(x=>x.id===d.id)||{};
     const T={called:'📞 Called', scheduled:'📅 Scheduled to start', started:'✅ Started', declined:'✖ Declined', rebooked:'🔁 Rebooked',
              reviewed:'👁 Observation reviewed', ready:'🟢 Ready to start', setDate:'📆 Set the date', approved:'👍 Medicaid approved', denied:'👎 Medicaid denied',
-             privatePay:'💵 Going private pay'}[d.what]||'';
+             privatePay:'💵 Going private pay', note:'📝 Add a note'}[d.what]||'';
     let h=top(T+' · '+esc(r.name||''))+'<div class="dm-body">';
     if(d.err) h+='<div class="err">'+esc(d.err)+'</div>';
     const base=today();
@@ -1019,6 +1040,8 @@
     } else if(d.what==='denied'){
       h+='<div>Marks them <b>Medicaid Denied</b>. They stay on the call list until they decide: <b>💵 Going private pay</b>, <b>✅ Started</b>, or <b>✖ Not going ahead</b>.</div>'+
         '<div><div class="q lab2">Call them about private pay</div>'+quickDates('nextFU', base, fuDates(base))+'</div>';
+    } else if(d.what==='note'){
+      h+='<div class="small muted">Adds a dated note to their call log. Nothing else changes.</div>';
     } else if(d.what==='privatePay'){
       h+='<div>Their payment type changes to <b>private pay</b> and they become <b>Pending</b> (reason: Medicaid denied). Their exam moves to private pay &mdash; it isn’t counted twice.</div>'+
         '<div><div class="q lab2">Next call</div>'+quickDates('nextFU', base, fuDates(base))+'</div>';
@@ -1028,6 +1051,7 @@
         declined:(r.outcome===TC.MED_NO?'Closes it: they’re not going ahead. It stays a Medicaid denial with no start.':'Closes the follow-up as declined.'),
         ready:'Moves them to the top of the call list as recall ready.'}[d.what]||'')+'</div>';
     }
+    h+=noteField('callNote', d.what==='note' ? 'Note' : 'Note about this call', d.what==='note' ? 'What was said, what happens next' : 'Optional - what was said, what happens next');
     h+='</div><div class="dm-foot"><button class="btn ghost" data-act="close">Cancel</button><button class="btn" data-act="fu-save"'+(d.busy?' disabled':'')+'>'+(d.busy?'Saving…':'Save')+'</button></div>';
     return h;
   }
@@ -1098,7 +1122,12 @@
     else if(d.what==='rebooked'){ if(!TC.parse(x.newDate)){ d.err='Pick the new consult date.'; return drawDlg(); } TC.DO.rebooked(r, t); jobs.push(persist(copyFor(r, x.newDate, x.newTime, 'Rebooked after no-show on '+fmtS(r.date)), null)); }
     else if(d.what==='denied') TC.DO.denied(r, t, x.nextFU||'');
     else if(d.what==='privatePay') TC.DO.privatePay(r, t, x.nextFU||'');
+    else if(d.what==='note'){ if(!String(x.callNote||'').trim()){ d.err='Write or say the note first.'; return drawDlg(); } }
     else TC.DO[d.what](r, t);
+    const W={called:'📞 Called', scheduled:'📅 Scheduled to start', started:'✅ Started', declined:'✖ Declined', rebooked:'🔁 Rebooked', reviewed:'👁 Reviewed',
+             ready:'🟢 Ready now', setDate:'📆 Date set', approved:'👍 Medicaid approved', denied:'👎 Medicaid denied', privatePay:'💵 Going private pay', note:'📝 Note'}[d.what]||'';
+    const nxt=d.what==='note' ? '' : (x.nextFU||x.obsReview||'');
+    TC.addCall(r, {at:new Date().toISOString(), day:t, by:myName()||myMail(), what:W, note:String(x.callNote||'').trim(), next:nxt});
     d.busy=true; d.err=''; drawDlg();
     Promise.all([persist(r, keyOf(r))].concat(jobs)).then(()=>{ closeDlg(); render(); toast('✓ '+r.name+' updated'); },
       e=>{ d.busy=false; d.err='It didn’t save: '+((e && e.message)||'try again'); drawDlg(); });
@@ -1151,7 +1180,7 @@
       persist(r, DLG.origKey).then(()=>{ closeDlg(); render(); toast('Consult deleted'); }, e=>{ DLG.err='It didn’t delete: '+((e&&e.message)||'try again'); DLG.confirmDel=false; drawDlg(); });
       return;
     }
-    if(act==='fu-save'){ saveFu(); return; }
+    if(act==='fu-save'){ if(TALK){ const d0=DLG; talkFinish().then(()=>{ if(DLG===d0) saveFu(); }); return; } saveFu(); return; }
     if(act==='usual'){ const o=inView()[0]; saveSlots(o, s=>{ TC.setUsual(s, Number(v), today()); }).then(()=>{ render(); toast('✓ '+v+' slots on an open day'); }, e=>toast('It didn’t save: '+e.message, true)); return; }
     if(act==='usual-other'){ const o=inView()[0]; openDlg({kind:'usual', office:o, other:String((SLOTS[o]||{}).usual||'')}); return; }
     if(act==='day'){ openDlg({kind:'slot', office:inView()[0], date:v}); return; }
@@ -1224,7 +1253,7 @@
 })();
 </script>
 <script>PH.nav('tc');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(window.TCPAGE)TCPAGE.identity();});document.addEventListener('ph-identity',function(){if(window.TCPAGE)TCPAGE.identity();});</script>
-<script src="tour.js?v=hc217"></script>
+<script src="tour.js?v=hc218"></script>
 <script>
 Tour.init([
   {sel:'#offbar', title:'Your office', body:'You see the offices you work at. Heather, Selene and leadership see every office and can pick one.'},

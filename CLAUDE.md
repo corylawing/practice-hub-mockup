@@ -489,6 +489,21 @@ I can confidently say that the chat feature should go next. The production thing
    do Medicaid ... they do need it" - stays on the Medicaid list.
    CHAT PHOTOS (Cory 18/11, like Slack): hovering a photo shows a round magnifier with a + and darkens it a little (mouse
    only; phones tap). test/party checks it.
+41. **TC TRACKER - SELENE'S TWO (19/11/2026; hc218; LIVE - Cory: "You can do selene cancelled and call-list notes and put in
+   production").** (1) CANCELLED as its own outcome (tc.js OUTCOMES); the old "Rescheduled / Cancelled" (shown as
+   "Rescheduled", offers the new date) stays EXACTLY as it is so no saved consult changes. Cancelled: not completed, not on
+   the call list, its own line in the month's numbers (monthStats cancelled / cancelledRate of everyone booked; the
+   table now says "Rescheduled" and "Cancelled"); its own grey colour; a line in the form ("Cancelled, with no new date...").
+   (2) THE CALL LOG (Selene: "a notes field on the call list so the team can log each outreach attempt"): every
+   call-list action's dialog has "Note about this call" (optional) and a new "📝 Add a note" button on every card logs a
+   note alone (needs words, changes nothing else). Each saves one line on the consult's own r.calls [{at, day (the
+   practice's own day), by, what, note, next}] (tc.js addCall/cleanCalls/callLine; never overwritten; 200 kept). The card
+   shows the newest two, "▸ All N notes" for the rest; the consult form shows the whole log under Notes; the download adds
+   "Call log" as the LAST column (Selene's 28 columns + Medicaid / Private pay never move). THE RECORDER (Cory: "Notes
+   should have our recorder (well placed)"): the TC Tracker's own 🎤 Talk, beside the note box's label, exactly like
+   Notes (noteField(f) - Talk types into whichever box has data-talkbox; Save while talking waits for the last words).
+   Cory: no privacy reminder under the box ("I don't need that reminder please don't put it"). Saving adds fields only
+   (persist/strip keep every field; consultsFrom reads every field). test/tc (185).
 40. **DROPPED 19/11 - don't propose again unless Cory brings them back:** a PRACTICE MAP (the 8 offices on a map of TX/NM,
    tap for today's doctor / month pace / report status - a "The practice today" card on Home for leadership) and a MONTH
    REPLAY (offices racing day by day to their monthly goal on the Production Dashboard). Both mocked up 19/11; Cory: "For
