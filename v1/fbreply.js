@@ -47,7 +47,12 @@
       msgs.sort((a,b)=>String(a.at).localeCompare(String(b.at)));
       const lastThem=msgs.filter(m=>m.who==='them').pop(), lastTeam=msgs.filter(m=>m.who==='team').pop()||null;
       const answered=!!lastTeam && lastTeam.at>=lastThem.at, doneSince=!!rep.doneAt && rep.doneAt>=lastThem.at;
-      return {id:root.id, by:root.by||{}, kind:first.kind, page:lineOf(root.Details,'Page'), offices:lineOf(root.Details,'Offices'),
+      /* The name Home-Brace knows them by (the message's "From:" line, from the practice's own list), not their Microsoft
+         account's - Melinda's account is called "San Angelo Treatment Coordinator" (Cory 18/11). The account's name stays
+         underneath as `account`; who it is still matches by the account (sameAs). */
+      const fromName=lineOf(root.Details,'From').replace(/\s*<[^>]*>\s*$/,'').trim(), by=Object.assign({}, root.by||{});
+      if(fromName && fromName!=='Someone' && !/@/.test(fromName)){ if(by.name && by.name!==fromName) by.account=by.name; by.name=fromName; }
+      return {id:root.id, by, kind:first.kind, page:lineOf(root.Details,'Page'), offices:lineOf(root.Details,'Offices'),
               msgs, replies:rep, lastTeam, lastAt:msgs[msgs.length-1].at, isNew:!answered && !doneSince, done:doneSince};
     }).sort((a,b)=>String(b.lastAt).localeCompare(String(a.lastAt)));
   }
@@ -177,7 +182,7 @@
       '<button type="button" data-re="1" style="margin-left:auto">↻ Refresh</button></div>';
     h+='<div class="fbr-filters fbr-kinds" role="group" aria-label="Type">'+KINDS.filter(k=>k[0]!=='other' || nk('other') || KIND==='other')
       .map(k=>'<button type="button" data-k="'+k[0]+'" class="'+(KIND===k[0]?'on':'')+'" aria-pressed="'+(KIND===k[0])+'">'+k[1]+' ('+nk(k[0])+')</button>').join('')+'</div>';
-    h+=shown.length ? '<div class="fbr-list">'+shown.map(t=>'<div class="fbr-th'+(t.isNew?' new':'')+'" data-t="'+esc(t.id)+'"><div class="fbr-top"><b>'+esc(t.by.name||t.by.email||'Someone')+'</b>'+
+    h+=shown.length ? '<div class="fbr-list">'+shown.map(t=>'<div class="fbr-th'+(t.isNew?' new':'')+'" data-t="'+esc(t.id)+'"><div class="fbr-top"><b>'+esc(t.by.name||t.by.email||'Someone')+'</b>'+(t.by.account?'<span class="muted" title="Their Microsoft account’s name"> ('+esc(t.by.account)+')</span>':'')+
         (t.offices?'<span>'+esc(t.offices)+'</span>':'')+(t.page?'<span>· '+esc(t.page)+'</span>':'')+kindPill(t.kind)+
         (t.isNew?'<span class="fbr-pill new">New</span>':t.done?'<span class="fbr-pill done">Done</span>':'<span class="fbr-pill">Replied</span>')+'</div>'+
         msgsHTML(t,'admin')+

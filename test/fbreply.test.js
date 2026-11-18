@@ -76,4 +76,11 @@ const rows=[
   t('replies are signed "Home-Brace team", and no name is ever on the page (comments aside)', /TEAM='Home-Brace team'/.test(src) && !/Cory/i.test(src.replace(/\/\*[\s\S]*?\*\//g,'').replace(/\/\/[^\n]*/g,'')));
   t('a phone alert never carries the words of the reply', /body:'Open Home-Brace to read it\.'/.test(src));
 }
+/* 18/11: the name Home-Brace knows them by, not their Microsoft account's ("San Angelo Treatment Coordinator") */
+{ const th=F.threads([{id:'9', at:'2026-11-18T18:56:00Z', by:{name:'Office Account Name', email:'office.tc@example.test'}, Details:body('QUESTION','Can I change the days?','Mara Quill <office.tc@example.test>')}])[0];
+  t('a feedback shows the name Home-Brace knows them by (its From line); the Microsoft account name is kept beside it; still matched by the account',
+    th.by.name==='Mara Quill' && th.by.account==='Office Account Name' && th.by.email==='office.tc@example.test' && F.sameAs(th.by, {email:'OFFICE.TC@example.test'}));
+  const th2=F.threads([{id:'8', at:'2026-11-18T18:56:00Z', by:{name:'Pat Pine', email:'pat@example.test'}, Details:body('IDEA','x','Pat Pine')}])[0];
+  t('…when both are the same nothing extra is shown; an email or "Someone" on the From line is never used as a name', th2.by.name==='Pat Pine' && !th2.by.account &&
+    F.threads([{id:'7', at:'2026-11-18T18:56:00Z', by:{name:'Pat Pine', email:'pat@example.test'}, Details:body('IDEA','x','pat@example.test')}])[0].by.name==='Pat Pine'); }
 console.log(pass+' passed, '+fail+' failed'); if(fail) process.exit(1);

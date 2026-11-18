@@ -440,6 +440,11 @@ I can confidently say that the chat feature should go next. The production thing
    localStorage ph_chat_emoji_recent (18 defaults). Used by the message box (emoji button) and "More emoji" on a
    reaction. All 1,425 toned sequences checked against Unicode's list. test/chatv2.test.js (42).
    STILL QUEUED: a "chat alerts: Home-Brace / Teams" choice.
+35. **FEEDBACK NAME (Cory 18/11: "melinda stills says treatment coordinator in feedback"; hc203).** The inbox showed the
+   SharePoint row's createdBy = her Microsoft account's display name "San Angelo Treatment Coordinator"; the email's "From:"
+   already used Home-Brace's own name (roster). fbreply.js threads(): by.name = the Details "From:" name (minus <email>),
+   the account name kept as by.account and shown small in brackets; sameAs still matches by account id/email.
+   test/fbreply +2. (Her Entra display name could also be fixed by an admin - only if the account is hers, not shared.)
 34. **QUEUED 18/11 (Cory: "we have other projects first").** (a) SELENE (email 18/11 8:23 pm): add "Cancelled" as a
    consultation outcome in the TC Tracker; a NOTES field on the call list so the team can log each outreach attempt
    (conversation, outcome, follow-up needed) - i.e. a dated log per call, not one overwritten box. (b) Cory: "Put in notes
