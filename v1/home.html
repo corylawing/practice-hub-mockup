@@ -142,11 +142,11 @@
   }
 
 </style>
-<script src="user.js?v=hc214"></script>
+<script src="user.js?v=hc215"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc214"></script>
-  <script src="gate.js?v=hc214"></script>
-  <script src="party.js?v=hc214"></script>
+  <script src="store.js?v=hc215"></script>
+  <script src="gate.js?v=hc215"></script>
+  <script src="party.js?v=hc215"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — this is the logged-in home. Use “Viewing as” to see how the app changes for each role.</div>
@@ -397,8 +397,7 @@
     const me=String((PH.email && PH.me && PH.email(PH.me()))||'').toLowerCase();
     const roster=(PH.rosterView && PH.rosterView())||[];
     /* the celebration you've had (any device): kept in your own entry of the shared record, so a belated one shows once */
-    const onSeen=it=>{ if(!me || !window.PH_STORE) return; PH_STORE.update(PH.PARTY_KEY, cur=>{ const rec=cur && typeof cur==='object' && cur.p ? cur : {v:1, p:{}};
-      const x=Object.assign({}, rec.p[me]||{}), seen=Object.assign({}, x.seen||{}); seen[it.kind]=it.on; x.seen=seen; rec.p[me]=x; return rec; }); };
+    const onSeen=it=>{ if(PH.partySeen) PH.partySeen(it); };
     const draw=rec=>{ try{ PH_PARTY.card(host, PH_PARTY.peopleFrom(rec, roster, PH.photoFor), {me, demo:!live, onSeen}); }catch(e){ if(host) host.hidden=true; } };
     if(!live){ let mine=null; try{ mine=JSON.parse(localStorage.getItem(PH.PARTY_KEY)); }catch(_){}
       const d=PH_PARTY.demo(); draw({v:1, p:Object.assign({}, d.p, (mine && mine.p)||{})}); return; }
@@ -413,7 +412,7 @@
 })();
 </script>
 <script>PH.nav('home');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(PH.loadActivity)PH.loadActivity().then(function(){return PH.loadSeen?PH.loadSeen():null;}).then(function(){if(window.HOME&&HOME.refreshUpdates)HOME.refreshUpdates();if(PH.refreshBell)PH.refreshBell();});});</script>
-<script src="tour.js?v=hc214"></script>
+<script src="tour.js?v=hc215"></script>
 <script>
 Tour.init([
   {sel:'.ph-av', title:'This is you', body:'Your name and photo, top right. Tap it any time for <b>My profile</b> \u2014 your photo, preferred name, phone and \u201cAbout me\u201d. Those follow you between devices.'},

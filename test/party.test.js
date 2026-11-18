@@ -50,7 +50,7 @@ t('…saved straight away, merged into the shared record (nobody else’s dates 
 t('My profile: each person can switch their own birthday or anniversary celebration off - no dates shown there', /Celebrate my birthday/.test(U) && /Celebrate my Workiversary/.test(U) && /function partyPref\(kind, on\)/.test(U));
 t('Home shows the card (live: the shared record; sandbox: made-up people)', /<div id="party" hidden><\/div>/.test(HOME) && /<script src="party\.js\?v=hc\d+"><\/script>/.test(HOME) && /PH_PARTY\.card\(host, PH_PARTY\.peopleFrom\(rec, roster, PH\.photoFor\), \{me, demo:!live, onSeen\}\)/.test(HOME));
 t('YOUR day opens by itself (once a day per device); everyone else’s never takes over the screen', /const auto=mineAll\.filter\(it=>!it\.seen\);/.test(J) && /if\(auto\.length && opts\.auto!==false && !seenToday\(auto\)\)/.test(J) && /function mineCard\(card, it\)/.test(J));
-t('motion art: aurora, glass card, light trails, fireworks, orbit ring, a cake with five candles to blow out - and still for "less motion"', /class="pp-aur"/.test(J) && /const PACE=1\.35;/.test(J) && /K=Math\.min\(3, Math\.max\(0\.5, \(now-\(prev\|\|now-16\.7\)\)\/16\.7\)\)\*PACE/.test(J) && /backdrop-filter:blur\(14px\)/.test(J) && /function drawRibbon/.test(J) && /function orbitRing/.test(J) && /class="pp-cake" id="pp-cake"/.test(J) && /function puff\(x, y\)/.test(J) && /prefers-reduced-motion: reduce/.test(J));
+t('motion art: aurora, glass card, light trails, fireworks, orbit ring, a cake with five candles to blow out - and still for "less motion"', /class="pp-aur"/.test(J) && /const PACE=1\.15;/.test(J) && /K=Math\.min\(3, Math\.max\(0\.5, \(now-\(prev\|\|now-16\.7\)\)\/16\.7\)\)\*PACE/.test(J) && /backdrop-filter:blur\(14px\)/.test(J) && /function drawRibbon/.test(J) && /function orbitRing/.test(J) && /class="pp-cake" id="pp-cake"/.test(J) && /function puff\(x, y\)/.test(J) && /prefers-reduced-motion: reduce/.test(J));
 t('"Send a message" opens Home-Brace Chat on that person with the message ready (Teams for anyone without it) - nothing sent by itself',
   /chat\.html#to='\+encodeURIComponent\(it\.email\)\+'&name='/.test(J) && /teams\.microsoft\.com\/l\/chat\/0\/0\?users=/.test(J) && /function openFromLink\(\)/.test(C) && /function prefill\(text\)/.test(C) && /if\(!openFromLink\(\)\) firstOpen\(\);/.test(C));
 
@@ -70,7 +70,7 @@ t('the words: "Happy belated birthday", "Happy belated 6th Workiversary"; "on Tu
   P.whenWas(L.recent[0])==='on Tuesday' && P.whenWas(L.recent[1])==='a week ago');
 t('the record keeps "seen" days (real dates only)', JSON.stringify(P.cleanRecord({p:{'a@x.com':{bday:'03-14', seen:{bday:'2026-03-14', anniv:'nope'}}}}).p['a@x.com'].seen)==='{"bday":"2026-03-14"}');
 t('only YOUR missed one comes back (once), as "We missed you on your day"; others never see it again', /const late=c\.recent\.filter\(it=>isMe\(it\) && !it\.seen\)/.test(J) && /We missed you on your day/.test(J) && /we saved your cake/.test(J) &&
-  /seen\[it\.kind\]=it\.on;/.test(HOME));
+  /seen\[it\.kind\]=it\.on;/.test(U) && /PH\.partySeen\(it\)/.test(HOME));
 
 /* Heather's "Hire Dates and Birthdays" Excel - a made-up sheet in its layout */
 const hc={}; const hp=(a,v)=>{ hc[a]={v}; };
@@ -90,6 +90,10 @@ t('Excel: no hire date says so', HR[4].started==='' && /No hire date/.test(HR[4]
 t('Excel: names match a person by first + last, the nickname too; two people with the same name match nobody',
   P.matchPerson('Pat (Patty) Penn', [{name:'Patty Penn', email:'pp@x.com'}])==='pp@x.com' && P.matchPerson('Lee Lane', [{name:'Lee Lane', email:'a@x'}, {name:'Lee Lane', email:'b@x'}])==='' && P.matchPerson('Zoe Zed', [{name:'Lee Lane', email:'a@x'}])==='');
 t('Admin: the file is read in the browser, shown first, and only EMPTY dates are filled', /🎂 Birthdays &amp; hire dates from Excel/.test(A) && /PH_PARTY\.fromHireSheet\(book\.sheets\[nm\]\.cells\)/.test(A) && /if\(!x\.bday\)\{ x\.bday=r\.bday; filled\+\+; \}/.test(A));
+
+t('YOUR celebration plays on whatever page you open first that day (not only Home) - once (Cory 19/11)',
+  /function partyMine\(\)/.test(U) && /setTimeout\(partyMine, 900\);/.test(U) && /sc\.src=PARTY_SRC/.test(U) && /function autoMine\(o\)/.test(J) && /if\(!list\.length \|\| seenToday\(list\)\) return false;/.test(J));
+t('pace: about 15% quicker than the first version (Cory 19/11: "Probably just 15% faster than original")', /const PACE=1\.15;/.test(J));
 
 /* chat photos say they can be opened (Cory 18/11) */
 t('chat: hovering a photo shows a magnifier with a + (mouse only)', /@media \(hover:hover\)\{\s*\.v2 \.media:has\(> img\[src\]\)\{cursor:zoom-in\}/.test(C) && /\.v2 \.media:has\(> img\[src\]\):hover::after\{opacity:1/.test(C));

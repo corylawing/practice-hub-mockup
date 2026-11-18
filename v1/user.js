@@ -2118,6 +2118,33 @@
   function partyRec(){ try{ const r=JSON.parse(localStorage.getItem(PARTY_KEY)); return r && typeof r==='object' && r.p ? r : {v:1, p:{}}; }catch(_){ return {v:1, p:{}}; } }
   /* My profile: a person switches their own birthday / anniversary celebration off (or back on). Merged into the shared
      record (PH_STORE.update), so nobody else's dates are touched. */
+  /* YOUR DAY ON WHATEVER PAGE YOU OPEN FIRST (Cory 19/11: "make it play on whatever page they open first (for who ever
+     birthday or workiversary it is)"). Home has its own card; on any other page, once we know who this is: if their own
+     entry in ph_celebrate has a date, party.js is loaded and plays their celebration (today's, or a missed one from the
+     last week) - once: not again on this device today, and not if they've had it on any device (seen). */
+  const PARTY_SRC=(function(){ try{ const me=document.currentScript && document.currentScript.src; return me ? new URL('party.js'+((/\?v=[^&#]+/.exec(me)||[''])[0]), me).href : 'party.js'; }catch(_){ return 'party.js'; } })();
+  function partySeen(it){
+    const e=String(email(me())||'').toLowerCase().trim(); if(!e || !it || !it.on || !window.PH_STORE) return;
+    window.PH_STORE.update(PARTY_KEY, cur=>{ const rec=cur && typeof cur==='object' && cur.p ? cur : {v:1, p:{}};
+      const x=Object.assign({}, rec.p[e]||{}), seen=Object.assign({}, x.seen||{}); seen[it.kind]=it.on; x.seen=seen; rec.p[e]=x; return rec; });
+  }
+  let PARTY_TRIED=false;
+  function partyMine(){
+    if(PARTY_TRIED || !partyOn() || !window.PH_STORE) return;
+    const file=(location.pathname.split('/').pop()||'home.html');
+    if(/^(home|auth|connect|restore|alerts-test|start)\.html$/i.test(file)) return;
+    if(env()==='live' && !window.PH_AUTH) return;                         // live: once signed in
+    const e=String(email(me())||'').toLowerCase().trim(); if(!e) return;
+    PARTY_TRIED=true;
+    window.PH_STORE.get(PARTY_KEY).then(rec=>{
+      const x=(rec && rec.p && rec.p[e]) || null; if(!x || !(x.bday || x.started)) return;
+      const run=()=>{ try{ window.PH_PARTY.autoMine({rec, me:e, roster:rosterView(), photoFor, onSeen:partySeen}); }catch(_){} };
+      if(window.PH_PARTY && window.PH_PARTY.autoMine) return run();
+      const sc=document.createElement('script'); sc.src=PARTY_SRC; sc.onload=run; document.head.appendChild(sc);
+    }).catch(()=>{ PARTY_TRIED=false; });
+  }
+  document.addEventListener('ph-identity', ()=>setTimeout(partyMine, 600));
+  document.addEventListener('ph-signed-in', ()=>setTimeout(partyMine, 1200));
   function partyPref(kind, on){
     const e=String(email(me())||'').toLowerCase().trim(); if(!e || (kind!=='bday' && kind!=='anniv') || !window.PH_STORE) return;
     window.PH_STORE.update(PARTY_KEY, cur=>{ const rec=cur && typeof cur==='object' && cur.p ? cur : {v:1, p:{}}; const x=Object.assign({}, rec.p[e]||{});
@@ -3028,6 +3055,7 @@
   let NAV_ACTIVE=null;
   function nav(active){
     if(active!=null) NAV_ACTIVE=active;
+    setTimeout(partyMine, 900);
     const host=document.getElementById('nav')||document.querySelector('.v1nav-in');
     /* Line icons - the same ones as the phone bar and the sidebar - not emoji. Cory, 20/10:
        "icons instead of emojis for the different tabs ... more professional". Emoji draw
@@ -4039,7 +4067,7 @@
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', start, {once:true}); else setTimeout(start, 0);
   })();
 
-  window.PH={PEOPLE,newHiresOn,pickOn,chatPilotMe,chatPilotKnown:()=>CHATPILOT!==null,chatGuest,reloadChatPilot,cleanChatPilot,CHAT_PILOT_KEY,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,teamNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, rosterView, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, chatBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK, notesHTML, searchHTML, searchDocs, searchDocsHTML, levelForTeams, teamsSeeAll, tcOn, tcRoleFor, payOn, monthlyOn, partyOn, partyPref, PARTY_KEY, payRoleFor, paySenders, reloadPaySenders, paySenderOffices, payLevel, payReminders, payMark, reloadPayStatus, payRulesReady, payAlertPlan, payAlertsTick, centralNow, alertsReady, saveFace, faceOf, avatar, viewLink, isWordName, wordAttrs, wordPdfInto,
+  window.PH={PEOPLE,newHiresOn,pickOn,chatPilotMe,chatPilotKnown:()=>CHATPILOT!==null,chatGuest,reloadChatPilot,cleanChatPilot,CHAT_PILOT_KEY,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,teamNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, rosterView, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, chatBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK, notesHTML, searchHTML, searchDocs, searchDocsHTML, levelForTeams, teamsSeeAll, tcOn, tcRoleFor, payOn, monthlyOn, partyOn, partyPref, partySeen, PARTY_KEY, payRoleFor, paySenders, reloadPaySenders, paySenderOffices, payLevel, payReminders, payMark, reloadPayStatus, payRulesReady, payAlertPlan, payAlertsTick, centralNow, alertsReady, saveFace, faceOf, avatar, viewLink, isWordName, wordAttrs, wordPdfInto,
     sensRecord, reloadSensitive, sensLevelFor, sensitiveLevel, sensConfirmOk,
     setTheme, theme:()=>THEME, setLayout, layout:()=>LAYOUT, layouts:()=>LAYOUTS.map(l=>({k:l.k, n:l.n})), themes:()=>THEMES.map(t=>({k:t.k, n:t.n})), schemeTokens:k=>schemeTokens(themeOf(k)), contrast,
     feedback:openFeedback, feedbackText, feedbackContext, learning:stillLearning, fbReady, myFeedback, fbTick, usageReady, rosterName, useEmail, useTrackMe, loadHold, loadDone};
