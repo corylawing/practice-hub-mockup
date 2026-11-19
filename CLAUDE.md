@@ -504,6 +504,21 @@ I can confidently say that the chat feature should go next. The production thing
    Notes (noteField(f) - Talk types into whichever box has data-talkbox; Save while talking waits for the last words).
    Cory: no privacy reminder under the box ("I don't need that reminder please don't put it"). Saving adds fields only
    (persist/strip keep every field; consultsFrom reads every field). test/tc (185).
+43. **DATE & TIME PICKER - one for all of Home-Brace (19/11/2026; hc220; SANDBOX PREVIEW ONLY so far:
+   v1/datepick-demo.html, not used by any page yet).** Cory: "I don't like the date picker either it looks so old"; "Can
+   they still type it though?"; the month/year dropdowns inside "look very old school"; the native time columns are good
+   but the highlight "nothing to do with home-brace brand"; "not always home-brace teal it depends on the color scheme";
+   the inline mockups "look like shit" (the chat preview's own button styles broke them) -> built the real thing.
+   v1/datepick.js (PH_PICK): enhance(root)/start(root) put a readable box in front of every input[type=date|time] (not
+   [data-nopick]); the original stays hidden and holds the value (yyyy-mm-dd / hh:mm) and fires input + change, so page
+   code is untouched; a MutationObserver catches boxes drawn later. Typing always works (mm/dd/yyyy with the slashes
+   filled in; "11/24" = this year; 2-digit years; nonsense refused with a line under the box); the calendar: quick picks
+   (Today/Tomorrow/In 3 days/Next week), the month and the year chosen from GRIDS (no selects), arrows + Enter + Esc,
+   min/max respected (past days greyed), Clear/Today. Date of birth (data-pick="dob" or a name/id with dob/birth) opens on
+   the year grid and shows "Apr 3, 2014". Time: scrolling columns hour 7-6 · minute every 5 · AM/PM; typing "930", "2"
+   (= 2 PM), "9:30 pm". Shown the American way ("Thu, Nov 19, 2026", "2:05 PM"). Every colour = the person's scheme
+   (--teal, --teal-600, --teal-wash, --teal-line, --teal-soft). test/datepick (11). Next: the tidied consult form + the
+   picker in the TC Tracker (when Cory says), then the rest of the app.
 42. **TC CALL LIST - CLEANER CARD (19/11/2026; hc219; LIVE).** Cory: "Love the call list but anyway to make it cleaner?" ->
    a mockup hiding actions under ⋯; Cory: "its extra clicks ... What do you think" -> kept EVERY action one click; Cory:
    "Perfect". fuCard: what's due as a coloured dot + words (no pill), days waiting top right; the name; every fact on ONE

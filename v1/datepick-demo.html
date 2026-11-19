@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Home-Brace · Date picker preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" href="../assets/favicon.png?v=2" type="image/png">
+<style>
+  :root{ --navy:#0F2A4A; --navy2:#25456e; --teal:#149B96; --teal2:#2BC0B8; --teal-soft:#E5F4F3; --teal-600:#0F827E;
+    --ink:#1F2D3D; --soft:#56627A; --line:#E4E8EE; --canvas:#F4F6F8; --shadow:0 1px 2px rgba(15,42,74,.06),0 6px 18px rgba(15,42,74,.06); --maxw:900px; }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--canvas);line-height:1.5;-webkit-font-smoothing:antialiased}
+  .ribbon{background:#F2A03D;color:#3a2400;text-align:center;font-size:13px;font-weight:600;padding:6px 14px}
+  .hdr{background:var(--navy);color:#fff}.hdr-in{max-width:var(--maxw);margin:0 auto;display:flex;align-items:center;gap:12px;padding:13px 20px}
+  .mark img{width:34px;height:34px;display:block;border-radius:50%}.brand{font-weight:700;font-size:18px;color:#fff;line-height:1.1}.brand i{font-style:normal;color:var(--teal2)}.brand small{display:block;font-weight:500;font-size:12px;color:#9fb4d0}
+  .v1nav{background:var(--navy2)}.v1nav-in{max-width:var(--maxw);margin:0 auto;display:flex;gap:2px;padding:0 12px;overflow-x:auto}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:22px 20px 90px}
+  h1{color:var(--navy);margin:0;font-size:25px}.lede{color:var(--soft);margin:4px 0 18px;font-size:14.5px}
+  .schemes{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+  .schemes button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 12px;font:600 13px/1 inherit;font-family:inherit;color:var(--navy);cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+  .schemes button i{width:12px;height:12px;border-radius:50%;display:inline-block}
+  .schemes button.on{border-color:var(--teal);box-shadow:0 0 0 2px var(--teal-soft)}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:20px}
+  .sh{font-size:11.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--soft);margin:0 0 12px}
+  .g{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:640px){.g{grid-template-columns:1fr}}
+  .f label{display:block;font-size:13px;font-weight:600;color:var(--ink);margin-bottom:5px}
+  .f input:not([type=date]):not([type=time]){width:100%;height:42px;border:1px solid var(--line);border-radius:10px;padding:0 12px;font:600 15px inherit;font-family:inherit;color:var(--navy)}
+  .sep{height:1px;background:var(--line);margin:18px 0}
+  .got{margin-top:16px;font-size:12.5px;color:var(--soft);background:#F6F8FA;border-radius:10px;padding:10px 12px;font-family:ui-monospace,Menlo,monospace}
+  .tips{margin-top:14px;font-size:13px;color:var(--soft)}
+  .tips b{color:var(--ink)}
+</style>
+<script src="user.js?v=hc220"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
+  <script src="store.js?v=hc220"></script>
+  <script src="gate.js?v=hc220"></script>
+  <script src="datepick.js?v=hc220"></script>
+</head>
+<body>
+<div class="ribbon">PREVIEW for Cory - the new date and time picker. Made-up patient. Nothing here is saved.</div>
+<header class="hdr"><div class="hdr-in"><span class="mark"><img src="../assets/logo-mark.png?v=2" alt="" width="34" height="34"></span><span class="brand">Home-<i>Brace</i><small>Date picker preview</small></span></div></header>
+<nav class="v1nav"><div class="v1nav-in" id="nav"></div></nav>
+<div class="wrap">
+  <h1>Date &amp; time picker</h1>
+  <p class="lede">The same picker for every date and time box in Home-Brace. Type, or tap. It follows each person’s colour scheme.</p>
+  <div class="schemes" id="schemes"></div>
+  <div class="card">
+    <div class="sh">Patient</div>
+    <div class="g">
+      <div class="f"><label for="nm">Full name</label><input id="nm" value="Maria Lopez"></div>
+      <div class="f"><label for="dob">Date of birth</label><input type="date" id="dob" data-pick="dob"></div>
+    </div>
+    <div class="sep"></div>
+    <div class="sh">Consult</div>
+    <div class="g">
+      <div class="f"><label for="cd">Consult date</label><input type="date" id="cd" value="2026-11-18"></div>
+      <div class="f"><label for="tm">Time</label><input type="time" id="tm" value="09:00"></div>
+      <div class="f"><label for="nf">Next follow-up <span style="font-weight:500;color:var(--soft)">(today or later)</span></label><input type="date" id="nf"></div>
+    </div>
+    <div class="got" id="got"></div>
+  </div>
+  <div class="tips"><b>Try:</b> type <b>04032014</b> in date of birth · type <b>11/24</b> in follow-up · type <b>930</b> or <b>2</b> in time · in a date, tap the month to pick a month, then the year to pick a year · arrow keys and Enter work too.</div>
+</div>
+<script>
+(function(){
+  if(window.PH && PH.isLive && PH.isLive()){ location.replace('home.html'); return; }     // the sandbox only
+  const S=[['homebrace','Home-Brace','#149B96'],['peony','Peony','#D9448B'],['lavender','Lavender','#8A73E0'],['harbor','Harbor Blue','#2563EB'],['sage','Sage','#5F917A']];
+  let cur='homebrace'; try{ cur=localStorage.getItem('ph_theme')||'homebrace'; }catch(_){}
+  function drawS(){ document.getElementById('schemes').innerHTML=S.map(s=>'<button data-s="'+s[0]+'" class="'+(s[0]===cur?'on':'')+'"><i style="background:'+s[2]+'"></i>'+s[1]+'</button>').join('');
+    document.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{ cur=b.dataset.s; if(PH.setTheme) PH.setTheme(cur); drawS(); }); }
+  drawS();
+  const nf=document.getElementById('nf'), t=new Date(); nf.min=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');
+  function got(){ document.getElementById('got').textContent='What the page receives:  date of birth "'+document.getElementById('dob').value+'"  ·  consult "'+document.getElementById('cd').value+'"  ·  time "'+document.getElementById('tm').value+'"  ·  follow-up "'+nf.value+'"'; }
+  document.addEventListener('change', got); got();
+  PH_PICK.start(document);
+})();
+</script>
+<script>PH.nav('home');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();});</script>
+</body>
+</html>
