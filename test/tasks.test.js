@@ -79,7 +79,8 @@ t('open order on my list: overdue, today, tomorrow, later, no date', (()=>{ let 
 t('due words: today, tomorrow, a weekday this week, a date later', R.dueText('2026-11-19',TODAY)==='Due today' && R.dueText('2026-11-20',TODAY)==='Due tomorrow' && R.dueText('2026-11-24',TODAY)==='Due Tuesday' && R.dueText('2026-12-04',TODAY)==='Due Fri Dec 4');
 t('overdue says when it was due', R.dueText('2026-11-18',TODAY)==='Overdue · was due yesterday' && R.dueText('2026-11-10',TODAY)==='Overdue · was due Tue Nov 10');
 t('next year’s date carries the year', R.dueText('2027-01-08',TODAY)==='Due Fri Jan 8, 2027');
-t('quick dates from a Thursday: Friday is tomorrow’s Friday, next Monday is the 23rd', (q=>q.find(x=>x.k==='fri').d==='2026-11-20' && q.find(x=>x.k==='mon').d==='2026-11-23')(R.quickDues(TODAY)));
+t('quick dates from a Thursday: no "Friday" button (it is "Tomorrow"), next Monday is the 23rd', (q=>!q.some(x=>x.k==='fri') && q.find(x=>x.k==='tomorrow').d==='2026-11-20' && q.find(x=>x.k==='mon').d==='2026-11-23')(R.quickDues(TODAY)));
+t('...from a Tuesday, Friday is that Friday', R.quickDues('2026-11-17').find(x=>x.k==='fri').d==='2026-11-20');
 t('...and from a Friday, "Friday" is next week’s', R.quickDues('2026-11-20').find(x=>x.k==='fri').d==='2026-11-27');
 
 /* changing it */
@@ -128,6 +129,62 @@ t('a task reopened since is not dropped', !!R.dropArchived(R.reopen(R.close(R.un
 /* the record is safe to read whatever is in it */
 t('a broken record reads as empty, never throws', Object.keys(R.cleanRecord('nonsense').t).length===0 && Object.keys(R.cleanRecord({t:{a:null, b:{title:''}}}).t).length===0);
 t('long words are cut, not refused', R.create({title:'x'.repeat(500), by:'a@x', people:[{id:'b@x'}]}, NOW).title.length===R.MAX_TITLE);
+
+/* typing it the way you'd say it (Cory 19/11: "It should be intelligent but not a stupid task system") */
+{
+  const ro=[{name:'Maya Chen',email:'maya@example.com'},{name:'Dana Brooks',email:'dana@example.com'},{name:'Maya Ruiz',email:'mruiz@example.com'},{name:'Jules Moreno',email:'jules@example.com'}];
+  const C={today:'2026-11-19', roster:ro, offices:['Hobbs','San Angelo'], teams:['Office Managers','TCs','Leadership Team','Doctors'], me:'jordan@example.com'};
+  const u=s=>R.understand(s, C), who=x=>x.who.map(w=>w.label).join('|');
+  let x=u('Office managers: count the aligner trays by Friday');
+  t('"Office managers: count the aligner trays by Friday" -> All Office Managers, Friday, the words alone', who(x)==='All Office Managers' && x.due==='2026-11-20' && x.title==='Count the aligner trays');
+  x=u('Ask Maya Chen and Dana to send the photos tomorrow');
+  t('"Ask Maya Chen and Dana to ..." -> both of them, tomorrow', who(x)==='Maya Chen|Dana Brooks' && x.due==='2026-11-20' && x.title==='Send the photos');
+  x=u('Everyone at Hobbs - restock the brochures by next Monday');
+  t('"Everyone at Hobbs - ..." -> that office; "next Monday" is the 23rd', who(x)==='Everyone at Hobbs' && x.due==='2026-11-23' && x.title==='Restock the brochures');
+  t('"OMs + leadership" and "TCs" and "Drs" are understood', who(u('OMs + leadership: review the budget'))==='All Office Managers|All Leadership Team' && who(u('TCs: x'))==='All TCs' && who(u('Drs: sign the charts'))==='All Doctors');
+  t('"by the 5th" after the 5th is next month’s 5th', u('TCs: top 3 wins by the 5th').due==='2026-12-05');
+  t('"by end of month" = the last working day', u('Check the dates by end of month').due==='2026-11-30');
+  t('"next Friday" on a Thursday is the Friday of next week; "Friday" is tomorrow', u('Do it next friday').due==='2026-11-27' && u('Do it Friday').due==='2026-11-20');
+  t('12/3, Nov 30, in 2 weeks, eod', u('Lunch 12/3').due==='2026-12-03' && u('Tidy the lab Nov 30').due==='2026-11-30' && u('Call the lab in 2 weeks').due==='2026-12-03' && u('Sign by eod').due==='2026-11-19');
+  t('a date that has gone this year means next year', u('Plan it by 1/15').due==='2027-01-15');
+  x=u('Send me a photo of Hobbs’ front desk');
+  t('an office named inside the words is NOT read as who it is for', !x.who.length && x.title==='Send me a photo of Hobbs’ front desk');
+  x=u('Reminder: lock the back door');
+  t('"Reminder: ..." stays as typed (nobody is called Reminder)', !x.who.length && x.title==='Reminder: lock the back door');
+  t('"next week" alone at the end is left in the words (could be what the task is about)', u('Plan the party next week').due==='' && u('Plan the party by next week').due==='2026-11-23');
+  x=u('Maya: order lunch 12/3');
+  t('two people called Maya -> asked, not guessed', !x.who.length && x.unknown.join().indexOf('2 people called Maya')>=0 && x.title==='Order lunch');
+  x=u('Maya Ruiz, Bob: order lunch');
+  t('a name nobody has is flagged; the ones found still count', who(x)==='Maya Ruiz' && x.unknown.join().indexOf('Bob')>=0);
+  t('"me" is the giver', u('Me: check the alarm').who[0].v==='jordan@example.com');
+}
+/* ideas from the practice's own teams, and "give again" */
+t('ideas only for teams the practice has, in its own words', (i=>i.some(x=>/^Office Managers: count the aligner trays/.test(x.text)) && !i.some(x=>/\{T\}/.test(x.text)))(R.ideas({teams:['Office Managers']})) && !R.ideas({teams:['Staff']}).some(x=>/Office Managers/.test(x.text)));
+{
+  const D=R.demo(['North','South','East','West','Mid'], NOW), mine=R.recent(D.rec, ['jordan.reyes@example.com'], D.people, 3);
+  t('"give again" = the last different things you gave, to the same people', mine.length===3 && mine.every(x=>/: /.test(x.text)) && mine[0].text.indexOf('Check the fire extinguisher')>0);
+}
+/* the giver's view */
+{
+  let r=R.add(null, R.create({id:'g1', title:'Count trays', due:'2026-11-18', by:'jordan@example.com', people:[{id:'a@x',name:'Avery Alder'},{id:'b@x',name:'Blake Birch'},{id:'c@x',name:'Casey Cedar'}]}, new Date('2026-11-16T10:00:00')));
+  t('one line for the giver: "Waiting on Avery, Blake and 1 more"', R.giverLine(r.t.g1)==='Waiting on Avery, Blake and 1 more');
+  t('due today: no Nudge button while Home-Brace’s own morning reminder is on; with it off, there is one', !R.needsNudge(R.edit(r,'g1',{due:TODAY},NOW).t.g1, TODAY, NOW) && R.needsNudge(R.edit(r,'g1',{due:TODAY, remind:false},NOW).t.g1, TODAY, NOW));
+  t('a late task is worth a nudge; nudged a minute ago it isn’t', R.needsNudge(r.t.g1, TODAY, NOW) && !R.needsNudge(R.nudged(r, 'g1', NOW).t.g1, TODAY, new Date(NOW.getTime()+60000)));
+  t('no date and quiet for 3 days -> worth a nudge; given yesterday -> not yet', R.needsNudge(R.edit(r,'g1',{due:''},NOW).t.g1, TODAY, NOW) && !R.needsNudge(R.add(null, R.create({id:'g2', title:'x', by:'j@x', people:[{id:'a@x'}]}, new Date('2026-11-18T10:00:00'))).t.g2, TODAY, NOW));
+  r=R.markDone(r, 'g1', 'a@x', null, NOW, 'jordan@example.com');
+  t('the giver can mark someone done (they told them) - and it says so', !!r.t.g1.to['a@x'].d && r.t.g1.to['a@x'].mk==='jordan@example.com');
+  t('undo clears who marked it', R.undo(r, 'g1', 'a@x').t.g1.to['a@x'].mk==='');
+  /* reminders Home-Brace sends */
+  const plan=(rec, day, hm, now)=>R.remindPlan(rec, day, hm, now||new Date(day+'T15:00:00Z')).map(p=>p.id+':'+p.kind+(p.silent?':silent':''));
+  let q=R.add(null, R.create({id:'d1', title:'Due Thursday', due:'2026-11-19', by:'j@x', people:[{id:'a@x'}]}, new Date('2026-11-17T10:00:00')));
+  t('the morning it is due (8 AM practice time on) -> a reminder', plan(q, '2026-11-19', '08:05').join()==='d1:due' && plan(q, '2026-11-19', '07:40').join()==='');
+  q.t.d1.rem.due='x'; q=R.cleanRecord(q);
+  t('sent once (stamped); the next working day it is late -> one more', plan(q, '2026-11-19', '09:00').join()==='' && plan(q, '2026-11-20', '09:00').join()==='d1:late');
+  t('never on a weekend, never once everyone is done, never when reminders are off', plan(q, '2026-11-21', '09:00').join()==='' && plan(R.markDone(q,'d1','a@x','',NOW), '2026-11-20', '09:00').join()==='' && plan(R.edit(q,'d1',{remind:false},NOW), '2026-11-20', '09:00').join()==='');
+  t('given on the day it is due -> no morning reminder on top of the new-task alert', R.create({title:'x', due:'2026-11-19', today:'2026-11-19', by:'j@x', people:[{id:'a@x'}]}, NOW).rem.due!=='');
+  t('a new due date earns new reminders', R.edit(q, 'd1', {due:'2026-11-24'}, NOW).t.d1.rem.due==='');
+  t('nudged by hand this morning -> the reminder is stamped but not sent again', plan(R.cleanRecord(Object.assign({}, R.nudged(R.cleanRecord({v:1,t:{d2:Object.assign({}, q.t.d1, {id:'d2', rem:{due:'',late:''}})}}), 'd2', new Date('2026-11-19T13:00:00Z')))), '2026-11-19', '09:00', new Date('2026-11-19T15:00:00Z')).join()==='d2:due:silent');
+}
 
 /* the pages - the switch, the tab, Heather's column, Home */
 const read=f=>fs.readFileSync(path.join(__dirname,'..','v1',f),'utf8');

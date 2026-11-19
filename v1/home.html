@@ -170,12 +170,12 @@
   }
 
 </style>
-<script src="user.js?v=hc223"></script>
+<script src="user.js?v=hc224"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc223"></script>
-  <script src="gate.js?v=hc223"></script>
-  <script src="party.js?v=hc223"></script>
-  <script src="tasks.js?v=hc223"></script>
+  <script src="store.js?v=hc224"></script>
+  <script src="gate.js?v=hc224"></script>
+  <script src="party.js?v=hc224"></script>
+  <script src="tasks.js?v=hc224"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — this is the logged-in home. Use “Viewing as” to see how the app changes for each role.</div>
@@ -450,10 +450,10 @@
     else { const a=TASK_AS[cur && cur.id]; if(!a){ host.hidden=true; return; }
       const p=R.demo(PH.officeNames()).people.find(x=>x.name===a[0]); TASKME={name:p.name, email:p.email, level:a[2], as:a[1]}; }
     const got=raw=>{ TASKREC=R.cleanRecord(raw); drawTasks(); };
-    if(live){ if(window.PH_STORE) PH_STORE.get(R.KEY).then(got, ()=>{ host.hidden=true; }); return; }
+    if(live){ if(window.PH_STORE) PH_STORE.get(R.KEY).then(got, ()=>{ host.hidden=true; }); if(R.remindTick) R.remindTick(); return; }
     let v=''; try{ v=localStorage.getItem('ph_tasks_demo'); }catch(_){}
     let raw=null; try{ raw=JSON.parse(localStorage.getItem(R.KEY)); }catch(_){}
-    if(v!=='1' || !raw){ raw=R.demo(PH.officeNames(), new Date()).rec; if(window.PH_STORE) PH_STORE.set(R.KEY, raw); try{ localStorage.setItem('ph_tasks_demo','1'); }catch(_){} }
+    if(v!=='2' || !raw){ raw=R.demo(PH.officeNames(), new Date()).rec; if(window.PH_STORE) PH_STORE.set(R.KEY, raw); try{ localStorage.setItem('ph_tasks_demo','2'); }catch(_){} }
     got(raw);
   }
   function drawTasks(){
@@ -489,7 +489,7 @@
 })();
 </script>
 <script>PH.nav('home');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(PH.loadActivity)PH.loadActivity().then(function(){return PH.loadSeen?PH.loadSeen():null;}).then(function(){if(window.HOME&&HOME.refreshUpdates)HOME.refreshUpdates();if(PH.refreshBell)PH.refreshBell();});});</script>
-<script src="tour.js?v=hc223"></script>
+<script src="tour.js?v=hc224"></script>
 <script>
 Tour.init([
   {sel:'.ph-av', title:'This is you', body:'Your name and photo, top right. Tap it any time for <b>My profile</b> \u2014 your photo, preferred name, phone and \u201cAbout me\u201d. Those follow you between devices.'},

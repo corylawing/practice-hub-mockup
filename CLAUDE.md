@@ -527,8 +527,27 @@ I can confidently say that the chat feature should go next. The production thing
    ph_tasks_old_<year given> (archive written first, then dropped from ph_tasks only if the archive holds it; run by a giver
    once a day per device), "Finished -> Show older" reads them. Every write = PH_STORE.update (merged). No patient details
    (the page says so). Sandbox: "Try it as" Jordan (gives) / Maya (gets) / Priya (everything) / Luis; Home maps admin ->
-   Priya, OM -> Maya, TC -> Luis; demo seeded once (ph_tasks_demo). Not built yet (ask Cory): repeating tasks; a morning
-   "due today" alert (needs a timer on the server). test/tasks (74) + notifications (3) + permissions (the live tab count).
+   Priya, OM -> Maya, TC -> Luis; demo seeded once (ph_tasks_demo '2'). test/tasks (104) + notifications (3) + permissions.
+   V2 SAME DAY (hc224) - Cory: "A little bit cleaner, and easier to use with good use cases.. It should be intelligent but
+   not a stupid task system"; "Also easier task management for the people who assigned":
+   - ONE BOX, TYPED (or said - the app-wide 🎤) THE WAY YOU'D SAY IT: tasks.js understand(). WHO only from the front
+     ("Office managers: ...", "Everyone at Hobbs - ...", "Ask Maya and Dana to ...", "OMs + leadership", "TCs", "Drs",
+     "me") and only if every name is real (person / office / team / everyone) - "Reminder: ..." or an office named mid-
+     sentence stay as typed; a first name two people share is ASKED ("2 people called Maya"), never guessed. WHEN only from
+     the end (by Friday / next Friday / tomorrow / eod / end of week / end of month = last working day / by the 5th /
+     12/3 / Nov 30 / in 2 weeks; "next week" needs "by"). The page shows Task / For / Due as understood; chips to fix it.
+   - IDEAS (only for teams the practice has): trays, fire extinguisher + eyewash, promo posters, TCs' top 3 wins, uniform
+     policy, emergency contact; GIVE AGAIN = your last 3 different tasks to the same people.
+   - LISTS grouped Late / Today / Coming up / Later / No date; tap a row to open it.
+   - GIVER: a red "N tasks are late - Nudge them all" line; one row per task "2 of 4 done · Waiting on Maya and Sam ·
+     1 day late" + a thin bar; Nudge only when worth it (late; due today with reminders off; no date and quiet 3 days);
+     open it to MARK SOMEONE DONE (they told you - "marked by Jordan"), MOVE THE DATE in one tap (they're told; new date =
+     new reminders), turn reminders off/on, Change, Give again, Close. "Just finished" shows 3 days.
+   - HOME-BRACE REMINDS FOR YOU (on by default, per task): remindPlan/remindTick - from 8 AM PRACTICE TIME (centralNow) on
+     weekdays, the morning it's due and once the first working day it's late, phone alert to those not done. No server
+     timer: whoever opens Home or Tasks on the live site runs it (every 20 min per device, stamped in the task so it goes
+     once - the payroll-reminder way). Given on the day it's due = no extra morning alert; nudged by hand in the last 12 h
+     = stamped, not sent. Not built yet (ask Cory): repeating tasks.
 43. **DATE & TIME PICKER - one for all of Home-Brace (19/11/2026; hc220; SANDBOX PREVIEW ONLY so far:
    v1/datepick-demo.html, not used by any page yet).** Cory: "I don't like the date picker either it looks so old"; "Can
    they still type it though?"; the month/year dropdowns inside "look very old school"; the native time columns are good

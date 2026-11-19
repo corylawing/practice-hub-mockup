@@ -91,11 +91,12 @@
     Object.keys(t.to||{}).forEach(k=>{
       const x=t.to[k], kk=lc(k).slice(0,160);
       if(!kk || !x || typeof x!=='object' || to[kk] || n>=MAX_PEOPLE) return; n++;
-      to[kk]={n:line(x.n,80), d:iso(x.d), note:text(x.note,MAX_NOTE), at:iso(x.at), gone:iso(x.gone)};
+      to[kk]={n:line(x.n,80), d:iso(x.d), note:text(x.note,MAX_NOTE), at:iso(x.at), gone:iso(x.gone), mk:line(x.mk,160)};
     });
     return {id, title, notes:text(t.notes,MAX_NOTES), due:isDay(t.due) ? t.due : '', by:lc(t.by).slice(0,160), byName:line(t.byName,80),
       at:iso(t.at) || '1970-01-01T00:00:00.000Z', how:(Array.isArray(t.how) ? t.how : []).map(h=>line(h,60)).filter(Boolean).slice(0,MAX_HOW),
-      to, closed:iso(t.closed), edited:iso(t.edited), nudged:iso(t.nudged), nudges:Math.max(0, Math.min(999, Math.floor(+t.nudges||0)))};
+      to, closed:iso(t.closed), edited:iso(t.edited), nudged:iso(t.nudged), nudges:Math.max(0, Math.min(999, Math.floor(+t.nudges||0))),
+      remind:t.remind!==false, rem:{due:line(t.rem && t.rem.due, 60), late:line(t.rem && t.rem.late, 60)}};
   }
   function cleanRecord(r){
     const out={v:1, t:{}};
@@ -120,7 +121,9 @@
   function create(o, now){
     now=now||new Date(); const at=now.toISOString(), to={};
     (o.people||[]).forEach(p=>{ const k=lc(p.id||personId(p)); if(k && !to[k]) to[k]={n:line(p.name,80), d:'', note:'', at, gone:''}; });
-    return cleanTask({id:o.id||newId(now), title:o.title, notes:o.notes, due:o.due, by:o.by, byName:o.byName, at, how:o.how, to});
+    /* given on the day it's due: they've just been told, so the morning reminder for today is already done */
+    const rem={due:(o.due && o.today && o.due===o.today) ? at : '', late:''};
+    return cleanTask({id:o.id||newId(now), title:o.title, notes:o.notes, due:o.due, by:o.by, byName:o.byName, at, how:o.how, to, remind:o.remind!==false, rem});
   }
   function add(rec, task){ rec=cleanRecord(rec); const c=cleanTask(task); if(c && !rec.t[c.id]) rec.t[c.id]=c; return rec; }
 
@@ -158,8 +161,9 @@
   /* The quick due-date choices: today, tomorrow, this Friday (or next, from Friday on), next Monday, in two weeks. */
   function quickDues(today){
     const wd=weekday(today), fri=addDays(today, ((5-wd+7)%7)||7), mon=addDays(today, ((1-wd+7)%7)||7);
-    return [{k:'today', n:'Today', d:today}, {k:'tomorrow', n:'Tomorrow', d:addDays(today,1)},
+    const all=[{k:'today', n:'Today', d:today}, {k:'tomorrow', n:'Tomorrow', d:addDays(today,1)},
             {k:'fri', n:'Friday', d:fri}, {k:'mon', n:'Next Monday', d:mon}, {k:'2w', n:'In 2 weeks', d:addDays(today,14)}];
+    return all.filter((x,i)=>!all.slice(0,i).some(y=>y.d===x.d));      // on a Thursday "Friday" is "Tomorrow" - one button, not two
   }
   const DUE_ORDER={late:0, today:1, tomorrow:2, week:3, later:4, none:5};
   function byDue(today){
@@ -201,16 +205,17 @@
     const c=JSON.parse(JSON.stringify(t)); if(fn(c)===false) return rec;
     const ok=cleanTask(c); if(ok) rec.t[id]=ok; return rec;
   }
-  function markDone(rec, id, key, note, now){
-    return change(rec, id, t=>{ const x=t.to[key]; if(!x || x.gone || t.closed) return false; if(!x.d) x.d=(now||new Date()).toISOString(); if(note!=null) x.note=text(note,MAX_NOTE); });
+  function markDone(rec, id, key, note, now, by){
+    return change(rec, id, t=>{ const x=t.to[key]; if(!x || x.gone || t.closed) return false; if(!x.d){ x.d=(now||new Date()).toISOString(); x.mk=by ? lc(by) : ''; } if(note!=null) x.note=text(note,MAX_NOTE); });
   }
   function setNote(rec, id, key, note){ return change(rec, id, t=>{ const x=t.to[key]; if(!x || x.gone) return false; x.note=text(note,MAX_NOTE); }); }
-  function undo(rec, id, key){ return change(rec, id, t=>{ const x=t.to[key]; if(!x || !x.d) return false; x.d=''; }); }
+  function undo(rec, id, key){ return change(rec, id, t=>{ const x=t.to[key]; if(!x || !x.d) return false; x.d=''; x.mk=''; }); }
   function edit(rec, id, o, now){
     return change(rec, id, t=>{
       if(o.title!=null){ const ti=line(o.title,MAX_TITLE); if(!ti) return false; t.title=ti; }
       if(o.notes!=null) t.notes=text(o.notes,MAX_NOTES);
-      if(o.due!=null) t.due=isDay(o.due) ? o.due : '';
+      if(o.due!=null){ const d=isDay(o.due) ? o.due : ''; if(d!==t.due){ t.due=d; t.rem={due:'', late:''}; } }   // a new date earns new reminders
+      if(o.remind!=null) t.remind=!!o.remind;
       t.edited=(now||new Date()).toISOString();
     });
   }
@@ -253,6 +258,166 @@
   function alertNudge(t, today){ return {title:'Reminder from '+(first(t.byName)||'Home-Brace'), body:t.title+(t.due ? ' · '+dueText(t.due, today) : '')}; }
   function alertAllDone(t){ return {title:'All done ✓ '+t.title, body:'Everyone on this task has finished it.'}; }
   function bellDone(t, who){ const p=progress(t); return '✅ '+first(who)+' finished “'+t.title+'”'+(p.total>1 ? ' ('+p.done+' of '+p.total+' done)' : ''); }
+
+  /* ---------- understanding what was typed ---------- */
+  /* Cory 19/11: "A little bit cleaner, and easier to use with good use cases.. It should be intelligent but not a stupid
+     task system". So a task can be typed the way it would be said, and the page fills in who and when:
+       "Office managers: count the aligner trays by Friday"     -> All Office Managers, due Friday, "Count the aligner trays"
+       "Ask Maya and Dana to send the photos tomorrow"          -> Maya + Dana, due tomorrow, "Send the photos"
+       "Everyone at Hobbs - restock the brochures by the 5th"   -> everyone at Hobbs, due the 5th
+     WHO is only read from the front ("<who>: ..." / "<who> - ..." / "Ask <who> to ..."), and only when every name in it is
+     someone or something real (a person, an office, a team, "everyone") - so "Reminder: ..." or "Send me a photo of
+     Hobbs' front desk" stay exactly as typed. WHEN is only read from the end. Names come from the team list, offices
+     from Admin -> Locations and teams from the people on the team list, so a 9th office or a new team works at once. */
+  const fold=s=>String(s==null?'':s).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[’‘`]/g,"'").replace(/\s+/g,' ').trim();
+  const WD3=['sun','mon','tue','wed','thu','fri','sat'], MON3=['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+  const NUMW={a:1, an:1, one:1, two:2, three:3, four:4, five:5, six:6};
+  function nextWd(today, wd, incl){ let n=(wd-weekday(today)+7)%7; if(n===0 && !incl) n=7; return addDays(today, n); }
+  function workBack(d){ while(weekday(d)===0 || weekday(d)===6) d=addDays(d,-1); return d; }
+  function monthDay(today, m, d, y){
+    const yy=y ? (y<100 ? 2000+y : y) : +today.slice(0,4), s=yy+'-'+p2(m)+'-'+p2(d);
+    if(!isDay(s)) return ''; if(!y && s<today) return (yy+1)+'-'+p2(m)+'-'+p2(d); return s;
+  }
+  /* A phrase (already folded, no "by") -> a day, or ''. strong = it can stand at the end without "by"/"due". */
+  function dateOf(p, today){
+    p=String(p||'').replace(/[.!,;]+$/,'').trim(); let m;
+    if(/^(today|tonight|eod|end of (the )?day)$/.test(p)) return {d:today, strong:true};
+    if(/^(tomorrow|tmrw|tmr|tomorow)$/.test(p)) return {d:addDays(today,1), strong:true};
+    if((m=/^(this |next |coming )?(sun|mon|tue|wed|thu|fri|sat)[a-z]*$/.exec(p)) && /^(sun(day)?|mon(day)?|tue(s|sday)?|wed(nesday)?|thu(r|rs|rsday)?|fri(day)?|sat(urday)?)$/.test(p.replace(/^(this|next|coming) /,''))){
+      const wd=WD3.indexOf(m[2]);
+      if(m[1]==='next '){ const d=nextWd(today, wd, false), mon=nextWd(today, 1, false); return {d:d<mon ? addDays(d,7) : d, strong:true}; }
+      return {d:nextWd(today, wd, true), strong:true};
+    }
+    if(/^(end of (the )?week|eow|this week|the end of the week)$/.test(p)){ const wd=weekday(today); return {d:(wd===6||wd===0) ? nextWd(today,5,false) : nextWd(today,5,true), strong:true}; }
+    if(/^next week$/.test(p)) return {d:nextWd(today,1,false), strong:false};
+    if(/^(end of (the )?month|eom|month end|the end of the month)$/.test(p)){
+      const t=new Date(today+'T12:00:00'), last=dayOf(new Date(t.getFullYear(), t.getMonth()+1, 0, 12)), w=workBack(last);
+      return {d:w<today ? today : w, strong:true}; }
+    if((m=/^in (\d{1,2}|a|an|one|two|three|four|five|six) (day|days|week|weeks)$/.exec(p))){ const n=NUMW[m[1]]||+m[1]; return {d:addDays(today, /week/.test(m[2]) ? n*7 : n), strong:true}; }
+    if((m=/^(\d{1,2})\/(\d{1,2})(?:\/(\d{2}|\d{4}))?$/.exec(p))){ const d=monthDay(today, +m[1], +m[2], m[3] ? +m[3] : 0); return d ? {d, strong:true} : null; }
+    if((m=/^([a-z]{3,9})\.? (\d{1,2})(?:st|nd|rd|th)?(?:,? (\d{4}))?$/.exec(p)) && MON3.indexOf(m[1].slice(0,3))>=0){ const d=monthDay(today, MON3.indexOf(m[1].slice(0,3))+1, +m[2], m[3] ? +m[3] : 0); return d ? {d, strong:true} : null; }
+    if((m=/^(\d{1,2})(?:st|nd|rd|th)? (?:of )?([a-z]{3,9})$/.exec(p)) && MON3.indexOf(m[2].slice(0,3))>=0){ const d=monthDay(today, MON3.indexOf(m[2].slice(0,3))+1, +m[1], 0); return d ? {d, strong:true} : null; }
+    if((m=/^the (\d{1,2})(?:st|nd|rd|th)$/.exec(p))){ const t=new Date(today+'T12:00:00'); let d=monthDay(today, t.getMonth()+1, +m[1], t.getFullYear());
+      if(!d || d<today){ const n=new Date(t.getFullYear(), t.getMonth()+1, 1, 12); d=monthDay(today, n.getMonth()+1, +m[1], n.getFullYear()); } return d ? {d, strong:true} : null; }
+    return null;
+  }
+  /* The due date at the END of the words: "... by Friday", "... due 12/3", "... tomorrow". -> {rest, due, said} */
+  function takeDue(txt, today){
+    const words=String(txt||'').trim().split(/\s+/);
+    for(let n=Math.min(6, words.length-1); n>=1; n--){
+      const head=words.slice(0, words.length-n).join(' ').replace(/[\s,;:–—-]+$/,''), tail=fold(words.slice(-n).join(' ')).replace(/^[,;:–—-]+\s*/,'');
+      if(!head) continue;
+      const m=/^(by|due|before|on|until|no later than)\s+(.+)$/.exec(tail), dd=dateOf(m ? m[2] : tail, today);
+      if(dd && dd.d && (m || dd.strong)) return {rest:head, due:dd.d, said:words.slice(-n).join(' ')};
+    }
+    return {rest:String(txt||'').trim(), due:'', said:''};
+  }
+  /* One name in a who-list -> {kind:'all'|'office'|'team'|'person', v, label} or null. ambiguous = several people match. */
+  function plural(x){ return x.replace(/'s$/,'').replace(/s$/,''); }
+  function whoOne(tok, ctx){
+    let x=fold(tok).replace(/^(the|our)\s+/,'');
+    if(/^(everyone|everybody|all|all staff|the whole team|the whole practice|everyone in the practice|whole team)$/.test(x)) return {kind:'all', v:'', label:'Everyone'};
+    if(/^(me|myself)$/.test(x) && ctx.me) return {kind:'person', v:ctx.me, label:'Me'};
+    const bare=x.replace(/^(all|every|everyone|everybody|all of|all the)\s+(at\s+|in\s+|from\s+)?/,'').replace(/\s+(office|team|staff|crew|people)$/,'').trim();
+    const ppl=ctx.roster||[];
+    const full=ppl.filter(r=>fold(r.name)===x); if(full.length===1) return {kind:'person', v:personId(full[0]), label:full[0].name};
+    for(const o of (ctx.offices||[])){ const f=fold(o); if(f===bare || f.replace(/\s*\(.*\)$/,'')===bare) return {kind:'office', v:o, label:'Everyone at '+o}; }
+    for(const t of (ctx.teams||[])){
+      const f=fold(t), base=f.replace(/\s+team$/,''), ac=base.split(' ').map(w=>w[0]).join('');
+      const forms=[f, base, plural(base), ac, ac+'s'].concat(base.split(' ').length===1 ? [] : []);
+      if(forms.indexOf(bare)>=0 || forms.indexOf(plural(bare))>=0 || (/^(drs?|docs?)$/.test(bare) && /^doctor/.test(base))) return {kind:'team', v:t, label:'All '+t};
+    }
+    const firsts=ppl.filter(r=>fold(r.name).split(' ')[0]===x);
+    if(firsts.length===1) return {kind:'person', v:personId(firsts[0]), label:firsts[0].name};
+    const fl=/^(\S+) (\S)\.?$/.exec(x); if(fl){ const h=ppl.filter(r=>{ const w=fold(r.name).split(' '); return w[0]===fl[1] && (w[w.length-1]||'')[0]===fl[2]; }); if(h.length===1) return {kind:'person', v:personId(h[0]), label:h[0].name}; }
+    if(firsts.length>1) return {kind:'ambiguous', v:x, label:tok.trim(), n:firsts.length};
+    return null;
+  }
+  function whoList(str, ctx){
+    const toks=String(str||'').split(/\s*(?:,|&|\+|\/|\band\b)\s*/i).map(x=>x.trim()).filter(Boolean);
+    if(!toks.length || toks.length>12) return null;
+    const got=toks.map(t=>({t, w:whoOne(t, ctx)}));
+    const ok=got.filter(g=>g.w && g.w.kind!=='ambiguous');
+    /* a real first name that fits two people ("Maya") still counts as a name: it is taken off the words and asked about */
+    return (ok.length || got.some(g=>g.w && g.w.kind==='ambiguous')) ? {found:ok.map(g=>g.w), unknown:got.filter(g=>!g.w || g.w.kind==='ambiguous').map(g=>g.w ? g.w.n+' people called '+g.w.label : '“'+g.t+'”')} : null;
+  }
+  function takeWho(txt, ctx){
+    const s0=String(txt||'').trim(); let m;
+    if((m=/^(?:please\s+)?(?:ask|have|get|tell|remind)\s+(.+?)\s+to\s+(.+)$/i.exec(s0))){ const w=whoList(m[1], ctx); if(w) return Object.assign({rest:m[2]}, w); }
+    if((m=/^([^:–—]{2,90}?)\s*[:–—]\s*(.+)$/.exec(s0)) || (m=/^(.{2,90}?)\s+-\s+(.+)$/.exec(s0))){ const w=whoList(m[1], ctx); if(w) return Object.assign({rest:m[2]}, w); }
+    return {rest:s0, found:[], unknown:[]};
+  }
+  /* "Office managers: count the trays by Friday" -> {title, due, dueSaid, who:[{kind,v,label}], unknown:[words], picks} */
+  function understand(txt, ctx){
+    ctx=ctx||{}; const today=ctx.today||dayOf(new Date());
+    const w=takeWho(txt, ctx), d=takeDue(w.rest, today);
+    let title=d.rest.replace(/^[\s,;:–—-]+|[\s,;:–—-]+$/g,'').replace(/^(please|pls)\s+/i,'');
+    if(!title) title=String(txt||'').trim();
+    title=title.charAt(0).toUpperCase()+title.slice(1);
+    const picks={people:[], offices:[], teams:[], all:false};
+    w.found.forEach(x=>{ if(x.kind==='all') picks.all=true; else if(x.kind==='office') picks.offices.push(x.v); else if(x.kind==='team') picks.teams.push(x.v); else picks.people.push(x.v); });
+    return {title:line(title, MAX_TITLE), due:d.due, dueSaid:d.said, who:w.found, unknown:w.unknown, picks};
+  }
+
+  /* ---------- ideas: the practice's own use cases, and what this person has given before ---------- */
+  /* Only offered when the practice has that team (read off the team list), in its own words. Nothing about patients. */
+  const IDEAS=[
+    {team:/office manager/, text:'{T}: count the aligner trays and order what’s low by Friday', ic:'📦'},
+    {team:/office manager/, text:'{T}: check the fire extinguisher and eyewash dates by end of week', ic:'🧯'},
+    {team:/office manager/, text:'{T}: put up the new promo posters by Monday', ic:'📣'},
+    {team:/^tcs?$|treatment coordinator/, text:'{T}: send me your top 3 wins this month by Friday', ic:'🏆'},
+    {team:null, text:'Everyone: read the new uniform policy by end of week', ic:'👕'},
+    {team:null, text:'Everyone: update your emergency contact in My profile by end of week', ic:'☎️'}];
+  function ideas(ctx){
+    const teams=ctx.teams||[];
+    return IDEAS.map(x=>{ if(!x.team) return {text:x.text, ic:x.ic}; const t=teams.find(n=>x.team.test(fold(n))); return t ? {text:x.text.replace('{T}', t), ic:x.ic} : null; }).filter(Boolean);
+  }
+  /* "Give again": the last few different things this person gave, ready to send again to the same people. */
+  function recent(rec, keys, roster, n){
+    const seen={}, out=[];
+    list(rec).filter(t=>isGiver(t, keys)).sort((a,b)=>a.at<b.at ? 1 : -1).forEach(t=>{
+      const k=fold(t.title); if(seen[k] || out.length>=(n||3)) return; seen[k]=1;
+      const who=t.how.length ? t.how.join(', ') : people(t).map(x=>x.n).filter(Boolean).slice(0,6).join(', ');
+      if(who) out.push({text:who+': '+t.title, ic:'↻', at:t.at});
+    });
+    return out;
+  }
+
+  /* ---------- a word on each task ---------- */
+  const names=a=>a.length<=2 ? a.join(' and ') : a.slice(0,2).join(', ')+' and '+(a.length-2)+' more';
+  function waitingOn(t){ return people(t).filter(x=>!x.d).sort((a,b)=>a.n.localeCompare(b.n)).map(x=>first(x.n)); }
+  /* Worth a nudge now? Not finished, someone still to do it, not nudged in the last hour, and: late; or due today with
+     Home-Brace's own reminders off (with them on, the morning reminder already went); or no date and nobody has moved
+     for 3 days. */
+  function needsNudge(t, today, now){
+    if(!t || finished(t) || !openIds(t).length || nudgeWait(t, now)) return false;
+    const st=dueState(t.due, today); if(st==='late') return true; if(st==='today') return !t.remind;
+    if(!t.due){ const quiet=((now||new Date())-new Date(t.nudged || t.at))/DAY; return quiet>=3; }
+    return false;
+  }
+  /* "Waiting on Maya and Sam" / "Everyone's done" / "Closed" - the one line a giver needs. */
+  function giverLine(t){
+    if(t.closed) return 'Closed'; const p=progress(t); if(p.all) return 'Everyone’s done';
+    return 'Waiting on '+names(waitingOn(t));
+  }
+
+  /* ---------- reminders Home-Brace sends for the giver ---------- */
+  /* Practice time (Central). From 8 AM on a weekday: the morning it's due, and once the first working day it's late -
+     to the people who haven't done it. Each is sent once (stamped in the task; the device whose stamp lands sends it).
+     A task nudged by hand in the last 12 hours is stamped but not sent again. */
+  function remindPlan(rec, today, hm, now){
+    const out=[]; if(String(hm||'')<'08:00') return out; const wd=weekday(today); if(wd===0 || wd===6) return out;
+    list(rec).forEach(t=>{
+      if(!t.remind || !t.due || finished(t) || !openIds(t).length) return;
+      const kind=t.due===today ? 'due' : (t.due<today ? 'late' : ''); if(!kind || t.rem[kind]) return;
+      if(kind==='late' && t.rem.late) return;
+      const silent=!!(t.nudged && ((now||new Date())-new Date(t.nudged))<12*36e5);
+      out.push({id:t.id, kind, silent});
+    });
+    return out;
+  }
+  function alertDue(t){ return {title:'Due today', body:t.title+(t.byName ? ' — from '+first(t.byName) : '')}; }
+  function alertLate(t, today){ return {title:'Still to do', body:t.title+' — '+dueText(t.due, today).replace('Overdue · ','')+(t.byName ? ' · from '+first(t.byName) : '')}; }
 
   /* ---------- the sandbox's made-up practice ---------- */
   /* Made-up people and tasks for the sandbox (never the live site). Offices are the practice's own list as it is today, so
@@ -307,10 +472,33 @@
     return r;
   }
 
+  /* Runs on Home and the Tasks page (live, whoever is signed in): at most every 20 minutes per device. */
+  let TICKING=false;
+  async function remindTick(){
+    const H=global.PH, S=global.PH_STORE;
+    if(TICKING || !H || !S || !(H.isLive && H.isLive()) || !(H.tasksOn && H.tasksOn())) return;
+    let last=0; try{ last=+localStorage.getItem('ph_tasks_remind_at')||0; }catch(_){}
+    if(Date.now()-last<20*60e3) return; try{ localStorage.setItem('ph_tasks_remind_at', String(Date.now())); }catch(_){}
+    TICKING=true;
+    try{
+      const c=H.centralNow ? H.centralNow() : {date:dayOf(new Date()), hm:'12:00'};
+      const plan=remindPlan(cleanRecord(await S.get(KEY)), c.date, c.hm, new Date());
+      for(const p of plan){
+        const stamp=new Date().toISOString()+'~'+Math.random().toString(36).slice(2,8);
+        const r=await S.update(KEY, cur=>{ const x=cleanRecord(cur), t=x.t[p.id]; if(!t || t.rem[p.kind]) return undefined; t.rem[p.kind]=stamp; return x; });
+        const t=r && r.value && cleanRecord(r.value).t[p.id];
+        if(!t || r.blocked || r.error || t.rem[p.kind]!==stamp || p.silent) continue;
+        buzz(openIds(t), p.kind==='due' ? alertDue(t) : alertLate(t, c.date), 'hb-task-'+t.id);
+      }
+    }catch(_){}
+    TICKING=false;
+  }
+
   const RULES={KEY, OLD, KEEP_DAYS, MAX_TITLE, MAX_NOTES, MAX_NOTE, lc, dayOf, addDays, isDay, personId, myKeys, expand, howWords,
     cleanTask, cleanRecord, list, problems, create, add, people, progress, finished, finishedAt, openIds, slotFor, isGiver,
     dueState, dueText, shortDay, quickDues, mine, given, summary, markDone, setNote, undo, edit, addPeople, removePerson,
-    close, reopen, nudged, nudgeWait, oldOnes, toArchive, dropArchived, alertNew, alertNudge, alertAllDone, bellDone, demo, tell, buzz, finish};
+    close, reopen, nudged, nudgeWait, oldOnes, toArchive, dropArchived, alertNew, alertNudge, alertAllDone, bellDone, demo, tell, buzz, finish,
+    fold, dateOf, takeDue, whoOne, understand, ideas, recent, waitingOn, needsNudge, giverLine, remindPlan, alertDue, alertLate, remindTick};
   if(typeof module!=='undefined' && module.exports) module.exports=RULES;
   global.PH_TASKS=RULES;
 })(typeof window!=='undefined' ? window : globalThis);
