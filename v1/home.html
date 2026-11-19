@@ -453,12 +453,12 @@
     if(live){ if(window.PH_STORE) PH_STORE.get(R.KEY).then(got, ()=>{ host.hidden=true; }); if(R.remindTick) R.remindTick(); return; }
     let v=''; try{ v=localStorage.getItem('ph_tasks_demo'); }catch(_){}
     let raw=null; try{ raw=JSON.parse(localStorage.getItem(R.KEY)); }catch(_){}
-    if(v!=='2' || !raw){ raw=R.demo(PH.officeNames(), new Date()).rec; if(window.PH_STORE) PH_STORE.set(R.KEY, raw); try{ localStorage.setItem('ph_tasks_demo','2'); }catch(_){} }
+    if(v!=='2' || !raw){ raw=R.demo(PH.officeNames(), new Date(), PH.centralNow ? PH.centralNow().date : '').rec; if(window.PH_STORE) PH_STORE.set(R.KEY, raw); try{ localStorage.setItem('ph_tasks_demo','2'); }catch(_){} }
     got(raw);
   }
   function drawTasks(){
     const host=el('tasks'), R=window.PH_TASKS; if(!host || !TASKME || !TASKREC) return;
-    const keys=R.myKeys(TASKME), today=R.dayOf(new Date()), m=R.mine(TASKREC, keys, today, new Date());
+    const keys=R.myKeys(TASKME), today=(PH.centralNow ? PH.centralNow().date : R.dayOf(new Date())), m=R.mine(TASKREC, keys, today, new Date());
     const gives=TASKME.level==='edit' || TASKME.level==='manage', g=gives ? R.given(TASKREC, keys, today) : {open:[]};
     if(!m.open.length && !g.open.length){ host.hidden=true; return; }
     const late=m.open.filter(t=>R.dueState(t.due,today)==='late').length, gl=g.open.filter(t=>R.dueState(t.due,today)==='late').length;

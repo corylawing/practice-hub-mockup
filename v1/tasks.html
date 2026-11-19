@@ -257,7 +257,7 @@
     {id:'maya',   n:'Maya — office manager (gets tasks)', who:'Maya Chen', level:'none'},
     {id:'priya',  n:'Priya — admin (every task in the practice)', who:'Priya Nair', level:'manage'},
     {id:'luis',   n:'Luis — TC (gets tasks)', who:'Luis Ortega', level:'none'}];
-  function demoData(){ if(!DEMO) DEMO=R.demo(PH.officeNames(), new Date()); return DEMO; }
+  function demoData(){ if(!DEMO) DEMO=R.demo(PH.officeNames(), new Date(), today()); return DEMO; }
   function who(){
     if(LIVE){ const m=PH.me()||{}, mail=String((PH.email && PH.email(m))||'').toLowerCase(), nm=(PH.name && PH.name(m))||'';
       return {level:PH.isAdmin(m) ? 'manage' : PH.can('tasks'), name:nm, key:mail || R.personId({name:nm}), keys:R.myKeys({email:mail, name:nm})}; }

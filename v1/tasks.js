@@ -426,9 +426,9 @@
     ['Maya Chen','Office Managers','Office manager',0],['Dana Brooks','Office Managers','Office manager',1],['Rory Lane','Office Managers','Office manager',2],
     ['Sam Whitfield','Office Managers','Office manager',3],['Luis Ortega','TCs','Treatment coordinator',0],['Jules Moreno','TCs','Treatment coordinator',1],
     ['Avery Patel','Staff','Front desk',0],['Theo Grant','Staff','Clinical assistant',2],['Nina Alvarez','Clinic Managers','Clinic lead',3],['Kai Turner','Staff','Clinical assistant',4]];
-  function demo(offices, now){
+  function demo(offices, now, day){
     now=now||new Date(); offices=(offices&&offices.length) ? offices : ['Main office'];
-    const today=dayOf(now), ago=h=>new Date(now.getTime()-h*36e5).toISOString();
+    const today=isDay(day) ? day : dayOf(now), ago=h=>new Date(now.getTime()-h*36e5).toISOString();   // day = the practice's day (Central)
     const wk=n=>{ let d=addDays(today,n); while(weekday(d)===0 || weekday(d)===6) d=addDays(d, n<0 ? -1 : 1); return d; };   // a working day
     const people=DEMO_PEOPLE.map(d=>({name:d[0], email:d[0].toLowerCase().replace(/[^a-z]+/g,'.')+'@example.com', teams:[d[1]], role:d[2],
       offices:d[3]==='all' ? offices.slice() : [offices[d[3]%offices.length]]}));
