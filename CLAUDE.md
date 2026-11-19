@@ -517,8 +517,9 @@ I can confidently say that the chat feature should go next. The production thing
    min/max respected (past days greyed), Clear/Today. Date of birth (data-pick="dob" or a name/id with dob/birth) opens on
    the year grid and shows "Apr 3, 2014". Time: scrolling columns hour 7-6 · minute every 5 · AM/PM; typing "930", "2"
    (= 2 PM), "9:30 pm". Shown the American way ("Thu, Nov 19, 2026", "2:05 PM"). Every colour = the person's scheme
-   (--teal, --teal-600, --teal-wash, --teal-line, --teal-soft). test/datepick (11). Next: the tidied consult form + the
-   picker in the TC Tracker (when Cory says), then the rest of the app.
+   (--teal, --teal-600, --teal-wash, --teal-line, --teal-soft). test/datepick (11). PARKED 19/11 - Cory, offered the
+   tidied consult form + the picker in the TC Tracker: "No its ok." Not used by any page; don't propose it again unless he
+   brings it back. The consult form stays as it is.
 42. **TC CALL LIST - CLEANER CARD (19/11/2026; hc219; LIVE).** Cory: "Love the call list but anyway to make it cleaner?" ->
    a mockup hiding actions under ⋯; Cory: "its extra clicks ... What do you think" -> kept EVERY action one click; Cory:
    "Perfect". fuCard: what's due as a coloured dot + words (no pill), days waiting top right; the name; every fact on ONE
