@@ -272,21 +272,21 @@
   }
 
 </style>
-<script src="user.js?v=hc222"></script>
+<script src="user.js?v=hc223"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="_staff.js?v=hc222"></script>
-  <script src="store.js?v=hc222"></script>
-  <script src="gate.js?v=hc222"></script>
-  <script src="docs.js?v=hc222"></script>
-  <script src="payrules.js?v=hc222"></script>
-  <script src="workbook.js?v=hc222"></script>
-  <script src="prodbook.js?v=hc222"></script>
-  <script src="party.js?v=hc222"></script>
-  <script src="prodfx.js?v=hc222"></script>
-  <script src="prodstore.js?v=hc222"></script>
-<script src="schedrec.js?v=hc222"></script>
-<script src="proddays.js?v=hc222"></script>
-  <script src="prodadmin.js?v=hc222"></script>
+  <script src="_staff.js?v=hc223"></script>
+  <script src="store.js?v=hc223"></script>
+  <script src="gate.js?v=hc223"></script>
+  <script src="docs.js?v=hc223"></script>
+  <script src="payrules.js?v=hc223"></script>
+  <script src="workbook.js?v=hc223"></script>
+  <script src="prodbook.js?v=hc223"></script>
+  <script src="party.js?v=hc223"></script>
+  <script src="prodfx.js?v=hc223"></script>
+  <script src="prodstore.js?v=hc223"></script>
+<script src="schedrec.js?v=hc223"></script>
+<script src="proddays.js?v=hc223"></script>
+  <script src="prodadmin.js?v=hc223"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — admin console concept for validation. Real build: people sync from Microsoft 365; access is managed here.</div>
@@ -373,6 +373,10 @@
        month; Everything = every office, mark a month final, and the report's settings (Medicaid offices, goals, due day).
        Off this grid on the live site until the report is on there (or an admin previews it), like Payroll. */
     ...((window.PH && PH.monthlyOn && !PH.monthlyOn()) ? [] : [{k:'monthly',n:'Monthly Report (month-end numbers)',s:'Monthly',ic:'📈'}]),
+    /* TASKS (19/11/2026, Cory: "Heather can decide who can assign tasks and who cannot, because it might be office managers
+       or whatever"): everyone GETS tasks; this column is who can GIVE them (Everything = every task in the practice too).
+       Off this grid on the live site until Tasks is on there (or an admin previews it), like the Monthly Report. */
+    ...((window.PH && PH.tasksOn && !PH.tasksOn()) ? [] : [{k:'tasks',n:'Tasks (give tasks to people)',s:'Tasks',ic:'✅'}]),
     /* The Documents TAB, on or off per team (07/10). It was never a column, so a team with
        saved settings had it off and there was no switch to turn it on when they're ready.
        It only shows or hides the tab: the section columns decide what each team sees and
@@ -433,6 +437,7 @@
     schedule:['none','view','edit'],
     meetings:['none','edit'],
     monthly:['none','view','edit','manage'],
+    tasks:['none','edit','manage'],
     marketing:['none','view','edit'],
     team:['none','view'],
     documents:['none','view'],
@@ -440,7 +445,7 @@
   };
   const levelsFor=k=>SEC_LEVELS[k]||LEVELS;   // document sections use the full ladder
   // short text in the grid square
-  const SEC_SHORT={meetings:{edit:'Can make'},monthly:{view:'See',edit:'Fill in',manage:'Everything'},production:{edit:'Enter',manage:'Enter + goals'},tc:{view:'See',edit:'Log + calls',manage:'Everything'},admin:{manage:'Full control'},documents:{view:'Can open'}};
+  const SEC_SHORT={tasks:{none:'Gets tasks',edit:'Can give',manage:'Everything'},meetings:{edit:'Can make'},monthly:{view:'See',edit:'Fill in',manage:'Everything'},production:{edit:'Enter',manage:'Enter + goals'},tc:{view:'See',edit:'Log + calls',manage:'Everything'},admin:{manage:'Full control'},documents:{view:'Can open'}};
   const shortFor=(k,l)=>((SEC_SHORT[k]||{})[l])||LVLNAME[l];
   // plain-English explanation in the picker
   const SEC_DESC={
@@ -453,6 +458,8 @@
     meetings:{none:'Sees the meetings on the Schedule, can’t make one',edit:'Can make meetings from the Schedule (the invites go out from them)'},
     monthly:{none:'No Monthly Report tab',view:'Can read the monthly reports for their offices',edit:'Can fill in and send the month’s report for their offices',
              manage:'Every office: read, correct, mark a month final, and set the goals and Medicaid offices'},
+    tasks:{none:'Gets the tasks given to them, can’t give one',edit:'Can give tasks to anyone, and sees who has done them',
+           manage:'Can give tasks, and sees, changes or closes every task in the practice'},
     marketing:{view:'Can look at the board',edit:'Can move cards and score results'},
     team:{view:"Can see everyone's contact card"},
     documents:{none:'No Documents tab yet',view:'Shows the Documents tab. What they see and can do inside is set in the section columns.'},
@@ -520,8 +527,8 @@
   let SAVED_ACCESS=null;
   try{ SAVED_ACCESS=JSON.parse(localStorage.getItem(ACCESS_KEY)); }catch(_){}
   allSections().forEach(x=>{ if(access['Admin']) access['Admin'][x.k]='manage'; });
-  set('Executive Team',{monthly:'view',tc:'manage',production:'manage',dashboard:'manage',schedule:'view',marketing:'view',team:'view',admin:'view',hr:'edit',eom:'manage',officedocs:'view',forms:'view',vendors:'view',filing:'view'});
-  set('Leadership Team',{monthly:'view',tc:'manage',production:'manage',dashboard:'edit',schedule:'view',marketing:'view',team:'view',hr:'edit',eom:'edit',officedocs:'view',forms:'view',vendors:'view',filing:'view'});
+  set('Executive Team',{tasks:'edit',monthly:'view',tc:'manage',production:'manage',dashboard:'manage',schedule:'view',marketing:'view',team:'view',admin:'view',hr:'edit',eom:'manage',officedocs:'view',forms:'view',vendors:'view',filing:'view'});
+  set('Leadership Team',{tasks:'edit',monthly:'view',tc:'manage',production:'manage',dashboard:'edit',schedule:'view',marketing:'view',team:'view',hr:'edit',eom:'edit',officedocs:'view',forms:'view',vendors:'view',filing:'view'});
   set('Office Managers',{monthly:'edit',meetings:'edit',tc:'view',production:'edit',dashboard:'view',schedule:'edit',marketing:'view',team:'view',hr:'view',eom:'edit',officedocs:'edit',forms:'edit',vendors:'edit',filing:'edit'});
   set('Clinic Managers',{dashboard:'view',schedule:'edit',team:'view',hr:'view',officedocs:'view',forms:'edit'});
   set('TCs',{monthly:'view',tc:'edit',schedule:'view',team:'view',hr:'view',forms:'add'});
@@ -1127,7 +1134,7 @@
     const cur=(tmpU.access&&tmpU.access[k]!==undefined)?tmpU.access[k]:base;
     const u=users[tmpU.gi]||{};
     openPk(ev.currentTarget, levelsFor(k).map(l=>({value:l,
-      label:(l==='none'?'None':shortFor(k,l)), desc:descFor(k,l), swatch:LVLSW[l], cur:cur===l})),
+      label:(l==='none' && !(SEC_SHORT[k]||{}).none ? 'None' : shortFor(k,l)), desc:descFor(k,l), swatch:LVLSW[l], cur:cur===l})),
       function(v){
         if(k==='admin' && isAdm(v) && !isAdm(cur) && !sureAdmin([u.f,u.l].filter(Boolean).join(' '))) return;
         tmpU.access=tmpU.access||{};
@@ -2324,7 +2331,7 @@
        time. currentTarget is captured now because it is null by the time the
        picker's callback runs. */
     const btn=ev.currentTarget;
-    openPk(btn, levelsFor(k).map(l=>({value:l,label:(l==='none'?'None':shortFor(k,l)),desc:descFor(k,l),swatch:LVLSW[l],cur:(access[t][k]||'none')===l})),
+    openPk(btn, levelsFor(k).map(l=>({value:l,label:(l==='none' && !(SEC_SHORT[k]||{}).none ? 'None' : shortFor(k,l)),desc:descFor(k,l),swatch:LVLSW[l],cur:(access[t][k]||'none')===l})),
       v=>{ if(k==='admin' && isAdm(v) && !isAdm(access[t][k]||'none') && !sureAdmin(t, true)) return;
            access[t][k]=v; saveAccess(t,k); syncEdit();
            if(btn){ LEVELS.forEach(l=>btn.classList.remove(l)); btn.classList.add(v); btn.textContent=shortFor(k,v); }
@@ -2430,7 +2437,7 @@ function sizeWatch(){
   }).catch(()=>{});
 }
 </script>
-<script src="tour.js?v=hc222"></script>
+<script src="tour.js?v=hc223"></script>
 <script>
 Tour.init([
   {sel:'#tabs', title:'This is your control room', body:'Four tabs and you can run the whole hub: <b>People</b>, <b>Teams &amp; Access</b>, <b>Document Sections</b> and <b>Locations</b>. No developer, no consultant.', pre:()=>AD.tab('users')},

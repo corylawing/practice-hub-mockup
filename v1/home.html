@@ -132,6 +132,34 @@
   .upd .utag{margin-left:auto;font-size:11px;font-weight:700;color:var(--teal-600);background:var(--teal-soft);border-radius:999px;padding:2px 9px;white-space:nowrap}
   .updates .ushow{display:block;width:100%;background:none;border:none;border-top:1px solid var(--line);color:var(--soft);font-size:12.5px;font-weight:600;padding:10px;cursor:pointer;font-family:inherit;margin-top:4px}
   .updates .ushow:hover{color:var(--teal-600)}
+  /* YOUR TASKS (19/11/2026, tasks.js) - what's been asked of you, overdue first, ticked off right here. */
+  .tcard{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:16px 18px;margin-bottom:22px;border-left:5px solid var(--teal)}
+  .tcard.late{border-left-color:var(--bad)}
+  .tcard h2{font-size:15px;color:var(--navy);margin:0;display:flex;align-items:center;gap:8px}
+  .tcard h2 .cnt{background:var(--teal);color:#fff;font-size:12px;font-weight:800;border-radius:999px;padding:1px 9px}
+  .tcard.late h2 .cnt{background:var(--bad)}
+  .tcard h2 a{margin-left:auto;font-size:12.5px;font-weight:700;color:var(--teal-600);text-decoration:none}
+  .tcard h2 a:hover{text-decoration:underline}
+  .trow{display:flex;align-items:flex-start;gap:12px;padding:11px 0;border-top:1px solid var(--line);transition:opacity .35s}
+  .tcard h2+.trow{margin-top:8px}
+  .trow.gone{opacity:.35}
+  .trow .tt{font-size:14px;font-weight:700;color:var(--ink);line-height:1.35}
+  .trow.gone .tt{text-decoration:line-through;color:var(--soft)}
+  .trow .tm{font-size:12px;color:var(--soft);margin-top:3px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .tdue{font-weight:700;border-radius:999px;padding:1px 8px;font-size:11.5px}
+  .tdue.late{background:#FBEAE7;color:#a63a27} .tdue.today{background:#FDF1E1;color:#8a5208}
+  .tdue.tomorrow,.tdue.week{background:var(--teal-soft);color:var(--teal-600)} .tdue.later{background:#eef1f5;color:var(--navy2)}
+  .tchk{flex:none;width:26px;height:26px;border-radius:50%;border:2px solid #b9c4d2;background:#fff;cursor:pointer;display:grid;place-items:center;padding:0;margin-top:1px;transition:background .2s,border-color .15s}
+  .tchk svg{width:14px;height:14px;stroke:#fff;stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round;opacity:0}
+  .tchk:hover{border-color:var(--teal)}
+  .tchk.on{background:var(--teal);border-color:var(--teal);animation:tpop .35s ease} .tchk.on svg{opacity:1}
+  @keyframes tpop{45%{transform:scale(1.25)}}
+  .tmore{display:block;font-size:12.5px;color:var(--soft);padding:9px 0 0;border-top:1px solid var(--line);text-decoration:none;font-weight:600}
+  .tmore:hover{color:var(--teal-600)}
+  .tgave{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;background:var(--teal-wash,#F2FBFA);border-radius:10px;padding:9px 12px;font-size:13px;color:var(--navy);text-decoration:none;font-weight:600}
+  .tgave:hover{background:var(--teal-soft)}
+  .tgave .lt{color:#a63a27}
+  .tgave .go{margin-left:auto;color:var(--teal-600)}
   /* Some people set "reduce motion" in Windows or macOS, often because movement makes
      them unwell. Honour it everywhere: keep the state changes, drop the travel. */
   @media (prefers-reduced-motion: reduce){
@@ -142,11 +170,12 @@
   }
 
 </style>
-<script src="user.js?v=hc222"></script>
+<script src="user.js?v=hc223"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc222"></script>
-  <script src="gate.js?v=hc222"></script>
-  <script src="party.js?v=hc222"></script>
+  <script src="store.js?v=hc223"></script>
+  <script src="gate.js?v=hc223"></script>
+  <script src="party.js?v=hc223"></script>
+  <script src="tasks.js?v=hc223"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — this is the logged-in home. Use “Viewing as” to see how the app changes for each role.</div>
@@ -170,6 +199,8 @@
   <div class="summary" id="summary"></div>
 
   <div id="party" hidden></div>
+
+  <div id="tasks" hidden></div>
 
   <div class="updates" id="updates"></div>
 
@@ -239,7 +270,7 @@
   ];
 
   const el=id=>document.getElementById(id);
-  let cur=PERSONAS[0];
+  let cur=PERSONAS[0], TASKS_READY=false;
 
   function matchScope(scope,p){
     if(scope==='everyone')return true;
@@ -379,6 +410,7 @@
     const docScope = cur.scope==='all'?'all offices':('the '+(cur.scopes||[cur.scope]).join(', ')+' folder'+((cur.scopes||[]).length>1?'s':'')+' only');
     el('summary').innerHTML='Sees <b>'+nSec+'</b> section'+(nSec===1?'':'s')+'. In Documents, sees <b>'+docScope+'</b>.'+(cur.id==='admin'?' Plus the <b>Admin console</b> to manage everyone.':'');
     PH.nav('home'); renderUpdates(cur); renderTiles(cur);
+    if(typeof renderTasks==='function' && TASKS_READY) try{ renderTasks(); }catch(_){}
   }
 
   // build the dropdown
@@ -405,6 +437,51 @@
   }
   renderParty();
   document.addEventListener('ph-identity', function(){ try{ renderParty(); }catch(_){} });
+  /* YOUR TASKS (tasks.js): the open ones given to you, overdue and due-today first, with a tick right here; for people who
+     can give tasks (Teams & Access), a line on the ones they gave. Hidden when there's nothing. Live: the shared record and
+     the signed-in person. Sandbox: the made-up practice the Tasks page uses, as the person this role stands for. */
+  const TASK_AS={admin:['Priya Nair','priya','manage'], om:['Maya Chen','maya','none'], tc:['Luis Ortega','luis','none']};
+  let TASKME=null, TASKREC=null;
+  function renderTasks(){
+    const host=el('tasks'); if(!host) return;
+    if(!(window.PH && PH.tasksOn && PH.tasksOn()) || !window.PH_TASKS){ host.hidden=true; return; }
+    const R=window.PH_TASKS, live=!!(PH.isLive && PH.isLive());
+    if(live){ const m=PH.me()||{}; TASKME={name:(PH.name && PH.name(m))||'', email:String((PH.email && PH.email(m))||'').toLowerCase(), level:PH.isAdmin(m) ? 'manage' : PH.can('tasks'), as:''}; }
+    else { const a=TASK_AS[cur && cur.id]; if(!a){ host.hidden=true; return; }
+      const p=R.demo(PH.officeNames()).people.find(x=>x.name===a[0]); TASKME={name:p.name, email:p.email, level:a[2], as:a[1]}; }
+    const got=raw=>{ TASKREC=R.cleanRecord(raw); drawTasks(); };
+    if(live){ if(window.PH_STORE) PH_STORE.get(R.KEY).then(got, ()=>{ host.hidden=true; }); return; }
+    let v=''; try{ v=localStorage.getItem('ph_tasks_demo'); }catch(_){}
+    let raw=null; try{ raw=JSON.parse(localStorage.getItem(R.KEY)); }catch(_){}
+    if(v!=='1' || !raw){ raw=R.demo(PH.officeNames(), new Date()).rec; if(window.PH_STORE) PH_STORE.set(R.KEY, raw); try{ localStorage.setItem('ph_tasks_demo','1'); }catch(_){} }
+    got(raw);
+  }
+  function drawTasks(){
+    const host=el('tasks'), R=window.PH_TASKS; if(!host || !TASKME || !TASKREC) return;
+    const keys=R.myKeys(TASKME), today=R.dayOf(new Date()), m=R.mine(TASKREC, keys, today, new Date());
+    const gives=TASKME.level==='edit' || TASKME.level==='manage', g=gives ? R.given(TASKREC, keys, today) : {open:[]};
+    if(!m.open.length && !g.open.length){ host.hidden=true; return; }
+    const late=m.open.filter(t=>R.dueState(t.due,today)==='late').length, gl=g.open.filter(t=>R.dueState(t.due,today)==='late').length;
+    const link=hash=>'tasks.html'+(TASKME.as||hash ? '#'+[TASKME.as ? 'as-'+TASKME.as : '', hash].filter(Boolean).join('-') : '');
+    const row=t=>{ const st=R.dueState(t.due,today);
+      return '<div class="trow" data-tid="'+esc(t.id)+'"><button class="tchk" type="button" data-tdone="'+esc(t.id)+'" aria-label="Mark done" title="Mark done"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>'+
+        '<div><div class="tt">'+esc(t.title)+'</div><div class="tm">'+(st!=='none' ? '<span class="tdue '+st+'">'+esc(R.dueText(t.due,today))+'</span>' : '')+'<span>From '+esc(t.byName)+'</span></div></div></div>'; };
+    host.className='tcard'+(late ? ' late' : '');
+    host.innerHTML='<h2>✅ Your tasks'+(m.open.length ? ' <span class="cnt">'+m.open.length+'</span>' : '')+'<a href="'+link('')+'">See all →</a></h2>'+
+      (m.open.length ? m.open.slice(0,3).map(row).join('') : '<div class="trow" style="color:var(--soft);font-size:13.5px">Nothing on your list ✨</div>')+
+      (m.open.length>3 ? '<a class="tmore" href="'+link('')+'">+ '+(m.open.length-3)+' more</a>' : '')+
+      (g.open.length ? '<a class="tgave" href="'+link('gave')+'">\u{1F4E4} You gave <b>'+g.open.length+'</b> open task'+(g.open.length===1?'':'s')+
+        (gl ? ' · <span class="lt">'+gl+' with someone overdue</span>' : '')+'<span class="go">Who’s done them →</span></a>' : '');
+    host.hidden=false;
+  }
+  document.addEventListener('click', function(e){
+    const b=e.target.closest('[data-tdone]'); if(!b || !TASKME || !TASKREC) return;
+    const R=window.PH_TASKS, id=b.dataset.tdone, t=TASKREC.t[id], k=t && R.slotFor(t, R.myKeys(TASKME)); if(!k) return;
+    b.classList.add('on'); const r=b.closest('.trow'); if(r) setTimeout(()=>r.classList.add('gone'), 250);
+    setTimeout(function(){ R.finish(id, k, TASKME.name, null).then(function(res){ if(res && res.value) TASKREC=R.cleanRecord(res.value); drawTasks(); }, drawTasks); }, 650);
+  });
+  TASKS_READY=true; renderTasks();
+  document.addEventListener('ph-identity', function(){ try{ renderTasks(); }catch(_){} });
   window.HOME={set, refreshUpdates};
   let saved='admin'; try{ saved=localStorage.getItem('ph_viewas')||'admin'; }catch(_){}
   if(!PERSONAS.some(p=>p.id===saved)) saved='admin';
@@ -412,7 +489,7 @@
 })();
 </script>
 <script>PH.nav('home');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(PH.loadActivity)PH.loadActivity().then(function(){return PH.loadSeen?PH.loadSeen():null;}).then(function(){if(window.HOME&&HOME.refreshUpdates)HOME.refreshUpdates();if(PH.refreshBell)PH.refreshBell();});});</script>
-<script src="tour.js?v=hc222"></script>
+<script src="tour.js?v=hc223"></script>
 <script>
 Tour.init([
   {sel:'.ph-av', title:'This is you', body:'Your name and photo, top right. Tap it any time for <b>My profile</b> \u2014 your photo, preferred name, phone and \u201cAbout me\u201d. Those follow you between devices.'},

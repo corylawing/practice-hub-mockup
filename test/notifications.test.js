@@ -125,6 +125,15 @@ t('a genuinely new update after a reload does show unread', R.unreadCount()===1)
   const titles=()=>P.notifications().map(n=>n.title);
   const has=t=>titles().some(x=>x.indexOf(t)>=0);
 
+  /* TASKS (19/11/2026): a notice addressed to people (e.to) reaches only them - the sandbox admin here included. */
+  const myMail=String(P.email(P.me())).toLowerCase(), myName=String(P.name(P.me())).toLowerCase().replace(/\s+/g,' ');
+  P.logActivity({kind:'task', sec:'tasks', title:'New task: count the trays', to:[myMail.toUpperCase()]});
+  P.logActivity({kind:'task', sec:'tasks', title:'New task: by name only', to:['name:'+myName]});
+  P.logActivity({kind:'task', sec:'tasks', title:'New task: for somebody else', to:['somebody.else@example.com']});
+  t('a task notice reaches the person it is for (by email, any case)', has('count the trays'));
+  t('...or by name, for someone the team list has no email for', has('by name only'));
+  t('...and nobody else - not even an admin', !has('for somebody else'));
+
   // A Hobbs clinical assistant: Staff team, Hobbs only, cannot open production.
   asPerson({offices:['Hobbs'], teams:['Staff'], can:Object.assign({}, P.me().can, {production:'none', dashboard:'none', admin:'none', marketing:'view'})});
   t('Hobbs staff hear their office closed', has('Hobbs closed'));

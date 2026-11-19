@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Home-Brace · Tasks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" href="../assets/favicon.png?v=2" type="image/png">
+<meta name="theme-color" content="#0F2A4A">
+<meta name="apple-mobile-web-app-title" content="Home-Brace">
+<link rel="apple-touch-icon" sizes="180x180" href="../assets/icons/apple-touch-icon.png?v=3">
+<meta name="description" content="The practice’s central hub — schedule, production, documents and team, in one place. Farnsworth · Sunflower · Las Cruces.">
+<style>
+  :root{
+    --navy:#0F2A4A; --navy2:#25456e; --teal:#149B96; --teal2:#2BC0B8; --teal-soft:#E5F4F3; --teal-600:#0F827E;
+    --ink:#1F2D3D; --soft:#56627A; --line:#E4E8EE; --canvas:#F4F6F8; --white:#fff;
+    --good:#2E9E6B; --good-soft:#E7F4EE; --bad:#D7503A; --bad-soft:#FBEAE7; --amber:#F2A03D; --amber-soft:#FDF1E1; --amber-ink:#8a5208;
+    --shadow:0 1px 2px rgba(15,42,74,.06),0 6px 18px rgba(15,42,74,.06);
+    --radius:14px; --maxw:960px;
+  }
+  *{box-sizing:border-box}
+  [hidden]{display:none !important}
+  body{margin:0;font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--canvas);line-height:1.5;-webkit-font-smoothing:antialiased}
+  h1{color:var(--navy);margin:0}
+  .ribbon{background:var(--amber);color:#3a2400;text-align:center;font-size:13px;font-weight:600;padding:6px 14px}
+  .hdr{background:var(--navy);color:#fff}
+  .hdr-in{max-width:var(--maxw);margin:0 auto;display:flex;align-items:center;gap:12px;padding:13px 20px}
+  .mark{width:34px;height:34px;flex:none;display:block}
+  .mark img{width:34px;height:34px;display:block;border-radius:50%}
+  .brand{font-weight:700;font-size:18px;color:#fff;line-height:1.1}
+  .brand i{font-style:normal;color:var(--teal2)}
+  .brand small{display:block;font-weight:500;font-size:12px;color:var(--navy-mute,#9fb4d0)}
+  .v1{background:rgba(255,255,255,.15);color:#eaf1fb;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;margin-left:6px}
+  .v1nav{background:var(--navy2)}
+  .v1nav-in{max-width:var(--maxw);margin:0 auto;display:flex;gap:2px;padding:0 12px;overflow-x:auto}
+  .v1nav a{color:var(--navy-mute,#cdd9ea);font-size:14px;font-weight:600;padding:13px 15px;text-decoration:none;border-bottom:3px solid transparent;white-space:nowrap}
+  .v1nav a:hover{color:#fff;background:rgba(255,255,255,.05)}
+  .v1nav a.active{color:#fff;border-bottom-color:var(--teal)}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:22px 20px 110px}
+  .viewas{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:13px 16px;display:flex;align-items:center;gap:13px;flex-wrap:wrap;margin-bottom:16px;border-left:5px solid var(--teal)}
+  .viewas .lab{font-size:12px;color:var(--soft);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+  .viewas select{padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;font-weight:700;color:var(--navy);background:#fff;max-width:100%}
+  .page-head{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap}
+  .page-head h1{font-size:25px;text-wrap:balance}
+  .page-head p{margin:4px 0 0;color:var(--soft);font-size:14.5px;max-width:600px}
+  .btn{border:0;background:var(--teal);color:#fff;font:700 14px/1 inherit;font-family:inherit;padding:12px 18px;border-radius:11px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
+  .btn:hover{background:var(--teal-600)}
+  .btn:disabled{opacity:.45;cursor:default}
+  .btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--line)}
+  .btn.ghost:hover{border-color:var(--teal);color:var(--teal-600)}
+  .btn.sm{padding:8px 12px;font-size:13px;border-radius:9px}
+  .btn.danger{background:var(--bad)} .btn.danger:hover{background:#b9402c}
+
+  .bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:18px 0 14px}
+  .tabs{display:flex;gap:4px;background:#e9edf2;border-radius:12px;padding:4px;flex-wrap:wrap}
+  .tabs button{border:0;background:none;border-radius:9px;padding:8px 14px;font-weight:600;font-size:14px;font-family:inherit;line-height:1.2;color:var(--navy);cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+  .tabs button.on{background:#fff;box-shadow:0 1px 3px rgba(15,42,74,.12);font-weight:700}
+  .tabs .n{background:var(--navy);color:#fff;font-size:11.5px;font-weight:800;border-radius:999px;padding:1px 7px;min-width:20px;text-align:center}
+  .tabs .n.late{background:var(--bad)}
+  .pills{display:flex;gap:6px;margin-left:auto}
+  .pills button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 12px;font:600 13px/1.2 inherit;font-family:inherit;color:var(--navy);cursor:pointer}
+  .pills button.on{border-color:var(--teal);background:var(--teal-soft);color:var(--teal-600)}
+
+  .stack{display:flex;flex-direction:column;gap:12px}
+  .strip{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:2px}
+  .chipc{font-size:12.5px;font-weight:700;border-radius:999px;padding:5px 11px;background:#fff;border:1px solid var(--line);color:var(--navy)}
+  .chipc.late{background:var(--bad-soft);border-color:#f2c9c0;color:#a63a27}
+  .chipc.today{background:var(--amber-soft);border-color:#f3d7ab;color:var(--amber-ink)}
+
+  /* one task */
+  .tk{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 16px;display:flex;gap:14px;align-items:flex-start;position:relative;transition:opacity .35s, transform .35s}
+  .tk.late{border-left:4px solid var(--bad)}
+  .tk.today{border-left:4px solid var(--amber)}
+  .tk.leaving{opacity:0;transform:translateX(18px)}
+  .tb{flex:1;min-width:0}
+  .tt{font-weight:700;color:var(--navy);font-size:15.5px;line-height:1.35;overflow-wrap:anywhere}
+  .tm{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center;font-size:12.5px;color:var(--soft);margin-top:4px}
+  .due{font-weight:700;border-radius:999px;padding:2px 9px;font-size:12px;white-space:nowrap}
+  .due.late{background:var(--bad-soft);color:#a63a27}
+  .due.today{background:var(--amber-soft);color:var(--amber-ink)}
+  .due.tomorrow,.due.week{background:var(--teal-soft);color:var(--teal-600)}
+  .due.later{background:#eef1f5;color:var(--navy2)}
+  .tn{font-size:13.5px;color:var(--ink);margin-top:8px;white-space:pre-wrap;overflow-wrap:anywhere;background:#f7f9fb;border-radius:9px;padding:8px 11px}
+  .tn.clamp{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer}
+  /* the tick */
+  .chk{flex:none;width:30px;height:30px;border-radius:50%;border:2px solid #b9c4d2;background:#fff;cursor:pointer;display:grid;place-items:center;padding:0;margin-top:1px;transition:border-color .15s, background .2s, transform .15s}
+  .chk svg{width:16px;height:16px;stroke:var(--teal);stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:22;stroke-dashoffset:22;transition:stroke-dashoffset .25s}
+  .chk:hover{border-color:var(--teal)} .chk:hover svg{stroke-dashoffset:11;opacity:.6}
+  .chk.on{background:var(--teal);border-color:var(--teal);animation:pop .35s ease}
+  .chk.on svg{stroke:#fff;stroke-dashoffset:0;opacity:1}
+  @keyframes pop{0%{transform:scale(1)}45%{transform:scale(1.25)}100%{transform:scale(1)}}
+  .tk.done .tt{color:var(--soft);text-decoration:line-through;text-decoration-color:#b9c4d2;font-weight:600}
+  .lnk{border:0;background:none;color:var(--teal-600);font-weight:700;font-size:12.5px;font-family:inherit;cursor:pointer;padding:2px 4px;border-radius:6px;white-space:nowrap}
+  .lnk:hover{background:var(--teal-soft)}
+  .mynote{display:flex;gap:6px;margin-top:8px}
+  .mynote input{flex:1;min-width:0;border:1px solid var(--line);border-radius:9px;padding:8px 10px;font:500 13.5px inherit;font-family:inherit}
+  .said{font-size:13px;color:var(--ink);margin-top:5px;font-style:italic}
+  .sec{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--soft);margin:18px 0 0;display:flex;align-items:center;gap:8px}
+  .sec button{margin-left:auto}
+
+  /* a task I gave */
+  .gv{flex-direction:column;gap:10px}
+  .gh{display:flex;gap:14px;align-items:flex-start;width:100%}
+  .ring{flex:none;width:52px;height:52px;position:relative}
+  .ring svg{width:52px;height:52px;transform:rotate(-90deg)}
+  .ring circle{fill:none;stroke-width:6}
+  .ring .bg{stroke:#e8edf2} .ring .fg{stroke:var(--teal);stroke-linecap:round;transition:stroke-dashoffset .6s ease}
+  .ring.all .fg{stroke:var(--good)}
+  .ring b{position:absolute;inset:0;display:grid;place-items:center;font-size:12.5px;color:var(--navy);font-variant-numeric:tabular-nums}
+  .who{display:flex;flex-wrap:wrap;gap:6px;width:100%}
+  .pc{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;border-radius:999px;padding:4px 10px 4px 4px;background:#f1f4f7;color:var(--navy);max-width:100%}
+  .pc .av{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:10px;font-weight:800;color:#fff;background:#9aa8ba;flex:none}
+  .pc.done{background:var(--good-soft);color:#1f6e4a} .pc.done .av{background:var(--good)}
+  .pc.late{background:var(--bad-soft);color:#a63a27} .pc.late .av{background:var(--bad)}
+  .pc i{font-style:italic;font-weight:500;color:inherit;opacity:.85;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px}
+  .pc .x{border:0;background:none;color:inherit;cursor:pointer;font-size:15px;line-height:1;padding:0 2px;opacity:.6}
+  .pc .x:hover{opacity:1}
+  .acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center;width:100%;border-top:1px solid var(--line);padding-top:10px}
+  .acts .grow{flex:1}
+  .acts .q{font-size:13px;font-weight:600;color:var(--ink)}
+  .badge{font-size:12px;font-weight:800;border-radius:999px;padding:3px 10px;background:var(--good-soft);color:#1f6e4a}
+  .badge.closed{background:#eef1f5;color:var(--soft)}
+  .from{font-weight:700;color:var(--navy2)}
+
+  .empty{background:#fff;border:1px dashed #cfd8e3;border-radius:var(--radius);padding:34px 20px;text-align:center;color:var(--soft);font-size:14px}
+  .empty .big{font-size:34px;line-height:1;margin-bottom:8px}
+  .empty b{display:block;color:var(--navy);font-size:16px;margin-bottom:4px}
+
+  /* give / change a task */
+  .sheet{position:fixed;inset:0;z-index:7100;display:flex;align-items:flex-start;justify-content:center;padding:5vh 14px;overflow-y:auto}
+  .sheet[hidden]{display:none}
+  .sheet .bg{position:fixed;inset:0;background:rgba(15,42,74,.45);animation:fade .2s}
+  .sheet .card{position:relative;background:#fff;border-radius:18px;box-shadow:0 24px 60px rgba(15,42,74,.3);width:min(640px,100%);padding:20px 22px 18px;animation:rise .25s ease}
+  @keyframes fade{from{opacity:0}} @keyframes rise{from{opacity:0;transform:translateY(14px)}}
+  .sh-h{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+  .sh-h h2{margin:0;font-size:19px;color:var(--navy)}
+  .sh-h .x{margin-left:auto;border:0;background:#f1f4f7;width:34px;height:34px;border-radius:50%;font-size:20px;cursor:pointer;color:var(--navy)}
+  .fl{display:block;font-size:13px;font-weight:700;color:var(--navy);margin:14px 0 6px}
+  .fl span{font-weight:500;color:var(--soft)}
+  .fi{width:100%;border:1px solid var(--line);border-radius:11px;padding:11px 13px;font:500 15px/1.4 inherit;font-family:inherit;color:var(--ink);background:#fff}
+  .fi:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px var(--teal-soft)}
+  textarea.fi{resize:vertical;min-height:72px}
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chips button,.chips label{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 12px;font:600 13px/1.2 inherit;font-family:inherit;color:var(--navy);cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+  .chips button:hover,.chips label:hover{border-color:var(--teal)}
+  .chips .on{background:var(--teal);border-color:var(--teal);color:#fff}
+  .chips input[type=date]{border:0;font:600 13px inherit;font-family:inherit;color:inherit;background:transparent;padding:0;max-width:130px}
+  .chips .on input[type=date]{color:#fff;color-scheme:dark}
+  .srch{position:relative}
+  .res{position:absolute;left:0;right:0;top:calc(100% + 4px);background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 30px rgba(15,42,74,.16);z-index:5;max-height:280px;overflow-y:auto;padding:4px}
+  .res button{display:flex;width:100%;text-align:left;align-items:center;gap:10px;border:0;background:none;border-radius:9px;padding:8px 10px;font:600 14px inherit;font-family:inherit;color:var(--navy);cursor:pointer}
+  .res button:hover,.res button.hi{background:var(--teal-soft)}
+  .res small{display:block;font-weight:500;color:var(--soft);font-size:12px}
+  .res .av{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:800;color:#fff;background:var(--navy2);flex:none}
+  .quick{margin-top:10px}
+  .quick .ql{font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--soft);margin:8px 0 5px}
+  .picked{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+  .picked .pc{background:var(--teal-soft);color:var(--teal-600)}
+  .picked .pc .av{background:var(--teal)}
+  .picked .pc.grp{padding-left:10px}
+  .picked .pc.lock{background:var(--good-soft);color:#1f6e4a} .picked .pc.lock .av{background:var(--good)}
+  .count{font-size:13px;color:var(--soft);margin-top:10px}
+  .count b{color:var(--navy)}
+  .warn{font-size:12.5px;color:var(--soft);margin:14px 0 0;display:flex;gap:6px}
+  .errs{color:var(--bad);font-size:13px;font-weight:600;margin-top:10px}
+  .sh-f{display:flex;gap:8px;justify-content:flex-end;align-items:center;margin-top:16px;flex-wrap:wrap}
+
+  .toast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,20px);background:var(--navy);color:#fff;border-radius:12px;padding:11px 16px;font-size:14px;font-weight:600;box-shadow:0 12px 30px rgba(15,42,74,.3);opacity:0;pointer-events:none;transition:opacity .2s, transform .2s;z-index:7200;display:flex;align-items:center;gap:12px;max-width:min(560px,92vw)}
+  .toast.on{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+  .toast button{border:0;background:rgba(255,255,255,.16);color:#fff;font:700 13px inherit;font-family:inherit;border-radius:8px;padding:6px 10px;cursor:pointer}
+  /* a little burst when something is ticked off */
+  .burst{position:fixed;pointer-events:none;z-index:7300}
+  .burst i{position:absolute;width:7px;height:7px;border-radius:2px;left:0;top:0;animation:fly .7s cubic-bezier(.2,.7,.3,1) forwards}
+  @keyframes fly{to{transform:translate(var(--x),var(--y)) rotate(var(--r));opacity:0}}
+  @media (max-width:560px){ .page-head .btn{width:100%;justify-content:center} .pills{margin-left:0} .tk{padding:13px} .sheet{padding:12px 10px 90px} .toast{bottom:84px} }
+  @media (prefers-reduced-motion: reduce){ *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important} .burst{display:none} }
+</style>
+<script src="user.js?v=hc223"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
+  <script src="store.js?v=hc223"></script>
+  <script src="gate.js?v=hc223"></script>
+  <script src="tasks.js?v=hc223"></script>
+</head>
+<body>
+<div class="ribbon">MOCK-UP for Heather — made-up people. Try it as Jordan to give a task, then as Maya to tick it off.</div>
+<header class="hdr">
+  <div class="hdr-in">
+    <span class="mark" aria-label="Home-Brace"><img src="../assets/logo-mark.png?v=2" alt="" width="34" height="34"></span>
+    <span class="brand">Home-<i>Brace</i><small>Tasks</small></span>
+    <span class="v1">V1 preview</span>
+  </div>
+</header>
+<nav class="v1nav"><div class="v1nav-in" id="nav"></div></nav>
+
+<div class="wrap">
+  <div class="viewas" id="tryas">
+    <span class="lab">👤 Try it as</span>
+    <select id="persona" onchange="TASKS.as(this.value)"></select>
+  </div>
+  <div class="page-head">
+    <div>
+      <h1>Tasks</h1>
+      <p id="lede">What’s been asked of you, and what you’ve asked of others. Tick it off when it’s done.</p>
+    </div>
+    <button class="btn" id="giveBtn" hidden onclick="TASKS.give()">＋ Give a task</button>
+  </div>
+  <div class="bar"><div class="tabs" id="tabs" role="tablist"></div><div class="pills" id="pills"></div></div>
+  <div id="view"><div class="empty">Reading the tasks…</div></div>
+</div>
+<div class="sheet" id="sheet" hidden></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+  'use strict';
+  const R=window.PH_TASKS, LIVE=!!(window.PH && PH.isLive && PH.isLive());
+  const el=id=>document.getElementById(id);
+  const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const RANK={none:0,view:1,add:2,edit:3,manage:4};
+  const today=()=>R.dayOf(new Date());
+  const fold=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+  const ini=n=>String(n||'?').trim().split(/\s+/).map(w=>w[0]||'').slice(0,2).join('').toUpperCase();
+  const first=n=>String(n||'').trim().split(/\s+/)[0]||'';
+
+  let REC=R.cleanRecord(null), OLDREC=null, WHO=null, TAB='mine', FILTER='open', DEMO=null;
+  let FORM=null, ASK={}, NOTE={}, OPEN={}, SHOWDONE=false;
+
+  /* ---------- who is looking ---------- */
+  /* SANDBOX "Try it as" - made-up people (tasks.js demo). Live: the signed-in person; what they can do is the Tasks column
+     of Teams & Access (admins: everything). */
+  const PERSONAS=[
+    {id:'jordan', n:'Jordan — Leadership (can give tasks)', who:'Jordan Reyes', level:'edit'},
+    {id:'maya',   n:'Maya — office manager (gets tasks)', who:'Maya Chen', level:'none'},
+    {id:'priya',  n:'Priya — admin (every task in the practice)', who:'Priya Nair', level:'manage'},
+    {id:'luis',   n:'Luis — TC (gets tasks)', who:'Luis Ortega', level:'none'}];
+  function demoData(){ if(!DEMO) DEMO=R.demo(PH.officeNames(), new Date()); return DEMO; }
+  function who(){
+    if(LIVE){ const m=PH.me()||{}, mail=String((PH.email && PH.email(m))||'').toLowerCase(), nm=(PH.name && PH.name(m))||'';
+      return {level:PH.isAdmin(m) ? 'manage' : PH.can('tasks'), name:nm, key:mail || R.personId({name:nm}), keys:R.myKeys({email:mail, name:nm})}; }
+    let id='jordan'; try{ id=localStorage.getItem('ph_tasks_as')||'jordan'; }catch(_){}
+    const h=/as-(\w+)/.exec(location.hash||''); if(h && PERSONAS.some(p=>p.id===h[1])) id=h[1];
+    const p=PERSONAS.find(x=>x.id===id)||PERSONAS[0], row=demoData().people.find(x=>x.name===p.who);
+    return {id:p.id, level:p.level, name:row.name, key:row.email, keys:R.myKeys({email:row.email, name:row.name})};
+  }
+  const can=l=>RANK[(WHO&&WHO.level)||'none']>=RANK[l];
+  function roster(){
+    const rows=LIVE ? ((PH.rosterView && PH.rosterView())||[]) : demoData().people;
+    return rows.filter(r=>r && R.personId(r) && String(r.status||'').toLowerCase()!=='inactive');
+  }
+  function nameOf(k){ const r=roster().find(x=>R.personId(x)===k); return r ? r.name : (k.indexOf('name:')===0 ? k.slice(5) : k); }
+
+  /* ---------- reading and saving ---------- */
+  async function load(){
+    let r=null; try{ r=await PH_STORE.get(R.KEY); }catch(_){}
+    if(!LIVE){ let v=''; try{ v=localStorage.getItem('ph_tasks_demo'); }catch(_){}
+      if(v!=='1' || !r){ r=demoData().rec; await PH_STORE.set(R.KEY, r); try{ localStorage.setItem('ph_tasks_demo','1'); }catch(_){} } }
+    REC=R.cleanRecord(r);
+  }
+  /* Every change goes through PH_STORE.update: it reads the shared copy first and lays this one change on it, so two
+     people ticking the same task at once never undo each other. */
+  async function save(mutate, ok){
+    let r=null; try{ r=await PH_STORE.update(R.KEY, cur=>mutate(R.cleanRecord(cur))); }catch(e){ r={error:e}; }
+    if(r && r.value) REC=R.cleanRecord(r.value);
+    const bad=!r || r.error || r.blocked;
+    if(bad) toast('That didn’t save — try again in a moment');
+    else if(ok) toast(ok);
+    render(); return bad ? null : r;
+  }
+  /* Finished more than 30 days ago -> that year's archive (written first; a task leaves ph_tasks only once the archive
+     holds it). Run by givers, at most once a day per device. Nothing is deleted. */
+  async function tidy(){
+    if(!can('edit')) return; let last=''; try{ last=localStorage.getItem('ph_tasks_tidy')||''; }catch(_){}
+    if(last===today()) return; try{ localStorage.setItem('ph_tasks_tidy', today()); }catch(_){}
+    const old=R.oldOnes(REC, new Date());
+    for(const y of Object.keys(old)){
+      const a=await PH_STORE.update(R.OLD+y, cur=>R.toArchive(cur, old[y])).catch(()=>null);
+      if(!a || a.error || a.blocked || !a.value) continue;
+      await save(cur=>R.dropArchived(cur, R.cleanRecord(a.value)));
+    }
+  }
+  async function loadOld(){
+    const out={v:1, t:{}}; let keys=[]; try{ keys=await PH_STORE.keys(R.OLD); }catch(_){}
+    for(const k of keys){ try{ const r=R.cleanRecord(await PH_STORE.get(k)); Object.assign(out.t, r.t); }catch(_){} }
+    OLDREC=out; render();
+  }
+
+  /* ---------- drawing ---------- */
+  function dueChip(t){ const st=R.dueState(t.due, today()); return st==='none' ? '' : '<span class="due '+st+'">'+esc(R.dueText(t.due, today()))+'</span>'; }
+  function when(iso){ return PH.ago ? PH.ago(iso) : ''; }
+  function dayTime(iso){ const d=new Date(iso); return R.shortDay(R.dayOf(d), today())+' · '+d.toLocaleTimeString('en-US',{hour:'numeric', minute:'2-digit'}); }
+  function notes(t){ if(!t.notes) return ''; const long=t.notes.length>180 || t.notes.split('\n').length>3;
+    return '<div class="tn'+(long && !OPEN[t.id] ? ' clamp' : '')+'" '+(long ? 'data-act="more"' : '')+'>'+esc(t.notes)+'</div>'; }
+  const CHECK='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+
+  function mineCard(t){
+    const st=R.dueState(t.due, today()), others=R.progress(t).total-1, done=!!t.me.d;
+    return '<article class="tk'+(done ? ' done' : (st==='late'||st==='today' ? ' '+st : ''))+'" data-id="'+esc(t.id)+'">'+
+      '<button class="chk'+(done?' on':'')+'" data-act="'+(done?'undo':'done')+'" aria-label="'+(done?'Mark not done':'Mark done')+'" title="'+(done?'Done — tap to undo':'Mark done')+'">'+CHECK+'</button>'+
+      '<div class="tb"><div class="tt">'+esc(t.title)+'</div>'+
+        '<div class="tm">'+(done ? '<span>Done '+esc(dayTime(t.me.d))+'</span>' : dueChip(t))+
+          '<span>From <b class="from">'+esc(t.byName||nameOf(t.by))+'</b> · '+esc(when(t.at))+'</span>'+
+          (others>0 ? '<span>· with '+others+' other'+(others===1?'':'s')+'</span>' : '')+'</div>'+
+        (done ? '' : notes(t))+
+        (done && t.me.note ? '<div class="said">“'+esc(t.me.note)+'”</div>' : '')+
+        (NOTE[t.id] ? '<div class="mynote"><input id="note_'+esc(t.id)+'" maxlength="'+R.MAX_NOTE+'" placeholder="A note for '+esc(first(t.byName))+' (optional)" value="'+esc(t.me.note||'')+'" data-enter="note"><button class="btn sm" data-act="note">Save</button></div>'
+          : (done ? '<div class="tm"><button class="lnk" data-act="addnote">'+(t.me.note?'Change my note':'＋ Add a note for '+esc(first(t.byName)))+'</button></div>' : ''))+
+      '</div></article>';
+  }
+  function viewMine(){
+    const m=R.mine(REC, WHO.keys, today(), new Date()), late=m.open.filter(t=>R.dueState(t.due,today())==='late').length, tod=m.open.filter(t=>R.dueState(t.due,today())==='today').length;
+    let h='';
+    if(!m.open.length) h+='<div class="empty"><div class="big">✨</div><b>Nothing on your list</b>When someone gives you a task it shows here and on Home'+(LIVE?'':' — and your phone buzzes if you turned alerts on')+'.</div>';
+    else {
+      h+='<div class="strip">'+(late?'<span class="chipc late">'+late+' overdue</span>':'')+(tod?'<span class="chipc today">'+tod+' due today</span>':'')+'<span class="chipc">'+m.open.length+' to do</span></div>';
+      h+=m.open.map(mineCard).join('');
+    }
+    if(m.done.length){
+      h+='<div class="sec">Done this week · '+m.done.length+'<button class="lnk" data-act="showdone">'+(SHOWDONE?'Hide':'Show')+'</button></div>';
+      if(SHOWDONE) h+=m.done.map(mineCard).join('');
+    }
+    return '<div class="stack">'+h+'</div>';
+  }
+
+  function ring(p){ const C=2*Math.PI*21, f=p.total ? p.done/p.total : 0;
+    return '<div class="ring'+(p.all?' all':'')+'" title="'+p.done+' of '+p.total+' done"><svg viewBox="0 0 52 52"><circle class="bg" cx="26" cy="26" r="21"/><circle class="fg" cx="26" cy="26" r="21" stroke-dasharray="'+C.toFixed(1)+'" stroke-dashoffset="'+(C*(1-f)).toFixed(1)+'"/></svg><b>'+p.done+'/'+p.total+'</b></div>'; }
+  function gaveCard(t, all, old){
+    const p=R.progress(t), st=R.dueState(t.due, today()), fin=R.finished(t), mineT=R.isGiver(t, WHO.keys) || can('manage');
+    const ppl=R.people(t).sort((a,b)=>(!!a.d===!!b.d) ? a.n.localeCompare(b.n) : (a.d ? 1 : -1));
+    const chip=x=>'<span class="pc '+(x.d ? 'done' : (st==='late' && !fin ? 'late' : ''))+'" title="'+esc(x.d ? 'Done '+dayTime(x.d) : 'Not done yet')+'"><span class="av">'+(x.d ? '✓' : esc(ini(x.n)))+'</span>'+esc(x.n||nameOf(x.id))+(x.note ? ' <i>“'+esc(x.note)+'”</i>' : '')+'</span>';
+    const wait=R.nudgeWait(t, new Date()), open=p.open;
+    let acts='';
+    if(!old && mineT){
+      if(ASK[t.id]) acts='<span class="q">Close this task? It comes off everyone’s list (nothing is deleted).</span><span class="grow"></span><button class="btn sm ghost" data-act="keep">Keep it</button><button class="btn sm danger" data-act="closeyes">Close it</button>';
+      else if(t.closed) acts='<span class="badge closed">Closed '+esc(dayTime(t.closed))+'</span><span class="grow"></span><button class="btn sm ghost" data-act="reopen">Reopen</button>';
+      else if(fin) acts='<span class="badge">🎉 Everyone’s done</span><span class="grow"></span><button class="btn sm ghost" data-act="edit">＋ People</button>';
+      else acts=(open ? '<button class="btn sm" data-act="nudge" '+(wait?'disabled':'')+' title="'+(wait?'You can nudge again in '+wait+' min':'An alert and a bell reminder to the '+open+' who haven’t done it')+'">🔔 '+(wait?'Nudged · again in '+wait+' min':'Nudge '+(open===p.total && open>1 ? 'all '+open : open))+'</button>' : '')+
+        '<button class="btn sm ghost" data-act="edit">Change</button><span class="grow"></span><button class="btn sm ghost" data-act="close">Close task</button>';
+    } else if(old) acts='<span class="badge closed">Archived</span>';
+    return '<article class="tk gv'+(!fin && st==='late' ? ' late' : '')+'" data-id="'+esc(t.id)+'">'+
+      '<div class="gh">'+ring(p)+'<div class="tb"><div class="tt">'+esc(t.title)+'</div>'+
+        '<div class="tm">'+(fin ? '' : dueChip(t))+(all ? '<span>From <b class="from">'+esc(t.byName||nameOf(t.by))+'</b></span>' : '')+
+          '<span>Given '+esc(R.shortDay(R.dayOf(new Date(t.at)), today()))+(t.how.length ? ' to '+esc(t.how.join(', ')) : '')+'</span>'+
+          (t.edited ? '<span>· changed '+esc(when(t.edited))+'</span>' : '')+(t.nudges ? '<span>· nudged '+t.nudges+'×</span>' : '')+'</div>'+notes(t)+'</div></div>'+
+      '<div class="who">'+ppl.map(chip).join('')+'</div>'+(acts ? '<div class="acts">'+acts+'</div>' : '')+'</article>';
+  }
+  function viewGave(all){
+    const g=R.given(REC, all ? null : WHO.keys, today()), list=FILTER==='open' ? g.open : g.done;
+    let h='';
+    if(!list.length) h='<div class="empty"><div class="big">'+(FILTER==='open'?'📋':'🗂️')+'</div><b>'+(FILTER==='open' ? (all?'No open tasks in the practice':'Nothing open that you gave') : 'Nothing finished yet')+'</b>'+
+      (FILTER==='open' && !all ? 'Press <b>＋ Give a task</b> — you’ll see here who has done it and who hasn’t.' : 'Tasks show here once everyone has ticked them off, or they are closed.')+'</div>';
+    else h=list.map(t=>gaveCard(t, all)).join('');
+    if(FILTER==='done'){
+      if(!OLDREC) h+='<div class="sec">Older<button class="lnk" data-act="older">Show tasks finished more than 30 days ago</button></div>';
+      else { const o=R.given(OLDREC, all ? null : WHO.keys, today()).done; h+='<div class="sec">Older · '+o.length+'</div>'+(o.length ? o.map(t=>gaveCard(t, all, true)).join('') : '<div class="empty">None yet.</div>'); }
+    }
+    return '<div class="stack">'+h+'</div>';
+  }
+
+  function render(){
+    if(!WHO) return;
+    const m=R.mine(REC, WHO.keys, today(), new Date()), g=R.given(REC, WHO.keys, today()), a=R.given(REC, null, today());
+    const late=m.open.filter(t=>R.dueState(t.due,today())==='late').length;
+    if(!can('edit') && TAB!=='mine') TAB='mine';
+    if(!can('manage') && TAB==='all') TAB='mine';
+    el('giveBtn').hidden=!can('edit');
+    el('lede').textContent=can('edit') ? 'What’s been asked of you, and what you’ve asked of others. Give a task and see who has done it.' : 'What’s been asked of you. Tick it off when it’s done — the person who asked sees it straight away.';
+    const tab=(k,n,c,cls)=>'<button role="tab" class="'+(TAB===k?'on':'')+'" data-tab="'+k+'">'+n+(c ? '<span class="n'+(cls?' '+cls:'')+'">'+c+'</span>' : '')+'</button>';
+    el('tabs').innerHTML=tab('mine','My tasks', m.open.length, late?'late':'')+(can('edit') ? tab('gave','Tasks I gave', g.open.length) : '')+(can('manage') ? tab('all','Everyone’s', a.open.length) : '');
+    el('pills').innerHTML=TAB==='mine' ? '' : '<button class="'+(FILTER==='open'?'on':'')+'" data-filter="open">Open</button><button class="'+(FILTER==='done'?'on':'')+'" data-filter="done">Finished</button>';
+    el('view').innerHTML=TAB==='mine' ? viewMine() : viewGave(TAB==='all');
+  }
+
+  /* ---------- giving (and changing) a task ---------- */
+  function blankForm(){ return {mode:'new', id:'', title:'', notes:'', due:'', dueK:'', picks:{people:[], offices:[], teams:[], all:false}, q:'', hi:0, errs:[], keep:[], drop:{}}; }
+  function give(){ FORM=blankForm(); drawSheet(); setTimeout(()=>{ const i=el('f_title'); if(i) i.focus(); }, 60); }
+  function change(id){
+    const t=REC.t[id]; if(!t) return;
+    FORM=Object.assign(blankForm(), {mode:'edit', id, title:t.title, notes:t.notes, due:t.due, dueK:t.due ? 'pick' : ''}); drawSheet();
+  }
+  function chosen(){
+    const extra=R.expand(FORM.picks, roster(), {wide:PH.officeNames().length, not:WHO.keys});
+    if(FORM.mode!=='edit') return {now:[], add:extra};
+    const t=REC.t[FORM.id], now=R.people(t).filter(x=>!FORM.drop[x.id]);
+    return {now, add:extra.filter(p=>!now.some(x=>x.id===p.id))};
+  }
+  function teamsList(){ const s={}; roster().forEach(r=>(Array.isArray(r.teams)?r.teams:String(r.team||'').split(/[;,]/)).forEach(x=>{ x=String(x).trim(); if(x) s[x]=(s[x]||0)+1; })); return Object.keys(s).sort(); }
+  function officesList(){ const has={}; roster().forEach(r=>(Array.isArray(r.offices)?r.offices:[r.loc]).forEach(o=>{ if(o) has[o]=1; })); return PH.officeNames().filter(o=>has[o]); }
+  function results(){
+    const q=fold(FORM.q).trim(); if(!q) return [];
+    const taken=FORM.picks.people;
+    return roster().filter(r=>fold(r.name).indexOf(q)>=0 || fold(r.name).split(/\s+/).some(w=>w.indexOf(q)===0)).filter(r=>taken.indexOf(R.personId(r))<0).slice(0,8);
+  }
+  function drawSheet(){
+    const F=FORM, q=R.quickDues(today()), c=chosen(), total=c.now.length+c.add.length, edit=F.mode==='edit';
+    const dueBtn=(k,n,d)=>'<button type="button" class="'+(F.dueK===k?'on':'')+'" data-due="'+k+'" data-d="'+d+'">'+n+'</button>';
+    const isQuick=F.due && q.some(x=>x.d===F.due && x.k===F.dueK);
+    const grp=(kind,v,label)=>'<button type="button" class="'+((kind==='all'?F.picks.all:F.picks[kind].indexOf(v)>=0)?'on':'')+'" data-pick="'+kind+'" data-v="'+esc(v)+'">'+esc(label)+'</button>';
+    const res=results();
+    const pickedChips=[].concat(
+      edit ? c.now.map(x=>'<span class="pc'+(x.d?' lock':'')+'" title="'+(x.d?'Already done — stays on the task':'')+'"><span class="av">'+(x.d?'✓':esc(ini(x.n)))+'</span>'+esc(x.n)+(x.d?'':'<button type="button" class="x" data-unpick="now" data-v="'+esc(x.id)+'" aria-label="Take '+esc(x.n)+' off">×</button>')+'</span>') : [],
+      F.picks.all ? ['<span class="pc grp">Everyone<button type="button" class="x" data-unpick="all" data-v="">×</button></span>'] : [],
+      F.picks.offices.map(o=>'<span class="pc grp">Everyone at '+esc(o)+'<button type="button" class="x" data-unpick="offices" data-v="'+esc(o)+'">×</button></span>'),
+      F.picks.teams.map(o=>'<span class="pc grp">All '+esc(o)+'<button type="button" class="x" data-unpick="teams" data-v="'+esc(o)+'">×</button></span>'),
+      F.picks.people.map(k=>'<span class="pc"><span class="av">'+esc(ini(nameOf(k)))+'</span>'+esc(nameOf(k))+'<button type="button" class="x" data-unpick="people" data-v="'+esc(k)+'">×</button></span>'));
+    const names=c.now.concat(c.add).map(x=>first(x.name||x.n));
+    el('sheet').innerHTML='<div class="bg" data-act="sheetx"></div><div class="card" role="dialog" aria-modal="true" aria-labelledby="shTitle">'+
+      '<div class="sh-h"><h2 id="shTitle">'+(edit?'Change this task':'Give a task')+'</h2><button type="button" class="x" data-act="sheetx" aria-label="Close">×</button></div>'+
+      '<label class="fl" for="f_title">What needs doing?</label><input class="fi" id="f_title" maxlength="'+R.MAX_TITLE+'" placeholder="e.g. Count the aligner trays and order what’s low" value="'+esc(F.title)+'">'+
+      '<label class="fl" for="f_notes">Details <span>(optional)</span></label><textarea class="fi" id="f_notes" maxlength="'+R.MAX_NOTES+'" placeholder="Anything that helps them get it right">'+esc(F.notes)+'</textarea>'+
+      '<span class="fl">Due</span><div class="chips">'+dueBtn('','No date','')+q.map(x=>dueBtn(x.k, x.n, x.d)).join('')+
+        '<label class="'+(F.due && !isQuick ? 'on' : '')+'">📅 <input type="date" id="f_date" min="'+today()+'" value="'+(F.due && !isQuick ? F.due : '')+'" aria-label="Pick a date"></label></div>'+
+      '<span class="fl">'+(edit?'Who’s on it':'Who’s it for?')+'</span>'+
+      '<div class="srch"><input class="fi" id="f_q" autocomplete="off" placeholder="Type a name…" value="'+esc(F.q)+'">'+
+        (res.length ? '<div class="res">'+res.map((r,i)=>'<button type="button" class="'+(i===F.hi?'hi':'')+'" data-person="'+esc(R.personId(r))+'"><span class="av">'+esc(ini(r.name))+'</span><span>'+esc(r.name)+'<small>'+esc([r.role, (Array.isArray(r.offices)?r.offices:[r.loc]).filter(Boolean).join(', ')].filter(Boolean).join(' · '))+'</small></span></button>').join('')+'</div>' : (F.q.trim() ? '<div class="res"><div style="padding:10px;color:var(--soft);font-size:13px">Nobody by that name</div></div>' : ''))+
+      '</div>'+
+      '<div class="quick"><div class="ql">Or a whole group</div><div class="chips">'+grp('all','','Everyone')+officesList().map(o=>grp('offices',o,'Everyone at '+o)).join('')+'</div>'+
+        '<div class="chips" style="margin-top:6px">'+teamsList().map(t=>grp('teams',t,'All '+t)).join('')+'</div></div>'+
+      (pickedChips.length ? '<div class="picked">'+pickedChips.join('')+'</div>' : '')+
+      '<div class="count">'+(total ? '<b>'+total+' '+(total===1?'person':'people')+'</b>'+(edit && c.add.length ? ' ('+c.add.length+' new)' : '')+': '+esc(names.slice(0,10).join(', '))+(names.length>10 ? ' and '+(names.length-10)+' more' : '') : 'Nobody picked yet.')+'</div>'+
+      '<p class="warn">🔒 <span>No patient details in a task — tasks aren’t kept in a locked folder.</span></p>'+
+      (F.errs.length ? '<div class="errs">'+F.errs.map(esc).join(' · ')+'</div>' : '')+
+      '<div class="sh-f"><button type="button" class="btn ghost" data-act="sheetx">Cancel</button><button type="button" class="btn" data-act="'+(edit?'savechange':'send')+'">'+
+        (edit ? 'Save changes' : (total ? 'Give it to '+(total===1 ? first(names[0]) : total+' people') : 'Give the task'))+'</button></div></div>';
+    el('sheet').hidden=false; document.body.style.overflow='hidden';
+  }
+  function closeSheet(){ FORM=null; el('sheet').hidden=true; el('sheet').innerHTML=''; document.body.style.overflow=''; }
+  function grab(){ if(!FORM) return; const a=el('f_title'), b=el('f_notes'); if(a) FORM.title=a.value; if(b) FORM.notes=b.value; }
+  async function send(){
+    grab(); const c=chosen(), ppl=c.add;
+    FORM.errs=R.problems({title:FORM.title, due:FORM.due, people:ppl}, today());
+    if(FORM.errs.length) return drawSheet();
+    const t=R.create({title:FORM.title, notes:FORM.notes, due:FORM.due, by:WHO.key, byName:WHO.name, people:ppl, how:R.howWords(FORM.picks)}, new Date());
+    const n=R.progress(t).total, ids=Object.keys(t.to);
+    closeSheet();
+    const r=await save(cur=>R.add(cur, t), 'Given to '+(n===1 ? first(t.to[ids[0]].n) : n+' people')+' — it’s on their Home and in their 🔔'+(LIVE ? ', and an alert if they turned alerts on' : ''));
+    if(!r) return;
+    R.tell(ids.filter(k=>WHO.keys.indexOf(k)<0), 'New task: “'+t.title+'”'+(t.due ? ' · '+R.dueText(t.due, today()) : ''), '📋');
+    R.buzz(ids.filter(k=>WHO.keys.indexOf(k)<0), R.alertNew(t, today()), 'hb-task-'+t.id);
+    TAB='gave'; FILTER='open'; render();
+  }
+  async function saveChange(){
+    grab(); const id=FORM.id, c=chosen(), add=c.add, drop=Object.keys(FORM.drop), how=R.howWords(FORM.picks);
+    if(!String(FORM.title).trim()){ FORM.errs=['Say what needs doing']; return drawSheet(); }
+    if(!c.now.length && !add.length){ FORM.errs=['A task needs at least one person — or close it instead']; return drawSheet(); }
+    if(FORM.due && FORM.due<today() && FORM.due!==(REC.t[id]||{}).due){ FORM.errs=['That due date has already passed']; return drawSheet(); }
+    const F=Object.assign({}, FORM); closeSheet();
+    const r=await save(cur=>{ let rec=R.edit(cur, id, {title:F.title, notes:F.notes, due:F.due}, new Date());
+      drop.forEach(k=>{ rec=R.removePerson(rec, id, k, new Date()); }); if(add.length) rec=R.addPeople(rec, id, add, new Date(), how); return rec; }, 'Saved'+(add.length ? ' — '+add.length+' new '+(add.length===1?'person':'people')+' told' : ''));
+    if(r && add.length){ const t=REC.t[id]; const ids=add.map(p=>p.id).filter(k=>WHO.keys.indexOf(k)<0);
+      R.tell(ids, 'New task: “'+t.title+'”'+(t.due ? ' · '+R.dueText(t.due, today()) : ''), '📋'); R.buzz(ids, R.alertNew(t, today()), 'hb-task-'+id); }
+  }
+
+  /* ---------- ticking, nudging, closing ---------- */
+  function burst(btn){
+    try{ const b=btn.getBoundingClientRect(), w=document.createElement('div'); w.className='burst'; w.style.left=(b.left+b.width/2)+'px'; w.style.top=(b.top+b.height/2)+'px';
+      const cs=getComputedStyle(document.documentElement), cols=[cs.getPropertyValue('--teal').trim()||'#149B96', '#F2A03D', '#2E9E6B', cs.getPropertyValue('--navy2').trim()||'#25456e'];
+      for(let i=0;i<14;i++){ const a=Math.PI*2*i/14+Math.random()*.4, d=26+Math.random()*26, s=document.createElement('i');
+        s.style.cssText='--x:'+(Math.cos(a)*d).toFixed(0)+'px;--y:'+(Math.sin(a)*d).toFixed(0)+'px;--r:'+(Math.random()*360|0)+'deg;background:'+cols[i%cols.length]; w.appendChild(s); }
+      document.body.appendChild(w); setTimeout(()=>w.remove(), 800); }catch(_){}
+  }
+  async function done(id, btn){
+    const t=REC.t[id], k=t && R.slotFor(t, WHO.keys); if(!k) return;
+    if(btn){ btn.classList.add('on'); burst(btn); const card=btn.closest('.tk'); if(card) setTimeout(()=>card.classList.add('leaving'), 260); }
+    const left=R.mine(REC, WHO.keys, today(), new Date()).open.length-1;
+    await new Promise(r=>setTimeout(r, 520));
+    const r=await R.finish(id, k, WHO.name, null);
+    if(r && r.value) REC=R.cleanRecord(r.value);
+    render();
+    if(!r || r.error || r.blocked) return toast('That didn’t save — try again in a moment');
+    toast(left<=0 ? '🎉 All caught up!' : 'Done ✓ '+first(t.byName)+' can see it', id);
+  }
+  async function act(a, id, btn){
+    const t=id && REC.t[id];
+    if(a==='done') return done(id, btn);
+    if(a==='undo'){ const k=R.slotFor(t, WHO.keys); return save(cur=>R.undo(cur, id, k), 'Back on your list'); }
+    if(a==='addnote'){ NOTE[id]=1; render(); const i=el('note_'+id); if(i) i.focus(); return; }
+    if(a==='note'){ const i=el('note_'+id), k=R.slotFor(t, WHO.keys); delete NOTE[id]; return save(cur=>R.setNote(cur, id, k, i ? i.value : ''), 'Note saved — '+first(t.byName)+' sees it on the task'); }
+    if(a==='more'){ OPEN[id]=!OPEN[id]; return render(); }
+    if(a==='showdone'){ SHOWDONE=!SHOWDONE; return render(); }
+    if(a==='older') return loadOld();
+    if(a==='edit') return change(id);
+    if(a==='close'){ ASK[id]=1; return render(); }
+    if(a==='keep'){ delete ASK[id]; return render(); }
+    if(a==='closeyes'){ delete ASK[id]; return save(cur=>R.close(cur, id, new Date()), 'Closed — it’s off everyone’s list'); }
+    if(a==='reopen') return save(cur=>R.reopen(cur, id), 'Reopened');
+    if(a==='nudge'){
+      const ids=R.openIds(t).filter(k=>WHO.keys.indexOf(k)<0); if(!ids.length || R.nudgeWait(t, new Date())) return;
+      const r=await save(cur=>R.nudged(cur, id, new Date()), 'Nudged '+(ids.length===1 ? first(nameOf(ids[0])) : ids.length+' people')+' — a reminder in their 🔔'+(LIVE?' and an alert':''));
+      if(r){ R.tell(ids, 'Reminder: “'+t.title+'”'+(t.due ? ' · '+R.dueText(t.due, today()) : ''), '🔔'); R.buzz(ids, R.alertNudge(t, today()), 'hb-task-'+id); }
+      return;
+    }
+    if(a==='sheetx') return closeSheet();
+    if(a==='send') return send();
+    if(a==='savechange') return saveChange();
+  }
+  let TT=0, UNDO='';
+  function toast(msg, undoId){
+    const x=el('toast'); UNDO=undoId||''; x.innerHTML='<span>'+esc(msg)+'</span>'+(undoId ? '<button type="button" data-toast="undo">Undo</button>' : '');
+    x.classList.add('on'); clearTimeout(TT); TT=setTimeout(()=>x.classList.remove('on'), undoId ? 6000 : 3600);
+  }
+
+  /* ---------- wiring ---------- */
+  document.addEventListener('click', e=>{
+    const tb=e.target.closest('[data-tab]'); if(tb){ TAB=tb.dataset.tab; try{ localStorage.setItem('ph_tasks_tab', TAB); }catch(_){} OLDREC=null; return render(); }
+    const fl=e.target.closest('[data-filter]'); if(fl){ FILTER=fl.dataset.filter; return render(); }
+    const tu=e.target.closest('[data-toast]'); if(tu && UNDO){ const id=UNDO; UNDO=''; el('toast').classList.remove('on'); const t=REC.t[id]; return save(cur=>R.undo(cur, id, R.slotFor(t, WHO.keys)), 'Back on your list'); }
+    if(FORM){
+      const du=e.target.closest('[data-due]'); if(du){ grab(); FORM.dueK=du.dataset.due; FORM.due=du.dataset.d; FORM.errs=[]; return drawSheet(); }
+      const pk=e.target.closest('[data-pick]'); if(pk){ grab(); const k=pk.dataset.pick, v=pk.dataset.v;
+        if(k==='all') FORM.picks.all=!FORM.picks.all; else { const a=FORM.picks[k], i=a.indexOf(v); if(i>=0) a.splice(i,1); else a.push(v); }
+        FORM.errs=[]; return drawSheet(); }
+      const up=e.target.closest('[data-unpick]'); if(up){ grab(); const k=up.dataset.unpick, v=up.dataset.v;
+        if(k==='all') FORM.picks.all=false; else if(k==='now') FORM.drop[v]=1; else FORM.picks[k]=FORM.picks[k].filter(x=>x!==v); return drawSheet(); }
+      const pp=e.target.closest('[data-person]'); if(pp){ grab(); FORM.picks.people.push(pp.dataset.person); if(FORM.drop[pp.dataset.person]) delete FORM.drop[pp.dataset.person]; FORM.q=''; FORM.hi=0; FORM.errs=[]; drawSheet(); const q=el('f_q'); if(q) q.focus(); return; }
+    }
+    const b=e.target.closest('[data-act]'); if(!b) return;
+    const card=b.closest('[data-id]'); act(b.dataset.act, card ? card.dataset.id : '', b);
+  });
+  document.addEventListener('input', e=>{
+    if(!FORM) return;
+    if(e.target.id==='f_q'){ grab(); FORM.q=e.target.value; FORM.hi=0; const pos=e.target.selectionStart; drawSheet(); const q=el('f_q'); if(q){ q.focus(); try{ q.setSelectionRange(pos,pos); }catch(_){} } }
+    else if(e.target.id==='f_date'){ grab(); FORM.due=e.target.value; FORM.dueK=e.target.value ? 'pick' : ''; FORM.errs=[]; drawSheet(); }
+  });
+  document.addEventListener('keydown', e=>{
+    if(e.key==='Escape' && FORM) return closeSheet();
+    if(FORM && e.target.id==='f_q'){
+      const res=results();
+      if(e.key==='ArrowDown' && res.length){ e.preventDefault(); FORM.hi=(FORM.hi+1)%res.length; drawSheet(); el('f_q').focus(); }
+      else if(e.key==='ArrowUp' && res.length){ e.preventDefault(); FORM.hi=(FORM.hi-1+res.length)%res.length; drawSheet(); el('f_q').focus(); }
+      else if(e.key==='Enter' && res.length){ e.preventDefault(); grab(); FORM.picks.people.push(R.personId(res[FORM.hi]||res[0])); FORM.q=''; FORM.hi=0; drawSheet(); el('f_q').focus(); }
+      return;
+    }
+    if(e.key==='Enter' && e.target.dataset && e.target.dataset.enter==='note'){ const card=e.target.closest('[data-id]'); if(card) act('note', card.dataset.id); }
+  });
+  function persona(){ const s=el('persona'); if(!s) return;
+    s.innerHTML=PERSONAS.map(p=>'<option value="'+p.id+'" '+(p.id===WHO.id?'selected':'')+'>'+esc(p.n)+'</option>').join(''); }
+  window.TASKS={
+    as(id){ try{ localStorage.setItem('ph_tasks_as', id); }catch(_){} if(location.hash) history.replaceState(null, '', location.pathname+location.search);
+      WHO=who(); persona(); TAB='mine'; FILTER='open'; ASK={}; NOTE={}; OLDREC=null; closeSheet(); render(); },
+    give, reset(){ try{ localStorage.removeItem('ph_tasks_demo'); }catch(_){} location.reload(); }
+  };
+
+  async function boot(){
+    WHO=who();
+    if(LIVE){ const t=el('tryas'); if(t) t.remove(); } else persona();
+    try{ const t=localStorage.getItem('ph_tasks_tab'); if(t) TAB=t; }catch(_){}
+    if(/gave\b/.test(location.hash||'') && can('edit')) TAB='gave';
+    await load(); render();
+    if(window.PH && PH.loadDone) PH.loadDone('page');
+    tidy().catch(()=>{});
+  }
+  if(window.PH && PH.loadHold && LIVE) PH.loadHold('page', 'Reading the tasks…');
+  if(!LIVE || window.PH_AUTH) boot();
+  else document.addEventListener('ph-signed-in', boot, {once:true});
+  document.addEventListener('ph-identity', ()=>{ if(LIVE){ WHO=who(); render(); } });
+  /* someone else ticks or gives something while this is open: catch up when the tab comes back */
+  document.addEventListener('visibilitychange', ()=>{ if(!document.hidden && WHO && !FORM) load().then(render).catch(()=>{}); });
+})();
+</script>
+<script>PH.nav('tasks');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
+</body>
+</html>

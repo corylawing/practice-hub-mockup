@@ -508,6 +508,27 @@ I can confidently say that the chat feature should go next. The production thing
    Notes (noteField(f) - Talk types into whichever box has data-talkbox; Save while talking waits for the last words).
    Cory: no privacy reminder under the box ("I don't need that reminder please don't put it"). Saving adds fields only
    (persist/strip keep every field; consultsFrom reads every field). test/tc (185).
+44. **TASKS - give a task, they tick it off, you see who has (19/11/2026; hc223; SANDBOX ONLY until user.js TASKS_LIVE).**
+   Cory: "leadership can assign a task to certain users who would get a notification and it would be in there today.
+   Then leadership who assigned task can track which of their tasks are still open and which ones have be completed?";
+   "I wouldn't call it leadership tasks. Maybe just tasks and Heather can decide who can assign tasks and who cannot".
+   v1/tasks.js (PH_TASKS rules + finish/tell/buzz + the sandbox demo), v1/tasks.html, the "Your tasks" card on Home.
+   EVERYONE GETS tasks (the tab shows for everyone while the switch is on); the Tasks column of Teams & Access is who can
+   GIVE them: Gets tasks (none) / Can give (edit) / Everything (manage = every task in the practice). Starts: Admin =
+   Everything, Executive + Leadership = Can give (DEPT_CAN + canForTeams fallback, like meetings/monthly) - Heather changes it.
+   Record ph_tasks {v:1,t:{id:task}} in the shared list; one line per person (email, or 'name:<name>'), so "Everyone at
+   Hobbs" = each person there (people listed at EVERY office are practice-wide and left out of an office pick; a group
+   pick never includes the giver). Due dates: quick chips (Today/Tomorrow/Friday/Next Monday/In 2 weeks) or a date.
+   Giving: bell entry ONLY to them (logActivity `to` - canSeeActivity shows an entry with `to` to those people and nobody
+   else, admins included) + a phone/computer alert (PH_ALERTS.sendTo, live, people with alerts on). Ticking: bell to the
+   giver ("Maya finished X (2 of 3 done)"); the LAST one also alerts the giver "All done". Nudge: alert + bell to the ones
+   who haven't, once an hour per task. Close (asks first) / Reopen; Change = words, details, due, add people (they're told),
+   take off someone who hasn't done it. NOTHING DELETED: taken off = gone stamp; closed = closed stamp; finished 30+ days ->
+   ph_tasks_old_<year given> (archive written first, then dropped from ph_tasks only if the archive holds it; run by a giver
+   once a day per device), "Finished -> Show older" reads them. Every write = PH_STORE.update (merged). No patient details
+   (the page says so). Sandbox: "Try it as" Jordan (gives) / Maya (gets) / Priya (everything) / Luis; Home maps admin ->
+   Priya, OM -> Maya, TC -> Luis; demo seeded once (ph_tasks_demo). Not built yet (ask Cory): repeating tasks; a morning
+   "due today" alert (needs a timer on the server). test/tasks (74) + notifications (3) + permissions (the live tab count).
 43. **DATE & TIME PICKER - one for all of Home-Brace (19/11/2026; hc220; SANDBOX PREVIEW ONLY so far:
    v1/datepick-demo.html, not used by any page yet).** Cory: "I don't like the date picker either it looks so old"; "Can
    they still type it though?"; the month/year dropdowns inside "look very old school"; the native time columns are good

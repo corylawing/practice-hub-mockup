@@ -86,7 +86,7 @@
      "added a bit of life" but looked a bit amateur; plain line icons were too basic). A scheme
      whose bar is light enough to wash a colour out gets it lightened until it reads (3:1). */
   const TAB_IC={home:'#2BC0B8', dashboard:'#6CB4F5', production:'#F7A25E', tc:'#B49CFB', schedule:'#F48C7F',
-                marketing:'#F27FC0', documents:'#F5C85C', team:'#6FD39A', chat:'#7FD4F0', payroll:'#B6E36B', monthly:'#F9E26B', academy:'#8FA2FF', admin:'#AEBBD0'};
+                marketing:'#F27FC0', documents:'#F5C85C', team:'#6FD39A', chat:'#7FD4F0', payroll:'#B6E36B', monthly:'#F9E26B', tasks:'#F0ABFC', academy:'#8FA2FF', admin:'#AEBBD0'};
   const THEME_VARS=['--navy','--navy2','--navy-mute','--teal','--teal2','--teal-600','--teal-soft',
                     '--teal-line','--teal-ink','--teal-wash','--ink','--soft','--line','--canvas'];
   function hexRgb(h){ h=String(h).replace('#',''); if(h.length===3) h=h.split('').map(c=>c+c).join('');
@@ -171,9 +171,9 @@
 
   // Department (Entra) -> what they can do. Keys are Heather's own ten team names, lowercased.
   const DEPT_CAN={
-    'admin':                      {dashboard:'view',production:'manage',schedule:'edit',marketing:'edit',documents:'manage',team:'view',admin:'manage',tc:'manage',payroll:'manage',meetings:'edit',monthly:'manage'},
-    'executive team':             {dashboard:'view',production:'edit',  schedule:'edit',marketing:'edit',documents:'manage',team:'view',admin:'none',tc:'manage',monthly:'view'},
-    'leadership team':            {dashboard:'view',production:'edit',  schedule:'edit',marketing:'edit',documents:'manage',team:'view',admin:'none',tc:'manage',monthly:'view'},
+    'admin':                      {dashboard:'view',production:'manage',schedule:'edit',marketing:'edit',documents:'manage',team:'view',admin:'manage',tc:'manage',payroll:'manage',meetings:'edit',monthly:'manage',tasks:'manage'},
+    'executive team':             {dashboard:'view',production:'edit',  schedule:'edit',marketing:'edit',documents:'manage',team:'view',admin:'none',tc:'manage',monthly:'view',tasks:'edit'},
+    'leadership team':            {dashboard:'view',production:'edit',  schedule:'edit',marketing:'edit',documents:'manage',team:'view',admin:'none',tc:'manage',monthly:'view',tasks:'edit'},
     'office managers':            {dashboard:'view',production:'edit',  schedule:'edit',marketing:'view',documents:'edit',  team:'view',admin:'none',tc:'view',meetings:'edit',monthly:'edit'},
     'clinic managers':            {dashboard:'view',production:'view',  schedule:'edit',marketing:'view',documents:'edit',  team:'view',admin:'none',tc:'none'},
     'doctors':                    {dashboard:'view',production:'none',  schedule:'view',marketing:'none',documents:'view',  team:'view',admin:'none',tc:'none'},
@@ -635,6 +635,8 @@
       if(c.meetings===undefined && DEPT_CAN[d] && DEPT_CAN[d].meetings) c=Object.assign({}, c, {meetings:DEPT_CAN[d].meetings});
       /* MONTHLY REPORT (18/11/2026) - the same: newer than the saved grid, so the team's starting value counts until set. */
       if(c.monthly===undefined && DEPT_CAN[d] && DEPT_CAN[d].monthly) c=Object.assign({}, c, {monthly:DEPT_CAN[d].monthly});
+      /* TASKS (19/11/2026) - the same: who can GIVE tasks starts as Admin, Executive and Leadership until Heather sets the column. */
+      if(c.tasks===undefined && DEPT_CAN[d] && DEPT_CAN[d].tasks) c=Object.assign({}, c, {tasks:DEPT_CAN[d].tasks});
       if(!can){ can=Object.assign({},c); return; }
       Object.keys(c).forEach(k=>{ if(RANK[c[k]]>RANK[can[k]]) can[k]=c[k]; });
     });
@@ -2152,6 +2154,12 @@
       const no=Object.assign({}, x.no||{}); no[kind]=!on; x.no=no; rec.p[e]=x; return rec; });
     const ok=document.getElementById('ph-ok'); if(ok){ ok.classList.add('on'); setTimeout(()=>ok.classList.remove('on'),1800); }
   }
+  /* TASKS (19/11/2026, tasks.js): give a task to people; they tick it off; the giver follows who has and hasn't. Sandbox
+     first - false keeps the tab, the Home card and the Teams & Access column off the live site until Cory says "tasks
+     live". An admin can try it there first with tasks.html?taskspreview (this tab only). */
+  const TASKS_LIVE=false;
+  function tasksOn(){ if(env()!=='live' || TASKS_LIVE) return true;
+    try{ if(/[?&]taskspreview\b/.test(location.search||'')) sessionStorage.setItem('ph_tasks_preview','1'); return sessionStorage.getItem('ph_tasks_preview')==='1' && isAdmin(realMe()); }catch(_){ return false; } }
   function monthlyOn(){ if(env()!=='live' || MONTHLY_LIVE) return true;
     try{ if(/[?&]monthlypreview\b/.test(location.search||'')) sessionStorage.setItem('ph_monthly_preview','1'); return sessionStorage.getItem('ph_monthly_preview')==='1' && isAdmin(realMe()); }catch(_){ return false; } }
   const PAY_LIVE=true;                // ON for staff 04/11/2026 (Heather: "I did all the instructions, I think we are good to go"); first pay period #24
@@ -2521,6 +2529,8 @@
   }
   const NAV=[
     {k:'home',       n:'\ud83c\udfe0 Home',             href:'home.html',       show:()=>true},
+    /* TASKS (19/11/2026): everyone gets tasks, so everyone gets the tab (Teams & Access decides who can GIVE one). */
+    {k:'tasks',      n:'\u2705 Tasks',             href:'tasks.html',      show:()=>tasksOn()},
     {k:'dashboard',  n:'\ud83d\udcca Production Dashboard',        href:'index.html',      show:()=>atLeast('dashboard','view')},
     {k:'production', n:'\ud83d\udcdd Enter Production',  href:'production.html', show:()=>atLeast('production','edit')},
     /* Sandbox: everyone (made-up patients; the page has its own "Try it as"). Live: the
@@ -2756,6 +2766,9 @@
                     it even at an office they do not otherwise see
            teams    restrict to these teams (the leadership-only items) */
       kind:e.kind||'', offices:arr(e.offices), people:arr(e.people), teams:arr(e.teams),
+      /* to  ONLY these people (their emails, or 'name:<name>' - tasks.js personId). A task given to someone tells them
+             and nobody else; a finished one tells its giver (19/11/2026). */
+      to:arr(e.to).map(x=>x.toLowerCase().trim()).slice(0,400),
       by:((who.first||'')+' '+(who.last||'')).trim()||'Someone',
       at:new Date().toISOString()
     };
@@ -2922,6 +2935,11 @@
     if(!e) return false;
     if(calendarDay(e)) return false;
     const m=me();
+    /* ADDRESSED TO PEOPLE (tasks, 19/11/2026): only them - not their office, not admins, whatever the section says. */
+    if(Array.isArray(e.to) && e.to.length){
+      const mail=String(email(m)||'').toLowerCase().trim(), nm=String(name(m)||'').toLowerCase().trim().replace(/\s+/g,' ');
+      return (!!mail && e.to.indexOf(mail)>=0) || (!!nm && e.to.indexOf('name:'+nm)>=0);
+    }
     const myName=name(m).toLowerCase().trim();
     const myTeams=(m.teams||[]).map(t=>String(t).toLowerCase());
     const mine=offices();
@@ -3091,7 +3109,7 @@
      "Enter P..." - which reads as broken. Short forms for the bar; the sheet and the
      top nav keep the full names. */
   const TAB_SHORT={home:'Home',dashboard:'Dashboard',production:'Enter Prod',tc:'TC Tracker',schedule:'Schedule',
-                   marketing:'Marketing',documents:'Documents',team:'Team',chat:'Chat',payroll:'Payroll',monthly:'Monthly',academy:'Academy',admin:'Admin'};
+                   marketing:'Marketing',documents:'Documents',team:'Team',chat:'Chat',payroll:'Payroll',monthly:'Monthly',tasks:'Tasks',academy:'Academy',admin:'Admin'};
   /* Line icons for the phone bar instead of emoji - emoji render differently on every
      phone and read as casual. 24-unit grid, stroke follows the text colour. */
   const ICON={
@@ -3107,6 +3125,7 @@
     chat:'<path d="M21 11.5a8.5 8.5 0 0 1-12.4 7.6L3 20.5l1.4-5.1A8.5 8.5 0 1 1 21 11.5z"/>',
     payroll:'<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.6"/><path d="M6 10v4M18 10v4"/>',
     monthly:'<path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/><path d="M3 21h18"/>',
+    tasks:'<path d="M10 6h10M10 12h10M10 18h10"/><path d="M3.5 6.2l1.3 1.3L7.3 5M3.5 12.2l1.3 1.3L7.3 11M3.5 18.2l1.3 1.3L7.3 17"/>',
     academy:'<path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c0 1.4 2.7 3 6 3s6-1.6 6-3v-5"/><path d="M22 9v6"/>',
     more:'<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>'
   };
@@ -4068,7 +4087,7 @@
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', start, {once:true}); else setTimeout(start, 0);
   })();
 
-  window.PH={PEOPLE,newHiresOn,pickOn,chatPilotMe,chatPilotKnown:()=>CHATPILOT!==null,chatGuest,reloadChatPilot,cleanChatPilot,CHAT_PILOT_KEY,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,teamNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, rosterView, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, chatBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK, notesHTML, searchHTML, searchDocs, searchDocsHTML, levelForTeams, teamsSeeAll, tcOn, tcRoleFor, payOn, monthlyOn, partyOn, partyPref, partySeen, PARTY_KEY, payRoleFor, paySenders, reloadPaySenders, paySenderOffices, payLevel, payReminders, payMark, reloadPayStatus, payRulesReady, payAlertPlan, payAlertsTick, centralNow, alertsReady, saveFace, faceOf, avatar, viewLink, isWordName, wordAttrs, wordPdfInto,
+  window.PH={PEOPLE,newHiresOn,pickOn,chatPilotMe,chatPilotKnown:()=>CHATPILOT!==null,chatGuest,reloadChatPilot,cleanChatPilot,CHAT_PILOT_KEY,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,teamNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, rosterView, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, chatBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK, notesHTML, searchHTML, searchDocs, searchDocsHTML, levelForTeams, teamsSeeAll, tcOn, tcRoleFor, payOn, monthlyOn, tasksOn, partyOn, partyPref, partySeen, PARTY_KEY, payRoleFor, paySenders, reloadPaySenders, paySenderOffices, payLevel, payReminders, payMark, reloadPayStatus, payRulesReady, payAlertPlan, payAlertsTick, centralNow, alertsReady, saveFace, faceOf, avatar, viewLink, isWordName, wordAttrs, wordPdfInto,
     sensRecord, reloadSensitive, sensLevelFor, sensitiveLevel, sensConfirmOk,
     setTheme, theme:()=>THEME, setLayout, layout:()=>LAYOUT, layouts:()=>LAYOUTS.map(l=>({k:l.k, n:l.n})), themes:()=>THEMES.map(t=>({k:t.k, n:t.n})), schemeTokens:k=>schemeTokens(themeOf(k)), contrast,
     feedback:openFeedback, feedbackText, feedbackContext, learning:stillLearning, fbReady, myFeedback, fbTick, usageReady, rosterName, useEmail, useTrackMe, loadHold, loadDone};
