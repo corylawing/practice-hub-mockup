@@ -440,7 +440,11 @@ I can confidently say that the chat feature should go next. The production thing
    localStorage ph_chat_emoji_recent (18 defaults). Used by the message box (emoji button) and "More emoji" on a
    reaction. All 1,425 toned sequences checked against Unicode's list. test/chatv2.test.js (42).
    STILL QUEUED: a "chat alerts: Home-Brace / Teams" choice.
-38. **CELEBRATIONS - birthdays + WORKIVERSARIES on Home (18/11/2026; hc210; SANDBOX ONLY until user.js PARTY_LIVE).**
+38. **CELEBRATIONS - birthdays + WORKIVERSARIES on Home (18/11/2026; hc210). LIVE 19/11/2026 (hc222, PARTY_LIVE=true) -
+   Cory: "heather said to go to production with birthday and workiversery".** Next: an admin loads Heather's hire-dates
+   file in Admin -> People -> "Birthdays & hire dates from Excel" on the live site. Use the copy on Cory's Mac
+   "Hire Dates and Birthdays - Mansfield dates added.xlsx" (Downloads; never commit): Heather sent the six Mansfield
+   anniversary days 19/11, so no one is "year only" any more. Still missing from her file: 2 birthdays, 2 hire dates.
    Cory: "Birthdays and work anniversaries on Home ... awesome animated motion art celebration put in sandbox to show
    Heather"; "something the admin can do in profile set up for birthday and start date (it should be hidden to other
    users)"; "The persons birthday or workaversary ... should be extra special animated on their home-brace, others should

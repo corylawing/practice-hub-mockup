@@ -44,7 +44,7 @@ const D=P.celebrations(P.peopleFrom(P.demo('2026-11-18T09:00:00')), '2026-11-18T
 t('the sandbox always has something to see today, coming up, and one from 3 days ago (made-up people)', D.today.length===2 && D.soon.length>=2 && D.recent.length===1 && D.recent[0].in===-3 && Object.keys(P.demo().p).every(e=>/@example\.com$/.test(e)));
 
 /* where it lives */
-t('OFF on the live site until Cory says "celebrations live"', /const PARTY_LIVE=false;/.test(U) && /function partyOn\(\)\{ return env\(\)!=='live' \|\| PARTY_LIVE; \}/.test(U));
+t('ON for the live site since 19/11/2026 (Heather\'s go) - one switch takes it back off', /const PARTY_LIVE=true;/.test(U) && /function partyOn\(\)\{ return env\(\)!=='live' \|\| PARTY_LIVE; \}/.test(U));
 t('the dates are set in Admin → People, marked ONLY ADMINS SEE THESE, the year never asked', /function celebHTML\(u\)/.test(A) && /ONLY ADMINS SEE THESE/.test(A) && /aria-label="Birth month"/.test(A) && !/Birth year/.test(A) && /setLocTZ,testAlert,setCeleb,hireOpen,hireRead,hireSet,hireSave,close:closeModal/.test(A));
 t('…saved straight away, merged into the shared record (nobody else’s dates touched)', /PH_STORE\.update\(PH\.PARTY_KEY, cur=>/.test(A));
 t('My profile: each person can switch their own birthday or anniversary celebration off - no dates shown there', /Celebrate my birthday/.test(U) && /Celebrate my Workiversary/.test(U) && /function partyPref\(kind, on\)/.test(U));

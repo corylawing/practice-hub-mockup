@@ -2110,9 +2110,10 @@
   /* MONTHLY REPORT (18/11/2026): the offices' month-end numbers (Heather's monitor report). Sandbox first - false keeps
      it off the live site until Cory says "monthly live". An admin can preview it there with monthly.html?monthlypreview. */
   const MONTHLY_LIVE=false;
-  /* CELEBRATIONS (18/11/2026): birthdays + work anniversaries on Home (party.js). Sandbox first; false keeps it off the
-     live site (no Home card, no admin dates, no profile switches) until Cory says "celebrations live". */
-  const PARTY_LIVE=false;
+  /* CELEBRATIONS (18/11/2026): birthdays + work anniversaries on Home (party.js). LIVE 19/11/2026 (Cory: "heather said to
+     go to production with birthday and workiversery"). false = the live site goes back to no Home card, no admin dates,
+     no profile switches (the dates already saved stay in ph_celebrate). */
+  const PARTY_LIVE=true;
   const PARTY_KEY='ph_celebrate';
   function partyOn(){ return env()!=='live' || PARTY_LIVE; }
   function partyRec(){ try{ const r=JSON.parse(localStorage.getItem(PARTY_KEY)); return r && typeof r==='object' && r.p ? r : {v:1, p:{}}; }catch(_){ return {v:1, p:{}}; } }
