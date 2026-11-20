@@ -122,6 +122,10 @@ const call=async (body, origin)=>{ const ctx={}; await F(ctx, {method:'POST', he
     t('new ways: A/R with only the report claim statuses', v('ar','par+iar.rep')===620 && v('ar','par.current+iar.rep')===520);
     t('new ways: patients (not contracts) on A/R, with a balance, and 60+ late', v('arn','par.patients')===2 && v('arn','par.patients.bal')===2 && v('deln','par.pat.late60')===1 && v('arn','par.patients+iar.rep')===3);
     t('gross production can also be read as production net', v('gp','prod.net')===900);
+    const ANS3={bh:{rows:1, by:{'11':{n:1, sum:{production:1000}, nz:{}, cnt:{}, groups:{}}}}, coll:{rows:1, by:{'11':{n:1, sum:{net:700}, nz:{}, cnt:{}, groups:{}}}}};
+    const W3=O.ways(ANS3,[11],{mdp:250, mdc:'40'}), W4=O.ways(ANS3,[11],{});
+    t('Heather = OrthoFi + Medicaid: production 1,000 + Medicaid 250; collections 700 + Medicaid 40', W3.gp[0].way==='bh.production+mdp' && W3.gp[0].v===1250 && W3.gc[0].v===740);
+    t('…an office with no Medicaid adds nothing (one rule for every office)', W4.gp[0].v===1000 && W4.gc[0].v===700);
     const bh=O.plan(2026, 10).find(q=>q.id==='bh');
     t('business health is asked for the whole month (OrthoFi files it under the LAST day)', bh.params['month-date-start-date']==='2026-10-01' && bh.params['month-date-end-date']==='2026-10-31');
   }

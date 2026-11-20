@@ -80,12 +80,19 @@
   const RIP=g=>/retainer\s*insurance|\brip\b/i.test(g);
   const ACTIVE=g=>/\b(in\s*treatment|active|started|in\s*progress)\b/i.test(g);              // \b: "Inactive" is not active
   /* answers = {planId: answer}; ids = this office's OrthoFi location ids -> {field:[{way, label, v}]} */
-  function ways(answers, ids){
+  /* typed = the office's own numbers for the month that OrthoFi never sees: Medicaid production (mdp) and Medicaid
+     collections (mdc). Heather's gross production = OrthoFi business health production + Medicaid production, and gross
+     collections = OrthoFi collections (net) + Medicaid collections - found 20/11/2026: Carlsbad, Clovis and Hobbs line
+     up to the third decimal. An office with no Medicaid adds 0, so it's one rule for every office. */
+  function ways(answers, ids, typed){
     const A=answers||{}, s=(id,k,f)=>tot(A[id], ids, k, f), plus=(a,b)=>a===null||b===null ? null : r2(a+b);
+    const T=typed||{}, med=k=>(T[k]===undefined || T[k]===null || T[k]==='') ? 0 : (+T[k]||0);
     const W={
-      gp:  [{way:'prod.gross', label:'Production — gross', v:s('prod','sum','gross')}, {way:'bh.production', label:'Business health — production', v:s('bh','sum','production')},
+      gp:  [{way:'bh.production+mdp', label:'Business health production + Medicaid production', v:plus(s('bh','sum','production'), med('mdp'))},
+            {way:'prod.gross', label:'Production — gross', v:s('prod','sum','gross')}, {way:'bh.production', label:'Business health — production', v:s('bh','sum','production')},
             {way:'prod.net', label:'Production — net', v:s('prod','sum','net')}],
-      gc:  [{way:'coll.gross', label:'Collections — gross', v:s('coll','sum','gross')}, {way:'coll.net', label:'Collections — net', v:s('coll','sum','net')}],
+      gc:  [{way:'coll.net+mdc', label:'Collections (net) + Medicaid collections', v:plus(s('coll','sum','net'), med('mdc'))},
+            {way:'coll.gross', label:'Collections — gross', v:s('coll','sum','gross')}, {way:'coll.net', label:'Collections — net', v:s('coll','sum','net')}],
       adj: [{way:'prod.adjustments', label:'Production — adjustments', v:s('prod','sum','adjustments')}, {way:'coll.adjustments', label:'Collections — adjustments', v:s('coll','sum','adjustments')}],
       np:  [{way:'prod.net', label:'Production — net', v:s('prod','sum','net')}],
       ar:  [{way:'par+iar.outstanding', label:'Patient + insurance A/R (outstanding)', v:plus(s('par','sum','outstandingBalance'), s('iar','sum','outstandingBalance'))},

@@ -60,13 +60,13 @@
   .pill.ok{background:var(--good-soft);color:#1f6e4a}
   .note{font-size:12.5px;color:var(--soft);margin-top:10px}
 </style>
-<script src="user.js?v=hc231"></script>
+<script src="user.js?v=hc232"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc231"></script>
-  <script src="gate.js?v=hc231"></script>
-  <script src="prodbook.js?v=hc231"></script>
-  <script src="monthly.js?v=hc231"></script>
-  <script src="orthofi.js?v=hc231"></script>
+  <script src="store.js?v=hc232"></script>
+  <script src="gate.js?v=hc232"></script>
+  <script src="prodbook.js?v=hc232"></script>
+  <script src="monthly.js?v=hc232"></script>
+  <script src="orthofi.js?v=hc232"></script>
 </head>
 <body>
 <div class="ribbon" id="ribbon">Setting up OrthoFi — real OrthoFi totals, shown only on this screen. Nothing is saved but the office matches.</div>
@@ -181,7 +181,8 @@
     const offs=PH.officeNames().filter(o=>O.locsOf(MAP, o).length);
     const tally={}; let boxes=0, matched=0;
     const parts=offs.map(o=>{
-      const W=O.ways(ANS, O.locsOf(MAP, o)), H=HEATHER[o], hv=H && H.year===t.y ? (H.months[p2(t.m)]||{}) : null;
+      const H=HEATHER[o], hv=H && H.year===t.y ? (H.months[p2(t.m)]||{}) : null;
+      const W=O.ways(ANS, O.locsOf(MAP, o), hv||{});                   // her Medicaid numbers go with OrthoFi's (OrthoFi never sees Medicaid)
       const rows=FIELDS.map(f=>{
         const ws=W[f.k]||[], h=hv ? hv[f.k] : undefined, has=h!==undefined && h!==null && h!=='';
         let any=false;

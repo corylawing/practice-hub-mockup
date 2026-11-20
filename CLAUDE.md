@@ -508,6 +508,15 @@ I can confidently say that the chat feature should go next. The production thing
    Notes (noteField(f) - Talk types into whichever box has data-talkbox; Save while talking waits for the last words).
    Cory: no privacy reminder under the box ("I don't need that reminder please don't put it"). Saving adds fields only
    (persist/strip keep every field; consultsFrom reads every field). test/tc (185).
+52. **ORTHOFI: HEATHER = ORTHOFI + MEDICAID (20/11/2026; hc232).** Second October check (16 of 66): gross production =
+    business health `production` (exact for San Angelo, Mansfield, Cruces LCO); A/R = patient + insurance with OrthoFi's
+    report statuses (exact for 3, within ~3% for 4); kept NP exams = business health keptNewPatientExam (exact for 3).
+    Carlsbad/Clovis/Hobbs: OrthoFi's share of Heather's gross production and collections equals her NON-Medicaid share to
+    the third decimal (checked locally from her files, ratios only) -> gross production = bh.production + Medicaid
+    production, gross collections = collections net + Medicaid collections (OrthoFi never sees Medicaid). ways() takes
+    `typed` ({mdp, mdc}; missing = 0, so one rule for every office); the check page passes Heather's month. Still open,
+    asked Heather: Lubbock (OrthoFi production/collections far above her sheet) and Cruces FFO (her A/R and account
+    count far above OrthoFi). PROVEN still empty until the check page shows ✓ to the dollar. Tests: orthofi 57.
 51. **PHONE ALERTS KEPT TURNING OFF (20/11/2026; hc231).** Heather: "my phone keeps not giving me notifications and when I
     open the app it shows the button to turn on notifications, which I have multiple times." alerts.js refresh() (runs on
     every page open + after sign-in) gave up when getRegistration()/getSubscription() came back empty - e.g. the phone's
