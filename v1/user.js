@@ -1782,6 +1782,14 @@
       if(e.target.classList.contains('nal-on')){ alertsTap(true); return; }
       if(e.target.classList.contains('nal-off')){ alertsTap(false); return; }
       const fb=e.target.closest('[data-fb]'); if(fb){ e.preventDefault(); closeNotes(); myFeedback(); return; }
+      /* A reminder for the page you're already on ("3 new feedback messages" while on Admin) did nothing: same page, same
+         #feedback, so the browser doesn't move (Cory 20/11/2026). Close the panel and tell the page - it opens that part. */
+      const go=e.target.closest('a.nrem[href]');
+      if(go){ try{ const u=new URL(go.getAttribute('href'), location.href);
+        if(u.pathname===location.pathname){ e.preventDefault(); closeNotes();
+          if(u.hash && u.hash!==location.hash) location.hash=u.hash;                 // fires hashchange by itself
+          else window.dispatchEvent(new Event('hashchange'));
+          return; } }catch(_){} }
       const ok=e.target.closest('.nok'); if(!ok) return;
       const row=ok.closest('.ni'); if(!row) return;
       markSeen({id:row.getAttribute('data-id')});

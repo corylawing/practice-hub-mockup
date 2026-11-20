@@ -508,6 +508,16 @@ I can confidently say that the chat feature should go next. The production thing
    Notes (noteField(f) - Talk types into whichever box has data-talkbox; Save while talking waits for the last words).
    Cory: no privacy reminder under the box ("I don't need that reminder please don't put it"). Saving adds fields only
    (persist/strip keep every field; consultsFrom reads every field). test/tc (185).
+47. **CHAT REACTIONS + BELL LINKS (20/11/2026; hc227).** (1) Cory reacting 👍 on his phone: "Not saved: Unicode 'like' in
+    the payload is not supported" - Microsoft now refuses the classic names (like/heart/...) on setReaction and wants the
+    emoji itself. chatgraph.js react(): adding sends the emoji, then the old name only if Microsoft answers 400; taking back
+    sends the type it was saved under (old ones may be "like"), then the other form; nothing but a 400 is retried
+    (chatv2 tests 46). (2) The bell's "N new feedback messages" did nothing while Admin was already open (same page, same
+    #feedback = the browser doesn't move). user.js: a reminder link to the page you're on closes the panel and fires
+    hashchange; admin.html follows hashchange (#feedback / #usage) and tabSet keeps the address in step (replaceState).
+    Also 20/11: Yessenia (Hobbs OM) "not able to see the logged consults" - checked read-only in Cory's Safari: her access
+    is right (write, on the locked folder, folder locked); Hobbs simply had nothing logged yet that day (Today only shows
+    today's consults; the rest are under Consults).
 46. **BELL: NO MORE "PRODUCTION NUMBERS ENTERED" (20/11/2026; hc226; sandbox first).** Heather: "take away the Production
     numbers entered reminder. I do want to keep it if an office hit goal or stretch ... so they don't get in the habit of
     just clicking them all as read." production.html no longer logs kind 'production' (entered / updated / workbook

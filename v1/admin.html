@@ -272,21 +272,21 @@
   }
 
 </style>
-<script src="user.js?v=hc226"></script>
+<script src="user.js?v=hc227"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="_staff.js?v=hc226"></script>
-  <script src="store.js?v=hc226"></script>
-  <script src="gate.js?v=hc226"></script>
-  <script src="docs.js?v=hc226"></script>
-  <script src="payrules.js?v=hc226"></script>
-  <script src="workbook.js?v=hc226"></script>
-  <script src="prodbook.js?v=hc226"></script>
-  <script src="party.js?v=hc226"></script>
-  <script src="prodfx.js?v=hc226"></script>
-  <script src="prodstore.js?v=hc226"></script>
-<script src="schedrec.js?v=hc226"></script>
-<script src="proddays.js?v=hc226"></script>
-  <script src="prodadmin.js?v=hc226"></script>
+  <script src="_staff.js?v=hc227"></script>
+  <script src="store.js?v=hc227"></script>
+  <script src="gate.js?v=hc227"></script>
+  <script src="docs.js?v=hc227"></script>
+  <script src="payrules.js?v=hc227"></script>
+  <script src="workbook.js?v=hc227"></script>
+  <script src="prodbook.js?v=hc227"></script>
+  <script src="party.js?v=hc227"></script>
+  <script src="prodfx.js?v=hc227"></script>
+  <script src="prodstore.js?v=hc227"></script>
+<script src="schedrec.js?v=hc227"></script>
+<script src="proddays.js?v=hc227"></script>
+  <script src="prodadmin.js?v=hc227"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — admin console concept for validation. Real build: people sync from Microsoft 365; access is managed here.</div>
@@ -728,7 +728,9 @@
   let tab=location.hash==='#feedback'?'fb':location.hash==='#usage'?'use':'users', search='',     // the bell's "new feedback" opens straight on Feedback
    tmpU=null, openSecs=new Set(['managers','hr']);
 
-  function tabSet(t){ tab=t; [...document.querySelectorAll('.tab')].forEach(b=>b.classList.toggle('active',b.dataset.t===t)); render(); }
+  function tabSet(t){ tab=t; [...document.querySelectorAll('.tab')].forEach(b=>b.classList.toggle('active',b.dataset.t===t)); render();
+    // the address follows the tab (no reload, no hashchange), so a reload stays put and the bell's link always means a move
+    try{ const h=t==='fb'?'#feedback':t==='use'?'#usage':''; if(location.hash!==h) history.replaceState(null,'',location.pathname+location.search+h); }catch(_){} }
   /* Repainting a whole tab throws away where the person was. The access matrix is
      wider than the screen, so setting a permission on a right-hand column used to
      snap back to the far left; expanding a document section jumped the page to the
@@ -2351,6 +2353,8 @@
 
   const thenSync=f=>function(){ const r=f.apply(this,arguments); syncEdit(); return r; };
   if(location.hash==='#feedback') setTimeout(()=>tabSet('fb'), 0);
+  /* The bell's "new feedback" while Admin is already open (20/11/2026): the page doesn't reload, so follow the address. */
+  window.addEventListener('hashchange', ()=>{ if(location.hash==='#feedback') tabSet('fb'); else if(location.hash==='#usage') tabSet('use'); });
   if(location.hash==='#usage') setTimeout(()=>tabSet('use'), 0);      // the bell's "new feedback" opens here
   window.AD={chatAdd,chatDel,chatRetry,tabNow:()=>tab,setupSecs,editSyncNow,tcSyncNow,paySyncNow,sensAdd,sensChange,sensRemove,sensClose,sensQ,sensToggle,sensClear,sensLevel,sensTyped,sensBack,sensNext,sensGo,sensSyncNow,tab:tabSet,viewAs:doViewAs,newTeam,editTeam,saveTeam:thenSync(saveTeam),delTeam:thenSync(delTeam),resetTeams,profile,whyNoAdd,
     addPerson,npSet,npLoc,npTeam,saveNewPerson:thenSync(saveNewPerson),accTeam:setAccTeam,removePerson:thenSync(removePerson),restorePerson:thenSync(restorePerson),showRemoved,togTeam,togLoc,setStatus,saveUser:thenSync(saveUser),pickLevel,pickAud,setField,pickPhoto,photoChosen,clearPhoto,pickUserLevel,clearUserLevel,tog,addFile,noop,newSec,editSec,saveSec:thenSync(saveSec),delSec,delSecGo,resetSecs,setSecName,setSecIcon,setSecStruct,setSecLocMode,setSecTeamMode,togSecLoc,togSecTeam,saveFile,cd,useFile,clearFile,uploadFile,setFileTeamMode,setFileLocMode,togFileLoc,togFileTeam,renderLocs,newLoc,editLoc,saveLoc,delLoc,resetLocs,setLocBrand,setLocState,setLocTZ,testAlert,setCeleb,hireOpen,hireRead,hireSet,hireSave,close:closeModal};
@@ -2437,7 +2441,7 @@ function sizeWatch(){
   }).catch(()=>{});
 }
 </script>
-<script src="tour.js?v=hc226"></script>
+<script src="tour.js?v=hc227"></script>
 <script>
 Tour.init([
   {sel:'#tabs', title:'This is your control room', body:'Four tabs and you can run the whole hub: <b>People</b>, <b>Teams &amp; Access</b>, <b>Document Sections</b> and <b>Locations</b>. No developer, no consultant.', pre:()=>AD.tab('users')},

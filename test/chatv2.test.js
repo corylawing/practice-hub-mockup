@@ -23,7 +23,7 @@ function load(){
   w.fetch=async (url, o)=>{ o=o||{}; calls.push({url, method:o.method||'GET', body:o.body ? JSON.parse(o.body) : null});
     return {ok:true, status:200, headers:{get:()=>null}, json:async ()=>({id:'m1', messageType:'message', createdDateTime:'2026-11-18T10:00:00Z', body:{contentType:'html', content:'hi'}}), blob:async ()=>({})}; };
   vm.createContext(w); vm.runInContext(SRC, w);
-  return {C:w.PH_CHATG, calls, LS};
+  return {C:w.PH_CHATG, calls, LS, w};
 }
 const {C, calls, LS}=load();
 const D='example.test';
@@ -62,9 +62,26 @@ t('a message carries its reactions and its formatting', (()=>{ const m=T.mapMess
   await C.react(chat, 'u-me', 'm 1', '👍', true);
   await C.react(chat, 'u-me', 'm1', '🙏', true);
   await C.react(chat, 'u-me', 'm1', '👍', false, '👍');
-  t('reacting: setReaction / unsetReaction on THAT message; 👍 goes as Teams’ own "like"; taking one back uses the name it was saved under',
-    calls[0].method==='POST' && /\/chats\/19%3Aabc%40thread\.v2\/messages\/m%201\/setReaction$/.test(calls[0].url) && calls[0].body.reactionType==='like' &&
-    calls[1].body.reactionType==='🙏' && /unsetReaction$/.test(calls[2].url) && calls[2].body.reactionType==='👍');
+  t('reacting: setReaction / unsetReaction on THAT message; 👍 goes as the emoji itself (Microsoft refuses "like" since 20/11/2026); taking one back uses the type it was saved under',
+    calls[0].method==='POST' && /\/chats\/19%3Aabc%40thread\.v2\/messages\/m%201\/setReaction$/.test(calls[0].url) && calls[0].body.reactionType==='👍' &&
+    calls[1].body.reactionType==='🙏' && /unsetReaction$/.test(calls[2].url) && calls[2].body.reactionType==='👍' && calls.length===3);
+  {
+    /* Microsoft refusing one form (400) -> the other form, once; any other failure is not retried. */
+    const L=load(); L.LS['ph_chat_testers']=LS['ph_chat_testers'];
+    const refuse=new Set(); let code=400;
+    const ok=L.fetch;
+    L.w.fetch=async (url, o)=>{ const b=o && o.body ? JSON.parse(o.body) : null; L.calls.push({url, method:o.method, body:b});
+      if(b && refuse.has(b.reactionType)) return {ok:false, status:code, headers:{get:()=>null}, json:async ()=>({error:{code:'BadRequest', message:'not supported'}})};
+      return {ok:true, status:204, headers:{get:()=>null}, json:async ()=>({})}; };
+    refuse.add('👍'); await L.C.react(chat, 'u-me', 'm1', '👍', true);
+    t('…if Microsoft refuses the emoji, the old name is tried once', L.calls.length===2 && L.calls[1].body.reactionType==='like');
+    L.calls.length=0; refuse.clear(); refuse.add('like'); await L.C.react(chat, 'u-me', 'm1', '👍', false, 'like');
+    t('…taking back an old "like": the name first, then 👍 when the name is refused', L.calls.length===2 && L.calls[0].body.reactionType==='like' && L.calls[1].body.reactionType==='👍');
+    L.calls.length=0; refuse.clear(); refuse.add('🙏'); let threw=false; try{ await L.C.react(chat, 'u-me', 'm1', '🙏', true); }catch(_){ threw=true; }
+    t('…an emoji with no old name is not retried - the refusal is shown', threw && L.calls.length===1);
+    L.calls.length=0; refuse.clear(); refuse.add('👍'); code=403; threw=false; try{ await L.C.react(chat, 'u-me', 'm1', '👍', true); }catch(_){ threw=true; }
+    t('…and a refusal that is not a 400 is never retried', threw && L.calls.length===1);
+  }
   let locked=false; try{ await C.react({id:'19:x', type:'group', people:[{id:'u-me'}, {id:'u-z', email:'zed@'+D}]}, 'u-me', 'm1', '👍', true); }catch(_){ locked=true; }
   t('…only in a chat you may send to (the pilot / test lock is checked inside, before anything leaves)', locked);
 

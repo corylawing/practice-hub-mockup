@@ -382,7 +382,8 @@
     return (Array.isArray(list) ? list : []).map(r=>{ const t=String((r && r.reactionType)||''), u=(r && r.user && r.user.user) || {};
       return {emoji:REACT_NAMES[t.toLowerCase()] || t, raw:t, userId:String(u.id||''), name:String((r && r.displayName)||u.displayName||'')}; }).filter(r=>r.emoji && r.emoji.length<=16);
   }
-  /* The name Teams knows a reaction by: its classic six by their names (what the Teams app itself uses), any other emoji as itself. */
+  /* A classic six's old name (👍 -> like). Only a fallback now: Microsoft refuses the names on setReaction ("Unicode 'like' in the
+     payload is not supported", Cory 20/11/2026) and wants the emoji itself. */
   const REACT_TYPE={}; Object.keys(REACT_NAMES).forEach(k=>{ REACT_TYPE[REACT_NAMES[k]]=k; });
   /* The message box's HTML -> Teams: mentions become <at id="n">, everything else the allowed set. mentions = [{id, name}]. */
   function teamsBody(html, mentions){
@@ -397,8 +398,17 @@
   async function react(chat, meId, msgId, emoji, on, raw){
     allowed(chat, meId);
     if(!msgId || !emoji) throw new Error('Nothing to react to.');
-    const type=String(raw || REACT_TYPE[emoji] || emoji);               // taking one back: the exact name it was saved under
-    return call('POST', '/chats/'+encodeURIComponent(chat.id)+'/messages/'+encodeURIComponent(msgId)+'/'+(on ? 'setReaction' : 'unsetReaction'), {reactionType:type});
+    /* Adding: the emoji itself, then the old name if Microsoft refuses it. Taking one back: the exact type it was saved
+       under (an old reaction may be saved as "like"), then the other form. Only a 400 tries the next one. */
+    const r=String(raw||''), old=REACT_NAMES[r.toLowerCase()];
+    const tries=on ? [emoji, REACT_TYPE[emoji]] : [r || emoji, old || REACT_TYPE[r || emoji] || emoji];
+    const path='/chats/'+encodeURIComponent(chat.id)+'/messages/'+encodeURIComponent(msgId)+'/'+(on ? 'setReaction' : 'unsetReaction');
+    let last=null;
+    for(const type of tries.filter((x,i,a)=>x && a.indexOf(x)===i)){
+      try{ return await call('POST', path, {reactionType:String(type)}); }
+      catch(e){ last=e; if(e.status!==400) throw e; }
+    }
+    throw last;
   }
   /* Every send checks the test lock itself, before anything leaves - not only the page's buttons. */
   function allowed(chat, meId){
