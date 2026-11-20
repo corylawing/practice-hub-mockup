@@ -29,6 +29,7 @@ T.setDeps({ env:()=>env, now:()=>now,
     if(/exam-counts/.test(url)) return res(401, {});
     if(/patient-accounts-receivable/.test(url)) return res(200, AR);
     if(/treatments/.test(url)) return res(200, TR);
+    if(/patient-exams/.test(url)) return res(200, [{practiceLocationId:11, patientId:501, patientFirstName:'Zelda', keptExamFlag:'Y', examTypeName:'New Patient'}, {practiceLocationId:11, patientId:502, patientFirstName:'Yusuf', keptExamFlag:'N'}]);
     if(/\/deposits/.test(url)) return res(200, [{practiceLocationId:11, depositId:77, paidByName:'Vera Lumen', createdByName:'Tess Front', amount:250.5, depositDetails:[{patientId:501, patientFirstName:'Zelda', amount:250.5}]},
                                                 {practiceLocationId:11, depositId:78, paidByName:'Uma Quay', amount:100, depositDetails:[]}]);
     if(/collection-details/.test(url)) return res(200, [{practiceLocationId:11, patientId:501, patientFirstName:'Zelda', patientLastName:'Quill', collection:300, practiceCollections:290, isCollectionSuccessful:true},
@@ -70,7 +71,8 @@ const call=async (body, origin)=>{ const ctx={}; await F(ctx, {method:'POST', he
 
   r=await call({idt:'good-signin', ask:'sum', path:'/v1/practice-locations/patients', locs:[11]});
   t('lists Home-Brace does not need (patients, guardians ...) are refused', r.status===400 && r.body.code==='bad');
-  t('every list it reads is a total-type list or is added up here', Object.keys(T.ALLOWED).every(p=>!/patients$|guardians|communications|eligibility|payment-profiles|patient-exams/.test(p)));
+  t('every list it reads is a total-type list or is added up here', Object.keys(T.ALLOWED).every(p=>!/patients$|guardians|communications|eligibility|payment-profiles/.test(p)));
+  t('the kept NPE list (rows hold patients) is asked only by exam date - never for a patient - and only counted (20/11/2026)', JSON.stringify(T.ALLOWED['/v1/practice-locations/patient-exams'])==='{"exam-date-start-date":"date","exam-date-end-date":"date"}');
   const a=T.cleanAsk({path:'/v1/practice-locations/production', locs:['11','x',-3], params:{'start-date':'2026-10-01','end-date':'31/10/2026','patient-ids':'501'}});
   t('only its own params, in their shape: a bad date and an unknown param are dropped', a.params['start-date']==='2026-10-01' && !a.params['end-date'] && !a.params['patient-ids'] && a.params['practice-location-ids']==='11');
 
@@ -172,6 +174,11 @@ const call=async (body, origin)=>{ const ctx={}; await F(ctx, {method:'POST', he
   { const W2=O.ways({dep:{rows:1, by:{'11':{n:1,sum:{amount:1000},nz:{},cnt:{},groups:{}}}}, cd:{rows:1, by:{'11':{n:1,sum:{},nz:{},cnt:{},csum:{ok:{sum:{collection:900, practiceCollections:880},nz:{}}},groups:{}}}}}, [11], {mdc:50});
     t('gross collections can now be read 3 more ways: deposits, collection details, practice collections (each + Medicaid collections)',
       W2.gc.some(w=>w.way==='dep.amount+mdc' && w.v===1050) && W2.gc.some(w=>w.way==='cd.collection+mdc' && w.v===950) && W2.gc.some(w=>w.way==='cd.practice+mdc' && w.v===930)); }
+  r=await call({idt:'good-signin', ask:'sum', path:'/v1/practice-locations/patient-exams', locs:[11], params:{'exam-date-start-date':'2026-10-01', 'exam-date-end-date':'2026-10-31'}, group:'keptExamFlag'});
+  t('kept NPE report: exams split by OrthoFi’s kept flag, never a name', r.status===200 && r.body.by['11'].groups.Y.n===1 && r.body.by['11'].groups.N.n===1 && !/Zelda|Yusuf/.test(r.raw));
+  { const W3=O.ways({adjr:{rows:1, by:{'11':{n:2,sum:{netAdjustment:-120.5, patientAdjustment:-100, insuranceAdjustment:-20.5},nz:{},cnt:{},groups:{}}}}, pex:{rows:3, by:{'11':{n:3,sum:{},nz:{},cnt:{},groups:{Y:{n:2,sum:{},nz:{}},N:{n:1,sum:{},nz:{}}}}}}}, [11], {});
+    t('adjustments can be read from OrthoFi’s adjustment report; new patient exams from its kept NPE report', W3.adj.some(w=>w.way==='adjr.net' && w.v===-120.5) && W3.adj.some(w=>w.way==='adjr.patient+ins' && w.v===-120.5) &&
+      W3.npe.some(w=>w.way==='pex.kept' && w.v===2) && W3.npe.some(w=>w.way==='pex.rows' && w.v===3)); }
   /* 20/11/2026: proven to the dollar (Sept + Oct) - and still nothing fills itself in for an office until it is ticked */
   t('proven: gross production = business health production, A/R = patient + insurance (report claim statuses) - nothing else', JSON.stringify(O.PROVEN)==='{"gp":"bh.production","ar":"par+iar.rep"}');
   t('...and no office fills itself in until it is ticked on the OrthoFi page', JSON.stringify(O.autoOffices(O.cleanMap(null)))==='{}' && JSON.stringify(O.cleanMap({map:{'11':'North'}}).auto)==='{}');

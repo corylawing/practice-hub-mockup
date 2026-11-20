@@ -198,11 +198,11 @@
   }
   @media (prefers-reduced-motion: reduce){ *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important} .burst{display:none} }
 </style>
-<script src="user.js?v=hc237"></script>
+<script src="user.js?v=hc238"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc237"></script>
-  <script src="gate.js?v=hc237"></script>
-  <script src="tasks.js?v=hc237"></script>
+  <script src="store.js?v=hc238"></script>
+  <script src="gate.js?v=hc238"></script>
+  <script src="tasks.js?v=hc238"></script>
 </head>
 <body>
 <div class="ribbon">MOCK-UP for Heather — made-up people. Try it as Jordan to make a task, then as Maya to tick it off.</div>
@@ -422,11 +422,11 @@
   }
 
   /* ---------- the give box ---------- */
-  function blank(){ return {mode:'new', id:'', say:'', notes:'', showNotes:false, due:undefined, picks:{people:[], offices:[], teams:[], all:false}, skip:{}, adding:false, q:'', hi:0, errs:[], drop:{}, remind:true}; }
+  function blank(){ return {mode:'new', id:'', say:'', notes:'', showNotes:false, due:undefined, picks:{people:[], offices:[], teams:[], all:false}, skip:{}, adding:true, q:'', hi:0, errs:[], drop:{}, remind:true}; }   // adding: the people list starts open (Cory 20/11: "the most used use case will be assigning to someone so it should start with that")
   /* REMINDER FOR ME (20/11/2026, Cory: "Can you give the ability to assign a task to yourself as a reminder, so you don't
      forget something?"): someone who can't assign tasks gets the same box, for themselves only - no names, no groups. */
   function give(text){ FORM=blank(); FORM.self=!can('edit'); if(FORM.self) FORM.picks.people=[WHO.key]; if(text) FORM.say=text; drawSheet(); }
-  function changeTask(id){ const t=REC.t[id]; if(!t) return; FORM=Object.assign(blank(), {mode:'edit', id, say:t.title, notes:t.notes, showNotes:!!t.notes, due:t.due, remind:t.remind}); drawSheet(); }
+  function changeTask(id){ const t=REC.t[id]; if(!t) return; FORM=Object.assign(blank(), {mode:'edit', id, say:t.title, notes:t.notes, showNotes:!!t.notes, due:t.due, remind:t.remind, adding:false}); drawSheet(); }
   function again(id){ const t=REC.t[id] || (OLDREC && OLDREC.t[id]); if(!t) return;
     const whoTxt=t.how.length ? t.how.join(', ') : R.people(t).map(x=>x.n).join(', ');
     give(whoTxt+': '+t.title); if(t.notes){ FORM.notes=t.notes; FORM.showNotes=true; drawParts(); } }
@@ -478,10 +478,10 @@
     host.innerHTML='<div class="u">'+
       '<div class="ur"><span class="ul">Task</span><div class="uv tt">'+(P.title ? esc(P.title) : '<span style="color:#9aa6b6;font-weight:500">…</span>')+'</div></div>'+
       '<div class="ur"><span class="ul">For</span><div class="uv">'+nowChips.concat(P.labels.map(lab), picked).join('')+
-        (FORM.self ? '' : (meOn ? '' : '<button type="button" class="chip" data-act="addme" title="Put this task on your own list">＋ Me</button>')+
-        '<button type="button" class="chip" data-act="adding">'+(FORM.adding ? 'Done' : '＋ Add')+'</button>')+'</div></div>'+
+        (FORM.self ? '' : '<button type="button" class="chip" data-act="adding">'+(FORM.adding ? 'Done' : '＋ Add people')+'</button>'+
+          (meOn ? '' : '<button type="button" class="chip" data-act="addme" title="Put this task on your own list">＋ Me</button>'))+'</div></div>'+
       (P.u.unknown.length ? '<div class="unk">Didn’t find '+esc(P.u.unknown.join(', '))+' — pick them with ＋ Add.</div>' : '')+
-      (FORM.adding ? '<div class="addbox"><div class="srch"><input class="fi" id="f_q" autocomplete="off" placeholder="Type a name…" value="'+esc(FORM.q)+'">'+
+      (FORM.adding && !FORM.self ? '<div class="addbox"><div class="srch"><input class="fi" id="f_q" autocomplete="off" placeholder="Type a name…" value="'+esc(FORM.q)+'">'+
           (res.length ? '<div class="res">'+res.map((r,i)=>'<button type="button" class="'+(i===FORM.hi?'hi':'')+'" data-person="'+esc(R.personId(r))+'"><span class="av">'+esc(ini(r.name))+'</span><span>'+esc(r.name)+'<small>'+esc([r.role, (Array.isArray(r.offices)?r.offices:[r.loc]).filter(Boolean).join(', ')].filter(Boolean).join(' · '))+'</small></span></button>').join('')+'</div>' : (FORM.q.trim() ? '<div class="res"><div style="padding:10px;color:var(--soft);font-size:13px">Nobody by that name</div></div>' : ''))+'</div>'+
           '<div class="groups">'+grpBtn('all','','Everyone')+officesList().map(o=>grpBtn('offices',o,'Everyone at '+o)).join('')+teamsList().map(t=>grpBtn('teams',t,'All '+t)).join('')+'</div></div>' : '')+
       (total ? '<div class="count"><b>'+total+' '+(total===1?'person':'people')+'</b>'+(edit && P.add.length ? ' ('+P.add.length+' new)' : '')+': '+esc(names.slice(0,8).join(', '))+(names.length>8 ? ' and '+(names.length-8)+' more' : '')+'</div>' : '')+

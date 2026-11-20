@@ -508,7 +508,7 @@ I can confidently say that the chat feature should go next. The production thing
    Notes (noteField(f) - Talk types into whichever box has data-talkbox; Save while talking waits for the last words).
    Cory: no privacy reminder under the box ("I don't need that reminder please don't put it"). Saving adds fields only
    (persist/strip keep every field; consultsFrom reads every field). test/tc (185).
-57. **ORTHOFI FILLS THE MONTHLY REPORT + OLD-SYSTEM BOXES + COLLECTIONS CANDIDATES (20/11/2026; hc237; sandbox).**
+57. **ORTHOFI FILLS THE MONTHLY REPORT + OLD-SYSTEM BOXES + COLLECTIONS CANDIDATES (20/11/2026; hc237-hc238; sandbox).**
     Cory: "go, but I think she wants to see in production to really know" (Heather can: admins' live preview
     monthly.html?monthlypreview while MONTHLY_LIVE stays false). monthly.js: FIELDS osp "Old system production" /
     osar "Old system A/R" (pms, oldsys:true; settings.oldsys, default DEF_OLDSYS Mansfield/Cruces FFO/Cruces LCO,
@@ -522,7 +522,14 @@ I can confidently say that the chat feature should go next. The production thing
     COLLECTIONS: Cory: "Why would you just ignore her number 4. We are trying to automate as much as possible" - Heather's
     "monthly balance sheet" = money deposited: server ALLOWED + plan 'dep' (/deposits, OrthoFi's day sheet, created-on)
     and 'cd' (/collection-details, payment date, isCollectionSuccessful=true); 3 new gc ways (each + Medicaid
-    collections). Needs the API deployed, then a re-run of Sept/Oct to see which matches.
+    collections). Needs the API deployed, then a re-run of Sept/Oct to see which matches. Heather (via Cory): the Monthly
+    Balance Sheet IS an OrthoFi report ("where you get all the reports is where it is") - OrthoFi's API notes map lists
+    to reports but name no balance sheet, so it is built from lists we read; deposits / collection details are the bet.
+    Same pass (hc238): adjustments from OrthoFi's adjustment report ('adjr', netAdjustment / patient+insurance) and new
+    patient exams from its kept NPE report ('pex', /patient-exams by exam date, split by keptExamFlag - GROUPS gained
+    keptExamFlag/examTypeName/patientExamResultName; counts only, test guards no names and exam-date-only params).
+    TASKS (hc238): Cory: "the most used use case will be assigning to someone so it should start with that" - blank()
+    adding:true (the people list + Everyone/office/team buttons open from the start), "＋ Add people" before "＋ Me".
 56. **ORTHOFI: SEPTEMBER CHECK + HEATHER'S ANSWERS (20/11/2026).** September (same 8 files): gross production =
     business health production + Medicaid production matches TO THE DOLLAR in Sept AND Oct for Carlsbad, Clovis, Hobbs,
     San Angelo, Lubbock, Mansfield. Both Las Cruces offices off in Sept (LCO ~0.94, FOLC ~0.96; their A/R/collections far

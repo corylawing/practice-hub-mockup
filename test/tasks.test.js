@@ -229,6 +229,8 @@ t('everyone can make a reminder for themselves: "＋ Reminder for me" for people
 { const own=R.create({title:'Call the lab', due:TODAY, by:'emery@example.com', byName:'Emery Elm', people:[{id:'emery@example.com', name:'Emery Elm'}], today:TODAY}, NOW);
   t('your own reminder’s alert doesn’t say "from" you', R.alertDue(own).body==='Call the lab' && !/from/.test(R.alertLate(own, TODAY).body));
   t('...a task from someone else still says who it’s from', /from Emery/.test(R.alertDue(R.create({title:'X', due:TODAY, by:'emery@example.com', byName:'Emery Elm', people:[{id:'avery@example.com', name:'Avery Alder'}], today:TODAY}, NOW)).body)); }
+t('a new task starts with WHO: the people list is open, "＋ Add people" comes before "＋ Me" (Cory: "the most used use case will be assigning to someone")',
+  /skip:\{\}, adding:true, q:''/.test(P) && /data-act="adding">'\+\(FORM\.adding \? 'Done' : '＋ Add people'\)\+'<\/button>'\+\s*\(meOn \? '' : '<button type="button" class="chip" data-act="addme"/.test(P) && /remind:t\.remind, adding:false\}/.test(P));
 t('the demo is made-up people only', R.demo(['North'], NOW).people.every(p=>/@example\.com$/.test(p.email)));
 
 console.log(ok.map(s=>'  PASS  '+s).join('\n'));
