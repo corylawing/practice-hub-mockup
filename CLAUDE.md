@@ -519,8 +519,11 @@ I can confidently say that the chat feature should go next. The production thing
     count far above OrthoFi). PROVEN still empty until the check page shows ✓ to the dollar. Tests: orthofi 57.
     HEATHER'S ANSWER (20/11): "The Lubbock sheet I sent you is incorrect, your numbers are correct" (sent late, not yet
     checked); "Carlsbad, Clovis and Hobbs combine the Medicaid number and the Orthofi number in the top portion of the
-    sheet" - confirms the rule. Next: her corrected Lubbock file -> re-run October -> PROVEN + nightly fill. Cruces FFO
-    still open (asked).
+    sheet" - confirms the rule. Next: her corrected Lubbock file -> re-run October -> PROVEN + nightly fill.
+    HEATHER 20/11 (FFO): "Mansfield, FOLC and LCO have patient AR accounts in their PMS since they only recently started
+    using Orthofi." -> their A/R (and FOLC's collections/accounts) = OrthoFi + the old system. Proposed to Cory: the same
+    pattern as Medicaid - OrthoFi fills its part, Heather types the old-system part, Home-Brace adds them (scalable: a
+    per-office setting, empty = 0, so it fades out as those accounts pay off). Not built yet - waiting on his OK.
 51. **PHONE ALERTS KEPT TURNING OFF (20/11/2026; hc231).** Heather: "my phone keeps not giving me notifications and when I
     open the app it shows the button to turn on notifications, which I have multiple times." alerts.js refresh() (runs on
     every page open + after sign-in) gave up when getRegistration()/getSubscription() came back empty - e.g. the phone's
