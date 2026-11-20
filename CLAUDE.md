@@ -508,7 +508,7 @@ I can confidently say that the chat feature should go next. The production thing
    Notes (noteField(f) - Talk types into whichever box has data-talkbox; Save while talking waits for the last words).
    Cory: no privacy reminder under the box ("I don't need that reminder please don't put it"). Saving adds fields only
    (persist/strip keep every field; consultsFrom reads every field). test/tc (185).
-58. **ORTHOFI: COLLECTIONS FOUND (20/11/2026; hc239-hc240; sandbox).** October re-run (15 lists): gross collections =
+58. **ORTHOFI: COLLECTIONS FOUND (20/11/2026; hc239-hc240; LIVE)** October re-run (15 lists): gross collections =
     collection details, successful payments (OrthoFi's collections-details report, payment date) + Medicaid collections
     matches TO THE DOLLAR at Carlsbad, Clovis, Hobbs, San Angelo, Lubbock, Mansfield; LCO +7%, FOLC -30% (old system).
     Deposits (day sheet) and practice collections: far off. Adjustment report: off everywhere (1.05-37x). Kept NPE report
