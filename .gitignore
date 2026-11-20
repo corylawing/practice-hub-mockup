@@ -30,3 +30,4 @@ api-push/push/vapid.json
 # messages Microsoft sends it. Never in this public repo; copied into the sender at deploy (deploy-production.sh).
 deploy/.chatcert.json
 api-push/chatcert.json
+date-picker-preview.png
