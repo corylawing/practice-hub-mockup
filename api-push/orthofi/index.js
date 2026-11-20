@@ -38,6 +38,11 @@ const ALLOWED = {
   '/v1/practice-locations/adjustments': { 'created-on-start-date': D, 'created-on-end-date': D },
   '/v1/practice-locations/costs-courtesies': { 'created-on-start-date': D, 'created-on-end-date': D },
   '/v1/practice-locations/collection-summary': {},
+  /* GROSS COLLECTIONS (20/11/2026, Heather: "I get it from the monthly balance sheet"): money deposited - OrthoFi's day
+     sheet (deposits, by the day entered) and its collection details (each payment, by payment date). Sums only; the
+     rows' payer and patient names never leave here (summarize adds up numbers, and only top-level ones). */
+  '/v1/practice-locations/deposits': { 'created-on-start-date': D, 'created-on-end-date': D },
+  '/v1/practice-locations/collection-details': { 'payment-start-date': D, 'payment-end-date': D },
   '/v1/practice-locations/treatments': { 'product-lines': LIST, 'treatment-status-ids': IDS,
     'contract-signed-on-start-date': D, 'contract-signed-on-end-date': D, 'appliance-date-start-date': D, 'appliance-date-end-date': D,
     'created-on-start-date': D, 'created-on-end-date': D }

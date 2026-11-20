@@ -15,14 +15,34 @@ const HEATHER=['Gross production','Gross collections','Net production adjustment
   'Delinquent accounts past 30 days','$ 90+ days past due','New patient exams','Active patients','Total discounts','RIP sold (Retainer Insurance Program)','Over estimated completion date','Total appointments','Comfort appointments',
   'Medicaid submissions','Medicaid denials','Medicaid approvals','Medicaid bandings','Medicaid production','Medicaid collections'];
 t('the report asks for exactly the things in Heather’s email 2 - comfort % as its two counts (case starts / case acceptance from the old sheet are not on it)',
-  M.FIELDS.length===21 && HEATHER.every(n=>M.FIELDS.some(f=>f.n===n)) && !M.FIELDS.some(f=>/start|accept/i.test(f.n)));
+  M.FIELDS.length===23 && HEATHER.every(n=>M.FIELDS.some(f=>f.n===n)) && M.FIELDS.filter(f=>HEATHER.indexOf(f.n)<0).map(f=>f.k).join()==='osp,osar' && !M.FIELDS.some(f=>/start|accept/i.test(f.n)));
 t('\u2026Medicaid, over-estimated completion date and comfort % are typed from the practice software (her words); the rest is OrthoFi\u2019s - RIP too (Heather 18/11: "It comes from Orthofi")',
   M.FIELDS.filter(f=>f.medicaid).every(f=>f.from==='pms') && M.BY.oecd.from==='pms' && M.BY.appts.from==='pms' && M.BY.cmfa.from==='pms' && M.BY.gp.from==='orthofi' && M.BY.deln.from==='orthofi' && M.BY.rip.from==='orthofi');
 t('nobody types a percentage that can be worked out: the delinquent COUNT is kept, the % is calculated (Heather: "Instead of them doing the math")',
   M.BY.deln.t==='#' && !M.BY.del && M.calc({arn:200, deln:12}).delpct===6);
 t('…the 6 Medicaid numbers only for the Medicaid offices (Heather can change which in Settings)',
   M.fieldsFor('Clovis', M.cleanSettings(null)).length===21 && M.fieldsFor('San Angelo', M.cleanSettings(null)).length===15 &&
-  M.fieldsFor('San Angelo', M.cleanSettings({medicaid:['San Angelo']})).length===21 && M.fieldsFor('Cruces LCO', M.cleanSettings(null)).length===21);
+  M.fieldsFor('San Angelo', M.cleanSettings({medicaid:['San Angelo']})).length===21 && M.fieldsFor('Cruces LCO', M.cleanSettings(null)).length===23);
+/* 20/11/2026 - the old system (Heather: Mansfield, FOLC and LCO; "The OMs should type that in") */
+t('the 2 old-system boxes only for offices still on an old system: Mansfield, Cruces FFO, Cruces LCO (Heather can change which in Settings)',
+  M.fieldsFor('Mansfield', M.cleanSettings(null)).some(f=>f.k==='osp') && M.fieldsFor('Cruces FFO', M.cleanSettings(null)).some(f=>f.k==='osar') &&
+  !M.fieldsFor('Clovis', M.cleanSettings(null)).some(f=>f.oldsys) && !M.fieldsFor('Mansfield', M.cleanSettings({oldsys:[]})).some(f=>f.oldsys) &&
+  M.BY.osp.from==='pms' && M.BY.osar.from==='pms' && M.BY.osp.flow===true && !M.BY.osar.flow);
+{ const R0={v:1, o:{}};
+  let x=M.mergeOrthofi(R0, 'Cruces FFO', 10, {gp:100000, ar:50000}, '2026-11-01T06:00:00Z');
+  let r=x.rec.o['Cruces FFO']['10'];
+  t('OrthoFi fills its PART: gross production and A/R = OrthoFi alone while nothing is typed', r.ofp.gp===100000 && r.v.gp===100000 && r.src.gp==='orthofi' && r.v.ar===50000 && r.ofp.ar===50000);
+  const typed=M.cleanYear(x.rec); typed.o['Cruces FFO']['10'].v.osp=12000.5; typed.o['Cruces FFO']['10'].src.osp='typed'; typed.o['Cruces FFO']['10'].v.osar=3000; typed.o['Cruces FFO']['10'].src.osar='typed';
+  r=M.cleanYear(typed).o['Cruces FFO']['10'];
+  t('the office manager types the old-system numbers -> the totals update by themselves (OrthoFi + old system)', r.v.gp===112000.5 && r.v.ar===53000 && r.ofv.gp===112000.5);
+  const med=M.cleanYear({v:1, o:{Clovis:{'10':{v:{mdp:25000.25}, src:{mdp:'typed'}}}}});
+  r=M.mergeOrthofi(med, 'Clovis', 10, {gp:200000}, '2026-11-01T06:00:00Z').rec.o.Clovis['10'];
+  t('...Medicaid production is added the same way (Heather: gross production = OrthoFi + Medicaid)', r.v.gp===225000.25 && r.ofp.gp===200000);
+  r=M.mergeOrthofi(M.cleanYear({v:1, o:{Clovis:{'10':{v:{gp:1, mdp:5}, src:{gp:'typed', mdp:'typed'}}}}}), 'Clovis', 10, {gp:200000}).rec.o.Clovis['10'];
+  t('...a gross production a person typed still wins (OrthoFi + Medicaid kept beside it for the "OrthoFi says" check)', r.v.gp===1 && r.src.gp==='typed' && r.ofv.gp===200005);
+  r=M.mergeOrthofi(M.cleanYear({v:1, o:{Clovis:{'10':{v:{mdp:5}, src:{mdp:'typed'}, final:{at:'2026-11-06T00:00:00Z', by:'Heather'}}}}}), 'Clovis', 10, {gp:200000}).rec.o.Clovis['10'];
+  t('...a month marked final is never touched', r.v.gp===undefined && !r.ofp); }
+
 t('comfort % is worked out: comfort appointments \u00f7 total appointments (Heather: "total appts" and "comfort appts"); LCO has the Medicaid boxes (Heather: "they do need it")', M.calc({appts:800, cmfa:40}).cmfpct===5 && M.calc({cmfa:40}).cmfpct===null);
 
 /* the maths - the old sheet's own formulas (D=C/B, F=E/B, I=H/B) and its goals row */
@@ -161,7 +181,10 @@ t('Settings has "Bring in past months from Excel": read in the browser, shown fi
 t('made-up numbers ONLY in the sandbox - the live site never makes any', /if\(!LIVE && \(!rec \|\| !rec\.o/.test(P));
 t('saving changes only the boxes typed, merged into whatever is saved now (PH_STORE.update)', /PH_STORE\.update\(M\.KEY\(Y\), cur=>/.test(P) && /function applyEdits\(r\)/.test(P));
 t('OrthoFi’s nightly numbers go through the same rule (mergeOrthofi)', /async function importOrthofi[\s\S]{0,300}M\.mergeOrthofi\(rec, o, m, byOffice\[o\], stamp\)/.test(P));
-t('the live site shows OrthoFi as not connected until ORTHOFI_LIVE is turned on', /const ORTHOFI_LIVE=false;/.test(P) && /const ORTHOFI_CONNECTED=LIVE \? ORTHOFI_LIVE : true;/.test(P));
+t('the live site shows OrthoFi as connected only once an admin has turned an office on (OrthoFi page, step 3)', /let ORTHOFI_CONNECTED=!LIVE;/.test(P) && /ORTHOFI_CONNECTED=!!\(OFMAP && Object\.keys\(PH_ORTHOFI\.autoOffices\(OFMAP\)\)\.length\);/.test(P));
+t('the fill: live only, someone who can type the report, at most every 3 hours, last month + this month, through mergeOrthofi (never a typed number or a final month)',
+  /if\(!LIVE \|\| !window\.PH_ORTHOFI \|\| !at\('edit'\)\) return;/.test(P) && /Date\.now\(\)-last<3\*3600e3/.test(P) && /\[\{y:LM\.y, m:LM\.m\}, \{y:NOW_Y, m:NOW_M\}\]/.test(P) && /M\.mergeOrthofi\(rec, o, m, byOffice\[o\], stamp\)/.test(P) && /autoFill\(false\);/.test(P));
+t('Settings: the old-system offices are switched on and off like the Medicaid ones; the office form has an "Old system" group', /MONTHLY\.setOld\(this\.dataset\.o\)/.test(P) && /\{t:'Old system', s:'From your old practice software/.test(P));
 t('an office manager types first; OrthoFi’s numbers sit below as a compact grid', P.indexOf("{t: typ ? 'Type these'")>0 && P.indexOf("<h3>From OrthoFi</h3>")>P.indexOf("{t: typ ? 'Type these'"));
 t('Medicaid box asks for numbers only, never a patient', /Numbers only — never a patient’s name\./.test(P));
 t('the summary for leadership is copied for Teams or email', /async function copy\(\)/.test(P) && /navigator\.clipboard\.writeText/.test(P));

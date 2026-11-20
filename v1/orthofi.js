@@ -27,7 +27,10 @@
     if(hits.length>1){ const best=hits.slice().sort((a,b)=>fold(b).length-fold(a).length); return fold(best[0]).length>fold(best[1]).length ? best[0] : ''; }
     return '';
   }
-  function cleanMap(r){ const out={v:1, map:{}, at:'', by:''}; if(r && typeof r==='object'){ Object.keys(r.map||{}).forEach(id=>{ const o=String(r.map[id]||'').trim().slice(0,80); if(/^\d+$/.test(id)) out.map[id]=o; }); out.at=String(r.at||'').slice(0,40); out.by=String(r.by||'').slice(0,120); } return out; }
+  /* auto: {box:[offices]} - which offices' box fills itself in (ticked on the OrthoFi page, 20/11/2026). Only AUTO's boxes. */
+  function cleanMap(r){ const out={v:1, map:{}, auto:{}, at:'', by:''}; if(r && typeof r==='object'){ Object.keys(r.map||{}).forEach(id=>{ const o=String(r.map[id]||'').trim().slice(0,80); if(/^\d+$/.test(id)) out.map[id]=o; });
+      Object.keys(AUTO).forEach(k=>{ const a=(r.auto||{})[k]; if(Array.isArray(a)) out.auto[k]=[...new Set(a.filter(x=>typeof x==='string' && x.trim()).map(x=>x.trim().slice(0,80)))].slice(0,60); });
+      out.at=String(r.at||'').slice(0,40); out.by=String(r.by||'').slice(0,120); } return out; }
   /* office -> its OrthoFi location ids ('' = not one of ours) */
   function locsOf(map, office){ return Object.keys((map && map.map)||{}).filter(id=>map.map[id]===office).map(Number); }
 
@@ -50,6 +53,11 @@
       {id:'exam', path:'/v1/practice-locations/exam-counts', params:D},
       /* OrthoFi files a month under its LAST day ("Month in Report is the LAST day of the month") - asked first..last */
       {id:'bh', path:'/v1/practice-locations/business-health', params:{'month-date-start-date':b.first, 'month-date-end-date':b.last}},
+      /* collections as the balance sheet may count them (Heather 20/11): deposits (OrthoFi's day sheet) and the successful
+         payments in collection details (OrthoFi: 'FILTER WHERE "isCollectionSuccessful" = true') */
+      {id:'dep', path:'/v1/practice-locations/deposits', params:{'created-on-start-date':b.first, 'created-on-end-date':b.last}},
+      {id:'cd', path:'/v1/practice-locations/collection-details', params:{'payment-start-date':b.first, 'payment-end-date':b.last},
+        count:[{name:'ok', is:{isCollectionSuccessful:['true']}}]},
       {id:'disc', path:'/v1/practice-locations/discounts', params:{'created-on-start-date':b.first, 'created-on-end-date':b.last}},
       {id:'trm', path:'/v1/practice-locations/treatments', params:{'contract-signed-on-start-date':b.first, 'contract-signed-on-end-date':b.last}, group:'productLine'},
       {id:'trs', path:'/v1/practice-locations/treatments', params:{}, group:'treatmentStatusName'}
@@ -92,6 +100,9 @@
             {way:'prod.gross', label:'Production — gross', v:s('prod','sum','gross')}, {way:'bh.production', label:'Business health — production', v:s('bh','sum','production')},
             {way:'prod.net', label:'Production — net', v:s('prod','sum','net')}],
       gc:  [{way:'coll.net+mdc', label:'Collections (net) + Medicaid collections', v:plus(s('coll','sum','net'), med('mdc'))},
+            {way:'dep.amount+mdc', label:'Deposits (day sheet) + Medicaid collections', v:plus(s('dep','sum','amount'), med('mdc'))},
+            {way:'cd.collection+mdc', label:'Collection details (successful) + Medicaid collections', v:plus(s('cd','csum','ok.collection'), med('mdc'))},
+            {way:'cd.practice+mdc', label:'Collection details — practice collections + Medicaid', v:plus(s('cd','csum','ok.practiceCollections'), med('mdc'))},
             {way:'coll.gross', label:'Collections — gross', v:s('coll','sum','gross')}, {way:'coll.net', label:'Collections — net', v:s('coll','sum','net')}],
       adj: [{way:'prod.adjustments', label:'Production — adjustments', v:s('prod','sum','adjustments')}, {way:'coll.adjustments', label:'Collections — adjustments', v:s('coll','sum','adjustments')}],
       np:  [{way:'prod.net', label:'Production — net', v:s('prod','sum','net')}],
@@ -128,8 +139,28 @@
     if(field==='adj') return Math.abs(Math.abs(a)-Math.abs(b))<0.5;
     return money ? Math.abs(a-b)<0.5 : Math.round(a)===Math.round(b);
   }
-  /* the ways that are proven - a box fills itself in only by one of these (empty until Heather's numbers prove one) */
-  const PROVEN={};
+  /* THE WAYS THAT ARE PROVEN (20/11/2026: to the dollar against Heather's sheets, September AND October). A box fills itself
+     in only by one of these, and only for the offices ticked for it on the OrthoFi page (map.auto) - an office is ticked
+     once its own numbers match. This is OrthoFi's PART: the Monthly Report adds what the office types (PH_MONTHLY.PARTS -
+     Medicaid production, old-system production / A/R).
+       gp - business health production (+ Medicaid + old system): Carlsbad, Clovis, Hobbs, San Angelo, Lubbock, Mansfield
+       ar - patient A/R + insurance A/R with OrthoFi's report claim statuses (+ old system): San Angelo, Lubbock, Mansfield
+     Collections are NOT OrthoFi's (Heather: "I get it from the monthly balance sheet") - typed. */
+  const PROVEN={gp:'bh.production', ar:'par+iar.rep'};
+  const AUTO={gp:{way:'bh.production', lists:['bh'], label:'Gross production', plus:'+ Medicaid + old system, as typed'},
+              ar:{way:'par+iar.rep', lists:['par','iar'], label:'Accounts receivable', plus:'+ old system, as typed'}};
+  /* one office's OrthoFi parts for the boxes it is ticked for -> {gp:n, ar:n} (a box OrthoFi has nothing for is left out) */
+  function autoParts(answers, ids, boxes){
+    const W=ways(answers, ids, {}), out={};
+    (boxes||Object.keys(AUTO)).forEach(k=>{ const w=(W[k]||[]).find(x=>x.way===AUTO[k].way); if(w && w.v!==null && w.v!==undefined && isFinite(w.v)) out[k]=w.v; });
+    return out;
+  }
+  /* the offices ticked for each box -> {office:[boxes]}; only offices that have an OrthoFi location */
+  function autoOffices(map){
+    const m=cleanMap(map), out={};
+    Object.keys(m.auto).forEach(k=>m.auto[k].forEach(o=>{ if(locsOf(m, o).length) (out[o]=out[o]||[]).push(k); }));
+    return out;
+  }
 
   /* ---------- asking ---------- */
   function apiUrl(){ const H=global.PH; return H && H.isLive && H.isLive() ? location.origin+'/api/orthofi' : LIVE_API; }
@@ -155,7 +186,19 @@
     return out;
   }
 
-  const RULES={KEY, fold, monthBounds, asOf, guessOffice, cleanMap, locsOf, plan, ways, same, PROVEN};
+  /* THE FILL (the Monthly Report calls this): only the lists the ticked boxes need, for the ticked offices' locations ->
+     {byOffice:{office:{gp, ar}}, errors:[...]}. Never a typed number, never a final month - PH_MONTHLY.mergeOrthofi sees to that. */
+  async function autoMonth(y, m, map){
+    const offs=autoOffices(map), names=Object.keys(offs); if(!names.length) return {byOffice:{}, errors:[]};
+    const need=new Set(); names.forEach(o=>offs[o].forEach(k=>AUTO[k].lists.forEach(l=>need.add(l))));
+    const locs=[...new Set(names.reduce((a,o)=>a.concat(locsOf(cleanMap(map), o)), []))];
+    const go=(global.PH_ORTHOFI && global.PH_ORTHOFI.ask) || ask, ans={}, errors=[];
+    for(const q of plan(y, m).filter(q=>need.has(q.id))){ try{ ans[q.id]=await go(Object.assign({ask:'sum', locs}, q)); }catch(e){ errors.push(q.id+': '+(e && e.message)); } }
+    const byOffice={}; names.forEach(o=>{ const p=autoParts(ans, locsOf(cleanMap(map), o), offs[o]); if(Object.keys(p).length) byOffice[o]=p; });
+    return {byOffice, errors};
+  }
+
+  const RULES={KEY, fold, monthBounds, asOf, guessOffice, cleanMap, locsOf, plan, ways, same, PROVEN, AUTO, autoParts, autoOffices};
   if(typeof module!=='undefined' && module.exports) module.exports=RULES;
-  global.PH_ORTHOFI=Object.assign({}, RULES, {ask, month, apiUrl});
+  global.PH_ORTHOFI=Object.assign({}, RULES, {ask, month, apiUrl, autoMonth});
 })(typeof window!=='undefined' ? window : globalThis);

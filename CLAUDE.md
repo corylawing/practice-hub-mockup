@@ -508,6 +508,21 @@ I can confidently say that the chat feature should go next. The production thing
    Notes (noteField(f) - Talk types into whichever box has data-talkbox; Save while talking waits for the last words).
    Cory: no privacy reminder under the box ("I don't need that reminder please don't put it"). Saving adds fields only
    (persist/strip keep every field; consultsFrom reads every field). test/tc (185).
+57. **ORTHOFI FILLS THE MONTHLY REPORT + OLD-SYSTEM BOXES + COLLECTIONS CANDIDATES (20/11/2026; hc237; sandbox).**
+    Cory: "go, but I think she wants to see in production to really know" (Heather can: admins' live preview
+    monthly.html?monthlypreview while MONTHLY_LIVE stays false). monthly.js: FIELDS osp "Old system production" /
+    osar "Old system A/R" (pms, oldsys:true; settings.oldsys, default DEF_OLDSYS Mansfield/Cruces FFO/Cruces LCO,
+    Settings card "Offices still on an old system"); PARTS {gp:[mdp,osp], ar:[osar]} - mergeOrthofi keeps OrthoFi's PART
+    in ofp and cleanMonth works the box out (ofp + typed parts) every read/save, so typing Medicaid/old system later
+    updates the total; typed gp still wins; final months untouched. orthofi.js: PROVEN {gp:'bh.production',
+    ar:'par+iar.rep'}, AUTO, autoParts, autoOffices, autoMonth (only the 3 lists needed); ph_orthofi.auto {box:[offices]}
+    - ticked on orthofi.html step 3 "Fill these in by themselves" (each office chip says ✓ matched / ✗ off in the month
+    just checked; nothing hard-coded). monthly.html autoFill(): live, someone who can type, at most every 3 h per device,
+    last month + this month; "Fill in from OrthoFi now" in Settings -> OrthoFi; tiles say "OrthoFi $x + typed $y".
+    COLLECTIONS: Cory: "Why would you just ignore her number 4. We are trying to automate as much as possible" - Heather's
+    "monthly balance sheet" = money deposited: server ALLOWED + plan 'dep' (/deposits, OrthoFi's day sheet, created-on)
+    and 'cd' (/collection-details, payment date, isCollectionSuccessful=true); 3 new gc ways (each + Medicaid
+    collections). Needs the API deployed, then a re-run of Sept/Oct to see which matches.
 56. **ORTHOFI: SEPTEMBER CHECK + HEATHER'S ANSWERS (20/11/2026).** September (same 8 files): gross production =
     business health production + Medicaid production matches TO THE DOLLAR in Sept AND Oct for Carlsbad, Clovis, Hobbs,
     San Angelo, Lubbock, Mansfield. Both Las Cruces offices off in Sept (LCO ~0.94, FOLC ~0.96; their A/R/collections far

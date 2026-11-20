@@ -47,8 +47,20 @@
     {k:'mda',  n:'Medicaid approvals',                 t:'#', from:'pms', flow:true, medicaid:true},
     {k:'mdb',  n:'Medicaid bandings',                  t:'#', from:'pms', flow:true, medicaid:true},
     {k:'mdp',  n:'Medicaid production',                t:'$', from:'pms', flow:true, medicaid:true},
-    {k:'mdc',  n:'Medicaid collections',               t:'$', from:'pms', flow:true, medicaid:true}];
+    {k:'mdc',  n:'Medicaid collections',               t:'$', from:'pms', flow:true, medicaid:true},
+    /* THE OLD SYSTEM (20/11/2026, Heather: Mansfield, FOLC and LCO "have patient AR accounts in their PMS since they only
+       recently started using Orthofi"; "FOLC does also include money from their PMS"; "The OMs should type that in, I
+       can't see it"). Typed by the office manager from their old practice software; Home-Brace adds each to OrthoFi's
+       part (PARTS below). Only offices on the Settings list get them - when an office's old system is done, it comes off. */
+    {k:'osp',  n:'Old system production',              t:'$', from:'pms', flow:true, oldsys:true, help:'From your old practice software — added to OrthoFi’s production'},
+    {k:'osar', n:'Old system A/R',                     t:'$', from:'pms', oldsys:true, help:'From your old practice software — added to OrthoFi’s A/R'}];
   const BY={}; FIELDS.forEach(f=>{ BY[f.k]=f; });
+  /* A BOX THAT IS OrthoFi + WHAT THE OFFICE TYPES (20/11/2026, matched to the dollar against Heather's sheets): gross
+     production = OrthoFi's business health production + Medicaid production + old system production; A/R = OrthoFi's
+     A/R + old system A/R (Heather: Medicaid is paid in full, so no Medicaid A/R). OrthoFi's own part is kept in ofp; the
+     box is worked out from it every time the month is read or saved - so typing the Medicaid or old-system number later
+     updates the total by itself. An office without Medicaid or an old system adds 0. */
+  const PARTS={gp:['mdp','osp'], ar:['osar']};
   /* worked out, never typed - the old sheet's ratios, against Heather's goals */
   const CALC=[
     {k:'colpct', n:'Collection %',  t:'%', of:v=>v.gp ? v.gc/v.gp*100 : null, goal:'col'},
@@ -63,6 +75,7 @@
   const DEF_GOALS={col:[91,93], adj:[7,9], ratio:[5.5,6], del:[5,7]};
   const GOAL_NAMES={col:'Collection %', adj:'Adjustment %', ratio:'A/R ratio', del:'Delinquent %'};
   const DEF_MEDICAID=['Clovis','Hobbs','Carlsbad','Cruces LCO'];     // Heather 03/11 - she can change it in Settings
+  const DEF_OLDSYS=['Mansfield','Cruces FFO','Cruces LCO'];           // Heather 20/11 (FOLC = Cruces FFO) - changed in Settings
   const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
   const mm=m=>String(m).padStart(2,'0');
   const num=v=>{ if(v===null || v===undefined || v==='') return null; const n=typeof v==='number' ? v : Number(String(v).replace(/[$,%\s]/g,'')); return isFinite(n) ? n : null; };
@@ -81,6 +94,9 @@
       if(r.at && typeof r.at[f.k]==='string') o.at[f.k]=r.at[f.k].slice(0,40);
       if(r.by && typeof r.by[f.k]==='string') o.by[f.k]=r.by[f.k].slice(0,120); });
     if(typeof r.of==='string') o.of=r.of.slice(0,40);
+    Object.keys(PARTS).forEach(k=>{ const p=cleanVal(k, (r.ofp||{})[k]); if(p===null) return; (o.ofp=o.ofp||{})[k]=p;
+      const tot=cleanVal(k, p+PARTS[k].reduce((s,x)=>s+(o.v[x]||0), 0)); if(tot===null) return;
+      o.ofv[k]=tot; if(o.src[k]==='orthofi'){ o.v[k]=tot; } });
     ['sent','final'].forEach(s=>{ const x=r[s]; if(x && typeof x==='object' && typeof x.at==='string') o[s]={at:x.at.slice(0,40), by:str(x.by,120)}; });
     o.notes=(Array.isArray(r.notes) ? r.notes : []).filter(n=>n && typeof n.t==='string' && n.t.trim()).slice(-50)
       .map(n=>({t:n.t.trim().slice(0,1000), by:str(n.by,120), at:str(n.at,40)}));
@@ -99,9 +115,11 @@
     const due=Math.min(28, Math.max(1, Math.round(+s.due)||5));
     /* Heather 18/11: "All office managers can see all offices. I currently send this as an email to all OMs and TCs" -
        so by default everyone who can open the report reads every office (typing stays with each office's own people). */
-    return {medicaid:[...new Set(med)], goals:g, due, everyone:s.everyone!==false};
+    const old=Array.isArray(s.oldsys) ? s.oldsys.filter(x=>typeof x==='string' && x.trim()).map(x=>x.trim().slice(0,80)) : DEF_OLDSYS.slice();
+    return {medicaid:[...new Set(med)], oldsys:[...new Set(old)], goals:g, due, everyone:s.everyone!==false};
   }
-  const fieldsFor=(office, settings)=>FIELDS.filter(f=>!f.medicaid || ((settings||{}).medicaid||[]).indexOf(office)>=0);
+  const fieldsFor=(office, settings)=>FIELDS.filter(f=>(!f.medicaid || ((settings||{}).medicaid||[]).indexOf(office)>=0) &&
+    (!f.oldsys || ((settings||{}).oldsys||[]).indexOf(office)>=0));
   /* the calculated ratios of one month's numbers */
   function calc(v){ const out={}; CALC.forEach(c=>{ const x=c.of(v||{}); out[c.k]=x===null || !isFinite(x) ? null : r2(x); }); return out; }
   /* is a value on goal? 'ok' inside the range, 'hi' above, 'lo' below, '' no goal or no value */
@@ -185,10 +203,12 @@
     if(r.final){ rec.o[office][key]=r; return {rec, changed, why:'final'}; }
     at=typeof at==='string' ? at.slice(0,40) : new Date().toISOString();
     Object.keys(vals||{}).forEach(k=>{ const f=BY[k]; if(!f || f.from!=='orthofi') return; const n=cleanVal(k, vals[k]); if(n===null) return;
-      if(r.ofv[k]!==n){ r.ofv[k]=n; changed++; }
+      if(PARTS[k]){ r.ofp=r.ofp||{}; if(r.ofp[k]!==n){ r.ofp[k]=n; changed++; } }   // OrthoFi's part; the total is worked out below
+      else if(r.ofv[k]!==n){ r.ofv[k]=n; changed++; }
       if(r.src[k]==='typed' && r.v[k]!==undefined) return;            // a person's number wins
+      if(PARTS[k]){ if(r.src[k]!=='orthofi'){ r.v[k]=n; r.src[k]='orthofi'; r.at[k]=at; r.by[k]='OrthoFi'; changed++; } return; }
       if(r.v[k]!==n || r.src[k]!=='orthofi'){ r.v[k]=n; r.src[k]='orthofi'; r.at[k]=at; r.by[k]='OrthoFi'; changed++; } });
-    r.of=at; rec.o[office][key]=r;
+    r.of=at; rec.o[office][key]=cleanMonth(r);
     return {rec, changed};
   }
   /* PAST MONTHS FROM THE OLD EXCEL (Heather 18/11: "I would love the past months to be put in, Some of these offices will
@@ -285,5 +305,5 @@
     }
     return r && Object.keys(r.v||{}).length ? 'started' : '';
   }
-  global.PH_MONTHLY={KEY, SET_KEY, FIELDS, BY, CALC, DEF_GOALS, GOAL_NAMES, DEF_MEDICAID, MONTHS, mm, num, money, cleanVal, cleanMonth, cleanYear, cleanSettings, fieldsFor, calc, onGoal, tone, yearRows, practiceTotals, insights, byWeight, mergeOrthofi, fromSheet, mergeImport, onTarget, streak, MILESTONES, mismatches, lastMonth, dueDate, status};
+  global.PH_MONTHLY={KEY, SET_KEY, FIELDS, BY, PARTS, CALC, DEF_GOALS, GOAL_NAMES, DEF_MEDICAID, DEF_OLDSYS, MONTHS, mm, num, money, cleanVal, cleanMonth, cleanYear, cleanSettings, fieldsFor, calc, onGoal, tone, yearRows, practiceTotals, insights, byWeight, mergeOrthofi, fromSheet, mergeImport, onTarget, streak, MILESTONES, mismatches, lastMonth, dueDate, status};
 })(typeof window!=='undefined' ? window : globalThis);

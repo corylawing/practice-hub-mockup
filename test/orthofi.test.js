@@ -29,6 +29,10 @@ T.setDeps({ env:()=>env, now:()=>now,
     if(/exam-counts/.test(url)) return res(401, {});
     if(/patient-accounts-receivable/.test(url)) return res(200, AR);
     if(/treatments/.test(url)) return res(200, TR);
+    if(/\/deposits/.test(url)) return res(200, [{practiceLocationId:11, depositId:77, paidByName:'Vera Lumen', createdByName:'Tess Front', amount:250.5, depositDetails:[{patientId:501, patientFirstName:'Zelda', amount:250.5}]},
+                                                {practiceLocationId:11, depositId:78, paidByName:'Uma Quay', amount:100, depositDetails:[]}]);
+    if(/collection-details/.test(url)) return res(200, [{practiceLocationId:11, patientId:501, patientFirstName:'Zelda', patientLastName:'Quill', collection:300, practiceCollections:290, isCollectionSuccessful:true},
+                                                       {practiceLocationId:11, patientId:502, patientFirstName:'Yusuf', collection:80, practiceCollections:78, isCollectionSuccessful:false}]);
     if(/production/.test(url)) return res(200, [{gross:1000, adjustments:-50, net:950, practiceId:1, practiceLocationId:11}]);
     return res(404, {}); } });
 const call=async (body, origin)=>{ const ctx={}; await F(ctx, {method:'POST', headers:{origin:origin===undefined ? 'https://kind-hill-00da87410.3.azurestaticapps.net' : origin}, body:JSON.stringify(body)}); return {status:ctx.res.status, body:JSON.parse(ctx.res.body), raw:ctx.res.body, headers:ctx.res.headers}; };
@@ -160,7 +164,27 @@ const call=async (body, origin)=>{ const ctx={}; await F(ctx, {method:'POST', he
   t('RIP sold = Retainer Insurance Program on contracts signed that month', W.rip[0].v===2);
   t('a list that didn’t read offers no way (not a zero)', !W.ar.some(w=>w.way==='wo.total'));
   t('to the dollar: $ within 50 cents, counts exactly, adjustments either sign', O.same('gp',1500.4,1500) && !O.same('gp',1501,1500) && O.same('deln',3,3) && !O.same('deln',3,4) && O.same('adj',-50,50));
-  t('nothing fills itself in until a way is proven against Heather', Object.keys(O.PROVEN).length===0);
+  /* 20/11/2026 - collections as Heather's balance sheet may count them */
+  r=await call({idt:'good-signin', ask:'sum', path:'/v1/practice-locations/deposits', locs:[11], params:{'created-on-start-date':'2026-10-01', 'created-on-end-date':'2026-10-31'}});
+  t('deposits (OrthoFi’s day sheet) add up per location; payer and patient names never come back', r.status===200 && r.body.by['11'].sum.amount===350.5 && !/Vera|Lumen|Uma|Quay|Tess|Zelda/.test(r.raw) && r.raw.indexOf('"77"')<0);
+  r=await call({idt:'good-signin', ask:'sum', path:'/v1/practice-locations/collection-details', locs:[11], params:{'payment-start-date':'2026-10-01', 'payment-end-date':'2026-10-31'}, count:[{name:'ok', is:{isCollectionSuccessful:['true']}}]});
+  t('collection details: only the successful payments counted (OrthoFi’s own rule), no names', r.status===200 && r.body.by['11'].csum.ok.sum.collection===300 && r.body.by['11'].csum.ok.sum.practiceCollections===290 && !/Zelda|Quill|Yusuf/.test(r.raw));
+  { const W2=O.ways({dep:{rows:1, by:{'11':{n:1,sum:{amount:1000},nz:{},cnt:{},groups:{}}}}, cd:{rows:1, by:{'11':{n:1,sum:{},nz:{},cnt:{},csum:{ok:{sum:{collection:900, practiceCollections:880},nz:{}}},groups:{}}}}}, [11], {mdc:50});
+    t('gross collections can now be read 3 more ways: deposits, collection details, practice collections (each + Medicaid collections)',
+      W2.gc.some(w=>w.way==='dep.amount+mdc' && w.v===1050) && W2.gc.some(w=>w.way==='cd.collection+mdc' && w.v===950) && W2.gc.some(w=>w.way==='cd.practice+mdc' && w.v===930)); }
+  /* 20/11/2026: proven to the dollar (Sept + Oct) - and still nothing fills itself in for an office until it is ticked */
+  t('proven: gross production = business health production, A/R = patient + insurance (report claim statuses) - nothing else', JSON.stringify(O.PROVEN)==='{"gp":"bh.production","ar":"par+iar.rep"}');
+  t('...and no office fills itself in until it is ticked on the OrthoFi page', JSON.stringify(O.autoOffices(O.cleanMap(null)))==='{}' && JSON.stringify(O.cleanMap({map:{'11':'North'}}).auto)==='{}');
+  { const MAP=O.cleanMap({map:{'11':'North','12':'North','13':'South','14':''}, auto:{gp:['North','South','Nowhere'], ar:['North'], gc:['North'], zz:['x']}});
+    t('ticks are kept only for the proven boxes; an office with no OrthoFi location is left out', Object.keys(MAP.auto).join()==='gp,ar' && JSON.stringify(O.autoOffices(MAP))==='{"North":["gp","ar"],"South":["gp"]}');
+    const ANS2={bh:{rows:2, by:{'11':{n:1,sum:{production:1000.5},nz:{},cnt:{},groups:{}},'12':{n:1,sum:{production:500},nz:{},cnt:{},groups:{}},'13':{n:1,sum:{production:70},nz:{},cnt:{},groups:{}}}},
+      par:{rows:1, by:{'11':{n:1,sum:{outstandingBalance:2000},nz:{},cnt:{},groups:{}}}}, iar:{rows:1, by:{'11':{n:1,sum:{},nz:{},cnt:{},csum:{rep:{sum:{outstandingBalance:300},nz:{}}},groups:{}}}}};
+    t('OrthoFi’s part for an office: its locations added up, only the boxes it is ticked for', JSON.stringify(O.autoParts(ANS2,[11,12],['gp','ar']))==='{"gp":1500.5,"ar":2300}' && JSON.stringify(O.autoParts(ANS2,[13],['gp']))==='{"gp":70}');
+    const asked=[]; global.PH_ORTHOFI.ask=async q=>{ asked.push(q.id+':'+q.locs.join('+')); return ANS2[q.id]; };
+    const res=await global.PH_ORTHOFI.autoMonth(2026, 10, MAP);
+    t('the fill asks OrthoFi only for what the ticked boxes need (3 lists, not 11), for the ticked offices’ locations', asked.join()==='par:11+12+13,iar:11+12+13,bh:11+12+13');
+    t('...and gives the Monthly Report each ticked office’s parts', JSON.stringify(res.byOffice)==='{"North":{"gp":1500.5,"ar":2300},"South":{"gp":70}}' && res.errors.length===0);
+    delete global.PH_ORTHOFI.ask; }
 
   console.log(ok.map(s=>'  PASS  '+s).join('\n'));
   if(bad.length) console.log(bad.map(s=>'  FAIL  '+s).join('\n'));

@@ -270,12 +270,13 @@
   }
   @media (prefers-reduced-motion: reduce){ *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important} }
 </style>
-<script src="user.js?v=hc236"></script>
+<script src="user.js?v=hc237"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc236"></script>
-  <script src="gate.js?v=hc236"></script>
-  <script src="prodbook.js?v=hc236"></script>
-  <script src="monthly.js?v=hc236"></script>
+  <script src="store.js?v=hc237"></script>
+  <script src="gate.js?v=hc237"></script>
+  <script src="prodbook.js?v=hc237"></script>
+  <script src="monthly.js?v=hc237"></script>
+  <script src="orthofi.js?v=hc237"></script>
 </head>
 <body>
 <div class="ribbon">MOCK-UP for Heather — made-up numbers. Try it as an office manager first, then as Heather.</div>
@@ -322,8 +323,9 @@
   const RANK={none:0,view:1,add:2,edit:3,manage:4};
   /* OrthoFi's nightly numbers (18/11/2026: OrthoFi is making the practice's API credentials). Until they are in, offices
      type every number; the moment they are, OrthoFi's boxes fill themselves and lock. */
-  const ORTHOFI_LIVE=false;                       // the live site: true once the credentials are in Azure and the nightly pull runs
-  const ORTHOFI_CONNECTED=LIVE ? ORTHOFI_LIVE : true;   // the sandbox shows how it will work, with made-up OrthoFi numbers
+  /* live: "connected" once an admin has ticked an office to fill itself in (OrthoFi page, step 3) - OFMAP below */
+  let ORTHOFI_CONNECTED=!LIVE;                    // the sandbox shows how it will work, with made-up OrthoFi numbers
+  let OFMAP=null;
   let Y=LM.y, MO=LM.m, TAB=null, OFF=null, SHOWALL=false;
   const DATA={}; let SET=M.cleanSettings(null), WHO=null;
   let EDIT={}, CORRECT={}, BUSY=false, SENDASK=false;
@@ -370,6 +372,7 @@
                  npe:Math.round((40+R()*70)*frac), act:pts+Math.round((R()-0.5)*30), disc:gp*(0.01+R()*0.02)};
         v.np=v.gp+v.adj; v.ar90=v.ar*(0.012+R()*0.035);
         v.rip=Math.round((4+R()*20)*frac);
+        if(!open && M.DEF_OLDSYS.indexOf(o)>=0){ v.osp=gp*(0.04+R()*0.06); v.osar=v.ar*(0.05+R()*0.08); }   // made up: the old system's share
         if(!open){ v.oecd=5+R()*12; v.appts=Math.round(600+R()*500); v.cmfa=Math.round(v.appts*(0.03+R()*0.06));
           if(med.indexOf(o)>=0){ v.mds=Math.round(8+R()*26); v.mdd=Math.round(v.mds*(0.05+R()*0.22)); v.mda=Math.max(0,v.mds-v.mdd-Math.round(R()*3));
             v.mdb=Math.round(v.mda*(0.6+R()*0.35)); v.mdp=25000+R()*85000; v.mdc=v.mdp*(0.75+R()*0.25); } }
@@ -377,6 +380,8 @@
         M.FIELDS.forEach(f=>{ if(v[f.k]===undefined) return; r.v[f.k]=v[f.k]; r.src[f.k]=f.from==='orthofi' ? 'orthofi' : 'typed'; r.at[f.k]=stamp; r.by[f.k]=f.from==='orthofi' ? 'OrthoFi' : 'Office manager';
           if(f.from==='orthofi') r.ofv[f.k]=v[f.k]; });
         if(open) r.of=NOW.toISOString();
+        /* OrthoFi's own part of the two boxes made of OrthoFi + what's typed (so the sandbox shows "OrthoFi … + typed …") */
+        r.ofp={gp:v.gp-(r.v.mdp||0)-(r.v.osp||0), ar:v.ar-(r.v.osar||0)};
         const lastDone=y===LM.y && m===LM.m;
         if(!open && !lastDone) r.final={at:new Date(y, m, 8).toISOString(), by:'Heather'};
         if(lastDone){
@@ -393,7 +398,7 @@
     return M.cleanYear(rec);
   }
   /* the sandbox's made-up years are remade when their story changes (DEMO_V) - real years never */
-  const DEMO_V='3';
+  const DEMO_V='4';
   async function loadYear(y, fresh){
     if(DATA[y] && !fresh) return DATA[y];
     let rec=null; try{ rec=await PH_STORE.get(M.KEY(y)); }catch(_){}
@@ -584,12 +589,14 @@
     const locked=f=>f.from==='orthofi' && r.src[f.k]==='orthofi' && !CORRECT[f.k];
     const groups=[
       {t: typ ? 'Type these' : 'From the practice software', s: typ ? 'From the practice software'+(fields.some(f=>f.from==='orthofi' && !locked(f)) ? ', plus anything OrthoFi hasn’t filled in yet.' : '.') : 'Typed by the office.',
-        f:fields.filter(f=>!f.medicaid && !locked(f))},
-      {t:'Medicaid', s:'Numbers only — never a patient’s name.', f:fields.filter(f=>f.medicaid && !locked(f))}];
+        f:fields.filter(f=>!f.medicaid && !f.oldsys && !locked(f))},
+      {t:'Medicaid', s:'Numbers only — never a patient’s name.', f:fields.filter(f=>f.medicaid && !locked(f))},
+      {t:'Old system', s:'From your old practice software — Home-Brace adds these to OrthoFi’s numbers.', f:fields.filter(f=>f.oldsys && !locked(f))}];
     groups.forEach(g=>{ if(!g.f.length) return; h+='<div class="grp"><h3>'+g.t+'</h3><div class="gsub">'+g.s+'</div>'+g.f.map(f=>fieldRow(f,r,typ)).join('')+'</div>'; });
     const ofs=fields.filter(locked);
-    if(ofs.length) h+='<div class="grp"><h3>From OrthoFi</h3><div class="gsub">'+(ORTHOFI_CONNECTED ? 'Filled in every night'+(r.of?' — last on '+day(r.of):'')+'. Nothing to type.' : 'Filled in from OrthoFi.')+'</div><div class="ofgrid">'+
-      ofs.map(f=>'<div class="oft"><span class="k">'+esc(f.n)+'</span><span class="v">'+fmt(f.t,r.v[f.k])+'</span>'+(typ && at('manage') ? '<button class="lnk" onclick="MONTHLY.correct(\''+f.k+'\')">Correct it</button>' : '')+'</div>').join('')+'</div></div>';
+    if(ofs.length) h+='<div class="grp"><h3>From OrthoFi</h3><div class="gsub">'+(ORTHOFI_CONNECTED ? 'Filled in from OrthoFi each day'+(r.of?' — last on '+day(r.of):'')+'. Nothing to type.' : 'Filled in from OrthoFi.')+'</div><div class="ofgrid">'+
+      ofs.map(f=>'<div class="oft"><span class="k">'+esc(f.n)+'</span><span class="v">'+fmt(f.t,r.v[f.k])+'</span>'+
+        (r.ofp && r.ofp[f.k]!==undefined && Math.abs(r.v[f.k]-r.ofp[f.k])>=0.005 ? '<span class="soft" style="font-size:11.5px">OrthoFi '+fmt(f.t,r.ofp[f.k])+' + typed '+fmt(f.t,r.v[f.k]-r.ofp[f.k])+'</span>' : '')+(typ && at('manage') ? '<button class="lnk" onclick="MONTHLY.correct(\''+f.k+'\')">Correct it</button>' : '')+'</div>').join('')+'</div></div>';
     h+=actionsHTML(o,r,s,typ,fields);
     h+='</div><div class="stack"><div class="card"><h2>At a glance</h2><div class="sub">Worked out from the numbers on the left, against the practice’s targets.</div><div id="glance" class="glance"></div></div>'+notesHTML(o,r)+'</div></div>';
     /* the last 12 months */
@@ -659,17 +666,20 @@
   /* ---------- YEAR SHEET: Heather's sheet, kept for her - every month, the quarters, the year ---------- */
   function yearHTML(){
     const offs=myOffices(); if(OFF===null || (OFF!=='__all' && offs.indexOf(OFF)<0)) OFF=offs[0];
-    const all=OFF==='__all', y=Y, settings=all ? {medicaid:SET.medicaid} : SET;
+    const all=OFF==='__all', y=Y, settings=all ? {medicaid:SET.medicaid, oldsys:SET.oldsys} : SET;
     const vals=m=>{ if(isFuture(y,m)) return null; const v=all ? offTotals(offs,y,m) : valsOf(OFF,y,m); return v ? Object.assign({}, v, M.calc(v)) : null; };
     const main=[['gp','$'],['gc','$'],['colpct','%'],['adj','$'],['adjpct','%'],['np','$'],['ar','$'],['ratio','x'],['arn','#'],['deln','#'],['delpct','%'],['ar90','$'],['npe','#'],['act','#'],['disc','$'],['rip','#'],['oecd','%'],['appts','#'],['cmfa','#'],['cmfpct','%']]
       .map(([k,t])=>({k,t,n:(M.BY[k]||M.CALC.find(c=>c.k===k)).n, flow:!!(M.BY[k]&&M.BY[k].flow), goal:({colpct:'col',adjpct:'adj',ratio:'ratio',delpct:'del'})[k]}));
     const medF=M.FIELDS.filter(f=>f.medicaid).map(f=>({k:f.k,t:f.t,n:f.n,flow:true}));
     const hasMed=all ? offs.some(o=>SET.medicaid.indexOf(o)>=0) : SET.medicaid.indexOf(OFF)>=0;
+    const oldF=M.FIELDS.filter(f=>f.oldsys).map(f=>({k:f.k,t:f.t,n:f.n,flow:!!f.flow}));
+    const hasOld=all ? offs.some(o=>SET.oldsys.indexOf(o)>=0) : SET.oldsys.indexOf(OFF)>=0;
     let h='<div class="ochips" style="margin-bottom:14px">'+(offs.length>1?'<button class="ochip '+(all?'on':'')+'" onclick="MONTHLY.office(\'__all\')">All offices together</button>':'')+
       offs.map(x=>'<button class="ochip '+(x===OFF?'on':'')+'" onclick="MONTHLY.office(\''+esc(x)+'\')"><i style="background:'+esc((PH.colorForOffice(x)||{}).dot||'#94a3b8')+'"></i>'+esc(x)+'</button>').join('')+
       '<button class="btn ghost" style="margin-left:auto" onclick="MONTHLY.csv()">⬇ Download for Excel</button></div>';
     h+=sheet(main, vals, y, true);
     if(hasMed) h+='<h2 style="font-size:16px;color:var(--navy);margin:22px 0 10px">Medicaid'+(all?' — the Medicaid offices together':'')+'</h2>'+sheet(medF, vals, y, false);
+    if(hasOld) h+='<h2 style="font-size:16px;color:var(--navy);margin:22px 0 10px">Old system'+(all?' — those offices together':'')+' <span class="soft" style="font-weight:500;font-size:13px">— already inside gross production and A/R above</span></h2>'+sheet(oldF, vals, y, false);
     return h+'<p class="note" style="margin-top:10px">Quarter and year rows average the months, like the old sheet; the YTD row adds up the month’s activity (balances and percentages aren’t added). Ratios update the moment a number changes.</p>';
   }
   function sheet(cols, vals, y, withGoals){
@@ -683,7 +693,7 @@
     return h+'</tbody></table></div>';
   }
   function csv(){
-    const offs=myOffices(), all=OFF==='__all', y=Y, cols=M.FIELDS.filter(f=>!f.medicaid || (all ? true : SET.medicaid.indexOf(OFF)>=0));
+    const offs=myOffices(), all=OFF==='__all', y=Y, cols=M.FIELDS.filter(f=>(!f.medicaid || (all ? true : SET.medicaid.indexOf(OFF)>=0)) && (!f.oldsys || (all ? true : SET.oldsys.indexOf(OFF)>=0)));
     const q=s=>'"'+String(s).replace(/"/g,'""')+'"';
     const lines=[[q('Month')].concat(cols.map(c=>q(c.n)), M.CALC.map(c=>q(c.n))).join(',')];
     for(let m=1;m<=12;m++){ const v=all ? offTotals(offs,y,m) : valsOf(OFF,y,m); if(!v) continue; const c=M.calc(v);
@@ -707,7 +717,9 @@
     let h='<div class="stack">'+importCard();
     /* ORTHOFI (20/11/2026): connect, match OrthoFi's locations to the offices, and check its numbers against Heather's -
        orthofi.html, admins only (it shows the practice's real OrthoFi totals). */
-    if(!LIVE || (PH.isAdmin && PH.isAdmin(PH.realMe ? PH.realMe() : PH.me()))) h+='<div class="card"><h2>OrthoFi</h2><div class="sub">Connect to OrthoFi, say which of its locations is which office, and check its numbers against Heather’s before they fill themselves in.</div><a class="btn" href="orthofi.html" style="text-decoration:none;display:inline-flex">Open the OrthoFi connection →</a></div>';
+    if(!LIVE || (PH.isAdmin && PH.isAdmin(PH.realMe ? PH.realMe() : PH.me()))) h+='<div class="card"><h2>OrthoFi</h2><div class="sub">Connect to OrthoFi, say which of its locations is which office, and check its numbers against Heather’s before they fill themselves in.</div><div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn" href="orthofi.html" style="text-decoration:none;display:inline-flex">Open the OrthoFi connection →</a>'+
+      (LIVE ? '<button class="btn ghost" onclick="MONTHLY.fillNow()">Fill in from OrthoFi now</button>' : '')+'</div>'+
+      (LIVE && OFMAP ? '<div class="note" style="margin-top:10px">'+(function(){ const A=OFMAP.auto||{}, p=[]; Object.keys(PH_ORTHOFI.AUTO).forEach(k=>{ const n=(A[k]||[]).length; if(n) p.push(PH_ORTHOFI.AUTO[k].label+': '+n+' office'+(n===1?'':'s')); }); return p.length ? 'Filling itself in — '+esc(p.join(' · '))+'.' : 'Nothing fills itself in yet — tick the offices on the OrthoFi connection (step 3).'; })()+'</div>' : '')+'</div>';
     h+='<div class="card"><h2>Who reads the reports</h2><div class="sub">Like your email to the office managers and TCs today — without the email.</div>'+
       sw(SET.everyone, "MONTHLY.setEveryone("+(!SET.everyone)+")", SET.everyone ? 'Everyone reads every office' : 'Each office reads only its own')+
       '<div class="note" style="margin-top:10px">Only each office’s own people (and you) can type its numbers. Who can open the Monthly Report at all is set in Admin → Teams &amp; Access.</div></div>';
@@ -721,6 +733,9 @@
     h+='<div class="card"><h2>Offices that bill Medicaid</h2><div class="sub">These offices get the Medicaid boxes. A new office added in Admin → Locations shows up here by itself.</div><div class="ochips">'+
       offs.map(o=>{ const on=SET.medicaid.indexOf(o)>=0, c=(PH.colorForOffice(o)||{}).dot||'#94a3b8';
         return sw(on, "MONTHLY.setMed(this.dataset.o)", '<i class="odot" style="background:'+esc(c)+'"></i>'+esc(o), ' data-o="'+esc(o)+'"'); }).join('')+'</div></div>';
+    h+='<div class="card"><h2>Offices still on an old system</h2><div class="sub">Their office manager types the old system’s production and A/R; Home-Brace adds them to OrthoFi’s. Switch an office off once its old system is done.</div><div class="ochips">'+
+      offs.map(o=>{ const on=SET.oldsys.indexOf(o)>=0, c=(PH.colorForOffice(o)||{}).dot||'#94a3b8';
+        return sw(on, "MONTHLY.setOld(this.dataset.o)", '<i class="odot" style="background:'+esc(c)+'"></i>'+esc(o), ' data-o="'+esc(o)+'"'); }).join('')+'</div></div>';
     h+='<div class="card"><h2>When reports are due</h2><div class="sub">Offices see the due date on their report, and you see who’s late.</div>'+
       '<label class="duesel">Due on the <select class="sel" onchange="MONTHLY.setDue(+this.value)" aria-label="Due day">'+
       Array.from({length:28},(_, i)=>i+1).map(d=>'<option value="'+d+'" '+(d===SET.due?'selected':'')+'>'+ord(d)+'</option>').join('')+'</select> of the next month</label></div>';
@@ -829,6 +844,31 @@
     await loadYear(y, true); render(); return changed;
   }
 
+  /* THE FILL (20/11/2026): OrthoFi's proven boxes (gross production, A/R) for the offices ticked on the OrthoFi page, added
+     to what each office types (Medicaid, old system). The site has no clock of its own, so it runs when someone who can
+     type the report opens it on the live site - at most every 3 hours on a device - for last month and this month.
+     A typed number and a final month are never touched (PH_MONTHLY.mergeOrthofi). Totals only, never a patient. */
+  const FILL_KEY='ph_monthly_offill';
+  async function loadOfMap(){ if(!LIVE || !window.PH_ORTHOFI) return; try{ OFMAP=PH_ORTHOFI.cleanMap(await PH_STORE.get(PH_ORTHOFI.KEY)); }catch(_){ OFMAP=null; }
+    ORTHOFI_CONNECTED=!!(OFMAP && Object.keys(PH_ORTHOFI.autoOffices(OFMAP)).length); }
+  function ofState(t){ const s=el('ofstate'); if(!s) return; s.classList.toggle('on', ORTHOFI_CONNECTED); const x=s.querySelector('span'); if(x && t) x.textContent=t; }
+  async function autoFill(force){
+    if(!LIVE || !window.PH_ORTHOFI || !at('edit')) return;
+    await loadOfMap(); if(!ORTHOFI_CONNECTED){ if(force) toast('No office is set to fill itself in yet — tick them on the OrthoFi page'); return; }
+    let last=0; try{ last=+localStorage.getItem(FILL_KEY)||0; }catch(_){}
+    if(!force && Date.now()-last<3*3600e3) return;
+    try{ localStorage.setItem(FILL_KEY, String(Date.now())); }catch(_){}
+    ofState('OrthoFi: filling in…'); let changed=0, errs=[];
+    for(const q of [{y:LM.y, m:LM.m}, {y:NOW_Y, m:NOW_M}]){
+      try{ const r=await PH_ORTHOFI.autoMonth(q.y, q.m, OFMAP); errs=errs.concat(r.errors||[]);
+        if(Object.keys(r.byOffice).length) changed+=await importOrthofi(q.y, q.m, r.byOffice, new Date().toISOString()); }
+      catch(e){ errs.push((e && e.message) || 'OrthoFi didn’t answer'); }
+    }
+    const tm=new Date().toLocaleTimeString('en-US',{hour:'numeric', minute:'2-digit'});
+    ofState(errs.length ? 'OrthoFi: couldn’t read everything at '+tm : 'OrthoFi: filled in at '+tm);
+    if(force) toast(errs.length ? 'OrthoFi didn’t answer everything — try again in a minute' : changed ? 'Filled in from OrthoFi' : 'Already up to date with OrthoFi');
+  }
+
   /* ---------- wiring ---------- */
   function persona(){ const s=el('persona'); if(!s) return; let id='heather'; try{ id=localStorage.getItem('ph_monthly_as')||'heather'; }catch(_){}
     s.innerHTML=PERSONAS.map(p=>'<option value="'+p.id+'" '+(p.id===id?'selected':'')+'>'+esc(p.n)+'</option>').join(''); }
@@ -843,6 +883,8 @@
     typed(inp){ EDIT[inp.dataset.k]=inp.value; inp.classList.toggle('empty', inp.value.trim()===''); const n=el('savenote'); if(n) n.textContent='Not saved yet'; glance(); },
     correct(k){ CORRECT[k]=true; render(); },
     setEveryone(on){ saveSet({everyone:!!on}, on ? 'Everyone now reads every office' : 'Each office now reads only its own'); },
+    setOld(o){ const on=SET.oldsys.indexOf(o)<0, old=on ? SET.oldsys.concat([o]) : SET.oldsys.filter(x=>x!==o); saveSet({oldsys:old}, on ? o+' now has the old-system boxes' : o+' no longer has the old-system boxes'); },
+    fillNow:()=>autoFill(true),
     setMed(o){ const on=SET.medicaid.indexOf(o)<0, med=on ? SET.medicaid.concat([o]) : SET.medicaid.filter(x=>x!==o); saveSet({medicaid:med}, on ? o+' now has the Medicaid boxes' : o+' no longer has the Medicaid boxes'); },
     setDue(d){ saveSet({due:d}, 'Reports are now due on the '+ord(d)); }, setTarget,
     impDrag(e, on){ e.preventDefault(); const z=el('impdrop'); if(z) z.classList.toggle('over', !!on); },
@@ -858,11 +900,13 @@
   async function boot(){
     WHO=who();
     if(LIVE){ const t=el('tryas'); if(t) t.remove(); } else persona();
-    if(ORTHOFI_CONNECTED){ el('ofstate').classList.add('on'); el('ofstate').querySelector('span').textContent=LIVE ? 'OrthoFi: connected · refreshed every night' : 'OrthoFi: made-up numbers here · refreshed every night once live'; }
+    await loadOfMap();
+    if(ORTHOFI_CONNECTED){ el('ofstate').classList.add('on'); el('ofstate').querySelector('span').textContent=LIVE ? 'OrthoFi: connected · filled in each day' : 'OrthoFi: made-up numbers here · filled in each day once live'; }
     try{ TAB=localStorage.getItem('ph_monthly_tab'); }catch(_){}
     await loadSettings();
     await render();
     if(window.PH && PH.loadDone) PH.loadDone('page');
+    autoFill(false);
   }
   if(window.PH && PH.loadHold && LIVE) PH.loadHold('page', 'Reading the monthly reports…');
   if(!LIVE || window.PH_AUTH) boot();
@@ -871,7 +915,7 @@
 })();
 </script>
 <script>PH.nav('monthly');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc236"></script>
+<script src="tour.js?v=hc237"></script>
 <script>
 Tour.init([
   {sel:'.statusline, .openbanner', title:'Who has sent it', body:'Every office’s report for the month, in one line: final, waiting for you, or late. No chasing eight Excel files.'},
