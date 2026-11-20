@@ -43,7 +43,7 @@
   .viewas select{padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;font-weight:700;color:var(--navy);background:#fff;max-width:100%}
   .page-head{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
   .page-head h1{font-size:25px}
-  .btn{border:0;background:var(--teal);color:#fff;font:700 14px/1 inherit;font-family:inherit;padding:12px 18px;border-radius:11px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
+  .btn{border:0;background:var(--teal);color:#fff;font-weight:700;font-size:14.5px;font-family:inherit;padding:11px 18px;border-radius:10px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
   .btn:hover{background:var(--teal-600)}
   .btn:disabled{opacity:.45;cursor:default}
   .btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--line)}
@@ -61,7 +61,7 @@
   .tabs .n{background:var(--navy);color:#fff;font-size:11.5px;font-weight:800;border-radius:999px;padding:1px 7px;min-width:20px;text-align:center}
   .tabs .n.late{background:var(--bad)}
   .pills{display:flex;gap:6px;margin-left:auto}
-  .pills button{border:0;background:none;padding:6px 8px;font:600 13.5px/1.2 inherit;font-family:inherit;color:var(--soft);cursor:pointer;border-bottom:2px solid transparent}
+  .pills button{border:0;background:none;padding:6px 8px;font-weight:600;font-size:13.5px;line-height:1.2;font-family:inherit;color:var(--soft);cursor:pointer;border-bottom:2px solid transparent}
   .pills button.on{color:var(--navy);border-bottom-color:var(--teal)}
 
   /* the one line that tells a giver what needs them */
@@ -110,7 +110,7 @@
   .meta{font-size:12.5px;color:var(--soft)}
   .meta b{color:var(--navy)}
   .noteline{display:flex;gap:8px;flex-wrap:wrap}
-  .noteline input{flex:1;min-width:180px;border:1px solid var(--line);border-radius:10px;padding:9px 11px;font:500 14px inherit;font-family:inherit;background:#fff}
+  .noteline input{flex:1;min-width:180px;border:1px solid var(--line);border-radius:10px;padding:9px 11px;font-weight:500;font-size:14px;font-family:inherit;background:#fff}
   .noteline input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px var(--teal-soft)}
   .ppl{background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden}
   .pr{display:flex;align-items:center;gap:10px;padding:8px 12px;font-size:13.5px}
@@ -122,10 +122,10 @@
   .pr.late .ps{color:var(--bad-ink)}
   .dl{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:13px;color:var(--soft)}
   .dl b{color:var(--navy);margin-right:4px}
-  .chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 11px;font:600 12.5px/1.2 inherit;font-family:inherit;color:var(--navy);cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+  .chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 11px;font-weight:600;font-size:12.5px;line-height:1.2;font-family:inherit;color:var(--navy);cursor:pointer;display:inline-flex;align-items:center;gap:6px}
   .chip:hover{border-color:var(--teal)}
   .chip.on{background:var(--teal);border-color:var(--teal);color:#fff}
-  .chip input[type=date]{border:0;font:600 12.5px inherit;font-family:inherit;color:inherit;background:transparent;padding:0;max-width:122px}
+  .chip input[type=date]{border:0;font-weight:600;font-size:12.5px;font-family:inherit;color:inherit;background:transparent;padding:0;max-width:122px}
   .chip.on input[type=date]{color:#fff;color-scheme:dark}
   .rmd{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink);cursor:pointer}
   .rmd input{width:17px;height:17px;accent-color:var(--teal);flex:none}
@@ -146,13 +146,13 @@
   .sh-h{display:flex;align-items:center;gap:10px;margin-bottom:12px}
   .sh-h h2{margin:0;font-size:19px;color:var(--navy)}
   .sh-h .x{margin-left:auto;border:0;background:#f1f4f7;width:34px;height:34px;border-radius:50%;font-size:20px;cursor:pointer;color:var(--navy)}
-  .say{width:100%;border:2px solid var(--line);border-radius:13px;padding:13px 15px;font:600 16.5px/1.4 inherit;font-family:inherit;color:var(--navy);resize:none;min-height:56px;overflow:hidden;background:#fff;display:block}
+  .say{width:100%;border:2px solid var(--line);border-radius:13px;padding:13px 15px;font-weight:600;font-size:16.5px;line-height:1.4;font-family:inherit;color:var(--navy);resize:none;min-height:56px;overflow:hidden;background:#fff;display:block}
   .say:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 4px var(--teal-soft)}
   .say::placeholder{color:#9aa6b6;font-weight:500}
   .hint{font-size:12.5px;color:var(--soft);margin:6px 2px 0}
   .ideas{margin-top:14px;display:flex;flex-direction:column;gap:6px}
   .ql{font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--soft);margin:6px 2px 2px}
-  .idea{display:flex;align-items:center;gap:10px;text-align:left;border:1px solid var(--line);background:#fff;border-radius:11px;padding:9px 12px;font:500 14px/1.35 inherit;font-family:inherit;color:var(--ink);cursor:pointer}
+  .idea{display:flex;align-items:center;gap:10px;text-align:left;border:1px solid var(--line);background:#fff;border-radius:11px;padding:9px 12px;font-weight:500;font-size:14px;line-height:1.35;font-family:inherit;color:var(--ink);cursor:pointer}
   .idea:hover{border-color:var(--teal);background:var(--teal-soft)}
   .idea .ic{width:22px;text-align:center;flex:none}
   .u{margin-top:14px;border:1px solid var(--line);border-radius:13px;padding:4px 14px}
@@ -168,11 +168,11 @@
   .unk{font-size:12.5px;color:var(--amber-ink);background:var(--amber-soft);border-radius:8px;padding:6px 10px;margin:0 0 8px 56px}
   .addbox{padding:0 0 10px 56px}
   .srch{position:relative}
-  .fi{width:100%;border:1px solid var(--line);border-radius:10px;padding:9px 12px;font:500 14px/1.4 inherit;font-family:inherit;color:var(--ink);background:#fff}
+  .fi{width:100%;border:1px solid var(--line);border-radius:10px;padding:9px 12px;font-weight:500;font-size:14px;line-height:1.4;font-family:inherit;color:var(--ink);background:#fff}
   .fi:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px var(--teal-soft)}
   textarea.fi{resize:vertical;min-height:64px}
   .res{position:absolute;left:0;right:0;top:calc(100% + 4px);background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 30px rgba(15,42,74,.16);z-index:5;max-height:260px;overflow-y:auto;padding:4px}
-  .res button{display:flex;width:100%;text-align:left;align-items:center;gap:10px;border:0;background:none;border-radius:9px;padding:7px 10px;font:600 14px inherit;font-family:inherit;color:var(--navy);cursor:pointer}
+  .res button{display:flex;width:100%;text-align:left;align-items:center;gap:10px;border:0;background:none;border-radius:9px;padding:7px 10px;font-weight:600;font-size:14px;font-family:inherit;color:var(--navy);cursor:pointer}
   .res button:hover,.res button.hi{background:var(--teal-soft)}
   .res small{display:block;font-weight:500;color:var(--soft);font-size:12px}
   .res .av{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:10.5px;font-weight:800;color:#fff;background:var(--navy2);flex:none}
@@ -186,7 +186,7 @@
 
   .toast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,20px);background:var(--navy);color:#fff;border-radius:12px;padding:11px 16px;font-size:14px;font-weight:600;box-shadow:0 12px 30px rgba(15,42,74,.3);opacity:0;pointer-events:none;transition:opacity .2s, transform .2s;z-index:7200;display:flex;align-items:center;gap:12px;max-width:min(560px,92vw)}
   .toast.on{opacity:1;transform:translate(-50%,0);pointer-events:auto}
-  .toast button{border:0;background:rgba(255,255,255,.16);color:#fff;font:700 13px inherit;font-family:inherit;border-radius:8px;padding:6px 10px;cursor:pointer}
+  .toast button{border:0;background:rgba(255,255,255,.16);color:#fff;font-weight:700;font-size:13px;font-family:inherit;border-radius:8px;padding:6px 10px;cursor:pointer}
   .burst{position:fixed;pointer-events:none;z-index:7300}
   .burst i{position:absolute;width:7px;height:7px;border-radius:2px;left:0;top:0;animation:fly .7s cubic-bezier(.2,.7,.3,1) forwards}
   @keyframes fly{to{transform:translate(var(--x),var(--y)) rotate(var(--r));opacity:0}}
@@ -198,14 +198,14 @@
   }
   @media (prefers-reduced-motion: reduce){ *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important} .burst{display:none} }
 </style>
-<script src="user.js?v=hc232"></script>
+<script src="user.js?v=hc233"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc232"></script>
-  <script src="gate.js?v=hc232"></script>
-  <script src="tasks.js?v=hc232"></script>
+  <script src="store.js?v=hc233"></script>
+  <script src="gate.js?v=hc233"></script>
+  <script src="tasks.js?v=hc233"></script>
 </head>
 <body>
-<div class="ribbon">MOCK-UP for Heather — made-up people. Try it as Jordan to give a task, then as Maya to tick it off.</div>
+<div class="ribbon">MOCK-UP for Heather — made-up people. Try it as Jordan to make a task, then as Maya to tick it off.</div>
 <header class="hdr">
   <div class="hdr-in">
     <span class="mark" aria-label="Home-Brace"><img src="../assets/logo-mark.png?v=2" alt="" width="34" height="34"></span>
@@ -222,7 +222,7 @@
   </div>
   <div class="page-head">
     <h1>Tasks</h1>
-    <button class="btn" id="giveBtn" hidden onclick="TASKS.give()">＋ Give a task</button>
+    <button class="btn" id="giveBtn" hidden onclick="TASKS.give()">＋ New task</button>
   </div>
   <div class="bar"><div class="tabs" id="tabs" role="tablist"></div><div class="pills" id="pills"></div></div>
   <div id="view"><div class="empty">Reading the tasks…</div></div>
@@ -271,6 +271,7 @@
     const rows=LIVE ? ((PH.rosterView && PH.rosterView())||[]) : demoData().people;
     return rows.filter(r=>r && R.personId(r) && String(r.status||'').toLowerCase()!=='inactive');
   }
+  const isMe=k=>!!WHO && WHO.keys.indexOf(String(k||'').toLowerCase())>=0;
   function nameOf(k){ const r=roster().find(x=>R.personId(x)===k); return r ? r.name : (k.indexOf('name:')===0 ? k.slice(5) : k); }
   function teamsList(){ const s={}; roster().forEach(r=>(Array.isArray(r.teams)?r.teams:String(r.team||'').split(/[;,]/)).forEach(x=>{ x=String(x).trim(); if(x) s[x]=1; })); return Object.keys(s).sort(); }
   function officesList(){ const has={}; roster().forEach(r=>(Array.isArray(r.offices)?r.offices:[r.loc]).forEach(o=>{ if(o) has[o]=1; })); return PH.officeNames().filter(o=>has[o]); }
@@ -341,7 +342,7 @@
   function viewMine(){
     const m=R.mine(REC, WHO.keys, today(), new Date());
     let h='';
-    if(!m.open.length) h+='<div class="empty"><div class="big">✨</div><b>You’re all caught up</b>When someone gives you a task it shows here and on Home.</div>';
+    if(!m.open.length) h+='<div class="empty"><div class="big">✨</div><b>You’re all caught up</b>When someone assigns you a task it shows here and on Home.</div>';
     else [['late','Late'],['today','Today'],['week','Coming up'],['later','Later'],['none','No date']].forEach(g=>{
       const l=m.open.filter(t=>bucket(t)===g[0]); if(l.length) h+=group(g[0], g[1], l.length, l.map(mineItem).join(''));
     });
@@ -379,7 +380,7 @@
     }
     if(mine){
       if(ASK[t.id]) h+='<div class="acts"><span class="q">Close this task? It comes off everyone’s list (nothing is deleted).</span><span class="grow"></span><button class="btn sm ghost" data-act="keep">Keep it</button><button class="btn sm danger" data-act="closeyes">Close it</button></div>';
-      else h+='<div class="acts">'+(fin ? '' : '<button class="btn sm ghost" data-act="edit">Change</button>')+'<button class="btn sm ghost" data-act="again">↻ Give again</button><span class="grow"></span>'+
+      else h+='<div class="acts">'+(fin ? '' : '<button class="btn sm ghost" data-act="edit">Change</button>')+'<button class="btn sm ghost" data-act="again">↻ Assign again</button><span class="grow"></span>'+
         (t.closed ? '<button class="btn sm ghost" data-act="reopen">Reopen</button>' : (fin ? '' : '<button class="lnk quiet" data-act="close">Close task</button>'))+'</div>';
     }
     return h+'</div>';
@@ -399,7 +400,7 @@
       const ppl={}; late.forEach(t=>R.openIds(t).forEach(k=>{ ppl[k]=1; })); const n=Object.keys(ppl).length, canNudge=late.some(t=>R.needsNudge(t, T, new Date()));
       h+='<div class="needs">⏰ <span><b>'+late.length+' task'+(late.length===1?' is':'s are')+' late</b> — '+n+' '+(n===1?'person hasn’t':'people haven’t')+' finished.</span>'+(canNudge ? '<button class="btn sm" data-act="nudgeall">🔔 Nudge them all</button>' : '<span style="margin-left:auto;font-size:12.5px">Nudged in the last hour</span>')+'</div>';
     } else if(g.open.length) h+='<div class="calm">✓ Nothing late. Home-Brace reminds people the morning a task is due.</div>';
-    if(!g.open.length && !fresh.length) h+='<div class="empty"><div class="big">📋</div><b>'+(all?'No open tasks in the practice':'Nothing open that you gave')+'</b>'+(all ? '' : 'Press <b>＋ Give a task</b> and type it the way you’d say it.')+'</div>';
+    if(!g.open.length && !fresh.length) h+='<div class="empty"><div class="big">📋</div><b>'+(all?'No open tasks in the practice':'Nothing open that you assigned')+'</b>'+(all ? '' : 'Press <b>＋ New task</b> and type it the way you’d say it.')+'</div>';
     if(late.length) h+=group('late','Late', late.length, late.map(t=>gaveItem(t, all)).join(''));
     if(tod.length) h+=group('today','Due today', tod.length, tod.map(t=>gaveItem(t, all)).join(''));
     if(rest.length) h+=group('','Waiting', rest.length, rest.map(t=>gaveItem(t, all)).join(''));
@@ -415,7 +416,7 @@
     if(!can('manage') && TAB==='all') TAB='mine';
     el('giveBtn').hidden=!can('edit');
     const tab=(k,n,c,cls)=>'<button role="tab" class="'+(TAB===k?'on':'')+'" data-tab="'+k+'">'+n+(c ? '<span class="n'+(cls?' '+cls:'')+'">'+c+'</span>' : '')+'</button>';
-    el('tabs').innerHTML=tab('mine','My tasks', m.open.length, late?'late':'')+(can('edit') ? tab('gave','Tasks I gave', g.open.length, glate?'late':'') : '')+(can('manage') ? tab('all','Everyone’s', a.open.length) : '');
+    el('tabs').innerHTML=tab('mine','My tasks', m.open.length, late?'late':'')+(can('edit') ? tab('gave','Tasks I assigned', g.open.length, glate?'late':'') : '')+(can('manage') ? tab('all','Everyone’s', a.open.length) : '');
     el('pills').innerHTML=TAB==='mine' ? '' : '<button class="'+(FILTER==='open'?'on':'')+'" data-filter="open">Open</button><button class="'+(FILTER==='done'?'on':'')+'" data-filter="done">Finished</button>';
     el('view').innerHTML=TAB==='mine' ? viewMine() : viewGave(TAB==='all');
   }
@@ -434,6 +435,7 @@
     u.who.forEach(w=>{ if(FORM.skip[w.kind+':'+w.v]) return; if(w.kind==='all') picks.all=true; else if(w.kind==='office') picks.offices.push(w.v); else if(w.kind==='team') picks.teams.push(w.v); else picks.people.push(w.v); });
     ['people','offices','teams'].forEach(k=>FORM.picks[k].forEach(v=>{ if(picks[k].indexOf(v)<0) picks[k].push(v); })); if(FORM.picks.all) picks.all=true;
     const add=R.expand(picks, C.roster, {wide:PH.officeNames().length, not:WHO.keys});
+    if(picks.people.some(isMe) && !add.some(p=>isMe(p.id))) add.push({id:WHO.key, name:WHO.name});   // not on the team list (yet)
     let now=[]; if(FORM.mode==='edit'){ const t=REC.t[FORM.id]; now=t ? R.people(t).filter(x=>!FORM.drop[x.id]) : []; }
     return {u, picks, title:FORM.mode==='edit' ? (u.title||FORM.say) : u.title, due:FORM.due!==undefined ? FORM.due : u.due,
       now, add:add.filter(p=>!now.some(x=>x.id===p.id)), labels:u.who.filter(w=>!FORM.skip[w.kind+':'+w.v])};
@@ -441,7 +443,7 @@
   function drawSheet(){
     const edit=FORM.mode==='edit';
     el('sheet').innerHTML='<div class="bg" data-act="sheetx"></div><div class="card" role="dialog" aria-modal="true" aria-labelledby="shTitle">'+
-      '<div class="sh-h"><h2 id="shTitle">'+(edit?'Change this task':'Give a task')+'</h2><button type="button" class="x" data-act="sheetx" aria-label="Close">×</button></div>'+
+      '<div class="sh-h"><h2 id="shTitle">'+(edit?'Change this task':'New task')+'</h2><button type="button" class="x" data-act="sheetx" aria-label="Close">×</button></div>'+
       '<textarea class="say" id="f_say" rows="1" maxlength="400" placeholder="'+(edit ? 'What needs doing?' : 'e.g. Office managers: count the aligner trays by Friday')+'">'+esc(FORM.say)+'</textarea>'+
       (edit ? '' : '<div class="hint">Say who and when the way you’d say it — or pick them below.</div>')+
       '<div id="f_parts"></div></div>';
@@ -455,22 +457,24 @@
     if(!edit && !FORM.say.trim()){
       const C=ctx(), rec=R.recent(REC, WHO.keys, C.roster, 3), ide=R.ideas(C);
       const b=x=>'<button type="button" class="idea" data-idea="'+esc(x.text)+'"><span class="ic">'+x.ic+'</span><span>'+esc(x.text)+'</span></button>';
-      host.innerHTML='<div class="ideas">'+(rec.length ? '<div class="ql">Give again</div>'+rec.map(b).join('') : '')+'<div class="ql">Ideas</div>'+ide.map(b).join('')+'</div>';
+      host.innerHTML='<div class="ideas">'+(rec.length ? '<div class="ql">Assign again</div>'+rec.map(b).join('') : '')+'<div class="ql">Ideas</div>'+ide.map(b).join('')+'</div>';
       return;
     }
-    const P=plan(), total=P.now.length+P.add.length, q=R.quickDues(today()), names=P.now.map(x=>first(x.n)).concat(P.add.map(x=>first(x.name)));
+    const P=plan(), total=P.now.length+P.add.length, q=R.quickDues(today()), names=P.now.map(x=>isMe(x.id) ? 'me' : first(x.n)).concat(P.add.map(x=>isMe(x.id) ? 'me' : first(x.name)));
+    const meOn=P.now.concat(P.add).some(x=>isMe(x.id)), onlyMe=total>0 && P.now.concat(P.add).every(x=>isMe(x.id));
     const lab=w=>'<span class="who">'+esc(w.label)+'<button type="button" class="x" data-skip="'+esc(w.kind+':'+w.v)+'" aria-label="Take off">×</button></span>';
     const picked=[].concat(FORM.picks.all ? ['<span class="who">Everyone<button type="button" class="x" data-unpick="all" data-v="">×</button></span>'] : [],
       FORM.picks.offices.map(o=>'<span class="who">Everyone at '+esc(o)+'<button type="button" class="x" data-unpick="offices" data-v="'+esc(o)+'">×</button></span>'),
       FORM.picks.teams.map(o=>'<span class="who">All '+esc(o)+'<button type="button" class="x" data-unpick="teams" data-v="'+esc(o)+'">×</button></span>'),
-      FORM.picks.people.map(k=>'<span class="who">'+esc(nameOf(k))+'<button type="button" class="x" data-unpick="people" data-v="'+esc(k)+'">×</button></span>'));
-    const nowChips=P.now.map(x=>x.d ? '<span class="who lock" title="Already done — stays on the task">✓ '+esc(x.n)+'</span>' : '<span class="who">'+esc(x.n)+'<button type="button" class="x" data-drop="'+esc(x.id)+'" aria-label="Take off">×</button></span>');
+      FORM.picks.people.map(k=>'<span class="who">'+esc(isMe(k) ? 'Me' : nameOf(k))+'<button type="button" class="x" data-unpick="people" data-v="'+esc(k)+'">×</button></span>'));
+    const nowChips=P.now.map(x=>x.d ? '<span class="who lock" title="Already done — stays on the task">✓ '+esc(isMe(x.id) ? 'Me' : x.n)+'</span>' : '<span class="who">'+esc(isMe(x.id) ? 'Me' : x.n)+'<button type="button" class="x" data-drop="'+esc(x.id)+'" aria-label="Take off">×</button></span>');
     const res=FORM.adding ? results() : [];
     const dueChip=(d,n)=>'<button type="button" class="chip'+(P.due===d?' on':'')+'" data-due="'+d+'">'+n+'</button>';
     const isQuick=!P.due || q.some(x=>x.d===P.due);
     host.innerHTML='<div class="u">'+
       '<div class="ur"><span class="ul">Task</span><div class="uv tt">'+(P.title ? esc(P.title) : '<span style="color:#9aa6b6;font-weight:500">…</span>')+'</div></div>'+
       '<div class="ur"><span class="ul">For</span><div class="uv">'+nowChips.concat(P.labels.map(lab), picked).join('')+
+        (meOn ? '' : '<button type="button" class="chip" data-act="addme" title="Put this task on your own list">＋ Me</button>')+
         '<button type="button" class="chip" data-act="adding">'+(FORM.adding ? 'Done' : '＋ Add')+'</button></div></div>'+
       (P.u.unknown.length ? '<div class="unk">Didn’t find '+esc(P.u.unknown.join(', '))+' — pick them with ＋ Add.</div>' : '')+
       (FORM.adding ? '<div class="addbox"><div class="srch"><input class="fi" id="f_q" autocomplete="off" placeholder="Type a name…" value="'+esc(FORM.q)+'">'+
@@ -479,12 +483,12 @@
       (total ? '<div class="count"><b>'+total+' '+(total===1?'person':'people')+'</b>'+(edit && P.add.length ? ' ('+P.add.length+' new)' : '')+': '+esc(names.slice(0,8).join(', '))+(names.length>8 ? ' and '+(names.length-8)+' more' : '')+'</div>' : '')+
       '<div class="ur"><span class="ul">Due</span><div class="uv">'+dueChip('','No date')+q.map(x=>dueChip(x.d, x.n)).join('')+
         '<label class="chip'+(!isQuick ? ' on' : '')+'">📅 <input type="date" id="f_date" min="'+today()+'" value="'+(!isQuick ? P.due : '')+'" aria-label="Pick a date"></label></div></div>'+
-      '<div class="ur"><span class="ul"></span><div class="uv"><label class="rmd"><input type="checkbox" id="f_remind" '+(FORM.remind?'checked':'')+'> Remind them for me <small>'+(P.due ? '— the morning it’s due, and the next day if it’s late' : '— once there’s a due date')+'</small></label></div></div>'+
+      '<div class="ur"><span class="ul"></span><div class="uv"><label class="rmd"><input type="checkbox" id="f_remind" '+(FORM.remind?'checked':'')+'> '+(onlyMe ? 'Remind me' : 'Remind them for me')+' <small>'+(P.due ? '— the morning it’s due, and the next day if it’s late' : '— once there’s a due date')+'</small></label></div></div>'+
       '<div class="ur"><span class="ul"></span><div class="uv" style="display:block">'+(FORM.showNotes ? '<textarea class="fi" id="f_notes" maxlength="'+R.MAX_NOTES+'" placeholder="Details that help them get it right">'+esc(FORM.notes)+'</textarea>' : '<button type="button" class="lnk" data-act="shownotes" style="padding-left:0">＋ Details</button>')+'</div></div>'+
       '</div><p class="warn">🔒 No patient details in a task — tasks aren’t kept in a locked folder.</p>'+
       (FORM.errs.length ? '<div class="errs">'+FORM.errs.map(esc).join(' · ')+'</div>' : '')+
-      '<div class="sh-f"><span class="kbd">'+(edit ? '' : 'Enter to give it')+'</span><button type="button" class="btn ghost" data-act="sheetx">Cancel</button><button type="button" class="btn" data-act="'+(edit?'savechange':'send')+'">'+
-        (edit ? 'Save changes' : (total ? 'Give it to '+(total===1 ? esc(names[0]) : total+' people') : 'Give the task'))+'</button></div>';
+      '<div class="sh-f"><span class="kbd">'+(edit ? '' : 'Enter to save it')+'</span><button type="button" class="btn ghost" data-act="sheetx">Cancel</button><button type="button" class="btn" data-act="'+(edit?'savechange':'send')+'">'+
+        (edit ? 'Save changes' : (total ? (onlyMe ? 'Add to my tasks' : 'Assign to '+(total===1 ? esc(names[0]) : total+' people')) : 'Save task'))+'</button></div>';
   }
   function grpBtn(kind, v, label){ const on=kind==='all' ? FORM.picks.all : FORM.picks[kind].indexOf(v)>=0; return '<button type="button" class="chip'+(on?' on':'')+'" data-pick="'+kind+'" data-v="'+esc(v)+'">'+esc(label)+'</button>'; }
   function results(){
@@ -499,11 +503,12 @@
     FORM.errs=R.problems({title:P.title, due:P.due, people:ppl}, today()); if(FORM.errs.length) return drawParts();
     const t=R.create({title:P.title, notes:FORM.notes, due:P.due, by:WHO.key, byName:WHO.name, people:ppl, how:R.howWords(P.picks), remind:FORM.remind, today:today()}, new Date());
     const ids=Object.keys(t.to), n=ids.length; closeSheet();
-    const r=await save(cur=>R.add(cur, t), 'Given to '+(n===1 ? first(t.to[ids[0]].n) : n+' people')+' — on their Home and in their 🔔'+(LIVE ? ', with an alert' : ''));
-    if(!r) return;
     const others=ids.filter(k=>WHO.keys.indexOf(k)<0);
+    const r=await save(cur=>R.add(cur, t), !others.length ? 'Added to your tasks — on your Home' :
+      'Assigned to '+(n===1 ? first(t.to[ids[0]].n) : n+' people')+' — on their Home and in their 🔔'+(LIVE ? ', with an alert' : ''));
+    if(!r) return;
     R.tell(others, 'New task: “'+t.title+'”'+(t.due ? ' · '+R.dueText(t.due, today()) : ''), '📋'); R.buzz(others, R.alertNew(t, today()), 'hb-task-'+t.id);
-    TAB='gave'; FILTER='open'; OPEN={}; render();
+    TAB=others.length ? 'gave' : 'mine'; FILTER='open'; OPEN={}; render();
   }
   async function saveChange(){
     grabNotes(); const id=FORM.id, P=plan(), drop=Object.keys(FORM.drop), how=R.howWords(P.picks), F=FORM;
@@ -535,7 +540,7 @@
     if(r && r.value) REC=R.cleanRecord(r.value);
     delete OPEN[id]; render();
     if(!r || r.error || r.blocked) return toast('That didn’t save — try again in a moment');
-    toast(left<=0 ? '🎉 All caught up!' : 'Done ✓ '+first(t.byName)+' can see it', id);
+    toast(left<=0 ? '🎉 All caught up!' : (R.isGiver(t, WHO.keys) ? 'Done ✓' : 'Done ✓ '+first(t.byName)+' can see it'), id);
   }
   function nudgeOne(t){
     const ids=R.openIds(t).filter(k=>WHO.keys.indexOf(k)<0); if(!ids.length) return 0;
@@ -568,6 +573,7 @@
       }
       case 'adding': grabNotes(); FORM.adding=!FORM.adding; FORM.q=''; drawParts(); if(FORM.adding){ const q=el('f_q'); if(q) q.focus(); } return;
       case 'shownotes': grabNotes(); FORM.showNotes=true; drawParts(); { const n=el('f_notes'); if(n) n.focus(); } return;
+      case 'addme': grabNotes(); if(FORM.picks.people.indexOf(WHO.key)<0) FORM.picks.people.push(WHO.key); delete FORM.drop[WHO.key]; FORM.errs=[]; drawParts(); return;
       case 'sheetx': return closeSheet();
       case 'send': return send();
       case 'savechange': return saveChange();

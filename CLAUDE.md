@@ -508,6 +508,23 @@ I can confidently say that the chat feature should go next. The production thing
    Notes (noteField(f) - Talk types into whichever box has data-talkbox; Save while talking waits for the last words).
    Cory: no privacy reminder under the box ("I don't need that reminder please don't put it"). Saving adds fields only
    (persist/strip keep every field; consultsFrom reads every field). test/tc (185).
+53. **TASKS WORDING + TASK FOR YOURSELF; THE 🎤 ONLY ON ITS BOX; EMOJI SEARCH ON A PHONE (20/11/2026; hc233; sandbox).**
+    Cory: "the new task text on the button doesn't look the same as throughout the app" - tasks.html (and orthofi.html)
+    had `font:700 14px/1 inherit` - INVALID (inherit can't sit in the font shorthand), the browser drops the whole rule ->
+    thin 13.3px button text. Now font-weight/size/line-height written out; .btn = the app's (700, 14.5px, 11px 18px, r10).
+    The same typo is still in small spots on home/history/payroll/production/user.js (bell "Mark all read", etc.) - NOT
+    changed (approved looks; ask Cory first). "Give a task could be better naming" -> "＋ New task", sheet "New task",
+    "Assign to Maya / 3 people", "Tasks I assigned", "↻ Assign again". Heather: "assign a task to yourself" -> a one-tap
+    "＋ Me" chip in For (shown once the task is typed), shown as "Me"; on the task even if the team list lacks you;
+    no bell/alert to yourself; "Add to my tasks" -> opens My tasks; tasks.js given() leaves self-only tasks out of
+    "Tasks I assigned" and Home's "You gave" (still in Everyone's). 🎤 (user.js): "floating ... multiple times" - a
+    page's rule for EVERY button (History: button{margin-top:13px}) reached it -> its layout CSS is !important now; and
+    micOnBox(): each placement asks elementsFromPoint what is really under it - its box (or a thing inside the box) or
+    it hides. Headless sweep, every page x desktop + phone, opening each page's add/new/search/feedback forms: 193
+    boxes, 0 problems. Chat: "on mobile when you click to search emojis it automatically closes" - the REACTION picker
+    closed on any page scroll and the phone keyboard scrolls the page; now it stays while its search box has the cursor
+    (old page reproduced the close in a headless phone test, new one doesn't). test/tasks (115), test/mic (5, new),
+    test/chatv2 (47).
 52. **ORTHOFI: HEATHER = ORTHOFI + MEDICAID (20/11/2026; hc232).** Second October check (16 of 66): gross production =
     business health `production` (exact for San Angelo, Mansfield, Cruces LCO); A/R = patient + insurance with OrthoFi's
     report statuses (exact for 3, within ~3% for 4); kept NP exams = business health keptNewPatientExam (exact for 3).

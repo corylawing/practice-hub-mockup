@@ -3617,7 +3617,10 @@
     const st=document.createElement('style'); st.id='ph-mic-css';
     /* .ph-mic[hidden]: its own display:grid beat the browser's "hidden", so on a page without a [hidden] rule (Admin) a 🎤
        told to hide stayed painted where its box had been (Cory 18/11: "Why is microphone sign just sitting there"). */
-    st.textContent='.ph-mic[hidden]{display:none!important}.ph-mic{position:fixed;z-index:9450;width:26px;height:26px;border-radius:50%;border:0;padding:0;display:grid;place-items:center;'+
+    /* the layout bits are !important: a page's own rule for EVERY button (History: button{margin-top:13px}) reached the 🎤
+       too and pushed it off its box (Cory 20/11: "in random place ... multiple times"). No page style can move it now. */
+    st.textContent='.ph-mic[hidden]{display:none!important}.ph-mic{position:fixed!important;z-index:9450;width:26px!important;height:26px!important;border-radius:50%;border:0!important;padding:0!important;display:grid;place-items:center;'+
+      'margin:0!important;transform:none!important;transition:none!important;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;right:auto!important;bottom:auto!important;box-sizing:border-box!important;float:none!important;'+
       'background:#eef2f7;color:#33475b;cursor:pointer;box-shadow:0 1px 3px rgba(15,42,74,.18)}.ph-mic:hover{background:#e2e8f0}'+
       '.ph-mic svg{width:15px;height:15px;display:block}.ph-mic.on{background:#d92d20;color:#fff;animation:ph-mic 1.2s ease-in-out infinite}'+
       '@keyframes ph-mic{0%,100%{box-shadow:0 0 0 0 rgba(217,45,32,.45)}50%{box-shadow:0 0 0 7px rgba(217,45,32,0)}}'+
@@ -3637,9 +3640,24 @@
     const r=micFor.getBoundingClientRect();
     if(!r.width || r.bottom<0 || r.top>window.innerHeight){ micBtn.hidden=true; return; }
     const ta=micFor.tagName==='TEXTAREA', sz=26;
-    micBtn.hidden=false;
-    micBtn.style.left=Math.round(r.right-sz-(ta?16:4))+'px';
-    micBtn.style.top=Math.round(ta ? r.bottom-sz-6 : r.top+(r.height-sz)/2)+'px';
+    const x=Math.round(r.right-sz-(ta?16:4)), y=Math.round(ta ? r.bottom-sz-6 : r.top+(r.height-sz)/2);
+    micBtn.style.left=x+'px'; micBtn.style.top=y+'px';
+    micBtn.hidden=!micOnBox(x+sz/2, y+sz/2, r);
+  }
+  /* ONLY ON ITS OWN BOX (20/11/2026, Cory: "We keep seeing the microphone ... in random place (this time just floating
+     around the new task). I need you to double check everywhere because this is multiple times."). The 🎤 sits on top
+     of the page, so it can show over something else when its box is scrolled out of a panel, covered by something drawn
+     over it, or moved in a way the page never told us. Now, each time it is placed, it asks the browser what is really
+     under that spot: its own box (or a little thing drawn inside the box) - it shows; anything else - it hides, and comes
+     back by itself when the box is in view again. */
+  function micOnBox(cx, cy, r){
+    if(typeof document.elementsFromPoint!=='function') return true;
+    let under=null;
+    try{ under=document.elementsFromPoint(cx, cy).find(function(e){ return e!==micBtn && !micBtn.contains(e); }); }catch(_){ return true; }
+    if(!under) return false;
+    if(under===micFor || micFor.contains(under)) return true;
+    const u=under.getBoundingClientRect();      // e.g. a clear "×" drawn inside a search box
+    return u.width>0 && u.left>=r.left-1 && u.right<=r.right+1 && u.top>=r.top-1 && u.bottom<=r.bottom+1;
   }
   function micShow(el){
     micStyles();

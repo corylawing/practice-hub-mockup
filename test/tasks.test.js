@@ -210,6 +210,19 @@ t('every change is merged onto the shared copy (PH_STORE.update), never written 
 t('the sandbox demo is never written on the live site', /if\(!LIVE\)\{ let v=''; try\{ v=localStorage\.getItem\('ph_tasks_demo'\)/.test(P));
 t('the page says no patient details where you type', /No patient details in a task/.test(P));
 t('closing asks first and says nothing is deleted', /Close this task\? It comes off everyone’s list \(nothing is deleted\)/.test(P));
+/* 20/11/2026: a task for yourself; "New task" wording; buttons look like the rest of the app */
+{ const me=R.create({title:'Call the lab', by:'emery@example.com', byName:'Emery Elm', people:[{id:'emery@example.com', name:'Emery Elm'}], today:TODAY}, NOW);
+  const both=R.create({title:'Order gloves', by:'emery@example.com', byName:'Emery Elm', people:[{id:'emery@example.com', name:'Emery Elm'},{id:'avery@example.com', name:'Avery Alder'}], today:TODAY}, NOW);
+  let r=R.add(R.add(R.cleanRecord(null), me), both);
+  t('a task for yourself is on your own list', R.mine(r, ['emery@example.com'], TODAY, NOW).open.some(x=>x.id===me.id));
+  t('...and not under "Tasks I assigned" (nobody else to wait on)', !R.given(r, ['emery@example.com'], TODAY).open.some(x=>x.id===me.id) && R.given(r, ['emery@example.com'], TODAY).open.some(x=>x.id===both.id));
+  t('...but still in Everyone’s', R.given(r, null, TODAY).open.some(x=>x.id===me.id));
+  t('Home does not count it as one you assigned', R.summary(r, ['emery@example.com'], TODAY).gaveOpen===1); }
+t('a one-tap "＋ Me" on a new task, shown as "Me", and you are on it even if the team list does not have you', /data-act="addme"/.test(P) && /isMe\(k\) \? 'Me'/.test(P) && /add\.push\(\{id:WHO\.key, name:WHO\.name\}\)/.test(P));
+t('no bell or alert to yourself; a task only for you says "Added to your tasks" and opens My tasks', /const others=ids\.filter\(k=>WHO\.keys\.indexOf\(k\)<0\)/.test(P) && /Added to your tasks/.test(P) && /TAB=others\.length \? 'gave' : 'mine'/.test(P));
+t('the button says "New task" and the sheet "Assign to ..." (not "Give")', /＋ New task<\/button>/.test(P) && /'Assign to '/.test(P) && !/Give a task|Give the task|Give it to/.test(P));
+t('no broken "font:... inherit" rules on the page (the browser drops them: thin, small button text)', !/font:\s*\d{3}[^;}]*\binherit/.test(P));
+t('the main button matches the rest of the app (700, 14.5px)', /\.btn\{[^}]*font-weight:700;font-size:14\.5px/.test(P));
 t('the demo is made-up people only', R.demo(['North'], NOW).people.every(p=>/@example\.com$/.test(p.email)));
 
 console.log(ok.map(s=>'  PASS  '+s).join('\n'));

@@ -55,6 +55,7 @@ t('a plain Teams message stays plain words (no formatting to keep)', T.richOf({c
 const rs=T.reactionsOf([{reactionType:'like', user:{user:{id:'u-q', displayName:'Quinn Quill'}}}, {reactionType:'💯', user:{user:{id:'u-me'}}}, {reactionType:'x'.repeat(40), user:{user:{id:'u-z'}}}, null]);
 t('reactions read: Teams’ "like" is 👍, any emoji as itself, who reacted, the exact Teams name kept; junk dropped',
   rs.length===2 && rs[0].emoji==='👍' && rs[0].raw==='like' && rs[0].userId==='u-q' && rs[0].name==='Quinn Quill' && rs[1].emoji==='💯' && rs[1].raw==='💯');
+t('the reaction emoji list stays open while you type in its search (a phone keyboard scrolls the page)', /const a=document\.activeElement; if\(a && a\.closest && a\.closest\('\.pop'\)\) return; popClose\(\);/.test(CHAT));
 t('a message carries its reactions and its formatting', (()=>{ const m=T.mapMessage({id:'1', messageType:'message', createdDateTime:'2026-11-18T10:00:00Z', from:{user:{id:'u-q', displayName:'Quinn Quill'}},
   body:{contentType:'html', content:'<p><b>Yes</b></p>'}, reactions:[{reactionType:'heart', user:{user:{id:'u-me'}}}]}, 'u-me'); return m.rich==='<p><b>Yes</b></p>' && m.reactions[0].emoji==='❤️'; })());
 (async ()=>{

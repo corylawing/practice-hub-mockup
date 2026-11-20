@@ -186,9 +186,12 @@
   }
   /* The tasks someone gave (keys = theirs), or every task (keys = null, for Everything). Open: the ones with someone
      overdue first, then by due date. Finished: newest first. */
+  /* A task someone made just for themselves (20/11/2026, Heather: assign a task to yourself) is on their own list, not
+     under "Tasks I assigned" - nobody else to wait on. */
   function given(rec, keys, today){
     const open=[], done=[];
-    list(rec).forEach(t=>{ if(keys && !isGiver(t, keys)) return; (finished(t) ? done : open).push(t); });
+    const selfOnly=t=>{ const p=people(t); return p.length>0 && p.every(x=>keys.indexOf(x.id)>=0); };
+    list(rec).forEach(t=>{ if(keys && (!isGiver(t, keys) || selfOnly(t))) return; (finished(t) ? done : open).push(t); });
     open.sort(byDue(today)); done.sort((a,b)=>finishedAt(a)<finishedAt(b) ? 1 : -1);
     return {open, done};
   }
