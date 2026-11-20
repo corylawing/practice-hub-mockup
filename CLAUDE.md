@@ -517,6 +517,10 @@ I can confidently say that the chat feature should go next. The production thing
     `typed` ({mdp, mdc}; missing = 0, so one rule for every office); the check page passes Heather's month. Still open,
     asked Heather: Lubbock (OrthoFi production/collections far above her sheet) and Cruces FFO (her A/R and account
     count far above OrthoFi). PROVEN still empty until the check page shows ✓ to the dollar. Tests: orthofi 57.
+    HEATHER'S ANSWER (20/11): "The Lubbock sheet I sent you is incorrect, your numbers are correct" (sent late, not yet
+    checked); "Carlsbad, Clovis and Hobbs combine the Medicaid number and the Orthofi number in the top portion of the
+    sheet" - confirms the rule. Next: her corrected Lubbock file -> re-run October -> PROVEN + nightly fill. Cruces FFO
+    still open (asked).
 51. **PHONE ALERTS KEPT TURNING OFF (20/11/2026; hc231).** Heather: "my phone keeps not giving me notifications and when I
     open the app it shows the button to turn on notifications, which I have multiple times." alerts.js refresh() (runs on
     every page open + after sign-in) gave up when getRegistration()/getSubscription() came back empty - e.g. the phone's
