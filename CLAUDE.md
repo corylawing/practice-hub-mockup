@@ -508,6 +508,14 @@ I can confidently say that the chat feature should go next. The production thing
    Notes (noteField(f) - Talk types into whichever box has data-talkbox; Save while talking waits for the last words).
    Cory: no privacy reminder under the box ("I don't need that reminder please don't put it"). Saving adds fields only
    (persist/strip keep every field; consultsFrom reads every field). test/tc (185).
+48. **ORTHOFI: LISTS TOO BIG (20/11/2026; hc228).** Cory's first October check on live: "Some lists didn't read: iar
+    (OrthoFi answered 507) · exam (401) · trs (507)". 507 = OrthoFi won't send that much at once (insurance A/R and ALL
+    treatments, 9 locations). api-push/orthofi: on 507/413 the same question goes one location at a time (3 at once) and
+    the rows are put back together; one location still too big = the list is an error (never a total missing a
+    location). New ask 'statuses' (/v1/reference-data -> patientTreatmentStatuses, ids+names only); month() asks trs only
+    for the ACTIVE statuses (ACTIVE now has \b - "Inactive" matched before). exam-counts 401 = our OrthoFi key isn't
+    allowed that list (a fresh pass is tried once): the new-patient-exam box has 2 other ways (npc, business health);
+    ask OrthoFi to open exam-counts only if neither matches Heather. Tests: orthofi 46.
 47. **CHAT REACTIONS + BELL LINKS (20/11/2026; hc227).** (1) Cory reacting 👍 on his phone: "Not saved: Unicode 'like' in
     the payload is not supported" - Microsoft now refuses the classic names (like/heart/...) on setReaction and wants the
     emoji itself. chatgraph.js react(): adding sends the emoji, then the old name only if Microsoft answers 400; taking back

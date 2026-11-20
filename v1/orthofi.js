@@ -72,7 +72,7 @@
     return seen ? v : null;
   }
   const RIP=g=>/retainer\s*insurance|\brip\b/i.test(g);
-  const ACTIVE=g=>/in\s*treatment|active|started|in\s*progress/i.test(g);
+  const ACTIVE=g=>/\b(in\s*treatment|active|started|in\s*progress)\b/i.test(g);              // \b: "Inactive" is not active
   /* answers = {planId: answer}; ids = this office's OrthoFi location ids -> {field:[{way, label, v}]} */
   function ways(answers, ids){
     const A=answers||{}, s=(id,k,f)=>tot(A[id], ids, k, f), plus=(a,b)=>a===null||b===null ? null : r2(a+b);
@@ -125,7 +125,13 @@
   async function month(y, m, locs, onStep){
     const out={}, P=plan(y, m);
     const go=(global.PH_ORTHOFI && global.PH_ORTHOFI.ask) || ask;                 // (the page's own, so a check can stand in for OrthoFi)
-    for(const q of P){ if(onStep) onStep(q.id); try{ out[q.id]=await go(Object.assign({ask:'sum', locs}, q)); }catch(e){ out[q.id]={error:e.message, code:e.code}; } }
+    /* Every treatment ever is too much for OrthoFi to send (507, 20/11/2026): ask only for the active statuses. If the
+       status list can't be read, ask as before. */
+    let act='';
+    try{ const st=await go({ask:'statuses'}); act=((st && st.statuses)||[]).filter(x=>ACTIVE(x.name)).map(x=>x.id).slice(0,31).join(','); }catch(_){}
+    for(let q of P){
+      if(q.id==='trs' && act) q=Object.assign({}, q, {params:{'treatment-status-ids':act}});
+      if(onStep) onStep(q.id); try{ out[q.id]=await go(Object.assign({ask:'sum', locs}, q)); }catch(e){ out[q.id]={error:e.message, code:e.code}; } }
     return out;
   }
 

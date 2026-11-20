@@ -46,6 +46,9 @@ const ALLOWED = {
 const GROUPS = ['productLine', 'treatmentTypeName', 'treatmentStatusName', 'treatmentStatusId', 'discountType', 'discountName', 'adjustmentType',
   'submissionStatus', 'collectionType', 'monthDate', 'endDate', 'creditTier', 'planPriority', 'dentition'];
 const KEEP_MS = 10 * 60e3;
+/* OrthoFi's "the answer is too big" (507, seen 20/11/2026 on insurance A/R and all treatments for 9 locations at once):
+   then the same question one location at a time, 3 at once, and the rows put back together. */
+const SPLIT_AT = [507, 413];
 const clip = (v, n) => String(v == null ? '' : v).slice(0, n);
 const r2 = x => Math.round(x * 100) / 100;
 const isId = k => /id$|ids$/i.test(k);
@@ -127,7 +130,30 @@ function cleanAsk(b) {
     .filter(c => c.name && (c.any.length || Object.keys(c.min).length));
   return { path, params, group, count };
 }
+async function each(list, n, fn) {
+  const out = new Array(list.length); let i = 0;
+  await Promise.all(Array.from({ length: Math.min(n, list.length) }, async () => { while (i < list.length) { const k = i++; out[k] = await fn(list[k]); } }));
+  return out;
+}
+async function rowsFor(a) {
+  try { return await get(a.path, a.params); }
+  catch (e) {
+    const locs = String(a.params['practice-location-ids'] || '').split(',').filter(Boolean);
+    if (locs.length < 2 || SPLIT_AT.indexOf(e.status) < 0) throw e;
+    const parts = await each(locs, 3, loc => get(a.path, Object.assign({}, a.params, { 'practice-location-ids': loc }))
+      .catch(e2 => { throw fail('api', 'OrthoFi answered ' + (e2.status || '?') + ' even for one location', e2.status); }));
+    return [].concat(...parts);
+  }
+}
 async function answer(b) {
+  /* The treatment statuses OrthoFi knows (names and ids only - reference data, no patient in it). */
+  if (b.ask === 'statuses') {
+    const hit = cache.get('statuses'); if (hit && deps.now() - hit.at < KEEP_MS) return hit.v;
+    const r = (await get('/v1/reference-data', {}))[0] || {};
+    const v = { ok: true, statuses: (Array.isArray(r.patientTreatmentStatuses) ? r.patientTreatmentStatuses : [])
+      .map(x => ({ id: Math.floor(+(x && x.id)), name: clip(x && x.name, 80) })).filter(x => x.id > 0 && x.name).slice(0, 200) };
+    cache.set('statuses', { at: deps.now(), v }); return v;
+  }
   if (b.ask === 'locations') {
     const rows = await get('/v1/practice-locations', {});
     return { ok: true, locations: rows.map(r => ({ id: r.practiceLocationId, name: clip(r.practiceLocationName, 120), practice: clip(r.practiceName, 120),
@@ -136,7 +162,7 @@ async function answer(b) {
   if (b.ask === 'sum') {
     const a = cleanAsk(b), key = JSON.stringify(a), hit = cache.get(key);
     if (hit && deps.now() - hit.at < KEEP_MS) return hit.v;
-    const rows = await get(a.path, a.params), s = summarize(rows, a.group, a.count);
+    const rows = await rowsFor(a), s = summarize(rows, a.group, a.count);
     const v = { ok: true, rows: rows.length, fields: s.fields, by: s.by };
     if (cache.size > 300) cache.clear(); cache.set(key, { at: deps.now(), v });
     return v;

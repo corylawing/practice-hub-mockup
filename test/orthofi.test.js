@@ -6,6 +6,7 @@ const path=require('path');
 const F=require(path.join(__dirname,'..','api-push','orthofi','index.js')), T=F._t;
 const ok=[],bad=[]; const t=(n,v)=>{ (v?ok:bad).push(n); };
 const SECRET='s3cr3t-made-up-value', CID='made-up-client';
+let TOOBIG='';
 let calls=[], now=Date.parse('2026-11-20T15:00:00Z'), env={ORTHOFI_CLIENT_ID:CID, ORTHOFI_CLIENT_SECRET:SECRET}, authStatus=200, expire=false;
 const AR=[ {practiceLocationId:11, practiceLocationName:'North Office', patientId:501, patientFirstName:'Zelda', patientLastName:'Quill', contractId:9001, outstandingBalance:1200.5, pastDue30Day:0, pastDue90Day:0, pastDueOver90Day:0},
            {practiceLocationId:11, practiceLocationName:'North Office', patientId:502, patientFirstName:'Yusuf', patientLastName:'Pryce', contractId:9002, outstandingBalance:800.25, pastDue30Day:150, pastDue90Day:0, pastDueOver90Day:75},
@@ -20,6 +21,12 @@ T.setDeps({ env:()=>env, now:()=>now,
     if(/oauth2\/token/.test(url)) return authStatus===200 ? res(200, {access_token:'pass-'+calls.length, expires_in:3600, token_type:'Bearer'}) : res(authStatus, {error:'invalid_client', error_description:'secret '+SECRET+' is wrong'});
     if(expire){ expire=false; return res(401, {}); }
     if(/\/v1\/practice-locations\?|\/v1\/practice-locations$/.test(url)) return res(200, [{practiceLocationId:11, practiceLocationName:'North Office', practiceName:'Made-Up Orthodontics', city:'Northtown', stateAbbreviation:'TX', address1:'1 Main St'}, {practiceLocationId:12, practiceLocationName:'South Office', practiceName:'Made-Up Orthodontics', city:'Southtown', stateAbbreviation:'NM'}]);
+    if(/insurance-accounts-receivable/.test(url)){ const ids=new URL(url).searchParams.get('practice-location-ids')||'';
+      if(ids.indexOf(',')>=0 || ids===TOOBIG) return res(507, {});                                       // too big for OrthoFi at once
+      return res(200, [{practiceLocationId:+ids, patientFirstName:'Zelda', outstandingBalance:+ids*10, submissionStatusName:'Open'}]); }
+    if(/reference-data/.test(url)) return res(200, {chargeTypes:[{id:1, name:'Fee'}], patientTreatmentStatuses:[{id:3, name:'Active Treatment'}, {id:4, name:'Inactive'},
+      {id:5, name:'In Treatment'}, {id:6, name:'Completed'}, {id:0, name:'zero'}]});
+    if(/exam-counts/.test(url)) return res(401, {});
     if(/patient-accounts-receivable/.test(url)) return res(200, AR);
     if(/treatments/.test(url)) return res(200, TR);
     if(/production/.test(url)) return res(200, [{gross:1000, adjustments:-50, net:950, practiceId:1, practiceLocationId:11}]);
@@ -76,7 +83,31 @@ const call=async (body, origin)=>{ const ctx={}; await F(ctx, {method:'POST', he
   t('a wrong ID/secret -> "did not accept", and OrthoFi’s own words (which could echo the secret) are not passed on', r.status===502 && r.body.code==='auth' && r.raw.indexOf(SECRET)<0 && /did not accept/.test(r.body.error));
 
   /* the page side (v1/orthofi.js): which location is which office, the ways a box can be read, the match to Heather */
+  /* TOO BIG (20/11/2026: OrthoFi answered 507 for insurance A/R and all treatments across 9 locations) */
+  calls=[]; r=await call({idt:'good-signin', ask:'sum', path:'/v1/practice-locations/insurance-accounts-receivable', locs:[11,12,13], params:{'as-of-date':'2026-10-31'}});
+  const iarCalls=calls.filter(c=>/insurance-accounts/.test(c.url));
+  t('507 for every location at once -> asked again one location at a time, put back together', r.status===200 && iarCalls.length===4 &&
+    r.body.rows===3 && r.body.by['12'].sum.outstandingBalance===120 && r.body.by['13'].n===1);
+  t('…and still no names in what comes back', !/Zelda/.test(r.raw));
+  TOOBIG='12'; T.reset(); r=await call({idt:'good-signin', ask:'sum', path:'/v1/practice-locations/insurance-accounts-receivable', locs:[11,12], params:{'as-of-date':'2026-10-31'}});
+  t('one location still too big -> the list is an error (never a total missing a location)', r.status===502 && /even for one location/.test(r.body.error)); TOOBIG='';
+  calls=[]; T.reset(); r=await call({idt:'good-signin', ask:'sum', path:'/v1/practice-locations/exam-counts', locs:[11,12], params:{'start-date':'2026-10-01','end-date':'2026-10-31'}});
+  t('a refusal that is not "too big" (401) is not split up', r.status===502 && calls.filter(c=>/exam-counts/.test(c.url)).length===2);   // (the 2nd = the one retry with a fresh pass)
+  r=await call({idt:'good-signin', ask:'statuses'});
+  t('treatment statuses: ids and names only, from reference data', r.status===200 && r.body.statuses.length===4 && r.body.statuses[0].id===3 && !/Fee/.test(r.raw));
+
   const O=require(path.join(__dirname,'..','v1','orthofi.js'));
+  {
+    const asked=[]; const keep=global.PH_ORTHOFI.ask;
+    global.PH_ORTHOFI.ask=async q=>{ asked.push(q); if(q.ask==='statuses') return {ok:true, statuses:[{id:3,name:'Active Treatment'},{id:4,name:'Inactive'},{id:5,name:'In Treatment'},{id:6,name:'Completed'}]}; return {ok:true, rows:0, by:{}}; };
+    await global.PH_ORTHOFI.month(2026, 10, [11]);
+    const trs=asked.find(q=>q.id==='trs');
+    t('all treatments: only the active statuses are asked for ("Inactive" is not active)', trs && trs.params['treatment-status-ids']==='3,5');
+    asked.length=0; global.PH_ORTHOFI.ask=async q=>{ asked.push(q); if(q.ask==='statuses') throw new Error('no'); return {ok:true, rows:0, by:{}}; };
+    await global.PH_ORTHOFI.month(2026, 10, [11]);
+    t('…and if the status list can’t be read, asked as before', asked.find(q=>q.id==='trs') && !asked.find(q=>q.id==='trs').params['treatment-status-ids']);
+    global.PH_ORTHOFI.ask=keep;
+  }
   const OFF=['Carlsbad','Clovis','Hobbs','San Angelo','Lubbock','Mansfield','Cruces LCO','Cruces FFO'];
   t('location -> office by name: "Farnsworth Orthodontics - Hobbs" is Hobbs', O.guessOffice({name:'Farnsworth Orthodontics - Hobbs'}, OFF)==='Hobbs');
   t('...by city when the name doesn’t say: a location in San Angelo', O.guessOffice({name:'Sunflower Orthodontics', city:'San Angelo'}, OFF)==='San Angelo');
