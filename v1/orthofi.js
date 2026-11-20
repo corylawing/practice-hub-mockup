@@ -34,6 +34,8 @@
   /* ---------- a month: what to ask ---------- */
   const LATE30=['pastDue30Day','pastDue60Day','pastDue90Day','pastDueOver90Day','pastDue120Day','pastDueOver120Day','pastDue180Day','pastDueOver180Day','pastDue365Day','pastDueOver365Day'];
   const LATE60=LATE30.filter(f=>f!=='pastDue30Day');
+  /* OrthoFi's own insurance A/R report: balance >= 0 and one of these claim statuses (their API docs) */
+  const IAR_REPORT=['Accepted','Open','Paper Claim','Pending','Pending Primary','Practice Verified','Rejected by Carrier'];
   function plan(y, m, now){
     const b=monthBounds(y, m), aod=asOf(y, m, now), D={'start-date':b.first, 'end-date':b.last};
     return [
@@ -41,11 +43,13 @@
       {id:'coll', path:'/v1/practice-locations/collection', params:D},
       {id:'par', path:'/v1/practice-locations/patient-accounts-receivable', params:{'as-of-date':aod},
         count:[{name:'bal', min:{outstandingBalance:0.005}}, {name:'late30', any:LATE30}, {name:'late60', any:LATE60}, {name:'late10', any:['pastDue10Day'].concat(LATE30)}]},
-      {id:'iar', path:'/v1/practice-locations/insurance-accounts-receivable', params:{'as-of-date':aod}, count:[{name:'bal', min:{outstandingBalance:0.005}}]},
+      {id:'iar', path:'/v1/practice-locations/insurance-accounts-receivable', params:{'as-of-date':aod}, count:[{name:'bal', min:{outstandingBalance:0.005}},
+        {name:'rep', min:{outstandingBalance:0}, is:{submissionStatusName:IAR_REPORT, submissionStatus:IAR_REPORT}}]},
       {id:'wo', path:'/v1/practice-locations/write-offs', params:D, group:'endDate'},
       {id:'npc', path:'/v1/practice-locations/new-patient-counts', params:D},
       {id:'exam', path:'/v1/practice-locations/exam-counts', params:D},
-      {id:'bh', path:'/v1/practice-locations/business-health', params:{'month-date-start-date':b.first, 'month-date-end-date':b.first}},
+      /* OrthoFi files a month under its LAST day ("Month in Report is the LAST day of the month") - asked first..last */
+      {id:'bh', path:'/v1/practice-locations/business-health', params:{'month-date-start-date':b.first, 'month-date-end-date':b.last}},
       {id:'disc', path:'/v1/practice-locations/discounts', params:{'created-on-start-date':b.first, 'created-on-end-date':b.last}},
       {id:'trm', path:'/v1/practice-locations/treatments', params:{'contract-signed-on-start-date':b.first, 'contract-signed-on-end-date':b.last}, group:'productLine'},
       {id:'trs', path:'/v1/practice-locations/treatments', params:{}, group:'treatmentStatusName'}
@@ -57,7 +61,9 @@
   /* adds a location list's totals up for one office: kind 'sum'|'nz'|'cnt'|'n', field */
   function tot(ans, ids, kind, f){
     if(!ans || !ans.by) return null; let v=0, seen=false;
-    ids.forEach(id=>{ const L=ans.by[String(id)]; if(!L) return; seen=true; v+=kind==='n' ? L.n : kind==='sum' ? (L.sum[f]||0) : kind==='nz' ? (L.nz[f]||0) : (L.cnt[f]||0); });
+    ids.forEach(id=>{ const L=ans.by[String(id)]; if(!L) return; seen=true;
+      v+=kind==='n' ? L.n : kind==='sum' ? (L.sum[f]||0) : kind==='nz' ? (L.nz[f]||0) : kind==='pat' ? (L.pat||0) : kind==='patc' ? ((L.patc||{})[f]||0)
+        : kind==='csum' ? ((((L.csum||{})[f.split('.')[0]]||{}).sum||{})[f.split('.')[1]]||0) : (L.cnt[f]||0); });
     return seen ? r2(v) : (ans.rows===0 ? 0 : null);
   }
   /* write-offs/AR summary rows are per date: the office's value on the LAST date */
@@ -77,19 +83,26 @@
   function ways(answers, ids){
     const A=answers||{}, s=(id,k,f)=>tot(A[id], ids, k, f), plus=(a,b)=>a===null||b===null ? null : r2(a+b);
     const W={
-      gp:  [{way:'prod.gross', label:'Production — gross', v:s('prod','sum','gross')}, {way:'bh.production', label:'Business health — production', v:s('bh','sum','production')}],
+      gp:  [{way:'prod.gross', label:'Production — gross', v:s('prod','sum','gross')}, {way:'bh.production', label:'Business health — production', v:s('bh','sum','production')},
+            {way:'prod.net', label:'Production — net', v:s('prod','sum','net')}],
       gc:  [{way:'coll.gross', label:'Collections — gross', v:s('coll','sum','gross')}, {way:'coll.net', label:'Collections — net', v:s('coll','sum','net')}],
       adj: [{way:'prod.adjustments', label:'Production — adjustments', v:s('prod','sum','adjustments')}, {way:'coll.adjustments', label:'Collections — adjustments', v:s('coll','sum','adjustments')}],
       np:  [{way:'prod.net', label:'Production — net', v:s('prod','sum','net')}],
       ar:  [{way:'par+iar.outstanding', label:'Patient + insurance A/R (outstanding)', v:plus(s('par','sum','outstandingBalance'), s('iar','sum','outstandingBalance'))},
             {way:'par+iar.current', label:'Patient (current) + insurance A/R', v:plus(s('par','sum','currentBalance'), s('iar','sum','outstandingBalance'))},
+            {way:'par+iar.rep', label:'Patient + insurance A/R (OrthoFi report claim statuses)', v:plus(s('par','sum','outstandingBalance'), s('iar','csum','rep.outstandingBalance'))},
+            {way:'par.current+iar.rep', label:'Patient (current) + insurance A/R (report statuses)', v:plus(s('par','sum','currentBalance'), s('iar','csum','rep.outstandingBalance'))},
             {way:'par.outstanding', label:'Patient A/R only', v:s('par','sum','outstandingBalance')},
             {way:'wo.total', label:'A/R summary — total', v:lastGroup(A.wo, ids, 'total')}],
       arn: [{way:'par.bal', label:'Patient accounts with a balance', v:s('par','cnt','bal')}, {way:'par.rows', label:'Patient accounts (all)', v:s('par','n')},
             {way:'par+iar.bal', label:'Patient + insurance accounts with a balance', v:plus(s('par','cnt','bal'), s('iar','cnt','bal'))},
-            {way:'wo.nonZero', label:'A/R summary — accounts not zero', v:lastGroup(A.wo, ids, 'nonZeroAccounts')}],
+            {way:'wo.nonZero', label:'A/R summary — accounts not zero', v:lastGroup(A.wo, ids, 'nonZeroAccounts')},
+            {way:'par.patients', label:'Patients on patient A/R', v:s('par','pat')}, {way:'par.patients.bal', label:'Patients with a balance', v:s('par','patc','bal')},
+            {way:'par.patients+iar.rep', label:'Patients with a balance + insurance claims (report statuses)', v:plus(s('par','patc','bal'), s('iar','cnt','rep'))}],
       deln:[{way:'par.late30', label:'Accounts past due 30+ days', v:s('par','cnt','late30')}, {way:'par.late60', label:'Accounts past due 60+ days', v:s('par','cnt','late60')},
-            {way:'par.late10', label:'Accounts past due at all', v:s('par','cnt','late10')}],
+            {way:'par.late10', label:'Accounts past due at all', v:s('par','cnt','late10')},
+            {way:'par.pat.late30', label:'Patients past due 30+ days', v:s('par','patc','late30')}, {way:'par.pat.late60', label:'Patients past due 60+ days', v:s('par','patc','late60')},
+            {way:'par.pat.late10', label:'Patients past due at all', v:s('par','patc','late10')}],
       ar90:[{way:'par.over90', label:'Patient A/R over 90 days', v:s('par','sum','pastDueOver90Day')},
             {way:'par.90+over90', label:'Patient A/R 90 days + over 90', v:plus(s('par','sum','pastDue90Day'), s('par','sum','pastDueOver90Day'))}],
       npe: [{way:'exam.all', label:'Exams — all', v:s('exam','sum','all')}, {way:'npc.newPatient', label:'New patient count', v:s('npc','sum','newPatient')},

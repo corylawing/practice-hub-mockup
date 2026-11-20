@@ -508,6 +508,16 @@ I can confidently say that the chat feature should go next. The production thing
    Notes (noteField(f) - Talk types into whichever box has data-talkbox; Save while talking waits for the last words).
    Cory: no privacy reminder under the box ("I don't need that reminder please don't put it"). Saving adds fields only
    (persist/strip keep every field; consultsFrom reads every field). test/tc (185).
+49. **ORTHOFI: FIRST OCTOBER CHECK (20/11/2026; hc229).** 5 of 51 boxes matched. Read-only check in Cory's Safari (ratios
+    only, no figures): location matches are right; A/R is close everywhere; San Angelo + Mansfield net production and
+    collections match OrthoFi almost exactly; Carlsbad/Clovis/Hobbs/Lubbock production + collections are far off in both
+    directions (pooled they still don't add up) -> asked Heather where those numbers come from. Fixed from OrthoFi's own
+    docs: business health asked first..LAST day of the month (was the 1st only -> nothing); insurance A/R also read with
+    OrthoFi's report statuses (balance >= 0, Accepted/Open/Paper Claim/Pending/Pending Primary/Practice Verified/Rejected
+    by Carrier - server count condition `is`, sums per condition `csum`); PATIENTS not contracts (server `pat`/`patc` =
+    distinct patientId counts, never ids) for account counts and delinquent; gross production also read as production
+    net. orthofi.html: Excel files placed by Monthly's rule (LCO works) and a "which office?" picker for the rest (FOLC).
+    Tests: orthofi 55.
 48. **ORTHOFI: LISTS TOO BIG (20/11/2026; hc228).** Cory's first October check on live: "Some lists didn't read: iar
     (OrthoFi answered 507) · exam (401) · trs (507)". 507 = OrthoFi won't send that much at once (insurance A/R and ALL
     treatments, 9 locations). api-push/orthofi: on 507/413 the same question goes one location at a time (3 at once) and

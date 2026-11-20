@@ -60,13 +60,13 @@
   .pill.ok{background:var(--good-soft);color:#1f6e4a}
   .note{font-size:12.5px;color:var(--soft);margin-top:10px}
 </style>
-<script src="user.js?v=hc228"></script>
+<script src="user.js?v=hc229"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc228"></script>
-  <script src="gate.js?v=hc228"></script>
-  <script src="prodbook.js?v=hc228"></script>
-  <script src="monthly.js?v=hc228"></script>
-  <script src="orthofi.js?v=hc228"></script>
+  <script src="store.js?v=hc229"></script>
+  <script src="gate.js?v=hc229"></script>
+  <script src="prodbook.js?v=hc229"></script>
+  <script src="monthly.js?v=hc229"></script>
+  <script src="orthofi.js?v=hc229"></script>
 </head>
 <body>
 <div class="ribbon" id="ribbon">Setting up OrthoFi — real OrthoFi totals, shown only on this screen. Nothing is saved but the office matches.</div>
@@ -89,6 +89,7 @@
     <div class="sub">OrthoFi can be read more than one way for some boxes. This shows every way next to Heather’s Excel — the way that matches every office is the one Home-Brace will use.</div>
     <div class="row"><input type="month" id="mon"><button class="btn" id="get">Get OrthoFi’s numbers</button><span class="soft" id="prog"></span></div>
     <label class="drop" id="drop"><span style="font-size:22px">📄</span><b>Drop Heather’s monitor-report Excel files here</b><span class="soft">or <u>choose them</u> — read on this screen only, never saved</span><input type="file" accept=".xlsx" multiple hidden id="files"></label>
+    <div id="loose"></div>
     <div id="out"></div>
   </div>
 </div>
@@ -149,16 +150,30 @@
     finally{ BUSY=false; el('get').disabled=false; }
     draw();
   }
+  /* Which office a file is - the same rule as the Monthly Report's Excel import: every word of the office's name, or one
+     word only that office has ("LCO"). A file it can't place ("FOLC") is asked about, never dropped (20/11/2026). */
+  const words=x=>String(x).toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+  function officeOf(name){
+    const toks=words(name), offs=PH.officeNames();
+    const hits=offs.filter(o=>{ const ot=words(o); return ot.every(t=>toks.indexOf(t)>=0) ||
+      (ot.length>1 && ot.some(t=>t.length>2 && toks.indexOf(t)>=0 && offs.filter(x=>words(x).indexOf(t)>=0).length===1)); });
+    return hits.length===1 ? hits[0] : '';
+  }
+  let LOOSE=[];
+  function drawLoose(){
+    el('loose').innerHTML=LOOSE.length ? '<div class="state" style="margin-top:10px">'+LOOSE.map((x,i)=>'<div style="margin:4px 0">📄 <b>'+esc(x.file)+'</b> is which office? '+
+      '<select data-loose="'+i+'"><option value="">Choose…</option>'+PH.officeNames().map(o=>'<option>'+esc(o)+'</option>').join('')+'</select></div>').join('')+'</div>' : '';
+  }
   async function readFiles(files){
     for(const f of Array.from(files||[])){
       try{ const book=await PH_BOOK.open(new Uint8Array(await f.arrayBuffer())), nm=book.names[0], r=M.fromSheet(book.sheets[nm].cells);
-        const toks=(f.name+' '+nm).toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
-        const office=PH.officeNames().find(o=>o.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean).every(w=>toks.indexOf(w)>=0));
+        const office=officeOf(f.name+' '+nm);
         const year=(+((/20\d\d/.exec(f.name)||[])[0]))||new Date().getFullYear();
-        if(office) HEATHER[office]={year, months:r.months, file:f.name};
+        LOOSE=LOOSE.filter(x=>x.file!==f.name);
+        if(office) HEATHER[office]={year, months:r.months, file:f.name}; else LOOSE.push({year, months:r.months, file:f.name});
       }catch(_){}
     }
-    draw();
+    drawLoose(); draw();
   }
   function draw(){
     const t=ym(), out=el('out'); if(!ANS || !t || ANS_FOR!==t.y+'-'+p2(t.m)){ out.innerHTML=Object.keys(HEATHER).length ? '<div class="note">Excel read for: '+esc(Object.keys(HEATHER).join(', '))+'. Now press “Get OrthoFi’s numbers”.</div>' : ''; return; }
@@ -187,7 +202,9 @@
 
   /* ---------- wiring ---------- */
   document.addEventListener('click', e=>{ if(e.target.id==='connect') connect(); else if(e.target.id==='get') getMonth(); else if(e.target.id==='savemap') saveMap(); });
-  document.addEventListener('change', e=>{ if(e.target.dataset && e.target.dataset.loc){ MAP.map[e.target.dataset.loc]=e.target.value; } else if(e.target.id==='files') readFiles(e.target.files); else if(e.target.id==='mon') draw(); });
+  document.addEventListener('change', e=>{ if(e.target.dataset && e.target.dataset.loc){ MAP.map[e.target.dataset.loc]=e.target.value; }
+    else if(e.target.dataset && e.target.dataset.loose!==undefined && e.target.value){ const x=LOOSE.splice(+e.target.dataset.loose, 1)[0];
+      if(x) HEATHER[e.target.value]={year:x.year, months:x.months, file:x.file}; drawLoose(); draw(); } else if(e.target.id==='files') readFiles(e.target.files); else if(e.target.id==='mon') draw(); });
   const dz=el('drop'); dz.addEventListener('dragover', e=>{ e.preventDefault(); dz.classList.add('over'); }); dz.addEventListener('dragleave', ()=>dz.classList.remove('over'));
   dz.addEventListener('drop', e=>{ e.preventDefault(); dz.classList.remove('over'); readFiles([...(e.dataTransfer.files||[])].filter(f=>/\.xlsx$/i.test(f.name))); });
   const now=new Date(), lm=new Date(now.getFullYear(), now.getMonth()-1, 1); el('mon').value=lm.getFullYear()+'-'+p2(lm.getMonth()+1); el('mon').max=now.getFullYear()+'-'+p2(now.getMonth()+1);

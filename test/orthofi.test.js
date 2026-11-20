@@ -96,7 +96,35 @@ const call=async (body, origin)=>{ const ctx={}; await F(ctx, {method:'POST', he
   r=await call({idt:'good-signin', ask:'statuses'});
   t('treatment statuses: ids and names only, from reference data', r.status===200 && r.body.statuses.length===4 && r.body.statuses[0].id===3 && !/Fee/.test(r.raw));
 
+  /* PATIENTS, NOT CONTRACTS + OrthoFi's insurance report statuses (20/11/2026) */
+  {
+    const S=T.summarize([
+      {practiceLocationId:11, patientId:1, contractId:1, outstandingBalance:100, pastDue60Day:10, submissionStatusName:'Open'},
+      {practiceLocationId:11, patientId:1, contractId:2, outstandingBalance:50, pastDue60Day:5, submissionStatusName:'Ignore'},
+      {practiceLocationId:11, patientId:2, contractId:3, outstandingBalance:0, submissionStatusName:'Rejected by Carrier'},
+      {practiceLocationId:11, patientId:3, contractId:4, outstandingBalance:-5, submissionStatusName:'open'}], '',
+      T.cleanAsk({path:'/v1/practice-locations/insurance-accounts-receivable', locs:[11], params:{}, count:[{name:'bal', min:{outstandingBalance:0.005}}, {name:'late60', any:['pastDue60Day']},
+        {name:'rep', min:{outstandingBalance:0}, is:{submissionStatusName:['Open','Rejected by Carrier'], patientId:['1']}}]}).count);
+    const L=S.by['11'];
+    t('patients counted once however many contracts: 3 patients, 4 rows', L.n===4 && L.pat===3);
+    t('…and per test: 1 patient with a balance (2 contracts), 1 patient 60+ late', L.cnt.bal===2 && L.patc.bal===1 && L.cnt.late60===2 && L.patc.late60===1);
+    t('report statuses: balance >= 0 and status in the list (any case); "Ignore" and a negative balance left out', L.cnt.rep===2 && L.csum.rep.sum.outstandingBalance===100);
+    t('a status filter on an id field is refused (never filter by a person)', !('patientId' in (T.cleanAsk({path:'/v1/practice-locations/insurance-accounts-receivable', locs:[11], count:[{name:'x', is:{patientId:['1']}}]}).count[0]||{is:{}}).is));
+    t('only counts leave - no patient ids in the summary', !/"1"|"2"|"3"/.test(JSON.stringify(L.patc)) && JSON.stringify(S).indexOf('patientId":')<0);
+  }
+
   const O=require(path.join(__dirname,'..','v1','orthofi.js'));
+  {
+    const ANS2={par:{rows:3, by:{'11':{n:3, pat:2, patc:{bal:2, late60:1}, sum:{outstandingBalance:500, currentBalance:400}, nz:{}, cnt:{bal:3, late60:2}, csum:{}, groups:{}}}},
+      iar:{rows:2, by:{'11':{n:2, sum:{outstandingBalance:300}, nz:{}, cnt:{bal:2, rep:1}, csum:{rep:{sum:{outstandingBalance:120}, nz:{}}}, groups:{}}}},
+      prod:{rows:1, by:{'11':{n:1, sum:{gross:1000, net:900}, nz:{}, cnt:{}, groups:{}}}}};
+    const W2=O.ways(ANS2,[11]), v=(k,w)=>(W2[k].find(x=>x.way===w)||{}).v;
+    t('new ways: A/R with only the report claim statuses', v('ar','par+iar.rep')===620 && v('ar','par.current+iar.rep')===520);
+    t('new ways: patients (not contracts) on A/R, with a balance, and 60+ late', v('arn','par.patients')===2 && v('arn','par.patients.bal')===2 && v('deln','par.pat.late60')===1 && v('arn','par.patients+iar.rep')===3);
+    t('gross production can also be read as production net', v('gp','prod.net')===900);
+    const bh=O.plan(2026, 10).find(q=>q.id==='bh');
+    t('business health is asked for the whole month (OrthoFi files it under the LAST day)', bh.params['month-date-start-date']==='2026-10-01' && bh.params['month-date-end-date']==='2026-10-31');
+  }
   {
     const asked=[]; const keep=global.PH_ORTHOFI.ask;
     global.PH_ORTHOFI.ask=async q=>{ asked.push(q); if(q.ask==='statuses') return {ok:true, statuses:[{id:3,name:'Active Treatment'},{id:4,name:'Inactive'},{id:5,name:'In Treatment'},{id:6,name:'Completed'}]}; return {ok:true, rows:0, by:{}}; };

@@ -95,21 +95,31 @@ function addRow(T, row) {
     T.sum[k] = r2((T.sum[k] || 0) + v); if (v !== 0) T.nz[k] = (T.nz[k] || 0) + 1; });
 }
 function meets(row, c) {
-  const any = (c.any || []).filter(f => !isId(f)), min = c.min || {};
+  const any = (c.any || []).filter(f => !isId(f)), min = c.min || {}, is = c.is || {}, isF = Object.keys(is);
   if (any.length && !any.some(f => typeof row[f] === 'number' && row[f] > 0)) return false;
+  /* is: {field: [values]} - the row's value for ANY of the fields is one of its values (case ignored). OrthoFi's own
+     insurance A/R report counts only certain claim statuses (their docs, 20/11/2026). */
+  if (isF.length && !isF.some(f => row[f] != null && is[f].indexOf(String(row[f]).trim().toLowerCase()) >= 0)) return false;
   return Object.keys(min).every(f => typeof row[f] === 'number' && row[f] >= +min[f]);
 }
+/* PATIENTS, not contracts (OrthoFi: "UI report is grouped by patient, and our endpoint is at the contract level"): how
+   many DIFFERENT patients - only the count leaves here, never an id. */
 function summarize(rows, group, counts) {
-  const by = {}, fields = new Set();
+  const by = {}, fields = new Set(), P = {};
   (rows || []).forEach(row => {
     if (!row || typeof row !== 'object') return;
     Object.keys(row).forEach(k => fields.add(k));
     const loc = String(row.practiceLocationId != null ? row.practiceLocationId : (row.PracticeLocationId != null ? row.PracticeLocationId : 'all'));
-    const L = by[loc] = by[loc] || { n: 0, sum: {}, nz: {}, cnt: {}, groups: {} };
-    L.n++; addRow(L, row);
-    (counts || []).forEach(c => { if (meets(row, c)) L.cnt[c.name] = (L.cnt[c.name] || 0) + 1; });
+    const L = by[loc] = by[loc] || { n: 0, sum: {}, nz: {}, cnt: {}, csum: {}, pat: 0, patc: {}, groups: {} };
+    const S = P[loc] = P[loc] || { all: new Set(), c: {} }, pid = row.patientId != null ? String(row.patientId) : '';
+    L.n++; addRow(L, row); if (pid) S.all.add(pid);
+    (counts || []).forEach(c => { if (!meets(row, c)) return;
+      L.cnt[c.name] = (L.cnt[c.name] || 0) + 1;
+      const C = L.csum[c.name] = L.csum[c.name] || { sum: {}, nz: {} }; addRow(C, row);
+      if (pid) (S.c[c.name] = S.c[c.name] || new Set()).add(pid); });
     if (group) { const gv = clip(row[group] == null ? '(none)' : row[group], 80), G = L.groups[gv] = L.groups[gv] || { n: 0, sum: {}, nz: {} }; G.n++; addRow(G, row); }
   });
+  Object.keys(by).forEach(loc => { const S = P[loc]; by[loc].pat = S.all.size; Object.keys(S.c).forEach(k => { by[loc].patc[k] = S.c[k].size; }); });
   return { by, fields: [...fields].sort() };
 }
 /* the request, cleaned: only what ALLOWED says, in the shapes it says */
@@ -126,8 +136,10 @@ function cleanAsk(b) {
   const group = GROUPS.indexOf(b.group) >= 0 ? b.group : '';
   const count = (Array.isArray(b.count) ? b.count : []).slice(0, 12).map(c => ({ name: clip(c && c.name, 40).replace(/[^\w]/g, ''),
     any: (Array.isArray(c && c.any) ? c.any : []).map(f => clip(f, 60)).filter(f => /^\w+$/.test(f)).slice(0, 12),
-    min: Object.keys((c && c.min) || {}).filter(f => /^\w+$/.test(f) && isFinite(+c.min[f])).slice(0, 4).reduce((o, f) => (o[f] = +c.min[f], o), {}) }))
-    .filter(c => c.name && (c.any.length || Object.keys(c.min).length));
+    min: Object.keys((c && c.min) || {}).filter(f => /^\w+$/.test(f) && isFinite(+c.min[f])).slice(0, 4).reduce((o, f) => (o[f] = +c.min[f], o), {}),
+    is: Object.keys((c && c.is) || {}).filter(f => /^\w+$/.test(f) && !isId(f) && Array.isArray(c.is[f])).slice(0, 2)
+      .reduce((o, f) => (o[f] = c.is[f].map(x => clip(x, 40).trim().toLowerCase()).filter(x => /^[\w &'().,\-\/]+$/.test(x)).slice(0, 12), o), {}) }))
+    .filter(c => c.name && (c.any.length || Object.keys(c.min).length || Object.keys(c.is).length));
   return { path, params, group, count };
 }
 async function each(list, n, fn) {
