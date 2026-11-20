@@ -151,7 +151,7 @@ t('a genuinely new update after a reload does show unread', R.unreadCount()===1)
 
   // Hobbs office manager: sees Hobbs production and the new colleague; not the goal notice.
   asPerson({offices:['Hobbs'], teams:['Office Managers'], can:Object.assign({}, P.me().can, {production:'edit', dashboard:'view', admin:'none'})});
-  t('an office manager hears production was entered at her office', has('Production numbers entered for Hobbs'));
+  t('an office manager no longer hears production was entered (Heather 20/11/2026)', !has('Production numbers entered for Hobbs'));
   t('and that somebody joined her office', has('Jane Smith joined Hobbs'));
   t('but not the leadership goal notice', !has('hit its September goal'));
   t('and not a Carlsbad doctor\u2019s day', !has('Carlsbad on Mon'));
@@ -164,7 +164,8 @@ t('a genuinely new update after a reload does show unread', R.unreadCount()===1)
   // Leadership: all offices, the goal notice, but not the office-manager chatter unless on that team.
   asPerson({offices:'all', teams:['Leadership Team'], can:Object.assign({}, P.me().can, {admin:'none'})});
   t('leadership gets the goal notice', has('hit its September goal'));
-  t('leadership sees every office\u2019s production', has('Production numbers entered for Hobbs'));
+  t('leadership no longer gets "numbers entered" either', !has('Production numbers entered for Hobbs'));
+  t('but still gets the goal notice (kind goal is not retired)', has('hit its September goal'));
   t('leadership does not get the office-manager-only notice', !has('Jane Smith joined'));
   t('leadership does not see refused saves (admins only)', !has('A save was refused'));
 

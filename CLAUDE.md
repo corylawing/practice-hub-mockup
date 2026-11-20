@@ -508,6 +508,14 @@ I can confidently say that the chat feature should go next. The production thing
    Notes (noteField(f) - Talk types into whichever box has data-talkbox; Save while talking waits for the last words).
    Cory: no privacy reminder under the box ("I don't need that reminder please don't put it"). Saving adds fields only
    (persist/strip keep every field; consultsFrom reads every field). test/tc (185).
+46. **BELL: NO MORE "PRODUCTION NUMBERS ENTERED" (20/11/2026; hc226; sandbox first).** Heather: "take away the Production
+    numbers entered reminder. I do want to keep it if an office hit goal or stretch ... so they don't get in the habit of
+    just clicking them all as read." production.html no longer logs kind 'production' (entered / updated / workbook
+    updated - the first fired on every keystroke); canSeeActivity hides any old kind 'production' entry (hidden, not
+    deleted; the feed drops them after 3 days anyway). tellLeadership now also says "X has reached its <Mon> stretch
+    goal" (🚀; both at once says only the stretch), once per office+month: this browser's marker AND the shared feed, so
+    a second person saving the same month does not repeat it. Goal/stretch still go to Leadership/Executive/Admin only.
+    The "entered N days after month end" (late) notice is unchanged - ask Heather if she wants it gone too.
 45. **ORTHOFI CONNECTION (20/11/2026; hc225; server piece needs a deploy, nothing fills itself in yet).** Cory put OrthoFi's
    ORTHOFI_CLIENT_ID + ORTHOFI_CLIENT_SECRET into Azure (Static Web App -> Environment variables -> Production) himself -
    never chat, never git. OrthoFi auth = OAuth2 client credentials: form POST {grant_type:client_credentials, client_id,

@@ -134,15 +134,15 @@
   }
 
 </style>
-<script src="user.js?v=hc225"></script>
+<script src="user.js?v=hc226"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="workbook.js?v=hc225"></script>
-  <script src="prodbook.js?v=hc225"></script>
-  <script src="prodstore.js?v=hc225"></script>
-<script src="schedrec.js?v=hc225"></script>
-<script src="proddays.js?v=hc225"></script>
-  <script src="store.js?v=hc225"></script>
-  <script src="gate.js?v=hc225"></script>
+  <script src="workbook.js?v=hc226"></script>
+  <script src="prodbook.js?v=hc226"></script>
+  <script src="prodstore.js?v=hc226"></script>
+<script src="schedrec.js?v=hc226"></script>
+<script src="proddays.js?v=hc226"></script>
+  <script src="store.js?v=hc226"></script>
+  <script src="gate.js?v=hc226"></script>
 </head>
 <body>
 <div class="ribbon">SANDBOX — made-up numbers. Saving here stays in your browser; the real workbook is never touched.</div>
@@ -386,9 +386,8 @@
       if(window.PH_STORE && PH_STORE.update && PH.isLive()) PH_STORE.update('ph_prodaudit', stamp);
       else localStorage.setItem('ph_prodaudit',JSON.stringify(stamp(JSON.parse(localStorage.getItem('ph_prodaudit')||'{}'))));
     }catch(_){}
-    if(window.PH && PH.logActivity && PH.isLive())
-      PH.logActivity({kind:'production', sec:'production', ic:'\u{1F4DD}',
-        title:'Production numbers entered for '+office+' \u00b7 '+MO[month], offices:[office]});
+    /* No "Production numbers entered" notice any more (Heather 20/11/2026: "I don't think everyone cares when they get
+       entered" - keep the bell for what matters: goal and stretch, see tellLeadership). It also fired on every keystroke. */
     save(); refreshRight();
   }
   function refreshRight(){
@@ -484,10 +483,7 @@
         settle('done', 'Saved');
         const nx=saved.next&&saved.next.changes ? ' '+saved.next.year+'\u2019s \u201clast year\u201d updated too.' : '';
         wbBanner('\u2713 Saved '+saved.changes.length+' value(s) in Home-Brace for '+office+' \u00b7 '+MO[month]+' '+HB_YEAR+'.'+nx+note, /NOT updated/.test(note));
-        if(window.PH && PH.logActivity && PH.isLive()){
-          PH.logActivity({kind:'production', sec:'production', ic:'\u{1F4DD}', title:'Production updated \u2014 '+office+' '+MO[month], offices:[office]});
-          tellLeadership();
-        }
+        if(window.PH && PH.logActivity && PH.isLive()) tellLeadership();
       } else {
         settle('failed', 'Nothing changed');
         wbBanner('Nothing to save \u2014 no boxes were changed for '+office+' \u00b7 '+MO[month]+'.', true);
@@ -575,11 +571,7 @@
       }catch(_){}
       wbBanner('\u2713 Saved '+done.length+' value(s) to the workbook for '+office+
                ' \u00b7 '+MO[month]+'. Verified in the file.');
-      if(window.PH && PH.logActivity && PH.isLive()){
-        PH.logActivity({kind:'production', sec:'production', ic:'\u{1F4DD}',
-          title:'Workbook updated \u2014 '+office+' '+MO[month], offices:[office]});
-        tellLeadership();
-      }
+      if(window.PH && PH.logActivity && PH.isLive()) tellLeadership();
     } else {
       settle('failed', 'Nothing changed');
       wbBanner('Nothing to save \u2014 no boxes were changed for '+office+
@@ -628,13 +620,21 @@
   const LEAD=['Leadership Team','Executive Team','Admin'];
   function tellLeadership(){
     try{
-      const goal=val(office,month,'goal');
+      const goal=val(office,month,'goal'), str=val(office,month,'str');
       const total=val(office,month,'tc')+val(office,month,'mds')*val(office,month,'fee');
       const yr0=shownYear(), mark='ph_goalhit_'+yr0+'_'+office+'_'+month;   // the year too: next January is a new January
-      if(goal>0 && total>=goal && !localStorage.getItem(mark)){
+      const markS='ph_stretchhit_'+yr0+'_'+office+'_'+month;
+      /* Said once: this browser's marker, and the shared feed (someone else may have saved this month already). */
+      const told=t=>{ try{ return (PH.activity?PH.activity():[]).some(e=>e && e.title===t); }catch(_){ return false; } };
+      const sayG=office+' has reached its '+MO[month]+' goal', sayS=office+' has reached its '+MO[month]+' stretch goal';
+      /* STRETCH (Heather 20/11/2026: keep the notice "if an office hit goal or stretch"). Reaching both in one save
+         says only the stretch - it includes the goal. */
+      if(str>0 && total>=str && !localStorage.getItem(markS)){
+        localStorage.setItem(markS,'1'); localStorage.setItem(mark,'1');
+        if(!told(sayS)) PH.logActivity({kind:'goal', sec:'dashboard', ic:'\u{1F680}', offices:[office], teams:LEAD, title:sayS});
+      } else if(goal>0 && total>=goal && !localStorage.getItem(mark)){
         localStorage.setItem(mark,'1');
-        PH.logActivity({kind:'goal', sec:'dashboard', ic:'\u{1F3AF}', offices:[office], teams:LEAD,
-          title:office+' has reached its '+MO[month]+' goal'});
+        if(!told(sayG)) PH.logActivity({kind:'goal', sec:'dashboard', ic:'\u{1F3AF}', offices:[office], teams:LEAD, title:sayG});
       }
       const monthEnd=new Date(yr0, month+1, 0);                               // December typed in January is a few days late, not -11 months
       const daysLate=Math.floor((Date.now()-monthEnd.getTime())/86400000);
@@ -850,7 +850,7 @@
 })();
 </script>
 <script>PH.nav('production');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(window.PROD&&PROD.identity)PROD.identity();});document.addEventListener('ph-identity',function(){if(window.PROD&&PROD.identity)PROD.identity();});</script>
-<script src="tour.js?v=hc225"></script>
+<script src="tour.js?v=hc226"></script>
 <script>
 Tour.init([
   {sel:'.syncbar', title:'One set of numbers', body:'Type here and it saves into the <b>same Excel workbook</b> on SharePoint. If someone types in Excel instead, it shows up here. There is never a second copy to reconcile.'},

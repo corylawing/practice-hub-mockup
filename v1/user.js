@@ -2934,6 +2934,9 @@
   function canSeeActivity(e){
     if(!e) return false;
     if(calendarDay(e)) return false;
+    /* "Production numbers entered / updated" notices are retired (Heather 20/11/2026) - any still in the feed are hidden,
+       not deleted. Goal and stretch notices are kind 'goal' and still show. */
+    if(e.kind==='production') return false;
     const m=me();
     /* ADDRESSED TO PEOPLE (tasks, 19/11/2026): only them - not their office, not admins, whatever the section says. */
     if(Array.isArray(e.to) && e.to.length){
