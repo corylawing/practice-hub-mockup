@@ -29,6 +29,17 @@ const fnOf=(src,name)=>{ const i=src.indexOf('function '+name+'('); if(i<0) retu
     /cuT=setInterval\(chatUnreadCheck, 60000\);/.test(fnOf(U,'chatUnreadStart')) && /visibilitychange/.test(fnOf(U,'chatUnreadStart')) && /window\.addEventListener\('focus', chatUnreadCheck\);/.test(fnOf(U,'chatUnreadStart')) &&
     /d\.type==='ph-alert' && d\.message && d\.message\.tag==='hb-chat'\) setTimeout\(chatUnreadCheck, 1500\)/.test(fnOf(U,'chatUnreadStart')) && /chatUnreadStart\(\); \} \}\); \}/.test(U));
   t('…and never while the page is in the background', /document\.visibilityState!=='visible'\) return;/.test(fnOf(U,'chatUnreadCheck')));
+  /* THE RED NUMBER ON THE APP ICON (20/11/2026, Cory: Android shows it for a chat message, his iPhone doesn't) */
+  { const SW=fs.readFileSync(path.join(__dirname,'..','v1','sw.js'),'utf8'), store={}, badges=[], L={};
+    const caches={ open:()=>Promise.resolve({ match:k=>Promise.resolve(k in store ? {text:()=>Promise.resolve(store[k])} : undefined), put:(k,r)=>r.text().then(v=>{ store[k]=v; }) }) };
+    class Resp{ constructor(b){ this.b=b; } text(){ return Promise.resolve(this.b); } }
+    const self={ addEventListener:(n,f)=>{ L[n]=f; }, navigator:{ setAppBadge:n=>{ badges.push(n); return Promise.resolve(); } }, caches,
+      registration:{ showNotification:()=>Promise.resolve(), scope:'https://x/v1/' }, clients:{ matchAll:()=>Promise.resolve([]), claim:()=>Promise.resolve() }, skipWaiting:()=>{} };
+    require('vm').runInNewContext(SW, { self, caches, Response:Resp, Promise, URL, console, Math, String, parseInt });
+    const push=async()=>{ let w; L.push({ data:{ json:()=>({title:'Quinn', body:'hi', tag:'hb-chat'}) }, waitUntil:p=>{ w=p; } }); await w; };
+    await push(); await push();
+    t('each alert adds one to the app icon’s number (an iPhone only shows what the app sets)', JSON.stringify(badges)==='[1,2]');
+    t('opening Home-Brace sets the icon’s number to the unread chats, 0 clears it (live only)', /if\(env\(\)==='live'\) appBadge\(n\);/.test(U) && /navigator\.clearAppBadge \? navigator\.clearAppBadge\(\)/.test(U) && /caches\.open\('ph-badge'\)\.then\(c=>c\.put\('ph-badge-count'/.test(U)); }
   console.log(ok.map(s=>'  PASS  '+s).join('\n'));
   if(bad.length) console.log(bad.map(s=>'  FAIL  '+s).join('\n'));
   console.log('\n'+ok.length+' passed, '+bad.length+' failed');

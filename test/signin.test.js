@@ -50,7 +50,12 @@ run({store:{}, hash:''});
 t('auth.html: a sign-in that lost its way offers to open Home-Brace again', /didn.t finish/i.test(lastNote) && /href="home\.html"/.test(lastNote));
 run({store:{ph_signin_redirect:BACK}, hash:'#code=abc'});
 t('auth.html: a normal return goes straight back, with no note', lastNote==='');
-t('gate.js: a normal browser still signs in with the popup', /app\.loginPopup\(\{ scopes: SCOPES \}\)/.test(gate) && /if \(USE_REDIRECT\)\{ goSignIn\(app\)/.test(gate));
+t('gate.js: a normal browser still signs in with the popup', /app\.loginPopup\(pick\(\{ scopes: SCOPES \}\)\)/.test(gate) && /if \(USE_REDIRECT\)\{ goSignIn\(app\)/.test(gate));
 t('gate.js: on the way back the in-progress sign-in is not wiped before MSAL reads it', /var BACKFROM = returning\(\);\s*if \(!BACKFROM\) try\{/.test(gate));
+/* 20/11/2026, Cory: "every time it asks you to sign in ... once we authenticate it should work for awhile" */
+const GATE=fs.readFileSync(path.join(__dirname,'..','v1','gate.js'),'utf8'), USERJS=fs.readFileSync(path.join(__dirname,'..','v1','user.js'),'utf8');
+t('the sign-in is remembered on the device (localStorage), not forgotten when the tab or app closes', /cache: \{ cacheLocation: 'localStorage' \}/.test(GATE) && !/cacheLocation: 'sessionStorage'/.test(GATE));
+t('Sign out under your name (live), clearing only this device’s copy, then back to the sign-in screen', /signOut: function\(\)\{/.test(GATE) && /onRedirectNavigate: function\(\)\{ return false; \}/.test(GATE) && /PH_AUTH\.signOut\(\)">↪ Sign out<\/button>/.test(USERJS));
+t('after Sign out the next sign-in asks which account (a shared front-desk computer)', /req\.prompt = 'select_account'/.test(GATE) && /app\.loginPopup\(pick\(\{ scopes: SCOPES \}\)\)/.test(GATE) && /var req = pick\(\{ scopes: scopes \|\| SCOPES/.test(GATE));
 console.log(pass+' passed, '+fail+' failed');
 process.exit(fail?1:0);

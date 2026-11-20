@@ -508,6 +508,22 @@ I can confidently say that the chat feature should go next. The production thing
    Notes (noteField(f) - Talk types into whichever box has data-talkbox; Save while talking waits for the last words).
    Cory: no privacy reminder under the box ("I don't need that reminder please don't put it"). Saving adds fields only
    (persist/strip keep every field; consultsFrom reads every field). test/tc (185).
+55. **REMEMBERED SIGN-IN, IPHONE APP BADGE, GLASS BAR (20/11/2026; hc236; sandbox - waiting on Cory's "deploy").**
+    SIGN-IN (Cory: "every time it asks you to sign in even if you close ... With Salesforce ... it remembers"): gate.js
+    MSAL cacheLocation was 'sessionStorage' - gone when the tab/browser/phone app closed, and every new tab signed out.
+    Now 'localStorage'. Microsoft caps a web app's silent renewal at 24 h; after that one tap on Sign in (Microsoft
+    usually remembers them - no password). NEW "↪ Sign out" in the menu under your name (live): PH_AUTH.signOut() =
+    logoutRedirect with onRedirectNavigate:false (this device's copy only), sets ph_signed_out -> the next sign-in uses
+    prompt:'select_account' (shared front-desk computers). Not testable headless - check on a real phone + desktop.
+    APP BADGE (Cory: Android shows a red number on the app for a chat message, iPhone doesn't): Android counts alerts
+    itself; iOS (home-screen app, alerts on) only shows navigator.setAppBadge. sw.js badgeAdd(): +1 per alert, the one
+    number kept in Cache Storage 'ph-badge'/'ph-badge-count'; user.js appBadge(n): while open (and on coming back) it is
+    the unread chats, 0 clears. test/chatbadge runs sw.js for real (1, 2).
+    GLASS BAR (Cory + Slack/Reddit screenshots; phone only): floating see-through navy pill (color-mix of the person's
+    --navy, blur), active tab a light bubble; a person's own scroll down (touch/wheel/keys in the last 0.9 s - a page
+    scrolling itself doesn't count) shrinks it to a 58px circle at the bottom left with this page's icon IN ITS COLOUR
+    (Cory: "Keep the same color in the shrinked left circle"); scroll up / near the top / tap the circle -> whole bar.
+    Any scrolling box counts (chat messages, lists), not the More sheet / bell / dialogs.
 54. **TASKS: WHO CAN ASSIGN + REMINDERS FOR EVERYONE (20/11/2026; sandbox).** Cory: "anyone who is not regular staff,
     financial coordinators or TCs should be able to assign tasks" -> DEPT_CAN defaults: Office Managers, Clinic Managers,
     Doctors, Marketing get tasks:'edit' (with Executive, Leadership; Admin 'manage'). Staff / FC team / TCs stay "Gets

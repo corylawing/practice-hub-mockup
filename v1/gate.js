@@ -41,12 +41,15 @@
   var LIVE = !!(global.PH && global.PH.isLive && global.PH.isLive());
   var USE_REDIRECT = STANDALONE || PHONE;
   var BACK = 'ph_signin_redirect';
+  var OUT = 'ph_signed_out';                                  // set by Sign out: the next sign-in asks which account
+  function pick(req){ try{ if (localStorage.getItem(OUT)) req.prompt = 'select_account'; }catch(_){} return req; }
+  function signedIn(){ try{ localStorage.removeItem(OUT); }catch(_){} }
   function returning(){
     try{ return USE_REDIRECT && !!sessionStorage.getItem(BACK) && /[#&](code|error)=/.test(location.hash); }catch(_){ return false; }
   }
   function goSignIn(app, account, scopes){
     try{ sessionStorage.setItem(BACK, location.href.split('#')[0]); }catch(_){}
-    var req = { scopes: scopes || SCOPES, redirectStartPage: location.href.split('#')[0] };
+    var req = pick({ scopes: scopes || SCOPES, redirectStartPage: location.href.split('#')[0] });
     if (account) req.account = account;
     return account ? app.acquireTokenRedirect(req) : app.loginRedirect(req);
   }
@@ -147,6 +150,14 @@
         var scopes = SCOPES.concat(extra || []);
         if (USE_REDIRECT) return goSignIn(app, account, scopes);
         return app.acquireTokenPopup({ scopes: scopes, account: account }).then(function(r){ return r.accessToken; });
+      },
+      /* SIGN OUT (20/11/2026): with the sign-in remembered, a shared computer needs a way out. Clears Home-Brace's copy
+         of the sign-in on this device only (Microsoft's own sign-in elsewhere is untouched), and the next sign-in here
+         asks which account - so the next person at the front desk can be themselves. */
+      signOut: function(){
+        try{ localStorage.setItem(OUT, '1'); }catch(_){}
+        return Promise.resolve(app.logoutRedirect({ account: account, onRedirectNavigate: function(){ return false; } }))
+          .catch(function(){}).then(function(){ global.location.reload(); });
       },
       graph: function(path){
         return global.PH_AUTH.token().then(function(t){
@@ -260,7 +271,13 @@
       auth: { clientId: CLIENT_ID,
               authority: 'https://login.microsoftonline.com/' + TENANT_ID,
               redirectUri: REDIRECT },
-      cache: { cacheLocation: 'sessionStorage' }
+      /* REMEMBERED (20/11/2026, Cory: "On desktop everytime it asks you to sign in even if you close or whatever. With
+         Salesforce once we authenticate and even close it remembers ... Same with phone each time I have to sign in").
+         'sessionStorage' forgot the sign-in whenever the tab, the browser or the phone app closed, and every new tab
+         started signed out. 'localStorage' keeps it on this device until they press Sign out (menu under their name).
+         Microsoft lets a web app renew silently for 24 hours at a time; after that one tap on Sign in, and Microsoft
+         usually remembers them (no password) - Chrome/Edge often renew without even that. */
+      cache: { cacheLocation: 'localStorage' }
     });
     app.initialize().then(function(){
       if (!BACKFROM) return null;
@@ -276,6 +293,7 @@
     }).then(function(back){
       if (back === 'failed') return;
       if (back && back.account){
+        signedIn();
         if (app.setActiveAccount) app.setActiveAccount(back.account);
         expose(app, back.account); open(gate); return;
       }
@@ -298,7 +316,8 @@
       btn.onclick = function(){
         btn.disabled = true; err.textContent = '';
         if (USE_REDIRECT){ goSignIn(app).catch(function(e){ fail((e && (e.errorMessage || e.message)) || 'Sign-in could not start.'); }); return; }
-        app.loginPopup({ scopes: SCOPES }).then(function(r){
+        app.loginPopup(pick({ scopes: SCOPES })).then(function(r){
+          signedIn();
           if (app.setActiveAccount && r.account) app.setActiveAccount(r.account);
           expose(app, r.account);
           open(gate);

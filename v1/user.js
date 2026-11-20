@@ -1190,26 +1190,40 @@
   @media(max-width:640px){
     .v1nav{display:none !important}
     body{padding-bottom:calc(136px + env(safe-area-inset-bottom,0px)) !important}   /* bar + the tour button */
-    .tour-launch{bottom:calc(76px + env(safe-area-inset-bottom,0px)) !important}
+    .tour-launch{bottom:calc(84px + env(safe-area-inset-bottom,0px)) !important}
     /* Above the bar, and the phone's full width - centred with left:50% they shrank to half. */
-    #ph-savefail,#ph-saveok{bottom:calc(76px + env(safe-area-inset-bottom,0px)) !important;
+    #ph-savefail,#ph-saveok{bottom:calc(84px + env(safe-area-inset-bottom,0px)) !important;
       left:12px !important;right:12px !important;transform:none !important;width:auto !important;max-width:none !important}
 
-    .ph-tabbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:7000;
-      background:var(--navy,#0F2A4A);border-top:1px solid rgba(255,255,255,.10);
-      padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px));
-      box-shadow:0 -6px 20px rgba(15,42,74,.18)}
-    .ph-tabbar a,.ph-tabbar button{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;
-      gap:3px;padding:6px 2px 4px;color:var(--navy-mute,#B7C6DA);text-decoration:none;font-family:inherit;font-size:10.5px;font-weight:600;line-height:1.15;
-      background:none;border:none;border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent}
-    .ph-tabbar .ti{width:22px;height:22px;display:block;opacity:.72}
+    /* THE GLASS BAR (20/11/2026, Cory + Slack/Reddit screenshots: "a colored glassy bottom bar and if you scroll down
+       the app it moves to one circle (with the app you are on) ... goes to the left (so you can always click and open it
+       up) but if you scroll up it moves back to the full horizontal bar"). A floating pill of see-through navy (the
+       person's own colour scheme); scrolling down shrinks it to a circle at the bottom left showing this page's icon;
+       scrolling up, reaching the top, or tapping the circle opens it again. barWatch() below does the watching. */
+    .ph-tabbar{display:flex;position:fixed;left:12px;right:12px;bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:7000;
+      background:rgba(15,42,74,.80);background:color-mix(in srgb,var(--navy,#0F2A4A) 78%,transparent);
+      -webkit-backdrop-filter:blur(18px) saturate(170%);backdrop-filter:blur(18px) saturate(170%);
+      border:1px solid rgba(255,255,255,.16);border-radius:28px;padding:5px;overflow:hidden;
+      box-shadow:0 10px 30px rgba(15,42,74,.30),inset 0 1px 0 rgba(255,255,255,.14);
+      transition:right .32s cubic-bezier(.2,.8,.2,1),border-radius .32s,padding .32s}
+    .ph-tabbar a,.ph-tabbar button{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+      gap:3px;padding:7px 2px 6px;color:var(--navy-mute,#B7C6DA);text-decoration:none;font-family:inherit;font-size:10.5px;font-weight:600;line-height:1.15;
+      background:none;border:none;border-radius:22px;cursor:pointer;-webkit-tap-highlight-color:transparent;
+      transition:flex-basis .32s,opacity .2s,padding .32s,background .2s;overflow:hidden;white-space:nowrap}
+    .ph-tabbar .ti{width:22px;height:22px;display:block;opacity:.72;flex:none}
     .ph-tabbar .tl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
-    .ph-tabbar a.active{color:#fff}
+    .ph-tabbar a.active{color:#fff;background:rgba(255,255,255,.16)}
     .ph-tabbar a.active .ti{opacity:1;stroke-width:2.1}
-    .ph-tabbar a.active .tl{position:relative}
-    .ph-tabbar a.active .tl::after{content:"";position:absolute;left:25%;right:25%;bottom:-5px;height:2px;border-radius:2px;background:var(--teal2,#2BC0B8)}
     .ph-tabbar .more{color:var(--navy-mute,#B7C6DA)}
-    .ph-tabbar .more.on{color:#fff}
+    .ph-tabbar .more.on{color:#fff;background:rgba(255,255,255,.16)}
+    .ph-tabbar .cur{display:none}
+    /* the circle: only this page's icon, at the left */
+    .ph-tabbar{height:62px;transition:right .32s cubic-bezier(.2,.8,.2,1),height .32s,border-radius .32s,padding .32s}
+    .ph-tabbar.mini{right:calc(100% - 12px - 58px);height:58px;border-radius:50%;padding:0}
+    .ph-tabbar.mini > a,.ph-tabbar.mini > .more{flex:0 0 0;opacity:0;padding:0;pointer-events:none}
+    .ph-tabbar.mini .cur{display:flex;flex:1 0 auto;color:#fff;padding:0;border-radius:50%}
+    .ph-tabbar.mini .cur .ti{width:24px;height:24px;opacity:1;stroke-width:2.1}
+    @media (prefers-reduced-motion:reduce){ .ph-tabbar,.ph-tabbar a,.ph-tabbar button{transition:none} }
     .ph-more{position:fixed;left:0;right:0;bottom:0;z-index:7100;background:#fff;color:var(--navy,#0F2A4A);
       border-radius:16px 16px 0 0;box-shadow:0 -12px 34px rgba(15,42,74,.28);
       padding:10px 14px calc(14px + env(safe-area-inset-bottom,0px))}
@@ -1237,7 +1251,7 @@
     .ph-body,.ov .m-body{flex:1 1 auto;max-height:none !important;overflow:auto;-webkit-overflow-scrolling:touch;min-height:0}
     .ph-foot,.ov .m-foot,.ov .dm-foot{flex:none;position:sticky;bottom:0;padding-bottom:calc(14px + env(safe-area-inset-bottom,0px)) !important}
     .ph-top,.ov .m-top{flex:none}
-    .ph-np{position:fixed !important;left:8px;right:8px;top:60px;bottom:calc(64px + env(safe-area-inset-bottom,0px));
+    .ph-np{position:fixed !important;left:8px;right:8px;top:60px;bottom:calc(82px + env(safe-area-inset-bottom,0px));
       width:auto !important;display:flex;flex-direction:column;border-radius:14px}
     .ph-np .nph{flex:none}
     .ph-np .nlist{flex:1 1 auto;max-height:none !important;overflow:auto;-webkit-overflow-scrolling:touch}
@@ -1382,7 +1396,7 @@
   /* each section in its own colour (TAB_IC), full strength; the white label and the teal
      marker still say which page you're on */
   :root{${Object.keys(TAB_IC).map(k=>'--ic-'+k+':'+readable(TAB_IC[k],'#25456E',3)+';--ic-'+k+'-l:'+readable(TAB_IC[k],'#FFFFFF',3)).join(';')}}
-  .v1nav .v1nav-in a .ti[data-k], .ph-sidenav .ph-sb-list a .ti[data-k], .ph-tabbar a .ti[data-k]{color:var(--ic);opacity:1;stroke-width:2}
+  .v1nav .v1nav-in a .ti[data-k], .ph-sidenav .ph-sb-list a .ti[data-k], .ph-tabbar a .ti[data-k], .ph-tabbar .cur .ti[data-k]{color:var(--ic);opacity:1;stroke-width:2}
   .ph-more a .ti[data-k]{color:var(--ic-l);opacity:1}
   /* the choice, in the profile - a little picture of each */
   .ph-lays{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -1408,6 +1422,7 @@
     menu=document.createElement('div'); menu.className='ph-menu';
     menu.innerHTML='<div class="mh"><b>'+name(p)+'</b><small>'+p.title+'</small></div>'+
       '<button onclick="PH.profile()">👤 My profile</button>'+
+      (isLive() && window.PH_AUTH && PH_AUTH.signOut ? '<button onclick="PH_AUTH.signOut()">↪ Sign out</button>' : '')+
       (isLive() ? '' :
       '<div class="sec">Demo — sign in as</div>'+
       PEOPLE.map(x=>'<button class="'+(x.id===p.id?'cur':'')+'" onclick="PH.setMe(\''+x.id+'\')">'+
@@ -1810,10 +1825,20 @@
 
   /* The chat button's unread count. The mock-up keeps it for this browser tab only (sessionStorage
      ph_chat_unread = {chat id: unread}), so a fresh tab starts the demo again at chat.html's 3 unread. */
+  /* The red number on the app icon (sw.js adds one per alert): while Home-Brace is open it is the unread chats - 0 clears
+     it. Live only; a browser without app badges (most desktops) ignores it. */
+  function appBadge(n){
+    if(document.visibilityState && document.visibilityState!=='visible') return;
+    n=Math.max(0, Math.min(99, Number(n)||0));
+    try{ if(navigator.setAppBadge){ const p=n ? navigator.setAppBadge(n) : (navigator.clearAppBadge ? navigator.clearAppBadge() : navigator.setAppBadge(0)); if(p && p.catch) p.catch(()=>{}); } }catch(_){}
+    try{ if(window.caches) caches.open('ph-badge').then(c=>c.put('ph-badge-count', new Response(String(n)))).catch(()=>{}); }catch(_){}
+  }
+  document.addEventListener('visibilitychange', function(){ if(document.visibilityState==='visible' && env()==='live') chatBadge(); });   // back in the app: the icon's number = unread chats
   function chatBadge(){
-    const c=document.querySelector('.ph-chat'); if(!c) return;
     let n=env()==='live' ? 0 : 3;            // the live site never shows the mock-up's made-up 3
     try{ const v=sessionStorage.getItem('ph_chat_unread'); if(v!==null){ const m=JSON.parse(v)||{}; n=Object.keys(m).reduce((t,k)=>t+(Number(m[k])||0),0); } }catch(_){}
+    if(env()==='live') appBadge(n);
+    const c=document.querySelector('.ph-chat'); if(!c) return;
     let d=c.querySelector('.dot'); if(!n){ if(d) d.remove(); c.title='Chat'; return; }
     if(!d){ d=document.createElement('span'); d.className='dot'; c.appendChild(d); }
     d.textContent=n>9?'9+':String(n); c.title='Chat - '+n+' unread';
@@ -3155,9 +3180,33 @@
       return '<a href="'+x.href+'"'+(x.k===NAV_ACTIVE?' class="active"':'')+'>'+icon(x.k)+'<span class="tl">'+p.label+'</span></a>'; };
     const restActive=rest.some(x=>x.k===NAV_ACTIVE);
     bar.innerHTML=primary.map(link).join('')+
-      (rest.length?'<button type="button" class="more'+(restActive?' on':'')+'" aria-haspopup="true">'+icon('more')+'<span class="tl">More</span></button>':'');
+      (rest.length?'<button type="button" class="more'+(restActive?' on':'')+'" aria-haspopup="true">'+icon('more')+'<span class="tl">More</span></button>':'')+
+      '<button type="button" class="cur" aria-label="Show all sections">'+icon(NAV_ACTIVE && ICON[NAV_ACTIVE] ? NAV_ACTIVE : 'more')+'</button>';
     const more=bar.querySelector('.more');
     if(more) more.onclick=function(){ moreSheet?closeMore():openMore(rest); };
+    const cur=bar.querySelector && bar.querySelector('.cur'); if(cur) cur.onclick=function(){ barMini(false); };
+    barWatch();
+  }
+  /* The glass bar's circle: down = circle, up = the whole bar. Any scrolling box counts (the chat's messages, a list),
+     not just the page; a small wiggle (under 10px) changes nothing; near the top it is always the whole bar. */
+  let barOn=false, barHand=0;
+  const barTops=new WeakMap();
+  function barMini(on){ const b=document.querySelector('.ph-tabbar'); if(b) b.classList.toggle('mini', !!on); }
+  function barWatch(){
+    if(barOn) return; barOn=true;
+    /* only scrolling a person does (a finger, a wheel, keys) - a page jumping to its newest chat message by itself doesn't */
+    ['touchmove','wheel','keydown'].forEach(function(ev){ document.addEventListener(ev, function(){ barHand=Date.now(); }, {capture:true, passive:true}); });
+    document.addEventListener('scroll', function(e){
+      if(Date.now()-barHand>900) return;
+      const bar=document.querySelector('.ph-tabbar'); if(!bar) return;
+      const el=(e.target===document || e.target===document.documentElement || e.target===document.body) ? (document.scrollingElement||document.documentElement) : e.target;
+      if(!el || el.nodeType!==1 || (el.closest && el.closest('.ph-more,.ph-np,.ov,.ph-ov,.ph-tabbar'))) return;
+      const y=Math.max(0, Math.min(el.scrollTop||0, el.scrollHeight-el.clientHeight));   // the phone's bounce at either end isn't a direction
+      const st=barTops.get(el) || {a:y}; barTops.set(el, st);
+      if(y<24){ barMini(false); st.a=y; return; }
+      if(!bar.classList.contains('mini')){ if(y<st.a) st.a=y; else if(y-st.a>12){ barMini(true); st.a=y; } }
+      else { if(y>st.a) st.a=y; else if(st.a-y>12){ barMini(false); st.a=y; } }
+    }, {capture:true, passive:true});
   }
   let moreSheet=null;
   function closeMore(){ if(moreSheet){ moreSheet.scrim.remove(); moreSheet.sheet.remove(); moreSheet=null; } }
