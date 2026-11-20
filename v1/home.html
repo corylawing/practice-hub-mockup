@@ -121,10 +121,10 @@
   .updates .sub2{font-size:12.5px;color:var(--soft);margin:4px 0 8px}
   .updates .upd.read{opacity:.55}
   .updates .upd .uok{margin-left:auto;background:#fff;border:1px solid #CBD5E1;border-radius:8px;
-    color:var(--navy);font:700 11.5px inherit;padding:5px 10px;cursor:pointer;flex:none;white-space:nowrap}
+    color:var(--navy);font-weight:700;font-size:11.5px;font-family:inherit;padding:5px 10px;cursor:pointer;flex:none;white-space:nowrap}
   .updates .upd .uok:hover{background:var(--teal-wash,#F2FBFA);border-color:var(--teal);color:var(--teal-600,#0F827E)}
   .updates .uall{margin-left:auto;background:none;border:none;color:var(--teal);
-    font:700 12.5px inherit;cursor:pointer;padding:2px}
+    font-weight:700;font-size:12.5px;font-family:inherit;cursor:pointer;padding:2px}
   .upd{display:flex;align-items:flex-start;gap:11px;padding:11px 0;border-top:1px solid var(--line)}
   .upd .uic{font-size:18px;line-height:1.3}
   .upd .ut{font-size:14px;color:var(--ink);font-weight:600}
@@ -170,12 +170,12 @@
   }
 
 </style>
-<script src="user.js?v=hc233"></script>
+<script src="user.js?v=hc234"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc233"></script>
-  <script src="gate.js?v=hc233"></script>
-  <script src="party.js?v=hc233"></script>
-  <script src="tasks.js?v=hc233"></script>
+  <script src="store.js?v=hc234"></script>
+  <script src="gate.js?v=hc234"></script>
+  <script src="party.js?v=hc234"></script>
+  <script src="tasks.js?v=hc234"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — this is the logged-in home. Use “Viewing as” to see how the app changes for each role.</div>
@@ -489,7 +489,7 @@
 })();
 </script>
 <script>PH.nav('home');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(PH.loadActivity)PH.loadActivity().then(function(){return PH.loadSeen?PH.loadSeen():null;}).then(function(){if(window.HOME&&HOME.refreshUpdates)HOME.refreshUpdates();if(PH.refreshBell)PH.refreshBell();});});</script>
-<script src="tour.js?v=hc233"></script>
+<script src="tour.js?v=hc234"></script>
 <script>
 Tour.init([
   {sel:'.ph-av', title:'This is you', body:'Your name and photo, top right. Tap it any time for <b>My profile</b> \u2014 your photo, preferred name, phone and \u201cAbout me\u201d. Those follow you between devices.'},

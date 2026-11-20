@@ -120,7 +120,7 @@
   .choose h2{margin:0 0 4px;font-size:19px;color:var(--navy)}
   .choose .sub{color:var(--soft);font-size:13.5px;margin-bottom:16px}
   .offbtns{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
-  .offbtn{padding:14px 12px;border:1px solid var(--line);border-radius:12px;background:#fff;font:700 15px/1.2 inherit;color:var(--navy);cursor:pointer;text-align:left}
+  .offbtn{padding:14px 12px;border:1px solid var(--line);border-radius:12px;background:#fff;font-weight:700;font-size:15px;line-height:1.2;font-family:inherit;color:var(--navy);cursor:pointer;text-align:left}
   .offbtn:hover,.offbtn:focus-visible{border-color:var(--teal);background:var(--teal-soft,#E5F4F3);outline:none}
   .noacc b{color:var(--navy)}
   @media(max-width:760px){ .grid2{grid-template-columns:1fr} }
@@ -134,15 +134,15 @@
   }
 
 </style>
-<script src="user.js?v=hc233"></script>
+<script src="user.js?v=hc234"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="workbook.js?v=hc233"></script>
-  <script src="prodbook.js?v=hc233"></script>
-  <script src="prodstore.js?v=hc233"></script>
-<script src="schedrec.js?v=hc233"></script>
-<script src="proddays.js?v=hc233"></script>
-  <script src="store.js?v=hc233"></script>
-  <script src="gate.js?v=hc233"></script>
+  <script src="workbook.js?v=hc234"></script>
+  <script src="prodbook.js?v=hc234"></script>
+  <script src="prodstore.js?v=hc234"></script>
+<script src="schedrec.js?v=hc234"></script>
+<script src="proddays.js?v=hc234"></script>
+  <script src="store.js?v=hc234"></script>
+  <script src="gate.js?v=hc234"></script>
 </head>
 <body>
 <div class="ribbon">SANDBOX — made-up numbers. Saving here stays in your browser; the real workbook is never touched.</div>
@@ -850,7 +850,7 @@
 })();
 </script>
 <script>PH.nav('production');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(window.PROD&&PROD.identity)PROD.identity();});document.addEventListener('ph-identity',function(){if(window.PROD&&PROD.identity)PROD.identity();});</script>
-<script src="tour.js?v=hc233"></script>
+<script src="tour.js?v=hc234"></script>
 <script>
 Tour.init([
   {sel:'.syncbar', title:'One set of numbers', body:'Type here and it saves into the <b>same Excel workbook</b> on SharePoint. If someone types in Excel instead, it shows up here. There is never a second copy to reconcile.'},

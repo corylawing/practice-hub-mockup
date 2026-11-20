@@ -1143,7 +1143,7 @@
     box-shadow:0 12px 34px rgba(15,42,74,.20);color:var(--navy,#0F2A4A);text-align:left;cursor:default}
   .ph-np .nph{display:flex;align-items:center;gap:8px;padding:13px 15px;border-bottom:1px solid #EEF1F5}
   .ph-np .nph b{font-size:14.5px;flex:1}
-  .ph-np .nall{background:none;border:none;color:var(--teal,#149B96);font:700 12.5px inherit;cursor:pointer;padding:4px 2px}
+  .ph-np .nall{background:none;border:none;color:var(--teal,#149B96);font-weight:700;font-size:12.5px;font-family:inherit;cursor:pointer;padding:4px 2px}
   .ph-np .nallok{font-size:12.5px;font-weight:700;color:var(--teal-600,#0F827E)}
   .ph-np .nlist{max-height:min(60vh,420px);overflow:auto}
   .ph-np .ni{display:flex;gap:10px;align-items:flex-start;padding:12px 15px;border-bottom:1px solid #F3F5F8;
@@ -1155,7 +1155,7 @@
   .ph-np .ni.read .ntt{font-weight:600;color:#56627A}
   .ph-np .ni .nw{font-size:11.5px;color:#7A889B;margin-top:2px}
   .ph-np .ni .nok{background:#fff;border:1px solid #CBD5E1;border-radius:8px;color:var(--navy,#0F2A4A);
-    font:700 11.5px inherit;padding:5px 9px;cursor:pointer;flex:none;white-space:nowrap}
+    font-weight:700;font-size:11.5px;font-family:inherit;padding:5px 9px;cursor:pointer;flex:none;white-space:nowrap}
   .ph-np .ni .nok:hover{background:var(--teal-wash,#F2FBFA);border-color:var(--teal,#149B96);color:var(--teal-600,#0F827E)}
   .ph-np .ni .ndone{flex:none;font-size:11.5px;font-weight:700;color:var(--teal-600,#0F827E);background:var(--teal-soft,#E8F6F4);
     border-radius:8px;padding:5px 9px;white-space:nowrap;align-self:flex-start}
@@ -1175,7 +1175,7 @@
   .ph-np .ni.nrem.late{background:#FDF0EE;border-left-color:#C2412D}
   .ph-np .nalert{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;padding:11px 15px;border-top:1px solid #EEF1F5;background:#F7FBFB;font-size:12.5px;color:#46546b;line-height:1.45;flex:none}
   .ph-np .nalert>span{flex:1;min-width:0}
-  .ph-np .nalert button{background:var(--teal,#149B96);color:#fff;border:none;border-radius:8px;font:700 12px inherit;font-family:inherit;padding:6px 11px;cursor:pointer;flex:none}
+  .ph-np .nalert button{background:var(--teal,#149B96);color:#fff;border:none;border-radius:8px;font-weight:700;font-size:12px;font-family:inherit;padding:6px 11px;cursor:pointer;flex:none}
   .ph-np .nalert.on button{background:#fff;color:#56627A;border:1px solid #CBD5E1}
   .ph-np .nalert .nalnote{flex-basis:100%;font-size:12px;color:var(--teal-600,#0F827E);font-weight:600}
   .ph-np .sav{width:30px;height:30px;border-radius:50%;background:var(--teal-soft,#E8F6F4);color:var(--teal-600,#0F827E);font-size:12px;font-weight:800;display:grid;place-items:center;flex:none}
@@ -2591,7 +2591,7 @@
     n.id='ph-savefail';
     n.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:9000;'+
       'width:max-content;max-width:min(560px,92vw);background:#FCEBE8;color:#93301f;border:1px solid #f0c3b9;'+
-      'border-radius:12px;padding:12px 16px;font:600 13.5px/1.55 inherit;'+
+      'border-radius:12px;padding:12px 16px;font-weight:600;font-size:13.5px;line-height:1.55;font-family:inherit;'+
       'box-shadow:0 8px 24px rgba(15,42,74,.18);display:flex;gap:10px;align-items:flex-start';
     const tooBig=d&&d.tooBig;
     const detail=d&&d.error ? '<br><small style="font-weight:500;opacity:.75">Details: '+
@@ -2636,7 +2636,7 @@
      box hands them the link and a Try again. 403 is no access at all: an admin's job. */
   function accessHelpHTML(d, lead){
     const said=(d&&d.said)?'<br><span style="font-weight:500;font-size:12px;opacity:.85">Microsoft said: '+escHTML(d.said)+'</span>':'';
-    const btn='display:inline-block;margin:10px 8px 0 0;padding:8px 14px;border-radius:9px;font:700 13.5px/1.2 inherit;cursor:pointer;text-decoration:none;';
+    const btn='display:inline-block;margin:10px 8px 0 0;padding:8px 14px;border-radius:9px;font-weight:700;font-size:13.5px;line-height:1.2;font-family:inherit;cursor:pointer;text-decoration:none;';
     if(d && d.status===401 && d.site)
       return '<b>'+(lead||'One more step to finish setting up your access.')+'</b><br>'+
         'Tap <b>Open SharePoint</b> and let the page load (sign in if it asks). Then come back here and tap <b>Try again</b>. '+
@@ -2650,7 +2650,7 @@
     const n=document.createElement('div'); n.id=id;
     n.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:'+z+';'+
       'width:max-content;max-width:min(580px,92vw);background:#FFF6E5;color:#7a4b00;border:1px solid #f0d9a8;'+
-      'border-radius:12px;padding:13px 16px;font:600 13.5px/1.55 inherit;'+
+      'border-radius:12px;padding:13px 16px;font-weight:600;font-size:13.5px;line-height:1.55;font-family:inherit;'+
       'box-shadow:0 8px 24px rgba(15,42,74,.18);display:flex;gap:10px;align-items:flex-start';
     return n;
   }
