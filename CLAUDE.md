@@ -508,13 +508,18 @@ I can confidently say that the chat feature should go next. The production thing
    Notes (noteField(f) - Talk types into whichever box has data-talkbox; Save while talking waits for the last words).
    Cory: no privacy reminder under the box ("I don't need that reminder please don't put it"). Saving adds fields only
    (persist/strip keep every field; consultsFrom reads every field). test/tc (185).
-58. **ORTHOFI: COLLECTIONS FOUND (20/11/2026; hc239; sandbox).** October re-run (15 lists): gross collections =
+58. **ORTHOFI: COLLECTIONS FOUND (20/11/2026; hc239-hc240; sandbox).** October re-run (15 lists): gross collections =
     collection details, successful payments (OrthoFi's collections-details report, payment date) + Medicaid collections
     matches TO THE DOLLAR at Carlsbad, Clovis, Hobbs, San Angelo, Lubbock, Mansfield; LCO +7%, FOLC -30% (old system).
     Deposits (day sheet) and practice collections: far off. Adjustment report: off everywhere (1.05-37x). Kept NPE report
     'kept' = 0 everywhere (the keptExamFlag values aren't Y/yes/true/1/kept - unknown); every exam 1.2-2.5x. So: PROVEN
     gc 'cd.collection' (AUTO check 'cd.collection+mdc'), PARTS gc = [mdc, osc], new box osc "Old system collections"
     (oldsys). Waiting: a September re-run to confirm collections in a second month, then Cory's "deploy" + step 3 ticks.
+    Cory: "Are you sure: adjustments, net production, past-due accounts and new patient exams. Should we be sure before we
+    assume?" -> hc240 adds readings: business health totalWriteOff (+ signedNotStartedWriteOff) as adjustments; net
+    production = BH production + Medicaid − write-offs; BH scheduledNewPatientExam; OrthoFi's /delinquent list (TODAY's
+    only - no date - so it can't prove a past month; useful only for filling the current month). If these miss too:
+    ask Heather which report and line she reads each of those 4 boxes from (Cory: she showed him reports, maybe OrthoFi).
 57. **ORTHOFI FILLS THE MONTHLY REPORT + OLD-SYSTEM BOXES + COLLECTIONS CANDIDATES (20/11/2026; hc237-hc238; LIVE - Cory: "deploy")**
     Cory: "go, but I think she wants to see in production to really know" (Heather can: admins' live preview
     monthly.html?monthlypreview while MONTHLY_LIVE stays false). monthly.js: FIELDS osp "Old system production" /

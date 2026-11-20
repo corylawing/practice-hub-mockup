@@ -179,6 +179,11 @@ const call=async (body, origin)=>{ const ctx={}; await F(ctx, {method:'POST', he
   { const W3=O.ways({adjr:{rows:1, by:{'11':{n:2,sum:{netAdjustment:-120.5, patientAdjustment:-100, insuranceAdjustment:-20.5},nz:{},cnt:{},groups:{}}}}, pex:{rows:3, by:{'11':{n:3,sum:{},nz:{},cnt:{},groups:{Y:{n:2,sum:{},nz:{}},N:{n:1,sum:{},nz:{}}}}}}}, [11], {});
     t('adjustments can be read from OrthoFi’s adjustment report; new patient exams from its kept NPE report', W3.adj.some(w=>w.way==='adjr.net' && w.v===-120.5) && W3.adj.some(w=>w.way==='adjr.patient+ins' && w.v===-120.5) &&
       W3.npe.some(w=>w.way==='pex.kept' && w.v===2) && W3.npe.some(w=>w.way==='pex.rows' && w.v===3)); }
+  { const W4=O.ways({bh:{rows:1, by:{'11':{n:1,sum:{production:10000, totalWriteOff:300, signedNotStartedWriteOff:50, scheduledNewPatientExam:41, keptNewPatientExam:33},nz:{},cnt:{},groups:{}}}},
+      del:{rows:5, by:{'11':{n:5,sum:{},nz:{},cnt:{d30:3, d1:5},patc:{d30:2},groups:{}}}}}, [11], {mdp:1000});
+    t('Cory: "Should we be sure before we assume?" - adjustments as business health write-offs (signed as a write-off)', W4.adj.some(w=>w.way==='bh.writeoff' && w.v===-300) && W4.adj.some(w=>w.way==='bh.writeoff+sns' && w.v===-350));
+    t('...net production = business health production + Medicaid − write-offs', W4.np.some(w=>w.way==='bh.prod+mdp-writeoff' && w.v===10700) && W4.np.some(w=>w.way==='bh.prod+mdp-writeoff-sns' && w.v===10650));
+    t('...new patient exams: scheduled as well as kept; past due: OrthoFi’s delinquent list (today’s)', W4.npe.some(w=>w.way==='bh.scheduled' && w.v===41) && W4.deln.some(w=>w.way==='del.d30' && w.v===3) && W4.deln.some(w=>w.way==='del.pat30' && w.v===2)); }
   /* 20/11/2026: proven to the dollar (Sept + Oct) - and still nothing fills itself in for an office until it is ticked */
   t('proven: gross production = business health production, collections = collection details (successful payments), A/R = patient + insurance (report claim statuses) - nothing else', JSON.stringify(O.PROVEN)==='{"gp":"bh.production","gc":"cd.collection","ar":"par+iar.rep"}');
   t('...and no office fills itself in until it is ticked on the OrthoFi page', JSON.stringify(O.autoOffices(O.cleanMap(null)))==='{}' && JSON.stringify(O.cleanMap({map:{'11':'North'}}).auto)==='{}');

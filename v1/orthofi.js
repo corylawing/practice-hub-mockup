@@ -61,6 +61,8 @@
       /* OrthoFi's adjustment report (createdOn) and kept NPE report (examDate), per their API notes (20/11/2026) */
       {id:'adjr', path:'/v1/practice-locations/adjustments', params:{'created-on-start-date':b.first, 'created-on-end-date':b.last}},
       {id:'pex', path:'/v1/practice-locations/patient-exams', params:{'exam-date-start-date':b.first, 'exam-date-end-date':b.last}, group:'keptExamFlag'},
+      /* OrthoFi's delinquent list: TODAY's (it takes no date) - one row per payment plan past due */
+      {id:'del', path:'/v1/practice-locations/delinquent', params:{}, count:[{name:'d30', min:{daysPastDue:30}}, {name:'d1', min:{daysPastDue:1}}]},
       {id:'disc', path:'/v1/practice-locations/discounts', params:{'created-on-start-date':b.first, 'created-on-end-date':b.last}},
       {id:'trm', path:'/v1/practice-locations/treatments', params:{'contract-signed-on-start-date':b.first, 'contract-signed-on-end-date':b.last}, group:'productLine'},
       {id:'trs', path:'/v1/practice-locations/treatments', params:{}, group:'treatmentStatusName'}
@@ -98,6 +100,7 @@
      up to the third decimal. An office with no Medicaid adds 0, so it's one rule for every office. */
   function ways(answers, ids, typed){
     const A=answers||{}, s=(id,k,f)=>tot(A[id], ids, k, f), plus=(a,b)=>a===null||b===null ? null : r2(a+b);
+    const minus=(a,b)=>a===null||b===null ? null : r2(a-Math.abs(b)), neg=a=>a===null ? null : r2(-Math.abs(a));
     const T=typed||{}, med=k=>(T[k]===undefined || T[k]===null || T[k]==='') ? 0 : (+T[k]||0);
     const W={
       gp:  [{way:'bh.production+mdp', label:'Business health production + Medicaid production', v:plus(s('bh','sum','production'), med('mdp'))},
@@ -109,10 +112,16 @@
             {way:'cd.collection', label:'Collection details (successful)', v:s('cd','csum','ok.collection')},
             {way:'cd.practice+mdc', label:'Collection details — practice collections + Medicaid', v:plus(s('cd','csum','ok.practiceCollections'), med('mdc'))},
             {way:'coll.gross', label:'Collections — gross', v:s('coll','sum','gross')}, {way:'coll.net', label:'Collections — net', v:s('coll','sum','net')}],
-      adj: [{way:'adjr.net', label:'Adjustment report — net', v:s('adjr','sum','netAdjustment')},
+      /* 20/11/2026 (Cory: "Should we be sure before we assume?"): Heather's gross production is the business health
+         dashboard's - so her adjustments and net production may be its write-offs too (totals, signed as write-offs) */
+      adj: [{way:'bh.writeoff', label:'Business health — total write-off', v:neg(s('bh','sum','totalWriteOff'))},
+            {way:'bh.writeoff+sns', label:'Business health — write-offs incl. signed-not-started', v:neg(plus(s('bh','sum','totalWriteOff'), s('bh','sum','signedNotStartedWriteOff')))},
+            {way:'adjr.net', label:'Adjustment report — net', v:s('adjr','sum','netAdjustment')},
             {way:'adjr.patient+ins', label:'Adjustment report — patient + insurance', v:plus(s('adjr','sum','patientAdjustment'), s('adjr','sum','insuranceAdjustment'))},
             {way:'prod.adjustments', label:'Production — adjustments', v:s('prod','sum','adjustments')}, {way:'coll.adjustments', label:'Collections — adjustments', v:s('coll','sum','adjustments')}],
-      np:  [{way:'prod.net', label:'Production — net', v:s('prod','sum','net')}],
+      np:  [{way:'bh.prod+mdp-writeoff', label:'Business health production + Medicaid − write-offs', v:minus(plus(s('bh','sum','production'), med('mdp')), s('bh','sum','totalWriteOff'))},
+            {way:'bh.prod+mdp-writeoff-sns', label:'Business health production + Medicaid − write-offs incl. signed-not-started', v:minus(minus(plus(s('bh','sum','production'), med('mdp')), s('bh','sum','totalWriteOff')), s('bh','sum','signedNotStartedWriteOff'))},
+            {way:'prod.net', label:'Production — net', v:s('prod','sum','net')}],
       ar:  [{way:'par+iar.outstanding', label:'Patient + insurance A/R (outstanding)', v:plus(s('par','sum','outstandingBalance'), s('iar','sum','outstandingBalance'))},
             {way:'par+iar.current', label:'Patient (current) + insurance A/R', v:plus(s('par','sum','currentBalance'), s('iar','sum','outstandingBalance'))},
             {way:'par+iar.rep', label:'Patient + insurance A/R (OrthoFi report claim statuses)', v:plus(s('par','sum','outstandingBalance'), s('iar','csum','rep.outstandingBalance'))},
@@ -127,10 +136,13 @@
       deln:[{way:'par.late30', label:'Accounts past due 30+ days', v:s('par','cnt','late30')}, {way:'par.late60', label:'Accounts past due 60+ days', v:s('par','cnt','late60')},
             {way:'par.late10', label:'Accounts past due at all', v:s('par','cnt','late10')},
             {way:'par.pat.late30', label:'Patients past due 30+ days', v:s('par','patc','late30')}, {way:'par.pat.late60', label:'Patients past due 60+ days', v:s('par','patc','late60')},
-            {way:'par.pat.late10', label:'Patients past due at all', v:s('par','patc','late10')}],
+            {way:'par.pat.late10', label:'Patients past due at all', v:s('par','patc','late10')},
+            {way:'del.d30', label:'Delinquent list (today) — plans 30+ days', v:s('del','cnt','d30')}, {way:'del.pat30', label:'Delinquent list (today) — patients 30+ days', v:s('del','patc','d30')},
+            {way:'del.d1', label:'Delinquent list (today) — plans past due', v:s('del','cnt','d1')}],
       ar90:[{way:'par.over90', label:'Patient A/R over 90 days', v:s('par','sum','pastDueOver90Day')},
             {way:'par.90+over90', label:'Patient A/R 90 days + over 90', v:plus(s('par','sum','pastDue90Day'), s('par','sum','pastDueOver90Day'))}],
-      npe: [{way:'pex.kept', label:'Kept NPE report — kept', v:groupCount(A.pex, ids, KEPT)}, {way:'pex.rows', label:'Kept NPE report — every exam', v:s('pex','n')},
+      npe: [{way:'bh.scheduled', label:'Business health — scheduled new patient exams', v:s('bh','sum','scheduledNewPatientExam')},
+            {way:'pex.kept', label:'Kept NPE report — kept', v:groupCount(A.pex, ids, KEPT)}, {way:'pex.rows', label:'Kept NPE report — every exam', v:s('pex','n')},
             {way:'exam.all', label:'Exams — all', v:s('exam','sum','all')}, {way:'npc.newPatient', label:'New patient count', v:s('npc','sum','newPatient')},
             {way:'bh.kept', label:'Business health — kept new patient exams', v:s('bh','sum','keptNewPatientExam')}],
       act: [{way:'trs.active', label:'Treatments in treatment / active', v:groupCount(A.trs, ids, ACTIVE)}, {way:'par.rows', label:'Patient accounts (all)', v:s('par','n')}],
