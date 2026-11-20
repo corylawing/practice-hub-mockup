@@ -270,12 +270,12 @@
   }
   @media (prefers-reduced-motion: reduce){ *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important} }
 </style>
-<script src="user.js?v=hc224"></script>
+<script src="user.js?v=hc225"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc224"></script>
-  <script src="gate.js?v=hc224"></script>
-  <script src="prodbook.js?v=hc224"></script>
-  <script src="monthly.js?v=hc224"></script>
+  <script src="store.js?v=hc225"></script>
+  <script src="gate.js?v=hc225"></script>
+  <script src="prodbook.js?v=hc225"></script>
+  <script src="monthly.js?v=hc225"></script>
 </head>
 <body>
 <div class="ribbon">MOCK-UP for Heather — made-up numbers. Try it as an office manager first, then as Heather.</div>
@@ -705,6 +705,9 @@
     const offs=PH.officeNames(), G=SET.goals;
     const sw=(on,act,label,extra)=>'<button type="button" class="tchip'+(on?' on':' off')+'" role="switch" aria-checked="'+on+'" onclick="'+act+'"'+(extra||'')+'><span class="sw"></span>'+label+'</button>';
     let h='<div class="stack">'+importCard();
+    /* ORTHOFI (20/11/2026): connect, match OrthoFi's locations to the offices, and check its numbers against Heather's -
+       orthofi.html, admins only (it shows the practice's real OrthoFi totals). */
+    if(!LIVE || (PH.isAdmin && PH.isAdmin(PH.realMe ? PH.realMe() : PH.me()))) h+='<div class="card"><h2>OrthoFi</h2><div class="sub">Connect to OrthoFi, say which of its locations is which office, and check its numbers against Heather’s before they fill themselves in.</div><a class="btn" href="orthofi.html" style="text-decoration:none;display:inline-flex">Open the OrthoFi connection →</a></div>';
     h+='<div class="card"><h2>Who reads the reports</h2><div class="sub">Like your email to the office managers and TCs today — without the email.</div>'+
       sw(SET.everyone, "MONTHLY.setEveryone("+(!SET.everyone)+")", SET.everyone ? 'Everyone reads every office' : 'Each office reads only its own')+
       '<div class="note" style="margin-top:10px">Only each office’s own people (and you) can type its numbers. Who can open the Monthly Report at all is set in Admin → Teams &amp; Access.</div></div>';
@@ -868,7 +871,7 @@
 })();
 </script>
 <script>PH.nav('monthly');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc224"></script>
+<script src="tour.js?v=hc225"></script>
 <script>
 Tour.init([
   {sel:'.statusline, .openbanner', title:'Who has sent it', body:'Every office’s report for the month, in one line: final, waiting for you, or late. No chasing eight Excel files.'},

@@ -508,6 +508,28 @@ I can confidently say that the chat feature should go next. The production thing
    Notes (noteField(f) - Talk types into whichever box has data-talkbox; Save while talking waits for the last words).
    Cory: no privacy reminder under the box ("I don't need that reminder please don't put it"). Saving adds fields only
    (persist/strip keep every field; consultsFrom reads every field). test/tc (185).
+45. **ORTHOFI CONNECTION (20/11/2026; hc225; server piece needs a deploy, nothing fills itself in yet).** Cory put OrthoFi's
+   ORTHOFI_CLIENT_ID + ORTHOFI_CLIENT_SECRET into Azure (Static Web App -> Environment variables -> Production) himself -
+   never chat, never git. OrthoFi auth = OAuth2 client credentials: form POST {grant_type:client_credentials, client_id,
+   client_secret} to https://auth.data.orthofi.com/oauth2/token (their email also names dev.auth... - we use the real one;
+   ORTHOFI_AUTH_URL / ORTHOFI_SCOPE settings exist if ever needed). Spec https://api.data.orthofi.com/v1/openapi.
+   SERVER: api-push/orthofi (POST /api/orthofi, ships with the site's API like /api/push). Practice sign-in required
+   (idtoken.js), Home-Brace origins only (sandbox included - it asks the live site). {ask:'locations'} -> id/name/practice/
+   city/state; {ask:'sum', path, locs, params, group, count} -> TOTALS per location only (sums + non-zero counts of number
+   fields, ids dropped; count rules {any:[fields]} / {min:{field:n}}; split only by GROUPS = fields that never hold a
+   person). NEVER a row, a patient/guardian name or id. Only ALLOWED paths + their date params. Pass cached till expiry,
+   answers 10 min. OrthoFi's error text never passed on (could echo the secret). test/orthofi (39, incl. the page side).
+   PAGE: v1/orthofi.html (admins; linked from Monthly Report -> Settings) + v1/orthofi.js (PH_ORTHOFI): 1) Connect -> list
+   OrthoFi's locations, guess each one's office by name/city (scalable: Admin -> Locations names), fix, Save -> ph_orthofi
+   {map:{locationId: office}} (an office can have 2 locations). 2) Check a month: 11 lists read (plan()), every box shows
+   EVERY WAY OrthoFi could fill it (ways(): e.g. A/R = patient+insurance outstanding / patient current+insurance / patient
+   only / A/R summary; delinquent = past due 30+ / 60+ / any; RIP = "Retainer Insurance Program" product line on contracts
+   signed that month; active = treatments in treatment), next to Heather's own number from her monitor-report Excel dropped
+   on the page (read on screen only, never saved; same reader as the import). A "Which way matches Heather" summary (NO
+   numbers - safe to screenshot) counts offices matched per way. PROVEN (orthofi.js) is EMPTY: no box fills itself in until
+   a way matches Heather to the dollar for every office (then: PROVEN + the nightly pull via monthly importOrthofi/
+   mergeOrthofi - never over typed, never a final month). Next: Cory OKs the deploy -> opens live v1/orthofi.html ->
+   Connect -> matches -> October + Heather's 8 files -> screenshot of the summary.
 44. **TASKS - give a task, they tick it off, you see who has (19/11/2026; hc223; SANDBOX ONLY until user.js TASKS_LIVE).**
    Cory: "leadership can assign a task to certain users who would get a notification and it would be in there today.
    Then leadership who assigned task can track which of their tasks are still open and which ones have be completed?";

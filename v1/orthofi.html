@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Home-Brace · OrthoFi connection</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" href="../assets/favicon.png?v=2" type="image/png">
+<meta name="theme-color" content="#0F2A4A">
+<style>
+  :root{
+    --navy:#0F2A4A; --navy2:#25456e; --teal:#149B96; --teal2:#2BC0B8; --teal-soft:#E5F4F3; --teal-600:#0F827E;
+    --ink:#1F2D3D; --soft:#56627A; --line:#E4E8EE; --canvas:#F4F6F8;
+    --good:#2E9E6B; --good-soft:#E7F4EE; --bad:#D7503A; --bad-soft:#FBEAE7; --amber:#F2A03D; --amber-soft:#FDF1E1; --amber-ink:#8a5208;
+    --shadow:0 1px 2px rgba(15,42,74,.06),0 6px 18px rgba(15,42,74,.06); --radius:14px; --maxw:1000px;
+  }
+  *{box-sizing:border-box}
+  [hidden]{display:none !important}
+  body{margin:0;font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--canvas);line-height:1.5;-webkit-font-smoothing:antialiased}
+  h1{color:var(--navy);margin:0;font-size:25px}
+  .ribbon{background:var(--amber);color:#3a2400;text-align:center;font-size:13px;font-weight:600;padding:6px 14px}
+  .hdr{background:var(--navy);color:#fff}
+  .hdr-in{max-width:var(--maxw);margin:0 auto;display:flex;align-items:center;gap:12px;padding:13px 20px}
+  .mark img{width:34px;height:34px;display:block;border-radius:50%}
+  .brand{font-weight:700;font-size:18px;color:#fff;line-height:1.1}
+  .brand i{font-style:normal;color:var(--teal2)}
+  .brand small{display:block;font-weight:500;font-size:12px;color:var(--navy-mute,#9fb4d0)}
+  .v1nav{background:var(--navy2)}
+  .v1nav-in{max-width:var(--maxw);margin:0 auto;display:flex;gap:2px;padding:0 12px;overflow-x:auto}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:22px 20px 110px}
+  .lede{color:var(--soft);font-size:14.5px;margin:4px 0 18px;max-width:640px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px;margin-bottom:16px}
+  .card h2{margin:0 0 4px;font-size:16px;color:var(--navy);display:flex;align-items:center;gap:10px}
+  .card h2 .n{width:24px;height:24px;border-radius:50%;background:var(--navy);color:#fff;font-size:12.5px;display:grid;place-items:center}
+  .sub{font-size:13px;color:var(--soft);margin-bottom:12px}
+  .btn{border:0;background:var(--teal);color:#fff;font:700 14px/1 inherit;font-family:inherit;padding:11px 16px;border-radius:10px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
+  .btn:hover{background:var(--teal-600)} .btn:disabled{opacity:.45;cursor:default}
+  .btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--line)}
+  .state{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:14px;margin-top:12px;padding:10px 13px;border-radius:10px;background:#f6f8fa}
+  .state.ok{background:var(--good-soft);color:#1f6e4a} .state.bad{background:var(--bad-soft);color:#93301f} .state.wait{background:var(--amber-soft);color:var(--amber-ink)}
+  table{border-collapse:collapse;width:100%;font-size:13.5px;font-variant-numeric:tabular-nums}
+  th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+  th{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--soft);background:#fafbfc}
+  .tw{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+  select,input[type=month]{padding:9px 11px;border:1px solid var(--line);border-radius:9px;font:600 14px inherit;font-family:inherit;color:var(--navy);background:#fff;max-width:100%}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .soft{color:var(--soft)}
+  .drop{display:flex;flex-direction:column;align-items:center;gap:4px;border:2px dashed #cdd6e0;border-radius:12px;padding:20px;cursor:pointer;background:#fafcfd;margin-top:12px;text-align:center}
+  .drop.over{border-color:var(--teal);background:var(--teal-soft)}
+  .way{display:flex;gap:8px;align-items:baseline;justify-content:space-between;padding:2px 0}
+  .way .l{color:var(--soft);font-size:12.5px}
+  .way.yes{color:#1f6e4a;font-weight:700} .way.yes .l{color:#1f6e4a}
+  .way.no .v{color:var(--ink)}
+  .office{margin-top:16px}
+  .office h3{margin:0 0 8px;font-size:15px;color:var(--navy)}
+  .tick{font-weight:800}
+  .sum td.c{font-weight:700;white-space:nowrap}
+  .pill{display:inline-block;border-radius:999px;padding:2px 9px;font-size:12px;font-weight:700;background:#eef1f5;color:var(--navy2)}
+  .pill.ok{background:var(--good-soft);color:#1f6e4a}
+  .note{font-size:12.5px;color:var(--soft);margin-top:10px}
+</style>
+<script src="user.js?v=hc225"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
+  <script src="store.js?v=hc225"></script>
+  <script src="gate.js?v=hc225"></script>
+  <script src="prodbook.js?v=hc225"></script>
+  <script src="monthly.js?v=hc225"></script>
+  <script src="orthofi.js?v=hc225"></script>
+</head>
+<body>
+<div class="ribbon" id="ribbon">Setting up OrthoFi — real OrthoFi totals, shown only on this screen. Nothing is saved but the office matches.</div>
+<header class="hdr"><div class="hdr-in"><span class="mark"><img src="../assets/logo-mark.png?v=2" alt="" width="34" height="34"></span><span class="brand">Home-<i>Brace</i><small>OrthoFi connection</small></span></div></header>
+<nav class="v1nav"><div class="v1nav-in" id="nav"></div></nav>
+<div class="wrap" id="wrap">
+  <h1>OrthoFi connection</h1>
+  <p class="lede">The Monthly Report’s OrthoFi numbers come from here. Home-Brace only ever receives <b>totals per office</b> — never a patient.</p>
+
+  <div class="card">
+    <h2><span class="n">1</span>Connect, and say which location is which office</h2>
+    <div class="sub">Home-Brace signs in to OrthoFi with the ID and secret in the live site’s settings.</div>
+    <button class="btn" id="connect">Connect to OrthoFi</button>
+    <div id="cstate"></div>
+    <div id="locs"></div>
+  </div>
+
+  <div class="card">
+    <h2><span class="n">2</span>Check a month against Heather’s numbers</h2>
+    <div class="sub">OrthoFi can be read more than one way for some boxes. This shows every way next to Heather’s Excel — the way that matches every office is the one Home-Brace will use.</div>
+    <div class="row"><input type="month" id="mon"><button class="btn" id="get">Get OrthoFi’s numbers</button><span class="soft" id="prog"></span></div>
+    <label class="drop" id="drop"><span style="font-size:22px">📄</span><b>Drop Heather’s monitor-report Excel files here</b><span class="soft">or <u>choose them</u> — read on this screen only, never saved</span><input type="file" accept=".xlsx" multiple hidden id="files"></label>
+    <div id="out"></div>
+  </div>
+</div>
+<script>
+(function(){
+  'use strict';
+  const O=window.PH_ORTHOFI, M=window.PH_MONTHLY, LIVE=!!(window.PH && PH.isLive && PH.isLive());
+  const el=id=>document.getElementById(id), esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const p2=n=>String(n).padStart(2,'0');
+  const FIELDS=M.FIELDS.filter(f=>f.from==='orthofi');
+  let LOCS=null, MAP={v:1, map:{}}, ANS=null, ANS_FOR='', HEATHER={}, BUSY=false;
+  const fmt=(f,v)=>v===null||v===undefined||v==='' ? '—' : f.t==='$' ? (v<0?'−':'')+'$'+Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2}) : Number(v).toLocaleString('en-US');
+
+  /* who: live = admins only (it shows the practice's real totals); the sandbox needs a real sign-in too (it asks the live site) */
+  function allowed(){ return !LIVE || (PH.isAdmin && PH.isAdmin(PH.realMe ? PH.realMe() : PH.me())); }
+  function gate(){ if(allowed()) return true; el('wrap').innerHTML='<h1>OrthoFi connection</h1><p class="lede">This page is for Home-Brace admins.</p>'; return false; }
+
+  function state(cls, html){ el('cstate').innerHTML='<div class="state '+cls+'">'+html+'</div>'; }
+  async function loadMap(){ try{ MAP=O.cleanMap(await PH_STORE.get(O.KEY)); }catch(_){ MAP=O.cleanMap(null); } }
+  async function connect(){
+    if(!gate()) return; state('wait','Signing in to OrthoFi…');
+    try{
+      const j=await O.ask({ask:'locations'}); LOCS=j.locations||[]; await loadMap();
+      const offs=PH.officeNames();
+      LOCS.forEach(l=>{ if(MAP.map[l.id]===undefined) MAP.map[l.id]=O.guessOffice(l, offs); });
+      state('ok','✓ <b>Connected to OrthoFi.</b> It has '+LOCS.length+' location'+(LOCS.length===1?'':'s')+'.');
+      drawLocs();
+    }catch(e){
+      const why={setup:'The live site doesn’t have the OrthoFi ID and secret yet (Azure → the Static Web App → Environment variables → Production).',
+        auth:'OrthoFi didn’t accept the ID and secret. Check they were pasted exactly (no spaces) — or ask OrthoFi if they are for their test system.',
+        signin:'Sign in to Home-Brace first.', missing:'The live site doesn’t have the OrthoFi piece yet — it needs a deploy.', net:'The live site couldn’t be reached.'}[e.code];
+      state('bad','✗ <b>Not connected.</b> '+esc(why || e.message));
+    }
+  }
+  function drawLocs(){
+    const offs=PH.officeNames(), used={};
+    Object.keys(MAP.map).forEach(id=>{ const o=MAP.map[id]; if(o) used[o]=(used[o]||0)+1; });
+    el('locs').innerHTML='<div class="tw" style="margin-top:12px"><table><thead><tr><th>OrthoFi location</th><th>Where</th><th>Home-Brace office</th></tr></thead><tbody>'+
+      LOCS.map(l=>'<tr><td><b>'+esc(l.name)+'</b><div class="soft" style="font-size:12px">'+esc(l.practice)+'</div></td><td>'+esc([l.city, l.state].filter(Boolean).join(', '))+'</td><td><select data-loc="'+l.id+'"><option value="">— not one of ours</option>'+
+        offs.map(o=>'<option '+(MAP.map[l.id]===o?'selected':'')+'>'+esc(o)+'</option>').join('')+'</select></td></tr>').join('')+'</tbody></table></div>'+
+      '<div class="row" style="margin-top:10px"><button class="btn" id="savemap">Save the matches</button><span class="soft" id="mapnote">'+
+        offs.filter(o=>!used[o]).map(o=>'No OrthoFi location for '+esc(o)).join(' · ')+'</span></div>';
+  }
+  async function saveMap(){
+    const by=(PH.name && PH.name(PH.realMe ? PH.realMe() : PH.me()))||'';
+    const r=await PH_STORE.update(O.KEY, cur=>{ const x=O.cleanMap(cur); Object.keys(MAP.map).forEach(id=>{ x.map[id]=MAP.map[id]; }); x.at=new Date().toISOString(); x.by=by; return x; });
+    el('mapnote').textContent=r && !r.error && !r.blocked ? '✓ Saved — '+new Date().toLocaleTimeString() : 'That didn’t save — try again';
+  }
+
+  /* ---------- a month ---------- */
+  function ym(){ const v=el('mon').value; const m=/^(\d{4})-(\d{2})$/.exec(v); return m ? {y:+m[1], m:+m[2]} : null; }
+  async function getMonth(){
+    if(!gate() || BUSY) return; const t=ym(); if(!t) return;
+    if(!LOCS) await connect(); if(!LOCS) return;
+    const ids=Object.keys(MAP.map).filter(id=>MAP.map[id]).map(Number); if(!ids.length){ el('prog').textContent='Match the locations to offices first (step 1).'; return; }
+    BUSY=true; el('get').disabled=true; const P=O.plan(t.y, t.m); let i=0;
+    try{ ANS=await O.month(t.y, t.m, ids, id=>{ i++; el('prog').textContent='Reading OrthoFi… '+i+' of '+P.length; }); ANS_FOR=t.y+'-'+p2(t.m); el('prog').textContent='Read '+P.length+' lists from OrthoFi.'; }
+    finally{ BUSY=false; el('get').disabled=false; }
+    draw();
+  }
+  async function readFiles(files){
+    for(const f of Array.from(files||[])){
+      try{ const book=await PH_BOOK.open(new Uint8Array(await f.arrayBuffer())), nm=book.names[0], r=M.fromSheet(book.sheets[nm].cells);
+        const toks=(f.name+' '+nm).toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+        const office=PH.officeNames().find(o=>o.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean).every(w=>toks.indexOf(w)>=0));
+        const year=(+((/20\d\d/.exec(f.name)||[])[0]))||new Date().getFullYear();
+        if(office) HEATHER[office]={year, months:r.months, file:f.name};
+      }catch(_){}
+    }
+    draw();
+  }
+  function draw(){
+    const t=ym(), out=el('out'); if(!ANS || !t || ANS_FOR!==t.y+'-'+p2(t.m)){ out.innerHTML=Object.keys(HEATHER).length ? '<div class="note">Excel read for: '+esc(Object.keys(HEATHER).join(', '))+'. Now press “Get OrthoFi’s numbers”.</div>' : ''; return; }
+    const errs=Object.keys(ANS).filter(k=>ANS[k] && ANS[k].error);
+    const offs=PH.officeNames().filter(o=>O.locsOf(MAP, o).length);
+    const tally={}; let boxes=0, matched=0;
+    const parts=offs.map(o=>{
+      const W=O.ways(ANS, O.locsOf(MAP, o)), H=HEATHER[o], hv=H && H.year===t.y ? (H.months[p2(t.m)]||{}) : null;
+      const rows=FIELDS.map(f=>{
+        const ws=W[f.k]||[], h=hv ? hv[f.k] : undefined, has=h!==undefined && h!==null && h!=='';
+        let any=false;
+        const lines=ws.map(w=>{ const yes=has && O.same(f.k, w.v, +h); if(yes) any=true; tally[f.k]=tally[f.k]||{}; tally[f.k][w.way]=tally[f.k][w.way]||{label:w.label, yes:0, of:0}; if(has){ tally[f.k][w.way].of++; if(yes) tally[f.k][w.way].yes++; }
+          return '<div class="way '+(has ? (yes?'yes':'no') : '')+'"><span class="l">'+esc(w.label)+'</span><span class="v">'+fmt(f, w.v)+(yes?' <span class="tick">✓</span>':'')+'</span></div>'; }).join('') || '<span class="soft">OrthoFi has nothing for this yet</span>';
+        if(has){ boxes++; if(any) matched++; }
+        return '<tr><td><b>'+esc(f.n)+'</b></td><td>'+(has ? fmt(f, +h) : '<span class="soft">—</span>')+'</td><td>'+lines+'</td></tr>';
+      }).join('');
+      return '<div class="office"><h3>'+esc(o)+(H ? ' <span class="pill">Excel: '+esc(H.file)+'</span>' : '')+'</h3><div class="tw"><table><thead><tr><th style="width:26%">Box</th><th style="width:18%">Heather</th><th>OrthoFi, each way it can be read</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+    });
+    /* the summary Cory can screenshot - which way matched how many offices; no numbers in it */
+    const sum=FIELDS.map(f=>{ const T=tally[f.k]||{}, ks=Object.keys(T).filter(k=>T[k].of).sort((a,b)=>T[b].yes-T[a].yes);
+      return '<tr><td><b>'+esc(f.n)+'</b></td><td>'+(ks.length ? ks.map(k=>'<span class="pill'+(T[k].yes===T[k].of?' ok':'')+'">'+esc(T[k].label)+': '+T[k].yes+' of '+T[k].of+'</span>').join(' ') : '<span class="soft">No Excel number to check against</span>')+'</td></tr>'; }).join('');
+    out.innerHTML=(errs.length ? '<div class="state bad">Some lists didn’t read: '+esc(errs.map(k=>k+' ('+ANS[k].error+')').join(' · '))+'</div>' : '')+
+      (Object.keys(HEATHER).length ? '<div class="office"><h3>Which way matches Heather <span class="pill'+(boxes && matched===boxes?' ok':'')+'">'+matched+' of '+boxes+' boxes match a way</span></h3><div class="tw"><table class="sum"><tbody>'+sum+'</tbody></table></div><div class="note">This summary has no numbers in it — it’s the part to screenshot for Claude.</div></div>' : '<div class="note">Drop Heather’s Excel files above to see which way matches.</div>')+
+      parts.join('');
+  }
+
+  /* ---------- wiring ---------- */
+  document.addEventListener('click', e=>{ if(e.target.id==='connect') connect(); else if(e.target.id==='get') getMonth(); else if(e.target.id==='savemap') saveMap(); });
+  document.addEventListener('change', e=>{ if(e.target.dataset && e.target.dataset.loc){ MAP.map[e.target.dataset.loc]=e.target.value; } else if(e.target.id==='files') readFiles(e.target.files); else if(e.target.id==='mon') draw(); });
+  const dz=el('drop'); dz.addEventListener('dragover', e=>{ e.preventDefault(); dz.classList.add('over'); }); dz.addEventListener('dragleave', ()=>dz.classList.remove('over'));
+  dz.addEventListener('drop', e=>{ e.preventDefault(); dz.classList.remove('over'); readFiles([...(e.dataTransfer.files||[])].filter(f=>/\.xlsx$/i.test(f.name))); });
+  const now=new Date(), lm=new Date(now.getFullYear(), now.getMonth()-1, 1); el('mon').value=lm.getFullYear()+'-'+p2(lm.getMonth()+1); el('mon').max=now.getFullYear()+'-'+p2(now.getMonth()+1);
+  if(!LIVE) el('ribbon').textContent='SANDBOX — this page asks the LIVE site (your real sign-in) for real OrthoFi totals. Shown on this screen only; only the office matches are saved (in this browser).';
+  document.addEventListener('ph-identity', ()=>{ if(LIVE) gate(); });
+})();
+</script>
+<script>PH.nav('admin');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
+</body>
+</html>
