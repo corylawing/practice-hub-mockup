@@ -425,8 +425,9 @@
     });
     return out;
   }
-  function alertDue(t){ return {title:'Due today', body:t.title+(t.byName ? ' — from '+first(t.byName) : '')}; }
-  function alertLate(t, today){ return {title:'Still to do', body:t.title+' — '+dueText(t.due, today).replace('Overdue · ','')+(t.byName ? ' · from '+first(t.byName) : '')}; }
+  const selfMade=t=>{ const p=people(t); return p.length>0 && p.every(x=>x.id===t.by); };      // a reminder someone made for themselves
+  function alertDue(t){ return {title:'Due today', body:t.title+(t.byName && !selfMade(t) ? ' — from '+first(t.byName) : '')}; }
+  function alertLate(t, today){ return {title:'Still to do', body:t.title+' — '+dueText(t.due, today).replace('Overdue · ','')+(t.byName && !selfMade(t) ? ' · from '+first(t.byName) : '')}; }
 
   /* ---------- the sandbox's made-up practice ---------- */
   /* Made-up people and tasks for the sandbox (never the live site). Offices are the practice's own list as it is today, so

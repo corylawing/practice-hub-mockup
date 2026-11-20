@@ -508,6 +508,17 @@ I can confidently say that the chat feature should go next. The production thing
    Notes (noteField(f) - Talk types into whichever box has data-talkbox; Save while talking waits for the last words).
    Cory: no privacy reminder under the box ("I don't need that reminder please don't put it"). Saving adds fields only
    (persist/strip keep every field; consultsFrom reads every field). test/tc (185).
+54. **TASKS: WHO CAN ASSIGN + REMINDERS FOR EVERYONE (20/11/2026; sandbox).** Cory: "anyone who is not regular staff,
+    financial coordinators or TCs should be able to assign tasks" -> DEPT_CAN defaults: Office Managers, Clinic Managers,
+    Doctors, Marketing get tasks:'edit' (with Executive, Leadership; Admin 'manage'). Staff / FC team / TCs stay "Gets
+    tasks". Defaults only apply where Heather hasn't set the team in Admin -> Teams & Access (c.tasks===undefined) - if a
+    team still can't, she flips it there. "Can you give the ability to assign a task to yourself as a reminder" -> people
+    who can't assign get "＋ Reminder for me": same box, FORM.self - only Me (typed names ignored, no ＋ Add/groups/ideas),
+    "Add to my tasks", due-day + late alerts to themselves (alertDue/alertLate drop "from <me>" on a self-made one).
+    TO DO (queued, not built): REPEATING TASKS - Cory: "might help although I can't think of what they would be right now".
+    DEPLOY OUTAGE (same night): a deploy whose server package was identical left /api stopped ("Function host is not
+    running", ~45 min - alerts, chat alerts, OrthoFi). Fixed by a changed package; deploy-production.sh now stamps a
+    fresh version on the staged api/package.json every deploy and checks /api/orthofi answers 403 afterwards.
 53. **TASKS WORDING + TASK FOR YOURSELF; THE 🎤 ONLY ON ITS BOX; EMOJI SEARCH ON A PHONE (20/11/2026; hc233-hc234; LIVE).**
     Cory: "the new task text on the button doesn't look the same as throughout the app" - tasks.html (and orthofi.html)
     had `font:700 14px/1 inherit` - INVALID (inherit can't sit in the font shorthand), the browser drops the whole rule ->

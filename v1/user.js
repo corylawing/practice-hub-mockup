@@ -174,11 +174,11 @@
     'admin':                      {dashboard:'view',production:'manage',schedule:'edit',marketing:'edit',documents:'manage',team:'view',admin:'manage',tc:'manage',payroll:'manage',meetings:'edit',monthly:'manage',tasks:'manage'},
     'executive team':             {dashboard:'view',production:'edit',  schedule:'edit',marketing:'edit',documents:'manage',team:'view',admin:'none',tc:'manage',monthly:'view',tasks:'edit'},
     'leadership team':            {dashboard:'view',production:'edit',  schedule:'edit',marketing:'edit',documents:'manage',team:'view',admin:'none',tc:'manage',monthly:'view',tasks:'edit'},
-    'office managers':            {dashboard:'view',production:'edit',  schedule:'edit',marketing:'view',documents:'edit',  team:'view',admin:'none',tc:'view',meetings:'edit',monthly:'edit'},
-    'clinic managers':            {dashboard:'view',production:'view',  schedule:'edit',marketing:'view',documents:'edit',  team:'view',admin:'none',tc:'none'},
-    'doctors':                    {dashboard:'view',production:'none',  schedule:'view',marketing:'none',documents:'view',  team:'view',admin:'none',tc:'none'},
+    'office managers':            {dashboard:'view',production:'edit',  schedule:'edit',marketing:'view',documents:'edit',  team:'view',admin:'none',tc:'view',meetings:'edit',monthly:'edit',tasks:'edit'},
+    'clinic managers':            {dashboard:'view',production:'view',  schedule:'edit',marketing:'view',documents:'edit',  team:'view',admin:'none',tc:'none',tasks:'edit'},
+    'doctors':                    {dashboard:'view',production:'none',  schedule:'view',marketing:'none',documents:'view',  team:'view',admin:'none',tc:'none',tasks:'edit'},
     'tcs':                        {dashboard:'none',production:'none',  schedule:'view',marketing:'none',documents:'add',   team:'view',admin:'none',tc:'edit',monthly:'view'},
-    'marketing team':             {dashboard:'none',production:'none',  schedule:'view',marketing:'edit',documents:'edit',  team:'view',admin:'none',tc:'none'},
+    'marketing team':             {dashboard:'none',production:'none',  schedule:'view',marketing:'edit',documents:'edit',  team:'view',admin:'none',tc:'none',tasks:'edit'},
     'financial coordinator team': {dashboard:'view',production:'edit',  schedule:'view',marketing:'none',documents:'view',  team:'view',admin:'none',tc:'none'},
     'staff':                      {dashboard:'none',production:'none',  schedule:'view',marketing:'none',documents:'view',  team:'view',admin:'none',tc:'none'}
   };

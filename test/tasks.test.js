@@ -201,7 +201,9 @@ const read=f=>fs.readFileSync(path.join(__dirname,'..','v1',f),'utf8');
 const U=read('user.js'), A=read('admin.html'), HOME=read('home.html'), P=read('tasks.html');
 t('ON on the live site since 20/11/2026 (Heather: push tasks to production); the preview switch stays', /const TASKS_LIVE=true;/.test(U) && /function tasksOn\(\)\{ if\(env\(\)!=='live' \|\| TASKS_LIVE\) return true;/.test(U) && /taskspreview/.test(U));
 t('everyone gets the Tasks tab (the switch decides, not a team)', /\{k:'tasks',\s+n:'[^']*Tasks',\s+href:'tasks\.html',\s+show:\(\)=>tasksOn\(\)\}/.test(U));
-t('who can GIVE tasks starts as Admin (everything), Executive and Leadership (can give)', /'admin':[^\n]*tasks:'manage'/.test(U) && /'executive team':[^\n]*tasks:'edit'/.test(U) && /'leadership team':[^\n]*tasks:'edit'/.test(U) && /c\.tasks===undefined && DEPT_CAN\[d\]/.test(U));
+t('who can GIVE tasks by default: Admin (everything); Executive, Leadership, Office Managers, Clinic Managers, Doctors, Marketing (can give); not Staff, FCs or TCs (Cory 20/11)',
+  /'admin':[^\n]*tasks:'manage'/.test(U) && ['executive team','leadership team','office managers','clinic managers','doctors','marketing team'].every(d=>new RegExp("'"+d+"':[^\\n]*tasks:'edit'").test(U)) &&
+  ['tcs','financial coordinator team','staff'].every(d=>!new RegExp("'"+d+"':[^\\n]*tasks:").test(U)) && /c\.tasks===undefined && DEPT_CAN\[d\]/.test(U));
 t('Heather decides in Teams & Access: Gets tasks / Can give / Everything (off the grid while Tasks is off)', /PH\.tasksOn && !PH\.tasksOn\(\)\) \? \[\] : \[\{k:'tasks'/.test(A) && /tasks:\['none','edit','manage'\]/.test(A) && /tasks:\{none:'Gets tasks',edit:'Can give',manage:'Everything'\}/.test(A));
 t('the bell keeps who a notice is for (e.to) and shows it to them only', /to:arr\(e\.to\)/.test(U) && /if\(Array\.isArray\(e\.to\) && e\.to\.length\)\{/.test(U));
 t('the page and Home load the rules', /<script src="tasks\.js\?v=hc\d+"><\/script>/.test(P) && /<script src="tasks\.js\?v=hc\d+"><\/script>/.test(HOME));
@@ -223,6 +225,10 @@ t('no bell or alert to yourself; a task only for you says "Added to your tasks" 
 t('the button says "New task" and the sheet "Assign to ..." (not "Give")', /＋ New task<\/button>/.test(P) && /'Assign to '/.test(P) && !/Give a task|Give the task|Give it to/.test(P));
 t('no broken "font:... inherit" rules on the page (the browser drops them: thin, small button text)', !/font:\s*\d{3}[^;}]*\binherit/.test(P));
 t('the main button matches the rest of the app (700, 14.5px)', /\.btn\{[^}]*font-weight:700;font-size:14\.5px/.test(P));
+t('everyone can make a reminder for themselves: "＋ Reminder for me" for people who can’t assign, only "Me" on it, no names or groups', /textContent=can\('edit'\) \? '＋ New task' : '＋ Reminder for me'/.test(P) && /FORM\.self=!can\('edit'\); if\(FORM\.self\) FORM\.picks\.people=\[WHO\.key\]/.test(P) && /if\(FORM\.self\)\{ picks\.people=\[WHO\.key\]; picks\.offices=\[\]; picks\.teams=\[\]; picks\.all=false; \}/.test(P));
+{ const own=R.create({title:'Call the lab', due:TODAY, by:'emery@example.com', byName:'Emery Elm', people:[{id:'emery@example.com', name:'Emery Elm'}], today:TODAY}, NOW);
+  t('your own reminder’s alert doesn’t say "from" you', R.alertDue(own).body==='Call the lab' && !/from/.test(R.alertLate(own, TODAY).body));
+  t('...a task from someone else still says who it’s from', /from Emery/.test(R.alertDue(R.create({title:'X', due:TODAY, by:'emery@example.com', byName:'Emery Elm', people:[{id:'avery@example.com', name:'Avery Alder'}], today:TODAY}, NOW)).body)); }
 t('the demo is made-up people only', R.demo(['North'], NOW).people.every(p=>/@example\.com$/.test(p.email)));
 
 console.log(ok.map(s=>'  PASS  '+s).join('\n'));
