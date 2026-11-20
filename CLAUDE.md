@@ -508,6 +508,18 @@ I can confidently say that the chat feature should go next. The production thing
    Notes (noteField(f) - Talk types into whichever box has data-talkbox; Save while talking waits for the last words).
    Cory: no privacy reminder under the box ("I don't need that reminder please don't put it"). Saving adds fields only
    (persist/strip keep every field; consultsFrom reads every field). test/tc (185).
+56. **ORTHOFI: SEPTEMBER CHECK + HEATHER'S ANSWERS (20/11/2026).** September (same 8 files): gross production =
+    business health production + Medicaid production matches TO THE DOLLAR in Sept AND Oct for Carlsbad, Clovis, Hobbs,
+    San Angelo, Lubbock, Mansfield. Both Las Cruces offices off in Sept (LCO ~0.94, FOLC ~0.96; their A/R/collections far
+    off - mid-move to OrthoFi); LCO matched in Oct. A/R (OrthoFi report statuses) exact both months: San Angelo, Lubbock,
+    Mansfield; Carlsbad/Hobbs 1-4% under. Collections (net + Medicaid) exact both months: Clovis, San Angelo.
+    Heather (paste): "1. FOLC does also include money from their PMS 2. The OMs should type that in, I can't see it
+    because I dont have proper access to their PMS 3. Medicaid is paid in full ... so there is no outstanding A/R for
+    them. 4. I get it [collections] from the monthly balance sheet." => collections are NOT an OrthoFi number (stay typed);
+    the Carlsbad/Hobbs A/R gap is NOT Medicaid (unexplained); old-PMS amounts are typed by each OM (production + A/R),
+    Home-Brace adds them to OrthoFi's part. Proposed to Cory (not built, waiting on "go"): gross production fills itself
+    for every office = OrthoFi + Medicaid (typed) + old system (OM-typed; a per-office setting, empty = 0); A/R fills
+    itself only where proven (SA, Lubbock, Mansfield) + old system; everything else typed as today.
 55. **REMEMBERED SIGN-IN, IPHONE APP BADGE, GLASS BAR (20/11/2026; hc236; LIVE - Cory: "deploy").**
     SIGN-IN (Cory: "every time it asks you to sign in even if you close ... With Salesforce ... it remembers"): gate.js
     MSAL cacheLocation was 'sessionStorage' - gone when the tab/browser/phone app closed, and every new tab signed out.
