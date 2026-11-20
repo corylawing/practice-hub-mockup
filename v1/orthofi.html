@@ -66,13 +66,13 @@
   .achip.on{background:var(--teal);border-color:var(--teal);color:#fff}
   .achip small{font-weight:600;font-size:11.5px;opacity:.85}
 </style>
-<script src="user.js?v=hc238"></script>
+<script src="user.js?v=hc239"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc238"></script>
-  <script src="gate.js?v=hc238"></script>
-  <script src="prodbook.js?v=hc238"></script>
-  <script src="monthly.js?v=hc238"></script>
-  <script src="orthofi.js?v=hc238"></script>
+  <script src="store.js?v=hc239"></script>
+  <script src="gate.js?v=hc239"></script>
+  <script src="prodbook.js?v=hc239"></script>
+  <script src="monthly.js?v=hc239"></script>
+  <script src="orthofi.js?v=hc239"></script>
 </head>
 <body>
 <div class="ribbon" id="ribbon">Setting up OrthoFi — real OrthoFi totals, shown only on this screen. Nothing is saved but the office matches.</div>
@@ -200,7 +200,7 @@
         const ws=W[f.k]||[], h=hv ? hv[f.k] : undefined, has=h!==undefined && h!==null && h!=='';
         let any=false;
         const lines=ws.map(w=>{ const yes=has && O.same(f.k, w.v, +h); if(yes) any=true;
-          if(has && O.AUTO[f.k] && w.way===(f.k==='gp' ? 'bh.production+mdp' : O.AUTO[f.k].way)){ (MATCH[f.k]=MATCH[f.k]||{})[o]=yes; } tally[f.k]=tally[f.k]||{}; tally[f.k][w.way]=tally[f.k][w.way]||{label:w.label, yes:0, of:0}; if(has){ tally[f.k][w.way].of++; if(yes) tally[f.k][w.way].yes++; }
+          if(has && O.AUTO[f.k] && w.way===O.AUTO[f.k].check){ (MATCH[f.k]=MATCH[f.k]||{})[o]=yes; } tally[f.k]=tally[f.k]||{}; tally[f.k][w.way]=tally[f.k][w.way]||{label:w.label, yes:0, of:0}; if(has){ tally[f.k][w.way].of++; if(yes) tally[f.k][w.way].yes++; }
           return '<div class="way '+(has ? (yes?'yes':'no') : '')+'"><span class="l">'+esc(w.label)+'</span><span class="v">'+fmt(f, w.v)+(yes?' <span class="tick">✓</span>':'')+'</span></div>'; }).join('') || '<span class="soft">OrthoFi has nothing for this yet</span>';
         if(has){ boxes++; if(any) matched++; }
         return '<tr><td><b>'+esc(f.n)+'</b></td><td>'+(has ? fmt(f, +h) : '<span class="soft">—</span>')+'</td><td>'+lines+'</td></tr>';

@@ -53,14 +53,16 @@
        can't see it"). Typed by the office manager from their old practice software; Home-Brace adds each to OrthoFi's
        part (PARTS below). Only offices on the Settings list get them - when an office's old system is done, it comes off. */
     {k:'osp',  n:'Old system production',              t:'$', from:'pms', flow:true, oldsys:true, help:'From your old practice software — added to OrthoFi’s production'},
+    {k:'osc',  n:'Old system collections',             t:'$', from:'pms', flow:true, oldsys:true, help:'From your old practice software — added to OrthoFi’s collections'},
     {k:'osar', n:'Old system A/R',                     t:'$', from:'pms', oldsys:true, help:'From your old practice software — added to OrthoFi’s A/R'}];
   const BY={}; FIELDS.forEach(f=>{ BY[f.k]=f; });
   /* A BOX THAT IS OrthoFi + WHAT THE OFFICE TYPES (20/11/2026, matched to the dollar against Heather's sheets): gross
-     production = OrthoFi's business health production + Medicaid production + old system production; A/R = OrthoFi's
+     production = OrthoFi's business health production + Medicaid production + old system production; gross collections =
+     OrthoFi's collection details (successful payments) + Medicaid collections + old system collections; A/R = OrthoFi's
      A/R + old system A/R (Heather: Medicaid is paid in full, so no Medicaid A/R). OrthoFi's own part is kept in ofp; the
      box is worked out from it every time the month is read or saved - so typing the Medicaid or old-system number later
      updates the total by itself. An office without Medicaid or an old system adds 0. */
-  const PARTS={gp:['mdp','osp'], ar:['osar']};
+  const PARTS={gp:['mdp','osp'], gc:['mdc','osc'], ar:['osar']};
   /* worked out, never typed - the old sheet's ratios, against Heather's goals */
   const CALC=[
     {k:'colpct', n:'Collection %',  t:'%', of:v=>v.gp ? v.gc/v.gp*100 : null, goal:'col'},

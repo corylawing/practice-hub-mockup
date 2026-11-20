@@ -270,13 +270,13 @@
   }
   @media (prefers-reduced-motion: reduce){ *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important} }
 </style>
-<script src="user.js?v=hc238"></script>
+<script src="user.js?v=hc239"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc238"></script>
-  <script src="gate.js?v=hc238"></script>
-  <script src="prodbook.js?v=hc238"></script>
-  <script src="monthly.js?v=hc238"></script>
-  <script src="orthofi.js?v=hc238"></script>
+  <script src="store.js?v=hc239"></script>
+  <script src="gate.js?v=hc239"></script>
+  <script src="prodbook.js?v=hc239"></script>
+  <script src="monthly.js?v=hc239"></script>
+  <script src="orthofi.js?v=hc239"></script>
 </head>
 <body>
 <div class="ribbon">MOCK-UP for Heather — made-up numbers. Try it as an office manager first, then as Heather.</div>
@@ -372,7 +372,7 @@
                  npe:Math.round((40+R()*70)*frac), act:pts+Math.round((R()-0.5)*30), disc:gp*(0.01+R()*0.02)};
         v.np=v.gp+v.adj; v.ar90=v.ar*(0.012+R()*0.035);
         v.rip=Math.round((4+R()*20)*frac);
-        if(!open && M.DEF_OLDSYS.indexOf(o)>=0){ v.osp=gp*(0.04+R()*0.06); v.osar=v.ar*(0.05+R()*0.08); }   // made up: the old system's share
+        if(!open && M.DEF_OLDSYS.indexOf(o)>=0){ v.osp=gp*(0.04+R()*0.06); v.osc=v.gc*(0.04+R()*0.06); v.osar=v.ar*(0.05+R()*0.08); }   // made up: the old system's share
         if(!open){ v.oecd=5+R()*12; v.appts=Math.round(600+R()*500); v.cmfa=Math.round(v.appts*(0.03+R()*0.06));
           if(med.indexOf(o)>=0){ v.mds=Math.round(8+R()*26); v.mdd=Math.round(v.mds*(0.05+R()*0.22)); v.mda=Math.max(0,v.mds-v.mdd-Math.round(R()*3));
             v.mdb=Math.round(v.mda*(0.6+R()*0.35)); v.mdp=25000+R()*85000; v.mdc=v.mdp*(0.75+R()*0.25); } }
@@ -381,7 +381,7 @@
           if(f.from==='orthofi') r.ofv[f.k]=v[f.k]; });
         if(open) r.of=NOW.toISOString();
         /* OrthoFi's own part of the two boxes made of OrthoFi + what's typed (so the sandbox shows "OrthoFi … + typed …") */
-        r.ofp={gp:v.gp-(r.v.mdp||0)-(r.v.osp||0), ar:v.ar-(r.v.osar||0)};
+        r.ofp={gp:v.gp-(r.v.mdp||0)-(r.v.osp||0), gc:v.gc-(r.v.mdc||0)-(r.v.osc||0), ar:v.ar-(r.v.osar||0)};
         const lastDone=y===LM.y && m===LM.m;
         if(!open && !lastDone) r.final={at:new Date(y, m, 8).toISOString(), by:'Heather'};
         if(lastDone){
@@ -398,7 +398,7 @@
     return M.cleanYear(rec);
   }
   /* the sandbox's made-up years are remade when their story changes (DEMO_V) - real years never */
-  const DEMO_V='4';
+  const DEMO_V='5';
   async function loadYear(y, fresh){
     if(DATA[y] && !fresh) return DATA[y];
     let rec=null; try{ rec=await PH_STORE.get(M.KEY(y)); }catch(_){}
@@ -679,7 +679,7 @@
       '<button class="btn ghost" style="margin-left:auto" onclick="MONTHLY.csv()">⬇ Download for Excel</button></div>';
     h+=sheet(main, vals, y, true);
     if(hasMed) h+='<h2 style="font-size:16px;color:var(--navy);margin:22px 0 10px">Medicaid'+(all?' — the Medicaid offices together':'')+'</h2>'+sheet(medF, vals, y, false);
-    if(hasOld) h+='<h2 style="font-size:16px;color:var(--navy);margin:22px 0 10px">Old system'+(all?' — those offices together':'')+' <span class="soft" style="font-weight:500;font-size:13px">— already inside gross production and A/R above</span></h2>'+sheet(oldF, vals, y, false);
+    if(hasOld) h+='<h2 style="font-size:16px;color:var(--navy);margin:22px 0 10px">Old system'+(all?' — those offices together':'')+' <span class="soft" style="font-weight:500;font-size:13px">— already inside gross production, collections and A/R above</span></h2>'+sheet(oldF, vals, y, false);
     return h+'<p class="note" style="margin-top:10px">Quarter and year rows average the months, like the old sheet; the YTD row adds up the month’s activity (balances and percentages aren’t added). Ratios update the moment a number changes.</p>';
   }
   function sheet(cols, vals, y, withGoals){
@@ -733,7 +733,7 @@
     h+='<div class="card"><h2>Offices that bill Medicaid</h2><div class="sub">These offices get the Medicaid boxes. A new office added in Admin → Locations shows up here by itself.</div><div class="ochips">'+
       offs.map(o=>{ const on=SET.medicaid.indexOf(o)>=0, c=(PH.colorForOffice(o)||{}).dot||'#94a3b8';
         return sw(on, "MONTHLY.setMed(this.dataset.o)", '<i class="odot" style="background:'+esc(c)+'"></i>'+esc(o), ' data-o="'+esc(o)+'"'); }).join('')+'</div></div>';
-    h+='<div class="card"><h2>Offices still on an old system</h2><div class="sub">Their office manager types the old system’s production and A/R; Home-Brace adds them to OrthoFi’s. Switch an office off once its old system is done.</div><div class="ochips">'+
+    h+='<div class="card"><h2>Offices still on an old system</h2><div class="sub">Their office manager types the old system’s production, collections and A/R; Home-Brace adds them to OrthoFi’s. Switch an office off once its old system is done.</div><div class="ochips">'+
       offs.map(o=>{ const on=SET.oldsys.indexOf(o)>=0, c=(PH.colorForOffice(o)||{}).dot||'#94a3b8';
         return sw(on, "MONTHLY.setOld(this.dataset.o)", '<i class="odot" style="background:'+esc(c)+'"></i>'+esc(o), ' data-o="'+esc(o)+'"'); }).join('')+'</div></div>';
     h+='<div class="card"><h2>When reports are due</h2><div class="sub">Offices see the due date on their report, and you see who’s late.</div>'+
@@ -915,7 +915,7 @@
 })();
 </script>
 <script>PH.nav('monthly');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc238"></script>
+<script src="tour.js?v=hc239"></script>
 <script>
 Tour.init([
   {sel:'.statusline, .openbanner', title:'Who has sent it', body:'Every office’s report for the month, in one line: final, waiting for you, or late. No chasing eight Excel files.'},

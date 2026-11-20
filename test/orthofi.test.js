@@ -180,16 +180,17 @@ const call=async (body, origin)=>{ const ctx={}; await F(ctx, {method:'POST', he
     t('adjustments can be read from OrthoFi’s adjustment report; new patient exams from its kept NPE report', W3.adj.some(w=>w.way==='adjr.net' && w.v===-120.5) && W3.adj.some(w=>w.way==='adjr.patient+ins' && w.v===-120.5) &&
       W3.npe.some(w=>w.way==='pex.kept' && w.v===2) && W3.npe.some(w=>w.way==='pex.rows' && w.v===3)); }
   /* 20/11/2026: proven to the dollar (Sept + Oct) - and still nothing fills itself in for an office until it is ticked */
-  t('proven: gross production = business health production, A/R = patient + insurance (report claim statuses) - nothing else', JSON.stringify(O.PROVEN)==='{"gp":"bh.production","ar":"par+iar.rep"}');
+  t('proven: gross production = business health production, collections = collection details (successful payments), A/R = patient + insurance (report claim statuses) - nothing else', JSON.stringify(O.PROVEN)==='{"gp":"bh.production","gc":"cd.collection","ar":"par+iar.rep"}');
   t('...and no office fills itself in until it is ticked on the OrthoFi page', JSON.stringify(O.autoOffices(O.cleanMap(null)))==='{}' && JSON.stringify(O.cleanMap({map:{'11':'North'}}).auto)==='{}');
   { const MAP=O.cleanMap({map:{'11':'North','12':'North','13':'South','14':''}, auto:{gp:['North','South','Nowhere'], ar:['North'], gc:['North'], zz:['x']}});
-    t('ticks are kept only for the proven boxes; an office with no OrthoFi location is left out', Object.keys(MAP.auto).join()==='gp,ar' && JSON.stringify(O.autoOffices(MAP))==='{"North":["gp","ar"],"South":["gp"]}');
+    t('ticks are kept only for the proven boxes; an office with no OrthoFi location is left out', Object.keys(MAP.auto).join()==='gp,gc,ar' && JSON.stringify(O.autoOffices(MAP))==='{"North":["gp","gc","ar"],"South":["gp"]}');
     const ANS2={bh:{rows:2, by:{'11':{n:1,sum:{production:1000.5},nz:{},cnt:{},groups:{}},'12':{n:1,sum:{production:500},nz:{},cnt:{},groups:{}},'13':{n:1,sum:{production:70},nz:{},cnt:{},groups:{}}}},
       par:{rows:1, by:{'11':{n:1,sum:{outstandingBalance:2000},nz:{},cnt:{},groups:{}}}}, iar:{rows:1, by:{'11':{n:1,sum:{},nz:{},cnt:{},csum:{rep:{sum:{outstandingBalance:300},nz:{}}},groups:{}}}}};
+    t('collections: OrthoFi’s part is the successful payments in collection details', O.autoParts({cd:{rows:1, by:{'11':{n:2,sum:{},nz:{},cnt:{},csum:{ok:{sum:{collection:812.25},nz:{}}},groups:{}}}}}, [11], ['gc']).gc===812.25);
     t('OrthoFi’s part for an office: its locations added up, only the boxes it is ticked for', JSON.stringify(O.autoParts(ANS2,[11,12],['gp','ar']))==='{"gp":1500.5,"ar":2300}' && JSON.stringify(O.autoParts(ANS2,[13],['gp']))==='{"gp":70}');
     const asked=[]; global.PH_ORTHOFI.ask=async q=>{ asked.push(q.id+':'+q.locs.join('+')); return ANS2[q.id]; };
     const res=await global.PH_ORTHOFI.autoMonth(2026, 10, MAP);
-    t('the fill asks OrthoFi only for what the ticked boxes need (3 lists, not 11), for the ticked offices’ locations', asked.join()==='par:11+12+13,iar:11+12+13,bh:11+12+13');
+    t('the fill asks OrthoFi only for what the ticked boxes need (4 lists, not 15), for the ticked offices’ locations', asked.join()==='par:11+12+13,iar:11+12+13,bh:11+12+13,cd:11+12+13');
     t('...and gives the Monthly Report each ticked office’s parts', JSON.stringify(res.byOffice)==='{"North":{"gp":1500.5,"ar":2300},"South":{"gp":70}}' && res.errors.length===0);
     delete global.PH_ORTHOFI.ask; }
 

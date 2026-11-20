@@ -106,6 +106,7 @@
       gc:  [{way:'coll.net+mdc', label:'Collections (net) + Medicaid collections', v:plus(s('coll','sum','net'), med('mdc'))},
             {way:'dep.amount+mdc', label:'Deposits (day sheet) + Medicaid collections', v:plus(s('dep','sum','amount'), med('mdc'))},
             {way:'cd.collection+mdc', label:'Collection details (successful) + Medicaid collections', v:plus(s('cd','csum','ok.collection'), med('mdc'))},
+            {way:'cd.collection', label:'Collection details (successful)', v:s('cd','csum','ok.collection')},
             {way:'cd.practice+mdc', label:'Collection details — practice collections + Medicaid', v:plus(s('cd','csum','ok.practiceCollections'), med('mdc'))},
             {way:'coll.gross', label:'Collections — gross', v:s('coll','sum','gross')}, {way:'coll.net', label:'Collections — net', v:s('coll','sum','net')}],
       adj: [{way:'adjr.net', label:'Adjustment report — net', v:s('adjr','sum','netAdjustment')},
@@ -151,11 +152,14 @@
      once its own numbers match. This is OrthoFi's PART: the Monthly Report adds what the office types (PH_MONTHLY.PARTS -
      Medicaid production, old-system production / A/R).
        gp - business health production (+ Medicaid + old system): Carlsbad, Clovis, Hobbs, San Angelo, Lubbock, Mansfield
+       gc - collection details, successful payments (+ Medicaid + old system): Carlsbad, Clovis, Hobbs, San Angelo, Lubbock,
+            Mansfield (October; Heather: "I get it from the monthly balance sheet" - an OrthoFi report built on these)
        ar - patient A/R + insurance A/R with OrthoFi's report claim statuses (+ old system): San Angelo, Lubbock, Mansfield
-     Collections are NOT OrthoFi's (Heather: "I get it from the monthly balance sheet") - typed. */
-  const PROVEN={gp:'bh.production', ar:'par+iar.rep'};
-  const AUTO={gp:{way:'bh.production', lists:['bh'], label:'Gross production', plus:'+ Medicaid + old system, as typed'},
-              ar:{way:'par+iar.rep', lists:['par','iar'], label:'Accounts receivable', plus:'+ old system, as typed'}};
+     check = the way the OrthoFi page compares with Heather's sheet (her Medicaid number added, as the Monthly Report will). */
+  const PROVEN={gp:'bh.production', gc:'cd.collection', ar:'par+iar.rep'};
+  const AUTO={gp:{way:'bh.production', check:'bh.production+mdp', lists:['bh'], label:'Gross production', plus:'+ Medicaid + old system, as typed'},
+              gc:{way:'cd.collection', check:'cd.collection+mdc', lists:['cd'], label:'Gross collections', plus:'+ Medicaid + old system, as typed'},
+              ar:{way:'par+iar.rep', check:'par+iar.rep', lists:['par','iar'], label:'Accounts receivable', plus:'+ old system, as typed'}};
   /* one office's OrthoFi parts for the boxes it is ticked for -> {gp:n, ar:n} (a box OrthoFi has nothing for is left out) */
   function autoParts(answers, ids, boxes){
     const W=ways(answers, ids, {}), out={};

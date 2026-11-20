@@ -15,14 +15,14 @@ const HEATHER=['Gross production','Gross collections','Net production adjustment
   'Delinquent accounts past 30 days','$ 90+ days past due','New patient exams','Active patients','Total discounts','RIP sold (Retainer Insurance Program)','Over estimated completion date','Total appointments','Comfort appointments',
   'Medicaid submissions','Medicaid denials','Medicaid approvals','Medicaid bandings','Medicaid production','Medicaid collections'];
 t('the report asks for exactly the things in Heather’s email 2 - comfort % as its two counts (case starts / case acceptance from the old sheet are not on it)',
-  M.FIELDS.length===23 && HEATHER.every(n=>M.FIELDS.some(f=>f.n===n)) && M.FIELDS.filter(f=>HEATHER.indexOf(f.n)<0).map(f=>f.k).join()==='osp,osar' && !M.FIELDS.some(f=>/start|accept/i.test(f.n)));
+  M.FIELDS.length===24 && HEATHER.every(n=>M.FIELDS.some(f=>f.n===n)) && M.FIELDS.filter(f=>HEATHER.indexOf(f.n)<0).map(f=>f.k).join()==='osp,osc,osar' && !M.FIELDS.some(f=>/start|accept/i.test(f.n)));
 t('\u2026Medicaid, over-estimated completion date and comfort % are typed from the practice software (her words); the rest is OrthoFi\u2019s - RIP too (Heather 18/11: "It comes from Orthofi")',
   M.FIELDS.filter(f=>f.medicaid).every(f=>f.from==='pms') && M.BY.oecd.from==='pms' && M.BY.appts.from==='pms' && M.BY.cmfa.from==='pms' && M.BY.gp.from==='orthofi' && M.BY.deln.from==='orthofi' && M.BY.rip.from==='orthofi');
 t('nobody types a percentage that can be worked out: the delinquent COUNT is kept, the % is calculated (Heather: "Instead of them doing the math")',
   M.BY.deln.t==='#' && !M.BY.del && M.calc({arn:200, deln:12}).delpct===6);
 t('…the 6 Medicaid numbers only for the Medicaid offices (Heather can change which in Settings)',
   M.fieldsFor('Clovis', M.cleanSettings(null)).length===21 && M.fieldsFor('San Angelo', M.cleanSettings(null)).length===15 &&
-  M.fieldsFor('San Angelo', M.cleanSettings({medicaid:['San Angelo']})).length===21 && M.fieldsFor('Cruces LCO', M.cleanSettings(null)).length===23);
+  M.fieldsFor('San Angelo', M.cleanSettings({medicaid:['San Angelo']})).length===21 && M.fieldsFor('Cruces LCO', M.cleanSettings(null)).length===24);
 /* 20/11/2026 - the old system (Heather: Mansfield, FOLC and LCO; "The OMs should type that in") */
 t('the 2 old-system boxes only for offices still on an old system: Mansfield, Cruces FFO, Cruces LCO (Heather can change which in Settings)',
   M.fieldsFor('Mansfield', M.cleanSettings(null)).some(f=>f.k==='osp') && M.fieldsFor('Cruces FFO', M.cleanSettings(null)).some(f=>f.k==='osar') &&
@@ -40,6 +40,8 @@ t('the 2 old-system boxes only for offices still on an old system: Mansfield, Cr
   t('...Medicaid production is added the same way (Heather: gross production = OrthoFi + Medicaid)', r.v.gp===225000.25 && r.ofp.gp===200000);
   r=M.mergeOrthofi(M.cleanYear({v:1, o:{Clovis:{'10':{v:{gp:1, mdp:5}, src:{gp:'typed', mdp:'typed'}}}}}), 'Clovis', 10, {gp:200000}).rec.o.Clovis['10'];
   t('...a gross production a person typed still wins (OrthoFi + Medicaid kept beside it for the "OrthoFi says" check)', r.v.gp===1 && r.src.gp==='typed' && r.ofv.gp===200005);
+  r=M.mergeOrthofi(M.cleanYear({v:1, o:{'Cruces LCO':{'10':{v:{mdc:1000, osc:500.5}, src:{mdc:'typed', osc:'typed'}}}}}), 'Cruces LCO', 10, {gc:40000}).rec.o['Cruces LCO']['10'];
+  t('...gross collections the same way: OrthoFi + Medicaid collections + old system collections', r.v.gc===41500.5 && r.ofp.gc===40000 && M.BY.osc.oldsys===true);
   r=M.mergeOrthofi(M.cleanYear({v:1, o:{Clovis:{'10':{v:{mdp:5}, src:{mdp:'typed'}, final:{at:'2026-11-06T00:00:00Z', by:'Heather'}}}}}), 'Clovis', 10, {gp:200000}).rec.o.Clovis['10'];
   t('...a month marked final is never touched', r.v.gp===undefined && !r.ofp); }
 
