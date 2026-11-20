@@ -81,7 +81,7 @@
     const reg=await registration();
     let sub=await reg.pushManager.getSubscription();
     if(!sub) sub=await reg.pushManager.subscribe({userVisibleOnly:true, applicationServerKey:keyBytes(PUBLIC_KEY)});
-    const j=sub.toJSON(); keep(j); await saveMine(j);
+    const j=sub.toJSON(); keep(j); markOff(false); await saveMine(j);
     chatLink();                                                // instant chat alerts for a pilot member (quietly)
     return j;
   }
@@ -89,20 +89,39 @@
     await chatUnlink();                                        // Microsoft stops telling the sender about this device
     const old=saved();
     try{ const reg=await navigator.serviceWorker.getRegistration(); const s=reg && await reg.pushManager.getSubscription(); if(s) await s.unsubscribe(); }catch(_){}
-    keep(null);
+    keep(null); markOff(true);
     if(old && old.endpoint) await dropMine(old.endpoint);
   }
-  /* A device's address can change on its own: keep ours current - here and with the person - whenever a page opens. */
-  async function refresh(){
-    if(!supported() || Notification.permission!=='granted' || !saved()) return;
+  /* A device's address can change on its own: keep ours current - here and with the person - whenever a page opens.
+     20/11/2026, Heather: "my phone keeps not giving me notifications and when I open the app it shows the button to turn
+     on notifications, which I have multiple times." This used to give up the moment the phone hadn't found its alert
+     service yet: it then DELETED this phone from the person's devices and showed "Turn on" again. Now it wakes the
+     service (registering again is harmless), and if the phone really has no subscription while alerts are still
+     allowed, it quietly makes a new one. Only if that fails is the old one dropped. A browser that forgot it was on
+     (allowed + a live subscription, and not turned off here) is put back on. */
+  const OFF_KEY='ph_alert_off';
+  const offHere=()=>{ try{ return localStorage.getItem(OFF_KEY)==='1'; }catch(_){ return false; } };
+  const markOff=v=>{ try{ v ? localStorage.setItem(OFF_KEY, '1') : localStorage.removeItem(OFF_KEY); }catch(_){} };
+  let busy=null, again=false;
+  function refresh(){                                          // one at a time; a call while one runs runs once more after it
+    if(busy){ again=true; return busy; }
+    busy=(async ()=>{ try{ do{ again=false; await refreshNow(); }while(again); }catch(_){} finally{ busy=null; } })();
+    return busy;
+  }
+  async function refreshNow(){
+    if(!supported() || Notification.permission!=='granted') return;
     const old=saved();
-    try{
-      const reg=await navigator.serviceWorker.getRegistration(), s=reg && await reg.pushManager.getSubscription();
-      if(!s){ keep(null); if(old && old.endpoint) await dropMine(old.endpoint); return; }
-      const j=s.toJSON(); keep(j);
-      if(old && old.endpoint && old.endpoint!==j.endpoint) await dropMine(old.endpoint);
-      await saveMine(j);
-    }catch(_){}
+    if(!old && offHere()) return;                              // turned off on this device: leave it off
+    let reg=null;
+    try{ reg=await navigator.serviceWorker.getRegistration(); }catch(_){}
+    if(!reg){ try{ reg=await registration(); }catch(_){ return; } }        // can't reach the service right now: change nothing
+    let s=null;
+    try{ s=await reg.pushManager.getSubscription(); }catch(_){ return; }
+    if(!s && old){ try{ s=await reg.pushManager.subscribe({userVisibleOnly:true, applicationServerKey:keyBytes(PUBLIC_KEY)}); }catch(_){ s=null; } }
+    if(!s){ if(old){ keep(null); if(old.endpoint) await dropMine(old.endpoint); } return; }
+    const j=s.toJSON(); keep(j);
+    if(old && old.endpoint && old.endpoint!==j.endpoint) await dropMine(old.endpoint);
+    await saveMine(j);
   }
 
   /* The person's Microsoft sign-in, for the sender. '' when there's none (the sender then refuses: "signin"). */

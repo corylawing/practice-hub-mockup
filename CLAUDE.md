@@ -508,6 +508,15 @@ I can confidently say that the chat feature should go next. The production thing
    Notes (noteField(f) - Talk types into whichever box has data-talkbox; Save while talking waits for the last words).
    Cory: no privacy reminder under the box ("I don't need that reminder please don't put it"). Saving adds fields only
    (persist/strip keep every field; consultsFrom reads every field). test/tc (185).
+51. **PHONE ALERTS KEPT TURNING OFF (20/11/2026; hc231).** Heather: "my phone keeps not giving me notifications and when I
+    open the app it shows the button to turn on notifications, which I have multiple times." alerts.js refresh() (runs on
+    every page open + after sign-in) gave up when getRegistration()/getSubscription() came back empty - e.g. the phone's
+    alert service not found yet on a cold start - and then DELETED the phone from ph_alertdev_<email> and cleared
+    ph_alert_sub (bell: "Turn on"). Now: no registration -> register sw.js again (harmless); no subscription while
+    alerts are still allowed -> quietly subscribe again (new endpoint saved, old dropped); only if that fails is it
+    dropped. Allowed + live subscription + this browser forgot -> back on, unless turned off here (ph_alert_off, set by
+    disable, cleared by enable). One refresh at a time (a second call runs again after). sw.js always shows the alert
+    (iOS cancels push for silent pushes - we never send one). Tests: alerts 30.
 50. **TASKS ARE LIVE (20/11/2026; hc230).** Cory: "heather wants tasks pushed to production" -> `TASKS_LIVE=true`. Who can
     give: Teams & Access "Tasks" column (until Heather sets it: Admin = Everything, Executive + Leadership = Can give,
     everyone else = Gets tasks). Live never seeds the made-up demo (sandbox only); the ribbon and "Try it as" hide on live

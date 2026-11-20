@@ -14,13 +14,19 @@ const sub=(n)=>({endpoint:'https://web.push.apple.com/dev-'+n, keys:{p256dh:'P'+
 
 function load(opts){
   opts=opts||{};
-  const LS={}, posted=[];
+  const LS=Object.assign({}, opts.ls||{}), posted=[];
   const w={ localStorage:{getItem:k=>k in LS?LS[k]:null, setItem:(k,v)=>{LS[k]=String(v);}, removeItem:k=>{delete LS[k];}},
     navigator:{userAgent:opts.ua||'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0)', maxTouchPoints:0},
     location:{href:'https://corylawing.github.io/practice-hub-mockup/v1/home.html', origin:opts.origin||'https://corylawing.github.io'},
     document:{addEventListener(){}, dispatchEvent(){}}, CustomEvent:class{constructor(t,o){this.type=t;this.detail=o&&o.detail;}},
     URL, console, Promise, JSON, Set, Date, setTimeout, clearTimeout, atob:s=>Buffer.from(s,'base64').toString('binary') };
   w.window=w;
+  /* a phone's alert service, when asked for (opts.sw): {reg:true|false, sub:subscription|null, canSub:true|false} */
+  if(opts.sw){ const SW=opts.sw; SW.registered=0; SW.subscribed=0;
+    const toJ=x=>({endpoint:x.endpoint, keys:x.keys}), wrap=x=>x ? Object.assign({toJSON:()=>toJ(x)}, x) : null;
+    const reg={pushManager:{getSubscription:async ()=>wrap(SW.sub), subscribe:async ()=>{ if(!SW.canSub) throw new Error('needs a tap'); SW.subscribed++; SW.sub=SW.fresh; return wrap(SW.sub); }}};
+    w.navigator.serviceWorker={getRegistration:async ()=>SW.reg ? reg : undefined, register:async ()=>{ SW.registered++; SW.reg=true; return reg; }, get ready(){ return Promise.resolve(reg); }};
+    w.PushManager=function(){}; w.Notification={permission:SW.perm||'granted'}; }
   const me={first:'Gabriela', last:'Garrison', mail:'Gabriela.Garrison@farnsworthorthodontics.com'};
   w.PH={isLive:()=>!!opts.live, me:()=>me, realMe:()=>me, email:p=>p.mail};
   w.PH_AUTH={idToken:()=>Promise.resolve('ID-TOKEN')};
@@ -103,6 +109,35 @@ function load(opts){
     t('Admin: the sandbox never sends one', /if\(!\(PH\.isLive && PH\.isLive\(\)\)\)\{ say\('On the live site this sends '/.test(A));
     t('Admin: says when they haven\'t turned alerts on yet', /hasn’t turned alerts on yet/.test(A));
   }
+  /* ---- REFRESH WHEN THE APP OPENS (20/11/2026, Heather kept seeing "Turn on") ---- */
+  {
+    const devs=async (S)=>((await S.get('ph_alertdev_gabriela.garrison@farnsworthorthodontics.com'))||{d:[]}).d.map(x=>x.s.endpoint);
+    // 1. the phone hadn't found its alert service yet: wake it, keep the device
+    let L=load({sw:{reg:false, sub:sub(1)}}); L.LS['ph_alert_sub']=JSON.stringify(sub(1));
+    await L.S.set('ph_alertdev_gabriela.garrison@farnsworthorthodontics.com', {v:1, d:[{s:sub(1), k:'iPhone', at:'t'}]});
+    await L.A.refresh();
+    t('service not found yet -> woken, the phone stays on and stays in the person\u2019s devices', L.A.state()==='on' && (await devs(L.S)).join()===sub(1).endpoint);
+    // 2. the subscription really went: a new one quietly, the old one dropped
+    L=load({sw:{reg:true, sub:null, canSub:true, fresh:sub(2)}}); L.LS['ph_alert_sub']=JSON.stringify(sub(1));
+    await L.S.set('ph_alertdev_gabriela.garrison@farnsworthorthodontics.com', {v:1, d:[{s:sub(1), k:'iPhone', at:'t'}]});
+    await L.A.refresh();
+    t('subscription gone but alerts still allowed -> a new one, no "Turn on"; the dead one leaves the devices', L.A.state()==='on' && (await devs(L.S)).join()===sub(2).endpoint);
+    // 3. and if the phone won't make one without a tap: as before - off, dropped
+    L=load({sw:{reg:true, sub:null, canSub:false}}); L.LS['ph_alert_sub']=JSON.stringify(sub(1));
+    await L.S.set('ph_alertdev_gabriela.garrison@farnsworthorthodontics.com', {v:1, d:[{s:sub(1), k:'iPhone', at:'t'}]});
+    await L.A.refresh();
+    t('…and if it can\u2019t, off and dropped (the bell shows Turn on)', L.A.state()==='off' && (await devs(L.S)).length===0);
+    // 4. this browser forgot it was on: put back on
+    L=load({sw:{reg:true, sub:sub(3)}}); await L.A.refresh();
+    t('this browser forgot, but the phone still has its subscription -> back on, and in the devices', L.A.state()==='on' && (await devs(L.S)).join()===sub(3).endpoint);
+    // 5. turned off here: never quietly back on
+    L=load({sw:{reg:true, sub:sub(4)}, ls:{ph_alert_off:'1'}}); await L.A.refresh();
+    t('turned off on this device -> stays off', L.A.state()==='off' && (await devs(L.S)).length===0);
+    // 6. two at once (page open + sign-in) run one after the other
+    L=load({sw:{reg:false, sub:sub(5)}}); const p1=L.A.refresh(), p2=L.A.refresh(); await p1; await p2;
+    t('two refreshes at once run one after the other (the second after sign-in still saves)', L.w.navigator.serviceWorker && L.A.state()==='on');
+  }
+
   console.log(pass+' passed, '+fail+' failed');
   process.exit(fail?1:0);
 })().catch(e=>{ console.log('  FAIL  crashed: '+(e && e.stack || e)); process.exit(1); });
