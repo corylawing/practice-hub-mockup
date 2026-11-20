@@ -508,7 +508,7 @@ I can confidently say that the chat feature should go next. The production thing
    Notes (noteField(f) - Talk types into whichever box has data-talkbox; Save while talking waits for the last words).
    Cory: no privacy reminder under the box ("I don't need that reminder please don't put it"). Saving adds fields only
    (persist/strip keep every field; consultsFrom reads every field). test/tc (185).
-57. **ORTHOFI FILLS THE MONTHLY REPORT + OLD-SYSTEM BOXES + COLLECTIONS CANDIDATES (20/11/2026; hc237-hc238; sandbox).**
+57. **ORTHOFI FILLS THE MONTHLY REPORT + OLD-SYSTEM BOXES + COLLECTIONS CANDIDATES (20/11/2026; hc237-hc238; LIVE - Cory: "deploy")**
     Cory: "go, but I think she wants to see in production to really know" (Heather can: admins' live preview
     monthly.html?monthlypreview while MONTHLY_LIVE stays false). monthly.js: FIELDS osp "Old system production" /
     osar "Old system A/R" (pms, oldsys:true; settings.oldsys, default DEF_OLDSYS Mansfield/Cruces FFO/Cruces LCO,
