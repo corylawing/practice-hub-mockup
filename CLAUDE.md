@@ -508,7 +508,7 @@ I can confidently say that the chat feature should go next. The production thing
    Notes (noteField(f) - Talk types into whichever box has data-talkbox; Save while talking waits for the last words).
    Cory: no privacy reminder under the box ("I don't need that reminder please don't put it"). Saving adds fields only
    (persist/strip keep every field; consultsFrom reads every field). test/tc (185).
-55. **REMEMBERED SIGN-IN, IPHONE APP BADGE, GLASS BAR (20/11/2026; hc236; sandbox - waiting on Cory's "deploy").**
+55. **REMEMBERED SIGN-IN, IPHONE APP BADGE, GLASS BAR (20/11/2026; hc236; LIVE - Cory: "deploy").**
     SIGN-IN (Cory: "every time it asks you to sign in even if you close ... With Salesforce ... it remembers"): gate.js
     MSAL cacheLocation was 'sessionStorage' - gone when the tab/browser/phone app closed, and every new tab signed out.
     Now 'localStorage'. Microsoft caps a web app's silent renewal at 24 h; after that one tap on Sign in (Microsoft
@@ -524,7 +524,7 @@ I can confidently say that the chat feature should go next. The production thing
     scrolling itself doesn't count) shrinks it to a 58px circle at the bottom left with this page's icon IN ITS COLOUR
     (Cory: "Keep the same color in the shrinked left circle"); scroll up / near the top / tap the circle -> whole bar.
     Any scrolling box counts (chat messages, lists), not the More sheet / bell / dialogs.
-54. **TASKS: WHO CAN ASSIGN + REMINDERS FOR EVERYONE (20/11/2026; sandbox).** Cory: "anyone who is not regular staff,
+54. **TASKS: WHO CAN ASSIGN + REMINDERS FOR EVERYONE (20/11/2026; LIVE hc236).** Cory: "anyone who is not regular staff,
     financial coordinators or TCs should be able to assign tasks" -> DEPT_CAN defaults: Office Managers, Clinic Managers,
     Doctors, Marketing get tasks:'edit' (with Executive, Leadership; Admin 'manage'). Staff / FC team / TCs stay "Gets
     tasks". Defaults only apply where Heather hasn't set the team in Admin -> Teams & Access (c.tasks===undefined) - if a
