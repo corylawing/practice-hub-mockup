@@ -1,6 +1,6 @@
 {
   "name": "home-brace-alerts",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Home-Brace's alert sender: signs and sends one Web Push alert to one device. No Microsoft keys, no practice data.",
   "engines": { "node": ">=18" },
   "dependencies": {}

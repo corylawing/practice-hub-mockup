@@ -83,6 +83,11 @@ cp "$REPO/deploy/.vapid.json" "$API/push/vapid.json"
 chmod 644 "$API/push/vapid.json"   # the copy here is locked to this Mac's user; the function runs as another user
 cp "$REPO/deploy/.chatcert.json" "$API/chatcert.json"
 chmod 644 "$API/chatcert.json"
+# A FRESH SERVER PACKAGE EVERY DEPLOY (20/11/2026): a deploy whose server part was byte-for-byte the same as the last
+# one left the live server stopped ("Function host is not running" - phone alerts, chat alerts and OrthoFi all down,
+# ~45 min; Heather missed a chat alert). Re-sending the same package didn't bring it back; a changed one did at once.
+# So the staged copy (never the repo) gets a new version number each time.
+node -e 'const fs=require("fs"),f=process.argv[1],p=JSON.parse(fs.readFileSync(f,"utf8"));p.version="1.0."+Math.floor(Date.now()/1000);fs.writeFileSync(f,JSON.stringify(p,null,2))' "$API/package.json"
 
 # The CLI refuses to run from inside the artifact folder, so deploy from its parent.
 cd "$(dirname "$STAGE")"
@@ -90,6 +95,15 @@ SWA_CLI_DEPLOYMENT_TOKEN="$TOKEN" \
   npx --yes @azure/static-web-apps-cli@2.0.10 deploy ./swa --env production \
     --api-location ./api --api-language node --api-version 22
 
+echo
+# THE SERVER MUST BE UP: /api/orthofi refuses a call with no Home-Brace origin with 403 - that answer means it's running.
+LIVE_URL="https://kind-hill-00da87410.3.azurestaticapps.net"; up=""
+for i in 1 2 3 4 5 6 7 8 9 10 11 12; do
+  code=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$LIVE_URL/api/orthofi" || true)
+  [ "$code" = "403" ] && { up=1; break; }; sleep 15
+done
+if [ -n "$up" ]; then echo "Server part (alerts, chat alerts, OrthoFi): UP"
+else echo "!!!!! SERVER PART IS DOWN (last answer $code) - phone alerts, chat alerts and OrthoFi are not working. Deploy again (it sends a fresh package)." >&2; fi
 echo
 echo "Deployed. Verify the cache stamp actually changed:"
 echo "  curl -s https://kind-hill-00da87410.3.azurestaticapps.net/v1/production.html | grep -o 'v=hc[0-9]*' | sort -u"
