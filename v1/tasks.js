@@ -246,9 +246,15 @@
   /* Into a year's archive row (never over a task already there). */
   function toArchive(arc, tasks){ arc=cleanRecord(arc); Object.keys(tasks||{}).forEach(id=>{ const c=cleanTask(tasks[id]); if(c && !arc.t[c.id]) arc.t[c.id]=c; }); return arc; }
   /* Out of ph_tasks - only the ids the archive is confirmed to hold, and only if still finished. */
+  /* Oldest first, and never so many in one save that the list loses most of its weight: Home-Brace refuses a save that
+     drops below a quarter of a record (the wipe guard in store.js - it would show a "not saved" warning). The rest go on
+     a later day; they're finished, so nothing shows wrong meanwhile (20/11/2026, before Tasks went live). */
+  const weight=v=>v===null || v===undefined || v==='' || v===false ? 0 : typeof v!=='object' ? 1 : Object.keys(v).reduce((n,k)=>n+weight(v[k]), 0);
   function dropArchived(rec, held){
     rec=cleanRecord(rec); const h=(held && held.t) || {};
-    Object.keys(rec.t).forEach(id=>{ if(h[id] && finished(rec.t[id])) delete rec.t[id]; });
+    const go=Object.keys(rec.t).filter(id=>h[id] && finished(rec.t[id])).sort((a,b)=>String(finishedAt(rec.t[a])).localeCompare(String(finishedAt(rec.t[b]))));
+    const was=weight(rec); let left=was;
+    go.forEach(id=>{ const w=weight(rec.t[id]); if(left-w < was*0.4) return; left-=w; delete rec.t[id]; });
     return rec;
   }
 

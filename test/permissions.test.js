@@ -192,8 +192,8 @@ const t=(n,v)=>{ (v?ok:bad).push(n); };
   t('admin.html is NOT locked for her', H.locked()===false);
   /* Every tab - the TC Tracker included since it went live (19/10/2026, Cory: "yes on production"). */
   /* Monthly Report (18/11/2026) waits for its own switch (MONTHLY_LIVE) - monthly.test.js checks that. */
-  /* Tasks (19/11/2026) the same - its own switch (TASKS_LIVE); tasks.test.js checks that. */
-  t('and her menu has every tab, Payroll included since 04/11 (the Academy and Chat are sandbox mock-ups; the Monthly Report and Tasks wait for their switches)', H.tabs().length===H.PH.NAV.filter(x=>x.k!=='academy' && x.k!=='chat' && x.k!=='monthly' && x.k!=='tasks').length);
+  /* Tasks (19/11/2026) had its own switch; LIVE since 20/11/2026 (TASKS_LIVE, tasks.test.js). */
+  t('and her menu has every tab, Payroll since 04/11 and Tasks since 20/11 (the Academy and Chat are sandbox mock-ups; the Monthly Report waits for its switch)', H.tabs().length===H.PH.NAV.filter(x=>x.k!=='academy' && x.k!=='chat' && x.k!=='monthly').length && H.tabs().indexOf('tasks')>=0);
   t('the Chat mock-up never shows on the live site', H.tabs().indexOf('chat')<0);
   t('...and neither does its chat button beside the bell', H.PH.NAV.find(x=>x.k==='chat').show()===false);
   const CH=load({page:'chat'});

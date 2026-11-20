@@ -2165,7 +2165,7 @@
   /* TASKS (19/11/2026, tasks.js): give a task to people; they tick it off; the giver follows who has and hasn't. Sandbox
      first - false keeps the tab, the Home card and the Teams & Access column off the live site until Cory says "tasks
      live". An admin can try it there first with tasks.html?taskspreview (this tab only). */
-  const TASKS_LIVE=false;
+  const TASKS_LIVE=true;     // LIVE 20/11/2026 - Cory: "heather wants tasks pushed to production"
   function tasksOn(){ if(env()!=='live' || TASKS_LIVE) return true;
     try{ if(/[?&]taskspreview\b/.test(location.search||'')) sessionStorage.setItem('ph_tasks_preview','1'); return sessionStorage.getItem('ph_tasks_preview')==='1' && isAdmin(realMe()); }catch(_){ return false; } }
   function monthlyOn(){ if(env()!=='live' || MONTHLY_LIVE) return true;

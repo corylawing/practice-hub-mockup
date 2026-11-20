@@ -508,6 +508,12 @@ I can confidently say that the chat feature should go next. The production thing
    Notes (noteField(f) - Talk types into whichever box has data-talkbox; Save while talking waits for the last words).
    Cory: no privacy reminder under the box ("I don't need that reminder please don't put it"). Saving adds fields only
    (persist/strip keep every field; consultsFrom reads every field). test/tc (185).
+50. **TASKS ARE LIVE (20/11/2026; hc230).** Cory: "heather wants tasks pushed to production" -> `TASKS_LIVE=true`. Who can
+    give: Teams & Access "Tasks" column (until Heather sets it: Admin = Everything, Executive + Leadership = Can give,
+    everyone else = Gets tasks). Live never seeds the made-up demo (sandbox only); the ribbon and "Try it as" hide on live
+    (dechrome). Before going live: dropArchived (the 30-day tidy) now moves the oldest first and never takes ph_tasks below
+    40% of its weight in one save - store.js refuses a save under 25% (wipe guard) and would have shown "not saved"; the
+    rest move on later days. Tests: tasks 106, permissions 73.
 49. **ORTHOFI: FIRST OCTOBER CHECK (20/11/2026; hc229).** 5 of 51 boxes matched. Read-only check in Cory's Safari (ratios
     only, no figures): location matches are right; A/R is close everywhere; San Angelo + Mansfield net production and
     collections match OrthoFi almost exactly; Carlsbad/Clovis/Hobbs/Lubbock production + collections are far off in both

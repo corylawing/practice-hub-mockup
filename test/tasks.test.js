@@ -123,6 +123,16 @@ t('the archive holds it exactly', JSON.stringify(arc.t[T1.id])===JSON.stringify(
 t('the archive never writes over a task already there', R.toArchive(arc, {[T1.id]:Object.assign({}, rec.t[T1.id], {title:'changed'})}).t[T1.id].title==='Count the trays');
 const kept=R.dropArchived(rec, arc);
 t('only what the archive holds leaves ph_tasks', !kept.t[T1.id] && !!kept.t[T2.id] && !!kept.t[T3.id]);
+{ /* the wipe guard: one save never takes the list below 40% of its weight; oldest go first; the rest on a later day */
+  let big={v:1, t:{}}; const NOW2=new Date('2026-11-20T15:00:00Z');
+  for(let i=0;i<10;i++){ const c=R.create({title:'Old '+i, people:[{id:'casey@example.com', name:'Casey Made'}], by:'jordan@example.com', byName:'Jordan'}, new Date('2026-09-0'+(i%9+1)+'T10:00:00Z'));
+    big=R.add(big, c); big=R.markDone(big, c.id, 'casey@example.com', '', new Date('2026-09-1'+i%10+'T10:00:00Z')); }
+  const ids=Object.keys(big.t), arcAll={v:1, t:big.t};
+  const d1=R.dropArchived(big, arcAll), left1=Object.keys(d1.t).length;
+  t('archiving everything at once keeps enough that the save is never refused (wipe guard)', left1>0 && left1<10);
+  const d2=R.dropArchived(d1, arcAll);
+  t('…the next day takes more of them, oldest first', Object.keys(d2.t).length<left1 && Object.keys(d2.t).every(id=>Object.keys(d1.t).indexOf(id)>=0));
+}
 t('nothing leaves when the archive did not save', Object.keys(R.dropArchived(rec, null).t).length===Object.keys(rec.t).length);
 t('a task reopened since is not dropped', !!R.dropArchived(R.reopen(R.close(R.undo(rec, T1.id, 'casey@example.com'), T1.id, NOW), T1.id), arc).t[T1.id]);
 
@@ -189,7 +199,7 @@ t('ideas only for teams the practice has, in its own words', (i=>i.some(x=>/^Off
 /* the pages - the switch, the tab, Heather's column, Home */
 const read=f=>fs.readFileSync(path.join(__dirname,'..','v1',f),'utf8');
 const U=read('user.js'), A=read('admin.html'), HOME=read('home.html'), P=read('tasks.html');
-t('OFF on the live site until Cory says "tasks live" (an admin can preview with ?taskspreview)', /const TASKS_LIVE=false;/.test(U) && /function tasksOn\(\)\{ if\(env\(\)!=='live' \|\| TASKS_LIVE\) return true;/.test(U) && /taskspreview/.test(U));
+t('ON on the live site since 20/11/2026 (Heather: push tasks to production); the preview switch stays', /const TASKS_LIVE=true;/.test(U) && /function tasksOn\(\)\{ if\(env\(\)!=='live' \|\| TASKS_LIVE\) return true;/.test(U) && /taskspreview/.test(U));
 t('everyone gets the Tasks tab (the switch decides, not a team)', /\{k:'tasks',\s+n:'[^']*Tasks',\s+href:'tasks\.html',\s+show:\(\)=>tasksOn\(\)\}/.test(U));
 t('who can GIVE tasks starts as Admin (everything), Executive and Leadership (can give)', /'admin':[^\n]*tasks:'manage'/.test(U) && /'executive team':[^\n]*tasks:'edit'/.test(U) && /'leadership team':[^\n]*tasks:'edit'/.test(U) && /c\.tasks===undefined && DEPT_CAN\[d\]/.test(U));
 t('Heather decides in Teams & Access: Gets tasks / Can give / Everything (off the grid while Tasks is off)', /PH\.tasksOn && !PH\.tasksOn\(\)\) \? \[\] : \[\{k:'tasks'/.test(A) && /tasks:\['none','edit','manage'\]/.test(A) && /tasks:\{none:'Gets tasks',edit:'Can give',manage:'Everything'\}/.test(A));
