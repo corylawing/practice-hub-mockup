@@ -270,13 +270,13 @@
   }
   @media (prefers-reduced-motion: reduce){ *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important} }
 </style>
-<script src="user.js?v=hc241"></script>
+<script src="user.js?v=hc242"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc241"></script>
-  <script src="gate.js?v=hc241"></script>
-  <script src="prodbook.js?v=hc241"></script>
-  <script src="monthly.js?v=hc241"></script>
-  <script src="orthofi.js?v=hc241"></script>
+  <script src="store.js?v=hc242"></script>
+  <script src="gate.js?v=hc242"></script>
+  <script src="prodbook.js?v=hc242"></script>
+  <script src="monthly.js?v=hc242"></script>
+  <script src="orthofi.js?v=hc242"></script>
 </head>
 <body>
 <div class="ribbon">MOCK-UP for Heather — made-up numbers. Try it as an office manager first, then as Heather.</div>
@@ -381,7 +381,7 @@
           if(f.from==='orthofi') r.ofv[f.k]=v[f.k]; });
         if(open) r.of=NOW.toISOString();
         /* OrthoFi's own part of the two boxes made of OrthoFi + what's typed (so the sandbox shows "OrthoFi … + typed …") */
-        r.ofp={gp:v.gp-(r.v.mdp||0)-(r.v.osp||0), gc:v.gc-(r.v.mdc||0)-(r.v.osc||0), ar:v.ar-(r.v.osar||0)};
+        r.ofp={gp:v.gp-(r.v.mdp||0)-(r.v.osp||0), gc:v.gc-(r.v.mdc||0)-(r.v.osc||0), np:v.np-(r.v.mdp||0)-(r.v.osp||0), ar:v.ar-(r.v.osar||0)};
         const lastDone=y===LM.y && m===LM.m;
         if(!open && !lastDone) r.final={at:new Date(y, m, 8).toISOString(), by:'Heather'};
         if(lastDone){
@@ -398,7 +398,7 @@
     return M.cleanYear(rec);
   }
   /* the sandbox's made-up years are remade when their story changes (DEMO_V) - real years never */
-  const DEMO_V='5';
+  const DEMO_V='6';
   async function loadYear(y, fresh){
     if(DATA[y] && !fresh) return DATA[y];
     let rec=null; try{ rec=await PH_STORE.get(M.KEY(y)); }catch(_){}
@@ -915,7 +915,7 @@
 })();
 </script>
 <script>PH.nav('monthly');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc241"></script>
+<script src="tour.js?v=hc242"></script>
 <script>
 Tour.init([
   {sel:'.statusline, .openbanner', title:'Who has sent it', body:'Every office’s report for the month, in one line: final, waiting for you, or late. No chasing eight Excel files.'},

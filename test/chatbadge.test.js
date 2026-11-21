@@ -40,6 +40,7 @@ const fnOf=(src,name)=>{ const i=src.indexOf('function '+name+'('); if(i<0) retu
     await push(); await push();
     t('each alert adds one to the app icon’s number (an iPhone only shows what the app sets)', JSON.stringify(badges)==='[1,2]');
     t('opening Home-Brace sets the icon’s number to the unread chats, 0 clears it (live only)', /if\(env\(\)==='live'\) appBadge\(n\);/.test(U) && /navigator\.clearAppBadge \? navigator\.clearAppBadge\(\)/.test(U) && /caches\.open\('ph-badge'\)\.then\(c=>c\.put\('ph-badge-count'/.test(U)); }
+  t('the glass bar: a finger drawn down 30px always brings the whole bar back (Cory 21/11: "sometimes it doesn\'t")', /if\(t\.clientY-fy>30\)\{ barMini\(false\); fy=t\.clientY; \}/.test(U));
   console.log(ok.map(s=>'  PASS  '+s).join('\n'));
   if(bad.length) console.log(bad.map(s=>'  FAIL  '+s).join('\n'));
   console.log('\n'+ok.length+' passed, '+bad.length+' failed');

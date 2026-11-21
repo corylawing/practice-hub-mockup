@@ -63,7 +63,7 @@
      A/R + old system A/R (Heather: Medicaid is paid in full, so no Medicaid A/R). OrthoFi's own part is kept in ofp; the
      box is worked out from it every time the month is read or saved - so typing the Medicaid or old-system number later
      updates the total by itself. An office without Medicaid or an old system adds 0. */
-  const PARTS={gp:['mdp','osp'], gc:['mdc','osc'], ar:['osar']};
+  const PARTS={gp:['mdp','osp'], gc:['mdc','osc'], np:['mdp','osp'], ar:['osar']};
   /* worked out, never typed - the old sheet's ratios, against Heather's goals */
   const CALC=[
     {k:'colpct', n:'Collection %',  t:'%', of:v=>v.gp ? v.gc/v.gp*100 : null, goal:'col'},

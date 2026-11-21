@@ -508,6 +508,26 @@ I can confidently say that the chat feature should go next. The production thing
    Notes (noteField(f) - Talk types into whichever box has data-talkbox; Save while talking waits for the last words).
    Cory: no privacy reminder under the box ("I don't need that reminder please don't put it"). Saving adds fields only
    (persist/strip keep every field; consultsFrom reads every field). test/tc (185).
+60. **ADJUSTMENTS + NET PRODUCTION PROVEN FROM ORTHOFI (21/11/2026; hc242).** Cory: "Now that you have access to orthofi
+    via safari do what you need to do to make this perfect" (his Safari, OrthoFi portal; read-only - only reports run).
+    The Monthly Balance Sheet = OrthoFi portal Reports -> Accounting -> Monthly Balance Sheet (business-intelligence
+    .orthofi.com/acc1, framed from portal.orthofi.com/ReportingNew/Index#19/Month/YYYYMM/...; filters PracticeId 483
+    Farnsworth [Lubbock 1001, Clovis 1002, Hobbs 1003, Carlsbad 1004, San Angelo 1607, Las Cruces 2630], 1181 Sunflower
+    [Mansfield 2540], 1206 Las Cruces Orthodontics). Lines: Production; Production Adjustments (Insurance, Insurance
+    Non-OrthoFi, Add/(Remove) Discount, Transfer Out, Dismissal, Bad Debt x2, Additional Cost) Subtotal; Additional
+    Charges (Misc, Late, NSF, Interest Earned, Additional) Subtotal; Adjustments Total; Adjusted Production; Collections
+    Summary ... Collections Total; Ending Balance (= beginning + adjusted production + collections). REBUILT TO THE CENT
+    from the API for Lubbock/Clovis/Hobbs/Carlsbad/San Angelo/Mansfield x Sept+Oct (12/12): Adjustments Total =
+    /adjustments netAdjustment (every type, createdOn) + /miscellaneous-charges type "Miscellaneous Charge As AdHoc
+    Contract" (createdOn) - /discounts discountName "Courtesy added for Miscellaneous Charge." + /fees contractFeeTypeName
+    Late Fee + NSF Fee (createdOn) + /interest interestAccrued (accrualDate); Adjusted Production = BH production + that.
+    Heather's sheet: adjustments = Adjustments Total (12/12); net production = Adjusted Production + Medicaid production
+    (12/12). -> PROVEN adj 'bs.adj', np 'bs.np' (check 'bs.np+mdp'), PARTS np [mdp, osp]. Server gained: misc charges,
+    interest, fees, charges (charges list times out), non-contract charges; count rules eq (ALL fields) and on (row date
+    in span). A/R is NOT the balance sheet's Ending Balance (0.96-1.02); Carlsbad/Clovis/Hobbs A/R gap likely insurance
+    A/R drifting after the date (San Angelo's Sept 30 insurance balance moved 0.6%) - left typed there for now.
+    Glass bar (Cory: "scroll up on mobile pulls out the bottom bar but sometimes it doesn't"): a finger drawn down 30px
+    now always brings the whole bar back (touchstart/touchmove), on top of the scroll rule.
 59. **HEATHER'S REPORT SOURCES (21/11/2026; hc241; LIVE)** September confirmed: gross production AND gross
     collections (collection details + Medicaid) to the dollar at Carlsbad, Clovis, Hobbs, San Angelo, Lubbock, Mansfield;
     A/R at San Angelo, Lubbock, Mansfield (Clovis Sept only; Carlsbad/Hobbs 1-4% UNDER Heather - all Medicaid offices).

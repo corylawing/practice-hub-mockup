@@ -187,7 +187,15 @@ const call=async (body, origin)=>{ const ctx={}; await F(ctx, {method:'POST', he
   { const c=T.cleanAsk({path:'/v1/practice-locations/miscellaneous-charges', locs:[11], params:{}, count:[{name:'a', on:{field:'contractSignedOn', from:'2026-10-01', to:'2026-10-31'}}, {name:'b', on:{field:'patientFirstName', from:'2026-10-01', to:'2026-10-31'}}, {name:'c', on:{field:'createdOn', from:'x', to:'2026-10-31'}}]});
     t('a count can ask "this row’s own date is in the month" - only date fields, only real dates', c.count.length===1 && c.count[0].on.field==='contractSignedOn'); }
   /* 20/11/2026: proven to the dollar (Sept + Oct) - and still nothing fills itself in for an office until it is ticked */
-  t('proven: gross production = business health production, collections = collection details (successful payments), A/R = patient + insurance (report claim statuses) - nothing else', JSON.stringify(O.PROVEN)==='{"gp":"bh.production","gc":"cd.collection","ar":"par+iar.rep","deln":"del.d30"}');
+  t('proven: gross production = business health production, collections = collection details (successful payments), A/R = patient + insurance (report claim statuses) - nothing else', JSON.stringify(O.PROVEN)==='{"gp":"bh.production","gc":"cd.collection","adj":"bs.adj","np":"bs.np","ar":"par+iar.rep","deln":"del.d30"}');
+  { const W5=O.ways({adjr:{rows:2, by:{'11':{n:2,sum:{netAdjustment:-500.25},nz:{},cnt:{},groups:{}}}}, misc:{rows:2, by:{'11':{n:2,sum:{},nz:{},cnt:{},csum:{adhoc:{sum:{miscellaneousChargeAmount:200},nz:{}}},groups:{}}}},
+      disc:{rows:1, by:{'11':{n:1,sum:{},nz:{},cnt:{},csum:{misc:{sum:{discountAmount:50},nz:{}}},groups:{}}}}, fee:{rows:3, by:{'11':{n:3,sum:{},nz:{},cnt:{},csum:{late:{sum:{feeAmount:75}},nsf:{sum:{feeAmount:25}}},groups:{}}}},
+      int:{rows:9, by:{'11':{n:9,sum:{interestAccrued:10.5},nz:{},cnt:{},groups:{}}}}, bh:{rows:1, by:{'11':{n:1,sum:{production:10000},nz:{},cnt:{},groups:{}}}}}, [11], {mdp:1000});
+    t('adjustments = the balance sheet’s Adjustments Total: production adjustments + ad-hoc misc charges − their courtesies + late + NSF fees + interest (to the cent: 6 offices x Sept + Oct)',
+      W5.adj.some(w=>w.way==='bs.adj' && w.v===-239.75));
+    t('...net production = production + that; Heather adds Medicaid production', W5.np.some(w=>w.way==='bs.np' && w.v===9760.25) && W5.np.some(w=>w.way==='bs.np+mdp' && w.v===10760.25));
+    const W6=O.ways({adjr:{rows:0, by:{}}, misc:{rows:0, by:{}}, disc:{rows:0, by:{}}, fee:{rows:0, by:{}}, int:{rows:0, by:{}}}, [11], {});
+    t('...a month with none of those is 0, not "unknown"; a list that failed is unknown', W6.adj.some(w=>w.way==='bs.adj' && w.v===0) && !O.ways({adjr:{error:'x'}}, [11], {}).adj.some(w=>w.way==='bs.adj')); }
   t('delinquent accounts = OrthoFi’s Delinquent report, everyone 30+ days past due (Heather 21/11) - today’s list, so: this month, and last month only until the due day',
     O.AUTO.deln.snapshot===true && O.snapshotOk(2026, 11, {now:new Date(2026,10,21)}) && O.snapshotOk(2026, 10, {now:new Date(2026,10,4), due:5}) &&
     !O.snapshotOk(2026, 10, {now:new Date(2026,10,21), due:5}) && !O.snapshotOk(2026, 9, {now:new Date(2026,10,2)}) && O.snapshotOk(2025, 12, {now:new Date(2026,0,3)}));

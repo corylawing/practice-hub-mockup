@@ -63,7 +63,16 @@
       {id:'pex', path:'/v1/practice-locations/patient-exams', params:{'exam-date-start-date':b.first, 'exam-date-end-date':b.last}, group:'keptExamFlag'},
       /* OrthoFi's delinquent list: TODAY's (it takes no date) - one row per payment plan past due */
       {id:'del', path:'/v1/practice-locations/delinquent', params:{}, count:[{name:'d30', min:{daysPastDue:30}}, {name:'d1', min:{daysPastDue:1}}]},
-      {id:'disc', path:'/v1/practice-locations/discounts', params:{'created-on-start-date':b.first, 'created-on-end-date':b.last}},
+      /* THE MONTHLY BALANCE SHEET'S "ADJUSTMENTS TOTAL" (21/11/2026 - Heather's net production adjustments; rebuilt to the
+         cent from these lists, San Angelo October): production adjustments (adjr, every type) + additional charges: ad-hoc
+         misc charges, less the courtesies given on them, + late fees + NSF fees + interest earned */
+      {id:'misc', path:'/v1/practice-locations/miscellaneous-charges', params:{'created-on-start-date':b.first, 'created-on-end-date':b.last},
+        count:[{name:'adhoc', eq:{miscellaneousChargeType:['Miscellaneous Charge As AdHoc Contract']}}]},
+      {id:'fee', path:'/v1/practice-locations/fees', params:{'created-on-start-date':b.first, 'created-on-end-date':b.last},
+        count:[{name:'late', eq:{contractFeeTypeName:['Late Fee']}}, {name:'nsf', eq:{contractFeeTypeName:['NSF Fee']}}]},
+      {id:'int', path:'/v1/practice-locations/interest', params:{'accrual-start-date':b.first, 'accrual-end-date':b.last}},
+      {id:'disc', path:'/v1/practice-locations/discounts', params:{'created-on-start-date':b.first, 'created-on-end-date':b.last},
+        count:[{name:'misc', eq:{discountName:['Courtesy added for Miscellaneous Charge.']}}]},
       {id:'trm', path:'/v1/practice-locations/treatments', params:{'contract-signed-on-start-date':b.first, 'contract-signed-on-end-date':b.last}, group:'productLine'},
       {id:'trs', path:'/v1/practice-locations/treatments', params:{}, group:'treatmentStatusName'}
     ];
@@ -101,6 +110,11 @@
   function ways(answers, ids, typed){
     const A=answers||{}, s=(id,k,f)=>tot(A[id], ids, k, f), plus=(a,b)=>a===null||b===null ? null : r2(a+b);
     const minus=(a,b)=>a===null||b===null ? null : r2(a-Math.abs(b)), neg=a=>a===null ? null : r2(-Math.abs(a));
+    /* a list that answered (no error) but has nothing for this office this month counts 0 */
+    const z=(id,k,f)=>{ const a=A[id]; if(!a || a.error) return null; const v=tot(a, ids, k, f); return v===null ? 0 : v; };
+    const bsAdj=(()=>{ const p=[z('adjr','sum','netAdjustment'), z('misc','csum','adhoc.miscellaneousChargeAmount'), z('disc','csum','misc.discountAmount'),
+      z('fee','csum','late.feeAmount'), z('fee','csum','nsf.feeAmount'), z('int','sum','interestAccrued')]; if(p.some(x=>x===null)) return null;
+      return r2(p[0] + p[1] - Math.abs(p[2]) + p[3] + p[4] + p[5]); })();
     const T=typed||{}, med=k=>(T[k]===undefined || T[k]===null || T[k]==='') ? 0 : (+T[k]||0);
     const W={
       gp:  [{way:'bh.production+mdp', label:'Business health production + Medicaid production', v:plus(s('bh','sum','production'), med('mdp'))},
@@ -114,12 +128,15 @@
             {way:'coll.gross', label:'Collections — gross', v:s('coll','sum','gross')}, {way:'coll.net', label:'Collections — net', v:s('coll','sum','net')}],
       /* 20/11/2026 (Cory: "Should we be sure before we assume?"): Heather's gross production is the business health
          dashboard's - so her adjustments and net production may be its write-offs too (totals, signed as write-offs) */
-      adj: [{way:'bh.writeoff', label:'Business health — total write-off', v:neg(s('bh','sum','totalWriteOff'))},
+      adj: [{way:'bs.adj', label:'Balance sheet — adjustments total', v:bsAdj},
+            {way:'bh.writeoff', label:'Business health — total write-off', v:neg(s('bh','sum','totalWriteOff'))},
             {way:'bh.writeoff+sns', label:'Business health — write-offs incl. signed-not-started', v:neg(plus(s('bh','sum','totalWriteOff'), s('bh','sum','signedNotStartedWriteOff')))},
             {way:'adjr.net', label:'Adjustment report — net', v:s('adjr','sum','netAdjustment')},
             {way:'adjr.patient+ins', label:'Adjustment report — patient + insurance', v:plus(s('adjr','sum','patientAdjustment'), s('adjr','sum','insuranceAdjustment'))},
             {way:'prod.adjustments', label:'Production — adjustments', v:s('prod','sum','adjustments')}, {way:'coll.adjustments', label:'Collections — adjustments', v:s('coll','sum','adjustments')}],
-      np:  [{way:'bh.prod+mdp-writeoff', label:'Business health production + Medicaid − write-offs', v:minus(plus(s('bh','sum','production'), med('mdp')), s('bh','sum','totalWriteOff'))},
+      np:  [{way:'bs.np', label:'Balance sheet — adjusted production', v:plus(s('bh','sum','production'), bsAdj)},
+            {way:'bs.np+mdp', label:'Balance sheet — adjusted production + Medicaid production', v:plus(plus(s('bh','sum','production'), bsAdj), med('mdp'))},
+            {way:'bh.prod+mdp-writeoff', label:'Business health production + Medicaid − write-offs', v:minus(plus(s('bh','sum','production'), med('mdp')), s('bh','sum','totalWriteOff'))},
             {way:'bh.prod+mdp-writeoff-sns', label:'Business health production + Medicaid − write-offs incl. signed-not-started', v:minus(minus(plus(s('bh','sum','production'), med('mdp')), s('bh','sum','totalWriteOff')), s('bh','sum','signedNotStartedWriteOff'))},
             {way:'prod.net', label:'Production — net', v:s('prod','sum','net')}],
       ar:  [{way:'par+iar.outstanding', label:'Patient + insurance A/R (outstanding)', v:plus(s('par','sum','outstandingBalance'), s('iar','sum','outstandingBalance'))},
@@ -171,9 +188,15 @@
             they have to count everyone that is 30 and above days past due"). The report is TODAY's (no date), so it is a
             snapshot: it fills this month, and last month only up to the report's due day (when Heather makes the sheet).
      check = the way the OrthoFi page compares with Heather's sheet (her Medicaid number added, as the Monthly Report will). */
-  const PROVEN={gp:'bh.production', gc:'cd.collection', ar:'par+iar.rep', deln:'del.d30'};
+  /* adj / np (21/11/2026): Heather (screenshots): "#1 and 2 come from the monthly balance sheet" - its Adjustments Total and
+     Adjusted Production. Rebuilt from OrthoFi's lists TO THE CENT against the balance sheet itself for Lubbock, Clovis,
+     Hobbs, Carlsbad, San Angelo and Mansfield, September and October (run in OrthoFi's portal), and against Heather's
+     sheet for the same 12: adjustments exact; net production = adjusted production + Medicaid production (+ old system). */
+  const PROVEN={gp:'bh.production', gc:'cd.collection', adj:'bs.adj', np:'bs.np', ar:'par+iar.rep', deln:'del.d30'};
   const AUTO={gp:{way:'bh.production', check:'bh.production+mdp', lists:['bh'], label:'Gross production', plus:'+ Medicaid + old system, as typed'},
               gc:{way:'cd.collection', check:'cd.collection+mdc', lists:['cd'], label:'Gross collections', plus:'+ Medicaid + old system, as typed'},
+              adj:{way:'bs.adj', check:'bs.adj', lists:['adjr','misc','disc','fee','int'], label:'Net production adjustments', plus:'— the Monthly Balance Sheet’s Adjustments Total'},
+              np:{way:'bs.np', check:'bs.np+mdp', lists:['bh','adjr','misc','disc','fee','int'], label:'Net production', plus:'(the balance sheet’s Adjusted Production) + Medicaid + old system, as typed'},
               ar:{way:'par+iar.rep', check:'par+iar.rep', lists:['par','iar'], label:'Accounts receivable', plus:'+ old system, as typed'},
               deln:{way:'del.d30', check:'del.d30', lists:['del'], label:'Delinquent accounts past 30 days', plus:'Delinquent report, everyone 30+ days past due — counted on the day it fills in', snapshot:true}};
   /* one office's OrthoFi parts for the boxes it is ticked for -> {gp:n, ar:n} (a box OrthoFi has nothing for is left out) */

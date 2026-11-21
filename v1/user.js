@@ -3196,6 +3196,13 @@
     if(barOn) return; barOn=true;
     /* only scrolling a person does (a finger, a wheel, keys) - a page jumping to its newest chat message by itself doesn't */
     ['touchmove','wheel','keydown'].forEach(function(ev){ document.addEventListener(ev, function(){ barHand=Date.now(); }, {capture:true, passive:true}); });
+    /* 21/11/2026, Cory: "Generally the scroll up on mobile pulls out the bottom bar but sometimes it doesn't." A flick keeps
+       the page gliding after the finger lifts, and an inner list can be at its top while the page isn't - so the finger
+       itself counts too: drawing it DOWN (scrolling up) by 30px always brings the whole bar back. */
+    let fy=null;
+    document.addEventListener('touchstart', function(e){ const t=e.touches && e.touches[0]; fy=(t && !(e.target.closest && e.target.closest('.ph-more,.ph-np,.ov,.ph-ov,.ph-tabbar'))) ? t.clientY : null; }, {capture:true, passive:true});
+    document.addEventListener('touchmove', function(e){ const t=e.touches && e.touches[0]; if(fy===null || !t) return; if(t.clientY-fy>30){ barMini(false); fy=t.clientY; } else if(t.clientY<fy) fy=t.clientY; }, {capture:true, passive:true});
+    document.addEventListener('touchend', function(){ fy=null; }, {capture:true, passive:true});
     document.addEventListener('scroll', function(e){
       if(Date.now()-barHand>900) return;
       const bar=document.querySelector('.ph-tabbar'); if(!bar) return;

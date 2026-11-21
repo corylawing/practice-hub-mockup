@@ -43,6 +43,8 @@ t('the 2 old-system boxes only for offices still on an old system: Mansfield, Cr
   t('...a gross production a person typed still wins (OrthoFi + Medicaid kept beside it for the "OrthoFi says" check)', r.v.gp===1 && r.src.gp==='typed' && r.ofv.gp===200005);
   r=M.mergeOrthofi(M.cleanYear({v:1, o:{'Cruces LCO':{'10':{v:{mdc:1000, osc:500.5}, src:{mdc:'typed', osc:'typed'}}}}}), 'Cruces LCO', 10, {gc:40000}).rec.o['Cruces LCO']['10'];
   t('...gross collections the same way: OrthoFi + Medicaid collections + old system collections', r.v.gc===41500.5 && r.ofp.gc===40000 && M.BY.osc.oldsys===true);
+  r=M.mergeOrthofi(M.cleanYear({v:1, o:{Hobbs:{'10':{v:{mdp:3000}, src:{mdp:'typed'}}}}}), 'Hobbs', 10, {np:90000, adj:-1500}).rec.o.Hobbs['10'];
+  t('...net production the same way (OrthoFi’s adjusted production + Medicaid production); adjustments are OrthoFi’s alone', r.v.np===93000 && r.ofp.np===90000 && r.v.adj===-1500);
   r=M.mergeOrthofi(M.cleanYear({v:1, o:{Clovis:{'10':{v:{mdp:5}, src:{mdp:'typed'}, final:{at:'2026-11-06T00:00:00Z', by:'Heather'}}}}}), 'Clovis', 10, {gp:200000}).rec.o.Clovis['10'];
   t('...a month marked final is never touched', r.v.gp===undefined && !r.ofp); }
 
