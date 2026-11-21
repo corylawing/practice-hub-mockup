@@ -49,6 +49,9 @@ const ALLOWED = {
      interest earned). These two lists carry the additional charges - added up, never a row. */
   '/v1/practice-locations/miscellaneous-charges': { 'created-on-start-date': D, 'created-on-end-date': D },
   '/v1/practice-locations/interest': { 'accrual-start-date': D, 'accrual-end-date': D },
+  '/v1/practice-locations/fees': { 'created-on-start-date': D, 'created-on-end-date': D, 'invoice-due-date-start-date': D, 'invoice-due-date-end-date': D },
+  '/v1/practice-locations/charges': { 'charge-date-start-date': D, 'charge-date-end-date': D },
+  '/v1/practice-locations/non-contract-charges': { 'start-date': D, 'end-date': D },
   '/v1/practice-locations/collection-details': { 'payment-start-date': D, 'payment-end-date': D },
   '/v1/practice-locations/treatments': { 'product-lines': LIST, 'treatment-status-ids': IDS,
     'contract-signed-on-start-date': D, 'contract-signed-on-end-date': D, 'appliance-date-start-date': D, 'appliance-date-end-date': D,
@@ -56,7 +59,7 @@ const ALLOWED = {
 };
 /* fields a total may be split by - none of them ever holds a person */
 const GROUPS = ['productLine', 'treatmentTypeName', 'treatmentStatusName', 'treatmentStatusId', 'discountType', 'discountName', 'adjustmentType',
-  'submissionStatus', 'collectionType', 'monthDate', 'endDate', 'creditTier', 'planPriority', 'dentition', 'keptExamFlag', 'examTypeName', 'patientExamResultName', 'miscellaneousChargeType', 'contractInterestTypeName', 'paymentTypeName', 'paymentClassName', 'invoiceTypeName'];
+  'submissionStatus', 'collectionType', 'monthDate', 'endDate', 'creditTier', 'planPriority', 'dentition', 'keptExamFlag', 'examTypeName', 'patientExamResultName', 'miscellaneousChargeType', 'contractInterestTypeName', 'contractFeeTypeName', 'chargeTypeName', 'dateType', 'includedInContract', 'paymentTypeName', 'paymentClassName', 'invoiceTypeName'];
 const KEEP_MS = 10 * 60e3;
 /* OrthoFi's "the answer is too big" (507, seen 20/11/2026 on insurance A/R and all treatments for 9 locations at once):
    then the same question one location at a time, 3 at once, and the rows put back together. */
