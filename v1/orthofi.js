@@ -100,7 +100,7 @@
     return seen ? v : null;
   }
   const RIP=g=>/retainer\s*insurance|\brip\b/i.test(g);
-  const KEPT=g=>/^(y|yes|true|1|kept)$/i.test(String(g).trim());                  // OrthoFi's keptExamFlag (a short flag)
+  const KEPT=g=>/^(y|yes|true|1|kept|kept exam)$/i.test(String(g).trim());                  // OrthoFi's keptExamFlag (a short flag)
   const ACTIVE=g=>/\b(in\s*treatment|active|started|in\s*progress)\b/i.test(g);              // \b: "Inactive" is not active
   /* answers = {planId: answer}; ids = this office's OrthoFi location ids -> {field:[{way, label, v}]} */
   /* typed = the office's own numbers for the month that OrthoFi never sees: Medicaid production (mdp) and Medicaid

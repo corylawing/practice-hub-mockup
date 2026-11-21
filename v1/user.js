@@ -2579,6 +2579,8 @@
     /* Sandbox: the mock-up, everyone. Live: the switch (PAY_LIVE or an admin's preview), then payLevel(). */
     /* Sandbox: everyone (made-up numbers; the page has its own "Try it as"). Live: the switch, then Teams & Access. */
     {k:'monthly',    n:'\ud83d\udcc8 Monthly Report',    href:'monthly.html',    show:()=>env()!=='live' || (monthlyOn() && (isAdmin(me()) || atLeast('monthly','view')))},
+    /* ORTHOFI INSIGHTS (21/11/2026): a sandbox demo for now (Cory: "Lets just build it in sandbox for now") */
+    {k:'insights',   n:'\ud83d\udd0e OrthoFi insights', href:'insights.html',   show:()=>env()!=='live'},
     {k:'payroll',    n:'\ud83d\udcb5 Payroll',           href:'payroll.html',    show:()=>env()!=='live' || (payOn() && !!payLevel())},
     {k:'academy',    n:'\ud83c\udf93 Academy',           href:'academy.html',    show:()=>env()!=='live'},
     {k:'admin',      n:'\u2699\ufe0f Admin',            href:'admin.html',      show:()=>atLeast('admin','view')}
@@ -3161,6 +3163,7 @@
     chat:'<path d="M21 11.5a8.5 8.5 0 0 1-12.4 7.6L3 20.5l1.4-5.1A8.5 8.5 0 1 1 21 11.5z"/>',
     payroll:'<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.6"/><path d="M6 10v4M18 10v4"/>',
     monthly:'<path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/><path d="M3 21h18"/>',
+    insights:'<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/>',
     tasks:'<path d="M10 6h10M10 12h10M10 18h10"/><path d="M3.5 6.2l1.3 1.3L7.3 5M3.5 12.2l1.3 1.3L7.3 11M3.5 18.2l1.3 1.3L7.3 17"/>',
     academy:'<path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c0 1.4 2.7 3 6 3s6-1.6 6-3v-5"/><path d="M22 9v6"/>',
     more:'<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>'

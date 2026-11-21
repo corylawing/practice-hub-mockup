@@ -508,6 +508,29 @@ I can confidently say that the chat feature should go next. The production thing
    Notes (noteField(f) - Talk types into whichever box has data-talkbox; Save while talking waits for the last words).
    Cory: no privacy reminder under the box ("I don't need that reminder please don't put it"). Saving adds fields only
    (persist/strip keep every field; consultsFrom reads every field). test/tc (185).
+61. **ORTHOFI INSIGHTS - SANDBOX DEMO (21/11/2026; hc244; menu entry sandbox-only, env()!=='live').** Cory picked from my
+    list: "#1 the TC scorecards ... Also number 2. I also like 3 (but we have to double check). Lets just build it in
+    sandbox for now"; "I like how patients pay too, we should build it in demo version"; "where patients come from ...
+    good for marketing page too.. Are you sure there is data?". Proposed to Heather (Cory sent it) before going further.
+    CHECKS ON LIVE (read-only, Cory's Safari): (a) Enter Production's "TC net production" = OrthoFi BH production TO THE
+    DOLLAR, 6 offices x Sept+Oct (12/12) - so #3 (fill production daily) is real; waits for Heather (changes how offices
+    enter). (b) TC: /patient-exams carries treatmentCoordinatorName on EVERY exam (Oct: 374 kept, 12 TCs, none blank);
+    keptExamFlag 'Kept Exam'/'Not Kept'; examTypeName New/Recall Ready/Phase 2/Observation; patientExamResultName
+    Treatment Recommended/Patient Canceled/Patient Did Not Show Up/Observation/No Treatment/Specialist;
+    patientExamTreatmentStatusName Patient Started/Pending Financing Selection/Start / Records/Decline Tx. The TC Tracker
+    had 11 consults logged for all of October (Carlsbad 10, Hobbs 1; Sept none) - TCs work in the PMS ("They seem to
+    think that data is in the PMS"). (c) Referrals: Oct all offices exams/started - My Dentist 127/53, Friend / Family
+    75/39, Other 58/24, Internet Search 51/20, Social Media 20/6, Advertisement 6/2. Server: counts inside groups,
+    GROUPS + treatmentCoordinatorName/doctorName (staff) /patientExamTreatmentStatusName/referralSource, ALLOWED
+    /referrals - NEVER referralSourceOption (can name a referring patient). KEPT regex fixed later? (orthofi.js KEPT
+    still /^(y|yes|true|1|kept)$/ - 'Kept Exam' needs adding if pex.kept is used.)
+    v1/insights.html: tabs TC scorecards (per TC: new-patient exams kept, recommended, started, conversion = started /
+    recommended, pending, declined, no-shows+cancels), Late payments (/delinquent today: 1-30/31-60/61-90/91-180/180+
+    via min rules; OrthoFi stages flag 45-53, letter 91-98, maintenance 121-129, dismissal 180+; daily snapshot
+    ph_orthofi_late, keeps 60 days; "climbing" when 90+ $ up >10% and >$500 vs ~7 days ago), How patients pay (BH:
+    pay in full %, same-day starts %, down payment % of financed, same-day cash %, average plan months, extensions %),
+    Where patients come from (referral source exams/started/conversion/production). Sandbox = seeded made-up numbers;
+    live code path written (admins only) but the page isn't in the live menu yet.
 60. **ADJUSTMENTS + NET PRODUCTION PROVEN FROM ORTHOFI (21/11/2026; hc242).** Cory: "Now that you have access to orthofi
     via safari do what you need to do to make this perfect" (his Safari, OrthoFi portal; read-only - only reports run).
     The Monthly Balance Sheet = OrthoFi portal Reports -> Accounting -> Monthly Balance Sheet (business-intelligence

@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Home-Brace · OrthoFi insights</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" href="../assets/favicon.png?v=2" type="image/png">
+<meta name="theme-color" content="#0F2A4A">
+<!-- ORTHOFI INSIGHTS (21/11/2026, SANDBOX DEMO). Cory: "Let's do #1 the TC scorecards ... Also number 2 ... Lets just build it
+     in sandbox for now" and "I like how patients pay too, we should build it in demo version to see if they like it" and "where
+     patients come from ... would be good for marketing page too". Four tabs, all office TOTALS from OrthoFi (never a patient):
+       TC scorecards  - /patient-exams by exam date, split by TC: kept, new-patient kept, treatment recommended, started,
+                        pending, declined, no-shows/cancels. Checked on live 21/11: every October exam has its TC (374 kept,
+                        12 TCs) while the TC Tracker had 11 consults logged - OrthoFi is the complete record.
+       Late payments  - /delinquent (TODAY's list), by days past due; OrthoFi's own stages (flag 45-53, dismissal letter
+                        91-98, maintenance 121-129, dismissal 180+); the trend from a daily snapshot (ph_orthofi_late).
+       How patients pay - the business health dashboard: pay in full, down payment, same-day cash, plan length, extensions.
+       Where they come from - /referrals by exam date, split by referral SOURCE only (the "option" can name a patient).
+     Sandbox: made-up numbers. Live: admins only, and the page isn't in the menu there yet. -->
+<style>
+  :root{
+    --navy:#0F2A4A; --navy2:#25456e; --teal:#149B96; --teal2:#2BC0B8; --teal-soft:#E5F4F3; --teal-600:#0F827E;
+    --ink:#1F2D3D; --soft:#56627A; --line:#E4E8EE; --canvas:#F4F6F8;
+    --good:#2E9E6B; --good-soft:#E7F4EE; --bad:#D7503A; --bad-soft:#FBEAE7; --amber:#F2A03D; --amber-soft:#FDF1E1; --amber-ink:#8a5208;
+    --shadow:0 1px 2px rgba(15,42,74,.06),0 6px 18px rgba(15,42,74,.06); --radius:14px; --maxw:1100px;
+  }
+  *{box-sizing:border-box}
+  [hidden]{display:none !important}
+  body{margin:0;font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--canvas);line-height:1.5;-webkit-font-smoothing:antialiased}
+  h1{color:var(--navy);margin:0;font-size:25px}
+  .ribbon{background:var(--amber);color:#3a2400;text-align:center;font-size:13px;font-weight:600;padding:6px 14px}
+  .hdr{background:var(--navy);color:#fff}
+  .hdr-in{max-width:var(--maxw);margin:0 auto;display:flex;align-items:center;gap:12px;padding:13px 20px}
+  .mark img{width:34px;height:34px;display:block;border-radius:50%}
+  .brand{font-weight:700;font-size:18px;color:#fff;line-height:1.1}
+  .brand i{font-style:normal;color:var(--teal2)}
+  .brand small{display:block;font-weight:500;font-size:12px;color:var(--navy-mute,#9fb4d0)}
+  .v1nav{background:var(--navy2)}
+  .v1nav-in{max-width:var(--maxw);margin:0 auto;display:flex;gap:2px;padding:0 12px;overflow-x:auto}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:22px 20px 110px}
+  .lede{color:var(--soft);font-size:14.5px;margin:4px 0 16px;max-width:680px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px;margin-bottom:16px}
+  .card h2{margin:0 0 4px;font-size:16px;color:var(--navy)}
+  .sub{font-size:13px;color:var(--soft);margin-bottom:12px}
+  .bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+  .tabs{display:flex;gap:4px;background:#E9EDF2;border-radius:12px;padding:4px;flex-wrap:wrap}
+  .tabs button{border:0;background:none;padding:8px 14px;border-radius:9px;font-weight:700;font-size:13.5px;font-family:inherit;color:var(--soft);cursor:pointer}
+  .tabs button.on{background:#fff;color:var(--navy);box-shadow:0 1px 3px rgba(15,42,74,.12)}
+  select,input[type=month]{padding:8px 10px;border:1px solid var(--line);border-radius:9px;font-weight:600;font-size:13.5px;font-family:inherit;color:var(--navy);background:#fff}
+  .tw{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;font-variant-numeric:tabular-nums}
+  th{text-align:right;font-size:11.5px;letter-spacing:.03em;text-transform:uppercase;color:var(--soft);font-weight:700;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+  th:first-child,td:first-child{text-align:left}
+  td{padding:9px 10px;border-bottom:1px solid #F0F3F7;text-align:right;white-space:nowrap}
+  tr.tot td{font-weight:800;color:var(--navy);background:#F7F9FB}
+  tr.off td{font-weight:800;color:var(--navy);padding-top:16px}
+  .pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:700}
+  .good{background:var(--good-soft);color:#1f6e4a} .bad{background:var(--bad-soft);color:#93301f} .mid{background:var(--amber-soft);color:var(--amber-ink)}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:14px}
+  .kpi{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+  .kpi .k{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--soft);font-weight:700}
+  .kpi .v{font-size:22px;font-weight:800;color:var(--navy);font-variant-numeric:tabular-nums}
+  .kpi .s{font-size:12.5px;color:var(--soft)}
+  .hb{height:10px;border-radius:5px;background:#EEF2F6;position:relative;min-width:120px}
+  .hb i{position:absolute;left:0;top:0;bottom:0;border-radius:5px;background:var(--teal)}
+  .hb i.st{background:var(--navy)}
+  .note{font-size:12.5px;color:var(--soft);margin-top:10px}
+  .up{color:var(--bad);font-weight:700} .down{color:var(--good);font-weight:700}
+  .stage{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+  .stage div{border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:#FBFCFD;font-size:13px}
+  .stage b{display:block;font-size:18px;color:var(--navy)}
+  .warn{background:var(--bad-soft);color:#93301f;border-radius:10px;padding:10px 12px;font-size:13.5px;margin-bottom:12px}
+  .state{padding:12px;border-radius:10px;background:#F7F9FB;color:var(--soft);font-size:13.5px}
+  @media(max-width:640px){ .wrap{padding:16px 12px 140px} h1{font-size:21px} }
+</style>
+<script src="user.js?v=hc244"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
+  <script src="store.js?v=hc244"></script>
+  <script src="gate.js?v=hc244"></script>
+  <script src="orthofi.js?v=hc244"></script>
+</head>
+<body>
+<div class="ribbon" id="ribbon">SANDBOX — made-up numbers, to see how it would look.</div>
+<header class="hdr"><div class="hdr-in"><span class="mark"><img src="../assets/logo-mark.png?v=2" alt="" width="34" height="34"></span><span class="brand">Home-<i>Brace</i><small>OrthoFi insights</small></span></div></header>
+<nav class="v1nav"><div class="v1nav-in" id="nav"></div></nav>
+<div class="wrap" id="wrap">
+  <h1>OrthoFi insights</h1>
+  <p class="lede">Straight from OrthoFi, office by office — nobody types or logs anything. Totals only, never a patient.</p>
+  <div class="bar">
+    <div class="tabs" id="tabs" role="tablist"></div>
+    <span style="flex:1"></span>
+    <input type="month" id="mon" aria-label="Month">
+    <select id="off" aria-label="Office"></select>
+  </div>
+  <div id="view"></div>
+</div>
+<script>
+(function(){
+  'use strict';
+  const LIVE=!!(window.PH && PH.isLive && PH.isLive()), O=window.PH_ORTHOFI;
+  const el=id=>document.getElementById(id), esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const p2=n=>String(n).padStart(2,'0'), r1=x=>Math.round(x*10)/10;
+  const pct=(a,b)=>b ? Math.round(a/b*1000)/10 : null, fp=v=>v==null ? '—' : v+'%';
+  const money=v=>v==null ? '—' : (v<0?'−':'')+'$'+Math.round(Math.abs(v)).toLocaleString('en-US');
+  const TABS=[['tc','TC scorecards'],['late','Late payments'],['pay','How patients pay'],['ref','Where patients come from']];
+  let TAB='tc'; try{ TAB=localStorage.getItem('ph_insights_tab')||'tc'; }catch(_){}
+  if(!TABS.some(t=>t[0]===TAB)) TAB='tc';
+  const now=new Date(), lm=new Date(now.getFullYear(), now.getMonth()-1, 1);
+  el('mon').value=lm.getFullYear()+'-'+p2(lm.getMonth()+1); el('mon').max=now.getFullYear()+'-'+p2(now.getMonth()+1);
+  const offices=()=>(PH.officeNames && PH.officeNames().length) ? PH.officeNames() : ['Carlsbad','Clovis','Hobbs','San Angelo','Lubbock','Mansfield','Cruces LCO','Cruces FFO'];
+  function drawOff(){ const v=el('off').value||'__all'; el('off').innerHTML='<option value="__all">All offices</option>'+offices().map(o=>'<option'+(o===v?' selected':'')+'>'+esc(o)+'</option>').join(''); }
+  const ym=()=>{ const m=/^(\d{4})-(\d{2})$/.exec(el('mon').value); return m ? {y:+m[1], m:+m[2]} : {y:lm.getFullYear(), m:lm.getMonth()+1}; };
+  const pickOffs=()=>{ const v=el('off').value; return v && v!=='__all' ? [v] : offices(); };
+
+  /* ---------------- made-up numbers for the sandbox (seeded: everyone sees the same) ---------------- */
+  function rng(seed){ let s=0; for(const c of String(seed)) s=(s*31+c.charCodeAt(0))%2147483647; return ()=>{ s=(s*1103515245+12345)%2147483648; return s/2147483648; }; }
+  const DEMO_TCS={'Carlsbad':['Ava Moreno'],'Clovis':['Lena Ortiz'],'Hobbs':['Mia Duran','Kate Ruiz'],'San Angelo':['Rosa Vega'],'Lubbock':['Nina Park'],'Mansfield':['Tara Quinn'],'Cruces LCO':['Gina Salas','Ivy Cole'],'Cruces FFO':['Dana Reyes']};
+  function demoTC(o, y, m){ const R=rng('tc'+o+y+m), out={};
+    (DEMO_TCS[o]||['Sam Lee']).forEach((t,i)=>{ const keptNew=Math.round((i? 6:24)+R()*28), recall=Math.round(R()*8), rec=Math.round(keptNew*(0.62+R()*0.25)), started=Math.round(rec*(0.42+R()*0.33)),
+      pending=Math.round((rec-started)*(0.4+R()*0.4)), declined=Math.max(0, rec-started-pending), ns=Math.round(keptNew*(0.08+R()*0.12));
+      out[t]={keptNew, kept:keptNew+recall, rec, started, pending, declined, noshow:ns, cancel:Math.round(ns*0.8)}; }); return out; }
+  function demoLate(o, day){ const R=rng('late'+o+day), base=24+Math.round(R()*40); const b=[base, Math.round(base*0.45), Math.round(base*0.25), Math.round(base*0.3), Math.round(base*0.12+R()*4)];
+    const amt=b.map((n,i)=>n*(180+i*260)*(0.8+R()*0.4)); return {n:b, amt, flag:Math.round(b[1]*0.35), letter:Math.round(b[3]*0.18), maint:Math.round(b[3]*0.14), dismiss:b[4]}; }
+  function demoPay(o, y, m){ const R=rng('pay'+o+y+m), starts=Math.round(18+R()*30), pif=Math.round(starts*(0.08+R()*0.15)), resp=starts*(5200+R()*900), nonPif=resp*(1-pif/starts);
+    return {starts, pif, sameDayStarts:Math.round(starts*(0.15+R()*0.3)), dp:nonPif*(0.14+R()*0.12), nonPif, sdc:resp*(0.12+R()*0.15), resp, ext:Math.round(starts*(0.05+R()*0.2)), months:(starts-pif)*(20+R()*8)}; }
+  function demoRef(o, y, m){ const R=rng('ref'+o+y+m), S=[['My Dentist',0.38,0.42],['Friend / Family',0.22,0.52],['Internet Search',0.15,0.38],['Social Media',0.07,0.3],['Other',0.15,0.4],['Advertisement',0.03,0.3]], tot=40+Math.round(R()*40), out={};
+    S.forEach(([s,share,conv])=>{ const n=Math.max(0, Math.round(tot*share*(0.7+R()*0.6))), st=Math.round(n*conv*(0.7+R()*0.6)); out[s]={n, started:Math.min(n,st), prod:Math.min(n,st)*(5000+R()*1200)}; }); return out; }
+
+  /* ---------------- the real numbers (live: admins; the same asks proven on live 21/11/2026) ---------------- */
+  let MAP=null; const CACHE={};
+  async function map(){ if(!MAP) MAP=O.cleanMap(await PH_STORE.get(O.KEY)); return MAP; }
+  async function ask(key, fn){ if(CACHE[key]) return CACHE[key]; const v=await fn(); CACHE[key]=v; return v; }
+  async function liveTC(o, y, m){ const b=O.monthBounds(y,m), M=await map(), locs=O.locsOf(M,o); if(!locs.length) return {};
+    const K='kept exam', a=await O.ask({ask:'sum', path:'/v1/practice-locations/patient-exams', locs, params:{'exam-date-start-date':b.first,'exam-date-end-date':b.last}, group:'treatmentCoordinatorName',
+      count:[{name:'kept', eq:{keptExamFlag:[K]}}, {name:'keptNew', eq:{keptExamFlag:[K], examTypeName:['new']}}, {name:'rec', eq:{keptExamFlag:[K], patientExamResultName:['treatment recommended']}},
+             {name:'started', eq:{patientExamTreatmentStatusName:['patient started']}}, {name:'pending', eq:{patientExamTreatmentStatusName:['pending financing selection','start / records']}},
+             {name:'declined', eq:{patientExamTreatmentStatusName:['decline tx']}}, {name:'noshow', eq:{patientExamResultName:['patient did not show up']}}, {name:'cancel', eq:{patientExamResultName:['patient canceled']}}]});
+    const r={}; Object.keys(a.by||{}).forEach(l=>{ const G=a.by[l].groups||{}; Object.keys(G).forEach(t=>{ const x=r[t]=r[t]||{}; ['kept','keptNew','rec','started','pending','declined','noshow','cancel'].forEach(k=>{ x[k]=(x[k]||0)+((G[t].cnt||{})[k]||0); }); }); }); return r; }
+  const MINS=[1,31,45,54,61,91,99,121,130,181];
+  async function liveLate(o){ const M=await map(), locs=O.locsOf(M,o); if(!locs.length) return null;
+    const a=await O.ask({ask:'sum', path:'/v1/practice-locations/delinquent', locs, params:{}, count:MINS.map(d=>({name:'d'+d, min:{daysPastDue:d}}))});
+    const c=k=>Object.keys(a.by||{}).reduce((s,l)=>s+((a.by[l].cnt||{})[k]||0),0), $=k=>Object.keys(a.by||{}).reduce((s,l)=>s+((((a.by[l].csum||{})[k]||{}).sum||{}).pastDueAmount||0),0);
+    const n=[c('d1')-c('d31'), c('d31')-c('d61'), c('d61')-c('d91'), c('d91')-c('d181'), c('d181')], amt=[$('d1')-$('d31'), $('d31')-$('d61'), $('d61')-$('d91'), $('d91')-$('d181'), $('d181')];
+    return {n, amt, flag:c('d45')-c('d54'), letter:c('d91')-c('d99'), maint:c('d121')-c('d130'), dismiss:c('d181')}; }
+  async function livePay(o, y, m){ const b=O.monthBounds(y,m), M=await map(), locs=O.locsOf(M,o); if(!locs.length) return null;
+    const a=await O.ask({ask:'sum', path:'/v1/practice-locations/business-health', locs, params:{'month-date-start-date':b.first,'month-date-end-date':b.last}});
+    const s=k=>Object.keys(a.by||{}).reduce((t,l)=>t+((a.by[l].sum||{})[k]||0),0);
+    return {starts:s('starts'), pif:s('payInFullCount'), sameDayStarts:s('sameDayStarts'), dp:s('downPaymentAmount'), nonPif:s('nonPayInFullPatientResponsibility'), sdc:s('sameDayCash'), resp:s('patientResponsibility'), ext:s('extensions'), months:s('totalTreatmentMonths')}; }
+  async function liveRef(o, y, m){ const b=O.monthBounds(y,m), M=await map(), locs=O.locsOf(M,o); if(!locs.length) return {};
+    const a=await O.ask({ask:'sum', path:'/v1/practice-locations/referrals', locs, params:{'exam-date-start-date':b.first,'exam-date-end-date':b.last}, group:'referralSource', count:[{name:'started', on:{field:'startDate', from:'2000-01-01', to:'2100-12-31'}}]});
+    const r={}; Object.keys(a.by||{}).forEach(l=>{ const G=a.by[l].groups||{}; Object.keys(G).forEach(s=>{ const x=r[s]=r[s]||{n:0,started:0,prod:0}; x.n+=G[s].n; x.started+=((G[s].cnt||{}).started||0); x.prod+=(G[s].sum||{}).production||0; }); }); return r; }
+  const get={
+    tc:(o,y,m)=>LIVE ? ask('tc'+o+y+m, ()=>liveTC(o,y,m)) : Promise.resolve(demoTC(o,y,m)),
+    late:(o)=>LIVE ? ask('late'+o, ()=>liveLate(o)) : Promise.resolve(demoLate(o, new Date().toISOString().slice(0,10))),
+    pay:(o,y,m)=>LIVE ? ask('pay'+o+y+m, ()=>livePay(o,y,m)) : Promise.resolve(demoPay(o,y,m)),
+    ref:(o,y,m)=>LIVE ? ask('ref'+o+y+m, ()=>liveRef(o,y,m)) : Promise.resolve(demoRef(o,y,m))
+  };
+
+  /* ---------------- the late-payment trend: one snapshot a day (live), the sandbox makes one up ---------------- */
+  const LATE_KEY='ph_orthofi_late';
+  async function lateTrend(today){
+    if(!LIVE){ const ago=new Date(Date.now()-7*864e5).toISOString().slice(0,10), out={}; offices().forEach(o=>{ out[o]=demoLate(o, ago); }); return {day:ago, by:out}; }
+    try{ const rec=(await PH_STORE.get(LATE_KEY))||{days:{}}, days=Object.keys(rec.days||{}).sort(), target=new Date(Date.now()-7*864e5).toISOString().slice(0,10);
+      const d=days.filter(x=>x<=target).pop() || days.filter(x=>x<today)[0]; return d ? {day:d, by:rec.days[d]} : null; }catch(_){ return null; }
+  }
+  async function lateSave(today, by){
+    if(!LIVE) return;
+    try{ await PH_STORE.update(LATE_KEY, cur=>{ const x=(cur && typeof cur==='object') ? cur : {v:1, days:{}}; x.days=x.days||{}; if(x.days[today]) return undefined;
+      x.days[today]={}; Object.keys(by).forEach(o=>{ const v=by[o]; if(v) x.days[today][o]={n:v.n, amt:v.amt.map(a=>Math.round(a))}; });
+      const keep=Object.keys(x.days).sort().slice(-60), y={}; keep.forEach(k=>{ y[k]=x.days[k]; }); x.days=y; return x; }); }catch(_){}
+  }
+
+  /* ---------------- drawing ---------------- */
+  function tabs(){ el('tabs').innerHTML=TABS.map(t=>'<button role="tab" class="'+(TAB===t[0]?'on':'')+'" data-tab="'+t[0]+'">'+t[1]+'</button>').join(''); el('mon').hidden=TAB==='late'; }
+  const kpi=(k,v,s)=>'<div class="kpi"><div class="k">'+k+'</div><div class="v">'+v+'</div>'+(s?'<div class="s">'+s+'</div>':'')+'</div>';
+  const tone=(v,lo,hi)=>v==null ? '' : v>=hi ? 'good' : v<lo ? 'bad' : 'mid';
+  const monthName=()=>{ const t=ym(); return new Date(t.y, t.m-1, 1).toLocaleDateString('en-US',{month:'long', year:'numeric'}); };
+  let SEQ=0;
+  async function render(){
+    tabs(); const my=++SEQ, v=el('view'), t=ym(), offs=pickOffs();
+    v.innerHTML='<div class="state">Reading OrthoFi…</div>';
+    try{
+      let h='';
+      if(TAB==='tc') h=await tcHTML(offs, t);
+      else if(TAB==='late') h=await lateHTML(offs);
+      else if(TAB==='pay') h=await payHTML(offs, t);
+      else h=await refHTML(offs, t);
+      if(my===SEQ) v.innerHTML=h;
+    }catch(e){ if(my===SEQ) v.innerHTML='<div class="warn">OrthoFi didn’t answer: '+esc((e && e.message) || 'try again in a minute')+'</div>'; }
+  }
+
+  async function tcHTML(offs, t){
+    const all=await Promise.all(offs.map(o=>get.tc(o, t.y, t.m).then(r=>[o, r||{}])));
+    const T={keptNew:0, rec:0, started:0, pending:0, noshow:0, cancel:0}; const rows=[];
+    all.forEach(([o,r])=>Object.keys(r).forEach(tc=>{ const x=r[tc]; Object.keys(T).forEach(k=>{ T[k]+=x[k]||0; }); rows.push({o, tc, x}); }));
+    const conv=x=>pct(x.started||0, x.rec||0);
+    let h='<div class="kpis">'+kpi('New-patient exams kept', T.keptNew.toLocaleString())+kpi('Treatment recommended', T.rec.toLocaleString(), fp(pct(T.rec,T.keptNew))+' of exams')+
+      kpi('Started so far', T.started.toLocaleString(), fp(pct(T.started,T.rec))+' of recommended')+kpi('Still deciding', T.pending.toLocaleString(), 'pending financing or records')+
+      kpi('No-shows + cancels', (T.noshow+T.cancel).toLocaleString())+'</div>';
+    h+='<div class="card"><h2>Each TC · '+esc(monthName())+'</h2><div class="sub">From every exam in OrthoFi that month, by the TC on it. “Started” counts this month’s exams that have started treatment so far — it keeps growing as patients start.</div><div class="tw"><table>'+
+      '<thead><tr><th>TC</th><th>New-patient exams</th><th>Recommended</th><th>Started</th><th>Conversion</th><th>Still deciding</th><th>Declined</th><th>No-shows / cancels</th></tr></thead><tbody>';
+    const byOff={}; rows.forEach(r=>{ (byOff[r.o]=byOff[r.o]||[]).push(r); });
+    Object.keys(byOff).forEach(o=>{ if(offs.length>1) h+='<tr class="off"><td colspan="8">'+esc(o)+'</td></tr>';
+      byOff[o].sort((a,b)=>(b.x.keptNew||0)-(a.x.keptNew||0)).forEach(r=>{ const c=conv(r.x);
+        h+='<tr><td>'+esc(r.tc)+'</td><td>'+(r.x.keptNew||0)+'</td><td>'+(r.x.rec||0)+'</td><td>'+(r.x.started||0)+'</td><td><span class="pill '+tone(c,40,55)+'">'+fp(c)+'</span></td><td>'+(r.x.pending||0)+'</td><td>'+(r.x.declined||0)+'</td><td>'+((r.x.noshow||0)+(r.x.cancel||0))+'</td></tr>'; }); });
+    if(!rows.length) h+='<tr><td colspan="8" class="soft">No exams in OrthoFi for this month.</td></tr>';
+    h+='</tbody></table></div><div class="note">Conversion = started ÷ treatment recommended. Green 55%+, amber 40–55%, red under 40% (to be set with Heather). TCs don’t log anything for this — it comes from OrthoFi.</div></div>';
+    return h;
+  }
+
+  const BUCKETS=['1–30 days','31–60','61–90','91–180','180+ days'];
+  async function lateHTML(offs){
+    const today=new Date().toISOString().slice(0,10);
+    const [all, before]=await Promise.all([Promise.all(offs.map(o=>get.late(o).then(r=>[o,r]))), lateTrend(today)]);
+    const by={}; all.forEach(([o,r])=>{ by[o]=r; }); if(offs.length===offices().length) lateSave(today, by);
+    const sum=(f,i)=>all.reduce((s,[o,r])=>s+(r ? r[f][i] : 0),0), n90=all.reduce((s,[o,r])=>s+(r ? r.n[3]+r.n[4] : 0),0), a90=all.reduce((s,[o,r])=>s+(r ? r.amt[3]+r.amt[4] : 0),0);
+    const st=k=>all.reduce((s,[o,r])=>s+(r ? r[k] : 0),0);
+    let h='<div class="kpis">'+kpi('Accounts past due', BUCKETS.reduce((s,_,i)=>s+sum('n',i),0).toLocaleString(), money(BUCKETS.reduce((s,_,i)=>s+sum('amt',i),0))+' past due')+
+      kpi('90+ days', n90.toLocaleString(), money(a90))+kpi('Ready for a dismissal letter', st('letter'), '91–98 days')+kpi('At dismissal', st('dismiss'), '180+ days')+'</div>';
+    const rising=[]; all.forEach(([o,r])=>{ const b=before && before.by && before.by[o]; if(!r || !b) return; const now90=r.amt[3]+r.amt[4], was=(b.amt[3]||0)+(b.amt[4]||0); if(was>0 && now90>was*1.1 && now90-was>500) rising.push(o+' (+'+Math.round((now90/was-1)*100)+'%)'); });
+    if(rising.length) h+='<div class="warn">⚠️ 90+ days past due is climbing at '+esc(rising.join(', '))+' since '+esc(new Date(before.day+'T12:00:00').toLocaleDateString('en-US',{month:'short', day:'numeric'}))+'. Home-Brace would let that office manager know.</div>';
+    h+='<div class="card"><h2>Past due today, by how late</h2><div class="sub">OrthoFi’s Delinquent report, today. Number of accounts and dollars past due'+(before ? ', and the change in 90+ since '+esc(new Date(before.day+'T12:00:00').toLocaleDateString('en-US',{month:'short', day:'numeric'})) : '')+'.</div><div class="tw"><table><thead><tr><th>Office</th>'+BUCKETS.map(b=>'<th>'+b+'</th>').join('')+'<th>90+ change</th></tr></thead><tbody>';
+    all.forEach(([o,r])=>{ if(!r){ h+='<tr><td>'+esc(o)+'</td><td colspan="6" class="soft">No OrthoFi location</td></tr>'; return; }
+      const b=before && before.by && before.by[o], now90=r.amt[3]+r.amt[4], was=b ? (b.amt[3]||0)+(b.amt[4]||0) : null, ch=was ? Math.round((now90/was-1)*100) : null;
+      h+='<tr><td>'+esc(o)+'</td>'+r.n.map((n,i)=>'<td>'+n+' <span class="soft" style="font-size:12px">'+money(r.amt[i])+'</span></td>').join('')+'<td>'+(ch==null ? '—' : '<span class="'+(ch>0?'up':'down')+'">'+(ch>0?'↑ ':'↓ ')+Math.abs(ch)+'%</span>')+'</td></tr>'; });
+    h+='</tbody></table></div></div>';
+    h+='<div class="card"><h2>Where accounts are in OrthoFi’s steps</h2><div class="sub">OrthoFi’s own collection stages — the same ranges as its Delinquent report.</div><div class="stage">'+
+      '<div><b>'+st('flag')+'</b>Flag in the PMS (45–53 days)</div><div><b>'+st('letter')+'</b>Dismissal letter (91–98)</div><div><b>'+st('maint')+'</b>Maintenance (121–129)</div><div><b>'+st('dismiss')+'</b>Dismissal (180+)</div></div></div>';
+    return h;
+  }
+
+  async function payHTML(offs, t){
+    const all=await Promise.all(offs.map(o=>get.pay(o, t.y, t.m).then(r=>[o,r])));
+    const T={starts:0,pif:0,sameDayStarts:0,dp:0,nonPif:0,sdc:0,resp:0,ext:0,months:0}; all.forEach(([o,r])=>{ if(r) Object.keys(T).forEach(k=>{ T[k]+=r[k]||0; }); });
+    const f=x=>({pif:pct(x.pif,x.starts), sds:pct(x.sameDayStarts,x.starts), dp:pct(x.dp,x.nonPif), sdc:pct(x.sdc,x.resp), len:(x.starts-x.pif)>0 ? r1(x.months/(x.starts-x.pif)) : null, ext:pct(x.ext,x.starts)});
+    const P=f(T);
+    let h='<div class="kpis">'+kpi('Starts', T.starts.toLocaleString())+kpi('Paid in full', fp(P.pif), T.pif+' starts')+kpi('Down payment', fp(P.dp), 'of what patients finance')+kpi('Same-day cash', fp(P.sdc), 'collected on the start day')+kpi('Average plan', P.len==null?'—':P.len+' months')+'</div>';
+    const cell=(v,avg,unit,higherBetter)=>{ if(v==null) return '<td>—</td>'; const d=avg==null?0:v-avg, cls=Math.abs(d)<(unit==='m'?1.5:3) ? '' : ((d>0)===higherBetter ? 'good' : 'bad');
+      return '<td>'+(cls?'<span class="pill '+cls+'">':'')+(unit==='m' ? v+' mo' : v+'%')+(cls?'</span>':'')+'</td>'; };
+    h+='<div class="card"><h2>How each office’s patients pay · '+esc(monthName())+'</h2><div class="sub">From OrthoFi’s business health dashboard, on the starts that month. Green/red = noticeably better/worse than the practice as a whole.</div><div class="tw"><table><thead><tr><th>Office</th><th>Starts</th><th>Paid in full</th><th>Same-day starts</th><th>Down payment</th><th>Same-day cash</th><th>Average plan</th><th>Extensions</th></tr></thead><tbody>';
+    all.forEach(([o,r])=>{ if(!r){ h+='<tr><td>'+esc(o)+'</td><td colspan="7" class="soft">No OrthoFi location</td></tr>'; return; } const x=f(r);
+      h+='<tr><td>'+esc(o)+'</td><td>'+r.starts+'</td>'+cell(x.pif,P.pif,'%',true)+cell(x.sds,P.sds,'%',true)+cell(x.dp,P.dp,'%',true)+cell(x.sdc,P.sdc,'%',true)+cell(x.len,P.len,'m',false)+cell(x.ext,P.ext,'%',false)+'</tr>'; });
+    h+='<tr class="tot"><td>Practice</td><td>'+T.starts+'</td><td>'+fp(P.pif)+'</td><td>'+fp(P.sds)+'</td><td>'+fp(P.dp)+'</td><td>'+fp(P.sdc)+'</td><td>'+(P.len==null?'—':P.len+' mo')+'</td><td>'+fp(P.ext)+'</td></tr></tbody></table></div>'+
+      '<div class="note">Extensions = payment plans that run past the end of treatment (they carry interest).</div></div>';
+    return h;
+  }
+
+  async function refHTML(offs, t){
+    const all=await Promise.all(offs.map(o=>get.ref(o, t.y, t.m).then(r=>[o,r||{}])));
+    const S={}; all.forEach(([o,r])=>Object.keys(r).forEach(s=>{ const x=S[s]=S[s]||{n:0,started:0,prod:0}; x.n+=r[s].n; x.started+=r[s].started; x.prod+=r[s].prod; }));
+    const list=Object.keys(S).sort((a,b)=>S[b].n-S[a].n), tot=list.reduce((a,s)=>a+S[s].n,0), totSt=list.reduce((a,s)=>a+S[s].started,0), max=Math.max(1,...list.map(s=>S[s].n));
+    let h='<div class="kpis">'+kpi('New-patient exams', tot.toLocaleString())+kpi('Started so far', totSt.toLocaleString(), fp(pct(totSt,tot))+' of them')+
+      (list[0] ? kpi('Biggest source', esc(list[0]), fp(pct(S[list[0]].n,tot))+' of exams') : '')+'</div>';
+    h+='<div class="card"><h2>Where new patients came from · '+esc(monthName())+'</h2><div class="sub">What patients said brought them in, from OrthoFi’s referral report (exams that month). The navy part of each bar started treatment.</div><div class="tw"><table><thead><tr><th>Source</th><th style="text-align:left">Exams · started</th><th>Exams</th><th>Started</th><th>Conversion</th><th>Production of starts</th></tr></thead><tbody>'+
+      list.map(s=>{ const x=S[s], c=pct(x.started,x.n); return '<tr><td>'+esc(s)+'</td><td style="width:34%"><div class="hb" aria-hidden="true"><i style="width:'+(x.n/max*100)+'%"></i><i class="st" style="width:'+(x.started/max*100)+'%"></i></div></td><td>'+x.n+'</td><td>'+x.started+'</td><td><span class="pill '+tone(c,30,45)+'">'+fp(c)+'</span></td><td>'+money(x.prod)+'</td></tr>'; }).join('')+
+      (list.length ? '' : '<tr><td colspan="6" class="soft">No referral answers in OrthoFi for this month.</td></tr>')+'</tbody></table></div>'+
+      '<div class="note">A patient sent by another patient shows as Friend / Family — Home-Brace never reads who. This could sit on the Marketing page too.</div></div>';
+    return h;
+  }
+
+  /* ---------------- wiring ---------------- */
+  function allowed(){ return !LIVE || (PH.isAdmin && PH.isAdmin(PH.realMe ? PH.realMe() : PH.me())); }
+  document.addEventListener('click', e=>{ const b=e.target.closest('[data-tab]'); if(b){ TAB=b.dataset.tab; try{ localStorage.setItem('ph_insights_tab', TAB); }catch(_){} render(); } });
+  el('mon').addEventListener('change', render); el('off').addEventListener('change', render);
+  function boot(){ if(!allowed()){ el('wrap').innerHTML='<h1>OrthoFi insights</h1><p class="lede">This page is for Home-Brace admins.</p>'; return; } drawOff(); render(); }
+  if(LIVE) el('ribbon').textContent='OrthoFi insights — real OrthoFi totals, admins only (preview).';
+  if(!LIVE || window.PH_AUTH) boot(); else document.addEventListener('ph-signed-in', boot, {once:true});
+  document.addEventListener('ph-identity', ()=>{ drawOff(); });
+  window.INSIGHTS={render, _demo:{demoTC, demoLate, demoPay, demoRef}};
+})();
+</script>
+<script>PH.nav('insights');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
+</body>
+</html>
