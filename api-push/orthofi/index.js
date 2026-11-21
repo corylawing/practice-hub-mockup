@@ -52,14 +52,19 @@ const ALLOWED = {
   '/v1/practice-locations/fees': { 'created-on-start-date': D, 'created-on-end-date': D, 'invoice-due-date-start-date': D, 'invoice-due-date-end-date': D },
   '/v1/practice-locations/charges': { 'charge-date-start-date': D, 'charge-date-end-date': D },
   '/v1/practice-locations/non-contract-charges': { 'start-date': D, 'end-date': D },
+  /* WHERE NEW PATIENTS COME FROM (21/11/2026): totals by referral SOURCE only - never referralSourceOption, which for a
+     patient-to-patient referral can be the referring patient's name */
+  '/v1/practice-locations/referrals': { 'exam-date-start-date': D, 'exam-date-end-date': D },
   '/v1/practice-locations/collection-details': { 'payment-start-date': D, 'payment-end-date': D },
   '/v1/practice-locations/treatments': { 'product-lines': LIST, 'treatment-status-ids': IDS,
     'contract-signed-on-start-date': D, 'contract-signed-on-end-date': D, 'appliance-date-start-date': D, 'appliance-date-end-date': D,
     'created-on-start-date': D, 'created-on-end-date': D }
 };
-/* fields a total may be split by - none of them ever holds a person */
+/* fields a total may be split by - none of them ever holds a PATIENT (staff names - TC, doctor - are allowed, 21/11/2026) */
 const GROUPS = ['productLine', 'treatmentTypeName', 'treatmentStatusName', 'treatmentStatusId', 'discountType', 'discountName', 'adjustmentType',
-  'submissionStatus', 'collectionType', 'monthDate', 'endDate', 'creditTier', 'planPriority', 'dentition', 'keptExamFlag', 'examTypeName', 'patientExamResultName', 'miscellaneousChargeType', 'contractInterestTypeName', 'contractFeeTypeName', 'chargeTypeName', 'dateType', 'includedInContract', 'paymentTypeName', 'paymentClassName', 'invoiceTypeName'];
+  'submissionStatus', 'collectionType', 'monthDate', 'endDate', 'creditTier', 'planPriority', 'dentition', 'keptExamFlag', 'examTypeName', 'patientExamResultName', 'miscellaneousChargeType', 'contractInterestTypeName', 'contractFeeTypeName', 'chargeTypeName', 'dateType', 'includedInContract',
+  /* staff - the TC and the doctor on an exam (21/11/2026, TC scorecards): the practice's own people, never a patient */
+  'treatmentCoordinatorName', 'doctorName', 'patientExamTreatmentStatusName', 'referralSource', 'paymentTypeName', 'paymentClassName', 'invoiceTypeName'];
 const KEEP_MS = 10 * 60e3;
 /* OrthoFi's "the answer is too big" (507, seen 20/11/2026 on insurance A/R and all treatments for 9 locations at once):
    then the same question one location at a time, 3 at once, and the rows put back together. */
@@ -137,7 +142,8 @@ function summarize(rows, group, counts) {
       L.cnt[c.name] = (L.cnt[c.name] || 0) + 1;
       const C = L.csum[c.name] = L.csum[c.name] || { sum: {}, nz: {} }; addRow(C, row);
       if (pid) (S.c[c.name] = S.c[c.name] || new Set()).add(pid); });
-    if (group) { const gv = clip(row[group] == null ? '(none)' : row[group], 80), G = L.groups[gv] = L.groups[gv] || { n: 0, sum: {}, nz: {} }; G.n++; addRow(G, row); }
+    if (group) { const gv = clip(row[group] == null ? '(none)' : row[group], 80), G = L.groups[gv] = L.groups[gv] || { n: 0, sum: {}, nz: {}, cnt: {} }; G.n++; addRow(G, row);
+      (counts || []).forEach(c => { if (meets(row, c)) G.cnt[c.name] = (G.cnt[c.name] || 0) + 1; }); }   // per TC: kept, recommended, started (21/11/2026)
   });
   Object.keys(by).forEach(loc => { const S = P[loc]; by[loc].pat = S.all.size; Object.keys(S.c).forEach(k => { by[loc].patc[k] = S.c[k].size; }); });
   return { by, fields: [...fields].sort() };
