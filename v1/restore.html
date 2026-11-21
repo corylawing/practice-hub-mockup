@@ -88,6 +88,7 @@
 <script>
 (function(){
   'use strict';
+  function adminHere(){ return !(window.PH && PH.isLive && PH.isLive()) || !!(PH.isAdmin && PH.isAdmin(PH.realMe ? PH.realMe() : PH.me())); }
   var el=function(id){return document.getElementById(id);};
   var parsed=null;
   function show(id,cls,html){ var n=el(id); n.className='res on '+cls; n.innerHTML=html; }
@@ -169,15 +170,17 @@
     show('r2','warn','Saving…');
     if(!window.PH_STORE || !window.PH_AUTH)
       return show('r2','bad','<b>Not signed in.</b> Reload the page and sign in first.');
+    if(!adminHere()){ el('go').disabled=false; return show('r2','bad','<b>Only an admin can restore the schedule.</b>'); }
     parsed.__v = 2;                                  // the schedule's current format marker
     /* force: this page IS the deliberate overwrite. The store's guard exists to stop
        an accident, and a restore is the one place where replacing what is there is
        exactly the intention. Everywhere else it stays on. */
     PH_STORE.set('ph_sched2', parsed, {force:true}).then(function(r){
-      if(r && r.local){
-        show('r2','bad','<b>It saved on this device only.</b> '+
-          'SharePoint refused it'+(r.error?(' — '+String(r.error).replace(/[<>&]/g,'')):'')+
-          '. Nobody else will see it yet.');
+      if(r && (r.local || r.blocked || r.error || r.quota)){
+        if(PH_STORE.discard) PH_STORE.discard('ph_sched2');   // a failed restore is never sent later on its own (21/11/2026, code review)
+        show('r2','bad','<b>It did not save.</b> '+
+          'SharePoint refused it'+((r.error||r.why)?(' — '+String(r.error||r.why).replace(/[<>&]/g,'')):'')+
+          '. Nothing changed for anyone.');
         el('go').disabled=false; return;
       }
       /* Read it straight back. Saying "restored" without checking is what this whole
@@ -185,6 +188,7 @@
       PH_STORE.get('ph_sched2').then(function(back){
         var n=0; if(back) Object.keys(back).forEach(function(k){
           if(/^\d{4}-\d{2}-\d{2}$/.test(k)) n++; });
+        if(n && JSON.stringify(back)!==JSON.stringify(parsed)) n=0;   // what came back must BE what was restored
         show('r2', n?'ok':'bad', n
           ? '<b>Restored, and checked.</b> '+n+' days are back in the shared schedule. '+
             '<a href="schedule.html">Open the schedule</a> to see it.'
@@ -201,5 +205,8 @@
   };
 })();
 </script>
+<script>/* ADMINS ONLY (21/11/2026, code review): this page writes over shared records past both safety guards - it never
+   called the one gate, so anyone signed in could open it by its address. */
+PH.nav('admin');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
 </body>
 </html>

@@ -376,10 +376,12 @@
     const run=function(){
       fromStore().then(function(rows){
         if(Array.isArray(rows) && rows.length) return rosterFromRows(rows);
+        /* An UNREAD staff list is not a missing one (21/11/2026, code review): the file is shown, but never copied over it. */
+        const unread=!!(window.PH_STORE && isLive() && window.PH_STORE.readFailed && window.PH_STORE.readFailed(ROSTER_KEY));
         return fromFile().then(function(fileRows){
           if(!fileRows) return null;
           const out=rosterFromRows(fileRows);
-          SEED_ROWS=fileRows; seedRoster();     // now if the admin is already known, else when identity lands
+          if(!unread && fileRows.length){ SEED_ROWS=fileRows; seedRoster(); }     // now if the admin is already known, else when identity lands
           return out;
         });
       }).then(resolve, function(){ resolve(null); });
@@ -1420,7 +1422,7 @@
   function openMenu(anchor){
     closeMenu(); const p=me();
     menu=document.createElement('div'); menu.className='ph-menu';
-    menu.innerHTML='<div class="mh"><b>'+name(p)+'</b><small>'+p.title+'</small></div>'+
+    menu.innerHTML='<div class="mh"><b>'+escHTML(name(p))+'</b><small>'+escHTML(p.title)+'</small></div>'+
       '<button onclick="PH.profile()">👤 My profile</button>'+
       (isLive() && window.PH_AUTH && PH_AUTH.signOut ? '<button onclick="PH.signOut()">↪ Sign out</button>' : '')+
       (isLive() ? '' :
@@ -1436,8 +1438,12 @@
   }
 
   // one place that draws a person's picture: their uploaded photo if there is one, else initials
-  function faceStyle(p){ return p.photo ? 'background-image:url('+p.photo+');background-size:cover;background-position:center' : 'background:'+p.color; }
-  function face(p){ return p.photo ? '' : initials(p); }
+  /* A PHOTO IS A PICTURE AND NOTHING ELSE (21/11/2026, code review): anyone signed in can write their own profile record,
+     and a "photo" of `x);"><img src=x onerror=...>` ran in an admin's page when Admin -> People drew it. Only an inline
+     JPEG/PNG/WebP/GIF (what the photo picker makes) is ever drawn. */
+  function safePhoto(v){ return (typeof v==='string' && /^data:image\/(jpeg|png|webp|gif);base64,[A-Za-z0-9+\/=]+$/.test(v)) ? v : ''; }
+  function faceStyle(p){ const ph=safePhoto(p.photo); return ph ? 'background-image:url('+ph+');background-size:cover;background-position:center' : 'background:'+escHTML(p.color); }
+  function face(p){ return safePhoto(p.photo) ? '' : escHTML(initials(p)); }
 
   /* ---------------------------------------------------------------
      THE BELL. Lives in the header on every page, because mount() runs on every page.
@@ -1915,7 +1921,7 @@
   }
 
   const avHTML=p=>'<span class="cir" style="'+faceStyle(p)+'">'+face(p)+'</span>'+
-    '<span class="who"><b>'+name(p)+'</b><small>'+p.title.split(' · ')[0]+'</small></span><span class="car">▼</span>';
+    '<span class="who"><b>'+escHTML(name(p))+'</b><small>'+escHTML(String(p.title||'').split(' · ')[0])+'</small></span><span class="car">▼</span>';
   /* Once this page knows who this is, whatever the header drew from the last page's menu (NAVSNAP) is drawn from the
      real answer - the name button in place, the chat button only if that changed. */
   function unsnapBar(){
@@ -1953,10 +1959,10 @@
 
   function profile(){
     closeMenu(); const p=me();
-    const ro=(l,v)=>'<div class="ph-f"><label>'+l+'</label><div class="ph-ro">'+(v||'—')+'</div></div>';
+    const ro=(l,v)=>'<div class="ph-f"><label>'+l+'</label><div class="ph-ro">'+(v ? escHTML(v) : '—')+'</div></div>';
     document.getElementById('ph-card').innerHTML=
       '<div class="ph-top"><span class="big" style="'+faceStyle(p)+'">'+face(p)+'</span>'+
-        '<div><h3>'+name(p)+'</h3><div class="t">'+p.title+'</div></div>'+
+        '<div><h3>'+escHTML(name(p))+'</h3><div class="t">'+escHTML(p.title)+'</div></div>'+
         '<button class="x" onclick="PH.closeProfile()">×</button></div>'+
       '<div class="ph-body">'+
         '<p class="ph-lab">You can change these <span class="ph-tag you">YOURS TO EDIT</span></p>'+
@@ -2170,6 +2176,7 @@
     const file=(location.pathname.split('/').pop()||'home.html');
     if(/^(home|auth|connect|restore|alerts-test|start)\.html$/i.test(file)) return;
     if(env()==='live' && !window.PH_AUTH) return;                         // live: once signed in
+    if(env()==='live' && !PROFILE) return;                                // ...and known: "nobody" isn't anyone (21/11/2026, code review)
     const e=String(email(me())||'').toLowerCase().trim(); if(!e) return;
     PARTY_TRIED=true;
     window.PH_STORE.get(PARTY_KEY).then(rec=>{
@@ -2610,8 +2617,8 @@
     b.id='ph-impbar';
     b.style.cssText='background:#4B2E83;color:#fff;padding:8px 16px;font-size:13px;'+
       'display:flex;align-items:center;justify-content:center;gap:14px;font-weight:600';
-    b.innerHTML='\u{1F441} Viewing as <b>'+((imp.first||'')+' '+(imp.last||'')).trim()+
-      '</b>'+(imp.role?' \u00b7 '+imp.role:'')+
+    b.innerHTML='\u{1F441} Viewing as <b>'+escHTML(((imp.first||'')+' '+(imp.last||'')).trim())+
+      '</b>'+(imp.role?' \u00b7 '+escHTML(imp.role):'')+
       ' <button style="font:inherit;font-weight:700;background:#fff;color:#4B2E83;border:none;'+
       'border-radius:7px;padding:4px 12px;cursor:pointer">Return to my account</button>';
     b.querySelector('button').onclick=stopViewAs;
@@ -3062,7 +3069,7 @@
     try{ FACES=JSON.parse(localStorage.getItem(FACE_KEY))||{}; }catch(_){ FACES={}; }
     return FACES;
   }
-  function faceOf(slot){ return slot ? (faceCache()[String(slot).toLowerCase()]||'') : ''; }
+  function faceOf(slot){ return slot ? safePhoto(faceCache()[String(slot).toLowerCase()]) : ''; }
   function saveFace(slot, photo){
     slot=String(slot||'').toLowerCase(); if(!slot) return Promise.resolve({});
     const c=faceCache(); if(photo) c[slot]=photo; else delete c[slot];
@@ -3075,7 +3082,7 @@
     const k=String(mail||'').toLowerCase().trim();
     const f=faceOf(k); if(f) return f;
     const o=overrideFor(k);
-    return (o && o.photo) ? o.photo : '';
+    return (o && o.photo) ? safePhoto(o.photo) : '';
   }
   function photoFor(mail){
     // An admin-set photo counts the same as one the person uploaded themselves.
@@ -3085,9 +3092,9 @@
     // Their own row on this device first — instant after they upload.
     try{
       const own=JSON.parse(localStorage.getItem('ph_me_'+k)||'{}');
-      if(own && own.photo) return own.photo;
+      if(own && safePhoto(own.photo)) return own.photo;
     }catch(_){}
-    return photoCache()[k] || '';
+    return safePhoto(photoCache()[k]);
   }
   /* Pull every profile row from SharePoint so other people's photos appear too.
      Resolves true when something changed, so the caller can re-render. */
@@ -3099,14 +3106,14 @@
       const faces=faceCache(); let facesChanged=false;
       Object.keys(rows||{}).forEach(function(k){
         if(k.indexOf(FACE_PRE)===0){                 // a photo an admin set - cache only
-          const slot=k.slice(FACE_PRE.length), ph=(rows[k]&&rows[k].photo)||'';
+          const slot=k.slice(FACE_PRE.length), ph=safePhoto(rows[k]&&rows[k].photo);
           if(ph && faces[slot]!==ph){ faces[slot]=ph; facesChanged=true; }
           else if(!ph && faces[slot]){ delete faces[slot]; facesChanged=true; }
           return;
         }
         const mail=k.slice('ph_me_'.length);
         const v=rows[k];
-        if(v && v.photo && cache[mail]!==v.photo){ cache[mail]=v.photo; changed=true; }
+        if(v && safePhoto(v.photo) && cache[mail]!==v.photo){ cache[mail]=v.photo; changed=true; }
         /* Only the signed-in person's own row is kept on this device (it shows instantly after they upload).
            Everybody's used to be copied here as well - each photo stored twice, which is what filled browsers
            up (future-proofing check, 22/10/2026). Their photo is in the cache above. */

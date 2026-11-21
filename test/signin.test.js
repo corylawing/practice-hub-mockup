@@ -56,6 +56,10 @@ t('gate.js: on the way back the in-progress sign-in is not wiped before MSAL rea
 const GATE=fs.readFileSync(path.join(__dirname,'..','v1','gate.js'),'utf8'), USERJS=fs.readFileSync(path.join(__dirname,'..','v1','user.js'),'utf8');
 t('the sign-in is remembered on the device (localStorage), not forgotten when the tab or app closes', /cache: \{ cacheLocation: 'localStorage' \}/.test(GATE) && !/cacheLocation: 'sessionStorage'/.test(GATE));
 t('Sign out under your name (live), clearing only this device’s copy, then back to the sign-in screen', /signOut: function\(\)\{/.test(GATE) && /onRedirectNavigate: function\(\)\{ return false; \}/.test(GATE) && /PH\.signOut\(\)">↪ Sign out<\/button>/.test(USERJS) && /function signOut\(\)\{[\s\S]{0,600}P\.disable\(\)[\s\S]{0,300}A\.signOut\(\)/.test(USERJS));
+{ const fnSrc=(USERJS.match(/function safePhoto\(v\)\{[^\n]*\}/)||[''])[0]; const safePhoto=fnSrc ? new Function(fnSrc+'; return safePhoto;')() : null;
+  t('a profile "photo" is drawn only when it IS a picture: an injected one is dropped (21/11/2026, code review)', !!safePhoto && safePhoto('data:image/jpeg;base64,/9j/4AAQSkZJRg==')==='data:image/jpeg;base64,/9j/4AAQSkZJRg==' &&
+    safePhoto('x);"><img src=x onerror=alert(1)>')==='' && safePhoto('data:image/svg+xml;base64,PHN2Zz4=')==='' && safePhoto('javascript:alert(1)')==='' && safePhoto(null)==='' &&
+    /function faceStyle\(p\)\{ const ph=safePhoto\(p\.photo\)/.test(USERJS) && /<b>'\+escHTML\(name\(p\)\)\+'<\/b><small>/.test(USERJS)); }
 t('...and turns this device’s alerts off first (a shared computer: the next person never gets the last one’s alerts)', /signOut, centralNow/.test(USERJS));
 t('after Sign out the next sign-in asks which account (a shared front-desk computer)', /req\.prompt = 'select_account'/.test(GATE) && /app\.loginPopup\(pick\(\{ scopes: SCOPES \}\)\)/.test(GATE) && /var req = pick\(\{ scopes: scopes \|\| SCOPES/.test(GATE));
 console.log(pass+' passed, '+fail+' failed');

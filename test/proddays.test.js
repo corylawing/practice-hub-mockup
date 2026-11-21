@@ -83,6 +83,7 @@ t('…and the 8 if the book’s list isn’t loaded', D.offices().length===8);
   E=env({can:{production:true}, sched:{baseFailed:true, sched:null}}); r=await D.sync(); t('the Schedule didn’t read: nothing written', r.skipped==='schedule unread' && !E.writes.length);
   E=env({can:{production:true}, sched:{failed:['ph_sched_2028']}}); r=await D.sync(); t('one year of the Schedule didn’t read: nothing written', r.skipped==='schedule unread' && !E.writes.length);
   E=env({can:{production:true}, sched:{unknown:true}}); r=await D.sync(); t('the list of Schedule years didn’t read: nothing written', r.skipped==='schedule unread' && !E.writes.length);
+  E=env({can:{production:true}, sched:{stale:true}}); r=await D.sync(); t('the Schedule didn’t read and only this device’s OLDER copy stands in: nothing written (21/11/2026, code review)', r.skipped==='schedule unread' && !E.writes.length);
   E=env({can:{production:true}, failed:{ph_docs:true}}); r=await D.sync(); t('the doctor list didn’t read: nothing written', r.skipped==='doctors unread' && !E.writes.length);
   E=env({can:{production:true}, docs:[]}); r=await D.sync(); t('no doctors at all: nothing written', r.skipped==='doctors unread' && !E.writes.length);
   E=env({can:{production:true}, failed:{ph_prod_index:true}}); r=await D.sync(); t('the production list didn’t read: nothing written', r.skipped && !E.writes.length);

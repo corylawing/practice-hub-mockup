@@ -46,21 +46,24 @@
         return S().get(k).then(function(v){ return {k:k, v:v, failed:!!(S().readFailed && S().readFailed(k))}; });
       }));
     }).then(function(list){
-      var records = {}, failed = [];
+      var records = {}, failed = [], stale = [];
       list.forEach(function(x){
-        if(x.v && typeof x.v === 'object') records[x.k] = x.v;
+        if(x.v && typeof x.v === 'object'){ records[x.k] = x.v; if(x.failed) stale.push(x.k); }
         else if(x.failed) failed.push(x.k);
       });
-      return {records:records, failed:failed, unknown:false};
-    }, function(){ return {records:{}, failed:[], unknown:true}; });
+      return {records:records, failed:failed, stale:stale, unknown:false};
+    }, function(){ return {records:{}, failed:[], stale:[], unknown:true}; });
   }
 
   /* The whole schedule. {sched, baseFailed, failed, unknown}. When 'ph_sched2' itself would not
      read, sched is null - exactly as before, the page says so and writes nothing over it. */
   function load(){
     return Promise.all([S().get(BASE), years()]).then(function(r){
-      var base = r[0], yr = r[1], baseFailed = !!(S().readFailed && S().readFailed(BASE)) && !base;
-      return {sched: baseFailed ? null : combine(base, yr.records), baseFailed:baseFailed, failed:yr.failed, unknown:yr.unknown};
+      var base = r[0], yr = r[1], baseUnread = !!(S().readFailed && S().readFailed(BASE)), baseFailed = baseUnread && !base;
+      /* stale: a record didn't read, and this device's older copy stands in for it - fine to SHOW, never to work numbers out
+         from (production days from the Schedule skip it - 21/11/2026, code review) */
+      return {sched: baseFailed ? null : combine(base, yr.records), baseFailed:baseFailed, failed:yr.failed, unknown:yr.unknown,
+              stale: baseUnread || (yr.stale || []).length > 0};
     });
   }
 

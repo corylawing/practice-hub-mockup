@@ -89,19 +89,40 @@
 
   /* Fetch the person's own profile before letting the page render: their Department and
      Office location decide what they can see, so the app must not paint until it knows. */
+  /* Tried 3 times (21/11/2026, code review): one busy moment on /me left the person as "nobody" - "You don't have
+     access" on every page - until they reloaded. */
   function loadProfile(){
     if(!global.PH_AUTH) return Promise.resolve();
-    return global.PH_AUTH.graph('/me?$select=id,displayName,mail,userPrincipalName,jobTitle,department,officeLocation')
-      .then(function(p){ if(global.PH && PH.setProfile) PH.setProfile(p); })
-      .catch(function(){ /* proceed with least access rather than locking anyone out */ });
+    var tries = 0;
+    function once(){
+      return global.PH_AUTH.graph('/me?$select=id,displayName,mail,userPrincipalName,jobTitle,department,officeLocation')
+        .then(function(p){ if(global.PH && PH.setProfile) PH.setProfile(p); })
+        .catch(function(){
+          if(needsSignIn || ++tries >= 3) return;          // proceed with least access rather than locking anyone out
+          return new Promise(function(r){ setTimeout(r, 1200 * tries); }).then(once);
+        });
+    }
+    return once();
   }
 
+  /* Set when a silent renewal needs the person (requestSignIn): the sign-in screen it put up must stay up - open() used to
+     take it straight down again and carry on as "nobody" with no way back in (21/11/2026, code review). */
+  var needsSignIn = false;
   function open(gate){
     loadProfile().then(function(){
+      if(needsSignIn) return;
       if(gate && gate.remove) gate.remove();
       document.body.classList.remove('phgated');
       document.dispatchEvent(new CustomEvent('ph-signed-in'));
     });
+  }
+  /* A network drop is not an expired sign-in (21/11/2026, code review): waking a laptop offline put "Sign in again" up
+     and reloaded the page - losing anything typed. Only a renewal that really needs the person asks for them; the rest
+     is thrown back to the caller (the store retries it). */
+  function offlineErr(e){
+    var c = String((e && (e.errorCode || e.name)) || '') + ' ' + String((e && (e.errorMessage || e.message)) || '');
+    return (global.navigator && global.navigator.onLine === false) ||
+      /no_network_connectivity|network_error|request_failed|endpoints_resolution|failed to fetch|load failed|networkerror/i.test(c);
   }
 
   /* Set by the sign-in scope below. expose() cannot open a popup itself - see the
@@ -121,6 +142,7 @@
                is loading, or partway through a save. The popup was being blocked, so a
                session that simply needed renewing surfaced as the baffling
                "Error opening popup window". Ask for the click instead. */
+            if(offlineErr(e)) throw e;
             requestSignIn(app, account, e);
             throw new Error('Your Microsoft sign-in needs renewing \u2014 use the Sign in button.');
           })
@@ -134,6 +156,7 @@
         return app.acquireTokenSilent(req)
           .then(function(r){ return fresh(r) ? r : app.acquireTokenSilent({ scopes: SCOPES, account: account, forceRefresh: true }); })
           .then(function(r){ return r.idToken; }, function(e){
+            if(offlineErr(e)) throw e;
             requestSignIn(app, account, e);
             throw new Error('Your Microsoft sign-in needs renewing — use the Sign in button.');
           });
@@ -185,6 +208,9 @@
     document.body.classList.add('phgated');
     var gate = null;
     function ensureGate(){
+      /* open() takes the screen off the page; a later "Sign in again" must put it BACK, not show a detached one - that
+         hid the whole page behind nothing (21/11/2026, code review). */
+      if(gate && !gate.isConnected){ document.body.appendChild(gate); }
       if(!gate){
         gate = paint();
         gate.__btn = document.getElementById('phgatebtn');
@@ -228,6 +254,7 @@
        button rather than trying to open a window nobody asked for. */
     requestSignIn = function(app, account){
       try{
+        needsSignIn = true;
         var g = ensureGate();
         document.body.classList.add('phgated');
         g.style.display = '';
@@ -239,7 +266,7 @@
           g.__btn.disabled = true;
           if (USE_REDIRECT){ goSignIn(app, account); return; }
           app.acquireTokenPopup({ scopes: SCOPES, account: account })
-            .then(function(){ location.reload(); })
+            .then(function(r){ try{ if (app.setActiveAccount && r && r.account) app.setActiveAccount(r.account); }catch(_){} location.reload(); })
             .catch(function(e){
               g.__btn.disabled = false;
               g.__err.textContent = (e && e.errorCode === 'popup_window_error')
@@ -306,6 +333,10 @@
          popup. Prefer the account MSAL has marked active; with exactly one, mark it;
          with several and none active, ask. */
       var active = (app.getActiveAccount && app.getActiveAccount()) || null;
+      /* AFTER SIGN OUT (21/11/2026, code review): another account still remembered on this device (the last person at
+         the front desk) was signed straight back in without asking. Until someone signs in here, the button is shown. */
+      var out = false; try{ out = !!localStorage.getItem(OUT); }catch(_){}
+      if (out){ known = []; active = null; }
       if (active){ expose(app, active); open(gate); return; }
       if (known.length === 1){
         if (app.setActiveAccount) app.setActiveAccount(known[0]);

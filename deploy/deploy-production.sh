@@ -24,6 +24,9 @@ if ! sh "$REPO/test/all.sh"; then
 fi
 
 STAGE="$(mktemp -d)/swa"
+# The staging folder holds copies of the alert key and the chat certificate: gone when this script ends, whatever happens
+# (21/11/2026, code review - they piled up in /var/folders, one pair per deploy).
+trap 'rm -rf "$(dirname "$STAGE")"' EXIT
 
 mkdir -p "$STAGE/v1"
 cp "$REPO/deploy/index.html" "$STAGE/index.html"
@@ -37,8 +40,10 @@ cp "$REPO/start.html" "$STAGE/start.html"
 # so it only exists on the machine that deploys. start.html hides the player if it is missing.
 if [ -d "$REPO/media" ]; then cp -R "$REPO/media" "$STAGE/media"; else echo "  note: no media/ folder - start.html will show no video"; fi
 cp -R "$REPO/assets" "$STAGE/assets"
-# alerts-test.* is the sandbox's phone-alerts test page (no sign-in): it never goes to the live site.
-rsync -a --exclude 'snapshot.json' --exclude '_testgrids.json' --exclude 'alerts-test.html' --exclude 'alerts-test.webmanifest' "$REPO/v1/" "$STAGE/v1/"
+# alerts-test.* is the sandbox's phone-alerts test page (no sign-in): it never goes to the live site. Nor does connect.html
+# (21/11/2026, code review): the setup checker - it has no sign-in gate of its own and its step 11 writes a test value
+# into a live workbook cell and puts it back. It is run from the sandbox or locally.
+rsync -a --exclude 'snapshot.json' --exclude '_testgrids.json' --exclude 'alerts-test.html' --exclude 'alerts-test.webmanifest' --exclude 'connect.html' "$REPO/v1/" "$STAGE/v1/"
 
 # The roster is a STATIC file on a site whose pages are public (the sign-in gate is
 # drawn by JavaScript; it does not protect files). So anyone with the hub's URL can

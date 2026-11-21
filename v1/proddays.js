@@ -102,7 +102,7 @@
       var mode = r[0], idx = r[1], L = r[2], docs = r[3];
       if(!mode || mode.source !== 'homebrace') return {skipped:'excel is the master'};
       if(S.readFailed && (S.readFailed(PROD.INDEX) || S.readFailed('ph_prod_mode'))) return {skipped:'production list unread'};
-      if(!L || !L.sched || L.baseFailed || (L.failed && L.failed.length) || L.unknown) return {skipped:'schedule unread'};
+      if(!L || !L.sched || L.baseFailed || (L.failed && L.failed.length) || L.unknown || L.stale) return {skipped:'schedule unread'};
       if((S.readFailed && S.readFailed(DOCS)) || !Array.isArray(docs) || !docs.filter(Boolean).length) return {skipped:'doctors unread'};
       var years = Object.keys((idx && idx.years) || {}).map(Number).filter(function(y){ return y >= +FROM.slice(0, 4); }).sort();
       var out = {years:{}, wrote:0};

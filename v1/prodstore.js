@@ -289,7 +289,12 @@
      COMPARED from then on, never copied over Home-Brace. Only admins change it, and it can be
      changed back. (Cory, 21/10/2026: "build step 4 and the switch"; the switch stays off until
      he says, after the parallel run, before 2027.) */
-  function mode(){ return S().get(MODE).then(function(m){ return Object.assign({source:'excel', mirror:true}, m || {}); }); }
+  /* A setting that couldn't be read is NOT "Excel" (21/11/2026, code review): on a new phone with no saved copy, that
+     default sent Enter Production's saves to her Excel, and an admin's dashboard copied her Excel over Home-Brace's
+     numbers. Unread with no copy here = refuse; unread WITH a copy here = that copy (it changes once a year at most). */
+  function mode(){ return S().get(MODE).then(function(m){
+    if(!m && S().readFailed && S().readFailed(MODE)) throw fail('Couldn\u2019t tell where the production numbers live right now \u2014 reload to try again.');
+    return Object.assign({source:'excel', mirror:true}, m || {}); }); }
   function setMode(next){
     if(!admin()) return Promise.reject(fail('Only admins can switch where the production numbers live.'));
     return S().update(MODE, function(cur){
@@ -506,6 +511,8 @@
     var bytesWas;
     return Promise.all([offices(), S().get(DATA + y)]).then(function(r){
       var tab = WB.TABS[n], d = r[1] && r[1].data && r[1].data[tab];
+      // an unread year is not an empty one (21/11/2026, code review)
+      if(S().readFailed && S().readFailed(DATA + y)) throw fail('Couldn\u2019t read ' + y + '\u2019s numbers just now, so nothing was changed. Try again.');
       if(!tab) throw fail(n + ' isn’t one of the offices.');
       if(d && Object.keys(d).length) throw fail(n + ' already has numbers in ' + y + ' - it stays.');
       return getTemplate(y);
@@ -630,8 +637,14 @@
       var at = nowISO(), jobs = [];
       var saveTpl = tplChanged ? B().exportXlsxSmall(B().blank(t2), {}, null).then(function(bytes){ return putTemplate(year, bytes).then(function(sv){ delete tplCache[year]; return fingerprint(t2).then(function(fp){ return {sv:sv, fp:fp}; }); }); }) : Promise.resolve(null);
       return saveTpl.then(function(t){
-        rec.data = data; rec.updatedAt = at; rec.updatedBy = me();
-        jobs.push(S().set(DATA + year, rec));
+        /* Only the goal cells this changed, laid onto the year AS IT IS NOW (21/11/2026, code review): the whole year read
+           seconds earlier was written back after the layout upload, so a production number typed meanwhile was lost. */
+        jobs.push(S().update(DATA + year, function(cur){
+          cur = (cur && cur.data) ? cur : {year:year, data:{}};
+          var cd = cur.data[G.tab] = cur.data[G.tab] || {};
+          log.forEach(function(x){ if(Object.prototype.hasOwnProperty.call(d, x.cell)) cd[x.cell] = d[x.cell]; else delete cd[x.cell]; });
+          cur.updatedAt = at; cur.updatedBy = me(); return cur;
+        }));
         jobs.push(S().update(LOG + year, function(list){ return capLog([{at:at, from:{how:'goals', by:me(), copiedBy:me(), office:officeName}, changes:log}].concat(Array.isArray(list) ? list : [])); }));
         if(t) jobs.push(S().update(INDEX, function(cur){ cur = (cur && cur.years) ? cur : {years:{}}; var y = cur.years[year] = cur.years[year] || {}; y.layout = t.fp; y.template = {name:t.sv.name, webUrl:t.sv.webUrl || '', savedAt:at}; return cur; }));
         return Promise.all(jobs);
@@ -1133,8 +1146,15 @@
     if(live() && !admin()) return Promise.reject(fail('Only admins can start a new year.'));
     if(!pv || !pv.template) return Promise.reject(fail('Look at the preview first.'));
     var to = pv.to, at = nowISO(), book = pv.template;
-    return index().then(function(idx){
+    return Promise.all([index(), S().get(DATA + to)]).then(function(r){
+      var idx = r[0], had = r[1];
+      /* Never over a year that didn't read, or one that already has numbers (21/11/2026, code review): the index this
+         trusted could be an old copy on this device, and the year's numbers were written over without a look. */
+      if((S().readFailed && (S().readFailed(INDEX) || S().readFailed(DATA + to))))
+        throw fail('Couldn\u2019t read what\u2019s kept just now, so nothing was changed. Try again.');
       if(idx.years[to]) throw fail(to + ' is already kept - nothing was changed.');
+      if(had && had.data && Object.keys(had.data).some(function(t){ return had.data[t] && Object.keys(had.data[t]).length; }))
+        throw fail(to + ' already has numbers - nothing was changed.');
       return Promise.all([B().exportXlsxSmall(B().blank(book), {}, null), fingerprint(book)]);
     }).then(function(x){
       return putTemplate(to, x[0]).then(function(saved){

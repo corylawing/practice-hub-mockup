@@ -570,6 +570,42 @@ I can confidently say that the chat feature should go next. The production thing
     refreshed once a day. A device with the instant chat link records ci (until when); chat.html's alert uses
     sendTo(..., {skipInstant:true}) so those devices get the chat once, from Microsoft. Nothing else is deleted: the
     other people's records are only touched when they open Home-Brace themselves. test/alerts (37).
+63. **FULL CODE REVIEW (21/11/2026; Cory: "I want a full review of the code. Make sure its optimized and not slop. Nothing
+    can break thats important").** Six read-only reviewers (data layer, sign-in, server+alerts+chat, production+schedule,
+    payroll+admin, everything else), every finding checked before fixing. Fixed in the core (sandbox first):
+    - store.js update() sends If-Match (the eTag readNow keeps): a write that landed between our read and ours -> 412 ->
+      read again, change again (as 409). Replayed loss before: A read the year, B saved Lubbock, A saved Hobbs -> Lubbock
+      gone, both "saved". If SharePoint ever refuses the tag itself (400, or 412 after every retry) the page sets ETAG_OFF
+      and writes the old blind way - the check can never stop saving. test/sync 16.
+    - recover(): ph_prod_data_YYYY merges to the CELL (3 levels; a held Enter Production save had replaced a whole office
+      tab); ph_prod_log_YYYY (no ids) merges as a set, newest first (another device's history entry vanished). test/sync 17.
+    - prodstore: mode() REFUSES when ph_prod_mode didn't read and there's no copy here (the 'excel' default sent a new
+      phone's saves to her Excel / copied Excel over Home-Brace); removeOffice + createNextYear refuse on unread data and
+      never write over a year that has numbers; saveGoals writes only its goal cells via update() (was set() of the year).
+    - schedrec.load() reports stale (a record unread, this device's older copy shown) -> proddays skips.
+    - history.html + restore.html: PH.nav('admin') + admin check (they wrote with force past both guards and had no gate);
+      a failed write is PH_STORE.discard()ed (never sent later on its own); restore checks the read-back IS what it sent.
+      connect.html no longer deployed (no gate; its step 11 writes a test value into a live workbook cell).
+    - user.js: safePhoto() - only an inline jpeg/png/webp/gif is ever drawn as a photo (a "photo" could inject script into
+      Admin -> People); names/titles escaped in the header, menu, profile card and View-as bar. Roster seed skipped when
+      ph_roster didn't read. partyMine waits for the profile.
+    - gate.js: a "Sign in again" screen is put back on the page if open() had removed it (blank page); it stays up
+      (needsSignIn) instead of open() taking it down; a network drop (offline / network error codes) is thrown back to the
+      caller, never "Sign in again" + reload; /me tried 3x; after Sign out a still-remembered other account is NOT signed in
+      without asking (the button shows); the "Sign in again" popup makes its account the active one.
+    - api-push/orthofi: COUNT_FIELDS - a count rule (any/min/is/eq/on) may only use the fields the pages count by (a rule on
+      patientLastName returned ONE patient's balance). A new count field = add it there. idtoken.js keeps its keys when a
+      refresh fails (a Microsoft blip signed everyone out); webpush aborts after 10 s.
+    - alerts.js: sendTo sends to everyone at once (8 senders took 10-25 s - a payroll reminder could be cut off), keepalive,
+      a device list that didn't READ is a failure not "no devices"; who() = '' for "nobody" (was undefined@...); the instant
+      chat link is checked with Microsoft every 12 h (chk). chat.html: a forward alerts like a message. Sign out (PH.signOut)
+      turns this device's alerts off first (a shared computer got the last person's chat alerts).
+    - deploy-production.sh: the staging folder (alert key + chat certificate copies) is removed on exit.
+    NOT CHANGED (needs a look first): rosterByName also matches staff-list rows that HAVE an email - a guest whose display
+    name copies a staff member's would get their access; restricting it could lock out someone whose list email differs
+    from their Microsoft one (check the live list read-only first). copyFromBytes still uploads the layout before the
+    numbers (Excel copy / layout upload only - rare since the switch). ORTHOFI: any signed-in practice account can call
+    /api/orthofi (totals only now) - an ORTHOFI_ALLOW setting would limit it to admins.
 60. **ADJUSTMENTS + NET PRODUCTION PROVEN FROM ORTHOFI (21/11/2026; hc242).** Cory: "Now that you have access to orthofi
     via safari do what you need to do to make this perfect" (his Safari, OrthoFi portal; read-only - only reports run).
     The Monthly Balance Sheet = OrthoFi portal Reports -> Accounting -> Monthly Balance Sheet (business-intelligence
@@ -2654,7 +2690,7 @@ and could open the file in Excel anyway. Real containment would need per-office 
     null, and never hang a `.catch` on `get()` — it does not reject.
   - `PH_STORE.set()` refuses to write a key this session could not read, and refuses a write that
     empties a key which held real content. `weigh()` counts non-empty leaves, **not bytes**.
-  - `{force:true}` lifts both. Only `restore.html` uses it.
+  - `{force:true}` lifts both. Used by `restore.html`, `history.html` ("Put this back" - both admin-only since 21/11/2026) and the one-time roster seed in user.js.
   - The store keeps the copy it replaced at `<key>__prev`; `PH_STORE.backup(key)` reads it.
   - **`node test/guard.test.js` replays the whole incident.** Run it before touching `store.js` or
     any save path. It must pass.

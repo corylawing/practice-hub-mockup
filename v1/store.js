@@ -25,6 +25,12 @@
   var GRAPH = 'https://graph.microsoft.com/v1.0';
   var siteId = null, listId = null, ready = null;
   var idCache = {};      // key -> SharePoint item id, so updates don't re-search
+  /* TWO SAVES AT ONCE (21/11/2026, code review - replayed: A read the year's numbers, B saved Lubbock, A saved Hobbs ->
+     Lubbock's number was gone and both were told "saved"). SharePoint only answers 409 when two writes OVERLAP, not when
+     one lands between our read and our write. So update() now sends the version it read (If-Match): a write that landed
+     in between is refused (412), and update() reads again and changes again - as it already did for a 409. */
+  var etags = {};        // key -> the row's eTag as last read
+  var ETAG_OFF = false;  // set for this page if SharePoint ever refuses the tag itself: back to the old blind write
   var readFailed = {};   // key -> true when THIS session could not read the shared copy
   var readError = {};    // key -> {status, msg}: what Microsoft said when that read failed
   var synced = {};       // key -> the payload SharePoint last held, as this session knows it
@@ -113,11 +119,13 @@
     return ready;
   }
 
-  function send(method, path, body){
+  function send(method, path, body, ifMatch){
     return PH_AUTH.token().then(function(t){
+      var h = { Authorization:'Bearer '+t, 'Content-Type':'application/json' };
+      if(ifMatch) h['If-Match'] = ifMatch;
       return fetch(GRAPH + path, {
         method: method,
-        headers: { Authorization:'Bearer '+t, 'Content-Type':'application/json' },
+        headers: h,
         body: body ? JSON.stringify(body) : undefined
       }).then(function(res){
         if(res.status === 204) return {};
@@ -379,9 +387,9 @@
       });
     });
   }
-  function writeItem(key, pay){
+  function writeItem(key, pay, tag){
     if(idCache[key]){
-      return send('PATCH', listPath()+'/items/'+idCache[key]+'/fields', {Payload: pay})
+      return send('PATCH', listPath()+'/items/'+idCache[key]+'/fields', {Payload: pay}, tag || null)
         .catch(function(e){
           if(statusOf(e) !== 404) throw e;
           delete idCache[key]; return writeItem(key, pay);      // the row went; find or make it again
@@ -407,6 +415,7 @@
            answer and a first save is allowed; a thrown request is not, and is caught
            below. Everything downstream depends on keeping those two apart. */
         if(!hit){
+          delete etags[key];
           readFailed[key] = false; delete readError[key];
           // The very first save of this key never landed: send it now (the row gets made).
           synced[key] = null;                      // known: SharePoint has nothing for it
@@ -414,6 +423,7 @@
           rememberWeight(key, null); return parse(local(key));
         }
         idCache[key]=hit.id;
+        etags[key] = hit['@odata.etag'] || hit.eTag || '';
         var pay = (hit.fields && hit.fields.Payload) || '';
         return unpack(pay).then(function(raw){
           var got = parse(raw);
@@ -642,13 +652,13 @@
   }
 
   /* The network half. Never throws: resolves {ok:true} or {err}. */
-  function sendNow(key, raw, allow409){
+  function sendNow(key, raw, allow409, tag){
     return pack(raw).then(function(pay){
       if(pay.length > COL_MAX){
         var big = new Error('Too large for SharePoint: '+pay.length+' characters (the limit is about '+COL_MAX+').');
         big.tooBig = true; throw big;
       }
-      return withRetry(function(){ return connect().then(function(){ return writeItem(key, pay); }); }, allow409);
+      return withRetry(function(){ return connect().then(function(){ return writeItem(key, pay, tag); }); }, allow409);
     }).then(function(){ return {ok:true}; }, function(e){ return {err:e}; });
   }
   function landed(key, raw){
@@ -740,12 +750,24 @@
             if(next === undefined) return {unchanged:true, value:current};
             var p = prepare(key, next, opts);
             if(p.result) return Promise.resolve(p.result).then(function(r){ if(r) r.value = next; return r; });
-            return sendNow(key, p.raw, false).then(function(r){
+            var tag = ETAG_OFF ? null : (etags[key] || null);
+            return sendNow(key, p.raw, false, tag).then(function(r){
               if(r.ok){ landed(key, p.raw); return {value:next}; }
-              if(statusOf(r.err) === 409 && tries++ < 3){
+              var st = statusOf(r.err);
+              if((st === 409 || st === 412) && tries++ < 3){
                 // Someone else's write landed between our read and ours: read theirs, change again.
                 if(!local(whyKey(key))){ markUnsent(key, false); forget(key); }
                 return sleep(400 * tries).then(once);
+              }
+              /* Still refused with a tag after every retry, or the tag itself turned down (400): never let the
+                 check stop saving - this page goes back to the old way (a blind write) and says so in the console. */
+              if(tag && (st === 412 || st === 400)){
+                ETAG_OFF = true;
+                try{ console.warn('PH_STORE: SharePoint refused the version check on '+key+' ('+st+') - saving without it'); }catch(_){}
+                return sendNow(key, p.raw, false, null).then(function(r2){
+                  if(r2.ok){ landed(key, p.raw); return {value:next}; }
+                  var o2 = failed(key, r2.err); o2.value = next; return o2;
+                });
               }
               var out = failed(key, r.err); out.value = next; return out;
             });
@@ -803,8 +825,8 @@
      offices, the access grid's teams and their sections. Below that a value is ONE
      thing: a day's cell is its doctor, hours and event together, never half of one and
      half of the other. A record that is itself a list is combined item by item. */
-  function merge3(base, mine, theirs, depth){
-    depth = depth || 0;
+  function merge3(base, mine, theirs, depth, max){
+    depth = depth || 0; max = max || 2;
     var known = base !== UNKNOWN;
     if(same(mine, theirs)) return theirs;
     if(mine === undefined) return theirs;                    // SharePoint has it: it stays, whoever dropped it here
@@ -814,7 +836,7 @@
       return mine;                                           // new here: add it
     }
     if(known && same(mine, base)) return theirs;             // only they changed it
-    var descend = depth < 2 && isObj(mine) && isObj(theirs);
+    var descend = depth < max && isObj(mine) && isObj(theirs);
     var list = depth === 0 && Array.isArray(mine) && Array.isArray(theirs);
     /* Even where only THIS copy changed, an object is walked key by key rather than
        taken whole - taking it whole would also take away whatever this copy lacks. */
@@ -823,7 +845,7 @@
       Object.keys(theirs).concat(Object.keys(mine).filter(function(k){ return !hasOwn(theirs, k); }))
         .forEach(function(k){
           var bk = b === UNKNOWN ? UNKNOWN : (hasOwn(b, k) ? b[k] : undefined);
-          var v = merge3(bk, mine[k], theirs[k], depth + 1);
+          var v = merge3(bk, mine[k], theirs[k], depth + 1, max);
           if(v !== undefined) out[k] = v;
         });
       return out;
@@ -843,7 +865,7 @@
           var id = String(x.id); if(done[id]) return; done[id] = 1;
           var tv; theirs.forEach(function(y){ if(String(y.id) === id) tv = y; });
           var v = merge3(ba === UNKNOWN ? UNKNOWN : (hasOwn(B, id) ? B[id] : undefined),
-                         hasOwn(M, id) ? M[id] : undefined, tv, 1);
+                         hasOwn(M, id) ? M[id] : undefined, tv, 1, max);
           if(v !== undefined) items.push(v);
         });
         return items;
@@ -854,6 +876,26 @@
   }
   /* Can a record of this shape be combined at all? A list without ids - the doctor list,
      where days point at doctors by POSITION - cannot: that one keeps the old rule. */
+  /* PRODUCTION NUMBERS GO ONE LEVEL DEEPER (21/11/2026, code review - replayed: a phone's held Enter Production save,
+     resent later, put J30 back from 21 to 20). Its record is {data: {office tab: {cell: number}}}: at two levels a held
+     change replaced the whole office tab. Each CELL is its own value. */
+  function mergeDepth(key){ return /^ph_prod_data_\d{4}$/.test(key) ? 3 : 2; }
+  /* THE PRODUCTION HISTORY HAS NO IDS (same review - replayed: another device's history entry vanished). Its entries
+     are only ever added, so held entries join SharePoint's: an entry is kept unless the base had it and SharePoint has
+     since dropped it (cut to its length). Newest first, as the page keeps it. */
+  function isBag(key){ return /^ph_prod_log_\d{4}$/.test(key); }
+  function bagMerge(base, mine, theirs){
+    var b = (base !== UNKNOWN && Array.isArray(base)) ? base : [];
+    var out = theirs.slice();
+    mine.forEach(function(x){
+      if(out.some(function(y){ return same(x, y); })) return;
+      if(b.some(function(y){ return same(x, y); })) return;      // was there before, SharePoint dropped it since
+      out.push(x);
+    });
+    if(out.every(function(x){ return isObj(x) && x.at; }))
+      out.sort(function(x, y){ return (Date.parse(y.at) || 0) - (Date.parse(x.at) || 0); });
+    return out;
+  }
   function combinable(a, b){
     if(isObj(a) && isObj(b)) return true;
     if(Array.isArray(a) && Array.isArray(b)) return (allPrim(a) && allPrim(b)) || (allIds(a) && allIds(b));
@@ -932,10 +974,11 @@
          with everything before them exactly as SharePoint has it. */
       var appended = Array.isArray(mine) && Array.isArray(theirs) && mine.length > theirs.length &&
                      theirs.every(function(x, i){ return same(x, mine[i]); });
-      if(theirs !== null && !combinable(mine, theirs) && !appended){
+      var bag = isBag(key) && Array.isArray(mine) && Array.isArray(theirs);
+      if(theirs !== null && !bag && !combinable(mine, theirs) && !appended){
         rememberWeight(key, mine); return mine;      // the old rule: this browser's copy, sent by its own page
       }
-      var merged = (theirs === null || appended) ? mine : merge3(base, mine, theirs, 0);
+      var merged = (theirs === null || appended) ? mine : bag ? bagMerge(base, mine, theirs) : merge3(base, mine, theirs, 0, mergeDepth(key));
       if(theirs !== null && same(merged, theirs)) return settled();   // nothing of ours left to add
       if(theirs !== null && !keepsAll(merged, theirs)){
         try{ console.warn('PH_STORE: combining '+key+' would have dropped something - not sent'); }catch(_){}
@@ -1289,6 +1332,10 @@
     unsent:unsent,
     /* The copy this browser replaced last, for restore.html. */
     backup:function(k){ return parse(local(k + '__prev')); },
+    /* Stop holding a change that didn't reach SharePoint and go back to the shared copy as last read - for a deliberate
+       overwrite (History "Put this back", Restore) that failed: it must not be sent later on its own (21/11/2026, code review). */
+    discard:function(k){ markUnsent(k, false); forget(k);
+      if(Object.prototype.hasOwnProperty.call(synced, k)){ if(synced[k] == null) drop(k); else setLocal(k, synced[k]); } },
     weigh:weigh,
     LIST_NAME:LIST_NAME, SITE_PATH:SITE_PATH
   };

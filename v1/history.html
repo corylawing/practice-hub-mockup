@@ -125,6 +125,7 @@
 <script>
 (function(){
   'use strict';
+  function adminHere(){ return !(window.PH && PH.isLive && PH.isLive()) || !!(PH.isAdmin && PH.isAdmin(PH.realMe ? PH.realMe() : PH.me())); }
   var el=function(i){ return document.getElementById(i); };
   function show(cls,html){ var n=el('r'); n.className='res on '+cls; n.innerHTML=html; }
   function esc(v){ return String(v==null?'':v).replace(/[&<>"]/g,function(c){
@@ -243,9 +244,11 @@
                 '\n\nThis replaces what is there now. The previous content stays in this '+
                 'history, so it can be put back too.')) return;
 
+    if(!adminHere()) return show('bad','<b>Only an admin can put an old version back.</b>');
     b.disabled=true; b.textContent='Saving\u2026';
     PH_STORE.set(key, parsed, {force:true}).then(function(r){
-      if(r && (r.local || r.blocked)){
+      if(r && (r.local || r.blocked || r.error || r.quota)){
+        if(PH_STORE.discard) PH_STORE.discard(key);         // never sent later on its own
         b.disabled=false; b.textContent='Put this back';
         return show('bad','<b>It did not save to SharePoint.</b> '+
           esc((r.error||r.why||'')) + ' Nothing has changed for anyone else.');
@@ -410,5 +413,8 @@
   };
 })();
 </script>
+<script>/* ADMINS ONLY (21/11/2026, code review): this page writes over shared records past both safety guards - it never
+   called the one gate, so anyone signed in could open it by its address. */
+PH.nav('admin');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
 </body>
 </html>

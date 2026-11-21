@@ -26,7 +26,7 @@ function same(a,b){
 
 function SharePoint(){
   const sp={items:[], next:1, inflight:{}, peak:{}, writes:0, attempts:0, fail:[], delay:0};
-  const stamp=(it,by)=>{ it.at=new Date(Date.now()+sp.next*10+it.versions.length).toISOString();
+  const stamp=(it,by)=>{ it.ver=(it.ver||0)+1; it.at=new Date(Date.now()+sp.next*10+it.versions.length).toISOString();
     it.versions.unshift({id:(it.versions.length+1)+'.0', lastModifiedDateTime:it.at,
       lastModifiedBy:{user:{email:by.email, displayName:by.displayName}}, fields:{Payload:it.Payload}}); };
   sp.add=(Title,value,by)=>{ const it={id:String(sp.next++), Title, versions:[],
@@ -44,7 +44,7 @@ function SharePoint(){
     if((m=/\/items\/(\d+)\?/.exec(p))){ const it=sp.items.find(i=>i.id===m[1]); if(!it) throw err(404,'not found');
       sp.byId=(sp.byId||0)+1;
       if(sp.failById && sp.failById.title===it.Title && sp.failById.times-->0) throw err(sp.failById.status,'busy');
-      return {id:it.id, lastModifiedDateTime:it.at, fields:{Title:it.Title, Payload:it.Payload}}; }
+      return {id:it.id, '@odata.etag':'"'+it.id+','+it.ver+'"', lastModifiedDateTime:it.at, fields:{Title:it.Title, Payload:it.Payload}}; }
     if(/\/items\?/.test(p)){
       // Like the real one: fields($select=Title) leaves the contents out, $select=id the rest of the row.
       const short=/fields\(\$select=Title\)/.test(p), idOnly=/[?&]\$select=id(&|$)/.test(p);
@@ -74,6 +74,11 @@ function SharePoint(){
       const f=sp.fail.length&&sp.fail[0].on==='write'?sp.fail.shift():null;
       if(f){ if(f.then) f.then(); return resp(f.status,{error:{message:f.msg||'busy'}},f.retryAfter); }
       const pay=m?b.Payload:b.fields.Payload;
+      if(m && target && sp.beforeWrite){ const h=sp.beforeWrite; sp.beforeWrite=null; h(target); }
+      /* like the real one: a write carrying the version it read is refused (412) when the row has moved on */
+      const im=o.headers && o.headers['If-Match'];
+      if(im && sp.refuseTags) return resp(400,{error:{message:'Invalid If-Match header'}});
+      if(m && target && im && im!=='"'+target.id+','+target.ver+'"') return resp(412,{error:{message:'Precondition Failed'}});
       if(pay.length>LIMIT) return resp(400,{error:{code:'invalidRequest',message:'The field Payload is too long.'}});
       sp.writes++;
       if(m){ if(!target) return resp(404,{error:{message:'not found'}}); target.Payload=pay; stamp(target,who); return resp(200,{}); }
@@ -580,6 +585,42 @@ const ok=[],bad=[]; const t=(n,v)=>{ (v?ok:bad).push(n); };
     t('(size watch) a packed record is counted packed, and says so', !!sched && sched.packed===true && !list.find(r=>r.key==='ph_teams').packed);
     t('(size watch) and checking writes nothing', sp.writes===writes);
     t('(size watch) records are named in words', A.S.recordName && A.S.recordName('ph_prod_log_2027')==='Production history 2027' && A.S.recordName('ph_sched2')==='Doctor schedule (to 2027)' && A.S.recordName('ph_sched_2028')==='Doctor schedule 2028');
+  }
+
+  /* ---- 16. TWO SAVES AT ONCE: NEITHER IS LOST (21/11/2026, code review) ---------------------- */
+  {
+    const sp=SharePoint(), K='ph_prod_data_2026';
+    sp.add(K, {year:2026, data:{Hobbs:{J12:1}, Lubbock:{J12:1}}}, H);
+    const A=Browser(sp,H);
+    await A.S.get(K);
+    // B's save lands between A's read and A's write
+    sp.beforeWrite=it=>{ const v=JSON.parse(it.Payload); v.data.Lubbock.J12=222; it.Payload=JSON.stringify(v); it.ver++; };
+    const r=await A.S.update(K, rec=>{ rec.data.Hobbs.J12=111; return rec; });
+    const now=await unpacked(A,K,sp);
+    t('two saves at once: the one that landed in between is kept (Lubbock 222) and so is ours (Hobbs 111)', now.data.Lubbock.J12===222 && now.data.Hobbs.J12===111 && !r.error && !r.blocked);
+    sp.refuseTags=true;
+    const r2=await A.S.update(K, rec=>{ rec.data.Hobbs.J12=112; return rec; });
+    t('...and if SharePoint ever turned the version check down, saving still works (the old way)', !r2.error && (await unpacked(A,K,sp)).data.Hobbs.J12===112);
+  }
+
+  /* ---- 17. A HELD PRODUCTION SAVE, SENT LATER, KEEPS EVERYONE ELSE'S CELLS AND HISTORY (21/11/2026, code review) ---- */
+  {
+    const sp=SharePoint(), K='ph_prod_data_2026', L='ph_prod_log_2026';
+    sp.add(K, {year:2026, data:{Hobbs:{J12:1, J30:20}, Lubbock:{J12:1}}}, H);
+    sp.add(L, [{at:'2026-11-01T10:00:00Z', changes:[{cell:'J12'}]}], H);
+    const A=Browser(sp,H), B=Browser(sp,J);
+    await A.S.get(K); await A.S.get(L);
+    for(let i=0;i<8;i++) sp.fail.push({on:'write',status:503,retryAfter:0});
+    await A.S.update(K, rec=>{ rec.data.Hobbs.J12=555; return rec; });
+    await A.S.update(L, list=>[{at:'2026-11-20T09:00:00Z', changes:[{cell:'J12', to:555}]}].concat(list));
+    t('(setup) the phone’s production save and its history entry are held', A.S.unsent(K) && A.S.unsent(L));
+    sp.fail.length=0;
+    await B.S.update(K, rec=>{ rec.data.Hobbs.J30=21; return rec; });
+    await B.S.update(L, list=>[{at:'2026-11-20T10:00:00Z', changes:[{cell:'J30', to:21}]}].concat(list));
+    await resend(A);
+    const d=await unpacked(A,K,sp), l=await unpacked(A,L,sp);
+    t('held Enter Production save sent later: its own cell lands (J12 555) and the other device’s cell in the SAME office stays (J30 21)', d.data.Hobbs.J12===555 && d.data.Hobbs.J30===21 && d.data.Lubbock.J12===1);
+    t('...and both devices’ history entries are kept, newest first', l.length===3 && l[0].changes[0].cell==='J30' && l[1].changes[0].cell==='J12' && l[1].changes[0].to===555);
   }
 
   console.log(ok.map(s=>'  PASS  '+s).join('\n'));
