@@ -43,7 +43,7 @@
   th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
   th{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--soft);background:#fafbfc}
   .tw{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
-  select,input[type=month]{padding:9px 11px;border:1px solid var(--line);border-radius:9px;font-weight:600;font-size:14px;font-family:inherit;color:var(--navy);background:#fff;max-width:100%}
+  select{padding:9px 11px;border:1px solid var(--line);border-radius:9px;font-weight:600;font-size:14px;font-family:inherit;color:var(--navy);background:#fff;max-width:100%}
   .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
   .soft{color:var(--soft)}
   .drop{display:flex;flex-direction:column;align-items:center;gap:4px;border:2px dashed #cdd6e0;border-radius:12px;padding:20px;cursor:pointer;background:#fafcfd;margin-top:12px;text-align:center}
@@ -58,6 +58,11 @@
   .sum td.c{font-weight:700;white-space:nowrap}
   .pill{display:inline-block;border-radius:999px;padding:2px 9px;font-size:12px;font-weight:700;background:#eef1f5;color:var(--navy2)}
   .pill.ok{background:var(--good-soft);color:#1f6e4a}
+  .mnav{display:flex;align-items:center;gap:4px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:3px}
+  .mnav button{border:0;background:none;width:34px;height:34px;border-radius:9px;font-size:18px;color:var(--navy);cursor:pointer;font-family:inherit}
+  .mnav button:hover:not(:disabled){background:var(--teal-soft)}
+  .mnav button:disabled{opacity:.3;cursor:default}
+  .mnav b{min-width:140px;text-align:center;font-size:14.5px;color:var(--navy)}
   .note{font-size:12.5px;color:var(--soft);margin-top:10px}
   .abox{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-top:12px}
   .abox h3{margin:0 0 2px;font-size:15px;color:var(--navy)} .abox .soft{font-size:12.5px}
@@ -66,13 +71,13 @@
   .achip.on{background:var(--teal);border-color:var(--teal);color:#fff}
   .achip small{font-weight:600;font-size:11.5px;opacity:.85}
 </style>
-<script src="user.js?v=hc245"></script>
+<script src="user.js?v=hc246"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc245"></script>
-  <script src="gate.js?v=hc245"></script>
-  <script src="prodbook.js?v=hc245"></script>
-  <script src="monthly.js?v=hc245"></script>
-  <script src="orthofi.js?v=hc245"></script>
+  <script src="store.js?v=hc246"></script>
+  <script src="gate.js?v=hc246"></script>
+  <script src="prodbook.js?v=hc246"></script>
+  <script src="monthly.js?v=hc246"></script>
+  <script src="orthofi.js?v=hc246"></script>
 </head>
 <body>
 <div class="ribbon" id="ribbon">Setting up OrthoFi — real OrthoFi totals, shown only on this screen. Nothing is saved but the office matches.</div>
@@ -93,7 +98,7 @@
   <div class="card">
     <h2><span class="n">2</span>Check a month against Heather’s numbers</h2>
     <div class="sub">OrthoFi can be read more than one way for some boxes. This shows every way next to Heather’s Excel — the way that matches every office is the one Home-Brace will use.</div>
-    <div class="row"><input type="month" id="mon"><button class="btn" id="get">Get OrthoFi’s numbers</button><span class="soft" id="prog"></span></div>
+    <div class="row"><div class="mnav" id="mnavx" aria-label="Month"></div><input type="hidden" id="mon"><button class="btn" id="get">Get OrthoFi’s numbers</button><span class="soft" id="prog"></span></div>
     <label class="drop" id="drop"><span style="font-size:22px">📄</span><b>Drop Heather’s monitor-report Excel files here</b><span class="soft">or <u>choose them</u> — read on this screen only, never saved</span><input type="file" accept=".xlsx" multiple hidden id="files"></label>
     <div id="loose"></div>
     <div id="out"></div>
@@ -245,7 +250,21 @@
       if(x) HEATHER[e.target.value]={year:x.year, months:x.months, file:x.file}; drawLoose(); draw(); } else if(e.target.id==='files') readFiles(e.target.files); else if(e.target.id==='mon') draw(); });
   const dz=el('drop'); dz.addEventListener('dragover', e=>{ e.preventDefault(); dz.classList.add('over'); }); dz.addEventListener('dragleave', ()=>dz.classList.remove('over'));
   dz.addEventListener('drop', e=>{ e.preventDefault(); dz.classList.remove('over'); readFiles([...(e.dataTransfer.files||[])].filter(f=>/\.xlsx$/i.test(f.name))); });
-  const now=new Date(), lm=new Date(now.getFullYear(), now.getMonth()-1, 1); el('mon').value=lm.getFullYear()+'-'+p2(lm.getMonth()+1); el('mon').max=now.getFullYear()+'-'+p2(now.getMonth()+1);
+  const now=new Date(), lm=new Date(now.getFullYear(), now.getMonth()-1, 1); el('mon').value=lm.getFullYear()+'-'+p2(lm.getMonth()+1);
+  /* MONTH ARROWS (21/11/2026, Cory: "Why are you doing date selector like that 2026-10.. you have to type it" - Safari on
+     a Mac has no month picker, so type="month" was a typing box). The Monthly Report's ‹ October 2026 › instead; the hidden
+     #mon keeps YYYY-MM for the code that reads it. */
+  function monthNav(){
+    const box=document.getElementById('mnavx'), inp=document.getElementById('mon'); if(!box || !inp) return;
+    const MN=['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const cur=()=>{ const m=/^(\d{4})-(\d{2})$/.exec(inp.value)||[]; return {y:+m[1]||new Date().getFullYear(), m:+m[2]||new Date().getMonth()+1}; };
+    const draw=()=>{ const c=cur(), n=new Date(), last=c.y>n.getFullYear() || (c.y===n.getFullYear() && c.m>=n.getMonth()+1);
+      box.innerHTML='<button type="button" aria-label="Earlier month" data-mstep="-1">‹</button><b>'+MN[c.m-1]+' '+c.y+'</b><button type="button" aria-label="Later month" data-mstep="1"'+(last?' disabled':'')+'>›</button>'; };
+    box.addEventListener('click', e=>{ const b=e.target.closest('[data-mstep]'); if(!b || b.disabled) return; const c=cur(), d=new Date(c.y, c.m-1+(+b.dataset.mstep), 1);
+      inp.value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); draw(); inp.dispatchEvent(new Event('change', {bubbles:true})); });
+    draw();
+  }
+  monthNav();
   if(!LIVE) el('ribbon').textContent='SANDBOX — this page asks the LIVE site (your real sign-in) for real OrthoFi totals. Shown on this screen only; only the office matches are saved (in this browser).';
   document.addEventListener('ph-identity', ()=>{ if(LIVE) gate(); });
   async function showAuto(){ if(!allowed()) return; await loadMap(); AUTOSEL=null; drawAuto(); }

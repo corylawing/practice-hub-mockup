@@ -48,7 +48,12 @@
   .tabs{display:flex;gap:4px;background:#E9EDF2;border-radius:12px;padding:4px;flex-wrap:wrap}
   .tabs button{border:0;background:none;padding:8px 14px;border-radius:9px;font-weight:700;font-size:13.5px;font-family:inherit;color:var(--soft);cursor:pointer}
   .tabs button.on{background:#fff;color:var(--navy);box-shadow:0 1px 3px rgba(15,42,74,.12)}
-  select,input[type=month]{padding:8px 10px;border:1px solid var(--line);border-radius:9px;font-weight:600;font-size:13.5px;font-family:inherit;color:var(--navy);background:#fff}
+  select{padding:8px 10px;border:1px solid var(--line);border-radius:9px;font-weight:600;font-size:13.5px;font-family:inherit;color:var(--navy);background:#fff}
+  .mnav{display:flex;align-items:center;gap:4px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:3px}
+  .mnav button{border:0;background:none;width:34px;height:34px;border-radius:9px;font-size:18px;color:var(--navy);cursor:pointer;font-family:inherit}
+  .mnav button:hover:not(:disabled){background:var(--teal-soft)}
+  .mnav button:disabled{opacity:.3;cursor:default}
+  .mnav b{min-width:140px;text-align:center;font-size:14.5px;color:var(--navy)}
   .tw{overflow-x:auto}
   table{width:100%;border-collapse:collapse;font-size:13.5px;font-variant-numeric:tabular-nums}
   th{text-align:right;font-size:11.5px;letter-spacing:.03em;text-transform:uppercase;color:var(--soft);font-weight:700;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
@@ -114,11 +119,11 @@
   @media(max-width:640px){ .lrow,.src{grid-template-columns:1fr;gap:6px} .l90,.sv{text-align:left;align-items:flex-start} .stack{width:100% !important} }
   @media(max-width:640px){ .wrap{padding:16px 12px 140px} h1{font-size:21px} }
 </style>
-<script src="user.js?v=hc245"></script>
+<script src="user.js?v=hc246"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc245"></script>
-  <script src="gate.js?v=hc245"></script>
-  <script src="orthofi.js?v=hc245"></script>
+  <script src="store.js?v=hc246"></script>
+  <script src="gate.js?v=hc246"></script>
+  <script src="orthofi.js?v=hc246"></script>
 </head>
 <body>
 <div class="ribbon" id="ribbon">SANDBOX — made-up numbers, to see how it would look.</div>
@@ -130,7 +135,7 @@
   <div class="bar">
     <div class="tabs" id="tabs" role="tablist"></div>
     <span style="flex:1"></span>
-    <input type="month" id="mon" aria-label="Month">
+    <div class="mnav" id="mnavx" aria-label="Month"></div><input type="hidden" id="mon">
     <select id="off" aria-label="Office"></select>
   </div>
   <div id="view"></div>
@@ -147,7 +152,21 @@
   let TAB='tc'; try{ TAB=localStorage.getItem('ph_insights_tab')||'tc'; }catch(_){}
   if(!TABS.some(t=>t[0]===TAB)) TAB='tc';
   const now=new Date(), lm=new Date(now.getFullYear(), now.getMonth()-1, 1);
-  el('mon').value=lm.getFullYear()+'-'+p2(lm.getMonth()+1); el('mon').max=now.getFullYear()+'-'+p2(now.getMonth()+1);
+  el('mon').value=lm.getFullYear()+'-'+p2(lm.getMonth()+1);
+  /* MONTH ARROWS (21/11/2026, Cory: "Why are you doing date selector like that 2026-10.. you have to type it" - Safari on
+     a Mac has no month picker, so type="month" was a typing box). The Monthly Report's ‹ October 2026 › instead; the hidden
+     #mon keeps YYYY-MM for the code that reads it. */
+  function monthNav(){
+    const box=document.getElementById('mnavx'), inp=document.getElementById('mon'); if(!box || !inp) return;
+    const MN=['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const cur=()=>{ const m=/^(\d{4})-(\d{2})$/.exec(inp.value)||[]; return {y:+m[1]||new Date().getFullYear(), m:+m[2]||new Date().getMonth()+1}; };
+    const draw=()=>{ const c=cur(), n=new Date(), last=c.y>n.getFullYear() || (c.y===n.getFullYear() && c.m>=n.getMonth()+1);
+      box.innerHTML='<button type="button" aria-label="Earlier month" data-mstep="-1">‹</button><b>'+MN[c.m-1]+' '+c.y+'</b><button type="button" aria-label="Later month" data-mstep="1"'+(last?' disabled':'')+'>›</button>'; };
+    box.addEventListener('click', e=>{ const b=e.target.closest('[data-mstep]'); if(!b || b.disabled) return; const c=cur(), d=new Date(c.y, c.m-1+(+b.dataset.mstep), 1);
+      inp.value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); draw(); inp.dispatchEvent(new Event('change', {bubbles:true})); });
+    draw();
+  }
+  monthNav();
   const offices=()=>(PH.officeNames && PH.officeNames().length) ? PH.officeNames() : ['Carlsbad','Clovis','Hobbs','San Angelo','Lubbock','Mansfield','Cruces LCO','Cruces FFO'];
   function drawOff(){ const v=el('off').value||'__all'; el('off').innerHTML='<option value="__all">All offices</option>'+offices().map(o=>'<option'+(o===v?' selected':'')+'>'+esc(o)+'</option>').join(''); }
   const ym=()=>{ const m=/^(\d{4})-(\d{2})$/.exec(el('mon').value); return m ? {y:+m[1], m:+m[2]} : {y:lm.getFullYear(), m:lm.getMonth()+1}; };
@@ -212,7 +231,7 @@
   }
 
   /* ---------------- drawing ---------------- */
-  function tabs(){ el('tabs').innerHTML=TABS.map(t=>'<button role="tab" class="'+(TAB===t[0]?'on':'')+'" data-tab="'+t[0]+'">'+t[1]+'</button>').join(''); el('mon').hidden=TAB==='late'; }
+  function tabs(){ el('tabs').innerHTML=TABS.map(t=>'<button role="tab" class="'+(TAB===t[0]?'on':'')+'" data-tab="'+t[0]+'">'+t[1]+'</button>').join(''); el('mnavx').hidden=TAB==='late'; }
   const kpi=(k,v,s)=>'<div class="kpi"><div class="k">'+k+'</div><div class="v">'+v+'</div>'+(s?'<div class="s">'+s+'</div>':'')+'</div>';
   const tone=(v,lo,hi)=>v==null ? '' : v>=hi ? 'good' : v<lo ? 'bad' : 'mid';
   const monthName=()=>{ const t=ym(); return new Date(t.y, t.m-1, 1).toLocaleDateString('en-US',{month:'long', year:'numeric'}); };
