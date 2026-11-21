@@ -32,11 +32,34 @@
   const keyFor=email=>DEV+lc(email);
   const okSub=s=>!!(s && typeof s.endpoint==='string' && /^https:\/\//.test(s.endpoint) && s.keys && s.keys.p256dh && s.keys.auth);
   function devices(rec){ return (rec && Array.isArray(rec.d)) ? rec.d.filter(x=>x && okSub(x.s)) : []; }
-  function addDevice(rec, sub, kind, at){
+  /* ONE ALERT PER PHONE (21/11/2026, Cory: "Sometimes homebrace on my phone will send notifications 2 or 3 times").
+     His record held two iPhones - the same phone under an old address Apple still accepted, so every alert went twice
+     (and a chat sent from Home-Brace a third time, through the instant chat link too). Now each install keeps its own id
+     (did): a new address for the same install replaces the old one; an entry no install has opened Home-Brace on for
+     STALE_DAYS is dropped; and the entries from before ids (no id) of this phone's own kind go when this phone saves.
+     seen = the last day this install opened Home-Brace; ci = until when this device has instant chat alerts. */
+  const STALE_DAYS=21, DAYMS=864e5;
+  function addDevice(rec, sub, kind, at, did){
     if(!okSub(sub)) return undefined;
-    const rest=devices(rec).filter(x=>x.s.endpoint!==sub.endpoint);
-    return {v:1, d:[{s:{endpoint:sub.endpoint, keys:{p256dh:sub.keys.p256dh, auth:sub.keys.auth}}, k:kind||'', at:at||''}].concat(rest).slice(0, MAX_DEVICES)};
+    const was=devices(rec).find(x=>x.s.endpoint===sub.endpoint);
+    const rest=devices(rec).filter(x=>x.s.endpoint!==sub.endpoint && !(did && x.id===did));
+    const e={s:{endpoint:sub.endpoint, keys:{p256dh:sub.keys.p256dh, auth:sub.keys.auth}}, k:kind||'', at:at||''};
+    if(did){ e.id=String(did).slice(0,40); e.seen=at||''; }
+    if(was && was.ci) e.ci=was.ci;
+    return {v:1, d:[e].concat(rest).slice(0, MAX_DEVICES)};
   }
+  /* what this install's save leaves: stale entries out; old no-id leftovers of the same kind out */
+  function tidyDevices(list, me, kind, nowMs){
+    return list.filter(x=>{
+      if(x.s.endpoint===me) return true;
+      const last=Date.parse(x.seen || x.at || '') || 0;
+      if(last && nowMs-last>STALE_DAYS*DAYMS) return false;
+      if(!x.id && x.k===kind && last && nowMs-last>2*DAYMS) return false;
+      return true;
+    });
+  }
+  const DID_KEY='ph_alert_did';
+  function myDid(){ try{ let d=localStorage.getItem(DID_KEY); if(!d){ d=Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-5); localStorage.setItem(DID_KEY, d); } return d; }catch(_){ return ''; } }
   function dropDevice(rec, endpoint){
     const was=devices(rec), left=was.filter(x=>x.s.endpoint!==endpoint);
     return left.length===was.length ? undefined : {v:1, d:left};      // undefined = nothing to write
@@ -50,10 +73,12 @@
   const store=()=>global.PH_STORE||null;
   function saveMine(sub){
     const em=who(), S=store(); if(!em || !S || !okSub(sub)) return Promise.resolve(null);
+    const did=myDid();
     return S.update(keyFor(em), cur=>{
-      const has=devices(cur).find(x=>x.s.endpoint===sub.endpoint);
-      if(has && has.s.keys.p256dh===sub.keys.p256dh && has.s.keys.auth===sub.keys.auth && devices(cur)[0]===has) return undefined;
-      return addDevice(cur, sub, KIND, new Date().toISOString());
+      const nowMs=Date.now(), list=devices(cur), has=list.find(x=>x.s.endpoint===sub.endpoint), tidy=tidyDevices(list, sub.endpoint, KIND, nowMs);
+      const fresh=has && has.seen && nowMs-(Date.parse(has.seen)||0)<DAYMS;
+      if(has && has.s.keys.p256dh===sub.keys.p256dh && has.s.keys.auth===sub.keys.auth && list[0]===has && has.id===did && fresh && tidy.length===list.length) return undefined;
+      return addDevice({v:1, d:tidy}, sub, KIND, new Date(nowMs).toISOString(), did);
     }).catch(()=>null);
   }
   function dropMine(endpoint){
@@ -146,7 +171,7 @@
   }
   /* One alert to every device of each of these people. Resolves {people, devices, sent, gone, failed:[...]};
      people with no devices are simply skipped (they haven't turned alerts on anywhere). */
-  async function sendTo(emails, msg){
+  async function sendTo(emails, msg, opts){
     const out={people:0, devices:0, sent:0, gone:0, failed:[]}, S=store();
     if(!ON || !S) return out;
     const list=[...new Set((emails||[]).map(lc).filter(Boolean))];
@@ -156,6 +181,7 @@
       let rec=null; try{ rec=await S.get(keyFor(em)); }catch(_){ out.failed.push(em+': couldn’t read their devices'); continue; }
       const ds=devices(rec); if(ds.length) out.people++;
       for(const d of ds){
+        if(opts && opts.skipInstant && d.ci && Date.parse(d.ci)>Date.now()) continue;   // its instant chat link alerts it already
         out.devices++;
         try{
           const j=await post(d.s, msg, idt);
@@ -198,7 +224,7 @@
         return 'off';
       }
       const sub=saved(), now=Date.now();
-      if(cur && cur.id && cur.ep===sub.endpoint && cur.exp-now>2*DAY) return 'fine';
+      if(cur && cur.id && cur.ep===sub.endpoint && cur.exp-now>2*DAY){ markInstant(new Date(cur.exp).toISOString()); return 'fine'; }
       const A=global.PH_AUTH; if(!A || !A.tokenFor) return 'nosignin';
       const me=(global.PH && PH.profileOf && PH.profileOf()) || {}; if(!me.id) return 'nosignin';
       const tok=await A.tokenFor(['Chat.ReadWrite']);
@@ -206,7 +232,7 @@
       if(cur && cur.id){
         if(cur.ep===sub.endpoint){
           try{ const j=await graph('PATCH', '/subscriptions/'+encodeURIComponent(cur.id), {expirationDateTime:exp}, tok);
-               linkSet({id:cur.id, exp:Date.parse(j.expirationDateTime||exp), ep:sub.endpoint}); return 'renewed'; }
+               linkSet({id:cur.id, exp:Date.parse(j.expirationDateTime||exp), ep:sub.endpoint}); markInstant(new Date(Date.parse(j.expirationDateTime||exp)).toISOString()); return 'renewed'; }
           catch(e){ if(e.status!==404) throw e; }                    // it had run out: make a new one below
         } else { try{ await graph('DELETE', '/subscriptions/'+encodeURIComponent(cur.id), null, tok); }catch(_){} }   // this device's address changed
         linkSet(null);
@@ -217,14 +243,20 @@
       const j=await graph('POST', '/subscriptions', {changeType:'created', notificationUrl:s.url, lifecycleNotificationUrl:s.url+'&l=1',
         resource:'/users/'+me.id+'/chats/getAllMessages', includeResourceData:true, encryptionCertificate:s.cert, encryptionCertificateId:s.certId,
         expirationDateTime:exp, clientState:s.clientState}, tok);
-      linkSet({id:j.id, exp:Date.parse(j.expirationDateTime||exp), ep:sub.endpoint});
+      linkSet({id:j.id, exp:Date.parse(j.expirationDateTime||exp), ep:sub.endpoint}); markInstant(new Date(Date.parse(j.expirationDateTime||exp)).toISOString());
       return 'made';
     })().catch(e=>{ try{ console.warn('Instant chat alerts:', e && e.message); }catch(_){} return 'failed'; })
       .then(x=>{ linkBusy=null; return x; });
     return linkBusy;
   }
+  /* this device's entry says until when Microsoft alerts it for chats (so Home-Brace's own chat alert skips it) */
+  function markInstant(until){
+    const em=who(), S=store(), sub=saved(); if(!em || !S || !sub) return Promise.resolve(null);
+    return S.update(keyFor(em), cur=>{ const list=devices(cur), me=list.find(x=>x.s.endpoint===sub.endpoint); if(!me) return undefined;
+      if((me.ci||'')===(until||'')) return undefined; const d=list.map(x=>x===me ? Object.assign({}, x, until ? {ci:until} : {}) : x); if(!until) delete d[list.indexOf(me)].ci; return {v:1, d}; }).catch(()=>null);
+  }
   async function chatUnlink(){
-    const cur=linkGet(); linkSet(null); if(!cur || !cur.id) return;
+    const cur=linkGet(); linkSet(null); markInstant(null); if(!cur || !cur.id) return;
     try{ const A=global.PH_AUTH; if(A && A.tokenFor) await graph('DELETE', '/subscriptions/'+encodeURIComponent(cur.id), null, await A.tokenFor(['Chat.ReadWrite'])); }catch(_){}
   }
   const here=p=>new URL(p, location.href).pathname;          // the path an alert opens, on this site
@@ -234,5 +266,5 @@
     document.addEventListener('ph-identity', ()=>{ if(LIVE) chatLink(); });   // the pilot list has landed: make / renew / remove the instant link
   }
   global.PH_ALERTS={state, enable, disable, send, sendTo, saved, here, refresh, chatLink, chatUnlink, CHAT_INSTANT, IOS, INSTALLED, KIND, ON, supported,
-    _rec:{keyFor, devices, addDevice, dropDevice, MAX_DEVICES}};
+    _rec:{keyFor, devices, addDevice, dropDevice, tidyDevices, MAX_DEVICES, STALE_DAYS}};
 })(window);

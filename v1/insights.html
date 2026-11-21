@@ -81,6 +81,23 @@
   .warn{background:var(--bad-soft);color:#93301f;border-radius:10px;padding:10px 12px;font-size:13.5px;margin-bottom:12px}
   .state{padding:12px;border-radius:10px;background:#F7F9FB;color:var(--soft);font-size:13.5px}
   /* pictures, not spreadsheets */
+  /* compared with the period before: green = better, red = worse, grey = about the same */
+  .dl{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;border-radius:999px;padding:1px 8px;white-space:nowrap;font-variant-numeric:tabular-nums;cursor:default;font-style:normal}
+  .dl.gd{background:var(--good-soft);color:#1f6e4a} .dl.bd{background:var(--bad-soft);color:#93301f} .dl.nt{background:#EEF2F6;color:var(--soft)}
+  .dl small{font-weight:600;opacity:.75;font-size:11px}
+  .kpi .d{margin-top:4px}
+  .ln span.dl,.sn span.dl{display:inline-flex;flex-direction:row;align-self:flex-start;line-height:1.5} .ln span.dw,.sn span.dw{display:block;margin-top:4px}
+  .vsline{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12.5px;color:var(--soft);margin:-4px 0 12px}
+  .grid.pay{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
+  .m{grid-template-columns:96px 1fr 60px 46px !important} .m b{white-space:nowrap} .m .dl{padding:1px 6px;font-size:11px;justify-self:end}
+  .stack i.sg{display:flex;font-style:normal;align-items:center;justify-content:center;color:#fff;font-size:11.5px;font-weight:800;letter-spacing:.01em;overflow:hidden;white-space:nowrap;min-width:0;cursor:default;transition:filter .12s}
+  .stack i.sg.lt{color:#0F2A4A}
+  .stack i.sg:hover,.hb:hover{filter:brightness(1.08) saturate(1.05)}
+  .tip{position:fixed;z-index:9000;pointer-events:none;display:flex;gap:9px;align-items:flex-start;background:#0F2A4A;color:#fff;border-radius:11px;padding:9px 12px;font-size:12.5px;line-height:1.35;box-shadow:0 10px 28px rgba(15,42,74,.28);max-width:280px;animation:tipin .08s ease-out}
+  .tip b{display:block;font-size:13px} .tip span span{color:#C9D6E6}
+  .tip .tsw{width:10px;height:10px;border-radius:3px;margin-top:4px;flex:none;box-shadow:0 0 0 1.5px rgba(255,255,255,.5)}
+  @keyframes tipin{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){ .tip{animation:none} }
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
   .tcc{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:12px}
   .tcc .top{display:flex;align-items:center;gap:14px}
@@ -121,12 +138,12 @@
   @media(max-width:640px){ .lrow,.src{grid-template-columns:1fr;gap:6px} .l90,.sv{text-align:left;align-items:flex-start} .stack{width:100% !important} }
   @media(max-width:640px){ .wrap{padding:16px 12px 140px} h1{font-size:21px} }
 </style>
-<script src="user.js?v=hc248"></script>
+<script src="user.js?v=hc249"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc248"></script>
-  <script src="gate.js?v=hc248"></script>
-  <script src="orthofi.js?v=hc248"></script>
-  <script src="periodpick.js?v=hc248"></script>
+  <script src="store.js?v=hc249"></script>
+  <script src="gate.js?v=hc249"></script>
+  <script src="orthofi.js?v=hc249"></script>
+  <script src="periodpick.js?v=hc249"></script>
 </head>
 <body>
 <div class="ribbon" id="ribbon">SANDBOX — made-up numbers, to see how it would look.</div>
@@ -225,23 +242,49 @@
 
   /* ---------------- drawing ---------------- */
   function tabs(){ el('tabs').innerHTML=TABS.map(t=>'<button role="tab" class="'+(TAB===t[0]?'on':'')+'" data-tab="'+t[0]+'">'+t[1]+'</button>').join(''); el('per').hidden=TAB==='late'; }
-  const kpi=(k,v,s)=>'<div class="kpi"><div class="k">'+k+'</div><div class="v">'+v+'</div>'+(s?'<div class="s">'+s+'</div>':'')+'</div>';
+  const kpi=(k,v,s,d)=>'<div class="kpi"><div class="k">'+k+'</div><div class="v">'+v+'</div>'+(s?'<div class="s">'+s+'</div>':'')+(d?'<div class="d">'+d+'</div>':'')+'</div>';
+  /* COMPARED WITH THE PERIOD BEFORE (21/11/2026, Cory: "if they are comparing a quarter or month there is a vs last month or
+     vs last quarter ... good to show if ones increasing or decreasing" and "same with conversion for TC. Its always useful if
+     you see a compared to"). PH_PERIOD.prev() picks the period before - and while this one is still going, the SAME number of
+     days of it (Nov 1-21 vs Oct 1-21). A count shows its % change, a rate (conversion, paid in full) its change in points.
+     Green = better, red = worse, grey = about the same; the tooltip shows both numbers. */
+  let VS={short:'', long:''};
+  const MS3=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function vsOf(p){ const a=new Date(p.first+'T12:00:00'), b=new Date(p.last+'T12:00:00');
+    const span=p.partial ? MS3[a.getMonth()]+' '+a.getDate()+' – '+(a.getMonth()===b.getMonth() && a.getFullYear()===b.getFullYear() ? '' : MS3[b.getMonth()]+' ')+b.getDate()+', '+b.getFullYear()+' (the same days)' : p.label;
+    return {short:p.short, long:span}; }
+  function dlt(cur, was, o){ o=o||{}; if(cur==null || was==null || !isFinite(cur) || !isFinite(was)) return '';
+    const u=o.unit||'%'; let d, txt;
+    if(u==='%'){ if(!was) return ''; d=(cur-was)/was*100; txt=Math.round(Math.abs(d))+'%'; }
+    else if(u==='pts'){ d=cur-was; const n=Math.round(Math.abs(d)); txt=n+(n===1 ? ' pt' : ' pts'); }
+    else { d=cur-was; txt=r1(Math.abs(d))+' '+u; }
+    const flat=Math.abs(d)<(u==='%' ? 3 : u==='pts' ? 1 : 0.5), good=o.down ? d<0 : d>0, cls=flat ? 'nt' : good ? 'gd' : 'bd';
+    const f=o.fmt||(x=>Number(x).toLocaleString('en-US'));
+    return '<span class="dl '+cls+'" data-tip="'+esc((o.name ? o.name+' · ' : '')+'compared with '+VS.long)+'" data-tip-b="'+esc('Now '+f(cur)+' · then '+f(was))+'" data-tip-c="'+(flat?'#94a3b8':good?'#2E9E6B':'#D7503A')+'">'+
+      (flat ? (o.bare ? 'same' : '≈ same') : (d>0?'↑ ':'↓ ')+txt)+(o.bare ? '' : ' <small>'+esc(VS.short)+'</small>')+'</span>'; }
+  const vsLine=()=>'<div class="vsline"><span><span class="dl gd">↑</span> <span class="dl bd">↓</span> compared with '+esc(VS.long)+'. Hover or tap one to see both numbers.</span></div>';
   const tone=(v,lo,hi)=>v==null ? '' : v>=hi ? 'good' : v<lo ? 'bad' : 'mid';
   const monthName=()=>period().label;
   let SEQ=0;
   async function render(){
-    tabs(); const my=++SEQ, v=el('view'), t=period(), offs=pickOffs();
+    tabs(); const my=++SEQ, v=el('view'), t=period(), p=PER.prev(), offs=pickOffs(); VS=vsOf(p);
     v.innerHTML='<div class="state">Reading OrthoFi…</div>';
     try{
       let h='';
-      if(TAB==='tc') h=await tcHTML(offs, t);
+      if(TAB==='tc') h=await tcHTML(offs, t, p);
       else if(TAB==='late') h=await lateHTML(offs);
-      else if(TAB==='pay') h=await payHTML(offs, t);
-      else h=await refHTML(offs, t);
+      else if(TAB==='pay') h=await payHTML(offs, t, p);
+      else h=await refHTML(offs, t, p);
       if(my===SEQ) v.innerHTML=h;
     }catch(e){ if(my===SEQ) v.innerHTML='<div class="warn">OrthoFi didn’t answer: '+esc((e && e.message) || 'try again in a minute')+'</div>'; }
   }
 
+  /* A BAR PIECE (21/11/2026, Cory: "Hover over the numbers would be nicer if it was more modern and quicker to pop up. Also
+     percentage on") - its share written inside when there's room (dark text on the light colours), and the app's own
+     tooltip instead of the browser's slow grey one. */
+  const LIGHT_SRC=['Internet Search','Other'];
+  function seg(v, of, color, light, name, detail){ const p=of ? v/of*100 : 0;
+    return '<i class="sg'+(light?' lt':'')+'" style="flex:'+v+';background:'+color+'" data-tip="'+esc(name)+'" data-tip-b="'+esc(detail)+'" data-tip-c="'+esc(color)+'">'+(p>=7 ? Math.round(p)+'%' : '')+'</i>'; }
   /* ---- pictures, not spreadsheets (Cory 21/11: "Try to make it less like an excel sheet the most you can") ---- */
   const offDot=o=>'<i class="dot" style="background:'+esc(((PH.colorForOffice && PH.colorForOffice(o))||{}).dot||'#94a3b8')+'"></i>';
   function ring(p, cls){ const r=30, c=2*Math.PI*r, v=Math.max(0, Math.min(100, p||0)), col=cls==='good' ? 'var(--good)' : cls==='bad' ? 'var(--bad)' : 'var(--amber)';
@@ -249,20 +292,24 @@
       (p==null ? '' : '<circle cx="36" cy="36" r="'+r+'" fill="none" stroke="'+col+'" stroke-width="8" stroke-linecap="round" stroke-dasharray="'+(c*v/100).toFixed(1)+' '+c.toFixed(1)+'" transform="rotate(-90 36 36)"/>')+
       '<text x="36" y="41" text-anchor="middle" font-size="16" font-weight="800" fill="#0F2A4A" font-family="Inter,sans-serif">'+(p==null ? '—' : Math.round(p)+'%')+'</text></svg>'; }
 
-  async function tcHTML(offs, t){
-    const all=await Promise.all(offs.map(o=>get.tc(o, t).then(r=>[o, r||{}])));
-    const T={keptNew:0, rec:0, started:0, pending:0, noshow:0, cancel:0}, cards=[];
-    all.forEach(([o,r])=>Object.keys(r).forEach(tc=>{ const x=r[tc]; Object.keys(T).forEach(k=>{ T[k]+=x[k]||0; }); cards.push({o, tc, x, c:pct(x.started||0, x.rec||0)}); }));
+  async function tcHTML(offs, t, p){
+    const [all, before]=await Promise.all([Promise.all(offs.map(o=>get.tc(o, t).then(r=>[o, r||{}]))), Promise.all(offs.map(o=>get.tc(o, p).then(r=>[o, r||{}])))]);
+    const T={keptNew:0, rec:0, started:0, pending:0, noshow:0, cancel:0}, W={keptNew:0, rec:0, started:0}, cards=[], was={};
+    before.forEach(([o,r])=>{ was[o]=r; Object.keys(r).forEach(tc=>{ Object.keys(W).forEach(k=>{ W[k]+=r[tc][k]||0; }); }); });
+    all.forEach(([o,r])=>Object.keys(r).forEach(tc=>{ const x=r[tc], w=(was[o]||{})[tc]; Object.keys(T).forEach(k=>{ T[k]+=x[k]||0; }); cards.push({o, tc, x, c:pct(x.started||0, x.rec||0), w:w && w.rec ? pct(w.started||0, w.rec) : null}); }));
     cards.sort((a,b)=>((b.c||0)-(a.c||0)) || ((b.x.keptNew||0)-(a.x.keptNew||0)));
     const top=cards.filter(c=>(c.x.rec||0)>=10)[0];
-    let h='<div class="kpis">'+kpi('New-patient exams', T.keptNew.toLocaleString())+kpi('Treatment recommended', T.rec.toLocaleString(), fp(pct(T.rec,T.keptNew))+' of exams — told “ready to start”')+
-      kpi('Started so far', T.started.toLocaleString(), fp(pct(T.started,T.rec))+' of recommended')+kpi('Still deciding', T.pending.toLocaleString(), 'waiting on financing or records')+'</div>';
-    h+='<div class="sub" style="margin:2px 0 10px">'+esc(monthName())+' · every exam in OrthoFi, by the TC on it.</div>'+
+    const cv=pct(T.started,T.rec), cw=pct(W.started,W.rec);
+    let h='<div class="kpis">'+kpi('Conversion', fp(cv), 'started ÷ recommended', dlt(cv, cw, {unit:'pts', name:'Conversion', fmt:fp}))+kpi('New-patient exams', T.keptNew.toLocaleString(), '', dlt(T.keptNew, W.keptNew, {name:'New-patient exams'}))+
+      kpi('Treatment recommended', T.rec.toLocaleString(), fp(pct(T.rec,T.keptNew))+' of exams — told “ready to start”', dlt(T.rec, W.rec, {name:'Recommended'}))+
+      kpi('Started so far', T.started.toLocaleString(), fp(pct(T.started,T.rec))+' of recommended', dlt(T.started, W.started, {name:'Started'}))+kpi('Still deciding', T.pending.toLocaleString(), 'waiting on financing or records')+'</div>';
+    h+='<div class="sub" style="margin:2px 0 6px">'+esc(monthName())+' · every exam in OrthoFi, by the TC on it.</div>'+vsLine()+
       '<div class="explain"><b>How to read a card.</b> <i>Exams</i> = new-patient exams the patient showed up for. <i>Recommended</i> = at that exam the doctor said the patient is ready to start treatment now (not “let’s wait and watch”, not “no treatment needed”). <i>Started</i> = of those, how many have started. The ring is the TC’s <b>conversion</b>: started ÷ recommended — it keeps climbing as patients start.</div><div class="grid">';
     cards.forEach(c=>{ const x=c.x, ex=Math.max(1, x.keptNew||0), cls=tone(c.c,40,55);
       const bar=(lab,n,col)=>'<div class="r"><span>'+lab+'</span><span class="t"><i style="width:'+Math.min(100, (n||0)/ex*100)+'%;background:'+col+'"></i></span><b>'+(n||0)+'</b></div>';
       h+='<div class="tcc">'+(top && c===top ? '<span class="badge">Top conversion</span>' : '')+
-        '<div class="top">'+ring(c.c, cls)+'<div><div class="nm">'+esc(c.tc)+'</div><div class="of">'+offDot(c.o)+esc(c.o)+'</div></div></div>'+
+        '<div class="top">'+ring(c.c, cls)+'<div><div class="nm">'+esc(c.tc)+'</div><div class="of">'+offDot(c.o)+esc(c.o)+'</div>'+
+          '<div class="of" style="margin-top:6px">'+(c.w==null ? '<span class="dl nt">new '+esc(VS.short.replace(/^vs /,'since '))+'</span>' : dlt(c.c, c.w, {unit:'pts', name:c.tc+'’s conversion', fmt:fp}))+'</div></div></div>'+
         '<div class="fun">'+bar('Exams', x.keptNew, '#BFE3E0')+bar('Recommended', x.rec, 'var(--teal)')+bar('Started', x.started, 'var(--navy)')+'</div>'+
         '<div class="chips">'+(x.pending ? '<span class="chip">⏳ '+x.pending+' deciding</span>' : '')+(x.declined ? '<span class="chip">✋ '+x.declined+' declined</span>' : '')+
           (((x.noshow||0)+(x.cancel||0)) ? '<span class="chip">🚫 '+((x.noshow||0)+(x.cancel||0))+' no-show / cancel</span>' : '')+'</div></div>'; });
@@ -288,7 +335,7 @@
       if(!r){ h+='<div class="lrow"><div class="ln">'+offDot(o)+esc(o)+'</div><div class="soft">No OrthoFi location</div><div></div></div>'; return; }
       const b=before && before.by && before.by[o], now90=r.amt[3]+r.amt[4], was=b ? (b.amt[3]||0)+(b.amt[4]||0) : null, ch=was ? Math.round((now90/was-1)*100) : null;
       h+='<div class="lrow"><div class="ln">'+offDot(o)+'<span><b>'+esc(o)+'</b><small>'+money(tot(r))+' · '+cnt(r)+' accounts</small></span></div>'+
-        '<div class="stack" style="width:'+Math.max(8, tot(r)/max*100)+'%">'+r.amt.map((a,i)=>a>0 ? '<i style="flex:'+a+';background:'+HEAT[i]+'" title="'+BUCKETS[i]+': '+r.n[i]+' accounts · '+money(a)+'"></i>' : '').join('')+'</div>'+
+        '<div class="stack" style="width:'+Math.max(8, tot(r)/max*100)+'%">'+r.amt.map((a,i)=>a>0 ? seg(a, tot(r), HEAT[i], i<2, BUCKETS[i], r.n[i]+' accounts · '+money(a)+' · '+fp(pct(a, tot(r)))+' of '+o+'’s past due') : '').join('')+'</div>'+
         '<div class="l90"><b>'+money(now90)+'</b> 90+ '+(ch==null ? '' : '<span class="'+(ch>0?'up':'down')+'">'+(ch>0?'↑ ':'↓ ')+Math.abs(ch)+'%</span>')+'</div></div>'; });
     h+='</div><div class="card"><h2>OrthoFi’s collection steps</h2><div class="sub">How many accounts are at each step today — the same ranges as OrthoFi’s Delinquent report.</div><div class="steps">'+
       [['🚩','Flag in the PMS','45–53 days','flag'],['✉️','Dismissal letter','91–98 days','letter'],['🛠️','Maintenance','121–129 days','maint'],['⛔','Dismissal','180+ days','dismiss']]
@@ -296,33 +343,41 @@
     return h;
   }
 
-  async function payHTML(offs, t){
-    const all=await Promise.all(offs.map(o=>get.pay(o, t).then(r=>[o,r])));
-    const T={starts:0,pif:0,sameDayStarts:0,dp:0,nonPif:0,sdc:0,resp:0,ext:0,months:0}; all.forEach(([o,r])=>{ if(r) Object.keys(T).forEach(k=>{ T[k]+=r[k]||0; }); });
+  async function payHTML(offs, t, p){
+    const [all, before]=await Promise.all([Promise.all(offs.map(o=>get.pay(o, t).then(r=>[o,r]))), Promise.all(offs.map(o=>get.pay(o, p).then(r=>[o,r])))]);
+    const T={starts:0,pif:0,sameDayStarts:0,dp:0,nonPif:0,sdc:0,resp:0,ext:0,months:0}, W={}; Object.keys(T).forEach(k=>{ W[k]=0; });
+    all.forEach(([o,r])=>{ if(r) Object.keys(T).forEach(k=>{ T[k]+=r[k]||0; }); }); before.forEach(([o,r])=>{ if(r) Object.keys(W).forEach(k=>{ W[k]+=r[k]||0; }); });
+    const wasO={}; before.forEach(([o,r])=>{ wasO[o]=r; });
     const f=x=>({pif:pct(x.pif,x.starts), sds:pct(x.sameDayStarts,x.starts), dp:pct(x.dp,x.nonPif), sdc:pct(x.sdc,x.resp), len:(x.starts-x.pif)>0 ? r1(x.months/(x.starts-x.pif)) : null, ext:pct(x.ext,x.starts)});
-    const P=f(T), rows=all.filter(([o,r])=>r).map(([o,r])=>[o,r,f(r)]);
+    const P=f(T), PW=f(W), rows=all.filter(([o,r])=>r).map(([o,r])=>[o,r,f(r),wasO[o] ? f(wasO[o]) : null]);
+    /* business health is filed by MONTH, so a month still going can't be cut to the same days - its starts aren't compared then (the rates still are) */
+    const startsD=t.open ? '' : dlt(T.starts, W.starts, {name:'Starts'}), rate=(k,name,down)=>dlt(P[k], PW[k], {unit:k==='len'?'mo':'pts', name, down, fmt:k==='len' ? (x=>x+' months') : fp});
     const M=[['pif','Paid in full','%',true],['sds','Same-day start','%',true],['dp','Down payment','%',true],['sdc','Same-day cash','%',true],['len','Average plan','mo',false],['ext','Extensions','%',false]];
     const top={}; M.forEach(([k])=>{ top[k]=Math.max(k==='len'?30:10, ...rows.map(x=>x[2][k]||0), P[k]||0)*1.15; });
-    let h='<div class="kpis">'+kpi('Starts', T.starts.toLocaleString())+kpi('Paid in full', fp(P.pif), T.pif+' starts')+kpi('Down payment', fp(P.dp), 'of what patients finance')+kpi('Same-day cash', fp(P.sdc), 'collected on the start day')+kpi('Average plan', P.len==null?'—':P.len+' months')+'</div>';
-    h+='<div class="sub" style="margin:2px 0 10px">'+esc(monthName())+' · from OrthoFi’s business health dashboard, on the starts in that period. The dark tick on each bar is the practice average; green or red when an office is clearly better or worse.</div><div class="grid">';
-    rows.forEach(([o,r,x])=>{ h+='<div class="tcc"><div class="top" style="gap:8px"><div><div class="nm">'+offDot(o)+esc(o)+'</div><div class="of">'+r.starts+' starts</div></div></div><div class="fun">'+
+    let h='<div class="kpis">'+kpi('Starts', T.starts.toLocaleString(), '', startsD)+kpi('Paid in full', fp(P.pif), T.pif+' starts', rate('pif','Paid in full'))+kpi('Down payment', fp(P.dp), 'of what patients finance', rate('dp','Down payment'))+
+      kpi('Same-day cash', fp(P.sdc), 'collected on the start day', rate('sdc','Same-day cash'))+kpi('Average plan', P.len==null?'—':P.len+' months', '', rate('len','Average plan',true))+'</div>';
+    h+='<div class="sub" style="margin:2px 0 6px">'+esc(monthName())+' · from OrthoFi’s business health dashboard, on the starts in that period. The dark tick on each bar is the practice average; green or red when an office is clearly better or worse.</div>'+vsLine()+'<div class="grid pay">';
+    rows.forEach(([o,r,x,xw])=>{ h+='<div class="tcc"><div class="top" style="gap:8px"><div><div class="nm">'+offDot(o)+esc(o)+'</div><div class="of">'+r.starts+' starts '+(t.open || !wasO[o] ? '' : dlt(r.starts, wasO[o].starts, {name:o+' starts', bare:true}))+'</div></div></div><div class="fun">'+
       M.map(([k,lab,u,hb])=>{ const v=x[k], avg=P[k], d=(v==null||avg==null) ? 0 : v-avg, cls=Math.abs(d)<(u==='mo'?1.5:3) ? '' : ((d>0)===hb ? 'gd' : 'bd');
-        return '<div class="m"><span>'+lab+'</span><span class="t"><i style="width:'+Math.min(100,(v||0)/top[k]*100)+'%"></i>'+(avg==null?'':'<u style="left:'+Math.min(100,avg/top[k]*100)+'%"></u>')+'</span><b class="'+cls+'">'+(v==null?'—':v+(u==='mo'?' mo':'%'))+'</b></div>'; }).join('')+
+        return '<div class="m"><span>'+lab+'</span><span class="t"><i style="width:'+Math.min(100,(v||0)/top[k]*100)+'%"></i>'+(avg==null?'':'<u style="left:'+Math.min(100,avg/top[k]*100)+'%"></u>')+'</span><b class="'+cls+'">'+(v==null?'—':v+(u==='mo'?' mo':'%'))+'</b>'+
+          (xw ? dlt(v, xw[k], {unit:u==='mo'?'mo':'pts', name:o+' · '+lab, down:!hb, bare:true, fmt:u==='mo' ? (z=>z+' months') : fp}).replace(/ (pts?|mo)</,'<') : '<span></span>')+'</div>'; }).join('')+
       '</div></div>'; });
     return h+'</div><div class="note">Extensions = payment plans that run past the end of treatment (they carry interest).</div>';
   }
 
-  async function refHTML(offs, t){
-    const all=await Promise.all(offs.map(o=>get.ref(o, t).then(r=>[o,r||{}])));
+  async function refHTML(offs, t, p){
+    const [all, before]=await Promise.all([Promise.all(offs.map(o=>get.ref(o, t).then(r=>[o,r||{}]))), Promise.all(offs.map(o=>get.ref(o, p).then(r=>[o,r||{}])))]);
     const S={}; all.forEach(([o,r])=>Object.keys(r).forEach(s=>{ const x=S[s]=S[s]||{n:0,started:0,prod:0}; x.n+=r[s].n; x.started+=r[s].started; x.prod+=r[s].prod; }));
+    const SW={}, OW={}; before.forEach(([o,r])=>{ OW[o]=Object.keys(r).reduce((a,s)=>a+r[s].n,0); Object.keys(r).forEach(s=>{ const x=SW[s]=SW[s]||{n:0,started:0}; x.n+=r[s].n; x.started+=r[s].started; }); });
+    const totW=Object.keys(SW).reduce((a,s)=>a+SW[s].n,0), totStW=Object.keys(SW).reduce((a,s)=>a+SW[s].started,0);
     const list=Object.keys(S).sort((a,b)=>S[b].n-S[a].n), tot=list.reduce((a,s)=>a+S[s].n,0), totSt=list.reduce((a,s)=>a+S[s].started,0), max=Math.max(1,...list.map(s=>S[s].n));
     const IC={'My Dentist':'🦷','Friend / Family':'👨‍👩‍👧','Internet Search':'🔎','Social Media':'📱','Advertisement':'📣','Other':'✨'};
-    let h='<div class="kpis">'+kpi('New-patient exams', tot.toLocaleString())+kpi('Started so far', totSt.toLocaleString(), fp(pct(totSt,tot))+' of them')+
+    let h='<div class="kpis">'+kpi('New-patient exams', tot.toLocaleString(), '', dlt(tot, totW, {name:'New-patient exams'}))+kpi('Started so far', totSt.toLocaleString(), fp(pct(totSt,tot))+' of them', dlt(totSt, totStW, {name:'Started'}))+
       (list[0] ? kpi('Biggest source', esc(list[0]), fp(pct(S[list[0]].n,tot))+' of exams') : '')+'</div>';
-    h+='<div class="card"><h2>Where new patients came from · '+esc(monthName())+'</h2><div class="sub">What patients told the office brought them in (OrthoFi’s referral report). The dark part of each bar went on to start treatment.</div>'+
+    h+='<div class="card"><h2>Where new patients came from · '+esc(monthName())+'</h2><div class="sub">What patients told the office brought them in (OrthoFi’s referral report). The dark part of each bar went on to start treatment.</div>'+vsLine()+
       list.map(s=>{ const x=S[s], c=pct(x.started,x.n);
-        return '<div class="src"><div class="sn"><span class="ic">'+(IC[s]||'•')+'</span><span><b>'+esc(s)+'</b><small>'+x.n+' exams · '+x.started+' started</small></span></div>'+
-          '<div class="hb" title="'+x.n+' exams, '+x.started+' started"><i style="width:'+(x.n/max*100)+'%"></i><i class="st" style="width:'+(x.started/max*100)+'%"></i></div>'+
+        return '<div class="src"><div class="sn"><span class="ic">'+(IC[s]||'•')+'</span><span><b>'+esc(s)+'</b><small>'+x.n+' exams · '+x.started+' started</small><span class="dw">'+(SW[s] ? dlt(x.n, SW[s].n, {name:s+' exams'}) : '<span class="dl nt">new '+esc(VS.short.replace(/^vs /,'since '))+'</span>')+'</span></span></div>'+
+          '<div class="hb" data-tip="'+esc(s)+'" data-tip-b="'+x.n+' exams · '+x.started+' started ('+fp(c)+')" data-tip-c="#149B96"><i style="width:'+(x.n/max*100)+'%"></i><i class="st" style="width:'+(x.started/max*100)+'%"></i></div>'+
           '<div class="sv"><span class="pill '+tone(c,30,45)+'">'+fp(c)+' start</span><small>'+money(x.prod)+'</small></div></div>'; }).join('')+
       (list.length ? '' : '<div class="state">No referral answers in OrthoFi for this month.</div>')+
       '<div class="note">A patient sent by another patient shows as Friend / Family — Home-Brace never reads who. This could sit on the Marketing page too.</div></div>';
@@ -333,13 +388,26 @@
         '<div class="legend">'+list.map(s=>'<span><i style="background:'+col(s)+'"></i>'+esc(s)+'</span>').join('')+'</div>';
       all.map(([o,r])=>[o,r,Object.keys(r).reduce((a,s)=>a+r[s].n,0)]).sort((a,b)=>b[2]-a[2]).forEach(([o,r,n])=>{
         const st=Object.keys(r).reduce((a,s)=>a+r[s].started,0), lead=list.filter(s=>r[s] && r[s].n).sort((a,b)=>r[b].n-r[a].n)[0];
-        h+='<div class="lrow"><div class="ln">'+offDot(o)+'<span><b>'+esc(o)+'</b><small>'+n+' exams · '+fp(pct(st,n))+' started</small></span></div>'+
-          '<div class="stack" style="width:100%">'+(n ? list.map(s=>r[s] && r[s].n ? '<i style="flex:'+r[s].n+';background:'+col(s)+'" title="'+esc(s)+': '+r[s].n+' exams ('+fp(pct(r[s].n,n))+'), '+r[s].started+' started"></i>' : '').join('') : '')+'</div>'+
+        h+='<div class="lrow"><div class="ln">'+offDot(o)+'<span><b>'+esc(o)+'</b><small>'+n+' exams · '+fp(pct(st,n))+' started</small>'+(OW[o] ? '<span class="dw">'+dlt(n, OW[o], {name:o+' exams'})+'</span>' : '')+'</span></div>'+
+          '<div class="stack" style="width:100%">'+(n ? list.map(s=>r[s] && r[s].n ? seg(r[s].n, n, col(s), LIGHT_SRC.indexOf(s)>=0, s, r[s].n+' exams · '+fp(pct(r[s].n,n))+' of '+o+'’s · '+r[s].started+' started') : '').join('') : '')+'</div>'+
           '<div class="l90">'+(lead ? 'Most from <b>'+esc(lead)+'</b>' : '—')+'</div></div>'; });
       h+='</div>';
     }
     return h;
   }
+
+  /* ---------------- the quick tooltip ---------------- */
+  const TIP=document.createElement('div'); TIP.className='tip'; TIP.setAttribute('role','tooltip'); TIP.hidden=true; document.body.appendChild(TIP);
+  let tipFor=null;
+  function tipShow(t, x, y){
+    if(tipFor!==t){ tipFor=t; TIP.innerHTML='<span class="tsw" style="background:'+esc(t.dataset.tipC||'var(--teal)')+'"></span><span><b>'+esc(t.dataset.tip)+'</b>'+(t.dataset.tipB ? '<span>'+esc(t.dataset.tipB)+'</span>' : '')+'</span>'; TIP.hidden=false; }
+    const w=TIP.offsetWidth, h=TIP.offsetHeight; let l=x-w/2, top=y-h-14; if(top<8) top=y+18; l=Math.max(8, Math.min(window.innerWidth-w-8, l));
+    TIP.style.left=l+'px'; TIP.style.top=top+'px';
+  }
+  function tipHide(){ tipFor=null; TIP.hidden=true; }
+  document.addEventListener('mousemove', e=>{ const t=e.target.closest && e.target.closest('[data-tip]'); if(t) tipShow(t, e.clientX, e.clientY); else if(tipFor) tipHide(); }, {passive:true});
+  document.addEventListener('touchstart', e=>{ const t=e.target.closest && e.target.closest('[data-tip]'), p=e.touches && e.touches[0]; if(t && p) tipShow(t, p.clientX, p.clientY); else tipHide(); }, {passive:true});
+  window.addEventListener('scroll', tipHide, {passive:true, capture:true});
 
   /* ---------------- wiring ---------------- */
   function allowed(){ return !LIVE || (PH.isAdmin && PH.isAdmin(PH.realMe ? PH.realMe() : PH.me())); }

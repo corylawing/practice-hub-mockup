@@ -380,13 +380,13 @@
   .lb .lbnav.p{left:14px}.lb .lbnav.n{right:14px}
   .lb .lbnav[hidden]{display:none}
 </style>
-<script src="user.js?v=hc248"></script>
+<script src="user.js?v=hc249"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc248"></script>
-  <script src="gate.js?v=hc248"></script>
-  <script src="_staff.js?v=hc248"></script>
-  <script src="alerts.js?v=hc248"></script>
-  <script src="chatgraph.js?v=hc248"></script>
+  <script src="store.js?v=hc249"></script>
+  <script src="gate.js?v=hc249"></script>
+  <script src="_staff.js?v=hc249"></script>
+  <script src="alerts.js?v=hc249"></script>
+  <script src="chatgraph.js?v=hc249"></script>
 </head>
 <body>
 <div class="ribbon" id="ribbon">MOCK-UP for Heather and Dr. Jae — made-up people, messages and videos. Nothing is sent anywhere.</div>
@@ -735,7 +735,7 @@
   function emoLoad(){
     if(window.PH_EMOJI) return Promise.resolve(window.PH_EMOJI);
     if(emoP) return emoP;
-    emoP=new Promise((res, rej)=>{ const sc=document.createElement('script'); sc.src='emoji.js?v=hc248'; sc.async=true;
+    emoP=new Promise((res, rej)=>{ const sc=document.createElement('script'); sc.src='emoji.js?v=hc249'; sc.async=true;
       sc.onload=()=>window.PH_EMOJI ? res(window.PH_EMOJI) : rej(new Error('no emoji')); sc.onerror=()=>{ emoP=null; sc.remove(); rej(new Error('no emoji')); };
       document.head.appendChild(sc); });
     return emoP;
@@ -1367,7 +1367,7 @@
     if(CG.TEST){ const ok=CG.testers().map(t=>t.email); to=to.filter(e=>ok.indexOf(e)>=0); }
     if(!to.length) return;
     A.sendTo(to, {title:c.type==='person' ? ME : ME+' · '+c.name, body:kind==='video' ? '🎥 Sent a video' : kind==='photo' ? '📷 Sent a photo' : String(text).slice(0,140),
-      url:A.here('chat.html')+'#chat='+encodeURIComponent(c.id), tag:'hb-chat'}).catch(()=>{});
+      url:A.here('chat.html')+'#chat='+encodeURIComponent(c.id), tag:'hb-chat'}, {skipInstant:true}).catch(()=>{});   // a phone with instant chat alerts gets this one from Microsoft already (21/11)
   }
   /* Microsoft said no - in words. Before IT approves Chat.ReadWrite this is what shows. */
   function problem(e){

@@ -59,6 +59,28 @@ function load(opts){
     t('junk in the record is ignored', R.devices({d:[null, {s:{endpoint:'nope'}}, {s:sub(1)}]}).length===1);
   }
 
+  /* ---- 1b. One alert per phone (21/11/2026, Cory: "on my phone will send notifications 2 or 3 times") ---- */
+  {
+    const {A}=load(), R=A._rec, D=864e5, now=Date.parse('2026-11-21T12:00:00Z'), iso=ms=>new Date(ms).toISOString();
+    let rec=R.addDevice(undefined, sub(1), 'iPhone', iso(now-3*D), 'inst1');
+    rec=R.addDevice(rec, sub(2), 'iPhone', iso(now), 'inst1');
+    t('the same install with a new address replaces its old one (no second alert to the same phone)', rec.d.length===1 && rec.d[0].s.endpoint===sub(2).endpoint && rec.d[0].id==='inst1');
+    const legacy=[{s:sub(3), k:'iPhone', at:iso(now-3*D)}, {s:sub(4), k:'Mac', at:iso(now-3*D)}, {s:sub(5), k:'iPhone', at:iso(now-1*3600e3)}, {s:sub(6), k:'iPad', at:iso(now-30*D), id:'x', seen:iso(now-30*D)}];
+    const left=R.tidyDevices(legacy, sub(9).endpoint, 'iPhone', now).map(x=>x.s.endpoint);
+    t('an old leftover of this phone’s kind (from before ids) is dropped; another kind of device stays', left.indexOf(sub(3).endpoint)<0 && left.indexOf(sub(4).endpoint)>=0);
+    t('...a brand-new one (under 2 days) stays, in case it is a second real phone', left.indexOf(sub(5).endpoint)>=0);
+    t('a device nobody has opened Home-Brace on for 3 weeks is dropped', R.STALE_DAYS===21 && left.indexOf(sub(6).endpoint)<0);
+    const keepCi=R.addDevice({v:1, d:[{s:sub(7), k:'iPhone', at:'a', ci:iso(now+D)}]}, sub(7), 'iPhone', iso(now), 'inst7');
+    t('a device keeps its instant-chat mark when it saves itself again', keepCi.d[0].ci===iso(now+D));
+  }
+  {
+    const {A, S, posted}=load(), R=A._rec;
+    await S.set(R.keyFor('quinn.quill@farnsworthorthodontics.com'), {v:1, d:[{s:sub(1), k:'iPhone', at:'a', ci:new Date(Date.now()+864e5).toISOString()}, {s:sub(2), k:'Mac', at:'b'}]});
+    const out=await A.sendTo(['quinn.quill@farnsworthorthodontics.com'], {title:'Quinn', tag:'hb-chat'}, {skipInstant:true});
+    t('a chat sent from Home-Brace skips the phone that gets it straight from Microsoft (no double chat alert); others still get it', posted.length===1 && posted[0].b.sub.endpoint===sub(2).endpoint && out.devices===1);
+    posted.length=0; await A.sendTo(['quinn.quill@farnsworthorthodontics.com'], {title:'Task', tag:'hb-task'});
+    t('...every other kind of alert still goes to every device', posted.length===2);
+  }
   /* ---- 2. sendTo(): one alert per device, with the sign-in ---- */
   {
     const {A, S, posted}=load({gone:[sub(2).endpoint]}), R=A._rec;

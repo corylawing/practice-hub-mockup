@@ -545,6 +545,30 @@ I can confidently say that the chat feature should go next. The production thing
     "What is recommended" (Cory: "They probably understand but I don't") -> a "How to read a card" box: Exams = new-patient
     exams kept; Recommended = the doctor said ready to start now (not wait-and-watch, not no treatment); Started; ring =
     started / recommended.
+    QUICK TOOLTIP + % IN THE BARS (hc249; Cory: "Hover over the numbers would be nicer if it was more modern and quicker to
+    pop up. Also percentage on"): seg() writes a piece's share inside it when >=7% (dark text on the light colours); one
+    app tooltip (.tip, data-tip / data-tip-b / data-tip-c) follows the mouse or a tap, hides on scroll - never title=.
+    COMPARED WITH THE PERIOD BEFORE (hc249; Cory: "if they are comparing a quarter or month there is a vs last month or vs
+    last quarter ... good to show if ones increasing or decreasing" and "same with conversion for TC. Its always useful if
+    you see a compared to"): PH_PERIOD.prev(v) / handle.prev() = the month / quarter before, the same dates last year for
+    year to date, the year before; while the period is still going the one before is cut to the SAME days (Nov 1-21 vs
+    Oct 1-21) and says so. dlt(cur, was, {unit:'%'|'pts'|'mo', down}) draws the chip: counts as % change, rates in
+    points, green better / red worse / grey "about the same" (<3% / <1 pt / <0.5 mo), tooltip "Now x · then y". On: the
+    KPI tiles (incl. a new Conversion tile), every TC card's conversion ("new since ..." when the TC had none before),
+    each pay card's starts + each rate, each referral source's and each office's exams. Business health is filed by
+    MONTH, so while a month is open its STARTS aren't compared (rates still are). BEFORE GOING LIVE: conversion keeps
+    climbing as patients start, so last month vs the month before isn't fair on real data (the older month had longer) -
+    compare "started by the same number of days after the period" (needs a start date per exam - check /patient-exams
+    rows for one, read-only) or say so on the page.
+62. **ONE ALERT PER PHONE (21/11/2026; hc249; Cory: "Sometimes homebrace on my phone will send notifications 2 or 3
+    times").** Cause, from his own device record: two iPhone entries (18 and 19 Nov - the same phone under an old push
+    address Apple still accepted) -> every alert twice; a chat sent FROM Home-Brace a third time, because his phone also
+    has the instant chat link (Microsoft tells /api/chatnote about every Teams chat, Home-Brace's included). alerts.js:
+    each install keeps an id (localStorage ph_alert_did); its save replaces any entry with the same id, drops entries
+    nobody has opened Home-Brace on for 21 days (seen/at), and drops old no-id entries of its own kind (>2 days); seen is
+    refreshed once a day. A device with the instant chat link records ci (until when); chat.html's alert uses
+    sendTo(..., {skipInstant:true}) so those devices get the chat once, from Microsoft. Nothing else is deleted: the
+    other people's records are only touched when they open Home-Brace themselves. test/alerts (37).
 60. **ADJUSTMENTS + NET PRODUCTION PROVEN FROM ORTHOFI (21/11/2026; hc242).** Cory: "Now that you have access to orthofi
     via safari do what you need to do to make this perfect" (his Safari, OrthoFi portal; read-only - only reports run).
     The Monthly Balance Sheet = OrthoFi portal Reports -> Accounting -> Monthly Balance Sheet (business-intelligence

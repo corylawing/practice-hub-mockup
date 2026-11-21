@@ -40,6 +40,20 @@
     const last=open ? N.iso : b.y+'-'+pad(b.m)+'-'+pad(lastDay(b.y, b.m));
     return {first:a.y+'-'+pad(a.m)+'-01', last, months, open, label:label(v)};
   }
+  /* THE PERIOD BEFORE, to compare with (21/11/2026, Cory: "if they are comparing a quarter or month there is a vs last month
+     or vs last quarter ... good to show if ones increasing or decreasing"). Month -> the month before, quarter -> the quarter
+     before, year to date -> the same dates last year, a year -> the year before. While a period is still going, the one
+     before is cut to the SAME number of days (Nov 1-21 vs Oct 1-21), so a part month never looks like a drop. */
+  function prev(v){
+    v=clean(v); const R=range(v); let p;
+    if(v.kind==='month') p=v.m===1 ? {kind:'month', y:v.y-1, m:12} : {kind:'month', y:v.y, m:v.m-1};
+    else if(v.kind==='quarter') p=v.q===1 ? {kind:'quarter', y:v.y-1, q:4} : {kind:'quarter', y:v.y, q:v.q-1};
+    else p={kind:'year', y:v.y-1};
+    const P=range(p), short=v.kind==='month' ? 'vs '+MS[p.m-1] : v.kind==='quarter' ? 'vs Q'+p.q : v.kind==='ytd' ? 'vs same time '+p.y : 'vs '+p.y;
+    if(R.open){ const d0=Date.parse(R.first+'T12:00:00'), days=Math.round((Date.parse(R.last+'T12:00:00')-d0)/864e5), s=new Date(Date.parse(P.first+'T12:00:00')+days*864e5);
+      const cut=s.getFullYear()+'-'+pad(s.getMonth()+1)+'-'+pad(s.getDate()); if(cut<P.last){ P.last=cut; P.months=P.months.filter(x=>x.y+'-'+pad(x.m)+'-01'<=cut); P.partial=true; } }
+    P.short=short; P.value=p; return P;
+  }
   function label(v){
     v=clean(v); const N=now();
     if(v.kind==='month') return MON[v.m-1]+' '+v.y;
@@ -119,7 +133,7 @@
     btn.classList.add('pp-btn'); btn.type='button'; btn.setAttribute('aria-haspopup','dialog'); btn.setAttribute('aria-expanded','false');
     btn.addEventListener('click', e=>{ e.preventDefault(); open(C); });
     paint(C);
-    return { get:()=>C.value, range:()=>range(C.value), set:v=>set(C, v, false) };
+    return { get:()=>C.value, range:()=>range(C.value), prev:()=>prev(C.value), set:v=>set(C, v, false) };
   }
   if(typeof document!=='undefined'){
     document.addEventListener('mousedown', e=>{ if(POP && !POP.contains(e.target) && !(CUR && CUR.btn.contains(e.target))) close(); }, true);
@@ -127,6 +141,6 @@
     window.addEventListener('resize', ()=>{ if(CUR && POP) place(CUR); });
     window.addEventListener('scroll', ()=>{ if(CUR && POP) place(CUR); }, true);
   }
-  global.PH_PERIOD={attach, range, label, clean};
+  global.PH_PERIOD={attach, range, prev, label, clean};
   if(typeof module!=='undefined' && module.exports) module.exports=global.PH_PERIOD;
 })(typeof window!=='undefined' ? window : globalThis);
