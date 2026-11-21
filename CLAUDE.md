@@ -508,7 +508,7 @@ I can confidently say that the chat feature should go next. The production thing
    Notes (noteField(f) - Talk types into whichever box has data-talkbox; Save while talking waits for the last words).
    Cory: no privacy reminder under the box ("I don't need that reminder please don't put it"). Saving adds fields only
    (persist/strip keep every field; consultsFrom reads every field). test/tc (185).
-59. **HEATHER'S REPORT SOURCES (21/11/2026; hc241; sandbox).** September confirmed: gross production AND gross
+59. **HEATHER'S REPORT SOURCES (21/11/2026; hc241; LIVE)** September confirmed: gross production AND gross
     collections (collection details + Medicaid) to the dollar at Carlsbad, Clovis, Hobbs, San Angelo, Lubbock, Mansfield;
     A/R at San Angelo, Lubbock, Mansfield (Clovis Sept only; Carlsbad/Hobbs 1-4% UNDER Heather - all Medicaid offices).
     Heather (screenshots via Cory): adjustments = "Adjustments Total" and net production = "Adjusted Production" on
