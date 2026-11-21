@@ -72,6 +72,8 @@
   .hb i{position:absolute;left:0;top:0;bottom:0;border-radius:5px;background:var(--teal)}
   .hb i.st{background:var(--navy)}
   .note{font-size:12.5px;color:var(--soft);margin-top:10px}
+  .explain{background:#fff;border:1px solid var(--line);border-left:4px solid var(--teal);border-radius:12px;padding:10px 14px;font-size:13.5px;color:var(--ink);margin:0 0 12px;max-width:820px}
+  .explain i{font-style:normal;font-weight:700;color:var(--navy)}
   .up{color:var(--bad);font-weight:700} .down{color:var(--good);font-weight:700}
   .stage{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
   .stage div{border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:#FBFCFD;font-size:13px}
@@ -119,11 +121,12 @@
   @media(max-width:640px){ .lrow,.src{grid-template-columns:1fr;gap:6px} .l90,.sv{text-align:left;align-items:flex-start} .stack{width:100% !important} }
   @media(max-width:640px){ .wrap{padding:16px 12px 140px} h1{font-size:21px} }
 </style>
-<script src="user.js?v=hc246"></script>
+<script src="user.js?v=hc247"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc246"></script>
-  <script src="gate.js?v=hc246"></script>
-  <script src="orthofi.js?v=hc246"></script>
+  <script src="store.js?v=hc247"></script>
+  <script src="gate.js?v=hc247"></script>
+  <script src="orthofi.js?v=hc247"></script>
+  <script src="periodpick.js?v=hc247"></script>
 </head>
 <body>
 <div class="ribbon" id="ribbon">SANDBOX — made-up numbers, to see how it would look.</div>
@@ -135,7 +138,7 @@
   <div class="bar">
     <div class="tabs" id="tabs" role="tablist"></div>
     <span style="flex:1"></span>
-    <div class="mnav" id="mnavx" aria-label="Month"></div><input type="hidden" id="mon">
+    <button id="per" aria-label="Period"></button>
     <select id="off" aria-label="Office"></select>
   </div>
   <div id="view"></div>
@@ -152,24 +155,12 @@
   let TAB='tc'; try{ TAB=localStorage.getItem('ph_insights_tab')||'tc'; }catch(_){}
   if(!TABS.some(t=>t[0]===TAB)) TAB='tc';
   const now=new Date(), lm=new Date(now.getFullYear(), now.getMonth()-1, 1);
-  el('mon').value=lm.getFullYear()+'-'+p2(lm.getMonth()+1);
-  /* MONTH ARROWS (21/11/2026, Cory: "Why are you doing date selector like that 2026-10.. you have to type it" - Safari on
-     a Mac has no month picker, so type="month" was a typing box). The Monthly Report's ‹ October 2026 › instead; the hidden
-     #mon keeps YYYY-MM for the code that reads it. */
-  function monthNav(){
-    const box=document.getElementById('mnavx'), inp=document.getElementById('mon'); if(!box || !inp) return;
-    const MN=['January','February','March','April','May','June','July','August','September','October','November','December'];
-    const cur=()=>{ const m=/^(\d{4})-(\d{2})$/.exec(inp.value)||[]; return {y:+m[1]||new Date().getFullYear(), m:+m[2]||new Date().getMonth()+1}; };
-    const draw=()=>{ const c=cur(), n=new Date(), last=c.y>n.getFullYear() || (c.y===n.getFullYear() && c.m>=n.getMonth()+1);
-      box.innerHTML='<button type="button" aria-label="Earlier month" data-mstep="-1">‹</button><b>'+MN[c.m-1]+' '+c.y+'</b><button type="button" aria-label="Later month" data-mstep="1"'+(last?' disabled':'')+'>›</button>'; };
-    box.addEventListener('click', e=>{ const b=e.target.closest('[data-mstep]'); if(!b || b.disabled) return; const c=cur(), d=new Date(c.y, c.m-1+(+b.dataset.mstep), 1);
-      inp.value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); draw(); inp.dispatchEvent(new Event('change', {bubbles:true})); });
-    draw();
-  }
-  monthNav();
+  /* THE PERIOD (21/11/2026, Cory: "we already built a date picker. Also what if they want to do this quarter, year to date,
+     last year etc?") - periodpick.js: a month, a quarter, year to date or a year; every tab but Late payments (today) follows it */
+  const PER=PH_PERIOD.attach(el('per'), {value:{kind:'month', y:lm.getFullYear(), m:lm.getMonth()+1}, onChange:()=>render()});
   const offices=()=>(PH.officeNames && PH.officeNames().length) ? PH.officeNames() : ['Carlsbad','Clovis','Hobbs','San Angelo','Lubbock','Mansfield','Cruces LCO','Cruces FFO'];
   function drawOff(){ const v=el('off').value||'__all'; el('off').innerHTML='<option value="__all">All offices</option>'+offices().map(o=>'<option'+(o===v?' selected':'')+'>'+esc(o)+'</option>').join(''); }
-  const ym=()=>{ const m=/^(\d{4})-(\d{2})$/.exec(el('mon').value); return m ? {y:+m[1], m:+m[2]} : {y:lm.getFullYear(), m:lm.getMonth()+1}; };
+  const period=()=>PER.range();
   const pickOffs=()=>{ const v=el('off').value; return v && v!=='__all' ? [v] : offices(); };
 
   /* ---------------- made-up numbers for the sandbox (seeded: everyone sees the same) ---------------- */
@@ -190,7 +181,7 @@
   let MAP=null; const CACHE={};
   async function map(){ if(!MAP) MAP=O.cleanMap(await PH_STORE.get(O.KEY)); return MAP; }
   async function ask(key, fn){ if(CACHE[key]) return CACHE[key]; const v=await fn(); CACHE[key]=v; return v; }
-  async function liveTC(o, y, m){ const b=O.monthBounds(y,m), M=await map(), locs=O.locsOf(M,o); if(!locs.length) return {};
+  async function liveTC(o, R){ const b={first:R.first, last:R.last}, M=await map(), locs=O.locsOf(M,o); if(!locs.length) return {};
     const K='kept exam', a=await O.ask({ask:'sum', path:'/v1/practice-locations/patient-exams', locs, params:{'exam-date-start-date':b.first,'exam-date-end-date':b.last}, group:'treatmentCoordinatorName',
       count:[{name:'kept', eq:{keptExamFlag:[K]}}, {name:'keptNew', eq:{keptExamFlag:[K], examTypeName:['new']}}, {name:'rec', eq:{keptExamFlag:[K], patientExamResultName:['treatment recommended']}},
              {name:'started', eq:{patientExamTreatmentStatusName:['patient started']}}, {name:'pending', eq:{patientExamTreatmentStatusName:['pending financing selection','start / records']}},
@@ -202,18 +193,20 @@
     const c=k=>Object.keys(a.by||{}).reduce((s,l)=>s+((a.by[l].cnt||{})[k]||0),0), $=k=>Object.keys(a.by||{}).reduce((s,l)=>s+((((a.by[l].csum||{})[k]||{}).sum||{}).pastDueAmount||0),0);
     const n=[c('d1')-c('d31'), c('d31')-c('d61'), c('d61')-c('d91'), c('d91')-c('d181'), c('d181')], amt=[$('d1')-$('d31'), $('d31')-$('d61'), $('d61')-$('d91'), $('d91')-$('d181'), $('d181')];
     return {n, amt, flag:c('d45')-c('d54'), letter:c('d91')-c('d99'), maint:c('d121')-c('d130'), dismiss:c('d181')}; }
-  async function livePay(o, y, m){ const b=O.monthBounds(y,m), M=await map(), locs=O.locsOf(M,o); if(!locs.length) return null;
+  async function livePay(o, R){ const lastM=R.months[R.months.length-1], b={first:R.first, last:O.monthBounds(lastM.y, lastM.m).last}, M=await map(), locs=O.locsOf(M,o); if(!locs.length) return null;   // business health is filed under each month's LAST day
     const a=await O.ask({ask:'sum', path:'/v1/practice-locations/business-health', locs, params:{'month-date-start-date':b.first,'month-date-end-date':b.last}});
     const s=k=>Object.keys(a.by||{}).reduce((t,l)=>t+((a.by[l].sum||{})[k]||0),0);
     return {starts:s('starts'), pif:s('payInFullCount'), sameDayStarts:s('sameDayStarts'), dp:s('downPaymentAmount'), nonPif:s('nonPayInFullPatientResponsibility'), sdc:s('sameDayCash'), resp:s('patientResponsibility'), ext:s('extensions'), months:s('totalTreatmentMonths')}; }
-  async function liveRef(o, y, m){ const b=O.monthBounds(y,m), M=await map(), locs=O.locsOf(M,o); if(!locs.length) return {};
+  async function liveRef(o, R){ const b={first:R.first, last:R.last}, M=await map(), locs=O.locsOf(M,o); if(!locs.length) return {};
     const a=await O.ask({ask:'sum', path:'/v1/practice-locations/referrals', locs, params:{'exam-date-start-date':b.first,'exam-date-end-date':b.last}, group:'referralSource', count:[{name:'started', on:{field:'startDate', from:'2000-01-01', to:'2100-12-31'}}]});
     const r={}; Object.keys(a.by||{}).forEach(l=>{ const G=a.by[l].groups||{}; Object.keys(G).forEach(s=>{ const x=r[s]=r[s]||{n:0,started:0,prod:0}; x.n+=G[s].n; x.started+=((G[s].cnt||{}).started||0); x.prod+=(G[s].sum||{}).production||0; }); }); return r; }
+  /* the sandbox adds its made-up months up, the way the real numbers add up over a quarter or a year */
+  const addUp=(list, nested)=>list.reduce((acc, x)=>{ Object.keys(x||{}).forEach(k=>{ if(nested){ const a=acc[k]=acc[k]||{}; Object.keys(x[k]).forEach(f=>{ a[f]=(a[f]||0)+(x[k][f]||0); }); } else acc[k]=(acc[k]||0)+(x[k]||0); }); return acc; }, {});
   const get={
-    tc:(o,y,m)=>LIVE ? ask('tc'+o+y+m, ()=>liveTC(o,y,m)) : Promise.resolve(demoTC(o,y,m)),
+    tc:(o,R)=>LIVE ? ask('tc'+o+R.first+R.last, ()=>liveTC(o,R)) : Promise.resolve(addUp(R.months.map(x=>demoTC(o,x.y,x.m)), true)),
     late:(o)=>LIVE ? ask('late'+o, ()=>liveLate(o)) : Promise.resolve(demoLate(o, new Date().toISOString().slice(0,10))),
-    pay:(o,y,m)=>LIVE ? ask('pay'+o+y+m, ()=>livePay(o,y,m)) : Promise.resolve(demoPay(o,y,m)),
-    ref:(o,y,m)=>LIVE ? ask('ref'+o+y+m, ()=>liveRef(o,y,m)) : Promise.resolve(demoRef(o,y,m))
+    pay:(o,R)=>LIVE ? ask('pay'+o+R.first+R.last, ()=>livePay(o,R)) : Promise.resolve(addUp(R.months.map(x=>demoPay(o,x.y,x.m)), false)),
+    ref:(o,R)=>LIVE ? ask('ref'+o+R.first+R.last, ()=>liveRef(o,R)) : Promise.resolve(addUp(R.months.map(x=>demoRef(o,x.y,x.m)), true))
   };
 
   /* ---------------- the late-payment trend: one snapshot a day (live), the sandbox makes one up ---------------- */
@@ -231,13 +224,13 @@
   }
 
   /* ---------------- drawing ---------------- */
-  function tabs(){ el('tabs').innerHTML=TABS.map(t=>'<button role="tab" class="'+(TAB===t[0]?'on':'')+'" data-tab="'+t[0]+'">'+t[1]+'</button>').join(''); el('mnavx').hidden=TAB==='late'; }
+  function tabs(){ el('tabs').innerHTML=TABS.map(t=>'<button role="tab" class="'+(TAB===t[0]?'on':'')+'" data-tab="'+t[0]+'">'+t[1]+'</button>').join(''); el('per').hidden=TAB==='late'; }
   const kpi=(k,v,s)=>'<div class="kpi"><div class="k">'+k+'</div><div class="v">'+v+'</div>'+(s?'<div class="s">'+s+'</div>':'')+'</div>';
   const tone=(v,lo,hi)=>v==null ? '' : v>=hi ? 'good' : v<lo ? 'bad' : 'mid';
-  const monthName=()=>{ const t=ym(); return new Date(t.y, t.m-1, 1).toLocaleDateString('en-US',{month:'long', year:'numeric'}); };
+  const monthName=()=>period().label;
   let SEQ=0;
   async function render(){
-    tabs(); const my=++SEQ, v=el('view'), t=ym(), offs=pickOffs();
+    tabs(); const my=++SEQ, v=el('view'), t=period(), offs=pickOffs();
     v.innerHTML='<div class="state">Reading OrthoFi…</div>';
     try{
       let h='';
@@ -257,14 +250,15 @@
       '<text x="36" y="41" text-anchor="middle" font-size="16" font-weight="800" fill="#0F2A4A" font-family="Inter,sans-serif">'+(p==null ? '—' : Math.round(p)+'%')+'</text></svg>'; }
 
   async function tcHTML(offs, t){
-    const all=await Promise.all(offs.map(o=>get.tc(o, t.y, t.m).then(r=>[o, r||{}])));
+    const all=await Promise.all(offs.map(o=>get.tc(o, t).then(r=>[o, r||{}])));
     const T={keptNew:0, rec:0, started:0, pending:0, noshow:0, cancel:0}, cards=[];
     all.forEach(([o,r])=>Object.keys(r).forEach(tc=>{ const x=r[tc]; Object.keys(T).forEach(k=>{ T[k]+=x[k]||0; }); cards.push({o, tc, x, c:pct(x.started||0, x.rec||0)}); }));
     cards.sort((a,b)=>((b.c||0)-(a.c||0)) || ((b.x.keptNew||0)-(a.x.keptNew||0)));
     const top=cards.filter(c=>(c.x.rec||0)>=10)[0];
-    let h='<div class="kpis">'+kpi('New-patient exams', T.keptNew.toLocaleString())+kpi('Treatment recommended', T.rec.toLocaleString(), fp(pct(T.rec,T.keptNew))+' of exams')+
+    let h='<div class="kpis">'+kpi('New-patient exams', T.keptNew.toLocaleString())+kpi('Treatment recommended', T.rec.toLocaleString(), fp(pct(T.rec,T.keptNew))+' of exams — told “ready to start”')+
       kpi('Started so far', T.started.toLocaleString(), fp(pct(T.started,T.rec))+' of recommended')+kpi('Still deciding', T.pending.toLocaleString(), 'waiting on financing or records')+'</div>';
-    h+='<div class="sub" style="margin:2px 0 10px">'+esc(monthName())+' · every exam in OrthoFi, by the TC on it. The ring is conversion: started ÷ recommended (it keeps climbing as patients start).</div><div class="grid">';
+    h+='<div class="sub" style="margin:2px 0 10px">'+esc(monthName())+' · every exam in OrthoFi, by the TC on it.</div>'+
+      '<div class="explain"><b>How to read a card.</b> <i>Exams</i> = new-patient exams the patient showed up for. <i>Recommended</i> = at that exam the doctor said the patient is ready to start treatment now (not “let’s wait and watch”, not “no treatment needed”). <i>Started</i> = of those, how many have started. The ring is the TC’s <b>conversion</b>: started ÷ recommended — it keeps climbing as patients start.</div><div class="grid">';
     cards.forEach(c=>{ const x=c.x, ex=Math.max(1, x.keptNew||0), cls=tone(c.c,40,55);
       const bar=(lab,n,col)=>'<div class="r"><span>'+lab+'</span><span class="t"><i style="width:'+Math.min(100, (n||0)/ex*100)+'%;background:'+col+'"></i></span><b>'+(n||0)+'</b></div>';
       h+='<div class="tcc">'+(top && c===top ? '<span class="badge">Top conversion</span>' : '')+
@@ -303,14 +297,14 @@
   }
 
   async function payHTML(offs, t){
-    const all=await Promise.all(offs.map(o=>get.pay(o, t.y, t.m).then(r=>[o,r])));
+    const all=await Promise.all(offs.map(o=>get.pay(o, t).then(r=>[o,r])));
     const T={starts:0,pif:0,sameDayStarts:0,dp:0,nonPif:0,sdc:0,resp:0,ext:0,months:0}; all.forEach(([o,r])=>{ if(r) Object.keys(T).forEach(k=>{ T[k]+=r[k]||0; }); });
     const f=x=>({pif:pct(x.pif,x.starts), sds:pct(x.sameDayStarts,x.starts), dp:pct(x.dp,x.nonPif), sdc:pct(x.sdc,x.resp), len:(x.starts-x.pif)>0 ? r1(x.months/(x.starts-x.pif)) : null, ext:pct(x.ext,x.starts)});
     const P=f(T), rows=all.filter(([o,r])=>r).map(([o,r])=>[o,r,f(r)]);
     const M=[['pif','Paid in full','%',true],['sds','Same-day start','%',true],['dp','Down payment','%',true],['sdc','Same-day cash','%',true],['len','Average plan','mo',false],['ext','Extensions','%',false]];
     const top={}; M.forEach(([k])=>{ top[k]=Math.max(k==='len'?30:10, ...rows.map(x=>x[2][k]||0), P[k]||0)*1.15; });
     let h='<div class="kpis">'+kpi('Starts', T.starts.toLocaleString())+kpi('Paid in full', fp(P.pif), T.pif+' starts')+kpi('Down payment', fp(P.dp), 'of what patients finance')+kpi('Same-day cash', fp(P.sdc), 'collected on the start day')+kpi('Average plan', P.len==null?'—':P.len+' months')+'</div>';
-    h+='<div class="sub" style="margin:2px 0 10px">'+esc(monthName())+' · from OrthoFi’s business health dashboard, on that month’s starts. The dark tick on each bar is the practice average; green or red when an office is clearly better or worse.</div><div class="grid">';
+    h+='<div class="sub" style="margin:2px 0 10px">'+esc(monthName())+' · from OrthoFi’s business health dashboard, on the starts in that period. The dark tick on each bar is the practice average; green or red when an office is clearly better or worse.</div><div class="grid">';
     rows.forEach(([o,r,x])=>{ h+='<div class="tcc"><div class="top" style="gap:8px"><div><div class="nm">'+offDot(o)+esc(o)+'</div><div class="of">'+r.starts+' starts</div></div></div><div class="fun">'+
       M.map(([k,lab,u,hb])=>{ const v=x[k], avg=P[k], d=(v==null||avg==null) ? 0 : v-avg, cls=Math.abs(d)<(u==='mo'?1.5:3) ? '' : ((d>0)===hb ? 'gd' : 'bd');
         return '<div class="m"><span>'+lab+'</span><span class="t"><i style="width:'+Math.min(100,(v||0)/top[k]*100)+'%"></i>'+(avg==null?'':'<u style="left:'+Math.min(100,avg/top[k]*100)+'%"></u>')+'</span><b class="'+cls+'">'+(v==null?'—':v+(u==='mo'?' mo':'%'))+'</b></div>'; }).join('')+
@@ -319,7 +313,7 @@
   }
 
   async function refHTML(offs, t){
-    const all=await Promise.all(offs.map(o=>get.ref(o, t.y, t.m).then(r=>[o,r||{}])));
+    const all=await Promise.all(offs.map(o=>get.ref(o, t).then(r=>[o,r||{}])));
     const S={}; all.forEach(([o,r])=>Object.keys(r).forEach(s=>{ const x=S[s]=S[s]||{n:0,started:0,prod:0}; x.n+=r[s].n; x.started+=r[s].started; x.prod+=r[s].prod; }));
     const list=Object.keys(S).sort((a,b)=>S[b].n-S[a].n), tot=list.reduce((a,s)=>a+S[s].n,0), totSt=list.reduce((a,s)=>a+S[s].started,0), max=Math.max(1,...list.map(s=>S[s].n));
     const IC={'My Dentist':'🦷','Friend / Family':'👨‍👩‍👧','Internet Search':'🔎','Social Media':'📱','Advertisement':'📣','Other':'✨'};
@@ -350,7 +344,7 @@
   /* ---------------- wiring ---------------- */
   function allowed(){ return !LIVE || (PH.isAdmin && PH.isAdmin(PH.realMe ? PH.realMe() : PH.me())); }
   document.addEventListener('click', e=>{ const b=e.target.closest('[data-tab]'); if(b){ TAB=b.dataset.tab; try{ localStorage.setItem('ph_insights_tab', TAB); }catch(_){} render(); } });
-  el('mon').addEventListener('change', render); el('off').addEventListener('change', render);
+  el('off').addEventListener('change', render);
   function boot(){ if(!allowed()){ el('wrap').innerHTML='<h1>OrthoFi insights</h1><p class="lede">This page is for Home-Brace admins.</p>'; return; } drawOff(); render(); }
   if(LIVE) el('ribbon').textContent='OrthoFi insights — real OrthoFi totals, admins only (preview).';
   if(!LIVE || window.PH_AUTH) boot(); else document.addEventListener('ph-signed-in', boot, {once:true});

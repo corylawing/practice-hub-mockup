@@ -535,6 +535,16 @@ I can confidently say that the chat feature should go next. The production thing
     legend) + OrthoFi steps as tiles, pay mix as office cards (bars with the practice-average tick, green/red), referral
     sources as rows with icons. "We should be able to break down where they come from by office" -> "Each office's mix"
     (a bar per office split by source, legend; the office picker shows one office's detail).
+    PERIOD PICKER (hc247): Cory on <input type=month>: "Way to old school, we already built a date picker. Also what if
+    they want to do this quarter, year to date, last year etc?" -> v1/periodpick.js PH_PERIOD.attach(btn, {value,
+    months, onChange}) - same look as datepick.js (scheme colours): quick picks This month / Last month / This quarter /
+    Last quarter / Year to date / Last year, a year-stepped month grid, Q1-Q4, "All of <year>"; nothing past this month;
+    PH_PERIOD.range(v) -> {first, last (today if still going), months[], open, label}. insights.html uses it (live asks
+    take first..last; business health up to the last month's LAST day; the sandbox adds its made-up months up);
+    orthofi.html uses months:true (it checks single months). Reuse it for the Monthly Report etc. later.
+    "What is recommended" (Cory: "They probably understand but I don't") -> a "How to read a card" box: Exams = new-patient
+    exams kept; Recommended = the doctor said ready to start now (not wait-and-watch, not no treatment); Started; ring =
+    started / recommended.
 60. **ADJUSTMENTS + NET PRODUCTION PROVEN FROM ORTHOFI (21/11/2026; hc242).** Cory: "Now that you have access to orthofi
     via safari do what you need to do to make this perfect" (his Safari, OrthoFi portal; read-only - only reports run).
     The Monthly Balance Sheet = OrthoFi portal Reports -> Accounting -> Monthly Balance Sheet (business-intelligence
