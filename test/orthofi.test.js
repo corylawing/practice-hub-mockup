@@ -185,7 +185,10 @@ const call=async (body, origin)=>{ const ctx={}; await F(ctx, {method:'POST', he
     t('...net production = business health production + Medicaid − write-offs', W4.np.some(w=>w.way==='bh.prod+mdp-writeoff' && w.v===10700) && W4.np.some(w=>w.way==='bh.prod+mdp-writeoff-sns' && w.v===10650));
     t('...new patient exams: scheduled as well as kept; past due: OrthoFi’s delinquent list (today’s)', W4.npe.some(w=>w.way==='bh.scheduled' && w.v===41) && W4.deln.some(w=>w.way==='del.d30' && w.v===3) && W4.deln.some(w=>w.way==='del.pat30' && w.v===2)); }
   /* 20/11/2026: proven to the dollar (Sept + Oct) - and still nothing fills itself in for an office until it is ticked */
-  t('proven: gross production = business health production, collections = collection details (successful payments), A/R = patient + insurance (report claim statuses) - nothing else', JSON.stringify(O.PROVEN)==='{"gp":"bh.production","gc":"cd.collection","ar":"par+iar.rep"}');
+  t('proven: gross production = business health production, collections = collection details (successful payments), A/R = patient + insurance (report claim statuses) - nothing else', JSON.stringify(O.PROVEN)==='{"gp":"bh.production","gc":"cd.collection","ar":"par+iar.rep","deln":"del.d30"}');
+  t('delinquent accounts = OrthoFi’s Delinquent report, everyone 30+ days past due (Heather 21/11) - today’s list, so: this month, and last month only until the due day',
+    O.AUTO.deln.snapshot===true && O.snapshotOk(2026, 11, {now:new Date(2026,10,21)}) && O.snapshotOk(2026, 10, {now:new Date(2026,10,4), due:5}) &&
+    !O.snapshotOk(2026, 10, {now:new Date(2026,10,21), due:5}) && !O.snapshotOk(2026, 9, {now:new Date(2026,10,2)}) && O.snapshotOk(2025, 12, {now:new Date(2026,0,3)}));
   t('...and no office fills itself in until it is ticked on the OrthoFi page', JSON.stringify(O.autoOffices(O.cleanMap(null)))==='{}' && JSON.stringify(O.cleanMap({map:{'11':'North'}}).auto)==='{}');
   { const MAP=O.cleanMap({map:{'11':'North','12':'North','13':'South','14':''}, auto:{gp:['North','South','Nowhere'], ar:['North'], gc:['North'], zz:['x']}});
     t('ticks are kept only for the proven boxes; an office with no OrthoFi location is left out', Object.keys(MAP.auto).join()==='gp,gc,ar' && JSON.stringify(O.autoOffices(MAP))==='{"North":["gp","gc","ar"],"South":["gp"]}');
@@ -197,6 +200,10 @@ const call=async (body, origin)=>{ const ctx={}; await F(ctx, {method:'POST', he
     const res=await global.PH_ORTHOFI.autoMonth(2026, 10, MAP);
     t('the fill asks OrthoFi only for what the ticked boxes need (4 lists, not 15), for the ticked offices’ locations', asked.join()==='par:11+12+13,iar:11+12+13,bh:11+12+13,cd:11+12+13');
     t('...and gives the Monthly Report each ticked office’s parts', JSON.stringify(res.byOffice)==='{"North":{"gp":1500.5,"ar":2300},"South":{"gp":70}}' && res.errors.length===0);
+    const asked2=[]; global.PH_ORTHOFI.ask=async q=>{ asked2.push(q.id); return q.id==='del' ? {rows:3, by:{'11':{n:3,sum:{},nz:{},cnt:{d30:2},groups:{}}}} : ANS2[q.id]; };
+    const MAPD=O.cleanMap({map:{'11':'North'}, auto:{deln:['North']}});
+    const past=await global.PH_ORTHOFI.autoMonth(2026, 9, MAPD, {now:new Date(2026,10,21)}), cur=await global.PH_ORTHOFI.autoMonth(2026, 11, MAPD, {now:new Date(2026,10,21)});
+    t('...a past month never gets today’s delinquent count; this month does', JSON.stringify(past.byOffice)==='{}' && JSON.stringify(cur.byOffice)==='{"North":{"deln":2}}' && asked2.join()==='del');
     delete global.PH_ORTHOFI.ask; }
 
   console.log(ok.map(s=>'  PASS  '+s).join('\n'));

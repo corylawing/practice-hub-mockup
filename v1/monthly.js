@@ -30,7 +30,8 @@
        COUNT is kept (as the old sheet's column K) and the % of accounts is worked out (CALC delpct, the old L = K/J). */
     {k:'deln', n:'Delinquent accounts past 30 days',   t:'#', from:'orthofi'},
     {k:'ar90', n:'$ 90+ days past due',                t:'$', from:'orthofi'},
-    {k:'npe',  n:'New patient exams',                  t:'#', from:'orthofi', flow:true},
+    /* Heather 21/11/2026: "New Patient exams are pulled from the PMS" - typed by the office, not OrthoFi's */
+    {k:'npe',  n:'New patient exams',                  t:'#', from:'pms', flow:true},
     {k:'act',  n:'Active patients',                    t:'#', from:'orthofi'},
     {k:'disc', n:'Total discounts',                    t:'$', from:'orthofi', flow:true},
     /* Heather 18/11: a COUNT, and it "comes from Orthofi but you can't run a report for it" - it is the "Retainer Insurance

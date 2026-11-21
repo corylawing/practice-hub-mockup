@@ -167,11 +167,15 @@
        gc - collection details, successful payments (+ Medicaid + old system): Carlsbad, Clovis, Hobbs, San Angelo, Lubbock,
             Mansfield (October; Heather: "I get it from the monthly balance sheet" - an OrthoFi report built on these)
        ar - patient A/R + insurance A/R with OrthoFi's report claim statuses (+ old system): San Angelo, Lubbock, Mansfield
+       deln - OrthoFi's Delinquent report, everyone 30+ days past due (Heather 21/11: "Reports- Delinquent account and then
+            they have to count everyone that is 30 and above days past due"). The report is TODAY's (no date), so it is a
+            snapshot: it fills this month, and last month only up to the report's due day (when Heather makes the sheet).
      check = the way the OrthoFi page compares with Heather's sheet (her Medicaid number added, as the Monthly Report will). */
-  const PROVEN={gp:'bh.production', gc:'cd.collection', ar:'par+iar.rep'};
+  const PROVEN={gp:'bh.production', gc:'cd.collection', ar:'par+iar.rep', deln:'del.d30'};
   const AUTO={gp:{way:'bh.production', check:'bh.production+mdp', lists:['bh'], label:'Gross production', plus:'+ Medicaid + old system, as typed'},
               gc:{way:'cd.collection', check:'cd.collection+mdc', lists:['cd'], label:'Gross collections', plus:'+ Medicaid + old system, as typed'},
-              ar:{way:'par+iar.rep', check:'par+iar.rep', lists:['par','iar'], label:'Accounts receivable', plus:'+ old system, as typed'}};
+              ar:{way:'par+iar.rep', check:'par+iar.rep', lists:['par','iar'], label:'Accounts receivable', plus:'+ old system, as typed'},
+              deln:{way:'del.d30', check:'del.d30', lists:['del'], label:'Delinquent accounts past 30 days', plus:'Delinquent report, everyone 30+ days past due — counted on the day it fills in', snapshot:true}};
   /* one office's OrthoFi parts for the boxes it is ticked for -> {gp:n, ar:n} (a box OrthoFi has nothing for is left out) */
   function autoParts(answers, ids, boxes){
     const W=ways(answers, ids, {}), out={};
@@ -211,8 +215,17 @@
 
   /* THE FILL (the Monthly Report calls this): only the lists the ticked boxes need, for the ticked offices' locations ->
      {byOffice:{office:{gp, ar}}, errors:[...]}. Never a typed number, never a final month - PH_MONTHLY.mergeOrthofi sees to that. */
-  async function autoMonth(y, m, map){
-    const offs=autoOffices(map), names=Object.keys(offs); if(!names.length) return {byOffice:{}, errors:[]};
+  /* a snapshot box (today's report) may fill this month, and last month until its due day (opts.due, the 5th by default) */
+  function snapshotOk(y, m, opts){
+    const now=(opts && opts.now) || new Date(), due=(opts && +opts.due) || 5, cy=now.getFullYear(), cm=now.getMonth()+1;
+    if(y===cy && m===cm) return true;
+    const ly=cm===1 ? cy-1 : cy, lm=cm===1 ? 12 : cm-1;
+    return y===ly && m===lm && now.getDate()<=due;
+  }
+  async function autoMonth(y, m, map, opts){
+    const snap=snapshotOk(y, m, opts), all=autoOffices(map), offs={};
+    Object.keys(all).forEach(o=>{ const b=all[o].filter(k=>!AUTO[k].snapshot || snap); if(b.length) offs[o]=b; });
+    const names=Object.keys(offs); if(!names.length) return {byOffice:{}, errors:[]};
     const need=new Set(); names.forEach(o=>offs[o].forEach(k=>AUTO[k].lists.forEach(l=>need.add(l))));
     const locs=[...new Set(names.reduce((a,o)=>a.concat(locsOf(cleanMap(map), o)), []))];
     const go=(global.PH_ORTHOFI && global.PH_ORTHOFI.ask) || ask, ans={}, errors=[];
@@ -221,7 +234,7 @@
     return {byOffice, errors};
   }
 
-  const RULES={KEY, fold, monthBounds, asOf, guessOffice, cleanMap, locsOf, plan, ways, same, PROVEN, AUTO, autoParts, autoOffices};
+  const RULES={KEY, fold, monthBounds, asOf, guessOffice, cleanMap, locsOf, plan, ways, same, PROVEN, AUTO, autoParts, autoOffices, snapshotOk};
   if(typeof module!=='undefined' && module.exports) module.exports=RULES;
   global.PH_ORTHOFI=Object.assign({}, RULES, {ask, month, apiUrl, autoMonth});
 })(typeof window!=='undefined' ? window : globalThis);

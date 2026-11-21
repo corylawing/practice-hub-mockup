@@ -66,13 +66,13 @@
   .achip.on{background:var(--teal);border-color:var(--teal);color:#fff}
   .achip small{font-weight:600;font-size:11.5px;opacity:.85}
 </style>
-<script src="user.js?v=hc240"></script>
+<script src="user.js?v=hc241"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc240"></script>
-  <script src="gate.js?v=hc240"></script>
-  <script src="prodbook.js?v=hc240"></script>
-  <script src="monthly.js?v=hc240"></script>
-  <script src="orthofi.js?v=hc240"></script>
+  <script src="store.js?v=hc241"></script>
+  <script src="gate.js?v=hc241"></script>
+  <script src="prodbook.js?v=hc241"></script>
+  <script src="monthly.js?v=hc241"></script>
+  <script src="orthofi.js?v=hc241"></script>
 </head>
 <body>
 <div class="ribbon" id="ribbon">Setting up OrthoFi — real OrthoFi totals, shown only on this screen. Nothing is saved but the office matches.</div>
@@ -222,8 +222,8 @@
     const offs=PH.officeNames().filter(o=>O.locsOf(MAP, o).length);
     if(!offs.length){ host.innerHTML='<div class="note">Match OrthoFi’s locations to the offices first (step 1).</div>'; return; }
     host.innerHTML=Object.keys(O.AUTO).map(k=>{ const A=O.AUTO[k], on=AUTOSEL[k]||[];
-      return '<div class="abox"><h3>'+esc(A.label)+'</h3><div class="soft">OrthoFi '+esc(A.plus)+'</div><div class="achips">'+
-        offs.map(o=>{ const m=(MATCH[k]||{})[o], sel=on.indexOf(o)>=0;
+      return '<div class="abox"><h3>'+esc(A.label)+'</h3><div class="soft">'+(A.snapshot ? esc(A.plus)+'. OrthoFi only shows today’s list, so a past month can’t be checked here.' : 'OrthoFi '+esc(A.plus))+'</div><div class="achips">'+
+        offs.map(o=>{ const m=A.snapshot ? undefined : (MATCH[k]||{})[o], sel=on.indexOf(o)>=0;
           return '<button type="button" class="achip'+(sel?' on':'')+'" role="switch" aria-checked="'+sel+'" data-auto="'+k+'" data-o="'+esc(o)+'">'+esc(o)+
             '<small>'+(sel ? 'Fills itself in' : 'Typed')+(m===true ? ' · ✓ matched '+esc(MATCH_FOR) : m===false ? ' · ✗ off in '+esc(MATCH_FOR) : '')+'</small></button>'; }).join('')+'</div></div>'; }).join('')+
       '<div class="row" style="margin-top:12px"><button class="btn" id="saveauto">Save</button><span class="soft" id="autonote">'+(MAP.at ? 'Last saved '+esc(new Date(MAP.at).toLocaleString('en-US',{month:'short', day:'numeric', hour:'numeric', minute:'2-digit'}))+(MAP.by?' by '+esc(MAP.by):'') : '')+'</span></div>';

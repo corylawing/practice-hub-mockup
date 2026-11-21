@@ -508,6 +508,16 @@ I can confidently say that the chat feature should go next. The production thing
    Notes (noteField(f) - Talk types into whichever box has data-talkbox; Save while talking waits for the last words).
    Cory: no privacy reminder under the box ("I don't need that reminder please don't put it"). Saving adds fields only
    (persist/strip keep every field; consultsFrom reads every field). test/tc (185).
+59. **HEATHER'S REPORT SOURCES (21/11/2026; hc241; sandbox).** September confirmed: gross production AND gross
+    collections (collection details + Medicaid) to the dollar at Carlsbad, Clovis, Hobbs, San Angelo, Lubbock, Mansfield;
+    A/R at San Angelo, Lubbock, Mansfield (Clovis Sept only; Carlsbad/Hobbs 1-4% UNDER Heather - all Medicaid offices).
+    Heather (screenshots via Cory): adjustments = "Adjustments Total" and net production = "Adjusted Production" on
+    OrthoFi's Monthly Balance Sheet (Reports; columns patient / insurance / total; an "Additional Charges" section - NSF
+    fees, interest earned, additional charges - sits above; a "Collections Summary" below). Her screenshot's figures
+    matched no month in her Excel (likely November so far). NEXT: the whole balance sheet's line names, to map each to an
+    OrthoFi list. Delinquent: "Reports- Delinquent account ... count everyone that is 30 and above days past due" = the
+    API /delinquent list (same columns) -> AUTO deln 'del.d30', snapshot:true (today's list: fills this month, and last
+    month only until SET.due - snapshotOk). New patient exams: "pulled from the PMS" -> npe from:'pms' (typed).
 58. **ORTHOFI: COLLECTIONS FOUND (20/11/2026; hc239-hc240; LIVE)** October re-run (15 lists): gross collections =
     collection details, successful payments (OrthoFi's collections-details report, payment date) + Medicaid collections
     matches TO THE DOLLAR at Carlsbad, Clovis, Hobbs, San Angelo, Lubbock, Mansfield; LCO +7%, FOLC -30% (old system).

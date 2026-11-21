@@ -270,13 +270,13 @@
   }
   @media (prefers-reduced-motion: reduce){ *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important} }
 </style>
-<script src="user.js?v=hc240"></script>
+<script src="user.js?v=hc241"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc240"></script>
-  <script src="gate.js?v=hc240"></script>
-  <script src="prodbook.js?v=hc240"></script>
-  <script src="monthly.js?v=hc240"></script>
-  <script src="orthofi.js?v=hc240"></script>
+  <script src="store.js?v=hc241"></script>
+  <script src="gate.js?v=hc241"></script>
+  <script src="prodbook.js?v=hc241"></script>
+  <script src="monthly.js?v=hc241"></script>
+  <script src="orthofi.js?v=hc241"></script>
 </head>
 <body>
 <div class="ribbon">MOCK-UP for Heather — made-up numbers. Try it as an office manager first, then as Heather.</div>
@@ -860,7 +860,7 @@
     try{ localStorage.setItem(FILL_KEY, String(Date.now())); }catch(_){}
     ofState('OrthoFi: filling in…'); let changed=0, errs=[];
     for(const q of [{y:LM.y, m:LM.m}, {y:NOW_Y, m:NOW_M}]){
-      try{ const r=await PH_ORTHOFI.autoMonth(q.y, q.m, OFMAP); errs=errs.concat(r.errors||[]);
+      try{ const r=await PH_ORTHOFI.autoMonth(q.y, q.m, OFMAP, {due:SET.due}); errs=errs.concat(r.errors||[]);
         if(Object.keys(r.byOffice).length) changed+=await importOrthofi(q.y, q.m, r.byOffice, new Date().toISOString()); }
       catch(e){ errs.push((e && e.message) || 'OrthoFi didn’t answer'); }
     }
@@ -915,7 +915,7 @@
 })();
 </script>
 <script>PH.nav('monthly');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc240"></script>
+<script src="tour.js?v=hc241"></script>
 <script>
 Tour.init([
   {sel:'.statusline, .openbanner', title:'Who has sent it', body:'Every office’s report for the month, in one line: final, waiting for you, or late. No chasing eight Excel files.'},
