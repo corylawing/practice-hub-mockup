@@ -73,13 +73,52 @@
   .stage b{display:block;font-size:18px;color:var(--navy)}
   .warn{background:var(--bad-soft);color:#93301f;border-radius:10px;padding:10px 12px;font-size:13.5px;margin-bottom:12px}
   .state{padding:12px;border-radius:10px;background:#F7F9FB;color:var(--soft);font-size:13.5px}
+  /* pictures, not spreadsheets */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+  .tcc{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:12px}
+  .tcc .top{display:flex;align-items:center;gap:14px}
+  .ring{width:72px;height:72px;flex:none}
+  .nm{font-weight:800;color:var(--navy);font-size:15.5px;line-height:1.25;display:flex;align-items:center;gap:7px}
+  .of{font-size:12.5px;color:var(--soft);display:flex;align-items:center;gap:6px;margin-top:2px}
+  .dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex:none}
+  .fun{display:flex;flex-direction:column;gap:7px}
+  .fun .r{display:grid;grid-template-columns:94px 1fr 30px;align-items:center;gap:8px;font-size:12.5px;color:var(--soft)}
+  .fun .r b,.m b{text-align:right;color:var(--navy);font-variant-numeric:tabular-nums}
+  .fun .t{height:9px;border-radius:5px;background:#EEF2F6;overflow:hidden}
+  .fun .t i{display:block;height:100%;border-radius:5px}
+  .chips{display:flex;gap:6px;flex-wrap:wrap}
+  .chip{font-size:12px;font-weight:600;color:var(--soft);background:#F3F6F9;border-radius:999px;padding:3px 9px}
+  .badge{font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--teal-600);background:var(--teal-soft);border-radius:999px;padding:2px 8px;align-self:flex-start}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--soft);margin:2px 0 6px}
+  .legend span{display:inline-flex;align-items:center;gap:6px} .legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+  .lrow{display:grid;grid-template-columns:170px 1fr 150px;gap:16px;align-items:center;padding:12px 0;border-bottom:1px solid #F0F3F7}
+  .lrow:last-child{border-bottom:0}
+  .ln,.sn{display:flex;align-items:center;gap:9px} .ln span,.sn span{display:flex;flex-direction:column;line-height:1.25}
+  .ln b,.sn b{color:var(--navy);font-size:14px} .ln small,.sn small,.sv small{color:var(--soft);font-size:12px}
+  .stack{display:flex;height:24px;border-radius:8px;overflow:hidden;gap:2px;background:#fff}
+  .stack i{display:block;height:100%}
+  .l90{font-size:12.5px;color:var(--soft);text-align:right} .l90 b{color:var(--navy);font-size:14px}
+  .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+  .stp{border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:#FBFCFD;display:flex;flex-direction:column;gap:2px}
+  .stp .ic{font-size:20px} .stp b{font-size:24px;color:var(--navy);line-height:1.1} .stp span{font-weight:700;color:var(--navy);font-size:13.5px} .stp small{color:var(--soft);font-size:12px}
+  .m{display:grid;grid-template-columns:108px 1fr 52px;gap:8px;align-items:center;font-size:12.5px;color:var(--soft)}
+  .m .t{position:relative;height:9px;border-radius:5px;background:#EEF2F6}
+  .m .t i{position:absolute;left:0;top:0;bottom:0;border-radius:5px;background:var(--teal)}
+  .m .t u{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--navy);border-radius:1px}
+  .m b.gd{color:var(--good)} .m b.bd{color:var(--bad)}
+  .src{display:grid;grid-template-columns:200px 1fr 130px;gap:16px;align-items:center;padding:12px 0;border-bottom:1px solid #F0F3F7}
+  .sn .ic{font-size:22px;width:36px;height:36px;border-radius:10px;background:#F3F6F9;display:grid;place-items:center;flex:none}
+  .sv{display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+  .hb{height:14px;border-radius:7px}
+  .hb i{border-radius:7px}
+  @media(max-width:640px){ .lrow,.src{grid-template-columns:1fr;gap:6px} .l90,.sv{text-align:left;align-items:flex-start} .stack{width:100% !important} }
   @media(max-width:640px){ .wrap{padding:16px 12px 140px} h1{font-size:21px} }
 </style>
-<script src="user.js?v=hc244"></script>
+<script src="user.js?v=hc245"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc244"></script>
-  <script src="gate.js?v=hc244"></script>
-  <script src="orthofi.js?v=hc244"></script>
+  <script src="store.js?v=hc245"></script>
+  <script src="gate.js?v=hc245"></script>
+  <script src="orthofi.js?v=hc245"></script>
 </head>
 <body>
 <div class="ribbon" id="ribbon">SANDBOX — made-up numbers, to see how it would look.</div>
@@ -191,43 +230,56 @@
     }catch(e){ if(my===SEQ) v.innerHTML='<div class="warn">OrthoFi didn’t answer: '+esc((e && e.message) || 'try again in a minute')+'</div>'; }
   }
 
+  /* ---- pictures, not spreadsheets (Cory 21/11: "Try to make it less like an excel sheet the most you can") ---- */
+  const offDot=o=>'<i class="dot" style="background:'+esc(((PH.colorForOffice && PH.colorForOffice(o))||{}).dot||'#94a3b8')+'"></i>';
+  function ring(p, cls){ const r=30, c=2*Math.PI*r, v=Math.max(0, Math.min(100, p||0)), col=cls==='good' ? 'var(--good)' : cls==='bad' ? 'var(--bad)' : 'var(--amber)';
+    return '<svg class="ring" viewBox="0 0 72 72" role="img" aria-label="Conversion '+fp(p)+'"><circle cx="36" cy="36" r="'+r+'" fill="none" stroke="#EEF2F6" stroke-width="8"/>'+
+      (p==null ? '' : '<circle cx="36" cy="36" r="'+r+'" fill="none" stroke="'+col+'" stroke-width="8" stroke-linecap="round" stroke-dasharray="'+(c*v/100).toFixed(1)+' '+c.toFixed(1)+'" transform="rotate(-90 36 36)"/>')+
+      '<text x="36" y="41" text-anchor="middle" font-size="16" font-weight="800" fill="#0F2A4A" font-family="Inter,sans-serif">'+(p==null ? '—' : Math.round(p)+'%')+'</text></svg>'; }
+
   async function tcHTML(offs, t){
     const all=await Promise.all(offs.map(o=>get.tc(o, t.y, t.m).then(r=>[o, r||{}])));
-    const T={keptNew:0, rec:0, started:0, pending:0, noshow:0, cancel:0}; const rows=[];
-    all.forEach(([o,r])=>Object.keys(r).forEach(tc=>{ const x=r[tc]; Object.keys(T).forEach(k=>{ T[k]+=x[k]||0; }); rows.push({o, tc, x}); }));
-    const conv=x=>pct(x.started||0, x.rec||0);
-    let h='<div class="kpis">'+kpi('New-patient exams kept', T.keptNew.toLocaleString())+kpi('Treatment recommended', T.rec.toLocaleString(), fp(pct(T.rec,T.keptNew))+' of exams')+
-      kpi('Started so far', T.started.toLocaleString(), fp(pct(T.started,T.rec))+' of recommended')+kpi('Still deciding', T.pending.toLocaleString(), 'pending financing or records')+
-      kpi('No-shows + cancels', (T.noshow+T.cancel).toLocaleString())+'</div>';
-    h+='<div class="card"><h2>Each TC · '+esc(monthName())+'</h2><div class="sub">From every exam in OrthoFi that month, by the TC on it. “Started” counts this month’s exams that have started treatment so far — it keeps growing as patients start.</div><div class="tw"><table>'+
-      '<thead><tr><th>TC</th><th>New-patient exams</th><th>Recommended</th><th>Started</th><th>Conversion</th><th>Still deciding</th><th>Declined</th><th>No-shows / cancels</th></tr></thead><tbody>';
-    const byOff={}; rows.forEach(r=>{ (byOff[r.o]=byOff[r.o]||[]).push(r); });
-    Object.keys(byOff).forEach(o=>{ if(offs.length>1) h+='<tr class="off"><td colspan="8">'+esc(o)+'</td></tr>';
-      byOff[o].sort((a,b)=>(b.x.keptNew||0)-(a.x.keptNew||0)).forEach(r=>{ const c=conv(r.x);
-        h+='<tr><td>'+esc(r.tc)+'</td><td>'+(r.x.keptNew||0)+'</td><td>'+(r.x.rec||0)+'</td><td>'+(r.x.started||0)+'</td><td><span class="pill '+tone(c,40,55)+'">'+fp(c)+'</span></td><td>'+(r.x.pending||0)+'</td><td>'+(r.x.declined||0)+'</td><td>'+((r.x.noshow||0)+(r.x.cancel||0))+'</td></tr>'; }); });
-    if(!rows.length) h+='<tr><td colspan="8" class="soft">No exams in OrthoFi for this month.</td></tr>';
-    h+='</tbody></table></div><div class="note">Conversion = started ÷ treatment recommended. Green 55%+, amber 40–55%, red under 40% (to be set with Heather). TCs don’t log anything for this — it comes from OrthoFi.</div></div>';
-    return h;
+    const T={keptNew:0, rec:0, started:0, pending:0, noshow:0, cancel:0}, cards=[];
+    all.forEach(([o,r])=>Object.keys(r).forEach(tc=>{ const x=r[tc]; Object.keys(T).forEach(k=>{ T[k]+=x[k]||0; }); cards.push({o, tc, x, c:pct(x.started||0, x.rec||0)}); }));
+    cards.sort((a,b)=>((b.c||0)-(a.c||0)) || ((b.x.keptNew||0)-(a.x.keptNew||0)));
+    const top=cards.filter(c=>(c.x.rec||0)>=10)[0];
+    let h='<div class="kpis">'+kpi('New-patient exams', T.keptNew.toLocaleString())+kpi('Treatment recommended', T.rec.toLocaleString(), fp(pct(T.rec,T.keptNew))+' of exams')+
+      kpi('Started so far', T.started.toLocaleString(), fp(pct(T.started,T.rec))+' of recommended')+kpi('Still deciding', T.pending.toLocaleString(), 'waiting on financing or records')+'</div>';
+    h+='<div class="sub" style="margin:2px 0 10px">'+esc(monthName())+' · every exam in OrthoFi, by the TC on it. The ring is conversion: started ÷ recommended (it keeps climbing as patients start).</div><div class="grid">';
+    cards.forEach(c=>{ const x=c.x, ex=Math.max(1, x.keptNew||0), cls=tone(c.c,40,55);
+      const bar=(lab,n,col)=>'<div class="r"><span>'+lab+'</span><span class="t"><i style="width:'+Math.min(100, (n||0)/ex*100)+'%;background:'+col+'"></i></span><b>'+(n||0)+'</b></div>';
+      h+='<div class="tcc">'+(top && c===top ? '<span class="badge">Top conversion</span>' : '')+
+        '<div class="top">'+ring(c.c, cls)+'<div><div class="nm">'+esc(c.tc)+'</div><div class="of">'+offDot(c.o)+esc(c.o)+'</div></div></div>'+
+        '<div class="fun">'+bar('Exams', x.keptNew, '#BFE3E0')+bar('Recommended', x.rec, 'var(--teal)')+bar('Started', x.started, 'var(--navy)')+'</div>'+
+        '<div class="chips">'+(x.pending ? '<span class="chip">⏳ '+x.pending+' deciding</span>' : '')+(x.declined ? '<span class="chip">✋ '+x.declined+' declined</span>' : '')+
+          (((x.noshow||0)+(x.cancel||0)) ? '<span class="chip">🚫 '+((x.noshow||0)+(x.cancel||0))+' no-show / cancel</span>' : '')+'</div></div>'; });
+    if(!cards.length) h+='<div class="state">No exams in OrthoFi for this month.</div>';
+    return h+'</div><div class="note">Green 55%+ · amber 40–55% · red under 40% (to be set with Heather). Nothing for the TCs to log — it comes from OrthoFi.</div>';
   }
 
-  const BUCKETS=['1–30 days','31–60','61–90','91–180','180+ days'];
+  const BUCKETS=['1–30 days','31–60','61–90','91–180','180+ days'], HEAT=['#FBD9CF','#F5AE98','#EC7F63','#D7503A','#9E2E1C'];
   async function lateHTML(offs){
     const today=new Date().toISOString().slice(0,10);
     const [all, before]=await Promise.all([Promise.all(offs.map(o=>get.late(o).then(r=>[o,r]))), lateTrend(today)]);
     const by={}; all.forEach(([o,r])=>{ by[o]=r; }); if(offs.length===offices().length) lateSave(today, by);
-    const sum=(f,i)=>all.reduce((s,[o,r])=>s+(r ? r[f][i] : 0),0), n90=all.reduce((s,[o,r])=>s+(r ? r.n[3]+r.n[4] : 0),0), a90=all.reduce((s,[o,r])=>s+(r ? r.amt[3]+r.amt[4] : 0),0);
-    const st=k=>all.reduce((s,[o,r])=>s+(r ? r[k] : 0),0);
-    let h='<div class="kpis">'+kpi('Accounts past due', BUCKETS.reduce((s,_,i)=>s+sum('n',i),0).toLocaleString(), money(BUCKETS.reduce((s,_,i)=>s+sum('amt',i),0))+' past due')+
-      kpi('90+ days', n90.toLocaleString(), money(a90))+kpi('Ready for a dismissal letter', st('letter'), '91–98 days')+kpi('At dismissal', st('dismiss'), '180+ days')+'</div>';
+    const tot=r=>r ? r.amt.reduce((a,b)=>a+b,0) : 0, cnt=r=>r ? r.n.reduce((a,b)=>a+b,0) : 0, max=Math.max(1, ...all.map(([o,r])=>tot(r)));
+    const n90=all.reduce((s,[o,r])=>s+(r ? r.n[3]+r.n[4] : 0),0), a90=all.reduce((s,[o,r])=>s+(r ? r.amt[3]+r.amt[4] : 0),0), st=k=>all.reduce((s,[o,r])=>s+(r ? r[k] : 0),0);
+    const since=before ? new Date(before.day+'T12:00:00').toLocaleDateString('en-US',{month:'short', day:'numeric'}) : '';
+    let h='<div class="kpis">'+kpi('Past due', money(all.reduce((s,[o,r])=>s+tot(r),0)), all.reduce((s,[o,r])=>s+cnt(r),0)+' accounts')+kpi('90+ days', money(a90), n90+' accounts')+
+      kpi('Ready for a dismissal letter', st('letter'), '91–98 days late')+kpi('At dismissal', st('dismiss'), '180+ days late')+'</div>';
     const rising=[]; all.forEach(([o,r])=>{ const b=before && before.by && before.by[o]; if(!r || !b) return; const now90=r.amt[3]+r.amt[4], was=(b.amt[3]||0)+(b.amt[4]||0); if(was>0 && now90>was*1.1 && now90-was>500) rising.push(o+' (+'+Math.round((now90/was-1)*100)+'%)'); });
-    if(rising.length) h+='<div class="warn">⚠️ 90+ days past due is climbing at '+esc(rising.join(', '))+' since '+esc(new Date(before.day+'T12:00:00').toLocaleDateString('en-US',{month:'short', day:'numeric'}))+'. Home-Brace would let that office manager know.</div>';
-    h+='<div class="card"><h2>Past due today, by how late</h2><div class="sub">OrthoFi’s Delinquent report, today. Number of accounts and dollars past due'+(before ? ', and the change in 90+ since '+esc(new Date(before.day+'T12:00:00').toLocaleDateString('en-US',{month:'short', day:'numeric'})) : '')+'.</div><div class="tw"><table><thead><tr><th>Office</th>'+BUCKETS.map(b=>'<th>'+b+'</th>').join('')+'<th>90+ change</th></tr></thead><tbody>';
-    all.forEach(([o,r])=>{ if(!r){ h+='<tr><td>'+esc(o)+'</td><td colspan="6" class="soft">No OrthoFi location</td></tr>'; return; }
+    if(rising.length) h+='<div class="warn">⚠️ 90+ days late is climbing at '+esc(rising.join(', '))+' since '+esc(since)+'. Home-Brace would let that office manager know.</div>';
+    h+='<div class="card"><h2>Who owes, and how late</h2><div class="sub">Today, from OrthoFi’s Delinquent report. Each bar is an office’s past-due dollars — the darker, the later.</div>'+
+      '<div class="legend">'+BUCKETS.map((b,i)=>'<span><i style="background:'+HEAT[i]+'"></i>'+b+'</span>').join('')+'</div>';
+    all.slice().sort((a,b)=>tot(b[1])-tot(a[1])).forEach(([o,r])=>{
+      if(!r){ h+='<div class="lrow"><div class="ln">'+offDot(o)+esc(o)+'</div><div class="soft">No OrthoFi location</div><div></div></div>'; return; }
       const b=before && before.by && before.by[o], now90=r.amt[3]+r.amt[4], was=b ? (b.amt[3]||0)+(b.amt[4]||0) : null, ch=was ? Math.round((now90/was-1)*100) : null;
-      h+='<tr><td>'+esc(o)+'</td>'+r.n.map((n,i)=>'<td>'+n+' <span class="soft" style="font-size:12px">'+money(r.amt[i])+'</span></td>').join('')+'<td>'+(ch==null ? '—' : '<span class="'+(ch>0?'up':'down')+'">'+(ch>0?'↑ ':'↓ ')+Math.abs(ch)+'%</span>')+'</td></tr>'; });
-    h+='</tbody></table></div></div>';
-    h+='<div class="card"><h2>Where accounts are in OrthoFi’s steps</h2><div class="sub">OrthoFi’s own collection stages — the same ranges as its Delinquent report.</div><div class="stage">'+
-      '<div><b>'+st('flag')+'</b>Flag in the PMS (45–53 days)</div><div><b>'+st('letter')+'</b>Dismissal letter (91–98)</div><div><b>'+st('maint')+'</b>Maintenance (121–129)</div><div><b>'+st('dismiss')+'</b>Dismissal (180+)</div></div></div>';
+      h+='<div class="lrow"><div class="ln">'+offDot(o)+'<span><b>'+esc(o)+'</b><small>'+money(tot(r))+' · '+cnt(r)+' accounts</small></span></div>'+
+        '<div class="stack" style="width:'+Math.max(8, tot(r)/max*100)+'%">'+r.amt.map((a,i)=>a>0 ? '<i style="flex:'+a+';background:'+HEAT[i]+'" title="'+BUCKETS[i]+': '+r.n[i]+' accounts · '+money(a)+'"></i>' : '').join('')+'</div>'+
+        '<div class="l90"><b>'+money(now90)+'</b> 90+ '+(ch==null ? '' : '<span class="'+(ch>0?'up':'down')+'">'+(ch>0?'↑ ':'↓ ')+Math.abs(ch)+'%</span>')+'</div></div>'; });
+    h+='</div><div class="card"><h2>OrthoFi’s collection steps</h2><div class="sub">How many accounts are at each step today — the same ranges as OrthoFi’s Delinquent report.</div><div class="steps">'+
+      [['🚩','Flag in the PMS','45–53 days','flag'],['✉️','Dismissal letter','91–98 days','letter'],['🛠️','Maintenance','121–129 days','maint'],['⛔','Dismissal','180+ days','dismiss']]
+        .map(s=>'<div class="stp"><span class="ic">'+s[0]+'</span><b>'+st(s[3])+'</b><span>'+s[1]+'</span><small>'+s[2]+'</small></div>').join('')+'</div></div>';
     return h;
   }
 
@@ -235,28 +287,44 @@
     const all=await Promise.all(offs.map(o=>get.pay(o, t.y, t.m).then(r=>[o,r])));
     const T={starts:0,pif:0,sameDayStarts:0,dp:0,nonPif:0,sdc:0,resp:0,ext:0,months:0}; all.forEach(([o,r])=>{ if(r) Object.keys(T).forEach(k=>{ T[k]+=r[k]||0; }); });
     const f=x=>({pif:pct(x.pif,x.starts), sds:pct(x.sameDayStarts,x.starts), dp:pct(x.dp,x.nonPif), sdc:pct(x.sdc,x.resp), len:(x.starts-x.pif)>0 ? r1(x.months/(x.starts-x.pif)) : null, ext:pct(x.ext,x.starts)});
-    const P=f(T);
+    const P=f(T), rows=all.filter(([o,r])=>r).map(([o,r])=>[o,r,f(r)]);
+    const M=[['pif','Paid in full','%',true],['sds','Same-day start','%',true],['dp','Down payment','%',true],['sdc','Same-day cash','%',true],['len','Average plan','mo',false],['ext','Extensions','%',false]];
+    const top={}; M.forEach(([k])=>{ top[k]=Math.max(k==='len'?30:10, ...rows.map(x=>x[2][k]||0), P[k]||0)*1.15; });
     let h='<div class="kpis">'+kpi('Starts', T.starts.toLocaleString())+kpi('Paid in full', fp(P.pif), T.pif+' starts')+kpi('Down payment', fp(P.dp), 'of what patients finance')+kpi('Same-day cash', fp(P.sdc), 'collected on the start day')+kpi('Average plan', P.len==null?'—':P.len+' months')+'</div>';
-    const cell=(v,avg,unit,higherBetter)=>{ if(v==null) return '<td>—</td>'; const d=avg==null?0:v-avg, cls=Math.abs(d)<(unit==='m'?1.5:3) ? '' : ((d>0)===higherBetter ? 'good' : 'bad');
-      return '<td>'+(cls?'<span class="pill '+cls+'">':'')+(unit==='m' ? v+' mo' : v+'%')+(cls?'</span>':'')+'</td>'; };
-    h+='<div class="card"><h2>How each office’s patients pay · '+esc(monthName())+'</h2><div class="sub">From OrthoFi’s business health dashboard, on the starts that month. Green/red = noticeably better/worse than the practice as a whole.</div><div class="tw"><table><thead><tr><th>Office</th><th>Starts</th><th>Paid in full</th><th>Same-day starts</th><th>Down payment</th><th>Same-day cash</th><th>Average plan</th><th>Extensions</th></tr></thead><tbody>';
-    all.forEach(([o,r])=>{ if(!r){ h+='<tr><td>'+esc(o)+'</td><td colspan="7" class="soft">No OrthoFi location</td></tr>'; return; } const x=f(r);
-      h+='<tr><td>'+esc(o)+'</td><td>'+r.starts+'</td>'+cell(x.pif,P.pif,'%',true)+cell(x.sds,P.sds,'%',true)+cell(x.dp,P.dp,'%',true)+cell(x.sdc,P.sdc,'%',true)+cell(x.len,P.len,'m',false)+cell(x.ext,P.ext,'%',false)+'</tr>'; });
-    h+='<tr class="tot"><td>Practice</td><td>'+T.starts+'</td><td>'+fp(P.pif)+'</td><td>'+fp(P.sds)+'</td><td>'+fp(P.dp)+'</td><td>'+fp(P.sdc)+'</td><td>'+(P.len==null?'—':P.len+' mo')+'</td><td>'+fp(P.ext)+'</td></tr></tbody></table></div>'+
-      '<div class="note">Extensions = payment plans that run past the end of treatment (they carry interest).</div></div>';
-    return h;
+    h+='<div class="sub" style="margin:2px 0 10px">'+esc(monthName())+' · from OrthoFi’s business health dashboard, on that month’s starts. The dark tick on each bar is the practice average; green or red when an office is clearly better or worse.</div><div class="grid">';
+    rows.forEach(([o,r,x])=>{ h+='<div class="tcc"><div class="top" style="gap:8px"><div><div class="nm">'+offDot(o)+esc(o)+'</div><div class="of">'+r.starts+' starts</div></div></div><div class="fun">'+
+      M.map(([k,lab,u,hb])=>{ const v=x[k], avg=P[k], d=(v==null||avg==null) ? 0 : v-avg, cls=Math.abs(d)<(u==='mo'?1.5:3) ? '' : ((d>0)===hb ? 'gd' : 'bd');
+        return '<div class="m"><span>'+lab+'</span><span class="t"><i style="width:'+Math.min(100,(v||0)/top[k]*100)+'%"></i>'+(avg==null?'':'<u style="left:'+Math.min(100,avg/top[k]*100)+'%"></u>')+'</span><b class="'+cls+'">'+(v==null?'—':v+(u==='mo'?' mo':'%'))+'</b></div>'; }).join('')+
+      '</div></div>'; });
+    return h+'</div><div class="note">Extensions = payment plans that run past the end of treatment (they carry interest).</div>';
   }
 
   async function refHTML(offs, t){
     const all=await Promise.all(offs.map(o=>get.ref(o, t.y, t.m).then(r=>[o,r||{}])));
     const S={}; all.forEach(([o,r])=>Object.keys(r).forEach(s=>{ const x=S[s]=S[s]||{n:0,started:0,prod:0}; x.n+=r[s].n; x.started+=r[s].started; x.prod+=r[s].prod; }));
     const list=Object.keys(S).sort((a,b)=>S[b].n-S[a].n), tot=list.reduce((a,s)=>a+S[s].n,0), totSt=list.reduce((a,s)=>a+S[s].started,0), max=Math.max(1,...list.map(s=>S[s].n));
+    const IC={'My Dentist':'🦷','Friend / Family':'👨‍👩‍👧','Internet Search':'🔎','Social Media':'📱','Advertisement':'📣','Other':'✨'};
     let h='<div class="kpis">'+kpi('New-patient exams', tot.toLocaleString())+kpi('Started so far', totSt.toLocaleString(), fp(pct(totSt,tot))+' of them')+
       (list[0] ? kpi('Biggest source', esc(list[0]), fp(pct(S[list[0]].n,tot))+' of exams') : '')+'</div>';
-    h+='<div class="card"><h2>Where new patients came from · '+esc(monthName())+'</h2><div class="sub">What patients said brought them in, from OrthoFi’s referral report (exams that month). The navy part of each bar started treatment.</div><div class="tw"><table><thead><tr><th>Source</th><th style="text-align:left">Exams · started</th><th>Exams</th><th>Started</th><th>Conversion</th><th>Production of starts</th></tr></thead><tbody>'+
-      list.map(s=>{ const x=S[s], c=pct(x.started,x.n); return '<tr><td>'+esc(s)+'</td><td style="width:34%"><div class="hb" aria-hidden="true"><i style="width:'+(x.n/max*100)+'%"></i><i class="st" style="width:'+(x.started/max*100)+'%"></i></div></td><td>'+x.n+'</td><td>'+x.started+'</td><td><span class="pill '+tone(c,30,45)+'">'+fp(c)+'</span></td><td>'+money(x.prod)+'</td></tr>'; }).join('')+
-      (list.length ? '' : '<tr><td colspan="6" class="soft">No referral answers in OrthoFi for this month.</td></tr>')+'</tbody></table></div>'+
+    h+='<div class="card"><h2>Where new patients came from · '+esc(monthName())+'</h2><div class="sub">What patients told the office brought them in (OrthoFi’s referral report). The dark part of each bar went on to start treatment.</div>'+
+      list.map(s=>{ const x=S[s], c=pct(x.started,x.n);
+        return '<div class="src"><div class="sn"><span class="ic">'+(IC[s]||'•')+'</span><span><b>'+esc(s)+'</b><small>'+x.n+' exams · '+x.started+' started</small></span></div>'+
+          '<div class="hb" title="'+x.n+' exams, '+x.started+' started"><i style="width:'+(x.n/max*100)+'%"></i><i class="st" style="width:'+(x.started/max*100)+'%"></i></div>'+
+          '<div class="sv"><span class="pill '+tone(c,30,45)+'">'+fp(c)+' start</span><small>'+money(x.prod)+'</small></div></div>'; }).join('')+
+      (list.length ? '' : '<div class="state">No referral answers in OrthoFi for this month.</div>')+
       '<div class="note">A patient sent by another patient shows as Friend / Family — Home-Brace never reads who. This could sit on the Marketing page too.</div></div>';
+    /* BY OFFICE (Cory 21/11: "We should be able to break down where they come from by office") - each office's mix */
+    if(offs.length>1 && list.length){
+      const SC={'My Dentist':'#149B96','Friend / Family':'#25456E','Internet Search':'#F2A03D','Social Media':'#8E6BD1','Advertisement':'#E07A9C','Other':'#AAB4C2'}, col=s=>SC[s]||'#CBD3DD';
+      h+='<div class="card"><h2>Each office’s mix</h2><div class="sub">Share of each office’s new-patient exams by where they came from. Pick an office at the top to see its full detail.</div>'+
+        '<div class="legend">'+list.map(s=>'<span><i style="background:'+col(s)+'"></i>'+esc(s)+'</span>').join('')+'</div>';
+      all.map(([o,r])=>[o,r,Object.keys(r).reduce((a,s)=>a+r[s].n,0)]).sort((a,b)=>b[2]-a[2]).forEach(([o,r,n])=>{
+        const st=Object.keys(r).reduce((a,s)=>a+r[s].started,0), lead=list.filter(s=>r[s] && r[s].n).sort((a,b)=>r[b].n-r[a].n)[0];
+        h+='<div class="lrow"><div class="ln">'+offDot(o)+'<span><b>'+esc(o)+'</b><small>'+n+' exams · '+fp(pct(st,n))+' started</small></span></div>'+
+          '<div class="stack" style="width:100%">'+(n ? list.map(s=>r[s] && r[s].n ? '<i style="flex:'+r[s].n+';background:'+col(s)+'" title="'+esc(s)+': '+r[s].n+' exams ('+fp(pct(r[s].n,n))+'), '+r[s].started+' started"></i>' : '').join('') : '')+'</div>'+
+          '<div class="l90">'+(lead ? 'Most from <b>'+esc(lead)+'</b>' : '—')+'</div></div>'; });
+      h+='</div>';
+    }
     return h;
   }
 

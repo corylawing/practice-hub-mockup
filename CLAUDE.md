@@ -522,8 +522,7 @@ I can confidently say that the chat feature should go next. The production thing
     think that data is in the PMS"). (c) Referrals: Oct all offices exams/started - My Dentist 127/53, Friend / Family
     75/39, Other 58/24, Internet Search 51/20, Social Media 20/6, Advertisement 6/2. Server: counts inside groups,
     GROUPS + treatmentCoordinatorName/doctorName (staff) /patientExamTreatmentStatusName/referralSource, ALLOWED
-    /referrals - NEVER referralSourceOption (can name a referring patient). KEPT regex fixed later? (orthofi.js KEPT
-    still /^(y|yes|true|1|kept)$/ - 'Kept Exam' needs adding if pex.kept is used.)
+    /referrals - NEVER referralSourceOption (can name a referring patient). orthofi.js KEPT now matches 'Kept Exam'.
     v1/insights.html: tabs TC scorecards (per TC: new-patient exams kept, recommended, started, conversion = started /
     recommended, pending, declined, no-shows+cancels), Late payments (/delinquent today: 1-30/31-60/61-90/91-180/180+
     via min rules; OrthoFi stages flag 45-53, letter 91-98, maintenance 121-129, dismissal 180+; daily snapshot
@@ -531,6 +530,11 @@ I can confidently say that the chat feature should go next. The production thing
     pay in full %, same-day starts %, down payment % of financed, same-day cash %, average plan months, extensions %),
     Where patients come from (referral source exams/started/conversion/production). Sandbox = seeded made-up numbers;
     live code path written (admins only) but the page isn't in the live menu yet.
+    Cory: "Try to make it less like an excel sheet the most you can" -> TC cards (conversion ring, exams/recommended/
+    started funnel, chips, "Top conversion"), late payments as one bar per office in dollars by age (light->dark red,
+    legend) + OrthoFi steps as tiles, pay mix as office cards (bars with the practice-average tick, green/red), referral
+    sources as rows with icons. "We should be able to break down where they come from by office" -> "Each office's mix"
+    (a bar per office split by source, legend; the office picker shows one office's detail).
 60. **ADJUSTMENTS + NET PRODUCTION PROVEN FROM ORTHOFI (21/11/2026; hc242).** Cory: "Now that you have access to orthofi
     via safari do what you need to do to make this perfect" (his Safari, OrthoFi portal; read-only - only reports run).
     The Monthly Balance Sheet = OrthoFi portal Reports -> Accounting -> Monthly Balance Sheet (business-intelligence
