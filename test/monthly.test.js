@@ -18,6 +18,8 @@ t('the report asks for exactly the things in Heather’s email 2 - comfort % as 
   M.FIELDS.length===24 && HEATHER.every(n=>M.FIELDS.some(f=>f.n===n)) && M.FIELDS.filter(f=>HEATHER.indexOf(f.n)<0).map(f=>f.k).join()==='osp,osc,osar' && !M.FIELDS.some(f=>/start|accept/i.test(f.n)));
 t('\u2026Medicaid, over-estimated completion date and comfort % are typed from the practice software (her words); the rest is OrthoFi\u2019s - RIP too (Heather 18/11: "It comes from Orthofi")',
   M.FIELDS.filter(f=>f.medicaid).every(f=>f.from==='pms') && M.BY.oecd.from==='pms' && M.BY.appts.from==='pms' && M.BY.cmfa.from==='pms' && M.BY.gp.from==='orthofi' && M.BY.deln.from==='orthofi' && M.BY.rip.from==='orthofi');
+t('the boxes show US commas (300,800.85; 1,059) and tidy to that when you leave one; saving reads past the commas (Cory: "These are americas can we have the commas?")',
+  /function showIn\(t, v\)/.test(P) && /minimumFractionDigits:2, maximumFractionDigits:2/.test(P) && /onblur="MONTHLY\.tidy\(this\)"/.test(P) && M.num('1,734,786.68')===1734786.68);
 t('new patient exams are typed from the practice software (Heather 21/11: "New Patient exams are pulled from the PMS")', M.BY.npe.from==='pms');
 t('nobody types a percentage that can be worked out: the delinquent COUNT is kept, the % is calculated (Heather: "Instead of them doing the math")',
   M.BY.deln.t==='#' && !M.BY.del && M.calc({arn:200, deln:12}).delpct===6);

@@ -270,13 +270,13 @@
   }
   @media (prefers-reduced-motion: reduce){ *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important} }
 </style>
-<script src="user.js?v=hc247"></script>
+<script src="user.js?v=hc248"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc247"></script>
-  <script src="gate.js?v=hc247"></script>
-  <script src="prodbook.js?v=hc247"></script>
-  <script src="monthly.js?v=hc247"></script>
-  <script src="orthofi.js?v=hc247"></script>
+  <script src="store.js?v=hc248"></script>
+  <script src="gate.js?v=hc248"></script>
+  <script src="prodbook.js?v=hc248"></script>
+  <script src="monthly.js?v=hc248"></script>
+  <script src="orthofi.js?v=hc248"></script>
 </head>
 <body>
 <div class="ribbon">MOCK-UP for Heather — made-up numbers. Try it as an office manager first, then as Heather.</div>
@@ -615,6 +615,10 @@
     if(s==='late') return 'Was due '+due.getDate()+' '+MON[due.getMonth()]+'.';
     return 'Due '+due.getDate()+' '+MON[due.getMonth()]+'.';
   }
+  /* COMMAS (21/11/2026, Cory: "These are americas can we have the commas?") - a box shows 300,800.85, not 300800.85, and
+     tidies to that when you leave it. Saving reads past the commas (M.num), so nothing stored changes. */
+  function showIn(t, v){ const n=Number(v); if(!isFinite(n)) return String(v);
+    return t==='$' ? n.toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2}) : t==='#' ? Math.round(n).toLocaleString('en-US') : String(n); }
   function fieldRow(f,r,typ){
     const v=r.v[f.k], src=r.src[f.k], lockedAuto=f.from==='orthofi' && src==='orthofi' && !CORRECT[f.k];
     const label='<label for="f_'+f.k+'">'+esc(f.n)+(f.help?'<small>'+esc(f.help)+'</small>':'')+'</label>';
@@ -623,9 +627,9 @@
       right='<div class="fv"><span class="val">'+fmt(f.t,v)+'</span>'+(v!==undefined ? (src==='orthofi' ? '<span class="src">OrthoFi · '+day(r.at[f.k]||r.of)+'</span>' : '<span class="src typed">typed</span>') : '')+
         (lockedAuto && typ && at('manage') ? '<button class="lnk" onclick="MONTHLY.correct(\''+f.k+'\')">Correct it</button>' : '')+'</div>';
     } else {
-      const cur=EDIT[f.k]!==undefined ? EDIT[f.k] : (v!==undefined ? String(v) : '');
+      const cur=EDIT[f.k]!==undefined ? EDIT[f.k] : (v!==undefined ? showIn(f.t, v) : '');
       const kind=f.t==='$' ? 'pre' : f.t==='%' ? 'suf' : '';
-      right='<div class="fv"><div class="inp '+kind+'">'+(kind==='pre'?'<span class="a">$</span>':'')+'<input id="f_'+f.k+'" data-k="'+f.k+'" inputmode="decimal" autocomplete="off" class="'+(cur===''?'empty':'')+'" value="'+esc(cur)+'" oninput="MONTHLY.typed(this)" aria-label="'+esc(f.n)+'">'+(kind==='suf'?'<span class="a">%</span>':'')+'</div></div>';
+      right='<div class="fv"><div class="inp '+kind+'">'+(kind==='pre'?'<span class="a">$</span>':'')+'<input id="f_'+f.k+'" data-k="'+f.k+'" inputmode="decimal" autocomplete="off" class="'+(cur===''?'empty':'')+'" value="'+esc(cur)+'" oninput="MONTHLY.typed(this)" onblur="MONTHLY.tidy(this)" aria-label="'+esc(f.n)+'">'+(kind==='suf'?'<span class="a">%</span>':'')+'</div></div>';
     }
     const mis=M.mismatches(r).find(x=>x.k===f.k);
     const misHTML=mis ? '<div class="mis" style="grid-column:1/-1">OrthoFi says <b>'+fmt(f.t,mis.orthofi)+'</b> — '+fmt(f.t,mis.typed)+' was typed.'+(typ?' <button class="lnk" onclick="MONTHLY.useOf(\''+f.k+'\')">Use OrthoFi’s</button>':'')+'</div>' : '';
@@ -880,6 +884,7 @@
     open(o){ OFF=o; TAB='office'; SENDASK=false; EDIT={}; CORRECT={}; render(); window.scrollTo({top:0, behavior:'smooth'}); },
     office(o){ if(Object.keys(EDIT).length && !confirmLeave()) return; OFF=o; EDIT={}; CORRECT={}; SENDASK=false; render(); },
     all(){ SHOWALL=!SHOWALL; render(); },
+    tidy(inp){ const k=inp.dataset.k, f=M.BY[k], n=M.num(inp.value); if(!f || n===null || f.t==='%') return; const s=showIn(f.t, n); if(s!==inp.value){ inp.value=s; if(EDIT[k]!==undefined) EDIT[k]=s; } },
     typed(inp){ EDIT[inp.dataset.k]=inp.value; inp.classList.toggle('empty', inp.value.trim()===''); const n=el('savenote'); if(n) n.textContent='Not saved yet'; glance(); },
     correct(k){ CORRECT[k]=true; render(); },
     setEveryone(on){ saveSet({everyone:!!on}, on ? 'Everyone now reads every office' : 'Each office now reads only its own'); },
@@ -915,7 +920,7 @@
 })();
 </script>
 <script>PH.nav('monthly');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc247"></script>
+<script src="tour.js?v=hc248"></script>
 <script>
 Tour.init([
   {sel:'.statusline, .openbanner', title:'Who has sent it', body:'Every office’s report for the month, in one line: final, waiting for you, or late. No chasing eight Excel files.'},
