@@ -154,8 +154,9 @@
             {way:'par.late10', label:'Accounts past due at all', v:s('par','cnt','late10')},
             {way:'par.pat.late30', label:'Patients past due 30+ days', v:s('par','patc','late30')}, {way:'par.pat.late60', label:'Patients past due 60+ days', v:s('par','patc','late60')},
             {way:'par.pat.late10', label:'Patients past due at all', v:s('par','patc','late10')},
-            {way:'del.d30', label:'Delinquent list (today) — plans 30+ days', v:s('del','cnt','d30')}, {way:'del.pat30', label:'Delinquent list (today) — patients 30+ days', v:s('del','patc','d30')},
-            {way:'del.d1', label:'Delinquent list (today) — plans past due', v:s('del','cnt','d1')}],
+            /* nobody on the delinquent list for an office = 0 late accounts, not "unknown" (Cruces FFO, 21/11/2026) */
+            {way:'del.d30', label:'Delinquent list (today) — plans 30+ days', v:z('del','cnt','d30')}, {way:'del.pat30', label:'Delinquent list (today) — patients 30+ days', v:z('del','patc','d30')},
+            {way:'del.d1', label:'Delinquent list (today) — plans past due', v:z('del','cnt','d1')}],
       ar90:[{way:'par.over90', label:'Patient A/R over 90 days', v:s('par','sum','pastDueOver90Day')},
             {way:'par.90+over90', label:'Patient A/R 90 days + over 90', v:plus(s('par','sum','pastDue90Day'), s('par','sum','pastDueOver90Day'))}],
       npe: [{way:'bh.scheduled', label:'Business health — scheduled new patient exams', v:s('bh','sum','scheduledNewPatientExam')},

@@ -213,6 +213,7 @@ const call=async (body, origin)=>{ const ctx={}; await F(ctx, {method:'POST', he
     const asked2=[]; global.PH_ORTHOFI.ask=async q=>{ asked2.push(q.id); return q.id==='del' ? {rows:3, by:{'11':{n:3,sum:{},nz:{},cnt:{d30:2},groups:{}}}} : ANS2[q.id]; };
     const MAPD=O.cleanMap({map:{'11':'North'}, auto:{deln:['North']}});
     const past=await global.PH_ORTHOFI.autoMonth(2026, 9, MAPD, {now:new Date(2026,10,21)}), cur=await global.PH_ORTHOFI.autoMonth(2026, 11, MAPD, {now:new Date(2026,10,21)});
+    t('...an office with nobody on the delinquent list gets 0 (not left empty)', O.ways({del:{rows:3, by:{'99':{n:3,sum:{},nz:{},cnt:{d30:3},groups:{}}}}}, [11], {}).deln.some(w=>w.way==='del.d30' && w.v===0));
     t('...a past month never gets today’s delinquent count; this month does', JSON.stringify(past.byOffice)==='{}' && JSON.stringify(cur.byOffice)==='{"North":{"deln":2}}' && asked2.join()==='del');
     delete global.PH_ORTHOFI.ask; }
 

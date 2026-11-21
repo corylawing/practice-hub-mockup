@@ -528,6 +528,10 @@ I can confidently say that the chat feature should go next. The production thing
     A/R drifting after the date (San Angelo's Sept 30 insurance balance moved 0.6%) - left typed there for now.
     Glass bar (Cory: "scroll up on mobile pulls out the bottom bar but sometimes it doesn't"): a finger drawn down 30px
     now always brings the whole bar back (touchstart/touchmove), on top of the scroll rule.
+    LIVE STATE 21/11: Cory saved step 3 - gp/gc/adj/np: Carlsbad, Clovis, Hobbs, San Angelo, Lubbock, Mansfield; ar: San
+    Angelo, Lubbock, Mansfield; deln: all 8. The fill ran on live (monthly.html?monthlypreview in his Safari, "Fill in from
+    OrthoFi now"): October's stored gp/gc/np parts + adj = the Monthly Balance Sheet to the cent for all 6. hc243: an
+    office with nobody on the delinquent list gets 0, not empty (Cruces FFO).
 59. **HEATHER'S REPORT SOURCES (21/11/2026; hc241; LIVE)** September confirmed: gross production AND gross
     collections (collection details + Medicaid) to the dollar at Carlsbad, Clovis, Hobbs, San Angelo, Lubbock, Mansfield;
     A/R at San Angelo, Lubbock, Mansfield (Clovis Sept only; Carlsbad/Hobbs 1-4% UNDER Heather - all Medicaid offices).
