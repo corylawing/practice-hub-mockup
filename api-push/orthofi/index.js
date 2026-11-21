@@ -44,6 +44,11 @@ const ALLOWED = {
   '/v1/practice-locations/deposits': { 'created-on-start-date': D, 'created-on-end-date': D },
   /* NEW PATIENT EXAMS (20/11/2026): OrthoFi's "kept NPE report" list, by exam date - counted, never a name */
   '/v1/practice-locations/patient-exams': { 'exam-date-start-date': D, 'exam-date-end-date': D },
+  /* NET PRODUCTION ADJUSTMENTS (21/11/2026): Heather's number is the Monthly Balance Sheet's "Adjustments Total" =
+     production adjustments (the adjustments list, every type) + "Additional Charges" (misc charges, late fees, NSF fees,
+     interest earned). These two lists carry the additional charges - added up, never a row. */
+  '/v1/practice-locations/miscellaneous-charges': { 'created-on-start-date': D, 'created-on-end-date': D },
+  '/v1/practice-locations/interest': { 'accrual-start-date': D, 'accrual-end-date': D },
   '/v1/practice-locations/collection-details': { 'payment-start-date': D, 'payment-end-date': D },
   '/v1/practice-locations/treatments': { 'product-lines': LIST, 'treatment-status-ids': IDS,
     'contract-signed-on-start-date': D, 'contract-signed-on-end-date': D, 'appliance-date-start-date': D, 'appliance-date-end-date': D,
@@ -51,7 +56,7 @@ const ALLOWED = {
 };
 /* fields a total may be split by - none of them ever holds a person */
 const GROUPS = ['productLine', 'treatmentTypeName', 'treatmentStatusName', 'treatmentStatusId', 'discountType', 'discountName', 'adjustmentType',
-  'submissionStatus', 'collectionType', 'monthDate', 'endDate', 'creditTier', 'planPriority', 'dentition', 'keptExamFlag', 'examTypeName', 'patientExamResultName'];
+  'submissionStatus', 'collectionType', 'monthDate', 'endDate', 'creditTier', 'planPriority', 'dentition', 'keptExamFlag', 'examTypeName', 'patientExamResultName', 'miscellaneousChargeType', 'contractInterestTypeName', 'paymentTypeName', 'paymentClassName', 'invoiceTypeName'];
 const KEEP_MS = 10 * 60e3;
 /* OrthoFi's "the answer is too big" (507, seen 20/11/2026 on insurance A/R and all treatments for 9 locations at once):
    then the same question one location at a time, 3 at once, and the rows put back together. */
