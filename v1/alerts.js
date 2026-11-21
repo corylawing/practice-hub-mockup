@@ -68,7 +68,8 @@
   /* Whose devices this browser's are: the signed-in person on the live site; on the sandbox whoever you're viewing as. */
   function who(){
     const P=global.PH; if(!P || !P.email) return '';
-    try{ return lc(P.email(LIVE && P.realMe ? P.realMe() : P.me())); }catch(_){ return ''; }
+    /* nobody yet (the live site before sign-in lands) = nobody's devices - not "undefined@..." (21/11/2026, code review) */
+    try{ const p=LIVE && P.realMe ? P.realMe() : P.me(); return (!p || p._unknown || !(p.mail || p.first)) ? '' : lc(P.email(p)); }catch(_){ return ''; }
   }
   const store=()=>global.PH_STORE||null;
   function saveMine(sub){
@@ -155,7 +156,8 @@
     return (A && A.idToken) ? A.idToken().catch(()=>'') : Promise.resolve('');
   }
   async function post(sub, msg, idt){
-    const r=await fetch(SENDER, {method:'POST', headers:{'Content-Type':'text/plain'}, body:JSON.stringify(Object.assign({idt, sub}, msg))});
+    /* keepalive: an alert already on its way still goes if the page is left (a payroll reminder sent from someone's visit) */
+    const r=await fetch(SENDER, {method:'POST', keepalive:true, headers:{'Content-Type':'text/plain'}, body:JSON.stringify(Object.assign({idt, sub}, msg))});
     const j=await r.json().catch(()=>({}));
     if(r.status===401) j.signin=true;
     return Object.assign({httpOk:r.ok}, j);
@@ -177,11 +179,15 @@
     const list=[...new Set((emails||[]).map(lc).filter(Boolean))];
     if(!list.length) return out;
     const idt=await idToken();
-    for(const em of list){
-      let rec=null; try{ rec=await S.get(keyFor(em)); }catch(_){ out.failed.push(em+': couldn’t read their devices'); continue; }
+    /* Everyone at once (21/11/2026, code review): one by one, 8 offices' senders took 10-25 s - long enough for the person
+       whose visit sends a payroll reminder to move on and cut the rest off. A device list that couldn't be READ is a
+       failure, not "no devices" (PH_STORE.get never throws - it hands back the local copy). */
+    await Promise.all(list.map(async em=>{
+      const rec=await Promise.resolve(S.get(keyFor(em))).catch(()=>null);
+      if(S.readFailed && S.readFailed(keyFor(em))){ out.failed.push(em+': couldn’t read their devices'); return; }
       const ds=devices(rec); if(ds.length) out.people++;
-      for(const d of ds){
-        if(opts && opts.skipInstant && d.ci && Date.parse(d.ci)>Date.now()) continue;   // its instant chat link alerts it already
+      await Promise.all(ds.map(async d=>{
+        if(opts && opts.skipInstant && d.ci && Date.parse(d.ci)>Date.now()) return;   // its instant chat link alerts it already
         out.devices++;
         try{
           const j=await post(d.s, msg, idt);
@@ -189,8 +195,8 @@
           else if(j.httpOk && j.ok) out.sent++;
           else out.failed.push(em+': '+(j.signin ? 'signin' : (j.error || ('status '+(j.status||'?')))));
         }catch(e){ out.failed.push(em+': '+((e && e.message) || 'network')); }
-      }
-    }
+      }));
+    }));
     return out;
   }
   /* INSTANT CHAT ALERTS (18/11/2026, Cory: "build instant chat alerts") - the server side is api-push/chatkeys.js.
@@ -224,7 +230,9 @@
         return 'off';
       }
       const sub=saved(), now=Date.now();
-      if(cur && cur.id && cur.ep===sub.endpoint && cur.exp-now>2*DAY){ markInstant(new Date(cur.exp).toISOString()); return 'fine'; }
+      /* checked with Microsoft at most every 12 h (21/11/2026, code review): Microsoft can end a link early, and this
+         device's entry would go on telling Home-Brace's own chat alert to skip it - no alert either way for up to 2 days */
+      if(cur && cur.id && cur.ep===sub.endpoint && cur.exp-now>2*DAY && now-(cur.chk||0)<12*3600e3){ markInstant(new Date(cur.exp).toISOString()); return 'fine'; }
       const A=global.PH_AUTH; if(!A || !A.tokenFor) return 'nosignin';
       const me=(global.PH && PH.profileOf && PH.profileOf()) || {}; if(!me.id) return 'nosignin';
       const tok=await A.tokenFor(['Chat.ReadWrite']);
@@ -232,7 +240,7 @@
       if(cur && cur.id){
         if(cur.ep===sub.endpoint){
           try{ const j=await graph('PATCH', '/subscriptions/'+encodeURIComponent(cur.id), {expirationDateTime:exp}, tok);
-               linkSet({id:cur.id, exp:Date.parse(j.expirationDateTime||exp), ep:sub.endpoint}); markInstant(new Date(Date.parse(j.expirationDateTime||exp)).toISOString()); return 'renewed'; }
+               linkSet({id:cur.id, exp:Date.parse(j.expirationDateTime||exp), ep:sub.endpoint, chk:now}); markInstant(new Date(Date.parse(j.expirationDateTime||exp)).toISOString()); return 'renewed'; }
           catch(e){ if(e.status!==404) throw e; }                    // it had run out: make a new one below
         } else { try{ await graph('DELETE', '/subscriptions/'+encodeURIComponent(cur.id), null, tok); }catch(_){} }   // this device's address changed
         linkSet(null);
@@ -243,7 +251,7 @@
       const j=await graph('POST', '/subscriptions', {changeType:'created', notificationUrl:s.url, lifecycleNotificationUrl:s.url+'&l=1',
         resource:'/users/'+me.id+'/chats/getAllMessages', includeResourceData:true, encryptionCertificate:s.cert, encryptionCertificateId:s.certId,
         expirationDateTime:exp, clientState:s.clientState}, tok);
-      linkSet({id:j.id, exp:Date.parse(j.expirationDateTime||exp), ep:sub.endpoint}); markInstant(new Date(Date.parse(j.expirationDateTime||exp)).toISOString());
+      linkSet({id:j.id, exp:Date.parse(j.expirationDateTime||exp), ep:sub.endpoint, chk:now}); markInstant(new Date(Date.parse(j.expirationDateTime||exp)).toISOString());
       return 'made';
     })().catch(e=>{ try{ console.warn('Instant chat alerts:', e && e.message); }catch(_){} return 'failed'; })
       .then(x=>{ linkBusy=null; return x; });

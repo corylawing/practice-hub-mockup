@@ -246,7 +246,8 @@
   /* COMPARED WITH THE PERIOD BEFORE (21/11/2026, Cory: "if they are comparing a quarter or month there is a vs last month or
      vs last quarter ... good to show if ones increasing or decreasing" and "same with conversion for TC. Its always useful if
      you see a compared to"). PH_PERIOD.prev() picks the period before - and while this one is still going, the SAME number of
-     days of it (Nov 1-21 vs Oct 1-21). A count shows its % change, a rate (conversion, paid in full) its change in points.
+     days of it (Nov 1-21 vs Oct 1-21). A count shows its % change; a rate (conversion, paid in full)
+     shows how far the rate itself moved, as a % (55% -> 75% = "↑ 20%"; Cory 21/11: "not pts percentages").
      Green = better, red = worse, grey = about the same; the tooltip shows both numbers. */
   let VS={short:'', long:''};
   const MS3=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -256,9 +257,9 @@
   function dlt(cur, was, o){ o=o||{}; if(cur==null || was==null || !isFinite(cur) || !isFinite(was)) return '';
     const u=o.unit||'%'; let d, txt;
     if(u==='%'){ if(!was) return ''; d=(cur-was)/was*100; txt=Math.round(Math.abs(d))+'%'; }
-    else if(u==='pts'){ d=cur-was; const n=Math.round(Math.abs(d)); txt=n+(n===1 ? ' pt' : ' pts'); }
+    else if(u==='rate'){ d=cur-was; txt=Math.round(Math.abs(d))+'%'; }
     else { d=cur-was; txt=r1(Math.abs(d))+' '+u; }
-    const flat=Math.abs(d)<(u==='%' ? 3 : u==='pts' ? 1 : 0.5), good=o.down ? d<0 : d>0, cls=flat ? 'nt' : good ? 'gd' : 'bd';
+    const flat=Math.abs(d)<(u==='%' ? 3 : u==='rate' ? 1 : 0.5), good=o.down ? d<0 : d>0, cls=flat ? 'nt' : good ? 'gd' : 'bd';
     const f=o.fmt||(x=>Number(x).toLocaleString('en-US'));
     return '<span class="dl '+cls+'" data-tip="'+esc((o.name ? o.name+' · ' : '')+'compared with '+VS.long)+'" data-tip-b="'+esc('Now '+f(cur)+' · then '+f(was))+'" data-tip-c="'+(flat?'#94a3b8':good?'#2E9E6B':'#D7503A')+'">'+
       (flat ? (o.bare ? 'same' : '≈ same') : (d>0?'↑ ':'↓ ')+txt)+(o.bare ? '' : ' <small>'+esc(VS.short)+'</small>')+'</span>'; }
@@ -300,7 +301,7 @@
     cards.sort((a,b)=>((b.c||0)-(a.c||0)) || ((b.x.keptNew||0)-(a.x.keptNew||0)));
     const top=cards.filter(c=>(c.x.rec||0)>=10)[0];
     const cv=pct(T.started,T.rec), cw=pct(W.started,W.rec);
-    let h='<div class="kpis">'+kpi('Conversion', fp(cv), 'started ÷ recommended', dlt(cv, cw, {unit:'pts', name:'Conversion', fmt:fp}))+kpi('New-patient exams', T.keptNew.toLocaleString(), '', dlt(T.keptNew, W.keptNew, {name:'New-patient exams'}))+
+    let h='<div class="kpis">'+kpi('Conversion', fp(cv), 'started ÷ recommended', dlt(cv, cw, {unit:'rate', name:'Conversion', fmt:fp}))+kpi('New-patient exams', T.keptNew.toLocaleString(), '', dlt(T.keptNew, W.keptNew, {name:'New-patient exams'}))+
       kpi('Treatment recommended', T.rec.toLocaleString(), fp(pct(T.rec,T.keptNew))+' of exams — told “ready to start”', dlt(T.rec, W.rec, {name:'Recommended'}))+
       kpi('Started so far', T.started.toLocaleString(), fp(pct(T.started,T.rec))+' of recommended', dlt(T.started, W.started, {name:'Started'}))+kpi('Still deciding', T.pending.toLocaleString(), 'waiting on financing or records')+'</div>';
     h+='<div class="sub" style="margin:2px 0 6px">'+esc(monthName())+' · every exam in OrthoFi, by the TC on it.</div>'+vsLine()+
@@ -309,7 +310,7 @@
       const bar=(lab,n,col)=>'<div class="r"><span>'+lab+'</span><span class="t"><i style="width:'+Math.min(100, (n||0)/ex*100)+'%;background:'+col+'"></i></span><b>'+(n||0)+'</b></div>';
       h+='<div class="tcc">'+(top && c===top ? '<span class="badge">Top conversion</span>' : '')+
         '<div class="top">'+ring(c.c, cls)+'<div><div class="nm">'+esc(c.tc)+'</div><div class="of">'+offDot(c.o)+esc(c.o)+'</div>'+
-          '<div class="of" style="margin-top:6px">'+(c.w==null ? '<span class="dl nt">new '+esc(VS.short.replace(/^vs /,'since '))+'</span>' : dlt(c.c, c.w, {unit:'pts', name:c.tc+'’s conversion', fmt:fp}))+'</div></div></div>'+
+          '<div class="of" style="margin-top:6px">'+(c.w==null ? '<span class="dl nt">new '+esc(VS.short.replace(/^vs /,'since '))+'</span>' : dlt(c.c, c.w, {unit:'rate', name:c.tc+'’s conversion', fmt:fp}))+'</div></div></div>'+
         '<div class="fun">'+bar('Exams', x.keptNew, '#BFE3E0')+bar('Recommended', x.rec, 'var(--teal)')+bar('Started', x.started, 'var(--navy)')+'</div>'+
         '<div class="chips">'+(x.pending ? '<span class="chip">⏳ '+x.pending+' deciding</span>' : '')+(x.declined ? '<span class="chip">✋ '+x.declined+' declined</span>' : '')+
           (((x.noshow||0)+(x.cancel||0)) ? '<span class="chip">🚫 '+((x.noshow||0)+(x.cancel||0))+' no-show / cancel</span>' : '')+'</div></div>'; });
@@ -351,7 +352,7 @@
     const f=x=>({pif:pct(x.pif,x.starts), sds:pct(x.sameDayStarts,x.starts), dp:pct(x.dp,x.nonPif), sdc:pct(x.sdc,x.resp), len:(x.starts-x.pif)>0 ? r1(x.months/(x.starts-x.pif)) : null, ext:pct(x.ext,x.starts)});
     const P=f(T), PW=f(W), rows=all.filter(([o,r])=>r).map(([o,r])=>[o,r,f(r),wasO[o] ? f(wasO[o]) : null]);
     /* business health is filed by MONTH, so a month still going can't be cut to the same days - its starts aren't compared then (the rates still are) */
-    const startsD=t.open ? '' : dlt(T.starts, W.starts, {name:'Starts'}), rate=(k,name,down)=>dlt(P[k], PW[k], {unit:k==='len'?'mo':'pts', name, down, fmt:k==='len' ? (x=>x+' months') : fp});
+    const startsD=t.open ? '' : dlt(T.starts, W.starts, {name:'Starts'}), rate=(k,name,down)=>dlt(P[k], PW[k], {unit:k==='len'?'mo':'rate', name, down, fmt:k==='len' ? (x=>x+' months') : fp});
     const M=[['pif','Paid in full','%',true],['sds','Same-day start','%',true],['dp','Down payment','%',true],['sdc','Same-day cash','%',true],['len','Average plan','mo',false],['ext','Extensions','%',false]];
     const top={}; M.forEach(([k])=>{ top[k]=Math.max(k==='len'?30:10, ...rows.map(x=>x[2][k]||0), P[k]||0)*1.15; });
     let h='<div class="kpis">'+kpi('Starts', T.starts.toLocaleString(), '', startsD)+kpi('Paid in full', fp(P.pif), T.pif+' starts', rate('pif','Paid in full'))+kpi('Down payment', fp(P.dp), 'of what patients finance', rate('dp','Down payment'))+
@@ -360,7 +361,7 @@
     rows.forEach(([o,r,x,xw])=>{ h+='<div class="tcc"><div class="top" style="gap:8px"><div><div class="nm">'+offDot(o)+esc(o)+'</div><div class="of">'+r.starts+' starts '+(t.open || !wasO[o] ? '' : dlt(r.starts, wasO[o].starts, {name:o+' starts', bare:true}))+'</div></div></div><div class="fun">'+
       M.map(([k,lab,u,hb])=>{ const v=x[k], avg=P[k], d=(v==null||avg==null) ? 0 : v-avg, cls=Math.abs(d)<(u==='mo'?1.5:3) ? '' : ((d>0)===hb ? 'gd' : 'bd');
         return '<div class="m"><span>'+lab+'</span><span class="t"><i style="width:'+Math.min(100,(v||0)/top[k]*100)+'%"></i>'+(avg==null?'':'<u style="left:'+Math.min(100,avg/top[k]*100)+'%"></u>')+'</span><b class="'+cls+'">'+(v==null?'—':v+(u==='mo'?' mo':'%'))+'</b>'+
-          (xw ? dlt(v, xw[k], {unit:u==='mo'?'mo':'pts', name:o+' · '+lab, down:!hb, bare:true, fmt:u==='mo' ? (z=>z+' months') : fp}).replace(/ (pts?|mo)</,'<') : '<span></span>')+'</div>'; }).join('')+
+          (xw ? dlt(v, xw[k], {unit:u==='mo'?'mo':'rate', name:o+' · '+lab, down:!hb, bare:true, fmt:u==='mo' ? (z=>z+' months') : fp}).replace(/ mo</,'<') : '<span></span>')+'</div>'; }).join('')+
       '</div></div>'; });
     return h+'</div><div class="note">Extensions = payment plans that run past the end of treatment (they carry interest).</div>';
   }

@@ -1422,7 +1422,7 @@
     menu=document.createElement('div'); menu.className='ph-menu';
     menu.innerHTML='<div class="mh"><b>'+name(p)+'</b><small>'+p.title+'</small></div>'+
       '<button onclick="PH.profile()">👤 My profile</button>'+
-      (isLive() && window.PH_AUTH && PH_AUTH.signOut ? '<button onclick="PH_AUTH.signOut()">↪ Sign out</button>' : '')+
+      (isLive() && window.PH_AUTH && PH_AUTH.signOut ? '<button onclick="PH.signOut()">↪ Sign out</button>' : '')+
       (isLive() ? '' :
       '<div class="sec">Demo — sign in as</div>'+
       PEOPLE.map(x=>'<button class="'+(x.id===p.id?'cur':'')+'" onclick="PH.setMe(\''+x.id+'\')">'+
@@ -2498,6 +2498,17 @@
     const when=slot==='eve' ? 'is due '+wd+' by 2 pm' : slot==='am' ? 'is due today by 2 pm' : 'is due at 2 pm — an hour to go';
     return {key:per.key, n:per.n, slot:slot, sends:todo.map(function(o){
       return {o:o, emails:off[o].slice(), title:o+'’s payroll sheet '+when, body:'Pay period #'+per.n+' · tap to open it'}; })};
+  }
+  /* SIGN OUT TURNS THIS DEVICE'S ALERTS OFF FIRST (21/11/2026, code review). The alert address belongs to the browser,
+     not the person: on a shared front-desk computer the next person to sign in would get the last one's alerts and
+     instant chat alerts (sender + the start of the message), and the computer would quietly join their own list. The
+     page-open check finishes first (so it can't put the address back), then alerts go off here - the instant chat link
+     removed with the leaving person's own sign-in. At most 6 s; sign-out happens either way. */
+  function signOut(){
+    const A=window.PH_AUTH; if(!A || !A.signOut) return Promise.resolve();
+    const off=alertsReady().then(function(P){ if(!P) return null;
+      return Promise.resolve(P.refresh && P.refresh()).then(function(){ return P.saved && P.saved() ? P.disable() : null; }); }).catch(function(){ return null; });
+    return Promise.race([off, new Promise(function(r){ setTimeout(r, 6000); })]).then(function(){ return A.signOut(); });
   }
   let PAY_ALERT_BUSY=false, PAY_ALERT_AT=0;
   function payAlertsTick(now){
@@ -4175,7 +4186,7 @@
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', start, {once:true}); else setTimeout(start, 0);
   })();
 
-  window.PH={PEOPLE,newHiresOn,pickOn,chatPilotMe,chatPilotKnown:()=>CHATPILOT!==null,chatGuest,reloadChatPilot,cleanChatPilot,CHAT_PILOT_KEY,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,teamNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, rosterView, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, chatBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK, notesHTML, searchHTML, searchDocs, searchDocsHTML, levelForTeams, teamsSeeAll, tcOn, tcRoleFor, payOn, monthlyOn, tasksOn, partyOn, partyPref, partySeen, PARTY_KEY, payRoleFor, paySenders, reloadPaySenders, paySenderOffices, payLevel, payReminders, payMark, reloadPayStatus, payRulesReady, payAlertPlan, payAlertsTick, centralNow, alertsReady, saveFace, faceOf, avatar, viewLink, isWordName, wordAttrs, wordPdfInto,
+  window.PH={PEOPLE,newHiresOn,pickOn,chatPilotMe,chatPilotKnown:()=>CHATPILOT!==null,chatGuest,reloadChatPilot,cleanChatPilot,CHAT_PILOT_KEY,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,teamNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, rosterView, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, chatBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK, notesHTML, searchHTML, searchDocs, searchDocsHTML, levelForTeams, teamsSeeAll, tcOn, tcRoleFor, payOn, monthlyOn, tasksOn, partyOn, partyPref, partySeen, PARTY_KEY, payRoleFor, paySenders, reloadPaySenders, paySenderOffices, payLevel, payReminders, payMark, reloadPayStatus, payRulesReady, payAlertPlan, payAlertsTick, signOut, centralNow, alertsReady, saveFace, faceOf, avatar, viewLink, isWordName, wordAttrs, wordPdfInto,
     sensRecord, reloadSensitive, sensLevelFor, sensitiveLevel, sensConfirmOk,
     setTheme, theme:()=>THEME, setLayout, layout:()=>LAYOUT, layouts:()=>LAYOUTS.map(l=>({k:l.k, n:l.n})), themes:()=>THEMES.map(t=>({k:t.k, n:t.n})), schemeTokens:k=>schemeTokens(themeOf(k)), contrast,
     feedback:openFeedback, feedbackText, feedbackContext, learning:stillLearning, fbReady, myFeedback, fbTick, usageReady, rosterName, useEmail, useTrackMe, loadHold, loadDone};

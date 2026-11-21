@@ -51,10 +51,14 @@ function okEndpoint(endpoint) {
 async function send(sub, message, keys, subject, fetchImpl) {
   if (!sub || !okEndpoint(sub.endpoint) || !sub.keys) throw new Error('bad subscription');
   const body = encrypt(Buffer.from(JSON.stringify(message)), sub.keys.p256dh, sub.keys.auth);
-  const r = await (fetchImpl || fetch)(sub.endpoint, { method: 'POST', body, headers: {
-    'Content-Type': 'application/octet-stream', 'Content-Encoding': 'aes128gcm', TTL: '86400', Urgency: 'high',
-    Authorization: vapid(sub.endpoint, keys, subject) } });
-  return { status: r.status, gone: r.status === 404 || r.status === 410 };   // gone = that device turned alerts off
+  /* 10 s at most (21/11/2026, code review): a push service that hangs must not hold every alert queued behind it */
+  const ac = new AbortController(), t = setTimeout(() => ac.abort(), 10000);
+  try {
+    const r = await (fetchImpl || fetch)(sub.endpoint, { method: 'POST', body, signal: ac.signal, headers: {
+      'Content-Type': 'application/octet-stream', 'Content-Encoding': 'aes128gcm', TTL: '86400', Urgency: 'high',
+      Authorization: vapid(sub.endpoint, keys, subject) } });
+    return { status: r.status, gone: r.status === 404 || r.status === 410 };   // gone = that device turned alerts off
+  } finally { clearTimeout(t); }
 }
 
 module.exports = { encrypt, vapid, send, okEndpoint, b64u, unb64u };

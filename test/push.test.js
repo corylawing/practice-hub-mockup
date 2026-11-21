@@ -113,6 +113,9 @@ t('junk is refused', !W.okEndpoint('not a url') && !W.okEndpoint(''));
   t('a key Microsoft doesn\'t list: refused, after checking for new keys once', r0.status===401 && !sent && keyGets===gets+1);
   r0=await call(SB, {sub, title:'x', idt:sign({}, {kid:'k-unknown'})});
   t('and it doesn\'t fetch the keys again straight away', r0.status===401 && keyGets===gets+1);
+  { const later=Date.now()+13*3600e3, tok=sign({exp:Math.floor(later/1000)+3600});
+    const v=await ID.verify(tok, {now:later, fetch:async ()=>{ throw new Error('Microsoft is down'); }}).catch(()=>null);
+    t('Microsoft’s keys can’t be refreshed (a blip): the keys already held still check sign-ins', !!v && v.oid==='o-1'); }
 
   let r=await call('https://evil.example', {sub, title:'x'});
   t('a page from anywhere else is refused (403)', r.status===403 && !sent);

@@ -65,6 +65,15 @@ const GROUPS = ['productLine', 'treatmentTypeName', 'treatmentStatusName', 'trea
   'submissionStatus', 'collectionType', 'monthDate', 'endDate', 'creditTier', 'planPriority', 'dentition', 'keptExamFlag', 'examTypeName', 'patientExamResultName', 'miscellaneousChargeType', 'contractInterestTypeName', 'contractFeeTypeName', 'chargeTypeName', 'dateType', 'includedInContract',
   /* staff - the TC and the doctor on an exam (21/11/2026, TC scorecards): the practice's own people, never a patient */
   'treatmentCoordinatorName', 'doctorName', 'patientExamTreatmentStatusName', 'referralSource', 'paymentTypeName', 'paymentClassName', 'invoiceTypeName'];
+/* THE ONLY FIELDS A COUNT RULE MAY LOOK AT (21/11/2026, code review): a rule on any other field - eq:{patientLastName:[..]}
+   - would turn "how many rows meet it" and their sums into ONE patient's balance. These are the fields Home-Brace's pages
+   actually count by (orthofi.js plan(), insights.html); none holds a person. A new count = add its field here. */
+const COUNT_FIELDS = new Set(['outstandingBalance', 'daysPastDue', 'pastDue10Day', 'pastDue30Day', 'pastDue60Day', 'pastDue90Day',
+  'pastDueOver90Day', 'pastDue120Day', 'pastDueOver120Day', 'pastDue180Day', 'pastDueOver180Day', 'pastDue365Day', 'pastDueOver365Day',
+  'submissionStatus', 'submissionStatusName', 'isCollectionSuccessful', 'keptExamFlag', 'examTypeName', 'patientExamResultName',
+  'patientExamTreatmentStatusName', 'miscellaneousChargeType', 'contractFeeTypeName', 'discountName',
+  'startDate', 'contractSignedOn', 'createdOn']);
+const okField = f => typeof f === 'string' && COUNT_FIELDS.has(f);
 const KEEP_MS = 10 * 60e3;
 /* OrthoFi's "the answer is too big" (507, seen 20/11/2026 on insurance A/R and all treatments for 9 locations at once):
    then the same question one location at a time, 3 at once, and the rows put back together. */
@@ -161,13 +170,13 @@ function cleanAsk(b) {
     else if (kind === LIST && /^[\w &'().,\-\/]{1,200}$/.test(v)) params[k] = v; });
   const group = GROUPS.indexOf(b.group) >= 0 ? b.group : '';
   const count = (Array.isArray(b.count) ? b.count : []).slice(0, 12).map(c => ({ name: clip(c && c.name, 40).replace(/[^\w]/g, ''),
-    any: (Array.isArray(c && c.any) ? c.any : []).map(f => clip(f, 60)).filter(f => /^\w+$/.test(f)).slice(0, 12),
-    min: Object.keys((c && c.min) || {}).filter(f => /^\w+$/.test(f) && isFinite(+c.min[f])).slice(0, 4).reduce((o, f) => (o[f] = +c.min[f], o), {}),
-    is: Object.keys((c && c.is) || {}).filter(f => /^\w+$/.test(f) && !isId(f) && Array.isArray(c.is[f])).slice(0, 2)
+    any: (Array.isArray(c && c.any) ? c.any : []).filter(okField).slice(0, 12),
+    min: Object.keys((c && c.min) || {}).filter(f => okField(f) && isFinite(+c.min[f])).slice(0, 4).reduce((o, f) => (o[f] = +c.min[f], o), {}),
+    is: Object.keys((c && c.is) || {}).filter(f => okField(f) && Array.isArray(c.is[f])).slice(0, 2)
       .reduce((o, f) => (o[f] = c.is[f].map(x => clip(x, 40).trim().toLowerCase()).filter(x => /^[\w &'().,\-\/]+$/.test(x)).slice(0, 12), o), {}),
-    eq: Object.keys((c && c.eq) || {}).filter(f => /^\w+$/.test(f) && !isId(f) && Array.isArray(c.eq[f])).slice(0, 3)
+    eq: Object.keys((c && c.eq) || {}).filter(f => okField(f) && Array.isArray(c.eq[f])).slice(0, 3)
       .reduce((o, f) => (o[f] = c.eq[f].map(x => clip(x, 60).trim().toLowerCase()).filter(x => /^[\w &'().,\-\/]+$/.test(x)).slice(0, 12), o), {}),
-    on: (c && c.on && /^\w+(On|Date)$/.test(c.on.field) && /^\d{4}-\d{2}-\d{2}$/.test(c.on.from) && /^\d{4}-\d{2}-\d{2}$/.test(c.on.to)) ? { field: c.on.field, from: c.on.from, to: c.on.to } : null }))
+    on: (c && c.on && okField(c.on.field) && /^\w+(On|Date)$/.test(c.on.field) && /^\d{4}-\d{2}-\d{2}$/.test(c.on.from) && /^\d{4}-\d{2}-\d{2}$/.test(c.on.to)) ? { field: c.on.field, from: c.on.from, to: c.on.to } : null }))
     .filter(c => c.name && (c.any.length || Object.keys(c.min).length || Object.keys(c.is).length || Object.keys(c.eq).length || c.on));
   return { path, params, group, count };
 }
@@ -230,4 +239,4 @@ async function handler(context, req) {
   }
 }
 module.exports = handler;
-module.exports._t = { setDeps: d => { deps = Object.assign({}, deps, d); }, reset, summarize, cleanAsk, token, ALLOWED, GROUPS, ORIGINS };
+module.exports._t = { setDeps: d => { deps = Object.assign({}, deps, d); }, reset, summarize, cleanAsk, token, ALLOWED, GROUPS, ORIGINS, COUNT_FIELDS };

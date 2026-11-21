@@ -552,8 +552,9 @@ I can confidently say that the chat feature should go next. The production thing
     last quarter ... good to show if ones increasing or decreasing" and "same with conversion for TC. Its always useful if
     you see a compared to"): PH_PERIOD.prev(v) / handle.prev() = the month / quarter before, the same dates last year for
     year to date, the year before; while the period is still going the one before is cut to the SAME days (Nov 1-21 vs
-    Oct 1-21) and says so. dlt(cur, was, {unit:'%'|'pts'|'mo', down}) draws the chip: counts as % change, rates in
-    points, green better / red worse / grey "about the same" (<3% / <1 pt / <0.5 mo), tooltip "Now x · then y". On: the
+    Oct 1-21) and says so. dlt(cur, was, {unit:'%'|'rate'|'mo', down}) draws the chip: counts as % change, a rate as
+    how far it moved shown with % (55% -> 75% = "↑ 20%" - Cory: "not pts percentages"; never "pts"), green better / red
+    worse / grey "about the same" (<3% / <1 / <0.5 mo), tooltip "Now x · then y". On: the
     KPI tiles (incl. a new Conversion tile), every TC card's conversion ("new since ..." when the TC had none before),
     each pay card's starts + each rate, each referral source's and each office's exams. Business health is filed by
     MONTH, so while a month is open its STARTS aren't compared (rates still are). BEFORE GOING LIVE: conversion keeps

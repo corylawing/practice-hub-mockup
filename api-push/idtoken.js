@@ -13,9 +13,10 @@ const unb64u = s => Buffer.from(String(s).replace(/-/g, '+').replace(/_/g, '/'),
 
 async function keys(force, fetchImpl, now) {
   if (!force && cache.keys.length && now - cache.at < 12 * 3600e3) return cache.keys;
-  const r = await (fetchImpl || fetch)(KEYS_URL);
-  if (!r || !r.ok) throw new Error('could not get Microsoft’s keys');
-  const j = await r.json();
+  /* a failed refresh keeps the keys we have (21/11/2026, code review): a Microsoft blip must not sign everyone out */
+  let r = null, j = null;
+  try { r = await (fetchImpl || fetch)(KEYS_URL); if (r && r.ok) j = await r.json(); } catch (_) { j = null; }
+  if (!j) { if (cache.keys.length) return cache.keys; throw new Error('could not get Microsoft’s keys'); }
   cache = { at: now, keys: (j && Array.isArray(j.keys)) ? j.keys : [] };
   return cache.keys;
 }

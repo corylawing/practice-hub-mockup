@@ -55,7 +55,8 @@ t('gate.js: on the way back the in-progress sign-in is not wiped before MSAL rea
 /* 20/11/2026, Cory: "every time it asks you to sign in ... once we authenticate it should work for awhile" */
 const GATE=fs.readFileSync(path.join(__dirname,'..','v1','gate.js'),'utf8'), USERJS=fs.readFileSync(path.join(__dirname,'..','v1','user.js'),'utf8');
 t('the sign-in is remembered on the device (localStorage), not forgotten when the tab or app closes', /cache: \{ cacheLocation: 'localStorage' \}/.test(GATE) && !/cacheLocation: 'sessionStorage'/.test(GATE));
-t('Sign out under your name (live), clearing only this device’s copy, then back to the sign-in screen', /signOut: function\(\)\{/.test(GATE) && /onRedirectNavigate: function\(\)\{ return false; \}/.test(GATE) && /PH_AUTH\.signOut\(\)">↪ Sign out<\/button>/.test(USERJS));
+t('Sign out under your name (live), clearing only this device’s copy, then back to the sign-in screen', /signOut: function\(\)\{/.test(GATE) && /onRedirectNavigate: function\(\)\{ return false; \}/.test(GATE) && /PH\.signOut\(\)">↪ Sign out<\/button>/.test(USERJS) && /function signOut\(\)\{[\s\S]{0,600}P\.disable\(\)[\s\S]{0,300}A\.signOut\(\)/.test(USERJS));
+t('...and turns this device’s alerts off first (a shared computer: the next person never gets the last one’s alerts)', /signOut, centralNow/.test(USERJS));
 t('after Sign out the next sign-in asks which account (a shared front-desk computer)', /req\.prompt = 'select_account'/.test(GATE) && /app\.loginPopup\(pick\(\{ scopes: SCOPES \}\)\)/.test(GATE) && /var req = pick\(\{ scopes: scopes \|\| SCOPES/.test(GATE));
 console.log(pass+' passed, '+fail+' failed');
 process.exit(fail?1:0);

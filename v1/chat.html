@@ -1761,6 +1761,7 @@
           const blob=await (await fetch(img.src)).blob(), p=await CG.photo(new File([blob], 'photo.jpg', {type:blob.type||'image/jpeg'}));
           await CG.sendPhoto(t, MEID, p.b64, p.w, p.h, text, {html, mentions:[]});
         } else await CG.sendText(t, MEID, text, {html, mentions:[]});
+        chatAlert(t, img && /^(blob:|data:image)/.test(img.src) ? 'photo' : 'text', text);   // a forward alerts like any message (21/11/2026, code review)
       }
       closeDlg(); renderList(); if(open===t.id) renderConv();
       undoToast('Forwarded to '+t.name+' ✓', null);
