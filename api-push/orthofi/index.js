@@ -115,6 +115,9 @@ function meets(row, c) {
   /* is: {field: [values]} - the row's value for ANY of the fields is one of its values (case ignored). OrthoFi's own
      insurance A/R report counts only certain claim statuses (their docs, 20/11/2026). */
   if (isF.length && !isF.some(f => row[f] != null && is[f].indexOf(String(row[f]).trim().toLowerCase()) >= 0)) return false;
+  /* on: {field, from, to} - the row's own date (YYYY-MM-DD...) falls in that span (21/11/2026: OrthoFi dates each misc
+     charge by its contract's signing or its creation - "dateType" says which - and the balance sheet counts it so) */
+  if (c.on) { const d = String(row[c.on.field] == null ? '' : row[c.on.field]).slice(0, 10); if (!(d >= c.on.from && d <= c.on.to)) return false; }
   return Object.keys(min).every(f => typeof row[f] === 'number' && row[f] >= +min[f]);
 }
 /* PATIENTS, not contracts (OrthoFi: "UI report is grouped by patient, and our endpoint is at the contract level"): how
@@ -153,8 +156,9 @@ function cleanAsk(b) {
     any: (Array.isArray(c && c.any) ? c.any : []).map(f => clip(f, 60)).filter(f => /^\w+$/.test(f)).slice(0, 12),
     min: Object.keys((c && c.min) || {}).filter(f => /^\w+$/.test(f) && isFinite(+c.min[f])).slice(0, 4).reduce((o, f) => (o[f] = +c.min[f], o), {}),
     is: Object.keys((c && c.is) || {}).filter(f => /^\w+$/.test(f) && !isId(f) && Array.isArray(c.is[f])).slice(0, 2)
-      .reduce((o, f) => (o[f] = c.is[f].map(x => clip(x, 40).trim().toLowerCase()).filter(x => /^[\w &'().,\-\/]+$/.test(x)).slice(0, 12), o), {}) }))
-    .filter(c => c.name && (c.any.length || Object.keys(c.min).length || Object.keys(c.is).length));
+      .reduce((o, f) => (o[f] = c.is[f].map(x => clip(x, 40).trim().toLowerCase()).filter(x => /^[\w &'().,\-\/]+$/.test(x)).slice(0, 12), o), {}),
+    on: (c && c.on && /^\w+(On|Date)$/.test(c.on.field) && /^\d{4}-\d{2}-\d{2}$/.test(c.on.from) && /^\d{4}-\d{2}-\d{2}$/.test(c.on.to)) ? { field: c.on.field, from: c.on.from, to: c.on.to } : null }))
+    .filter(c => c.name && (c.any.length || Object.keys(c.min).length || Object.keys(c.is).length || c.on));
   return { path, params, group, count };
 }
 async function each(list, n, fn) {
