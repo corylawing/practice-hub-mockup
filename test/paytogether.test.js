@@ -49,7 +49,7 @@ t('until she saves her own list, the two Cruces offices are entered together (he
   /const TOG_DEFAULT=\[\['crucesffo','cruceslco'\]\];/.test(H) && /TOGETHER=cleanTogether\(st\.together\);/.test(H) && /x\.together=gs;/.test(fn('togSave')));
 t('one bonus: the strictest mark, on their first office’s row (the same on the combined sheet, its totals, History, the lookup and the download)',
   /return \{home:parts\[0\]\.k, amt:Math\.min\(\.\.\.parts\.map\(q=>calc\(p,q\.x,pr\)\.ppb\)\), n:parts\.length\};/.test(fn('oneBonus')) &&
-  /calc\(en\.p, x, pr, ob \? \(here \? ob\.amt : 0\) : undefined\)/.test(fn('entryCalc')) && /entryCalc\(n,pr,en\)/.test(fn('combined')) && /entryCalc\(n,pr,en\)/.test(fn('combTotals')) &&
+  /calc\(en\.p, x, pr, ob \? \(here \? ob\.amt : 0\) : undefined, !here\)/.test(fn('entryCalc')) && /entryCalc\(n,pr,en\)/.test(fn('combined')) && /entryCalc\(n,pr,en\)/.test(fn('combTotals')) &&
   /entryCalc\(n,pr,en\)/.test(fn('csv')) && /ob \? \(o\.k===ob\.home \? ob\.amt : 0\) : undefined/.test(fn('histList')) && /ob \? \(k===ob\.home \? ob\.amt : 0\) : undefined/.test(fn('lookHTML')));
 t('the combined sheet: one section per group, A-Z, a person at both = one row ("2 offices · hours added"), the other row says where the bonus is',
   /sections\(\)\.forEach\(ks=>\{/.test(fn('combined')) && /if\(ks\.length>1\) list\.sort\(\(a,b\)=>byLast\(a\.p,b\.p\)\);/.test(fn('combEntries')) &&

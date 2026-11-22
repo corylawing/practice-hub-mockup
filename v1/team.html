@@ -162,6 +162,7 @@
   let PEOPLE=buildPeople(STAFF);
   rebuildOffices();
   const el=id=>document.getElementById(id);
+  const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));   // roster words go in as text (21/11/2026, code review)
   let q='', office='All';
   try{ q=new URLSearchParams(location.search).get('q')||''; }catch(_){}   // the header search lands here
   const initials=p=>(p.first[0]+(p.last[0]||'')).toUpperCase();
@@ -197,8 +198,9 @@
       const t=(p.full+' '+(p.nick||'')+' '+p.title+' '+p.office+' '+p.brand+' '+p.team+' '+p.email+' '+p.phone+' '+(p.nick||'')).toLowerCase();
       return t.includes(q.toLowerCase());
     });
+    // roster words are escaped, and the office rides in data-o, so an apostrophe can't break the button (21/11/2026, code review)
     el('filters').innerHTML=['All'].concat(OFFICES).concat(['Rotates','All offices']).map(o=>
-      '<button class="fchip'+(office===o?' on':'')+'" onclick="TEAM.office(\''+o+'\')">'+(o==='All'?'Everyone':o==='Rotates'?'Doctors':o==='All offices'?'Leadership':o)+'</button>').join('');
+      '<button class="fchip'+(office===o?' on':'')+'" data-o="'+esc(o)+'" onclick="TEAM.office(this.dataset.o)">'+esc(o==='All'?'Everyone':o==='Rotates'?'Doctors':o==='All offices'?'Leadership':o)+'</button>').join('');
     el('count').textContent=list.length+' of '+PEOPLE.length+' people';
     el('grid').innerHTML= list.length ? '<div class="grid">'+list.map(p=>{
       const pref = (isMeOf(p)&&mine&&mine.preferred)||p.nick||null;
@@ -210,19 +212,19 @@
           const ph = (window.PH && PH.photoFor) ? PH.photoFor(p.email) : '';   // the card exposes email, not mail
           if(isMe && window.PH) return '<span class="cir" style="'+PH.faceStyle(mine)+'">'+PH.face(mine)+'</span>';
           if(ph) return '<span class="cir" style="background-image:url('+ph+');background-size:cover;background-position:center"></span>';
-          return '<span class="cir" style="background:'+p.color+'">'+initials(p)+'</span>';
+          return '<span class="cir" style="background:'+p.color+'">'+esc(initials(p))+'</span>';
         })()+
-          '<div><div class="nm">'+shown+'</div>'+(pref?'<div style="font-size:11.5px;color:var(--soft)">'+p.first+' '+p.last+'</div>':'')+
-          '<div class="ttl">'+p.title+'</div></div>'+(isMe?'<span class="mine">You</span>':'')+'</div>'+
-        '<div class="row"><span class="ic">📍</span>'+p.office+'</div>'+
+          '<div><div class="nm">'+esc(shown)+'</div>'+(pref?'<div style="font-size:11.5px;color:var(--soft)">'+esc(p.first+' '+p.last)+'</div>':'')+
+          '<div class="ttl">'+esc(p.title)+'</div></div>'+(isMe?'<span class="mine">You</span>':'')+'</div>'+
+        '<div class="row"><span class="ic">📍</span>'+esc(p.office)+'</div>'+
         (p.phone
-          ? '<div class="row"><span class="ic">📞</span><a href="tel:'+p.phone.replace(/[^0-9]/g,'')+'">'+p.phone+'</a></div>'
+          ? '<div class="row"><span class="ic">📞</span><a href="tel:'+p.phone.replace(/[^0-9]/g,'')+'">'+esc(p.phone)+'</a></div>'
           : '')+
         (p.email
-          ? '<div class="row"><span class="ic">✉️</span><a href="mailto:'+p.email+'">'+p.email+'</a></div>'
+          ? '<div class="row"><span class="ic">✉️</span><a href="mailto:'+esc(p.email)+'">'+esc(p.email)+'</a></div>'
           : '<div class="row"><span class="ic">✉️</span><span class="t">No email on file — an admin can add one</span></div>')+
-        '<div class="tchips"><span class="t'+(p.isDoc?' dr':'')+'">'+p.team+'</span>'+
-          (p.brand?'<span class="t">'+p.brand+'</span>':'')+'<span class="t loc">'+p.office+'</span></div>'+
+        '<div class="tchips"><span class="t'+(p.isDoc?' dr':'')+'">'+esc(p.team)+'</span>'+
+          (p.brand?'<span class="t">'+esc(p.brand)+'</span>':'')+'<span class="t loc">'+esc(p.office)+'</span></div>'+
         (isMe?'<div class="row" style="margin-top:8px"><button style="border:1px solid var(--line);background:#fff;border-radius:9px;padding:7px 12px;font-size:12.5px;font-weight:700;color:var(--navy);cursor:pointer;font-family:inherit" onclick="PH.profile()">Edit my profile</button></div>':'')+
       '</div>';
     }).join('')+'</div>' : '<div class="empty">Nobody matches that search.</div>';

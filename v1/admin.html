@@ -1306,12 +1306,33 @@
     PH.saveRosterExtra(function(ex){ if(ex.removed.indexOf(key)<0) ex.removed.push(key); return ex; }).then(function(r){
       if(r && (r.blocked||r.error)){ alert('That did not save to SharePoint. '+(r.why||r.error||'')); return; }
       closeModal();
+      dropPaySender(u);          // and off "who sends each payroll sheet" (21/11/2026, code review)
       if(window.PH && PH.logActivity && PH.isLive())
         PH.logActivity({kind:'people', sec:'team', ic:'\u{1F464}', scope:'everyone',
           title:u.f+' '+u.l+' left'+(u.loc&&u.loc!=='Unassigned'?' '+u.loc:''),
           offices:(u.loc&&u.loc!=='Unassigned'&&u.loc!=='All offices')?u.loc.split(',').map(x=>x.trim()):[],
           teams:['Office Managers','Clinic Managers','TCs','Leadership Team','Executive Team','Admin']});
     });
+  }
+  /* Someone removed who sends an office's payroll sheet stops sending (21/11/2026, code review): off that list too, so
+     the payroll folder sync takes their folder access back - and the page says so. */
+  function dropPaySender(u){
+    const em=String((u && u.email)||'').trim().toLowerCase(), who=((u && u.f || '')+' '+(u && u.l || '')).trim();
+    if(!em || !window.PH_STORE || !PH_STORE.update || !window.PAYRULES || !PAYRULES.dropSender) return Promise.resolve(null);
+    let from=[];
+    return PH_STORE.update('ph_pay_senders', function(cur){ const d=PAYRULES.dropSender(cur, em); if(!d) return undefined;
+        from=d.from; d.rec.upd=new Date().toISOString(); d.rec.updBy=String((PH.email && PH.email(PH.me()))||'').toLowerCase(); return d.rec; })
+      .then(function(r){
+        if(r && (r.blocked||r.error)) throw new Error(r.why||r.error||'');
+        if(!from.length) return null;
+        if(PH.reloadPaySenders) PH.reloadPaySenders();
+        syncPay();
+        docToast(who+' no longer sends '+from.join(' and ')+'’s payroll sheet, so their payroll folder access is taken back. Choose who sends it now in Payroll → Settings.');
+        return from;
+      }).catch(function(){
+        docToast(who+' may still be down to send a payroll sheet - that list didn’t save. Take them off in Payroll → Settings.', true);
+        return null;
+      });
   }
   function restorePerson(key){
     PH.saveRosterExtra(function(ex){ ex.removed=ex.removed.filter(k=>k!==key); return ex; }).then(function(r){
@@ -1397,10 +1418,22 @@
       '<div class="dm-banner" style="background:var(--teal-soft);border-bottom:1px solid var(--teal-line,#c4e6e3);color:var(--teal-ink,#0c5b57);font-size:12.5px;padding:10px 20px;line-height:1.5">A team is <b>what a group of people can do</b>. Create it here and it appears as a new row in the grid \u2014 then tick what it can reach.</div>'+
       '<div class="m-body"><div class="fld"><label>Team name</label>'+
         '<input id="teamName" value="'+(d.n||'').replace(/"/g,'&quot;')+'" placeholder="e.g. Records Techs, Regional Managers"></div>'+
-        '<div class="accessbox"><h4>What happens</h4>A new team starts with <b>no access to anything</b> \u2014 you decide square by square. Then add people to it from <b>People</b>.</div></div>'+
+        '<div class="accessbox"><h4>What happens</h4>A new team starts with <b>no access to anything</b> \u2014 you decide square by square. Then add people to it from <b>People</b>.</div>'+
+        '<div id="teamErr" class="docerr" style="display:none"></div></div>'+
       '<div class="m-foot">'+(isNew?'':'<button class="btn ghost" onclick="AD.delTeam()">Delete team</button>')+
         '<span style="flex:1"></span><button class="btn ghost" onclick="AD.close()">Cancel</button>'+
         '<button class="btn" onclick="AD.saveTeam()">'+(isNew?'Create team':'Save')+'</button></div>');
+  }
+  /* A team someone is on is never renamed or deleted here (21/11/2026, code review): their saved teams would keep the old
+     name, their access would fall back to the defaults, and the TC, Payroll and Sensitive syncs would apply that in
+     SharePoint. Names compared like user.js reads them (any capitals). */
+  const teamPeople=t=>users.filter(u=>(u.teams||[]).some(x=>String(x).toLowerCase()===String(t).toLowerCase()));
+  function teamBusy(t){
+    const ps=teamPeople(t); if(!ps.length) return false;
+    const nm=ps.slice(0,5).map(u=>(u.f+' '+u.l).trim()).join(', ')+(ps.length>5?' and '+(ps.length-5)+' more':'');
+    const msg=(ps.length===1?'1 person is':ps.length+' people are')+' on '+t+' ('+nm+'). Move '+(ps.length===1?'them':'these '+ps.length+' people')+' to another team first (People → their name), then try again.';
+    const e=el('teamErr'); if(e){ e.textContent=msg; e.style.display='block'; } else docToast(msg, true);
+    return true;
   }
   function saveTeam(){
     const nm=(el('teamName')?el('teamName').value:'').trim(); if(!nm)return;
@@ -1409,6 +1442,7 @@
     if(!d.old){
       if(TEAMS.indexOf(nm)<0){ TEAMS.push(nm); access[nm]={}; allSections().forEach(x=>access[nm][x.k]='none'); }
     } else if(nm!==d.old){
+      if(teamBusy(d.old)) return;
       TEAMS=TEAMS.map(t=>t===d.old?nm:t);
       access[nm]=access[d.old]; delete access[d.old];
       users.forEach(u=>{ u.teams=u.teams.map(t=>t===d.old?nm:t); });
@@ -1419,6 +1453,7 @@
   }
   function delTeam(){
     const t=teamDraft.old; if(!t || t==='Admin')return;                 // built in: never deleted
+    if(teamBusy(t)) return;
     TEAMS=TEAMS.filter(x=>x!==t); delete access[t];
     users.forEach(u=>{ u.teams=u.teams.filter(x=>x!==t); });
     DOCSECS.forEach(sec=>{ if(sec.teams) sec.teams=sec.teams.filter(x=>x!==t); });
@@ -1459,6 +1494,7 @@
         '<div class="fld"><label>Time zone</label><select onchange="AD.setLocTZ(this.value)">'+
           TZS.map(x=>'<option'+(x===d.tz?' selected':'')+'>'+x+'</option>').join('')+'</select></div>'+
         '<div class="accessbox"><h4>What happens</h4>Adding an office creates its <b>Office Docs folder</b>, adds it to the <b>schedule board</b>, makes it selectable on <b>people\u2019s profiles</b>, and adds it to the <b>dashboard</b> once production numbers exist.</div>'+
+        '<div id="locErr" class="docerr" style="display:none"></div>'+
       '</div>'+
       '<div class="m-foot">'+(isNew?'':'<button class="btn ghost" onclick="AD.delLoc()">Delete</button>')+
         '<span style="flex:1"></span><button class="btn ghost" onclick="AD.close()">Cancel</button>'+
@@ -1467,8 +1503,15 @@
   function setLocBrand(v){locDraft.brand=v;renderLocModal();}
   function setLocState(v){locDraft.state=v;}
   function setLocTZ(v){locDraft.tz=v;}
+  /* (21/11/2026, code review) Never two offices with one name (any capitals). And an office is RENAMED on the Schedule,
+     where its schedule days move with it - here the days would stay under the old name. Said in the page. */
+  const locTaken=(nm, own)=>LOCS.some(l=>String(l.n).toLowerCase()===String(nm).toLowerCase() && l.n!==own);
+  function locErr(t){ const e=el('locErr'); if(e){ e.textContent=t; e.style.display='block'; } else docToast(t, true); }
   function saveLoc(){
     const nm=(el('locName')?el('locName').value:locDraft.n).trim(); if(!nm)return;
+    const own=locDraft.i<0 ? null : locDraft.n;
+    if(locTaken(nm, own)){ locErr('There’s already an office called '+nm+'.'); return; }
+    if(own!==null && nm!==own){ locErr('To rename '+own+', use the Schedule (the ✎ beside its name) - its schedule days move with it there. Brand, state and time zone are changed here.'); return; }
     // Keep whatever the Schedule owns on this record — color, lunch and opening days —
     // otherwise saving a brand or timezone here would silently wipe the rota.
     const keep = locDraft.i<0 ? {} : LOCS[locDraft.i];
@@ -1476,7 +1519,17 @@
     if(locDraft.i<0) LOCS.push(rec); else LOCS[locDraft.i]=rec;
     saveLocs(); closeModal(); renderLocs();
   }
-  function delLoc(){ if(locDraft.i>=0){LOCS.splice(locDraft.i,1); saveLocs();} closeModal(); renderLocs(); }
+  /* Deleting an office asks first, in the page (21/11/2026, code review). */
+  function delLoc(){
+    if(locDraft.i<0){ closeModal(); renderLocs(); return; }
+    openModal('<div class="m-top"><h3 style="margin:0;font-size:17px;color:var(--navy)">Delete '+esc(locDraft.n)+'?</h3><button class="x" onclick="AD.close()">×</button></div>'+
+      '<div class="m-body"><p style="font-size:14px;color:var(--ink);margin:0;line-height:1.5">'+esc(locDraft.n)+' comes off Locations for everyone.</p></div>'+
+      '<div class="m-foot"><span style="flex:1"></span><button class="btn ghost" onclick="AD.close()">Cancel</button><button class="btn danger" onclick="AD.delLocGo()">Delete location</button></div>');
+  }
+  function delLocGo(){
+    const i=(LOCS[locDraft.i] && LOCS[locDraft.i].n===locDraft.n) ? locDraft.i : LOCS.findIndex(l=>l.n===locDraft.n);
+    if(i>=0){LOCS.splice(i,1); saveLocs();} closeModal(); renderLocs();
+  }
   function resetLocs(){ try{localStorage.removeItem('ph_locations');}catch(_){} LOCS=PH.locations(); renderLocs(); }
 
   /* ---------- DOCUMENT SECTIONS (admin can create these) ---------- */
@@ -2357,7 +2410,7 @@
   window.addEventListener('hashchange', ()=>{ if(location.hash==='#feedback') tabSet('fb'); else if(location.hash==='#usage') tabSet('use'); });
   if(location.hash==='#usage') setTimeout(()=>tabSet('use'), 0);      // the bell's "new feedback" opens here
   window.AD={chatAdd,chatDel,chatRetry,tabNow:()=>tab,setupSecs,editSyncNow,tcSyncNow,paySyncNow,sensAdd,sensChange,sensRemove,sensClose,sensQ,sensToggle,sensClear,sensLevel,sensTyped,sensBack,sensNext,sensGo,sensSyncNow,tab:tabSet,viewAs:doViewAs,newTeam,editTeam,saveTeam:thenSync(saveTeam),delTeam:thenSync(delTeam),resetTeams,profile,whyNoAdd,
-    addPerson,npSet,npLoc,npTeam,saveNewPerson:thenSync(saveNewPerson),accTeam:setAccTeam,removePerson:thenSync(removePerson),restorePerson:thenSync(restorePerson),showRemoved,togTeam,togLoc,setStatus,saveUser:thenSync(saveUser),pickLevel,pickAud,setField,pickPhoto,photoChosen,clearPhoto,pickUserLevel,clearUserLevel,tog,addFile,noop,newSec,editSec,saveSec:thenSync(saveSec),delSec,delSecGo,resetSecs,setSecName,setSecIcon,setSecStruct,setSecLocMode,setSecTeamMode,togSecLoc,togSecTeam,saveFile,cd,useFile,clearFile,uploadFile,setFileTeamMode,setFileLocMode,togFileLoc,togFileTeam,renderLocs,newLoc,editLoc,saveLoc,delLoc,resetLocs,setLocBrand,setLocState,setLocTZ,testAlert,setCeleb,hireOpen,hireRead,hireSet,hireSave,close:closeModal};
+    addPerson,npSet,npLoc,npTeam,saveNewPerson:thenSync(saveNewPerson),accTeam:setAccTeam,removePerson:thenSync(removePerson),restorePerson:thenSync(restorePerson),showRemoved,togTeam,togLoc,setStatus,saveUser:thenSync(saveUser),pickLevel,pickAud,setField,pickPhoto,photoChosen,clearPhoto,pickUserLevel,clearUserLevel,tog,addFile,noop,newSec,editSec,saveSec:thenSync(saveSec),delSec,delSecGo,resetSecs,setSecName,setSecIcon,setSecStruct,setSecLocMode,setSecTeamMode,togSecLoc,togSecTeam,saveFile,cd,useFile,clearFile,uploadFile,setFileTeamMode,setFileLocMode,togFileLoc,togFileTeam,renderLocs,newLoc,editLoc,saveLoc,delLoc,delLocGo,resetLocs,setLocBrand,setLocState,setLocTZ,testAlert,setCeleb,hireOpen,hireRead,hireSet,hireSave,close:closeModal};
   el('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
   /* Load the real roster before the first paint. If it isn't there (the public

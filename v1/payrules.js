@@ -218,8 +218,23 @@
     return {want, noEmail};
   }
 
+  /* Someone taken off the team list stops sending (21/11/2026, code review): their email comes off every office's list
+     in 'ph_pay_senders', so the folder sync takes their office folder back. rec = that list -> {rec: a copy without
+     them, from: [office names]}, or null when they weren't on it (nothing to write). Nobody else is touched. */
+  function dropSender(rec, em){
+    em=String(em||'').trim().toLowerCase();
+    if(!em || !rec || typeof rec!=='object' || !rec.offices || typeof rec.offices!=='object') return null;
+    const offices={}, from=[];
+    Object.keys(rec.offices).forEach(o=>{ const l=rec.offices[o];
+      if(!Array.isArray(l)){ offices[o]=l; return; }
+      const kept=l.filter(e=>String(e||'').trim().toLowerCase()!==em);
+      if(kept.length!==l.length) from.push(o);
+      offices[o]=kept; });
+    return from.length ? {rec:Object.assign({}, rec, {offices}), from} : null;
+  }
+
   const api={OFFICES, OFF, OFFEXTRA, BASE_OFFICES, BYS, keyFor, cleanOffices, setOffices, newOffices, syncOffices, OFF_KEY:'ph_pay_offices', SAFE_NAME, RATES, RATE_LIMITS, RATE_KEY:'ph_pay_rates', cleanRates, ratesOn, HOLIDAYS, EDITS, holidaysFor, holidaysThrough, holIn, holDates, cleanEdits, withEdits, setHolidayEdits, HOL_KEY:'ph_pay_holidays', ANCHOR, FIRST, addDays, dow, days, todayISO, workdayBefore, payOf, numberOf, period, currentIndex, indexOfKey,
-    eligibleOn, eligible, num, r2, cutVal, cutBy, otOK, calc, wanted};
+    eligibleOn, eligible, num, r2, cutVal, cutBy, otOK, calc, wanted, dropSender};
   global.PAYRULES=api;
   if(typeof module!=='undefined' && module.exports) module.exports=api;
 })(typeof window!=='undefined' ? window : globalThis);
