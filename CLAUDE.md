@@ -601,6 +601,29 @@ I can confidently say that the chat feature should go next. The production thing
       chat link is checked with Microsoft every 12 h (chk). chat.html: a forward alerts like a message. Sign out (PH.signOut)
       turns this device's alerts off first (a shared computer got the last person's chat alerts).
     - deploy-production.sh: the staging folder (alert key + chat certificate copies) is removed on exit.
+    PAGES (four fixers, each reviewed + merged; tests codereview / codereview-pay / codereview-mkt / tcsave):
+    - Payroll: holiday pay/hours only on a two-office person's HOME row (oneBonus home, like the bonus) - it was paid on
+      both; an ENTERED sheet is locked in its file (saves refused except the tick, "Reload" note); a person with no row is
+      flagged "no hours"; an addition never lands on an office entered before it; taken-off people with anything typed
+      stay; due/late by PH.centralNow(); pending saves flushed on pagehide; CSV text starting = + - @ gets '.
+      Admin: a team with people can't be renamed/deleted; Locations: duplicate names refused, renames sent to the Schedule,
+      delete asks; removing a sender takes them off ph_pay_senders (payrules dropSender). Photos: okPhoto() as user.js.
+    - Production: a month after this one (Central) can't be saved in Home-Brace mode (December typed in January); the save
+      keeps the office/month/year it started with and locks the pickers; unreadable boxes (validity.badInput) refused,
+      paste strips $ , spaces; audit stamp once per landed save; late notice once per office+month; form not rebuilt
+      while typing (quietRender). mode() rejection = "Couldn't tell where the production numbers live" + stop (both pages).
+      Dashboard: no red "behind pace" before production is typed; the chosen office stays. Schedule: Delete office refused
+      while it has days (or the schedule part-loaded), asks otherwise; duplicate office names refused; doctor list saved
+      BEFORE renumbered cells. Admin goals editor: "save or discard first".
+    - TC Tracker: a save lays only the changed fields on the STORED consult (TC.mergeConsult; call logs joined by at+by);
+      a move writes the new month first, the "moved" marker after; can't close while saving; Settings locked when
+      ph_tclists didn't read; Year row sums schedStart/cancelled. Tasks: the sheet closes only once saved ("saved on this
+      device" when held); change() returns undefined when nothing changed (chained callers: `rec=f(rec||cur,..)||rec`).
+    - Marketing: card title/owner/result escaped (was script injection); new card ids time+random (two people's new cards
+      overwrote each other); "Where I'll be" is SHARED now (ph_mktgwhere via update(); this browser's old entries added
+      once). Monthly: write() keeps the office/month/edits it started with, refusals say "Not saved", typing during a save
+      kept, settings never saved over a failed read, streaks read back up to 36 months, putMonth() changes only that
+      office-month. Insights/periodpick: Central "today"; year to date vs last year by month and day.
     NOT CHANGED (needs a look first): rosterByName also matches staff-list rows that HAVE an email - a guest whose display
     name copies a staff member's would get their access; restricting it could lock out someone whose list email differs
     from their Microsoft one (check the live list read-only first). copyFromBytes still uploads the layout before the
