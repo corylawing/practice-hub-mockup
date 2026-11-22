@@ -445,7 +445,6 @@
 
   const WK={s:480,e:1020};   // 8:00a – 5:00p
   const HALF={s:480,e:840};  // 8:00a – 2:00p  (their half day)
-  const SAT={s:480,e:840};
 
   // Same list Admin edits (lives in user.js). Add an office in either place and it
   // shows up in both — plus the dashboard, documents, team and marketing.
@@ -506,7 +505,9 @@
          every path that touches a day - the day editor, office hours following, a doctor
          removed, an office renamed - is covered without instrumenting each one. One save
          at a time from this page: anything changed while one is on its way goes next. */
-      if(saving) again=true; else sendCells();
+      /* When the doctor list changed too it goes FIRST and the cells only once it is taken: removing a doctor renumbers
+         the days, and renumbered cells used to land even when the list was then refused (21/11/2026, code review). */
+      if(JSON.stringify(people)===docsSaved){ if(saving) again=true; else sendCells(); }
     } else {
       if(window.PH_STORE) PH_STORE.set('ph_sched2', sched);
       else try{ localStorage.setItem('ph_sched2',JSON.stringify(sched)); }catch(_){}
@@ -532,7 +533,7 @@
           if(clash){
             alert('The doctor list was changed by someone else while this page was open. '+
                   'Reload to see their version, then make your change again.');
-          } else if(r && !r.blocked){ docsSaved=docsNow; docsLoaded=docsNow; }
+          } else if(r && !r.blocked){ docsSaved=docsNow; docsLoaded=docsNow; if(saving) again=true; else sendCells(); }
         });
       } else {
         docsSaved=docsNow;
@@ -1102,7 +1103,7 @@
     openModal(
       '<div class="m-top"><h3>'+(t.isNew?'Add an office':'Edit '+t.orig)+'</h3><button class="x" onclick="PS.close()">×</button></div>'+
       '<div class="m-body">'+
-        '<div class="s-lab">Office name</div><input class="s-input" id="lName" value="'+(t.n||'').replace(/"/g,'&quot;')+'" placeholder="e.g. Roswell">'+
+        '<div class="s-lab">Office name</div><input class="s-input" id="lName" value="'+(t.n||'').replace(/"/g,'&quot;')+'" placeholder="e.g. Roswell"><div class="merr" id="lErr"></div>'+
         '<div class="s-lab">Color — how this office shows on the schedule</div><div class="colgrid">'+cols+'</div>'+
         '<div class="s-lab">Time zone</div><select class="s-input" onchange="PS.setTZ(this.value)">'+TZS.map(z=>'<option'+(z===t.tz?' selected':'')+'>'+z+'</option>').join('')+'</select>'+
         '<div class="s-lab">Office hours</div>'+days+
@@ -1153,6 +1154,10 @@
 
   function saveLoc(){
     const nm=(el('lName').value||'').trim(); if(!nm)return;
+    /* A name another office already has took over that office's days (21/11/2026, code review) - ignoring case and spaces. */
+    const same=x=>String(x||'').replace(/\s+/g,'').toLowerCase();
+    const twin=locations.find(l=>(tmpLoc.isNew || l.n!==tmpLoc.orig) && same(l.n)===same(nm));
+    if(twin){ const e=el('lErr'); if(e) e.textContent='There is already an office called '+twin.n+'. Pick another name.'; return; }
     // Keep brand/state from Admin — this page doesn't edit them and must not drop them.
     const keep = tmpLoc.isNew ? {} : (locations.find(l=>l.n===tmpLoc.orig)||{});
     const rec=Object.assign({},keep,{n:nm,color:tmpLoc.color,tz:tmpLoc.tz,lunch:tmpLoc.lunch,hours:tmpLoc.hours});
@@ -1186,7 +1191,26 @@
     }
     save(); PH.saveLocations(locations); closeModal(); refresh();
   }
-  function delLoc(){
+  /* "Delete office" took the office off the shared list and its days off every date of every year, in one tap
+     (21/11/2026, code review). Now it is refused while the office has any day on the schedule - or while part of the
+     schedule couldn't be read - and asks first when it has none. */
+  let schedPart=false;   // some of the schedule didn't load, so its days can't be counted
+  function locDays(n){ return Object.keys(sched).filter(k=>{ if(!isDay(k)) return false; const c=(sched[k]||{})[n]; return !!(c && typeof c==='object' && Object.keys(c).length); }).length; }
+  function delLoc(){ if(!canEdit()) return;
+    const n=tmpLoc.orig, days=locDays(n);
+    if(days || schedPart){
+      openModal('<div class="m-top"><h3>'+escH(n)+' can\u2019t be deleted yet</h3><button class="x" onclick="PS.close()">×</button></div>'+
+        '<div class="m-body">'+(days
+          ? escH(n)+' has <b>'+days+' day'+(days===1?'':'s')+'</b> on the schedule. Clear or move its days first, then delete the office.'
+          : 'Part of the schedule couldn\u2019t be loaded, so '+escH(n)+'\u2019s days can\u2019t be counted. Reload the page and try again.')+'</div>'+
+        '<div class="m-foot"><span style="flex:1"></span><button class="sbtn" onclick="PS.close()">OK</button></div>');
+      return;
+    }
+    openModal('<div class="m-top"><h3>Delete '+escH(n)+'?</h3><button class="x" onclick="PS.close()">×</button></div>'+
+      '<div class="m-body">'+escH(n)+' has no days on the schedule. It comes off the practice\u2019s office list for everyone.</div>'+
+      '<div class="m-foot"><span style="flex:1"></span><button class="sbtn ghost" onclick="PS.close()">Keep it</button><button class="sbtn" style="background:#C4321C" onclick="PS.delLocGo()">Delete office</button></div>');
+  }
+  function delLocGo(){ if(!canEdit() || !tmpLoc || tmpLoc.isNew || schedPart || locDays(tmpLoc.orig)) return;
     locations=locations.filter(l=>l.n!==tmpLoc.orig); fLoc.delete(tmpLoc.orig);
     Object.keys(sched).forEach(k=>delete sched[k][tmpLoc.orig]);
     save(); PH.saveLocations(locations); closeModal(); refresh();
@@ -1560,7 +1584,7 @@
   document.addEventListener('ph-identity', function(){ if(booted){ applyPerms(); refresh(); } });
 
   window.PS={view:setView,step,today,togLoc,allLocs,togDoc,allDocs,unleave,togYdot,togClosed,togEvent,setEvent,open,addTo,quick,pickDoc,setT,halfDay,fullDay,markYdot,markClosed,
-    clearDay,saveDay,addLocation,editLoc,setColor,setTZ,dtog,dtime,lunchTog,lunchT,saveLoc,delLoc,
+    clearDay,saveDay,addLocation,editLoc,setColor,setTZ,dtog,dtime,lunchTog,lunchT,saveLoc,delLoc,delLocGo,
     relocate:function(){ locations=PH.locations(); locations.forEach(l=>fLoc.add(l.n)); refresh(); },
     pickMonth,goMonth,jumpTo,countStep,mode,newMeet,meetSave,meetCancelAsk,meetCancel,meetChange,meetAsk,
     addPerson,edit:editPerson,savePerson,delPerson,close:closeModal};
@@ -1669,6 +1693,7 @@
     Promise.all([ PH_SCHED.load(), PH_STORE.get('ph_docs') ])
            .then(function(r){
              const L = r[0], got = L.sched || local;
+             schedPart = !!(L.baseFailed || L.failed.length || L.unknown);
              boot(got, r[1] || ldocs, L.baseFailed && !got,
                   PH_STORE.readFailed('ph_docs') && !r[1]);
              if(L.failed.length)
@@ -1677,7 +1702,7 @@
              else if(L.unknown && new Date().getFullYear()>=PH_SCHED.CUT-1)
                warn('<b>Days from '+PH_SCHED.CUT+' on could not be loaded just now.</b> Nothing has been lost. Reload the page in a moment.');
            })
-           .catch(function(){ boot(local, ldocs, !local, !ldocs); });
+           .catch(function(){ schedPart = true; boot(local, ldocs, !local, !ldocs); });
   } else boot(local, ldocs, false, false);
 })();
 </script>

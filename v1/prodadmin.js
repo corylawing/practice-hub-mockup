@@ -15,6 +15,7 @@
   var live = function(){ return !!(global.PH && global.PH.isLive && global.PH.isLive()); };
   var host = null, IDX = null, LOGS = {}, open = null, busy = '', msg = null, pending = null, MODE = null, sw = null, NEXT = null, nextOpen = {};
   var GY = null, GO = null, GM = null, GEDIT = {}, GPREV = {}, GERR = '', gTimer = null;
+  var GWAIT = '';   // "save or discard first" - said, without stopping Save (21/11/2026, code review)
   var FY = null, FT = null, FM = null, FQ = '', FED = null, FMSG = null, fTimer = null, fLoading = false;   // Formulas
   var PCOV = null;   // {office: [12 x true when the Schedule decides that month's production days]}
   var OLDY = false, PSERR = '', PY = null, PO = null, PM = null, PD = null, PDIRTY = false, PPREV = null, PERR = '', PMSG = null, POPEN = {}, pTimer = null, pLoading = false, ADV = false;   // Plan, Advanced
@@ -243,7 +244,8 @@
       '<button class="btn ghost" data-pd="gdiscard"'+(n ? '' : ' hidden')+'>Discard changes</button></div>';
     return h + '</div>';
   }
-  function gErrHTML(){ return GERR ? '<div class="stat warn" style="margin-top:10px"><span>⚠️</span><span class="grow">'+esc(GERR)+'</span></div>' : ''; }
+  function gErrHTML(){ return (GERR ? '<div class="stat warn" style="margin-top:10px"><span>⚠️</span><span class="grow">'+esc(GERR)+'</span></div>' : '')+
+    (GWAIT ? '<div class="stat warn" style="margin-top:10px"><span>⚠️</span><span class="grow">'+esc(GWAIT)+'</span></div>' : ''); }
   function gSaveLabel(){ var n = Object.keys(GEDIT).length; return busy === 'gsave' ? 'Saving…' : 'Save '+esc(GO)+' '+esc(GY)+(n ? ' ('+n+' change'+(n > 1 ? 's' : '')+')' : ''); }
   /* While she types: only the dollar figures, the error line and the Save button change - the box
      she is typing in is never redrawn. */
@@ -275,7 +277,7 @@
   var gLoading = false;
   function gLoad(){
     if(gLoading) return; gLoading = true;
-    GM = null; GEDIT = {}; GPREV = {}; GERR = '';
+    GM = null; GEDIT = {}; GPREV = {}; GERR = ''; GWAIT = '';
     P().goalModel(+GY, GO).then(function(m){ gLoading = false; GM = m; render(); }, function(e){ gLoading = false; GERR = 'Could not read '+GO+' '+GY+': '+((e && e.message) || e); GM = {year:+GY, office:GO, rows:[], tab:''}; render(); });
   }
   function gPreview(){
@@ -837,7 +839,7 @@
       P().previewNextYear().then(function(pv){ busy = ''; NEXT = pv; nextOpen = {}; render(); }, function(err){ busy = ''; say('warn','⚠️','Could not work out next year: '+esc(err.message||err)); render(); });
     }
     if(act === 'nextclose'){ NEXT = null; render(); }
-    if(act === 'gdiscard'){ GEDIT = {}; GPREV = {}; GERR = ''; render(); }
+    if(act === 'gdiscard'){ GEDIT = {}; GPREV = {}; GERR = ''; GWAIT = ''; render(); }
     if(act === 'gsave'){
       var ch = Object.keys(GEDIT).map(function(k){ return GEDIT[k].change; });
       busy = 'gsave'; render();
@@ -891,6 +893,9 @@
       if(row && v !== '') row.cells.forEach(function(x){ var k = x.rule.kind; if(row.key === 'days' || k === 'times' || k === 'amount' || k === 'empty') GEDIT[x.cell] = {text:v, change:gChange(row.key, x.cell, v)}; });
       render(); gPreview(); return;
     }
+    /* Changing the year or office threw away goals typed and not saved - the same guard as Plan the year (21/11/2026, code review). */
+    if(t.dataset && (t.dataset.pd === 'gy' || t.dataset.pd === 'go') && Object.keys(GEDIT).length){
+      t.value = String(t.dataset.pd === 'gy' ? GY : GO); GWAIT = 'Save or discard '+GO+' '+GY+'’s changes first.'; gPaint(); return; }
     if(t.dataset && t.dataset.pd === 'gy'){ GY = t.value; gLoad(); return; }
     if(t.dataset && t.dataset.pl === 'stbase' && PD && PM){ var was = PD.st && PD.st.main; PD.stBase = t.value; PD.st = P().planLine(PM, 'stretch', t.value);
       if(PD.st && PD.st.main == null && was != null) PD.st.main = was; PDIRTY = true; PPREV = null; PERR = ''; render(); pPreview(); return; }

@@ -405,17 +405,6 @@ const OFFICES=[
       days:zero(), done:zero()});
   });
 })();
-// Numbers typed on the "Enter Production" page flow straight into this dashboard.
-(function applyEdits(){
-  let e={}; try{ e=JSON.parse(localStorage.getItem('ph_prod'))||{}; }catch(_){ return; }
-  Object.keys(e).forEach(k=>{
-    const p=k.split('|'), o=OFFICES.find(x=>x.n===p[0]), m=+p[1], v=e[k];
-    if(!o||isNaN(m)) return;
-    if(v._total!==undefined&&v._total!=='') o.act[m]=Number(v._total);
-    if(v._goal!==undefined&&v._goal!=='')   o.goal[m]=Number(v._goal);
-    if(v._days!==undefined&&v._days!=='')  o.done[m]=Number(v._days);
-  });
-})();
 (function(){
   const MO=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const MOFULL=['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -426,9 +415,9 @@ const OFFICES=[
     {id:'tc',name:'Treatment Coordinator',offices:[]},
     {id:'staff',name:'Front Desk / Staff',offices:[]}
   ];
-  const NAVSECS=[{k:'schedule',n:'📅 Schedule',href:'schedule.html'},{k:'marketing',n:'📣 Marketing',href:'marketing.html'}];
   const el=id=>document.getElementById(id);
   let cur=PERSONAS[0], sel='ALL', allowed=[];
+  let chosen=false;   // the person picked sel themselves (21/11/2026, code review)
   let combine=false, combined=new Set();
   let shown=null;
   const curOffice=()=>shown;
@@ -448,7 +437,6 @@ const OFFICES=[
   }
   let year=LIVE_YEAR, FROM_HB=false;
   const Z=()=>Array(12).fill(0);
-  const yearHasGoals=y=>y===LIVE_YEAR;
   // Return an office shaped exactly like the live year, whatever the selected year holds.
   function yearOf(o){
     if(year===LIVE_YEAR) return o;
@@ -651,7 +639,9 @@ const OFFICES=[
   function gauges(o){
     const t=stats(o), st=sStats(o);
     const c0=partial(o);
-    const paced = inProgress(o) && c0>=0 && o.done[c0]>0;
+    /* Completed days now fill in from the Schedule as each day passes, so a month with days but no production typed
+       yet is pending too - not every office in red "behind pace" (21/11/2026, code review). */
+    const paced = inProgress(o) && c0>=0 && o.done[c0]>0 && o.act[c0]>0;
     const par = paced ? ' pace' : ' goal';
     // Heather flagged this: "Main goal" meant two different things depending on whether the
     // office had logged its days — a part-month goal on some tiles, the whole month's on
@@ -661,18 +651,19 @@ const OFFICES=[
     const goalLab = (period==='mtd'||isMonth()) ? 'Monthly goal' : 'Goal';
     // With no days logged we can't say whether they're behind — comparing a part month to a
     // whole month's goal produced a red 9% and "$205,505 behind goal" that simply wasn't true.
-    const pending = inProgress(o) && c0>=0 && !o.done[c0];
+    const pending = inProgress(o) && c0>=0 && (!o.done[c0] || !o.act[c0]);
+    const waitFor = (pending && o.done[c0]) ? 'this month\u2019s production' : 'days worked';   // what it is waiting for
     const sVerdict = o.noGoals
       ? (o.hasStarts===false ? 'Starts aren\u2019t on file for '+year
          : 'Worked out from '+year+'\u2019s production and average case fee.')
-      : pending ? '\u23f3 Enter days worked to see whether this is on pace.'
+      : pending ? '\u23f3 Enter '+waitFor+' to see whether this is on pace.'
       : paced ? ((st.vpace>=0?'\u2705 ':'\u26a0\ufe0f ')+Math.abs(Math.round(st.vpace))+
                  ' starts '+(st.vpace>=0?'ahead of':'behind')+' pace')
       : (st.v>=0 ? '\u2705 '+Math.abs(Math.round(st.v))+' starts over goal'
                  : '\u26a0\ufe0f '+Math.abs(Math.round(st.v))+' starts to go');
     const pVerdict = o.noGoals
       ? year+' actuals from the workbook \u2014 no goals were recorded for that year.'
-      : pending ? '\u23f3 Enter days worked to see whether this is on pace.'
+      : pending ? '\u23f3 Enter '+waitFor+' to see whether this is on pace.'
       : paced ? ((t.vpace>=0?'\u2705 ':'\u26a0\ufe0f ')+full(Math.abs(t.vpace))+
                  (t.vpace>=0?' ahead of':' behind')+' pace for '+o.done[c0]+' of '+o.days[c0]+' days')
       : (t.vgoal>=0 ? '\u2705 '+full(Math.abs(t.vgoal))+' over goal'
@@ -693,7 +684,7 @@ const OFFICES=[
                  '<span>Per day <b>'+money(t.perDay)+'</b> vs <b>'+money(t.needPerDay)+'</b> needed</span>'+
                  (paced?'<span style="color:var(--teal-600)">'+o.done[c0]+' of '+o.days[c0]+
                         ' days done \u2014 pace target '+money(t.gPace)+'</span>'
-                   :(pending?'<span style="color:var(--amber)">no days logged yet \u2014 shown against the whole month</span>':''))})+
+                   :(pending?'<span style="color:var(--amber)">'+(o.done[c0]?'no production entered yet':'no days logged yet')+' \u2014 shown against the whole month</span>':''))})+
       gauge({icon:'\ud83e\uddb7',title:'Starts',
         big:(o.noGoals&&o.hasStarts===false)?'\u2014':Math.round(st.a)+' starts',noGoal:!!o.noGoals,
         sub:(period==='mtd'?monthName(o)+' so far'+dayNote:(isMonth()?MOFULL[period]:'Year so far'))+' \u00b7 '+st.perDay.toFixed(1)+' a day',
@@ -1088,7 +1079,7 @@ const OFFICES=[
   function pick(n){
     if(combine && n!=='ALL'){ combined.has(n)?combined.delete(n):combined.add(n); render(); return; }
     if(n==='ALL'){ combine=false; combined.clear(); }
-    sel=n; render(); window.scrollTo({top:0,behavior:'smooth'});
+    sel=n; chosen=true; render(); window.scrollTo({top:0,behavior:'smooth'});
   }
   function toggleCombine(){
     combine=!combine;
@@ -1213,7 +1204,12 @@ const OFFICES=[
        Home-Brace, they come from Home-Brace's own books - same series, same sums (prodstore.js
        dashboardData runs her formulas through workbook.js office()). Until then, her Excel. */
     let mode={source:'excel'};
-    try{ if(window.PH_PROD) mode=await PH_PROD.mode(); }catch(_){}
+    /* PH_PROD.mode() rejects when this device couldn't read the switch and has no copy of it: say so and stop, rather
+       than guess "her Excel" (21/11/2026, code review). */
+    if(window.PH_PROD){
+      try{ mode=await PH_PROD.mode(); }
+      catch(_){ banner('<b>Couldn\u2019t tell where the production numbers live right now \u2014 reload to try again.</b>', true); return false; }
+    }
     if(mode.source==='homebrace'){
       banner('Reading Home-Brace\u2019s production numbers\u2026');
       let hb;
@@ -1312,7 +1308,10 @@ const OFFICES=[
     }
     cur=real;
     allowed = cur.offices==='all' ? OFFICES.slice() : OFFICES.filter(o=>cur.offices.indexOf(o.n)>=0);
-    sel = allowed.length>1 ? 'ALL' : (allowed[0] ? allowed[0].n : 'ALL');
+    /* Who you are lands in stages; keep what you picked while you may still see it - it was thrown back to All
+       Offices on every update, as Enter Production's office once was (21/11/2026, code review). */
+    if(!(chosen && (sel==='ALL' || allowed.some(o=>o.n===sel))))
+      sel = allowed.length>1 ? 'ALL' : (allowed[0] ? allowed[0].n : 'ALL');
     render();
     return true;
   }
