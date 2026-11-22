@@ -357,7 +357,7 @@
     if(folds.length){
       const rows=folds.map(f=>{
         let chips='';
-        if(f.perLocation){ const locs = p.scope==='all'?LOCS:(p.scopes||[p.scope]); chips=locs.map(l=>'<span class="locchip">'+l+'</span>').join(''); }
+        if(f.perLocation){ const locs = p.scope==='all'?LOCS:(p.scopes||[p.scope]); chips=locs.map(l=>'<span class="locchip">'+esc(l)+'</span>').join(''); }      // office names are typed in Admin: escaped (21/11/2026, code review)
         else if(f.perBrand){ chips=BRANDS.map(b=>'<span class="locchip brand">'+b+'</span>').join(''); }
         else if(f.note){ chips='<span style="font-size:12px;color:var(--soft)">'+f.note+'</span>'; }
         return '<div class="frow"><span class="fn">'+f.n+'</span>'+chips+'<span class="capmini '+p.doc[f.k]+'">'+CAPSHORT[p.doc[f.k]]+'</span></div>';
@@ -407,7 +407,7 @@
     greet();
     el('who_sub').textContent=cur.sub;
     const nSec=SECTIONS.filter(s=>s.kind==='tool'&&(!s.adminOnly||cur.id==='admin')&&cur.sec[s.k]).length + (foldersFor(cur).length?1:0);
-    const docScope = cur.scope==='all'?'all offices':('the '+(cur.scopes||[cur.scope]).join(', ')+' folder'+((cur.scopes||[]).length>1?'s':'')+' only');
+    const docScope = cur.scope==='all'?'all offices':('the '+esc((cur.scopes||[cur.scope]).join(', '))+' folder'+((cur.scopes||[]).length>1?'s':'')+' only');
     el('summary').innerHTML='Sees <b>'+nSec+'</b> section'+(nSec===1?'':'s')+'. In Documents, sees <b>'+docScope+'</b>.'+(cur.id==='admin'?' Plus the <b>Admin console</b> to manage everyone.':'');
     PH.nav('home'); renderUpdates(cur); renderTiles(cur);
     if(typeof renderTasks==='function' && TASKS_READY) try{ renderTasks(); }catch(_){}
@@ -433,8 +433,13 @@
     const draw=rec=>{ try{ PH_PARTY.card(host, PH_PARTY.peopleFrom(rec, roster, PH.photoFor), {me, demo:!live, onSeen}); }catch(e){ if(host) host.hidden=true; } };
     if(!live){ let mine=null; try{ mine=JSON.parse(localStorage.getItem(PH.PARTY_KEY)); }catch(_){}
       const d=PH_PARTY.demo(); draw({v:1, p:Object.assign({}, d.p, (mine && mine.p)||{})}); return; }
-    if(window.PH_STORE) PH_STORE.get(PH.PARTY_KEY).then(r=>draw(r||{}), ()=>{});
+    if(window.PH_STORE) partyRead().then(r=>draw(r||{}), ()=>{});
   }
+  /* One read of ph_celebrate at a time: sign-in fires 4-6 identity updates, and each redraw shares the read already on
+     its way instead of starting another (21/11/2026, code review). Same for ph_tasks below. */
+  let PARTY_P=null, TASKS_P=null;
+  function partyRead(){ return PARTY_P || (PARTY_P=PH_STORE.get(PH.PARTY_KEY).then(r=>{ PARTY_P=null; return r; }, e=>{ PARTY_P=null; throw e; })); }
+  function tasksRead(key){ return TASKS_P || (TASKS_P=PH_STORE.get(key).then(r=>{ TASKS_P=null; return r; }, e=>{ TASKS_P=null; throw e; })); }
   renderParty();
   document.addEventListener('ph-identity', function(){ try{ renderParty(); }catch(_){} });
   /* YOUR TASKS (tasks.js): the open ones given to you, overdue and due-today first, with a tick right here; for people who
@@ -450,7 +455,7 @@
     else { const a=TASK_AS[cur && cur.id]; if(!a){ host.hidden=true; return; }
       const p=R.demo(PH.officeNames()).people.find(x=>x.name===a[0]); TASKME={name:p.name, email:p.email, level:a[2], as:a[1]}; }
     const got=raw=>{ TASKREC=R.cleanRecord(raw); drawTasks(); };
-    if(live){ if(window.PH_STORE) PH_STORE.get(R.KEY).then(got, ()=>{ host.hidden=true; }); if(R.remindTick) R.remindTick(); return; }
+    if(live){ if(window.PH_STORE) tasksRead(R.KEY).then(got, ()=>{ host.hidden=true; }); if(R.remindTick) R.remindTick(); return; }
     let v=''; try{ v=localStorage.getItem('ph_tasks_demo'); }catch(_){}
     let raw=null; try{ raw=JSON.parse(localStorage.getItem(R.KEY)); }catch(_){}
     if(v!=='2' || !raw){ raw=R.demo(PH.officeNames(), new Date(), PH.centralNow ? PH.centralNow().date : '').rec; if(window.PH_STORE) PH_STORE.set(R.KEY, raw); try{ localStorage.setItem('ph_tasks_demo','2'); }catch(_){} }
@@ -481,7 +486,7 @@
     setTimeout(function(){ R.finish(id, k, TASKME.name, null).then(function(res){ if(res && res.value) TASKREC=R.cleanRecord(res.value); drawTasks(); }, drawTasks); }, 650);
   });
   TASKS_READY=true; renderTasks();
-  document.addEventListener('ph-identity', function(){ try{ renderTasks(); }catch(_){} });
+  // No second ph-identity listener here: set() already redraws the tasks on every identity update (21/11/2026, code review).
   window.HOME={set, refreshUpdates};
   let saved='admin'; try{ saved=localStorage.getItem('ph_viewas')||'admin'; }catch(_){}
   if(!PERSONAS.some(p=>p.id===saved)) saved='admin';

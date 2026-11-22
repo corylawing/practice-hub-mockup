@@ -203,10 +203,13 @@
   }
 
   /* ---------- changes (each returns the new record; used inside PH_STORE.update, so they merge) ---------- */
+  /* Nothing changed (no such task, refused, or the same task again) -> undefined, so PH_STORE.update writes nothing
+     (21/11/2026, code review). A caller chaining several changes keeps the last record: `rec=f(rec, ...) || rec`. */
   function change(rec, id, fn){
-    rec=cleanRecord(rec); const t=rec.t[id]; if(!t) return rec;
-    const c=JSON.parse(JSON.stringify(t)); if(fn(c)===false) return rec;
-    const ok=cleanTask(c); if(ok) rec.t[id]=ok; return rec;
+    rec=cleanRecord(rec); const t=rec.t[id]; if(!t) return undefined;
+    const c=JSON.parse(JSON.stringify(t)); if(fn(c)===false) return undefined;
+    const ok=cleanTask(c); if(!ok || JSON.stringify(ok)===JSON.stringify(t)) return undefined;
+    rec.t[id]=ok; return rec;
   }
   function markDone(rec, id, key, note, now, by){
     return change(rec, id, t=>{ const x=t.to[key]; if(!x || x.gone || t.closed) return false; if(!x.d){ x.d=(now||new Date()).toISOString(); x.mk=by ? lc(by) : ''; } if(note!=null) x.note=text(note,MAX_NOTE); });
@@ -419,7 +422,6 @@
     list(rec).forEach(t=>{
       if(!t.remind || !t.due || finished(t) || !openIds(t).length) return;
       const kind=t.due===today ? 'due' : (t.due<today ? 'late' : ''); if(!kind || t.rem[kind]) return;
-      if(kind==='late' && t.rem.late) return;
       const silent=!!(t.nudged && ((now||new Date())-new Date(t.nudged))<12*36e5);
       out.push({id:t.id, kind, silent});
     });

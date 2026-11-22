@@ -414,6 +414,8 @@
   let ALL=[], EVERY=[], SLOTS={}, LISTS=Object.assign({}, TC.DEFAULT_LISTS), SCHED=null, loaded=false, loadErr='';
   // Months that would not read this time (tcstore.js {partial:true}): everything else is shown, and the page says which.
   let UNREAD=[];
+  // The settings (ph_tclists) would not read: the defaults are showing, so Settings can't be saved over the real lists (21/11/2026, code review).
+  let LISTS_BAD=false;
   const takesMed=o=>TC.takesMedicaid(LISTS, o);
   const payTag=r=>r.payer==='Medicaid'?'<span class="pay">Medicaid</span>':'';
   // "Submitted to Medicaid", "Medicaid Approved" and "Medicaid Denied" only for a Medicaid patient at an office that takes Medicaid.
@@ -475,6 +477,7 @@
         ALL=EVERY.filter(r=>offs.indexOf(r.office)>=0);
         SLOTS={}; S.forEach(([o,v])=>{ SLOTS[o]=(v && typeof v==='object')?v:{}; });
         LISTS=Object.assign({}, TC.DEFAULT_LISTS, (Li && typeof Li==='object')?Li:{});
+        LISTS_BAD=!!(PH_STORE.readFailed && PH_STORE.readFailed(TC.LISTS_KEY));
         SCHED=(Sc && typeof Sc==='object')?Sc:null;
         Object.keys(openFns).forEach(k=>delete openFns[k]);
         loaded=true; loadErr=''; render();
@@ -482,26 +485,35 @@
   }
   const strip=r=>{ const o=Object.assign({}, r); Object.keys(o).forEach(k=>{ if(o[k]===undefined) delete o[k]; }); return o; };
   /* One consult to its office-and-month record. A consult whose date or office changed
-     leaves a "moved" marker in its old record (nothing is ever removed - see tc.js). */
-  function persist(rec, oldKey){
+     leaves a "moved" marker in its old record (nothing is ever removed - see tc.js).
+     `orig` = the copy the form opened with: only what the form changed goes on the STORED consult, call logs joined
+     (TC.mergeConsult). A move reads the old month's copy first and marks the old month "moved" only after the new month's
+     write has landed - side by side, a failed write plus a landed marker lost the consult (21/11/2026, code review). */
+  function persist(rec, oldKey, orig){
     rec.upd=new Date().toISOString(); rec.updBy=myMail()||myName();
-    const ym=TC.monthOf(rec.date), key=TC.logKey(rec.office, ym);
-    const put=TCSTORE.update(key, cur=>{
+    const ym=TC.monthOf(rec.date), key=TC.logKey(rec.office, ym), moving=!!(oldKey && oldKey!==key);
+    let from, saved=strip(rec);
+    const before=moving ? TCSTORE.update(oldKey, cur=>{ const c=cur && cur.consults && cur.consults[rec.id]; from=(c && !c.moved) ? c : undefined; return undefined; }) : Promise.resolve();
+    return before.then(()=>TCSTORE.update(key, cur=>{
       const v=(cur && typeof cur==='object') ? Object.assign({}, cur) : {v:1, office:rec.office, month:ym, consults:{}};
-      v.consults=Object.assign({}, v.consults||{}); v.consults[rec.id]=strip(rec); return v;
-    });
-    const mv=(oldKey && oldKey!==key) ? TCSTORE.update(oldKey, cur=>{
-      if(!cur || !cur.consults || !cur.consults[rec.id]) return undefined;
-      const v=Object.assign({}, cur); v.consults=Object.assign({}, cur.consults);
-      v.consults[rec.id]={moved:true, to:key, upd:rec.upd}; return v;
-    }) : Promise.resolve({});
-    return Promise.all([put, mv]).then(()=>{
-      [ALL, EVERY].forEach(arr=>{
-        const i=arr.findIndex(x=>x.id===rec.id);
-        if(rec.deleted){ if(i>=0) arr.splice(i,1); }
-        else if(i>=0) arr[i]=Object.assign({}, rec); else arr.push(Object.assign({}, rec));
+      v.consults=Object.assign({}, v.consults||{});
+      const here=v.consults[rec.id];
+      saved=strip(TC.mergeConsult((here && !here.moved) ? here : from, orig, rec)); v.consults[rec.id]=saved; return v;
+    })).catch(e=>{ if(moving) throw new Error('it wasn’t moved ('+((e && e.message)||'try again')+')'); throw e; })
+      .then(()=>moving ? TCSTORE.update(oldKey, cur=>{
+        if(!cur || !cur.consults || !cur.consults[rec.id]) return undefined;
+        const v=Object.assign({}, cur); v.consults=Object.assign({}, cur.consults);
+        v.consults[rec.id]={moved:true, to:key, upd:rec.upd}; return v;
+      }).then(()=>'', ()=>'Saved. Its old month couldn’t be updated, but it shows once - nothing lost.') : '')
+      .then(warn=>{
+        const shown=TC.consultsFrom({k:{consults:{[rec.id]:saved}}})[0] || saved;     // as the page reads it back
+        [ALL, EVERY].forEach(arr=>{
+          const i=arr.findIndex(x=>x.id===rec.id);
+          if(saved.deleted){ if(i>=0) arr.splice(i,1); }
+          else if(i>=0) arr[i]=Object.assign({}, shown); else arr.push(Object.assign({}, shown));
+        });
+        return warn;
       });
-    });
   }
   const keyOf=r=>TC.logKey(r.office, TC.monthOf(r.date));
   function saveSlots(o, mutate){
@@ -519,7 +531,7 @@
   }
 
   /* ---------------- page ---------------- */
-  let tab=null, month=TC.monthOf(today()), tcFilter='', q='', ocFilter='';
+  let tab=null, month=TC.monthOf(today()), tcFilter='', q='', ocFilter='', qT=null;
   const TABS=[
     {k:'today', n:'Today'},
     {k:'calls', n:'Call list'},
@@ -530,6 +542,9 @@
   // TCs open on Today; Selene, Heather and office managers on the numbers.
   function defaultTab(){ return canEdit() && !canManage() ? 'today' : 'numbers'; }
   const scoped=()=>ALL.filter(r=>inView().indexOf(r.office)>=0);
+  // The call list, worked out once per render (the tab count, Today and the Call list all use it) (21/11/2026, code review).
+  let CALLS=null;
+  const callsNow=()=>CALLS||(CALLS=TC.callList(scoped(), today()));
   const scopedTC=()=>scoped().filter(r=>!tcFilter || r.tc===tcFilter);
 
   function renderOffices(){
@@ -539,14 +554,14 @@
       offs.map(o=>'<button class="ochip'+(office===o?' on':'')+'"'+attr('act','office')+attr('v',o)+'>'+esc(o)+'</button>').join('');
   }
   function renderTabs(){
-    const due=TC.callList(scoped(), today()).filter(x=>TC.DUE.indexOf(x.a)>=0).length;
+    const due=callsNow().filter(x=>TC.DUE.indexOf(x.a)>=0).length;
     el('tabs').innerHTML=TABS.map(t=>'<button role="tab" class="tab'+(tab===t.k?' on':'')+'"'+attr('act','tab')+attr('v',t.k)+'>'+t.n+
       (t.k==='calls'?'<span class="n'+(due?'':' z')+'">'+due+'</span>':'')+'</button>').join('');
   }
   function render(){
     if(RANK[level()]<RANK.view){ el('view').innerHTML='<div class="empty">You don’t have the TC Tracker. Ask your administrator.</div>'; el('tabs').innerHTML=''; el('offbar').innerHTML=''; return; }
     if(!tab) tab=defaultTab();
-    renderOffices(); renderTabs();
+    CALLS=null; renderOffices(); renderTabs();
     if(!loaded){ el('view').innerHTML='<div class="empty">Loading…</div>'; return; }
     if(loadErr){ el('view').innerHTML='<div class="note warn">'+esc(loadErr)+' <button class="link" data-act="reload">Try again</button></div>'; return; }
     const v=({today:viewToday, calls:viewCalls, log:viewLog, numbers:viewNumbers, slots:viewSlots})[tab]||viewToday;
@@ -570,8 +585,8 @@
   function viewToday(){
     const d=today(), list=scoped().filter(r=>r.date===d).sort((a,b)=>(a.time||'99')<(b.time||'99')?-1:1);
     const slots=slotsOn(d), missing=scoped().filter(r=>!r.outcome && r.date<d);
-    const due=TC.callList(scoped(), d).filter(x=>TC.DUE.indexOf(x.a)>=0);
-    const needDate=TC.callList(scoped(), d).filter(x=>TC.NEEDS_DATE.indexOf(x.a)>=0).length;
+    const due=callsNow().filter(x=>TC.DUE.indexOf(x.a)>=0);
+    const needDate=callsNow().filter(x=>TC.NEEDS_DATE.indexOf(x.a)>=0).length;
     const multi=inView().length>1;
     let h='<div class="stack">';
     const noUsual=inView().some(o=>!TC.usualOn(SLOTS[o]||{}, d) && !((SLOTS[o]||{}).days||{})[d]);
@@ -647,7 +662,7 @@
       (btns?'<div class="btns">'+btns+'</div>':'')+'</div>';
   }
   function viewCalls(){
-    const d=today(), all=TC.callList(scoped(), d);
+    const d=today(), all=callsNow();
     // Already contacted today sinks to the bottom of its group - still listed, as in the sheet.
     const sinkCalled=a=>a.slice().sort((x,y)=>(x.r.lastContact===d)-(y.r.lastContact===d));
     const due=sinkCalled(all.filter(x=>TC.DUE.indexOf(x.a)>=0));
@@ -767,10 +782,10 @@
        Accountability section so they can see progress and learn from one another" - rates and
        counts only, no patients, nothing else from another office. */
     if(iAmTC() || canManage()){
-      const names=[...new Set(EVERY.map(r=>r.tc).filter(Boolean))];
+      const names=[...new Set(EVERY.map(r=>r.tc).filter(Boolean))], pc={};   // patients worked out once per set of offices (21/11/2026, code review)
       const rows=names.map(n=>{
-        const mineR=EVERY.filter(r=>r.tc===n), offs=[...new Set(mineR.map(r=>r.office))];
-        const s=TC.monthStats(EVERY.filter(r=>offs.indexOf(r.office)>=0), month, 0, d, r=>r.tc===n);
+        const mineR=EVERY.filter(r=>r.tc===n), offs=[...new Set(mineR.map(r=>r.office))], L=EVERY.filter(r=>offs.indexOf(r.office)>=0), pk=offs.slice().sort().join('|');
+        const s=TC.monthStats(L, month, 0, d, r=>r.tc===n, pc[pk]||(pc[pk]=TC.patients(L)));
         return {n, office:offs.join(', '), s};
       }).filter(x=>x.s.scheduled || x.s.conversion.total.starts).sort((a,b)=>a.office<b.office?-1:a.office>b.office?1:(a.n<b.n?-1:1));
       h+='<div class="card"><h2>All TCs · TC accountability</h2><p class="sub">'+esc(fmtM(month))+' &middot; rates and counts only &mdash; no patient details. Everyone sees the same table.</p>'+
@@ -831,8 +846,17 @@
 
   /* ---------------- dialogs ---------------- */
   let DLG=null;
-  function openDlg(d){ DLG=d; drawDlg(); el('dlg').classList.add('open'); document.body.style.overflow='hidden'; }
+  function openDlg(d){ d.start=JSON.stringify(d.rec||null); DLG=d; drawDlg(); el('dlg').classList.add('open'); document.body.style.overflow='hidden'; }
   function closeDlg(){ talkAbort(); DLG=null; el('dlg').classList.remove('open'); el('dlgcard').innerHTML=''; document.body.style.overflow=''; }
+  /* Escape or a tap outside: ignored while saving (the form stays to show how it went); a consult or call form with
+     changes asks first, in its own footer like Delete does (21/11/2026, code review). */
+  function askClose(){
+    if(!DLG || DLG.busy || DLG.saving) return;
+    const changed=JSON.stringify(DLG.rec||null)!==DLG.start || !!(DLG.newDate || DLG.newTime);
+    if((DLG.kind==='consult' || DLG.kind==='fu') && !DLG.ro && changed){ DLG.confirmClose=true; drawDlg(); return; }
+    closeDlg();
+  }
+  const closeAsk='<div class="dm-foot"><span class="left small"><b>Close without saving?</b> What you changed here is lost.</span><button class="btn ghost" data-act="close-no">Keep editing</button><button class="btn danger solid" data-act="close-yes">Close</button></div>';
   const top=t=>'<div class="dm-top"><h3>'+t+'</h3><button class="x" data-act="close" aria-label="Close">×</button></div>';
   function chips(field, list, val, extraCls){
     return '<div class="chips">'+list.map(v=>'<button type="button" class="chip'+(extraCls?' '+extraCls+' o-'+ocClass(v).slice(3):'')+(val===v?' on':'')+'"'+attr('act','pick')+attr('f',field)+attr('v',v)+'>'+esc(extraCls?ocShort(v):v)+'</button>').join('')+'</div>';
@@ -1003,6 +1027,7 @@
     if(r.upd && !d.isNew) h+='<div class="small muted">Last changed '+esc(fmtS(String(r.upd).slice(0,10)))+(r.updBy && r.updBy!=='demo'?' by '+esc(r.updBy):'')+'</div>';
     h+='</div>';
     if(ro) h+='<div class="dm-foot"><button class="btn ghost" data-act="close">Close</button></div>';
+    else if(d.confirmClose) h+=closeAsk;
     else if(d.confirmDel) h+='<div class="dm-foot"><span class="left small"><b>Delete this consult?</b> It comes off every count.</span><button class="btn ghost" data-act="del-no">Keep it</button><button class="btn danger solid" data-act="del-yes">Delete</button></div>';
     else h+='<div class="dm-foot">'+(d.isNew?'':'<button class="btn danger left" data-act="del">Delete</button>')+
       '<button class="btn ghost" data-act="close">Cancel</button><button class="btn" data-act="save"'+(d.busy?' disabled':'')+'>'+(d.busy?'Saving…':(d.isNew?'Save consult':'Save'))+'</button></div>';
@@ -1063,7 +1088,7 @@
         ready:'Moves them to the top of the call list as recall ready.'}[d.what]||'')+'</div>';
     }
     h+=noteField('callNote', d.what==='note' ? 'Note' : 'Note about this call', d.what==='note' ? 'What was said, what happens next' : 'Optional - what was said, what happens next');
-    h+='</div><div class="dm-foot"><button class="btn ghost" data-act="close">Cancel</button><button class="btn" data-act="fu-save"'+(d.busy?' disabled':'')+'>'+(d.busy?'Saving…':'Save')+'</button></div>';
+    h+='</div>'+(d.confirmClose ? closeAsk : '<div class="dm-foot"><button class="btn ghost" data-act="close">Cancel</button><button class="btn" data-act="fu-save"'+(d.busy?' disabled':'')+'>'+(d.busy?'Saving…':'Save')+'</button></div>');
     return h;
   }
   function slotDlg(){
@@ -1082,12 +1107,13 @@
     const d=DLG;
     const ta=(k,label)=>'<div class="fld full"><label>'+label+' <span class="small muted">(one per line)</span></label><textarea style="min-height:110px"'+attr('in','dlg')+attr('f',k)+'>'+esc(d[k])+'</textarea></div>';
     return top('TC Tracker settings')+'<div class="dm-body">'+(d.err?'<div class="err">'+esc(d.err)+'</div>':'')+
+      (LISTS_BAD?'<div class="note warn">⚠️ <b>Couldn’t read the settings - try again.</b> These are the standard lists, not the practice’s, so they can’t be saved until the settings read. <button class="link" data-act="lists-retry">Try again</button></div>':'')+
       '<div class="grp"><div class="gl">Offices that take Medicaid</div><div class="chk">'+allOffices().map(o=>
         '<label><input type="checkbox"'+attr('act','med-toggle')+attr('v',o)+(d.medicaid.indexOf(o)>=0?' checked':'')+'> '+esc(o)+'</label>').join('')+'</div>'+
         '<div class="small muted" style="margin-top:6px">These offices ask “Medicaid or private pay?” on every consult, and their numbers show both.</div></div>'+
       '<div class="small muted">Outcomes and follow-up statuses are fixed &mdash; the numbers are worked out from them. These lists are just labels.</div>'+
       '<div class="fields">'+ta('types','Consult types')+ta('reasons','Pending reasons')+ta('holdReasons','Pre-TX hold reasons')+ta('leads','Lead sources')+'</div></div>'+
-      '<div class="dm-foot"><button class="btn ghost" data-act="close">Cancel</button><button class="btn" data-act="lists-save">Save settings</button></div>';
+      '<div class="dm-foot"><button class="btn ghost" data-act="close">Cancel</button><button class="btn" data-act="lists-save"'+(LISTS_BAD?' disabled':'')+'>Save settings</button></div>';
   }
   function drawDlg(){
     if(!DLG) return;
@@ -1106,17 +1132,17 @@
     const r=ALL.find(x=>x.id===id); if(!r) return;
     const rec=Object.assign({}, r);
     if(outcome){ TC.setOutcome(rec, outcome); if(outcome==='Started' && !rec.rpi) rec.rpi='No'; }
-    openDlg({kind:'consult', isNew:false, ro:!canEdit(), rec, origKey:keyOf(r), origOutcome:r.outcome||''});
+    openDlg({kind:'consult', isNew:false, ro:!canEdit(), rec, origKey:keyOf(r), origOutcome:r.outcome||'', orig:JSON.parse(JSON.stringify(r))});
   }
   function saveConsult(){
     const d=DLG, r=d.rec;
     r.name=String(r.name||'').trim();
     const why=problems(r); if(why){ d.err=why; drawDlg(); return; }
     d.busy=true; d.err=''; drawDlg();
-    const jobs=[persist(r, d.isNew?null:d.origKey)];
+    const jobs=[persist(r, d.isNew?null:d.origKey, d.isNew?null:d.orig)];
     if(r.outcome==='Rescheduled / Cancelled' && d.newDate) jobs.push(persist(copyFor(r, d.newDate, d.newTime, 'Rescheduled from '+fmtS(r.date)), null));
-    Promise.all(jobs).then(()=>{ closeDlg(); render(); toast(d.isNew?'✓ Consult saved':'✓ Saved'); },
-      e=>{ d.busy=false; d.err='It didn’t save: '+((e && e.message)||'try again')+'. Nothing was lost - your typing is still here.'; drawDlg(); });
+    Promise.all(jobs).then(w=>{ const warn=w.filter(Boolean)[0]; if(DLG===d) closeDlg(); render(); toast(warn || (d.isNew?'✓ Consult saved':'✓ Saved'), !!warn); },
+      e=>{ d.busy=false; d.err='It didn’t save: '+((e && e.message)||'try again')+'. Nothing was lost - your typing is still here.'; if(DLG===d) drawDlg(); else toast(d.err, true); });
   }
   function copyFor(r, date, time, note){
     const t=defaultTC(r.office);
@@ -1124,7 +1150,7 @@
       type:r.type||'', lead:r.lead||'', outcome:'', payer:r.payer||'', tc:r.tc||t.name, tcMail:r.tcMail||t.mail, notes:note, by:myMail()||myName(), at:new Date().toISOString()};
   }
   function saveFu(){
-    const d=DLG, r=Object.assign({}, ALL.find(x=>x.id===d.id)||{}); if(!r.id) return closeDlg();
+    const d=DLG, was=ALL.find(x=>x.id===d.id)||{}, orig=JSON.parse(JSON.stringify(was)), r=Object.assign({}, was); if(!r.id) return closeDlg();
     const t=today(), x=d.rec, jobs=[];
     if(d.what==='called') TC.DO.called(r, t, x.nextFU||x.obsReview||'');
     else if(d.what==='setDate'){ const v=x.nextFU||x.obsReview; if(!v){ d.err='Pick a date.'; return drawDlg(); } TC.DO.setDate(r, v); }
@@ -1140,8 +1166,8 @@
     const nxt=d.what==='note' ? '' : (x.nextFU||x.obsReview||'');
     TC.addCall(r, {at:new Date().toISOString(), day:t, by:myName()||myMail(), what:W, note:String(x.callNote||'').trim(), next:nxt});
     d.busy=true; d.err=''; drawDlg();
-    Promise.all([persist(r, keyOf(r))].concat(jobs)).then(()=>{ closeDlg(); render(); toast('✓ '+r.name+' updated'); },
-      e=>{ d.busy=false; d.err='It didn’t save: '+((e && e.message)||'try again'); drawDlg(); });
+    Promise.all([persist(r, keyOf(r), orig)].concat(jobs)).then(()=>{ if(DLG===d) closeDlg(); render(); toast('✓ '+r.name+' updated'); },
+      e=>{ d.busy=false; d.err='It didn’t save: '+((e && e.message)||'try again'); if(DLG===d) drawDlg(); else toast(d.err, true); });
   }
   function download(){
     const rows=scopedTC().filter(r=>TC.inMonth(r.date, month));
@@ -1168,7 +1194,9 @@
       const r=ALL.find(x=>x.id===b.dataset.id); if(!r) return;
       openDlg({kind:'fu', id:r.id, what:v, rec:{rpi:'', startDate:today()}}); return;
     }
-    if(act==='close'){ closeDlg(); return; }
+    if(act==='close'){ if(DLG && (DLG.busy || DLG.saving)) return; closeDlg(); return; }
+    if(act==='close-no' && DLG){ DLG.confirmClose=false; drawDlg(); return; }
+    if(act==='close-yes'){ if(DLG && (DLG.busy || DLG.saving)) return; closeDlg(); return; }
     if(act==='pick' && DLG){
       const f=b.dataset.f;
       if(DLG.kind==='consult' && f==='outcome'){
@@ -1188,8 +1216,10 @@
     if(act==='del'){ DLG.confirmDel=true; drawDlg(); return; }
     if(act==='del-no'){ DLG.confirmDel=false; drawDlg(); return; }
     if(act==='del-yes'){
-      const r=Object.assign({}, DLG.rec, {deleted:true});
-      persist(r, DLG.origKey).then(()=>{ closeDlg(); render(); toast('Consult deleted'); }, e=>{ DLG.err='It didn’t delete: '+((e&&e.message)||'try again'); DLG.confirmDel=false; drawDlg(); });
+      const d=DLG; if(d.busy) return; d.busy=true;
+      const r=Object.assign({}, d.rec, {deleted:true});
+      persist(r, d.origKey, d.orig).then(()=>{ if(DLG===d) closeDlg(); render(); toast('Consult deleted'); },
+        e=>{ d.busy=false; d.err='It didn’t delete: '+((e&&e.message)||'try again'); d.confirmDel=false; if(DLG===d) drawDlg(); else toast(d.err, true); });
       return;
     }
     if(act==='fu-save'){ if(TALK){ const d0=DLG; talkFinish().then(()=>{ if(DLG===d0) saveFu(); }); return; } saveFu(); return; }
@@ -1206,7 +1236,19 @@
     if(act==='lists'){ openDlg({kind:'lists', types:LISTS.types.join('\n'), reasons:LISTS.reasons.join('\n'), holdReasons:LISTS.holdReasons.join('\n'),
       leads:LISTS.leads.join('\n'), medicaid:TC.medicaidOffices(LISTS).slice()}); return; }
     if(act==='med-toggle' && DLG && DLG.kind==='lists'){ const i=DLG.medicaid.indexOf(v); if(i>=0) DLG.medicaid.splice(i,1); else DLG.medicaid.push(v); return; }
+    if(act==='lists-retry' && DLG && DLG.kind==='lists'){
+      const d=DLG;
+      PH_STORE.get(TC.LISTS_KEY).then(Li=>{
+        if(PH_STORE.readFailed && PH_STORE.readFailed(TC.LISTS_KEY)){ d.err='Still couldn’t read the settings - try again in a moment.'; if(DLG===d) drawDlg(); return; }
+        LISTS=Object.assign({}, TC.DEFAULT_LISTS, (Li && typeof Li==='object')?Li:{}); LISTS_BAD=false; render();
+        if(DLG!==d) return;
+        Object.assign(d, {err:'', types:LISTS.types.join('\n'), reasons:LISTS.reasons.join('\n'), holdReasons:LISTS.holdReasons.join('\n'), leads:LISTS.leads.join('\n'), medicaid:TC.medicaidOffices(LISTS).slice()});
+        drawDlg();
+      });
+      return;
+    }
     if(act==='lists-save'){
+      if(LISTS_BAD) return;
       const d=DLG, clean=t=>[...new Set(String(t||'').split('\n').map(x=>x.trim()).filter(Boolean))];
       const next={types:clean(d.types), reasons:clean(d.reasons), holdReasons:clean(d.holdReasons), leads:clean(d.leads), medicaid:d.medicaid.slice()};
       if(!next.types.length || !next.reasons.length || !next.holdReasons.length || !next.leads.length){ d.err='Each list needs at least one line.'; drawDlg(); return; }
@@ -1232,7 +1274,10 @@
   // Typing: kept in the dialog's state without redrawing, so the cursor stays put.
   document.addEventListener('input', e=>{
     const t=e.target, k=t.dataset && t.dataset.in; if(!k) return;
-    if(k==='q'){ q=t.value; const pos=t.selectionStart; render(); const n=document.querySelector('[data-in="q"]'); if(n){ n.focus(); try{ n.setSelectionRange(pos,pos); }catch(_){} } return; }
+    // Search: one redraw once typing pauses (150 ms), not one per key (21/11/2026, code review).
+    if(k==='q'){ q=t.value; clearTimeout(qT); qT=setTimeout(()=>{
+      const o=document.querySelector('[data-in="q"]'), had=!!o && document.activeElement===o, pos=o ? o.selectionStart : null;
+      render(); const n=document.querySelector('[data-in="q"]'); if(had && n){ n.focus(); try{ n.setSelectionRange(pos,pos); }catch(_){} } }, 150); return; }
     if(!DLG) return;
     if(k==='rec') DLG.rec[t.dataset.f]=t.value;
     else if(k==='dlg') DLG[t.dataset.f]=t.value;
@@ -1244,8 +1289,8 @@
     if(k==='rec' && DLG && t.tagName==='SELECT'){ DLG.rec[t.dataset.f]=t.value; if(t.dataset.f==='tc'){ const x=tcsFor(DLG.rec.office).find(y=>y.name===t.value); DLG.rec.tcMail=x?x.mail:''; } drawDlg(); }
   });
   document.addEventListener('toggle', e=>{ if(DLG && e.target.matches && e.target.matches('details.more')) DLG.moreOpen=e.target.open; }, true);
-  document.addEventListener('keydown', e=>{ if(e.key==='Escape' && DLG) closeDlg(); });
-  el('dlg').addEventListener('click', e=>{ if(e.target===el('dlg')) closeDlg(); });
+  document.addEventListener('keydown', e=>{ if(e.key==='Escape' && DLG) askClose(); });
+  el('dlg').addEventListener('click', e=>{ if(e.target===el('dlg')) askClose(); });
 
   /* ---------------- sandbox: try it as ---------------- */
   el('persona').innerHTML=Object.keys(ROLES).map(k=>'<option value="'+k+'"'+(k===tryAs?' selected':'')+'>'+esc(ROLES[k].label)+'</option>').join('');

@@ -104,6 +104,15 @@ const C=[
   t('Monthly Totals October row = the month view', eq(y.rows[9], TC.monthStats(C, '2026-10', 88, TODAY)));
   t('Year total sums the months', y.total.scheduled===12 && y.total.started===3 && y.total.rpi===3 && y.total.slots===88);
   t('Year rates come from the sums', y.total.acceptance===3/7 && y.total.fuRate===2/5);
+  /* 21/11/2026, code review: the Year row printed "undefined" under Sched. start */
+  const ys=TC.yearTotals([{id:'a', date:'2026-10-02', outcome:TC.SCHED_START, nextFU:'2026-10-20'}, {id:'b', date:'2026-11-03', outcome:TC.SCHED_START},
+    {id:'c', date:'2026-10-04', outcome:'Cancelled'}], 2026, ()=>0, TODAY);
+  t('Year total sums Scheduled to start and Cancelled too', ys.total.schedStart===2 && ys.total.cancelled===1);
+  const HM=require('fs').readFileSync(require('path').join(__dirname,'..','v1','tc.html'),'utf8'), mr=(/const MR=[^\n]*/.exec(HM)||[''])[0];
+  const used=[...new Set((mr.match(/\br\.([a-zA-Z]+)/g)||[]).map(x=>x.slice(2)))];
+  t('every number a Monthly totals row prints is there for the Year row too (no "undefined")', used.length>15 && used.every(k=>y.total[k]!==undefined));
+  t('Monthly totals work out the patients once for the year, the same numbers as month by month',
+    y.rows.every((r,i)=>JSON.stringify(r.conversion)===JSON.stringify(TC.monthStats(C, '2026-'+String(i+1).padStart(2,'0'), 0, TODAY).conversion)));
 }
 
 /* ---------- What the page fills in for the TC ---------- */

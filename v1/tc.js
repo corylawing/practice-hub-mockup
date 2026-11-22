@@ -270,10 +270,10 @@
   /* One month. `keep(record)` limits whose numbers they are (one TC, say): an exam belongs
      to the record it happened on, a start to the record that started - so a patient seen by
      one TC and started by another is never counted twice. */
-  function conversion(consults, ym, keep){
+  function conversion(consults, ym, keep, pats){
     keep=keep||(()=>true);
     const g={'Private pay':{consults:0, starts:0}, 'Medicaid':{consults:0, starts:0}};
-    patients(consults).forEach(p=>{
+    (pats||patients(consults)).forEach(p=>{
       if(p.counts && inMonth(p.exam.date, ym) && keep(p.exam)) g[payerOf(p.exam)].consults++;
       if(p.start && inMonth(p.start.date, ym) && keep(p.start.r)) g[payerOf(p.start.r)].starts++;
     });
@@ -291,7 +291,8 @@
   /* One month, as the Dashboard's "Monthly results" and "TC accountability metrics" show it,
      and as one row of Monthly Totals. `consults` is everyone in view; `slots` is that
      month's available consult slots (Daily Capacity). */
-  function monthStats(consults, ym, slots, today, keep){
+  // `pats` (optional) = patients(consults) worked out once by the caller, e.g. for twelve months (21/11/2026, code review).
+  function monthStats(consults, ym, slots, today, keep, pats){
     keep=keep||(()=>true);
     const all=(consults||[]).filter(live), mine=all.filter(keep), m=mine.filter(r=>inMonth(r.date, ym));
     const n=o=>m.filter(r=>r.outcome===o).length;
@@ -321,7 +322,7 @@
       cancelled, cancelledRate:rate(cancelled, scheduled),
       // RIP counts by the SALE date, not the consult date (B16 / M6).
       rpi:mine.filter(r=>r.rpi==='Yes' && inMonth(r.rpiDate, ym)).length,
-      conversion:conversion(all, ym, keep),
+      conversion:conversion(all, ym, keep, pats),
       acceptance:rate(started, completed),
       sameDay, sameDayRate:rate(sameDay, completed),
       fuYes, fuNo, fuRate:rate(fuYes, fuYes+fuNo),
@@ -365,11 +366,12 @@
   /* Monthly Totals: twelve rows and the year. Rates for the year come from the year's
      sums (the sheet left all but the follow-up rate blank on that row). */
   function yearTotals(consults, year, slotsInMonth, today, keep){
-    const rows=[];
-    for(let i=1;i<=12;i++){ const ym=year+'-'+pad(i); rows.push(monthStats(consults, ym, slotsInMonth(ym), today, keep)); }
+    const rows=[], pats=patients(consults);
+    for(let i=1;i<=12;i++){ const ym=year+'-'+pad(i); rows.push(monthStats(consults, ym, slotsInMonth(ym), today, keep, pats)); }
     const sum=k=>rows.reduce((a,r)=>a+(r[k]||0),0);
     const t={ym:String(year)};
-    ['slots','scheduled','completed','started','pending','hold','submitted','medApproved','medDenied','wentPrivate','observation','noShow','refused','rescheduled','rpi','sameDay','fuYes','fuNo','missing']
+    // schedStart and cancelled summed too: the Year row printed "undefined" under Sched. start (21/11/2026, code review).
+    ['slots','scheduled','completed','started','pending','schedStart','hold','submitted','medApproved','medDenied','wentPrivate','observation','noShow','refused','rescheduled','cancelled','rpi','sameDay','fuYes','fuNo','missing']
       .forEach(k=>{ t[k]=sum(k); });
     t.conversion={};
     PAYERS.concat(['total']).forEach(g=>{
@@ -474,6 +476,24 @@
       });
     });
     return Object.keys(out).map(id=>out[id]);
+  }
+  /* One save laid on the STORED consult, not the form's copy: only the fields the form changed (against `orig`, the copy
+     it opened with) and both call logs (union by at+by, stored order first) - a form open since 8:00 no longer undoes a
+     10:00 change by someone else (21/11/2026, code review). */
+  function mergeCalls(stored, mine){
+    const out=cleanCalls(stored), seen={}, k=e=>e.at+'|'+e.by;
+    out.forEach(e=>{ seen[k(e)]=1; });
+    cleanCalls(mine).forEach(e=>{ if(!seen[k(e)]){ seen[k(e)]=1; out.push(e); } });
+    return out.slice(-200);
+  }
+  function mergeConsult(stored, orig, mine){
+    if(!stored || typeof stored!=='object' || stored.moved) return Object.assign({}, mine);
+    const out=Object.assign({}, stored), o=orig||{};
+    Object.keys(Object.assign({}, o, mine)).forEach(f=>{
+      if(f!=='calls' && JSON.stringify(mine[f])!==JSON.stringify(o[f])) out[f]=mine[f];
+    });
+    if(stored.calls!==undefined || mine.calls!==undefined) out.calls=mergeCalls(stored.calls, mine.calls);
+    return out;
   }
 
   /* ---------- the sheet's own columns, for the download ---------- */
@@ -645,7 +665,7 @@
     PAYERS, DEFAULT_MEDICAID, medicaidOffices, takesMedicaid, payerOf, patientKey, startOf, patients, conversion, earlierExam,
     iso, parse, addDays, addMonths, daysBetween, monthOf, inMonth, monthDays, shiftMonth,
     action, daysWaiting, setOutcome, DO, monthStats, openWork, dailyView, yearTotals, callList,
-    slotsOn, slotsInMonth, usualOn, setUsual, lastDayOf, openFrom, slug, LOG_PREFIX, logKey, slotsKey, LISTS_KEY, newId, consultsFrom,
+    slotsOn, slotsInMonth, usualOn, setUsual, lastDayOf, openFrom, slug, LOG_PREFIX, logKey, slotsKey, LISTS_KEY, newId, consultsFrom, mergeConsult, mergeCalls,
     SHEET_COLS, csv, demo, live, talkText, joinTalk, talkError, cleanCalls, addCall, callLine
   };
   global.TC=TC;

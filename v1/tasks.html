@@ -287,7 +287,7 @@
   /* Every change goes through PH_STORE.update: the shared copy is read first and this one change laid on it. */
   async function save(mutate, ok){
     let r=null; try{ r=await PH_STORE.update(R.KEY, cur=>mutate(R.cleanRecord(cur))); }catch(e){ r={error:e}; }
-    if(r && r.value) REC=R.cleanRecord(r.value);
+    if(r && r.value && !r.blocked) REC=R.cleanRecord(r.value);     // a refused save was kept nowhere: don't show it (21/11/2026, code review)
     const bad=!r || r.error || r.blocked;
     if(bad) toast('That didn’t save — try again in a moment'); else if(ok) toast(ok);
     render(); return bad ? null : r;
@@ -505,12 +505,23 @@
   async function send(){
     grabNotes(); const P=plan(), ppl=P.add;
     FORM.errs=R.problems({title:P.title, due:P.due, people:ppl}, today()); if(FORM.errs.length) return drawParts();
+    if(FORM.busy) return; const F=FORM; F.busy=true;
     const t=R.create({title:P.title, notes:FORM.notes, due:P.due, by:WHO.key, byName:WHO.name, people:ppl, how:R.howWords(P.picks), remind:FORM.remind, today:today()}, new Date());
-    const ids=Object.keys(t.to), n=ids.length; closeSheet();
+    const ids=Object.keys(t.to), n=ids.length;
     const others=ids.filter(k=>WHO.keys.indexOf(k)<0);
-    const r=await save(cur=>R.add(cur, t), !others.length ? 'Added to your tasks — on your Home' :
+    /* The sheet closes only once the task is saved. Refused: it stays open with the words, nothing listed. Kept on this
+       device to send later (store.js {local, error}): said so, and they're still told - retrying made a second task
+       (21/11/2026, code review). */
+    let r=null; try{ r=await PH_STORE.update(R.KEY, cur=>R.add(R.cleanRecord(cur), t)); }catch(e){ r={error:e}; }
+    F.busy=false;
+    const kept=!!(r && r.local && r.error && !r.blocked);
+    if(!r || r.blocked || (r.error && !kept)){
+      F.errs=['That didn’t save — try again in a moment']; if(FORM===F) drawParts(); else toast('That didn’t save — try again in a moment'); return;
+    }
+    if(r.value) REC=R.cleanRecord(r.value);
+    if(FORM===F) closeSheet();
+    toast(kept ? 'Saved on this device — it will send when you’re back online' : !others.length ? 'Added to your tasks — on your Home' :
       'Assigned to '+(n===1 ? first(t.to[ids[0]].n) : n+' people')+' — on their Home and in their 🔔'+(LIVE ? ', with an alert' : ''));
-    if(!r) return;
     R.tell(others, 'New task: “'+t.title+'”'+(t.due ? ' · '+R.dueText(t.due, today()) : ''), '📋'); R.buzz(others, R.alertNew(t, today()), 'hb-task-'+t.id);
     TAB=others.length ? 'gave' : 'mine'; FILTER='open'; OPEN={}; render();
   }
@@ -520,8 +531,8 @@
     if(!P.now.length && !P.add.length){ FORM.errs=['A task needs at least one person — or close it instead']; return drawParts(); }
     if(P.due && P.due<today() && P.due!==(REC.t[id]||{}).due){ FORM.errs=['That due date has already passed']; return drawParts(); }
     closeSheet();
-    const r=await save(cur=>{ let rec=R.edit(cur, id, {title:P.title, notes:F.notes, due:P.due, remind:F.remind}, new Date());
-      drop.forEach(k=>{ rec=R.removePerson(rec, id, k, new Date()); }); if(P.add.length) rec=R.addPeople(rec, id, P.add, new Date(), how); return rec; }, 'Saved'+(P.add.length ? ' — '+P.add.length+' new '+(P.add.length===1?'person':'people')+' told' : ''));
+    const r=await save(cur=>{ let rec=R.edit(cur, id, {title:P.title, notes:F.notes, due:P.due, remind:F.remind}, new Date());     // undefined = that step changed nothing
+      drop.forEach(k=>{ rec=R.removePerson(rec||cur, id, k, new Date()) || rec; }); if(P.add.length) rec=R.addPeople(rec||cur, id, P.add, new Date(), how) || rec; return rec; }, 'Saved'+(P.add.length ? ' — '+P.add.length+' new '+(P.add.length===1?'person':'people')+' told' : ''));
     if(r && P.add.length){ const t=REC.t[id], ids=P.add.map(p=>p.id).filter(k=>WHO.keys.indexOf(k)<0);
       R.tell(ids, 'New task: “'+t.title+'”'+(t.due ? ' · '+R.dueText(t.due, today()) : ''), '📋'); R.buzz(ids, R.alertNew(t, today()), 'hb-task-'+id); }
   }
@@ -571,14 +582,14 @@
       case 'nudge': { if(!t || R.nudgeWait(t, new Date())) return; const r=await save(cur=>R.nudged(cur, id, new Date())); if(r){ const n=nudgeOne(REC.t[id]); toast('Nudged '+(n===1 ? first(nameOf(R.openIds(REC.t[id])[0])) : n+' people')+' — a reminder in their 🔔'+(LIVE?' and an alert':'')); } return; }
       case 'nudgeall': {
         const late=R.given(REC, TAB==='all' ? null : WHO.keys, today()).open.filter(x=>R.dueState(x.due,today())==='late' && R.needsNudge(x, today(), new Date()));
-        if(!late.length) return; const r=await save(cur=>{ let rec=cur; late.forEach(x=>{ rec=R.nudged(rec, x.id, new Date()); }); return rec; });
+        if(!late.length) return; const r=await save(cur=>{ let rec; late.forEach(x=>{ rec=R.nudged(rec||cur, x.id, new Date()) || rec; }); return rec; });
         if(r){ const ppl={}; late.forEach(x=>{ nudgeOne(REC.t[x.id]); R.openIds(x).forEach(k=>{ ppl[k]=1; }); }); toast('Nudged '+Object.keys(ppl).length+' people on '+late.length+' late task'+(late.length===1?'':'s')); }
         return;
       }
       case 'adding': grabNotes(); FORM.adding=!FORM.adding; FORM.q=''; drawParts(); if(FORM.adding){ const q=el('f_q'); if(q) q.focus(); } return;
       case 'shownotes': grabNotes(); FORM.showNotes=true; drawParts(); { const n=el('f_notes'); if(n) n.focus(); } return;
       case 'addme': grabNotes(); if(FORM.picks.people.indexOf(WHO.key)<0) FORM.picks.people.push(WHO.key); delete FORM.drop[WHO.key]; FORM.errs=[]; drawParts(); return;
-      case 'sheetx': return closeSheet();
+      case 'sheetx': if(FORM && FORM.busy) return; return closeSheet();
       case 'send': return send();
       case 'savechange': return saveChange();
     }
@@ -626,7 +637,7 @@
     else if(e.target.id==='f_q'){ FORM.q=e.target.value; FORM.hi=0; const pos=e.target.selectionStart; grabNotes(); drawParts(); const q=el('f_q'); if(q){ q.focus(); try{ q.setSelectionRange(pos,pos); }catch(_){} } }
   });
   document.addEventListener('keydown', e=>{
-    if(e.key==='Escape' && FORM) return closeSheet();
+    if(e.key==='Escape' && FORM){ if(FORM.busy) return; return closeSheet(); }
     if(FORM && e.target.id==='f_say' && e.key==='Enter' && !e.shiftKey){ e.preventDefault(); return FORM.mode==='edit' ? saveChange() : send(); }
     if(FORM && e.target.id==='f_q'){
       const res=results();

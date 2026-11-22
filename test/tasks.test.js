@@ -57,11 +57,14 @@ t('the giver sees 1 of 3 done', R.progress(rec.t[T1.id]).done===1);
 m=R.mine(rec, ['avery@example.com'], TODAY, NOW);
 t('it moves to her done list', m.open.length===0 && m.done.length===1);
 const firstDone=rec.t[T1.id].to['avery@example.com'].d;
-rec=R.markDone(rec, T1.id, 'avery@example.com', null, new Date('2026-11-20T10:00:00'));
-t('ticking again keeps the first time (and the note)', rec.t[T1.id].to['avery@example.com'].d===firstDone && rec.t[T1.id].to['avery@example.com'].note==='Ordered 2 boxes');
+/* 21/11/2026, code review: a change that changes nothing returns undefined, so PH_STORE.update writes nothing */
+t('ticking again keeps the first time (and the note) - nothing to write', R.markDone(rec, T1.id, 'avery@example.com', null, new Date('2026-11-20T10:00:00'))===undefined &&
+  rec.t[T1.id].to['avery@example.com'].d===firstDone && rec.t[T1.id].to['avery@example.com'].note==='Ordered 2 boxes');
+t('the same note again, or a task that is not there - nothing to write', R.setNote(rec, T1.id, 'avery@example.com', 'Ordered 2 boxes')===undefined && R.close(rec, 'no-such-task', NOW)===undefined &&
+  R.setNote(rec, T1.id, 'avery@example.com', 'Ordered 3 boxes').t[T1.id].to['avery@example.com'].note==='Ordered 3 boxes');
 rec=R.undo(rec, T1.id, 'avery@example.com');
 t('undo puts it back on her list', R.mine(rec, ['avery@example.com'], TODAY, NOW).open.length===1);
-t('someone not on the task cannot tick it', JSON.stringify(R.markDone(rec, T1.id, 'casey@example.com', '', NOW))===JSON.stringify(rec));
+t('someone not on the task cannot tick it', R.markDone(rec, T1.id, 'casey@example.com', '', NOW)===undefined);
 
 /* the giver's view */
 const T2=R.create({title:'Send your top 3 wins', due:'2026-11-18', by:'emery@example.com', byName:'Emery Elm', people:[{id:'casey@example.com', name:'Casey Cedar'}]}, new Date('2026-11-10T09:00:00'));
@@ -86,21 +89,21 @@ t('...and from a Friday, "Friday" is next week’s', R.quickDues('2026-11-20').f
 /* changing it */
 rec=R.edit(rec, T1.id, {title:'Count the trays', due:'2026-11-24', notes:'Both closets'}, NOW);
 t('edit: words, details and due date change; it says when', rec.t[T1.id].title==='Count the trays' && rec.t[T1.id].due==='2026-11-24' && !!rec.t[T1.id].edited);
-t('an edit with no words is ignored', R.edit(rec, T1.id, {title:'  '}, NOW).t[T1.id].title==='Count the trays');
+t('an edit with no words is ignored', R.edit(rec, T1.id, {title:'  '}, NOW)===undefined && rec.t[T1.id].title==='Count the trays');
 rec=R.addPeople(rec, T1.id, [{id:'casey@example.com', name:'Casey Cedar'}], NOW, ['Everyone at North']);
 t('more people can be added', R.progress(rec.t[T1.id]).total===4 && rec.t[T1.id].how.indexOf('Everyone at North')>=0);
 rec=R.removePerson(rec, T1.id, 'casey@example.com', NOW);
 t('taking someone off marks them gone - the line is kept', R.progress(rec.t[T1.id]).total===3 && !!rec.t[T1.id].to['casey@example.com'].gone);
 t('...and it leaves their list', R.mine(rec, ['casey@example.com'], TODAY, NOW).open.every(x=>x.id!==T1.id));
 rec=R.markDone(rec, T1.id, 'blake@example.com', '', NOW);
-t('someone who has done it cannot be taken off (it is the giver’s record)', !R.removePerson(rec, T1.id, 'blake@example.com', NOW).t[T1.id].to['blake@example.com'].gone);
+t('someone who has done it cannot be taken off (it is the giver’s record)', R.removePerson(rec, T1.id, 'blake@example.com', NOW)===undefined && !rec.t[T1.id].to['blake@example.com'].gone);
 rec=R.addPeople(rec, T1.id, [{id:'casey@example.com', name:'Casey Cedar'}], NOW);
 t('added back, they get a fresh open line', !rec.t[T1.id].to['casey@example.com'].gone && !rec.t[T1.id].to['casey@example.com'].d);
 
 /* closing, nudging */
 rec=R.close(rec, T3.id, NOW);
 t('closing marks it closed; it leaves Avery’s list, and is finished for the giver', !!rec.t[T3.id].closed && R.mine(rec, ['avery@example.com'], TODAY, NOW).open.every(x=>x.id!==T3.id) && R.given(rec, ['blake@example.com'], TODAY).done.length===1);
-t('a closed task cannot be ticked', !R.markDone(rec, T3.id, 'avery@example.com', '', NOW).t[T3.id].to['avery@example.com'].d);
+t('a closed task cannot be ticked', R.markDone(rec, T3.id, 'avery@example.com', '', NOW)===undefined && !rec.t[T3.id].to['avery@example.com'].d);
 rec=R.reopen(rec, T3.id);
 t('reopen brings it back', !rec.t[T3.id].closed && R.mine(rec, ['avery@example.com'], TODAY, NOW).open.some(x=>x.id===T3.id));
 t('a nudge goes to the people who haven’t done it', R.openIds(rec.t[T1.id]).sort().join()==='avery@example.com,casey@example.com,name:drew dogwood');
@@ -233,7 +236,71 @@ t('a new task starts with WHO: the people list is open, "＋ Add people" comes b
   /skip:\{\}, adding:true, q:''/.test(P) && /data-act="adding">'\+\(FORM\.adding \? 'Done' : '＋ Add people'\)\+'<\/button>'\+\s*\(meOn \? '' : '<button type="button" class="chip" data-act="addme"/.test(P) && /remind:t\.remind, adding:false\}/.test(P));
 t('the demo is made-up people only', R.demo(['North'], NOW).people.every(p=>/@example\.com$/.test(p.email)));
 
-console.log(ok.map(s=>'  PASS  '+s).join('\n'));
-if(bad.length) console.log(bad.map(s=>'  FAIL  '+s).join('\n'));
-console.log('\n'+ok.length+' passed, '+bad.length+' failed');
-process.exit(bad.length?1:0);
+/* 21/11/2026, code review: a new task whose save failed; chained changes; Home reads ph_tasks / ph_celebrate once */
+const vm=require('vm');
+const afn=(src,name)=>{ let i=src.indexOf('async function '+name+'('); if(i<0) i=src.indexOf('function '+name+'('); if(i<0) return ''; let d=0, j=src.indexOf('{', i);
+  for(let k=j;k<src.length;k++){ if(src[k]==='{') d++; else if(src[k]==='}'){ d--; if(!d) return src.slice(i, k+1); } } return ''; };
+t('the reminder plan checks "already sent" once (the repeated late check is gone)', !/if\(kind==='late' && t\.rem\.late\) return;/.test(read('tasks.js')));
+t('chained changes keep the last record when a step changes nothing (Change, Nudge all)', /rec=R\.removePerson\(rec\|\|cur, id, k, new Date\(\)\) \|\| rec;/.test(P) && /rec=R\.addPeople\(rec\|\|cur, id, P\.add, new Date\(\), how\) \|\| rec;/.test(P) &&
+  /let rec; late\.forEach\(x=>\{ rec=R\.nudged\(rec\|\|cur, x\.id, new Date\(\)\) \|\| rec; \}\); return rec;/.test(P));
+t('the sheet can’t be closed while a new task is saving', /case 'sheetx': if\(FORM && FORM\.busy\) return; return closeSheet\(\);/.test(P) && /if\(e\.key==='Escape' && FORM\)\{ if\(FORM\.busy\) return; return closeSheet\(\); \}/.test(P));
+t('Home: no second ph-identity listener reading ph_tasks again (set() already redraws the tasks)', !/addEventListener\('ph-identity', function\(\)\{ try\{ renderTasks\(\); \}catch\(_\)\{\} \}\)/.test(HOME) && /tasksRead\(R\.KEY\)\.then\(got/.test(HOME) && /partyRead\(\)\.then\(r=>draw/.test(HOME));
+t('Home: office names on the Documents tile and the summary are escaped', /'<span class="locchip">'\+esc\(l\)\+'<\/span>'/.test(HOME) && /'the '\+esc\(\(cur\.scopes\|\|\[cur\.scope\]\)\.join\(', '\)\)/.test(HOME));
+(async ()=>{
+  /* tasks.html send(): run as written, against a stand-in store answering each way store.js can */
+  const sendSrc=afn(P,'send'), saveSrc=afn(P,'save'), changeSrc=afn(P,'saveChange');
+  async function trySend(mode, twice){
+    const told=[], buzzed=[], toasts=[]; let calls=0;
+    const RR=Object.assign({}, R, {tell:(ids)=>told.push(ids.join()), buzz:(ids)=>buzzed.push(ids.join())});
+    const w={R:RR, WHO:{key:'emery@example.com', keys:['emery@example.com'], name:'Emery Elm'}, REC:{v:1, t:{}}, LIVE:true, TAB:'mine', FILTER:'', OPEN:{}, closed:0, drew:0, rendered:0,
+      FORM:{errs:[], notes:'', remind:true, picks:{people:['avery@example.com'], offices:[], teams:[], all:false}}, today:()=>TODAY, first:n=>String(n||'').split(' ')[0],
+      grabNotes(){}, drawParts(){ w.drew++; }, render(){ w.rendered++; }, toast:m=>toasts.push(m), Promise, Object, JSON, Date};
+    w.closeSheet=()=>{ w.closed++; w.FORM=null; };
+    w.plan=()=>({title:'Count the aligner trays', due:'', add:[{id:'avery@example.com', name:'Avery Alder'}], picks:w.FORM.picks});
+    w.PH_STORE={update:(key, fn)=>{ calls++; const v=fn(undefined);
+      return new Promise(res=>setTimeout(()=>res(mode==='ok' ? {value:v} : mode==='local' ? {local:true, error:'SharePoint 503', value:v} :
+        mode==='blocked' ? {blocked:true, why:'could not read', value:v} : {quota:true, error:'This browser has run out of room.'}), 5)); }};
+    vm.createContext(w); vm.runInContext(sendSrc, w);
+    const F=w.FORM; await (twice ? Promise.all([w.send(), w.send()]) : w.send());
+    return {w, F, told, buzzed, toasts, calls, listed:Object.keys(w.REC.t).length};
+  }
+  let x=await trySend('local');
+  t('new task kept on this device (SharePoint didn’t take it yet): the sheet closes, it says "saved on this device, will send when back online"', x.w.closed===1 && /Saved on this device — it will send when you’re back online/.test(x.toasts.join()));
+  t('…and Avery still gets the bell entry and the alert; the task is listed once', x.told.join()==='avery@example.com' && x.buzzed.join()==='avery@example.com' && x.listed===1);
+  x=await trySend('blocked');
+  t('new task refused (a read that failed): the sheet stays open with the words, says it didn’t save, nothing listed, nobody told', x.w.closed===0 && x.w.FORM===x.F && /didn’t save/.test(x.F.errs.join()) && x.w.drew>0 && x.listed===0 && !x.told.length && !x.buzzed.length);
+  x=await trySend('quota');
+  t('new task not kept anywhere (browser full): the sheet stays open', x.w.closed===0 && /didn’t save/.test(x.F.errs.join()) && !x.told.length);
+  x=await trySend('ok');
+  t('new task saved: the sheet closes after the save, "Assigned to Avery", she is told', x.w.closed===1 && /Assigned to Avery/.test(x.toasts.join()) && x.told.length===1 && x.w.TAB==='gave');
+  x=await trySend('ok', true);
+  t('Enter twice while saving: one task, one save', x.calls===1 && x.listed===1 && x.told.length===1);
+  /* save(): a refused save's value is not shown as if saved */
+  { const toasts=[], w={R, REC:{v:1, t:{}}, toast:m=>toasts.push(m), render(){}, Promise, Object, JSON};
+    w.PH_STORE={update:(k, fn)=>Promise.resolve({blocked:true, why:'x', value:fn(undefined)})};
+    vm.createContext(w); vm.runInContext(saveSrc, w);
+    const r=await w.save(cur=>R.add(cur, R.create({title:'X', by:'emery@example.com', people:[{id:'a@x'}]}, NOW)), 'ok');
+    t('a refused save shows nothing new in the list and says it didn’t save', r===null && !Object.keys(w.REC.t).length && /didn’t save/.test(toasts.join())); }
+  /* saveChange(): taking off someone who has done it changes nothing - the new words and the added person still go */
+  { const T=R.create({id:'k1', title:'Old words', by:'emery@example.com', byName:'Emery Elm', people:[{id:'avery@example.com', name:'Avery Alder'}, {id:'blake@example.com', name:'Blake Birch'}]}, NOW);
+    let base=R.markDone(R.add(null, T), 'k1', 'avery@example.com', '', NOW), mut=null;
+    const w={R, REC:base, WHO:{keys:['emery@example.com']}, today:()=>TODAY, grabNotes(){}, closeSheet(){}, drawParts(){}, Object, JSON, Date,
+      FORM:{id:'k1', drop:{'avery@example.com':true}, notes:'', remind:true, errs:[]}, save:async (fn)=>{ mut=fn; return null; }};
+    w.plan=()=>({title:'New words', due:'', now:[{id:'blake@example.com'}], add:[{id:'casey@example.com', name:'Casey Cedar'}], picks:{people:[], offices:[], teams:[], all:false}});
+    vm.createContext(w); vm.runInContext(changeSrc, w); await w.saveChange();
+    const out=mut && mut(R.cleanRecord(base));
+    t('Change: a step that changes nothing no longer drops the rest (new words + Casey added; Avery, who did it, stays)', !!out && out.t.k1.title==='New words' && !!out.t.k1.to['casey@example.com'] && !out.t.k1.to['avery@example.com'].gone);
+    t('Change on a task that is gone: nothing to write', mut(R.cleanRecord(null))===undefined); }
+  /* Home: one read of ph_tasks / ph_celebrate at a time */
+  { let gets=0; const w={PH:{PARTY_KEY:'ph_celebrate'}, PH_STORE:{get:()=>{ gets++; return new Promise(r=>setTimeout(()=>r({v:1}), 5)); }}, Promise};
+    const helpers=HOME.slice(HOME.indexOf('  let PARTY_P=null, TASKS_P=null;'), HOME.indexOf('  renderParty();'));
+    vm.createContext(w); vm.runInContext(helpers+';this.partyRead=partyRead;this.tasksRead=tasksRead;', w);
+    await Promise.all([w.partyRead(), w.partyRead(), w.tasksRead('ph_tasks'), w.tasksRead('ph_tasks'), w.tasksRead('ph_tasks')]);
+    const burst=gets; await w.tasksRead('ph_tasks');
+    t('Home: identity updates arriving together share one read of each record; a later one reads again', burst===2 && gets===3); }
+})().catch(e=>{ bad.push('crashed: '+(e && e.stack || e)); }).then(()=>{
+  console.log(ok.map(s=>'  PASS  '+s).join('\n'));
+  if(bad.length) console.log(bad.map(s=>'  FAIL  '+s).join('\n'));
+  console.log('\n'+ok.length+' passed, '+bad.length+' failed');
+  process.exit(bad.length?1:0);
+});
