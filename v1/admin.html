@@ -844,7 +844,11 @@
   /* The photo to show for a person: one an admin set here first (their face row), then one
      they uploaded themselves. This read ONLY their own upload, so a photo Heather set for
      Melinda was saved but never shown here - "when I save it, it doesn't save" (07/10). */
-  function photoOf(u){
+  /* Only an inline picture is ever drawn as a photo (21/11/2026, code review): a "photo" written into someone's record
+     could carry script into this page - an admin's. Same rule as user.js safePhoto(). */
+  const okPhoto=v=>(typeof v==='string' && /^data:image\/(jpeg|png|webp|gif);base64,[A-Za-z0-9+\/=]+$/.test(v)) ? v : '';
+  function photoOf(u){ return okPhoto(photoOfRaw(u)); }
+  function photoOfRaw(u){
     if(!u) return '';
     const set=u.photo || ((window.PH && PH.faceOf) ? PH.faceOf(ovrKey(u)) : '');
     if(set) return set;
@@ -1166,7 +1170,7 @@
           g.drawImage(img,(img.width-m)/2,(img.height-m)/2,m,m,0,0,S,S);
           tmpU.photo=c.toDataURL('image/jpeg',0.82); }
         const face=el('fPhotoFace');
-        if(face) face.innerHTML='<img class="face" src="'+tmpU.photo+'" alt="" style="width:34px;height:34px;border-radius:50%;object-fit:cover">';
+        if(face && okPhoto(tmpU.photo)) face.innerHTML='<img class="face" src="'+tmpU.photo+'" alt="" style="width:34px;height:34px;border-radius:50%;object-fit:cover">';
       };
       img.onerror=function(){ alert('That picture could not be opened. Try a JPG or PNG.'); input.value=''; };
       img.src=r.result;
