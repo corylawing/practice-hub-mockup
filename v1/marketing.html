@@ -331,7 +331,8 @@
   const TYPES=[{k:'social',n:'Social post'},{k:'event',n:'Community event'},{k:'promo',n:'Promotion'},{k:'email',n:'Email / Newsletter'},{k:'referral',n:'Referral / DDS'}];
   const TYPEN=Object.fromEntries(TYPES.map(t=>[t.k,t.n]));
   const RES={good:'🟢 Good',mixed:'🟡 Mixed',bad:'🔴 Underperformed',none:'Set result'};
-  const LOCS=['All offices'].concat(PH.officeNames());   // shared list — see user.js
+  // read when needed, not once at load: an office added in Admin after the page opened was dropped from cards (21/11/2026, code review)
+  const LOCS=()=>['All offices'].concat(PH.officeNames());   // shared list — see user.js
   const ALLOFF='All offices';
 
   /* A campaign can run at SEVERAL offices and over a RANGE of days. Jessica's promo
@@ -340,9 +341,10 @@
      one-day card. Older cards stored a single `loc` string, so everything reads
      offices through locsOf() and an empty list means every office. */
   function locsOf(c){
-    if(Array.isArray(c.locs)) return c.locs.filter(n=>LOCS.indexOf(n)>=0);
+    const all=LOCS();
+    if(Array.isArray(c.locs)) return c.locs.filter(n=>all.indexOf(n)>=0);
     if(!c.loc || c.loc===ALLOFF) return [];
-    return LOCS.indexOf(c.loc)>=0 ? [c.loc] : [];
+    return all.indexOf(c.loc)>=0 ? [c.loc] : [];
   }
   const isAllOff=c=>locsOf(c).length===0;
   const locLabel=c=>isAllOff(c) ? ALLOFF : locsOf(c).join(', ');
@@ -408,9 +410,33 @@
      calendar shows the activity AND the person alongside it. Keyed by date, then by person. */
   const WKEY='ph_mktgwhere';
   let where={};
-  try{ where=JSON.parse(localStorage.getItem(WKEY)||'{}'); }catch(_){ where={}; }
-  const saveWhere=()=>{ try{ localStorage.setItem(WKEY,JSON.stringify(where)); }catch(_){} };
+  try{ where=JSON.parse(localStorage.getItem(WKEY)||'{}')||{}; }catch(_){ where={}; }
   const meName=()=>PH.name(PH.me());   // PH.name takes a person, not zero args
+  /* Shared through Home-Brace's store like the board, same shape (21/11/2026, code review): it was kept only in this
+     browser. What this browser had is added once to the shared copy (days and people it lacks), so nothing typed is lost. */
+  const WMOVED='ph_mktgwhere_moved';
+  const isObj=x=>!!x && typeof x==='object' && !Array.isArray(x);
+  function addWhere(cur, old){
+    const out={}; if(isObj(cur)) Object.keys(cur).forEach(d=>{ if(isObj(cur[d])) out[d]=Object.assign({}, cur[d]); });
+    if(isObj(old)) Object.keys(old).forEach(d=>{ if(!isObj(old[d])) return; Object.keys(old[d]).forEach(n=>{
+      if(typeof old[d][n]!=='string' || !old[d][n]) return; out[d]=out[d]||{}; if(out[d][n]===undefined) out[d][n]=old[d][n]; }); });
+    return out;
+  }
+  function loadWhere(){
+    if(!(window.PH_STORE && PH.isLive())) return;
+    let old=null; try{ if(localStorage.getItem(WMOVED)!=='1') old=JSON.parse(localStorage.getItem(WKEY)||'null'); }catch(_){}
+    const redraw=()=>{ if(view==='calendar') renderCalendar(); };
+    PH_STORE.get(WKEY).then(function(shared){
+      if(isObj(shared)) where=shared;
+      if(PH_STORE.readFailed && PH_STORE.readFailed(WKEY)){ redraw(); return; }
+      if(!isObj(old) || !Object.keys(old).length){ try{ localStorage.setItem(WMOVED,'1'); }catch(_){} redraw(); return; }
+      // always written once, so a shared row is made even when this browser's copy is all there is
+      return PH_STORE.update(WKEY, cur=>addWhere(cur, old)).then(function(r){
+        if(r && !r.blocked && !r.error){ try{ localStorage.setItem(WMOVED,'1'); }catch(_){} if(isObj(r.value)) where=r.value; }
+        redraw();
+      });
+    }).catch(function(){});
+  }
 
   function whereHtml(iso){
     const day=where[iso]||{};
@@ -432,19 +458,40 @@
     openModalRaw('<h3 style="margin:0 0 4px">Where will you be?</h3>'+
       '<p style="margin:0 0 14px;color:var(--soft);font-size:13.5px">'+niceDate(iso)+' \u2014 shows on the calendar next to that day\u2019s marketing.</p>'+
       '<div class="wpick">'+opts.map(o=>
-        '<button class="wopt'+(o===cur?' on':'')+'" onclick="MK.pickWhere(\''+iso+'\',\''+esc(o)+'\')">'+
+        '<button class="wopt'+(o===cur?' on':'')+'" data-o="'+esc(o)+'" onclick="MK.pickWhere(\''+iso+'\',this.dataset.o)">'+
         esc(o)+'</button>').join('')+'</div>'+
       (cur?'<button class="wclear" onclick="MK.pickWhere(\''+iso+'\',\'\')">Remove me from this day</button>':''));
   }
+  // this person's one day, laid onto whatever is saved now (21/11/2026, code review)
+  function whereWith(cur,iso,me,office){
+    const out=isObj(cur)?Object.assign({},cur):{}, day=isObj(out[iso])?Object.assign({},out[iso]):{};
+    if(office) day[me]=office; else delete day[me];
+    if(Object.keys(day).length) out[iso]=day; else delete out[iso];
+    return out;
+  }
   function pickWhere(iso,office){
+    if(!canEdit()) return;
     const me=meName();
-    where[iso]=where[iso]||{};
-    if(office) where[iso][me]=office; else delete where[iso][me];
-    if(!Object.keys(where[iso]).length) delete where[iso];
-    saveWhere(); closeRaw(); renderCalendar();
+    where=whereWith(where,iso,me,office);
+    closeRaw(); renderCalendar();
+    if(!window.PH_STORE){ try{ localStorage.setItem(WKEY,JSON.stringify(where)); }catch(_){} return; }
+    PH_STORE.update(WKEY, cur=>whereWith(cur,iso,me,office)).then(function(r){
+      // refused or not sent: the store's banner says so and it stays on this screen, as the board's cards do
+      if(r && !r.blocked && !r.error && isObj(r.value)){ where=r.value; if(view==='calendar') renderCalendar(); }
+    });
   }
 
   let seq=100;
+  /* A new card's id can't be one another person's page also hands out: it was the highest id this page had seen + 1, and
+     mergeById put the second card over the first. Time + random, always above the last one made here (21/11/2026, code review) */
+  let lastId=0;
+  function newId(){
+    let id=Math.max(Date.now()*1000+Math.floor(Math.random()*1000), lastId+1);
+    while(cards.some(c=>String(c.id)===String(id))) id++;
+    return lastId=id;
+  }
+  // an id goes into onclick="MK.open(id)" only as a number (21/11/2026, code review)
+  const nid=c=>Number(c.id);
   /* Demo campaigns for the sandbox only. In the real app the board starts empty —
      showing staff invented campaigns they might act on would be worse than blank. */
   const DEMO=[
@@ -537,7 +584,7 @@
       list.forEach(function(p){
         if(have[(p.title||'')+'|'+(p.date||'')]) return;      // never add the same promo twice
         const c=Object.assign({type:'promo',owner:'',result:'none',notes:'',locs:[],
-                               end:'',offer:'',flash:false}, p, {id:++seq});
+                               end:'',offer:'',flash:false}, p, {id:newId()});
         // Stage comes from the dates, so it stays right as the year moves on.
         if(!c.stage) c.stage = !c.date ? 'ideas'
                              : (endOf(c)<iso ? 'done' : (c.date<=iso ? 'active' : 'planned'));
@@ -552,6 +599,7 @@
     if(window.PH && PH.loadHold) PH.loadHold('page', 'Loading the marketing calendar…');   // the loading screen stays up until the numbers are in (user.js)
     const done=()=>{ try{ render(); } finally { if(window.PH && PH.loadDone) PH.loadDone('page'); } };
     if(window.PH_STORE && PH.isLive()){
+      loadWhere();
       PH_STORE.get(MKEY).catch(()=>null).then(function(remote){
         adopt(remote)||adopt(local);
         takeCardSnap();
@@ -596,19 +644,19 @@
     const ed=canEdit();
     const si=STAGES.findIndex(s=>s.k===c.stage);
     const resChip = c.stage==='done'
-      ? (ed ? '<button class="res '+c.result+'" onclick="event.stopPropagation();MK.pickRes(event,'+c.id+')">'+RES[c.result]+'</button>'
-            : '<span class="res '+c.result+'">'+RES[c.result]+'</span>')
+      ? (ed ? '<button class="res '+esc(c.result)+'" onclick="event.stopPropagation();MK.pickRes(event,'+nid(c)+')">'+RES[c.result]+'</button>'
+            : '<span class="res '+esc(c.result)+'">'+RES[c.result]+'</span>')
       : '';
-    return '<div class="kcard"'+(ed?' draggable="true"':'')+' data-id="'+c.id+'"'+(ed?' onclick="MK.open('+c.id+')"':'')+'>'+
+    return '<div class="kcard"'+(ed?' draggable="true"':'')+' data-id="'+nid(c)+'"'+(ed?' onclick="MK.open('+nid(c)+')"':'')+'>'+
       '<i class="kstripe" style="'+officeStripe(c)+'"></i>'+
-      '<div class="kt">'+c.title+'</div>'+
+      '<div class="kt">'+esc(c.title)+'</div>'+   // escaped like every other view (21/11/2026, code review)
       (c.offer?'<div class="koffer">'+esc(c.offer)+'</div>':'')+
       '<div class="kmeta"><span class="tag">'+TYPEN[c.type]+'</span>'+
         (isFlash(c)?'<span class="tag flash">\u26A1 Flash \u00b7 ready</span>':'')+
         officeTag(c)+(c.date?'<span class="tag">'+dateLabel(c)+'</span>':'')+'</div>'+
-      '<div class="kfoot"><span>'+(c.owner?'👤 '+c.owner:'Unassigned')+'</span><span class="sp"></span>'+resChip+
-        (ed?'<button class="mv" onclick="event.stopPropagation();MK.move('+c.id+',-1)" '+(si===0?'disabled':'')+'>◀</button>'+
-            '<button class="mv" onclick="event.stopPropagation();MK.move('+c.id+',1)" '+(si===STAGES.length-1?'disabled':'')+'>▶</button>':'')+
+      '<div class="kfoot"><span>'+(c.owner?'👤 '+esc(c.owner):'Unassigned')+'</span><span class="sp"></span>'+resChip+
+        (ed?'<button class="mv" onclick="event.stopPropagation();MK.move('+nid(c)+',-1)" '+(si===0?'disabled':'')+'>◀</button>'+
+            '<button class="mv" onclick="event.stopPropagation();MK.move('+nid(c)+',1)" '+(si===STAGES.length-1?'disabled':'')+'>▶</button>':'')+
       '</div></div>';
   }
   function renderBoard(){
@@ -667,12 +715,12 @@
                   (STAGES.find(s=>s.k===c.stage)||{}).n+(c.offer?' \u00b7 '+esc(c.offer):'');
         const dot=(c.stage==='done'&&c.result!=='none')?'<span class="rd">'+RESDOT[c.result]+'</span> ':'';
         if(!ls.length)
-          return '<button class="ev all'+done+'" title="'+tip+'" onclick="MK.open('+c.id+')">'+
+          return '<button class="ev all'+done+'" title="'+tip+'" onclick="MK.open('+nid(c)+')">'+
                  dot+esc(c.title)+'</button>';
         return ls.map(function(n){
           const col=PH.colorForOffice(n);
           return '<button class="ev'+done+'" style="background:'+col.dot+'" title="'+tip+
-                 '" onclick="MK.open('+c.id+')">'+dot+esc(c.title)+
+                 '" onclick="MK.open('+nid(c)+')">'+dot+esc(c.title)+
                  '<span class="evo">'+esc(n)+'</span></button>';
         }).join('');
       }).join('');
@@ -701,10 +749,10 @@
         '<span><i style="background:#94a3b8"></i> '+ALLOFF+'</span></div>'+
       (flash.length? '<div class="nodate flashshelf"><div class="t2">\u26A1 Flash sales \u2014 approved and ready to launch</div>'+
         '<div class="calsub" style="margin:0 0 8px">Offer and artwork already signed off. Give one dates when an office needs a lift.</div>'+
-        '<div class="chips2">'+flash.map(c=>'<button onclick="MK.open('+c.id+')">'+esc(c.title)+
+        '<div class="chips2">'+flash.map(c=>'<button onclick="MK.open('+nid(c)+')">'+esc(c.title)+
           (c.offer?' \u00b7 '+esc(c.offer):'')+'</button>').join('')+'</div></div>' : '')+
       (undated.length? '<div class="nodate"><div class="t2">No date yet \u2014 tap to set one</div><div class="chips2">'+
-        undated.map(c=>'<button onclick="MK.open('+c.id+')">'+esc(c.title)+'</button>').join('')+'</div></div>' : '')+
+        undated.map(c=>'<button onclick="MK.open('+nid(c)+')">'+esc(c.title)+'</button>').join('')+'</div></div>' : '')+
       '</div>';
   }
   /* ---- Views ---------------------------------------------------------------
@@ -800,15 +848,15 @@
       const items = r.all.length
         ? '<div class="chips2">'+r.all.map(function(c){
             const own=locsOf(c).indexOf(r.office)>=0;
-            return '<button onclick="event.stopPropagation();MK.open('+c.id+')">'+
+            return '<button onclick="event.stopPropagation();MK.open('+nid(c)+')">'+
               '<i style="background:'+(own?r.col.dot:'#94a3b8')+'"></i>'+esc(c.title)+
               (c.offer?' \u00b7 '+esc(c.offer):'')+
               (c.date?' \u00b7 '+esc(dateLabel(c)):'')+
               (c.stage==='done'&&c.result!=='none'?' '+RESDOT[c.result]:'')+'</button>';
           }).join('')+'</div>'
         : '<div class="byo-empty">Nothing on the calendar for '+esc(r.office)+' in '+byoYear+'.</div>';
-      return '<tr class="byorow'+(open?' open':'')+'" onclick="MK.byoToggle(\''+
-             r.office.replace(/'/g,"\\'")+'\')">'+
+      // the office travels in data-o, not inside the onclick's quotes (21/11/2026, code review)
+      return '<tr class="byorow'+(open?' open':'')+'" data-o="'+esc(r.office)+'" onclick="MK.byoToggle(this.dataset.o)">'+
         '<td><div class="byo-name"><span class="car">\u203a</span>'+
           '<i style="background:'+r.col.dot+'"></i>'+esc(r.office)+'</div></td>'+
         cells+'<td class="byo-n">'+n+'</td></tr>'+
@@ -881,7 +929,7 @@
             ' \u00b7 <b>offer not decided yet</b>')+'</div></div>'+
         '<div class="yrtrack">'+cells+
           '<button class="yrbar'+(c.stage==='done'?' done':'')+'" style="grid-column:'+(from+1)+'/'+(to+2)+
-          ';background:'+bg+'" onclick="MK.open('+c.id+')" title="'+esc(c.title)+
+          ';background:'+bg+'" onclick="MK.open('+nid(c)+')" title="'+esc(c.title)+
           ' \u2014 '+esc(dateLabel(c))+'">'+(to>from?esc(dateLabel(c)):'')+'</button>'+
         '</div>'+
         '<div class="yroff">'+offices+'</div></div>';
@@ -913,7 +961,7 @@
       (shelf.length
         ? '<div class="yrshelf"><div class="t2">\u26A1 Ready to launch \u2014 no dates</div>'+
           '<p>Offer and artwork already approved. Give one dates when an office needs a lift.</p>'+
-          '<div class="chips2">'+shelf.map(c=>'<button onclick="MK.open('+c.id+')">'+esc(c.title)+
+          '<div class="chips2">'+shelf.map(c=>'<button onclick="MK.open('+nid(c)+')">'+esc(c.title)+
             (c.offer?' \u00b7 '+esc(c.offer):'')+'</button>').join('')+'</div></div>'
         : '')+
       '</div>';
@@ -967,7 +1015,7 @@
   function open(id){
     if(!canEdit())return; editId=id; const c=cards.find(x=>x.id===id); openModal(c); }
   function add(stage){
-    if(!canEdit())return; const c={id:++seq,title:'',type:'social',owner:'',locs:[],date:'',end:'',offer:'',flash:false,stage:stage,result:stage==='done'?'good':'none',notes:''}; cards.push(c); editId=id=c.id; openModal(c,true); }
+    if(!canEdit())return; const c={id:newId(),title:'',type:'social',owner:'',locs:[],date:'',end:'',offer:'',flash:false,stage:stage,result:stage==='done'?'good':'none',notes:''}; cards.push(c); editId=id=c.id; openModal(c,true); }
 
   /* A plain modal for anything that isn't the campaign editor -- the campaign one
      closes with MK.close(true), which discards a half-made card. */
@@ -1012,8 +1060,7 @@
     const on=locsOf(c);
     return PH.officeNames().map(function(n){
       const col=PH.colorForOffice(n), lit=on.indexOf(n)>=0;
-      return '<button class="ochip'+(lit?' on':'')+'" data-n="'+esc(n)+'" onclick="MK.togLoc(\''+
-             n.replace(/'/g,"\\'")+'\')" style="'+(lit?'background:'+col.bg+';color:'+col.fg+
+      return '<button class="ochip'+(lit?' on':'')+'" data-n="'+esc(n)+'" onclick="MK.togLoc(this.dataset.n)" style="'+(lit?'background:'+col.bg+';color:'+col.fg+
              ';border-color:'+col.dot:'')+'"><i style="background:'+col.dot+'"></i>'+esc(n)+'</button>';
     }).join('');
   }
@@ -1058,7 +1105,7 @@
   }
   function del(){ cards=cards.filter(x=>x.id!==editId); closeModal(); render(); }
   function closeModal(discard){ if(discard){ const c=cards.find(x=>x.id===editId); if(c&&!c.title) cards=cards.filter(x=>x.id!==editId); } el('modal').classList.remove('open'); if(discard)render(); }
-  function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+  function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }   // String(): a number from the shared copy must not stop the board (21/11/2026, code review)
 
   function dropTo(id,stage,anchor){
     if(!canEdit())return; const c=cards.find(x=>x.id===id); if(!c||c.stage===stage)return;

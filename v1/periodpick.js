@@ -17,7 +17,10 @@
     right:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>',
     cal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg>',
     down:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>'};
-  const now=()=>{ const d=new Date(); return {y:d.getFullYear(), m:d.getMonth()+1, d:d.getDate(), iso:d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())}; };
+  // the practice's today (Central, PH.centralNow) - this device's clock only where user.js isn't loaded (21/11/2026, code review)
+  const now=()=>{ const P=global.PH, c=P && typeof P.centralNow==='function' ? P.centralNow() : null, x=/^(\d{4})-(\d{2})-(\d{2})$/.exec((c && c.date) || '');
+    if(x) return {y:+x[1], m:+x[2], d:+x[3], iso:x[0]};
+    const d=new Date(); return {y:d.getFullYear(), m:d.getMonth()+1, d:d.getDate(), iso:d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())}; };
   const lastDay=(y,m)=>new Date(y, m, 0).getDate();
 
   /* ---------- what a period means ---------- */
@@ -51,7 +54,10 @@
     else p={kind:'year', y:v.y-1};
     const P=range(p), short=v.kind==='month' ? 'vs '+MS[p.m-1] : v.kind==='quarter' ? 'vs Q'+p.q : v.kind==='ytd' ? 'vs same time '+p.y : 'vs '+p.y;
     if(R.open){ const d0=Date.parse(R.first+'T12:00:00'), days=Math.round((Date.parse(R.last+'T12:00:00')-d0)/864e5), s=new Date(Date.parse(P.first+'T12:00:00')+days*864e5);
-      const cut=s.getFullYear()+'-'+pad(s.getMonth()+1)+'-'+pad(s.getDate()); if(cut<P.last){ P.last=cut; P.months=P.months.filter(x=>x.y+'-'+pad(x.m)+'-01'<=cut); P.partial=true; } }
+      let cut=s.getFullYear()+'-'+pad(s.getMonth()+1)+'-'+pad(s.getDate());
+      /* last year: the same month and day, not a count of days - a Feb 29 moved it by one (on 2028-03-01, Jan 1-Mar 1 2027) (21/11/2026, code review) */
+      if(p.kind==='year'){ const lm=+R.last.slice(5,7); cut=p.y+'-'+pad(lm)+'-'+pad(Math.min(+R.last.slice(8,10), lastDay(p.y, lm))); }
+      if(cut<P.last){ P.last=cut; P.months=P.months.filter(x=>x.y+'-'+pad(x.m)+'-01'<=cut); P.partial=true; } }
     P.short=short; P.value=p; return P;
   }
   function label(v){

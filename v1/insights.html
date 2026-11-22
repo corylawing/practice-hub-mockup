@@ -320,7 +320,8 @@
 
   const BUCKETS=['1–30 days','31–60','61–90','91–180','180+ days'], HEAT=['#FBD9CF','#F5AE98','#EC7F63','#D7503A','#9E2E1C'];
   async function lateHTML(offs){
-    const today=new Date().toISOString().slice(0,10);
+    // the practice's day (Central), not the UTC one - each evening the snapshot was filed under tomorrow (21/11/2026, code review)
+    const today=(PH.centralNow && PH.centralNow().date) || new Date().toISOString().slice(0,10);
     const [all, before]=await Promise.all([Promise.all(offs.map(o=>get.late(o).then(r=>[o,r]))), lateTrend(today)]);
     const by={}; all.forEach(([o,r])=>{ by[o]=r; }); if(offs.length===offices().length) lateSave(today, by);
     const tot=r=>r ? r.amt.reduce((a,b)=>a+b,0) : 0, cnt=r=>r ? r.n.reduce((a,b)=>a+b,0) : 0, max=Math.max(1, ...all.map(([o,r])=>tot(r)));

@@ -111,6 +111,22 @@
       Object.keys(ms).forEach(m=>{ if(/^(0[1-9]|1[0-2])$/.test(m)) out.o[k][m]=cleanMonth(ms[m]); }); });
     return out;
   }
+  /* ONE office-month laid onto the year AS STORED (21/11/2026, code review): a save used to send cleanYear() of the whole
+     year, so a tab running an older Home-Brace stripped every field a newer one had added, in every office. Now only the
+     month being saved changes; other offices and months stay as stored, and a field this version doesn't know is kept. */
+  const MONTH_KEYS=['v','src','at','by','ofv','of','ofp','sent','final','notes'];
+  function putMonth(stored, office, m, month){
+    const base=stored && typeof stored==='object' && !Array.isArray(stored) ? stored : {};
+    const out=Object.assign({}, base, {v:base.v || 1, o:Object.assign({}, base.o && typeof base.o==='object' ? base.o : {})});
+    const key=mm(m), was=out.o[office] && typeof out.o[office]==='object' ? out.o[office] : {}, offRec=Object.assign({}, was);
+    const old=offRec[key] && typeof offRec[key]==='object' ? offRec[key] : {}, next=Object.assign({}, month);
+    const has=(o,k)=>Object.prototype.hasOwnProperty.call(o,k), keep=k=>k!=='__proto__';
+    Object.keys(old).filter(keep).forEach(k=>{ if(MONTH_KEYS.indexOf(k)<0) next[k]=old[k]; });
+    ['v','src','at','by','ofv'].forEach(b=>{ const o=old[b]; if(!o || typeof o!=='object') return;
+      Object.keys(o).filter(keep).forEach(f=>{ if(!has(BY,f)){ next[b]=Object.assign({}, next[b]); next[b][f]=o[f]; } }); });
+    if(old.ofp && typeof old.ofp==='object') Object.keys(old.ofp).filter(keep).forEach(f=>{ if(!has(PARTS,f)){ next.ofp=Object.assign({}, next.ofp); next.ofp[f]=old.ofp[f]; } });
+    offRec[key]=next; out.o[office]=offRec; return out;
+  }
   function cleanSettings(s){
     s=s && typeof s==='object' ? s : {};
     const med=Array.isArray(s.medicaid) ? s.medicaid.filter(x=>typeof x==='string' && x.trim()).map(x=>x.trim().slice(0,80)) : DEF_MEDICAID.slice();
@@ -292,6 +308,9 @@
   function streak(valsAt, y, m, goals, max){
     let n=0; for(let i=0;i<(max||36);i++){ let mm2=m-i, yy=y; while(mm2<1){ mm2+=12; yy--; } if(onTarget(valsAt(yy, mm2), goals)!==true) break; n++; } return n;
   }
+  /* the month a run of n months ending at (y, m) began - a run that began in January may go on into the year before, so the
+     page reads that year too (it read only two, and a year not read counted as a miss) (21/11/2026, code review) */
+  function runStart(y, m, n){ let mm2=m-Math.max(0, n-1), yy=y; while(mm2<1){ mm2+=12; yy--; } return {y:yy, m:mm2}; }
   const MILESTONES=[3,6,12,24];
   /* the month just finished (what an office reports at the start of a month) */
   function lastMonth(now){ const d=now ? new Date(now) : new Date(); const y=d.getMonth()===0 ? d.getFullYear()-1 : d.getFullYear(), m=d.getMonth()===0 ? 12 : d.getMonth(); return {y, m}; }
@@ -308,5 +327,5 @@
     }
     return r && Object.keys(r.v||{}).length ? 'started' : '';
   }
-  global.PH_MONTHLY={KEY, SET_KEY, FIELDS, BY, PARTS, CALC, DEF_GOALS, GOAL_NAMES, DEF_MEDICAID, DEF_OLDSYS, MONTHS, mm, num, money, cleanVal, cleanMonth, cleanYear, cleanSettings, fieldsFor, calc, onGoal, tone, yearRows, practiceTotals, insights, byWeight, mergeOrthofi, fromSheet, mergeImport, onTarget, streak, MILESTONES, mismatches, lastMonth, dueDate, status};
+  global.PH_MONTHLY={KEY, SET_KEY, FIELDS, BY, PARTS, CALC, DEF_GOALS, GOAL_NAMES, DEF_MEDICAID, DEF_OLDSYS, MONTHS, mm, num, money, cleanVal, cleanMonth, cleanYear, cleanSettings, fieldsFor, calc, onGoal, tone, yearRows, practiceTotals, insights, byWeight, mergeOrthofi, fromSheet, mergeImport, onTarget, streak, runStart, MILESTONES, mismatches, lastMonth, dueDate, status, putMonth};
 })(typeof window!=='undefined' ? window : globalThis);

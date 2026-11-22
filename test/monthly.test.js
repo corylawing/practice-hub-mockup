@@ -186,7 +186,7 @@ t('Teams & Access gets a Monthly column (none / See / Fill in / Everything), off
 t('the page loads the rules and the Excel reader', /<script src="monthly\.js\?v=hc\d+"><\/script>/.test(P) && /<script src="prodbook\.js\?v=hc\d+"><\/script>/.test(P));
 t('Settings has "Bring in past months from Excel": read in the browser, shown first, then only empty boxes filled', /Bring in past months from Excel/.test(P) && /PH_BOOK\.open\(/.test(P) && /M\.mergeImport\(/.test(P));
 t('made-up numbers ONLY in the sandbox - the live site never makes any', /if\(!LIVE && \(!rec \|\| !rec\.o/.test(P));
-t('saving changes only the boxes typed, merged into whatever is saved now (PH_STORE.update)', /PH_STORE\.update\(M\.KEY\(Y\), cur=>/.test(P) && /function applyEdits\(r\)/.test(P));
+t('saving changes only the boxes typed, merged into whatever is saved now (PH_STORE.update)', /PH_STORE\.update\(M\.KEY\(y\), cur=>/.test(P) && /function applyEdits\(r, edits\)/.test(P));
 t('OrthoFi’s nightly numbers go through the same rule (mergeOrthofi)', /async function importOrthofi[\s\S]{0,300}M\.mergeOrthofi\(rec, o, m, byOffice\[o\], stamp\)/.test(P));
 t('the live site shows OrthoFi as connected only once an admin has turned an office on (OrthoFi page, step 3)', /let ORTHOFI_CONNECTED=!LIVE;/.test(P) && /ORTHOFI_CONNECTED=!!\(OFMAP && Object\.keys\(PH_ORTHOFI\.autoOffices\(OFMAP\)\)\.length\);/.test(P));
 t('the fill: live only, someone who can type the report, at most every 3 hours, last month + this month, through mergeOrthofi (never a typed number or a final month)',

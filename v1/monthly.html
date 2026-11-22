@@ -309,6 +309,7 @@
     <div class="tabs" id="tabs" role="tablist"></div>
     <div class="mnav" id="mnav"></div>
   </div>
+  <div class="warnbox" id="pagewarn" role="alert" hidden style="margin:0 0 14px"></div>
   <div id="view"><div class="empty">Reading the reports…</div></div>
 </div>
 
@@ -329,6 +330,20 @@
   let Y=LM.y, MO=LM.m, TAB=null, OFF=null, SHOWALL=false;
   const DATA={}; let SET=M.cleanSettings(null), WHO=null;
   let EDIT={}, CORRECT={}, BUSY=false, SENDASK=false;
+  /* SAID ON THE PAGE (21/11/2026, code review): a shared copy that couldn't be read is not an empty one, and a save the
+     store refused is not saved. #pagewarn stays up until a read or a save works. */
+  const YFAIL={}; let SETFAIL=false, SAVEWARN='';
+  const readFailed=k=>!!(window.PH_STORE && PH_STORE.readFailed && PH_STORE.readFailed(k));
+  const refused=r=>!r || !!(r.blocked || r.error);
+  function showWarn(){ const w=el('pagewarn'); if(!w) return;
+    const ys=Object.keys(YFAIL).map(Number).filter(y=>YFAIL[y] && y<=Y && y>=Y-3).sort();
+    const t=(ys.length ? 'Home-Brace couldn’t read the saved reports for '+ys.join(' and ')+' — what’s shown may be missing or out of date (an office can show as Late), and nothing is saved over them. Reload the page to try again. ' : '')+
+      (SETFAIL ? 'The report’s settings couldn’t be read — the targets and offices shown are the starting ones, and settings can’t be changed until the page is reloaded. ' : '')+SAVEWARN;
+    w.textContent=t.trim(); w.hidden=!w.textContent; }
+  function notSaved(r, tail){ const why=String((r && (r.why || r.error)) || '').slice(0,160).replace(/\.?\s*$/, '.');
+    SAVEWARN='Not saved'+(why.length>1 ? ' — '+why : '.')+' '+(tail || 'What you typed is still here — try again.');
+    toast('Not saved'+(tail ? '' : ' — what you typed is still here')); showWarn(); }
+  const busy=()=>{ if(BUSY) toast('Still saving — one moment'); return BUSY; };
 
   /* SANDBOX "Try it as" - four people in the report's story. Live: the signed-in person and Teams & Access. */
   const PERSONAS=[
@@ -402,13 +417,14 @@
   async function loadYear(y, fresh){
     if(DATA[y] && !fresh) return DATA[y];
     let rec=null; try{ rec=await PH_STORE.get(M.KEY(y)); }catch(_){}
+    YFAIL[y]=readFailed(M.KEY(y));
     if(!LIVE){ let v=''; try{ v=localStorage.getItem('ph_monthly_demo_v_'+y)||''; }catch(_){} if(v!==DEMO_V){ rec=null; try{ localStorage.setItem('ph_monthly_demo_v_'+y, DEMO_V); }catch(_){} } }
     if(!LIVE && (!rec || !rec.o || !Object.keys(rec.o).length) && y>=NOW_Y-1 && y<=NOW_Y){
       rec=demoYear(y); try{ await PH_STORE.set(M.KEY(y), rec); }catch(_){}
     }
     DATA[y]=M.cleanYear(rec); return DATA[y];
   }
-  async function loadSettings(){ try{ SET=M.cleanSettings(await PH_STORE.get(M.SET_KEY)); }catch(_){ SET=M.cleanSettings(null); } }
+  async function loadSettings(){ try{ SET=M.cleanSettings(await PH_STORE.get(M.SET_KEY)); }catch(_){ SET=M.cleanSettings(null); } SETFAIL=readFailed(M.SET_KEY); }
 
   const recOf=(o,y,m)=>((DATA[y]||{o:{}}).o[o]||{})[M.mm(m)]||null;
   const valsOf=(o,y,m)=>{ const r=recOf(o,y,m); return r && Object.keys(r.v).length ? r.v : null; };
@@ -444,6 +460,17 @@
   const flame=big=>'<span class="flame'+(big?' big':'')+'">'+FLAME+'</span>';
   /* the run that a month's report continues: a month still going counts up to the month before */
   function runAt(o, y, m){ const p=isOpen(y,m) ? step(y,m,-1) : {y,m}; return M.streak((yy,mm)=>valsOf(o,yy,mm), p.y, p.m, SET.goals); }
+  /* a run counts back up to 36 months, but only this year and last were read - a year not read counted as a miss, so a
+     longer run was cut short. Read the year before whenever a run reaches January (21/11/2026, code review) */
+  async function loadRuns(){
+    for(let pass=0; pass<3; pass++){
+      const starts=[isOpen(Y,MO) ? step(Y,MO,-1) : {y:Y, m:MO}, step(Y,MO,-1)], want={};
+      myOffices().forEach(o=>starts.forEach(p=>{ const n=M.streak((yy,mm)=>valsOf(o,yy,mm), p.y, p.m, SET.goals), s=M.runStart(p.y, p.m, n);
+        if(n>0 && n<36 && s.m===1 && !DATA[s.y-1]) want[s.y-1]=1; }));
+      const ys=Object.keys(want).map(Number); if(!ys.length) return;
+      await Promise.all(ys.map(y=>loadYear(y)));
+    }
+  }
   function countUps(){ if(matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     document.querySelectorAll('[data-count]').forEach(n=>{ const to=+n.dataset.count, t0=performance.now(), dur=600+to*60; n.textContent='0';
       const st=now=>{ const k=Math.min(1,(now-t0)/dur), e=1-Math.pow(1-k,3); n.textContent=Math.round(e*to); if(k<1) requestAnimationFrame(st); }; requestAnimationFrame(st); }); }
@@ -480,6 +507,7 @@
   async function render(){
     WHO=WHO||who(); renderBar();
     await Promise.all([loadYear(Y), loadYear(Y-1)]);
+    await loadRuns(); showWarn();
     const v=el('view');
     if(!myOffices().length){ v.innerHTML='<div class="empty">No offices are set for you yet. An administrator can add yours in Admin → People.</div>'; return; }
     if(TAB==='overview') v.innerHTML=overviewHTML();
@@ -525,7 +553,7 @@
     const ended=open ? [] : offs.filter(o=>runAt(o,y,m)===0).map(o=>({o, n:M.streak((yy,mm)=>valsOf(o,yy,mm), pr.y, pr.m, SET.goals)})).filter(r=>r.n>=3);
     if(rolling.length || ended.length){
       h+='<div class="streaks"><div class="skh">'+flame(true)+'<div><b>On a roll</b><span>Months in a row on every target — collection, adjustments and late accounts'+(open?' (through '+M.MONTHS[pr.m-1]+')':'')+'</span></div></div>'+
-        (rolling.length ? '<div class="skl">'+rolling.map(r=>'<button class="sk" onclick="MONTHLY.open(\''+esc(r.o)+'\')" title="Open '+esc(r.o)+'">'+flame()+'<span class="n" data-count="'+r.n+'">'+r.n+'</span><span class="w"><b>'+esc(r.o)+'</b><small>'+(r.n===1?'month':'months')+' in a row</small></span></button>').join('')+'</div>'
+        (rolling.length ? '<div class="skl">'+rolling.map(r=>'<button class="sk" data-o="'+esc(r.o)+'" onclick="MONTHLY.open(this.dataset.o)" title="Open '+esc(r.o)+'">'+flame()+'<span class="n" data-count="'+r.n+'">'+r.n+'</span><span class="w"><b>'+esc(r.o)+'</b><small>'+(r.n===1?'month':'months')+' in a row</small></span></button>').join('')+'</div>'
           : '<div class="ended" style="margin-top:12px">No office is on a run right now — two months in a row on every target starts one.</div>')+
         (ended.length ? '<div class="ended">'+ended.map(r=>esc(r.o)+'’s '+r.n+'-month run ended in '+M.MONTHS[m-1]).join(' · ')+'.</div>' : '')+'</div>';
     }
@@ -535,17 +563,18 @@
     const talk=all.filter(i=>i.tone==='bad' || i.tone==='watch'), good=all.filter(i=>i.tone==='good' && i.k==='col');
     const show=SHOWALL ? talk : talk.slice(0,6);
     h+='<div class="card"><h2>Worth a conversation</h2><div class="sub">Worked out from the numbers, biggest dollar gap first. Open an office to see why — its manager can leave a note.</div>';
-    h+= talk.length ? '<ul class="talk">'+show.map(i=>'<li class="t-'+i.tone+'">'+opill(i.o)+'<span><span class="ico">'+ICON[i.tone]+'</span>'+esc(i.text)+'</span><button class="lnk" onclick="MONTHLY.open(\''+esc(i.o)+'\')">Open</button></li>').join('')+'</ul>'+
+    h+= talk.length ? '<ul class="talk">'+show.map(i=>'<li class="t-'+i.tone+'">'+opill(i.o)+'<span><span class="ico">'+ICON[i.tone]+'</span>'+esc(i.text)+'</span><button class="lnk" data-o="'+esc(i.o)+'" onclick="MONTHLY.open(this.dataset.o)">Open</button></li>').join('')+'</ul>'+
         (talk.length>6 ? '<button class="lnk more" onclick="MONTHLY.all()">'+(SHOWALL?'Show fewer':'Show all '+talk.length)+'</button>' : '')
       : '<div class="note">Nothing off target this month.</div>';
     if(good.length) h+='<div class="note" style="margin-top:10px"><b class="up">✓ Above the collection target:</b> '+good.map(i=>esc(i.o)).join(', ')+'</div>';
     h+='</div>';
     /* every office side by side */
+    // office names go in data-o: inside an onclick's quotes an apostrophe broke the button (21/11/2026, code review)
     h+='<div class="tablewrap"><table><thead><tr><th>Office</th><th>Report</th><th>Produced</th><th>Collected</th><th>Collection %<small>target '+goalTxt('col')+'</small></th><th>Adjustment %<small>target '+goalTxt('adj')+'</small></th><th>A/R ratio<small>target '+goalTxt('ratio')+'</small></th><th>Late 30+ %<small>target '+goalTxt('del')+'</small></th><th>NP exams</th><th>Collection %, 6 months</th></tr></thead><tbody>';
     rows.forEach(x=>{ const v=x.v||{}, cc=M.calc(v), r=x.r;
       const ser=[]; for(let i=5;i>=0;i--){ const q=step(y,m,-i); const vv=valsOf(x.o,q.y,q.m); ser.push(vv?M.calc(vv).colpct:null); }
       const rn=runAt(x.o,y,m);
-      h+='<tr class="click" onclick="MONTHLY.open(\''+esc(x.o)+'\')"><td>'+opill(x.o)+(rn>=2?'<span class="skmini" title="'+rn+' months in a row on every target">'+flame()+rn+'</span>':'')+'</td><td>'+stChip(r,y,m)+'</td><td>'+fmt('$',v.gp)+'</td><td>'+fmt('$',v.gc)+'</td>'+
+      h+='<tr class="click" data-o="'+esc(x.o)+'" onclick="MONTHLY.open(this.dataset.o)"><td>'+opill(x.o)+(rn>=2?'<span class="skmini" title="'+rn+' months in a row on every target">'+flame()+rn+'</span>':'')+'</td><td>'+stChip(r,y,m)+'</td><td>'+fmt('$',v.gp)+'</td><td>'+fmt('$',v.gc)+'</td>'+
         cell('col',cc.colpct,'%')+cell('adj',cc.adjpct,'%')+cell('ratio',cc.ratio,'x')+cell('del',cc.delpct,'%')+'<td>'+fmt('#',v.npe)+'</td><td style="width:130px">'+spark(ser, SET.goals.col, {w:120,h:26,label:'Collection % for 6 months'})+'</td></tr>'; });
     h+='<tr class="tot"><td>Whole practice</td><td></td><td>'+fmt('$',T.gp)+'</td><td>'+fmt('$',T.gc)+'</td>'+cell('col',c.colpct,'%')+cell('adj',c.adjpct,'%')+cell('ratio',c.ratio,'x')+cell('del',c.delpct,'%')+'<td>'+fmt('#',T.npe)+'</td><td></td></tr>';
     return h+'</tbody></table></div></div>';
@@ -578,7 +607,7 @@
     const offs=myOffices(); if(!OFF || offs.indexOf(OFF)<0) OFF=offs.find(x=>WHO.offices!=='all' && WHO.offices.indexOf(x)>=0) || offs[0];
     const o=OFF, y=Y, m=MO, r=recOf(o,y,m)||M.cleanMonth(null), typ=canType(o,r), fields=M.fieldsFor(o,SET), s=M.status(r,y,m,SET,NOW), due=M.dueDate(y,m,SET);
     let h='';
-    if(offs.length>1) h+='<div class="ochips" style="margin-bottom:14px">'+offs.map(x=>'<button class="ochip '+(x===o?'on':'')+'" onclick="MONTHLY.office(\''+esc(x)+'\')"><i style="background:'+esc((PH.colorForOffice(x)||{}).dot||'#94a3b8')+'"></i>'+esc(x)+'</button>').join('')+'</div>';
+    if(offs.length>1) h+='<div class="ochips" style="margin-bottom:14px">'+offs.map(x=>'<button class="ochip '+(x===o?'on':'')+'" data-o="'+esc(x)+'" onclick="MONTHLY.office(this.dataset.o)"><i style="background:'+esc((PH.colorForOffice(x)||{}).dot||'#94a3b8')+'"></i>'+esc(x)+'</button>').join('')+'</div>';
     const auto=fields.filter(f=>f.from==='orthofi' && r.src[f.k]==='orthofi').length, toType=fields.filter(f=>!(f.from==='orthofi' && r.src[f.k]==='orthofi')).length;
     h+='<div class="grid2"><div class="card"><div class="ohead"><div><h2>'+esc(o)+' · '+M.MONTHS[m-1]+' '+y+'</h2><div class="note" style="margin-top:4px">'+stChip(r,y,m)+' '+statusWords(r,s,due)+'</div></div>'+
        (auto ? '<div class="saver">⚡ OrthoFi filled '+auto+' of '+fields.length+' — '+(toType?toType+' to type':'nothing to type')+'</div>' : '')+'</div>';
@@ -679,7 +708,7 @@
     const oldF=M.FIELDS.filter(f=>f.oldsys).map(f=>({k:f.k,t:f.t,n:f.n,flow:!!f.flow}));
     const hasOld=all ? offs.some(o=>SET.oldsys.indexOf(o)>=0) : SET.oldsys.indexOf(OFF)>=0;
     let h='<div class="ochips" style="margin-bottom:14px">'+(offs.length>1?'<button class="ochip '+(all?'on':'')+'" onclick="MONTHLY.office(\'__all\')">All offices together</button>':'')+
-      offs.map(x=>'<button class="ochip '+(x===OFF?'on':'')+'" onclick="MONTHLY.office(\''+esc(x)+'\')"><i style="background:'+esc((PH.colorForOffice(x)||{}).dot||'#94a3b8')+'"></i>'+esc(x)+'</button>').join('')+
+      offs.map(x=>'<button class="ochip '+(x===OFF?'on':'')+'" data-o="'+esc(x)+'" onclick="MONTHLY.office(this.dataset.o)"><i style="background:'+esc((PH.colorForOffice(x)||{}).dot||'#94a3b8')+'"></i>'+esc(x)+'</button>').join('')+
       '<button class="btn ghost" style="margin-left:auto" onclick="MONTHLY.csv()">⬇ Download for Excel</button></div>';
     h+=sheet(main, vals, y, true);
     if(hasMed) h+='<h2 style="font-size:16px;color:var(--navy);margin:22px 0 10px">Medicaid'+(all?' — the Medicaid offices together':'')+'</h2>'+sheet(medF, vals, y, false);
@@ -747,9 +776,12 @@
   }
   /* one setting changed: merged into whatever is saved now (another admin's change is kept), then said */
   async function saveSet(patch, said){
+    // built on settings that couldn't be read, a change would save the starting ones ± this one (21/11/2026, code review)
+    if(SETFAIL){ toast('Not saved — reload the page first'); render(); return; }
     try{ let next=null;
-      await PH_STORE.update(M.SET_KEY, cur=>{ next=M.cleanSettings(Object.assign({}, M.cleanSettings(cur||SET), patch)); return Object.assign({}, next, {upd:new Date().toISOString(), updBy:by()}); });
-      SET=next||M.cleanSettings(Object.assign({}, SET, patch)); toast(said); render(); }
+      const r=await PH_STORE.update(M.SET_KEY, cur=>{ next=M.cleanSettings(Object.assign({}, M.cleanSettings(cur||SET), patch)); return Object.assign({}, next, {upd:new Date().toISOString(), updBy:by()}); });
+      if(refused(r)){ notSaved(r, 'Nothing changed.'); render(); return; }
+      SAVEWARN=''; SET=next||M.cleanSettings(Object.assign({}, SET, patch)); toast(said); render(); }
     catch(e){ toast('Not saved — check the connection. Nothing changed.'); render(); }
   }
   function setTarget(k, i, inp){
@@ -803,10 +835,18 @@
     const todo=IMP.filter(x=>x.r && x.office && Object.keys(x.r.months).length); if(!todo.length || BUSY) return; BUSY=true;
     const b=el('impgo'); if(b){ b.classList.add('saving'); b.disabled=true; }
     let filled=0, kept=0; const stamp=new Date().toISOString();
-    try{
+    try{ SAVEWARN='';
       for(const x of todo){
-        await PH_STORE.update(M.KEY(x.year), cur=>{ const res=M.mergeImport(cur && cur.o ? cur : DATA[x.year], x.office, x.r.months, stamp, 'Excel import ('+by()+')'); filled+=res.filled; kept+=res.kept.length; return res.rec; });
-        if(x.r.medicaid && SET.medicaid.indexOf(x.office)<0){ const next=M.cleanSettings(Object.assign({}, SET, {medicaid:SET.medicaid.concat([x.office])})); await PH_STORE.update(M.SET_KEY, ()=>next); SET=next; }
+        /* a refused save stops here and says so; only the imported months change, the rest of the year stays as stored;
+           the Medicaid office is added to the settings as saved now, never to ones that couldn't be read (21/11/2026, code review) */
+        let f1=0, k1=0;
+        const r=await PH_STORE.update(M.KEY(x.year), cur=>{ const base=cur && cur.o ? cur : DATA[x.year], res=M.mergeImport(base, x.office, x.r.months, stamp, 'Excel import ('+by()+')'); f1=res.filled; k1=res.kept.length;
+          let out=base; Object.keys(res.rec.o[x.office]||{}).forEach(k=>{ if(Object.prototype.hasOwnProperty.call(x.r.months, k)) out=M.putMonth(out, x.office, +k, res.rec.o[x.office][k]); }); return out; });
+        if(refused(r)){ notSaved(r, x.file+' and the files after it weren’t brought in — try again.'); render(); return; }
+        filled+=f1; kept+=k1;
+        if(x.r.medicaid && SET.medicaid.indexOf(x.office)<0 && !SETFAIL){
+          const rs=await PH_STORE.update(M.SET_KEY, cur=>{ const s=M.cleanSettings(cur||SET); return s.medicaid.indexOf(x.office)>=0 ? undefined : Object.assign({}, s, {medicaid:s.medicaid.concat([x.office])}); });
+          if(refused(rs)) notSaved(rs, x.office+' wasn’t added to the Medicaid offices — switch it on in Settings.'); else SET=M.cleanSettings(rs.value||SET); }
         await loadYear(x.year, true);
       }
       toast('Brought in '+filled+' numbers'+(kept?' · '+kept+' already here, kept':'')); IMP=[]; render();
@@ -816,35 +856,46 @@
 
   /* ---------- saving: only what changed, merged into whatever is saved now ---------- */
   function by(){ return WHO.name || WHO.email || 'Someone'; }
+  /* The office, month and typed numbers are taken when Save is pressed: the save reads the shared copy first, and the page
+     could be on another office by then. A refused save is not "Saved" (21/11/2026, code review). Resolves to the numbers
+     it saved, or null. */
   async function write(mutate){
-    if(BUSY) return false; BUSY=true;
-    try{ await PH_STORE.update(M.KEY(Y), cur=>{ const rec=M.cleanYear(cur && cur.o ? cur : DATA[Y]); rec.o[OFF]=rec.o[OFF]||{}; const k=M.mm(MO);
-        const r=M.cleanMonth(rec.o[OFF][k]); mutate(r); rec.o[OFF][k]=M.cleanMonth(r); return rec; });
-      await loadYear(Y, true); return true; }
-    catch(e){ toast('Could not save — '+String((e&&e.message)||e).slice(0,80)); return false; }
+    if(busy()) return null; BUSY=true;
+    const o=OFF, y=Y, mo=MO, edits=Object.assign({}, EDIT);
+    try{ const r=await PH_STORE.update(M.KEY(y), cur=>{ const base=cur && cur.o ? cur : DATA[y], k=M.mm(mo);
+        const m=M.cleanMonth(((base && base.o) || {})[o] && base.o[o][k]); mutate(m, edits); return M.putMonth(base, o, mo, M.cleanMonth(m)); });
+      if(refused(r)){ notSaved(r); return null; }
+      SAVEWARN=''; showWarn(); await loadYear(y, true); return edits; }
+    catch(e){ notSaved({error:String((e&&e.message)||e)}); return null; }
     finally{ BUSY=false; }
   }
-  function applyEdits(r){ const now=new Date().toISOString();
-    Object.keys(EDIT).forEach(k=>{ const n=M.cleanVal(k, EDIT[k]);
-      if(n===null){ if(String(EDIT[k]).trim()===''){ delete r.v[k]; delete r.src[k]; delete r.at[k]; delete r.by[k]; } return; }
+  function applyEdits(r, edits){ const now=new Date().toISOString();
+    Object.keys(edits).forEach(k=>{ const n=M.cleanVal(k, edits[k]);
+      if(n===null){ if(String(edits[k]).trim()===''){ delete r.v[k]; delete r.src[k]; delete r.at[k]; delete r.by[k]; } return; }
       if(r.v[k]===n && r.src[k]==='typed') return; r.v[k]=n; r.src[k]='typed'; r.at[k]=now; r.by[k]=by(); }); }
-  async function save(quiet){ const ok=await write(r=>applyEdits(r)); if(ok){ EDIT={}; CORRECT={}; if(!quiet) toast('Saved'); render(); } return ok; }
+  // a box typed into while the save was on its way keeps what was typed (21/11/2026, code review)
+  function doneEditing(saved){ Object.keys(saved).forEach(k=>{ if(EDIT[k]===saved[k]) delete EDIT[k]; }); }
+  async function save(quiet){ const saved=await write((r,e)=>applyEdits(r,e));
+    if(saved){ doneEditing(saved); Object.keys(CORRECT).forEach(k=>{ if(EDIT[k]===undefined) delete CORRECT[k]; }); if(!quiet) toast('Saved'); render(); } return !!saved; }
   async function send(force){
     const r=recOf(OFF,Y,MO)||M.cleanMonth(null), fields=M.fieldsFor(OFF,SET);
     const empty=fields.filter(f=>{ const e=EDIT[f.k]; return e!==undefined ? M.num(e)===null : r.v[f.k]===undefined; });
     if(empty.length && !force){ SENDASK=true; render(); return; }
-    SENDASK=false; const ok=await write(x=>{ applyEdits(x); x.sent={at:new Date().toISOString(), by:by()}; });
-    if(ok){ EDIT={}; toast(M.MONTHS[MO-1]+' sent — Heather can see it now'); render(); }
+    SENDASK=false; const mo=MO, saved=await write((x,e)=>{ applyEdits(x,e); x.sent={at:new Date().toISOString(), by:by()}; });
+    if(saved){ doneEditing(saved); toast(M.MONTHS[mo-1]+' sent — Heather can see it now'); render(); }
   }
-  async function markFinal(on){ const ok=await write(x=>{ applyEdits(x); if(on){ x.final={at:new Date().toISOString(), by:by()}; if(!x.sent) x.sent={at:x.final.at, by:by()}; } else delete x.final; });
-    if(ok){ EDIT={}; toast(on ? M.MONTHS[MO-1]+' marked final' : 'Reopened'); render(); } }
+  async function markFinal(on){ const mo=MO, saved=await write((x,e)=>{ applyEdits(x,e); if(on){ x.final={at:new Date().toISOString(), by:by()}; if(!x.sent) x.sent={at:x.final.at, by:by()}; } else delete x.final; });
+    if(saved){ doneEditing(saved); toast(on ? M.MONTHS[mo-1]+' marked final' : 'Reopened'); render(); } }
   async function addNote(){ const t=(el('newnote')||{}).value||''; if(!t.trim()) return;
     const ok=await write(x=>{ x.notes.push({t:t.trim().slice(0,1000), by:by(), at:new Date().toISOString()}); }); if(ok){ toast('Note added'); render(); } }
   async function useOf(k){ const ok=await write(x=>{ if(x.ofv[k]!==undefined){ x.v[k]=x.ofv[k]; x.src[k]='orthofi'; x.at[k]=x.of||new Date().toISOString(); x.by[k]='OrthoFi'; } }); if(ok){ delete EDIT[k]; render(); } }
   /* ---------- OrthoFi's numbers in (the nightly job calls this; it never touches a typed number or a final month) ---------- */
   async function importOrthofi(y, m, byOffice, stamp){
     let changed=0;
-    await PH_STORE.update(M.KEY(y), cur=>{ let rec=cur; Object.keys(byOffice||{}).forEach(o=>{ const x=M.mergeOrthofi(rec, o, m, byOffice[o], stamp); rec=x.rec; changed+=x.changed; }); return M.cleanYear(rec); });
+    const r=await PH_STORE.update(M.KEY(y), cur=>{ let rec=cur; changed=0; Object.keys(byOffice||{}).forEach(o=>{ const x=M.mergeOrthofi(rec, o, m, byOffice[o], stamp);
+      const mo=x.why!=='bad month' && x.rec.o[o] && x.rec.o[o][M.mm(m)]; if(mo) rec=M.putMonth(rec, o, m, mo); changed+=x.changed; }); return rec; });
+    // only each office's month changes; a refused save is an error, not "filled in" (21/11/2026, code review)
+    if(refused(r)) throw new Error('Not saved — '+String(r && (r.why || r.error) || '').slice(0,120));
     await loadYear(y, true); render(); return changed;
   }
 
@@ -879,10 +930,11 @@
   window.MONTHLY={
     as(id){ try{ localStorage.setItem('ph_monthly_as', id); }catch(_){} WHO=null; WHO=who(); TAB=null; OFF=null; EDIT={}; CORRECT={}; SENDASK=false; render(); },
     tab(t){ if(TAB==='year' && t!=='year' && OFF==='__all') OFF=null; if(TAB!=='year' && t==='year') Y=Math.min(Y, NOW_Y); TAB=t; SENDASK=false; try{ localStorage.setItem('ph_monthly_tab', t); }catch(_){} render(); },
-    move(n){ if(Object.keys(EDIT).length && !confirmLeave()) return; EDIT={}; CORRECT={}; SENDASK=false;
+    // no other office or month while a save is on its way (21/11/2026, code review)
+    move(n){ if(busy()) return; if(Object.keys(EDIT).length && !confirmLeave()) return; EDIT={}; CORRECT={}; SENDASK=false;
       if(TAB==='year'){ Y=Math.min(NOW_Y, Y+n); } else { const p=step(Y,MO,n); if(isFuture(p.y,p.m)) return; Y=p.y; MO=p.m; } render(); },
-    open(o){ OFF=o; TAB='office'; SENDASK=false; EDIT={}; CORRECT={}; render(); window.scrollTo({top:0, behavior:'smooth'}); },
-    office(o){ if(Object.keys(EDIT).length && !confirmLeave()) return; OFF=o; EDIT={}; CORRECT={}; SENDASK=false; render(); },
+    open(o){ if(busy()) return; OFF=o; TAB='office'; SENDASK=false; EDIT={}; CORRECT={}; render(); window.scrollTo({top:0, behavior:'smooth'}); },
+    office(o){ if(busy()) return; if(Object.keys(EDIT).length && !confirmLeave()) return; OFF=o; EDIT={}; CORRECT={}; SENDASK=false; render(); },
     all(){ SHOWALL=!SHOWALL; render(); },
     tidy(inp){ const k=inp.dataset.k, f=M.BY[k], n=M.num(inp.value); if(!f || n===null || f.t==='%') return; const s=showIn(f.t, n); if(s!==inp.value){ inp.value=s; if(EDIT[k]!==undefined) EDIT[k]=s; } },
     typed(inp){ EDIT[inp.dataset.k]=inp.value; inp.classList.toggle('empty', inp.value.trim()===''); const n=el('savenote'); if(n) n.textContent='Not saved yet'; glance(); },

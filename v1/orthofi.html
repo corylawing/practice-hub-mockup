@@ -127,7 +127,13 @@
   function gate(){ if(allowed()) return true; el('wrap').innerHTML='<h1>OrthoFi connection</h1><p class="lede">This page is for Home-Brace admins.</p>'; return false; }
 
   function state(cls, html){ el('cstate').innerHTML='<div class="state '+cls+'">'+html+'</div>'; }
-  async function loadMap(){ try{ MAP=O.cleanMap(await PH_STORE.get(O.KEY)); }catch(_){ MAP=O.cleanMap(null); } }
+  /* a map that couldn't be read is not an empty one: Save would put these switches and matches over the saved ones, so it
+     says so and doesn't save until a read works (21/11/2026, code review) */
+  let MAPFAIL=false;
+  async function loadMap(){ try{ MAP=O.cleanMap(await PH_STORE.get(O.KEY)); }catch(_){ MAP=O.cleanMap(null); }
+    const was=MAPFAIL; MAPFAIL=!!(PH_STORE.readFailed && PH_STORE.readFailed(O.KEY));
+    if(was && !MAPFAIL && el('auto')){ AUTOSEL=JSON.parse(JSON.stringify(MAP.auto||{})); drawAuto(); } }
+  const MAPFAIL_TXT='Home-Brace couldn’t read the saved OrthoFi settings, so nothing here is saved over them. Reload the page to try again.';
   async function connect(){
     if(!gate()) return; state('wait','Signing in to OrthoFi…');
     try{
@@ -153,6 +159,7 @@
         offs.filter(o=>!used[o]).map(o=>'No OrthoFi location for '+esc(o)).join(' · ')+'</span></div>';
   }
   async function saveMap(){
+    if(MAPFAIL){ el('mapnote').textContent=MAPFAIL_TXT; return; }
     const by=(PH.name && PH.name(PH.realMe ? PH.realMe() : PH.me()))||'';
     const r=await PH_STORE.update(O.KEY, cur=>{ const x=O.cleanMap(cur); Object.keys(MAP.map).forEach(id=>{ x.map[id]=MAP.map[id]; }); x.at=new Date().toISOString(); x.by=by; return x; });
     el('mapnote').textContent=r && !r.error && !r.blocked ? '✓ Saved — '+new Date().toLocaleTimeString() : 'That didn’t save — try again';
@@ -232,10 +239,10 @@
         offs.map(o=>{ const m=A.snapshot ? undefined : (MATCH[k]||{})[o], sel=on.indexOf(o)>=0;
           return '<button type="button" class="achip'+(sel?' on':'')+'" role="switch" aria-checked="'+sel+'" data-auto="'+k+'" data-o="'+esc(o)+'">'+esc(o)+
             '<small>'+(sel ? 'Fills itself in' : 'Typed')+(m===true ? ' · ✓ matched '+esc(MATCH_FOR) : m===false ? ' · ✗ off in '+esc(MATCH_FOR) : '')+'</small></button>'; }).join('')+'</div></div>'; }).join('')+
-      '<div class="row" style="margin-top:12px"><button class="btn" id="saveauto">Save</button><span class="soft" id="autonote">'+(MAP.at ? 'Last saved '+esc(new Date(MAP.at).toLocaleString('en-US',{month:'short', day:'numeric', hour:'numeric', minute:'2-digit'}))+(MAP.by?' by '+esc(MAP.by):'') : '')+'</span></div>';
+      '<div class="row" style="margin-top:12px"><button class="btn" id="saveauto">Save</button><span class="soft" id="autonote">'+(MAPFAIL ? esc(MAPFAIL_TXT) : MAP.at ? 'Last saved '+esc(new Date(MAP.at).toLocaleString('en-US',{month:'short', day:'numeric', hour:'numeric', minute:'2-digit'}))+(MAP.by?' by '+esc(MAP.by):'') : '')+'</span></div>';
   }
   async function saveAuto(){
-    if(!gate()) return; const by=(PH.name && PH.name(PH.realMe ? PH.realMe() : PH.me()))||'';
+    if(!gate()) return; if(MAPFAIL){ el('autonote').textContent=MAPFAIL_TXT; return; } const by=(PH.name && PH.name(PH.realMe ? PH.realMe() : PH.me()))||'';
     const r=await PH_STORE.update(O.KEY, cur=>{ const x=O.cleanMap(cur); x.auto=JSON.parse(JSON.stringify(AUTOSEL||{})); x.at=new Date().toISOString(); x.by=by; return O.cleanMap(x); });
     if(r && !r.error && !r.blocked){ MAP=O.cleanMap(r.value || MAP); el('autonote').textContent='✓ Saved — the Monthly Report fills these in from now on'; }
     else el('autonote').textContent='That didn’t save — try again';
