@@ -463,6 +463,12 @@
       localStorage.setItem(DEMO_FLAG,'v3');
     }catch(_){}
   }
+  /* Which consults are this person's: worked out from the consults read AND who they are NOW - again whenever that
+     changes (ph-identity), not frozen at the read. A TC whose offices come from the roster is "no offices" for the first
+     moment after sign-in; a read finishing in that moment used to keep nothing, so everything already logged stayed
+     hidden until a lucky reload and only what she added in that sitting showed (Hobbs, 23/11/2026: Thursday's consults
+     for Monday "not coming up", entered again). */
+  function rescope(){ const offs=myOffices(); ALL=EVERY.filter(r=>offs.indexOf(r.office)>=0); }
   function load(){
     const offs=myOffices();
     seedDemo(false);
@@ -474,7 +480,7 @@
       .then(([L,S,Li,Sc])=>{
         EVERY=TC.consultsFrom(L).filter(TC.live);
         UNREAD=(L && L.unread) || [];
-        ALL=EVERY.filter(r=>offs.indexOf(r.office)>=0);
+        rescope();
         SLOTS={}; S.forEach(([o,v])=>{ SLOTS[o]=(v && typeof v==='object')?v:{}; });
         LISTS=Object.assign({}, TC.DEFAULT_LISTS, (Li && typeof Li==='object')?Li:{});
         LISTS_BAD=!!(PH_STORE.readFailed && PH_STORE.readFailed(TC.LISTS_KEY));
@@ -1304,7 +1310,7 @@
   const pageDone=()=>{ if(window.PH && PH.loadDone) PH.loadDone('page'); };
   function boot(){ render(); Promise.resolve(load()).then(pageDone, pageDone); }
   if(window.PH && PH.loadHold) PH.loadHold('page', 'Loading the TC Tracker…');   // the loading screen stays up until the numbers are in (user.js)
-  window.TCPAGE={render, reload:load, identity:()=>{ tab=null; office=null; render(); }};
+  window.TCPAGE={render, reload:load, identity:()=>{ tab=null; office=null; rescope(); render(); }};
   if(!LIVE() || window.PH_AUTH) boot();
   else document.addEventListener('ph-signed-in', boot, {once:true});
 })();
