@@ -653,11 +653,17 @@ I can confidently say that the chat feature should go next. The production thing
     "Already logged … Same patient?" Open that one / Save anyway; a tab back after 5+ min or on a new day re-reads (never
     under an open form; a failed re-read keeps the screen; MINE overlays this page's saves). Phones: .dm forms (TC,
     Payroll, Chat, Academy) hide the bottom bar - their Save buttons were under it. tests tcscope (39).
-    SELENE (hc255 SANDBOX): "could we view the day? Look up a date" -> Today tab ‹ day ›, a date box, Back to today;
-    logging on a day starts on that day; outcome buttons only today/earlier; test tcday.
+    SELENE (hc256 LIVE 23/11; Cory: "make sure you are doing it the most user friendly way"): Today tab = a WEEK STRIP
+    (dayBar: Mon-Fri chips with each day's consult count / Closed; Sat-Sun only with consults or picked), ‹ › a week,
+    the week name opens a month calendar (calPop, counts on every day, ‹ › months), "Today" when away, ← → step a day
+    (not while typing / in a form), Esc or a click outside closes the calendar. NO native date box (datepick.js is
+    PARKED for the TC Tracker - Cory "No its ok"). Logging on a day starts on that day; outcome buttons only today or
+    earlier; "no outcome" warnings only on today. test tcday (20).
     HEATHER MONTHLY (23/11): her two asks already exist - a month is sent from the 1st and OrthoFi re-fills last month
     on/after the 1st; old-system boxes (osp/osc/osar) default to Mansfield + both Cruces and add onto OrthoFi. Live
-    ph_orthofi.auto has NO Cruces offices for gp/gc/adj/np (mapped 2613/2630, never ticked: OrthoFi alone was ~94-96%).
+    ph_orthofi.auto had NO Cruces offices for gp/gc/adj/np (mapped 2613/2630, never ticked: OrthoFi alone was ~94-96%).
+    Cory "yes switch on las cruces" (23/11): ONE guarded PH_STORE.update added Cruces LCO + Cruces FFO to gp/gc/adj/np
+    (dry run + read back; ar and the map untouched - A/R stays typed like Carlsbad/Clovis/Hobbs, unproven for Cruces).
 60. **ADJUSTMENTS + NET PRODUCTION PROVEN FROM ORTHOFI (21/11/2026; hc242).** Cory: "Now that you have access to orthofi
     via safari do what you need to do to make this perfect" (his Safari, OrthoFi portal; read-only - only reports run).
     The Monthly Balance Sheet = OrthoFi portal Reports -> Accounting -> Monthly Balance Sheet (business-intelligence
