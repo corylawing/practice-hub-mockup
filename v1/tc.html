@@ -104,9 +104,39 @@
   /* Today */
   .todayhead{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
   .todayhead h2{font-size:19px;margin:0;color:var(--navy)}
-  .dayrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
-  .dayrow .mpick span{min-width:96px}
-  .dayjump{width:auto;min-width:0}
+  .daybar{position:relative;margin-bottom:14px}
+  .dayrow{display:flex;align-items:center;gap:6px;margin-bottom:10px}
+  .wkbtn{width:38px;height:38px;border:1px solid var(--line);border-radius:10px;background:#fff;font-size:18px;font-weight:800;color:var(--navy);cursor:pointer;flex:none}
+  .wkbtn:hover{border-color:var(--teal);background:var(--teal-soft)}
+  .wklabel{height:38px;border:1px solid var(--line);border-radius:10px;background:#fff;padding:0 14px;font:inherit;font-weight:800;font-size:14.5px;color:var(--navy);cursor:pointer;white-space:nowrap}
+  .wklabel:hover,.wklabel.open{border-color:var(--teal);background:var(--teal-soft)}
+  .wklabel .caret{font-size:11px;color:var(--teal-600);margin-left:2px}
+  .today-btn{margin-left:auto}
+  .dchips{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:8px}
+  .dchip{display:flex;flex-direction:column;align-items:center;gap:1px;padding:9px 4px 8px;border:1px solid var(--line);border-radius:12px;background:#fff;cursor:pointer;font:inherit;color:var(--navy);min-width:0}
+  .dchip:hover{border-color:var(--teal)}
+  .dchip .dw{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#6b7a8c}
+  .dchip .dn{font-size:20px;font-weight:800;line-height:1.15}
+  .dchip .dc{font-size:12px;font-weight:700;color:var(--teal-600);min-height:16px}
+  .dchip.shut .dc{color:#94a3b8;font-weight:600}
+  .dchip.now{border-color:var(--teal)}
+  .dchip.now .dw{color:var(--teal-600)}
+  .dchip.on{background:var(--teal);border-color:var(--teal);color:#fff}
+  .dchip.on .dw,.dchip.on .dc{color:#fff}
+  .calpop{position:absolute;z-index:30;top:46px;left:44px;width:300px;max-width:calc(100vw - 32px);background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 12px 32px rgba(15,42,74,.16);padding:12px}
+  .calhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;color:var(--navy)}
+  .calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+  .cdw{font-size:10.5px;font-weight:700;text-transform:uppercase;color:#6b7a8c;text-align:center;padding:2px 0}
+  .cday{display:flex;flex-direction:column;align-items:center;justify-content:center;height:38px;border:none;border-radius:9px;background:none;cursor:pointer;font:inherit;color:var(--navy)}
+  .cday:hover{background:var(--teal-soft)}
+  .cday .dn{font-size:13.5px;font-weight:700;line-height:1.1}
+  .cday .dc{font-size:10px;font-weight:800;color:var(--teal-600);min-height:11px}
+  .cday.shut .dn{color:#a3afbd}
+  .cday.now{box-shadow:inset 0 0 0 1.5px var(--teal)}
+  .cday.on{background:var(--teal);color:#fff}
+  .cday.on .dc{color:#fff}
+  .calfoot{margin-top:8px;text-align:center}
+  @media (max-width:560px){ .dchips{gap:5px} .dchip{padding:8px 2px 7px;border-radius:10px} .dchip .dn{font-size:18px} .dchip .dc{font-size:11px} .calpop{left:0} }
   .capline{font-size:13.5px;color:var(--soft)}
   .capline b{color:var(--navy)}
   .clist{display:flex;flex-direction:column}
@@ -296,14 +326,14 @@
     *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}
   }
 </style>
-<script src="user.js?v=hc255"></script>
+<script src="user.js?v=hc256"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc255"></script>
-  <script src="gate.js?v=hc255"></script>
-  <script src="_staff.js?v=hc255"></script>
-  <script src="tc.js?v=hc255"></script>
-  <script src="tcstore.js?v=hc255"></script>
-  <script src="schedrec.js?v=hc255"></script>
+  <script src="store.js?v=hc256"></script>
+  <script src="gate.js?v=hc256"></script>
+  <script src="_staff.js?v=hc256"></script>
+  <script src="tc.js?v=hc256"></script>
+  <script src="tcstore.js?v=hc256"></script>
+  <script src="schedrec.js?v=hc256"></script>
 </head>
 <body>
 <div class="ribbon">SANDBOX — made-up patients. Use “Try it as” to see it as a TC, an office manager or Selene.</div>
@@ -616,12 +646,49 @@
 
   /* ---------------- Today ---------------- */
   /* ANY DAY, NOT ONLY TODAY (23/11/2026, Selene: "could we view the day? Look up a date to view consults?"). The Today tab
-     steps a day at a time (‹ ›), jumps to any date (the date box), and "Today" comes back. Logging a consult while on a
+     shows the week (dayBar, below), jumps to any date (its month calendar), and "Today" comes back. Logging a consult while on a
      day starts on that day's date - entering Monday's consults on Thursday is: go to Monday, log them. */
   let day='';                                     // '' = today (and it stays today after midnight)
   const viewDay=()=>day||today();
   const shiftDay=(s,n)=>{ const x=TC.parse(s); x.setDate(x.getDate()+n); return TC.iso(x); };
-  function relDay(d){ const n=today(); return d===n ? 'Today' : d===shiftDay(n,-1) ? 'Yesterday' : d===shiftDay(n,1) ? 'Tomorrow' : fmtS(d); }
+  /* THE WEEK STRIP: the week's days with how many consults each has - tap one to see it. ‹ › a week at a time; the week's
+     name opens a month calendar (counts on every day) to jump anywhere; "Today" comes back; ← → on a keyboard step a day.
+     Saturday and Sunday show only when they have consults (or are the day picked). */
+  let calOpen=false, calMonth='';
+  const weekStart=s=>{ const x=TC.parse(s); x.setDate(x.getDate()-(x.getDay()+6)%7); return TC.iso(x); };
+  const countOn=s=>scoped().filter(r=>r.date===s).length;
+  const closedOn=s=>!slotsOn(s) && inView().every(o=>!isOpenFn(o)(s));
+  const DW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  function chip(s, d, now, cls){
+    const n=countOn(s), shut=!n && closedOn(s), x=TC.parse(s);
+    return '<button class="'+cls+(s===d?' on':'')+(s===now?' now':'')+(shut?' shut':'')+'"'+attr('act','goday')+attr('v',s)+
+      ' aria-pressed="'+(s===d)+'" aria-label="'+esc(fmtD(s)+' - '+(n?n+' consult'+(n===1?'':'s'):shut?'closed':'no consults'))+'">'+
+      (cls==='dchip'?'<span class="dw">'+DW[x.getDay()]+'</span>':'')+'<span class="dn">'+x.getDate()+'</span>'+
+      '<span class="dc">'+(n?n:shut&&cls==='dchip'?'Closed':cls==='dchip'?'–':'')+'</span></button>';
+  }
+  function dayBar(d){
+    const now=today(), mon=weekStart(d), fri=shiftDay(mon,4), days=[];
+    for(let i=0;i<7;i++){ const s=shiftDay(mon,i); if(i>=5 && s!==d && !countOn(s)) continue; days.push(s); }
+    let h='<div class="daybar"><div class="dayrow">'+
+      '<button class="wkbtn" data-act="week" data-v="-1" aria-label="Week before">‹</button>'+
+      '<button class="wklabel'+(calOpen?' open':'')+'" data-act="cal" aria-expanded="'+calOpen+'" aria-label="Pick a date">'+esc(fmtS(mon))+' – '+esc(TC.monthOf(mon)===TC.monthOf(fri)?String(TC.parse(fri).getDate()):fmtS(fri))+
+        ' <span class="caret">▾</span></button>'+
+      '<button class="wkbtn" data-act="week" data-v="1" aria-label="Week after">›</button>'+
+      (d===now?'':'<button class="btn ghost sm today-btn" data-act="goday" data-v="'+esc(now)+'">Today</button>')+'</div>';
+    if(calOpen) h+=calPop(d, now);
+    h+='<div class="dchips" style="--n:'+days.length+'">'+days.map(s=>chip(s, d, now, 'dchip')).join('')+'</div></div>';
+    return h;
+  }
+  function calPop(d, now){
+    const ym=calMonth||TC.monthOf(d), first=TC.parse(ym+'-01'), lead=(first.getDay()+6)%7, last=new Date(first.getFullYear(), first.getMonth()+1, 0).getDate();
+    let cells='';
+    for(let i=0;i<lead;i++) cells+='<span></span>';
+    for(let k=1;k<=last;k++) cells+=chip(ym+'-'+String(k).padStart(2,'0'), d, now, 'cday');
+    return '<div class="calpop" role="dialog" aria-label="Pick a date"><div class="calhead"><button class="wkbtn" data-act="calm" data-v="-1" aria-label="Month before">‹</button>'+
+      '<b>'+esc(fmtM(ym))+'</b><button class="wkbtn" data-act="calm" data-v="1" aria-label="Month after">›</button></div>'+
+      '<div class="calgrid">'+['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(x=>'<span class="cdw">'+x+'</span>').join('')+cells+'</div>'+
+      '<div class="calfoot small muted">The number on a day = consults logged for it.</div></div>';
+  }
   function viewToday(){
     const now=today(), d=viewDay(), isT=d===now, past=d<=now;
     const list=scoped().filter(r=>r.date===d).sort((a,b)=>(a.time||'99')<(b.time||'99')?-1:1);
@@ -632,11 +699,8 @@
     let h='<div class="stack">';
     const noUsual=inView().some(o=>!TC.usualOn(SLOTS[o]||{}, d) && !((SLOTS[o]||{}).days||{})[d]);
     const closedToday=!slots && inView().every(o=>!isOpenFn(o)(d));
-    h+='<div class="todayhead"><div><div class="dayrow"><span class="mpick"><button data-act="day" data-v="-1" aria-label="Day before">‹</button><span>'+esc(relDay(d))+'</span>'+
-      '<button data-act="day" data-v="1" aria-label="Day after">›</button></span>'+
-      '<input class="sel dayjump" type="date" data-in="day" value="'+esc(d)+'" aria-label="Go to a date">'+
-      (isT?'':'<button class="btn ghost sm" data-act="day" data-v="0">Back to today</button>')+'</div>'+
-      '<h2>'+esc(fmtD(d))+'</h2><div class="capline">'+
+    h+=dayBar(d);
+    h+='<div class="todayhead"><div><h2>'+(isT?'Today · ':'')+esc(fmtD(d))+'</h2><div class="capline">'+
       (slots?'<b>'+list.length+'</b> of <b>'+slots+'</b> consult slots booked':'<b>'+list.length+'</b> consult'+(list.length===1?'':'s')+(isT?' today':''))+
       (slots?'':closedToday?(isT?' · closed today on the Schedule':' · closed that day on the Schedule'):noUsual?' · <button class="link" data-act="tab" data-v="slots">set your usual slots</button>':'')+'</div></div>'+
       (canEdit()?'<button class="btn big" data-act="new">＋ Log a consult</button>':'')+'</div>';
@@ -1261,6 +1325,10 @@
     if(act==='office'){ office=v||null; render(); return; }
     if(act==='month'){ month=TC.shiftMonth(month, Number(v)); render(); return; }
     if(act==='day'){ const n=Number(v); day=n ? shiftDay(viewDay(), n) : ''; if(day===today()) day=''; render(); return; }
+    if(act==='goday'){ if(TC.parse(v)){ day=v===today() ? '' : v; calOpen=false; render(); } return; }
+    if(act==='week'){ day=shiftDay(viewDay(), 7*Number(v)); if(day===today()) day=''; calMonth=''; render(); return; }
+    if(act==='cal'){ calOpen=!calOpen; calMonth=TC.monthOf(viewDay()); render(); return; }
+    if(act==='calm'){ calMonth=TC.shiftMonth(calMonth||TC.monthOf(viewDay()), Number(v)); render(); return; }
     if(act==='reload'){ loaded=false; render(); load(); return; }
     if(act==='new'){ newConsult(); return; }
     if(act==='open'){ openConsult(b.dataset.id); return; }
@@ -1365,12 +1433,18 @@
   document.addEventListener('change', e=>{
     const t=e.target, k=t.dataset && t.dataset.in; if(!k) return;
     if(k==='tcf'){ tcFilter=t.value; render(); return; }
-    if(k==='day'){ if(TC.parse(t.value)){ day=t.value===today() ? '' : t.value; render(); } return; }
     if(k==='ocf'){ ocFilter=t.value; render(); return; }
     if(k==='rec' && DLG && t.tagName==='SELECT'){ DLG.rec[t.dataset.f]=t.value; if(TWIN_FIELDS.indexOf(t.dataset.f)>=0){ DLG.twin=null; DLG.dupOk=false; } if(t.dataset.f==='tc'){ const x=tcsFor(DLG.rec.office).find(y=>y.name===t.value); DLG.rec.tcMail=x?x.mail:''; } drawDlg(); }
   });
   document.addEventListener('toggle', e=>{ if(DLG && e.target.matches && e.target.matches('details.more')) DLG.moreOpen=e.target.open; }, true);
-  document.addEventListener('keydown', e=>{ if(e.key==='Escape' && DLG) askClose(); });
+  document.addEventListener('keydown', e=>{
+    if(e.key==='Escape' && DLG){ askClose(); return; }
+    if(e.key==='Escape' && calOpen){ calOpen=false; render(); return; }
+    const typing=e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName);
+    if(!DLG && !typing && tab==='today' && !e.metaKey && !e.ctrlKey && !e.altKey && (e.key==='ArrowLeft' || e.key==='ArrowRight')){
+      day=shiftDay(viewDay(), e.key==='ArrowLeft' ? -1 : 1); if(day===today()) day=''; render(); e.preventDefault(); }
+  });
+  document.addEventListener('click', e=>{ if(calOpen && !e.target.closest('.calpop, .wklabel')){ calOpen=false; render(); } });
   el('dlg').addEventListener('click', e=>{ if(e.target===el('dlg')) askClose(); });
 
   /* ---------------- sandbox: try it as ---------------- */
@@ -1406,7 +1480,7 @@
 })();
 </script>
 <script>PH.nav('tc');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(window.TCPAGE)TCPAGE.identity();});document.addEventListener('ph-identity',function(){if(window.TCPAGE)TCPAGE.identity();});</script>
-<script src="tour.js?v=hc255"></script>
+<script src="tour.js?v=hc256"></script>
 <script>
 Tour.init([
   {sel:'#offbar', title:'Your office', body:'You see the offices you work at. Heather, Selene and leadership see every office and can pick one.'},

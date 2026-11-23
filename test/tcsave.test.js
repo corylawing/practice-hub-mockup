@@ -138,7 +138,7 @@ function startedElsewhere(S){
     open({kind:'slot'}); w.askClose(); t('4: other dialogs: close as before', w.closed===1);
     open({}); w.DLG.newDate='2026-12-01'; w.askClose(); t('4: a new consult date typed counts as a change', w.DLG.confirmClose===true);
   }
-  t('4: Escape and the backdrop go through askClose; × / Cancel / Close do nothing while saving', /e\.key==='Escape' && DLG\) askClose\(\)/.test(H) && /if\(e\.target===el\('dlg'\)\) askClose\(\)/.test(H) &&
+  t('4: Escape and the backdrop go through askClose; × / Cancel / Close do nothing while saving', /e\.key==='Escape' && DLG\)\s*\{?\s*askClose\(\)/.test(H) && /if\(e\.target===el\('dlg'\)\) askClose\(\)/.test(H) &&
     /if\(act==='close'\)\{ if\(DLG && \(DLG\.busy \|\| DLG\.saving\)\) return; closeDlg\(\)/.test(H) && /if\(act==='close-yes'\)\{ if\(DLG && \(DLG\.busy \|\| DLG\.saving\)\) return;/.test(H));
   t('4: a failed save after the form closed says so (a red toast), it never redraws a closed form', (fnOf(H,'saveConsult').match(/if\(DLG===d\) drawDlg\(\); else toast\(d\.err, true\)/g)||[]).length===1 &&
     /if\(DLG===d\) drawDlg\(\); else toast\(d\.err, true\)/.test(fnOf(H,'saveFu')) && /d\.confirmDel=false; if\(DLG===d\) drawDlg\(\); else toast\(d\.err, true\)/.test(H));
