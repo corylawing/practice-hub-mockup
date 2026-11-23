@@ -647,6 +647,17 @@ I can confidently say that the chat feature should go next. The production thing
     DONE 23/11 (Cory: "deploy tc fix and clean up"): hc252 LIVE (verified). Cleanup = ONE TCSTORE.update, dry-run first,
     read back: 39 consults in, 39 out, 10 changed, nothing else (SharePoint v56; v55 = just before). UNDO if ever asked =
     put those 10 consults back from version 55's content (guard: their upd still = the cleanup time).
+    NEVER AGAIN (hc253-254, LIVE 23/11, Cory: "make sure it never happens again" / "push to production"): render() says
+    "One moment… finding your offices" (or who can fix it) instead of an empty day when myOffices() is empty; a NEW consult
+    first reads its office-month fresh (findTwin: same name, or same DOB + phone/chart, same office + day) -> footer
+    "Already logged … Same patient?" Open that one / Save anyway; a tab back after 5+ min or on a new day re-reads (never
+    under an open form; a failed re-read keeps the screen; MINE overlays this page's saves). Phones: .dm forms (TC,
+    Payroll, Chat, Academy) hide the bottom bar - their Save buttons were under it. tests tcscope (39).
+    SELENE (hc255 SANDBOX): "could we view the day? Look up a date" -> Today tab ‹ day ›, a date box, Back to today;
+    logging on a day starts on that day; outcome buttons only today/earlier; test tcday.
+    HEATHER MONTHLY (23/11): her two asks already exist - a month is sent from the 1st and OrthoFi re-fills last month
+    on/after the 1st; old-system boxes (osp/osc/osar) default to Mansfield + both Cruces and add onto OrthoFi. Live
+    ph_orthofi.auto has NO Cruces offices for gp/gc/adj/np (mapped 2613/2630, never ticked: OrthoFi alone was ~94-96%).
 60. **ADJUSTMENTS + NET PRODUCTION PROVEN FROM ORTHOFI (21/11/2026; hc242).** Cory: "Now that you have access to orthofi
     via safari do what you need to do to make this perfect" (his Safari, OrthoFi portal; read-only - only reports run).
     The Monthly Balance Sheet = OrthoFi portal Reports -> Accounting -> Monthly Balance Sheet (business-intelligence
