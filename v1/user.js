@@ -1267,10 +1267,11 @@
     .ov .m-foot > button,.ov .dm-foot > button,.ph-foot > button{flex:1 1 0;min-width:0;white-space:nowrap;text-align:center;margin:0 !important}
     .ov .m-foot > button[onclick*="del"],.ov .m-foot > button[onclick*="remove"],.ov .m-foot > button[onclick*="clear"]{flex:1 1 100%;order:1}
     /* The tour button has no business floating over an open dialog's buttons. */
-    body:has(.ov.open) .tour-launch, body:has(.ph-ov.open) .tour-launch{display:none !important}
+    body:has(.ov.open) .tour-launch, body:has(.ph-ov.open) .tour-launch, body:has(.dm.open) .tour-launch{display:none !important}
     /* While any dialog is open the bar steps aside so the sheet has the whole screen; for
        browsers without :has(), every overlay stops above the bar instead. */
-    body:has(.ov.open) .ph-tabbar, body:has(.ph-ov.open) .ph-tabbar, body:has(#modal.open) .ph-tabbar{display:none}
+    /* .dm = the TC Tracker / Payroll / Chat / Academy forms: their Save buttons were under the bar on a phone (23/11/2026). */
+    body:has(.ov.open) .ph-tabbar, body:has(.ph-ov.open) .ph-tabbar, body:has(#modal.open) .ph-tabbar, body:has(.dm.open) .ph-tabbar{display:none}
     .ov,.ph-ov{bottom:calc(64px + env(safe-area-inset-bottom,0px)) !important}
     body:has(.ov.open) .ov, body:has(.ph-ov.open) .ph-ov{bottom:0 !important}
   }
