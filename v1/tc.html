@@ -104,6 +104,9 @@
   /* Today */
   .todayhead{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
   .todayhead h2{font-size:19px;margin:0;color:var(--navy)}
+  .dayrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+  .dayrow .mpick span{min-width:96px}
+  .dayjump{width:auto;min-width:0}
   .capline{font-size:13.5px;color:var(--soft)}
   .capline b{color:var(--navy)}
   .clist{display:flex;flex-direction:column}
@@ -293,14 +296,14 @@
     *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}
   }
 </style>
-<script src="user.js?v=hc254"></script>
+<script src="user.js?v=hc255"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc254"></script>
-  <script src="gate.js?v=hc254"></script>
-  <script src="_staff.js?v=hc254"></script>
-  <script src="tc.js?v=hc254"></script>
-  <script src="tcstore.js?v=hc254"></script>
-  <script src="schedrec.js?v=hc254"></script>
+  <script src="store.js?v=hc255"></script>
+  <script src="gate.js?v=hc255"></script>
+  <script src="_staff.js?v=hc255"></script>
+  <script src="tc.js?v=hc255"></script>
+  <script src="tcstore.js?v=hc255"></script>
+  <script src="schedrec.js?v=hc255"></script>
 </head>
 <body>
 <div class="ribbon">SANDBOX — made-up patients. Use “Try it as” to see it as a TC, an office manager or Selene.</div>
@@ -612,28 +615,40 @@
   }
 
   /* ---------------- Today ---------------- */
+  /* ANY DAY, NOT ONLY TODAY (23/11/2026, Selene: "could we view the day? Look up a date to view consults?"). The Today tab
+     steps a day at a time (‹ ›), jumps to any date (the date box), and "Today" comes back. Logging a consult while on a
+     day starts on that day's date - entering Monday's consults on Thursday is: go to Monday, log them. */
+  let day='';                                     // '' = today (and it stays today after midnight)
+  const viewDay=()=>day||today();
+  const shiftDay=(s,n)=>{ const x=TC.parse(s); x.setDate(x.getDate()+n); return TC.iso(x); };
+  function relDay(d){ const n=today(); return d===n ? 'Today' : d===shiftDay(n,-1) ? 'Yesterday' : d===shiftDay(n,1) ? 'Tomorrow' : fmtS(d); }
   function viewToday(){
-    const d=today(), list=scoped().filter(r=>r.date===d).sort((a,b)=>(a.time||'99')<(b.time||'99')?-1:1);
-    const slots=slotsOn(d), missing=scoped().filter(r=>!r.outcome && r.date<d);
+    const now=today(), d=viewDay(), isT=d===now, past=d<=now;
+    const list=scoped().filter(r=>r.date===d).sort((a,b)=>(a.time||'99')<(b.time||'99')?-1:1);
+    const slots=slotsOn(d), missing=isT ? scoped().filter(r=>!r.outcome && r.date<now) : [];
     const due=callsNow().filter(x=>TC.DUE.indexOf(x.a)>=0);
     const needDate=callsNow().filter(x=>TC.NEEDS_DATE.indexOf(x.a)>=0).length;
     const multi=inView().length>1;
     let h='<div class="stack">';
     const noUsual=inView().some(o=>!TC.usualOn(SLOTS[o]||{}, d) && !((SLOTS[o]||{}).days||{})[d]);
     const closedToday=!slots && inView().every(o=>!isOpenFn(o)(d));
-    h+='<div class="todayhead"><div><h2>'+esc(fmtD(d))+'</h2><div class="capline">'+
-      (slots?'<b>'+list.length+'</b> of <b>'+slots+'</b> consult slots booked':'<b>'+list.length+'</b> consult'+(list.length===1?'':'s')+' today')+
-      (slots?'':closedToday?' · closed today on the Schedule':noUsual?' · <button class="link" data-act="tab" data-v="slots">set your usual slots</button>':'')+'</div></div>'+
+    h+='<div class="todayhead"><div><div class="dayrow"><span class="mpick"><button data-act="day" data-v="-1" aria-label="Day before">‹</button><span>'+esc(relDay(d))+'</span>'+
+      '<button data-act="day" data-v="1" aria-label="Day after">›</button></span>'+
+      '<input class="sel dayjump" type="date" data-in="day" value="'+esc(d)+'" aria-label="Go to a date">'+
+      (isT?'':'<button class="btn ghost sm" data-act="day" data-v="0">Back to today</button>')+'</div>'+
+      '<h2>'+esc(fmtD(d))+'</h2><div class="capline">'+
+      (slots?'<b>'+list.length+'</b> of <b>'+slots+'</b> consult slots booked':'<b>'+list.length+'</b> consult'+(list.length===1?'':'s')+(isT?' today':''))+
+      (slots?'':closedToday?(isT?' · closed today on the Schedule':' · closed that day on the Schedule'):noUsual?' · <button class="link" data-act="tab" data-v="slots">set your usual slots</button>':'')+'</div></div>'+
       (canEdit()?'<button class="btn big" data-act="new">＋ Log a consult</button>':'')+'</div>';
     if(missing.length) h+='<div class="note warn">⚠️ <b>'+missing.length+' earlier consult'+(missing.length===1?' has':'s have')+' no outcome.</b> '+
       missing.slice(0,4).map(r=>'<button class="link"'+attr('act','open')+attr('id',r.id)+'>'+esc(r.name)+' ('+esc(fmtS(r.date))+')</button>').join(', ')+(missing.length>4?' …':'')+'</div>';
-    h+='<div class="card"><h2>Today’s consults</h2><p class="sub">'+(canEdit()?'Tap the outcome when the consult is done. Only the questions that fit that outcome come up.':'What’s been logged today.')+'</p>';
-    if(!list.length) h+='<div class="empty">Nothing logged for today yet.'+(canEdit()?' Use <b>Log a consult</b> for each new patient on the schedule, no-shows included.':'')+'</div>';
+    h+='<div class="card"><h2>'+(isT?'Today’s consults':'Consults on '+esc(fmtD(d)))+'</h2><p class="sub">'+(canEdit()&&past?'Tap the outcome when the consult is done. Only the questions that fit that outcome come up.':canEdit()?'Booked ahead - the outcomes come up on the day.':isT?'What’s been logged today.':'What’s logged for that day.')+'</p>';
+    if(!list.length) h+='<div class="empty">Nothing logged for '+(isT?'today':esc(fmtD(d)))+' yet.'+(canEdit()?' Use <b>Log a consult</b> for each new patient on the schedule, no-shows included.':'')+'</div>';
     else h+='<div class="clist">'+list.map(r=>
       '<div class="crow"><div class="tm">'+esc(fmtT(r.time)||'—')+'</div>'+
       '<div class="who"><button class="nm"'+attr('act','open')+attr('id',r.id)+'>'+esc(r.name||'(no name)')+'</button>'+payTag(r)+
       '<div class="meta">'+[r.type, r.lead, multi?r.office:'', r.tc].filter(Boolean).map(esc).join(' · ')+'</div></div>'+
-      '<div class="quick">'+(r.outcome||!canEdit() ? ocBadge(r.outcome) :
+      '<div class="quick">'+(r.outcome||!canEdit()||!past ? ocBadge(r.outcome) :
         outcomesFor(r).map(o=>'<button class="qb"'+attr('act','outcome')+attr('id',r.id)+attr('v',o)+'>'+esc(ocShort(o))+'</button>').join(''))+'</div></div>').join('')+'</div>';
     h+='</div>';
     h+='<div class="card duecard"><div class="big">'+due.length+'</div><div class="grow"><b>follow-up'+(due.length===1?'':'s')+' due</b>'+
@@ -1157,7 +1172,7 @@
   }
   function newConsult(){
     const offs=myOffices(), o=office || (offs.length===1?offs[0]:''), t=o?defaultTC(o):{name:'',mail:''};
-    openDlg({kind:'consult', isNew:true, rec:{id:TC.newId(), office:o, date:today(), time:'', name:'', dob:'', phone:'', chart:'',
+    openDlg({kind:'consult', isNew:true, rec:{id:TC.newId(), office:o, date:(tab==='today' && day) ? day : today(), time:'', name:'', dob:'', phone:'', chart:'',
       type:'', lead:'', outcome:'', payer:'', tc:t.name, tcMail:t.mail, notes:'', by:myMail()||myName(), at:new Date().toISOString()}});
     setTimeout(()=>{ const n=document.querySelector('[data-f="name"]'); if(n && o) n.focus(); }, 30);
   }
@@ -1245,6 +1260,7 @@
     if(act==='clamp'){ b.classList.toggle('open'); return; }
     if(act==='office'){ office=v||null; render(); return; }
     if(act==='month'){ month=TC.shiftMonth(month, Number(v)); render(); return; }
+    if(act==='day'){ const n=Number(v); day=n ? shiftDay(viewDay(), n) : ''; if(day===today()) day=''; render(); return; }
     if(act==='reload'){ loaded=false; render(); load(); return; }
     if(act==='new'){ newConsult(); return; }
     if(act==='open'){ openConsult(b.dataset.id); return; }
@@ -1349,6 +1365,7 @@
   document.addEventListener('change', e=>{
     const t=e.target, k=t.dataset && t.dataset.in; if(!k) return;
     if(k==='tcf'){ tcFilter=t.value; render(); return; }
+    if(k==='day'){ if(TC.parse(t.value)){ day=t.value===today() ? '' : t.value; render(); } return; }
     if(k==='ocf'){ ocFilter=t.value; render(); return; }
     if(k==='rec' && DLG && t.tagName==='SELECT'){ DLG.rec[t.dataset.f]=t.value; if(TWIN_FIELDS.indexOf(t.dataset.f)>=0){ DLG.twin=null; DLG.dupOk=false; } if(t.dataset.f==='tc'){ const x=tcsFor(DLG.rec.office).find(y=>y.name===t.value); DLG.rec.tcMail=x?x.mail:''; } drawDlg(); }
   });
@@ -1389,7 +1406,7 @@
 })();
 </script>
 <script>PH.nav('tc');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(window.TCPAGE)TCPAGE.identity();});document.addEventListener('ph-identity',function(){if(window.TCPAGE)TCPAGE.identity();});</script>
-<script src="tour.js?v=hc254"></script>
+<script src="tour.js?v=hc255"></script>
 <script>
 Tour.init([
   {sel:'#offbar', title:'Your office', body:'You see the offices you work at. Heather, Selene and leadership see every office and can pick one.'},
