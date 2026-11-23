@@ -633,6 +633,17 @@ I can confidently say that the chat feature should go next. The production thing
     from their Microsoft one (check the live list read-only first). copyFromBytes still uploads the layout before the
     numbers (Excel copy / layout upload only - rare since the switch). ORTHOFI: any signed-in practice account can call
     /api/orthofi (totals only now) - an ORTHOFI_ALLOW setting would limit it to admins.
+64. **hc251 LIVE (23/11/2026) + TC "TODAY EMPTY" ROOT CAUSE (hc252 sandbox).** Cory said deploy for Heather's reimbursements:
+    hc251 live = code review + holiday once + reimbursements (verified: stamp, 404 list incl. connect.html, switches, POST
+    /api/orthofi 403). A Hobbs TC logged Monday's consults on Thursday; Monday "they are not coming up", she re-entered them.
+    Found READ-ONLY (Safari + SharePoint version history of ph_tclog_hobbs_2026-11): the file only ever grew, Thursday's
+    consults were saved with Monday's date and in the file all weekend - nothing lost, nothing overwritten. CAUSE: load()
+    filtered EVERY by myOffices() ONCE at the read; a TC whose offices come from the roster is "no offices" for the first
+    moment after sign-in, so a read landing then kept nothing, and TCPAGE.identity (ph-identity) only re-rendered. Saves
+    push into ALL, so only what she added that sitting showed. FIX: rescope() after the read AND on identity
+    (test/tcscope). Result: 8 duplicate pairs dated 23/11 (Monday copies have the outcomes/notes; Thursday copies hold 2
+    referral sources Monday's lack). Cleanup = mark the 8 Thursday copies deleted (kept in file) + copy those 2 leads where
+    blank, guarded by each copy's upd - ONLY with Cory's yes (Safari is read-only by default).
 60. **ADJUSTMENTS + NET PRODUCTION PROVEN FROM ORTHOFI (21/11/2026; hc242).** Cory: "Now that you have access to orthofi
     via safari do what you need to do to make this perfect" (his Safari, OrthoFi portal; read-only - only reports run).
     The Monthly Balance Sheet = OrthoFi portal Reports -> Accounting -> Monthly Balance Sheet (business-intelligence
