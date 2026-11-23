@@ -293,14 +293,14 @@
     *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}
   }
 </style>
-<script src="user.js?v=hc252"></script>
+<script src="user.js?v=hc253"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc252"></script>
-  <script src="gate.js?v=hc252"></script>
-  <script src="_staff.js?v=hc252"></script>
-  <script src="tc.js?v=hc252"></script>
-  <script src="tcstore.js?v=hc252"></script>
-  <script src="schedrec.js?v=hc252"></script>
+  <script src="store.js?v=hc253"></script>
+  <script src="gate.js?v=hc253"></script>
+  <script src="_staff.js?v=hc253"></script>
+  <script src="tc.js?v=hc253"></script>
+  <script src="tcstore.js?v=hc253"></script>
+  <script src="schedrec.js?v=hc253"></script>
 </head>
 <body>
 <div class="ribbon">SANDBOX — made-up patients. Use “Try it as” to see it as a TC, an office manager or Selene.</div>
@@ -469,7 +469,19 @@
      hidden until a lucky reload and only what she added in that sitting showed (Hobbs, 23/11/2026: Thursday's consults
      for Monday "not coming up", entered again). */
   function rescope(){ const offs=myOffices(); ALL=EVERY.filter(r=>offs.indexOf(r.office)>=0); }
-  function load(){
+  /* What this page saved, by id: laid over a read that began before the save landed, so a consult just saved never
+     drops off the screen because a re-read raced it (the newer copy wins either way). */
+  const MINE={};
+  function overlayMine(){
+    Object.keys(MINE).forEach(id=>{
+      const m=MINE[id], i=EVERY.findIndex(x=>x.id===id);
+      if(i>=0 && String(EVERY[i].upd||'')>=String(m.upd||'')) return;
+      if(m.deleted){ if(i>=0) EVERY.splice(i,1); }
+      else if(i>=0) EVERY[i]=Object.assign({}, m); else EVERY.push(Object.assign({}, m));
+    });
+  }
+  let readDay='';
+  function load(quiet){
     const offs=myOffices();
     seedDemo(false);
     // Consults live in their own locked folder on the live site (tcstore.js), the browser on the sandbox.
@@ -479,15 +491,18 @@
     return Promise.all([logs, slots, PH_STORE.get(TC.LISTS_KEY).catch(()=>null), (window.PH_SCHED ? PH_SCHED.load().then(L=>L.sched) : PH_STORE.get('ph_sched2')).catch(()=>null)])
       .then(([L,S,Li,Sc])=>{
         EVERY=TC.consultsFrom(L).filter(TC.live);
+        overlayMine();
         UNREAD=(L && L.unread) || [];
-        rescope();
+        rescope(); readDay=today();
         SLOTS={}; S.forEach(([o,v])=>{ SLOTS[o]=(v && typeof v==='object')?v:{}; });
         LISTS=Object.assign({}, TC.DEFAULT_LISTS, (Li && typeof Li==='object')?Li:{});
         LISTS_BAD=!!(PH_STORE.readFailed && PH_STORE.readFailed(TC.LISTS_KEY));
         SCHED=(Sc && typeof Sc==='object')?Sc:null;
         Object.keys(openFns).forEach(k=>delete openFns[k]);
         loaded=true; loadErr=''; render();
-      }, e=>{ loaded=true; loadErr=(e && e.message)||'Could not read the tracker.'; render(); });
+      }, e=>{
+        if(quiet && loaded && !loadErr){ toast('Couldn’t check for new consults just now - this is what was read earlier.', true); return; }
+        loaded=true; loadErr=(e && e.message)||'Could not read the tracker.'; render(); });
   }
   const strip=r=>{ const o=Object.assign({}, r); Object.keys(o).forEach(k=>{ if(o[k]===undefined) delete o[k]; }); return o; };
   /* One consult to its office-and-month record. A consult whose date or office changed
@@ -513,6 +528,7 @@
       }).then(()=>'', ()=>'Saved. Its old month couldn’t be updated, but it shows once - nothing lost.') : '')
       .then(warn=>{
         const shown=TC.consultsFrom({k:{consults:{[rec.id]:saved}}})[0] || saved;     // as the page reads it back
+        MINE[rec.id]=saved.deleted ? {deleted:true, upd:saved.upd} : Object.assign({}, shown);
         [ALL, EVERY].forEach(arr=>{
           const i=arr.findIndex(x=>x.id===rec.id);
           if(saved.deleted){ if(i>=0) arr.splice(i,1); }
@@ -570,6 +586,14 @@
     CALLS=null; renderOffices(); renderTabs();
     if(!loaded){ el('view').innerHTML='<div class="empty">Loading…</div>'; return; }
     if(loadErr){ el('view').innerHTML='<div class="note warn">'+esc(loadErr)+' <button class="link" data-act="reload">Try again</button></div>'; return; }
+    /* Not knowing your offices yet is not "nothing logged" - that empty screen is what got consults typed twice
+       (Hobbs, 23/11/2026). Still finding out: "One moment"; found out there are none: say who can fix it. */
+    if(!myOffices().length){
+      el('view').innerHTML=(LIVE() && window.PH && PH.learning && PH.learning())
+        ? '<div class="empty">One moment… finding your offices.</div>'
+        : '<div class="empty">No office is set for you yet, so there are no consults to show. Ask your administrator (Admin → People).</div>';
+      return;
+    }
     const v=({today:viewToday, calls:viewCalls, log:viewLog, numbers:viewNumbers, slots:viewSlots})[tab]||viewToday;
     el('view').innerHTML=unreadNote()+v();
   }
@@ -1035,6 +1059,9 @@
     if(ro) h+='<div class="dm-foot"><button class="btn ghost" data-act="close">Close</button></div>';
     else if(d.confirmClose) h+=closeAsk;
     else if(d.confirmDel) h+='<div class="dm-foot"><span class="left small"><b>Delete this consult?</b> It comes off every count.</span><button class="btn ghost" data-act="del-no">Keep it</button><button class="btn danger solid" data-act="del-yes">Delete</button></div>';
+    else if(d.twin) h+='<div class="dm-foot twin"><span class="left small">⚠️ <b>Already logged:</b> '+esc(d.twin.name||'this patient')+', '+esc(fmtS(d.twin.date))+
+      (d.twin.time?' at '+esc(fmtT(d.twin.time)):'')+(d.twin.tc?' · '+esc(d.twin.tc):'')+'. Same patient?</span>'+
+      '<button class="btn ghost" data-act="twin-open">Open that one</button><button class="btn" data-act="twin-save">Save anyway</button></div>';
     else h+='<div class="dm-foot">'+(d.isNew?'':'<button class="btn danger left" data-act="del">Delete</button>')+
       '<button class="btn ghost" data-act="close">Cancel</button><button class="btn" data-act="save"'+(d.busy?' disabled':'')+'>'+(d.busy?'Saving…':(d.isNew?'Save consult':'Save'))+'</button></div>';
     return h;
@@ -1140,10 +1167,36 @@
     if(outcome){ TC.setOutcome(rec, outcome); if(outcome==='Started' && !rec.rpi) rec.rpi='No'; }
     openDlg({kind:'consult', isNew:false, ro:!canEdit(), rec, origKey:keyOf(r), origOutcome:r.outcome||'', orig:JSON.parse(JSON.stringify(r))});
   }
+  /* THE SAME PATIENT TWICE ON ONE DAY (23/11/2026, Hobbs: a screen that hadn't caught up showed an empty day, and 8
+     consults already saved were typed again). Before a NEW consult is saved, its office and month are read fresh from
+     where they're kept (a read, no write) and a consult for the same patient on the same day - same name, or same birth
+     date with the same phone or chart - is shown with "Open that one" / "Save anyway". */
+  const nameKey=s=>String(s||'').toLowerCase().replace(/[^a-z]/g,'');
+  const digits=s=>String(s||'').replace(/\D/g,'');
+  function samePatient(a, b){
+    if(nameKey(a.name) && nameKey(a.name)===nameKey(b.name)) return true;
+    if(!a.dob || a.dob!==b.dob) return false;
+    const ph=digits(a.phone), ch=String(a.chart||'').trim();
+    return (ph.length>=7 && ph===digits(b.phone)) || (!!ch && ch===String(b.chart||'').trim());
+  }
+  function findTwin(r){
+    const look=list=>list.find(x=>x && x.id!==r.id && TC.live(x) && x.office===r.office && x.date===r.date && samePatient(r, x)) || null;
+    const mem=look(EVERY); if(mem) return Promise.resolve(mem);
+    let twin=null;
+    return TCSTORE.update(TC.logKey(r.office, TC.monthOf(r.date)), cur=>{ twin=look(TC.consultsFrom({k:cur||{}})); return undefined; })
+      .then(()=>twin, ()=>null);      // can't read it: the save itself reads first and says so
+  }
   function saveConsult(){
     const d=DLG, r=d.rec;
     r.name=String(r.name||'').trim();
     const why=problems(r); if(why){ d.err=why; drawDlg(); return; }
+    if(d.isNew && !d.dupOk){
+      d.busy=true; d.err=''; d.twin=null; drawDlg();
+      findTwin(r).then(t=>{ if(DLG!==d) return; d.busy=false;
+        if(t){ d.twin=t; drawDlg(); return; }
+        d.dupOk=true; saveConsult(); });
+      return;
+    }
     d.busy=true; d.err=''; drawDlg();
     const jobs=[persist(r, d.isNew?null:d.origKey, d.isNew?null:d.orig)];
     if(r.outcome==='Rescheduled / Cancelled' && d.newDate) jobs.push(persist(copyFor(r, d.newDate, d.newTime, 'Rescheduled from '+fmtS(r.date)), null));
@@ -1219,6 +1272,10 @@
     if(act==='talk'){ if(TALK) talkStop(); else talkStart(); return; }
     if(act==='save'){ if(DLG.saving) return; DLG.saving=true; const d0=DLG;
       talkFinish().then(()=>{ d0.saving=false; if(DLG===d0) saveConsult(); }); return; }
+    if(act==='twin-save'){ if(!DLG || DLG.busy) return; DLG.dupOk=!!DLG.twin; DLG.twin=null; saveConsult(); return; }
+    if(act==='twin-open'){ if(!DLG || !DLG.twin) return; const t=DLG.twin;
+      if(!EVERY.some(x=>x.id===t.id)) EVERY.push(Object.assign({}, t));
+      rescope(); closeDlg(); render(); openConsult(t.id); return; }
     if(act==='del'){ DLG.confirmDel=true; drawDlg(); return; }
     if(act==='del-no'){ DLG.confirmDel=false; drawDlg(); return; }
     if(act==='del-yes'){
@@ -1278,6 +1335,7 @@
     saveSlots(o, s=>{ s.days[d.date]=n; }).then(()=>{ closeDlg(); render(); toast('✓ '+fmtS(d.date)+': '+(n?n+' slots':'closed')); }, e=>{ d.err=e.message; drawDlg(); });
   }
   // Typing: kept in the dialog's state without redrawing, so the cursor stays put.
+  const TWIN_FIELDS=['name','date','office','dob','phone','chart'];
   document.addEventListener('input', e=>{
     const t=e.target, k=t.dataset && t.dataset.in; if(!k) return;
     // Search: one redraw once typing pauses (150 ms), not one per key (21/11/2026, code review).
@@ -1285,14 +1343,14 @@
       const o=document.querySelector('[data-in="q"]'), had=!!o && document.activeElement===o, pos=o ? o.selectionStart : null;
       render(); const n=document.querySelector('[data-in="q"]'); if(had && n){ n.focus(); try{ n.setSelectionRange(pos,pos); }catch(_){} } }, 150); return; }
     if(!DLG) return;
-    if(k==='rec') DLG.rec[t.dataset.f]=t.value;
+    if(k==='rec'){ DLG.rec[t.dataset.f]=t.value; if(TWIN_FIELDS.indexOf(t.dataset.f)>=0){ DLG.twin=null; DLG.dupOk=false; } }
     else if(k==='dlg') DLG[t.dataset.f]=t.value;
   });
   document.addEventListener('change', e=>{
     const t=e.target, k=t.dataset && t.dataset.in; if(!k) return;
     if(k==='tcf'){ tcFilter=t.value; render(); return; }
     if(k==='ocf'){ ocFilter=t.value; render(); return; }
-    if(k==='rec' && DLG && t.tagName==='SELECT'){ DLG.rec[t.dataset.f]=t.value; if(t.dataset.f==='tc'){ const x=tcsFor(DLG.rec.office).find(y=>y.name===t.value); DLG.rec.tcMail=x?x.mail:''; } drawDlg(); }
+    if(k==='rec' && DLG && t.tagName==='SELECT'){ DLG.rec[t.dataset.f]=t.value; if(TWIN_FIELDS.indexOf(t.dataset.f)>=0){ DLG.twin=null; DLG.dupOk=false; } if(t.dataset.f==='tc'){ const x=tcsFor(DLG.rec.office).find(y=>y.name===t.value); DLG.rec.tcMail=x?x.mail:''; } drawDlg(); }
   });
   document.addEventListener('toggle', e=>{ if(DLG && e.target.matches && e.target.matches('details.more')) DLG.moreOpen=e.target.open; }, true);
   document.addEventListener('keydown', e=>{ if(e.key==='Escape' && DLG) askClose(); });
@@ -1306,6 +1364,21 @@
     tab=null; office=null; tcFilter=''; q=''; ocFilter=''; loaded=false; render(); load();
   });
 
+  /* A TAB LEFT OPEN for days showed the day it was read: consults logged since (another computer, another TC) weren't
+     there. Back on the tab after 5+ minutes away, or on a new day, it reads again - never under an open form (that waits
+     until the form closes), and a re-read that fails keeps what's on screen (23/11/2026). */
+  let awayAt=0, wantRead=false;
+  function freshen(){
+    if(!loaded || loadErr || document.hidden) return;
+    if(DLG){ wantRead=true; return; }
+    wantRead=false; load(true);
+  }
+  document.addEventListener('visibilitychange', ()=>{
+    if(document.hidden){ awayAt=Date.now(); return; }
+    if((awayAt && Date.now()-awayAt>5*60e3) || (readDay && today()!==readDay)) freshen();
+  });
+  setInterval(()=>{ if(wantRead && !DLG) freshen(); else if(readDay && today()!==readDay && !document.hidden) freshen(); }, 60e3);
+
   /* ---------------- start ---------------- */
   const pageDone=()=>{ if(window.PH && PH.loadDone) PH.loadDone('page'); };
   function boot(){ render(); Promise.resolve(load()).then(pageDone, pageDone); }
@@ -1316,7 +1389,7 @@
 })();
 </script>
 <script>PH.nav('tc');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(window.TCPAGE)TCPAGE.identity();});document.addEventListener('ph-identity',function(){if(window.TCPAGE)TCPAGE.identity();});</script>
-<script src="tour.js?v=hc252"></script>
+<script src="tour.js?v=hc253"></script>
 <script>
 Tour.init([
   {sel:'#offbar', title:'Your office', body:'You see the offices you work at. Heather, Selene and leadership see every office and can pick one.'},

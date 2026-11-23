@@ -31,7 +31,7 @@ function store(){
 /* tc.html's strip() + persist(), exactly as written there */
 const block=H.slice(H.indexOf('  const strip='), H.indexOf('  const keyOf='));
 function page(S, who){
-  const w={TC, TCSTORE:S.TCSTORE, ALL:[], EVERY:[], myMail:()=>'', myName:()=>who||'Luis Ortega', JSON, Object, Date, Promise, Error, console};
+  const w={TC, TCSTORE:S.TCSTORE, ALL:[], EVERY:[], MINE:{}, myMail:()=>'', myName:()=>who||'Luis Ortega', JSON, Object, Date, Promise, Error, console};
   vm.createContext(w); vm.runInContext(block, w);
   w.load=()=>{ w.ALL.length=0; w.EVERY.length=0; TC.consultsFrom(S.db).filter(TC.live).forEach(r=>{ w.ALL.push(r); w.EVERY.push(r); }); };
   return w;
