@@ -644,6 +644,9 @@ I can confidently say that the chat feature should go next. The production thing
     (test/tcscope). Result: 8 duplicate pairs dated 23/11 (Monday copies have the outcomes/notes; Thursday copies hold 2
     referral sources Monday's lack). Cleanup = mark the 8 Thursday copies deleted (kept in file) + copy those 2 leads where
     blank, guarded by each copy's upd - ONLY with Cory's yes (Safari is read-only by default).
+    DONE 23/11 (Cory: "deploy tc fix and clean up"): hc252 LIVE (verified). Cleanup = ONE TCSTORE.update, dry-run first,
+    read back: 39 consults in, 39 out, 10 changed, nothing else (SharePoint v56; v55 = just before). UNDO if ever asked =
+    put those 10 consults back from version 55's content (guard: their upd still = the cleanup time).
 60. **ADJUSTMENTS + NET PRODUCTION PROVEN FROM ORTHOFI (21/11/2026; hc242).** Cory: "Now that you have access to orthofi
     via safari do what you need to do to make this perfect" (his Safari, OrthoFi portal; read-only - only reports run).
     The Monthly Balance Sheet = OrthoFi portal Reports -> Accounting -> Monthly Balance Sheet (business-intelligence
