@@ -624,6 +624,10 @@ I can confidently say that the chat feature should go next. The production thing
       once). Monthly: write() keeps the office/month/edits it started with, refusals say "Not saved", typing during a save
       kept, settings never saved over a failed read, streaks read back up to 36 months, putMonth() changes only that
       office-month. Insights/periodpick: Central "today"; year to date vs last year by month and day.
+    REIMBURSEMENTS IN ADD TO PAYROLL (23/11/2026, hc251; Heather: "Will you make it to where I can also add reimbursements
+    for employees on this 'add to payroll' part, not just bonuses"): ADD_COLS gets ['radd','Reimbursement']; withAdds puts it
+    in row field radd; calc() reimb = mileage + radd - NEVER in Total; "+ $45 · Scrubs" under Reimburse on the combined
+    sheet; CSV Reimburse + Notes. History / Look up have no Reimburse column (Total unchanged). test/payreimb (31).
     NOT CHANGED (needs a look first): rosterByName also matches staff-list rows that HAVE an email - a guest whose display
     name copies a staff member's would get their access; restricting it could lock out someone whose list email differs
     from their Microsoft one (check the live list read-only first). copyFromBytes still uploads the layout before the
