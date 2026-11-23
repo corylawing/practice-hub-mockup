@@ -190,7 +190,7 @@
     const holN=holDates(per.hol).filter(d=>eligible(p.start, d)).length, hol=!p.holHrs?holN*rates.holiday:0, holH=p.holHrs?holN*rates.holidayHrs:0;
     const oc=num(x.oncall)*rates.onCall, own=r2(num(x.phone)+num(x.dibs)*num(rates.dibs==null ? RATES.dibs : rates.dibs)+num(x.pog)), extra=r2(num(cols.extra)+num(x.exc)+num(x.spb));   // spb: the office's special bonus (payroll.html SPECIAL_LIVE)
     return {hours:w1+w2, reg:r2(w1+w2-ot1-ot2), ot1:r2(ot1), ot2:r2(ot2), ppb, pto:num(x.pto), sick:num(x.sick), hol, holH, oc,
-            goal:num(cols.goal), tcom:num(cols.tcom), own, extra, exc:num(x.exc), reimb:r2((num(x.mkt)+num(x.oth))*rates.mile),
+            goal:num(cols.goal), tcom:num(cols.tcom), own, extra, exc:num(x.exc), reimb:r2((num(x.mkt)+num(x.oth))*rates.mile+num(x.radd)),   // + reimbursements from Add to payroll (x.radd), out of Total (23/11/2026, Heather: reimbursements in Add to payroll)
             total:r2(ppb+num(cols.goal)+num(cols.tcom)+hol+oc+own+extra)};
   }
 

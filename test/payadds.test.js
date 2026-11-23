@@ -31,8 +31,8 @@ t('＋ Add stays while ANY pay period is still open - also on an entered one (it
   /function addPeriods\(\)\{ const out=\[\]; for\(let m=\(BEFORE\?NEXT:CUR\); m<=NEXT\+7; m\+\+\)\{ if\(!enteredOf\(m\)\) out\.push\(m\); \} return out; \}/.test(H));
 t('"everyone" means the 8 offices, once per person (the first office’s row whose sheet is in) - not Zihua Partners',
   /OFFICES\.find\(o=>!o\.self && p\.offices\.indexOf\(o\.k\)>=0 && get\(n,o\.k\)\.status==='sent' && get\(n,o\.k\)\.rows\[p\.id\]\)/.test(H) && /if\(t\.k==='all'\) return !!OFF\[o\] && !OFF\[o\]\.self && homeRow\(n,p\)===o;/.test(H));
-t('only Goal, TC/OM or Extra, only a positive amount, and what it’s for is escaped wherever it shows',
-  /ADD_COLS=\[\['goal','Goal'\],\['tcom','TC\/OM'\],\['extra','Extra'\]\]/.test(H) && /num\(a\.amt\)>0 && ADD_COLS\.some/.test(H) && /esc\(a\.what\)/.test(H) && !/\+a\.what\+'</.test(H));
+t('only Goal, TC/OM, Extra or Reimbursement (23/11/2026, Heather: reimbursements in Add to payroll), only a positive amount, and what it’s for is escaped wherever it shows',
+  /ADD_COLS=\[\['goal','Goal'\],\['tcom','TC\/OM'\],\['extra','Extra'\],\['radd','Reimbursement'\]\]/.test(H) && /num\(a\.amt\)>0 && ADD_COLS\.some/.test(H) && /esc\(a\.what\)/.test(H) && !/\+a\.what\+'</.test(H));
 
 /* 17/11/2026, Heather: "it says 'pick who it's for' but I did select the proper office" - Add to payroll's button shared
    'addok' with Add a person, so its handler ran first and Add a person could never save (broken since hc150). */

@@ -674,8 +674,14 @@
      once: on the first office's row (the sheet's order) whose sheet is in. ---------- */
   let LIVEADDS=[];
   const adds=()=>LIVEPAY ? LIVEADDS : (S.adds=S.adds||[]);
-  const ADD_COLS=[['goal','Goal'],['tcom','TC/OM'],['extra','Extra']];
+  /* REIMBURSEMENTS TOO (23/11/2026, Heather: reimbursements in Add to payroll): "Will you make it to where I can also add
+     reimbursements for employees on this 'add to payroll' part, not just bonuses." A 4th choice, row field 'radd' (never
+     'reimb' - that's the worked-out Reimburse column): calc() adds it to Reimburse next to the mileage, so it is NEVER in
+     Total; shown under Reimburse ("+ $45 · Scrubs"), in the download's Reimburse and Notes. A page from before this
+     ignores it (addsFor only keeps the columns it knows). */
+  const ADD_COLS=[['goal','Goal'],['tcom','TC/OM'],['extra','Extra'],['radd','Reimbursement']];
   const addColName=c=>(ADD_COLS.find(x=>x[0]===c)||[c,c])[1];
+  const addInto=c=>c==='radd' ? 'in Reimburse' : 'in '+addColName(c);   // the sheet's column it lands in (23/11/2026, Heather: reimbursements in Add to payroll)
   const addsFor=n=>adds().filter(a=>a && !a.gone && a.key && nOfP(a.key)===n && num(a.amt)>0 && ADD_COLS.some(x=>x[0]===a.col));
   const homeRow=(n,p)=>{ const o=OFFICES.find(o=>!o.self && p.offices.indexOf(o.k)>=0 && get(n,o.k).status==='sent' && get(n,o.k).rows[p.id]); return o ? o.k : null; };
   /* An office already entered in payroll BEFORE something was written down never gets it (21/11/2026, code review):
@@ -729,7 +735,7 @@
     const holN=PR.holDates(pr.hol).filter(d=>eligible(p,d)).length, hol=!p.holHrs?holN*RT.holiday:0, holH=p.holHrs?holN*RT.holidayHrs:0;   // two in one pay period: both paid
     const oc=num(x.oncall)*RT.onCall, own=r2(num(x.phone)+num(x.dibs)*num(RT.dibs)+num(x.pog)), extra=r2(num(x.extra)+num(x.exc)+num(x.spb)), spec=r2(specUsd(x));   // spb: the office's special bonus
     return {hours:w1+w2, reg:r2(w1+w2-ot1-ot2), ot1:r2(ot1), ot2:r2(ot2), ppb, pto:num(x.pto), sick:num(x.sick), hol, holH, oc,
-            goal:num(x.goal), tcom:num(x.tcom), own, extra, exc:num(x.exc), spb:num(x.spb), ers:num(x.ers), spec, reimb:r2((num(x.mkt)+num(x.oth))*RT.mile),
+            goal:num(x.goal), tcom:num(x.tcom), own, extra, exc:num(x.exc), spb:num(x.spb), ers:num(x.ers), spec, reimb:r2((num(x.mkt)+num(x.oth))*RT.mile+num(x.radd)),   // + reimbursements from Add to payroll, out of Total (23/11/2026, Heather: reimbursements in Add to payroll)
             total:r2(ppb+num(x.goal)+num(x.tcom)+hol+oc+own+extra+spec)};
   }
   const daySet=v=>v!==undefined && v!==null && v!=='';
@@ -1053,7 +1059,7 @@
     (own||ownCols(o)).map(c=>'<th class="n">'+(c?info(esc(c.n),ownTip(ks ? ownerOf(ks,c) : o,c,RATE)):'')+'</th>').join('')+
     '<th class="n">'+info('Extra','A special bonus. You type it in - the offices don’t see it. Any exception commuter pay'+(SPBON()?' or special bonus':'')+' the office entered is added here too.')+'</th>'+
     '<th class="n">'+info('Total','PP bonus + Goal + TC/OM + Holiday + On call + the office’s own bonuses + Extra + any extra $ column added to Total. Reimburse isn’t in it.')+'</th>'+
-    '<th class="n">'+info('Reimburse','Mileage: marketing and other miles × '+money(RATE.mile)+' a mile (the IRS rate). Kept out of Total.')+'</th>'+
+    '<th class="n">'+info('Reimburse','Mileage: marketing and other miles × '+money(RATE.mile)+' a mile (the IRS rate), plus reimbursements added in Add to payroll. Kept out of Total.')+'</th>'+   // 23/11/2026, Heather: reimbursements in Add to payroll
     (sp?'<th>'+info('Extra columns','The columns you added in Settings, as the office typed them. A $ column added to Total is in Total.')+'</th>':'')+'<th>Notes</th></tr>';
   let tipEl=null, tipFor=null;
   function showTip(b){
@@ -1189,7 +1195,7 @@
           '<td class="n">'+(c.holH?hrs(c.holH)+' h':money(c.hol))+(!r.here && PR.holDates(pr.hol).some(d=>eligible(p,d)) ? '<div class="small muted">on '+esc(poss(OFF[r.ob.home].n))+' row</div>' : '')+'</td><td class="n">'+money(c.oc)+'</td><td class="n">'+(c.ers?c.ers:'—')+'</td>'+
           own.map(col=>'<td class="n">'+(!col?'':col.hrs?hrs(c.sick):money(ownUsd(col,x,RATE))+(ownEach(col) && num(x[col.k]) ? '<div class="small muted">'+esc(num(x[col.k]))+' × '+money(RATE[col.each])+'</div>' : ''))+'</td>').join('')+     // typed by the office
           '<td class="n">'+typed('extra')+(c.exc?'<div class="small muted">+ '+money(c.exc)+' commuter</div>':'')+(c.spb?'<div class="small muted" title="'+esc('Special bonus: '+(x.spbType?x.spbType+' - ':'')+String(x.spbWhy||''))+'">+ '+money(c.spb)+' special'+(x.spbType?' · '+esc(x.spbType):'')+'</div>':'')+'</td>'+
-          '<td class="n"><b id="ct-'+gid+'-'+p.id+'">'+money(c.total)+'</b></td><td class="n">'+money(c.reimb)+'</td>'+
+          '<td class="n"><b id="ct-'+gid+'-'+p.id+'">'+money(c.total)+'</b></td><td class="n">'+money(c.reimb)+en.parts.map(q=>addLines(n,q.k,p,'radd')).join('')+'</td>'+   // its reimbursements under it (23/11/2026, Heather: reimbursements in Add to payroll)
           (anySp?'<td class="small">'+sp.filter(cc=>num(x['sc_'+cc.id])).map(cc=>esc(cc.n)+': <b>'+specShow(cc,x['sc_'+cc.id])+'</b>').join('<br>')+'</td>':'')+
           '<td>'+(x.notes?'<span class="nt" title="'+esc(x.notes)+'">📝 note</span>':'')+'</td></tr>'; });
       ['reg','ot1','ot2','total','reimb'].forEach(k=>{ grand[k]+=sub[k]; });
@@ -1204,7 +1210,7 @@
     });
     h+='<tr class="grand"><td class="nm">All offices</td><td class="n">'+hrs(grand.reg)+'</td><td class="n">'+hrs(grand.ot1)+'</td><td class="n">'+hrs(grand.ot2)+'</td><td colspan="10"></td><td class="n" id="cgt">'+money(grand.total)+'</td><td class="n">'+money(grand.reimb)+'</td>'+(anySp?'<td></td>':'')+'<td></td></tr>';
     return h+'</tbody></table></div><p class="small muted" style="margin:8px 2px 0">Total = PP bonus + Goal + TC/OM + holiday ('+money(RATE.holiday)+') + on call ('+money(RATE.onCall)+' a weekend) + Phone, DIBS, POG + Extra'+(anySp?' + any extra $ column added to Total':'')+'. A line under Goal, TC/OM or Extra (“+ $100 · Team hit goal”) is from <b>Add to payroll</b> - it’s in Total. ER hrs: 1 hour of pay for each patient seen on an ER - hours, kept out of Total. '+
-      'Reimburse is mileage at '+money(RATE.mile)+' a mile (the IRS rate) and stays out of Total. <b>Goal, TC/OM and Extra are yours to fill in</b> — the offices don’t see them. Phone, DIBS and POG come from the offices’ own sheets.</p>';
+      'Reimburse is mileage at '+money(RATE.mile)+' a mile (the IRS rate) plus any reimbursement from Add to payroll (the line under it), and stays out of Total. <b>Goal, TC/OM and Extra are yours to fill in</b> — the offices don’t see them. Phone, DIBS and POG come from the offices’ own sheets.</p>';
   }
   /* Totals follow as Heather types, without redrawing the box she is typing in. */
   function combTotals(n){
@@ -1256,7 +1262,7 @@
   function addsCard(n){
     const e=enteredOf(n), ro=R().ro, all=adds().filter(a=>a && a.key && nOfP(a.key)===n), on=all.filter(a=>!a.gone), off=all.filter(a=>a.gone);
     const later={}; adds().forEach(a=>{ if(!a || a.gone || !a.key) return; const m=nOfP(a.key); if(m!==null && m>n) later[m]=(later[m]||0)+1; });
-    let h='<div class="card" id="addscard"><div class="row" style="margin-bottom:8px"><div class="grow"><h2>Add to payroll</h2><p class="sub" style="margin:0">A bonus or anything extra - write it down as soon as you know. It lands on this pay period’s combined sheet by itself, in the column you pick, and it’s in Total and the download. The offices never see this.</p></div>'+
+    let h='<div class="card" id="addscard"><div class="row" style="margin-bottom:8px"><div class="grow"><h2>Add to payroll</h2><p class="sub" style="margin:0">A bonus, a reimbursement or anything extra - write it down as soon as you know. It lands on this pay period’s combined sheet by itself, in the column you pick, and it’s in Total and the download (a reimbursement goes in Reimburse, kept out of Total). The offices never see this.</p></div>'+
       /* ALWAYS THERE while any pay period is still open (Heather 18/11: "Once I click on all payroll entered ... it takes away
          the ability for me to add a bonus to another payroll. I just had a team hit goal this afternoon"): on an entered
          pay period it goes on a later one (the dialog starts at the first one still open). */
@@ -1314,13 +1320,16 @@
   }
   function paintAddPrev(){
     const b=el('aprev'); if(!b) return; const r=addRead();
+    /* A reimbursement asks what it paid for, and says it stays out of Total (23/11/2026, Heather: reimbursements in Add to payroll). */
+    const wf=el('awhat'); if(wf) wf.placeholder=r.col==='radd' ? 'e.g. Scrubs, CE course, supplies' : 'e.g. Team hit goal, pilot bonus';
     if(!r.to || !(r.amt>0)){ b.textContent='Pick who and the amount.'; return; }
     b.innerHTML=r.to.k==='person'
-      ? esc(addWho({to:r.to}))+' gets <b>'+money(r.amt)+'</b> in '+esc(addColName(r.col))+' on '+esc(lab(r.n))+'.'
+      ? esc(addWho({to:r.to}))+' gets <b>'+money(r.amt)+'</b> '+esc(addInto(r.col))+' on '+esc(lab(r.n))+'.'
       : r.to.k==='some'
-      ? money(r.amt)+' each × '+r.howMany+' people = <b>'+money(r.amt*r.howMany)+'</b> in '+esc(addColName(r.col))+' on '+esc(lab(r.n))+'. <span class="muted">'+esc(addWho({to:r.to}))+'</span>'
-      : money(r.amt)+' each × about '+r.howMany+' '+(r.howMany===1?'person':'people')+' = <b>about '+money(r.amt*r.howMany)+'</b> in '+esc(addColName(r.col))+' on '+esc(lab(r.n))+
+      ? money(r.amt)+' each × '+r.howMany+' people = <b>'+money(r.amt*r.howMany)+'</b> '+esc(addInto(r.col))+' on '+esc(lab(r.n))+'. <span class="muted">'+esc(addWho({to:r.to}))+'</span>'
+      : money(r.amt)+' each × about '+r.howMany+' '+(r.howMany===1?'person':'people')+' = <b>about '+money(r.amt*r.howMany)+'</b> '+esc(addInto(r.col))+' on '+esc(lab(r.n))+
         '. <span class="muted">Exactly who: everyone on '+(r.to.k==='all'?'each office’s':esc(poss(OFF[r.to.o].n)))+' sheet when it comes in.</span>';
+    if(r.col==='radd') b.innerHTML+=' <span class="muted">A reimbursement - kept out of Total.</span>';
     /* An office already entered for that pay period won't get it (addsOn) - say so before it's added (21/11/2026, code review). */
     const ent=addOffs({to:r.to}).filter(k=>OFF[k] && entOff(r.n,k));
     if(ent.length) b.innerHTML+='<div style="margin-top:6px;color:#9a2f1e;font-weight:700">⚠️ '+esc(ent.map(k=>OFF[k].n).join(', '))+(ent.length===1?' is':' are')+' already entered in payroll for '+esc(lab(r.n))+

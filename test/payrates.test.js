@@ -30,7 +30,7 @@ t('100 marketing miles: $76 in the pay period before, $71 from the change - the 
 
 /* the page: every sum and every "$x each" uses its own pay period's rates */
 t('the sums use the rates of the pay period they’re for (holiday, on call, DIBS, mileage)',
-  /const RT=rt\(pr\.start\);/.test(fn('calc')) && !/RATE\./.test(fn('calc')) && /reimb:r2\(\(num\(x\.mkt\)\+num\(x\.oth\)\)\*RT\.mile\)/.test(fn('calc')));
+  /const RT=rt\(pr\.start\);/.test(fn('calc')) && !/RATE\./.test(fn('calc')) && /reimb:r2\(\(num\(x\.mkt\)\+num\(x\.oth\)\)\*RT\.mile\+num\(x\.radd\)\)/.test(fn('calc')));   // + Add to payroll reimbursements (23/11/2026, Heather: reimbursements in Add to payroll)
 t('…and so does what’s shown: the office sheet, its rules, the combined sheet, the download, the holiday box, the second look',
   /RATE=rt\(pr\.start\)/.test(fn('sheetTable')) && /RATE=rt\(pr\.start\)/.test(fn('combined')) && /RATE=rt\(pr\.start\)/.test(fn('csv')) &&
   /const RATE=rt\(pr\.start\);/.test(fn('holHTML')) && /RATE=rt\(pr\.start\)/.test(fn('flags')) && /money\(rtN\(n\)\[c\.each\]\)/.test(H) &&
