@@ -321,13 +321,13 @@
   }
   @media (prefers-reduced-motion: reduce){ *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important} }
 </style>
-<script src="user.js?v=hc265"></script>
+<script src="user.js?v=hc266"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc265"></script>
-  <script src="gate.js?v=hc265"></script>
-  <script src="prodbook.js?v=hc265"></script>
-  <script src="monthly.js?v=hc265"></script>
-  <script src="orthofi.js?v=hc265"></script>
+  <script src="store.js?v=hc266"></script>
+  <script src="gate.js?v=hc266"></script>
+  <script src="prodbook.js?v=hc266"></script>
+  <script src="monthly.js?v=hc266"></script>
+  <script src="orthofi.js?v=hc266"></script>
 </head>
 <body>
 <div class="ribbon">MOCK-UP for Heather — made-up numbers. Try it as an office manager first, then as Heather.</div>
@@ -1183,6 +1183,8 @@
     await loadOfMap();
     if(ORTHOFI_CONNECTED){ el('ofstate').classList.add('on'); el('ofstate').querySelector('span').textContent=LIVE ? 'OrthoFi: connected · filled in each day' : 'OrthoFi: made-up numbers here · filled in each day once live'; }
     try{ TAB=localStorage.getItem('ph_monthly_tab'); }catch(_){}
+    /* a link can open a tab: monthly.html#year (24/11/2026 - the link sent to Jessica for the Year sheet) */
+    { const hz=String(location.hash||'').replace('#',''); if(['overview','office','year','settings'].indexOf(hz)>=0) TAB=hz; }
     await loadSettings();
     await render();
     if(window.PH && PH.loadDone) PH.loadDone('page');
@@ -1195,7 +1197,7 @@
 })();
 </script>
 <script>PH.nav('monthly');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc265"></script>
+<script src="tour.js?v=hc266"></script>
 <script>
 Tour.init([
   {sel:'.statusline, .openbanner', title:'Who has sent it', body:'Every office’s report for the month, in one line: final, waiting for you, or late. No chasing eight Excel files.'},
