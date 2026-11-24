@@ -163,6 +163,9 @@
   .hcard svg{width:100%;height:auto;margin-top:6px}
   .hcard .ax{font-size:10px;fill:#8a96aa}
   .hcard .bl{stroke:#d5dce4}
+  .hline svg{height:58px}
+  .hax{display:flex;justify-content:space-between;font-size:10px;color:#8a96aa;margin-top:1px}
+  .ysub{font-size:13px;font-weight:700;color:var(--navy2);margin:2px 0 4px}
   #ytip{position:fixed;z-index:80;pointer-events:none;background:#0F2A4A;color:#fff;border-radius:10px;padding:9px 11px;font-size:12.5px;line-height:1.5;box-shadow:0 8px 24px rgba(15,42,74,.25);opacity:0;transform:translateY(4px);transition:opacity .12s,transform .12s;max-width:280px}
   #ytip.on{opacity:1;transform:none}
   #ytip .tsub{margin-top:4px;color:#c9d6e4;font-size:12px}
@@ -317,13 +320,13 @@
   }
   @media (prefers-reduced-motion: reduce){ *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important} }
 </style>
-<script src="user.js?v=hc263"></script>
+<script src="user.js?v=hc264"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc263"></script>
-  <script src="gate.js?v=hc263"></script>
-  <script src="prodbook.js?v=hc263"></script>
-  <script src="monthly.js?v=hc263"></script>
-  <script src="orthofi.js?v=hc263"></script>
+  <script src="store.js?v=hc264"></script>
+  <script src="gate.js?v=hc264"></script>
+  <script src="prodbook.js?v=hc264"></script>
+  <script src="monthly.js?v=hc264"></script>
+  <script src="orthofi.js?v=hc264"></script>
 </head>
 <body>
 <div class="ribbon">MOCK-UP for Heather — made-up numbers. Try it as an office manager first, then as Heather.</div>
@@ -775,7 +778,7 @@
      for balances), ONE picture (production next to collections; A/R by age stacked; a small chart per health number), and
      the full months (quarters, YTD, targets - Heather's sheet) one tap away under "Show the months". ---------- */
   const YOPEN=(()=>{ try{ return JSON.parse(localStorage.getItem('ph_monthly_yopen')||'{}')||{}; }catch(_){ return {}; } })();
-  const niceMax=v=>{ if(!(v>0)) return 1; const p=Math.pow(10, Math.floor(Math.log10(v))), n=v/p; return (n<=1?1:n<=2?2:n<=2.5?2.5:n<=5?5:10)*p; };
+  const niceMax=v=>{ if(!(v>0)) return 1; const p=Math.pow(10, Math.floor(Math.log10(v))), n=v/p; return ([1,1.5,2,2.5,3,4,5,6,8,10].find(x=>n<=x)||10)*p; };
   const kmoney=v=>{ const a=Math.abs(v); return (v<0?'−':'')+'$'+(a>=1e6 ? (a/1e6).toFixed(a>=1e7?0:1).replace(/\.0$/,'')+'M' : a>=1e3 ? Math.round(a/1e3)+'k' : Math.round(a)); };
   /* bars by month: grouped (series side by side) or stacked (series on top of one another); hover / tap a month for its numbers */
   function monthBars(y, rows, series, opt){
@@ -873,15 +876,16 @@
     const aged=has('ar_cur') || has('ar_31');
     const asOf=x=>x ? 'end of '+MON[x.m-1] : '';
     const seg=(k,t)=>'<button class="'+(ARV===k?'on':'')+'" aria-pressed="'+(ARV===k)+'" onclick="MONTHLY.arv(\''+k+'\')">'+t+'</button>';
-    const AGE=[{k:'ar_cur', n:'Current', c:'#149B96'}, {k:'ar_31', n:'31–60 days', c:'#E9B949'}, {k:'ar_61', n:'61–90 days', c:'#E07B39'}, {k:'ar_91', n:'91+ days', c:'#B83227'}];
+    /* the PAST-DUE money by age (current isn't drawn - next to it the old money was a sliver; it's in the tile + the months) */
+    const AGE=[{k:'ar_31', n:'31–60 days', c:'#E9B949'}, {k:'ar_61', n:'61–90 days', c:'#E07B39'}, {k:'ar_91', n:'91+ days', c:'#B83227'}];
     h+='<section class="ychunk"><div class="yhead"><h2>Accounts receivable</h2><div class="seg" role="group" aria-label="Whose A/R">'+seg('both','Patient + insurance')+seg('patient','Patient')+seg('insurance','Insurance')+'</div></div>'+
       '<div class="tiles">'+tile('Total outstanding', fmt('$',lt&&lt.v,true), asOf(lt), '', lt ? since(lt, before('ar_tot', lt.m), false) : '')+
         tile('Past due', fmt('$',lpd&&lpd.v,true), lpd&&lt&&lt.v ? fmt('%',lpd.v/lt.v*100)+' of outstanding' : (aged?asOf(lpd):'from OrthoFi - coming'), '', lpd ? since(lpd, before('ar_pd', lpd.m), false) : '')+
         tile('91+ days', fmt('$',l91&&l91.v,true), l91&&lt&&lt.v ? fmt('%',l91.v/lt.v*100)+' of outstanding' : (aged?asOf(l91):'from OrthoFi - coming'), '', l91 ? since(l91, before('ar_91', l91.m), false) : '')+
         (ARV==='both' ? tile('A/R ratio', fmt('x',lr&&lr.v), 'target '+goalTxt('ratio'), tn('ratio',lr&&lr.v))+tile('Delinquent %', fmt('%',ld&&ld.v), 'target '+goalTxt('del'), tn('del',ld&&ld.v)) : '')+'</div>'+
-      (aged ? monthBars(y, rows, AGE, {stacked:true, label:'A/R by age at each month end',
-          tipMore:r=>'<div class="tsub">Past due <b>'+fmt('$',r.ar_pd)+'</b> of <b>'+fmt('$',r.ar_tot)+'</b> outstanding</div>'})+
-          '<p class="ynote">Each bar is what was owed at the month’s end, oldest on top. More red over the months = old money building up.</p>'
+      (aged ? '<div class="ysub">Past due at each month’s end, by age</div>'+monthBars(y, rows, AGE, {stacked:true, label:'Past-due A/R by age at each month end',
+          tipMore:r=>'<div class="tsub">Past due <b>'+fmt('$',r.ar_pd)+'</b> · current <b>'+fmt('$',r.ar_cur)+'</b> · outstanding <b>'+fmt('$',r.ar_tot)+'</b></div>'})+
+          '<p class="ynote">Oldest on top. A bar growing — or more red in it — means old money is building up. Current (not yet past due) is in the tile above and the months.</p>'
         : '<p class="note" style="margin:0 0 10px">The ages (current, 31–60, 61–90, 91+) and the patient / insurance split come from OrthoFi. They fill in once they’re matched to the practice’s own A/R aging report'+(ARV==='both'?' — total outstanding, the A/R ratio and delinquent % are already here.':'.')+'</p>');
     const arCols=[col('ar_pd','$','Past due',{grp:'Accounts receivable'}), col('ar_tot','$','Total outstanding'), col('ar_cur','$','Current'), col('ar_31','$','31–60 days past due'), col('ar_61','$','61–90 days past due'), col('ar_91','$','91+ days past due')];
     if(ARV==='both') arCols.push(col('ratio','x','A/R ratio',{grp:'Against target'}), col('delpct','%','Delinquent %'));
@@ -890,15 +894,16 @@
     /* 3. PRACTICE HEALTH - one small card per number */
     const series=k=>rows.map(r=>r && r[k]!=null ? r[k] : null);
     const la=latest('act'), db=k=>tot(k);
-    const card=(n, v, sub, k, t, extra)=>'<div class="hcard"><div class="k">'+n+'</div><div class="v">'+v+'</div><div class="d">'+(sub||'&nbsp;')+'</div>'+(extra||'')+miniBars(y, series(k), t)+'</div>';
+    const card=(n, v, sub, k, t, level)=>'<div class="hcard"><div class="k">'+n+'</div><div class="v">'+v+'</div><div class="d">'+(sub||'&nbsp;')+'</div>'+
+      (level ? '<div class="hline">'+spark(series(k), null, {w:240, h:58, label:n+' by month'})+'<div class="hax"><span>Jan</span><span>Dec</span></div></div>' : miniBars(y, series(k), t))+'</div>';
     h+='<section class="ychunk"><div class="yhead"><h2>Practice health</h2><span class="soft">reporting for now — targets later</span></div><div class="hgrid">'+
-      card('Active patients', fmt('#',la&&la.v), la ? asOf(la)+(before('act',la.m) ? ' · '+(la.v-before('act',la.m).v>=0?'↑ ':'↓ ')+Math.abs(Math.round(la.v-before('act',la.m).v))+' since '+MON[before('act',la.m).m-1] : '') : '', 'act', '#')+
+      card('Active patients', fmt('#',la&&la.v), la ? asOf(la)+(before('act',la.m) ? ' · '+(la.v-before('act',la.m).v>=0?'↑ ':'↓ ')+Math.abs(Math.round(la.v-before('act',la.m).v))+' since '+MON[before('act',la.m).m-1] : '') : '', 'act', '#', true)+
       card('New starts', fmt('#',tot('starts')), yr, 'starts', '#')+
       card('RIP sold', fmt('#',tot('rip')), yr, 'rip', '#')+
       card('Comprehensive debonds', fmt('#',db('dbc')), yr, 'dbc', '#')+
       card('Phase I debonds', fmt('#',db('dbp')), yr, 'dbp', '#')+
-      card('OECD', fmt('%',avg('oecd')), 'average of the months', 'oecd', '%')+
-      card('Comfort %', fmt('%',pc(tot('cmfa'),tot('appts'))), 'comfort appts ÷ kept clinical appts', 'cmfpct', '%')+
+      card('OECD', fmt('%',avg('oecd')), 'average of the months', 'oecd', '%', true)+
+      card('Comfort %', fmt('%',pc(tot('cmfa'),tot('appts'))), 'comfort appts ÷ kept clinical appts', 'cmfpct', '%', true)+
       card('New patient exams', fmt('#',tot('npe')), yr+' · also tracked', 'npe', '#')+'</div>'+
       months('ph', [col('act','#','Active patients',{grp:'Practice health'}), col('starts','#','New starts'), col('rip','#','RIP sold'), col('dbc','#','Comprehensive debonds'), col('dbp','#','Phase I debonds'),
              col('oecd','%','OECD'), col('cmfpct','%','Comfort %'), col('npe','#','New patient exams',{grp:'Also tracked'})], false)+'</section>';
@@ -1187,7 +1192,7 @@
 })();
 </script>
 <script>PH.nav('monthly');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc263"></script>
+<script src="tour.js?v=hc264"></script>
 <script>
 Tour.init([
   {sel:'.statusline, .openbanner', title:'Who has sent it', body:'Every office’s report for the month, in one line: final, waiting for you, or late. No chasing eight Excel files.'},
