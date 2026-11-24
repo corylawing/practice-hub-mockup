@@ -132,6 +132,40 @@
   .seg button.on{background:var(--teal-soft);color:var(--teal-600)}
   tr.grp th{background:#fff;color:var(--navy2);font-size:11px;padding-top:8px;padding-bottom:2px;text-align:left;border-bottom:0}
   th.gs,td.gs{border-left:2px solid #e3e9ef}
+  /* the year as a dashboard (24/11/2026) */
+  .tile .dl{font-size:12px;font-weight:700;margin-top:2px}
+  .dl.up{color:var(--good)} .dl.down{color:var(--bad)} .dl.flat{color:var(--soft)}
+  .ychart{margin:2px 0 4px}
+  .ychart svg{width:100%;height:auto;display:block;overflow:visible}
+  .ylegend{display:flex;gap:6px 16px;flex-wrap:wrap;font-size:12.5px;color:var(--ink);margin:0 0 6px}
+  .ylegend i,#ytip i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+  .ychart .gl{stroke:#e8edf2;stroke-width:1}
+  .ychart .bl{stroke:#b9c3cf;stroke-width:1}
+  .ychart .ax{font-size:11px;fill:#6b7a8c;font-family:inherit}
+  .ychart .ax.fut{fill:#c2cad4}
+  .ychart .ax.pct{fill:#51647a;font-weight:700;font-size:10.5px}
+  .ychart .hit{fill:transparent;cursor:pointer;outline:none}
+  .ychart .hit:hover,.ychart .hit:focus{fill:rgba(20,155,150,.06)}
+  .ychart g.good{color:var(--good)} .ychart g.bad{color:var(--bad)} .ychart g.ok{color:#9aa6b5} .ychart g.watch{color:var(--amber-ink)}
+  .ychart .tdot{fill:currentColor}
+  .ynote{font-size:12.5px;color:var(--soft);margin:4px 2px 0}
+  .ynote .good{color:var(--good)} .ynote .ok{color:#9aa6b5} .ynote .bad{color:var(--bad)}
+  .ymonths{margin-top:12px;border-top:1px solid var(--line);padding-top:8px}
+  .ymonths summary{cursor:pointer;font-weight:700;color:var(--teal-600);font-size:13.5px;padding:4px 0;list-style-position:inside}
+  .ymonths[open] summary{margin-bottom:8px}
+  .hgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+  @media(max-width:1180px){ .hgrid{grid-template-columns:repeat(2,minmax(0,1fr))} }
+  @media(max-width:520px){ .hgrid{grid-template-columns:1fr 1fr;gap:8px} }
+  .hcard{border:1px solid var(--line);border-radius:12px;padding:12px 13px 8px;display:flex;flex-direction:column;gap:2px;min-width:0}
+  .hcard .k{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--soft)}
+  .hcard .v{font-size:22px;font-weight:800;color:var(--navy);font-variant-numeric:tabular-nums}
+  .hcard .d{font-size:12px;color:var(--soft);min-height:16px}
+  .hcard svg{width:100%;height:auto;margin-top:6px}
+  .hcard .ax{font-size:10px;fill:#8a96aa}
+  .hcard .bl{stroke:#d5dce4}
+  #ytip{position:fixed;z-index:80;pointer-events:none;background:#0F2A4A;color:#fff;border-radius:10px;padding:9px 11px;font-size:12.5px;line-height:1.5;box-shadow:0 8px 24px rgba(15,42,74,.25);opacity:0;transform:translateY(4px);transition:opacity .12s,transform .12s;max-width:280px}
+  #ytip.on{opacity:1;transform:none}
+  #ytip .tsub{margin-top:4px;color:#c9d6e4;font-size:12px}
 
   .st{display:inline-block;font-size:11.5px;font-weight:700;border-radius:999px;padding:3px 9px;white-space:nowrap}
   .st.final{background:var(--navy);color:#fff} .st.sent{background:var(--teal-soft);color:var(--teal-600)}
@@ -283,13 +317,13 @@
   }
   @media (prefers-reduced-motion: reduce){ *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important} }
 </style>
-<script src="user.js?v=hc262"></script>
+<script src="user.js?v=hc263"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc262"></script>
-  <script src="gate.js?v=hc262"></script>
-  <script src="prodbook.js?v=hc262"></script>
-  <script src="monthly.js?v=hc262"></script>
-  <script src="orthofi.js?v=hc262"></script>
+  <script src="store.js?v=hc263"></script>
+  <script src="gate.js?v=hc263"></script>
+  <script src="prodbook.js?v=hc263"></script>
+  <script src="monthly.js?v=hc263"></script>
+  <script src="orthofi.js?v=hc263"></script>
 </head>
 <body>
 <div class="ribbon">MOCK-UP for Heather — made-up numbers. Try it as an office manager first, then as Heather.</div>
@@ -345,7 +379,7 @@
   let EDIT={}, CORRECT={}, BUSY=false, SENDASK=false;
   /* SAID ON THE PAGE (21/11/2026, code review): a shared copy that couldn't be read is not an empty one, and a save the
      store refused is not saved. #pagewarn stays up until a read or a save works. */
-  const YFAIL={}; let SETFAIL=false, SAVEWARN='';
+  const YFAIL={}, YPREV={}; let SETFAIL=false, SAVEWARN='';
   const readFailed=k=>!!(window.PH_STORE && PH_STORE.readFailed && PH_STORE.readFailed(k));
   const refused=r=>!r || !!(r.blocked || r.error);
   function showWarn(){ const w=el('pagewarn'); if(!w) return;
@@ -736,65 +770,147 @@
     o.ar_pd=o.ar_31==null && o.ar_61==null && o.ar_91==null ? null : (o.ar_31||0)+(o.ar_61||0)+(o.ar_91||0);
     return o;
   }
+  /* ---------- the year as a dashboard (24/11/2026, Cory: "Is this the best layout we can provide?" - no: three tall tables
+     were the old sheet cut in three). Each part: tiles (with ↑/↓ against the same months last year, or the month before
+     for balances), ONE picture (production next to collections; A/R by age stacked; a small chart per health number), and
+     the full months (quarters, YTD, targets - Heather's sheet) one tap away under "Show the months". ---------- */
+  const YOPEN=(()=>{ try{ return JSON.parse(localStorage.getItem('ph_monthly_yopen')||'{}')||{}; }catch(_){ return {}; } })();
+  const niceMax=v=>{ if(!(v>0)) return 1; const p=Math.pow(10, Math.floor(Math.log10(v))), n=v/p; return (n<=1?1:n<=2?2:n<=2.5?2.5:n<=5?5:10)*p; };
+  const kmoney=v=>{ const a=Math.abs(v); return (v<0?'−':'')+'$'+(a>=1e6 ? (a/1e6).toFixed(a>=1e7?0:1).replace(/\.0$/,'')+'M' : a>=1e3 ? Math.round(a/1e3)+'k' : Math.round(a)); };
+  /* bars by month: grouped (series side by side) or stacked (series on top of one another); hover / tap a month for its numbers */
+  function monthBars(y, rows, series, opt){
+    opt=opt||{}; const W=720, H=opt.h||210, L=48, R=8, T=10, B=opt.under ? 44 : 26, cw=(W-L-R)/12;
+    const tot=r=>series.reduce((t,s)=>t+Math.max(0, r[s.k]||0),0);
+    const top=niceMax(Math.max(1, ...rows.filter(Boolean).map(r=>opt.stacked ? tot(r) : Math.max(...series.map(s=>Math.max(0, r[s.k]||0))))));
+    const Yp=v=>T+(H-T-B)*(1-v/top), base=Yp(0);
+    let g='';
+    [0, 0.5, 1].forEach(f=>{ const yy=Yp(top*f); g+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+yy.toFixed(1)+'" y2="'+yy.toFixed(1)+'" class="gl"/><text x="'+(L-6)+'" y="'+(yy+4).toFixed(1)+'" class="ax" text-anchor="end">'+kmoney(top*f)+'</text>'; });
+    let bars='', hits='';
+    for(let m=1;m<=12;m++){
+      const r=rows[m-1], x0=L+(m-1)*cw, cx=x0+cw/2, open=isOpen(y,m), fut=isFuture(y,m);
+      bars+='<text x="'+cx.toFixed(1)+'" y="'+(H-B+15)+'" class="ax'+(fut?' fut':'')+'" text-anchor="middle">'+MON[m-1]+'</text>';
+      if(!r || fut) continue;
+      const op=open ? ' opacity="0.55"' : '';
+      if(opt.stacked){
+        let acc=0; const bw=Math.min(30, cw*0.56), bx=cx-bw/2, segs=series.filter(s=>(r[s.k]||0)>0);
+        segs.forEach((s,i)=>{ const v=r[s.k], y1=Yp(acc+v), y0=Yp(acc), last=i===segs.length-1, h=Math.max(0, y0-y1-(i?2:0));
+          bars+='<path d="'+roundTop(bx, y1, bw, h, last?3:0)+'" fill="'+s.c+'"'+op+'/>'; acc+=v; });
+      } else {
+        const bw=Math.min(15, cw*0.3), gap=2;
+        series.forEach((s,i)=>{ const v=Math.max(0, r[s.k]||0), bx=cx-(series.length*bw+(series.length-1)*gap)/2+i*(bw+gap), y1=Yp(v);
+          bars+='<path d="'+roundTop(bx, y1, bw, base-y1, 3)+'" fill="'+s.c+'"'+op+'/>'; });
+      }
+      if(opt.under){ const u=opt.under(r); if(u) bars+='<g class="'+(u.tn||'')+'"><circle cx="'+(cx-15).toFixed(1)+'" cy="'+(H-B+30)+'" r="3.2" class="tdot"/><text x="'+(cx-9).toFixed(1)+'" y="'+(H-B+33.5)+'" class="ax pct">'+esc(u.t)+'</text></g>'; }
+      const tip='<b>'+M.MONTHS[m-1]+' '+y+(open?' (so far)':'')+'</b>'+series.map(s=>'<div><i style="background:'+s.c+'"></i>'+esc(s.n)+' <b>'+fmt('$', r[s.k])+'</b></div>').join('')+(opt.tipMore ? opt.tipMore(r) : '');
+      hits+='<rect x="'+x0.toFixed(1)+'" y="'+T+'" width="'+cw.toFixed(1)+'" height="'+(H-T-B+4)+'" class="hit" data-tip="'+esc(tip)+'" tabindex="0"/>';
+    }
+    return '<div class="ychart"><div class="ylegend">'+series.map(s=>'<span><i style="background:'+s.c+'"></i>'+esc(s.n)+'</span>').join('')+(rows.some((r,i)=>r && isOpen(y,i+1))?'<span class="soft">lighter = the month so far</span>':'')+'</div>'+
+      '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+esc(opt.label||'by month')+'">'+g+'<line x1="'+L+'" x2="'+(W-R)+'" y1="'+base.toFixed(1)+'" y2="'+base.toFixed(1)+'" class="bl"/>'+bars+hits+'</svg></div>';
+  }
+  function roundTop(x, y, w, h, r){ if(h<=0) return ''; r=Math.min(r, w/2, h); return 'M'+x.toFixed(1)+','+(y+h).toFixed(1)+'V'+(y+r).toFixed(1)+(r?'Q'+x.toFixed(1)+','+y.toFixed(1)+' '+(x+r).toFixed(1)+','+y.toFixed(1):'')+'H'+(x+w-r).toFixed(1)+(r?'Q'+(x+w).toFixed(1)+','+y.toFixed(1)+' '+(x+w).toFixed(1)+','+(y+r).toFixed(1):'')+'V'+(y+h).toFixed(1)+'Z'; }
+  /* one small chart per number (Practice health) */
+  function miniBars(y, vals, t){
+    const W=240, H=58, cw=W/12, top=niceMax(Math.max(1, ...vals.filter(v=>v!=null)));
+    let s='<svg viewBox="0 0 '+W+' '+(H+12)+'" aria-hidden="true"><line x1="0" x2="'+W+'" y1="'+H+'" y2="'+H+'" class="bl"/>';
+    vals.forEach((v,i)=>{ const x=i*cw+cw*0.22, w=cw*0.56; if(v==null || isFuture(y,i+1)) return; const h=Math.max(1.5, (H-4)*v/top);
+      s+='<path d="'+roundTop(x, H-h, w, h, 2)+'" fill="var(--teal)"'+(isOpen(y,i+1)?' opacity="0.5"':'')+'><title>'+M.MONTHS[i]+': '+fmt(t, v)+'</title></path>'; });
+    [0,11].forEach(i=>{ s+='<text x="'+(i?W:0)+'" y="'+(H+11)+'" class="ax" text-anchor="'+(i?'end':'start')+'">'+MON[i]+'</text>'; });
+    return s+'</svg>';
+  }
   function yearHTML(){
     const offs=myOffices(); if(OFF===null || (OFF!=='__all' && offs.indexOf(OFF)<0)) OFF=offs[0];
     const all=OFF==='__all', y=Y;
-    const vals=m=>{ if(isFuture(y,m)) return null; const v=all ? offTotals(offs,y,m) : valsOf(OFF,y,m); return v ? Object.assign({}, v, M.calc(v), arView(v)) : null; };
+    if(!DATA[y-1] && !YPREV[y-1]){ YPREV[y-1]=true; loadYear(y-1).then(()=>{ if(TAB==='year') render(); }, ()=>{}); }      // last year, for ↑/↓
+    const valsY=(yy,m)=>{ if(isFuture(yy,m)) return null; const v=all ? offTotals(offs,yy,m) : valsOf(OFF,yy,m); return v ? Object.assign({}, v, M.calc(v), arView(v)) : null; };
+    const vals=m=>valsY(y,m);
     const col=(k,t,n,o)=>Object.assign({k,t,n:n||(M.BY[k]||M.CALC.find(c=>c.k===k)).n, flow:!!(M.BY[k]&&M.BY[k].flow), goal:({colpct:'col',adjpct:'adj',ratio:'ratio',delpct:'del'})[k]}, o||{});
     const medF=M.FIELDS.filter(f=>f.medicaid).map(f=>({k:f.k,t:f.t,n:f.n,flow:true}));
     const hasMed=all ? offs.some(o=>SET.medicaid.indexOf(o)>=0) : SET.medicaid.indexOf(OFF)>=0;
     const oldF=M.FIELDS.filter(f=>f.oldsys).map(f=>({k:f.k,t:f.t,n:f.n,flow:!!f.flow}));
     const hasOld=all ? offs.some(o=>SET.oldsys.indexOf(o)>=0) : SET.oldsys.indexOf(OFF)>=0;
-    /* the year in numbers, for the tiles */
-    const months=[]; for(let m=1;m<=12;m++){ const v=vals(m); if(v) months.push({m, v}); }
-    const tot=k=>{ const xs=months.map(x=>x.v[k]).filter(x=>x!=null); return xs.length ? xs.reduce((a,b)=>a+b,0) : null; };
-    const avg=k=>{ const xs=months.map(x=>x.v[k]).filter(x=>x!=null); return xs.length ? xs.reduce((a,b)=>a+b,0)/xs.length : null; };
-    const latest=k=>{ for(let i=months.length-1;i>=0;i--){ const x=months[i].v[k]; if(x!=null) return {v:x, m:months[i].m}; } return null; };
+    const rows=[]; for(let m=1;m<=12;m++) rows.push(vals(m));
+    const has=k=>rows.some(r=>r && r[k]!=null);
+    const tot=(k,last)=>{ const xs=rows.slice(0, last||12).map(r=>r && r[k]).filter(x=>x!=null); return xs.length ? xs.reduce((a,b)=>a+b,0) : null; };
+    const avg=k=>{ const xs=rows.map(r=>r && r[k]).filter(x=>x!=null); return xs.length ? xs.reduce((a,b)=>a+b,0)/xs.length : null; };
+    const latest=k=>{ for(let i=11;i>=0;i--){ const x=rows[i] && rows[i][k]; if(x!=null) return {v:x, m:i+1}; } return null; };
+    const before=(k,m)=>{ for(let i=m-2;i>=0;i--){ const x=rows[i] && rows[i][k]; if(x!=null) return {v:x, m:i+1}; } return null; };
     const pc=(a,b)=>a!=null && b ? a/b*100 : null;
-    const tile=(k,v,d,tn)=>'<div class="tile"><div class="k">'+k+'</div><div class="v'+(tn?' '+tn:'')+'">'+v+'</div>'+(d?'<div class="d">'+d+'</div>':'')+'</div>';
+    /* against the same FINISHED months last year (a month still going isn't compared) */
+    const done=y===NOW_Y ? NOW_M-1 : 12, prevRows=[]; for(let m=1;m<=12;m++) prevRows.push(valsY(y-1,m));
+    const ptot=(k)=>{ const xs=prevRows.slice(0,done).map(r=>r && r[k]).filter(x=>x!=null); return xs.length===done && done>0 ? xs.reduce((a,b)=>a+b,0) : null; };
+    const span=done>0 ? (done===1 ? MON[0] : MON[0]+'–'+MON[done-1])+' '+(y-1) : '';
+    const yoy=(now, was, upGood, rate)=>{ if(now==null || was==null || (!rate && !was)) return '';
+      const d=rate ? now-was : (now-was)/Math.abs(was)*100; if(Math.abs(d)<(rate?0.3:1)) return '<span class="dl flat">≈ same as '+esc(span)+'</span>';
+      const good=(d>0)===upGood; return '<span class="dl '+(good?'up':'down')+'">'+(d>0?'↑':'↓')+' '+Math.abs(d).toFixed(1)+'% vs '+esc(span)+'</span>'; };
+    const since=(now, was, upGood)=>{ if(!now || !was) return ''; const d=now.v-was.v; if(Math.abs(d)<0.5) return '';
+      const good=(d>0)===upGood; return '<span class="dl '+(good?'up':'down')+'">'+(d>0?'↑ ':'↓ ')+kmoney(Math.abs(d)).replace('−','')+' since '+MON[was.m-1]+'</span>'; };
+    const tile=(k,v,d,tn,extra)=>'<div class="tile"><div class="k">'+k+'</div><div class="v'+(tn?' '+tn:'')+'">'+v+'</div>'+(d?'<div class="d">'+d+'</div>':'')+(extra||'')+'</div>';
     const tn=(g,v)=>M.tone(g,v,SET.goals)||'';
     const yr=y===NOW_Y ? 'so far this year' : 'in '+y;
+    const months=(key, cols, goals, label)=>'<details class="ymonths"'+(YOPEN[key]?' open':'')+' ontoggle="MONTHLY.yopen(\''+key+'\', this.open)"><summary>Show the months'+(label?' — '+label:'')+'</summary>'+sheet(cols, vals, y, goals)+'</details>';
 
     let h='<div class="ochips" style="margin-bottom:14px">'+(offs.length>1?'<button class="ochip '+(all?'on':'')+'" onclick="MONTHLY.office(\'__all\')">All offices together</button>':'')+
       offs.map(x=>'<button class="ochip '+(x===OFF?'on':'')+'" data-o="'+esc(x)+'" onclick="MONTHLY.office(this.dataset.o)"><i style="background:'+esc((PH.colorForOffice(x)||{}).dot||'#94a3b8')+'"></i>'+esc(x)+'</button>').join('')+
       '<button class="btn ghost" style="margin-left:auto" onclick="MONTHLY.csv()">⬇ Download for Excel</button></div>';
 
-    /* 1. PRODUCTION / COLLECTIONS */
+    /* 1. PRODUCTION & COLLECTIONS */
     const gp=tot('gp'), gc=tot('gc'), adj=tot('adj'), np=tot('np'), disc=tot('disc');
     const colY=pc(gc,gp), adjY=gp && adj!=null ? -adj/gp*100 : null, discY=pc(disc,gp);
+    const gpD=tot('gp',done), gcD=tot('gc',done), npD=tot('np',done), colD=pc(gcD,gpD), colP=pc(ptot('gc'),ptot('gp'));
     h+='<section class="ychunk"><div class="yhead"><h2>Production &amp; collections</h2><span class="soft">'+esc(yr)+'</span></div>'+
-      '<div class="tiles">'+tile('Gross production', fmt('$',gp,true))+tile('Gross collections', fmt('$',gc,true))+
-        tile('Collections %', fmt('%',colY), 'target '+goalTxt('col'), tn('col',colY))+tile('Net production', fmt('$',np,true))+
+      '<div class="tiles">'+tile('Gross production', fmt('$',gp,true), yoy(gpD, ptot('gp'), true))+tile('Gross collections', fmt('$',gc,true), yoy(gcD, ptot('gc'), true))+
+        tile('Collections %', fmt('%',colY), 'target '+goalTxt('col'), tn('col',colY), yoy(colD, colP, true, true))+tile('Net production', fmt('$',np,true), yoy(npD, ptot('np'), true))+
         tile('Adjustments', fmt('%',adjY), fmt('$',adj,true)+' · target '+goalTxt('adj'), tn('adj',adjY))+tile('Contract discounts', fmt('%',discY), fmt('$',disc,true))+'</div>'+
-      sheet([col('gp','$','Gross production',{grp:'Production & collections'}), col('gc','$','Gross collections'), col('colpct','%','Collections %'),
-             col('adj','$','Adjustments $',{grp:'Adjustments, net & discounts'}), col('adjpct','%','Adjustments %'), col('np','$','Net production'), col('disc','$','Contract discounts $'), col('discpct','%','Contract discounts %')], vals, y, true)+'</section>';
+      (has('gp')||has('gc') ? monthBars(y, rows, [{k:'gp', n:'Gross production', c:'var(--navy2)'}, {k:'gc', n:'Gross collections', c:'var(--teal)'}],
+        {label:'Gross production and collections by month', under:r=>r.colpct==null ? null : {t:fmt('%',r.colpct), tn:tn('col',r.colpct)},
+         tipMore:r=>'<div class="tsub">Collections % <b>'+fmt('%',r.colpct)+'</b> · Adjustments <b>'+fmt('$',r.adj)+'</b> ('+fmt('%',r.adjpct)+') · Net <b>'+fmt('$',r.np)+'</b></div>'}) +
+        '<p class="ynote">The % under each month is that month’s collections % — <span class="good">●</span> above target, <span class="ok">●</span> on target, <span class="bad">●</span> below.</p>' : '<p class="note">No numbers for '+y+' yet.</p>')+
+      months('pc', [col('gp','$','Gross production',{grp:'Production & collections'}), col('gc','$','Gross collections'), col('colpct','%','Collections %'),
+             col('adj','$','Adjustments $',{grp:'Adjustments, net & discounts'}), col('adjpct','%','Adjustments %'), col('np','$','Net production'), col('disc','$','Contract discounts $'), col('discpct','%','Contract discounts %')], true)+'</section>';
 
     /* 2. ACCOUNTS RECEIVABLE */
-    const L=k=>latest(k), lt=L('ar_tot'), lpd=L('ar_pd'), l91=L('ar_91'), lr=L('ratio'), ld=L('delpct');
-    const aged=months.some(x=>x.v.ar_cur!=null || x.v.ar_31!=null);
+    const lt=latest('ar_tot'), lpd=latest('ar_pd'), l91=latest('ar_91'), lr=latest('ratio'), ld=latest('delpct');
+    const aged=has('ar_cur') || has('ar_31');
     const asOf=x=>x ? 'end of '+MON[x.m-1] : '';
     const seg=(k,t)=>'<button class="'+(ARV===k?'on':'')+'" aria-pressed="'+(ARV===k)+'" onclick="MONTHLY.arv(\''+k+'\')">'+t+'</button>';
+    const AGE=[{k:'ar_cur', n:'Current', c:'#149B96'}, {k:'ar_31', n:'31–60 days', c:'#E9B949'}, {k:'ar_61', n:'61–90 days', c:'#E07B39'}, {k:'ar_91', n:'91+ days', c:'#B83227'}];
     h+='<section class="ychunk"><div class="yhead"><h2>Accounts receivable</h2><div class="seg" role="group" aria-label="Whose A/R">'+seg('both','Patient + insurance')+seg('patient','Patient')+seg('insurance','Insurance')+'</div></div>'+
-      '<div class="tiles">'+tile('Total outstanding', fmt('$',lt&&lt.v,true), asOf(lt))+tile('Past due', fmt('$',lpd&&lpd.v,true), lpd&&lt&&lt.v ? fmt('%',lpd.v/lt.v*100)+' of outstanding' : asOf(lpd))+
-        tile('91+ days', fmt('$',l91&&l91.v,true), l91&&lt&&lt.v ? fmt('%',l91.v/lt.v*100)+' of outstanding' : asOf(l91))+
-        (ARV==='both' ? tile('A/R ratio', fmt('x',lr&&lr.v), 'target '+goalTxt('ratio'), tn('ratio',lr&&lr.v))+tile('Delinquent %', fmt('%',ld&&ld.v), 'target '+goalTxt('del'), tn('del',ld&&ld.v)) : '')+'</div>';
-    if(!aged) h+='<p class="note" style="margin:0 0 10px">The ages (current, 31–60, 61–90, 91+) and the patient / insurance split come from OrthoFi. They fill in once they’re matched to the practice’s own A/R aging report'+(ARV==='both'?' - total outstanding, the A/R ratio and delinquent % are already here.':'.')+'</p>';
+      '<div class="tiles">'+tile('Total outstanding', fmt('$',lt&&lt.v,true), asOf(lt), '', lt ? since(lt, before('ar_tot', lt.m), false) : '')+
+        tile('Past due', fmt('$',lpd&&lpd.v,true), lpd&&lt&&lt.v ? fmt('%',lpd.v/lt.v*100)+' of outstanding' : (aged?asOf(lpd):'from OrthoFi - coming'), '', lpd ? since(lpd, before('ar_pd', lpd.m), false) : '')+
+        tile('91+ days', fmt('$',l91&&l91.v,true), l91&&lt&&lt.v ? fmt('%',l91.v/lt.v*100)+' of outstanding' : (aged?asOf(l91):'from OrthoFi - coming'), '', l91 ? since(l91, before('ar_91', l91.m), false) : '')+
+        (ARV==='both' ? tile('A/R ratio', fmt('x',lr&&lr.v), 'target '+goalTxt('ratio'), tn('ratio',lr&&lr.v))+tile('Delinquent %', fmt('%',ld&&ld.v), 'target '+goalTxt('del'), tn('del',ld&&ld.v)) : '')+'</div>'+
+      (aged ? monthBars(y, rows, AGE, {stacked:true, label:'A/R by age at each month end',
+          tipMore:r=>'<div class="tsub">Past due <b>'+fmt('$',r.ar_pd)+'</b> of <b>'+fmt('$',r.ar_tot)+'</b> outstanding</div>'})+
+          '<p class="ynote">Each bar is what was owed at the month’s end, oldest on top. More red over the months = old money building up.</p>'
+        : '<p class="note" style="margin:0 0 10px">The ages (current, 31–60, 61–90, 91+) and the patient / insurance split come from OrthoFi. They fill in once they’re matched to the practice’s own A/R aging report'+(ARV==='both'?' — total outstanding, the A/R ratio and delinquent % are already here.':'.')+'</p>');
     const arCols=[col('ar_pd','$','Past due',{grp:'Accounts receivable'}), col('ar_tot','$','Total outstanding'), col('ar_cur','$','Current'), col('ar_31','$','31–60 days past due'), col('ar_61','$','61–90 days past due'), col('ar_91','$','91+ days past due')];
     if(ARV==='both') arCols.push(col('ratio','x','A/R ratio',{grp:'Against target'}), col('delpct','%','Delinquent %'));
-    h+=sheet(arCols, vals, y, ARV==='both')+(ARV==='both' && hasOld ? '<p class="soft" style="font-size:12.5px;margin:6px 2px 0">Total outstanding includes the old system’s A/R; the ages are OrthoFi’s.</p>' : '')+'</section>';
+    h+=months('ar', arCols, ARV==='both')+(ARV==='both' && hasOld ? '<p class="ynote">Total outstanding includes the old system’s A/R; the ages are OrthoFi’s.</p>' : '')+'</section>';
 
-    /* 3. PRACTICE HEALTH */
-    const la=L('act'), db=(tot('dbc')||0)+(tot('dbp')||0);
-    h+='<section class="ychunk"><div class="yhead"><h2>Practice health</h2><span class="soft">reporting for now - targets later</span></div>'+
-      '<div class="tiles">'+tile('Active patients', fmt('#',la&&la.v), asOf(la))+tile('New starts', fmt('#',tot('starts')), yr)+tile('RIP sold', fmt('#',tot('rip')), yr)+
-        tile('Debonds', fmt('#',tot('dbc')==null&&tot('dbp')==null?null:db), (tot('dbc')!=null?fmt('#',tot('dbc'))+' comprehensive':'')+(tot('dbp')!=null?' · '+fmt('#',tot('dbp'))+' Phase I':''))+
-        tile('OECD', fmt('%',avg('oecd')), 'average')+tile('Comfort %', fmt('%',pc(tot('cmfa'),tot('appts'))), yr)+'</div>'+
-      sheet([col('act','#','Active patients',{grp:'Practice health'}), col('starts','#','New starts'), col('rip','#','RIP sold'), col('dbc','#','Comprehensive debonds'), col('dbp','#','Phase I debonds'),
-             col('oecd','%','OECD'), col('cmfpct','%','Comfort %'), col('npe','#','New patient exams',{grp:'Also tracked'})], vals, y, false)+'</section>';
+    /* 3. PRACTICE HEALTH - one small card per number */
+    const series=k=>rows.map(r=>r && r[k]!=null ? r[k] : null);
+    const la=latest('act'), db=k=>tot(k);
+    const card=(n, v, sub, k, t, extra)=>'<div class="hcard"><div class="k">'+n+'</div><div class="v">'+v+'</div><div class="d">'+(sub||'&nbsp;')+'</div>'+(extra||'')+miniBars(y, series(k), t)+'</div>';
+    h+='<section class="ychunk"><div class="yhead"><h2>Practice health</h2><span class="soft">reporting for now — targets later</span></div><div class="hgrid">'+
+      card('Active patients', fmt('#',la&&la.v), la ? asOf(la)+(before('act',la.m) ? ' · '+(la.v-before('act',la.m).v>=0?'↑ ':'↓ ')+Math.abs(Math.round(la.v-before('act',la.m).v))+' since '+MON[before('act',la.m).m-1] : '') : '', 'act', '#')+
+      card('New starts', fmt('#',tot('starts')), yr, 'starts', '#')+
+      card('RIP sold', fmt('#',tot('rip')), yr, 'rip', '#')+
+      card('Comprehensive debonds', fmt('#',db('dbc')), yr, 'dbc', '#')+
+      card('Phase I debonds', fmt('#',db('dbp')), yr, 'dbp', '#')+
+      card('OECD', fmt('%',avg('oecd')), 'average of the months', 'oecd', '%')+
+      card('Comfort %', fmt('%',pc(tot('cmfa'),tot('appts'))), 'comfort appts ÷ kept clinical appts', 'cmfpct', '%')+
+      card('New patient exams', fmt('#',tot('npe')), yr+' · also tracked', 'npe', '#')+'</div>'+
+      months('ph', [col('act','#','Active patients',{grp:'Practice health'}), col('starts','#','New starts'), col('rip','#','RIP sold'), col('dbc','#','Comprehensive debonds'), col('dbp','#','Phase I debonds'),
+             col('oecd','%','OECD'), col('cmfpct','%','Comfort %'), col('npe','#','New patient exams',{grp:'Also tracked'})], false)+'</section>';
 
-    if(hasMed) h+='<section class="ychunk"><div class="yhead"><h2>Medicaid'+(all?' — the Medicaid offices together':'')+'</h2></div>'+sheet(medF, vals, y, false)+'</section>';
-    if(hasOld) h+='<section class="ychunk"><div class="yhead"><h2>Old system'+(all?' — those offices together':'')+'</h2><span class="soft">already inside gross production, collections and A/R above</span></div>'+sheet(oldF, vals, y, false)+'</section>';
-    return h+'<p class="note" style="margin-top:10px">Quarter and year rows average the months, like the old sheet; the YTD row adds up the month’s activity (balances and percentages aren’t added). Ratios update the moment a number changes.</p>';
+    if(hasMed){ const sub=tot('mds'), app=tot('mda'), prod=tot('mdp');
+      h+='<section class="ychunk"><div class="yhead"><h2>Medicaid'+(all?' — the Medicaid offices together':'')+'</h2><span class="soft">'+esc(yr)+'</span></div>'+
+        '<div class="tiles">'+tile('Submissions', fmt('#',sub))+tile('Approvals', fmt('#',app), sub ? fmt('%',app/sub*100)+' of submissions' : '')+tile('Denials', fmt('#',tot('mdd')))+tile('Bandings', fmt('#',tot('mdb')))+tile('Medicaid production', fmt('$',prod,true))+tile('Medicaid collections', fmt('$',tot('mdc'),true))+'</div>'+
+        months('md', medF, false)+'</section>'; }
+    if(hasOld) h+='<section class="ychunk"><div class="yhead"><h2>Old system'+(all?' — those offices together':'')+'</h2><span class="soft">already inside gross production, collections and A/R above</span></div>'+
+      '<div class="tiles">'+tile('Old system production', fmt('$',tot('osp'),true), yr)+tile('Old system collections', fmt('$',tot('osc'),true), yr)+tile('Old system A/R', fmt('$',(latest('osar')||{}).v,true), asOf(latest('osar')))+'</div>'+
+      months('os', oldF, false)+'</section>';
+    return h+'<p class="note" style="margin-top:10px">In “Show the months”, quarter and year rows average the months, like the old sheet; the YTD row adds up the month’s activity (balances and percentages aren’t added). ↑/↓ compares the finished months with the same months last year; balances compare with the month before.</p>';
   }
   function sheet(cols, vals, y, withGoals){
     const Rr=M.yearRows(vals, cols);
@@ -1012,7 +1128,20 @@
   /* ---------- wiring ---------- */
   function persona(){ const s=el('persona'); if(!s) return; let id='heather'; try{ id=localStorage.getItem('ph_monthly_as')||'heather'; }catch(_){}
     s.innerHTML=PERSONAS.map(p=>'<option value="'+p.id+'" '+(p.id===id?'selected':'')+'>'+esc(p.n)+'</option>').join(''); }
+  /* the chart tooltip: hover, keyboard focus or a tap on a month shows its numbers */
+  (function(){
+    const tip=document.createElement('div'); tip.id='ytip'; tip.setAttribute('role','tooltip'); document.body.appendChild(tip);
+    const show=(t,x,y)=>{ tip.innerHTML=t.dataset.tip; tip.classList.add('on'); const w=tip.offsetWidth, hgt=tip.offsetHeight;
+      let L=x+14, T=y-hgt-12; if(L+w>innerWidth-8) L=x-w-14; if(L<8) L=8; if(T<8) T=y+16; tip.style.left=L+'px'; tip.style.top=T+'px'; };
+    const hide=()=>tip.classList.remove('on');
+    document.addEventListener('mousemove', e=>{ const t=e.target.closest && e.target.closest('[data-tip]'); if(t) show(t, e.clientX, e.clientY); else hide(); });
+    document.addEventListener('focusin', e=>{ const t=e.target.closest && e.target.closest('[data-tip]'); if(!t) return; const r=t.getBoundingClientRect(); show(t, r.left+r.width/2, r.top+20); });
+    document.addEventListener('focusout', hide);
+    document.addEventListener('click', e=>{ const t=e.target.closest && e.target.closest('[data-tip]'); if(t){ show(t, e.clientX, e.clientY); } else hide(); });
+    addEventListener('scroll', hide, {passive:true});
+  })();
   window.MONTHLY={
+    yopen(k, open){ YOPEN[k]=!!open; try{ localStorage.setItem('ph_monthly_yopen', JSON.stringify(YOPEN)); }catch(_){} },
     arv(k){ if(!AR_KEYS.hasOwnProperty(k)) return; ARV=k; try{ localStorage.setItem('ph_monthly_arv', k); }catch(_){} render(); },
     as(id){ try{ localStorage.setItem('ph_monthly_as', id); }catch(_){} WHO=null; WHO=who(); TAB=null; OFF=null; EDIT={}; CORRECT={}; SENDASK=false; render(); },
     tab(t){ if(TAB==='year' && t!=='year' && OFF==='__all') OFF=null; if(TAB!=='year' && t==='year') Y=Math.min(Y, NOW_Y); TAB=t; SENDASK=false; try{ localStorage.setItem('ph_monthly_tab', t); }catch(_){} render(); },
@@ -1058,7 +1187,7 @@
 })();
 </script>
 <script>PH.nav('monthly');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc262"></script>
+<script src="tour.js?v=hc263"></script>
 <script>
 Tour.init([
   {sel:'.statusline, .openbanner', title:'Who has sent it', body:'Every office’s report for the month, in one line: final, waiting for you, or late. No chasing eight Excel files.'},
