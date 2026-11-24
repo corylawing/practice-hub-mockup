@@ -283,13 +283,13 @@
   }
   @media (prefers-reduced-motion: reduce){ *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important} }
 </style>
-<script src="user.js?v=hc260"></script>
+<script src="user.js?v=hc261"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc260"></script>
-  <script src="gate.js?v=hc260"></script>
-  <script src="prodbook.js?v=hc260"></script>
-  <script src="monthly.js?v=hc260"></script>
-  <script src="orthofi.js?v=hc260"></script>
+  <script src="store.js?v=hc261"></script>
+  <script src="gate.js?v=hc261"></script>
+  <script src="prodbook.js?v=hc261"></script>
+  <script src="monthly.js?v=hc261"></script>
+  <script src="orthofi.js?v=hc261"></script>
 </head>
 <body>
 <div class="ribbon">MOCK-UP for Heather — made-up numbers. Try it as an office manager first, then as Heather.</div>
@@ -400,13 +400,13 @@
                  npe:Math.round((40+R()*70)*frac), act:pts+Math.round((R()-0.5)*30), disc:gp*(0.01+R()*0.02)};
         v.np=v.gp+v.adj; v.ar90=v.ar*(0.012+R()*0.035);
         v.rip=Math.round((4+R()*20)*frac);
-        v.starts=Math.round((16+R()*30)*frac); v.dbc=Math.round((14+R()*24)*frac); v.dbp=Math.round((2+R()*8)*frac);
+        v.starts=Math.round((16+R()*30)*frac);
         /* made up: the A/R by age (patient about four fifths of it) */
         { const pt=v.ar*(0.74+R()*0.1), it=v.ar-pt, sp=(t,c,a,b)=>{ const x31=t*a, x61=t*b, x91=t*(0.03+R()*0.05); return [t, t-x31-x61-x91, x31, x61, x91]; };
           [v.pa_tot, v.pa_cur, v.pa_31, v.pa_61, v.pa_91]=sp(pt, 0, 0.04+R()*0.03, 0.02+R()*0.02);
           [v.ia_tot, v.ia_cur, v.ia_31, v.ia_61, v.ia_91]=sp(it, 0, 0.12+R()*0.08, 0.06+R()*0.05); }
         if(!open && M.DEF_OLDSYS.indexOf(o)>=0){ v.osp=gp*(0.04+R()*0.06); v.osc=v.gc*(0.04+R()*0.06); v.osar=v.ar*(0.05+R()*0.08); }   // made up: the old system's share
-        if(!open){ v.oecd=5+R()*12; v.appts=Math.round(600+R()*500); v.cmfa=Math.round(v.appts*(0.03+R()*0.06));
+        if(!open){ v.oecd=5+R()*12; v.appts=Math.round(600+R()*500); v.cmfa=Math.round(v.appts*(0.03+R()*0.06)); v.dbc=Math.round(14+R()*24); v.dbp=Math.round(2+R()*8);
           if(med.indexOf(o)>=0){ v.mds=Math.round(8+R()*26); v.mdd=Math.round(v.mds*(0.05+R()*0.22)); v.mda=Math.max(0,v.mds-v.mdd-Math.round(R()*3));
             v.mdb=Math.round(v.mda*(0.6+R()*0.35)); v.mdp=25000+R()*85000; v.mdc=v.mdp*(0.75+R()*0.25); } }
         const r={v:{}, src:{}, at:{}, by:{}, ofv:{}, notes:[]}, stamp=new Date(y, m, Math.min(3, 28), 6).toISOString();
@@ -431,7 +431,7 @@
     return M.cleanYear(rec);
   }
   /* the sandbox's made-up years are remade when their story changes (DEMO_V) - real years never */
-  const DEMO_V='7';      // 7: Jessica's year sheet (new starts, debonds, A/R by age) - 24/11/2026
+  const DEMO_V='8';      // 7: Jessica's year sheet (new starts, debonds, A/R by age) - 24/11/2026
   async function loadYear(y, fresh){
     if(DATA[y] && !fresh) return DATA[y];
     let rec=null; try{ rec=await PH_STORE.get(M.KEY(y)); }catch(_){}
@@ -1058,7 +1058,7 @@
 })();
 </script>
 <script>PH.nav('monthly');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc260"></script>
+<script src="tour.js?v=hc261"></script>
 <script>
 Tour.init([
   {sel:'.statusline, .openbanner', title:'Who has sent it', body:'Every office’s report for the month, in one line: final, waiting for you, or late. No chasing eight Excel files.'},
