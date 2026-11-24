@@ -153,10 +153,13 @@
   .ymonths{margin-top:12px;border-top:1px solid var(--line);padding-top:8px}
   .ymonths summary{cursor:pointer;font-weight:700;color:var(--teal-600);font-size:13.5px;padding:4px 0;list-style-position:inside}
   .ymonths[open] summary{margin-bottom:8px}
-  .hgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
-  @media(max-width:1180px){ .hgrid{grid-template-columns:repeat(2,minmax(0,1fr))} }
-  @media(max-width:520px){ .hgrid{grid-template-columns:1fr 1fr;gap:8px} }
-  .hcard{border:1px solid var(--line);border-radius:12px;padding:12px 13px 8px;display:flex;flex-direction:column;gap:2px;min-width:0}
+  .hgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+  @media(max-width:820px){ .hgrid{grid-template-columns:1fr} }
+  .hcard{border:1px solid var(--line);border-radius:12px;padding:14px 16px 10px;display:flex;flex-direction:column;gap:6px;min-width:0}
+  .hcard .hhead{display:grid;grid-template-columns:1fr auto;grid-template-areas:'k d' 'v d';align-items:end;column-gap:12px}
+  .hcard .hhead .k{grid-area:k} .hcard .hhead .v{grid-area:v} .hcard .hhead .d{grid-area:d;text-align:right;align-self:end;max-width:220px}
+  .ychart .ax.val{fill:var(--navy);font-weight:800;font-size:12px}
+  .ychart.empty{font-size:12.5px;color:var(--soft);padding:16px 0}
   .hcard .k{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--soft)}
   .hcard .v{font-size:22px;font-weight:800;color:var(--navy);font-variant-numeric:tabular-nums}
   .hcard .d{font-size:12px;color:var(--soft);min-height:16px}
@@ -321,13 +324,13 @@
   }
   @media (prefers-reduced-motion: reduce){ *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important} }
 </style>
-<script src="user.js?v=hc266"></script>
+<script src="user.js?v=hc267"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc266"></script>
-  <script src="gate.js?v=hc266"></script>
-  <script src="prodbook.js?v=hc266"></script>
-  <script src="monthly.js?v=hc266"></script>
-  <script src="orthofi.js?v=hc266"></script>
+  <script src="store.js?v=hc267"></script>
+  <script src="gate.js?v=hc267"></script>
+  <script src="prodbook.js?v=hc267"></script>
+  <script src="monthly.js?v=hc267"></script>
+  <script src="orthofi.js?v=hc267"></script>
 </head>
 <body>
 <div class="ribbon">MOCK-UP for Heather — made-up numbers. Try it as an office manager first, then as Heather.</div>
@@ -783,14 +786,15 @@
   const kmoney=v=>{ const a=Math.abs(v); return (v<0?'−':'')+'$'+(a>=1e6 ? (a/1e6).toFixed(a>=1e7?0:1).replace(/\.0$/,'')+'M' : a>=1e3 ? Math.round(a/1e3)+'k' : Math.round(a)); };
   /* bars by month: grouped (series side by side) or stacked (series on top of one another); hover / tap a month for its numbers */
   const NARROW=()=>{ try{ return matchMedia('(max-width:560px)').matches; }catch(_){ return false; } };
+  const axisFmt=(t,v)=>t==='$' ? kmoney(v) : t==='%' ? (Math.round(v*10)/10)+'%' : Math.round(v).toLocaleString('en-US');
   function monthBars(y, rows, series, opt){
-    opt=Object.assign({}, opt||{}); const nar=NARROW(); if(nar) opt.under=null;            // a phone: the month's % is in the tap
-    const W=nar ? 360 : 720, H=nar ? 200 : (opt.h||210), L=nar ? 40 : 48, R=nar ? 4 : 8, T=10, B=opt.under ? 44 : 26, cw=(W-L-R)/12;
+    opt=Object.assign({}, opt||{}); const nar=NARROW(), TT=opt.t||'$'; if(nar) opt.under=null;            // a phone: the month's % is in the tap
+    const W=opt.w ? (nar ? 360 : opt.w) : (nar ? 360 : 720), H=nar ? (opt.h ? Math.max(150, opt.h) : 200) : (opt.h||210), L=nar ? 40 : 48, R=nar ? 4 : 8, T=10, B=opt.under ? 44 : 26, cw=(W-L-R)/12;
     const tot=r=>series.reduce((t,s)=>t+Math.max(0, r[s.k]||0),0);
     const top=niceMax(Math.max(1, ...rows.filter(Boolean).map(r=>opt.stacked ? tot(r) : Math.max(...series.map(s=>Math.max(0, r[s.k]||0))))));
     const Yp=v=>T+(H-T-B)*(1-v/top), base=Yp(0);
     let g='';
-    [0, 0.5, 1].forEach(f=>{ const yy=Yp(top*f); g+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+yy.toFixed(1)+'" y2="'+yy.toFixed(1)+'" class="gl"/><text x="'+(L-6)+'" y="'+(yy+4).toFixed(1)+'" class="ax" text-anchor="end">'+kmoney(top*f)+'</text>'; });
+    [0, 0.5, 1].forEach(f=>{ const yy=Yp(top*f); g+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+yy.toFixed(1)+'" y2="'+yy.toFixed(1)+'" class="gl"/><text x="'+(L-6)+'" y="'+(yy+4).toFixed(1)+'" class="ax" text-anchor="end">'+axisFmt(TT, top*f)+'</text>'; });
     let bars='', hits='';
     for(let m=1;m<=12;m++){
       const r=rows[m-1], x0=L+(m-1)*cw, cx=x0+cw/2, open=isOpen(y,m), fut=isFuture(y,m);
@@ -807,13 +811,38 @@
           bars+='<path d="'+roundTop(bx, y1, bw, base-y1, 3)+'" fill="'+s.c+'"'+op+'/>'; });
       }
       if(opt.under){ const u=opt.under(r); if(u) bars+='<g class="'+(u.tn||'')+'"><circle cx="'+(cx-15).toFixed(1)+'" cy="'+(H-B+30)+'" r="3.2" class="tdot"/><text x="'+(cx-9).toFixed(1)+'" y="'+(H-B+33.5)+'" class="ax pct">'+esc(u.t)+'</text></g>'; }
-      const tip='<b>'+M.MONTHS[m-1]+' '+y+(open?' (so far)':'')+'</b>'+series.map(s=>'<div><i style="background:'+s.c+'"></i>'+esc(s.n)+' <b>'+fmt('$', r[s.k])+'</b></div>').join('')+(opt.tipMore ? opt.tipMore(r) : '');
+      const tip='<b>'+M.MONTHS[m-1]+' '+y+(open?' (so far)':'')+'</b>'+series.map(s=>'<div><i style="background:'+s.c+'"></i>'+esc(s.n)+' <b>'+fmt(TT, r[s.k])+'</b></div>').join('')+(opt.tipMore ? opt.tipMore(r) : '');
       hits+='<rect x="'+x0.toFixed(1)+'" y="'+T+'" width="'+cw.toFixed(1)+'" height="'+(H-T-B+4)+'" class="hit" data-tip="'+esc(tip)+'" tabindex="0"/>';
     }
-    return '<div class="ychart"><div class="ylegend">'+series.map(s=>'<span><i style="background:'+s.c+'"></i>'+esc(s.n)+'</span>').join('')+(rows.some((r,i)=>r && isOpen(y,i+1))?'<span class="soft">lighter = the month so far</span>':'')+'</div>'+
+    const soFar=rows.some((r,i)=>r && isOpen(y,i+1) && series.some(s=>r[s.k]!=null));
+    return '<div class="ychart"><div class="ylegend">'+(series.length>1 ? series.map(s=>'<span><i style="background:'+s.c+'"></i>'+esc(s.n)+'</span>').join('') : '')+(soFar?'<span class="soft">lighter = the month so far</span>':'')+'</div>'+
       '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+esc(opt.label||'by month')+'">'+g+'<line x1="'+L+'" x2="'+(W-R)+'" y1="'+base.toFixed(1)+'" y2="'+base.toFixed(1)+'" class="bl"/>'+bars+hits+'</svg></div>';
   }
   function roundTop(x, y, w, h, r){ if(h<=0) return ''; r=Math.min(r, w/2, h); return 'M'+x.toFixed(1)+','+(y+h).toFixed(1)+'V'+(y+r).toFixed(1)+(r?'Q'+x.toFixed(1)+','+y.toFixed(1)+' '+(x+r).toFixed(1)+','+y.toFixed(1):'')+'H'+(x+w-r).toFixed(1)+(r?'Q'+(x+w).toFixed(1)+','+y.toFixed(1)+' '+(x+w).toFixed(1)+','+(y+r).toFixed(1):'')+'V'+(y+h).toFixed(1)+'Z'; }
+  function niceRange(lo, hi){
+    if(!(hi>lo)){ const d=Math.abs(lo)*0.05||1; lo-=d; hi+=d; }
+    const st0=(hi-lo)/3, p=Math.pow(10, Math.floor(Math.log10(st0))), st=([1,2,2.5,5,10].find(x=>st0/p<=x)||10)*p;
+    return {lo:Math.floor(lo/st)*st, hi:Math.ceil(hi/st)*st, step:st};
+  }
+  function monthLine(y, rows, k, t, opt){
+    opt=opt||{}; const nar=NARROW(), W=nar ? 360 : (opt.w||520), H=opt.h||170, L=nar ? 44 : 52, R=nar ? 10 : 16, Tp=14, B=26, cw=(W-L-R)/12;
+    const pts=[]; rows.forEach((r,i)=>{ if(r && r[k]!=null && isFinite(r[k]) && !isFuture(y,i+1)) pts.push({m:i+1, v:r[k]}); });
+    if(!pts.length) return '<div class="ychart empty">No numbers yet.</div>';
+    const rg=niceRange(Math.min(...pts.map(p=>p.v)), Math.max(...pts.map(p=>p.v))), Yp=v=>Tp+(H-Tp-B)*(1-(v-rg.lo)/(rg.hi-rg.lo)), X=m=>L+(m-0.5)*cw;
+    let g='';
+    for(let v=rg.lo; v<=rg.hi+rg.step/2; v+=rg.step){ const yy=Yp(v); g+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+yy.toFixed(1)+'" y2="'+yy.toFixed(1)+'" class="gl"/><text x="'+(L-6)+'" y="'+(yy+4).toFixed(1)+'" class="ax" text-anchor="end">'+axisFmt(t, v)+'</text>'; }
+    let path='', prev=null;
+    pts.forEach(p=>{ path+=(prev && p.m===prev.m+1 ? 'L' : 'M')+X(p.m).toFixed(1)+','+Yp(p.v).toFixed(1); prev=p; });
+    let s='<path d="'+path+'" fill="none" stroke="var(--navy2)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>';
+    pts.forEach((p,i)=>{ const last=i===pts.length-1, open=isOpen(y,p.m);
+      s+='<circle cx="'+X(p.m).toFixed(1)+'" cy="'+Yp(p.v).toFixed(1)+'" r="'+(last?4.5:3.2)+'" fill="'+(last?'var(--teal)':'var(--navy2)')+'" stroke="#fff" stroke-width="2"'+(open?' opacity="0.6"':'')+'/>';
+      if(last) s+='<text x="'+Math.min(W-R, X(p.m)+2).toFixed(1)+'" y="'+(Yp(p.v)-9).toFixed(1)+'" class="ax val" text-anchor="'+(p.m>=11?'end':'middle')+'">'+fmt(t, p.v)+'</text>'; });
+    let lab='', hits='';
+    for(let m=1;m<=12;m++){ const fut=isFuture(y,m), p=pts.find(q=>q.m===m);
+      lab+='<text x="'+X(m).toFixed(1)+'" y="'+(H-B+16)+'" class="ax'+(fut?' fut':'')+'" text-anchor="middle">'+(nar ? MON[m-1].charAt(0) : MON[m-1])+'</text>';
+      if(p) hits+='<rect x="'+(L+(m-1)*cw).toFixed(1)+'" y="'+Tp+'" width="'+cw.toFixed(1)+'" height="'+(H-Tp-B+4)+'" class="hit" tabindex="0" data-tip="'+esc('<b>'+M.MONTHS[m-1]+' '+y+(isOpen(y,m)?' (so far)':'')+'</b><div>'+esc(opt.name||'')+' <b>'+fmt(t, p.v)+'</b></div>')+'"/>'; }
+    return '<div class="ychart"><svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+esc((opt.name||'')+' by month')+'">'+g+s+lab+hits+'</svg></div>';
+  }
   /* one small chart per number (Practice health) */
   function miniBars(y, vals, t){
     const W=240, H=58, cw=W/12, top=niceMax(Math.max(1, ...vals.filter(v=>v!=null)));
@@ -896,8 +925,10 @@
     /* 3. PRACTICE HEALTH - one small card per number */
     const series=k=>rows.map(r=>r && r[k]!=null ? r[k] : null);
     const la=latest('act'), db=k=>tot(k);
-    const card=(n, v, sub, k, t, level)=>'<div class="hcard"><div class="k">'+n+'</div><div class="v">'+v+'</div><div class="d">'+(sub||'&nbsp;')+'</div>'+
-      (level ? '<div class="hline">'+spark(series(k), null, {w:240, h:58, label:n+' by month'})+'<div class="hax"><span>Jan</span><span>Dec</span></div></div>' : miniBars(y, series(k), t))+'</div>';
+    /* each number: big, what it is, and a REAL chart - a labelled scale, every month named, the latest written on it, a
+       tap on a month for its number (Cory 24/11: a line with no scale "you can't read") */
+    const card=(n, v, sub, k, t, level)=>'<div class="hcard"><div class="hhead"><div class="k">'+n+'</div><div class="v">'+v+'</div><div class="d">'+(sub||'&nbsp;')+'</div></div>'+
+      (level ? monthLine(y, rows, k, t, {name:n}) : monthBars(y, rows, [{k, n, c:'var(--teal)'}], {t, w:520, h:170, label:n+' by month'}))+'</div>';
     h+='<section class="ychunk"><div class="yhead"><h2>Practice health</h2><span class="soft">reporting for now — targets later</span></div><div class="hgrid">'+
       card('Active patients', fmt('#',la&&la.v), la ? asOf(la)+(before('act',la.m) ? ' · '+(la.v-before('act',la.m).v>=0?'↑ ':'↓ ')+Math.abs(Math.round(la.v-before('act',la.m).v))+' since '+MON[before('act',la.m).m-1] : '') : '', 'act', '#', true)+
       card('New starts', fmt('#',tot('starts')), yr, 'starts', '#')+
@@ -1197,7 +1228,7 @@
 })();
 </script>
 <script>PH.nav('monthly');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc266"></script>
+<script src="tour.js?v=hc267"></script>
 <script>
 Tour.init([
   {sel:'.statusline, .openbanner', title:'Who has sent it', body:'Every office’s report for the month, in one line: final, waiting for you, or late. No chasing eight Excel files.'},
