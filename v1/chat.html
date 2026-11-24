@@ -380,13 +380,13 @@
   .lb .lbnav.p{left:14px}.lb .lbnav.n{right:14px}
   .lb .lbnav[hidden]{display:none}
 </style>
-<script src="user.js?v=hc257"></script>
+<script src="user.js?v=hc258"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc257"></script>
-  <script src="gate.js?v=hc257"></script>
-  <script src="_staff.js?v=hc257"></script>
-  <script src="alerts.js?v=hc257"></script>
-  <script src="chatgraph.js?v=hc257"></script>
+  <script src="store.js?v=hc258"></script>
+  <script src="gate.js?v=hc258"></script>
+  <script src="_staff.js?v=hc258"></script>
+  <script src="alerts.js?v=hc258"></script>
+  <script src="chatgraph.js?v=hc258"></script>
 </head>
 <body>
 <div class="ribbon" id="ribbon">MOCK-UP for Heather and Dr. Jae — made-up people, messages and videos. Nothing is sent anywhere.</div>
@@ -735,7 +735,7 @@
   function emoLoad(){
     if(window.PH_EMOJI) return Promise.resolve(window.PH_EMOJI);
     if(emoP) return emoP;
-    emoP=new Promise((res, rej)=>{ const sc=document.createElement('script'); sc.src='emoji.js?v=hc257'; sc.async=true;
+    emoP=new Promise((res, rej)=>{ const sc=document.createElement('script'); sc.src='emoji.js?v=hc258'; sc.async=true;
       sc.onload=()=>window.PH_EMOJI ? res(window.PH_EMOJI) : rej(new Error('no emoji')); sc.onerror=()=>{ emoP=null; sc.remove(); rej(new Error('no emoji')); };
       document.head.appendChild(sc); });
     return emoP;

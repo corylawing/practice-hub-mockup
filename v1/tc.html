@@ -363,15 +363,15 @@
     *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}
   }
 </style>
-<script src="user.js?v=hc257"></script>
+<script src="user.js?v=hc258"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc257"></script>
-  <script src="gate.js?v=hc257"></script>
-  <script src="_staff.js?v=hc257"></script>
-  <script src="tc.js?v=hc257"></script>
-  <script src="tcstore.js?v=hc257"></script>
-  <script src="orthofi.js?v=hc257"></script>
-  <script src="schedrec.js?v=hc257"></script>
+  <script src="store.js?v=hc258"></script>
+  <script src="gate.js?v=hc258"></script>
+  <script src="_staff.js?v=hc258"></script>
+  <script src="tc.js?v=hc258"></script>
+  <script src="tcstore.js?v=hc258"></script>
+  <script src="orthofi.js?v=hc258"></script>
+  <script src="schedrec.js?v=hc258"></script>
 </head>
 <body>
 <div class="ribbon">SANDBOX — made-up patients. Use “Try it as” to see it as a TC, an office manager or Selene.</div>
@@ -968,6 +968,8 @@
     const n=(v)=>v==null?'—':String(v);
     const diff=(o,l)=>{ if(o==null) return '<td class="dz"></td>'; const d=l-o; return d===0 ? '<td class="dz ok">✓</td>' : '<td class="dz '+(d<0?'neg':'pos')+'">'+(d<0?'−':'+')+Math.abs(d)+'</td>'; };
     const conv=x=>x && x.rec ? Math.round(x.st/x.rec*100)+'%' : '—';
+    /* starts missing BEYOND the exams not logged at all (those starts are missing because the exam is) */
+    const unmarked=x=>(x.o.st-x.l.st)-Math.max(0, x.o.ex-x.l.ex);
     const pill=(o,l)=>{ const d=l-o; return d===0 ? '<span class="ofpill ok">✓ All logged</span>' : d<0 ? '<span class="ofpill neg">'+(-d)+' not logged</span>' : '<span class="ofpill pos">'+d+' more than OrthoFi</span>'; };
     const when=esc(fmtM(month))+(sp.open?' · through '+esc(fmtS(sp.last)):'');
     let h='<div class="card ofcheck"><div class="ofhead"><h2>Logged vs OrthoFi</h2><span class="small muted">'+when+(sample?' · sample OrthoFi numbers (sandbox)':'')+'</span></div>'+
@@ -989,8 +991,8 @@
         '<tr><td>Recommended</td><td class="n">'+x.o.rec+'</td><td class="n">'+x.l.rec+'</td>'+diff(x.o.rec, x.l.rec)+'</tr>'+
         '<tr><td>Started</td><td class="n">'+x.o.st+'</td><td class="n">'+x.l.st+'</td>'+diff(x.o.st, x.l.st)+'</tr>'+
         '<tr class="cv"><td>Conversion</td><td class="n">'+conv(x.o)+'</td><td class="n">'+conv(x.l)+'</td><td></td></tr></tbody></table>'+
-        (x.l.none?'<p class="small muted ofnote">'+x.l.none+' logged consult'+(x.l.none===1?' still needs':'s still need')+' an outcome, so Recommended and Started may catch up.</p>':'')+
-        (x.l.st<x.o.st?'<p class="small muted ofnote">Started is lower here: a patient who starts after the consult needs their outcome changed to Started.</p>':'');
+        (x.l.none?'<p class="small muted ofnote">'+x.l.none+' logged consult'+(x.l.none===1?' still needs':'s still need')+' an outcome.</p>':'')+
+        (unmarked(x)>0?'<p class="small muted ofnote">Up to '+unmarked(x)+' patient'+(unmarked(x)===1?'':'s')+' started in OrthoFi but '+(unmarked(x)===1?'isn’t':'aren’t')+' marked Started here - check '+(unmarked(x)===1?'that outcome':'those outcomes')+'.</p>':'');
       if(x.rows.length){
         h+='<details class="oftc"'+attr('of',o)+(OF_OPEN[o]?' open':'')+'><summary>By TC <span class="muted">('+x.rows.length+')</span></summary><div class="ofrows">'+
           '<div class="oflegend">Each pair: <b>OrthoFi</b> · <b>Logged</b></div>'+
@@ -1008,7 +1010,7 @@
     h+='<details class="ofhow"'+(OF_OPEN.__how?' open':'')+attr('of','__how')+'><summary>How this check works</summary><div class="small">'+
       '<p><b>Exams kept</b> - OrthoFi: new-patient exams kept, by exam date. Logged: consults on those days, not counting no-shows, cancellations and reschedules.</p>'+
       '<p><b>Recommended</b> - OrthoFi: those exams with “treatment recommended”. Logged: those consults with an outcome other than Observation.</p>'+
-      '<p><b>Started</b> - of those same patients, how many have started. A patient who starts days after the consult shows here once their outcome is changed to Started.</p>'+
+      '<p><b>Started</b> - of those same patients, how many have started. A patient who starts days after the consult counts here once their outcome is changed to Started; the card says how many look unmarked.</p>'+
       '<p><b>Conversion</b> here is started ÷ recommended for these same patients, Medicaid included (OrthoFi can’t split it out) - so it won’t equal the private-pay conversion at the top of this tab.</p>'+
       '<p><b>Names</b> - a TC is matched by full name, else last name, else first name within the office (so “Becca” finds “Rebecca”). A name that still doesn’t match gets its own row; the office totals never depend on names.</p>'+
       '<p><b>−3</b> = three fewer logged than in OrthoFi; <b>+2</b> = two more logged (often a duplicate or a consult on another day). Numbers only - no patient details come from OrthoFi.</p></div></details>';
@@ -1675,7 +1677,7 @@
 })();
 </script>
 <script>PH.nav('tc');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(window.TCPAGE)TCPAGE.identity();});document.addEventListener('ph-identity',function(){if(window.TCPAGE)TCPAGE.identity();});</script>
-<script src="tour.js?v=hc257"></script>
+<script src="tour.js?v=hc258"></script>
 <script>
 Tour.init([
   {sel:'#offbar', title:'Your office', body:'You see the offices you work at. Heather, Selene and leadership see every office and can pick one.'},
