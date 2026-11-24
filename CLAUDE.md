@@ -633,6 +633,28 @@ I can confidently say that the chat feature should go next. The production thing
     from their Microsoft one (check the live list read-only first). copyFromBytes still uploads the layout before the
     numbers (Excel copy / layout upload only - rare since the switch). ORTHOFI: any signed-in practice account can call
     /api/orthofi (totals only now) - an ORTHOFI_ALLOW setting would limit it to admins.
+65. **TC NUMBERS: LOGGED vs ORTHOFI (24/11/2026; hc257-258 SANDBOX) + PAYROLL MOVES ON (hc259 SANDBOX).** Heather after
+    meeting Selene: "She is good with all of those things pulling from OrthoFi" (TC scorecards, item 1: "a check that
+    catches anything missed, not a replacement"); Cory: "go, put it in the Numbers tab.. but make sure its user
+    friendly. Don't do you quick thing just to do it". READ LIVE FIRST (read-only, counts only): OrthoFi TC names vs the
+    Tracker's don't line up ("Becca Fluhman"/"Rebecca Fluhman", San Angelo logged as "Melinda Angelo Treatment
+    Coordinator", "Noemi Sanchez"/"Noemi Sanchez Torres", "Carlsbad Treatment Coordinator", "Cory  Lawing" in OrthoFi
+    Hobbs) - so OFFICES FIRST (no names needed; Nov 1-23: Hobbs 27=27, San Angelo 32=32, Lubbock 28 vs 5, Carlsbad
+    starts 15 vs 9). tc.html ofCheck(): card "Logged vs OrthoFi" under the KPIs; per office: Exams kept / Recommended /
+    Started / Conversion, OrthoFi vs Logged, −n/+n/✓, pill "N not logged" / "N more than OrthoFi" / "✓ All logged";
+    "By TC" (details, open state kept in OF_OPEN) with matchNames (full name, else last name, else first name, each only
+    when ONE OrthoFi TC fits; unmatched Tracker names = own row "only in the TC Tracker"); "Up to N started in OrthoFi but
+    not marked Started here" only for starts missing BEYOND unlogged exams. BOTH SIDES = kept NEW-patient exams by exam
+    date, 1st..today (OrthoFi counts ex / rec / st all with keptExamFlag 'kept exam' + examTypeName 'new'; Tracker:
+    consults not No Show/Cancelled/Rescheduled, rec = outcome not Observation, st = Started). Conversion here = started ÷
+    recommended incl. Medicaid (said on the card - not the private-pay KPI). 3 offices at a time, cached 10 min, an
+    answer redraws only the card (ofRedraw), 403 hides it, unmapped office says so, sandbox = demoOf (seeded). orthofi.js
+    now loaded on tc.html. test tcofcheck (45).
+    PAYROLL (Heather: "Once I have clicked on submitted all payroll can it automatically scroll to the next one?"):
+    HOME() = NEXT once enteredOf(CUR) (an OM: their own sheet); finishing the entering (tick or "Mark all/the rest") moves
+    per=NEXT after 900 ms, scrolled up; allEnteredNote() "✓ #24 is all entered in payroll. Here's #25, in progress. Back
+    to #24"; the board's dropdown lists NEXT while there. Unsent offices keep it on CUR (enteredOf = every office).
+    test paynext (16). Both wait for Cory's "deploy".
 64. **hc251 LIVE (23/11/2026) + TC "TODAY EMPTY" ROOT CAUSE (hc252 sandbox).** Cory said deploy for Heather's reimbursements:
     hc251 live = code review + holiday once + reimbursements (verified: stamp, 404 list incl. connect.html, switches, POST
     /api/orthofi 403). A Hobbs TC logged Monday's consults on Thursday; Monday "they are not coming up", she re-entered them.
