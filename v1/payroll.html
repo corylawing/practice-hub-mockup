@@ -266,15 +266,15 @@
     .perhead .when{font-size:17px}
   }
 </style>
-<script src="user.js?v=hc258"></script>
+<script src="user.js?v=hc259"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc258"></script>
-  <script src="gate.js?v=hc258"></script>
-  <script src="alerts.js?v=hc258"></script>
-  <script src="_staff.js?v=hc258"></script>
-  <script src="payrules.js?v=hc258"></script>
-  <script src="paystore.js?v=hc258"></script>
-  <script src="docs.js?v=hc258"></script>
+  <script src="store.js?v=hc259"></script>
+  <script src="gate.js?v=hc259"></script>
+  <script src="alerts.js?v=hc259"></script>
+  <script src="_staff.js?v=hc259"></script>
+  <script src="payrules.js?v=hc259"></script>
+  <script src="paystore.js?v=hc259"></script>
+  <script src="docs.js?v=hc259"></script>
 </head>
 <body>
 <div class="ribbon">MOCK-UP for Heather — made-up people and amounts. Try it as the Carlsbad TC first, then as Heather.</div>
@@ -483,7 +483,11 @@
   /* Live: Home-Brace payroll begins with PR.FIRST (#24). Before that one has ended, the sheet "being sent" is from
      the old way: nothing is expected of it - everyone starts on the one in progress, and nothing earlier is listed. */
   const FIRST_N=LIVEPAY ? ANCHOR.n+PR.indexOfKey(PR.FIRST) : -Infinity, BEFORE=CUR<FIRST_N;
-  const HOME=()=>BEFORE ? NEXT : CUR;
+  /* ALL ENTERED -> ON TO THE NEXT ONE (24/11/2026, Heather: "this payroll still shows as the last on this screen. Once I
+     have clicked on submitted all payroll can it automatically scroll to the next one?"). Once every sheet of the pay
+     period being sent is entered in payroll (an office manager: their own), Payroll opens on the one in progress; ticking
+     the last office moves there itself, with "Back to #N" (allEnteredNote). Picking a pay period still shows that one. */
+  const HOME=()=>{ if(BEFORE) return NEXT; try{ if(enteredOf(CUR)) return NEXT; }catch(_){} return CUR; };
   /* RECENT FIRST (10/11/2026, Cory: "maybe we should do that now to make this stable for the future"). Opening Payroll
      reads the pay periods a screen shows straight away: from RECENT (the last 10) on, the one in progress included -
      the sheet's pay-period picker and Past sheets go back 9, Look up a person 10. About 26 sheets an office are added a
@@ -794,6 +798,12 @@
   const dueText=pr=>(NOW>pr.dueAt?'was due ':'due ')+(pr.due===NOWDAY?'today':fmt(pr.due,{weekday:'short'}))+' by 2 pm Central'+
     (pr.dueHol?' (a Monday: '+pr.dueHol.n+' is that week)':'');
 
+  function allEnteredNote(){
+    if(BEFORE || per!==NEXT || !enteredOf(CUR)) return '';
+    const mine=R().kind==='om';
+    return '<div class="note good alldone">✓ <b>'+(mine?'Your '+esc(lab(CUR))+' sheet is':esc(lab(CUR))+' is all')+' entered in payroll.</b> Here’s '+esc(lab(NEXT))+', in progress. '+
+      '<button class="link" data-act="'+(mine?'omopen':'open')+'" data-v="'+CUR+'">Back to '+esc(lab(CUR))+'</button></div>';
+  }
   function render(){
     if(LIVEPAY && !LIVE.ready){
       el('lede').innerHTML=''; el('tabs').innerHTML='';
@@ -816,6 +826,7 @@
       (offs.length>1 ? '<select class="in" id="offpick" style="margin-left:auto" aria-label="Office">'+offs.map(o=>'<option value="'+o+'"'+(o===R().office?' selected':'')+'>'+esc(OFF[o].n)+'</option>').join('')+'</select>' : '');
     el('view').innerHTML = k==='om' ? (tab==='past' ? viewOmPast() : viewOmSheet()) : (tab==='past' ? viewHistory() : tab==='settings' ? viewSettings() : viewBoard());
     if(LIVEPAY && LIVE.lockMsg) el('view').insertAdjacentHTML('afterbegin', lockNote());   // a save refused on an entered sheet: say so until reloaded
+    if(tab==='sheet') el('view').insertAdjacentHTML('afterbegin', allEnteredNote());
     if(k!=='om' && tab==='past' && LIVEPAY) loadOlder();          // RECENT FIRST: History is what needs the older pay periods
   }
 
@@ -1226,7 +1237,7 @@
       '<div class="when">'+esc(fmt(pr.start,{weekday:'short'}))+' – '+esc(fmt(pr.end,{weekday:'short'}))+'</div>'+
       '<div class="small muted"><b>Wk 1</b> '+esc(span(pr.start,pr.w1end))+' · <b>Wk 2</b> '+esc(span(pr.w2start,pr.end))+'</div>'+
       '<div class="small muted">Paid '+esc(fmt(pr.pay,{weekday:'long'}))+' · office sheets '+esc(dueText(pr))+(pr.hol?' · includes '+esc(pr.hol.n):'')+'</div></div>'+
-      '<div class="row">'+(n===NEXT?'<span class="pill p-go">In progress — ends '+esc(fmt(pr.end,{weekday:'short'}))+'</span>':e?'<span class="pill p-lock">🔒 Entered '+esc(fmtT(e.at))+'</span>':'<span class="pill '+(sent===OFFICES.length?'p-done':'p-go')+'">'+sent+' of '+OFFICES.length+' offices sent</span>'+(enteredCount(n)?'<span class="pill p-lock">🔒 '+enteredCount(n)+' entered</span>':''))+periodPicker('perpick')+'</div></div>'+
+      '<div class="row">'+(n===NEXT?'<span class="pill p-go">In progress — ends '+esc(fmt(pr.end,{weekday:'short'}))+'</span>':e?'<span class="pill p-lock">🔒 Entered '+esc(fmtT(e.at))+'</span>':'<span class="pill '+(sent===OFFICES.length?'p-done':'p-go')+'">'+sent+' of '+OFFICES.length+' offices sent</span>'+(enteredCount(n)?'<span class="pill p-lock">🔒 '+enteredCount(n)+' entered</span>':''))+periodPicker('perpick', per===NEXT || !!enteredOf(CUR))+'</div></div>'+
       '<div class="offs" style="margin-top:14px">'+OFFICES.map(o=>{ const s=get(n,o.k);
         if(o.self) return '<div class="off"><div class="row"><span class="on grow">'+esc(o.n)+'</span>'+(s.status==='sent'||e?statusPill(n,o.k):'<span class="pill p-new">Not done yet</span>')+'</div><div class="co">'+esc(o.co)+'<br>Filled in by '+esc(o.by)+'</div><div class="row">'+
           (!entOff(n,o.k) && (n===CUR || n===NEXT) && !R().ro ? '<button class="btn sm" data-act="fillin" data-v="'+o.k+'">'+(s.status==='sent'?'Open it':'Fill it in')+'</button>' : s.status==='sent'?'<button class="btn ghost sm" data-act="view" data-v="'+o.k+'">See what was done</button>':'')+entTick(n,o.k)+'</div></div>';
@@ -1879,6 +1890,7 @@
         ks.forEach(k=>{ m[k]=val; }); delete S.entered[n];
         const nowAll=enteredOf(n);
         render();
+        if(val && !wasAll && nowAll && n===CUR && !BEFORE) setTimeout(()=>{ if(per!==n || tab!=='sheet') return; per=NEXT; render(); window.scrollTo({top:0, behavior:'smooth'}); }, 900);
         toast(act==='entoff' ? (val ? OFF[v].n+' entered ✓ - its sheet is locked' : OFF[v].n+' reopened - its sheet can be changed again')
           : val ? 'Entered — office sheets for '+lab(n)+' are locked' : 'Reopened — office sheets can be changed again');
         if(LIVEPAY && PH.payMark && !!nowAll!==wasAll) PH.payMark(keyOf(n), x=>{ if(nowAll) x.entered=nowAll.at; else delete x.entered; }).catch(()=>{});
@@ -2438,7 +2450,7 @@
 })();
 </script>
 <script>PH.nav('payroll');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc258"></script>
+<script src="tour.js?v=hc259"></script>
 <script>
 Tour.init([
   ...((window.PH && PH.isLive && PH.isLive()) || (()=>{ try{ return localStorage.getItem('ph_pay_real')==='1'; }catch(_){ return false; } })() ? [] : [{sel:'#persona', title:'A mock-up', body:'Made-up people and amounts. Start as the <b>Carlsbad TC</b>, who sends Carlsbad’s sheet, then switch to <b>Heather</b>.'}]),
