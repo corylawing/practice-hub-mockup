@@ -722,6 +722,10 @@ I can confidently say that the chat feature should go next. The production thing
     ph_orthofi.auto had NO Cruces offices for gp/gc/adj/np (mapped 2613/2630, never ticked: OrthoFi alone was ~94-96%).
     Cory "yes switch on las cruces" (23/11): ONE guarded PH_STORE.update added Cruces LCO + Cruces FFO to gp/gc/adj/np
     (dry run + read back; ar and the map untouched - A/R stays typed like Carlsbad/Clovis/Hobbs, unproven for Cruces).
+    24/11 Cory "yes": A/R switched on for both Cruces too (one guarded save, read back: ar = Mansfield, Lubbock, San
+    Angelo, Cruces LCO, Cruces FFO) - the old-system offices all work alike: OrthoFi's part + their typed old-system part.
+    Live check same day: Oct + Nov already filled from OrthoFi for Mansfield + both Cruces; old-system / Medicaid boxes
+    still empty - office managers can't see the Monthly Report until MONTHLY_LIVE (admins could type them meanwhile).
 60. **ADJUSTMENTS + NET PRODUCTION PROVEN FROM ORTHOFI (21/11/2026; hc242).** Cory: "Now that you have access to orthofi
     via safari do what you need to do to make this perfect" (his Safari, OrthoFi portal; read-only - only reports run).
     The Monthly Balance Sheet = OrthoFi portal Reports -> Accounting -> Monthly Balance Sheet (business-intelligence
