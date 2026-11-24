@@ -650,6 +650,14 @@ I can confidently say that the chat feature should go next. The production thing
     (COO) and Jessica Lynch (CSO) are both Admin team on live; staff still wait for MONTHLY_LIVE.
     OPEN: Jessica's "Production Adjustments (count and %)" - only $ and % exist (OrthoFi's adjustment report has counts);
     A/R ages + New starts need proving against Heather's own reports before they fill; the other tabs (proposed).
+    DASHBOARD VERSION (hc263-265 SANDBOX; Cory: "Is this the best layout we can provide?" -> no, "go"): yearHTML() = per
+    part tiles (↑/↓ vs the same FINISHED months last year via loadYear(y-1) / YPREV; balances "since <last month>"), ONE
+    picture (monthBars(): grouped production vs collections with each month's collections % dot under it; A/R = the
+    PAST-DUE money stacked 31-60/61-90/91+ - current left out, it was a sliver; Practice health = .hcard small multiples,
+    counts as miniBars, levels (active patients, OECD, comfort %) as spark() lines), the full months under "Show the
+    months" (details, open state ph_monthly_yopen). Hover / focus / tap a month = #ytip. Phones (NARROW <=560px): charts
+    redraw at 360 wide, one-letter months, the % row moves into the tap. niceMax steps 1/1.5/2/2.5/3/4/5/6/8/10. LIVE is
+    still the three-part TABLE version (hc262, admins only) until Cory says deploy.
 65. **TC NUMBERS: LOGGED vs ORTHOFI (24/11/2026; hc257-258 SANDBOX) + PAYROLL MOVES ON (hc259 SANDBOX).** Heather after
     meeting Selene: "She is good with all of those things pulling from OrthoFi" (TC scorecards, item 1: "a check that
     catches anything missed, not a replacement"); Cory: "go, put it in the Numbers tab.. but make sure its user
