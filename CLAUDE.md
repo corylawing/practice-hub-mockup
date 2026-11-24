@@ -633,6 +633,23 @@ I can confidently say that the chat feature should go next. The production thing
     from their Microsoft one (check the live list read-only first). copyFromBytes still uploads the layout before the
     numbers (Excel copy / layout upload only - rare since the switch). ORTHOFI: any signed-in practice account can call
     /api/orthofi (totals only now) - an ORTHOFI_ALLOW setting would limit it to admins.
+66. **MONTHLY YEAR SHEET IN THREE PARTS + ADMINS SEE IT LIVE (24/11/2026; hc260-262 LIVE).** Jessica Lynch (CSO, Admin)
+    with Heather: "break this up into 3 separate chunks ... You can make these table or you can get creative with a
+    dashboard" + "then determine how to view the other tabs". yearHTML(): .ychunk cards, each = tiles (year so far / latest
+    month-end) + its own month table (sheet() now takes column groups: c.grp -> a band header + a gs divider line):
+    1 Production & collections (gp, gc, Collections % | Adjustments $ and %, Net production, Contract discounts $ and %
+    = CALC discpct disc/gp); 2 Accounts receivable with .seg Patient + insurance / Patient / Insurance (ARV, localStorage
+    ph_monthly_arv; arView(): both = proven ar total + pa_+ia_ ages; past due = 31-60 + 61-90 + 91+; "Current" = not yet
+    31 days past due) + A/R ratio and Delinquent % with targets (both only); 3 Practice health (act, starts, rip, dbc,
+    dbp, oecd, cmfpct only - appts relabelled "Kept clinical appointments") + npe under "Also tracked". Medicaid + Old
+    system below as before. monthly.js FIELDS +13: starts (orthofi, typed until proven), dbc/dbp (pms), pa_/ia_ tot/cur/
+    31/61/91 (orthofi, auto:true = never typed, never in fieldsFor, never in the send "empty boxes" check; mergeOrthofi only
+    writes AUTO boxes so nothing fills them until a way is PROVEN against the practice's aging report). Sandbox sample
+    DEMO_V 8. Tests monthly (75) updated to Jessica's list; permissions: an admin's live menu has the Monthly Report, an
+    office manager's doesn't. ACCESS: monthlyOn() on live = isAdmin(realMe()) (no ?monthlypreview needed) - Heather Beal
+    (COO) and Jessica Lynch (CSO) are both Admin team on live; staff still wait for MONTHLY_LIVE.
+    OPEN: Jessica's "Production Adjustments (count and %)" - only $ and % exist (OrthoFi's adjustment report has counts);
+    A/R ages + New starts need proving against Heather's own reports before they fill; the other tabs (proposed).
 65. **TC NUMBERS: LOGGED vs ORTHOFI (24/11/2026; hc257-258 SANDBOX) + PAYROLL MOVES ON (hc259 SANDBOX).** Heather after
     meeting Selene: "She is good with all of those things pulling from OrthoFi" (TC scorecards, item 1: "a check that
     catches anything missed, not a replacement"); Cory: "go, put it in the Numbers tab.. but make sure its user
