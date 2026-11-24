@@ -726,6 +726,14 @@ I can confidently say that the chat feature should go next. The production thing
     Angelo, Cruces LCO, Cruces FFO) - the old-system offices all work alike: OrthoFi's part + their typed old-system part.
     Live check same day: Oct + Nov already filled from OrthoFi for Mansfield + both Cruces; old-system / Medicaid boxes
     still empty - office managers can't see the Monthly Report until MONTHLY_LIVE (admins could type them meanwhile).
+    PAST MONTHS IMPORTED (24/11, Cory: "can you just do it if I have homebrace open?"): Heather's 8 "<Office> Monitor
+    Report 2026.xlsx" (Downloads/remonthlyreportinhomebraceafewquickquestions, sent 18/11; FOLC = Cruces FFO) handed to
+    the live page as File objects (base64 via Safari do JavaScript) -> the page's OWN impRead preview -> impSet FOLC ->
+    impGo (mergeImport: EMPTY boxes only, months come in "sent", nothing final). Read back: Jan-Sep (5 offices), Jul-Sep
+    Mansfield, May-Sep both Cruces; October = only boxes OrthoFi hadn't filled (Medicaid, NPE, OECD...). October check:
+    Carlsbad, Clovis, Hobbs, Mansfield, San Angelo = her sheet to the dollar (OrthoFi + her Medicaid); kept OrthoFi where
+    they differ: Cruces FFO/LCO (her sheet includes the old system's money - osp/osc not typed yet) and Lubbock (her
+    October looks part-month: gp 49,746 vs OrthoFi 90,895).
 60. **ADJUSTMENTS + NET PRODUCTION PROVEN FROM ORTHOFI (21/11/2026; hc242).** Cory: "Now that you have access to orthofi
     via safari do what you need to do to make this perfect" (his Safari, OrthoFi portal; read-only - only reports run).
     The Monthly Balance Sheet = OrthoFi portal Reports -> Accounting -> Monthly Balance Sheet (business-intelligence
