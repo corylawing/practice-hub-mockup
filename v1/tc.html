@@ -211,6 +211,43 @@
 
   /* Numbers */
   .kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+  /* Logged vs OrthoFi */
+  .ofhead{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  .ofhead h2{margin:0}
+  .ofsum{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:var(--teal-soft);border-radius:12px;padding:10px 14px;margin:4px 0 14px;font-size:14px;color:var(--navy)}
+  .ofsum>div:first-child{flex:1 1 260px}
+  .ofmeter{flex:0 1 220px;height:8px;border-radius:99px;background:#fff;overflow:hidden;min-width:120px}
+  .ofmeter i{display:block;height:100%;background:var(--teal);border-radius:99px}
+  .ofgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px}
+  .ofc{border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:#fff;min-width:0}
+  .ofc.quiet{background:#fbfcfd}
+  .ofc-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;color:var(--navy);font-size:15px}
+  .ofpill{font-size:12px;font-weight:800;padding:3px 9px;border-radius:999px;white-space:nowrap}
+  .ofpill.ok{background:var(--good-soft);color:#1d6b47}
+  .ofpill.neg{background:var(--bad-soft);color:#9a2f1e}
+  .ofpill.pos{background:var(--amber-soft);color:#7a4b00}
+  .oft{width:100%;border-collapse:collapse;font-size:14px}
+  .oft th{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#6b7a8c;padding:2px 0 4px;text-align:left}
+  .oft td{padding:5px 0;border-top:1px solid #eef2f5;color:var(--navy)}
+  .oft .n{text-align:right;font-variant-numeric:tabular-nums;width:64px}
+  .oft td.n{font-weight:800}
+  .oft .dz{width:44px;text-align:right;font-weight:800;font-size:13px}
+  .oft .dz.ok{color:var(--good)} .oft .dz.neg{color:var(--bad)} .oft .dz.pos{color:#b06e00}
+  .oft tr.cv td{color:#51647a} .oft tr.cv td.n{font-weight:700}
+  .ofnote{margin:6px 0 0;line-height:1.4}
+  .negt{color:var(--bad);font-weight:700} .post{color:#b06e00;font-weight:700} .okt{color:var(--good);font-weight:700}
+  .oftc{margin-top:8px;border-top:1px solid #eef2f5;padding-top:6px}
+  .oftc summary,.ofhow summary{cursor:pointer;font-weight:700;color:var(--teal-600);font-size:13.5px;padding:4px 0}
+  .ofrows{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+  .ofrow{display:flex;flex-direction:column;gap:3px;padding:7px 9px;border-radius:10px;background:#f7f9fb}
+  .oflegend{font-size:12px;color:#6b7a8c}
+  .ofwho{font-size:13.5px;color:var(--navy);line-height:1.35}
+  .ofstats{display:flex;gap:12px;flex-wrap:wrap;font-size:13px;color:var(--navy);font-variant-numeric:tabular-nums}
+  .ofstat em{font-style:normal;color:#6b7a8c;margin-right:4px}
+  .ofhow{margin-top:12px}
+  .ofhow p{margin:6px 0;line-height:1.5}
+  .ofspin{display:inline-block;width:10px;height:10px;border:2px solid var(--teal-soft);border-top-color:var(--teal);border-radius:50%;animation:ofspin .8s linear infinite;vertical-align:-1px;margin-right:4px}
+  @keyframes ofspin{to{transform:rotate(360deg)}}
   .kpi{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;box-shadow:var(--shadow)}
   .kpi .k{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--soft)}
   .kpi .v{font-size:24px;font-weight:800;color:var(--navy);line-height:1.2;font-variant-numeric:tabular-nums}
@@ -326,14 +363,15 @@
     *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}
   }
 </style>
-<script src="user.js?v=hc256"></script>
+<script src="user.js?v=hc257"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc256"></script>
-  <script src="gate.js?v=hc256"></script>
-  <script src="_staff.js?v=hc256"></script>
-  <script src="tc.js?v=hc256"></script>
-  <script src="tcstore.js?v=hc256"></script>
-  <script src="schedrec.js?v=hc256"></script>
+  <script src="store.js?v=hc257"></script>
+  <script src="gate.js?v=hc257"></script>
+  <script src="_staff.js?v=hc257"></script>
+  <script src="tc.js?v=hc257"></script>
+  <script src="tcstore.js?v=hc257"></script>
+  <script src="orthofi.js?v=hc257"></script>
+  <script src="schedrec.js?v=hc257"></script>
 </head>
 <body>
 <div class="ribbon">SANDBOX — made-up patients. Use “Try it as” to see it as a TC, an office manager or Selene.</div>
@@ -823,6 +861,160 @@
   }
 
   /* ---------------- Numbers (Dashboard + Monthly Totals) ---------------- */
+
+  /* ================= LOGGED vs ORTHOFI (24/11/2026) =================
+     Heather, after meeting Selene: "She is good with all of those things pulling from OrthoFi" - for each TC and each
+     office, new-patient exams kept, treatment recommended, starts and conversion straight from OrthoFi, NEXT TO what's
+     logged here: "a check that catches anything missed, not a replacement". Cory: "put it in the Numbers tab.. but make
+     sure its user friendly".
+     BOTH SIDES COUNT THE SAME PATIENTS, from the month's 1st up to today:
+       Exams kept   OrthoFi: kept NEW-patient exams by exam date  ·  Logged: consults that day not No Show / Cancelled / Rescheduled
+       Recommended  OrthoFi: those with "treatment recommended"   ·  Logged: those with an outcome other than Observation
+       Started      OrthoFi: those whose treatment status is "patient started" · Logged: outcome Started
+       Conversion   started ÷ recommended on each side (Medicaid included - OrthoFi can't split it), so it is NOT the
+                    private-pay conversion at the top of this tab.
+     OFFICES FIRST: an office's totals need no names, and on live they matched exactly where everything was logged (Hobbs
+     27/27, San Angelo 32/32, November). By TC underneath: names are matched within the office - the same full name, else
+     the same last name, else the same first name, each only when ONE OrthoFi TC fits ("Becca Fluhman" = "Rebecca
+     Fluhman"; "Melinda Angelo Treatment Coordinator" = "Melinda Tavarez"). A name that still doesn't match gets its own
+     row, said plainly, so nothing goes missing. Totals only - OrthoFi never sends a patient (api-push/orthofi). */
+  const OF_GONE=['No Show','Cancelled','Rescheduled / Cancelled'];
+  const OFC={}, OF_OPEN={};                       // answers by month (each office as it lands); which "By TC" boxes are open
+  const nf=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z ]+/g,' ').replace(/\s+/g,' ').trim();
+  const tidyName=s=>String(s||'').replace(/\s+/g,' ').trim();
+  function ofSpan(ym){
+    const now=today(), b=ym+'-01', e=TC.iso(new Date(+ym.slice(0,4), +ym.slice(5,7), 0));
+    if(b>now) return null;                        // a month still to come: nothing to check
+    return {first:b, last:e<now?e:now, open:e>=now};
+  }
+  /* the Tracker's side, one office: {tc:{ex,rec,st,none}} */
+  function loggedBy(office, sp){
+    const out={};
+    scoped().filter(r=>r.office===office && r.date>=sp.first && r.date<=sp.last && OF_GONE.indexOf(r.outcome)<0).forEach(r=>{
+      const k=tidyName(r.tc)||'(no TC picked)', x=out[k]=out[k]||{ex:0,rec:0,st:0,none:0};
+      x.ex++; if(!r.outcome) x.none++; else if(r.outcome!=='Observation') x.rec++; if(r.outcome==='Started') x.st++;
+    });
+    return out;
+  }
+  /* Tracker names -> OrthoFi names, within one office (null = no match) */
+  function matchNames(ofNames, trNames){
+    const of=ofNames.map(n=>({n, w:nf(n).split(' ')})), out={};
+    const one=test=>{ const hit=of.filter(test); return hit.length===1 ? hit[0].n : null; };
+    trNames.forEach(t=>{ const w=nf(t).split(' '), f=w.join(' ');
+      out[t]=!f ? null : (one(o=>o.w.join(' ')===f) ||
+        (w.length>1 ? one(o=>o.w.length>1 && o.w[o.w.length-1]===w[w.length-1]) : null) ||
+        one(o=>o.w[0]===w[0]) || null); });
+    return out;
+  }
+  const sum=(L,k)=>L.reduce((t,x)=>t+(x[k]||0),0);
+  /* one office, both sides lined up: {o:{ex,rec,st}, l:{ex,rec,st,none}, rows:[{name, as:[tracker names], o, l, only}]} */
+  function lineUp(ofByTC, trByTC){
+    const ofNames=Object.keys(ofByTC||{}).filter(n=>(ofByTC[n].ex||0)+(ofByTC[n].rec||0)+(ofByTC[n].st||0)>0);
+    const m=matchNames(ofNames, Object.keys(trByTC)), rows=[];
+    ofNames.forEach(n=>{ const as=Object.keys(trByTC).filter(t=>m[t]===n), L=as.map(t=>trByTC[t]);
+      rows.push({name:tidyName(n), as:as.filter(t=>nf(t)!==nf(n)), o:ofByTC[n], l:{ex:sum(L,'ex'), rec:sum(L,'rec'), st:sum(L,'st'), none:sum(L,'none')}}); });
+    Object.keys(trByTC).filter(t=>!m[t]).forEach(t=>rows.push({name:t, as:[], o:null, l:trByTC[t], only:'tracker'}));
+    rows.sort((a,b)=>((b.o?b.o.ex:0)+b.l.ex)-((a.o?a.o.ex:0)+a.l.ex));
+    const O=ofNames.map(n=>ofByTC[n]), T=Object.keys(trByTC).map(t=>trByTC[t]);
+    return {o:{ex:sum(O,'ex'), rec:sum(O,'rec'), st:sum(O,'st')}, l:{ex:sum(T,'ex'), rec:sum(T,'rec'), st:sum(T,'st'), none:sum(T,'none')}, rows};
+  }
+  /* SANDBOX: made-up OrthoFi numbers built from the sample consults (same every time for a month), so the gaps show */
+  function demoOf(office, sp){
+    const tr=loggedBy(office, sp), out={}; let seed=0; (sp.first+office).split('').forEach(c=>{ seed=(seed*31+c.charCodeAt(0))>>>0; });
+    const R=()=>{ seed=(seed*1103515245+12345)>>>0; return (seed>>>8)/16777216; };
+    Object.keys(tr).forEach(t=>{ const x=tr[t], miss=Math.floor(R()*5);
+      out[t]={ex:x.ex+miss, rec:x.rec+Math.floor(miss*0.7), st:x.st+Math.floor(R()*3)}; });
+    if(!Object.keys(out).length){ const e=6+Math.floor(R()*14); out['Sample TC']={ex:e, rec:Math.round(e*0.8), st:Math.round(e*0.4)}; }
+    return out;
+  }
+  function ofFetch(ym, sp){
+    const C=OFC[ym]=OFC[ym]||{at:Date.now(), by:{}, err:{}, busy:{}, gone:false};
+    const offs=inView().filter(o=>!C.by[o] && !C.busy[o] && !C.err[o]);
+    if(!offs.length) return;
+    if(!LIVE()){ offs.forEach(o=>{ C.by[o]=demoOf(o, sp); }); return; }
+    if(!window.PH_ORTHOFI){ offs.forEach(o=>{ C.err[o]='OrthoFi isn’t loaded on this page.'; }); return; }
+    const O=window.PH_ORTHOFI, K='kept exam', NEW={keptExamFlag:[K], examTypeName:['new']};
+    let mapP=null; const getMap=()=>mapP||(mapP=PH_STORE.get(O.KEY).then(v=>O.cleanMap(v)));
+    offs.forEach(o=>{ C.busy[o]=true; });
+    let next=0;
+    const lane=()=>{ if(next>=offs.length) return Promise.resolve(); const o=offs[next++];
+      return getMap().then(M=>{ const locs=O.locsOf(M,o);
+        if(!locs.length){ C.by[o]={__unmapped:true}; return; }
+        return O.ask({ask:'sum', path:'/v1/practice-locations/patient-exams', locs, params:{'exam-date-start-date':sp.first,'exam-date-end-date':sp.last}, group:'treatmentCoordinatorName',
+          count:[{name:'ex', eq:NEW}, {name:'rec', eq:Object.assign({patientExamResultName:['treatment recommended']}, NEW)}, {name:'st', eq:Object.assign({patientExamTreatmentStatusName:['patient started']}, NEW)}]})
+          .then(a=>{ const g={}; Object.keys(a.by||{}).forEach(l=>{ const G=(a.by[l]||{}).groups||{};
+              Object.keys(G).forEach(t=>{ const x=g[t]=g[t]||{ex:0,rec:0,st:0}; ['ex','rec','st'].forEach(k=>{ x[k]+=((G[t].cnt||{})[k]||0); }); }); });
+            C.by[o]=g; });
+      }).catch(e=>{ if(e && (e.status===403 || e.code==='forbidden')) C.gone=true; C.err[o]=(e && e.message)||'OrthoFi didn’t answer.'; })
+        .then(()=>{ delete C.busy[o]; ofRedraw(ym); }).then(lane); };
+    for(let k=0;k<3;k++) lane();
+  }
+  /* an answer landed: redraw this card only - the rest of the tab (and any box someone opened) stays as it is */
+  function ofRedraw(ym){
+    if(tab!=='numbers' || month!==ym) return;
+    const card=document.querySelector('#view .ofcheck'); if(!card) return;
+    const box=document.createElement('div'); box.innerHTML=ofCheck(); const fresh=box.firstElementChild;
+    if(fresh) card.replaceWith(fresh); else card.remove();
+  }
+  function ofCheck(){
+    const sp=ofSpan(month); if(!sp) return '';
+    let C=OFC[month];
+    if(C && !Object.keys(C.busy).length && Date.now()-C.at>10*60e3){ delete OFC[month]; C=null; }   // older than 10 minutes: ask again
+    ofFetch(month, sp); C=OFC[month];
+    if(C.gone) return '';                                                                           // OrthoFi kept for managers: nothing here
+    const offs=inView(), sample=!LIVE();
+    const lined={}; offs.forEach(o=>{ const v=C.by[o]; if(v && !v.__unmapped) lined[o]=lineUp(v, loggedBy(o, sp)); });
+    const ready=Object.keys(lined), busy=offs.some(o=>C.busy[o]);
+    const n=(v)=>v==null?'—':String(v);
+    const diff=(o,l)=>{ if(o==null) return '<td class="dz"></td>'; const d=l-o; return d===0 ? '<td class="dz ok">✓</td>' : '<td class="dz '+(d<0?'neg':'pos')+'">'+(d<0?'−':'+')+Math.abs(d)+'</td>'; };
+    const conv=x=>x && x.rec ? Math.round(x.st/x.rec*100)+'%' : '—';
+    const pill=(o,l)=>{ const d=l-o; return d===0 ? '<span class="ofpill ok">✓ All logged</span>' : d<0 ? '<span class="ofpill neg">'+(-d)+' not logged</span>' : '<span class="ofpill pos">'+d+' more than OrthoFi</span>'; };
+    const when=esc(fmtM(month))+(sp.open?' · through '+esc(fmtS(sp.last)):'');
+    let h='<div class="card ofcheck"><div class="ofhead"><h2>Logged vs OrthoFi</h2><span class="small muted">'+when+(sample?' · sample OrthoFi numbers (sandbox)':'')+'</span></div>'+
+      '<p class="sub">New-patient exams kept in OrthoFi next to the consults logged here - a check that catches anything missed. The TC Tracker stays the place to log.</p>';
+    if(ready.length>1){
+      const O=sum(ready.map(o=>lined[o].o),'ex'), L=sum(ready.map(o=>lined[o].l),'ex'), share=O?Math.min(100, Math.round(L/O*100)):0;
+      h+='<div class="ofsum"><div><b>'+O+'</b> exams in OrthoFi · <b>'+L+'</b> logged'+(L<O?' · <span class="negt">'+(O-L)+' not logged</span>':L>O?' · <span class="post">'+(L-O)+' more than OrthoFi</span>':' · <span class="okt">all logged</span>')+'</div>'+
+        '<div class="ofmeter" title="'+share+'% logged"><i style="width:'+share+'%"></i></div></div>';
+    }
+    h+='<div class="ofgrid">';
+    offs.forEach(o=>{
+      const v=C.by[o], x=lined[o];
+      if(v && v.__unmapped){ h+='<div class="ofc quiet"><div class="ofc-top"><b>'+esc(o)+'</b></div><p class="small muted">Not connected to OrthoFi yet'+(canManage()?' - match it on the OrthoFi page (Admin).':'.')+'</p></div>'; return; }
+      if(!x){ const err=C.err[o];
+        h+='<div class="ofc quiet"><div class="ofc-top"><b>'+esc(o)+'</b></div>'+(err ? '<p class="small"><span class="negt">Couldn’t reach OrthoFi just now.</span> <button class="link" data-act="ofretry">Try again</button></p>' : '<p class="small muted"><span class="ofspin"></span> Checking OrthoFi…</p>')+'</div>'; return; }
+      h+='<div class="ofc"><div class="ofc-top"><b>'+esc(o)+'</b>'+pill(x.o.ex, x.l.ex)+'</div>'+
+        '<table class="oft"><thead><tr><th></th><th class="n">OrthoFi</th><th class="n">Logged</th><th class="n"></th></tr></thead><tbody>'+
+        '<tr><td>Exams kept</td><td class="n">'+x.o.ex+'</td><td class="n">'+x.l.ex+'</td>'+diff(x.o.ex, x.l.ex)+'</tr>'+
+        '<tr><td>Recommended</td><td class="n">'+x.o.rec+'</td><td class="n">'+x.l.rec+'</td>'+diff(x.o.rec, x.l.rec)+'</tr>'+
+        '<tr><td>Started</td><td class="n">'+x.o.st+'</td><td class="n">'+x.l.st+'</td>'+diff(x.o.st, x.l.st)+'</tr>'+
+        '<tr class="cv"><td>Conversion</td><td class="n">'+conv(x.o)+'</td><td class="n">'+conv(x.l)+'</td><td></td></tr></tbody></table>'+
+        (x.l.none?'<p class="small muted ofnote">'+x.l.none+' logged consult'+(x.l.none===1?' still needs':'s still need')+' an outcome, so Recommended and Started may catch up.</p>':'')+
+        (x.l.st<x.o.st?'<p class="small muted ofnote">Started is lower here: a patient who starts after the consult needs their outcome changed to Started.</p>':'');
+      if(x.rows.length){
+        h+='<details class="oftc"'+attr('of',o)+(OF_OPEN[o]?' open':'')+'><summary>By TC <span class="muted">('+x.rows.length+')</span></summary><div class="ofrows">'+
+          '<div class="oflegend">Each pair: <b>OrthoFi</b> · <b>Logged</b></div>'+
+          x.rows.map(r=>{ const c=(k)=>'<span class="ofstat"><em>'+({ex:'Exams',rec:'Recommended',st:'Started'})[k]+'</em><b>'+n(r.o?r.o[k]:null)+'</b> · <b class="'+(r.o && r.l[k]<r.o[k]?'negt':r.o && r.l[k]>r.o[k]?'post':'')+'">'+r.l[k]+'</b></span>';
+            return '<div class="ofrow"><div class="ofwho"><b>'+esc(r.name)+'</b>'+
+              (r.only==='tracker'?'<span class="small muted"> · only in the TC Tracker - OrthoFi has no TC by this name here</span>':'')+
+              (r.o && !r.l.ex?'<span class="small muted"> · nothing logged under this name</span>':'')+
+              (r.as.length?'<span class="small muted"> · logged as '+r.as.map(esc).join(', ')+'</span>':'')+'</div>'+
+              '<div class="ofstats">'+c('ex')+c('rec')+c('st')+'</div></div>'; }).join('')+'</div></details>';
+      }
+      h+='</div>';
+    });
+    h+='</div>';
+    if(busy && ready.length) h+='<p class="small muted" style="margin:8px 0 0"><span class="ofspin"></span> Still checking '+offs.filter(o=>C.busy[o]).map(esc).join(', ')+'…</p>';
+    h+='<details class="ofhow"'+(OF_OPEN.__how?' open':'')+attr('of','__how')+'><summary>How this check works</summary><div class="small">'+
+      '<p><b>Exams kept</b> - OrthoFi: new-patient exams kept, by exam date. Logged: consults on those days, not counting no-shows, cancellations and reschedules.</p>'+
+      '<p><b>Recommended</b> - OrthoFi: those exams with “treatment recommended”. Logged: those consults with an outcome other than Observation.</p>'+
+      '<p><b>Started</b> - of those same patients, how many have started. A patient who starts days after the consult shows here once their outcome is changed to Started.</p>'+
+      '<p><b>Conversion</b> here is started ÷ recommended for these same patients, Medicaid included (OrthoFi can’t split it out) - so it won’t equal the private-pay conversion at the top of this tab.</p>'+
+      '<p><b>Names</b> - a TC is matched by full name, else last name, else first name within the office (so “Becca” finds “Rebecca”). A name that still doesn’t match gets its own row; the office totals never depend on names.</p>'+
+      '<p><b>−3</b> = three fewer logged than in OrthoFi; <b>+2</b> = two more logged (often a duplicate or a consult on another day). Numbers only - no patient details come from OrthoFi.</p></div></details>';
+    h+='</div>';
+    return h;
+  }
   function viewNumbers(){
     /* One TC picked: the counts are that TC's, but a patient is still worked out across the
        whole office - so a patient one TC examined and another started counts once (tc.js). */
@@ -840,6 +1032,7 @@
       K('Follow-up completion', pct(m.fuRate), m.fuYes+' of '+(m.fuYes+m.fuNo)+' done')+
       K('RIP sold', m.rpi, 'by sale date')+'</div>';
     if(m.missing) h+='<div class="note warn">⚠️ <b>'+m.missing+' consult'+(m.missing===1?'':'s')+'</b> in '+esc(fmtM(month))+' still need'+(m.missing===1?'s':'')+' an outcome, so these numbers aren’t final.</div>';
+    h+=ofCheck();
     const CV=(label, g)=>'<tr><td>'+label+'</td><td class="n">'+g.consults+'</td><td class="n">'+g.starts+'</td><td class="n"><b>'+pct(g.rate)+'</b></td></tr>';
     /* MEDICAID IS NOT IN CONVERSION (Selene, 11/11/2026): "Could we exclude Medicaid Conversion while still tracking
        their status? Medicaid approval is outside the TCs’ control." Conversion everywhere is private pay only; Medicaid
@@ -1324,6 +1517,7 @@
     if(act==='clamp'){ b.classList.toggle('open'); return; }
     if(act==='office'){ office=v||null; render(); return; }
     if(act==='month'){ month=TC.shiftMonth(month, Number(v)); render(); return; }
+    if(act==='ofretry'){ const C=OFC[month]; if(C){ C.err={}; C.at=Date.now(); } render(); return; }
     if(act==='day'){ const n=Number(v); day=n ? shiftDay(viewDay(), n) : ''; if(day===today()) day=''; render(); return; }
     if(act==='goday'){ if(TC.parse(v)){ day=v===today() ? '' : v; calOpen=false; render(); } return; }
     if(act==='week'){ day=shiftDay(viewDay(), 7*Number(v)); if(day===today()) day=''; calMonth=''; render(); return; }
@@ -1436,7 +1630,8 @@
     if(k==='ocf'){ ocFilter=t.value; render(); return; }
     if(k==='rec' && DLG && t.tagName==='SELECT'){ DLG.rec[t.dataset.f]=t.value; if(TWIN_FIELDS.indexOf(t.dataset.f)>=0){ DLG.twin=null; DLG.dupOk=false; } if(t.dataset.f==='tc'){ const x=tcsFor(DLG.rec.office).find(y=>y.name===t.value); DLG.rec.tcMail=x?x.mail:''; } drawDlg(); }
   });
-  document.addEventListener('toggle', e=>{ if(DLG && e.target.matches && e.target.matches('details.more')) DLG.moreOpen=e.target.open; }, true);
+  document.addEventListener('toggle', e=>{ if(DLG && e.target.matches && e.target.matches('details.more')) DLG.moreOpen=e.target.open;
+    if(e.target.matches && e.target.matches('details[data-of]')) OF_OPEN[e.target.dataset.of]=e.target.open; }, true);
   document.addEventListener('keydown', e=>{
     if(e.key==='Escape' && DLG){ askClose(); return; }
     if(e.key==='Escape' && calOpen){ calOpen=false; render(); return; }
@@ -1480,7 +1675,7 @@
 })();
 </script>
 <script>PH.nav('tc');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(window.TCPAGE)TCPAGE.identity();});document.addEventListener('ph-identity',function(){if(window.TCPAGE)TCPAGE.identity();});</script>
-<script src="tour.js?v=hc256"></script>
+<script src="tour.js?v=hc257"></script>
 <script>
 Tour.init([
   {sel:'#offbar', title:'Your office', body:'You see the offices you work at. Heather, Selene and leadership see every office and can pick one.'},
