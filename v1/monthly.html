@@ -164,6 +164,7 @@
   .hcard .ax{font-size:10px;fill:#8a96aa}
   .hcard .bl{stroke:#d5dce4}
   .hline svg{height:58px}
+  .nw{white-space:nowrap}
   .hax{display:flex;justify-content:space-between;font-size:10px;color:#8a96aa;margin-top:1px}
   .ysub{font-size:13px;font-weight:700;color:var(--navy2);margin:2px 0 4px}
   #ytip{position:fixed;z-index:80;pointer-events:none;background:#0F2A4A;color:#fff;border-radius:10px;padding:9px 11px;font-size:12.5px;line-height:1.5;box-shadow:0 8px 24px rgba(15,42,74,.25);opacity:0;transform:translateY(4px);transition:opacity .12s,transform .12s;max-width:280px}
@@ -320,13 +321,13 @@
   }
   @media (prefers-reduced-motion: reduce){ *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important} }
 </style>
-<script src="user.js?v=hc264"></script>
+<script src="user.js?v=hc265"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc264"></script>
-  <script src="gate.js?v=hc264"></script>
-  <script src="prodbook.js?v=hc264"></script>
-  <script src="monthly.js?v=hc264"></script>
-  <script src="orthofi.js?v=hc264"></script>
+  <script src="store.js?v=hc265"></script>
+  <script src="gate.js?v=hc265"></script>
+  <script src="prodbook.js?v=hc265"></script>
+  <script src="monthly.js?v=hc265"></script>
+  <script src="orthofi.js?v=hc265"></script>
 </head>
 <body>
 <div class="ribbon">MOCK-UP for Heather — made-up numbers. Try it as an office manager first, then as Heather.</div>
@@ -781,8 +782,10 @@
   const niceMax=v=>{ if(!(v>0)) return 1; const p=Math.pow(10, Math.floor(Math.log10(v))), n=v/p; return ([1,1.5,2,2.5,3,4,5,6,8,10].find(x=>n<=x)||10)*p; };
   const kmoney=v=>{ const a=Math.abs(v); return (v<0?'−':'')+'$'+(a>=1e6 ? (a/1e6).toFixed(a>=1e7?0:1).replace(/\.0$/,'')+'M' : a>=1e3 ? Math.round(a/1e3)+'k' : Math.round(a)); };
   /* bars by month: grouped (series side by side) or stacked (series on top of one another); hover / tap a month for its numbers */
+  const NARROW=()=>{ try{ return matchMedia('(max-width:560px)').matches; }catch(_){ return false; } };
   function monthBars(y, rows, series, opt){
-    opt=opt||{}; const W=720, H=opt.h||210, L=48, R=8, T=10, B=opt.under ? 44 : 26, cw=(W-L-R)/12;
+    opt=Object.assign({}, opt||{}); const nar=NARROW(); if(nar) opt.under=null;            // a phone: the month's % is in the tap
+    const W=nar ? 360 : 720, H=nar ? 200 : (opt.h||210), L=nar ? 40 : 48, R=nar ? 4 : 8, T=10, B=opt.under ? 44 : 26, cw=(W-L-R)/12;
     const tot=r=>series.reduce((t,s)=>t+Math.max(0, r[s.k]||0),0);
     const top=niceMax(Math.max(1, ...rows.filter(Boolean).map(r=>opt.stacked ? tot(r) : Math.max(...series.map(s=>Math.max(0, r[s.k]||0))))));
     const Yp=v=>T+(H-T-B)*(1-v/top), base=Yp(0);
@@ -791,7 +794,7 @@
     let bars='', hits='';
     for(let m=1;m<=12;m++){
       const r=rows[m-1], x0=L+(m-1)*cw, cx=x0+cw/2, open=isOpen(y,m), fut=isFuture(y,m);
-      bars+='<text x="'+cx.toFixed(1)+'" y="'+(H-B+15)+'" class="ax'+(fut?' fut':'')+'" text-anchor="middle">'+MON[m-1]+'</text>';
+      bars+='<text x="'+cx.toFixed(1)+'" y="'+(H-B+15)+'" class="ax'+(fut?' fut':'')+'" text-anchor="middle">'+(nar ? MON[m-1].charAt(0) : MON[m-1])+'</text>';
       if(!r || fut) continue;
       const op=open ? ' opacity="0.55"' : '';
       if(opt.stacked){
@@ -799,7 +802,7 @@
         segs.forEach((s,i)=>{ const v=r[s.k], y1=Yp(acc+v), y0=Yp(acc), last=i===segs.length-1, h=Math.max(0, y0-y1-(i?2:0));
           bars+='<path d="'+roundTop(bx, y1, bw, h, last?3:0)+'" fill="'+s.c+'"'+op+'/>'; acc+=v; });
       } else {
-        const bw=Math.min(15, cw*0.3), gap=2;
+        const bw=Math.min(15, cw*0.34), gap=nar ? 1 : 2;
         series.forEach((s,i)=>{ const v=Math.max(0, r[s.k]||0), bx=cx-(series.length*bw+(series.length-1)*gap)/2+i*(bw+gap), y1=Yp(v);
           bars+='<path d="'+roundTop(bx, y1, bw, base-y1, 3)+'" fill="'+s.c+'"'+op+'/>'; });
       }
@@ -814,11 +817,10 @@
   /* one small chart per number (Practice health) */
   function miniBars(y, vals, t){
     const W=240, H=58, cw=W/12, top=niceMax(Math.max(1, ...vals.filter(v=>v!=null)));
-    let s='<svg viewBox="0 0 '+W+' '+(H+12)+'" aria-hidden="true"><line x1="0" x2="'+W+'" y1="'+H+'" y2="'+H+'" class="bl"/>';
+    let s='<svg viewBox="0 0 '+W+' '+(H+2)+'" aria-hidden="true"><line x1="0" x2="'+W+'" y1="'+H+'" y2="'+H+'" class="bl"/>';
     vals.forEach((v,i)=>{ const x=i*cw+cw*0.22, w=cw*0.56; if(v==null || isFuture(y,i+1)) return; const h=Math.max(1.5, (H-4)*v/top);
       s+='<path d="'+roundTop(x, H-h, w, h, 2)+'" fill="var(--teal)"'+(isOpen(y,i+1)?' opacity="0.5"':'')+'><title>'+M.MONTHS[i]+': '+fmt(t, v)+'</title></path>'; });
-    [0,11].forEach(i=>{ s+='<text x="'+(i?W:0)+'" y="'+(H+11)+'" class="ax" text-anchor="'+(i?'end':'start')+'">'+MON[i]+'</text>'; });
-    return s+'</svg>';
+    return s+'</svg><div class="hax"><span>Jan</span><span>Dec</span></div>';
   }
   function yearHTML(){
     const offs=myOffices(); if(OFF===null || (OFF!=='__all' && offs.indexOf(OFF)<0)) OFF=offs[0];
@@ -862,12 +864,12 @@
     const gpD=tot('gp',done), gcD=tot('gc',done), npD=tot('np',done), colD=pc(gcD,gpD), colP=pc(ptot('gc'),ptot('gp'));
     h+='<section class="ychunk"><div class="yhead"><h2>Production &amp; collections</h2><span class="soft">'+esc(yr)+'</span></div>'+
       '<div class="tiles">'+tile('Gross production', fmt('$',gp,true), yoy(gpD, ptot('gp'), true))+tile('Gross collections', fmt('$',gc,true), yoy(gcD, ptot('gc'), true))+
-        tile('Collections %', fmt('%',colY), 'target '+goalTxt('col'), tn('col',colY), yoy(colD, colP, true, true))+tile('Net production', fmt('$',np,true), yoy(npD, ptot('np'), true))+
-        tile('Adjustments', fmt('%',adjY), fmt('$',adj,true)+' · target '+goalTxt('adj'), tn('adj',adjY))+tile('Contract discounts', fmt('%',discY), fmt('$',disc,true))+'</div>'+
+        tile('Collections %', fmt('%',colY), '<span class="nw">target '+goalTxt('col')+'</span>', tn('col',colY), yoy(colD, colP, true, true))+tile('Net production', fmt('$',np,true), yoy(npD, ptot('np'), true))+
+        tile('Adjustments', fmt('%',adjY), fmt('$',adj,true)+' · <span class="nw">target '+goalTxt('adj')+'</span>', tn('adj',adjY))+tile('Contract discounts', fmt('%',discY), fmt('$',disc,true))+'</div>'+
       (has('gp')||has('gc') ? monthBars(y, rows, [{k:'gp', n:'Gross production', c:'var(--navy2)'}, {k:'gc', n:'Gross collections', c:'var(--teal)'}],
         {label:'Gross production and collections by month', under:r=>r.colpct==null ? null : {t:fmt('%',r.colpct), tn:tn('col',r.colpct)},
          tipMore:r=>'<div class="tsub">Collections % <b>'+fmt('%',r.colpct)+'</b> · Adjustments <b>'+fmt('$',r.adj)+'</b> ('+fmt('%',r.adjpct)+') · Net <b>'+fmt('$',r.np)+'</b></div>'}) +
-        '<p class="ynote">The % under each month is that month’s collections % — <span class="good">●</span> above target, <span class="ok">●</span> on target, <span class="bad">●</span> below.</p>' : '<p class="note">No numbers for '+y+' yet.</p>')+
+        (NARROW() ? '<p class="ynote">Tap a month for its collections %, adjustments and net production.</p>' : '<p class="ynote">The % under each month is that month’s collections % — <span class="good">●</span> above target, <span class="ok">●</span> on target, <span class="bad">●</span> below.</p>') : '<p class="note">No numbers for '+y+' yet.</p>')+
       months('pc', [col('gp','$','Gross production',{grp:'Production & collections'}), col('gc','$','Gross collections'), col('colpct','%','Collections %'),
              col('adj','$','Adjustments $',{grp:'Adjustments, net & discounts'}), col('adjpct','%','Adjustments %'), col('np','$','Net production'), col('disc','$','Contract discounts $'), col('discpct','%','Contract discounts %')], true)+'</section>';
 
@@ -882,7 +884,7 @@
       '<div class="tiles">'+tile('Total outstanding', fmt('$',lt&&lt.v,true), asOf(lt), '', lt ? since(lt, before('ar_tot', lt.m), false) : '')+
         tile('Past due', fmt('$',lpd&&lpd.v,true), lpd&&lt&&lt.v ? fmt('%',lpd.v/lt.v*100)+' of outstanding' : (aged?asOf(lpd):'from OrthoFi - coming'), '', lpd ? since(lpd, before('ar_pd', lpd.m), false) : '')+
         tile('91+ days', fmt('$',l91&&l91.v,true), l91&&lt&&lt.v ? fmt('%',l91.v/lt.v*100)+' of outstanding' : (aged?asOf(l91):'from OrthoFi - coming'), '', l91 ? since(l91, before('ar_91', l91.m), false) : '')+
-        (ARV==='both' ? tile('A/R ratio', fmt('x',lr&&lr.v), 'target '+goalTxt('ratio'), tn('ratio',lr&&lr.v))+tile('Delinquent %', fmt('%',ld&&ld.v), 'target '+goalTxt('del'), tn('del',ld&&ld.v)) : '')+'</div>'+
+        (ARV==='both' ? tile('A/R ratio', fmt('x',lr&&lr.v), '<span class="nw">target '+goalTxt('ratio')+'</span>', tn('ratio',lr&&lr.v))+tile('Delinquent %', fmt('%',ld&&ld.v), '<span class="nw">target '+goalTxt('del')+'</span>', tn('del',ld&&ld.v)) : '')+'</div>'+
       (aged ? '<div class="ysub">Past due at each month’s end, by age</div>'+monthBars(y, rows, AGE, {stacked:true, label:'Past-due A/R by age at each month end',
           tipMore:r=>'<div class="tsub">Past due <b>'+fmt('$',r.ar_pd)+'</b> · current <b>'+fmt('$',r.ar_cur)+'</b> · outstanding <b>'+fmt('$',r.ar_tot)+'</b></div>'})+
           '<p class="ynote">Oldest on top. A bar growing — or more red in it — means old money is building up. Current (not yet past due) is in the tile above and the months.</p>'
@@ -1145,6 +1147,7 @@
     document.addEventListener('click', e=>{ const t=e.target.closest && e.target.closest('[data-tip]'); if(t){ show(t, e.clientX, e.clientY); } else hide(); });
     addEventListener('scroll', hide, {passive:true});
   })();
+  { let was=NARROW(); addEventListener('resize', ()=>{ const n=NARROW(); if(n!==was){ was=n; if(TAB==='year') render(); } }); }
   window.MONTHLY={
     yopen(k, open){ YOPEN[k]=!!open; try{ localStorage.setItem('ph_monthly_yopen', JSON.stringify(YOPEN)); }catch(_){} },
     arv(k){ if(!AR_KEYS.hasOwnProperty(k)) return; ARV=k; try{ localStorage.setItem('ph_monthly_arv', k); }catch(_){} render(); },
@@ -1192,7 +1195,7 @@
 })();
 </script>
 <script>PH.nav('monthly');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc264"></script>
+<script src="tour.js?v=hc265"></script>
 <script>
 Tour.init([
   {sel:'.statusline, .openbanner', title:'Who has sent it', body:'Every office’s report for the month, in one line: final, waiting for you, or late. No chasing eight Excel files.'},
