@@ -324,13 +324,13 @@
   }
   @media (prefers-reduced-motion: reduce){ *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important} }
 </style>
-<script src="user.js?v=hc267"></script>
+<script src="user.js?v=hc268"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc267"></script>
-  <script src="gate.js?v=hc267"></script>
-  <script src="prodbook.js?v=hc267"></script>
-  <script src="monthly.js?v=hc267"></script>
-  <script src="orthofi.js?v=hc267"></script>
+  <script src="store.js?v=hc268"></script>
+  <script src="gate.js?v=hc268"></script>
+  <script src="prodbook.js?v=hc268"></script>
+  <script src="monthly.js?v=hc268"></script>
+  <script src="orthofi.js?v=hc268"></script>
 </head>
 <body>
 <div class="ribbon">MOCK-UP for Heather — made-up numbers. Try it as an office manager first, then as Heather.</div>
@@ -794,7 +794,8 @@
     const top=niceMax(Math.max(1, ...rows.filter(Boolean).map(r=>opt.stacked ? tot(r) : Math.max(...series.map(s=>Math.max(0, r[s.k]||0))))));
     const Yp=v=>T+(H-T-B)*(1-v/top), base=Yp(0);
     let g='';
-    [0, 0.5, 1].forEach(f=>{ const yy=Yp(top*f); g+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+yy.toFixed(1)+'" y2="'+yy.toFixed(1)+'" class="gl"/><text x="'+(L-6)+'" y="'+(yy+4).toFixed(1)+'" class="ax" text-anchor="end">'+axisFmt(TT, top*f)+'</text>'; });
+    [0, 0.5, 1].forEach(f=>{ const yy=Yp(top*f), lab=!(TT==='#' && !Number.isInteger(top*f));       // a count's scale never says "12.5"
+      g+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+yy.toFixed(1)+'" y2="'+yy.toFixed(1)+'" class="gl"/>'+(lab?'<text x="'+(L-6)+'" y="'+(yy+4).toFixed(1)+'" class="ax" text-anchor="end">'+axisFmt(TT, top*f)+'</text>':''); });
     let bars='', hits='';
     for(let m=1;m<=12;m++){
       const r=rows[m-1], x0=L+(m-1)*cw, cx=x0+cw/2, open=isOpen(y,m), fut=isFuture(y,m);
@@ -1228,7 +1229,7 @@
 })();
 </script>
 <script>PH.nav('monthly');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc267"></script>
+<script src="tour.js?v=hc268"></script>
 <script>
 Tour.init([
   {sel:'.statusline, .openbanner', title:'Who has sent it', body:'Every office’s report for the month, in one line: final, waiting for you, or late. No chasing eight Excel files.'},
