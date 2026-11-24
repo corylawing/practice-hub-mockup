@@ -119,6 +119,19 @@
   td.ok .dot{background:#c5ced9}
   tr.q td.bad,tr.tot td.bad{color:var(--bad)} tr.q td.good,tr.tot td.good{color:var(--good)} tr.q td.watch,tr.tot td.watch{color:var(--amber-ink)}
   td.future{color:#b6c0cc}
+  /* the year sheet in three parts (Jessica, 24/11/2026) */
+  .ychunk{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 18px 18px;margin-bottom:16px}
+  .yhead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+  .yhead h2{font-size:17px;color:var(--navy);margin:0}
+  .yhead .soft{font-size:13px}
+  .ychunk .tiles{margin-bottom:14px}
+  .tile .v.bad{color:var(--bad)} .tile .v.good{color:var(--good)} .tile .v.watch{color:var(--amber-ink)}
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff}
+  .seg button{border:none;background:none;padding:7px 12px;font:inherit;font-size:13px;font-weight:700;color:var(--soft);cursor:pointer}
+  .seg button+button{border-left:1px solid var(--line)}
+  .seg button.on{background:var(--teal-soft);color:var(--teal-600)}
+  tr.grp th{background:#fff;color:var(--navy2);font-size:11px;padding-top:8px;padding-bottom:2px;text-align:left;border-bottom:0}
+  th.gs,td.gs{border-left:2px solid #e3e9ef}
 
   .st{display:inline-block;font-size:11.5px;font-weight:700;border-radius:999px;padding:3px 9px;white-space:nowrap}
   .st.final{background:var(--navy);color:#fff} .st.sent{background:var(--teal-soft);color:var(--teal-600)}
@@ -270,13 +283,13 @@
   }
   @media (prefers-reduced-motion: reduce){ *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important} }
 </style>
-<script src="user.js?v=hc259"></script>
+<script src="user.js?v=hc260"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc259"></script>
-  <script src="gate.js?v=hc259"></script>
-  <script src="prodbook.js?v=hc259"></script>
-  <script src="monthly.js?v=hc259"></script>
-  <script src="orthofi.js?v=hc259"></script>
+  <script src="store.js?v=hc260"></script>
+  <script src="gate.js?v=hc260"></script>
+  <script src="prodbook.js?v=hc260"></script>
+  <script src="monthly.js?v=hc260"></script>
+  <script src="orthofi.js?v=hc260"></script>
 </head>
 <body>
 <div class="ribbon">MOCK-UP for Heather — made-up numbers. Try it as an office manager first, then as Heather.</div>
@@ -387,6 +400,11 @@
                  npe:Math.round((40+R()*70)*frac), act:pts+Math.round((R()-0.5)*30), disc:gp*(0.01+R()*0.02)};
         v.np=v.gp+v.adj; v.ar90=v.ar*(0.012+R()*0.035);
         v.rip=Math.round((4+R()*20)*frac);
+        v.starts=Math.round((16+R()*30)*frac); v.dbc=Math.round((14+R()*24)*frac); v.dbp=Math.round((2+R()*8)*frac);
+        /* made up: the A/R by age (patient about four fifths of it) */
+        { const pt=v.ar*(0.74+R()*0.1), it=v.ar-pt, sp=(t,c,a,b)=>{ const x31=t*a, x61=t*b, x91=t*(0.03+R()*0.05); return [t, t-x31-x61-x91, x31, x61, x91]; };
+          [v.pa_tot, v.pa_cur, v.pa_31, v.pa_61, v.pa_91]=sp(pt, 0, 0.04+R()*0.03, 0.02+R()*0.02);
+          [v.ia_tot, v.ia_cur, v.ia_31, v.ia_61, v.ia_91]=sp(it, 0, 0.12+R()*0.08, 0.06+R()*0.05); }
         if(!open && M.DEF_OLDSYS.indexOf(o)>=0){ v.osp=gp*(0.04+R()*0.06); v.osc=v.gc*(0.04+R()*0.06); v.osar=v.ar*(0.05+R()*0.08); }   // made up: the old system's share
         if(!open){ v.oecd=5+R()*12; v.appts=Math.round(600+R()*500); v.cmfa=Math.round(v.appts*(0.03+R()*0.06));
           if(med.indexOf(o)>=0){ v.mds=Math.round(8+R()*26); v.mdd=Math.round(v.mds*(0.05+R()*0.22)); v.mda=Math.max(0,v.mds-v.mdd-Math.round(R()*3));
@@ -413,7 +431,7 @@
     return M.cleanYear(rec);
   }
   /* the sandbox's made-up years are remade when their story changes (DEMO_V) - real years never */
-  const DEMO_V='6';
+  const DEMO_V='7';      // 7: Jessica's year sheet (new starts, debonds, A/R by age) - 24/11/2026
   async function loadYear(y, fresh){
     if(DATA[y] && !fresh) return DATA[y];
     let rec=null; try{ rec=await PH_STORE.get(M.KEY(y)); }catch(_){}
@@ -697,32 +715,99 @@
   }
 
   /* ---------- YEAR SHEET: Heather's sheet, kept for her - every month, the quarters, the year ---------- */
+  /* THE YEAR SHEET IN THREE PARTS (24/11/2026, Jessica, with Heather: "What if we broke this up into 3 separate chunks of
+     info ... so they are easier to read. You can make these table or you can get creative with a dashboard."):
+       Production/Collections - Gross production, Gross collections, Collections % | Production adjustments ($ and %),
+         Net production, Contract discounts ($ and %) ("Kinda group the two subgroups together")
+       Accounts Receivable - Past due, Total outstanding, Current, 31-60, 61-90, 91+; Patient + insurance / Patient /
+         Insurance ("can you toggle between patient and insurance"); A/R ratio and Delinquent % kept with their targets
+       Practice Health - Active patients, New starts, RIP sold, Comprehensive debonds, Phase I debonds, OECD, Comfort %
+         (only the %: "no need to show those appt totals just the %"); new patient exams kept at the end
+     Each part: a few tiles for the year (or the latest month-end for balances), then its own month table. Medicaid and
+     the old system follow as before. Nothing that was on the sheet is dropped - it is in the CSV either way. */
+  let ARV='both'; try{ ARV=localStorage.getItem('ph_monthly_arv')||'both'; }catch(_){}
+  const AR_KEYS={both:null, patient:'pa', insurance:'ia'};
+  function arView(v){                                    // the A/R columns for the chosen view, from one month's numbers
+    const p=AR_KEYS[ARV]||null, g=k=>v[k]==null ? null : v[k];
+    const add=(a,b)=>a==null && b==null ? null : (a||0)+(b||0);
+    const part=k=>p ? g(p+'_'+k) : add(g('pa_'+k), g('ia_'+k));
+    const o={ar_cur:part('cur'), ar_31:part('31'), ar_61:part('61'), ar_91:part('91')};
+    o.ar_tot=p ? g(p+'_tot') : g('ar');                  // both: the proven total (old-system A/R included)
+    o.ar_pd=o.ar_31==null && o.ar_61==null && o.ar_91==null ? null : (o.ar_31||0)+(o.ar_61||0)+(o.ar_91||0);
+    return o;
+  }
   function yearHTML(){
     const offs=myOffices(); if(OFF===null || (OFF!=='__all' && offs.indexOf(OFF)<0)) OFF=offs[0];
-    const all=OFF==='__all', y=Y, settings=all ? {medicaid:SET.medicaid, oldsys:SET.oldsys} : SET;
-    const vals=m=>{ if(isFuture(y,m)) return null; const v=all ? offTotals(offs,y,m) : valsOf(OFF,y,m); return v ? Object.assign({}, v, M.calc(v)) : null; };
-    const main=[['gp','$'],['gc','$'],['colpct','%'],['adj','$'],['adjpct','%'],['np','$'],['ar','$'],['ratio','x'],['arn','#'],['deln','#'],['delpct','%'],['ar90','$'],['npe','#'],['act','#'],['disc','$'],['rip','#'],['oecd','%'],['appts','#'],['cmfa','#'],['cmfpct','%']]
-      .map(([k,t])=>({k,t,n:(M.BY[k]||M.CALC.find(c=>c.k===k)).n, flow:!!(M.BY[k]&&M.BY[k].flow), goal:({colpct:'col',adjpct:'adj',ratio:'ratio',delpct:'del'})[k]}));
+    const all=OFF==='__all', y=Y;
+    const vals=m=>{ if(isFuture(y,m)) return null; const v=all ? offTotals(offs,y,m) : valsOf(OFF,y,m); return v ? Object.assign({}, v, M.calc(v), arView(v)) : null; };
+    const col=(k,t,n,o)=>Object.assign({k,t,n:n||(M.BY[k]||M.CALC.find(c=>c.k===k)).n, flow:!!(M.BY[k]&&M.BY[k].flow), goal:({colpct:'col',adjpct:'adj',ratio:'ratio',delpct:'del'})[k]}, o||{});
     const medF=M.FIELDS.filter(f=>f.medicaid).map(f=>({k:f.k,t:f.t,n:f.n,flow:true}));
     const hasMed=all ? offs.some(o=>SET.medicaid.indexOf(o)>=0) : SET.medicaid.indexOf(OFF)>=0;
     const oldF=M.FIELDS.filter(f=>f.oldsys).map(f=>({k:f.k,t:f.t,n:f.n,flow:!!f.flow}));
     const hasOld=all ? offs.some(o=>SET.oldsys.indexOf(o)>=0) : SET.oldsys.indexOf(OFF)>=0;
+    /* the year in numbers, for the tiles */
+    const months=[]; for(let m=1;m<=12;m++){ const v=vals(m); if(v) months.push({m, v}); }
+    const tot=k=>{ const xs=months.map(x=>x.v[k]).filter(x=>x!=null); return xs.length ? xs.reduce((a,b)=>a+b,0) : null; };
+    const avg=k=>{ const xs=months.map(x=>x.v[k]).filter(x=>x!=null); return xs.length ? xs.reduce((a,b)=>a+b,0)/xs.length : null; };
+    const latest=k=>{ for(let i=months.length-1;i>=0;i--){ const x=months[i].v[k]; if(x!=null) return {v:x, m:months[i].m}; } return null; };
+    const pc=(a,b)=>a!=null && b ? a/b*100 : null;
+    const tile=(k,v,d,tn)=>'<div class="tile"><div class="k">'+k+'</div><div class="v'+(tn?' '+tn:'')+'">'+v+'</div>'+(d?'<div class="d">'+d+'</div>':'')+'</div>';
+    const tn=(g,v)=>M.tone(g,v,SET.goals)||'';
+    const yr=y===NOW_Y ? 'so far this year' : 'in '+y;
+
     let h='<div class="ochips" style="margin-bottom:14px">'+(offs.length>1?'<button class="ochip '+(all?'on':'')+'" onclick="MONTHLY.office(\'__all\')">All offices together</button>':'')+
       offs.map(x=>'<button class="ochip '+(x===OFF?'on':'')+'" data-o="'+esc(x)+'" onclick="MONTHLY.office(this.dataset.o)"><i style="background:'+esc((PH.colorForOffice(x)||{}).dot||'#94a3b8')+'"></i>'+esc(x)+'</button>').join('')+
       '<button class="btn ghost" style="margin-left:auto" onclick="MONTHLY.csv()">⬇ Download for Excel</button></div>';
-    h+=sheet(main, vals, y, true);
-    if(hasMed) h+='<h2 style="font-size:16px;color:var(--navy);margin:22px 0 10px">Medicaid'+(all?' — the Medicaid offices together':'')+'</h2>'+sheet(medF, vals, y, false);
-    if(hasOld) h+='<h2 style="font-size:16px;color:var(--navy);margin:22px 0 10px">Old system'+(all?' — those offices together':'')+' <span class="soft" style="font-weight:500;font-size:13px">— already inside gross production, collections and A/R above</span></h2>'+sheet(oldF, vals, y, false);
+
+    /* 1. PRODUCTION / COLLECTIONS */
+    const gp=tot('gp'), gc=tot('gc'), adj=tot('adj'), np=tot('np'), disc=tot('disc');
+    const colY=pc(gc,gp), adjY=gp && adj!=null ? -adj/gp*100 : null, discY=pc(disc,gp);
+    h+='<section class="ychunk"><div class="yhead"><h2>Production &amp; collections</h2><span class="soft">'+esc(yr)+'</span></div>'+
+      '<div class="tiles">'+tile('Gross production', fmt('$',gp,true))+tile('Gross collections', fmt('$',gc,true))+
+        tile('Collections %', fmt('%',colY), 'target '+goalTxt('col'), tn('col',colY))+tile('Net production', fmt('$',np,true))+
+        tile('Adjustments', fmt('%',adjY), fmt('$',adj,true)+' · target '+goalTxt('adj'), tn('adj',adjY))+tile('Contract discounts', fmt('%',discY), fmt('$',disc,true))+'</div>'+
+      sheet([col('gp','$','Gross production',{grp:'Production & collections'}), col('gc','$','Gross collections'), col('colpct','%','Collections %'),
+             col('adj','$','Adjustments $',{grp:'Adjustments, net & discounts'}), col('adjpct','%','Adjustments %'), col('np','$','Net production'), col('disc','$','Contract discounts $'), col('discpct','%','Contract discounts %')], vals, y, true)+'</section>';
+
+    /* 2. ACCOUNTS RECEIVABLE */
+    const L=k=>latest(k), lt=L('ar_tot'), lpd=L('ar_pd'), l91=L('ar_91'), lr=L('ratio'), ld=L('delpct');
+    const aged=months.some(x=>x.v.ar_cur!=null || x.v.ar_31!=null);
+    const asOf=x=>x ? 'end of '+MON[x.m-1] : '';
+    const seg=(k,t)=>'<button class="'+(ARV===k?'on':'')+'" aria-pressed="'+(ARV===k)+'" onclick="MONTHLY.arv(\''+k+'\')">'+t+'</button>';
+    h+='<section class="ychunk"><div class="yhead"><h2>Accounts receivable</h2><div class="seg" role="group" aria-label="Whose A/R">'+seg('both','Patient + insurance')+seg('patient','Patient')+seg('insurance','Insurance')+'</div></div>'+
+      '<div class="tiles">'+tile('Total outstanding', fmt('$',lt&&lt.v,true), asOf(lt))+tile('Past due', fmt('$',lpd&&lpd.v,true), lpd&&lt&&lt.v ? fmt('%',lpd.v/lt.v*100)+' of outstanding' : asOf(lpd))+
+        tile('91+ days', fmt('$',l91&&l91.v,true), l91&&lt&&lt.v ? fmt('%',l91.v/lt.v*100)+' of outstanding' : asOf(l91))+
+        (ARV==='both' ? tile('A/R ratio', fmt('x',lr&&lr.v), 'target '+goalTxt('ratio'), tn('ratio',lr&&lr.v))+tile('Delinquent %', fmt('%',ld&&ld.v), 'target '+goalTxt('del'), tn('del',ld&&ld.v)) : '')+'</div>';
+    if(!aged) h+='<p class="note" style="margin:0 0 10px">The ages (current, 31–60, 61–90, 91+) and the patient / insurance split come from OrthoFi. They fill in once they’re matched to the practice’s own A/R aging report'+(ARV==='both'?' - total outstanding, the A/R ratio and delinquent % are already here.':'.')+'</p>';
+    const arCols=[col('ar_pd','$','Past due',{grp:'Accounts receivable'}), col('ar_tot','$','Total outstanding'), col('ar_cur','$','Current'), col('ar_31','$','31–60 days past due'), col('ar_61','$','61–90 days past due'), col('ar_91','$','91+ days past due')];
+    if(ARV==='both') arCols.push(col('ratio','x','A/R ratio',{grp:'Against target'}), col('delpct','%','Delinquent %'));
+    h+=sheet(arCols, vals, y, ARV==='both')+(ARV==='both' && hasOld ? '<p class="soft" style="font-size:12.5px;margin:6px 2px 0">Total outstanding includes the old system’s A/R; the ages are OrthoFi’s.</p>' : '')+'</section>';
+
+    /* 3. PRACTICE HEALTH */
+    const la=L('act'), db=(tot('dbc')||0)+(tot('dbp')||0);
+    h+='<section class="ychunk"><div class="yhead"><h2>Practice health</h2><span class="soft">reporting for now - targets later</span></div>'+
+      '<div class="tiles">'+tile('Active patients', fmt('#',la&&la.v), asOf(la))+tile('New starts', fmt('#',tot('starts')), yr)+tile('RIP sold', fmt('#',tot('rip')), yr)+
+        tile('Debonds', fmt('#',tot('dbc')==null&&tot('dbp')==null?null:db), (tot('dbc')!=null?fmt('#',tot('dbc'))+' comprehensive':'')+(tot('dbp')!=null?' · '+fmt('#',tot('dbp'))+' Phase I':''))+
+        tile('OECD', fmt('%',avg('oecd')), 'average')+tile('Comfort %', fmt('%',pc(tot('cmfa'),tot('appts'))), yr)+'</div>'+
+      sheet([col('act','#','Active patients',{grp:'Practice health'}), col('starts','#','New starts'), col('rip','#','RIP sold'), col('dbc','#','Comprehensive debonds'), col('dbp','#','Phase I debonds'),
+             col('oecd','%','OECD'), col('cmfpct','%','Comfort %'), col('npe','#','New patient exams',{grp:'Also tracked'})], vals, y, false)+'</section>';
+
+    if(hasMed) h+='<section class="ychunk"><div class="yhead"><h2>Medicaid'+(all?' — the Medicaid offices together':'')+'</h2></div>'+sheet(medF, vals, y, false)+'</section>';
+    if(hasOld) h+='<section class="ychunk"><div class="yhead"><h2>Old system'+(all?' — those offices together':'')+'</h2><span class="soft">already inside gross production, collections and A/R above</span></div>'+sheet(oldF, vals, y, false)+'</section>';
     return h+'<p class="note" style="margin-top:10px">Quarter and year rows average the months, like the old sheet; the YTD row adds up the month’s activity (balances and percentages aren’t added). Ratios update the moment a number changes.</p>';
   }
   function sheet(cols, vals, y, withGoals){
     const Rr=M.yearRows(vals, cols);
-    let h='<div class="tablewrap"><table><thead><tr><th>'+y+'</th>'+cols.map(c=>'<th>'+esc(c.n)+'</th>').join('')+'</tr></thead><tbody>';
-    const line=(lab,v,cls)=>'<tr class="'+(cls||'')+'"><td>'+lab+'</td>'+cols.map(c=>{ const x=v?v[c.k]:null; return c.goal ? cell(c.goal,x,c.t) : '<td>'+fmt(c.t,x)+'</td>'; }).join('')+'</tr>';
-    Rr.months.forEach((mo,i)=>{ h+= isFuture(y,mo.m) ? '<tr><td>'+M.MONTHS[mo.m-1]+'</td>'+cols.map(()=>'<td class="future">—</td>').join('')+'</tr>' : line(M.MONTHS[mo.m-1]+(isOpen(y,mo.m)?' <span class="st open">so far</span>':''), mo.v);
+    /* column groups (Jessica: "group the two subgroups together"): a band over each group, a line where a group starts */
+    const gs=cols.map((c,i)=>!!c.grp && i>0), grps=[]; cols.forEach(c=>{ if(c.grp || !grps.length) grps.push({t:c.grp||'', n:1}); else grps[grps.length-1].n++; });
+    let h='<div class="tablewrap"><table><thead>'+
+      (cols.some(c=>c.grp) ? '<tr class="grp"><th></th>'+grps.map((g,i)=>'<th colspan="'+g.n+'"'+(i?' class="gs"':'')+'>'+esc(g.t)+'</th>').join('')+'</tr>' : '')+
+      '<tr><th>'+y+'</th>'+cols.map((c,i)=>'<th'+(gs[i]?' class="gs"':'')+'>'+esc(c.n)+'</th>').join('')+'</tr></thead><tbody>';
+    const line=(lab,v,cls)=>'<tr class="'+(cls||'')+'"><td>'+lab+'</td>'+cols.map((c,i)=>{ const x=v?v[c.k]:null, td=c.goal ? cell(c.goal,x,c.t) : '<td>'+fmt(c.t,x)+'</td>'; return gs[i] ? td.replace('<td class="','<td class="gs ').replace('<td>','<td class="gs">') : td; }).join('')+'</tr>';
+    Rr.months.forEach((mo,i)=>{ h+= isFuture(y,mo.m) ? '<tr><td>'+M.MONTHS[mo.m-1]+'</td>'+cols.map((c,j)=>'<td class="future'+(gs[j]?' gs':'')+'">—</td>').join('')+'</tr>' : line(M.MONTHS[mo.m-1]+(isOpen(y,mo.m)?' <span class="st open">so far</span>':''), mo.v);
       if(i%3===2) h+=line(['1st','2nd','3rd','4th'][Math.floor(i/3)]+' quarter average', Rr.quarters[Math.floor(i/3)].v, 'q'); });
     h+=line('Year to date', Rr.ytd, 'tot')+line(y+' average', Rr.avg, 'q');
-    if(withGoals) h+='<tr class="goals"><td>Targets</td>'+cols.map(c=>'<td>'+(c.goal ? goalTxt(c.goal)+(c.goal==='ratio'?' production':'') : '')+'</td>').join('')+'</tr>';
+    if(withGoals) h+='<tr class="goals"><td>Targets</td>'+cols.map((c,j)=>'<td'+(gs[j]?' class="gs"':'')+'>'+(c.goal ? goalTxt(c.goal)+(c.goal==='ratio'?' production':'') : '')+'</td>').join('')+'</tr>';
     return h+'</tbody></table></div>';
   }
   function csv(){
@@ -928,6 +1013,7 @@
   function persona(){ const s=el('persona'); if(!s) return; let id='heather'; try{ id=localStorage.getItem('ph_monthly_as')||'heather'; }catch(_){}
     s.innerHTML=PERSONAS.map(p=>'<option value="'+p.id+'" '+(p.id===id?'selected':'')+'>'+esc(p.n)+'</option>').join(''); }
   window.MONTHLY={
+    arv(k){ if(!AR_KEYS.hasOwnProperty(k)) return; ARV=k; try{ localStorage.setItem('ph_monthly_arv', k); }catch(_){} render(); },
     as(id){ try{ localStorage.setItem('ph_monthly_as', id); }catch(_){} WHO=null; WHO=who(); TAB=null; OFF=null; EDIT={}; CORRECT={}; SENDASK=false; render(); },
     tab(t){ if(TAB==='year' && t!=='year' && OFF==='__all') OFF=null; if(TAB!=='year' && t==='year') Y=Math.min(Y, NOW_Y); TAB=t; SENDASK=false; try{ localStorage.setItem('ph_monthly_tab', t); }catch(_){} render(); },
     // no other office or month while a save is on its way (21/11/2026, code review)
@@ -972,7 +1058,7 @@
 })();
 </script>
 <script>PH.nav('monthly');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc259"></script>
+<script src="tour.js?v=hc260"></script>
 <script>
 Tour.init([
   {sel:'.statusline, .openbanner', title:'Who has sent it', body:'Every office’s report for the month, in one line: final, waiting for you, or late. No chasing eight Excel files.'},

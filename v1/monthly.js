@@ -41,7 +41,8 @@
     {k:'oecd', n:'Over estimated completion date',     t:'%', from:'pms'},
     /* COMFORT % (Heather 18/11: "The X is number of total appts and the Y is number of comfort appts"): Ortho2 doesn't show
        the %, so the office types the two counts and Home-Brace works it out (CALC cmfpct = comfort / total). */
-    {k:'appts', n:'Total appointments',                t:'#', from:'pms', flow:true},
+    /* Jessica 24/11: "total kept clinical appointments" - the comfort % is comfort appts ÷ these */
+    {k:'appts', n:'Kept clinical appointments',        t:'#', from:'pms', flow:true},
     {k:'cmfa',  n:'Comfort appointments',              t:'#', from:'pms', flow:true},
     {k:'mds',  n:'Medicaid submissions',               t:'#', from:'pms', flow:true, medicaid:true},
     {k:'mdd',  n:'Medicaid denials',                   t:'#', from:'pms', flow:true, medicaid:true},
@@ -55,7 +56,25 @@
        part (PARTS below). Only offices on the Settings list get them - when an office's old system is done, it comes off. */
     {k:'osp',  n:'Old system production',              t:'$', from:'pms', flow:true, oldsys:true, help:'From your old practice software — added to OrthoFi’s production'},
     {k:'osc',  n:'Old system collections',             t:'$', from:'pms', flow:true, oldsys:true, help:'From your old practice software — added to OrthoFi’s collections'},
-    {k:'osar', n:'Old system A/R',                     t:'$', from:'pms', oldsys:true, help:'From your old practice software — added to OrthoFi’s A/R'}];
+    {k:'osar', n:'Old system A/R',                     t:'$', from:'pms', oldsys:true, help:'From your old practice software — added to OrthoFi’s A/R'},
+    /* JESSICA'S YEAR SHEET (24/11/2026: Production/Collections, Accounts Receivable, Practice Health). New starts (typed
+       until OrthoFi's way is proven, like active patients) and the two kinds of debond, typed from the practice software. */
+    {k:'starts', n:'New starts',                       t:'#', from:'orthofi', flow:true},
+    {k:'dbc',  n:'Comprehensive debonds',              t:'#', from:'pms', flow:true},
+    {k:'dbp',  n:'Phase I debonds',                    t:'#', from:'pms', flow:true},
+    /* A/R BY AGE, patient and insurance ("can you toggle between patient and insurance"): OrthoFi only - auto: never typed,
+       never in an office's form or its "boxes left empty" - month-end balances, filled once matched to the practice's own
+       A/R aging report (Heather's numbers are the reference). Current = not yet 31 days past due. */
+    {k:'pa_tot', n:'Patient A/R outstanding',          t:'$', from:'orthofi', auto:true},
+    {k:'pa_cur', n:'Patient A/R current',              t:'$', from:'orthofi', auto:true},
+    {k:'pa_31',  n:'Patient A/R 31–60 days',           t:'$', from:'orthofi', auto:true},
+    {k:'pa_61',  n:'Patient A/R 61–90 days',           t:'$', from:'orthofi', auto:true},
+    {k:'pa_91',  n:'Patient A/R 91+ days',             t:'$', from:'orthofi', auto:true},
+    {k:'ia_tot', n:'Insurance A/R outstanding',        t:'$', from:'orthofi', auto:true},
+    {k:'ia_cur', n:'Insurance A/R current',            t:'$', from:'orthofi', auto:true},
+    {k:'ia_31',  n:'Insurance A/R 31–60 days',         t:'$', from:'orthofi', auto:true},
+    {k:'ia_61',  n:'Insurance A/R 61–90 days',         t:'$', from:'orthofi', auto:true},
+    {k:'ia_91',  n:'Insurance A/R 91+ days',           t:'$', from:'orthofi', auto:true}];
   const BY={}; FIELDS.forEach(f=>{ BY[f.k]=f; });
   /* A BOX THAT IS OrthoFi + WHAT THE OFFICE TYPES (20/11/2026, matched to the dollar against Heather's sheets): gross
      production = OrthoFi's business health production + Medicaid production + old system production; gross collections =
@@ -72,7 +91,9 @@
     {k:'adjpct', n:'Adjustment %',  t:'%', of:v=>v.gp && v.adj!=null ? -v.adj/v.gp*100 : null, goal:'adj'},
     {k:'ratio',  n:'A/R ratio',     t:'x', of:v=>v.gp && v.ar!=null ? v.ar/v.gp : null, goal:'ratio'},
     {k:'delpct', n:'Delinquent %',  t:'%', of:v=>v.arn && v.deln!=null ? v.deln/v.arn*100 : null, goal:'del'},
-    {k:'cmfpct', n:'Comfort %',     t:'%', of:v=>v.appts && v.cmfa!=null ? v.cmfa/v.appts*100 : null}];
+    {k:'cmfpct', n:'Comfort %',     t:'%', of:v=>v.appts && v.cmfa!=null ? v.cmfa/v.appts*100 : null},
+    /* Jessica 24/11: contract discounts "$ and %" - as a share of gross production, like adjustments */
+    {k:'discpct', n:'Discount %',   t:'%', of:v=>v.gp && v.disc!=null ? v.disc/v.gp*100 : null}];
   /* the old sheet's goals row. Heather's email 2 (the list below is exactly hers) narrowed what the report shows -
      case starts and case acceptance (>70%) were on the old sheet and are NOT on her list, so they are not here. */
   const DEF_GOALS={col:[91,93], adj:[7,9], ratio:[5.5,6], del:[5,7]};
@@ -137,7 +158,7 @@
     const old=Array.isArray(s.oldsys) ? s.oldsys.filter(x=>typeof x==='string' && x.trim()).map(x=>x.trim().slice(0,80)) : DEF_OLDSYS.slice();
     return {medicaid:[...new Set(med)], oldsys:[...new Set(old)], goals:g, due, everyone:s.everyone!==false};
   }
-  const fieldsFor=(office, settings)=>FIELDS.filter(f=>(!f.medicaid || ((settings||{}).medicaid||[]).indexOf(office)>=0) &&
+  const fieldsFor=(office, settings)=>FIELDS.filter(f=>!f.auto && (!f.medicaid || ((settings||{}).medicaid||[]).indexOf(office)>=0) &&
     (!f.oldsys || ((settings||{}).oldsys||[]).indexOf(office)>=0));
   /* the calculated ratios of one month's numbers */
   function calc(v){ const out={}; CALC.forEach(c=>{ const x=c.of(v||{}); out[c.k]=x===null || !isFinite(x) ? null : r2(x); }); return out; }

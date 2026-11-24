@@ -12,10 +12,15 @@ const near=(a,b)=>Math.abs(a-b)<0.011;
 
 /* the list - exactly Heather's email 2, nothing more */
 const HEATHER=['Gross production','Gross collections','Net production adjustments','Net production','Accounts receivable','Number of accounts receivable',
-  'Delinquent accounts past 30 days','$ 90+ days past due','New patient exams','Active patients','Total discounts','RIP sold (Retainer Insurance Program)','Over estimated completion date','Total appointments','Comfort appointments',
+  'Delinquent accounts past 30 days','$ 90+ days past due','New patient exams','Active patients','Total discounts','RIP sold (Retainer Insurance Program)','Over estimated completion date','Kept clinical appointments','Comfort appointments',
   'Medicaid submissions','Medicaid denials','Medicaid approvals','Medicaid bandings','Medicaid production','Medicaid collections'];
-t('the report asks for exactly the things in Heather’s email 2 - comfort % as its two counts (case starts / case acceptance from the old sheet are not on it)',
-  M.FIELDS.length===24 && HEATHER.every(n=>M.FIELDS.some(f=>f.n===n)) && M.FIELDS.filter(f=>HEATHER.indexOf(f.n)<0).map(f=>f.k).join()==='osp,osc,osar' && !M.FIELDS.some(f=>/start|accept/i.test(f.n)));
+t('the report asks for Heather’s email 2 plus Jessica’s year sheet (24/11: new starts, comprehensive + Phase I debonds, A/R by age for patient and insurance) - comfort % as its two counts, no case acceptance',
+  M.FIELDS.length===37 && HEATHER.every(n=>M.FIELDS.some(f=>f.n===n)) &&
+  M.FIELDS.filter(f=>HEATHER.indexOf(f.n)<0).map(f=>f.k).join()==='osp,osc,osar,starts,dbc,dbp,pa_tot,pa_cur,pa_31,pa_61,pa_91,ia_tot,ia_cur,ia_31,ia_61,ia_91' && !M.FIELDS.some(f=>/accept/i.test(f.n)));
+t('the A/R ages are OrthoFi only: never in an office’s form, never asked for when a report is sent',
+  M.FIELDS.filter(f=>/^(pa|ia)_/.test(f.k)).every(f=>f.auto && f.from==='orthofi' && !f.flow) && !M.fieldsFor('Hobbs', M.cleanSettings(null)).some(f=>f.auto));
+t('debonds are typed from the practice software; new starts typed until OrthoFi’s way is proven; discount % worked out from gross production',
+  M.BY.dbc.from==='pms' && M.BY.dbp.from==='pms' && M.BY.starts.from==='orthofi' && M.BY.dbc.flow && M.BY.starts.flow && M.calc({gp:200000, disc:5000}).discpct===2.5);
 t('\u2026Medicaid, over-estimated completion date and comfort % are typed from the practice software (her words); the rest is OrthoFi\u2019s - RIP too (Heather 18/11: "It comes from Orthofi")',
   M.FIELDS.filter(f=>f.medicaid).every(f=>f.from==='pms') && M.BY.oecd.from==='pms' && M.BY.appts.from==='pms' && M.BY.cmfa.from==='pms' && M.BY.gp.from==='orthofi' && M.BY.deln.from==='orthofi' && M.BY.rip.from==='orthofi');
 t('the boxes show US commas (300,800.85; 1,059) and tidy to that when you leave one; saving reads past the commas (Cory: "These are americas can we have the commas?")',
@@ -24,8 +29,8 @@ t('new patient exams are typed from the practice software (Heather 21/11: "New P
 t('nobody types a percentage that can be worked out: the delinquent COUNT is kept, the % is calculated (Heather: "Instead of them doing the math")',
   M.BY.deln.t==='#' && !M.BY.del && M.calc({arn:200, deln:12}).delpct===6);
 t('…the 6 Medicaid numbers only for the Medicaid offices (Heather can change which in Settings)',
-  M.fieldsFor('Clovis', M.cleanSettings(null)).length===21 && M.fieldsFor('San Angelo', M.cleanSettings(null)).length===15 &&
-  M.fieldsFor('San Angelo', M.cleanSettings({medicaid:['San Angelo']})).length===21 && M.fieldsFor('Cruces LCO', M.cleanSettings(null)).length===24);
+  M.fieldsFor('Clovis', M.cleanSettings(null)).length===24 && M.fieldsFor('San Angelo', M.cleanSettings(null)).length===18 &&
+  M.fieldsFor('San Angelo', M.cleanSettings({medicaid:['San Angelo']})).length===24 && M.fieldsFor('Cruces LCO', M.cleanSettings(null)).length===27);
 /* 20/11/2026 - the old system (Heather: Mansfield, FOLC and LCO; "The OMs should type that in") */
 t('the 2 old-system boxes only for offices still on an old system: Mansfield, Cruces FFO, Cruces LCO (Heather can change which in Settings)',
   M.fieldsFor('Mansfield', M.cleanSettings(null)).some(f=>f.k==='osp') && M.fieldsFor('Cruces FFO', M.cleanSettings(null)).some(f=>f.k==='osar') &&
