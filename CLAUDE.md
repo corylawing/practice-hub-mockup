@@ -633,6 +633,17 @@ I can confidently say that the chat feature should go next. The production thing
     from their Microsoft one (check the live list read-only first). copyFromBytes still uploads the layout before the
     numbers (Excel copy / layout upload only - rare since the switch). ORTHOFI: any signed-in practice account can call
     /api/orthofi (totals only now) - an ORTHOFI_ALLOW setting would limit it to admins.
+67. **A/R BY AGE PROVEN vs ORTHOFI'S OWN REPORT (24/11/2026, read-only, Cory's Safari, portal.orthofi.com Reports ->
+    "PATIENT AR" = hash #12, PracticeId/PracticeLocationId/monthsFilterList, its "Tier" summary table - TOTALS ROW ONLY
+    read, never patient rows).** Oct 31 2026, ALL 8 offices, to the dollar: the feed's patient-accounts-receivable (as-of
+    month end, sum) = the report: outstandingBalance = Total; currentBalance = "Current Balance" (not past due);
+    pastDue10Day = "0-10 Days"; pastDue30Day = "11-30 Days"; pastDue60Day = "31-60 Days"; pastDue90Day = "61-90 Days";
+    pastDueOver90Day = ">90 Days" (NOT the names' face value - pastDueNNDay is the bucket ENDING near NN). OrthoFi's own
+    "Past Due Total" counts from day 0-10 (Hobbs $64,607) - Jessica's "past due" (asked: 31+?) changes which buckets add.
+    Insurance: the portal's INSURANCE A/R is a Tableau dashboard (NextGen redirect, drawn - unreadable from the page);
+    the feed's insurance ages (rep statuses: dollarsFuture, dollarsAged_1_30/31_60/61_90/Over_90) add up exactly to
+    rep.outstandingBalance, the insurance part of the A/R total already proven against Heather. San Angelo's 2nd location
+    (1657) adds 0. NEXT: fill pa_*/ia_* from these (keep 1-30 as its own box so Jessica's answer only changes the view).
 66. **MONTHLY YEAR SHEET IN THREE PARTS + ADMINS SEE IT LIVE (24/11/2026; hc260-262 LIVE).** Jessica Lynch (CSO, Admin)
     with Heather: "break this up into 3 separate chunks ... You can make these table or you can get creative with a
     dashboard" + "then determine how to view the other tabs". yearHTML(): .ychunk cards, each = tiles (year so far / latest
