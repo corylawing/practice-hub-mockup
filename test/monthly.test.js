@@ -178,7 +178,7 @@ t('the page: an "On a roll" strip (longest first, a run that ended this month sa
 t('a month still going counts the run up to the month before', /function runAt\(o, y, m\)\{ const p=isOpen\(y,m\) \? step\(y,m,-1\) : \{y,m\};/.test(P));
 
 /* switches and permissions */
-t('OFF on the live site until Cory says "monthly live" (an admin can preview with ?monthlypreview)', /const MONTHLY_LIVE=false;/.test(U) && /function monthlyOn\(\)/.test(U) && /monthlypreview/.test(U));
+t('OFF on the live site for staff until Cory says "monthly live"; admins (Heather, Jessica) see it there with no special link (24/11/2026)', /const MONTHLY_LIVE=false;/.test(U) && /function monthlyOn\(\)\{ if\(env\(\)!=='live' \|\| MONTHLY_LIVE\) return true;\s*try\{ return isAdmin\(realMe\(\)\); \}catch\(_\)\{ return false; \} \}/.test(U));
 t('a tab: everyone in the sandbox; live = the switch, then Teams & Access (or an admin)',
   /\{k:'monthly',\s+n:'[^']*Monthly Report',\s+href:'monthly\.html',\s+show:\(\)=>env\(\)!=='live' \|\| \(monthlyOn\(\) && \(isAdmin\(me\(\)\) \|\| atLeast\('monthly','view'\)\)\)\}/.test(U));
 t('starting permissions: Admin everything, Executive + Leadership read, Office Managers fill in',

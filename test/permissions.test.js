@@ -191,9 +191,10 @@ const t=(n,v)=>{ (v?ok:bad).push(n); };
   t('the COO is still an admin', H.PH.isAdmin()===true);
   t('admin.html is NOT locked for her', H.locked()===false);
   /* Every tab - the TC Tracker included since it went live (19/10/2026, Cory: "yes on production"). */
-  /* Monthly Report (18/11/2026) waits for its own switch (MONTHLY_LIVE) - monthly.test.js checks that. */
+  /* Monthly Report (18/11/2026) waits for its own switch (MONTHLY_LIVE) for staff - but ADMINS see it on the live site
+     since 24/11/2026 (Cory: "make sure heather and jessica have access in production"; monthly.test.js checks the rule). */
   /* Tasks (19/11/2026) had its own switch; LIVE since 20/11/2026 (TASKS_LIVE, tasks.test.js). */
-  t('and her menu has every tab, Payroll since 04/11 and Tasks since 20/11 (the Academy, Chat and OrthoFi insights are sandbox mock-ups; the Monthly Report waits for its switch)', H.tabs().length===H.PH.NAV.filter(x=>x.k!=='academy' && x.k!=='chat' && x.k!=='monthly' && x.k!=='insights').length && H.tabs().indexOf('tasks')>=0 && H.tabs().indexOf('insights')<0);
+  t('and her menu has every tab, Payroll since 04/11, Tasks since 20/11 and the Monthly Report since 24/11 for admins (the Academy, Chat and OrthoFi insights are sandbox mock-ups)', H.tabs().length===H.PH.NAV.filter(x=>x.k!=='academy' && x.k!=='chat' && x.k!=='insights').length && H.tabs().indexOf('monthly')>=0 && H.tabs().indexOf('tasks')>=0 && H.tabs().indexOf('insights')<0);
   t('the Chat mock-up never shows on the live site', H.tabs().indexOf('chat')<0);
   t('...and neither does its chat button beside the bell', H.PH.NAV.find(x=>x.k==='chat').show()===false);
   const CH=load({page:'chat'});
@@ -233,6 +234,7 @@ const t=(n,v)=>{ (v?ok:bad).push(n); };
   t('an office manager gets her own office only',
     JSON.stringify(OM.PH.offices())==='["Cruces FFO"]');
   t('an office manager does NOT get Admin', OM.PH.can('admin')==='none');
+  t('...and does NOT see the Monthly Report on the live site yet (staff wait for its switch; only admins see it)', OM.tabs().indexOf('monthly')<0 && OM.PH.monthlyOn()===false);
 }
 
 /* ---- 6c. HOME AND DOCUMENTS RENDER THE SIGNED-IN PERSON, NOT THE DEMO ADMIN.

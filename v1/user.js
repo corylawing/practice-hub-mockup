@@ -2150,7 +2150,9 @@
      ph_pay_senders in the shared list (names only, no pay) - see and send their own office's sheet. The sheets
      themselves are in the locked payroll folder (paystore.js), never the shared list. */
   /* MONTHLY REPORT (18/11/2026): the offices' month-end numbers (Heather's monitor report). Sandbox first - false keeps
-     it off the live site until Cory says "monthly live". An admin can preview it there with monthly.html?monthlypreview. */
+     it off the live site until Cory says "monthly live". ADMINS SEE IT ON THE LIVE SITE (24/11/2026, Cory: "make sure
+     heather and jessica have access in production" - both are Admin) in their menu, no special link needed; everyone else
+     waits for the switch. monthly.html?monthlypreview still works (it does nothing more now). */
   const MONTHLY_LIVE=false;
   /* CELEBRATIONS (18/11/2026): birthdays + work anniversaries on Home (party.js). LIVE 19/11/2026 (Cory: "heather said to
      go to production with birthday and workiversery"). false = the live site goes back to no Home card, no admin dates,
@@ -2202,7 +2204,7 @@
   function tasksOn(){ if(env()!=='live' || TASKS_LIVE) return true;
     try{ if(/[?&]taskspreview\b/.test(location.search||'')) sessionStorage.setItem('ph_tasks_preview','1'); return sessionStorage.getItem('ph_tasks_preview')==='1' && isAdmin(realMe()); }catch(_){ return false; } }
   function monthlyOn(){ if(env()!=='live' || MONTHLY_LIVE) return true;
-    try{ if(/[?&]monthlypreview\b/.test(location.search||'')) sessionStorage.setItem('ph_monthly_preview','1'); return sessionStorage.getItem('ph_monthly_preview')==='1' && isAdmin(realMe()); }catch(_){ return false; } }
+    try{ return isAdmin(realMe()); }catch(_){ return false; } }
   const PAY_LIVE=true;                // ON for staff 04/11/2026 (Heather: "I did all the instructions, I think we are good to go"); first pay period #24
   function payPreview(){
     try{
