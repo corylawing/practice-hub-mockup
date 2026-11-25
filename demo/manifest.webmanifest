@@ -1,6 +1,6 @@
 {
-  "name": "Home-Brace",
-  "short_name": "Home-Brace",
+  "name": "Practice Hub",
+  "short_name": "Practice Hub",
   "start_url": "home.html",
   "scope": "./",
   "display": "standalone",

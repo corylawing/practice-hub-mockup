@@ -1,17 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script src="demo-shim.js?v=d202611250847"></script>
+<script src="demo-shim.js?v=d202611250900"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Home-Brace · Monthly Report</title>
+<title>Practice Hub · Monthly Report</title>
+<meta name="description" content="Try the live demo: schedules, production, new-patient consults, payroll, monthly reports, tasks and team chat — one hub for every office of a multi-location practice.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Practice Hub">
+<meta property="og:title" content="Practice Hub | Multi-Location Practice Operations Hub">
+<meta property="og:description" content="Try the live demo: schedules, production, new-patient consults, payroll, monthly reports, tasks and team chat — one hub for every office of a multi-location practice.">
+<meta property="og:image" content="https://corylawing.github.io/practice-hub-mockup/demo/share.png">
+<meta property="og:image:width" content="1734">
+<meta property="og:image:height" content="907">
+<meta property="og:url" content="https://corylawing.github.io/practice-hub-mockup/demo/monthly.html">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Practice Hub | Multi-Location Practice Operations Hub">
+<meta name="twitter:description" content="Try the live demo: schedules, production, new-patient consults, payroll, monthly reports, tasks and team chat — one hub for every office of a multi-location practice.">
+<meta name="twitter:image" content="https://corylawing.github.io/practice-hub-mockup/demo/share.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="icon" href="../assets/favicon.png?v=2" type="image/png">
 <meta name="theme-color" content="#0F2A4A">
-<meta name="apple-mobile-web-app-title" content="Home-Brace">
+<meta name="apple-mobile-web-app-title" content="Practice Hub">
 <link rel="apple-touch-icon" sizes="180x180" href="../assets/icons/apple-touch-icon.png?v=3">
-<meta name="description" content="The practice’s central hub — schedule, production, documents and team, in one place. Brightline · Maple · Riverbend.">
 <style>
   :root{
     --navy:#0F2A4A; --navy2:#25456e; --teal:#149B96; --teal2:#2BC0B8; --teal-soft:#E5F4F3; --teal-600:#0F827E;
@@ -325,19 +337,19 @@
   }
   @media (prefers-reduced-motion: reduce){ *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important} }
 </style>
-<script src="user.js?v=hc268d202611250847"></script>
-  <script src="store.js?v=hc268d202611250847"></script>
-  <script src="gate.js?v=hc268d202611250847"></script>
-  <script src="prodbook.js?v=hc268d202611250847"></script>
-  <script src="monthly.js?v=hc268d202611250847"></script>
-  <script src="orthofi.js?v=hc268d202611250847"></script>
+<script src="user.js?v=hc268d202611250900"></script>
+  <script src="store.js?v=hc268d202611250900"></script>
+  <script src="gate.js?v=hc268d202611250900"></script>
+  <script src="prodbook.js?v=hc268d202611250900"></script>
+  <script src="monthly.js?v=hc268d202611250900"></script>
+  <script src="orthofi.js?v=hc268d202611250900"></script>
 </head>
 <body>
 <div class="ribbon">DEMO — made-up numbers. Use “Try it as”: an office manager first, then the practice administrator.</div>
 <header class="hdr">
   <div class="hdr-in">
-    <span class="mark" aria-label="Home-Brace"><img src="../assets/logo-mark.png?v=2" alt="" width="34" height="34"></span>
-    <span class="brand">Home-<i>Brace</i><small>Monthly Report</small></span>
+    <span class="mark" aria-label="Practice Hub"><img src="../assets/logo-mark.png?v=2" alt="" width="34" height="34"></span>
+    <span class="brand">Practice <i>Hub</i><small>Monthly Report</small></span>
     <span class="v1">Demo</span>
   </div>
 </header>
@@ -391,7 +403,7 @@
   const refused=r=>!r || !!(r.blocked || r.error);
   function showWarn(){ const w=el('pagewarn'); if(!w) return;
     const ys=Object.keys(YFAIL).map(Number).filter(y=>YFAIL[y] && y<=Y && y>=Y-3).sort();
-    const t=(ys.length ? 'Home-Brace couldn’t read the saved reports for '+ys.join(' and ')+' — what’s shown may be missing or out of date (an office can show as Late), and nothing is saved over them. Reload the page to try again. ' : '')+
+    const t=(ys.length ? 'Practice Hub couldn’t read the saved reports for '+ys.join(' and ')+' — what’s shown may be missing or out of date (an office can show as Late), and nothing is saved over them. Reload the page to try again. ' : '')+
       (SETFAIL ? 'The report’s settings couldn’t be read — the targets and offices shown are the starting ones, and settings can’t be changed until the page is reloaded. ' : '')+SAVEWARN;
     w.textContent=t.trim(); w.hidden=!w.textContent; }
   function notSaved(r, tail){ const why=String((r && (r.why || r.error)) || '').slice(0,160).replace(/\.?\s*$/, '.');
@@ -651,7 +663,7 @@
     talk.sort(M.byWeight);
     if(talk.length){ L.push('','Worth a conversation:'); talk.slice(0,10).forEach(t=>L.push('• '+t.o+' — '+t.text)); }
     const late=offs.filter(o=>M.status(recOf(o,y,m),y,m,SET,NOW)==='late'); if(late.length) L.push('','Still to send: '+late.join(', ')+'.');
-    L.push('','Details: Home-Brace → Monthly Report.');
+    L.push('','Details: Practice Hub → Monthly Report.');
     return L.join('\n');
   }
   async function copy(){
@@ -679,7 +691,7 @@
       {t: typ ? 'Type these' : 'From the practice software', s: typ ? 'From the practice software'+(fields.some(f=>f.from==='orthofi' && !locked(f)) ? ', plus anything OrthoFi hasn’t filled in yet.' : '.') : 'Typed by the office.',
         f:fields.filter(f=>!f.medicaid && !f.oldsys && !locked(f))},
       {t:'Medicaid', s:'Numbers only — never a patient’s name.', f:fields.filter(f=>f.medicaid && !locked(f))},
-      {t:'Old system', s:'From your old practice software — Home-Brace adds these to OrthoFi’s numbers.', f:fields.filter(f=>f.oldsys && !locked(f))}];
+      {t:'Old system', s:'From your old practice software — Practice Hub adds these to OrthoFi’s numbers.', f:fields.filter(f=>f.oldsys && !locked(f))}];
     groups.forEach(g=>{ if(!g.f.length) return; h+='<div class="grp"><h3>'+g.t+'</h3><div class="gsub">'+g.s+'</div>'+g.f.map(f=>fieldRow(f,r,typ)).join('')+'</div>'; });
     const ofs=fields.filter(locked);
     if(ofs.length) h+='<div class="grp"><h3>From OrthoFi</h3><div class="gsub">'+(ORTHOFI_CONNECTED ? 'Filled in from OrthoFi each day'+(r.of?' — last on '+day(r.of):'')+'. Nothing to type.' : 'Filled in from OrthoFi.')+'</div><div class="ofgrid">'+
@@ -976,7 +988,7 @@
   }
 
   /* ---------- SETTINGS (Morgan): which offices bill Medicaid, the targets, the due day ---------- */
-  /* SETTINGS - like the rest of Home-Brace (Jordan 18/11: "very ux friendly like the rest of the app"): plain cards, each
+  /* SETTINGS - like the rest of Practice Hub (Jordan 18/11: "very ux friendly like the rest of the app"): plain cards, each
      change saves the moment it's made and says so (no Save button to forget), switches instead of tick boxes. */
   const TGT=[
     {k:'col',   n:'Collection %',      how:'Collected ÷ produced',                unit:'%',  step:0.5, ex:'An office collecting less than the first number is “Off target”.'},
@@ -1006,7 +1018,7 @@
     h+='<div class="card"><h2>Offices that bill Medicaid</h2><div class="sub">These offices get the Medicaid boxes. A new office added in Admin → Locations shows up here by itself.</div><div class="ochips">'+
       offs.map(o=>{ const on=SET.medicaid.indexOf(o)>=0, c=(PH.colorForOffice(o)||{}).dot||'#94a3b8';
         return sw(on, "MONTHLY.setMed(this.dataset.o)", '<i class="odot" style="background:'+esc(c)+'"></i>'+esc(o), ' data-o="'+esc(o)+'"'); }).join('')+'</div></div>';
-    h+='<div class="card"><h2>Offices still on an old system</h2><div class="sub">Their office manager types the old system’s production, collections and A/R; Home-Brace adds them to OrthoFi’s. Switch an office off once its old system is done.</div><div class="ochips">'+
+    h+='<div class="card"><h2>Offices still on an old system</h2><div class="sub">Their office manager types the old system’s production, collections and A/R; Practice Hub adds them to OrthoFi’s. Switch an office off once its old system is done.</div><div class="ochips">'+
       offs.map(o=>{ const on=SET.oldsys.indexOf(o)>=0, c=(PH.colorForOffice(o)||{}).dot||'#94a3b8';
         return sw(on, "MONTHLY.setOld(this.dataset.o)", '<i class="odot" style="background:'+esc(c)+'"></i>'+esc(o), ' data-o="'+esc(o)+'"'); }).join('')+'</div></div>';
     h+='<div class="card"><h2>When reports are due</h2><div class="sub">Offices see the due date on their report, and you see who’s late.</div>'+
@@ -1033,13 +1045,13 @@
   /* ---------- PAST MONTHS FROM THE OLD EXCEL (Morgan: "I would love the past months to be put in") ----------
      Choose the offices' monitor sheets -> each is read in this browser (PH_BOOK), shown with what it found and anything
      that doesn't add up -> "Bring them in" fills EMPTY boxes only (mergeImport). Nothing leaves the browser except the
-     numbers saved into Home-Brace; the file itself is not kept. */
+     numbers saved into Practice Hub; the file itself is not kept. */
   let IMP=[];
   function guessOffice(name){ const toks=String(name).toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
     const hits=PH.officeNames().filter(o=>{ const ot=o.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean); return ot.every(t=>toks.indexOf(t)>=0) || (ot.length>1 && ot.some(t=>t.length>2 && toks.indexOf(t)>=0 && PH.officeNames().filter(x=>x.toLowerCase().split(/[^a-z0-9]+/).indexOf(t)>=0).length===1)); });
     return hits.length===1 ? hits[0] : ''; }
   function importCard(){
-    let h='<div class="card"><h2>Bring in past months from Excel</h2><div class="sub">Choose the offices’ monitor report files (all at once is fine). Home-Brace reads the numbers, shows you what it found and anything that doesn’t add up, and only fills boxes that are still empty — nothing already here is replaced.</div>'+
+    let h='<div class="card"><h2>Bring in past months from Excel</h2><div class="sub">Choose the offices’ monitor report files (all at once is fine). Practice Hub reads the numbers, shows you what it found and anything that doesn’t add up, and only fills boxes that are still empty — nothing already here is replaced.</div>'+
       '<label class="drop" id="impdrop" ondragover="MONTHLY.impDrag(event,1)" ondragleave="MONTHLY.impDrag(event,0)" ondrop="MONTHLY.impDrop(event)">'+
         '<span class="dico" aria-hidden="true">📄</span><b>Drop the Excel files here</b><span class="soft">or <u>choose them</u> — all eight at once is fine</span>'+
         '<input type="file" id="impfiles" accept=".xlsx" multiple onchange="MONTHLY.impRead(this.files)"></label>';
@@ -1229,7 +1241,7 @@
 })();
 </script>
 <script>PH.nav('monthly');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc268d202611250847"></script>
+<script src="tour.js?v=hc268d202611250900"></script>
 <script>
 Tour.init([
   {sel:'.statusline, .openbanner', title:'Who has sent it', body:'Every office’s report for the month, in one line: final, waiting for you, or late. No chasing eight Excel files.'},

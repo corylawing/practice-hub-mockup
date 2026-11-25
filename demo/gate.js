@@ -1,4 +1,4 @@
-/* Home-Brace sign-in gate.
+/* Practice Hub sign-in gate.
    Requires a real Microsoft sign-in before the page is usable.
 
    HONEST LIMIT: this hides the INTERFACE, not the FILES. Anything baked into the
@@ -24,7 +24,7 @@
      meant Azure opened GitHub's page and then sat there blank forever. Every host this runs
      on needs its own /v1/auth.html registered as a redirect URI in Entra. */
   var REDIRECT = location.origin + location.pathname.replace(/\/[^\/]*$/, '/') + 'auth.html';
-  /* AN IPHONE HOME-SCREEN APP (phone alerts, 22/10/2026): Apple only sends alerts to Home-Brace once it is on the home
+  /* AN IPHONE HOME-SCREEN APP (phone alerts, 22/10/2026): Apple only sends alerts to Practice Hub once it is on the home
      screen, and a home-screen app can't use the sign-in popup. There the whole page goes to Microsoft and back
      instead: the answer lands on auth.html, which hands it straight back to the page that started (BACK below), and
      handleRedirectPromise() reads it here. Live too since 04/11/2026 (alerts on): a normal browser tab keeps the popup. */
@@ -32,7 +32,7 @@
     !!(global.matchMedia && global.matchMedia('(display-mode: standalone)').matches);
   /* PHONES AND TABLETS TOO (11/11/2026, hc144). Morgan: Dr. Chen "is getting stuck after the authenticator".
      On a phone the sign-in "popup" is a second tab. He leaves for the Authenticator app, comes back to that tab, and
-     Microsoft sends it to the blank auth.html - while the Home-Brace tab that should read it and close it sits paused
+     Microsoft sends it to the blank auth.html - while the Practice Hub tab that should read it and close it sits paused
      in the background, so nothing happens. Signing in on the same tab (the home-screen app's way, live since 04/11)
      has no second tab to get lost in. iPadOS calls itself a Mac, so a Mac with a touch screen counts too. */
   var NAV = global.navigator || {};
@@ -77,7 +77,7 @@
     g.innerHTML =
       '<div class="box">' +
       '<img src="../assets/logo-mark.png" alt="">' +
-      '<h1>Home-Brace</h1>' +
+      '<h1>Practice Hub</h1>' +
       '<p>This hub contains the practice’s production figures. Sign in with your work ' +
       'Microsoft account to continue.</p>' +
       '<button id="phgatebtn">Sign in with Microsoft</button>' +
@@ -148,7 +148,7 @@
           })
           .then(function(r){ return r.accessToken; });
       },
-      /* The Microsoft sign-in itself (the ID token, issued to Home-Brace). The alert sender checks it, so only people
+      /* The Microsoft sign-in itself (the ID token, issued to Practice Hub). The alert sender checks it, so only people
          signed in to the practice can send alerts (03/11/2026). It lasts an hour: renewed when under 5 minutes are left. */
       idToken: function(){
         var req = { scopes: SCOPES, account: account };
@@ -174,7 +174,7 @@
         if (USE_REDIRECT) return goSignIn(app, account, scopes);
         return app.acquireTokenPopup({ scopes: scopes, account: account }).then(function(r){ return r.accessToken; });
       },
-      /* SIGN OUT (20/11/2026): with the sign-in remembered, a shared computer needs a way out. Clears Home-Brace's copy
+      /* SIGN OUT (20/11/2026): with the sign-in remembered, a shared computer needs a way out. Clears Practice Hub's copy
          of the sign-in on this device only (Microsoft's own sign-in elsewhere is untouched), and the next sign-in here
          asks which account - so the next person at the front desk can be themselves. */
       signOut: function(){

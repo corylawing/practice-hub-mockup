@@ -1,14 +1,14 @@
 /* TC TRACKER STORAGE - its own locked folder on the live site.
 
    17/10/2026. The TC Tracker holds patient names, birth dates and phone numbers. The hub's
-   shared list (HomeBraceData) can be read by everyone in Home-Brace, so consults live as files
-   in one folder of the Home-Brace site's Documents library, "Home-Brace TC Tracker" - beside
-   Home-Brace Documents, never inside it. Jordan: "lets do it like we did for documents then as
+   shared list (HomeBraceData) can be read by everyone in Practice Hub, so consults live as files
+   in one folder of the Practice Hub site's Documents library, "Practice Hub TC Tracker" - beside
+   Practice Hub Documents, never inside it. Jordan: "lets do it like we did for documents then as
    long as its scalable": the folder is locked once by hand (Members and Visitors removed) and
    from then on Admin gives and takes back each person's access from Teams & Access (docs.js
    tcGrant / tcRevoke). A folder, not a list, because Microsoft lets an app share a folder with
    a person; a list it does not.
-       Documents / Home-Brace TC Tracker / ph_tclog_lakeview_2026-10.json   (one file per office-month)
+       Documents / Practice Hub TC Tracker / ph_tclog_lakeview_2026-10.json   (one file per office-month)
    Consult slots and the editable lists stay in HomeBraceData through PH_STORE: no patient
    details in them.
 
@@ -28,8 +28,8 @@
 (function(global){
   'use strict';
   var GRAPH = 'https://graph.microsoft.com/v1.0';
-  var HOST = 'brightline.sharepoint.example', SITE_PATH = '/sites/Home-Brace';
-  var FOLDER = 'Home-Brace TC Tracker';
+  var HOST = 'brightline.sharepoint.example', SITE_PATH = '/sites/Practice Hub';
+  var FOLDER = 'Practice Hub TC Tracker';
   var RETRY_WAITS = [800, 2500, 6000];
 
   function live(){ return !!(global.PH && global.PH.isLive && global.PH.isLive()); }
@@ -65,7 +65,7 @@
     return attempt();
   }
   var NO_ACCESS = 'Your account doesn’t have access to the TC Tracker’s patient folder yet. ' +
-    'Home-Brace gives it from Admin → Teams & Access (the TC Tracker column) - ask your administrator.';
+    'Practice Hub gives it from Admin → Teams & Access (the TC Tracker column) - ask your administrator.';
 
   /* The folder. It is made the first time anyone uses the tracker. Someone who can't see it
      (it is locked and they haven't been given access) gets "it's already there" when trying to

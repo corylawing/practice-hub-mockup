@@ -1,13 +1,13 @@
 /* MONTHLY REPORT - the rules (18/11/2026). Morgan: "At the beginning of the month each office sends a monthly monitor
    report from the month prior. The offices who have Medicaid have an extra section ... I would love for them to start
-   building this in Home Brace and it keeps record of each month and the years past, present and future." Her list
+   building this in Practice Hub and it keeps record of each month and the years past, present and future." Her list
    (email 2): the numbers below + 6 Medicaid ones; "All Medicaid, overestimated completion date and comfort percentage
    reporting will come from the PMS manually entered" - the rest from OrthoFi (filled in nightly once connected).
    Jordan: "It has to be more than just her excel" - so beyond the sheet: the gap to goal in DOLLARS, what needs a
    conversation, the month so far every morning, a mismatch flag when a typed number and OrthoFi disagree, notes.
    WORDING (Morgan 18/11 IDEA: "change the wording to target instead of goal. I know it may have said that on the sheets
    ... but I was not the original creator of that"): everything people READ says "target"; the code keeps its names.
-   Kept in Home-Brace's shared list: one record per year  ph_monthly_<year>  {v:1, o:{<office>:{<mm>:<month>}}}
+   Kept in Practice Hub's shared list: one record per year  ph_monthly_<year>  {v:1, o:{<office>:{<mm>:<month>}}}
      <month> = {v:{field:number}, src:{field:'orthofi'|'typed'}, at:{field:iso}, by:{field:who},
                 ofv:{field:OrthoFi's latest number}, of:iso (OrthoFi's last refresh), sent:{at,by}, final:{at,by},
                 notes:[{t,by,at}]}
@@ -26,7 +26,7 @@
     {k:'np',   n:'Net production',                     t:'$', from:'orthofi', flow:true},
     {k:'ar',   n:'Accounts receivable',                t:'$', from:'orthofi'},
     {k:'arn',  n:'Number of accounts receivable',      t:'#', from:'orthofi'},
-    /* Morgan 18/11: "Instead of them doing the math to find the percentage. Maybe Home Brace could calculate it" - so the
+    /* Morgan 18/11: "Instead of them doing the math to find the percentage. Maybe Practice Hub could calculate it" - so the
        COUNT is kept (as the old sheet's column K) and the % of accounts is worked out (CALC delpct, the old L = K/J). */
     {k:'deln', n:'Delinquent accounts past 30 days',   t:'#', from:'orthofi'},
     {k:'ar90', n:'$ 90+ days past due',                t:'$', from:'orthofi'},
@@ -40,7 +40,7 @@
     {k:'rip',  n:'RIP sold (Retainer Insurance Program)', t:'#', from:'orthofi', flow:true},
     {k:'oecd', n:'Over estimated completion date',     t:'%', from:'pms'},
     /* COMFORT % (Morgan 18/11: "The X is number of total appts and the Y is number of comfort appts"): Ortho2 doesn't show
-       the %, so the office types the two counts and Home-Brace works it out (CALC cmfpct = comfort / total). */
+       the %, so the office types the two counts and Practice Hub works it out (CALC cmfpct = comfort / total). */
     /* Jamie 24/11: "total kept clinical appointments" - the comfort % is comfort appts ÷ these */
     {k:'appts', n:'Kept clinical appointments',        t:'#', from:'pms', flow:true},
     {k:'cmfa',  n:'Comfort appointments',              t:'#', from:'pms', flow:true},
@@ -52,7 +52,7 @@
     {k:'mdc',  n:'Medicaid collections',               t:'$', from:'pms', flow:true, medicaid:true},
     /* THE OLD SYSTEM (20/11/2026, Morgan: Hillcrest, BRB and RBO "have patient AR accounts in their PMS since they only
        recently started using Orthofi"; "BRB does also include money from their PMS"; "The OMs should type that in, I
-       can't see it"). Typed by the office manager from their old practice software; Home-Brace adds each to OrthoFi's
+       can't see it"). Typed by the office manager from their old practice software; Practice Hub adds each to OrthoFi's
        part (PARTS below). Only offices on the Settings list get them - when an office's old system is done, it comes off. */
     {k:'osp',  n:'Old system production',              t:'$', from:'pms', flow:true, oldsys:true, help:'From your old practice software — added to OrthoFi’s production'},
     {k:'osc',  n:'Old system collections',             t:'$', from:'pms', flow:true, oldsys:true, help:'From your old practice software — added to OrthoFi’s collections'},
@@ -133,7 +133,7 @@
     return out;
   }
   /* ONE office-month laid onto the year AS STORED (21/11/2026, code review): a save used to send cleanYear() of the whole
-     year, so a tab running an older Home-Brace stripped every field a newer one had added, in every office. Now only the
+     year, so a tab running an older Practice Hub stripped every field a newer one had added, in every office. Now only the
      month being saved changes; other offices and months stay as stored, and a field this version doesn't know is kept. */
   const MONTH_KEYS=['v','src','at','by','ofv','of','ofp','sent','final','notes'];
   function putMonth(stored, office, m, month){
@@ -257,7 +257,7 @@
      below are read - nothing else on the sheet (the Medicaid area of some sheets has patient names typed beside it).
      cells: {A1:{v}, ...} (PH_BOOK's parse). Returns {months:{mm:{field:number}}, medicaid:bool, checks:[{m,text}], sign}.
      ADJUSTMENTS' SIGN: most sheets type a write-off as a minus (net = gross + adjustments); one types it as a plus and
-     subtracts it. Each sheet's own way is read from its months (net vs gross +/- adjustments) and turned into Home-Brace's
+     subtracts it. Each sheet's own way is read from its months (net vs gross +/- adjustments) and turned into Practice Hub's
      (minus = written off). A month where net production is neither is kept as typed and listed as a check. */
   const XL_MAIN={'gross production':'gp','gross collections':'gc','net production adjustments':'adj','net production':'np',
     'accounts receivable':'ar','# of accounts receivable':'arn','# of delinquent accounts (pts. 30+)':'deln','np exam':'npe'};
@@ -298,7 +298,7 @@
     }
     return out;
   }
-  /* put a sheet's months in: EMPTY boxes only - a number already in Home-Brace (typed, or OrthoFi's) is never replaced,
+  /* put a sheet's months in: EMPTY boxes only - a number already in Practice Hub (typed, or OrthoFi's) is never replaced,
      and where the sheet says something different it is listed; a month marked FINAL is not touched at all. The months count as sent (Morgan already has them).
      np (net production) is not one of Morgan's 20 boxes - FIELDS has it - so it comes in like the rest. */
   function mergeImport(yearRec, office, months, stamp, who){

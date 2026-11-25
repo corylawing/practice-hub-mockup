@@ -1,5 +1,5 @@
 /* ADMIN -> USAGE: the adoption dashboard (10/11/2026). Jordan: the practice asked "to put in ADMIN so dashboard to see usage
-   of Home-Brace (non admins). Who is logging in per different period. Basic an adoption dashboard" - "Make it a real
+   of Practice Hub (non admins). Who is logging in per different period. Basic an adoption dashboard" - "Make it a real
    adoption dashboard. Not too much but very clear with a few tiles".
    Reads every person's visit record (ph_use_<email>, written by user.js useTick: who, which section, which day) and
    lays it against the team list: four tiles (adoption, using it today, days used, never signed in), people per day,
@@ -48,7 +48,7 @@
   }
   /* One period: the tiles, people per day, by office, by section, and each person's line. */
   /* COUNTING STARTS THE DAY IT WENT LIVE (12/11/2026). Jordan, of "30 days" drawn as 27 empty days and 3 bars: "Probably
-     don't need to show the months before this was live". A period now starts no earlier than the first visit Home-Brace
+     don't need to show the months before this was live". A period now starts no earlier than the first visit Practice Hub
      ever counted (anyone's): the chart, Days used ("of 3", not "of 30"), the office and section counts all start there.
      A period wholly before it is empty (and Admin doesn't offer it - see paint). */
   const dayOf=iso=>{ const d=new Date(iso); return isNaN(d) ? String(iso||'').slice(0,10) : isoDay(d); };
@@ -175,16 +175,16 @@
     const label=cut ? 'since '+fmtShort(S.since) : ((PERIODS.find(p=>p[0]===KIND)||[])[1]||'');
     let h='<div class="use-top" role="group" aria-label="Period">'+offered.map(p=>'<button type="button" class="chip'+(KIND===p[0]?' on':'')+'" data-k="'+p[0]+'" aria-pressed="'+(KIND===p[0])+'">'+p[1]+'</button>').join('')+
       '<label><input type="checkbox" data-adm'+(ADMINS?' checked':'')+'> Include admins</label></div>';
-    h+='<p class="use-since"><b>'+esc(fmtDay(S.from))+(S.from!==S.to?' – '+esc(fmtDay(S.to)):'')+'</b>'+(S.since ? ' · Home-Brace has counted visits since '+esc(fmtShort(S.since))+(S.since>period(KIND, today).from && KIND!=='today' ? ', so this starts there' : '')+'.' : ' · Nothing counted yet - visits count from the day this went live.')+'</p>';
+    h+='<p class="use-since"><b>'+esc(fmtDay(S.from))+(S.from!==S.to?' – '+esc(fmtDay(S.to)):'')+'</b>'+(S.since ? ' · Practice Hub has counted visits since '+esc(fmtShort(S.since))+(S.since>period(KIND, today).from && KIND!=='today' ? ', so this starts there' : '')+'.' : ' · Nothing counted yet - visits count from the day this went live.')+'</p>';
     h+='<div class="use-tiles">'+
-      '<div class="use-tile"><div class="k">Adoption · '+esc(label)+'</div><div class="v">'+pct(S.adoption)+'</div><div class="s">'+S.active+' of '+S.total+' people used Home-Brace</div><div class="use-meter" aria-hidden="true"><i style="width:'+Math.round((S.adoption||0)*100)+'%"></i></div></div>'+
+      '<div class="use-tile"><div class="k">Adoption · '+esc(label)+'</div><div class="v">'+pct(S.adoption)+'</div><div class="s">'+S.active+' of '+S.total+' people used Practice Hub</div><div class="use-meter" aria-hidden="true"><i style="width:'+Math.round((S.adoption||0)*100)+'%"></i></div></div>'+
       '<div class="use-tile"><div class="k">Using it today</div><div class="v">'+S.today+'</div><div class="s">'+(S.today===1?'person':'people')+' so far today</div></div>'+
       '<div class="use-tile"><div class="k">Days used</div><div class="v">'+(S.avgDays==null?'—':(Math.round(S.avgDays*10)/10))+'</div><div class="s">'+(S.avgDays==null?'no one yet':'days each, of '+S.days+', for those using it')+'</div></div>'+
       '<div class="use-tile"><div class="k">Never signed in</div><div class="v">'+S.never+'</div>'+(S.never?'<button type="button" class="s" data-who="never">See who →</button>':'<div class="s">Everyone has been in</div>')+'</div>'+
       '</div>';
     const max=Math.max(1, ...S.perDay.map(x=>x.n));
     h+='<div class="use-card"><h3>People using it each day</h3><p class="sub">'+(KIND==='today'?'The last 7 days':'Each day of the period')+(ADMINS?'':', admins left out')+'.</p>'+
-      '<div class="use-chart" role="img" aria-label="People using Home-Brace each day"><span class="ymax">'+max+'</span>'+
+      '<div class="use-chart" role="img" aria-label="People using Practice Hub each day"><span class="ymax">'+max+'</span>'+
       S.perDay.map(x=>'<span class="b'+(x.n?'':' zero')+'" tabindex="0" data-tip="'+esc(fmtDay(x.d))+': '+x.n+' '+(x.n===1?'person':'people')+'" aria-label="'+esc(fmtDay(x.d))+': '+x.n+'"><i style="height:'+Math.max(2, Math.round(x.n/max*100))+'%"></i></span>').join('')+'</div>'+
       (S.perDay.length ? '<div class="use-x"><span>'+esc(fmtShort(S.perDay[0].d))+'</span>'+(S.perDay.length>2?'<span>'+esc(fmtShort(S.perDay[Math.floor(S.perDay.length/2)].d))+'</span>':'')+(S.perDay.length>1?'<span>'+esc(fmtShort(S.perDay[S.perDay.length-1].d))+'</span>':'')+'</div>' : '')+'</div>';
     h+='<div class="use-two"><div class="use-card"><h3>By office</h3><p class="sub">People on the team list who used it, '+esc(label.toLowerCase())+'.</p><div class="use-bars">'+

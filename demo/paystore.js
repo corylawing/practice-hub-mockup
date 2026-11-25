@@ -1,10 +1,10 @@
 /* PAYROLL STORAGE - its own locked folder on the live site, ONE FOLDER PER OFFICE.
 
    01/11/2026. Morgan: "We can go live with the payroll sheet." Pay is private: an office's hours, bonuses and notes
-   are for that office's sender and Morgan, not the other offices, and not everyone in Home-Brace (the hub's shared
+   are for that office's sender and Morgan, not the other offices, and not everyone in Practice Hub (the hub's shared
    list, HomeBraceData, can be read by all of them). So, like the TC Tracker (tcstore.js), payroll lives as files in
-   a folder of the Home-Brace site's Documents library, beside Home-Brace Documents and never inside it:
-       Documents / Home-Brace Payroll /                     locked once by hand (Members and Visitors removed)
+   a folder of the Practice Hub site's Documents library, beside Practice Hub Documents and never inside it:
+       Documents / Practice Hub Payroll /                     locked once by hand (Members and Visitors removed)
            Cedar Grove /   people.json, sheet_2026-23.json ...  that office's sender(s) + whoever manages payroll
            Lakeview / ...                                       one folder per office
            Morgan /    settings.json, cols_2026-23.json     whoever manages payroll ONLY: bonus amounts, her
@@ -25,8 +25,8 @@
 (function(global){
   'use strict';
   var GRAPH = 'https://graph.microsoft.com/v1.0';
-  var HOST = 'brightline.sharepoint.example', SITE_PATH = '/sites/Home-Brace';
-  var ROOT = 'Home-Brace Payroll', PRIVATE = 'Morgan';
+  var HOST = 'brightline.sharepoint.example', SITE_PATH = '/sites/Practice Hub';
+  var ROOT = 'Practice Hub Payroll', PRIVATE = 'Morgan';
   var RETRY_WAITS = [800, 2500, 6000];
 
   function live(){ return !!(global.PH && global.PH.isLive && global.PH.isLive()); }
@@ -61,7 +61,7 @@
     }
     return attempt();
   }
-  var NO_ACCESS = 'Your account doesn’t have access to Payroll yet. Home-Brace gives it from Admin → Teams & Access ' +
+  var NO_ACCESS = 'Your account doesn’t have access to Payroll yet. Practice Hub gives it from Admin → Teams & Access ' +
     '(the Payroll column) - ask your administrator.';
   var NOT_SET_UP = function(sub){ return 'The Payroll folder for ' + sub + ' isn’t set up yet. It’s made the first time ' +
     'whoever manages payroll opens Payroll - ask them to open it once.'; };

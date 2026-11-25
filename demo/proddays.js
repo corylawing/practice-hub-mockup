@@ -1,6 +1,6 @@
 /* PRODUCTION DAYS FROM THE SCHEDULE (16/11/2026).
 
-   Morgan 23/10: "can the # of production days per office pull from the schedule in Home Brace and can the completed
+   Morgan 23/10: "can the # of production days per office pull from the schedule in Practice Hub and can the completed
    production days # on this screen pull from that calendar as well once that day has passed?" Her rules (01/11): a
    Friday (half day) counts as a whole day; a cancelled day - "the schedule will be updated"; "If it is a yellow day or a
    virtual promo or any day the doctor is not present we will not count it as a production day". 16/11, on December not

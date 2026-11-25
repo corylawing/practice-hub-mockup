@@ -1,5 +1,5 @@
 /* PHONE AND COMPUTER ALERTS (22/10/2026, Jordan: "yes for phone alerts we need that" - payroll reminders, chat).
-   PH_ALERTS turns alerts on for THIS device, and sends alerts through Home-Brace's alert sender (api-push).
+   PH_ALERTS turns alerts on for THIS device, and sends alerts through Practice Hub's alert sender (api-push).
    EVERY DEVICE A PERSON TURNS ON (03/11/2026): each device's alert address (its "subscription") is kept with the
    person in the shared store - ph_alertdev_<email> = {v:1, d:[{s: subscription, k:'iPhone', at}]}, newest first, at
    most 6 - so a reminder or a chat message reaches every phone and computer they turned on. sendTo(emails, msg) reads
@@ -34,10 +34,10 @@
   function devices(rec){ return (rec && Array.isArray(rec.d)) ? rec.d.filter(x=>x && okSub(x.s)) : []; }
   /* ONE ALERT PER PHONE (21/11/2026, Jordan: "Sometimes homebrace on my phone will send notifications 2 or 3 times").
      His record held two iPhones - the same phone under an old address Apple still accepted, so every alert went twice
-     (and a chat sent from Home-Brace a third time, through the instant chat link too). Now each install keeps its own id
-     (did): a new address for the same install replaces the old one; an entry no install has opened Home-Brace on for
+     (and a chat sent from Practice Hub a third time, through the instant chat link too). Now each install keeps its own id
+     (did): a new address for the same install replaces the old one; an entry no install has opened Practice Hub on for
      STALE_DAYS is dropped; and the entries from before ids (no id) of this phone's own kind go when this phone saves.
-     seen = the last day this install opened Home-Brace; ci = until when this device has instant chat alerts. */
+     seen = the last day this install opened Practice Hub; ci = until when this device has instant chat alerts. */
   const STALE_DAYS=21, DAYMS=864e5;
   function addDevice(rec, sub, kind, at, did){
     if(!okSub(sub)) return undefined;
@@ -200,12 +200,12 @@
     return out;
   }
   /* INSTANT CHAT ALERTS (18/11/2026, Jordan: "build instant chat alerts") - the server side is api-push/chatkeys.js.
-     This device asks Microsoft, with the person's OWN sign-in (Chat.ReadWrite, delegated), to tell Home-Brace's alert
+     This device asks Microsoft, with the person's OWN sign-in (Chat.ReadWrite, delegated), to tell Practice Hub's alert
      sender about every new message in their Teams chats - so a message typed in the Teams app alerts here too, within
      seconds, and their own messages never do. Only: the live site, someone in the chat pilot (PH.chatPilotMe - a
      member, never a guest) with alerts on, on this device. Microsoft keeps it up to 3 days; a visit with less than 2
      days left renews it. Turning alerts off here, or leaving the pilot, removes it. Kept on this device: ph_chat_link
-     {id, exp, ep}. Fails quietly: the alerts Home-Brace already sends carry on as before (same tag 'hb-chat', so the
+     {id, exp, ep}. Fails quietly: the alerts Practice Hub already sends carry on as before (same tag 'hb-chat', so the
      two never stack). */
   const CHAT_INSTANT=true;
   const LINK_KEY='ph_chat_link', G='https://graph.microsoft.com/v1.0', DAY=864e5;
@@ -231,7 +231,7 @@
       }
       const sub=saved(), now=Date.now();
       /* checked with Microsoft at most every 12 h (21/11/2026, code review): Microsoft can end a link early, and this
-         device's entry would go on telling Home-Brace's own chat alert to skip it - no alert either way for up to 2 days */
+         device's entry would go on telling Practice Hub's own chat alert to skip it - no alert either way for up to 2 days */
       if(cur && cur.id && cur.ep===sub.endpoint && cur.exp-now>2*DAY && now-(cur.chk||0)<12*3600e3){ markInstant(new Date(cur.exp).toISOString()); return 'fine'; }
       const A=global.PH_AUTH; if(!A || !A.tokenFor) return 'nosignin';
       const me=(global.PH && PH.profileOf && PH.profileOf()) || {}; if(!me.id) return 'nosignin';
@@ -257,7 +257,7 @@
       .then(x=>{ linkBusy=null; return x; });
     return linkBusy;
   }
-  /* this device's entry says until when Microsoft alerts it for chats (so Home-Brace's own chat alert skips it) */
+  /* this device's entry says until when Microsoft alerts it for chats (so Practice Hub's own chat alert skips it) */
   function markInstant(until){
     const em=who(), S=store(), sub=saved(); if(!em || !S || !sub) return Promise.resolve(null);
     return S.update(keyFor(em), cur=>{ const list=devices(cur), me=list.find(x=>x.s.endpoint===sub.endpoint); if(!me) return undefined;

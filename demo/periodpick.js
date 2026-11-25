@@ -1,4 +1,4 @@
-/* PERIOD PICKER - a month, a quarter, year to date or a year, one control for all of Home-Brace (21/11/2026).
+/* PERIOD PICKER - a month, a quarter, year to date or a year, one control for all of Practice Hub (21/11/2026).
    Jordan, on a plain month box: "Way to old school, we already built a date picker. Also what if they want to do this
    quarter, year to date, last year etc?" Same look as the date picker (datepick.js): a box showing the period ("October
    2026", "Q4 2026", "2026 so far"), and on tap quick picks + a month grid with the year's quarters, no dropdowns. Every

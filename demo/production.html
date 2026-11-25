@@ -1,29 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script src="demo-shim.js?v=d202611250847"></script>
+<script src="demo-shim.js?v=d202611250900"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Home-Brace · Enter Production</title>
+<title>Practice Hub · Enter Production</title>
+<meta name="description" content="Try the live demo: schedules, production, new-patient consults, payroll, monthly reports, tasks and team chat — one hub for every office of a multi-location practice.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Practice Hub">
+<meta property="og:title" content="Practice Hub | Multi-Location Practice Operations Hub">
+<meta property="og:description" content="Try the live demo: schedules, production, new-patient consults, payroll, monthly reports, tasks and team chat — one hub for every office of a multi-location practice.">
+<meta property="og:image" content="https://corylawing.github.io/practice-hub-mockup/demo/share.png">
+<meta property="og:image:width" content="1734">
+<meta property="og:image:height" content="907">
+<meta property="og:url" content="https://corylawing.github.io/practice-hub-mockup/demo/production.html">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Practice Hub | Multi-Location Practice Operations Hub">
+<meta name="twitter:description" content="Try the live demo: schedules, production, new-patient consults, payroll, monthly reports, tasks and team chat — one hub for every office of a multi-location practice.">
+<meta name="twitter:image" content="https://corylawing.github.io/practice-hub-mockup/demo/share.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="icon" href="../assets/favicon.png?v=2" type="image/png">
 <meta name="theme-color" content="#0F2A4A">
-<meta name="apple-mobile-web-app-title" content="Home-Brace">
+<meta name="apple-mobile-web-app-title" content="Practice Hub">
 <link rel="apple-touch-icon" sizes="180x180" href="../assets/icons/apple-touch-icon.png?v=3">
-<meta name="description" content="The practice’s central hub — schedule, production, documents and team, in one place. Brightline · Maple · Riverbend.">
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="Home-Brace">
-<meta property="og:title" content="Home-Brace">
-<meta property="og:description" content="The practice’s central hub — schedule, production, documents and team, in one place. Brightline · Maple · Riverbend.">
-<meta property="og:image" content="https://app.brightline.example/assets/og-image.png">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-<meta property="og:url" content="https://app.brightline.example/v1/production.html">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Home-Brace">
-<meta name="twitter:description" content="The practice’s central hub — schedule, production, documents and team, in one place. Brightline · Maple · Riverbend.">
-<meta name="twitter:image" content="https://app.brightline.example/assets/og-image.png">
 <style>
   :root{
     --navy:#0F2A4A; --navy2:#25456e; --teal:#149B96; --teal2:#2BC0B8; --teal-soft:#E5F4F3; --teal-600:#0F827E;
@@ -136,21 +136,21 @@
   }
 
 </style>
-<script src="user.js?v=hc268d202611250847"></script>
-  <script src="workbook.js?v=hc268d202611250847"></script>
-  <script src="prodbook.js?v=hc268d202611250847"></script>
-  <script src="prodstore.js?v=hc268d202611250847"></script>
-<script src="schedrec.js?v=hc268d202611250847"></script>
-<script src="proddays.js?v=hc268d202611250847"></script>
-  <script src="store.js?v=hc268d202611250847"></script>
-  <script src="gate.js?v=hc268d202611250847"></script>
+<script src="user.js?v=hc268d202611250900"></script>
+  <script src="workbook.js?v=hc268d202611250900"></script>
+  <script src="prodbook.js?v=hc268d202611250900"></script>
+  <script src="prodstore.js?v=hc268d202611250900"></script>
+<script src="schedrec.js?v=hc268d202611250900"></script>
+<script src="proddays.js?v=hc268d202611250900"></script>
+  <script src="store.js?v=hc268d202611250900"></script>
+  <script src="gate.js?v=hc268d202611250900"></script>
 </head>
 <body>
 <div class="ribbon">DEMO — made-up numbers. What you type stays in your browser.</div>
 <header class="hdr">
   <div class="hdr-in">
-    <span class="mark" aria-label="Home-Brace"><img src="../assets/logo-mark.png?v=2" alt="" width="34" height="34"></span>
-    <span class="brand">Home-<i>Brace</i><small>Enter Production</small></span>
+    <span class="mark" aria-label="Practice Hub"><img src="../assets/logo-mark.png?v=2" alt="" width="34" height="34"></span>
+    <span class="brand">Practice <i>Hub</i><small>Enter Production</small></span>
     <span class="v1">Demo</span>
   </div>
 </header>
@@ -167,7 +167,7 @@
   </div>
   <div class="syncbar" id="syncbar">🔄 <b>One set of numbers, two places to work.</b> Type here and it saves to the <b>Production Dashboard workbook on SharePoint</b>. If someone types in the Excel instead, it shows up here — it's the same file, not a copy.</div>
   <script>/* The sandbox is not connected to the workbook (13/10/2026) - say so where the page explains saving. */
-  if(window.PH && PH.isLive && !PH.isLive()){ document.getElementById('syncbar').innerHTML='🔄 <b>In the real Home-Brace</b>, typing here saves straight to the practice’s workbook, and changes made in the Excel show up here. <b>In this demo</b> the numbers are made up and saving stays in your browser.'; }</script>
+  if(window.PH && PH.isLive && !PH.isLive()){ document.getElementById('syncbar').innerHTML='🔄 <b>In the real Practice Hub</b>, typing here saves straight to the practice’s workbook, and changes made in the Excel show up here. <b>In this demo</b> the numbers are made up and saving stays in your browser.'; }</script>
   <div id="view"></div>
 </div>
 
@@ -487,10 +487,10 @@
       }
     }
 
-    /* AFTER THE SWITCH: into Home-Brace's own numbers (prodstore.js setValues - the same field-to-row
+    /* AFTER THE SWITCH: into Practice Hub's own numbers (prodstore.js setValues - the same field-to-row
        matching as her Excel, every change in the year's history). Her Excel follows only when "keep it
        up to date" is on AND it is the same year - a 2027 number must never land in her 2026 sheet -
-       and a failure there never undoes the Home-Brace save. */
+       and a failure there never undoes the Practice Hub save. */
     if(MODE.source==='homebrace'){
       const values=Object.assign({}, vals);
       let saved=null;
@@ -503,7 +503,7 @@
           const miss=[];
           for(const f of Object.keys(values)){ try{ await PH_WB.writeCell(PH_AUTH.token, WB_DRIVE, WB_ITEM, o, f, m, values[f]); }catch(e){ miss.push(f+': '+((e&&e.message)||e)); } }
           try{ if(PH_WB.closeSession) await PH_WB.closeSession(PH_AUTH.token, WB_DRIVE, WB_ITEM); }catch(_){}
-          note = miss.length ? ' Morgan\u2019s Excel was NOT updated: '+miss.join(' \u00b7 ').replace(/</g,'&lt;')+' (Home-Brace has the numbers).' : ' Morgan\u2019s Excel updated too.';
+          note = miss.length ? ' Morgan\u2019s Excel was NOT updated: '+miss.join(' \u00b7 ').replace(/</g,'&lt;')+' (Practice Hub has the numbers).' : ' Morgan\u2019s Excel updated too.';
         } else if(xl) note=' Morgan\u2019s Excel is for '+xl+', so it was left alone.';
       }
       if(failed.length){
@@ -513,7 +513,7 @@
         settled(Object.keys(values), ctx);
         settle('done', 'Saved');
         const nx=saved.next&&saved.next.changes ? ' '+saved.next.year+'\u2019s \u201clast year\u201d updated too.' : '';
-        wbBanner('\u2713 Saved '+saved.changes.length+' value(s) in Home-Brace for '+o+' \u00b7 '+MO[m]+' '+y+'.'+nx+note, /NOT updated/.test(note));
+        wbBanner('\u2713 Saved '+saved.changes.length+' value(s) in Practice Hub for '+o+' \u00b7 '+MO[m]+' '+y+'.'+nx+note, /NOT updated/.test(note));
         stampAudit(o);
         if(window.PH && PH.logActivity && PH.isLive()) tellLeadership(ctx);
       } else {
@@ -527,9 +527,9 @@
        begun, saving "January" would land on January 2026's actuals - ask first (late 2026 numbers are fine). */
     if(new Date().getFullYear()>XL_YEAR &&
        !confirm('This saves into '+MOFULL[m]+' '+XL_YEAR+' in the '+XL_YEAR+' workbook - not '+MOFULL[m]+' '+(XL_YEAR+1)+'.\n\n'+
-                'Is it a '+XL_YEAR+' number? (For '+(XL_YEAR+1)+', an admin first switches to Home-Brace: Admin \u2192 Production data.)')){
+                'Is it a '+XL_YEAR+' number? (For '+(XL_YEAR+1)+', an admin first switches to Practice Hub: Admin \u2192 Production data.)')){
       if(btn){ btn.classList.remove('saving'); btn.disabled=false; }
-      wbBanner('<b>Not saved.</b> '+(XL_YEAR+1)+'\u2019s numbers go into Home-Brace once an admin switches (Admin \u2192 Production data).', true);
+      wbBanner('<b>Not saved.</b> '+(XL_YEAR+1)+'\u2019s numbers go into Practice Hub once an admin switches (Admin \u2192 Production data).', true);
       return;
     }
 
@@ -798,7 +798,7 @@
       if(typeof PH_WB==='undefined' || !window.PH_AUTH){
         wbBanner('<b>Not signed in.</b> Showing placeholder figures until you sign in.',true); return;
       }
-      /* THE SWITCH (Admin -> Production data): after it, the numbers come from Home-Brace's own
+      /* THE SWITCH (Admin -> Production data): after it, the numbers come from Practice Hub's own
          books and saving writes there (pushToWorkbook below); her Excel only if "keep it up to
          date" is on. Same fields, found the same way. */
       /* PH_PROD.mode() rejects when this device couldn't read the switch and has no copy of it. Guessing "her Excel"
@@ -808,9 +808,9 @@
         catch(_){ MODE_UNKNOWN=true; wbBanner('<b>Couldn\u2019t tell where the production numbers live right now \u2014 reload to try again.</b>', true); return; }
       }
       if(MODE.source==='homebrace'){
-        wbBanner('Reading Home-Brace\u2019s production numbers\u2026');
+        wbBanner('Reading Practice Hub\u2019s production numbers\u2026');
         try{ res=await PH_PROD.dashboardData(); HB_YEAR=res.year; }
-        catch(e){ wbBanner('<b>Could not read Home-Brace\u2019s production numbers.</b> '+String((e&&e.message)||e).replace(/[<>&]/g,''),true); return; }
+        catch(e){ wbBanner('<b>Could not read Practice Hub\u2019s production numbers.</b> '+String((e&&e.message)||e).replace(/[<>&]/g,''),true); return; }
         // This year and the one before, when both are kept: last year's December is typed in January.
         try{ const ix=await PH_PROD.index(); HB_YEARS=Object.keys(ix.years).map(Number).filter(y=>y<=HB_YEAR && y>=HB_YEAR-1).sort((a,b)=>b-a); }catch(_){ HB_YEARS=[]; }
       } else {
@@ -828,7 +828,7 @@
     const who=String(res.savedBy||'').replace(/[<>&]/g,'');
     const after=new Date().getFullYear()>XL_YEAR;
     if(after) month=11;                            // a new year, still on the old Excel: its last month, not "January"
-    wbBanner((after ? '<b>This is the '+XL_YEAR+' workbook - every month here is '+XL_YEAR+'.</b> '+(XL_YEAR+1)+'\u2019s numbers go into Home-Brace once an admin switches (Admin \u2192 Production data). ' : '')+
+    wbBanner((after ? '<b>This is the '+XL_YEAR+' workbook - every month here is '+XL_YEAR+'.</b> '+(XL_YEAR+1)+'\u2019s numbers go into Practice Hub once an admin switches (Admin \u2192 Production data). ' : '')+
              '\u25CF Live from the practice\u2019s workbook \u2014 '+n+' of '+Object.keys(BASE).length+
              ' offices'+(stamp?(who?', '+who+' last saved it '+stamp:', last saved '+stamp):''),
              after || res.errors.length>0);
@@ -856,7 +856,7 @@
     const d=el('dysro'); if(d) d.value=disp(office,month,'dys');
     refreshRight();
   }
-  /* The numbers on the page, from the workbook or a Home-Brace year. `reset` empties every office
+  /* The numbers on the page, from the workbook or a Practice Hub year. `reset` empties every office
      first - another year must not keep this one's numbers where it has none. */
   function fillBase(res, reset){
     let n=0; const zero=()=>[0,0,0,0,0,0,0,0,0,0,0,0];
@@ -890,11 +890,11 @@
     const thisYear=(new Date()).getFullYear(), past=HB_YEAR<thisYear;
     const warn=!past ? '' : HB_YEARS.some(y=>y>HB_YEAR)
       ? '<b>You are entering numbers for '+HB_YEAR+'.</b> Pick '+Math.max.apply(null,HB_YEARS)+' above for this year. '
-      : '<b>'+thisYear+' isn\u2019t started in Home-Brace yet, so numbers here go into '+HB_YEAR+'.</b> Ask an admin to start '+thisYear+' (Admin \u2192 Production data). ';
-      wbBanner(warn+'\u25CF Home-Brace\u2019s production numbers for '+HB_YEAR+' \u2014 '+n+' of '+Object.keys(BASE).length+' offices'+
+      : '<b>'+thisYear+' isn\u2019t started in Practice Hub yet, so numbers here go into '+HB_YEAR+'.</b> Ask an admin to start '+thisYear+' (Admin \u2192 Production data). ';
+      wbBanner(warn+'\u25CF Practice Hub\u2019s production numbers for '+HB_YEAR+' \u2014 '+n+' of '+Object.keys(BASE).length+' offices'+
                (stamp?(who?', '+who+' last saved '+stamp:', last saved '+stamp):'')+(MODE.mirror?' \u00b7 Morgan\u2019s Excel is kept up to date too':''), past||res.errors.length>0);
       // The page's own explanation was written for her Excel ("it's the same file"); after the switch it is not.
-      const sb=el('syncbar'); if(sb) sb.innerHTML='\u{1F504} <b>Home-Brace keeps the production numbers now.</b> Type here and it saves to Home-Brace'+
+      const sb=el('syncbar'); if(sb) sb.innerHTML='\u{1F504} <b>Practice Hub keeps the production numbers now.</b> Type here and it saves to Practice Hub'+
         (MODE.mirror?', and Morgan\u2019s Excel is kept up to date too. Something typed in her Excel no longer shows up here \u2014 type it here instead.':'. Morgan\u2019s Excel is not updated any more.');
       const hp=document.querySelector('.page-head p'); if(hp) hp.textContent='Type the month\u2019s numbers once. '+(MODE.mirror?'The dashboard and Morgan\u2019s Excel both update.':'The dashboard updates.');
       const b=el('pushbtn'); if(b) b.textContent=saveLabel();
@@ -902,7 +902,7 @@
   /* Another kept year (this one or the one before), chosen above the boxes. */
   async function setYear(y){
     y=+y; if(!y || y===HB_YEAR || MODE.source!=='homebrace' || SAVING) return;
-    wbBanner('Reading Home-Brace\u2019s production numbers for '+y+'\u2026');
+    wbBanner('Reading Practice Hub\u2019s production numbers for '+y+'\u2026');
     let res;
     try{ res=await PH_PROD.dashboardData(y); }
     catch(e){ wbBanner('<b>Could not read '+y+'.</b> '+String((e&&e.message)||e).replace(/[<>&]/g,''),true); render(); return; }
@@ -937,7 +937,7 @@
 })();
 </script>
 <script>PH.nav('production');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(window.PROD&&PROD.identity)PROD.identity();});document.addEventListener('ph-identity',function(){if(window.PROD&&PROD.identity)PROD.identity();});</script>
-<script src="tour.js?v=hc268d202611250847"></script>
+<script src="tour.js?v=hc268d202611250900"></script>
 <script>
 Tour.init([
   {sel:'.syncbar', title:'One set of numbers', body:'Type here and it saves into the <b>same Excel workbook</b> on SharePoint. If someone types in Excel instead, it shows up here. There is never a second copy to reconcile.'},

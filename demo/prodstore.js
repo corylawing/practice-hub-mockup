@@ -1,22 +1,22 @@
 /* PRODUCTION BOOKS, KEPT - where each year's book lives, and the copy from Morgan's Excel.
 
-   21/10/2026, Jordan: build Home-Brace's own production data beside the live Excel ("don't
+   21/10/2026, Jordan: build Practice Hub's own production data beside the live Excel ("don't
    disconnect production dashboard for now") and "run them parallel for a bit to make sure
    everything works correctly" before anything switches. The book engine is prodbook.js.
 
-   What is kept, all on the Home-Brace site:
+   What is kept, all on the Practice Hub site:
      - each year's TEMPLATE (her workbook without the typed numbers: tabs, labels, formatting,
        that year's formulas) as a file, "<year> production template.xlsx", in the folder
-       "Home-Brace Production" at the top of the site's Documents. SharePoint keeps every
+       "Practice Hub Production" at the top of the site's Documents. SharePoint keeps every
        earlier version of it, so an older layout can always be looked at again.
      - each year's NUMBERS in the shared store: 'ph_prod_data_<year>' = {year, data:{tab:{cell:n}}, from}
      - what changed, newest first: 'ph_prod_log_<year>'
      - the years and how each was last copied and checked: 'ph_prod_index'
 
    COPY-ONLY. Nothing here writes to Morgan's Excel, and nothing is ever removed: a copy adds
-   or updates Home-Brace's own records, and the shared store's wipe guard refuses a copy that
+   or updates Practice Hub's own records, and the shared store's wipe guard refuses a copy that
    would shrink a year's numbers to almost nothing (an emptied Excel stays an emptied Excel,
-   not an emptied Home-Brace). Only admins copy. On the sandbox her workbook is never opened:
+   not an emptied Practice Hub). Only admins copy. On the sandbox her workbook is never opened:
    everything stays in this browser, and a workbook can be tried by choosing a file.
 
    Each year stands alone: a new layout for 2027 is 2027's template only, and the "last year"
@@ -25,7 +25,7 @@
 (function(global){
   'use strict';
 
-  var HOST = 'brightline.sharepoint.example', SITE = '/sites/Home-Brace', FOLDER = 'Home-Brace Production';
+  var HOST = 'brightline.sharepoint.example', SITE = '/sites/Practice Hub', FOLDER = 'Practice Hub Production';
   var GRAPH = 'https://graph.microsoft.com/v1.0';
   var INDEX = 'ph_prod_index', DATA = 'ph_prod_data_', LOG = 'ph_prod_log_', MODE = 'ph_prod_mode', LINKS = 'ph_prod_links_';
   /* A year's History keeps a whole busy year (her -7 file, every office planned + 192 Enter Production saves =
@@ -112,7 +112,7 @@
     var L = B().layoutText(book), keys = Object.keys(L);
     return Promise.all(keys.map(function(k){ return sha(L[k]); })).then(function(h){ var o = {}; keys.forEach(function(k, i){ o[k] = h[i]; }); return o; });
   }
-  /* Does Home-Brace's own working-out agree with the results Excel saved in the file? */
+  /* Does Practice Hub's own working-out agree with the results Excel saved in the file? */
   function check(book){
     var ev = B().evaluate(book), n = 0, differ = [];
     book.names.forEach(function(s){ var cs = book.sheets[s].cells;
@@ -172,7 +172,7 @@
     var book, year, chk, fp, idx, prevData, changes, tplChanged, moved = null, store = S();
     return B().open(bytes).then(function(b){
       book = b; year = B().yearOf(book);
-      if(!year) throw fail('Home-Brace could not tell which year this workbook is for (no row like "2026 TC Production Goal").');
+      if(!year) throw fail('Practice Hub could not tell which year this workbook is for (no row like "2026 TC Production Goal").');
       chk = check(book);
       return fingerprint(book);
     }).then(function(f){
@@ -218,7 +218,7 @@
       }));
       return Promise.all(writes).then(function(res){
         var blocked = res.filter(function(x){ return x && (x.blocked || x.error); });
-        if(blocked.length) throw fail('Home-Brace refused to save this copy (' + (blocked[0].why || blocked[0].error) + '). Nothing was changed.');
+        if(blocked.length) throw fail('Practice Hub refused to save this copy (' + (blocked[0].why || blocked[0].error) + '). Nothing was changed.');
         return (changes.length ? followOn(year) : Promise.resolve(null)).then(function(next){
           return {year:year, first:!prevData, changes:changes.length, layout:entry.layout, numbers:entry.numbers, kept:entry.kept,
                   check:{formulas:chk.formulas, differ:chk.differ, sample:chk.sample}, next:next};
@@ -241,7 +241,7 @@
       var it = r[0], idx = r[1] || {}, hb = r[2].source === 'homebrace', modified = it.lastModifiedDateTime || '';
       var by = (it.lastModifiedBy && it.lastModifiedBy.user && it.lastModifiedBy.user.displayName) || '';
       // Skip a save already handled the same way: compared (after the switch) or copied (before it, or after switching
-      // back - a save that was only compared while Home-Brace held the numbers is copied once it is her Excel again).
+      // back - a save that was only compared while Practice Hub held the numbers is copied once it is her Excel again).
       if(!opts.force && idx.source && idx.source.modified === modified && !!idx.source.compared === hb) return {skipped:'unchanged', modified:modified};
       return bytesOf(it['@microsoft.graph.downloadUrl']).then(function(bytes){
         var src = {name:it.name, modified:modified, by:by, how:'copy'};
@@ -260,13 +260,13 @@
       });
     });
   }
-  /* The Excel, from Home-Brace: the year's own layout with its numbers, formatted exactly as hers. */
+  /* The Excel, from Practice Hub: the year's own layout with its numbers, formatted exactly as hers. */
   function downloadYear(y){
     return loadYear(y).then(function(Y){
       var ev = B().evaluate(Y.book);
       return B().exportXlsxSmall(Y.book, Y.data, ev).then(function(bytes){
         return {blob:new Blob([bytes], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),
-                name:y + ' PRODUCTION DASHBOARD (from Home-Brace).xlsx', bytes:bytes};
+                name:y + ' PRODUCTION DASHBOARD (from Practice Hub).xlsx', bytes:bytes};
       });
     });
   }
@@ -284,13 +284,13 @@
 
   /* ------------------------------------------------------------------ THE SWITCH
      Where the production numbers live. 'excel' (today): the dashboard and Enter Production use
-     Morgan's Excel, and Home-Brace keeps a copy. 'homebrace': they use Home-Brace's own books;
+     Morgan's Excel, and Practice Hub keeps a copy. 'homebrace': they use Practice Hub's own books;
      her Excel, while it still exists, is kept up to date too when `mirror` is on, and is only
-     COMPARED from then on, never copied over Home-Brace. Only admins change it, and it can be
+     COMPARED from then on, never copied over Practice Hub. Only admins change it, and it can be
      changed back. (Jordan, 21/10/2026: "build step 4 and the switch"; the switch stays off until
      he says, after the parallel run, before 2027.) */
   /* A setting that couldn't be read is NOT "Excel" (21/11/2026, code review): on a new phone with no saved copy, that
-     default sent Enter Production's saves to her Excel, and an admin's dashboard copied her Excel over Home-Brace's
+     default sent Enter Production's saves to her Excel, and an admin's dashboard copied her Excel over Practice Hub's
      numbers. Unread with no copy here = refuse; unread WITH a copy here = that copy (it changes once a year at most). */
   function mode(){ return S().get(MODE).then(function(m){
     if(!m && S().readFailed && S().readFailed(MODE)) throw fail('Couldn\u2019t tell where the production numbers live right now \u2014 reload to try again.');
@@ -313,12 +313,12 @@
     return past.length ? past[past.length - 1] : ys[ys.length - 1];
   }
 
-  /* After the switch: is her Excel still the same as Home-Brace? Copied nowhere - just counted. */
+  /* After the switch: is her Excel still the same as Practice Hub? Copied nowhere - just counted. */
   function compareFromBytes(bytes, src){
     var book, year;
     return B().open(bytes).then(function(b){
       book = b; year = B().yearOf(book);
-      if(!year) throw fail('Home-Brace could not tell which year her workbook is for.');
+      if(!year) throw fail('Practice Hub could not tell which year her workbook is for.');
       return S().get(DATA + year);
     }).then(function(rec){
       var theirs = B().dataOf(book), ours = (rec && rec.data) || {}, d = diff(book, ours, theirs);
@@ -333,7 +333,7 @@
     });
   }
 
-  /* ------------------------------------------------------------------ the dashboard from Home-Brace */
+  /* ------------------------------------------------------------------ the dashboard from Practice Hub */
   /* The same series the dashboard gets from her Excel (workbook.js office()), worked out from a
      kept year instead - same rows, same sums. */
   function dashboardData(year){
@@ -341,7 +341,7 @@
     if(!WB) return Promise.reject(fail('The production reader is missing.'));
     return index().then(function(idx){
       var y = year || liveYear(idx);
-      if(!y) throw fail('Home-Brace has no production numbers kept yet.');
+      if(!y) throw fail('Practice Hub has no production numbers kept yet.');
       return loadYear(y).then(function(Y){
         var ev = B().evaluate(Y.book), out = {}, errors = [];
         Object.keys(WB.TABS).forEach(function(name){
@@ -355,7 +355,7 @@
     });
   }
 
-  /* ------------------------------------------------------------------ Enter Production into Home-Brace */
+  /* ------------------------------------------------------------------ Enter Production into Practice Hub */
   var tplCache = {};
   function templateBook(y){ if(!tplCache[y]) tplCache[y] = offices().then(function(){ return getTemplate(y); }).then(B().open).catch(function(e){ delete tplCache[y]; throw e; }); return tplCache[y]; }
   /* The cell a field and month land in - found the way Enter Production finds it in her Excel
@@ -398,7 +398,7 @@
         return rec;
       });
     }).then(function(r){
-      if(r && (r.blocked || r.error)) throw fail('Home-Brace could not save (' + (r.why || r.error) + ').');
+      if(r && (r.blocked || r.error)) throw fail('Practice Hub could not save (' + (r.why || r.error) + ').');
       if(!changes.length) return null;
       return S().update(LOG + year, function(list){
         list = Array.isArray(list) ? list : [];
@@ -436,7 +436,7 @@
         return rec;
       });
     }).then(function(r){
-      if(r && (r.blocked || r.error)) throw fail('Home-Brace could not save (' + (r.why || r.error) + ').');
+      if(r && (r.blocked || r.error)) throw fail('Practice Hub could not save (' + (r.why || r.error) + ').');
       if(!changes.length) return null;
       return S().update(LOG + year, function(list){
         list = Array.isArray(list) ? list : [];
@@ -536,9 +536,9 @@
     });
   }
 
-  /* ------------------------------------------------------------------ GOALS & FORMULAS, IN HOME-BRACE
+  /* ------------------------------------------------------------------ GOALS & FORMULAS, IN PRACTICE HUB
      Jordan, 21/10/2026: "I want homebrace to be able to configure the formulas for future years" -
-     "Home-Brace to manage the numbers, calculations, etc with just the option to download in excel".
+     "Practice Hub to manage the numbers, calculations, etc with just the option to download in excel".
      A year's goal rows, office by office, in her own terms: each month is "last year x 1.04" (her
      multiplier, edited as a number), an amount typed in, or - left alone, shown as it is - any other
      formula of hers. Saving changes that YEAR's template and numbers only; every change is in the
@@ -615,7 +615,7 @@
           if(!base){                                   // an amount or empty month: take the row's usual base
             var others = MONTHS12.map(function(c){ return ruleOf(cs[c + /\d+$/.exec(a)[0]], null, G); }).filter(function(x){ return x.kind === 'times'; });
             base = others[0] || (function(){ var rr = +/\d+$/.exec(a)[0], k = rr === (G.rows.md && G.rows.md.row) ? 'lyMed' : 'lyNet'; return G.rows[k] ? {base:k, baseRow:G.rows[k].row} : null; })();
-            if(!base) throw fail('Home-Brace can’t tell what this month should multiply.');
+            if(!base) throw fail('Practice Hub can’t tell what this month should multiply.');
           }
           var f = base.baseRows ? '(' + col + base.baseRows[0] + '+' + col + base.baseRows[1] + ')*' + m : col + base.baseRow + (m === 1 ? '' : '*' + m);
           try{ B().parse(f); }catch(_){ throw fail('That formula could not be read: ' + f); }
@@ -650,13 +650,13 @@
         return Promise.all(jobs);
       }).then(function(res){
         var b2 = res.filter(function(x){ return x && (x.blocked || x.error); });
-        if(b2.length) throw fail('Home-Brace could not save (' + (b2[0].why || b2[0].error) + ').');
+        if(b2.length) throw fail('Practice Hub could not save (' + (b2[0].why || b2[0].error) + ').');
         return {saved:true, changes:log};
       });
     });
   }
 
-  /* ------------------------------------------------------------------ FORMULAS: EVERY CALCULATION, IN HOME-BRACE
+  /* ------------------------------------------------------------------ FORMULAS: EVERY CALCULATION, IN PRACTICE HUB
      Jordan, 21/10/2026: "build the formula screen remember clear and easy ux so she can and others can
      manage this". Any row's formula, for the months chosen, in plain words (prodfx.js) - shown first
      with what it gives and what else moves, then saved into that YEAR's layout only. Every change is
@@ -745,7 +745,7 @@
       return Promise.all(jobs);
     }).then(function(res){
       var b2 = res.filter(function(r){ return r && (r.blocked || r.error); });
-      if(b2.length) throw fail('Home-Brace could not save (' + (b2[0].why || b2[0].error) + ').');
+      if(b2.length) throw fail('Practice Hub could not save (' + (b2[0].why || b2[0].error) + ').');
       return followOn(+year).then(function(next){ return Object.assign(out, {saved:true, at:at, next:next}); });
     });
   }
@@ -867,7 +867,7 @@
     if(!opts.preview && live() && !admin()) return Promise.reject(fail('Only admins can change the plan.'));
     return fxCtx(year).then(function(x){
       var tpl = x.tpl, G = goalRowsOf(tpl, officeName, year), R = G.rows, edits = [];
-      if(!R.tc || !R.lyNet) throw fail('Home-Brace can’t find ' + officeName + '’s goal rows for ' + year + '.');
+      if(!R.tc || !R.lyNet) throw fail('Practice Hub can’t find ' + officeName + '’s goal rows for ' + year + '.');
       var num = function(v, what){ var n = Number(v); if(!isFinite(n)) throw fail(what + ' isn’t a number.'); return n; };
       var times = function(base, pct){ var p = num(pct, 'A growth %'); if(p <= -100 || p > 1000) throw fail('A growth of ' + p + '% doesn’t look right.');
         var m = String(+(1 + p / 100).toFixed(6)); return base + (m === '1' ? '' : '*' + m); };
@@ -1181,7 +1181,7 @@
           })
         ]).then(function(res){
           var bad = res.filter(function(r){ return r && (r.blocked || r.error); });
-          if(bad.length) throw fail('Home-Brace could not save ' + to + ' (' + (bad[0].why || bad[0].error) + ').');
+          if(bad.length) throw fail('Practice Hub could not save ' + to + ' (' + (bad[0].why || bad[0].error) + ').');
           return {year:to, numbers:n, flags:pv.flags.length};
         });
       });
@@ -1228,7 +1228,7 @@
           rec.updatedAt = nowISO(); rec.updatedBy = me();
           return rec;
         }).then(function(res){
-          if(res && (res.blocked || res.error)) throw fail('Home-Brace could not update ' + to + '\'s last year (' + (res.why || res.error) + ').');
+          if(res && (res.blocked || res.error)) throw fail('Practice Hub could not update ' + to + '\'s last year (' + (res.why || res.error) + ').');
           if(!changes.length) return {year:to, changes:0, kept:kept};
           return Promise.all([
             S().update(LINKS + to, function(x){ x = (x && x.cells) ? x : L; changes.forEach(function(c){ (x.cells[c.tab] = x.cells[c.tab] || {})[c.cell] = c.to; }); return x; }),

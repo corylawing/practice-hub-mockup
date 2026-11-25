@@ -24,7 +24,10 @@ names + a "Start over" button; DEMO banners; leaves out connect/restore/orthofi/
 It REFUSES to finish if any real name is left (its list + the real roster v1/_people.json, which exists only on Cory's
 Mac - so build it there). A real name added to v1 that isn't in the roster or MAP won't be caught: add it to MAP.
 Production never ships demo/. The old repo-root portfolio pages (index.html, chat.html ... "INTERACTIVE PORTFOLIO
-DEMO") are untouched. Rebuild only when Cory asks ("refresh the demo").
+DEMO") stay, but the repo-root index.html now opens the demo (old front page kept as classic.html). NAMED "PRACTICE
+HUB" in the demo (Cory 25/11: "Don't call it home brace though") - build-demo.py NAME; Home-Brace is only the
+practice's own name. Link previews: every demo page + the root carry deploy/demo-share.png (Cory's picture, wording
+changed to Practice Hub) as demo/share.png. Rebuild only when Cory asks ("refresh the demo").
 
 **The user is Cory Lawing.** He is building this for a friend's orthodontic practice. He is not a
 developer. Keep answers **short** — he has told me repeatedly that I write too much. Give the

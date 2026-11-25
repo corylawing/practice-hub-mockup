@@ -89,7 +89,7 @@
      2028 holiday pay would quietly have gone missing. Jordan: "Everything we build needs to be scalable". The six paid
      holidays by their rule - New Year's Day, Memorial Day (last Monday of May), Independence Day, Labor Day (first
      Monday of September), Thanksgiving (fourth Thursday of November), Christmas. PAID ON THE ACTUAL DAY (Morgan,
-     17/11/2026: "We pay the Holiday no matter what day it falls on. It would be ideal for Home Brace to pay it out on
+     17/11/2026: "We pay the Holiday no matter what day it falls on. It would be ideal for Practice Hub to pay it out on
      the actual day") - July 4 is July 4 even on a Saturday, for the pay AND for the "sheets due Monday" week. (Pay
      periods run Sunday to Saturday, so the Friday-before / Monday-after dates typed in before were always in the same
      pay period anyway.) Years 2026 to two years ahead of today; no list to keep up to date. */
@@ -150,7 +150,7 @@
      dates of its pay date's YEAR - #1 is the first Friday paid in January - so #20 of 2026 is i=0, and 2027 starts
      again at #1. Its key, 'YYYY-NN', names its files (sheet_2026-23.json). */
   const ANCHOR='2026-09-25';
-  /* The first pay period on Home-Brace (Morgan: go live with #24, Nov 1-14). Nothing before it is expected - no sheet,
+  /* The first pay period on Practice Hub (Morgan: go live with #24, Nov 1-14). Nothing before it is expected - no sheet,
      no reminder, no "late" - those were done the old way. */
   const FIRST='2026-24';
   const payOf=i=>addDays(ANCHOR, i*14);

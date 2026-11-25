@@ -111,7 +111,7 @@
       if((m = /^(\$?)([A-Z]{1,3})(\$?)(\d+)(?![\w(])/.exec(rest))){ out.push({k:'ref', absC:m[1] === '$', col:m[2], c:B().colNum(m[2]), r:+m[4], raw:m[0]}); i += m[0].length; continue; }
       if((m = /^([A-Z][A-Z0-9.]*)\(/.exec(rest))){ out.push({k:'fn', v:m[1]}); i += m[1].length; continue; }
       if('+-*/(),:'.indexOf(ch) >= 0){ out.push({k:ch}); i++; continue; }
-      throw friendly('Home-Brace can’t read part of this formula: ' + rest.slice(0, 12));
+      throw friendly('Practice Hub can’t read part of this formula: ' + rest.slice(0, 12));
     }
     return out;
   }

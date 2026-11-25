@@ -1,7 +1,7 @@
-/* Home-Brace shared storage.
+/* Practice Hub shared storage.
 
    Sandbox  -> localStorage, as it always was.
-   Live     -> a SharePoint list on /sites/Home-Brace, so the schedule, offices, teams and
+   Live     -> a SharePoint list on /sites/Practice Hub, so the schedule, offices, teams and
                everything else follow a person between devices instead of living in one
                browser. Reads and writes happen AS THE SIGNED-IN PERSON, so SharePoint
                keeps enforcing who can touch what.
@@ -18,7 +18,7 @@
 (function(global){
   'use strict';
 
-  var SITE_PATH = '/sites/Home-Brace';
+  var SITE_PATH = '/sites/Practice Hub';
   var LIST_NAME = 'HomeBraceData';
   var hostname  = 'brightline.sharepoint.example';
 
@@ -550,7 +550,7 @@
      writing a feed over a copy we could not read would still drop other people's
      entries. When one of these is refused it stays quiet, because the next event
      writes it again anyway. */
-  /* ph_docgrants: which SharePoint edit rights Home-Brace handed out (07/10) - it shrinks
+  /* ph_docgrants: which SharePoint edit rights Practice Hub handed out (07/10) - it shrinks
      every time a level is lowered, by design. */
   /* ph_paygrants: the same record for the payroll folders (03/11). ph_alertdev_<email>: a person's alert devices
      (alerts.js) - one going to none when they turn alerts off is the point, not a wipe. */
@@ -1221,7 +1221,7 @@
   }
 
   /* FEEDBACK REPLIES (04/11/2026, Jordan: "Would be nice as me as an admin can respond to these that they submit from
-     Home-Brace directly"). Two more columns on the same list, added by hand like the rest: "Replies" (multiple lines of
+     Practice Hub directly"). Two more columns on the same list, added by hand like the rest: "Replies" (multiple lines of
      plain text - the team's answers, JSON {v:1, doneAt, r:[{at, t, by}]}, kept on the message itself) and "ReplyTo"
      (single line of text - a person's answer back is a NEW row pointing at the first one, so the email flow tells us
      about it like any message). Who wrote a row is SharePoint's own createdBy; with the list set to "Read items that

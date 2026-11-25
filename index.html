@@ -3,135 +3,37 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Home-Brace</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/styles.css?v=hb10">
-<!-- social+favicon -->
+<title>Practice Hub | Multi-Location Practice Operations Hub</title>
+<!-- The front door (25/11/2026, Cory: "send people to the new demo"). It opens the live demo (demo/, built from the
+     sandbox by deploy/build-demo.py) and carries the link-preview picture for anyone sharing this address. The old
+     front page is classic.html. -->
+<meta http-equiv="refresh" content="0; url=demo/home.html">
+<link rel="canonical" href="https://corylawing.github.io/practice-hub-mockup/demo/home.html">
 <link rel="icon" href="assets/favicon.png" type="image/png">
-<link rel="icon" href="assets/icons/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
 <meta name="theme-color" content="#0F2A4A">
-<meta name="description" content="Try a live, fictional-data demo of a multi-location practice operations hub for schedules, forms, documents, scorecards, and team resources.">
+<meta name="description" content="Try the live demo: schedules, production, new-patient consults, payroll, monthly reports, tasks and team chat — one hub for every office of a multi-location practice.">
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="Home-Brace">
-<meta property="og:title" content="Home-Brace | Multi-Location Practice Operations Hub">
-<meta property="og:description" content="Try the live demo. Explore schedules, forms, documents, scorecards, and team resources in one responsive operations hub.">
-<meta property="og:image" content="https://corylawing.github.io/practice-hub-mockup/assets/home-brace-preview.png">
-<meta property="og:image:width" content="1747">
-<meta property="og:image:height" content="911">
+<meta property="og:site_name" content="Practice Hub">
+<meta property="og:title" content="Practice Hub | Multi-Location Practice Operations Hub">
+<meta property="og:description" content="Try the live demo: schedules, production, new-patient consults, payroll, monthly reports, tasks and team chat — one hub for every office of a multi-location practice.">
+<meta property="og:image" content="https://corylawing.github.io/practice-hub-mockup/demo/share.png">
+<meta property="og:image:width" content="1734">
+<meta property="og:image:height" content="907">
 <meta property="og:url" content="https://corylawing.github.io/practice-hub-mockup/">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Home-Brace | Multi-Location Practice Operations Hub">
-<meta name="twitter:description" content="Try the live demo. Explore schedules, forms, documents, scorecards, and team resources in one responsive operations hub.">
-<meta name="twitter:image" content="https://corylawing.github.io/practice-hub-mockup/assets/home-brace-preview.png">
+<meta name="twitter:title" content="Practice Hub | Multi-Location Practice Operations Hub">
+<meta name="twitter:description" content="Try the live demo: schedules, production, new-patient consults, payroll, monthly reports, tasks and team chat — one hub for every office of a multi-location practice.">
+<meta name="twitter:image" content="https://corylawing.github.io/practice-hub-mockup/demo/share.png">
+<style>
+  :root{color-scheme:dark}
+  body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0F2A4A;color:#fff;
+    font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding-inline:16px}
+  a{color:#2BC0B8;font-weight:600}
+</style>
+<script>location.replace('demo/home.html' + location.hash);</script>
 </head>
-<body data-page="home">
-<div id="hdr"></div>
-
-<div class="wrap">
-
-  <section class="hero hero--product">
-    <div class="hero-grid">
-      <div class="hero-main">
-        <div class="hero-eyebrow">Multi-location operations hub</div>
-        <h1>One place to run every location.</h1>
-        <p>Find the right resource, launch a request, check a schedule, or review performance without hunting through email and shared drives.</p>
-        <div class="hero-search" onclick="openSearch()">
-          <input type="text" placeholder="Search vacation, expense, handbook, vendor, KPI…" readonly>
-          <span class="s-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
-        </div>
-        <div class="hero-chips">
-          <button class="chip" onclick="runSearch('vacation')">Try “vacation”</button>
-          <button class="chip" onclick="runSearch('expense')">Expense</button>
-          <button class="chip" onclick="runSearch('vendor')">Vendor</button>
-          <button class="chip" onclick="runSearch('KPI')">KPI</button>
-        </div>
-      </div>
-      <aside class="hero-pulse" aria-label="Sample operations snapshot">
-        <div class="pulse-head"><span>Today’s operations</span><span class="pulse-live"><i></i> Sample data</span></div>
-        <div class="pulse-row"><span>Locations connected</span><strong>8</strong></div>
-        <div class="pulse-row"><span>Offices open today</span><strong>6</strong></div>
-        <div class="pulse-row"><span>Requests awaiting review</span><strong>4</strong></div>
-        <div class="pulse-row pulse-row--good"><span>Core systems</span><strong>Healthy</strong></div>
-      </aside>
-    </div>
-  </section>
-
-  <section class="demo-paths" aria-labelledby="demo-paths-title">
-    <div class="demo-paths__intro">
-      <span class="demo-paths__eyebrow">Interactive demo</span>
-      <h2 id="demo-paths-title">Try a real workflow</h2>
-      <p>Every card opens a working part of the prototype.</p>
-    </div>
-    <button class="demo-path" onclick="runSearch('vacation')"><span>01</span><strong>Find a policy</strong><small>Search with a natural synonym</small></button>
-    <a class="demo-path" href="forms.html"><span>02</span><strong>Submit a request</strong><small>Open a working sample form</small></a>
-    <a class="demo-path" href="calendars.html"><span>03</span><strong>Plan the week</strong><small>Filter locations and doctors</small></a>
-    <a class="demo-path" href="scorecards.html"><span>04</span><strong>Review performance</strong><small>Explore office-level KPIs</small></a>
-    <a class="demo-path demo-path--wide" href="chat.html"><span>05</span><strong>Message a team</strong><small>Videos, photos and phone alerts</small></a>
-  </section>
-
-  <div class="section-title">Where do you want to go?</div>
-  <div class="tiles" id="moduleTiles"></div>
-
-  <div class="cols" style="margin-top:34px">
-    <div>
-      <div class="card">
-        <h2>📣 Announcements</h2>
-        <div class="announce">
-          <div class="pin"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11v2a1 1 0 0 0 1 1h3l5 4V6L7 10H4a1 1 0 0 0-1 1z"/><path d="M16 9a4 4 0 0 1 0 6"/></svg></div>
-          <div>
-            <h4>New PTO request process is live</h4>
-            <div class="meta">Posted by Jordan Avery (COO) · 2 days ago</div>
-            <p style="margin:.4em 0 0;font-size:14px">All time-off requests now go through the Forms page. Texting your manager is being retired — please use the new form so nothing gets lost.</p>
-          </div>
-        </div>
-        <div class="announce">
-          <div class="pin"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11v2a1 1 0 0 0 1 1h3l5 4V6L7 10H4a1 1 0 0 0-1 1z"/><path d="M16 9a4 4 0 0 1 0 6"/></svg></div>
-          <div>
-            <h4>Q3 priorities posted</h4>
-            <div class="meta">Posted by Leadership · 5 days ago</div>
-            <p style="margin:.4em 0 0;font-size:14px">Office managers — please review the Q3 focus areas before the next manager meeting.</p>
-          </div>
-        </div>
-        <div class="announce">
-          <div class="pin"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11v2a1 1 0 0 0 1 1h3l5 4V6L7 10H4a1 1 0 0 0-1 1z"/><path d="M16 9a4 4 0 0 1 0 6"/></svg></div>
-          <div>
-            <h4>Welcome to Home-Brace!</h4>
-            <div class="meta">Posted by Jordan Avery (COO) · 1 week ago</div>
-            <p style="margin:.4em 0 0;font-size:14px">This is now our one place for documents, forms, and updates. Bookmark it on your phone.</p>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div>
-      <div class="card">
-        <h3>⚡ Quick links</h3>
-        <ul class="qlinks">
-          <li><a href="forms.html">Request time off (PTO) <span class="arr">›</span></a></li>
-          <li><a href="forms.html">Submit an expense <span class="arr">›</span></a></li>
-          <li><a href="hr.html">Employee Handbook <span class="arr">›</span></a></li>
-          <li><a href="manage-my-office.html">Vendor contact list <span class="arr">›</span></a></li>
-          <li><a href="calendars.html">Practice calendar <span class="arr">›</span></a></li>
-          <li><a href="it.html">Get IT help <span class="arr">›</span></a></li>
-        </ul>
-      </div>
-      <div class="card">
-        <h3>📅 This week</h3>
-        <ul class="qlinks">
-          <li><a href="calendars.html">Manager meeting — Wed 10:00a <span class="arr">›</span></a></li>
-          <li><a href="calendars.html">Dr. Chen out — Thu/Fri <span class="arr">›</span></a></li>
-          <li><a href="calendars.html">Supply order cutoff — Fri <span class="arr">›</span></a></li>
-        </ul>
-      </div>
-    </div>
-  </div>
-
-</div>
-
-<div id="ftr"></div>
-<script src="assets/data.js?v=hb10"></script>
-<script src="assets/app.js?v=hb10"></script>
+<body>
+<p>Opening the Practice Hub demo… <a href="demo/home.html">Open it now</a></p>
 </body>
 </html>

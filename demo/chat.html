@@ -1,23 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script src="demo-shim.js?v=d202611250847"></script>
+<script src="demo-shim.js?v=d202611250900"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Home-Brace · Chat</title>
+<title>Practice Hub · Chat</title>
+<meta name="description" content="Try the live demo: schedules, production, new-patient consults, payroll, monthly reports, tasks and team chat — one hub for every office of a multi-location practice.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Practice Hub">
+<meta property="og:title" content="Practice Hub | Multi-Location Practice Operations Hub">
+<meta property="og:description" content="Try the live demo: schedules, production, new-patient consults, payroll, monthly reports, tasks and team chat — one hub for every office of a multi-location practice.">
+<meta property="og:image" content="https://corylawing.github.io/practice-hub-mockup/demo/share.png">
+<meta property="og:image:width" content="1734">
+<meta property="og:image:height" content="907">
+<meta property="og:url" content="https://corylawing.github.io/practice-hub-mockup/demo/chat.html">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Practice Hub | Multi-Location Practice Operations Hub">
+<meta name="twitter:description" content="Try the live demo: schedules, production, new-patient consults, payroll, monthly reports, tasks and team chat — one hub for every office of a multi-location practice.">
+<meta name="twitter:image" content="https://corylawing.github.io/practice-hub-mockup/demo/share.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="icon" href="../assets/favicon.png?v=2" type="image/png">
 <meta name="theme-color" content="#0F2A4A">
-<meta name="apple-mobile-web-app-title" content="Home-Brace">
+<meta name="apple-mobile-web-app-title" content="Practice Hub">
 <link rel="apple-touch-icon" sizes="180x180" href="../assets/icons/apple-touch-icon.png?v=3">
 <meta name="robots" content="noindex">
 <!-- CHAT - A MOCK-UP for Morgan and Dr. Patel (22/10/2026), sandbox only (user.js NAV: the header's chat button and
      the page are off on the live site). It opens from the chat button beside the bell, not a tab. The chat gets the
-     whole screen: no page title, alerts inside the chat list, no Tour & Feedback button (Jordan, 22/10). Dr. Patel asked for "communications in Home-Brace" with videos; Jordan: they want "the whole
-     thing in Home-Brace" - replying to messages, sending and viewing videos, alerts. The plan it shows: Microsoft
+     whole screen: no page title, alerts inside the chat list, no Tour & Feedback button (Jordan, 22/10). Dr. Patel asked for "communications in Practice Hub" with videos; Jordan: they want "the whole
+     thing in Practice Hub" - replying to messages, sending and viewing videos, alerts. The plan it shows: Microsoft
      Teams as the engine underneath (free with their Microsoft 365, messages and videos kept in their own Microsoft
-     365), everything done inside Home-Brace, phone alerts sent by Home-Brace itself, live calls opening Teams.
+     365), everything done inside Practice Hub, phone alerts sent by Practice Hub itself, live calls opening Teams.
      Made-up people, messages, videos and photo (chat-demo/). Nothing is sent anywhere; a video you record stays
      in this browser tab.
      THE REAL CHAT (12/11/2026, Jordan: "very important that nobody sees it until I've confirmed it works ... also the
@@ -181,7 +194,7 @@
   .pick button:hover{background:var(--teal-soft)}
   .pick small{display:block;color:var(--soft);font-size:12px}
   .pick .grp{font-size:11.5px;font-weight:800;color:var(--soft);text-transform:uppercase;letter-spacing:.05em;padding:8px 12px 4px;background:#F7F9FB}
-  /* a phone's alert, as Home-Brace would send it */
+  /* a phone's alert, as Practice Hub would send it */
   .notif{position:fixed;top:12px;left:50%;transform:translate(-50%,-140%);width:min(380px,calc(100% - 24px));background:rgba(250,251,252,.97);backdrop-filter:blur(8px);border-radius:18px;box-shadow:0 12px 34px rgba(15,42,74,.28);padding:11px 14px;display:flex;gap:11px;align-items:flex-start;z-index:90;transition:transform .35s ease;cursor:pointer}
   .notif.on{transform:translate(-50%,0)}
   @media(min-width:761px){ .notif{left:auto;right:16px;transform:translateX(calc(100% + 30px))} .notif.on{transform:none} }
@@ -381,19 +394,19 @@
   .lb .lbnav.p{left:14px}.lb .lbnav.n{right:14px}
   .lb .lbnav[hidden]{display:none}
 </style>
-<script src="user.js?v=hc268d202611250847"></script>
-  <script src="store.js?v=hc268d202611250847"></script>
-  <script src="gate.js?v=hc268d202611250847"></script>
-  <script src="_staff.js?v=hc268d202611250847"></script>
-  <script src="alerts.js?v=hc268d202611250847"></script>
-  <script src="chatgraph.js?v=hc268d202611250847"></script>
+<script src="user.js?v=hc268d202611250900"></script>
+  <script src="store.js?v=hc268d202611250900"></script>
+  <script src="gate.js?v=hc268d202611250900"></script>
+  <script src="_staff.js?v=hc268d202611250900"></script>
+  <script src="alerts.js?v=hc268d202611250900"></script>
+  <script src="chatgraph.js?v=hc268d202611250900"></script>
 </head>
 <body>
 <div class="ribbon" id="ribbon">DEMO — made-up people, messages and videos. Nothing is sent anywhere.</div>
 <header class="hdr">
   <div class="hdr-in">
-    <span class="mark" aria-label="Home-Brace"><img src="../assets/logo-mark.png?v=2" alt="" width="34" height="34"></span>
-    <span class="brand">Home-<i>Brace</i><small>Chat</small></span>
+    <span class="mark" aria-label="Practice Hub"><img src="../assets/logo-mark.png?v=2" alt="" width="34" height="34"></span>
+    <span class="brand">Practice <i>Hub</i><small>Chat</small></span>
     <span class="v1">Demo</span>
   </div>
 </header>
@@ -442,7 +455,7 @@
     if(c.photo) return '<span class="'+cls+'"><img src="'+esc(c.photo)+'" alt=""></span>';
     return '<span class="'+cls+'" style="background:'+colorOf(c.name)+'">'+esc(initials(c.name))+'</span>';
   }
-  /* A person's Home-Brace profile photo when there is one (their own upload or one an admin set), else initials. */
+  /* A person's Practice Hub profile photo when there is one (their own upload or one an admin set), else initials. */
   const personAv=(n, em)=>{ const ph=em && window.PH && PH.photoFor ? PH.photoFor(em) : '';
     return ph ? '<span class="av sm"><img src="'+esc(ph)+'" alt=""></span>' : '<span class="av sm" style="background:'+colorOf(n||'?')+'">'+esc(initials(n||'?'))+'</span>'; };
 
@@ -461,7 +474,7 @@
       {from:'Dr. Clara Coleman', at:ago(62), text:'Here’s the new tray layout for Lakeview. What do you think?'},
       {from:'Dr. Clara Coleman', at:ago(61), photo:'chat-demo/trays.jpg', w:800, h:600}]},
     {id:'c3', type:'team', name:'Doctors', members:['Dr. Clara Coleman','Dr. Thornbury','Dr. Ashcombe','Dr. Fairbanks',ME], unread:0, msgs:[
-      {from:ME, at:ago(1180), text:'November’s schedule is posted in Home-Brace.'},
+      {from:ME, at:ago(1180), text:'November’s schedule is posted in Practice Hub.'},
       {from:'Dr. Thornbury', at:ago(1150), text:'Thanks! I’m off the 27th - already marked.'}]},
     {id:'c4', type:'office', name:'Meadow Park office', members:['Logan Pratt','Ines Salazar','Hayden Moss','Carmen Ibarra','Dr. Ashcombe',ME], unread:0, msgs:[
       {from:'Hayden Moss', at:ago(2950), text:'Friday reminder for everyone 👇'},
@@ -490,7 +503,7 @@
   const REAL=!!window.PH_ALERTS;
   if(REAL) alertsOn=PH_ALERTS.state()==='on';
   else try{ alertsOn=localStorage.getItem('ph_chat_alerts')==='1'; }catch(_){}
-  const SAMPLE=()=>REALCHAT ? {title:'Home-Brace chat', body:'This is how a new message alert looks.', url:PH_ALERTS.here('chat.html'), tag:'hb-chat', delay:5}
+  const SAMPLE=()=>REALCHAT ? {title:'Practice Hub chat', body:'This is how a new message alert looks.', url:PH_ALERTS.here('chat.html'), tag:'hb-chat', delay:5}
     : {title:'Gabriela Garrison · Cedar Grove office', body:'🎥 Sent a video', url:PH_ALERTS.here('chat.html'), tag:'hb-chat', delay:5};
   /* which device this is, so the alert steps are only the ones for it; and whether they closed the strip */
   const UA=navigator.userAgent||'';
@@ -735,7 +748,7 @@
   function emoLoad(){
     if(window.PH_EMOJI) return Promise.resolve(window.PH_EMOJI);
     if(emoP) return emoP;
-    emoP=new Promise((res, rej)=>{ const sc=document.createElement('script'); sc.src='emoji.js?v=hc268d202611250847'; sc.async=true;
+    emoP=new Promise((res, rej)=>{ const sc=document.createElement('script'); sc.src='emoji.js?v=hc268d202611250900'; sc.async=true;
       sc.onload=()=>window.PH_EMOJI ? res(window.PH_EMOJI) : rej(new Error('no emoji')); sc.onerror=()=>{ emoP=null; sc.remove(); rej(new Error('no emoji')); };
       document.head.appendChild(sc); });
     return emoP;
@@ -821,7 +834,7 @@
     r.lang=navigator.language||'en-US'; r.continuous=true; r.interimResults=false;
     r.onresult=e=>{ for(let i=e.resultIndex;i<e.results.length;i++){ if(!e.results[i].isFinal) continue; let said=e.results[i][0].transcript.trim(); if(!said) continue;
       const before=String(t.innerText||''); if(before && !/\s$/.test(before)) said=' '+said; edInsertText(said); } };
-    r.onerror=e=>{ const er=e && e.error; if(er==='not-allowed' || er==='service-not-allowed') toast('The microphone is blocked for Home-Brace - allow it in the browser’s settings for this site.'); };
+    r.onerror=e=>{ const er=e && e.error; if(er==='not-allowed' || er==='service-not-allowed') toast('The microphone is blocked for Practice Hub - allow it in the browser’s settings for this site.'); };
     r.onend=()=>{ if(micRec===r){ micRec=null; const b=document.querySelector('.cbox .tb.mic'); if(b) b.classList.remove('on'); } };
     micRec=r; edRestore();
     try{ r.start(); const b=document.querySelector('.cbox .tb.mic'); if(b) b.classList.add('on'); }catch(_){ micRec=null; }
@@ -1002,7 +1015,7 @@
   let nt=null;
   function notify(c, m){
     const n=el('notif');
-    n.innerHTML='<img src="../assets/logo-mark.png?v=2" alt=""><div style="flex:1;min-width:0"><div class="t"><span>HOME-BRACE</span><span>now</span></div>'+
+    n.innerHTML='<img src="../assets/logo-mark.png?v=2" alt=""><div style="flex:1;min-width:0"><div class="t"><span>PRACTICE HUB</span><span>now</span></div>'+
       '<b>'+esc(c.type==='person' ? m.from : m.from+' · '+c.name)+'</b><div class="x2">'+esc(m.video?'🎥 Sent a video':m.photo?'📷 Sent a photo':m.text)+'</div></div>';
     n.dataset.chat=c.id; n.classList.add('on'); clearTimeout(nt); nt=setTimeout(()=>n.classList.remove('on'), 4200);
   }
@@ -1021,7 +1034,7 @@
     const st=REAL ? PH_ALERTS.state() : '';
     if(alertTab===DEVICE && (st==='blocked' || st==='unsupported')){
       return openDlg(top(st==='blocked'?'Alerts are blocked on this device':'This browser can’t get alerts')+'<div class="dm-body"><div class="lead">'+
-        (st==='blocked' ? (DEVICE==='iphone' ? 'This iPhone said no before. Open <b>Settings → Notifications → Home-Brace → Allow Notifications</b>, then come back and turn them on.'
+        (st==='blocked' ? (DEVICE==='iphone' ? 'This iPhone said no before. Open <b>Settings → Notifications → Practice Hub → Allow Notifications</b>, then come back and turn them on.'
                                              : 'This browser said no before. Click the icon left of the web address → <b>Notifications → Allow</b>, then reload.')
                         : 'Try Safari on an iPhone (added to the home screen), or Chrome, Edge, Safari or Firefox on Android or a computer.')+
         '</div></div><div class="dm-foot"><button class="btn" data-act="close">Got it</button></div>');
@@ -1029,18 +1042,18 @@
     const t=alertTab, mine=t===DEVICE, pc=t==='computer';
     const name={iphone:'iPhone', android:'Android phone', computer:'computer'}[t];
     const title=mine ? 'Get alerts on '+(pc?'this computer':'your '+name) : 'Alerts on '+(pc?'a computer':'an '+name);
-    const ask=pc ? '<div class="bp"><div class="bp-t">🔔 <b>Home-Brace</b> wants to<br>show notifications</div><div class="bp-b"><span>Block</span><span class="go">Allow</span></div></div>'
-                 : '<div class="bp ph"><div class="bp-t"><b>“Home-Brace” would like to send you notifications</b></div><div class="bp-b"><span>Don’t Allow</span><span class="go">Allow</span></div></div>';
+    const ask=pc ? '<div class="bp"><div class="bp-t">🔔 <b>Practice Hub</b> wants to<br>show notifications</div><div class="bp-b"><span>Block</span><span class="go">Allow</span></div></div>'
+                 : '<div class="bp ph"><div class="bp-t"><b>“Practice Hub” would like to send you notifications</b></div><div class="bp-b"><span>Don’t Allow</span><span class="go">Allow</span></div></div>';
     let lead, steps, foot;
     if(t==='iphone' && !(mine && INSTALLED)){
-      lead='Your iPhone shows a new message like a text, even when Home-Brace is closed. Apple only allows that for apps on the home screen, so first put Home-Brace there. You do this once.';
+      lead='Your iPhone shows a new message like a text, even when Practice Hub is closed. Apple only allows that for apps on the home screen, so first put Practice Hub there. You do this once.';
       steps=['In Safari, tap the Share button <span class="ui">'+SHARE+'</span> at the bottom of the screen.',
              'Tap <span class="ui">Add to Home Screen</span>, then <span class="ui">Add</span>.',
-             'Open Home-Brace from its new icon, go to Chat and tap <span class="ui">Turn on</span>. Your iPhone asks - tap <b>Allow</b>.'+ask];
+             'Open Practice Hub from its new icon, go to Chat and tap <span class="ui">Turn on</span>. Your iPhone asks - tap <b>Allow</b>.'+ask];
       foot='<button class="btn" data-act="close">Got it</button>';
     } else {
       lead=pc ? 'A small alert pops up in the corner of your screen when someone messages you - even while you’re in another window.'
-              : 'Your phone shows a new message like a text, even when Home-Brace is closed.';
+              : 'Your phone shows a new message like a text, even when Practice Hub is closed.';
       steps=[(pc?'Click':'Tap')+' <span class="ui">Turn on alerts</span> below.',
              (pc?'Your browser asks to show notifications. Click':'Your phone asks. Tap')+' <b>Allow</b>.'+ask];
       foot=mine ? '<button class="btn ghost" data-act="close">Not now</button><button class="btn" data-act="alertson">Turn on alerts</button>'
@@ -1085,7 +1098,7 @@
       '<div class="note" id="recnote">Up to 5 minutes. It’s sent to <b>'+esc((CHATS.find(x=>x.id===open)||{}).name||'')+'</b> and kept in your own Microsoft 365.</div></div>'+
       '<div class="dm-foot" id="recfoot"><button class="btn ghost" data-act="close">Cancel</button><button class="btn" id="recbtn" data-act="recgo" disabled>● Record</button></div>');
     if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || typeof MediaRecorder==='undefined'){
-      el('cam').innerHTML='<div class="msg">This browser can’t use the camera here. In Home-Brace on a phone or a computer with a camera, this is where you record.</div>'; return;
+      el('cam').innerHTML='<div class="msg">This browser can’t use the camera here. In Practice Hub on a phone or a computer with a camera, this is where you record.</div>'; return;
     }
     navigator.mediaDevices.getUserMedia({video:{facingMode:'user'}, audio:true}).then(stream=>{
       recState={stream, chunks:[], rec:null, started:0, timer:null};
@@ -1108,7 +1121,7 @@
       const secs=Math.max(1,Math.round((Date.now()-recState.started)/1000));
       const ext=/mp4/.test(rec.mimeType||'') ? 'mp4' : 'webm';
       recState.done={url, blob, dur:Math.floor(secs/60)+':'+String(secs%60).padStart(2,'0'),
-        name:'Home-Brace video '+new Date().toISOString().slice(0,16).replace('T',' ').replace(':','.')+'.'+ext};
+        name:'Practice Hub video '+new Date().toISOString().slice(0,16).replace('T',' ').replace(':','.')+'.'+ext};
       recState.stream.getTracks().forEach(t=>t.stop());
       el('cam').classList.remove('recording');
       el('cam').innerHTML='<video src="'+url+'" controls playsinline></video>';
@@ -1359,7 +1372,7 @@
       toast('Not sent: '+local.failed);
     }
   }
-  /* The phone alert, sent by Home-Brace to the others in the chat (every device they turned on). In the test, only
+  /* The phone alert, sent by Practice Hub to the others in the chat (every device they turned on). In the test, only
      to testers. Messages written in Teams itself don't come through here - the Teams app alerts for those. */
   function chatAlert(c, kind, text){
     const A=window.PH_ALERTS; if(!A || !A.ON || !A.sendTo) return;
@@ -1374,7 +1387,7 @@
     const raw=String(((e && e.errorCode)||'')+' '+((e && e.message)||e||'')).trim();
     const consent=/AADSTS65001|AADSTS90094|consent_required|interaction_required|invalid_grant|admin approval|InteractionRequired/i.test(raw);
     const lic=!consent && /licen[cs]e/i.test(raw);
-    const msg=consent ? '<b>Chat isn’t approved by IT yet.</b><br>Microsoft hasn’t given Home-Brace the Teams chat permission (Chat.ReadWrite). Once Evan clicks <b>Grant admin consent</b>, press Try again.'
+    const msg=consent ? '<b>Chat isn’t approved by IT yet.</b><br>Microsoft hasn’t given Practice Hub the Teams chat permission (Chat.ReadWrite). Once Evan clicks <b>Grant admin consent</b>, press Try again.'
       : lic ? '<b>No Teams licence.</b><br>Microsoft says this account can’t use Teams chat.<br><small>'+esc(raw.slice(0,200))+'</small>'
       : '<b>Couldn’t load your Teams chats.</b><br><small>Microsoft said: '+esc(raw.slice(0,240))+'</small>';
     el('items').innerHTML='<div class="empty" style="padding:24px 16px">'+msg+'<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px">'+
@@ -1457,7 +1470,7 @@
     if(act==='tadd'){ CG.setTesters(CG.testers().concat([{email:b.dataset.email, name:b.dataset.name}])); afterTesters(); return; }
     if(act==='tdel'){ CG.setTesters(CG.testers().filter(t=>t.email!==v)); afterTesters(); return; }
     if(act==='mkreal'){ startWith([v]); return; }
-    if(act==='mkgroup'){ startWith(CG.testers().map(t=>t.email), 'Home-Brace test'); return; }
+    if(act==='mkgroup'){ startWith(CG.testers().map(t=>t.email), 'Practice Hub test'); return; }
     if(act==='more'){
       const c=cur(); if(!c || !c.next) return;
       b.disabled=true;
@@ -1572,9 +1585,9 @@
      someone else. Same as slack"). Whoever makes a group owns it; an owner can make others owners or step down (never
      the last one). Only owners rename the group or take people out; anyone in it can add people and leave. A group with
      no owner left (or made in Teams / before this) = anyone in it can do everything, and anyone can make someone owner.
-     Kept in Home-Brace's shared list, one record per group: ph_chatgrp_<short hash of the chat id> {chat, owners:[user
+     Kept in Practice Hub's shared list, one record per group: ph_chatgrp_<short hash of the chat id> {chat, owners:[user
      ids], upd, updBy} - changed with PH_STORE.update (never over someone else's change). Teams itself has no owners in a
-     group chat: in the Teams app anyone in it can still rename or take people out - this rule is Home-Brace's own. */
+     group chat: in the Teams app anyone in it can still rename or take people out - this rule is Practice Hub's own. */
   const OWN_PRE='ph_chatgrp_';
   const ownKey=id=>{ let h=0x811c9dc5; for(const ch of String(id||'')){ h^=ch.codePointAt(0); h=Math.imul(h, 0x01000193)>>>0; } return OWN_PRE+h.toString(36); };
   function cleanOwn(rec, chatId){
@@ -1599,7 +1612,7 @@
   }
   function ownSave(c, change){
     if(!REALCHAT){ c.owners=change((c.owners||[]).slice()); return Promise.resolve(c.owners); }
-    if(!window.PH_STORE) return Promise.reject(new Error('Home-Brace’s shared list isn’t ready'));
+    if(!window.PH_STORE) return Promise.reject(new Error('Practice Hub’s shared list isn’t ready'));
     return PH_STORE.update(ownKey(c.id), cur=>{ const r=cleanOwn(cur, c.id); return {chat:c.id, owners:change(r ? r.owners.slice() : []), upd:new Date().toISOString(), updBy:meKey()}; })
       .then(r=>{ if(!r || r.blocked || r.error) throw new Error((r && (r.why || r.error)) || 'no answer'); return (cleanOwn(r.value, c.id)||{owners:[]}).owners; });
   }

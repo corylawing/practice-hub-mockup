@@ -1,15 +1,15 @@
-/* Home-Brace documents - the practice's files, kept in SharePoint, run from the hub.
+/* Practice Hub documents - the practice's files, kept in SharePoint, run from the hub.
 
-   30/09/2026. Jordan: "There is no way from Home Brace Morgan can create the folders
+   30/09/2026. Jordan: "There is no way from Practice Hub Morgan can create the folders
    which would automatically put it in HomeBrace ... She wants it to be master", "She
    should also be able to remove folders she already created", and "Uploading a
    document and deciding the controls needs to be very easy to understand."
 
-   WHERE THINGS LIVE. The Home-Brace site's own document library ("Documents"), inside
-   one folder, "Home-Brace Documents": a folder per Documents section and, for a section
+   WHERE THINGS LIVE. The Practice Hub site's own document library ("Documents"), inside
+   one folder, "Practice Hub Documents": a folder per Documents section and, for a section
    organised by office or brand, a folder per office or brand inside that.
-       Documents / Home-Brace Documents / HR / New Hire / packet.pdf
-       Documents / Home-Brace Documents / Office Docs / Cedar Grove / lease.pdf
+       Documents / Practice Hub Documents / HR / New Hire / packet.pdf
+       Documents / Practice Hub Documents / Office Docs / Cedar Grove / lease.pdf
    Everything is read and written AS THE SIGNED-IN PERSON (delegated Sites.ReadWrite.All),
    so SharePoint still decides what each person can reach.
 
@@ -19,8 +19,8 @@
        is Replace, which a manager chooses for ONE file and confirms: it writes a new
        VERSION of that file, and SharePoint keeps the old one in its version history.
      - Rename anything. Move only when a manager chooses it for one item - move() below,
-       fenced at both ends to inside Home-Brace Documents.
-     - Touch anything outside Home-Brace Documents. remove() is the one destructive call
+       fenced at both ends to inside Practice Hub Documents.
+     - Touch anything outside Practice Hub Documents. remove() is the one destructive call
        and it is fenced to items inside that folder; Microsoft moves them to the site's
        recycle bin (restorable for 93 days) rather than deleting them. A LINKED file -
        one that lives elsewhere, e.g. in Morgan's OneDrive - is only ever un-linked.
@@ -34,8 +34,8 @@
   'use strict';
 
   var HOST  = 'brightline.sharepoint.example';
-  var SITE  = '/sites/Home-Brace';
-  var BASE  = 'Home-Brace Documents';
+  var SITE  = '/sites/Practice Hub';
+  var BASE  = 'Practice Hub Documents';
   var GRAPH = 'https://graph.microsoft.com/v1.0';
   var SMALL = 4 * 1024 * 1024;          // one request up to 4 MB; bigger files go in pieces
   var PIECE = 320 * 1024 * 16;          // 5 MB pieces - Graph wants multiples of 320 KB
@@ -117,7 +117,7 @@
     }
     return s || 'Untitled';
   }
-  /* path('HR', 'Cedar Grove') -> 'Home-Brace Documents/HR/Cedar Grove'. Each argument is ONE
+  /* path('HR', 'Cedar Grove') -> 'Practice Hub Documents/HR/Cedar Grove'. Each argument is ONE
      folder: a section called "Insurance / W-9" is the folder "Insurance - W-9", not two. */
   function path(){
     var parts = [BASE];
@@ -363,7 +363,7 @@
     return inside(item.id, 0).then(function(){ return { files: files, folders: folders, more: more }; });
   }
 
-  /* THE ONE DESTRUCTIVE CALL. Only for something inside Home-Brace Documents, and even
+  /* THE ONE DESTRUCTIVE CALL. Only for something inside Practice Hub Documents, and even
      then Microsoft keeps it in the site's recycle bin for 93 days. Anything else - the
      folder itself, a linked file in someone's OneDrive, another library - is refused
      here, whatever the page asked for. */
@@ -373,13 +373,13 @@
     var at = pr.path; try{ at = decodeURIComponent(at); }catch(_){}
     var i = at.indexOf('root:/');
     if(i < 0) return false;
-    var rel = at.slice(i + 6);                        // 'Home-Brace Documents/HR/...'
+    var rel = at.slice(i + 6);                        // 'Practice Hub Documents/HR/...'
     return rel === BASE || rel.indexOf(BASE + '/') === 0;
   }
   function remove(item){
     return drive().then(function(d){
       if(!item || !item.id || !insideBase(item, d.id))
-        throw fail(0, 'Only files and folders inside “' + BASE + '” can be removed from Home-Brace.', { fenced: true });
+        throw fail(0, 'Only files and folders inside “' + BASE + '” can be removed from Practice Hub.', { fenced: true });
       return retry(function(){ return api('DELETE', '/drives/' + d.id + '/items/' + item.id); })
         .then(function(){
           var gone = Object.keys(ids).filter(function(k){ return ids[k] === item.id; });
@@ -396,7 +396,7 @@
      handbook goes in place of the old one - same name, same place, same link. Not an
      accident: a manager picks the file and confirms. SharePoint keeps the old one in the
      file's version history, so it can be brought back. Fenced like remove(): only a FILE
-     inside Home-Brace Documents, and only with the same kind of file (.pdf for a .pdf),
+     inside Practice Hub Documents, and only with the same kind of file (.pdf for a .pdf),
      so the name never lies about what is inside. Sends no conflictBehavior at all - the
      file is addressed by its id, so there is nothing to clash with. */
   function ext(n){ var s = String(n || ''), i = s.lastIndexOf('.'); return i > 0 ? s.slice(i + 1).toLowerCase() : ''; }
@@ -404,7 +404,7 @@
     var prog = function(x){ try{ if(onProgress) onProgress(x); }catch(_){} };
     return drive().then(function(d){
       if(!item || !item.id || item.folder || !insideBase(item, d.id))
-        throw fail(0, 'Only a file inside \u201c' + BASE + '\u201d can be replaced from Home-Brace.', { fenced: true });
+        throw fail(0, 'Only a file inside \u201c' + BASE + '\u201d can be replaced from Practice Hub.', { fenced: true });
       if(!file || ext(file.name) !== ext(item.name))
         throw fail(0, 'Pick a .' + (ext(item.name) || '?') + ' file to replace \u201c' + item.name + '\u201d.', { wrongType: true });
       var at = '/drives/' + d.id + '/items/' + item.id;
@@ -418,9 +418,9 @@
   }
 
   /* MOVE (07/10 - Jordan: "what if you want to move a file to another section or folder?").
-     A file or folder goes to another folder inside Home-Brace Documents. It is the SAME
+     A file or folder goes to another folder inside Practice Hub Documents. It is the SAME
      item afterwards, so its version history, its link and its "who can see it" go with it.
-     Fenced at both ends: the item must be inside Home-Brace Documents, and the destination
+     Fenced at both ends: the item must be inside Practice Hub Documents, and the destination
      must be a section folder or a folder inside one (never the top folder itself, where
      no section would show it). A folder can't go inside itself. A name already taken
      there is refused with a plain message - nothing is renamed or replaced. */
@@ -433,7 +433,7 @@
   function move(item, destPath){
     return drive().then(function(d){
       if(!item || !item.id || !insideBase(item, d.id))
-        throw fail(0, 'Only files and folders inside \u201c' + BASE + '\u201d can be moved from Home-Brace.', { fenced: true });
+        throw fail(0, 'Only files and folders inside \u201c' + BASE + '\u201d can be moved from Practice Hub.', { fenced: true });
       var dp = String(destPath || '');
       if(dp.indexOf(BASE + '/') !== 0)
         throw fail(0, 'It can only go into a section, or a folder inside one.', { fenced: true });
@@ -455,17 +455,17 @@
     });
   }
 
-  /* EDIT RIGHTS IN SHAREPOINT, HANDED OUT BY HOME-BRACE (07/10).
+  /* EDIT RIGHTS IN SHAREPOINT, HANDED OUT BY PRACTICE HUB (07/10).
      Jordan: "it's a two step process and can't be managed by homebrace which sucks". After
-     the one-time lock (Home-Brace Members = Read on Home-Brace Documents), Admin gives the
+     the one-time lock (Practice Hub Members = Read on Practice Hub Documents), Admin gives the
      people whose Teams & Access level on a section is Add files or more Edit on THAT
      section's folder (their own offices' folders, for a per-office section), and takes it
-     back when the level drops. Only ever a direct grant to ONE named person, on Home-Brace
+     back when the level drops. Only ever a direct grant to ONE named person, on Practice Hub
      Documents or a folder inside it. Never a group's permission, never anything inherited
-     or shared by link, never anything above Home-Brace Documents. */
+     or shared by link, never anything above Practice Hub Documents. */
   function inBaseTree(p){ p = String(p || ''); return p === BASE || p.indexOf(BASE + '/') === 0; }
   function emailOk(em){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em); }
-  /* Has the lock been done? Not while the Home-Brace Members GROUP can still edit Home-Brace
+  /* Has the lock been done? Not while the Practice Hub Members GROUP can still edit Practice Hub
      Documents. The group by its own name only: every person's sign-in name reads
      "i:0#.f|membership|...", so looking for "members" anywhere took Morgan's own Edit for
      the group's, and said "not locked" when it was (Jordan's screenshot, 07/10). */
@@ -525,13 +525,13 @@
 
   /* THE TC TRACKER'S FOLDER (17/10/2026). Jordan: "lets do it like we did for documents then as
      long as its scalable". The TC Tracker's records (patient names, birth dates, phones -
-     tcstore.js) live in one folder BESIDE Home-Brace Documents, never inside it, so the
+     tcstore.js) live in one folder BESIDE Practice Hub Documents, never inside it, so the
      Documents page and the header search never reach them. One-time lock by hand: stop
-     inheriting, then remove Home-Brace Members AND Visitors (nobody else may read it, unlike
-     Home-Brace Documents where Members keep Read). After that Admin gives each TC Tracker person
+     inheriting, then remove Practice Hub Members AND Visitors (nobody else may read it, unlike
+     Practice Hub Documents where Members keep Read). After that Admin gives each TC Tracker person
      access - edit, or read for "See" - and takes back only what it gave (ph_tcgrants). Fenced to
      that one folder: these functions take no path at all. */
-  var TC_BASE = 'Home-Brace TC Tracker';
+  var TC_BASE = 'Practice Hub TC Tracker';
   function visitorsGroup(x){
     var g = x.grantedToV2 || {}, names = [];
     if(g.siteGroup) names.push(g.siteGroup.displayName || '');
@@ -549,7 +549,7 @@
              /spo-grid-all-users|^c:0\(\.s\|true$/i.test(String(u.loginName || ''));
     });
   }
-  /* A LOCKED FOLDER WHOSE ACCESS HOME-BRACE KEEPS IN STEP WITH A LIST. Two of them: the TC
+  /* A LOCKED FOLDER WHOSE ACCESS PRACTICE HUB KEEPS IN STEP WITH A LIST. Two of them: the TC
      Tracker's patient folder, and Sensitive Material (20/10/2026). Each one is fenced to its
      own path, fixed here - nothing below takes a path from the caller, so a grant or a
      take-back can never land on any other folder. */
@@ -618,7 +618,7 @@
        office manager moved from "Log + calls" to "See" would be left with nothing). One person
        failing never stops the rest. Resolves {gave, took, failed}. */
     /* CHECKED AGAINST SHAREPOINT, NOT ONLY THE RECORD (12/11/2026). Hollie (Brookside) couldn't open Payroll: the
-       record said Home-Brace had given her the Brookside folder, but SharePoint no longer had her - and because the
+       record said Practice Hub had given her the Brookside folder, but SharePoint no longer had her - and because the
        record said "given", no sync ever gave it again (8 office senders were in the same state). So before planning,
        anyone the record says was given access but who is NOT on the folder in SharePoint, and who should have it, is
        given it again. If SharePoint's list can't be read, the record is used as before. */
@@ -651,14 +651,14 @@
   function tcSync(want, gave){ return TC.sync(want, gave); }
 
   /* PAYROLL (01/11/2026). Morgan: "We can go live with the payroll sheet." Pay is private, so payroll is files in
-     its own locked folder BESIDE Home-Brace Documents (paystore.js), one folder inside it per office:
-       Home-Brace Payroll            whoever manages payroll (Teams & Access: Payroll "Everything", and admins)
-       Home-Brace Payroll/<office>   those managers + that office's sender(s) (Payroll "Edit" at that office)
-       Home-Brace Payroll/Morgan    NEVER given to anyone: it only inherits the locked folder's managers
-     One-time lock by hand of Home-Brace Payroll, like the TC Tracker's. Then Admin keeps every folder in step with
+     its own locked folder BESIDE Practice Hub Documents (paystore.js), one folder inside it per office:
+       Practice Hub Payroll            whoever manages payroll (Teams & Access: Payroll "Everything", and admins)
+       Practice Hub Payroll/<office>   those managers + that office's sender(s) (Payroll "Edit" at that office)
+       Practice Hub Payroll/Morgan    NEVER given to anyone: it only inherits the locked folder's managers
+     One-time lock by hand of Practice Hub Payroll, like the TC Tracker's. Then Admin keeps every folder in step with
      the grid and takes back only what it gave (ph_paygrants = {folder path: {email: role}}). Fenced: a path here is
      always the payroll folder or one office folder directly inside it - never Morgan's, never anything else. */
-  var PAY_BASE = 'Home-Brace Payroll', PAY_PRIVATE = 'Morgan';
+  var PAY_BASE = 'Practice Hub Payroll', PAY_PRIVATE = 'Morgan';
   var PAY_ROOT = lockedFolder(PAY_BASE), PAY_OFFICES = {};
   function payFolder(path){
     path = String(path || '');
@@ -695,9 +695,9 @@
 
   /* SENSITIVE MATERIAL (20/10/2026). Jordan: "another Folder in Documents called Sensitive
      Material ... meant to hold doctor sensitive info" and "company sensitive information". Inside
-     Home-Brace Documents, so it shows in Documents - but LOCKED in SharePoint like the TC folder
-     (stop inheriting, remove Members and Visitors), because everyone in Home-Brace can READ the
-     rest of Home-Brace Documents in SharePoint. Who may open it is one list in Admin (every admin,
+     Practice Hub Documents, so it shows in Documents - but LOCKED in SharePoint like the TC folder
+     (stop inheriting, remove Members and Visitors), because everyone in Practice Hub can READ the
+     rest of Practice Hub Documents in SharePoint. Who may open it is one list in Admin (every admin,
      plus teams and people added with a double confirmation); Admin gives and takes back the
      SharePoint access from that list (ph_sensgrants). Nothing moves in or out of it (move()). */
   var SENS_NAME = 'Sensitive Material', SENS_PATH = BASE + '/' + SENS_NAME;
@@ -705,7 +705,7 @@
   function inSens(p){ p = String(p || ''); return p === SENS_PATH || p.indexOf(SENS_PATH + '/') === 0; }
 
   /* SAFE TO SYNC? (12/11/2026) The access syncs (TC Tracker, Payroll) work out who should have each folder from
-     Home-Brace's shared lists. When one of those lists can't be read, the store hands back this browser's old copy
+     Practice Hub's shared lists. When one of those lists can't be read, the store hands back this browser's old copy
      without failing - and a sync working from an old or empty copy takes access away from the people missing from
      it. That is how 8 office managers lost their payroll folders (12/11). So a sync first asks this: the lists it
      needs that DIDN'T read just now (named for the screen), plus "the team list" if the roster is empty. Anything in
@@ -721,11 +721,11 @@
   }
   function syncBlocked(keys){
     var bad = unreadForSync(keys);
-    return bad.length ? fail(0, 'Part of Home-Brace didn\u2019t load (' + bad.join(', ') + '), so no access was changed. Try again in a moment.', { unread: bad }) : null;
+    return bad.length ? fail(0, 'Part of Practice Hub didn\u2019t load (' + bad.join(', ') + '), so no access was changed. Try again in a moment.', { unread: bad }) : null;
   }
 
   /* What to change, from who should have what (want: {email: 'write'|'read'}) and what
-     Home-Brace has given before (gave: {email: role}). Pure - tested. */
+     Practice Hub has given before (gave: {email: role}). Pure - tested. */
   function tcPlan(want, gave){
     want = want || {}; gave = (gave && typeof gave === 'object' && !Array.isArray(gave)) ? gave : {};
     var give = [], take = [];
@@ -737,7 +737,7 @@
     Object.keys(gave).forEach(function(em){ if(!want[em]) take.push({ em: em, role: gave[em] }); });
     return { give: give, take: take };
   }
-  /* The record of what Home-Brace has given (ph_tcgrants), after a sync. A take-back that
+  /* The record of what Practice Hub has given (ph_tcgrants), after a sync. A take-back that
      failed stays on record - even over a new role given to the same person - so the next run
      tries again rather than leave someone with more than the grid says. Pure - tested. */
   function tcRecord(cur, done){
@@ -766,8 +766,8 @@
         throw e;
       });
   }
-  /* Can everyone in Home-Brace open it? true: it is in the Home-Brace library, shared with
-     the Home-Brace group, or shared with the whole organisation. false: only named
+  /* Can everyone in Practice Hub open it? true: it is in the Practice Hub library, shared with
+     the Practice Hub group, or shared with the whole organisation. false: only named
      people. null: could not tell (the check itself was refused) - say nothing then. */
   function whoCanOpen(item){
     var pr = (item && item.parentReference) || {};

@@ -1,14 +1,14 @@
 /* FEEDBACK REPLIES (04/11/2026). Jordan: "Would be nice as me as an admin can respond to these that they submit from
-   Home-Brace directly" - and replies are signed "Home-Brace team" (his choice; the feedback form never names him).
+   Practice Hub directly" - and replies are signed "Practice Hub team" (his choice; the feedback form never names him).
    - Admin -> Feedback: every message, newest first, the conversation under it, Reply and Mark done.
-   - The person: the bell says "Home-Brace team replied to your feedback" (and their phone, if they turned alerts on);
+   - The person: the bell says "Practice Hub team replied to your feedback" (and their phone, if they turned alerts on);
      Tour & Feedback -> My messages shows each message with the replies, and Reply sends an answer back.
    Storage (store.js): the HomeBraceFeedback list. The team's answers sit on the message itself (Replies); a person's
    answer back is a new row (ReplyTo = the first one) so the email flow sends it to us like any message. Who wrote a
    row is SharePoint's createdBy. Loaded on demand by user.js (PH.fbReady). */
 (function(global){
   'use strict';
-  const SEEN='ph_fb_seen', TEAM='Home-Brace team';
+  const SEEN='ph_fb_seen', TEAM='Practice Hub team';
   const esc=v=>String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   const nowISO=()=>new Date().toISOString();
 
@@ -47,7 +47,7 @@
       msgs.sort((a,b)=>String(a.at).localeCompare(String(b.at)));
       const lastThem=msgs.filter(m=>m.who==='them').pop(), lastTeam=msgs.filter(m=>m.who==='team').pop()||null;
       const answered=!!lastTeam && lastTeam.at>=lastThem.at, doneSince=!!rep.doneAt && rep.doneAt>=lastThem.at;
-      /* The name Home-Brace knows them by (the message's "From:" line, from the practice's own list), not their Microsoft
+      /* The name Practice Hub knows them by (the message's "From:" line, from the practice's own list), not their Microsoft
          account's - Marlene's account is called "Brookside Treatment Coordinator" (Jordan 18/11). The account's name stays
          underneath as `account`; who it is still matches by the account (sameAs). */
       const fromName=lineOf(root.Details,'From').replace(/\s*<[^>]*>\s*$/,'').trim(), by=Object.assign({}, root.by||{});
@@ -192,7 +192,7 @@
         '<span class="fbr-err"></span></div></div></div>').join('')+'</div>'
       + (shown.length<match.length ? '<div class="fbr-row" style="margin-top:12px"><button type="button" class="fbr-btn ghost" data-more="1">Show all '+match.length+(FILTER==='done'?' done':'')+'</button><span style="font-size:13px;color:#5b6b7d">Showing the '+shown.length+' most recent</span></div>' : '')
       : '<div class="fbr-empty">'+(FILTER==='new' && KIND==='any' ? 'Nothing new - you’re all caught up.' : 'Nothing here.')+'</div>';
-    h+='<p style="margin:14px 2px 0;font-size:12.5px;color:#8291a3">Everyone’s messages show here, for Home-Brace admins. Staff only ever see their own, under My messages.</p>';
+    h+='<p style="margin:14px 2px 0;font-size:12.5px;color:#8291a3">Everyone’s messages show here, for Practice Hub admins. Staff only ever see their own, under My messages.</p>';
     el.innerHTML=h;
     Object.keys(typed).forEach(id=>{ const th=el.querySelector('.fbr-th[data-t="'+(window.CSS && CSS.escape ? CSS.escape(id) : id)+'"]'); if(!th) return;
       const ta=th.querySelector('textarea'), b=th.querySelector('[data-send]'); if(ta){ ta.value=typed[id]; if(b) b.disabled=!ta.value.trim(); if(id===focusId) try{ ta.focus(); }catch(_){} } });
@@ -228,7 +228,7 @@
   /* Their phone, if they turned alerts on - no words of the reply on a lock screen, just that there is one. */
   function phone(emails, id){
     try{ if(!PH.alertsReady) return;
-      PH.alertsReady().then(A=>{ if(!A || !A.ON) return; return A.sendTo(emails, {title:TEAM+' replied to your feedback', body:'Open Home-Brace to read it.', url:A.here('home.html')+'#myfeedback', tag:'hb-fb-'+id}); }).catch(()=>{});
+      PH.alertsReady().then(A=>{ if(!A || !A.ON) return; return A.sendTo(emails, {title:TEAM+' replied to your feedback', body:'Open Practice Hub to read it.', url:A.here('home.html')+'#myfeedback', tag:'hb-fb-'+id}); }).catch(()=>{});
     }catch(_){}
   }
 

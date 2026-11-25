@@ -1,4 +1,4 @@
-/* Home-Brace's service worker - phone and computer ALERTS only (22/10/2026, Jordan: "yes for phone alerts we need that").
+/* Practice Hub's service worker - phone and computer ALERTS only (22/10/2026, Jordan: "yes for phone alerts we need that").
    No page caching and no offline copy: every page still comes straight from the site. A push shows the alert; tapping it
    opens (or brings forward) the page it points to. Open pages are told too, so they can update. */
 self.addEventListener('install', () => self.skipWaiting());
@@ -6,7 +6,7 @@ self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
 
 /* THE RED NUMBER ON THE APP ICON (20/11/2026, Jordan: on Android a chat message puts a red number on the app, "but it
    doesn't do that on my Iphone"). Android counts the alerts by itself; an iPhone (home-screen app, alerts on) only shows
-   the number the app sets. Each alert adds one; opening Home-Brace sets it to the unread chats (user.js appBadge). The
+   the number the app sets. Each alert adds one; opening Practice Hub sets it to the unread chats (user.js appBadge). The
    one number is kept in the browser's cache store - the only thing ever put there (still no copies of pages). */
 const BADGE = 'ph-badge', BADGE_KEY = 'ph-badge-count';
 function badgeAdd() {
@@ -23,7 +23,7 @@ self.addEventListener('push', e => {
   try { m = e.data ? e.data.json() : {}; } catch (_) { m = { body: e.data ? e.data.text() : '' }; }
   e.waitUntil(Promise.all([
     badgeAdd(),
-    self.registration.showNotification(m.title || 'Home-Brace', {
+    self.registration.showNotification(m.title || 'Practice Hub', {
       body: m.body || '', icon: '../assets/icons/icon-192.png',
       tag: m.tag || undefined, renotify: !!m.tag, data: { url: m.url || '' } }),
     self.clients.matchAll({ type: 'window', includeUncontrolled: true })

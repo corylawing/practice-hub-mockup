@@ -1,4 +1,4 @@
-/* Home-Brace V1 — the signed-in person: avatar, My Profile, and what they're allowed to do.
+/* Practice Hub V1 — the signed-in person: avatar, My Profile, and what they're allowed to do.
    ONE source of truth for personas + permissions. Every page includes this.
    Levels: none < view < add < edit < manage   (see Admin → Teams & Access) */
 (function(){
@@ -45,7 +45,7 @@
 
      Jordan, 25/09/2026: "for the user in their profile to change the colors of the practice
      hub. It needs to be smart. We should provide color schemes." And: "default is what we
-     have already" - Home-Brace is the pages' own colours, untouched; choosing it removes
+     have already" - Practice Hub is the pages' own colours, untouched; choosing it removes
      every override.
 
      What makes it safe to hand to seventy people:
@@ -64,7 +64,7 @@
      female contrasts would be great." The softer, warmer schemes come first, after the
      original; every one passes the same readability rules as picked. */
   const THEMES=[
-    {k:'homebrace',  n:'Home-Brace',    p:'#0F2A4A', a:'#149B96', note:'The original'},
+    {k:'homebrace',  n:'Practice Hub',    p:'#0F2A4A', a:'#149B96', note:'The original'},
     {k:'blush',      n:'Blush',         p:'#5E3445', a:'#D96A8E'},
     {k:'peony',      n:'Peony',         p:'#5A1A45', a:'#D9448B'},
     {k:'rose',       n:'Rose',          p:'#5B1F37', a:'#C2456B'},
@@ -131,7 +131,7 @@
       if(tok) Object.keys(tok).forEach(v=>st.setProperty(v,tok[v]));
     }
     if(root && root.setAttribute) root.setAttribute('data-scheme',th.k);
-    // Home-Brace's own icon colours sit in the stylesheet; another scheme re-fits them to its bar.
+    // Practice Hub's own icon colours sit in the stylesheet; another scheme re-fits them to its bar.
     if(st && st.removeProperty) Object.keys(TAB_IC).forEach(k=>st.removeProperty('--ic-'+k));
     if(tok && st && st.setProperty) Object.keys(TAB_IC).forEach(k=>st.setProperty('--ic-'+k, readable(TAB_IC[k],tok['--navy2'],3)));
     // The phone's address bar takes the bar colour too.
@@ -955,26 +955,26 @@
   /* A stand-in for their SharePoint tree. In production this is the Graph file picker,
      which returns the file's real driveId/itemId — the hub stores the LINK, never a copy. */
   const DRIVE={
-    '':{folders:['Home-Brace','Shared Documents','Clinical','Finance'],files:[]},
-    'Home-Brace':{folders:['HR','Operations','Marketing','Office Forms'],files:[]},
-    'Home-Brace/HR':{folders:['New Hire','Policies'],files:[
+    '':{folders:['Practice Hub','Shared Documents','Clinical','Finance'],files:[]},
+    'Practice Hub':{folders:['HR','Operations','Marketing','Office Forms'],files:[]},
+    'Practice Hub/HR':{folders:['New Hire','Policies'],files:[
       ['Employee Handbook 2026.docx','Modified 2 days ago by Morgan B.'],
       ['PTO Request Form.xlsx','Modified last week by Ivy R.']]},
-    'Home-Brace/HR/New Hire':{folders:[],files:[
+    'Practice Hub/HR/New Hire':{folders:[],files:[
       ['New-Hire Packet (New Mexico).pdf','Modified yesterday by Morgan B.'],
       ['New-Hire Packet (Texas).pdf','Modified yesterday by Morgan B.'],
       ['W-9 Blank.pdf','Modified 3 months ago']]},
-    'Home-Brace/HR/Policies':{folders:[],files:[
+    'Practice Hub/HR/Policies':{folders:[],files:[
       ['Uniform Policy.docx','Modified last month by Morgan B.'],
       ['Attendance Policy.docx','Modified last month by Morgan B.']]},
-    'Home-Brace/Operations':{folders:[],files:[
+    'Practice Hub/Operations':{folders:[],files:[
       ['2026 Production Dashboard.xlsx','Modified today by Ivy R.'],
       ['Opening & Closing Checklist.docx','Modified 2 weeks ago'],
       ['Supply Order Form.xlsx','Modified last week']]},
-    'Home-Brace/Marketing':{folders:[],files:[
+    'Practice Hub/Marketing':{folders:[],files:[
       ['Marketing Calendar 2026.xlsx','Modified 3 days ago by Renee B.'],
       ['Referral Card Artwork.pdf','Modified last month']]},
-    'Home-Brace/Office Forms':{folders:[],files:[
+    'Practice Hub/Office Forms':{folders:[],files:[
       ['Maintenance Request.docx','Modified 2 months ago'],
       ['Incident Report.pdf','Modified 5 months ago']]},
     'Shared Documents':{folders:[],files:[['Group Org Chart.pptx','Modified last quarter']]},
@@ -1524,13 +1524,13 @@
   }
   /* DOCUMENTS IN THE SEARCH (07/10 - Jordan: "the search doesn't take into accounts these
      documents and what the user does or does not have access too"). Files and folders in
-     Home-Brace Documents - by name and by what is in them, through SharePoint's own search
+     Practice Hub Documents - by name and by what is in them, through SharePoint's own search
      - and files linked in from elsewhere. Each is shown ONLY if this person could open it
      on the Documents page: the section's level from the access grid; for a per-office or
      per-brand section, only their offices' and brands' folders; and any "Only certain
      people" on the item or on a folder it sits in (people who manage the section see
      everything, as they do there). Anything not in a section is not shown. Live only. */
-  const DOC_BASE='Home-Brace Documents';
+  const DOC_BASE='Practice Hub Documents';
   const DOC_DEFAULT_SECS=[{k:'hr',n:'HR'},{k:'officedocs',n:'Office Docs',structure:'byLocation'},{k:'forms',n:'Office Forms',structure:'byBrand'},
     {k:'vendors',n:'Vendors'},{k:'filing',n:'Insurance / W-9'},{k:'eom',n:'End-of-Month Reporting'}];
   const DOC_BRAND={BFO:'BFO',MPL:'Maple',RBO:'RBO'};
@@ -1542,7 +1542,7 @@
     return x || 'Untitled';
   }
   /* OPEN TO LOOK, NOT TO EDIT (12/11/2026). Morgan couldn't remove a form from Patient Forms: opening it from
-     Home-Brace had put her in Word's EDITING mode (SharePoint's own link says action=default), and a Word file being
+     Practice Hub had put her in Word's EDITING mode (SharePoint's own link says action=default), and a Word file being
      edited is locked - no Remove, no Replace - until a while after it's closed. Word, Excel and PowerPoint files now
      open in VIEW mode: looking never locks, nobody changes a master form by accident, and Edit is one click in Word's
      own bar for anyone allowed. Only Microsoft's Office-viewer links (…sharepoint.com/…/_layouts/15/Doc.aspx or
@@ -1554,10 +1554,10 @@
     if(/[?&]action=[^&]*/i.test(base)) return base.replace(/([?&])action=[^&]*/i, '$1action=view')+tail;
     return base+'&action=view'+tail;
   }
-  /* WORD FILES OPEN AS THEY PRINT (16/11/2026). Morgan: "some word documents show up formatted weird in Home Brace but
+  /* WORD FILES OPEN AS THEY PRINT (16/11/2026). Morgan: "some word documents show up formatted weird in Practice Hub but
      when I put them in as pdfs they are correct." Word for the web lays out forms built from text boxes and tight lines
      loosely (the BFO Medical History, one page on paper, ran on for pages there); Microsoft's own PDF of the same file
-     (Graph /content?format=pdf - what Word prints) matched it page for page. So a Word file opened from Home-Brace
+     (Graph /content?format=pdf - what Word prints) matched it page for page. So a Word file opened from Practice Hub
      (Documents, the header search) opens as that PDF in a new tab. Its link still points at Word for the web (view):
      that is used when the PDF can't be made, for a Ctrl/Cmd-click, on a phone or tablet, and in the home-screen app,
      where a new tab can't show it. Editing: "Edit" next to it in Documents, for people who can edit there. */
@@ -1612,7 +1612,7 @@
     if(!(isLive() && window.PH_AUTH && PH_AUTH.graph && window.PH_STORE)) return Promise.resolve(null);
     const g=PH_AUTH.graph;
     DOCX=Promise.all([
-      g('/sites/brightline.sharepoint.example:/sites/Home-Brace').then(function(site){ return g('/sites/'+site.id+'/drive?$select=id'); })
+      g('/sites/brightline.sharepoint.example:/sites/Practice Hub').then(function(site){ return g('/sites/'+site.id+'/drive?$select=id'); })
         .then(function(d){ return g('/drives/'+d.id+'/root:/'+encodeURIComponent(DOC_BASE)+'?$select=id').then(function(b){ return {driveId:d.id, baseId:b.id}; }); }),
       PH_STORE.get('ph_docsecs').catch(function(){ return null; }),
       PH_STORE.get('ph_docmeta').catch(function(){ return null; }),
@@ -1664,7 +1664,7 @@
     return x==='pdf'?'\u{1F4D5}':['doc','docx','rtf','txt'].indexOf(x)>=0?'\u{1F4D8}':['xls','xlsx','xlsm','csv'].indexOf(x)>=0?'\u{1F4D7}':
       ['ppt','pptx'].indexOf(x)>=0?'\u{1F4D9}':['png','jpg','jpeg','gif','heic','webp'].indexOf(x)>=0?'\u{1F5BC}\uFE0F':'\u{1F4C4}';
   }
-  /* WHERE A SEARCH RESULT SITS, as a path inside Home-Brace Documents.
+  /* WHERE A SEARCH RESULT SITS, as a path inside Practice Hub Documents.
      14/10/2026, Jamie: searching "hygiene", the oral hygiene form never came up. It is a
      Word file, and SharePoint gives Word, Excel and PowerPoint files an address that opens
      them in Office Online (.../_layouts/15/Doc.aspx?sourcedoc=...) - no folders in it. The
@@ -1832,7 +1832,7 @@
 
   /* The chat button's unread count. The mock-up keeps it for this browser tab only (sessionStorage
      ph_chat_unread = {chat id: unread}), so a fresh tab starts the demo again at chat.html's 3 unread. */
-  /* The red number on the app icon (sw.js adds one per alert): while Home-Brace is open it is the unread chats - 0 clears
+  /* The red number on the app icon (sw.js adds one per alert): while Practice Hub is open it is the unread chats - 0 clears
      it. Live only; a browser without app badges (most desktops) ignores it. */
   function appBadge(n){
     if(document.visibilityState && document.visibilityState!=='visible') return;
@@ -1850,7 +1850,7 @@
     if(!d){ d=document.createElement('span'); d.className='dot'; c.appendChild(d); }
     d.textContent=n>9?'9+':String(n); c.title='Chat - '+n+' unread';
   }
-  /* THE CHAT COUNT ON EVERY PAGE (Morgan 18/11: "Since I have Home Brace open, I do not see a number next to my messages
+  /* THE CHAT COUNT ON EVERY PAGE (Morgan 18/11: "Since I have Practice Hub open, I do not see a number next to my messages
      when you send me one"). The count used to be only what the Chat page last saw in this browser tab - so with Home open
      it never moved, and a fresh tab showed the mock-up's 3. Now, on the live site, for anyone who has chat: Microsoft is
      asked which chats have something unread (as the Chat page decides it: the newest message isn't yours, isn't deleted,
@@ -1998,7 +1998,7 @@
         '<div class="ph-f" style="margin-bottom:18px"><label>About me</label>'+
           '<textarea class="ph-edit" id="ph-about" placeholder="A line about what you do…">'+(p.about||'')+'</textarea></div>'+
         (partyOn() ? (function(){ const x=partyRec().p[String(email(p)||'').toLowerCase()]||{}, no=x.no||{};
-          return '<div class="ph-f" style="margin-bottom:18px"><label>Celebrations on Home-Brace</label>'+
+          return '<div class="ph-f" style="margin-bottom:18px"><label>Celebrations on Practice Hub</label>'+
             '<label style="display:flex;gap:8px;align-items:center;font-size:14px;margin:4px 0"><input type="checkbox" '+(no.bday?'':'checked')+' onchange="PH.partyPref(\'bday\',this.checked)"> Celebrate my birthday 🎂</label>'+
             '<label style="display:flex;gap:8px;align-items:center;font-size:14px;margin:4px 0"><input type="checkbox" '+(no.anniv?'':'checked')+' onchange="PH.partyPref(\'anniv\',this.checked)"> Celebrate my Workiversary 🏆</label>'+
             '<div style="font-size:11.5px;color:#56627A;margin-top:4px">Your admin adds the dates. Only the day is ever shown — never your age. Saves as you tick.</div></div>'; })() : '')+
@@ -2247,7 +2247,7 @@
     return paySenderOffices().length ? 'send' : '';
   }
   /* PAYROLL REMINDERS IN THE BELL (02/11/2026). Morgan 22/10: "How will they get reminders to send payroll? Is it
-     through Home-Brace?" Worked out from today's date and ph_pay_status (the shared list: which office sent which
+     through Practice Hub?" Worked out from today's date and ph_pay_status (the shared list: which office sent which
      pay period, and when it was entered - times only, never pay), so nothing is stored per reminder and one stays
      until its sheet is sent:
        - whoever sends an office's sheet: from the workday before it's due ("due Tuesday by 2 pm"), the day itself,
@@ -2309,7 +2309,7 @@
     const pad=function(n){ return String(n).padStart(2,'0'); };
     const today=R.todayISO(now), hm=pad(now.getHours())+':'+pad(now.getMinutes());
     const per=R.period(R.currentIndex(today)), st=(payStatus().p||{})[per.key]||{}, sent=st.sent||{};
-    if(R.FIRST && per.key<R.FIRST) return [];                    // before Home-Brace payroll began: done the old way
+    if(R.FIRST && per.key<R.FIRST) return [];                    // before Practice Hub payroll began: done the old way
     if(st.entered || today<R.workdayBefore(per.due)) return [];
     const after=today>per.due || (today===per.due && hm>='14:00');
     const wd=function(d){ return ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][R.dow(d)]; };
@@ -2336,9 +2336,9 @@
     return out;
   }
   /* ALERTS ON THIS DEVICE, FROM THE BELL (03/11/2026). alerts.js (PH_ALERTS) is loaded on every page when it's needed,
-     like payrules.js; the bell's last row turns alerts on or off for this phone or computer (an iPhone: add Home-Brace
+     like payrules.js; the bell's last row turns alerts on or off for this phone or computer (an iPhone: add Practice Hub
      to the home screen first - Apple's rule). Hidden where alerts aren't on yet (the live site until ALERTS_LIVE). */
-  /* FEEDBACK REPLIES (04/11/2026, fbreply.js): the person's "Home-Brace team replied" and an admin's "N new feedback
+  /* FEEDBACK REPLIES (04/11/2026, fbreply.js): the person's "Practice Hub team replied" and an admin's "N new feedback
      messages" sit with the bell's reminders. Looked up after sign-in and when a tab comes back, 10 minutes apart. */
   let FB_P=null, FBR={mine:[], fresh:0}, FB_AT=0, FB_BUSY=false;
   function fbReady(){
@@ -2366,7 +2366,7 @@
   function fbReminders(){
     const out=(FBR.mine||[]).map(function(t){
       const first=(t.msgs[0]&&t.msgs[0].text)||'', short=first.length>48?first.slice(0,46)+'…':first;
-      return {ic:'\u{1F4AC}', title:'Home-Brace team replied to your feedback', sub:'\u201c'+short+'\u201d \u00b7 '+ago(t.lastTeam.at), fb:t.id};
+      return {ic:'\u{1F4AC}', title:'Practice Hub team replied to your feedback', sub:'\u201c'+short+'\u201d \u00b7 '+ago(t.lastTeam.at), fb:t.id};
     });
     if(FBR.fresh) out.push({ic:'\u{1F4E5}', title:FBR.fresh+' new feedback message'+(FBR.fresh===1?'':'s'), sub:'Admin \u2192 Feedback', href:'admin.html#feedback'});
     return out;
@@ -2376,7 +2376,7 @@
   document.addEventListener('visibilitychange', function(){ if(document.visibilityState==='visible') fbTick(false); });
 
   /* USAGE - THE ADOPTION DASHBOARD (10/11/2026, Jordan: the practice asked "to put in ADMIN so dashboard to see usage of
-     Home-Brace (non admins). Who is logging in per different period. Basic an adoption dashboard"; "Make it a real
+     Practice Hub (non admins). Who is logging in per different period. Basic an adoption dashboard"; "Make it a real
      adoption dashboard. Not too much but very clear with a few tiles"; no line in the staff guide). Each person's own
      record, ph_use_<email> = {v:1, email, name, rk, admin, first, last, d:{'YYYY-MM-DD':{n, p:{home:2, payroll:1}}}}:
      who, which section, which day (this device's calendar) - never what they typed or saw. rk = their team-list key
@@ -2456,8 +2456,8 @@
     if(st==='unsupported') return '';
     const note=ALERT_NOTE ? '<div class="nalnote">'+escHTML(ALERT_NOTE)+'</div>' : '';
     if(st==='on') return '<div class="nalert on"><span>📱 Alerts are on for this '+dev+'</span><button class="nal-off" type="button">Turn off</button>'+note+'</div>';
-    if(st==='install') return '<div class="nalert"><span>📱 To get alerts on this '+dev+': tap <b>Share</b>, then <b>Add to Home Screen</b>, and open Home-Brace from your home screen.</span></div>';
-    if(st==='blocked') return '<div class="nalert"><span>📱 Alerts are blocked for Home-Brace in this browser’s settings.</span>'+note+'</div>';
+    if(st==='install') return '<div class="nalert"><span>📱 To get alerts on this '+dev+': tap <b>Share</b>, then <b>Add to Home Screen</b>, and open Practice Hub from your home screen.</span></div>';
+    if(st==='blocked') return '<div class="nalert"><span>📱 Alerts are blocked for Practice Hub in this browser’s settings.</span>'+note+'</div>';
     return '<div class="nalert"><span>📱 Get reminders on this '+dev+'</span><button class="nal-on" type="button">Turn on</button>'+note+'</div>';
   }
   function alertsTap(on){
@@ -2467,7 +2467,7 @@
     if(!on){ A.disable().then(function(){ ALERT_NOTE='Alerts are off on this '+(A.KIND||'device')+'.'; paint(); }); return; }
     A.enable()                                     // straight from the tap: the browser only asks from one
       .then(function(){ ALERT_NOTE='On ✓ A test alert is on its way.'; paint();
-        return A.send({title:'Alerts are on ✓', body:'Home-Brace reminders will come in like this.', url:A.here('home.html'), tag:'hb-test', delay:3}); })
+        return A.send({title:'Alerts are on ✓', body:'Practice Hub reminders will come in like this.', url:A.here('home.html'), tag:'hb-test', delay:3}); })
       .catch(function(e){ const m=(e && e.message)||'';
         ALERT_NOTE=m==='blocked' ? 'This browser said no. You can allow alerts for this site in its settings.'
           : m==='dismissed' ? 'Nothing changed - tap Turn on again and choose Allow.'
@@ -2477,7 +2477,7 @@
 
   /* PAYROLL REMINDERS ON PHONES (03/11/2026). The bell's reminders (above), sent as alerts to every device each sender
      turned on: the workday before it's due at 9 am, the due day at 9 am, and at 1 pm - Central, like the 2 pm deadline -
-     to the senders of offices that haven't sent yet. No server clock: the first Home-Brace visit after each time sends
+     to the senders of offices that haven't sent yet. No server clock: the first Practice Hub visit after each time sends
      it, from whoever's browser that is. It's claimed first in ph_pay_status (p[period].al[slot] = {at, by}), so two
      visits at once still send it once; a visit that finds a later time already due sends only that one. Nothing after
      2 pm (the bell says "late" from then). Off until alerts are on (PH_ALERTS.ON). */
@@ -2647,7 +2647,7 @@
     n.innerHTML='<span>\u26A0\uFE0F</span><div><b>Your change was not saved for anyone else yet.</b><br>'+
       (denied
         ? 'You don\u2019t have permission to save to the practice\u2019s SharePoint site, so this '+
-          'stayed on your own device. Ask an admin for <b>Edit</b> access to the Home-Brace site.'
+          'stayed on your own device. Ask an admin for <b>Edit</b> access to the Practice Hub site.'
         : tooBig
         ? 'This is too large for SharePoint to take in one piece. It is kept safe on this device. '+
           'Tell Jordan, and keep using this device until he says it is sorted.'
@@ -3151,7 +3151,7 @@
     if(!document.body || !document.querySelector('.v1nav')) return;
     let side=document.querySelector('.ph-sidenav');
     if(!side){ side=document.createElement('aside'); side.className='ph-sidenav'; side.setAttribute('aria-label','Main menu'); document.body.appendChild(side); }
-    side.innerHTML='<a class="ph-sb-brand" href="home.html"><img src="../assets/logo-mark.png?v=2" alt="" width="34" height="34"><span>Home-<i>Brace</i></span></a>'+
+    side.innerHTML='<a class="ph-sb-brand" href="home.html"><img src="../assets/logo-mark.png?v=2" alt="" width="34" height="34"><span>Practice <i>Hub</i></span></a>'+
       '<nav class="ph-sb-list">'+navShown().map(x=>{ const p=splitNav(x.n);
         return '<a href="'+x.href+'"'+(x.k===NAV_ACTIVE?' class="active" aria-current="page"':'')+'>'+icon(x.k)+'<span>'+escHTML(p.label)+'</span></a>'; }).join('')+'</nav>';
   }
@@ -3422,7 +3422,7 @@
      One place, because it is referenced by both the Dashboard and Enter Production and
      a half-updated pair is a silent breakage. These IDs identify the file; they grant
      nothing on their own - reading it still needs a signed-in person who already has
-     access. If the file is ever MOVED (e.g. from Morgan's OneDrive into the Home-Brace
+     access. If the file is ever MOVED (e.g. from Morgan's OneDrive into the Practice Hub
      site) both values change: get the new ones from connect.html step 5 and change them
      here only. */
   const WORKBOOK={
@@ -3550,7 +3550,7 @@
       ctx.looking&&ctx.looking.length?'Had open: '+ctx.looking.join(' · '):null,
       ctx.url?'Link: '+ctx.url:null,
       ctx.device?'Device: '+ctx.device:null,
-      'Home-Brace version: '+(ctx.version||'?')+(ctx.colors?' · Colors: '+ctx.colors:''),
+      'Practice Hub version: '+(ctx.version||'?')+(ctx.colors?' · Colors: '+ctx.colors:''),
       ctx.online===false?'Connection: offline when it was written':null,
       'Recent errors on this page: '+(ctx.trouble&&ctx.trouble.length?'\n  '+ctx.trouble.join('\n  '):'none'),
       'Sent: '+when].filter(l=>l!==null);
@@ -3794,7 +3794,7 @@
     };
     rec.onerror=function(e){
       const er=e && e.error;
-      if(er==='not-allowed' || er==='service-not-allowed') micToast('The microphone is blocked for Home-Brace. Allow it in the browser’s settings for this site, then try again.');
+      if(er==='not-allowed' || er==='service-not-allowed') micToast('The microphone is blocked for Practice Hub. Allow it in the browser’s settings for this site, then try again.');
       else if(er==='network') micToast('Talk to type needs the internet.');
       else if(er==='audio-capture') micToast('No microphone found on this device.');
     };
@@ -3844,7 +3844,7 @@
   function loadMsg(){
     if(!LOAD.el) return;
     const k=Object.keys(LOAD.holds).find(x=>x!=='who' && LOAD.holds[x]);
-    const t=('who' in LOAD.holds) && isLive() ? (!SIGNED_IN ? 'Signing you in…' : 'Getting your offices…') : (k ? LOAD.holds[k] : 'Opening Home-Brace…');
+    const t=('who' in LOAD.holds) && isLive() ? (!SIGNED_IN ? 'Signing you in…' : 'Getting your offices…') : (k ? LOAD.holds[k] : 'Opening Practice Hub…');
     const m=LOAD.el.querySelector('.phl-msg'); if(m && m.textContent!==t) m.textContent=t;
   }
   function loadHide(){
@@ -3861,7 +3861,7 @@
     if(wait>0) setTimeout(loadCheck, wait); else loadHide();
   }
   /* ONLY THE PAGE'S OWN PART (10/11/2026, Jordan: "I'd prefer that there isn't a complete other screen with the loading
-     animation just the part of Home-Brace that will show the screen loads so you still see the apps etc."). Once the
+     animation just the part of Practice Hub that will show the screen loads so you still see the apps etc."). Once the
      page shows, the loading screen covers only where the page's content goes - right of the sidebar, or under the
      header and the tabs across the top, and above the phone bar - so the menu stays in view and can be clicked.
      While sign-in is still being checked (gate.js hides the whole page, menu included: body.phgated) it is the whole
@@ -3869,7 +3869,7 @@
   /* THE SIDEBAR STAYS STILL (10/11/2026, Jordan: "screen loads then side bar pops from the left. Would be good that
      side bar stays still"). While sign-in is checked gate.js hides the whole page - the real sidebar too - and which
      apps it lists isn't known yet. So with the Sidebar menu (a computer-wide window, a page with the menu) the loading
-     screen draws the sidebar's empty panel itself: the same navy, width and Home-Brace at the top, nothing about
+     screen draws the sidebar's empty panel itself: the same navy, width and Practice Hub at the top, nothing about
      anyone. It sits OVER the real sidebar (z 47, over its 45/46) while sign-in is checked - that one is drawn before
      anyone is known ("Home" only, no name) - and steps aside once sign-in is done and the menu is filled in: the
      items appear, nothing moves. */
@@ -3888,7 +3888,7 @@
       if(p || !document.createElement) return;
       p=document.createElement('div'); p.id='phload-side'; p.setAttribute('aria-hidden','true');
       if(NAVSNAP && isLive()) p.style.zIndex='44';           // the real menu is right from the start (NAVSNAP): the panel only fills in behind it
-      p.innerHTML='<div class="phls-brand"><img src="'+LOAD.logo+'" alt="" width="34" height="34"><span>Home-<i>Brace</i></span></div>';
+      p.innerHTML='<div class="phls-brand"><img src="'+LOAD.logo+'" alt="" width="34" height="34"><span>Practice <i>Hub</i></span></div>';
       document.documentElement.appendChild(p);
     }catch(_){}
   }
@@ -3982,9 +3982,9 @@
         '<circle cx="56" cy="56" r="52" style="stroke:color-mix(in srgb, var(--teal,#149B96) 16%, transparent)"/>'+
         '<circle cx="56" cy="56" r="52" style="stroke:var(--teal,#149B96)" stroke-dasharray="82 245"/></svg>'+
         '<img src="'+logo+'" alt=""></div>'+
-      '<div class="phl-word">Home-Brace</div>'+
+      '<div class="phl-word">Practice Hub</div>'+
       '<svg class="phl-wire" viewBox="0 0 132 30" aria-hidden="true"><path d="M4 10 Q66 34 128 10"/>'+br+'</svg>'+
-      '<div class="phl-msg">Opening Home-Brace…</div></div>';
+      '<div class="phl-msg">Opening Practice Hub…</div></div>';
     document.documentElement.appendChild(el);
     document.documentElement.classList.add('ph-loading');
     LOAD.el=el; loadMsg(); loadFit();
@@ -4007,7 +4007,7 @@
   })(); }catch(_){ try{ if(LOAD.el && LOAD.el.parentNode) LOAD.el.parentNode.removeChild(LOAD.el); }catch(__){} LOAD.gone=true; }   // never let the loading screen break - or cover - a page
 
   /* HOME-SCREEN APP (phone alerts, 22/10/2026): Apple only sends alerts to a web app added to the home screen, so the
-     site says how Home-Brace looks there - its name, icon, and that it opens full-screen on Home. On the live site
+     site says how Practice Hub looks there - its name, icon, and that it opens full-screen on Home. On the live site
      too since alerts went live there (04/11/2026). */
   if(document.head && !document.querySelector('link[rel="manifest"]')){
     const m=document.createElement('link'); m.rel='manifest'; m.href='manifest.webmanifest'; document.head.appendChild(m);

@@ -252,7 +252,7 @@
   /* Into a year's archive row (never over a task already there). */
   function toArchive(arc, tasks){ arc=cleanRecord(arc); Object.keys(tasks||{}).forEach(id=>{ const c=cleanTask(tasks[id]); if(c && !arc.t[c.id]) arc.t[c.id]=c; }); return arc; }
   /* Out of ph_tasks - only the ids the archive is confirmed to hold, and only if still finished. */
-  /* Oldest first, and never so many in one save that the list loses most of its weight: Home-Brace refuses a save that
+  /* Oldest first, and never so many in one save that the list loses most of its weight: Practice Hub refuses a save that
      drops below a quarter of a record (the wipe guard in store.js - it would show a "not saved" warning). The rest go on
      a later day; they're finished, so nothing shows wrong meanwhile (20/11/2026, before Tasks went live). */
   const weight=v=>v===null || v===undefined || v==='' || v===false ? 0 : typeof v!=='object' ? 1 : Object.keys(v).reduce((n,k)=>n+weight(v[k]), 0);
@@ -266,8 +266,8 @@
 
   /* ---------- words for alerts and the bell ---------- */
   const first=n=>String(n||'').trim().split(/\s+/)[0]||'';
-  function alertNew(t, today){ return {title:'New task from '+(first(t.byName)||'Home-Brace'), body:t.title+(t.due ? ' · '+dueText(t.due, today) : '')}; }
-  function alertNudge(t, today){ return {title:'Reminder from '+(first(t.byName)||'Home-Brace'), body:t.title+(t.due ? ' · '+dueText(t.due, today) : '')}; }
+  function alertNew(t, today){ return {title:'New task from '+(first(t.byName)||'Practice Hub'), body:t.title+(t.due ? ' · '+dueText(t.due, today) : '')}; }
+  function alertNudge(t, today){ return {title:'Reminder from '+(first(t.byName)||'Practice Hub'), body:t.title+(t.due ? ' · '+dueText(t.due, today) : '')}; }
   function alertAllDone(t){ return {title:'All done ✓ '+t.title, body:'Everyone on this task has finished it.'}; }
   function bellDone(t, who){ const p=progress(t); return '✅ '+first(who)+' finished “'+t.title+'”'+(p.total>1 ? ' ('+p.done+' of '+p.total+' done)' : ''); }
 
@@ -399,7 +399,7 @@
   const names=a=>a.length<=2 ? a.join(' and ') : a.slice(0,2).join(', ')+' and '+(a.length-2)+' more';
   function waitingOn(t){ return people(t).filter(x=>!x.d).sort((a,b)=>a.n.localeCompare(b.n)).map(x=>first(x.n)); }
   /* Worth a nudge now? Not finished, someone still to do it, not nudged in the last hour, and: late; or due today with
-     Home-Brace's own reminders off (with them on, the morning reminder already went); or no date and nobody has moved
+     Practice Hub's own reminders off (with them on, the morning reminder already went); or no date and nobody has moved
      for 3 days. */
   function needsNudge(t, today, now){
     if(!t || finished(t) || !openIds(t).length || nudgeWait(t, now)) return false;
@@ -413,7 +413,7 @@
     return 'Waiting on '+names(waitingOn(t));
   }
 
-  /* ---------- reminders Home-Brace sends for the giver ---------- */
+  /* ---------- reminders Practice Hub sends for the giver ---------- */
   /* Practice time (Central). From 8 AM on a weekday: the morning it's due, and once the first working day it's late -
      to the people who haven't done it. Each is sent once (stamped in the task; the device whose stamp lands sends it).
      A task nudged by hand in the last 12 hours is stamped but not sent again. */

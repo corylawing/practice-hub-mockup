@@ -2,7 +2,7 @@
    Jordan put OrthoFi's client ID + secret into the live site's settings; the live site's /api/orthofi talks to OrthoFi and
    answers TOTALS per OrthoFi location, never a person. This file:
      - asks it (with the person's Microsoft sign-in), from the live site or the sandbox;
-     - says which OrthoFi location is which Home-Brace office (a guess by name, Morgan/Jordan fix it; kept in ph_orthofi);
+     - says which OrthoFi location is which Practice Hub office (a guess by name, Morgan/Jordan fix it; kept in ph_orthofi);
      - turns a month's answers into the Monthly Report's OrthoFi boxes. Several ways of reading OrthoFi are offered for a
        box until one is proven against Morgan's own numbers (her monitor-report Excel), to the dollar - "Morgan's numbers
        are the reference": a box only fills itself in once its way is proven (PROVEN, below).

@@ -1,4 +1,4 @@
-/* DATE & TIME PICKER - one for all of Home-Brace (19/11/2026).
+/* DATE & TIME PICKER - one for all of Practice Hub (19/11/2026).
    Jordan: "I don't like the date picker either it looks so old"; "Can they still type it though?"; "I don't really like the
    drop down within it [the month and year selectors] look very old school"; the time picker's columns are good but "uses
    highlight color that have nothing to do with home-brace brand"; "not always home-brace teal it depends on the color
@@ -46,7 +46,7 @@
   const RULES={parseISO, parseTyped, parseTime, mask, showDate, showTime, iso};
   if(typeof document==='undefined'){ global.PH_PICK=RULES; return; }
 
-  /* ---------- styles: the person's own scheme colours, with Home-Brace's as the fallback ---------- */
+  /* ---------- styles: the person's own scheme colours, with Practice Hub's as the fallback ---------- */
   function css(){
     if(document.getElementById('pk-css')) return; const st=document.createElement('style'); st.id='pk-css'; st.textContent=
     '.pk-box{position:relative;display:flex;align-items:center;gap:8px;width:100%;box-sizing:border-box;border:1px solid var(--line,#E4E8EE);border-radius:10px;background:#fff;padding:0 11px;min-height:42px;cursor:text;transition:border-color .12s,box-shadow .12s}'+

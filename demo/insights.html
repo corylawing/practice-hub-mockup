@@ -1,10 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script src="demo-shim.js?v=d202611250847"></script>
+<script src="demo-shim.js?v=d202611250900"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Home-Brace · OrthoFi insights</title>
+<title>Practice Hub · OrthoFi insights</title>
+<meta name="description" content="Try the live demo: schedules, production, new-patient consults, payroll, monthly reports, tasks and team chat — one hub for every office of a multi-location practice.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Practice Hub">
+<meta property="og:title" content="Practice Hub | Multi-Location Practice Operations Hub">
+<meta property="og:description" content="Try the live demo: schedules, production, new-patient consults, payroll, monthly reports, tasks and team chat — one hub for every office of a multi-location practice.">
+<meta property="og:image" content="https://corylawing.github.io/practice-hub-mockup/demo/share.png">
+<meta property="og:image:width" content="1734">
+<meta property="og:image:height" content="907">
+<meta property="og:url" content="https://corylawing.github.io/practice-hub-mockup/demo/insights.html">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Practice Hub | Multi-Location Practice Operations Hub">
+<meta name="twitter:description" content="Try the live demo: schedules, production, new-patient consults, payroll, monthly reports, tasks and team chat — one hub for every office of a multi-location practice.">
+<meta name="twitter:image" content="https://corylawing.github.io/practice-hub-mockup/demo/share.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="icon" href="../assets/favicon.png?v=2" type="image/png">
@@ -139,15 +152,15 @@
   @media(max-width:640px){ .lrow,.src{grid-template-columns:1fr;gap:6px} .l90,.sv{text-align:left;align-items:flex-start} .stack{width:100% !important} }
   @media(max-width:640px){ .wrap{padding:16px 12px 140px} h1{font-size:21px} }
 </style>
-<script src="user.js?v=hc268d202611250847"></script>
-  <script src="store.js?v=hc268d202611250847"></script>
-  <script src="gate.js?v=hc268d202611250847"></script>
-  <script src="orthofi.js?v=hc268d202611250847"></script>
-  <script src="periodpick.js?v=hc268d202611250847"></script>
+<script src="user.js?v=hc268d202611250900"></script>
+  <script src="store.js?v=hc268d202611250900"></script>
+  <script src="gate.js?v=hc268d202611250900"></script>
+  <script src="orthofi.js?v=hc268d202611250900"></script>
+  <script src="periodpick.js?v=hc268d202611250900"></script>
 </head>
 <body>
 <div class="ribbon" id="ribbon">DEMO — made-up numbers, to see how it would look.</div>
-<header class="hdr"><div class="hdr-in"><span class="mark"><img src="../assets/logo-mark.png?v=2" alt="" width="34" height="34"></span><span class="brand">Home-<i>Brace</i><small>OrthoFi insights</small></span></div></header>
+<header class="hdr"><div class="hdr-in"><span class="mark"><img src="../assets/logo-mark.png?v=2" alt="" width="34" height="34"></span><span class="brand">Practice <i>Hub</i><small>OrthoFi insights</small></span></div></header>
 <nav class="v1nav"><div class="v1nav-in" id="nav"></div></nav>
 <div class="wrap" id="wrap">
   <h1>OrthoFi insights</h1>
@@ -330,7 +343,7 @@
     let h='<div class="kpis">'+kpi('Past due', money(all.reduce((s,[o,r])=>s+tot(r),0)), all.reduce((s,[o,r])=>s+cnt(r),0)+' accounts')+kpi('90+ days', money(a90), n90+' accounts')+
       kpi('Ready for a dismissal letter', st('letter'), '91–98 days late')+kpi('At dismissal', st('dismiss'), '180+ days late')+'</div>';
     const rising=[]; all.forEach(([o,r])=>{ const b=before && before.by && before.by[o]; if(!r || !b) return; const now90=r.amt[3]+r.amt[4], was=(b.amt[3]||0)+(b.amt[4]||0); if(was>0 && now90>was*1.1 && now90-was>500) rising.push(o+' (+'+Math.round((now90/was-1)*100)+'%)'); });
-    if(rising.length) h+='<div class="warn">⚠️ 90+ days late is climbing at '+esc(rising.join(', '))+' since '+esc(since)+'. Home-Brace would let that office manager know.</div>';
+    if(rising.length) h+='<div class="warn">⚠️ 90+ days late is climbing at '+esc(rising.join(', '))+' since '+esc(since)+'. Practice Hub would let that office manager know.</div>';
     h+='<div class="card"><h2>Who owes, and how late</h2><div class="sub">Today, from OrthoFi’s Delinquent report. Each bar is an office’s past-due dollars — the darker, the later.</div>'+
       '<div class="legend">'+BUCKETS.map((b,i)=>'<span><i style="background:'+HEAT[i]+'"></i>'+b+'</span>').join('')+'</div>';
     all.slice().sort((a,b)=>tot(b[1])-tot(a[1])).forEach(([o,r])=>{
@@ -382,7 +395,7 @@
           '<div class="hb" data-tip="'+esc(s)+'" data-tip-b="'+x.n+' exams · '+x.started+' started ('+fp(c)+')" data-tip-c="#149B96"><i style="width:'+(x.n/max*100)+'%"></i><i class="st" style="width:'+(x.started/max*100)+'%"></i></div>'+
           '<div class="sv"><span class="pill '+tone(c,30,45)+'">'+fp(c)+' start</span><small>'+money(x.prod)+'</small></div></div>'; }).join('')+
       (list.length ? '' : '<div class="state">No referral answers in OrthoFi for this month.</div>')+
-      '<div class="note">A patient sent by another patient shows as Friend / Family — Home-Brace never reads who. This could sit on the Marketing page too.</div></div>';
+      '<div class="note">A patient sent by another patient shows as Friend / Family — Practice Hub never reads who. This could sit on the Marketing page too.</div></div>';
     /* BY OFFICE (Jordan 21/11: "We should be able to break down where they come from by office") - each office's mix */
     if(offs.length>1 && list.length){
       const SC={'My Dentist':'#149B96','Friend / Family':'#25456E','Internet Search':'#F2A03D','Social Media':'#8E6BD1','Advertisement':'#E07A9C','Other':'#AAB4C2'}, col=s=>SC[s]||'#CBD3DD';
@@ -415,7 +428,7 @@
   function allowed(){ return !LIVE || (PH.isAdmin && PH.isAdmin(PH.realMe ? PH.realMe() : PH.me())); }
   document.addEventListener('click', e=>{ const b=e.target.closest('[data-tab]'); if(b){ TAB=b.dataset.tab; try{ localStorage.setItem('ph_insights_tab', TAB); }catch(_){} render(); } });
   el('off').addEventListener('change', render);
-  function boot(){ if(!allowed()){ el('wrap').innerHTML='<h1>OrthoFi insights</h1><p class="lede">This page is for Home-Brace admins.</p>'; return; } drawOff(); render(); }
+  function boot(){ if(!allowed()){ el('wrap').innerHTML='<h1>OrthoFi insights</h1><p class="lede">This page is for Practice Hub admins.</p>'; return; } drawOff(); render(); }
   if(LIVE) el('ribbon').textContent='OrthoFi insights — real OrthoFi totals, admins only (preview).';
   if(!LIVE || window.PH_AUTH) boot(); else document.addEventListener('ph-signed-in', boot, {once:true});
   document.addEventListener('ph-identity', ()=>{ drawOff(); });

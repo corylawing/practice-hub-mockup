@@ -1,6 +1,6 @@
 /* TC CONSULT TRACKER - the rules behind tc.html.
 
-   12/10/2026. Morgan, cc Renee: "is there a way to make this a fillable form on Home Brace
+   12/10/2026. Morgan, cc Renee: "is there a way to make this a fillable form on Practice Hub
    instead of an excel sheet that she has to email out every month? It would be for TC
    reporting." The sheet is BFO_TC_Consult_Tracker_Excel_Compatible.xlsx: a Consult Log
    (28 columns), a Follow-Up Queue and a Dashboard / Monthly Totals calculated from it, and a

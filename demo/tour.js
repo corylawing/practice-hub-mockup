@@ -1,4 +1,4 @@
-/* Home-Brace V1 — guided walkthrough.
+/* Practice Hub V1 — guided walkthrough.
    Steps: {sel, title, body, pre?}  pre() runs first (e.g. switch a tab) then we spotlight sel.
    Options: {key, title, launch, next:{label,href}}  next = where the walkthrough continues, so
    someone can walk the whole app end to end on their own, with no one sitting beside them. */
@@ -65,7 +65,7 @@
       '<span><b>'+(opts.launch||'Show me around')+'</b><small>Step by step, a minute or two</small></span></button>'+
       '<button type="button" class="tour-mi" role="menuitem" data-a="fb"><span class="tmi-ic" aria-hidden="true">\u{1F4AC}</span>'+
       '<span><b>Send Feedback</b><small>Something wrong, or an idea? Tell us.</small></span></button>'+
-      /* FEEDBACK REPLIES (04/11/2026): what they sent, and the Home-Brace team's replies (fbreply.js). */
+      /* FEEDBACK REPLIES (04/11/2026): what they sent, and the Practice Hub team's replies (fbreply.js). */
       (window.PH&&PH.myFeedback ? '<button type="button" class="tour-mi" role="menuitem" data-a="mine"><span class="tmi-ic" aria-hidden="true">\u{1F4E8}</span>'+
       '<span><b>My messages</b><small>What you sent, and our replies</small></span></button>' : '');
     const r=launch.getBoundingClientRect();

@@ -1,4 +1,4 @@
-/* HOME-BRACE PUBLIC DEMO - runs first on every demo page (deploy/build-demo.py puts it there; demo/ is a generated copy).
+/* THE PUBLIC DEMO - runs first on every demo page (deploy/build-demo.py puts it there; demo/ is a generated copy).
    1. A pretend Microsoft: a made-up admin is "signed in" and Microsoft's answers come from here, so the demo needs no
       account and NOTHING is sent anywhere - any other address is refused.
    2. Its own saved data: everything the demo remembers is kept under "hbdemo:" names, apart from the sandbox's
@@ -44,7 +44,7 @@
     }
     if (url.origin === location.origin && url.pathname.indexOf('/api/') < 0) return real(u, o);
     if (SAFE.test(url.hostname)) return real(u, o);
-    return Promise.reject(new TypeError('Home-Brace demo: nothing is sent anywhere'));
+    return Promise.reject(new TypeError('Demo: nothing is sent anywhere'));
   };
   try { if (navigator.sendBeacon) navigator.sendBeacon = function(){ return true; }; } catch (_) {}
 

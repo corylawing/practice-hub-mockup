@@ -1,20 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script src="demo-shim.js?v=d202611250847"></script>
+<script src="demo-shim.js?v=d202611250900"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Home-Brace · Payroll</title>
+<title>Practice Hub · Payroll</title>
+<meta name="description" content="Try the live demo: schedules, production, new-patient consults, payroll, monthly reports, tasks and team chat — one hub for every office of a multi-location practice.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Practice Hub">
+<meta property="og:title" content="Practice Hub | Multi-Location Practice Operations Hub">
+<meta property="og:description" content="Try the live demo: schedules, production, new-patient consults, payroll, monthly reports, tasks and team chat — one hub for every office of a multi-location practice.">
+<meta property="og:image" content="https://corylawing.github.io/practice-hub-mockup/demo/share.png">
+<meta property="og:image:width" content="1734">
+<meta property="og:image:height" content="907">
+<meta property="og:url" content="https://corylawing.github.io/practice-hub-mockup/demo/payroll.html">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Practice Hub | Multi-Location Practice Operations Hub">
+<meta name="twitter:description" content="Try the live demo: schedules, production, new-patient consults, payroll, monthly reports, tasks and team chat — one hub for every office of a multi-location practice.">
+<meta name="twitter:image" content="https://corylawing.github.io/practice-hub-mockup/demo/share.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="icon" href="../assets/favicon.png?v=2" type="image/png">
 <meta name="theme-color" content="#0F2A4A">
-<meta name="apple-mobile-web-app-title" content="Home-Brace">
+<meta name="apple-mobile-web-app-title" content="Practice Hub">
 <link rel="apple-touch-icon" sizes="180x180" href="../assets/icons/apple-touch-icon.png?v=3">
 <meta name="robots" content="noindex">
 <!-- PAYROLL - A MOCK-UP for Morgan (21/10/2026), sandbox only (user.js NAV: the tab and the page
      are off on the live site). Morgan: every other week each office manager sends her a payroll
-     sheet; she copies them into one main Excel sheet, and wants Home-Brace to keep the records "kind
+     sheet; she copies them into one main Excel sheet, and wants Practice Hub to keep the records "kind
      of like the production sheet does" so she can go back to past weeks and months. Same columns as
      her office form and her main sheet, with her written rules built into the form. Made-up people
      and amounts; nothing is saved anywhere but this browser. Not the real design yet.
@@ -106,8 +119,8 @@
   .dm-foot{display:flex;gap:8px;justify-content:flex-end;padding:14px 20px;border-top:1px solid var(--line);flex-wrap:wrap}
   .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:11px 18px;border-radius:12px;font-weight:700;font-size:14px;box-shadow:var(--shadow-lg);opacity:0;transition:opacity .2s;pointer-events:none;z-index:80;max-width:calc(100% - 32px)}
   .toast.on{opacity:1}
-  /* REMINDERS (Morgan, 22/10: "How will they get reminders to send payroll? Is it through Home-Brace?"): a strip on the
-     sheet from the workday before it's due, and the phone alert Home-Brace sends */
+  /* REMINDERS (Morgan, 22/10: "How will they get reminders to send payroll? Is it through Practice Hub?"): a strip on the
+     sheet from the workday before it's due, and the phone alert Practice Hub sends */
   .remind{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--amber-soft);border:1px solid #f3d7a6;border-left:5px solid var(--amber);border-radius:12px;padding:11px 14px;color:#5c3a00;font-size:14px}
   .remind .grow{flex:1;min-width:220px}
   .remind small{display:block;color:#7a5a1e;font-size:12.5px;margin-top:2px}
@@ -267,21 +280,21 @@
     .perhead .when{font-size:17px}
   }
 </style>
-<script src="user.js?v=hc268d202611250847"></script>
-  <script src="store.js?v=hc268d202611250847"></script>
-  <script src="gate.js?v=hc268d202611250847"></script>
-  <script src="alerts.js?v=hc268d202611250847"></script>
-  <script src="_staff.js?v=hc268d202611250847"></script>
-  <script src="payrules.js?v=hc268d202611250847"></script>
-  <script src="paystore.js?v=hc268d202611250847"></script>
-  <script src="docs.js?v=hc268d202611250847"></script>
+<script src="user.js?v=hc268d202611250900"></script>
+  <script src="store.js?v=hc268d202611250900"></script>
+  <script src="gate.js?v=hc268d202611250900"></script>
+  <script src="alerts.js?v=hc268d202611250900"></script>
+  <script src="_staff.js?v=hc268d202611250900"></script>
+  <script src="payrules.js?v=hc268d202611250900"></script>
+  <script src="paystore.js?v=hc268d202611250900"></script>
+  <script src="docs.js?v=hc268d202611250900"></script>
 </head>
 <body>
 <div class="ribbon">DEMO — made-up people and amounts. Use “Try it as”: an office sending its payroll, then the person who runs payroll.</div>
 <header class="hdr">
   <div class="hdr-in">
-    <span class="mark" aria-label="Home-Brace"><img src="../assets/logo-mark.png?v=2" alt="" width="34" height="34"></span>
-    <span class="brand">Home-<i>Brace</i><small>Payroll</small></span>
+    <span class="mark" aria-label="Practice Hub"><img src="../assets/logo-mark.png?v=2" alt="" width="34" height="34"></span>
+    <span class="brand">Practice <i>Hub</i><small>Payroll</small></span>
     <span class="v1">Demo</span>
   </div>
 </header>
@@ -421,7 +434,7 @@
   const sender=o=>OFF[o].self ? OFF[o].by : 'the '+OFF[o].n+' '+OFF[o].by;
   const poss=n=>/s$/.test(n) ? n+'’' : n+'’s';      // Cedar Grove’s, Keystone Partners’
   const PHONE=()=>!!(window.PH_ALERTS && PH_ALERTS.ON);   // phone alerts are on here (the sandbox; live once ALERTS_LIVE)
-  /* Who sends this office's sheet, by name when Home-Brace knows (live, or the sandbox's Real version); '' = nobody chosen. */
+  /* Who sends this office's sheet, by name when Practice Hub knows (live, or the sandbox's Real version); '' = nobody chosen. */
   const whoSends=o=>{
     if(!LIVEPAY){ const t=sender(o); return t.charAt(0).toUpperCase()+t.slice(1); }
     const ems=((PH.paySenders && PH.paySenders().offices)||{})[OFF[o].n]||[], ro=(PH.rosterView && PH.rosterView())||[];
@@ -480,7 +493,7 @@
      away?"). The sheet being sent is CUR (ended most recently); NEXT, the one running now, is open on the office's side
      too: hours and notes save as they type, and it can be sent once it has ended - by then it is CUR. */
   const NEXT=CUR+1;
-  /* Live: Home-Brace payroll begins with PR.FIRST (#24). Before that one has ended, the sheet "being sent" is from
+  /* Live: Practice Hub payroll begins with PR.FIRST (#24). Before that one has ended, the sheet "being sent" is from
      the old way: nothing is expected of it - everyone starts on the one in progress, and nothing earlier is listed. */
   const FIRST_N=LIVEPAY ? ANCHOR.n+PR.indexOfKey(PR.FIRST) : -Infinity, BEFORE=CUR<FIRST_N;
   /* ALL ENTERED -> ON TO THE NEXT ONE (24/11/2026, Morgan: "this payroll still shows as the last on this screen. Once I
@@ -883,14 +896,14 @@
       '<th class="n wr">'+info('OT Wk 1','Hours over 40 in week 1 ('+span(pr.start,pr.w1end)+')')+'</th><th class="n wr">'+info('OT Wk 2','Hours over 40 in week 2 ('+span(pr.w2start,pr.end)+')')+'</th>'+
       '<th class="n gl wr">'+info('PTO hrs','Vacation / PTO hours')+'</th>'+
       (sickCol?'<th class="n wr">'+info('Sick hrs','Sick hours - only for the person who kept them from before')+'</th>':'')+
-      (hol?'<th class="wr">'+info(esc(pr.hol.n),'Home-Brace knows each person’s 90-day review date, so nobody fills this in')+'</th>':'')+
+      (hol?'<th class="wr">'+info(esc(pr.hol.n),'Practice Hub knows each person’s 90-day review date, so nobody fills this in')+'</th>':'')+
       '<th class="n gl wr">'+info('On call','Count 1 for each weekend they were on call this pay period')+'</th>'+
       '<th class="n wr">'+info('# of ERs taken','Each patient seen on an ER = 1 hour of pay. Count the patients seen this pay period.')+'</th>'+
       '<th class="n wr">'+info('Com&shy;mutes','Round trips to another office (a round trip = 1). Don’t add commuter miles or road time - commuter pay is worked out from the federal rate.')+'</th><th>'+info('To','Which office they commuted to')+'</th>'+
       '<th class="n wr">'+info('Exception commuter $','Rarely used: only when a doctor asks for an amount. Say which doctor in Notes.')+'</th>'+
       '<th class="n wr">'+info('Marketing mi','Miles driven for marketing')+'</th><th class="n wr">'+info('Other mi','Special events only, not office-to-office or marketing. Say what for in Notes.')+'</th>'+
       ownM.map((c,i)=>'<th class="n wr'+(i?'':' gl')+'">'+(ownEach(c)
-        ? info(esc(c.n)+' #','How many '+esc(c.n)+' this person did this pay period - each one is '+money(RATE[c.each])+'. Home-Brace works out the dollars.')
+        ? info(esc(c.n)+' #','How many '+esc(c.n)+' this person did this pay period - each one is '+money(RATE[c.each])+'. Practice Hub works out the dollars.')
         : info(esc(c.n)+' $','A bonus only '+OFF[o].n+' has: the amount for this person, this pay period'))+'</th>').join('')+
       sp.map((c,i)=>'<th class="n wr'+(i?'':' gl')+'">'+info(specLabel(c),(c.tip?c.tip+' ':'')+KTIP[c.kind]+(c.to?' Taken off - still here because something was typed in it.':''))+'</th>').join('')+
       (spbCol ? '<th class="n gl wr">'+info('Special bonus $','A one-off bonus for this person, this pay period: the amount. It goes into Morgan’s Extra and the Total.')+'</th>'+
@@ -958,14 +971,14 @@
       '<div class="row">'+(early?'<span class="pill p-go">In progress — ends '+esc(fmt(pr.end,{weekday:'short'}))+'</span>':statusPill(n,o))+periodPicker('perpick', true)+'</div></div></div>';
     if(n===CUR && !BEFORE){ const nx=P(NEXT); h+='<div class="note info">The pay period running now (<b>'+lab(NEXT)+' · '+esc(span(nx.start,nx.end))+'</b>) is open too: make notes and hours as you go - they save without sending. <button class="btn ghost sm" data-act="omopen" data-v="'+NEXT+'">Open '+lab(NEXT)+'</button></div>'; }
     if(early) h+='<div class="note info">This pay period is still running. Everything you type saves as you go - nothing goes to '+(R().mgr?'the combined sheet':'Morgan')+' until you '+(R().mgr?'mark it done':'send it')+', and you can send it once it ends ('+esc(fmt(pr.end,{weekday:'long'}))+').</div>';
-    /* Home-Brace reminds whoever sends the sheet: the workday before it's due, the morning it's due, and at 1 pm if it
+    /* Practice Hub reminds whoever sends the sheet: the workday before it's due, the morning it's due, and at 1 pm if it
        still isn't sent - on the sheet and in the bell, and on their phone once alerts are on (the chat's alerts). */
     if(n===CUR && !e && s.status!=='sent' && !OFF[o].self && NOWDAY>=workdayBefore(pr.due)){
       const late=NOW>pr.dueAt, today=pr.due===NOWDAY;
       h+='<div class="remind'+(late?' late':'')+'"><span style="font-size:20px" aria-hidden="true">'+(late?'⚠️':'⏰')+'</span><div class="grow"><b>'+
         (late ? 'This sheet was due '+esc(fmt(pr.due,{weekday:'long'}))+' at 2 pm. Please send it now.'
               : today ? 'Reminder: this sheet is due today by 2 pm Central.' : 'Heads-up: this sheet is due '+esc(fmt(pr.due,{weekday:'long'}))+' by 2 pm Central.')+
-        '</b><small>'+(LIVEPAY ? 'Home-Brace reminds you in the bell (top right) from the workday before it’s due, until it’s sent.'+(PHONE()?' To get them on your phone too: the bell → Turn on.':'') : 'Home-Brace reminds you the workday before, the morning it’s due, and at 1 pm if it isn’t sent yet - here, and on your phone once alerts are on.')+'</small></div>'+
+        '</b><small>'+(LIVEPAY ? 'Practice Hub reminds you in the bell (top right) from the workday before it’s due, until it’s sent.'+(PHONE()?' To get them on your phone too: the bell → Turn on.':'') : 'Practice Hub reminds you the workday before, the morning it’s due, and at 1 pm if it isn’t sent yet - here, and on your phone once alerts are on.')+'</small></div>'+
         (LIVEPAY ? '' : '<button class="btn ghost sm" data-act="phrem">See the phone reminder</button>')+'</div>';
     }
     if((n===CUR || early) && !e){
@@ -974,7 +987,7 @@
         ((OFF[o].own||[]).filter(c=>!c.hrs && !ownEach(c)).length ? '<li><b>'+(OFF[o].own||[]).filter(c=>!c.hrs && !ownEach(c)).map(c=>esc(c.n)).join(' and ')+':</b> type the amount for each person who gets it this pay period.</li>' : '')+
         (OFF[o].own||[]).filter(ownEach).map(c=>'<li><b>'+esc(c.n)+':</b> type how many each person did - each one is '+money(rtN(n)[c.each])+'.</li>').join('')+
         '<li><b>Overtime</b> only when Morgan approved it first. It’s worked out week by week — tick “Approved” for each week that has some.</li>'+
-        '<li><b>Holiday pay</b> starts after the 90-day review. Home-Brace knows the dates, so there’s nothing to fill in.</li>'+
+        '<li><b>Holiday pay</b> starts after the 90-day review. Practice Hub knows the dates, so there’s nothing to fill in.</li>'+
         '<li><b>On call:</b> 1 for each weekend on call. <b># of ERs taken:</b> 1 for each patient seen on an ER - each is 1 hour of pay.</li>'+
         '<li><b>Commutes:</b> round trips (1 each) and the office — no commuter miles or road time.</li>'+
         specCols(n,o).filter(c=>!c.to).map(c=>'<li><b>'+esc(c.n)+':</b> '+(c.tip?esc(c.tip)+' ':'')+'('+KSHORT[c.kind]+')</li>').join('')+
@@ -1064,7 +1077,7 @@
     '<th class="n">'+info('PP bonus','The pay-period bonus: a set amount per person (you set it in Settings). The office marks it Full, Partial (takes off a % or a $ amount) or None.')+'</th>'+
     '<th class="n">'+info('Goal','The team reached its goal. You type it in - the offices don’t see it.')+'</th>'+
     '<th class="n">'+info('TC/OM','A bonus for the TC or the office manager - not a set amount. You type it in - the offices don’t see it.')+'</th>'+
-    '<th class="n">'+info('Holiday','Holiday pay: '+money(RATE.holiday)+' when the pay period has a holiday, for anyone past their 90-day review ('+RATE.holidayHrs+' hours instead for anyone who gets holiday hours). Home-Brace works it out.')+'</th>'+
+    '<th class="n">'+info('Holiday','Holiday pay: '+money(RATE.holiday)+' when the pay period has a holiday, for anyone past their 90-day review ('+RATE.holidayHrs+' hours instead for anyone who gets holiday hours). Practice Hub works it out.')+'</th>'+
     '<th class="n">'+info('On call',money(RATE.onCall)+' for each weekend on call. The office counts the weekends.')+'</th>'+
     '<th class="n">'+info('ER hrs','# of ERs taken: each patient seen = 1 hour of pay. Hours, not dollars - kept out of Total.')+'</th>'+
     (own||ownCols(o)).map(c=>'<th class="n">'+(c?info(esc(c.n),ownTip(ks ? ownerOf(ks,c) : o,c,RATE)):'')+'</th>').join('')+
@@ -1245,7 +1258,7 @@
           (s.status==='sent'?'<button class="btn ghost sm" data-act="view" data-v="'+o.k+'">See what was sent</button>':(!entOff(n,o.k) && !LIVEPAY?'<button class="btn ghost sm" data-act="remind" data-v="'+o.k+'">Send a reminder</button>':''))+entTick(n,o.k)+'</div></div>'; }).join('')+'</div>'+
       (!e?'<div class="small muted" style="margin-top:12px">'+(LIVEPAY
         ? '⏰ Each office’s sender gets a reminder in their bell from the workday before it’s due, until it’s sent. At 2 pm on the due day your bell lists any still to come.'+(PHONE()?' Senders who turn alerts on (the bell → Turn on) get them on their phone too: the workday before at 9 am, the due day at 9 am and 1 pm.':' Reminders on phones come with Chat.')
-        : '⏰ Reminders go out on their own to whoever sends each sheet: the workday before, the morning it’s due, and at 1 pm if it isn’t sent yet - in Home-Brace, and on their phone once alerts are on. <b>Send a reminder</b> sends one right now.')+'</div>':'')+'</div>';
+        : '⏰ Reminders go out on their own to whoever sends each sheet: the workday before, the morning it’s due, and at 1 pm if it isn’t sent yet - in Practice Hub, and on their phone once alerts are on. <b>Send a reminder</b> sends one right now.')+'</div>':'')+'</div>';
     h+=addsCard(n);
     const groups=[['doc','🩺 Doctors to pay (paid by the day)'],['add','🆕 New people'],['ot','⏱ Overtime'],['er','🚑 ERs taken'],['two','🏢 Working two offices — hours combined'],['green','🟢 Missed green days'],['pay','💵 Exception commuter pay'],['spb','🎁 Special bonuses'],['miles','🚗 Mileage']];
     const count=groups.reduce((a,g)=>a+F[g[0]].length,0);
@@ -1362,7 +1375,7 @@
     let h='';
     if(LIVEPAY && LIVE.old==='failed') h+='<div class="note warn" style="margin-bottom:12px"><b>The older pay periods couldn’t be read.</b> '+esc(LIVE.oldErr)+' <button class="btn ghost sm" data-act="oldretry">Try again</button></div>';
     h+='<div class="card"><h2>Every pay period, kept</h2><p class="sub">2026 so far. Nothing is ever overwritten: open one to see each office’s sheet as it was sent, and any change made after.</p><div class="tblwrap"><table class="t"><thead><tr><th>Pay period</th><th>Dates</th><th>Paid</th><th>Offices</th><th>Status</th><th class="n">Hours</th><th class="n">Total</th><th></th></tr></thead><tbody>';
-    if(CUR<FIRST_N) h+='<tr><td colspan="7" class="muted">Nothing yet - the first pay period on Home-Brace is '+lab(FIRST_N)+' ('+esc(span(P(FIRST_N).start,P(FIRST_N).end))+').</td></tr>';
+    if(CUR<FIRST_N) h+='<tr><td colspan="7" class="muted">Nothing yet - the first pay period on Practice Hub is '+lab(FIRST_N)+' ('+esc(span(P(FIRST_N).start,P(FIRST_N).end))+').</td></tr>';
     for(let n=CUR;n>=Math.max(1, FIRST_N);n--){
       const pr=P(n), e=enteredOf(n); let hours=0,total=0,sent=0;
       if(waiting(n)){ h+='<tr><td><b>'+lab(n)+'</b></td><td>'+esc(span(pr.start,pr.end))+(pr.hol?' <span class="pill p-new">'+esc(pr.hol.n)+'</span>':'')+'</td><td>'+esc(fmt(pr.pay))+'</td><td class="muted" colspan="4">'+(LIVE.old==='failed'?'Couldn’t be read':'Loading…')+'</td><td></td></tr>'; continue; }
@@ -1418,7 +1431,7 @@
       .concat(ed.add.filter(a=>inYrs(a.d) && !PR.holidaysThrough(hy+2).some(h=>h.d===a.d)).map(a=>({d:a.d, n:a.n, added:true})))
       .sort((a,b)=>a.d<b.d?-1:a.d>b.d?1:0);
     const btn=(act,d,t)=>'<button class="btn ghost sm" data-act="'+act+'" data-v="'+esc(d)+'">'+t+'</button>';
-    return '<div class="card"><h2>Paid holidays</h2><p class="sub">A holiday column shows up by itself in the pay period it falls in. Home-Brace works them out every year - '+
+    return '<div class="card"><h2>Paid holidays</h2><p class="sub">A holiday column shows up by itself in the pay period it falls in. Practice Hub works them out every year - '+
       'each one on its actual day, whatever day of the week it falls on'+(can?'. Change any of them here: everyone’s sheets follow. The ones already paid stay as they were.':'.')+'</p>'+
       rows.map(x=>'<div class="hrow'+(x.off?' off':'')+'"><span class="hd">'+esc(fmt(x.d,{weekday:'short', year:'numeric'}))+'</span><span class="hn"><span class="hnm">'+esc(x.n)+'</span>'+
         (x.added?' <span class="pill p-go">Added</span>':'')+(x.off?' <span class="pill p-new">Not paid</span>':'')+'</span>'+
@@ -1507,7 +1520,7 @@
     S.docRate=add(S.docRate);
     if(!LIVEPAY){ save(); closeDlg(); render(); toast(done); return; }
     liveQueue('_h','settings', cur=>{ const x=cur||{v:1, bonus:{}}; x.docRate=add(x.docRate); return x; });
-    liveFlushAll().then(ok=>{ closeDlg(); render(); toast(ok ? done : 'Not saved yet - Home-Brace keeps trying'); });
+    liveFlushAll().then(ok=>{ closeDlg(); render(); toast(ok ? done : 'Not saved yet - Practice Hub keeps trying'); });
   }
   function rateDlg(k){
     const st=rateStarts(); if(!st.length || !RATE_ROWS.some(r=>r[0]===k)) return;
@@ -1544,16 +1557,16 @@
     TOGETHER=gs;
     if(!LIVEPAY){ S.together=gs; save(); render(); toast(done); return; }
     liveQueue('_h','settings', cur=>{ const x=cur||{v:1, bonus:{}}; x.together=gs; return x; });
-    liveFlushAll().then(ok=>{ render(); toast(ok ? done : 'Not saved yet - Home-Brace keeps trying'); });
+    liveFlushAll().then(ok=>{ render(); toast(ok ? done : 'Not saved yet - Practice Hub keeps trying'); });
   }
   function viewSettings(){
     let h='<div class="stack">'+(LIVEPAY
-      ? (everyone().length ? '' : '<div class="note warn"><b>Start here.</b> Fill each office from the Home-Brace team list (below), then set each person’s pay-period bonus and start date, and choose who sends each office’s sheet.</div>')
+      ? (everyone().length ? '' : '<div class="note warn"><b>Start here.</b> Fill each office from the Practice Hub team list (below), then set each person’s pay-period bonus and start date, and choose who sends each office’s sheet.</div>')
       : '<div class="note info">Your answers are in. Try adding or taking off people and doctors — in this mock-up it stays in your browser.</div>');
     h+=ratesHTML();
     const roster=LIVEPAY ? ((PH.rosterView && PH.rosterView())||[]).filter(r=>r.email) : [], sendersOf=o=>LIVEPAY ? ((PH.paySenders().offices||{})[o.n]||[]) : [];
     const nameOf=em=>{ const r=roster.find(x=>String(x.email).toLowerCase()===String(em).toLowerCase()); return r ? r.name : em; };
-    h+='<div class="card"><h2>Who sends each office’s sheet</h2><p class="sub">'+(LIVEPAY ? 'They see their own office’s sheet and send it to you - no other office’s. Home-Brace gives them the tab and the access.' : 'They’re the ones who see it and send it to you, along with you.')+'</p><div class="tblwrap"><table class="t"><thead><tr><th>Office</th><th>Sent by</th><th>Its own columns (the office types them)</th></tr></thead><tbody>'+
+    h+='<div class="card"><h2>Who sends each office’s sheet</h2><p class="sub">'+(LIVEPAY ? 'They see their own office’s sheet and send it to you - no other office’s. Practice Hub gives them the tab and the access.' : 'They’re the ones who see it and send it to you, along with you.')+'</p><div class="tblwrap"><table class="t"><thead><tr><th>Office</th><th>Sent by</th><th>Its own columns (the office types them)</th></tr></thead><tbody>'+
       OFFICES.map(o=>'<tr><td><b>'+esc(o.n)+'</b></td><td>'+(o.self
         ? 'You fill it in - <b>This pay period</b> → '+esc(o.n)+' → <b>Fill it in</b>. Nobody sends it.'
         : LIVEPAY
@@ -1573,7 +1586,7 @@
       tw.map(g=>'<div class="row" style="margin-top:8px;gap:8px;flex-wrap:wrap"><b>'+esc(disp(g[0]))+'</b><span class="small muted">'+esc(g.map(p=>p.offices.map(k=>OFF[k].n).join(' + ')).join(' · '))+'</span>'+
         (R().ro ? '' : '<button class="btn sm" data-act="oneperson" data-v="'+esc(twinKey(g))+'">Make them one person</button>')+'</div>').join('')+'</div>';
     h+='<div class="card"><div class="row" style="margin-bottom:8px"><div class="grow"><h2>People</h2><p class="sub" style="margin:0">By last name, like the payroll software. Their office, their pay-period bonus, and when holiday pay starts.</p></div><button class="btn ghost sm" data-act="addp" data-v="">＋ Add a person</button></div>'+
-      (LIVEPAY ? '<div class="row" style="margin-bottom:10px;flex-wrap:wrap;gap:6px"><span class="small muted">Fill from the Home-Brace team list:</span>'+OFFICES.filter(o=>!o.self).map(o=>'<button class="btn ghost sm" data-act="fill" data-v="'+o.k+'">＋ '+esc(o.n)+'</button>').join('')+
+      (LIVEPAY ? '<div class="row" style="margin-bottom:10px;flex-wrap:wrap;gap:6px"><span class="small muted">Fill from the Practice Hub team list:</span>'+OFFICES.filter(o=>!o.self).map(o=>'<button class="btn ghost sm" data-act="fill" data-v="'+o.k+'">＋ '+esc(o.n)+'</button>').join('')+
         OFFICES.filter(o=>o.self).map(o=>'<span class="small muted">'+esc(o.n)+': add its people with <b>＋ Add a person</b>.</span>').join('')+'</div>' : '')+skippedHTML()+
       '<div class="tblwrap"><table class="t"><thead><tr><th>Name</th><th>Office</th><th class="n">PP bonus</th><th>Started</th><th>Holiday pay from</th><th></th><th></th></tr></thead><tbody>'+
       act.map(p=>'<tr><td><b>'+esc(disp(p))+'</b></td><td>'+esc(p.offices.map(k=>OFF[k].n).join(' + '))+
@@ -1625,7 +1638,7 @@
   let nt=null;
   function notifyPay(title, body){
     const n=el('notif');
-    n.innerHTML='<img src="../assets/logo-mark.png?v=2" alt=""><div style="flex:1;min-width:0"><div class="t"><span>HOME-BRACE</span><span>now</span></div><b>'+esc(title)+'</b><div class="x2">'+esc(body)+'</div></div>';
+    n.innerHTML='<img src="../assets/logo-mark.png?v=2" alt=""><div style="flex:1;min-width:0"><div class="t"><span>PRACTICE HUB</span><span>now</span></div><b>'+esc(title)+'</b><div class="x2">'+esc(body)+'</div></div>';
     n.classList.add('on'); clearTimeout(nt); nt=setTimeout(()=>n.classList.remove('on'), 4500);
   }
   let tt=null; function toast(m){ const t=el('toast'); t.textContent=m; t.classList.add('on'); clearTimeout(tt); tt=setTimeout(()=>t.classList.remove('on'),2600); }
@@ -1794,7 +1807,7 @@
       .then(()=>toast('Sent to your phone ✓ It arrives in about 5 seconds - lock your phone to see it.'), err=>toast('Couldn’t send: '+(err&&err.message)));
     if(act==='remind'){
       if(realOn()){ realSend('Reminder from Morgan: payroll sheet due '+(P(per).due===TODAY?'today':fmt(P(per).due,{weekday:'long'}))+' by 2 pm', OFF[v].n+' · pay period '+lab(per)+' - tap to open it'); return; }
-      toast('Reminder sent to '+sender(v)+' - in Home-Brace and on their phone. (Mock-up: nothing is sent.)'); return;
+      toast('Reminder sent to '+sender(v)+' - in Practice Hub and on their phone. (Mock-up: nothing is sent.)'); return;
     }
     if(act==='phrem'){ const o=R().office, pr=P(per), title='Payroll sheet due '+(pr.due===TODAY?'today':fmt(pr.due,{weekday:'long'}))+' by 2 pm', body=OFF[o].n+' · pay period '+lab(per)+' - tap to open it';
       if(realOn()){ realSend(title, body); return; }
@@ -2140,7 +2153,7 @@
   }
   /* NEW ON THE TEAM LIST (17/11/2026, hc170) - SANDBOX ONLY until user.js NEWHIRES_LIVE is true (PH.newHiresOn()).
      Morgan added two new hires to Northpoint in Admin -> People; Payroll never knew - its people are
-     its own private list, filled from the team list only by "Fill from the Home-Brace team list". Now anyone ADDED in
+     its own private list, filled from the team list only by "Fill from the Practice Hub team list". Now anyone ADDED in
      Admin -> People (r._added - not the starting staff list: that was filled at go-live, and whoever was left out was
      left out on purpose) who isn't on their office's payroll list is offered on her board: "Add to <office>'s sheet"
      (Add a person, filled in - she types the start date and the bonus) or "Skip" (kept in her own folder,
@@ -2191,7 +2204,7 @@
     if(!L.length) return '';
     return '<div class="small muted" style="margin:-2px 0 10px">Skipped from “New on the team list”: '+L.map(x=>'<span style="white-space:nowrap">'+esc(x.nm)+' ('+esc(OFF[x.k].n)+') <button class="link small" data-act="newback" data-v="'+esc(x.k)+'" data-i="'+esc(x.key)+'">Put back</button></span>').join(' · ')+'</div>';
   }
-  /* Fill an office from the Home-Brace team list (once, to start): everyone the roster puts at that office who isn't
+  /* Fill an office from the Practice Hub team list (once, to start): everyone the roster puts at that office who isn't
      a doctor and isn't on its list yet. Morgan then sets bonuses and start dates, and takes off anyone who isn't paid
      there. */
   function liveFill(k){
@@ -2265,7 +2278,7 @@
     PEOPLE=PEOPLE.filter(p=>rest.indexOf(p)<0); S.added=S.added.filter(p=>rest.indexOf(p)<0);
     liveFlushAll(); render(); toast(disp(keep)+' is one person now - on the '+keep.offices.map(k=>OFF[k].n).join(' and ')+' sheets');
   }
-  /* Who sends each office's sheet - the shared list (names only, no pay): Home-Brace shows them the tab and, from
+  /* Who sends each office's sheet - the shared list (names only, no pay): Practice Hub shows them the tab and, from
      Admin, gives them their office's folder. An admin's browser hands out that folder access right away. */
   function liveSenders(office, em, add){
     em=String(em||'').trim().toLowerCase(); if(!em) return;
@@ -2359,16 +2372,16 @@
   function liveLoadNow(lv){
     const offs=lv==='send' ? myOffices() : OFFICES.map(o=>o.k), people={}, docs=[];
     S.subs={}; S.entered={}; S.entOff={}; S.removed={}; S.docGone={}; S.bonus={}; S.notPaid={}; S.dpay={}; S.docRate={}; S.added=[]; S.docAdd=[]; LIVECOLS={}; LIVE.old=null; LIVE.oldErr='';
-    /* Nothing is read or written until the payroll folder is LOCKED: before that, everyone in Home-Brace could open it
+    /* Nothing is read or written until the payroll folder is LOCKED: before that, everyone in Practice Hub could open it
        in SharePoint. Whoever manages payroll is told how; a sender only ever gets access after it's locked anyway. */
     /* The lock is checked AT THE SAME TIME as the folders (10/11/2026, speed). Only if it doesn't look locked is it
        asked again once the folders are certainly there - the answer that decides is the same as before. */
     const lockedNow=()=>window.PH_DOCS && PH_DOCS.payLocked ? PH_DOCS.payLocked() : false;
     (lv==='manage' && ONLIVE ? Promise.all([PAYSTORE.ensure(OFFICES.map(o=>o.n)), Promise.resolve().then(lockedNow).catch(()=>false)])
         .then(([, locked])=>locked ? true : lockedNow()).then(locked=>{
-        if(!locked) throw new Error('The payroll folder isn’t locked yet, so nothing is saved in it - until it is, everyone in Home-Brace could open it in SharePoint. '+
-          'Lock it once: SharePoint → Home-Brace → Documents → next to “Home-Brace Payroll”: ⋯ → Manage access → Advanced settings → Stop Inheriting Permissions, '+
-          'then remove Home-Brace Members and Home-Brace Visitors. Then press Try again.');
+        if(!locked) throw new Error('The payroll folder isn’t locked yet, so nothing is saved in it - until it is, everyone in Practice Hub could open it in SharePoint. '+
+          'Lock it once: SharePoint → Practice Hub → Documents → next to “Practice Hub Payroll”: ⋯ → Manage access → Advanced settings → Stop Inheriting Permissions, '+
+          'then remove Practice Hub Members and Practice Hub Visitors. Then press Try again.');
       }) : Promise.resolve())
       /* SPEED (10/11/2026, Jordan: "the loading screen takes at least 5-8 seconds"): every office, and Morgan's own
          folder, are read AT THE SAME TIME - they used to be read one office after another. What comes back is still
@@ -2450,7 +2463,7 @@
 })();
 </script>
 <script>PH.nav('payroll');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc268d202611250847"></script>
+<script src="tour.js?v=hc268d202611250900"></script>
 <script>
 Tour.init([
   ...((window.PH && PH.isLive && PH.isLive()) || (()=>{ try{ return localStorage.getItem('ph_pay_real')==='1'; }catch(_){ return false; } })() ? [] : [{sel:'#persona', title:'A mock-up', body:'Made-up people and amounts. Start as the <b>Cedar Grove TC</b>, who sends Cedar Grove’s sheet, then switch to <b>Morgan</b>.'}]),

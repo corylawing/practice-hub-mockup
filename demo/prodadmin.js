@@ -1,10 +1,10 @@
-/* ADMIN -> PRODUCTION DATA: Home-Brace's own copy of the production workbook (prodstore.js).
+/* ADMIN -> PRODUCTION DATA: Practice Hub's own copy of the production workbook (prodstore.js).
 
    What an admin sees and can do (21/10/2026, Jordan OK'd steps 1-4: keep each year, copy from
    Morgan's Excel automatically, download the Excel and upload a changed layout for one year,
    start the next year - and NOT switch the dashboard yet: "we need to wait and run them
    parallel for a bit"):
-     - when Home-Brace last copied her Excel, and whether every formula gave the same result;
+     - when Practice Hub last copied her Excel, and whether every formula gave the same result;
      - each year kept: Download Excel (formatted exactly as hers), its history of changes, and
        "Upload a changed layout" for that year only;
      - on the sandbox, where her workbook is never opened: try it with a workbook file. */
@@ -85,21 +85,21 @@
   function render(){
     if(!host) return;
     var years = IDX ? Object.keys(IDX.years).sort().reverse() : [], src = IDX && IDX.source;
-    // After the switch her Excel is only compared, never copied over Home-Brace - say so, and name the button for it.
+    // After the switch her Excel is only compared, never copied over Practice Hub - say so, and name the button for it.
     var onHB = !!(MODE && MODE.source === 'homebrace');
-    var h = '<div class="pd"><div class="card"><h2>Production data, kept by Home-Brace</h2>'+
-      '<p class="sub">Home-Brace keeps its own copy of the production workbook, one book per year: the layout and formulas, and every number typed. '+
+    var h = '<div class="pd"><div class="card"><h2>Production data, kept by Practice Hub</h2>'+
+      '<p class="sub">Practice Hub keeps its own copy of the production workbook, one book per year: the layout and formulas, and every number typed. '+
       (onHB ? 'The dashboard and Enter Production use these books now (see below). Nothing here ever changes her Excel.</p>'
             : 'The dashboard still reads Morgan’s Excel — this runs alongside it until you decide to switch. Nothing here ever changes her Excel.</p>');
     if(live()){
       h += '<div class="stat info"><span>🔁</span><span class="grow">'+(onHB
           ? (src ? 'Compared with Morgan’s Excel — her save of <b>'+when(src.modified)+'</b>'+(src.by ? ' by '+esc(src.by) : '')+'. ' : '')+
-            'Home-Brace compares again by itself whenever an admin opens the dashboard after she saves. Her numbers are never copied over Home-Brace’s now.'
+            'Practice Hub compares again by itself whenever an admin opens the dashboard after she saves. Her numbers are never copied over Practice Hub’s now.'
           : src && src.compared
-          ? 'Her save of <b>'+when(src.modified)+'</b>'+(src.by ? ' by '+esc(src.by) : '')+' was only compared while Home-Brace kept the numbers. Home-Brace copies it the next time an admin opens the dashboard, or now:'
+          ? 'Her save of <b>'+when(src.modified)+'</b>'+(src.by ? ' by '+esc(src.by) : '')+' was only compared while Practice Hub kept the numbers. Practice Hub copies it the next time an admin opens the dashboard, or now:'
           : src
-          ? 'Copied from Morgan’s Excel — her save of <b>'+when(src.modified)+'</b>'+(src.by ? ' by '+esc(src.by) : '')+'. Home-Brace copies it again by itself whenever an admin opens the dashboard after she saves.'
-          : 'Not copied yet. Home-Brace copies Morgan’s Excel by itself when an admin opens the dashboard, or now:')+'</span>'+
+          ? 'Copied from Morgan’s Excel — her save of <b>'+when(src.modified)+'</b>'+(src.by ? ' by '+esc(src.by) : '')+'. Practice Hub copies it again by itself whenever an admin opens the dashboard after she saves.'
+          : 'Not copied yet. Practice Hub copies Morgan’s Excel by itself when an admin opens the dashboard, or now:')+'</span>'+
         '<button class="btn tiny" data-pd="sync"'+(busy?' disabled':'')+'>'+(busy==='sync'?(onHB?'Comparing…':'Copying…'):(onHB?'Compare now':'Copy now'))+'</button></div>';
     } else {
       h += '<div class="stat info"><span>🧪</span><span class="grow"><b>Demo.</b> In a real practice this '+(onHB ? 'compares with' : 'copies')+' Morgan’s Excel by itself. Here her workbook is never opened — '+
@@ -110,8 +110,8 @@
     var cy = years[0] && IDX.years[years[0]];
     if(cy && cy.check){
       h += cy.check.differ
-        ? '<div class="stat warn" style="margin-top:10px"><span>⚠️</span><span class="grow"><b>'+cy.check.differ+' of '+cy.check.formulas.toLocaleString('en-US')+' formulas came out differently</b> in Home-Brace than in her Excel ('+esc(years[0])+'). '+
-          'Don’t switch anything until this is explained:<ul style="margin:6px 0 0">'+cy.check.sample.map(function(d){ return '<li>'+place(d)+': Excel '+esc(d.excel)+', Home-Brace '+esc(d.homeBrace)+'</li>'; }).join('')+'</ul></span></div>'
+        ? '<div class="stat warn" style="margin-top:10px"><span>⚠️</span><span class="grow"><b>'+cy.check.differ+' of '+cy.check.formulas.toLocaleString('en-US')+' formulas came out differently</b> in Practice Hub than in her Excel ('+esc(years[0])+'). '+
+          'Don’t switch anything until this is explained:<ul style="margin:6px 0 0">'+cy.check.sample.map(function(d){ return '<li>'+place(d)+': Excel '+esc(d.excel)+', Practice Hub '+esc(d.homeBrace)+'</li>'; }).join('')+'</ul></span></div>'
         : '<div class="stat ok" style="margin-top:10px"><span>✓</span><span class="grow"><b>All '+cy.check.formulas.toLocaleString('en-US')+' formulas give the same results as her Excel</b> ('+esc(years[0])+', checked '+when(cy.check.at)+').</span></div>';
     }
     h += '</div>';
@@ -145,22 +145,22 @@
     var m = MODE || {source:'excel', mirror:true}, onHB = m.source === 'homebrace', cmp = IDX && IDX.compare;
     var h = '<div class="card"><h2>Where the production numbers live</h2>';
     if(!onHB){
-      h += '<div class="stat info"><span>📗</span><span class="grow"><b>Morgan’s Excel</b>, as today. The dashboard and Enter Production use her Excel, and Home-Brace keeps its copy alongside.</span>'+
-        (sw ? '' : '<button class="btn tiny" data-pd="swopen">Switch to Home-Brace…</button>')+'</div>';
+      h += '<div class="stat info"><span>📗</span><span class="grow"><b>Morgan’s Excel</b>, as today. The dashboard and Enter Production use her Excel, and Practice Hub keeps its copy alongside.</span>'+
+        (sw ? '' : '<button class="btn tiny" data-pd="swopen">Switch to Practice Hub…</button>')+'</div>';
       if(sw === 'to') h += switchDlgHTML();
     } else {
-      h += '<div class="stat ok"><span>🏠</span><span class="grow"><b>Home-Brace</b>, since '+when(m.changedAt)+(m.changedBy ? ' ('+esc(m.changedBy)+')' : '')+
-        '. The dashboard and Enter Production use Home-Brace’s own numbers. '+(m.mirror ? 'Morgan’s Excel is kept up to date too.' : 'Morgan’s Excel is no longer updated.')+'</span></div>';
+      h += '<div class="stat ok"><span>🏠</span><span class="grow"><b>Practice Hub</b>, since '+when(m.changedAt)+(m.changedBy ? ' ('+esc(m.changedBy)+')' : '')+
+        '. The dashboard and Enter Production use Practice Hub’s own numbers. '+(m.mirror ? 'Morgan’s Excel is kept up to date too.' : 'Morgan’s Excel is no longer updated.')+'</span></div>';
       if(cmp) h += cmp.differ
-        ? '<div class="stat warn" style="margin-top:10px"><span>⚠️</span><span class="grow"><b>Her Excel differs from Home-Brace in '+cmp.differ+' number'+(cmp.differ > 1 ? 's' : '')+'</b> ('+(cmp.modified ? 'her save of '+when(cmp.modified)+(cmp.by ? ' by '+esc(cmp.by) : '') : '“'+esc(cmp.name || 'the workbook')+'”, '+when(cmp.at))+'). Someone may have typed in her Excel - Home-Brace’s numbers are the ones used:<ul style="margin:6px 0 0">'+
-            cmp.sample.slice(0, 8).map(function(c){ return '<li>'+place(c)+': Home-Brace '+fmtVal(c.from)+', her Excel '+fmtVal(c.to)+'</li>'; }).join('')+'</ul></span></div>'
-        : '<div class="stat ok" style="margin-top:10px"><span>✓</span><span class="grow">Her Excel matches Home-Brace ('+(cmp.modified ? 'her save of '+when(cmp.modified) : '“'+esc(cmp.name || 'the workbook')+'”, '+when(cmp.at))+').</span></div>';
+        ? '<div class="stat warn" style="margin-top:10px"><span>⚠️</span><span class="grow"><b>Her Excel differs from Practice Hub in '+cmp.differ+' number'+(cmp.differ > 1 ? 's' : '')+'</b> ('+(cmp.modified ? 'her save of '+when(cmp.modified)+(cmp.by ? ' by '+esc(cmp.by) : '') : '“'+esc(cmp.name || 'the workbook')+'”, '+when(cmp.at))+'). Someone may have typed in her Excel - Practice Hub’s numbers are the ones used:<ul style="margin:6px 0 0">'+
+            cmp.sample.slice(0, 8).map(function(c){ return '<li>'+place(c)+': Practice Hub '+fmtVal(c.from)+', her Excel '+fmtVal(c.to)+'</li>'; }).join('')+'</ul></span></div>'
+        : '<div class="stat ok" style="margin-top:10px"><span>✓</span><span class="grow">Her Excel matches Practice Hub ('+(cmp.modified ? 'her save of '+when(cmp.modified) : '“'+esc(cmp.name || 'the workbook')+'”, '+when(cmp.at))+').</span></div>';
       h += '<div class="acts" style="margin-top:10px"><button class="btn ghost tiny" data-pd="mirror"'+(busy?' disabled':'')+'>'+(m.mirror ? 'Stop updating her Excel' : 'Keep her Excel up to date again')+'</button>'+
         (sw ? '' : '<button class="btn ghost tiny" data-pd="swback">Switch back to her Excel…</button>')+'</div>';
       if(sw === 'back') h += '<div class="dlg" style="margin-top:12px"><b>Switch back to Morgan’s Excel?</b><div>The dashboard and Enter Production go back to her Excel. '+
-        // Switching back makes her Excel the one copied again, so anything only Home-Brace has would then live on in History alone.
-        (cmp && cmp.differ ? '<b>Her Excel differs from Home-Brace in '+cmp.differ+' number'+(cmp.differ > 1 ? 's' : '')+'</b> (listed above). Put those in her Excel first: once switched back, her Excel is copied into Home-Brace again, and Home-Brace’s versions stay only in History.'
-          : m.mirror ? 'Her Excel has been kept up to date, so nothing is lost.' : '<b>Her Excel was not kept up to date</b>, so numbers entered in Home-Brace since then are not in it. Put them in her Excel first (Download Excel below shows them): once switched back, her Excel is copied into Home-Brace again, and Home-Brace’s versions stay only in History.')+'</div>'+
+        // Switching back makes her Excel the one copied again, so anything only Practice Hub has would then live on in History alone.
+        (cmp && cmp.differ ? '<b>Her Excel differs from Practice Hub in '+cmp.differ+' number'+(cmp.differ > 1 ? 's' : '')+'</b> (listed above). Put those in her Excel first: once switched back, her Excel is copied into Practice Hub again, and Practice Hub’s versions stay only in History.'
+          : m.mirror ? 'Her Excel has been kept up to date, so nothing is lost.' : '<b>Her Excel was not kept up to date</b>, so numbers entered in Practice Hub since then are not in it. Put them in her Excel first (Download Excel below shows them): once switched back, her Excel is copied into Practice Hub again, and Practice Hub’s versions stay only in History.')+'</div>'+
         '<div class="acts"><button class="btn" data-pd="swbackgo"'+(busy?' disabled':'')+'>'+(busy === 'sw' ? 'Switching…' : 'Switch back')+'</button><button class="btn ghost" data-pd="swcancel">Cancel</button></div></div>';
     }
     return h + '</div>';
@@ -168,21 +168,21 @@
   function switchDlgHTML(){
     var y = P().liveYear(IDX), Y = y && IDX.years[y], ok = function(b){ return b ? '✓' : '⚠️'; }, src = IDX && IDX.source;
     var ready = [
-      [!!Y, Y ? y+' is kept by Home-Brace ('+(Y.numbers||0).toLocaleString('en-US')+' numbers).' : 'This year isn’t kept yet - copy her Excel first.'],
+      [!!Y, Y ? y+' is kept by Practice Hub ('+(Y.numbers||0).toLocaleString('en-US')+' numbers).' : 'This year isn’t kept yet - copy her Excel first.'],
       [!!(Y && Y.check && !Y.check.differ), Y && Y.check ? (Y.check.differ ? Y.check.differ+' formulas came out differently from her Excel - explain those first.' : 'Every formula gave the same result as her Excel at the last copy.') : 'No formula check yet.'],
       live() ? [!!src, src ? 'Last copy of her Excel: her save of '+when(src.modified)+(src.by ? ' by '+esc(src.by) : '')+'.' : 'Her Excel hasn’t been copied yet.']
              : [true, 'Sandbox: there is no Excel of hers here to copy.']
     ];
     var go = ready.every(function(r){ return r[0]; });
-    return '<div class="dlg" style="margin-top:12px"><b>Switch to Home-Brace?</b>'+
+    return '<div class="dlg" style="margin-top:12px"><b>Switch to Practice Hub?</b>'+
       '<div>'+ready.map(function(r){ return ok(r[0])+' '+r[1]; }).join('<br>')+'</div>'+
-      '<div>From then on: <b>Enter Production saves into Home-Brace</b>, and <b>the dashboard shows Home-Brace’s numbers</b>. '+(live() ? 'Home-Brace copies her Excel one last time first, so nothing she typed is missed. ' : '')+
-      'Her Excel stays where it is; Home-Brace only compares with it from then on. You can switch back.</div>'+
+      '<div>From then on: <b>Enter Production saves into Practice Hub</b>, and <b>the dashboard shows Practice Hub’s numbers</b>. '+(live() ? 'Practice Hub copies her Excel one last time first, so nothing she typed is missed. ' : '')+
+      'Her Excel stays where it is; Practice Hub only compares with it from then on. You can switch back.</div>'+
       '<label><input type="checkbox" id="pdmirror" checked> Keep Morgan’s Excel up to date too (recommended until you retire it)</label>'+
       '<div class="acts"><button class="btn" data-pd="swgo"'+(go && !busy ? '' : ' disabled')+'>'+(busy === 'sw' ? 'Switching…' : 'Switch now')+'</button><button class="btn ghost" data-pd="swcancel">Cancel</button></div></div>';
   }
 
-  /* ---------- goals & formulas, in Home-Brace (Jordan: "configure the formulas for future years") ---------- */
+  /* ---------- goals & formulas, in Practice Hub (Jordan: "configure the formulas for future years") ---------- */
   var MO = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   var GLAB = {tc:'TC goal', md:'Medicaid goal', total:'Total goal', stretch:'Stretch goal', days:'Production days'};
   var money = function(v){ return typeof v === 'number' && isFinite(v) ? '$' + Math.round(v).toLocaleString('en-US') : ''; };
@@ -214,7 +214,7 @@
             '<button class="btn tiny" data-pd="offadd" data-y="'+esc(y)+'" data-n="'+esc(n)+'" data-sel="'+id+'"'+(busy ? ' disabled' : '')+'>'+(busy === 'offadd'+y+n ? 'Adding…' : 'Add to '+esc(y))+'</button>' : ' An admin can add it.')+'</span></div>';
       });
       r.added.forEach(function(n){
-        h += '<div class="stat ok" style="margin-top:8px"><span>✓</span><span class="grow"><b>'+esc(n)+'</b> is in the '+esc(y)+' numbers (added in Home-Brace).'+
+        h += '<div class="stat ok" style="margin-top:8px"><span>✓</span><span class="grow"><b>'+esc(n)+'</b> is in the '+esc(y)+' numbers (added in Practice Hub).'+
           (can ? ' <button class="btn ghost tiny" data-pd="offrm" data-y="'+esc(y)+'" data-n="'+esc(n)+'"'+(busy ? ' disabled' : '')+'>Take it out of '+esc(y)+'</button> <span class="muted">(only while no number has been typed for it)</span>' : '')+'</span></div>';
       });
     });
@@ -326,7 +326,7 @@
       return h + '</div>';
     }
     var st = IDX.years[PY].started;
-    h += '<div class="plstep">'+(st ? 'Step 1 · ✓ Set up from '+esc(st.from)+' on '+when(st.at)+(st.by ? ' by '+esc(st.by) : '') : esc(PY)+' is kept by Home-Brace')+'</div>';
+    h += '<div class="plstep">'+(st ? 'Step 1 · ✓ Set up from '+esc(st.from)+' on '+when(st.at)+(st.by ? ' by '+esc(st.by) : '') : esc(PY)+' is kept by Practice Hub')+'</div>';
     if(MODE && MODE.source !== 'homebrace' && IDX.source && +IDX.source.year === +PY)
       h += '<div class="stat warn" style="margin:6px 0 10px"><span>⚠️</span><span class="grow">'+esc(PY)+' is still copied from Morgan’s Excel, so her next save puts her goals back. Plan here the year she doesn’t keep in Excel'+(Y.list.indexOf(Y.next) >= 0 ? ' ('+Y.next+')' : '')+', or after the switch.</span></div>';
     h += '<div class="plstep">Step 2 · Plan each office <span style="text-transform:none;letter-spacing:0;font-weight:600">- change it any time; every save can be undone</span></div>';
@@ -704,7 +704,7 @@
     if(p.year !== p.forYear) h += '<div class="stat warn"><span>⚠️</span><span class="grow">You chose it from the '+esc(p.forYear)+' row, but it is for '+esc(p.year)+'. It would become '+esc(p.year)+'’s layout.</span></div>';
     if(live() && IDX && IDX.source && +IDX.source.year === +p.year)
       h += '<div class="stat warn"><span>⚠️</span><span class="grow">'+esc(p.year)+' is copied from Morgan’s Excel. The next copy from her Excel puts her layout back if it is different.</span></div>';
-    if(has) h += '<label><input type="radio" name="pdmode" value="keep" checked> Use its layout and formulas, and <b>keep Home-Brace’s numbers</b> — each one moves to the row and month with the same name.</label>'+
+    if(has) h += '<label><input type="radio" name="pdmode" value="keep" checked> Use its layout and formulas, and <b>keep Practice Hub’s numbers</b> — each one moves to the row and month with the same name.</label>'+
                  '<label><input type="radio" name="pdmode" value="take"> Use its layout, formulas <b>and its numbers</b>.</label>';
     else h += '<div>Its layout, formulas and numbers become '+esc(p.year)+'’s book.</div>';
     return h + '<div class="acts"><button class="btn" data-pd="useit">Use it for '+esc(p.year)+'</button><button class="btn ghost" data-pd="cancel">Cancel</button></div></div>';
@@ -747,7 +747,7 @@
   function say(cls, icon, html){ msg = {cls:cls, icon:icon, html:html}; }
   function summary(r){
     var bits = [];
-    if(r.first) bits.push('<b>'+esc(r.year)+' is now kept by Home-Brace</b>: '+r.numbers.toLocaleString('en-US')+' numbers');
+    if(r.first) bits.push('<b>'+esc(r.year)+' is now kept by Practice Hub</b>: '+r.numbers.toLocaleString('en-US')+' numbers');
     else bits.push(r.changes ? '<b>'+r.changes+' number'+(r.changes>1?'s':'')+' changed</b> in '+esc(r.year) : 'No numbers changed in '+esc(r.year));
     if(r.layout && r.layout !== 'new') bits.push('the layout or formulas changed');
     if(r.kept && r.kept.lost.length) bits.push('<b>'+r.kept.lost.length+' numbers had no place in the new layout</b> (see History)');
@@ -767,7 +767,7 @@
       P().syncFromWorkbook({force:true}).then(function(r){
         busy = '';
         if(r && r.skipped) say('info','ℹ️','Nothing to copy ('+esc(r.skipped)+').');
-        else if(r && r.compared) say(r.differ ? 'warn' : 'ok', r.differ ? '⚠️' : '✓', r.differ ? 'Her Excel differs from Home-Brace in <b>'+r.differ+' number'+(r.differ > 1 ? 's' : '')+'</b> (listed below). Home-Brace’s numbers were not changed.' : 'Her Excel matches Home-Brace.');
+        else if(r && r.compared) say(r.differ ? 'warn' : 'ok', r.differ ? '⚠️' : '✓', r.differ ? 'Her Excel differs from Practice Hub in <b>'+r.differ+' number'+(r.differ > 1 ? 's' : '')+'</b> (listed below). Practice Hub’s numbers were not changed.' : 'Her Excel matches Practice Hub.');
         else say(r.check.differ ? 'warn' : 'ok', r.check.differ ? '⚠️' : '✓', summary(r));
         LOGS = {}; return refresh();
       }).catch(function(err){ busy = ''; say('warn','⚠️','That did not work: '+esc(err.message||err)+' Nothing was changed.'); render(); });
@@ -803,7 +803,7 @@
       (live() ? P().syncFromWorkbook({force:true}) : Promise.resolve(null)).then(function(r){
         if(r && r.check && r.check.differ) throw new Error('The last copy of her Excel has '+r.check.differ+' formulas that came out differently. Nothing was switched.');
         return P().setMode({source:'homebrace', mirror:mirror});
-      }).then(function(){ busy = ''; sw = null; say('ok','✓','<b>Switched.</b> The dashboard and Enter Production now use Home-Brace’s numbers'+(mirror ? ', and keep Morgan’s Excel up to date too.' : '.')); return refresh(); },
+      }).then(function(){ busy = ''; sw = null; say('ok','✓','<b>Switched.</b> The dashboard and Enter Production now use Practice Hub’s numbers'+(mirror ? ', and keep Morgan’s Excel up to date too.' : '.')); return refresh(); },
         function(err){ busy = ''; say('warn','⚠️','Not switched: '+esc(err.message||err)); render(); });
     }
     if(act === 'swbackgo'){
@@ -850,7 +850,7 @@
       busy = 'nextdl'; render();
       var B = global.PH_BOOK, nb = B.withData(NEXT.template, NEXT.data);
       B.exportXlsxSmall(nb, NEXT.data, B.evaluate(nb)).then(function(bytes){
-        save(new Blob([bytes], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}), NEXT.to+' PRODUCTION DASHBOARD (preview from Home-Brace).xlsx'); busy = ''; render();
+        save(new Blob([bytes], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}), NEXT.to+' PRODUCTION DASHBOARD (preview from Practice Hub).xlsx'); busy = ''; render();
       }, function(err){ busy = ''; say('warn','⚠️','Could not build the preview Excel: '+esc(err.message||err)); render(); });
     }
     if(act === 'setup'){
@@ -906,9 +906,9 @@
     if(t.dataset.pd === 'file'){
       busy = 'file'; msg = null; render();
       readFile(t).then(function(f){ if(!f){ busy = ''; render(); return; }
-        // After the switch a workbook is compared, as her Excel is on the live site - never copied over Home-Brace.
+        // After the switch a workbook is compared, as her Excel is on the live site - never copied over Practice Hub.
         if(MODE && MODE.source === 'homebrace') return P().compareFromBytes(f.bytes, {how:'upload', name:f.name}).then(function(r){ busy = '';
-          say(r.differ ? 'warn' : 'ok', r.differ ? '⚠️' : '✓', r.differ ? 'That workbook differs from Home-Brace in <b>'+r.differ+' number'+(r.differ > 1 ? 's' : '')+'</b> (listed below). Home-Brace’s numbers were not changed.' : 'That workbook matches Home-Brace.'); return refresh(); });
+          say(r.differ ? 'warn' : 'ok', r.differ ? '⚠️' : '✓', r.differ ? 'That workbook differs from Practice Hub in <b>'+r.differ+' number'+(r.differ > 1 ? 's' : '')+'</b> (listed below). Practice Hub’s numbers were not changed.' : 'That workbook matches Practice Hub.'); return refresh(); });
         return P().copyFromBytes(f.bytes, {how:'upload', name:f.name}).then(function(r){ busy = ''; say(r.check.differ ? 'warn' : 'ok', r.check.differ ? '⚠️' : '✓', summary(r)); LOGS = {}; return refresh(); });
       }).catch(function(err){ busy = ''; say('warn','⚠️','That did not work: '+esc(err.message||err)); render(); });
     }
@@ -916,7 +916,7 @@
       var forYear = t.dataset.y;
       readFile(t).then(function(f){ if(!f) return;
         return global.PH_BOOK.open(f.bytes).then(function(book){
-          var year = global.PH_BOOK.yearOf(book); if(!year) throw new Error('Home-Brace could not tell which year that workbook is for.');
+          var year = global.PH_BOOK.yearOf(book); if(!year) throw new Error('Practice Hub could not tell which year that workbook is for.');
           var formulas = book.names.reduce(function(n, s){ return n + Object.keys(book.sheets[s].cells).filter(function(a){ return book.sheets[s].cells[a].f != null; }).length; }, 0);
           var numbers = Object.keys(global.PH_BOOK.dataOf(book)).reduce(function(n, s){ return n + Object.keys(global.PH_BOOK.dataOf(book)[s]).length; }, 0);
           pending = {name:f.name, bytes:f.bytes, year:String(year), forYear:String(forYear), tabs:book.names.length, formulas:formulas, numbers:numbers};

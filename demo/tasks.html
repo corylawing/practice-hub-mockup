@@ -1,17 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script src="demo-shim.js?v=d202611250847"></script>
+<script src="demo-shim.js?v=d202611250900"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Home-Brace · Tasks</title>
+<title>Practice Hub · Tasks</title>
+<meta name="description" content="Try the live demo: schedules, production, new-patient consults, payroll, monthly reports, tasks and team chat — one hub for every office of a multi-location practice.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Practice Hub">
+<meta property="og:title" content="Practice Hub | Multi-Location Practice Operations Hub">
+<meta property="og:description" content="Try the live demo: schedules, production, new-patient consults, payroll, monthly reports, tasks and team chat — one hub for every office of a multi-location practice.">
+<meta property="og:image" content="https://corylawing.github.io/practice-hub-mockup/demo/share.png">
+<meta property="og:image:width" content="1734">
+<meta property="og:image:height" content="907">
+<meta property="og:url" content="https://corylawing.github.io/practice-hub-mockup/demo/tasks.html">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Practice Hub | Multi-Location Practice Operations Hub">
+<meta name="twitter:description" content="Try the live demo: schedules, production, new-patient consults, payroll, monthly reports, tasks and team chat — one hub for every office of a multi-location practice.">
+<meta name="twitter:image" content="https://corylawing.github.io/practice-hub-mockup/demo/share.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="icon" href="../assets/favicon.png?v=2" type="image/png">
 <meta name="theme-color" content="#0F2A4A">
-<meta name="apple-mobile-web-app-title" content="Home-Brace">
+<meta name="apple-mobile-web-app-title" content="Practice Hub">
 <link rel="apple-touch-icon" sizes="180x180" href="../assets/icons/apple-touch-icon.png?v=3">
-<meta name="description" content="The practice’s central hub — schedule, production, documents and team, in one place. Brightline · Maple · Riverbend.">
 <style>
   :root{
     --navy:#0F2A4A; --navy2:#25456e; --teal:#149B96; --teal2:#2BC0B8; --teal-soft:#E5F4F3; --teal-600:#0F827E;
@@ -199,17 +211,17 @@
   }
   @media (prefers-reduced-motion: reduce){ *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important} .burst{display:none} }
 </style>
-<script src="user.js?v=hc268d202611250847"></script>
-  <script src="store.js?v=hc268d202611250847"></script>
-  <script src="gate.js?v=hc268d202611250847"></script>
-  <script src="tasks.js?v=hc268d202611250847"></script>
+<script src="user.js?v=hc268d202611250900"></script>
+  <script src="store.js?v=hc268d202611250900"></script>
+  <script src="gate.js?v=hc268d202611250900"></script>
+  <script src="tasks.js?v=hc268d202611250900"></script>
 </head>
 <body>
 <div class="ribbon">DEMO — made-up people. Use “Try it as” to give a task, then as the person who ticks it off.</div>
 <header class="hdr">
   <div class="hdr-in">
-    <span class="mark" aria-label="Home-Brace"><img src="../assets/logo-mark.png?v=2" alt="" width="34" height="34"></span>
-    <span class="brand">Home-<i>Brace</i><small>Tasks</small></span>
+    <span class="mark" aria-label="Practice Hub"><img src="../assets/logo-mark.png?v=2" alt="" width="34" height="34"></span>
+    <span class="brand">Practice <i>Hub</i><small>Tasks</small></span>
     <span class="v1">Demo</span>
   </div>
 </header>
@@ -399,7 +411,7 @@
     if(late.length){
       const ppl={}; late.forEach(t=>R.openIds(t).forEach(k=>{ ppl[k]=1; })); const n=Object.keys(ppl).length, canNudge=late.some(t=>R.needsNudge(t, T, new Date()));
       h+='<div class="needs">⏰ <span><b>'+late.length+' task'+(late.length===1?' is':'s are')+' late</b> — '+n+' '+(n===1?'person hasn’t':'people haven’t')+' finished.</span>'+(canNudge ? '<button class="btn sm" data-act="nudgeall">🔔 Nudge them all</button>' : '<span style="margin-left:auto;font-size:12.5px">Nudged in the last hour</span>')+'</div>';
-    } else if(g.open.length) h+='<div class="calm">✓ Nothing late. Home-Brace reminds people the morning a task is due.</div>';
+    } else if(g.open.length) h+='<div class="calm">✓ Nothing late. Practice Hub reminds people the morning a task is due.</div>';
     if(!g.open.length && !fresh.length) h+='<div class="empty"><div class="big">📋</div><b>'+(all?'No open tasks in the practice':'Nothing open that you assigned')+'</b>'+(all ? '' : 'Press <b>＋ New task</b> and type it the way you’d say it.')+'</div>';
     if(late.length) h+=group('late','Late', late.length, late.map(t=>gaveItem(t, all)).join(''));
     if(tod.length) h+=group('today','Due today', tod.length, tod.map(t=>gaveItem(t, all)).join(''));
@@ -448,7 +460,7 @@
     el('sheet').innerHTML='<div class="bg" data-act="sheetx"></div><div class="card" role="dialog" aria-modal="true" aria-labelledby="shTitle">'+
       '<div class="sh-h"><h2 id="shTitle">'+(edit?'Change this task':FORM.self?'Reminder for me':'New task')+'</h2><button type="button" class="x" data-act="sheetx" aria-label="Close">×</button></div>'+
       '<textarea class="say" id="f_say" rows="1" maxlength="400" placeholder="'+(edit ? 'What needs doing?' : FORM.self ? 'e.g. Call the lab about the retainers tomorrow' : 'e.g. Office managers: count the aligner trays by Friday')+'">'+esc(FORM.say)+'</textarea>'+
-      (edit ? '' : '<div class="hint">'+(FORM.self ? 'Say what and when — it goes on your own list, and Home-Brace reminds you.' : 'Say who and when the way you’d say it — or pick them below.')+'</div>')+
+      (edit ? '' : '<div class="hint">'+(FORM.self ? 'Say what and when — it goes on your own list, and Practice Hub reminds you.' : 'Say who and when the way you’d say it — or pick them below.')+'</div>')+
       '<div id="f_parts"></div></div>';
     el('sheet').hidden=false; document.body.style.overflow='hidden';
     grow(); drawParts(); setTimeout(()=>{ const i=el('f_say'); if(i){ i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }, 60);
@@ -625,7 +637,7 @@
   });
   document.addEventListener('change', e=>{
     const a=e.target.dataset && e.target.dataset.act, item=e.target.closest && e.target.closest('[data-id]');
-    if(a==='remind' && item){ const on=e.target.checked; return save(cur=>R.edit(cur, item.dataset.id, {remind:on}, new Date()), on ? 'Home-Brace will remind them' : 'No automatic reminders on this one'); }
+    if(a==='remind' && item){ const on=e.target.checked; return save(cur=>R.edit(cur, item.dataset.id, {remind:on}, new Date()), on ? 'Practice Hub will remind them' : 'No automatic reminders on this one'); }
     if(a==='redate' && item && e.target.value) return redue(REC.t[item.dataset.id], e.target.value);
     if(FORM && e.target.id==='f_remind') FORM.remind=e.target.checked;
     if(FORM && e.target.id==='f_date'){ grabNotes(); FORM.due=e.target.value || ''; FORM.errs=[]; drawParts(); }

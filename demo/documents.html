@@ -1,29 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script src="demo-shim.js?v=d202611250847"></script>
+<script src="demo-shim.js?v=d202611250900"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Home-Brace · Documents</title>
+<title>Practice Hub · Documents</title>
+<meta name="description" content="Try the live demo: schedules, production, new-patient consults, payroll, monthly reports, tasks and team chat — one hub for every office of a multi-location practice.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Practice Hub">
+<meta property="og:title" content="Practice Hub | Multi-Location Practice Operations Hub">
+<meta property="og:description" content="Try the live demo: schedules, production, new-patient consults, payroll, monthly reports, tasks and team chat — one hub for every office of a multi-location practice.">
+<meta property="og:image" content="https://corylawing.github.io/practice-hub-mockup/demo/share.png">
+<meta property="og:image:width" content="1734">
+<meta property="og:image:height" content="907">
+<meta property="og:url" content="https://corylawing.github.io/practice-hub-mockup/demo/documents.html">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Practice Hub | Multi-Location Practice Operations Hub">
+<meta name="twitter:description" content="Try the live demo: schedules, production, new-patient consults, payroll, monthly reports, tasks and team chat — one hub for every office of a multi-location practice.">
+<meta name="twitter:image" content="https://corylawing.github.io/practice-hub-mockup/demo/share.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="icon" href="../assets/favicon.png?v=2" type="image/png">
 <meta name="theme-color" content="#0F2A4A">
-<meta name="apple-mobile-web-app-title" content="Home-Brace">
+<meta name="apple-mobile-web-app-title" content="Practice Hub">
 <link rel="apple-touch-icon" sizes="180x180" href="../assets/icons/apple-touch-icon.png?v=3">
-<meta name="description" content="The practice’s central hub — schedule, production, documents and team, in one place. Brightline · Maple · Riverbend.">
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="Home-Brace">
-<meta property="og:title" content="Home-Brace">
-<meta property="og:description" content="The practice’s central hub — schedule, production, documents and team, in one place. Brightline · Maple · Riverbend.">
-<meta property="og:image" content="https://app.brightline.example/assets/og-image.png">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-<meta property="og:url" content="https://app.brightline.example/v1/documents.html">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Home-Brace">
-<meta name="twitter:description" content="The practice’s central hub — schedule, production, documents and team, in one place. Brightline · Maple · Riverbend.">
-<meta name="twitter:image" content="https://app.brightline.example/assets/og-image.png">
 <style>
   :root{
     --navy:#0F2A4A; --navy2:#25456e; --teal:#149B96; --teal2:#2BC0B8; --teal-soft:#E5F4F3; --teal-600:#0F827E;
@@ -238,17 +238,17 @@
   }
 
 </style>
-<script src="user.js?v=hc268d202611250847"></script>
-  <script src="store.js?v=hc268d202611250847"></script>
-  <script src="gate.js?v=hc268d202611250847"></script>
-  <script src="docs.js?v=hc268d202611250847"></script>
+<script src="user.js?v=hc268d202611250900"></script>
+  <script src="store.js?v=hc268d202611250900"></script>
+  <script src="gate.js?v=hc268d202611250900"></script>
+  <script src="docs.js?v=hc268d202611250900"></script>
 </head>
 <body>
 <div class="ribbon">DEMO — Documents. You see only the folders your role, office and team allow.</div>
 <header class="hdr">
   <div class="hdr-in">
-    <span class="mark" aria-label="Home-Brace"><img src="../assets/logo-mark.png?v=2" alt="" width="34" height="34"></span>
-    <span class="brand">Home-<i>Brace</i><small>Documents</small></span>
+    <span class="mark" aria-label="Practice Hub"><img src="../assets/logo-mark.png?v=2" alt="" width="34" height="34"></span>
+    <span class="brand">Practice <i>Hub</i><small>Documents</small></span>
     <span class="v1">Demo</span>
   </div>
 </header>
@@ -269,7 +269,7 @@
 
   <div id="folders"></div>
 
-  <div class="synced">📎 <b>Nothing here is a copy.</b> Files are kept in the practice's <b>SharePoint</b> (Home-Brace › Documents). <b>Open</b> shows the real file, and any change saves straight to it.</div>
+  <div class="synced">📎 <b>Nothing here is a copy.</b> Files are kept in the practice's <b>SharePoint</b> (Practice Hub › Documents). <b>Open</b> shows the real file, and any change saves straight to it.</div>
 </div>
 
 <div id="docmodal" class="ov"><div class="modal" id="docmodalcard"></div></div>
@@ -435,7 +435,7 @@
   const SHEET={cols:['Vendor','Category','Status'],rows:[['Henry Schein','Supplies','Active'],['Ortho2','Software','Active'],['Align Tech','Aligners','Review']]};
   let simStep=0;
   function paneHTML(side){
-    const label=side==='hub'?'📄 In Home-Brace':'☁ Microsoft drive';
+    const label=side==='hub'?'📄 In Practice Hub':'☁ Microsoft drive';
     const who=side==='hub'?'you':'Anna · in Excel';
     let t='<table class="sheet"><thead><tr>'+SHEET.cols.map(c=>'<th>'+c+'</th>').join('')+'</tr></thead><tbody>';
     SHEET.rows.forEach((r,ri)=>{ t+='<tr>'+r.map((v,ci)=>'<td><input data-side="'+side+'" data-r="'+ri+'" data-c="'+ci+'" value="'+String(v).replace(/"/g,'&quot;')+'"></td>').join('')+'</tr>'; });
@@ -496,7 +496,7 @@
   function useFile(n){ addCtx.name=n; addCtx.path='Microsoft drive \u203a '+(drivePath?drivePath.split('/').join(' \u203a '):'root'); renderAdd(); }
   function clearFile(){ addCtx.name=''; addCtx.path=''; renderAdd(); }
   function uploadFile(){ addCtx.name='New Vendor W-9.pdf';
-    addCtx.path='Uploaded to Microsoft drive \u203a '+(drivePath||'Home-Brace')+' \u2014 then linked'; renderAdd(); }
+    addCtx.path='Uploaded to Microsoft drive \u203a '+(drivePath||'Practice Hub')+' \u2014 then linked'; renderAdd(); }
   function locPart(){ return addCtx.locMode==='all' ? 'all offices' : (addCtx.locs.length?addCtx.locs.join(', '):'(pick locations)'); }
   function teamPart(){ return addCtx.teamMode==='all' ? 'Everyone' : (addCtx.teams.length?addCtx.teams.join(', '):'(pick teams)'); }
   function audLabel(){
@@ -531,10 +531,10 @@
   }
 
   /* ================= LIVE: real folders and files in SharePoint =================
-     30/09/2026 - Jordan: Morgan creates folders from Home-Brace, drags files in, links
+     30/09/2026 - Jordan: Morgan creates folders from Practice Hub, drags files in, links
      files she already has, removes folders she made, and "uploading a document and
      deciding the controls needs to be very easy to understand".
-     The folders are real folders in the Home-Brace site's library (docs.js has the
+     The folders are real folders in the Practice Hub site's library (docs.js has the
      where and the rules); files open the real file. The demo above - sample files,
      the two-way "sync" viewer, the View-as picker - stays for the sandbox only.
      Every action is a data-act button handled in one place below, so a folder or file
@@ -655,7 +655,7 @@
     if(!n){ load(path); return '<div class="lv-msg">Loading…</div>'; }
     if(n.state==='loading') return '<div class="lv-msg">Loading…</div>';
     if(n.state==='error') return '<div class="lv-msg err">'+((n.status===401||n.status===403)
-        ? 'You can’t open this folder yet. Ask an admin to add you to the Home-Brace group.'
+        ? 'You can’t open this folder yet. Ask an admin to add you to the Practice Hub group.'
         : 'This folder didn’t load.')+' <button class="lv-link"'+attr('act','retry')+attr('path',path)+'>Try again</button></div>';
     const pad=depth?' style="padding-left:'+(depth*20)+'px"':'';
     const rows=[];
@@ -820,11 +820,11 @@
     }
     if(d.kind==='link'){
       const it=d.item;
-      const shared=d.shared===true?'<div class="lv-ok">✓ Everyone in Home-Brace can open it.</div>'
-        :d.shared===false?'<div class="lv-warn">⚠ Right now only the people it’s shared with can open it. In the file, click <b>Share</b> and add <b>Home-Brace Members</b>, or others will see “no access”.</div>'
-        :(it?'<div class="lv-warn">Couldn’t check who can open it. Make sure it’s shared with <b>Home-Brace Members</b>.</div>':'');
+      const shared=d.shared===true?'<div class="lv-ok">✓ Everyone in Practice Hub can open it.</div>'
+        :d.shared===false?'<div class="lv-warn">⚠ Right now only the people it’s shared with can open it. In the file, click <b>Share</b> and add <b>Practice Hub Members</b>, or others will see “no access”.</div>'
+        :(it?'<div class="lv-warn">Couldn’t check who can open it. Make sure it’s shared with <b>Practice Hub Members</b>.</div>':'');
       card.innerHTML=top('\u{1F517} Link a file to '+escH(where(d)))+'<div class="dm-body">'+
-        '<div class="dm-banner" style="margin:-16px -18px 14px;border-radius:0">For a file that should stay where it is — like a workbook you keep updating. Home-Brace shows it here and opens the original; nothing is copied.</div>'+
+        '<div class="dm-banner" style="margin:-16px -18px 14px;border-radius:0">For a file that should stay where it is — like a workbook you keep updating. Practice Hub shows it here and opens the original; nothing is copied.</div>'+
         '<div class="afield"><label>Paste the file’s link</label><div class="lv-row"><input class="lv-input" id="lvUrl" value="'+escH(d.url||'')+'" placeholder="In the file: Share → Copy link, then paste here">'+
           '<button class="lv-btn"'+attr('act','link-find')+(d.busy?' disabled':'')+'>'+(d.busy?'Looking…':'Find it')+'</button></div></div>'+
         (d.err?'<div class="lv-bad">'+escH(d.err)+'</div>':'')+
@@ -888,7 +888,7 @@
     }
     if(d.kind==='unlink'){
       card.innerHTML=top('Remove the link to “'+escH(d.link.name)+'”?')+'<div class="dm-body">'+
-        '<div class="lv-note" style="font-size:13.5px">The file itself isn’t touched — it stays where it is. Home-Brace just stops showing it here.</div>'+
+        '<div class="lv-note" style="font-size:13.5px">The file itself isn’t touched — it stays where it is. Practice Hub just stops showing it here.</div>'+
         (d.err?'<div class="lv-bad">'+escH(d.err)+'</div>':'')+'</div>'+
         foot('<button class="simbtn"'+attr('act','close')+'>Cancel</button><button class="addbtn danger"'+attr('act','unlink-go')+(d.busy?' disabled':'')+'>Remove link</button>');
     }
@@ -974,7 +974,7 @@
   }
   /* MOVE (07/10 - Jordan: "what if you want to move a file to another section or folder?").
      Anywhere this person can add to: each section (each office or brand of one), and the
-     folders one level inside. docs.js fences it to inside Home-Brace Documents. */
+     folders one level inside. docs.js fences it to inside Practice Hub Documents. */
   function moveOpen(path,id,k,sub){
     const it=itemIn(path,id); if(!it) return;
     const sr=secRoot(k,sub); if(!sr || sr.cap!=='manage' || sr.s.sensitive) return;
@@ -1017,7 +1017,7 @@
       e=>{ d.busy=false; d.err=(e&&e.message)||'That didn\u2019t save. Try again.'; if(DLG===d) drawDlg(); });
   }
   /* REPLACE: a new version of one master file - Morgan updates the handbook PDF and it
-     goes in place of the old one (07/10). docs.js fences it to files inside Home-Brace
+     goes in place of the old one (07/10). docs.js fences it to files inside Practice Hub
      Documents of the same type; SharePoint keeps the old version. */
   const extOf=n=>{ const t=String(n||''), i=t.lastIndexOf('.'); return i>0 ? t.slice(i+1).toLowerCase() : ''; };
   function repOpen(path,id,k,sub){
@@ -1156,14 +1156,14 @@ document.addEventListener('ph-identity',function(){
   });
 });
 PH.nav('documents');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc268d202611250847"></script>
+<script src="tour.js?v=hc268d202611250900"></script>
 <script>
 Tour.init([
   {sel:'.crumb', title:'Everything in one place', body:'This replaces \u201cwho has the latest copy?\u201d. Every policy, form and office file lives here \u2014 and people only ever see the folders meant for them.'},
   {sel:'#folders .folder', title:'Your folders', body:'Tap a folder to open it. The badge on the right (<b>View only</b>, <b>You can add files</b>, <b>Add &amp; edit</b>, <b>Full control</b>) says what you can do there. If you can add, drag files straight onto the open folder.'},
   {sel:'#folders .file .sp', title:'Files open in Microsoft', body:'<b>Open</b> shows the real file in Word, Excel or your browser \u2014 not a copy. Change it there and everyone sees the change.'},
   {sel:'.viewas', title:'Prove it to yourself', body:'Switch to <b>Front Desk / Staff</b>: the folder list shrinks and the restricted payroll files vanish. Switch back to Administrator and they return.'},
-  {sel:'.synced', title:'No second copies, ever', body:'Files live in the practice\u2019s SharePoint and Home-Brace shows them. Nothing to sync, nothing to go stale.'}
+  {sel:'.synced', title:'No second copies, ever', body:'Files live in the practice\u2019s SharePoint and Practice Hub shows them. Nothing to sync, nothing to go stale.'}
 ], {key:'docs', title:'Documents', next:{label:'the Admin console', href:'admin.html'}});
 </script>
 </body>

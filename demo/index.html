@@ -1,29 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script src="demo-shim.js?v=d202611250847"></script>
+<script src="demo-shim.js?v=d202611250900"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Home-Brace · Production Dashboard</title>
+<title>Practice Hub · Production Dashboard</title>
+<meta name="description" content="Try the live demo: schedules, production, new-patient consults, payroll, monthly reports, tasks and team chat — one hub for every office of a multi-location practice.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Practice Hub">
+<meta property="og:title" content="Practice Hub | Multi-Location Practice Operations Hub">
+<meta property="og:description" content="Try the live demo: schedules, production, new-patient consults, payroll, monthly reports, tasks and team chat — one hub for every office of a multi-location practice.">
+<meta property="og:image" content="https://corylawing.github.io/practice-hub-mockup/demo/share.png">
+<meta property="og:image:width" content="1734">
+<meta property="og:image:height" content="907">
+<meta property="og:url" content="https://corylawing.github.io/practice-hub-mockup/demo/index.html">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Practice Hub | Multi-Location Practice Operations Hub">
+<meta name="twitter:description" content="Try the live demo: schedules, production, new-patient consults, payroll, monthly reports, tasks and team chat — one hub for every office of a multi-location practice.">
+<meta name="twitter:image" content="https://corylawing.github.io/practice-hub-mockup/demo/share.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="icon" href="../assets/favicon.png?v=2" type="image/png">
 <meta name="theme-color" content="#0F2A4A">
-<meta name="apple-mobile-web-app-title" content="Home-Brace">
+<meta name="apple-mobile-web-app-title" content="Practice Hub">
 <link rel="apple-touch-icon" sizes="180x180" href="../assets/icons/apple-touch-icon.png?v=3">
-<meta name="description" content="The practice’s central hub — schedule, production, documents and team, in one place. Brightline · Maple · Riverbend.">
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="Home-Brace">
-<meta property="og:title" content="Home-Brace">
-<meta property="og:description" content="The practice’s central hub — schedule, production, documents and team, in one place. Brightline · Maple · Riverbend.">
-<meta property="og:image" content="https://app.brightline.example/assets/og-image.png">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-<meta property="og:url" content="https://app.brightline.example/v1/index.html">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Home-Brace">
-<meta name="twitter:description" content="The practice’s central hub — schedule, production, documents and team, in one place. Brightline · Maple · Riverbend.">
-<meta name="twitter:image" content="https://app.brightline.example/assets/og-image.png">
 <style>
   :root{
     --navy:#0F2A4A; --navy2:#25456e; --teal:#149B96; --teal2:#2BC0B8; --teal-soft:#E5F4F3; --teal-600:#0F827E;
@@ -317,22 +317,22 @@
   }
 
 </style>
-<script src="user.js?v=hc268d202611250847"></script>
-<script src="celebrate.js?v=hc268d202611250847"></script>
-  <script src="workbook.js?v=hc268d202611250847"></script>
-  <script src="store.js?v=hc268d202611250847"></script>
-  <script src="prodbook.js?v=hc268d202611250847"></script>
-  <script src="prodstore.js?v=hc268d202611250847"></script>
-<script src="schedrec.js?v=hc268d202611250847"></script>
-<script src="proddays.js?v=hc268d202611250847"></script>
-  <script src="gate.js?v=hc268d202611250847"></script>
+<script src="user.js?v=hc268d202611250900"></script>
+<script src="celebrate.js?v=hc268d202611250900"></script>
+  <script src="workbook.js?v=hc268d202611250900"></script>
+  <script src="store.js?v=hc268d202611250900"></script>
+  <script src="prodbook.js?v=hc268d202611250900"></script>
+  <script src="prodstore.js?v=hc268d202611250900"></script>
+<script src="schedrec.js?v=hc268d202611250900"></script>
+<script src="proddays.js?v=hc268d202611250900"></script>
+  <script src="gate.js?v=hc268d202611250900"></script>
 </head>
 <body>
 <div class="ribbon">DEMO — made-up numbers. In a real practice this reads the practice’s own production workbook.</div>
 <header class="hdr">
   <div class="hdr-in">
-    <span class="mark" aria-label="Home-Brace"><img src="../assets/logo-mark.png?v=2" alt="" width="34" height="34"></span>
-    <span class="brand">Home-<i>Brace</i><small>Production Dashboard</small></span>
+    <span class="mark" aria-label="Practice Hub"><img src="../assets/logo-mark.png?v=2" alt="" width="34" height="34"></span>
+    <span class="brand">Practice <i>Hub</i><small>Production Dashboard</small></span>
     <span class="v1">Demo</span>
   </div>
 </header>
@@ -427,7 +427,7 @@ const OFFICES=[
      Anything in an office's `hist` is a past year. The list is DISCOVERED from the data, so
      when the practice adds 2027 columns the picker gains 2027 with no code change. Years
      without goals still work — the UI drops the goal-dependent parts instead of breaking. */
-  /* 2026 while the dashboard reads Morgan's Excel; after the switch, the year Home-Brace's own
+  /* 2026 while the dashboard reads Morgan's Excel; after the switch, the year Practice Hub's own
      books are on (prodstore.js dashboardData) - 2027 and on with no code change. */
   let LIVE_YEAR=2026;
   function allYears(){
@@ -1050,7 +1050,7 @@ const OFFICES=[
        lists all eight now. A row opens that office only for someone who holds it. */
     if(isAll && !noFigures) html += leaderboard(OFFICES);
     html += '<div class="foot"><b>Where these numbers come from:</b> '+(FROM_HB
-      ? 'Home-Brace\u2019s own production records for '+LIVE_YEAR+' \u2014 entered in Enter Production and worked out with the practice\u2019s own formulas (Admin \u2192 Production data has the Excel). '
+      ? 'Practice Hub\u2019s own production records for '+LIVE_YEAR+' \u2014 entered in Enter Production and worked out with the practice\u2019s own formulas (Admin \u2192 Production data has the Excel). '
       : 'the practice\u2019s '+LIVE_YEAR+' Production Dashboard workbook on SharePoint \u2014 the hub reads it live, so there is no second copy to keep in sync. ')+
       'A month counts once it has <b>both</b> an actual and a goal (Hillcrest has production from '+
       'January but goals from April), and the month in progress is kept separate from the year figure.<br><br>'+
@@ -1201,7 +1201,7 @@ const OFFICES=[
       return false;
     }
     /* THE SWITCH (Admin -> Production data, 21/10/2026): once an admin moves the numbers to
-       Home-Brace, they come from Home-Brace's own books - same series, same sums (prodstore.js
+       Practice Hub, they come from Practice Hub's own books - same series, same sums (prodstore.js
        dashboardData runs her formulas through workbook.js office()). Until then, her Excel. */
     let mode={source:'excel'};
     /* PH_PROD.mode() rejects when this device couldn't read the switch and has no copy of it: say so and stop, rather
@@ -1211,16 +1211,16 @@ const OFFICES=[
       catch(_){ banner('<b>Couldn\u2019t tell where the production numbers live right now \u2014 reload to try again.</b>', true); return false; }
     }
     if(mode.source==='homebrace'){
-      banner('Reading Home-Brace\u2019s production numbers\u2026');
+      banner('Reading Practice Hub\u2019s production numbers\u2026');
       let hb;
       try{ hb=await PH_PROD.dashboardData(); }
-      catch(e){ banner('<b>Could not read Home-Brace\u2019s production numbers.</b> '+String((e&&e.message)||e).replace(/[<>&]/g,''), true); return false; }
+      catch(e){ banner('<b>Could not read Practice Hub\u2019s production numbers.</b> '+String((e&&e.message)||e).replace(/[<>&]/g,''), true); return false; }
       if(hb.year!==LIVE_YEAR){ LIVE_YEAR=hb.year; year=LIVE_YEAR; }
       FROM_HB=true;
       takeHB(hb);
       let when2='';
       if(hb.savedAt){ const who=String(hb.savedBy||'').replace(/[<>&]/g,''); when2=' <span title="'+new Date(hb.savedAt).toLocaleString()+'">&mdash; '+(who?who+' last saved':'last saved')+' '+new Date(hb.savedAt).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+'</span>'; }
-      banner('<span>\u25CF</span><span>Showing <b>Home-Brace\u2019s</b> production numbers'+when2+(hb.errors.length?' <b>&mdash; '+hb.errors.length+' office(s) missing</b>':'')+'</span>', hb.errors.length>0);
+      banner('<span>\u25CF</span><span>Showing <b>Practice Hub\u2019s</b> production numbers'+when2+(hb.errors.length?' <b>&mdash; '+hb.errors.length+' office(s) missing</b>':'')+'</span>', hb.errors.length>0);
       daysFromSchedule();
       // Her Excel, while it is still around, is only compared from now on (admins, in the background).
       if(PH.isAdmin && PH.isAdmin()) PH_PROD.syncFromWorkbook({driveId:WB_DRIVE, itemId:WB_ITEM}).catch(function(e){ try{ console.warn('Production compare:', e && e.message || e); }catch(_){} });
@@ -1257,7 +1257,7 @@ const OFFICES=[
     banner('<span>\u25CF</span><span>Showing the practice\'s live workbook'+when+
            (res.errors.length?' <b>&mdash; '+res.errors.length+' tab(s) unread</b>':'')+'</span>',
            res.errors.length>0);
-    /* Home-Brace's own copy of the workbook (prodstore.js, 21/10/2026) runs ALONGSIDE this,
+    /* Practice Hub's own copy of the workbook (prodstore.js, 21/10/2026) runs ALONGSIDE this,
        never instead of it: once an admin has the numbers on screen, copy her Excel if she has
        saved since the last copy. In the background - the dashboard never waits on it, and a
        failure only shows in Admin -> Production data. Copy-only: her Excel is never written. */
@@ -1266,7 +1266,7 @@ const OFFICES=[
     return true;
   }
 
-  /* Home-Brace's numbers onto the offices - and an office added in Admin -> Production data (17/11/2026) gets its place
+  /* Practice Hub's numbers onto the offices - and an office added in Admin -> Production data (17/11/2026) gets its place
      here too, after the 8, its brand from Admin -> Locations. */
   function takeHB(hb){
     Object.keys(hb.offices||{}).forEach(n=>{
@@ -1325,7 +1325,7 @@ const OFFICES=[
 })();
 </script>
 <script>PH.nav('dashboard');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(window.DASH&&DASH.identity)DASH.identity();});document.addEventListener('ph-identity',function(){if(window.DASH&&DASH.identity)DASH.identity();if(window.DASH&&DASH.loadAudit)DASH.loadAudit();});</script>
-<script src="tour.js?v=hc268d202611250847"></script>
+<script src="tour.js?v=hc268d202611250900"></script>
 <script>
 Tour.init([
   {sel:'.viewas', title:'You only see your offices', body:'Everyone can see <b>All Offices</b> \u2014 the practice total as one number. What your location decides is which offices you can <b>open individually</b>. Switch to the Cedar Grove manager: she keeps the group total, the leaderboard and Cedar Grove, but can\u2019t open the other offices on their own.'},

@@ -27,7 +27,7 @@
   // Tabs carrying Medicaid rows. The others are TC-only and label things differently.
   var MEDICAID = { 'Cedar Grove':1, 'Northpoint':1, 'Lakeview':1, 'Meadow Park':1 };
   /* A NEW OFFICE (17/11/2026). The 8 above never change - her Excel has exactly those tabs. An office added in Admin ->
-     Production data (prodstore.js addOffice: a copy of another office's tab in Home-Brace's own book) joins these two
+     Production data (prodstore.js addOffice: a copy of another office's tab in Practice Hub's own book) joins these two
      lists - the SAME objects everyone already holds, so every page that reads TABS sees it. Never one of the 8's names. */
   var BASE = Object.keys(TABS);
   function isBase(n){ return BASE.indexOf(n) >= 0; }
@@ -72,7 +72,7 @@
   }
 
   /* Turn one office tab's grid into the series the dashboard needs.
-     `year` is the year the tab tracks (default 2026, her workbook today). Home-Brace's own
+     `year` is the year the tab tracks (default 2026, her workbook today). Practice Hub's own
      books (prodstore.js) carry on into 2027 and later with the same labels a year on, so the
      years are worked out from it rather than written in. Same rows, same sums, for 2026. */
   function office(rows, med, year){
@@ -213,7 +213,7 @@
     if (sandbox()) return refuse();
     var item = '/drives/' + driveId + '/items/' + itemId;
     var base = item + '/workbook';
-    var names = BASE.slice();              // her Excel has the 8 tabs; an office added in Home-Brace lives only there
+    var names = BASE.slice();              // her Excel has the 8 tabs; an office added in Practice Hub lives only there
 
     // Ask WHO saved it too — assuming it's always Morgan would be wrong the first time
     // anyone else touches the file.
@@ -261,7 +261,7 @@
      ------------------------------------------------------------------ */
 
   // Which column-A label each editable field lives on. Two tab layouts, first match wins.
-  // writeRows(year) gives the same map a year on, for Home-Brace's own books (prodstore.js).
+  // writeRows(year) gives the same map a year on, for Practice Hub's own books (prodstore.js).
   function writeRows(year){
     var Y = String(year || 2026), L = String((year || 2026) - 1), out = {};
     Object.keys(WRITE_ROWS).forEach(function(f){

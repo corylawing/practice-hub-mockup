@@ -1,4 +1,4 @@
-/* PRODUCTION BOOKS - Home-Brace's own copy of the production workbook, one BOOK per year.
+/* PRODUCTION BOOKS - Practice Hub's own copy of the production workbook, one BOOK per year.
 
    21/10/2026, Jordan: "build our own data base and make it scalable for the future and that they
    can produce an excel formatted exactly as they have" ... "they may have to change calculations
@@ -9,7 +9,7 @@
      - the TEMPLATE: that year's workbook with the numbers taken out - tabs, labels, formatting,
        column widths, merged cells, and that year's FORMULAS (her growth multipliers live there);
      - the DATA: every number someone typed, by tab and cell.
-   Home-Brace works out every formula itself, so its figures are the Excel's figures by
+   Practice Hub works out every formula itself, so its figures are the Excel's figures by
    construction, and the Excel download is the template with the data put back - formatted
    exactly as theirs, because it IS theirs. Changing a calculation for 2027 changes 2027's
    template only. "Last year" rows hold a COPY of last year's figures (as the Excel does),
@@ -345,7 +345,7 @@
         rowsXml[r] = cells; return _;
       });
       function put(a, xml){ var r = split(a).r; (rowsXml[r] = rowsXml[r] || {})[a] = xml; if(!(r in rowAttrs)) rowAttrs[r] = ' r="' + r + '"'; }
-      /* A formula changed in Home-Brace (or new to the cell) is written out in full. When it belongs
+      /* A formula changed in Practice Hub (or new to the cell) is written out in full. When it belongs
          to one of Excel's "shared" formulas, the whole group is, so no other cell keeps pointing at
          a master that has moved on. An untouched formula keeps her file's own bytes. */
       var changedGroups = {};
@@ -530,7 +530,7 @@
     out[newPath] = enc.encode(x);
     return {files:out, path:newPath, sheetId:sheetId, rid:newRid};
   }
-  /* Take an added tab out again - the reverse of copySheet, for a tab Home-Brace added and no number was typed in. */
+  /* Take an added tab out again - the reverse of copySheet, for a tab Practice Hub added and no number was typed in. */
   function removeSheet(files, name){
     var enc = new TextEncoder(), out = {}; Object.keys(files).forEach(function(k){ out[k] = files[k]; });
     var wb = txt(out['xl/workbook.xml']), relsPath = 'xl/_rels/workbook.xml.rels', rl = txt(out[relsPath]);

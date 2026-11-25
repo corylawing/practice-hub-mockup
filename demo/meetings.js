@@ -1,13 +1,13 @@
 /* MEETINGS (18/11/2026). Jordan 12/11: "connecting their Meeting Calendar which they did in home-brace to schedule so
    they can see Team Meetings and Doctor Schedule (based on permissions and everything). They should also be able to
-   create a meeting from Home-Brace." 18/11: "I think it should be a permission to give to make meetings but I believe
+   create a meeting from Practice Hub." 18/11: "I think it should be a permission to give to make meetings but I believe
    its office managers. Build it please".
 
-   THE CALENDAR: the Home-Brace Microsoft 365 group's own calendar (Outlook -> Groups -> Home-Brace) - the practice's
+   THE CALENDAR: the Practice Hub Microsoft 365 group's own calendar (Outlook -> Groups -> Practice Hub) - the practice's
    shared meetings calendar. Read with the signed-in person's own sign-in (DELEGATED - never an application permission,
    never a secret): GET /groups/{id}/calendarView (Calendars.ReadWrite - granted 18/11).
    A NEW MEETING is made in the ORGANIZER's own calendar (POST /me/events, Calendars.ReadWrite) with the people invited
-   AND the Home-Brace group invited: Microsoft sends the invites (everyone gets a normal Outlook invite), puts it on the
+   AND the Practice Hub group invited: Microsoft sends the invites (everyone gets a normal Outlook invite), puts it on the
    shared calendar, and makes the Teams link (isOnlineMeeting). Changing or cancelling goes through the organizer's own
    copy (found by its iCalUId), so Microsoft sends the update / cancellation to everyone - only the organizer can.
    The group is found by name (GROUP_NAME) with Group.ReadWrite.All (granted 17/11) and remembered on this device.
@@ -18,7 +18,7 @@
   const MEET_LIVE=false;                         // the live site: false = no meetings there yet (sandbox first)
   const G='https://graph.microsoft.com/v1.0';
   const EXTRA=['Calendars.ReadWrite','Group.ReadWrite.All'];
-  const GROUP_NAME='Home-Brace';
+  const GROUP_NAME='Practice Hub';
   const GROUP_KEY='ph_meet_group', DEMO_KEY='ph_meet_demo';
   const ls={get:k=>{ try{ return global.localStorage.getItem(k); }catch(_){ return null; } }, set:(k,v)=>{ try{ global.localStorage.setItem(k,v); }catch(_){} }};
   const live=()=>!!(global.PH && global.PH.isLive && global.PH.isLive());
@@ -42,14 +42,14 @@
       return j;
     }
   }
-  /* The Home-Brace group: {id, mail, name} - looked up once, then remembered on this device. */
+  /* The Practice Hub group: {id, mail, name} - looked up once, then remembered on this device. */
   let groupP=null;
   function group(){
     if(groupP) return groupP;
     try{ const c=JSON.parse(ls.get(GROUP_KEY)||'null'); if(c && c.id && c.mail) return (groupP=Promise.resolve(c)); }catch(_){}
     groupP=call('GET', "/groups?$filter="+encodeURIComponent("displayName eq '"+GROUP_NAME.replace(/'/g,"''")+"'")+'&$select=id,displayName,mail,groupTypes')
       .then(j=>{ const g=(j.value||[]).find(x=>x && x.mail && (x.groupTypes||[]).indexOf('Unified')>=0) || (j.value||[]).find(x=>x && x.mail);
-        if(!g) throw new Error('The Home-Brace group calendar wasn’t found in Microsoft 365.');
+        if(!g) throw new Error('The Practice Hub group calendar wasn’t found in Microsoft 365.');
         const v={id:g.id, mail:lc(g.mail), name:g.displayName||GROUP_NAME}; ls.set(GROUP_KEY, JSON.stringify(v)); return v; })
       .catch(e=>{ groupP=null; throw e; });
     return groupP;
@@ -128,7 +128,7 @@
     const e=await mine(ev);
     return call('POST', '/me/events/'+encodeURIComponent(e.id)+'/cancel', {comment:String(comment||'').slice(0,1000)});
   }
-  /* A person with no email in Home-Brace's list: their Microsoft account by their exact name (or null). */
+  /* A person with no email in Practice Hub's list: their Microsoft account by their exact name (or null). */
   async function byName(name){
     const n=String(name||'').trim(); if(!real() || n.length<3) return null;
     const j=await call('GET', '/users?$top=2&$select=displayName,mail,userPrincipalName&$filter='+encodeURIComponent("displayName eq '"+n.replace(/'/g,"''")+"'"));

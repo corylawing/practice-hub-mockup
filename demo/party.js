@@ -131,7 +131,7 @@
     }
     return out;
   }
-  /* a name from the sheet -> one person in Home-Brace (their email), or '' when none or more than one could be them.
+  /* a name from the sheet -> one person in Practice Hub (their email), or '' when none or more than one could be them.
      "Alexis (Tess) Easton" matches "Alexis Easton" or "Tess Easton"; case, accents and punctuation ignored. */
   const fold=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
   function nameKeys(n){ n=fold(n); const nick=(/\(([^)]+)\)/.exec(n)||[])[1]||''; const base=n.replace(/\([^)]*\)/g,' ').replace(/[^a-z\s'-]/g,' ').replace(/\s+/g,' ').trim();
@@ -451,7 +451,7 @@
     play(it.kind, true);
   }
   /* SEND A MESSAGE (Jordan 18/11: "a reach out ... message that automatically opens a chat to that staff member for them to
-     write a message"): Home-Brace Chat for anyone who has it (and the sandbox), opened on that person with a message
+     write a message"): Practice Hub Chat for anyone who has it (and the sandbox), opened on that person with a message
      ready to change and send; otherwise Teams' own chat, the same way. Nothing is ever sent by itself. */
   function chatLink(it){ return 'chat.html#to='+encodeURIComponent(it.email)+'&name='+encodeURIComponent(it.name)+'&say='+encodeURIComponent(wishText(it)); }
   function wish(it){
@@ -495,7 +495,7 @@
         '<button class="go" data-i="'+i+'">'+(it.mine?'✨ My celebration':'🎉 Celebrate')+'</button></span></div>';
     const pastOther=opts.demo ? c.recent.find(it=>!isMe(it)) : null;
     const demoLinks=opts.demo && (others.length || pastOther) ? '<div class="pp-demo">Demo: see what '+others.map((it,i)=>'<button data-as="'+i+'">'+esc(it.first)+'</button>').join(' or ')+' sees today (it’s their day)'+
-      (pastOther ? ' · or a belated one: <button data-late="1">'+esc(pastOther.first)+'</button> was off '+esc(whenWas(pastOther).replace(/^on /,''))+' and opens Home-Brace today' : '')+'</div>' : '';
+      (pastOther ? ' · or a belated one: <button data-late="1">'+esc(pastOther.first)+'</button> was off '+esc(whenWas(pastOther).replace(/^on /,''))+' and opens Practice Hub today' : '')+'</div>' : '';
     host.innerHTML='<div class="pp-home'+(mineAll.length?' mine':'')+(onlyAnniv?' anniv':'')+'"><div class="aur" aria-hidden="true"></div>'+bok+
       '<h2><span class="spark">✨</span>'+(late.length && !c.today.some(it=>it.mine) ? 'We missed you on your day!' : mineAll.length ? 'It’s your day!' : c.today.length ? 'Celebrating today' : 'Coming up this week')+'</h2>'+
       (shown.length ? '<div class="pp-today">'+shown.map(item).join('')+'</div>' : '')+

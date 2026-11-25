@@ -1,6 +1,6 @@
-/* REAL CHAT - Microsoft Teams chats inside Home-Brace (12/11/2026, Jordan: "Yes start. But very important that nobody
+/* REAL CHAT - Microsoft Teams chats inside Practice Hub (12/11/2026, Jordan: "Yes start. But very important that nobody
    sees it until I've confirmed it works ... what we did in sandbox is very important, but also the ability to send
-   videos"). Morgan's #2. Teams is the engine underneath: the messages live in their own Microsoft 365, Home-Brace
+   videos"). Morgan's #2. Teams is the engine underneath: the messages live in their own Microsoft 365, Practice Hub
    reads and sends them as the signed-in person (DELEGATED Chat.ReadWrite - never an Application permission).
 
    WHO SEES IT - three locks, all must open:
@@ -283,7 +283,7 @@
       'user@odata.bind':G+"/users('"+u.id+"')", roles:['owner'], visibleHistoryStartDateTime:HISTORY_ALL});   // they see the whole conversation, like Slack
     return list.length;
   }
-  /* Does Microsoft let Home-Brace take people out of groups? (ChatMember.ReadWrite in the token's granted list.) */
+  /* Does Microsoft let Practice Hub take people out of groups? (ChatMember.ReadWrite in the token's granted list.) */
   let manageOK=null;
   async function canManageMembers(){
     if(manageOK!==null) return manageOK;
