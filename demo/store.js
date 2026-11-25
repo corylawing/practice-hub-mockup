@@ -1,0 +1,1342 @@
+/* Home-Brace shared storage.
+
+   Sandbox  -> localStorage, as it always was.
+   Live     -> a SharePoint list on /sites/Home-Brace, so the schedule, offices, teams and
+               everything else follow a person between devices instead of living in one
+               browser. Reads and writes happen AS THE SIGNED-IN PERSON, so SharePoint
+               keeps enforcing who can touch what.
+
+   One list, "HomeBraceData", with two text columns:
+     Title    - the key ('ph_sched2', 'ph_locations', ...)
+     Payload  - JSON, multiple lines of text
+
+   The app never creates the list: that needs Sites.Manage.All, which we deliberately do
+   not have. Create it by hand once (see setup() below for the exact steps).
+
+   Every read falls back to localStorage, and every write mirrors to localStorage, so a
+   SharePoint hiccup degrades to the old behavior instead of losing someone's work. */
+(function(global){
+  'use strict';
+
+  var SITE_PATH = '/sites/Home-Brace';
+  var LIST_NAME = 'HomeBraceData';
+  var hostname  = 'brightline.sharepoint.example';
+
+  var GRAPH = 'https://graph.microsoft.com/v1.0';
+  var siteId = null, listId = null, ready = null;
+  var idCache = {};      // key -> SharePoint item id, so updates don't re-search
+  /* TWO SAVES AT ONCE (21/11/2026, code review - replayed: A read the year's numbers, B saved Westfield, A saved Lakeview ->
+     Westfield's number was gone and both were told "saved"). SharePoint only answers 409 when two writes OVERLAP, not when
+     one lands between our read and our write. So update() now sends the version it read (If-Match): a write that landed
+     in between is refused (412), and update() reads again and changes again - as it already did for a 409. */
+  var etags = {};        // key -> the row's eTag as last read
+  var ETAG_OFF = false;  // set for this page if SharePoint ever refuses the tag itself: back to the old blind write
+  var readFailed = {};   // key -> true when THIS session could not read the shared copy
+  var readError = {};    // key -> {status, msg}: what Microsoft said when that read failed
+  var synced = {};       // key -> the payload SharePoint last held, as this session knows it
+  function noop(){}
+  function emit(type, detail){
+    try{ document.dispatchEvent(new CustomEvent(type, {detail:detail})); }catch(_){}
+  }
+  function listPath(){ return '/sites/'+siteId+'/lists/'+listId; }
+
+  function local(k){ try{ return localStorage.getItem(k); }catch(_){ return null; } }
+  /* Reports whether it worked. Browser storage fills up - usually on profile photos -
+     and a save that silently didn't happen is how a screen full of changes reverts on
+     the next reload with nobody any the wiser. */
+  /* OUT OF ROOM. A browser holds about 5 MB; photos filled it, and from then on EVERY save from that device was
+     refused before it was sent (future-proofing check, 22/10/2026). Now, when a write doesn't fit, what can be
+     fetched again goes first - the photo caches and other people's profile rows, then the "previous copy"
+     backups (SharePoint keeps its own versions) - and the write is tried again. A change still waiting to be
+     sent is never touched. */
+  var EXPENDABLE = [[/^ph_photos$/, /^ph_faces$/, /^ph_me_/, /^ph_face_/], [/__prev$/]];
+  function makeRoom(except){
+    for(var stage = 0; stage < EXPENDABLE.length; stage++){
+      var freed = false;
+      try{
+        for(var i = localStorage.length - 1; i >= 0; i--){
+          var k = localStorage.key(i); if(!k || k === except || /__(unsent|at|w)$/.test(k)) continue;
+          if(!EXPENDABLE[stage].some(function(re){ return re.test(k); })) continue;
+          if(unsent(k.replace(/__prev$/, ''))) continue;
+          localStorage.removeItem(k); freed = true;
+        }
+      }catch(_){}
+      if(freed) return true;
+    }
+    return false;
+  }
+  function setLocal(k,v){
+    try{ localStorage.setItem(k,v); return true; }catch(_){}
+    for(var tries = 0; tries < 2 && makeRoom(k); tries++){ try{ localStorage.setItem(k,v); return true; }catch(_){} }
+    return false;
+  }
+
+  /* ------------------------------------------------------------------
+     A LIVE SITE THAT IS NOT SIGNED IN YET IS NOT THE SANDBOX.
+
+     19/09/2026, Morgan on her phone: a blank September, four doctors, "View only" for
+     the COO. Every page reads its data the instant it loads, and at that instant
+     Microsoft has not finished signing the person in - PH_AUTH does not exist yet.
+     live() used to require PH_AUTH, so on a live site before sign-in it said "sandbox"
+     and handed back this browser's local cache as the truth. On a desktop used for
+     weeks the cache is warm and it looked fine. On a fresh phone it is empty: the page
+     built a blank year from nothing, decided edit/view for nobody, and nothing ever
+     read again after sign-in. It also recorded "nothing here" as the guard's baseline,
+     which is how a fresh device could still write a blank year over a full one.
+
+     Now live() is about the SITE, and a read on a live site WAITS for sign-in. Every
+     page's existing read simply resolves a moment later, with the real data. A write
+     on a live site before sign-in is refused: nothing legitimate writes then.
+     ------------------------------------------------------------------ */
+  function live(){ return !!(global.PH && PH.isLive && PH.isLive()); }
+  function signedIn(){ return !!global.PH_AUTH; }
+  var authReady = new Promise(function(res){
+    if(signedIn()) return res();
+    var done=false, fin=function(){ if(done) return; done=true; clearInterval(t); res(); };
+    try{ document.addEventListener('ph-signed-in', fin, {once:true}); }catch(_){}
+    // gate.js sets PH_AUTH a moment before it fires the event; poll so neither order matters.
+    var t=setInterval(function(){ if(signedIn()) fin(); }, 150);
+    // Never keep a test process alive waiting for a sign-in that is not coming.
+    if(t && typeof t.unref==='function') t.unref();
+  });
+
+  function connect(){
+    if(ready) return ready;
+    ready = PH_AUTH.graph('/sites/' + hostname + ':' + SITE_PATH)
+      .then(function(s){
+        siteId = s.id;
+        return PH_AUTH.graph('/sites/' + siteId + '/lists?$select=id,displayName');
+      })
+      .then(function(r){
+        var hit = (r.value||[]).filter(function(l){ return l.displayName === LIST_NAME; })[0];
+        if(!hit) throw new Error('No "' + LIST_NAME + '" list on ' + SITE_PATH + ' yet.');
+        listId = hit.id;
+      })
+      /* A failed first connection used to stay failed for the rest of the page's life:
+         every later read and write - and every retry - got the same rejected promise
+         back at once. Forget it, so the next attempt really tries again. */
+      .catch(function(e){ ready = null; throw e; });
+    return ready;
+  }
+
+  function send(method, path, body, ifMatch){
+    return PH_AUTH.token().then(function(t){
+      var h = { Authorization:'Bearer '+t, 'Content-Type':'application/json' };
+      if(ifMatch) h['If-Match'] = ifMatch;
+      return fetch(GRAPH + path, {
+        method: method,
+        headers: h,
+        body: body ? JSON.stringify(body) : undefined
+      }).then(function(res){
+        if(res.status === 204) return {};
+        return res.json().catch(function(){ return {}; }).then(function(j){
+          if(!res.ok){
+            var e = new Error('Graph '+res.status+': '+((j.error&&j.error.message)||res.statusText));
+            e.status = res.status;
+            var ra = null;
+            try{ ra = res.headers && res.headers.get && res.headers.get('Retry-After'); }catch(_){}
+            e.retryAfter = Number(ra) || 0;
+            throw e;
+          }
+          return j;
+        });
+      });
+    });
+  }
+
+  /* ------------------------------------------------------------------
+     A BUSY MOMENT IS NOT A FAILURE.
+
+     SharePoint answers "try again" in several ways: 429 and 503 when it is throttling
+     (with a Retry-After), 409 "Save Conflict" when two writes reach the same item at
+     once, a dropped connection on a phone. Each of those used to go straight to the
+     red banner and leave the change behind. Wait and try again a few times first. */
+  var RETRY_WAITS = [800, 2500, 6000];
+  function statusOf(e){
+    if(e && e.status) return e.status;
+    var m = /Graph (\d{3})/.exec(String(e && e.message));
+    return m ? Number(m[1]) : 0;
+  }
+  function transient(e, allow409){
+    var st = statusOf(e);
+    if(st === 409) return !!allow409;
+    if(st === 423 || st === 429 || st === 500 || st === 502 || st === 503 || st === 504) return true;
+    return !st && /fetch|network|load failed|timed? ?out|abort/i.test(String(e && e.message));
+  }
+  function sleep(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
+  function withRetry(run, allow409){
+    var n = 0;
+    function attempt(){
+      return run().catch(function(e){
+        if(n >= RETRY_WAITS.length || !transient(e, allow409)) throw e;
+        var wait = Math.max(RETRY_WAITS[n++], Math.min(30, (e && e.retryAfter) || 0) * 1000);
+        return sleep(wait).then(attempt);
+      });
+    }
+    return attempt();
+  }
+
+  /* ------------------------------------------------------------------
+     A RECORD SHAREPOINT WILL TAKE.
+
+     25/09/2026, Morgan, entering 2027 doctor dates: "Your change was not saved for
+     anyone else", several times. A list's "Multiple lines of text" column holds 63,999
+     characters, and the whole schedule is ONE record - about 60,000 characters for
+     three-quarters of a year - so starting 2027 took it over and every save bounced.
+     Nothing had ever checked. The storage proof in connect.html wrote 100 characters.
+
+     A large payload is now deflated (the browser's own zlib) and stored as base64
+     behind a short tag. A year of schedule shrinks to a few thousand characters. Small
+     records stay plain JSON, readable in SharePoint as before, and anything already
+     stored plain still reads. A payload that STILL does not fit is never sent: it stays
+     unsent here, safe, and the banner says what it is. */
+  var COL_MAX   = 63000;          // Microsoft's figure is 63,999; keep a margin
+  var PACK_OVER = 48000;          // only what would not fit otherwise - see WRAPPED below
+  var PACK_TAG  = '~z1:';
+  /* WRAPPED, so a browser still running the code from before this can read it.
+     Somebody who had the hub open before an update keeps the old store.js until they
+     reload. That code does not know the packed form: a bare "~z1:..." read as not-JSON,
+     which it treated as EMPTY - and its next save would have written back a schedule of
+     just the day it changed. Stored as {"__packed":"~z1:..."} it is ordinary JSON to old
+     code: it merges its day onto that object and writes the packed year back untouched,
+     and unpack() below lays the old tab's day back on top. Records under PACK_OVER are
+     never packed at all, so everything that fits today stays readable by everyone. */
+  function canPack(){
+    return typeof CompressionStream === 'function' && typeof DecompressionStream === 'function' &&
+           typeof Blob === 'function' && typeof Response === 'function' &&
+           typeof btoa === 'function' && typeof atob === 'function';
+  }
+  /* OLDER iPHONES AND iPADS (future-proofing check, 22/10/2026). Safari before 16.4 has no
+     CompressionStream, so there a packed record - the schedule above all - could not be read at
+     all (a failed read: the device's own copy shown, every save refused), and a big save could not
+     be packed to fit. pako (v1/vendor/pako.min.js, MIT, 2.1.0, checked against npm's published
+     hash) does the same zlib "deflate" in plain JavaScript, byte for byte compatible. Only a browser
+     that needs it fetches it. Resolves to pako, or null when the browser's own will do. */
+  var pakoP = null;
+  function zlib(){
+    if(canPack()) return Promise.resolve(null);
+    if(global.pako && global.pako.inflate) return Promise.resolve(global.pako);
+    if(pakoP) return pakoP;
+    pakoP = new Promise(function(res, rej){
+      var s = document.createElement('script');
+      s.src = 'vendor/pako.min.js?v=2.1.0';
+      s.onload = function(){ if(global.pako && global.pako.inflate) res(global.pako); else rej(new Error('The unpacker did not load.')); };
+      s.onerror = function(){ rej(new Error('The unpacker could not be loaded.')); };
+      (document.head || document.documentElement).appendChild(s);
+    }).catch(function(e){ pakoP = null; throw e; });       // the next read tries again
+    return pakoP;
+  }
+  function toB64(bytes){
+    var s = '', CH = 0x8000;
+    for(var i=0;i<bytes.length;i+=CH) s += String.fromCharCode.apply(null, bytes.subarray(i, i+CH));
+    return btoa(s);
+  }
+  function fromB64(t){
+    var s = atob(t), a = new Uint8Array(s.length);
+    for(var i=0;i<s.length;i++) a[i] = s.charCodeAt(i);
+    return a;
+  }
+  function pack(raw){
+    if(typeof raw !== 'string' || raw.length <= PACK_OVER) return Promise.resolve(raw);
+    function wrap(bytes){ var out = JSON.stringify({__packed: PACK_TAG + toB64(bytes)}); return out.length < raw.length ? out : raw; }
+    return zlib().then(function(pk){
+      if(pk) return wrap(pk.deflate(raw));
+      var z = new Blob([raw]).stream().pipeThrough(new CompressionStream('deflate'));
+      return new Response(z).arrayBuffer().then(function(buf){ return wrap(new Uint8Array(buf)); });
+    }, function(){ return raw; });         // no packer here at all: sent plain, and the size check says if it is too big
+  }
+  function inflate(blob){
+    var bytes = fromB64(blob.slice(PACK_TAG.length));
+    return zlib().then(function(pk){
+      if(pk) return pk.inflate(bytes, {to: 'string'});
+      var z = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate'));
+      return new Response(z).text();
+    });
+  }
+  /* Resolves to the JSON text. Rejects when a packed payload cannot be read here (not even
+     with pako), so the caller treats it as a FAILED read - never as an empty one. */
+  function unpack(pay){
+    if(typeof pay !== 'string') return Promise.resolve(pay);
+    var bare = pay.indexOf(PACK_TAG) === 0, wrap = !bare && pay.indexOf('{"__packed":') === 0;
+    if(!bare && !wrap) return Promise.resolve(pay);
+    try{
+      if(bare) return inflate(pay);
+      var w = JSON.parse(pay);
+      if(typeof w.__packed !== 'string' || w.__packed.indexOf(PACK_TAG) !== 0) return Promise.resolve(pay);
+      return inflate(w.__packed).then(function(txt){
+        var extra = Object.keys(w).filter(function(k){ return k !== '__packed'; });
+        if(!extra.length) return txt;
+        // Written back by a browser on the old code: its changes sit beside the packed copy.
+        var full = JSON.parse(txt);
+        if(full && typeof full === 'object' && !Array.isArray(full)) extra.forEach(function(k){ full[k] = w[k]; });
+        return JSON.stringify(full);
+      });
+    }catch(e){ return Promise.reject(e); }       // mangled text: a failed read, reported as one
+  }
+
+  /* ------------------------------------------------------------------
+     ONE WRITE AT A TIME, PER RECORD.
+
+     One day edit on the schedule fired up to three writes to the notification feed at
+     the same instant, and the schedule's own save could start while the previous one
+     was still going. Writes that reach one SharePoint item together are what produce
+     "Save Conflict". Each key now has a queue: reads and writes for it run in order.
+     Several set()s queued for one key send only the newest value. */
+  var turn = {};
+  function inTurn(key, job){
+    var run = (turn[key] || Promise.resolve()).then(job, job);
+    turn[key] = run.then(noop, noop);
+    return run;
+  }
+  var seq = {}, waiting = {};
+
+  /* The whole list, every page of it. The old read asked for 200 items and never
+     followed on: with 70 people's profile and read-list rows the list passes that, and
+     a key past the first page would have read as "not there yet" - and been created a
+     second time. One listing in flight is shared by everyone who asks.
+
+     KEYS AND IDS ONLY (future-proofing check, 22/10/2026). This used to bring every
+     row's contents as well - the schedule, every year's production numbers and their
+     history, everybody's profile photo - on every page, just to learn which row held
+     which key, and it grew every year. It now asks for each row's key and id; a page
+     then reads the rows it uses, one at a time, by id (readItem). A row's contents
+     NEVER come from a listing: a missing Payload there means "not asked for", and
+     reading that as an empty record is the 15 Sep path.
+
+     If SharePoint does not understand a shorter form, the next one is tried. The last
+     is exactly the old request. */
+  var LIST_FORMS = [
+    '?$select=id&$expand=fields($select=Title)&$top=200',
+    '?$expand=fields($select=Title)&$top=200',
+    '?$expand=fields&$top=200'
+  ];
+  var listForm = 0;
+  /* A short listing is trusted only when it plainly worked: every row has its id and
+     fields, and the keys are there. Otherwise the next form - never a guess. */
+  function understood(page){
+    if(listForm === LIST_FORMS.length - 1 || !page.length) return true;
+    var titled = 0;
+    for(var i=0;i<page.length;i++){
+      var it = page[i];
+      if(!it || it.id === undefined || it.id === null || !it.fields || typeof it.fields !== 'object') return false;
+      if(typeof it.fields.Title === 'string' && it.fields.Title) titled++;
+    }
+    return titled > 0;
+  }
+  var listingP = null;
+  function listing(){
+    if(listingP) return listingP;
+    var out = [];
+    function one(p, n){
+      return PH_AUTH.graph(p).then(function(r){
+        var page = (r && r.value) || [];
+        if(!understood(page)){ var odd = new Error('The short list of keys did not come back as expected.'); odd.odd = true; throw odd; }
+        out = out.concat(page);
+        var next = r && r['@odata.nextLink'];
+        if(next && n < 40) return one(next.replace(GRAPH, ''), n+1);
+        return out;
+      });
+    }
+    function tryForm(){
+      return withRetry(function(){ out = []; return one(listPath()+'/items'+LIST_FORMS[listForm], 0); })
+        .catch(function(e){
+          var st = statusOf(e);
+          if((e && e.odd || st === 400 || st === 501) && listForm < LIST_FORMS.length - 1){ listForm++; return tryForm(); }
+          throw e;
+        });
+    }
+    listingP = tryForm()
+      .then(function(items){
+        var seen = {};
+        items.forEach(function(i){
+          var t = i.fields && i.fields.Title;
+          if(t && !seen[t]){ seen[t] = 1; idCache[t] = i.id; }   // the FIRST row for a key, always
+        });
+        listingP = null; return items;
+      }, function(e){ listingP = null; throw e; });
+    return listingP;
+  }
+  /* The id of the row holding a key (the first, if there were ever two), or null when
+     the list has none. */
+  function findId(key){
+    return listing().then(function(items){
+      for(var i=0;i<items.length;i++) if(items[i].fields && items[i].fields.Title === key) return items[i].id;
+      return null;
+    });
+  }
+  function fetchItem(id){ return PH_AUTH.graph(listPath()+'/items/'+id+'?$expand=fields'); }
+  /* One row, contents and all, by id. Resolves null ONLY when the list has no row for
+     the key - "not there yet", a real answer. Anything else that goes wrong throws, and
+     readNow() treats a throw as a failed read, never an empty one. */
+  function readItem(key){
+    if(!idCache[key]) return readFresh(key);
+    return fetchItem(idCache[key]).then(function(i){
+      if(!i || !i.fields || i.fields.Title !== key){ delete idCache[key]; return readFresh(key); }
+      return i;
+    }, function(e){
+      if(statusOf(e) === 404){ delete idCache[key]; return readFresh(key); }
+      throw e;
+    });
+  }
+  function readFresh(key){
+    return findId(key).then(function(id){
+      if(!id) return null;
+      return fetchItem(id).then(function(i){
+        if(i && i.fields && i.fields.Title === key){ idCache[key] = id; return i; }
+        throw new Error('The row for '+key+' could not be read.');
+      });
+    });
+  }
+  function writeItem(key, pay, tag){
+    if(idCache[key]){
+      return send('PATCH', listPath()+'/items/'+idCache[key]+'/fields', {Payload: pay}, tag || null)
+        .catch(function(e){
+          if(statusOf(e) !== 404) throw e;
+          delete idCache[key]; return writeItem(key, pay);      // the row went; find or make it again
+        });
+    }
+    return findId(key).then(function(id){
+      if(id){ idCache[key] = id; return send('PATCH', listPath()+'/items/'+id+'/fields', {Payload: pay}); }
+      return send('POST', listPath()+'/items', {fields:{Title:key, Payload:pay}})
+        .then(function(created){ idCache[key] = created.id; return created; });
+    });
+  }
+
+  /* Read one key. Resolves to the parsed value, or null. Queued behind any write to
+     the same key that is still on its way, so a read never races one. */
+  function get(key){
+    if(!live()){ var lv = parse(local(key)); rememberWeight(key, lv); return Promise.resolve(lv); }
+    return authReady.then(function(){ return inTurn(key, function(){ return readNow(key); }); });
+  }
+  function readNow(key){
+    return withRetry(function(){ return connect().then(function(){ return readItem(key); }); })
+      .then(function(hit){
+        /* Reaching this line at all means the read worked. "No row yet" is a real
+           answer and a first save is allowed; a thrown request is not, and is caught
+           below. Everything downstream depends on keeping those two apart. */
+        if(!hit){
+          delete etags[key];
+          readFailed[key] = false; delete readError[key];
+          // The very first save of this key never landed: send it now (the row gets made).
+          synced[key] = null;                      // known: SharePoint has nothing for it
+          if(unsent(key)) return recover(key, '', null);
+          rememberWeight(key, null); return parse(local(key));
+        }
+        idCache[key]=hit.id;
+        etags[key] = hit['@odata.etag'] || hit.eTag || '';
+        var pay = (hit.fields && hit.fields.Payload) || '';
+        return unpack(pay).then(function(raw){
+          var got = parse(raw);
+          /* Text that is there but will not read is a FAILED read, not an empty record.
+             Treating it as empty is the 15 Sep path: blank year, then saved over. */
+          if(raw && got === null) throw new Error('The saved copy of '+key+' could not be read.');
+          readFailed[key] = false; delete readError[key];
+          /* WHOSE COPY WINS.
+
+             This used to compare one browser's clock against SharePoint's timestamp and
+             keep whichever looked newer. That is not a sound question to ask: the two
+             clocks belong to different machines, and every save on the schedule page
+             rewrites ph_docs, so simply using the page stamped the local copy as "newer"
+             without changing a thing. Once a person's push to SharePoint failed - which
+             is what happens to a guest with read but not write access to the site - their
+             local stamp stayed ahead of the remote one for good, and they never saw
+             anybody else's changes again.
+
+             Reported 2026-09-17: Morgan added a new doctor to the doctor list, and
+             Jules's calendar carried on showing the four it had.
+
+             So: the local copy counts ONLY when it is holding changes that never reached
+             SharePoint - and then it is COMBINED with the shared copy (recover()), not
+             put over it. Otherwise the shared copy is the truth. No clocks involved. */
+          if(unsent(key)) return recover(key, raw, hit.id);
+          var remoteAt = Date.parse(hit.lastModifiedDateTime || (hit.fields && hit.fields.Modified) || 0) || 0;
+          setLocal(key, raw);
+          setLocal(stampKey(key), String(remoteAt || Date.now()));
+          synced[key] = raw;
+          rememberWeight(key, got);
+          return got;
+        });
+      })
+      .catch(function(e){
+        /* Still never block the app on storage - but remember that we are now working
+           from a guess, so set() below refuses to write this key over the copy we
+           could not see. Keep what Microsoft said: the banner shows it, so a
+           screenshot says WHY (Nora, 06/10 - a guest whose saves were all refused). */
+        readFailed[key] = true;
+        readError[key] = { status: statusOf(e), msg: String((e && e.message) || e || '').slice(0, 220) };
+        accessRefused(readError[key]);
+        return parse(local(key));
+      });
+  }
+
+  /* Stamp every write, so a sync can tell which copy is newer instead of blindly
+     trusting whichever it read last. Without this, opening the app on a second device
+     could push an older copy over a change made on the first. */
+  function stampKey(k){ return k + '__at'; }
+  function localStamp(k){ return Number(local(stampKey(k))) || 0; }
+
+  /* "This browser has a change that SharePoint never took." Set when a push fails,
+     cleared the moment one succeeds. It is the only reason to prefer a local copy over
+     the shared one - see the note in get(). */
+  function unsentKey(k){ return k + '__unsent'; }
+  function unsent(k){ return local(unsentKey(k)) === '1'; }
+  function drop(k){ try{ localStorage.removeItem(k); }catch(_){ setLocal(k, ''); } }
+  function markUnsent(k, yes){
+    if(yes) setLocal(unsentKey(k), '1');
+    else drop(unsentKey(k));
+  }
+  /* What the unsent change was made ON TOP OF - the copy SharePoint held when this
+     browser's first change of the run failed to go. With it, recover() can tell "I
+     changed this" from "someone else changed this since". '' means there was nothing. */
+  function baseKey(k){ return k + '__base'; }
+  /* Why the last send failed: 'denied' and 'tooBig' wait for the person's next save;
+     anything else is retried in the background. */
+  function whyKey(k){ return k + '__why'; }
+  function forget(k){ drop(baseKey(k)); drop(whyKey(k)); }
+
+
+  /* ------------------------------------------------------------------
+     THE SEATBELT.
+
+     On 15 Sep 2026 the schedule page asked for the shared copy, the request failed,
+     the failure came back looking exactly like "there is nothing saved", the page
+     built a blank year from that, and the next save wrote the blank year over a year
+     of somebody's work - 974 writes inside one minute.
+
+     Fixing the schedule page fixed the schedule page. This fixes all of them, because
+     every write in the hub comes through set() below, and no page can tell a failed
+     read from an empty one on its own.
+
+     Two rules, deliberately blunt:
+       1. If we could not READ a key this session, we will not WRITE it. Whatever is
+          in memory was built on a guess.
+       2. A write that empties out a key which had real content in it is refused, even
+          when the read worked fine.
+
+     Both lift with {force:true}, for restore.html and for anything that genuinely
+     means "make this blank". A seatbelt, not a lock.
+     ------------------------------------------------------------------ */
+
+  /* How much real content is in here? Counts non-empty leaves, so a year of 1,000 days
+     each holding an empty {} weighs zero - same as {}. Byte size cannot tell those two
+     apart, which is precisely how the blank year got through. */
+  function weigh(v, depth){
+    depth = depth || 0;
+    if(depth > 12 || v === null || v === undefined || v === '' || v === false) return 0;
+    if(typeof v !== 'object') return 1;
+    var n = 0, i;
+    if(Object.prototype.toString.call(v) === '[object Array]'){
+      for(i=0;i<v.length;i++) n += weigh(v[i], depth+1);
+      return n;
+    }
+    for(i in v) if(Object.prototype.hasOwnProperty.call(v,i)) n += weigh(v[i], depth+1);
+    return n;
+  }
+  function weightKey(k){ return k + '__w'; }
+  function knownWeight(k){ var n = Number(local(weightKey(k))); return n > 0 ? n : 0; }
+  function rememberWeight(k, v){ setLocal(weightKey(k), String(weigh(v))); }
+
+  /* Below this, a key is a setting rather than someone's work, and settings get
+     cleared on purpose all the time. Nothing to protect. */
+  var GUARD_FLOOR = 12;
+
+  /* Keys that are SUPPOSED to shrink, and that nobody typed. The notification feed
+     drops anything older than three days, so a quiet weekend empties it; a person's
+     read-list is pruned to whatever is still in that feed; the photo cache is rebuilt
+     from everyone's profile rows. Guarding these would only ever fire by mistake, and
+     the banner would cry wolf over background bookkeeping.
+
+     They are exempt from the shrink rule ONLY. The failed-read rule still applies:
+     writing a feed over a copy we could not read would still drop other people's
+     entries. When one of these is refused it stays quiet, because the next event
+     writes it again anyway. */
+  /* ph_docgrants: which SharePoint edit rights Home-Brace handed out (07/10) - it shrinks
+     every time a level is lowered, by design. */
+  /* ph_paygrants: the same record for the payroll folders (03/11). ph_alertdev_<email>: a person's alert devices
+     (alerts.js) - one going to none when they turn alerts off is the point, not a wipe. */
+  /* ph_use_<email>: a person's visits for Admin -> Usage (10/11) - trimmed to about 13 months, so it may shrink. */
+  var HOUSEKEEPING = ['ph_activity', 'ph_seen_', 'ph_photos', 'ph_docgrants', 'ph_tcgrants', 'ph_sensgrants', 'ph_paygrants', 'ph_alertdev_', 'ph_use_'];
+  function housekeeping(key){
+    for(var i=0;i<HOUSEKEEPING.length;i++)
+      if(key === HOUSEKEEPING[i] || key.indexOf(HOUSEKEEPING[i]) === 0) return true;
+    return false;
+  }
+
+  function wouldWipe(key, value){
+    if(housekeeping(key)) return false;
+    var had = knownWeight(key);
+    if(had < GUARD_FLOOR) return false;
+    return weigh(value) < had * 0.25;
+  }
+
+  /* SHAREPOINT REFUSED THIS PERSON (401/403) - say so once, at once, not only when they
+     try to save. Nora, 06/10: a guest whose every read came back 401 "There has been an
+     error authenticating the request". SharePoint does not fully know a guest until they
+     have opened the site in a browser once; until then every app request for them is
+     refused. user.js shows the way out (open the site once, come back, try again). */
+  var accessToldOnce = false;
+  function accessRefused(re){
+    if(accessToldOnce || !re || (re.status !== 401 && re.status !== 403)) return;
+    accessToldOnce = true;
+    try{
+      document.dispatchEvent(new CustomEvent('ph-access-refused', {detail:{status:re.status, said:re.msg,
+        site:'https://' + hostname + SITE_PATH}}));
+    }catch(_){}
+  }
+
+  /* Refused writes are kept, not dropped. If a guard ever fires wrongly the work is
+     still here rather than gone, which is the whole point. */
+  function refuse(key, value, why, more){
+    try{ setLocal(key + '__refused', JSON.stringify(value)); }catch(_){}
+    var detail = {key:key, why:why};
+    if(more) Object.keys(more).forEach(function(k){ detail[k] = more[k]; });
+    if(!housekeeping(key)){
+      try{
+        document.dispatchEvent(new CustomEvent('ph-save-blocked', {detail:detail}));
+      }catch(_){}
+    }
+    return Promise.resolve({blocked:true, why:why, denied:!!detail.denied});
+  }
+
+  /* The guards and the local write - everything set() does before the network. Returns
+     {raw} to send, or {result} when there is nothing to send (refused, sandbox, full). */
+  function prepare(key, value, opts){
+    if(live() && !signedIn()){
+      /* Quiet, on purpose: this is a page bug, not something the person can act on,
+         and the banner would sit under the sign-in screen. Loud in the console. */
+      try{ console.warn('PH_STORE.set('+key+') before sign-in - refused'); }catch(_){}
+      return {result:{blocked:true, notReady:true, why:'Not signed in yet.'}};
+    }
+    if(!(opts && opts.force)){
+      if(readFailed[key] === true){
+        /* Refused access (401/403) is not a hiccup a reload fixes: this person's account
+           cannot reach the hub's SharePoint at all, and only an admin can change that. */
+        var re = readError[key] || {}, denied = re.status === 401 || re.status === 403;
+        return {result: refuse(key, value, denied
+          ? 'Your account can\u2019t open the hub\u2019s SharePoint yet, so nothing you change can be saved.'
+          : 'The hub could not read the saved copy when this page opened, so it will not write '+
+            'over it.', {denied: denied, status: re.status || 0, said: re.msg || '',
+                         site: 'https://' + hostname + SITE_PATH})};
+      }
+      if(wouldWipe(key, value))
+        return {result: refuse(key, value,
+          'This would have emptied out something that had real content in it.')};
+    }
+    var raw = JSON.stringify(value);
+    /* Keep the copy we are about to replace, here in this browser, so there is always
+       an undo even when nobody can find SharePoint's version history. */
+    var prevRaw = local(key);
+    /* Not unsent means this browser's copy WAS the shared one. Remember it before it is
+       replaced: if this send fails, it is what the change was made on top of. */
+    if(!unsent(key) && !Object.prototype.hasOwnProperty.call(synced, key) && prevRaw !== null) synced[key] = prevRaw;
+    if(prevRaw && prevRaw !== raw && weigh(parse(prevRaw)) >= GUARD_FLOOR)
+      setLocal(key + '__prev', prevRaw);
+    if(!setLocal(key, raw))
+      return {result:{quota:true, error:'This browser has run out of room.'}};
+    setLocal(stampKey(key), String(Date.now()));
+    rememberWeight(key, value);
+    if(!live()) return {result:{local:true}};
+    /* From here the change is on its way. Mark it NOW, not only if it fails: a phone that
+       locks, or a tab that is shut, while the save is still going used to leave the
+       change on the device unmarked - and the next page load read SharePoint over it.
+       Marked, the next load finds it and sends it (recover()). Cleared when it lands. */
+    if(!unsent(key)){
+      /* The base only when it is really known. A device that never read this key has no
+         idea what SharePoint holds; recording "nothing" would let this copy win every
+         difference. Unknown sends recover() to the version history instead. */
+      if(Object.prototype.hasOwnProperty.call(synced, key))
+        setLocal(baseKey(key), synced[key] == null ? '' : synced[key]);
+      markUnsent(key, true);
+    }
+    return {raw:raw};
+  }
+
+  /* The network half. Never throws: resolves {ok:true} or {err}. */
+  function sendNow(key, raw, allow409, tag){
+    return pack(raw).then(function(pay){
+      if(pay.length > COL_MAX){
+        var big = new Error('Too large for SharePoint: '+pay.length+' characters (the limit is about '+COL_MAX+').');
+        big.tooBig = true; throw big;
+      }
+      return withRetry(function(){ return connect().then(function(){ return writeItem(key, pay, tag); }); }, allow409);
+    }).then(function(){ return {ok:true}; }, function(e){ return {err:e}; });
+  }
+  function landed(key, raw){
+    synced[key] = raw;
+    var recovered = !!local(whyKey(key));        // it had failed before (not just been on its way)
+    markUnsent(key, false); forget(key);
+    emit('ph-save-landed', {key:key, recovered:recovered});
+  }
+  function failed(key, e, quiet){
+    /* A shared save that fails used to be completely silent: it still went into this
+       browser's localStorage, so it LOOKED saved, and nobody else ever got it. That is
+       the worst way to find out someone's SharePoint permissions are wrong. Say so
+       instead - user.js listens and puts a banner up. */
+    var msg = (e && e.message) || String(e);
+    var st = statusOf(e);
+    var denied = st === 403 || /403|forbidden|accessDenied|denied/i.test(msg);
+    var tooBig = !!(e && e.tooBig);
+    /* It did not land. Remember that, and what it was made on top of, so the next read
+       combines this copy with the shared one instead of losing either. */
+    if(!unsent(key)){
+      if(Object.prototype.hasOwnProperty.call(synced, key))
+        setLocal(baseKey(key), synced[key] == null ? '' : synced[key]);
+      markUnsent(key, true);
+    }
+    setLocal(whyKey(key), tooBig ? 'tooBig' : denied ? 'denied' : 'later');
+    /* The notification feed and a person's read-list are bookkeeping, not anybody's work:
+       the next event rewrites the feed, and both are resent in the background. A red
+       "your change was not saved" for them was a false alarm - it went up on a day edit
+       whose schedule save had gone through, because the day's notification had not. */
+    /* ph_roster is the one-time copy of the roster file an admin's browser makes on its
+       own; nobody typed it, so nobody should be told "your change" did not save. */
+    if(!quiet && !housekeeping(key) && key !== 'ph_roster') emit('ph-save-failed', {key:key, error:msg, denied:denied, tooBig:tooBig});
+    else try{ console.warn('PH_STORE: '+key+' not sent yet - '+msg); }catch(_){}
+    return {local:true, error:msg, denied:denied, tooBig:tooBig, conflict: st === 409};
+  }
+
+  /* Write one key. Always writes locally first so the UI stays instant; the send joins
+     the key's queue, and a newer set() of the same key that is queued behind it carries
+     this one's change (every caller gets the result of the send that included theirs). */
+  function set(key, value, opts){
+    var p = prepare(key, value, opts);
+    if(p.result) return Promise.resolve(p.result);
+    var raw = p.raw, my = seq[key] = (seq[key] || 0) + 1;
+    return new Promise(function(resolve){
+      (waiting[key] = waiting[key] || []).push(resolve);
+      inTurn(key, function(){
+        if(seq[key] !== my) return;
+        var callers = waiting[key]; waiting[key] = [];
+        return sendNow(key, raw, true).then(function(r){
+          var out = r.ok ? (landed(key, raw), {}) : failed(key, r.err);
+          callers.forEach(function(f){ f(out); });
+        });
+      });
+    });
+  }
+
+  /* ------------------------------------------------------------------
+     CHANGE ONE PART OF A SHARED RECORD WITHOUT FLATTENING THE REST.
+
+     Every save used to send the page's whole copy of a record. A page that had been
+     open for an hour sent an hour-old copy, and whatever anybody else had saved in
+     that hour was gone - quietly, because the size barely moved so the wipe guard had
+     nothing to say. The Admin screen does this for every person's settings and every
+     cell of the access grid, so it was the most exposed.
+
+     update() reads the shared copy FIRST, hands it to the caller to change, and writes
+     the result - all of it in the key's queue, so two changes to one record can never
+     read the same copy and each drop the other's. A "Save Conflict" (someone else's
+     write landed in between) reads again and changes again. A read that fails leaves
+     the write refused - you cannot safely merge onto something you could not see.
+
+     The caller returns the new value, or undefined for "nothing to write". It may be
+     called more than once, so it should not count on running only once. */
+  function update(key, mutate, opts){
+    if(!live()){
+      var cur = parse(local(key)), nx;
+      try{ nx = mutate(cur === null ? undefined : cur); }catch(e){ return Promise.reject(e); }
+      if(nx === undefined) return Promise.resolve({unchanged:true, value:cur});
+      return set(key, nx, opts).then(function(r){ if(r) r.value = nx; return r; });
+    }
+    return authReady.then(function(){
+      return inTurn(key, function(){
+        var tries = 0;
+        function once(){
+          return readNow(key).then(function(current){
+            var next;
+            try{ next = mutate(current === null ? undefined : current); }
+            catch(e){ return Promise.reject(e); }
+            if(next === undefined) return {unchanged:true, value:current};
+            var p = prepare(key, next, opts);
+            if(p.result) return Promise.resolve(p.result).then(function(r){ if(r) r.value = next; return r; });
+            var tag = ETAG_OFF ? null : (etags[key] || null);
+            return sendNow(key, p.raw, false, tag).then(function(r){
+              if(r.ok){ landed(key, p.raw); return {value:next}; }
+              var st = statusOf(r.err);
+              if((st === 409 || st === 412) && tries++ < 3){
+                // Someone else's write landed between our read and ours: read theirs, change again.
+                if(!local(whyKey(key))){ markUnsent(key, false); forget(key); }
+                return sleep(400 * tries).then(once);
+              }
+              /* Still refused with a tag after every retry, or the tag itself turned down (400): never let the
+                 check stop saving - this page goes back to the old way (a blind write) and says so in the console. */
+              if(tag && (st === 412 || st === 400)){
+                ETAG_OFF = true;
+                try{ console.warn('PH_STORE: SharePoint refused the version check on '+key+' ('+st+') - saving without it'); }catch(_){}
+                return sendNow(key, p.raw, false, null).then(function(r2){
+                  if(r2.ok){ landed(key, p.raw); return {value:next}; }
+                  var o2 = failed(key, r2.err); o2.value = next; return o2;
+                });
+              }
+              var out = failed(key, r.err); out.value = next; return out;
+            });
+          });
+        }
+        return once();
+      });
+    });
+  }
+
+  /* ------------------------------------------------------------------
+     A CHANGE THAT NEVER REACHED SHAREPOINT, AND THE COPY THAT DID.
+
+     This browser is holding a change SharePoint never took. It used to win outright:
+     the local copy was shown, and the next save sent the whole of it - over whatever
+     anybody else had saved since. Now the two are COMBINED, and the result is sent.
+
+     Jordan, 25/09: "Do not delete any data on the schedule." So the rules only ever add
+     or update, never take away:
+       - Anything SharePoint has and this copy lacks is kept.
+       - Anything only this browser has is added.
+       - Where both hold something different, the copy this change was made on top of
+         (its "base") says who changed it. Without a base, SharePoint's value stands.
+     The base is recorded when a send first fails. A browser that was left holding a
+     change before that existed finds it in the version history: the newest version
+     this same person wrote is exactly what their held change was made on top of.
+     ------------------------------------------------------------------ */
+  var UNKNOWN = {};
+  function isObj(v){ return v !== null && typeof v === 'object' && !Array.isArray(v); }
+  function hasOwn(o, k){ return Object.prototype.hasOwnProperty.call(o, k); }
+  function same(a, b){
+    if(a === b) return true;
+    if(a === null || b === null || typeof a !== 'object' || typeof b !== 'object') return false;
+    if(Array.isArray(a) !== Array.isArray(b)) return false;
+    var i;
+    if(Array.isArray(a)){
+      if(a.length !== b.length) return false;
+      for(i=0;i<a.length;i++) if(!same(a[i], b[i])) return false;
+      return true;
+    }
+    var ka = Object.keys(a), kb = Object.keys(b);
+    if(ka.length !== kb.length) return false;
+    for(i=0;i<ka.length;i++) if(!hasOwn(b, ka[i]) || !same(a[ka[i]], b[ka[i]])) return false;
+    return true;
+  }
+  function allPrim(a){ return a.every(function(x){ return x === null || typeof x !== 'object'; }); }
+  function allIds(a){
+    var seen = {};
+    return a.every(function(x){
+      if(!isObj(x) || x.id === undefined || x.id === null) return false;
+      var id = String(x.id); if(seen[id]) return false; seen[id] = 1; return true;
+    });
+  }
+  /* Two levels of a record are combined key by key - a schedule's days and each day's
+     offices, the access grid's teams and their sections. Below that a value is ONE
+     thing: a day's cell is its doctor, hours and event together, never half of one and
+     half of the other. A record that is itself a list is combined item by item. */
+  function merge3(base, mine, theirs, depth, max){
+    depth = depth || 0; max = max || 2;
+    var known = base !== UNKNOWN;
+    if(same(mine, theirs)) return theirs;
+    if(mine === undefined) return theirs;                    // SharePoint has it: it stays, whoever dropped it here
+    if(theirs === undefined){
+      // Only here. If the base had it unchanged, it was removed in SharePoint - already the state there.
+      if(known && base !== undefined && same(mine, base)) return undefined;
+      return mine;                                           // new here: add it
+    }
+    if(known && same(mine, base)) return theirs;             // only they changed it
+    var descend = depth < max && isObj(mine) && isObj(theirs);
+    var list = depth === 0 && Array.isArray(mine) && Array.isArray(theirs);
+    /* Even where only THIS copy changed, an object is walked key by key rather than
+       taken whole - taking it whole would also take away whatever this copy lacks. */
+    if(descend){
+      var out = {}, b = known ? (isObj(base) ? base : {}) : UNKNOWN;
+      Object.keys(theirs).concat(Object.keys(mine).filter(function(k){ return !hasOwn(theirs, k); }))
+        .forEach(function(k){
+          var bk = b === UNKNOWN ? UNKNOWN : (hasOwn(b, k) ? b[k] : undefined);
+          var v = merge3(bk, mine[k], theirs[k], depth + 1, max);
+          if(v !== undefined) out[k] = v;
+        });
+      return out;
+    }
+    if(list){
+      var ba = known ? (Array.isArray(base) ? base : []) : UNKNOWN;
+      if(allPrim(mine) && allPrim(theirs)){
+        var set1 = theirs.slice();                           // everything SharePoint has, plus what is new here
+        mine.forEach(function(x){ if(set1.indexOf(x) < 0 && (ba === UNKNOWN || ba.indexOf(x) < 0)) set1.push(x); });
+        return set1;
+      }
+      if(allIds(mine) && allIds(theirs) && (ba === UNKNOWN || allIds(ba))){
+        var M = {}, B = {}, done = {}, items = [];
+        mine.forEach(function(x){ M[String(x.id)] = x; });
+        if(ba !== UNKNOWN) ba.forEach(function(x){ B[String(x.id)] = x; });
+        theirs.concat(mine).forEach(function(x){
+          var id = String(x.id); if(done[id]) return; done[id] = 1;
+          var tv; theirs.forEach(function(y){ if(String(y.id) === id) tv = y; });
+          var v = merge3(ba === UNKNOWN ? UNKNOWN : (hasOwn(B, id) ? B[id] : undefined),
+                         hasOwn(M, id) ? M[id] : undefined, tv, 1, max);
+          if(v !== undefined) items.push(v);
+        });
+        return items;
+      }
+    }
+    if(known && same(theirs, base)) return mine;             // one value, only this copy changed it
+    return known ? mine : theirs;       // a true clash: with a base, the held change; without, SharePoint's
+  }
+  /* Can a record of this shape be combined at all? A list without ids - the doctor list,
+     where days point at doctors by POSITION - cannot: that one keeps the old rule. */
+  /* PRODUCTION NUMBERS GO ONE LEVEL DEEPER (21/11/2026, code review - replayed: a phone's held Enter Production save,
+     resent later, put J30 back from 21 to 20). Its record is {data: {office tab: {cell: number}}}: at two levels a held
+     change replaced the whole office tab. Each CELL is its own value. */
+  function mergeDepth(key){ return /^ph_prod_data_\d{4}$/.test(key) ? 3 : 2; }
+  /* THE PRODUCTION HISTORY HAS NO IDS (same review - replayed: another device's history entry vanished). Its entries
+     are only ever added, so held entries join SharePoint's: an entry is kept unless the base had it and SharePoint has
+     since dropped it (cut to its length). Newest first, as the page keeps it. */
+  function isBag(key){ return /^ph_prod_log_\d{4}$/.test(key); }
+  function bagMerge(base, mine, theirs){
+    var b = (base !== UNKNOWN && Array.isArray(base)) ? base : [];
+    var out = theirs.slice();
+    mine.forEach(function(x){
+      if(out.some(function(y){ return same(x, y); })) return;
+      if(b.some(function(y){ return same(x, y); })) return;      // was there before, SharePoint dropped it since
+      out.push(x);
+    });
+    if(out.every(function(x){ return isObj(x) && x.at; }))
+      out.sort(function(x, y){ return (Date.parse(y.at) || 0) - (Date.parse(x.at) || 0); });
+    return out;
+  }
+  function combinable(a, b){
+    if(isObj(a) && isObj(b)) return true;
+    if(Array.isArray(a) && Array.isArray(b)) return (allPrim(a) && allPrim(b)) || (allIds(a) && allIds(b));
+    return false;
+  }
+  /* Everything SharePoint had is still in the result. Checked before sending anything,
+     on top of the wipe guard, because this is the one write nobody asked for. */
+  function keepsAll(merged, theirs){
+    if(isObj(theirs)) return isObj(merged) && Object.keys(theirs).every(function(k){ return hasOwn(merged, k); });
+    if(Array.isArray(theirs) && Array.isArray(merged)){
+      if(allIds(theirs)){ var ids = {}; merged.forEach(function(x){ if(isObj(x)) ids[String(x.id)] = 1; });
+        return theirs.every(function(x){ return ids[String(x.id)]; }); }
+      return theirs.every(function(x){ return merged.some(function(y){ return same(x, y); }); });
+    }
+    return true;
+  }
+  function whoAmI(){
+    var a = global.PH_AUTH && PH_AUTH.account;
+    return a ? {mail:String(a.username || '').toLowerCase(), name:String(a.name || '')} : null;
+  }
+  function byMe(v, who){
+    var u = v && v.lastModifiedBy && v.lastModifiedBy.user;
+    if(!u || !who) return false;
+    var em = String(u.email || u.userPrincipalName || '').toLowerCase();
+    if(em && who.mail) return em === who.mail;
+    return !!(u.displayName && who.name && u.displayName === who.name);
+  }
+  /* The newest version of this row that THIS person wrote - their last save that
+     landed. Looks back 30 versions at most. */
+  function mineInHistory(itemId){
+    var who = whoAmI();
+    if(!who || !itemId) return Promise.resolve(null);
+    var found = null, pages = 0;
+    function page(p){
+      return PH_AUTH.graph(p).then(function(r){
+        var vs = ((r && r.value) || []).slice().sort(function(x, y){
+          return (Date.parse(y.lastModifiedDateTime) || 0) - (Date.parse(x.lastModifiedDateTime) || 0); });
+        for(var i=0;i<vs.length && !found;i++) if(byMe(vs[i], who)) found = vs[i];
+        var next = r && r['@odata.nextLink'];
+        if(!found && next && ++pages < 3) return page(next.replace(GRAPH, ''));
+      });
+    }
+    return page(listPath()+'/items/'+itemId+'/versions?$top=10').then(function(){
+      return found ? unpack((found.fields && found.fields.Payload) || '') : null;
+    });
+  }
+  function baseFor(key, itemId){
+    var b = local(baseKey(key));
+    if(b !== null) return Promise.resolve(b === '' ? undefined : parse(b));
+    return mineInHistory(itemId).then(function(raw){
+      if(raw === null || raw === undefined) return UNKNOWN;
+      var v = parse(raw); return (raw && v === null) ? UNKNOWN : (v === null ? undefined : v);
+    }, function(){ return UNKNOWN; });
+  }
+  /* Runs inside the key's queue (from readNow). Resolves to what the page should show. */
+  function recover(key, remoteRaw, itemId){
+    var mineRaw = local(key), mine = parse(mineRaw), theirs = parse(remoteRaw);
+    if(mine === null){                               // nothing held after all
+      markUnsent(key, false); forget(key);
+      setLocal(key, remoteRaw || ''); synced[key] = remoteRaw; rememberWeight(key, theirs);
+      return Promise.resolve(theirs);
+    }
+    /* The held copy is what SharePoint already has - a save that landed but whose answer
+       never came back, most often. Nothing to send; just stop holding it. */
+    function settled(){
+      markUnsent(key, false); forget(key);
+      setLocal(key, remoteRaw || ''); synced[key] = remoteRaw; rememberWeight(key, theirs);
+      return theirs;
+    }
+    if(theirs !== null && same(mine, theirs)) return Promise.resolve(settled());
+    return baseFor(key, itemId).then(function(base){
+      /* A list without ids - the doctor list, which days point into BY POSITION - is
+         never combined or sent from here, with or without a base. Its own page sends it,
+         with that page's clash check. */
+      /* Except the one change that cannot move anybody's position: doctors added at the end,
+         with everything before them exactly as SharePoint has it. */
+      var appended = Array.isArray(mine) && Array.isArray(theirs) && mine.length > theirs.length &&
+                     theirs.every(function(x, i){ return same(x, mine[i]); });
+      var bag = isBag(key) && Array.isArray(mine) && Array.isArray(theirs);
+      if(theirs !== null && !bag && !combinable(mine, theirs) && !appended){
+        rememberWeight(key, mine); return mine;      // the old rule: this browser's copy, sent by its own page
+      }
+      var merged = (theirs === null || appended) ? mine : bag ? bagMerge(base, mine, theirs) : merge3(base, mine, theirs, 0, mergeDepth(key));
+      if(theirs !== null && same(merged, theirs)) return settled();   // nothing of ours left to add
+      if(theirs !== null && !keepsAll(merged, theirs)){
+        try{ console.warn('PH_STORE: combining '+key+' would have dropped something - not sent'); }catch(_){}
+        rememberWeight(key, mine); return mine;
+      }
+      var mergedRaw = JSON.stringify(merged);
+      setLocal(key + '__mine', mineRaw);             // this browser's copy as it was, before combining
+      setLocal(key, mergedRaw);
+      setLocal(baseKey(key), remoteRaw || '');       // what is still unsent is now "merged minus this"
+      synced[key] = remoteRaw;
+      rememberWeight(key, merged);
+      if(!local(whyKey(key))) setLocal(whyKey(key), 'later');   // held from before: say so when it lands
+      if(wouldWipe(key, merged)) return merged;      // never; but if it ever would, it is not sent
+      return sendNow(key, mergedRaw, false).then(function(r){
+        if(r.ok) landed(key, mergedRaw); else failed(key, r.err, true);
+        return merged;
+      });
+    });
+  }
+
+  /* ------------------------------------------------------------------
+     SEND WHAT IS STILL WAITING - without anyone having to save again.
+
+     A change left behind used to go only when that person saved the same thing again,
+     so a COO who entered twenty days, saw the banner and closed the laptop had twenty
+     days sitting on one machine. Now every page, once signed in, reads each held key
+     (which combines and sends it - see recover()), and again every minute and whenever
+     the connection comes back. Refusals for permission or size wait for a real save. */
+  function pending(){
+    var out = [];
+    try{
+      for(var i=0;i<localStorage.length;i++){
+        var k = localStorage.key(i);
+        if(k && k.length > 8 && k.slice(-8) === '__unsent' && localStorage.getItem(k) === '1') out.push(k.slice(0, -8));
+      }
+    }catch(_){}
+    return out;
+  }
+  var resending = false, AUTO = true;
+  function autoResend(){ if(AUTO) resendAll(); }
+  function resendAll(){
+    if(resending || !live() || !signedIn()) return Promise.resolve();
+    var keys = pending().filter(function(k){ var w = local(whyKey(k)); return w !== 'denied' && w !== 'tooBig'; });
+    if(!keys.length) return Promise.resolve();
+    resending = true;
+    return Promise.all(keys.map(function(k){ return get(k).catch(noop); }))
+      .then(function(){ resending = false; }, function(){ resending = false; });
+  }
+  authReady.then(function(){ var t = setTimeout(autoResend, 3000); if(t && t.unref) t.unref(); });
+  if(typeof setInterval === 'function'){ var every = setInterval(autoResend, 60000); if(every && every.unref) every.unref(); }
+  try{ global.addEventListener && global.addEventListener('online', autoResend); }catch(_){}
+
+  /* ------------------------------------------------------------------
+     MERGE ONLY WHAT THIS PAGE CHANGED.
+
+     Two people editing the schedule at once used to be last-save-wins for the whole
+     year: each page sent its entire copy, so whoever saved second erased the other's
+     cell. The wipe guard stops blanking, not that. These take the shared copy as the
+     base and lay only this page's changed pieces on top, so both people keep their
+     work. Pure functions, tested in test/guard.test.js. */
+  function mergeInto(remote, local, changed, removed){
+    var out = Object.assign({}, (remote && typeof remote==='object') ? remote : {});
+    (changed||[]).forEach(function(k){ if(local && local[k]!==undefined) out[k]=local[k]; });
+    (removed||[]).forEach(function(k){ delete out[k]; });
+    return out;
+  }
+  function mergeById(remote, local, changedIds, removedIds){
+    var byId={}, order=[], mine={};
+    (Array.isArray(remote)?remote:[]).forEach(function(c){ var id=String(c&&c.id); byId[id]=c; order.push(id); });
+    (Array.isArray(local)?local:[]).forEach(function(c){ mine[String(c&&c.id)]=c; });
+    (changedIds||[]).forEach(function(id){ id=String(id); if(mine[id]===undefined) return;
+      if(!(id in byId)) order.push(id); byId[id]=mine[id]; });
+    (removedIds||[]).forEach(function(id){ delete byId[String(id)]; });
+    return order.filter(function(id){ return byId[id]!==undefined; }).map(function(id){ return byId[id]; });
+  }
+
+  function parse(raw){
+    if(raw===null || raw===undefined || raw==='') return null;
+    try{ return JSON.parse(raw); }catch(_){ return null; }
+  }
+
+  /* The keys that exist and start with `prefix` - from the keys-only listing on the live site (no
+     contents read), from this browser on the sandbox. Used to find a year's history archive. */
+  function keys(prefix){
+    if(!live()){
+      var mine = [];
+      try{ for(var i = 0; i < localStorage.length; i++){ var k = localStorage.key(i); if(k && k.indexOf(prefix) === 0 && k.indexOf('__') < 0) mine.push(k); } }catch(_){}
+      return Promise.resolve(mine.sort());
+    }
+    return authReady.then(function(){ return withRetry(connect); })
+      .then(function(){ return listing(); })
+      .then(function(items){
+        var seen = {}, out = [];
+        items.forEach(function(i){ var t = i.fields && i.fields.Title; if(t && !seen[t] && t.indexOf(prefix) === 0){ seen[t] = 1; out.push(t); } });
+        return out.sort();
+      });
+  }
+
+  /* A few at a time, not all at once: SharePoint throttles a burst. */
+  function fewAtATime(list, n, job){
+    var next = 0;
+    function lane(){
+      if(next >= list.length) return Promise.resolve();
+      var x = list[next++];
+      return Promise.resolve().then(function(){ return job(x); }).then(lane, lane);
+    }
+    var lanes = [];
+    for(var k=0;k<Math.min(n, list.length);k++) lanes.push(lane());
+    return Promise.all(lanes);
+  }
+
+  /* Every row whose key starts with a prefix (or any of several), as { key: value }.
+     Used for everyone's profile row. A row this browser is still holding unsent comes
+     back as this browser has it - the caller writes these rows into local storage, and
+     must not put the old copy over the held one. A row that will not read is left out,
+     never reported empty.
+
+     The listing holds keys only now (see listing()), so each wanted row is read by id,
+     a few at a time, in its key's queue - after any save of it that is on its way. */
+  function getAll(prefix){
+    if(!live()) return Promise.resolve({});
+    var pre = Array.isArray(prefix) ? prefix : [prefix];
+    var wanted = function(t){ return pre.some(function(x){ return t.indexOf(x) === 0; }); };
+    return authReady.then(function(){ return withRetry(connect); })
+      .then(function(){ return listing(); })
+      .then(function(items){
+        var out = {}, seen = {}, rows = [];
+        items.forEach(function(i){
+          var t = i.fields && i.fields.Title;
+          if(!t || seen[t] || !wanted(t)) return;
+          seen[t] = 1; rows.push({t:t, id:i.id});
+        });
+        return fewAtATime(rows, 6, function(r){
+          var t = r.t;
+          return inTurn(t, function(){
+            if(unsent(t)){ out[t] = parse(local(t)); return; }
+            return withRetry(function(){ return fetchItem(r.id); }).then(function(i){
+              if(!i || !i.fields || i.fields.Title !== t) return;          // not the row the listing named: left out
+              return unpack(i.fields.Payload || '').then(function(raw){
+                var v = parse(raw);
+                if(raw && v === null) return;
+                readFailed[t] = false; synced[t] = raw; out[t] = v; rememberWeight(t, v);
+              });
+            }).catch(noop);
+          });
+        }).then(function(){ return out; });
+      })
+      .catch(function(){ return {}; });
+  }
+
+  /* HOW FULL IS EACH RECORD (future-proofing check, 22/10/2026). One SharePoint text column holds
+     63,999 characters (COL_MAX keeps a margin) and a record that grows into it starts refusing
+     saves. This reads every row's contents ONCE - only when somebody asks (History, or Admin at most
+     once a day) - and reports each record as SharePoint stores it (a packed one counts packed).
+     Resolves [{key, chars, packed}], biggest first. Reads only; never writes. */
+  var SIZE_WARN = 0.7;
+  function sizes(){
+    if(!live()) return Promise.resolve([]);
+    var out = [];
+    function one(p, n){
+      return PH_AUTH.graph(p).then(function(r){
+        out = out.concat((r && r.value) || []);
+        var next = r && r['@odata.nextLink'];
+        return (next && n < 40) ? one(next.replace(GRAPH, ''), n+1) : out;
+      });
+    }
+    return authReady.then(function(){ return withRetry(connect); })
+      .then(function(){ return withRetry(function(){ out = []; return one(listPath()+'/items?$expand=fields&$top=200', 0); }); })
+      .then(function(items){
+        var seen = {}, list = [];
+        items.forEach(function(i){
+          var t = i.fields && i.fields.Title; if(!t || seen[t]) return; seen[t] = 1;
+          var pay = String((i.fields && i.fields.Payload) || '');
+          list.push({key: t, chars: pay.length, packed: pay.indexOf(PACK_TAG) === 0 || pay.indexOf('{"__packed":') === 0});
+        });
+        return list.sort(function(a, b){ return b.chars - a.chars; });
+      });
+  }
+
+  /* What a record is, in words - for the size watch. */
+  function recordName(k){
+    var m, NAMES = {ph_sched2:'Doctor schedule (to 2027)', ph_docs:'Doctor list', ph_people:'People settings', ph_access:'Teams & access',
+      ph_roster:'Staff roster', ph_roster_extra:'Staff added / removed', ph_locations:'Offices', ph_activity:'Notifications',
+      ph_mktg:'Marketing board', ph_prodaudit:'Production entries — who and when', ph_prod_index:'Production years', ph_teams:'Teams'};
+    if(NAMES[k]) return NAMES[k];
+    if((m = /^ph_prod_log_(\d{4})$/.exec(k))) return 'Production history ' + m[1];
+    if((m = /^ph_sched_(\d{4})$/.exec(k))) return 'Doctor schedule ' + m[1];
+    if((m = /^ph_prod_data_(\d{4})$/.exec(k))) return 'Production numbers ' + m[1];
+    if((m = /^ph_prod_links_(\d{4})$/.exec(k))) return 'Production links ' + m[1];
+    if(k.indexOf('ph_me_') === 0) return 'Profile — ' + k.slice(6);
+    if(k.indexOf('ph_seen_') === 0) return 'Notifications read — ' + k.slice(8);
+    if(k.indexOf('ph_face_') === 0) return 'Photo — ' + k.slice(8);
+    return k;
+  }
+
+  /* What a human has to do once, by hand, before live storage works. */
+  function setup(){
+    return 'On ' + SITE_PATH + ': New > List > Blank list, name it "' + LIST_NAME + '", ' +
+           'then Add column > Multiple lines of text named "Payload". Nothing else.';
+  }
+
+  /* ------------------------------------------------------------------
+     FEEDBACK: one row per message, on its own list.
+
+     29/09/2026, Jordan: feedback "collected with information on user, what screen they
+     were on, etc and forwarded to me by email". The hub cannot send email (no Mail.Send,
+     on purpose), so each message is a new row on "HomeBraceFeedback" and a Power
+     Automate flow on that list emails it. A row, not a key on HomeBraceData: the flow
+     fires on "item created", and the data list creates items for other reasons.
+
+     Made by hand like HomeBraceData: Title, plus "Details" (multiple lines of text).
+     A missing list is reported as missingList, so the form can say "not switched on
+     yet" rather than "check your connection". */
+  var FEEDBACK_LIST = 'HomeBraceFeedback', feedbackListId = null;
+  function feedbackList(){
+    return authReady.then(connect).then(function(){
+      if(feedbackListId) return feedbackListId;
+      return PH_AUTH.graph('/sites/' + siteId + '/lists?$select=id,displayName').then(function(r){
+        var hit = (r.value||[]).filter(function(l){ return l.displayName === FEEDBACK_LIST; })[0];
+        if(!hit){
+          var e = new Error('No "' + FEEDBACK_LIST + '" list on ' + SITE_PATH + ' yet.');
+          e.missingList = true; throw e;
+        }
+        return (feedbackListId = hit.id);
+      });
+    });
+  }
+  function addFeedback(fields){
+    if(!live()){ fbSandboxAdd(fields); return Promise.resolve({sandbox:true}); }
+    /* An answer back carries ReplyTo: written under the column's own name (feedbackColumns), or left off - with
+       "Reply:" in its title - if the list doesn't have that column yet. */
+    var ready = fields.ReplyTo === undefined ? feedbackList() : feedbackColumns().then(function(c){
+      fields = Object.assign({}, fields); var v = fields.ReplyTo; delete fields.ReplyTo;
+      if(c.replyTo) fields[c.tName] = String(v);
+      return feedbackListId;
+    });
+    return ready.then(function(id){
+      return withRetry(function(){ return send('POST', '/sites/' + siteId + '/lists/' + id + '/items', {fields:fields}); });
+    });
+  }
+
+  /* FEEDBACK REPLIES (04/11/2026, Jordan: "Would be nice as me as an admin can respond to these that they submit from
+     Home-Brace directly"). Two more columns on the same list, added by hand like the rest: "Replies" (multiple lines of
+     plain text - the team's answers, JSON {v:1, doneAt, r:[{at, t, by}]}, kept on the message itself) and "ReplyTo"
+     (single line of text - a person's answer back is a NEW row pointing at the first one, so the email flow tells us
+     about it like any message). Who wrote a row is SharePoint's own createdBy; with the list set to "Read items that
+     were created by the user", each person reads only their own and the site's owners read every one.
+     Sandbox: this browser (ph_fb_sandbox), each row marked with whoever is signed in / viewed as here. */
+  var FB_SBX = 'ph_fb_sandbox';
+  function fbSandbox(){ try{ var d = JSON.parse(localStorage.getItem(FB_SBX)); if(d && Array.isArray(d.items)) return d; }catch(_){} return {n:1, items:[]}; }
+  function fbSandboxSave(d){ try{ localStorage.setItem(FB_SBX, JSON.stringify(d)); }catch(_){} }
+  function fbSandboxWho(){
+    try{
+      var P = global.PH, m = (P && P.realMe && P.realMe()) || {}, nm = String(((m.first||'') + ' ' + (m.last||'')).trim() || m.name || '');
+      return {email: String(m.mail || (P && P.email && m.first ? P.email(m) : '') || '').toLowerCase(), name: nm, id: ''};
+    }catch(_){ return {email:'', name:'', id:''}; }
+  }
+  function fbSandboxAdd(fields){
+    var d = fbSandbox(), id = String(d.n++);
+    d.items.push({id:id, at:new Date().toISOString(), by:fbSandboxWho(), Title:fields.Title||'', Details:fields.Details||'', Replies:'', ReplyTo:fields.ReplyTo||''});
+    fbSandboxSave(d); return id;
+  }
+  /* Which of the two reply columns the list has: {replies, replyTo}. Without them messages still read; replies wait. */
+  /* Found by name or by what it shows as ("Reply To" typed with a space is stored as Reply_x0020_To): rName / tName are
+     the names to read and write them under. */
+  var fbColsP = null;
+  function feedbackColumns(){
+    if(!live()) return Promise.resolve({replies:true, replyTo:true, rName:'Replies', tName:'ReplyTo'});
+    if(fbColsP) return fbColsP;
+    fbColsP = feedbackList().then(function(id){
+      return withRetry(function(){ return send('GET', '/sites/' + siteId + '/lists/' + id + '/columns?$select=name,displayName'); });
+    }).then(function(r){
+      var flat = function(v){ return String(v||'').toLowerCase().replace(/_x0020_|\s+/g, ''); };
+      var find = function(want){ return (r.value||[]).filter(function(c){ return flat(c.name) === want || flat(c.displayName) === want; })[0]; };
+      var a = find('replies'), b = find('replyto');
+      var out = {replies:!!a, replyTo:!!b, rName:a ? a.name : 'Replies', tName:b ? b.name : 'ReplyTo'};
+      if(!out.replies || !out.replyTo) setTimeout(function(){ fbColsP = null; }, 60000);   // looked for again once added
+      return out;
+    }).catch(function(e){ fbColsP = null; throw e; });
+    return fbColsP;
+  }
+  function fbRow(it, cols){
+    var f = it.fields || {}, u = (it.createdBy && it.createdBy.user) || {};
+    return {id:String(it.id), at:it.createdDateTime || f.Created || '', by:{email:String(u.email||'').toLowerCase(), name:u.displayName||'', id:u.id||''},
+            Title:f.Title||'', Details:f.Details||'', Replies:cols.replies ? (f[cols.rName]||'') : '', ReplyTo:cols.replyTo ? String(f[cols.tName]||'') : ''};
+  }
+  /* Every message this person may read (SharePoint decides: their own, or all of them for a site owner), oldest first.
+     Up to 1,000 - five pages. */
+  function feedbackItems(){
+    if(!live()) return Promise.resolve(fbSandbox().items.slice());
+    var cols;
+    return feedbackColumns().then(function(c){
+      cols = c;
+      var sel = ['Title','Details'].concat(c.replies ? [c.rName] : [], c.replyTo ? [c.tName] : []).join(',');
+      var out = [], pages = 0;
+      function page(path){
+        return withRetry(function(){ return send('GET', path); }).then(function(r){
+          (r.value||[]).forEach(function(it){ out.push(fbRow(it, cols)); });
+          var next = r['@odata.nextLink'];
+          if(next && ++pages < 5 && next.indexOf(GRAPH) === 0) return page(next.slice(GRAPH.length));
+          return out;
+        });
+      }
+      return page('/sites/' + siteId + '/lists/' + feedbackListId + '/items?$expand=fields($select=' + sel + ')&$top=200');
+    }).then(function(rows){ return rows.sort(function(a, b){ return String(a.at).localeCompare(String(b.at)); }); });
+  }
+  /* The team's answers on one message: read it fresh, change(replies) -> replies, write it back. */
+  function feedbackReplies(id, change){
+    if(!live()){
+      var d = fbSandbox(), it = d.items.filter(function(x){ return x.id === String(id); })[0];
+      if(!it) return Promise.reject(new Error('That message is gone'));
+      it.Replies = JSON.stringify(change(it.Replies || '')); fbSandboxSave(d); return Promise.resolve(it.Replies);
+    }
+    return feedbackColumns().then(function(c){
+      if(!c.replies){ var e = new Error('The feedback list has no Replies column yet'); e.needsSetup = true; throw e; }
+      var base = '/sites/' + siteId + '/lists/' + feedbackListId + '/items/' + encodeURIComponent(id);
+      return withRetry(function(){ return send('GET', base + '?$expand=fields($select=' + c.rName + ')'); }).then(function(it){
+        var next = JSON.stringify(change((it.fields && it.fields[c.rName]) || '')), body = {}; body[c.rName] = next;
+        return withRetry(function(){ return send('PATCH', base + '/fields', body); }, true).then(function(){ return next; });
+      });
+    });
+  }
+
+  global.PH_STORE = {
+    get:get, set:set, update:update, getAll:getAll, keys:keys, setup:setup,
+    /* One feedback message -> one new row on HomeBraceFeedback (see addFeedback). */
+    addFeedback:addFeedback, FEEDBACK_LIST:FEEDBACK_LIST,
+    /* Replies to feedback (fbreply.js): what may be read, which reply columns exist, the team's answers on one message. */
+    feedbackItems:feedbackItems, feedbackColumns:feedbackColumns, feedbackReplies:feedbackReplies,
+    mergeInto:mergeInto, mergeById:mergeById,
+    /* Packed payloads: history.html and restore.html read raw versions through these. */
+    pack:pack, unpack:unpack, COL_MAX:COL_MAX,
+    /* pako on a browser without CompressionStream (older Safari), else null - prodbook.js unzips with it. */
+    zlib:zlib,
+    /* Every record's stored size, biggest first, for the size watch (History, Admin); SIZE_WARN of COL_MAX = "getting full". */
+    sizes:sizes, SIZE_WARN:SIZE_WARN, recordName:recordName,
+    /* The id of the row holding a key, or null - history.html reads that row's versions. */
+    idOf:function(key){ return authReady.then(function(){ return withRetry(connect); }).then(function(){ return findId(key); }); },
+    /* Combining a held change with the shared copy - pure, tested in test/sync.test.js. */
+    merge3:function(base, mine, theirs){ return merge3(base === undefined ? UNKNOWN : base, mine, theirs, 0); },
+    /* Keys this browser is holding unsent, and "send them now". */
+    pending:pending, resend:resendAll,
+    /* Tests shorten the waits between retries. */
+    setRetryWaits:function(w){ RETRY_WAITS = w; },
+    setAutoResend:function(on){ AUTO = !!on; },
+    /* Resolves once the person is signed in; a live site reads nothing before that. */
+    ready:authReady,
+    /* Pages ask this instead of guessing from a null. */
+    readFailed:function(k){ return readFailed[k] === true; },
+    /* True when this browser is holding a change SharePoint never took. */
+    unsent:unsent,
+    /* The copy this browser replaced last, for restore.html. */
+    backup:function(k){ return parse(local(k + '__prev')); },
+    /* Stop holding a change that didn't reach SharePoint and go back to the shared copy as last read - for a deliberate
+       overwrite (History "Put this back", Restore) that failed: it must not be sent later on its own (21/11/2026, code review). */
+    discard:function(k){ markUnsent(k, false); forget(k);
+      if(Object.prototype.hasOwnProperty.call(synced, k)){ if(synced[k] == null) drop(k); else setLocal(k, synced[k]); } },
+    weigh:weigh,
+    LIST_NAME:LIST_NAME, SITE_PATH:SITE_PATH
+  };
+})(window);

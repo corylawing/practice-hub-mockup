@@ -1,0 +1,1340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="demo-shim.js?v=d202611250847"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Home-Brace · Production Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" href="../assets/favicon.png?v=2" type="image/png">
+<meta name="theme-color" content="#0F2A4A">
+<meta name="apple-mobile-web-app-title" content="Home-Brace">
+<link rel="apple-touch-icon" sizes="180x180" href="../assets/icons/apple-touch-icon.png?v=3">
+<meta name="description" content="The practice’s central hub — schedule, production, documents and team, in one place. Brightline · Maple · Riverbend.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Home-Brace">
+<meta property="og:title" content="Home-Brace">
+<meta property="og:description" content="The practice’s central hub — schedule, production, documents and team, in one place. Brightline · Maple · Riverbend.">
+<meta property="og:image" content="https://app.brightline.example/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="https://app.brightline.example/v1/index.html">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Home-Brace">
+<meta name="twitter:description" content="The practice’s central hub — schedule, production, documents and team, in one place. Brightline · Maple · Riverbend.">
+<meta name="twitter:image" content="https://app.brightline.example/assets/og-image.png">
+<style>
+  :root{
+    --navy:#0F2A4A; --navy2:#25456e; --teal:#149B96; --teal2:#2BC0B8; --teal-soft:#E5F4F3; --teal-600:#0F827E;
+    --ink:#1F2D3D; --soft:#56627A; --line:#E4E8EE; --canvas:#F4F6F8; --white:#fff;
+    --good:#2E9E6B; --good-soft:#E7F4EE; --bad:#D7503A; --bad-soft:#FBEAE7; --amber:#F2A03D; --amber-soft:#FFF3E2;
+    --blue:#1f6f9e; --blue-soft:#E3F0FA; --ly:#b9c3d1;
+    --shadow:0 1px 2px rgba(15,42,74,.06),0 6px 18px rgba(15,42,74,.06);
+    --shadow-lg:0 10px 30px rgba(15,42,74,.12); --radius:14px; --maxw:1100px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--canvas);line-height:1.5;-webkit-font-smoothing:antialiased}
+  h1{color:var(--navy);margin:0}
+  .ribbon{background:var(--amber);color:#3a2400;text-align:center;font-size:13px;font-weight:600;padding:6px 14px}
+  .hdr{background:var(--navy);color:#fff}
+  .hdr-in{max-width:var(--maxw);margin:0 auto;display:flex;align-items:center;gap:12px;padding:13px 20px}
+  .mark{width:34px;height:34px;flex:none;display:block}
+  .mark img{width:34px;height:34px;display:block;border-radius:50%}
+  .brand{font-weight:700;font-size:18px;color:#fff;line-height:1.1}
+  .brand i{font-style:normal;color:var(--teal2)}
+  .brand small{display:block;font-weight:500;font-size:12px;color:var(--navy-mute,#9fb4d0)}
+  .v1{background:rgba(255,255,255,.15);color:#eaf1fb;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;margin-left:6px}
+  .v1nav{background:var(--navy2)}
+  .v1nav-in{max-width:var(--maxw);margin:0 auto;display:flex;gap:2px;padding:0 12px;overflow-x:auto}
+  .v1nav a{color:var(--navy-mute,#cdd9ea);font-size:14px;font-weight:600;padding:13px 15px;text-decoration:none;border-bottom:3px solid transparent;white-space:nowrap}
+  .v1nav a:hover{color:#fff;background:rgba(255,255,255,.05)}
+  .v1nav a.active{color:#fff;border-bottom-color:var(--teal)}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:22px 20px 90px}
+  /* viewing as */
+  .viewas{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:13px 16px;display:flex;align-items:center;gap:13px;flex-wrap:wrap;margin-bottom:18px;border-left:5px solid var(--teal)}
+  .viewas .lab{font-size:12px;color:var(--soft);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+  .viewas select{padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;font-weight:700;color:var(--navy);background:#fff;min-width:200px}
+  .viewas .scope{font-size:12.5px;color:var(--teal-600);background:var(--teal-soft);border:1px solid var(--teal-line,#c4e6e3);padding:5px 11px;border-radius:999px;font-weight:600;margin-left:auto}
+  .page-head h1{font-size:25px}
+  .page-head p{margin:4px 0 0;color:var(--soft);font-size:14.5px}
+  /* office tabs */
+  .chips{display:flex;gap:7px;flex-wrap:wrap;margin:18px 0 20px}
+  .chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;font-size:13.5px;font-weight:600;color:var(--navy);cursor:pointer;font-family:inherit;box-shadow:var(--shadow)}
+  .chip:hover{border-color:var(--teal);color:var(--teal-600)}
+  .chip.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .chip .br{font-size:10.5px;opacity:.65;margin-left:4px}
+  /* kpi cards */
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+  .kpi{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:15px 17px;border-top:4px solid var(--teal)}
+  .kpi.g{border-top-color:var(--good)} .kpi.b{border-top-color:var(--bad)} .kpi.n{border-top-color:var(--blue)}
+  .kpi .k{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--soft);font-weight:700}
+  .kpi .v{font-size:26px;font-weight:800;color:var(--navy);line-height:1.15;margin-top:3px}
+  .kpi .s{font-size:12.5px;color:var(--soft);margin-top:3px}
+  .kpi .s b.g{color:var(--good)} .kpi .s b.b{color:var(--bad)}
+  /* chart */
+  .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px;margin-top:18px}
+  .card h2{margin:0 0 2px;font-size:16px;color:var(--navy)}
+  .card .sub{font-size:12.5px;color:var(--soft);margin-bottom:14px}
+  .legend{display:flex;gap:15px;flex-wrap:wrap;font-size:12px;color:var(--soft);margin-bottom:12px;align-items:center}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .sw{width:13px;height:13px;border-radius:3px;display:inline-block}
+  .swline{width:16px;height:0;border-top:2px dashed var(--navy);display:inline-block}
+  .swdot{width:16px;height:0;border-top:2px dotted #8a5cf5;display:inline-block}
+  .chartwrap{overflow-x:auto;padding-top:8px}
+  .plot{position:relative;min-width:660px;padding:26px 0 0 46px}
+  .grid{position:absolute;left:46px;right:0;top:26px;bottom:30px;pointer-events:none}
+  .grid .gl{position:absolute;left:0;right:0;border-top:1px dashed #e7ebf0}
+  .grid .gl b{position:absolute;left:-46px;top:-8px;width:40px;text-align:right;font-size:10px;font-weight:700;color:#9aa6b6}
+  .grid .gl.base{border-top:1px solid #d7dde5}
+  .chart{position:relative;display:flex;gap:12px;align-items:flex-end;height:210px;padding-bottom:30px}
+  .mo{flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end;position:relative}
+  .bars{position:relative;width:100%;height:100%;display:flex;align-items:flex-end;justify-content:center;gap:4px}
+  .bar{width:36%;border-radius:6px 6px 0 0;position:relative;transition:filter .15s,transform .15s;cursor:default}
+  /* Overlay instead of filter:brightness() — consistent across Safari and the rest. */
+  .bar:hover{box-shadow:inset 0 0 0 999px rgba(15,42,74,.075);transform:translateY(-2px)}
+  .bval{position:absolute;top:-17px;left:0;right:0;text-align:center;font-size:10.5px;font-weight:800;color:var(--navy);white-space:nowrap}
+  .bar.lyb .bval{color:#8794a6}
+  .bar.lyb{background:var(--ly)}
+  .bar.ab{background:var(--teal)}
+  .bar.ab.over{background:var(--good)} .bar.ab.under{background:var(--bad)} .bar.ab.mtd{background:var(--amber)}
+  .gm{position:absolute;left:2%;right:2%;border-top:2px dashed var(--navy);pointer-events:none}
+  .sm{position:absolute;left:2%;right:2%;border-top:2px dotted #8a5cf5;pointer-events:none}
+  .molab{position:absolute;bottom:-24px;left:0;right:0;text-align:center;font-size:11.5px;color:var(--soft);font-weight:700;white-space:nowrap}
+  .mo.best .molab{color:var(--good)}
+  /* ON A PHONE (12/11/2026, Jordan's iPhone screenshot: "Not looking so clean on mobile", then of the first fix: "Even
+     your photos don't look super clean"). Eleven months of paired bars can't sit cleanly in a ~310px card: the amounts
+     ran into the goal lines and each other, and it scrolled sideways. So a phone gets the same figures as ONE ROW PER
+     MONTH, top to bottom: this year's bar (green at/above goal, red under, amber in progress), last year as a thin
+     grey bar under it, a navy tick at the main goal and a purple one at stretch, and the amount at the end of the
+     row - nothing overlaps. Tap a month for its full figures in a line under the list. Computers keep the chart. */
+  .mlist,.readout,.tapnote{display:none}
+  @media(max-width:520px){
+    #bottomchart .chartwrap{display:none}
+    .mlist{display:block;margin-top:4px}
+    .mrow{display:grid;grid-template-columns:44px 1fr 78px;align-items:center;gap:10px;padding:7px 6px;border-radius:8px;cursor:pointer}
+    .mrow + .mrow{border-top:1px solid #EEF1F5}
+    .mrow.sel{background:#F2F6FA;border-top-color:transparent}
+    .mrow.sel + .mrow{border-top-color:transparent}
+    .mrow .mm{font-size:13px;font-weight:700;color:var(--soft)}
+    .mrow.best .mm{color:var(--good)}
+    .mtrack{position:relative;height:20px}
+    .mtrack .ty{position:absolute;left:0;top:2px;height:11px;border-radius:0 4px 4px 0;background:var(--teal)}
+    .mtrack .ty.over{background:var(--good)} .mtrack .ty.under{background:var(--bad)} .mtrack .ty.mtd{background:var(--amber)}
+    .mtrack .ly{position:absolute;left:0;top:15px;height:4px;border-radius:0 2px 2px 0;background:var(--ly)}
+    .mtrack .tg,.mtrack .ts{position:absolute;top:0;height:20px;width:0;margin-left:-1px}
+    .mtrack .tg{border-left:2px solid var(--navy)}
+    .mtrack .ts{border-left:2px dotted #8a5cf5}
+    .mrow .mv{text-align:right;font-size:13.5px;font-weight:800;color:var(--navy);font-variant-numeric:tabular-nums;white-space:nowrap}
+    .mrow .mv small{display:block;font-size:10.5px;font-weight:700;color:var(--soft)}
+    .hovnote{display:none}
+    .tapnote{display:inline}
+    .readout{display:block;margin-top:12px;padding:10px 12px;border-radius:10px;background:#F2F6FA;font-size:13px;line-height:1.5;color:var(--navy)}
+    .legend .swline{width:2px;height:14px;border:0;background:var(--navy)}
+    .legend .swdot{width:0;height:14px;border:0;border-left:2px dotted #8a5cf5}
+  }
+  .tip{position:fixed;background:var(--navy);color:#fff;font-size:12px;padding:7px 10px;border-radius:8px;pointer-events:none;opacity:0;transition:opacity .12s;z-index:50;white-space:nowrap;box-shadow:var(--shadow-lg)}
+  /* leaderboard */
+  .lb-audit{font-size:10px;color:var(--soft);opacity:.75;margin:-2px 0 4px;letter-spacing:.01em}
+  .lb-upd{font-size:9.5px;color:var(--soft);opacity:.8;margin-top:2px;white-space:nowrap}
+  .lb-upd.none{opacity:.45;font-style:italic}
+  .lb-scroll{overflow-x:auto}
+  table.lb{width:100%;border-collapse:collapse;min-width:680px}
+  table.lb th{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--soft);font-weight:700;text-align:left;padding:9px 10px;border-bottom:1px solid var(--line)}
+  table.lb td{padding:11px 10px;border-bottom:1px solid var(--line);font-size:14px}
+  table.lb td.num.big{font-weight:800;color:var(--navy)}   /* the figure leads, the % supports it */
+  table.lb tr:last-child td{border-bottom:none}
+  table.lb tbody tr.go{cursor:pointer}              /* only offices this person can open */
+  table.lb tbody tr.go:hover td{background:var(--teal-wash,#f2fbfa)}
+  .rk{font-weight:800;color:var(--soft);width:34px}
+  .rk.top{color:#b8860b}
+  .onm{font-weight:700;color:var(--navy)}
+  .onm .br{font-size:10.5px;color:var(--soft);font-weight:600;margin-left:5px}
+  .pbar{height:8px;background:var(--canvas);border-radius:99px;overflow:hidden;min-width:80px;margin-top:4px}
+  .pbar i{display:block;height:100%;border-radius:99px;background:var(--good)}
+  .pbar i.b{background:var(--bad)} .pbar i.a{background:var(--amber)}
+  .num{font-weight:700} .num.g{color:var(--good)} .num.b{color:var(--bad)}
+  .dleft{font-weight:700;color:var(--navy)}
+  table.lb tr.lb-sub{display:none}
+  @media(max-width:520px){
+    table.lb{min-width:0}
+    table.lb tr:not(.lb-sub) > :nth-child(n+5){display:none}
+    table.lb th, table.lb td{padding-left:6px;padding-right:6px}
+    table.lb tbody tr:not(.lb-sub) td{border-bottom:none;padding-bottom:4px}
+    table.lb tr.lb-sub{display:table-row}
+    table.lb tr.lb-sub td{padding-top:0;padding-bottom:12px;font-size:12.5px;color:var(--soft);line-height:1.45}
+    table.lb tr.lb-sub b{color:var(--navy)} table.lb tr.lb-sub b.g{color:var(--good)} table.lb tr.lb-sub b.b{color:var(--bad)}
+    table.lb tr:last-child td{border-bottom:none}
+    table.lb tr.lb-sub .nb{white-space:nowrap}
+    table.lb th{white-space:nowrap;font-size:10.5px}
+    table.lb th .lbx{display:none}
+    .onm .on1{white-space:nowrap}
+  }
+  @media(max-width:380px){
+    table.lb th, table.lb td{padding-left:4px;padding-right:4px}
+    table.lb td{font-size:13px}
+    .rk{width:20px}
+    .pbar{min-width:0}
+  }
+  @media(max-width:359px){
+    table.lb th{white-space:normal}
+    .onm .on1{white-space:normal}
+    .rk{width:26px}
+    .pbar{min-width:60px}
+  }
+  .periodbar{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin:4px 0 6px}
+  .pchip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 15px;font-size:13.5px;font-weight:700;color:var(--navy);cursor:pointer;font-family:inherit;box-shadow:var(--shadow)}
+  .pchip:hover{border-color:var(--teal);color:var(--teal-600)}
+  .pchip.on{background:var(--teal);color:#fff;border-color:var(--teal)}
+  /* Month picker — one button, opens a grid, pick a month. The trigger is a FIXED width
+     and the grid is an overlay, so nothing on the page shifts when you open it or change
+     month (an earlier stepper made the row jump every time the label changed length). */
+  .mpick{position:relative;display:inline-block}
+  .mpick > .trg{display:inline-flex;align-items:center;gap:8px;width:150px;height:38px;
+    border:1px solid var(--line);background:#fff;border-radius:999px;box-shadow:var(--shadow);
+    padding:0 14px;font-family:inherit;font-size:13.5px;font-weight:700;color:var(--soft);cursor:pointer}
+  .mpick > .trg:hover{border-color:var(--teal);color:var(--teal-600)}
+  .mpick > .trg .cal{font-size:14px;line-height:1}
+  .mpick > .trg .txt{flex:1;text-align:left;white-space:nowrap;overflow:hidden}
+  .mpick > .trg .car{font-size:10px;opacity:.7}
+  .mpick.on > .trg{background:var(--teal);border-color:var(--teal);color:#fff}
+  .mpick.open > .trg{border-color:var(--teal)}
+  .mgrid{position:absolute;top:44px;left:0;z-index:60;background:#fff;border:1px solid var(--line);
+    border-radius:14px;box-shadow:var(--shadow-lg);padding:12px;width:262px;display:none}
+  .mpick.open .mgrid{display:block}
+  .mgrid .gh{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;
+    color:var(--soft);padding:0 2px 9px}
+  .mgrid .g{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+  .mgrid .g button{border:1px solid var(--line);background:#fff;border-radius:9px;padding:9px 0;
+    font-family:inherit;font-size:13px;font-weight:700;color:var(--navy);cursor:pointer}
+  .mgrid .g button:hover:not(:disabled){border-color:var(--teal);color:var(--teal-600);background:var(--teal-soft)}
+  .mgrid .g button.on{background:var(--teal);border-color:var(--teal);color:#fff}
+  .mgrid .g button:disabled{color:#c3ccd8;background:#fafbfc;border-color:#eef1f5;cursor:default}
+  .mgrid .clr.comb{border:1px dashed var(--line);border-radius:9px;margin-top:10px}
+  .mgrid .clr.comb.on{background:var(--teal);border-color:var(--teal);color:#fff}
+  .mgrid .g button .tick{font-weight:800}
+  .mgrid .g button.now{border-color:var(--teal);color:var(--teal-600)}
+  .mgrid .g button .nowdot{display:inline-block;width:5px;height:5px;border-radius:50%;
+    background:var(--teal);margin-left:5px;vertical-align:middle}
+  .mgrid .g button.on .nowdot{background:#fff}
+  .mgrid .clr{width:100%;margin-top:9px;border:none;background:none;font-family:inherit;font-size:12.5px;
+    font-weight:700;color:var(--teal-600);cursor:pointer;padding:7px}
+  .mgrid .clr:hover{text-decoration:underline}
+  /* On a phone a left-anchored 262px panel hangs off the screen edge, so center it
+     instead — a familiar picker sheet. Outside-tap and Esc still close it. */
+  @media(max-width:520px){
+    .mgrid{position:fixed;left:14px;right:14px;top:50%;transform:translateY(-50%);
+      width:auto;padding:16px;box-shadow:0 20px 60px rgba(15,42,74,.4)}
+    .mgrid .g button{padding:13px 0;font-size:14px}
+    .mgrid .clr{padding:11px}
+  }
+  .chip .tick{font-weight:800;color:var(--teal-600)}
+  .chip.on .tick{color:#fff}
+  .chip.combtog{border-style:dashed;font-weight:700}
+  .chip.combtog.on{background:var(--teal);border-color:var(--teal);color:#fff}
+  .pchip.mini{padding:8px 14px;font-size:12.5px;box-shadow:none;min-height:36px}
+  .phint{font-size:12.5px;color:var(--soft)}
+  .ypick{display:inline-flex;align-items:center;gap:7px;background:#fff;border:1px solid var(--line);
+    border-radius:999px;box-shadow:var(--shadow);padding:0 6px 0 13px;height:38px}
+  .ypick label{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--soft)}
+  .ypick select{border:none;background:none;font-family:inherit;font-size:13.5px;font-weight:700;
+    color:var(--navy);height:36px;padding-right:4px;cursor:pointer}
+  .gauge.flat{border-top-color:var(--soft)}
+  .gauge.pend{border-top-color:var(--amber)}
+  .g-pct.pend{color:var(--soft)}
+  .g-verdict.pend{color:#7a4d0a}
+  .g-nogoal{font-size:12px;font-weight:700;color:var(--soft);background:var(--canvas);
+    border:1px solid var(--line);border-radius:999px;padding:3px 10px}
+  .g-verdict.flatv{color:var(--soft);font-weight:600}
+  .charttog{display:flex;gap:6px;margin-bottom:12px}
+  /* the at-a-glance gauges — this is the bit people read first */
+  .gauges{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:6px}
+  .gauge{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:18px 20px 16px;position:relative;overflow:hidden}
+  .gauge::before{content:'';position:absolute;inset:0 0 auto 0;height:5px}
+  .gauge.ok::before{background:var(--good)} .gauge.near::before{background:var(--amber)} .gauge.low::before{background:var(--bad)}
+  .g-top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .g-ttl{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--soft)}
+  .g-big{font-size:40px;font-weight:800;color:var(--navy);line-height:1;margin:6px 0 2px}
+  .g-pct{font-size:23px;font-weight:800;margin-left:auto}
+  .g-pct.ok{color:var(--good)} .g-pct.near{color:var(--amber)} .g-pct.low{color:var(--bad)}
+  .g-sub{font-size:13px;color:var(--soft);margin-bottom:14px}
+  .track{position:relative;height:26px;background:#eef1f5;border-radius:999px;overflow:visible;margin:34px 0 9px}
+  .fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--teal2),var(--teal));transition:width .7s cubic-bezier(.2,.8,.2,1)}
+  .fill.ok{background:linear-gradient(90deg,#3fbf7f,var(--good))}
+  .fill.near{background:linear-gradient(90deg,#f7bd6b,var(--amber))}
+  .fill.low{background:linear-gradient(90deg,#e8836e,var(--bad))}
+  .mk{position:absolute;top:-5px;bottom:-5px;width:3px;border-radius:2px}
+  .mk.main{background:var(--navy)} .mk.str{background:#8a5cf5}
+  .mklab{position:absolute;top:-20px;transform:translateX(-50%);font-size:10px;font-weight:800;
+    letter-spacing:.05em;white-space:nowrap;pointer-events:none}
+  .mklab.hi{top:-36px}
+  .mklab.main{color:var(--navy)} .mklab.str{color:#8a5cf5}
+  .mklab::after{content:'';position:absolute;left:50%;top:13px;width:1px;height:7px;background:currentColor;opacity:.45}
+  .mklab.hi::after{height:23px}
+  .overflag{position:absolute;right:9px;top:50%;transform:translateY(-50%);font-size:11px;font-weight:800;color:#fff;
+    text-shadow:0 1px 2px rgba(0,0,0,.25);pointer-events:none}
+  .g-foot{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--soft);margin-top:14px}
+  .g-foot b{color:var(--navy)}
+  .g-verdict{font-size:14.5px;font-weight:700;margin-top:4px}
+  .g-verdict.ok{color:var(--good)} .g-verdict.near{color:var(--amber)} .g-verdict.low{color:var(--bad)}
+  /* celebration */
+  .party{background:linear-gradient(100deg,var(--teal-600,#0F827E),var(--teal,#149B96) 55%,var(--teal2,#2BC0B8));color:#fff;border-radius:16px;
+    padding:16px 20px;margin-bottom:16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;box-shadow:var(--shadow-lg)}
+  .party .em{font-size:30px;line-height:1}
+  .party b{font-size:17px;display:block}
+  .party span{font-size:13.5px;opacity:.92}
+  .party button{margin-left:auto;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);color:#fff;
+    border-radius:999px;padding:9px 16px;font-weight:700;font-size:13.5px;cursor:pointer;font-family:inherit}
+  .party button:hover{background:rgba(255,255,255,.3)}
+  @media(max-width:760px){ .gauges{grid-template-columns:1fr} .g-big{font-size:33px} }
+  .daycard{padding:16px 20px}
+  .dayrow{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .dayn{display:flex;align-items:baseline;gap:7px;white-space:nowrap}
+  .dayn b{font-size:30px;font-weight:800;color:var(--navy);line-height:1}
+  .dayn span{font-size:13px;color:var(--soft)}
+  .daybar{flex:1;min-width:160px;height:16px;background:#eef1f5;border-radius:999px;overflow:hidden}
+  .daybar div{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--teal2),var(--teal));transition:width .7s cubic-bezier(.2,.8,.2,1)}
+  .daypct{font-size:19px;font-weight:800;color:var(--teal-600)}
+  .pips{display:flex;gap:4px;flex-wrap:wrap;margin-top:12px}
+  .pips i{width:13px;height:13px;border-radius:4px;background:#e3e8ef;display:block}
+  .pips i.on{background:var(--teal)}
+  .daysub{font-size:13px;color:var(--soft);margin-top:10px}
+  .secttl{font-size:19px;color:var(--navy);margin:26px 0 2px}
+  .secttl:first-of-type{margin-top:8px}
+  .secsub{font-size:13.5px;color:var(--soft);margin:0 0 14px}
+  .noacc{background:#fff;border:1px dashed var(--line);border-radius:14px;padding:34px;text-align:center;color:var(--soft)}
+  .noacc b{color:var(--navy)}
+  .foot{font-size:12px;color:var(--soft);margin-top:18px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 15px;line-height:1.55}
+  .foot b{color:var(--navy)}
+  @media(max-width:620px){ .kpi .v{font-size:22px} }
+  /* Some people set "reduce motion" in Windows or macOS, often because movement makes
+     them unwell. Honour it everywhere: keep the state changes, drop the travel. */
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{
+      animation-duration:.01ms !important; animation-iteration-count:1 !important;
+      transition-duration:.01ms !important; scroll-behavior:auto !important;
+    }
+  }
+
+</style>
+<script src="user.js?v=hc268d202611250847"></script>
+<script src="celebrate.js?v=hc268d202611250847"></script>
+  <script src="workbook.js?v=hc268d202611250847"></script>
+  <script src="store.js?v=hc268d202611250847"></script>
+  <script src="prodbook.js?v=hc268d202611250847"></script>
+  <script src="prodstore.js?v=hc268d202611250847"></script>
+<script src="schedrec.js?v=hc268d202611250847"></script>
+<script src="proddays.js?v=hc268d202611250847"></script>
+  <script src="gate.js?v=hc268d202611250847"></script>
+</head>
+<body>
+<div class="ribbon">DEMO — made-up numbers. In a real practice this reads the practice’s own production workbook.</div>
+<header class="hdr">
+  <div class="hdr-in">
+    <span class="mark" aria-label="Home-Brace"><img src="../assets/logo-mark.png?v=2" alt="" width="34" height="34"></span>
+    <span class="brand">Home-<i>Brace</i><small>Production Dashboard</small></span>
+    <span class="v1">Demo</span>
+  </div>
+</header>
+<nav class="v1nav"><div class="v1nav-in" id="nav"></div></nav>
+
+<div class="wrap">
+  <div class="viewas">
+    <span class="lab">👤 Viewing as</span>
+    <select id="persona" onchange="DASH.set(this.value)"></select>
+    <span class="scope" id="scope"></span>
+  </div>
+  <div class="page-head">
+    <h1>Production Dashboard</h1>
+    <p id="sub">Where production stands against the main goal and the stretch goal.</p>
+  </div>
+  <div id="chips" class="chips"></div>
+  <div id="view"></div>
+</div>
+<div class="tip" id="tip"></div>
+
+<script>
+/* Identity only. Every figure is read from the practice's live workbook at run time by
+   workbook.js -- see hydrate() below. Deliberately NO real numbers in this file: it is
+   served from a public URL, and a sign-in gate hides the page, not the file. */
+const OFFICES=[
+  {n:'Cedar Grove',brand:'BFO',fee:0,avgFee:0,
+   act:[0,0,0,0,0,0,0,0,0,0,0,0], goal:[0,0,0,0,0,0,0,0,0,0,0,0], stretch:[0,0,0,0,0,0,0,0,0,0,0,0], ly:[0,0,0,0,0,0,0,0,0,0,0,0],
+   sAct:[0,0,0,0,0,0,0,0,0,0,0,0], sGoal:[0,0,0,0,0,0,0,0,0,0,0,0], mdStarts:[0,0,0,0,0,0,0,0,0,0,0,0], lyStarts:[0,0,0,0,0,0,0,0,0,0,0,0],
+   days:[0,0,0,0,0,0,0,0,0,0,0,0], done:[0,0,0,0,0,0,0,0,0,0,0,0], hist:{}},
+  {n:'Northpoint',brand:'BFO',fee:0,avgFee:0,
+   act:[0,0,0,0,0,0,0,0,0,0,0,0], goal:[0,0,0,0,0,0,0,0,0,0,0,0], stretch:[0,0,0,0,0,0,0,0,0,0,0,0], ly:[0,0,0,0,0,0,0,0,0,0,0,0],
+   sAct:[0,0,0,0,0,0,0,0,0,0,0,0], sGoal:[0,0,0,0,0,0,0,0,0,0,0,0], mdStarts:[0,0,0,0,0,0,0,0,0,0,0,0], lyStarts:[0,0,0,0,0,0,0,0,0,0,0,0],
+   days:[0,0,0,0,0,0,0,0,0,0,0,0], done:[0,0,0,0,0,0,0,0,0,0,0,0], hist:{}},
+  {n:'Lakeview',brand:'BFO',fee:0,avgFee:0,
+   act:[0,0,0,0,0,0,0,0,0,0,0,0], goal:[0,0,0,0,0,0,0,0,0,0,0,0], stretch:[0,0,0,0,0,0,0,0,0,0,0,0], ly:[0,0,0,0,0,0,0,0,0,0,0,0],
+   sAct:[0,0,0,0,0,0,0,0,0,0,0,0], sGoal:[0,0,0,0,0,0,0,0,0,0,0,0], mdStarts:[0,0,0,0,0,0,0,0,0,0,0,0], lyStarts:[0,0,0,0,0,0,0,0,0,0,0,0],
+   days:[0,0,0,0,0,0,0,0,0,0,0,0], done:[0,0,0,0,0,0,0,0,0,0,0,0], hist:{}},
+  {n:'Meadow Park',brand:'RBO',fee:0,avgFee:0,
+   act:[0,0,0,0,0,0,0,0,0,0,0,0], goal:[0,0,0,0,0,0,0,0,0,0,0,0], stretch:[0,0,0,0,0,0,0,0,0,0,0,0], ly:[0,0,0,0,0,0,0,0,0,0,0,0],
+   sAct:[0,0,0,0,0,0,0,0,0,0,0,0], sGoal:[0,0,0,0,0,0,0,0,0,0,0,0], mdStarts:[0,0,0,0,0,0,0,0,0,0,0,0], lyStarts:[0,0,0,0,0,0,0,0,0,0,0,0],
+   days:[0,0,0,0,0,0,0,0,0,0,0,0], done:[0,0,0,0,0,0,0,0,0,0,0,0], hist:{}},
+  {n:'Riverbend',brand:'BFO',fee:0,avgFee:0,
+   act:[0,0,0,0,0,0,0,0,0,0,0,0], goal:[0,0,0,0,0,0,0,0,0,0,0,0], stretch:[0,0,0,0,0,0,0,0,0,0,0,0], ly:[0,0,0,0,0,0,0,0,0,0,0,0],
+   sAct:[0,0,0,0,0,0,0,0,0,0,0,0], sGoal:[0,0,0,0,0,0,0,0,0,0,0,0], mdStarts:[0,0,0,0,0,0,0,0,0,0,0,0], lyStarts:[0,0,0,0,0,0,0,0,0,0,0,0],
+   days:[0,0,0,0,0,0,0,0,0,0,0,0], done:[0,0,0,0,0,0,0,0,0,0,0,0], hist:{}},
+  {n:'Westfield',brand:'BFO',fee:0,avgFee:0,
+   act:[0,0,0,0,0,0,0,0,0,0,0,0], goal:[0,0,0,0,0,0,0,0,0,0,0,0], stretch:[0,0,0,0,0,0,0,0,0,0,0,0], ly:[0,0,0,0,0,0,0,0,0,0,0,0],
+   sAct:[0,0,0,0,0,0,0,0,0,0,0,0], sGoal:[0,0,0,0,0,0,0,0,0,0,0,0], mdStarts:[0,0,0,0,0,0,0,0,0,0,0,0], lyStarts:[0,0,0,0,0,0,0,0,0,0,0,0],
+   days:[0,0,0,0,0,0,0,0,0,0,0,0], done:[0,0,0,0,0,0,0,0,0,0,0,0], hist:{}},
+  {n:'Brookside',brand:'BFO',fee:0,avgFee:0,
+   act:[0,0,0,0,0,0,0,0,0,0,0,0], goal:[0,0,0,0,0,0,0,0,0,0,0,0], stretch:[0,0,0,0,0,0,0,0,0,0,0,0], ly:[0,0,0,0,0,0,0,0,0,0,0,0],
+   sAct:[0,0,0,0,0,0,0,0,0,0,0,0], sGoal:[0,0,0,0,0,0,0,0,0,0,0,0], mdStarts:[0,0,0,0,0,0,0,0,0,0,0,0], lyStarts:[0,0,0,0,0,0,0,0,0,0,0,0],
+   days:[0,0,0,0,0,0,0,0,0,0,0,0], done:[0,0,0,0,0,0,0,0,0,0,0,0], hist:{}},
+  {n:'Hillcrest',brand:'MPL',fee:0,avgFee:0,
+   act:[0,0,0,0,0,0,0,0,0,0,0,0], goal:[0,0,0,0,0,0,0,0,0,0,0,0], stretch:[0,0,0,0,0,0,0,0,0,0,0,0], ly:[0,0,0,0,0,0,0,0,0,0,0,0],
+   sAct:[0,0,0,0,0,0,0,0,0,0,0,0], sGoal:[0,0,0,0,0,0,0,0,0,0,0,0], mdStarts:[0,0,0,0,0,0,0,0,0,0,0,0], lyStarts:[0,0,0,0,0,0,0,0,0,0,0,0],
+   days:[0,0,0,0,0,0,0,0,0,0,0,0], done:[0,0,0,0,0,0,0,0,0,0,0,0], hist:{}}
+];
+// An office added in Admin (or the Schedule) has no workbook figures yet. Show it anyway,
+// with zeros and a fee of 0, so the practice can see it exists and start entering — rather
+// than adding an office and finding the dashboard silently ignores it.
+(function addNewOffices(){
+  if(!window.PH || !PH.locations) return;
+  const zero=()=>[0,0,0,0,0,0,0,0,0,0,0,0];
+  PH.locations().forEach(l=>{
+    if(OFFICES.some(o=>o.n===l.n)) return;
+    OFFICES.push({n:l.n, brand:l.brand||'', fee:0, isNew:true,
+      act:zero(), goal:zero(), stretch:zero(), ly:zero(),
+      sAct:zero(), sGoal:zero(), mdStarts:zero(), lyStarts:zero(),
+      days:zero(), done:zero()});
+  });
+})();
+(function(){
+  const MO=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const MOFULL=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const PERSONAS=[
+    {id:'admin',name:'Administrator',offices:'all'},
+    {id:'om',name:'Office Manager — Cedar Grove',offices:['Cedar Grove']},
+    {id:'doctor',name:'Doctor — Cedar Grove & Lakeview',offices:['Cedar Grove','Lakeview']},
+    {id:'tc',name:'Treatment Coordinator',offices:[]},
+    {id:'staff',name:'Front Desk / Staff',offices:[]}
+  ];
+  const el=id=>document.getElementById(id);
+  let cur=PERSONAS[0], sel='ALL', allowed=[];
+  let chosen=false;   // the person picked sel themselves (21/11/2026, code review)
+  let combine=false, combined=new Set();
+  let shown=null;
+  const curOffice=()=>shown;
+  let period='mtd';      // their ask: default to MTD, with a toggle to the year
+  /* ---------- YEARS ----------
+     LIVE_YEAR is the year the workbook is actively tracking (actuals + goals + starts).
+     Anything in an office's `hist` is a past year. The list is DISCOVERED from the data, so
+     when the practice adds 2027 columns the picker gains 2027 with no code change. Years
+     without goals still work — the UI drops the goal-dependent parts instead of breaking. */
+  /* 2026 while the dashboard reads Morgan's Excel; after the switch, the year Home-Brace's own
+     books are on (prodstore.js dashboardData) - 2027 and on with no code change. */
+  let LIVE_YEAR=2026;
+  function allYears(){
+    const set=new Set([LIVE_YEAR]);
+    OFFICES.forEach(o=>Object.keys(o.hist||{}).forEach(y=>set.add(+y)));
+    return [...set].sort((a,b)=>b-a);
+  }
+  let year=LIVE_YEAR, FROM_HB=false;
+  const Z=()=>Array(12).fill(0);
+  // Return an office shaped exactly like the live year, whatever the selected year holds.
+  function yearOf(o){
+    if(year===LIVE_YEAR) return o;
+    const h=(o.hist||{})[String(year)]||{};
+    const act=h.act||Z(), days=h.days||Z();
+    return Object.assign({},o,{
+      act:act, days:days, done:days.slice(),        // a past year is finished, so pace = 1
+      sAct:h.sAct||Z(), sGoal:Z(), goal:Z(), stretch:Z(), ly:Z(), lyStarts:Z(), mdStarts:Z(),
+      noGoals:true, hasStarts:!!h.sAct, hasDays:days.some(d=>d>0)
+    });
+  }
+  let pickOpen=false;    // month-picker popover open?
+  let combineM=false;    // combine several months, like Combine offices
+  let chartMode='production'; // opens on Production — their headline number; toggle to Starts
+
+  // a month counts once it has BOTH an actual and a goal (Hillcrest has actuals from Jan but goals only from Apr)
+  // finished months (all scheduled days worked) — these make up the year figure
+  const live=o=>{const a=[];for(let i=0;i<12;i++){
+    const ok = o.noGoals ? o.act[i]>0                       // past year: actuals are all there is
+                         : (o.act[i]>0&&o.goal[i]>0&&o.days[i]>0&&o.done[i]>=o.days[i]);
+    if(ok)a.push(i);} return a;};
+  // the month currently in progress (some days worked, not all)
+  /* The month in progress.
+     Prefer the ACTUAL calendar month once it has a goal, even before anyone has entered
+     a number — on the 4th of September a manager wants to see September at zero, not be
+     shown August and told it is "the latest". Only fall back to the newest month with
+     production when the calendar month isn't being tracked yet. */
+  const calMonth=()=>(new Date()).getMonth();
+  function partial(o){
+    if(o.noGoals) return -1;                        // a closed-out year has nothing in progress
+    if(year===LIVE_YEAR){
+      const c=calMonth();
+      const tracked = (o.goal[c]>0) || (o.act[c]>0);
+      if(tracked){
+        const finished = o.days[c]>0 && o.done[c]>=o.days[c];
+        if(!finished) return c;
+      }
+    }
+    let last=-1;
+    for(let i=0;i<12;i++) if(o.act[i]>0) last=i;      // newest month with any production
+    if(last<0) return -1;
+    const finished = o.days[last]>0 && o.done[last]>=o.days[last];
+    return finished ? -1 : last;
+  }
+  const sum=(arr,idx)=>idx.reduce((s,i)=>s+arr[i],0);
+  const isMonth =()=>typeof period==='number';
+  const isMonths=()=>Array.isArray(period);          // several months combined
+  const pickedMonths=()=>isMonths()?period.slice().sort((a,b)=>a-b):(isMonth()?[period]:[]);
+  function curIdx(o){ const p=partial(o); if(p>=0)return p; const L=live(o); return L.length?L[L.length-1]:-1; }
+  function months(o){
+    /* A month counts if it has production, or if it is the current month and has a goal
+       — otherwise September reads as "no data" when it is simply not finished. */
+    const okM=i=>(o.act[i]>0 || (year===LIVE_YEAR && i===calMonth() && o.goal[i]>0))
+                 && (o.noGoals || o.goal[i]>0);
+    if(isMonths()) return period.filter(okM).sort((a,b)=>a-b);
+    if(isMonth()) return okM(period)?[period]:[];
+    const L=live(o);
+    if(period==='mtd'){ const c=curIdx(o); return c>=0?[c]:[]; }
+    // Year to date = every finished month PLUS the one in progress, so the year figure
+    // runs through today instead of stopping at the last completed month.
+    const p=partial(o);
+    return (p>=0 && o.act[p]>0 && o.goal[p]>0 && L.indexOf(p)<0) ? L.concat([p]) : L;
+  }
+  const monthName=o=>{ if(isMonth())return MO[period];
+    if(isMonths())return pickedMonths().map(i=>MO[i]).join(' + ');
+    const c=curIdx(o); return c>=0?MO[c]:''; };
+  const inProgress=o=>period==='mtd' && partial(o)>=0;
+  // how far through the month we are, so a part-month isn't judged against a whole month's goal
+  // How much of a given month has been worked. 1 for a finished month; for the month in
+  // progress it's days worked / days scheduled, so a part-month isn't judged against a
+  // whole month's goal. Used per-month so YTD keeps full goals for finished months.
+  function monthPace(o,i){
+    const p=partial(o);
+    if(i!==p) return 1;
+    if(!o.days[i]||!o.done[i]) return 1;              // no days logged => don't scale
+    return o.done[i]/o.days[i];
+  }
+  const pacedSum=(o,arr,L)=>L.reduce((x,i)=>x+(arr[i]||0)*monthPace(o,i),0);
+  function stats(o){
+    const L=months(o);
+    const a=sum(o.act,L);
+    // full goal for every finished month, pro-rated goal for the month in progress
+    let g=L.reduce((x,i)=>x+(o.goal[i]||0),0);            // the REAL goal, never scaled
+    let s=L.reduce((x,i)=>x+(o.stretch[i]||0),0);
+    let l=L.reduce((x,i)=>x+(o.ly[i]||0),0);
+    const gPace=pacedSum(o,o.goal,L);                     // goal for the days worked (pace only)
+    const schd = L.reduce((x,i)=>x+o.days[i],0);
+    const comp = L.reduce((x,i)=>x+o.done[i],0);
+    const perDay = comp? a/comp : 0, needPerDay = comp? gPace/comp : 0;
+    return {L,a,g,s,l,gPace,perDay,needPerDay,pct:g?a/g:0,spct:s?a/s:0,yoy:l?a/l:0,
+            vgoal:a-g, vpace:a-gPace, vstretch:a-s,
+            share:g?gPace/g:1,
+            sched:schd, done:comp,
+            // "Days left" = scheduled production days (workbook line 26) minus completed
+            // days (line 5). It follows the period chosen: a month or a combined set counts
+            // only those months; Year to date counts the rest of the year. A closed-out past
+            // year has none left.
+            daysLeft:(function(){
+              if(o.noGoals) return 0;
+              if(period==='ytd') return o.days.reduce((x,y)=>x+y,0)-o.done.reduce((x,y)=>x+y,0);
+              return L.reduce((x,i)=>x+Math.max(0,(o.days[i]||0)-(o.done[i]||0)),0);
+            })()};
+  }
+  function group(list){
+    const z=()=>Array(12).fill(0);
+    const G={n:'All Offices',brand:'',act:z(),goal:z(),stretch:z(),ly:z(),sAct:z(),sGoal:z(),lyStarts:z(),days:z(),done:z(),
+             noGoals:list.some(o=>o.noGoals), hasStarts:list.some(o=>o.hasStarts!==false),
+             hasDays:list.some(o=>o.days.some(d=>d>0))};
+    // Only roll up months an office actually reported — finished months, plus the one in progress.
+    // (Summing every office's scheduled days made January look half-worked for the group.)
+    list.forEach(o=>{ const L=live(o), p=partial(o);
+      for(let i=0;i<12;i++){
+        if(L.indexOf(i)<0 && i!==p) continue;
+        G.act[i]+=o.act[i]; G.goal[i]+=o.goal[i]; G.stretch[i]+=o.stretch[i]; G.ly[i]+=o.ly[i];
+        G.sAct[i]+=(o.sAct[i]||0); G.sGoal[i]+=(o.sGoal[i]||0); G.lyStarts[i]+=(o.lyStarts&&o.lyStarts[i])||0;
+        G.days[i]+=o.days[i]; G.done[i]+=o.done[i];
+      } });
+    return G;
+  }
+  const money=v=>{const s=v<0?'-':'';v=Math.abs(v);
+    return s+'$'+(v>=1e6?(v/1e6).toFixed(2)+'M':v>=1e3?Math.round(v/1e3)+'K':Math.round(v));};
+  const full=v=>(v<0?'-$':'$')+Math.abs(Math.round(v)).toLocaleString('en-US');
+  const pc=v=>Math.round(v*100)+'%';
+  function niceMax(v){ if(!v) return 1;
+    const target=v*1.06, mag=Math.pow(10,Math.floor(Math.log10(target))), n=target/mag;
+    const steps=[1,1.2,1.5,2,2.5,3,4,5,6,8,10];
+    return (steps.find(x=>x>=n)||10)*mag;
+  }
+
+  function kpis(o){
+    const t=stats(o);
+    const vg=t.vgoal>=0, vy=t.yoy>=1;
+    return '<div class="kpis">'+
+      '<div class="kpi n"><div class="k">Production so far</div><div class="v">'+money(t.a)+'</div>'+
+        '<div class="s">'+t.L.length+' month'+(t.L.length===1?'':'s')+' with a goal set</div></div>'+
+      '<div class="kpi '+(vg?'g':'b')+'"><div class="k">vs Main goal</div><div class="v" style="color:'+(vg?'var(--good)':'var(--bad)')+'">'+(vg?'+':'')+money(t.vgoal)+'</div>'+
+        '<div class="s">Main goal '+money(t.g)+'</div></div>'+
+      '<div class="kpi"><div class="k">% of main goal</div><div class="v">'+pc(t.pct)+'</div>'+
+        '<div class="s">Stretch: <b class="'+(t.vstretch>=0?'g':'b')+'">'+pc(t.spct)+'</b> of '+money(t.s)+'</div></div>'+
+      '<div class="kpi '+(vy?'g':'b')+'"><div class="k">vs Last year</div><div class="v" style="color:'+(vy?'var(--good)':'var(--bad)')+'">'+pc(t.yoy)+'</div>'+
+        '<div class="s">Last year '+money(t.l)+'</div></div>'+
+    '</div>';
+  }
+  function sStats(o){
+    const L=months(o);
+    const sa=o.sAct||[], sg=o.sGoal||[];
+    const a=L.reduce((x,i)=>x+(sa[i]||0),0);
+    const g=L.reduce((x,i)=>x+(sg[i]||0),0);              // real starts goal, never scaled
+    const gPace=pacedSum(o,sg,L);
+    const days=L.reduce((x,i)=>x+(o.done[i]||0),0);
+    return {L,a,g,gPace,pct:g?a/g:0,v:a-g,vpace:a-gPace,perDay:days?a/days:0,needPerDay:days?gPace/days:0,days};
+  }
+  function startsKpis(o){
+    const t=sStats(o), up=t.v>=0;
+    return '<div class="kpis">'+
+      '<div class="kpi n"><div class="k">Starts so far</div><div class="v">'+Math.round(t.a)+'</div>'+
+        '<div class="s">'+t.L.length+' month'+(t.L.length===1?'':'s')+' reported</div></div>'+
+      '<div class="kpi '+(up?'g':'b')+'"><div class="k">vs Starts goal</div><div class="v" style="color:'+(up?'var(--good)':'var(--bad)')+'">'+(up?'+':'')+Math.round(t.v)+'</div>'+
+        '<div class="s">Goal '+Math.round(t.g)+' starts</div></div>'+
+      '<div class="kpi"><div class="k">% of starts goal</div><div class="v">'+pc(t.pct)+'</div>'+
+        '<div class="s">'+(up?'ahead of':'behind')+' where it should be</div></div>'+
+      '<div class="kpi"><div class="k">Starts per day</div><div class="v">'+t.perDay.toFixed(1)+'</div>'+
+        '<div class="s">across production days worked</div></div>'+
+    '</div>';
+  }
+  const band=p=>p>=1?'ok':(p>=0.9?'near':'low');
+  function gauge(opts){
+    // Pending = production entered but no days logged. Don't paint it red; we don't know.
+    if(opts.pending) opts=Object.assign({},opts,{pct:null});
+    if(opts.noGoal){
+      return '<div class="gauge flat">'+
+        '<div class="g-top"><span class="g-ttl">'+opts.icon+' '+opts.title+'</span>'+
+          '<span class="g-nogoal">no goal on file</span></div>'+
+        '<div class="g-big">'+opts.big+'</div><div class="g-sub">'+opts.sub+'</div>'+
+        '<div class="g-verdict flatv">'+opts.verdict+'</div>'+
+        '<div class="g-foot">'+opts.footer+'</div></div>';
+    }
+    const isPending = opts.pct===null;
+    const cls = isPending ? 'pend' : band(opts.pct);
+    // Keep the goal mark readable even at 400%: the scale never stretches past ~1.35x the
+    // furthest goal, and anything beyond that fills the bar and shows an "over" flag.
+    const far=Math.max(1,opts.stretchPct||0);
+    const top=Math.min(Math.max(opts.pct,far)*1.08, far*1.35);
+    const w=v=>Math.min(100,(v/top)*100);
+    const over=opts.pct>top;
+    const gp=w(1), sp=opts.stretchPct?w(opts.stretchPct):null;
+    const close = sp!==null && Math.abs(sp-gp)<17;
+    const lab=(pos,txt,cls2,hi)=>'<div class="mklab '+cls2+(hi?' hi':'')+'" style="left:'+pos+'%">'+txt+'</div>';
+    let marks='<div class="mk main" style="left:'+gp+'%"></div>'+lab(gp,'GOAL','main',false);
+    if(sp!==null) marks+='<div class="mk str" style="left:'+sp+'%"></div>'+lab(sp,'STRETCH','str',close);
+    return '<div class="gauge '+cls+'">'+
+      '<div class="g-top"><span class="g-ttl">'+opts.icon+' '+opts.title+'</span>'+
+        '<span class="g-pct '+cls+'">'+(isPending?'\u2014':pc(opts.pct))+'</span></div>'+
+      '<div class="g-big">'+opts.big+'</div><div class="g-sub">'+opts.sub+'</div>'+
+      '<div class="track"><div class="fill '+cls+'" style="width:'+(isPending?0:w(opts.pct))+'%"></div>'+marks+
+        ((!isPending&&over)?'<span class="overflag">'+pc(opts.pct)+' \u25b6</span>':'')+'</div>'+
+      '<div class="g-verdict '+cls+'">'+opts.verdict+'</div>'+
+      '<div class="g-foot">'+opts.footer+'</div></div>';
+  }
+  function gauges(o){
+    const t=stats(o), st=sStats(o);
+    const c0=partial(o);
+    /* Completed days now fill in from the Schedule as each day passes, so a month with days but no production typed
+       yet is pending too - not every office in red "behind pace" (21/11/2026, code review). */
+    const paced = inProgress(o) && c0>=0 && o.done[c0]>0 && o.act[c0]>0;
+    const par = paced ? ' pace' : ' goal';
+    // Morgan flagged this: "Main goal" meant two different things depending on whether the
+    // office had logged its days — a part-month goal on some tiles, the whole month's on
+    // others. Say which one it is, every time.
+    // Always the real goal from the workbook — Morgan: it must match her sheet, and a
+    // part-month must never read as "goal hit".
+    const goalLab = (period==='mtd'||isMonth()) ? 'Monthly goal' : 'Goal';
+    // With no days logged we can't say whether they're behind — comparing a part month to a
+    // whole month's goal produced a red 9% and "$205,505 behind goal" that simply wasn't true.
+    const pending = inProgress(o) && c0>=0 && (!o.done[c0] || !o.act[c0]);
+    const waitFor = (pending && o.done[c0]) ? 'this month\u2019s production' : 'days worked';   // what it is waiting for
+    const sVerdict = o.noGoals
+      ? (o.hasStarts===false ? 'Starts aren\u2019t on file for '+year
+         : 'Worked out from '+year+'\u2019s production and average case fee.')
+      : pending ? '\u23f3 Enter '+waitFor+' to see whether this is on pace.'
+      : paced ? ((st.vpace>=0?'\u2705 ':'\u26a0\ufe0f ')+Math.abs(Math.round(st.vpace))+
+                 ' starts '+(st.vpace>=0?'ahead of':'behind')+' pace')
+      : (st.v>=0 ? '\u2705 '+Math.abs(Math.round(st.v))+' starts over goal'
+                 : '\u26a0\ufe0f '+Math.abs(Math.round(st.v))+' starts to go');
+    const pVerdict = o.noGoals
+      ? year+' actuals from the workbook \u2014 no goals were recorded for that year.'
+      : pending ? '\u23f3 Enter '+waitFor+' to see whether this is on pace.'
+      : paced ? ((t.vpace>=0?'\u2705 ':'\u26a0\ufe0f ')+full(Math.abs(t.vpace))+
+                 (t.vpace>=0?' ahead of':' behind')+' pace for '+o.done[c0]+' of '+o.days[c0]+' days')
+      : (t.vgoal>=0 ? '\u2705 '+full(Math.abs(t.vgoal))+' over goal'
+                    : '\u26a0\ufe0f '+full(Math.abs(t.vgoal))+' to go');
+    const dayNote = inProgress(o) ? (()=>{const c=partial(o);
+      return o.done[c] ? ' \u00b7 '+o.done[c]+' of '+o.days[c]+' days'
+                       : ' \u00b7 days not logged yet';})() : '';
+
+    // Production LEFT, Starts RIGHT — production is the number they lead with.
+    // No stretch on starts: their workbook has no starts stretch goal, and the derived one
+    // was dropped on request (2026-08-17). Stretch stays on production only.
+    return '<div class="gauges">'+
+      gauge({icon:'\ud83d\udcb0',title:'Production',big:money(t.a),noGoal:!!o.noGoals,
+        sub:(period==='mtd'?monthName(o)+' so far'+dayNote:(isMonth()?MOFULL[period]:'Year so far'))+' \u00b7 vs last year '+pc(t.yoy),
+        pct:t.pct,stretchPct:(t.g?t.s/t.g:0),verdict:pVerdict,
+        pending:pending,
+        footer:'<span>'+goalLab+' <b>'+money(t.g)+'</b></span><span>Stretch <b>'+money(t.s)+'</b> ('+pc(t.spct)+' there)</span>'+
+                 '<span>Per day <b>'+money(t.perDay)+'</b> vs <b>'+money(t.needPerDay)+'</b> needed</span>'+
+                 (paced?'<span style="color:var(--teal-600)">'+o.done[c0]+' of '+o.days[c0]+
+                        ' days done \u2014 pace target '+money(t.gPace)+'</span>'
+                   :(pending?'<span style="color:var(--amber)">'+(o.done[c0]?'no production entered yet':'no days logged yet')+' \u2014 shown against the whole month</span>':''))})+
+      gauge({icon:'\ud83e\uddb7',title:'Starts',
+        big:(o.noGoals&&o.hasStarts===false)?'\u2014':Math.round(st.a)+' starts',noGoal:!!o.noGoals,
+        sub:(period==='mtd'?monthName(o)+' so far'+dayNote:(isMonth()?MOFULL[period]:'Year so far'))+' \u00b7 '+st.perDay.toFixed(1)+' a day',
+        pct:st.pct,verdict:sVerdict,
+        pending:pending,
+        footer:'<span>'+goalLab+' <b>'+Math.round(st.g)+'</b></span>'+
+          '<span>Per day <b>'+st.perDay.toFixed(1)+'</b> vs <b>'+st.needPerDay.toFixed(1)+'</b> needed</span>'+
+          '<span>'+st.days+' days worked</span>'})+
+    '</div>';
+  }
+
+  /* ---------- celebrations ---------- */
+  const partied=new Set();
+  function goalState(o){ const t=stats(o); return {main:t.pct>=1, stretch:t.s>0&&t.a>=t.s, t}; }
+  function partyBanner(o,who){
+    const g=goalState(o); if(!g.main&&!g.stretch) return '';
+    const msg = g.main&&g.stretch ? 'smashed the main goal AND the stretch goal!'
+              : g.main ? 'hit the main goal!' : 'reached the stretch goal!';
+    const em = g.main&&g.stretch ? '\ud83c\udf86\ud83c\udf89' : g.main ? '\ud83c\udf86' : '\ud83c\udf89';
+    const when = period==='mtd' ? ' this month' : (isMonth()? ' in '+MOFULL[period] : ' this year');
+    return '<div class="party"><span class="em">'+em+'</span><div><b>'+who+' '+msg+'</b>'+
+      '<span>'+pc(g.t.pct)+' of goal \u00b7 '+full(g.t.a)+' produced'+when+'</span></div>'+
+      '<button onclick="DASH.party()">Celebrate again \ud83c\udf8a</button></div>';
+  }
+  function maybeParty(o,key){
+    const g=goalState(o); if(!g.main&&!g.stretch) return;
+    if(partied.has(key)) return; partied.add(key);
+    /* `partied` is in-memory, so an office already over goal was celebrated on every
+       single page load — charming once, wearing by Thursday, on the page people open to
+       check whether they are in trouble. Once per office per month is enough. */
+    try{
+      const seen=JSON.parse(localStorage.getItem('ph_partied')||'{}');
+      const stamp=new Date().getFullYear()+'-'+new Date().getMonth();
+      if(seen[key]===stamp) return;
+      seen[key]=stamp;
+      localStorage.setItem('ph_partied', JSON.stringify(seen));
+    }catch(_){}
+    // Someone who asked for less motion should not get fireworks.
+    try{ if(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return; }catch(_){}
+    setTimeout(()=>{ if(window.Celebrate) Celebrate.fire({fireworks:g.main,confetti:g.stretch}); },420);
+  }
+  function partyNow(){
+    const o=curOffice(); if(!o||!window.Celebrate) return;
+    const g=goalState(o); Celebrate.fire({fireworks:g.main||!g.stretch,confetti:g.stretch});
+  }
+
+  function periodBar(o){
+    // The "This month" pill must always name the CURRENT month. monthName() returns the
+    // selected one, so looking back at July used to relabel the pill "This month · Jul".
+    const ci=curIdx(o); const nm = ci>=0 ? MO[ci] : '';
+    const b=(v,lab)=>'<button class="pchip'+(period===v?' on':'')+'" onclick="DASH.period(\''+v+'\')">'+lab+'</button>';
+    const done=live(o), cur=partial(o);
+    const avail=done.filter(i=>i!==cur);                 // finished months you can look back at
+    const picked=pickedMonths();
+    // ONE month control. It defaults to this month, so there's no separate "This month"
+    // button — the current month sits in the grid marked "now", finished months are
+    // pickable, and Combine ticks several together.
+    const cells=MOFULL.map((m,i)=>{
+      const isNow = i===cur;
+      const ok = avail.indexOf(i)>=0 || isNow || i===cur;
+      const on = isNow ? (period==='mtd' || picked.indexOf(i)>=0) : picked.indexOf(i)>=0;
+      return '<button'+(ok?'':' disabled')+(on?' class="on"':(isNow?' class="now"':''))+
+        (ok?' onclick="DASH.month('+i+')"':'')+' title="'+m+(isNow?' (this month so far)':'')+'">'+
+        (combineM&&ok?'<span class="tick">'+(on?'✓':'+')+'</span> ':'')+MO[i]+
+        (isNow?'<i class="nowdot" title="this month"></i>':'')+'</button>';
+    }).join('');
+    // If the newest month with numbers IS the calendar month, say "This month".
+    // If the calendar has moved on (Sept 1, workbook still on August), say "Latest"
+    // — calling August "this month" in September read as a bug.
+    const realNow=(new Date()).getMonth();
+    const isCal = year===LIVE_YEAR && ci===realNow;
+    const mlabel = period==='mtd' ? (isCal?'This month · ':'Latest · ')+(nm||MO[cur]||'')
+      : picked.length===0 ? 'Pick a month'
+      : picked.length===1 ? MOFULL[picked[0]] : picked.length+' months';
+    const back='<div class="mpick on'+(pickOpen?' open':'')+'">'+
+      '<button class="trg" onclick="DASH.pickOpen()" aria-haspopup="true" aria-expanded="'+(pickOpen?'true':'false')+'">'+
+        '<span class="cal">📅</span><span class="txt">'+mlabel+'</span><span class="car">▼</span></button>'+
+      '<div class="mgrid" onclick="event.stopPropagation()">'+
+        '<div class="gh">'+(combineM?'Tick the months to add together':'Pick a month — ● is this month so far')+'</div>'+
+        '<div class="g">'+cells+'</div>'+
+        '<button class="clr comb'+(combineM?' on':'')+'" onclick="DASH.combineMonths()">'+
+          (combineM?'✕ Stop combining months':'➕ Combine months')+'</button>'+
+      '</div></div>';
+    const hint = year!==LIVE_YEAR
+      ? year+' as recorded in the workbook \u2014 production'+(o.hasStarts!==false?', starts':'')+
+        (o.hasDays?' and production days':'')+'. No goals were kept for that year.'
+      : isMonths() ? picked.map(i=>MOFULL[i]).join(' + ')+' added together.'
+      : isMonth() ? MOFULL[period]+' — a finished month, judged against its full goal.'
+      // Was "goals scaled to the days worked so far" — which is what the app used to do and
+      // exactly what Morgan rejected: August read as goal-hit when it was not. The goal shown
+      // is the FULL monthly goal; only the pace comparison uses days worked.
+      : period==='mtd' ? 'Showing '+(nm||'the latest month')+(isCal?' so far':' — the newest month with numbers')+', against its full monthly goal.'
+      : 'Every month so far this year, through today — ' + (nm?nm+' is counted up to the days worked.':'live.');
+    // Keep the month suffix ALWAYS — it used to appear only while MTD was selected, which
+    // changed the pill's width and shoved the month picker sideways on every switch.
+    const ys=allYears();
+    const ysel = ys.length<2 ? '' :
+      '<div class="ypick"><label for="yearsel">Year</label><select id="yearsel" onchange="DASH.year(this.value)">'+
+        ys.map(y=>'<option value="'+y+'"'+(y===year?' selected':'')+'>'+y+(y===LIVE_YEAR?'':' \u00b7 actuals only')+'</option>').join('')+
+      '</select></div>';
+    // A past year is closed out — This month / month picker make no sense there.
+    const cur2 = year===LIVE_YEAR ? back+b('ytd','Year to date') : b('ytd','Whole of '+year);
+    return '<div class="periodbar">'+ysel+cur2+
+      '<span class="phint">'+hint+'</span></div>';
+  }
+  function daysTiles(o){
+    const t=stats(o), pct=t.sched?t.done/t.sched:0;
+    const pips=t.sched<=31 ? '<div class="pips">'+Array.from({length:t.sched},(_,i)=>
+        '<i class="'+(i<t.done?'on':'')+'"></i>').join('')+'</div>' : '';
+    return '<div class="card daycard"><div class="dayrow">'+
+        '<div class="dayn"><b>'+t.done+'</b><span>of '+t.sched+' days worked</span></div>'+
+        '<div class="daybar"><div style="width:'+Math.min(100,pct*100)+'%"></div></div>'+
+        '<div class="daypct">'+pc(pct)+'</div>'+
+      '</div>'+pips+
+    '</div>';
+  }
+  // Months to plot: finished ones plus the month in progress, so the chart doesn't stop
+  // a month behind the rest of the dashboard.
+  function plotMonths(o){
+    const L=live(o), p=partial(o);
+    // Include the month in progress even at zero: a bar of nothing beside its goal line
+    // is the point early in a month. Requiring production first hid September entirely.
+    const tracked = p>=0 && (o.act[p]>0 || o.goal[p]>0);
+    return (tracked && L.indexOf(p)<0) ? L.concat([p]) : L;
+  }
+  function startsChart(o){
+    const L=plotMonths(o); if(!L.length) return '';
+    const sa=o.sAct||[], sg=o.sGoal||[], sl=o.lyStarts||[];
+    // No stretch on starts anywhere (dropped 2026-08-17) — their workbook has no starts
+    // stretch row and the derived one was more confusing than useful.
+    let max=0; L.forEach(i=>{max=Math.max(max,sa[i]||0,sg[i]||0,sl[i]||0);});
+    max=niceMax(max);
+    const best=o.noGoals ? L.reduce((b,i)=>((sa[i]||0)>(sa[b]||0)?i:b),L[0])
+      : L.reduce((b,i)=>((sg[i]?sa[i]/sg[i]:0)>(sg[b]?sa[b]/sg[b]:0)?i:b),L[0]);
+    const cols=L.map(i=>{
+      const a=sa[i]||0, g=sg[i]||0, l=sl[i]||0, h=v=>Math.max(1.5,(v/max)*100);
+      return '<div class="mo'+(i===best?' best':'')+'"><div class="bars">'+
+        '<div class="gm" style="bottom:'+h(g)+'%"></div>'+
+        '<div class="bar lyb" style="height:'+h(l)+'%" data-t="'+MO[i]+' last year: about '+Math.round(l)+' starts"></div>'+
+        '<div class="bar ab '+(a>=g?'over':'under')+'" style="height:'+h(a)+'%" data-t="'+MO[i]+' '+LIVE_YEAR+': '+Math.round(a)+' starts \u00b7 goal '+Math.round(g)+'">'+
+          '<span class="bval">'+Math.round(a)+'</span></div>'+
+        '</div><div class="molab">'+MO[i]+(i===best?' \u2605':'')+'</div></div>';
+    }).join('');
+    // A PHONE: one row per month (see the CSS note above .mlist).
+    let rmax=0; L.forEach(i=>{ rmax=Math.max(rmax,sa[i]||0,sg[i]||0,sl[i]||0); }); rmax=rmax*1.03||1;   // the rows' own scale: the bars fill the row
+    const rows=L.map(i=>{
+      const a=sa[i]||0, g=sg[i]||0, l=sl[i]||0, w=v=>Math.min(100,Math.max(0,(v/rmax)*100)), prog=(o.done||[])[i]>0 && (o.done||[])[i]<(o.days||[])[i];
+      return '<div class="mrow'+(i===best?' best':'')+'"><span class="mm">'+MO[i]+(i===best?' \u2605':'')+'</span>'+
+        '<span class="mtrack"><i class="ty '+(prog?'mtd':a>=g?'over':'under')+'" style="width:'+w(a)+'%"></i><i class="ly" style="width:'+w(l)+'%"></i>'+(g?'<i class="tg" style="left:'+w(g)+'%"></i>':'')+'</span>'+
+        '<span class="mv">'+Math.round(a)+(g?'<small>'+Math.round(a/g*100)+'% of goal</small>':'')+'</span>'+
+        '<span class="ro" hidden><b>'+MOFULL[i]+' '+LIVE_YEAR+': '+Math.round(a)+' starts'+(prog?' so far':'')+'</b>'+(g?' \u00b7 goal '+Math.round(g)+(a>=g?' \u2713':''):'')+
+          ' \u00b7 '+(LIVE_YEAR-1)+': about '+Math.round(l)+(i===best?' \u00b7 \u2605 best month':'')+'</span></div>';
+    }).join('');
+    return '<div class="card" id="bottomchart"><h2>Starts month by month</h2>'+
+      '<div class="sub"><span class="hovnote">Last year beside this year. <b>Dashed</b> = starts goal.</span><span class="tapnote">This year\u2019s bar, last year\u2019s thin grey one under it. <b>Navy line</b> = starts goal. Tap a month for its figures.</span> \u2605 marks the best month.</div>'+
+      chartToggle()+
+      '<div class="legend"><span><i class="sw" style="background:var(--ly)"></i> Last year ('+(LIVE_YEAR-1)+')</span>'+
+        '<span><i class="sw" style="background:var(--good)"></i> '+LIVE_YEAR+' at/above goal</span>'+
+        '<span><i class="sw" style="background:var(--bad)"></i> '+LIVE_YEAR+' under goal</span>'+
+        '<span><i class="swline"></i> Starts goal</span>'+
+        '<span style="margin-left:auto;font-style:italic">last year\u2019s starts are worked out from the production figures</span></div>'+
+      '<div class="chartwrap"><div class="plot">'+axis(max,false)+'<div class="chart">'+cols+'</div></div></div><div class="mlist">'+rows+'</div><div class="readout" id="readout"></div></div>';
+  }
+  function chart(o){
+    const L=plotMonths(o); if(!L.length) return '';
+    let max=0; L.forEach(i=>{max=Math.max(max,o.act[i],o.goal[i],o.stretch[i],o.ly[i]);});
+    max=niceMax(max);
+    const best=o.noGoals ? L.reduce((b,i)=>(o.act[i]>o.act[b]?i:b),L[0])
+      : L.reduce((b,i)=>((o.goal[i]?o.act[i]/o.goal[i]:0)>(o.goal[b]?o.act[b]/o.goal[b]:0)?i:b),L[0]);
+    const cols=L.map(i=>{
+      const inProg=o.done[i]>0&&o.done[i]<o.days[i];
+      const cls=inProg?'mtd':(o.act[i]>=o.goal[i]?'over':'under');
+      const h=v=>Math.max(1.5,(v/max)*100);
+      return '<div class="mo'+(i===best?' best':'')+'"><div class="bars">'+
+        '<div class="gm" style="bottom:'+h(o.goal[i])+'%"></div>'+
+        '<div class="sm" style="bottom:'+h(o.stretch[i])+'%"></div>'+
+        '<div class="bar lyb" style="height:'+h(o.ly[i])+'%" data-t="'+MO[i]+' last year: '+full(o.ly[i])+'"></div>'+
+        '<div class="bar ab '+cls+'" style="height:'+h(o.act[i])+'%" data-t="'+MO[i]+' '+LIVE_YEAR+': '+full(o.act[i])+' \u00b7 main goal '+full(o.goal[i])+' \u00b7 stretch '+full(o.stretch[i])+'">'+
+          '<span class="bval">'+money(o.act[i])+'</span></div>'+
+        '</div><div class="molab">'+MO[i]+(i===best?' \u2605':'')+'</div></div>';
+    }).join('');
+    // A PHONE: one row per month (see the CSS note above .mlist).
+    let rmax=0; L.forEach(i=>{ rmax=Math.max(rmax,o.act[i]||0,o.goal[i]||0,o.stretch[i]||0,o.ly[i]||0); }); rmax=rmax*1.03||1;   // the rows' own scale
+    const rows=L.map(i=>{
+      const inProg=o.done[i]>0&&o.done[i]<o.days[i], a=o.act[i], g=o.goal[i], st=o.stretch[i], w=v=>Math.min(100,Math.max(0,(v/rmax)*100));
+      return '<div class="mrow'+(i===best?' best':'')+'"><span class="mm">'+MO[i]+(i===best?' \u2605':'')+'</span>'+
+        '<span class="mtrack"><i class="ty '+(inProg?'mtd':a>=g?'over':'under')+'" style="width:'+w(a)+'%"></i><i class="ly" style="width:'+w(o.ly[i])+'%"></i>'+
+          (g?'<i class="tg" style="left:'+w(g)+'%"></i>':'')+(st?'<i class="ts" style="left:'+w(st)+'%"></i>':'')+'</span>'+
+        '<span class="mv">'+money(a)+(g?'<small>'+Math.round(a/g*100)+'% of goal</small>':'')+'</span>'+
+        '<span class="ro" hidden><b>'+MOFULL[i]+' '+LIVE_YEAR+': '+money(a)+(inProg?' so far':'')+'</b>'+
+          (g?' \u00b7 goal '+money(g)+(a>=g?' \u2713':'')+(st?' \u00b7 stretch '+money(st):''):'')+
+          ' \u00b7 '+(LIVE_YEAR-1)+': '+money(o.ly[i])+(i===best?' \u00b7 \u2605 best month':'')+'</span></div>';
+    }).join('');
+    return '<div class="card" id="bottomchart"><h2>Month by month</h2>'+
+      '<div class="sub"><span class="hovnote">Last year beside this year. <b>Dashed</b> = main goal, <b>dotted</b> = stretch. Hover any bar for exact figures.</span><span class="tapnote">This year\u2019s bar, last year\u2019s thin grey one under it. <b>Navy line</b> = main goal, <b>purple dots</b> = stretch. Tap a month for its figures.</span> \u2605 = best month.</div>'+
+      chartToggle()+
+      '<div class="legend"><span><i class="sw" style="background:var(--ly)"></i> Last year ('+(LIVE_YEAR-1)+')</span>'+
+        '<span><i class="sw" style="background:var(--good)"></i> '+LIVE_YEAR+' at/above goal</span>'+
+        '<span><i class="sw" style="background:var(--bad)"></i> '+LIVE_YEAR+' under goal</span>'+
+        '<span><i class="swline"></i> Main goal</span><span><i class="swdot"></i> Stretch goal</span></div>'+
+      '<div class="chartwrap"><div class="plot">'+axis(max,true)+'<div class="chart">'+cols+'</div></div></div><div class="mlist">'+rows+'</div><div class="readout" id="readout"></div></div>';
+  }
+  function axis(max,money$){
+    const steps=4, lines=[];
+    for(let i=steps;i>=0;i--){
+      const v=max*(i/steps), pct=(i/steps)*100;
+      lines.push('<div class="gl'+(i===0?' base':'')+'" style="bottom:'+pct+'%"><b>'+(money$?money(v):Math.round(v))+'</b></div>');
+    }
+    return '<div class="grid">'+lines.join('')+'</div>';
+  }
+  function chartToggle(){
+    const b=(v,lab)=>'<button class="pchip mini'+(chartMode===v?' on':'')+'" onclick="DASH.chart(\''+v+'\')">'+lab+'</button>';
+    return '<div class="charttog">'+b('production','\ud83d\udcb0 Production')+b('starts','\ud83e\uddb7 Starts')+'</div>';
+  }
+  /* The audit trail comes from SharePoint after sign-in (loadAudit, on ph-identity);
+     the local copy is only the sandbox's. */
+  let AUDIT=null;
+  function auditData(){ if(AUDIT) return AUDIT; try{ return JSON.parse(localStorage.getItem('ph_prodaudit')||'{}'); }catch(_){ return {}; } }
+  function loadAudit(){
+    if(!(window.PH_STORE && PH.isLive())) return;
+    PH_STORE.get('ph_prodaudit').then(function(a){ if(a && typeof a==='object'){ AUDIT=a; render(); } }).catch(function(){});
+  }
+  function officeAudit(name){
+    try{
+      const a=auditData();
+      const e=(a.offices||{})[name];
+      if(!e) return '<div class="lb-upd none">no app entry yet</div>';
+      const d=new Date(e.at);
+      return '<div class="lb-upd">'+e.by.split(' ')[0]+' \u00b7 '+
+        d.toLocaleDateString('en-US',{month:'short',day:'numeric'})+', '+
+        d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})+'</div>';
+    }catch(_){ return ''; }
+  }
+  function leaderboard(list){
+    // Production leads and ranks the table — it's the number they run the business on.
+    const rows=list.map(src=>{const o=yearOf(src); return {o,t:stats(o),s:sStats(o)};})
+      .sort((x,y)=> x.o.noGoals ? y.t.a-x.t.a : y.t.pct-x.t.pct);   // no goals => rank by production
+    // Nobody leads a table of zeros. Only crown someone once there is production to rank.
+    const anyProduction=rows.some(r=>r.t.a>0);
+    const body=rows.map((r,i)=>{
+      const t=r.t, pctw=Math.min(100,t.pct*100), cls=t.pct>=1?'':(t.pct>=.9?'a':'b');
+      const canOpen=allowed.some(a=>a.n===r.o.n);
+      return '<tr'+(canOpen?' class="go" onclick="DASH.pick(\''+r.o.n+'\')" title="Open '+r.o.n+'"':'')+'>'+
+        '<td class="rk'+(i===0&&anyProduction?' top':'')+'">'+((i===0&&anyProduction)?'🏆':i+1)+'</td>'+
+        '<td><div class="onm"><span class="on1">'+r.o.n+'</span><span class="br">'+r.o.brand+'</span></div>'+
+          '<div class="pbar"><i class="'+cls+'" style="width:'+pctw+'%"></i></div>'+
+          officeAudit(r.o.n)+'</td>'+
+        '<td class="num big">'+full(t.a)+'</td>'+
+        '<td class="num">'+(r.o.noGoals?'\u2014':pc(t.pct))+'</td>'+
+        '<td class="num '+(t.yoy>=1?'g':'b')+'">'+((t.l&&t.a>0)?pc(t.yoy):'\u2014')+'</td>'+
+        '<td class="num big">'+Math.round(r.s.a)+'</td>'+
+        '<td class="num">'+(r.o.noGoals||!r.s.g?'\u2014':pc(r.s.pct))+'</td>'+
+        '<td class="dleft">'+(t.daysLeft||'\u2014')+'</td></tr>'+
+        /* A PHONE (12/11/2026): the last four columns don't fit, and were hidden off to the right with nothing to say
+           so. On a phone they're this line under the office instead (CSS hides it on a computer). */
+        '<tr class="lb-sub'+(canOpen?' go':'')+'"'+(canOpen?' onclick="DASH.pick(\''+r.o.n+'\')"':'')+'><td></td><td colspan="3">'+
+          [ (t.l&&t.a>0) ? 'vs last yr <b class="'+(t.yoy>=1?'g':'b')+'">'+pc(t.yoy)+'</b>' : '',
+            'Starts <b>'+Math.round(r.s.a)+'</b>'+((r.o.noGoals||!r.s.g) ? '' : ' (<b>'+pc(r.s.pct)+'</b> of goal)'),
+            t.daysLeft ? '<b>'+t.daysLeft+'</b> days left' : '' ].filter(Boolean).map(x=>'<span class="nb">'+x+'</span>').join(' \u00b7 ')+'</td></tr>';
+    }).join('');
+    // Who last entered numbers in the app, so leadership can see entries are current.
+    let audit='';
+    try{
+      const a=auditData();
+      // Top line stays the WORKBOOK stamp (who/when the excel side moved) — the per-office
+      // app entries live on each row below.
+      if(a.last&&a.last.by){
+        const d=new Date(a.last.at);
+        audit='<div class="lb-audit">Latest app entry: '+a.last.by+' \u00b7 '+a.last.office+' \u00b7 '+
+          d.toLocaleDateString('en-US',{month:'short',day:'numeric'})+', '+
+          d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})+'</div>';
+      }
+    }catch(_){}
+    return '<div class="card"><h2>Leaderboard</h2>'+audit+
+      '<div class="sub">Ranked by <b>% of production goal</b> \u2014 top of the table is the leader. '+
+        '\u201cDays left\u201d = production days scheduled minus days worked, for whatever period is selected above.</div>'+
+      '<div class="lb-scroll"><table class="lb"><thead><tr><th></th><th>Office</th>'+
+        '<th>Production</th><th>%<span class="lbx"> of</span> goal</th><th>vs last yr</th>'+
+        '<th>Starts</th><th>% of goal</th><th>Days left</th></tr></thead>'+
+      '<tbody>'+body+'</tbody></table></div></div>';
+  }
+  function render(){
+
+    if(!allowed.length){
+      /* Still learning who this is and what their team may see: say nothing about
+         access yet (it flashed "No dashboard access" on every visit - 30/09). */
+      if(window.PH && PH.learning && PH.learning()){
+        el('chips').innerHTML=''; el('scope').textContent='Loading\u2026'; el('sub').textContent='';
+        el('view').innerHTML='<div class="noacc">One moment\u2026</div>'; return;
+      }
+      /* Two causes used to give the same message, and it sent admins to the wrong
+         screen. No team permission is one thing; having the permission but no office
+         assigned is another, and the fix for that one is in People, not in Teams &
+         Access. Seven people on the roster have no office yet. */
+      const hasTeamPermission = !window.PH || !PH.atLeast || PH.atLeast('dashboard','view');
+      el('chips').innerHTML='';
+      el('scope').textContent = hasTeamPermission ? 'No office assigned' : 'No dashboard access';
+      el('view').innerHTML = hasTeamPermission
+        ? '<div class="noacc"><b>You don\'t have an office assigned yet.</b><br>'+
+          'The dashboard shows your office\u2019s figures, so it needs to know which office '+
+          'is yours. An admin sets that in <b>Admin \u2192 People</b>.</div>'
+        : '<div class="noacc"><b>This role doesn\'t have the Production Dashboard.</b><br>'+
+          'An admin grants access per team in <b>Admin \u2192 Teams &amp; Access</b>.</div>';
+      el('sub').textContent='Access is set by team; the offices you see are set by your location.';
+      return;
+    }
+    /* EVERYONE who has the dashboard can see the group roll-up; what your location
+       controls is which offices you can open INDIVIDUALLY. So a Cedar Grove person gets
+       "All Offices" (the practice total) plus Cedar Grove, and no other office by name.
+       The group total is a single number for all eight - it never breaks the other
+       offices out - which is why it is safe to show and the leaderboard is not. */
+    const seesEvery = allowed.length===OFFICES.length;
+    const multi=allowed.length>1;
+    el('scope').textContent = seesEvery
+      ? 'All '+OFFICES.length+' offices'
+      : 'Group totals \u00b7 '+allowed.map(o=>o.n).join(', ');
+    el('sub').textContent = seesEvery
+      ? 'Where production stands against the main goal and the stretch goal.'
+      : 'The group, and your own office, against the main goal and the stretch goal.';
+    if(sel!=='ALL' && !allowed.some(o=>o.n===sel)) sel = multi ? 'ALL' : allowed[0].n;
+    el('chips').innerHTML =
+      '<button class="chip'+((sel==='ALL'&&!combine)?' on':'')+'" onclick="DASH.pick(\'ALL\')">All Offices</button>'+
+      allowed.map(o=>{ const on = combine ? combined.has(o.n) : (sel!=='ALL' && sel===o.n);
+        return '<button class="chip'+(on?' on':'')+'" onclick="DASH.pick(\''+o.n+'\')">'+
+          (combine?'<span class="tick">'+(on?'\u2713':'+')+'</span> ':'')+o.n+'<span class="br">'+o.brand+'</span></button>';}).join('')+
+      // Combining is only meaningful when you have more than one office of your own.
+      (multi
+        ? '<button class="chip combtog'+(combine?' on':'')+'" onclick="DASH.combine()" title="Add offices together and see one set of numbers">'+
+          (combine?'\u2715 Stop combining':'\u2795 Combine offices')+'</button>'
+        : '');
+    const isAll = sel==='ALL' && !combine;
+    const picked = combine ? allowed.filter(x=>combined.has(x.n)) : [];
+    const isCombo = combine && picked.length>0;
+    if(combine && !picked.length){
+      el('view').innerHTML='<div class="noacc"><b>Pick the offices you want to add together.</b><br>'+
+        'Tap them above \u2014 the numbers below will combine as you go.</div>';
+      return;
+    }
+    // Swap in the selected year before anything is computed.
+    // "All Offices" means the whole practice for everyone - otherwise a one-office
+    // person's "group" total would just be their own office again.
+    const src = isAll ? OFFICES : isCombo ? picked : [allowed.find(x=>x.n===sel)];
+    const scoped = src.map(yearOf);
+    const o = (isAll||isCombo) ? group(scoped) : scoped[0];
+    if(isCombo) o.n = picked.length+' offices combined';
+    shown=o;
+    const who = isAll ? 'The group' : isCombo ? picked.map(x=>x.n).join(' + ') : o.n;
+    const noFigures = o.noGoals && !o.act.some(v=>v>0);
+    let html = partyBanner(o,who) + periodBar(o) +
+      (noFigures
+        ? '<div class="noacc" style="margin-top:14px"><b>No '+year+' figures for '+who+'.</b><br>'+
+          'The workbook doesn\u2019t have that year for this office \u2014 pick another year above.</div>'
+        : gauges(o)) +
+      (o.days.some(d=>d>0)
+        ? '<h2 class="secttl">\ud83d\udcc6 Production days</h2><p class="secsub">How much of the '+(period==='mtd'?'month':'year')+' has actually been worked.</p>'+daysTiles(o)
+        : '') +
+      (noFigures ? '' : (chartMode==='starts'? startsChart(o) : chart(o)));
+    /* THE LEADERBOARD IS FOR EVERYONE WHO CAN OPEN "ALL OFFICES". Jordan, 25/09/2026:
+       "The leaderboard should appear regardless - if they have access to the all
+       offices it should appear." It had been kept to people who may open every office
+       individually, because it names each office's figures; Hollie (Brookside) and
+       every other one-office person saw the group total with no table under it. It
+       lists all eight now. A row opens that office only for someone who holds it. */
+    if(isAll && !noFigures) html += leaderboard(OFFICES);
+    html += '<div class="foot"><b>Where these numbers come from:</b> '+(FROM_HB
+      ? 'Home-Brace\u2019s own production records for '+LIVE_YEAR+' \u2014 entered in Enter Production and worked out with the practice\u2019s own formulas (Admin \u2192 Production data has the Excel). '
+      : 'the practice\u2019s '+LIVE_YEAR+' Production Dashboard workbook on SharePoint \u2014 the hub reads it live, so there is no second copy to keep in sync. ')+
+      'A month counts once it has <b>both</b> an actual and a goal (Hillcrest has production from '+
+      'January but goals from April), and the month in progress is kept separate from the year figure.<br><br>'+
+      '<b>How the total is built:</b> the hub adds the eight office tabs itself \u2014 it never reads the '+
+      'workbook\u2019s own \u201cDashboard\u201d tab \u2014 so each office is counted exactly once, and a '+
+      'summing slip on that tab can\u2019t reach these numbers.</div>';
+    el('view').innerHTML = html;
+    wireTips();
+    maybeParty(o,(isAll?'ALL':sel)+'|'+period);
+  }
+  function wireTips(){
+    const tip=el('tip');
+    document.querySelectorAll('.bar[data-t]').forEach(b=>{
+      b.onmousemove=e=>{tip.textContent=b.dataset.t;tip.style.opacity='1';
+        tip.style.left=Math.min(e.clientX+12,window.innerWidth-tip.offsetWidth-10)+'px';tip.style.top=(e.clientY-34)+'px';};
+      b.onmouseleave=()=>{tip.style.opacity='0';};
+    });
+    // A phone: tap a month to read its figures under the chart (CSS shows the line only on a phone).
+    const ro=el('readout'), mos=[...document.querySelectorAll('#bottomchart .mrow')];
+    if(ro && mos.length){
+      const show=m=>{ mos.forEach(x=>x.classList.toggle('sel', x===m)); const r=m.querySelector('.ro'); ro.innerHTML=r ? r.innerHTML : ''; };
+      mos.forEach(m=>{ m.onclick=()=>show(m); });
+      show(mos[mos.length-1]);
+    }
+  }
+  function pick(n){
+    if(combine && n!=='ALL'){ combined.has(n)?combined.delete(n):combined.add(n); render(); return; }
+    if(n==='ALL'){ combine=false; combined.clear(); }
+    sel=n; chosen=true; render(); window.scrollTo({top:0,behavior:'smooth'});
+  }
+  function toggleCombine(){
+    combine=!combine;
+    if(combine){ combined.clear(); if(sel!=='ALL') combined.add(sel); }
+    render();
+  }
+  function set(id){
+    cur=PERSONAS.find(p=>p.id===id)||PERSONAS[0];
+    try{ localStorage.setItem('ph_viewas',cur.id); }catch(_){}
+    el('persona').value=cur.id;
+    allowed = cur.offices==='all' ? OFFICES.slice() : OFFICES.filter(o=>cur.offices.indexOf(o.n)>=0);
+    // Land on the group when you hold several offices, on your own office when you
+    // hold one - the group is still one tap away either way.
+    sel = allowed.length>1 ? 'ALL' : (allowed[0]?allowed[0].n:'ALL');
+    render();
+  }
+  el('persona').innerHTML=PERSONAS.map(p=>'<option value="'+p.id+'">'+p.name+'</option>').join('');
+  window.DASH={set,pick,party:partyNow,combine:toggleCombine,identity:applyIdentity,loadAudit,
+    period:v=>{period=v;pickOpen=false;combineM=false;render();},
+    year:v=>{ year=Number(v); period='ytd'; pickOpen=false; combineM=false; render(); },
+    month:v=>{ if(v===''||v==null)return; const i=Number(v);
+      if(combineM){
+        // 'mtd' means the current month — carry it into the set instead of losing it.
+        const now=partial(shown||OFFICES[0]);
+        const cur = isMonths() ? period.slice()
+                  : isMonth() ? [period]
+                  : (period==='mtd' && now>=0) ? [now] : [];
+        const k=cur.indexOf(i); if(k>=0)cur.splice(k,1); else cur.push(i);
+        period = cur.length? cur : 'mtd';               // untick the last one and you're back to this month
+        render(); return;                               // keep the popover open while ticking
+      }
+      // The current month in the grid IS "this month" — pro-rated to the days worked.
+      period = (i===partial(shown||OFFICES[0])) ? 'mtd' : i;
+      pickOpen=false; render(); },
+    combineMonths:()=>{
+      combineM=!combineM;
+      if(combineM){
+        const now=partial(shown||OFFICES[0]);
+        if(isMonth()) period=[period];
+        else if(period==='mtd' && now>=0) period=[now];   // start from this month
+      }
+      else if(isMonths()){
+        const now=partial(shown||OFFICES[0]);
+        const last=period.length? period[period.length-1] : null;
+        period = (last===null) ? 'mtd' : (last===now ? 'mtd' : last);
+      }
+      render();
+    },
+    pickOpen:()=>{ pickOpen=!pickOpen; render(); },
+    chart:v=>{chartMode=v;render();}};
+  document.addEventListener('click',e=>{
+    if(pickOpen && !e.target.closest('.mpick')){ pickOpen=false; render(); }
+  });
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&pickOpen){ pickOpen=false; render(); } });
+  let saved='admin'; try{ saved=localStorage.getItem('ph_viewas')||'admin'; }catch(_){}
+  if(!PERSONAS.some(p=>p.id===saved)) saved='admin';
+
+  /* The practice's live workbook, by its permanent address. These IDs identify the file but
+     grant nothing on their own -- reading it still requires a signed-in person who already
+     has access to it. */
+  // Single source in user.js - see PH.WORKBOOK there if the file is ever moved.
+  const WB_DRIVE=(window.PH&&PH.WORKBOOK)?PH.WORKBOOK.drive:'';
+  const WB_ITEM =(window.PH&&PH.WORKBOOK)?PH.WORKBOOK.item :'';
+
+  function banner(html, bad){
+    let n=document.getElementById('wbstate');
+    if(!n){ n=document.createElement('div'); n.id='wbstate';
+      n.style.cssText='max-width:var(--maxw);margin:0 auto 14px;padding:9px 14px;border-radius:10px;'+
+        'font-size:12.5px;font-weight:600;border:1px solid;display:flex;align-items:center;gap:8px';
+      document.querySelector('.wrap').prepend(n); }
+    n.style.background = bad ? '#FCEBE8' : 'var(--teal-soft,#E5F4F3)';
+    n.style.color      = bad ? '#93301f' : 'var(--teal-600,#0F827E)';
+    n.style.borderColor= bad ? '#f0c3b9' : 'var(--teal-line,#bfe3d0)';
+    n.innerHTML=html;
+  }
+
+  /* Turn a Graph failure into something a person can act on.
+     The status is read from the FRONT of the message (workbook.js throws
+     'Graph <status>: <text>'), not matched anywhere inside it - an earlier version
+     tested /423|locked/ against the whole string, and Microsoft's errors carry
+     request ids full of digits, so an unrelated failure could report itself as
+     "someone has it open in Excel". The raw error is always appended, because a
+     friendly guess that turns out to be wrong wastes more time than no guess. */
+  function wbWhyNot(e){
+    const msg=(e&&e.message)||String(e);
+    const m=/^Graph\s+(\d{3})\b/.exec(msg);
+    const code=m?Number(m[1]):0;
+    const detail='<div style="margin-top:8px;font-weight:400;opacity:.75;font-size:12px">'+
+                 String(msg).replace(/[<>&]/g,'')+'</div>';
+    if(code===403 || code===401 || /accessdenied|unauthenticated/i.test(msg))
+      return '<b>You don\u2019t have access to the production workbook yet.</b> '+
+             'Everything else in the hub works \u2014 just the numbers need the workbook '+
+             'shared with you. Ask an admin and they can do it in a moment.'+detail;
+    if(code===404 || /itemnotfound/i.test(msg))
+      return '<b>The hub can\u2019t find the production workbook.</b> '+
+             'It may have been moved or renamed \u2014 that needs fixing in the hub, '+
+             'not by sharing it again.'+detail;
+    if(code===423 || /resourcelocked|\blocked\b/i.test(msg))
+      return '<b>The workbook is locked right now</b>, usually because someone has it '+
+             'open in Excel. Try again in a minute.'+detail;
+    if(code===429 || code>=500)
+      return '<b>Microsoft is busy or having trouble.</b> Try again in a minute \u2014 '+
+             'nothing is wrong with the hub or your access.'+detail;
+    return '<b>Could not read the workbook.</b>'+detail;
+  }
+  async function hydrate(){
+    /* SANDBOX (13/10/2026, Jordan): made-up numbers, never the practice's workbook. It used to
+       read Morgan's real file here once signed in. workbook.js refuses on the sandbox too. */
+    if(!(window.PH && PH.isLive && PH.isLive())){
+      if(typeof PH_WB==='undefined' || !PH_WB.demo){ banner('<b>Sandbox.</b> Sample numbers are missing.', true); return false; }
+      const res=PH_WB.demo();
+      OFFICES.forEach(o=>{ const d=res.offices[o.n]; if(d) Object.keys(d).forEach(k=>{ o[k]=d[k]; }); });
+      banner('<span>\u25CF</span><span><b>Demo:</b> made-up numbers. In a real practice this reads the practice\'s own workbook.</span>', false);
+      return true;
+    }
+    if(typeof PH_WB==='undefined' || !window.PH_AUTH){
+      banner('<b>Not signed in.</b> The dashboard shows live figures from the practice\'s workbook '+
+             'and needs a Microsoft sign-in to read it.', true);
+      return false;
+    }
+    /* THE SWITCH (Admin -> Production data, 21/10/2026): once an admin moves the numbers to
+       Home-Brace, they come from Home-Brace's own books - same series, same sums (prodstore.js
+       dashboardData runs her formulas through workbook.js office()). Until then, her Excel. */
+    let mode={source:'excel'};
+    /* PH_PROD.mode() rejects when this device couldn't read the switch and has no copy of it: say so and stop, rather
+       than guess "her Excel" (21/11/2026, code review). */
+    if(window.PH_PROD){
+      try{ mode=await PH_PROD.mode(); }
+      catch(_){ banner('<b>Couldn\u2019t tell where the production numbers live right now \u2014 reload to try again.</b>', true); return false; }
+    }
+    if(mode.source==='homebrace'){
+      banner('Reading Home-Brace\u2019s production numbers\u2026');
+      let hb;
+      try{ hb=await PH_PROD.dashboardData(); }
+      catch(e){ banner('<b>Could not read Home-Brace\u2019s production numbers.</b> '+String((e&&e.message)||e).replace(/[<>&]/g,''), true); return false; }
+      if(hb.year!==LIVE_YEAR){ LIVE_YEAR=hb.year; year=LIVE_YEAR; }
+      FROM_HB=true;
+      takeHB(hb);
+      let when2='';
+      if(hb.savedAt){ const who=String(hb.savedBy||'').replace(/[<>&]/g,''); when2=' <span title="'+new Date(hb.savedAt).toLocaleString()+'">&mdash; '+(who?who+' last saved':'last saved')+' '+new Date(hb.savedAt).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+'</span>'; }
+      banner('<span>\u25CF</span><span>Showing <b>Home-Brace\u2019s</b> production numbers'+when2+(hb.errors.length?' <b>&mdash; '+hb.errors.length+' office(s) missing</b>':'')+'</span>', hb.errors.length>0);
+      daysFromSchedule();
+      // Her Excel, while it is still around, is only compared from now on (admins, in the background).
+      if(PH.isAdmin && PH.isAdmin()) PH_PROD.syncFromWorkbook({driveId:WB_DRIVE, itemId:WB_ITEM}).catch(function(e){ try{ console.warn('Production compare:', e && e.message || e); }catch(_){} });
+      return true;
+    }
+    banner('Reading the live workbook…');
+    let res;
+    try{ res = await PH_WB.load(PH_AUTH.graph, WB_DRIVE, WB_ITEM); }
+    catch(e){ banner(wbWhyNot(e), true); return false; }
+    let filled=0;
+    OFFICES.forEach(o=>{
+      const live=res.offices[o.n];
+      if(!live) return;
+      Object.keys(live).forEach(k=>{ o[k]=live[k]; });
+      filled++;
+    });
+    if(!filled){ banner('<b>No office data came back.</b> '+(res.errors.join('; ')||''), true); return false; }
+    /* The question this answers is "are these numbers current?", so lead with how long ago
+       Morgan saved rather than a raw timestamp. Exact time stays on hover. */
+    let when='';
+    if(res.savedAt){
+      const d=new Date(res.savedAt), mins=Math.round((Date.now()-d)/60000);
+      const ago = mins<2 ? 'just now'
+                : mins<60 ? mins+' minutes ago'
+                : mins<120 ? 'an hour ago'
+                : mins<1440 ? Math.round(mins/60)+' hours ago'
+                : mins<2880 ? 'yesterday'
+                : Math.round(mins/1440)+' days ago';
+      // Name whoever actually saved it, in full — not an assumption about who usually does.
+      const who = String(res.savedBy||'').replace(/[<>&]/g,'');
+      when=' <span title="'+d.toLocaleString()+'">&mdash; '+
+           (who ? who+' last saved it' : 'last saved')+' <b>'+ago+'</b></span>';
+    }
+    banner('<span>\u25CF</span><span>Showing the practice\'s live workbook'+when+
+           (res.errors.length?' <b>&mdash; '+res.errors.length+' tab(s) unread</b>':'')+'</span>',
+           res.errors.length>0);
+    /* Home-Brace's own copy of the workbook (prodstore.js, 21/10/2026) runs ALONGSIDE this,
+       never instead of it: once an admin has the numbers on screen, copy her Excel if she has
+       saved since the last copy. In the background - the dashboard never waits on it, and a
+       failure only shows in Admin -> Production data. Copy-only: her Excel is never written. */
+    if(window.PH_PROD && PH.isAdmin && PH.isAdmin())
+      PH_PROD.syncFromWorkbook({driveId:WB_DRIVE, itemId:WB_ITEM}).catch(function(e){ try{ console.warn('Production copy:', e && e.message || e); }catch(_){} });
+    return true;
+  }
+
+  /* Home-Brace's numbers onto the offices - and an office added in Admin -> Production data (17/11/2026) gets its place
+     here too, after the 8, its brand from Admin -> Locations. */
+  function takeHB(hb){
+    Object.keys(hb.offices||{}).forEach(n=>{
+      if(OFFICES.some(o=>o.n===n)) return;
+      const z=()=>[0,0,0,0,0,0,0,0,0,0,0,0], loc=((window.PH && window.PH.locations && window.PH.locations())||[]).find(l=>l && l.n===n);
+      OFFICES.push({n, brand:(loc && loc.brand)||'BFO', fee:0, avgFee:0, act:z(), goal:z(), stretch:z(), ly:z(), sAct:z(), sGoal:z(), mdStarts:z(), lyStarts:z(), days:z(), done:z(), hist:{}});
+    });
+    OFFICES.forEach(o=>{ const d=hb.offices[o.n]; if(d) Object.keys(d).forEach(k=>{ o[k]=d[k]; }); });
+  }
+  /* PRODUCTION DAYS FROM THE SCHEDULE (proddays.js, 16/11/2026): kept in step in the background by anyone who may
+     change production numbers or the Schedule; when it changed something, the dashboard repaints with it. */
+  function daysFromSchedule(){
+    const PDY=window.PH_PRODDAYS; if(!PDY || !window.PH_PROD) return;
+    PDY.whenReady().then(()=>PDY.sync()).then(r=>{
+      if(!(r && r.wrote)) return;
+      return PH_PROD.dashboardData().then(hb=>{ takeHB(hb); render(); });
+    }).catch(e=>{ try{ console.warn('Production days from the Schedule:', (e&&e.message)||e); }catch(_){} });
+  }
+
+  /* WHO IS ACTUALLY LOOKING.
+     PERSONAS is the sandbox's "View as" toy. dechrome() hides that picker in the
+     real app, but this page was still USING it - and it defaults to Administrator,
+     so every signed-in person was being handed all eight offices regardless of
+     their team or location. The signed-in account has to decide instead. */
+  function realPerson(){
+    if(!(window.PH && PH.me && PH.isLive && PH.isLive())) return null;
+    const m=PH.me(); if(!m) return null;
+    return { id:'me', name:(PH.name?PH.name(m):'')||'You',
+             offices:(m.offices==='all'?'all':(m.offices||[])) };
+  }
+  function applyIdentity(){
+    const real=realPerson();
+    if(!real) return false;
+    // The team decides whether you get this page at all; the location decides
+    // which offices you can open on it.
+    if(window.PH && PH.atLeast && !PH.atLeast('dashboard','view')){
+      cur={id:'me',name:real.name,offices:[]};
+      allowed=[]; render(); return true;
+    }
+    cur=real;
+    allowed = cur.offices==='all' ? OFFICES.slice() : OFFICES.filter(o=>cur.offices.indexOf(o.n)>=0);
+    /* Who you are lands in stages; keep what you picked while you may still see it - it was thrown back to All
+       Offices on every update, as Enter Production's office once was (21/11/2026, code review). */
+    if(!(chosen && (sel==='ALL' || allowed.some(o=>o.n===sel))))
+      sel = allowed.length>1 ? 'ALL' : (allowed[0] ? allowed[0].n : 'ALL');
+    render();
+    return true;
+  }
+
+  // Wait for the workbook before the first paint, so nobody ever sees a screen of zeros.
+  const pageDone=()=>{ if(window.PH && PH.loadDone) PH.loadDone('page'); };
+  function boot(){ hydrate().then(()=>{ if(!applyIdentity()) set(saved); }).then(pageDone, pageDone); }
+  if(window.PH && PH.loadHold && PH.isLive()) PH.loadHold('page', 'Reading the production numbers…');   // the loading screen stays up until the numbers are in (user.js)
+  if(window.PH_AUTH) boot();
+  else document.addEventListener('ph-signed-in', boot, {once:true});
+})();
+</script>
+<script>PH.nav('dashboard');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(window.DASH&&DASH.identity)DASH.identity();});document.addEventListener('ph-identity',function(){if(window.DASH&&DASH.identity)DASH.identity();if(window.DASH&&DASH.loadAudit)DASH.loadAudit();});</script>
+<script src="tour.js?v=hc268d202611250847"></script>
+<script>
+Tour.init([
+  {sel:'.viewas', title:'You only see your offices', body:'Everyone can see <b>All Offices</b> \u2014 the practice total as one number. What your location decides is which offices you can <b>open individually</b>. Switch to the Cedar Grove manager: she keeps the group total, the leaderboard and Cedar Grove, but can\u2019t open the other offices on their own.'},
+  {sel:'.kpis', title:'The four numbers', body:'Production so far \u00b7 how far <b>ahead or behind the main goal</b> \u00b7 <b>% of the main goal</b> with the <b>stretch goal</b> underneath \u00b7 and how it compares to <b>last year</b>.'},
+  {sel:'#chips', title:'Group, or one office', body:'<b>All Offices</b> is the group view. Tap any office name to open just that office. A manager with one office skips straight to hers.'},
+  {sel:'.chart', title:'This year vs last year', body:'Each month shows <b>last year in grey</b> beside this year. The <b>dashed line</b> is the main goal; the <b>dotted line</b> is the stretch goal. Green means the main goal was beaten.'},
+  {sel:'table.lb', title:'The leaderboard', body:'Every office ranked <b>best on top</b> by % of goal, with <b>production days left</b> in the year. Tap a row to open an office you look after.'},
+  {sel:'.foot', title:'Where the numbers live', body:'Straight from your <b>Production Dashboard workbook on SharePoint</b> \u2014 no second copy. The hub adds the eight office tabs itself, so every office is counted exactly once.'}
+], {key:'dash', title:'Production Dashboard', next:{label:'entering the numbers', href:'production.html'}});
+</script>
+</body>
+</html>

@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="demo-shim.js?v=d202611250847"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Home-Brace · History</title>
+<meta name="description" content="The practice’s central hub — schedule, production, documents and team, in one place. Brightline · Maple · Riverbend.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Home-Brace">
+<meta property="og:title" content="Home-Brace">
+<meta property="og:description" content="The practice’s central hub — schedule, production, documents and team, in one place. Brightline · Maple · Riverbend.">
+<meta property="og:image" content="https://app.brightline.example/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="https://app.brightline.example/v1/history.html">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Home-Brace">
+<meta name="twitter:description" content="The practice’s central hub — schedule, production, documents and team, in one place. Brightline · Maple · Riverbend.">
+<meta name="twitter:image" content="https://app.brightline.example/assets/og-image.png">
+<link rel="icon" href="../assets/favicon.png?v=2" type="image/png">
+<meta name="theme-color" content="#0F2A4A">
+<meta name="apple-mobile-web-app-title" content="Home-Brace">
+<link rel="apple-touch-icon" sizes="180x180" href="../assets/icons/apple-touch-icon.png?v=3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{--navy:#0F2A4A;--teal:#149B96;--teal-600:#0F827E;--line:#E4E9F0;--soft:#64748B;--maxw:940px}
+  *{box-sizing:border-box}
+  body{margin:0;background:#F4F6F9;font:15px/1.6 Inter,system-ui,sans-serif;color:var(--navy)}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:28px 16px 60px}
+  h1{font-size:24px;margin:0 0 6px}
+  .sub{color:var(--soft);margin:0 0 22px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:16px;
+        box-shadow:0 1px 3px rgba(15,42,74,.06)}
+  .card h2{font-size:16px;margin:0 0 4px}
+  .hint{font-size:13.5px;color:var(--soft);margin:2px 0 14px;line-height:1.55}
+  label{display:block;font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;
+        color:var(--soft);margin:0 0 5px}
+  input,select{width:100%;font:inherit;border:1px solid #cbd5e1;border-radius:10px;padding:10px 11px;background:#FBFCFE}
+  .row{display:flex;gap:12px;flex-wrap:wrap}
+  .row > div{flex:1;min-width:190px}
+  button{font:inherit;font-weight:700;background:var(--teal);color:#fff;border:none;border-radius:10px;
+         padding:11px 18px;cursor:pointer;margin-top:13px}
+  button:disabled{background:#c7d2da;cursor:not-allowed}
+  .res{margin-top:14px;padding:13px 15px;border-radius:11px;font-size:14px;display:none}
+  .res.on{display:block}
+  .res.ok{background:#E8F6F4;border:1px solid #bfe3d0;color:var(--teal-600)}
+  .res.bad{background:#FCEBE8;border:1px solid #f0c3b9;color:#93301f}
+  .res.warn{background:#FFF8E6;border:1px solid #f2d99b;color:#7a5200}
+  table{width:100%;border-collapse:collapse;margin-top:14px;font-size:13px}
+  th{text-align:left;font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--soft);
+     border-bottom:1px solid var(--line);padding:7px 9px 7px 0;white-space:nowrap}
+  td{padding:8px 9px 8px 0;border-bottom:1px solid #F1F4F8;vertical-align:top}
+  tr.hit td{background:#E8F6F4}
+  tr.chg td{font-weight:700}
+  .names{font:12px/1.45 ui-monospace,Menlo,Consolas,monospace;color:var(--navy);word-break:break-word}
+  .pos{display:inline-block;background:#EEF2F7;border-radius:5px;padding:0 5px;margin-right:5px;
+       font-weight:800;font-size:11px;color:var(--soft)}
+  .tag{display:inline-block;background:var(--teal);color:#fff;border-radius:999px;padding:1px 8px;
+       font-size:10.5px;font-weight:800;letter-spacing:.03em}
+  .muted{color:var(--soft)}
+  .put{background:#fff;color:var(--navy);border:1px solid #cbd5e1;border-radius:8px;
+       font-weight:700;font-size:11.5px;font-family:inherit;padding:5px 10px;cursor:pointer;margin:0;white-space:nowrap}
+  .put:hover{background:#E8F6F4;border-color:var(--teal);color:var(--teal-600)}
+  .now{font-size:10.5px;font-weight:800;color:var(--teal-600);letter-spacing:.03em}
+  /* How full is each record */
+  .bar{height:8px;background:#EEF1F5;border-radius:99px;overflow:hidden;min-width:120px}
+  .bar i{display:block;height:100%;background:var(--teal)}
+  .bar.warn i{background:#F2A03D}
+  .bar.bad i{background:#D7503A}
+  td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Look through the history</h1>
+  <p class="sub">Every saved version of one of the hub's records, straight from SharePoint &mdash; further
+     back than the panel in SharePoint will scroll. It only ever writes if you press
+     <b>Put this back</b> on a version and confirm it.</p>
+
+  <div class="card">
+    <h2>What to look for</h2>
+    <p class="hint">Pick the record and type a word to hunt for. Versions containing it are highlighted,
+       and for the doctor list the names are shown <b>in order</b> &mdash; the calendar stores doctors by
+       position, so the order is what matters.</p>
+    <div class="row">
+      <div>
+        <label for="key">Record</label>
+        <select id="key">
+          <option value="ph_docs">Doctor list (ph_docs)</option>
+          <option value="ph_sched2">Doctor schedule, to 2027 (ph_sched2)</option>
+          <option value="ph_locations">Offices (ph_locations)</option>
+          <option value="ph_people">People overrides (ph_people)</option>
+          <option value="ph_access">Teams &amp; access (ph_access)</option>
+          <option value="ph_mktg">Marketing board (ph_mktg)</option>
+          <option value="ph_roster">Staff roster (ph_roster)</option>
+          <option value="ph_roster_extra">Staff added / removed (ph_roster_extra)</option>
+          <option value="ph_prodaudit">Production entries — who and when (ph_prodaudit)</option>
+        </select>
+      </div>
+      <div>
+        <label for="find">Word to find</label>
+        <input id="find" value="" spellcheck="false" placeholder="e.g. a doctor’s name">
+      </div>
+    </div>
+    <button id="go">Search the history</button>
+    <div class="res" id="r"></div>
+    <div id="out"></div>
+  </div>
+
+  <div class="card" id="sizes">
+    <h2>How full is each record</h2>
+    <p class="hint">One SharePoint record holds about 63,000 characters, and a record that fills up starts refusing
+       saves. Big records are stored packed, and are counted packed here. Amber from 70%, red from 90%.
+       This only reads &mdash; it changes nothing.</p>
+    <button id="sizego">Check the sizes</button>
+    <div id="sizeout"></div>
+  </div>
+</div>
+
+<script src="user.js?v=hc268d202611250847"></script>
+<script src="store.js?v=hc268d202611250847"></script>
+<script src="gate.js?v=hc268d202611250847"></script>
+<script>
+(function(){
+  'use strict';
+  function adminHere(){ return !(window.PH && PH.isLive && PH.isLive()) || !!(PH.isAdmin && PH.isAdmin(PH.realMe ? PH.realMe() : PH.me())); }
+  var el=function(i){ return document.getElementById(i); };
+  function show(cls,html){ var n=el('r'); n.className='res on '+cls; n.innerHTML=html; }
+  function esc(v){ return String(v==null?'':v).replace(/[&<>"]/g,function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+
+  var HOST='brightline.sharepoint.example', SITE='/sites/Home-Brace', LIST='HomeBraceData';
+
+  /* Every page of versions. SharePoint's own panel stops after a few hundred; this
+     follows @odata.nextLink until there are no more, which is the whole point of the
+     page - the answer we needed was ~950 versions down. */
+  function allVersions(path){
+    var out=[];
+    function page(p){
+      return PH_AUTH.graph(p).then(function(r){
+        out=out.concat(r.value||[]);
+        var next=r['@odata.nextLink'];
+        if(next && out.length<4000){
+          return page(next.replace('https://graph.microsoft.com/v1.0',''));
+        }
+        return out;
+      });
+    }
+    return page(path);
+  }
+
+  /* A schedule is a hundred kilobytes of JSON - a slice off the front tells you nothing
+     about whether a version is the good one. Count what is actually in it instead, so
+     two versions can be compared at a glance. That is this page's whole job: working
+     out which version to put back. */
+  function summarise(parsed, pay){
+    if(!parsed || typeof parsed!=='object')
+      return '<span class="muted">'+esc(pay.slice(0,180))+(pay.length>180?'\u2026':'')+'</span>';
+    var days=0, docs=0, ydot=0, closed=0, events=0, first='', last='';
+    Object.keys(parsed).forEach(function(k){
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(k)) return;
+      days++; if(!first||k<first) first=k; if(!last||k>last) last=k;
+      var day=parsed[k]||{};
+      Object.keys(day).forEach(function(office){
+        var c=day[office]; if(!c) return;
+        if(c.closed) closed++;
+        else if(c.ydot) ydot++;
+        else if(c.ps || c.p!=null) docs++;
+        if(c.event) events++;
+      });
+    });
+    if(!days){
+      var keys=Object.keys(parsed);
+      /* An overrides record: key -> {locs, teams, status, ...}. Show who, and the
+         office each one has been pinned to, because that is the field that goes wrong. */
+      var looksLikeOverrides = keys.length && keys.every(function(k){
+        var v=parsed[k];
+        return v && typeof v==='object' && (v.locs||v.teams||v.status||v.access);
+      });
+      if(looksLikeOverrides){
+        return '<b>'+keys.length+'</b> people set by hand<br>'+
+          keys.map(function(k){
+            var v=parsed[k]||{};
+            var where=(v.locs&&v.locs.length)?v.locs.join(' + '):'\u2014';
+            return '<span class="muted">'+esc(nameFor(k))+'</span> '+esc(where);
+          }).join('<br>');
+      }
+      var n=Object.keys(parsed).length;
+      return '<span class="muted">'+n+' entr'+(n===1?'y':'ies')+' \u00b7 '+
+             Math.round(pay.length/1024)+' KB</span>';
+    }
+    return '<b>'+docs+'</b> doctor days \u00b7 '+ydot+' yellow dot \u00b7 '+closed+' closed'+
+           (events?' \u00b7 '+events+' events':'')+
+           '<br><span class="muted">'+days+' dated days, '+esc(first)+' to '+esc(last)+
+           ' \u00b7 '+Math.round(pay.length/1024)+' KB</span>';
+  }
+
+  /* The overrides record is keyed by email, or by "emp:<id>" for the many staff who
+     have no email on file. Neither is something a person can read, so pull the roster
+     once and label each entry with the actual name. Without this the record renders as
+     "21 entries" and tells you nothing, which is exactly the state it was in when we
+     needed to know which people had the wrong office. */
+  var NAMES=null;
+  function loadNames(){
+    if(NAMES) return Promise.resolve(NAMES);
+    return (window.PH && PH.rosterReady ? PH.rosterReady : Promise.resolve())
+      .then(function(){
+        NAMES={};
+        ((window.PH && PH.rosterRows) ? PH.rosterRows() : []).forEach(function(r){
+          if(r.email) NAMES[String(r.email).toLowerCase()]=r.name;
+          if(r.empId) NAMES['emp:'+String(r.empId).toLowerCase()]=r.name;
+        });
+        return NAMES;
+      }).catch(function(){ NAMES={}; return NAMES; });
+  }
+  function nameFor(key){
+    var k=String(key||'').toLowerCase();
+    return (NAMES && NAMES[k]) || key;
+  }
+
+
+  var PAYLOADS={}, CURRENT_KEY=null;
+
+  /* Putting a version back. The one thing this page can change, and only when somebody
+     presses the button and confirms what it contains.
+
+     Positions are why this exists rather than "just retype the names". A day stores its
+     doctor as an index into this list, so restoring the exact list restores every day
+     that pointed into it - and retyping the names in a different order would silently
+     point those days at the wrong doctor. */
+  document.addEventListener('click', function(ev){
+    var b=ev.target.closest && ev.target.closest('.put'); if(!b) return;
+    var vid=b.getAttribute('data-v'), raw=PAYLOADS[vid], key=CURRENT_KEY;
+    if(!raw || !key) return;
+    var parsed; try{ parsed=JSON.parse(raw); }catch(_){ 
+      return show('bad','<b>That version could not be read back.</b> Tell Jordan before trying again.'); }
+
+    var what = Object.prototype.toString.call(parsed)==='[object Array]'
+      ? parsed.map(function(d,n){ return (n+1)+'. '+((d&&(d.n||d.name))||''); }).join('\n')
+      : (raw.length+' characters of data');
+    if(!confirm('Put version '+vid+' back as the current '+key+'?\n\n'+what+
+                '\n\nThis replaces what is there now. The previous content stays in this '+
+                'history, so it can be put back too.')) return;
+
+    if(!adminHere()) return show('bad','<b>Only an admin can put an old version back.</b>');
+    b.disabled=true; b.textContent='Saving\u2026';
+    PH_STORE.set(key, parsed, {force:true}).then(function(r){
+      if(r && (r.local || r.blocked || r.error || r.quota)){
+        if(PH_STORE.discard) PH_STORE.discard(key);         // never sent later on its own
+        b.disabled=false; b.textContent='Put this back';
+        return show('bad','<b>It did not save to SharePoint.</b> '+
+          esc((r.error||r.why||'')) + ' Nothing has changed for anyone else.');
+      }
+      /* Read it straight back. Saying "restored" without checking is what this whole
+         mess was made of. */
+      return PH_STORE.get(key).then(function(back){
+        var same=JSON.stringify(back)===JSON.stringify(parsed);
+        b.textContent='Put back \u2713';
+        show(same?'ok':'warn', same
+          ? '<b>Done, and checked.</b> Version '+esc(vid)+' is now the current '+esc(key)+
+            '. Everyone should reload the hub to pick it up.'
+          : '<b>Saved, but reading it back gave something different.</b> Do not press '+
+            'anything else \u2014 tell Jordan.');
+        /* Re-read the history, or the table is left saying IN USE NOW against the very
+           version we just replaced. In a recovery tool that is the one thing that must
+           not be wrong. */
+        if(same) setTimeout(function(){ el('go').click(); }, 900);
+      });
+    }).catch(function(e){
+      b.disabled=false; b.textContent='Put this back';
+      show('bad','<b>It did not save.</b> '+esc((e&&e.message)||e));
+    });
+  });
+
+  /* HOW FULL IS EACH RECORD (22/10/2026). Reads every record once; Admin links here when one passes 70%. */
+  function checkSizes(){
+    if(!window.PH_AUTH || !window.PH_STORE || !PH_STORE.sizes){ el('sizeout').innerHTML='<p class="hint">Not signed in. Reload the page and sign in first.</p>'; return; }
+    el('sizego').disabled=true; el('sizeout').innerHTML='<p class="hint">Reading every record once…</p>';
+    PH_STORE.sizes().then(function(list){
+      el('sizego').disabled=false;
+      var lim=PH_STORE.COL_MAX, warn=PH_STORE.SIZE_WARN, top=list.slice(0,30);
+      try{ localStorage.setItem('ph_sizewatch', JSON.stringify({at:Date.now(), over:list.filter(function(r){ return r.chars>=lim*warn; })})); }catch(_){}
+      el('sizeout').innerHTML='<table><thead><tr><th>Record</th><th style="text-align:right">Characters</th><th>How full</th><th></th></tr></thead><tbody>'+
+        top.map(function(r){ var pc=Math.min(100, Math.round(r.chars/lim*100)), cls=r.chars>=lim*0.9?'bad':r.chars>=lim*warn?'warn':'';
+          return '<tr><td><b>'+esc(PH_STORE.recordName(r.key))+'</b>'+(r.packed?' <span class="muted">(packed)</span>':'')+'<div class="muted" style="font-size:11.5px">'+esc(r.key)+'</div></td>'+
+            '<td class="n">'+r.chars.toLocaleString('en-US')+'</td><td><div class="bar '+cls+'"><i style="width:'+pc+'%"></i></div></td><td class="n">'+pc+'%</td></tr>'; }).join('')+
+        '</tbody></table>'+(list.length>top.length?'<p class="hint">…and '+(list.length-top.length)+' smaller ones.</p>':'');
+    }, function(e){ el('sizego').disabled=false; el('sizeout').innerHTML='<p class="hint">Could not read the sizes: '+esc((e&&e.message)||e)+'</p>'; });
+  }
+  el('sizego').onclick=checkSizes;
+  /* From 2028 each year of the schedule has its own record (schedrec.js): offer the ones there are. */
+  var waitYears=setInterval(function(){
+    if(!window.PH_AUTH || !window.PH_STORE || !PH_STORE.keys) return;
+    clearInterval(waitYears);
+    PH_STORE.keys('ph_sched_').then(function(ks){
+      var after=el('key').querySelector('option[value="ph_sched2"]');
+      ks.filter(function(k){ return /^ph_sched_\d{4}$/.test(k); }).reverse().forEach(function(k){
+        if(el('key').querySelector('option[value="'+k+'"]')) return;
+        var o=document.createElement('option'); o.value=k; o.textContent='Doctor schedule '+k.slice(9)+' ('+k+')';
+        after.parentNode.insertBefore(o, after.nextSibling);
+      });
+    }).catch(function(){});
+  }, 400);
+  // From Admin's "getting full" notice: check straight away once signed in.
+  if(location.hash==='#sizes'){
+    var waitSizes=setInterval(function(){ if(window.PH_AUTH){ clearInterval(waitSizes); checkSizes(); } }, 300);
+  }
+
+  el('go').onclick=function(){
+    if(!window.PH_AUTH) return show('bad','<b>Not signed in.</b> Reload the page and sign in first.');
+    var key=el('key').value, needle=(el('find').value||'').trim();
+    el('go').disabled=true; el('out').innerHTML='';
+    show('warn','Reading the history… several hundred versions can take a moment.');
+
+    var siteId, listId, itemId;
+    PH_AUTH.graph('/sites/'+HOST+':'+SITE)
+      .then(function(s){ siteId=s.id;
+        return PH_AUTH.graph('/sites/'+siteId+'/lists?$select=id,displayName'); })
+      .then(function(r){
+        var hit=(r.value||[]).filter(function(l){ return l.displayName===LIST; })[0];
+        if(!hit) throw new Error('No "'+LIST+'" list on '+SITE+'.');
+        listId=hit.id;
+        /* Which row holds the key, from the keys alone (store.js) - every page of the list.
+           This used to read the first 200 rows with all their contents, and a record past
+           those 200 showed as "no record yet". */
+        if(window.PH_STORE && PH_STORE.idOf) return PH_STORE.idOf(key);
+        return PH_AUTH.graph('/sites/'+siteId+'/lists/'+listId+'/items?$expand=fields&$top=200').then(function(r){
+          var row=(r.value||[]).filter(function(i){ return i.fields && i.fields.Title===key; })[0];
+          return row ? row.id : null;
+        });
+      })
+      .then(function(id){
+        if(!id) throw new Error('There is no "'+key+'" record in the list yet.');
+        itemId=id;
+        return loadNames().then(function(){
+          return allVersions('/sites/'+siteId+'/lists/'+listId+'/items/'+itemId+'/versions?$top=200');
+        });
+      })
+      .then(function(vers){
+        /* Large records are stored packed now (see store.js, "A RECORD SHAREPOINT WILL
+           TAKE"). Unpack every version first, so what is compared, searched, shown and
+           put back is the JSON itself. A version that will not unpack keeps its raw text
+           and says so rather than disappearing. */
+        var up = (window.PH_STORE && PH_STORE.unpack) ? PH_STORE.unpack : function(x){ return Promise.resolve(x); };
+        return Promise.all(vers.map(function(v){
+          var f = v.fields || {};
+          return up(f.Payload || '').then(function(txt){ f.Payload = txt; v.fields = f; return v; },
+                                          function(){ return v; });
+        }));
+      })
+      .then(function(vers){
+        el('go').disabled=false;
+        if(!vers.length) return show('bad','<b>No versions came back.</b>');
+
+        /* Newest first, and only the versions where the CONTENT actually changed - the
+           rest are the same payload saved again, which is most of them. */
+        vers.sort(function(a,b){ return String(b.id).localeCompare(String(a.id),undefined,{numeric:true}); });
+        var rows=[], lastPayload=null, changes=0, hits=0;
+        for(var i=vers.length-1;i>=0;i--){                 // oldest -> newest, to spot changes
+          var v=vers[i], f=v.fields||{}, pay=f.Payload||'';
+          var changed = pay!==lastPayload;
+          lastPayload = pay;
+          if(!changed) continue;
+          changes++;
+          var found = needle && pay.toLowerCase().indexOf(needle.toLowerCase())>=0;
+          if(found) hits++;
+          var names='';
+          try{
+            var parsed=JSON.parse(pay);
+            if(Object.prototype.toString.call(parsed)==='[object Array]')
+              names=parsed.map(function(d,n){
+                var label=(d&&(d.n||d.name))||JSON.stringify(d);
+                return '<span class="pos">'+(n+1)+'</span>'+esc(label);
+              }).join('  ');
+            else names=summarise(parsed, pay);
+          }catch(_){ names='<span class="muted">'+esc(pay.slice(0,180))+(pay.length>180?'…':'')+'</span>'; }
+          rows.push({ id:v.id, raw:pay, when:f.Modified||v.lastModifiedDateTime||'',
+            who:(v.lastModifiedBy&&v.lastModifiedBy.user&&v.lastModifiedBy.user.displayName)||
+                (f.Editor&&f.Editor.LookupValue)||'—',
+            found:found, names:names, bytes:pay.length });
+        }
+        rows.reverse();                                    // newest first for reading
+
+        show(hits?'ok':'warn',
+          '<b>'+vers.length+' versions</b>, of which <b>'+changes+'</b> actually changed the content.'+
+          (needle ? (hits ? ' <b>'+hits+'</b> of those contain “'+esc(needle)+'” — highlighted below.'
+                          : ' <b>None</b> of them contain “'+esc(needle)+'”.') : ''));
+
+        /* Keep each version's exact payload, so "Put this back" writes the bytes that
+           were actually there rather than something re-assembled from the screen. */
+        PAYLOADS={}; rows.forEach(function(r){ PAYLOADS[r.id]=r.raw; });
+        CURRENT_KEY=key;
+
+        el('out').innerHTML='<table><thead><tr><th>Version</th><th>When</th><th>Saved by</th>'+
+          '<th>Content</th><th></th></tr></thead><tbody>'+
+          rows.map(function(r,i){
+            return '<tr class="'+(r.found?'hit':'')+'"><td>'+esc(r.id)+
+              (r.found?' <span class="tag">FOUND</span>':'')+'</td>'+
+              '<td>'+esc(r.when?new Date(r.when).toLocaleString():'—')+'</td>'+
+              '<td>'+esc(r.who)+'</td>'+
+              '<td class="names">'+r.names+'</td>'+
+              '<td>'+(i===0 ? '<span class="now">IN USE NOW</span>'
+                            : '<button class="put" data-v="'+esc(r.id)+'">Put this back</button>')+
+              '</td></tr>';
+          }).join('')+'</tbody></table>';
+      })
+      .catch(function(e){
+        el('go').disabled=false;
+        show('bad','<b>Could not read the history.</b> '+esc((e&&e.message)||e));
+      });
+  };
+})();
+</script>
+<script>/* ADMINS ONLY (21/11/2026, code review): this page writes over shared records past both safety guards - it never
+   called the one gate, so anyone signed in could open it by its address. */
+PH.nav('admin');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
+</body>
+</html>

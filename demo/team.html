@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="demo-shim.js?v=d202611250847"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Home-Brace · Team</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" href="../assets/favicon.png?v=2" type="image/png">
+<meta name="theme-color" content="#0F2A4A">
+<meta name="apple-mobile-web-app-title" content="Home-Brace">
+<link rel="apple-touch-icon" sizes="180x180" href="../assets/icons/apple-touch-icon.png?v=3">
+<meta name="description" content="The practice’s central hub — schedule, production, documents and team, in one place. Brightline · Maple · Riverbend.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Home-Brace">
+<meta property="og:title" content="Home-Brace">
+<meta property="og:description" content="The practice’s central hub — schedule, production, documents and team, in one place. Brightline · Maple · Riverbend.">
+<meta property="og:image" content="https://app.brightline.example/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="https://app.brightline.example/v1/team.html">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Home-Brace">
+<meta name="twitter:description" content="The practice’s central hub — schedule, production, documents and team, in one place. Brightline · Maple · Riverbend.">
+<meta name="twitter:image" content="https://app.brightline.example/assets/og-image.png">
+<style>
+  :root{
+    --navy:#0F2A4A; --navy2:#25456e; --teal:#149B96; --teal2:#2BC0B8; --teal-soft:#E5F4F3; --teal-600:#0F827E;
+    --ink:#1F2D3D; --soft:#56627A; --line:#E4E8EE; --canvas:#F4F6F8; --white:#fff;
+    --good:#2E9E6B; --good-soft:#E7F4EE; --amber:#F2A03D; --purple:#6b3fd0; --purple-soft:#efe9fb;
+    --shadow:0 1px 2px rgba(15,42,74,.06),0 6px 18px rgba(15,42,74,.06);
+    --shadow-lg:0 10px 30px rgba(15,42,74,.12); --radius:14px; --maxw:1080px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--canvas);line-height:1.5;-webkit-font-smoothing:antialiased}
+  h1{color:var(--navy);margin:0}
+  .ribbon{background:var(--amber);color:#3a2400;text-align:center;font-size:13px;font-weight:600;padding:6px 14px}
+  .hdr{background:var(--navy);color:#fff}
+  .hdr-in{max-width:var(--maxw);margin:0 auto;display:flex;align-items:center;gap:12px;padding:13px 20px}
+  .mark{width:34px;height:34px;flex:none;display:block}
+  .mark img{width:34px;height:34px;display:block;border-radius:50%}
+  .brand{font-weight:700;font-size:18px;color:#fff;line-height:1.1}
+  .brand i{font-style:normal;color:var(--teal2)}
+  .brand small{display:block;font-weight:500;font-size:12px;color:var(--navy-mute,#9fb4d0)}
+  .v1{background:rgba(255,255,255,.15);color:#eaf1fb;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;margin-left:6px}
+  .v1nav{background:var(--navy2)}
+  .v1nav-in{max-width:var(--maxw);margin:0 auto;display:flex;gap:2px;padding:0 12px;overflow-x:auto}
+  .v1nav a{color:var(--navy-mute,#cdd9ea);font-size:14px;font-weight:600;padding:13px 15px;text-decoration:none;border-bottom:3px solid transparent;white-space:nowrap}
+  .v1nav a:hover{color:#fff;background:rgba(255,255,255,.05)}
+  .v1nav a.active{color:#fff;border-bottom-color:var(--teal)}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:22px 20px 90px}
+  .page-head h1{font-size:25px}
+  .page-head p{margin:4px 0 0;color:var(--soft);font-size:14.5px}
+  .toolrow{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:18px 0 6px}
+  .search{flex:1;min-width:210px;padding:11px 14px;border:1px solid var(--line);border-radius:11px;font-size:15px;font-family:inherit;background:#fff;box-shadow:var(--shadow)}
+  .filters{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 4px}
+  .fchip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 13px;font-size:13px;font-weight:600;color:var(--navy);cursor:pointer;font-family:inherit}
+  /* Comfortable thumb targets on phones. */
+  @media(max-width:760px){ .fchip{padding:10px 16px;min-height:38px;font-size:13.5px} }
+  .fchip:hover{border-color:var(--teal);color:var(--teal-600)}
+  .fchip.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .count{font-size:13px;color:var(--soft);margin:12px 2px 6px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(255px,1fr));gap:14px}
+  .p{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:16px;display:flex;flex-direction:column;gap:2px}
+  .p .top{display:flex;align-items:center;gap:12px;margin-bottom:9px}
+  .p .cir{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;font-size:16px;flex:none}
+  .p .nm{font-weight:800;color:var(--navy);font-size:15.5px;line-height:1.2}
+  .p .ttl{font-size:12.5px;color:var(--soft)}
+  .p .row{display:flex;align-items:center;gap:8px;font-size:13px;padding:3px 0;color:var(--ink)}
+  .p .row .ic{width:16px;text-align:center;color:var(--soft);flex:none}
+  .p a{color:var(--teal-600);text-decoration:none;font-weight:600;word-break:break-all}
+  .p a:hover{text-decoration:underline}
+  .tchips{display:flex;gap:4px;flex-wrap:wrap;margin-top:9px}
+  .t{font-size:11px;font-weight:700;background:var(--canvas);color:var(--soft);border:1px solid var(--line);border-radius:999px;padding:2px 8px}
+  .t.dr{background:var(--purple-soft);color:var(--purple);border-color:#ded2f7}
+  .t.loc{background:var(--teal-soft);color:var(--teal-600);border-color:var(--teal-line,#c4e6e3)}
+  .me{outline:2px solid var(--teal);outline-offset:-2px}
+  .me .mine{font-size:10.5px;font-weight:800;color:var(--teal-600);background:var(--teal-soft);border-radius:999px;padding:2px 8px;margin-left:auto}
+  .note{font-size:12.5px;color:var(--soft);margin-top:20px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 15px;line-height:1.55}
+  .note b{color:var(--navy)}
+  .empty{background:#fff;border:1px dashed var(--line);border-radius:14px;padding:30px;text-align:center;color:var(--soft)}
+  /* Some people set "reduce motion" in Windows or macOS, often because movement makes
+     them unwell. Honour it everywhere: keep the state changes, drop the travel. */
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{
+      animation-duration:.01ms !important; animation-iteration-count:1 !important;
+      transition-duration:.01ms !important; scroll-behavior:auto !important;
+    }
+  }
+
+</style>
+<script src="user.js?v=hc268d202611250847"></script>
+  <script src="_staff.js?v=hc268d202611250847"></script>
+  <script src="store.js?v=hc268d202611250847"></script>
+  <script src="gate.js?v=hc268d202611250847"></script>
+</head>
+<body>
+<div class="ribbon">DEMO — everyone’s contact card. In a real practice this list builds itself from Microsoft 365.</div>
+<header class="hdr">
+  <div class="hdr-in">
+    <span class="mark" aria-label="Home-Brace"><img src="../assets/logo-mark.png?v=2" alt="" width="34" height="34"></span>
+    <span class="brand">Home-<i>Brace</i><small>Team</small></span>
+    <span class="v1">Demo</span>
+  </div>
+</header>
+<nav class="v1nav"><div class="v1nav-in" id="nav"></div></nav>
+
+<div class="wrap">
+  <div class="page-head">
+    <h1>Team</h1>
+    <p>Who's who across the practice — find someone's office, phone or email in a couple of seconds.</p>
+  </div>
+  <div class="toolrow"><input class="search" id="q" placeholder="Search a name, office, role or phone…"></div>
+  <div class="filters" id="filters"></div>
+  <div class="count" id="count"></div>
+  <div id="grid"></div>
+  <div class="note"><b>Where this comes from:</b> names, photos and emails come from <b>Microsoft 365</b> — nobody maintains this list by hand. Each person controls their own <b>photo</b> and <b>“About me”</b>; their <b>team, office, role and email</b> can be set by an admin in <b>Admin → People</b>. Where an email or phone number is blank, nobody has one on file yet — it is never made up.</div>
+</div>
+
+<script>
+(function(){
+  const PAL=['#149B96','#25456e','#946011','#6b3fd0','#b03a63','#2E7D52','#1f6f9e','#b0442f'];
+  const STAFF=window.STAFF||[];   // the sandbox's made-up people (_staff.js); live: the SharePoint roster, below
+  // Their real sheet lists "Riverbend" once and splits the two practices by brand.
+  // Shared office list (user.js) UNION whatever offices the roster actually uses, so a
+  // new office from Admin gets a chip and nobody already on the roster loses theirs.
+  // (The roster says 'Riverbend'; the workbook splits it into Meadow Park / Riverbend —
+  // still an open question with the practice, so keep both until they decide.)
+  /* Filter chips follow the people actually on screen, not a fixed list - otherwise
+     a stale office from the sandbox roster (e.g. "Riverbend", which is really two
+     offices) keeps a chip long after the real roster has replaced it. */
+  let OFFICES=[];
+  function rebuildOffices(){
+    const out=PH.officeNames().slice();
+    PEOPLE.forEach(p=>String(p.office||'').split(',').map(x=>x.trim()).forEach(function(o){
+      if(o && o!=='\u2014' && o!=='Rotates' && o!=='All offices' && out.indexOf(o)<0) out.push(o);
+    }));
+    OFFICES=out;
+  }
+  /* The real roster lives in SharePoint (ph_roster); STAFF (_staff.js, made-up people) is the public
+     sandbox's stand-in. */
+  function buildPeople(rows){
+    /* Colours by place in the list as it was before new hires were grouped with their office (hc170): the starting list
+       first, then added people - so nobody's colour moved. */
+    const nb=rows.filter(r=>!r.added).length; let bi=0, ai=0; const slot=rows.map(r=>r.added ? nb+(ai++) : bi++);
+    return rows.map((r,i)=>{
+    const isDoc=/^Dr\./.test(r.n);
+    const clean=r.n.replace(/"[^"]*"/g,'').replace(/\([^)]*\)/g,'').replace(/\s+/g,' ').trim();
+    const parts=clean.replace(/^Dr\.\s*/,'').split(' ');
+    const first=parts[0], last=parts.slice(1).join(' ');
+    const leader=/\bC[COS]O\b|CSO|Director|Owner/i.test(r.role);
+    const office=r.loc||(isDoc?'Rotates':(leader?'All offices':'\u2014'));
+    return {full:(isDoc?'Dr. ':'')+first+' '+last, first, last, isDoc, leader,
+      title:r.role||'Team member', office, brand:r.brand||'',
+      team:(isDoc?'Doctors':leader?'Leadership':(r.team||'Staff')),
+      // No invented addresses or numbers: blank is honest, a made-up mailto is not.
+      email:r.mail||'', realMail:!!r.mail,
+      phone:r.phone||'',
+      color:PAL[slot[i]%PAL.length], nick:(r.n.match(/"([^"]*)"/)||r.n.match(/\(([^)]*)\)/)||[])[1]||null};
+  }); }
+  let PEOPLE=buildPeople(STAFF);
+  rebuildOffices();
+  const el=id=>document.getElementById(id);
+  const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));   // roster words go in as text (21/11/2026, code review)
+  let q='', office='All';
+  try{ q=new URLSearchParams(location.search).get('q')||''; }catch(_){}   // the header search lands here
+  const initials=p=>(p.first[0]+(p.last[0]||'')).toUpperCase();
+
+  function render(){
+    const mine = window.PH ? PH.me() : null;
+    const myName = mine ? PH.name(mine) : '';
+    const isMeOf=p=>{ if(!mine) return false;
+      const legal=(mine.first+' '+mine.last).toLowerCase();
+      return (p.first+' '+p.last).toLowerCase()===legal; };
+    /* WHO MATCHES THE CHIP.
+
+       Two bugs lived in the one line this replaces, `p.office!==office`:
+
+       - The chip labelled "Doctors" is the value 'Rotates', i.e. "has no fixed
+         office". So a doctor WITH an office was not a doctor. Dr. Celia works at
+         Lakeview and Cedar Grove, so she vanished from Doctors - Morgan, 17/09.
+       - It compared the whole office string. Somebody at two offices has the string
+         "Lakeview, Cedar Grove", which equals neither "Lakeview" nor "Cedar Grove", so they
+         matched no office chip either. a doctor and a staff member were reachable
+         only from "Everyone".
+
+       Doctors now means a doctor, Leadership means a leader, and an office matches if
+       the person works there. */
+    const list=PEOPLE.filter(p=>{
+      if(office==='Rotates'){ if(!p.isDoc) return false; }
+      else if(office==='All offices'){ if(!p.leader) return false; }
+      else if(office!=='All'){
+        const mine=String(p.office||'').split(',').map(x=>x.trim());
+        if(mine.indexOf(office)<0) return false;
+      }
+      if(!q) return true;
+      const t=(p.full+' '+(p.nick||'')+' '+p.title+' '+p.office+' '+p.brand+' '+p.team+' '+p.email+' '+p.phone+' '+(p.nick||'')).toLowerCase();
+      return t.includes(q.toLowerCase());
+    });
+    // roster words are escaped, and the office rides in data-o, so an apostrophe can't break the button (21/11/2026, code review)
+    el('filters').innerHTML=['All'].concat(OFFICES).concat(['Rotates','All offices']).map(o=>
+      '<button class="fchip'+(office===o?' on':'')+'" data-o="'+esc(o)+'" onclick="TEAM.office(this.dataset.o)">'+esc(o==='All'?'Everyone':o==='Rotates'?'Doctors':o==='All offices'?'Leadership':o)+'</button>').join('');
+    el('count').textContent=list.length+' of '+PEOPLE.length+' people';
+    el('grid').innerHTML= list.length ? '<div class="grid">'+list.map(p=>{
+      const pref = (isMeOf(p)&&mine&&mine.preferred)||p.nick||null;
+      const shown = pref ? (p.isDoc?'Dr. ':'')+pref+' '+p.last : p.full;
+      const isMe = isMeOf(p);
+      return '<div class="p'+(isMe?' me':'')+'">'+
+        /* Their own upload wins, then their Microsoft photo, then initials. */
+        '<div class="top">'+(function(){
+          const ph = (window.PH && PH.photoFor) ? PH.photoFor(p.email) : '';   // the card exposes email, not mail
+          if(isMe && window.PH) return '<span class="cir" style="'+PH.faceStyle(mine)+'">'+PH.face(mine)+'</span>';
+          if(ph) return '<span class="cir" style="background-image:url('+ph+');background-size:cover;background-position:center"></span>';
+          return '<span class="cir" style="background:'+p.color+'">'+esc(initials(p))+'</span>';
+        })()+
+          '<div><div class="nm">'+esc(shown)+'</div>'+(pref?'<div style="font-size:11.5px;color:var(--soft)">'+esc(p.first+' '+p.last)+'</div>':'')+
+          '<div class="ttl">'+esc(p.title)+'</div></div>'+(isMe?'<span class="mine">You</span>':'')+'</div>'+
+        '<div class="row"><span class="ic">📍</span>'+esc(p.office)+'</div>'+
+        (p.phone
+          ? '<div class="row"><span class="ic">📞</span><a href="tel:'+p.phone.replace(/[^0-9]/g,'')+'">'+esc(p.phone)+'</a></div>'
+          : '')+
+        (p.email
+          ? '<div class="row"><span class="ic">✉️</span><a href="mailto:'+esc(p.email)+'">'+esc(p.email)+'</a></div>'
+          : '<div class="row"><span class="ic">✉️</span><span class="t">No email on file — an admin can add one</span></div>')+
+        '<div class="tchips"><span class="t'+(p.isDoc?' dr':'')+'">'+esc(p.team)+'</span>'+
+          (p.brand?'<span class="t">'+esc(p.brand)+'</span>':'')+'<span class="t loc">'+esc(p.office)+'</span></div>'+
+        (isMe?'<div class="row" style="margin-top:8px"><button style="border:1px solid var(--line);background:#fff;border-radius:9px;padding:7px 12px;font-size:12.5px;font-weight:700;color:var(--navy);cursor:pointer;font-family:inherit" onclick="PH.profile()">Edit my profile</button></div>':'')+
+      '</div>';
+    }).join('')+'</div>' : '<div class="empty">Nobody matches that search.</div>';
+  }
+  el('q').oninput=e=>{q=e.target.value; render();};
+  if(q) el('q').value=q;
+  window.TEAM={office:o=>{office=o; render();}};
+  window.TEAMPAGE={refresh:render};   // re-draw once Microsoft photos arrive
+  /* ONE roster, from user.js: the deployed file plus anyone added in Admin, minus
+     anyone removed there. This page used to fetch the file itself, so a person Morgan
+     added would never have appeared here. Without a roster (public sandbox) the
+     built-in list stands. */
+  function adoptRoster(){
+    /* rosterView: the roster with Admin > People's changes on top (role, offices,
+       email), so a role Morgan fixes there shows here. */
+    const rows=(window.PH && PH.rosterView) ? PH.rosterView() : (window.PH && PH.rosterRows) ? PH.rosterRows() : [];
+    if(rows.length){
+      PEOPLE=buildPeople(rows.map(function(x){
+        return { n:x.name, mail:x.email||'', loc:(x.offices||[]).join(', '),
+                 st:x.state||'', brand:x.brand||'', role:x.role||'',
+                 team:(x.teams||[]).join(', '), phone:x.phone||'', added:!!x._added };
+      }));
+    }
+    rebuildOffices();
+    render();
+  }
+  if(window.PH && PH.rosterReady) PH.rosterReady.then(adoptRoster, adoptRoster); else render();
+  // Additions and removals arrive after sign-in, and again whenever an admin saves one.
+  document.addEventListener('ph-identity', adoptRoster);
+})();
+</script>
+<script>PH.nav('team');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.loadPhotos)PH.loadPhotos().then(function(got){if(got&&window.TEAMPAGE&&TEAMPAGE.refresh)TEAMPAGE.refresh();});if(PH.reloadAccess)PH.reloadAccess();});</script>
+<script src="tour.js?v=hc268d202611250847"></script>
+<script>
+Tour.init([
+  {sel:'#q', title:'Find anyone fast', body:'Type a name, an office, or part of a phone number. This is the quickest way to reach the right person at the right office.'},
+  {sel:'#filters', title:'Filter by office', body:'Tap an office to see just that team. <b>Rotates</b> shows the doctors who move between offices.'},
+  {sel:'.p', title:'Everyone\'s card', body:'Photo, role, office, phone and email. On a phone the number and email are <b>tap-to-call</b> and <b>tap-to-email</b>.'},
+  {sel:'.note', title:'It maintains itself', body:'This list builds from <b>Microsoft 365</b> — no spreadsheet to keep updated. People set their own photo; admins set their team and office.'}
+], {key:'team', title:'Team'});
+</script>
+</body>
+</html>

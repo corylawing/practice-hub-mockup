@@ -14,6 +14,18 @@ to the entire workflow").** Never hard-code offices, their colors, years, rates 
 practice manages them (Admin -> Locations = offices + colors; the production book's tabs; Settings = rates). Before
 finishing anything, answer "a 9th office? a new color? next year?" - and say it in the reply. See to-do #15.
 
+**PUBLIC DEMO FOR OTHER PRACTICES (25/11/2026, Cory: "It needs to be demoable for other practices to see what they can
+do").** `demo/` = a GENERATED copy of the sandbox (v1/) for a made-up practice ("Brightline", offices Cedar Grove,
+Lakeview, Northpoint, Westfield, Brookside, Hillcrest, Riverbend, Meadow Park; owner Dr. Maya Chen; admin Jordan Avery).
+URL: https://corylawing.github.io/practice-hub-mockup/demo/home.html. NEVER edit demo/ by hand: change v1/, then run
+`python3 deploy/build-demo.py` (copies git-tracked v1 files only, swaps every real name/office/domain via its MAP, puts
+`deploy/demo-shim.js` first on every page = pretend Microsoft sign-in, all network refused, saved data under "hbdemo:"
+names + a "Start over" button; DEMO banners; leaves out connect/restore/orthofi/auth/alerts-test/datepick/guide pages).
+It REFUSES to finish if any real name is left (its list + the real roster v1/_people.json, which exists only on Cory's
+Mac - so build it there). A real name added to v1 that isn't in the roster or MAP won't be caught: add it to MAP.
+Production never ships demo/. The old repo-root portfolio pages (index.html, chat.html ... "INTERACTIVE PORTFOLIO
+DEMO") are untouched. Rebuild only when Cory asks ("refresh the demo").
+
 **The user is Cory Lawing.** He is building this for a friend's orthodontic practice. He is not a
 developer. Keep answers **short** — he has told me repeatedly that I write too much. Give the
 answer, not the reasoning behind every alternative.

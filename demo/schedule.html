@@ -1,0 +1,1729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="demo-shim.js?v=d202611250847"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Home-Brace · Schedule</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" href="../assets/favicon.png?v=2" type="image/png">
+<meta name="theme-color" content="#0F2A4A">
+<meta name="apple-mobile-web-app-title" content="Home-Brace">
+<link rel="apple-touch-icon" sizes="180x180" href="../assets/icons/apple-touch-icon.png?v=3">
+<meta name="description" content="The practice’s central hub — schedule, production, documents and team, in one place. Brightline · Maple · Riverbend.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Home-Brace">
+<meta property="og:title" content="Home-Brace">
+<meta property="og:description" content="The practice’s central hub — schedule, production, documents and team, in one place. Brightline · Maple · Riverbend.">
+<meta property="og:image" content="https://app.brightline.example/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="https://app.brightline.example/v1/schedule.html">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Home-Brace">
+<meta name="twitter:description" content="The practice’s central hub — schedule, production, documents and team, in one place. Brightline · Maple · Riverbend.">
+<meta name="twitter:image" content="https://app.brightline.example/assets/og-image.png">
+<style>
+  :root{
+    --navy:#0F2A4A; --navy2:#25456e; --teal:#149B96; --teal2:#2BC0B8; --teal-soft:#E5F4F3; --teal-600:#0F827E;
+    --ink:#1F2D3D; --soft:#56627A; --line:#E4E8EE; --canvas:#F4F6F8; --white:#fff;
+    --good:#2E9E6B; --good-soft:#E7F4EE; --bad:#D7503A; --amber:#F2A03D;
+    --shadow:0 1px 2px rgba(15,42,74,.06),0 6px 18px rgba(15,42,74,.06);
+    --shadow-lg:0 10px 30px rgba(15,42,74,.12); --radius:14px; --maxw:1220px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--canvas);line-height:1.5;-webkit-font-smoothing:antialiased}
+  h1{color:var(--navy);margin:0}
+  .ribbon{background:var(--amber);color:#3a2400;text-align:center;font-size:13px;font-weight:600;padding:6px 14px}
+  .hdr{background:var(--navy);color:#fff}
+  .hdr-in{max-width:var(--maxw);margin:0 auto;display:flex;align-items:center;gap:12px;padding:13px 20px}
+  .mark{width:34px;height:34px;flex:none;display:block}
+  .mark img{width:34px;height:34px;display:block;border-radius:50%}
+  .brand{font-weight:700;font-size:18px;color:#fff;line-height:1.1}
+  .brand i{font-style:normal;color:var(--teal2)}
+  .brand small{display:block;font-weight:500;font-size:12px;color:var(--navy-mute,#9fb4d0)}
+  .v1{background:rgba(255,255,255,.15);color:#eaf1fb;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;margin-left:6px}
+  .v1nav{background:var(--navy2)}
+  .v1nav-in{max-width:var(--maxw);margin:0 auto;display:flex;gap:2px;padding:0 12px;overflow-x:auto}
+  .v1nav a{color:var(--navy-mute,#cdd9ea);font-size:14px;font-weight:600;padding:13px 15px;text-decoration:none;border-bottom:3px solid transparent;white-space:nowrap}
+  .v1nav a:hover{color:#fff;background:rgba(255,255,255,.05)}
+  .v1nav a.active{color:#fff;border-bottom-color:var(--teal)}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:22px 20px 90px}
+  .page-head h1{font-size:25px}
+  .page-head p{margin:4px 0 0;color:var(--soft);font-size:14.5px}
+  .notice{background:var(--teal-soft);border:1px solid var(--teal-line,#c4e6e3);border-radius:12px;padding:12px 15px;font-size:13.5px;color:var(--teal-ink,#0c5b57);margin:14px 0}
+  .notice b{color:var(--teal-ink,#0a4d49)}
+  .bar{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin:16px 0 12px}
+  .seg{display:flex;gap:4px;background:#e9edf2;border-radius:999px;padding:4px}
+  .seg button{border:none;background:none;border-radius:999px;padding:8px 17px;font-size:13.5px;font-weight:700;color:var(--navy);cursor:pointer;font-family:inherit}
+  .seg button.on{background:#fff;box-shadow:var(--shadow)}
+  .nav2{display:flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:4px;box-shadow:var(--shadow)}
+  .nav2 button{border:none;background:none;width:30px;height:30px;border-radius:50%;font-size:17px;color:var(--navy);cursor:pointer;font-family:inherit}
+  .nav2 button:hover{background:var(--canvas)}
+  .nav2 .lab{font-weight:800;color:var(--navy);font-size:14px;min-width:158px;text-align:center}
+  .sbtn{background:var(--teal);color:#fff;border:none;border-radius:10px;padding:9px 15px;font-weight:700;font-size:13.5px;cursor:pointer;font-family:inherit;white-space:nowrap}
+  .sbtn:hover{background:var(--teal-600)}
+  .sbtn.ghost{background:#fff;color:var(--navy);border:1px solid var(--line);font-weight:600}
+  .sbtn.ghost:hover{border-color:var(--teal);color:var(--teal-600)}
+  .sbtn.tiny{padding:5px 11px;font-size:12px}
+  .s-note{font-weight:600;text-transform:none;letter-spacing:0;color:var(--soft);font-size:11.5px}
+  .pk.alsoat{border-style:dashed}
+  .pk.alsoat small{display:block;font-weight:600;font-size:10.5px;opacity:.8}
+  .clash{background:#FFF6E9;border:1px solid #f0d9ae;color:#7a4d0a;border-radius:9px;
+    padding:9px 12px;font-size:12.5px;margin:8px 0 0;line-height:1.5}
+  .filters{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:12px 15px;margin-bottom:13px}
+  .frow{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+  .frow + .frow{margin-top:9px;padding-top:9px;border-top:1px solid var(--line)}
+  .flab{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--soft);min-width:60px}
+  .lchip{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:5px 12px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px}
+  .lchip .dot{width:11px;height:11px;border-radius:50%;display:inline-block}
+  .lchip.off{opacity:.38}   /* no grayscale() — Safari renders CSS filters differently */
+  .dchip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 13px;font-size:12.5px;font-weight:700;color:var(--navy);cursor:pointer;font-family:inherit}
+  .dchip.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .dwrap{display:inline-flex;align-items:center;gap:2px}
+  .dedit{border:none;background:transparent;color:var(--soft);cursor:pointer;font-family:inherit;
+    font-size:12px;padding:4px 5px;border-radius:6px;opacity:0;transition:opacity .12s}
+  .dwrap:hover .dedit,.dedit:focus-visible{opacity:1}
+  .dedit:hover{color:var(--teal);background:var(--teal-soft)}
+  @media (hover:none){.dedit{opacity:1}}
+  /* The OFFICE pencil is always visible, not hover-only. Office hours are set behind it,
+     and "hover the chip to discover the pencil" is not something to make anyone guess. */
+  .dedit.always{opacity:1}
+  /* Show/hide toggles. Same "dimmed = hidden" language as the office chips. */
+  .tchip{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:5px 12px;font-size:12.5px;
+    font-weight:700;color:var(--navy);cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px}
+  .tchip .sw{width:26px;height:15px;border-radius:999px;background:#cbd5e1;position:relative;transition:background .12s}
+  .tchip .sw::after{content:'';position:absolute;top:2px;left:2px;width:11px;height:11px;border-radius:50%;
+    background:#fff;transition:transform .12s}
+  .tchip.on .sw{background:var(--teal)}
+  .tchip.on .sw::after{transform:translateX(11px)}
+  .tchip.off{opacity:.5}
+  .scroll{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);background:#fff}
+  table.sgrid{border-collapse:collapse;width:100%;min-width:900px}
+  table.sgrid th,table.sgrid td{border-bottom:1px solid var(--line);border-left:1px solid var(--line)}
+  table.sgrid th:first-child,table.sgrid td:first-child{border-left:none}
+  table.sgrid thead th{background:#fafbfc;font-size:12px;color:var(--navy);font-weight:800;padding:9px 6px;text-align:center}
+  table.sgrid thead th .dnum{display:block;font-size:11px;color:var(--soft);font-weight:600}
+  table.sgrid thead th.istoday{color:var(--teal-600)}
+  th.loc{text-align:left;padding:10px 12px;min-width:190px;background:#fff}
+  .locname{display:flex;align-items:center;gap:7px;font-weight:800;color:var(--navy);font-size:14px}
+  .locname .dot{width:12px;height:12px;border-radius:50%;flex:none}
+  /* Office opening hours beside the name - Morgan asked for these to be visible
+     instead of buried in the office editor. */
+  .ohrs{display:block;font-size:11px;font-weight:700;color:var(--teal-600,#0F827E);
+    letter-spacing:.01em;margin-top:1px}
+  /* Special events: purple so they read as neither a doctor nor a Yellow Dot. */
+  .evt{display:block;font-size:10.5px;font-weight:800;color:#5B21B6;background:#EDE9FE;
+    border-radius:5px;padding:2px 6px;margin-top:3px;line-height:1.35;
+    white-space:normal;overflow-wrap:anywhere}
+  .cell.evtc{background:#FAF8FF}
+  .ent.ev .es{color:#5B21B6}
+  .es.evt{display:block;color:#5B21B6;font-weight:800}
+  .evrow{display:flex;gap:8px;align-items:center}
+  .evrow .s-input{flex:1}
+  .tz{font-size:10px;font-weight:700;background:var(--canvas);color:var(--soft);border-radius:5px;padding:1px 6px;white-space:nowrap}
+  .locsub{font-size:11.5px;color:var(--soft);margin-top:2px}
+  .ledit{border:none;background:none;color:var(--soft);cursor:pointer;font-size:13px;opacity:.45;font-family:inherit}
+  tr:hover .ledit{opacity:.9}
+  td.cell{padding:7px 6px;text-align:center;cursor:pointer;vertical-align:middle;height:62px}
+  /* Darken with a translucent overlay rather than filter:brightness(), which Safari
+     composites in a different color space than Chrome/Edge/Firefox. */
+  td.cell:hover{box-shadow:inset 0 0 0 999px rgba(15,42,74,.055)}
+  td.cell.today{box-shadow:inset 0 0 0 2px var(--teal2)}
+  .who{display:block;font-weight:800;font-size:13px;line-height:1.2}
+  .hrs{display:block;font-size:11px;opacity:.85;margin-top:1px}
+  .needs{color:#946011;font-size:12px;font-weight:700}
+  td.needsc{background:#FFFBEF}
+  .ydot{color:#6b4c05;font-size:11.5px;font-weight:800;display:inline-flex;align-items:center;gap:5px}
+  td.ydotc{background:#FDE047}
+  .closed{color:#9aa6b6;font-size:12px;font-weight:600}
+  td.closedc{background:#fafbfc}
+  .dim{opacity:.16}
+  .month{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;min-width:820px}
+  .mscroll{overflow-x:auto}
+  .mdnum .dw{display:none}
+  .month .dow{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--soft);text-align:center;padding:4px 0}
+  .nav2 .lab{font:inherit;font-weight:800;background:none;border:none;color:inherit;cursor:pointer;padding:6px 10px;border-radius:8px}
+  .nav2 .lab:hover{background:rgba(15,42,74,.06)}
+  .yrow{display:flex;align-items:center;justify-content:center;gap:16px;font-size:18px;margin:4px 0 14px}
+  .pmgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .pm{font:inherit;font-weight:700;padding:12px 0;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--navy);cursor:pointer}
+  .pm.now{border-color:var(--teal)}
+  .pm.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .mini{display:none}
+  /* Today: a ring that pulses twice, so it is seen even when the day was already on screen. */
+  @keyframes todaypulse{0%,100%{box-shadow:inset 0 0 0 3px var(--teal),0 0 0 0 rgba(20,155,150,0)}
+    50%{box-shadow:inset 0 0 0 3px var(--teal),0 0 0 7px rgba(20,155,150,.28)}}
+  .mday.flash{box-shadow:0 0 0 3px var(--teal) inset;background-color:var(--teal-soft,#E5F4F3);animation:todaypulse .8s ease-in-out 2}
+  td.cell.flash{box-shadow:inset 0 0 0 3px var(--teal);animation:todaypulse .8s ease-in-out 2}
+  @media(max-width:640px){
+    .mini{display:block;background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 10px 8px;margin:0 0 12px}
+    .mmh,.mmg{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
+    .mmh span{font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--soft);text-align:center;padding-bottom:4px}
+    .mm{font:inherit;font-size:13.5px;font-weight:600;padding:7px 0;border:none;border-radius:8px;background:transparent;color:var(--navy);position:relative}
+    .mm.out{visibility:hidden}
+    .mm.busy::after{content:"";position:absolute;left:50%;bottom:2px;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:var(--teal)}
+    .mm.today{background:var(--navy);color:#fff}
+    .mm.today.busy::after{background:#fff}
+  }
+  .mday{background:#fff;border:1px solid var(--line);border-radius:10px;min-height:108px;padding:6px 7px}
+  .mday.out{background:#fafbfc;border-color:#f0f2f5}
+  .mday.today{border-color:var(--teal);box-shadow:0 0 0 2px var(--teal-soft) inset}
+  .mdnum{font-size:11.5px;font-weight:800;color:var(--soft);margin-bottom:4px}
+  .mday.today .mdnum{color:var(--teal-600)}
+  /* Today breathes: a slow, soft glow so it is easy to find at a glance (Jordan, 21/10/2026:
+     "suttle annimation glow on today"). In the scheme's own accent, so it follows the theme.
+     The jump-to-today flash still wins while it runs; anyone who asks their device for less
+     motion gets the glow held still instead. */
+  @keyframes todayglow{0%,100%{box-shadow:0 0 0 2px var(--teal-soft) inset,0 0 0 0 color-mix(in srgb,var(--teal) 0%,transparent)}
+    50%{box-shadow:0 0 0 2px var(--teal-soft) inset,0 0 22px 5px color-mix(in srgb,var(--teal) 48%,transparent)}}
+  @keyframes todaycell{0%,100%{box-shadow:inset 0 0 0 2px var(--teal2),inset 0 0 0 0 color-mix(in srgb,var(--teal2) 0%,transparent)}
+    50%{box-shadow:inset 0 0 0 2px var(--teal2),inset 0 0 18px 4px color-mix(in srgb,var(--teal2) 50%,transparent)}}
+  .mday.today{animation:todayglow 3s ease-in-out infinite}
+  td.cell.today{animation:todaycell 3s ease-in-out infinite}
+  .mday.today.flash, td.cell.today.flash{animation:todaypulse .8s ease-in-out 2}
+  @media (prefers-reduced-motion: reduce){
+    .mday.today{animation:none;box-shadow:0 0 0 2px var(--teal-soft) inset,0 0 12px 2px color-mix(in srgb,var(--teal) 26%,transparent)}
+    td.cell.today{animation:none;box-shadow:inset 0 0 0 2px var(--teal2),inset 0 0 12px 2px color-mix(in srgb,var(--teal2) 30%,transparent)}
+  }
+  /* A solid bar in the office's REAL color. The pale fills we derived are only ~4 ΔE
+     apart — two offices could look identical, and worse in some browsers. Her own colors
+     are ~36 apart, so the bar is what you actually read. */
+  .ent{display:block;width:100%;text-align:left;border:none;border-left:6px solid transparent;
+    border-radius:4px;padding:2px 6px 2px 7px;margin-bottom:2px;
+    font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;line-height:1.25}
+  .ent small{display:block;font-weight:600;opacity:.8;font-size:10px;line-height:1.2}
+  /* Yellow Dot Day is the ONE row that reads across: office on the left, the label pushed
+     right. Everything else stays stacked (office over doctor). */
+  /* Closed reads across too: office on the left, "Closed" right. Grey fill and grey text
+     say "not working", but the office's color bar stays full strength so you can still
+     tell WHICH office is closed at a glance. */
+  .ent.cl{display:flex;align-items:center;gap:6px;background:#fafbfc;color:#94a3b8}
+  .ent.cl .eo{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700}
+  .ent.cl .es{margin-left:auto;font-weight:700;font-size:10.5px;white-space:nowrap;letter-spacing:.02em}
+  .ent.yd{display:flex;align-items:center;gap:6px}
+  .ent.yd .eo{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ent.yd .es{margin-left:auto;font-weight:800;font-size:10.5px;white-space:nowrap;
+    display:inline-flex;align-items:center;gap:5px}
+  .ent.yd .es{opacity:1;font-weight:800}
+  /* Bright yellow, ringed so it stands out on any office color. */
+  .ydmark{width:10px;height:10px;border-radius:50%;background:#FDE047;display:inline-block;flex:none;
+    border:1.5px solid #a16207;
+    box-shadow:0 0 0 2px rgba(161,98,7,.25)}
+  .ent.nd{background:#FFF7E6;color:#9a6b12;border:1px dashed #e6c877;border-left-width:6px;border-left-style:solid;border-left-color:#e6c877}
+  .addday{display:block;width:100%;border:1px dashed #cfd7e0;background:transparent;color:#8a94a6;border-radius:6px;
+    padding:3px 6px;font-size:10.5px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:2px}
+  .mday:hover .addday{border-color:var(--teal);color:var(--teal-600)}
+  .counts{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px}
+  /* the counts' own month arrows (Morgan 18/11) */
+  .cntbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:22px}
+  .cntbar h2{margin:0;font-size:17px;color:var(--navy);flex:1;min-width:0}
+  .cntbar + .counts{margin-top:12px}
+  .cntbar .nav2 .lab{cursor:default}
+  .cntbar .nav2 .lab:hover{background:none}
+  .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
+  .card h2{margin:0 0 3px;font-size:16px;color:var(--navy)}
+  .card .sub{font-size:12.5px;color:var(--soft);margin-bottom:12px}
+  table.cnt{width:100%;border-collapse:collapse}
+  table.cnt th{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--soft);font-weight:800;text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)}
+  table.cnt td{padding:7px 8px;border-bottom:1px solid var(--line);font-size:13.5px}
+  table.cnt tr:last-child td{border-bottom:none}
+  table.cnt td.n{text-align:right;font-weight:800;color:var(--navy)}
+  .pilldot{display:inline-flex;align-items:center;gap:7px;font-weight:700}
+  .pilldot i{width:11px;height:11px;border-radius:50%}
+  .cbar{height:7px;background:var(--canvas);border-radius:99px;overflow:hidden;margin-top:4px;min-width:70px}
+  .cbar i{display:block;height:100%;border-radius:99px}
+  .status{border-radius:12px;padding:11px 15px;font-size:13.5px;margin:12px 0;box-shadow:var(--shadow);border:1px solid var(--line);background:#fff}
+  .status.ok{background:var(--good-soft);border-color:#bfe4d0;color:#1d6b48}
+  .status.warn{background:#FFF6E9;border-color:#f0d9ae;color:#7a4d0a}
+  .keyrow{display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin:0 0 12px;font-size:12.5px;color:var(--soft)}
+  .keyitem{display:inline-flex;align-items:center;gap:6px}
+  .keyitem b{color:var(--ink)}
+  .kbox{width:14px;height:14px;border-radius:4px;border:1px solid var(--line);display:inline-block}
+  /* Three office colors side by side, so this swatch reads as "it varies" rather than
+     "pink means doctor on site" — every other swatch in this row IS its literal color. */
+  .kmulti{display:inline-flex;gap:3px}
+  .hint{font-size:12.5px;color:var(--soft);margin-top:10px}
+  /* DOCTOR SCHEDULE | MEETINGS (Jordan 18/11: "It needs to be really easy to switch from doctor schedule to meeting
+     schedule ... They cannot live on each other") - two separate calendars, one switch */
+  .modeseg{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:#e9edf2;border-radius:16px;padding:5px;margin:0 0 16px;max-width:620px}
+  .modeseg[hidden]{display:none}
+  .modeseg button{display:flex;align-items:center;gap:10px;border:0;background:none;border-radius:12px;padding:10px 14px;cursor:pointer;font-family:inherit;text-align:left;color:var(--navy)}
+  .modeseg button .mi{font-size:22px;line-height:1}
+  .modeseg button b{display:block;font-size:15px}
+  .modeseg button small{display:block;font-size:12px;color:var(--soft);font-weight:600;margin-top:1px}
+  .modeseg button.on{background:#fff;box-shadow:var(--shadow)}
+  .modeseg button:not(.on):hover{background:rgba(255,255,255,.55)}
+  body.mode-meet #filters, body.mode-meet #status, body.mode-meet .keyrow, body.mode-meet #counters, body.mode-meet #tourNotice,
+  body.mode-meet #addLocBtn, body.mode-meet #addDocBtn, body.mode-meet #hint, body.mode-meet .ph-ro-banner{display:none !important}
+  body:not(.mode-meet) #newMeetBtn, body:not(.mode-meet) #meetnote{display:none !important}
+  .mmonth{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+  .mmonth .dow{font-size:11.5px;font-weight:800;color:var(--soft);text-transform:uppercase;letter-spacing:.05em;padding:0 4px 4px}
+  .mmday{background:#fff;border:1px solid var(--line);border-radius:10px;min-height:104px;padding:6px 7px;display:flex;flex-direction:column}
+  .mmday.out{background:transparent;border-color:transparent}
+  .mmday.wkend{background:#fafbfc}
+  .mmday.today{border-color:#2563EB;box-shadow:0 0 0 2px rgba(37,99,235,.15)}
+  .mmday .mdnum{font-size:12.5px;font-weight:800;color:var(--navy);margin-bottom:5px}
+  .mmday .mtg,.mweek .mtg{flex-direction:column;align-items:flex-start;gap:1px;padding:5px 7px}
+  .mmday .mtg .ms,.mweek .mtg .ms{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:12px}
+  .mmday .mtg .mt,.mweek .mtg .mt{font-size:11px;color:#3B5BA9}
+  .mmday .madd{margin-top:auto;border:1px dashed #C7D7F4;background:none;color:#1E3A8A;border-radius:7px;padding:3px 6px;font:inherit;font-size:11px;font-weight:700;cursor:pointer;opacity:0;transition:opacity .12s}
+  .mmday:hover .madd,.mmday .madd:focus{opacity:1}
+  .mweek{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
+  .mweek .wd{background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px;min-height:220px;display:flex;flex-direction:column}
+  .mweek .wd.today{border-color:#2563EB}
+  .mweek .wh{font-size:12.5px;font-weight:800;color:var(--navy);margin-bottom:8px}
+  .mweek .mtg{flex-direction:column;align-items:flex-start;gap:1px;padding:7px 8px}
+  .mweek .mtg .mw{font-size:11px;font-weight:600;color:#3B5BA9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+  .mempty{background:#fff;border:1px dashed var(--line);border-radius:12px;padding:26px 16px;text-align:center;color:var(--soft);font-size:14px;margin-top:10px}
+  @media (hover:none){ .mmday .madd{opacity:1} }
+  @media(max-width:760px){
+    .modeseg{max-width:none} .modeseg button{padding:9px 10px} .modeseg button small{display:none}
+    .mmonth,.mweek{grid-template-columns:1fr} .mmonth .dow{display:none} .mmday.out,.mmday.none{display:none}
+    .mmday,.mweek .wd{min-height:0} .mmday .madd{display:none} .mweek .wd.none{display:none}
+  }
+  /* MEETINGS (18/11/2026) - the Home-Brace group calendar on the Schedule */
+  .mtg{display:flex;align-items:center;gap:6px;width:100%;text-align:left;border:1px solid #C7D7F4;background:#EEF4FF;color:#1E3A8A;border-radius:8px;padding:4px 7px;margin:0 0 4px;font:inherit;font-size:11.5px;font-weight:700;cursor:pointer;line-height:1.25}
+  .mtg:hover{border-color:#2563EB}
+  .mtg .mt{font-weight:800;white-space:nowrap}
+  .mtg .ms{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  tr.mrow th.loc .locname{color:#1E3A8A}
+  tr.mrow td{vertical-align:top;padding:5px}
+  #meetnote:empty{display:none}
+  #meetnote{background:#EEF4FF;border:1px solid #C7D7F4;color:#1E3A8A;border-radius:10px;padding:9px 12px;font-size:13px;margin:0 0 12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .mdl{display:grid;grid-template-columns:22px 1fr;gap:8px 10px;font-size:14px;color:var(--ink)}
+  .mdl .ic{text-align:center}
+  .mppl{display:flex;flex-direction:column;gap:5px;margin-top:4px}
+  .mppl div{display:flex;gap:8px;align-items:center;font-size:13.5px}
+  .mppl .r{margin-left:auto;font-size:12px;font-weight:700;border-radius:999px;padding:1px 8px}
+  .r.yes{background:#E7F4EE;color:#1d6b47}.r.no{background:#FBEAE7;color:#9a2f1e}.r.may{background:#FFF4E2;color:#7a4b00}.r.none{background:#F1F4F7;color:#56627A}
+  .mform label{display:block;font-size:12.5px;font-weight:700;color:var(--navy);margin:12px 0 5px}
+  .mform label:first-child{margin-top:0}
+  .mform .row2{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:8px}
+  .mform input[type=date],.mform input[type=time]{width:100%;padding:8px 9px;border:1px solid var(--line);border-radius:9px;font-size:14px;font-family:inherit}
+  .mform textarea{width:100%;min-height:70px;padding:9px 11px;border:1px solid var(--line);border-radius:9px;font-size:14px;font-family:inherit;resize:vertical}
+  .merr{color:#b42318;font-weight:700;font-size:13px;margin-top:10px}
+  .mform .phpk-btn,.mform select{display:flex;width:100%}
+  .merr:empty{display:none}
+  .mcount{font-size:12.5px;color:var(--soft);margin-top:6px}
+  @media (max-width:760px), (pointer:coarse){ .mform input,.mform textarea{font-size:16px} .mform .row2{grid-template-columns:1fr 1fr} .mform .row2 > :first-child{grid-column:1 / -1} }
+  .ov{position:fixed;inset:0;background:rgba(15,42,74,.5);z-index:120;display:none;align-items:flex-start;justify-content:center;padding:22px 14px;overflow:auto}
+  .ov.open{display:flex}
+  .modal{background:#fff;width:100%;max-width:560px;border-radius:16px;box-shadow:var(--shadow-lg);margin:auto;overflow:hidden}
+  .m-top{display:flex;align-items:center;gap:11px;padding:16px 20px;border-bottom:1px solid var(--line)}
+  .m-top h3{margin:0;font-size:17px;color:var(--navy)}
+  .m-top .x{margin-left:auto;border:none;background:none;font-size:24px;color:var(--soft);cursor:pointer}
+  .m-body{padding:18px 20px;max-height:70vh;overflow:auto}
+  .m-foot{display:flex;gap:10px;align-items:center;padding:14px 20px;border-top:1px solid var(--line);background:#fafbfc;flex-wrap:wrap}
+  .s-lab{font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--soft);margin:15px 0 7px}
+  .s-lab:first-child{margin-top:0}
+  .picks{display:flex;gap:7px;flex-wrap:wrap}
+  .pk{border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 13px;font-size:13.5px;font-weight:700;color:var(--navy);cursor:pointer;font-family:inherit}
+  .pk.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .pk.busy{opacity:.42;cursor:not-allowed}
+  .pk small{display:block;font-weight:600;font-size:10.5px}
+  .pk.yd.on{background:#FEF3C7;color:#8a6410;border-color:#e6c877}
+  .s-input{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:9px;font-size:14px;font-family:inherit}
+  .drow{display:flex;align-items:center;gap:9px;padding:6px 0;flex-wrap:wrap}
+  .drow .dname{min-width:44px;font-weight:700;font-size:13px;color:var(--navy)}
+  .dtimes{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+  .dtimes input{padding:5px 7px;border:1px solid var(--line);border-radius:7px;font-size:12.5px;font-family:inherit}
+  .dclosed{color:#9aa6b6;font-size:12.5px}
+  .sw{display:inline-flex;align-items:center;gap:7px;font-size:13.5px;cursor:pointer}
+  .offgrid{display:grid;grid-template-columns:1fr;gap:8px}
+  .offrow{display:flex;align-items:center;gap:6px;border:1.5px solid var(--line);border-radius:11px;padding:7px 9px;flex-wrap:wrap}
+  .offpick{flex:1;min-width:150px;border:none;background:none;padding:3px 2px;text-align:left;cursor:pointer;font-family:inherit;
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .quickyd,.quickcl{border:1px solid rgba(15,42,74,.18);background:rgba(255,255,255,.75);border-radius:8px;padding:6px 10px;
+    font-size:11.5px;font-weight:800;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+  .quickyd{color:#6b4c05} .quickcl{color:#5b6675}
+  .quickyd:hover{background:#FDE047} .quickcl:hover{background:#fff}
+  .offpick b{font-size:13.5px;font-weight:800}
+  .offpick small{display:block;width:100%;font-size:11px;opacity:.85;font-weight:600}
+  .offpick .dot{width:11px;height:11px;border-radius:50%;flex:none}
+  @media(max-width:560px){ .offgrid{grid-template-columns:1fr} }
+  .colgrid{display:flex;gap:8px;flex-wrap:wrap}
+  .colsw{width:34px;height:34px;border-radius:9px;border:2px solid transparent;cursor:pointer}
+  .colsw.on{border-color:var(--navy);box-shadow:0 0 0 2px #fff inset}
+  .ph-ro-banner{background:#FFF6E9;border:1px solid #f0d9ae;color:#7a4d0a;border-radius:12px;padding:11px 15px;font-size:13.5px;font-weight:600;margin-bottom:14px}
+  @media(max-width:820px){ .counts{grid-template-columns:1fr} }
+  /* Bigger finger targets on phones — the filter chips and month arrows were ~28px. */
+  @media(max-width:760px){
+    .lchip,.dchip,.tchip,.sbtn.tiny{min-height:38px;padding-top:8px;padding-bottom:8px;font-size:13.5px}
+    .nav2 button{width:40px;height:40px;font-size:19px}
+    .seg button{padding:10px 20px}
+  }
+  /* PHONES: a 7-column month grid is unusable at 390px — you could only ever see
+     two and a half days. Collapse it to a one-day-per-row agenda instead. Same data,
+     same buttons, no sideways scrolling. */
+  @media(max-width:760px){
+    .month{grid-template-columns:1fr;min-width:0;gap:8px}
+    .month .dow{display:none}
+    .mday.out{display:none}
+    .mscroll{overflow-x:visible}
+    .mday{min-height:0;padding:9px 11px;display:flex;flex-direction:column}
+    .mdnum{font-size:13px;color:var(--navy);margin-bottom:6px;display:flex;align-items:baseline;gap:7px}
+    .mdnum .dw{display:inline;font-size:11px;font-weight:800;letter-spacing:.06em;
+      text-transform:uppercase;color:var(--soft);min-width:30px}
+    .mday.today .mdnum .dw{color:var(--teal-600)}
+    .mday.empty{background:#fbfcfd;opacity:.75}
+    .ent{font-size:13px;padding:8px 11px;margin-bottom:5px}
+    .ent small{font-size:11.5px}
+    .addday{padding:9px 11px;font-size:12px}
+  }
+  /* Some people set "reduce motion" in Windows or macOS, often because movement makes
+     them unwell. Honour it everywhere: keep the state changes, drop the travel. */
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{
+      animation-duration:.01ms !important; animation-iteration-count:1 !important;
+      transition-duration:.01ms !important; scroll-behavior:auto !important;
+    }
+  }
+
+</style>
+<script src="user.js?v=hc268d202611250847"></script>
+  <script src="store.js?v=hc268d202611250847"></script>
+  <script src="schedrec.js?v=hc268d202611250847"></script>
+  <script src="gate.js?v=hc268d202611250847"></script>
+  <script src="meetings.js?v=hc268d202611250847"></script>
+</head>
+<body>
+<div class="ribbon">DEMO — a sample staff schedule: which office is open each day and who’s working.</div>
+<header class="hdr">
+  <div class="hdr-in">
+    <span class="mark" aria-label="Home-Brace"><img src="../assets/logo-mark.png?v=2" alt="" width="34" height="34"></span>
+    <span class="brand">Home-<i>Brace</i><small>Schedule</small></span>
+    <span class="v1">Demo</span>
+  </div>
+</header>
+<nav class="v1nav"><div class="v1nav-in" id="nav"></div></nav>
+
+<div class="wrap">
+  <div class="page-head">
+    <h1 id="schedTitle">Schedule — Who's Where</h1>
+    <p id="schedSub">Which office is open each day and which doctor is working there.</p>
+  </div>
+  <div class="modeseg" id="modeseg" role="tablist" aria-label="What to show" hidden>
+    <button type="button" role="tab" data-m="docs" onclick="PS.mode('docs')"><span class="mi">🩺</span><span><b>Doctor schedule</b><small>Who’s at which office</small></span></button>
+    <button type="button" role="tab" data-m="meet" onclick="PS.mode('meet')"><span class="mi">🗓</span><span><b>Meetings</b><small>Team meetings and Teams calls</small></span></button>
+  </div>
+  <div class="notice" id="tourNotice"><b>Every office has its own color.</b> Tap any day to put a doctor in it, mark it a <b>Yellow Dot Day</b> (open, no doctor) or close it. Work in <b>Month</b> view and tap <b>+ Add</b> on any day to put an office and doctor on it.</div>
+
+  <div class="bar">
+    <div class="seg" id="viewseg"></div>
+    <div class="nav2"><button onclick="PS.step(-1)" aria-label="Previous">‹</button><button class="lab" id="perlab" type="button" onclick="PS.pickMonth()" title="Jump to a month" data-fb-view></button><button onclick="PS.step(1)" aria-label="Next">›</button></div>
+    <button class="sbtn ghost" onclick="PS.today()">Today</button>
+    <button class="sbtn" id="newMeetBtn" onclick="PS.newMeet()" style="display:none">＋ New meeting</button>
+    <span style="flex:1"></span>
+    <button class="sbtn ghost" id="addLocBtn" onclick="PS.addLocation()">+ Add office</button>
+    <button class="sbtn ghost" id="addDocBtn" onclick="PS.addPerson()">+ Add doctor</button>
+  </div>
+
+  <div class="filters" id="filters"></div>
+  <div id="meetnote"></div>
+  <div id="status"></div>
+  <div class="keyrow">
+    <span class="keyitem"><span class="kmulti"><i class="kbox" style="background:#FFE1EF;border-color:#F0378F"></i><i class="kbox" style="background:#DFF3FE;border-color:#38BDF8"></i><i class="kbox" style="background:#ECFACC;border-color:#84CC16"></i></span> <b>Doctor on site</b> — shown in that office's own color</span>
+    <span class="keyitem"><i class="kbox" style="background:#FFF7E6;border:1px dashed #e6c877"></i> <b>Not decided yet</b> — open, no doctor and no Yellow Dot</span>
+    <span class="keyitem" id="keyYdot"><i class="kbox" style="background:#FDE047;border-color:#eab308"></i><span class="ydmark"></span> <b>Yellow Dot Day</b> — open, no doctor on site</span>
+    <span class="keyitem" id="keyClosed"><i class="kbox" style="background:#fafbfc"></i> Closed</span>
+  </div>
+  <div id="board"></div>
+  <p class="hint" id="hint"></p>
+  <div id="counters"></div>
+</div>
+
+<div id="modal" class="ov"><div class="modal" id="modalCard"></div></div>
+
+<script>
+(function(){
+  /* ---------- the OFFICE carries the color, not the doctor ---------- */
+  // PALETTE now lives in user.js so Marketing uses the identical colors.
+  const PALETTE=PH.palette();
+  const colOf=c=>PALETTE.find(p=>p.k===c)||PALETTE[9];
+
+  const WK={s:480,e:1020};   // 8:00a – 5:00p
+  const HALF={s:480,e:840};  // 8:00a – 2:00p  (their half day)
+
+  // Same list Admin edits (lives in user.js). Add an office in either place and it
+  // shows up in both — plus the dashboard, documents, team and marketing.
+  // A–Z everywhere — filter chips, week grid rows, month rows, counters.
+  const byName=(a,b)=>a.n.localeCompare(b.n);
+  let locations=PH.locations().sort(byName);
+  // Doctors have no color now — a day takes the color of its office.
+  let people=[{n:'Dr. Fairbanks'},{n:'Dr. Bramwell'},{n:'Dr. Coleman'},{n:'Dr. Merrick'}];
+
+  const TZS=['Eastern Time','Central Time','Mountain Time','Mountain Time (Arizona, no DST)','Pacific Time','Alaska Time','Hawaii Time'];
+  // Mon–Fri only — five wide columns so all eight offices fit in a day without scrolling.
+  const DOW=['Mon','Tue','Wed','Thu','Fri'];
+  const MOFULL=['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+  /* ---------- keyed by real date, so a whole year can be built ---------- */
+  let sched={};
+  const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  const parseISO=s=>{const p=s.split('-');return new Date(+p[0],+p[1]-1,+p[2]);};
+  const dowIdx=d=>(d.getDay()+6)%7;
+  const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x;};
+  const mondayOf=d=>addDays(d,-dowIdx(d));
+  const TODAY=new Date();
+  const loc=n=>locations.find(l=>l.n===n);
+  const openOn=(l,d)=>{const i=dowIdx(d); return i<5? l.hours[i] : null;};
+  const cellOf=(l,d)=>(sched[iso(d)]||{})[l.n];
+  function setCell(l,d,v){ const k=iso(d); sched[k]=sched[k]||{}; if(v===null) delete sched[k][l.n]; else sched[k][l.n]=v; save(); }
+  /* Local first so the calendar never lags, then out to SharePoint so the schedule
+     follows people between devices. PH_STORE handles both and degrades to local alone. */
+  /* Schedules written before production existed were demo data, but carry no marker —
+     the stamp above only catches ones built since. So production also requires a schedule
+     to declare this version; anything older is treated as pre-launch demo data and dropped.
+     Safe only because nothing real has been entered yet. Bumping this again later WOULD
+     discard genuine work, so don't. */
+  const SCHED_VERSION=2;
+
+  /* Writes are coalesced. Any code path that changes many cells in a row - a bulk
+     fill, a doctor being removed from a year of days - used to fire one SharePoint
+     write per cell. One write, just after the last change, is what anybody actually
+     wants, and it makes a thousand-version storm impossible. */
+  let saveTimer=null;
+  let docsSaved=null;              // the doctor list as last persisted, to spot a real change
+  let docsLoaded=null;             // ...and as loaded, to spot somebody else's change
+  function save(){ clearTimeout(saveTimer); saveTimer=setTimeout(saveNow, 400); }
+  function saveNow(){
+    sched.__v=SCHED_VERSION;
+    /* Notifications are raised where the change is made (saveDay, saveLoc, the doctor
+       list), naming the office and the doctor, so each person hears only what is
+       theirs. A blanket "Schedule updated" to everyone told nobody anything. */
+    /* Goes through the store, never straight to localStorage: the store is what keeps
+       the previous copy, weighs the new one, and refuses a write that would empty the
+       year out. A direct localStorage.setItem here would step around all of it. */
+    if(window.PH_STORE && PH_STORE.update && PH.isLive()){
+      /* ONLY THE OFFICE CELLS THIS PAGE CHANGED go out, laid onto the shared copy.
+         Two people editing at once used to be last-save-wins for the whole year; then
+         for a whole DAY - Morgan setting Cedar Grove on the 5th sent the 5th as her page
+         had it, over the Northpoint doctor Jules had just put on the same day. Changes are
+         found by comparing against the snapshot taken at load and after each save, so
+         every path that touches a day - the day editor, office hours following, a doctor
+         removed, an office renamed - is covered without instrumenting each one. One save
+         at a time from this page: anything changed while one is on its way goes next. */
+      /* When the doctor list changed too it goes FIRST and the cells only once it is taken: removing a doctor renumbers
+         the days, and renumbered cells used to land even when the list was then refused (21/11/2026, code review). */
+      if(JSON.stringify(people)===docsSaved){ if(saving) again=true; else sendCells(); }
+    } else {
+      if(window.PH_STORE) PH_STORE.set('ph_sched2', sched);
+      else try{ localStorage.setItem('ph_sched2',JSON.stringify(sched)); }catch(_){}
+    }
+    /* The doctor list rides along WHEN IT CHANGED. Removing a doctor re-numbers the
+       days, so the list and the days must persist together or the days point at the
+       wrong doctor - but rewriting it on every single save meant that simply using the
+       page restamped it, and a browser whose push had failed then held the whole
+       practice's doctor list hostage to its own stale copy. Kept out of `sched`
+       because three loops walk its keys. */
+    const docsNow=JSON.stringify(people);
+    if(docsNow!==docsSaved){
+      if(window.PH_STORE && PH_STORE.update && PH.isLive()){
+        /* The doctor list is positional - the days point at doctors by index - so two
+           people's edits to it cannot be merged. Instead: if somebody else changed the
+           list since this page loaded, keep theirs and say so, rather than silently
+           putting ours over it. */
+        let clash=false;
+        PH_STORE.update('ph_docs', function(remote){
+          if(remote && JSON.stringify(remote)!==docsLoaded){ clash=true; return undefined; }
+          return people;
+        }).then(function(r){
+          if(clash){
+            alert('The doctor list was changed by someone else while this page was open. '+
+                  'Reload to see their version, then make your change again.');
+          } else if(r && !r.blocked){ docsSaved=docsNow; docsLoaded=docsNow; if(saving) again=true; else sendCells(); }
+        });
+      } else {
+        docsSaved=docsNow;
+        if(window.PH_STORE) PH_STORE.set('ph_docs', people);
+        else try{ localStorage.setItem('ph_docs',docsNow); }catch(_){}
+      }
+    }
+  }
+  /* Snapshot of every day as last loaded or saved, for finding what THIS page changed. */
+  let snap={};
+  const isDay=k=>/^\d{4}-\d{2}-\d{2}$/.test(k);
+  function takeSnap(){ snap={}; Object.keys(sched).forEach(k=>{ if(isDay(k)) snap[k]=JSON.stringify(sched[k]); }); }
+  const J=v=>v===undefined ? undefined : JSON.stringify(v);
+  /* Every [day, office] whose cell differs from the snapshot. */
+  function dirtyCells(){
+    const cells=[], seen={};
+    Object.keys(sched).filter(isDay).concat(Object.keys(snap)).forEach(k=>{
+      if(seen[k]) return; seen[k]=1;
+      const cur=sched[k]||{};
+      if(snap[k]!==undefined && JSON.stringify(cur)===snap[k]) return;
+      const was=snap[k]===undefined ? {} : JSON.parse(snap[k]), offs={};
+      Object.keys(cur).concat(Object.keys(was)).forEach(o=>{
+        if(offs[o]) return; offs[o]=1;
+        if(J(cur[o])!==J(was[o])) cells.push([k,o]);
+      });
+    });
+    return cells;
+  }
+  let saving=false, again=false;
+  /* ONE RECORD PER YEAR FROM 2028 (22/10/2026 - schedrec.js). Each changed cell is laid onto
+     the shared copy of its own year's record: 2026 and 2027 onto 'ph_sched2' exactly as before,
+     2028 on onto 'ph_sched_2028' and so on, so no record ever fills up. */
+  function sendCells(){
+    const cells=dirtyCells();
+    if(!cells.length) return;
+    saving=true; again=false;
+    PH_SCHED.send(cells, (k,o)=>sched[k] ? sched[k][o] : undefined, SCHED_VERSION).then(function(res){
+      saving=false;
+      /* NOT SAVED MEANS NOT SAVED. This used to adopt the result and re-snapshot even
+         when the send had failed - r.value is filled in either way - so the page forgot
+         those cells were unsent. They stay changed now and go with the next save, and
+         the store holds them and sends them itself. No retry loop from here. A save
+         across years counts only when every year's record took its cells. */
+      if(res.ok){
+        adoptSaved(res.parts, res.sent);
+        try{ localStorage.removeItem('ph_daysync_at'); }catch(_){}   // production days follow the Schedule (proddays.js): next page that can, does it now
+        if(again || dirtyCells().length) save();
+      } else if(again) save();
+    }, function(){ saving=false; if(again) save(); });
+  }
+  /* A SAVE THAT FINISHES LATE MUST NOT TAKE BACK A LATER EDIT.
+
+     Saving is quick in the office and slow on a phone. Morgan enters a doctor on
+     Tuesday, the save goes; she enters Wednesday while it is still on its way; the
+     Tuesday save comes back with the shared year and the page used to REPLACE its
+     schedule with it - Wednesday was not in it, and the snapshot taken next said
+     Wednesday was never changed, so it was never sent. Now the shared year comes in,
+     every cell edited here since that save left is laid back on top, and it stays
+     marked as changed so the next save carries it. */
+  function adoptSaved(parts, sent){
+    const keep=[], seen={};
+    Object.keys(sched).filter(isDay).concat(Object.keys(snap)).forEach(k=>{
+      if(seen[k]) return; seen[k]=1;
+      const cur=sched[k]||{}, was=snap[k]===undefined ? {} : JSON.parse(snap[k]), offs={};
+      Object.keys(cur).concat(Object.keys(was)).forEach(o=>{
+        if(offs[o]) return; offs[o]=1;
+        const id=k+'|'+o, now=J(cur[o]);
+        const left=Object.prototype.hasOwnProperty.call(sent,id) ? sent[id] : J(was[o]);
+        if(now!==left) keep.push([k,o,cur[o]]);
+      });
+    });
+    sched=PH_SCHED.adopt(sched, parts); takeSnap();
+    keep.forEach(([k,o,v])=>{ const day=Object.assign({}, sched[k]||{}); if(v===undefined) delete day[o]; else day[o]=v; sched[k]=day; });
+    refresh();
+  }
+
+  // null on a day the office is OPEN = nobody rostered = a Yellow Dot Day.
+  // Several offices genuinely run days with staff but no doctor on site.
+  const PATTERN={
+    'Cedar Grove':[0,null,1,null,0],
+    'Northpoint':[1,null,0,null,2],
+    'Lakeview':[null,0,null,1,null],
+    'Brookside':[2,null,3,null,1],
+    'Westfield':[null,2,null,3,null],     // Friday: open, no doctor
+    'Hillcrest':[3,null,2,null,3],
+    'Meadow Park':[null,3,null,2,null],
+    'Riverbend':[null,null,2,null,1]
+  };
+  function buildYear(year){
+    let d=new Date(year,0,1); const end=new Date(year,11,31);
+    while(d<=end){
+      const i=dowIdx(d);
+      if(i<6) locations.forEach(l=>{
+        const h=openOn(l,d); if(!h) return;
+        const p=(PATTERN[l.n]||[])[i];
+        setCell(l,d, (p==null) ? {ydot:true} : {p:p,s:h.s,e:h.e});
+      });
+      d=addDays(d,1);
+    }
+    // Stamp it, so a demo schedule that got saved before this existed can be recognized
+    // and thrown away in production instead of being mistaken for real work.
+    sched.__demo=true;
+    save();
+  }
+
+  let view='month';
+  let anchor=mondayOf(new Date(TODAY));
+  let mY=TODAY.getFullYear(), mM=TODAY.getMonth();
+  let fLoc=new Set(locations.map(l=>l.n));
+  // Doctor filter is a SET so several doctors can be picked at once (empty = everyone).
+  let fDocs=new Set();
+  const fAll=()=>fDocs.size===0;                       // no filter -> show everything
+  const fHit=ds=>fAll()||ds.some(d=>fDocs.has(d));     // does this cell match the filter?
+  // Both on by default: the calendar shows everything until you choose to quieten it.
+  let fYdot=true, fClosed=true, fEvent=true;
+
+  const el=id=>document.getElementById(id);
+  const canEdit=()=>!window.PH||PH.atLeast('schedule','edit');
+  const two=n=>String(n).padStart(2,'0');
+  const fmt=m=>{const h=Math.floor(m/60),x=m%60,ap=h>=12?'p':'a',hh=((h+11)%12)+1;return hh+(x?':'+two(x):'')+ap;};
+  const fmt24=m=>two(Math.floor(m/60))+':'+two(m%60);
+  const hm=v=>{const p=v.split(':');return (+p[0])*60+(+p[1]);};
+  /* Two different jobs, and using the wrong one is a security bug.
+       esc()  - safe inside a JS STRING LITERAL (an onclick attribute). Escapes the
+                quote only, which is all that job needs.
+       escH() - safe as HTML text or an attribute value.
+     The Special event field is typed by a person and shared with the whole practice
+     through SharePoint, so it must go through escH. Passing it through esc() let
+     `" onfocus="..."` or an <img onerror> out of the field and into the page for
+     everyone who opened the schedule. */
+  const esc=s=>String(s).replace(/'/g,"\\'");
+  const escH=s=>String(s==null?'':s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  const shownLocs=()=>locations.filter(l=>fLoc.has(l.n));
+
+  /* ---------- filters: office AND/OR doctor ---------- */
+  function renderFilters(){
+    /* The pencil sits here as well as on the Week row, because the office editor - hours
+       included - used to live ONLY in the Week view's row header. Morgan works in Month
+       view, so changing an office's hours meant knowing to switch views first. Same
+       pattern as the doctor chips right below: the chip filters, the pencil edits. */
+    const locs=locations.map(l=>{const c=colOf(l.color);
+      return '<span class="dwrap"><button class="lchip'+(fLoc.has(l.n)?'':' off')+'" style="border-color:'+c.dot+';color:'+c.fg+';background:'+(fLoc.has(l.n)?c.bg:'#fff')+'" onclick="PS.togLoc(\''+esc(l.n)+'\')">'+
+        '<span class="dot" style="background:'+c.dot+'"></span>'+l.n+'</button>'+
+        (canEdit()?'<button class="dedit always" title="Edit '+esc(l.n)+' \u2014 hours, colour, lunch" '+
+          'onclick="event.stopPropagation();PS.editLoc(\''+esc(l.n)+'\')">\u270E</button>':'')+
+        '</span>';}).join('');
+    /* A doctor chip filters; the pencil renames or removes. editPerson() existed and was
+       even exported, but nothing ever called it — so a doctor could be added and then
+       never corrected. A doctor who wanted to go by a different name had no way through. */
+    const docs=people.map((p,i)=> p.left ? '' :
+      '<span class="dwrap"><button class="dchip'+(fDocs.has(i)?' on':'')+'" onclick="PS.togDoc('+i+')">'+p.n+'</button>'+
+      (canEdit()?'<button class="dedit" title="Rename or remove '+esc(p.n)+'" '+
+        'onclick="event.stopPropagation();PS.edit('+i+')">\u270E</button>':'')+'</span>').join('')+
+      /* Doctors who left stay on every day they worked; only an editor sees them here, to bring one back. */
+      (canEdit() && people.some(p=>p.left) ? '<span class="hint" style="margin-left:6px">Left: '+people.map((p,i)=>p.left ?
+        esc(p.n)+' <button class="sbtn ghost tiny" onclick="PS.unleave('+i+')" title="Back on the doctor list">Bring back</button>' : '').filter(Boolean).join(' \u00b7 ')+'</span>' : '');
+    const tog=(on,fn,dot,label)=>
+      '<button class="tchip '+(on?'on':'off')+'" onclick="PS.'+fn+'()" aria-pressed="'+on+'">'+
+        '<span class="sw"></span><span class="dot" style="background:'+dot+';width:11px;height:11px;border-radius:50%;display:inline-block"></span>'+label+'</button>';
+    const shows=tog(fYdot,'togYdot','#FACC15','Yellow Dot Days')+
+      tog(fClosed,'togClosed','#cbd5e1','Closed days')+
+      tog(fEvent,'togEvent','#7C3AED','Special events');
+    el('filters').innerHTML=
+      '<div class="frow"><span class="flab">Offices</span>'+locs+
+        '<button class="sbtn ghost tiny" onclick="PS.allLocs()">'+(fLoc.size===locations.length?'Hide all':'Show all')+'</button></div>'+
+      '<div class="frow"><span class="flab">Doctor</span>'+docs+
+        (!fAll()?'<button class="sbtn ghost tiny" onclick="PS.allDocs()">Show all doctors</button>':'')+'</div>'+
+      '<div class="frow"><span class="flab">Show</span>'+shows+'</div>';
+  }
+
+  /* ---------- an office's opening hours, in words ----------------------------
+     Morgan: "when I change the hours for a location, can it display next to the
+     name? ... you have to go searching for it and I would prefer it show so
+     everyone knows."
+
+     Hours are set PER WEEKDAY, so this is not one number. Days that share the same
+     times are grouped, so an office open 8-5 all week reads "8:00a-5:00p", while one
+     that closes early on Friday reads "Mon-Thu 8:00a-5:00p - Fri 8:00a-2:00p". Days
+     the office is shut are simply left out; the grid already shows those. */
+  function hoursLabel(l){
+    const groups=[];                       // [{s,e,days:[0..4]}] in weekday order
+    for(let i=0;i<5;i++){
+      const h=l.hours && l.hours[i];
+      if(!h) continue;
+      const last=groups[groups.length-1];
+      /* Only extend the run when this day is ADJACENT to the last. Skipping a closed
+         day used to keep the run going, so Mon/Wed/Thu collapsed into one group and
+         printed "Mon-Thu" - telling everyone the office is open on a Tuesday it is
+         shut. Wrong hours are worse than no hours. */
+      if(last && last.s===h.s && last.e===h.e && last.days[last.days.length-1]===i-1)
+        last.days.push(i);
+      else groups.push({s:h.s, e:h.e, days:[i]});
+    }
+    if(!groups.length) return '';
+    const span=g=>g.days.length===1 ? DOW[g.days[0]]
+              : g.days.length===2 ? DOW[g.days[0]]+', '+DOW[g.days[1]]
+              : DOW[g.days[0]]+'\u2013'+DOW[g.days[g.days.length-1]];
+    // Day names can only be dropped when the office really is open all five days.
+    if(groups.length===1 && groups[0].days.length===5)
+      return fmt(groups[0].s)+'\u2013'+fmt(groups[0].e);
+    return groups.map(g=>span(g)+' '+fmt(g.s)+'\u2013'+fmt(g.e)).join(' \u00b7 ');
+  }
+
+  /* ---------- week board ---------- */
+  const weekDays=()=>Array.from({length:5},(_,i)=>addDays(anchor,i));  // Mon–Fri
+  function cellHtml(l,d){
+    const c=colOf(l.color), cell=cellOf(l,d), open=openOn(l,d);
+    const t=(iso(d)===iso(TODAY)?' today':'');
+    const click=canEdit()?' onclick="PS.open(\''+esc(l.n)+'\',\''+iso(d)+'\')"':'';
+    const blank='<td class="cell closedc'+t+'"'+click+'></td>';
+    // The event label goes ON whatever the day already is, rather than replacing it.
+    const ev=(cell&&cell.event&&fEvent)?'<span class="evt" title="Special event">\u2605 '+escH(cell.event)+'</span>':'';
+    if(cell&&cell.closed) return (fClosed||ev)?'<td class="cell closedc'+t+'"'+click+'><span class="closed">Closed</span>'+ev+'</td>':blank;
+    const ds=docsOf(cell);
+    if(ds.length){
+      const dim=fHit(ds)?'':' dim';
+      return '<td class="cell'+t+dim+'" style="background:'+c.bg+';box-shadow:inset 6px 0 0 '+c.dot+'"'+click+'>'+
+        ds.map(i=>'<span class="who" style="color:'+c.fg+'">'+people[i].n+'</span>').join('')+
+        '<span class="hrs" style="color:'+c.fg+'">'+fmt(cell.s)+'\u2013'+fmt(cell.e)+'</span>'+ev+'</td>';
+    }
+    if(cell&&cell.ydot) return fYdot?'<td class="cell ydotc'+t+(fAll()?'':' dim')+'"'+click+'><span class="ydot"><span class="ydmark"></span> Yellow Dot Day</span>'+ev+'</td>':blank;
+    // An event on its own is a settled day, not one still waiting for a doctor.
+    if(ev) return '<td class="cell evtc'+t+(fAll()?'':' dim')+'"'+click+'>'+ev+'</td>';
+    if(open) return '<td class="cell needsc'+t+(fAll()?'':' dim')+'"'+click+'><span class="needs">Needs doctor</span></td>';
+    return fClosed?'<td class="cell closedc'+t+'"'+click+'><span class="closed">Closed</span></td>':blank;
+  }
+  function renderWeek(){
+    const days=weekDays();
+    const head='<tr><th class="loc">Office</th>'+days.map(d=>'<th'+(iso(d)===iso(TODAY)?' class="istoday"':'')+'>'+DOW[dowIdx(d)]+
+      '<span class="dnum">'+(d.getMonth()+1)+'/'+d.getDate()+'</span></th>').join('')+'</tr>';
+    const rows=shownLocs().map(l=>{
+      const c=colOf(l.color);
+      const hrs=hoursLabel(l);
+      return '<tr><th class="loc"><div class="locname"><span class="dot" style="background:'+c.dot+'"></span>'+l.n+
+        (hrs?'<span class="ohrs" title="When this office is open">'+hrs+'</span>':'')+
+        '<span class="tz">'+l.tz+'</span>'+
+        (canEdit()?'<button class="ledit" title="Edit office" onclick="event.stopPropagation();PS.editLoc(\''+esc(l.n)+'\')">✎</button>':'')+'</div>'+
+        '<div class="locsub">'+(l.lunch?'lunch '+fmt(l.lunch.s)+'–'+fmt(l.lunch.e):'no set lunch')+'</div></th>'+
+        days.map(d=>cellHtml(l,d)).join('')+'</tr>';
+    }).join('');
+    el('board').innerHTML='<div class="scroll"><table class="sgrid"><thead>'+head+'</thead><tbody>'+rows+'</tbody></table></div>';
+  }
+
+  /* ---------- month view ---------- */
+  function renderMonth(){
+    const first=new Date(mY,mM,1), dim=new Date(mY,mM+1,0).getDate();
+    // Five columns = Mon–Fri. Pad to the 1st's weekday (a weekend 1st starts the grid at
+    // Monday) and skip Saturdays and Sundays completely, or days land in the wrong column.
+    // Pad from the first WEEKDAY of the month, not the 1st — August 2026 starts on a
+    // Saturday, so the grid must begin at Monday the 3rd with no leading blanks.
+    let fw=new Date(mY,mM,1);
+    while(dowIdx(fw)>4) fw=addDays(fw,1);
+    const start=dowIdx(fw);
+    let cells='';
+    let slots=0;
+    for(let i=0;i<start;i++){ cells+='<div class="mday out"></div>'; slots++; }
+    for(let dn=1;dn<=dim;dn++){
+      const d=new Date(mY,mM,dn), isT=iso(d)===iso(TODAY);
+      if(dowIdx(d)>4) continue;                      // Saturday / Sunday: no column for it
+      slots++;
+      let ents='';
+      shownLocs().forEach(l=>{
+        const cell=cellOf(l,d), c=colOf(l.color), open=openOn(l,d);
+        const click=canEdit()?' onclick="PS.open(\''+esc(l.n)+'\',\''+iso(d)+'\')"':'';
+        const mev=(cell&&cell.event&&fEvent)?'<span class="es evt">\u2605 '+escH(cell.event)+'</span>':'';
+        const closedEnt=()=>'<button class="ent cl" style="border-left-color:'+c.dot+'"'+click+'>'+
+          '<span class="eo">'+l.n+'</span><span class="es">Closed</span>'+mev+'</button>';
+        // Marked closed outright.
+        if(cell&&cell.closed){ if(fClosed&&fAll()) ents+=closedEnt(); return; }
+        const mds=docsOf(cell);
+        if(mds.length){
+          if(!fHit(mds)) return;
+          /* The times belong here too. Week view has shown them next to the doctor since
+             Morgan asked for it; Month view showed the doctor and nothing else, so a
+             half day looked exactly like a full one. */
+          const mt=(cell.s!=null&&cell.e!=null)?' \u00b7 '+fmt(cell.s)+'\u2013'+fmt(cell.e):'';
+          ents+='<button class="ent" style="background:'+c.bg+';color:'+c.fg+';border-left-color:'+c.dot+'"'+click+'>'+l.n+
+            '<small>'+mds.map(i=>people[i].n).join(', ')+mt+'</small>'+mev+'</button>';
+        } else if(cell&&cell.ydot){
+          if(!fAll()||!fYdot) return;
+          // Keep the office color so you can still tell WHICH office — only the dot is yellow.
+          ents+='<button class="ent yd" style="background:'+c.bg+';color:'+c.fg+';border-left-color:'+c.dot+'"'+click+'>'+
+            '<span class="eo">'+l.n+'</span>'+
+            '<span class="es"><span class="ydmark"></span>Yellow Dot Day</span>'+mev+'</button>';
+        } else if(cell&&cell.event&&fEvent){
+          // An event on its own is a settled day, not one still waiting for a doctor.
+          if(!fAll()) return;
+          ents+='<button class="ent ev" style="background:'+c.bg+';color:'+c.fg+';border-left-color:'+c.dot+'"'+click+'>'+
+            '<span class="eo">'+l.n+'</span><span class="es">\u2605 '+escH(cell.event)+'</span></button>';
+        } else if(open){
+          if(!fAll()) return;
+          ents+='<button class="ent nd"'+click+'>'+l.n+'<small>not decided yet</small></button>';
+        } else {
+          // Not open on this weekday at all — same thing to a reader as "Closed".
+          if(fClosed&&fAll()) ents+=closedEnt();
+        }
+      });
+      // Nothing to add once every visible office has an entry — drop the button and
+      // reclaim its row, which matters on a day where all eight are covered.
+      const allSet = shownLocs().every(l=>{const cl=cellOf(l,d);
+        return docsOf(cl).length || (cl&&(cl.ydot||cl.closed));});
+      const addBtn = (canEdit() && !allSet)
+        ? '<button class="addday" onclick="PS.addTo(\''+iso(d)+'\')" title="Add an office and doctor to this day">+ Add / set day</button>'
+        : '';
+      // The weekday label is hidden on desktop (the column headers do that job) and shown
+      // on phones, where the grid collapses to a one-day-per-row agenda.
+      const dw='<span class="dw">'+['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()]+'</span>';
+      cells+='<div class="mday'+(isT?' today':'')+(ents?'':' empty')+'" data-date="'+iso(d)+'"><div class="mdnum">'+dw+dn+(isT?' · today':'')+'</div>'+ents+addBtn+'</div>';
+    }
+    const tail=(5-(slots%5))%5;
+    for(let i=0;i<tail;i++) cells+='<div class="mday out"></div>';
+    el('board').innerHTML=miniMonth()+'<div class="mscroll"><div class="month">'+
+      ['Mon','Tue','Wed','Thu','Fri'].map(x=>'<div class="dow">'+x+'</div>').join('')+cells+'</div></div>';
+    autoScrollToday();
+  }
+
+  /* ---------- counters ---------- */
+  function tally(from,to){
+    const perDoc={}, perPair={}, perLoc={};
+    let d=new Date(from);
+    while(d<=to){
+      const day=sched[iso(d)];
+      if(day) locations.forEach(l=>{
+        const c=day[l.n];
+        const ds=docsOf(c);
+        if(ds.length){
+          perLoc[l.n]=(perLoc[l.n]||0)+1;              // the OFFICE had a doctor-day
+          ds.forEach(pi=>{                             // and each doctor worked it
+            perDoc[pi]=(perDoc[pi]||0)+1;
+            perPair[pi+'|'+l.n]=(perPair[pi+'|'+l.n]||0)+1;
+          });
+        }
+      });
+      d=addDays(d,1);
+    }
+    return {perDoc,perPair,perLoc};
+  }
+  function renderCounters(){
+    const M=tally(new Date(mY,mM,1), new Date(mY,mM+1,0));
+    const Y=tally(new Date(mY,0,1),  new Date(mY,11,31));
+    const maxDoc=Math.max(1,...people.map((p,i)=>Y.perDoc[i]||0));
+    const maxLoc=Math.max(1,...locations.map(l=>Y.perLoc[l.n]||0));
+    const mn=MOFULL[mM].slice(0,3);
+    const docRows=people.map((p,i)=> p.left && !Y.perDoc[i] ? '' : '<tr><td><b>'+p.n+'</b>'+(p.left?' <small style="color:var(--soft)">(left)</small>':'')+
+        '<div class="cbar"><i style="width:'+((Y.perDoc[i]||0)/maxDoc*100)+'%;background:var(--teal)"></i></div></td>'+
+        '<td class="n">'+(M.perDoc[i]||0)+'</td><td class="n">'+(Y.perDoc[i]||0)+'</td></tr>').join('');
+    const locRows=locations.map(l=>{const c=colOf(l.color);
+      return '<tr><td><span class="pilldot"><i style="background:'+c.dot+'"></i>'+l.n+'</span>'+
+        '<div class="cbar"><i style="width:'+((Y.perLoc[l.n]||0)/maxLoc*100)+'%;background:'+c.dot+'"></i></div></td>'+
+        '<td class="n">'+(M.perLoc[l.n]||0)+'</td><td class="n">'+(Y.perLoc[l.n]||0)+'</td></tr>';}).join('');
+    const pairRows=[];
+    people.forEach((p,i)=>locations.forEach(l=>{
+      const y=Y.perPair[i+'|'+l.n]||0; if(!y)return;
+      const c=colOf(l.color);
+      pairRows.push('<tr><td>'+p.n+'</td><td><span class="pilldot"><i style="background:'+c.dot+'"></i>'+l.n+'</span></td>'+
+        '<td class="n">'+(M.perPair[i+'|'+l.n]||0)+'</td><td class="n">'+y+'</td></tr>');
+    }));
+    /* MONTH ARROWS RIGHT HERE (Morgan 18/11: "I often need to see the chart of the days covered per office and scroll
+       through the months. I find that I have to go back up to the top ... then go down the page halfway"). They move the
+       whole page a month, like the ones at the top, and keep these counts where they are on the screen. */
+    el('counters').innerHTML='<div class="cntbar"><h2>Doctor days and coverage</h2><div class="nav2">'+
+        '<button onclick="PS.countStep(-1)" aria-label="Previous month" title="Previous month">‹</button><span class="lab">'+MOFULL[mM]+' '+mY+'</span>'+
+        '<button onclick="PS.countStep(1)" aria-label="Next month" title="Next month">›</button></div></div>'+
+      '<div class="counts">'+
+      '<div class="card"><h2>🧑‍⚕️ Doctor days</h2><div class="sub">Days each doctor is scheduled to work.</div>'+
+        '<table class="cnt"><thead><tr><th>Doctor</th><th style="text-align:right">'+mn+'</th><th style="text-align:right">'+mY+'</th></tr></thead><tbody>'+docRows+'</tbody></table></div>'+
+      '<div class="card"><h2>🏢 Days covered per office</h2><div class="sub">Days with a doctor on site.</div>'+
+        '<table class="cnt"><thead><tr><th>Office</th><th style="text-align:right">'+mn+'</th><th style="text-align:right">'+mY+'</th></tr></thead><tbody>'+locRows+'</tbody></table></div>'+
+      '</div>'+
+      '<div class="card" style="margin-top:16px"><h2>Doctor days by office</h2><div class="sub">Who covers where, and how often.</div>'+
+        '<div style="overflow-x:auto"><table class="cnt"><thead><tr><th>Doctor</th><th>Office</th><th style="text-align:right">'+mn+'</th><th style="text-align:right">'+mY+'</th></tr></thead>'+
+        '<tbody>'+(pairRows.join('')||'<tr><td colspan="4" style="color:var(--soft)">Nothing scheduled yet.</td></tr>')+'</tbody></table></div></div>';
+  }
+
+  function renderStatus(){
+    let need=0,total=0;
+    const days = view==='week'? weekDays() : (()=>{const a=[],dim=new Date(mY,mM+1,0).getDate();
+      for(let i=1;i<=dim;i++)a.push(new Date(mY,mM,i)); return a;})();
+    let ydotN=0, undecided=0, eventN=0;
+    days.forEach(d=>shownLocs().forEach(l=>{
+      if(!openOn(l,d))return; const c=cellOf(l,d);
+      if(c&&c.closed)return;
+      total++;
+      /* Morgan: "We do not want it to count toward an open doctor day." The
+         doctor-day counters already only count days WITH a doctor, so those were
+         fine. Here a special event is treated like a Yellow Dot: a day with no
+         doctor, but a decision already taken rather than something outstanding.
+         It is deliberately still counted in the total - skipping it entirely made
+         this line claim "21 of 21 have a doctor" on a day that had a staff
+         training and no doctor at all, which is worse than the problem it fixed. */
+      if(!docsOf(c).length){
+        need++;
+        if(c&&c.event)     eventN++;
+        else if(c&&c.ydot) ydotN++;
+        else               undecided++;
+      }
+    }));
+    const st=el('status');
+    st.className='status ';   // set below, once we know what is actually outstanding
+    // Split the two: a Yellow Dot Day is a decision already taken; an unassigned open day
+    // is still waiting on one. Lumping them together hid the days that need action.
+    const parts=[];
+    if(ydotN)     parts.push(ydotN+' marked <b>Yellow Dot Day</b>');
+    if(eventN)    parts.push(eventN+' with a <b>special event</b>');
+    if(undecided) parts.push(undecided+' <b>still to decide</b>');
+    // Only days nobody has decided on are a warning; the rest are settled.
+    const outstanding=undecided;
+    st.className='status '+(undecided===0?'ok':'warn');
+    st.innerHTML = total===0 ? '<b>Nothing open</b> in this view.'
+      : need===0 ? '<b>Fully covered.</b> Every open day '+(view==='week'?'this week':'this month')+' has a doctor ('+total+' of '+total+').'
+      : '<b>'+need+' open day'+(need===1?'':'s')+' with no doctor</b> — '+parts.join(' · ')+
+        ' ('+(total-need)+' of '+total+' have a doctor).';
+  }
+
+  /* ---------- day editor ---------- */
+  let cur=null;
+  /* A day at an office can have SEVERAL doctors. Cells store `ps` (an array of doctor
+     indexes); older saved cells store a single `p`, so read everything through docsOf()
+     and nobody's existing rota breaks. */
+  function docsOf(cell){
+    if(!cell) return [];
+    if(Array.isArray(cell.ps)) return cell.ps.filter(i=>people[i]);
+    return (cell.p!=null && people[cell.p]) ? [cell.p] : [];
+  }
+  const docNames=cell=>docsOf(cell).map(i=>people[i].n);
+  function busyAt(dateStr,pi,exceptLoc){
+    const day=sched[dateStr]||{};
+    for(const ln in day){ if(ln===exceptLoc)continue;
+      if(docsOf(day[ln]).indexOf(pi)>=0) return ln; }
+    return null;
+  }
+  // Clicking "+ Add" on a day: choose the office first, then the doctor.
+  function addTo(dateStr){
+    if(!canEdit())return;
+    const d=parseISO(dateStr);
+    const rows=locations.map(l=>{
+      const c=colOf(l.color), h=openOn(l,d), cell=cellOf(l,d);
+      const hasN = docNames(cell);
+      const note = hasN.length ? 'already '+hasN.join(', ') : (h? 'open '+fmt(h.s)+'\u2013'+fmt(h.e) : 'not normally open');
+      return '<div class="offrow" style="background:'+c.bg+';border-color:'+c.dot+'">'+
+        '<button class="offpick" style="color:'+c.fg+'" onclick="PS.open(\''+esc(l.n)+'\',\''+dateStr+'\')">'+
+          '<span class="dot" style="background:'+c.dot+'"></span><b>'+l.n+'</b><small>'+note+'</small></button>'+
+        '<button class="quickyd" title="Open with no doctor" onclick="PS.quick(\''+esc(l.n)+'\',\''+dateStr+'\',\'ydot\')"><span class="ydmark"></span> Yellow Dot</button>'+
+        '<button class="quickcl" title="Office closed that day" onclick="PS.quick(\''+esc(l.n)+'\',\''+dateStr+'\',\'closed\')">Closed</button>'+
+      '</div>';
+    }).join('');
+    openModal(
+      '<div class="m-top"><h3>Add to '+DOW[dowIdx(d)]+' '+(d.getMonth()+1)+'/'+d.getDate()+'</h3><button class="x" onclick="PS.close()">\u00d7</button></div>'+
+      '<div class="m-body"><div class="s-lab">Which office?</div><div class="offgrid">'+rows+'</div>'+
+        '<p class="hint">Tap an <b>office</b> to choose the doctor and hours \u2014 or set it straight to a <b>Yellow Dot Day</b> (open, no doctor) or <b>Closed</b> right here.</p></div>'+
+      '<div class="m-foot"><span style="flex:1"></span><button class="sbtn ghost" onclick="PS.close()">Cancel</button></div>');
+  }
+  // set a whole day straight from the picker, without going through the doctor step
+  function quick(locName,dateStr,what){
+    if(!canEdit())return;
+    setCell(loc(locName),parseISO(dateStr), what==='ydot'?{ydot:true}:{closed:true});
+    closeModal(); refresh();
+  }
+  function open(locName,dateStr){
+    if(!canEdit())return;
+    const l=loc(locName), d=parseISO(dateStr), c=cellOf(l,d), h=openOn(l,d)||WK;
+    cur={loc:locName,date:dateStr,
+      tmp:{ps:docsOf(c).slice(), s:(c&&c.s!=null)?c.s:h.s, e:(c&&c.e!=null)?c.e:h.e,
+           ydot:!!(c&&c.ydot), closed:!!(c&&c.closed), event:(c&&c.event)||''}};
+    renderDay();
+  }
+  function renderDay(){
+    const l=loc(cur.loc), d=parseISO(cur.date), t=cur.tmp, cc=colOf(l.color);
+    // A doctor booked elsewhere that day is FLAGGED, not blocked. Half days exist precisely
+    // so someone can do 8–2 at one office and the afternoon at another, and with 4 doctors
+    // across 8 offices a hard block made it impossible to ever put two in one office.
+    const clashes=[];
+    const picks=people.map((p,i)=>{
+      const on=t.ps.indexOf(i)>=0;
+      if(p.left && !on) return '';
+      const busy=busyAt(cur.date,i,cur.loc);
+      if(busy && on) clashes.push(p.n+' is also at '+busy);
+      return '<button class="pk'+(on?' on':'')+(busy?' alsoat':'')+'" onclick="PS.pickDoc('+i+')">'+
+        p.n+(p.left?' <small>(left)</small>':'')+(busy?'<small>also at '+busy+'</small>':'')+'</button>';
+    }).join('');
+    openModal(
+      '<div class="m-top"><span style="width:14px;height:14px;border-radius:50%;background:'+cc.dot+'"></span>'+
+        '<h3>'+l.n+' · '+DOW[dowIdx(d)]+' '+(d.getMonth()+1)+'/'+d.getDate()+'</h3><button class="x" onclick="PS.close()">×</button></div>'+
+      '<div class="m-body">'+
+        '<div class="s-lab">Who is working? <span class="s-note">tap as many as you need</span></div>'+
+        '<div class="picks">'+picks+'</div>'+
+        (t.ps.length>1?'<p class="hint" style="margin:6px 0 0">'+t.ps.length+' doctors at '+l.n+' that day \u2014 it counts as one doctor-day for the office and a day each for '+t.ps.map(i=>people[i].n).join(' and ')+'.</p>':'')+
+        (clashes.length?'<p class="clash">\u26a0\ufe0f '+clashes.join(' \u00b7 ')+' the same day. Fine if they\u2019re splitting the day \u2014 just check the hours.</p>':'')+
+        '<div class="s-lab">Hours</div>'+
+        '<div class="dtimes"><input type="time" value="'+fmt24(t.s)+'" onchange="PS.setT(\'s\',this.value)"><span>to</span>'+
+          '<input type="time" value="'+fmt24(t.e)+'" onchange="PS.setT(\'e\',this.value)">'+
+          '<button class="sbtn ghost" style="padding:6px 11px;font-size:12.5px" onclick="PS.halfDay()">Half day (8–2)</button>'+
+          '<button class="sbtn ghost" style="padding:6px 11px;font-size:12.5px" onclick="PS.fullDay()">Full day (8–5)</button></div>'+
+        '<div class="s-lab">Or mark the day</div><div class="picks">'+
+          '<button class="pk yd'+(t.ydot?' on':'')+'" onclick="PS.markYdot()">● Yellow Dot Day</button>'+
+          '<button class="pk'+(t.closed?' on':'')+'" onclick="PS.markClosed()">Closed</button>'+
+        '</div>'+
+        '<p class="hint">Tap <b>Yellow Dot Day</b> again to switch it off — the office then shows as <b>Closed</b>. Yellow Dot = open with no doctor; Closed = not open at all.</p>'+
+        '<div class="s-lab">Special event <span class="s-note">optional \u2014 shows on the day</span></div>'+
+        '<div class="evrow">'+
+          '<input class="s-input" id="evtext" maxlength="60" value="'+escH(t.event||'')+'" '+
+            'placeholder="e.g. Staff training, Team lunch" oninput="PS.setEvent(this.value)">'+
+          (t.event?'<button class="sbtn ghost" onclick="PS.setEvent(\'\',true)">Remove</button>':'')+
+        '</div>'+
+        '<p class="hint">Use this when something is on at the office so nobody treats it as a '+
+        'free day. It shows on the calendar and <b>never counts as a doctor day</b> \u2014 it can '+
+        'sit on a day that already has a doctor, or on its own.</p>'+
+      '</div>'+
+      '<div class="m-foot"><button class="sbtn ghost" onclick="PS.clearDay()">Clear</button>'+
+        '<span id="dhint" style="flex:1;color:var(--bad);font-size:12.5px"></span>'+
+        '<button class="sbtn ghost" onclick="PS.close()">Cancel</button>'+
+        '<button class="sbtn" onclick="PS.saveDay()">Save</button></div>');
+  }
+  // Toggle — tap as many doctors as are in that office that day.
+  function pickDoc(i){ const t=cur.tmp; const k=t.ps.indexOf(i);
+    if(k>=0) t.ps.splice(k,1); else t.ps.push(i);
+    t.ydot=false; t.closed=false; renderDay(); }
+  function setT(k,v){ cur.tmp[k]=hm(v); }
+  function setEvent(v,redraw){ cur.tmp.event=v; if(redraw) renderDay(); }
+  function halfDay(){ cur.tmp.s=HALF.s; cur.tmp.e=HALF.e; renderDay(); }
+  function fullDay(){ cur.tmp.s=WK.s; cur.tmp.e=WK.e; renderDay(); }
+  // their ask: de-selecting a Yellow Dot Day closes the office
+  function markYdot(){ const t=cur.tmp;
+    if(t.ydot){ t.ydot=false; t.closed=true; } else { t.ydot=true; t.closed=false; t.ps=[]; } renderDay(); }
+  function markClosed(){ const t=cur.tmp;
+    if(t.closed){ t.closed=false; } else { t.closed=true; t.ydot=false; t.ps=[]; } renderDay(); }
+  function clearDay(){ setCell(loc(cur.loc),parseISO(cur.date),null); closeModal(); refresh(); }
+  function saveDay(){
+    const t=cur.tmp, l=loc(cur.loc), d=parseISO(cur.date);
+    /* A special event is a LABEL on the day, not a state of its own, so it can sit on a
+       day that already has a doctor, a Yellow Dot or a closure - "Dr. Coleman in, plus a
+       team lunch at 4" is a real thing. It is also enough on its own to keep a day that
+       would otherwise be cleared. */
+    const ev=(t.event||'').trim().slice(0,60);
+    let cell=null;
+    if(t.closed)    cell={closed:true};
+    else if(t.ydot) cell={ydot:true};
+    else if(t.ps.length){
+      if(t.e<=t.s){ el('dhint').textContent='End time must be after the start time.'; return; }
+      cell={ps:t.ps.slice(),s:t.s,e:t.e};
+    }
+    if(ev){ cell=cell||{}; cell.event=ev; }
+    setCell(l,d,cell);
+    /* No notification for a day. Morgan, 30/09: "I don't think we need it to notify
+       people every time the calendar has a change to it. That is a ton of
+       notifications when I am entering calendars for the first time." */
+    closeModal(); refresh();
+  }
+
+  /* ---------- office editor ---------- */
+  let tmpLoc=null;
+  function addLocation(){ if(!canEdit())return;
+    tmpLoc={isNew:true,n:'',color:PALETTE[8].k,tz:'Mountain Time',lunch:null,hours:[WK,null,WK,null,WK,null]}; renderLoc(); }
+  function editLoc(n){ if(!canEdit())return;
+    const l=loc(n); tmpLoc=JSON.parse(JSON.stringify(l)); tmpLoc.isNew=false; tmpLoc.orig=n; renderLoc(); }
+  function renderLoc(){
+    const t=tmpLoc;
+    const cols=PALETTE.map(c=>'<button class="colsw'+(t.color===c.k?' on':'')+'" style="background:'+c.dot+'" title="'+c.k+'" onclick="PS.setColor(\''+esc(c.k)+'\')"></button>').join('');
+    const days=DOW.map((d,i)=>{
+      const h=t.hours[i];
+      return '<div class="drow"><span class="dname">'+d+'</span>'+
+        '<label class="sw"><input type="checkbox" '+(h?'checked':'')+' onchange="PS.dtog('+i+')"> open</label>'+
+        (h?'<span class="dtimes"><input type="time" value="'+fmt24(h.s)+'" onchange="PS.dtime('+i+',\'s\',this.value)"><span>to</span><input type="time" value="'+fmt24(h.e)+'" onchange="PS.dtime('+i+',\'e\',this.value)"></span>':'<span class="dclosed">closed</span>')+
+      '</div>';}).join('');
+    openModal(
+      '<div class="m-top"><h3>'+(t.isNew?'Add an office':'Edit '+t.orig)+'</h3><button class="x" onclick="PS.close()">×</button></div>'+
+      '<div class="m-body">'+
+        '<div class="s-lab">Office name</div><input class="s-input" id="lName" value="'+(t.n||'').replace(/"/g,'&quot;')+'" placeholder="e.g. Roswell"><div class="merr" id="lErr"></div>'+
+        '<div class="s-lab">Color — how this office shows on the schedule</div><div class="colgrid">'+cols+'</div>'+
+        '<div class="s-lab">Time zone</div><select class="s-input" onchange="PS.setTZ(this.value)">'+TZS.map(z=>'<option'+(z===t.tz?' selected':'')+'>'+z+'</option>').join('')+'</select>'+
+        '<div class="s-lab">Office hours</div>'+days+
+        '<div class="s-lab">Lunch</div>'+
+        '<label class="sw"><input type="checkbox" '+(t.lunch?'checked':'')+' onchange="PS.lunchTog()"> this office takes a set lunch</label>'+
+        (t.lunch?'<div class="dtimes" style="margin-top:8px"><input type="time" value="'+fmt24(t.lunch.s)+'" onchange="PS.lunchT(\'s\',this.value)"><span>to</span><input type="time" value="'+fmt24(t.lunch.e)+'" onchange="PS.lunchT(\'e\',this.value)"></div>':'<p class="hint">No set lunch — leave it unticked if this office doesn\'t schedule one.</p>')+
+      '</div>'+
+      '<div class="m-foot">'+(t.isNew?'':'<button class="sbtn ghost" onclick="PS.delLoc()">Delete office</button>')+
+        '<span style="flex:1"></span><button class="sbtn ghost" onclick="PS.close()">Cancel</button>'+
+        '<button class="sbtn" onclick="PS.saveLoc()">Save</button></div>');
+  }
+  function setColor(c){ tmpLoc.color=c; renderLoc(); }
+  function setTZ(v){ tmpLoc.tz=v; }
+  function dtog(i){ tmpLoc.hours[i]=tmpLoc.hours[i]?null:{s:WK.s,e:WK.e}; renderLoc(); }
+  function dtime(i,k,v){ if(tmpLoc.hours[i]) tmpLoc.hours[i][k]=hm(v); }
+  function lunchTog(){ tmpLoc.lunch=tmpLoc.lunch?null:{s:720,e:780}; renderLoc(); }
+  function lunchT(k,v){ if(tmpLoc.lunch) tmpLoc.lunch[k]=hm(v); }
+
+  /* ---------- office hours vs. the days already on the calendar -------------------
+     Morgan, 2026-09-16: "when I change an office to 8-2 the hours do not show up on
+     the calendar."
+
+     Every day stores the times it was created with. Changing the office's hours
+     changed the label beside the office name and nothing else, so the row read
+     "Mon 8a-2p" while all five days under it still read 8a-5p.
+
+     Days that were only ever following the office hours should keep following them.
+     Days where somebody typed a different time on purpose must not be touched - half
+     days exist precisely so a doctor can do 8-2 at one office and the afternoon at
+     another. So a day only moves when its times match the office's OLD hours exactly.
+
+     Only from today forward. A past day is a record of what actually happened and
+     rewriting it would be a lie. */
+  function daysFollowingHours(name, oldHours, newHours){
+    const hits=[], today=iso(TODAY);
+    Object.keys(sched).forEach(k=>{
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(k) || k < today) return;
+      const cell=(sched[k]||{})[name];
+      if(!cell || cell.s==null || cell.e==null) return;
+      const i=dowIdx(parseISO(k)); if(i>4) return;
+      const was=oldHours&&oldHours[i], now=newHours&&newHours[i];
+      if(!was || !now) return;                       // closed then or closed now
+      if(was.s===now.s && was.e===now.e) return;     // that weekday did not change
+      if(cell.s===was.s && cell.e===was.e) hits.push({k:k, i:i});
+    });
+    return hits;
+  }
+
+  function saveLoc(){
+    const nm=(el('lName').value||'').trim(); if(!nm)return;
+    /* A name another office already has took over that office's days (21/11/2026, code review) - ignoring case and spaces. */
+    const same=x=>String(x||'').replace(/\s+/g,'').toLowerCase();
+    const twin=locations.find(l=>(tmpLoc.isNew || l.n!==tmpLoc.orig) && same(l.n)===same(nm));
+    if(twin){ const e=el('lErr'); if(e) e.textContent='There is already an office called '+twin.n+'. Pick another name.'; return; }
+    // Keep brand/state from Admin — this page doesn't edit them and must not drop them.
+    const keep = tmpLoc.isNew ? {} : (locations.find(l=>l.n===tmpLoc.orig)||{});
+    const rec=Object.assign({},keep,{n:nm,color:tmpLoc.color,tz:tmpLoc.tz,lunch:tmpLoc.lunch,hours:tmpLoc.hours});
+    if(tmpLoc.isNew){ locations.push(rec); fLoc.add(nm); }
+    else{
+      const i=locations.findIndex(l=>l.n===tmpLoc.orig);
+      if(tmpLoc.orig!==nm){
+        Object.keys(sched).forEach(k=>{ if(sched[k][tmpLoc.orig]!==undefined){ sched[k][nm]=sched[k][tmpLoc.orig]; delete sched[k][tmpLoc.orig]; }});
+        fLoc.delete(tmpLoc.orig); fLoc.add(nm);
+      }
+      locations[i]=rec;
+    }
+    /* Ask before touching days she has already filled in - never rewrite a schedule
+       on somebody's behalf without saying so. */
+    const follow = tmpLoc.isNew ? [] : daysFollowingHours(nm, keep.hours||[], rec.hours);
+    if(follow.length){
+      const n=follow.length;
+      if(confirm(n+(n===1?' day':' days')+' from today onward still show '+nm+'\u2019s old '+
+                 'hours.\n\nChange '+(n===1?'it':'them')+' to the new hours?\n\n'+
+                 'Days where someone set a different time on purpose are left alone, '+
+                 'and days before today are not changed.')){
+        follow.forEach(h=>{ const c=sched[h.k][nm]; c.s=rec.hours[h.i].s; c.e=rec.hours[h.i].e; });
+      }
+    }
+    if(window.PH && PH.logActivity && PH.isLive()){
+      if(tmpLoc.isNew)
+        PH.logActivity({kind:'schedule', sec:'schedule', ic:'\u{1F3E2}', title:'New office added: '+nm, scope:'everyone'});
+      else if(JSON.stringify(keep.hours||null)!==JSON.stringify(rec.hours||null))
+        PH.logActivity({kind:'schedule', sec:'schedule', ic:'\u{1F550}', offices:[nm],
+          title:nm+' hours are now '+hoursLabel(rec)+(follow.length?' \u2014 '+follow.length+' upcoming days updated':'')});
+    }
+    save(); PH.saveLocations(locations); closeModal(); refresh();
+  }
+  /* "Delete office" took the office off the shared list and its days off every date of every year, in one tap
+     (21/11/2026, code review). Now it is refused while the office has any day on the schedule - or while part of the
+     schedule couldn't be read - and asks first when it has none. */
+  let schedPart=false;   // some of the schedule didn't load, so its days can't be counted
+  function locDays(n){ return Object.keys(sched).filter(k=>{ if(!isDay(k)) return false; const c=(sched[k]||{})[n]; return !!(c && typeof c==='object' && Object.keys(c).length); }).length; }
+  function delLoc(){ if(!canEdit()) return;
+    const n=tmpLoc.orig, days=locDays(n);
+    if(days || schedPart){
+      openModal('<div class="m-top"><h3>'+escH(n)+' can\u2019t be deleted yet</h3><button class="x" onclick="PS.close()">×</button></div>'+
+        '<div class="m-body">'+(days
+          ? escH(n)+' has <b>'+days+' day'+(days===1?'':'s')+'</b> on the schedule. Clear or move its days first, then delete the office.'
+          : 'Part of the schedule couldn\u2019t be loaded, so '+escH(n)+'\u2019s days can\u2019t be counted. Reload the page and try again.')+'</div>'+
+        '<div class="m-foot"><span style="flex:1"></span><button class="sbtn" onclick="PS.close()">OK</button></div>');
+      return;
+    }
+    openModal('<div class="m-top"><h3>Delete '+escH(n)+'?</h3><button class="x" onclick="PS.close()">×</button></div>'+
+      '<div class="m-body">'+escH(n)+' has no days on the schedule. It comes off the practice\u2019s office list for everyone.</div>'+
+      '<div class="m-foot"><span style="flex:1"></span><button class="sbtn ghost" onclick="PS.close()">Keep it</button><button class="sbtn" style="background:#C4321C" onclick="PS.delLocGo()">Delete office</button></div>');
+  }
+  function delLocGo(){ if(!canEdit() || !tmpLoc || tmpLoc.isNew || schedPart || locDays(tmpLoc.orig)) return;
+    locations=locations.filter(l=>l.n!==tmpLoc.orig); fLoc.delete(tmpLoc.orig);
+    Object.keys(sched).forEach(k=>delete sched[k][tmpLoc.orig]);
+    save(); PH.saveLocations(locations); closeModal(); refresh();
+  }
+
+  /* ---------- doctors (name only) ---------- */
+  let tmpP=null;
+  function addPerson(){ if(docsBlocked())return; if(!canEdit())return; tmpP={i:-1,n:''}; renderPerson(); }
+  function editPerson(i){ if(docsBlocked())return; if(!canEdit())return; tmpP={i:i,n:people[i].n}; renderPerson(); }
+  function renderPerson(){
+    openModal(
+      '<div class="m-top"><h3>'+(tmpP.i<0?'Add a doctor':'Edit doctor')+'</h3><button class="x" onclick="PS.close()">×</button></div>'+
+      '<div class="m-body"><div class="s-lab">Name</div>'+
+        '<input class="s-input" id="pName" value="'+(tmpP.n||'').replace(/"/g,'&quot;')+'" placeholder="e.g. Dr. Parker">'+
+        '<p class="hint">Doctors don\'t have their own color — a day takes the color of the <b>office</b>.</p></div>'+
+      (tmpP.i>=0 && worked(tmpP.i) ? '<p class="hint" style="margin:0 16px 10px">“Has left” takes them off the doctor list. <b>Every day they worked stays on the schedule.</b></p>' : '')+
+      '<div class="m-foot">'+(tmpP.i<0?'':'<button class="sbtn ghost" onclick="PS.delPerson()">'+(worked(tmpP.i)?'Has left':'Remove')+'</button>')+
+        '<span style="flex:1"></span><button class="sbtn ghost" onclick="PS.close()">Cancel</button>'+
+        '<button class="sbtn" onclick="PS.savePerson()">Save</button></div>');
+  }
+  function savePerson(){ if(docsBlocked())return;
+    const nm=(el('pName').value||'').trim(); if(!nm)return;
+    const prev = tmpP.i<0 ? null : people[tmpP.i].n;
+    if(tmpP.i<0) people.push({n:nm}); else people[tmpP.i].n=nm;
+    if(window.PH && PH.logActivity && PH.isLive() && prev!==nm)
+      PH.logActivity({kind:'schedule', sec:'schedule', ic:'\u{1FA7A}', scope:'everyone',
+        title: prev ? prev+' is now listed as '+nm : nm+' added to the doctor list'});
+    save(); closeModal(); refresh();
+  }
+  /* Has this doctor ever been on a day, past or future? */
+  function worked(i){ return Object.keys(sched).some(k=>isDay(k) && Object.keys(sched[k]).some(ln=>{ const c=sched[k][ln]; return c && docsOf(c).indexOf(i)>=0; })); }
+  /* A doctor who has worked here is never taken off the days - the schedule is the record of who was where
+     (Jordan: "Do not delete any data on the schedule"). Removing one used to delete every day where they were
+     the only doctor, in every year, and renumber the rest (future-proofing check, 22/10/2026). Now they are
+     marked as left: off the chips and the day picker, still on every day, and they can be brought back.
+     Only a doctor who never worked a day (added by mistake) is removed outright. */
+  function delPerson(){ if(docsBlocked())return;
+    const i=tmpP.i;
+    if(worked(i)){
+      people[i]=Object.assign({}, people[i], {left:iso(new Date())});
+      fDocs.delete(i);
+      if(window.PH && PH.logActivity && PH.isLive())
+        PH.logActivity({kind:'schedule', sec:'schedule', ic:'\u{1FA7A}', scope:'everyone',
+          title: people[i].n+' has left the doctor list (every day they worked stays on the schedule)', people:[people[i].n]});
+      save(); closeModal(); refresh(); return;
+    }
+    Object.keys(sched).forEach(k=>Object.keys(sched[k]).forEach(ln=>{
+      const c=sched[k][ln]; if(!c) return;
+      const ds=docsOf(c).filter(x=>x!==i).map(x=>x>i?x-1:x);
+      delete c.p;                                   // collapse legacy shape as we go
+      if(ds.length) c.ps=ds; else delete sched[k][ln];
+    }));
+    const gone=people[i] && people[i].n;
+    people.splice(i,1);
+    if(window.PH && PH.logActivity && PH.isLive() && gone)
+      PH.logActivity({kind:'schedule', sec:'schedule', ic:'\u{1FA7A}', scope:'everyone',
+        title: gone+' removed from the doctor list', people:[gone]});
+    // Re-key the filter: drop the removed doctor, shift the indexes above them down.
+    fDocs=new Set([...fDocs].filter(x=>x!==i).map(x=>x>i?x-1:x));
+    save(); closeModal(); refresh();
+  }
+
+  /* ---------- chrome ---------- */
+  function renderBar(){
+    el('viewseg').innerHTML=
+      '<button class="'+(view==='week'?'on':'')+'" onclick="PS.view(\'week\')">Week</button>'+
+      '<button class="'+(view==='month'?'on':'')+'" onclick="PS.view(\'month\')">Month</button>';
+    el('perlab').textContent = view==='week'
+      ? 'Week of '+MOFULL[anchor.getMonth()].slice(0,3)+' '+anchor.getDate()
+      : MOFULL[mM]+' '+mY;
+    el('hint').textContent = canEdit()
+      ? 'Tap any day to set a doctor, a Yellow Dot Day, or close it · every office has its own color · today is outlined.'
+      : 'Filter by office or doctor to find what you need · today is outlined.';
+  }
+  function refresh(){ renderBar(); renderMode(); renderFilters(); renderStatus(); MODE==='meet' ? (view==='week'?renderMeetWeek():renderMeetMonth()) : (view==='week'?renderWeek():renderMonth()); renderCounters(); renderKey(); loadMeets(); }
+  // Don't explain a color that isn't on screen — the legend follows the Show toggles.
+  function renderKey(){
+    el('keyYdot').style.display = fYdot ? '' : 'none';
+    el('keyClosed').style.display = fClosed ? '' : 'none';
+  }
+  /* JUMP TO A MONTH. Tap the "September 2026" label: a year with arrows and twelve
+     months. Morgan on her phone: "somewhere to see the month and pick one, like Google
+     Calendar". Works in both views; in week view it lands on that month's first week. */
+  function pickMonth(){
+    let y=mY;
+    const draw=()=>{
+      const months=MOFULL.map((n,i)=>'<button class="pm'+(i===mM&&y===mY?' on':'')+(i===TODAY.getMonth()&&y===TODAY.getFullYear()?' now':'')+'" onclick="PS.goMonth('+y+','+i+')">'+n.slice(0,3)+'</button>').join('');
+      openModal('<div class="m-top"><h3>Go to</h3><button class="x" onclick="PS.close()">\u00d7</button></div>'+
+        '<div class="m-body"><div class="yrow"><button class="sbtn ghost" onclick="PS.pickYear('+(y-1)+')">\u2039</button><b>'+y+'</b><button class="sbtn ghost" onclick="PS.pickYear('+(y+1)+')">\u203a</button></div>'+
+        '<div class="pmgrid">'+months+'</div></div>'+
+        '<div class="m-foot"><button class="sbtn ghost" onclick="PS.today();PS.close()">Today</button><span style="flex:1"></span><button class="sbtn ghost" onclick="PS.close()">Cancel</button></div>');
+    };
+    window.PS.pickYear=function(yy){ y=yy; draw(); };
+    draw();
+  }
+  function goMonth(y,m){
+    mY=y; mM=m;
+    if(view==='week') anchor=mondayOf(new Date(y,m,1));
+    closeModal(); refresh();
+    const first=document.querySelector('.mday[data-date]'); if(first && isPhone()) first.scrollIntoView({block:'start'});
+  }
+  const isPhone=()=>window.matchMedia && window.matchMedia('(max-width:640px)').matches;
+  /* On a phone the month is a long list; tap a date on the mini calendar to land on it. */
+  function jumpTo(dateStr){
+    const n=document.querySelector('.mday[data-date="'+dateStr+'"]');
+    if(n){ n.scrollIntoView({block:'start',behavior:'smooth'}); n.classList.add('flash'); setTimeout(()=>n.classList.remove('flash'),1200); }
+  }
+  function miniMonth(){
+    const dim=new Date(mY,mM+1,0).getDate();
+    let cells=''; let fw=new Date(mY,mM,1); while(dowIdx(fw)>4) fw=addDays(fw,1);
+    for(let i=0;i<dowIdx(fw);i++) cells+='<span class="mm out"></span>';
+    for(let dn=1;dn<=dim;dn++){
+      const d=new Date(mY,mM,dn); if(dowIdx(d)>4) continue;
+      const k=iso(d), day=sched[k]||{};
+      const busy=Object.keys(day).some(o=>{ const c=day[o]; return c && (docsOf(c).length || c.event); });
+      cells+='<button class="mm'+(k===iso(TODAY)?' today':'')+(busy?' busy':'')+'" onclick="PS.jumpTo(\''+k+'\')">'+dn+'</button>';
+    }
+    return '<div class="mini" aria-label="Pick a date"><div class="mmh">'+['Mon','Tue','Wed','Thu','Fri'].map(x=>'<span>'+x+'</span>').join('')+'</div><div class="mmg">'+cells+'</div></div>';
+  }
+  let autoScrolled=false, autoScrollPending=false;
+  function autoScrollToday(){
+    /* Once per page load, on a phone, when the month on screen is this month: land on
+       today instead of the 1st. Not when the person has deliberately stepped elsewhere. */
+    if(autoScrolled || !isPhone() || view!=='month') return;
+    if(mY!==TODAY.getFullYear() || mM!==TODAY.getMonth()) return;
+    /* Today, or - on a weekend, when the Mon-Fri board has no "today" - the next working
+       day. Landing at the 1st on a Saturday was the gap the first version had. */
+    const t=iso(TODAY);
+    const find=()=>document.querySelector('.mday.today')
+         || Array.from(document.querySelectorAll('.mday[data-date]')).find(x=>x.getAttribute('data-date')>=t);
+    if(!find() || autoScrollPending) return;
+    /* Identity settles in stages after sign-in and each stage redraws the board, so an
+       element grabbed now can be detached by the time the scroll runs - which is a
+       silent no-op. Look the element up inside the timer, and only count it done once
+       an attached element has actually been scrolled to. */
+    autoScrollPending=true;
+    setTimeout(function(){
+      autoScrollPending=false;
+      const n=find(); if(!n || !n.isConnected) return;
+      n.scrollIntoView({block:'start'}); autoScrolled=true;
+    }, 350);
+  }
+  function step(n){ if(view==='week'){ anchor=addDays(anchor,7*n); mY=anchor.getFullYear(); mM=anchor.getMonth(); }
+    else { mM+=n; if(mM<0){mM=11;mY--;} if(mM>11){mM=0;mY++;} } refresh(); }
+  /* the counts' arrows: a whole month in either view, and the counts stay put on the screen (the calendar above changes
+     height from month to month - 4, 5 or 6 weeks - which would otherwise push them away) */
+  function countStep(n){
+    const box=el('counters'), y0=box.getBoundingClientRect().top;
+    let y=mY, m=mM+n; if(m<0){ m=11; y--; } if(m>11){ m=0; y++; }
+    mY=y; mM=m; if(view==='week') anchor=mondayOf(new Date(y,m,1));
+    refresh();
+    window.scrollBy(0, el('counters').getBoundingClientRect().top-y0);
+  }
+  function today(){ anchor=mondayOf(new Date(TODAY)); mY=TODAY.getFullYear(); mM=TODAY.getMonth(); refresh(); landOnToday(); }
+  /* "Today" has to be SEEN to do something, even when this month is already on screen -
+     on a phone the month is a long list, so the button looked dead (Jordan, 19/09). Scroll
+     to today, or the next working day on a weekend, and flash it. A desktop month is NOT
+     all in view either - eight offices a day make it several screens tall - so the end
+     of the month flashed out of sight and the button "literally does nothing" (Jordan,
+     30/09). Scroll there too when it is off screen. Looked up inside the timer:
+     refresh() redraws. */
+  function landOnToday(){
+    const t=iso(TODAY);
+    const find=()=>document.querySelector('.mday.today, td.cell.today')
+      || Array.from(document.querySelectorAll('.mday[data-date]')).find(x=>x.getAttribute('data-date')>=t);
+    setTimeout(function(){
+      const n=find(); if(!n || !n.isConnected) return;
+      /* A smooth scroll from the 1st to the 20th is 7,000px and over a second long - it
+         looks like nothing happened until it suddenly does. Jump when far, glide when near. */
+      const r=n.getBoundingClientRect(), vh=window.innerHeight||800;
+      if(isPhone()){ const far=Math.abs(r.top)>1500; n.scrollIntoView({block:'start',behavior:far?'auto':'smooth'}); }
+      else if(r.top<80 || r.bottom>vh-12){ const far=Math.abs(r.top)>2500; n.scrollIntoView({block:'center',behavior:far?'auto':'smooth'}); }
+      n.classList.remove('flash'); void n.offsetWidth;          // pressing Today twice replays it
+      n.classList.add('flash'); setTimeout(()=>n.classList.remove('flash'),1700);
+    }, 60);
+  }
+  function setView(v){ view=v; refresh(); }
+  function togLoc(n){ fLoc.has(n)?fLoc.delete(n):fLoc.add(n); refresh(); }
+  function allLocs(){ if(fLoc.size===locations.length) fLoc.clear(); else locations.forEach(l=>fLoc.add(l.n)); refresh(); }
+  function togDoc(i){ fDocs.has(i)?fDocs.delete(i):fDocs.add(i); refresh(); }
+  function allDocs(){ fDocs.clear(); refresh(); }
+  function unleave(i){ if(docsBlocked())return; if(!canEdit() || !people[i]) return; const p=Object.assign({}, people[i]); delete p.left; people[i]=p; save(); refresh(); }
+  function togYdot(){ fYdot=!fYdot; refresh(); }
+  function togEvent(){ fEvent=!fEvent; refresh(); }
+  function togClosed(){ fClosed=!fClosed; refresh(); }
+  function openModal(h){ el('modalCard').innerHTML=h; el('modal').classList.add('open'); }
+
+  /* ---------- MEETINGS (18/11/2026) ----------------------------------------------------------------------------------
+     Jordan: "connecting their Meeting Calendar ... so they can see Team Meetings and Doctor Schedule" and "it should be a
+     permission to give to make meetings but I believe its office managers". The Home-Brace group's calendar (meetings.js)
+     shows on each day (and as a row on top in Week view) for everyone who sees the Schedule; "Meetings" in Show hides it.
+     ＋ New meeting only for whoever has Meetings = Can make in Admin -> Teams & Access (Office Managers + Admin to start):
+     a name, the day and time, where, a Teams link (on by default), and who's invited - people, a whole office or a
+     team. Microsoft sends the invites and puts it on the shared calendar. The one who made it can change or cancel it. */
+  const meetOn=()=>!!(window.PH_MEET && PH_MEET.on());
+  const canMeet=()=>!window.PH || PH.atLeast('meetings','edit') || !!(PH.isAdmin && PH.isAdmin(PH.me()));
+  const myMail=()=>{ const P=window.PH && PH.profileOf && PH.profileOf(); return String((P && (P.mail||P.userPrincipalName))||'').toLowerCase(); };
+  let MEETS=[], MKEY='', MAT=0, MERR='', MASK=false;
+  function meetRange(){
+    if(view==='week'){ const d=weekDays(); return [new Date(d[0].getFullYear(), d[0].getMonth(), d[0].getDate()), new Date(d[0].getFullYear(), d[0].getMonth(), d[0].getDate()+7)]; }
+    return [new Date(mY,mM,1), new Date(mY,mM+1,1)];
+  }
+  function loadMeets(force){
+    if(!meetOn()){ MEETS=[]; return; }
+    const r=meetRange(), key=r[0].getTime()+'-'+r[1].getTime();
+    if(!force && key===MKEY && Date.now()-MAT<5*60000) return;
+    MKEY=key; MAT=Date.now();
+    PH_MEET.list(r[0], r[1], myMail()).then(list=>{ if(key!==MKEY) return; MEETS=list; MERR=''; MASK=false; meetNote(); redrawBoard(); },
+      e=>{ if(key!==MKEY) return; MKEY=''; MEETS=[];
+        const raw=String(((e && e.errorCode)||'')+' '+((e && e.message)||e||''));
+        MASK=/consent|interaction_required|AADSTS65001|InteractionRequired/i.test(raw);
+        MERR=/Not signed in yet/.test(raw) ? '' : raw.trim(); meetNote(); redrawBoard(); });
+  }
+  function meetNote(){
+    const n=el('meetnote'); if(!n) return;
+    n.innerHTML=!MERR ? '' : '🗓 '+(MASK ? 'Team meetings need one more Microsoft sign-in step.' : 'Couldn’t load the team meetings - '+escH(MERR.slice(0,160)))+
+      ' <button class="sbtn ghost tiny" onclick="PS.meetAsk()">'+(MASK?'Sign in for meetings':'Try again')+'</button>';
+  }
+  function meetAsk(){ if(MASK && PH_MEET.ask) PH_MEET.ask().then(()=>loadMeets(true), ()=>{}); else loadMeets(true); }
+  function redrawBoard(){ if(MODE!=='meet') return; const y=window.scrollY; view==='week'?renderMeetWeek():renderMeetMonth(); window.scrollTo(0, y); }
+  /* THE SWITCH: Doctor schedule | Meetings - remembered on this device; a link with #meetings opens Meetings */
+  let MODE=(()=>{ if(/#meetings/.test(location.hash||'')) return 'meet'; try{ return localStorage.getItem('ph_sched_mode')==='meet' ? 'meet' : 'docs'; }catch(_){ return 'docs'; } })();
+  function mode(m){ MODE=m==='meet' && meetOn() ? 'meet' : 'docs'; try{ localStorage.setItem('ph_sched_mode', MODE); }catch(_){} refresh(); window.scrollTo({top:0}); }
+  function renderMode(){
+    if(MODE==='meet' && !meetOn()) MODE='docs';
+    const seg=el('modeseg'); if(seg){ seg.hidden=!meetOn(); seg.querySelectorAll('button').forEach(b=>{ const on=b.dataset.m===MODE; b.classList.toggle('on', on); b.setAttribute('aria-selected', on); }); }
+    document.body.classList.toggle('mode-meet', MODE==='meet');
+    el('schedTitle').textContent=MODE==='meet' ? 'Schedule — Meetings' : 'Schedule — Who\'s Where';
+    el('schedSub').textContent=MODE==='meet' ? 'The practice’s team meetings, from the Home-Brace calendar in Outlook.' : 'Which office is open each day and which doctor is working there.';
+    const nm=el('newMeetBtn'); if(nm) nm.style.display=MODE==='meet' && meetOn() && canMeet() ? '' : 'none';
+  }
+  const MSTATE=()=>MERR ? '' : (MKEY ? '' : '<div class="mempty">Loading the meetings…</div>');
+  const D7=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  function emptyNote(){ return '<div class="mempty">No meetings '+(view==='week'?'this week':'in '+MOFULL[mM])+'.'+(canMeet()?' <button class="sbtn ghost tiny" onclick="PS.newMeet()">＋ New meeting</button>':'')+'</div>'; }
+  function meetLine(m, long){ return '<button type="button" class="mtg" data-mi="'+MEETS.indexOf(m)+'" title="'+escH(m.subject)+'"><span class="mt">'+(m.allDay?'All day':hm12(m.start)+(long?' – '+hm12(m.end):''))+'</span><span class="ms">'+(m.join?'🎥 ':'')+escH(m.subject)+'</span>'+(long && m.where?'<span class="mw">📍 '+escH(m.where)+'</span>':'')+'</button>'; }
+  function renderMeetMonth(){
+    const first=new Date(mY,mM,1), dim=new Date(mY,mM+1,0).getDate(), lead=dowIdx(first); let cells='';
+    for(let i=0;i<lead;i++) cells+='<div class="mmday out"></div>';
+    for(let dn=1; dn<=dim; dn++){ const d=new Date(mY,mM,dn), ms=meetsOn(d), isT=iso(d)===iso(TODAY);
+      cells+='<div class="mmday'+(isT?' today':'')+(dowIdx(d)>4?' wkend':'')+(ms.length?'':' none')+'"><div class="mdnum">'+D7[dowIdx(d)]+' '+dn+(isT?' · today':'')+'</div>'+ms.map(m=>meetLine(m)).join('')+
+        (canMeet()?'<button type="button" class="madd" onclick="PS.newMeet(\''+iso(d)+'\')">＋ Meeting</button>':'')+'</div>'; }
+    const any=MEETS.some(m=>{ const s=new Date(m.start); return s.getFullYear()===mY && s.getMonth()===mM; });
+    el('board').innerHTML=MSTATE()+(MKEY && !MERR && !any ? emptyNote() : '')+'<div class="mscroll"><div class="mmonth">'+D7.map(x=>'<div class="dow">'+x+'</div>').join('')+cells+'</div></div>';
+  }
+  function renderMeetWeek(){
+    const d0=weekDays()[0], days=[...Array(7)].map((_,i)=>new Date(d0.getFullYear(), d0.getMonth(), d0.getDate()+i));
+    const any=days.some(d=>meetsOn(d).length);
+    el('board').innerHTML=MSTATE()+(MKEY && !MERR && !any ? emptyNote() : '')+'<div class="mweek">'+days.map(d=>{ const ms=meetsOn(d), isT=iso(d)===iso(TODAY);
+      return '<div class="wd'+(isT?' today':'')+(ms.length?'':' none')+'"><div class="wh">'+D7[dowIdx(d)]+' '+(d.getMonth()+1)+'/'+d.getDate()+(isT?' · today':'')+'</div>'+ms.map(m=>meetLine(m, true)).join('')+
+        (canMeet()?'<button type="button" class="sbtn ghost tiny" style="margin-top:auto" onclick="PS.newMeet(\''+iso(d)+'\')">＋ Meeting</button>':'')+'</div>'; }).join('')+'</div>';
+  }
+  const hm12=t=>{ const d=new Date(t); let h=d.getHours(); const m=d.getMinutes(), ap=h>=12?'p':'a'; h=((h+11)%12)+1; return h+(m?':'+two(m):'')+ap; };
+  function meetsOn(d){ const a=new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime(), b=a+86400000; return MEETS.filter(m=>m.start<b && m.end>a); }
+  document.addEventListener('click', e=>{ const b=e.target.closest && e.target.closest('.mtg[data-mi]'); if(!b) return; e.stopPropagation(); meetShow(MEETS[+b.dataset.mi]); }, true);
+  const whenText=m=>{ const s=new Date(m.start), e=new Date(m.end), day=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][dowIdx(s)]+' '+(s.getMonth()+1)+'/'+s.getDate();
+    return m.allDay ? day+' · all day' : day+' · '+hm12(m.start)+' – '+hm12(m.end)+(iso(s)!==iso(new Date(m.end-1)) ? ' ('+(e.getMonth()+1)+'/'+e.getDate()+')' : ''); };
+  let MCUR=null;
+  function meetShow(m){
+    if(!m) return; MCUR=m;
+    const said={accepted:['yes','Going'], tentativelyAccepted:['may','Maybe'], declined:['no','Not going'], none:['none','No answer'], notResponded:['none','No answer'], organizer:['yes','Organizer']};
+    const ppl=m.people.map(p=>{ const r=said[p.said]||said.none; return '<div><span>'+escH(p.name||p.email)+'</span><span class="r '+r[0]+'">'+r[1]+'</span></div>'; }).join('');
+    const mineCan=m.mine && canMeet();
+    openModal('<div class="m-top"><span style="font-size:18px">🗓</span><h3>'+escH(m.subject)+'</h3><button class="x" onclick="PS.close()">×</button></div>'+
+      '<div class="m-body"><div class="mdl"><span class="ic">🕒</span><span>'+escH(whenText(m))+'</span>'+
+        (m.where?'<span class="ic">📍</span><span>'+escH(m.where)+'</span>':'')+
+        (m.by.name||m.by.email?'<span class="ic">👤</span><span>Made by '+escH(m.mine?'you':(m.by.name||m.by.email))+'</span>':'')+
+        (m.note?'<span class="ic">📝</span><span style="white-space:pre-wrap">'+escH(m.note)+'</span>':'')+'</div>'+
+        (m.people.length?'<div class="s-lab" style="margin-top:16px">Invited ('+m.people.length+')</div><div class="mppl">'+ppl+'</div>':'')+'</div>'+
+      '<div class="m-foot">'+(m.join?'<a class="sbtn" href="'+escH(m.join)+'" target="_blank" rel="noopener">🎥 Join the Teams meeting</a>':'')+
+        (m.web?'<a class="sbtn ghost" href="'+escH(m.web)+'" target="_blank" rel="noopener">Open in Outlook</a>':'')+'<span style="flex:1"></span>'+
+        (mineCan?'<button class="sbtn ghost" onclick="PS.meetChange()">Change</button><button class="sbtn ghost" style="color:#b42318" onclick="PS.meetCancelAsk()">Cancel meeting</button>':'')+'</div>');
+  }
+  /* who can be invited: whole offices, teams, and people - from Home-Brace's own list (a new office or team shows up by itself) */
+  let MWHO=[];
+  function whoList(){
+    const rows=(window.PH && PH.rosterView ? PH.rosterView() : []).filter(r=>r && r.name);
+    const P=rows.map(r=>({name:String(r.name), email:String(r.email||'').trim().toLowerCase(), offices:(r.offices||[]).map(String), teams:(r.teams||[]).map(String)}));
+    const offs=locations.map(l=>l.n), fromAdmin=(window.PH && PH.teamNames ? PH.teamNames() : []).filter(Boolean);
+    const teams=fromAdmin.length ? fromAdmin : [...new Set([].concat(...P.map(p=>p.teams)).filter(Boolean))].sort();      // Admin's teams, else the ones people are on
+    return {P, offs, teams};
+  }
+  function newMeet(day, edit){
+    if(!meetOn() || !canMeet()) return;
+    const W=whoList(); MWHO=W.P;
+    const d0=day ? parseISO(day) : (()=>{ let d=new Date(TODAY); d.setDate(d.getDate()+1); while(dowIdx(d)>4) d.setDate(d.getDate()+1); return d; })();
+    const e=edit||null, sd=e?new Date(e.start):null, ed=e?new Date(e.end):null;
+    const tv=d=>two(d.getHours())+':'+two(d.getMinutes());
+    const opts=!e ? '<option value="all">Everyone ('+W.P.length+' people)</option>'+
+      W.offs.map(o=>{ const n=W.P.filter(p=>p.offices.indexOf(o)>=0).length; return n?'<option value="o:'+escH(o)+'">Everyone at '+escH(o)+' ('+n+')</option>':''; }).join('')+
+      W.teams.map(t=>{ const n=W.P.filter(p=>p.teams.some(x=>x.toLowerCase()===t.toLowerCase())).length; return n?'<option value="t:'+escH(t)+'">'+escH(t)+(/team$/i.test(t)?'':' team')+' ('+n+')</option>':''; }).join('')+
+      W.P.map((p,i)=>'<option value="p:'+i+'">'+escH(p.name)+(p.offices[0]?' · '+escH(p.offices[0]):'')+'</option>').join('') : '';
+    openModal('<div class="m-top"><span style="font-size:18px">🗓</span><h3>'+(e?'Change the meeting':'New meeting')+'</h3><button class="x" onclick="PS.close()">×</button></div>'+
+      '<div class="m-body mform"><label>Meeting name<input class="s-input" id="mname" maxlength="200" value="'+escH(e?e.subject:'')+'" placeholder="Office managers’ meeting" autocomplete="off" data-nomic></label>'+
+        '<div class="row2"><label>Day<input type="date" id="mday" value="'+iso(e?sd:d0)+'"></label><label>From<input type="time" id="mfrom" value="'+(e?tv(sd):'09:00')+'" step="300"></label><label>To<input type="time" id="mto" value="'+(e?tv(ed):'09:30')+'" step="300"></label></div>'+
+        '<label>Where<input class="s-input" id="mwhere" maxlength="200" value="'+escH(e?e.where:'')+'" placeholder="Cedar Grove office, or leave blank for Teams only" autocomplete="off" data-nomic></label>'+
+        (e?'':'<label class="sw" style="font-weight:600;margin-top:12px"><input type="checkbox" id="mteams" checked> Add a Teams meeting link</label>'+
+          '<label for="mwho">Who’s invited</label><select id="mwho" multiple data-pick data-ph="People, a whole office or a team">'+opts+'</select><div class="mcount" id="mcount">Nobody yet.</div>'+
+          '<label>Note (optional)<textarea id="mnote" maxlength="4000" placeholder="What it’s about"></textarea></label>')+
+        (e?'<div class="mcount">To change who’s invited, open it in Outlook. Everyone invited gets the new time.</div>':'')+
+        '<div class="merr" id="merr"></div></div>'+
+      '<div class="m-foot"><span style="flex:1"></span><button class="sbtn ghost" onclick="PS.close()">Cancel</button><button class="sbtn" id="msave" onclick="PS.meetSave()">'+(e?'Save the change':'Send the invites')+'</button></div>');
+    MCUR=e;
+    const who=el('mwho'); if(who) who.addEventListener('change', meetCount);
+    const fr=el('mfrom'), to=el('mto'); let len=(e?(e.end-e.start):30*60000);
+    if(fr && to){ fr.addEventListener('change', ()=>{ const a=hm(fr.value||'09:00'); to.value=fmt24(Math.min(23*60+55, a+Math.round(len/60000))); });
+      to.addEventListener('change', ()=>{ len=Math.max(5, hm(to.value||'00:00')-hm(fr.value||'00:00'))*60000; }); }
+    setTimeout(()=>{ const i=el('mname'); if(i) i.focus(); }, 30);
+  }
+  function meetPicked(){
+    const sel=el('mwho'); if(!sel) return [];
+    const vals=[...sel.selectedOptions].map(o=>o.value), out=[], seen={};
+    const add=p=>{ const k=p.email||('n:'+p.name.toLowerCase()); if(seen[k]) return; seen[k]=1; out.push(p); };
+    vals.forEach(v=>{
+      if(v==='all') MWHO.forEach(add);
+      else if(v.indexOf('o:')===0) MWHO.filter(p=>p.offices.indexOf(v.slice(2))>=0).forEach(add);
+      else if(v.indexOf('t:')===0) MWHO.filter(p=>p.teams.some(x=>x.toLowerCase()===v.slice(2).toLowerCase())).forEach(add);
+      else if(v.indexOf('p:')===0 && MWHO[+v.slice(2)]) add(MWHO[+v.slice(2)]);
+    });
+    const me=myMail(); return out.filter(p=>!me || p.email!==me);
+  }
+  function meetCount(){ const n=meetPicked().length, c=el('mcount'); if(c) c.textContent=n ? n+' '+(n===1?'person':'people')+' invited' : 'Nobody yet.'; }
+  async function meetSave(){
+    const err=t=>{ const x=el('merr'); if(x) x.textContent=t||''; }, b=el('msave');
+    const day=(el('mday')||{}).value, f=(el('mfrom')||{}).value, t=(el('mto')||{}).value;
+    const d=day ? parseISO(day) : null, start=d && f ? new Date(d.getFullYear(), d.getMonth(), d.getDate(), +f.split(':')[0], +f.split(':')[1]).getTime() : NaN,
+      end=d && t ? new Date(d.getFullYear(), d.getMonth(), d.getDate(), +t.split(':')[0], +t.split(':')[1]).getTime() : NaN;
+    const m={subject:(el('mname')||{}).value, where:(el('mwhere')||{}).value, note:(el('mnote')||{}).value||'', start, end, teams:!el('mteams') || el('mteams').checked};
+    err(''); b.disabled=true;
+    try{
+      if(MCUR){ await PH_MEET.change(MCUR, m); closeModal(); toast('Changed ✓ Everyone invited gets the new details.'); loadMeets(true); return; }
+      let ppl=meetPicked(), missing=[];
+      if(PH_MEET.real()){ const fixed=[]; for(const p of ppl){ if(p.email){ fixed.push(p); continue; } const u=await PH_MEET.byName(p.name).catch(()=>null); if(u) fixed.push(u); else missing.push(p.name); } ppl=fixed; }
+      else ppl=ppl.map(p=>p.email ? p : Object.assign({}, p, {email:p.name.toLowerCase().replace(/[^a-z]+/g,'.').replace(/^\.|\.$/g,'')+'@example.test'}));
+      await PH_MEET.create(Object.assign(m, {people:ppl}));
+      closeModal(); toast('Meeting made ✓ '+ppl.length+' invite'+(ppl.length===1?'':'s')+' sent'+(missing.length?' - not found in Microsoft: '+missing.slice(0,3).join(', ')+(missing.length>3?' and '+(missing.length-3)+' more':''):''));
+      loadMeets(true);
+    }catch(e2){ b.disabled=false; err((e2 && e2.message)||'That didn’t work - try again.'); }
+  }
+  function meetChange(){ if(MCUR) newMeet(null, MCUR); }
+  function meetCancelAsk(){
+    const m=MCUR; if(!m) return;
+    openModal('<div class="m-top"><h3>Cancel “'+escH(m.subject)+'”?</h3><button class="x" onclick="PS.close()">×</button></div>'+
+      '<div class="m-body mform"><div>'+escH(whenText(m))+'. Everyone invited gets a cancellation from Microsoft.</div><label>Message to them (optional)<textarea id="mcmt" maxlength="1000" placeholder="Sorry - moving this to next week."></textarea></label><div class="merr" id="merr"></div></div>'+
+      '<div class="m-foot"><span style="flex:1"></span><button class="sbtn ghost" onclick="PS.close()">Keep it</button><button class="sbtn" style="background:#C4321C" id="msave" onclick="PS.meetCancel()">Cancel the meeting</button></div>');
+  }
+  async function meetCancel(){
+    const m=MCUR, b=el('msave'); if(!m) return; b.disabled=true;
+    try{ await PH_MEET.cancel(m, (el('mcmt')||{}).value||''); closeModal(); toast('Cancelled ✓ Everyone invited was told.'); loadMeets(true); }
+    catch(e){ b.disabled=false; const x=el('merr'); if(x) x.textContent=(e && e.message)||'That didn’t work.'; }
+  }
+  let toastT=null;
+  function toast(t){ let x=el('mtoast'); if(!x){ x=document.createElement('div'); x.id='mtoast'; x.style.cssText='position:fixed;left:50%;bottom:24px;transform:translateX(-50%);max-width:calc(100% - 32px);background:var(--navy,#0F2A4A);color:#fff;padding:11px 18px;border-radius:12px;font-weight:700;font-size:14px;z-index:200;text-align:center'; document.body.appendChild(x); }
+    x.textContent=t; x.style.display='block'; clearTimeout(toastT); toastT=setTimeout(()=>{ x.style.display='none'; }, 4500); }
+  function closeModal(){ el('modal').classList.remove('open'); }
+
+  /* Re-runnable. Identity settles in stages after sign-in - profile, then roster, then
+     the access grid - and the COO's edit rights can arrive on the third. This used to
+     run once, at boot, and never look again; on a fresh phone that meant "View only"
+     for Morgan. It now runs on every ph-identity and can go both ways. */
+  function applyPerms(){
+    const edit=canEdit();
+    document.body.classList.toggle('ph-view-only', !edit);
+    document.querySelectorAll('.ph-ro-banner').forEach(n=>n.remove());
+    if(!edit && window.PH) PH.readOnlyBanner('.wrap','schedule');
+    ['addLocBtn','addDocBtn'].forEach(id=>{const b=el(id); if(b)b.style.display=edit?'':'none';});
+    renderMode();
+    const n=el('tourNotice');
+    if(n && !edit)n.innerHTML='<b>Every office has its own color.</b> Grey = closed, <b>Yellow Dot Day</b> = open with no doctor on site. Use the filters to find an office or a doctor.';
+  }
+  let booted=false;
+  document.addEventListener('ph-identity', function(){ if(booted){ applyPerms(); refresh(); } });
+
+  window.PS={view:setView,step,today,togLoc,allLocs,togDoc,allDocs,unleave,togYdot,togClosed,togEvent,setEvent,open,addTo,quick,pickDoc,setT,halfDay,fullDay,markYdot,markClosed,
+    clearDay,saveDay,addLocation,editLoc,setColor,setTZ,dtog,dtime,lunchTog,lunchT,saveLoc,delLoc,delLocGo,
+    relocate:function(){ locations=PH.locations(); locations.forEach(l=>fLoc.add(l.n)); refresh(); },
+    pickMonth,goMonth,jumpTo,countStep,mode,newMeet,meetSave,meetCancelAsk,meetCancel,meetChange,meetAsk,
+    addPerson,edit:editPerson,savePerson,delPerson,close:closeModal};
+
+  el('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal();});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+
+  /* Where the schedule comes from.
+     Live: whatever the practice has actually entered, from SharePoint. If they have
+       entered nothing, it starts EMPTY — inventing doctor days in the real app would put
+       fiction in front of staff who might act on it.
+     Sandbox: the demo pattern, so the calendar has something to show. */
+  /* Builds the blank year IN MEMORY. It used to go through setCell(), which saves on
+     every single call - roughly a thousand writes to the shared store for one page
+     load, each one a new version, and each one overwriting whatever was there. That is
+     what produced ~1000 versions in two minutes and wiped a schedule somebody had
+     spent hours on. Nothing here writes; the first real edit is what saves. */
+  function startEmpty(){
+    sched={};
+    let d=new Date(TODAY.getFullYear(),0,1); const end=new Date(TODAY.getFullYear(),11,31);
+    while(d<=end){
+      if(dowIdx(d)<6) locations.forEach(l=>{
+        if(openOn(l,d)){ const k=iso(d); sched[k]=sched[k]||{}; sched[k][l.n]={}; }
+      });
+      d=addDays(d,1);
+    }
+  }
+  /* DATA LOSS, fixed 2026-09-16. This used to answer "nothing came back" by writing a
+     blank year over the top - which is fine the very first time, and catastrophic every
+     other time. If the read FAILED (a stale sign-in, a dropped connection, SharePoint
+     having a moment) the result is also "nothing came back", so the blank slate was
+     saved over a schedule somebody had spent hours filling in.
+
+     Two changes: a failed read is now told apart from a genuinely empty one and never
+     writes anything, and an empty schedule is never persisted at all. It simply renders
+     empty; the first real edit saves it. Nothing is written until a person does something. */
+  function warn(html){
+    const n=document.createElement('div');
+    n.style.cssText='max-width:var(--maxw);margin:0 auto 14px;padding:11px 14px;border-radius:10px;'+
+      'font-size:13px;font-weight:600;background:#FCEBE8;color:#93301f;border:1px solid #f0c3b9';
+    n.innerHTML=html;
+    const w=document.querySelector('.wrap'); if(w) w.prepend(n);
+  }
+  /* Adding or removing a doctor renumbers the days that point at them. Doing that
+     against a list we could not read would leave the days pointing at the wrong
+     doctor, and the store would refuse the list half of the write anyway - so the
+     days would move and the list would not. Blocked outright while it is stale. */
+  let docsStale=false;
+  function docsBlocked(){
+    if(!docsStale) return false;
+    alert('The practice\u2019s doctor list could not be loaded, so it can\u2019t be changed '+
+          'right now \u2014 adding or removing a doctor here would renumber the days '+
+          'against a list that may be out of date.\n\nReload the page and try again. If it '+
+          'keeps happening, sign out and back in.');
+    return true;
+  }
+  function boot(stored, docs, readFailed, docsFailed){
+    if(Array.isArray(docs) && docs.length && docs.every(d=>d&&d.n)) people=docs;
+    /* The four names in `people` above are a starting point, not the practice's list.
+       When the shared list cannot be read they were shown anyway, with nothing to say
+       so - which is how Morgan could add a new doctor and another person's calendar could
+       carry on showing four doctors as though that were the truth. The names stay on
+       screen because the day cells point at them by position, but nobody is told they
+       are current when they are not. Saving the list back is refused while this is up:
+       PH_STORE will not write a key it could not read. */
+    else if(docsFailed && PH.isLive())
+      docsStale=true,
+      warn('<b>The doctor list could not be loaded.</b> The names below are the '+
+           'starting list, not the practice\u2019s \u2014 anyone added recently will be '+
+           'missing. Reload in a moment; if it keeps happening, sign out and back in. '+
+           'Nothing you change now will overwrite the real list.');
+    const isDemo = stored && (stored.__demo || stored.__v!==SCHED_VERSION);
+    if(PH.isLive() && isDemo) stored=null;          // never show invented days in the real app
+    if(stored && typeof stored==='object' && Object.keys(stored).length){
+      sched=stored;
+    } else if(readFailed){
+      /* Say so rather than showing an empty calendar that looks like lost work. */
+      sched={};
+      warn('<b>The schedule could not be loaded just now.</b> This is not an empty '+
+           'schedule \u2014 nothing has been lost. Reload the page in a moment; if it keeps '+
+           'happening, sign out and back in.');
+    } else if(PH.isLive()){
+      startEmpty();                                  // in memory only - never saved over anyone
+    } else buildYear(TODAY.getFullYear());
+    /* What is persisted right now, so a save that changed nothing about the doctors
+       does not rewrite their row. Set AFTER people is settled, or the first save
+       would push regardless and we would be back to restamping on every edit. */
+    docsSaved=JSON.stringify(people); docsLoaded=docsSaved;
+    takeSnap();
+    applyPerms();
+    refresh();
+    booted=true;
+    if(window.PH && PH.loadDone) PH.loadDone('page');
+  }
+
+  let local=null; try{ local=JSON.parse(localStorage.getItem('ph_sched2')); }catch(_){}
+  let ldocs=null; try{ ldocs=JSON.parse(localStorage.getItem('ph_docs')); }catch(_){}
+  if(window.PH && PH.loadHold) PH.loadHold('page', 'Loading the schedule…');   // the loading screen stays up until the numbers are in (user.js)
+  if(window.PH_STORE && PH.isLive()){
+    /* "It broke" and "there is nothing there" are very different answers, and treating
+       the first as the second is what lost a schedule. This used to hang a .catch on
+       the read - which never fired, because PH_STORE.get() swallows its own errors by
+       design so a storage hiccup can't take the page down. The store now records the
+       failure and we ask it. */
+    /* 'ph_sched2' and every year record from 2028 (schedrec.js), as the one schedule. */
+    Promise.all([ PH_SCHED.load(), PH_STORE.get('ph_docs') ])
+           .then(function(r){
+             const L = r[0], got = L.sched || local;
+             schedPart = !!(L.baseFailed || L.failed.length || L.unknown);
+             boot(got, r[1] || ldocs, L.baseFailed && !got,
+                  PH_STORE.readFailed('ph_docs') && !r[1]);
+             if(L.failed.length)
+               warn('<b>The '+L.failed.map(k=>k.slice(PH_SCHED.PREFIX.length)).join(' and ')+' schedule could not be loaded just now.</b> '+
+                    'Those days are not shown \u2014 nothing has been lost, and nothing you change there will be saved over it. Reload the page in a moment.');
+             else if(L.unknown && new Date().getFullYear()>=PH_SCHED.CUT-1)
+               warn('<b>Days from '+PH_SCHED.CUT+' on could not be loaded just now.</b> Nothing has been lost. Reload the page in a moment.');
+           })
+           .catch(function(){ schedPart = true; boot(local, ldocs, !local, !ldocs); });
+  } else boot(local, ldocs, false, false);
+})();
+</script>
+<script>
+/* The shared office list can land after the board has drawn (user.js pulls it on
+   mount and fires this). Re-read it and redraw, or an office added on another
+   machine is missing here until the next page load. */
+document.addEventListener('ph-locations-changed',function(){ if(window.PS&&PS.relocate)PS.relocate(); });
+PH.nav('schedule');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
+<script src="tour.js?v=hc268d202611250847"></script>
+<script>
+Tour.init([
+  {sel:'#viewseg', title:'Week or month', body:'<b>Week</b> is the day-to-day working view. <b>Month</b> shows the whole month at a glance, with every office in its own color.'},
+  {sel:'#filters', title:'Find anything fast', body:'Tap offices to show or hide them, and tap a doctor to see <b>only</b> where that doctor is working. Both filters work in either view.'},
+  {sel:'#status', title:'Is it actually covered?', body:'The one question that matters on a Monday: <b>is any open day still without a doctor?</b>'},
+  {sel:'#board', title:'Tap any day to set it', body:'Pick a doctor — you\'ll only be offered doctors who are <b>free that day</b> — set the hours or use <b>Half day (8–2)</b>, or mark it a <b>Yellow Dot Day</b>. Tapping Yellow Dot again switches it off and closes the office.'},
+  {sel:'#board', title:'Hours, and anything else going on', body:'Each office\u2019s <b>opening hours</b> now sit next to its name, so nobody has to go looking for them \u2014 and if an office keeps different hours on different days, it says so. You can also give any day a <b>\u2605 special event</b> (\u201cStaff training\u201d, \u201cTeam lunch\u201d) so people can see something is on and it isn\u2019t a free day to ask off. It <b>never counts as a doctor day</b>, and it can sit on a day that already has a doctor.'},
+  {sel:'#board', title:'Add a day as you go', body:'In <b>Month</b> view every day has a small <b>+ Add</b>. Tap it, choose the <b>office</b>, then the <b>doctor</b> and hours \u2014 that\u2019s how the calendar gets built.'},
+  {sel:'#counters', title:'Doctor days, counted for you', body:'How many days each doctor works, how many days each office is covered, and who covers where — for <b>this month and the whole year</b>.'},
+  {sel:'#addLocBtn', title:'Offices, colors, hours and lunches', body:'Add an office, choose its <b>color</b>, set its opening days and times, its time zone, and whether it takes a <b>set lunch at all</b>.'}
+], {key:'sched', title:'Schedule', next:{label:'Marketing', href:'marketing.html'}});
+</script>
+</body>
+</html>

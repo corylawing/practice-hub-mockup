@@ -1,0 +1,872 @@
+/* Home-Brace documents - the practice's files, kept in SharePoint, run from the hub.
+
+   30/09/2026. Jordan: "There is no way from Home Brace Morgan can create the folders
+   which would automatically put it in HomeBrace ... She wants it to be master", "She
+   should also be able to remove folders she already created", and "Uploading a
+   document and deciding the controls needs to be very easy to understand."
+
+   WHERE THINGS LIVE. The Home-Brace site's own document library ("Documents"), inside
+   one folder, "Home-Brace Documents": a folder per Documents section and, for a section
+   organised by office or brand, a folder per office or brand inside that.
+       Documents / Home-Brace Documents / HR / New Hire / packet.pdf
+       Documents / Home-Brace Documents / Office Docs / Cedar Grove / lease.pdf
+   Everything is read and written AS THE SIGNED-IN PERSON (delegated Sites.ReadWrite.All),
+   so SharePoint still decides what each person can reach.
+
+   WHAT THIS NEVER DOES
+     - Overwrite. Uploads use conflictBehavior=rename: a second "policy.pdf" arrives as
+       "policy 1.pdf". Nothing here sends "replace". The one way a file's content changes
+       is Replace, which a manager chooses for ONE file and confirms: it writes a new
+       VERSION of that file, and SharePoint keeps the old one in its version history.
+     - Rename anything. Move only when a manager chooses it for one item - move() below,
+       fenced at both ends to inside Home-Brace Documents.
+     - Touch anything outside Home-Brace Documents. remove() is the one destructive call
+       and it is fenced to items inside that folder; Microsoft moves them to the site's
+       recycle bin (restorable for 93 days) rather than deleting them. A LINKED file -
+       one that lives elsewhere, e.g. in Morgan's OneDrive - is only ever un-linked.
+
+   Who may see a file INSIDE the hub (the "Only certain people" choice) is recorded in
+   ph_docmeta, and links to files kept elsewhere in ph_doclinks - both through the store,
+   so they follow everyone between devices and two people adding at once both land.
+
+   Tests: test/docs.test.js, against a stand-in SharePoint. */
+(function(global){
+  'use strict';
+
+  var HOST  = 'brightline.sharepoint.example';
+  var SITE  = '/sites/Home-Brace';
+  var BASE  = 'Home-Brace Documents';
+  var GRAPH = 'https://graph.microsoft.com/v1.0';
+  var SMALL = 4 * 1024 * 1024;          // one request up to 4 MB; bigger files go in pieces
+  var PIECE = 320 * 1024 * 16;          // 5 MB pieces - Graph wants multiples of 320 KB
+  var LINKS = 'ph_doclinks', META = 'ph_docmeta';
+  // What a folder drop drags along from a Mac or Windows and nobody meant to share.
+  var JUNK  = /^(\.|~\$)|^(thumbs\.db|desktop\.ini)$/i;
+
+  var WAITS = [800, 2500, 6000];
+  var driveP = null, ids = {};
+
+  function fail(status, msg, extra){
+    var e = new Error(msg); e.status = status;
+    if(extra) Object.keys(extra).forEach(function(k){ e[k] = extra[k]; });
+    return e;
+  }
+  function isBlob(b){ return typeof Blob !== 'undefined' && b instanceof Blob; }
+
+  function api(method, url, body, headers){
+    return global.PH_AUTH.token().then(function(t){
+      var h = { Authorization: 'Bearer ' + t };
+      if(body !== undefined && !isBlob(body)) h['Content-Type'] = 'application/json';
+      if(headers) Object.keys(headers).forEach(function(k){ h[k] = headers[k]; });
+      return fetch(/^https?:/i.test(url) ? url : GRAPH + url, {
+        method: method, headers: h,
+        body: body === undefined ? undefined : (isBlob(body) ? body : JSON.stringify(body))
+      });
+    }).then(function(res){
+      if(res.status === 204) return {};
+      return res.json().catch(function(){ return {}; }).then(function(j){
+        var code = j.error && j.error.code;
+        /* LOCKED (12/11/2026). Morgan tried to remove a form from Patient Forms -> BFO and got Microsoft's own words
+           that it "is locked": the file was open in Word (she had just opened it to look). Say that plainly. */
+        if(res.status === 423 || code === 'resourceLocked')
+          throw fail(res.status, 'It’s open in Word, Excel or PowerPoint right now (by you or someone else), so SharePoint has it locked. ' +
+            'Close it wherever it’s open, wait a few minutes, then try again. Nothing was changed.', { code: code, locked: true });
+        if(!res.ok) throw fail(res.status, (j.error && j.error.message) || ('Graph ' + res.status),
+                               { code: code });
+        return j;
+      });
+    });
+  }
+
+  /* SharePoint answers "busy" (429, 503) and phones drop connections. Wait and try again
+     a few times before calling it a failure. */
+  function transient(e){
+    var s = e && e.status;
+    if(s === 429 || s === 500 || s === 502 || s === 503 || s === 504) return true;
+    return !s && /fetch|network|load failed|timed? ?out|abort/i.test(String(e && e.message));
+  }
+  function retry(run){
+    var n = 0;
+    function go(){
+      return run().catch(function(e){
+        if(n >= WAITS.length || !transient(e)) throw e;
+        var w = WAITS[n++];
+        return new Promise(function(r){ setTimeout(r, w); }).then(go);
+      });
+    }
+    return go();
+  }
+
+  function drive(){
+    if(!driveP){
+      driveP = retry(function(){ return api('GET', '/sites/' + HOST + ':' + SITE); })
+        .then(function(s){ return retry(function(){ return api('GET', '/sites/' + s.id + '/drive?$select=id,webUrl'); }); })
+        .catch(function(e){ driveP = null; throw e; });
+    }
+    return driveP;
+  }
+
+  /* A name SharePoint will take. Only the characters it refuses are changed, so a file
+     keeps the name it was given; nothing here ever adds a number or a date. */
+  function clean(name){
+    var s = String(name == null ? '' : name).replace(/["*:<>?\/\\|]/g, '-').replace(/\s+/g, ' ').trim().replace(/[.\s]+$/, '');
+    if(/^(con|prn|aux|nul|com\d|lpt\d)(\..*)?$/i.test(s) || /^_vti_/i.test(s)) s = '_' + s;
+    if(s.length > 200){
+      var dot = s.lastIndexOf('.'), ext = (dot > 0 && s.length - dot <= 10) ? s.slice(dot) : '';
+      s = s.slice(0, 200 - ext.length) + ext;
+    }
+    return s || 'Untitled';
+  }
+  /* path('HR', 'Cedar Grove') -> 'Home-Brace Documents/HR/Cedar Grove'. Each argument is ONE
+     folder: a section called "Insurance / W-9" is the folder "Insurance - W-9", not two. */
+  function path(){
+    var parts = [BASE];
+    [].slice.call(arguments).forEach(function(p){ if(p != null && String(p) !== '') parts.push(clean(p)); });
+    return parts.join('/');
+  }
+  /* A folder path plus a relative one that may go several levels down ('New Hire/Texas'),
+     as a dropped folder brings. */
+  function under(p, rel){
+    var r = String(rel || '').split('/').filter(function(x){ return x !== ''; }).map(clean);
+    return r.length ? p + '/' + r.join('/') : p;
+  }
+  function enc(p){ return p.split('/').map(encodeURIComponent).join('/'); }
+
+  function itemAt(p){
+    return drive().then(function(d){
+      return retry(function(){ return api('GET', '/drives/' + d.id + '/root:/' + enc(p) + '?$select=id,name,folder,file,webUrl,parentReference'); });
+    }).catch(function(e){ if(e.status === 404) return null; throw e; });
+  }
+
+  /* Make sure a folder path exists, one level at a time. A folder someone else made a
+     moment ago (409) is simply used; a FILE in the way is reported, never replaced. */
+  function ensureFolder(p){
+    if(ids[p]) return Promise.resolve(ids[p]);
+    return drive().then(function(d){
+      var parts = p.split('/'), i = 0, parent = null, walked = '';
+      function step(){
+        if(i >= parts.length) return parent;
+        var name = parts[i++];
+        walked = walked ? walked + '/' + name : name;
+        if(ids[walked]){ parent = ids[walked]; return step(); }
+        var here = walked;
+        return itemAt(here).then(function(it){
+          if(it && it.folder){ parent = ids[here] = it.id; return step(); }
+          if(it) throw fail(409, 'There is a file called “' + name + '” where that folder should go.', { blocked: true });
+          var url = parent ? '/drives/' + d.id + '/items/' + parent + '/children' : '/drives/' + d.id + '/root/children';
+          return retry(function(){ return api('POST', url, { name: name, folder: {}, '@microsoft.graph.conflictBehavior': 'fail' }); })
+            .then(function(made){ parent = ids[here] = made.id; return step(); }, function(e){
+              if(e.status !== 409) throw e;
+              return itemAt(here).then(function(again){
+                if(!again || !again.folder) throw e;
+                parent = ids[here] = again.id; return step();
+              });
+            });
+        });
+      }
+      return step();
+    });
+  }
+
+  /* Folder ids are remembered for speed. If one was removed since (here, or by someone
+     in SharePoint), Microsoft answers 404 - forget them all, look again, try once more. */
+  function fresh(run){
+    return run().catch(function(e){
+      if(e.status !== 404) throw e;
+      ids = {};
+      return run();
+    });
+  }
+
+  /* What is in a folder. A folder nobody has put anything in yet is simply empty. */
+  function list(p){
+    return drive().then(function(d){
+      var out = [];
+      function page(u){
+        return retry(function(){ return api('GET', u); }).then(function(r){
+          out = out.concat(r.value || []);
+          return r['@odata.nextLink'] ? page(r['@odata.nextLink']) : out;
+        });
+      }
+      return page('/drives/' + d.id + '/root:/' + enc(p) + ':/children?$top=200' +
+                  '&$select=id,name,webUrl,size,file,folder,lastModifiedDateTime,lastModifiedBy,parentReference');
+    }).then(function(items){
+      var by = function(a, b){ return String(a.name).localeCompare(String(b.name), undefined, { numeric: true, sensitivity: 'base' }); };
+      return {
+        folders: items.filter(function(i){ return i.folder; }).sort(by),
+        files:   items.filter(function(i){ return !i.folder && !JUNK.test(i.name); }).sort(by),
+        missing: false
+      };
+    }, function(e){
+      if(e.status === 404) return { folders: [], files: [], missing: true };
+      throw e;
+    });
+  }
+
+  /* A new folder, made by hand ("+ New folder"). Saying so beats making "HR 1". */
+  function newFolder(p, name){
+    var nm = clean(name);
+    return fresh(function(){ return ensureFolder(p).then(function(parent){
+      return drive().then(function(d){
+        return retry(function(){ return api('POST', '/drives/' + d.id + '/items/' + parent + '/children',
+          { name: nm, folder: {}, '@microsoft.graph.conflictBehavior': 'fail' }); })
+          .catch(function(e){
+            if(e.status === 409) throw fail(409, 'There is already a folder called “' + nm + '” here.', { exists: true });
+            throw e;
+          });
+      });
+    }); });
+  }
+
+  /* One file, into a folder path. Never overwrites: a name that is taken gets a number. */
+  function upload(p, file, onProgress){
+    var name = clean(file.name);
+    var prog = function(x){ try{ if(onProgress) onProgress(x); }catch(_){} };
+    return fresh(function(){ return ensureFolder(p).then(function(parent){
+      return drive().then(function(d){
+        var at = '/drives/' + d.id + '/items/' + parent + ':/' + encodeURIComponent(name) + ':';
+        if(file.size <= SMALL){
+          return retry(function(){
+            return api('PUT', at + '/content?@microsoft.graph.conflictBehavior=rename', file,
+                       { 'Content-Type': file.type || 'application/octet-stream' });
+          }).then(function(it){ prog(1); return it; });
+        }
+        return retry(function(){ return api('POST', at + '/createUploadSession', { item: { '@microsoft.graph.conflictBehavior': 'rename' } }); })
+          .then(function(s){ return pieces(s.uploadUrl, file, prog); });
+      });
+    }); });
+  }
+  /* A big file, 5 MB at a time. The session URL carries its own permission, so no
+     Authorization header - Microsoft rejects one. */
+  function pieces(url, file, prog){
+    var size = file.size, start = 0;
+    function send(){
+      var end = Math.min(start + PIECE, size);
+      return retry(function(){
+        return fetch(url, { method: 'PUT', headers: { 'Content-Range': 'bytes ' + start + '-' + (end - 1) + '/' + size },
+                            body: file.slice(start, end) })
+          .then(function(res){
+            return res.json().catch(function(){ return {}; }).then(function(j){
+              if(!res.ok) throw fail(res.status, (j.error && j.error.message) || ('Upload ' + res.status));
+              return { status: res.status, body: j };
+            });
+          });
+      }).then(function(r){
+        start = end; prog(Math.min(1, start / size));
+        if(r.status === 200 || r.status === 201 || start >= size) return r.body;
+        return send();
+      });
+    }
+    return send();
+  }
+
+  /* Many files, and the folders they came in. [{file, dir}] or [{dir}] for a folder with
+     nothing in it. Folders first, then files one at a time; one failure does not stop
+     the rest. onProgress({done, total}) - done is fractional while a file is going. */
+  function uploadAll(p, entries, onProgress){
+    var list = (entries || []).filter(function(e){ return e && (e.file ? !JUNK.test(e.file.name) : !!e.dir); });
+    var files = list.filter(function(e){ return e.file; });
+    var dirs = [];
+    list.forEach(function(e){ if(e.dir && dirs.indexOf(e.dir) < 0) dirs.push(e.dir); });
+    var done = 0, uploaded = [], folders = [], failed = [];
+    var report = function(x){ try{ if(onProgress) onProgress({ done: x, total: files.length }); }catch(_){} };
+    var chain = Promise.resolve();
+    dirs.forEach(function(dir){
+      chain = chain.then(function(){
+        var target = under(p, dir);
+        return fresh(function(){ return ensureFolder(target); }).then(function(id){ folders.push({ dir: dir, id: id }); },
+                                         function(e){ failed.push({ name: dir, error: e }); });
+      });
+    });
+    files.forEach(function(e){
+      chain = chain.then(function(){
+        var target = under(p, e.dir);
+        return upload(target, e.file, function(f){ report(done + f); })
+          .then(function(it){ uploaded.push(Object.assign({ dir: e.dir || '' }, it)); },
+                function(err){ failed.push({ name: e.file.name, error: err }); })
+          .then(function(){ done++; report(done); });
+      });
+    });
+    return chain.then(function(){ return { uploaded: uploaded, folders: folders, failed: failed }; });
+  }
+
+  /* From an <input type=file> (with or without webkitdirectory). A chosen folder keeps
+     its own name as the first level, the way it looked on the computer. */
+  function fromInput(fileList){
+    return [].slice.call(fileList || []).map(function(f){
+      var rel = String(f.webkitRelativePath || ''), cut = rel.lastIndexOf('/');
+      return { file: f, dir: cut > 0 ? rel.slice(0, cut) : '' };
+    });
+  }
+  /* From a drop. The entries MUST be taken during the drop event itself - a browser
+     empties DataTransfer afterwards - so this reads them first and walks them after. */
+  function fromDrop(dt){
+    var items = dt && dt.items, roots = [];
+    if(items && items.length && typeof items[0].webkitGetAsEntry === 'function'){
+      for(var i = 0; i < items.length; i++){
+        var en = items[i].webkitGetAsEntry && items[i].webkitGetAsEntry();
+        if(en) roots.push(en);
+      }
+      /* Some browsers hand over the files without their folder entries. Then the
+         plain file list is what there is - still upload those. */
+      if(roots.length) return walk(roots, '');
+    }
+    return Promise.resolve([].slice.call((dt && dt.files) || []).map(function(f){ return { file: f, dir: '' }; }));
+  }
+  function readAll(reader){
+    var all = [];
+    return new Promise(function(res){
+      (function next(){
+        reader.readEntries(function(batch){
+          if(!batch || !batch.length) return res(all);
+          all = all.concat([].slice.call(batch)); next();
+        }, function(){ res(all); });
+      })();
+    });
+  }
+  function walk(entries, dir){
+    var out = [];
+    return entries.reduce(function(chain, en){
+      return chain.then(function(){
+        if(en.isFile) return new Promise(function(res){
+          en.file(function(f){ out.push({ file: f, dir: dir }); res(); }, function(){ res(); });
+        });
+        if(en.isDirectory){
+          var sub = dir ? dir + '/' + en.name : en.name;
+          out.push({ dir: sub });
+          return readAll(en.createReader()).then(function(kids){ return walk(kids, sub); })
+            .then(function(more){ out = out.concat(more); });
+        }
+      });
+    }, Promise.resolve()).then(function(){ return out; });
+  }
+
+  /* How much is inside a folder, for the "are you sure" before removing it. Stops
+     counting at 500 - past that the number is "500+" and the answer is the same. */
+  function tally(item){
+    if(!item || !item.folder) return Promise.resolve({ files: item ? 1 : 0, folders: 0, more: false });
+    var files = 0, folders = 0, more = false;
+    function inside(id, depth){
+      if(files + folders >= 500 || depth > 8){ more = true; return Promise.resolve(); }
+      return drive().then(function(d){
+        return retry(function(){ return api('GET', '/drives/' + d.id + '/items/' + id + '/children?$top=200&$select=id,name,folder'); });
+      }).then(function(r){
+        if(r['@odata.nextLink']) more = true;
+        var kids = r.value || [], chain = Promise.resolve();
+        kids.forEach(function(k){
+          if(k.folder){ folders++; chain = chain.then(function(){ return inside(k.id, depth + 1); }); }
+          else if(!JUNK.test(k.name)) files++;
+        });
+        return chain;
+      });
+    }
+    return inside(item.id, 0).then(function(){ return { files: files, folders: folders, more: more }; });
+  }
+
+  /* THE ONE DESTRUCTIVE CALL. Only for something inside Home-Brace Documents, and even
+     then Microsoft keeps it in the site's recycle bin for 93 days. Anything else - the
+     folder itself, a linked file in someone's OneDrive, another library - is refused
+     here, whatever the page asked for. */
+  function insideBase(item, driveId){
+    var pr = (item && item.parentReference) || {};
+    if(pr.driveId !== driveId || typeof pr.path !== 'string') return false;
+    var at = pr.path; try{ at = decodeURIComponent(at); }catch(_){}
+    var i = at.indexOf('root:/');
+    if(i < 0) return false;
+    var rel = at.slice(i + 6);                        // 'Home-Brace Documents/HR/...'
+    return rel === BASE || rel.indexOf(BASE + '/') === 0;
+  }
+  function remove(item){
+    return drive().then(function(d){
+      if(!item || !item.id || !insideBase(item, d.id))
+        throw fail(0, 'Only files and folders inside “' + BASE + '” can be removed from Home-Brace.', { fenced: true });
+      return retry(function(){ return api('DELETE', '/drives/' + d.id + '/items/' + item.id); })
+        .then(function(){
+          var gone = Object.keys(ids).filter(function(k){ return ids[k] === item.id; });
+          Object.keys(ids).forEach(function(k){
+            if(gone.some(function(g){ return k === g || k.indexOf(g + '/') === 0; })) delete ids[k];
+          });
+          return { removed: true };
+        });
+    });
+  }
+
+  /* REPLACE: A NEW VERSION OF ONE FILE, ON PURPOSE.
+     07/10/2026 - Morgan keeps her master copies here and updates them: a new PDF of the
+     handbook goes in place of the old one - same name, same place, same link. Not an
+     accident: a manager picks the file and confirms. SharePoint keeps the old one in the
+     file's version history, so it can be brought back. Fenced like remove(): only a FILE
+     inside Home-Brace Documents, and only with the same kind of file (.pdf for a .pdf),
+     so the name never lies about what is inside. Sends no conflictBehavior at all - the
+     file is addressed by its id, so there is nothing to clash with. */
+  function ext(n){ var s = String(n || ''), i = s.lastIndexOf('.'); return i > 0 ? s.slice(i + 1).toLowerCase() : ''; }
+  function replace(item, file, onProgress){
+    var prog = function(x){ try{ if(onProgress) onProgress(x); }catch(_){} };
+    return drive().then(function(d){
+      if(!item || !item.id || item.folder || !insideBase(item, d.id))
+        throw fail(0, 'Only a file inside \u201c' + BASE + '\u201d can be replaced from Home-Brace.', { fenced: true });
+      if(!file || ext(file.name) !== ext(item.name))
+        throw fail(0, 'Pick a .' + (ext(item.name) || '?') + ' file to replace \u201c' + item.name + '\u201d.', { wrongType: true });
+      var at = '/drives/' + d.id + '/items/' + item.id;
+      if(file.size <= SMALL){
+        return retry(function(){ return api('PUT', at + '/content', file, { 'Content-Type': file.type || 'application/octet-stream' }); })
+          .then(function(it){ prog(1); return it; });
+      }
+      return retry(function(){ return api('POST', at + '/createUploadSession', {}); })
+        .then(function(s){ return pieces(s.uploadUrl, file, prog); });
+    });
+  }
+
+  /* MOVE (07/10 - Jordan: "what if you want to move a file to another section or folder?").
+     A file or folder goes to another folder inside Home-Brace Documents. It is the SAME
+     item afterwards, so its version history, its link and its "who can see it" go with it.
+     Fenced at both ends: the item must be inside Home-Brace Documents, and the destination
+     must be a section folder or a folder inside one (never the top folder itself, where
+     no section would show it). A folder can't go inside itself. A name already taken
+     there is refused with a plain message - nothing is renamed or replaced. */
+  function parentRel(item){
+    var pr = (item && item.parentReference) || {}, at = String(pr.path || '');
+    try{ at = decodeURIComponent(at); }catch(_){}
+    var i = at.indexOf('root:/');
+    return i < 0 ? null : at.slice(i + 6);
+  }
+  function move(item, destPath){
+    return drive().then(function(d){
+      if(!item || !item.id || !insideBase(item, d.id))
+        throw fail(0, 'Only files and folders inside \u201c' + BASE + '\u201d can be moved from Home-Brace.', { fenced: true });
+      var dp = String(destPath || '');
+      if(dp.indexOf(BASE + '/') !== 0)
+        throw fail(0, 'It can only go into a section, or a folder inside one.', { fenced: true });
+      var here = parentRel(item);
+      if(here === dp) throw fail(0, 'It\u2019s already there.', { same: true });
+      if(inSens(here) !== inSens(dp))
+        throw fail(0, 'Nothing moves in or out of \u201c' + SENS_NAME + '\u201d - add it there, or remove it from there, instead.', { fenced: true, sensitive: true });
+      if(item.folder){
+        var self = here + '/' + item.name;
+        if(dp === self || dp.indexOf(self + '/') === 0) throw fail(0, 'A folder can\u2019t go inside itself.', { loop: true });
+      }
+      return fresh(function(){ return ensureFolder(dp).then(function(parentId){
+        return retry(function(){ return api('PATCH', '/drives/' + d.id + '/items/' + item.id, { parentReference: { id: parentId } }); })
+          .catch(function(e){
+            if(e.status === 409) throw fail(409, 'There\u2019s already something called \u201c' + item.name + '\u201d there.', { exists: true });
+            throw e;
+          });
+      }); });
+    });
+  }
+
+  /* EDIT RIGHTS IN SHAREPOINT, HANDED OUT BY HOME-BRACE (07/10).
+     Jordan: "it's a two step process and can't be managed by homebrace which sucks". After
+     the one-time lock (Home-Brace Members = Read on Home-Brace Documents), Admin gives the
+     people whose Teams & Access level on a section is Add files or more Edit on THAT
+     section's folder (their own offices' folders, for a per-office section), and takes it
+     back when the level drops. Only ever a direct grant to ONE named person, on Home-Brace
+     Documents or a folder inside it. Never a group's permission, never anything inherited
+     or shared by link, never anything above Home-Brace Documents. */
+  function inBaseTree(p){ p = String(p || ''); return p === BASE || p.indexOf(BASE + '/') === 0; }
+  function emailOk(em){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em); }
+  /* Has the lock been done? Not while the Home-Brace Members GROUP can still edit Home-Brace
+     Documents. The group by its own name only: every person's sign-in name reads
+     "i:0#.f|membership|...", so looking for "members" anywhere took Morgan's own Edit for
+     the group's, and said "not locked" when it was (Jordan's screenshot, 07/10). */
+  function membersGroup(x){
+    var g = x.grantedToV2 || {}, names = [];
+    if(g.siteGroup) names.push(g.siteGroup.displayName || '');
+    if(g.group) names.push(g.group.displayName || '');
+    var old = (x.grantedTo && x.grantedTo.user) || null;              // the older shape: a group shows as a "user" with no email
+    if(!g.siteGroup && !g.group && !g.user && old && !old.email) names.push(old.displayName || '');
+    return names.some(function(n){ return /(^|\s)members$/i.test(String(n).trim()); });
+  }
+  function isLocked(){
+    return drive().then(function(d){
+      return retry(function(){ return api('GET', '/drives/' + d.id + '/root:/' + enc(BASE) + ':/permissions'); });
+    }).then(function(r){
+      return !(r.value || []).some(function(x){
+        return membersGroup(x) && (x.roles || []).some(function(role){ return role === 'write' || role === 'owner'; });
+      });
+    }, function(e){ if(e.status === 404) return false; throw e; });
+  }
+  function grantEdit(p, email){
+    var em = String(email || '').trim().toLowerCase();
+    if(!inBaseTree(p)) return Promise.reject(fail(0, 'Edit rights only go on \u201c' + BASE + '\u201d or a folder inside it.', { fenced: true }));
+    if(!emailOk(em)) return Promise.reject(fail(0, 'There is no email address to give edit rights to.', { noEmail: true }));
+    return drive().then(function(d){
+      return fresh(function(){ return ensureFolder(p).then(function(id){
+        return retry(function(){ return api('POST', '/drives/' + d.id + '/items/' + id + '/invite',
+          { recipients: [{ email: em }], roles: ['write'], requireSignIn: true, sendInvitation: false }); });
+      }); });
+    });
+  }
+  function grantee(x){
+    var u = (x.grantedToV2 && x.grantedToV2.user) || (x.grantedTo && x.grantedTo.user) || null;
+    return u ? String(u.email || u.userPrincipalName || '').toLowerCase() : '';
+  }
+  function revokeEdit(p, email){
+    var em = String(email || '').trim().toLowerCase();
+    if(!inBaseTree(p)) return Promise.reject(fail(0, 'Edit rights are only taken back inside \u201c' + BASE + '\u201d.', { fenced: true }));
+    if(!emailOk(em)) return Promise.resolve({ removed: 0 });
+    return drive().then(function(d){
+      return itemAt(p).then(function(it){
+        if(!it || !it.folder) return { removed: 0, gone: true };         // the folder went: nothing to take back
+        return retry(function(){ return api('GET', '/drives/' + d.id + '/items/' + it.id + '/permissions'); }).then(function(r){
+          var mine = (r.value || []).filter(function(x){
+            var g = x.grantedToV2 || {};
+            return !x.inheritedFrom && !x.link && !g.group && !g.siteGroup &&
+                   (x.roles || []).indexOf('write') >= 0 && grantee(x) === em;
+          });
+          return mine.reduce(function(c, x){ return c.then(function(){
+            return retry(function(){ return api('DELETE', '/drives/' + d.id + '/items/' + it.id + '/permissions/' + encodeURIComponent(x.id)); })
+              .catch(function(e){ if(e.status !== 404) throw e; });
+          }); }, Promise.resolve()).then(function(){ return { removed: mine.length }; });
+        });
+      });
+    });
+  }
+
+  /* THE TC TRACKER'S FOLDER (17/10/2026). Jordan: "lets do it like we did for documents then as
+     long as its scalable". The TC Tracker's records (patient names, birth dates, phones -
+     tcstore.js) live in one folder BESIDE Home-Brace Documents, never inside it, so the
+     Documents page and the header search never reach them. One-time lock by hand: stop
+     inheriting, then remove Home-Brace Members AND Visitors (nobody else may read it, unlike
+     Home-Brace Documents where Members keep Read). After that Admin gives each TC Tracker person
+     access - edit, or read for "See" - and takes back only what it gave (ph_tcgrants). Fenced to
+     that one folder: these functions take no path at all. */
+  var TC_BASE = 'Home-Brace TC Tracker';
+  function visitorsGroup(x){
+    var g = x.grantedToV2 || {}, names = [];
+    if(g.siteGroup) names.push(g.siteGroup.displayName || '');
+    if(g.group) names.push(g.group.displayName || '');
+    var old = (x.grantedTo && x.grantedTo.user) || null;
+    if(!g.siteGroup && !g.group && !g.user && old && !old.email) names.push(old.displayName || '');
+    return names.some(function(n){ return /(^|\s)visitors$/i.test(String(n).trim()); });
+  }
+  // "Everyone" / "Everyone except external users": the whole organisation under one name.
+  function everyoneGrant(x){
+    var g = x.grantedToV2 || {}, who = [g.siteUser, g.user, g.group, g.siteGroup, x.grantedTo && x.grantedTo.user];
+    return who.some(function(u){
+      if(!u) return false;
+      return /^everyone( except external users)?$/i.test(String(u.displayName || '').trim()) ||
+             /spo-grid-all-users|^c:0\(\.s\|true$/i.test(String(u.loginName || ''));
+    });
+  }
+  /* A LOCKED FOLDER WHOSE ACCESS HOME-BRACE KEEPS IN STEP WITH A LIST. Two of them: the TC
+     Tracker's patient folder, and Sensitive Material (20/10/2026). Each one is fenced to its
+     own path, fixed here - nothing below takes a path from the caller, so a grant or a
+     take-back can never land on any other folder. */
+  function lockedFolder(PATH){
+    // The folder, made if it is not there yet (an empty folder is harmless, and it must exist to be locked).
+    function folder(){ return fresh(function(){ return ensureFolder(PATH); }); }
+    /* Locked = nothing inherited, no Members or Visitors group (in ANY role - not even read),
+       no "Everyone", and no link that lets the whole organisation or anyone in. */
+    function locked(){
+      return drive().then(function(d){
+        return retry(function(){ return api('GET', '/drives/' + d.id + '/root:/' + enc(PATH) + ':/permissions'); });
+      }).then(function(r){
+        return !(r.value || []).some(function(x){
+          var sc = x.link && x.link.scope;
+          return !!x.inheritedFrom || membersGroup(x) || visitorsGroup(x) || everyoneGrant(x) || sc === 'organization' || sc === 'anonymous';
+        });
+      }, function(e){ if(e.status === 404) return false; throw e; });
+    }
+    function grant(email, role){
+      var em = String(email || '').trim().toLowerCase(), r = role === 'read' ? 'read' : 'write';
+      if(!emailOk(em)) return Promise.reject(fail(0, 'There is no email address to give access to.', { noEmail: true }));
+      return drive().then(function(d){
+        return folder().then(function(id){
+          return retry(function(){ return api('POST', '/drives/' + d.id + '/items/' + id + '/invite',
+            { recipients: [{ email: em }], roles: [r], requireSignIn: true, sendInvitation: false }); });
+        });
+      });
+    }
+    // Takes back this person's OWN grant of that role on the folder - never a group's, an inherited one or a link.
+    function revoke(email, role){
+      var em = String(email || '').trim().toLowerCase(), r = role === 'read' ? 'read' : 'write';
+      if(!emailOk(em)) return Promise.resolve({ removed: 0 });
+      return drive().then(function(d){
+        return itemAt(PATH).then(function(it){
+          if(!it || !it.folder) return { removed: 0, gone: true };
+          return retry(function(){ return api('GET', '/drives/' + d.id + '/items/' + it.id + '/permissions'); }).then(function(res){
+            var mine = (res.value || []).filter(function(x){
+              var g = x.grantedToV2 || {};
+              return !x.inheritedFrom && !x.link && !g.group && !g.siteGroup && (x.roles || []).indexOf(r) >= 0 && grantee(x) === em;
+            });
+            return mine.reduce(function(c, x){ return c.then(function(){
+              return retry(function(){ return api('DELETE', '/drives/' + d.id + '/items/' + it.id + '/permissions/' + encodeURIComponent(x.id)); })
+                .catch(function(e){ if(e.status !== 404) throw e; });
+            }); }, Promise.resolve()).then(function(){ return { removed: mine.length }; });
+          });
+        });
+      });
+    }
+    /* Everyone with their OWN access to the folder (not a group's, not a link): [email]. Read
+       only - so Admin can say "these people can also open it in SharePoint", never act on it. */
+    function people(){
+      return drive().then(function(d){
+        return retry(function(){ return api('GET', '/drives/' + d.id + '/root:/' + enc(PATH) + ':/permissions'); });
+      }).then(function(r){
+        var out = [];
+        (r.value || []).forEach(function(x){
+          var g = x.grantedToV2 || {};
+          if(x.inheritedFrom || x.link || g.group || g.siteGroup) return;
+          var em = grantee(x); if(em && out.indexOf(em) < 0) out.push(em);
+        });
+        return out;
+      }, function(e){ if(e.status === 404) return []; throw e; });
+    }
+    /* Bring the folder in line. Take-backs go FIRST: SharePoint keeps one permission per person
+       on a folder, so a new role given before the old one was taken back would go with it (an
+       office manager moved from "Log + calls" to "See" would be left with nothing). One person
+       failing never stops the rest. Resolves {gave, took, failed}. */
+    /* CHECKED AGAINST SHAREPOINT, NOT ONLY THE RECORD (12/11/2026). Hollie (Brookside) couldn't open Payroll: the
+       record said Home-Brace had given her the Brookside folder, but SharePoint no longer had her - and because the
+       record said "given", no sync ever gave it again (8 office senders were in the same state). So before planning,
+       anyone the record says was given access but who is NOT on the folder in SharePoint, and who should have it, is
+       given it again. If SharePoint's list can't be read, the record is used as before. */
+    function sync(want, gave){
+      return people().then(function(onIt){
+        var rec = (gave && typeof gave === 'object' && !Array.isArray(gave)) ? Object.assign({}, gave) : {};
+        Object.keys(rec).forEach(function(em){ if(want && want[em] === rec[em] && onIt.indexOf(em) < 0) delete rec[em]; });
+        return syncFrom(want, rec);
+      }, function(){ return syncFrom(want, gave); });
+    }
+    function syncFrom(want, gave){
+      var plan = tcPlan(want, gave), done = { gave: [], took: [], failed: [] };
+      function each(list, fn, into, verb){
+        return list.reduce(function(c, g){ return c.then(function(){
+          return fn(g.em, g.role).then(function(){ into.push(g); },
+            function(e){ done.failed.push({ verb: verb, em: g.em, role: g.role, why: (e && e.message) || 'error' }); });
+        }); }, Promise.resolve());
+      }
+      return each(plan.take, revoke, done.took, 'take back')
+        .then(function(){ return each(plan.give, grant, done.gave, 'give'); })
+        .then(function(){ return done; });
+    }
+    return { path: PATH, folder: folder, locked: locked, grant: grant, revoke: revoke, people: people, sync: sync };
+  }
+  var TC = lockedFolder(TC_BASE);
+  function tcFolder(){ return TC.folder(); }
+  function tcLocked(){ return TC.locked(); }
+  function tcGrant(email, role){ return TC.grant(email, role); }
+  function tcRevoke(email, role){ return TC.revoke(email, role); }
+  function tcSync(want, gave){ return TC.sync(want, gave); }
+
+  /* PAYROLL (01/11/2026). Morgan: "We can go live with the payroll sheet." Pay is private, so payroll is files in
+     its own locked folder BESIDE Home-Brace Documents (paystore.js), one folder inside it per office:
+       Home-Brace Payroll            whoever manages payroll (Teams & Access: Payroll "Everything", and admins)
+       Home-Brace Payroll/<office>   those managers + that office's sender(s) (Payroll "Edit" at that office)
+       Home-Brace Payroll/Morgan    NEVER given to anyone: it only inherits the locked folder's managers
+     One-time lock by hand of Home-Brace Payroll, like the TC Tracker's. Then Admin keeps every folder in step with
+     the grid and takes back only what it gave (ph_paygrants = {folder path: {email: role}}). Fenced: a path here is
+     always the payroll folder or one office folder directly inside it - never Morgan's, never anything else. */
+  var PAY_BASE = 'Home-Brace Payroll', PAY_PRIVATE = 'Morgan';
+  var PAY_ROOT = lockedFolder(PAY_BASE), PAY_OFFICES = {};
+  function payFolder(path){
+    path = String(path || '');
+    if(path === PAY_BASE) return PAY_ROOT;
+    var name = path.indexOf(PAY_BASE + '/') === 0 ? path.slice(PAY_BASE.length + 1) : '';
+    if(!name || /[\/\\]/.test(name) || name === PAY_PRIVATE || name === '.' || name === '..')
+      throw fail(0, 'Not a payroll office folder: ' + path, { fenced: true });
+    return PAY_OFFICES[name] || (PAY_OFFICES[name] = lockedFolder(path));
+  }
+  function payLocked(){ return PAY_ROOT.locked(); }
+  /* want / gave: {folder path: {email: role}}. Every folder that either names is brought in line, one after another
+     (one failing never stops the rest). Resolves {path: {gave, took, failed}}; a path that isn't a payroll folder is
+     reported as failed and never touched. */
+  function paySync(want, gave){
+    want = want || {}; gave = (gave && typeof gave === 'object' && !Array.isArray(gave)) ? gave : {};
+    var paths = Object.keys(want).concat(Object.keys(gave).filter(function(k){ return !(k in want); }));
+    paths.sort(function(a, b){ return a === PAY_BASE ? -1 : b === PAY_BASE ? 1 : a < b ? -1 : 1; });   // the folder itself first
+    var out = {};
+    return paths.reduce(function(c, path){ return c.then(function(){
+      var F; try{ F = payFolder(path); }catch(e){ out[path] = { gave: [], took: [], failed: [{ verb: 'give', em: '', role: '', why: e.message }] }; return; }
+      return F.sync(want[path] || {}, gave[path] || {}).then(function(done){ out[path] = done; },
+        function(e){ out[path] = { gave: [], took: [], failed: [{ verb: 'give', em: '', role: '', why: (e && e.message) || 'error' }] }; });
+    }); }, Promise.resolve()).then(function(){ return out; });
+  }
+  /* The record after a sync, folder by folder - the TC Tracker's rule in each (a failed take-back stays on record). */
+  function payRecord(cur, done){
+    var next = (cur && typeof cur === 'object' && !Array.isArray(cur)) ? JSON.parse(JSON.stringify(cur)) : {};
+    Object.keys(done || {}).forEach(function(path){
+      var r = tcRecord(next[path], done[path]);
+      if(Object.keys(r).length) next[path] = r; else delete next[path];
+    });
+    return next;
+  }
+
+  /* SENSITIVE MATERIAL (20/10/2026). Jordan: "another Folder in Documents called Sensitive
+     Material ... meant to hold doctor sensitive info" and "company sensitive information". Inside
+     Home-Brace Documents, so it shows in Documents - but LOCKED in SharePoint like the TC folder
+     (stop inheriting, remove Members and Visitors), because everyone in Home-Brace can READ the
+     rest of Home-Brace Documents in SharePoint. Who may open it is one list in Admin (every admin,
+     plus teams and people added with a double confirmation); Admin gives and takes back the
+     SharePoint access from that list (ph_sensgrants). Nothing moves in or out of it (move()). */
+  var SENS_NAME = 'Sensitive Material', SENS_PATH = BASE + '/' + SENS_NAME;
+  var SENS = lockedFolder(SENS_PATH);
+  function inSens(p){ p = String(p || ''); return p === SENS_PATH || p.indexOf(SENS_PATH + '/') === 0; }
+
+  /* SAFE TO SYNC? (12/11/2026) The access syncs (TC Tracker, Payroll) work out who should have each folder from
+     Home-Brace's shared lists. When one of those lists can't be read, the store hands back this browser's old copy
+     without failing - and a sync working from an old or empty copy takes access away from the people missing from
+     it. That is how 8 office managers lost their payroll folders (12/11). So a sync first asks this: the lists it
+     needs that DIDN'T read just now (named for the screen), plus "the team list" if the roster is empty. Anything in
+     it = change nothing and say so. */
+  var SYNC_LIST_NAMES = { ph_access: 'Teams & Access', ph_people: 'Admin \u2192 People', ph_pay_senders: 'who sends each office\u2019s sheet',
+    ph_paygrants: 'the record of payroll access', ph_tcgrants: 'the record of TC Tracker access', ph_sensgrants: 'the record of Sensitive Material access' };
+  function unreadForSync(keys){
+    var S = global.PH_STORE, P = global.PH, out = [];
+    (keys || []).forEach(function(k){ if(S && S.readFailed && S.readFailed(k)) out.push(SYNC_LIST_NAMES[k] || k); });
+    var ros = []; try{ ros = (P && P.rosterView) ? (P.rosterView() || []) : []; }catch(_){ ros = []; }
+    if(!ros.length) out.push('the team list');
+    return out;
+  }
+  function syncBlocked(keys){
+    var bad = unreadForSync(keys);
+    return bad.length ? fail(0, 'Part of Home-Brace didn\u2019t load (' + bad.join(', ') + '), so no access was changed. Try again in a moment.', { unread: bad }) : null;
+  }
+
+  /* What to change, from who should have what (want: {email: 'write'|'read'}) and what
+     Home-Brace has given before (gave: {email: role}). Pure - tested. */
+  function tcPlan(want, gave){
+    want = want || {}; gave = (gave && typeof gave === 'object' && !Array.isArray(gave)) ? gave : {};
+    var give = [], take = [];
+    Object.keys(want).forEach(function(em){
+      if(gave[em] === want[em]) return;
+      give.push({ em: em, role: want[em] });
+      if(gave[em]) take.push({ em: em, role: gave[em] });
+    });
+    Object.keys(gave).forEach(function(em){ if(!want[em]) take.push({ em: em, role: gave[em] }); });
+    return { give: give, take: take };
+  }
+  /* The record of what Home-Brace has given (ph_tcgrants), after a sync. A take-back that
+     failed stays on record - even over a new role given to the same person - so the next run
+     tries again rather than leave someone with more than the grid says. Pure - tested. */
+  function tcRecord(cur, done){
+    var next = (cur && typeof cur === 'object' && !Array.isArray(cur)) ? Object.assign({}, cur) : {};
+    (done.gave || []).forEach(function(g){ next[g.em] = g.role; });
+    (done.took || []).forEach(function(g){ if(next[g.em] === g.role) delete next[g.em]; });
+    (done.failed || []).forEach(function(f){ if(f.verb === 'take back') next[f.em] = f.role; });
+    return next;
+  }
+
+  /* ---- Files that live somewhere else, linked into a section. ---- */
+  function b64url(s){
+    var bytes = new TextEncoder().encode(s), bin = '';
+    for(var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    return btoa(bin).replace(/=+$/, '').replace(/\//g, '_').replace(/\+/g, '-');
+  }
+  function shareId(url){ return 'u!' + b64url(String(url || '').trim()); }
+  function resolveLink(url){
+    var u = String(url || '').trim();
+    if(!/^https:\/\/[^\/]+\.sharepoint\.com\//i.test(u))
+      return Promise.reject(fail(0, 'That doesn’t look like a SharePoint or OneDrive link. In the file, click Share, then Copy link, and paste that.', { badLink: true }));
+    return retry(function(){ return api('GET', '/shares/' + shareId(u) + '/driveItem?$select=id,name,webUrl,file,folder,size,parentReference'); })
+      .catch(function(e){
+        if(e.status === 400 || e.status === 403 || e.status === 404)
+          throw fail(e.status, 'That link didn’t open a file you can see. Check the link, or ask the owner to share the file with you.', { badLink: true });
+        throw e;
+      });
+  }
+  /* Can everyone in Home-Brace open it? true: it is in the Home-Brace library, shared with
+     the Home-Brace group, or shared with the whole organisation. false: only named
+     people. null: could not tell (the check itself was refused) - say nothing then. */
+  function whoCanOpen(item){
+    var pr = (item && item.parentReference) || {};
+    return drive().then(function(d){
+      if(pr.driveId === d.id) return true;
+      return api('GET', '/drives/' + pr.driveId + '/items/' + item.id + '/permissions').then(function(r){
+        return (r.value || []).some(function(p){
+          var sc = p.link && p.link.scope;
+          if(sc === 'organization' || sc === 'anonymous') return true;
+          return /home-brace/i.test(JSON.stringify([p.grantedToV2, p.grantedToIdentitiesV2, p.grantedTo, p.grantedToIdentities]));
+        });
+      });
+    }).catch(function(){ return null; });
+  }
+
+  function store(){ return global.PH_STORE; }
+  function saved(r, what){
+    if(r && (r.blocked || r.error)) throw fail(0, what + ' did not save: ' + (r.why || r.error));
+    return r;
+  }
+  function links(){
+    if(!store()) return Promise.resolve([]);
+    return store().get(LINKS).then(function(v){ return Array.isArray(v) ? v : []; }, function(){ return []; });
+  }
+  /* A link is kept, never deleted: un-linking marks it hidden, so it can always be seen
+     who added what, and adding the same link again simply brings it back. */
+  function addLink(sec, sub, item, shared, by){
+    var id = 'L' + item.id + '|' + sec + '|' + (sub || '');
+    var entry = { id: id, sec: sec, sub: sub || '', name: item.name, webUrl: item.webUrl,
+                  driveId: ((item.parentReference || {}).driveId) || '', itemId: item.id,
+                  shared: shared, by: by || '', at: new Date().toISOString(), hidden: false };
+    return store().update(LINKS, function(cur){
+      var arr = Array.isArray(cur) ? cur.slice() : [];
+      var i = -1; arr.forEach(function(x, n){ if(x && x.id === id) i = n; });
+      if(i >= 0) arr[i] = Object.assign({}, arr[i], entry); else arr.push(entry);
+      return arr;
+    }).then(function(r){ saved(r, 'The link'); return entry; });
+  }
+  function unlink(id, by){
+    return store().update(LINKS, function(cur){
+      var arr = Array.isArray(cur) ? cur.slice() : [];
+      var i = -1; arr.forEach(function(x, n){ if(x && x.id === id) i = n; });
+      if(i < 0) return undefined;
+      arr[i] = Object.assign({}, arr[i], { hidden: true, hiddenBy: by || '', hiddenAt: new Date().toISOString() });
+      return arr;
+    }).then(function(r){ return saved(r, 'Removing the link'); });
+  }
+
+  /* "Only certain people" for items the hub holds: { itemId: {teams, offices, by, at} }.
+     An empty teams list means every team; an empty offices list, every office. */
+  function meta(){
+    if(!store()) return Promise.resolve({});
+    return store().get(META).then(function(v){ return (v && typeof v === 'object' && !Array.isArray(v)) ? v : {}; }, function(){ return {}; });
+  }
+  function setAudience(itemIds, aud, by){
+    var list = (itemIds || []).filter(Boolean);
+    if(!list.length || !aud) return Promise.resolve({ unchanged: true });
+    var teams = (aud.teams || []).slice(), offices = (aud.offices || []).slice();
+    if(!teams.length && !offices.length) return Promise.resolve({ unchanged: true });
+    var stamp = { teams: teams, offices: offices, by: by || '', at: new Date().toISOString() };
+    return store().update(META, function(cur){
+      var next = (cur && typeof cur === 'object' && !Array.isArray(cur)) ? Object.assign({}, cur) : {};
+      list.forEach(function(id){ next[id] = stamp; });
+      return next;
+    }).then(function(r){ return saved(r, 'Who can see it'); });
+  }
+  /* Back to "everyone who can open the section" (07/10 - Jordan: "can I go to each file and
+     choose who gets access?"). Only that item's entry is taken off; nothing else in the
+     record changes and no file is touched. Nothing to take off: nothing is written. */
+  function clearAudience(itemIds){
+    var list = (itemIds || []).filter(Boolean);
+    if(!list.length) return Promise.resolve({ unchanged: true });
+    return store().update(META, function(cur){
+      if(!cur || typeof cur !== 'object' || Array.isArray(cur)) return undefined;
+      var hit = list.filter(function(id){ return Object.prototype.hasOwnProperty.call(cur, id); });
+      if(!hit.length) return undefined;
+      var next = Object.assign({}, cur);
+      hit.forEach(function(id){ delete next[id]; });
+      return next;
+    }).then(function(r){ return saved(r, 'Who can see it'); });
+  }
+
+  global.PH_DOCS = {
+    BASE: BASE, clean: clean, path: path, under: under, shareId: shareId,
+    drive: drive, item: itemAt, list: list, ensureFolder: ensureFolder, newFolder: newFolder,
+    upload: upload, uploadAll: uploadAll, fromInput: fromInput, fromDrop: fromDrop,
+    tally: tally, remove: remove, replace: replace, move: move, insideBase: insideBase,
+    isLocked: isLocked, grantEdit: grantEdit, revokeEdit: revokeEdit,
+    TC_BASE: TC_BASE, tcFolder: tcFolder, tcLocked: tcLocked, tcGrant: tcGrant, tcRevoke: tcRevoke, tcPlan: tcPlan,
+    tcSync: tcSync, tcRecord: tcRecord, unreadForSync: unreadForSync, syncBlocked: syncBlocked,
+    PAY_BASE: PAY_BASE, PAY_PRIVATE: PAY_PRIVATE, payFolder: payFolder, payLocked: payLocked, warm: function(){ return drive().then(function(){ return true; }, function(){ return false; }); }, paySync: paySync, payRecord: payRecord,
+    SENS_NAME: SENS_NAME, SENS_PATH: SENS_PATH, inSens: inSens,
+    sensFolder: SENS.folder, sensLocked: SENS.locked, sensGrant: SENS.grant, sensRevoke: SENS.revoke,
+    sensPeople: SENS.people, sensSync: SENS.sync, tcPeople: TC.people,
+    resolveLink: resolveLink, whoCanOpen: whoCanOpen,
+    links: links, addLink: addLink, unlink: unlink,
+    meta: meta, setAudience: setAudience, clearAudience: clearAudience,
+    /* Tests shorten the waits and start from a clean slate. */
+    setRetryWaits: function(w){ WAITS = w; },
+    reset: function(){ driveP = null; ids = {}; }
+  };
+})(window);

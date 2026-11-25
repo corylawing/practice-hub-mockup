@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="demo-shim.js?v=d202611250847"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Home-Brace · OrthoFi insights</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" href="../assets/favicon.png?v=2" type="image/png">
+<meta name="theme-color" content="#0F2A4A">
+<!-- ORTHOFI INSIGHTS (21/11/2026, SANDBOX DEMO). Jordan: "Let's do #1 the TC scorecards ... Also number 2 ... Lets just build it
+     in sandbox for now" and "I like how patients pay too, we should build it in demo version to see if they like it" and "where
+     patients come from ... would be good for marketing page too". Four tabs, all office TOTALS from OrthoFi (never a patient):
+       TC scorecards  - /patient-exams by exam date, split by TC: kept, new-patient kept, treatment recommended, started,
+                        pending, declined, no-shows/cancels. Checked on live 21/11: every October exam has its TC (374 kept,
+                        12 TCs) while the TC Tracker had 11 consults logged - OrthoFi is the complete record.
+       Late payments  - /delinquent (TODAY's list), by days past due; OrthoFi's own stages (flag 45-53, dismissal letter
+                        91-98, maintenance 121-129, dismissal 180+); the trend from a daily snapshot (ph_orthofi_late).
+       How patients pay - the business health dashboard: pay in full, down payment, same-day cash, plan length, extensions.
+       Where they come from - /referrals by exam date, split by referral SOURCE only (the "option" can name a patient).
+     Sandbox: made-up numbers. Live: admins only, and the page isn't in the menu there yet. -->
+<style>
+  :root{
+    --navy:#0F2A4A; --navy2:#25456e; --teal:#149B96; --teal2:#2BC0B8; --teal-soft:#E5F4F3; --teal-600:#0F827E;
+    --ink:#1F2D3D; --soft:#56627A; --line:#E4E8EE; --canvas:#F4F6F8;
+    --good:#2E9E6B; --good-soft:#E7F4EE; --bad:#D7503A; --bad-soft:#FBEAE7; --amber:#F2A03D; --amber-soft:#FDF1E1; --amber-ink:#8a5208;
+    --shadow:0 1px 2px rgba(15,42,74,.06),0 6px 18px rgba(15,42,74,.06); --radius:14px; --maxw:1100px;
+  }
+  *{box-sizing:border-box}
+  [hidden]{display:none !important}
+  body{margin:0;font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--canvas);line-height:1.5;-webkit-font-smoothing:antialiased}
+  h1{color:var(--navy);margin:0;font-size:25px}
+  .ribbon{background:var(--amber);color:#3a2400;text-align:center;font-size:13px;font-weight:600;padding:6px 14px}
+  .hdr{background:var(--navy);color:#fff}
+  .hdr-in{max-width:var(--maxw);margin:0 auto;display:flex;align-items:center;gap:12px;padding:13px 20px}
+  .mark img{width:34px;height:34px;display:block;border-radius:50%}
+  .brand{font-weight:700;font-size:18px;color:#fff;line-height:1.1}
+  .brand i{font-style:normal;color:var(--teal2)}
+  .brand small{display:block;font-weight:500;font-size:12px;color:var(--navy-mute,#9fb4d0)}
+  .v1nav{background:var(--navy2)}
+  .v1nav-in{max-width:var(--maxw);margin:0 auto;display:flex;gap:2px;padding:0 12px;overflow-x:auto}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:22px 20px 110px}
+  .lede{color:var(--soft);font-size:14.5px;margin:4px 0 16px;max-width:680px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px;margin-bottom:16px}
+  .card h2{margin:0 0 4px;font-size:16px;color:var(--navy)}
+  .sub{font-size:13px;color:var(--soft);margin-bottom:12px}
+  .bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+  .tabs{display:flex;gap:4px;background:#E9EDF2;border-radius:12px;padding:4px;flex-wrap:wrap}
+  .tabs button{border:0;background:none;padding:8px 14px;border-radius:9px;font-weight:700;font-size:13.5px;font-family:inherit;color:var(--soft);cursor:pointer}
+  .tabs button.on{background:#fff;color:var(--navy);box-shadow:0 1px 3px rgba(15,42,74,.12)}
+  select{padding:8px 10px;border:1px solid var(--line);border-radius:9px;font-weight:600;font-size:13.5px;font-family:inherit;color:var(--navy);background:#fff}
+  .mnav{display:flex;align-items:center;gap:4px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:3px}
+  .mnav button{border:0;background:none;width:34px;height:34px;border-radius:9px;font-size:18px;color:var(--navy);cursor:pointer;font-family:inherit}
+  .mnav button:hover:not(:disabled){background:var(--teal-soft)}
+  .mnav button:disabled{opacity:.3;cursor:default}
+  .mnav b{min-width:140px;text-align:center;font-size:14.5px;color:var(--navy)}
+  .tw{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;font-variant-numeric:tabular-nums}
+  th{text-align:right;font-size:11.5px;letter-spacing:.03em;text-transform:uppercase;color:var(--soft);font-weight:700;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+  th:first-child,td:first-child{text-align:left}
+  td{padding:9px 10px;border-bottom:1px solid #F0F3F7;text-align:right;white-space:nowrap}
+  tr.tot td{font-weight:800;color:var(--navy);background:#F7F9FB}
+  tr.off td{font-weight:800;color:var(--navy);padding-top:16px}
+  .pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:700}
+  .good{background:var(--good-soft);color:#1f6e4a} .bad{background:var(--bad-soft);color:#93301f} .mid{background:var(--amber-soft);color:var(--amber-ink)}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:14px}
+  .kpi{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+  .kpi .k{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--soft);font-weight:700}
+  .kpi .v{font-size:22px;font-weight:800;color:var(--navy);font-variant-numeric:tabular-nums}
+  .kpi .s{font-size:12.5px;color:var(--soft)}
+  .hb{height:10px;border-radius:5px;background:#EEF2F6;position:relative;min-width:120px}
+  .hb i{position:absolute;left:0;top:0;bottom:0;border-radius:5px;background:var(--teal)}
+  .hb i.st{background:var(--navy)}
+  .note{font-size:12.5px;color:var(--soft);margin-top:10px}
+  .explain{background:#fff;border:1px solid var(--line);border-left:4px solid var(--teal);border-radius:12px;padding:10px 14px;font-size:13.5px;color:var(--ink);margin:0 0 12px;max-width:820px}
+  .explain i{font-style:normal;font-weight:700;color:var(--navy)}
+  .up{color:var(--bad);font-weight:700} .down{color:var(--good);font-weight:700}
+  .stage{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+  .stage div{border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:#FBFCFD;font-size:13px}
+  .stage b{display:block;font-size:18px;color:var(--navy)}
+  .warn{background:var(--bad-soft);color:#93301f;border-radius:10px;padding:10px 12px;font-size:13.5px;margin-bottom:12px}
+  .state{padding:12px;border-radius:10px;background:#F7F9FB;color:var(--soft);font-size:13.5px}
+  /* pictures, not spreadsheets */
+  /* compared with the period before: green = better, red = worse, grey = about the same */
+  .dl{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;border-radius:999px;padding:1px 8px;white-space:nowrap;font-variant-numeric:tabular-nums;cursor:default;font-style:normal}
+  .dl.gd{background:var(--good-soft);color:#1f6e4a} .dl.bd{background:var(--bad-soft);color:#93301f} .dl.nt{background:#EEF2F6;color:var(--soft)}
+  .dl small{font-weight:600;opacity:.75;font-size:11px}
+  .kpi .d{margin-top:4px}
+  .ln span.dl,.sn span.dl{display:inline-flex;flex-direction:row;align-self:flex-start;line-height:1.5} .ln span.dw,.sn span.dw{display:block;margin-top:4px}
+  .vsline{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12.5px;color:var(--soft);margin:-4px 0 12px}
+  .grid.pay{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
+  .m{grid-template-columns:96px 1fr 60px 46px !important} .m b{white-space:nowrap} .m .dl{padding:1px 6px;font-size:11px;justify-self:end}
+  .stack i.sg{display:flex;font-style:normal;align-items:center;justify-content:center;color:#fff;font-size:11.5px;font-weight:800;letter-spacing:.01em;overflow:hidden;white-space:nowrap;min-width:0;cursor:default;transition:filter .12s}
+  .stack i.sg.lt{color:#0F2A4A}
+  .stack i.sg:hover,.hb:hover{filter:brightness(1.08) saturate(1.05)}
+  .tip{position:fixed;z-index:9000;pointer-events:none;display:flex;gap:9px;align-items:flex-start;background:#0F2A4A;color:#fff;border-radius:11px;padding:9px 12px;font-size:12.5px;line-height:1.35;box-shadow:0 10px 28px rgba(15,42,74,.28);max-width:280px;animation:tipin .08s ease-out}
+  .tip b{display:block;font-size:13px} .tip span span{color:#C9D6E6}
+  .tip .tsw{width:10px;height:10px;border-radius:3px;margin-top:4px;flex:none;box-shadow:0 0 0 1.5px rgba(255,255,255,.5)}
+  @keyframes tipin{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){ .tip{animation:none} }
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+  .tcc{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:12px}
+  .tcc .top{display:flex;align-items:center;gap:14px}
+  .ring{width:72px;height:72px;flex:none}
+  .nm{font-weight:800;color:var(--navy);font-size:15.5px;line-height:1.25;display:flex;align-items:center;gap:7px}
+  .of{font-size:12.5px;color:var(--soft);display:flex;align-items:center;gap:6px;margin-top:2px}
+  .dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex:none}
+  .fun{display:flex;flex-direction:column;gap:7px}
+  .fun .r{display:grid;grid-template-columns:94px 1fr 30px;align-items:center;gap:8px;font-size:12.5px;color:var(--soft)}
+  .fun .r b,.m b{text-align:right;color:var(--navy);font-variant-numeric:tabular-nums}
+  .fun .t{height:9px;border-radius:5px;background:#EEF2F6;overflow:hidden}
+  .fun .t i{display:block;height:100%;border-radius:5px}
+  .chips{display:flex;gap:6px;flex-wrap:wrap}
+  .chip{font-size:12px;font-weight:600;color:var(--soft);background:#F3F6F9;border-radius:999px;padding:3px 9px}
+  .badge{font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--teal-600);background:var(--teal-soft);border-radius:999px;padding:2px 8px;align-self:flex-start}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--soft);margin:2px 0 6px}
+  .legend span{display:inline-flex;align-items:center;gap:6px} .legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+  .lrow{display:grid;grid-template-columns:170px 1fr 150px;gap:16px;align-items:center;padding:12px 0;border-bottom:1px solid #F0F3F7}
+  .lrow:last-child{border-bottom:0}
+  .ln,.sn{display:flex;align-items:center;gap:9px} .ln span,.sn span{display:flex;flex-direction:column;line-height:1.25}
+  .ln b,.sn b{color:var(--navy);font-size:14px} .ln small,.sn small,.sv small{color:var(--soft);font-size:12px}
+  .stack{display:flex;height:24px;border-radius:8px;overflow:hidden;gap:2px;background:#fff}
+  .stack i{display:block;height:100%}
+  .l90{font-size:12.5px;color:var(--soft);text-align:right} .l90 b{color:var(--navy);font-size:14px}
+  .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+  .stp{border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:#FBFCFD;display:flex;flex-direction:column;gap:2px}
+  .stp .ic{font-size:20px} .stp b{font-size:24px;color:var(--navy);line-height:1.1} .stp span{font-weight:700;color:var(--navy);font-size:13.5px} .stp small{color:var(--soft);font-size:12px}
+  .m{display:grid;grid-template-columns:108px 1fr 52px;gap:8px;align-items:center;font-size:12.5px;color:var(--soft)}
+  .m .t{position:relative;height:9px;border-radius:5px;background:#EEF2F6}
+  .m .t i{position:absolute;left:0;top:0;bottom:0;border-radius:5px;background:var(--teal)}
+  .m .t u{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--navy);border-radius:1px}
+  .m b.gd{color:var(--good)} .m b.bd{color:var(--bad)}
+  .src{display:grid;grid-template-columns:200px 1fr 130px;gap:16px;align-items:center;padding:12px 0;border-bottom:1px solid #F0F3F7}
+  .sn .ic{font-size:22px;width:36px;height:36px;border-radius:10px;background:#F3F6F9;display:grid;place-items:center;flex:none}
+  .sv{display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+  .hb{height:14px;border-radius:7px}
+  .hb i{border-radius:7px}
+  @media(max-width:640px){ .lrow,.src{grid-template-columns:1fr;gap:6px} .l90,.sv{text-align:left;align-items:flex-start} .stack{width:100% !important} }
+  @media(max-width:640px){ .wrap{padding:16px 12px 140px} h1{font-size:21px} }
+</style>
+<script src="user.js?v=hc268d202611250847"></script>
+  <script src="store.js?v=hc268d202611250847"></script>
+  <script src="gate.js?v=hc268d202611250847"></script>
+  <script src="orthofi.js?v=hc268d202611250847"></script>
+  <script src="periodpick.js?v=hc268d202611250847"></script>
+</head>
+<body>
+<div class="ribbon" id="ribbon">DEMO — made-up numbers, to see how it would look.</div>
+<header class="hdr"><div class="hdr-in"><span class="mark"><img src="../assets/logo-mark.png?v=2" alt="" width="34" height="34"></span><span class="brand">Home-<i>Brace</i><small>OrthoFi insights</small></span></div></header>
+<nav class="v1nav"><div class="v1nav-in" id="nav"></div></nav>
+<div class="wrap" id="wrap">
+  <h1>OrthoFi insights</h1>
+  <p class="lede">Straight from OrthoFi, office by office — nobody types or logs anything. Totals only, never a patient.</p>
+  <div class="bar">
+    <div class="tabs" id="tabs" role="tablist"></div>
+    <span style="flex:1"></span>
+    <button id="per" aria-label="Period"></button>
+    <select id="off" aria-label="Office"></select>
+  </div>
+  <div id="view"></div>
+</div>
+<script>
+(function(){
+  'use strict';
+  const LIVE=!!(window.PH && PH.isLive && PH.isLive()), O=window.PH_ORTHOFI;
+  const el=id=>document.getElementById(id), esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const p2=n=>String(n).padStart(2,'0'), r1=x=>Math.round(x*10)/10;
+  const pct=(a,b)=>b ? Math.round(a/b*1000)/10 : null, fp=v=>v==null ? '—' : v+'%';
+  const money=v=>v==null ? '—' : (v<0?'−':'')+'$'+Math.round(Math.abs(v)).toLocaleString('en-US');
+  const TABS=[['tc','TC scorecards'],['late','Late payments'],['pay','How patients pay'],['ref','Where patients come from']];
+  let TAB='tc'; try{ TAB=localStorage.getItem('ph_insights_tab')||'tc'; }catch(_){}
+  if(!TABS.some(t=>t[0]===TAB)) TAB='tc';
+  const now=new Date(), lm=new Date(now.getFullYear(), now.getMonth()-1, 1);
+  /* THE PERIOD (21/11/2026, Jordan: "we already built a date picker. Also what if they want to do this quarter, year to date,
+     last year etc?") - periodpick.js: a month, a quarter, year to date or a year; every tab but Late payments (today) follows it */
+  const PER=PH_PERIOD.attach(el('per'), {value:{kind:'month', y:lm.getFullYear(), m:lm.getMonth()+1}, onChange:()=>render()});
+  const offices=()=>(PH.officeNames && PH.officeNames().length) ? PH.officeNames() : ['Cedar Grove','Northpoint','Lakeview','Brookside','Westfield','Hillcrest','Meadow Park','Riverbend'];
+  function drawOff(){ const v=el('off').value||'__all'; el('off').innerHTML='<option value="__all">All offices</option>'+offices().map(o=>'<option'+(o===v?' selected':'')+'>'+esc(o)+'</option>').join(''); }
+  const period=()=>PER.range();
+  const pickOffs=()=>{ const v=el('off').value; return v && v!=='__all' ? [v] : offices(); };
+
+  /* ---------------- made-up numbers for the sandbox (seeded: everyone sees the same) ---------------- */
+  function rng(seed){ let s=0; for(const c of String(seed)) s=(s*31+c.charCodeAt(0))%2147483647; return ()=>{ s=(s*1103515245+12345)%2147483648; return s/2147483648; }; }
+  const DEMO_TCS={'Cedar Grove':['Ava Moreno'],'Northpoint':['Lena Ortiz'],'Lakeview':['Zoe Duran','Kate Ruiz'],'Brookside':['Rosa Vega'],'Westfield':['Nina Park'],'Hillcrest':['Tina Quinn'],'Meadow Park':['Gina Salas','Ivy Cole'],'Riverbend':['Dana Ramsey']};
+  function demoTC(o, y, m){ const R=rng('tc'+o+y+m), out={};
+    (DEMO_TCS[o]||['Sam Lee']).forEach((t,i)=>{ const keptNew=Math.round((i? 6:24)+R()*28), recall=Math.round(R()*8), rec=Math.round(keptNew*(0.62+R()*0.25)), started=Math.round(rec*(0.42+R()*0.33)),
+      pending=Math.round((rec-started)*(0.4+R()*0.4)), declined=Math.max(0, rec-started-pending), ns=Math.round(keptNew*(0.08+R()*0.12));
+      out[t]={keptNew, kept:keptNew+recall, rec, started, pending, declined, noshow:ns, cancel:Math.round(ns*0.8)}; }); return out; }
+  function demoLate(o, day){ const R=rng('late'+o+day), base=24+Math.round(R()*40); const b=[base, Math.round(base*0.45), Math.round(base*0.25), Math.round(base*0.3), Math.round(base*0.12+R()*4)];
+    const amt=b.map((n,i)=>n*(180+i*260)*(0.8+R()*0.4)); return {n:b, amt, flag:Math.round(b[1]*0.35), letter:Math.round(b[3]*0.18), maint:Math.round(b[3]*0.14), dismiss:b[4]}; }
+  function demoPay(o, y, m){ const R=rng('pay'+o+y+m), starts=Math.round(18+R()*30), pif=Math.round(starts*(0.08+R()*0.15)), resp=starts*(5200+R()*900), nonPif=resp*(1-pif/starts);
+    return {starts, pif, sameDayStarts:Math.round(starts*(0.15+R()*0.3)), dp:nonPif*(0.14+R()*0.12), nonPif, sdc:resp*(0.12+R()*0.15), resp, ext:Math.round(starts*(0.05+R()*0.2)), months:(starts-pif)*(20+R()*8)}; }
+  function demoRef(o, y, m){ const R=rng('ref'+o+y+m), S=[['My Dentist',0.38,0.42],['Friend / Family',0.22,0.52],['Internet Search',0.15,0.38],['Social Media',0.07,0.3],['Other',0.15,0.4],['Advertisement',0.03,0.3]], tot=40+Math.round(R()*40), out={};
+    S.forEach(([s,share,conv])=>{ const n=Math.max(0, Math.round(tot*share*(0.7+R()*0.6))), st=Math.round(n*conv*(0.7+R()*0.6)); out[s]={n, started:Math.min(n,st), prod:Math.min(n,st)*(5000+R()*1200)}; }); return out; }
+
+  /* ---------------- the real numbers (live: admins; the same asks proven on live 21/11/2026) ---------------- */
+  let MAP=null; const CACHE={};
+  async function map(){ if(!MAP) MAP=O.cleanMap(await PH_STORE.get(O.KEY)); return MAP; }
+  async function ask(key, fn){ if(CACHE[key]) return CACHE[key]; const v=await fn(); CACHE[key]=v; return v; }
+  async function liveTC(o, R){ const b={first:R.first, last:R.last}, M=await map(), locs=O.locsOf(M,o); if(!locs.length) return {};
+    const K='kept exam', a=await O.ask({ask:'sum', path:'/v1/practice-locations/patient-exams', locs, params:{'exam-date-start-date':b.first,'exam-date-end-date':b.last}, group:'treatmentCoordinatorName',
+      count:[{name:'kept', eq:{keptExamFlag:[K]}}, {name:'keptNew', eq:{keptExamFlag:[K], examTypeName:['new']}}, {name:'rec', eq:{keptExamFlag:[K], patientExamResultName:['treatment recommended']}},
+             {name:'started', eq:{patientExamTreatmentStatusName:['patient started']}}, {name:'pending', eq:{patientExamTreatmentStatusName:['pending financing selection','start / records']}},
+             {name:'declined', eq:{patientExamTreatmentStatusName:['decline tx']}}, {name:'noshow', eq:{patientExamResultName:['patient did not show up']}}, {name:'cancel', eq:{patientExamResultName:['patient canceled']}}]});
+    const r={}; Object.keys(a.by||{}).forEach(l=>{ const G=a.by[l].groups||{}; Object.keys(G).forEach(t=>{ const x=r[t]=r[t]||{}; ['kept','keptNew','rec','started','pending','declined','noshow','cancel'].forEach(k=>{ x[k]=(x[k]||0)+((G[t].cnt||{})[k]||0); }); }); }); return r; }
+  const MINS=[1,31,45,54,61,91,99,121,130,181];
+  async function liveLate(o){ const M=await map(), locs=O.locsOf(M,o); if(!locs.length) return null;
+    const a=await O.ask({ask:'sum', path:'/v1/practice-locations/delinquent', locs, params:{}, count:MINS.map(d=>({name:'d'+d, min:{daysPastDue:d}}))});
+    const c=k=>Object.keys(a.by||{}).reduce((s,l)=>s+((a.by[l].cnt||{})[k]||0),0), $=k=>Object.keys(a.by||{}).reduce((s,l)=>s+((((a.by[l].csum||{})[k]||{}).sum||{}).pastDueAmount||0),0);
+    const n=[c('d1')-c('d31'), c('d31')-c('d61'), c('d61')-c('d91'), c('d91')-c('d181'), c('d181')], amt=[$('d1')-$('d31'), $('d31')-$('d61'), $('d61')-$('d91'), $('d91')-$('d181'), $('d181')];
+    return {n, amt, flag:c('d45')-c('d54'), letter:c('d91')-c('d99'), maint:c('d121')-c('d130'), dismiss:c('d181')}; }
+  async function livePay(o, R){ const lastM=R.months[R.months.length-1], b={first:R.first, last:O.monthBounds(lastM.y, lastM.m).last}, M=await map(), locs=O.locsOf(M,o); if(!locs.length) return null;   // business health is filed under each month's LAST day
+    const a=await O.ask({ask:'sum', path:'/v1/practice-locations/business-health', locs, params:{'month-date-start-date':b.first,'month-date-end-date':b.last}});
+    const s=k=>Object.keys(a.by||{}).reduce((t,l)=>t+((a.by[l].sum||{})[k]||0),0);
+    return {starts:s('starts'), pif:s('payInFullCount'), sameDayStarts:s('sameDayStarts'), dp:s('downPaymentAmount'), nonPif:s('nonPayInFullPatientResponsibility'), sdc:s('sameDayCash'), resp:s('patientResponsibility'), ext:s('extensions'), months:s('totalTreatmentMonths')}; }
+  async function liveRef(o, R){ const b={first:R.first, last:R.last}, M=await map(), locs=O.locsOf(M,o); if(!locs.length) return {};
+    const a=await O.ask({ask:'sum', path:'/v1/practice-locations/referrals', locs, params:{'exam-date-start-date':b.first,'exam-date-end-date':b.last}, group:'referralSource', count:[{name:'started', on:{field:'startDate', from:'2000-01-01', to:'2100-12-31'}}]});
+    const r={}; Object.keys(a.by||{}).forEach(l=>{ const G=a.by[l].groups||{}; Object.keys(G).forEach(s=>{ const x=r[s]=r[s]||{n:0,started:0,prod:0}; x.n+=G[s].n; x.started+=((G[s].cnt||{}).started||0); x.prod+=(G[s].sum||{}).production||0; }); }); return r; }
+  /* the sandbox adds its made-up months up, the way the real numbers add up over a quarter or a year */
+  const addUp=(list, nested)=>list.reduce((acc, x)=>{ Object.keys(x||{}).forEach(k=>{ if(nested){ const a=acc[k]=acc[k]||{}; Object.keys(x[k]).forEach(f=>{ a[f]=(a[f]||0)+(x[k][f]||0); }); } else acc[k]=(acc[k]||0)+(x[k]||0); }); return acc; }, {});
+  const get={
+    tc:(o,R)=>LIVE ? ask('tc'+o+R.first+R.last, ()=>liveTC(o,R)) : Promise.resolve(addUp(R.months.map(x=>demoTC(o,x.y,x.m)), true)),
+    late:(o)=>LIVE ? ask('late'+o, ()=>liveLate(o)) : Promise.resolve(demoLate(o, new Date().toISOString().slice(0,10))),
+    pay:(o,R)=>LIVE ? ask('pay'+o+R.first+R.last, ()=>livePay(o,R)) : Promise.resolve(addUp(R.months.map(x=>demoPay(o,x.y,x.m)), false)),
+    ref:(o,R)=>LIVE ? ask('ref'+o+R.first+R.last, ()=>liveRef(o,R)) : Promise.resolve(addUp(R.months.map(x=>demoRef(o,x.y,x.m)), true))
+  };
+
+  /* ---------------- the late-payment trend: one snapshot a day (live), the sandbox makes one up ---------------- */
+  const LATE_KEY='ph_orthofi_late';
+  async function lateTrend(today){
+    if(!LIVE){ const ago=new Date(Date.now()-7*864e5).toISOString().slice(0,10), out={}; offices().forEach(o=>{ out[o]=demoLate(o, ago); }); return {day:ago, by:out}; }
+    try{ const rec=(await PH_STORE.get(LATE_KEY))||{days:{}}, days=Object.keys(rec.days||{}).sort(), target=new Date(Date.now()-7*864e5).toISOString().slice(0,10);
+      const d=days.filter(x=>x<=target).pop() || days.filter(x=>x<today)[0]; return d ? {day:d, by:rec.days[d]} : null; }catch(_){ return null; }
+  }
+  async function lateSave(today, by){
+    if(!LIVE) return;
+    try{ await PH_STORE.update(LATE_KEY, cur=>{ const x=(cur && typeof cur==='object') ? cur : {v:1, days:{}}; x.days=x.days||{}; if(x.days[today]) return undefined;
+      x.days[today]={}; Object.keys(by).forEach(o=>{ const v=by[o]; if(v) x.days[today][o]={n:v.n, amt:v.amt.map(a=>Math.round(a))}; });
+      const keep=Object.keys(x.days).sort().slice(-60), y={}; keep.forEach(k=>{ y[k]=x.days[k]; }); x.days=y; return x; }); }catch(_){}
+  }
+
+  /* ---------------- drawing ---------------- */
+  function tabs(){ el('tabs').innerHTML=TABS.map(t=>'<button role="tab" class="'+(TAB===t[0]?'on':'')+'" data-tab="'+t[0]+'">'+t[1]+'</button>').join(''); el('per').hidden=TAB==='late'; }
+  const kpi=(k,v,s,d)=>'<div class="kpi"><div class="k">'+k+'</div><div class="v">'+v+'</div>'+(s?'<div class="s">'+s+'</div>':'')+(d?'<div class="d">'+d+'</div>':'')+'</div>';
+  /* COMPARED WITH THE PERIOD BEFORE (21/11/2026, Jordan: "if they are comparing a quarter or month there is a vs last month or
+     vs last quarter ... good to show if ones increasing or decreasing" and "same with conversion for TC. Its always useful if
+     you see a compared to"). PH_PERIOD.prev() picks the period before - and while this one is still going, the SAME number of
+     days of it (Nov 1-21 vs Oct 1-21). A count shows its % change; a rate (conversion, paid in full)
+     shows how far the rate itself moved, as a % (55% -> 75% = "↑ 20%"; Jordan 21/11: "not pts percentages").
+     Green = better, red = worse, grey = about the same; the tooltip shows both numbers. */
+  let VS={short:'', long:''};
+  const MS3=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function vsOf(p){ const a=new Date(p.first+'T12:00:00'), b=new Date(p.last+'T12:00:00');
+    const span=p.partial ? MS3[a.getMonth()]+' '+a.getDate()+' – '+(a.getMonth()===b.getMonth() && a.getFullYear()===b.getFullYear() ? '' : MS3[b.getMonth()]+' ')+b.getDate()+', '+b.getFullYear()+' (the same days)' : p.label;
+    return {short:p.short, long:span}; }
+  function dlt(cur, was, o){ o=o||{}; if(cur==null || was==null || !isFinite(cur) || !isFinite(was)) return '';
+    const u=o.unit||'%'; let d, txt;
+    if(u==='%'){ if(!was) return ''; d=(cur-was)/was*100; txt=Math.round(Math.abs(d))+'%'; }
+    else if(u==='rate'){ d=cur-was; txt=Math.round(Math.abs(d))+'%'; }
+    else { d=cur-was; txt=r1(Math.abs(d))+' '+u; }
+    const flat=Math.abs(d)<(u==='%' ? 3 : u==='rate' ? 1 : 0.5), good=o.down ? d<0 : d>0, cls=flat ? 'nt' : good ? 'gd' : 'bd';
+    const f=o.fmt||(x=>Number(x).toLocaleString('en-US'));
+    return '<span class="dl '+cls+'" data-tip="'+esc((o.name ? o.name+' · ' : '')+'compared with '+VS.long)+'" data-tip-b="'+esc('Now '+f(cur)+' · then '+f(was))+'" data-tip-c="'+(flat?'#94a3b8':good?'#2E9E6B':'#D7503A')+'">'+
+      (flat ? (o.bare ? 'same' : '≈ same') : (d>0?'↑ ':'↓ ')+txt)+(o.bare ? '' : ' <small>'+esc(VS.short)+'</small>')+'</span>'; }
+  const vsLine=()=>'<div class="vsline"><span><span class="dl gd">↑</span> <span class="dl bd">↓</span> compared with '+esc(VS.long)+'. Hover or tap one to see both numbers.</span></div>';
+  const tone=(v,lo,hi)=>v==null ? '' : v>=hi ? 'good' : v<lo ? 'bad' : 'mid';
+  const monthName=()=>period().label;
+  let SEQ=0;
+  async function render(){
+    tabs(); const my=++SEQ, v=el('view'), t=period(), p=PER.prev(), offs=pickOffs(); VS=vsOf(p);
+    v.innerHTML='<div class="state">Reading OrthoFi…</div>';
+    try{
+      let h='';
+      if(TAB==='tc') h=await tcHTML(offs, t, p);
+      else if(TAB==='late') h=await lateHTML(offs);
+      else if(TAB==='pay') h=await payHTML(offs, t, p);
+      else h=await refHTML(offs, t, p);
+      if(my===SEQ) v.innerHTML=h;
+    }catch(e){ if(my===SEQ) v.innerHTML='<div class="warn">OrthoFi didn’t answer: '+esc((e && e.message) || 'try again in a minute')+'</div>'; }
+  }
+
+  /* A BAR PIECE (21/11/2026, Jordan: "Hover over the numbers would be nicer if it was more modern and quicker to pop up. Also
+     percentage on") - its share written inside when there's room (dark text on the light colours), and the app's own
+     tooltip instead of the browser's slow grey one. */
+  const LIGHT_SRC=['Internet Search','Other'];
+  function seg(v, of, color, light, name, detail){ const p=of ? v/of*100 : 0;
+    return '<i class="sg'+(light?' lt':'')+'" style="flex:'+v+';background:'+color+'" data-tip="'+esc(name)+'" data-tip-b="'+esc(detail)+'" data-tip-c="'+esc(color)+'">'+(p>=7 ? Math.round(p)+'%' : '')+'</i>'; }
+  /* ---- pictures, not spreadsheets (Jordan 21/11: "Try to make it less like an excel sheet the most you can") ---- */
+  const offDot=o=>'<i class="dot" style="background:'+esc(((PH.colorForOffice && PH.colorForOffice(o))||{}).dot||'#94a3b8')+'"></i>';
+  function ring(p, cls){ const r=30, c=2*Math.PI*r, v=Math.max(0, Math.min(100, p||0)), col=cls==='good' ? 'var(--good)' : cls==='bad' ? 'var(--bad)' : 'var(--amber)';
+    return '<svg class="ring" viewBox="0 0 72 72" role="img" aria-label="Conversion '+fp(p)+'"><circle cx="36" cy="36" r="'+r+'" fill="none" stroke="#EEF2F6" stroke-width="8"/>'+
+      (p==null ? '' : '<circle cx="36" cy="36" r="'+r+'" fill="none" stroke="'+col+'" stroke-width="8" stroke-linecap="round" stroke-dasharray="'+(c*v/100).toFixed(1)+' '+c.toFixed(1)+'" transform="rotate(-90 36 36)"/>')+
+      '<text x="36" y="41" text-anchor="middle" font-size="16" font-weight="800" fill="#0F2A4A" font-family="Inter,sans-serif">'+(p==null ? '—' : Math.round(p)+'%')+'</text></svg>'; }
+
+  async function tcHTML(offs, t, p){
+    const [all, before]=await Promise.all([Promise.all(offs.map(o=>get.tc(o, t).then(r=>[o, r||{}]))), Promise.all(offs.map(o=>get.tc(o, p).then(r=>[o, r||{}])))]);
+    const T={keptNew:0, rec:0, started:0, pending:0, noshow:0, cancel:0}, W={keptNew:0, rec:0, started:0}, cards=[], was={};
+    before.forEach(([o,r])=>{ was[o]=r; Object.keys(r).forEach(tc=>{ Object.keys(W).forEach(k=>{ W[k]+=r[tc][k]||0; }); }); });
+    all.forEach(([o,r])=>Object.keys(r).forEach(tc=>{ const x=r[tc], w=(was[o]||{})[tc]; Object.keys(T).forEach(k=>{ T[k]+=x[k]||0; }); cards.push({o, tc, x, c:pct(x.started||0, x.rec||0), w:w && w.rec ? pct(w.started||0, w.rec) : null}); }));
+    cards.sort((a,b)=>((b.c||0)-(a.c||0)) || ((b.x.keptNew||0)-(a.x.keptNew||0)));
+    const top=cards.filter(c=>(c.x.rec||0)>=10)[0];
+    const cv=pct(T.started,T.rec), cw=pct(W.started,W.rec);
+    let h='<div class="kpis">'+kpi('Conversion', fp(cv), 'started ÷ recommended', dlt(cv, cw, {unit:'rate', name:'Conversion', fmt:fp}))+kpi('New-patient exams', T.keptNew.toLocaleString(), '', dlt(T.keptNew, W.keptNew, {name:'New-patient exams'}))+
+      kpi('Treatment recommended', T.rec.toLocaleString(), fp(pct(T.rec,T.keptNew))+' of exams — told “ready to start”', dlt(T.rec, W.rec, {name:'Recommended'}))+
+      kpi('Started so far', T.started.toLocaleString(), fp(pct(T.started,T.rec))+' of recommended', dlt(T.started, W.started, {name:'Started'}))+kpi('Still deciding', T.pending.toLocaleString(), 'waiting on financing or records')+'</div>';
+    h+='<div class="sub" style="margin:2px 0 6px">'+esc(monthName())+' · every exam in OrthoFi, by the TC on it.</div>'+vsLine()+
+      '<div class="explain"><b>How to read a card.</b> <i>Exams</i> = new-patient exams the patient showed up for. <i>Recommended</i> = at that exam the doctor said the patient is ready to start treatment now (not “let’s wait and watch”, not “no treatment needed”). <i>Started</i> = of those, how many have started. The ring is the TC’s <b>conversion</b>: started ÷ recommended — it keeps climbing as patients start.</div><div class="grid">';
+    cards.forEach(c=>{ const x=c.x, ex=Math.max(1, x.keptNew||0), cls=tone(c.c,40,55);
+      const bar=(lab,n,col)=>'<div class="r"><span>'+lab+'</span><span class="t"><i style="width:'+Math.min(100, (n||0)/ex*100)+'%;background:'+col+'"></i></span><b>'+(n||0)+'</b></div>';
+      h+='<div class="tcc">'+(top && c===top ? '<span class="badge">Top conversion</span>' : '')+
+        '<div class="top">'+ring(c.c, cls)+'<div><div class="nm">'+esc(c.tc)+'</div><div class="of">'+offDot(c.o)+esc(c.o)+'</div>'+
+          '<div class="of" style="margin-top:6px">'+(c.w==null ? '<span class="dl nt">new '+esc(VS.short.replace(/^vs /,'since '))+'</span>' : dlt(c.c, c.w, {unit:'rate', name:c.tc+'’s conversion', fmt:fp}))+'</div></div></div>'+
+        '<div class="fun">'+bar('Exams', x.keptNew, '#BFE3E0')+bar('Recommended', x.rec, 'var(--teal)')+bar('Started', x.started, 'var(--navy)')+'</div>'+
+        '<div class="chips">'+(x.pending ? '<span class="chip">⏳ '+x.pending+' deciding</span>' : '')+(x.declined ? '<span class="chip">✋ '+x.declined+' declined</span>' : '')+
+          (((x.noshow||0)+(x.cancel||0)) ? '<span class="chip">🚫 '+((x.noshow||0)+(x.cancel||0))+' no-show / cancel</span>' : '')+'</div></div>'; });
+    if(!cards.length) h+='<div class="state">No exams in OrthoFi for this month.</div>';
+    return h+'</div><div class="note">Green 55%+ · amber 40–55% · red under 40% (to be set with Morgan). Nothing for the TCs to log — it comes from OrthoFi.</div>';
+  }
+
+  const BUCKETS=['1–30 days','31–60','61–90','91–180','180+ days'], HEAT=['#FBD9CF','#F5AE98','#EC7F63','#D7503A','#9E2E1C'];
+  async function lateHTML(offs){
+    // the practice's day (Central), not the UTC one - each evening the snapshot was filed under tomorrow (21/11/2026, code review)
+    const today=(PH.centralNow && PH.centralNow().date) || new Date().toISOString().slice(0,10);
+    const [all, before]=await Promise.all([Promise.all(offs.map(o=>get.late(o).then(r=>[o,r]))), lateTrend(today)]);
+    const by={}; all.forEach(([o,r])=>{ by[o]=r; }); if(offs.length===offices().length) lateSave(today, by);
+    const tot=r=>r ? r.amt.reduce((a,b)=>a+b,0) : 0, cnt=r=>r ? r.n.reduce((a,b)=>a+b,0) : 0, max=Math.max(1, ...all.map(([o,r])=>tot(r)));
+    const n90=all.reduce((s,[o,r])=>s+(r ? r.n[3]+r.n[4] : 0),0), a90=all.reduce((s,[o,r])=>s+(r ? r.amt[3]+r.amt[4] : 0),0), st=k=>all.reduce((s,[o,r])=>s+(r ? r[k] : 0),0);
+    const since=before ? new Date(before.day+'T12:00:00').toLocaleDateString('en-US',{month:'short', day:'numeric'}) : '';
+    let h='<div class="kpis">'+kpi('Past due', money(all.reduce((s,[o,r])=>s+tot(r),0)), all.reduce((s,[o,r])=>s+cnt(r),0)+' accounts')+kpi('90+ days', money(a90), n90+' accounts')+
+      kpi('Ready for a dismissal letter', st('letter'), '91–98 days late')+kpi('At dismissal', st('dismiss'), '180+ days late')+'</div>';
+    const rising=[]; all.forEach(([o,r])=>{ const b=before && before.by && before.by[o]; if(!r || !b) return; const now90=r.amt[3]+r.amt[4], was=(b.amt[3]||0)+(b.amt[4]||0); if(was>0 && now90>was*1.1 && now90-was>500) rising.push(o+' (+'+Math.round((now90/was-1)*100)+'%)'); });
+    if(rising.length) h+='<div class="warn">⚠️ 90+ days late is climbing at '+esc(rising.join(', '))+' since '+esc(since)+'. Home-Brace would let that office manager know.</div>';
+    h+='<div class="card"><h2>Who owes, and how late</h2><div class="sub">Today, from OrthoFi’s Delinquent report. Each bar is an office’s past-due dollars — the darker, the later.</div>'+
+      '<div class="legend">'+BUCKETS.map((b,i)=>'<span><i style="background:'+HEAT[i]+'"></i>'+b+'</span>').join('')+'</div>';
+    all.slice().sort((a,b)=>tot(b[1])-tot(a[1])).forEach(([o,r])=>{
+      if(!r){ h+='<div class="lrow"><div class="ln">'+offDot(o)+esc(o)+'</div><div class="soft">No OrthoFi location</div><div></div></div>'; return; }
+      const b=before && before.by && before.by[o], now90=r.amt[3]+r.amt[4], was=b ? (b.amt[3]||0)+(b.amt[4]||0) : null, ch=was ? Math.round((now90/was-1)*100) : null;
+      h+='<div class="lrow"><div class="ln">'+offDot(o)+'<span><b>'+esc(o)+'</b><small>'+money(tot(r))+' · '+cnt(r)+' accounts</small></span></div>'+
+        '<div class="stack" style="width:'+Math.max(8, tot(r)/max*100)+'%">'+r.amt.map((a,i)=>a>0 ? seg(a, tot(r), HEAT[i], i<2, BUCKETS[i], r.n[i]+' accounts · '+money(a)+' · '+fp(pct(a, tot(r)))+' of '+o+'’s past due') : '').join('')+'</div>'+
+        '<div class="l90"><b>'+money(now90)+'</b> 90+ '+(ch==null ? '' : '<span class="'+(ch>0?'up':'down')+'">'+(ch>0?'↑ ':'↓ ')+Math.abs(ch)+'%</span>')+'</div></div>'; });
+    h+='</div><div class="card"><h2>OrthoFi’s collection steps</h2><div class="sub">How many accounts are at each step today — the same ranges as OrthoFi’s Delinquent report.</div><div class="steps">'+
+      [['🚩','Flag in the PMS','45–53 days','flag'],['✉️','Dismissal letter','91–98 days','letter'],['🛠️','Maintenance','121–129 days','maint'],['⛔','Dismissal','180+ days','dismiss']]
+        .map(s=>'<div class="stp"><span class="ic">'+s[0]+'</span><b>'+st(s[3])+'</b><span>'+s[1]+'</span><small>'+s[2]+'</small></div>').join('')+'</div></div>';
+    return h;
+  }
+
+  async function payHTML(offs, t, p){
+    const [all, before]=await Promise.all([Promise.all(offs.map(o=>get.pay(o, t).then(r=>[o,r]))), Promise.all(offs.map(o=>get.pay(o, p).then(r=>[o,r])))]);
+    const T={starts:0,pif:0,sameDayStarts:0,dp:0,nonPif:0,sdc:0,resp:0,ext:0,months:0}, W={}; Object.keys(T).forEach(k=>{ W[k]=0; });
+    all.forEach(([o,r])=>{ if(r) Object.keys(T).forEach(k=>{ T[k]+=r[k]||0; }); }); before.forEach(([o,r])=>{ if(r) Object.keys(W).forEach(k=>{ W[k]+=r[k]||0; }); });
+    const wasO={}; before.forEach(([o,r])=>{ wasO[o]=r; });
+    const f=x=>({pif:pct(x.pif,x.starts), sds:pct(x.sameDayStarts,x.starts), dp:pct(x.dp,x.nonPif), sdc:pct(x.sdc,x.resp), len:(x.starts-x.pif)>0 ? r1(x.months/(x.starts-x.pif)) : null, ext:pct(x.ext,x.starts)});
+    const P=f(T), PW=f(W), rows=all.filter(([o,r])=>r).map(([o,r])=>[o,r,f(r),wasO[o] ? f(wasO[o]) : null]);
+    /* business health is filed by MONTH, so a month still going can't be cut to the same days - its starts aren't compared then (the rates still are) */
+    const startsD=t.open ? '' : dlt(T.starts, W.starts, {name:'Starts'}), rate=(k,name,down)=>dlt(P[k], PW[k], {unit:k==='len'?'mo':'rate', name, down, fmt:k==='len' ? (x=>x+' months') : fp});
+    const M=[['pif','Paid in full','%',true],['sds','Same-day start','%',true],['dp','Down payment','%',true],['sdc','Same-day cash','%',true],['len','Average plan','mo',false],['ext','Extensions','%',false]];
+    const top={}; M.forEach(([k])=>{ top[k]=Math.max(k==='len'?30:10, ...rows.map(x=>x[2][k]||0), P[k]||0)*1.15; });
+    let h='<div class="kpis">'+kpi('Starts', T.starts.toLocaleString(), '', startsD)+kpi('Paid in full', fp(P.pif), T.pif+' starts', rate('pif','Paid in full'))+kpi('Down payment', fp(P.dp), 'of what patients finance', rate('dp','Down payment'))+
+      kpi('Same-day cash', fp(P.sdc), 'collected on the start day', rate('sdc','Same-day cash'))+kpi('Average plan', P.len==null?'—':P.len+' months', '', rate('len','Average plan',true))+'</div>';
+    h+='<div class="sub" style="margin:2px 0 6px">'+esc(monthName())+' · from OrthoFi’s business health dashboard, on the starts in that period. The dark tick on each bar is the practice average; green or red when an office is clearly better or worse.</div>'+vsLine()+'<div class="grid pay">';
+    rows.forEach(([o,r,x,xw])=>{ h+='<div class="tcc"><div class="top" style="gap:8px"><div><div class="nm">'+offDot(o)+esc(o)+'</div><div class="of">'+r.starts+' starts '+(t.open || !wasO[o] ? '' : dlt(r.starts, wasO[o].starts, {name:o+' starts', bare:true}))+'</div></div></div><div class="fun">'+
+      M.map(([k,lab,u,hb])=>{ const v=x[k], avg=P[k], d=(v==null||avg==null) ? 0 : v-avg, cls=Math.abs(d)<(u==='mo'?1.5:3) ? '' : ((d>0)===hb ? 'gd' : 'bd');
+        return '<div class="m"><span>'+lab+'</span><span class="t"><i style="width:'+Math.min(100,(v||0)/top[k]*100)+'%"></i>'+(avg==null?'':'<u style="left:'+Math.min(100,avg/top[k]*100)+'%"></u>')+'</span><b class="'+cls+'">'+(v==null?'—':v+(u==='mo'?' mo':'%'))+'</b>'+
+          (xw ? dlt(v, xw[k], {unit:u==='mo'?'mo':'rate', name:o+' · '+lab, down:!hb, bare:true, fmt:u==='mo' ? (z=>z+' months') : fp}).replace(/ mo</,'<') : '<span></span>')+'</div>'; }).join('')+
+      '</div></div>'; });
+    return h+'</div><div class="note">Extensions = payment plans that run past the end of treatment (they carry interest).</div>';
+  }
+
+  async function refHTML(offs, t, p){
+    const [all, before]=await Promise.all([Promise.all(offs.map(o=>get.ref(o, t).then(r=>[o,r||{}]))), Promise.all(offs.map(o=>get.ref(o, p).then(r=>[o,r||{}])))]);
+    const S={}; all.forEach(([o,r])=>Object.keys(r).forEach(s=>{ const x=S[s]=S[s]||{n:0,started:0,prod:0}; x.n+=r[s].n; x.started+=r[s].started; x.prod+=r[s].prod; }));
+    const SW={}, OW={}; before.forEach(([o,r])=>{ OW[o]=Object.keys(r).reduce((a,s)=>a+r[s].n,0); Object.keys(r).forEach(s=>{ const x=SW[s]=SW[s]||{n:0,started:0}; x.n+=r[s].n; x.started+=r[s].started; }); });
+    const totW=Object.keys(SW).reduce((a,s)=>a+SW[s].n,0), totStW=Object.keys(SW).reduce((a,s)=>a+SW[s].started,0);
+    const list=Object.keys(S).sort((a,b)=>S[b].n-S[a].n), tot=list.reduce((a,s)=>a+S[s].n,0), totSt=list.reduce((a,s)=>a+S[s].started,0), max=Math.max(1,...list.map(s=>S[s].n));
+    const IC={'My Dentist':'🦷','Friend / Family':'👨‍👩‍👧','Internet Search':'🔎','Social Media':'📱','Advertisement':'📣','Other':'✨'};
+    let h='<div class="kpis">'+kpi('New-patient exams', tot.toLocaleString(), '', dlt(tot, totW, {name:'New-patient exams'}))+kpi('Started so far', totSt.toLocaleString(), fp(pct(totSt,tot))+' of them', dlt(totSt, totStW, {name:'Started'}))+
+      (list[0] ? kpi('Biggest source', esc(list[0]), fp(pct(S[list[0]].n,tot))+' of exams') : '')+'</div>';
+    h+='<div class="card"><h2>Where new patients came from · '+esc(monthName())+'</h2><div class="sub">What patients told the office brought them in (OrthoFi’s referral report). The dark part of each bar went on to start treatment.</div>'+vsLine()+
+      list.map(s=>{ const x=S[s], c=pct(x.started,x.n);
+        return '<div class="src"><div class="sn"><span class="ic">'+(IC[s]||'•')+'</span><span><b>'+esc(s)+'</b><small>'+x.n+' exams · '+x.started+' started</small><span class="dw">'+(SW[s] ? dlt(x.n, SW[s].n, {name:s+' exams'}) : '<span class="dl nt">new '+esc(VS.short.replace(/^vs /,'since '))+'</span>')+'</span></span></div>'+
+          '<div class="hb" data-tip="'+esc(s)+'" data-tip-b="'+x.n+' exams · '+x.started+' started ('+fp(c)+')" data-tip-c="#149B96"><i style="width:'+(x.n/max*100)+'%"></i><i class="st" style="width:'+(x.started/max*100)+'%"></i></div>'+
+          '<div class="sv"><span class="pill '+tone(c,30,45)+'">'+fp(c)+' start</span><small>'+money(x.prod)+'</small></div></div>'; }).join('')+
+      (list.length ? '' : '<div class="state">No referral answers in OrthoFi for this month.</div>')+
+      '<div class="note">A patient sent by another patient shows as Friend / Family — Home-Brace never reads who. This could sit on the Marketing page too.</div></div>';
+    /* BY OFFICE (Jordan 21/11: "We should be able to break down where they come from by office") - each office's mix */
+    if(offs.length>1 && list.length){
+      const SC={'My Dentist':'#149B96','Friend / Family':'#25456E','Internet Search':'#F2A03D','Social Media':'#8E6BD1','Advertisement':'#E07A9C','Other':'#AAB4C2'}, col=s=>SC[s]||'#CBD3DD';
+      h+='<div class="card"><h2>Each office’s mix</h2><div class="sub">Share of each office’s new-patient exams by where they came from. Pick an office at the top to see its full detail.</div>'+
+        '<div class="legend">'+list.map(s=>'<span><i style="background:'+col(s)+'"></i>'+esc(s)+'</span>').join('')+'</div>';
+      all.map(([o,r])=>[o,r,Object.keys(r).reduce((a,s)=>a+r[s].n,0)]).sort((a,b)=>b[2]-a[2]).forEach(([o,r,n])=>{
+        const st=Object.keys(r).reduce((a,s)=>a+r[s].started,0), lead=list.filter(s=>r[s] && r[s].n).sort((a,b)=>r[b].n-r[a].n)[0];
+        h+='<div class="lrow"><div class="ln">'+offDot(o)+'<span><b>'+esc(o)+'</b><small>'+n+' exams · '+fp(pct(st,n))+' started</small>'+(OW[o] ? '<span class="dw">'+dlt(n, OW[o], {name:o+' exams'})+'</span>' : '')+'</span></div>'+
+          '<div class="stack" style="width:100%">'+(n ? list.map(s=>r[s] && r[s].n ? seg(r[s].n, n, col(s), LIGHT_SRC.indexOf(s)>=0, s, r[s].n+' exams · '+fp(pct(r[s].n,n))+' of '+o+'’s · '+r[s].started+' started') : '').join('') : '')+'</div>'+
+          '<div class="l90">'+(lead ? 'Most from <b>'+esc(lead)+'</b>' : '—')+'</div></div>'; });
+      h+='</div>';
+    }
+    return h;
+  }
+
+  /* ---------------- the quick tooltip ---------------- */
+  const TIP=document.createElement('div'); TIP.className='tip'; TIP.setAttribute('role','tooltip'); TIP.hidden=true; document.body.appendChild(TIP);
+  let tipFor=null;
+  function tipShow(t, x, y){
+    if(tipFor!==t){ tipFor=t; TIP.innerHTML='<span class="tsw" style="background:'+esc(t.dataset.tipC||'var(--teal)')+'"></span><span><b>'+esc(t.dataset.tip)+'</b>'+(t.dataset.tipB ? '<span>'+esc(t.dataset.tipB)+'</span>' : '')+'</span>'; TIP.hidden=false; }
+    const w=TIP.offsetWidth, h=TIP.offsetHeight; let l=x-w/2, top=y-h-14; if(top<8) top=y+18; l=Math.max(8, Math.min(window.innerWidth-w-8, l));
+    TIP.style.left=l+'px'; TIP.style.top=top+'px';
+  }
+  function tipHide(){ tipFor=null; TIP.hidden=true; }
+  document.addEventListener('mousemove', e=>{ const t=e.target.closest && e.target.closest('[data-tip]'); if(t) tipShow(t, e.clientX, e.clientY); else if(tipFor) tipHide(); }, {passive:true});
+  document.addEventListener('touchstart', e=>{ const t=e.target.closest && e.target.closest('[data-tip]'), p=e.touches && e.touches[0]; if(t && p) tipShow(t, p.clientX, p.clientY); else tipHide(); }, {passive:true});
+  window.addEventListener('scroll', tipHide, {passive:true, capture:true});
+
+  /* ---------------- wiring ---------------- */
+  function allowed(){ return !LIVE || (PH.isAdmin && PH.isAdmin(PH.realMe ? PH.realMe() : PH.me())); }
+  document.addEventListener('click', e=>{ const b=e.target.closest('[data-tab]'); if(b){ TAB=b.dataset.tab; try{ localStorage.setItem('ph_insights_tab', TAB); }catch(_){} render(); } });
+  el('off').addEventListener('change', render);
+  function boot(){ if(!allowed()){ el('wrap').innerHTML='<h1>OrthoFi insights</h1><p class="lede">This page is for Home-Brace admins.</p>'; return; } drawOff(); render(); }
+  if(LIVE) el('ribbon').textContent='OrthoFi insights — real OrthoFi totals, admins only (preview).';
+  if(!LIVE || window.PH_AUTH) boot(); else document.addEventListener('ph-signed-in', boot, {once:true});
+  document.addEventListener('ph-identity', ()=>{ drawOff(); });
+  window.INSIGHTS={render, _demo:{demoTC, demoLate, demoPay, demoRef}};
+})();
+</script>
+<script>PH.nav('insights');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
+</body>
+</html>

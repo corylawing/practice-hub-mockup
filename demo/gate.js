@@ -1,0 +1,381 @@
+/* Home-Brace sign-in gate.
+   Requires a real Microsoft sign-in before the page is usable.
+
+   HONEST LIMIT: this hides the INTERFACE, not the FILES. Anything baked into the
+   page source (today: the production figures in index.html) can still be fetched
+   by anyone with the URL, gate or no gate. Only two things actually fix that:
+   move the numbers out of the file and fetch them from Graph after sign-in, or
+   host somewhere that refuses to serve files to anonymous users (Azure Static
+   Web Apps with Entra auth). Both are planned; neither is done. */
+(function(global){
+  'use strict';
+  var CLIENT_ID = '00000000-0000-0000-0000-000000000001';
+  var TENANT_ID = '00000000-0000-0000-0000-000000000002';
+  /* One sign-in covers everything the hub needs. Consent is granted tenant-wide, so
+     asking for all three here does not add a prompt. All DELEGATED -- the app acts as the
+     signed-in person and SharePoint keeps enforcing their own access. */
+  var SCOPES = ['User.Read','Sites.ReadWrite.All','User.ReadBasic.All'];
+  /* A BLANK page, on purpose. The popup lands here and the opener reads the auth
+     response out of the URL fragment. Landing on a real page risks that page
+     consuming the fragment first -- which is exactly MSAL's "Hash value cannot be
+     processed because it is empty". Must be registered as a redirect URI in Entra. */
+  /* ALWAYS same-origin. The popup posts the sign-in result back to whoever opened it, and
+     a browser will not let one origin read another's URL — pointing this at a fixed host
+     meant Azure opened GitHub's page and then sat there blank forever. Every host this runs
+     on needs its own /v1/auth.html registered as a redirect URI in Entra. */
+  var REDIRECT = location.origin + location.pathname.replace(/\/[^\/]*$/, '/') + 'auth.html';
+  /* AN IPHONE HOME-SCREEN APP (phone alerts, 22/10/2026): Apple only sends alerts to Home-Brace once it is on the home
+     screen, and a home-screen app can't use the sign-in popup. There the whole page goes to Microsoft and back
+     instead: the answer lands on auth.html, which hands it straight back to the page that started (BACK below), and
+     handleRedirectPromise() reads it here. Live too since 04/11/2026 (alerts on): a normal browser tab keeps the popup. */
+  var STANDALONE = global.navigator.standalone === true ||
+    !!(global.matchMedia && global.matchMedia('(display-mode: standalone)').matches);
+  /* PHONES AND TABLETS TOO (11/11/2026, hc144). Morgan: Dr. Chen "is getting stuck after the authenticator".
+     On a phone the sign-in "popup" is a second tab. He leaves for the Authenticator app, comes back to that tab, and
+     Microsoft sends it to the blank auth.html - while the Home-Brace tab that should read it and close it sits paused
+     in the background, so nothing happens. Signing in on the same tab (the home-screen app's way, live since 04/11)
+     has no second tab to get lost in. iPadOS calls itself a Mac, so a Mac with a touch screen counts too. */
+  var NAV = global.navigator || {};
+  var PHONE = /iPhone|iPad|iPod|Android/i.test(NAV.userAgent || '') ||
+    (NAV.platform === 'MacIntel' && NAV.maxTouchPoints > 1);
+  var LIVE = !!(global.PH && global.PH.isLive && global.PH.isLive());
+  var USE_REDIRECT = STANDALONE || PHONE;
+  var BACK = 'ph_signin_redirect';
+  var OUT = 'ph_signed_out';                                  // set by Sign out: the next sign-in asks which account
+  function pick(req){ try{ if (localStorage.getItem(OUT)) req.prompt = 'select_account'; }catch(_){} return req; }
+  function signedIn(){ try{ localStorage.removeItem(OUT); }catch(_){} }
+  function returning(){
+    try{ return USE_REDIRECT && !!sessionStorage.getItem(BACK) && /[#&](code|error)=/.test(location.hash); }catch(_){ return false; }
+  }
+  function goSignIn(app, account, scopes){
+    try{ sessionStorage.setItem(BACK, location.href.split('#')[0]); }catch(_){}
+    var req = pick({ scopes: scopes || SCOPES, redirectStartPage: location.href.split('#')[0] });
+    if (account) req.account = account;
+    return account ? app.acquireTokenRedirect(req) : app.loginRedirect(req);
+  }
+
+  var CSS =
+    '#phgate{position:fixed;inset:0;z-index:99999;background:#0F2A4A;color:#fff;display:flex;' +
+    'align-items:center;justify-content:center;padding:24px;' +
+    'font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}' +
+    '#phgate .box{max-width:400px;width:100%;text-align:center}' +
+    '#phgate img{width:56px;height:56px;border-radius:14px;margin-bottom:18px}' +
+    '#phgate h1{font-size:23px;margin:0 0 7px;color:#fff;font-weight:700}' +
+    '#phgate p{color:#9fb4d0;font-size:14px;margin:0 0 22px;line-height:1.5}' +
+    '#phgate button{font-family:inherit;font-size:15px;font-weight:700;border:none;border-radius:11px;' +
+    'padding:13px 24px;background:#149B96;color:#fff;cursor:pointer;width:100%}' +
+    '#phgate button:hover{background:#0F827E}' +
+    '#phgate button:disabled{opacity:.5;cursor:not-allowed}' +
+    '#phgate .err{color:#FFC7BC;font-size:13px;margin-top:14px;min-height:18px}' +
+    'body.phgated>*:not(#phgate){display:none !important}';
+
+  function paint(){
+    var st = document.createElement('style'); st.textContent = CSS;
+    document.head.appendChild(st);
+    var g = document.createElement('div');
+    g.id = 'phgate';
+    g.innerHTML =
+      '<div class="box">' +
+      '<img src="../assets/logo-mark.png" alt="">' +
+      '<h1>Home-Brace</h1>' +
+      '<p>This hub contains the practice’s production figures. Sign in with your work ' +
+      'Microsoft account to continue.</p>' +
+      '<button id="phgatebtn">Sign in with Microsoft</button>' +
+      '<div class="err" id="phgateerr"></div></div>';
+    document.body.appendChild(g);
+    document.body.classList.add('phgated');
+    return g;
+  }
+
+  /* Fetch the person's own profile before letting the page render: their Department and
+     Office location decide what they can see, so the app must not paint until it knows. */
+  /* Tried 3 times (21/11/2026, code review): one busy moment on /me left the person as "nobody" - "You don't have
+     access" on every page - until they reloaded. */
+  function loadProfile(){
+    if(!global.PH_AUTH) return Promise.resolve();
+    var tries = 0;
+    function once(){
+      return global.PH_AUTH.graph('/me?$select=id,displayName,mail,userPrincipalName,jobTitle,department,officeLocation')
+        .then(function(p){ if(global.PH && PH.setProfile) PH.setProfile(p); })
+        .catch(function(){
+          if(needsSignIn || ++tries >= 3) return;          // proceed with least access rather than locking anyone out
+          return new Promise(function(r){ setTimeout(r, 1200 * tries); }).then(once);
+        });
+    }
+    return once();
+  }
+
+  /* Set when a silent renewal needs the person (requestSignIn): the sign-in screen it put up must stay up - open() used to
+     take it straight down again and carry on as "nobody" with no way back in (21/11/2026, code review). */
+  var needsSignIn = false;
+  function open(gate){
+    loadProfile().then(function(){
+      if(needsSignIn) return;
+      if(gate && gate.remove) gate.remove();
+      document.body.classList.remove('phgated');
+      document.dispatchEvent(new CustomEvent('ph-signed-in'));
+    });
+  }
+  /* A network drop is not an expired sign-in (21/11/2026, code review): waking a laptop offline put "Sign in again" up
+     and reloaded the page - losing anything typed. Only a renewal that really needs the person asks for them; the rest
+     is thrown back to the caller (the store retries it). */
+  function offlineErr(e){
+    var c = String((e && (e.errorCode || e.name)) || '') + ' ' + String((e && (e.errorMessage || e.message)) || '');
+    return (global.navigator && global.navigator.onLine === false) ||
+      /no_network_connectivity|network_error|request_failed|endpoints_resolution|failed to fetch|load failed|networkerror/i.test(c);
+  }
+
+  /* Set by the sign-in scope below. expose() cannot open a popup itself - see the
+     comment in token() - so it asks for one through this. */
+  var requestSignIn = function(){};
+
+  /* Shared Graph access, so pages don't each stand up their own MSAL instance. */
+  function expose(app, account){
+    global.PH_AUTH = {
+      account: account,
+      token: function(){
+        var req = { scopes: SCOPES, account: account };
+        return app.acquireTokenSilent(req)
+          .catch(function(e){
+            /* DO NOT open a popup from here. A browser only allows one that a person's
+               own click just opened, and this runs long after any click - while a page
+               is loading, or partway through a save. The popup was being blocked, so a
+               session that simply needed renewing surfaced as the baffling
+               "Error opening popup window". Ask for the click instead. */
+            if(offlineErr(e)) throw e;
+            requestSignIn(app, account, e);
+            throw new Error('Your Microsoft sign-in needs renewing \u2014 use the Sign in button.');
+          })
+          .then(function(r){ return r.accessToken; });
+      },
+      /* The Microsoft sign-in itself (the ID token, issued to Home-Brace). The alert sender checks it, so only people
+         signed in to the practice can send alerts (03/11/2026). It lasts an hour: renewed when under 5 minutes are left. */
+      idToken: function(){
+        var req = { scopes: SCOPES, account: account };
+        var fresh = function(r){ var c = r && r.idTokenClaims; return !!(r && r.idToken && c && c.exp * 1000 - Date.now() > 300000); };
+        return app.acquireTokenSilent(req)
+          .then(function(r){ return fresh(r) ? r : app.acquireTokenSilent({ scopes: SCOPES, account: account, forceRefresh: true }); })
+          .then(function(r){ return r.idToken; }, function(e){
+            if(offlineErr(e)) throw e;
+            requestSignIn(app, account, e);
+            throw new Error('Your Microsoft sign-in needs renewing — use the Sign in button.');
+          });
+      },
+      /* MORE THAN THE SIGN-IN ASKS FOR (real chat, 12/11/2026): a token that also carries `extra` - today only the
+         chat page's Chat.ReadWrite. SCOPES above never changes, so nobody's sign-in changes. Silent only: a refusal
+         (IT hasn't approved it yet) comes back to the page that asked, and the sign-in screen is NOT put up.
+         askFor() is the same from a person's own click (a popup; on a phone the whole page goes and comes back). */
+      tokenFor: function(extra){
+        return app.acquireTokenSilent({ scopes: SCOPES.concat(extra || []), account: account })
+          .then(function(r){ return r.accessToken; });
+      },
+      askFor: function(extra){
+        var scopes = SCOPES.concat(extra || []);
+        if (USE_REDIRECT) return goSignIn(app, account, scopes);
+        return app.acquireTokenPopup({ scopes: scopes, account: account }).then(function(r){ return r.accessToken; });
+      },
+      /* SIGN OUT (20/11/2026): with the sign-in remembered, a shared computer needs a way out. Clears Home-Brace's copy
+         of the sign-in on this device only (Microsoft's own sign-in elsewhere is untouched), and the next sign-in here
+         asks which account - so the next person at the front desk can be themselves. */
+      signOut: function(){
+        try{ localStorage.setItem(OUT, '1'); }catch(_){}
+        return Promise.resolve(app.logoutRedirect({ account: account, onRedirectNavigate: function(){ return false; } }))
+          .catch(function(){}).then(function(){ global.location.reload(); });
+      },
+      graph: function(path){
+        return global.PH_AUTH.token().then(function(t){
+          return fetch('https://graph.microsoft.com/v1.0' + path, {
+            headers: { Authorization: 'Bearer ' + t }
+          }).then(function(res){
+            return res.json().catch(function(){ return {}; }).then(function(body){
+              if (!res.ok){
+                throw new Error('Graph ' + res.status + ': ' +
+                  ((body.error && body.error.message) || res.statusText));
+              }
+              return body;
+            });
+          });
+        });
+      }
+    };
+  }
+
+  function start(){
+    /* Don't paint the sign-in screen up front. Every page load would flash it for a moment
+       before MSAL confirms the existing session, which made moving between tabs look broken.
+       Hide the content instantly, decide quietly, and only build the sign-in screen if the
+       person genuinely isn't signed in. */
+    document.body.classList.add('phgated');
+    var gate = null;
+    function ensureGate(){
+      /* open() takes the screen off the page; a later "Sign in again" must put it BACK, not show a detached one - that
+         hid the whole page behind nothing (21/11/2026, code review). */
+      if(gate && !gate.isConnected){ document.body.appendChild(gate); }
+      if(!gate){
+        gate = paint();
+        gate.__btn = document.getElementById('phgatebtn');
+        gate.__err = document.getElementById('phgateerr');
+      }
+      return gate;
+    }
+    function fail(m){
+      var g = ensureGate();
+      g.__err.textContent = m; g.__btn.disabled = false;
+    }
+
+    /* Two Microsoft accounts signed in on one browser is normal - your own and one you
+       were shown. Guessing between them is how somebody ends up looking at the wrong
+       person's figures, or at an error because that account cannot reach the workbook. */
+    function chooseAccount(app, accounts){
+      var g = ensureGate();
+      g.__btn.style.display = 'none';
+      g.__err.innerHTML = '';
+      var wrap = document.createElement('div');
+      wrap.style.cssText = 'display:flex;flex-direction:column;gap:8px;text-align:left';
+      var head = document.createElement('div');
+      head.style.cssText = 'font-weight:700;margin-bottom:2px';
+      head.textContent = 'You are signed in with more than one account. Which one?';
+      wrap.appendChild(head);
+      accounts.forEach(function(a){
+        var b = document.createElement('button');
+        b.textContent = a.username || a.name || 'Account';
+        b.style.cssText = 'width:100%';
+        b.onclick = function(){
+          if (app.setActiveAccount) app.setActiveAccount(a);
+          expose(app, a); open(gate);
+        };
+        wrap.appendChild(b);
+      });
+      g.__err.appendChild(wrap);
+      g.style.display = '';
+    }
+
+    /* A silent renewal failed, so a real click is needed. Put the gate back with a
+       button rather than trying to open a window nobody asked for. */
+    requestSignIn = function(app, account){
+      try{
+        needsSignIn = true;
+        var g = ensureGate();
+        document.body.classList.add('phgated');
+        g.style.display = '';
+        g.__btn.style.display = '';
+        g.__btn.disabled = false;
+        g.__btn.textContent = 'Sign in again';
+        g.__err.textContent = 'Your Microsoft sign-in needs renewing.';
+        g.__btn.onclick = function(){
+          g.__btn.disabled = true;
+          if (USE_REDIRECT){ goSignIn(app, account); return; }
+          app.acquireTokenPopup({ scopes: SCOPES, account: account })
+            .then(function(r){ try{ if (app.setActiveAccount && r && r.account) app.setActiveAccount(r.account); }catch(_){} location.reload(); })
+            .catch(function(e){
+              g.__btn.disabled = false;
+              g.__err.textContent = (e && e.errorCode === 'popup_window_error')
+                ? 'Your browser blocked the sign-in window. Allow pop-ups for this site, then try again.'
+                : ((e && e.errorMessage) || 'Sign-in failed. Try again.');
+            });
+        };
+      }catch(_){}
+    };
+
+    if (typeof msal === 'undefined'){
+      fail('Could not load the Microsoft sign-in library. Check the connection and reload.');
+      return;
+    }
+    /* A sign-in that fails part-way (a redirect-URI mismatch, a closed popup) leaves MSAL's
+       "interaction in progress" flag set, and every later attempt then dies with
+       interaction_in_progress until the browser's storage is cleared by hand. On a fresh
+       page load nothing can legitimately be in progress, so clear it. */
+    var BACKFROM = returning();
+    if (!BACKFROM) try{
+      [sessionStorage, localStorage].forEach(function(store){
+        Object.keys(store).forEach(function(k){
+          if (k.indexOf('interaction.status') >= 0) store.removeItem(k);
+        });
+      });
+    }catch(_){}
+
+    var app = new msal.PublicClientApplication({
+      auth: { clientId: CLIENT_ID,
+              authority: 'https://login.microsoftonline.com/' + TENANT_ID,
+              redirectUri: REDIRECT },
+      /* REMEMBERED (20/11/2026, Jordan: "On desktop everytime it asks you to sign in even if you close or whatever. With
+         Salesforce once we authenticate and even close it remembers ... Same with phone each time I have to sign in").
+         'sessionStorage' forgot the sign-in whenever the tab, the browser or the phone app closed, and every new tab
+         started signed out. 'localStorage' keeps it on this device until they press Sign out (menu under their name).
+         Microsoft lets a web app renew silently for 24 hours at a time; after that one tap on Sign in, and Microsoft
+         usually remembers them (no password) - Chrome/Edge often renew without even that. */
+      cache: { cacheLocation: 'localStorage' }
+    });
+    app.initialize().then(function(){
+      if (!BACKFROM) return null;
+      /* Back from Microsoft (the home-screen app): read the answer, then tidy the address. */
+      return app.handleRedirectPromise().then(function(r){
+        try{ sessionStorage.removeItem(BACK); history.replaceState(null, '', location.href.split('#')[0]); }catch(_){}
+        return r;
+      }, function(e){
+        try{ sessionStorage.removeItem(BACK); history.replaceState(null, '', location.href.split('#')[0]); }catch(_){}
+        fail((e && (e.errorMessage || e.message)) || 'Sign-in failed. Try again.');
+        return 'failed';
+      });
+    }).then(function(back){
+      if (back === 'failed') return;
+      if (back && back.account){
+        signedIn();
+        if (app.setActiveAccount) app.setActiveAccount(back.account);
+        expose(app, back.account); open(gate); return;
+      }
+      // Already signed in this session? Don't make them do it again on every page.
+      var known = app.getAllAccounts();
+      // Already signed in: never build the sign-in screen at all — painting it just to
+      // remove it is exactly the flash this is meant to avoid.
+      /* known[0] was a coin toss once two accounts were signed in. Picking the wrong
+         one made the silent token renewal fail, which is what produced the blocked
+         popup. Prefer the account MSAL has marked active; with exactly one, mark it;
+         with several and none active, ask. */
+      var active = (app.getActiveAccount && app.getActiveAccount()) || null;
+      /* AFTER SIGN OUT (21/11/2026, code review): another account still remembered on this device (the last person at
+         the front desk) was signed straight back in without asking. Until someone signs in here, the button is shown. */
+      var out = false; try{ out = !!localStorage.getItem(OUT); }catch(_){}
+      if (out){ known = []; active = null; }
+      if (active){ expose(app, active); open(gate); return; }
+      if (known.length === 1){
+        if (app.setActiveAccount) app.setActiveAccount(known[0]);
+        expose(app, known[0]); open(gate); return;
+      }
+      if (known.length > 1){ chooseAccount(app, known); return; }
+      var g = ensureGate(), btn = g.__btn, err = g.__err;
+      btn.onclick = function(){
+        btn.disabled = true; err.textContent = '';
+        if (USE_REDIRECT){ goSignIn(app).catch(function(e){ fail((e && (e.errorMessage || e.message)) || 'Sign-in could not start.'); }); return; }
+        app.loginPopup(pick({ scopes: SCOPES })).then(function(r){
+          signedIn();
+          if (app.setActiveAccount && r.account) app.setActiveAccount(r.account);
+          expose(app, r.account);
+          open(gate);
+        }).catch(function(e){
+          var code = e && e.errorCode;
+          if (code === 'interaction_in_progress'){
+            // Shouldn't happen now we clear on load, but never leave a person stuck.
+            try{
+              [sessionStorage, localStorage].forEach(function(store){
+                Object.keys(store).forEach(function(k){
+                  if (k.indexOf('interaction.status') >= 0) store.removeItem(k);
+                });
+              });
+            }catch(_){}
+            fail('That sign-in was interrupted. Press the button once more.');
+            return;
+          }
+          fail(code === 'popup_window_error'
+            ? 'The popup was blocked. Allow popups for this site, then try again.'
+            : (e && (e.errorMessage || e.message)) || 'Sign-in failed.');
+        });
+      };
+    }).catch(function(e){
+      fail((e && (e.errorMessage || e.message)) || 'Sign-in could not start.');
+    });
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
+})(window);

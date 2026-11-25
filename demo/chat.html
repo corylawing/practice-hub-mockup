@@ -1,0 +1,1996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="demo-shim.js?v=d202611250847"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Home-Brace · Chat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" href="../assets/favicon.png?v=2" type="image/png">
+<meta name="theme-color" content="#0F2A4A">
+<meta name="apple-mobile-web-app-title" content="Home-Brace">
+<link rel="apple-touch-icon" sizes="180x180" href="../assets/icons/apple-touch-icon.png?v=3">
+<meta name="robots" content="noindex">
+<!-- CHAT - A MOCK-UP for Morgan and Dr. Patel (22/10/2026), sandbox only (user.js NAV: the header's chat button and
+     the page are off on the live site). It opens from the chat button beside the bell, not a tab. The chat gets the
+     whole screen: no page title, alerts inside the chat list, no Tour & Feedback button (Jordan, 22/10). Dr. Patel asked for "communications in Home-Brace" with videos; Jordan: they want "the whole
+     thing in Home-Brace" - replying to messages, sending and viewing videos, alerts. The plan it shows: Microsoft
+     Teams as the engine underneath (free with their Microsoft 365, messages and videos kept in their own Microsoft
+     365), everything done inside Home-Brace, phone alerts sent by Home-Brace itself, live calls opening Teams.
+     Made-up people, messages, videos and photo (chat-demo/). Nothing is sent anywhere; a video you record stays
+     in this browser tab.
+     THE REAL CHAT (12/11/2026, Jordan: "very important that nobody sees it until I've confirmed it works ... also the
+     ability to send videos"): the same page with Microsoft Teams underneath (chatgraph.js). Only an Admin on the
+     SANDBOX who presses "Test the real chat" (this device only) gets it; everyone else keeps this mock-up, and the
+     live site has neither (NAV + chatgraph CHAT_LIVE=false). While testing you can read your own Teams chats but
+     only send to your testers. Videos go the way Teams sends them (OneDrive + shared with the chat). -->
+<style>
+  :root{
+    --navy:#0F2A4A; --navy2:#25456e; --teal:#149B96; --teal2:#2BC0B8; --teal-soft:#E5F4F3; --teal-600:#0F827E;
+    --ink:#1F2D3D; --soft:#56627A; --line:#E4E8EE; --canvas:#F4F6F8; --white:#fff; --bad:#D7503A; --amber-soft:#FFF4E2;
+    --shadow:0 1px 2px rgba(15,42,74,.06),0 6px 18px rgba(15,42,74,.06);
+    --shadow-lg:0 10px 30px rgba(15,42,74,.16); --maxw:1180px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--canvas);line-height:1.5;-webkit-font-smoothing:antialiased}
+  button{font-family:inherit}
+  .ribbon{background:#F2A03D;color:#3a2400;text-align:center;font-size:13px;font-weight:600;padding:6px 14px}
+  .hdr{background:var(--navy);color:#fff}
+  .hdr-in{max-width:var(--maxw);margin:0 auto;display:flex;align-items:center;gap:12px;padding:13px 20px}
+  .mark img{width:34px;height:34px;display:block;border-radius:50%}
+  .brand{font-weight:700;font-size:18px;color:#fff;line-height:1.1}
+  .brand i{font-style:normal;color:var(--teal2)}
+  .brand small{display:block;font-weight:500;font-size:12px;color:#9fb4d0}
+  .v1{background:rgba(255,255,255,.15);color:#eaf1fb;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;margin-left:6px}
+  .v1nav{background:var(--navy2)}
+  .v1nav-in{max-width:var(--maxw);margin:0 auto;display:flex;gap:2px;padding:0 12px;overflow-x:auto}
+  .v1nav a{color:#cdd9ea;font-size:14px;font-weight:600;padding:13px 15px;text-decoration:none;border-bottom:3px solid transparent;white-space:nowrap}
+  .v1nav a.active{color:#fff;border-bottom-color:var(--teal)}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:16px 20px 0}
+  .btn{background:var(--teal);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-weight:700;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+  .btn:hover{background:var(--teal-600)}
+  .btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--line);font-weight:600}
+  .btn.ghost:hover{border-color:var(--teal);background:var(--teal-soft)}
+  .btn.sm{padding:7px 11px;font-size:13px;border-radius:9px}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+
+  /* the "turn on alerts" strip */
+  /* alerts, in the chat list itself (Jordan: "can't the turn on alerts be on the chat itself?") */
+  .alertbar{display:flex;align-items:center;gap:8px;background:var(--teal-soft);border-radius:10px;padding:6px 4px 6px 10px;font-size:13px;color:var(--navy)}
+  .alertbar[hidden]{display:none}
+  .alertbar .grow{flex:1;min-width:0}
+  .alertbar .btn.sm{padding:5px 10px;font-size:12.5px}
+  .alertbar .x{font-size:19px;width:26px;height:26px;padding:0;border-radius:8px;flex:none}
+  .alertbar .x:hover{background:rgba(15,42,74,.08)}
+  /* the bell beside New chat: alerts on / off, any time (the strip above can be closed) */
+  .ib.sm{width:34px;height:34px;border-radius:10px;position:relative}
+  .ib.sm svg{width:18px;height:18px}
+  .bellb.on{color:var(--teal-600);border-color:var(--teal-line,#9ED8D4)}
+  .bellb.on::after{content:"";position:absolute;top:5px;right:6px;width:7px;height:7px;border-radius:50%;background:#2E9E6B;border:1.5px solid #fff}
+
+  /* the chat app: the list beside the conversation (a phone shows one at a time) */
+  .chatapp{display:grid;grid-template-columns:330px minmax(0,1fr);height:max(300px, calc(100vh - 182px));background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
+  .list{border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0;background:#FBFCFD}
+  .list-top{padding:14px 14px 10px;display:flex;flex-direction:column;gap:10px;border-bottom:1px solid var(--line);background:#fff}
+  .list-top .row{display:flex;align-items:center;gap:8px}
+  .list-top h1{margin:0;font-size:18px;color:var(--navy);flex:1}
+  .search{width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font:inherit;font-size:14px;background:#F7F9FB}
+  .search:focus{outline:2px solid var(--teal2);background:#fff}
+  .chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:4px 11px;font-size:12.5px;font-weight:600;color:var(--soft);cursor:pointer;white-space:nowrap}
+  .chip.on{background:var(--navy);border-color:var(--navy);color:#fff}
+  .items{overflow-y:auto;flex:1;min-height:0;overscroll-behavior:contain}
+  .ci{display:flex;gap:11px;align-items:center;width:100%;text-align:left;background:none;border:none;border-bottom:1px solid #EEF1F5;padding:11px 14px;cursor:pointer;font:inherit;color:inherit}
+  .ci:hover{background:#F2F6F9}
+  .ci.on{background:var(--teal-soft)}
+  .ci .mid{flex:1;min-width:0}
+  .ci .nm,.ci .pv{display:block}
+  .ci .nm{font-weight:700;color:var(--navy);font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ci .pv{font-size:13px;color:var(--soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ci.unread .pv{color:var(--ink);font-weight:600}
+  .ci .side{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:none}
+  .ci .tm{font-size:11.5px;color:var(--soft)}
+  .badge{background:var(--teal);color:#fff;border-radius:999px;font-size:11.5px;font-weight:800;min-width:20px;height:20px;padding:0 6px;display:inline-flex;align-items:center;justify-content:center}
+  .av{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:#fff;flex:none}
+  .av.sm{width:30px;height:30px;font-size:11.5px}
+  .av svg{width:20px;height:20px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+  .conv{display:flex;flex-direction:column;min-height:0;min-width:0}
+  .conv-top{display:flex;align-items:center;gap:11px;padding:11px 16px;border-bottom:1px solid var(--line);background:#fff}
+  .conv-top .who{flex:1;min-width:0}
+  .conv-top .who b{display:block;color:var(--navy);font-size:15.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .conv-top .who span{display:block;font-size:12.5px;color:var(--soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .back{display:none;background:none;border:none;font-size:24px;line-height:1;color:var(--navy);cursor:pointer;padding:2px 6px}
+  .msgs{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:16px 18px;display:flex;flex-direction:column;gap:6px;background:#F4F7FA}
+  .day{align-self:center;font-size:11.5px;font-weight:700;color:var(--soft);background:#E7EDF3;border-radius:999px;padding:3px 10px;margin:10px 0 4px;text-transform:uppercase;letter-spacing:.04em}
+  .m{display:flex;gap:8px;align-items:flex-end;max-width:78%}
+  .m.me{align-self:flex-end;flex-direction:row-reverse}
+  .m .col{display:flex;flex-direction:column;gap:3px;min-width:0}
+  .m.me .col{align-items:flex-end}
+  .m .from{font-size:12px;font-weight:700;color:var(--soft);margin:4px 0 0 2px}
+  .bub{background:#fff;border:1px solid var(--line);border-radius:16px 16px 16px 5px;padding:8px 12px;font-size:14.5px;color:var(--ink);white-space:pre-wrap;word-wrap:break-word;overflow-wrap:anywhere;box-shadow:0 1px 1px rgba(15,42,74,.04)}
+  .m.me .bub{background:var(--teal);border-color:var(--teal);color:#fff;border-radius:16px 16px 5px 16px}
+  .m .meta{font-size:11px;color:var(--soft);margin:0 4px}
+  .media{position:relative;border-radius:14px;overflow:hidden;background:#0F2A4A;border:1px solid var(--line);max-width:260px;box-shadow:0 1px 2px rgba(15,42,74,.08)}
+  .media.wide{max-width:340px}
+  .media video,.media img{display:block;width:100%;height:auto;max-height:min(320px,45vh);object-fit:cover;background:#0F2A4A}
+  .media.tall{width:fit-content}
+  .media.tall video{width:auto;height:min(320px,45vh)}
+  .media .play{position:absolute;inset:0;margin:auto;width:58px;height:58px;border-radius:50%;border:none;background:rgba(15,42,74,.62);color:#fff;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding-left:4px}
+  .media .play:hover{background:rgba(20,155,150,.9)}
+  .media .dur{position:absolute;left:8px;bottom:8px;background:rgba(15,42,74,.72);color:#fff;font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 8px;display:flex;gap:5px;align-items:center}
+  .media.playing .play,.media.playing .dur{display:none}
+
+  .composer{display:flex;flex-wrap:wrap;align-items:flex-end;gap:8px;padding:10px 12px;border-top:1px solid var(--line);background:#fff}
+  /* A photo or video waiting to go, with room to type under it (Jordan 18/11, "like Slack") */
+  .staged{flex-basis:100%;display:flex;align-items:center;gap:10px;padding:2px 2px 4px}
+  .staged .thumb{position:relative;width:76px;height:76px;border-radius:12px;overflow:hidden;background:#0F2A4A;border:1px solid var(--line);flex:none}
+  .staged .thumb img,.staged .thumb video{width:100%;height:100%;object-fit:cover;display:block}
+  .staged .thumb .x{position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:50%;border:0;background:rgba(15,42,74,.78);color:#fff;font-size:15px;line-height:24px;cursor:pointer;padding:0}
+  .staged .thumb .kind{position:absolute;left:5px;bottom:4px;font-size:11px;font-weight:700;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.6)}
+  .staged .hint{font-size:13px;color:var(--soft);line-height:1.4}
+  .composer textarea{flex:1;resize:none;border:1px solid var(--line);border-radius:12px;padding:9px 12px;font:inherit;font-size:14.5px;max-height:120px;min-height:40px;background:#F7F9FB}
+  .composer textarea:focus{outline:2px solid var(--teal2);background:#fff}
+  .ib{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none;color:var(--navy)}
+  .ib:hover{border-color:var(--teal);background:var(--teal-soft)}
+  .ib svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .ib.rec{color:#C2412D}
+  .ib.send{background:var(--teal);border-color:var(--teal);color:#fff}
+  .ib.send:hover{background:var(--teal-600)}
+  .empty{margin:auto;text-align:center;color:var(--soft);font-size:14px;max-width:320px}
+
+  /* dialogs, the phone alert, the toast */
+  .dm{position:fixed;inset:0;background:rgba(15,42,74,.5);display:none;align-items:flex-start;justify-content:center;padding:28px 14px;z-index:60;overflow-y:auto}
+  .dm.open{display:flex}
+  .dmc{background:#fff;border-radius:16px;box-shadow:var(--shadow-lg);width:100%;max-width:520px}
+  .dm-top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:15px 18px;border-bottom:1px solid var(--line)}
+  .dm-top h3{margin:0;font-size:17px;color:var(--navy)}
+  .x{background:none;border:none;font-size:24px;line-height:1;color:var(--soft);cursor:pointer;padding:2px 6px}
+  .dm-body{padding:16px 18px;display:flex;flex-direction:column;gap:12px;font-size:14.5px}
+  .dm-foot{display:flex;gap:8px;justify-content:flex-end;padding:13px 18px;border-top:1px solid var(--line);flex-wrap:wrap}
+  .cam{position:relative;background:#0F2A4A;border-radius:12px;overflow:hidden;aspect-ratio:3/4;max-height:56vh;display:flex;align-items:center;justify-content:center}
+  .cam video{width:100%;height:100%;object-fit:cover;display:block}
+  .cam .msg{color:#cdd9ea;text-align:center;padding:20px;font-size:14px}
+  .cam .clock{position:absolute;top:10px;left:10px;background:rgba(194,65,45,.92);color:#fff;font-weight:800;font-size:13px;border-radius:999px;padding:3px 10px;display:none}
+  .cam.recording .clock{display:block}
+  .tabs{display:flex;gap:6px}
+  .steps{margin:0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:10px;counter-reset:s}
+  .steps li{counter-increment:s;position:relative;padding-left:34px}
+  .steps li::before{content:counter(s);position:absolute;left:0;top:0;width:24px;height:24px;border-radius:50%;background:var(--teal);color:#fff;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center}
+  .ui{display:inline-block;border:1px solid #cbd5e1;border-radius:7px;padding:0 7px;font-size:13px;font-weight:700;background:#fff;white-space:nowrap}
+  .note{background:var(--teal-soft);border-radius:10px;padding:9px 12px;font-size:13.5px;color:var(--teal-ink,#0c5b57)}
+  .lead{color:var(--ink);line-height:1.5}
+  .other{font-size:12.5px;color:var(--soft)}
+  .other button{background:none;border:none;padding:0;font:inherit;font-weight:700;color:var(--teal-600);text-decoration:underline;cursor:pointer}
+  .ui svg{width:13px;height:13px;vertical-align:-2px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  /* a picture of the question the browser / the phone asks, with Allow ringed */
+  .bp{margin-top:9px;max-width:290px;background:#fff;border:1px solid #D5DCE4;border-radius:12px;box-shadow:0 6px 18px rgba(15,42,74,.14);padding:12px 12px 10px;font-size:13px;color:#1f2937;line-height:1.4}
+  .bp-b{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}
+  .bp-b span{border:1px solid #cbd5e1;border-radius:8px;padding:4px 12px;font-weight:600;font-size:12.5px;color:#334155}
+  .bp-b .go{background:#1a73e8;border-color:#1a73e8;color:#fff;box-shadow:0 0 0 3px #fff,0 0 0 5px var(--teal2)}
+  .bp.ph{max-width:270px;background:#F2F2F7;border-radius:14px;padding:14px 0 0;text-align:center}
+  .bp.ph .bp-t{padding:0 16px}
+  .bp.ph .bp-b{display:grid;grid-template-columns:1fr 1fr;gap:0;margin-top:12px;border-top:1px solid #C6C6C8}
+  .bp.ph .bp-b span{border:none;border-radius:0;color:#007AFF;padding:10px 0;font-size:14px;font-weight:500}
+  .bp.ph .bp-b span+span{border-left:1px solid #C6C6C8}
+  .bp.ph .bp-b .go{background:none;color:#007AFF;font-weight:700;box-shadow:inset 0 0 0 2px var(--teal2);border-radius:0 0 14px 0}
+  .pick{display:flex;flex-direction:column;gap:2px;max-height:300px;overflow-y:auto;border:1px solid var(--line);border-radius:12px}
+  .pick button{display:flex;align-items:center;gap:10px;background:#fff;border:none;border-bottom:1px solid #EEF1F5;padding:9px 12px;cursor:pointer;text-align:left;font:inherit}
+  .pick button:hover{background:var(--teal-soft)}
+  .pick small{display:block;color:var(--soft);font-size:12px}
+  .pick .grp{font-size:11.5px;font-weight:800;color:var(--soft);text-transform:uppercase;letter-spacing:.05em;padding:8px 12px 4px;background:#F7F9FB}
+  /* a phone's alert, as Home-Brace would send it */
+  .notif{position:fixed;top:12px;left:50%;transform:translate(-50%,-140%);width:min(380px,calc(100% - 24px));background:rgba(250,251,252,.97);backdrop-filter:blur(8px);border-radius:18px;box-shadow:0 12px 34px rgba(15,42,74,.28);padding:11px 14px;display:flex;gap:11px;align-items:flex-start;z-index:90;transition:transform .35s ease;cursor:pointer}
+  .notif.on{transform:translate(-50%,0)}
+  @media(min-width:761px){ .notif{left:auto;right:16px;transform:translateX(calc(100% + 30px))} .notif.on{transform:none} }
+  .notif img{width:36px;height:36px;border-radius:9px;flex:none}
+  .notif .t{font-size:12px;color:var(--soft);display:flex;justify-content:space-between;gap:8px}
+  .notif b{display:block;font-size:14px;color:#111}
+  .notif .x2{font-size:13.5px;color:#222}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);width:max-content;max-width:calc(100vw - 32px);white-space:normal;text-align:center;background:var(--navy);color:#fff;padding:11px 18px;border-radius:12px;font-weight:700;font-size:14px;box-shadow:var(--shadow-lg);opacity:0;transition:opacity .2s;pointer-events:none;z-index:80;max-width:calc(100% - 32px);text-align:center}
+  .toast.on{opacity:1}
+
+  /* REAL CHAT (12/11/2026): the test bar, photos in avatars, files, sending state, the test lock */
+  .ribbon button{margin-left:10px;background:rgba(58,36,0,.12);border:1px solid rgba(58,36,0,.28);color:#3a2400;border-radius:999px;padding:2px 10px;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer}
+  .ribbon button:hover{background:rgba(58,36,0,.22)}
+  .ribbon.real{background:var(--teal-600,#0F827E);color:#fff}   /* the person's colour scheme, like the rest of the page */
+  .pilotbar{background:var(--teal-600,#0F827E);color:#fff;text-align:center;font-size:13px;font-weight:600;padding:6px 14px}
+  .pilotbar button{margin-left:10px;font:inherit;font-size:12px;font-weight:700;cursor:pointer;border-radius:999px;padding:3px 11px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.45);color:#fff}
+  .ribbon.real button{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.45);color:#fff}
+  .ribbon.real button:hover{background:rgba(255,255,255,.28)}
+  .av img{width:100%;height:100%;border-radius:50%;object-fit:cover;display:block}
+  .file{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:9px 12px;font-size:14px;color:var(--navy);text-decoration:none;font-weight:600;max-width:260px;word-break:break-word}
+  .file:hover{border-color:var(--teal)}
+  .m .meta.bad{color:var(--bad);font-weight:700}
+  .more{align-self:center;margin:2px 0 8px}
+  .locked{padding:12px 14px;border-top:1px solid var(--line);background:#FFF8EC;color:#5b3d00;font-size:13.5px}
+  .media .wait{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#cdd9ea;font-size:13px;pointer-events:none}
+  .media.playing .wait{display:none}
+  .trow{display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid #EEF1F5;background:#fff}
+  .trow small,.pick button small{display:block;color:var(--soft);font-size:12px}
+  .trow .x{font-size:20px}
+
+  @media(max-width:760px){
+    .wrap{padding:10px 10px 0}
+    html body{padding-bottom:0 !important}   /* the chat stops above the tab bar itself (fit) */
+    .chatapp{grid-template-columns:minmax(0,1fr);height:max(280px, calc(100vh - 220px))}
+    .toast{bottom:calc(84px + env(safe-area-inset-bottom, 0px))}   /* above the phone tab bar */
+    .chatapp .conv{display:none}
+    .chatapp.open .list{display:none}
+    .chatapp.open .conv{display:flex}
+    .back{display:block}
+    .m{max-width:88%}
+    /* NO SIDEWAYS SLIDING ON A PHONE (Jordan 18/11: "on mobile you can slide the chat from side to side which is weird"):
+       nothing may reach past the screen edge - not a long link in a message, not the hidden pop-up message - and the
+       page itself never pans sideways. */
+    html,body{overflow-x:hidden;overscroll-behavior-x:none}
+    .msgs{overflow-x:hidden}
+    .m .col{min-width:0}
+  }
+  /* NO ZOOM WHEN YOU TAP TO TYPE (Jordan 18/11: "once you click to type, it zooms in ... once you are done it zooms out and
+     then you can move side to side"). An iPhone/iPad zooms into any box whose text is under 16px and doesn't come back
+     cleanly. At 16px it doesn't zoom at all - the message box and the searches, on any touch screen. */
+  @media (max-width:760px), (pointer:coarse){
+    .composer textarea, .search, .composer .ed{font-size:16px}
+  }
+  /* ---------- CHAT v2 (18/11/2026): the Slack-style message box, formatting, reactions, the photo viewer ---------- */
+  .composer.v2{display:block;padding:10px 12px}
+  .composer.v2 .staged{margin-bottom:8px}
+  .cbox{border:1px solid var(--line);border-radius:12px;background:#fff;overflow:hidden}
+  .cbox:focus-within{border-color:var(--teal2);box-shadow:0 0 0 3px var(--teal-wash,#eef8f7)}
+  .cbox .fmt{display:flex;align-items:center;gap:2px;padding:4px 6px;background:#F6F8FB;border-bottom:1px solid #EDF1F5;flex-wrap:wrap}
+  .cbox .cbar{display:flex;align-items:center;gap:2px;padding:4px 6px 6px}
+  .cbox button.tb{width:32px;height:32px;border-radius:8px;border:0;background:none;color:#4b5a6b;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font:inherit;font-size:15px;padding:0}
+  .cbox button.tb:hover{background:#EEF2F6;color:var(--navy)}
+  .cbox button.tb.on{background:var(--teal-wash,#e6f6f5);color:var(--teal-600)}
+  .cbox button.tb svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .cbox button.tb b,.cbox button.tb i,.cbox button.tb u,.cbox button.tb s{font-size:16px;font-family:Georgia,serif}
+  .cbox button.tb.mic.on{background:#d92d20;color:#fff}
+  .cbox .sep{width:1px;height:20px;background:#DCE3EA;margin:0 4px}
+  .cbox .grow{flex:1}
+  .cbox .sendb{height:34px;min-width:44px;padding:0 12px;border-radius:9px;border:0;background:var(--teal);color:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+  .cbox .sendb:hover{background:var(--teal-600)}
+  .cbox .sendb svg{width:18px;height:18px;fill:currentColor}
+  .composer .ed{min-height:40px;max-height:160px;overflow-y:auto;padding:10px 12px;font-size:14.5px;line-height:1.45;outline:none;color:var(--ink);word-wrap:break-word;overflow-wrap:anywhere;white-space:pre-wrap}
+  .composer .ed.blank:before{content:attr(data-ph);color:#98a3b3;pointer-events:none}
+  @media (max-width:760px), (pointer:coarse){ .composer .ed{font-size:16px} }      /* after the 14.5px above: an iPhone never zooms into it */
+  .ed p,.bub.rich p{margin:0}
+  .ed ul,.ed ol,.bub.rich ul,.bub.rich ol{margin:2px 0;padding-left:22px}
+  .ed blockquote,.bub.rich blockquote{margin:2px 0;padding:0 0 0 9px;border-left:3px solid #c9d3df;color:#4b5a6b}
+  .m.me .bub.rich blockquote{border-left-color:rgba(255,255,255,.6);color:#fff}
+  .bub.rich{white-space:normal}
+  .bub.rich a,.ed a{color:inherit;text-decoration:underline}
+  .ed .mention,.bub .at{background:var(--teal-soft);color:var(--teal-600);border-radius:4px;padding:0 3px;font-weight:600}
+  .m.me .bub .at{background:rgba(255,255,255,.25);color:#fff}
+  .pop{position:fixed;z-index:10000;background:#fff;border:1px solid #DCE3EC;border-radius:12px;box-shadow:0 14px 40px rgba(15,42,74,.18);padding:8px;max-width:calc(100vw - 16px)}
+  .pop .emg{display:grid;grid-template-columns:repeat(8,34px);gap:2px;max-height:240px;overflow-y:auto}
+  .pop .emg button{width:34px;height:34px;border:0;background:none;border-radius:8px;font-size:20px;cursor:pointer;padding:0}
+  .pop .emg button:hover{background:#EEF2F6}
+  .pop .ppl button{display:flex;align-items:center;gap:8px;width:100%;border:0;background:none;padding:7px 8px;border-radius:8px;font:inherit;font-size:14px;cursor:pointer;text-align:left;color:var(--ink)}
+  .pop .ppl button:hover{background:#EEF2F6}
+  .pop .quick{display:flex;gap:2px}
+  .pop .quick button{width:38px;height:38px;border:0;background:none;border-radius:10px;font-size:22px;cursor:pointer;padding:0}
+  .pop .quick button:hover{background:#EEF2F6}
+  .reacts{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+  .m.me .reacts{justify-content:flex-end}
+  .reacts .rc{display:inline-flex;align-items:center;gap:4px;border:1px solid #DCE3EA;background:#fff;border-radius:999px;padding:1px 8px;font:inherit;font-size:13px;cursor:pointer;color:#33475b;line-height:22px}
+  .reacts .rc.mine{border-color:var(--teal2);background:var(--teal-wash,#eef8f7);color:var(--teal-600);font-weight:700}
+  .m .col{position:relative}
+  .reacts .radd{display:inline-flex;align-items:center;gap:1px;border:1px solid #DCE3EA;background:#fff;border-radius:999px;padding:0 7px;height:24px;font:inherit;font-size:12px;font-weight:700;cursor:pointer;color:#7b8797}
+  .reacts .radd:hover{border-color:var(--teal2);color:var(--teal-600)}
+  .reacts .radd svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+  /* THE MESSAGE TOOLBAR, like Slack (Jordan 18/11: "Its hard to scroll over to emoji now and it flashes off. Look at what
+     slack does"): over the message's top corner while the pointer is on the message - it overlaps the bubble, so moving
+     onto it never loses it. React, Forward, Copy, Delete (your own). Phones: hold the message instead. */
+  .m .col{position:relative}
+  .mbar{position:absolute;top:-27px;right:-6px;display:none;gap:1px;background:#fff;border:1px solid #DCE3EA;border-radius:10px;box-shadow:0 4px 14px rgba(15,42,74,.13);padding:2px;z-index:4}
+  .m.me .mbar{right:auto;left:-6px}
+  .mbar button{width:32px;height:30px;border:0;background:none;border-radius:8px;cursor:pointer;color:#4b5a6b;display:inline-flex;align-items:center;justify-content:center;padding:0;font:inherit}
+  .mbar button:hover{background:#EEF2F6;color:var(--navy)}
+  .mbar button.del:hover{background:#FDF0EE;color:#b42318}
+  .mbar svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .mbar small{font-size:11px;font-weight:800;margin-left:-1px}
+  @media (hover:hover){ .m:hover .mbar,.mbar:focus-within{display:flex} }
+  .fwdq{border-left:3px solid #c9d3df;padding:4px 0 4px 10px;color:#4b5a6b;font-size:13.5px;max-height:90px;overflow:hidden;white-space:pre-wrap}
+  #fwlist{max-height:240px;overflow:auto}
+  #fwlist button.on{background:var(--teal-soft)}
+  /* phones: hold a message to react (like WhatsApp); the ＋ only shows next to reactions already there */
+  @media (pointer:coarse){ body.v2 .m .bub{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none} }
+  .m.del .bub{font-style:italic;opacity:.75}
+  .utoast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);display:none;align-items:center;gap:14px;max-width:calc(100% - 32px);background:var(--navy);color:#fff;padding:10px 12px 10px 18px;border-radius:12px;font-weight:700;font-size:14px;box-shadow:var(--shadow-lg);z-index:85}
+  .utoast.on{display:flex}
+  .utoast button{border:0;background:rgba(255,255,255,.16);color:#fff;font:inherit;font-weight:800;padding:6px 12px;border-radius:9px;cursor:pointer}
+  .pop .copy{display:block;width:100%;margin-top:6px;border:0;border-top:1px solid #EDF1F5;background:none;padding:9px 6px 3px;font:inherit;font-size:14px;color:var(--ink);text-align:left;cursor:pointer}
+  /* GROUPS (Jordan 18/11) */
+  .lab2{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:700;color:var(--ink)}
+  .lsec{display:flex;align-items:center;gap:6px;width:100%;border:0;background:#F7F9FB;border-bottom:1px solid #EEF1F5;padding:9px 14px 7px;font:inherit;font-size:12.5px;font-weight:800;color:var(--soft);cursor:pointer;text-align:left;letter-spacing:.01em}
+  .lsec:hover{color:var(--navy)}
+  .lsec .car{display:inline-block;transition:transform .15s;font-size:11px}
+  .lsec.folded .car{transform:rotate(-90deg)}
+  .lsec .cnt{margin-left:auto;font-weight:700;font-size:11.5px;color:var(--soft)}
+  .sys{align-self:center;max-width:90%;text-align:center;font-size:12.5px;color:var(--soft);background:#EEF2F6;border-radius:999px;padding:4px 12px;margin:4px 0}
+  .conv-top .who.grpw{cursor:pointer;border-radius:8px}
+  .conv-top .who.grpw:hover b{text-decoration:underline}
+  .gchips{display:flex;flex-wrap:wrap;gap:6px}
+  .gchips:empty{display:none}
+  .gchip{display:inline-flex;align-items:center;gap:6px;background:var(--teal-soft);color:var(--teal-ink,#0c5b57);border-radius:999px;padding:3px 4px 3px 10px;font-size:13px;font-weight:600}
+  .gchip button{border:0;background:none;font-size:16px;line-height:1;cursor:pointer;color:inherit;padding:0 4px}
+  .pick button .tick{margin-left:auto;width:22px;height:22px;border-radius:6px;border:2px solid #C9D3DF;display:inline-flex;align-items:center;justify-content:center;font-size:14px;color:#fff;flex:none}
+  .pick button.on .tick{background:var(--teal);border-color:var(--teal)}
+  .gerr{color:#b42318;font-weight:700;font-size:13px}
+  .gerr:empty{display:none}
+  .gname{display:flex;align-items:center;gap:10px;font-size:16px}
+  .gname b{flex:1;min-width:0;overflow-wrap:anywhere}
+  .btn.warn{background:#fff;color:#b42318;border:1px solid #F1C4BE}
+  .btn.warn:hover{background:#FDF0EE}
+  .btn.red{background:#C4321C}
+  .btn.red:hover{background:#A82A17}
+  .ownb{display:inline-block;margin-left:6px;font-size:11px;font-weight:800;letter-spacing:.03em;color:var(--teal-ink,#0c5b57);background:var(--teal-soft);border-radius:999px;padding:1px 8px;vertical-align:1px}
+  .trow .own{margin-left:auto;border:1px solid var(--line);background:#fff;color:var(--navy);border-radius:8px;padding:4px 9px;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap}
+  .trow .own:hover{border-color:var(--teal);background:var(--teal-soft)}
+  .trow .own + .x{margin-left:4px !important}
+  .pick .trow .x{margin-left:auto;border:0;background:none;padding:2px 8px;border-radius:8px}
+  .pick .trow .x:hover{background:#FDF0EE;color:#b42318}
+  /* THE EMOJI PICKER (Jordan 18/11 + his Slack screenshot) */
+  .pop.emp{padding:0;width:356px;max-width:calc(100vw - 16px);display:flex;flex-direction:column;overflow:hidden}
+  .emtabs{display:flex;justify-content:space-between;padding:6px 8px;border-bottom:1px solid #EDF1F5}
+  .emtabs button{width:34px;height:34px;border:0;background:none;border-radius:8px;color:#7b8797;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0}
+  .emtabs button:hover{color:var(--navy);background:#F3F6F9}
+  .emtabs button.on{background:#EEF2F6;color:var(--navy)}
+  .emtabs svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .emsearch{padding:8px 10px 2px}
+  .emsearch input{width:100%;border:1px solid #C9D3DF;border-radius:9px;padding:8px 10px;font:inherit;font-size:14px;outline:none;color:var(--ink);background:#fff}
+  .emsearch input:focus{border-color:var(--teal2);box-shadow:0 0 0 3px var(--teal-wash,#eef8f7)}
+  .embody{position:relative;height:300px;overflow-y:auto;padding:0 8px 8px;overscroll-behavior:contain}
+  .emh{font-size:13px;font-weight:700;color:var(--ink);padding:10px 4px 4px;position:sticky;top:0;background:#fff;z-index:1}
+  .emg2{display:grid;grid-template-columns:repeat(auto-fill,36px);justify-content:space-between}
+  .emg2 button,.emskins button{width:36px;height:36px;border:0;background:none;border-radius:8px;font-size:24px;line-height:1;cursor:pointer;padding:0;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif}
+  .emg2 button:hover,.emskins button:hover{background:#EEF2F6}
+  .emnone{padding:24px 8px;text-align:center;color:var(--soft);font-size:14px}
+  .emfoot{display:flex;align-items:center;gap:8px;border-top:1px solid #EDF1F5;padding:6px 10px;min-height:48px}
+  .empv{flex:1;min-width:0;display:flex;align-items:center;gap:8px;font-size:13px;color:#4b5a6b;overflow:hidden;white-space:nowrap}
+  .empv b{font-size:26px;font-weight:400;line-height:1}
+  .empv span{overflow:hidden;text-overflow:ellipsis}
+  .emskinb{border:1px solid #DCE3EA;background:#fff;border-radius:9px;padding:4px 10px;font:inherit;font-size:13px;cursor:pointer;color:var(--ink);display:inline-flex;gap:6px;align-items:center;white-space:nowrap}
+  .emskinb b{font-size:18px;font-weight:400}
+  .emskins{display:flex;gap:2px;align-items:center;flex-wrap:wrap}
+  .emskins button.on{background:var(--teal-soft);box-shadow:inset 0 0 0 2px var(--teal2)}
+  .emload{padding:30px 40px;color:var(--soft);font-size:14px}
+  @media (max-width:760px), (pointer:coarse){ .emsearch input{font-size:16px} .embody{height:min(300px,40vh)} }
+  .media img{cursor:zoom-in}
+  /* A PHOTO SAYS IT CAN BE OPENED (Jordan 18/11: "in slack when you hover over an image it shows a magnifying glass with a +
+     in the middle of it showing the user they can click to enlarge"). Mouse only - a phone just taps it. */
+  @media (hover:hover){
+    .v2 .media:has(> img[src]){cursor:zoom-in}
+    .v2 .media:has(> img[src])::after{content:'';position:absolute;inset:0;margin:auto;width:46px;height:46px;border-radius:50%;
+      background:rgba(15,42,74,.62) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round'><circle cx='10.5' cy='10.5' r='6.5'/><path d='M15.5 15.5L21 21M10.5 7.8v5.4M7.8 10.5h5.4'/></svg>") center/24px no-repeat;box-shadow:0 2px 10px rgba(0,0,0,.25);
+      opacity:0;transform:scale(.8);transition:opacity .15s,transform .15s;pointer-events:none}
+    .v2 .media:has(> img[src]):hover::after{opacity:1;transform:none}
+    .v2 .media:has(> img[src]) img{transition:filter .15s}
+    .v2 .media:has(> img[src]):hover img{filter:brightness(.85)}
+  }
+  .lb{position:fixed;inset:0;z-index:10001;background:rgba(10,18,30,.92);display:flex;align-items:center;justify-content:center;touch-action:pan-y pinch-zoom}
+  .lb img{max-width:92vw;max-height:84vh;object-fit:contain;border-radius:6px;box-shadow:0 10px 40px rgba(0,0,0,.4);cursor:default}
+  .lb .lbtop{position:fixed;top:0;left:0;right:0;display:flex;align-items:center;gap:12px;padding:12px 14px calc(12px);color:#fff;font-size:14px;padding-top:calc(12px + env(safe-area-inset-top, 0px))}
+  .lb .lbtop .who{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .lb .lbtop .who small{color:#b8c4d3;margin-left:8px}
+  .lb .lbtop a,.lb .lbtop button{color:#fff;background:rgba(255,255,255,.12);border:0;border-radius:10px;padding:8px 12px;font:inherit;font-size:14px;cursor:pointer;text-decoration:none}
+  .lb .lbnav{position:fixed;top:50%;transform:translateY(-50%);width:46px;height:46px;border-radius:50%;border:0;background:rgba(255,255,255,.14);color:#fff;font-size:24px;cursor:pointer}
+  .lb .lbnav.p{left:14px}.lb .lbnav.n{right:14px}
+  .lb .lbnav[hidden]{display:none}
+</style>
+<script src="user.js?v=hc268d202611250847"></script>
+  <script src="store.js?v=hc268d202611250847"></script>
+  <script src="gate.js?v=hc268d202611250847"></script>
+  <script src="_staff.js?v=hc268d202611250847"></script>
+  <script src="alerts.js?v=hc268d202611250847"></script>
+  <script src="chatgraph.js?v=hc268d202611250847"></script>
+</head>
+<body>
+<div class="ribbon" id="ribbon">DEMO — made-up people, messages and videos. Nothing is sent anywhere.</div>
+<header class="hdr">
+  <div class="hdr-in">
+    <span class="mark" aria-label="Home-Brace"><img src="../assets/logo-mark.png?v=2" alt="" width="34" height="34"></span>
+    <span class="brand">Home-<i>Brace</i><small>Chat</small></span>
+    <span class="v1">Demo</span>
+  </div>
+</header>
+<nav class="v1nav"><div class="v1nav-in" id="nav"></div></nav>
+
+<div class="wrap">
+  <div class="chatapp" id="app">
+    <aside class="list" aria-label="Your chats">
+      <div class="list-top">
+        <div class="row"><h1>Chats</h1><button class="ib sm bellb" id="bellb" data-act="alerts" title="Turn on alerts" aria-label="Turn on alerts"><svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0112 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 004 0"/></svg></button><button class="btn sm" data-act="new">＋ New chat</button></div>
+        <div class="alertbar" id="alertbar"></div>
+        <input class="search" id="q" type="search" placeholder="Search chats" autocomplete="off" aria-label="Search chats">
+        <div class="chips" id="chips"></div>
+      </div>
+      <div class="items" id="items"></div>
+    </aside>
+    <section class="conv" id="conv" aria-label="Conversation"></section>
+  </div>
+</div>
+
+<div class="dm" id="dlg" role="dialog" aria-modal="true"><div class="dmc" id="dlgcard"></div></div>
+<div class="notif" id="notif" role="status" aria-live="polite"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<input type="file" id="file" accept="image/*,video/*" hidden>
+
+<script>
+(function(){
+  'use strict';
+  const el=id=>document.getElementById(id);
+  const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  let ME='Priya Tatum';
+  /* REAL CHAT (12/11/2026): the same page, with Microsoft Teams underneath - see chatgraph.js for who gets it
+     (an Admin on the sandbox who switched it on; never the live site until CHAT_LIVE). Everyone else: the mock-up. */
+  const CG=window.PH_CHATG||null;
+  let REALCHAT=false, MEID='';
+  const ONLIVE=!!(window.PH && PH.isLive && PH.isLive());          // the live site: the chat PILOT only (chatgraph.js), never the made-up chats
+  const COLORS=['#149B96','#6CB4F5','#F7A25E','#B49CFB','#F48C7F','#F27FC0','#6FD39A','#8FA2FF','#E0A800','#5B8DEF'];
+  const colorOf=n=>{ let h=0; for(const c of n) h=(h*31+c.charCodeAt(0))>>>0; return COLORS[h%COLORS.length]; };
+  /* first and last name - a nickname in brackets or quotes is skipped ("Avery (Ave) Alder" = AA, not "A(") */
+  const initials=n=>{ const w=String(n||'').replace(/^Dr\.\s*/,'').split(/\s+/).filter(x=>/^[\p{L}\p{N}]/u.test(x)); return ((w[0]||'?')[0]+(w.length>1 ? w[w.length-1][0] : '')).toUpperCase(); };
+  const ICON={office:'<path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h1M14 9h1M9 13h1M14 13h1M9 17h6"/>',
+              team:'<circle cx="9" cy="8" r="3.2"/><circle cx="17" cy="9" r="2.6"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5M15 14.6c3 0 6 1.6 6 4.6"/>'};
+  function avatar(c, sm){
+    const cls='av'+(sm?' sm':'');
+    if(c.type==='office' || c.type==='team' || c.type==='group') return '<span class="'+cls+'" style="background:'+(c.type==='office'?'var(--navy2,#25456E)':'var(--teal-600,#0F827E)')+'"><svg viewBox="0 0 24 24">'+ICON[c.type==='office'?'office':'team']+'</svg></span>';
+    if(c.photo) return '<span class="'+cls+'"><img src="'+esc(c.photo)+'" alt=""></span>';
+    return '<span class="'+cls+'" style="background:'+colorOf(c.name)+'">'+esc(initials(c.name))+'</span>';
+  }
+  /* A person's Home-Brace profile photo when there is one (their own upload or one an admin set), else initials. */
+  const personAv=(n, em)=>{ const ph=em && window.PH && PH.photoFor ? PH.photoFor(em) : '';
+    return ph ? '<span class="av sm"><img src="'+esc(ph)+'" alt=""></span>' : '<span class="av sm" style="background:'+colorOf(n||'?')+'">'+esc(initials(n||'?'))+'</span>'; };
+
+  /* ---------- made-up chats. Times are "minutes ago" so the mock-up always looks current. ---------- */
+  const now=Date.now(), ago=min=>now-min*60000;
+  let CHATS=[
+    {id:'c1', type:'office', name:'Cedar Grove office', members:['Gabriela Garrison','Quinn Quill','Avery Brooks','Jordan Ellis','Sofia Navarro',ME], unread:2, msgs:[
+      {from:'Jordan Ellis', at:ago(1500), text:'Is anyone grabbing lunch for the team on Friday?'},
+      {from:ME, at:ago(1490), text:'I will - tacos again?'},
+      {from:'Gabriela Garrison', at:ago(48), text:'Morning! Quick video on the new check-in steps before patients arrive 👇'},
+      {from:'Gabriela Garrison', at:ago(47), video:'chat-demo/huddle.mp4', poster:'chat-demo/huddle.jpg', dur:'0:08', ar:'9/16'},
+      {from:'Quinn Quill', at:ago(36), text:'Watched it. So the consent form comes first now?'},
+      {from:'Gabriela Garrison', at:ago(31), text:'Yes - consent first, then the photos.'}]},
+    {id:'c2', type:'person', name:'Dr. Clara Coleman', sub:'Doctor · Lakeview and Northpoint', members:['Dr. Clara Coleman',ME], unread:1, msgs:[
+      {from:ME, at:ago(1700), text:'Thanks for covering Northpoint today.'},
+      {from:'Dr. Clara Coleman', at:ago(62), text:'Here’s the new tray layout for Lakeview. What do you think?'},
+      {from:'Dr. Clara Coleman', at:ago(61), photo:'chat-demo/trays.jpg', w:800, h:600}]},
+    {id:'c3', type:'team', name:'Doctors', members:['Dr. Clara Coleman','Dr. Thornbury','Dr. Ashcombe','Dr. Fairbanks',ME], unread:0, msgs:[
+      {from:ME, at:ago(1180), text:'November’s schedule is posted in Home-Brace.'},
+      {from:'Dr. Thornbury', at:ago(1150), text:'Thanks! I’m off the 27th - already marked.'}]},
+    {id:'c4', type:'office', name:'Meadow Park office', members:['Logan Pratt','Ines Salazar','Hayden Moss','Carmen Ibarra','Dr. Ashcombe',ME], unread:0, msgs:[
+      {from:'Hayden Moss', at:ago(2950), text:'Friday reminder for everyone 👇'},
+      {from:'Hayden Moss', at:ago(2949), video:'chat-demo/reminder.mp4', poster:'chat-demo/reminder.jpg', dur:'0:06', wide:true, ar:'16/9'},
+      {from:'Ines Salazar', at:ago(2900), text:'Got it 👍'}]},
+    {id:'c5', type:'team', name:'Leadership Team', members:['Morgan Hale','Casey Webb','Skyler Bennett',ME], unread:0, msgs:[
+      {from:'Casey Webb', at:ago(4300), text:'Payroll sheets are due Tuesday by 2 pm this week.'}]},
+    {id:'c6', type:'person', name:'Quinn Quill', sub:'TC · Cedar Grove', members:['Quinn Quill',ME], unread:0, msgs:[
+      {from:ME, at:ago(4500), text:'Can you cover Northpoint on Thursday?'},
+      {from:'Quinn Quill', at:ago(4480), text:'Yes, I’ve got it.'}]}
+  ];
+  CHATS.forEach(c=>c.msgs.forEach((m,i)=>{ m.id=c.id+'-'+i; }));
+  CHATS[0].msgs[5].reactions=[{emoji:'👍', userId:'qq', name:'Quinn Quill'}, {emoji:'👍', userId:'ae', name:'Avery Brooks'}, {emoji:'🙏', userId:'je', name:'Jordan Ellis'}];
+  CHATS[1].msgs[2].reactions=[{emoji:'❤️', userId:'me', name:'You'}];
+  /* The header's chat button shows the same unread count, kept for this browser tab (user.js chatBadge). */
+  try{ const s=sessionStorage.getItem('ph_chat_unread'); if(s){ const m=JSON.parse(s)||{}; CHATS.forEach(c=>{ c.unread=Number(m[c.id])||0; }); } }catch(_){}
+  function saveUnread(){
+    const m={}; CHATS.forEach(c=>{ if(c.unread) m[c.id]=c.unread; });
+    try{ sessionStorage.setItem('ph_chat_unread', JSON.stringify(m)); }catch(_){}
+    if(window.PH && PH.chatBadge) PH.chatBadge();
+  }
+  const REPLIES=['Got it, thanks!','👍','Perfect - see you there.','Watched it, makes sense.','On it.','Thank you!'];
+  let open=null, filter='all', q='', alertsOn=false, recState=null, objectUrls=[], stick=true, ro=null;
+  /* REAL ALERTS (22/10/2026, Jordan: "go"): alerts.js turns them on for this device and the alert sender sends them.
+     Without it this falls back to the pretend version below. */
+  const REAL=!!window.PH_ALERTS;
+  if(REAL) alertsOn=PH_ALERTS.state()==='on';
+  else try{ alertsOn=localStorage.getItem('ph_chat_alerts')==='1'; }catch(_){}
+  const SAMPLE=()=>REALCHAT ? {title:'Home-Brace chat', body:'This is how a new message alert looks.', url:PH_ALERTS.here('chat.html'), tag:'hb-chat', delay:5}
+    : {title:'Gabriela Garrison · Cedar Grove office', body:'🎥 Sent a video', url:PH_ALERTS.here('chat.html'), tag:'hb-chat', delay:5};
+  /* which device this is, so the alert steps are only the ones for it; and whether they closed the strip */
+  const UA=navigator.userAgent||'';
+  const DEVICE=(/iPhone|iPad|iPod/.test(UA) || (/Macintosh/.test(UA) && navigator.maxTouchPoints>1)) ? 'iphone' : /Android/.test(UA) ? 'android' : 'computer';
+  const INSTALLED=navigator.standalone===true || !!(window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+  let alertsHidden=false; try{ alertsHidden=localStorage.getItem('ph_chat_alerts_hide')==='1'; }catch(_){}
+  const setAlerts=on=>{ alertsOn=on; if(!REAL) try{ localStorage.setItem('ph_chat_alerts', on?'1':'0'); }catch(_){} renderAlertbar(); };
+
+  /* ---------- time, as a phone shows it ---------- */
+  const dayKey=t=>{ const d=new Date(t); return d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate(); };
+  const clock=t=>new Date(t).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  function when(t){
+    const d=new Date(t), today=new Date(), yest=new Date(); yest.setDate(today.getDate()-1);
+    if(dayKey(t)===dayKey(today)) return clock(t);
+    if(dayKey(t)===dayKey(yest)) return 'Yesterday';
+    return d.toLocaleDateString('en-US',{weekday:'short'});
+  }
+  function dayLabel(t){
+    const today=new Date(), yest=new Date(); yest.setDate(today.getDate()-1);
+    if(dayKey(t)===dayKey(today)) return 'Today';
+    if(dayKey(t)===dayKey(yest)) return 'Yesterday';
+    return new Date(t).toLocaleDateString('en-US',{weekday:'long', month:'short', day:'numeric'});
+  }
+  /* The newest message: the loaded ones, or (real chat) Teams' own preview when that's newer. */
+  const NONE={from:'', at:0, text:''};
+  const last=c=>{ const m=c.msgs[c.msgs.length-1], l=c.lastMsg; return (l && (!m || l.at>m.at)) ? l : (m||l||NONE); };
+  const mineOf=m=>m.mine!=null ? !!m.mine : m.from===ME;
+  function preview(m, c){
+    if(m.system) return sysText(m, c);
+    const short=n=>/^Dr\./.test(n) ? n : String(n||'').split(' ')[0];       // "Dr. Thornbury", "Gabriela"
+    const who=mineOf(m) ? 'You: ' : (c.type==='person' || !m.from ? '' : short(m.from)+': ');
+    const vid=m.video || m.localVideo || (m.files && m.files.some(f=>f.video));
+    const pic=m.photo || m.localImg || (!m.text && m.images && m.images.length);
+    return who+(vid ? '🎥 Video' : pic ? '📷 Photo' : (m.text || (m.files && m.files.length ? '📎 '+m.files[0].name : '')));
+  }
+
+  /* ---------- the alerts strip ---------- */
+  /* The strip only shows while alerts are off, and it can be closed for good (Jordan, 22/10: "they should have the
+     ability to close that out and its not always there"). The bell beside New chat always works. */
+  function renderAlertbar(){
+    const b=el('alertbar');
+    b.hidden=alertsOn || alertsHidden;
+    b.innerHTML='<span>🔔</span><span class="grow"><b>Get message alerts</b></span>'+
+      '<button class="btn sm" data-act="alerts">Turn on</button>'+
+      '<button class="x" data-act="hidealerts" title="Close (the bell next to New chat turns alerts on any time)" aria-label="Close">×</button>';
+    const bb=el('bellb'); if(bb){ bb.classList.toggle('on', alertsOn); bb.title=alertsOn?'Alerts are on':'Turn on alerts'; bb.setAttribute('aria-label', bb.title); }
+  }
+  /* The chat runs to the bottom of the screen (on a phone, to just above the tab bar), so the message box and
+     Send are always in view. A very short window keeps a minimum and lets the page scroll instead. */
+  function fit(){
+    const a=el('app'); if(!a || !a.offsetParent) return;
+    const phone=!window.matchMedia('(min-width:761px)').matches;
+    const bar=document.querySelector('.ph-tabbar'), b=bar && getComputedStyle(bar).display!=='none' ? bar.getBoundingClientRect() : null;
+    const room=(b && b.height ? window.innerHeight-b.top : 0)+(phone?10:16);
+    const want=window.innerHeight-(a.getBoundingClientRect().top+window.scrollY)-room, min=phone?280:300;
+    a.style.height=Math.round(Math.max(min, want))+'px';
+    document.querySelector('.wrap').style.paddingBottom=(want<min ? room : 0)+'px';
+  }
+
+  /* ---------- the list ---------- */
+  function renderChips(){
+    const F=[['all','All'],['unread','Unread'],['office',REALCHAT?'Groups':'Offices & teams'],['person','People']];
+    el('chips').innerHTML=F.map(f=>'<button class="chip'+(filter===f[0]?' on':'')+'" data-act="filter" data-v="'+f[0]+'">'+f[1]+'</button>').join('');
+  }
+  const SEC_KEY='ph_chat_sections';
+  function secFolded(){ try{ const v=JSON.parse(localStorage.getItem(SEC_KEY)||'{}'); return v && typeof v==='object' ? v : {}; }catch(_){ return {}; } }
+  function secToggle(k){ const v=secFolded(); v[k]=!v[k]; try{ localStorage.setItem(SEC_KEY, JSON.stringify(v)); }catch(_){} renderList(); }
+  function renderList(){
+    const qq=q.trim().toLowerCase();
+    const list=CHATS.slice().sort((a,b)=>last(b).at-last(a).at).filter(c=>
+      (filter==='all' || (filter==='unread' && c.unread) || (filter==='office' && c.type!=='person') || (filter==='person' && c.type==='person')) &&
+      (!qq || c.name.toLowerCase().indexOf(qq)>=0 || c.members.some(m=>m.toLowerCase().indexOf(qq)>=0)));
+    const row=c=>{ const m=last(c);
+      return '<button class="ci'+(open===c.id?' on':'')+(c.unread?' unread':'')+'" data-act="open" data-v="'+c.id+'">'+avatar(c)+
+        '<span class="mid"><span class="nm">'+esc(c.name)+'</span><span class="pv">'+esc(preview(m,c))+'</span></span>'+
+        '<span class="side"><span class="tm">'+esc(when(m.at))+'</span>'+(c.unread?'<span class="badge">'+c.unread+'</span>':'')+'</span></button>'; };
+    /* GROUPS AND DIRECT MESSAGES APART, like Slack (Jordan 18/11: "Like Slack there should be a seperation between DMs and
+       Channels (or groups)"). On All and Unread: a "Groups" section, then "Direct messages", newest first in each. A
+       section folds away with its heading (kept on this device); a folded one still shows its unread chats and the one
+       that's open. The Groups / People chips still show just one kind. */
+    let html='';
+    if(!list.length) html='<div class="empty" style="padding:30px 16px">No chats match.</div>';
+    else if(filter==='all' || filter==='unread'){
+      const fold=secFolded();
+      [['groups', REALCHAT ? 'Groups' : 'Offices, teams and groups', list.filter(c=>c.type!=='person')], ['dms', 'Direct messages', list.filter(c=>c.type==='person')]].forEach(sx=>{
+        if(!sx[2].length) return;
+        const f=!!fold[sx[0]], unr=sx[2].reduce((a,c)=>a+(c.unread?1:0),0), shown=f ? sx[2].filter(c=>c.unread || c.id===open) : sx[2];
+        html+='<button type="button" class="lsec'+(f?' folded':'')+'" data-act="lsec" data-v="'+sx[0]+'" aria-expanded="'+(!f)+'"><span class="car">▾</span>'+esc(sx[1])+
+          '<span class="cnt">'+(f && unr ? unr+' unread' : sx[2].length)+'</span></button>'+shown.map(row).join('');
+      });
+    } else html=list.map(row).join('');
+    el('items').innerHTML=html;
+    saveUnread();
+  }
+
+  /* ---------- a conversation ---------- */
+  function msgHTML(m, c, prev){
+    if(m.system){ const tx=sysText(m, c); return tx ? '<div class="sys" data-mid="'+esc(m.id||'')+'">'+esc(tx)+'</div>' : ''; }
+    const mine=mineOf(m), group=c.type!=='person';
+    const showFrom=group && !mine && (!prev || prev.from!==m.from || dayKey(prev.at)!==dayKey(m.at));
+    let body;
+    if(REALCHAT) body=realBody(m);
+    else
+    if(m.video){
+      const tall=m.ar && (r=>r[0]<r[1])(String(m.ar).split('/').map(Number));      // a phone video, upright
+      body=(m.text?'<div class="bub">'+esc(m.text)+'</div>':'')+'<div class="media'+(m.wide?' wide':'')+(tall?' tall':'')+'"><video src="'+esc(m.video)+'"'+(m.poster?' poster="'+esc(m.poster)+'"':'')+(m.ar?' style="aspect-ratio:'+m.ar+'"':'')+' preload="metadata" playsinline></video>'+
+        '<button class="play" data-act="play" aria-label="Play the video">▶</button><span class="dur">🎥 '+esc(m.dur||'')+'</span></div>';
+    } else if(m.photo){
+      body=(m.text?'<div class="bub">'+esc(m.text)+'</div>':'')+'<div class="media wide"><img src="'+esc(m.photo)+'"'+(m.w?' width="'+m.w+'" height="'+m.h+'"':'')+' alt="A photo from '+esc(m.from)+'"></div>';
+    } else body='<div class="bub">'+esc(m.text)+'</div>';
+    if(!REALCHAT && m.richHtml && V2()) body=body.replace(/^<div class="bub">[\s\S]*?<\/div>/, '<div class="bub rich">'+m.richHtml+'</div>');
+    const meta=m.failed ? '<div class="meta bad">Not sent - '+esc(m.failed)+'</div>'
+      : m.pending ? '<div class="meta">'+esc(m.progress!=null ? 'Uploading… '+Math.round(m.progress*100)+'%' : 'Sending…')+'</div>'
+      : '<div class="meta">'+esc(clock(m.at))+(!REALCHAT && mine && m.seen!==false ? ' · Seen' : '')+(m.edited ? ' · Edited' : '')+'</div>';
+    return '<div class="m'+(mine?' me':'')+(m.deleted?' del':'')+'" data-mid="'+esc(m.id||'')+'">'+(group && !mine ? (showFrom ? personAv(m.from, m.fromEmail) : '<span style="width:30px;flex:none"></span>') : '')+
+      '<div class="col">'+msgBar(m)+(showFrom?'<div class="from">'+esc(m.from)+'</div>':'')+body+reactsHTML(m)+meta+'</div></div>';
+  }
+  /* A real message: its words (plain text - Teams' HTML never goes into the page), pictures, videos and files.
+     Pictures and videos are filled in a moment later (hydrate), with the sign-in. Only https addresses are used. */
+  const httpsOnly=u=>/^https:\/\//i.test(String(u||''));
+  function realBody(m){
+    let h='';
+    if(m.rich && V2() && CG) h+='<div class="bub rich">'+CG.cleanRich(m.rich)+'</div>';      // cleaned again here: only the safe set ever reaches the page
+    else if(m.text) h+='<div class="bub">'+esc(m.text)+'</div>';
+    if(m.localImg) h+='<div class="media wide"><img src="'+esc(m.localImg)+'" alt="Your photo"></div>';
+    else (m.images||[]).forEach(u=>{ if(httpsOnly(u)) h+='<div class="media wide"><img data-hc="'+esc(u)+'" alt="A photo from '+esc(m.from)+'"></div>'; });
+    if(m.localVideo) h+='<div class="media"><video src="'+esc(m.localVideo)+'" preload="metadata" playsinline></video><button class="play" data-act="play" aria-label="Play the video">▶</button><span class="dur">🎥 Video</span></div>';
+    else (m.files||[]).forEach(f=>{
+      if(!httpsOnly(f.url)) return;
+      if(f.video) h+='<div class="media"><video data-ref="'+esc(f.url)+'" preload="metadata" playsinline></video><span class="wait">Loading video…</span><button class="play" data-act="play" aria-label="Play the video">▶</button><span class="dur">🎥 Video</span></div>';
+      else if(f.image) h+='<div class="media wide"><img data-ref="'+esc(f.url)+'" alt="'+esc(f.name)+'"></div>';
+      else h+='<a class="file" href="'+esc(f.url)+'" target="_blank" rel="noopener">📄 <span>'+esc(f.name)+'</span></a>';
+    });
+    return h || '<div class="bub">'+esc(m.deleted ? 'This message was deleted.' : '(nothing to show - open it in Teams)')+'</div>';
+  }
+  function renderConv(){
+    const c=CHATS.find(x=>x.id===open), box=el('conv');
+    if(!c){ box.innerHTML='<div class="empty">Pick a chat on the left, or start a new one.</div>'; return; }
+    const sub=c.type==='person' ? (c.sub||'') : c.members.length+' people · '+c.members.filter(n=>n!==ME).slice(0,4).join(', ')+(c.members.length>5?'…':'');
+    const isGrp=GROUPS() && c.type==='group';
+    let h='<div class="conv-top"><button class="back" data-act="back" aria-label="Back to chats">‹</button>'+avatar(c)+
+      '<div class="who'+(isGrp?' grpw" data-act="grpinfo" role="button" tabindex="0" title="Group settings':'')+'"><b>'+esc(c.name)+'</b><span>'+esc(sub)+'</span></div>'+
+      (isGrp ? '<button class="btn ghost sm" data-act="grpinfo" title="People and settings">👥 '+(c.members||[]).length+'</button>' : '')+
+      '<button class="btn ghost sm" data-act="call" title="Calls open Microsoft Teams">📞 Call</button>'+
+      (V2() ? '<button class="btn ghost sm" data-act="chatmenu" title="More" aria-label="More">⋯</button>' : '')+'</div><div class="msgs" id="msgs">';
+    if(REALCHAT && c.next) h+='<button class="btn ghost sm more" data-act="more">Load earlier messages</button>';
+    if(REALCHAT && !c.loaded) h+='<div class="empty">Loading…</div>';
+    let prev=null;
+    c.msgs.forEach(m=>{ if(!prev || dayKey(prev.at)!==dayKey(m.at)) h+='<div class="day">'+esc(dayLabel(m.at))+'</div>'; h+=msgHTML(m,c,prev); prev=m; });
+    /* THE TEST LOCK: in a chat with anyone who isn't a tester there is no message box at all (chatgraph.js checks again). */
+    if(REALCHAT && !CG.canSend(c, MEID)) h+='</div><div class="locked">🔒 '+(ONLIVE ? '<b>Pilot:</b> you can read this chat, but for now you can only send to the others in the pilot group.' : '<b>Test:</b> you can read this chat, but you can only send to your testers. Add them with <b>Testers</b> in the green bar.')+'</div>';
+    else h+='</div>'+composerHTML(c);
+    box.innerHTML=h;
+    afterConv(c, box);
+  }
+  /* THE MESSAGE BOX. A photo or video picked (or pasted, or recorded) WAITS above it - you can type a message under it
+     and one Send sends both together, as one message (Jordan 18/11: "like in slack you can add the photo and put text
+     under it before you send"). One waiting attachment per chat; × takes it off. */
+  const STAGED={};
+  /* CHAT v2 (18/11/2026) - the Slack-style message box, formatting, @mentions, reactions, the photo viewer. Jordan: "it
+     should be like slack where microphone is below (don't add the code stuff, but basic bold and links and everything they
+     have is well layed out", "add an emoji to their message ... the message they sent and its under it", "Clicking on
+     photo in chat that brings up bigger view exactly like slack does". SANDBOX ONLY until CHAT_V2_LIVE is true; on the
+     live site one device can try it first (localStorage ph_chat_v2 = '1'). */
+  const CHAT_V2_LIVE=true;     // ON for the live site 18/11 (Jordan: "chat v2 live"); false = the v1 box again
+  const V2=()=>{ if(CHAT_V2_LIVE || !ONLIVE) return true; try{ return localStorage.getItem('ph_chat_v2')==='1'; }catch(_){ return false; } };
+  const SR=window.SpeechRecognition || window.webkitSpeechRecognition || null;
+  const FMT_KEY='ph_chat_fmt';
+  const fmtOn=()=>{ try{ const v=localStorage.getItem(FMT_KEY); return v===null ? window.matchMedia('(min-width:761px)').matches : v==='1'; }catch(_){ return true; } };
+  const SVG=p=>'<svg viewBox="0 0 24 24" aria-hidden="true">'+p+'</svg>';
+  const ICO={link:SVG('<path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1 1"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1-1"/>'),
+    ol:SVG('<path d="M10 6h10M10 12h10M10 18h10"/><path d="M4 5h1.5v4M4 9h3M4 14.5c.4-.6 1-1 1.7-1 .8 0 1.3.5 1.3 1.1 0 1.2-3 1.8-3 3.4h3"/>'),
+    ul:SVG('<path d="M10 6h10M10 12h10M10 18h10"/><circle cx="5" cy="6" r="1.2"/><circle cx="5" cy="12" r="1.2"/><circle cx="5" cy="18" r="1.2"/>'),
+    quote:SVG('<path d="M5 5v14"/><path d="M10 7h9M10 12h9M10 17h6"/>'),
+    plus:SVG('<path d="M12 5v14M5 12h14"/>'), smile:SVG('<circle cx="12" cy="12" r="9"/><path d="M8.5 14.5a4.5 4.5 0 0 0 7 0"/><path d="M9 9.5h.01M15 9.5h.01"/>'),
+    video:SVG('<rect x="2.5" y="6" width="13" height="12" rx="2.5"/><path d="M15.5 10.5l6-3.5v10l-6-3.5z"/>'),
+    mic:SVG('<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>'),
+    fwd:SVG('<path d="M15 5l6 6-6 6"/><path d="M21 11H11a7 7 0 0 0-7 7v1"/>'), copy:SVG('<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/>'),
+    trash:SVG('<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>'),
+    send:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.4 20.4L21 12 3.4 3.6 3.3 10.2 15 12 3.3 13.8z"/></svg>'};
+  const tb=(act, v, label, inner, on, cls)=>'<button type="button" class="tb'+(on?' on':'')+(cls?' '+cls:'')+'" data-act="'+act+'"'+(v?' data-v="'+v+'"':'')+' title="'+esc(label)+'" aria-label="'+esc(label)+'"'+(on!==undefined && on!==null && act==='fmt'?' aria-pressed="'+(on?'true':'false')+'"':'')+'>'+inner+'</button>';
+  function stagedHTML(st){
+    return st ? '<div class="staged"><div class="thumb">'+(st.photo ? '<img src="'+esc(st.photo)+'" alt="The photo you’re sending">' : '<video src="'+esc(st.video)+'" muted playsinline preload="metadata"></video><span class="kind">🎥 Video</span>')+
+      '<button class="x" data-act="unstage" aria-label="Don’t send this '+(st.photo?'photo':'video')+'" title="Remove">×</button></div>'+
+      '<div class="hint">Add a message if you like, then press <b>Send</b> - they go together.</div></div>' : '';
+  }
+  function composerHTML2(c){
+    const st=STAGED[c.id], ph=st ? 'Add a message…' : 'Message '+c.name+'…';
+    return '<div class="composer v2">'+stagedHTML(st)+'<div class="cbox">'+
+      (fmtOn() ? '<div class="fmt" role="toolbar" aria-label="Formatting">'+
+        tb('cmd','bold','Bold','<b>B</b>')+tb('cmd','italic','Italic','<i>I</i>')+tb('cmd','underline','Underline','<u>U</u>')+tb('cmd','strikeThrough','Strikethrough','<s>S</s>')+'<span class="sep"></span>'+
+        tb('link','','Link',ICO.link)+tb('cmd','insertOrderedList','Numbered list',ICO.ol)+tb('cmd','insertUnorderedList','Bulleted list',ICO.ul)+'<span class="sep"></span>'+tb('quote','','Quote',ICO.quote)+'</div>' : '')+
+      '<div id="txt" class="ed blank" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Message" data-ph="'+esc(ph)+'" data-nomic spellcheck="true"></div>'+
+      '<div class="cbar">'+tb('attach','','Add a photo or video',ICO.plus)+tb('fmt','','Formatting','<span style="text-decoration:underline;font-weight:600">Aa</span>',fmtOn())+
+        tb('emoji','','Emoji',ICO.smile)+tb('mention','','Mention someone','<span style="font-size:17px;font-weight:600">@</span>')+'<span class="sep"></span>'+
+        tb('record','','Record a video',ICO.video)+(SR ? tb('mic','','Talk to type',ICO.mic,!!micRec,'mic') : '')+
+        '<span class="grow"></span><button type="button" class="sendb" data-act="send" title="Send (Enter) · new line: Shift+Enter" aria-label="Send">'+ICO.send+'</button></div>'+
+      '</div></div>';
+  }
+  /* The message box's contents: {text, html, mentions} - mentions become <at id="n">Name</at> for Teams. */
+  const isEd=t=>!!(t && t.isContentEditable);
+  function edGet(t){
+    if(!isEd(t)) return {text:String((t && t.value)||'').trim()};
+    const clone=t.cloneNode(true), mentions=[];
+    clone.querySelectorAll('.mention').forEach(sp=>{ const i=mentions.length; mentions.push({id:sp.dataset.uid||'', name:sp.dataset.name||''});
+      const at=document.createElement('at'); at.setAttribute('id', String(i)); at.textContent=sp.dataset.name||''; sp.replaceWith(at); });
+    const text=String(t.innerText||'').replace(/ /g,' ').trim();
+    return {text, html:text || mentions.length ? clone.innerHTML : '', mentions};
+  }
+  function edClear(t){ if(isEd(t)){ t.innerHTML=''; t.classList.add('blank'); } else if(t){ t.value=''; t.style.height='auto'; } }
+  function edEmptyMark(t){ if(isEd(t)) t.classList.toggle('blank', !String(t.innerText||'').replace(/ /g,' ').trim() && !t.querySelector('.mention,li,blockquote')); }
+  let edRange=null;
+  function edSave(){ const t=el('txt'), s=window.getSelection(); if(t && isEd(t) && s.rangeCount && t.contains(s.getRangeAt(0).commonAncestorContainer)) edRange=s.getRangeAt(0).cloneRange(); }
+  function edRestore(){ const t=el('txt'); if(!t) return; t.focus(); if(edRange && t.contains(edRange.commonAncestorContainer)){ const s=window.getSelection(); s.removeAllRanges(); s.addRange(edRange); } }
+  function edInsertText(txt){ edRestore(); document.execCommand('insertText', false, txt); edEmptyMark(el('txt')); edSave(); }
+  /* a small pop-up by a button (emoji, @mention, reactions) */
+  let popEl=null;
+  function popClose(){ if(popEl){ popEl.remove(); popEl=null; } }
+  function popOpen(anchor, html){
+    popClose(); const p=document.createElement('div'); p.className='pop'; p.innerHTML=html; document.body.appendChild(p); popEl=p; p._a=anchor;
+    popPlace(); return p;
+  }
+  /* emoji and @ lists sit just above the whole message box (never over what's being typed), lined up with their button */
+  const boxAnchor=b=>({getBoundingClientRect(){ const r=b.getBoundingClientRect(), c=((b.closest && b.closest('.cbox')) || document.querySelector('.cbox') || b).getBoundingClientRect(); return {left:r.left, right:r.right, top:c.top, bottom:c.bottom}; }});
+  function popPlace(){
+    const p=popEl; if(!p) return; const r=p._a.getBoundingClientRect(), w=p.offsetWidth, h=p.offsetHeight;
+    let left=Math.max(8, Math.min(r.left, window.innerWidth-w-8)), top=r.top-h-8; if(top<8) top=Math.min(window.innerHeight-h-8, r.bottom+8);
+    p.style.left=left+'px'; p.style.top=Math.max(8, top)+'px';
+  }
+  const EMOJI='😀 😃 😄 😁 😆 😅 😂 🙂 😉 😊 😍 🥰 😘 😎 🤩 🥳 🤔 😐 😴 😮 😢 😭 😡 🙄 😬 😷 🤒 👍 👎 👏 🙌 🙏 💪 👋 🤝 👌 ✌️ 🤞 👀 ❤️ 💙 💚 💛 🧡 💜 💯 🔥 ⭐ ✨ 🎉 🎂 🎁 ✅ ❌ ⚠️ ❓ 📅 ⏰ 📞 📷 🎥 📎 🦷 😁 🪥 💰 ☕ 🍕 🌮 🌵 ☀️ 🌧️ 🏠 🚗'.split(' ').filter((x,i,a)=>x && a.indexOf(x)===i);
+  const QUICK=['👍','❤️','😆','😮','😢','🙏'];
+  const emojiGrid=act=>'<div class="emg">'+EMOJI.map(e=>'<button type="button" data-act="'+act+'" data-v="'+e+'" aria-label="'+e+'">'+e+'</button>').join('')+'</div>';
+  /* THE EMOJI PICKER - like Slack (Jordan 18/11 + screenshot: "All emojis categories and they can search ... Plus skin
+     tone selector"; no GIFs). Tabs for Frequently used + Unicode's 8 categories, "Search all emoji" (names and everyday
+     words: "good" finds 👍), the emoji under the pointer and its name at the bottom, Skin tone (kept on this device).
+     The list (emoji.js, 1,849 emoji, Unicode's own data) loads a moment after the chat opens, or when first needed.
+     Used for the message box and for "More emoji" on a reaction. */
+  const SKIN_KEY='ph_chat_skin', RECENT_KEY='ph_chat_emoji_recent';
+  const MODS=['\u{1F3FB}','\u{1F3FC}','\u{1F3FD}','\u{1F3FE}','\u{1F3FF}'];
+  const DEFAULT_RECENT=['👍','❤️','🙏','😂','🎉','✅','👀','🔥','💯','👏','😊','🙌','💪','😍','🤔','😅','👋','⭐'];
+  let emoP=null, EMO_IX=null;
+  function emoLoad(){
+    if(window.PH_EMOJI) return Promise.resolve(window.PH_EMOJI);
+    if(emoP) return emoP;
+    emoP=new Promise((res, rej)=>{ const sc=document.createElement('script'); sc.src='emoji.js?v=hc268d202611250847'; sc.async=true;
+      sc.onload=()=>window.PH_EMOJI ? res(window.PH_EMOJI) : rej(new Error('no emoji')); sc.onerror=()=>{ emoP=null; sc.remove(); rej(new Error('no emoji')); };
+      document.head.appendChild(sc); });
+    return emoP;
+  }
+  const emoIndex=D=>{ if(!EMO_IX){ EMO_IX={}; D.cats.forEach(c=>c.e.forEach(x=>{ EMO_IX[x[0]]=x; })); } return EMO_IX; };
+  const skinGet=()=>{ try{ const v=localStorage.getItem(SKIN_KEY); const n=v===null ? -1 : parseInt(v,10); return n>=0 && n<5 ? n : -1; }catch(_){ return -1; } };
+  /* the emoji in the chosen skin tone: 1 = the tone goes right after its first character (an FE0F there dropped); a
+     list = Unicode's own five spelled out (people holding hands, kisses, couples) */
+  function toned(ent, t){
+    if(t<0 || !ent || !ent[3]) return ent ? ent[0] : '';
+    if(Array.isArray(ent[3])) return ent[3][t] || ent[0];
+    const cps=Array.from(ent[0]); let rest=cps.slice(1); if(rest[0]==='️') rest=rest.slice(1);
+    return cps[0]+MODS[t]+rest.join('');
+  }
+  function recentGet(){ try{ const a=JSON.parse(localStorage.getItem(RECENT_KEY)||'null'); if(Array.isArray(a) && a.length) return a.filter(x=>typeof x==='string' && x.length<=16).slice(0,27); }catch(_){} return DEFAULT_RECENT.slice(); }
+  function recentAdd(base){ if(!base) return; const a=recentGet().filter(x=>x!==base); a.unshift(base); try{ localStorage.setItem(RECENT_KEY, JSON.stringify(a.slice(0,27))); }catch(_){} }
+  const EMO_ICONS={recent:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>', people:'<circle cx="12" cy="12" r="9"/><path d="M8.5 14.5a4.5 4.5 0 0 0 7 0"/><path d="M9 9.5h.01M15 9.5h.01"/>',
+    nature:'<path d="M5 19c0-8 5-13 14-14-1 9-6 14-14 14z"/><path d="M5 19l7-7"/>', food:'<path d="M4 11a8 6 0 0 1 16 0z"/><path d="M4 14h16M5 17.5h14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z"/>',
+    activity:'<ellipse cx="12" cy="12" rx="9.5" ry="6" transform="rotate(-45 12 12)"/><path d="M9.5 14.5l5-5M11 11.5l1.5 1.5M12.5 10l1.5 1.5"/>',
+    travel:'<path d="M10.5 13.5L4 11l1.5-1.5 7 1 4-4.5c1-1 2.5-1.2 3-.5s.5 2-.5 3l-4.5 4 1 7L13 21l-2.5-6.5z"/>', objects:'<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/>',
+    symbols:'<circle cx="12" cy="12" r="9"/><path d="M12 3v18M12 12l-6.4 6.4M12 12l6.4 6.4"/>', flags:'<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>'};
+  const empBtn=(ent, t)=>{ const v=toned(ent, t); return '<button type="button" data-act="empick" data-v="'+esc(v)+'" data-b="'+esc(ent[0])+'" aria-label="'+esc(ent[1])+'">'+v+'</button>'; };
+  const empCache={};
+  function empSections(D, t){
+    const ix=emoIndex(D), rec=recentGet().map(b=>ix[b] || [b, '', '']);
+    const cats=empCache[t] || (empCache[t]=D.cats.map(c=>'<div class="emsec" data-k="'+c.k+'"><div class="emh">'+esc(c.n)+'</div><div class="emg2">'+c.e.map(x=>empBtn(x, t)).join('')+'</div></div>').join(''));
+    return '<div class="emsec" data-k="recent"><div class="emh">Frequently used</div><div class="emg2">'+rec.map(x=>empBtn(x, t)).join('')+'</div></div>'+cats;
+  }
+  const skinBtn=t=>'<button type="button" class="emskinb" data-act="emskin" title="Skin tone">'+'<b>'+(t<0 ? '✋' : '✋'+MODS[t])+'</b>Skin tone</button>';
+  function empHTML(D){
+    const t=skinGet(), tabs=[['recent','Frequently used']].concat(D.cats.map(c=>[c.k, c.n]));
+    return '<div class="emtabs" role="tablist">'+tabs.map((x,i)=>'<button type="button" data-act="emtab" data-v="'+x[0]+'" title="'+esc(x[1])+'" aria-label="'+esc(x[1])+'"'+(i?'':' class="on"')+'><svg viewBox="0 0 24 24" aria-hidden="true">'+EMO_ICONS[x[0]]+'</svg></button>').join('')+'</div>'+
+      '<div class="emsearch"><input id="emq" type="search" placeholder="Search all emoji" autocomplete="off" spellcheck="false" data-nomic aria-label="Search all emoji"></div>'+
+      '<div class="embody" id="embody">'+empSections(D, t)+'</div>'+
+      '<div class="emfoot"><span class="empv" id="empv"></span>'+skinBtn(t)+'</div>';
+  }
+  /* search: every word must start a word of the name or its everyday words ("thumbs", "good", "+1", ":tada:" works too) */
+  function emoFind(D, q){
+    const ws=String(q||'').toLowerCase().replace(/[:_]/g,' ').split(/\s+/).filter(Boolean); if(!ws.length) return null;
+    const out=[], pop={}; recentGet().concat(DEFAULT_RECENT).forEach((b,i)=>{ if(pop[b]===undefined) pop[b]=i; });
+    D.cats.forEach(c=>c.e.forEach(x=>{
+      const nm=x[1].toLowerCase(), toks=(nm+' '+x[2].toLowerCase()).split(/[\s:,\-“”"()]+/);
+      if(!ws.every(w=>toks.some(k=>k.indexOf(w)===0))) return;
+      const nmt=nm.split(/[\s:,\-]+/);
+      let rank=nm.indexOf(ws.join(' '))===0 ? 0 : ws.every(w=>nmt.some(k=>k.indexOf(w)===0)) ? 2 : ws.every(w=>toks.indexOf(w)>=0) ? 4 : 6;
+      if(pop[x[0]]!==undefined) rank-=1.5;                     // the everyday ones first: "good" -> 👍 before 🫡
+      out.push([rank, out.length, x]); }));
+    return out.sort((a,b)=>a[0]-b[0] || a[1]-b[1]).slice(0,240).map(r=>r[2]);
+  }
+  function empSearch(){
+    const p=popEl, q=el('emq'), body=el('embody'); if(!p || !q || !body || !window.PH_EMOJI) return;
+    const D=window.PH_EMOJI, hits=emoFind(D, q.value), t=skinGet();
+    if(!hits){ body.innerHTML=empSections(D, t); body.scrollTop=0; empSpy(); return; }
+    body.innerHTML=hits.length ? '<div class="emsec" data-k="search"><div class="emh">Search results</div><div class="emg2">'+hits.map(x=>empBtn(x, t)).join('')+'</div></div>'
+      : '<div class="emnone">No emoji match “'+esc(q.value.trim())+'”</div>';
+    body.scrollTop=0;
+  }
+  function empSpy(){
+    const body=el('embody'); if(!body || !popEl) return; let k='recent';
+    body.querySelectorAll('.emsec').forEach(x=>{ if(x.offsetTop-body.scrollTop<=12) k=x.dataset.k; });
+    popEl.querySelectorAll('.emtabs button').forEach(b=>b.classList.toggle('on', b.dataset.v===k));
+  }
+  function emojiPicker(anchor, purpose){
+    const p=popOpen(anchor, '<div class="emload">Loading emoji…</div>'); p.classList.add('emp'); p.dataset.purpose=purpose;
+    if(purpose==='react') p.dataset.kind='react'; else p.dataset.by='emoji';
+    emoLoad().then(D=>{
+      if(popEl!==p) return;
+      p.innerHTML=empHTML(D); popPlace();
+      const body=el('embody');
+      body.addEventListener('scroll', empSpy, {passive:true});
+      body.addEventListener('mouseover', e=>{ const b=e.target.closest && e.target.closest('[data-act="empick"]'), pv=el('empv'); if(b && pv) pv.innerHTML='<b>'+esc(b.dataset.v)+'</b><span>'+esc(b.getAttribute('aria-label')||'')+'</span>'; });
+      body.addEventListener('mouseleave', ()=>{ const pv=el('empv'); if(pv) pv.innerHTML=''; });
+      if(!window.matchMedia('(pointer:coarse)').matches) el('emq').focus();           // a phone keeps its keyboard down until they tap Search
+    }, ()=>{ if(popEl!==p) return; p.classList.remove('emp'); p.innerHTML=emojiGrid(purpose==='react' ? 'reactpick' : 'emojipick'); popPlace(); });
+    return p;
+  }
+  /* TALK TO TYPE - the 🎤 in the bottom row (Jordan: "microphone is below"), into the message box where the cursor is. */
+  let micRec=null;
+  function micToggle(){
+    if(micRec){ try{ micRec.stop(); }catch(_){} return; }
+    const t=el('txt'); if(!t || !SR) return;
+    let r; try{ r=new SR(); }catch(_){ toast('Talk to type isn’t available in this browser.'); return; }
+    r.lang=navigator.language||'en-US'; r.continuous=true; r.interimResults=false;
+    r.onresult=e=>{ for(let i=e.resultIndex;i<e.results.length;i++){ if(!e.results[i].isFinal) continue; let said=e.results[i][0].transcript.trim(); if(!said) continue;
+      const before=String(t.innerText||''); if(before && !/\s$/.test(before)) said=' '+said; edInsertText(said); } };
+    r.onerror=e=>{ const er=e && e.error; if(er==='not-allowed' || er==='service-not-allowed') toast('The microphone is blocked for Home-Brace - allow it in the browser’s settings for this site.'); };
+    r.onend=()=>{ if(micRec===r){ micRec=null; const b=document.querySelector('.cbox .tb.mic'); if(b) b.classList.remove('on'); } };
+    micRec=r; edRestore();
+    try{ r.start(); const b=document.querySelector('.cbox .tb.mic'); if(b) b.classList.add('on'); }catch(_){ micRec=null; }
+  }
+  function linkDlg(){
+    edSave(); const sel=window.getSelection(), has=!!(edRange && !edRange.collapsed);
+    openDlg(top('Add a link')+'<div class="dm-body">'+(has?'':'<label class="lab2">Text<input class="search" id="lktx" placeholder="What it says" autocomplete="off"></label>')+
+      '<label class="lab2">Link<input class="search" id="lkurl" placeholder="https://…" autocomplete="off" inputmode="url"></label><div id="lkerr" class="small" style="color:#b42318;font-weight:700;margin-top:6px"></div></div>'+
+      '<div class="dm-foot"><button class="btn ghost" data-act="close">Cancel</button><button class="btn" data-act="linkok">Add link</button></div>');
+    const fo=()=>{ const f=el(has?'lkurl':'lktx'); if(f && document.activeElement!==f && !(document.activeElement && document.activeElement.closest && document.activeElement.closest('#dlg'))) f.focus(); };
+    fo(); setTimeout(fo, 30);
+  }
+  function linkOk(){
+    let u=String((el('lkurl')||{}).value||'').trim(); const tx=String((el('lktx')||{}).value||'').trim();
+    if(u && !/^[a-z]+:/i.test(u)) u=(/^[^\s@]+@[^\s@]+$/.test(u) ? 'mailto:' : 'https://')+u;
+    if(!CG || !CG._t.safeHref(u)){ const e=el('lkerr'); if(e) e.textContent='That doesn’t look like a web address.'; return; }
+    closeDlg(); edRestore();
+    if(edRange && !edRange.collapsed) document.execCommand('createLink', false, u);
+    else document.execCommand('insertHTML', false, '<a href="'+esc(u)+'">'+esc(tx||u)+'</a>&nbsp;');
+    edEmptyMark(el('txt')); edSave();
+  }
+  function quoteToggle(){
+    edRestore(); const s=window.getSelection(); let n=s.rangeCount ? s.getRangeAt(0).startContainer : null, inQ=false;
+    while(n && n!==el('txt')){ if(n.nodeName==='BLOCKQUOTE'){ inQ=true; break; } n=n.parentNode; }
+    document.execCommand('formatBlock', false, inQ ? '<div>' : '<blockquote>'); edEmptyMark(el('txt')); edSave();
+  }
+  function mentionPop(anchor, typedAt){
+    const c=cur(); if(!c) return;
+    const people=(REALCHAT ? (c.people||[]).filter(p=>p.id!==MEID).map(p=>({id:p.id, name:p.name})) : (c.members||[]).filter(n=>n!==ME).map(n=>({id:'', name:n})));
+    if(!people.length){ toast('Nobody else in this chat to mention.'); return; }
+    mentionTyped=typedAt ? 1 : 0;
+    popOpen(anchor, '<div class="ppl">'+people.map(p=>'<button type="button" data-act="mentionpick" data-uid="'+esc(p.id)+'" data-name="'+esc(p.name)+'">'+personAv(p.name, '')+'<span>'+esc(p.name)+'</span></button>').join('')+'</div>');
+  }
+  let mentionTyped=0, edBusy=false;
+  function mentionPick(uid, name){
+    popClose(); edRestore();
+    const n=mentionTyped; mentionTyped=0; edBusy=true;                   // our own edits don't re-open the list
+    try{
+      for(let k=0;k<n;k++) document.execCommand('delete', false);          // the @ and the letters they typed
+      document.execCommand('insertHTML', false, '<span class="mention" contenteditable="false" data-uid="'+esc(uid)+'" data-name="'+esc(name)+'">@'+esc(name)+'</span>&nbsp;');
+    } finally { edBusy=false; }
+    edEmptyMark(el('txt')); edSave();
+  }
+  /* REACTIONS under a message (Jordan: "add an emoji to their message ... not another message ... its under it"). */
+  function reactsHTML(m){
+    const list=m.reactions||[], c=cur(); if(!V2() || m.pending || m.failed || m.deleted || !m.id || /^local-/.test(String(m.id))) return '';
+    const can=!REALCHAT || (c && CG.canSend(c, MEID)), by={};
+    list.forEach(r=>{ (by[r.emoji]=by[r.emoji]||[]).push(r); });
+    const chips=Object.keys(by).map(e=>{ const rs=by[e], mine=rs.some(r=>r.userId===(REALCHAT?MEID:'me'));
+      return '<button type="button" class="rc'+(mine?' mine':'')+'"'+(can?' data-act="react" data-v="'+esc(e)+'" data-m="'+esc(m.id)+'"':' disabled')+' title="'+esc(rs.map(r=>r.name||'Someone').join(', '))+'">'+e+' <span>'+rs.length+'</span></button>'; }).join('');
+    if(!chips) return '';
+    return '<div class="reacts">'+chips+(can?'<button type="button" class="radd" data-act="reactadd" data-m="'+esc(m.id)+'" title="Add a reaction" aria-label="Add a reaction">'+ICO.smile+'+</button>':'')+'</div>';
+  }
+  /* the toolbar over a message (desktop hover) */
+  function msgBar(m){
+    const c=cur(); if(!V2() || m.pending || m.failed || m.deleted || !m.id || /^local-/.test(String(m.id))) return '';
+    const can=!REALCHAT || (c && CG.canSend(c, MEID));
+    const b=(act, label, inner, cls)=>'<button type="button"'+(cls?' class="'+cls+'"':'')+' data-act="'+act+'" data-m="'+esc(m.id)+'" title="'+esc(label)+'" aria-label="'+esc(label)+'">'+inner+'</button>';
+    return '<div class="mbar">'+(can ? b('reactadd','Add a reaction',ICO.smile+'<small>+</small>') : '')+b('fwd','Forward',ICO.fwd)+
+      (m.text ? b('copytext','Copy text',ICO.copy) : '')+(can && mineOf(m) ? b('msgdel','Delete',ICO.trash,'del') : '')+'</div>';
+  }
+  async function reactToggle(msgId, emoji, onOnly){
+    const c=cur(); if(!c) return; const m=c.msgs.find(x=>String(x.id)===String(msgId)); if(!m) return;
+    const me=REALCHAT ? MEID : 'me', mineR=(m.reactions||[]).find(r=>r.emoji===emoji && r.userId===me), had=!!mineR, on=onOnly ? true : !had;
+    if(on && had) return;
+    const before=(m.reactions||[]).slice(); m._rb=Date.now();
+    m.reactions=on ? before.concat([{emoji, userId:me, name:'You'}]) : before.filter(r=>!(r.emoji===emoji && r.userId===me));
+    const i=c.msgs.indexOf(m); replaceEl(c, m.id, m, c.msgs[i-1]);
+    if(!REALCHAT) return;
+    try{ await CG.react(c, MEID, m.id, emoji, on, on ? '' : (mineR && mineR.raw) || ''); m._rb=Date.now(); }
+    catch(e){ m._rb=0; m.reactions=before; const j=c.msgs.indexOf(m); replaceEl(c, m.id, m, c.msgs[j-1]); toast('Not saved: '+((e && e.message)||'Microsoft didn’t answer')); }
+  }
+  /* THE PHOTO VIEWER (Jordan: "Clicking on photo in chat that brings up bigger view exactly like slack does"):
+     full screen, who sent it and when, ← → (and swipe) between the chat's photos, Esc or × to close. */
+  let lb=null;
+  function lbOpen(img){
+    const list=[...el('msgs').querySelectorAll('.media img[src]')].filter(x=>x.src); let i=Math.max(0, list.indexOf(img));
+    lbClose(); lb=document.createElement('div'); lb.className='lb'; lb.setAttribute('role','dialog'); lb.setAttribute('aria-label','Photo');
+    const paint=()=>{ const x=list[i], mEl=x.closest('[data-mid]'), c=cur(), m=c && mEl ? c.msgs.find(z=>String(z.id)===mEl.dataset.mid) : null;
+      lb.innerHTML='<div class="lbtop"><span class="who">'+esc(m ? (mineOf(m)?'You':m.from) : '')+'<small>'+esc(m ? dayLabel(m.at)+' · '+clock(m.at) : '')+(list.length>1?' · '+(i+1)+' of '+list.length:'')+'</small></span>'+
+        '<a href="'+esc(x.src)+'" target="_blank" rel="noopener">Open full size</a><button type="button" data-lb="x" aria-label="Close">✕</button></div>'+
+        '<button type="button" class="lbnav p" data-lb="p" aria-label="Previous photo"'+(i>0?'':' hidden')+'>‹</button><img src="'+esc(x.src)+'" alt="'+esc(x.alt||'Photo')+'">'+
+        '<button type="button" class="lbnav n" data-lb="n" aria-label="Next photo"'+(i<list.length-1?'':' hidden')+'>›</button>'; };
+    const go=d=>{ const j=i+d; if(j<0 || j>=list.length) return; i=j; paint(); };
+    paint(); document.body.appendChild(lb);
+    lb.addEventListener('click', e=>{ const b=e.target.closest('[data-lb]'); if(b){ e.preventDefault(); if(b.dataset.lb==='x') lbClose(); else go(b.dataset.lb==='n'?1:-1); return; } if(e.target===lb) lbClose(); });
+    let sx=null; lb.addEventListener('touchstart', e=>{ sx=e.touches.length===1 ? e.touches[0].clientX : null; }, {passive:true});
+    lb.addEventListener('touchend', e=>{ if(sx==null) return; const dx=e.changedTouches[0].clientX-sx; sx=null; if(Math.abs(dx)>50) go(dx<0?1:-1); }, {passive:true});
+    lb._key=e=>{ if(e.key==='Escape') lbClose(); else if(e.key==='ArrowRight') go(1); else if(e.key==='ArrowLeft') go(-1); };
+    document.addEventListener('keydown', lb._key);
+  }
+  function lbClose(){ if(!lb) return; document.removeEventListener('keydown', lb._key); lb.remove(); lb=null; }
+  function composerHTML(c){
+    if(V2()) return composerHTML2(c);
+    const st=STAGED[c.id];
+    return '<div class="composer">'+
+      (st ? '<div class="staged"><div class="thumb">'+(st.photo ? '<img src="'+esc(st.photo)+'" alt="The photo you’re sending">' : '<video src="'+esc(st.video)+'" muted playsinline preload="metadata"></video><span class="kind">🎥 Video</span>')+
+        '<button class="x" data-act="unstage" aria-label="Don’t send this '+(st.photo?'photo':'video')+'" title="Remove">×</button></div>'+
+        '<div class="hint">Add a message if you like, then press <b>Send</b> - they go together.</div></div>' : '')+
+      '<button class="ib" data-act="attach" title="Send a photo or a video from your phone or computer" aria-label="Send a photo or video"><svg viewBox="0 0 24 24"><path d="M21 11.5l-8.6 8.6a5.5 5.5 0 0 1-7.8-7.8l8.6-8.6a3.7 3.7 0 0 1 5.2 5.2l-8.6 8.6a1.8 1.8 0 0 1-2.6-2.6l7.9-7.9"/></svg></button>'+
+      '<button class="ib rec" data-act="record" title="Record a video (up to 5 minutes)" aria-label="Record a video"><svg viewBox="0 0 24 24"><rect x="2.5" y="6" width="13" height="12" rx="2.5"/><path d="M15.5 10.5l6-3.5v10l-6-3.5z"/></svg></button>'+
+      '<textarea id="txt" rows="1" placeholder="'+(st ? 'Add a message…' : 'Message'+(window.matchMedia('(min-width:761px)').matches?' '+esc(c.name):'')+'…')+'" aria-label="Message"></textarea>'+
+      '<button class="ib send" data-act="send" title="Send" aria-label="Send"><svg viewBox="0 0 24 24"><path d="M4 12l16-8-6 16-2.5-6.5z"/></svg></button></div>';
+  }
+  /* Redraw only the message box, keeping what's typed in it. */
+  function paintComposer(focus){
+    const c=cur(), box=el('conv') && el('conv').querySelector('.composer'); if(!c || !box) return;
+    const t=el('txt'), v=t ? (isEd(t) ? t.innerHTML : t.value) : '';
+    box.outerHTML=composerHTML(c);
+    const t2=el('txt'); if(t2){ if(isEd(t2)){ if(t && isEd(t)) t2.innerHTML=v; else if(v) t2.textContent=v; edEmptyMark(t2); }
+      else { t2.value=t && isEd(t) ? String(t.innerText||'') : v; t2.style.height='auto'; t2.style.height=Math.min(120,t2.scrollHeight)+'px'; }
+      if(focus){ t2.focus(); if(isEd(t2)){ const r=document.createRange(); r.selectNodeContents(t2); r.collapse(false); const sl=window.getSelection(); sl.removeAllRanges(); sl.addRange(r); } } }
+  }
+  function stage(m){
+    const c=cur(); if(!c){ toast('Open a chat first.'); return; }
+    if(REALCHAT && !CG.canSend(c, MEID)){ toast(ONLIVE ? 'Pilot: you can only send to the pilot group for now.' : 'Test: you can only send to your testers.'); return; }
+    STAGED[c.id]=m; paintComposer(true);
+  }
+  /* Send what's typed, with the waiting photo/video if there is one. */
+  function sendNow(){
+    const c=cur(), t=el('txt'); if(!c || !t) return;
+    const v=edGet(t), text=v.text, st=STAGED[c.id], rich=v.html ? {html:v.html, mentions:v.mentions||[]} : null;
+    if(!text && !st && !(rich && rich.mentions.length)) return;
+    edClear(t); popClose();
+    if(st){ delete STAGED[c.id]; paintComposer(true); send(Object.assign({}, st, {text, rich})); }
+    else send({text, rich});
+  }
+  function afterConv(c, box){
+    const ms=el('msgs');
+    if(!ms){ if(REALCHAT) hydrate(box); return; }
+    /* OPENS AT THE NEWEST MESSAGE, AND STAYS THERE (Jordan 18/11: "when clicking on chat it should go to the bottom of the
+       chat right away"). Teams pictures are filled in a moment after the chat opens (hydrate), and each one pushed the
+       newest messages down out of sight - only pictures already there were watched. Now EVERY picture or video frame
+       that loads in the chat, whenever it loads, brings the bottom back - unless they scrolled up themselves. */
+    stick=true;
+    const follow=()=>{ if(stick) ms.scrollTop=ms.scrollHeight; };
+    ms.addEventListener('load', follow, true);
+    ms.addEventListener('loadedmetadata', follow, true);
+    ms.addEventListener('scroll', ()=>{ stick=ms.scrollTop+ms.clientHeight>=ms.scrollHeight-40; }, {passive:true});
+    if(REALCHAT) hydrate(box);
+    follow(); setTimeout(follow, 0); setTimeout(follow, 250);
+    if(window.ResizeObserver){ if(ro) ro.disconnect(); ro=new ResizeObserver(follow); ro.observe(ms); }
+  }
+  /* show=false: select it without leaving the list (a phone shows one or the other) */
+  function openChat(id, show){
+    open=id; const c=CHATS.find(x=>x.id===id); const had=c && c.unread; if(c) c.unread=0;
+    if(show!==false) el('app').classList.add('open');
+    renderList(); renderConv(); fit();
+    if(REALCHAT && c){
+      if(!c.loaded) loadChat(c);
+      if(had || show!==false) readIt(c, true);
+    }
+  }
+
+  /* ---------- sending, and a made-up reply a few seconds later ---------- */
+  function addMsg(c, m){
+    c.msgs.push(m);
+    if(open===c.id){ renderConv(); } else { c.unread=(c.unread||0)+1; }
+    renderList();
+  }
+  function send(m){
+    if(REALCHAT) return sendReal(m);
+    const c=CHATS.find(x=>x.id===open); if(!c) return;
+    const mm=Object.assign({from:ME, at:Date.now(), id:'d'+Date.now()}, m);
+    if(m.rich && m.rich.html && CG) mm.richHtml=CG.cleanRich(m.rich.html.replace(/<at id="\d+">/g,'<at>'));
+    delete mm.rich;
+    addMsg(c, mm);
+    const others=c.members.filter(n=>n!==ME); if(!others.length) return;
+    const who=others[Math.floor(Math.random()*others.length)];
+    // the reply comes straight back (Jordan, 22/10: "make the sandbox one instant too")
+    setTimeout(()=>{
+      const r={from:who, at:Date.now(), id:'d'+Date.now()+'r', text:REPLIES[Math.floor(Math.random()*REPLIES.length)]};
+      addMsg(c, r);
+      if(alertsOn) notify(c, r);
+    }, 500);
+  }
+  /* the alert a phone would show */
+  let nt=null;
+  function notify(c, m){
+    const n=el('notif');
+    n.innerHTML='<img src="../assets/logo-mark.png?v=2" alt=""><div style="flex:1;min-width:0"><div class="t"><span>HOME-BRACE</span><span>now</span></div>'+
+      '<b>'+esc(c.type==='person' ? m.from : m.from+' · '+c.name)+'</b><div class="x2">'+esc(m.video?'🎥 Sent a video':m.photo?'📷 Sent a photo':m.text)+'</div></div>';
+    n.dataset.chat=c.id; n.classList.add('on'); clearTimeout(nt); nt=setTimeout(()=>n.classList.remove('on'), 4200);
+  }
+  let tt=null; function toast(t){ const x=el('toast'); x.textContent=t; x.classList.add('on'); clearTimeout(tt); tt=setTimeout(()=>x.classList.remove('on'), 3000); }
+
+  /* ---------- dialogs ---------- */
+  function openDlg(html){ el('dlgcard').innerHTML=html; el('dlg').classList.add('open'); }
+  function closeDlg(){ stopCamera(); el('dlg').classList.remove('open'); }
+  const top=t=>'<div class="dm-top"><h3>'+t+'</h3><button class="x" data-act="close" aria-label="Close">×</button></div>';
+  /* Turning alerts on (Jordan, 22/10: "This isn't very clear"): only the steps for the device in your hand, in plain
+     words, with a picture of the question the browser or phone asks. Another device's steps are a click away. */
+  let alertTab=DEVICE;
+  const SHARE='<svg viewBox="0 0 24 24"><path d="M12 15V3M8 7l4-4 4 4"/><path d="M7 11H5v10h14V11h-2"/></svg>';
+  function alertsDlg(){
+    if(alertsOn && alertTab===DEVICE) return alertsOnDlg();
+    const st=REAL ? PH_ALERTS.state() : '';
+    if(alertTab===DEVICE && (st==='blocked' || st==='unsupported')){
+      return openDlg(top(st==='blocked'?'Alerts are blocked on this device':'This browser can’t get alerts')+'<div class="dm-body"><div class="lead">'+
+        (st==='blocked' ? (DEVICE==='iphone' ? 'This iPhone said no before. Open <b>Settings → Notifications → Home-Brace → Allow Notifications</b>, then come back and turn them on.'
+                                             : 'This browser said no before. Click the icon left of the web address → <b>Notifications → Allow</b>, then reload.')
+                        : 'Try Safari on an iPhone (added to the home screen), or Chrome, Edge, Safari or Firefox on Android or a computer.')+
+        '</div></div><div class="dm-foot"><button class="btn" data-act="close">Got it</button></div>');
+    }
+    const t=alertTab, mine=t===DEVICE, pc=t==='computer';
+    const name={iphone:'iPhone', android:'Android phone', computer:'computer'}[t];
+    const title=mine ? 'Get alerts on '+(pc?'this computer':'your '+name) : 'Alerts on '+(pc?'a computer':'an '+name);
+    const ask=pc ? '<div class="bp"><div class="bp-t">🔔 <b>Home-Brace</b> wants to<br>show notifications</div><div class="bp-b"><span>Block</span><span class="go">Allow</span></div></div>'
+                 : '<div class="bp ph"><div class="bp-t"><b>“Home-Brace” would like to send you notifications</b></div><div class="bp-b"><span>Don’t Allow</span><span class="go">Allow</span></div></div>';
+    let lead, steps, foot;
+    if(t==='iphone' && !(mine && INSTALLED)){
+      lead='Your iPhone shows a new message like a text, even when Home-Brace is closed. Apple only allows that for apps on the home screen, so first put Home-Brace there. You do this once.';
+      steps=['In Safari, tap the Share button <span class="ui">'+SHARE+'</span> at the bottom of the screen.',
+             'Tap <span class="ui">Add to Home Screen</span>, then <span class="ui">Add</span>.',
+             'Open Home-Brace from its new icon, go to Chat and tap <span class="ui">Turn on</span>. Your iPhone asks - tap <b>Allow</b>.'+ask];
+      foot='<button class="btn" data-act="close">Got it</button>';
+    } else {
+      lead=pc ? 'A small alert pops up in the corner of your screen when someone messages you - even while you’re in another window.'
+              : 'Your phone shows a new message like a text, even when Home-Brace is closed.';
+      steps=[(pc?'Click':'Tap')+' <span class="ui">Turn on alerts</span> below.',
+             (pc?'Your browser asks to show notifications. Click':'Your phone asks. Tap')+' <b>Allow</b>.'+ask];
+      foot=mine ? '<button class="btn ghost" data-act="close">Not now</button><button class="btn" data-act="alertson">Turn on alerts</button>'
+                : '<button class="btn" data-act="close">Got it</button>';
+    }
+    const others=['iphone','android','computer'].filter(x=>x!==t).map(x=>'<button data-act="atab" data-v="'+x+'">'+{iphone:'iPhone',android:'Android',computer:'Computer'}[x]+'</button>').join(' · ');
+    openDlg(top(title)+'<div class="dm-body"><div class="lead">'+lead+'</div><ol class="steps">'+steps.map(x=>'<li>'+x+'</li>').join('')+'</ol>'+
+      (t==='iphone'?'<div class="note">iPhones need iOS 16.4 or newer (from 2023 on).</div>':'')+
+      '<div class="other">Setting up a different device? '+others+'</div></div><div class="dm-foot">'+foot+'</div>');
+  }
+  function alertsOnDlg(){
+    openDlg(top('Alerts are on ✓')+'<div class="dm-body"><div class="lead">When someone messages you, '+
+      (DEVICE==='computer'?'an alert pops up in the corner of your screen.':'your phone shows it like a text.')+'</div>'+
+      '<div><button class="btn ghost" data-act="sample">'+(REAL?'Send me a test alert':'Show me a sample')+'</button></div>'+
+      (REAL?'<div class="other">It arrives in about 5 seconds - '+(DEVICE==='computer'?'switch to another window to see it pop up.':'lock your phone to see it.')+'</div>':'')+
+      '<div class="other">To turn them off later, click the bell next to New chat.</div></div>'+
+      '<div class="dm-foot"><button class="btn ghost" data-act="alertsoff">Turn alerts off</button><button class="btn" data-act="close">Done</button></div>');
+  }
+  function newChatDlg(){
+    const staff=(window.STAFF||[]).map(p=>p.n).filter(n=>n && n!==ME && !/Avery/i.test(n)).slice(0,40);
+    /* The offices and teams as Admin has them (Locations; Teams & Access) - a new office or team shows up here by itself
+       (17/11/2026, "Everything we build needs to be scalable"). The lists below only if Admin's haven't been read yet. */
+    const fromAdmin=f=>{ try{ const x=(window.PH && PH[f]) ? PH[f]() : []; return Array.isArray(x) ? x.filter(Boolean) : []; }catch(_){ return []; } };
+    const offices=fromAdmin('officeNames').length ? fromAdmin('officeNames') : ['Cedar Grove','Northpoint','Lakeview','Westfield','Brookside','Hillcrest','Riverbend','Meadow Park'];
+    const teams=fromAdmin('teamNames').length ? fromAdmin('teamNames') : ['Doctors','TCs','Office Managers','Leadership Team','Marketing Team'];
+    openDlg(top('New chat')+'<div class="dm-body"><input class="search" id="nq" placeholder="Search a person, an office or a team" autocomplete="off"><div class="pick" id="pick">'+
+      (GROUPS() ? '<button data-act="grpnew">'+avatar({type:'group', name:'New group'}, true)+'<span><b>＋ New group</b><small>Give it a name and pick the people</small></span></button>' : '')+
+      '<div class="grp">Offices - everyone who works there</div>'+offices.map(o=>'<button data-act="mk" data-t="office" data-v="'+esc(o)+' office">'+avatar({type:'office',name:o},true)+'<span>'+esc(o)+' office</span></button>').join('')+
+      '<div class="grp">Teams</div>'+teams.map(t=>'<button data-act="mk" data-t="team" data-v="'+esc(t)+'">'+avatar({type:'team',name:t},true)+'<span>'+esc(t)+'</span></button>').join('')+
+      '<div class="grp">People</div>'+staff.map(n=>'<button data-act="mk" data-t="person" data-v="'+esc(n)+'">'+personAv(n)+'<span>'+esc(n)+'</span></button>').join('')+
+      '</div></div>');
+    setTimeout(()=>{ const i=el('nq'); if(i) i.focus(); }, 30);
+  }
+
+  /* ---------- recording a video: the camera, up to 5 minutes, kept in this browser ---------- */
+  function stopCamera(){
+    if(recState){ try{ recState.rec && recState.rec.state!=='inactive' && recState.rec.stop(); }catch(_){}
+      if(recState.stream) recState.stream.getTracks().forEach(t=>t.stop()); clearInterval(recState.timer); recState=null; }
+  }
+  function recordDlg(){
+    openDlg(top('Record a video')+'<div class="dm-body"><div class="cam" id="cam"><div class="msg">Starting your camera…</div><span class="clock" id="clk">0:00</span></div>'+
+      '<div class="note" id="recnote">Up to 5 minutes. It’s sent to <b>'+esc((CHATS.find(x=>x.id===open)||{}).name||'')+'</b> and kept in your own Microsoft 365.</div></div>'+
+      '<div class="dm-foot" id="recfoot"><button class="btn ghost" data-act="close">Cancel</button><button class="btn" id="recbtn" data-act="recgo" disabled>● Record</button></div>');
+    if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || typeof MediaRecorder==='undefined'){
+      el('cam').innerHTML='<div class="msg">This browser can’t use the camera here. In Home-Brace on a phone or a computer with a camera, this is where you record.</div>'; return;
+    }
+    navigator.mediaDevices.getUserMedia({video:{facingMode:'user'}, audio:true}).then(stream=>{
+      recState={stream, chunks:[], rec:null, started:0, timer:null};
+      const cam=el('cam'); cam.innerHTML='<video id="live" autoplay muted playsinline></video><span class="clock" id="clk">0:00</span>';
+      el('live').srcObject=stream; el('recbtn').disabled=false;
+    }, ()=>{
+      el('cam').innerHTML='<div class="msg">The camera wasn’t allowed. Allow the camera for this site and try again - or press 📎 to send a video you already have.</div>';
+    });
+  }
+  function recGo(){
+    if(!recState) return;
+    const types=['video/mp4','video/webm;codecs=vp9,opus','video/webm'];
+    const type=types.find(t=>MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t))||'';
+    const rec=new MediaRecorder(recState.stream, type?{mimeType:type}:undefined);
+    recState.rec=rec; recState.chunks=[]; recState.started=Date.now();
+    rec.ondataavailable=e=>{ if(e.data && e.data.size) recState && recState.chunks.push(e.data); };
+    rec.onstop=()=>{
+      if(!recState) return;
+      const blob=new Blob(recState.chunks,{type:rec.mimeType||'video/webm'}), url=URL.createObjectURL(blob); objectUrls.push(url);
+      const secs=Math.max(1,Math.round((Date.now()-recState.started)/1000));
+      const ext=/mp4/.test(rec.mimeType||'') ? 'mp4' : 'webm';
+      recState.done={url, blob, dur:Math.floor(secs/60)+':'+String(secs%60).padStart(2,'0'),
+        name:'Home-Brace video '+new Date().toISOString().slice(0,16).replace('T',' ').replace(':','.')+'.'+ext};
+      recState.stream.getTracks().forEach(t=>t.stop());
+      el('cam').classList.remove('recording');
+      el('cam').innerHTML='<video src="'+url+'" controls playsinline></video>';
+      el('recfoot').innerHTML='<button class="btn ghost" data-act="retake">Record again</button><button class="btn" data-act="recsend">Use this video</button>';
+    };
+    rec.start(250);
+    el('cam').classList.add('recording');
+    el('recfoot').innerHTML='<button class="btn" data-act="recstop">■ Stop</button>';
+    recState.timer=setInterval(()=>{
+      const s=Math.floor((Date.now()-recState.started)/1000), c=el('clk'); if(c) c.textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0')+' / 5:00';
+      if(s>=300) recState.rec.stop();
+    }, 250);
+  }
+
+  /* ================= THE REAL CHAT (12/11/2026) =================
+     Microsoft Teams underneath (chatgraph.js). The list refreshes every 20 seconds and the open chat every 5, only
+     while the page is on screen. New messages are added to the bottom - nothing playing is interrupted. */
+  const cur=()=>CHATS.find(x=>x.id===open)||null;
+  const adminNow=()=>{ try{ return !!(window.PH && PH.isAdmin && PH.isAdmin()); }catch(_){ return false; } };
+  const photoOf=em=>em && window.PH && PH.photoFor ? PH.photoFor(em) : '';
+  function myEmail(){ const P=window.PH && PH.profileOf && PH.profileOf(); return String((P && (P.mail||P.userPrincipalName))||'').toLowerCase(); }
+  function loading(){
+    el('items').innerHTML='<div class="empty" style="padding:30px 16px">Loading your Teams chats…</div>';
+    el('conv').innerHTML='<div class="empty">Loading…</div>';
+  }
+  function ribbon(){
+    const r=el('ribbon'); if(!r || !CG) return;
+    if(REALCHAT && ONLIVE){
+      let b=el('pilotbar'); if(!b){ b=document.createElement('div'); b.id='pilotbar'; b.className='pilotbar'; r.parentNode.insertBefore(b, r); }
+      b.innerHTML='CHAT PILOT - only the pilot group has this for now. You can message the others in it.<button data-act="testers">Who’s in it ('+CG.testers().length+')</button>';
+      return;
+    }
+    if(REALCHAT){
+      r.className='ribbon real';
+      r.innerHTML='REAL CHAT TEST - only you see this. Your real Teams chats; you can only send to your testers.'+
+        '<button data-act="testers">Testers ('+CG.testers().length+')</button><button data-act="mock">Back to the mock-up</button>';
+    } else if(!(window.PH && PH.isLive && PH.isLive()) && CG.signedIn() && adminNow() && !r.querySelector('[data-act="tryreal"]')){
+      r.insertAdjacentHTML('beforeend', '<button data-act="tryreal" title="Only you, on this device. Everyone else keeps seeing the mock-up.">Test the real chat</button>');
+    }
+  }
+  /* A CHAT STARTED FROM ANOTHER PAGE (Home's celebrations, Jordan 18/11/2026: "a reach out ... message that automatically
+     opens a chat to that staff member for them to write a message"). chat.html#to=<email>&name=<Name>&say=<text> opens
+     (or starts) the chat with that person and puts the text in the box - ready to change and send. Nothing is sent by
+     itself. Real chat: the person is found by email (CG.userByEmail) and the one-to-one chat made/found (CG.createChat). */
+  const hashTo=()=>{ const g=k=>{ const m=new RegExp('[#&]'+k+'=([^&]*)').exec(location.hash||''); try{ return m ? decodeURIComponent(m[1]) : ''; }catch(_){ return ''; } };
+    return {to:g('to').toLowerCase().trim().slice(0,200), name:g('name').trim().slice(0,80), say:g('say').slice(0,500)}; };
+  function prefill(text){ if(!text) return; setTimeout(()=>{ const t=el('txt'); if(!t) return; if(isEd(t)){ t.textContent=text; edEmptyMark(t); } else t.value=text;
+    t.focus(); try{ const r=document.createRange(); r.selectNodeContents(t); r.collapse(false); const sel=getSelection(); sel.removeAllRanges(); sel.addRange(r); }catch(_){} }, 80); }
+  function openFromLink(){
+    const h=hashTo(); if(!h.to && !h.name) return false;
+    try{ history.replaceState(null, '', location.pathname+location.search); }catch(_){}
+    if(REALCHAT){
+      (async()=>{ try{ toast('Opening the chat…'); const u=await CG.userByEmail(h.to); const ch=await CG.createChat(MEID, [u.id], '');
+          if(!CHATS.some(c=>c.id===ch.id)){ const people=[{id:MEID, name:ME, email:myEmail()}, u];
+            CHATS.unshift({id:ch.id, type:'person', name:u.name, people, members:people.map(p=>p.name), msgs:[], loaded:true, next:'', unread:0, read:Date.now(), local:true,
+              sub:u.email, photo:photoOf(u.email), lastMsg:{at:Date.now(), text:'', from:'', mine:true}}); renderList(); }
+          openChat(ch.id); prefill(h.say); }
+        catch(e){ toast('Couldn’t open the chat with '+(h.name||h.to)+': '+((e && e.message)||e)); if(CHATS.length) firstOpen(); } })();
+      return true;
+    }
+    const nm=h.name||h.to; let c=CHATS.find(x=>x.type==='person' && x.name===nm);
+    if(!c){ c={id:'n'+Date.now(), type:'person', name:nm, sub:'', members:[nm, ME], unread:0, msgs:[]}; CHATS.push(c); renderList(); }
+    openChat(c.id); prefill(h.say); return true;
+  }
+  const hashChat=()=>{ const m=/[#&]chat=([^&]+)/.exec(location.hash||''); try{ return m ? decodeURIComponent(m[1]) : ''; }catch(_){ return ''; } };
+  /* who sent it, and their email for the photo */
+  function dress(m, c){
+    const p=(c.people||[]).find(x=>x.id===m.fromId);
+    m.fromEmail=p ? p.email : '';
+    if(m.mine) m.from=ME;
+    return m;
+  }
+
+  function startReal(){
+    REALCHAT=true;
+    const P=PH.profileOf ? PH.profileOf() : null;
+    MEID=(P && P.id)||''; ME=(P && P.displayName)||'You';
+    if(!MEID){ REALCHAT=false; return; }                 // never without knowing who this is (CG.mode checks too)
+    CHATS=[]; open=null; el('app').classList.remove('open');
+    ribbon(); renderChips(); loading();
+    loadList(true);
+    /* SPEED (Jordan 18/11: "how long it takes before they receive the message. I want it to be as quick as possible"): the
+       open chat is checked every 2 seconds while you're looking at it (every 6 when the window is visible but in the
+       background), the chat list every 10, and at once when you come back to the window. Nothing while the page isn't
+       visible. Microsoft's "slow down" (429) is obeyed in chatgraph.js call(). Was 5 s / 20 s. */
+    setInterval(()=>{ if(document.visibilityState!=='visible') return; tick++;
+      const looking=!document.hasFocus || document.hasFocus();
+      if(looking || tick%3===0) pollOpen();
+      if(tick%5===0) loadList(false); }, 2000);
+    document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible'){ loadList(false); pollOpen(); } });
+    window.addEventListener('focus', ()=>{ pollOpen(); if(tick%5!==0) loadList(false); });
+    window.addEventListener('hashchange', ()=>{ const w=hashChat(); if(w && CHATS.some(c=>c.id===w)) openChat(w); });
+  }
+  let tick=0, listP=null, loadedOnce=false, openBusy=0;
+  function loadList(first){ if(listP) return listP; listP=doList(first).finally(()=>{ listP=null; }); return listP; }
+  async function doList(first){
+    let got;
+    try{ got=await CG.listChats(MEID); }
+    catch(e){ if(first || !CHATS.length) problem(e); return; }
+    const before={}; CHATS.forEach(c=>{ before[c.id]=c; });
+    CHATS=got.map(g=>{
+      const was=before[g.id], c=was||{msgs:[], loaded:false, next:'', unread:0};
+      know(g.people);
+      const other=g.people.filter(p=>p.id!==MEID);
+      Object.assign(c, {id:g.id, type:g.type, name:g.name, people:g.people, members:g.people.map(p=>p.name), webUrl:g.webUrl, read:g.read,
+        sub:g.type==='person' ? ((other[0] && other[0].email)||'') : '',
+        photo:g.type==='person' && other[0] ? photoOf(other[0].email) : '',
+        lastMsg:{id:g.last.id, at:g.last.at, text:g.last.text, from:g.last.mine ? ME : g.last.from, mine:g.last.mine}});
+      const moved=!!(was && was._lastId && was._lastId!==g.last.id);
+      if(!g.unread) c.unread=0;
+      else if(g.id===open && document.visibilityState==='visible') { /* the open chat is read as it arrives (pollOpen) */ }
+      else c.unread=moved ? (c.unread||0)+1 : Math.max(1, c.unread||0);
+      // a new message from someone else in another chat: the little banner (phones get the real alert)
+      if(loadedOnce && moved && g.unread && g.id!==open) notify(c, {from:g.last.from, text:g.last.text});
+      c._lastId=g.last.id;
+      return c;
+    });
+    /* NEVER DROP THE OPEN CHAT (Jordan 18/11: "it seems like I have to refresh the page to see the next message"). Teams
+       leaves a chat with no message in it yet out of its list, so a chat just made here vanished at the next refresh -
+       and the open chat stopped looking for new messages. A chat made here (local) or the one that's open stays until
+       Teams lists it. */
+    Object.keys(before).forEach(id=>{ const c=before[id]; if(!CHATS.some(x=>x.id===id) && (c.local || id===open)) CHATS.unshift(c); });
+    CHATS.forEach(c=>{ if(c.local && got.some(g=>g.id===c.id)) delete c.local; });
+    renderList();
+    if(first && !loadedOnce){
+      loadedOnce=true;
+      const want=hashChat();
+      if(hashTo().to) openFromLink();
+      else if(want && CHATS.some(c=>c.id===want)) openChat(want);
+      else if(CHATS.length) firstOpen();
+      else el('conv').innerHTML='<div class="empty">No Teams chats yet. Start one with ＋ New chat.</div>';
+      countUnread();
+    }
+    const c=cur(); if(c && c.loaded && c._lastId && !c.msgs.some(m=>m.id===c._lastId)) pollOpen();
+  }
+  /* Exact unread numbers for the first few unread chats (their newest 20 messages, kept for when they're opened). */
+  async function countUnread(){
+    for(const c of CHATS.filter(x=>x.unread && !x.loaded && x.id!==open).slice(0,8)){
+      try{
+        const r=await CG.listMessages(c.id, MEID, null, 20);
+        if(!c.loaded){ c.msgs=r.msgs.map(m=>dress(m,c)); c.next=r.next; c.loaded=true; }
+        if(c.id!==open) c.unread=Math.max(1, c.msgs.filter(m=>!m.mine && m.at>c.read).length);
+      }catch(_){}
+    }
+    renderList();
+  }
+  async function loadChat(c){
+    try{
+      const r=await CG.listMessages(c.id, MEID);
+      c.msgs=r.msgs.map(m=>dress(m,c)).concat(c.msgs.filter(m=>m.pending)); c.next=r.next; c.loaded=true;
+      if(open===c.id) renderConv(); renderList();
+    }catch(e){
+      if(open===c.id){ const ms=el('msgs'); if(ms) ms.innerHTML='<div class="empty">'+esc('Couldn’t load this chat. Microsoft said: '+((e && e.message)||e))+'</div>'; }
+    }
+  }
+  /* The open chat: anything new goes on the bottom. Skipped while one of mine is still sending (no doubles). */
+  async function pollOpen(){
+    const c=cur(); if(!REALCHAT || !c) return;
+    if(!c.loaded){ if(!c._loading){ c._loading=true; loadChat(c).finally(()=>{ c._loading=false; }); } return; }   // heals itself, never goes quiet
+    if((openBusy && Date.now()-openBusy<15000) || c.msgs.some(m=>m.pending)) return;   // a look that hung for 15 s doesn't block the next
+    openBusy=Date.now();
+    try{
+      const r=await CG.listMessages(c.id, MEID, null, 20);
+      if(open!==c.id || c.msgs.some(m=>m.pending)) return;
+      const have={}; c.msgs.forEach(m=>{ if(m.id) have[m.id]=1; });
+      const fresh=r.msgs.filter(m=>!have[m.id]).map(m=>dress(m,c));
+      const rk=x=>(x.reactions||[]).map(q=>q.emoji+'|'+q.userId).sort().join(',');
+      r.msgs.forEach(n=>{ if(!have[n.id]) return; const i=c.msgs.findIndex(x=>x.id===n.id), o=c.msgs[i];
+        if(o && !o.pending && !(o._rb && Date.now()-o._rb<6000) && (rk(o)!==rk(n) || (o.rich||'')!==(n.rich||'') || o.text!==n.text)){ o.reactions=n.reactions; o.rich=n.rich; o.text=n.text; o.edited=n.edited; replaceEl(c, o.id, o, c.msgs[i-1]); } });
+      if(fresh.length){
+        const prev=c.msgs[c.msgs.length-1]; c.msgs=c.msgs.concat(fresh); appendConv(c, fresh, prev);
+        if(fresh.some(m=>!m.mine)) readIt(c, true);
+        renderList();
+      }
+    }catch(_){} finally{ openBusy=0; }
+  }
+  function appendConv(c, list, prev){
+    const ms=el('msgs'); if(!ms || open!==c.id){ if(open===c.id) renderConv(); return; }
+    const was=stick; let h='';
+    list.forEach(m=>{ if(!prev || dayKey(prev.at)!==dayKey(m.at)) h+='<div class="day">'+esc(dayLabel(m.at))+'</div>'; h+=msgHTML(m,c,prev); prev=m; });
+    const e=ms.querySelector(':scope > .empty'); if(e) e.remove();
+    ms.insertAdjacentHTML('beforeend', h); hydrate(ms);
+    if(was) ms.scrollTop=ms.scrollHeight;
+  }
+  function msgEl(id){ const ms=el('msgs'); if(!ms) return null; const all=ms.querySelectorAll('[data-mid]'); for(let i=0;i<all.length;i++) if(all[i].dataset.mid===id) return all[i]; return null; }
+  function replaceEl(c, oldId, m, prev){
+    if(open!==c.id) return; const x=msgEl(oldId); if(!x) return;
+    x.outerHTML=msgHTML(m, c, prev); hydrate(el('msgs'));
+    if(stick){ const ms=el('msgs'); ms.scrollTop=ms.scrollHeight; }
+  }
+  function readIt(c, force){
+    if(!REALCHAT || !c || document.visibilityState!=='visible' || (!force && !c.unread)) return;
+    c.unread=0; c.read=Date.now(); renderList();
+    CG.markRead(c.id, MEID).catch(()=>{});
+  }
+  /* Pictures inside messages, and videos/pictures sent as files: filled in with the sign-in. One that can't be
+     fetched becomes a link to open it in Teams / SharePoint instead. */
+  function hydrate(root){
+    if(!REALCHAT || !root) return;
+    root.querySelectorAll('img[data-hc]:not([data-done])').forEach(img=>{
+      img.dataset.done='1';
+      CG.picture(img.dataset.hc).then(u=>{ img.src=u; }, ()=>{ const d=document.createElement('div'); d.className='bub'; d.textContent='(A picture that couldn’t be loaded - open it in Teams)'; (img.closest('.media')||img).replaceWith(d); });
+    });
+    root.querySelectorAll('[data-ref]:not([data-done])').forEach(x=>{
+      x.dataset.done='1';
+      CG.fileFor(x.dataset.ref).then(f=>{
+        if(!f.url) throw new Error('no address');
+        if(x.tagName==='VIDEO'){ if(f.thumb) x.poster=f.thumb; x.src=f.url; const w=x.parentNode && x.parentNode.querySelector('.wait'); if(w) w.remove(); }
+        else x.src=f.url;
+      }).catch(()=>{
+        const a=document.createElement('a'); a.className='file'; a.href=x.dataset.ref; a.target='_blank'; a.rel='noopener';
+        a.textContent=(x.tagName==='VIDEO'?'🎥 Open the video':'📷 Open the picture')+' in Teams / SharePoint';
+        (x.closest('.media')||x).replaceWith(a);
+      });
+    });
+  }
+
+  /* ---------- sending for real ---------- */
+  async function sendReal(m){
+    const c=cur(); if(!c) return;
+    if(!CG.canSend(c, MEID)){ toast(ONLIVE ? 'Pilot: you can only send to the pilot group for now.' : 'Test: you can only send to your testers.'); return; }
+    const kind=m.blob ? 'video' : m.b64 ? 'photo' : 'text';
+    const rich=m.rich && m.rich.html ? m.rich : null;
+    const local={id:'local-'+Date.now(), at:Date.now(), from:ME, mine:true, pending:true, text:m.text||'', images:[], files:[], rich:rich ? CG.cleanRich(rich.html) : '', reactions:[],
+      localImg:kind==='photo' ? m.photo : '', localVideo:kind==='video' ? m.video : '', progress:kind==='video' ? 0 : null};
+    const prev=c.msgs[c.msgs.length-1]; c.msgs.push(local); c.loaded=true; appendConv(c, [local], prev); renderList();
+    try{
+      let res, warn='';
+      if(kind==='text') res=await CG.sendText(c, MEID, m.text, rich);
+      else if(kind==='photo') res=await CG.sendPhoto(c, MEID, m.b64, m.w, m.h, m.text||'', rich);
+      else {
+        const r=await CG.sendVideo(c, MEID, m.blob, m.name, f=>{ local.progress=f; const x=msgEl(local.id), mt=x && x.querySelector('.meta'); if(mt) mt.textContent='Uploading… '+Math.round(f*100)+'%'; }, m.text||'', rich);
+        res=r.message; if(!r.shared) warn='Sent - but sharing the video with them didn’t work, so they may not be able to open it.';
+      }
+      const got=CG._t.mapMessage(res, MEID) || {};
+      const done=Object.assign({}, local, got, {pending:false, progress:null, mine:true, from:ME, localImg:local.localImg, localVideo:local.localVideo});
+      if(!done.text && m.text) done.text=m.text;
+      if(!done.at) done.at=local.at;
+      const i=c.msgs.indexOf(local); if(i>=0) c.msgs[i]=done;
+      replaceEl(c, local.id, done, c.msgs[i-1]);
+      c._lastId=done.id; c.lastMsg={id:done.id, at:done.at, text:done.text, mine:true, from:ME, video:kind==='video', photo:kind==='photo'};
+      renderList();
+      if(warn) toast(warn); else if(kind!=='text') toast((kind==='video'?'Video':'Photo')+' sent ✓');
+      chatAlert(c, kind, m.text||'');
+    }catch(e){
+      local.pending=false; local.failed=(e && e.message)||'error';
+      replaceEl(c, local.id, local, c.msgs[c.msgs.indexOf(local)-1]);
+      toast('Not sent: '+local.failed);
+    }
+  }
+  /* The phone alert, sent by Home-Brace to the others in the chat (every device they turned on). In the test, only
+     to testers. Messages written in Teams itself don't come through here - the Teams app alerts for those. */
+  function chatAlert(c, kind, text){
+    const A=window.PH_ALERTS; if(!A || !A.ON || !A.sendTo) return;
+    let to=(c.people||[]).filter(p=>p.id!==MEID && p.email).map(p=>p.email);
+    if(CG.TEST){ const ok=CG.testers().map(t=>t.email); to=to.filter(e=>ok.indexOf(e)>=0); }
+    if(!to.length) return;
+    A.sendTo(to, {title:c.type==='person' ? ME : ME+' · '+c.name, body:kind==='video' ? '🎥 Sent a video' : kind==='photo' ? '📷 Sent a photo' : String(text).slice(0,140),
+      url:A.here('chat.html')+'#chat='+encodeURIComponent(c.id), tag:'hb-chat'}, {skipInstant:true}).catch(()=>{});   // a phone with instant chat alerts gets this one from Microsoft already (21/11)
+  }
+  /* Microsoft said no - in words. Before IT approves Chat.ReadWrite this is what shows. */
+  function problem(e){
+    const raw=String(((e && e.errorCode)||'')+' '+((e && e.message)||e||'')).trim();
+    const consent=/AADSTS65001|AADSTS90094|consent_required|interaction_required|invalid_grant|admin approval|InteractionRequired/i.test(raw);
+    const lic=!consent && /licen[cs]e/i.test(raw);
+    const msg=consent ? '<b>Chat isn’t approved by IT yet.</b><br>Microsoft hasn’t given Home-Brace the Teams chat permission (Chat.ReadWrite). Once Evan clicks <b>Grant admin consent</b>, press Try again.'
+      : lic ? '<b>No Teams licence.</b><br>Microsoft says this account can’t use Teams chat.<br><small>'+esc(raw.slice(0,200))+'</small>'
+      : '<b>Couldn’t load your Teams chats.</b><br><small>Microsoft said: '+esc(raw.slice(0,240))+'</small>';
+    el('items').innerHTML='<div class="empty" style="padding:24px 16px">'+msg+'<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px">'+
+      '<button class="btn sm" data-act="retry">Try again</button>'+(consent ? '<button class="btn ghost sm" data-act="askms">Sign in for chat</button>' : '')+
+      '<button class="btn ghost sm" data-act="mock">Back to the mock-up</button></div></div>';
+    el('conv').innerHTML='<div class="empty">'+(consent ? 'Waiting on IT to approve chat.' : '')+'</div>';
+  }
+
+  /* ---------- testers, new chats ---------- */
+  function testersDlg(){
+    const ts=CG.testers();
+    if(ONLIVE){
+      openDlg(top('The pilot group')+'<div class="dm-body"><div class="lead">For now the real chat is just for these people, and you can only send to them.</div>'+
+        '<div class="pick">'+(ts.length ? ts.map(t=>'<div class="trow">'+personAv(t.name, t.email)+'<span style="flex:1;min-width:0">'+esc(t.name)+'<small>'+esc(t.email)+'</small></span></div>').join('') : '<div class="grp">Nobody yet</div>')+'</div>'+
+        '<div class="other">Admin → Chat changes who’s in it.</div></div><div class="dm-foot"><button class="btn" data-act="close">Done</button></div>');
+      return;
+    }
+    openDlg(top('Testers')+'<div class="dm-body"><div class="lead">While you test, the real chat only sends to these people - every other chat is locked. They get real Teams messages from you, so pick people who know you’re testing.</div>'+
+      '<div class="pick">'+(ts.length ? ts.map(t=>'<div class="trow">'+personAv(t.name, t.email)+'<span style="flex:1;min-width:0">'+esc(t.name)+'<small>'+esc(t.email)+'</small></span><button class="x" data-act="tdel" data-v="'+esc(t.email)+'" aria-label="Remove '+esc(t.name)+'">×</button></div>').join('')
+        : '<div class="grp">No testers yet</div>')+'</div>'+
+      '<input class="search" id="tq" placeholder="Add someone - type their name" autocomplete="off"><div class="pick" id="tres" hidden></div>'+
+      '<div class="other">Kept on this device only.</div></div><div class="dm-foot"><button class="btn" data-act="close">Done</button></div>');
+    setTimeout(()=>{ const i=el('tq'); if(i) i.focus(); }, 30);
+  }
+  function afterTesters(){ testersDlg(); ribbon(); if(cur()) renderConv(); }
+  function newChatDlgReal(){
+    if(CG.TEST){
+      const ts=CG.testers();
+      const meE=myEmail(), others=ts.filter(t=>String(t.email||'').toLowerCase()!==meE);
+      openDlg(top('New chat')+'<div class="dm-body"><div class="note">'+(ONLIVE ? 'Pilot: you can start a chat with the pilot group only.' : 'Test: you can start a chat with your testers only.')+'</div><div class="pick">'+
+        (GROUPS() && others.length>1 ? '<button data-act="grpnew">'+avatar({type:'group', name:'New group'}, true)+'<span><b>＋ New group</b><small>Give it a name and pick the people</small></span></button>' : '')+
+        (ts.length ? ts.map(t=>'<button data-act="mkreal" data-v="'+esc(t.email)+'">'+personAv(t.name, t.email)+'<span>'+esc(t.name)+'<small>'+esc(t.email)+'</small></span></button>').join('')+
+          (ts.length>1 && !GROUPS() ? '<button data-act="mkgroup">'+avatar({type:'group', name:'Testers'}, true)+'<span>All your testers<small>A group chat</small></span></button>' : '')
+          : '<div class="grp">No testers yet</div>')+
+        '</div>'+(ONLIVE ? '' : '<div><button class="btn ghost sm" data-act="testers">Add testers</button></div>')+'</div>');
+      return;
+    }
+    openDlg(top('New chat')+'<div class="dm-body">'+(GROUPS() ? '<div class="pick"><button data-act="grpnew">'+avatar({type:'group', name:'New group'}, true)+'<span><b>＋ New group</b><small>Give it a name and pick the people</small></span></button></div>' : '')+
+      '<input class="search" id="nqr" placeholder="Search for a person" autocomplete="off"><div class="pick" id="nres" hidden></div></div>');
+    setTimeout(()=>{ const i=el('nqr'); if(i) i.focus(); }, 30);
+  }
+  let psT=null;
+  function peopleSearch(inp){
+    clearTimeout(psT);
+    const box=el(inp.id==='tq' ? 'tres' : 'nres'); if(!box) return;
+    const q=inp.value.trim(); if(q.length<2){ box.hidden=true; box.innerHTML=''; return; }
+    psT=setTimeout(()=>{
+      CG.searchPeople(q).then(list=>{
+        if(inp.value.trim()!==q) return;
+        const act=inp.id==='tq' ? 'tadd' : 'mkreal';
+        box.hidden=false;
+        box.innerHTML=list.length ? list.map(u=>'<button data-act="'+act+'" data-v="'+esc(u.email)+'" data-email="'+esc(u.email)+'" data-name="'+esc(u.name)+'">'+personAv(u.name, u.email)+
+          '<span>'+esc(u.name)+'<small>'+esc(u.title ? u.title+' · '+u.email : u.email)+'</small></span></button>').join('') : '<div class="grp">No one found</div>';
+      }, e=>{ box.hidden=false; box.innerHTML='<div class="grp">'+esc('Search didn’t work: '+((e && e.message)||e))+'</div>'; });
+    }, 300);
+  }
+  async function startWith(emails, topic){
+    toast('Opening the chat…');
+    try{
+      const us=[]; for(const e of emails) us.push(await CG.userByEmail(e));
+      const ch=await CG.createChat(MEID, us.map(u=>u.id), us.length>1 ? topic : '');
+      closeDlg();
+      await loadList(false);
+      if(!CHATS.some(c=>c.id===ch.id)){
+        const people=[{id:MEID, name:ME, email:myEmail()}].concat(us);
+        CHATS.unshift({id:ch.id, type:us.length===1 ? 'person' : 'group', name:us.length===1 ? us[0].name : (topic||us.map(u=>u.name).join(', ')),
+          people, members:people.map(p=>p.name), msgs:[], loaded:true, next:'', unread:0, read:Date.now(), local:true,
+          sub:us.length===1 ? us[0].email : '', photo:us.length===1 ? photoOf(us[0].email) : '', lastMsg:{at:Date.now(), text:'', from:'', mine:true}});
+      }
+      openChat(ch.id);
+    }catch(e){ toast('Couldn’t start the chat: '+((e && e.message)||e)); }
+  }
+  /* The real chat's buttons. false = not one of these. */
+  function realAct(act, b, v){
+    if(act==='tryreal'){ CG.setSwitch(true); location.reload(); return; }
+    if(act==='mock'){ CG.setSwitch(false); location.hash=''; location.reload(); return; }
+    if(act==='retry'){ loading(); loadList(true); return; }
+    if(act==='askms'){ CG.ask().then(()=>{ loading(); loadList(true); }, e=>problem(e)); return; }
+    if(act==='testers') return testersDlg();
+    if(act==='tadd'){ CG.setTesters(CG.testers().concat([{email:b.dataset.email, name:b.dataset.name}])); afterTesters(); return; }
+    if(act==='tdel'){ CG.setTesters(CG.testers().filter(t=>t.email!==v)); afterTesters(); return; }
+    if(act==='mkreal'){ startWith([v]); return; }
+    if(act==='mkgroup'){ startWith(CG.testers().map(t=>t.email), 'Home-Brace test'); return; }
+    if(act==='more'){
+      const c=cur(); if(!c || !c.next) return;
+      b.disabled=true;
+      CG.listMessages(c.id, MEID, c.next).then(r=>{
+        const ms=el('msgs'), h0=ms ? ms.scrollHeight : 0, t0=ms ? ms.scrollTop : 0;
+        const have={}; c.msgs.forEach(m=>{ have[m.id]=1; });
+        c.msgs=r.msgs.filter(m=>!have[m.id]).map(m=>dress(m,c)).concat(c.msgs); c.next=r.next;
+        renderConv(); const ms2=el('msgs'); if(ms2){ stick=false; ms2.scrollTop=ms2.scrollHeight-h0+t0; }
+      }, e=>{ b.disabled=false; toast('Couldn’t load more: '+((e && e.message)||e)); });
+      return;
+    }
+    return false;
+  }
+
+  /* ---------- GROUPS (18/11/2026, Jordan: "Flexibility to create their own group" - like Slack channels; "Groups"
+     because in Teams they're invite-only group chats, and a Teams "channel" is something else). ＋ New group: a name
+     and at least 2 people. Tap a group's name (or 👥) for: rename, add people, take someone out, leave. Every change
+     shows in the conversation ("Priya added Quinn") and in Teams. Real chat: chatgraph.js createGroup / renameGroup /
+     addPeople / removePerson / leaveGroup (pilot: testers only, checked there); taking out / leaving only once Microsoft's
+     ChatMember.ReadWrite permission is granted. SANDBOX ONLY until GROUPS_LIVE is true (one live device: ph_chat_groups=1). */
+  const GROUPS_LIVE=true;      // ON for the live site 18/11 (Jordan: "groups live"); false = no groups again
+  const GROUPS=()=>{ if(GROUPS_LIVE || !ONLIVE) return true; try{ return localStorage.getItem('ph_chat_groups')==='1'; }catch(_){ return false; } };
+  let GP=null;                 // the people being picked: {mode:'new'|'add', chat, picked:{key:{id,name,email}}}
+  /* Names Teams leaves out of its notes (someone taken out is no longer in the chat's people): remembered from every
+     chat seen this visit, else looked up once and the conversation redrawn. */
+  const KNOWN={}, ASKED={};
+  const know=list=>(list||[]).forEach(p=>{ if(p && p.id && p.name) KNOWN[p.id]=p.name; });
+  let knownT=null;
+  function lookUp(id){
+    if(!REALCHAT || !id || ASKED[id] || !CG.userById) return; ASKED[id]=1;
+    CG.userById(id).then(u=>{ if(u && u.name){ KNOWN[id]=u.name; clearTimeout(knownT); knownT=setTimeout(()=>{ const c=cur(); if(c && !c.msgs.some(m=>m.pending)) renderConv(); renderList(); }, 150); } }, ()=>{});
+  }
+  function sysText(m, c){
+    const isMe=x=>!!x && (REALCHAT ? (x.id && x.id===MEID) : x.name===ME);
+    const nameOf=x=>{ if(!x) return 'Someone'; if(isMe(x)) return 'You'; if(x.name) return x.name; const p=(c.people||[]).find(q=>q.id && q.id===x.id);
+      if(p && p.name) return p.name; if(x.id && KNOWN[x.id]) return KNOWN[x.id]; lookUp(x.id); return 'Someone'; };
+    const and=a=>a.length<=1 ? (a[0]||'') : a.slice(0,-1).join(', ')+' and '+a[a.length-1];
+    const by=nameOf(m.by), who=(m.who||[]).filter(x=>!(x.id ? x.id===(m.by||{}).id : x.name===(m.by||{}).name));
+    if(m.kind==='made') return by+' made the group “'+(m.topic||c.name)+'”';
+    if(m.kind==='added') return who.length ? by+' added '+and(who.map(nameOf)) : '';
+    if(m.kind==='removed') return !who.length ? by+' left the group' : by+' took '+and(who.map(nameOf))+' out';
+    if(m.kind==='renamed') return by+' named the group “'+(m.topic||c.name)+'”';
+    return '';
+  }
+  function grpPool(){                 // who can be picked without searching: the testers (pilot), or the made-up staff
+    if(REALCHAT){ const me=myEmail(); return CG.TEST ? CG.testers().filter(t=>String(t.email||'').toLowerCase()!==me).map(t=>({id:'', name:t.name||t.email, email:String(t.email||'').toLowerCase()})) : null; }
+    return (window.STAFF||[]).map(p=>p.n).filter(n=>n && n!==ME && !/Avery/i.test(n)).slice(0,60).map(n=>({id:'', name:n, email:''}));
+  }
+  const gKey=p=>(p.email||p.name||'').toLowerCase();
+  function grpChips(){ const b=el('gchips'); if(!b || !GP) return; b.innerHTML=Object.values(GP.picked).map(p=>'<span class="gchip">'+esc(p.name)+'<button type="button" data-act="gunpick" data-k="'+esc(gKey(p))+'" aria-label="Take '+esc(p.name)+' off">×</button></span>').join(''); }
+  function grpRows(list){
+    const inChat={}; if(GP && GP.chat) (REALCHAT ? (GP.chat.people||[]).map(p=>p.email) : (GP.chat.members||[]).map(n=>n.toLowerCase())).forEach(k=>{ if(k) inChat[String(k).toLowerCase()]=1; });
+    const rows=list.filter(p=>!inChat[gKey(p)]);
+    return rows.length ? rows.map(p=>{ const on=!!(GP && GP.picked[gKey(p)]);
+      return '<button type="button" class="'+(on?'on':'')+'" data-act="gpick" data-k="'+esc(gKey(p))+'" data-id="'+esc(p.id||'')+'" data-name="'+esc(p.name)+'" data-email="'+esc(p.email||'')+'">'+personAv(p.name, p.email)+
+        '<span>'+esc(p.name)+(p.email ? '<small>'+esc(p.email)+'</small>' : '')+'</span><span class="tick">'+(on?'✓':'')+'</span></button>'; }).join('')
+      : '<div class="grp">'+(list.length ? 'Everyone here is already in it' : 'No one found')+'</div>';
+  }
+  function grpPickHTML(){
+    const pool=grpPool();
+    return '<div class="lab2">People</div><div class="gchips" id="gchips"></div>'+
+      '<input class="search" id="gq" placeholder="'+(pool ? 'Type to narrow the list' : 'Search for a person')+'" autocomplete="off" data-nomic>'+
+      (REALCHAT && CG.TEST ? '<div class="note">'+(ONLIVE ? 'Pilot: only people in the pilot group can be added for now.' : 'Test: only your testers can be added.')+'</div>' : '')+
+      '<div class="pick" id="gres"'+(pool ? '' : ' hidden')+'>'+(pool ? grpRows(pool) : '')+'</div><div class="gerr" id="gerr"></div>';
+  }
+  const gErr=t=>{ const e=el('gerr'); if(e) e.textContent=t||''; };
+  function grpNew(){
+    GP={mode:'new', chat:null, picked:{}};
+    openDlg(top('New group')+'<div class="dm-body"><label class="lab2">Group name<input class="search" id="gname" maxlength="80" placeholder="e.g. Front desk leads" autocomplete="off" data-nomic></label>'+grpPickHTML()+'</div>'+
+      '<div class="dm-foot"><button class="btn ghost" data-act="close">Cancel</button><button class="btn" data-act="grpmake">Create group</button></div>');
+    grpChips(); setTimeout(()=>{ const i=el('gname'); if(i) i.focus(); }, 30);
+  }
+  let gsT=null;
+  function grpSearch(inp){
+    const box=el('gres'), pool=grpPool(), q=inp.value.trim().toLowerCase(); if(!box) return;
+    if(pool){ box.innerHTML=grpRows(pool.filter(p=>!q || (p.name+' '+p.email).toLowerCase().indexOf(q)>=0)); return; }
+    clearTimeout(gsT); if(q.length<2){ box.hidden=true; box.innerHTML=''; return; }
+    gsT=setTimeout(()=>{ CG.searchPeople(q).then(list=>{ if(inp.value.trim().toLowerCase()!==q) return; box.hidden=false; box.innerHTML=grpRows(list.filter(u=>u.id!==MEID)); },
+      e=>{ box.hidden=false; box.innerHTML='<div class="grp">'+esc('Search didn’t work: '+((e && e.message)||e))+'</div>'; }); }, 300);
+  }
+  function grpPickToggle(b){
+    if(!GP) return; const k=b.dataset.k;
+    if(GP.picked[k]) delete GP.picked[k]; else GP.picked[k]={id:b.dataset.id||'', name:b.dataset.name||'', email:b.dataset.email||''};
+    b.classList.toggle('on', !!GP.picked[k]); const tk=b.querySelector('.tick'); if(tk) tk.textContent=GP.picked[k] ? '✓' : '';
+    grpChips(); gErr('');
+  }
+  async function idsOf(list){ const us=[]; for(const p of list) us.push(p.id ? p : await CG.userByEmail(p.email)); return us; }
+  async function grpMake(btn){
+    const name=String((el('gname')||{}).value||'').trim(), ps=Object.values((GP && GP.picked)||{});
+    if(!name){ gErr('Give the group a name.'); return; }
+    if(ps.length<2){ gErr('Pick at least 2 people - a chat with one person is a normal chat.'); return; }
+    if(!REALCHAT){
+      const id='g'+Date.now(), c={id, type:'group', name, members:[ME].concat(ps.map(p=>p.name)), unread:0, msgs:[{id:id+'-0', system:true, kind:'made', by:{name:ME}, who:[], topic:name, at:Date.now()},
+        {id:id+'-1', system:true, kind:'added', by:{name:ME}, who:ps.map(p=>({name:p.name})), at:Date.now()}]};
+      c.owners=[ME]; CHATS.unshift(c); closeDlg(); openChat(id); toast('Group made ✓'); return;
+    }
+    btn.disabled=true; gErr('');
+    try{
+      const us=await idsOf(ps), ch=await CG.createGroup(MEID, us, name);
+      closeDlg(); await loadList(false);
+      if(!CHATS.some(c=>c.id===ch.id)){
+        const people=[{id:MEID, name:ME, email:myEmail()}].concat(us);
+        CHATS.unshift({id:ch.id, type:'group', name, topic:name, people, members:people.map(p=>p.name), msgs:[], loaded:true, next:'', unread:0, read:Date.now(), local:true,
+          sub:'', photo:'', lastMsg:{at:Date.now(), text:'', from:'', mine:true}});
+      }
+      openChat(ch.id);
+      const made=CHATS.find(x=>x.id===ch.id) || {id:ch.id, people:[{id:MEID}]};
+      ownSave(made, ()=>[MEID]).then(()=>toast('Group made ✓ You’re its owner.'), ()=>toast('Group made ✓ - but saving you as its owner didn’t work. Make yourself owner in its settings.'));
+    }catch(e){ btn.disabled=false; gErr('Not made: '+((e && e.message)||e)); }
+  }
+  /* GROUP OWNERS (Jordan 18/11: "The person who starts the group can be the owner of the group or assign ownership to
+     someone else. Same as slack"). Whoever makes a group owns it; an owner can make others owners or step down (never
+     the last one). Only owners rename the group or take people out; anyone in it can add people and leave. A group with
+     no owner left (or made in Teams / before this) = anyone in it can do everything, and anyone can make someone owner.
+     Kept in Home-Brace's shared list, one record per group: ph_chatgrp_<short hash of the chat id> {chat, owners:[user
+     ids], upd, updBy} - changed with PH_STORE.update (never over someone else's change). Teams itself has no owners in a
+     group chat: in the Teams app anyone in it can still rename or take people out - this rule is Home-Brace's own. */
+  const OWN_PRE='ph_chatgrp_';
+  const ownKey=id=>{ let h=0x811c9dc5; for(const ch of String(id||'')){ h^=ch.codePointAt(0); h=Math.imul(h, 0x01000193)>>>0; } return OWN_PRE+h.toString(36); };
+  function cleanOwn(rec, chatId){
+    if(!rec || typeof rec!=='object' || rec.chat!==chatId) return null;
+    const o=(Array.isArray(rec.owners) ? rec.owners : []).filter(x=>typeof x==='string' && x && x.length<=200);
+    return {chat:chatId, owners:o.filter((x,i)=>o.indexOf(x)===i).slice(0,50)};
+  }
+  const meKey=()=>REALCHAT ? MEID : ME;
+  const memberKeys=c=>REALCHAT ? (c.people||[]).map(p=>p.id).filter(Boolean) : (c.members||[]).slice();
+  /* {known, owners (still in the group), none (no owner = anyone can manage), mine} */
+  async function ownersOf(c){
+    let list=null, known=true;
+    if(!REALCHAT) list=Array.isArray(c.owners) ? c.owners : null;
+    else if(window.PH_STORE){
+      const k=ownKey(c.id); let v=null;
+      try{ v=await PH_STORE.get(k); }catch(_){ known=false; }
+      if(PH_STORE.readFailed && PH_STORE.readFailed(k)) known=false;
+      const r=cleanOwn(v, c.id); list=r ? r.owners : null;
+    }
+    const inIt=memberKeys(c), owners=(list||[]).filter(x=>inIt.indexOf(x)>=0), none=known && !owners.length;
+    return {known, owners, none, mine:known && (none || owners.indexOf(meKey())>=0)};
+  }
+  function ownSave(c, change){
+    if(!REALCHAT){ c.owners=change((c.owners||[]).slice()); return Promise.resolve(c.owners); }
+    if(!window.PH_STORE) return Promise.reject(new Error('Home-Brace’s shared list isn’t ready'));
+    return PH_STORE.update(ownKey(c.id), cur=>{ const r=cleanOwn(cur, c.id); return {chat:c.id, owners:change(r ? r.owners.slice() : []), upd:new Date().toISOString(), updBy:meKey()}; })
+      .then(r=>{ if(!r || r.blocked || r.error) throw new Error((r && (r.why || r.error)) || 'no answer'); return (cleanOwn(r.value, c.id)||{owners:[]}).owners; });
+  }
+  /* A group's settings */
+  async function grpInfo(view){
+    const c=cur(); if(!c || c.type!=='group') return;
+    const can=!REALCHAT || CG.canSend(c, MEID), mng=REALCHAT ? await CG.canManageMembers() : true, O=await ownersOf(c);
+    if(cur()!==c) return;
+    const isOwn=id=>O.owners.indexOf(id)>=0, boss=can && O.mine;          // boss = may rename, take out, change owners
+    const ppl=REALCHAT ? (c.people||[]).map(p=>({id:p.id, name:p.name||p.email||'Someone', email:p.email, me:p.id===MEID}))
+      : (c.members||[]).map(n=>({id:n, name:n, email:'', me:n===ME}));
+    ppl.sort((a,b)=>(b.me-a.me) || (isOwn(b.id)-isOwn(a.id)) || a.name.localeCompare(b.name));
+    let body;
+    if(view==='rename') body='<label class="lab2">Group name<input class="search" id="gname" maxlength="80" value="'+esc(c.name)+'" autocomplete="off" data-nomic></label><div class="gerr" id="gerr"></div>';
+    else if(view==='add'){ GP={mode:'add', chat:c, picked:{}}; body=grpPickHTML(); }
+    else if(view && view.rm) body='<div>Take <b>'+esc(view.rm.name)+'</b> out of “'+esc(c.name)+'”? They stop getting its messages. Someone in the group can add them back.</div><div class="gerr" id="gerr"></div>';
+    else if(view==='leave'){ const last=O.owners.length===1 && isOwn(meKey()) && ppl.length>1;
+      body='<div>Leave “'+esc(c.name)+'”? You stop getting its messages. Someone in the group can add you back.</div>'+
+        (last ? '<div class="note">You’re its only owner. Make someone else an owner first - or the group will have no owner, and anyone in it can rename it and take people out.</div>' : '')+'<div class="gerr" id="gerr"></div>'; }
+    else body='<div class="gname"><b>'+esc(c.name)+'</b>'+(boss ? '<button class="btn ghost sm" data-act="grpren">Rename</button>' : '')+'</div>'+
+      '<div class="pick"><div class="grp">People ('+ppl.length+')</div>'+ppl.map(p=>{ const own=isOwn(p.id);
+        const ob=!boss ? '' : own ? (O.owners.length>1 ? '<button class="own" data-act="grpunown" data-v="'+esc(p.id)+'" data-name="'+esc(p.name)+'">'+(p.me ? 'Step down' : 'Remove owner')+'</button>' : '')
+          : '<button class="own" data-act="grpown" data-v="'+esc(p.id)+'" data-name="'+esc(p.name)+'">Make owner</button>';
+        return '<div class="trow">'+personAv(p.name, p.email)+'<span style="flex:1;min-width:0">'+esc(p.name)+(p.me?' <small style="display:inline">(you)</small>':'')+(own?'<span class="ownb">Owner</span>':'')+(p.email?'<small>'+esc(p.email)+'</small>':'')+'</span>'+ob+
+        (boss && mng && !p.me ? '<button class="x" data-act="grprm" data-v="'+esc(p.id)+'" data-name="'+esc(p.name)+'" aria-label="Take '+esc(p.name)+' out" title="Take out of the group">×</button>' : '')+'</div>'; }).join('')+'</div>'+
+      (can ? '<div><button class="btn ghost sm" data-act="grpadd">＋ Add people</button></div>' : '')+
+      (!O.known ? '<div class="note">Couldn’t check who owns this group - renaming, taking people out and owners are off until it can. Close and open it again.</div>'
+        : O.none ? '<div class="small" style="color:var(--soft)">No owner yet - anyone in the group can rename it and take people out. Make someone an owner to change that.</div>'
+        : !O.mine ? '<div class="small" style="color:var(--soft)">Only the group’s owners can rename it and take people out.</div>' : '')+
+      (REALCHAT && !mng ? '<div class="small" style="color:var(--soft)">Taking people out and leaving turn on once Microsoft’s ChatMember.ReadWrite permission is granted.</div>' : '')+
+      (!can ? '<div class="note">'+(ONLIVE ? 'Pilot: only the pilot group can change a group for now.' : 'Test: only your testers can change a group.')+'</div>' : '');
+    const foot=view==='rename' ? '<button class="btn ghost" data-act="grpinfo">Cancel</button><button class="btn" data-act="grprenok">Save</button>'
+      : view==='add' ? '<button class="btn ghost" data-act="grpinfo">Cancel</button><button class="btn" data-act="grpaddok">Add</button>'
+      : view && view.rm ? '<button class="btn ghost" data-act="grpinfo">Cancel</button><button class="btn red" data-act="grprmok" data-v="'+esc(view.rm.id)+'" data-name="'+esc(view.rm.name)+'">Take out</button>'
+      : view==='leave' ? '<button class="btn ghost" data-act="grpinfo">Cancel</button><button class="btn red" data-act="grpleaveok">Leave group</button>'
+      : (mng ? '<button class="btn warn" data-act="grpleave">Leave group</button>' : '')+'<button class="btn" data-act="close">Done</button>';
+    openDlg(top(view==='add' ? 'Add people' : view==='rename' ? 'Rename the group' : view==='leave' ? 'Leave the group' : view && view.rm ? 'Take someone out' : 'Group')+'<div class="dm-body">'+body+'</div><div class="dm-foot">'+foot+'</div>');
+    if(view==='add') grpChips();
+    if(view==='rename') setTimeout(()=>{ const i=el('gname'); if(i){ i.focus(); i.select(); } }, 30);
+  }
+  /* after a change: the made-up chat notes it; the real one re-reads the list (Teams writes its own note) */
+  async function grpAfter(c, note, msg){
+    if(!REALCHAT){ c.msgs.push(Object.assign({id:c.id+'-'+Date.now(), system:true, at:Date.now(), by:{name:ME}}, note)); }
+    else { await loadList(false); setTimeout(()=>{ pollOpen(); }, 1200); }
+    renderList(); if(open===c.id) renderConv(); if(msg) toast(msg);
+  }
+  async function grpDo(btn, fn){ btn.disabled=true; gErr(''); try{ await fn(); }catch(e){ btn.disabled=false; const m='Not done: '+((e && e.message)||e); if(el('gerr')) gErr(m); else toast(m); } }
+  function grpAct(act, b, v){
+    const c=cur();
+    if(act==='grpnew'){ grpNew(); return true; }
+    if(act==='gpick'){ grpPickToggle(b); return true; }
+    if(act==='gunpick'){ if(GP){ delete GP.picked[b.dataset.k]; grpChips(); const r=document.querySelector('#gres [data-k="'+CSS.escape(b.dataset.k)+'"]'); if(r){ r.classList.remove('on'); const tk=r.querySelector('.tick'); if(tk) tk.textContent=''; } } return true; }
+    if(act==='grpmake'){ grpMake(b); return true; }
+    if(!c || c.type!=='group') return false;
+    if(act==='grpinfo'){ grpInfo(); return true; }
+    if(act==='grpren'){ grpInfo('rename'); return true; }
+    if(act==='grpadd'){ grpInfo('add'); return true; }
+    if(act==='grprm'){ grpInfo({rm:{id:v, name:b.dataset.name||'them'}}); return true; }
+    if(act==='grpleave'){ grpInfo('leave'); return true; }
+    const ownerOnly=async what=>{ const O=await ownersOf(c); if(!O.known) throw new Error('couldn’t check who owns this group - try again'); if(!O.mine) throw new Error('only the group’s owners can '+what); return O; };
+    if(act==='grpown' || act==='grpunown'){ const nm=b.dataset.name||'them', meIt=v===meKey();
+      grpDo(b, async ()=>{ const O=await ownerOnly('change its owners');
+        await ownSave(c, list=>{ let o=list.filter(x=>memberKeys(c).indexOf(x)>=0);
+          if(act==='grpown'){ if(o.indexOf(v)<0) o.push(v); }
+          else { if(o.length<=1) throw new Error('a group keeps at least one owner'); o=o.filter(x=>x!==v); }
+          return o; });
+        grpInfo(); toast(act==='grpown' ? nm+' is now an owner' : meIt ? 'You’re no longer an owner' : nm+' is no longer an owner'); }); return true; }
+    if(act==='grprenok'){ const nm=String((el('gname')||{}).value||'').trim(); if(!nm){ gErr('Give the group a name.'); return true; }
+      grpDo(b, async ()=>{ await ownerOnly('rename it'); if(REALCHAT) await CG.renameGroup(c, MEID, nm); c.name=nm; c.topic=nm; closeDlg(); await grpAfter(c, {kind:'renamed', topic:nm}, 'Renamed ✓'); }); return true; }
+    if(act==='grpaddok'){ const ps=Object.values((GP && GP.picked)||{}); if(!ps.length){ gErr('Pick who to add.'); return true; }
+      grpDo(b, async ()=>{ if(REALCHAT) await CG.addPeople(c, MEID, await idsOf(ps)); else c.members=c.members.concat(ps.map(p=>p.name));
+        closeDlg(); await grpAfter(c, {kind:'added', who:ps.map(p=>({name:p.name}))}, ps.length===1 ? ps[0].name+' added ✓' : ps.length+' people added ✓'); }); return true; }
+    if(act==='grprmok'){ const nm=b.dataset.name||'them';
+      grpDo(b, async ()=>{ await ownerOnly('take people out'); if(REALCHAT) await CG.removePerson(c, MEID, v); else c.members=c.members.filter(n=>n!==v);
+        ownSave(c, list=>list.filter(x=>x!==v)).catch(()=>{});                 // no longer in it = no longer an owner
+        closeDlg(); await grpAfter(c, {kind:'removed', who:[{name:nm}]}, nm+' taken out ✓'); }); return true; }
+    if(act==='grpleaveok'){
+      grpDo(b, async ()=>{ if(REALCHAT) await CG.leaveGroup(c, MEID);
+        const me=meKey(); ownSave(c, list=>list.filter(x=>x!==me)).catch(()=>{});
+        closeDlg(); CHATS=CHATS.filter(x=>x.id!==c.id); open=null; el('app').classList.remove('open'); renderList(); renderConv(); fit(); toast('You left “'+c.name+'”'); }); return true; }
+    return false;
+  }
+
+  /* ---------- clicks, typing ---------- */
+  /* CHAT v2: keep the cursor in the message box while its buttons are pressed (bold, emoji, @, ...) */
+  document.addEventListener('mousedown', e=>{ if(e.target.closest && e.target.closest('.cbox button, .pop button')) e.preventDefault(); });
+  let reactFor='';
+  const quickHTML=(m)=>'<div class="quick">'+QUICK.map(x=>{ const y=(x==='👍' || x==='🙏') ? toned([x,'','',1], skinGet()) : x; return '<button type="button" data-act="reactpick" data-v="'+y+'" aria-label="React '+y+'">'+y+'</button>'; }).join('')+
+    '<button type="button" data-act="reactmore" aria-label="More emoji" title="More emoji" style="font-size:16px;color:#7b8797">'+ICO.smile.replace('<svg','<svg style="width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2"')+'</button></div>'+
+    (m && !m.deleted ? '<button type="button" class="copy" data-act="fwd" data-m="'+esc(m.id)+'">Forward</button>' : '')+
+    (m && m.text && !m.deleted ? '<button type="button" class="copy" data-act="copytext">Copy text</button>' : '')+
+    (m && !m.deleted && mineOf(m) ? '<button type="button" class="copy" data-act="msgdel" data-m="'+esc(m.id)+'" style="color:#b42318">Delete message</button>' : '');
+  function v2Click(e, b, act, v){
+    if(act==='cmd'){ edRestore(); document.execCommand(v, false, null); edEmptyMark(el('txt')); edSave(); fmtPaint(); return true; }
+    if(act==='link'){ linkDlg(); return true; }
+    if(act==='linkok'){ linkOk(); return true; }
+    if(act==='quote'){ quoteToggle(); fmtPaint(); return true; }
+    if(act==='fmt'){ const on=!fmtOn(); try{ localStorage.setItem(FMT_KEY, on?'1':'0'); }catch(_){} edSave(); paintComposer(true); return true; }
+    if(act==='emoji'){ edSave(); emojiPicker(boxAnchor(b), 'compose'); return true; }
+    if(act==='empick'){ const pur=popEl && popEl.dataset.purpose; recentAdd(b.dataset.b); popClose();
+      if(pur==='react'){ if(reactFor) reactToggle(reactFor, v, true); } else edInsertText(v); return true; }
+    if(act==='emtab'){ const q=el('emq'); if(q && q.value){ q.value=''; empSearch(); } const body=el('embody'), sec=body && body.querySelector('.emsec[data-k="'+v+'"]');
+      if(sec) body.scrollTop=sec.offsetTop; empSpy(); return true; }
+    if(act==='emskin'){ const f=b.closest('.emfoot'), t=skinGet();
+      f.innerHTML='<span class="small" style="color:var(--soft);margin-right:4px">Skin tone</span><span class="emskins">'+[-1,0,1,2,3,4].map(i=>'<button type="button" data-act="emtone" data-v="'+i+'"'+(i===t?' class="on"':'')+' aria-label="'+(i<0?'Default':['Light','Medium-light','Medium','Medium-dark','Dark'][i])+' skin tone">✋'+(i<0?'':MODS[i])+'</button>').join('')+'</span>';
+      return true; }
+    if(act==='emtone'){ const t=parseInt(v,10); try{ if(t<0) localStorage.removeItem(SKIN_KEY); else localStorage.setItem(SKIN_KEY, String(t)); }catch(_){}
+      const f=b.closest('.emfoot'); f.innerHTML='<span class="empv" id="empv"></span>'+skinBtn(skinGet()); empSearch(); return true; }
+    if(act==='emojipick'){ popClose(); edInsertText(v); return true; }
+    if(act==='mention'){ edSave(); mentionPop(boxAnchor(b), false); if(popEl) popEl.dataset.by='mention'; return true; }
+    if(act==='mentionpick'){ mentionPick(b.dataset.uid||'', b.dataset.name||''); return true; }
+    if(act==='mic'){ micToggle(); return true; }
+    if(act==='react'){ reactToggle(b.dataset.m, v); return true; }
+    if(act==='reactadd'){ reactFor=b.dataset.m; const p=popOpen(b, quickHTML(null)); p.dataset.by='reactadd'; p.dataset.kind='react'; return true; }
+    if(act==='reactpick'){ popClose(); if(reactFor) reactToggle(reactFor, v, true); return true; }
+    if(act==='reactmore'){ const a=popEl; const r=a ? a.getBoundingClientRect() : null; popClose();
+      emojiPicker({getBoundingClientRect:()=>r || b.getBoundingClientRect()}, 'react'); return true; }
+    if(act==='chatmenu'){ const p=popOpen(b, '<div class="ppl"><button type="button" data-act="hidechat"><span style="font-size:18px">🙈</span><span>Hide this chat<small style="display:block;color:#7b8797;font-size:12px">Off your list until someone writes again. Nothing is deleted.</small></span></button></div>'); p.dataset.by='chatmenu'; return true; }
+    if(act==='hidechat'){ popClose(); hideChatNow(); return true; }
+    if(act==='msgdel'){ popClose(); msgDelAsk(b.dataset.m || reactFor); return true; }
+    if(act==='msgdelok'){ msgDelNow(b.dataset.m, b); return true; }
+    if(act==='fwd'){ popClose(); fwdDlg(b.dataset.m || reactFor); return true; }
+    if(act==='fwdto'){ document.querySelectorAll('#fwlist button').forEach(x=>x.classList.toggle('on', x===b)); if(FWD) FWD.to=b.dataset.v; gErr(''); return true; }
+    if(act==='fwdok'){ fwdNow(b); return true; }
+    if(act==='copytext'){ popClose(); const c=cur(), m=c && c.msgs.find(x=>String(x.id)===String(b.dataset.m || reactFor));
+      if(m && m.text && navigator.clipboard) navigator.clipboard.writeText(m.text).then(()=>toast('Copied'), ()=>toast('Couldn’t copy')); return true; }
+    return false;
+  }
+  /* FORWARD A MESSAGE (Jordan 18/11: "also forward is a good option as well") - to any chat you may send to, with a note
+     if you like. It arrives as "Forwarded from <name>" + the words (formatting kept) + a photo it had; a video or file goes
+     as its link. Teams can't attach the original, so it's a new message in that chat. */
+  let FWD=null;
+  function fwdDlg(id){
+    const c=cur(), m=c && c.msgs.find(x=>String(x.id)===String(id)); if(!m || m.deleted) return;
+    FWD={c, m, to:''};
+    const list=CHATS.filter(x=>!REALCHAT || CG.canSend(x, MEID));
+    const pv=(m.text ? esc(String(m.text).slice(0,240)) : '')+((m.photo || m.localImg || (m.images||[]).length) ? (m.text?'\n':'')+'📷 Photo' : '')+((m.video || m.localVideo || (m.files||[]).length) ? (m.text?'\n':'')+'📎 '+(m.video||m.localVideo?'Video':'File') : '');
+    openDlg(top('Forward message')+'<div class="dm-body"><div class="fwdq"><b>'+esc(mineOf(m)?'You':m.from)+'</b>\n'+pv+'</div>'+
+      '<input class="search" id="fwq" placeholder="Search chats" autocomplete="off" data-nomic>'+
+      '<div class="pick" id="fwlist">'+(list.length ? list.map(x=>'<button type="button" data-act="fwdto" data-v="'+esc(x.id)+'">'+avatar(x,true)+'<span>'+esc(x.name)+'</span></button>').join('') : '<div class="grp">No chats you can send to</div>')+'</div>'+
+      '<label class="lab2">Add a message (optional)<input class="search" id="fwmsg" maxlength="2000" placeholder="FYI…" autocomplete="off" data-nomic></label><div class="gerr" id="gerr"></div></div>'+
+      '<div class="dm-foot"><button class="btn ghost" data-act="close">Cancel</button><button class="btn" data-act="fwdok">Forward</button></div>');
+    setTimeout(()=>{ const i=el('fwq'); if(i) i.focus(); }, 30);
+  }
+  async function fwdNow(btn){
+    if(!FWD) return; const t=CHATS.find(x=>x.id===FWD.to); if(!t){ gErr('Pick a chat to forward it to.'); return; }
+    const m=FWD.m, who=mineOf(m) ? ME : m.from, note=String((el('fwmsg')||{}).value||'').trim();
+    const bodyHtml=m.rich ? (CG ? CG.cleanRich(m.rich) : '') : esc(m.text||'').replace(/\n/g,'<br>');
+    const links=(m.files||[]).filter(f=>/^https:\/\//i.test(f.url)).map(f=>'<a href="'+esc(f.url)+'">📎 '+esc(f.name||'File')+'</a>').join('<br>');
+    const html=(note ? '<p>'+esc(note)+'</p>' : '')+'<blockquote><p><i>Forwarded from '+esc(who)+'</i></p>'+(bodyHtml ? '<p>'+bodyHtml+'</p>' : '')+(links ? '<p>'+links+'</p>' : '')+'</blockquote>';
+    const text=(note ? note+'\n\n' : '')+'Forwarded from '+who+':\n'+(m.text||'');
+    btn.disabled=true; gErr('');
+    try{
+      if(!REALCHAT){
+        t.msgs.push({id:t.id+'-'+Date.now(), from:ME, at:Date.now(), text, richHtml:CG ? CG.cleanRich(html) : '', photo:m.photo||'', w:m.w, h:m.h});
+      } else {
+        const img=msgEl(m.id) && msgEl(m.id).querySelector('.media img[src]');
+        if(img && /^(blob:|data:image)/.test(img.src)){
+          const blob=await (await fetch(img.src)).blob(), p=await CG.photo(new File([blob], 'photo.jpg', {type:blob.type||'image/jpeg'}));
+          await CG.sendPhoto(t, MEID, p.b64, p.w, p.h, text, {html, mentions:[]});
+        } else await CG.sendText(t, MEID, text, {html, mentions:[]});
+        chatAlert(t, img && /^(blob:|data:image)/.test(img.src) ? 'photo' : 'text', text);   // a forward alerts like any message (21/11/2026, code review)
+      }
+      closeDlg(); renderList(); if(open===t.id) renderConv();
+      undoToast('Forwarded to '+t.name+' ✓', null);
+      if(REALCHAT) loadList(false);
+    }catch(e){ btn.disabled=false; gErr('Not forwarded: '+((e && e.message)||e)); }
+  }
+  /* HIDE A CHAT, DELETE MY MESSAGE (Jordan 18/11) - both with Undo. */
+  let utT=null;
+  function undoToast(text, fn){
+    let x=el('utoast'); if(!x){ x=document.createElement('div'); x.id='utoast'; x.className='utoast'; document.body.appendChild(x); }
+    x.innerHTML='<span>'+esc(text)+'</span>'+(fn?'<button type="button">Undo</button>':''); x.classList.add('on');
+    const b=x.querySelector('button'); if(b) b.onclick=()=>{ x.classList.remove('on'); fn(); };
+    clearTimeout(utT); utT=setTimeout(()=>x.classList.remove('on'), 7000);
+  }
+  async function hideChatNow(){
+    const c=cur(); if(!c) return;
+    try{ if(REALCHAT) await CG.hideChat(c, MEID); }
+    catch(e){ toast('Not hidden: '+((e && e.message)||'Microsoft didn’t answer')); return; }
+    const at=CHATS.indexOf(c); CHATS=CHATS.filter(x=>x!==c); open=null; el('app').classList.remove('open'); renderList(); renderConv(); fit();
+    undoToast('“'+c.name+'” hidden - it comes back if someone writes.', async ()=>{
+      try{ if(REALCHAT){ await CG.hideChat(c, MEID, true); await loadList(false); } if(!CHATS.some(x=>x.id===c.id)) CHATS.splice(Math.max(0,at), 0, c); openChat(c.id); }
+      catch(e){ toast('Couldn’t bring it back: '+((e && e.message)||e)); } });
+  }
+  function msgDelAsk(id){
+    const c=cur(), m=c && c.msgs.find(x=>String(x.id)===String(id)); if(!m || !mineOf(m)) return;
+    openDlg(top('Delete this message?')+'<div class="dm-body"><div>Everyone in the chat will see <i>This message was deleted.</i> instead - here and in Teams.</div>'+
+      (m.text ? '<div class="note" style="white-space:pre-wrap;max-height:120px;overflow:auto">'+esc(String(m.text).slice(0,300))+'</div>' : '')+'</div>'+
+      '<div class="dm-foot"><button class="btn ghost" data-act="close">Keep it</button><button class="btn" style="background:#C4321C" data-act="msgdelok" data-m="'+esc(m.id)+'">Delete</button></div>');
+  }
+  async function msgDelNow(id, btn){
+    const c=cur(), m=c && c.msgs.find(x=>String(x.id)===String(id)); if(!m) return; if(btn) btn.disabled=true;
+    try{ if(REALCHAT) await CG.deleteMessage(c, MEID, m); }
+    catch(e){ if(btn) btn.disabled=false; toast('Not deleted: '+((e && e.message)||'Microsoft didn’t answer')); return; }
+    closeDlg();
+    const before=Object.assign({}, m);
+    Object.assign(m, {deleted:true, text:'This message was deleted.', rich:'', richHtml:'', images:[], files:[], reactions:[], photo:'', video:'', localImg:'', localVideo:''});
+    const i=c.msgs.indexOf(m); replaceEl(c, m.id, m, c.msgs[i-1]); renderList();
+    undoToast('Message deleted.', async ()=>{
+      try{ if(REALCHAT) await CG.deleteMessage(c, MEID, before, true); Object.keys(m).forEach(k=>delete m[k]); Object.assign(m, before); const j=c.msgs.indexOf(m); replaceEl(c, m.id, m, c.msgs[j-1]); renderList(); }
+      catch(e){ toast('Couldn’t undo: '+((e && e.message)||e)); } });
+  }
+  /* the B / I / U / S buttons light up for the words the cursor is in */
+  function fmtPaint(){
+    const t=el('txt'); if(!t || !isEd(t)) return;
+    document.querySelectorAll('.cbox .fmt [data-act="cmd"]').forEach(x=>{ let on=false; try{ on=document.queryCommandState(x.dataset.v); }catch(_){} x.classList.toggle('on', !!on); });
+  }
+  document.addEventListener('selectionchange', ()=>{ const t=el('txt'), sl=window.getSelection(); if(t && isEd(t) && sl.rangeCount && t.contains(sl.getRangeAt(0).commonAncestorContainer)){ edSave(); fmtPaint(); } });
+  /* PHONES: hold a message for a moment to react (or copy its words) - like WhatsApp */
+  let lp=null, lpAt=0;
+  /* lifting the finger after a hold isn't a tap: no click closes the reactions, no phone menu pops up */
+  document.addEventListener('touchend', e=>{ if(lpAt && Date.now()-lpAt<1500 && e.target.closest && e.target.closest('#msgs')){ lpAt=0; lpLift=Date.now(); if(e.cancelable) e.preventDefault(); } }, {passive:false});
+  document.addEventListener('contextmenu', e=>{ if(Date.now()-Math.max(lpAt, lpLift)<1500 && e.target.closest && e.target.closest('#msgs')) e.preventDefault(); });
+  let lpLift=0;
+  document.addEventListener('touchstart', e=>{
+    if(!V2() || e.touches.length!==1) return;
+    const col=e.target.closest && e.target.closest('#msgs .m .col'); if(!col || e.target.closest('button,a,video,.reacts')) return;
+    const mEl=col.closest('[data-mid]'), id=mEl && mEl.dataset.mid, c=cur(); if(!id || !c) return;
+    const m=c.msgs.find(x=>String(x.id)===id); if(!m || m.pending || m.failed || /^local-/.test(id)) return;
+    const can=!REALCHAT || CG.canSend(c, MEID);
+    const x0=e.touches[0].clientX, y0=e.touches[0].clientY;
+    clearTimeout(lp && lp.t);
+    lp={x0, y0, t:setTimeout(()=>{ lp=null; lpAt=Date.now(); reactFor=id; if(navigator.vibrate) try{ navigator.vibrate(10); }catch(_){}
+      const anchor=col.querySelector('.bub, .media') || col;
+      const p=popOpen(anchor, can ? quickHTML(m) : (m.text ? '<button type="button" class="copy" data-act="copytext" style="margin:0;border:0;padding:6px">Copy text</button>' : '<div class="small" style="padding:4px">Nothing to copy.</div>'));
+      p.dataset.kind='react'; }, 450)};
+  }, {passive:true});
+  const lpCancel=e=>{ if(!lp) return; if(e.type==='touchmove'){ const t=e.touches[0]; if(Math.abs(t.clientX-lp.x0)<10 && Math.abs(t.clientY-lp.y0)<10) return; } clearTimeout(lp.t); lp=null; };
+  document.addEventListener('touchmove', lpCancel, {passive:true});
+  document.addEventListener('touchend', lpCancel, {passive:true});
+  document.addEventListener('touchcancel', lpCancel, {passive:true});
+  /* a reaction list closes when the messages scroll away under it - but not while someone is typing in its search box:
+     on a phone the keyboard coming up scrolls the page, and that closed it (Jordan 20/11: "on mobile when you click to
+     search emojis it automatically closes") */
+  document.addEventListener('scroll', e=>{ if(popEl && popEl.dataset.kind==='react' && !(e.target && e.target.closest && e.target.closest('.pop'))){
+    const a=document.activeElement; if(a && a.closest && a.closest('.pop')) return; popClose(); } }, true);
+  document.addEventListener('click', e=>{
+    const n=e.target.closest('#notif'); if(n && n.dataset.chat){ n.classList.remove('on'); openChat(n.dataset.chat); return; }
+    /* a click outside the little pop-up closes it; the same button again just closes it */
+    if(lpLift && Date.now()-lpLift<700 && !e.target.closest('.pop')) return;          // the lift after a hold
+    if(popEl && !e.target.closest('.pop')){ const by=popEl.dataset.by, ob=e.target.closest('[data-act]'); popClose(); if(ob && by && ob.dataset.act===by) return; }
+    const im=e.target.closest('#msgs .media img'); if(im && V2() && im.getAttribute('src')){ lbOpen(im); return; }
+    const b=e.target.closest('[data-act]'); if(!b) return;
+    const act=b.dataset.act, v=b.dataset.v;
+    if(V2() && v2Click(e, b, act, v)) return;
+    if(GROUPS() && /^(grp|gpick|gunpick)/.test(act) && grpAct(act, b, v)) return;
+    if(act==='open') return openChat(v);
+    if(act==='back'){ el('app').classList.remove('open'); open=null; renderList(); fit(); return; }
+    if(act==='filter'){ filter=v; renderChips(); renderList(); return; }
+    if(act==='lsec'){ secToggle(v); return; }
+    if(act==='send'){ sendNow(); return; }
+    if(act==='unstage'){ const c=cur(); if(c){ delete STAGED[c.id]; paintComposer(true); } return; }
+    if(act==='attach'){ el('file').click(); return; }
+    if(act==='record') return recordDlg();
+    if(act==='recgo') return recGo();
+    if(act==='recstop'){ if(recState && recState.rec) recState.rec.stop(); clearInterval(recState && recState.timer); return; }
+    if(act==='retake'){ stopCamera(); recordDlg(); return; }
+    if(act==='recsend'){ const d=recState && recState.done; closeDlg(); if(d) stage({video:d.url, dur:d.dur, blob:d.blob, name:d.name}); return; }   // waits in the box: add a message, then Send
+    if(act==='play'){ const box=b.closest('.media'), vid=box.querySelector('video'); if(REALCHAT && !vid.getAttribute('src')){ toast('The video is still loading - one moment.'); return; }
+      box.classList.add('playing'); vid.controls=true; vid.play().catch(()=>{}); return; }
+    if(act==='call'){
+      if(REALCHAT){ const c=cur(), u=c && CG.callLink(c, MEID); if(u) window.open(u, '_blank', 'noopener'); else toast('No one to call in this chat.'); return; }
+      toast('Calls open in Microsoft Teams - free. (Mock-up: nothing opens.)'); return; }
+    if(act==='alerts'){ alertTab=DEVICE; return alertsDlg(); }
+    if(act==='atab'){ alertTab=v; alertsDlg(); return; }
+    if(act==='alertson'){
+      if(!REAL){ setAlerts(true); alertsOnDlg(); setTimeout(()=>notify(CHATS[0], {from:'Gabriela Garrison', video:true}), 900); return; }
+      b.disabled=true;
+      PH_ALERTS.enable().then(()=>{ setAlerts(true); alertsOnDlg(); return PH_ALERTS.send(SAMPLE()); })
+        .then(()=>toast('Alerts are on ✓ A test is on its way - about 5 seconds.'))
+        .catch(err=>{ b.disabled=false; const m=err && err.message;
+          toast(m==='dismissed'?'No answer - tap Turn on alerts again and choose Allow.':m==='blocked'?'Alerts were not allowed on this device.':'Couldn’t turn alerts on: '+m); });
+      return;
+    }
+    if(act==='alertsoff'){ (REAL?PH_ALERTS.disable():Promise.resolve()).then(()=>{ setAlerts(false); closeDlg(); toast('Alerts are off'); }); return; }
+    if(act==='hidealerts'){ alertsHidden=true; try{ localStorage.setItem('ph_chat_alerts_hide','1'); }catch(_){} renderAlertbar();
+      toast('Closed. The bell next to New chat turns alerts on any time.'); return; }
+    if(act==='sample'){
+      if(REAL && alertsOn){ PH_ALERTS.send(SAMPLE()).then(()=>toast('Sent ✓ It arrives in about 5 seconds.'), err=>{ if(PH_ALERTS.state()!=='on') setAlerts(false); toast('Couldn’t send: '+(err&&err.message)); }); return; }
+      notify(CHATS[0], {from:'Gabriela Garrison', video:true}); return;
+    }
+    if(act==='new') return REALCHAT ? newChatDlgReal() : newChatDlg();
+    if(REALCHAT || act==='tryreal'){ const r=realAct(act, b, v); if(r!==false) return; }
+    if(act==='mk'){
+      const t=b.dataset.t; let c=CHATS.find(x=>x.name===v);
+      if(!c){ c={id:'n'+Date.now(), type:t, name:v, sub:t==='person'?'':'', members:t==='person'?[v,ME]:[ME,'Gabriela Garrison','Quinn Quill','Avery Brooks'], unread:0, msgs:[]};
+        CHATS.push(c); c.msgs.push({id:c.id+'-0', from:ME, at:Date.now(), text:'👋', seen:false}); }
+      closeDlg(); openChat(c.id); return;
+    }
+    if(act==='close') return closeDlg();
+  });
+  el('dlg').addEventListener('click', e=>{ if(e.target===el('dlg')) closeDlg(); });
+  document.addEventListener('keydown', e=>{
+    if(e.key==='Escape'){ if(lb) return; if(popEl){ const back=popEl.dataset.purpose==='compose'; popClose(); if(back) edRestore(); return; } closeDlg(); }
+    if(e.key==='Enter' && e.target && (e.target.id==='lkurl' || e.target.id==='lktx')){ e.preventDefault(); linkOk(); return; }
+    if(e.key==='Enter' && e.target && e.target.id==='gname'){ e.preventDefault(); const b=document.querySelector('#dlg [data-act="grprenok"]'); if(b) b.click(); else { const q=el('gq'); if(q) q.focus(); } return; }
+    if(e.key==='Enter' && e.target && e.target.classList && e.target.classList.contains('grpw')){ e.preventDefault(); e.target.click(); return; }
+    if(e.key==='Enter' && e.target && e.target.id==='emq'){ e.preventDefault(); const f=document.querySelector('#embody [data-act="empick"]'); if(f) f.click(); return; }
+    if(e.key==='Enter' && !e.shiftKey && !e.isComposing && e.target && e.target.id==='txt'){
+      if(isEd(e.target)){
+        if(popEl && popEl.dataset.by==='typed'){ const f=[...popEl.querySelectorAll('[data-act="mentionpick"]')].find(x=>x.style.display!=='none'); if(f){ e.preventDefault(); mentionPick(f.dataset.uid||'', f.dataset.name||''); return; } }
+        /* in a bulleted or numbered list Enter starts the next point (Enter on an empty point ends the list), like Slack; Ctrl/Cmd+Enter sends */
+        const sl=window.getSelection(); let n=sl.rangeCount ? sl.getRangeAt(0).startContainer : null, inLi=false;
+        while(n && n!==e.target){ if(n.nodeName==='LI'){ inLi=true; break; } n=n.parentNode; }
+        if(inLi && !(e.ctrlKey || e.metaKey)) return;
+      }
+      e.preventDefault(); sendNow();
+    }
+  });
+  document.addEventListener('input', e=>{
+    if(e.target.id==='q'){ q=e.target.value; renderList(); }
+    if(e.target.id==='tq' || e.target.id==='nqr') peopleSearch(e.target);
+    if(e.target.id==='nq'){ const qq=e.target.value.trim().toLowerCase(); document.querySelectorAll('#pick button').forEach(x=>{ x.style.display=!qq||x.textContent.toLowerCase().indexOf(qq)>=0?'':'none'; }); }
+    if(e.target.id==='emq'){ empSearch(); return; }
+    if(e.target.id==='gq'){ grpSearch(e.target); return; }
+    if(e.target.id==='fwq'){ const qq=e.target.value.trim().toLowerCase(); document.querySelectorAll('#fwlist button').forEach(x=>{ x.style.display=!qq || x.textContent.toLowerCase().indexOf(qq)>=0 ? '' : 'none'; }); return; }
+    if(e.target.id==='txt' && isEd(e.target)){ edEmptyMark(e.target); edSave(); typedMention(e.target); fmtPaint(); }
+    else if(e.target.id==='txt'){ e.target.style.height='auto'; e.target.style.height=Math.min(120,e.target.scrollHeight)+'px'; }
+  });
+  /* typing @ (at the start or after a space) offers the people in the chat; more letters narrow it down */
+  function typedMention(t){
+    if(edBusy) return;
+    const sl=window.getSelection(); if(!sl.rangeCount || !sl.isCollapsed){ if(popEl && popEl.dataset.by==='typed') popClose(); return; }
+    const r=sl.getRangeAt(0), node=r.startContainer;
+    const before=node.nodeType===3 ? node.textContent.slice(0, r.startOffset) : '';
+    const m=/(^|[\s\u00a0])@([^\s@]{0,24})$/.exec(before);
+    if(!m){ if(popEl && popEl.dataset.by==='typed') popClose(); return; }
+    if(!popEl || popEl.dataset.by!=='typed'){ const a=document.querySelector('.cbox [data-act="mention"]') || t; mentionPop(boxAnchor(a), true); if(!popEl) return; popEl.dataset.by='typed'; }
+    const q=m[2].toLowerCase(); let any=false;
+    popEl.querySelectorAll('[data-act="mentionpick"]').forEach(x=>{ const hit=!q || (x.dataset.name||'').toLowerCase().split(/\s+/).some(w=>w.indexOf(q)===0) || (x.dataset.name||'').toLowerCase().indexOf(q)===0; x.style.display=hit?'':'none'; if(hit) any=true; });
+    if(!any) popClose(); else { mentionTyped=m[2].length+1; popPlace(); }
+  }
+  el('file').addEventListener('change', e=>{
+    const f=e.target.files && e.target.files[0]; e.target.value=''; if(!f) return;
+    if(REALCHAT){
+      if(/^video\//.test(f.type) || /\.(mp4|mov|m4v|webm|3gp)$/i.test(f.name||'')){ const u=URL.createObjectURL(f); objectUrls.push(u); stage({video:u, blob:f, name:f.name||'video.mp4'}); }
+      else CG.photo(f).then(p=>stage({photo:p.dataUrl, b64:p.b64, w:p.w, h:p.h}), err=>toast((err && err.message) || 'That file could not be sent.'));
+      return;
+    }
+    const url=URL.createObjectURL(f); objectUrls.push(url);
+    if(/^video\//.test(f.type)) stage({video:url, dur:'video'}); else stage({photo:url});
+  });
+  /* PASTE a picture straight into the message box (like Slack): it waits there like a picked one. */
+  document.addEventListener('paste', e=>{
+    const tg=e.target && (e.target.nodeType===1 ? e.target : e.target.parentElement), box=tg && tg.closest && tg.closest('#txt'); if(!box) return;
+    const f=[...((e.clipboardData && e.clipboardData.files) || [])].find(x=>/^image\//.test(x.type));
+    if(!f){ if(isEd(box)){ e.preventDefault(); const tx=(e.clipboardData && e.clipboardData.getData('text/plain')) || ''; if(tx) document.execCommand('insertText', false, tx); edEmptyMark(box); } return; }
+    e.preventDefault();
+    if(REALCHAT) CG.photo(f).then(p=>stage({photo:p.dataUrl, b64:p.b64, w:p.w, h:p.h}), err=>toast((err && err.message) || 'That picture could not be used.'));
+    else { const url=URL.createObjectURL(f); objectUrls.push(url); stage({photo:url}); }
+  });
+  document.addEventListener('drop', e=>{
+    const tg=e.target && e.target.closest && e.target.closest('#txt'); if(!tg || !isEd(tg)) return;
+    e.preventDefault();                                                    // never a raw file dropped inside the words
+    const f=e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]; if(!f) return;
+    const dt=new DataTransfer(); dt.items.add(f); el('file').files=dt.files; el('file').dispatchEvent(new Event('change'));
+  });
+  window.addEventListener('pagehide', ()=>{ stopCamera(); try{ if(micRec) micRec.stop(); }catch(_){} objectUrls.forEach(u=>URL.revokeObjectURL(u)); });
+
+  /* On a computer the newest chat is open beside the list; a phone starts at the list. */
+  const DEMO=CHATS;
+  const wide=window.matchMedia('(min-width:761px)');
+  const firstOpen=()=>{ if(wide.matches && !open && CHATS.length) openChat(CHATS.slice().sort((a,b)=>last(b).at-last(a).at)[0].id, false); };
+  /* Someone who switched the real chat on doesn't see the made-up chats flash up first. */
+  const WANT_REAL=!!(CG && (ONLIVE || CG.switchedOn()));          // live: never the made-up chats, not even for a moment
+  let demoShown=!WANT_REAL;
+  document.body.classList.toggle('v2', V2());
+  if(V2()) setTimeout(()=>{ emoLoad().catch(()=>{}); }, 2500);
+  renderAlertbar(); renderChips();
+  if(WANT_REAL){ CHATS=[]; loading(); } else { renderList(); renderConv(); if(!openFromLink()) firstOpen(); }
+  if(wide.addEventListener) wide.addEventListener('change', firstOpen);
+  /* Once signed in we know who this is: the real chat (an Admin who switched it on, sandbox only) or the mock-up. */
+  function startMode(){
+    if(!CG || !window.PH_AUTH) return;
+    if(ONLIVE && !CG.signedIn()) return;                           // who this is first (ph-identity asks again)
+    if(!CG.pilotKnown()){ CG.loadPilot().then(startMode, startMode); return; }
+    if(CG.mode()==='real'){ if(!REALCHAT) startReal(); return; }
+    if(REALCHAT) return;
+    if(ONLIVE){ CHATS=[]; el('items').innerHTML=''; el('conv').innerHTML='<div class="empty">'+(CG.guest() ? 'Chat is for people in the practice’s own Microsoft account.' : 'Chat isn’t open to everyone yet - a few people are trying it first.')+'</div>'; return; }
+    if(!demoShown){ demoShown=true; CHATS=DEMO; renderChips(); renderList(); renderConv(); if(!openFromLink()) firstOpen(); }
+    ribbon();
+  }
+  document.addEventListener('ph-signed-in', ()=>setTimeout(startMode, 0));
+  document.addEventListener('ph-identity', ()=>setTimeout(startMode, 0));
+  if(window.PH_AUTH) startMode();
+  // again once the page is showing (after sign-in), or the window changes
+  window.addEventListener('resize', fit); window.addEventListener('load', fit);
+  if(window.ResizeObserver) new ResizeObserver(fit).observe(document.body);
+})();
+</script>
+<script>PH.nav('chat');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
+</body>
+</html>

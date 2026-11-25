@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="demo-shim.js?v=d202611250847"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Home-Brace · Marketing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" href="../assets/favicon.png?v=2" type="image/png">
+<meta name="theme-color" content="#0F2A4A">
+<meta name="apple-mobile-web-app-title" content="Home-Brace">
+<link rel="apple-touch-icon" sizes="180x180" href="../assets/icons/apple-touch-icon.png?v=3">
+<meta name="description" content="The practice’s central hub — schedule, production, documents and team, in one place. Brightline · Maple · Riverbend.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Home-Brace">
+<meta property="og:title" content="Home-Brace">
+<meta property="og:description" content="The practice’s central hub — schedule, production, documents and team, in one place. Brightline · Maple · Riverbend.">
+<meta property="og:image" content="https://app.brightline.example/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="https://app.brightline.example/v1/marketing.html">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Home-Brace">
+<meta name="twitter:description" content="The practice’s central hub — schedule, production, documents and team, in one place. Brightline · Maple · Riverbend.">
+<meta name="twitter:image" content="https://app.brightline.example/assets/og-image.png">
+<style>
+  :root{
+    --navy:#0F2A4A; --navy2:#25456e; --teal:#149B96; --teal2:#2BC0B8; --teal-soft:#E5F4F3; --teal-600:#0F827E;
+    --ink:#1F2D3D; --soft:#56627A; --line:#E4E8EE; --canvas:#F4F6F8; --white:#fff;
+    --good:#2E9E6B; --good-soft:#E7F4EE; --bad:#D7503A; --bad-soft:#FBEAE7; --amber:#F2A03D; --amber-soft:#FFF3E2;
+    --shadow:0 1px 2px rgba(15,42,74,.06),0 6px 18px rgba(15,42,74,.06);
+    --shadow-lg:0 10px 30px rgba(15,42,74,.12); --radius:14px; --maxw:1180px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--canvas);line-height:1.5;-webkit-font-smoothing:antialiased}
+  h1{color:var(--navy);margin:0}
+  .ribbon{background:var(--amber);color:#3a2400;text-align:center;font-size:13px;font-weight:600;padding:6px 14px}
+  .hdr{background:var(--navy);color:#fff}
+  .hdr-in{max-width:var(--maxw);margin:0 auto;display:flex;align-items:center;gap:12px;padding:13px 20px}
+  .mark{width:34px;height:34px;flex:none;display:block}
+  .mark img{width:34px;height:34px;display:block;border-radius:50%}
+  .brand{font-weight:700;font-size:18px;color:#fff;line-height:1.1}
+  .brand i{font-style:normal;color:var(--teal2)}
+  .brand small{display:block;font-weight:500;font-size:12px;color:var(--navy-mute,#9fb4d0)}
+  .v1{background:rgba(255,255,255,.15);color:#eaf1fb;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;margin-left:6px}
+  .v1nav{background:var(--navy2)}
+  .v1nav-in{max-width:var(--maxw);margin:0 auto;display:flex;gap:2px;padding:0 12px;overflow-x:auto}
+  .v1nav a{color:var(--navy-mute,#cdd9ea);font-size:14px;font-weight:600;padding:13px 15px;text-decoration:none;border-bottom:3px solid transparent;white-space:nowrap}
+  .v1nav a:hover{color:#fff;background:rgba(255,255,255,.05)}
+  .v1nav a.active{color:#fff;border-bottom-color:var(--teal)}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:24px 20px 90px}
+  .page-head{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap}
+  .page-head h1{font-size:26px}
+  .page-head p{margin:4px 0 0;color:var(--soft);font-size:15px}
+  .page-head .sp{flex:1}
+  .btn{background:var(--teal);color:#fff;border:none;border-radius:9px;padding:10px 15px;font-weight:600;font-size:14px;cursor:pointer;font-family:inherit;white-space:nowrap}
+  .btn:hover{background:var(--teal-600)}
+  .btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--line)}
+  /* result summary */
+  .sumrow{display:flex;gap:12px;flex-wrap:wrap;margin:18px 0 8px}
+  .sumcard{background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:12px 16px;min-width:120px}
+  .sumcard .n{font-size:22px;font-weight:800;color:var(--navy);line-height:1}
+  .sumcard .k{font-size:12px;color:var(--soft);font-weight:600;margin-top:3px}
+  .sumcard.good{border-top:3px solid var(--good)} .sumcard.bad{border-top:3px solid var(--bad)} .sumcard.mixed{border-top:3px solid var(--amber)}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--soft);margin:6px 2px 0}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .dot{width:11px;height:11px;border-radius:50%;display:inline-block}
+  /* board */
+  .board{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:18px}
+  .col{background:#eef1f5;border-radius:14px;padding:10px;min-height:200px;transition:background .12s,outline .12s}
+  .col.dragover{outline:2px dashed var(--teal);outline-offset:-2px;background:var(--teal-wash,#e3efee)}
+  .kcard.dragging{opacity:.45}
+  .kcard{cursor:grab}
+  body.ph-view-only .kcard{cursor:default}
+  body.ph-view-only .res{cursor:default}
+  .kcard:active{cursor:grabbing}
+  .col-h{display:flex;align-items:center;gap:8px;font-weight:700;color:var(--navy);font-size:14px;padding:4px 6px 10px}
+  .col-h .ct{background:#fff;color:var(--soft);font-size:12px;font-weight:700;border-radius:999px;padding:1px 8px;margin-left:auto}
+  .add{width:100%;border:1px dashed #c3ccd8;background:transparent;color:var(--soft);border-radius:10px;padding:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:2px}
+  .add:hover{border-color:var(--teal);color:var(--teal-600)}
+  .kcard{background:#fff;border:1px solid var(--line);border-radius:11px;box-shadow:var(--shadow);padding:11px 12px;margin-bottom:10px;cursor:pointer;border-left:4px solid var(--teal)}
+  .kcard:hover{box-shadow:var(--shadow-lg)}
+  /* The colour strip is the office's, drawn as an element so several offices can
+     share one card. Replaces the old per-type border colours. */
+  .kcard{position:relative;overflow:hidden}
+  .kstripe{position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:4px 0 0 4px}
+  .koffer{font-size:12.5px;font-weight:700;color:var(--teal-600,#0F827E);margin:2px 0 0}
+  .tag.otag{display:inline-flex;align-items:center;gap:5px;border:1px solid}
+  .tag.otag i{width:8px;height:8px;border-radius:50%;display:inline-block}
+  .tag.flash{background:#FFF4DA;color:#7a5200;border:1px solid #F2A03D}
+  .offpick{display:flex;flex-wrap:wrap;gap:7px}
+  .ochip{font:inherit;font-size:12.5px;font-weight:600;display:inline-flex;align-items:center;gap:6px;
+    border:1px solid #d8dfe7;background:#fff;color:var(--navy);border-radius:999px;padding:6px 11px;cursor:pointer}
+  .ochip i{width:9px;height:9px;border-radius:50%;display:inline-block}
+  .hint2{font-size:12px;color:#64748b;margin:6px 0 0}
+  .opt{font-weight:500;color:#94a3b8;font-size:11.5px}
+  .fld.two{display:flex;gap:12px} .fld.two>div{flex:1}
+  .flashshelf{border-color:#F2A03D;background:#FFFBF2}
+  /* View switch - same shape as the Schedule's Week/Month segment, so the two pages
+     behave alike. */
+  .viewseg{display:inline-flex;gap:2px;background:#EEF2F6;border-radius:11px;padding:3px;margin:0 0 16px}
+  .viewseg button{font:inherit;font-size:13px;font-weight:700;border:none;background:transparent;
+    color:#64748b;border-radius:9px;padding:7px 15px;cursor:pointer}
+  .viewseg button.on{background:#fff;color:var(--navy);box-shadow:0 1px 3px rgba(15,42,74,.14)}
+  /* By office */
+  .byo{background:#fff;border:1px solid var(--line,#E4E9F0);border-radius:16px;padding:18px 18px 6px}
+  .byo-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:4px}
+  .byo-head h2{margin:0;font-size:17px}
+  .byo-sub{font-size:13px;color:#64748b;margin:2px 0 16px}
+  .yrseg{display:inline-flex;gap:2px;background:#EEF2F6;border-radius:10px;padding:3px;margin-left:auto}
+  .yrseg button{font:inherit;font-size:12.5px;font-weight:700;border:none;background:transparent;
+    color:#64748b;border-radius:8px;padding:5px 12px;cursor:pointer}
+  .yrseg button.on{background:#fff;color:var(--navy);box-shadow:0 1px 3px rgba(15,42,74,.14)}
+  .byoscroll{overflow-x:auto}
+  .byotable{width:100%;min-width:720px;border-collapse:collapse}
+  .byotable th{font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;
+    letter-spacing:.04em;padding:0 0 8px;text-align:center}
+  .byotable th.oh{text-align:left;padding-left:2px;width:132px}
+  .byotable th.nh{text-align:right;width:150px;padding-right:2px}
+  .byorow{cursor:pointer;border-top:1px solid var(--line,#E4E9F0)}
+  .byorow:hover{background:#F8FAFC}
+  .byorow td{padding:9px 0}
+  .byo-name{font-size:13.5px;font-weight:700;color:var(--navy);display:flex;align-items:center;gap:7px}
+  .byo-name i{width:10px;height:10px;border-radius:50%;flex:none}
+  .byo-name .car{color:#94a3b8;font-size:11px;margin-left:1px;transition:transform .15s}
+  .byorow.open .byo-name .car{transform:rotate(90deg)}
+  /* "Nothing" has to be obviously different from "an all-office campaign reached
+     them" - the first version used two greys three shades apart and nobody could
+     tell them apart. Nothing is now an empty outline. */
+  .mcell{width:26px;height:22px;border-radius:5px;background:transparent;
+    border:1px dashed #D9E1EA;margin:0 auto;position:relative}
+  .mcell.all{background:#94A3B8;border-color:#94A3B8}
+  .byo-key{display:inline-flex;align-items:center;gap:6px;margin:6px 16px 0 0;font-size:12.5px}
+  .byo-key i{width:15px;height:13px;border-radius:4px;display:inline-block}
+  .byo-key i.k1{background:#F0378F}
+  .byo-key i.k2{background:#94A3B8}
+  .byo-key i.k3{background:transparent;border:1px dashed #D9E1EA}
+  .mcell b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-size:10.5px;font-weight:800;color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.25)}
+  .byo-n{text-align:right;font-size:12.5px;color:#475569;padding-right:2px;white-space:nowrap}
+  .byo-n b{color:var(--navy)}
+  .byo-res{display:block;font-size:11.5px;margin-top:2px;letter-spacing:.5px}
+  /* ---- Year view: one row per promotion, twelve months across ---- */
+  .yr{background:#fff;border:1px solid var(--line,#E4E9F0);border-radius:16px;padding:18px}
+  .yr-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .yr-head h2{margin:0;font-size:17px}
+  .yr-sub{font-size:13.5px;color:#475569;margin:6px 0 16px;line-height:1.5}
+  .yrscroll{overflow-x:auto}
+  .yrgrid{min-width:760px}
+  .yrrow{display:grid;grid-template-columns:210px 1fr 200px;gap:14px;align-items:center;
+    padding:9px 0;border-top:1px solid var(--line,#E4E9F0)}
+  .yrrow.hd{border:none;padding-bottom:2px}
+  .yrrow.hd .yrtrack div{font-size:11px;font-weight:700;color:#94a3b8;text-align:center}
+  .yrrow.hd .yrtrack div.gap{color:var(--bad,#D7503A)}
+  .yrrow.hd .yrtrack div.now{color:var(--teal-600,#0F827E)}
+  .yrname{font-size:13.5px;font-weight:700;color:var(--navy);line-height:1.3}
+  .yrwhen{font-size:12px;font-weight:600;color:#64748b;margin-top:2px}
+  .yrwhen b{color:var(--teal-600,#0F827E)}
+  .yrtrack{display:grid;grid-template-columns:repeat(12,1fr);gap:3px}
+  .yrtrack>*{grid-row:1}
+  .yrcell{height:26px;border-radius:6px;background:#F4F7FA}
+  .yrcell.gap{background:#FDECE8}
+  .yrnow{font-size:9.5px;font-weight:800;color:var(--teal-600,#0F827E);display:block;
+    letter-spacing:.03em;margin-top:1px}
+  .yrbar{height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;
+    color:#fff;font-size:11px;font-weight:800;text-shadow:0 1px 1px rgba(0,0,0,.28);
+    cursor:pointer;border:none;font-family:inherit;padding:0 4px;overflow:hidden}
+  .yrbar.done{opacity:.55}
+  .yroff{display:flex;flex-wrap:wrap;gap:5px}
+  .yroff span{font-size:11.5px;font-weight:600;color:var(--navy);display:inline-flex;
+    align-items:center;gap:4px;background:#F4F7FA;border-radius:999px;padding:3px 8px}
+  .yroff span i{width:8px;height:8px;border-radius:50%;flex:none}
+  .yrnote{display:flex;gap:9px;align-items:flex-start;font-size:13.5px;line-height:1.5;
+    background:#FDECE8;border:1px solid #f3c6bb;border-radius:12px;padding:11px 14px;margin-top:16px}
+  .yrnote.ok{background:var(--teal-soft,#E8F6F4);border-color:var(--teal-line,#bfe3d0)}
+  .yrnote b{color:var(--navy)}
+  .yrshelf{margin-top:14px;border:1px solid #F2A03D;background:#FFFBF2;border-radius:12px;padding:12px 14px}
+  .yrshelf .t2{font-size:13px;font-weight:800;color:var(--navy);margin-bottom:3px}
+  .yrshelf p{font-size:12.5px;color:#64748b;margin:0 0 9px}
+  .lnk{font:inherit;font-size:13px;font-weight:700;background:transparent;border:none;
+    color:var(--teal-600,#0F827E);text-decoration:underline;cursor:pointer;padding:0}
+  @media(max-width:640px){ .yr{padding:14px 12px} }
+  .byo-n .none{color:var(--bad,#D7503A);font-weight:700}
+  .byo-items{background:#F8FAFC;border-top:1px solid var(--line,#E4E9F0)}
+  .byo-items td{padding:11px 2px 14px}
+  .byo-items .chips2{display:flex;flex-wrap:wrap;gap:7px}
+  .byo-items button{font:inherit;font-size:12.5px;font-weight:600;border:1px solid #d8dfe7;
+    background:#fff;color:var(--navy);border-radius:9px;padding:6px 11px;cursor:pointer;
+    display:inline-flex;align-items:center;gap:6px}
+  .byo-items button i{width:8px;height:8px;border-radius:50%;flex:none}
+  .byo-empty{font-size:12.5px;color:#64748b;font-style:italic}
+  @media(max-width:640px){ .byo{padding:14px 12px 4px} .byotable th.nh{width:96px} }
+  .kcard .kt{font-weight:700;color:var(--navy);font-size:14px;margin-bottom:6px}
+  .kmeta{display:flex;flex-wrap:wrap;gap:5px;align-items:center;font-size:11.5px}
+  .tag{font-weight:700;padding:2px 8px;border-radius:999px;background:var(--canvas);color:var(--soft);border:1px solid var(--line)}
+  .kfoot{display:flex;align-items:center;gap:8px;margin-top:9px;font-size:11.5px;color:var(--soft)}
+  .kfoot .sp{flex:1}
+  .mv{border:1px solid var(--line);background:#fff;border-radius:7px;width:24px;height:24px;font-size:13px;cursor:pointer;color:var(--navy);line-height:1;font-family:inherit}
+  /* Touch devices can't drag cards, so these arrows are the only way to move one. */
+  @media(max-width:760px){
+    .mv{width:38px;height:38px;font-size:16px}
+    .res{padding:8px 14px;font-size:12.5px;min-height:36px}
+    .ev{padding:8px 9px;font-size:12px;min-height:32px}
+    .kcard{padding:13px 14px}
+    .kcard .kt{font-size:14.5px}
+    .nodate .chips2 button{padding:8px 14px;font-size:12.5px;min-height:36px}
+  }
+  .mv:hover{border-color:var(--teal);color:var(--teal-600)}
+  .mv:disabled{opacity:.3;cursor:default}
+  .res{font-weight:700;padding:3px 9px;border-radius:999px;cursor:pointer;font-size:11.5px;font-family:inherit;border:none}
+  .res.good{background:var(--good-soft);color:var(--good)} .res.bad{background:var(--bad-soft);color:var(--bad)}
+  .res.mixed{background:var(--amber-soft);color:#946011} .res.none{background:#eef1f5;color:#8a94a6}
+  /* calendar overview */
+  .calwrap{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px;margin-top:22px}
+  .calhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px}
+  .calhead h2{margin:0;font-size:17px;color:var(--navy)}
+  .calhead .nav{display:flex;align-items:center;gap:6px;margin-left:auto}
+  .calhead button{border:1px solid var(--line);background:#fff;border-radius:9px;width:32px;height:32px;font-size:15px;cursor:pointer;color:var(--navy);font-family:inherit}
+  .calhead button:hover{border-color:var(--teal);color:var(--teal-600)}
+  .calhead .mlab{font-weight:800;color:var(--navy);font-size:15px;min-width:132px;text-align:center}
+  .calsub{font-size:12.5px;color:var(--soft);margin-bottom:14px}
+  .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;min-width:640px}
+  .calscroll{overflow-x:auto}
+  .cal .dow{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--soft);text-align:center;padding:4px 0}
+  /* min-width:0 is the fix for long campaign names stretching a column: grid items
+     default to min-width:auto, so the cell refuses to shrink below its widest
+     nowrap title and steals space from the other six days. With this, the title
+     ellipsises instead and every day stays the same width. */
+  .cal .day{min-height:74px;border:1px solid var(--line);border-radius:9px;padding:5px 6px;background:#fff;min-width:0}
+  .cal .day.out{background:#fafbfc;border-color:#f0f2f5}
+  .cal .day.today{border-color:var(--teal);box-shadow:0 0 0 2px var(--teal-soft) inset}
+  .cal .dnum{font-size:11.5px;font-weight:700;color:var(--soft);margin-bottom:3px}
+  .cal .day.today .dnum{color:var(--teal-600)}
+  .ev{display:block;width:100%;text-align:left;border:none;border-radius:6px;padding:3px 6px;margin-bottom:3px;font-size:11px;font-weight:700;
+      cursor:pointer;font-family:inherit;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ev.all{background:#64748b}
+  .evo{opacity:.82;font-weight:600;margin-left:5px;font-size:10.5px}
+  .ev.done{opacity:.62}
+  .ev .rd{font-weight:800}
+  .callegend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--soft);margin-top:12px}
+  .callegend span{display:inline-flex;align-items:center;gap:6px}
+  .callegend i{width:11px;height:11px;border-radius:3px;display:inline-block}
+  .nodate{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+  .nodate .t2{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--soft);margin-bottom:7px}
+  .nodate .chips2{display:flex;gap:6px;flex-wrap:wrap}
+  .nodate .chips2 button{border:1px dashed var(--line);background:#fff;border-radius:999px;padding:5px 11px;font-size:12px;font-weight:600;color:var(--navy);cursor:pointer;font-family:inherit}
+  /* tap-to-pick menu */
+  .pk{position:fixed;z-index:300;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow-lg);padding:6px;min-width:200px}
+  .pk button{display:flex;align-items:center;gap:10px;width:100%;border:none;background:none;font-family:inherit;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:13.5px;font-weight:600;color:var(--ink);text-align:left}
+  .pk button:hover{background:var(--canvas)}
+  .pk button.cur{background:var(--teal-soft)}
+  .pk small{display:block;color:var(--soft);font-size:11px;font-weight:500}
+  .pk .ck{margin-left:auto;color:var(--teal-600);font-weight:800}
+  .pk .pkh{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--soft);padding:7px 10px 5px}
+  /* modal */
+  .ov{position:fixed;inset:0;background:rgba(15,42,74,.5);z-index:120;display:none;align-items:flex-start;justify-content:center;padding:24px 16px;overflow:auto}
+  .ov.open{display:flex}
+  .modal{background:#fff;width:100%;max-width:520px;border-radius:16px;box-shadow:var(--shadow-lg);overflow:hidden;margin:auto}
+  .m-top{display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid var(--line)}
+  .m-top h3{margin:0;font-size:17px;color:var(--navy)}
+  .m-top .x{margin-left:auto;border:none;background:none;font-size:24px;color:var(--soft);cursor:pointer;line-height:1}
+  .m-body{padding:20px}
+  .m-foot{display:flex;gap:10px;justify-content:flex-end;padding:14px 20px;border-top:1px solid var(--line);background:#fafbfc}
+  .fld{margin-bottom:13px}
+  .fld label{display:block;font-size:12px;font-weight:600;color:var(--soft);margin-bottom:3px}
+  .fld input,.fld select,.fld textarea{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:9px;font-size:14px;font-family:inherit;background:#fff}
+  .fld textarea{resize:vertical;min-height:60px}
+  .segs{display:flex;gap:6px;flex-wrap:wrap}
+  .seg{border:1px solid var(--line);background:#fff;border-radius:9px;padding:8px 12px;font-size:13px;font-weight:600;color:var(--navy);cursor:pointer;font-family:inherit}
+  .seg.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .seg.g.on{background:var(--good);border-color:var(--good)} .seg.b.on{background:var(--bad);border-color:var(--bad)} .seg.m.on{background:var(--amber);border-color:var(--amber);color:#3a2400}
+  @media(max-width:900px){ .board{grid-template-columns:repeat(2,1fr)} }
+  @media(max-width:560px){ .board{grid-template-columns:1fr} }
+  /* Some people set "reduce motion" in Windows or macOS, often because movement makes
+     them unwell. Honour it everywhere: keep the state changes, drop the travel. */
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{
+      animation-duration:.01ms !important; animation-iteration-count:1 !important;
+      transition-duration:.01ms !important; scroll-behavior:auto !important;
+    }
+  }
+
+</style>
+<script src="user.js?v=hc268d202611250847"></script>
+  <script src="store.js?v=hc268d202611250847"></script>
+  <script src="gate.js?v=hc268d202611250847"></script>
+</head>
+<body>
+<div class="ribbon">DEMO — the marketing board: events, social posts and what each campaign brought in.</div>
+<header class="hdr">
+  <div class="hdr-in">
+    <span class="mark" aria-label="Home-Brace"><img src="../assets/logo-mark.png?v=2" alt="" width="34" height="34"></span>
+    <span class="brand">Home-<i>Brace</i><small>Marketing Board</small></span>
+    <span class="v1">Demo</span>
+  </div>
+</header>
+<nav class="v1nav"><div class="v1nav-in" id="nav"></div></nav>
+
+<div class="wrap">
+  <div class="page-head">
+    <div>
+      <h1>Marketing Calendar</h1>
+      <p>Plan events &amp; social posts, move them across the board — then score how they did.</p>
+    </div>
+    <span class="sp"></span>
+    <button class="btn" onclick="MK.add('ideas')">+ New idea</button>
+  </div>
+
+  <div class="sumrow" id="summary"></div>
+  <div class="legend">
+    <span><i class="dot" style="background:var(--good)"></i> Good — hit or beat the goal</span>
+    <span><i class="dot" style="background:var(--amber)"></i> Mixed — okay, room to improve</span>
+    <span><i class="dot" style="background:var(--bad)"></i> Underperformed — didn't work</span>
+    <span style="margin-left:auto">Score is set when a card reaches <b>Done</b>.</span>
+  </div>
+
+  <div class="viewseg" id="viewseg"></div>
+
+  <div id="year"></div>
+  <div class="board" id="board"></div>
+  <div id="calendar"></div>
+  <div id="byoffice"></div>
+</div>
+
+<div id="modal" class="ov"><div class="modal" id="modalCard"></div></div>
+
+<script>
+(function(){
+  const STAGES=[{k:'ideas',n:'💡 Ideas'},{k:'planned',n:'🗓️ Planned'},{k:'active',n:'🚀 In progress'},{k:'done',n:'✅ Done'}];
+  const TYPES=[{k:'social',n:'Social post'},{k:'event',n:'Community event'},{k:'promo',n:'Promotion'},{k:'email',n:'Email / Newsletter'},{k:'referral',n:'Referral / DDS'}];
+  const TYPEN=Object.fromEntries(TYPES.map(t=>[t.k,t.n]));
+  const RES={good:'🟢 Good',mixed:'🟡 Mixed',bad:'🔴 Underperformed',none:'Set result'};
+  // read when needed, not once at load: an office added in Admin after the page opened was dropped from cards (21/11/2026, code review)
+  const LOCS=()=>['All offices'].concat(PH.officeNames());   // shared list — see user.js
+  const ALLOFF='All offices';
+
+  /* A campaign can run at SEVERAL offices and over a RANGE of days. Jamie's promo
+     list needs both - "$1,000 off, Lakeview, Cedar Grove & Westfield only, one day" and
+     "Jun 1 - Aug 31, all locations" - and neither fitted the old one-office,
+     one-day card. Older cards stored a single `loc` string, so everything reads
+     offices through locsOf() and an empty list means every office. */
+  function locsOf(c){
+    const all=LOCS();
+    if(Array.isArray(c.locs)) return c.locs.filter(n=>all.indexOf(n)>=0);
+    if(!c.loc || c.loc===ALLOFF) return [];
+    return all.indexOf(c.loc)>=0 ? [c.loc] : [];
+  }
+  const isAllOff=c=>locsOf(c).length===0;
+  const locLabel=c=>isAllOff(c) ? ALLOFF : locsOf(c).join(', ');
+  const endOf=c=>c.end||c.date;
+  // ISO dates sort and compare correctly as plain strings, so no Date objects needed.
+  function runsOn(c,iso){
+    if(!c.date) return false;
+    return iso>=c.date && iso<=(endOf(c)||c.date);
+  }
+  /* Flash sales have no date on purpose: the offer and artwork are approved up front
+     so a slow office can launch one inside 24 hours. They sit on the shelf until
+     someone gives them dates. */
+  const isFlash=c=>!!c.flash;
+  const two=n=>String(n).padStart(2,'0');
+  const CSS=document.createElement('style');
+  CSS.textContent=
+
+    '.wrow{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px;padding-top:5px;border-top:1px dashed var(--line)}'+
+    '.wrow .who{font-size:10.5px;font-weight:700;padding:2px 6px;border-radius:5px;'+
+      'background:var(--teal-soft,#E5F4F3);color:var(--teal-600,#0F827E);'+
+      'display:inline-flex;align-items:center;gap:4px;white-space:nowrap}'+
+    /* One "+ I'll be here" on all 31 days drowned the calendar. Keep it out of sight until
+       the day is hovered -- except on touch, where there is no hover to reveal it. */
+    '.wset{font-family:inherit;font-size:10.5px;font-weight:700;border:1px dashed var(--line);'+
+      'background:transparent;color:var(--soft);border-radius:5px;padding:2px 7px;cursor:pointer;'+
+      'opacity:0;transition:opacity .1s}'+
+    '.day:hover .wset,.wset:focus-visible{opacity:1}'+
+    '.wset:hover{border-color:var(--teal);color:var(--teal)}'+
+    '@media (hover:none){.wset{opacity:1}}'+
+    /* A day with nobody on it needs no divider line. */
+    '.wrow:has(.wset:only-child){border-top:0;margin-top:2px;padding-top:0}'+
+    '.wpick{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}'+
+    '.wopt{font-family:inherit;font-size:13px;font-weight:700;border:1.5px solid var(--line);'+
+      'background:#fff;color:var(--navy);border-radius:9px;padding:8px 13px;cursor:pointer}'+
+    '.wopt.on{border-color:var(--teal);background:var(--teal-soft,#E5F4F3);color:var(--teal-600,#0F827E)}'+
+    '.wclear{font-family:inherit;font-size:13px;font-weight:600;background:transparent;border:none;'+
+      'color:var(--bad,#D7503A);cursor:pointer;padding:4px 0}';
+  document.head.appendChild(CSS);
+
+  /* Offices carry their Schedule colour here too, so a location reads the same on
+     both pages. (This replaces the old marketing-TYPE colours - the type is still
+     on the card, as words.) "All offices" has no office colour, so it stays neutral. */
+  function officeTag(c){
+    const ls=locsOf(c);
+    if(!ls.length) return '<span class="tag">\u{1F4CD} '+esc(ALLOFF)+'</span>';
+    return ls.map(function(n){
+      const col=PH.colorForOffice(n);
+      return '<span class="tag otag" style="background:'+col.bg+';color:'+col.fg+
+             ';border-color:'+col.dot+'"><i style="background:'+col.dot+'"></i>'+esc(n)+'</span>';
+    }).join('');
+  }
+  // The strip down the left of a board card: one slice per office it runs at.
+  function officeStripe(c){
+    const ls=locsOf(c);
+    const cols = ls.length ? ls.map(n=>PH.colorForOffice(n).dot) : ['#94a3b8'];
+    if(cols.length===1) return 'background:'+cols[0];
+    const step=100/cols.length;
+    return 'background:linear-gradient(to bottom,'+cols.map(function(c2,i){
+      return c2+' '+(i*step)+'%,'+c2+' '+((i+1)*step)+'%'; }).join(',')+')';
+  }
+
+  /* "Where I'll be": marketing staff mark which office they are at on a given day, so the
+     calendar shows the activity AND the person alongside it. Keyed by date, then by person. */
+  const WKEY='ph_mktgwhere';
+  let where={};
+  try{ where=JSON.parse(localStorage.getItem(WKEY)||'{}')||{}; }catch(_){ where={}; }
+  const meName=()=>PH.name(PH.me());   // PH.name takes a person, not zero args
+  /* Shared through Home-Brace's store like the board, same shape (21/11/2026, code review): it was kept only in this
+     browser. What this browser had is added once to the shared copy (days and people it lacks), so nothing typed is lost. */
+  const WMOVED='ph_mktgwhere_moved';
+  const isObj=x=>!!x && typeof x==='object' && !Array.isArray(x);
+  function addWhere(cur, old){
+    const out={}; if(isObj(cur)) Object.keys(cur).forEach(d=>{ if(isObj(cur[d])) out[d]=Object.assign({}, cur[d]); });
+    if(isObj(old)) Object.keys(old).forEach(d=>{ if(!isObj(old[d])) return; Object.keys(old[d]).forEach(n=>{
+      if(typeof old[d][n]!=='string' || !old[d][n]) return; out[d]=out[d]||{}; if(out[d][n]===undefined) out[d][n]=old[d][n]; }); });
+    return out;
+  }
+  function loadWhere(){
+    if(!(window.PH_STORE && PH.isLive())) return;
+    let old=null; try{ if(localStorage.getItem(WMOVED)!=='1') old=JSON.parse(localStorage.getItem(WKEY)||'null'); }catch(_){}
+    const redraw=()=>{ if(view==='calendar') renderCalendar(); };
+    PH_STORE.get(WKEY).then(function(shared){
+      if(isObj(shared)) where=shared;
+      if(PH_STORE.readFailed && PH_STORE.readFailed(WKEY)){ redraw(); return; }
+      if(!isObj(old) || !Object.keys(old).length){ try{ localStorage.setItem(WMOVED,'1'); }catch(_){} redraw(); return; }
+      // always written once, so a shared row is made even when this browser's copy is all there is
+      return PH_STORE.update(WKEY, cur=>addWhere(cur, old)).then(function(r){
+        if(r && !r.blocked && !r.error){ try{ localStorage.setItem(WMOVED,'1'); }catch(_){} if(isObj(r.value)) where=r.value; }
+        redraw();
+      });
+    }).catch(function(){});
+  }
+
+  function whereHtml(iso){
+    const day=where[iso]||{};
+    const names=Object.keys(day);
+    const mine=day[meName()];
+    const rows=names.map(n=>
+      '<span class="who" title="'+esc(n)+' at '+esc(day[n])+'">\u{1F464} '+
+      esc(n.split(' ')[0])+' \u00b7 '+esc(day[n])+'</span>').join('');
+    const btn = canEdit()
+      ? '<button class="wset" onclick="MK.setWhere(\''+iso+'\')">'+(mine?'Change where I am':'+ I\u2019ll be here')+'</button>'
+      : '';
+    return (rows||btn) ? '<div class="wrow">'+rows+btn+'</div>' : '';
+  }
+
+  function setWhere(iso){
+    if(!canEdit()) return;
+    const cur=(where[iso]||{})[meName()]||'';
+    const opts=PH.officeNames();
+    openModalRaw('<h3 style="margin:0 0 4px">Where will you be?</h3>'+
+      '<p style="margin:0 0 14px;color:var(--soft);font-size:13.5px">'+niceDate(iso)+' \u2014 shows on the calendar next to that day\u2019s marketing.</p>'+
+      '<div class="wpick">'+opts.map(o=>
+        '<button class="wopt'+(o===cur?' on':'')+'" data-o="'+esc(o)+'" onclick="MK.pickWhere(\''+iso+'\',this.dataset.o)">'+
+        esc(o)+'</button>').join('')+'</div>'+
+      (cur?'<button class="wclear" onclick="MK.pickWhere(\''+iso+'\',\'\')">Remove me from this day</button>':''));
+  }
+  // this person's one day, laid onto whatever is saved now (21/11/2026, code review)
+  function whereWith(cur,iso,me,office){
+    const out=isObj(cur)?Object.assign({},cur):{}, day=isObj(out[iso])?Object.assign({},out[iso]):{};
+    if(office) day[me]=office; else delete day[me];
+    if(Object.keys(day).length) out[iso]=day; else delete out[iso];
+    return out;
+  }
+  function pickWhere(iso,office){
+    if(!canEdit()) return;
+    const me=meName();
+    where=whereWith(where,iso,me,office);
+    closeRaw(); renderCalendar();
+    if(!window.PH_STORE){ try{ localStorage.setItem(WKEY,JSON.stringify(where)); }catch(_){} return; }
+    PH_STORE.update(WKEY, cur=>whereWith(cur,iso,me,office)).then(function(r){
+      // refused or not sent: the store's banner says so and it stays on this screen, as the board's cards do
+      if(r && !r.blocked && !r.error && isObj(r.value)){ where=r.value; if(view==='calendar') renderCalendar(); }
+    });
+  }
+
+  let seq=100;
+  /* A new card's id can't be one another person's page also hands out: it was the highest id this page had seen + 1, and
+     mergeById put the second card over the first. Time + random, always above the last one made here (21/11/2026, code review) */
+  let lastId=0;
+  function newId(){
+    let id=Math.max(Date.now()*1000+Math.floor(Math.random()*1000), lastId+1);
+    while(cards.some(c=>String(c.id)===String(id))) id++;
+    return lastId=id;
+  }
+  // an id goes into onclick="MK.open(id)" only as a number (21/11/2026, code review)
+  const nid=c=>Number(c.id);
+  /* Demo campaigns for the sandbox only. In the real app the board starts empty —
+     showing staff invented campaigns they might act on would be worse than blank. */
+  const DEMO=[
+    {id:++seq,title:'Back-to-school braces promo',type:'promo',owner:'Renee B.',locs:[],date:'2026-08-01',end:'2026-08-31',offer:'$500 off full treatment',stage:'done',result:'good',notes:'Demo data.'},
+    {id:++seq,title:'Labor Day weekend offer',type:'promo',owner:'Renee B.',locs:['Lakeview','Cedar Grove','Westfield'],date:'2026-09-07',offer:'$1,000 off',stage:'done',result:'mixed',notes:'Demo data \u2014 a one-day promo across three offices.'},
+    {id:++seq,title:'Flash sale \u2014 pre-approved',type:'promo',owner:'',locs:[],date:'',offer:'48 hours, offer to suit',flash:true,stage:'ideas',result:'none',notes:'Demo data \u2014 sits on the shelf until an office needs a lift.'},
+    {id:++seq,title:'\u201cMeet Dr. Chen\u201d reel',type:'social',owner:'Renee B.',locs:['Cedar Grove'],date:'2026-09-30',stage:'active',result:'none',notes:'Instagram + Facebook reel.'},
+    {id:++seq,title:'Lakeview school-supply drive',type:'event',owner:'Yolanda R.',locs:['Lakeview'],date:'2026-09-12',stage:'planned',result:'none',notes:'Community goodwill + lead capture.'},
+    {id:++seq,title:'Referral thank-you cards to DDS',type:'referral',owner:'Morgan B.',locs:[],date:'2026-09-24',stage:'active',result:'none',notes:'Handwritten cards to referring dentists.'},
+    {id:++seq,title:'Summer smile giveaway',type:'social',owner:'Renee B.',locs:[],date:'2026-06-15',stage:'done',result:'good',notes:'320 new followers, 41 consult requests.'},
+    {id:++seq,title:'Mall kiosk weekend',type:'event',owner:'Becca F.',locs:['Westfield'],date:'2026-05-16',stage:'done',result:'bad',notes:'Low foot traffic; cost > leads. Skip next year.'},
+    {id:++seq,title:'Google review push',type:'social',owner:'Ivy R.',locs:['Cedar Grove'],date:'',stage:'ideas',result:'none',notes:'Ask happy patients at deband.'},
+    {id:++seq,title:'Invisalign teen webinar',type:'event',owner:'',locs:[],date:'',stage:'ideas',result:'none',notes:'Parents Q&A on Zoom.'}
+  ];
+  let cards = (window.PH && PH.isLive && PH.isLive()) ? [] : DEMO.slice();
+
+  const MKEY='ph_mktg';
+  /* Only the cards THIS page changed go out, laid onto the shared board, so two people
+     working the board at once both keep their cards. Changes are found against a
+     snapshot by card id, so add, edit, move and delete are all covered. */
+  let snapCards={};
+  function takeCardSnap(){ snapCards={}; cards.forEach(c=>{ snapCards[String(c.id)]=JSON.stringify(c); }); }
+  function dirtyCards(){
+    const changed=[], removed=[], now={};
+    cards.forEach(c=>{ const id=String(c.id); now[id]=1; if(JSON.stringify(c)!==snapCards[id]) changed.push(id); });
+    Object.keys(snapCards).forEach(id=>{ if(!now[id]) removed.push(id); });
+    return {changed, removed};
+  }
+  function persist(){
+    if(window.PH_STORE && PH_STORE.update && PH.isLive()){
+      const d=dirtyCards();
+      if(!d.changed.length && !d.removed.length) return;
+      const mine=cards, sent={};
+      PH_STORE.update(MKEY, function(remote){
+        d.changed.forEach(id=>{ const c=mine.find(x=>String(x.id)===id); sent[id]=c?JSON.stringify(c):undefined; });
+        d.removed.forEach(id=>{ sent[id]=undefined; });
+        return PH_STORE.mergeById(remote, mine, d.changed, d.removed);
+      }).then(function(r){
+        /* Not saved means not saved: the cards stay changed and go with the next save.
+           And a save that comes back late must not take back a card edited since it
+           left - the same fix as the schedule (see adoptSaved there). */
+        if(!r || r.blocked || r.error || !r.value) return;
+        const now={}; cards.forEach(c=>{ now[String(c.id)]=c; });
+        const keep={};
+        Object.keys(now).concat(Object.keys(snapCards)).forEach(id=>{
+          if(Object.prototype.hasOwnProperty.call(keep,id)) return;
+          const cur=now[id]?JSON.stringify(now[id]):undefined;
+          const was=Object.prototype.hasOwnProperty.call(sent,id)?sent[id]:snapCards[id];
+          if(cur!==was) keep[id]=now[id]||null;
+        });
+        cards=r.value.slice(); takeCardSnap();
+        Object.keys(keep).forEach(id=>{
+          const i=cards.findIndex(c=>String(c.id)===id);
+          if(keep[id]===null){ if(i>=0) cards.splice(i,1); }
+          else if(i>=0) cards[i]=keep[id]; else cards.push(keep[id]);
+        });
+        cards.forEach(c=>{ if(+c.id>seq) seq=+c.id; });
+        render();
+        if(Object.keys(keep).length) persist();
+      });
+      return;
+    }
+    if(window.PH_STORE) PH_STORE.set(MKEY, cards);
+    else try{ localStorage.setItem(MKEY,JSON.stringify(cards)); }catch(_){}
+  }
+  /* The board saved but never loaded - only PH_STORE.set existed - so everything
+     typed in came back empty after a reload. */
+  function adopt(list){
+    if(!Array.isArray(list) || !list.length) return false;
+    cards=list;
+    cards.forEach(c=>{ if(+c.id>seq) seq=+c.id; });
+    return true;
+  }
+  /* Their promo calendar ships as a data file rather than as code: it is commercial
+     information and the sandbox repo is public, so `_promos.json` is gitignored and
+     only ever reaches their own tenant. Seeds the board once, while it is still empty. */
+  const SEEDKEY='ph_mktg_seeded';
+  function seedPromos(){
+    // Once only, and by a flag rather than "is the board empty" - otherwise a board
+    // that already had a card on it would never receive the promo calendar, and
+    // deleting a promo would bring it back on the next reload.
+    let already=false; try{ already=localStorage.getItem(SEEDKEY)==='1'; }catch(_){}
+    if(already) return Promise.resolve(false);
+    return fetch('_promos.json').then(r=>r.ok?r.json():null).then(function(j){
+      const list=j&&j.promos;
+      try{ localStorage.setItem(SEEDKEY,'1'); }catch(_){}
+      if(!Array.isArray(list)||!list.length) return false;
+      const t=new Date(), iso=t.getFullYear()+'-'+two(t.getMonth()+1)+'-'+two(t.getDate());
+      const have={}; cards.forEach(c=>{ have[(c.title||'')+'|'+(c.date||'')]=1; });
+      list.forEach(function(p){
+        if(have[(p.title||'')+'|'+(p.date||'')]) return;      // never add the same promo twice
+        const c=Object.assign({type:'promo',owner:'',result:'none',notes:'',locs:[],
+                               end:'',offer:'',flash:false}, p, {id:newId()});
+        // Stage comes from the dates, so it stays right as the year moves on.
+        if(!c.stage) c.stage = !c.date ? 'ideas'
+                             : (endOf(c)<iso ? 'done' : (c.date<=iso ? 'active' : 'planned'));
+        cards.push(c);
+      });
+      persist();
+      return true;
+    }).catch(function(){ return false; });
+  }
+  function boot(){
+    let local=null; try{ local=JSON.parse(localStorage.getItem(MKEY)); }catch(_){}
+    if(window.PH && PH.loadHold) PH.loadHold('page', 'Loading the marketing calendar…');   // the loading screen stays up until the numbers are in (user.js)
+    const done=()=>{ try{ render(); } finally { if(window.PH && PH.loadDone) PH.loadDone('page'); } };
+    if(window.PH_STORE && PH.isLive()){
+      loadWhere();
+      PH_STORE.get(MKEY).catch(()=>null).then(function(remote){
+        adopt(remote)||adopt(local);
+        takeCardSnap();
+        seedPromos().then(function(){ takeCardSnap(); done(); });   // adds the promo calendar alongside whatever is there
+      }).catch(function(){ if(window.PH && PH.loadDone) PH.loadDone('page'); });
+      return;
+    }
+    if(adopt(local)) return done();
+    done();
+  }
+
+  const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const MOFULL=['January','February','March','April','May','June','July','August',
+                'September','October','November','December'];
+  function parts(d){ const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(d||''); return m?{y:+m[1],m:+m[2]-1,d:+m[3]}:null; }
+  function niceDate(d){ const p=parts(d); return p? MONTHS[p.m]+' '+p.d : (d||''); }
+  /* One day reads "Jan 19"; a range reads "Jun 1 - Aug 31"; a whole single month
+     reads just "March", which is how Jamie writes them. */
+  function dateLabel(c){
+    const a=parts(c.date), b=parts(endOf(c));
+    if(!a) return '';
+    if(!b || (a.y===b.y&&a.m===b.m&&a.d===b.d)) return niceDate(c.date);
+    const lastOfMonth=new Date(a.y,a.m+1,0).getDate();
+    if(a.y===b.y && a.m===b.m && a.d===1 && b.d===lastOfMonth) return MOFULL[a.m];
+    return niceDate(c.date)+' \u2013 '+niceDate(endOf(c));
+  }
+  const canEdit=()=>!window.PH||PH.atLeast('marketing','edit');
+  const el=id=>document.getElementById(id);
+  let editId=null;
+
+  function renderSummary(){
+    const done=cards.filter(c=>c.stage==='done');
+    const g=done.filter(c=>c.result==='good').length, m=done.filter(c=>c.result==='mixed').length, b=done.filter(c=>c.result==='bad').length;
+    el('summary').innerHTML=
+      '<div class="sumcard"><div class="n">'+cards.length+'</div><div class="k">Total campaigns</div></div>'+
+      '<div class="sumcard"><div class="n">'+cards.filter(c=>c.stage==='active').length+'</div><div class="k">In progress</div></div>'+
+      '<div class="sumcard good"><div class="n">'+g+'</div><div class="k">Good results</div></div>'+
+      '<div class="sumcard mixed"><div class="n">'+m+'</div><div class="k">Mixed</div></div>'+
+      '<div class="sumcard bad"><div class="n">'+b+'</div><div class="k">Underperformed</div></div>';
+  }
+  function card(c){
+    const ed=canEdit();
+    const si=STAGES.findIndex(s=>s.k===c.stage);
+    const resChip = c.stage==='done'
+      ? (ed ? '<button class="res '+esc(c.result)+'" onclick="event.stopPropagation();MK.pickRes(event,'+nid(c)+')">'+RES[c.result]+'</button>'
+            : '<span class="res '+esc(c.result)+'">'+RES[c.result]+'</span>')
+      : '';
+    return '<div class="kcard"'+(ed?' draggable="true"':'')+' data-id="'+nid(c)+'"'+(ed?' onclick="MK.open('+nid(c)+')"':'')+'>'+
+      '<i class="kstripe" style="'+officeStripe(c)+'"></i>'+
+      '<div class="kt">'+esc(c.title)+'</div>'+   // escaped like every other view (21/11/2026, code review)
+      (c.offer?'<div class="koffer">'+esc(c.offer)+'</div>':'')+
+      '<div class="kmeta"><span class="tag">'+TYPEN[c.type]+'</span>'+
+        (isFlash(c)?'<span class="tag flash">\u26A1 Flash \u00b7 ready</span>':'')+
+        officeTag(c)+(c.date?'<span class="tag">'+dateLabel(c)+'</span>':'')+'</div>'+
+      '<div class="kfoot"><span>'+(c.owner?'👤 '+esc(c.owner):'Unassigned')+'</span><span class="sp"></span>'+resChip+
+        (ed?'<button class="mv" onclick="event.stopPropagation();MK.move('+nid(c)+',-1)" '+(si===0?'disabled':'')+'>◀</button>'+
+            '<button class="mv" onclick="event.stopPropagation();MK.move('+nid(c)+',1)" '+(si===STAGES.length-1?'disabled':'')+'>▶</button>':'')+
+      '</div></div>';
+  }
+  function renderBoard(){
+    el('board').innerHTML=STAGES.map(s=>{
+      const list=cards.filter(c=>c.stage===s.k);
+      return '<div class="col" data-stage="'+s.k+'"><div class="col-h">'+s.n+'<span class="ct">'+list.length+'</span></div>'+
+        list.map(card).join('')+
+        (canEdit()?'<button class="add" onclick="MK.add(\''+s.k+'\')">+ Add</button>':'')+'</div>';
+    }).join('');
+  }
+  // Was hardcoded to Jul 28 2026, so this calendar opened a month behind every other page.
+  const _t=new Date();
+  const TODAY={y:_t.getFullYear(), m:_t.getMonth(), d:_t.getDate()};
+  let calY=TODAY.y, calM=TODAY.m;
+  const RESDOT={good:'\ud83d\udfe2',mixed:'\ud83d\udfe1',bad:'\ud83d\udd34',none:''};
+  /* An empty month used to look like a broken page: the calendar opens on the
+     current month, and a month with no promotion in it simply showed nothing.
+     Say so in words, and offer the nearest month that does have something. */
+  function emptyMonthNote(){
+    const has=d=>cards.some(c=>{
+      const ms=monthsTouched(c,calY); return parts(c.date) && ms.indexOf(d)>=0; });
+    if(has(calM)) return '';
+    const dated=cards.filter(c=>parts(c.date)).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+    if(!dated.length) return '';
+    const hereISO=calY+'-'+two(calM+1)+'-01';
+    const next=dated.find(c=>(endOf(c)||c.date)>=hereISO) ||dated[dated.length-1];
+    const p=parts(next.date);
+    return '<div class="yrnote"><span>\u{1F4C5}</span><div>Nothing is on in <b>'+
+      MOFULL[calM]+' '+calY+'</b>. The nearest is <b>'+esc(next.title)+'</b> on '+
+      esc(dateLabel(next))+'. <button class="lnk" onclick="MK.goMonth('+p.y+','+p.m+
+      ')">Jump to '+MOFULL[p.m]+'</button></div></div>';
+  }
+  function goMonth(y,m){ calY=y; calM=m; renderCalendar(); }
+  function renderCalendar(){
+    const first=new Date(calY,calM,1), start=first.getDay();
+    const dim=new Date(calY,calM+1,0).getDate();
+    const prevDim=new Date(calY,calM,0).getDate();
+    const dow=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=>'<div class="dow">'+d+'</div>').join('');
+    /* A promo that runs Jun 1 - Aug 31 has to appear on every one of those days,
+       not just the first, or the month view answers the wrong question. */
+    const byDay={};
+    for(let d=1;d<=dim;d++){
+      const iso=calY+'-'+two(calM+1)+'-'+two(d);
+      cards.forEach(c=>{ if(runsOn(c,iso)) (byDay[d]=byDay[d]||[]).push(c); });
+    }
+    let cells='';
+    for(let i=0;i<start;i++) cells+='<div class="day out"><div class="dnum">'+(prevDim-start+i+1)+'</div></div>';
+    for(let d=1;d<=dim;d++){
+      const isToday=(calY===TODAY.y&&calM===TODAY.m&&d===TODAY.d);
+      /* Colour comes from the OFFICE, matching the Schedule. An item running at
+         three offices draws three chips, so "what is on at Lakeview?" is answerable
+         at a glance. "All offices" has no office colour and stays neutral. */
+      const evs=(byDay[d]||[]).map(c=>{
+        const ls=locsOf(c), done=(c.stage==='done'?' done':'');
+        const tip=esc(c.title)+' \u00b7 '+esc(locLabel(c))+' \u00b7 '+
+                  (STAGES.find(s=>s.k===c.stage)||{}).n+(c.offer?' \u00b7 '+esc(c.offer):'');
+        const dot=(c.stage==='done'&&c.result!=='none')?'<span class="rd">'+RESDOT[c.result]+'</span> ':'';
+        if(!ls.length)
+          return '<button class="ev all'+done+'" title="'+tip+'" onclick="MK.open('+nid(c)+')">'+
+                 dot+esc(c.title)+'</button>';
+        return ls.map(function(n){
+          const col=PH.colorForOffice(n);
+          return '<button class="ev'+done+'" style="background:'+col.dot+'" title="'+tip+
+                 '" onclick="MK.open('+nid(c)+')">'+dot+esc(c.title)+
+                 '<span class="evo">'+esc(n)+'</span></button>';
+        }).join('');
+      }).join('');
+      const iso=calY+'-'+two(calM+1)+'-'+two(d);
+      cells+='<div class="day'+(isToday?' today':'')+'"><div class="dnum">'+d+(isToday?' \u00b7 today':'')+'</div>'+
+        evs+whereHtml(iso)+'</div>';
+    }
+    const tail=(7-((start+dim)%7))%7;
+    for(let i=1;i<=tail;i++) cells+='<div class="day out"><div class="dnum">'+i+'</div></div>';
+    // Flash sales are undated on purpose, so they get their own shelf rather than
+    // sitting in the "you forgot a date" list.
+    const flash=cards.filter(c=>isFlash(c)&&!parts(c.date));
+    const undated=cards.filter(c=>!parts(c.date)&&!isFlash(c));
+    el('calendar').innerHTML=
+      '<div class="calwrap"><div class="calhead"><h2>\ud83d\uddd3\ufe0f Calendar overview</h2>'+
+        '<div class="nav"><button onclick="MK.calMove(-1)" aria-label="Previous month">\u2039</button>'+
+        '<span class="mlab">'+new Date(calY,calM,1).toLocaleDateString('en-US',{month:'long',year:'numeric'})+'</span>'+
+        '<button onclick="MK.calMove(1)" aria-label="Next month">\u203a</button>'+
+        '<button onclick="MK.calToday()" title="Back to this month" style="width:auto;padding:0 11px;font-size:12.5px;font-weight:700">Today</button></div></div>'+
+      '<div class="calsub">Everything with a date, laid out on the month. Tap any item to open it. Finished items carry their result.</div>'+
+      emptyMonthNote()+
+      '<div class="calscroll"><div class="cal">'+dow+cells+'</div></div>'+
+      '<div class="callegend">'+PH.officeNames().map(function(n){
+          const col=PH.colorForOffice(n);
+          return '<span><i style="background:'+col.dot+'"></i> '+esc(n)+'</span>'; }).join('')+
+        '<span><i style="background:#94a3b8"></i> '+ALLOFF+'</span></div>'+
+      (flash.length? '<div class="nodate flashshelf"><div class="t2">\u26A1 Flash sales \u2014 approved and ready to launch</div>'+
+        '<div class="calsub" style="margin:0 0 8px">Offer and artwork already signed off. Give one dates when an office needs a lift.</div>'+
+        '<div class="chips2">'+flash.map(c=>'<button onclick="MK.open('+nid(c)+')">'+esc(c.title)+
+          (c.offer?' \u00b7 '+esc(c.offer):'')+'</button>').join('')+'</div></div>' : '')+
+      (undated.length? '<div class="nodate"><div class="t2">No date yet \u2014 tap to set one</div><div class="chips2">'+
+        undated.map(c=>'<button onclick="MK.open('+nid(c)+')">'+esc(c.title)+'</button>').join('')+'</div></div>' : '')+
+      '</div>';
+  }
+  /* ---- Views ---------------------------------------------------------------
+     Board, Calendar and By office are three questions about the same cards, not
+     three sets of data - so they live on one page behind a switch rather than on
+     separate pages that could drift apart. Board stays the default, so nothing
+     changes for anyone who does not touch the switch. */
+  const VKEY='ph_mktgview';
+  const VIEWS=[{k:'year',n:'The year'},{k:'board',n:'Board'},
+               {k:'calendar',n:'Month'},{k:'byoffice',n:'By office'}];
+  let view='year';
+  try{ const v=localStorage.getItem(VKEY); if(VIEWS.some(x=>x.k===v)) view=v; }catch(_){}
+  function setView(v){
+    view=v; try{ localStorage.setItem(VKEY,v); }catch(_){}
+    openOffice=null;                       // don't carry an expanded row between views
+    render();
+  }
+  function renderViewSeg(){
+    el('viewseg').innerHTML=VIEWS.map(v=>
+      '<button class="'+(v.k===view?'on':'')+'" onclick="MK.view(\''+v.k+'\')">'+v.n+'</button>').join('');
+  }
+
+  /* ---- By office ------------------------------------------------------------
+     The question leadership cannot answer today: which offices are actually
+     getting marketing, and which are being missed. An item aimed AT an office
+     counts as targeted; an all-offices item reaches it too but is not aimed at
+     it, so the two are counted and coloured separately - an office showing only
+     grey has had nothing of its own all year. */
+  let openOffice=null;
+  function yearsPresent(){
+    const ys={};
+    cards.forEach(c=>{ const p=parts(c.date); if(p) ys[p.y]=1; });
+    ys[TODAY.y]=1;
+    return Object.keys(ys).map(Number).sort();
+  }
+  let byoYear=TODAY.y;
+  function inYear(c,y){
+    const a=parts(c.date); if(!a) return false;
+    const b=parts(endOf(c))||a;
+    return a.y<=y && b.y>=y;                       // a range may straddle a year end
+  }
+  function monthsTouched(c,y){
+    const a=parts(c.date); if(!a) return [];
+    const b=parts(endOf(c))||a;
+    const from = a.y<y ? 0 : a.m, to = b.y>y ? 11 : b.m;
+    const out=[]; for(let m=from;m<=to;m++) out.push(m);
+    return out;
+  }
+  function officeRows(){
+    const y=byoYear;
+    const dated=cards.filter(c=>inYear(c,y));
+    return PH.officeNames().map(function(n){
+      const targeted=dated.filter(c=>locsOf(c).indexOf(n)>=0);
+      const shared  =dated.filter(c=>isAllOff(c));
+      const months=[];
+      for(let m=0;m<12;m++){
+        const t=targeted.filter(c=>monthsTouched(c,y).indexOf(m)>=0);
+        const a=shared.filter(c=>monthsTouched(c,y).indexOf(m)>=0);
+        months.push({t:t.length, a:a.length});
+      }
+      const all=targeted.concat(shared).sort((x,z)=>(x.date||'').localeCompare(z.date||''));
+      const scored=all.filter(c=>c.stage==='done'&&c.result!=='none');
+      return { office:n, col:PH.colorForOffice(n), targeted:targeted, shared:shared,
+               months:months, all:all,
+               good:scored.filter(c=>c.result==='good').length,
+               mixed:scored.filter(c=>c.result==='mixed').length,
+               bad:scored.filter(c=>c.result==='bad').length };
+    });
+  }
+  function renderByOffice(){
+    if(view!=='byoffice'){ el('byoffice').innerHTML=''; return; }
+    const rows=officeRows(), ys=yearsPresent();
+    const head='<tr><th class="oh">Office</th>'+
+      MONTHS.map(m=>'<th>'+m[0]+'</th>').join('')+
+      '<th class="nh">Just for them \u00b7 everywhere</th></tr>';
+    const body=rows.map(function(r,i){
+      const cells=r.months.map(function(m){
+        if(m.t) return '<td><div class="mcell" style="background:'+r.col.dot+'" title="'+m.t+
+                       ' aimed at '+esc(r.office)+(m.a?', '+m.a+' all-office':'')+'">'+
+                       (m.t>1?'<b>'+m.t+'</b>':'')+'</div></td>';
+        if(m.a) return '<td><div class="mcell all" title="'+m.a+' all-office"></div></td>';
+        return '<td><div class="mcell"></div></td>';
+      }).join('');
+      const n = (r.targeted.length
+        ? '<b>'+r.targeted.length+'</b> just for them \u00b7 '+r.shared.length+' everywhere'
+        : '<span class="none">None of their own</span> \u00b7 '+r.shared.length+' everywhere')
+        // Leadership's second question is whether it worked, so the scores ride along.
+        + (r.good||r.mixed||r.bad
+            ? '<span class="byo-res">'+(r.good?'\u{1F7E2}'+r.good+' ':'')+
+              (r.mixed?'\u{1F7E1}'+r.mixed+' ':'')+(r.bad?'\u{1F534}'+r.bad:'')+'</span>'
+            : '');
+      const open=(openOffice===r.office);
+      const items = r.all.length
+        ? '<div class="chips2">'+r.all.map(function(c){
+            const own=locsOf(c).indexOf(r.office)>=0;
+            return '<button onclick="event.stopPropagation();MK.open('+nid(c)+')">'+
+              '<i style="background:'+(own?r.col.dot:'#94a3b8')+'"></i>'+esc(c.title)+
+              (c.offer?' \u00b7 '+esc(c.offer):'')+
+              (c.date?' \u00b7 '+esc(dateLabel(c)):'')+
+              (c.stage==='done'&&c.result!=='none'?' '+RESDOT[c.result]:'')+'</button>';
+          }).join('')+'</div>'
+        : '<div class="byo-empty">Nothing on the calendar for '+esc(r.office)+' in '+byoYear+'.</div>';
+      // the office travels in data-o, not inside the onclick's quotes (21/11/2026, code review)
+      return '<tr class="byorow'+(open?' open':'')+'" data-o="'+esc(r.office)+'" onclick="MK.byoToggle(this.dataset.o)">'+
+        '<td><div class="byo-name"><span class="car">\u203a</span>'+
+          '<i style="background:'+r.col.dot+'"></i>'+esc(r.office)+'</div></td>'+
+        cells+'<td class="byo-n">'+n+'</td></tr>'+
+        (open?'<tr class="byo-items"><td colspan="14">'+items+'</td></tr>':'');
+    }).join('');
+    const missed=rows.filter(r=>!r.targeted.length).map(r=>r.office);
+    el('byoffice').innerHTML=
+      '<div class="byo"><div class="byo-head"><h2>\u{1F4CD} By office</h2>'+
+        (ys.length>1?'<div class="yrseg">'+ys.map(y=>'<button class="'+(y===byoYear?'on':'')+
+          '" onclick="MK.byoYear('+y+')">'+y+'</button>').join('')+'</div>':'')+'</div>'+
+      '<p class="byo-sub">One row per office, January to December.<br>'+
+        '<span class="byo-key"><i class="k1"></i> a promotion <b>named that office</b></span>'+
+        '<span class="byo-key"><i class="k2"></i> a promotion that ran <b>everywhere</b></span>'+
+        '<span class="byo-key"><i class="k3"></i> nothing at all</span><br>'+
+        'Tap a row to see the list.'+
+        (missed.length? ' <b>No promotion named '+missed.map(esc).join(', ')+' in '+byoYear+'.</b>':'')+
+        '</p>'+
+      '<div class="byoscroll"><table class="byotable"><thead>'+head+'</thead><tbody>'+body+
+      '</tbody></table></div></div>';
+  }
+  function byoToggle(n){ openOffice = (openOffice===n) ? null : n; renderByOffice(); }
+  function byoSetYear(y){ byoYear=y; openOffice=null; renderByOffice(); }
+
+  /* ---- The year -------------------------------------------------------------
+     Jamie's reason for all this: "I was asking for this info to plan goals for
+     next year." That is a question about the YEAR, not about a month, so one row
+     per promotion with the twelve months across it. The gaps are the point - the
+     empty columns are the months with nothing running - so they are called out in
+     a plain sentence as well as coloured, because nobody should have to count
+     squares to find them. */
+  function renderYear(){
+    if(view!=='year'){ el('year').innerHTML=''; return; }
+    const y=byoYear, ys=yearsPresent();
+    const dated=cards.filter(c=>inYear(c,y))
+                     .sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+    const shelf=cards.filter(c=>isFlash(c)&&!parts(c.date));
+
+    // Which months have nothing at all? That is the planning conversation.
+    const empty=[];
+    for(let m=0;m<12;m++) if(!dated.some(c=>monthsTouched(c,y).indexOf(m)>=0)) empty.push(m);
+    // And which offices are never named?
+    const never=PH.officeNames().filter(n=>!dated.some(c=>locsOf(c).indexOf(n)>=0));
+    const nowM=(y===TODAY.y)?TODAY.m:-1;
+
+    const head='<div class="yrrow hd"><div></div><div class="yrtrack">'+
+      MONTHS.map(function(mn,m){
+        const cls=(empty.indexOf(m)>=0?'gap':'')+(m===nowM?' now':'');
+        return '<div class="'+cls.trim()+'">'+mn+
+               (m===nowM?'<span class="yrnow">we are here</span>':'')+'</div>';
+      }).join('')+'</div><div></div></div>';
+
+    const rows=dated.map(function(c){
+      const ms=monthsTouched(c,y);
+      const from=ms.length?ms[0]:0, to=ms.length?ms[ms.length-1]:0;
+      const ls=locsOf(c), cols=ls.map(n=>PH.colorForOffice(n).dot);
+      const bg = !cols.length ? '#64748b'
+        : cols.length===1 ? cols[0]
+        : 'linear-gradient(to right,'+cols.map(function(c2,i){
+            const st=100/cols.length; return c2+' '+(i*st)+'%,'+c2+' '+((i+1)*st)+'%'; }).join(',');
+      const cells=MONTHS.map(function(_,m){
+        return '<div class="yrcell'+(empty.indexOf(m)>=0?' gap':'')+'"></div>';
+      }).join('');
+      const offices = ls.length
+        ? ls.map(n=>'<span><i style="background:'+PH.colorForOffice(n).dot+'"></i>'+esc(n)+'</span>').join('')
+        : '<span><i style="background:#64748b"></i>Every office</span>';
+      const res=(c.stage==='done'&&c.result!=='none')?' '+RESDOT[c.result]:'';
+      return '<div class="yrrow">'+
+        '<div><div class="yrname">'+esc(c.title)+res+'</div>'+
+          '<div class="yrwhen">'+esc(dateLabel(c))+(c.offer?' \u00b7 <b>'+esc(c.offer)+'</b>':
+            ' \u00b7 <b>offer not decided yet</b>')+'</div></div>'+
+        '<div class="yrtrack">'+cells+
+          '<button class="yrbar'+(c.stage==='done'?' done':'')+'" style="grid-column:'+(from+1)+'/'+(to+2)+
+          ';background:'+bg+'" onclick="MK.open('+nid(c)+')" title="'+esc(c.title)+
+          ' \u2014 '+esc(dateLabel(c))+'">'+(to>from?esc(dateLabel(c)):'')+'</button>'+
+        '</div>'+
+        '<div class="yroff">'+offices+'</div></div>';
+    }).join('');
+
+    const say=a=>a.length===1?a[0]:a.slice(0,-1).join(', ')+' and '+a[a.length-1];
+    const notes=
+      (empty.length
+        ? '<div class="yrnote"><span>\u26A0\uFE0F</span><div>Nothing is running in <b>'+
+          say(empty.map(m=>MOFULL[m]))+'</b>. '+
+          (y>=TODAY.y?'Those are the gaps to fill.':'')+'</div></div>'
+        : '<div class="yrnote ok"><span>\u2705</span><div>Every month of '+y+' has something running.</div></div>')+
+      (never.length
+        ? '<div class="yrnote"><span>\u26A0\uFE0F</span><div>No promotion names <b>'+say(never.map(esc))+
+          '</b> in '+y+'. They are only reached by the all-office campaigns.</div></div>'
+        : '');
+
+    el('year').innerHTML=
+      '<div class="yr"><div class="yr-head"><h2>\u{1F4C5} '+y+' promotions</h2>'+
+        (ys.length>1?'<div class="yrseg" style="margin-left:auto">'+ys.map(yy=>'<button class="'+
+          (yy===byoYear?'on':'')+'" onclick="MK.byoYear('+yy+')">'+yy+'</button>').join('')+'</div>':'')+
+      '</div>'+
+      '<p class="yr-sub">Every promotion in '+y+' \u2014 when it runs, what the offer is, and which '+
+        'offices it covers. The colored bar shows the months it is on. <b>Tap any bar to open it.</b></p>'+
+      (dated.length
+        ? '<div class="yrscroll"><div class="yrgrid">'+head+rows+'</div></div>'
+        : '<p class="byo-empty">Nothing on the calendar for '+y+' yet.</p>')+
+      notes+
+      (shelf.length
+        ? '<div class="yrshelf"><div class="t2">\u26A1 Ready to launch \u2014 no dates</div>'+
+          '<p>Offer and artwork already approved. Give one dates when an office needs a lift.</p>'+
+          '<div class="chips2">'+shelf.map(c=>'<button onclick="MK.open('+nid(c)+')">'+esc(c.title)+
+            (c.offer?' \u00b7 '+esc(c.offer):'')+'</button>').join('')+'</div></div>'
+        : '')+
+      '</div>';
+  }
+
+  function render(){
+    renderViewSeg(); renderSummary();
+    el('board').style.display   = view==='board'    ? '' : 'none';
+    el('calendar').style.display= view==='calendar' ? '' : 'none';
+    if(view==='board')    renderBoard();
+    if(view==='calendar') renderCalendar();
+    renderYear();
+    renderByOffice();
+  }
+
+  function move(id,dir){
+    if(!canEdit())return;
+    const c=cards.find(x=>x.id===id); const si=STAGES.findIndex(s=>s.k===c.stage);
+    const ni=Math.max(0,Math.min(STAGES.length-1,si+dir)); const wasNotDone=c.stage!=='done';
+    c.stage=STAGES[ni].k;
+    if(c.stage!=='done') c.result='none';
+    render();
+    if(c.stage==='done'&&wasNotDone) askResult(c.id);
+  }
+  let pk=null;
+  function closePk(){ if(pk){pk.remove();pk=null;} }
+  function openPk(anchor,items,onPick,title){
+    closePk(); pk=document.createElement('div'); pk.className='pk';
+    if(title){ const h=document.createElement('div'); h.className='pkh'; h.textContent=title; pk.appendChild(h); }
+    items.forEach(it=>{ const b=document.createElement('button'); if(it.cur)b.classList.add('cur');
+      b.innerHTML='<span>'+it.label+(it.desc?'<small>'+it.desc+'</small>':'')+'</span>'+(it.cur?'<span class="ck">✓</span>':'');
+      b.onclick=e=>{e.stopPropagation(); closePk(); onPick(it.value);}; pk.appendChild(b); });
+    document.body.appendChild(pk);
+    const r=anchor.getBoundingClientRect(), pr=pk.getBoundingClientRect();
+    let top=r.bottom+6; if(top+pr.height>window.innerHeight-8) top=Math.max(8,r.top-pr.height-6);
+    let left=Math.min(Math.max(8,r.left),window.innerWidth-pr.width-8);
+    pk.style.top=top+'px'; pk.style.left=left+'px';
+  }
+  document.addEventListener('click',e=>{ if(pk&&!pk.contains(e.target))closePk(); });
+  window.addEventListener('scroll',closePk,true);
+  function pickRes(ev,id){
+    if(!canEdit())return;
+    const c=cards.find(x=>x.id===id);
+    openPk(ev.currentTarget,[
+      {value:'good',label:'🟢 Good',desc:'Hit or beat the goal',cur:c.result==='good'},
+      {value:'mixed',label:'🟡 Mixed',desc:'Okay — room to improve',cur:c.result==='mixed'},
+      {value:'bad',label:'🔴 Underperformed',desc:"Didn't work — skip or rethink",cur:c.result==='bad'}
+    ], v=>{ c.result=v; render(); });
+  }
+
+  function open(id){
+    if(!canEdit())return; editId=id; const c=cards.find(x=>x.id===id); openModal(c); }
+  function add(stage){
+    if(!canEdit())return; const c={id:newId(),title:'',type:'social',owner:'',locs:[],date:'',end:'',offer:'',flash:false,stage:stage,result:stage==='done'?'good':'none',notes:''}; cards.push(c); editId=id=c.id; openModal(c,true); }
+
+  /* A plain modal for anything that isn't the campaign editor -- the campaign one
+     closes with MK.close(true), which discards a half-made card. */
+  function openModalRaw(html){
+    el('modalCard').innerHTML='<div class="m-top"><span></span><button class="x" onclick="MK.closeRaw()">\u00d7</button></div>'+
+      '<div class="m-body">'+html+'</div>';
+    el('modal').classList.add('open');
+  }
+  function closeRaw(){ el('modal').classList.remove('open'); }
+
+  function openModal(c,isNew){
+    el('modalCard').innerHTML=
+      '<div class="m-top"><h3>'+(isNew?'New campaign':'Edit campaign')+'</h3><button class="x" onclick="MK.close(true)">×</button></div>'+
+      '<div class="m-body">'+
+        '<div class="fld"><label>Title</label><input id="e_title" value="'+esc(c.title)+'" placeholder="e.g. Back-to-school promo"></div>'+
+        '<div class="fld"><label>Type</label><div class="segs" id="e_type">'+TYPES.map(t=>'<button class="seg'+(t.k===c.type?' on':'')+'" data-k="'+t.k+'" onclick="MK.pick(\'type\',\''+t.k+'\')">'+t.n+'</button>').join('')+'</div></div>'+
+        '<div class="fld"><label>Stage</label><div class="segs" id="e_stage">'+STAGES.map(s=>'<button class="seg'+(s.k===c.stage?' on':'')+'" data-k="'+s.k+'" onclick="MK.pick(\'stage\',\''+s.k+'\')">'+s.n+'</button>').join('')+'</div></div>'+
+        '<div class="fld" id="e_reswrap" style="'+(c.stage==='done'?'':'display:none')+'"><label>Result</label><div class="segs" id="e_res">'+
+          '<button class="seg g'+(c.result==='good'?' on':'')+'" onclick="MK.pick(\'result\',\'good\')">🟢 Good</button>'+
+          '<button class="seg m'+(c.result==='mixed'?' on':'')+'" onclick="MK.pick(\'result\',\'mixed\')">🟡 Mixed</button>'+
+          '<button class="seg b'+(c.result==='bad'?' on':'')+'" onclick="MK.pick(\'result\',\'bad\')">🔴 Underperformed</button></div></div>'+
+        '<div class="fld"><label>Owner</label><input id="e_owner" value="'+esc(c.owner)+'" placeholder="Who\'s running it"></div>'+
+        '<div class="fld"><label>Offices</label><div class="offpick" id="e_locs">'+offChips(c)+'</div>'+
+          '<p class="hint2">Pick none for <b>all offices</b>. Each one keeps its Schedule colour.</p></div>'+
+        '<div class="fld"><label>Offer <span class="opt">optional</span></label>'+
+          '<input id="e_offer" value="'+esc(c.offer||'')+'" placeholder="e.g. $1,000 off \u00b7 down-payment match up to $1,000"></div>'+
+        '<div class="fld"><label>Flash sale</label>'+
+          '<button class="seg'+(isFlash(c)?' on':'')+'" id="e_flash" onclick="MK.togFlash()">\u26A1 '+
+          (isFlash(c)?'On the ready-to-launch shelf':'Make this a flash sale')+'</button>'+
+          '<p class="hint2">Approved up front with no dates, so a slow office can launch it inside 24 hours.</p></div>'+
+        '<div class="fld two"><div><label>Starts</label><input type="date" id="e_date" value="'+esc(c.date)+'"></div>'+
+          '<div><label>Ends <span class="opt">same day if blank</span></label>'+
+          '<input type="date" id="e_end" value="'+esc(c.end||'')+'"></div></div>'+
+        '<div class="fld"><label>Notes / results</label><textarea id="e_notes" placeholder="What happened, key numbers…">'+esc(c.notes)+'</textarea></div>'+
+      '</div>'+
+      '<div class="m-foot"><button class="btn ghost" onclick="MK.del()">Delete</button><button class="btn" onclick="MK.save()">Save</button></div>';
+    el('modal').classList.add('open');
+  }
+  /* Offices are chips rather than a dropdown because a promo commonly runs at three
+     or four of them - Jamie's list has several. No chips lit = all offices. */
+  function offChips(c){
+    const on=locsOf(c);
+    return PH.officeNames().map(function(n){
+      const col=PH.colorForOffice(n), lit=on.indexOf(n)>=0;
+      return '<button class="ochip'+(lit?' on':'')+'" data-n="'+esc(n)+'" onclick="MK.togLoc(this.dataset.n)" style="'+(lit?'background:'+col.bg+';color:'+col.fg+
+             ';border-color:'+col.dot:'')+'"><i style="background:'+col.dot+'"></i>'+esc(n)+'</button>';
+    }).join('');
+  }
+  function togLoc(n){
+    const c=cards.find(x=>x.id===editId); if(!c) return;
+    const on=locsOf(c), i=on.indexOf(n);
+    if(i>=0) on.splice(i,1); else on.push(n);
+    c.locs=on; delete c.loc;                       // migrate off the old single field
+    const w=el('e_locs'); if(w) w.innerHTML=offChips(c);
+  }
+  function togFlash(){
+    const c=cards.find(x=>x.id===editId); if(!c) return;
+    c.flash=!c.flash;
+    const b=el('e_flash'); if(b){ b.classList.toggle('on',!!c.flash);
+      b.innerHTML='\u26A1 '+(c.flash?'On the ready-to-launch shelf':'Make this a flash sale'); }
+  }
+  function pick(field,val){
+    const c=cards.find(x=>x.id===editId); c[field]=val;
+    if(field==='stage'){ const rw=el('e_reswrap'); if(rw) rw.style.display = val==='done'?'':'none'; if(val==='done'&&c.result==='none')c.result='good'; }
+    const wrap=el('e_'+field); if(wrap) [...wrap.children].forEach(b=>b.classList.toggle('on',b.dataset&&b.dataset.k===val||b.textContent.includes(val==='good'?'Good':val==='mixed'?'Mixed':val==='bad'?'Underperformed':'@@')));
+    // simpler: re-highlight
+    if(field==='type'||field==='stage'){ [...el('e_'+field).children].forEach(b=>b.classList.toggle('on',b.dataset.k===val)); }
+    if(field==='result'){ const map={good:0,mixed:1,bad:2}; [...el('e_res').children].forEach((b,i)=>b.classList.toggle('on',i===map[val])); }
+  }
+  function save(){
+    const c=cards.find(x=>x.id===editId);
+    c.title=el('e_title').value.trim()||'Untitled'; c.owner=el('e_owner').value.trim();
+    c.date=el('e_date').value.trim(); c.end=el('e_end').value.trim(); c.notes=el('e_notes').value.trim();
+    c.offer=el('e_offer').value.trim();
+    if(c.end && c.date && c.end<c.date) c.end=c.date;   // an end before the start is a typo
+    delete c.loc;                                        // offices live on c.locs now
+    if(c.stage!=='done')c.result='none';
+    if(window.PH && PH.logActivity && PH.isLive())
+      /* A promo for Cedar Grove reaches the people in Cedar Grove; one for every office reaches
+         everyone. The old scope joined several offices with commas, which matched no
+         office at all - so a two-office promo told nobody. */
+      PH.logActivity({kind:'promo', sec:'marketing', ic:'\u{1F4E3}',
+        title:'Marketing \u00b7 '+c.title+(c.date?' \u2014 from '+c.date:''),
+        offices:(isAllOff(c)?[]:locsOf(c)), scope:'everyone'});
+    persist();
+    closeModal(); render();
+  }
+  function del(){ cards=cards.filter(x=>x.id!==editId); closeModal(); render(); }
+  function closeModal(discard){ if(discard){ const c=cards.find(x=>x.id===editId); if(c&&!c.title) cards=cards.filter(x=>x.id!==editId); } el('modal').classList.remove('open'); if(discard)render(); }
+  function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }   // String(): a number from the shared copy must not stop the board (21/11/2026, code review)
+
+  function dropTo(id,stage,anchor){
+    if(!canEdit())return; const c=cards.find(x=>x.id===id); if(!c||c.stage===stage)return;
+    const wasNotDone=c.stage!=='done';
+    c.stage=stage; if(stage!=='done')c.result='none';
+    render();
+    if(stage==='done'&&wasNotDone) askResult(c.id,anchor);
+  }
+  // Landing in Done always asks "how did it go?" — nothing gets scored by accident.
+  function askResult(cardId,anchor){
+    const c=cards.find(x=>x.id===cardId); if(!c)return;
+    const node=document.querySelector('.kcard[data-id="'+cardId+'"] .res')
+              ||document.querySelector('.kcard[data-id="'+cardId+'"]')||anchor;
+    if(!node){ c.result='good'; render(); return; }
+    openPk(node,[
+      {value:'good',label:'\ud83d\udfe2 Good',desc:'Hit or beat the goal',cur:c.result==='good'},
+      {value:'mixed',label:'\ud83d\udfe1 Mixed',desc:'Okay \u2014 room to improve',cur:c.result==='mixed'},
+      {value:'bad',label:'\ud83d\udd34 Underperformed',desc:"Didn't work \u2014 skip or rethink",cur:c.result==='bad'}
+    ], v=>{ c.result=v; render(); }, 'How did it go?');
+  }
+
+  // Drag & drop (listeners live on the persistent #board container, survive re-renders)
+  let dragId=null;
+  const board=el('board');
+  board.addEventListener('dragstart',e=>{ const k=e.target.closest('.kcard'); if(!k)return;
+    dragId=+k.dataset.id; k.classList.add('dragging'); e.dataTransfer.effectAllowed='move';
+    try{ e.dataTransfer.setData('text/plain',k.dataset.id); }catch(_){} });
+  board.addEventListener('dragend',e=>{ const k=e.target.closest('.kcard'); if(k)k.classList.remove('dragging');
+    document.querySelectorAll('.col.dragover').forEach(c=>c.classList.remove('dragover')); dragId=null; });
+  board.addEventListener('dragover',e=>{ const col=e.target.closest('.col'); if(!col)return;
+    e.preventDefault(); e.dataTransfer.dropEffect='move';
+    document.querySelectorAll('.col.dragover').forEach(c=>{if(c!==col)c.classList.remove('dragover')});
+    col.classList.add('dragover'); });
+  board.addEventListener('dragleave',e=>{ const col=e.target.closest('.col'); if(col && !col.contains(e.relatedTarget))col.classList.remove('dragover'); });
+  board.addEventListener('drop',e=>{ const col=e.target.closest('.col'); if(!col)return;
+    e.preventDefault(); col.classList.remove('dragover');
+    const id=dragId||+(e.dataTransfer.getData('text/plain')); if(id)dropTo(id,col.dataset.stage,col); });
+
+  window.MK={add,open,move,pickRes,askResult,pick,save,del,close:closeModal,setWhere,pickWhere,closeRaw,
+    togLoc,togFlash,view:setView,byoToggle,byoYear:byoSetYear,goMonth,
+    calMove:d=>{calM+=d; if(calM<0){calM=11;calY--;} if(calM>11){calM=0;calY++;} renderCalendar();},
+    calToday:()=>{calY=TODAY.y;calM=TODAY.m;renderCalendar();}};
+  el('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal(true);});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal(true);});
+  /* Re-runnable, both ways. This used to run once at parse - before sign-in had finished
+     - see "nobody", and stamp the board view-only for good. Jordan, 19/09: "On marketing
+     board it says I can view but not edit?" Identity settles in stages; decide on each. */
+  let subOriginal=null;
+  function applyPerms(){
+    const edit=canEdit();
+    document.body.classList.toggle('ph-view-only', !edit);
+    document.querySelectorAll('.ph-ro-banner').forEach(n=>n.remove());
+    const nb=document.querySelector('.page-head .btn');
+    const sub=document.querySelector('.page-head p');
+    if(sub && subOriginal===null) subOriginal=sub.textContent;
+    if(!edit){
+      if(nb) nb.style.display='none';
+      if(window.PH) PH.readOnlyBanner('.wrap','marketing board');
+      if(sub) sub.textContent='What marketing is planned and how past campaigns did.';
+    } else {
+      // Rights arrived after the first pass: put back what view-only took away.
+      if(nb) nb.style.display='';
+      if(sub && subOriginal!==null) sub.textContent=subOriginal;
+    }
+  }
+  applyPerms();
+  boot();
+  // What this person may see settles in stages after sign-in; redraw on each.
+  document.addEventListener('ph-identity', function(){ try{ applyPerms(); render(); }catch(_){} });
+})();
+</script>
+<script>PH.nav('marketing');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
+<script src="tour.js?v=hc268d202611250847"></script>
+<script>
+Tour.init([
+  {sel:'#viewseg', pre:()=>MK.view('year'), title:'Four ways to look at it', body:'<b>The year</b> is the planning view \u2014 every promotion on one screen. <b>Board</b> is the day-to-day working view. <b>Month</b> lays everything out on a calendar. <b>By office</b> shows what each location got.'},
+  {sel:'#year', pre:()=>MK.view('year'), title:'The whole year on one screen', body:'One row per promotion: <b>when it runs, the offer, and which offices</b>. The colored bar sits on the months it is on \u2014 tap it to open it. The <b>pink months are empty</b>, and the notes underneath say in plain words which months have nothing and which offices were never named. That is the list to work from when planning next year.'},
+  {sel:'.board', pre:()=>MK.view('board'), title:'The working board', body:'Every event, promo and post is a card that moves left to right: <b>Ideas \u2192 Planned \u2192 In progress \u2192 Done</b>. <b>Drag a card</b> across, or use the \u25c0 \u25b6 arrows on a phone.'},
+  {sel:'.page-head .btn', pre:()=>MK.view('board'), title:'Capture anything', body:'<b>+ New idea</b>, or <b>+ Add</b> at the bottom of any column. Tap a card to set its type, owner, dates and notes \u2014 and the <b>offices</b> it runs at. Pick several if a promo covers more than one; leave them all off for every office.'},
+  {sel:'#board .col:last-child', pre:()=>MK.view('board'), title:'Every finished thing gets scored', body:'The moment a card lands in <b>Done</b> it asks <b>\u201cHow did it go?\u201d</b> \u2014 \ud83d\udfe2 Good, \ud83d\udfe1 Mixed or \ud83d\udd34 Underperformed. Nothing gets marked a success by accident.'},
+  {sel:'#calendar', pre:()=>MK.view('calendar'), title:'The month, day by day', body:'A promo running at three offices draws <b>three chips \u2014 one in each office\u2019s color</b>, the same colors as the Schedule. If a month has nothing in it, the page says so and offers to jump to the nearest one. \u26a1 <b>Flash sales</b> sit on their own shelf below.'},
+  {sel:'#byoffice', pre:()=>MK.view('byoffice'), title:'What each office got', body:'One row per office, January to December. A <b>colored</b> square means a promotion named that office; a <b>solid grey</b> one means only an all-offices campaign reached them; an <b>empty outline</b> means nothing at all. Tap a row for the list.'},
+  {sel:'#summary', pre:()=>MK.view('board'), title:'So you learn what works', body:'The tally at the top is the point of the whole board: after a year you can see which kinds of marketing actually brought patients in \u2014 and stop repeating the ones that didn\u2019t.'}
+], {key:'mkt', title:'Marketing', next:{label:'Documents', href:'documents.html'}});
+</script>
+</body>
+</html>

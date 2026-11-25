@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="demo-shim.js?v=d202611250847"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Home-Brace · Enter Production</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" href="../assets/favicon.png?v=2" type="image/png">
+<meta name="theme-color" content="#0F2A4A">
+<meta name="apple-mobile-web-app-title" content="Home-Brace">
+<link rel="apple-touch-icon" sizes="180x180" href="../assets/icons/apple-touch-icon.png?v=3">
+<meta name="description" content="The practice’s central hub — schedule, production, documents and team, in one place. Brightline · Maple · Riverbend.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Home-Brace">
+<meta property="og:title" content="Home-Brace">
+<meta property="og:description" content="The practice’s central hub — schedule, production, documents and team, in one place. Brightline · Maple · Riverbend.">
+<meta property="og:image" content="https://app.brightline.example/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="https://app.brightline.example/v1/production.html">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Home-Brace">
+<meta name="twitter:description" content="The practice’s central hub — schedule, production, documents and team, in one place. Brightline · Maple · Riverbend.">
+<meta name="twitter:image" content="https://app.brightline.example/assets/og-image.png">
+<style>
+  :root{
+    --navy:#0F2A4A; --navy2:#25456e; --teal:#149B96; --teal2:#2BC0B8; --teal-soft:#E5F4F3; --teal-600:#0F827E;
+    --ink:#1F2D3D; --soft:#56627A; --line:#E4E8EE; --canvas:#F4F6F8; --white:#fff;
+    --good:#2E9E6B; --good-soft:#E7F4EE; --bad:#D7503A; --bad-soft:#FBEAE7; --amber:#F2A03D;
+    --blue:#1f6f9e; --blue-soft:#E3F0FA;
+    --shadow:0 1px 2px rgba(15,42,74,.06),0 6px 18px rgba(15,42,74,.06);
+    --shadow-lg:0 10px 30px rgba(15,42,74,.12); --radius:14px; --maxw:1000px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--canvas);line-height:1.5;-webkit-font-smoothing:antialiased}
+  h1{color:var(--navy);margin:0}
+  .ribbon{background:var(--amber);color:#3a2400;text-align:center;font-size:13px;font-weight:600;padding:6px 14px}
+  .hdr{background:var(--navy);color:#fff}
+  .hdr-in{max-width:var(--maxw);margin:0 auto;display:flex;align-items:center;gap:12px;padding:13px 20px}
+  .mark{width:34px;height:34px;flex:none;display:block}
+  .mark img{width:34px;height:34px;display:block;border-radius:50%}
+  .brand{font-weight:700;font-size:18px;color:#fff;line-height:1.1}
+  .brand i{font-style:normal;color:var(--teal2)}
+  .brand small{display:block;font-weight:500;font-size:12px;color:var(--navy-mute,#9fb4d0)}
+  .v1{background:rgba(255,255,255,.15);color:#eaf1fb;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;margin-left:6px}
+  .v1nav{background:var(--navy2)}
+  .v1nav-in{max-width:var(--maxw);margin:0 auto;display:flex;gap:2px;padding:0 12px;overflow-x:auto}
+  .v1nav a{color:var(--navy-mute,#cdd9ea);font-size:14px;font-weight:600;padding:13px 15px;text-decoration:none;border-bottom:3px solid transparent;white-space:nowrap}
+  .v1nav a:hover{color:#fff;background:rgba(255,255,255,.05)}
+  .v1nav a.active{color:#fff;border-bottom-color:var(--teal)}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:22px 20px 90px}
+  .viewas{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:13px 16px;display:flex;align-items:center;gap:13px;flex-wrap:wrap;margin-bottom:16px;border-left:5px solid var(--teal)}
+  .viewas .lab{font-size:12px;color:var(--soft);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+  .viewas select{padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;font-weight:700;color:var(--navy);background:#fff}
+  .page-head h1{font-size:25px}
+  .page-head p{margin:4px 0 0;color:var(--soft);font-size:14.5px}
+  .syncbar{background:var(--blue-soft);border:1px solid #c3ddf2;border-radius:12px;padding:11px 15px;font-size:13px;color:#14496c;margin:16px 0 4px;line-height:1.5}
+  .syncbar b{color:#0d3550}
+  .pickrow{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin:18px 0 6px}
+  .pick{display:flex;flex-direction:column;gap:5px}
+  .pick label{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--soft)}
+  .pick select{padding:10px 13px;border:1px solid var(--line);border-radius:10px;font-size:15px;font-family:inherit;font-weight:700;color:var(--navy);background:#fff;min-width:170px;box-shadow:var(--shadow)}
+  .grid2{display:grid;grid-template-columns:1.15fr .85fr;gap:16px;margin-top:14px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
+  .card h2{margin:0 0 3px;font-size:16px;color:var(--navy)}
+  .card .sub{font-size:12.5px;color:var(--soft);margin-bottom:14px}
+  .f{margin-bottom:14px}
+  .f label{display:block;font-size:13px;font-weight:600;color:var(--ink);margin-bottom:4px}
+  .f .help{font-size:11.5px;color:var(--soft);font-weight:500}
+  .money{position:relative}
+  .money span{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--soft);font-weight:700;font-size:15px}
+  .money input{padding-left:28px}
+  .f input{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10px;font-size:16px;font-family:inherit;font-weight:600;color:var(--navy);background:#fff}
+  .f input:focus{outline:2px solid var(--teal);border-color:var(--teal)}
+  .f input.bad{border-color:var(--bad);background:var(--bad-soft)}   /* a box the page can't read as a number (21/11/2026, code review) */
+  .f .money input{padding-left:30px}
+  .calcline{background:var(--teal-soft);border:1px solid var(--teal-line,#c4e6e3);border-radius:9px;padding:9px 12px;font-size:13px;color:var(--teal-ink,#0c5b57);margin:-4px 0 14px}
+  .calcline b{color:var(--teal-ink,#0a4d49)}
+  .f input.ro{background:#fafbfc;color:var(--soft);font-weight:700}
+  .rowline{display:flex;justify-content:space-between;align-items:baseline;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}
+  .rowline:last-child{border-bottom:none}
+  .rowline .k{color:var(--soft)}
+  .rowline .v{font-weight:800;color:var(--navy);font-size:16px}
+  .rowline .v.g{color:var(--good)} .rowline .v.b{color:var(--bad)}
+  .big{background:var(--teal-soft);border:1px solid var(--teal-line,#c4e6e3);border-radius:12px;padding:14px 16px;margin-bottom:14px}
+  .big .k{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--teal-ink,#0a4d49);font-weight:700}
+  .big .v{font-size:28px;font-weight:800;color:var(--teal-ink,#0a4d49);line-height:1.15}
+  .savebar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:16px}
+  /* The button reports its own outcome. Someone who has just typed a month of numbers
+     is looking at the button they pressed, not at a banner elsewhere on the page. */
+  .btn.saving{position:relative;color:transparent}
+  .btn.saving::after{content:'';position:absolute;inset:0;margin:auto;width:16px;height:16px;
+    border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;
+    animation:btnspin .6s linear infinite}
+  @keyframes btnspin{to{transform:rotate(360deg)}}
+  .btn.done{background:var(--good,#2E9E6B)}
+  .btn.done::before{content:'\2713  '}
+  .btn.failed{background:var(--bad,#D7503A)}
+  /* A quick settle, not a bounce — this is a confirmation, not a reward. */
+  .btn.done,.btn.failed{animation:btnsettle .28s ease-out}
+  @keyframes btnsettle{from{transform:scale(.97)}to{transform:none}}
+  @media (prefers-reduced-motion: reduce){
+    .btn.saving::after{animation:none;border-top-color:rgba(255,255,255,.9)}
+    .btn.done,.btn.failed{animation:none}
+  }
+  .btn{background:var(--teal);color:#fff;border:none;border-radius:10px;padding:12px 20px;font-weight:700;font-size:15px;cursor:pointer;font-family:inherit}
+  .btn:hover{background:var(--teal-600)}
+  .btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--line);font-weight:600;font-size:14px;padding:10px 15px}
+  .saved{font-size:13px;font-weight:700;color:var(--good);background:var(--good-soft);padding:7px 13px;border-radius:999px;opacity:0;transition:opacity .2s}
+  .saved.on{opacity:1}
+  .months{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+  .mchip{border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 10px;font-size:12.5px;font-weight:700;color:var(--navy);cursor:pointer;font-family:inherit;min-width:46px}
+  .mchip.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .mchip.has{border-color:var(--teal);color:var(--teal-600)}
+  .mchip.has.on{background:var(--navy);color:#fff}
+  /* Month buttons were 29px tall — too small to hit reliably with a thumb. */
+  @media(max-width:760px){ .mchip{padding:9px 12px;min-height:40px;font-size:13.5px} }
+  .noacc{background:#fff;border:1px dashed var(--line);border-radius:14px;padding:34px;text-align:center;color:var(--soft)}
+  .choose{background:#fff;border:1px solid var(--line);border-radius:14px;padding:24px 22px;box-shadow:var(--shadow);margin-top:18px}
+  .choose h2{margin:0 0 4px;font-size:19px;color:var(--navy)}
+  .choose .sub{color:var(--soft);font-size:13.5px;margin-bottom:16px}
+  .offbtns{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+  .offbtn{padding:14px 12px;border:1px solid var(--line);border-radius:12px;background:#fff;font-weight:700;font-size:15px;line-height:1.2;font-family:inherit;color:var(--navy);cursor:pointer;text-align:left}
+  .offbtn:hover,.offbtn:focus-visible{border-color:var(--teal);background:var(--teal-soft,#E5F4F3);outline:none}
+  .noacc b{color:var(--navy)}
+  @media(max-width:760px){ .grid2{grid-template-columns:1fr} }
+  /* Some people set "reduce motion" in Windows or macOS, often because movement makes
+     them unwell. Honour it everywhere: keep the state changes, drop the travel. */
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{
+      animation-duration:.01ms !important; animation-iteration-count:1 !important;
+      transition-duration:.01ms !important; scroll-behavior:auto !important;
+    }
+  }
+
+</style>
+<script src="user.js?v=hc268d202611250847"></script>
+  <script src="workbook.js?v=hc268d202611250847"></script>
+  <script src="prodbook.js?v=hc268d202611250847"></script>
+  <script src="prodstore.js?v=hc268d202611250847"></script>
+<script src="schedrec.js?v=hc268d202611250847"></script>
+<script src="proddays.js?v=hc268d202611250847"></script>
+  <script src="store.js?v=hc268d202611250847"></script>
+  <script src="gate.js?v=hc268d202611250847"></script>
+</head>
+<body>
+<div class="ribbon">DEMO — made-up numbers. What you type stays in your browser.</div>
+<header class="hdr">
+  <div class="hdr-in">
+    <span class="mark" aria-label="Home-Brace"><img src="../assets/logo-mark.png?v=2" alt="" width="34" height="34"></span>
+    <span class="brand">Home-<i>Brace</i><small>Enter Production</small></span>
+    <span class="v1">Demo</span>
+  </div>
+</header>
+<nav class="v1nav"><div class="v1nav-in" id="nav"></div></nav>
+
+<div class="wrap">
+  <div class="viewas">
+    <span class="lab">👤 Viewing as</span>
+    <select id="persona" onchange="PROD.set(this.value)"></select>
+  </div>
+  <div class="page-head">
+    <h1>Enter Production</h1>
+    <p>Type the month's numbers once. The dashboard and the Excel workbook both update.</p>
+  </div>
+  <div class="syncbar" id="syncbar">🔄 <b>One set of numbers, two places to work.</b> Type here and it saves to the <b>Production Dashboard workbook on SharePoint</b>. If someone types in the Excel instead, it shows up here — it's the same file, not a copy.</div>
+  <script>/* The sandbox is not connected to the workbook (13/10/2026) - say so where the page explains saving. */
+  if(window.PH && PH.isLive && !PH.isLive()){ document.getElementById('syncbar').innerHTML='🔄 <b>In the real Home-Brace</b>, typing here saves straight to the practice’s workbook, and changes made in the Excel show up here. <b>In this demo</b> the numbers are made up and saving stays in your browser.'; }</script>
+  <div id="view"></div>
+</div>
+
+<script>
+(function(){
+  const MO=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const MOFULL=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  // Baseline from their workbook (what's already filled in).
+  /* PLACEHOLDER SHAPE ONLY - every monthly figure is 0 (13/10/2026). This file is public.
+   The numbers that were here followed the practice's real ones (each office's real figures
+   scaled up or down). Live: the workbook fills these (hydrate() below). Sandbox: made-up
+   numbers from PH_WB.demo(). fee / afee stay: live keeps them when the workbook's is 0. */
+  const BASE={
+   'Cedar Grove':{fee:4000, afee:5500, tc:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], mds:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+     adj:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], dys:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+     goal:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+     str:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]},
+   'Northpoint':{fee:4000, afee:5500, tc:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], mds:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+     adj:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], dys:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+     goal:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+     str:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]},
+   'Lakeview':{fee:4000, afee:5500, tc:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], mds:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+     adj:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], dys:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+     goal:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+     str:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]},
+   'Meadow Park':{fee:4000, afee:5500, tc:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], mds:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+     adj:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], dys:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+     goal:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+     str:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]},
+   'Riverbend':{fee:0, afee:5500, tc:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], mds:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+     adj:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], dys:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+     goal:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+     str:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]},
+   'Westfield':{fee:0, afee:5500, tc:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], mds:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+     adj:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], dys:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+     goal:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+     str:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]},
+   'Brookside':{fee:0, afee:5500, tc:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], mds:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+     adj:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], dys:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+     goal:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+     str:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]},
+   'Hillcrest':{fee:0, afee:5500, tc:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], mds:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+     adj:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], dys:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+     goal:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+     str:[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}
+  };
+;
+  // Offices added in Admin / the Schedule get an empty row here so a manager can start
+  // typing their numbers straight away — the shared list is the single source of truth.
+  (function addNewOffices(){
+    if(!window.PH || !PH.locations) return;
+    const zero=()=>[0,0,0,0,0,0,0,0,0,0,0,0];
+    PH.locations().forEach(l=>{
+      if(BASE[l.n]) return;
+      BASE[l.n]={fee:0, afee:0, tc:zero(), mds:zero(), adj:zero(), dys:zero(), goal:zero(), str:zero()};
+    });
+  })();
+  const PERSONAS=(window.PH?PH.PEOPLE:[]).map(p=>({
+    id:p.id, name:PH.name(p)+' — '+p.title.split(' \u00b7 ')[0],
+    offices:p.offices, can:PH.atLeast?null:null }));
+  const canEnter=()=>!window.PH||PH.atLeast('production','edit');
+  const canGoals=()=>!window.PH||PH.atLeast('production','manage');
+  /* After the switch a year's goals and case fees have ONE home: Admin -> Production data -> Plan the year
+     (Jordan, 22/10/2026: "Do what you reccommend"). Here they show read-only; this page keeps the month's
+     own numbers. Before the switch they still write into her Excel, as they always have. */
+  const yearlyHere=()=>{ try{ return canGoals() && MODE.source!=='homebrace'; }catch(_){ return canGoals(); } };
+  const roHelp=()=>{ try{ if(canGoals() && MODE.source==='homebrace') return 'Set in Admin \u2192 Production data \u2192 Plan the year'; }catch(_){} return 'Set by leadership \u2014 you can\u2019t change this'; };
+  const el=id=>document.getElementById(id);
+  // month was hardcoded to 6 (July) and the page opened two months behind.
+  let cur=PERSONAS[0], office=null, month=(new Date()).getMonth(), edits={};
+  /* A save on its way: the office, month and year pickers wait for it (21/11/2026, code review). */
+  let SAVING=false;
+  try{ edits=JSON.parse(localStorage.getItem('ph_prod'))||{}; }catch(_){ edits={}; }
+  const save=()=>{ try{ localStorage.setItem('ph_prod',JSON.stringify(edits)); }catch(_){} };
+  /* After the switch a year can be chosen (December is typed in January), so unsaved boxes belong
+     to a year too. Before it, keys stay as they always were. */
+  const yr=()=>{ try{ return (MODE.source==='homebrace' && HB_YEAR) ? HB_YEAR+'|' : ''; }catch(_){ return ''; } };
+  /* Her Excel is the 2026 workbook (workbook.js reads 2026's rows); it is retired before 2027. */
+  const XL_YEAR=2026;
+  const shownYear=()=>{ try{ return (MODE.source==='homebrace' && HB_YEAR) ? HB_YEAR : XL_YEAR; }catch(_){ return XL_YEAR; } };
+  const key=(o,m)=>yr()+o+'|'+m;
+  /* An emptied box is NOT the same as an untouched one. '' means the person deliberately
+     cleared it and wants that cell blank in the workbook, so it must not fall back to the
+     figure already there -- otherwise a number typed into the wrong month can only be
+     undone in Excel. */
+  const cleared=(o,m,f)=>{ const e=edits[key(o,m)]; return !!(e && e[f]===''); };
+  function val(o,m,f){
+    const e=edits[key(o,m)];
+    if(e && e[f]!==undefined && e[f]!=='') return Number(e[f]);
+    if(e && e[f]==='') return 0;              // cleared counts as nothing, for every total
+    const b=BASE[o]; if(!b) return 0;
+    if(f==='fee')  return b.fee;                // both case fees are per office, not per month
+    if(f==='afee') return b.afee||0;
+    return (b[f]||[])[m]||0;
+  }
+  // What the input shows: blank when cleared, the figure otherwise.
+  const disp=(o,m,f)=> cleared(o,m,f) ? '' : val(o,m,f);
+  const medDollars=(o,m)=>val(o,m,'mds')*val(o,m,'fee');
+  const money=v=>'$'+Math.round(v).toLocaleString('en-US');
+  const pc=v=>Math.round(v*100)+'%';
+
+  /* After the switch: only the offices the year's numbers have (an office added in Admin -> Production data included,
+     17/11/2026) - an office with no place in that year can't be saved into, so it isn't offered. */
+  let HB_OFFS=null;
+  function offices(){ const all=Object.keys(BASE).filter(o=>!HB_OFFS || HB_OFFS.indexOf(o)>=0); return cur.offices==='all'?all:cur.offices.filter(o=>all.indexOf(o)>=0); }
+  function render(){
+
+    const list=offices();
+    if(!canEnter() || !list.length){
+      // Still learning who this is: say nothing about access yet (it flashed - 30/09).
+      if(window.PH && PH.learning && PH.learning()){ el('view').innerHTML='<div class="noacc">One moment\u2026</div>'; return; }
+      /* Having Edit but no office in this year's numbers is not "can't enter" - each has its own fix (21/11/2026, code review). */
+      const mine=cur.offices==='all' || (cur.offices||[]).length>0;
+      el('view').innerHTML = !canEnter()
+        ? '<div class="noacc"><b>This role can\'t enter production numbers.</b><br>Entering numbers needs <b>Edit</b> on the Dashboard section — set per team in <b>Admin → Teams &amp; Access</b>.</div>'
+        : mine
+        ? '<div class="noacc"><b>None of your offices are in '+shownYear()+'’s production numbers.</b><br>An admin adds an office to a year in <b>Admin → Production data</b>.</div>'
+        : '<div class="noacc"><b>You don\'t have an office assigned yet.</b><br>An admin sets that in <b>Admin → People</b>.</div>';
+      return;
+    }
+    /* CHOOSE THE OFFICE FIRST. This used to fall back to the first office on the list, so
+       after a reload the numbers went to whichever office came first unless she remembered
+       to switch (Morgan, 06/10: "they have to choose location first"). One office: nothing
+       to get wrong, so it is chosen. Several: she picks, every visit - nothing remembered. */
+    if(office && list.indexOf(office)<0) office=null;
+    if(!office && list.length===1) office=list[0];
+    if(!office){
+      el('view').innerHTML=
+        '<div class="choose"><h2>Which office are you entering numbers for?</h2>'+
+          '<div class="sub">Pick one first. The boxes for its numbers open next.</div>'+
+          '<div class="offbtns">'+list.map(o=>'<button class="offbtn" type="button" data-office="'+o.replace(/"/g,'&quot;')+'">\u{1F4CD} '+o+'</button>').join('')+'</div></div>';
+      el('view').querySelectorAll('.offbtn').forEach(b=>b.onclick=function(){ setOffice(this.dataset.office); });
+      return;
+    }
+    const b=BASE[office];
+    const tc=val(office,month,'tc'), mds=val(office,month,'mds'), fee=val(office,month,'fee');
+    const afee=val(office,month,'afee');
+    const mdp=mds*fee, adj=val(office,month,'adj');
+    const dys=val(office,month,'dys'), goal=val(office,month,'goal'), str=val(office,month,'str');
+    const total=tc+mdp, net=total+adj, pctGoal=goal?total/goal:0, pctStr=str?total/str:0;
+    const perDay=dys?net/dys:0, vGoal=total-goal;
+    const billsMedicaid=fee>0||mds>0;
+    const mchips=MO.map((m,i)=>{
+      const has=(BASE[office].tc[i]>0)||(edits[key(office,i)]&&edits[key(office,i)].tc);
+      return '<button class="mchip'+(i===month?' on':'')+(has?' has':'')+'"'+(SAVING?' disabled':'')+' onclick="PROD.month('+i+')">'+m+'</button>';
+    }).join('');
+    el('view').innerHTML=
+      '<div class="pickrow">'+
+        '<div class="pick"><label>Office</label><select'+(SAVING?' disabled':'')+' onchange="PROD.office(this.value)">'+list.map(o=>'<option'+(o===office?' selected':'')+'>'+o+'</option>').join('')+'</select></div>'+
+        (HB_YEARS.length>1 ? '<div class="pick"><label>Year</label><select'+(SAVING?' disabled':'')+' onchange="PROD.year(this.value)">'+HB_YEARS.map(y=>'<option'+(y===HB_YEAR?' selected':'')+'>'+y+'</option>').join('')+'</select></div>' : '')+
+        '<div class="pick" style="flex:1"><label>Month</label><div class="months">'+mchips+'</div></div>'+
+      '</div>'+
+      '<div class="grid2">'+
+        '<div class="card"><h2>'+MOFULL[month]+' '+shownYear()+' · '+office+'</h2><div class="sub">Only these few boxes. Everything else is worked out for you.</div>'+
+          fld('TC Net Production','Total production minus discounts','tc',disp(office,month,'tc'))+
+          (billsMedicaid
+            ? fld('Medicaid starts','How many Medicaid cases started this month \u2014 a count, not dollars','mds',disp(office,month,'mds'),true)+
+              (yearlyHere()
+                ? fld('Medicaid case fee','What one Medicaid case is worth. Applies to every month at this office.','fee',disp(office,month,'fee'))
+                : '<div class="f"><label>Medicaid case fee</label><div class="help">'+roHelp()+'</div><input class="ro" value="$'+Math.round(fee).toLocaleString('en-US')+'" readonly></div>')+
+              '<div class="calcline" id="calcline">'+mds+' starts \u00d7 '+money(fee)+' = <b>'+money(mdp)+'</b> Medicaid production</div>'
+            : '')+
+          (yearlyHere()
+            ? fld('Average case fee','What a typical case is worth here. Turns production into a starts figure. Applies to every month at this office.','afee',disp(office,month,'afee'))
+            : '<div class="f"><label>Average case fee</label><div class="help">'+roHelp()+'</div><input class="ro" value="$'+Math.round(afee).toLocaleString('en-US')+'" readonly></div>')+
+          (afee>0 ? '<div class="calcline" id="startline">'+money(tc)+' \u00f7 '+money(afee)+' \u2248 <b>'+Math.round(tc/afee)+'</b> starts</div>' : '')+
+          fld('Write-offs &amp; other adjustments','Can be negative','adj',disp(office,month,'adj'))+
+          (fromSch(office,month)
+            ? '<div class="f"><label>Completed production days</label><div class="help">\u{1F4C5} From the Schedule: each weekday with a doctor counts once it has passed. To change it, change the Schedule.</div><input class="ro" id="dysro" value="'+disp(office,month,'dys')+'" readonly></div>'
+            : fld('Completed production days','How many days you actually saw patients','dys',disp(office,month,'dys'),true))+
+          '<div style="border-top:1px solid var(--line);margin:4px 0 14px"></div>'+
+          (yearlyHere()
+            ? '<p style="font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--soft);margin:0 0 10px">Goals <span style="background:#FFF6E9;color:#946011;font-size:10px;padding:2px 7px;border-radius:5px;letter-spacing:0">LEADERSHIP ONLY</span></p>'+
+              fld('Main production goal','The number this office is held to','goal',disp(office,month,'goal'))+
+              fld('Stretch goal','The reach number','str',disp(office,month,'str'))
+            : '<p style="font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--soft);margin:0 0 8px">Goals</p>'+
+              '<div class="f"><label>Main production goal</label><div class="help">'+roHelp()+'</div><input class="ro" value="$'+Math.round(goal).toLocaleString('en-US')+'" readonly></div>'+
+              '<div class="f"><label>Stretch goal</label><div class="help">'+roHelp()+'</div><input class="ro" value="$'+Math.round(str).toLocaleString('en-US')+'" readonly></div>')+
+          '<div class="savebar"><button class="btn" id="pushbtn" onclick="PROD.commit()">'+saveLabel()+'</button>'+
+            '<button class="btn ghost" onclick="PROD.reset()">Undo my changes</button>'+
+            '<span class="saved" id="saved">✓ Saved · dashboard &amp; Excel updated</span></div>'+
+        '</div>'+
+        '<div class="card"><h2>What that gives you</h2><div class="sub">Updates as you type.</div>'+
+          '<div class="big"><div class="k">Total production</div><div class="v">'+money(total)+'</div></div>'+
+          line('Main goal',money(goal))+
+          line('vs main goal',(vGoal>=0?'+':'')+money(vGoal),vGoal>=0?'g':'b')+
+          line('% of main goal',pc(pctGoal))+
+          line('Stretch goal',money(str))+
+          line('% of stretch',pc(pctStr))+
+          (billsMedicaid?line('Medicaid production',money(mdp)):'')+
+          line('Adjusted net',money(net))+
+          line('Average per day',dys?money(perDay):'\u2014')+
+          line('Starts (from average case fee)',afee>0?Math.round(tc/afee):'\u2014')+
+        '</div>'+
+      '</div>';
+  }
+  function fld(lab,help,f,v,isInt){
+    // A worked-out goal can carry float noise (111,280 x 1.1 = 122408.00000000001): money shows cents.
+    if(!isInt && typeof v==='number' && isFinite(v)) v=Math.round(v*100)/100;
+    return '<div class="f"><label>'+lab+'</label><div class="help">'+help+'</div>'+
+      (isInt? '<input type="number" value="'+v+'" data-f="'+f+'" oninput="PROD.edit(\''+f+'\',this.value,this)" onpaste="PROD.paste(event,\''+f+'\')">'
+            : '<div class="money"><span>$</span><input type="number" value="'+v+'" data-f="'+f+'" oninput="PROD.edit(\''+f+'\',this.value,this)" onpaste="PROD.paste(event,\''+f+'\')"></div>')+'</div>';
+  }
+  function line(k,v,cls){ return '<div class="rowline"><span class="k">'+k+'</span><span class="v '+(cls||'')+'">'+v+'</span></div>'; }
+  function edit(f,v,inp){
+    if(!office) return;
+    /* A box the browser can't read as a number (a comma, a letter) hands back '' - and '' here means "cleared on
+       purpose", which Save turns into a deleted figure. Mark the box and keep what was there (21/11/2026, code review). */
+    if(inp && inp.validity && inp.validity.badInput){ inp.classList.add('bad'); return; }
+    if(inp) inp.classList.remove('bad');
+    if(f==='fee'||f==='afee'){ // a case fee applies to the whole office, every month
+      for(let m=0;m<12;m++){ const kk=key(office,m); edits[kk]=edits[kk]||{}; edits[kk][f]=v===''?'':Number(v); }
+    }
+    const k=key(office,month); edits[k]=edits[k]||{}; edits[k][f]=v===''?'':Number(v); edits[k]._at=Date.now();
+    // store the resulting TOTAL so the dashboard never has to re-derive it
+    const b=BASE[office];
+    edits[k]._total = val(office,month,'tc') + medDollars(office,month);
+    edits[k]._days  = val(office,month,'dys');
+    edits[k]._goal  = val(office,month,'goal');
+    /* Who entered numbers is stamped by stampAudit() once a save lands, not here on every keystroke (21/11/2026, code review). */
+    /* No "Production numbers entered" notice any more (Morgan 20/11/2026: "I don't think everyone cares when they get
+       entered" - keep the bell for what matters: goal and stretch, see tellLeadership). It also fired on every keystroke. */
+    save(); refreshRight();
+  }
+  /* A pasted "$125,000" came in as 125 or as nothing at all: take out $, commas and spaces and put in the number
+     (21/11/2026, code review). Text that still isn't a number is refused, and the box keeps what it had. */
+  function paste(ev,f){
+    const cb=ev && (ev.clipboardData||window.clipboardData), inp=ev && ev.target; if(!cb || !inp) return;
+    const raw=String(cb.getData('text')||''), clean=raw.replace(/[$,\s]/g,'');
+    if(clean===raw && clean!=='' && isFinite(Number(clean))) return;      // already a plain number: the browser pastes it
+    ev.preventDefault();
+    if(clean==='' || !isFinite(Number(clean))){ wbBanner('<b>That isn\u2019t a number.</b> Type the figure with digits only, like 125000.', true); return; }
+    inp.value=clean; edit(f,inp.value,inp);
+  }
+  /* Who entered numbers, and when - SHARED, so leadership sees it on the dashboard from any device (it lived in this
+     browser only until 19/09); merged one office at a time. Once per save that landed, for the office it saved: it was
+     a SharePoint read and write on every keystroke (21/11/2026, code review). */
+  function stampAudit(o){
+    try{
+      const me=(window.PH&&PH.me)?PH.name(PH.me()):'Unknown';
+      const now=new Date().toISOString();
+      const stamp=function(a){ a=(a&&typeof a==='object')?a:{}; a.last={by:me,at:now,office:o};
+        (a.offices=a.offices||{})[o]={by:me,at:now}; return a; };
+      if(window.PH_STORE && PH_STORE.update && PH.isLive()) PH_STORE.update('ph_prodaudit', stamp);
+      else localStorage.setItem('ph_prodaudit',JSON.stringify(stamp(JSON.parse(localStorage.getItem('ph_prodaudit')||'{}'))));
+    }catch(_){}
+  }
+  function refreshRight(){
+    const b=BASE[office];
+    const tc=val(office,month,'tc'), mds=val(office,month,'mds'), fee=val(office,month,'fee');
+    const afee=val(office,month,'afee');
+    const mdp=mds*fee, adj=val(office,month,'adj');
+    const dys=val(office,month,'dys'), goal=val(office,month,'goal'), str=val(office,month,'str');
+    const total=tc+mdp, net=total+adj, vGoal=total-goal; const billsMedicaid=fee>0||mds>0;
+    const cl=el('calcline');
+    if(cl && billsMedicaid) cl.innerHTML=mds+' starts \u00d7 '+money(fee)+' = <b>'+money(mdp)+'</b> Medicaid production';
+    const sl=el('startline');
+    if(sl) sl.innerHTML = afee>0 ? money(tc)+' \u00f7 '+money(afee)+' \u2248 <b>'+Math.round(tc/afee)+'</b> starts' : '';
+    const cards=document.querySelectorAll('.grid2 .card')[1]; if(!cards)return;
+    cards.innerHTML='<h2>What that gives you</h2><div class="sub">Updates as you type.</div>'+
+      '<div class="big"><div class="k">Total production</div><div class="v">'+money(total)+'</div></div>'+
+      line('Main goal',money(goal))+line('vs main goal',(vGoal>=0?'+':'')+money(vGoal),vGoal>=0?'g':'b')+
+      line('% of main goal',pc(goal?total/goal:0))+line('Stretch goal',money(str))+
+      line('% of stretch',pc(str?total/str:0))+
+      (billsMedicaid?line('Medicaid production',money(mdp)):'')+line('Adjusted net',money(net))+
+      line('Average per day',dys?money(net/dys):'\u2014')+
+      line('Starts (from average case fee)',afee>0?Math.round(tc/afee):'\u2014');
+  }
+  /* Push this office+month to the practice's workbook. The hub and the workbook are two
+     doors onto the same numbers, so saving here has to reach the file the owner reads.
+     Every cell is verified after writing; anything that fails is reported, not swallowed. */
+  async function pushToWorkbook(){
+    /* SANDBOX (13/10/2026): never the practice's workbook - pressing Save on the sandbox
+       used to write into Morgan's real file. The numbers stay in this browser (save()). */
+    if(!(window.PH && PH.isLive && PH.isLive())){
+      stampAudit(office);
+      wbBanner('<b>Demo:</b> saved in this browser only.', false); return;
+    }
+    if(!window.PH_AUTH || typeof PH_WB==='undefined' || !PH_WB.writeCell){
+      wbBanner('<b>Not connected.</b> Sign in before saving to the workbook.', true); return;
+    }
+    /* Write ONLY what this person actually changed. Pushing all eight fields meant a save
+       could overwrite something the owner had just typed in Excel, using our older copy.
+       `edits` already records exactly which boxes were touched. */
+    const WRITABLE=['tc','adj','mds','dys','goal','str','fee','afee'];
+    /* What this save is FOR, taken now: the office, month and year on screen can change while it travels, and after
+       the first wait everything used to read whatever was on screen by then (21/11/2026, code review). */
+    const o=office, m=month, y=HB_YEAR;
+    const touched=Object.keys((edits[key(o,m)]||{}))
+      .filter(f=>WRITABLE.indexOf(f)>=0);
+    const fields=touched;
+    // '' = cleared on purpose (writeCell / setValues clear it); only genuinely absent values are skipped.
+    const vals={}; fields.forEach(f=>{ const blank=cleared(o,m,f); const v=blank?'':val(o,m,f); if(!blank && (v===''||v===null||v===undefined)) return; vals[f]=v; });
+    const ctx={o:o, m:m, y:y, sy:shownYear(), yp:yr(), vals:vals};
+    const btn=el('pushbtn');
+    if(btn){ btn.disabled=true; btn.classList.remove('done','failed'); btn.classList.add('saving'); }
+    const done=[], failed=[];
+    // A shared sender, so the write and its read-back use one token path.
+    const send=(method,path,body)=>PH_AUTH.token().then(t=>
+      fetch('https://graph.microsoft.com/v1.0'+path,{method,
+        headers:{Authorization:'Bearer '+t,'Content-Type':'application/json'},
+        body:body?JSON.stringify(body):undefined})
+      .then(r=>r.status===204?{}:r.json().then(j=>{
+        if(!r.ok) throw new Error('Graph '+r.status+': '+((j.error&&j.error.message)||r.statusText));
+        return j; })));
+    /* Their sheet divides production by completed days, so 0 days with production in it
+       produces #DIV/0! in several places. Say so before writing it rather than letting
+       them find a broken workbook. */
+    const daysNow=val(o,m,'dys'), prodNow=val(o,m,'tc');
+    if(touched.indexOf('dys')>=0 && (daysNow===''||Number(daysNow)===0) && Number(prodNow)>0){
+      if(!confirm('This office has production but 0 completed days.\n\n'+
+                  'The workbook divides production by days, so several cells will show '+
+                  '#DIV/0!. Enter the days actually worked, or press OK to save anyway.')){
+        if(btn){ btn.classList.remove('saving'); btn.disabled=false; }
+        wbBanner('<b>Not saved.</b> Enter the number of days this office saw patients.', true);
+        return;
+      }
+    }
+
+    /* AFTER THE SWITCH: into Home-Brace's own numbers (prodstore.js setValues - the same field-to-row
+       matching as her Excel, every change in the year's history). Her Excel follows only when "keep it
+       up to date" is on AND it is the same year - a 2027 number must never land in her 2026 sheet -
+       and a failure there never undoes the Home-Brace save. */
+    if(MODE.source==='homebrace'){
+      const values=Object.assign({}, vals);
+      let saved=null;
+      try{ saved=await PH_PROD.setValues(y, o, m, values); saved.saved.forEach(x=>done.push(x.field+' \u2192 '+x.address)); }
+      catch(e){ failed.push((e&&e.message)||String(e)); }
+      let note='';
+      if(saved && MODE.mirror && Object.keys(values).length){
+        let xl=null; try{ const ix=await PH_PROD.index(); xl=ix.source && +ix.source.year; }catch(_){}
+        if(xl===y && typeof PH_WB!=='undefined' && PH_WB.writeCell){
+          const miss=[];
+          for(const f of Object.keys(values)){ try{ await PH_WB.writeCell(PH_AUTH.token, WB_DRIVE, WB_ITEM, o, f, m, values[f]); }catch(e){ miss.push(f+': '+((e&&e.message)||e)); } }
+          try{ if(PH_WB.closeSession) await PH_WB.closeSession(PH_AUTH.token, WB_DRIVE, WB_ITEM); }catch(_){}
+          note = miss.length ? ' Morgan\u2019s Excel was NOT updated: '+miss.join(' \u00b7 ').replace(/</g,'&lt;')+' (Home-Brace has the numbers).' : ' Morgan\u2019s Excel updated too.';
+        } else if(xl) note=' Morgan\u2019s Excel is for '+xl+', so it was left alone.';
+      }
+      if(failed.length){
+        settle('failed', 'Didn\u2019t save');
+        wbBanner('<b>Not saved.</b> '+failed.join(' \u00b7 ').replace(/</g,'&lt;'), true);
+      } else if(saved && saved.changes.length){
+        settled(Object.keys(values), ctx);
+        settle('done', 'Saved');
+        const nx=saved.next&&saved.next.changes ? ' '+saved.next.year+'\u2019s \u201clast year\u201d updated too.' : '';
+        wbBanner('\u2713 Saved '+saved.changes.length+' value(s) in Home-Brace for '+o+' \u00b7 '+MO[m]+' '+y+'.'+nx+note, /NOT updated/.test(note));
+        stampAudit(o);
+        if(window.PH && PH.logActivity && PH.isLive()) tellLeadership(ctx);
+      } else {
+        settle('failed', 'Nothing changed');
+        wbBanner('Nothing to save \u2014 no boxes were changed for '+o+' \u00b7 '+MO[m]+'.', true);
+      }
+      return;
+    }
+
+    /* JANUARY, STILL ON THE EXCEL: her workbook is 2026's, so every month here is a 2026 month. Once 2027 has
+       begun, saving "January" would land on January 2026's actuals - ask first (late 2026 numbers are fine). */
+    if(new Date().getFullYear()>XL_YEAR &&
+       !confirm('This saves into '+MOFULL[m]+' '+XL_YEAR+' in the '+XL_YEAR+' workbook - not '+MOFULL[m]+' '+(XL_YEAR+1)+'.\n\n'+
+                'Is it a '+XL_YEAR+' number? (For '+(XL_YEAR+1)+', an admin first switches to Home-Brace: Admin \u2192 Production data.)')){
+      if(btn){ btn.classList.remove('saving'); btn.disabled=false; }
+      wbBanner('<b>Not saved.</b> '+(XL_YEAR+1)+'\u2019s numbers go into Home-Brace once an admin switches (Admin \u2192 Production data).', true);
+      return;
+    }
+
+    /* Has the workbook moved since we loaded it? If the owner has saved in Excel
+       meanwhile, our copy is stale and writing it would undo his work. Re-read first
+       and let the person decide. */
+    let clash=false;
+    try{
+      const meta=await PH_AUTH.graph('/drives/'+WB_DRIVE+'/items/'+WB_ITEM+
+                                     '?$select=lastModifiedDateTime,lastModifiedBy');
+      const now=meta && meta.lastModifiedDateTime;
+      if(loadedStamp && now && now!==loadedStamp){
+        const who=(meta.lastModifiedBy&&meta.lastModifiedBy.user&&meta.lastModifiedBy.user.displayName)||'Someone';
+        clash=!confirm(who+' saved the workbook after this page loaded.\n\n'+
+          'Saving now would write your figures over theirs. Reload to see their changes first, '+
+          'or press OK to save anyway.');
+      }
+    }catch(_){ /* can't check -> proceed rather than block the save */ }
+    if(clash){
+      if(btn){ btn.classList.remove('saving'); btn.disabled=false; }
+      wbBanner('<b>Not saved.</b> Reload the page to pick up the newer workbook, then re-enter.', true);
+      return;
+    }
+
+    /* Write straight to the workbook as the signed-in person. There was a server-side
+       route here for a while, so the app could hold the workbook access instead of
+       every person needing the file shared with them; the practice decided not to run
+       one, so it is gone rather than left half-wired. What it cost while it was here:
+       a wasted request before every save, and a guess about whether the endpoint was
+       really answering - a guess that could have fallen back to a direct write on an
+       ordinary server hiccup. The code is still in api/ if it is ever wanted. */
+    const okFields=[];
+    for(const f of fields){
+      // '' tells writeCell to clear the cell (it uses Graph's clear action, since a
+      // PATCH of null is ignored). Only genuinely absent values are skipped (vals, taken at the start).
+      if(!(f in vals)) continue;
+      const v=vals[f];
+      try{
+        const r=await PH_WB.writeCell(PH_AUTH.token, WB_DRIVE, WB_ITEM, o, f, m, v);
+        done.push(f+' \u2192 '+r.address); okFields.push(f);
+      }catch(e){ failed.push(f+': '+((e&&e.message)||e)); }
+    }
+    if(okFields.length){ settled(okFields, ctx); stampAudit(o); }
+    /* Say what happened on the button itself, then return it to normal. */
+    function settle(state, label){
+      if(!btn) return;
+      btn.classList.remove('saving');
+      btn.disabled=false;
+      btn.classList.add(state);
+      btn.textContent=label;
+      setTimeout(function(){
+        btn.classList.remove('done','failed');
+        btn.textContent=saveLabel();
+      }, state==='done' ? 2600 : 4000);
+    }
+    // Flush the session so the workbook on disk reflects the writes.
+    try{ if(PH_WB.closeSession) await PH_WB.closeSession(PH_AUTH.token, WB_DRIVE, WB_ITEM); }catch(_){}
+
+    if(failed.length){
+      settle('failed', failed.length+' didn\u2019t save');
+      wbBanner('<b>'+failed.length+' value(s) did not save.</b> '+
+               failed.join(' \u00b7 ').replace(/</g,'&lt;')+
+               (done.length?' \u2014 '+done.length+' did.':''), true);
+    } else if(done.length){
+      settle('done', 'Saved to workbook');
+      // We just moved the file, so our own write must not look like someone else's clash.
+      try{
+        const m2=await PH_AUTH.graph('/drives/'+WB_DRIVE+'/items/'+WB_ITEM+'?$select=lastModifiedDateTime');
+        if(m2 && m2.lastModifiedDateTime) loadedStamp=m2.lastModifiedDateTime;
+      }catch(_){}
+      wbBanner('\u2713 Saved '+done.length+' value(s) to the workbook for '+o+
+               ' \u00b7 '+MO[m]+'. Verified in the file.');
+      if(window.PH && PH.logActivity && PH.isLive()) tellLeadership(ctx);
+    } else {
+      settle('failed', 'Nothing changed');
+      wbBanner('Nothing to save \u2014 no boxes were changed for '+o+
+               ' \u00b7 '+MO[m]+'.', true);
+    }
+  }
+
+  /* SAVED = DONE. A saved box goes back to showing the saved figure, and is not sent again. It used to stay
+     in this browser as "typed" for good: it hid any later correction (Morgan fixing it in Excel), and the
+     next save of that office and month sent it again, over the correction (future-proofing check, 22/10/2026). */
+  const BASEKEY={tc:'tc', adj:'adj', mds:'mds', dys:'dys', goal:'goal', str:'str'};
+  /* For the office, month and year the save was FOR (c), with the values it sent: a box typed again while it
+     travelled stays typed, and another year on screen by then keeps its own figures (21/11/2026, code review). */
+  function settled(fields, c){
+    const b=BASE[c.o]; if(!b) return;
+    const here=c.y===HB_YEAR, K=mm=>c.yp+c.o+'|'+mm;
+    fields.forEach(f=>{
+      if(!(f in c.vals)) return;
+      const sent=c.vals[f], v=sent==='' ? 0 : (Number(sent)||0);
+      if(f==='fee'||f==='afee'){ if(here) b[f]=v; for(let m=0;m<12;m++){ const e=edits[K(m)]; if(e && e[f]===sent) delete e[f]; } }
+      else if(BASEKEY[f]){ if(here){ const arr=b[BASEKEY[f]]=(b[BASEKEY[f]]||[0,0,0,0,0,0,0,0,0,0,0,0]).slice(); arr[c.m]=v; } const e=edits[K(c.m)]; if(e && e[f]===sent) delete e[f]; }
+    });
+    Object.keys(edits).forEach(k=>{ if(!Object.keys(edits[k]).some(x=>x.charAt(0)!=='_')) delete edits[k]; });
+    save();
+  }
+  /* On the live site the page starts from the saved figures. Only boxes typed in the last 12 hours and not
+     saved yet are kept (a quick trip to another page loses nothing); anything older, or already equal to
+     the saved figure, is dropped. The sandbox keeps everything: this browser is its only store. */
+  function dropStale(){
+    const now=Date.now();
+    Object.keys(edits).forEach(k=>{
+      const e=edits[k];
+      if(!e._at || now-e._at>12*3600*1000){ delete edits[k]; return; }
+      const p=k.split('|'), mine=(p.length>2)===!!yr() && (!yr() || k.indexOf(yr())===0);
+      const o=p.length>2?p[1]:p[0], m=+p[p.length-1], b=BASE[o]; if(!mine || !b) return;
+      Object.keys(e).forEach(f=>{ if(f.charAt(0)==='_') return;
+        const saved=(f==='fee'||f==='afee') ? b[f] : (b[BASEKEY[f]]||[])[m];
+        if(e[f]!=='' && Number(e[f])===Number(saved||0)) delete e[f]; });
+      if(!Object.keys(e).some(x=>x.charAt(0)!=='_')) delete edits[k];
+    });
+    save();
+  }
+
+  /* THE TWO THINGS LEADERSHIP ASKED TO HEAR ABOUT, raised only when numbers have
+     actually reached the workbook:
+       - an office crossing its monthly goal - said once per office per month, with a
+         marker in this browser so re-saving the same month does not repeat it;
+       - numbers going in late - more than five days after the month they belong to
+         ended. */
+  const LEAD=['Leadership Team','Executive Team','Admin'];
+  function tellLeadership(c){
+    try{
+      /* About what was saved (c), not what is on screen now (21/11/2026, code review). */
+      if(c.y!==HB_YEAR) return;
+      const office=c.o, month=c.m, V=f=>(f in c.vals) ? (c.vals[f]==='' ? 0 : (Number(c.vals[f])||0)) : val(office,month,f);
+      const goal=V('goal'), str=V('str');
+      const total=V('tc')+V('mds')*V('fee');
+      const yr0=c.sy, mark='ph_goalhit_'+yr0+'_'+office+'_'+month;   // the year too: next January is a new January
+      const markS='ph_stretchhit_'+yr0+'_'+office+'_'+month;
+      /* Said once: this browser's marker, and the shared feed (someone else may have saved this month already). */
+      const told=t=>{ try{ return (PH.activity?PH.activity():[]).some(e=>e && e.title===t); }catch(_){ return false; } };
+      const sayG=office+' has reached its '+MO[month]+' goal', sayS=office+' has reached its '+MO[month]+' stretch goal';
+      /* STRETCH (Morgan 20/11/2026: keep the notice "if an office hit goal or stretch"). Reaching both in one save
+         says only the stretch - it includes the goal. */
+      if(str>0 && total>=str && !localStorage.getItem(markS)){
+        localStorage.setItem(markS,'1'); localStorage.setItem(mark,'1');
+        if(!told(sayS)) PH.logActivity({kind:'goal', sec:'dashboard', ic:'\u{1F680}', offices:[office], teams:LEAD, title:sayS});
+      } else if(goal>0 && total>=goal && !localStorage.getItem(mark)){
+        localStorage.setItem(mark,'1');
+        if(!told(sayG)) PH.logActivity({kind:'goal', sec:'dashboard', ic:'\u{1F3AF}', offices:[office], teams:LEAD, title:sayG});
+      }
+      /* Late: once per office and month, like the goal notices (it repeated on every save), counted from the 1st of the
+         next month (from the last day it said a day too many) (21/11/2026, code review). */
+      const monthEnd=new Date(yr0, month+1, 1);                               // December typed in January is a few days late, not -11 months
+      const daysLate=Math.floor((Date.now()-monthEnd.getTime())/86400000);
+      const markL='ph_late_'+yr0+'_'+office+'_'+month, sayL=office+'\u2019s '+MO[month]+' numbers were entered ';
+      const toldL=()=>{ try{ return (PH.activity?PH.activity():[]).some(e=>e && typeof e.title==='string' && e.title.indexOf(sayL)===0); }catch(_){ return false; } };
+      if(daysLate>5 && !localStorage.getItem(markL)){
+        localStorage.setItem(markL,'1');
+        if(!toldL()) PH.logActivity({kind:'late', sec:'dashboard', ic:'\u23F0', offices:[office], teams:LEAD,
+          title:sayL+daysLate+' days after month end'});
+      }
+    }catch(_){}
+  }
+  /* Reasons not to send at all, said on the page (21/11/2026, code review). */
+  function refusal(){
+    if(MODE_UNKNOWN) return '<b>Not saved.</b> Couldn\u2019t tell where the production numbers live right now \u2014 reload to try again.';
+    const bad=[].slice.call(el('view').querySelectorAll('input[data-f]')).filter(i=>i.validity && i.validity.badInput);
+    if(bad.length){
+      bad.forEach(i=>i.classList.add('bad'));
+      const names=bad.map(i=>{ const l=i.closest('.f') && i.closest('.f').querySelector('label'); return l ? l.textContent : 'A box'; });
+      return '<b>Not saved.</b> '+names.join(', ').replace(/[<>&]/g,'')+(bad.length>1?' aren\u2019t numbers':' isn\u2019t a number')+' the page can read. Type the figure with digits only, like 125000.';
+    }
+    if(MODE.source==='homebrace' && HB_YEAR && futureMonth(HB_YEAR, month))
+      return '<b>Not saved.</b> '+MOFULL[month]+' '+HB_YEAR+' hasn\u2019t happened yet'+
+        (HB_YEARS.indexOf(HB_YEAR-1)>=0 ? ' \u2014 for '+MOFULL[month]+' '+(HB_YEAR-1)+' pick '+(HB_YEAR-1)+' in the Year picker.' : '.');
+    return '';
+  }
+  /* After the switch a month that hasn't begun can't have numbers. On 1 January the page moves to the new year, so a
+     December tapped then went into NEXT December (21/11/2026, code review). Central time, like the practice. */
+  function futureMonth(y,m){
+    let c=''; try{ c=(window.PH && PH.centralNow) ? PH.centralNow().date : ''; }catch(_){}
+    const p=/^(\d{4})-(\d{2})/.exec(c||''), d=new Date(), cy=p ? +p[1] : d.getFullYear(), cm=p ? +p[2]-1 : d.getMonth();
+    return y>cy || (y===cy && m>cm);
+  }
+  /* While a save travels the pickers wait, so it can't be pointed somewhere else halfway (21/11/2026, code review). */
+  function lock(on){
+    SAVING=on;
+    const v=el('view'); if(v) v.querySelectorAll('.mchip, .pick select').forEach(x=>{ x.disabled=on; });
+  }
+  function commit(){ if(!office || SAVING) return;
+    const why=refusal(); if(why){ wbBanner(why, true); return; }
+    save(); lock(true); const free=()=>lock(false); pushToWorkbook().then(free, free); const s=el('saved'); if(s){s.classList.add('on'); setTimeout(()=>s.classList.remove('on'),2600);} }
+  function reset(){ if(!office) return; const pre=yr()+office+'|'; Object.keys(edits).forEach(k=>{ if(k.indexOf(pre)===0) delete edits[k]; }); save(); render(); }
+  /* The button says WHICH office it saves, so a wrong one is plain before it is sent. */
+  function saveLabel(){ const where=MODE.source==='homebrace'?'':' to workbook'; return office ? 'Save '+office+where : 'Save'+(where||''); }
+  function setOffice(o){ if(!o || SAVING) return; office=o; render(); }
+  function setMonth(m){ if(SAVING) return; month=m; render(); }
+  let booted=false;
+  function set(id){
+    const prev=cur?cur.id:null;
+    cur=PERSONAS.find(p=>p.id===id)||PERSONAS[0];
+    try{ localStorage.setItem('ph_viewas',cur.id); }catch(_){}
+    el('persona').value=cur.id; office=null;
+    // only when a human switches person (not on first paint) do we reload so the nav re-filters
+    if(booted && prev && prev!==cur.id){ location.reload(); return; }
+    render();
+  }
+  el('persona').innerHTML=PERSONAS.map(p=>'<option value="'+p.id+'">'+p.name+'</option>').join('');
+  window.PROD={set,office:setOffice,month:setMonth,year:(y)=>setYear(y),edit,paste,commit,reset,identity:applyIdentity};
+  let saved='admin'; try{ saved=localStorage.getItem('ph_viewas')||'admin'; }catch(_){}
+  if(!PERSONAS.some(p=>p.id===saved)) saved='admin';
+
+  /* Same live workbook the dashboard reads. BASE above is only a placeholder shape —
+     these are the practice's real inputs, fetched after sign-in, so no figures live
+     in this file. */
+  let loadedStamp=null;   // the workbook's last-saved time when this page read it
+  let MODE={source:'excel', mirror:true}, HB_YEAR=null, HB_YEARS=[];   // the switch (Admin -> Production data); years to choose from
+  let MODE_UNKNOWN=false;   // the switch couldn't be read: nothing is read or saved (21/11/2026, code review)
+  // Single source in user.js - see PH.WORKBOOK there if the file is ever moved.
+  const WB_DRIVE=(window.PH&&PH.WORKBOOK)?PH.WORKBOOK.drive:'';
+  const WB_ITEM =(window.PH&&PH.WORKBOOK)?PH.WORKBOOK.item :'';
+
+  function wbBanner(html,bad){
+    let n=document.getElementById('wbstate');
+    if(!n){ n=document.createElement('div'); n.id='wbstate';
+      n.style.cssText='max-width:var(--maxw);margin:0 auto 14px;padding:9px 14px;border-radius:10px;'+
+        'font-size:12.5px;font-weight:600;border:1px solid';
+      const w=document.querySelector('.wrap'); if(w) w.prepend(n); }
+    n.style.background = bad?'#FCEBE8':'var(--teal-soft,#E5F4F3)';
+    n.style.color      = bad?'#93301f':'var(--teal-600,#0F827E)';
+    n.style.borderColor= bad?'#f0c3b9':'var(--teal-line,#bfe3d0)';
+    n.innerHTML=html;
+  }
+
+  /* Turn a Graph failure into something a person can act on.
+     The status is read from the FRONT of the message (workbook.js throws
+     'Graph <status>: <text>'), not matched anywhere inside it - an earlier version
+     tested /423|locked/ against the whole string, and Microsoft's errors carry
+     request ids full of digits, so an unrelated failure could report itself as
+     "someone has it open in Excel". The raw error is always appended, because a
+     friendly guess that turns out to be wrong wastes more time than no guess. */
+  function wbWhyNot(e){
+    const msg=(e&&e.message)||String(e);
+    const m=/^Graph\s+(\d{3})\b/.exec(msg);
+    const code=m?Number(m[1]):0;
+    const detail='<div style="margin-top:8px;font-weight:400;opacity:.75;font-size:12px">'+
+                 String(msg).replace(/[<>&]/g,'')+'</div>';
+    if(code===403 || code===401 || /accessdenied|unauthenticated/i.test(msg))
+      return '<b>You don\u2019t have access to the production workbook yet.</b> '+
+             'Everything else in the hub works \u2014 just the numbers need the workbook '+
+             'shared with you. Ask an admin and they can do it in a moment.'+detail;
+    if(code===404 || /itemnotfound/i.test(msg))
+      return '<b>The hub can\u2019t find the production workbook.</b> '+
+             'It may have been moved or renamed \u2014 that needs fixing in the hub, '+
+             'not by sharing it again.'+detail;
+    if(code===423 || /resourcelocked|\blocked\b/i.test(msg))
+      return '<b>The workbook is locked right now</b>, usually because someone has it '+
+             'open in Excel. Try again in a minute.'+detail;
+    if(code===429 || code>=500)
+      return '<b>Microsoft is busy or having trouble.</b> Try again in a minute \u2014 '+
+             'nothing is wrong with the hub or your access.'+detail;
+    return '<b>Could not read the workbook.</b>'+detail;
+  }
+  async function hydrate(){
+    let res;
+    // SANDBOX: made-up numbers, never the practice's workbook (see pushToWorkbook()).
+    const sandbox=!(window.PH && PH.isLive && PH.isLive());
+    if(sandbox){
+      if(typeof PH_WB==='undefined' || !PH_WB.demo){ wbBanner('<b>Sandbox.</b> Sample numbers are missing.',true); return; }
+      res=PH_WB.demo();
+    } else {
+      if(typeof PH_WB==='undefined' || !window.PH_AUTH){
+        wbBanner('<b>Not signed in.</b> Showing placeholder figures until you sign in.',true); return;
+      }
+      /* THE SWITCH (Admin -> Production data): after it, the numbers come from Home-Brace's own
+         books and saving writes there (pushToWorkbook below); her Excel only if "keep it up to
+         date" is on. Same fields, found the same way. */
+      /* PH_PROD.mode() rejects when this device couldn't read the switch and has no copy of it. Guessing "her Excel"
+         sent a new phone's numbers to the wrong place: say so and stop - nothing read, nothing saved (21/11/2026, code review). */
+      if(window.PH_PROD){
+        try{ MODE=await PH_PROD.mode(); }
+        catch(_){ MODE_UNKNOWN=true; wbBanner('<b>Couldn\u2019t tell where the production numbers live right now \u2014 reload to try again.</b>', true); return; }
+      }
+      if(MODE.source==='homebrace'){
+        wbBanner('Reading Home-Brace\u2019s production numbers\u2026');
+        try{ res=await PH_PROD.dashboardData(); HB_YEAR=res.year; }
+        catch(e){ wbBanner('<b>Could not read Home-Brace\u2019s production numbers.</b> '+String((e&&e.message)||e).replace(/[<>&]/g,''),true); return; }
+        // This year and the one before, when both are kept: last year's December is typed in January.
+        try{ const ix=await PH_PROD.index(); HB_YEARS=Object.keys(ix.years).map(Number).filter(y=>y<=HB_YEAR && y>=HB_YEAR-1).sort((a,b)=>b-a); }catch(_){ HB_YEARS=[]; }
+      } else {
+        wbBanner('Reading the live workbook…');
+        try{ res=await PH_WB.load(PH_AUTH.graph,WB_DRIVE,WB_ITEM); }
+        catch(e){ wbBanner(wbWhyNot(e),true); return; }
+      }
+    }
+    const n=fillBase(res,false);
+    if(!sandbox) dropStale();
+    loadedStamp=res.savedAt||null;
+    if(sandbox){ wbBanner('<b>Demo:</b> made-up numbers. What you type stays in this browser.',false); return; }
+    if(MODE.source==='homebrace'){ hbShow(res,n); daysFromSchedule(); return; }
+    const stamp=res.savedAt?new Date(res.savedAt).toLocaleString():'';
+    const who=String(res.savedBy||'').replace(/[<>&]/g,'');
+    const after=new Date().getFullYear()>XL_YEAR;
+    if(after) month=11;                            // a new year, still on the old Excel: its last month, not "January"
+    wbBanner((after ? '<b>This is the '+XL_YEAR+' workbook - every month here is '+XL_YEAR+'.</b> '+(XL_YEAR+1)+'\u2019s numbers go into Home-Brace once an admin switches (Admin \u2192 Production data). ' : '')+
+             '\u25CF Live from the practice\u2019s workbook \u2014 '+n+' of '+Object.keys(BASE).length+
+             ' offices'+(stamp?(who?', '+who+' last saved it '+stamp:', last saved '+stamp):''),
+             after || res.errors.length>0);
+  }
+  /* PRODUCTION DAYS FROM THE SCHEDULE (proddays.js, 16/11/2026). Morgan: completed production days should "pull from
+     that calendar as well once that day has passed". A month the Schedule decides shows them read-only; the numbers
+     are kept in step in the background and the page repaints when they changed. */
+  let COVER=null;
+  const fromSch=(o,m)=>!!(COVER && COVER[o] && COVER[o][m]);
+  function daysFromSchedule(){
+    const PDY=window.PH_PRODDAYS; if(!PDY) return;
+    const y=HB_YEAR;
+    PDY.covered(y).then(c=>{ if(y===HB_YEAR){ COVER=c; quietRender(); } });
+    PDY.whenReady().then(()=>PDY.sync()).then(r=>{
+      if(!(r && r.wrote) || y!==HB_YEAR) return;
+      return PH_PROD.dashboardData(y).then(res=>{ if(y!==HB_YEAR) return; fillBase(res,false); quietRender(); });
+    }).catch(e=>{ try{ console.warn('Production days from the Schedule:', (e&&e.message)||e); }catch(_){} });
+  }
+  /* A background repaint rebuilt the form while someone typed: the box lost focus and a phone's keyboard closed. While
+     a box has focus only the Schedule's days box and the right-hand card change; the rest waits for the next
+     redraw (21/11/2026, code review). */
+  function quietRender(){
+    const a=document.activeElement, v=el('view');
+    if(!(office && a && v && v.contains(a) && a.tagName==='INPUT')){ render(); return; }
+    const d=el('dysro'); if(d) d.value=disp(office,month,'dys');
+    refreshRight();
+  }
+  /* The numbers on the page, from the workbook or a Home-Brace year. `reset` empties every office
+     first - another year must not keep this one's numbers where it has none. */
+  function fillBase(res, reset){
+    let n=0; const zero=()=>[0,0,0,0,0,0,0,0,0,0,0,0];
+    Object.keys(res.offices||{}).forEach(name=>{ if(!BASE[name]) BASE[name]={fee:0, afee:0, tc:zero(), mds:zero(), adj:zero(), dys:zero(), goal:zero(), str:zero()}; });
+    HB_OFFS = res.source==='homebrace' ? Object.keys(res.offices||{}) : null;
+    Object.keys(BASE).forEach(name=>{
+      const b=BASE[name];
+      if(reset){ b.tc=zero(); b.adj=zero(); b.dys=zero(); b.sched=zero(); b.goal=zero(); b.str=zero(); b.mds=zero(); }
+      const L=res.offices[name]; if(!L) return;
+      if(L.tc)      b.tc=L.tc.slice();
+      if(L.adj)     b.adj=L.adj.slice();
+      // The input asks "how many days you actually saw patients", so it must be the
+      // COMPLETED row — it was reading and writing "Number of Production Days (2026)",
+      // which is the schedule. Morgan changed one number and a different one moved.
+      if(L.done)    b.dys=L.done.slice();
+      if(L.days)    b.sched=L.days.slice();
+      if(L.goal)    b.goal=L.goal.slice();
+      if(L.stretch) b.str=L.stretch.slice();
+      if(L.mdStarts)b.mds=L.mdStarts.slice();
+      if(L.fee)     b.fee=L.fee;
+      if(L.avgFee)  b.afee=L.avgFee;
+      n++;
+    });
+    return n;
+  }
+  /* After the switch: say whose numbers these are, and loudly when they are an earlier year's - in
+     January, before the new year is started, "January" here would be last January. */
+  function hbShow(res,n){
+    const stamp=res.savedAt?new Date(res.savedAt).toLocaleString():'';
+    const who=String(res.savedBy||'').replace(/[<>&]/g,'');
+    const thisYear=(new Date()).getFullYear(), past=HB_YEAR<thisYear;
+    const warn=!past ? '' : HB_YEARS.some(y=>y>HB_YEAR)
+      ? '<b>You are entering numbers for '+HB_YEAR+'.</b> Pick '+Math.max.apply(null,HB_YEARS)+' above for this year. '
+      : '<b>'+thisYear+' isn\u2019t started in Home-Brace yet, so numbers here go into '+HB_YEAR+'.</b> Ask an admin to start '+thisYear+' (Admin \u2192 Production data). ';
+      wbBanner(warn+'\u25CF Home-Brace\u2019s production numbers for '+HB_YEAR+' \u2014 '+n+' of '+Object.keys(BASE).length+' offices'+
+               (stamp?(who?', '+who+' last saved '+stamp:', last saved '+stamp):'')+(MODE.mirror?' \u00b7 Morgan\u2019s Excel is kept up to date too':''), past||res.errors.length>0);
+      // The page's own explanation was written for her Excel ("it's the same file"); after the switch it is not.
+      const sb=el('syncbar'); if(sb) sb.innerHTML='\u{1F504} <b>Home-Brace keeps the production numbers now.</b> Type here and it saves to Home-Brace'+
+        (MODE.mirror?', and Morgan\u2019s Excel is kept up to date too. Something typed in her Excel no longer shows up here \u2014 type it here instead.':'. Morgan\u2019s Excel is not updated any more.');
+      const hp=document.querySelector('.page-head p'); if(hp) hp.textContent='Type the month\u2019s numbers once. '+(MODE.mirror?'The dashboard and Morgan\u2019s Excel both update.':'The dashboard updates.');
+      const b=el('pushbtn'); if(b) b.textContent=saveLabel();
+  }
+  /* Another kept year (this one or the one before), chosen above the boxes. */
+  async function setYear(y){
+    y=+y; if(!y || y===HB_YEAR || MODE.source!=='homebrace' || SAVING) return;
+    wbBanner('Reading Home-Brace\u2019s production numbers for '+y+'\u2026');
+    let res;
+    try{ res=await PH_PROD.dashboardData(y); }
+    catch(e){ wbBanner('<b>Could not read '+y+'.</b> '+String((e&&e.message)||e).replace(/[<>&]/g,''),true); render(); return; }
+    HB_YEAR=y;
+    const now=new Date(); month = y<now.getFullYear() ? 11 : now.getMonth();
+    const n=fillBase(res,true); loadedStamp=res.savedAt||null;
+    COVER=null; hbShow(res,n); render();
+    if(window.PH_PRODDAYS) PH_PRODDAYS.covered(y).then(c=>{ if(y===HB_YEAR){ COVER=c; quietRender(); } });
+  }
+
+  /* Same trap as the dashboard: PERSONAS is the sandbox's "View as" list, which
+     dechrome() hides in the real app while this page carried on USING it - so a
+     signed-in person got persona #1's offices instead of their own. The account
+     decides here too. */
+  function applyIdentity(){
+    if(!(window.PH && PH.me && PH.isLive && PH.isLive())) return false;
+    const m=PH.me(); if(!m) return false;
+    cur={ id:'me', name:(PH.name?PH.name(m):'')||'You',
+          offices:(m.offices==='all'?'all':(m.offices||[])) };
+    /* Who she is lands in stages (profile, then the access grid, then Admin's settings) -
+       still her each time. Keep the office she picked; render() drops it only if it is no
+       longer one of hers. It used to be wiped here, and with no default office any more
+       her choice would vanish a second after she made it. */
+    render();
+    return true;
+  }
+  const pageDone=()=>{ if(window.PH && PH.loadDone) PH.loadDone('page'); };
+  function boot(){ hydrate().then(()=>{ if(!applyIdentity()) set(saved); booted=true; }).then(pageDone, pageDone); }
+  if(window.PH && PH.loadHold && PH.isLive()) PH.loadHold('page', 'Reading the production numbers…');   // the loading screen stays up until the numbers are in (user.js)
+  if(window.PH_AUTH) boot();
+  else document.addEventListener('ph-signed-in', boot, {once:true});
+})();
+</script>
+<script>PH.nav('production');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(window.PROD&&PROD.identity)PROD.identity();});document.addEventListener('ph-identity',function(){if(window.PROD&&PROD.identity)PROD.identity();});</script>
+<script src="tour.js?v=hc268d202611250847"></script>
+<script>
+Tour.init([
+  {sel:'.syncbar', title:'One set of numbers', body:'Type here and it saves into the <b>same Excel workbook</b> on SharePoint. If someone types in Excel instead, it shows up here. There is never a second copy to reconcile.'},
+  {sel:'.pickrow, .choose', title:'Office first, then month', body:'Pick the office before anything else \u2014 the boxes open after. Months that already have numbers are outlined in teal. You only see the offices you\u2019re responsible for.'},
+  {sel:'.grid2 .card', title:'Only four boxes', body:'Production, Medicaid (if your office bills it), adjustments, and days worked. That is genuinely everything a manager types each month.'},
+  {sel:'.big', title:'The maths is automatic', body:'Totals, % of main goal, % of stretch and average per day update as you type \u2014 no formulas to copy, nothing to break.'},
+  {sel:'.savebar', title:'Save, and it\u2019s everywhere', body:'<b>Save to workbook</b> writes it back and the <b>Dashboard updates immediately</b>. Got it wrong? <b>Undo my changes</b> puts it back.'}
+], {key:'prod', title:'Enter Production', next:{label:'the Schedule', href:'schedule.html'}});
+</script>
+</body>
+</html>

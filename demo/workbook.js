@@ -1,0 +1,542 @@
+/* Reads the practice's live production workbook out of Microsoft Graph.
+
+   ONE implementation, used by BOTH the dashboard and connect.html's step-7 verifier.
+   Keep it that way: verifying one implementation and shipping another proves nothing.
+
+   Every series is matched on the column-A LABEL, never a row number. The office tabs use
+   two different layouts and the same series sits on different rows per tab (12/20/20/20/
+   12/11/11/18 for actual production alone). Reading by row number silently compared the
+   wrong rows once already.
+
+   Verified 2026-08-28 against "2026 PRODUCTION DASHBOARD (New)-5.xlsx": all 10 series,
+   all 8 offices, all 12 months reproduce the practice's own figures exactly.
+
+   THE SNAPSHOT IS THE REFERENCE, NOT A SUSPECT. Morgan reviewed the mockup's numbers
+   against her own workbook and confirmed they are right. So if this reader ever disagrees
+   with snapshot.json, the bug is HERE -- do not "fix" the figures to match a new reading,
+   and do not change a derivation because it looks tidier. Reproduce her numbers exactly,
+   or find out why you cannot. */
+(function(global){
+  'use strict';
+
+  var TABS = {
+    'Cedar Grove':'Cedar Grove (BFO)', 'Northpoint':'Northpoint (BFO)', 'Lakeview':'Lakeview (BFO)',
+    'Westfield':'Westfield (BFO)', 'Brookside':'Brookside (BFO)', 'Riverbend':'Riverbend (BFO)',
+    'Meadow Park':'Riverbend (RBO)', 'Hillcrest':'Hillcrest (MPL)'
+  };
+  // Tabs carrying Medicaid rows. The others are TC-only and label things differently.
+  var MEDICAID = { 'Cedar Grove':1, 'Northpoint':1, 'Lakeview':1, 'Meadow Park':1 };
+  /* A NEW OFFICE (17/11/2026). The 8 above never change - her Excel has exactly those tabs. An office added in Admin ->
+     Production data (prodstore.js addOffice: a copy of another office's tab in Home-Brace's own book) joins these two
+     lists - the SAME objects everyone already holds, so every page that reads TABS sees it. Never one of the 8's names. */
+  var BASE = Object.keys(TABS);
+  function isBase(n){ return BASE.indexOf(n) >= 0; }
+  function addOffices(list){
+    (list || []).forEach(function(o){
+      if(!o || typeof o.n !== 'string' || typeof o.tab !== 'string' || !o.n || !o.tab || isBase(o.n)) return;
+      if(BASE.some(function(b){ return TABS[b] === o.tab; })) return;          // never one of the 8's tabs
+      TABS[o.n] = o.tab; if(o.med) MEDICAID[o.n] = 1; else delete MEDICAID[o.n];
+    });
+    return TABS;
+  }
+
+  function norm(v){ return String(v == null ? '' : v).toLowerCase().replace(/\s+/g,' ').trim(); }
+
+  /* rows: array of arrays. must: substrings that all have to appear in the label.
+     never: substrings that disqualify it. */
+  function row(rows, must, never){
+    never = never || [];
+    for (var r = 0; r < rows.length; r++){
+      var L = norm(rows[r][0]);
+      if (!L) continue;
+      var ok = true, i;
+      for (i = 0; i < must.length; i++) if (L.indexOf(must[i]) < 0) { ok = false; break; }
+      if (!ok) continue;
+      for (i = 0; i < never.length; i++) if (L.indexOf(never[i]) >= 0) { ok = false; break; }
+      if (ok) return r;
+    }
+    return -1;
+  }
+  function months(rows, r){
+    var out = [], i;
+    if (r < 0) { for (i = 0; i < 12; i++) out.push(0); return out; }
+    for (i = 1; i <= 12; i++){
+      var v = rows[r][i];
+      out.push(typeof v === 'number' ? v : (v === '' || v == null ? 0 : (parseFloat(v) || 0)));
+    }
+    return out;
+  }
+  function firstNonZero(a){
+    for (var i = 0; i < a.length; i++) if (a[i]) return a[i];
+    return 0;
+  }
+
+  /* Turn one office tab's grid into the series the dashboard needs.
+     `year` is the year the tab tracks (default 2026, her workbook today). Home-Brace's own
+     books (prodstore.js) carry on into 2027 and later with the same labels a year on, so the
+     years are worked out from it rather than written in. Same rows, same sums, for 2026. */
+  function office(rows, med, year){
+    var Y = String(year || 2026), L = String((year || 2026) - 1), P = String((year || 2026) - 2);
+    var act = months(rows, med
+      ? row(rows, [Y,'actual','tc only','+','medicaid'])
+      /* Medicaid tabs ALSO carry "2026 Actual TC Net Production (Non-Medicaid)" -- a subset,
+         not the total. Excluded so it can never be picked up by mistake. */
+      : row(rows, [Y,'actual','tc net production'], ['non-medicaid']));
+
+    var goal    = months(rows, med ? row(rows, [Y,'total production goal'])
+                                   : row(rows, [Y,'tc production goal'], ['non-medicaid']));
+    var stretch = months(rows, row(rows, [Y,'stretch production goal']));
+    var days    = months(rows, row(rows, ['number of production days','('+Y+')']));
+    var done    = months(rows, row(rows, ['completed number of production days']));
+
+    var lyNet = months(rows, row(rows, [L,'net production']));
+    var lyMed = med ? months(rows, row(rows, [L,'medicaid production'])) : null;
+    var ly = lyNet.map(function(v, i){ return v + (lyMed ? lyMed[i] : 0); });
+
+    var mdStarts = months(rows, row(rows, ['number of medicaid starts']));
+
+    /* Starts are RECONSTRUCTED, not read -- the workbook has no monthly actual-starts row.
+       Goal = needed-per-day x scheduled days. Actual = needed-per-day x days WORKED, plus
+       their ahead/behind figure. Using scheduled days instead of worked days inflates every
+       part-month (August, on four offices). On a Medicaid tab the Non-Medicaid per-day row
+       is the one that reproduces their numbers. */
+    var perDay = months(rows, med
+      ? row(rows, ['needed number of starts per day','(non-medicaid)'])
+      : row(rows, ['needed number of starts per day']));
+    var ahead = months(rows, row(rows, ['current # of starts']));
+
+    var sGoal = perDay.map(function(p, i){ return Math.round(p * days[i]); });
+    var sAct  = perDay.map(function(p, i){
+      return done[i] > 0 ? Math.round(p * done[i] + ahead[i]) : 0;
+    });
+
+    /* TWO different case fees, easily confused:
+         avgFee = "2025 Average Case Fee"  -- reconstructs last year's starts
+         mdFee  = "Medicaid Case Fee"      -- what the dashboard calls `fee` (0 on TC-only tabs)
+       No last-year starts row exists, so it is derived from production / average fee. */
+    var avgFee = firstNonZero(months(rows, row(rows, [L+' average case fee'])));
+    var mdFee  = firstNonZero(months(rows, row(rows, ['medicaid case fee'])));
+    var lyStarts = ly.map(function(v){ return avgFee ? Math.round(v / avgFee) : 0; });
+
+    /* Past years, for the year selector. 2025 production is the same figure as `ly`;
+       kept separate because the dashboard addresses them differently. */
+    var hist = {};
+    hist[P] = { act: months(rows, row(rows, [P,'net production'])).map(function(v, i){
+                  var m = med ? months(rows, row(rows, [P,'medicaid production'])) : null;
+                  return v + (m ? m[i] : 0);
+                }),
+                days: months(rows, row(rows, ['number of production days','('+P+')'])) };
+    hist[L] = { act: ly.slice(), days: months(rows, row(rows, ['number of production days','('+L+')'])),
+                sAct: lyStarts.slice() };
+
+    /* Enter Production works from the raw inputs rather than the totals: TC net production
+       and the write-offs line, both present on either tab layout. */
+    var tc  = months(rows, row(rows, ['tc net production']));
+    var adj = months(rows, row(rows, ['write-offs']));
+
+    return { act:act, goal:goal, stretch:stretch, ly:ly, sAct:sAct, sGoal:sGoal,
+             mdStarts:mdStarts, lyStarts:lyStarts, days:days, done:done,
+             hist:hist, fee:mdFee, avgFee:avgFee, tc:tc, adj:adj };
+  }
+
+  /* graph(path) -> Promise of parsed JSON, supplied by the caller so this module
+     stays out of the sign-in business. */
+
+  var CACHE_KEY = 'ph_wb_cache';
+
+  /* THE SANDBOX NEVER OPENS THE PRACTICE'S WORKBOOK (13/10/2026).
+     Jordan: the sandbox (GitHub) must not show the real numbers or be connected to the excel.
+     It was: once signed in, the sandbox dashboard read Morgan's file and the sandbox's
+     Enter Production could WRITE to it. Every read and write here now refuses on the
+     sandbox, and the pages show demo() instead. Which site is which: user.js env() when
+     the page has it; connect.html deliberately loads no user.js, so the same rule is
+     repeated - live is the Azure site, a hub.* domain, or ?env=live. Node (the API, the
+     tests) has no location and is never the sandbox. */
+  function sandbox(){
+    if (global.PH && typeof global.PH.env === 'function') return global.PH.env() !== 'live';
+    if (typeof location === 'undefined' || !location || !location.hostname) return false;
+    if (/[?&]env=live(&|$)/.test(location.search || '')) return false;
+    var h = location.hostname;
+    return !(/azurestaticapps\.net$/i.test(h) || /^hub\./i.test(h));
+  }
+  var SANDBOX_MSG = 'This is the sandbox: it never opens the practice\u2019s workbook. Made-up numbers only.';
+  function refuse(){ var e = new Error(SANDBOX_MSG); e.sandbox = true; return Promise.reject(e); }
+
+  /* Made-up figures in exactly the shape load() returns, so the sandbox runs the same page
+     code as the real site. Seeded, so everyone sees the same; drawn at random - NOT derived
+     from the practice's figures in any way. Months before this one are complete, this one
+     is part-way, later ones are empty, as in the real file. */
+  function demo(now){
+    now = now || new Date();
+    var cm = now.getMonth(), seed = 7919;
+    function rnd(){ seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; }
+    function r(a, b){ return a + rnd() * (b - a); }
+    function hundreds(v){ return Math.round(v / 100) * 100; }
+    try { if (typeof sessionStorage !== 'undefined') sessionStorage.removeItem(CACHE_KEY); } catch(_){}  // any real copy cached before
+    var out = {};
+    Object.keys(TABS).forEach(function(name){
+      var med = !!MEDICAID[name], size = r(110000, 320000), fee = med ? 4000 : 0, avgFee = 5500;
+      var o = { act:[], goal:[], stretch:[], ly:[], sAct:[], sGoal:[], mdStarts:[], lyStarts:[],
+                days:[], done:[], tc:[], adj:[] };
+      var ly24 = [], days24 = [], days25 = [];
+      for (var m = 0; m < 12; m++){
+        var goal = hundreds(size * (1 + 0.12 * Math.sin((m + 1) / 6 * Math.PI) + r(-0.06, 0.06)));
+        var days = Math.round(r(8, 14));
+        var part = m === cm ? Math.min(1, now.getDate() / 30) : (m < cm ? 1 : 0);
+        var done = Math.round(days * part);
+        var md = med ? Math.round(r(0, 8) * part) : 0;
+        var act = hundreds(goal * r(0.82, 1.12) * part);
+        var ly = hundreds(goal * r(0.85, 1.05)), perDay = r(2.2, 4.2);
+        o.goal.push(goal); o.stretch.push(hundreds(goal * r(1.08, 1.18)));
+        o.days.push(days); o.done.push(done); o.mdStarts.push(md); o.act.push(act);
+        o.tc.push(Math.max(0, act - md * fee)); o.adj.push(part === 1 ? -hundreds(r(0, 18000)) : 0);
+        o.ly.push(ly); o.lyStarts.push(Math.round(ly / avgFee));
+        o.sGoal.push(Math.round(perDay * days)); o.sAct.push(done > 0 ? Math.max(0, Math.round(perDay * done + r(-4, 4))) : 0);
+        ly24.push(hundreds(goal * r(0.75, 0.98))); days24.push(Math.round(r(8, 14))); days25.push(Math.round(r(8, 14)));
+      }
+      o.hist = { '2024': { act: ly24, days: days24 }, '2025': { act: o.ly.slice(), days: days25, sAct: o.lyStarts.slice() } };
+      o.fee = fee; o.avgFee = avgFee;
+      out[name] = o;
+    });
+    return { offices: out, errors: [], savedAt: new Date(now.getTime() - 3600000).toISOString(),
+             savedBy: 'Sample data', cached: false, demo: true };
+  }
+
+  /* Three things keep this fast:
+       1. the eight tabs are fetched IN PARALLEL, not one after another -- sequential
+          round trips were the whole 7-10s;
+       2. $select=values drops address/formulas/formatting from each response;
+       3. the result is cached against the file's lastModifiedDateTime, so a reload is
+          instant and still correct -- the moment she saves, the stamp changes and the
+          cache is skipped. */
+  function load(graph, driveId, itemId){
+    if (sandbox()) return refuse();
+    var item = '/drives/' + driveId + '/items/' + itemId;
+    var base = item + '/workbook';
+    var names = BASE.slice();              // her Excel has the 8 tabs; an office added in Home-Brace lives only there
+
+    // Ask WHO saved it too — assuming it's always Morgan would be wrong the first time
+    // anyone else touches the file.
+    return graph(item + '?$select=lastModifiedDateTime,lastModifiedBy,name').then(function(meta){
+      var stamp = meta && meta.lastModifiedDateTime;
+      var who = (meta && meta.lastModifiedBy && meta.lastModifiedBy.user &&
+                 meta.lastModifiedBy.user.displayName) || '';
+      var hit = null;
+      try {
+        var raw = sessionStorage.getItem(CACHE_KEY);
+        if (raw){
+          var c = JSON.parse(raw);
+          if (c && c.stamp && c.stamp === stamp && c.itemId === itemId) hit = c;
+        }
+      } catch(_){}
+      if (hit) return { offices: hit.offices, errors: [], savedAt: stamp, savedBy: who, cached: true };
+
+      var out = {}, errs = [];
+      return Promise.all(names.map(function(name){
+        return graph(base + "/worksheets('" + encodeURIComponent(TABS[name]) +
+                     "')/usedRange(valuesOnly=true)?$select=values")
+          .then(function(rng){ out[name] = office(rng.values || [], !!MEDICAID[name]); })
+          .catch(function(e){ errs.push(name + ': ' + ((e && e.message) || e)); });
+      })).then(function(){
+        if (!errs.length){
+          try {
+            sessionStorage.setItem(CACHE_KEY, JSON.stringify(
+              { stamp: stamp, itemId: itemId, offices: out }));
+          } catch(_){}   // quota or private mode -- caching is an optimisation, not a requirement
+        }
+        return { offices: out, errors: errs, savedAt: stamp, savedBy: who, cached: false };
+      });
+    });
+  }
+
+  /* ------------------------------------------------------------------
+     WRITING BACK.
+     The direction that matters: people enter numbers in the hub, and the workbook stays
+     the report an owner reads. Two rules, because this writes into the document they run
+     the practice on:
+       1. Never guess an address. Resolve it from the sheet's own used-range origin and
+          the row whose column-A label matches -- the same matching the reader is verified
+          against to the dollar.
+       2. Never trust the write. Read the cell back and compare before reporting success.
+     ------------------------------------------------------------------ */
+
+  // Which column-A label each editable field lives on. Two tab layouts, first match wins.
+  // writeRows(year) gives the same map a year on, for Home-Brace's own books (prodstore.js).
+  function writeRows(year){
+    var Y = String(year || 2026), L = String((year || 2026) - 1), out = {};
+    Object.keys(WRITE_ROWS).forEach(function(f){
+      out[f] = WRITE_ROWS[f].map(function(p){
+        var sw = function(a){ return (a || []).map(function(x){ return x.replace('2026', Y).replace('2025', L); }); };
+        return {all: sw(p.all), not: p.not ? sw(p.not) : undefined};
+      });
+    });
+    return out;
+  }
+  var WRITE_ROWS = {
+    tc:   [ {all:['tc net production']} ],
+    adj:  [ {all:['write-offs']} ],
+    mds:  [ {all:['number of medicaid starts']} ],
+    // "Completed production days" in the app = the COMPLETED row, not the schedule.
+    dys:  [ {all:['completed number of production days']} ],
+    sched:[ {all:['number of production days','(2026)']} ],
+    done: [ {all:['completed number of production days']} ],
+    goal: [ {all:['2026','total production goal']}, {all:['2026','tc production goal'], not:['non-medicaid']} ],
+    str:  [ {all:['2026','stretch production goal']} ],
+    fee:  [ {all:['medicaid case fee']} ],
+    afee: [ {all:['2025 average case fee']} ]
+  };
+
+  function colLetters(n){                 // 0 -> A, 25 -> Z, 26 -> AA
+    var out='', v=n+1;
+    while(v>0){ var r=(v-1)%26; out=String.fromCharCode(65+r)+out; v=Math.floor((v-1)/26); }
+    return out;
+  }
+  function parseOrigin(address){          // "Sheet1!A1:N60" -> {col:0,row:1}
+    var m=/!\$?([A-Z]+)\$?(\d+)/.exec(address||'');
+    if(!m) return {col:0,row:1};
+    var c=0, L=m[1];
+    for(var i=0;i<L.length;i++) c=c*26+(L.charCodeAt(i)-64);
+    return { col:c-1, row:parseInt(m[2],10) };
+  }
+
+  /* EXCEL SESSIONS.
+     Without one, each Graph call can land on a different snapshot of the workbook: a write
+     reports success and the read-back still shows the old value. That is exactly the
+     "wrote 1 to J21 but it reads back as 8" Morgan saw. A persistent session makes every
+     call in a save see the same document, so writes actually stick.  */
+  /* One session per SAVE, not one per page. In a browser a module-level session was
+     fine - one person, one tab. On the server this same file is loaded once and
+     serves everybody, so a shared session meant two office managers saving at the
+     same time used one id, and whichever finished first closed it under the other,
+     who then got "wrote 250000 to J21, reads back as 8" on writes that had actually
+     landed. The session now travels with the request. */
+  var SESSION = null;            // browser only: one person, one workbook
+
+  function call(token, method, path, body, sessionId){
+    if (sandbox()) return refuse();
+    return token().then(function(t){
+      var h = { Authorization:'Bearer '+t, 'Content-Type':'application/json' };
+      var sid = sessionId || SESSION;
+      if (sid) h['workbook-session-id'] = sid;
+      return fetch('https://graph.microsoft.com/v1.0' + path, {
+        method: method, headers: h, body: body ? JSON.stringify(body) : undefined
+      }).then(function(res){
+        if (res.status === 204) return {};
+        return res.json().catch(function(){ return {}; }).then(function(j){
+          if (!res.ok) throw new Error('Graph '+res.status+': '+((j.error&&j.error.message)||res.statusText));
+          return j;
+        });
+      });
+    });
+  }
+
+  /* `own` opens a session that belongs to the CALLER, returned rather than stored,
+     for the server where several saves run at once. Without it the browser keeps its
+     single shared session, which is correct there. */
+  function openSession(token, driveId, itemId, own){
+    if (!own && SESSION) return Promise.resolve(SESSION);
+    return call(token, 'POST', '/drives/'+driveId+'/items/'+itemId+'/workbook/createSession',
+                { persistChanges: true })
+      .then(function(r){
+        var id = r && r.id;
+        if (!own) SESSION = id;
+        return id;
+      })
+      .catch(function(){ if(!own) SESSION = null; return null; });  // proceed without; worse, not fatal
+  }
+  function closeSession(token, driveId, itemId, sessionId){
+    var id = sessionId || SESSION;
+    if (!id) return Promise.resolve();
+    return call(token, 'POST', '/drives/'+driveId+'/items/'+itemId+'/workbook/closeSession', {},
+                id)
+      .catch(function(){})
+      .then(function(){ if(!sessionId) SESSION = null; });
+  }
+
+  /* Where does one field/month actually live on the sheet? Both the writer and the
+     round-trip test go through this, so a test can never verify a different mapping
+     from the one the app ships -- which is how the wrong-row bug survived so long. */
+  function resolve(token, driveId, itemId, officeName, field, monthIndex, sid){
+    var tab=TABS[officeName];
+    if(!tab) return Promise.reject(new Error('Unknown office: '+officeName));
+    var pats=WRITE_ROWS[field];
+    if(!pats) return Promise.reject(new Error('"'+field+'" is not a writable field.'));
+    if(!(monthIndex>=0 && monthIndex<12)) return Promise.reject(new Error('Bad month.'));
+
+    var base='/drives/'+driveId+'/items/'+itemId+"/workbook/worksheets('"+encodeURIComponent(tab)+"')";
+    return Promise.resolve(sid || openSession(token, driveId, itemId)).then(function(s){
+      sid = sid || s;
+      return call(token, 'GET', base+'/usedRange(valuesOnly=true)?$select=values,address', null, sid);
+    }).then(function(rng){
+      var rows=rng.values||[], origin=parseOrigin(rng.address), idx=-1;
+      for(var i=0;i<pats.length && idx<0;i++) idx=row(rows, pats[i].all, pats[i].not);
+      if(idx<0) throw new Error('Could not find the row for "'+field+'" on '+tab+'.');
+
+      return { base:base, sheet:tab, sid:sid,
+               address: colLetters(origin.col + 1 + monthIndex) + (origin.row + idx),
+               label: rows[idx][0] };
+    });
+  }
+
+  /* Read one field/month from exactly where the writer would put it. */
+  function readCell(token, driveId, itemId, officeName, field, monthIndex, sid){
+    return resolve(token, driveId, itemId, officeName, field, monthIndex, sid).then(function(at){
+      return call(token, 'GET', at.base+"/range(address='"+at.address+"')?$select=values", null, at.sid)
+        .then(function(r){
+          var v=(r.values&&r.values[0]&&r.values[0][0]);
+          return { address:at.address, sheet:at.sheet, label:at.label,
+                   value:(v===''||v===null||v===undefined) ? null : v };
+        });
+    });
+  }
+
+  /* Write one month of one field, then verify it. `token` returns a bearer token. */
+  function writeCell(token, driveId, itemId, officeName, field, monthIndex, value, sid){
+    return resolve(token, driveId, itemId, officeName, field, monthIndex, sid).then(function(at){
+      var base=at.base, address=at.address, tab=at.sheet;
+      var num = (value===''||value===null||value===undefined) ? null : Number(value);
+      if(num!==null && !isFinite(num)) throw new Error('That is not a number.');
+
+      /* Clearing a cell needs the clear action, NOT a PATCH of [[null]]: Graph reads
+         null in a values array as "leave this cell alone", so a blank silently did
+         nothing and the verify below then failed. applyTo Contents keeps the cell's
+         formatting. Found on the live workbook - the round-trip test could not put a
+         blank December back. */
+      var send = (num===null)
+        ? call(token, 'POST', base+"/range(address='"+address+"')/clear", { applyTo:'Contents' }, at.sid)
+        : call(token, 'PATCH', base+"/range(address='"+address+"')", { values: [[num]] }, at.sid);
+
+      return send
+        .then(function(){ return call(token, 'GET', base+"/range(address='"+address+"')?$select=values", null, at.sid); })
+        .then(function(check){
+          var got=(check.values&&check.values[0]&&check.values[0][0]);
+          // A cleared cell reads back as '' or null. Accepting 0 here would hide a failure.
+          var ok = (num===null) ? (got===null||got===''||got===undefined)
+                                : Math.abs(Number(got)-num) < 0.01;
+          if(!ok) throw new Error((num===null?'cleared ':'wrote '+num+' to ')+address+
+                                  ', reads back as '+
+                                  (got===''||got===null||got===undefined?'(blank)':got));
+          return { address:address, sheet:tab, value:num, label:at.label };
+        });
+    });
+  }
+
+  /* ---- Self-restoring round-trip test -------------------------------------
+     Proves on the LIVE file that "completed production days" lands on the completed
+     row and leaves the scheduled row alone -- the bug Morgan reported. It drives the
+     same resolve/readCell/writeCell the app uses, because a test that re-implements
+     the mapping would have passed on the broken build.
+
+     It must never leave the practice's workbook altered:
+       - refuses if the two fields resolve to the same cell (that IS the bug)
+       - refuses if the target holds a formula: writing a value destroys it, and
+         restoring a value would not bring the formula back
+       - restores the original on every exit path, including after a failure
+       - verifies the restore by reading it back, and reports the exact cell and
+         number to type by hand if it ever cannot put it back.
+     Returns {pass, steps:[{ok,text}], error, restored, manualFix}. */
+  function roundTrip(token, driveId, itemId, officeName, monthIndex, opts){
+    opts = opts || {};
+    var readFormula = opts.readFormula || function(at){
+      return call(token, 'GET', at.base+"/range(address='"+at.address+"')?$select=formulas")
+        .then(function(r){ return (r.formulas && r.formulas[0] && r.formulas[0][0]); });
+    };
+    var steps=[], wrote=false, orig=null, origSched=null, atDone=null, atSched=null;
+    /* Report each step as it happens, not in a lump at the end. If the tab dies
+       mid-test the person still has the original value on screen to type back. */
+    var onStep = opts.onStep || function(){};
+    var ok=function(t){ var st={ok:true, text:t}; steps.push(st); try{ onStep(st, steps); }catch(_){ } };
+    var blank=function(v){ return v===null||v===undefined||v===''; };
+    var same=function(a,b){
+      if(blank(a)||blank(b)) return blank(a)&&blank(b);
+      return Math.abs(Number(a)-Number(b)) < 0.0001;
+    };
+    var show=function(v){ return blank(v) ? '(blank)' : String(v); };
+
+    return Promise.resolve()
+      .then(function(){ return resolve(token, driveId, itemId, officeName, 'dys', monthIndex); })
+      .then(function(a){ atDone=a;
+        return resolve(token, driveId, itemId, officeName, 'sched', monthIndex); })
+      .then(function(b){ atSched=b;
+        ok('Completed days resolves to '+atDone.address+' - row "'+atDone.label+'"');
+        ok('Scheduled days resolves to '+atSched.address+' - row "'+atSched.label+'"');
+        if(atDone.address===atSched.address)
+          throw new Error('Both resolve to '+atDone.address+'. That is the original bug - nothing was written.');
+        ok('They are different cells, which is the point of the fix.');
+        return readFormula(atDone);
+      })
+      .then(function(f){
+        if(typeof f==='string' && f.charAt(0)==='=')
+          throw new Error(atDone.address+' holds a formula ('+f+'). Not writing to it - pick another month.');
+        ok('No formula in '+atDone.address+' - safe to write and restore.');
+        return readCell(token, driveId, itemId, officeName, 'dys', monthIndex);
+      })
+      .then(function(r){ orig=r.value;
+        return readCell(token, driveId, itemId, officeName, 'sched', monthIndex); })
+      .then(function(r){ origSched=r.value;
+        ok('Recorded originals - completed '+show(orig)+', scheduled '+show(origSched)+'.');
+        var test = (Number(orig)===17) ? 18 : 17;
+        wrote=true;
+        return writeCell(token, driveId, itemId, officeName, 'dys', monthIndex, test)
+          .then(function(){ return test; });
+      })
+      .then(function(test){
+        return readCell(token, driveId, itemId, officeName, 'dys', monthIndex).then(function(a){
+          return readCell(token, driveId, itemId, officeName, 'sched', monthIndex).then(function(b){
+            if(!same(a.value, test))
+              throw new Error('Wrote '+test+' to '+atDone.address+' but it reads back as '+show(a.value)+'.');
+            ok('Wrote '+test+' - it landed in '+atDone.address+', the completed row.');
+            if(!same(b.value, origSched))
+              throw new Error('The scheduled cell '+atSched.address+' changed from '+show(origSched)+
+                              ' to '+show(b.value)+'. That is the bug Morgan reported, still present.');
+            ok('Scheduled cell '+atSched.address+' did not move - still '+show(origSched)+
+               '. This is the bug she reported, and it is gone.');
+          });
+        });
+      })
+      .then(function(){
+        return writeCell(token, driveId, itemId, officeName, 'dys', monthIndex, blank(orig)?'':orig);
+      })
+      .then(function(){ wrote=false;
+        return readCell(token, driveId, itemId, officeName, 'dys', monthIndex); })
+      .then(function(a){
+        return readCell(token, driveId, itemId, officeName, 'sched', monthIndex).then(function(b){
+          if(!same(a.value, orig))
+            throw new Error('RESTORE FAILED. '+atDone.address+' should be '+show(orig)+
+                            ' but reads '+show(a.value)+'.');
+          if(!same(b.value, origSched))
+            throw new Error('RESTORE FAILED. '+atSched.address+' should be '+show(origSched)+
+                            ' but reads '+show(b.value)+'.');
+          ok('Restored - '+atDone.address+' is back to '+show(orig)+' and '+atSched.address+
+             ' to '+show(origSched)+'. The workbook is exactly as it was.');
+          return { pass:true, steps:steps, restored:true };
+        });
+      })
+      .catch(function(e){
+        var out = { pass:false, steps:steps, error:e.message||String(e), restored:!wrote };
+        if(!wrote) return out;
+        // A test number is sitting in their workbook. Getting it out matters more than the result.
+        return writeCell(token, driveId, itemId, officeName, 'dys', monthIndex, blank(orig)?'':orig)
+          .then(function(){ out.restored=true; return out; })
+          .catch(function(){
+            out.restored=false;
+            out.manualFix={ sheet:atDone&&atDone.sheet, cell:atDone&&atDone.address, value:show(orig) };
+            return out;
+          });
+      })
+      .then(function(out){
+        return closeSession(token, driveId, itemId).catch(function(){}).then(function(){ return out; });
+      });
+  }
+
+  global.PH_WB = { load:load, office:office, TABS:TABS, MEDICAID:MEDICAID, BASE:BASE, isBase:isBase, addOffices:addOffices, demo:demo, sandbox:sandbox,
+                   writeCell:writeCell, readCell:readCell, resolve:resolve, roundTrip:roundTrip,
+                   openSession:openSession,
+                   closeSession:closeSession, WRITE_ROWS:WRITE_ROWS, writeRows:writeRows, row:row, colLetters:colLetters };
+})(typeof globalThis!=='undefined' ? globalThis : window);
+
+/* Also usable from Node, so the SERVER parses the workbook with this exact code rather
+   than a second copy of it. The parsing was verified to the dollar against Morgan's
+   figures once; two implementations would drift, and a drifting parser is what caused
+   the wrong-row bug in the first place. */
+if (typeof module !== 'undefined' && module.exports) module.exports = globalThis.PH_WB;

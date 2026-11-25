@@ -1,0 +1,4204 @@
+/* Home-Brace V1 — the signed-in person: avatar, My Profile, and what they're allowed to do.
+   ONE source of truth for personas + permissions. Every page includes this.
+   Levels: none < view < add < edit < manage   (see Admin → Teams & Access) */
+(function(){
+  const RANK={none:0,view:1,add:2,edit:3,manage:4};
+
+  // Sample people for the demo. Real names/emails/photos come from Microsoft 365 at go-live;
+  // teams & locations are placeholders until the practice sends their real groupings.
+  // Made-up people in the practice's real roles (the repo is public; the real roster is in SharePoint).
+  // Note many staff hold DUAL roles — that's why `role` can be a combination.
+  const PEOPLE=[
+    {id:'admin', first:'Priya', last:'Tatum', role:'COO', title:'COO (Admin)',
+     teams:['Admin','Executive Team'], loc:'All offices', region:'All', brand:'Group',
+     mail:'priya@brightline.example',
+     phone:'(575) 555-1002', emp:'E-1002', status:'Active', color:'#25456e', offices:'all',
+     about:'COO. I look after the group and I\u2019m the administrator for this hub.',
+     can:{dashboard:'view',production:'manage',schedule:'edit',marketing:'edit',documents:'manage',team:'view',admin:'manage',tc:'manage'}},
+    {id:'om', first:'Gabriela', last:'Garrison', role:'OM / Clinic Lead', title:'Office Manager \u00b7 Cedar Grove',
+     teams:['Office Managers','Clinic Managers'], loc:'Cedar Grove', region:'NM', brand:'BFO',
+     mail:'gabriela@brightline.example',
+     phone:'(575) 555-1010', emp:'E-1010', status:'Active', color:'#149B96', offices:['Cedar Grove'],
+     about:'Office manager and clinic lead at Cedar Grove.',
+     can:{dashboard:'view',production:'edit',schedule:'edit',marketing:'view',documents:'edit',team:'view',admin:'none',tc:'view'}},
+    {id:'doctor', first:'Clara', last:'Coleman', role:'Associate Doctor', title:'Associate Doctor \u00b7 rotates', dr:true,
+     teams:['Doctors'], loc:'Rotates', region:'NM', brand:'BFO',
+     phone:'(575) 555-1020', emp:'E-1020', status:'Active', color:'#6b3fd0', offices:['Cedar Grove','Lakeview'],
+     about:'Associate doctor. I rotate between offices.',
+     can:{dashboard:'view',production:'none',schedule:'view',marketing:'none',documents:'view',team:'view',admin:'none',tc:'none'}},
+    {id:'tc', first:'Quinn', last:'Quill', role:'TC', title:'Treatment Coordinator \u00b7 Lakeview',
+     teams:['TCs'], loc:'Lakeview', region:'NM', brand:'BFO',
+     mail:'quinn@brightline.example',
+     phone:'(575) 555-1030', emp:'E-1030', status:'Active', color:'#946011', offices:['Lakeview'],
+     about:'Treatment coordinator at Lakeview.',
+     can:{dashboard:'none',production:'none',schedule:'view',marketing:'none',documents:'add',team:'view',admin:'none',tc:'edit'}},
+    {id:'staff', first:'Camila', last:'Calder', role:'Clinical Assistant', title:'Clinical Assistant \u00b7 Cedar Grove',
+     teams:['Staff'], loc:'Cedar Grove', region:'NM', brand:'BFO',
+     phone:'(575) 555-1055', emp:'E-1055', status:'Active', color:'#b03a63', offices:['Cedar Grove'],
+     about:'Clinical assistant at Cedar Grove.',
+     can:{dashboard:'none',production:'none',schedule:'view',marketing:'none',documents:'view',team:'view',admin:'none',tc:'none'}}
+  ];
+  const COLORS=['#25456e','#149B96','#6b3fd0','#946011','#b03a63','#2E7D52','#1f6f9e','#b0442f'];
+
+  /* ------------------------------------------------------------------
+     COLOUR SCHEMES - each person picks their own, in My profile.
+
+     Jordan, 25/09/2026: "for the user in their profile to change the colors of the practice
+     hub. It needs to be smart. We should provide color schemes." And: "default is what we
+     have already" - Home-Brace is the pages' own colours, untouched; choosing it removes
+     every override.
+
+     What makes it safe to hand to seventy people:
+       - A scheme is TWO colours, the bar and the accent. Every other shade is worked out
+         from them here and its contrast is checked: a shade that would be hard to read is
+         darkened until it is not - 7:1 for white on the bar, 3:1 for white on a button,
+         4.5:1 for accent text on white, 7:1 for text on the tinted panels (WCAG AA/AAA).
+       - Only the hub's own colours move. Office colours on the schedule, initials colours,
+         the logo, and the red/amber/green that give figures their meaning are the same for
+         everybody, so "Cedar Grove is pink" reads the same on every screen.
+       - It follows the person: saved in their own profile row, so a phone and a desktop
+         match; cached on the device and applied before the page draws, so there is no
+         flash of the default first.
+     --------------------------------------------------------------- */
+  /* Jordan, 25/09: "Most of the practice employees are female so if you could have more
+     female contrasts would be great." The softer, warmer schemes come first, after the
+     original; every one passes the same readability rules as picked. */
+  const THEMES=[
+    {k:'homebrace',  n:'Home-Brace',    p:'#0F2A4A', a:'#149B96', note:'The original'},
+    {k:'blush',      n:'Blush',         p:'#5E3445', a:'#D96A8E'},
+    {k:'peony',      n:'Peony',         p:'#5A1A45', a:'#D9448B'},
+    {k:'rose',       n:'Rose',          p:'#5B1F37', a:'#C2456B'},
+    {k:'lavender',   n:'Lavender',      p:'#3D3270', a:'#8A73E0'},
+    {k:'mauve',      n:'Mauve',         p:'#4D3550', a:'#A5679A'},
+    {k:'plum',       n:'Plum',          p:'#3B1E4B', a:'#9B3D7E'},
+    {k:'coral',      n:'Coral',         p:'#5A2B2B', a:'#E0604F'},
+    {k:'rosegold',   n:'Rose Gold',     p:'#4A2C2A', a:'#C27C6B'},
+    {k:'sage',       n:'Sage',          p:'#2E4A3F', a:'#5F917A'},
+    {k:'harbor',     n:'Harbor Blue',   p:'#13315C', a:'#2563EB'},
+    {k:'evergreen',  n:'Evergreen',     p:'#173F2E', a:'#2F855A'},
+    {k:'terracotta', n:'Terracotta',    p:'#4A2419', a:'#C05621'},
+    {k:'graphite',   n:'Graphite',      p:'#22262B', a:'#5B5FD6'},
+    {k:'contrast',   n:'High contrast', p:'#000000', a:'#0A58CA', note:'Easiest to read',
+       extra:{'--ink':'#0B0F14','--soft':'#2F3A48','--line':'#98A2B3','--canvas':'#FFFFFF'}}
+  ];
+  const THEME_KEY='ph_theme';
+  /* Each section's icon has its own colour (Jordan, 20/10, picked "2" of three mock-ups: the emoji
+     "added a bit of life" but looked a bit amateur; plain line icons were too basic). A scheme
+     whose bar is light enough to wash a colour out gets it lightened until it reads (3:1). */
+  const TAB_IC={home:'#2BC0B8', dashboard:'#6CB4F5', production:'#F7A25E', tc:'#B49CFB', schedule:'#F48C7F',
+                marketing:'#F27FC0', documents:'#F5C85C', team:'#6FD39A', chat:'#7FD4F0', payroll:'#B6E36B', monthly:'#F9E26B', tasks:'#F0ABFC', academy:'#8FA2FF', admin:'#AEBBD0'};
+  const THEME_VARS=['--navy','--navy2','--navy-mute','--teal','--teal2','--teal-600','--teal-soft',
+                    '--teal-line','--teal-ink','--teal-wash','--ink','--soft','--line','--canvas'];
+  function hexRgb(h){ h=String(h).replace('#',''); if(h.length===3) h=h.split('').map(c=>c+c).join('');
+    const n=parseInt(h,16); return [n>>16&255, n>>8&255, n&255]; }
+  function rgbHex(c){ return '#'+c.map(v=>Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,'0')).join('').toUpperCase(); }
+  function mixHex(a,b,t){ const x=hexRgb(a), y=hexRgb(b); return rgbHex(x.map((v,i)=>v+(y[i]-v)*t)); }
+  function luminance(h){ const w=[0.2126,0.7152,0.0722];
+    return hexRgb(h).reduce((s,v,i)=>{ v/=255; return s+w[i]*(v<=0.03928 ? v/12.92 : Math.pow((v+0.055)/1.055,2.4)); },0); }
+  function contrast(a,b){ const x=luminance(a), y=luminance(b); return (Math.max(x,y)+0.05)/(Math.min(x,y)+0.05); }
+  /* Move `c` toward black (on a light background) or white (on a dark one) until it reaches
+     `min` contrast against `bg`. This is the "smart" part: nobody can pick an unreadable hub. */
+  function readable(c,bg,min){
+    const toward=luminance(bg)>0.4 ? '#000000' : '#FFFFFF';
+    let t=0, out=rgbHex(hexRgb(c));
+    while(contrast(out,bg)<min && t<1){ t=Math.min(1,t+0.04); out=mixHex(c,toward,t); }
+    return out;
+  }
+  function schemeTokens(th){
+    const W='#FFFFFF', navy=readable(th.p,W,7), teal=readable(th.a,W,3), soft=mixHex(teal,W,0.9);
+    return Object.assign({
+      '--navy':navy,                                          // the header, nav and phone bar
+      '--navy2':mixHex(navy,W,0.16),                          // the strip under the header
+      '--navy-mute':readable(mixHex(navy,W,0.66),navy,4.5),   // quiet text on the bar
+      '--teal':teal,                                          // buttons and highlights
+      '--teal2':mixHex(teal,W,0.28),                          // the lighter accent
+      '--teal-600':readable(teal,W,4.5),                      // accent text and links on white
+      '--teal-soft':soft,                                     // tinted panels
+      '--teal-wash':mixHex(teal,W,0.95),                      // the lightest tint: hovers and highlights
+      '--teal-line':mixHex(teal,W,0.72),                      // their borders
+      '--teal-ink':readable(teal,soft,7)                      // text on the tinted panels
+    }, th.extra||{});
+  }
+  const themeOf=k=>THEMES.find(t=>t.k===k)||THEMES[0];
+  let THEME='homebrace';
+  function applyTheme(k){
+    const th=themeOf(k), root=document.documentElement;
+    THEME=th.k;
+    const st=root && root.style;
+    const tok = th.k==='homebrace' ? null : schemeTokens(th);
+    if(st && st.removeProperty){
+      THEME_VARS.forEach(v=>st.removeProperty(v));
+      if(tok) Object.keys(tok).forEach(v=>st.setProperty(v,tok[v]));
+    }
+    if(root && root.setAttribute) root.setAttribute('data-scheme',th.k);
+    // Home-Brace's own icon colours sit in the stylesheet; another scheme re-fits them to its bar.
+    if(st && st.removeProperty) Object.keys(TAB_IC).forEach(k=>st.removeProperty('--ic-'+k));
+    if(tok && st && st.setProperty) Object.keys(TAB_IC).forEach(k=>st.setProperty('--ic-'+k, readable(TAB_IC[k],tok['--navy2'],3)));
+    // The phone's address bar takes the bar colour too.
+    let m=document.querySelector('meta[name="theme-color"]');
+    if(!m && document.head){ m=document.createElement('meta'); m.name='theme-color'; document.head.appendChild(m); }
+    if(m) m.setAttribute('content', tok ? tok['--navy'] : '#0F2A4A');
+  }
+  try{ applyTheme(localStorage.getItem(THEME_KEY)||'homebrace'); }catch(_){}
+
+  /* MENU LAYOUT (19/10/2026). Jordan: a profile setting for desktop - the tabs across the top
+     as they are today, "or like a more modern app the side bar is on the left". Per person,
+     exactly like the colours: on this device at once (before the page draws, so it never
+     jumps), saved in their own row, and theirs on any computer they sign in on. Computers
+     only (960px and wider); phones keep the bar along the bottom.
+     DEFAULT: THE SIDEBAR (10/11/2026, Jordan: "I want everyone by default to have the sidebar on the left"). Anyone who
+     never chose gets the sidebar; only someone who picked "Tabs across the top" in their profile keeps the tabs (their
+     row says layout:'top' - setLayout is the only thing that writes it there). */
+  const LAYOUT_KEY='ph_layout';
+  const LAYOUTS=[{k:'side', n:'Sidebar on the left', note:'Like most apps - the default'},
+                 {k:'top',  n:'Tabs across the top', note:'The tabs from before'}];
+  let LAYOUT='side';
+  function applyLayout(k){
+    LAYOUT = k==='top' ? 'top' : 'side';
+    const c=document.documentElement && document.documentElement.classList;
+    if(c){ if(LAYOUT==='side') c.add('ph-lay-side'); else c.remove('ph-lay-side'); }
+  }
+  try{ applyLayout(localStorage.getItem(LAYOUT_KEY)); }catch(_){}
+
+  /* ------------------------------------------------------------------
+     WHO IS THIS?
+     Sandbox: the "Viewing as" dropdown, so roles can be demonstrated.
+     Live: the person's own Microsoft profile. Their Entra **Department** decides what
+     they can do and their **Office location** decides whose numbers they see — the two
+     fields IT populates. Nothing here is a security boundary on its own; SharePoint
+     still enforces what a token can actually fetch.
+     ------------------------------------------------------------------ */
+
+  // Department (Entra) -> what they can do. Keys are Morgan's own ten team names, lowercased.
+  const DEPT_CAN={
+    'admin':                      {dashboard:'view',production:'manage',schedule:'edit',marketing:'edit',documents:'manage',team:'view',admin:'manage',tc:'manage',payroll:'manage',meetings:'edit',monthly:'manage',tasks:'manage'},
+    'executive team':             {dashboard:'view',production:'edit',  schedule:'edit',marketing:'edit',documents:'manage',team:'view',admin:'none',tc:'manage',monthly:'view',tasks:'edit'},
+    'leadership team':            {dashboard:'view',production:'edit',  schedule:'edit',marketing:'edit',documents:'manage',team:'view',admin:'none',tc:'manage',monthly:'view',tasks:'edit'},
+    'office managers':            {dashboard:'view',production:'edit',  schedule:'edit',marketing:'view',documents:'edit',  team:'view',admin:'none',tc:'view',meetings:'edit',monthly:'edit',tasks:'edit'},
+    'clinic managers':            {dashboard:'view',production:'view',  schedule:'edit',marketing:'view',documents:'edit',  team:'view',admin:'none',tc:'none',tasks:'edit'},
+    'doctors':                    {dashboard:'view',production:'none',  schedule:'view',marketing:'none',documents:'view',  team:'view',admin:'none',tc:'none',tasks:'edit'},
+    'tcs':                        {dashboard:'none',production:'none',  schedule:'view',marketing:'none',documents:'add',   team:'view',admin:'none',tc:'edit',monthly:'view'},
+    'marketing team':             {dashboard:'none',production:'none',  schedule:'view',marketing:'edit',documents:'edit',  team:'view',admin:'none',tc:'none',tasks:'edit'},
+    'financial coordinator team': {dashboard:'view',production:'edit',  schedule:'view',marketing:'none',documents:'view',  team:'view',admin:'none',tc:'none'},
+    'staff':                      {dashboard:'none',production:'none',  schedule:'view',marketing:'none',documents:'view',  team:'view',admin:'none',tc:'none'}
+  };
+  // Departments that legitimately see every office.
+  const ALL_OFFICE_DEPTS=['admin','executive team','leadership team'];
+
+  /* What Admin > Teams & Access has actually set. That screen is the practice's own
+     control over permissions, so it wins; DEPT_CAN above is only the starting point for
+     a team the matrix doesn't mention. Keys there are team names as typed, so match
+     case-insensitively. */
+  /* PER-PERSON OVERRIDES set in Admin > People.
+     Microsoft creates the account; the HUB decides access. So whatever an administrator
+     sets here beats the Entra Department/Office fields — those are only the starting
+     point for someone nobody has configured yet. */
+  let PEOPLE_OVR=null;
+  function loadPeopleLocal(){
+    try{ PEOPLE_OVR=JSON.parse(localStorage.getItem('ph_people')); }catch(_){ PEOPLE_OVR=null; }
+  }
+  loadPeopleLocal();
+  function reloadPeople(){
+    loadPeopleLocal();
+    // Make sure the roster has landed before anyone asks who this person is.
+    if(!ROSTER_BY_MAIL) return rosterReady.then(function(){ return reloadPeopleRemote(); });
+    return reloadPeopleRemote();
+  }
+  function reloadPeopleRemote(){
+    if(window.PH_STORE && isLive()){
+      return window.PH_STORE.get('ph_people').then(function(r){
+        if(r && typeof r==='object'){
+          PEOPLE_OVR=r;
+          try{ localStorage.setItem('ph_people',JSON.stringify(r)); }catch(_){}
+        }
+        return PEOPLE_OVR;
+      }).catch(function(){ return PEOPLE_OVR; });
+    }
+    return Promise.resolve(PEOPLE_OVR);
+  }
+  /* THE ROSTER as a fallback for permissions, not just for display.
+     Until today, teams and offices came only from an admin override or from the
+     Entra Department/Office fields. A B2B guest has neither, and Evan has not filled
+     those fields in for the in-tenant staff either - so everyone would have landed as
+     Staff with no office until somebody opened Admin and pressed Save on all seventy.
+     `_people.json` (the practice's own list) now fills that gap. Precedence stays:
+     what an admin sets wins, then Entra, then this. Fetched at load because it is a
+     static file needing no token, so it is long since ready by the time a sign-in
+     popup completes. */
+  let ROSTER_BY_MAIL=null, ROSTER_BY_NAME=null, ROSTER_ROWS=null;
+  /* ------------------------------------------------------------------
+     THE ROSTER, AND WHO HAS BEEN ADDED OR REMOVED SINCE.
+
+     _people.json is built from Morgan's workbook and deployed by Jordan. The practice
+     cannot edit a deployed file - but they hire, and people leave, and Admin told them
+     "people come from Microsoft and appear on their own", which was never true. So the
+     changes live in SharePoint, under ph_roster_extra, and are laid over the file:
+
+         { added:   [ {name, role, offices, teams, email, empId, ...}, ... ],
+           removed: [ personKey, ... ] }
+
+     Removing HIDES. It never deletes: the row is still in the file, the key is still in
+     this list, and un-removing is deleting the key. Every reader - Admin, Team, and the
+     permissions in this file - takes rosterRows(), so a person added here can sign in
+     and get their team's rights the same as anyone in the file.
+     ------------------------------------------------------------------ */
+  let ROSTER_FILE=null, ROSTER_EXTRA={added:[],removed:[]};
+  const EXTRA_KEY='ph_roster_extra';
+  /* NEW HIRES (17/11/2026, hc170; ON for the live site hc171 - Jordan: "push ... the new hires").
+     false = the live site goes back to exactly how it was before (the sandbox keeps it either way).
+     Morgan added two new hires to Northpoint in Admin -> People: they sat at the very bottom of the
+     list instead of with Northpoint, and Payroll never knew about them. With this on: (1) someone added here goes in
+     after the last person at their (first) office, so every list that reads the roster shows them with their office;
+     (2) Payroll -> This pay period offers "New on the team list" (payroll.html newOnList). Off = exactly as before.
+     Here, not further down: applyExtra can run while this file is still being read. */
+  const NEWHIRES_LIVE=true;
+  function newHiresOn(){ return NEWHIRES_LIVE || env()!=='live'; }
+  /* Where an added row goes: after the last row whose first office is theirs, else the last row that has their office
+     at all, else the end (as before). Several added at one office keep the order they were added in. */
+  function officeSpot(rows, row){
+    const o=String(((row && row.offices)||[])[0]||'').trim();
+    if(!o) return -1;
+    let at=-1;
+    rows.forEach(function(x, i){ if(String(((x && x.offices)||[])[0]||'').trim()===o) at=i; });
+    if(at<0) rows.forEach(function(x, i){ if(((x && x.offices)||[]).indexOf(o)>=0) at=i; });
+    return at<0 ? -1 : at+1;
+  }
+  function applyExtra(){
+    const base=(ROSTER_FILE||[]).slice(), grouped=newHiresOn();
+    (ROSTER_EXTRA.added||[]).forEach(function(r){
+      if(!(r && r.name)) return;
+      const row=Object.assign({_added:true}, r), at=grouped ? officeSpot(base, row) : -1;
+      if(at<0) base.push(row); else base.splice(at, 0, row);
+    });
+    const gone={};
+    (ROSTER_EXTRA.removed||[]).forEach(function(k){ gone[String(k||'').toLowerCase()]=1; });
+    const rows=base.filter(function(r){ return !gone[personKey(r)]; });
+    ROSTER_ROWS=rows; ROSTER_BY_NAME=null; ROSTER_BY_MAIL={};
+    rows.forEach(function(x){
+      const m=String(x.email||'').toLowerCase().trim();
+      if(m) ROSTER_BY_MAIL[m]=x;
+    });
+    return rows;
+  }
+  /* Everyone currently on the books - the file plus the added, minus the removed. */
+  function rosterRows(){ return (ROSTER_ROWS||[]).slice(); }
+  /* What Admin > People saved for one roster row, found in the same slots admin.html
+     reads (ovrKeysFor): the row's own key, then its email, then its employee id. */
+  function overrideForRow(row){
+    if(!PEOPLE_OVR || !row) return null;
+    const keys=[personKey(row), String(row.email||'').toLowerCase().trim(),
+                row.empId ? 'emp:'+String(row.empId).toLowerCase().trim() : ''];
+    for(let i=0;i<keys.length;i++){ const k=keys[i]; if(k && PEOPLE_OVR[k]) return PEOPLE_OVR[k]; }
+    return null;
+  }
+  /* EVERYONE AS THE DIRECTORY SHOULD SHOW THEM: the roster with what an admin changed
+     in Admin > People laid on top - role, offices, email, teams.
+     Morgan, 30/09: "I updated Sienna's role on her profile to Clinical Asst and it
+     still shows as Clinic Lead" - the Team page and the search read the bare file.
+     For SHOWING people only. rosterRows() stays the bare roster: Admin keys each
+     person's settings off it, and sign-in matches people against it. */
+  function rosterView(){
+    return rosterRows().map(function(r){
+      const o=overrideForRow(r); if(!o) return r;
+      const v=Object.assign({}, r);
+      if(typeof o.role==='string') v.role=o.role;
+      if(Array.isArray(o.locs)) v.offices=o.locs.slice();
+      if(typeof o.email==='string') v.email=o.email;
+      if(Array.isArray(o.teams) && o.teams.length) v.teams=o.teams.slice();
+      return v;
+    });
+  }
+  /* The people hidden by a removal, so it can be undone. */
+  function removedRows(){
+    const gone={};
+    (ROSTER_EXTRA.removed||[]).forEach(function(k){ gone[String(k||'').toLowerCase()]=1; });
+    const base=(ROSTER_FILE||[]).concat((ROSTER_EXTRA.added||[]).map(function(r){ return Object.assign({_added:true}, r); }));
+    return base.filter(function(r){ return gone[personKey(r)]; });
+  }
+  function reloadRosterExtra(){
+    if(!window.PH_STORE || !isLive()) return Promise.resolve(false);
+    return window.PH_STORE.get(EXTRA_KEY).then(function(r){
+      if(r && typeof r==='object'){
+        ROSTER_EXTRA={added:Array.isArray(r.added)?r.added:[], removed:Array.isArray(r.removed)?r.removed:[]};
+        applyExtra(); return true;
+      }
+      return false;
+    }).catch(function(){ return false; });
+  }
+  /* Change the added/removed lists. Goes through update(), so a page that has been
+     open a while lays its one change onto the shared copy rather than over it. */
+  function saveRosterExtra(mutate){
+    if(!window.PH_STORE || !window.PH_STORE.update) return Promise.resolve({local:true});
+    return window.PH_STORE.update(EXTRA_KEY, function(cur){
+      const ex={ added:(cur&&Array.isArray(cur.added))?cur.added.slice():[],
+                 removed:(cur&&Array.isArray(cur.removed))?cur.removed.slice():[] };
+      const next=mutate(ex)||ex;
+      ROSTER_EXTRA=next; applyExtra();
+      return next;
+    }).then(function(r){ identityChanged(); return r; });
+  }
+
+  /* THE ROSTER LIVES IN SHAREPOINT (ph_roster), where only signed-in members can read
+     it. It used to be a public file: anyone with the URL could fetch every name, work
+     email and office without signing in. The file is still deployed for now as the
+     seed and the fallback; the first admin to open the hub after this ships copies it
+     into SharePoint, and once that record exists the file stops being deployed. */
+  const ROSTER_KEY='ph_roster';
+  function rosterFromRows(rows){
+    ROSTER_FILE=rows;
+    // Whatever this browser already knows about additions and removals, until the
+    // shared copy is pulled after sign-in.
+    try{ const ex=JSON.parse(localStorage.getItem(EXTRA_KEY));
+         if(ex && typeof ex==='object') ROSTER_EXTRA={added:ex.added||[], removed:ex.removed||[]}; }catch(_){}
+    applyExtra();
+    return ROSTER_BY_MAIL;
+  }
+  /* ONE-TIME SEED. The first admin to open the hub copies the file into SharePoint so the
+     file can stop being public. Whether that admin is KNOWN yet is a race at sign-in:
+     PH_STORE.ready fires as soon as PH_AUTH exists, while the profile (/me) that says
+     "admin" lands on its own request - so the roster is usually read first and isAdmin()
+     answers false. The rows wait here; identityChanged() asks again each time the answer
+     to who-is-this changes, and the write happens once. */
+  let SEED_ROWS=null;
+  function seedRoster(){
+    if(!SEED_ROWS || !window.PH_STORE || !isLive() || !isAdmin()) return false;
+    const rows=SEED_ROWS; SEED_ROWS=null;
+    window.PH_STORE.set(ROSTER_KEY, rows, {force:true});
+    return true;
+  }
+  const rosterReady=new Promise(function(resolve){
+    const fromFile=()=>(typeof fetch==='function')
+      ? fetch('_people.json').then(r=>r.ok?r.json():null).then(j=>(j&&Array.isArray(j.people))?j.people:null).catch(()=>null)
+      : Promise.resolve(null);
+    const fromStore=()=>(window.PH_STORE && isLive())
+      ? window.PH_STORE.get(ROSTER_KEY).catch(()=>null)      // waits for sign-in on a live site
+      : Promise.resolve(null);
+    const run=function(){
+      fromStore().then(function(rows){
+        if(Array.isArray(rows) && rows.length) return rosterFromRows(rows);
+        /* An UNREAD staff list is not a missing one (21/11/2026, code review): the file is shown, but never copied over it. */
+        const unread=!!(window.PH_STORE && isLive() && window.PH_STORE.readFailed && window.PH_STORE.readFailed(ROSTER_KEY));
+        return fromFile().then(function(fileRows){
+          if(!fileRows) return null;
+          const out=rosterFromRows(fileRows);
+          if(!unread && fileRows.length){ SEED_ROWS=fileRows; seedRoster(); }     // now if the admin is already known, else when identity lands
+          return out;
+        });
+      }).then(resolve, function(){ resolve(null); });
+    };
+    /* Never run inside this file's own evaluation: isLive(), isAdmin() and PH_STORE are
+       all declared later (store.js loads after this file). Wait for the document, or
+       at least for the current script to finish - a deferred load must not break it. */
+    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', run); else setTimeout(run, 0);
+  });
+  function rosterFor(mail){
+    if(!ROSTER_BY_MAIL || !mail) return null;
+    return ROSTER_BY_MAIL[String(mail).toLowerCase().trim()] || null;
+  }
+  /* By name, for the thirty-eight staff the roster holds no email for. Their Microsoft
+     address is real but the roster does not record it, so the display name is the only
+     link back to their row. Names are unique across the seventy; a miss returns null
+     and the caller falls back to the default, so a mismatch costs nothing. */
+  /* "Dr." is a title, not part of the name (11/11/2026): the roster says "Dr. Maya Chen", Microsoft may just
+     say "Maya Chen". No two people on the roster differ only by the title, so dropping it is safe. */
+  function rosterName(n){
+    return String(n||'').replace(/"[^"]*"|\([^)]*\)/g,'')
+      .trim().toLowerCase().replace(/\s+/g,' ').replace(/^dr\.?\s+/,'');
+  }
+  /* AN EMAIL AN ADMIN TYPED IN (11/11/2026). Admin > People lets Morgan fill in a missing address - Dr. Chen's
+     roster row has none - but sign-in only ever looked at the roster's own email, so typing it
+     in changed what the Team page showed and not who he was when he signed in. Now it counts too. The roster's own
+     address still wins (rosterFor runs first), so this can only find people the roster couldn't. */
+  function rosterByAdminMail(mail){
+    const m=String(mail||'').toLowerCase().trim();
+    if(!m || !PEOPLE_OVR || !ROSTER_ROWS) return null;
+    for(let i=0;i<ROSTER_ROWS.length;i++){
+      const o=overrideForRow(ROSTER_ROWS[i]);
+      if(o && typeof o.email==='string' && o.email.toLowerCase().trim()===m) return ROSTER_ROWS[i];
+    }
+    return null;
+  }
+  /* WHICH ROSTER ROW IS THE PERSON SIGNING IN: their roster email, then an email an admin typed, then their name. */
+  function rosterMe(mail, name){
+    return (mail && rosterFor(mail)) || (mail && rosterByAdminMail(mail)) || (name && rosterByName(name)) || null;
+  }
+  /* A ROLE'S NAME, NOT A PERSON'S (12/11/2026). Jordan, of the dashboard's "Northpoint Treatment Coordinator last saved ...":
+     "Why isn't there a name?" Some practice mailboxes carry the ROLE as their Microsoft name - Northpoint, Westfield and
+     Cedar Grove Treatment Coordinator, likely on purpose (it's what patients see) - though each is one person's own
+     address on the staff list. So when the staff list has THIS address (its own email, or one an admin typed) and
+     Microsoft's name shares no word with the staff list's, the staff list's name is the one shown and saved: "Lorraine
+     Sutton last saved". A Microsoft name that shares a word ("Hollie Haynes" / Allison "Hollie" Garrity) is left as it
+     is - it's theirs, maybe newer than the list. A nickname in quotes or brackets is the first name ("Hollie Garrity");
+     a leading "Dr." is left off so it never becomes the first name. Only the NAME changes - who they are,
+     their teams and offices are worked out exactly as before. '' = keep Microsoft's name.
+     A CLINIC login keeps its own name (Jordan checked the live list 12/11 - "Westfield Clinic", "CL Clinic", "SA clinic"
+     each sit on one person's staff-list row, but a clinic login is likely shared at the front desk, and one person's
+     name on everyone's saves would be wrong). */
+  function staffName(mail, msName){
+    const m=String(mail||'').toLowerCase().trim(); if(!m) return '';
+    if(/\bclinic\b/i.test(String(msName||''))) return '';
+    const row=rosterFor(m) || rosterByAdminMail(m); if(!row || !row.name) return '';
+    const raw=String(row.name), nick=((raw.match(/"([^"]*)"/)||raw.match(/\(([^)]*)\)/)||[])[1]||'').trim();
+    const clean=raw.replace(/"[^"]*"|\([^)]*\)/g,' ').replace(/^\s*dr\.?\s+/i,'').replace(/\s+/g,' ').trim();
+    const words=x=>String(x||'').toLowerCase().replace(/[^a-z\s]/g,' ').split(/\s+/).filter(w=>w.length>1);
+    const theirs=words(clean+' '+nick); if(!theirs.length) return '';
+    if(words(String(msName||'').replace(/^\s*dr\.?\s+/i,'')).some(w=>theirs.indexOf(w)>=0)) return '';
+    const bits=clean.split(' '); if(nick && bits.length>1) bits[0]=nick;
+    return bits.join(' ');
+  }
+  function rosterByName(name){
+    if(!ROSTER_BY_MAIL && !ROSTER_ROWS) return null;
+    const want=rosterName(name); if(!want) return null;
+    if(!ROSTER_BY_NAME){
+      ROSTER_BY_NAME={};
+      Object.keys(ROSTER_BY_MAIL||{}).forEach(function(k){
+        const r=ROSTER_BY_MAIL[k]; const n=rosterName(r && r.name);
+        if(n) ROSTER_BY_NAME[n]=r;
+      });
+      (ROSTER_ROWS||[]).forEach(function(r){
+        const n=rosterName(r && r.name); if(n) ROSTER_BY_NAME[n]=r;
+      });
+    }
+    return ROSTER_BY_NAME[want] || null;
+  }
+
+  /* GUESTS FROM ANOTHER TENANT.
+     A B2B guest signs in as name_riverbend.example#EXT#@<host>.onmicrosoft.com.
+     Graph usually also returns their real address in `mail`, but not always - and
+     when it doesn't, nothing in the roster or the admin overrides matches, so the
+     person lands as Staff with no access and the invite looks broken. Turn that UPN
+     back into the address it was made from. */
+  function realAddress(v){
+    const raw=String(v||'').toLowerCase().trim();
+    const i=raw.indexOf('#ext#');
+    if(i<0) return raw;
+    const left=raw.slice(0,i);
+    const u=left.lastIndexOf('_');
+    return u<0 ? left : left.slice(0,u)+'@'+left.slice(u+1);
+  }
+  function signedInAddress(){
+    if(!PROFILE) return '';
+    // Prefer the real mailbox; fall back to un-mangling the guest UPN.
+    return String(PROFILE.mail||'').toLowerCase().trim() || realAddress(PROFILE.userPrincipalName);
+  }
+
+  /* ------------------------------------------------------------------
+     WHICH SLOT DO THIS PERSON'S ADMIN SETTINGS LIVE IN?
+
+     One definition, used by Admin when it writes and by this file when it reads.
+     They had two, and both were wrong.
+
+     admin.html built the slot as `email || 'emp:' + employeeId`. Thirty-eight of the
+     seventy staff have no email on file, and four have no employee id either - so
+     those collapsed to the literal string "emp:" and SHARED ONE SLOT. Morgan set a
+     location, it wrote to "emp:"; she set the next person, it overwrote the same
+     slot; and on load that one office was stamped onto all of them, over the correct
+     roster. The ph_people history showed it changing hands every few seconds:
+     Westfield, Northpoint, Westfield, All offices, Cedar Grove.
+
+     Email first, because that is how the twenty-one slots already saved are keyed and
+     none of them may be orphaned. Then the employee id. Then the name, which every
+     person has - so there is no way left to land in a shared bucket.
+     ------------------------------------------------------------------ */
+  function personKey(row){
+    if(!row) return '';
+    const mail=String(row.email||row.mail||'').trim().toLowerCase();
+    if(mail) return mail;
+    const emp=String(row.empId||row.emp||'').trim().toLowerCase();
+    if(emp) return 'emp:'+emp;
+    const nm=String(row.name || ((row.f||'')+' '+(row.l||''))).trim()
+      .toLowerCase().replace(/\s+/g,' ');
+    return nm ? 'name:'+nm : '';
+  }
+
+  /* Settings an admin saved for this person, whichever slot they are in.
+
+     This used to look up by email and nothing else. For the thirty-eight staff whose
+     roster row has no email, their slot is NOT their address - so an admin could set
+     their team and their offices in Admin and it would never reach what they actually
+     saw. The Admin screen was decorative for more than half the practice.
+
+     A signed-in address that the roster does not list is matched on display name,
+     which is the only link there is. A name that does not match finds nothing and the
+     person falls back to their roster teams and offices - the correct default - so
+     this fails closed. */
+  function overrideFor(mail, name){
+    if(!PEOPLE_OVR) return null;
+    const m=String(mail||'').toLowerCase().trim();
+    if(m && PEOPLE_OVR[m]) return PEOPLE_OVR[m];
+    const row=rosterMe(m, name);
+    if(row){
+      const k=personKey(row);
+      if(k && PEOPLE_OVR[k]) return PEOPLE_OVR[k];
+    }
+    return null;
+  }
+
+  let ACCESS=null;
+  function loadAccessLocal(){
+    try{ ACCESS=JSON.parse(localStorage.getItem('ph_access')); }catch(_){ ACCESS=null; }
+  }
+  loadAccessLocal();
+  function reloadAccess(){
+    loadAccessLocal();
+    if(window.PH_STORE && isLive()){
+      return window.PH_STORE.get('ph_access').then(function(r){
+        if(r && typeof r==='object'){
+          ACCESS=r;
+          try{ localStorage.setItem('ph_access',JSON.stringify(r)); }catch(_){}
+        }
+        return ACCESS;
+      }).catch(function(){ return ACCESS; });
+    }
+    return Promise.resolve(ACCESS);
+  }
+  /* SENSITIVE MATERIAL (20/10/2026) - doctor-sensitive and company-sensitive information,
+     in its own locked folder in Documents. Who may open it is ONE list, ph_sensitive, kept in
+     Admin: every admin automatically, plus teams and people an admin adds - each addition
+     confirmed twice (Jordan: "double confirmation ... when adding a team or a specific user").
+       { teams:{'Leadership Team':'view'|'edit'}, people:{email:{level, name}}, locked, log:[...] }
+     Not in the Teams & Access grid, so there is no second way to give it. */
+  const SENS_KEY='ph_sensitive';
+  let SENS=null;
+  function sensRecord(){
+    if(SENS) return SENS;
+    try{ SENS=JSON.parse(localStorage.getItem(SENS_KEY))||null; }catch(_){ SENS=null; }
+    return SENS||{};
+  }
+  function reloadSensitive(){
+    if(window.PH_STORE && (!isLive() || window.PH_AUTH)){             // the store reads both: SharePoint, or this browser
+      return window.PH_STORE.get(SENS_KEY).then(function(r){
+        SENS=(r && typeof r==='object' && !Array.isArray(r)) ? r : {};
+        try{ localStorage.setItem(SENS_KEY, JSON.stringify(SENS)); }catch(_){}
+        return SENS;
+      }, function(){ return sensRecord(); });
+    }
+    SENS=null; return Promise.resolve(sensRecord());
+  }
+  /* 'manage' (every admin), 'edit', 'view', or '' - the best of what this person's teams and
+     their own name on the list give them. */
+  function sensLevelFor(p, rec){
+    p=p||me(); rec=rec||sensRecord()||{};
+    if(isAdmin(p)) return 'manage';
+    const R={view:1, edit:2}; let best='';
+    const mine=(p.teams||[]).map(function(t){ return String(t).trim().toLowerCase(); });
+    Object.keys(rec.teams||{}).forEach(function(t){
+      const l=rec.teams[t]; if(mine.indexOf(String(t).trim().toLowerCase())>=0 && (R[l]||0)>(R[best]||0)) best=l;
+    });
+    const em=String(p.mail||'').trim().toLowerCase(), pr=em && rec.people ? rec.people[em] : null;
+    const pl=pr ? (typeof pr==='string' ? pr : pr.level) : '';
+    if((R[pl]||0)>(R[best]||0)) best=pl;
+    return best;
+  }
+  function sensitiveLevel(){ return sensLevelFor(me()); }
+  // The second confirmation: the name typed back - same words, any capitals or spacing.
+  function sensConfirmOk(typed, expected){
+    const n=function(v){ return String(v==null?'':v).toLowerCase().replace(/\s+/g,' ').trim(); };
+    return !!n(expected) && n(typed)===n(expected);
+  }
+
+  function accessForTeam(dept){
+    if(!ACCESS) return null;
+    const key=Object.keys(ACCESS).find(k=>k.toLowerCase()===dept);
+    return key?ACCESS[key]:null;
+  }
+
+  /* BOOTSTRAP ADMINS.
+     Access normally comes from the Entra Department field. But until someone sets those
+     fields nobody is an admin — and Admin is where you'd fix it. That deadlock would leave
+     the hub unadministrable on day one. These accounts are treated as Admin regardless, by
+     email. Keep the list tiny and remove people once their Entra profile is set properly.
+     This grants nothing in SharePoint — only what the interface offers. */
+  const BOOTSTRAP_ADMINS=[
+    'consult@brightline.example'
+  ];
+
+  // Set by gate.js once Graph /me comes back.
+  let PROFILE=null;
+  function setProfile(p){
+    PROFILE=p;
+    /* THE MENU STAYS PUT (NAVSNAP): kept for whoever was signed in on this tab. Someone else has signed in - forget it
+       at once and draw the menu from what is known of them (never another person's apps or name). */
+    try{
+      const em=String((p && (p.mail||p.userPrincipalName))||'').toLowerCase();
+      if(NAVSNAP && NAVSNAP.who!==em){ NAVSNAP=null; try{ sessionStorage.removeItem(NAVSNAP_KEY); }catch(_){} nav(NAV_ACTIVE); unsnapBar(); }
+    }catch(_){}
+  }
+
+  /* Turn one or more team names into a permission set. Used by BOTH real sign-in and
+     View as — they diverged once, and an admin impersonating another admin got locked
+     out of Admin because "Admin; Leadership Team" was looked up as a single literal. */
+  function canForTeams(depts){
+    let can=null;
+    depts.forEach(d=>{
+      let c=accessForTeam(d) || DEPT_CAN[d]; if(!c) return;
+      /* MEETINGS (18/11/2026) is newer than the saved Teams & Access grid: until an admin sets that column for a team,
+         the team's starting value counts (Office Managers + Admin can make meetings - Jordan: "I believe its office managers"). */
+      if(c.meetings===undefined && DEPT_CAN[d] && DEPT_CAN[d].meetings) c=Object.assign({}, c, {meetings:DEPT_CAN[d].meetings});
+      /* MONTHLY REPORT (18/11/2026) - the same: newer than the saved grid, so the team's starting value counts until set. */
+      if(c.monthly===undefined && DEPT_CAN[d] && DEPT_CAN[d].monthly) c=Object.assign({}, c, {monthly:DEPT_CAN[d].monthly});
+      /* TASKS (19/11/2026) - the same: who can GIVE tasks starts as Admin, Executive and Leadership until Morgan sets the column. */
+      if(c.tasks===undefined && DEPT_CAN[d] && DEPT_CAN[d].tasks) c=Object.assign({}, c, {tasks:DEPT_CAN[d].tasks});
+      if(!can){ can=Object.assign({},c); return; }
+      Object.keys(c).forEach(k=>{ if(RANK[c[k]]>RANK[can[k]]) can[k]=c[k]; });
+    });
+    return can;
+  }
+  const splitTeams=v=>String(v||'').split(/[;,]/).map(x=>x.trim().toLowerCase()).filter(Boolean);
+
+  function fromProfile(){
+    if(!PROFILE) return null;
+    const mailNow=signedInAddress();
+    const ovr=overrideFor(mailNow, PROFILE && PROFILE.displayName);
+    /* The roster row by email, or by display name when the roster holds no email for
+       them - which is 38 of the 70. Without this, half the practice signed in and got
+       least-access no matter what team the roster gave them, and the Admin settings
+       meant to correct it were looked up the same broken way. */
+    const ros=rosterMe(mailNow, PROFILE && PROFILE.displayName);
+    /* The hub's own setting wins; then Entra, if IT has filled it in; then the
+       practice's own roster, which is what makes a brand-new guest work. */
+    const deptSrc = (ovr && ovr.teams && ovr.teams.length)
+      ? ovr.teams.join(';')
+      : (String(PROFILE.department||'').trim()
+         || ((ros && ros.teams && ros.teams.length) ? ros.teams.join(';') : ''));
+    const depts=splitTeams(deptSrc);
+    // Several departments -> take the most permissive level for each area.
+    let can=canForTeams(depts);
+    const known=depts.some(d=>accessForTeam(d)||DEPT_CAN[d]);
+    if(!can) can=Object.assign({},DEPT_CAN['staff']);   // unrecognised/blank -> least access
+
+    const mail=signedInAddress();
+    const boot=BOOTSTRAP_ADMINS.indexOf(mail)>=0;
+    if(boot) can=Object.assign({},DEPT_CAN['admin']);
+
+    /* A per-person override set in Admin beats the team grid, for the cases teams
+       can't express. Applied after the bootstrap admin so it can't lock the hub's
+       own administrator out of Admin. */
+    if(ovr && ovr.access){
+      can=Object.assign({},can);
+      Object.keys(ovr.access).forEach(function(k){
+        if(boot && k==='admin') return;
+        can[k]=ovr.access[k];
+      });
+    }
+
+    const ovrLocs = (ovr && ovr.locs && ovr.locs.length) ? ovr.locs
+                  : null;
+    // Same order for offices: admin, then Entra, then the roster.
+    const rosLocs = (!ovrLocs && !String(PROFILE.officeLocation||'').trim()
+                     && ros && ros.offices && ros.offices.length) ? ros.offices : null;
+    const loc = ovrLocs ? ovrLocs.filter(l=>l!=='All offices').join(', ')
+              : rosLocs ? rosLocs.join(', ')
+              : String(PROFILE.officeLocation||'').trim();
+    const seesAll = boot
+      || (ovrLocs ? ovrLocs.indexOf('All offices')>=0 : false)
+      || depts.some(d=>ALL_OFFICE_DEPTS.indexOf(d)>=0);
+    const offs = seesAll ? 'all'
+      : (ovrLocs ? ovrLocs.slice()
+      : rosLocs ? rosLocs.slice()
+      : (loc?[loc]:[]));
+
+    const full=staffName(mailNow, PROFILE.displayName) || String(PROFILE.displayName||PROFILE.mail||'').trim();   // a role's name -> the person's
+    const bits=full.split(/\s+/);
+    return {
+      id:'me', first:bits[0]||'', last:bits.slice(1).join(' '),
+      role:PROFILE.jobTitle||'', title:PROFILE.jobTitle||'',
+      mail:PROFILE.mail||realAddress(PROFILE.userPrincipalName)||'',
+      teams:depts.length?depts.map(d=>d.replace(/\b\w/g,c=>c.toUpperCase())):['Staff'],
+      loc:loc||'', offices:offs, can:can,
+      // Flags the UI uses to explain a thin-looking account rather than just showing nothing.
+      _needsSetup: !boot && !ovr && (!known || (!seesAll && !loc))
+    };
+  }
+
+  /* VIEW AS — admin only, Salesforce-style. An administrator can look at the hub through
+     someone else's eyes to debug "I can't see X". A banner always says so, and one click
+     returns. Presentation only: SharePoint still answers to the REAL person's token, so
+     this can never grant access the impersonator doesn't already have. */
+  const IMP_KEY='ph_impersonate';
+  function impersonating(){
+    try{ return JSON.parse(localStorage.getItem(IMP_KEY)||'null'); }catch(_){ return null; }
+  }
+  function realMe(){
+    const real=fromProfile();
+    if(real) return real;
+    /* Had its own copy of the fallback, with the same hole. isAdmin() reads realMe(),
+       so before the profile landed isAdmin() answered true for everybody - which also
+       meant an impersonation written into localStorage was honoured, and viewAs() let
+       anyone through. */
+    return withoutProfile();
+  }
+  function isAdmin(p){ p=p||realMe(); return RANK[(p.can||{}).admin||'none']>=RANK['manage']; }
+  function viewAs(person){
+    if(!isAdmin()) return false;                       // only an admin may do this
+    try{ localStorage.setItem(IMP_KEY, JSON.stringify(person)); }catch(_){}
+    location.reload(); return true;
+  }
+  function stopViewAs(){
+    try{ localStorage.removeItem(IMP_KEY); }catch(_){}
+    location.reload();
+  }
+  /* Turn a roster row into someone the app can render as. */
+  function personFromStaff(row){
+    const depts=splitTeams(row.team);
+    const bits=String(row.n||'').trim().split(/\s+/);
+    const locs=String(row.loc||'').split(',').map(x=>x.trim()).filter(Boolean);
+    const seesAll = locs.indexOf('All offices')>=0 ||
+                    depts.some(d=>ALL_OFFICE_DEPTS.indexOf(d)>=0);
+    return { id:'imp', first:bits[0]||'', last:bits.slice(1).join(' '),
+             role:row.role||'', title:row.role||'', mail:row.mail||'',
+             teams:depts.length?depts.map(d=>d.replace(/\b\w/g,c=>c.toUpperCase())):['Staff'],
+             loc:row.loc||'',
+             offices: seesAll ? 'all' : locs,
+             can: canForTeams(depts) || Object.assign({},DEPT_CAN['staff']) };
+  }
+
+  /* SANDBOX ONLY. The demo persona picker defaults to 'admin', which is Morgan with
+     manage rights on everything. That default must never be reachable in production -
+     see nobody() directly below. */
+  function id(){ let v='admin'; try{ v=localStorage.getItem('ph_viewas')||'admin'; }catch(_){}
+    return PEOPLE.some(p=>p.id===v)?v:'admin'; }
+
+  /* ------------------------------------------------------------------
+     WHO WE ARE WHEN WE DO NOT YET KNOW.
+
+     Found 2026-09-17, from a screenshot of an external guest's screen -
+     looking at the full navigation including Admin.
+
+     Every page calls PH.nav() the moment it parses. gate.js does not set PROFILE
+     until Microsoft Graph answers /me, which is a network round trip later. So for
+     the first stretch of every page load there is no profile, and me() used to answer
+     that by falling through to the SANDBOX persona - 'admin', Morgan, COO, manage on
+     everything, offices 'all'. nav() built the menu from that and guard() waved the
+     page through, and neither was ever recomputed.
+
+     The gate's own comment said it would "proceed with least access rather than
+     locking anyone out". It did the exact opposite: it proceeded with the most access
+     there is. Two ways that showed up:
+       - the window on every page load, before /me answers;
+       - permanently, for anyone whose /me call fails - gate.js catches that and
+         carries on, so a guest with a restricted directory read got admin for good.
+
+     Not knowing who someone is now means no access, and it says so. */
+  function nobody(){
+    const none={}; Object.keys(DEPT_CAN['staff']||{}).forEach(k=>{ none[k]='none'; });
+    none.admin='none';
+    return { id:'unknown', first:'', last:'', role:'', title:'',
+             mail:'', teams:[], loc:'', offices:[], can:none, _unknown:true };
+  }
+  /* The one place the "no profile" answer is decided, so me() and realMe() cannot
+     drift apart - they already had two copies of this and both were wrong. */
+  function withoutProfile(){
+    if(isLive()) return nobody();
+    const base=PEOPLE.find(p=>p.id===id());
+    let mine={}; try{ mine=JSON.parse(localStorage.getItem('ph_me_'+base.id))||{}; }catch(_){}
+    return Object.assign({},base,mine);
+  }
+  function me(){
+    const imp=impersonating();
+    if(imp && isAdmin(realMe())) return imp;    // admin looking through someone else's eyes
+    const real=fromProfile();
+    if(real){
+      let mine={}; try{ mine=JSON.parse(localStorage.getItem(profileKey()))||{}; }catch(_){}
+      return Object.assign(real, mine);         // live: the signed-in person + their own edits
+    }
+    return withoutProfile();                    // live: nobody. sandbox: the chosen persona.
+  }
+  /* Profile edits (photo, preferred name, phone, About me) belong to the PERSON, so in
+     production they're keyed by their email — not by a demo persona id, which would have
+     made everyone share one profile. They also go to SharePoint so they follow the person
+     between devices. */
+  function profileKey(){
+    if(PROFILE){
+      const mail=signedInAddress();
+      if(mail) return 'ph_me_'+mail;
+    }
+    return 'ph_me_'+id();
+  }
+  function saveMine(patch){
+    const k=profileKey(); let cur={}; try{ cur=JSON.parse(localStorage.getItem(k))||{}; }catch(_){}
+    const merged=Object.assign(cur,patch);
+    /* Through the store, not straight to localStorage: writing it locally first would
+       make the store see the old and new copies as identical, so it would keep no
+       backup and weigh the wrong thing. */
+    if(window.PH_STORE) window.PH_STORE.set(k, merged);
+    else try{ localStorage.setItem(k,JSON.stringify(merged)); }catch(_){}
+  }
+  const name=p=>((p.dr?'Dr. ':'')+(p.preferred||p.first)+' '+p.last);
+  const initialsOf=p=>((p.preferred||p.first)[0]+p.last[0]).toUpperCase();
+  const initials=p=>((p.preferred||p.first)[0]+(p.last[0]||'')).toUpperCase();
+  const email=p=>p.mail||((p.first[0]+p.last).toLowerCase().replace(/[^a-z]/g,'')+'@brightline.example');
+  function can(section){ const c=me().can||{}; return c[section]||'none'; }
+
+  /* THE SIGNED-IN PERSON, IN THE SHAPE HOME AND DOCUMENTS RENDER FROM.
+
+     Those two pages were written for the sandbox's persona objects ({sec, doc, scope})
+     and in production kept rendering PERSONAS[0] - the demo Administrator. Every
+     signed-in person saw the Administrator's tiles and folders, clicked one, and the
+     real page correctly refused them. Jules, 18/09: "Documents, then a message that
+     she doesn't have access." Both pages now render THIS.
+
+     Tool tiles come from can(). Folders come from the per-folder rows of the access
+     grid (hr, officedocs, forms, ...), which every team has once the grid is loaded.
+     Until it is - sandbox, or the read not landed yet - a folder falls back to the
+     person's overall Documents level, so the page and its own guard agree instead of
+     one saying "Documents" and the other saying "0 folders". */
+  const TOOL_KEYS=['dashboard','production','tc','schedule','marketing','team','admin'];
+  const DOC_KEYS=['hr','officedocs','forms','vendors','filing','eom'];
+  function asPersona(){
+    const m=me(), c=m.can||{};
+    const sec={}; TOOL_KEYS.forEach(k=>{ const v=c[k]||'none'; if(v!=='none') sec[k]=v; });
+    const overall=c.documents||'none';
+    const doc={}; DOC_KEYS.forEach(k=>{
+      const v=(c[k]===undefined)?overall:c[k];
+      if(v && v!=='none') doc[k]=v;
+    });
+    const offs=offices();
+    const scopes=offs==='all'?['all']:(Array.isArray(offs)?offs.slice():[]);
+    return { id:isAdmin()?'admin':'me', name:name(m), sub:m.title||'',
+             scope:offs==='all'?'all':(scopes[0]||'—'), scopes:scopes,
+             state:'', brand:'', teams:(m.teams||[]).slice(), teamName:(m.teams||[])[0]||'',
+             sec:sec, doc:doc, live:true };
+  }
+  function atLeast(section,lvl){ return RANK[can(section)]>=RANK[lvl]; }
+  function offices(){ return me().offices; }
+
+  /* ------------------------------------------------------------------
+     LOCATIONS — one list, shared by every page.
+     Admin owns brand/state/tz. Schedule owns color/lunch/hours. Both write the
+     WHOLE record back so neither wipes the other's fields. Every other page just
+     reads it, so adding an office in either place shows up everywhere at once.
+     ------------------------------------------------------------------ */
+  const WKH={s:480,e:1020};   // 8:00a–5:00p. hours[] is Mon–Fri (5 slots) — no weekends.
+  const DEFAULT_LOCATIONS=[
+    {n:'Cedar Grove',  brand:'BFO', state:'New Mexico', tz:'Mountain Time', color:'Hot Pink',
+     lunch:{s:720,e:780}, hours:[WKH,null,WKH,null,WKH]},
+    {n:'Northpoint',    brand:'BFO', state:'New Mexico', tz:'Mountain Time', color:'Highlighter Orange',
+     lunch:{s:720,e:780}, hours:[WKH,null,WKH,null,WKH]},
+    {n:'Lakeview',     brand:'BFO', state:'New Mexico', tz:'Mountain Time', color:'Lime Green',
+     lunch:{s:720,e:780}, hours:[null,WKH,null,WKH,null]},
+    {n:'Brookside',brand:'BFO', state:'Texas',      tz:'Central Time',  color:'Sky Blue',
+     lunch:{s:780,e:840}, hours:[WKH,null,WKH,null,WKH]},
+    {n:'Westfield',   brand:'BFO', state:'Texas',      tz:'Central Time',  color:'Highlighter Yellow',
+     lunch:null,          hours:[null,WKH,null,WKH,WKH]},
+    {n:'Hillcrest', brand:'MPL', state:'Texas',      tz:'Central Time',  color:'Purple',
+     lunch:{s:720,e:780}, hours:[WKH,null,WKH,null,WKH]},
+    {n:'Meadow Park',brand:'RBO', state:'New Mexico', tz:'Mountain Time', color:'Jade',
+     lunch:{s:720,e:780}, hours:[null,WKH,null,WKH,null]},
+    {n:'Riverbend',brand:'BFO', state:'New Mexico', tz:'Mountain Time', color:'Slate Blue',
+     lunch:null,          hours:[null,null,WKH,null,WKH]}
+  ];
+  // Same order as the Schedule's PALETTE, so an auto-assigned color is always one the
+  // schedule can actually render.
+  const ALL_COLORS=['Teal','Slate Blue','Hot Pink','Purple','Sky Blue','Highlighter Orange',
+                    'Lime Green','Highlighter Yellow','Jade','Red'];
+  // Stored locations from earlier versions hold abbreviations ("NM", "MT"). The practice
+  // asked for full names everywhere, so heal them on read rather than leaving stale data
+  // showing codes forever.
+  const STATE_FULL={AL:'Alabama',AK:'Alaska',AZ:'Arizona',AR:'Arkansas',CA:'California',CO:'Colorado',
+    CT:'Connecticut',DE:'Delaware',DC:'District of Columbia',FL:'Florida',GA:'Georgia',HI:'Hawaii',
+    ID:'Idaho',IL:'Illinois',IN:'Indiana',IA:'Iowa',KS:'Kansas',KY:'Kentucky',LA:'Louisiana',ME:'Maine',
+    MD:'Maryland',MA:'Massachusetts',MI:'Michigan',MN:'Minnesota',MS:'Mississippi',MO:'Missouri',
+    MT:'Montana',NE:'Nebraska',NV:'Nevada',NH:'New Hampshire',NJ:'New Jersey',NM:'New Mexico',
+    NY:'New York',NC:'North Carolina',ND:'North Dakota',OH:'Ohio',OK:'Oklahoma',OR:'Oregon',
+    PA:'Pennsylvania',RI:'Rhode Island',SC:'South Carolina',SD:'South Dakota',TN:'Tennessee',TX:'Texas',
+    UT:'Utah',VT:'Vermont',VA:'Virginia',WA:'Washington',WV:'West Virginia',WI:'Wisconsin',WY:'Wyoming'};
+  const TZ_FULL={ET:'Eastern Time',CT:'Central Time',MT:'Mountain Time',AZ:'Mountain Time (Arizona, no DST)',
+    PT:'Pacific Time',AKT:'Alaska Time',HT:'Hawaii Time',
+    Eastern:'Eastern Time',Central:'Central Time',Mountain:'Mountain Time',Pacific:'Pacific Time'};
+  const fullState=v=>{ v=(v||'').trim(); return STATE_FULL[v.toUpperCase()] || v; };
+  // Light Pink/Light Orange were retired for reading as Hot Pink and Highlighter Orange
+  // when stacked together in a day cell. Anyone holding a retired name keeps a color
+  // that still renders, rather than losing it or drawing blank.
+  const COLOR_RENAME={'Light Pink':'Jade','Light Orange':'Slate Blue','Royal Blue':'Slate Blue'};
+  const fullTZ=v=>{ v=(v||'').trim(); return TZ_FULL[v] || TZ_FULL[v.toUpperCase()] || v; };
+
+  function locations(){
+    let st=null; try{ st=JSON.parse(localStorage.getItem('ph_locations')); }catch(_){}
+    /* The default open/closed pattern per office is demo invention — it claims Cedar Grove
+       shuts on Tuesdays and so on. In production every office starts open Mon–Fri with
+       nothing decided, and the practice closes the days they actually close. Stored
+       locations from before this are dropped the same way, by version. */
+    const LOC_VERSION=2;
+    const openAllWeek=()=>[WKH,WKH,WKH,WKH,WKH].map(h=>({s:h.s,e:h.e}));
+    if(isLive()){
+      const stale = !Array.isArray(st) || !st.length || st.some(l=>l.__v!==LOC_VERSION);
+      if(stale){
+        return DEFAULT_LOCATIONS.map(l=>Object.assign(
+          JSON.parse(JSON.stringify(l)), {hours:openAllWeek(), __v:LOC_VERSION}));
+      }
+    }
+    if(!Array.isArray(st)||!st.length) return JSON.parse(JSON.stringify(DEFAULT_LOCATIONS));
+    // An office added from Admin has no color/hours yet; give it usable ones so the
+    // Schedule can draw it straight away instead of rendering blank.
+    const used=st.map(l=>l.color).filter(Boolean);
+    let spare=0;
+    const nextColor=()=>{
+      const free=ALL_COLORS.find(c=>used.indexOf(c)<0);
+      // Track it immediately — otherwise every office added in the same pass gets the
+      // same color, and two offices sharing a color breaks the whole calendar.
+      const pick = free || ALL_COLORS[spare++ % ALL_COLORS.length];
+      used.push(pick);
+      return pick;
+    };
+    return st.map(l=>{
+      const rec=Object.assign({
+        brand:'', state:'', tz:'Mountain Time',
+        lunch: null,
+        hours: [null,null,null,null,null,null]    // closed until someone sets the days
+      }, l, l.color?{}:{color:nextColor()});
+      rec.state=fullState(rec.state); rec.tz=fullTZ(rec.tz);
+      if(COLOR_RENAME[rec.color]) rec.color=COLOR_RENAME[rec.color];
+      return rec;
+    });
+  }
+  /* A stand-in for their SharePoint tree. In production this is the Graph file picker,
+     which returns the file's real driveId/itemId — the hub stores the LINK, never a copy. */
+  const DRIVE={
+    '':{folders:['Home-Brace','Shared Documents','Clinical','Finance'],files:[]},
+    'Home-Brace':{folders:['HR','Operations','Marketing','Office Forms'],files:[]},
+    'Home-Brace/HR':{folders:['New Hire','Policies'],files:[
+      ['Employee Handbook 2026.docx','Modified 2 days ago by Morgan B.'],
+      ['PTO Request Form.xlsx','Modified last week by Ivy R.']]},
+    'Home-Brace/HR/New Hire':{folders:[],files:[
+      ['New-Hire Packet (New Mexico).pdf','Modified yesterday by Morgan B.'],
+      ['New-Hire Packet (Texas).pdf','Modified yesterday by Morgan B.'],
+      ['W-9 Blank.pdf','Modified 3 months ago']]},
+    'Home-Brace/HR/Policies':{folders:[],files:[
+      ['Uniform Policy.docx','Modified last month by Morgan B.'],
+      ['Attendance Policy.docx','Modified last month by Morgan B.']]},
+    'Home-Brace/Operations':{folders:[],files:[
+      ['2026 Production Dashboard.xlsx','Modified today by Ivy R.'],
+      ['Opening & Closing Checklist.docx','Modified 2 weeks ago'],
+      ['Supply Order Form.xlsx','Modified last week']]},
+    'Home-Brace/Marketing':{folders:[],files:[
+      ['Marketing Calendar 2026.xlsx','Modified 3 days ago by Renee B.'],
+      ['Referral Card Artwork.pdf','Modified last month']]},
+    'Home-Brace/Office Forms':{folders:[],files:[
+      ['Maintenance Request.docx','Modified 2 months ago'],
+      ['Incident Report.pdf','Modified 5 months ago']]},
+    'Shared Documents':{folders:[],files:[['Group Org Chart.pptx','Modified last quarter']]},
+    'Clinical':{folders:[],files:[['Sterilization Log.xlsx','Modified today']]},
+    'Finance':{folders:[],files:[['Payroll Tracking Sheet.xlsx','Modified today by Morgan B.']]}
+  };
+  let drivePath='';
+  const esc=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  /* Browse the Microsoft drive and LINK the live file. This is the whole point of the hub —
+     the document keeps living on SharePoint and the hub points at it, so it is never a stale
+     second copy. Uploading from a device is offered too, but it uploads TO the drive first. */
+  function drivePicker(o){
+    if(o.name){
+      return '<div class="picked"><span style="font-size:20px">\ud83d\udcc4</span>'+
+        '<div style="flex:1"><div class="pn">'+esc(o.name)+'</div>'+
+        '<div class="pp">\u2601 '+esc(o.path2||'Microsoft drive')+'</div>'+
+        '<div class="linkpill">\ud83d\udd17 LINKED \u2014 ALWAYS THE LIVE FILE</div></div>'+
+        '<button class="dpbtn" onclick="'+o.ns+'.clearFile()">Change</button></div>';
+    }
+    const node=DRIVE[o.path||'']||{folders:[],files:[]};
+    const parts=(o.path||'')?(o.path||'').split('/'):[];
+    let acc='', crumbs='<button onclick="'+o.ns+'.cd(\'\')">\u2601 Microsoft drive</button>';
+    parts.forEach(p=>{ acc=acc?acc+'/'+p:p; crumbs+='<span>\u203a</span><button onclick="'+o.ns+'.cd(\''+acc.replace(/'/g,"\\'")+'\')">'+p+'</button>'; });
+    const up = (o.path||'') ? '<button class="drow" onclick="'+o.ns+'.cd(\''+parts.slice(0,-1).join('/').replace(/'/g,"\\'")+'\')"><span class="di">\u21a9</span><span class="dn">Back</span></button>' : '';
+    const rows = node.folders.map(f=>{
+      const full=((o.path||'')?(o.path||'')+'/':'')+f;
+      return '<button class="drow" onclick="'+o.ns+'.cd(\''+full.replace(/'/g,"\\'")+'\')"><span class="di">\ud83d\udcc1</span><span class="dn">'+f+'</span><span class="dm">\u203a</span></button>';
+    }).join('') + node.files.map(f=>
+      '<button class="drow" onclick="'+o.ns+'.useFile(\''+f[0].replace(/'/g,"\\'")+'\')"><span class="di">\ud83d\udcc4</span><span class="dn">'+f[0]+'</span><span class="dm">'+f[1]+'</span></button>'
+    ).join('');
+    return '<div class="drivebox">'+
+        '<div class="drive-h">\u2601 Choose a document already on your Microsoft drive</div>'+
+        '<div class="crumb2">'+crumbs+'</div>'+
+        '<div class="drivelist">'+up+(rows||'<div style="padding:14px;color:var(--soft);font-size:13.5px">Nothing in this folder.</div>')+'</div>'+
+      '</div>'+
+      '<div class="orline">or</div>'+
+      '<div class="dfile">\ud83d\udcbb <span style="flex:1">Upload a file from this device</span>'+
+        '<button class="dpbtn" onclick="'+o.ns+'.uploadFile()">Choose file\u2026</button></div>'+
+      '<div class="uploadnote">An upload is saved <b>onto the practice\u2019s Microsoft drive first</b>, then linked here \u2014 so it behaves exactly like the files above. The hub never keeps its own copy.</div>';
+  }
+
+  /* The office list was written to SharePoint and only ever read back from this
+     browser. So a second device saw the defaults, and the moment anything was saved
+     there, the defaults went over the practice's real setup. Same shape of loss as the
+     schedule, different key. locations() is called synchronously all over the app and
+     can't wait for a network round trip, so this pulls the shared copy into this
+     browser and tells the page it changed. */
+  let locsPulled=false;
+  /* The office names this page has known (as loaded, as pulled, as saved) - so an office missing from its list
+     can be told apart: one it knew = deleted or renamed here; one it never knew = added elsewhere since. */
+  const locsSeen=new Set((function(){ try{ const st=JSON.parse(localStorage.getItem('ph_locations')); return Array.isArray(st) ? st.map(l=>l&&l.n).filter(Boolean) : []; }catch(_){ return []; } })());
+  function reloadLocations(){
+    if(locsPulled || !window.PH_STORE || !isLive()) return Promise.resolve(false);
+    locsPulled=true;
+    return window.PH_STORE.get('ph_locations').then(function(r){
+      if(!Array.isArray(r) || !r.length) return false;
+      const before=localStorage.getItem('ph_locations');
+      const after=JSON.stringify(r);
+      r.forEach(l=>{ if(l && l.n) locsSeen.add(l.n); });
+      if(before===after) return false;
+      try{ localStorage.setItem('ph_locations', after); }catch(_){ return false; }
+      try{ document.dispatchEvent(new CustomEvent('ph-locations-changed')); }catch(_){}
+      return true;
+    }).catch(function(){ return false; });
+  }
+
+  /* Saved as a CHANGE to the shared list as it is now (future-proofing check, 22/10/2026). It used to write this
+     page's whole list over the shared one: a Schedule page opened before Roswell was added deleted Roswell for
+     everyone the next time someone on it changed any office. Now an office this page never knew is kept; one
+     it knew and no longer has was deleted or renamed here and goes. And a page that only has the built-in
+     offices (the practice's list couldn't be read) never saves them over the practice's own. */
+  function saveLocations(list){
+    let st=null; try{ st=JSON.parse(localStorage.getItem('ph_locations')); }catch(_){}
+    const onDefaults = isLive() && (!Array.isArray(st) || !st.length || st.some(l=>l.__v!==2));
+    if(isLive()) list.forEach(l=>{ l.__v=2; });   // mark as the practice's own, not demo
+    // Offices are shared practice-wide, so they belong in SharePoint, not one browser.
+    if(!window.PH_STORE) return;
+    if(!window.PH_STORE.update){ window.PH_STORE.set('ph_locations', list); return; }
+    let refused=false;
+    window.PH_STORE.update('ph_locations', function(remote){
+      const theirs = Array.isArray(remote) ? remote.filter(l=>l && l.n) : [];
+      if(onDefaults && theirs.length){ refused=true; return undefined; }
+      const mine = list.slice(), have = new Set(mine.map(l=>l.n));
+      theirs.forEach(function(l){ if(!have.has(l.n) && !locsSeen.has(l.n)) mine.push(l); });   // added elsewhere since this page loaded
+      return mine;
+    }).then(function(r){
+      if(refused){ try{ alert('The practice\u2019s office list couldn\u2019t be loaded on this page, so nothing was saved.\n\nReload the page and try again.'); }catch(_){} return; }
+      list.forEach(l=>locsSeen.add(l.n));
+      const saved = r && Array.isArray(r.value) ? r.value : null;
+      if(saved && JSON.stringify(saved)!==JSON.stringify(list)){
+        try{ localStorage.setItem('ph_locations', JSON.stringify(saved)); }catch(_){}
+        try{ document.dispatchEvent(new CustomEvent('ph-locations-changed')); }catch(_){}
+      }
+    });
+  }
+  const officeNames=()=>locations().map(l=>l.n);
+  /* The teams, as Admin -> Teams & Access has them (the access grid's teams) - for lists like Chat's "New chat", so a
+     team added there shows up everywhere without a code change (Jordan 17/11/2026: "Everything we build needs to be
+     scalable"). Empty until the grid has been read once on this device. */
+  const teamNames=()=>Object.keys((ACCESS && typeof ACCESS==='object' && !Array.isArray(ACCESS)) ? ACCESS : {}).filter(t=>t && t.charAt(0)!=='_');
+
+  function setMe(v){
+    try{ localStorage.setItem('ph_viewas',v); }catch(_){}
+    // If the person we just became can't open this page, don't leave them staring at it.
+    const file=(location.pathname.split('/').pop()||'home.html');
+    const entry=NAV.find(x=>x.href===file);
+    if(entry && !entry.show()){ location.assign('home.html'); return; }
+    location.reload();
+  }
+
+  const css=`
+  /* Microsoft-drive file picker — shared by Documents and Admin so the two can't drift. */
+  .dpbtn{background:#fff;border:1px solid #E4E8EE;border-radius:9px;padding:9px 13px;font-weight:600;
+    font-size:13px;cursor:pointer;font-family:inherit;color:var(--navy,#0F2A4A)}
+  .dpbtn:hover{border-color:var(--teal,#149B96);color:var(--teal-600,#0F827E)}
+  .drivebox{border:1px solid #E4E8EE;border-radius:12px;overflow:hidden}
+  .drive-h{display:flex;align-items:center;gap:8px;background:#eef3fb;color:#1f6f9e;padding:9px 12px;font-size:12.5px;font-weight:700}
+  .crumb2{display:flex;align-items:center;gap:4px;flex-wrap:wrap;font-size:12.5px;color:#56627A;padding:8px 12px;border-bottom:1px solid #E4E8EE;background:#fafbfc}
+  .crumb2 button{border:none;background:none;font-family:inherit;font-size:12.5px;font-weight:700;color:var(--teal-600,#0F827E);cursor:pointer;padding:2px 4px}
+  .drivelist{max-height:230px;overflow:auto}
+  .drow{display:flex;align-items:center;gap:10px;width:100%;border:none;background:none;font-family:inherit;
+    text-align:left;padding:10px 13px;font-size:14px;cursor:pointer;border-bottom:1px solid #E4E8EE;color:var(--ink,#1F2D3D)}
+  .drow:last-child{border-bottom:none}
+  .drow:hover{background:var(--teal-soft,#E5F4F3)}
+  .drow .di{font-size:16px;flex:none}
+  .drow .dn{flex:1;font-weight:500}
+  .drow .dm{font-size:11.5px;color:#56627A}
+  .picked{display:flex;align-items:flex-start;gap:11px;border:1px solid var(--teal-line,#c4e6e3);background:var(--teal-soft,#E5F4F3);border-radius:10px;padding:11px 13px}
+  .picked .pn{font-weight:700;color:var(--navy,#0F2A4A);font-size:14px}
+  .picked .pp{font-size:12px;color:var(--teal-ink,#0c5b57);margin-top:2px}
+  .linkpill{display:inline-block;background:#fff;border:1px solid var(--teal-line,#c4e6e3);color:var(--teal-600,#0F827E);border-radius:999px;padding:2px 9px;font-size:11px;font-weight:800;margin-top:6px}
+  .orline{display:flex;align-items:center;gap:10px;margin:12px 0 0;color:#56627A;font-size:12px}
+  .orline:before,.orline:after{content:'';flex:1;height:1px;background:#E4E8EE}
+  .uploadnote{font-size:12.5px;color:#56627A;margin-top:7px;line-height:1.5}
+  .dfile{display:flex;align-items:center;gap:10px;border:1px dashed #E4E8EE;border-radius:10px;padding:10px 12px;font-size:14px;color:#56627A;margin-top:8px}
+  body.ph-locked .wrap > *:not(.ph-noaccess){display:none!important}
+  /* Identity not known yet: hide the page's content without saying anything about access. */
+  body.ph-pending .wrap > *{visibility:hidden}
+  body.ph-pending .wrap{min-height:40vh;position:relative}
+  body.ph-pending .wrap::after{content:"One moment\u2026";visibility:visible;position:absolute;left:0;right:0;top:64px;
+    text-align:center;color:#8a94a6;font-size:14px}
+  body.ph-locked .ph-fab,body.ph-locked .tourfab,body.ph-locked #tourfab{display:none!important}
+  .ph-noaccess{background:#fff;border:1px solid #E4E8EE;border-radius:16px;padding:40px 28px;text-align:center;
+    max-width:520px;margin:40px auto;box-shadow:0 1px 2px rgba(15,42,74,.06),0 6px 18px rgba(15,42,74,.06)}
+  .ph-noaccess .ic{font-size:34px;line-height:1}
+  .ph-noaccess h2{margin:12px 0 8px;font-size:20px;color:var(--navy,#0F2A4A)}
+  .ph-noaccess p{margin:0 0 20px;font-size:14.5px;color:#56627A;line-height:1.55}
+  .ph-noaccess .btn{display:inline-block;background:var(--teal,#149B96);color:#fff;text-decoration:none;
+    border-radius:10px;padding:11px 18px;font-weight:700;font-size:14px}
+  .ph-noaccess .btn:hover{background:var(--teal-600,#0F827E)}
+  .ph-bw{position:relative;margin-left:auto;display:flex;flex:none;gap:8px;align-items:center}
+  .ph-bell svg{display:block}
+  .ph-bell{display:grid;place-items:center;width:36px;height:36px;
+    border-radius:999px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.18);
+    cursor:pointer;font-size:16px;line-height:1;color:#fff;font-family:inherit;flex:none}
+  .ph-bell:hover{background:rgba(255,255,255,.18)}
+  .ph-bell.on{background:rgba(255,255,255,.26);border-color:rgba(255,255,255,.4)}
+  .ph-nb,.ph-chat{position:relative}
+  a.ph-bell{text-decoration:none}
+  /* Four round buttons with the chat one: on a phone the sandbox's "V1 preview" pill makes way (it is never on the live site). */
+  @media(max-width:560px){ .hdr-in:has(.ph-chat) .v1{display:none} }
+  .ph-bell .dot{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;padding:0 5px;
+    border-radius:999px;background:#D7503A;color:#fff;font-size:11px;font-weight:800;
+    display:grid;place-items:center;border:2px solid var(--navy,#0F2A4A);box-sizing:content-box}
+  .ph-bw + .ph-av{margin-left:10px}
+  .ph-np{position:absolute;top:calc(100% + 10px);right:0;width:min(380px,calc(100vw - 24px));
+    background:#fff;border:1px solid #E4E8EE;border-radius:14px;z-index:8000;overflow:hidden;
+    box-shadow:0 12px 34px rgba(15,42,74,.20);color:var(--navy,#0F2A4A);text-align:left;cursor:default}
+  .ph-np .nph{display:flex;align-items:center;gap:8px;padding:13px 15px;border-bottom:1px solid #EEF1F5}
+  .ph-np .nph b{font-size:14.5px;flex:1}
+  .ph-np .nall{background:none;border:none;color:var(--teal,#149B96);font-weight:700;font-size:12.5px;font-family:inherit;cursor:pointer;padding:4px 2px}
+  .ph-np .nallok{font-size:12.5px;font-weight:700;color:var(--teal-600,#0F827E)}
+  .ph-np .nlist{max-height:min(60vh,420px);overflow:auto}
+  .ph-np .ni{display:flex;gap:10px;align-items:flex-start;padding:12px 15px;border-bottom:1px solid #F3F5F8;
+    background:var(--teal-wash,#F2FBFA)}
+  .ph-np .ni.read{background:#fff}
+  .ph-np .ni .nic{font-size:16px;line-height:1.2;flex:none}
+  .ph-np .ni .ntx{flex:1;min-width:0}
+  .ph-np .ni .ntt{font-size:13.5px;font-weight:700;line-height:1.35}
+  .ph-np .ni.read .ntt{font-weight:600;color:#56627A}
+  .ph-np .ni .nw{font-size:11.5px;color:#7A889B;margin-top:2px}
+  .ph-np .ni .nok{background:#fff;border:1px solid #CBD5E1;border-radius:8px;color:var(--navy,#0F2A4A);
+    font-weight:700;font-size:11.5px;font-family:inherit;padding:5px 9px;cursor:pointer;flex:none;white-space:nowrap}
+  .ph-np .ni .nok:hover{background:var(--teal-wash,#F2FBFA);border-color:var(--teal,#149B96);color:var(--teal-600,#0F827E)}
+  .ph-np .ni .ndone{flex:none;font-size:11.5px;font-weight:700;color:var(--teal-600,#0F827E);background:var(--teal-soft,#E8F6F4);
+    border-radius:8px;padding:5px 9px;white-space:nowrap;align-self:flex-start}
+  .ph-np .nempty{padding:26px 18px;text-align:center;font-size:13.5px;color:#7A889B;line-height:1.55}
+  .ph-np .nshow{display:block;width:100%;background:#FAFBFC;border:none;border-top:1px solid #EEF1F5;color:#56627A;
+    font-size:12.5px;font-weight:600;padding:11px;cursor:pointer;font-family:inherit;flex:none}
+  .ph-np .nshow:hover{color:var(--teal-600,#0F827E)}
+  .ph-np .sph{padding:10px 12px;gap:8px}
+  .ph-np .sin{flex:1;min-width:0;border:1px solid #E4E8EE;border-radius:10px;padding:9px 12px;font-size:14px;
+    font-family:inherit;color:var(--navy,#0F2A4A);background:#F7F9FB;outline:none;-webkit-appearance:none;appearance:none}
+  .ph-np .sin:focus{border-color:var(--teal,#149B96);background:#fff}
+  .ph-np .sx{border:none;background:none;font-size:22px;line-height:1;color:#56627A;cursor:pointer;padding:2px 4px;font-family:inherit;flex:none}
+  .ph-np .slab{font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#7A889B;padding:10px 15px 4px;background:#FAFBFC}
+  .ph-np a.ni{text-decoration:none;color:inherit;cursor:pointer}
+  .ph-np a.ni:hover{background:var(--teal-wash,#F7FBFB)}
+  .ph-np .ni.nrem{background:#FFF8EC;border-left:4px solid #E8A33A;padding-left:11px}
+  .ph-np .ni.nrem.late{background:#FDF0EE;border-left-color:#C2412D}
+  .ph-np .nalert{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;padding:11px 15px;border-top:1px solid #EEF1F5;background:#F7FBFB;font-size:12.5px;color:#46546b;line-height:1.45;flex:none}
+  .ph-np .nalert>span{flex:1;min-width:0}
+  .ph-np .nalert button{background:var(--teal,#149B96);color:#fff;border:none;border-radius:8px;font-weight:700;font-size:12px;font-family:inherit;padding:6px 11px;cursor:pointer;flex:none}
+  .ph-np .nalert.on button{background:#fff;color:#56627A;border:1px solid #CBD5E1}
+  .ph-np .nalert .nalnote{flex-basis:100%;font-size:12px;color:var(--teal-600,#0F827E);font-weight:600}
+  .ph-np .sav{width:30px;height:30px;border-radius:50%;background:var(--teal-soft,#E8F6F4);color:var(--teal-600,#0F827E);font-size:12px;font-weight:800;display:grid;place-items:center;flex:none}
+  .ph-np .sr .nic{display:grid;place-items:center;width:30px;height:30px;flex:none}
+  .ph-np .sr .ti{width:20px;height:20px;display:block;color:var(--navy,#0F2A4A);opacity:.8}
+
+  /* ---- PHONE SHELL. Below 640px the top tab strip goes and a bottom bar takes over,
+          the way a phone app does. Same NAV list, same show() rule, same order - so a
+          person sees exactly the sections they may open, nothing else. Morgan asked
+          for it 18/09; Jordan: keep the icons modest. ---- */
+  .ph-tabbar{display:none}
+  @media(max-width:640px){
+    .v1nav{display:none !important}
+    body{padding-bottom:calc(136px + env(safe-area-inset-bottom,0px)) !important}   /* bar + the tour button */
+    .tour-launch{bottom:calc(84px + env(safe-area-inset-bottom,0px)) !important}
+    /* Above the bar, and the phone's full width - centred with left:50% they shrank to half. */
+    #ph-savefail,#ph-saveok{bottom:calc(84px + env(safe-area-inset-bottom,0px)) !important;
+      left:12px !important;right:12px !important;transform:none !important;width:auto !important;max-width:none !important}
+
+    /* THE GLASS BAR (20/11/2026, Jordan + Slack/Reddit screenshots: "a colored glassy bottom bar and if you scroll down
+       the app it moves to one circle (with the app you are on) ... goes to the left (so you can always click and open it
+       up) but if you scroll up it moves back to the full horizontal bar"). A floating pill of see-through navy (the
+       person's own colour scheme); scrolling down shrinks it to a circle at the bottom left showing this page's icon;
+       scrolling up, reaching the top, or tapping the circle opens it again. barWatch() below does the watching. */
+    .ph-tabbar{display:flex;position:fixed;left:12px;right:12px;bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:7000;
+      background:rgba(15,42,74,.80);background:color-mix(in srgb,var(--navy,#0F2A4A) 78%,transparent);
+      -webkit-backdrop-filter:blur(18px) saturate(170%);backdrop-filter:blur(18px) saturate(170%);
+      border:1px solid rgba(255,255,255,.16);border-radius:28px;padding:5px;overflow:hidden;
+      box-shadow:0 10px 30px rgba(15,42,74,.30),inset 0 1px 0 rgba(255,255,255,.14);
+      transition:right .32s cubic-bezier(.2,.8,.2,1),border-radius .32s,padding .32s}
+    .ph-tabbar a,.ph-tabbar button{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+      gap:3px;padding:7px 2px 6px;color:var(--navy-mute,#B7C6DA);text-decoration:none;font-family:inherit;font-size:10.5px;font-weight:600;line-height:1.15;
+      background:none;border:none;border-radius:22px;cursor:pointer;-webkit-tap-highlight-color:transparent;
+      transition:flex-basis .32s,opacity .2s,padding .32s,background .2s;overflow:hidden;white-space:nowrap}
+    .ph-tabbar .ti{width:22px;height:22px;display:block;opacity:.72;flex:none}
+    .ph-tabbar .tl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+    .ph-tabbar a.active{color:#fff;background:rgba(255,255,255,.16)}
+    .ph-tabbar a.active .ti{opacity:1;stroke-width:2.1}
+    .ph-tabbar .more{color:var(--navy-mute,#B7C6DA)}
+    .ph-tabbar .more.on{color:#fff;background:rgba(255,255,255,.16)}
+    .ph-tabbar .cur{display:none}
+    /* the circle: only this page's icon, at the left */
+    .ph-tabbar{height:62px;transition:right .32s cubic-bezier(.2,.8,.2,1),height .32s,border-radius .32s,padding .32s}
+    .ph-tabbar.mini{right:calc(100% - 12px - 58px);height:58px;border-radius:50%;padding:0}
+    .ph-tabbar.mini > a,.ph-tabbar.mini > .more{flex:0 0 0;opacity:0;padding:0;pointer-events:none}
+    .ph-tabbar.mini .cur{display:flex;flex:1 0 auto;color:#fff;padding:0;border-radius:50%}
+    .ph-tabbar.mini .cur .ti{width:24px;height:24px;opacity:1;stroke-width:2.1}
+    @media (prefers-reduced-motion:reduce){ .ph-tabbar,.ph-tabbar a,.ph-tabbar button{transition:none} }
+    .ph-more{position:fixed;left:0;right:0;bottom:0;z-index:7100;background:#fff;color:var(--navy,#0F2A4A);
+      border-radius:16px 16px 0 0;box-shadow:0 -12px 34px rgba(15,42,74,.28);
+      padding:10px 14px calc(14px + env(safe-area-inset-bottom,0px))}
+    .ph-more .grab{width:38px;height:4px;border-radius:2px;background:#D5DDE8;margin:2px auto 8px}
+    .ph-more .mh{display:flex;align-items:center;justify-content:space-between;padding:0 2px 6px 10px}
+    .ph-more .mh b{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:#7A889B;font-weight:800}
+    .ph-more .mx{border:none;background:#EEF2F7;color:var(--navy,#0F2A4A);width:34px;height:34px;border-radius:50%;font-size:22px;
+      line-height:1;cursor:pointer;font-family:inherit;display:grid;place-items:center}
+    .ph-more .mx:active{background:#DDE5EE}
+    .ph-more a{display:flex;align-items:center;gap:12px;padding:13px 10px;border-radius:12px;
+      text-decoration:none;color:var(--navy,#0F2A4A);font-family:inherit;font-size:15px;font-weight:600}
+    .ph-more a:active{background:#EEF2F7}
+    .ph-more a .ti{width:22px;height:22px;flex:none;opacity:.8}
+    .ph-more a.active{background:var(--teal-soft,#E8F6F4);color:var(--teal-600,#0F827E)}
+    .ph-scrim{position:fixed;inset:0;z-index:7050;background:rgba(15,42,74,.35)}
+    /* ON A PHONE, A DIALOG IS A SHEET, NOT A FLOATING CARD. The profile card and every
+       page's editor were desktop popovers squeezed onto a phone: taller than the screen,
+       scrolled by dragging the page behind them, Save somewhere below the fold or under
+       the bar (Jordan, 19/09: "like you have to scroll down on the side of the app"). Now:
+       the sheet fills the screen, its BODY scrolls, header and buttons stay put. Same for
+       the bell panel. Desktop is untouched - these rules only exist below 640px. */
+    .ph-ov,.ov{padding:0 !important;align-items:stretch !important}
+    .ph-card,.ov > *{max-width:none !important;width:100% !important;margin:0 !important;border-radius:0 !important;
+      height:100%;max-height:100dvh;display:flex;flex-direction:column;box-shadow:none !important}
+    .ph-body,.ov .m-body{flex:1 1 auto;max-height:none !important;overflow:auto;-webkit-overflow-scrolling:touch;min-height:0}
+    .ph-foot,.ov .m-foot,.ov .dm-foot{flex:none;position:sticky;bottom:0;padding-bottom:calc(14px + env(safe-area-inset-bottom,0px)) !important}
+    .ph-top,.ov .m-top{flex:none}
+    .ph-np{position:fixed !important;left:8px;right:8px;top:60px;bottom:calc(82px + env(safe-area-inset-bottom,0px));
+      width:auto !important;display:flex;flex-direction:column;border-radius:14px}
+    .ph-np .nph{flex:none}
+    .ph-np .nlist{flex:1 1 auto;max-height:none !important;overflow:auto;-webkit-overflow-scrolling:touch}
+    /* DIALOG FOOTERS ON A PHONE. Desktop footers put a destructive button left, a helper
+       note in the middle, Cancel and Save right - five things in one row that a 375px
+       screen cannot hold, so Save fell off the edge (Jordan, 19/09, Admin person editor).
+       On a phone: the note goes, buttons share the row, and anything destructive
+       (delete / remove / clear) takes a row of its own. */
+    .ov .m-foot,.ov .dm-foot,.ph-foot{flex-wrap:wrap;gap:8px;padding:10px 12px calc(12px + env(safe-area-inset-bottom,0px)) !important}
+    .ov .m-foot > span,.ov .dm-foot > span,.ph-foot > span:not(.ph-ok){display:none}
+    .ov .m-foot > button,.ov .dm-foot > button,.ph-foot > button{flex:1 1 0;min-width:0;white-space:nowrap;text-align:center;margin:0 !important}
+    .ov .m-foot > button[onclick*="del"],.ov .m-foot > button[onclick*="remove"],.ov .m-foot > button[onclick*="clear"]{flex:1 1 100%;order:1}
+    /* The tour button has no business floating over an open dialog's buttons. */
+    body:has(.ov.open) .tour-launch, body:has(.ph-ov.open) .tour-launch, body:has(.dm.open) .tour-launch{display:none !important}
+    /* While any dialog is open the bar steps aside so the sheet has the whole screen; for
+       browsers without :has(), every overlay stops above the bar instead. */
+    /* .dm = the TC Tracker / Payroll / Chat / Academy forms: their Save buttons were under the bar on a phone (23/11/2026). */
+    body:has(.ov.open) .ph-tabbar, body:has(.ph-ov.open) .ph-tabbar, body:has(#modal.open) .ph-tabbar, body:has(.dm.open) .ph-tabbar{display:none}
+    .ov,.ph-ov{bottom:calc(64px + env(safe-area-inset-bottom,0px)) !important}
+    body:has(.ov.open) .ov, body:has(.ph-ov.open) .ph-ov{bottom:0 !important}
+  }
+  .ph-av{margin-left:auto;display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.18);
+    border-radius:999px;padding:5px 12px 5px 6px;cursor:pointer;font-family:inherit;color:#fff}
+  .ph-av:hover{background:rgba(255,255,255,.18)}
+  .ph-av .cir{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:12px;color:#fff;flex:none}
+  .ph-av .who{text-align:left;line-height:1.15}
+  .ph-av .who b{display:block;font-size:13px;font-weight:700}
+  .ph-av .who small{font-size:10.5px;color:var(--navy-mute,#a8bdd8)}
+  .ph-av .car{font-size:9px;color:var(--navy-mute,#a8bdd8)}
+  @media(max-width:560px){ .ph-av .who{display:none} }
+  .ph-menu{position:fixed;z-index:400;background:#fff;border:1px solid #E4E8EE;border-radius:14px;box-shadow:0 16px 44px rgba(15,42,74,.28);
+    padding:7px;min-width:250px;font-family:inherit}
+  .ph-menu .mh{padding:9px 11px 8px;border-bottom:1px solid #E4E8EE;margin-bottom:6px}
+  .ph-menu .mh b{display:block;color:var(--navy,#0F2A4A);font-size:14px}
+  .ph-menu .mh small{color:#56627A;font-size:11.5px}
+  .ph-menu button{display:flex;align-items:center;gap:9px;width:100%;border:none;background:none;font-family:inherit;text-align:left;
+    padding:9px 11px;border-radius:9px;cursor:pointer;font-size:13.5px;font-weight:600;color:var(--ink,#1F2D3D)}
+  .ph-menu button:hover{background:#F4F6F8}
+  .ph-menu .sec{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#8a94a6;padding:9px 11px 4px}
+  .ph-menu button.cur{background:var(--teal-soft,#E5F4F3);color:var(--teal-600,#0F827E)}
+  .ph-menu button .ck{margin-left:auto;font-weight:800;color:var(--teal-600,#0F827E)}
+  .ph-ov{position:fixed;inset:0;background:rgba(15,42,74,.55);z-index:410;display:none;align-items:flex-start;justify-content:center;padding:22px 14px;overflow:auto}
+  .ph-ov.open{display:flex}
+  .ph-card{background:#fff;width:100%;max-width:620px;border-radius:16px;box-shadow:0 16px 44px rgba(15,42,74,.3);margin:auto;overflow:hidden;font-family:inherit}
+  .ph-themes{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px}
+  .ph-th{display:flex;flex-direction:column;gap:6px;border:1.5px solid #E4E8EE;background:#fff;border-radius:12px;
+    padding:7px 7px 8px;cursor:pointer;text-align:left;font-family:inherit;color:var(--ink,#1F2D3D)}
+  .ph-th:hover{border-color:#CBD5E1}
+  .ph-th.on{border-color:var(--teal-600,#0F827E);box-shadow:0 0 0 3px var(--teal-soft,#E5F4F3)}
+  .ph-thsw{display:flex;align-items:stretch;width:100%;height:28px;border-radius:8px;overflow:hidden;
+    border:1px solid rgba(15,42,74,.08);box-sizing:border-box}
+  .ph-thsw > span{display:block;height:auto;min-width:0}
+  .ph-thsw-p{flex:3 1 0} .ph-thsw-a{flex:2 1 0} .ph-thsw-t{flex:2 1 0}
+  .ph-th{position:relative}
+  .ph-thn{display:block;font-size:12.5px;font-weight:700;line-height:1.2;color:#1F2D3D}
+  /* The tick is a badge on the corner, so a name never has to share its line with it. */
+  .ph-thck{position:absolute;top:3px;right:3px;width:18px;height:18px;border-radius:50%;background:#fff;
+    color:var(--teal-600,#0F827E);font-size:11px;font-weight:800;line-height:18px;text-align:center;
+    box-shadow:0 1px 3px rgba(15,42,74,.25)}
+  .ph-thnote{display:block;font-size:11px;color:#56627A;line-height:1.2;margin-top:-3px}
+  .ph-top{display:flex;align-items:center;gap:13px;padding:17px 20px;border-bottom:1px solid #E4E8EE}
+  .ph-top .big{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;font-size:19px;flex:none}
+  .ph-top h3{margin:0;font-size:19px;color:var(--navy,#0F2A4A)}
+  .ph-top .t{font-size:13px;color:#56627A}
+  .ph-top .x{margin-left:auto;border:none;background:none;font-size:25px;color:#56627A;cursor:pointer;line-height:1}
+  .ph-body{padding:18px 20px;max-height:68vh;overflow:auto}
+  .ph-lab{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#8a94a6;margin:0 0 9px;display:flex;align-items:center;gap:8px}
+  .ph-tag{font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px}
+  .ph-tag.ms{background:#eef3fb;color:#2b5f9e}
+  .ph-tag.adm{background:#FFF6E9;color:#946011}
+  .ph-tag.you{background:#E7F4EE;color:#2E9E6B}
+  .ph-g{display:grid;grid-template-columns:1fr 1fr;gap:9px 16px;margin-bottom:18px}
+  .ph-f label{display:block;font-size:11.5px;font-weight:600;color:#56627A;margin-bottom:3px}
+  .ph-ro{background:#fafbfc;border:1px dashed #E4E8EE;border-radius:9px;padding:9px 11px;font-size:14px;color:var(--ink,#1F2D3D);font-weight:500}
+  .ph-edit{border:1px solid #E4E8EE;border-radius:9px;padding:10px 12px;font-size:14px;font-family:inherit;width:100%;color:var(--ink,#1F2D3D)}
+  .ph-edit:focus{outline:2px solid var(--teal,#149B96);border-color:var(--teal,#149B96)}
+  textarea.ph-edit{min-height:74px;resize:vertical}
+  .ph-pick{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+  .ph-photo{display:flex;align-items:center;gap:14px;flex-wrap:wrap;border:2px dashed #dbe2ea;border-radius:14px;padding:14px;background:#fafbfc;transition:border-color .15s,background .15s}
+  .ph-photo.over{border-color:var(--teal,#149B96);background:var(--teal-soft,#E5F4F3)}
+  .ph-face{width:66px;height:66px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;font-size:23px;flex:none}
+  .ph-photo-txt{flex:1;min-width:150px;display:flex;flex-direction:column}
+  .ph-photo-txt b{font-size:13.5px;color:var(--navy,#0F2A4A)}
+  .ph-photo-txt span{font-size:12px;color:#56627A}
+  .ph-photo-btns{display:flex;gap:8px;flex-wrap:wrap}
+  .ph-sw{width:30px;height:30px;border-radius:50%;border:2px solid transparent;cursor:pointer}
+  .ph-sw.on{border-color:var(--navy,#0F2A4A)}
+  .ph-note{background:var(--teal-soft,#E5F4F3);border:1px solid var(--teal-line,#c4e6e3);border-radius:10px;padding:11px 14px;font-size:12.5px;color:var(--teal-ink,#0c5b57);line-height:1.5}
+  .ph-note b{color:var(--teal-ink,#0a4d49)}
+  .ph-foot{display:flex;align-items:center;gap:10px;padding:14px 20px;border-top:1px solid #E4E8EE;background:#fafbfc}
+  .ph-btn{background:var(--teal,#149B96);color:#fff;border:none;border-radius:9px;padding:10px 17px;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit}
+  .ph-btn:hover{background:var(--teal-600,#0F827E)}
+  .ph-btn.g{background:#fff;color:var(--navy,#0F2A4A);border:1px solid #E4E8EE;font-weight:600}
+  .ph-ok{font-size:12.5px;font-weight:700;color:#2E9E6B;opacity:0;transition:opacity .2s}
+  .ph-ok.on{opacity:1}
+  .ph-ro-banner{background:#FFF6E9;border:1px solid #f0d9ae;color:#7a4d0a;border-radius:12px;padding:11px 15px;font-size:13.5px;font-weight:600;margin-bottom:16px;display:flex;align-items:center;gap:9px}
+  @media(max-width:560px){ .ph-g{grid-template-columns:1fr} }
+
+  /* ---- SIDEBAR MENU, for whoever picks it (profile -> Menu on a computer). Only on pages
+          that have the menu, and only 960px and wider: below that nothing here applies and the
+          page is exactly as before - tabs across the top, or the phone bar. The blue top bar
+          goes too (Jordan, 20/10: "It stays and looks kind of funny"): its search, bell and name
+          sit at the foot of the sidebar, the logo at its top, and each page's own heading
+          names the page. ---- */
+  /* the tabs across the top: line icons sized to the text (20/10). A touch less space between
+     tabs, so an admin's full row (9 tabs) fits a laptop screen - it overflowed even with emoji. */
+  .v1nav .v1nav-in a{display:inline-flex;align-items:center;gap:6px;padding-left:9px;padding-right:9px}
+  .v1nav .v1nav-in a .ti{width:16px;height:16px;flex:none;opacity:.8}
+  .v1nav .v1nav-in a.active .ti{opacity:1;color:var(--teal2,#2BC0B8)}
+  .ph-sidenav{display:none}
+  @media(min-width:960px){
+    html.ph-lay-side body:has(.v1nav){padding-left:248px}
+    html.ph-lay-side body:has(.v1nav) .v1nav{display:none !important}
+    html.ph-lay-side .ph-sidenav{display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;width:248px;z-index:45;
+      background:var(--navy,#0F2A4A);border-right:1px solid rgba(255,255,255,.07);padding-bottom:118px}
+    html.ph-lay-side body:has(.v1nav) .hdr{position:fixed;left:0;bottom:0;width:248px;z-index:46;background:var(--navy,#0F2A4A);
+      border-top:1px solid rgba(255,255,255,.08);border-right:1px solid rgba(255,255,255,.07)}
+    html.ph-lay-side body:has(.v1nav) .hdr-in{max-width:none;margin:0;padding:12px 12px 14px;flex-wrap:wrap;gap:8px}
+    html.ph-lay-side body:has(.v1nav) .hdr .mark,
+    html.ph-lay-side body:has(.v1nav) .hdr .brand,
+    html.ph-lay-side body:has(.v1nav) .hdr .v1{display:none}
+    html.ph-lay-side body:has(.v1nav) .hdr .ph-bw{margin-left:0}
+    html.ph-lay-side body:has(.v1nav) .hdr .ph-av{width:100%;margin-left:0}
+    html.ph-lay-side body:has(.v1nav) .hdr .ph-av .car{margin-left:auto}
+    /* the bell's and the search's panels open upwards from the foot of the sidebar */
+    html.ph-lay-side body:has(.v1nav) .hdr .ph-np{top:auto;bottom:calc(100% + 10px);left:0;right:auto}
+  }
+  .ph-sidenav .ph-sb-brand{display:flex;align-items:center;gap:10px;height:60px;flex:none;padding:0 18px;
+    color:#fff;text-decoration:none;font-weight:700;font-size:18px}
+  .ph-sidenav .ph-sb-brand img{width:34px;height:34px;display:block}
+  .ph-sidenav .ph-sb-brand i{font-style:normal;color:var(--teal2,#2BC0B8)}
+  .ph-sidenav .ph-sb-list{display:flex;flex-direction:column;gap:2px;padding:10px;overflow-y:auto;flex:1}
+  .ph-sidenav .ph-sb-list a{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;position:relative;
+    color:var(--navy-mute,#B7C6DA);font-size:14.5px;font-weight:600;text-decoration:none;line-height:1.25}
+  .ph-sidenav .ph-sb-list a:hover{background:rgba(255,255,255,.06);color:#fff}
+  .ph-sidenav .ph-sb-list a.active{background:rgba(255,255,255,.11);color:#fff}
+  .ph-sidenav .ph-sb-list a.active::before{content:"";position:absolute;left:-10px;top:9px;bottom:9px;width:3px;
+    border-radius:0 3px 3px 0;background:var(--teal2,#2BC0B8)}
+  .ph-sidenav a:focus-visible{outline:2px solid var(--teal2,#2BC0B8);outline-offset:-2px}
+  .ph-sidenav .ti{width:20px;height:20px;flex:none;opacity:.8}
+  .ph-sidenav a.active .ti{opacity:1;color:var(--teal2,#2BC0B8)}
+  @media print{ .ph-sidenav{display:none !important} html.ph-lay-side body{padding-left:0 !important} }
+  /* each section in its own colour (TAB_IC), full strength; the white label and the teal
+     marker still say which page you're on */
+  :root{${Object.keys(TAB_IC).map(k=>'--ic-'+k+':'+readable(TAB_IC[k],'#25456E',3)+';--ic-'+k+'-l:'+readable(TAB_IC[k],'#FFFFFF',3)).join(';')}}
+  .v1nav .v1nav-in a .ti[data-k], .ph-sidenav .ph-sb-list a .ti[data-k], .ph-tabbar a .ti[data-k], .ph-tabbar .cur .ti[data-k]{color:var(--ic);opacity:1;stroke-width:2}
+  .ph-more a .ti[data-k]{color:var(--ic-l);opacity:1}
+  /* the choice, in the profile - a little picture of each */
+  .ph-lays{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .ph-lay{display:flex;flex-direction:column;gap:6px;border:1.5px solid #E4E8EE;background:#fff;border-radius:12px;position:relative;
+    padding:7px 7px 8px;cursor:pointer;text-align:left;font-family:inherit;color:var(--ink,#1F2D3D)}
+  .ph-lay:hover{border-color:#CBD5E1}
+  .ph-lay.on{border-color:var(--teal-600,#0F827E);box-shadow:0 0 0 3px var(--teal-soft,#E5F4F3)}
+  .ph-laypic{display:grid;height:46px;border-radius:8px;overflow:hidden;border:1px solid rgba(15,42,74,.08);background:#F7F9FB}
+  .ph-laypic-top{grid-template-rows:10px 1fr}
+  .ph-laypic-side{grid-template-columns:18px 1fr}
+  .ph-laypic-b{background:var(--navy,#0F2A4A)}
+  .ph-laypic-c{background:linear-gradient(#DCE3EA,#DCE3EA) 7px 7px/52% 4px no-repeat,
+    linear-gradient(#E7ECF1,#E7ECF1) 7px 15px/72% 4px no-repeat,linear-gradient(#E7ECF1,#E7ECF1) 7px 23px/60% 4px no-repeat,#F7F9FB}
+  `;
+  const style=document.createElement('style'); style.textContent=css; document.head.appendChild(style);
+
+  let menu=null;
+  function closeMenu(){ if(menu){menu.remove();menu=null;} }
+  document.addEventListener('click',e=>{ if(menu && !menu.contains(e.target) && !e.target.closest('.ph-av')) closeMenu(); });
+
+  function openMenu(anchor){
+    closeMenu(); const p=me();
+    menu=document.createElement('div'); menu.className='ph-menu';
+    menu.innerHTML='<div class="mh"><b>'+escHTML(name(p))+'</b><small>'+escHTML(p.title)+'</small></div>'+
+      '<button onclick="PH.profile()">👤 My profile</button>'+
+      (isLive() && window.PH_AUTH && PH_AUTH.signOut ? '<button onclick="PH.signOut()">↪ Sign out</button>' : '')+
+      (isLive() ? '' :
+      '<div class="sec">Demo — sign in as</div>'+
+      PEOPLE.map(x=>'<button class="'+(x.id===p.id?'cur':'')+'" onclick="PH.setMe(\''+x.id+'\')">'+
+        '<span class="cir" style="width:22px;height:22px;font-size:10px;'+faceStyle(x.id===p.id?p:x)+'">'+face(x.id===p.id?p:x)+'</span>'+
+        x.title.split(' · ')[0]+(x.id===p.id?'<span class="ck">✓</span>':'')+'</button>').join(''));
+    document.body.appendChild(menu);
+    const r=anchor.getBoundingClientRect(), m=menu.getBoundingClientRect();
+    // Below the name, or above it when there's no room (the sidebar puts the name at the foot).
+    menu.style.top=(r.bottom+8+m.height<=window.innerHeight-8 ? r.bottom+8 : Math.max(8, r.top-8-m.height))+'px';
+    menu.style.left=Math.max(8,Math.min(r.right-m.width,window.innerWidth-m.width-8))+'px';
+  }
+
+  // one place that draws a person's picture: their uploaded photo if there is one, else initials
+  /* A PHOTO IS A PICTURE AND NOTHING ELSE (21/11/2026, code review): anyone signed in can write their own profile record,
+     and a "photo" of `x);"><img src=x onerror=...>` ran in an admin's page when Admin -> People drew it. Only an inline
+     JPEG/PNG/WebP/GIF (what the photo picker makes) is ever drawn. */
+  function safePhoto(v){ return (typeof v==='string' && /^data:image\/(jpeg|png|webp|gif);base64,[A-Za-z0-9+\/=]+$/.test(v)) ? v : ''; }
+  function faceStyle(p){ const ph=safePhoto(p.photo); return ph ? 'background-image:url('+ph+');background-size:cover;background-position:center' : 'background:'+escHTML(p.color); }
+  function face(p){ return safePhoto(p.photo) ? '' : escHTML(initials(p)); }
+
+  /* ---------------------------------------------------------------
+     THE BELL. Lives in the header on every page, because mount() runs on every page.
+     Shows how many updates this person has not checked off; opening it does NOT
+     mark anything read - they tick each one, or use "Mark all as read". Checking
+     something off is a decision, not a side effect of glancing at the list.
+     --------------------------------------------------------------- */
+  let npanel=null;
+  function closeNotes(){ if(npanel){ npanel.remove(); npanel=null; } }
+
+  /* SEARCH. People (the practice roster) and the pages this person may open. A person
+     opens on the Team page, filtered to them, where the phone number and email live -
+     if this person may see Team; otherwise the result is shown here and goes nowhere. */
+  let spanel=null;
+  function closeSearch(){ if(spanel){ spanel.remove(); spanel=null; } }
+  function openSearch(wrap){
+    closeSearch();
+    spanel=document.createElement('div');
+    spanel.className='ph-np ph-sp';
+    spanel.innerHTML='<div class="nph sph"><input class="sin" type="search" placeholder="Search people, pages'+(isLive()?' and documents':'')+'\u2026" '+
+      'autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" aria-label="Search"></div><div class="nlist sres"></div>';
+    spanel.addEventListener('click',function(e){ e.stopPropagation(); if(e.target.closest('.sx')) closeSearch(); });
+    const inp=spanel.querySelector('.sin'), res=spanel.querySelector('.sres');
+    let dt=null;
+    inp.oninput=function(){
+      const q=inp.value, base=searchHTML(q), docsToo=isLive() && String(q).trim().length>=2;
+      const none=base.indexOf('Nothing matches')>=0;
+      res.innerHTML=(docsToo && none ? '' : base)+(docsToo ? '<div class="sdocs"><div class="slab">Documents</div><div class="nempty">Searching documents\u2026</div></div>' : '');
+      clearTimeout(dt);
+      if(!docsToo) return;
+      dt=setTimeout(function(){
+        searchDocs(q).then(function(list){
+          if(inp.value!==q || !spanel) return;                      // they kept typing
+          const box=res.querySelector('.sdocs'); if(!box) return;
+          if(list.length){ box.innerHTML=searchDocsHTML(list); return; }
+          box.remove();
+          if(none) res.innerHTML=base;                              // nothing anywhere: say so once
+        }, function(){ const box=res.querySelector('.sdocs'); if(box) box.remove(); if(none && inp.value===q) res.innerHTML=base; });
+      }, 280);
+    };
+    inp.onkeydown=function(e){ if(e.key==='Enter'){ const a=res.querySelector('a.ni'); if(a) location.href=a.getAttribute('href'); } };
+    res.innerHTML=searchHTML('');
+    wrap.appendChild(spanel);
+    /* Jamie, 14/10: "the search is a bit slow". The first document search on a page has to
+       find the library and the "only certain people" folders before it can search. Start that
+       now, while they type, instead of after. */
+    if(isLive() && window.PH_AUTH) docContext().catch(function(){});
+    try{ inp.focus(); }catch(_){}
+    setTimeout(function(){ try{ inp.focus(); }catch(_){} },30);   // again once the phone sheet has laid out
+  }
+  function searchInitials(n){
+    return String(n||'').replace(/^Dr\.?\s+/i,'').replace(/["\u201c\u201d(][^"\u201c\u201d)]*["\u201c\u201d)]/g,'')
+      .split(/\s+/).filter(Boolean).map(function(x){ return x[0]; }).slice(0,2).join('').toUpperCase();
+  }
+  function searchHTML(q){
+    q=String(q||'').trim().toLowerCase();
+    if(!q) return '<div class="nempty">Type a name, an office, a team or a page.</div>';
+    const words=q.split(/\s+/).filter(Boolean);
+    const hit=function(t){ t=String(t||'').toLowerCase(); return words.every(function(w){ return t.indexOf(w)>=0; }); };
+    const pages=NAV.filter(function(x){ return x.show(); })
+      .filter(function(x){ return hit(splitNav(x.n,x.k).label+' '+x.n); });
+    const canTeam=atLeast('team','view');
+    const people=rosterView().filter(function(r){
+      return hit([r.name,r.role,(r.offices||[]).join(' '),(r.teams||[]).join(' '),r.email||''].join(' ')); }).slice(0,12);
+    if(!pages.length && !people.length) return '<div class="nempty">Nothing matches \u201c'+escHTML(q)+'\u201d.</div>';
+    const pg=pages.map(function(x){ const p=splitNav(x.n,x.k);
+      return '<a class="ni sr" href="'+escAttr(x.href)+'"><span class="nic">'+icon(x.k)+'</span>'+
+        '<div class="ntx"><div class="ntt">'+escHTML(p.label)+'</div><div class="nw">Open the page</div></div></a>'; }).join('');
+    const pp=people.map(function(r){
+      const sub=[r.role,(r.offices||[]).join(', ')].filter(Boolean).join(' \u00b7 ');
+      const inner='<span class="nic sav">'+escHTML(searchInitials(r.name))+'</span>'+
+        '<div class="ntx"><div class="ntt">'+escHTML(r.name)+'</div><div class="nw">'+escHTML(sub)+'</div></div>';
+      return canTeam
+        ? '<a class="ni sr" href="team.html?q='+encodeURIComponent(r.name)+'">'+inner+'</a>'
+        : '<div class="ni sr">'+inner+'</div>'; }).join('');
+    return (pages.length?'<div class="slab">Pages</div>'+pg:'')+(people.length?'<div class="slab">People</div>'+pp:'');
+  }
+  /* DOCUMENTS IN THE SEARCH (07/10 - Jordan: "the search doesn't take into accounts these
+     documents and what the user does or does not have access too"). Files and folders in
+     Home-Brace Documents - by name and by what is in them, through SharePoint's own search
+     - and files linked in from elsewhere. Each is shown ONLY if this person could open it
+     on the Documents page: the section's level from the access grid; for a per-office or
+     per-brand section, only their offices' and brands' folders; and any "Only certain
+     people" on the item or on a folder it sits in (people who manage the section see
+     everything, as they do there). Anything not in a section is not shown. Live only. */
+  const DOC_BASE='Home-Brace Documents';
+  const DOC_DEFAULT_SECS=[{k:'hr',n:'HR'},{k:'officedocs',n:'Office Docs',structure:'byLocation'},{k:'forms',n:'Office Forms',structure:'byBrand'},
+    {k:'vendors',n:'Vendors'},{k:'filing',n:'Insurance / W-9'},{k:'eom',n:'End-of-Month Reporting'}];
+  const DOC_BRAND={BFO:'BFO',MPL:'Maple',RBO:'RBO'};
+  /* The folder a section's files live in - the same rule as docs.js clean(). */
+  function docFolderName(sec){
+    if(sec.folder) return sec.folder;
+    let x=String(sec.n||'').replace(/["*:<>?\/\\|]/g,'-').replace(/\s+/g,' ').trim().replace(/[.\s]+$/,'');
+    if(/^(con|prn|aux|nul|com\d|lpt\d)(\..*)?$/i.test(x) || /^_vti_/i.test(x)) x='_'+x;
+    return x || 'Untitled';
+  }
+  /* OPEN TO LOOK, NOT TO EDIT (12/11/2026). Morgan couldn't remove a form from Patient Forms: opening it from
+     Home-Brace had put her in Word's EDITING mode (SharePoint's own link says action=default), and a Word file being
+     edited is locked - no Remove, no Replace - until a while after it's closed. Word, Excel and PowerPoint files now
+     open in VIEW mode: looking never locks, nobody changes a master form by accident, and Edit is one click in Word's
+     own bar for anyone allowed. Only Microsoft's Office-viewer links (…sharepoint.com/…/_layouts/15/Doc.aspx or
+     WopiFrame.aspx) are touched, and only their action=; a PDF, a picture or any other link is returned exactly. */
+  function viewLink(u){
+    const s=String(u==null?'':u);
+    if(!/^https:\/\/[a-z0-9-]+\.sharepoint\.com(\/[^?#]*)?\/_layouts\/15\/(Doc|WopiFrame2?)\.aspx\?/i.test(s)) return s;
+    const hash=s.indexOf('#'), base=hash<0?s:s.slice(0,hash), tail=hash<0?'':s.slice(hash);
+    if(/[?&]action=[^&]*/i.test(base)) return base.replace(/([?&])action=[^&]*/i, '$1action=view')+tail;
+    return base+'&action=view'+tail;
+  }
+  /* WORD FILES OPEN AS THEY PRINT (16/11/2026). Morgan: "some word documents show up formatted weird in Home Brace but
+     when I put them in as pdfs they are correct." Word for the web lays out forms built from text boxes and tight lines
+     loosely (the BFO Medical History, one page on paper, ran on for pages there); Microsoft's own PDF of the same file
+     (Graph /content?format=pdf - what Word prints) matched it page for page. So a Word file opened from Home-Brace
+     (Documents, the header search) opens as that PDF in a new tab. Its link still points at Word for the web (view):
+     that is used when the PDF can't be made, for a Ctrl/Cmd-click, on a phone or tablet, and in the home-screen app,
+     where a new tab can't show it. Editing: "Edit" next to it in Documents, for people who can edit there. */
+  const WORD_RX=/\.(docx?|dotx?|rtf|odt)$/i;
+  const isWordName=n=>WORD_RX.test(String(n||''));
+  function wordPdfHere(){
+    try{
+      if(!isLive() || !window.PH_AUTH || !PH_AUTH.token) return false;
+      if((window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone===true) return false;
+      if(window.matchMedia && !matchMedia('(pointer: fine)').matches) return false;          // phones and tablets: as before
+      return !/iPhone|iPad|iPod|Android/i.test(navigator.userAgent||'');
+    }catch(_){ return false; }
+  }
+  /* Fill a tab already opened (w) with the PDF of one file; anything wrong = that tab goes to the Word link instead. */
+  function wordPdfInto(w, driveId, itemId, name, fallback){
+    try{ w.document.title=String(name||'Opening…');
+      w.document.body.innerHTML='<p style="font:16px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;margin:48px auto;max-width:520px;color:#56627A;text-align:center">Opening <b style="color:#0F2A4A">'+
+        escHTML(name||'the file')+'</b>…</p>'; }catch(_){}
+    const drv=driveId ? Promise.resolve(driveId) : docContext().then(function(c){ if(!c) throw new Error('no drive'); return c.driveId; });
+    return drv.then(function(d){ return PH_AUTH.token().then(function(t){
+        return fetch('https://graph.microsoft.com/v1.0/drives/'+encodeURIComponent(d)+'/items/'+encodeURIComponent(itemId)+'/content?format=pdf',
+          {headers:{Authorization:'Bearer '+t}}); }); })
+      .then(function(r){ if(!r.ok) throw new Error('PDF '+r.status); return r.blob(); })
+      .then(function(b){
+        if(!b || !b.size) throw new Error('empty PDF');
+        const u=URL.createObjectURL(new Blob([b], {type:'application/pdf'}));
+        w.location.replace(u);
+        setTimeout(function(){ try{ URL.revokeObjectURL(u); }catch(_){} }, 30*60*1000);
+        return 'pdf';
+      })
+      .catch(function(){ try{ w.location.replace(fallback); }catch(_){} return 'word'; });
+  }
+  document.addEventListener('click', function(e){
+    const a=e.target && e.target.closest ? e.target.closest('a[data-word]') : null; if(!a) return;
+    if(e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || !wordPdfHere()) return;   // the link itself
+    const w=window.open('', '_blank'); if(!w) return;                                                    // blocked: the link itself
+    e.preventDefault();
+    wordPdfInto(w, a.getAttribute('data-drive')||'', a.getAttribute('data-word'), a.getAttribute('data-name')||a.textContent, a.href);
+  });
+  /* The attributes a Word file's link carries (empty for anything else). */
+  function wordAttrs(name, itemId, driveId){
+    if(!isWordName(name) || !itemId) return '';
+    return ' data-word="'+escAttr(itemId)+'"'+(driveId?' data-drive="'+escAttr(driveId)+'"':'')+' data-name="'+escAttr(name)+'"';
+  }
+  function docRel(webUrl){
+    let p=''; try{ p=decodeURIComponent(new URL(webUrl).pathname); }catch(_){ return null; }
+    const i=p.indexOf('/'+DOC_BASE+'/'); return i<0 ? null : p.slice(i+DOC_BASE.length+2);
+  }
+  let DOCX=null;
+  function docContext(){
+    if(DOCX) return DOCX;
+    if(!(isLive() && window.PH_AUTH && PH_AUTH.graph && window.PH_STORE)) return Promise.resolve(null);
+    const g=PH_AUTH.graph;
+    DOCX=Promise.all([
+      g('/sites/brightline.sharepoint.example:/sites/Home-Brace').then(function(site){ return g('/sites/'+site.id+'/drive?$select=id'); })
+        .then(function(d){ return g('/drives/'+d.id+'/root:/'+encodeURIComponent(DOC_BASE)+'?$select=id').then(function(b){ return {driveId:d.id, baseId:b.id}; }); }),
+      PH_STORE.get('ph_docsecs').catch(function(){ return null; }),
+      PH_STORE.get('ph_docmeta').catch(function(){ return null; }),
+      PH_STORE.get('ph_doclinks').catch(function(){ return null; }),
+      reloadSensitive().catch(function(){ return null; })
+    ]).then(function(r){
+      const meta=(r[2] && typeof r[2]==='object' && !Array.isArray(r[2])) ? r[2] : {};
+      const ctx={driveId:r[0].driveId, baseId:r[0].baseId,
+        secs:(Array.isArray(r[1]) && r[1].length) ? r[1].filter(function(x){ return x && x.k; }) : DOC_DEFAULT_SECS,
+        meta:meta, links:Array.isArray(r[3]) ? r[3] : [], restricted:[]};
+      /* Folders with their own audience: where they are, so what sits inside them follows it.
+         Same lookup (and the same memory) as placing a search result by its folder. */
+      return Promise.all(Object.keys(meta).filter(function(id){ return id.charAt(0)!=='L'; }).map(function(id){
+        return folderAt(ctx.driveId, id).then(function(rel){ if(rel) ctx.restricted.push({rel:rel, aud:meta[id]}); });
+      })).then(function(){ return ctx; });
+    }).catch(function(e){ DOCX=null; throw e; });
+    return DOCX;
+  }
+  function docSecLevel(sec){
+    const m=me(), mine=offices();
+    if(sec.locMode==='some' && !isAdmin() && mine!=='all' && !(Array.isArray(mine) && mine.some(function(o){ return (sec.locs||[]).indexOf(o)>=0; }))) return 'none';
+    const c=m.can||{};
+    if(c[sec.k]!==undefined) return c[sec.k]||'none';
+    if(DOC_KEYS.indexOf(sec.k)>=0) return c.documents||'none';
+    /* A section someone made that the grid never mentions: its own audience. */
+    if((c.documents||'none')==='none') return 'none';
+    const myTeams=(m.teams||[]).map(function(t){ return String(t).toLowerCase(); });
+    const teamOk=sec.teamMode!=='some' || isAdmin() || (sec.teams||[]).some(function(t){ return myTeams.indexOf(String(t).toLowerCase())>=0; });
+    return teamOk ? (isAdmin()?'manage':'view') : 'none';
+  }
+  function docAudOk(a){
+    if(!a) return true;
+    const myTeams=(me().teams||[]).map(function(t){ return String(t).toLowerCase(); }), mine=offices();
+    const teamOk=!(a.teams||[]).length || a.teams.some(function(t){ return myTeams.indexOf(String(t).toLowerCase())>=0; });
+    const offOk=!(a.offices||[]).length || mine==='all' || (Array.isArray(mine) && a.offices.some(function(o){ return mine.indexOf(o)>=0; }));
+    return teamOk && offOk;
+  }
+  /* The office or brand folder of a per-office / per-brand section: is it one of theirs? */
+  function docSubOk(sec, sub){
+    if(sec.structure!=='byLocation' && sec.structure!=='byBrand') return true;
+    if(isAdmin() || offices()==='all') return true;
+    const mine=offices(); if(!Array.isArray(mine)) return false;
+    if(sec.structure==='byLocation') return mine.indexOf(sub)>=0;
+    return locations().some(function(l){ return mine.indexOf(l.n)>=0 && (DOC_BRAND[l.brand]||l.brand)===sub; });
+  }
+  function docIcon(n, folder){
+    if(folder) return '\u{1F4C1}';
+    const x=String(n).toLowerCase().split('.').pop();
+    return x==='pdf'?'\u{1F4D5}':['doc','docx','rtf','txt'].indexOf(x)>=0?'\u{1F4D8}':['xls','xlsx','xlsm','csv'].indexOf(x)>=0?'\u{1F4D7}':
+      ['ppt','pptx'].indexOf(x)>=0?'\u{1F4D9}':['png','jpg','jpeg','gif','heic','webp'].indexOf(x)>=0?'\u{1F5BC}\uFE0F':'\u{1F4C4}';
+  }
+  /* WHERE A SEARCH RESULT SITS, as a path inside Home-Brace Documents.
+     14/10/2026, Jamie: searching "hygiene", the oral hygiene form never came up. It is a
+     Word file, and SharePoint gives Word, Excel and PowerPoint files an address that opens
+     them in Office Online (.../_layouts/15/Doc.aspx?sourcedoc=...) - no folders in it. The
+     section was read from that address, so every Office file was dropped as "not in any
+     section". Those are placed by their FOLDER instead: a folder's address always carries
+     its path. One lookup per folder per page, however many results share it. */
+  const FOLDER_AT={}, PARENT_OF={};
+  function folderAt(driveId, id){
+    if(!FOLDER_AT[id]) FOLDER_AT[id]=PH_AUTH.graph('/drives/'+driveId+'/items/'+id+'?$select=id,webUrl,folder')
+      .then(function(f){ return (f && f.folder) ? docRel(f.webUrl) : null; }, function(){ delete FOLDER_AT[id]; return null; });
+    return FOLDER_AT[id];
+  }
+  function placeOf(ctx, it){
+    const rel=docRel(it.webUrl); if(rel) return Promise.resolve(rel);
+    const pid=it.parentReference && it.parentReference.id;
+    // A result that does not name its folder: ask once per file, then remember.
+    if(!pid && !PARENT_OF[it.id]) PARENT_OF[it.id]=PH_AUTH.graph('/drives/'+ctx.driveId+'/items/'+it.id+'?$select=id,parentReference')
+      .then(function(x){ return (x && x.parentReference && x.parentReference.id) || null; }, function(){ delete PARENT_OF[it.id]; return null; });
+    const parent=pid ? Promise.resolve(pid) : PARENT_OF[it.id];
+    return parent.then(function(id){ return id ? folderAt(ctx.driveId, id) : null; })
+      .then(function(at){ return at ? at+'/'+it.name : null; }, function(){ return null; });
+  }
+  function searchDocs(q){
+    q=String(q||'').trim();
+    if(q.length<2) return Promise.resolve([]);
+    return docContext().then(function(ctx){
+      if(!ctx) return [];
+      const words=q.toLowerCase().split(/\s+/).filter(Boolean);
+      const out=[], seen={};
+      const place=function(sec, segs){ return [sec.n].concat(segs).join(' \u203a '); };
+      const at='/drives/'+ctx.driveId+'/items/'+ctx.baseId+"/search(q='"+encodeURIComponent(q.replace(/'/g,"''"))+"')";
+      /* Asking for parentReference saves a lookup per Office file. Should SharePoint ever
+         refuse it, search the way it always did - each file is then asked for its folder. */
+      return PH_AUTH.graph(at+'?$select=id,name,webUrl,file,folder,parentReference&$top=50')
+        .catch(function(e){ if(!/\b400\b/.test(String(e && e.message))) throw e;
+          return PH_AUTH.graph(at+'?$select=id,name,webUrl,file,folder&$top=50'); })
+        .then(function(r){
+          const found=(r && r.value) || [];
+          return Promise.all(found.map(function(it){ return placeOf(ctx, it); }))
+            .then(function(rels){ return found.map(function(it, i){ return {it:it, rel:rels[i]}; }); });
+        })
+        .then(function(placed){
+          placed.forEach(function(p){
+            const it=p.it, rel=p.rel; if(!rel || seen[it.id]) return;
+            const segs=rel.split('/'), top=segs[0].toLowerCase();
+            let sec=ctx.secs.find(function(x){ return docFolderName(x).toLowerCase()===top; });
+            /* Sensitive Material is not one of Admin's sections: its own list decides, and anyone
+               not on it never sees so much as a file name (SharePoint itself hides it too, once locked). */
+            if(!sec && top==='sensitive material'){ if(!sensitiveLevel()) return; sec={k:'sensitive', n:'Sensitive Material', sensitive:true}; }
+            if(!sec) return;
+            const lvl=sec.sensitive ? 'manage' : docSecLevel(sec); if(lvl==='none') return;
+            if(!sec.sensitive && segs.length>1 && !docSubOk(sec, segs[1])) return;
+            if(lvl!=='manage'){
+              if(!docAudOk(ctx.meta[it.id])) return;
+              if(ctx.restricted.some(function(f){ return rel.indexOf(f.rel+'/')===0 && !docAudOk(f.aud); })) return;
+            }
+            seen[it.id]=1;
+            const isSection=segs.length===1 && !!it.folder;
+            out.push({name:isSection?sec.n:it.name, folder:!!it.folder,
+              href:it.folder ? 'documents.html#'+encodeURIComponent(sec.k) : viewLink(it.webUrl), newTab:!it.folder,
+              word:(!it.folder && isWordName(it.name)) ? {item:it.id, drive:ctx.driveId} : null,
+              where:isSection?'Section in Documents':place(sec, segs.slice(1, -1))});
+          });
+          /* Files linked in from elsewhere: matched by name, shown by the same rules. */
+          ctx.links.forEach(function(l){
+            if(!l || l.hidden || seen[l.id]) return;
+            const nm=String(l.name||'').toLowerCase(); if(!words.every(function(w){ return nm.indexOf(w)>=0; })) return;
+            const sec=ctx.secs.find(function(x){ return x.k===l.sec; }); if(!sec) return;
+            const lvl=docSecLevel(sec); if(lvl==='none') return;
+            if(l.sub && !docSubOk(sec, l.sub)) return;
+            if(lvl!=='manage' && !docAudOk(ctx.meta[l.id])) return;
+            if(!/^https:\/\//i.test(String(l.webUrl||''))) return;
+            seen[l.id]=1;
+            out.push({name:l.name, folder:false, href:viewLink(l.webUrl), newTab:true, where:place(sec, l.sub?[l.sub]:[])+' \u00b7 linked'});
+          });
+          return out.slice(0,12);
+        });
+    });
+  }
+  function searchDocsHTML(list){
+    return '<div class="slab">Documents</div>'+list.map(function(d){
+      return '<a class="ni sr" href="'+escAttr(d.href)+'"'+(d.newTab?' target="_blank" rel="noopener"':'')+(d.word?wordAttrs(d.name, d.word.item, d.word.drive):'')+'>'+
+        '<span class="nic">'+docIcon(d.name, d.folder)+'</span>'+
+        '<div class="ntx"><div class="ntt">'+escHTML(d.name)+'</div><div class="nw">'+escHTML(d.where)+'</div></div></a>';
+    }).join('');
+  }
+  function bellBadge(){
+    const b=document.querySelector('.ph-bell.ph-nb'); if(!b) return;
+    const n=unreadCount()+payReminders().length+fbReminders().length;
+    const dot=b.querySelector('.dot');
+    if(!n){ if(dot) dot.remove(); b.setAttribute('aria-label','Notifications — nothing new'); return; }
+    const txt=n>9?'9+':String(n);
+    if(dot) dot.textContent=txt;
+    else { const d=document.createElement('span'); d.className='dot'; d.textContent=txt; b.appendChild(d); }
+    b.setAttribute('aria-label', n+' unread notification'+(n===1?'':'s'));
+  }
+  /* READ ONES GO AWAY. Jordan, 19/09: "if we have read notifications it should go away."
+     The panel lists what is still unread; ticking one off removes it. The read ones are a
+     tap away ("Show N read") rather than gone for good. */
+  let showRead=false;
+  function notesHTML(){
+    const list=notifications();
+    const unreadList=list.filter(n=>!n.seen), readList=list.filter(n=>n.seen);
+    const shown=showRead?list:unreadList, rem=payReminders().concat(fbReminders());
+    const row=n=>'<div class="ni'+(n.seen?' read':'')+'" data-id="'+escAttr(n.id)+'">'+
+      '<span class="nic">'+escHTML(n.ic||'\u{1F514}')+'</span>'+
+      '<div class="ntx"><div class="ntt">'+escHTML(n.title)+'</div>'+
+      '<div class="nw">'+escHTML(n.by||'')+(n.by?' \u00b7 ':'')+escHTML(ago(n.at))+'</div></div>'+
+      (n.seen ? '<span class="ndone" title="You checked this off">\u2713 Read</span>'
+              : '<button class="nok" type="button">Got it</button>')+'</div>';
+    return '<div class="nph"><b>Notifications</b>'+
+      (unreadList.length ? '<button class="nall" type="button">Mark all as read</button>'
+              : (list.length ? '<span class="nallok">\u2713 All caught up</span>' : ''))+'</div>'+
+      (rem.length ? '<div class="slab">Reminders</div>'+rem.map(function(r){
+          return '<a class="ni nrem'+(r.late?' late':'')+'" href="'+escAttr(r.href||'#')+'"'+(r.fb?' data-fb="'+escAttr(r.fb)+'"':'')+'><span class="nic">'+escHTML(r.ic)+'</span>'+
+            '<div class="ntx"><div class="ntt">'+escHTML(r.title)+'</div><div class="nw">'+escHTML(r.sub)+'</div></div></a>'; }).join('')+
+          (shown.length ? '<div class="slab">Updates</div>' : '') : '')+
+      (shown.length
+        ? '<div class="nlist">'+shown.map(row).join('')+'</div>'
+        : rem.length ? '' : '<div class="nempty">'+(list.length
+            ? 'You\u2019re all caught up.'
+            : 'Nothing new right now.<br>Updates show up here when someone '+
+              'changes the schedule, enters production or posts something.')+'</div>')+
+      (readList.length
+        ? '<button class="nshow" type="button">'+(showRead?'Hide read':'Show '+readList.length+' read')+'</button>'
+        : '')+alertsRow();
+  }
+  function openNotes(wrap){
+    closeNotes();
+    npanel=document.createElement('div');
+    npanel.className='ph-np';
+    npanel.innerHTML=notesHTML();
+    npanel.addEventListener('click',function(e){
+      e.stopPropagation();
+      if(e.target.classList.contains('nshow')){ showRead=!showRead; npanel.innerHTML=notesHTML(); return; }
+      if(e.target.classList.contains('nall')){ markAllSeen(); return; }
+      if(e.target.classList.contains('nal-on')){ alertsTap(true); return; }
+      if(e.target.classList.contains('nal-off')){ alertsTap(false); return; }
+      const fb=e.target.closest('[data-fb]'); if(fb){ e.preventDefault(); closeNotes(); myFeedback(); return; }
+      /* A reminder for the page you're already on ("3 new feedback messages" while on Admin) did nothing: same page, same
+         #feedback, so the browser doesn't move (Jordan 20/11/2026). Close the panel and tell the page - it opens that part. */
+      const go=e.target.closest('a.nrem[href]');
+      if(go){ try{ const u=new URL(go.getAttribute('href'), location.href);
+        if(u.pathname===location.pathname){ e.preventDefault(); closeNotes();
+          if(u.hash && u.hash!==location.hash) location.hash=u.hash;                 // fires hashchange by itself
+          else window.dispatchEvent(new Event('hashchange'));
+          return; } }catch(_){} }
+      const ok=e.target.closest('.nok'); if(!ok) return;
+      const row=ok.closest('.ni'); if(!row) return;
+      markSeen({id:row.getAttribute('data-id')});
+    });
+    wrap.appendChild(npanel);
+    bellBadge();
+  }
+  /* Repaint wherever it is showing, so ticking one off in the panel updates the
+     badge and Home's list at the same time. */
+  document.addEventListener('ph-notifications-changed',function(){
+    bellBadge();
+    if(npanel) npanel.innerHTML=notesHTML();
+  });
+  document.addEventListener('click',function(e){
+    if(npanel && !e.target.closest('.ph-bw')) closeNotes();
+    if(spanel && !e.target.closest('.ph-bw')) closeSearch();
+  });
+
+  /* The chat button's unread count. The mock-up keeps it for this browser tab only (sessionStorage
+     ph_chat_unread = {chat id: unread}), so a fresh tab starts the demo again at chat.html's 3 unread. */
+  /* The red number on the app icon (sw.js adds one per alert): while Home-Brace is open it is the unread chats - 0 clears
+     it. Live only; a browser without app badges (most desktops) ignores it. */
+  function appBadge(n){
+    if(document.visibilityState && document.visibilityState!=='visible') return;
+    n=Math.max(0, Math.min(99, Number(n)||0));
+    try{ if(navigator.setAppBadge){ const p=n ? navigator.setAppBadge(n) : (navigator.clearAppBadge ? navigator.clearAppBadge() : navigator.setAppBadge(0)); if(p && p.catch) p.catch(()=>{}); } }catch(_){}
+    try{ if(window.caches) caches.open('ph-badge').then(c=>c.put('ph-badge-count', new Response(String(n)))).catch(()=>{}); }catch(_){}
+  }
+  document.addEventListener('visibilitychange', function(){ if(document.visibilityState==='visible' && env()==='live') chatBadge(); });   // back in the app: the icon's number = unread chats
+  function chatBadge(){
+    let n=env()==='live' ? 0 : 3;            // the live site never shows the mock-up's made-up 3
+    try{ const v=sessionStorage.getItem('ph_chat_unread'); if(v!==null){ const m=JSON.parse(v)||{}; n=Object.keys(m).reduce((t,k)=>t+(Number(m[k])||0),0); } }catch(_){}
+    if(env()==='live') appBadge(n);
+    const c=document.querySelector('.ph-chat'); if(!c) return;
+    let d=c.querySelector('.dot'); if(!n){ if(d) d.remove(); c.title='Chat'; return; }
+    if(!d){ d=document.createElement('span'); d.className='dot'; c.appendChild(d); }
+    d.textContent=n>9?'9+':String(n); c.title='Chat - '+n+' unread';
+  }
+  /* THE CHAT COUNT ON EVERY PAGE (Morgan 18/11: "Since I have Home Brace open, I do not see a number next to my messages
+     when you send me one"). The count used to be only what the Chat page last saw in this browser tab - so with Home open
+     it never moved, and a fresh tab showed the mock-up's 3. Now, on the live site, for anyone who has chat: Microsoft is
+     asked which chats have something unread (as the Chat page decides it: the newest message isn't yours, isn't deleted,
+     and is newer than when you last read that chat; hidden chats don't count) - when the page opens, every minute while
+     it's on screen, when you come back to it, and 1.5 s after a chat alert arrives on this device. The Chat page itself
+     keeps its own count. Delegated Chat.ReadWrite (the chat's own permission). */
+  let cuT=null, cuBusy=false;
+  async function chatUnreadCheck(){
+    if(env()!=='live' || !chatPilotMe() || /chat\.html$/.test(location.pathname) || !PROFILE || !PROFILE.id || !window.PH_AUTH || !PH_AUTH.tokenFor) return;
+    if(cuBusy || document.visibilityState!=='visible') return; cuBusy=true;
+    try{
+      const t=await PH_AUTH.tokenFor(['Chat.ReadWrite']);
+      const r=await fetch('https://graph.microsoft.com/v1.0/me/chats?$top=50&$orderby=lastMessagePreview/createdDateTime%20desc&$expand=lastMessagePreview', {headers:{Authorization:'Bearer '+t}});
+      if(!r.ok) return;
+      const j=await r.json(), m={};
+      (j.value||[]).forEach(function(c){
+        if(!c || (c.chatType!=='oneOnOne' && c.chatType!=='group') || (c.viewpoint && c.viewpoint.isHidden)) return;
+        const lp=c.lastMessagePreview; if(!lp || lp.isDeleted) return;
+        const from=lp.from && lp.from.user; if(from && from.id===PROFILE.id) return;
+        const at=Date.parse(lp.createdDateTime)||0, read=c.viewpoint && c.viewpoint.lastMessageReadDateTime ? Date.parse(c.viewpoint.lastMessageReadDateTime)||0 : 0;
+        if(at>read) m[c.id]=1;
+      });
+      try{ sessionStorage.setItem('ph_chat_unread', JSON.stringify(m)); }catch(_){}
+      chatBadge();
+    }catch(_){} finally{ cuBusy=false; }
+  }
+  function chatUnreadStart(){
+    if(cuT || env()!=='live' || typeof window.addEventListener!=='function') return;
+    cuT=setInterval(chatUnreadCheck, 60000);
+    document.addEventListener('visibilitychange', function(){ if(document.visibilityState==='visible') chatUnreadCheck(); });
+    window.addEventListener('focus', chatUnreadCheck);
+    try{ if(navigator.serviceWorker) navigator.serviceWorker.addEventListener('message', function(e){ const d=e.data||{};
+      if(d.type==='ph-alert' && d.message && d.message.tag==='hb-chat') setTimeout(chatUnreadCheck, 1500); }); }catch(_){}
+    chatUnreadCheck();
+  }
+  function bell(){
+    const bar=document.querySelector('.hdr-in'); if(!bar) return;
+    const old=bar.querySelector('.ph-bw'); if(old) old.remove();
+    const wrap=document.createElement('span'); wrap.className='ph-bw';
+    if(snapping()) wrap.setAttribute('data-snap','1');
+    /* Search sits left of the bell, on every page, desktop and phone. Jordan, 19/09. */
+    const s=document.createElement('button');
+    s.className='ph-bell ph-srch'; s.type='button'; s.title='Search'; s.setAttribute('aria-label','Search');
+    s.innerHTML='<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg>';
+    s.onclick=function(e){ e.stopPropagation(); closeNotes(); closeMenu(); spanel?closeSearch():openSearch(wrap); };
+    wrap.appendChild(s);
+    /* CHAT sits beside the bell, not in the tabs (Jordan, 22/10: "a tab or a button next to profile ... the most user
+       friendly way"): one tap from any page, its own unread count, always visible on a phone. Sandbox mock-up for now. */
+    const chatEntry=NAV.find(x=>x.k==='chat');
+    if(chatEntry && navShown(true).indexOf(chatEntry)>=0){
+      const c=document.createElement('a');
+      c.className='ph-bell ph-chat'+(/chat\.html$/.test(location.pathname)?' on':''); c.href='chat.html'; c.title='Chat'; c.setAttribute('aria-label','Chat');
+      c.innerHTML='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.5 8.5 0 0 1-12.4 7.6L3 20.5l1.4-5.1A8.5 8.5 0 1 1 21 11.5z"/></svg>';
+      wrap.appendChild(c);
+    }
+    const b=document.createElement('button');
+    b.className='ph-bell ph-nb'; b.type='button'; b.title='Notifications';
+    // A line icon like the search and the phone bar - "more modern and less emoji" (Jordan).
+    b.innerHTML='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 16V11a6 6 0 0112 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 004 0"/></svg>';
+    b.onclick=function(e){ e.stopPropagation(); closeSearch(); closeMenu(); npanel?closeNotes():openNotes(wrap); };
+    wrap.appendChild(b);
+    bar.appendChild(wrap);
+    bellBadge(); chatBadge();
+    /* Their read list lives in SharePoint too, so something ticked off on a phone is
+       still ticked off on the desktop. */
+    loadSeen().then(function(){ bellBadge(); if(npanel) npanel.innerHTML=notesHTML(); });
+    if(payOn() && payLevel()) reloadPayStatus();
+    alertsReady().then(function(A){ if(A && A.ON && npanel) npanel.innerHTML=notesHTML(); });
+  }
+
+  const avHTML=p=>'<span class="cir" style="'+faceStyle(p)+'">'+face(p)+'</span>'+
+    '<span class="who"><b>'+escHTML(name(p))+'</b><small>'+escHTML(String(p.title||'').split(' · ')[0])+'</small></span><span class="car">▼</span>';
+  /* Once this page knows who this is, whatever the header drew from the last page's menu (NAVSNAP) is drawn from the
+     real answer - the name button in place, the chat button only if that changed. */
+  function unsnapBar(){
+    try{
+      const bar=document.querySelector('.hdr-in'); if(!bar) return;
+      const av=bar.querySelector('.ph-av[data-snap]');
+      if(av){ const h=avHTML(me()); if(av.innerHTML!==h) av.innerHTML=h; av.removeAttribute('data-snap'); }
+      /* The chat button follows who this is - also when it changes LATER (the chat pilot list lands after the header is
+         drawn: found 17/11 in the live-mode browser check - a pilot member had no chat button on Home). */
+      const bw=bar.querySelector('.ph-bw');
+      if(bw){ bw.removeAttribute('data-snap'); if(navShown(true).some(x=>x.k==='chat')!==!!bw.querySelector('.ph-chat')) bell(); }
+    }catch(_){}
+  }
+  function mount(){
+    reloadLocations();            // offices are shared; pull the practice's copy once
+    const bar=document.querySelector('.hdr-in'); if(!bar)return;
+    // Re-mount once the real profile lands: pages call nav()/mount() before sign-in
+    // finishes, so the first paint would otherwise show a demo persona forever.
+    const old=bar.querySelector('.ph-av'); if(old) old.remove();
+    const p=me();
+    const b=document.createElement('button'); b.className='ph-av';
+    if(snapping() && NAVSNAP.av){ b.innerHTML=NAVSNAP.av; b.setAttribute('data-snap','1'); }   // still finding out: the name the last page showed
+    else b.innerHTML=avHTML(p);
+    b.onclick=e=>{e.stopPropagation(); closeNotes(); closeSearch(); menu?closeMenu():openMenu(b);};   // one panel at a time
+    bell();                       // bell first, so it sits left of the avatar
+    bar.appendChild(b);
+    if(!document.getElementById('ph-ov')){
+      const ov=document.createElement('div'); ov.id='ph-ov'; ov.className='ph-ov';
+      ov.innerHTML='<div class="ph-card" id="ph-card"></div>';
+      ov.addEventListener('click',e=>{ if(e.target===ov) closeProfile(); });
+      document.body.appendChild(ov);
+    }
+    document.addEventListener('keydown',e=>{ if(e.key==='Escape'){closeProfile();closeMenu();closeNotes();closeSearch();} });
+  }
+
+  function profile(){
+    closeMenu(); const p=me();
+    const ro=(l,v)=>'<div class="ph-f"><label>'+l+'</label><div class="ph-ro">'+(v ? escHTML(v) : '—')+'</div></div>';
+    document.getElementById('ph-card').innerHTML=
+      '<div class="ph-top"><span class="big" style="'+faceStyle(p)+'">'+face(p)+'</span>'+
+        '<div><h3>'+escHTML(name(p))+'</h3><div class="t">'+escHTML(p.title)+'</div></div>'+
+        '<button class="x" onclick="PH.closeProfile()">×</button></div>'+
+      '<div class="ph-body">'+
+        '<p class="ph-lab">You can change these <span class="ph-tag you">YOURS TO EDIT</span></p>'+
+        '<div class="ph-f" style="margin-bottom:16px"><label>Photo</label>'+
+          '<div class="ph-photo" id="ph-drop">'+
+            '<span class="ph-face" style="'+faceStyle(p)+'">'+face(p)+'</span>'+
+            '<div class="ph-photo-txt"><b>'+(p.photo?'Your photo':'No photo yet')+'</b>'+
+              '<span>Drag a picture here, or choose one from your device \u2014 JPG or PNG.</span></div>'+
+            '<div class="ph-photo-btns">'+
+              '<button class="ph-btn" onclick="document.getElementById(\'ph-file\').click()">'+(p.photo?'Change photo':'Choose photo')+'</button>'+
+              (p.photo?'<button class="ph-btn g" onclick="PH.clearPhoto()">Remove</button>':'')+
+            '</div>'+
+            '<input type="file" id="ph-file" accept="image/*" style="display:none" onchange="PH.pickPhoto(this)">'+
+          '</div>'+
+          (p.photo?'':'<div class="ph-pick" style="margin-top:10px"><span style="font-size:12px;color:#56627A">No photo? Pick a color for your initials:</span>'+
+            COLORS.map(c=>'<button class="ph-sw'+(c===p.color?' on':'')+'" style="background:'+c+'" onclick="PH.setColor(\''+c+'\')" title="Use this color"></button>').join('')+'</div>')+
+        '</div>'+
+        '<div class="ph-f" style="margin-bottom:16px"><label>Colors for the hub</label>'+
+          '<div class="ph-themes" id="ph-themes">'+themePicker()+'</div>'+
+          '<div style="font-size:11.5px;color:#56627A;margin-top:6px">Just for you, on every device you sign in on. '+
+          'Office colors on the schedule stay the same for everyone.</div></div>'+
+        '<div class="ph-f" style="margin-bottom:16px"><label>Menu on a computer</label>'+
+          '<div class="ph-lays" id="ph-lays">'+layoutPicker()+'</div>'+
+          '<div style="font-size:11.5px;color:#56627A;margin-top:6px">Just for you, on every computer you sign in on. '+
+          'Phones always keep the bar along the bottom.</div></div>'+
+        '<div class="ph-f" style="margin-bottom:14px"><label>Preferred name</label>'+
+          '<input class="ph-edit" id="ph-pref" value="'+((p.preferred||'')).replace(/"/g,'&quot;')+'" placeholder="'+p.first+'">'+
+          '<div style="font-size:11.5px;color:#56627A;margin-top:4px">What you\u2019d like to be called \u2014 this is the name your team sees. Leave blank to use \u201c'+p.first+'\u201d.</div></div>'+
+        '<div class="ph-f" style="margin-bottom:14px"><label>Contact phone</label>'+
+          '<input class="ph-edit" id="ph-phone" value="'+(p.phone||'').replace(/"/g,'&quot;')+'" placeholder="(575) 555-0000">'+
+          '<div style="font-size:11.5px;color:#56627A;margin-top:4px">Microsoft doesn\'t hold this — keep it current so your team can reach you.</div></div>'+
+        '<div class="ph-f" style="margin-bottom:18px"><label>About me</label>'+
+          '<textarea class="ph-edit" id="ph-about" placeholder="A line about what you do…">'+(p.about||'')+'</textarea></div>'+
+        (partyOn() ? (function(){ const x=partyRec().p[String(email(p)||'').toLowerCase()]||{}, no=x.no||{};
+          return '<div class="ph-f" style="margin-bottom:18px"><label>Celebrations on Home-Brace</label>'+
+            '<label style="display:flex;gap:8px;align-items:center;font-size:14px;margin:4px 0"><input type="checkbox" '+(no.bday?'':'checked')+' onchange="PH.partyPref(\'bday\',this.checked)"> Celebrate my birthday 🎂</label>'+
+            '<label style="display:flex;gap:8px;align-items:center;font-size:14px;margin:4px 0"><input type="checkbox" '+(no.anniv?'':'checked')+' onchange="PH.partyPref(\'anniv\',this.checked)"> Celebrate my Workiversary 🏆</label>'+
+            '<div style="font-size:11.5px;color:#56627A;margin-top:4px">Your admin adds the dates. Only the day is ever shown — never your age. Saves as you tick.</div></div>'; })() : '')+
+        '<p class="ph-lab">From Microsoft 365 <span class="ph-tag ms">SYNCED — CAN\'T EDIT HERE</span></p>'+
+        '<div class="ph-g">'+ro('First name',p.first)+ro('Last name',p.last)+ro('Email',email(p))+ro('Employee ID',p.emp)+'</div>'+
+        '<p class="ph-lab">Set by your admin <span class="ph-tag adm">ADMIN ONLY</span></p>'+
+        '<div class="ph-g">'+ro('Role(s)',p.role||'\u2014')+ro('Team(s)',p.teams.join(', '))+ro('Location(s)',p.loc)+ro('Region',p.region)+ro('Brand',p.brand)+ro('Status',p.status)+'</div>'+
+        '<div class="ph-note"><b>Why some boxes are locked:</b> your name and email come straight from Microsoft, so they only change there. Your team, location and status decide what you can open — only an admin can change those. Your <b>photo</b>, <b>phone</b> and <b>About me</b> are yours to keep current.</div>'+
+      '</div>'+
+      '<div class="ph-foot"><span class="ph-ok" id="ph-ok">✓ Saved</span><span style="flex:1"></span>'+
+        '<button class="ph-btn g" onclick="PH.closeProfile()">Close</button>'+
+        '<button class="ph-btn" onclick="PH.saveProfile()">Save my changes</button></div>';
+    document.getElementById('ph-ov').classList.add('open');
+    wireDrop();
+  }
+  function pickPhoto(input){ const f=input.files&&input.files[0]; if(f) readPhoto(f); }
+  /* A PHOTO THAT ALWAYS FITS (22/10/2026). One SharePoint record holds ~63,000 characters, and a busy photo saved
+     at one fixed quality can come close - the size watch found a profile at 70%. The quality steps down until the
+     picture is under 30,000 characters, then the size too if it must. A plain face is still the 256 px it was. */
+  function avatar(img){
+    const m=Math.min(img.width,img.height); let out='';
+    for(const S of [256,192,160]){
+      const c=document.createElement('canvas'); c.width=S; c.height=S;
+      c.getContext('2d').drawImage(img,(img.width-m)/2,(img.height-m)/2,m,m,0,0,S,S);
+      for(const q of [0.82,0.72,0.62,0.52]){ out=c.toDataURL('image/jpeg',q); if(out.length<=30000) return out; }
+    }
+    return out;
+  }
+  function readPhoto(file){
+    if(!/^image\//.test(file.type)) return;
+    const r=new FileReader();
+    r.onload=e=>{
+      const img=new Image();
+      img.onload=()=>{ // shrink to a sensible avatar so it fits in storage
+        saveMine({photo:avatar(img)});
+        profile(); refreshFaces();
+      };
+      img.src=e.target.result;
+    };
+    r.readAsDataURL(file);
+  }
+  function clearPhoto(){ saveMine({photo:null}); profile(); refreshFaces(); }
+  function refreshFaces(){ const p=me(); const a=document.querySelector('.ph-av .cir');
+    if(a){ a.setAttribute('style',faceStyle(p)); a.textContent=face(p); }
+    document.dispatchEvent(new CustomEvent('ph:me-changed')); }
+  function wireDrop(){
+    const d=document.getElementById('ph-drop'); if(!d)return;
+    ['dragenter','dragover'].forEach(t=>d.addEventListener(t,e=>{e.preventDefault();d.classList.add('over');}));
+    ['dragleave','drop'].forEach(t=>d.addEventListener(t,e=>{e.preventDefault();d.classList.remove('over');}));
+    d.addEventListener('drop',e=>{ const f=e.dataTransfer.files&&e.dataTransfer.files[0]; if(f)readPhoto(f); });
+  }
+  /* Picking a scheme applies it at once and saves it to the person's own row. */
+  function setTheme(k){
+    applyTheme(k);
+    try{ localStorage.setItem(THEME_KEY, THEME); }catch(_){}
+    saveMine({theme:THEME});
+    const box=document.getElementById('ph-themes'); if(box) box.innerHTML=themePicker();
+  }
+  /* After sign-in: whoever this is, their own scheme - also on a front-desk computer that
+     several people share, where the one cached on the device may be somebody else's. */
+  function syncTheme(){
+    const key=profileKey();
+    const use=row=>{ const k=(row&&row.theme)||'homebrace';
+      if(k!==THEME) applyTheme(k);
+      try{ localStorage.setItem(THEME_KEY, THEME); }catch(_){}
+      // and their menu layout, the same way (a shared computer: theirs, not the last person's)
+      const lay=(row && row.layout)==='top' ? 'top' : 'side';          // never chose: the sidebar (the default)
+      if(lay!==LAYOUT){ applyLayout(lay); sidenav(); }
+      try{ localStorage.setItem(LAYOUT_KEY, LAYOUT); }catch(_){} };
+    let local=null; try{ local=JSON.parse(localStorage.getItem(key)); }catch(_){}
+    if(local) use(local);
+    if(window.PH_STORE && isLive() && window.PH_AUTH){
+      window.PH_STORE.get(key).then(function(row){
+        if(window.PH_STORE.readFailed && window.PH_STORE.readFailed(key)) return;   // unknown: keep what is showing
+        use(row);
+      }).catch(function(){});
+    }
+  }
+  /* The menu layout: the same three steps as the colours. */
+  function setLayout(k){
+    applyLayout(k);
+    try{ localStorage.setItem(LAYOUT_KEY, LAYOUT); }catch(_){}
+    saveMine({layout:LAYOUT});
+    const box=document.getElementById('ph-lays'); if(box) box.innerHTML=layoutPicker();
+    sidenav();
+  }
+  function layoutPicker(){
+    return LAYOUTS.map(l=>{ const on=l.k===LAYOUT;
+      return '<button type="button" class="ph-lay'+(on?' on':'')+'" aria-pressed="'+on+'" onclick="PH.setLayout(\''+l.k+'\')">'+
+        '<span class="ph-laypic ph-laypic-'+l.k+'" aria-hidden="true"><span class="ph-laypic-b"></span><span class="ph-laypic-c"></span></span>'+
+        (on?'<span class="ph-thck" aria-hidden="true">\u2713</span>':'')+
+        '<span class="ph-thn">'+escHTML(l.n)+'</span><span class="ph-thnote">'+escHTML(l.note)+'</span></button>';
+    }).join('');
+  }
+  function themePicker(){
+    return THEMES.map(th=>{
+      const t = th.k==='homebrace' ? {'--navy':'#0F2A4A','--teal':'#149B96','--teal-soft':'#E5F4F3'} : schemeTokens(th);
+      const on=th.k===THEME;
+      /* Class names only this picker uses. It first borrowed "sw", which the Schedule and
+         the Dashboard already give their own switches - there the bars shrank to nothing
+         and every card showed an empty box (Jordan's screenshot, 25/09). */
+      return '<button type="button" class="ph-th'+(on?' on':'')+'" aria-pressed="'+on+'" onclick="PH.setTheme(\''+th.k+'\')">'+
+        '<span class="ph-thsw"><span class="ph-thsw-p" style="background:'+t['--navy']+'"></span>'+
+          '<span class="ph-thsw-a" style="background:'+t['--teal']+'"></span>'+
+          '<span class="ph-thsw-t" style="background:'+t['--teal-soft']+'"></span></span>'+
+        (on?'<span class="ph-thck" aria-hidden="true">\u2713</span>':'')+
+        '<span class="ph-thn">'+escHTML(th.n)+'</span>'+
+        (th.note?'<span class="ph-thnote">'+escHTML(th.note)+'</span>':'')+'</button>';
+    }).join('');
+  }
+  function setColor(c){ saveMine({color:c}); profile();
+    const av=document.querySelector('.ph-av .cir'); if(av)av.style.background=c; }
+  function saveProfile(){
+    const t=document.getElementById('ph-about'), ph=document.getElementById('ph-phone'), pr=document.getElementById('ph-pref');
+    const patch={about:t?t.value:''};
+    if(ph) patch.phone=ph.value.trim();
+    if(pr) patch.preferred=pr.value.trim();
+    saveMine(patch);
+    refreshFaces();
+    const av=document.querySelector('.ph-av .who b'); if(av) av.textContent=name(me());
+    const ok=document.getElementById('ph-ok'); if(ok){ok.classList.add('on'); setTimeout(()=>ok.classList.remove('on'),2200);}
+  }
+  function closeProfile(){ const o=document.getElementById('ph-ov'); if(o)o.classList.remove('open'); }
+
+  /* ONE nav for every page — identical order everywhere, so it never rearranges itself.
+     A tab only appears if the person can actually open it. */
+  /* TC TRACKER - sandbox only until the practice says go (12/10/2026). Jordan: "I want to do
+     it in the sandbox first before we push to production." On the live site the tab, the
+     page and the Home tile stay off whatever Teams & Access says, until this is true. Going
+     live also needs its own locked SharePoint list for the patient details (CLAUDE.md).
+     ON 19/10/2026 - Jordan: "yes on production". From now on the tab, the page and the Home
+     tile follow Teams & Access (the TC Tracker column) like every other tab; the patient
+     details are in their own locked folder (tcstore.js), access given by Admin (docs.js). */
+  const TC_LIVE=true;
+  /* Before everyone gets it, an ADMIN can try it on the live site: open tc.html?tcpreview once
+     (remembered in that browser). Jordan, 17/10: test it on the real site first. Nobody else
+     sees anything until TC_LIVE is true. */
+  function tcPreview(){
+    try{
+      if(/[?&]tcpreview(=1)?(&|$)/.test(location.search||'')) localStorage.setItem('ph_tc_preview','1');
+      return localStorage.getItem('ph_tc_preview')==='1' && isAdmin(realMe());
+    }catch(_){ return false; }
+  }
+  const tcOn=()=>env()!=='live' || TC_LIVE || tcPreview();
+  /* PAYROLL (01/11/2026). Morgan: "We can go live with the payroll sheet." Off on the live site until PAY_LIVE; an
+     ADMIN can try it there first with payroll.html?paypreview (remembered in that browser), like the TC Tracker.
+     Who: whoever manages payroll (Teams & Access, Payroll: Edit or Everything - and admins) sees every office and her
+     Settings; Payroll: See reads every office; each office's sender(s) - Morgan's "Who sends each office's sheet",
+     ph_pay_senders in the shared list (names only, no pay) - see and send their own office's sheet. The sheets
+     themselves are in the locked payroll folder (paystore.js), never the shared list. */
+  /* MONTHLY REPORT (18/11/2026): the offices' month-end numbers (Morgan's monitor report). Sandbox first - false keeps
+     it off the live site until Jordan says "monthly live". ADMINS SEE IT ON THE LIVE SITE (24/11/2026, Jordan: "make sure
+     morgan and jamie have access in production" - both are Admin) in their menu, no special link needed; everyone else
+     waits for the switch. monthly.html?monthlypreview still works (it does nothing more now). */
+  const MONTHLY_LIVE=false;
+  /* CELEBRATIONS (18/11/2026): birthdays + work anniversaries on Home (party.js). LIVE 19/11/2026 (Jordan: "morgan said to
+     go to production with birthday and workiversery"). false = the live site goes back to no Home card, no admin dates,
+     no profile switches (the dates already saved stay in ph_celebrate). */
+  const PARTY_LIVE=true;
+  const PARTY_KEY='ph_celebrate';
+  function partyOn(){ return env()!=='live' || PARTY_LIVE; }
+  function partyRec(){ try{ const r=JSON.parse(localStorage.getItem(PARTY_KEY)); return r && typeof r==='object' && r.p ? r : {v:1, p:{}}; }catch(_){ return {v:1, p:{}}; } }
+  /* My profile: a person switches their own birthday / anniversary celebration off (or back on). Merged into the shared
+     record (PH_STORE.update), so nobody else's dates are touched. */
+  /* YOUR DAY ON WHATEVER PAGE YOU OPEN FIRST (Jordan 19/11: "make it play on whatever page they open first (for who ever
+     birthday or workiversary it is)"). Home has its own card; on any other page, once we know who this is: if their own
+     entry in ph_celebrate has a date, party.js is loaded and plays their celebration (today's, or a missed one from the
+     last week) - once: not again on this device today, and not if they've had it on any device (seen). */
+  const PARTY_SRC=(function(){ try{ const me=document.currentScript && document.currentScript.src; return me ? new URL('party.js'+((/\?v=[^&#]+/.exec(me)||[''])[0]), me).href : 'party.js'; }catch(_){ return 'party.js'; } })();
+  function partySeen(it){
+    const e=String(email(me())||'').toLowerCase().trim(); if(!e || !it || !it.on || !window.PH_STORE) return;
+    window.PH_STORE.update(PARTY_KEY, cur=>{ const rec=cur && typeof cur==='object' && cur.p ? cur : {v:1, p:{}};
+      const x=Object.assign({}, rec.p[e]||{}), seen=Object.assign({}, x.seen||{}); seen[it.kind]=it.on; x.seen=seen; rec.p[e]=x; return rec; });
+  }
+  let PARTY_TRIED=false;
+  function partyMine(){
+    if(PARTY_TRIED || !partyOn() || !window.PH_STORE) return;
+    const file=(location.pathname.split('/').pop()||'home.html');
+    if(/^(home|auth|connect|restore|alerts-test|start)\.html$/i.test(file)) return;
+    if(env()==='live' && !window.PH_AUTH) return;                         // live: once signed in
+    if(env()==='live' && !PROFILE) return;                                // ...and known: "nobody" isn't anyone (21/11/2026, code review)
+    const e=String(email(me())||'').toLowerCase().trim(); if(!e) return;
+    PARTY_TRIED=true;
+    window.PH_STORE.get(PARTY_KEY).then(rec=>{
+      const x=(rec && rec.p && rec.p[e]) || null; if(!x || !(x.bday || x.started)) return;
+      const run=()=>{ try{ window.PH_PARTY.autoMine({rec, me:e, roster:rosterView(), photoFor, onSeen:partySeen}); }catch(_){} };
+      if(window.PH_PARTY && window.PH_PARTY.autoMine) return run();
+      const sc=document.createElement('script'); sc.src=PARTY_SRC; sc.onload=run; document.head.appendChild(sc);
+    }).catch(()=>{ PARTY_TRIED=false; });
+  }
+  document.addEventListener('ph-identity', ()=>setTimeout(partyMine, 600));
+  document.addEventListener('ph-signed-in', ()=>setTimeout(partyMine, 1200));
+  function partyPref(kind, on){
+    const e=String(email(me())||'').toLowerCase().trim(); if(!e || (kind!=='bday' && kind!=='anniv') || !window.PH_STORE) return;
+    window.PH_STORE.update(PARTY_KEY, cur=>{ const rec=cur && typeof cur==='object' && cur.p ? cur : {v:1, p:{}}; const x=Object.assign({}, rec.p[e]||{});
+      const no=Object.assign({}, x.no||{}); no[kind]=!on; x.no=no; rec.p[e]=x; return rec; });
+    const ok=document.getElementById('ph-ok'); if(ok){ ok.classList.add('on'); setTimeout(()=>ok.classList.remove('on'),1800); }
+  }
+  /* TASKS (19/11/2026, tasks.js): give a task to people; they tick it off; the giver follows who has and hasn't. Sandbox
+     first - false keeps the tab, the Home card and the Teams & Access column off the live site until Jordan says "tasks
+     live". An admin can try it there first with tasks.html?taskspreview (this tab only). */
+  const TASKS_LIVE=true;     // LIVE 20/11/2026 - Jordan: "morgan wants tasks pushed to production"
+  function tasksOn(){ if(env()!=='live' || TASKS_LIVE) return true;
+    try{ if(/[?&]taskspreview\b/.test(location.search||'')) sessionStorage.setItem('ph_tasks_preview','1'); return sessionStorage.getItem('ph_tasks_preview')==='1' && isAdmin(realMe()); }catch(_){ return false; } }
+  function monthlyOn(){ if(env()!=='live' || MONTHLY_LIVE) return true;
+    try{ return isAdmin(realMe()); }catch(_){ return false; } }
+  const PAY_LIVE=true;                // ON for staff 04/11/2026 (Morgan: "I did all the instructions, I think we are good to go"); first pay period #24
+  function payPreview(){
+    try{
+      if(/[?&]paypreview(=1)?(&|$)/.test(location.search||'')) localStorage.setItem('ph_pay_preview','1');
+      return localStorage.getItem('ph_pay_preview')==='1' && isAdmin(realMe());
+    }catch(_){ return false; }
+  }
+  const payOn=()=>env()!=='live' || PAY_LIVE || payPreview();
+  // What a person gets on the payroll folders from their teams: 'write' manages payroll, 'read' sees every office.
+  function payRoleFor(teams){
+    if(levelForTeams(teams, 'admin')==='manage') return 'write';
+    const l=levelForTeams(teams, 'payroll');
+    return RANK[l]>=RANK.edit ? 'write' : RANK[l]>=RANK.view ? 'read' : '';
+  }
+  const PAY_SENDERS_KEY='ph_pay_senders';
+  let PAY_SENDERS=null;
+  function paySenders(){
+    if(PAY_SENDERS) return PAY_SENDERS;
+    try{ PAY_SENDERS=JSON.parse(localStorage.getItem(PAY_SENDERS_KEY))||null; }catch(_){ PAY_SENDERS=null; }
+    return PAY_SENDERS||{offices:{}};
+  }
+  function reloadPaySenders(){
+    if(!window.PH_STORE || !isLive() || !payOn()) return Promise.resolve(paySenders());
+    return window.PH_STORE.get(PAY_SENDERS_KEY).then(function(r){
+      PAY_SENDERS=(r && typeof r==='object' && r.offices && typeof r.offices==='object') ? r : {offices:{}};
+      try{ localStorage.setItem(PAY_SENDERS_KEY, JSON.stringify(PAY_SENDERS)); }catch(_){}
+      return PAY_SENDERS;
+    }).catch(function(){ return paySenders(); });
+  }
+  // The offices whose sheet this person sends (the signed-in person when no email is given).
+  function paySenderOffices(em){
+    em=String(em===undefined ? (email(me())||'') : em).trim().toLowerCase(); if(!em) return [];
+    const o=paySenders().offices||{};
+    return Object.keys(o).filter(k=>(o[k]||[]).some(e=>String(e||'').trim().toLowerCase()===em));
+  }
+  // The signed-in person: 'manage' (every office + Settings), 'view' (every office, read only), 'send' (their office), ''.
+  function payLevel(){
+    if(isAdmin(me()) || atLeast('payroll','edit')) return 'manage';
+    if(atLeast('payroll','view')) return 'view';
+    return paySenderOffices().length ? 'send' : '';
+  }
+  /* PAYROLL REMINDERS IN THE BELL (02/11/2026). Morgan 22/10: "How will they get reminders to send payroll? Is it
+     through Home-Brace?" Worked out from today's date and ph_pay_status (the shared list: which office sent which
+     pay period, and when it was entered - times only, never pay), so nothing is stored per reminder and one stays
+     until its sheet is sent:
+       - whoever sends an office's sheet: from the workday before it's due ("due Tuesday by 2 pm"), the day itself,
+         then "late" until it's sent or Morgan enters payroll;
+       - whoever manages payroll: from 2 pm on the due day, the offices still to send (only offices with a sender
+         chosen), then "all in - ready to enter" until she marks it entered.
+     The dates come from payrules.js, loaded when someone has Payroll. Phone reminders come with Chat's alerts. */
+  const PAY_STATUS_KEY='ph_pay_status';
+  let PAY_STATUS=null, PAY_RULES_P=null;
+  function payStatus(){
+    if(PAY_STATUS) return PAY_STATUS;
+    try{ PAY_STATUS=JSON.parse(localStorage.getItem(PAY_STATUS_KEY))||null; }catch(_){ PAY_STATUS=null; }
+    return PAY_STATUS||{p:{}};
+  }
+  function payRulesReady(){
+    if(window.PAYRULES) return Promise.resolve(window.PAYRULES);
+    if(PAY_RULES_P) return PAY_RULES_P;
+    PAY_RULES_P=new Promise(function(ok){
+      const me_=document.querySelector('script[src*="user.js"]'), sc=document.createElement('script');
+      sc.src=me_ ? me_.getAttribute('src').replace(/user\.js/, 'payrules.js') : 'payrules.js';
+      sc.onload=function(){ ok(window.PAYRULES||null); }; sc.onerror=function(){ ok(null); };
+      document.head.appendChild(sc);
+    });
+    return PAY_RULES_P;
+  }
+  function reloadPayStatus(){
+    if(!payOn() || !payLevel()) return Promise.resolve(null);
+    const got=window.PH_STORE ? window.PH_STORE.get(PAY_STATUS_KEY) : Promise.resolve(null);
+    // Morgan's holiday changes (payrules.js, 17/11/2026): the reminders' "due Monday" weeks follow them too
+    const hol=window.PH_STORE ? window.PH_STORE.get('ph_pay_holidays') : Promise.resolve(null);
+    const offs=window.PH_STORE ? window.PH_STORE.get('ph_pay_offices') : Promise.resolve(null);      // an office added in Payroll (17/11/2026)
+    return Promise.all([payRulesReady(), Promise.resolve(got).catch(function(){ return null; }), Promise.resolve(hol).catch(function(){ return null; }), Promise.resolve(offs).catch(function(){ return null; })]).then(function(r){
+      if(r[0] && r[0].setHolidayEdits) r[0].setHolidayEdits(r[2]);
+      if(r[0] && r[0].setOffices) r[0].setOffices(r[3]);
+      if(r[1] && typeof r[1]==='object' && r[1].p){ PAY_STATUS=r[1]; try{ localStorage.setItem(PAY_STATUS_KEY, JSON.stringify(PAY_STATUS)); }catch(_){} }
+      notifyChanged();
+      return PAY_STATUS;
+    });
+  }
+  /* One office's sheet sent / a pay period entered - the payroll page calls these. Keeps the last 6 pay periods. */
+  function payMark(key, fn){
+    const tidy=function(x){
+      x=(x && typeof x==='object' && x.p) ? x : {v:1, p:{}};
+      x.p[key]=x.p[key]||{sent:{}}; x.p[key].sent=x.p[key].sent||{};
+      fn(x.p[key]);
+      Object.keys(x.p).sort().slice(0, -6).forEach(function(k){ delete x.p[k]; });
+      return x;
+    };
+    PAY_STATUS=tidy(JSON.parse(JSON.stringify(payStatus())));
+    try{ localStorage.setItem(PAY_STATUS_KEY, JSON.stringify(PAY_STATUS)); }catch(_){}
+    notifyChanged();
+    if(!window.PH_STORE) return Promise.resolve(PAY_STATUS);
+    return window.PH_STORE.update(PAY_STATUS_KEY, tidy).then(function(r){ if(r && r.value) PAY_STATUS=r.value; notifyChanged(); return PAY_STATUS; });
+  }
+  function payReminders(now){
+    const R=window.PAYRULES; if(!R || !payOn()) return [];
+    const lv=payLevel(); if(!lv) return [];
+    now=now||new Date();
+    const pad=function(n){ return String(n).padStart(2,'0'); };
+    const today=R.todayISO(now), hm=pad(now.getHours())+':'+pad(now.getMinutes());
+    const per=R.period(R.currentIndex(today)), st=(payStatus().p||{})[per.key]||{}, sent=st.sent||{};
+    if(R.FIRST && per.key<R.FIRST) return [];                    // before Home-Brace payroll began: done the old way
+    if(st.entered || today<R.workdayBefore(per.due)) return [];
+    const after=today>per.due || (today===per.due && hm>='14:00');
+    const wd=function(d){ return ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][R.dow(d)]; };
+    const num='#'+per.n, out=[];
+    paySenderOffices().filter(function(o){ return !sent[o]; }).forEach(function(o){
+      out.push({id:'pay-'+per.key+'-'+o, ic:after?'\u26A0\uFE0F':'\u23F0', late:after, href:'payroll.html',
+        title:after ? o+'\u2019s payroll sheet is late \u2014 it was due '+(today===per.due?'today':wd(per.due))+' by 2 pm'
+                    : o+'\u2019s payroll sheet is due '+(today===per.due?'today':wd(per.due))+' by 2 pm',
+        sub:'Pay period '+num+' \u00b7 tap to open it'});
+    });
+    if(lv==='manage' && after){
+      const off=paySenders().offices||{}, chosen=Object.keys(off).filter(function(o){ return (off[o]||[]).length; });
+      if(chosen.length){                 // payroll is in use: Keystone Partners (nobody sends it - hers to fill in) counts too
+        const ord=(R.OFFICES||[]).map(function(x){ return x.n; }), at_=function(o){ const i=ord.indexOf(o); return i<0 ? 99 : i; };
+        (R.OFFICES||[]).forEach(function(x){ if(x.self && chosen.indexOf(x.n)<0) chosen.push(x.n); });
+        chosen.sort(function(a, b){ return at_(a)-at_(b); });
+      }
+      const missing=chosen.filter(function(o){ return !sent[o]; });
+      if(missing.length) out.push({id:'pay-'+per.key+'-wait', ic:'\u23F3', href:'payroll.html',
+        title:'Payroll '+num+': still waiting on '+missing.join(', '), sub:'Their sheets were due '+(today===per.due?'today':wd(per.due))+' by 2 pm'});
+      else if(chosen.length) out.push({id:'pay-'+per.key+'-in', ic:'\u2705', href:'payroll.html',
+        title:'Payroll '+num+': every sheet is in \u2014 ready to enter', sub:'Tap to open it'});
+    }
+    return out;
+  }
+  /* ALERTS ON THIS DEVICE, FROM THE BELL (03/11/2026). alerts.js (PH_ALERTS) is loaded on every page when it's needed,
+     like payrules.js; the bell's last row turns alerts on or off for this phone or computer (an iPhone: add Home-Brace
+     to the home screen first - Apple's rule). Hidden where alerts aren't on yet (the live site until ALERTS_LIVE). */
+  /* FEEDBACK REPLIES (04/11/2026, fbreply.js): the person's "Home-Brace team replied" and an admin's "N new feedback
+     messages" sit with the bell's reminders. Looked up after sign-in and when a tab comes back, 10 minutes apart. */
+  let FB_P=null, FBR={mine:[], fresh:0}, FB_AT=0, FB_BUSY=false;
+  function fbReady(){
+    if(window.PH_FBR) return Promise.resolve(window.PH_FBR);
+    if(FB_P) return FB_P;
+    FB_P=new Promise(function(ok){
+      const me_=document.querySelector('script[src*="user.js"]'), sc=document.createElement('script');
+      sc.src=me_ ? me_.getAttribute('src').replace(/user\.js/, 'fbreply.js') : 'fbreply.js';
+      sc.onload=function(){ ok(window.PH_FBR||null); }; sc.onerror=function(){ FB_P=null; ok(null); };
+      document.head.appendChild(sc);
+    });
+    return FB_P;
+  }
+  function fbTick(force){
+    if(FB_BUSY || (!force && Date.now()-FB_AT<10*60e3)) return;
+    if(isLive() && (!SIGNED_IN || stillLearning())) return;
+    if(!window.PH_STORE || !PH_STORE.feedbackItems) return;
+    FB_BUSY=true; FB_AT=Date.now();
+    fbReady().then(function(F){ return F ? F.refresh() : null; }).then(function(r){
+      FB_BUSY=false; if(!r) return;
+      FBR=r; bellBadge(); if(npanel) npanel.innerHTML=notesHTML();
+      if(location.hash==='#myfeedback'){ try{ history.replaceState(null,'',location.pathname+location.search); }catch(_){} myFeedback(); }
+    }, function(){ FB_BUSY=false; });
+  }
+  function fbReminders(){
+    const out=(FBR.mine||[]).map(function(t){
+      const first=(t.msgs[0]&&t.msgs[0].text)||'', short=first.length>48?first.slice(0,46)+'…':first;
+      return {ic:'\u{1F4AC}', title:'Home-Brace team replied to your feedback', sub:'\u201c'+short+'\u201d \u00b7 '+ago(t.lastTeam.at), fb:t.id};
+    });
+    if(FBR.fresh) out.push({ic:'\u{1F4E5}', title:FBR.fresh+' new feedback message'+(FBR.fresh===1?'':'s'), sub:'Admin \u2192 Feedback', href:'admin.html#feedback'});
+    return out;
+  }
+  function myFeedback(){ fbReady().then(function(F){ if(F) F.openMine(); }); }
+  document.addEventListener('ph-fb-changed', function(){ fbTick(true); });
+  document.addEventListener('visibilitychange', function(){ if(document.visibilityState==='visible') fbTick(false); });
+
+  /* USAGE - THE ADOPTION DASHBOARD (10/11/2026, Jordan: the practice asked "to put in ADMIN so dashboard to see usage of
+     Home-Brace (non admins). Who is logging in per different period. Basic an adoption dashboard"; "Make it a real
+     adoption dashboard. Not too much but very clear with a few tiles"; no line in the staff guide). Each person's own
+     record, ph_use_<email> = {v:1, email, name, rk, admin, first, last, d:{'YYYY-MM-DD':{n, p:{home:2, payroll:1}}}}:
+     who, which section, which day (this device's calendar) - never what they typed or saw. rk = their team-list key
+     (personKey of the row sign-in matched them to), so the dashboard finds the 38 people the list has no email for.
+     Written by the person themselves, at most once per section per 30 minutes on a device, never while an admin is
+     viewing as someone. Admin -> Usage (usage.js) reads them all. */
+  const USE_GAP=30*60e3;
+  /* The signed-in person's own email (never the person an admin is viewing as). */
+  function useEmail(){
+    const m=realMe()||{}, em=String((PROFILE && (PROFILE.mail||PROFILE.userPrincipalName)) || m.mail || '').toLowerCase().trim();
+    return em.indexOf('@')>0 ? em : '';
+  }
+  /* NOT TRACKED (10/11/2026, Jordan: "Please don't include me in the include Admin. I am not to be tracked"): an admin
+     can switch their own recording off on Admin -> Usage. Their record keeps only {email, off:true} - the visits so
+     far are cleared - useTick never writes to it again, and the dashboard leaves them out entirely, even with
+     "Include admins" ticked. It is kept in the shared record (not on this device), so it holds on every device. No
+     name or email is written into this code. */
+  function useTrackMe(on){
+    const em=useEmail(); if(!em || !window.PH_STORE || !PH_STORE.update) return Promise.reject(new Error('Not signed in'));
+    return PH_STORE.update('ph_use_'+em, function(cur){
+      if(on){ if(!(cur && cur.off)) return undefined; const x=Object.assign({}, cur); delete x.off; x.d=(x.d && typeof x.d==='object') ? x.d : {}; return x; }
+      return {v:1, email:em, off:true, d:{}};
+    });
+  }
+  function useTick(){
+    if(!window.PH_STORE || !PH_STORE.update) return;
+    if(isLive() && (!SIGNED_IN || stillLearning())) return;
+    if(impersonating() && isAdmin(realMe())) return;                  // viewing as someone: not their visit
+    const m=realMe()||{}, em=useEmail();
+    if(!em) return;
+    const sec=NAV_ACTIVE||'other', gate='ph_usegate_'+em+'_'+sec;      // this device's 30-minute gate (not a record)
+    let was=0; try{ was=+localStorage.getItem(gate)||0; }catch(_){}
+    if(Date.now()-was<USE_GAP) return;
+    try{ localStorage.setItem(gate, String(Date.now())); }catch(_){}
+    const now=new Date(), day=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+    const row=rosterMe(em, PROFILE && PROFILE.displayName), at=now.toISOString();
+    const name=String((PROFILE && PROFILE.displayName) || ((m.first||'')+' '+(m.last||''))).trim(), admin=!!isAdmin(realMe());
+    PH_STORE.update('ph_use_'+em, function(cur){
+      if(cur && cur.off) return undefined;                            // they asked not to be tracked: nothing written
+      const x=(cur && typeof cur==='object') ? cur : {v:1, email:em, first:at, d:{}};
+      x.v=1; x.email=em; if(name) x.name=name; if(row) x.rk=personKey(row); x.admin=admin; x.last=at; if(!x.first) x.first=at;
+      x.d=(x.d && typeof x.d==='object') ? x.d : {};
+      const dd=x.d[day]=x.d[day]||{n:0, p:{}}; dd.n=(dd.n||0)+1; dd.p=dd.p||{}; dd.p[sec]=(dd.p[sec]||0)+1;
+      const days=Object.keys(x.d).sort(); while(days.length>400) delete x.d[days.shift()];   // about 13 months
+      return x;
+    }).catch(function(){ try{ localStorage.removeItem(gate); }catch(_){} });
+  }
+  document.addEventListener('visibilitychange', function(){ if(document.visibilityState==='visible') setTimeout(useTick, 1500); });
+  let USAGE_P=null;
+  function usageReady(){
+    if(window.PH_USAGE) return Promise.resolve(window.PH_USAGE);
+    if(USAGE_P) return USAGE_P;
+    USAGE_P=new Promise(function(ok){
+      const me_=document.querySelector('script[src*="user.js"]'), sc=document.createElement('script');
+      sc.src=me_ ? me_.getAttribute('src').replace(/user\.js/, 'usage.js') : 'usage.js';
+      sc.onload=function(){ ok(window.PH_USAGE||null); }; sc.onerror=function(){ USAGE_P=null; ok(null); };
+      document.head.appendChild(sc);
+    });
+    return USAGE_P;
+  }
+
+  let ALERTS_P=null, ALERT_NOTE='';
+  function alertsReady(){
+    if(window.PH_ALERTS) return Promise.resolve(window.PH_ALERTS);
+    if(ALERTS_P) return ALERTS_P;
+    ALERTS_P=new Promise(function(ok){
+      const me_=document.querySelector('script[src*="user.js"]'), sc=document.createElement('script');
+      sc.src=me_ ? me_.getAttribute('src').replace(/user\.js/, 'alerts.js') : 'alerts.js';
+      sc.onload=function(){ ok(window.PH_ALERTS||null); }; sc.onerror=function(){ ok(null); };
+      document.head.appendChild(sc);
+    });
+    return ALERTS_P;
+  }
+  function alertsRow(){
+    const A=window.PH_ALERTS; if(!A || !A.ON) return '';
+    const st=A.state(), dev=escHTML(A.KIND||'device');
+    if(st==='unsupported') return '';
+    const note=ALERT_NOTE ? '<div class="nalnote">'+escHTML(ALERT_NOTE)+'</div>' : '';
+    if(st==='on') return '<div class="nalert on"><span>📱 Alerts are on for this '+dev+'</span><button class="nal-off" type="button">Turn off</button>'+note+'</div>';
+    if(st==='install') return '<div class="nalert"><span>📱 To get alerts on this '+dev+': tap <b>Share</b>, then <b>Add to Home Screen</b>, and open Home-Brace from your home screen.</span></div>';
+    if(st==='blocked') return '<div class="nalert"><span>📱 Alerts are blocked for Home-Brace in this browser’s settings.</span>'+note+'</div>';
+    return '<div class="nalert"><span>📱 Get reminders on this '+dev+'</span><button class="nal-on" type="button">Turn on</button>'+note+'</div>';
+  }
+  function alertsTap(on){
+    const A=window.PH_ALERTS; if(!A) return;
+    const paint=function(){ if(npanel) npanel.innerHTML=notesHTML(); };
+    ALERT_NOTE=''; 
+    if(!on){ A.disable().then(function(){ ALERT_NOTE='Alerts are off on this '+(A.KIND||'device')+'.'; paint(); }); return; }
+    A.enable()                                     // straight from the tap: the browser only asks from one
+      .then(function(){ ALERT_NOTE='On ✓ A test alert is on its way.'; paint();
+        return A.send({title:'Alerts are on ✓', body:'Home-Brace reminders will come in like this.', url:A.here('home.html'), tag:'hb-test', delay:3}); })
+      .catch(function(e){ const m=(e && e.message)||'';
+        ALERT_NOTE=m==='blocked' ? 'This browser said no. You can allow alerts for this site in its settings.'
+          : m==='dismissed' ? 'Nothing changed - tap Turn on again and choose Allow.'
+          : m==='signin' ? 'Sign in again, then try once more.' : 'Couldn’t turn alerts on ('+m+').';
+        paint(); });
+  }
+
+  /* PAYROLL REMINDERS ON PHONES (03/11/2026). The bell's reminders (above), sent as alerts to every device each sender
+     turned on: the workday before it's due at 9 am, the due day at 9 am, and at 1 pm - Central, like the 2 pm deadline -
+     to the senders of offices that haven't sent yet. No server clock: the first Home-Brace visit after each time sends
+     it, from whoever's browser that is. It's claimed first in ph_pay_status (p[period].al[slot] = {at, by}), so two
+     visits at once still send it once; a visit that finds a later time already due sends only that one. Nothing after
+     2 pm (the bell says "late" from then). Off until alerts are on (PH_ALERTS.ON). */
+  function centralNow(now){
+    now=now||new Date();
+    try{
+      const p={}; new Intl.DateTimeFormat('en-US',{timeZone:'America/Chicago', year:'numeric', month:'2-digit', day:'2-digit',
+        hour:'2-digit', minute:'2-digit', hourCycle:'h23'}).formatToParts(now).forEach(function(x){ p[x.type]=x.value; });
+      return {date:p.year+'-'+p.month+'-'+p.day, hm:(p.hour==='24'?'00':p.hour)+':'+p.minute};
+    }catch(_){
+      const pad=function(n){ return String(n).padStart(2,'0'); };
+      return {date:now.getFullYear()+'-'+pad(now.getMonth()+1)+'-'+pad(now.getDate()), hm:pad(now.getHours())+':'+pad(now.getMinutes())};
+    }
+  }
+  function payAlertPlan(now){
+    const R=window.PAYRULES; if(!R || !payOn()) return null;
+    const c=centralNow(now), per=R.period(R.currentIndex(c.date)), st=(payStatus().p||{})[per.key]||{}, sent=st.sent||{}, al=st.al||{};
+    if(st.entered || (R.FIRST && per.key<R.FIRST)) return null;
+    if(c.date>per.due || (c.date===per.due && c.hm>='14:00')) return null;
+    const slots=[{k:'eve', d:R.workdayBefore(per.due), hm:'09:00'}, {k:'am', d:per.due, hm:'09:00'}, {k:'pm', d:per.due, hm:'13:00'}]
+      .filter(function(x){ return c.date>x.d || (c.date===x.d && c.hm>=x.hm); });
+    if(!slots.length) return null;
+    const slot=slots[slots.length-1].k; if(al[slot]) return null;
+    const off=paySenders().offices||{};
+    const todo=Object.keys(off).filter(function(o){ return (off[o]||[]).length && !sent[o]; });
+    if(!todo.length) return null;
+    const wd=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][R.dow(per.due)];
+    const when=slot==='eve' ? 'is due '+wd+' by 2 pm' : slot==='am' ? 'is due today by 2 pm' : 'is due at 2 pm — an hour to go';
+    return {key:per.key, n:per.n, slot:slot, sends:todo.map(function(o){
+      return {o:o, emails:off[o].slice(), title:o+'’s payroll sheet '+when, body:'Pay period #'+per.n+' · tap to open it'}; })};
+  }
+  /* SIGN OUT TURNS THIS DEVICE'S ALERTS OFF FIRST (21/11/2026, code review). The alert address belongs to the browser,
+     not the person: on a shared front-desk computer the next person to sign in would get the last one's alerts and
+     instant chat alerts (sender + the start of the message), and the computer would quietly join their own list. The
+     page-open check finishes first (so it can't put the address back), then alerts go off here - the instant chat link
+     removed with the leaving person's own sign-in. At most 6 s; sign-out happens either way. */
+  function signOut(){
+    const A=window.PH_AUTH; if(!A || !A.signOut) return Promise.resolve();
+    const off=alertsReady().then(function(P){ if(!P) return null;
+      return Promise.resolve(P.refresh && P.refresh()).then(function(){ return P.saved && P.saved() ? P.disable() : null; }); }).catch(function(){ return null; });
+    return Promise.race([off, new Promise(function(r){ setTimeout(r, 6000); })]).then(function(){ return A.signOut(); });
+  }
+  let PAY_ALERT_BUSY=false, PAY_ALERT_AT=0;
+  function payAlertsTick(now){
+    if(PAY_ALERT_BUSY || !payOn() || !window.PH_STORE) return Promise.resolve(null);
+    PAY_ALERT_BUSY=true; PAY_ALERT_AT=Date.now();
+    const done=function(v){ PAY_ALERT_BUSY=false; return v; };
+    return alertsReady().then(function(A){
+      if(!A || !A.ON) return null;
+      return Promise.all([payRulesReady(), reloadPaySenders(), window.PH_STORE.get(PAY_STATUS_KEY).catch(function(){ return null; })]).then(function(r){
+        if(r[2] && typeof r[2]==='object' && r[2].p){ PAY_STATUS=r[2]; try{ localStorage.setItem(PAY_STATUS_KEY, JSON.stringify(PAY_STATUS)); }catch(_){} }
+        const plan=payAlertPlan(now); if(!plan) return null;
+        const stamp=new Date().toISOString()+'~'+Math.random().toString(36).slice(2,8);
+        const by=String(email(isLive() ? realMe() : me())||'').toLowerCase();
+        return window.PH_STORE.update(PAY_STATUS_KEY, function(cur){
+          cur=(cur && typeof cur==='object' && cur.p) ? cur : {v:1, p:{}};
+          const p=cur.p[plan.key]=cur.p[plan.key]||{sent:{}}; p.al=p.al||{};
+          if(p.al[plan.slot]) return undefined;              // someone else's visit sent it
+          p.al[plan.slot]={at:stamp, by:by}; return cur;
+        }).then(function(res){
+          const v=res && res.value, got=v && v.p && v.p[plan.key] && v.p[plan.key].al && v.p[plan.key].al[plan.slot];
+          if(!res || res.blocked || !got || got.at!==stamp) return null;
+          PAY_STATUS=v; try{ localStorage.setItem(PAY_STATUS_KEY, JSON.stringify(PAY_STATUS)); }catch(_){}
+          return plan.sends.reduce(function(c, x){ return c.then(function(acc){
+            return A.sendTo(x.emails, {title:x.title, body:x.body, url:A.here('payroll.html'), tag:'hb-pay-'+plan.key+'-'+x.o})
+              .then(function(o){ return acc.concat([{o:x.o, out:o}]); }, function(){ return acc; }); }); }, Promise.resolve([]));
+        });
+      });
+    }).then(done, function(){ return done(null); });
+  }
+  document.addEventListener('visibilitychange', function(){
+    if(document.visibilityState==='visible' && Date.now()-PAY_ALERT_AT>10*60e3 && SIGNED_IN && payOn()) payAlertsTick();
+  });
+  /* THE MENU STAYS PUT BETWEEN PAGES (10/11/2026, Jordan: "The app names still flash for a second once you click and
+     loading page loads.. It should work like a real app where nothing moves besides the content page with the loading
+     screen" - "the different tabs flash away for a second"). A page that has just opened doesn't know who this is until
+     sign-in has been checked again and the team list read (~0.5-1 s), so its menu showed only Home and no name, then
+     filled in. Now, once a page has settled, what its menu showed - which apps, and the name button - is kept for THIS
+     browser tab only (sessionStorage: gone when the tab closes; nothing about anyone else). The next page in the tab
+     draws that while it is still finding out, then redraws from what it learns - the same, so nothing moves. It only
+     changes what the menu SHOWS while loading - never what anyone may open (guard() and every page's own checks use
+     the real answer) - and the real answer replaces it as soon as it is known. Live only (the sandbox knows at once). */
+  const NAVSNAP_KEY='ph_navsnap';
+  let NAVSNAP=null;
+  try{ const v=JSON.parse(sessionStorage.getItem(NAVSNAP_KEY)||'null'); if(v && v.v===1 && v.who && Array.isArray(v.all) && v.all.length) NAVSNAP=v; }catch(_){ NAVSNAP=null; }
+  const snapping=()=>{ try{ return !!NAVSNAP && isLive() && stillLearning(); }catch(_){ return false; } };
+  // The apps the menu lists now: the real answer, or - while this page is still finding out - the last page's.
+  function navShown(withHidden){
+    let list=NAV.filter(x=>x.show());
+    if(snapping()){ const by={}; NAV.forEach(x=>{ by[x.k]=x; }); const l=NAVSNAP.all.map(k=>by[k]).filter(Boolean); if(l.length) list=l; }
+    return withHidden ? list : list.filter(x=>x.tab!==false);
+  }
+  // Kept once this page knows who this is (and its menu has been drawn from that).
+  function saveNavSnap(){
+    if(!isLive() || stillLearning()) return;
+    try{
+      const av=document.querySelector('.hdr-in .ph-av'); let avh=av ? av.innerHTML : '';
+      if(/blob:/i.test(avh) || avh.length>200000) avh='';                     // a photo that won't survive the next page
+      const who=String((PROFILE && (PROFILE.mail||PROFILE.userPrincipalName))||'').toLowerCase(); if(!who) return;
+      const snap={v:1, who, all:NAV.filter(x=>x.show()).map(x=>x.k), av:avh, fit:LOAD.lastFit||null};
+      sessionStorage.setItem(NAVSNAP_KEY, JSON.stringify(snap));
+    }catch(_){}
+  }
+  const NAV=[
+    {k:'home',       n:'\ud83c\udfe0 Home',             href:'home.html',       show:()=>true},
+    /* TASKS (19/11/2026): everyone gets tasks, so everyone gets the tab (Teams & Access decides who can GIVE one). */
+    {k:'tasks',      n:'\u2705 Tasks',             href:'tasks.html',      show:()=>tasksOn()},
+    {k:'dashboard',  n:'\ud83d\udcca Production Dashboard',        href:'index.html',      show:()=>atLeast('dashboard','view')},
+    {k:'production', n:'\ud83d\udcdd Enter Production',  href:'production.html', show:()=>atLeast('production','edit')},
+    /* Sandbox: everyone (made-up patients; the page has its own "Try it as"). Live: the
+       switch, then Teams & Access. */
+    {k:'tc',         n:'\ud83d\uddc2\ufe0f TC Tracker',        href:'tc.html',         show:()=>tcOn() && (env()!=='live' || isAdmin(me()) || atLeast('tc','view'))},
+    {k:'schedule',   n:'\ud83d\udcc5 Schedule',          href:'schedule.html',   show:()=>atLeast('schedule','view')},
+    {k:'marketing',  n:'\ud83d\udce3 Marketing',         href:'marketing.html',  show:()=>atLeast('marketing','view')},
+    {k:'documents',  n:'\ud83d\udcc1 Documents',         href:'documents.html',  show:()=>atLeast('documents','view')},
+    {k:'team',       n:'\ud83d\udc65 Team',              href:'team.html',       show:()=>atLeast('team','view')},
+    /* A MOCK-UP for Renee (20/10/2026) - role-based training with quizzes. Sandbox only:
+       never on the live site, where the page is shut too (guard). */
+    {k:'chat',       n:'\ud83d\udcac Chat',              href:'chat.html',       show:()=>env()!=='live' || chatPilotMe(), tab:false},   // live: the chat pilot only (chatPilotMe)   // mock-up (22/10/2026), sandbox only; the header's chat button, not a tab
+    /* Sandbox: the mock-up, everyone. Live: the switch (PAY_LIVE or an admin's preview), then payLevel(). */
+    /* Sandbox: everyone (made-up numbers; the page has its own "Try it as"). Live: the switch, then Teams & Access. */
+    {k:'monthly',    n:'\ud83d\udcc8 Monthly Report',    href:'monthly.html',    show:()=>env()!=='live' || (monthlyOn() && (isAdmin(me()) || atLeast('monthly','view')))},
+    /* ORTHOFI INSIGHTS (21/11/2026): a sandbox demo for now (Jordan: "Lets just build it in sandbox for now") */
+    {k:'insights',   n:'\ud83d\udd0e OrthoFi insights', href:'insights.html',   show:()=>env()!=='live'},
+    {k:'payroll',    n:'\ud83d\udcb5 Payroll',           href:'payroll.html',    show:()=>env()!=='live' || (payOn() && !!payLevel())},
+    {k:'academy',    n:'\ud83c\udf93 Academy',           href:'academy.html',    show:()=>env()!=='live'},
+    {k:'admin',      n:'\u2699\ufe0f Admin',            href:'admin.html',      show:()=>atLeast('admin','view')}
+  ];
+  /* Production is not a prototype. Strip the demo chrome — the amber ribbon, the
+     "Viewing as" switcher, the V1 badge — so staff see an app, not a mock-up. Sandbox
+     keeps all of it, because that is what it is for. */
+  function impersonationBar(){
+    const imp=impersonating();
+    // dechrome() runs twice — once on load, once after sign-in — so both banners must be
+    // idempotent or they stack.
+    const existing=document.getElementById('ph-impbar');
+    if(!imp || !isAdmin(realMe())){ if(existing) existing.remove(); return; }
+    if(existing) return;
+    const b=document.createElement('div');
+    b.id='ph-impbar';
+    b.style.cssText='background:#4B2E83;color:#fff;padding:8px 16px;font-size:13px;'+
+      'display:flex;align-items:center;justify-content:center;gap:14px;font-weight:600';
+    b.innerHTML='\u{1F441} Viewing as <b>'+escHTML(((imp.first||'')+' '+(imp.last||'')).trim())+
+      '</b>'+(imp.role?' \u00b7 '+escHTML(imp.role):'')+
+      ' <button style="font:inherit;font-weight:700;background:#fff;color:#4B2E83;border:none;'+
+      'border-radius:7px;padding:4px 12px;cursor:pointer">Return to my account</button>';
+    b.querySelector('button').onclick=stopViewAs;
+    document.body.insertBefore(b, document.body.firstChild);
+  }
+
+  /* A shared save that could not reach SharePoint has to be visible. It is still in
+     this browser, so the page looks fine - but nobody else will ever see it, and the
+     usual cause is a permission that was never granted. Shown once, not per save. */
+  let saveWarned=false;
+  function warnSaveFailed(d){
+    if(saveWarned) return; saveWarned=true;
+    const denied=d&&d.denied;
+    const n=document.createElement('div');
+    n.id='ph-savefail';
+    n.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:9000;'+
+      'width:max-content;max-width:min(560px,92vw);background:#FCEBE8;color:#93301f;border:1px solid #f0c3b9;'+
+      'border-radius:12px;padding:12px 16px;font-weight:600;font-size:13.5px;line-height:1.55;font-family:inherit;'+
+      'box-shadow:0 8px 24px rgba(15,42,74,.18);display:flex;gap:10px;align-items:flex-start';
+    const tooBig=d&&d.tooBig;
+    const detail=d&&d.error ? '<br><small style="font-weight:500;opacity:.75">Details: '+
+      escHTML(String(d.error).slice(0,160))+'</small>' : '';
+    n.innerHTML='<span>\u26A0\uFE0F</span><div><b>Your change was not saved for anyone else yet.</b><br>'+
+      (denied
+        ? 'You don\u2019t have permission to save to the practice\u2019s SharePoint site, so this '+
+          'stayed on your own device. Ask an admin for <b>Edit</b> access to the Home-Brace site.'
+        : tooBig
+        ? 'This is too large for SharePoint to take in one piece. It is kept safe on this device. '+
+          'Tell Jordan, and keep using this device until he says it is sorted.'
+        : 'SharePoint did not take it just now. It is kept safe on this device and the hub keeps '+
+          'trying on its own \u2014 you do not need to enter it again. Keep using this device for now.')+
+      detail+
+      '</div><button style="margin-left:auto;background:none;border:none;color:inherit;'+
+      'font-size:17px;cursor:pointer;line-height:1" aria-label="Dismiss">\u00d7</button>';
+    n.querySelector('button').onclick=function(){ n.remove(); saveWarned=false; };
+    document.body.appendChild(n);
+  }
+  document.addEventListener('ph-save-failed',function(e){ warnSaveFailed(e&&e.detail); });
+  /* It went after all - a retry, the background resend, or the next save. The red
+     banner comes down, and if it had been held back, say that it is saved now. */
+  document.addEventListener('ph-save-landed',function(e){
+    const b=document.getElementById('ph-savefail');
+    const recovered=e&&e.detail&&e.detail.recovered;
+    if(b){ b.remove(); saveWarned=false; }
+    if(!recovered || !document.body) return;
+    const old=document.getElementById('ph-saveok'); if(old) old.remove();
+    const n=document.createElement('div'); n.id='ph-saveok';
+    n.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:9000;'+
+      'width:max-content;max-width:min(460px,92vw);background:#E7F4EE;color:#1d6b45;border:1px solid #bfe3cf;'+
+      'border-radius:12px;padding:11px 16px;font-size:13.5px;font-weight:600;line-height:1.5;'+
+      'box-shadow:0 8px 24px rgba(15,42,74,.14)';
+    n.textContent='\u2713 Your earlier changes are saved now. Everyone can see them.';
+    document.body.appendChild(n);
+    setTimeout(function(){ n.remove(); }, 6000);
+  });
+
+  /* SHAREPOINT REFUSED THIS PERSON. 401 is the guest who has never opened the site in a
+     browser - SharePoint only fully knows a guest after that, and until then refuses
+     every app request for them (Nora, 06/10). Opening it once fixes it for good, so the
+     box hands them the link and a Try again. 403 is no access at all: an admin's job. */
+  function accessHelpHTML(d, lead){
+    const said=(d&&d.said)?'<br><span style="font-weight:500;font-size:12px;opacity:.85">Microsoft said: '+escHTML(d.said)+'</span>':'';
+    const btn='display:inline-block;margin:10px 8px 0 0;padding:8px 14px;border-radius:9px;font-weight:700;font-size:13.5px;line-height:1.2;font-family:inherit;cursor:pointer;text-decoration:none;';
+    if(d && d.status===401 && d.site)
+      return '<b>'+(lead||'One more step to finish setting up your access.')+'</b><br>'+
+        'Tap <b>Open SharePoint</b> and let the page load (sign in if it asks). Then come back here and tap <b>Try again</b>. '+
+        'You only need to do this once.'+said+'<br>'+
+        '<a href="'+escHTML(d.site)+'" target="_blank" rel="noopener" style="'+btn+'background:#7a4b00;color:#fff">Open SharePoint \u2197</a>'+
+        '<button type="button" data-ph-retry style="'+btn+'background:#fff;color:#7a4b00;border:1px solid #e3c98f">Try again</button>';
+    return '<b>'+(lead||'Your account can\u2019t open the hub\u2019s SharePoint yet.')+'</b><br>'+
+      'Nothing you change here can be saved until it can. <b>Send a screenshot of this to your admin</b> so they can check your access.'+said;
+  }
+  function boxAt(id, z){
+    const n=document.createElement('div'); n.id=id;
+    n.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:'+z+';'+
+      'width:max-content;max-width:min(580px,92vw);background:#FFF6E5;color:#7a4b00;border:1px solid #f0d9a8;'+
+      'border-radius:12px;padding:13px 16px;font-weight:600;font-size:13.5px;line-height:1.55;font-family:inherit;'+
+      'box-shadow:0 8px 24px rgba(15,42,74,.18);display:flex;gap:10px;align-items:flex-start';
+    return n;
+  }
+  function wireBox(n){
+    n.querySelector('button[aria-label=Dismiss]').onclick=function(){ n.remove(); };
+    const r=n.querySelector('[data-ph-retry]'); if(r) r.onclick=function(){ location.reload(); };
+  }
+  document.addEventListener('ph-access-refused',function(e){
+    const d=(e&&e.detail)||{};
+    if(!document.body || document.getElementById('ph-accesshelp') || document.getElementById('ph-saveblock')) return;
+    const n=boxAt('ph-accesshelp', 9001);
+    n.innerHTML='<span>\u{1F511}</span><div>'+accessHelpHTML(d)+'</div><button aria-label="Dismiss" style="margin-left:auto;background:none;border:none;color:inherit;'+
+      'font-size:17px;cursor:pointer;line-height:1">\u00d7</button>';
+    wireBox(n);
+    document.body.appendChild(n);
+  });
+
+  /* The store refused a save because it would have wiped out real work. This has to be
+     loud and it has to say what to do, because the alternative is someone deciding the
+     hub is broken and typing it all in again. */
+  function warnSaveBlocked(d){
+    if(document.getElementById('ph-saveblock')) return;
+    /* Refused access: the same way out as the access box, which this replaces. */
+    if(d && d.denied){
+      const old=document.getElementById('ph-accesshelp'); if(old) old.remove();
+      const b=boxAt('ph-saveblock', 9001);
+      b.innerHTML='<span>\u{1F6E1}\uFE0F</span><div>'+accessHelpHTML(d, d.status===401
+          ? 'Your change wasn\u2019t saved \u2014 one more step first.' : 'Your change wasn\u2019t saved.')+
+        ' Nothing already saved has been touched.</div><button aria-label="Dismiss" style="margin-left:auto;background:none;border:none;color:inherit;'+
+        'font-size:17px;cursor:pointer;line-height:1">\u00d7</button>';
+      wireBox(b);
+      document.body.appendChild(b);
+      return;
+    }
+    /* boxAt: width:max-content - centred with left:50%, a box may otherwise only use half
+       the screen, and on a phone this one became a tall, thin strip (Nora, 06/10). */
+    const n=boxAt('ph-saveblock', 9001);
+    /* What Microsoft actually said, small, so a screenshot of this box tells us WHY. */
+    const said=(d&&d.said)?'<br><span style="font-weight:500;font-size:12px;opacity:.85">Microsoft said: '+escHTML(d.said)+'</span>':'';
+    n.innerHTML='<span>\u{1F6E1}\uFE0F</span><div>'+
+      '<b>The hub stopped this from saving, on purpose.</b><br>'+((d&&d.why)||'')+' Nothing already saved has been touched. '+
+      '<b>Reload the page</b> to get the saved copy back, then make your change again.'+
+      said+'</div><button aria-label="Dismiss" style="margin-left:auto;background:none;border:none;color:inherit;'+
+      'font-size:17px;cursor:pointer;line-height:1">\u00d7</button>';
+    wireBox(n);
+    document.body.appendChild(n);
+  }
+  document.addEventListener('ph-save-blocked',function(e){
+    warnSaveBlocked(e&&e.detail);
+    /* And put it in front of the admins, who are the only ones who can act on it. The
+       log write goes through the same store; if THAT is refused it stays quiet
+       (ph_activity is housekeeping), so this cannot loop. */
+    try{
+      const d=(e&&e.detail)||{};
+      logActivity({kind:'blocked', sec:'admin', ic:'\u{1F6E1}\uFE0F', scope:'admins',
+        title:'A save was refused to protect existing data'+(d.key?' ('+d.key+')':'')});
+    }catch(_){}
+  });
+
+  function dechrome(){
+    impersonationBar();
+    if(!isLive()) return;
+    document.documentElement.classList.add('ph-live');
+    const css=document.createElement('style');
+    css.textContent='.ph-live .ribbon,.ph-live .viewas,.ph-live .v1{display:none !important}';
+    document.head.appendChild(css);
+    setupBar();
+  }
+  /* If a person's profile really isn't filled in, say so plainly instead of silently showing them an empty app.
+     Decided again whenever who-they-are changes (identityChanged), and never while it's still being learned:
+     04/11/2026, Hollie (Brookside OM, team and office both on the roster) kept the bar - it was decided at page load,
+     before the roster landed, and never taken down once her team and office arrived. */
+  function setupBar(){
+    if(!isLive() || !document.body) return;
+    const m=me(), old=document.getElementById('ph-setupbar');
+    if(!(m && m._needsSetup) || !SIGNED_IN || stillLearning()){ if(old) old.remove(); return; }
+    if(old) return;
+    const b=document.createElement('div');
+    b.id='ph-setupbar';
+    b.style.cssText='background:#FFF6E5;color:#8a5a00;border-bottom:1px solid #f0d9a8;'+
+      'padding:8px 16px;font-size:13px;text-align:center';
+    b.innerHTML='Your profile isn\u2019t finished yet, so you may not see everything. '+
+      'Ask your administrator to set your <b>Department</b> and <b>Office location</b>.';
+    document.body.insertBefore(b, document.body.firstChild);
+  }
+
+  /* ---------------------------------------------------------------
+     ACTIVITY — a real notification feed.
+     The home page used to list invented updates. Now anything that actually changes
+     records who did it, when, and which office it touched, and Home shows the entries
+     the reader is allowed to see. Capped, because this is a feed, not an audit log —
+     the audit trail for production numbers lives separately in ph_prodaudit.
+     --------------------------------------------------------------- */
+  const ACT_KEY='ph_activity', ACT_MAX=60;
+  const ACT_DAYS=3;           // a feed, not an archive — three days and it drops off
+  function fresh(list){
+    const cut=Date.now()-ACT_DAYS*86400000;
+    return (list||[]).filter(e=>e && e.at && new Date(e.at).getTime()>cut);
+  }
+
+  function activity(){
+    let l=[]; try{ l=JSON.parse(localStorage.getItem(ACT_KEY)||'[]'); }catch(_){ l=[]; }
+    return fresh(l);
+  }
+  function logActivity(e){
+    if(!e || !e.title) return;
+    const who=realMe();
+    const arr=v=>Array.isArray(v)?v.filter(Boolean).map(String):(v?[String(v)]:[]);
+    const entry={
+      /* An id of its own, so "I have read this" survives the entry being updated.
+         Without one the id would come from the timestamp, and saving again two
+         minutes later would make an update somebody already checked off come back. */
+      id:'a'+Date.now().toString(36)+Math.random().toString(36).slice(2,7),
+      title:e.title, sec:e.sec||'', ic:e.ic||'\u{1F514}',
+      scope:e.scope||'everyone',
+      /* WHO THIS IS FOR - see canSeeActivity(). All optional, all additive:
+           kind     a short type: schedule, production, document, promo, people,
+                    access, blocked, goal, late - for the icon and for grouping
+           offices  the office(s) it touches; only people who can see one of them get it
+           people   the person/people it is ABOUT (a doctor whose day moved); they get
+                    it even at an office they do not otherwise see
+           teams    restrict to these teams (the leadership-only items) */
+      kind:e.kind||'', offices:arr(e.offices), people:arr(e.people), teams:arr(e.teams),
+      /* to  ONLY these people (their emails, or 'name:<name>' - tasks.js personId). A task given to someone tells them
+             and nobody else; a finished one tells its giver (19/11/2026). */
+      to:arr(e.to).map(x=>x.toLowerCase().trim()).slice(0,400),
+      by:((who.first||'')+' '+(who.last||'')).trim()||'Someone',
+      at:new Date().toISOString()
+    };
+    // Collapse a burst of edits to the same thing by the same person into one entry.
+    const add=function(list){
+      list=fresh(Array.isArray(list)?list:[]);
+      const recent=list[0];
+      if(recent && recent.title===entry.title && recent.by===entry.by &&
+         (Date.now()-new Date(recent.at)) < 5*60*1000){
+        entry.id = recent.id || entry.id;      // same event, so it stays read
+        list[0]=entry;
+      }
+      else list.unshift(entry);
+      return fresh(list).slice(0,ACT_MAX);
+    };
+    const list=add(activity());
+    /* Into the shared feed AS IT IS NOW. It used to be this browser's copy plus the new entry, written over the
+       shared one - and that copy was only refreshed on Home, so a save from any other page wiped everybody's
+       newer notifications (future-proofing check, 22/10/2026). */
+    if(window.PH_STORE && window.PH_STORE.update) window.PH_STORE.update(ACT_KEY, function(remote){ return add(Array.isArray(remote) ? remote : activity()); });
+    else if(window.PH_STORE) window.PH_STORE.set(ACT_KEY, list);
+    else try{ localStorage.setItem(ACT_KEY,JSON.stringify(list)); }catch(_){}
+    return list;
+  }
+  function loadActivity(){
+    if(!window.PH_STORE || !isLive()) return Promise.resolve(activity());
+    return window.PH_STORE.get(ACT_KEY).then(function(remote){
+      if(Array.isArray(remote)){
+        try{ localStorage.setItem(ACT_KEY,JSON.stringify(remote)); }catch(_){}
+        return remote;
+      }
+      return activity();
+    }).catch(function(){ return activity(); });
+  }
+
+  /* ---------------------------------------------------------------
+     WHAT I HAVE ALREADY SEEN.
+     The feed used to show everybody the same list forever, so the only way to stop
+     an update nagging you was to wait three days for it to expire. Now each person
+     keeps their own list of what they have checked off, in their own row, and a
+     notification they have read never counts against them again.
+
+     Per person, not per browser: ph_seen_<their email>. Read on one device, read on
+     all of them.
+     --------------------------------------------------------------- */
+  /* Anything a person can type ends up in innerHTML somewhere. A staff name is
+     editable in Admin, so an unescaped one would run in everybody's header. */
+  function escHTML(v){
+    return String(v==null?'':v).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  const escAttr = escHTML;
+
+  function actId(e){
+    if(!e) return '';
+    return e.id || ((e.at||'')+'|'+(e.title||'')+'|'+(e.by||''));
+  }
+  /* Keyed exactly like their profile row. A person object carries no email property -
+     the address is derived - so reading m.mail here gave an empty key and nothing was
+     ever saved. Reuse profileKey(), which is the one that has always been right:
+     the signed-in address in production, the persona id in the sandbox. */
+  function seenKey(){
+    const k=profileKey();
+    return (k && k.indexOf('ph_me_')===0 && k.length>6) ? 'ph_seen_'+k.slice(6) : '';
+  }
+  let SEEN=null;
+  function seenList(){
+    if(SEEN) return SEEN;
+    const k=seenKey(); if(!k){ SEEN=[]; return SEEN; }
+    try{ SEEN=JSON.parse(localStorage.getItem(k))||[]; }catch(_){ SEEN=[]; }
+    if(!Array.isArray(SEEN)) SEEN=[];
+    return SEEN;
+  }
+  function saveSeen(){
+    const k=seenKey(); if(!k) return;
+    /* Only keep ids that are still in the feed. The feed drops entries after three
+       days, so without this the list would grow forever for no benefit. */
+    const alive={}; activity().forEach(e=>{ alive[actId(e)]=1; });
+    SEEN=seenList().filter(id=>alive[id]);
+    if(window.PH_STORE) window.PH_STORE.set(k, SEEN);
+    else try{ localStorage.setItem(k, JSON.stringify(SEEN)); }catch(_){}
+  }
+  /* Their list follows them between devices. Resolves true when something arrived. */
+  function loadSeen(){
+    const k=seenKey();
+    if(!k || !window.PH_STORE || !isLive()) return Promise.resolve(false);
+    return window.PH_STORE.get(k).then(function(r){
+      if(!Array.isArray(r)) return false;
+      const merged=r.concat(seenList()).filter((v,i,a)=>a.indexOf(v)===i);
+      const changed = merged.length !== seenList().length;
+      SEEN=merged;
+      try{ localStorage.setItem(k, JSON.stringify(SEEN)); }catch(_){}
+      return changed;
+    }).catch(function(){ return false; });
+  }
+  function isSeen(e){ return seenList().indexOf(actId(e))>=0; }
+  function markSeen(e){
+    const id=actId(e); if(!id) return;
+    if(seenList().indexOf(id)<0){ seenList().push(id); saveSeen(); notifyChanged(); }
+  }
+  function markAllSeen(){
+    let hit=false;
+    notifications().forEach(e=>{
+      const id=actId(e);
+      if(id && seenList().indexOf(id)<0){ seenList().push(id); hit=true; }
+    });
+    if(hit){ saveSeen(); notifyChanged(); }
+  }
+  function notifyChanged(){
+    try{ document.dispatchEvent(new CustomEvent('ph-notifications-changed')); }catch(_){}
+  }
+
+  /* Is this entry any of my business? One rule, so the bell and Home can never
+     disagree about what a person is allowed to see. */
+  /* WHO GETS TOLD. Decided once, here, for the bell and for Home.
+
+       1. It is ABOUT you (your name is in e.people - a doctor whose day moved) -> you
+          get it, whichever office it is at. A doctor rotates; her days are hers.
+       2. Otherwise you must be able to open the section it belongs to. Nobody is told
+          about production at an office when they cannot open production at all.
+       3. If it names offices, you must see one of them (or see all). Nobody is told
+          about an office they cannot see.
+       4. If it names teams, you must be on one of them. The leadership-only items.
+       5. scope: 'admins' means admins; an office name means that office (the old,
+          single-office way of saying it); 'everyone' means everyone left standing. */
+  /* A person's level in one Documents section: the Teams & Access grid when it says;
+     for the six built-in sections, their overall Documents level when it does not
+     (asPersona() does the same). A section Admin created is 'none' unless the grid
+     gives it. */
+  /* Any person's level on one section from their TEAMS - exactly what docLevel() and
+     canForTeams() answer for the signed-in person. Admin uses it to hand out (and take
+     back) SharePoint edit rights so they follow Teams & Access (07/10). */
+  function levelForTeams(teams, k){
+    const depts=(teams||[]).map(t=>String(t).trim().toLowerCase()).filter(Boolean);
+    const c=canForTeams(depts) || Object.assign({}, DEPT_CAN['staff']);
+    if(c[k]!==undefined) return c[k]||'none';
+    return DOC_KEYS.indexOf(k)>=0 ? (c.documents||'none') : 'none';
+  }
+  /* What a person gets on the TC Tracker's SharePoint folder (17/10): admins run the hub and
+     always have the whole tracker; otherwise its Teams & Access column - Log + calls or
+     Everything = edit, See = read, nothing = nothing. Admin hands these out (docs.js tcGrant). */
+  function tcRoleFor(teams){
+    if(levelForTeams(teams, 'admin')==='manage') return 'write';
+    const l=levelForTeams(teams, 'tc');
+    return RANK[l]>=RANK.edit ? 'write' : RANK[l]>=RANK.view ? 'read' : '';
+  }
+  /* Does this team list see every office? The same rule fromProfile() applies. */
+  function teamsSeeAll(teams){ return (teams||[]).some(t=>ALL_OFFICE_DEPTS.indexOf(String(t).trim().toLowerCase())>=0); }
+  function docLevel(k){
+    const c=me().can||{};
+    if(c[k]!==undefined) return c[k]||'none';
+    return DOC_KEYS.indexOf(k)>=0 ? (c.documents||'none') : 'none';
+  }
+  /* A day saved on the Schedule used to tell people ("Dr. X now at Cedar Grove on Mon
+     10/5"). Morgan, 30/09: "I don't think we need it to notify people every time the
+     calendar has a change to it. That is a ton of notifications when I am entering
+     calendars for the first time." schedule.html no longer sends them; this hides the
+     ones already in the feed, and any still sent by a page opened before the change.
+     They are the only schedule entries with the calendar icon - a new office, new
+     hours or a doctor added to the list still come through. Nothing is deleted. */
+  const calendarDay=e=>e.kind==='schedule' && e.ic==='\u{1F4C5}';
+  function canSeeActivity(e){
+    if(!e) return false;
+    if(calendarDay(e)) return false;
+    /* "Production numbers entered / updated" notices are retired (Morgan 20/11/2026) - any still in the feed are hidden,
+       not deleted. Goal and stretch notices are kind 'goal' and still show. */
+    if(e.kind==='production') return false;
+    const m=me();
+    /* ADDRESSED TO PEOPLE (tasks, 19/11/2026): only them - not their office, not admins, whatever the section says. */
+    if(Array.isArray(e.to) && e.to.length){
+      const mail=String(email(m)||'').toLowerCase().trim(), nm=String(name(m)||'').toLowerCase().trim().replace(/\s+/g,' ');
+      return (!!mail && e.to.indexOf(mail)>=0) || (!!nm && e.to.indexOf('name:'+nm)>=0);
+    }
+    const myName=name(m).toLowerCase().trim();
+    const myTeams=(m.teams||[]).map(t=>String(t).toLowerCase());
+    const mine=offices();
+    const seesOffice=o=>mine==='all' || (Array.isArray(mine) && mine.indexOf(o)>=0);
+
+    const about=(e.people||[]).map(p=>String(p).toLowerCase().trim());
+    if(about.length && myName && about.some(p=>p===myName || (p.length>3 && myName.indexOf(p)>=0))) return true;
+
+    /* A document's update follows the SECTION it went into (HR, Office Docs...), by the
+       same rule the Documents page uses - so a new payroll file's name never reaches
+       someone who cannot open HR. */
+    /* A payroll update (an office sent its sheet) is for whoever sees every office's payroll - not its sender. */
+    if(e.sec==='payroll'){ const pl=payLevel(); if(pl!=='manage' && pl!=='view') return false; }
+    else if(e.sec && (e.kind==='document' && e.sec!=='documents' ? docLevel(e.sec) : can(e.sec))==='none') return false;
+    const offs=(e.offices||[]);
+    if(offs.length && !offs.some(seesOffice)) return false;
+    const teams=(e.teams||[]).map(t=>String(t).toLowerCase());
+    if(teams.length && !teams.some(t=>myTeams.indexOf(t)>=0) && !isAdmin()) return false;
+
+    const sc=e.scope||'everyone';
+    if(sc==='everyone'||sc==='all') return true;
+    if(sc==='admins') return isAdmin();
+    /* An old-style office scope. It was sometimes several offices joined with commas,
+       which matched nothing; treat it as a list. */
+    return String(sc).split(',').map(x=>x.trim()).filter(Boolean).some(seesOffice);
+  }
+
+  /* The feed as it applies to whoever is signed in, newest first, each entry
+     carrying its own id and whether they have already checked it off. */
+  function notifications(){
+    return activity().filter(canSeeActivity)
+      .map(e=>Object.assign({}, e, {id:actId(e), seen:isSeen(e)}));
+  }
+  function unreadCount(){ return notifications().filter(n=>!n.seen).length; }
+
+  function ago(iso){
+    const mins=Math.round((Date.now()-new Date(iso))/60000);
+    if(mins<2) return 'just now';
+    if(mins<60) return mins+' minutes ago';
+    if(mins<120) return 'an hour ago';
+    if(mins<1440) return Math.round(mins/60)+' hours ago';
+    if(mins<2880) return 'yesterday';
+    return Math.round(mins/1440)+' days ago';
+  }
+
+  /* ---------------------------------------------------------------
+     PROFILE PHOTOS.
+     People upload their own from My profile — most staff have never set a photo on
+     their Microsoft account, so asking the directory for one would mostly return
+     nothing. An upload saves to their own profile row, which syncs to SharePoint;
+     this pulls everyone's rows in a single request so the Team page and Admin can
+     show each other's faces.
+     --------------------------------------------------------------- */
+  const PHOTO_KEY='ph_photos';
+  let PHOTOS=null;
+  function photoCache(){
+    if(PHOTOS) return PHOTOS;
+    try{ PHOTOS=JSON.parse(localStorage.getItem(PHOTO_KEY))||{}; }catch(_){ PHOTOS={}; }
+    return PHOTOS;
+  }
+  /* PHOTOS AN ADMIN SETS live in the person's own row, ph_face_<their slot>, one small
+     picture per row. They used to sit inside ph_people - the single record holding
+     everybody's teams, offices and access - and SharePoint holds 63,999 characters per
+     record, so one photo there would stop every Admin save for everyone. The local
+     cache below is filled by loadPhotos(); a photo still inside ph_people from before
+     is shown until that person is next saved, which moves it. */
+  const FACE_KEY='ph_faces', FACE_PRE='ph_face_';
+  let FACES=null;
+  function faceCache(){
+    if(FACES) return FACES;
+    try{ FACES=JSON.parse(localStorage.getItem(FACE_KEY))||{}; }catch(_){ FACES={}; }
+    return FACES;
+  }
+  function faceOf(slot){ return slot ? safePhoto(faceCache()[String(slot).toLowerCase()]) : ''; }
+  function saveFace(slot, photo){
+    slot=String(slot||'').toLowerCase(); if(!slot) return Promise.resolve({});
+    const c=faceCache(); if(photo) c[slot]=photo; else delete c[slot];
+    try{ localStorage.setItem(FACE_KEY, JSON.stringify(c)); }catch(_){}
+    try{ refreshFaces(); }catch(_){}
+    if(!window.PH_STORE) return Promise.resolve({local:true});
+    return window.PH_STORE.set(FACE_PRE+slot, {photo:photo||''});
+  }
+  function adminPhoto(mail){
+    const k=String(mail||'').toLowerCase().trim();
+    const f=faceOf(k); if(f) return f;
+    const o=overrideFor(k);
+    return (o && o.photo) ? safePhoto(o.photo) : '';
+  }
+  function photoFor(mail){
+    // An admin-set photo counts the same as one the person uploaded themselves.
+    const set=adminPhoto(mail); if(set) return set;
+    const k=String(mail||'').toLowerCase().trim();
+    if(!k) return '';
+    // Their own row on this device first — instant after they upload.
+    try{
+      const own=JSON.parse(localStorage.getItem('ph_me_'+k)||'{}');
+      if(own && safePhoto(own.photo)) return own.photo;
+    }catch(_){}
+    return safePhoto(photoCache()[k]);
+  }
+  /* Pull every profile row from SharePoint so other people's photos appear too.
+     Resolves true when something changed, so the caller can re-render. */
+  function loadPhotos(){
+    if(!window.PH_STORE || !window.PH_STORE.getAll || !isLive()) return Promise.resolve(false);
+    const mine=(function(){ try{ return String(email(realMe())||'').toLowerCase(); }catch(_){ return ''; } })();
+    return window.PH_STORE.getAll(['ph_me_', FACE_PRE]).then(function(rows){
+      const cache=photoCache(); let changed=false;
+      const faces=faceCache(); let facesChanged=false;
+      Object.keys(rows||{}).forEach(function(k){
+        if(k.indexOf(FACE_PRE)===0){                 // a photo an admin set - cache only
+          const slot=k.slice(FACE_PRE.length), ph=safePhoto(rows[k]&&rows[k].photo);
+          if(ph && faces[slot]!==ph){ faces[slot]=ph; facesChanged=true; }
+          else if(!ph && faces[slot]){ delete faces[slot]; facesChanged=true; }
+          return;
+        }
+        const mail=k.slice('ph_me_'.length);
+        const v=rows[k];
+        if(v && safePhoto(v.photo) && cache[mail]!==v.photo){ cache[mail]=v.photo; changed=true; }
+        /* Only the signed-in person's own row is kept on this device (it shows instantly after they upload).
+           Everybody's used to be copied here as well - each photo stored twice, which is what filled browsers
+           up (future-proofing check, 22/10/2026). Their photo is in the cache above. */
+        try{ if(v && mail===mine) localStorage.setItem(k, JSON.stringify(v)); }catch(_){}
+      });
+      if(changed){ try{ localStorage.setItem(PHOTO_KEY, JSON.stringify(cache)); }catch(_){} }
+      if(facesChanged){ try{ localStorage.setItem(FACE_KEY, JSON.stringify(faces)); }catch(_){} }
+      return changed || facesChanged;
+    }).catch(function(){ return false; });
+  }
+
+  /* Which page this is. Remembered so the menu and the guard can be recomputed the
+     moment we learn who the reader is - see the listener below. */
+  let NAV_ACTIVE=null;
+  function nav(active){
+    if(active!=null) NAV_ACTIVE=active;
+    setTimeout(partyMine, 900);
+    const host=document.getElementById('nav')||document.querySelector('.v1nav-in');
+    /* Line icons - the same ones as the phone bar and the sidebar - not emoji. Jordan, 20/10:
+       "icons instead of emojis for the different tabs ... more professional". Emoji draw
+       differently on every computer and phone. */
+    if(host) host.innerHTML=navShown().map(x=>{ const p=splitNav(x.n);
+      return '<a href="'+x.href+'"'+(x.k===NAV_ACTIVE?' class="active"':'')+'>'+icon(x.k)+'<span>'+escHTML(p.label)+'</span></a>'; }).join('');
+    tabbar();
+    sidenav();
+    guard(NAV_ACTIVE);
+  }
+  /* THE SIDEBAR - the same list as the tabs (same show() rule, same order), full names and
+     the phone bar's line icons. Made on any page with the menu; CSS decides whether it shows
+     (Menu on a computer = Sidebar, and a wide enough screen). */
+  function sidenav(){
+    if(!document.body || !document.querySelector('.v1nav')) return;
+    let side=document.querySelector('.ph-sidenav');
+    if(!side){ side=document.createElement('aside'); side.className='ph-sidenav'; side.setAttribute('aria-label','Main menu'); document.body.appendChild(side); }
+    side.innerHTML='<a class="ph-sb-brand" href="home.html"><img src="../assets/logo-mark.png?v=2" alt="" width="34" height="34"><span>Home-<i>Brace</i></span></a>'+
+      '<nav class="ph-sb-list">'+navShown().map(x=>{ const p=splitNav(x.n);
+        return '<a href="'+x.href+'"'+(x.k===NAV_ACTIVE?' class="active" aria-current="page"':'')+'>'+icon(x.k)+'<span>'+escHTML(p.label)+'</span></a>'; }).join('')+'</nav>';
+  }
+
+  /* The phone bar. Rendered from the SAME filtered list as the top nav, every time nav()
+     runs - so it re-shapes itself as identity settles after sign-in, exactly like the
+     top nav does, and Admin appears only for people who may open Admin. The first four
+     sit on the bar; anything beyond that is under "More", which shows only what the
+     person may open. Emoji and label are split from the NAV name so the icon can be
+     sized on its own. */
+  const TAB_MAX=4;
+  /* Bar labels must fit one line at 375px with five items across. The full names
+     ("Production Dashboard", "Enter Production") truncated to "Produc..." and
+     "Enter P..." - which reads as broken. Short forms for the bar; the sheet and the
+     top nav keep the full names. */
+  const TAB_SHORT={home:'Home',dashboard:'Dashboard',production:'Enter Prod',tc:'TC Tracker',schedule:'Schedule',
+                   marketing:'Marketing',documents:'Documents',team:'Team',chat:'Chat',payroll:'Payroll',monthly:'Monthly',tasks:'Tasks',academy:'Academy',admin:'Admin'};
+  /* Line icons for the phone bar instead of emoji - emoji render differently on every
+     phone and read as casual. 24-unit grid, stroke follows the text colour. */
+  const ICON={
+    home:'<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/>',
+    dashboard:'<path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/>',
+    production:'<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/>',
+    schedule:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/>',
+    tc:'<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1"/><path d="M9 12.5l2 2 4-4.5"/>',
+    marketing:'<path d="M3 11v2a1 1 0 001 1h2l5 4V6L6 10H4a1 1 0 00-1 1z"/><path d="M15 9a3 3 0 010 6"/><path d="M18 6a7 7 0 010 12"/>',
+    documents:'<path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>',
+    team:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0113 0"/><circle cx="17" cy="9" r="3"/><path d="M15.5 14.5A5.5 5.5 0 0122 20"/>',
+    admin:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 01-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 01-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 01-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 010-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 012.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 014 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 012.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 010 4h-.1a1.7 1.7 0 00-1.5 1z"/>',
+    chat:'<path d="M21 11.5a8.5 8.5 0 0 1-12.4 7.6L3 20.5l1.4-5.1A8.5 8.5 0 1 1 21 11.5z"/>',
+    payroll:'<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.6"/><path d="M6 10v4M18 10v4"/>',
+    monthly:'<path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/><path d="M3 21h18"/>',
+    insights:'<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/>',
+    tasks:'<path d="M10 6h10M10 12h10M10 18h10"/><path d="M3.5 6.2l1.3 1.3L7.3 5M3.5 12.2l1.3 1.3L7.3 11M3.5 18.2l1.3 1.3L7.3 17"/>',
+    academy:'<path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c0 1.4 2.7 3 6 3s6-1.6 6-3v-5"/><path d="M22 9v6"/>',
+    more:'<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>'
+  };
+  function icon(k){ const c=TAB_IC[k] ? ' data-k="'+k+'" style="--ic:var(--ic-'+k+');--ic-l:var(--ic-'+k+'-l)"' : '';
+    return '<svg class="ti"'+c+' viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(ICON[k]||ICON.more)+'</svg>'; }
+  function splitNav(n,k){ const m=String(n).match(/^(\S+)\s+(.*)$/);
+    return m?{ic:m[1],label:(k&&TAB_SHORT[k])||m[2]}:{ic:'',label:String(n)}; }
+  function tabbar(){
+    if(!document.body) return;
+    let bar=document.querySelector('.ph-tabbar');
+    if(!bar){ bar=document.createElement('nav'); bar.className='ph-tabbar'; bar.setAttribute('aria-label','Sections'); document.body.appendChild(bar); }
+    const items=navShown();
+    const primary=items.length>TAB_MAX ? items.slice(0,TAB_MAX) : items;
+    const rest=items.length>TAB_MAX ? items.slice(TAB_MAX) : [];
+    const link=x=>{ const p=splitNav(x.n,x.k);
+      return '<a href="'+x.href+'"'+(x.k===NAV_ACTIVE?' class="active"':'')+'>'+icon(x.k)+'<span class="tl">'+p.label+'</span></a>'; };
+    const restActive=rest.some(x=>x.k===NAV_ACTIVE);
+    bar.innerHTML=primary.map(link).join('')+
+      (rest.length?'<button type="button" class="more'+(restActive?' on':'')+'" aria-haspopup="true">'+icon('more')+'<span class="tl">More</span></button>':'')+
+      '<button type="button" class="cur" aria-label="Show all sections">'+icon(NAV_ACTIVE && ICON[NAV_ACTIVE] ? NAV_ACTIVE : 'more')+'</button>';
+    const more=bar.querySelector('.more');
+    if(more) more.onclick=function(){ moreSheet?closeMore():openMore(rest); };
+    const cur=bar.querySelector && bar.querySelector('.cur'); if(cur) cur.onclick=function(){ barMini(false); };
+    barWatch();
+  }
+  /* The glass bar's circle: down = circle, up = the whole bar. Any scrolling box counts (the chat's messages, a list),
+     not just the page; a small wiggle (under 10px) changes nothing; near the top it is always the whole bar. */
+  let barOn=false, barHand=0;
+  const barTops=new WeakMap();
+  function barMini(on){ const b=document.querySelector('.ph-tabbar'); if(b) b.classList.toggle('mini', !!on); }
+  function barWatch(){
+    if(barOn) return; barOn=true;
+    /* only scrolling a person does (a finger, a wheel, keys) - a page jumping to its newest chat message by itself doesn't */
+    ['touchmove','wheel','keydown'].forEach(function(ev){ document.addEventListener(ev, function(){ barHand=Date.now(); }, {capture:true, passive:true}); });
+    /* 21/11/2026, Jordan: "Generally the scroll up on mobile pulls out the bottom bar but sometimes it doesn't." A flick keeps
+       the page gliding after the finger lifts, and an inner list can be at its top while the page isn't - so the finger
+       itself counts too: drawing it DOWN (scrolling up) by 30px always brings the whole bar back. */
+    let fy=null;
+    document.addEventListener('touchstart', function(e){ const t=e.touches && e.touches[0]; fy=(t && !(e.target.closest && e.target.closest('.ph-more,.ph-np,.ov,.ph-ov,.ph-tabbar'))) ? t.clientY : null; }, {capture:true, passive:true});
+    document.addEventListener('touchmove', function(e){ const t=e.touches && e.touches[0]; if(fy===null || !t) return; if(t.clientY-fy>30){ barMini(false); fy=t.clientY; } else if(t.clientY<fy) fy=t.clientY; }, {capture:true, passive:true});
+    document.addEventListener('touchend', function(){ fy=null; }, {capture:true, passive:true});
+    document.addEventListener('scroll', function(e){
+      if(Date.now()-barHand>900) return;
+      const bar=document.querySelector('.ph-tabbar'); if(!bar) return;
+      const el=(e.target===document || e.target===document.documentElement || e.target===document.body) ? (document.scrollingElement||document.documentElement) : e.target;
+      if(!el || el.nodeType!==1 || (el.closest && el.closest('.ph-more,.ph-np,.ov,.ph-ov,.ph-tabbar'))) return;
+      const y=Math.max(0, Math.min(el.scrollTop||0, el.scrollHeight-el.clientHeight));   // the phone's bounce at either end isn't a direction
+      const st=barTops.get(el) || {a:y}; barTops.set(el, st);
+      if(y<24){ barMini(false); st.a=y; return; }
+      if(!bar.classList.contains('mini')){ if(y<st.a) st.a=y; else if(y-st.a>12){ barMini(true); st.a=y; } }
+      else { if(y>st.a) st.a=y; else if(st.a-y>12){ barMini(false); st.a=y; } }
+    }, {capture:true, passive:true});
+  }
+  let moreSheet=null;
+  function closeMore(){ if(moreSheet){ moreSheet.scrim.remove(); moreSheet.sheet.remove(); moreSheet=null; } }
+  function openMore(rest){
+    closeMore();
+    const scrim=document.createElement('div'); scrim.className='ph-scrim'; scrim.onclick=closeMore;
+    const sheet=document.createElement('div'); sheet.className='ph-more';
+    /* Three ways out, all visible: the x, tapping "More" again, or dragging the sheet
+       down. Tapping the dim background still works, but nobody guesses that. Jordan, 19/09. */
+    sheet.innerHTML='<div class="grab"></div><div class="mh"><b>More</b><button type="button" class="mx" aria-label="Close">\u00d7</button></div>'+
+      rest.map(x=>{ const p=splitNav(x.n);
+      return '<a href="'+x.href+'"'+(x.k===NAV_ACTIVE?' class="active"':'')+'>'+icon(x.k)+p.label+'</a>'; }).join('');
+    sheet.querySelector('.mx').onclick=closeMore;
+    let y0=null;
+    sheet.addEventListener('touchstart',function(e){ y0=e.touches[0].clientY; sheet.style.transition='none'; },{passive:true});
+    sheet.addEventListener('touchmove',function(e){ if(y0==null) return;
+      sheet.style.transform='translateY('+Math.max(0,e.touches[0].clientY-y0)+'px)'; },{passive:true});
+    sheet.addEventListener('touchend',function(e){ if(y0==null) return;
+      const dy=e.changedTouches[0].clientY-y0; y0=null;
+      if(dy>70) closeMore(); else { sheet.style.transition='transform .18s ease-out'; sheet.style.transform=''; } });
+    document.body.appendChild(scrim); document.body.appendChild(sheet);
+    moreSheet={scrim:scrim, sheet:sheet};
+  }
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeMore(); });
+
+  /* THE RE-CHECK. Every page calls PH.nav() as it parses, which is before Graph has
+     said who this is; not one page called it again afterwards. So the menu and the
+     page guard were both decided by whatever me() returned at parse time and never
+     revisited - which is how a guest ended up looking at the Admin tab.
+
+     This lives in user.js, deliberately, and not in nine copies of an inline script at
+     the bottom of nine pages. That is exactly how it got missed: the pages all
+     remembered to re-run mount() and dechrome() on this event, so the avatar showed the
+     right name over the wrong menu. A page added later gets this for free. */
+  /* ONE SIGNAL FOR "the answer to who-is-this just changed".
+
+     Sign-in is not the only moment it changes. fromProfile() reads three sources and
+     two of them arrive later: the practice roster (rosterReady, a fetch of
+     _people.json) and the admin overrides / team grid (reloadPeople, reloadAccess).
+     A guest whose Entra record is empty - which is every guest - gets her team and
+     her offices from the roster, so between sign-in and the roster landing she is
+     resolved as least-access with no offices, and nothing recomputed after that.
+
+     That direction is at least safe, but it is still the wrong answer left on screen.
+     So anything that can change the answer ends here, and this rebuilds the menu, the
+     page guard, and tells the page to rescope its own content. */
+  function identityChanged(){
+    seedRoster();                                // the admin may only now be known
+    nav(NAV_ACTIVE);
+    if(!snapping()){ unsnapBar(); if(isLive() && !stillLearning()) setTimeout(saveNavSnap, 0); }   // THE MENU STAYS PUT (above)
+    try{ setupBar(); }catch(_){}
+    try{ document.dispatchEvent(new CustomEvent('ph-identity')); }catch(_){}
+  }
+  /* WHILE WE DO NOT YET KNOW WHAT THIS PERSON MAY SEE, REFUSE NOTHING.
+     Two waits, each about a second on a phone, and both used to paint "You don't have
+     access" and then unlock - a flash of refusal on every tab change:
+       1. before sign-in has said who this is (held since 19/09 - but only until the
+          token existed, not until /me had answered), and
+       2. after sign-in, while their team and offices are still on their way from
+          SharePoint: the roster, the access grid, Admin's per-person settings. Anyone
+          whose team comes from the roster - most of the practice - was refused until
+          it landed. Morgan saw it on hers; Marlene in Brookside, 30/09, on every tab.
+     A page they CAN see opens at once. A refusal waits until those have landed, or 8
+     seconds have passed: SharePoint being down must not hold a page forever.
+     Pages ask PH.learning() before painting their own "no access" / "no office". */
+  /* THE CHAT PILOT (17/11/2026). Jordan: "start with chat but its important only people in this tenant can use it, and only
+     me morgan, jamie can use it first until we verify its good". On the live site the chat button and page are there
+     only for someone on Admin -> Chat's list (the shared list 'ph_chat_pilot' - names and emails, never in this public
+     code) and never for a guest (a sign-in name with #EXT#: someone from another company's Microsoft account).
+     chatgraph.js applies the same rule again before any real chat. A list that didn't read = nobody (fails closed). */
+  var CHAT_PILOT_KEY='ph_chat_pilot';
+  var CHATPILOT=null;     // var, not let: the menu can ask before this line has run - then it's simply "not yet"
+  function cleanChatPilot(x){
+    const seen={}, out=[];
+    ((x && Array.isArray(x.list)) ? x.list : []).forEach(function(t){ const e=String((t && t.email)||'').trim().toLowerCase();
+      if(e && /@/.test(e) && !/#ext#/.test(e) && !seen[e]){ seen[e]=1; out.push({email:e, name:String((t && t.name)||e).slice(0,80)}); } });
+    return out;
+  }
+  var CHAT_GUESTS=false;   // guests: off until one has tried it in the pilot (Jordan 17/11) - chatgraph.js has the same switch
+  function chatGuest(){ return !CHAT_GUESTS && /#ext#/i.test(String((PROFILE && PROFILE.userPrincipalName)||'')); }
+  function chatPilotMe(){
+    if(!CHATPILOT || !PROFILE || !PROFILE.id || chatGuest()) return false;
+    const mine=[PROFILE.mail, PROFILE.userPrincipalName].map(function(v){ return String(v||'').trim().toLowerCase(); }).filter(Boolean);
+    return CHATPILOT.some(function(t){ return mine.indexOf(t.email)>=0; });
+  }
+  function reloadChatPilot(){
+    if(!window.PH_STORE || !window.PH_STORE.get) return Promise.resolve();
+    return window.PH_STORE.get(CHAT_PILOT_KEY).then(function(x){
+      const failed=!!(window.PH_STORE.readFailed && window.PH_STORE.readFailed(CHAT_PILOT_KEY)), was=JSON.stringify(CHATPILOT);
+      CHATPILOT=failed ? (CHATPILOT||[]) : cleanChatPilot(x);
+      if(JSON.stringify(CHATPILOT)!==was) identityChanged();
+    }, function(){ if(CHATPILOT===null) CHATPILOT=[]; });
+  }
+  var SIGNED_IN=false, LATE=0, LATE_GAVE_UP=false;
+  function stillLearning(){
+    if(!isLive()) return false;
+    if(!PROFILE && !SIGNED_IN) return true;
+    return SIGNED_IN && LATE>0 && !LATE_GAVE_UP;
+  }
+  function lateLanded(){ LATE=Math.max(0,LATE-1); identityChanged(); }
+  document.addEventListener('ph-signed-in', function(){
+    SIGNED_IN=true; LATE=3; LATE_GAVE_UP=false;
+    const tm=setTimeout(function(){ if(LATE>0){ LATE_GAVE_UP=true; identityChanged(); } }, 8000);
+    if(tm && typeof tm.unref==='function') tm.unref();
+    try{ syncTheme(); }catch(_){}
+    identityChanged();
+    // ...and again once each late source has landed.
+    if(rosterReady && rosterReady.then)
+      rosterReady.then(function(){ return reloadRosterExtra(); }).then(lateLanded, lateLanded);
+    else lateLanded();
+    Promise.resolve(reloadAccess()).then(lateLanded, lateLanded);
+    Promise.resolve(reloadPeople()).then(lateLanded, lateLanded);
+    if(isLive()){ LATE++; Promise.resolve(reloadChatPilot()).then(lateLanded, lateLanded)
+      .then(function(){ if(chatPilotMe()){ alertsReady().then(function(A){ if(A && A.chatLink) A.chatLink(); }); chatUnreadStart(); } }); }   // the chat pilot list (Admin -> Chat); a member's instant chat alerts + the chat count on every page
+    if(payOn()) Promise.resolve(reloadPaySenders()).then(()=>{ identityChanged(); return reloadPayStatus(); }, ()=>{})   // a sender's Payroll tab
+      .then(()=>payAlertsTick(), ()=>{});                                                                                  // and any phone reminder that's due
+    setTimeout(function(){ fbTick(true); }, 2500);                                                                         // replies to their feedback
+    setTimeout(useTick, 4000);                                                                                             // this visit, for Admin -> Usage
+  });
+  setTimeout(function(){ if(!isLive()){ fbTick(true); useTick(); } }, 1500);                                                        // the sandbox has no sign-in to wait for
+
+  /* One gate for every page.
+     Hiding a tab in the nav is NOT enough — anyone can type the URL. Each page calls
+     PH.nav('<key>'), so this runs everywhere for free and uses the SAME show() rule the
+     nav does. The body class does the real work: even if the page's own script renders
+     afterwards (or re-renders later), CSS keeps its content hidden. */
+  const SECNAME={dashboard:'Production Dashboard',production:'Enter Production',tc:'TC Tracker',schedule:'Schedule',
+    marketing:'Marketing board',documents:'Documents',team:'Team directory',admin:'Admin Console'};
+  function guard(active){
+    const entry=NAV.find(x=>x.k===active);
+    const allowed=!entry || entry.show();
+    /* WHILE WE DO NOT YET KNOW WHAT THIS PERSON MAY SEE, REFUSE NOTHING (see
+       stillLearning). Hold the page quietly - "One moment..." - and decide once identity
+       and their team have landed; nav() re-runs then. Allowed pages are never held. */
+    if(!allowed && stillLearning() && entry.k!=='home'){
+      if(document.body){ document.body.classList.add('ph-pending'); document.body.classList.remove('ph-locked'); }
+      const stale=document.querySelector('.ph-noaccess'); if(stale && stale.remove) stale.remove();
+      return false;
+    }
+    if(document.body) document.body.classList.remove('ph-pending');
+    if(allowed){
+      /* Unlock AND take the panel away. It used to only drop the class and leave the
+         "you don't have access" card sitting in the page - which never showed before,
+         because guard() only ever ran once. Now that it runs again on sign-in, every
+         allowed page would open with a stale refusal above its content. */
+      if(document.body) document.body.classList.remove('ph-locked');
+      const stale=document.querySelector('.ph-noaccess');
+      if(stale && stale.remove) stale.remove();
+      return true;
+    }
+    const paint=()=>{
+      const wrap=document.querySelector('.wrap'); if(!wrap) return;
+      document.body.classList.add('ph-locked');
+      if(!wrap.querySelector('.ph-noaccess')){
+        const d=document.createElement('div'); d.className='ph-noaccess';
+        d.innerHTML='<div class="ic">🔒</div>'+
+          '<h2>You don\'t have access to '+(SECNAME[active]||'this page')+'</h2>'+
+          '<p>Access is set by your <b>team</b>. If you need this, ask an admin to add you '+
+          'in <b>Admin → Teams &amp; Access</b>.</p>'+
+          '<a class="btn" href="home.html">← Back to Home</a>';
+        wrap.insertBefore(d,wrap.firstChild);
+      }
+    };
+    paint();
+    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',paint);
+    window.addEventListener('load',paint);
+    return false;
+  }
+
+  /* Drop a "view only" banner at the top of a page's content. */
+  function readOnlyBanner(target,what){
+    const host=document.querySelector(target); if(!host||host.querySelector('.ph-ro-banner'))return;
+    const d=document.createElement('div'); d.className='ph-ro-banner';
+    d.innerHTML='👁 <span><b>View only.</b> You can look at the '+what+', but not change it. Ask an admin if you need to edit.</span>';
+    host.insertBefore(d,host.firstChild);
+  }
+
+  /* Office colors. Lives HERE, not in schedule.html, because Marketing colors its
+     items by office too and the two must never drift. Schedule owns which office has
+     which color; this owns what each color actually is. */
+  /* WHERE THE WORKBOOK LIVES.
+     One place, because it is referenced by both the Dashboard and Enter Production and
+     a half-updated pair is a silent breakage. These IDs identify the file; they grant
+     nothing on their own - reading it still needs a signed-in person who already has
+     access. If the file is ever MOVED (e.g. from Morgan's OneDrive into the Home-Brace
+     site) both values change: get the new ones from connect.html step 5 and change them
+     here only. */
+  const WORKBOOK={
+    drive:'b!_iYahf-6ukmoAAj5kJvRerfxyG2Vel1DjXWUHR3Q-rM_xdgQyKrjQJEx8aAKAvQ-',
+    item :'0153I7MX4WXYRN4DKUJFEZPTWOZ4GBQMIV'
+  };
+
+  const PALETTE=[
+    {k:'Hot Pink',           dot:'#F0378F', bg:'#FFE1EF', fg:'#A80F63'},
+    {k:'Purple',             dot:'#7C3AED', bg:'#EDE7FD', fg:'#5B21B6'},
+    {k:'Sky Blue',           dot:'#38BDF8', bg:'#DFF3FE', fg:'#0369A1'},
+    {k:'Highlighter Orange', dot:'#F27C1A', bg:'#FFE9D3', fg:'#B45309'},
+    {k:'Lime Green',         dot:'#84CC16', bg:'#ECFACC', fg:'#4D7C0F'},
+    {k:'Highlighter Yellow', dot:'#FACC15', bg:'#FEF6C7', fg:'#7A5B08'},
+    // Light Pink and Light Orange lived here. Each was the same hue as Hot Pink /
+    // Highlighter Orange, only paler, so stacked in one day cell they read as one
+    // color. Jade is the only hue the palette had real room for; Red is a spare.
+    // The two offices that had them now use Jade and the unused Slate Blue.
+    {k:'Jade',               dot:'#5CD6A9', bg:'#E3FDF3', fg:'#0A7F54'},
+    {k:'Red',                dot:'#F31637', bg:'#FDE3E7', fg:'#8E0B1F'},
+    {k:'Teal',               dot:'#14B8A6', bg:'#DBF5F1', fg:'#0F766E'},
+    {k:'Slate Blue',         dot:'#475569', bg:'#E8ECF1', fg:'#334155'}
+  ];
+  const colorOf=c=>PALETTE.find(p=>p.k===c)||PALETTE[PALETTE.length-1];
+  /* By OFFICE name, which is what Marketing has to hand. Falls back to a neutral so an
+     office that has not been given a color yet still renders. */
+  function colorForOffice(n){
+    const l=locations().find(x=>x.n===n);
+    return l ? colorOf(l.color) : {k:'',dot:'#94a3b8',bg:'#F1F5F9',fg:'#475569'};
+  }
+
+  /* ------------------------------------------------------------------
+     FEEDBACK - "Send feedback", from the round button bottom-right (tour.js offers it).
+
+     29/09/2026, Jordan: "The feedback should be collected with information on user, what
+     screen they were on, etc and forwarded to me by email." Each message becomes a new
+     row on the HomeBraceFeedback list (PH_STORE.addFeedback) and a Power Automate flow
+     emails it to him. What rides along is facts ABOUT the page - which page, what was
+     picked on it, the device, recent errors - never what is on it, so no patient details
+     travel unless someone types them, and the form asks them not to.
+     "Sent" shows only once SharePoint has the row. A failure keeps what they typed.
+     ------------------------------------------------------------------ */
+  const FB_PAGES={'home.html':'Home','index.html':'Production Dashboard','production.html':'Enter Production',
+    'schedule.html':'Schedule','marketing.html':'Marketing','documents.html':'Documents','team.html':'Team',
+    'admin.html':'Admin','history.html':'History','restore.html':'Restore'};
+  const FB_KINDS=[['problem','Something’s wrong','🐞'],['idea','Idea','💡'],['question','Question','❓']];
+  const FB_TROUBLE=[];   // the last few errors on this page - most "something's wrong" reports need them
+  function fbNote(msg){
+    try{
+      FB_TROUBLE.push(new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})+'  '+String(msg).replace(/\s+/g,' ').slice(0,160));
+      if(FB_TROUBLE.length>5) FB_TROUBLE.shift();
+    }catch(_){}
+  }
+  try{
+    window.addEventListener('error',e=>fbNote((e&&e.message)||'Script error'));
+    window.addEventListener('unhandledrejection',e=>{ const r=e&&e.reason; fbNote('Unhandled: '+((r&&r.message)||r||'?')); });
+  }catch(_){}
+  document.addEventListener('ph-save-failed',e=>fbNote('A save did not reach SharePoint'+(e&&e.detail&&e.detail.key?' ('+e.detail.key+')':'')));
+
+  function fbPage(){
+    const f=String(location.pathname||'').split('/').pop();
+    return FB_PAGES[f]||(typeof document.title==='string'&&document.title)||f||'Unknown page';
+  }
+  /* What was picked on the page: what a page names with data-fb-view, dropdowns, and the
+     pressed chip or tab ("on"/"active" on these pages). Short labels only, and never the
+     navigation, the tour or this form. */
+  function fbLooking(){
+    const out=[], seen={};
+    const add=t=>{ t=String(t||'').replace(/\s+/g,' ').trim(); if(t && t.length<=60 && !seen[t] && out.length<8){ seen[t]=1; out.push(t); } };
+    try{
+      const vis=el=>!!(el.offsetParent||(el.getClientRects&&el.getClientRects().length)) &&
+        !el.closest('nav,header,.ribbon,.ph-tabbar,.phfb-ov,.tour-menu,.tour-pop');
+      // A page can name what is on screen outright (the Schedule's month): data-fb-view.
+      document.querySelectorAll('[data-fb-view]').forEach(el=>{ if(vis(el)) add(el.textContent); });
+      document.querySelectorAll('select').forEach(s=>{
+        if(!vis(s)) return; const o=s.options[s.selectedIndex]; if(!o) return;
+        let lab=s.getAttribute('aria-label')||'';
+        if(!lab && s.id){ const l=document.querySelector('label[for="'+s.id+'"]'); if(l) lab=l.textContent; }
+        add((lab?lab.trim()+': ':'')+o.text);
+      });
+      document.querySelectorAll('button.on,button.active,[role="tab"].on,[role="tab"].active,.on>button,[aria-pressed="true"],[aria-selected="true"]').forEach(el=>{ if(vis(el)) add(el.textContent); });
+    }catch(_){}
+    return out;
+  }
+  function fbDevice(){
+    const ua=(typeof navigator!=='undefined'&&navigator.userAgent)||'';
+    const m=(re,label)=>{ const x=re.exec(ua); return x?label+(x[1]?' '+x[1]:''):''; };
+    const br=m(/Edg\/(\d+)/,'Edge')||m(/CriOS\/(\d+)/,'Chrome')||m(/Chrome\/(\d+)/,'Chrome')||m(/(?:FxiOS|Firefox)\/(\d+)/,'Firefox')||m(/Version\/(\d+)[\d.]* .*Safari/,'Safari')||'Browser';
+    const os=/iPhone/.test(ua)?'iPhone':/iPad/.test(ua)?'iPad':/Android/.test(ua)?'Android':/Windows/.test(ua)?'Windows':/Mac OS X/.test(ua)?'Mac':/CrOS/.test(ua)?'Chromebook':'';
+    let phone=/Mobi/.test(ua); try{ phone=phone||matchMedia('(max-width:760px)').matches; }catch(_){}
+    return (phone?'Phone':'Computer')+' · '+br+(os?' on '+os:'')+' · '+window.innerWidth+'×'+window.innerHeight;
+  }
+  function fbVersion(){
+    try{ const s=[...document.scripts].map(x=>x.src||'').find(x=>/user\.js\?v=/.test(x)); const v=s&&/[?&]v=([\w.-]+)/.exec(s); return v?v[1]:'?'; }
+    catch(_){ return '?'; }
+  }
+  /* Who sent it is the REAL person - an admin looking through someone else's eyes is
+     named, with who they were viewing as. */
+  function feedbackContext(){
+    const r=realMe()||{}, imp=impersonating(), known=!!(r.first||r.last);
+    const offs=r.offices==='all'?'All offices':(Array.isArray(r.offices)&&r.offices.length?r.offices.join(', '):'');
+    const th=THEMES.find(t=>t.k===THEME);
+    return { name:known?name(r):'', email:(known&&r.mail?String(r.mail):'')||signedInAddress()||'',
+      role:r.title||'', teams:(r.teams||[]).join(', '), offices:offs,
+      viewingAs:(imp&&imp.first&&isAdmin(r))?name(imp):'',
+      page:fbPage(), url:String(location.href||'').slice(0,400), looking:fbLooking(),
+      device:fbDevice(), version:fbVersion(), colors:th?th.n:'',
+      online:!(typeof navigator!=='undefined'&&navigator.onLine===false), trouble:FB_TROUBLE.slice(), when:new Date() };
+  }
+  /* The row: Title is the email subject, Details is the body. Pure - tested in
+     test/feedback.test.js. */
+  function feedbackText(ctx, kind, msg){
+    ctx=ctx||{};
+    const k=(FB_KINDS.find(x=>x[0]===kind)||[null,'Feedback'])[1];
+    const who=ctx.name||ctx.email||'Someone';
+    const text=String(msg||'').trim(), one=text.replace(/\s+/g,' ');
+    const title=(k+': '+(one.length>70?one.slice(0,67)+'…':one)+' — '+who+', '+(ctx.page||'?')).slice(0,250);
+    let when=String(ctx.when||'');
+    try{ if(ctx.when instanceof Date) when=ctx.when.toLocaleString([],{weekday:'short',month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short'}); }catch(_){}
+    const lines=[k.toUpperCase(), text, '',
+      'From: '+who+(ctx.email&&ctx.email!==who?' <'+ctx.email+'>':''),
+      ctx.role?'Role: '+ctx.role:null, ctx.teams?'Team: '+ctx.teams:null, ctx.offices?'Offices: '+ctx.offices:null,
+      ctx.viewingAs?'Was viewing as: '+ctx.viewingAs:null,
+      'Page: '+(ctx.page||'?'),
+      ctx.looking&&ctx.looking.length?'Had open: '+ctx.looking.join(' · '):null,
+      ctx.url?'Link: '+ctx.url:null,
+      ctx.device?'Device: '+ctx.device:null,
+      'Home-Brace version: '+(ctx.version||'?')+(ctx.colors?' · Colors: '+ctx.colors:''),
+      ctx.online===false?'Connection: offline when it was written':null,
+      'Recent errors on this page: '+(ctx.trouble&&ctx.trouble.length?'\n  '+ctx.trouble.join('\n  '):'none'),
+      'Sent: '+when].filter(l=>l!==null);
+    return {Title:title, Details:lines.join('\n').slice(0,20000)};
+  }
+
+  let FB_CSS=false;
+  function fbStyles(){
+    if(FB_CSS) return; FB_CSS=true;
+    const s=document.createElement('style');
+    s.textContent=`
+    .phfb-ov{position:fixed;inset:0;z-index:9400;background:rgba(15,42,74,.46);display:flex;align-items:center;justify-content:center;padding:18px;opacity:0;transition:opacity .18s ease}
+    .phfb-ov.open{opacity:1}
+    .phfb-card{position:relative;width:min(480px,100%);background:#fff;border-radius:18px;box-shadow:0 24px 64px rgba(15,42,74,.35);padding:22px 22px 18px;color:#1F2D3D;font-family:inherit;transform:translateY(14px) scale(.98);transition:transform .22s cubic-bezier(.2,.9,.3,1.2)}
+    .phfb-ov.open .phfb-card{transform:none}
+    .phfb-hd{display:flex;align-items:flex-start;gap:12px}
+    .phfb-hd h3{margin:0;font-size:19px;line-height:1.25;color:var(--navy,#0F2A4A);letter-spacing:-.01em}
+    .phfb-hd p{margin:5px 0 0;font-size:13.5px;line-height:1.5;color:#56627A}
+    .phfb-x{margin-left:auto;background:none;border:none;font-size:24px;line-height:1;color:#8a94a6;cursor:pointer;padding:0 4px}
+    .phfb-kinds{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 12px}
+    .phfb-kind{display:flex;gap:7px;align-items:center;border:1.5px solid #DCE2EA;background:#fff;border-radius:999px;padding:8px 13px;font-family:inherit;font-size:13.5px;font-weight:600;line-height:1;color:#3B4A5C;cursor:pointer}
+    .phfb-kind[aria-pressed="true"]{border-color:var(--teal,#149B96);background:var(--teal-soft,#E5F4F3);color:var(--navy,#0F2A4A)}
+    .phfb-msg{display:block;width:100%;box-sizing:border-box;min-height:124px;resize:vertical;border:1.5px solid #DCE2EA;border-radius:12px;padding:12px 13px;font-family:inherit;font-size:15px;line-height:1.5;color:#1F2D3D;background:#fff}
+    .phfb-msg:focus{outline:none;border-color:var(--teal,#149B96);box-shadow:0 0 0 3px rgba(20,155,150,.15)}
+    .phfb-note{margin:9px 0 0;font-size:12.5px;font-weight:600;color:#8a5a00}
+    .phfb-also{margin:4px 0 0;font-size:12.5px;line-height:1.45;color:#6B7A8C}
+    .phfb-err{display:none;margin:10px 0 0;font-size:13px;font-weight:600;line-height:1.45;color:#B42318}
+    .phfb-row{display:flex;gap:10px;justify-content:flex-end;margin-top:16px}
+    .phfb-btn{border:none;border-radius:10px;padding:11px 18px;font-family:inherit;font-size:14.5px;font-weight:700;line-height:1;cursor:pointer}
+    .phfb-cancel{background:#fff;color:var(--navy,#0F2A4A);border:1px solid #DCE2EA}
+    .phfb-send{display:flex;align-items:center;gap:8px;background:var(--teal,#149B96);color:#fff}
+    .phfb-send:disabled{opacity:.45;cursor:default}
+    .phfb-spin{width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,.45);border-top-color:#fff;animation:phfbspin .7s linear infinite}
+    .phfb-done{text-align:center;padding:14px 6px 6px}
+    .phfb-badge{position:relative;width:92px;height:92px;margin:6px auto 16px}
+    .phfb-disc{position:absolute;inset:0;border-radius:50%;background:var(--teal,#149B96);transform:scale(0);animation:phfbpop .45s cubic-bezier(.2,.9,.3,1.35) forwards}
+    .phfb-wave{position:absolute;inset:-10px;border-radius:50%;border:3px solid var(--teal,#149B96);opacity:0;animation:phfbwave .8s ease-out .25s forwards}
+    .phfb-dot{position:absolute;left:50%;top:50%;width:8px;height:8px;border-radius:50%;opacity:0;animation:phfbburst .75s ease-out .3s forwards}
+    .phfb-badge svg{position:absolute;inset:0;width:92px;height:92px}
+    .phfb-tick{fill:none;stroke:#fff;stroke-width:7;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:60;stroke-dashoffset:60;animation:phfbdraw .38s ease-out .32s forwards}
+    .phfb-done h3{margin:0;font-size:21px;color:var(--navy,#0F2A4A);opacity:0;animation:phfbup .35s ease-out .45s forwards}
+    .phfb-done p{margin:6px 0 0;font-size:14px;color:#56627A;opacity:0;animation:phfbup .35s ease-out .55s forwards}
+    .phfb-done .phfb-row{justify-content:center}
+    @keyframes phfbspin{to{transform:rotate(360deg)}}
+    @keyframes phfbpop{to{transform:scale(1)}}
+    @keyframes phfbwave{0%{opacity:.7;transform:scale(.85)}100%{opacity:0;transform:scale(1.4)}}
+    @keyframes phfbburst{0%{opacity:1;transform:translate(-50%,-50%)}100%{opacity:0;transform:translate(-50%,-50%) translate(var(--dx),var(--dy)) scale(.4)}}
+    @keyframes phfbdraw{to{stroke-dashoffset:0}}
+    @keyframes phfbup{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+    @media (max-width:760px){
+      .phfb-ov{align-items:flex-end;padding:0}
+      .phfb-card{border-radius:18px 18px 0 0;padding-bottom:calc(18px + env(safe-area-inset-bottom,0px))}
+    }
+    @media (prefers-reduced-motion:reduce){
+      .phfb-ov,.phfb-card{transition:none}
+      .phfb-disc,.phfb-wave,.phfb-dot,.phfb-tick,.phfb-done h3,.phfb-done p{animation-duration:.01s;animation-delay:0s}
+    }
+    body:has(.phfb-ov) .tour-launch{display:none !important}`;
+    document.head.appendChild(s);
+  }
+  function fbSentHTML(sandbox){
+    const cols=['#2BC0B8','#149B96','#F2B84B','#D96A8E','#8A73E0','#0F2A4A'];
+    const dots=cols.concat(cols).map((c,i)=>{ const a=i/12*Math.PI*2, d=60+(i%3)*9;
+      return '<i class="phfb-dot" style="background:'+c+';--dx:'+Math.round(Math.cos(a)*d)+'px;--dy:'+Math.round(Math.sin(a)*d)+'px"></i>'; }).join('');
+    return '<div class="phfb-done" role="status"><div class="phfb-badge"><span class="phfb-disc"></span><span class="phfb-wave"></span>'+dots+
+      '<svg viewBox="0 0 92 92" aria-hidden="true"><path class="phfb-tick" d="M28 47 L41 60 L65 34"/></svg></div>'+
+      '<h3>Sent. Thank you!</h3><p>'+(sandbox?'This is the sandbox copy, so nothing was actually sent.':'We’ve got it.')+'</p>'+
+      '<div class="phfb-row"><button type="button" class="phfb-btn phfb-cancel phfb-ok">Done</button></div></div>';
+  }
+  function openFeedback(){
+    if(document.querySelector('.phfb-ov')) return;
+    fbStyles();
+    const ctx=feedbackContext();           // the page as it was when they opened the form
+    const ov=document.createElement('div'); ov.className='phfb-ov';
+    ov.setAttribute('role','dialog'); ov.setAttribute('aria-modal','true'); ov.setAttribute('aria-label','Send Feedback');
+    ov.innerHTML='<div class="phfb-card">'+
+      '<div class="phfb-hd"><div><h3>Send Feedback</h3><p>It comes straight to us, with the page you’re on, so we can see what you saw.</p></div>'+
+      '<button type="button" class="phfb-x" aria-label="Close">×</button></div>'+
+      '<div class="phfb-kinds" role="group" aria-label="What kind of feedback">'+
+        FB_KINDS.map(k=>'<button type="button" class="phfb-kind" aria-pressed="false" data-k="'+k[0]+'"><span aria-hidden="true">'+k[2]+'</span>'+k[1]+'</button>').join('')+'</div>'+
+      '<textarea class="phfb-msg" maxlength="4000" placeholder="What happened, or what would make it better?" aria-label="Your feedback"></textarea>'+
+      '<p class="phfb-note">Please don’t include patient details.</p>'+
+      '<p class="phfb-also">Sent automatically with your comments: your name, this page ('+escHTML(ctx.page)+'), your device and the time.</p>'+
+      '<p class="phfb-err" role="alert"></p>'+
+      '<div class="phfb-row"><button type="button" class="phfb-btn phfb-cancel">Cancel</button>'+
+      '<button type="button" class="phfb-btn phfb-send" disabled>Send</button></div></div>';
+    document.body.appendChild(ov);
+    requestAnimationFrame(()=>ov.classList.add('open'));
+    const card=ov.querySelector('.phfb-card'), msg=ov.querySelector('.phfb-msg'), send=ov.querySelector('.phfb-send'), err=ov.querySelector('.phfb-err');
+    let kind='', busy=false, closed=false;
+    const onKey=e=>{ if(e.key==='Escape' && !busy){ e.stopPropagation(); close(); } };
+    function close(){ if(closed) return; closed=true; document.removeEventListener('keydown',onKey,true); ov.classList.remove('open'); setTimeout(()=>ov.remove(),200); }
+    document.addEventListener('keydown',onKey,true);
+    // A stray tap outside must not throw away what someone has typed.
+    ov.addEventListener('click',e=>{ if(e.target===ov && !busy && !msg.value.trim()) close(); });
+    ov.querySelector('.phfb-x').onclick=()=>{ if(!busy) close(); };
+    ov.querySelector('.phfb-cancel').onclick=()=>{ if(!busy) close(); };
+    ov.querySelectorAll('.phfb-kind').forEach(b=>b.onclick=()=>{
+      kind=kind===b.dataset.k?'':b.dataset.k;
+      ov.querySelectorAll('.phfb-kind').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.k===kind))); });
+    msg.addEventListener('input',()=>{ send.disabled=!msg.value.trim(); err.style.display='none'; });
+    setTimeout(()=>{ try{ msg.focus(); }catch(_){} },60);
+    send.onclick=()=>{
+      const text=msg.value.trim(); if(!text||busy) return;
+      busy=true; send.disabled=true; err.style.display='none';
+      send.innerHTML='<span class="phfb-spin" aria-hidden="true"></span>Sending…';
+      const row=feedbackText(Object.assign(ctx,{when:new Date(), trouble:FB_TROUBLE.slice(),
+        online:!(typeof navigator!=='undefined'&&navigator.onLine===false)}), kind, text);
+      const go=(window.PH_STORE&&PH_STORE.addFeedback)?PH_STORE.addFeedback(row):Promise.reject(new Error('Storage is not loaded'));
+      Promise.resolve(go).then(res=>{
+        const sandbox=!!(res&&res.sandbox);
+        if(sandbox) try{ console.info('[feedback - sandbox, not sent]\n'+row.Title+'\n\n'+row.Details); }catch(_){}
+        busy=false; card.innerHTML=fbSentHTML(sandbox);
+        const ok=card.querySelector('.phfb-ok'); if(ok){ ok.onclick=close; try{ ok.focus(); }catch(_){} }
+        setTimeout(close,3200);
+      }).catch(e=>{
+        busy=false; send.disabled=false; send.textContent='Send';
+        err.textContent=(e&&e.missingList)?'Feedback isn’t working right now. Please try again later.'
+          :'That didn’t send. Check your connection and try again — what you wrote is still here.';
+        err.style.display='block';
+      });
+    };
+  }
+
+  /* TALK TO TYPE (04/11/2026, Jordan: "All text boxes should have text to speech" ... "build the mic"). A 🎤 shows at the
+     right of whichever text box has the cursor: tap it and talk - the words go in where the cursor is, and the page
+     saves them like typing; tap it again (or click away) to stop. The browser's own speech service does the listening
+     (Chrome: Google, Safari: Apple, Edge: Microsoft), so it is NOT on the TC Tracker (patients' details - Jordan can ask
+     for it) and never on number, date, email or password boxes; [data-nomic] turns it off for a box. A browser without
+     one (Firefox) shows no 🎤. */
+  const MIC_SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  let micBtn=null, micFor=null, micRec=null, micPad=null, micRAF=0;
+  function micOK(el){
+    if(!MIC_SR || !el || el.readOnly || el.disabled) return false;
+    if(/(^|\/)tc\.html$/.test(location.pathname)) return false;
+    if(el.closest && el.closest('[data-nomic]')) return false;
+    if(el.tagName==='TEXTAREA') return true;
+    if(el.tagName!=='INPUT') return false;
+    const t=String(el.getAttribute('type')||'text').toLowerCase();
+    return t==='text' || t==='search';
+  }
+  function micStyles(){
+    if(document.getElementById('ph-mic-css')) return;
+    const st=document.createElement('style'); st.id='ph-mic-css';
+    /* .ph-mic[hidden]: its own display:grid beat the browser's "hidden", so on a page without a [hidden] rule (Admin) a 🎤
+       told to hide stayed painted where its box had been (Jordan 18/11: "Why is microphone sign just sitting there"). */
+    /* the layout bits are !important: a page's own rule for EVERY button (History: button{margin-top:13px}) reached the 🎤
+       too and pushed it off its box (Jordan 20/11: "in random place ... multiple times"). No page style can move it now. */
+    st.textContent='.ph-mic[hidden]{display:none!important}.ph-mic{position:fixed!important;z-index:9450;width:26px!important;height:26px!important;border-radius:50%;border:0!important;padding:0!important;display:grid;place-items:center;'+
+      'margin:0!important;transform:none!important;transition:none!important;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;right:auto!important;bottom:auto!important;box-sizing:border-box!important;float:none!important;'+
+      'background:#eef2f7;color:#33475b;cursor:pointer;box-shadow:0 1px 3px rgba(15,42,74,.18)}.ph-mic:hover{background:#e2e8f0}'+
+      '.ph-mic svg{width:15px;height:15px;display:block}.ph-mic.on{background:#d92d20;color:#fff;animation:ph-mic 1.2s ease-in-out infinite}'+
+      '@keyframes ph-mic{0%,100%{box-shadow:0 0 0 0 rgba(217,45,32,.45)}50%{box-shadow:0 0 0 7px rgba(217,45,32,0)}}'+
+      '@media (prefers-reduced-motion:reduce){.ph-mic.on{animation:none}}'+
+      '.ph-mic-t{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:9500;background:#0F2A4A;color:#fff;padding:10px 16px;border-radius:12px;font-size:14px;font-weight:700;max-width:90vw}';
+    document.head.appendChild(st);
+  }
+  function micToast(t){ const d=document.createElement('div'); d.className='ph-mic-t'; d.setAttribute('role','status'); d.textContent=t; document.body.appendChild(d); setTimeout(function(){ d.remove(); }, 4200); }
+  function micPaint(){
+    if(!micBtn) return; const on=!!micRec;
+    micBtn.classList.toggle('on', on); micBtn.setAttribute('aria-pressed', String(on));
+    micBtn.setAttribute('aria-label', on ? 'Stop talking to type' : 'Talk to type');
+    micBtn.title=on ? 'Listening… tap to stop' : 'Talk to type (no patient details)';
+  }
+  function micPlace(){
+    if(!micBtn || !micFor) return;
+    const r=micFor.getBoundingClientRect();
+    if(!r.width || r.bottom<0 || r.top>window.innerHeight){ micBtn.hidden=true; return; }
+    const ta=micFor.tagName==='TEXTAREA', sz=26;
+    const x=Math.round(r.right-sz-(ta?16:4)), y=Math.round(ta ? r.bottom-sz-6 : r.top+(r.height-sz)/2);
+    micBtn.style.left=x+'px'; micBtn.style.top=y+'px';
+    micBtn.hidden=!micOnBox(x+sz/2, y+sz/2, r);
+  }
+  /* ONLY ON ITS OWN BOX (20/11/2026, Jordan: "We keep seeing the microphone ... in random place (this time just floating
+     around the new task). I need you to double check everywhere because this is multiple times."). The 🎤 sits on top
+     of the page, so it can show over something else when its box is scrolled out of a panel, covered by something drawn
+     over it, or moved in a way the page never told us. Now, each time it is placed, it asks the browser what is really
+     under that spot: its own box (or a little thing drawn inside the box) - it shows; anything else - it hides, and comes
+     back by itself when the box is in view again. */
+  function micOnBox(cx, cy, r){
+    if(typeof document.elementsFromPoint!=='function') return true;
+    let under=null;
+    try{ under=document.elementsFromPoint(cx, cy).find(function(e){ return e!==micBtn && !micBtn.contains(e); }); }catch(_){ return true; }
+    if(!under) return false;
+    if(under===micFor || micFor.contains(under)) return true;
+    const u=under.getBoundingClientRect();      // e.g. a clear "×" drawn inside a search box
+    return u.width>0 && u.left>=r.left-1 && u.right<=r.right+1 && u.top>=r.top-1 && u.bottom<=r.bottom+1;
+  }
+  function micShow(el){
+    micStyles();
+    if(!micBtn){
+      micBtn=document.createElement('button'); micBtn.type='button'; micBtn.className='ph-mic';
+      micBtn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
+      micBtn.addEventListener('mousedown', function(e){ e.preventDefault(); });          // the cursor stays in the box
+      micBtn.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); if(micRec) micStop(); else micStart(); });
+      document.body.appendChild(micBtn);
+    }
+    if(micFor!==el){ micStop(); micUnpad(); }
+    micFor=el;
+    /* room for the 🎤 at the end of a one-line box, without changing its size */
+    if(el.tagName==='INPUT' && getComputedStyle(el).boxSizing==='border-box' && micPad!==el){
+      micPad=el; el.dataset.micPad=el.style.paddingRight||''; el.style.paddingRight=(parseFloat(getComputedStyle(el).paddingRight)||0)+26+'px';
+    }
+    micPaint(); micPlace(); micWatch();
+  }
+  /* LEFT FLOATING (10/11/2026, Jordan: "The microphone seems to be floating around on some pages" - over Admin -> Usage).
+     A page that redraws while the cursor is in a box removes that box, and the browser says nothing ("focusout" doesn't
+     fire), so the 🎤 stayed where the box had been, over whatever was drawn there next. Now, while it shows, it checks
+     each frame that its box is still on the page and still has the cursor (or is listening): if not, it goes; if the
+     box moved (the page above it grew), it follows. One box, only while it has the cursor - nothing to slow a page. */
+  function micWatch(){
+    if(typeof requestAnimationFrame!=='function') return;
+    cancelAnimationFrame(micRAF);
+    const tick=function(){
+      micRAF=0;
+      if(!micBtn || !micFor) return;
+      if(!micFor.isConnected || (document.activeElement!==micFor && !micRec)){ micHide(); return; }
+      micPlace(); micRAF=requestAnimationFrame(tick);
+    };
+    micRAF=requestAnimationFrame(tick);
+  }
+  function micUnpad(){ if(micPad){ micPad.style.paddingRight=micPad.dataset.micPad||''; delete micPad.dataset.micPad; micPad=null; } }
+  function micHide(){ if(micRAF){ cancelAnimationFrame(micRAF); micRAF=0; } micStop(); micUnpad(); micFor=null; if(micBtn) micBtn.hidden=true; }
+  function micStart(){
+    const el=micFor; if(!el || !MIC_SR) return;
+    let rec; try{ rec=new MIC_SR(); }catch(_){ micToast('Talk to type isn’t available in this browser.'); return; }
+    rec.lang=navigator.language||'en-US'; rec.continuous=true; rec.interimResults=true;
+    const a=el.selectionStart!=null ? el.selectionStart : el.value.length, b=el.selectionEnd!=null ? el.selectionEnd : a;
+    const before=el.value.slice(0,a), after=el.value.slice(b);
+    rec.onresult=function(e){
+      let said='';
+      for(let i=0;i<e.results.length;i++) said+=e.results[i][0].transcript;
+      said=said.replace(/^\s+/,'');
+      if(said && (!before.trim() || /[.!?]\s*$/.test(before))) said=said.charAt(0).toUpperCase()+said.slice(1);   // a new sentence
+      const head=before+(before && said && !/\s$/.test(before) ? ' ' : '')+said;
+      let v=head+(after && said && !/^\s/.test(after) ? ' ' : '')+after;
+      if(el.maxLength>0 && v.length>el.maxLength) v=v.slice(0, el.maxLength);
+      el.value=v;
+      try{ el.setSelectionRange(Math.min(head.length, v.length), Math.min(head.length, v.length)); }catch(_){}
+      el.dispatchEvent(new Event('input', {bubbles:true}));
+    };
+    rec.onerror=function(e){
+      const er=e && e.error;
+      if(er==='not-allowed' || er==='service-not-allowed') micToast('The microphone is blocked for Home-Brace. Allow it in the browser’s settings for this site, then try again.');
+      else if(er==='network') micToast('Talk to type needs the internet.');
+      else if(er==='audio-capture') micToast('No microphone found on this device.');
+    };
+    rec.onend=function(){ if(micRec===rec){ micRec=null; micPaint(); try{ el.dispatchEvent(new Event('change', {bubbles:true})); }catch(_){} } };
+    micRec=rec; micPaint();
+    try{ rec.start(); }catch(_){ micRec=null; micPaint(); }
+  }
+  function micStop(){ const r=micRec; if(!r) return; try{ r.stop(); }catch(_){ micRec=null; micPaint(); } }
+  if(MIC_SR){
+    document.addEventListener('focusin', function(e){ const t=e.target; if(t===micBtn) return; if(micOK(t)) micShow(t); else if(micFor) micHide(); });
+    document.addEventListener('focusout', function(){ setTimeout(function(){ const a=document.activeElement; if(micFor && a!==micFor && a!==micBtn) micHide(); }, 0); });
+    window.addEventListener('scroll', micPlace, true);
+    window.addEventListener('resize', micPlace);
+  }
+
+  /* WHERE ARE WE RUNNING?
+       'live'    - the practice's real hub on Azure. Reads their workbook.
+       'sandbox' - GitHub Pages or localhost. Demo numbers only, never real figures,
+                   because that host is public.
+     Anything that would expose real data must check this. */
+  function env(){
+    /* ?env=live forces production behaviour on any host, so the cold-device flow can
+       be exercised in a local browser. It only ever makes a page MORE locked down
+       (production requires sign-in; the sandbox does not), so it is safe to leave in. */
+    if(/[?&]env=live(&|$)/.test(location.search||'')) return 'live';
+    const h=location.hostname;
+    if(/azurestaticapps\.net$/i.test(h)) return 'live';
+    if(/^hub\./i.test(h)) return 'live';               // future custom domain
+    return 'sandbox';
+  }
+  const isLive=()=>env()==='live';
+
+  /* LOADING SCREEN (10/11/2026, Jordan: "When loading production dashboard (or anything that needs to grab our data)
+     ... it takes a second to load but shows numbers as zeros first. Would be better if we had a great animated
+     home-brace loading screen even if quickly"). One screen for every page, up from the first paint: the logo with a
+     ring going round it and the brackets on the wire lighting up one after another (the braces in the logo), and a
+     line saying what it is waiting for. It lifts when everything the page waits for has landed:
+       'who'  - sign-in, then the team list / access / Admin's settings (until PH.learning() is false; at once on
+                the sandbox),
+       and anything a page holds with PH.loadHold(key, 'Reading the production numbers…') until PH.loadDone(key) -
+       the dashboard, Enter production, Payroll, Schedule, TC Tracker and Marketing do, so nobody sees zeros first.
+     At least half a second (so it reads as a screen, not a flicker), at most 12 seconds (SharePoint being slow must
+     never hold a page; whatever the page has by then shows, with its own message). It sits under the sign-in screen
+     (gate.js #phgate, z 99999), and outside <body>, so gate.js hiding the body's content doesn't hide it. */
+  const LOAD={holds:{who:''}, t0:Date.now(), el:null, gone:false, ready:false, cap:null};
+  const LOAD_MIN=500, LOAD_MAX=12000;
+  function loadMsg(){
+    if(!LOAD.el) return;
+    const k=Object.keys(LOAD.holds).find(x=>x!=='who' && LOAD.holds[x]);
+    const t=('who' in LOAD.holds) && isLive() ? (!SIGNED_IN ? 'Signing you in…' : 'Getting your offices…') : (k ? LOAD.holds[k] : 'Opening Home-Brace…');
+    const m=LOAD.el.querySelector('.phl-msg'); if(m && m.textContent!==t) m.textContent=t;
+  }
+  function loadHide(){
+    if(LOAD.gone || !LOAD.el) return; LOAD.gone=true;
+    clearTimeout(LOAD.cap);
+    const el=LOAD.el; el.classList.add('out'); el.setAttribute('aria-busy','false');
+    document.documentElement.classList.remove('ph-loading');
+    setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); loadSide(false); }, 420);
+  }
+  function loadCheck(){
+    if(LOAD.gone || !LOAD.ready) return;
+    if(Object.keys(LOAD.holds).length) return loadMsg();             // (the last line stays up while it fades)
+    const wait=LOAD_MIN-(Date.now()-LOAD.t0);
+    if(wait>0) setTimeout(loadCheck, wait); else loadHide();
+  }
+  /* ONLY THE PAGE'S OWN PART (10/11/2026, Jordan: "I'd prefer that there isn't a complete other screen with the loading
+     animation just the part of Home-Brace that will show the screen loads so you still see the apps etc."). Once the
+     page shows, the loading screen covers only where the page's content goes - right of the sidebar, or under the
+     header and the tabs across the top, and above the phone bar - so the menu stays in view and can be clicked.
+     While sign-in is still being checked (gate.js hides the whole page, menu included: body.phgated) it is the whole
+     window, as before; it is fitted again whenever that changes, and when the window is resized. */
+  /* THE SIDEBAR STAYS STILL (10/11/2026, Jordan: "screen loads then side bar pops from the left. Would be good that
+     side bar stays still"). While sign-in is checked gate.js hides the whole page - the real sidebar too - and which
+     apps it lists isn't known yet. So with the Sidebar menu (a computer-wide window, a page with the menu) the loading
+     screen draws the sidebar's empty panel itself: the same navy, width and Home-Brace at the top, nothing about
+     anyone. It sits OVER the real sidebar (z 47, over its 45/46) while sign-in is checked - that one is drawn before
+     anyone is known ("Home" only, no name) - and steps aside once sign-in is done and the menu is filled in: the
+     items appear, nothing moves. */
+  const SIDE_W=248;
+  function sideWanted(){
+    try{
+      const r=document.documentElement;
+      return !!(r && r.classList && r.classList.contains('ph-lay-side')) && (window.innerWidth||0)>=960 &&
+        (!LOAD.parsed || !!document.querySelector('.v1nav'));          // before the page is read, assume it has the menu
+    }catch(_){ return false; }
+  }
+  function loadSide(on){
+    try{
+      let p=document.getElementById && document.getElementById('phload-side');
+      if(!on){ if(p && p.parentNode) p.parentNode.removeChild(p); return; }
+      if(p || !document.createElement) return;
+      p=document.createElement('div'); p.id='phload-side'; p.setAttribute('aria-hidden','true');
+      if(NAVSNAP && isLive()) p.style.zIndex='44';           // the real menu is right from the start (NAVSNAP): the panel only fills in behind it
+      p.innerHTML='<div class="phls-brand"><img src="'+LOAD.logo+'" alt="" width="34" height="34"><span>Home-<i>Brace</i></span></div>';
+      document.documentElement.appendChild(p);
+    }catch(_){}
+  }
+  function loadFit(){
+    const el=LOAD.el; if(!el || LOAD.gone) return;
+    try{
+      let top=0, left=0, bottom=0;
+      const body=document.body, gated=!body || !body.classList || body.classList.contains('phgated');
+      const wantSide=sideWanted();
+      // The page's own menu can show: signed in, or drawn from this tab's last page while sign-in is checked (NAVSNAP).
+      const menuOk=body && (!gated || (!!NAVSNAP && isLive()));
+      // Steps aside a moment later (after the page has filled its menu in) - unless sign-in started checking meanwhile.
+      if(gated) loadSide(wantSide); else setTimeout(function(){ const b=document.body; if(b && b.classList && !b.classList.contains('phgated')) loadSide(false); }, 0);
+      if(!body && NAVSNAP && isLive()){                                      // the page isn't read yet: where it sat last time
+        const f=NAVSNAP.fit;                                                // (same window width and menu)
+        if(f && f.w===(window.innerWidth||0) && f.lay===LAYOUT){ top=+f.top||0; left=+f.left||0; bottom=+f.bottom||0; }
+        else if(wantSide) left=SIDE_W;
+      }
+      else if(!menuOk){ if(wantSide) left=SIDE_W; }                            // not yet: the panel holds the sidebar's place
+      else {
+        const H=window.innerHeight||0;
+        const box=sel=>{ const e=document.querySelector(sel); if(!e || !e.getBoundingClientRect) return null; const r=e.getBoundingClientRect(); return (r.width>0 && r.height>0) ? r : null; };
+        const side=box('.ph-sidenav'), bar=box('.ph-tabbar');
+        if(side && side.left<=1 && side.height>=H*0.6) left=Math.round(side.right);                       // the sidebar
+        else ['.hdr','.v1nav'].forEach(s=>{ const r=box(s); if(r && r.top<H/3) top=Math.max(top, Math.round(r.bottom)); });   // header + tabs on top
+        if(bar && bar.top>H/2) bottom=Math.max(0, Math.round(H-bar.top));                                   // the phone bar
+        if(!left && wantSide) left=SIDE_W;
+        LOAD.lastFit={top, left, bottom, w:window.innerWidth||0, lay:LAYOUT};    // kept with the menu for the next page
+      }
+      el.style.top=top+'px'; el.style.left=left+'px'; el.style.bottom=bottom+'px';
+    }catch(_){}
+  }
+  function loadHold(k, label){ if(LOAD.gone || !k) return; LOAD.holds[k]=label||LOAD.holds[k]||''; loadMsg(); }
+  function loadDone(k){ if(!(k in LOAD.holds)) return; delete LOAD.holds[k]; loadCheck(); }
+  try{ (function loadScreen(){
+    const root=document.documentElement;                             // (the tests' stand-in document has none of this)
+    if(!root || typeof root.appendChild!=='function' || typeof document.createElement!=='function' || typeof window.addEventListener!=='function') return;
+    if(document.getElementById && document.getElementById('phload')) return;
+    let logo='../assets/logo-mark.png';
+    LOAD.logo='../assets/logo-mark.png?v=2';
+    try{ const me=document.currentScript && document.currentScript.src; if(me){ logo=new URL('../assets/logo-mark.png', me).href; LOAD.logo=new URL('../assets/logo-mark.png?v=2', me).href; } }catch(_){}
+    const st=document.createElement('style');
+    st.textContent=
+      '#phload{position:fixed;inset:0;z-index:99990;display:flex;align-items:center;justify-content:center;padding:24px;'+
+        'background:var(--canvas,#F4F6F9);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;'+
+        'transition:opacity .38s ease, visibility 0s linear .38s}'+
+      '#phload-side{position:fixed;top:0;left:0;bottom:0;width:'+SIDE_W+'px;z-index:47;box-sizing:border-box;background:var(--navy,#0F2A4A);'+
+        'border-right:1px solid rgba(255,255,255,.07);font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}'+
+      '#phload-side .phls-brand{display:flex;align-items:center;gap:10px;height:60px;padding:0 18px;color:#fff;font-weight:700;font-size:18px;line-height:1.5}'+
+      '#phload-side .phls-brand img{width:34px;height:34px;display:block}'+
+      '#phload-side .phls-brand i{font-style:normal;color:var(--teal2,#2BC0B8)}'+
+      '@media print{#phload-side{display:none}}'+
+      '#phload::before{content:"";position:absolute;inset:0;pointer-events:none;'+
+        'background:radial-gradient(520px 360px at 50% 44%, color-mix(in srgb, var(--teal,#149B96) 14%, transparent), transparent 70%)}'+
+      '#phload.out{opacity:0;visibility:hidden}'+
+      '#phload.out .phl-box{transform:scale(1.04)}'+
+      '#phload .phl-box{position:relative;display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;'+
+        'transition:transform .38s ease;animation:phl-in .45s cubic-bezier(.2,.8,.2,1) both}'+
+      '#phload .phl-mark{position:relative;width:112px;height:112px;display:grid;place-items:center}'+
+      '#phload .phl-mark img{width:76px;height:76px;border-radius:50%;box-shadow:0 10px 30px color-mix(in srgb, var(--teal,#149B96) 35%, transparent);'+
+        'animation:phl-breathe 2.4s ease-in-out infinite}'+
+      '#phload .phl-ring{position:absolute;inset:0;animation:phl-spin 1.15s linear infinite}'+
+      '#phload .phl-ring circle{fill:none;stroke-width:3.5;stroke-linecap:round}'+
+      '#phload .phl-word{font-size:21px;font-weight:800;letter-spacing:-.01em;color:var(--navy,#0F2A4A);margin-top:2px}'+
+      '#phload .phl-wire{width:150px;height:34px;overflow:visible}'+
+      '#phload .phl-wire path{fill:none;stroke:var(--teal,#149B96);stroke-width:2;opacity:.45}'+
+      '#phload .phl-br{transform-box:fill-box;transform-origin:center;animation:phl-br 1.6s ease-in-out infinite}'+
+      '#phload .phl-br rect.b{fill:var(--canvas,#F4F6F9);stroke:var(--teal,#149B96);stroke-width:2}'+
+      '#phload .phl-br rect.s{fill:var(--teal,#149B96)}'+
+      '#phload .phl-br:nth-of-type(2){animation-delay:.16s}#phload .phl-br:nth-of-type(3){animation-delay:.32s}#phload .phl-br:nth-of-type(4){animation-delay:.48s}'+
+      '#phload .phl-msg{font-size:14px;font-weight:600;color:var(--soft,#56627A);min-height:20px}'+
+      '@keyframes phl-in{from{opacity:0;transform:translateY(8px) scale(.97)}to{opacity:1;transform:none}}'+
+      '@keyframes phl-spin{to{transform:rotate(360deg)}}'+
+      '@keyframes phl-breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.045)}}'+
+      '@keyframes phl-br{0%,60%,100%{transform:translateY(0)}25%{transform:translateY(-5px)}}'+
+      '@keyframes phl-fill{0%,60%,100%{fill:var(--canvas,#F4F6F9)}25%{fill:var(--teal,#149B96)}}'+
+      '@keyframes phl-slot{0%,60%,100%{fill:var(--teal,#149B96)}25%{fill:#fff}}'+
+      '#phload .phl-br rect.b{animation:phl-fill 1.6s ease-in-out infinite;animation-delay:inherit}'+
+      '#phload .phl-br rect.s{animation:phl-slot 1.6s ease-in-out infinite;animation-delay:inherit}'+
+      '@media (prefers-reduced-motion:reduce){#phload .phl-ring{animation-duration:2.4s}#phload .phl-mark img,#phload .phl-br,#phload .phl-br rect.b,#phload .phl-br rect.s,#phload .phl-box{animation:none}}';
+    (document.head||document.documentElement).appendChild(st);
+    // The brackets sit on the wire's curve (a quadratic from (4,10) through (66,22) to (128,10)).
+    const br=[0.2,0.4,0.6,0.8].map(function(t){
+      const x=4+124*t, y=10+24*t*(1-t);
+      return '<g class="phl-br"><rect class="b" x="'+(x-7)+'" y="'+(y-7)+'" width="14" height="14" rx="3.5"/><rect class="s" x="'+(x-1.5)+'" y="'+(y-4)+'" width="3" height="8" rx="1"/></g>';
+    }).join('');
+    const el=document.createElement('div');
+    el.id='phload'; el.setAttribute('role','status'); el.setAttribute('aria-live','polite'); el.setAttribute('aria-busy','true');
+    el.innerHTML='<div class="phl-box">'+
+      '<div class="phl-mark"><svg class="phl-ring" viewBox="0 0 112 112" aria-hidden="true">'+
+        '<circle cx="56" cy="56" r="52" style="stroke:color-mix(in srgb, var(--teal,#149B96) 16%, transparent)"/>'+
+        '<circle cx="56" cy="56" r="52" style="stroke:var(--teal,#149B96)" stroke-dasharray="82 245"/></svg>'+
+        '<img src="'+logo+'" alt=""></div>'+
+      '<div class="phl-word">Home-Brace</div>'+
+      '<svg class="phl-wire" viewBox="0 0 132 30" aria-hidden="true"><path d="M4 10 Q66 34 128 10"/>'+br+'</svg>'+
+      '<div class="phl-msg">Opening Home-Brace…</div></div>';
+    document.documentElement.appendChild(el);
+    document.documentElement.classList.add('ph-loading');
+    LOAD.el=el; loadMsg(); loadFit();
+    LOAD.cap=setTimeout(loadHide, LOAD_MAX);
+    function onReady(){
+      LOAD.ready=true; LOAD.parsed=true;
+      // No sign-in on this page (or the sandbox): nobody to wait for.
+      if(!isLive() || !document.querySelector('script[src*="gate.js"]')) loadDone('who');
+      loadFit();
+      // gate.js hides / shows the whole page with a class on <body>: fit again each time it does.
+      try{ if(typeof MutationObserver==='function' && document.body) new MutationObserver(loadFit).observe(document.body, {attributes:true, attributeFilter:['class']}); }catch(_){}
+      loadCheck();
+    }
+    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', onReady, {once:true}); else setTimeout(onReady, 0);
+    document.addEventListener('ph-signed-in', function(){ loadMsg(); loadFit(); setTimeout(loadFit, 0); });
+    document.addEventListener('ph-identity', function(){ if(SIGNED_IN && !stillLearning()) loadDone('who'); else { loadMsg(); loadFit(); } });
+    window.addEventListener('resize', loadFit);
+    // Back to a page the browser kept in memory: it is already loaded.
+    window.addEventListener('pageshow', function(e){ if(e.persisted) loadHide(); });
+  })(); }catch(_){ try{ if(LOAD.el && LOAD.el.parentNode) LOAD.el.parentNode.removeChild(LOAD.el); }catch(__){} LOAD.gone=true; }   // never let the loading screen break - or cover - a page
+
+  /* HOME-SCREEN APP (phone alerts, 22/10/2026): Apple only sends alerts to a web app added to the home screen, so the
+     site says how Home-Brace looks there - its name, icon, and that it opens full-screen on Home. On the live site
+     too since alerts went live there (04/11/2026). */
+  if(document.head && !document.querySelector('link[rel="manifest"]')){
+    const m=document.createElement('link'); m.rel='manifest'; m.href='manifest.webmanifest'; document.head.appendChild(m);
+  }
+
+  /* ------------------------------------------------------------------
+     MODERN PICKLISTS (17/11/2026) - SANDBOX ONLY until PICK_LIVE is true. Jordan: "Can we make more modern picklists
+     please? Also ability to type to narrow down list?" Every long list on every page (PICK_MIN choices or more, one
+     that takes several, or one marked data-pick) becomes a picker: a box that opens a list you can type into to narrow
+     it down (any word, any order, accents ignored), arrow keys + Enter, Esc to close, and the second part of a choice
+     ("Alana Parker · Cedar Grove") in grey. The page's own <select> stays underneath and keeps the value - picking sets it
+     and fires its 'change' - so every page works exactly as before. Short lists (Yes/No, Full/Partial/None) stay as
+     they are; data-native keeps any list as it is. Off = every list exactly as before.
+     ------------------------------------------------------------------ */
+  const PICK_LIVE=true;    // ON for the live site 17/11/2026 (hc181) - Jordan: "pickers live". false = every list as before.
+  function pickOn(){ return PICK_LIVE || env()!=='live'; }
+  const PICK_MIN=8;
+  const pickNorm=s=>String(s==null?'':s).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+  const pickSplit=t=>{ const s=String(t||''), i=s.indexOf(' · '); return i>0 ? [s.slice(0,i), s.slice(i+3)] : [s, '']; };
+  const pickHit=(hay, q)=>{ const h=pickNorm(hay); return pickNorm(q).split(/\s+/).filter(Boolean).every(w=>h.indexOf(w)>=0); };
+  const pickWants=sel=>!!sel && sel.tagName==='SELECT' && !sel.hasAttribute('data-native') && !sel.hasAttribute('data-pk') &&
+    (sel.multiple || sel.hasAttribute('data-pick') || sel.options.length>=PICK_MIN);
+  (function picker(){
+    if(typeof document==='undefined' || typeof window==='undefined' || !pickOn()) return;
+    if(typeof document.addEventListener!=='function' || typeof window.addEventListener!=='function' || typeof document.querySelectorAll!=='function') return;   // not a real browser (the tests' stand-in)
+    const CSSX='.phpk-hid{display:none!important}'+
+      '.phpk-btn{display:inline-flex;align-items:center;justify-content:space-between;gap:8px;text-align:left;cursor:pointer;max-width:100%;min-width:0;background-color:#fff;color:inherit;font:inherit}'+
+      '.phpk-btn:not(.in){border:1px solid #D5DCE5;border-radius:10px;padding:7px 10px;font-size:14px;min-height:36px}'+
+      '.phpk-btn:hover:not(:disabled){border-color:var(--teal-line,#9fd9d4)}'+
+      '.phpk-btn:focus-visible{outline:2px solid var(--teal2,#2BC0B8);outline-offset:1px}'+
+      '.phpk-btn:disabled{opacity:.55;cursor:default}'+
+      '.phpk-btn .phpk-v{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'+
+      '.phpk-btn .phpk-v.ph{color:#7b8797}.phpk-btn .phpk-v small{color:#7b8797;font-size:.92em;margin-left:6px}'+
+      '.phpk-btn svg{flex:none;width:14px;height:14px;opacity:.55;transition:transform .15s}.phpk-btn[aria-expanded="true"] svg{transform:rotate(180deg)}'+
+      '.phpk-pop{position:fixed;z-index:100001;background:#fff;border:1px solid #DCE3EC;border-radius:14px;box-shadow:0 18px 48px rgba(15,42,74,.18),0 2px 8px rgba(15,42,74,.08);'+
+        'display:flex;flex-direction:column;overflow:hidden;font-size:14px;color:#1f2a37}'+
+      '.phpk-qw{position:relative;margin:8px 8px 4px}.phpk-qw svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:15px;height:15px;opacity:.5;pointer-events:none}'+
+      '.phpk-q{width:100%;box-sizing:border-box;padding:9px 12px 9px 34px;border:1px solid #DCE3EC;border-radius:10px;font:inherit;font-size:14px;outline:none;background:#F6F8FB;color:inherit}'+
+      '.phpk-q:focus{border-color:var(--teal,#0F766E);background:#fff;box-shadow:0 0 0 3px var(--teal-wash,#e6f6f5)}'+
+      '.phpk-list{overflow:auto;padding:4px 6px 8px;overscroll-behavior:contain}'+
+      '.phpk-g{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#7b8797;padding:10px 10px 4px}'+
+      '.phpk-o{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:9px;cursor:pointer;line-height:1.3}'+
+      '.phpk-o .phpk-t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}'+
+      '.phpk-o .phpk-s{color:#7b8797;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:50%}'+
+      '.phpk-o.on{background:var(--teal-wash,#eef8f7)}'+
+      '.phpk-o[aria-selected="true"] .phpk-t{font-weight:650;color:var(--teal-600,#0F766E)}'+
+      '.phpk-o .phpk-k{width:16px;flex:none;color:var(--teal-600,#0F766E);font-weight:700;text-align:center}'+
+      '.phpk-o .phpk-box{width:18px;height:18px;border:1.5px solid #B8C3D1;border-radius:5px;flex:none;display:grid;place-items:center;font-size:12px;line-height:1;color:transparent}'+
+      '.phpk-o[aria-selected="true"] .phpk-box{background:var(--teal,#0F766E);border-color:var(--teal,#0F766E);color:#fff}'+
+      '.phpk-o.dis{opacity:.45;cursor:default}'+
+      '.phpk-none{padding:14px 12px;color:#7b8797}'+
+      '.phpk-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 10px;border-top:1px solid #EEF2F6;font-size:13px;color:#56627A}'+
+      '.phpk-foot button{font:inherit;cursor:pointer;border-radius:9px;padding:7px 14px}'+
+      '.phpk-clear{background:none;border:0;color:#56627A;text-decoration:underline}'+
+      '.phpk-done{font-weight:700;background:var(--teal,#0F766E);color:#fff;border:0}'+
+      '@media (pointer:coarse){.phpk-q{font-size:16px}}'+   /* a touch screen doesn't zoom into the search (it does under 16px) */
+      '@media (max-width:560px){.phpk-pop{left:8px!important;right:8px!important;width:auto!important;top:auto!important;bottom:8px!important;max-height:72vh!important;border-radius:16px}}';
+    const CHEV='<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    const LOUPE='<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10.4 10.4L14 14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
+    let OPEN=null, seq=0, closedAt=0;
+    function styles(){ if(document.getElementById('phpk-css')) return; const s=document.createElement('style'); s.id='phpk-css'; s.textContent=CSSX; document.head.appendChild(s); }
+    function label(sel){
+      const chosen=[...sel.options].filter(o=>o.selected && !(sel.multiple && o.value==='')), ph=sel.getAttribute('data-ph')||'Choose…';
+      if(sel.multiple){
+        if(!chosen.length) return {t:ph, ph:true};
+        const names=chosen.map(o=>pickSplit(o.text)[0]);
+        return {t:names.length===1 ? names[0] : names[0]+' + '+(names.length-1)+' more', ph:false};   // names are often "Last, First": no comma lists
+      }
+      const o=sel.options[sel.selectedIndex]; if(!o) return {t:ph, ph:true};
+      const [t,s]=pickSplit(o.text); return {t, s, ph:o.value===''};
+    }
+    function paint(sel){
+      const b=sel._pkBtn; if(!b) return; const L=label(sel), v=b.querySelector('.phpk-v');
+      const sig=L.t+'|'+(L.s||'')+'|'+L.ph+'|'+sel.disabled; if(sel._pkSig===sig) return; sel._pkSig=sig;   // only when it changed (no endless redraw)
+      v.className='phpk-v'+(L.ph?' ph':''); v.textContent=L.t;
+      if(L.s){ const sm=document.createElement('small'); sm.textContent=L.s; v.appendChild(sm); }
+      b.disabled=sel.disabled; b.title=L.t+(L.s?' · '+L.s:'');
+    }
+    function enhance(sel){
+      if(!pickWants(sel)) return;
+      sel.setAttribute('data-pk','1');
+      const b=document.createElement('button'); b.type='button';
+      b.className=(sel.className||'')+' phpk-btn'; if(sel.getAttribute('style')) b.setAttribute('style', sel.getAttribute('style'));
+      b.setAttribute('aria-haspopup','listbox'); b.setAttribute('aria-expanded','false');
+      const al=sel.getAttribute('aria-label'); if(al) b.setAttribute('aria-label', al);
+      b.innerHTML='<span class="phpk-v"></span>'+CHEV;
+      sel._pkBtn=b; b._pkSel=sel;
+      sel.parentNode.insertBefore(b, sel); sel.classList.add('phpk-hid');
+      paint(sel);
+      sel.addEventListener('change', ()=>paint(sel));
+      b.addEventListener('click', e=>{ e.preventDefault(); e.stopPropagation(); if(Date.now()-closedAt<350) return; if(OPEN && OPEN.sel===sel) close(); else open(sel); });   // the Enter that picked doesn't re-open it
+      b.addEventListener('keydown', e=>{
+        if(e.key==='ArrowDown' || e.key==='ArrowUp' || (e.key===' ' && !OPEN)){ e.preventDefault(); open(sel); return; }
+        if(e.key.length===1 && !e.ctrlKey && !e.metaKey && !e.altKey && !OPEN){ e.preventDefault(); open(sel, e.key); }
+      });
+    }
+    function scan(){ document.querySelectorAll('select:not([data-pk]):not([data-native])').forEach(s=>{ if(!s.closest('.phpk-pop')) enhance(s); }); }
+    /* Straight from the page-change callback (it already comes once per batch of changes): animation frames don't run in
+       a tab that's in the background, so lists drawn there would stay plain. */
+    function later(){ try{ scan(); document.querySelectorAll('select[data-pk]').forEach(paint); if(OPEN && !OPEN.btn.isConnected) close(); }catch(_){} }   // a value set in code without a 'change' shows too
+    function fire(sel){ sel.dispatchEvent(new Event('input',{bubbles:true})); sel.dispatchEvent(new Event('change',{bubbles:true})); }
+    function open(sel, typed){
+      close(); styles();
+      const b=sel._pkBtn, multi=sel.multiple, id='phpk'+(++seq);
+      const pop=document.createElement('div'); pop.className='phpk-pop'; pop.setAttribute('role','dialog');
+      pop.setAttribute('data-nomic','');   // no talk-to-type 🎤 on a two-letter search (Jordan 18/11: it was left "just sitting there" under the list)
+      const search=sel.options.length>=PICK_MIN || multi;
+      const qw=document.createElement('div'); qw.className='phpk-qw'; qw.innerHTML=LOUPE;
+      const q=document.createElement('input'); q.className='phpk-q'; q.type='text'; q.placeholder='Type to search…'; q.setAttribute('autocomplete','off');
+      q.setAttribute('role','combobox'); q.setAttribute('aria-controls', id); q.setAttribute('aria-expanded','true'); q.setAttribute('aria-label', 'Search '+(b.getAttribute('aria-label')||'the list'));
+      qw.appendChild(q); if(search) pop.appendChild(qw);
+      const list=document.createElement('div'); list.className='phpk-list'; list.id=id; list.setAttribute('role','listbox'); if(multi) list.setAttribute('aria-multiselectable','true');
+      pop.appendChild(list);
+      const items=[]; let n=0;
+      const add=(o, grp, gEl)=>{
+        if(o.hidden) return;
+        const [t,s]=pickSplit(o.text), el=document.createElement('div'); el.className='phpk-o'+(o.disabled?' dis':''); el.id=id+'-'+(n++); el.setAttribute('role','option');
+        const mark=document.createElement('span'); mark.className=multi ? 'phpk-box' : 'phpk-k'; mark.textContent=multi ? '✓' : ''; el.appendChild(mark);
+        const tt=document.createElement('span'); tt.className='phpk-t'; tt.textContent=t; el.appendChild(tt);
+        if(s){ const ss=document.createElement('span'); ss.className='phpk-s'; ss.textContent=s; el.appendChild(ss); }
+        items.push({o, el, hay:o.text+' '+(grp||''), g:gEl});
+      };
+      [...sel.children].forEach(c=>{
+        if(c.tagName==='OPTGROUP'){ const g=document.createElement('div'); g.className='phpk-g'; g.textContent=c.label; g._items=[]; list.appendChild(g);
+          [...c.children].forEach(o=>{ add(o, c.label, g); const it=items[items.length-1]; if(it && it.o===o){ list.appendChild(it.el); g._items.push(it); } }); }
+        else if(c.tagName==='OPTION'){ add(c, '', null); const it=items[items.length-1]; if(it && it.o===c) list.appendChild(it.el); }
+      });
+      const none=document.createElement('div'); none.className='phpk-none'; none.textContent='Nothing matches'; none.style.display='none'; list.appendChild(none);
+      let foot=null, count=null;
+      if(multi){ foot=document.createElement('div'); foot.className='phpk-foot'; count=document.createElement('span');
+        const clr=document.createElement('button'); clr.type='button'; clr.className='phpk-clear'; clr.textContent='Clear';
+        const done=document.createElement('button'); done.type='button'; done.className='phpk-done'; done.textContent='Done';
+        const right=document.createElement('span'); right.style.display='flex'; right.style.gap='6px'; right.appendChild(clr); right.appendChild(done);
+        foot.appendChild(count); foot.appendChild(right); pop.appendChild(foot);
+        clr.addEventListener('click', ()=>{ [...sel.options].forEach(o=>{ o.selected=false; }); fire(sel); marks(); });
+        done.addEventListener('click', ()=>{ close(); b.focus(); }); }
+      let act=-1;
+      const vis=()=>items.filter(it=>it.el.style.display!=='none' && !it.o.disabled);
+      function marks(){ items.forEach(it=>{ it.el.setAttribute('aria-selected', it.o.selected && !(multi && it.o.value==='') && !(!multi && it.o.value==='' ) ? 'true' : 'false');
+          if(!multi) it.el.querySelector('.phpk-k').textContent=it.o.selected && it.o.value!=='' ? '✓' : ''; });
+        if(count){ const k=[...sel.options].filter(o=>o.selected && o.value!=='').length; count.textContent=k ? k+' chosen' : 'Pick one or more'; } }
+      function hi(i){ const v=vis(); items.forEach(it=>it.el.classList.remove('on')); act=Math.max(0, Math.min(i, v.length-1));
+        const it=v[act]; if(it){ it.el.classList.add('on'); q.setAttribute('aria-activedescendant', it.el.id); it.el.scrollIntoView({block:'nearest'}); } }
+      function filter(){ const t=q.value; let any=false;
+        items.forEach(it=>{ const ok=!t.trim() || pickHit(it.hay, t); it.el.style.display=ok?'':'none'; if(ok) any=true; });
+        list.querySelectorAll('.phpk-g').forEach(g=>{ g.style.display=g._items.some(it=>it.el.style.display!=='none') ? '' : 'none'; });
+        none.style.display=any?'none':''; hi(0); }
+      function choose(it){
+        if(!it || it.o.disabled) return;
+        if(!multi){ const was=sel.value; it.o.selected=true; if(sel.value!==was) fire(sel); close(); b.focus(); return; }
+        const on=!it.o.selected; it.o.selected=on;
+        if(on && it.o.hasAttribute('data-solo')) [...sel.options].forEach(o=>{ if(o!==it.o) o.selected=false; });
+        if(on && !it.o.hasAttribute('data-solo')) [...sel.options].forEach(o=>{ if(o.hasAttribute('data-solo')) o.selected=false; });
+        fire(sel); marks();
+      }
+      list.addEventListener('mousedown', e=>e.preventDefault());       // keep the typing box focused
+      list.addEventListener('click', e=>{ const el=e.target.closest('.phpk-o'); if(!el) return; choose(items.find(it=>it.el===el)); });
+      list.addEventListener('mousemove', e=>{ const el=e.target.closest('.phpk-o'); if(!el) return; const i=vis().findIndex(it=>it.el===el); if(i>=0 && i!==act) hi(i); });
+      q.addEventListener('input', filter);
+      q.addEventListener('keydown', e=>{
+        if(e.key==='ArrowDown'){ e.preventDefault(); hi(act+1); }
+        else if(e.key==='ArrowUp'){ e.preventDefault(); hi(act-1); }
+        else if(e.key==='Enter'){ e.preventDefault(); choose(vis()[act]); }
+        else if(e.key==='Escape'){ e.preventDefault(); close(); b.focus(); }
+        else if(e.key==='Tab'){ close(); }
+      });
+      pop.addEventListener('keydown', e=>{ if(e.key==='Escape'){ e.preventDefault(); close(); b.focus(); } });
+      document.body.appendChild(pop);
+      OPEN={sel, btn:b, pop}; b.setAttribute('aria-expanded','true');
+      place(); marks();
+      const cur=vis().findIndex(it=>it.o.selected && it.o.value!==''); hi(cur>=0 ? cur : 0);
+      if(search){ if(typed){ q.value=typed; filter(); } q.focus({preventScroll:true}); } else pop.setAttribute('tabindex','-1'), pop.focus({preventScroll:true});
+    }
+    function place(){
+      if(!OPEN) return; const r=OPEN.btn.getBoundingClientRect(), p=OPEN.pop, W=window.innerWidth, H=window.innerHeight;
+      const w=Math.min(Math.max(r.width, 280), W-16), left=Math.max(8, Math.min(r.left, W-w-8)), below=H-r.bottom-8, above=r.top-8;
+      p.style.width=w+'px'; p.style.left=left+'px';
+      if(below>=260 || below>=above){ p.style.top=(r.bottom+6)+'px'; p.style.bottom='auto'; p.style.maxHeight=Math.max(160, Math.min(420, below-6))+'px'; }
+      else { p.style.top='auto'; p.style.bottom=(H-r.top+6)+'px'; p.style.maxHeight=Math.max(160, Math.min(420, above-6))+'px'; }
+    }
+    function close(){ if(!OPEN) return; const o=OPEN; OPEN=null; closedAt=Date.now(); o.btn.setAttribute('aria-expanded','false'); if(o.pop.parentNode) o.pop.parentNode.removeChild(o.pop); }
+    document.addEventListener('pointerdown', e=>{ if(OPEN && !OPEN.pop.contains(e.target) && !OPEN.btn.contains(e.target)) close(); }, true);
+    window.addEventListener('resize', ()=>place());
+    window.addEventListener('scroll', e=>{ if(OPEN && !OPEN.pop.contains(e.target)) place(); }, true);
+    function start(){ styles(); scan(); try{ new MutationObserver(later).observe(document.documentElement, {childList:true, subtree:true}); }catch(_){} }
+    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', start, {once:true}); else setTimeout(start, 0);
+  })();
+
+  window.PH={PEOPLE,newHiresOn,pickOn,chatPilotMe,chatPilotKnown:()=>CHATPILOT!==null,chatGuest,reloadChatPilot,cleanChatPilot,CHAT_PILOT_KEY,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,teamNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, rosterView, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, chatBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK, notesHTML, searchHTML, searchDocs, searchDocsHTML, levelForTeams, teamsSeeAll, tcOn, tcRoleFor, payOn, monthlyOn, tasksOn, partyOn, partyPref, partySeen, PARTY_KEY, payRoleFor, paySenders, reloadPaySenders, paySenderOffices, payLevel, payReminders, payMark, reloadPayStatus, payRulesReady, payAlertPlan, payAlertsTick, signOut, centralNow, alertsReady, saveFace, faceOf, avatar, viewLink, isWordName, wordAttrs, wordPdfInto,
+    sensRecord, reloadSensitive, sensLevelFor, sensitiveLevel, sensConfirmOk,
+    setTheme, theme:()=>THEME, setLayout, layout:()=>LAYOUT, layouts:()=>LAYOUTS.map(l=>({k:l.k, n:l.n})), themes:()=>THEMES.map(t=>({k:t.k, n:t.n})), schemeTokens:k=>schemeTokens(themeOf(k)), contrast,
+    feedback:openFeedback, feedbackText, feedbackContext, learning:stillLearning, fbReady, myFeedback, fbTick, usageReady, rosterName, useEmail, useTrackMe, loadHold, loadDone};
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mount); else mount();
+})();

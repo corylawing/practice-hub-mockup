@@ -1,0 +1,1243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="demo-shim.js?v=d202611250847"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Home-Brace · Monthly Report</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" href="../assets/favicon.png?v=2" type="image/png">
+<meta name="theme-color" content="#0F2A4A">
+<meta name="apple-mobile-web-app-title" content="Home-Brace">
+<link rel="apple-touch-icon" sizes="180x180" href="../assets/icons/apple-touch-icon.png?v=3">
+<meta name="description" content="The practice’s central hub — schedule, production, documents and team, in one place. Brightline · Maple · Riverbend.">
+<style>
+  :root{
+    --navy:#0F2A4A; --navy2:#25456e; --teal:#149B96; --teal2:#2BC0B8; --teal-soft:#E5F4F3; --teal-600:#0F827E;
+    --ink:#1F2D3D; --soft:#56627A; --line:#E4E8EE; --canvas:#F4F6F8; --white:#fff;
+    --good:#2E9E6B; --good-soft:#E7F4EE; --bad:#D7503A; --bad-soft:#FBEAE7; --amber:#F2A03D; --amber-soft:#FDF1E1; --amber-ink:#8a5208;
+    --blue:#1f6f9e; --blue-soft:#E3F0FA;
+    --shadow:0 1px 2px rgba(15,42,74,.06),0 6px 18px rgba(15,42,74,.06);
+    --radius:14px; --maxw:1120px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--canvas);line-height:1.5;-webkit-font-smoothing:antialiased}
+  h1{color:var(--navy);margin:0}
+  .ribbon{background:var(--amber);color:#3a2400;text-align:center;font-size:13px;font-weight:600;padding:6px 14px}
+  .hdr{background:var(--navy);color:#fff}
+  .hdr-in{max-width:var(--maxw);margin:0 auto;display:flex;align-items:center;gap:12px;padding:13px 20px}
+  .mark{width:34px;height:34px;flex:none;display:block}
+  .mark img{width:34px;height:34px;display:block;border-radius:50%}
+  .brand{font-weight:700;font-size:18px;color:#fff;line-height:1.1}
+  .brand i{font-style:normal;color:var(--teal2)}
+  .brand small{display:block;font-weight:500;font-size:12px;color:var(--navy-mute,#9fb4d0)}
+  .v1{background:rgba(255,255,255,.15);color:#eaf1fb;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;margin-left:6px}
+  .v1nav{background:var(--navy2)}
+  .v1nav-in{max-width:var(--maxw);margin:0 auto;display:flex;gap:2px;padding:0 12px;overflow-x:auto}
+  .v1nav a{color:var(--navy-mute,#cdd9ea);font-size:14px;font-weight:600;padding:13px 15px;text-decoration:none;border-bottom:3px solid transparent;white-space:nowrap}
+  .v1nav a:hover{color:#fff;background:rgba(255,255,255,.05)}
+  .v1nav a.active{color:#fff;border-bottom-color:var(--teal)}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:22px 20px 90px}
+  .viewas{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:13px 16px;display:flex;align-items:center;gap:13px;flex-wrap:wrap;margin-bottom:16px;border-left:5px solid var(--teal)}
+  .viewas .lab{font-size:12px;color:var(--soft);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+  .viewas select{padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;font-weight:700;color:var(--navy);background:#fff;max-width:100%}
+  .page-head{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap}
+  .page-head h1{font-size:25px;text-wrap:balance}
+  .page-head p{margin:4px 0 0;color:var(--soft);font-size:14.5px;max-width:640px}
+  .ofstate{font-size:12.5px;font-weight:600;color:var(--soft);background:#fff;border:1px solid var(--line);border-radius:999px;padding:6px 12px;display:flex;align-items:center;gap:7px}
+  .ofstate i{width:8px;height:8px;border-radius:50%;background:var(--amber);display:inline-block}
+  .ofstate.on i{background:var(--good)}
+
+  /* tabs + month bar */
+  .bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:18px 0 14px}
+  .tabs{display:flex;gap:4px;background:#e9edf2;border-radius:12px;padding:4px;flex-wrap:wrap}
+  .tabs button{border:0;background:none;border-radius:9px;padding:8px 14px;font-weight:600;font-size:14px;font-family:inherit;line-height:1.2;color:var(--navy);cursor:pointer}
+  .tabs button.on{background:#fff;box-shadow:0 1px 3px rgba(15,42,74,.12);font-weight:700}
+  .mnav{display:flex;align-items:center;gap:4px;margin-left:auto;background:#fff;border:1px solid var(--line);border-radius:12px;padding:3px}
+  .mnav button{border:0;background:none;width:34px;height:34px;border-radius:9px;font-size:18px;color:var(--navy);cursor:pointer}
+  .mnav button:hover:not(:disabled){background:var(--teal-soft)}
+  .mnav button:disabled{opacity:.3;cursor:default}
+  .mnav b{min-width:148px;text-align:center;font-size:15px;color:var(--navy)}
+  .mnav b small{display:block;font-size:11px;font-weight:600;color:var(--soft);line-height:1.1}
+
+  .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
+  .card h2{margin:0 0 3px;font-size:16px;color:var(--navy)}
+  .card .sub{font-size:12.5px;color:var(--soft);margin-bottom:12px}
+  .stack{display:flex;flex-direction:column;gap:16px}
+
+  /* the month's state across offices */
+  .statusline{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#fff;border:1px solid var(--line);border-radius:12px;padding:11px 14px;font-size:14px}
+  .statusline .prog{flex:1;min-width:140px;height:8px;background:#edf1f5;border-radius:99px;overflow:hidden;display:flex}
+  .statusline .prog span{display:block;height:100%}
+  .statusline .prog .f{background:var(--navy)} .statusline .prog .s{background:var(--teal)}
+  .soft{color:var(--soft)}
+  .openbanner{background:var(--blue-soft);border:1px solid #c3ddf2;border-radius:12px;padding:11px 15px;font-size:13.5px;color:#14496c}
+
+  /* whole-practice tiles */
+  .tiles{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
+  @media(max-width:1180px){ .tiles{grid-template-columns:repeat(3,1fr)} }
+  @media(max-width:560px){ .tiles{grid-template-columns:repeat(2,1fr)} }
+  .tile{background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 14px;display:flex;flex-direction:column;gap:3px}
+  .tile .k{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--soft)}
+  .tile .v{font-size:24px;font-weight:800;color:var(--navy);line-height:1.15;font-variant-numeric:tabular-nums}
+  .tile .d{font-size:12.5px;color:var(--soft);font-variant-numeric:tabular-nums}
+  .up{color:var(--good)} .down{color:var(--bad)}
+
+  /* the gap, said once */
+  .headline{display:flex;gap:14px;align-items:flex-start;background:var(--navy);color:#fff;border-radius:var(--radius);padding:16px 18px}
+  .headline .big{font-size:28px;font-weight:800;line-height:1.1;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .headline p{margin:2px 0 0;font-size:14px;color:#d6e2f2;max-width:620px}
+  .headline b{color:#fff}
+  .headline.ok{background:var(--good)}
+
+  /* talk list */
+  .talk{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+  .talk li{display:grid;grid-template-columns:130px 1fr auto;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--line);font-size:14px}
+  .talk li:first-child{border-top:0}
+  .opill{display:inline-flex;align-items:center;gap:7px;font-weight:700;color:var(--navy);font-size:13.5px;min-width:0}
+  .opill i{width:10px;height:10px;border-radius:50%;flex:none}
+  .ico{display:inline-block;width:20px;text-align:center;font-weight:800}
+  .t-bad .ico{color:var(--bad)} .t-watch .ico{color:var(--amber-ink)} .t-good .ico{color:var(--good)} .t-info .ico{color:var(--blue)}
+  .lnk{border:0;background:none;color:var(--teal-600);font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;padding:4px 6px;border-radius:6px;white-space:nowrap}
+  .lnk:hover{background:var(--teal-soft)}
+  .more{margin-top:6px}
+
+  /* score table */
+  .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:#fff}
+  table{border-collapse:collapse;width:100%;font-size:13.5px;font-variant-numeric:tabular-nums}
+  th,td{padding:9px 11px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+  th{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--soft);background:#fafbfc;position:sticky;top:0;white-space:normal;min-width:92px;vertical-align:bottom;line-height:1.3}
+  th:first-child,td:first-child{text-align:left}
+  th small{display:block;text-transform:none;letter-spacing:0;font-weight:600;color:#8a96aa}
+  tbody tr.click{cursor:pointer} tbody tr.click:hover td{background:#f6fafa}
+  tr.tot td{font-weight:800;background:#f3f6f9;color:var(--navy);border-bottom:0}
+  tr.q td{background:#f7f9fb;font-weight:700;color:var(--navy2)}
+  table.imp th,table.imp td{text-align:left;vertical-align:top}
+  tr.goals td{background:#fff8ee;color:var(--amber-ink);font-weight:600;font-size:12px;white-space:normal}
+  td.ok{color:var(--ink)} td.bad{color:var(--bad);font-weight:700} td.good{color:var(--good);font-weight:700} td.watch{color:var(--amber-ink);font-weight:700}
+  td .dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;vertical-align:middle;background:currentColor}
+  td.ok .dot{background:#c5ced9}
+  tr.q td.bad,tr.tot td.bad{color:var(--bad)} tr.q td.good,tr.tot td.good{color:var(--good)} tr.q td.watch,tr.tot td.watch{color:var(--amber-ink)}
+  td.future{color:#b6c0cc}
+  /* the year sheet in three parts (Jamie, 24/11/2026) */
+  .ychunk{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 18px 18px;margin-bottom:16px}
+  .yhead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+  .yhead h2{font-size:17px;color:var(--navy);margin:0}
+  .yhead .soft{font-size:13px}
+  .ychunk .tiles{margin-bottom:14px}
+  .tile .v.bad{color:var(--bad)} .tile .v.good{color:var(--good)} .tile .v.watch{color:var(--amber-ink)}
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff}
+  .seg button{border:none;background:none;padding:7px 12px;font:inherit;font-size:13px;font-weight:700;color:var(--soft);cursor:pointer}
+  .seg button+button{border-left:1px solid var(--line)}
+  .seg button.on{background:var(--teal-soft);color:var(--teal-600)}
+  tr.grp th{background:#fff;color:var(--navy2);font-size:11px;padding-top:8px;padding-bottom:2px;text-align:left;border-bottom:0}
+  th.gs,td.gs{border-left:2px solid #e3e9ef}
+  /* the year as a dashboard (24/11/2026) */
+  .tile .dl{font-size:12px;font-weight:700;margin-top:2px}
+  .dl.up{color:var(--good)} .dl.down{color:var(--bad)} .dl.flat{color:var(--soft)}
+  .ychart{margin:2px 0 4px}
+  .ychart svg{width:100%;height:auto;display:block;overflow:visible}
+  .ylegend{display:flex;gap:6px 16px;flex-wrap:wrap;font-size:12.5px;color:var(--ink);margin:0 0 6px}
+  .ylegend i,#ytip i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+  .ychart .gl{stroke:#e8edf2;stroke-width:1}
+  .ychart .bl{stroke:#b9c3cf;stroke-width:1}
+  .ychart .ax{font-size:11px;fill:#6b7a8c;font-family:inherit}
+  .ychart .ax.fut{fill:#c2cad4}
+  .ychart .ax.pct{fill:#51647a;font-weight:700;font-size:10.5px}
+  .ychart .hit{fill:transparent;cursor:pointer;outline:none}
+  .ychart .hit:hover,.ychart .hit:focus{fill:rgba(20,155,150,.06)}
+  .ychart g.good{color:var(--good)} .ychart g.bad{color:var(--bad)} .ychart g.ok{color:#9aa6b5} .ychart g.watch{color:var(--amber-ink)}
+  .ychart .tdot{fill:currentColor}
+  .ynote{font-size:12.5px;color:var(--soft);margin:4px 2px 0}
+  .ynote .good{color:var(--good)} .ynote .ok{color:#9aa6b5} .ynote .bad{color:var(--bad)}
+  .ymonths{margin-top:12px;border-top:1px solid var(--line);padding-top:8px}
+  .ymonths summary{cursor:pointer;font-weight:700;color:var(--teal-600);font-size:13.5px;padding:4px 0;list-style-position:inside}
+  .ymonths[open] summary{margin-bottom:8px}
+  .hgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+  @media(max-width:820px){ .hgrid{grid-template-columns:1fr} }
+  .hcard{border:1px solid var(--line);border-radius:12px;padding:14px 16px 10px;display:flex;flex-direction:column;gap:6px;min-width:0}
+  .hcard .hhead{display:grid;grid-template-columns:1fr auto;grid-template-areas:'k d' 'v d';align-items:end;column-gap:12px}
+  .hcard .hhead .k{grid-area:k} .hcard .hhead .v{grid-area:v} .hcard .hhead .d{grid-area:d;text-align:right;align-self:end;max-width:220px}
+  .ychart .ax.val{fill:var(--navy);font-weight:800;font-size:12px}
+  .ychart.empty{font-size:12.5px;color:var(--soft);padding:16px 0}
+  .hcard .k{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--soft)}
+  .hcard .v{font-size:22px;font-weight:800;color:var(--navy);font-variant-numeric:tabular-nums}
+  .hcard .d{font-size:12px;color:var(--soft);min-height:16px}
+  .hcard svg{width:100%;height:auto;margin-top:6px}
+  .hcard .ax{font-size:10px;fill:#8a96aa}
+  .hcard .bl{stroke:#d5dce4}
+  .hline svg{height:58px}
+  .nw{white-space:nowrap}
+  .hax{display:flex;justify-content:space-between;font-size:10px;color:#8a96aa;margin-top:1px}
+  .ysub{font-size:13px;font-weight:700;color:var(--navy2);margin:2px 0 4px}
+  #ytip{position:fixed;z-index:80;pointer-events:none;background:#0F2A4A;color:#fff;border-radius:10px;padding:9px 11px;font-size:12.5px;line-height:1.5;box-shadow:0 8px 24px rgba(15,42,74,.25);opacity:0;transform:translateY(4px);transition:opacity .12s,transform .12s;max-width:280px}
+  #ytip.on{opacity:1;transform:none}
+  #ytip .tsub{margin-top:4px;color:#c9d6e4;font-size:12px}
+
+  .st{display:inline-block;font-size:11.5px;font-weight:700;border-radius:999px;padding:3px 9px;white-space:nowrap}
+  .st.final{background:var(--navy);color:#fff} .st.sent{background:var(--teal-soft);color:var(--teal-600)}
+  .st.late{background:var(--bad-soft);color:var(--bad)} .st.open{background:var(--blue-soft);color:var(--blue)}
+  .st.started{background:#eef1f5;color:var(--soft)} .st.none{background:#f3f4f6;color:#8a96aa}
+
+  .tn{display:inline-block;font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 8px;white-space:nowrap}
+  .tn.ok{background:#eef1f5;color:var(--soft)} .tn.good{background:var(--good-soft);color:var(--good)}
+  .tn.bad{background:var(--bad-soft);color:var(--bad)} .tn.watch{background:var(--amber-soft);color:var(--amber-ink)}
+
+  /* office: chips */
+  .ochips{display:flex;gap:6px;flex-wrap:wrap}
+  .ochip{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 12px;font-weight:600;font-size:13.5px;font-family:inherit;line-height:1;color:var(--navy);cursor:pointer}
+  .ochip i{width:9px;height:9px;border-radius:50%}
+  .ochip.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .ochip .st{margin-left:2px}
+  .grid2{display:grid;grid-template-columns:1.1fr .9fr;gap:16px;align-items:start}
+  @media(max-width:860px){ .grid2{grid-template-columns:1fr} }
+  .ohead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+  .ohead h2{font-size:20px;margin:0;color:var(--navy)}
+  .saver{background:var(--teal-soft);color:var(--teal-600);border-radius:10px;padding:8px 12px;font-size:13px;font-weight:600}
+  .grp{margin-top:16px}
+  .grp h3{margin:0 0 2px;font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:var(--soft)}
+  .grp .gsub{font-size:12.5px;color:var(--soft);margin-bottom:6px}
+  .frow{display:grid;grid-template-columns:1fr minmax(150px,190px);gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+  .frow:first-of-type{border-top:0}
+  .frow label{font-size:14px;font-weight:600;color:var(--ink)}
+  .frow label small{display:block;font-weight:500;font-size:12px;color:var(--soft)}
+  .fv{display:flex;flex-direction:column;align-items:flex-end;gap:2px;text-align:right}
+  .fv .val{font-size:16px;font-weight:800;color:var(--navy);font-variant-numeric:tabular-nums}
+  .src{font-size:11px;font-weight:700;color:var(--teal-600);background:var(--teal-soft);border-radius:999px;padding:1px 8px}
+  .src.typed{background:#eef1f5;color:var(--soft)}
+  .inp{position:relative;width:100%}
+  .inp input{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:9px;font-weight:700;font-size:15px;font-family:inherit;color:var(--navy);text-align:right;background:#fff;font-variant-numeric:tabular-nums}
+  .inp.pre input{padding-left:24px} .inp.suf input{padding-right:26px}
+  .inp .a{position:absolute;top:50%;transform:translateY(-50%);color:var(--soft);font-weight:700;font-size:14px;pointer-events:none}
+  .inp.pre .a{left:10px} .inp.suf .a{right:10px}
+  .inp input:focus{outline:2px solid var(--teal);border-color:var(--teal)}
+  .inp input.empty{background:#fffaf2;border-color:#f3d7ae}
+  .mis{font-size:12px;color:var(--amber-ink);background:var(--amber-soft);border-radius:8px;padding:4px 8px;text-align:right}
+  .ofgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px}
+  .oft{background:#f7f9fb;border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:1px}
+  .oft .k{font-size:12px;font-weight:600;color:var(--soft);line-height:1.3}
+  .oft .v{font-size:15.5px;font-weight:800;color:var(--navy);font-variant-numeric:tabular-nums}
+  .oft .lnk{align-self:flex-start;padding:0;font-size:12px}
+  .oft.warn{background:var(--amber-soft)}
+  .savebar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+  .btn{background:var(--teal);color:#fff;border:none;border-radius:10px;padding:11px 18px;font-weight:700;font-size:14.5px;font-family:inherit;cursor:pointer}
+  .btn:hover{background:var(--teal-600)}
+  .btn:disabled{opacity:.5;cursor:default}
+  .btn.navy{background:var(--navy)} .btn.navy:hover{background:var(--navy2)}
+  .btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--line);font-weight:600}
+  .btn.ghost:hover{background:#f6f8fa}
+  .note{font-size:13px;color:var(--soft)}
+  .warnbox{background:var(--amber-soft);border:1px solid #f1d3a6;color:var(--amber-ink);border-radius:10px;padding:9px 12px;font-size:13px}
+  .glance{display:flex;flex-direction:column;gap:10px}
+  .gl{display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center}
+  .gl .k{font-size:13.5px;font-weight:600}
+  .gl .v{font-size:20px;font-weight:800;color:var(--navy);text-align:right;font-variant-numeric:tabular-nums}
+  .gl .g{font-size:12px;color:var(--soft)}
+  .gbar{grid-column:1/-1;position:relative;height:8px;background:#edf1f5;border-radius:99px}
+  .gbar .band{position:absolute;top:0;bottom:0;background:#cdeee9;border-radius:99px}
+  .gbar .pin{position:absolute;top:-3px;width:4px;height:14px;border-radius:2px;background:var(--navy);transform:translateX(-2px)}
+  .ins{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+  .ins li{display:flex;gap:6px;font-size:13.5px;line-height:1.45}
+  .notes{display:flex;flex-direction:column;gap:8px;max-height:280px;overflow:auto}
+  .nt{background:#f6f8fa;border-radius:10px;padding:8px 11px;font-size:13.5px}
+  .nt .who{font-size:11.5px;color:var(--soft);font-weight:600}
+  .addnote{display:flex;gap:8px;margin-top:8px}
+  .addnote textarea{flex:1;min-height:42px;resize:vertical;border:1px solid var(--line);border-radius:10px;padding:9px 11px;font-weight:500;font-size:14px;font-family:inherit}
+  .smalls{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+  .sm{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 13px}
+  .sm .k{font-size:12.5px;font-weight:700;color:var(--soft)}
+  .sm .v{font-size:18px;font-weight:800;color:var(--navy);font-variant-numeric:tabular-nums}
+  .sm svg{display:block;width:100%;height:64px;margin-top:4px}
+  .sm .ax{display:flex;justify-content:space-between;font-size:11px;color:#8a96aa}
+  .empty{background:#fff;border:1px dashed var(--line);border-radius:14px;padding:30px;text-align:center;color:var(--soft)}
+  .setrow{display:grid;grid-template-columns:200px 1fr;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+  .setrow:first-of-type{border-top:0}
+  .setrow input[type=number]{width:90px;padding:8px 10px;border:1px solid var(--line);border-radius:9px;font-weight:700;font-size:14px;font-family:inherit;color:var(--navy)}
+  .checks{display:flex;flex-wrap:wrap;gap:8px}
+  .checks label{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:6px 11px;font-size:13.5px;font-weight:600;cursor:pointer}
+  /* switches - the Schedule's show/hide toggle */
+  .tchip{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:7px 13px;font-size:13.5px;font-weight:700;color:var(--navy);cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:8px}
+  .tchip .sw{width:30px;height:17px;border-radius:999px;background:#cbd5e1;position:relative;transition:background .12s;flex:none}
+  .tchip .sw::after{content:'';position:absolute;top:2px;left:2px;width:13px;height:13px;border-radius:50%;background:#fff;transition:transform .12s}
+  .tchip.on .sw{background:var(--teal)} .tchip.on .sw::after{transform:translateX(13px)} .tchip.on{border-color:var(--teal)}
+  .tchip.off{color:var(--soft)}
+  .tchip .odot{width:9px;height:9px;border-radius:50%;display:inline-block}
+  .tchip:focus-visible,.sel:focus-visible,.drop:focus-within{outline:2px solid var(--teal);outline-offset:2px}
+  /* targets */
+  .tgts{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+  .tgt{border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+  .tgt .tl b{display:block;color:var(--navy);font-size:14.5px} .tgt .tl span{font-size:12.5px;color:var(--soft)}
+  .tgt .tr{display:flex;align-items:center;gap:8px}
+  .tin{position:relative;display:inline-block}
+  .tin input{width:92px;padding:8px 26px 8px 10px;border:1px solid var(--line);border-radius:9px;font-weight:700;font-size:15px;font-family:inherit;color:var(--navy);font-variant-numeric:tabular-nums}
+  .tin input:focus{outline:2px solid var(--teal);border-color:var(--teal)}
+  .tin i{position:absolute;right:9px;top:50%;transform:translateY(-50%);font-style:normal;font-weight:700;color:var(--soft);pointer-events:none}
+  .gbar.tb{grid-column:auto}
+  .tgt .tx{font-size:12px;color:var(--soft)}
+  .sel{padding:8px 30px 8px 11px;border:1px solid var(--line);border-radius:9px;font-weight:700;font-size:14px;font-family:inherit;color:var(--navy);background:#fff;cursor:pointer}
+  .sel.need{border-color:var(--amber);background:var(--amber-soft)}
+  .duesel{display:inline-flex;align-items:center;gap:8px;font-weight:600;flex-wrap:wrap}
+  /* the Excel drop zone */
+  .drop{display:flex;flex-direction:column;align-items:center;gap:3px;border:2px dashed #cdd6e0;border-radius:14px;padding:22px 16px;text-align:center;cursor:pointer;background:#fafcfd;transition:background .12s,border-color .12s}
+  .drop:hover,.drop.over{border-color:var(--teal);background:var(--teal-soft)}
+  .drop .dico{font-size:26px} .drop b{color:var(--navy);font-size:15px}
+  .drop input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+  .btn.saving{position:relative;color:transparent}
+  .btn.saving::after{content:'';position:absolute;inset:0;margin:auto;width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:btnspin .6s linear infinite}
+  @keyframes btnspin{to{transform:rotate(360deg)}}
+  /* STREAKS: a flame that flickers, glows and throws embers; numbers count up; milestones burst */
+  .flame{position:relative;display:inline-block;width:20px;height:26px;flex:none;vertical-align:-6px}
+  .flame svg{width:100%;height:100%;overflow:visible;transform-origin:50% 100%;filter:drop-shadow(0 0 5px rgba(245,158,11,.55));animation:fl-flick 1.15s ease-in-out infinite}
+  .flame svg .in{transform-origin:50% 100%;animation:fl-in .7s ease-in-out infinite alternate}
+  .flame .em{position:absolute;left:50%;bottom:55%;width:3px;height:3px;margin-left:-1.5px;border-radius:50%;background:#FDBA74;opacity:0;animation:fl-ember 1.7s linear infinite}
+  .flame .em:nth-of-type(2){animation-delay:.55s;--x:5px}.flame .em:nth-of-type(3){animation-delay:1.1s;--x:-5px}
+  .flame.big{width:44px;height:56px}.flame.big .em{width:4px;height:4px}
+  @keyframes fl-flick{0%,100%{transform:scale(1,1) skewX(0)}25%{transform:scale(.96,1.05) skewX(-2deg)}50%{transform:scale(1.03,.96) skewX(1.5deg)}75%{transform:scale(.98,1.03) skewX(-1deg)}}
+  @keyframes fl-in{from{transform:scale(.92,.9)}to{transform:scale(1.06,1.1)}}
+  @keyframes fl-ember{0%{opacity:0;transform:translate(0,0)}15%{opacity:1}100%{opacity:0;transform:translate(var(--x,2px),-26px)}}
+  .streaks{position:relative;overflow:hidden;border-radius:var(--radius);padding:16px 18px;color:#fff;background:linear-gradient(120deg,var(--navy) 0%,var(--navy2) 70%,#1f5a6e 100%);box-shadow:var(--shadow)}
+  .streaks::before{content:'';position:absolute;inset:-40%;background:radial-gradient(closest-side,rgba(43,192,184,.32),transparent 70%) 70% 40%/55% 70% no-repeat,radial-gradient(closest-side,rgba(245,158,11,.16),transparent 70%) 8% 30%/30% 40% no-repeat;filter:blur(20px);animation:sk-glow 8s ease-in-out infinite alternate;pointer-events:none}
+  @keyframes sk-glow{to{transform:translate(4%,-3%) scale(1.08)}}
+  .streaks .skh{position:relative;display:flex;align-items:center;gap:12px}
+  .streaks .skh b{display:block;font-size:17px}.streaks .skh span{font-size:12.5px;color:#cfe0f2}
+  .streaks .skl{position:relative;display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+  .sk{display:flex;align-items:center;gap:8px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);border-radius:14px;padding:8px 13px 8px 10px;color:#fff;font-family:inherit;cursor:pointer;backdrop-filter:blur(6px)}
+  .sk:hover{background:rgba(255,255,255,.15)}
+  .sk .n{font-size:22px;font-weight:900;font-variant-numeric:tabular-nums;color:#fff}
+  .sk .w{display:flex;flex-direction:column;text-align:left;line-height:1.15}.sk .w b{font-size:13.5px}.sk .w small{font-size:11.5px;color:#cfe0f2}
+  .streaks .ended{position:relative;margin-top:10px;font-size:12.5px;color:#cfe0f2}
+  .skmini{display:inline-flex;align-items:center;gap:2px;margin-left:6px;font-weight:800;font-size:12px;color:var(--teal-600);vertical-align:middle}
+  .skmini .flame{width:13px;height:17px;vertical-align:-3px}
+  .skban{display:flex;align-items:center;gap:12px;margin-top:12px;padding:10px 14px;border-radius:12px;background:var(--teal-soft);border:1px solid #c4e6e3;position:relative;overflow:visible}
+  .skban b{color:var(--navy);font-size:15px}.skban span{color:var(--soft);font-size:12.5px;display:block}
+  .burst{position:absolute;left:22px;top:50%;width:0;height:0;pointer-events:none}
+  .burst i{position:absolute;left:0;top:0;width:6px;height:6px;margin:-3px;border-radius:50%;background:var(--c,#F59E0B);animation:sk-burst .9s cubic-bezier(.2,.8,.3,1) forwards;transform:rotate(var(--a)) translateY(0)}
+  @keyframes sk-burst{0%{opacity:1;transform:rotate(var(--a)) translateY(0) scale(1)}100%{opacity:0;transform:rotate(var(--a)) translateY(-46px) scale(.4)}}
+  @media (prefers-reduced-motion: reduce){.flame svg,.flame svg .in,.flame .em,.streaks::before,.burst i{animation:none!important}.flame .em{display:none}}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:11px 18px;border-radius:12px;font-size:14px;font-weight:600;box-shadow:0 10px 30px rgba(15,42,74,.25);z-index:50}
+  @media(max-width:640px){
+    .talk li{grid-template-columns:1fr auto} .talk li .opill{grid-column:1/-1}
+    .frow{grid-template-columns:1fr} .fv{align-items:stretch;text-align:left}
+    .tabs{width:100%;display:grid;grid-auto-flow:column;grid-auto-columns:1fr} .tabs button{padding:8px 4px;font-size:13px}
+    .mnav{margin-left:0;width:100%;justify-content:space-between} .setrow{grid-template-columns:1fr}
+    .headline{flex-direction:column}
+  }
+  @media (prefers-reduced-motion: reduce){ *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important} }
+</style>
+<script src="user.js?v=hc268d202611250847"></script>
+  <script src="store.js?v=hc268d202611250847"></script>
+  <script src="gate.js?v=hc268d202611250847"></script>
+  <script src="prodbook.js?v=hc268d202611250847"></script>
+  <script src="monthly.js?v=hc268d202611250847"></script>
+  <script src="orthofi.js?v=hc268d202611250847"></script>
+</head>
+<body>
+<div class="ribbon">DEMO — made-up numbers. Use “Try it as”: an office manager first, then the practice administrator.</div>
+<header class="hdr">
+  <div class="hdr-in">
+    <span class="mark" aria-label="Home-Brace"><img src="../assets/logo-mark.png?v=2" alt="" width="34" height="34"></span>
+    <span class="brand">Home-<i>Brace</i><small>Monthly Report</small></span>
+    <span class="v1">Demo</span>
+  </div>
+</header>
+<nav class="v1nav"><div class="v1nav-in" id="nav"></div></nav>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <linearGradient id="flO" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#DC2626"/><stop offset=".55" stop-color="#F97316"/><stop offset="1" stop-color="#FDE68A"/></linearGradient>
+  <linearGradient id="flI" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#FDBA74"/><stop offset=".6" stop-color="#FEF3C7"/><stop offset="1" stop-color="#FFFFFF"/></linearGradient>
+</defs></svg>
+<div class="wrap">
+  <div class="viewas" id="tryas">
+    <span class="lab">👤 Try it as</span>
+    <select id="persona" onchange="MONTHLY.as(this.value)"></select>
+  </div>
+  <div class="page-head">
+    <div>
+      <h1>Monthly Report</h1>
+      <p id="lede">Every office’s month-end numbers in one place. OrthoFi’s numbers fill themselves in every night, so offices only type what comes from the practice software.</p>
+    </div>
+    <span class="ofstate" id="ofstate"><i></i><span>OrthoFi: credentials on the way</span></span>
+  </div>
+  <div class="bar">
+    <div class="tabs" id="tabs" role="tablist"></div>
+    <div class="mnav" id="mnav"></div>
+  </div>
+  <div class="warnbox" id="pagewarn" role="alert" hidden style="margin:0 0 14px"></div>
+  <div id="view"><div class="empty">Reading the reports…</div></div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  const M=window.PH_MONTHLY, LIVE=!!(window.PH && PH.isLive && PH.isLive());
+  const el=id=>document.getElementById(id);
+  const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const NOW=new Date(), NOW_Y=NOW.getFullYear(), NOW_M=NOW.getMonth()+1;
+  const LM=M.lastMonth(NOW);
+  const RANK={none:0,view:1,add:2,edit:3,manage:4};
+  /* OrthoFi's nightly numbers (18/11/2026: OrthoFi is making the practice's API credentials). Until they are in, offices
+     type every number; the moment they are, OrthoFi's boxes fill themselves and lock. */
+  /* live: "connected" once an admin has ticked an office to fill itself in (OrthoFi page, step 3) - OFMAP below */
+  let ORTHOFI_CONNECTED=!LIVE;                    // the sandbox shows how it will work, with made-up OrthoFi numbers
+  let OFMAP=null;
+  let Y=LM.y, MO=LM.m, TAB=null, OFF=null, SHOWALL=false;
+  const DATA={}; let SET=M.cleanSettings(null), WHO=null;
+  let EDIT={}, CORRECT={}, BUSY=false, SENDASK=false;
+  /* SAID ON THE PAGE (21/11/2026, code review): a shared copy that couldn't be read is not an empty one, and a save the
+     store refused is not saved. #pagewarn stays up until a read or a save works. */
+  const YFAIL={}, YPREV={}; let SETFAIL=false, SAVEWARN='';
+  const readFailed=k=>!!(window.PH_STORE && PH_STORE.readFailed && PH_STORE.readFailed(k));
+  const refused=r=>!r || !!(r.blocked || r.error);
+  function showWarn(){ const w=el('pagewarn'); if(!w) return;
+    const ys=Object.keys(YFAIL).map(Number).filter(y=>YFAIL[y] && y<=Y && y>=Y-3).sort();
+    const t=(ys.length ? 'Home-Brace couldn’t read the saved reports for '+ys.join(' and ')+' — what’s shown may be missing or out of date (an office can show as Late), and nothing is saved over them. Reload the page to try again. ' : '')+
+      (SETFAIL ? 'The report’s settings couldn’t be read — the targets and offices shown are the starting ones, and settings can’t be changed until the page is reloaded. ' : '')+SAVEWARN;
+    w.textContent=t.trim(); w.hidden=!w.textContent; }
+  function notSaved(r, tail){ const why=String((r && (r.why || r.error)) || '').slice(0,160).replace(/\.?\s*$/, '.');
+    SAVEWARN='Not saved'+(why.length>1 ? ' — '+why : '.')+' '+(tail || 'What you typed is still here — try again.');
+    toast('Not saved'+(tail ? '' : ' — what you typed is still here')); showWarn(); }
+  const busy=()=>{ if(BUSY) toast('Still saving — one moment'); return BUSY; };
+
+  /* SANDBOX "Try it as" - four people in the report's story. Live: the signed-in person and Teams & Access. */
+  const PERSONAS=[
+    {id:'morgan', n:'Morgan — every office, can mark a month final', level:'manage', offices:'all', name:'Morgan'},
+    {id:'lead',    n:'Leadership — reads every office', level:'view', offices:'all', name:'Leadership'},
+    {id:'om',      n:'Cedar Grove office manager — has Medicaid', level:'edit', offices:['Cedar Grove'], name:'Gabriela (Cedar Grove)'},
+    {id:'om2',     n:'Brookside office manager — no Medicaid', level:'edit', offices:['Brookside'], name:'Sam (Brookside)'}];
+  function who(){
+    if(LIVE){ const m=PH.me()||{}; const lvl=PH.isAdmin(m) ? 'manage' : PH.can('monthly');
+      return {level:lvl, offices:m.offices==='all' ? 'all' : (m.offices||[]), name:(PH.name && PH.name(m))||'', email:String((PH.email && PH.email(m))||'')}; }
+    let id='morgan'; try{ id=localStorage.getItem('ph_monthly_as')||'morgan'; }catch(_){}
+    const p=PERSONAS.find(x=>x.id===id)||PERSONAS[0];
+    return {id:p.id, level:p.level, offices:p.offices, name:p.name, email:p.name};
+  }
+  const at=l=>RANK[(WHO&&WHO.level)||'none']>=RANK[l];
+  /* Morgan 18/11: "All office managers can see all offices" - Settings "everyone" (on by default). Typing stays with
+     each office's own people (mine) and Morgan (manage). */
+  function myOffices(){ const all=PH.officeNames(); if(WHO.offices==='all' || SET.everyone) return all; return all.filter(o=>WHO.offices.indexOf(o)>=0); }
+  const seesMany=()=>myOffices().length>1;
+  const mine=o=>WHO.offices==='all' || WHO.offices.indexOf(o)>=0;
+  const isOpen=(y,m)=>y===NOW_Y && m===NOW_M;
+  const isFuture=(y,m)=>y>NOW_Y || (y===NOW_Y && m>NOW_M);
+
+  /* ---------- reading and the made-up sandbox year ---------- */
+  function rng(seed){ return function(){ seed=seed+0x6D2B79F5|0; let t=Math.imul(seed^seed>>>15,1|seed); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+  function hash(s){ let h=2166136261; for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619); } return h>>>0; }
+  function demoYear(y){
+    const rec={v:1,o:{}}, last=y<NOW_Y ? 12 : NOW_M, med=M.DEF_MEDICAID;
+    PH.officeNames().forEach((o,i)=>{
+      const R=rng(hash(o+':'+y)), base=170000+R()*250000, colBase=0.895+R()*0.06, arx=5.3+R()*0.8, accts=500+Math.round(R()*800), pts=700+Math.round(R()*1300);
+      rec.o[o]={};
+      for(let m=1;m<=last;m++){
+        const open=isOpen(y,m), frac=open ? Math.min(1, Math.max(0.2, NOW.getDate()/30)) : 1;
+        const season=1+0.07*Math.sin((m+i)/12*2*Math.PI), full=base*season*(0.93+R()*0.14), gp=full*frac;
+        let col=colBase+(R()-0.5)*0.05, adjp=0.06+R()*0.04, del=3.5+R()*4;
+        if(o==='Lakeview' && y===NOW_Y && m>=LM.m-2 && m<=LM.m){ col=0.935-(m-LM.m+3)*0.025; del=8.6+R(); }   // the story: Lakeview slipping
+        if(o==='Westfield' && y===NOW_Y && m===LM.m) adjp=0.112;
+        if(y===NOW_Y && m<=LM.m && m>=LM.m-5 && (o==='Northpoint' || o==='Brookside' || (o==='Westfield' && m<LM.m) || (o==='Hillcrest' && m>=LM.m-2))){ col=0.932+R()*0.012; if(!(o==='Westfield' && m===LM.m)) adjp=0.062+R()*0.02; del=3.8+R()*2; }
+        const arn=accts+Math.round((R()-0.5)*40);
+        const v={gp, gc:gp*col, adj:-gp*adjp, ar:full*arx*(0.97+R()*0.06), arn, deln:Math.round(del/100*arn),
+                 npe:Math.round((40+R()*70)*frac), act:pts+Math.round((R()-0.5)*30), disc:gp*(0.01+R()*0.02)};
+        v.np=v.gp+v.adj; v.ar90=v.ar*(0.012+R()*0.035);
+        v.rip=Math.round((4+R()*20)*frac);
+        v.starts=Math.round((16+R()*30)*frac);
+        /* made up: the A/R by age (patient about four fifths of it) */
+        { const pt=v.ar*(0.74+R()*0.1), it=v.ar-pt, sp=(t,c,a,b)=>{ const x31=t*a, x61=t*b, x91=t*(0.03+R()*0.05); return [t, t-x31-x61-x91, x31, x61, x91]; };
+          [v.pa_tot, v.pa_cur, v.pa_31, v.pa_61, v.pa_91]=sp(pt, 0, 0.04+R()*0.03, 0.02+R()*0.02);
+          [v.ia_tot, v.ia_cur, v.ia_31, v.ia_61, v.ia_91]=sp(it, 0, 0.12+R()*0.08, 0.06+R()*0.05); }
+        if(!open && M.DEF_OLDSYS.indexOf(o)>=0){ v.osp=gp*(0.04+R()*0.06); v.osc=v.gc*(0.04+R()*0.06); v.osar=v.ar*(0.05+R()*0.08); }   // made up: the old system's share
+        if(!open){ v.oecd=5+R()*12; v.appts=Math.round(600+R()*500); v.cmfa=Math.round(v.appts*(0.03+R()*0.06)); v.dbc=Math.round(14+R()*24); v.dbp=Math.round(2+R()*8);
+          if(med.indexOf(o)>=0){ v.mds=Math.round(8+R()*26); v.mdd=Math.round(v.mds*(0.05+R()*0.22)); v.mda=Math.max(0,v.mds-v.mdd-Math.round(R()*3));
+            v.mdb=Math.round(v.mda*(0.6+R()*0.35)); v.mdp=25000+R()*85000; v.mdc=v.mdp*(0.75+R()*0.25); } }
+        const r={v:{}, src:{}, at:{}, by:{}, ofv:{}, notes:[]}, stamp=new Date(y, m, Math.min(3, 28), 6).toISOString();
+        M.FIELDS.forEach(f=>{ if(v[f.k]===undefined) return; r.v[f.k]=v[f.k]; r.src[f.k]=f.from==='orthofi' ? 'orthofi' : 'typed'; r.at[f.k]=stamp; r.by[f.k]=f.from==='orthofi' ? 'OrthoFi' : 'Office manager';
+          if(f.from==='orthofi') r.ofv[f.k]=v[f.k]; });
+        if(open) r.of=NOW.toISOString();
+        /* OrthoFi's own part of the two boxes made of OrthoFi + what's typed (so the sandbox shows "OrthoFi … + typed …") */
+        r.ofp={gp:v.gp-(r.v.mdp||0)-(r.v.osp||0), gc:v.gc-(r.v.mdc||0)-(r.v.osc||0), np:v.np-(r.v.mdp||0)-(r.v.osp||0), ar:v.ar-(r.v.osar||0)};
+        const lastDone=y===LM.y && m===LM.m;
+        if(!open && !lastDone) r.final={at:new Date(y, m, 8).toISOString(), by:'Morgan'};
+        if(lastDone){
+          if(['Cedar Grove','Brookside','Riverbend'].indexOf(o)>=0){ M.FIELDS.forEach(f=>{ if(f.from==='pms'){ delete r.v[f.k]; delete r.src[f.k]; } }); }
+          else if(['Northpoint','Hillcrest'].indexOf(o)>=0) r.final={at:new Date(y, m, 6).toISOString(), by:'Morgan'};
+          else r.sent={at:new Date(y, m, 3+i%3, 10).toISOString(), by:'Office manager'};
+          if(o==='Westfield'){ r.src.gp='typed'; r.v.gp=Math.round(r.v.gp/1000)*1000+4500; r.by.gp='Office manager'; }
+          if(o==='Lakeview') r.notes.push({t:'Two of our biggest payers moved to a payment plan this month, and our financial coordinator was out a week. Calls are booked for the week of the 10th.', by:'Lakeview office manager', at:new Date(y, m, 4, 9).toISOString()});
+          if(o==='Westfield') r.notes.push({t:'The adjustments include a one-time write-off of old insurance balances we cleaned up.', by:'Westfield office manager', at:new Date(y, m, 3, 15).toISOString()});
+        }
+        rec.o[o][M.mm(m)]=r;
+      }
+    });
+    return M.cleanYear(rec);
+  }
+  /* the sandbox's made-up years are remade when their story changes (DEMO_V) - real years never */
+  const DEMO_V='8';      // 7: Jamie's year sheet (new starts, debonds, A/R by age) - 24/11/2026
+  async function loadYear(y, fresh){
+    if(DATA[y] && !fresh) return DATA[y];
+    let rec=null; try{ rec=await PH_STORE.get(M.KEY(y)); }catch(_){}
+    YFAIL[y]=readFailed(M.KEY(y));
+    if(!LIVE){ let v=''; try{ v=localStorage.getItem('ph_monthly_demo_v_'+y)||''; }catch(_){} if(v!==DEMO_V){ rec=null; try{ localStorage.setItem('ph_monthly_demo_v_'+y, DEMO_V); }catch(_){} } }
+    if(!LIVE && (!rec || !rec.o || !Object.keys(rec.o).length) && y>=NOW_Y-1 && y<=NOW_Y){
+      rec=demoYear(y); try{ await PH_STORE.set(M.KEY(y), rec); }catch(_){}
+    }
+    DATA[y]=M.cleanYear(rec); return DATA[y];
+  }
+  async function loadSettings(){ try{ SET=M.cleanSettings(await PH_STORE.get(M.SET_KEY)); }catch(_){ SET=M.cleanSettings(null); } SETFAIL=readFailed(M.SET_KEY); }
+
+  const recOf=(o,y,m)=>((DATA[y]||{o:{}}).o[o]||{})[M.mm(m)]||null;
+  const valsOf=(o,y,m)=>{ const r=recOf(o,y,m); return r && Object.keys(r.v).length ? r.v : null; };
+  function step(y,m,n){ m+=n; while(m<1){ m+=12; y--; } while(m>12){ m-=12; y++; } return {y,m}; }
+  function histOf(o,y,m,n){ const out=[]; for(let i=n;i>=1;i--){ const p=step(y,m,-i); out.push(valsOf(o,p.y,p.m)); } return out; }
+  const offTotals=(offs,y,m)=>M.practiceTotals(offs.map(o=>valsOf(o,y,m)));
+
+  /* ---------- words and numbers ---------- */
+  function fmt(t,v,short){ if(v===null || v===undefined || !isFinite(v)) return '—';
+    if(t==='$'){ const a=Math.abs(v), s=v<0?'−':'';
+      if(short && a>=1e6) return s+'$'+(a/1e6).toFixed(2)+'M'; if(short && a>=1e4) return s+'$'+Math.round(a/1e3)+'k';
+      return s+'$'+Math.round(a).toLocaleString('en-US'); }
+    if(t==='%') return v.toFixed(1)+'%'; if(t==='x') return v.toFixed(1)+'×';
+    return Math.round(v).toLocaleString('en-US'); }
+  const MON=M.MONTHS.map(x=>x.slice(0,3));
+  const day=iso=>{ if(!iso) return ''; const d=new Date(iso); return isNaN(d) ? '' : d.getDate()+' '+MON[d.getMonth()]; };
+  const goalTxt=k=>{ const g=SET.goals[k]; return k==='ratio' ? g[0]+'–'+g[1]+'×' : g[0]+'–'+g[1]+'%'; };
+  const TONE_TXT={ok:'On target', bad:'Off target', good:'Better than target', watch:'Outside range'};
+  const toneChip=(k,v)=>{ const t=M.tone(k,v,SET.goals); return t ? '<span class="tn '+t+'">'+TONE_TXT[t]+'</span>' : ''; };
+  const ICON={bad:'!', watch:'△', good:'✓', info:'i'};
+  const STATUS={final:'✓ Final', sent:'Sent', late:'Late', open:'So far', started:'Started', '':'Not started'};
+  function stChip(r,y,m,plain){ const s=M.status(r,y,m,SET,NOW); let t=STATUS[s];
+    if(s==='sent' && r.sent && !plain) t='Sent '+day(r.sent.at); if(s==='final' && r.final) t='✓ Final';
+    return '<span class="st '+(s||'none')+'">'+t+'</span>'; }
+  function delta(cur, prev, t){ if(cur==null || prev==null || !prev) return '';
+    const p=(cur-prev)/Math.abs(prev)*100; if(Math.abs(p)<0.5) return '<span class="soft">same as '+MON[step(Y,MO,-1).m-1]+'</span>';
+    return '<span class="'+(p>0?'up':'down')+'">'+(p>0?'▲ ':'▼ ')+Math.abs(p).toFixed(0)+'%</span> <span class="soft">vs '+MON[step(Y,MO,-1).m-1]+'</span>'; }
+  function opill(o){ const c=PH.colorForOffice(o)||{}; return '<span class="opill"><i style="background:'+esc(c.dot||'#94a3b8')+'"></i>'+esc(o)+'</span>'; }
+  function toast(t){ const d=document.createElement('div'); d.className='toast'; d.textContent=t; document.body.appendChild(d); setTimeout(()=>d.remove(), 2600); }
+
+  /* STREAKS - months in a row on every target (monthly.js onTarget/streak) */
+  const FLAME='<svg viewBox="0 0 32 40" aria-hidden="true"><path fill="url(#flO)" d="M16 1C19 9 29 13 28 25c-.6 8-6 13-12 13S4 33 4 25c0-7 5-10 7-17 1 4 3 6 5 6 1-4 0-8 0-13z"/><path class="in" fill="url(#flI)" d="M16 17c3 4 7 7 6 12-.6 4-3 7-6 7s-6-3-6-7c0-4 3-6 6-12z"/></svg><i class="em"></i><i class="em"></i><i class="em"></i>';
+  const flame=big=>'<span class="flame'+(big?' big':'')+'">'+FLAME+'</span>';
+  /* the run that a month's report continues: a month still going counts up to the month before */
+  function runAt(o, y, m){ const p=isOpen(y,m) ? step(y,m,-1) : {y,m}; return M.streak((yy,mm)=>valsOf(o,yy,mm), p.y, p.m, SET.goals); }
+  /* a run counts back up to 36 months, but only this year and last were read - a year not read counted as a miss, so a
+     longer run was cut short. Read the year before whenever a run reaches January (21/11/2026, code review) */
+  async function loadRuns(){
+    for(let pass=0; pass<3; pass++){
+      const starts=[isOpen(Y,MO) ? step(Y,MO,-1) : {y:Y, m:MO}, step(Y,MO,-1)], want={};
+      myOffices().forEach(o=>starts.forEach(p=>{ const n=M.streak((yy,mm)=>valsOf(o,yy,mm), p.y, p.m, SET.goals), s=M.runStart(p.y, p.m, n);
+        if(n>0 && n<36 && s.m===1 && !DATA[s.y-1]) want[s.y-1]=1; }));
+      const ys=Object.keys(want).map(Number); if(!ys.length) return;
+      await Promise.all(ys.map(y=>loadYear(y)));
+    }
+  }
+  function countUps(){ if(matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    document.querySelectorAll('[data-count]').forEach(n=>{ const to=+n.dataset.count, t0=performance.now(), dur=600+to*60; n.textContent='0';
+      const st=now=>{ const k=Math.min(1,(now-t0)/dur), e=1-Math.pow(1-k,3); n.textContent=Math.round(e*to); if(k<1) requestAnimationFrame(st); }; requestAnimationFrame(st); }); }
+  function burstHTML(){ const C=['#F59E0B','#F97316','#FDE68A','#DC2626','#FFFFFF']; return '<span class="burst" aria-hidden="true">'+Array.from({length:14},(_,i)=>'<i style="--a:'+(i*360/14)+'deg;--c:'+C[i%C.length]+';animation-delay:'+(i%3)*40+'ms"></i>').join('')+'</span>'; }
+  /* a milestone (3, 6, 12, 24 months) bursts the first time this device sees it */
+  function freshMilestone(o, y, m, n){ if(M.MILESTONES.indexOf(n)<0) return false; const k='ph_monthly_ms', id=o+':'+y+'-'+m+':'+n;
+    try{ const seen=JSON.parse(localStorage.getItem(k)||'[]'); if(seen.indexOf(id)>=0) return false; seen.push(id); localStorage.setItem(k, JSON.stringify(seen.slice(-200))); return true; }catch(_){ return false; } }
+
+  /* a small line: the last n months, the target band behind it, the last point marked */
+  function spark(series, band, opts){
+    opts=opts||{}; const W=opts.w||240, H=opts.h||64, P=6; const pts=series.map((v,i)=>({i,v})).filter(p=>p.v!=null && isFinite(p.v));
+    if(pts.length<2) return '<svg viewBox="0 0 '+W+' '+H+'" aria-hidden="true"><text x="'+W/2+'" y="'+H/2+'" text-anchor="middle" font-size="11" fill="#8a96aa">Not enough months yet</text></svg>';
+    let lo=Math.min(...pts.map(p=>p.v)), hi=Math.max(...pts.map(p=>p.v));
+    if(band){ lo=Math.min(lo, band[0]); hi=Math.max(hi, band[1]); } const pad=(hi-lo)*0.12||1; lo-=pad; hi+=pad;
+    const X=i=>P+i*(W-2*P)/Math.max(1,series.length-1), Yv=v=>H-P-(v-lo)/(hi-lo)*(H-2*P);
+    let s='<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" role="img" aria-label="'+esc(opts.label||'trend')+'">';
+    if(band) s+='<rect x="0" y="'+Yv(band[1]).toFixed(1)+'" width="'+W+'" height="'+Math.max(1,Yv(band[0])-Yv(band[1])).toFixed(1)+'" fill="#d9f1ee"/>';
+    s+='<polyline fill="none" stroke="#0F2A4A" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke" points="'+pts.map(p=>X(p.i).toFixed(1)+','+Yv(p.v).toFixed(1)).join(' ')+'"/>';
+    const L=pts[pts.length-1]; s+='<circle cx="'+X(L.i).toFixed(1)+'" cy="'+Yv(L.v).toFixed(1)+'" r="3.5" fill="#149B96" stroke="#fff" stroke-width="1.5"/>';
+    return s+'</svg>';
+  }
+
+  /* ---------- tabs and the month ---------- */
+  function tabsFor(){ const t=[]; if(seesMany()) t.push(['overview','Overview']); t.push(['office', at('manage') || !at('edit') ? 'One office' : 'My report']); t.push(['year','Year sheet']); if(at('manage')) t.push(['settings','Settings']); return t; }
+  function renderBar(){
+    const tabs=tabsFor(); if(!tabs.some(t=>t[0]===TAB)) TAB=tabs[0][0];
+    el('tabs').innerHTML=tabs.map(t=>'<button role="tab" class="'+(t[0]===TAB?'on':'')+'" aria-selected="'+(t[0]===TAB)+'" onclick="MONTHLY.tab(\''+t[0]+'\')">'+t[1]+'</button>').join('');
+    const yearly=TAB==='year', canNext=yearly ? Y<NOW_Y : !isOpen(Y,MO);
+    el('mnav').hidden=TAB==='settings';
+    el('mnav').innerHTML='<button aria-label="Earlier" onclick="MONTHLY.move(-1)">‹</button><b>'+(yearly ? Y : M.MONTHS[MO-1]+' '+Y)+
+      '<small>'+(yearly ? 'the whole year' : isOpen(Y,MO) ? 'so far — still going' : (Y===LM.y && MO===LM.m ? 'last month' : ''))+'</small></b>'+
+      '<button aria-label="Later" onclick="MONTHLY.move(1)" '+(canNext?'':'disabled')+'>›</button>';
+  }
+  async function render(){
+    WHO=WHO||who(); renderBar();
+    await Promise.all([loadYear(Y), loadYear(Y-1)]);
+    await loadRuns(); showWarn();
+    const v=el('view');
+    if(!myOffices().length){ v.innerHTML='<div class="empty">No offices are set for you yet. An administrator can add yours in Admin → People.</div>'; return; }
+    if(TAB==='overview') v.innerHTML=overviewHTML();
+    else if(TAB==='office') v.innerHTML=officeHTML();
+    else if(TAB==='year') v.innerHTML=yearHTML();
+    else v.innerHTML=settingsHTML();
+    if(TAB==='office') glance();
+    countUps();
+  }
+
+  /* ---------- OVERVIEW: the whole practice's month, read in a minute ---------- */
+  function overviewHTML(){
+    const offs=myOffices(), y=Y, m=MO, open=isOpen(y,m), p=step(y,m,-1);
+    const rows=offs.map(o=>({o, r:recOf(o,y,m), v:valsOf(o,y,m), s:M.status(recOf(o,y,m),y,m,SET,NOW)}));
+    const fin=rows.filter(x=>x.s==='final').length, sent=rows.filter(x=>x.s==='sent').length, late=rows.filter(x=>x.s==='late'), n=rows.length;
+    const due=M.dueDate(y,m,SET);
+    let h='<div class="stack">';
+    if(open) h+='<div class="openbanner"><b>'+M.MONTHS[m-1]+' so far.</b> OrthoFi’s numbers as of this morning, refreshed every night — so a slipping office shows up mid-month, not on the 5th of next month. Offices send the report from 1 '+MON[m%12]+'.</div>';
+    else h+='<div class="statusline"><b>'+(fin+sent)+' of '+n+' reports in</b><span class="prog" aria-hidden="true"><span class="f" style="width:'+(fin/n*100)+'%"></span><span class="s" style="width:'+(sent/n*100)+'%"></span></span>'+
+      '<span class="soft">'+fin+' final · '+sent+(at('manage')?' waiting for you':' sent, not final yet')+' · due '+due.getDate()+' '+MON[due.getMonth()]+'</span>'+
+      (late.length ? '<span class="st late">Late: '+late.map(x=>esc(x.o)).join(', ')+'</span>' : '')+
+      (seesMany() ? '<button class="btn ghost" style="margin-left:auto" onclick="MONTHLY.copy()">📋 Copy the summary</button>' : '')+'</div>';
+    const T=offTotals(offs,y,m), PT=offTotals(offs,p.y,p.m);
+    if(!T){ return h+'<div class="empty">No numbers for '+M.MONTHS[m-1]+' '+y+' yet.</div></div>'; }
+    const c=M.calc(T);
+    /* the size of it, said once: what the offices below target would have collected at the target */
+    let short=0, shortN=0;
+    rows.forEach(x=>{ if(!x.v) return; const cc=M.calc(x.v); if(cc.colpct!==null && cc.colpct<SET.goals.col[0]){ short+=SET.goals.col[0]/100*x.v.gp-x.v.gc; shortN++; } });
+    if(!open){
+      h+= shortN ? '<div class="headline"><div class="big">'+fmt('$',short)+'</div><div><b>still to collect to reach the '+SET.goals.col[0]+'% target</b> at '+shortN+' office'+(shortN>1?'s':'')+' in '+M.MONTHS[m-1]+'.<p>That’s the gap between what these offices produced and what they collected — the first thing to chase.</p></div></div>'
+                 : '<div class="headline ok"><div class="big">✓</div><div><b>Every office collected at least '+SET.goals.col[0]+'% of production in '+M.MONTHS[m-1]+'.</b><p>Nothing to chase on collections this month.</p></div></div>';
+    }
+    h+='<div class="tiles">'+
+      tile('Produced', fmt('$',T.gp,true), delta(T.gp, PT&&PT.gp))+
+      tile('Collected', fmt('$',T.gc,true), (c.colpct!=null?fmt('%',c.colpct)+' of production ':'')+toneChip('col',c.colpct))+
+      tile('Adjustments', fmt('%',c.adjpct), toneChip('adj',c.adjpct)+' <span class="soft">target '+goalTxt('adj')+'</span>')+
+      tile('A/R ratio', fmt('x',c.ratio), fmt('$',T.ar,true)+' owed '+toneChip('ratio',c.ratio))+
+      tile('Late over 30 days', fmt('%',c.delpct), toneChip('del',c.delpct)+' <span class="soft">target '+goalTxt('del')+'</span>')+
+      tile('New patient exams', fmt('#',T.npe), delta(T.npe, PT&&PT.npe))+'</div>';
+    /* ON A ROLL - every office on a run of 2+, longest first; a run of 3+ that ended this month is said too */
+    const runs=offs.map(o=>({o, n:runAt(o,y,m)})), pr=step(y,m,-1);
+    const rolling=runs.filter(r=>r.n>=2).sort((a,b)=>b.n-a.n || a.o.localeCompare(b.o));
+    const ended=open ? [] : offs.filter(o=>runAt(o,y,m)===0).map(o=>({o, n:M.streak((yy,mm)=>valsOf(o,yy,mm), pr.y, pr.m, SET.goals)})).filter(r=>r.n>=3);
+    if(rolling.length || ended.length){
+      h+='<div class="streaks"><div class="skh">'+flame(true)+'<div><b>On a roll</b><span>Months in a row on every target — collection, adjustments and late accounts'+(open?' (through '+M.MONTHS[pr.m-1]+')':'')+'</span></div></div>'+
+        (rolling.length ? '<div class="skl">'+rolling.map(r=>'<button class="sk" data-o="'+esc(r.o)+'" onclick="MONTHLY.open(this.dataset.o)" title="Open '+esc(r.o)+'">'+flame()+'<span class="n" data-count="'+r.n+'">'+r.n+'</span><span class="w"><b>'+esc(r.o)+'</b><small>'+(r.n===1?'month':'months')+' in a row</small></span></button>').join('')+'</div>'
+          : '<div class="ended" style="margin-top:12px">No office is on a run right now — two months in a row on every target starts one.</div>')+
+        (ended.length ? '<div class="ended">'+ended.map(r=>esc(r.o)+'’s '+r.n+'-month run ended in '+M.MONTHS[m-1]).join(' · ')+'.</div>' : '')+'</div>';
+    }
+    /* what needs a conversation */
+    let all=[]; rows.forEach(x=>{ if(!x.v) return; M.insights(x.v,{goals:SET.goals, prev:valsOf(x.o,p.y,p.m), hist:histOf(x.o,y,m,3)}).forEach(i=>all.push(Object.assign({o:x.o}, i))); });
+    all.sort(M.byWeight);
+    const talk=all.filter(i=>i.tone==='bad' || i.tone==='watch'), good=all.filter(i=>i.tone==='good' && i.k==='col');
+    const show=SHOWALL ? talk : talk.slice(0,6);
+    h+='<div class="card"><h2>Worth a conversation</h2><div class="sub">Worked out from the numbers, biggest dollar gap first. Open an office to see why — its manager can leave a note.</div>';
+    h+= talk.length ? '<ul class="talk">'+show.map(i=>'<li class="t-'+i.tone+'">'+opill(i.o)+'<span><span class="ico">'+ICON[i.tone]+'</span>'+esc(i.text)+'</span><button class="lnk" data-o="'+esc(i.o)+'" onclick="MONTHLY.open(this.dataset.o)">Open</button></li>').join('')+'</ul>'+
+        (talk.length>6 ? '<button class="lnk more" onclick="MONTHLY.all()">'+(SHOWALL?'Show fewer':'Show all '+talk.length)+'</button>' : '')
+      : '<div class="note">Nothing off target this month.</div>';
+    if(good.length) h+='<div class="note" style="margin-top:10px"><b class="up">✓ Above the collection target:</b> '+good.map(i=>esc(i.o)).join(', ')+'</div>';
+    h+='</div>';
+    /* every office side by side */
+    // office names go in data-o: inside an onclick's quotes an apostrophe broke the button (21/11/2026, code review)
+    h+='<div class="tablewrap"><table><thead><tr><th>Office</th><th>Report</th><th>Produced</th><th>Collected</th><th>Collection %<small>target '+goalTxt('col')+'</small></th><th>Adjustment %<small>target '+goalTxt('adj')+'</small></th><th>A/R ratio<small>target '+goalTxt('ratio')+'</small></th><th>Late 30+ %<small>target '+goalTxt('del')+'</small></th><th>NP exams</th><th>Collection %, 6 months</th></tr></thead><tbody>';
+    rows.forEach(x=>{ const v=x.v||{}, cc=M.calc(v), r=x.r;
+      const ser=[]; for(let i=5;i>=0;i--){ const q=step(y,m,-i); const vv=valsOf(x.o,q.y,q.m); ser.push(vv?M.calc(vv).colpct:null); }
+      const rn=runAt(x.o,y,m);
+      h+='<tr class="click" data-o="'+esc(x.o)+'" onclick="MONTHLY.open(this.dataset.o)"><td>'+opill(x.o)+(rn>=2?'<span class="skmini" title="'+rn+' months in a row on every target">'+flame()+rn+'</span>':'')+'</td><td>'+stChip(r,y,m)+'</td><td>'+fmt('$',v.gp)+'</td><td>'+fmt('$',v.gc)+'</td>'+
+        cell('col',cc.colpct,'%')+cell('adj',cc.adjpct,'%')+cell('ratio',cc.ratio,'x')+cell('del',cc.delpct,'%')+'<td>'+fmt('#',v.npe)+'</td><td style="width:130px">'+spark(ser, SET.goals.col, {w:120,h:26,label:'Collection % for 6 months'})+'</td></tr>'; });
+    h+='<tr class="tot"><td>Whole practice</td><td></td><td>'+fmt('$',T.gp)+'</td><td>'+fmt('$',T.gc)+'</td>'+cell('col',c.colpct,'%')+cell('adj',c.adjpct,'%')+cell('ratio',c.ratio,'x')+cell('del',c.delpct,'%')+'<td>'+fmt('#',T.npe)+'</td><td></td></tr>';
+    return h+'</tbody></table></div></div>';
+  }
+  const tile=(k,v,d)=>'<div class="tile"><span class="k">'+k+'</span><span class="v">'+v+'</span><span class="d">'+(d||'&nbsp;')+'</span></div>';
+  function cell(g,v,t){ const tn=M.tone(g,v,SET.goals); return '<td class="'+(tn||'')+'" title="'+(tn?TONE_TXT[tn]:'')+'">'+(v!=null?'<span class="dot"></span>':'')+fmt(t,v)+'</td>'; }
+
+  /* the summary for leadership, ready to paste into Teams or an email */
+  function summaryText(){
+    const offs=myOffices(), y=Y, m=MO, p=step(y,m,-1), T=offTotals(offs,y,m); if(!T) return '';
+    const c=M.calc(T), L=[];
+    L.push('Monthly Report — '+M.MONTHS[m-1]+' '+y+' ('+offs.length+' offices)','');
+    L.push('Whole practice: produced '+fmt('$',T.gp)+', collected '+fmt('$',T.gc)+' ('+fmt('%',c.colpct)+'; target '+goalTxt('col')+'). Adjustments '+fmt('%',c.adjpct)+' (target '+goalTxt('adj')+'). A/R '+fmt('x',c.ratio)+' (target '+goalTxt('ratio')+'). Late over 30 days '+fmt('%',c.delpct)+'. New patient exams '+fmt('#',T.npe)+'.');
+    const talk=[]; offs.forEach(o=>{ const v=valsOf(o,y,m); if(!v) return; M.insights(v,{goals:SET.goals, prev:valsOf(o,p.y,p.m), hist:histOf(o,y,m,3)}).filter(i=>i.tone==='bad'||i.tone==='watch').forEach(i=>talk.push(Object.assign({o}, i))); });
+    talk.sort(M.byWeight);
+    if(talk.length){ L.push('','Worth a conversation:'); talk.slice(0,10).forEach(t=>L.push('• '+t.o+' — '+t.text)); }
+    const late=offs.filter(o=>M.status(recOf(o,y,m),y,m,SET,NOW)==='late'); if(late.length) L.push('','Still to send: '+late.join(', ')+'.');
+    L.push('','Details: Home-Brace → Monthly Report.');
+    return L.join('\n');
+  }
+  async function copy(){
+    const t=summaryText(); if(!t) return;
+    try{ await navigator.clipboard.writeText(t); toast('Summary copied — paste it into Teams or an email'); }
+    catch(_){ const ta=document.createElement('textarea'); ta.value=t; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); toast('Summary copied'); }catch(__){} ta.remove(); }
+  }
+
+  /* ---------- ONE OFFICE: fill in, see why, talk about it ---------- */
+  function canType(o,r){ if(!at('edit') || !mine(o) || isOpen(Y,MO) || isFuture(Y,MO)) return false; if(r && r.final && !at('manage')) return false; return true; }
+  function officeHTML(){
+    const offs=myOffices(); if(!OFF || offs.indexOf(OFF)<0) OFF=offs.find(x=>WHO.offices!=='all' && WHO.offices.indexOf(x)>=0) || offs[0];
+    const o=OFF, y=Y, m=MO, r=recOf(o,y,m)||M.cleanMonth(null), typ=canType(o,r), fields=M.fieldsFor(o,SET), s=M.status(r,y,m,SET,NOW), due=M.dueDate(y,m,SET);
+    let h='';
+    if(offs.length>1) h+='<div class="ochips" style="margin-bottom:14px">'+offs.map(x=>'<button class="ochip '+(x===o?'on':'')+'" data-o="'+esc(x)+'" onclick="MONTHLY.office(this.dataset.o)"><i style="background:'+esc((PH.colorForOffice(x)||{}).dot||'#94a3b8')+'"></i>'+esc(x)+'</button>').join('')+'</div>';
+    const auto=fields.filter(f=>f.from==='orthofi' && r.src[f.k]==='orthofi').length, toType=fields.filter(f=>!(f.from==='orthofi' && r.src[f.k]==='orthofi')).length;
+    h+='<div class="grid2"><div class="card"><div class="ohead"><div><h2>'+esc(o)+' · '+M.MONTHS[m-1]+' '+y+'</h2><div class="note" style="margin-top:4px">'+stChip(r,y,m)+' '+statusWords(r,s,due)+'</div></div>'+
+       (auto ? '<div class="saver">⚡ OrthoFi filled '+auto+' of '+fields.length+' — '+(toType?toType+' to type':'nothing to type')+'</div>' : '')+'</div>';
+    const rn=runAt(o,y,m), ms=rn>=3 && freshMilestone(o,y,m,rn);
+    if(rn>=1) h+='<div class="skban">'+(ms?burstHTML():'')+flame(rn>=3)+'<div><b><span data-count="'+rn+'">'+rn+'</span> '+(rn===1?'month':'months')+' in a row on every target'+(M.MILESTONES.indexOf(rn)>=0?' 🎉':'')+'</b>'+
+      '<span>'+(isOpen(y,m) ? 'Through '+M.MONTHS[step(y,m,-1).m-1]+' — keep '+M.MONTHS[m-1]+' on target to make it '+(rn+1)+'.' : rn===1 ? 'One more month on target starts a run.' : 'Collection, adjustments and late accounts all on target.')+'</span></div></div>';
+    /* WHAT TO TYPE FIRST (Jordan: "saving time"): a box OrthoFi has filled is not a box - it goes in the grid below. */
+    const locked=f=>f.from==='orthofi' && r.src[f.k]==='orthofi' && !CORRECT[f.k];
+    const groups=[
+      {t: typ ? 'Type these' : 'From the practice software', s: typ ? 'From the practice software'+(fields.some(f=>f.from==='orthofi' && !locked(f)) ? ', plus anything OrthoFi hasn’t filled in yet.' : '.') : 'Typed by the office.',
+        f:fields.filter(f=>!f.medicaid && !f.oldsys && !locked(f))},
+      {t:'Medicaid', s:'Numbers only — never a patient’s name.', f:fields.filter(f=>f.medicaid && !locked(f))},
+      {t:'Old system', s:'From your old practice software — Home-Brace adds these to OrthoFi’s numbers.', f:fields.filter(f=>f.oldsys && !locked(f))}];
+    groups.forEach(g=>{ if(!g.f.length) return; h+='<div class="grp"><h3>'+g.t+'</h3><div class="gsub">'+g.s+'</div>'+g.f.map(f=>fieldRow(f,r,typ)).join('')+'</div>'; });
+    const ofs=fields.filter(locked);
+    if(ofs.length) h+='<div class="grp"><h3>From OrthoFi</h3><div class="gsub">'+(ORTHOFI_CONNECTED ? 'Filled in from OrthoFi each day'+(r.of?' — last on '+day(r.of):'')+'. Nothing to type.' : 'Filled in from OrthoFi.')+'</div><div class="ofgrid">'+
+      ofs.map(f=>'<div class="oft"><span class="k">'+esc(f.n)+'</span><span class="v">'+fmt(f.t,r.v[f.k])+'</span>'+
+        (r.ofp && r.ofp[f.k]!==undefined && Math.abs(r.v[f.k]-r.ofp[f.k])>=0.005 ? '<span class="soft" style="font-size:11.5px">OrthoFi '+fmt(f.t,r.ofp[f.k])+' + typed '+fmt(f.t,r.v[f.k]-r.ofp[f.k])+'</span>' : '')+(typ && at('manage') ? '<button class="lnk" onclick="MONTHLY.correct(\''+f.k+'\')">Correct it</button>' : '')+'</div>').join('')+'</div></div>';
+    h+=actionsHTML(o,r,s,typ,fields);
+    h+='</div><div class="stack"><div class="card"><h2>At a glance</h2><div class="sub">Worked out from the numbers on the left, against the practice’s targets.</div><div id="glance" class="glance"></div></div>'+notesHTML(o,r)+'</div></div>';
+    /* the last 12 months */
+    const series=k=>{ const a=[]; for(let i=11;i>=0;i--){ const q=step(y,m,-i), v=valsOf(o,q.y,q.m); a.push(v ? (k in M.BY ? v[k] : M.calc(v)[k]) : null); } return a; };
+    const first=step(y,m,-11);
+    const SM=[['Gross production','gp','$',null],['Collection %','colpct','%','col'],['Adjustment %','adjpct','%','adj'],['A/R ratio','ratio','x','ratio'],['Late over 30 days','delpct','%','del'],['New patient exams','npe','#',null]];
+    h+='<h2 style="font-size:16px;color:var(--navy);margin:22px 0 10px">The last 12 months <span class="soft" style="font-weight:500;font-size:13px">— the green band is the target</span></h2><div class="smalls">'+
+      SM.map(x=>{ const a=series(x[1]), last=a[a.length-1]; return '<div class="sm"><div class="k">'+x[0]+'</div><div class="v">'+fmt(x[2],last)+'</div>'+spark(a, x[3]?SET.goals[x[3]]:null, {label:x[0]+' for 12 months'})+
+        '<div class="ax"><span>'+MON[first.m-1]+' '+String(first.y).slice(2)+'</span><span>'+MON[m-1]+' '+String(y).slice(2)+'</span></div></div>'; }).join('')+'</div>';
+    return h;
+  }
+  function statusWords(r,s,due){
+    if(s==='final') return 'Marked final by '+esc(r.final.by)+' on '+day(r.final.at)+'.';
+    if(s==='sent') return 'Sent by '+esc(r.sent.by)+' on '+day(r.sent.at)+'.';
+    if(s==='open') return 'The month is still going — these are the numbers so far.';
+    if(s==='late') return 'Was due '+due.getDate()+' '+MON[due.getMonth()]+'.';
+    return 'Due '+due.getDate()+' '+MON[due.getMonth()]+'.';
+  }
+  /* COMMAS (21/11/2026, Jordan: "These are americas can we have the commas?") - a box shows 300,800.85, not 300800.85, and
+     tidies to that when you leave it. Saving reads past the commas (M.num), so nothing stored changes. */
+  function showIn(t, v){ const n=Number(v); if(!isFinite(n)) return String(v);
+    return t==='$' ? n.toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2}) : t==='#' ? Math.round(n).toLocaleString('en-US') : String(n); }
+  function fieldRow(f,r,typ){
+    const v=r.v[f.k], src=r.src[f.k], lockedAuto=f.from==='orthofi' && src==='orthofi' && !CORRECT[f.k];
+    const label='<label for="f_'+f.k+'">'+esc(f.n)+(f.help?'<small>'+esc(f.help)+'</small>':'')+'</label>';
+    let right;
+    if(lockedAuto || !typ){
+      right='<div class="fv"><span class="val">'+fmt(f.t,v)+'</span>'+(v!==undefined ? (src==='orthofi' ? '<span class="src">OrthoFi · '+day(r.at[f.k]||r.of)+'</span>' : '<span class="src typed">typed</span>') : '')+
+        (lockedAuto && typ && at('manage') ? '<button class="lnk" onclick="MONTHLY.correct(\''+f.k+'\')">Correct it</button>' : '')+'</div>';
+    } else {
+      const cur=EDIT[f.k]!==undefined ? EDIT[f.k] : (v!==undefined ? showIn(f.t, v) : '');
+      const kind=f.t==='$' ? 'pre' : f.t==='%' ? 'suf' : '';
+      right='<div class="fv"><div class="inp '+kind+'">'+(kind==='pre'?'<span class="a">$</span>':'')+'<input id="f_'+f.k+'" data-k="'+f.k+'" inputmode="decimal" autocomplete="off" class="'+(cur===''?'empty':'')+'" value="'+esc(cur)+'" oninput="MONTHLY.typed(this)" onblur="MONTHLY.tidy(this)" aria-label="'+esc(f.n)+'">'+(kind==='suf'?'<span class="a">%</span>':'')+'</div></div>';
+    }
+    const mis=M.mismatches(r).find(x=>x.k===f.k);
+    const misHTML=mis ? '<div class="mis" style="grid-column:1/-1">OrthoFi says <b>'+fmt(f.t,mis.orthofi)+'</b> — '+fmt(f.t,mis.typed)+' was typed.'+(typ?' <button class="lnk" onclick="MONTHLY.useOf(\''+f.k+'\')">Use OrthoFi’s</button>':'')+'</div>' : '';
+    return '<div class="frow">'+label+right+misHTML+'</div>';
+  }
+  function actionsHTML(o,r,s,typ,fields){
+    if(isOpen(Y,MO)) return '<div class="savebar"><span class="note">You can send '+M.MONTHS[MO-1]+'’s report from 1 '+MON[MO%12]+'.</span></div>';
+    if(!typ) return r.final && at('edit') && mine(o) ? '<div class="savebar"><span class="note">This month is final. Ask Morgan if a number needs changing.</span></div>' : '';
+    const empty=fields.filter(f=>{ const e=EDIT[f.k]; const has=e!==undefined ? M.num(e)!==null : r.v[f.k]!==undefined; return !has; });
+    let h='<div class="savebar">';
+    h+='<button class="btn ghost" id="savebtn" onclick="MONTHLY.save()">Save</button>';
+    if(!r.final && !r.sent) h+= SENDASK && empty.length
+      ? '<span class="warnbox">'+empty.length+' still empty: '+empty.map(f=>esc(f.n)).join(', ')+'. <button class="lnk" onclick="MONTHLY.send(true)">Send anyway</button> <button class="lnk" onclick="MONTHLY.unask()">Keep typing</button></span>'
+      : '<button class="btn" onclick="MONTHLY.send()">Send the report</button>';
+    if(at('manage')) h+= r.final ? '<button class="btn ghost" onclick="MONTHLY.final(false)">Reopen the month</button>' : '<button class="btn navy" onclick="MONTHLY.final(true)">✓ Mark final</button>';
+    h+='<span class="note" id="savenote">'+(empty.length && !SENDASK ? empty.length+' box'+(empty.length>1?'es':'')+' still empty' : '')+'</span></div>';
+    return h;
+  }
+  /* the right-hand panel, redrawn as numbers are typed */
+  function liveVals(){ const r=recOf(OFF,Y,MO)||M.cleanMonth(null), v=Object.assign({}, r.v); Object.keys(EDIT).forEach(k=>{ const n=M.cleanVal(k,EDIT[k]); if(n===null) delete v[k]; else v[k]=n; }); return v; }
+  function glance(){
+    const g=el('glance'); if(!g) return; const v=liveVals(), c=M.calc(v), p=step(Y,MO,-1);
+    const row=(name,val,t,gk)=>{ const G=SET.goals[gk], w=Math.max(G[1]-G[0], 0.5), lo=Math.max(0, Math.min(G[0]-w*2.5, val==null?G[0]:val-w*0.5)), hi=Math.max(G[1]+w*2.5, val==null?G[1]:val+w*0.5), X=x=>(x-lo)/(hi-lo)*100;
+      return '<div class="gl"><span class="k">'+name+'</span><span class="v">'+fmt(t,val)+'</span><span class="g">target '+goalTxt(gk)+' '+toneChip(gk,val)+'</span><span></span>'+
+        '<div class="gbar"><span class="band" style="left:'+X(G[0])+'%;width:'+(X(G[1])-X(G[0]))+'%"></span>'+(val!=null?'<span class="pin" style="left:'+Math.max(0,Math.min(100,X(val)))+'%"></span>':'')+'</div></div>'; };
+    let h=row('Collection %',c.colpct,'%','col')+row('Adjustment %',c.adjpct,'%','adj')+row('A/R ratio',c.ratio,'x','ratio')+row('Late over 30 days',c.delpct,'%','del');
+    const ins=M.insights(v,{goals:SET.goals, prev:valsOf(OFF,p.y,p.m), hist:histOf(OFF,Y,MO,3)}).filter(i=>!(i.k==='col' && i.tone==='good'));
+    h+= ins.length ? '<ul class="ins">'+ins.map(i=>'<li class="t-'+i.tone+'"><span class="ico">'+ICON[i.tone]+'</span><span>'+esc(i.text)+'</span></li>').join('')+'</ul>' : '<div class="note">Everything with a target is on target.</div>';
+    g.innerHTML=h;
+  }
+  function notesHTML(o,r){
+    const can=mine(o) || at('manage');
+    return '<div class="card"><h2>Notes</h2><div class="sub">Explain a number, or ask about one. Everyone who sees this report sees these.</div><div class="notes">'+
+      (r.notes.length ? r.notes.map(n=>'<div class="nt">'+esc(n.t)+'<div class="who">'+esc(n.by)+' · '+day(n.at)+'</div></div>').join('') : '<div class="note">No notes for this month.</div>')+'</div>'+
+      (can ? '<div class="addnote"><textarea id="newnote" maxlength="1000" placeholder="e.g. Two big refunds this month — back to normal in December"></textarea><button class="btn ghost" onclick="MONTHLY.note()">Add</button></div>' : '')+'</div>';
+  }
+
+  /* ---------- YEAR SHEET: Morgan's sheet, kept for her - every month, the quarters, the year ---------- */
+  /* THE YEAR SHEET IN THREE PARTS (24/11/2026, Jamie, with Morgan: "What if we broke this up into 3 separate chunks of
+     info ... so they are easier to read. You can make these table or you can get creative with a dashboard."):
+       Production/Collections - Gross production, Gross collections, Collections % | Production adjustments ($ and %),
+         Net production, Contract discounts ($ and %) ("Kinda group the two subgroups together")
+       Accounts Receivable - Past due, Total outstanding, Current, 31-60, 61-90, 91+; Patient + insurance / Patient /
+         Insurance ("can you toggle between patient and insurance"); A/R ratio and Delinquent % kept with their targets
+       Practice Health - Active patients, New starts, RIP sold, Comprehensive debonds, Phase I debonds, OECD, Comfort %
+         (only the %: "no need to show those appt totals just the %"); new patient exams kept at the end
+     Each part: a few tiles for the year (or the latest month-end for balances), then its own month table. Medicaid and
+     the old system follow as before. Nothing that was on the sheet is dropped - it is in the CSV either way. */
+  let ARV='both'; try{ ARV=localStorage.getItem('ph_monthly_arv')||'both'; }catch(_){}
+  const AR_KEYS={both:null, patient:'pa', insurance:'ia'};
+  function arView(v){                                    // the A/R columns for the chosen view, from one month's numbers
+    const p=AR_KEYS[ARV]||null, g=k=>v[k]==null ? null : v[k];
+    const add=(a,b)=>a==null && b==null ? null : (a||0)+(b||0);
+    const part=k=>p ? g(p+'_'+k) : add(g('pa_'+k), g('ia_'+k));
+    const o={ar_cur:part('cur'), ar_31:part('31'), ar_61:part('61'), ar_91:part('91')};
+    o.ar_tot=p ? g(p+'_tot') : g('ar');                  // both: the proven total (old-system A/R included)
+    o.ar_pd=o.ar_31==null && o.ar_61==null && o.ar_91==null ? null : (o.ar_31||0)+(o.ar_61||0)+(o.ar_91||0);
+    return o;
+  }
+  /* ---------- the year as a dashboard (24/11/2026, Jordan: "Is this the best layout we can provide?" - no: three tall tables
+     were the old sheet cut in three). Each part: tiles (with ↑/↓ against the same months last year, or the month before
+     for balances), ONE picture (production next to collections; A/R by age stacked; a small chart per health number), and
+     the full months (quarters, YTD, targets - Morgan's sheet) one tap away under "Show the months". ---------- */
+  const YOPEN=(()=>{ try{ return JSON.parse(localStorage.getItem('ph_monthly_yopen')||'{}')||{}; }catch(_){ return {}; } })();
+  const niceMax=v=>{ if(!(v>0)) return 1; const p=Math.pow(10, Math.floor(Math.log10(v))), n=v/p; return ([1,1.5,2,2.5,3,4,5,6,8,10].find(x=>n<=x)||10)*p; };
+  const kmoney=v=>{ const a=Math.abs(v); return (v<0?'−':'')+'$'+(a>=1e6 ? (a/1e6).toFixed(a>=1e7?0:1).replace(/\.0$/,'')+'M' : a>=1e3 ? Math.round(a/1e3)+'k' : Math.round(a)); };
+  /* bars by month: grouped (series side by side) or stacked (series on top of one another); hover / tap a month for its numbers */
+  const NARROW=()=>{ try{ return matchMedia('(max-width:560px)').matches; }catch(_){ return false; } };
+  const axisFmt=(t,v)=>t==='$' ? kmoney(v) : t==='%' ? (Math.round(v*10)/10)+'%' : Math.round(v).toLocaleString('en-US');
+  function monthBars(y, rows, series, opt){
+    opt=Object.assign({}, opt||{}); const nar=NARROW(), TT=opt.t||'$'; if(nar) opt.under=null;            // a phone: the month's % is in the tap
+    const W=opt.w ? (nar ? 360 : opt.w) : (nar ? 360 : 720), H=nar ? (opt.h ? Math.max(150, opt.h) : 200) : (opt.h||210), L=nar ? 40 : 48, R=nar ? 4 : 8, T=10, B=opt.under ? 44 : 26, cw=(W-L-R)/12;
+    const tot=r=>series.reduce((t,s)=>t+Math.max(0, r[s.k]||0),0);
+    const top=niceMax(Math.max(1, ...rows.filter(Boolean).map(r=>opt.stacked ? tot(r) : Math.max(...series.map(s=>Math.max(0, r[s.k]||0))))));
+    const Yp=v=>T+(H-T-B)*(1-v/top), base=Yp(0);
+    let g='';
+    [0, 0.5, 1].forEach(f=>{ const yy=Yp(top*f), lab=!(TT==='#' && !Number.isInteger(top*f));       // a count's scale never says "12.5"
+      g+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+yy.toFixed(1)+'" y2="'+yy.toFixed(1)+'" class="gl"/>'+(lab?'<text x="'+(L-6)+'" y="'+(yy+4).toFixed(1)+'" class="ax" text-anchor="end">'+axisFmt(TT, top*f)+'</text>':''); });
+    let bars='', hits='';
+    for(let m=1;m<=12;m++){
+      const r=rows[m-1], x0=L+(m-1)*cw, cx=x0+cw/2, open=isOpen(y,m), fut=isFuture(y,m);
+      bars+='<text x="'+cx.toFixed(1)+'" y="'+(H-B+15)+'" class="ax'+(fut?' fut':'')+'" text-anchor="middle">'+(nar ? MON[m-1].charAt(0) : MON[m-1])+'</text>';
+      if(!r || fut) continue;
+      const op=open ? ' opacity="0.55"' : '';
+      if(opt.stacked){
+        let acc=0; const bw=Math.min(30, cw*0.56), bx=cx-bw/2, segs=series.filter(s=>(r[s.k]||0)>0);
+        segs.forEach((s,i)=>{ const v=r[s.k], y1=Yp(acc+v), y0=Yp(acc), last=i===segs.length-1, h=Math.max(0, y0-y1-(i?2:0));
+          bars+='<path d="'+roundTop(bx, y1, bw, h, last?3:0)+'" fill="'+s.c+'"'+op+'/>'; acc+=v; });
+      } else {
+        const bw=Math.min(15, cw*0.34), gap=nar ? 1 : 2;
+        series.forEach((s,i)=>{ const v=Math.max(0, r[s.k]||0), bx=cx-(series.length*bw+(series.length-1)*gap)/2+i*(bw+gap), y1=Yp(v);
+          bars+='<path d="'+roundTop(bx, y1, bw, base-y1, 3)+'" fill="'+s.c+'"'+op+'/>'; });
+      }
+      if(opt.under){ const u=opt.under(r); if(u) bars+='<g class="'+(u.tn||'')+'"><circle cx="'+(cx-15).toFixed(1)+'" cy="'+(H-B+30)+'" r="3.2" class="tdot"/><text x="'+(cx-9).toFixed(1)+'" y="'+(H-B+33.5)+'" class="ax pct">'+esc(u.t)+'</text></g>'; }
+      const tip='<b>'+M.MONTHS[m-1]+' '+y+(open?' (so far)':'')+'</b>'+series.map(s=>'<div><i style="background:'+s.c+'"></i>'+esc(s.n)+' <b>'+fmt(TT, r[s.k])+'</b></div>').join('')+(opt.tipMore ? opt.tipMore(r) : '');
+      hits+='<rect x="'+x0.toFixed(1)+'" y="'+T+'" width="'+cw.toFixed(1)+'" height="'+(H-T-B+4)+'" class="hit" data-tip="'+esc(tip)+'" tabindex="0"/>';
+    }
+    const soFar=rows.some((r,i)=>r && isOpen(y,i+1) && series.some(s=>r[s.k]!=null));
+    return '<div class="ychart"><div class="ylegend">'+(series.length>1 ? series.map(s=>'<span><i style="background:'+s.c+'"></i>'+esc(s.n)+'</span>').join('') : '')+(soFar?'<span class="soft">lighter = the month so far</span>':'')+'</div>'+
+      '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+esc(opt.label||'by month')+'">'+g+'<line x1="'+L+'" x2="'+(W-R)+'" y1="'+base.toFixed(1)+'" y2="'+base.toFixed(1)+'" class="bl"/>'+bars+hits+'</svg></div>';
+  }
+  function roundTop(x, y, w, h, r){ if(h<=0) return ''; r=Math.min(r, w/2, h); return 'M'+x.toFixed(1)+','+(y+h).toFixed(1)+'V'+(y+r).toFixed(1)+(r?'Q'+x.toFixed(1)+','+y.toFixed(1)+' '+(x+r).toFixed(1)+','+y.toFixed(1):'')+'H'+(x+w-r).toFixed(1)+(r?'Q'+(x+w).toFixed(1)+','+y.toFixed(1)+' '+(x+w).toFixed(1)+','+(y+r).toFixed(1):'')+'V'+(y+h).toFixed(1)+'Z'; }
+  function niceRange(lo, hi){
+    if(!(hi>lo)){ const d=Math.abs(lo)*0.05||1; lo-=d; hi+=d; }
+    const st0=(hi-lo)/3, p=Math.pow(10, Math.floor(Math.log10(st0))), st=([1,2,2.5,5,10].find(x=>st0/p<=x)||10)*p;
+    return {lo:Math.floor(lo/st)*st, hi:Math.ceil(hi/st)*st, step:st};
+  }
+  function monthLine(y, rows, k, t, opt){
+    opt=opt||{}; const nar=NARROW(), W=nar ? 360 : (opt.w||520), H=opt.h||170, L=nar ? 44 : 52, R=nar ? 10 : 16, Tp=14, B=26, cw=(W-L-R)/12;
+    const pts=[]; rows.forEach((r,i)=>{ if(r && r[k]!=null && isFinite(r[k]) && !isFuture(y,i+1)) pts.push({m:i+1, v:r[k]}); });
+    if(!pts.length) return '<div class="ychart empty">No numbers yet.</div>';
+    const rg=niceRange(Math.min(...pts.map(p=>p.v)), Math.max(...pts.map(p=>p.v))), Yp=v=>Tp+(H-Tp-B)*(1-(v-rg.lo)/(rg.hi-rg.lo)), X=m=>L+(m-0.5)*cw;
+    let g='';
+    for(let v=rg.lo; v<=rg.hi+rg.step/2; v+=rg.step){ const yy=Yp(v); g+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+yy.toFixed(1)+'" y2="'+yy.toFixed(1)+'" class="gl"/><text x="'+(L-6)+'" y="'+(yy+4).toFixed(1)+'" class="ax" text-anchor="end">'+axisFmt(t, v)+'</text>'; }
+    let path='', prev=null;
+    pts.forEach(p=>{ path+=(prev && p.m===prev.m+1 ? 'L' : 'M')+X(p.m).toFixed(1)+','+Yp(p.v).toFixed(1); prev=p; });
+    let s='<path d="'+path+'" fill="none" stroke="var(--navy2)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>';
+    pts.forEach((p,i)=>{ const last=i===pts.length-1, open=isOpen(y,p.m);
+      s+='<circle cx="'+X(p.m).toFixed(1)+'" cy="'+Yp(p.v).toFixed(1)+'" r="'+(last?4.5:3.2)+'" fill="'+(last?'var(--teal)':'var(--navy2)')+'" stroke="#fff" stroke-width="2"'+(open?' opacity="0.6"':'')+'/>';
+      if(last) s+='<text x="'+Math.min(W-R, X(p.m)+2).toFixed(1)+'" y="'+(Yp(p.v)-9).toFixed(1)+'" class="ax val" text-anchor="'+(p.m>=11?'end':'middle')+'">'+fmt(t, p.v)+'</text>'; });
+    let lab='', hits='';
+    for(let m=1;m<=12;m++){ const fut=isFuture(y,m), p=pts.find(q=>q.m===m);
+      lab+='<text x="'+X(m).toFixed(1)+'" y="'+(H-B+16)+'" class="ax'+(fut?' fut':'')+'" text-anchor="middle">'+(nar ? MON[m-1].charAt(0) : MON[m-1])+'</text>';
+      if(p) hits+='<rect x="'+(L+(m-1)*cw).toFixed(1)+'" y="'+Tp+'" width="'+cw.toFixed(1)+'" height="'+(H-Tp-B+4)+'" class="hit" tabindex="0" data-tip="'+esc('<b>'+M.MONTHS[m-1]+' '+y+(isOpen(y,m)?' (so far)':'')+'</b><div>'+esc(opt.name||'')+' <b>'+fmt(t, p.v)+'</b></div>')+'"/>'; }
+    return '<div class="ychart"><svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+esc((opt.name||'')+' by month')+'">'+g+s+lab+hits+'</svg></div>';
+  }
+  /* one small chart per number (Practice health) */
+  function miniBars(y, vals, t){
+    const W=240, H=58, cw=W/12, top=niceMax(Math.max(1, ...vals.filter(v=>v!=null)));
+    let s='<svg viewBox="0 0 '+W+' '+(H+2)+'" aria-hidden="true"><line x1="0" x2="'+W+'" y1="'+H+'" y2="'+H+'" class="bl"/>';
+    vals.forEach((v,i)=>{ const x=i*cw+cw*0.22, w=cw*0.56; if(v==null || isFuture(y,i+1)) return; const h=Math.max(1.5, (H-4)*v/top);
+      s+='<path d="'+roundTop(x, H-h, w, h, 2)+'" fill="var(--teal)"'+(isOpen(y,i+1)?' opacity="0.5"':'')+'><title>'+M.MONTHS[i]+': '+fmt(t, v)+'</title></path>'; });
+    return s+'</svg><div class="hax"><span>Jan</span><span>Dec</span></div>';
+  }
+  function yearHTML(){
+    const offs=myOffices(); if(OFF===null || (OFF!=='__all' && offs.indexOf(OFF)<0)) OFF=offs[0];
+    const all=OFF==='__all', y=Y;
+    if(!DATA[y-1] && !YPREV[y-1]){ YPREV[y-1]=true; loadYear(y-1).then(()=>{ if(TAB==='year') render(); }, ()=>{}); }      // last year, for ↑/↓
+    const valsY=(yy,m)=>{ if(isFuture(yy,m)) return null; const v=all ? offTotals(offs,yy,m) : valsOf(OFF,yy,m); return v ? Object.assign({}, v, M.calc(v), arView(v)) : null; };
+    const vals=m=>valsY(y,m);
+    const col=(k,t,n,o)=>Object.assign({k,t,n:n||(M.BY[k]||M.CALC.find(c=>c.k===k)).n, flow:!!(M.BY[k]&&M.BY[k].flow), goal:({colpct:'col',adjpct:'adj',ratio:'ratio',delpct:'del'})[k]}, o||{});
+    const medF=M.FIELDS.filter(f=>f.medicaid).map(f=>({k:f.k,t:f.t,n:f.n,flow:true}));
+    const hasMed=all ? offs.some(o=>SET.medicaid.indexOf(o)>=0) : SET.medicaid.indexOf(OFF)>=0;
+    const oldF=M.FIELDS.filter(f=>f.oldsys).map(f=>({k:f.k,t:f.t,n:f.n,flow:!!f.flow}));
+    const hasOld=all ? offs.some(o=>SET.oldsys.indexOf(o)>=0) : SET.oldsys.indexOf(OFF)>=0;
+    const rows=[]; for(let m=1;m<=12;m++) rows.push(vals(m));
+    const has=k=>rows.some(r=>r && r[k]!=null);
+    const tot=(k,last)=>{ const xs=rows.slice(0, last||12).map(r=>r && r[k]).filter(x=>x!=null); return xs.length ? xs.reduce((a,b)=>a+b,0) : null; };
+    const avg=k=>{ const xs=rows.map(r=>r && r[k]).filter(x=>x!=null); return xs.length ? xs.reduce((a,b)=>a+b,0)/xs.length : null; };
+    const latest=k=>{ for(let i=11;i>=0;i--){ const x=rows[i] && rows[i][k]; if(x!=null) return {v:x, m:i+1}; } return null; };
+    const before=(k,m)=>{ for(let i=m-2;i>=0;i--){ const x=rows[i] && rows[i][k]; if(x!=null) return {v:x, m:i+1}; } return null; };
+    const pc=(a,b)=>a!=null && b ? a/b*100 : null;
+    /* against the same FINISHED months last year (a month still going isn't compared) */
+    const done=y===NOW_Y ? NOW_M-1 : 12, prevRows=[]; for(let m=1;m<=12;m++) prevRows.push(valsY(y-1,m));
+    const ptot=(k)=>{ const xs=prevRows.slice(0,done).map(r=>r && r[k]).filter(x=>x!=null); return xs.length===done && done>0 ? xs.reduce((a,b)=>a+b,0) : null; };
+    const span=done>0 ? (done===1 ? MON[0] : MON[0]+'–'+MON[done-1])+' '+(y-1) : '';
+    const yoy=(now, was, upGood, rate)=>{ if(now==null || was==null || (!rate && !was)) return '';
+      const d=rate ? now-was : (now-was)/Math.abs(was)*100; if(Math.abs(d)<(rate?0.3:1)) return '<span class="dl flat">≈ same as '+esc(span)+'</span>';
+      const good=(d>0)===upGood; return '<span class="dl '+(good?'up':'down')+'">'+(d>0?'↑':'↓')+' '+Math.abs(d).toFixed(1)+'% vs '+esc(span)+'</span>'; };
+    const since=(now, was, upGood)=>{ if(!now || !was) return ''; const d=now.v-was.v; if(Math.abs(d)<0.5) return '';
+      const good=(d>0)===upGood; return '<span class="dl '+(good?'up':'down')+'">'+(d>0?'↑ ':'↓ ')+kmoney(Math.abs(d)).replace('−','')+' since '+MON[was.m-1]+'</span>'; };
+    const tile=(k,v,d,tn,extra)=>'<div class="tile"><div class="k">'+k+'</div><div class="v'+(tn?' '+tn:'')+'">'+v+'</div>'+(d?'<div class="d">'+d+'</div>':'')+(extra||'')+'</div>';
+    const tn=(g,v)=>M.tone(g,v,SET.goals)||'';
+    const yr=y===NOW_Y ? 'so far this year' : 'in '+y;
+    const months=(key, cols, goals, label)=>'<details class="ymonths"'+(YOPEN[key]?' open':'')+' ontoggle="MONTHLY.yopen(\''+key+'\', this.open)"><summary>Show the months'+(label?' — '+label:'')+'</summary>'+sheet(cols, vals, y, goals)+'</details>';
+
+    let h='<div class="ochips" style="margin-bottom:14px">'+(offs.length>1?'<button class="ochip '+(all?'on':'')+'" onclick="MONTHLY.office(\'__all\')">All offices together</button>':'')+
+      offs.map(x=>'<button class="ochip '+(x===OFF?'on':'')+'" data-o="'+esc(x)+'" onclick="MONTHLY.office(this.dataset.o)"><i style="background:'+esc((PH.colorForOffice(x)||{}).dot||'#94a3b8')+'"></i>'+esc(x)+'</button>').join('')+
+      '<button class="btn ghost" style="margin-left:auto" onclick="MONTHLY.csv()">⬇ Download for Excel</button></div>';
+
+    /* 1. PRODUCTION & COLLECTIONS */
+    const gp=tot('gp'), gc=tot('gc'), adj=tot('adj'), np=tot('np'), disc=tot('disc');
+    const colY=pc(gc,gp), adjY=gp && adj!=null ? -adj/gp*100 : null, discY=pc(disc,gp);
+    const gpD=tot('gp',done), gcD=tot('gc',done), npD=tot('np',done), colD=pc(gcD,gpD), colP=pc(ptot('gc'),ptot('gp'));
+    h+='<section class="ychunk"><div class="yhead"><h2>Production &amp; collections</h2><span class="soft">'+esc(yr)+'</span></div>'+
+      '<div class="tiles">'+tile('Gross production', fmt('$',gp,true), yoy(gpD, ptot('gp'), true))+tile('Gross collections', fmt('$',gc,true), yoy(gcD, ptot('gc'), true))+
+        tile('Collections %', fmt('%',colY), '<span class="nw">target '+goalTxt('col')+'</span>', tn('col',colY), yoy(colD, colP, true, true))+tile('Net production', fmt('$',np,true), yoy(npD, ptot('np'), true))+
+        tile('Adjustments', fmt('%',adjY), fmt('$',adj,true)+' · <span class="nw">target '+goalTxt('adj')+'</span>', tn('adj',adjY))+tile('Contract discounts', fmt('%',discY), fmt('$',disc,true))+'</div>'+
+      (has('gp')||has('gc') ? monthBars(y, rows, [{k:'gp', n:'Gross production', c:'var(--navy2)'}, {k:'gc', n:'Gross collections', c:'var(--teal)'}],
+        {label:'Gross production and collections by month', under:r=>r.colpct==null ? null : {t:fmt('%',r.colpct), tn:tn('col',r.colpct)},
+         tipMore:r=>'<div class="tsub">Collections % <b>'+fmt('%',r.colpct)+'</b> · Adjustments <b>'+fmt('$',r.adj)+'</b> ('+fmt('%',r.adjpct)+') · Net <b>'+fmt('$',r.np)+'</b></div>'}) +
+        (NARROW() ? '<p class="ynote">Tap a month for its collections %, adjustments and net production.</p>' : '<p class="ynote">The % under each month is that month’s collections % — <span class="good">●</span> above target, <span class="ok">●</span> on target, <span class="bad">●</span> below.</p>') : '<p class="note">No numbers for '+y+' yet.</p>')+
+      months('pc', [col('gp','$','Gross production',{grp:'Production & collections'}), col('gc','$','Gross collections'), col('colpct','%','Collections %'),
+             col('adj','$','Adjustments $',{grp:'Adjustments, net & discounts'}), col('adjpct','%','Adjustments %'), col('np','$','Net production'), col('disc','$','Contract discounts $'), col('discpct','%','Contract discounts %')], true)+'</section>';
+
+    /* 2. ACCOUNTS RECEIVABLE */
+    const lt=latest('ar_tot'), lpd=latest('ar_pd'), l91=latest('ar_91'), lr=latest('ratio'), ld=latest('delpct');
+    const aged=has('ar_cur') || has('ar_31');
+    const asOf=x=>x ? 'end of '+MON[x.m-1] : '';
+    const seg=(k,t)=>'<button class="'+(ARV===k?'on':'')+'" aria-pressed="'+(ARV===k)+'" onclick="MONTHLY.arv(\''+k+'\')">'+t+'</button>';
+    /* the PAST-DUE money by age (current isn't drawn - next to it the old money was a sliver; it's in the tile + the months) */
+    const AGE=[{k:'ar_31', n:'31–60 days', c:'#E9B949'}, {k:'ar_61', n:'61–90 days', c:'#E07B39'}, {k:'ar_91', n:'91+ days', c:'#B83227'}];
+    h+='<section class="ychunk"><div class="yhead"><h2>Accounts receivable</h2><div class="seg" role="group" aria-label="Whose A/R">'+seg('both','Patient + insurance')+seg('patient','Patient')+seg('insurance','Insurance')+'</div></div>'+
+      '<div class="tiles">'+tile('Total outstanding', fmt('$',lt&&lt.v,true), asOf(lt), '', lt ? since(lt, before('ar_tot', lt.m), false) : '')+
+        tile('Past due', fmt('$',lpd&&lpd.v,true), lpd&&lt&&lt.v ? fmt('%',lpd.v/lt.v*100)+' of outstanding' : (aged?asOf(lpd):'from OrthoFi - coming'), '', lpd ? since(lpd, before('ar_pd', lpd.m), false) : '')+
+        tile('91+ days', fmt('$',l91&&l91.v,true), l91&&lt&&lt.v ? fmt('%',l91.v/lt.v*100)+' of outstanding' : (aged?asOf(l91):'from OrthoFi - coming'), '', l91 ? since(l91, before('ar_91', l91.m), false) : '')+
+        (ARV==='both' ? tile('A/R ratio', fmt('x',lr&&lr.v), '<span class="nw">target '+goalTxt('ratio')+'</span>', tn('ratio',lr&&lr.v))+tile('Delinquent %', fmt('%',ld&&ld.v), '<span class="nw">target '+goalTxt('del')+'</span>', tn('del',ld&&ld.v)) : '')+'</div>'+
+      (aged ? '<div class="ysub">Past due at each month’s end, by age</div>'+monthBars(y, rows, AGE, {stacked:true, label:'Past-due A/R by age at each month end',
+          tipMore:r=>'<div class="tsub">Past due <b>'+fmt('$',r.ar_pd)+'</b> · current <b>'+fmt('$',r.ar_cur)+'</b> · outstanding <b>'+fmt('$',r.ar_tot)+'</b></div>'})+
+          '<p class="ynote">Oldest on top. A bar growing — or more red in it — means old money is building up. Current (not yet past due) is in the tile above and the months.</p>'
+        : '<p class="note" style="margin:0 0 10px">The ages (current, 31–60, 61–90, 91+) and the patient / insurance split come from OrthoFi. They fill in once they’re matched to the practice’s own A/R aging report'+(ARV==='both'?' — total outstanding, the A/R ratio and delinquent % are already here.':'.')+'</p>');
+    const arCols=[col('ar_pd','$','Past due',{grp:'Accounts receivable'}), col('ar_tot','$','Total outstanding'), col('ar_cur','$','Current'), col('ar_31','$','31–60 days past due'), col('ar_61','$','61–90 days past due'), col('ar_91','$','91+ days past due')];
+    if(ARV==='both') arCols.push(col('ratio','x','A/R ratio',{grp:'Against target'}), col('delpct','%','Delinquent %'));
+    h+=months('ar', arCols, ARV==='both')+(ARV==='both' && hasOld ? '<p class="ynote">Total outstanding includes the old system’s A/R; the ages are OrthoFi’s.</p>' : '')+'</section>';
+
+    /* 3. PRACTICE HEALTH - one small card per number */
+    const series=k=>rows.map(r=>r && r[k]!=null ? r[k] : null);
+    const la=latest('act'), db=k=>tot(k);
+    /* each number: big, what it is, and a REAL chart - a labelled scale, every month named, the latest written on it, a
+       tap on a month for its number (Jordan 24/11: a line with no scale "you can't read") */
+    const card=(n, v, sub, k, t, level)=>'<div class="hcard"><div class="hhead"><div class="k">'+n+'</div><div class="v">'+v+'</div><div class="d">'+(sub||'&nbsp;')+'</div></div>'+
+      (level ? monthLine(y, rows, k, t, {name:n}) : monthBars(y, rows, [{k, n, c:'var(--teal)'}], {t, w:520, h:170, label:n+' by month'}))+'</div>';
+    h+='<section class="ychunk"><div class="yhead"><h2>Practice health</h2><span class="soft">reporting for now — targets later</span></div><div class="hgrid">'+
+      card('Active patients', fmt('#',la&&la.v), la ? asOf(la)+(before('act',la.m) ? ' · '+(la.v-before('act',la.m).v>=0?'↑ ':'↓ ')+Math.abs(Math.round(la.v-before('act',la.m).v))+' since '+MON[before('act',la.m).m-1] : '') : '', 'act', '#', true)+
+      card('New starts', fmt('#',tot('starts')), yr, 'starts', '#')+
+      card('RIP sold', fmt('#',tot('rip')), yr, 'rip', '#')+
+      card('Comprehensive debonds', fmt('#',db('dbc')), yr, 'dbc', '#')+
+      card('Phase I debonds', fmt('#',db('dbp')), yr, 'dbp', '#')+
+      card('OECD', fmt('%',avg('oecd')), 'average of the months', 'oecd', '%', true)+
+      card('Comfort %', fmt('%',pc(tot('cmfa'),tot('appts'))), 'comfort appts ÷ kept clinical appts', 'cmfpct', '%', true)+
+      card('New patient exams', fmt('#',tot('npe')), yr+' · also tracked', 'npe', '#')+'</div>'+
+      months('ph', [col('act','#','Active patients',{grp:'Practice health'}), col('starts','#','New starts'), col('rip','#','RIP sold'), col('dbc','#','Comprehensive debonds'), col('dbp','#','Phase I debonds'),
+             col('oecd','%','OECD'), col('cmfpct','%','Comfort %'), col('npe','#','New patient exams',{grp:'Also tracked'})], false)+'</section>';
+
+    if(hasMed){ const sub=tot('mds'), app=tot('mda'), prod=tot('mdp');
+      h+='<section class="ychunk"><div class="yhead"><h2>Medicaid'+(all?' — the Medicaid offices together':'')+'</h2><span class="soft">'+esc(yr)+'</span></div>'+
+        '<div class="tiles">'+tile('Submissions', fmt('#',sub))+tile('Approvals', fmt('#',app), sub ? fmt('%',app/sub*100)+' of submissions' : '')+tile('Denials', fmt('#',tot('mdd')))+tile('Bandings', fmt('#',tot('mdb')))+tile('Medicaid production', fmt('$',prod,true))+tile('Medicaid collections', fmt('$',tot('mdc'),true))+'</div>'+
+        months('md', medF, false)+'</section>'; }
+    if(hasOld) h+='<section class="ychunk"><div class="yhead"><h2>Old system'+(all?' — those offices together':'')+'</h2><span class="soft">already inside gross production, collections and A/R above</span></div>'+
+      '<div class="tiles">'+tile('Old system production', fmt('$',tot('osp'),true), yr)+tile('Old system collections', fmt('$',tot('osc'),true), yr)+tile('Old system A/R', fmt('$',(latest('osar')||{}).v,true), asOf(latest('osar')))+'</div>'+
+      months('os', oldF, false)+'</section>';
+    return h+'<p class="note" style="margin-top:10px">In “Show the months”, quarter and year rows average the months, like the old sheet; the YTD row adds up the month’s activity (balances and percentages aren’t added). ↑/↓ compares the finished months with the same months last year; balances compare with the month before.</p>';
+  }
+  function sheet(cols, vals, y, withGoals){
+    const Rr=M.yearRows(vals, cols);
+    /* column groups (Jamie: "group the two subgroups together"): a band over each group, a line where a group starts */
+    const gs=cols.map((c,i)=>!!c.grp && i>0), grps=[]; cols.forEach(c=>{ if(c.grp || !grps.length) grps.push({t:c.grp||'', n:1}); else grps[grps.length-1].n++; });
+    let h='<div class="tablewrap"><table><thead>'+
+      (cols.some(c=>c.grp) ? '<tr class="grp"><th></th>'+grps.map((g,i)=>'<th colspan="'+g.n+'"'+(i?' class="gs"':'')+'>'+esc(g.t)+'</th>').join('')+'</tr>' : '')+
+      '<tr><th>'+y+'</th>'+cols.map((c,i)=>'<th'+(gs[i]?' class="gs"':'')+'>'+esc(c.n)+'</th>').join('')+'</tr></thead><tbody>';
+    const line=(lab,v,cls)=>'<tr class="'+(cls||'')+'"><td>'+lab+'</td>'+cols.map((c,i)=>{ const x=v?v[c.k]:null, td=c.goal ? cell(c.goal,x,c.t) : '<td>'+fmt(c.t,x)+'</td>'; return gs[i] ? td.replace('<td class="','<td class="gs ').replace('<td>','<td class="gs">') : td; }).join('')+'</tr>';
+    Rr.months.forEach((mo,i)=>{ h+= isFuture(y,mo.m) ? '<tr><td>'+M.MONTHS[mo.m-1]+'</td>'+cols.map((c,j)=>'<td class="future'+(gs[j]?' gs':'')+'">—</td>').join('')+'</tr>' : line(M.MONTHS[mo.m-1]+(isOpen(y,mo.m)?' <span class="st open">so far</span>':''), mo.v);
+      if(i%3===2) h+=line(['1st','2nd','3rd','4th'][Math.floor(i/3)]+' quarter average', Rr.quarters[Math.floor(i/3)].v, 'q'); });
+    h+=line('Year to date', Rr.ytd, 'tot')+line(y+' average', Rr.avg, 'q');
+    if(withGoals) h+='<tr class="goals"><td>Targets</td>'+cols.map((c,j)=>'<td'+(gs[j]?' class="gs"':'')+'>'+(c.goal ? goalTxt(c.goal)+(c.goal==='ratio'?' production':'') : '')+'</td>').join('')+'</tr>';
+    return h+'</tbody></table></div>';
+  }
+  function csv(){
+    const offs=myOffices(), all=OFF==='__all', y=Y, cols=M.FIELDS.filter(f=>(!f.medicaid || (all ? true : SET.medicaid.indexOf(OFF)>=0)) && (!f.oldsys || (all ? true : SET.oldsys.indexOf(OFF)>=0)));
+    const q=s=>'"'+String(s).replace(/"/g,'""')+'"';
+    const lines=[[q('Month')].concat(cols.map(c=>q(c.n)), M.CALC.map(c=>q(c.n))).join(',')];
+    for(let m=1;m<=12;m++){ const v=all ? offTotals(offs,y,m) : valsOf(OFF,y,m); if(!v) continue; const c=M.calc(v);
+      lines.push([q(M.MONTHS[m-1]+' '+y)].concat(cols.map(f=>v[f.k]==null?'':v[f.k]), M.CALC.map(k=>c[k.k]==null?'':c[k.k])).join(',')); }
+    const blob=new Blob([lines.join('\r\n')], {type:'text/csv'}), a=document.createElement('a');
+    a.href=URL.createObjectURL(blob); a.download='Monthly Report '+(all?'All offices':OFF)+' '+y+'.csv'; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  }
+
+  /* ---------- SETTINGS (Morgan): which offices bill Medicaid, the targets, the due day ---------- */
+  /* SETTINGS - like the rest of Home-Brace (Jordan 18/11: "very ux friendly like the rest of the app"): plain cards, each
+     change saves the moment it's made and says so (no Save button to forget), switches instead of tick boxes. */
+  const TGT=[
+    {k:'col',   n:'Collection %',      how:'Collected ÷ produced',                unit:'%',  step:0.5, ex:'An office collecting less than the first number is “Off target”.'},
+    {k:'adj',   n:'Adjustment %',      how:'Written off ÷ produced',              unit:'%',  step:0.5, ex:'More than the second number is “Off target”.'},
+    {k:'ratio', n:'A/R ratio',         how:'Owed ÷ a month’s production',         unit:'×',  step:0.1, ex:'Outside the range is worth a look either way.'},
+    {k:'del',   n:'Late over 30 days', how:'Late accounts ÷ accounts receivable', unit:'%',  step:0.5, ex:'More than the second number is “Off target”.'}];
+  const ord=n=>n+(n%10===1&&n!==11?'st':n%10===2&&n!==12?'nd':n%10===3&&n!==13?'rd':'th');
+  function settingsHTML(){
+    const offs=PH.officeNames(), G=SET.goals;
+    const sw=(on,act,label,extra)=>'<button type="button" class="tchip'+(on?' on':' off')+'" role="switch" aria-checked="'+on+'" onclick="'+act+'"'+(extra||'')+'><span class="sw"></span>'+label+'</button>';
+    let h='<div class="stack">'+importCard();
+    /* ORTHOFI (20/11/2026): connect, match OrthoFi's locations to the offices, and check its numbers against Morgan's -
+       orthofi.html, admins only (it shows the practice's real OrthoFi totals). */
+    if(!LIVE || (PH.isAdmin && PH.isAdmin(PH.realMe ? PH.realMe() : PH.me()))) h+='<div class="card"><h2>OrthoFi</h2><div class="sub">Connect to OrthoFi, say which of its locations is which office, and check its numbers against Morgan’s before they fill themselves in.</div><div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn" href="#" data-demo-off style="text-decoration:none;display:inline-flex">Open the OrthoFi connection →</a>'+
+      (LIVE ? '<button class="btn ghost" onclick="MONTHLY.fillNow()">Fill in from OrthoFi now</button>' : '')+'</div>'+
+      (LIVE && OFMAP ? '<div class="note" style="margin-top:10px">'+(function(){ const A=OFMAP.auto||{}, p=[]; Object.keys(PH_ORTHOFI.AUTO).forEach(k=>{ const n=(A[k]||[]).length; if(n) p.push(PH_ORTHOFI.AUTO[k].label+': '+n+' office'+(n===1?'':'s')); }); return p.length ? 'Filling itself in — '+esc(p.join(' · '))+'.' : 'Nothing fills itself in yet — tick the offices on the OrthoFi connection (step 3).'; })()+'</div>' : '')+'</div>';
+    h+='<div class="card"><h2>Who reads the reports</h2><div class="sub">Like your email to the office managers and TCs today — without the email.</div>'+
+      sw(SET.everyone, "MONTHLY.setEveryone("+(!SET.everyone)+")", SET.everyone ? 'Everyone reads every office' : 'Each office reads only its own')+
+      '<div class="note" style="margin-top:10px">Only each office’s own people (and you) can type its numbers. Who can open the Monthly Report at all is set in Admin → Teams &amp; Access.</div></div>';
+    h+='<div class="card"><h2>Targets</h2><div class="sub">The same for every office. Every colour and every “worth a conversation” line uses these. Changes save as you go.</div><div class="tgts">'+
+      TGT.map(t=>{ const g=G[t.k], lo=Math.max(0, g[0]-(g[1]-g[0]||1)*3), hi=g[1]+(g[1]-g[0]||1)*3, X=x=>(x-lo)/(hi-lo)*100;
+        return '<div class="tgt"><div class="tl"><b>'+t.n+'</b><span>'+t.how+'</span></div>'+
+          '<div class="tr"><span class="tin"><input type="number" inputmode="decimal" step="'+t.step+'" value="'+g[0]+'" aria-label="'+t.n+' from" onchange="MONTHLY.setTarget(\''+t.k+'\',0,this)"><i>'+t.unit+'</i></span>'+
+          '<span class="soft">to</span><span class="tin"><input type="number" inputmode="decimal" step="'+t.step+'" value="'+g[1]+'" aria-label="'+t.n+' to" onchange="MONTHLY.setTarget(\''+t.k+'\',1,this)"><i>'+t.unit+'</i></span></div>'+
+          '<div class="gbar tb" aria-hidden="true"><span class="band" style="left:'+X(g[0])+'%;width:'+(X(g[1])-X(g[0]))+'%"></span></div><div class="tx">'+t.ex+'</div></div>'; }).join('')+
+      '</div></div>';
+    h+='<div class="card"><h2>Offices that bill Medicaid</h2><div class="sub">These offices get the Medicaid boxes. A new office added in Admin → Locations shows up here by itself.</div><div class="ochips">'+
+      offs.map(o=>{ const on=SET.medicaid.indexOf(o)>=0, c=(PH.colorForOffice(o)||{}).dot||'#94a3b8';
+        return sw(on, "MONTHLY.setMed(this.dataset.o)", '<i class="odot" style="background:'+esc(c)+'"></i>'+esc(o), ' data-o="'+esc(o)+'"'); }).join('')+'</div></div>';
+    h+='<div class="card"><h2>Offices still on an old system</h2><div class="sub">Their office manager types the old system’s production, collections and A/R; Home-Brace adds them to OrthoFi’s. Switch an office off once its old system is done.</div><div class="ochips">'+
+      offs.map(o=>{ const on=SET.oldsys.indexOf(o)>=0, c=(PH.colorForOffice(o)||{}).dot||'#94a3b8';
+        return sw(on, "MONTHLY.setOld(this.dataset.o)", '<i class="odot" style="background:'+esc(c)+'"></i>'+esc(o), ' data-o="'+esc(o)+'"'); }).join('')+'</div></div>';
+    h+='<div class="card"><h2>When reports are due</h2><div class="sub">Offices see the due date on their report, and you see who’s late.</div>'+
+      '<label class="duesel">Due on the <select class="sel" onchange="MONTHLY.setDue(+this.value)" aria-label="Due day">'+
+      Array.from({length:28},(_, i)=>i+1).map(d=>'<option value="'+d+'" '+(d===SET.due?'selected':'')+'>'+ord(d)+'</option>').join('')+'</select> of the next month</label></div>';
+    return h+'</div>';
+  }
+  /* one setting changed: merged into whatever is saved now (another admin's change is kept), then said */
+  async function saveSet(patch, said){
+    // built on settings that couldn't be read, a change would save the starting ones ± this one (21/11/2026, code review)
+    if(SETFAIL){ toast('Not saved — reload the page first'); render(); return; }
+    try{ let next=null;
+      const r=await PH_STORE.update(M.SET_KEY, cur=>{ next=M.cleanSettings(Object.assign({}, M.cleanSettings(cur||SET), patch)); return Object.assign({}, next, {upd:new Date().toISOString(), updBy:by()}); });
+      if(refused(r)){ notSaved(r, 'Nothing changed.'); render(); return; }
+      SAVEWARN=''; SET=next||M.cleanSettings(Object.assign({}, SET, patch)); toast(said); render(); }
+    catch(e){ toast('Not saved — check the connection. Nothing changed.'); render(); }
+  }
+  function setTarget(k, i, inp){
+    const v=+inp.value, g=SET.goals[k].slice(); if(inp.value==='' || !isFinite(v) || v<0){ toast('Type a number'); render(); return; }
+    g[i]=v; if(g[0]>g[1]){ toast('The first number is the lower one'); render(); return; }
+    const goals=Object.assign({}, SET.goals, {[k]:g}); saveSet({goals}, (TGT.find(t=>t.k===k)||{}).n+' target saved: '+g[0]+'–'+g[1]+(k==='ratio'?'×':'%'));
+  }
+
+  /* ---------- PAST MONTHS FROM THE OLD EXCEL (Morgan: "I would love the past months to be put in") ----------
+     Choose the offices' monitor sheets -> each is read in this browser (PH_BOOK), shown with what it found and anything
+     that doesn't add up -> "Bring them in" fills EMPTY boxes only (mergeImport). Nothing leaves the browser except the
+     numbers saved into Home-Brace; the file itself is not kept. */
+  let IMP=[];
+  function guessOffice(name){ const toks=String(name).toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+    const hits=PH.officeNames().filter(o=>{ const ot=o.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean); return ot.every(t=>toks.indexOf(t)>=0) || (ot.length>1 && ot.some(t=>t.length>2 && toks.indexOf(t)>=0 && PH.officeNames().filter(x=>x.toLowerCase().split(/[^a-z0-9]+/).indexOf(t)>=0).length===1)); });
+    return hits.length===1 ? hits[0] : ''; }
+  function importCard(){
+    let h='<div class="card"><h2>Bring in past months from Excel</h2><div class="sub">Choose the offices’ monitor report files (all at once is fine). Home-Brace reads the numbers, shows you what it found and anything that doesn’t add up, and only fills boxes that are still empty — nothing already here is replaced.</div>'+
+      '<label class="drop" id="impdrop" ondragover="MONTHLY.impDrag(event,1)" ondragleave="MONTHLY.impDrag(event,0)" ondrop="MONTHLY.impDrop(event)">'+
+        '<span class="dico" aria-hidden="true">📄</span><b>Drop the Excel files here</b><span class="soft">or <u>choose them</u> — all eight at once is fine</span>'+
+        '<input type="file" id="impfiles" accept=".xlsx" multiple onchange="MONTHLY.impRead(this.files)"></label>';
+    if(IMP.length){
+      const yrs=[NOW_Y-2, NOW_Y-1, NOW_Y];
+      h+='<div class="tablewrap" style="margin-top:12px"><table class="imp"><thead><tr><th>File</th><th>Office</th><th>Year</th><th>Months found</th><th>Medicaid</th><th>Worth a look</th></tr></thead><tbody>'+
+        IMP.map((x,i)=>'<tr><td style="white-space:normal">'+esc(x.file)+(x.err?'<div class="soft">'+esc(x.err)+'</div>':'')+'</td>'+
+          '<td><select class="sel'+(x.office?'':' need')+'" onchange="MONTHLY.impSet('+i+',\'office\',this.value)"><option value="">Which office?</option>'+PH.officeNames().map(o=>'<option '+(o===x.office?'selected':'')+'>'+esc(o)+'</option>').join('')+'</select></td>'+
+          '<td><select class="sel" onchange="MONTHLY.impSet('+i+',\'year\',+this.value)">'+yrs.map(y=>'<option '+(y===x.year?'selected':'')+'>'+y+'</option>').join('')+'</select></td>'+
+          '<td style="white-space:normal">'+(x.r ? Object.keys(x.r.months).sort().map(k=>MON[+k-1]).join(', ')||'none' : '')+'</td>'+
+          '<td>'+(x.r && x.r.medicaid ? 'Yes' : 'No')+(x.r && x.office && x.r.medicaid!==(SET.medicaid.indexOf(x.office)>=0) ? '<div class="soft" style="white-space:normal">'+(x.r.medicaid?'Not in your Medicaid list':'In your Medicaid list, no Medicaid section')+'</div>' : '')+'</td>'+
+          '<td style="white-space:normal;text-align:left">'+(x.r && x.r.checks.length ? x.r.checks.map(c=>'<div>△ '+esc(c.text)+'</div>').join('') : (x.r?'<span class="soft">Adds up</span>':''))+'</td></tr>').join('')+'</tbody></table></div>';
+      const ready=IMP.filter(x=>x.r && x.office && Object.keys(x.r.months).length).length;
+      const need=IMP.filter(x=>x.r && !x.office).length;
+      h+='<div class="savebar"><button class="btn" id="impgo" '+(ready?'':'disabled')+' onclick="MONTHLY.impGo()">Bring in '+ready+' file'+(ready===1?'':'s')+'</button>'+(need?'<span class="warnbox">Pick the office for '+need+' file'+(need>1?'s':'')+' (in orange) to bring '+(need>1?'them':'it')+' in too.</span>':'')+'<button class="btn ghost" onclick="MONTHLY.impClear()">Clear</button>'+
+        '<span class="note">Months come in as “sent”; mark them final when you’re happy.</span></div>';
+    }
+    return h+'</div>';
+  }
+  async function impRead(files){
+    IMP=[]; if(!window.PH_BOOK){ toast('The Excel reader didn’t load — refresh the page'); return; }
+    for(const f of Array.from(files||[])){
+      const x={file:f.name, office:'', year:(+((/20\d\d/.exec(f.name)||[])[0]))||NOW_Y, r:null, err:''};
+      try{ const book=await PH_BOOK.open(new Uint8Array(await f.arrayBuffer())); const nm=book.names[0];
+        x.r=M.fromSheet(book.sheets[nm].cells); x.office=guessOffice(f.name+' '+nm);
+        if(!Object.keys(x.r.months).length) x.err='No months found — is this a monitor report?'; }
+      catch(e){ x.err='Could not read this file'; }
+      IMP.push(x);
+    }
+    render();
+  }
+  async function impGo(){
+    const todo=IMP.filter(x=>x.r && x.office && Object.keys(x.r.months).length); if(!todo.length || BUSY) return; BUSY=true;
+    const b=el('impgo'); if(b){ b.classList.add('saving'); b.disabled=true; }
+    let filled=0, kept=0; const stamp=new Date().toISOString();
+    try{ SAVEWARN='';
+      for(const x of todo){
+        /* a refused save stops here and says so; only the imported months change, the rest of the year stays as stored;
+           the Medicaid office is added to the settings as saved now, never to ones that couldn't be read (21/11/2026, code review) */
+        let f1=0, k1=0;
+        const r=await PH_STORE.update(M.KEY(x.year), cur=>{ const base=cur && cur.o ? cur : DATA[x.year], res=M.mergeImport(base, x.office, x.r.months, stamp, 'Excel import ('+by()+')'); f1=res.filled; k1=res.kept.length;
+          let out=base; Object.keys(res.rec.o[x.office]||{}).forEach(k=>{ if(Object.prototype.hasOwnProperty.call(x.r.months, k)) out=M.putMonth(out, x.office, +k, res.rec.o[x.office][k]); }); return out; });
+        if(refused(r)){ notSaved(r, x.file+' and the files after it weren’t brought in — try again.'); render(); return; }
+        filled+=f1; kept+=k1;
+        if(x.r.medicaid && SET.medicaid.indexOf(x.office)<0 && !SETFAIL){
+          const rs=await PH_STORE.update(M.SET_KEY, cur=>{ const s=M.cleanSettings(cur||SET); return s.medicaid.indexOf(x.office)>=0 ? undefined : Object.assign({}, s, {medicaid:s.medicaid.concat([x.office])}); });
+          if(refused(rs)) notSaved(rs, x.office+' wasn’t added to the Medicaid offices — switch it on in Settings.'); else SET=M.cleanSettings(rs.value||SET); }
+        await loadYear(x.year, true);
+      }
+      toast('Brought in '+filled+' numbers'+(kept?' · '+kept+' already here, kept':'')); IMP=[]; render();
+    } catch(e){ toast('Stopped — '+String((e&&e.message)||e).slice(0,80)); }
+    finally{ BUSY=false; }
+  }
+
+  /* ---------- saving: only what changed, merged into whatever is saved now ---------- */
+  function by(){ return WHO.name || WHO.email || 'Someone'; }
+  /* The office, month and typed numbers are taken when Save is pressed: the save reads the shared copy first, and the page
+     could be on another office by then. A refused save is not "Saved" (21/11/2026, code review). Resolves to the numbers
+     it saved, or null. */
+  async function write(mutate){
+    if(busy()) return null; BUSY=true;
+    const o=OFF, y=Y, mo=MO, edits=Object.assign({}, EDIT);
+    try{ const r=await PH_STORE.update(M.KEY(y), cur=>{ const base=cur && cur.o ? cur : DATA[y], k=M.mm(mo);
+        const m=M.cleanMonth(((base && base.o) || {})[o] && base.o[o][k]); mutate(m, edits); return M.putMonth(base, o, mo, M.cleanMonth(m)); });
+      if(refused(r)){ notSaved(r); return null; }
+      SAVEWARN=''; showWarn(); await loadYear(y, true); return edits; }
+    catch(e){ notSaved({error:String((e&&e.message)||e)}); return null; }
+    finally{ BUSY=false; }
+  }
+  function applyEdits(r, edits){ const now=new Date().toISOString();
+    Object.keys(edits).forEach(k=>{ const n=M.cleanVal(k, edits[k]);
+      if(n===null){ if(String(edits[k]).trim()===''){ delete r.v[k]; delete r.src[k]; delete r.at[k]; delete r.by[k]; } return; }
+      if(r.v[k]===n && r.src[k]==='typed') return; r.v[k]=n; r.src[k]='typed'; r.at[k]=now; r.by[k]=by(); }); }
+  // a box typed into while the save was on its way keeps what was typed (21/11/2026, code review)
+  function doneEditing(saved){ Object.keys(saved).forEach(k=>{ if(EDIT[k]===saved[k]) delete EDIT[k]; }); }
+  async function save(quiet){ const saved=await write((r,e)=>applyEdits(r,e));
+    if(saved){ doneEditing(saved); Object.keys(CORRECT).forEach(k=>{ if(EDIT[k]===undefined) delete CORRECT[k]; }); if(!quiet) toast('Saved'); render(); } return !!saved; }
+  async function send(force){
+    const r=recOf(OFF,Y,MO)||M.cleanMonth(null), fields=M.fieldsFor(OFF,SET);
+    const empty=fields.filter(f=>{ const e=EDIT[f.k]; return e!==undefined ? M.num(e)===null : r.v[f.k]===undefined; });
+    if(empty.length && !force){ SENDASK=true; render(); return; }
+    SENDASK=false; const mo=MO, saved=await write((x,e)=>{ applyEdits(x,e); x.sent={at:new Date().toISOString(), by:by()}; });
+    if(saved){ doneEditing(saved); toast(M.MONTHS[mo-1]+' sent — Morgan can see it now'); render(); }
+  }
+  async function markFinal(on){ const mo=MO, saved=await write((x,e)=>{ applyEdits(x,e); if(on){ x.final={at:new Date().toISOString(), by:by()}; if(!x.sent) x.sent={at:x.final.at, by:by()}; } else delete x.final; });
+    if(saved){ doneEditing(saved); toast(on ? M.MONTHS[mo-1]+' marked final' : 'Reopened'); render(); } }
+  async function addNote(){ const t=(el('newnote')||{}).value||''; if(!t.trim()) return;
+    const ok=await write(x=>{ x.notes.push({t:t.trim().slice(0,1000), by:by(), at:new Date().toISOString()}); }); if(ok){ toast('Note added'); render(); } }
+  async function useOf(k){ const ok=await write(x=>{ if(x.ofv[k]!==undefined){ x.v[k]=x.ofv[k]; x.src[k]='orthofi'; x.at[k]=x.of||new Date().toISOString(); x.by[k]='OrthoFi'; } }); if(ok){ delete EDIT[k]; render(); } }
+  /* ---------- OrthoFi's numbers in (the nightly job calls this; it never touches a typed number or a final month) ---------- */
+  async function importOrthofi(y, m, byOffice, stamp){
+    let changed=0;
+    const r=await PH_STORE.update(M.KEY(y), cur=>{ let rec=cur; changed=0; Object.keys(byOffice||{}).forEach(o=>{ const x=M.mergeOrthofi(rec, o, m, byOffice[o], stamp);
+      const mo=x.why!=='bad month' && x.rec.o[o] && x.rec.o[o][M.mm(m)]; if(mo) rec=M.putMonth(rec, o, m, mo); changed+=x.changed; }); return rec; });
+    // only each office's month changes; a refused save is an error, not "filled in" (21/11/2026, code review)
+    if(refused(r)) throw new Error('Not saved — '+String(r && (r.why || r.error) || '').slice(0,120));
+    await loadYear(y, true); render(); return changed;
+  }
+
+  /* THE FILL (20/11/2026): OrthoFi's proven boxes (gross production, A/R) for the offices ticked on the OrthoFi page, added
+     to what each office types (Medicaid, old system). The site has no clock of its own, so it runs when someone who can
+     type the report opens it on the live site - at most every 3 hours on a device - for last month and this month.
+     A typed number and a final month are never touched (PH_MONTHLY.mergeOrthofi). Totals only, never a patient. */
+  const FILL_KEY='ph_monthly_offill';
+  async function loadOfMap(){ if(!LIVE || !window.PH_ORTHOFI) return; try{ OFMAP=PH_ORTHOFI.cleanMap(await PH_STORE.get(PH_ORTHOFI.KEY)); }catch(_){ OFMAP=null; }
+    ORTHOFI_CONNECTED=!!(OFMAP && Object.keys(PH_ORTHOFI.autoOffices(OFMAP)).length); }
+  function ofState(t){ const s=el('ofstate'); if(!s) return; s.classList.toggle('on', ORTHOFI_CONNECTED); const x=s.querySelector('span'); if(x && t) x.textContent=t; }
+  async function autoFill(force){
+    if(!LIVE || !window.PH_ORTHOFI || !at('edit')) return;
+    await loadOfMap(); if(!ORTHOFI_CONNECTED){ if(force) toast('No office is set to fill itself in yet — tick them on the OrthoFi page'); return; }
+    let last=0; try{ last=+localStorage.getItem(FILL_KEY)||0; }catch(_){}
+    if(!force && Date.now()-last<3*3600e3) return;
+    try{ localStorage.setItem(FILL_KEY, String(Date.now())); }catch(_){}
+    ofState('OrthoFi: filling in…'); let changed=0, errs=[];
+    for(const q of [{y:LM.y, m:LM.m}, {y:NOW_Y, m:NOW_M}]){
+      try{ const r=await PH_ORTHOFI.autoMonth(q.y, q.m, OFMAP, {due:SET.due}); errs=errs.concat(r.errors||[]);
+        if(Object.keys(r.byOffice).length) changed+=await importOrthofi(q.y, q.m, r.byOffice, new Date().toISOString()); }
+      catch(e){ errs.push((e && e.message) || 'OrthoFi didn’t answer'); }
+    }
+    const tm=new Date().toLocaleTimeString('en-US',{hour:'numeric', minute:'2-digit'});
+    ofState(errs.length ? 'OrthoFi: couldn’t read everything at '+tm : 'OrthoFi: filled in at '+tm);
+    if(force) toast(errs.length ? 'OrthoFi didn’t answer everything — try again in a minute' : changed ? 'Filled in from OrthoFi' : 'Already up to date with OrthoFi');
+  }
+
+  /* ---------- wiring ---------- */
+  function persona(){ const s=el('persona'); if(!s) return; let id='morgan'; try{ id=localStorage.getItem('ph_monthly_as')||'morgan'; }catch(_){}
+    s.innerHTML=PERSONAS.map(p=>'<option value="'+p.id+'" '+(p.id===id?'selected':'')+'>'+esc(p.n)+'</option>').join(''); }
+  /* the chart tooltip: hover, keyboard focus or a tap on a month shows its numbers */
+  (function(){
+    const tip=document.createElement('div'); tip.id='ytip'; tip.setAttribute('role','tooltip'); document.body.appendChild(tip);
+    const show=(t,x,y)=>{ tip.innerHTML=t.dataset.tip; tip.classList.add('on'); const w=tip.offsetWidth, hgt=tip.offsetHeight;
+      let L=x+14, T=y-hgt-12; if(L+w>innerWidth-8) L=x-w-14; if(L<8) L=8; if(T<8) T=y+16; tip.style.left=L+'px'; tip.style.top=T+'px'; };
+    const hide=()=>tip.classList.remove('on');
+    document.addEventListener('mousemove', e=>{ const t=e.target.closest && e.target.closest('[data-tip]'); if(t) show(t, e.clientX, e.clientY); else hide(); });
+    document.addEventListener('focusin', e=>{ const t=e.target.closest && e.target.closest('[data-tip]'); if(!t) return; const r=t.getBoundingClientRect(); show(t, r.left+r.width/2, r.top+20); });
+    document.addEventListener('focusout', hide);
+    document.addEventListener('click', e=>{ const t=e.target.closest && e.target.closest('[data-tip]'); if(t){ show(t, e.clientX, e.clientY); } else hide(); });
+    addEventListener('scroll', hide, {passive:true});
+  })();
+  { let was=NARROW(); addEventListener('resize', ()=>{ const n=NARROW(); if(n!==was){ was=n; if(TAB==='year') render(); } }); }
+  window.MONTHLY={
+    yopen(k, open){ YOPEN[k]=!!open; try{ localStorage.setItem('ph_monthly_yopen', JSON.stringify(YOPEN)); }catch(_){} },
+    arv(k){ if(!AR_KEYS.hasOwnProperty(k)) return; ARV=k; try{ localStorage.setItem('ph_monthly_arv', k); }catch(_){} render(); },
+    as(id){ try{ localStorage.setItem('ph_monthly_as', id); }catch(_){} WHO=null; WHO=who(); TAB=null; OFF=null; EDIT={}; CORRECT={}; SENDASK=false; render(); },
+    tab(t){ if(TAB==='year' && t!=='year' && OFF==='__all') OFF=null; if(TAB!=='year' && t==='year') Y=Math.min(Y, NOW_Y); TAB=t; SENDASK=false; try{ localStorage.setItem('ph_monthly_tab', t); }catch(_){} render(); },
+    // no other office or month while a save is on its way (21/11/2026, code review)
+    move(n){ if(busy()) return; if(Object.keys(EDIT).length && !confirmLeave()) return; EDIT={}; CORRECT={}; SENDASK=false;
+      if(TAB==='year'){ Y=Math.min(NOW_Y, Y+n); } else { const p=step(Y,MO,n); if(isFuture(p.y,p.m)) return; Y=p.y; MO=p.m; } render(); },
+    open(o){ if(busy()) return; OFF=o; TAB='office'; SENDASK=false; EDIT={}; CORRECT={}; render(); window.scrollTo({top:0, behavior:'smooth'}); },
+    office(o){ if(busy()) return; if(Object.keys(EDIT).length && !confirmLeave()) return; OFF=o; EDIT={}; CORRECT={}; SENDASK=false; render(); },
+    all(){ SHOWALL=!SHOWALL; render(); },
+    tidy(inp){ const k=inp.dataset.k, f=M.BY[k], n=M.num(inp.value); if(!f || n===null || f.t==='%') return; const s=showIn(f.t, n); if(s!==inp.value){ inp.value=s; if(EDIT[k]!==undefined) EDIT[k]=s; } },
+    typed(inp){ EDIT[inp.dataset.k]=inp.value; inp.classList.toggle('empty', inp.value.trim()===''); const n=el('savenote'); if(n) n.textContent='Not saved yet'; glance(); },
+    correct(k){ CORRECT[k]=true; render(); },
+    setEveryone(on){ saveSet({everyone:!!on}, on ? 'Everyone now reads every office' : 'Each office now reads only its own'); },
+    setOld(o){ const on=SET.oldsys.indexOf(o)<0, old=on ? SET.oldsys.concat([o]) : SET.oldsys.filter(x=>x!==o); saveSet({oldsys:old}, on ? o+' now has the old-system boxes' : o+' no longer has the old-system boxes'); },
+    fillNow:()=>autoFill(true),
+    setMed(o){ const on=SET.medicaid.indexOf(o)<0, med=on ? SET.medicaid.concat([o]) : SET.medicaid.filter(x=>x!==o); saveSet({medicaid:med}, on ? o+' now has the Medicaid boxes' : o+' no longer has the Medicaid boxes'); },
+    setDue(d){ saveSet({due:d}, 'Reports are now due on the '+ord(d)); }, setTarget,
+    impDrag(e, on){ e.preventDefault(); const z=el('impdrop'); if(z) z.classList.toggle('over', !!on); },
+    impDrop(e){ e.preventDefault(); const z=el('impdrop'); if(z) z.classList.remove('over'); impRead([...(e.dataTransfer.files||[])].filter(f=>/\.xlsx$/i.test(f.name))); },
+    impRead, impGo, impSet(i,k,v){ if(IMP[i]){ IMP[i][k]=v; render(); } }, impClear(){ IMP=[]; render(); },
+    save:()=>save(), send, final:markFinal, unask(){ SENDASK=false; render(); }, note:addNote, useOf, copy, csv, importOrthofi
+  };
+  /* leaving typed numbers behind by changing month or office - keep them unless they say otherwise */
+  let LEAVE_OK=false;
+  function confirmLeave(){ if(LEAVE_OK){ LEAVE_OK=false; return true; } toast('You have unsaved numbers — press Save first (or press again to leave them)'); LEAVE_OK=true; setTimeout(()=>{ LEAVE_OK=false; }, 4000); return false; }
+  window.addEventListener('beforeunload', e=>{ if(Object.keys(EDIT).length){ e.preventDefault(); e.returnValue=''; } });
+
+  async function boot(){
+    WHO=who();
+    if(LIVE){ const t=el('tryas'); if(t) t.remove(); } else persona();
+    await loadOfMap();
+    if(ORTHOFI_CONNECTED){ el('ofstate').classList.add('on'); el('ofstate').querySelector('span').textContent=LIVE ? 'OrthoFi: connected · filled in each day' : 'OrthoFi: made-up numbers here · filled in each day once live'; }
+    try{ TAB=localStorage.getItem('ph_monthly_tab'); }catch(_){}
+    /* a link can open a tab: monthly.html#year (24/11/2026 - the link sent to Jamie for the Year sheet) */
+    { const hz=String(location.hash||'').replace('#',''); if(['overview','office','year','settings'].indexOf(hz)>=0) TAB=hz; }
+    await loadSettings();
+    await render();
+    if(window.PH && PH.loadDone) PH.loadDone('page');
+    autoFill(false);
+  }
+  if(window.PH && PH.loadHold && LIVE) PH.loadHold('page', 'Reading the monthly reports…');
+  if(!LIVE || window.PH_AUTH) boot();
+  else document.addEventListener('ph-signed-in', boot, {once:true});
+  document.addEventListener('ph-identity', ()=>{ if(LIVE){ WHO=who(); render(); } });
+})();
+</script>
+<script>PH.nav('monthly');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
+<script src="tour.js?v=hc268d202611250847"></script>
+<script>
+Tour.init([
+  {sel:'.statusline, .openbanner', title:'Who has sent it', body:'Every office’s report for the month, in one line: final, waiting for you, or late. No chasing eight Excel files.'},
+  {sel:'.headline', title:'The gap, in dollars', body:'What the offices below the collection target would have collected at the target. The first thing to chase.'},
+  {sel:'.talk, .card', title:'Worth a conversation', body:'Worked out from the numbers, biggest dollar gap first. Open an office to see its numbers, its last 12 months and its manager’s notes.'},
+  {sel:'.tablewrap', title:'Every office side by side', body:'Coloured against the practice’s targets. The little line is each office’s collection % for the last 6 months.'},
+  {sel:'#tabs', title:'Year sheet', body:'Morgan’s sheet, kept: every month, the quarters and the year — for one office or all of them together. Download it for Excel any time.'}
+], {key:'monthly', title:'Monthly Report', next:{label:'the Schedule', href:'schedule.html'}});
+</script>
+</body>
+</html>

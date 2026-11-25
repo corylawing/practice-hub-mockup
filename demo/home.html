@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="demo-shim.js?v=d202611250847"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Home-Brace · Home</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" href="../assets/favicon.png?v=2" type="image/png">
+<meta name="theme-color" content="#0F2A4A">
+<meta name="apple-mobile-web-app-title" content="Home-Brace">
+<link rel="apple-touch-icon" sizes="180x180" href="../assets/icons/apple-touch-icon.png?v=3">
+<meta name="description" content="The practice’s central hub — schedule, production, documents and team, in one place. Brightline · Maple · Riverbend.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Home-Brace">
+<meta property="og:title" content="Home-Brace">
+<meta property="og:description" content="The practice’s central hub — schedule, production, documents and team, in one place. Brightline · Maple · Riverbend.">
+<meta property="og:image" content="https://app.brightline.example/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="https://app.brightline.example/v1/home.html">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Home-Brace">
+<meta name="twitter:description" content="The practice’s central hub — schedule, production, documents and team, in one place. Brightline · Maple · Riverbend.">
+<meta name="twitter:image" content="https://app.brightline.example/assets/og-image.png">
+<style>
+  :root{
+    --navy:#0F2A4A; --navy2:#25456e; --teal:#149B96; --teal2:#2BC0B8; --teal-soft:#E5F4F3; --teal-600:#0F827E;
+    --ink:#1F2D3D; --soft:#56627A; --line:#E4E8EE; --canvas:#F4F6F8; --white:#fff;
+    --good:#2E9E6B; --good-soft:#E7F4EE; --bad:#D7503A; --amber:#F2A03D;
+    --blue:#1f6f9e; --blue-soft:#E3F0FA; --purple:#6b3fd0; --purple-soft:#efe9fb;
+    --shadow:0 1px 2px rgba(15,42,74,.06),0 6px 18px rgba(15,42,74,.06);
+    --shadow-lg:0 10px 30px rgba(15,42,74,.12); --radius:14px; --maxw:1080px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--canvas);line-height:1.5;-webkit-font-smoothing:antialiased}
+  h1{color:var(--navy);margin:0}
+  .ribbon{background:var(--amber);color:#3a2400;text-align:center;font-size:13px;font-weight:600;padding:6px 14px}
+  .hdr{background:var(--navy);color:#fff}
+  .hdr-in{max-width:var(--maxw);margin:0 auto;display:flex;align-items:center;gap:12px;padding:13px 20px}
+  .mark{width:34px;height:34px;flex:none;display:block}
+  .mark img{width:34px;height:34px;display:block;border-radius:50%}
+  .brand{font-weight:700;font-size:18px;color:#fff;line-height:1.1}
+  .brand i{font-style:normal;color:var(--teal2)}
+  .brand small{display:block;font-weight:500;font-size:12px;color:var(--navy-mute,#9fb4d0)}
+  .v1{background:rgba(255,255,255,.15);color:#eaf1fb;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;margin-left:6px}
+  .v1nav{background:var(--navy2)}
+  .v1nav-in{max-width:var(--maxw);margin:0 auto;display:flex;gap:2px;padding:0 12px;overflow-x:auto}
+  .v1nav a{color:var(--navy-mute,#cdd9ea);font-size:14px;font-weight:600;padding:13px 15px;text-decoration:none;border-bottom:3px solid transparent;white-space:nowrap}
+  .v1nav a:hover{color:#fff;background:rgba(255,255,255,.05)}
+  .v1nav a.active{color:#fff;border-bottom-color:var(--teal)}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:24px 20px 90px}
+  /* viewing-as bar */
+  .viewas{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:16px 18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:8px;border-left:5px solid var(--teal)}
+  .viewas .lab{font-size:13px;color:var(--soft);font-weight:600}
+  .viewas .lab b{color:var(--navy);display:block;font-size:12px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px}
+  .viewas select{padding:10px 13px;border:1px solid var(--line);border-radius:10px;font-size:15px;font-family:inherit;font-weight:700;color:var(--navy);background:#fff;min-width:230px}
+  .viewas .demo{font-size:12.5px;color:var(--teal-600);background:var(--teal-soft);border:1px solid var(--teal-line,#c4e6e3);padding:6px 11px;border-radius:999px;font-weight:600;margin-left:auto}
+  .whoami{display:flex;align-items:center;gap:12px;margin:20px 0 4px}
+  .whoami .av{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;font-size:17px;background:var(--navy2)}
+  .whoami h1{font-size:24px}
+  .whoami .sub{font-size:14px;color:var(--soft)}
+  /* GOOD MORNING (04/11/2026, Jordan: "Good Morning, Good Afternoon, and Working Late like we did in General KPI Dashboard
+     with animated icon based of hours of user"). The KPI dashboard's greeting and its little sun / moon, by this
+     device's clock: morning 5-12 (the sun rises), afternoon 12-18 (it glows), evening 18-22 and working late 22-5 (the
+     moon, with stars). */
+  .whoami .hi{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .whoami.morning{--dp-soft:#fff4dc} .whoami.afternoon{--dp-soft:#fff0cf} .whoami.evening{--dp-soft:#ecebff}
+  .dp{position:relative;flex:0 0 34px;width:34px;height:34px;border-radius:10px;overflow:hidden;background:var(--dp-soft)}
+  .dpi{position:absolute;left:0;top:0;width:72px;height:72px;transform:scale(.4722);transform-origin:0 0}
+  .dpi i{position:absolute;display:block}
+  .dpi .horizon{left:13px;right:13px;bottom:17px;height:2px;border-radius:99px;background:#efa83f;opacity:.6}
+  .dpi .sun{width:25px;height:25px;left:23px;top:24px;border-radius:50%;background:#ffba5c;box-shadow:0 0 0 7px rgba(255,186,92,.16)}
+  .whoami.morning .sun{animation:dp-rise 2.6s ease-in-out infinite}
+  .whoami.afternoon .sun{animation:dp-pulse 2.2s ease-in-out infinite}
+  .dpi .ray{left:35px;top:10px;width:3px;height:10px;border-radius:99px;background:#efa83f;transform-origin:1.5px 26px;animation:dp-glow 2.2s ease-in-out infinite}
+  .dpi .moon{left:23px;top:18px;width:31px;height:31px;border-radius:50%;background:#7b74e8;box-shadow:0 0 0 8px rgba(123,116,232,.12);animation:dp-float 3s ease-in-out infinite}
+  .dpi .moon::after{content:"";position:absolute;width:26px;height:26px;left:10px;top:-4px;border-radius:50%;background:#ecebff}
+  .dpi .spark{width:7px;height:7px;border-radius:50%;background:#fff;box-shadow:0 0 0 2px #afaaf5;opacity:0}
+  .dpi .spark.one{left:13px;top:15px;animation:dp-twinkle 2.4s .2s infinite}
+  .dpi .spark.two{right:13px;top:18px;animation:dp-twinkle 2.4s 1.1s infinite}
+  @keyframes dp-rise{0%,100%{transform:translateY(7px)}45%,65%{transform:translateY(-2px)}}
+  @keyframes dp-pulse{0%,100%{transform:scale(.94);box-shadow:0 0 0 6px rgba(255,186,92,.14)}50%{transform:scale(1.05);box-shadow:0 0 0 11px rgba(255,186,92,.08)}}
+  @keyframes dp-glow{0%,100%{opacity:.4}50%{opacity:1}}
+  @keyframes dp-float{0%,100%{transform:translateY(2px) rotate(-5deg)}50%{transform:translateY(-3px) rotate(3deg)}}
+  @keyframes dp-twinkle{0%,35%,100%{opacity:0;transform:scale(.5)}50%,72%{opacity:1;transform:scale(1)}}
+  @media (prefers-reduced-motion:reduce){.dpi i{animation:none}.dpi .spark{opacity:1}}
+  .summary{font-size:14px;color:var(--soft);margin:2px 0 20px}
+  .summary b{color:var(--navy)}
+  /* tiles */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
+  .tile{display:block;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:18px;color:inherit;border-top:4px solid var(--teal);transition:box-shadow .15s,transform .15s}
+  a.tile:hover{box-shadow:var(--shadow-lg);transform:translateY(-2px)}
+  .tile.docs{border-top-color:var(--blue)} .tile.admin{border-top-color:var(--navy2)}
+  .tile .ic{font-size:26px;line-height:1}
+  .tile .tn{font-weight:800;color:var(--navy);font-size:17px;margin:8px 0 2px}
+  .tile .td{font-size:13px;color:var(--soft);margin-bottom:12px}
+  .cap{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px}
+  .cap.view{background:var(--blue-soft);color:var(--blue)}
+  .cap.add{background:var(--good-soft);color:var(--good)}
+  .cap.edit{background:var(--teal-soft);color:var(--teal-600)}
+  .cap.manage{background:var(--navy);color:#fff}
+  .folders{margin-top:12px;border-top:1px solid var(--line);padding-top:10px;display:flex;flex-direction:column;gap:7px}
+  .frow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px}
+  .frow .fn{font-weight:700;color:var(--navy);min-width:96px}
+  .locchip{font-size:11px;font-weight:700;background:var(--teal-soft);color:var(--teal-600);border-radius:999px;padding:2px 8px}
+  .locchip.brand{background:var(--purple-soft);color:var(--purple)}
+  .capmini{font-size:11px;font-weight:700;padding:1px 8px;border-radius:999px;margin-left:auto}
+  .capmini.view{background:var(--blue-soft);color:var(--blue)}
+  .capmini.add{background:var(--good-soft);color:var(--good)}
+  .capmini.edit{background:var(--teal-soft);color:var(--teal-600)}
+  .capmini.manage{background:var(--navy);color:#fff}
+  .synced{margin-top:12px;border-top:1px solid var(--line);padding-top:10px;font-size:12px;color:var(--soft);line-height:1.5}
+  .synced b{color:var(--navy)}
+  .empty{background:#fff;border:1px dashed var(--line);border-radius:14px;padding:26px;text-align:center;color:var(--soft);font-size:14px}
+  .note{font-size:12.5px;color:var(--soft);margin-top:22px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 15px}
+  .note b{color:var(--navy)}
+  .updates{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:16px 18px;margin-bottom:22px}
+  .updates h2{font-size:15px;color:var(--navy);margin:0;display:flex;align-items:center;gap:8px}
+  .updates .cnt{background:var(--teal);color:#fff;font-size:12px;font-weight:800;border-radius:999px;padding:1px 9px}
+  .updates .sub2{font-size:12.5px;color:var(--soft);margin:4px 0 8px}
+  .updates .upd.read{opacity:.55}
+  .updates .upd .uok{margin-left:auto;background:#fff;border:1px solid #CBD5E1;border-radius:8px;
+    color:var(--navy);font-weight:700;font-size:11.5px;font-family:inherit;padding:5px 10px;cursor:pointer;flex:none;white-space:nowrap}
+  .updates .upd .uok:hover{background:var(--teal-wash,#F2FBFA);border-color:var(--teal);color:var(--teal-600,#0F827E)}
+  .updates .uall{margin-left:auto;background:none;border:none;color:var(--teal);
+    font-weight:700;font-size:12.5px;font-family:inherit;cursor:pointer;padding:2px}
+  .upd{display:flex;align-items:flex-start;gap:11px;padding:11px 0;border-top:1px solid var(--line)}
+  .upd .uic{font-size:18px;line-height:1.3}
+  .upd .ut{font-size:14px;color:var(--ink);font-weight:600}
+  .upd .uw{font-size:12px;color:var(--soft)}
+  .upd .utag{margin-left:auto;font-size:11px;font-weight:700;color:var(--teal-600);background:var(--teal-soft);border-radius:999px;padding:2px 9px;white-space:nowrap}
+  .updates .ushow{display:block;width:100%;background:none;border:none;border-top:1px solid var(--line);color:var(--soft);font-size:12.5px;font-weight:600;padding:10px;cursor:pointer;font-family:inherit;margin-top:4px}
+  .updates .ushow:hover{color:var(--teal-600)}
+  /* YOUR TASKS (19/11/2026, tasks.js) - what's been asked of you, overdue first, ticked off right here. */
+  .tcard{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:16px 18px;margin-bottom:22px;border-left:5px solid var(--teal)}
+  .tcard.late{border-left-color:var(--bad)}
+  .tcard h2{font-size:15px;color:var(--navy);margin:0;display:flex;align-items:center;gap:8px}
+  .tcard h2 .cnt{background:var(--teal);color:#fff;font-size:12px;font-weight:800;border-radius:999px;padding:1px 9px}
+  .tcard.late h2 .cnt{background:var(--bad)}
+  .tcard h2 a{margin-left:auto;font-size:12.5px;font-weight:700;color:var(--teal-600);text-decoration:none}
+  .tcard h2 a:hover{text-decoration:underline}
+  .trow{display:flex;align-items:flex-start;gap:12px;padding:11px 0;border-top:1px solid var(--line);transition:opacity .35s}
+  .tcard h2+.trow{margin-top:8px}
+  .trow.gone{opacity:.35}
+  .trow .tt{font-size:14px;font-weight:700;color:var(--ink);line-height:1.35}
+  .trow.gone .tt{text-decoration:line-through;color:var(--soft)}
+  .trow .tm{font-size:12px;color:var(--soft);margin-top:3px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .tdue{font-weight:700;border-radius:999px;padding:1px 8px;font-size:11.5px}
+  .tdue.late{background:#FBEAE7;color:#a63a27} .tdue.today{background:#FDF1E1;color:#8a5208}
+  .tdue.tomorrow,.tdue.week{background:var(--teal-soft);color:var(--teal-600)} .tdue.later{background:#eef1f5;color:var(--navy2)}
+  .tchk{flex:none;width:26px;height:26px;border-radius:50%;border:2px solid #b9c4d2;background:#fff;cursor:pointer;display:grid;place-items:center;padding:0;margin-top:1px;transition:background .2s,border-color .15s}
+  .tchk svg{width:14px;height:14px;stroke:#fff;stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round;opacity:0}
+  .tchk:hover{border-color:var(--teal)}
+  .tchk.on{background:var(--teal);border-color:var(--teal);animation:tpop .35s ease} .tchk.on svg{opacity:1}
+  @keyframes tpop{45%{transform:scale(1.25)}}
+  .tmore{display:block;font-size:12.5px;color:var(--soft);padding:9px 0 0;border-top:1px solid var(--line);text-decoration:none;font-weight:600}
+  .tmore:hover{color:var(--teal-600)}
+  .tgave{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;background:var(--teal-wash,#F2FBFA);border-radius:10px;padding:9px 12px;font-size:13px;color:var(--navy);text-decoration:none;font-weight:600}
+  .tgave:hover{background:var(--teal-soft)}
+  .tgave .lt{color:#a63a27}
+  .tgave .go{margin-left:auto;color:var(--teal-600)}
+  /* Some people set "reduce motion" in Windows or macOS, often because movement makes
+     them unwell. Honour it everywhere: keep the state changes, drop the travel. */
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{
+      animation-duration:.01ms !important; animation-iteration-count:1 !important;
+      transition-duration:.01ms !important; scroll-behavior:auto !important;
+    }
+  }
+
+</style>
+<script src="user.js?v=hc268d202611250847"></script>
+  <script src="store.js?v=hc268d202611250847"></script>
+  <script src="gate.js?v=hc268d202611250847"></script>
+  <script src="party.js?v=hc268d202611250847"></script>
+  <script src="tasks.js?v=hc268d202611250847"></script>
+</head>
+<body>
+<div class="ribbon">DEMO — a made-up practice. Use “Viewing as” to see how Home-Brace changes for each role.</div>
+<header class="hdr">
+  <div class="hdr-in">
+    <span class="mark" aria-label="Home-Brace"><img src="../assets/logo-mark.png?v=2" alt="" width="34" height="34"></span>
+    <span class="brand">Home-<i>Brace</i><small>Home</small></span>
+    <span class="v1">Demo</span>
+  </div>
+</header>
+<nav class="v1nav"><div class="v1nav-in" id="nav"></div></nav>
+
+<div class="wrap">
+  <div class="viewas">
+    <div class="lab"><b>👤 Viewing the app as</b>Switch roles to see the difference</div>
+    <select id="persona" onchange="HOME.set(this.value)"></select>
+    <span class="demo">Demo control — not a real login</span>
+  </div>
+
+  <div class="whoami" id="whoami"><span class="av" id="who_av"></span><div><div class="hi"><h1 id="who_name"></h1><span class="dp" id="who_dp" aria-hidden="true"></span></div><div class="sub" id="who_sub"></div></div></div>
+  <div class="summary" id="summary"></div>
+
+  <div id="party" hidden></div>
+
+  <div id="tasks" hidden></div>
+
+  <div class="updates" id="updates"></div>
+
+  <div id="tiles"></div>
+
+  <div class="note"><b>How this works:</b> each person logs in and sees only the <b>sections</b> their role &amp; team allow — and within a section, only the <b>folders</b> meant for them (their office, their brand). What they can <i>do</i> is set per section: view, add files, edit, or manage. Admins set all of this in the Admin console.<br><br><b>Two-way with your Microsoft drive:</b> documents live on <b>SharePoint/OneDrive</b> and the hub links to them. Change a file on the drive → it shows here (and editors get notified). Update data or a doc from inside the hub → it writes back to the same file on the drive. One source of truth, never a second copy to keep in sync.</div>
+</div>
+
+<script>
+(function(){
+  // Offices come from the one shared list (user.js) — the same one Admin and the
+  // Schedule edit. This used to be a hardcoded copy that had drifted out of sync
+  // ('Riverbend BRB' was never a real office name).
+  const LOCS=PH.officeNames();
+  const BRANDS=['BFO','Maple','RBO'];
+  const CAPTXT={view:'View only',add:'View + add files',edit:'View, add & edit',manage:'Full control'};
+  const CAPSHORT={view:'View',add:'+ Add files',edit:'Edit',manage:'Manage'};
+
+  const SECTIONS=[
+    {k:'dashboard',n:'Production Dashboard',ic:'📊',d:'Goals & production numbers',href:'index.html',kind:'tool'},
+    {k:'schedule',n:'Schedule',ic:'📅',d:'Who works where this week',href:'schedule.html',kind:'tool'},
+    {k:'marketing',n:'Marketing',ic:'📣',d:'Events & social post board',href:'marketing.html',kind:'tool'},
+    {k:'production',n:'Enter Production',ic:'📝',d:"Type the month's numbers",href:'production.html',kind:'tool'},
+    {k:'tc',n:'TC Tracker',ic:'🗂️',d:'Log consults · today’s call list',href:'tc.html',kind:'tool'},
+    {k:'documents',n:'Documents',ic:'📁',d:'Files, forms & policies',kind:'docs'},
+    {k:'admin',n:'Admin',ic:'⚙️',d:'Manage people & access',href:'admin.html',kind:'tool',adminOnly:true}
+  ];
+  const FOLDERS=[
+    {k:'hr',n:'HR',note:'policies · PTO · new-hire'},
+    {k:'officedocs',n:'Office Docs',perLocation:true},
+    {k:'forms',n:'Office Forms',perBrand:true},
+    {k:'vendors',n:'Vendors'},
+    {k:'filing',n:'Insurance / W-9'},
+    {k:'eom',n:'End-of-Month'}
+  ];
+
+  // Personas = capability profiles. cap per section, and per document-folder.
+  const PERSONAS=[
+    {id:'admin',name:'Administrator',sub:'Full access · all offices',scope:'all',state:'',brand:'',
+      sec:{dashboard:'manage',production:'edit',tc:'manage',schedule:'manage',marketing:'manage',admin:'manage'},
+      doc:{hr:'manage',officedocs:'manage',forms:'manage',vendors:'manage',filing:'manage',eom:'manage'}},
+    {id:'om',name:'Office Manager',sub:'Cedar Grove',scope:'Cedar Grove',state:'NM',brand:'BFO',
+      sec:{dashboard:'view',production:'edit',tc:'view',schedule:'edit',marketing:'view'},
+      doc:{hr:'view',officedocs:'edit',forms:'edit',vendors:'edit',filing:'edit',eom:'edit'}},
+    {id:'doctor',name:'Doctor',sub:'Clinical · rotates NM offices',scope:'all',state:'NM',brand:'BFO',
+      sec:{dashboard:'view',schedule:'view'},
+      doc:{hr:'view',forms:'view'}},
+    {id:'tc',name:'Treatment Coordinator',sub:'Front office · Cedar Grove',scope:'Cedar Grove',state:'NM',brand:'BFO',
+      sec:{tc:'edit',schedule:'view'},
+      doc:{hr:'view',forms:'add'}},
+    {id:'staff',name:'Front Desk / Staff',sub:'General · Cedar Grove',scope:'Cedar Grove',state:'NM',brand:'BFO',
+      sec:{schedule:'view'},
+      doc:{hr:'view',forms:'view'}}
+  ];
+
+  // Updates feed — each item is filtered to the viewer's section access + scope (location/state/brand).
+  // In the real build these fire when a linked SharePoint/OneDrive file changes or an app record updates.
+  const UPDATES=[
+    {sec:'documents',fold:'hr',scope:'New Mexico offices',ic:'📄',title:'HR · New-Hire Packet (New Mexico) updated',when:'2 hours ago'},
+    {sec:'documents',fold:'hr',scope:'everyone',ic:'📄',title:'HR · Uniform Policy replaced',when:'Yesterday'},
+    {sec:'documents',fold:'officedocs',scope:'Cedar Grove',ic:'📄',title:'Office Docs · Cedar Grove equipment invoice added',when:'Yesterday'},
+    {sec:'documents',fold:'forms',scope:'BFO',ic:'📄',title:'Office Forms · BFO — new DDS Referral form',when:'2 days ago'},
+    {sec:'schedule',scope:'Cedar Grove',ic:'📅',title:'Schedule · Dr. Coleman now covers Thursday at Cedar Grove',when:'2 days ago'},
+    {sec:'dashboard',scope:'everyone',ic:'📊',title:'Dashboard · June production posted — 105% of goal',when:'3 days ago'},
+    {sec:'documents',fold:'filing',scope:'Texas offices',ic:'📄',title:'Insurance / W-9 · Westfield W-9 refiled',when:'4 days ago'},
+    {sec:'marketing',scope:'everyone',ic:'📣',title:'Marketing · “Summer smile giveaway” scored 🟢 Good',when:'5 days ago'}
+  ];
+
+  const el=id=>document.getElementById(id);
+  let cur=PERSONAS[0], TASKS_READY=false;
+
+  function matchScope(scope,p){
+    if(scope==='everyone')return true;
+    // Admin housekeeping only surfaces for people who can actually reach Admin.
+    if(scope==='admins')return !!(window.PH && PH.isAdmin && PH.isAdmin());
+    if(scope==='Texas offices')return p.scope==='all'||p.state==='TX';
+    if(scope==='New Mexico offices')return p.scope==='all'||p.state==='NM';
+    if(BRANDS.includes(scope))return p.scope==='all'||p.brand===scope;
+    if(LOCS.includes(scope))return p.scope==='all'||(p.scopes||[p.scope]).includes(scope);
+    return false;
+  }
+  function canSee(u,p){
+    if(u.scope==='admins') return matchScope('admins',p);
+    const acc = u.sec==='documents' ? !!p.doc[u.fold] : !!p.sec[u.sec];
+    return acc && matchScope(u.scope,p);
+  }
+  function secName(k){ const s=SECTIONS.find(x=>x.k===k); return s?s.n:k; }
+  function esc(v){ return String(v==null?'':v).replace(/[&<>"']/g,c=>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+  /* Live uses PH.notifications(), which is the same list and the same visibility rule
+     the bell in the header uses - the two can never disagree about what a person is
+     allowed to see, or about what they have already checked off. The count is UNREAD,
+     not total, because a count that never goes down is just decoration. */
+  let showReadHome=false;    // read ones go away; "Show N read" brings them back
+  function renderUpdates(p){
+    const live = !!(window.PH && PH.isLive && PH.isLive());
+    const list = live
+      ? PH.notifications().map(a=>({id:a.id, seen:a.seen, sec:a.sec, kind:a.kind, ic:a.ic,
+          title:a.title+' \u2014 '+a.by, when:PH.ago(a.at)}))
+      : UPDATES.filter(u=>canSee(u,p)).map(u=>Object.assign({seen:false,id:''},u));
+    const unread=list.filter(u=>!u.seen).length, readN=list.filter(u=>u.seen).length;
+    const shown=(live && !showReadHome) ? list.filter(u=>!u.seen) : list;
+    const row=u=>'<div class="upd'+(u.seen?' read':'')+'" data-id="'+esc(u.id)+'">'+
+      '<span class="uic">'+esc(u.ic)+'</span>'+
+      '<div><div class="ut">'+esc(u.title)+'</div>'+
+      '<div class="uw">'+esc(u.when)+((u.kind==='document'||u.sec==='documents')?' \u00b7 in Documents':'')+'</div></div>'+
+      (live && !u.seen ? '<button class="uok" type="button">Got it</button>'
+        : (live && u.seen ? '<span class="utag" title="You checked this off">\u2713 Read</span>'
+                          : '<span class="utag">'+esc(secName(u.sec))+'</span>'))+'</div>';
+    el('updates').innerHTML='<h2>\u{1F514} Updates for you'+
+        (unread?' <span class="cnt">'+unread+'</span>':'')+
+        (live&&unread?'<button class="uall" type="button">Mark all as read</button>':'')+'</h2>'+
+      '<p class="sub2">New documents &amp; changes that match your role, location &amp; team. Files open on your Microsoft drive.</p>'+
+      (shown.length? shown.map(row).join('')
+        : '<div class="upd" style="border-top:none;color:var(--soft)">'+
+          (list.length ? 'You\u2019re all caught up.'
+            : (live
+            ? 'Nothing yet. Updates appear here as people enter production numbers, change the schedule or post marketing.'
+            : 'Nothing new right now.'))+'</div>')+
+      (live && readN ? '<button class="ushow" type="button">'+(showReadHome?'Hide read':'Show '+readN+' read')+'</button>' : '');
+  }
+
+  /* One listener on the card rather than one per row, so it keeps working after
+     every repaint. */
+  document.addEventListener('click',function(e){
+    const box=e.target.closest('#updates'); if(!box) return;
+    if(e.target.classList.contains('ushow')){ showReadHome=!showReadHome; renderUpdates(PH.me()); return; }
+    if(e.target.classList.contains('uall')){ PH.markAllSeen(); return; }
+    const ok=e.target.closest('.uok'); if(!ok) return;
+    const row=ok.closest('.upd'); if(!row) return;
+    PH.markSeen({id:row.getAttribute('data-id')});
+  });
+  // The bell and this list are two views of one thing; either one changing repaints both.
+  document.addEventListener('ph-notifications-changed',function(){
+    try{ renderUpdates(PH.me()); }catch(_){}
+  });
+
+  function initials(n){const p=n.split(' ');return (p[0][0]+(p[1]?p[1][0]:'')).toUpperCase();}
+  function foldersFor(p){ return FOLDERS.filter(f=>p.doc[f.k]); }
+
+
+  function tileCap(c){ return '<span class="cap '+c+'">'+CAPTXT[c]+'</span>'; }
+
+  function renderTiles(p){
+    // The TC Tracker tile follows the same sandbox-first switch as its tab (user.js tcOn).
+    const toolTiles=SECTIONS.filter(s=>s.kind==='tool' && (!s.adminOnly|| p.id==='admin') && p.sec[s.k] &&
+      (s.k!=='tc' || !(window.PH && PH.tcOn) || PH.tcOn())).map(s=>
+      '<a class="tile '+(s.k==='admin'?'admin':'')+'" href="'+s.href+'"><div class="ic">'+s.ic+'</div><div class="tn">'+s.n+'</div><div class="td">'+s.d+'</div>'+tileCap(p.sec[s.k])+'</a>'
+    );
+    // documents tile
+    const folds=foldersFor(p);
+    let docsTile='';
+    if(folds.length){
+      const rows=folds.map(f=>{
+        let chips='';
+        if(f.perLocation){ const locs = p.scope==='all'?LOCS:(p.scopes||[p.scope]); chips=locs.map(l=>'<span class="locchip">'+esc(l)+'</span>').join(''); }      // office names are typed in Admin: escaped (21/11/2026, code review)
+        else if(f.perBrand){ chips=BRANDS.map(b=>'<span class="locchip brand">'+b+'</span>').join(''); }
+        else if(f.note){ chips='<span style="font-size:12px;color:var(--soft)">'+f.note+'</span>'; }
+        return '<div class="frow"><span class="fn">'+f.n+'</span>'+chips+'<span class="capmini '+p.doc[f.k]+'">'+CAPSHORT[p.doc[f.k]]+'</span></div>';
+      }).join('');
+      docsTile='<a class="tile docs" id="docs" href="documents.html"><div class="ic">📁</div><div class="tn">Documents →</div><div class="td">Files, forms &amp; policies you can open</div><div class="folders">'+rows+'</div><div class="synced">📎 Opens the <b>real files on your Microsoft (SharePoint/OneDrive) drive</b> — the hub links to them, it doesn\'t keep copies.</div></a>';
+    }
+    const html=toolTiles.join('')+docsTile;
+    el('tiles').innerHTML= html ? '<div class="grid">'+html+'</div>' : '<div class="empty">This role has no sections yet — an admin assigns access in the Admin console.</div>';
+  }
+
+  /* The greeting's picture is the same one as top right: their photo if they have one,
+     else initials in their chosen color. It drew initials only, so Jordan's photo showed
+     in the header and "CL" here (29/09). Sandbox personas have no photos. */
+  function paintAvatar(){
+    const a=el('who_av'); if(!a) return;
+    if(window.PH && PH.isLive && PH.isLive() && PH.me && PH.faceStyle){
+      const m=PH.me(); a.setAttribute('style',PH.faceStyle(m)); a.textContent=PH.face(m);
+    } else { a.removeAttribute('style'); a.textContent=initials(cur.name); }
+  }
+  // A photo that lands after the first paint (SharePoint, or just uploaded) shows at once.
+  document.addEventListener('ph:me-changed', function(){ try{ paintAvatar(); }catch(_){} });
+
+  /* Good morning / afternoon / evening, or "Working late?" - by this device's clock (GOOD MORNING, in the styles). The
+     live site greets the person by first name; the sandbox's personas are roles, so they keep the whole label. */
+  function daypart(){ const h=new Date().getHours(); return h>=5&&h<12 ? 'morning' : h>=12&&h<18 ? 'afternoon' : h>=18&&h<22 ? 'evening' : 'late'; }
+  function greet(){
+    if(!cur) return;
+    const dp=daypart(), live=!!(window.PH && PH.isLive && PH.isLive()), nm=live ? (String(cur.name||'').trim().split(/\s+/)[0]||'') : (cur.name||'');
+    el('who_name').textContent=dp==='late' ? 'Working late'+(nm?', '+nm:'')+'?' : 'Good '+dp+(nm?', '+nm:'');
+    el('who_name').title=cur.name||'';
+    el('whoami').className='whoami '+(dp==='late' ? 'evening' : dp);
+    el('who_dp').innerHTML='<span class="dpi">'+(dp==='morning'||dp==='afternoon'
+      ? (dp==='morning'?'<i class="horizon"></i>':'')+'<i class="sun"></i>'+[0,1,2,3,4,5,6,7].map(i=>'<i class="ray" style="transform:rotate('+(i*45)+'deg)"></i>').join('')
+      : '<i class="moon"></i><i class="spark one"></i><i class="spark two"></i>')+'</span>';
+  }
+  setInterval(greet, 5*60*1000);      // left open past noon, it says good afternoon
+
+  function set(id){
+    /* Production: the signed-in person, never a demo persona. The View-as dropdown is
+       sandbox chrome (dechrome() hides it), so `id` is ignored there. */
+    if(window.PH && PH.isLive && PH.isLive() && PH.asPersona){ cur=PH.asPersona(); }
+    else {
+      cur=PERSONAS.find(p=>p.id===id)||PERSONAS[0];
+      try{ localStorage.setItem('ph_viewas',cur.id); }catch(_){}
+    }
+    paintAvatar();
+    greet();
+    el('who_sub').textContent=cur.sub;
+    const nSec=SECTIONS.filter(s=>s.kind==='tool'&&(!s.adminOnly||cur.id==='admin')&&cur.sec[s.k]).length + (foldersFor(cur).length?1:0);
+    const docScope = cur.scope==='all'?'all offices':('the '+esc((cur.scopes||[cur.scope]).join(', '))+' folder'+((cur.scopes||[]).length>1?'s':'')+' only');
+    el('summary').innerHTML='Sees <b>'+nSec+'</b> section'+(nSec===1?'':'s')+'. In Documents, sees <b>'+docScope+'</b>.'+(cur.id==='admin'?' Plus the <b>Admin console</b> to manage everyone.':'');
+    PH.nav('home'); renderUpdates(cur); renderTiles(cur);
+    if(typeof renderTasks==='function' && TASKS_READY) try{ renderTasks(); }catch(_){}
+  }
+
+  // build the dropdown
+  el('persona').innerHTML=PERSONAS.map(p=>'<option value="'+p.id+'">'+p.name+(p.scope!=='all'&&p.id!=='admin'?' — '+p.scope:'')+'</option>').join('');
+  // Home paints before sign-in resolves; this lets the page refresh its feed once the
+  // real activity has been fetched.
+  function refreshUpdates(){ try{ renderUpdates(PH.me()); }catch(_){} }
+  /* Identity settles in stages after sign-in (profile, then roster, then the access
+     grid). Each stage can change which tiles this person gets, so redraw on each. */
+  document.addEventListener('ph-identity', function(){ try{ set(cur&&cur.id); }catch(_){} });
+  /* CELEBRATIONS (party.js): birthdays and work anniversaries an admin set in Admin -> People. Live: the shared record and
+     today's team list. Sandbox: made-up people with something on today, plus anyone given dates in the sandbox's Admin. */
+  function renderParty(){
+    if(!(window.PH && PH.partyOn && PH.partyOn()) || !window.PH_PARTY) return;
+    const host=el('party'), live=PH.isLive && PH.isLive();
+    const me=String((PH.email && PH.me && PH.email(PH.me()))||'').toLowerCase();
+    const roster=(PH.rosterView && PH.rosterView())||[];
+    /* the celebration you've had (any device): kept in your own entry of the shared record, so a belated one shows once */
+    const onSeen=it=>{ if(PH.partySeen) PH.partySeen(it); };
+    const draw=rec=>{ try{ PH_PARTY.card(host, PH_PARTY.peopleFrom(rec, roster, PH.photoFor), {me, demo:!live, onSeen}); }catch(e){ if(host) host.hidden=true; } };
+    if(!live){ let mine=null; try{ mine=JSON.parse(localStorage.getItem(PH.PARTY_KEY)); }catch(_){}
+      const d=PH_PARTY.demo(); draw({v:1, p:Object.assign({}, d.p, (mine && mine.p)||{})}); return; }
+    if(window.PH_STORE) partyRead().then(r=>draw(r||{}), ()=>{});
+  }
+  /* One read of ph_celebrate at a time: sign-in fires 4-6 identity updates, and each redraw shares the read already on
+     its way instead of starting another (21/11/2026, code review). Same for ph_tasks below. */
+  let PARTY_P=null, TASKS_P=null;
+  function partyRead(){ return PARTY_P || (PARTY_P=PH_STORE.get(PH.PARTY_KEY).then(r=>{ PARTY_P=null; return r; }, e=>{ PARTY_P=null; throw e; })); }
+  function tasksRead(key){ return TASKS_P || (TASKS_P=PH_STORE.get(key).then(r=>{ TASKS_P=null; return r; }, e=>{ TASKS_P=null; throw e; })); }
+  renderParty();
+  document.addEventListener('ph-identity', function(){ try{ renderParty(); }catch(_){} });
+  /* YOUR TASKS (tasks.js): the open ones given to you, overdue and due-today first, with a tick right here; for people who
+     can give tasks (Teams & Access), a line on the ones they gave. Hidden when there's nothing. Live: the shared record and
+     the signed-in person. Sandbox: the made-up practice the Tasks page uses, as the person this role stands for. */
+  const TASK_AS={admin:['Priya Nair','priya','manage'], om:['Maya Chen','maya','none'], tc:['Luis Ortega','luis','none']};
+  let TASKME=null, TASKREC=null;
+  function renderTasks(){
+    const host=el('tasks'); if(!host) return;
+    if(!(window.PH && PH.tasksOn && PH.tasksOn()) || !window.PH_TASKS){ host.hidden=true; return; }
+    const R=window.PH_TASKS, live=!!(PH.isLive && PH.isLive());
+    if(live){ const m=PH.me()||{}; TASKME={name:(PH.name && PH.name(m))||'', email:String((PH.email && PH.email(m))||'').toLowerCase(), level:PH.isAdmin(m) ? 'manage' : PH.can('tasks'), as:''}; }
+    else { const a=TASK_AS[cur && cur.id]; if(!a){ host.hidden=true; return; }
+      const p=R.demo(PH.officeNames()).people.find(x=>x.name===a[0]); TASKME={name:p.name, email:p.email, level:a[2], as:a[1]}; }
+    const got=raw=>{ TASKREC=R.cleanRecord(raw); drawTasks(); };
+    if(live){ if(window.PH_STORE) tasksRead(R.KEY).then(got, ()=>{ host.hidden=true; }); if(R.remindTick) R.remindTick(); return; }
+    let v=''; try{ v=localStorage.getItem('ph_tasks_demo'); }catch(_){}
+    let raw=null; try{ raw=JSON.parse(localStorage.getItem(R.KEY)); }catch(_){}
+    if(v!=='2' || !raw){ raw=R.demo(PH.officeNames(), new Date(), PH.centralNow ? PH.centralNow().date : '').rec; if(window.PH_STORE) PH_STORE.set(R.KEY, raw); try{ localStorage.setItem('ph_tasks_demo','2'); }catch(_){} }
+    got(raw);
+  }
+  function drawTasks(){
+    const host=el('tasks'), R=window.PH_TASKS; if(!host || !TASKME || !TASKREC) return;
+    const keys=R.myKeys(TASKME), today=(PH.centralNow ? PH.centralNow().date : R.dayOf(new Date())), m=R.mine(TASKREC, keys, today, new Date());
+    const gives=TASKME.level==='edit' || TASKME.level==='manage', g=gives ? R.given(TASKREC, keys, today) : {open:[]};
+    if(!m.open.length && !g.open.length){ host.hidden=true; return; }
+    const late=m.open.filter(t=>R.dueState(t.due,today)==='late').length, gl=g.open.filter(t=>R.dueState(t.due,today)==='late').length;
+    const link=hash=>'tasks.html'+(TASKME.as||hash ? '#'+[TASKME.as ? 'as-'+TASKME.as : '', hash].filter(Boolean).join('-') : '');
+    const row=t=>{ const st=R.dueState(t.due,today);
+      return '<div class="trow" data-tid="'+esc(t.id)+'"><button class="tchk" type="button" data-tdone="'+esc(t.id)+'" aria-label="Mark done" title="Mark done"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>'+
+        '<div><div class="tt">'+esc(t.title)+'</div><div class="tm">'+(st!=='none' ? '<span class="tdue '+st+'">'+esc(R.dueText(t.due,today))+'</span>' : '')+'<span>From '+esc(t.byName)+'</span></div></div></div>'; };
+    host.className='tcard'+(late ? ' late' : '');
+    host.innerHTML='<h2>✅ Your tasks'+(m.open.length ? ' <span class="cnt">'+m.open.length+'</span>' : '')+'<a href="'+link('')+'">See all →</a></h2>'+
+      (m.open.length ? m.open.slice(0,3).map(row).join('') : '<div class="trow" style="color:var(--soft);font-size:13.5px">Nothing on your list ✨</div>')+
+      (m.open.length>3 ? '<a class="tmore" href="'+link('')+'">+ '+(m.open.length-3)+' more</a>' : '')+
+      (g.open.length ? '<a class="tgave" href="'+link('gave')+'">\u{1F4E4} You gave <b>'+g.open.length+'</b> open task'+(g.open.length===1?'':'s')+
+        (gl ? ' · <span class="lt">'+gl+' with someone overdue</span>' : '')+'<span class="go">Who’s done them →</span></a>' : '');
+    host.hidden=false;
+  }
+  document.addEventListener('click', function(e){
+    const b=e.target.closest('[data-tdone]'); if(!b || !TASKME || !TASKREC) return;
+    const R=window.PH_TASKS, id=b.dataset.tdone, t=TASKREC.t[id], k=t && R.slotFor(t, R.myKeys(TASKME)); if(!k) return;
+    b.classList.add('on'); const r=b.closest('.trow'); if(r) setTimeout(()=>r.classList.add('gone'), 250);
+    setTimeout(function(){ R.finish(id, k, TASKME.name, null).then(function(res){ if(res && res.value) TASKREC=R.cleanRecord(res.value); drawTasks(); }, drawTasks); }, 650);
+  });
+  TASKS_READY=true; renderTasks();
+  // No second ph-identity listener here: set() already redraws the tasks on every identity update (21/11/2026, code review).
+  window.HOME={set, refreshUpdates};
+  let saved='admin'; try{ saved=localStorage.getItem('ph_viewas')||'admin'; }catch(_){}
+  if(!PERSONAS.some(p=>p.id===saved)) saved='admin';
+  el('persona').value=saved; set(saved);
+})();
+</script>
+<script>PH.nav('home');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(PH.loadActivity)PH.loadActivity().then(function(){return PH.loadSeen?PH.loadSeen():null;}).then(function(){if(window.HOME&&HOME.refreshUpdates)HOME.refreshUpdates();if(PH.refreshBell)PH.refreshBell();});});</script>
+<script src="tour.js?v=hc268d202611250847"></script>
+<script>
+Tour.init([
+  {sel:'.ph-av', title:'This is you', body:'Your name and photo, top right. Tap it any time for <b>My profile</b> \u2014 your photo, preferred name, phone and \u201cAbout me\u201d. Those follow you between devices.'},
+  /* Only shown in the sandbox — the switcher doesn't exist in production, and tour.js
+     skips a step whose target is missing. */
+  {sel:'.viewas', title:'Try it as your staff', body:'A sandbox control for trying roles out. Switch to an office manager or a front-desk person and watch the whole app change around them. In the live hub people simply sign in as themselves, and an administrator can use <b>View as</b> in Admin \u2192 People to check what someone sees.'},
+  {sel:'#updates', title:'What\u2019s new for me', body:'Whenever a document or a number changes, the people it affects see it here \u2014 filtered by their <b>role, team and location</b>. A Texas policy never reaches New Mexico staff.'},
+  {sel:'#tiles', title:'Your sections', body:'Everyone lands here and only sees the tiles they\u2019re allowed to open. The label on each tile (<b>View only</b>, <b>Add files</b>, <b>Full control</b>) says what they can do inside.'},
+  {sel:'.note', title:'The whole idea, in one line', body:'Your <b>team</b> decides what you can do. Your <b>location</b> decides whose offices you see. Everything else follows from those two settings.'}
+], {key:'home', title:'Getting started', launch:'Show me around the whole app', next:{label:'the Dashboard', href:'index.html'}});
+</script>
+</body>
+</html>
