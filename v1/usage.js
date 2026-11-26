@@ -172,13 +172,19 @@
     const force=!!(opts && opts.force);
     if(el._busy && !force) return;
     el._busy=true;
-    load().then(recs=>{ el._busy=false; if(!el.isConnected) return; const sig=JSON.stringify(recs);
+    load().then(recs=>{ el._busy=false; if(!el.isConnected) return;
+        /* the team list counts too: it can land after the visits, and then the page must be drawn again (26/11/2026) */
+        const P0=global.PH||{}, sig=JSON.stringify(recs)+'#'+(P0.rosterRows ? P0.rosterRows().length : 0)+'#'+(P0.rosterView ? JSON.stringify(P0.rosterView().map(r=>[r.email, r.teams, r.offices])).length : 0);
         if(!force && sig===LAST && el.querySelector('.use-tiles')) return; LAST=sig; DATA=recs; paint(el); wantCtx(el); },
       e=>{ el._busy=false; if(!el.isConnected || el.querySelector('.use-tiles')) return; el.innerHTML='<div class="intro">Usage couldn’t load: '+esc((e && e.message)||'SharePoint didn’t answer')+'</div>'; });
   }
   function paint(el){
     const P=global.PH||{}, today=isoDay(new Date());
-    const list=people(P.rosterRows ? P.rosterRows() : [], P.rosterView ? P.rosterView() : [], DATA||[]);
+    let list=people(P.rosterRows ? P.rosterRows() : [], P.rosterView ? P.rosterView() : [], DATA||[]);
+    /* THE SANDBOX has no real visits (only this browser's), so it showed nothing: it uses the Monthly review's made-up
+       visits instead (26/11/2026), clearly marked. The live site never does. */
+    const SAMPLE=!(P.isLive && P.isLive()) && !!(global.PH_REVIEW && global.PH_REVIEW.sample);
+    if(SAMPLE) list=global.PH_REVIEW.sample(list);
     const since=countedFrom(list), offered=PERIODS.filter(p=>!since || p[0]==='today' || period(p[0], today).to>=since);
     if(!offered.some(p=>p[0]===KIND)) KIND='30d';
     const S=summary(list, {kind:KIND, today, includeAdmins:ADMINS, offices:P.officeNames ? P.officeNames() : []});
@@ -186,7 +192,7 @@
     const label=cut ? 'since '+fmtShort(S.since) : ((PERIODS.find(p=>p[0]===KIND)||[])[1]||'');
     let h='<div class="use-top" role="group" aria-label="Period">'+offered.map(p=>'<button type="button" class="chip'+(KIND===p[0]?' on':'')+'" data-k="'+p[0]+'" aria-pressed="'+(KIND===p[0])+'">'+p[1]+'</button>').join('')+
       '<label><input type="checkbox" data-adm'+(ADMINS?' checked':'')+'> Include admins</label></div>';
-    h+='<p class="use-since"><b>'+esc(fmtDay(S.from))+(S.from!==S.to?' – '+esc(fmtDay(S.to)):'')+'</b>'+(S.since ? ' · Home-Brace has counted visits since '+esc(fmtShort(S.since))+(S.since>period(KIND, today).from && KIND!=='today' ? ', so this starts there' : '')+'.' : ' · Nothing counted yet - visits count from the day this went live.')+'</p>';
+    h+='<p class="use-since">'+(SAMPLE ? '<span style="font-weight:700;color:#8a5a00;background:#FFF4DC;border-radius:99px;padding:2px 9px;margin-right:6px">Sandbox: made-up visits</span>' : '')+'<b>'+esc(fmtDay(S.from))+(S.from!==S.to?' – '+esc(fmtDay(S.to)):'')+'</b>'+(S.since ? ' · Home-Brace has counted visits since '+esc(fmtShort(S.since))+(S.since>period(KIND, today).from && KIND!=='today' ? ', so this starts there' : '')+'.' : ' · Nothing counted yet - visits count from the day this went live.')+'</p>';
     h+='<div class="use-tiles">'+
       '<div class="use-tile"><div class="k">Adoption · '+esc(label)+'</div><div class="v">'+pct(S.adoption)+'</div><div class="s">'+S.active+' of the '+S.total+' people who have signed in</div><div class="use-meter" aria-hidden="true"><i style="width:'+Math.round((S.adoption||0)*100)+'%"></i></div></div>'+
       '<div class="use-tile"><div class="k">Using it today</div><div class="v">'+S.today+'</div><div class="s">'+(S.today===1?'person':'people')+' so far today</div></div>'+

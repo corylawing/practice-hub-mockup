@@ -182,10 +182,10 @@
 
   /* ---------- the value calculator: every row belongs to an app ---------- */
   const JOBS=[
-    {k:'paySheets', app:'payroll',   n:'Each payroll sheet sent in Home-Brace', hint:'Copying and checking it by hand'},
-    {k:'consults',  app:'tc',        n:'Each consult logged',                   hint:'No spreadsheet to keep or email'},
-    {k:'prodDays',  app:'dashboard', n:'Each production day filled for you',    hint:'Typing and correcting the days'},
-    {k:'tasksDone', app:'tasks',     n:'Each task given and tracked here',       hint:'Chasing it by text or email'}
+    {k:'paySheets', app:'payroll',   n:'Each payroll sheet sent in Home-Brace', hint:'Copying and checking it by hand', unit:['sheet','sheets']},
+    {k:'consults',  app:'tc',        n:'Each consult logged',                   hint:'No spreadsheet to keep or email', unit:['consult','consults']},
+    {k:'prodDays',  app:'dashboard', n:'Each production day filled for you',    hint:'Typing and correcting the days', unit:['day','days']},
+    {k:'tasksDone', app:'tasks',     n:'Each task given and tracked here',       hint:'Chasing it by text or email', unit:['task','tasks']}
   ];
   const WEEKLY=[
     {k:'schedule',  app:'schedule',  n:'Schedule',             hint:'Finding who works where, across the practice'},
@@ -211,7 +211,7 @@
     const s=cleanSet(set), rows=[], byApp={}; let min=0;
     const add=(app, m)=>{ min+=m; byApp[app]=(byApp[app]||0)+m; };
     JOBS.forEach(j=>{ const per=s.jobs[j.k]||0, cnt=metrics && typeof metrics[j.k]==='number' ? metrics[j.k] : null;
-      const m=per && cnt!=null ? per*cnt : 0; add(j.app, m); rows.push({k:j.k, app:j.app, n:j.n, hint:j.hint, kind:'job', per, cnt, min:m}); });
+      const m=per && cnt!=null ? per*cnt : 0; add(j.app, m); rows.push({k:j.k, app:j.app, n:j.n, hint:j.hint, unit:j.unit, kind:'job', per, cnt, min:m}); });
     const weeks=(daysCounted||0)/7;
     WEEKLY.forEach(j=>{ const per=s.weekly[j.k]||0, m=per*weeks; add(j.app, m); rows.push({k:j.k, app:j.app, n:j.n, hint:j.hint, kind:'week', per, cnt:null, min:m}); });
     const toDollars=m=>m/60*s.rate, app={}; Object.keys(byApp).forEach(k=>{ app[k]={hrs:byApp[k]/60, dollars:toDollars(byApp[k])}; });
@@ -270,13 +270,15 @@
   function sampleRecords(list, ym, today){
     let seed=11; const rnd=()=>{ seed=(seed*16807)%2147483647; return seed/2147483647; };
     const prevDays=monthDays(shiftMonth(ym,-1)).slice(-12), curDays=monthDays(ym, today), keys=APPS.map(a=>a.k);
-    return (list||[]).filter(p=>p.listed && /@/.test(p.email||'')).map(p=>{ if(rnd()<0.12) return Object.assign({}, p, {rec:null});
+    return (list||[]).filter(p=>p.listed).map(p=>{ if(!/@/.test(p.email||'') || rnd()<0.12) return Object.assign({}, p, {rec:null});   // no email = can't sign in
       const mine=keys.filter(()=>rnd()<0.7), busy=0.15+rnd()*0.35, d={};
       const WORKS=APPS.filter(a=>a.work).map(a=>a.k);
       const visit=day=>{ const pp={home:1}, ww={}; mine.forEach(k=>{ if(rnd()<0.6){ pp[k]=1; if(WORKS.indexOf(k)>=0 && rnd()<0.55) ww[k]=1; } }); d[day]={n:2, p:pp, w:ww}; };
+      if(rnd()<0.22){ monthDays(shiftMonth(ym,-1)).slice(0,8).forEach(day=>{ if(rnd()<0.4) visit(day); }); const k=Object.keys(d); if(k.length) return Object.assign({}, p, {rec:{d, first:k[0]+'T15:00:00', last:k[k.length-1]+'T15:00:00'}}); }   // gone quiet
       if(rnd()<0.6) prevDays.forEach(day=>{ if(rnd()<busy*0.5) visit(day); });
       if(rnd()<0.8) curDays.forEach((day,i)=>{ if(rnd()<busy*(0.4+0.8*i/curDays.length)) visit(day); });
-      return Object.assign({}, p, {rec:{d}}); });
+      const days=Object.keys(d).sort(), at=x=>x ? x+'T15:00:00' : '';
+      return Object.assign({}, p, {rec:days.length ? {d, first:at(days[0]), last:at(days[days.length-1])} : null}); });
   }
 
   /* ---------- the page ---------- */
@@ -355,6 +357,9 @@
     .rv-ctbl td{padding:7px 8px;border-bottom:1px solid var(--line,#E4E8EE);vertical-align:middle}.rv-ctbl td small{display:block;color:var(--soft,#56627A);font-size:11.5px}
     .rv-ctbl .n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
     .rv-ctbl tfoot td{font-weight:800;color:var(--navy,#0F2A4A);border-bottom:0}
+    .rv-ctbl tr.grp td{background:#F6F8FA;font-size:12.5px;color:var(--soft,#56627A);padding:8px 8px}.rv-ctbl tr.grp b{color:var(--navy,#0F2A4A)}
+    .rv-ctbl td.n small{display:block;font-size:11px;color:var(--soft,#56627A);font-weight:400}
+    .rv-per{display:inline-flex;align-items:center;gap:6px;justify-content:flex-end}.rv-per span{font-size:12px;color:var(--soft,#56627A);white-space:nowrap;min-width:70px;text-align:left}
     .rv-cw{overflow-x:auto}.rv-cacts{display:flex;gap:8px;align-items:center;justify-content:flex-end;margin-top:12px;flex-wrap:wrap}.rv-cacts .msg{font-size:12.5px;color:var(--soft,#56627A);margin-right:auto}`;
     document.head.appendChild(s);
   }
@@ -462,16 +467,28 @@
     el.oninput=e=>{ if(e.target.matches('.rv-in')) calcPreview(el); };
   }
   /* THE VALUE CALCULATOR: the practice's own numbers, multiplied by what Home-Brace counted this month. */
+  /* THE VALUE CALCULATOR: the practice's own numbers, multiplied by what Home-Brace counted this month. Every number says
+     its unit (Cory: "Not clear if minutes saved is for this month this week or what"): counted jobs are "minutes EACH",
+     the rest "minutes A WEEK, whole practice", and each row shows its sum ("16 sheets x 20 min"). */
   function calcHTML(){
-    const L=LAST, V=L.val, s=V.set, can=isAdminNow();
+    const L=LAST, V=L.val, s=V.set, can=isAdminNow(), weeks=Math.round(L.daysCounted/7*10)/10;
     const inp=(attr, v, step)=>'<input class="rv-in" type="number" inputmode="decimal" min="0" step="'+(step||1)+'" '+attr+' value="'+(v||'')+'"'+(can?'':' disabled')+'>';
-    let h='<div class="rv-calc"><h3>🧮 Value calculator</h3><p class="sub">Heather and Jessica set the numbers; Home-Brace counts the jobs. Minutes = the time each job no longer takes. '+esc(monthName(L.ym))+': '+L.daysCounted+' days counted.</p>'+
-      '<div class="rv-rate">Average hourly cost of staff time $'+inp('data-rate', s.rate, 0.5)+'<span style="font-weight:400;font-size:12.5px;color:var(--soft,#56627A)">pay plus taxes and benefits</span></div>'+
-      '<div class="rv-cw"><table class="rv-ctbl"><thead><tr><th>What Home-Brace does</th><th>App</th><th class="n">This month</th><th class="n">Minutes saved</th><th class="n">Hours</th><th class="n">Value</th></tr></thead><tbody>';
-    V.rows.forEach(r=>{ h+='<tr><td>'+esc(r.n)+'<small>'+esc(r.hint)+'</small></td><td>'+esc((APP(r.app)||{}).n||'')+'</td><td class="n">'+(r.kind==='job' ? (r.cnt==null?'—':r.cnt.toLocaleString()) : 'per week')+'</td>'+
-      '<td class="n">'+inp('data-'+r.kind+'="'+r.k+'"', r.per, 1)+'</td><td class="n" data-h="'+r.kind+r.k+'">'+(r.min ? (Math.round(r.min/6)/10).toLocaleString() : '—')+'</td><td class="n" data-d="'+r.kind+r.k+'">'+(r.min && s.rate ? money(r.min/60*s.rate) : '—')+'</td></tr>'; });
-    h+='</tbody><tfoot><tr><td>Total</td><td></td><td></td><td></td><td class="n" data-th>'+(Math.round(V.hrs*10)/10).toLocaleString()+'</td><td class="n" data-td>'+(V.ready ? money(V.dollars) : '—')+'</td></tr></tfoot></table></div>'+
-      '<div class="rv-cacts"><span class="msg">'+(s.by ? 'Last set by '+esc(s.by)+(s.at ? ', '+esc(short(s.at.slice(0,10))) : '') : (can ? 'Not set yet.' : 'Only an admin can change these.'))+'</span>'+
+    const hrs=r=>r.min ? (Math.round(r.min/6)/10).toLocaleString()+' h' : '—', usd=r=>r.min && s.rate ? money(r.min/60*s.rate) : '—';
+    const sum=r=>r.kind==='job' ? (r.cnt==null ? 'not counted yet' : r.cnt.toLocaleString()+' '+r.unit[r.cnt===1?0:1]+' × '+(r.per||0)+' min')
+                                : weeks+' weeks × '+(r.per||0)+' min';
+    const row=r=>'<tr><td>'+esc(r.n)+'<small>'+esc(r.hint)+' · '+esc((APP(r.app)||{}).n||'')+'</small></td>'+
+      '<td class="n">'+(r.kind==='job' ? (r.cnt==null?'—':'<b>'+r.cnt.toLocaleString()+'</b> '+esc(r.unit[r.cnt===1?0:1])) : '<b>'+weeks+'</b> weeks')+'</td>'+
+      '<td class="n"><span class="rv-per">'+inp('data-'+r.kind+'="'+r.k+'"', r.per, 1)+'<span>'+(r.kind==='job' ? 'min each' : 'min a week')+'</span></span></td>'+
+      '<td class="n"><span data-h="'+r.kind+r.k+'">'+hrs(r)+'</span><small data-s="'+r.kind+r.k+'">'+esc(sum(r))+'</small></td><td class="n" data-d="'+r.kind+r.k+'">'+usd(r)+'</td></tr>';
+    let h='<div class="rv-calc"><h3>🧮 Value calculator</h3><p class="sub">Heather and Jessica set the numbers; Home-Brace multiplies them by what happened in '+esc(monthName(L.ym))+' ('+L.daysCounted+' days so far).</p>'+
+      '<div class="rv-rate">Average hourly cost of staff time $'+inp('data-rate', s.rate, 0.5)+'<span style="font-weight:400;font-size:12.5px;color:var(--soft,#56627A)">per hour, pay plus taxes and benefits</span></div>'+
+      '<div class="rv-cw"><table class="rv-ctbl"><thead><tr><th>What Home-Brace does</th><th class="n">In '+esc(MONTHS[+L.ym.slice(5,7)-1])+'</th><th class="n">Time it saves</th><th class="n">Hours saved</th><th class="n">Value</th></tr></thead><tbody>'+
+      '<tr class="grp"><td colspan="5"><b>1. Jobs Home-Brace counts</b> - type the minutes ONE of each saves</td></tr>'+
+      V.rows.filter(r=>r.kind==='job').map(row).join('')+
+      '<tr class="grp"><td colspan="5"><b>2. Everything else</b> - type the minutes the WHOLE PRACTICE saves in a week</td></tr>'+
+      V.rows.filter(r=>r.kind==='week').map(row).join('')+
+      '</tbody><tfoot><tr><td>Total for '+esc(MONTHS[+L.ym.slice(5,7)-1])+'</td><td></td><td></td><td class="n" data-th>'+(Math.round(V.hrs*10)/10).toLocaleString()+' h</td><td class="n" data-td>'+(V.ready ? money(V.dollars) : '—')+'</td></tr></tfoot></table></div>'+
+      '<div class="rv-cacts"><span class="msg">'+(s.by ? 'Last set by '+esc(s.by)+(s.at ? ', '+esc(short(s.at.slice(0,10))) : '') : (can ? 'Not set yet - these are example numbers.' : 'Only an admin can change these.'))+'</span>'+
       (can ? '<button type="button" class="btn sm" data-csave>Save</button>' : '')+'<button type="button" class="btn ghost sm" data-calc>Close</button></div></div>';
     return h;
   }
@@ -482,11 +499,13 @@
     return s;
   }
   function calcPreview(el){
-    const V=value(readCalc(el), LAST.m, LAST.daysCounted);
-    V.rows.forEach(r=>{ const hh=el.querySelector('[data-h="'+r.kind+r.k+'"]'), dd=el.querySelector('[data-d="'+r.kind+r.k+'"]');
-      if(hh) hh.textContent=r.min ? (Math.round(r.min/6)/10).toLocaleString() : '—'; if(dd) dd.textContent=r.min && V.set.rate ? money(r.min/60*V.set.rate) : '—'; });
+    const V=value(readCalc(el), LAST.m, LAST.daysCounted), weeks=Math.round(LAST.daysCounted/7*10)/10;
+    V.rows.forEach(r=>{ const id=r.kind+r.k, hh=el.querySelector('[data-h="'+id+'"]'), dd=el.querySelector('[data-d="'+id+'"]'), ss=el.querySelector('[data-s="'+id+'"]');
+      if(hh) hh.textContent=r.min ? (Math.round(r.min/6)/10).toLocaleString()+' h' : '—';
+      if(dd) dd.textContent=r.min && V.set.rate ? money(r.min/60*V.set.rate) : '—';
+      if(ss) ss.textContent=r.kind==='job' ? (r.cnt==null ? 'not counted yet' : r.cnt.toLocaleString()+' '+r.unit[r.cnt===1?0:1]+' × '+(r.per||0)+' min') : weeks+' weeks × '+(r.per||0)+' min'; });
     const th=el.querySelector('[data-th]'), td=el.querySelector('[data-td]');
-    if(th) th.textContent=(Math.round(V.hrs*10)/10).toLocaleString(); if(td) td.textContent=V.ready ? money(V.dollars) : '—';
+    if(th) th.textContent=(Math.round(V.hrs*10)/10).toLocaleString()+' h'; if(td) td.textContent=V.ready ? money(V.dollars) : '—';
   }
   function saveCalc(el, today){
     if(!isAdminNow() || !global.PH_STORE) return;
@@ -510,5 +529,7 @@
     return t;
   }
 
-  global.PH_REVIEW={mount, WORK, APPS, context, toolUse, _pure:{APPS, WORK, JOBS, WEEKLY, usage, toolUse, weekly, hasTool, counted, monthDays, paySheets, tasksDone, consults, missed, prodDays, celebrations, cleanSet, value, history, shiftMonth, usageOf, workSince}};
+  /* the same made-up visits for the Usage tab on the sandbox (Cory: "I don't see what you did to the usage app in sandbox") */
+  const sample=list=>{ const t=isoDay(new Date()); return sampleRecords(list, t.slice(0,7), t); };
+  global.PH_REVIEW={mount, WORK, APPS, context, toolUse, sample, _pure:{APPS, WORK, JOBS, WEEKLY, usage, toolUse, weekly, hasTool, counted, monthDays, paySheets, tasksDone, consults, missed, prodDays, celebrations, cleanSet, value, history, shiftMonth, usageOf, workSince}};
 })(typeof window!=='undefined' ? window : globalThis);
