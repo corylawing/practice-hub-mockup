@@ -78,7 +78,13 @@ patients who STARTED in the month x average case fee (review.js foundStarts); un
 "started after a follow-up" (+ "N found so far"). LIVE CHECK 26/11 (read-only, Cory's Safari, counts only): no consult
 logged 2+ days late since the check went live 24/11 = nothing caught yet. November so far OrthoFi new exams vs logged:
 Carlsbad 45/52, Hobbs 28/31, San Angelo 39/41 (fully logged); Clovis 34/7, Lubbock 29/5, Mansfield 30/0, Cruces LCO 27/0,
-Cruces FFO 17/0 = ~125 November exams not in the TC Tracker (5 offices barely/not using it) - asked Cory to find out why. Personal-email sign-in = invite staff as Entra GUESTS with
+Cruces FFO 17/0 = ~125 November exams not in the TC Tracker (5 offices barely/not using it) - asked Cory to find out why.
+PRODUCTION = hc277 (26/11/2026, Cory: "You can push the found from Orthofi check"): ONLY the found tag went live. Built as
+production's own commit f52f837 (all 72 live files checked byte-for-byte first) + the three tc.html edits + stamp hc277,
+deployed from a copy (scratchpad prodpatch, untracked deploy files copied in); all green, server UP, 404s ok, switches
+unchanged, review.js/yourday.js 404 on live (Monthly review, Your day, Usage fix, did-work, Monthly Report charts are
+still SANDBOX ONLY, waiting on Jessica's OK). The sandbox is hc276 and already has the same found tag: THE NEXT STAMP
+MUST BE hc278 OR HIGHER (hc277 = production's patch). Personal-email sign-in = invite staff as Entra GUESTS with
 the email one-time passcode (Cory to ask staff + IT); guests stay out of patient data (TC Tracker via Teams & Access). NEXT (Cory's plan): "Your day" card on Home for
 doctors/OMs (and take the app tiles off Home - Cory: they repeat the menu), then a morning phone alert.
 
