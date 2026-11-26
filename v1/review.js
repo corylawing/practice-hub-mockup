@@ -257,7 +257,7 @@
     const P=global.PH, on=Object.assign({tc:true, payroll:true, tasks:true, monthly:true, chat:true}, live() && P.switches ? P.switches() : {});
     const senders=new Set(); const so=(P.paySenders && P.paySenders().offices) || {};
     Object.keys(so).forEach(o=>(so[o]||[]).forEach(e=>senders.add(String(e||'').trim().toLowerCase())));
-    if(!live() && P.rosterView) P.rosterView().forEach(r=>{ if(/\bOM\b|office manager|\bTC\b/i.test(r.role||'') && r.email) senders.add(String(r.email).toLowerCase()); });
+    if(!live()) (P.rosterView && P.rosterView().length ? P.rosterView() : staffList()).forEach(r=>{ if(/\bOM\b|office manager|\bTC\b/i.test(r.role||'') && r.email) senders.add(String(r.email).toLowerCase()); });
     const lvCache={};
     const lv=(p,k)=>{ if(p.access && p.access[k]!==undefined) return RANK[p.access[k]]||0;          // Admin's own level for this person wins
       const key=(p.teams||[]).join('|')+'#'+k; if(!(key in lvCache)) lvCache[key]=RANK[P.levelForTeams(p.teams||[], k)]||0; return lvCache[key]; };
@@ -380,7 +380,7 @@
         BUSY=false; const el=host.querySelector(':scope > .rv'); if(!el || !el.isConnected) return;
         let list=U ? U._pure.people(P.rosterRows ? P.rosterRows() : [], P.rosterView ? P.rosterView() : [], recs) : [];
         const sample=!live();
-        if(sample) list=sampleRecords(list, ym, today);
+        if(sample) list=sampleRecords(list.some(p=>p.listed) ? list : staffList(), ym, today);
         const since=(U ? U._pure.countedFrom(list) : '') || '';
         const prevYm=shiftMonth(ym,-1), prev=usage(list, prevYm, c, today);
         const u=usage(list, ym, c, today);
@@ -529,7 +529,20 @@
     return t;
   }
 
+  /* The sandbox on the web has no team list (the real one never leaves SharePoint): it uses the made-up staff (_staff.js),
+     with teams from their roles and offices from their location, in the shape usage.js people() gives. */
+  function staffList(){
+    const S=(typeof global.STAFF!=='undefined' && global.STAFF) || (typeof STAFF!=='undefined' ? STAFF : []);    // eslint-disable-line no-undef
+    return (S||[]).map(p=>{ const role=String(p.role||''), teams=[];
+      if(/\bOM\b|office manager/i.test(role)) teams.push('Office Managers');
+      if(/\bTC\b/.test(role)) teams.push('TCs');
+      if(/doctor/i.test(role)) teams.push('Doctors');
+      if(/admin/i.test(p.team||'')) teams.push('Admin');
+      if(!teams.length) teams.push(p.team||'Staff');
+      const loc=String(p.loc||''), office=/cruces/i.test(loc) ? 'Cruces '+(/LCO/.test(p.brand||'') && !/FFO/.test(p.brand||'') ? 'LCO' : 'FFO') : loc;
+      return {name:p.n||'', email:String(p.mail||'').toLowerCase(), role, offices:office ? [office] : [], teams, access:null, admin:teams.indexOf('Admin')>=0, rec:null, listed:true}; });
+  }
   /* the same made-up visits for the Usage tab on the sandbox (Cory: "I don't see what you did to the usage app in sandbox") */
-  const sample=list=>{ const t=isoDay(new Date()); return sampleRecords(list, t.slice(0,7), t); };
+  const sample=list=>{ const t=isoDay(new Date()); return sampleRecords((list||[]).some(p=>p.listed) ? list : staffList(), t.slice(0,7), t); };
   global.PH_REVIEW={mount, WORK, APPS, context, toolUse, sample, _pure:{APPS, WORK, JOBS, WEEKLY, usage, toolUse, weekly, hasTool, counted, monthDays, paySheets, tasksDone, consults, missed, prodDays, celebrations, cleanSet, value, history, shiftMonth, usageOf, workSince}};
 })(typeof window!=='undefined' ? window : globalThis);
