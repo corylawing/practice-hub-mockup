@@ -135,4 +135,18 @@ t('no <input type="month"> (Safari types it)', !/type="month"/.test(src));
   const tk=fs.readFileSync(path.join(__dirname,'..','v1','tasks.html'),'utf8');
   t('tasks: archiving old tasks is housekeeping, not anyone\'s work', /R\.dropArchived\(cur, R\.cleanRecord\(a\.value\)\), undefined, true\)/.test(tk) && /if\(!bad && !chore\)/.test(tk));
 }
+
+/* PATIENTS WON BACK - started after a follow-up logged in the call list (Cory 26/11: show money found) */
+{
+  const W=[
+    {date:'2026-11-02', outcome:'Pending', fuStatus:'Closed - started', startDate:'2026-11-20', calls:[{day:'2026-11-10', what:'Called'}]},     // counts
+    {date:'2026-11-03', outcome:'Started', sameDay:'Yes', startDate:'2026-11-03', calls:[{day:'2026-11-03'}]},                              // same-day start: not won back
+    {date:'2026-11-04', outcome:'Pending', fuStatus:'Closed - started', startDate:'2026-11-18', calls:[]},                                  // no follow-up logged
+    {date:'2026-10-20', outcome:'Pending', fuStatus:'Closed - started', startDate:'2026-10-30', calls:[{day:'2026-10-25'}]},                // started last month
+    {date:'2026-11-05', outcome:'Pending', fuStatus:'Closed - started', startDate:'2026-11-12', calls:[{day:'2026-11-15'}]},                // the call came after the start
+    {date:'2026-11-06', outcome:'Pending', fuStatus:'Closed - started', startDate:'2026-11-22', calls:[{at:'2026-11-21T15:00:00Z'}], deleted:true}  // deleted
+  ];
+  t('won back: started this month, not same-day, with a call logged on or before the start', R.wonBack(W, YM)===1);
+  t('the average case fee is kept (and capped)', R.cleanSet({fee:5200}).fee===5200 && R.cleanSet({fee:-3}).fee===0 && R.cleanSet({fee:1e9}).fee===50000);
+}
 console.log(pass+' passed, '+fail+' failed'); if(fail) process.exit(1);

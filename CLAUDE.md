@@ -57,7 +57,13 @@ persist(), payroll.html liveFlush (live only), tasks.html save() (not tidy/archi
 stampAudit, monthly.html save/send, schedule.html saveDay, marketing.html save, documents.html uploadGo, chat.html sendReal.
 A NEW APP OR SAVE MUST CALL PH.did. review.js APPS: `work` = what counts as work (working apps show "N of M did work in it"
 + what that is + "X more only opened it"), `view` = what checking means (dashboard, team, schedule, documents, marketing,
-home show "checked it"). "Did work" starts the day it ships (workSince) - before that the card says "opened it". NEXT (Cory's plan): "Your day" card on Home for
+home show "checked it"). "Did work" starts the day it ships (workSince) - before that the card says "opened it".
+PATIENTS WON BACK (hc274; Cory "1. I guess" to showing money found): the first big tile = consults that STARTED in the
+month, were not same-day, with a call-list line (r.calls) on or before the start date (review.js wonBack) x the AVERAGE
+CASE FEE Heather types in the value calculator (ph_review_set.fee); without a fee it shows the count. It replaced the
+"% signed in" tile (Usage tab has that). NEXT: "Your day" card on Home - mock-up sent 26/11 (doctor / office manager /
+leadership), waiting on Cory's OK; app tiles come off Home. Personal-email sign-in = invite staff as Entra GUESTS with
+the email one-time passcode (Cory to ask staff + IT); guests stay out of patient data (TC Tracker via Teams & Access). NEXT (Cory's plan): "Your day" card on Home for
 doctors/OMs (and take the app tiles off Home - Cory: they repeat the menu), then a morning phone alert.
 
 **The user is Cory Lawing.** He is building this for a friend's orthodontic practice. He is not a

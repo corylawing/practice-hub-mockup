@@ -154,6 +154,15 @@
       n+=Math.max(0, ex-logged); });
     return n;
   }
+  /* PATIENTS WON BACK (26/11/2026, Cory: "1. I guess" to "show money found"): consults that started in the month, were NOT a
+     same-day start, and had at least one call-list line (r.calls - tc.js) on or before the start. "Started after a
+     follow-up in Home-Brace" - the TC Tracker's own record, nothing guessed. */
+  function wonBack(list, ym){
+    return (list||[]).filter(r=>{ if(!live_(r)) return false;
+      const started=r.fuStatus==='Closed - started' || r.outcome==='Started', start=r.startDate || (r.outcome==='Started' ? r.date : '');
+      if(!started || String(start).slice(0,7)!==ym || r.sameDay==='Yes') return false;
+      return (Array.isArray(r.calls) ? r.calls : []).some(c=>c && String(c.day || String(c.at||'').slice(0,10))<=start); }).length;
+  }
   function prodDays(logs, ym){
     let n=0; (logs||[]).forEach(list=>(Array.isArray(list) ? list : []).forEach(e=>{
       if(e && e.from && e.from.how==='schedule' && inMonth(e.at, ym)) n+=(e.changes||[]).length; }));
@@ -182,11 +191,11 @@
     {k:'chat',      app:'chat',      n:'Team Chat',            hint:'Once everyone has it'}
   ];
   const SET_KEY='ph_review_set';
-  const SAMPLE_SET={rate:22, jobs:{paySheets:20, consults:3, prodDays:2, tasksDone:5}, weekly:{schedule:90, documents:45, dashboard:60}};
+  const SAMPLE_SET={rate:22, fee:5200, jobs:{paySheets:20, consults:3, prodDays:2, tasksDone:5}, weekly:{schedule:90, documents:45, dashboard:60}};
   const num=v=>{ const n=parseFloat(v); return isFinite(n) && n>0 ? n : 0; };
   function cleanSet(s){
-    const o={rate:0, jobs:{}, weekly:{}, by:'', at:''}; if(!s || typeof s!=='object') return o;
-    o.rate=Math.min(500, num(s.rate));
+    const o={rate:0, fee:0, jobs:{}, weekly:{}, by:'', at:''}; if(!s || typeof s!=='object') return o;
+    o.rate=Math.min(500, num(s.rate)); o.fee=Math.min(50000, num(s.fee));
     JOBS.forEach(j=>{ const v=Math.min(600, num(s.jobs && s.jobs[j.k])); if(v) o.jobs[j.k]=v; });
     WEEKLY.forEach(j=>{ const v=Math.min(6000, num(s.weekly && s.weekly[j.k])); if(v) o.weekly[j.k]=v; });
     o.by=String(s.by||'').slice(0,80); o.at=String(s.at||'').slice(0,30);
@@ -217,7 +226,7 @@
     sc.src=me_ ? me_.getAttribute('src').replace(/user\.js/, name) : name; sc.onload=()=>ok(true); sc.onerror=()=>ok(false); document.head.appendChild(sc); }); }
   const CACHE={};
   function loadMetrics(ym, today){
-    if(!live()) return Promise.resolve({paySheets:16, consults:214, missed:23, tasksDone:23, prodDays:96, offices:8, celebrations:11, sample:true});
+    if(!live()) return Promise.resolve({paySheets:16, consults:214, missed:23, wonBack:9, tasksDone:23, prodDays:96, offices:8, celebrations:11, sample:true});
     if(CACHE[ym] && Date.now()-CACHE[ym].at<10*60e3) return CACHE[ym].p;
     const S=global.PH_STORE, P=global.PH, out={offices:(P.officeNames ? P.officeNames() : []).length}, y=ym.slice(0,4);
     const first=ym+'-01', lastD=isoDay(new Date(+y, +ym.slice(5,7), 0)), last=lastD<today ? lastD : today;
@@ -227,7 +236,7 @@
     const pa=S.get('ph_celebrate').then(r=>{ out.celebrations=celebrations(r, ym); }, ()=>{});
     const tcList=(global.TCSTORE && global.TC ? Promise.resolve() : script('tcstore.js').then(()=>script('tc.js')))
       .then(()=>global.TCSTORE.getAll(global.TC.LOG_PREFIX, {partial:true})).then(L=>global.TC.consultsFrom(L));
-    const tc=tcList.then(list=>{ out.consults=consults(list, ym);
+    const tc=tcList.then(list=>{ out.consults=consults(list, ym); out.wonBack=wonBack(list, ym);
       return (global.PH_ORTHOFI ? Promise.resolve() : script('orthofi.js')).then(()=>{ const O=global.PH_ORTHOFI; if(!O || !O.ask) return;
         const NEW={keptExamFlag:['kept exam'], examTypeName:['new']}, offs=P.officeNames ? P.officeNames() : [];
         return S.get(O.KEY).then(v=>O.cleanMap(v)).then(M=>Promise.all(offs.map(o=>{ const locs=O.locsOf(M, o); if(!locs.length) return [o, null];
@@ -401,15 +410,17 @@
       '<div class="rv-acts"><button type="button" class="btn ghost sm" data-calc>🧮 Value calculator</button><button type="button" class="btn ghost sm" data-copy>📋 Copy for email</button></div></div>';
     /* 1. the four numbers - then 2. value by app, 3. this month's work. Nothing else (Cory: "easy to see, use, and
        understand"; people week by week is the Usage tab's - "Thats double data"). */
-    const share=u.counted ? u.used/u.counted : null, was=L.prev ? L.prev.used/L.prev.counted : null;
-    const delta=was==null ? 'first month counted' : (Math.round(share*100)>=Math.round(was*100) ? '▲ ' : '▼ ')+'from '+Math.round(was*100)+'% in '+MONTHS[+shiftMonth(L.ym,-1).slice(5,7)-1];
     h+='<div class="rv-kpis">'+
+      (()=>{ const n=m.wonBack, fee=V.set.fee;
+        if(typeof n!=='number') return '<div class="rv-kpi"><div class="ic">🦷</div><div class="v">—</div><div class="l">patients started after a follow-up in Home-Brace</div><span class="d">from the TC Tracker’s call list</span></div>';
+        return '<div class="rv-kpi"><div class="ic">💰</div><div class="v">'+(fee ? money(n*fee) : n.toLocaleString())+'</div><div class="l">'+(fee ? 'from '+n+' '+(n===1?'patient':'patients')+' who started after a follow-up in Home-Brace' : (n===1?'patient':'patients')+' started after a follow-up in Home-Brace')+'</div>'+
+          (fee ? '<span class="d">'+n+' × '+money(fee)+' average case fee</span>' : '<button type="button" class="d" data-calc>add the average case fee for $</button>')+'</div>'; })()+
       (V.ready ? '<div class="rv-kpi"><div class="ic">⏱️</div><div class="v">'+money(V.dollars)+'</div><div class="l">of staff time given back in '+esc(mon)+' (≈ '+Math.round(V.hrs)+' hours)</div><button type="button" class="d" data-calc>≈ '+money(V.year)+' a year · how it’s worked out</button></div>'
                : '<div class="rv-kpi ask"><div class="ic">⏱️</div><div class="v">$ ?</div><div class="l">Staff time given back: set the minutes each job saves and the hourly cost.</div><button type="button" class="d" data-calc>Open the value calculator</button></div>')+
       (typeof m.missed==='number' ? '<div class="rv-kpi"><div class="ic">🦷</div><div class="v">'+m.missed.toLocaleString()+'</div><div class="l">exams OrthoFi saw that weren’t logged</div><span class="d">found for follow-up by the TC Tracker</span></div>'
         : '<div class="rv-kpi"><div class="ic">🦷</div><div class="v">'+(typeof m.consults==='number' ? m.consults.toLocaleString() : '—')+'</div><div class="l">new-patient consults logged</div><span class="d">every office, one tracker</span></div>')+
       '<div class="rv-kpi"><div class="ic">💵</div><div class="v">'+(typeof m.paySheets==='number' ? m.paySheets.toLocaleString() : '—')+'</div><div class="l">payroll sheets sent in Home-Brace</div><span class="d">totals add up themselves</span></div>'+
-      '<div class="rv-kpi"><div class="ic">👥</div><div class="v">'+(share==null ? '—' : Math.round(share*100)+'%')+'</div><div class="l">'+u.used+' of '+u.counted+' people signed in this month'+(u.workSince ? ' · '+u.worked+' did work in an app' : '')+'</div><span class="d">'+esc(delta)+'</span></div></div>';
+'</div>';
     if(CALC) h+=calcHTML();
     /* 2. value by app */
     const cards=appCards(L);
@@ -456,6 +467,7 @@
       '<td class="n"><span data-h="'+r.kind+r.k+'">'+hrs(r)+'</span><small data-s="'+r.kind+r.k+'">'+esc(sum(r))+'</small></td><td class="n" data-d="'+r.kind+r.k+'">'+usd(r)+'</td></tr>';
     let h='<div class="rv-calc"><h3>🧮 Value calculator</h3><p class="sub">Heather and Jessica set the numbers; Home-Brace multiplies them by what happened in '+esc(monthName(L.ym))+' ('+L.daysCounted+' days so far).</p>'+
       '<div class="rv-rate">Average hourly cost of staff time $'+inp('data-rate', s.rate, 0.5)+'<span style="font-weight:400;font-size:12.5px;color:var(--soft,#56627A)">per hour, pay plus taxes and benefits</span></div>'+
+      '<div class="rv-rate">Average case fee $'+inp('data-fee', s.fee, 50)+'<span style="font-weight:400;font-size:12.5px;color:var(--soft,#56627A)">per started patient - for “patients won back”</span></div>'+
       '<div class="rv-cw"><table class="rv-ctbl"><thead><tr><th>What Home-Brace does</th><th class="n">In '+esc(MONTHS[+L.ym.slice(5,7)-1])+'</th><th class="n">Time it saves</th><th class="n">Hours saved</th><th class="n">Value</th></tr></thead><tbody>'+
       '<tr class="grp"><td colspan="5"><b>1. Jobs Home-Brace counts</b> - type the minutes ONE of each saves</td></tr>'+
       V.rows.filter(r=>r.kind==='job').map(row).join('')+
@@ -467,7 +479,8 @@
     return h;
   }
   function readCalc(el){
-    const s={rate:0, jobs:{}, weekly:{}}; const r=el.querySelector('[data-rate]'); if(r) s.rate=num(r.value);
+    const s={rate:0, fee:0, jobs:{}, weekly:{}}; const r=el.querySelector('[data-rate]'); if(r) s.rate=num(r.value);
+    const f=el.querySelector('[data-fee]'); if(f) s.fee=num(f.value);
     el.querySelectorAll('[data-job]').forEach(i=>{ s.jobs[i.dataset.job]=num(i.value); });
     el.querySelectorAll('[data-week]').forEach(i=>{ s.weekly[i.dataset.week]=num(i.value); });
     return s;
@@ -495,6 +508,7 @@
     let t='Home-Brace - '+monthName(L.ym)+'\n\n';
     if(V.ready) t+='Staff time given back: '+money(V.dollars)+' (about '+Math.round(V.hrs)+' hours) - about '+money(V.year)+' a year at this pace\n';
     if(typeof m.missed==='number') t+='Exams OrthoFi saw that weren\'t logged, found for follow-up: '+m.missed+'\n';
+    if(typeof m.wonBack==='number') t+='Patients who started after a follow-up in Home-Brace: '+m.wonBack+(V.set.fee ? ' (about '+money(m.wonBack*V.set.fee)+' at the average case fee)' : '')+'\n';
     if(typeof m.paySheets==='number') t+='Payroll sheets sent in Home-Brace: '+m.paySheets+'\n';
     t+='Signed in this month: '+u.used+' of '+u.counted+' people ('+pct(u.used, u.counted)+')'+(u.workSince ? '; '+u.worked+' did work in an app' : '')+'\n\nValue by app:\n';
     appCards(L).forEach(x=>{ const g=usageOf(x.a, x.t, L); t+='- '+x.a.n+' ('+x.a.use.replace(/\.$/,'')+'): '+g.n+' of '+g.d+' with access '+g.label+(x.r ? '; '+x.r.n+' '+x.r.t : '')+(x.v ? '; '+money(x.v.dollars)+' staff time saved' : '')+'\n'; });
@@ -518,5 +532,5 @@
   }
   /* the same made-up visits for the Usage tab on the sandbox (Cory: "I don't see what you did to the usage app in sandbox") */
   const sample=list=>{ const t=isoDay(new Date()); return sampleRecords((list||[]).some(p=>p.listed) ? list : staffList(), t.slice(0,7), t); };
-  global.PH_REVIEW={mount, WORK, APPS, context, toolUse, sample, _pure:{APPS, WORK, JOBS, WEEKLY, usage, toolUse, hasTool, counted, monthDays, paySheets, tasksDone, consults, missed, prodDays, celebrations, cleanSet, value, history, shiftMonth, usageOf, workSince}};
+  global.PH_REVIEW={mount, WORK, APPS, context, toolUse, sample, _pure:{APPS, WORK, JOBS, WEEKLY, usage, toolUse, hasTool, counted, monthDays, paySheets, tasksDone, consults, missed, prodDays, celebrations, cleanSet, value, history, shiftMonth, usageOf, workSince, wonBack}};
 })(typeof window!=='undefined' ? window : globalThis);
