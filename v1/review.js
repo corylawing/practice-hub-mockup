@@ -9,11 +9,10 @@
    One month, numbers first:
      1. four big numbers: staff time given back in dollars (the value calculator), exams OrthoFi saw that were never
         logged, payroll sheets sent in Home-Brace, and the share of people using it;
-     2. two charts: people using Home-Brace week by week, and each tool used by the people who HAVE it;
-     3. VALUE BY APP: one card per app - what it's used for, its usage ring, the result Home-Brace counted, its dollars
+     2. VALUE BY APP: one card per app - what it's used for, its usage ring, the result Home-Brace counted, its dollars
         from the calculator, and what has been built or upgraded in it. VALUE BELONGS TO THE APP: an upgrade adds to its
         app, it never gets a number of its own;
-     4. THIS MONTH'S WORK: what was delivered, marked New or Upgrade and tied to its app - Before -> Now, who asked; the
+     3. THIS MONTH'S WORK: what was delivered, marked New or Upgrade and tied to its app - Before -> Now, who asked; the
         ask, why and what was built (Jessica's words) open with "Details".
    WHO COUNTS: people on the team list who have signed in at least once since counting began (10/11/2026). Someone who
    has never signed in is in no number, whatever access they have. A tool counts the people who have it (Teams & Access
@@ -130,18 +129,6 @@
     return {counted:ppl.length, used:ppl.filter(p=>usedIn(p, days)).length, worked:ppl.filter(p=>usedIn(p, days, null, true)).length,
       never:(list||[]).filter(p=>p.listed && !p.rec).length, tools, days:days.length, workSince:workSince(list)};
   }
-  /* People using it each week (Monday to Sunday) that touches the month, from the day counting began. */
-  function weekly(list, ym, today, since){
-    const days=monthDays(ym, today); if(!days.length) return [];
-    const ppl=(list||[]).filter(counted), out=[];
-    const d=parseDay(days[0]); d.setDate(d.getDate()-((d.getDay()+6)%7));                  // the Monday on or before the 1st
-    for(let w=isoDay(d); w<=days[days.length-1]; w=addDays(w,7)){
-      const wk=[]; for(let i=0;i<7;i++){ const x=addDays(w,i); if(x<=today && (!since || x>=since)) wk.push(x); }
-      if(wk.length) out.push({from:w, n:ppl.filter(p=>usedIn(p, wk)).length});
-    }
-    return out;
-  }
-
   /* ---------- the results Home-Brace counts itself ---------- */
   const inMonth=(iso, ym)=>{ if(!iso) return false; const d=new Date(iso); return !isNaN(d) && isoDay(d).slice(0,7)===ym; };
   function paySheets(status, ym){
@@ -309,14 +296,6 @@
     .rv-kpi.ask{background:#fff;color:var(--navy,#0F2A4A);border:2px dashed var(--teal,#149B96)}.rv-kpi.ask .l{color:var(--soft,#56627A)}.rv-kpi.ask .d{background:var(--teal,#149B96);color:#fff;text-decoration:none}
     .rv-card{background:#fff;border:1px solid var(--line,#E4E8EE);border-radius:16px;padding:16px 18px;min-width:0}
     .rv-card h3{margin:0;font-size:15.5px;color:var(--navy,#0F2A4A)}.rv-card .sub{margin:2px 0 12px;font-size:12.5px;color:var(--soft,#56627A)}
-    .rv-wk{display:flex;align-items:flex-end;gap:10px;height:150px;border-bottom:1px solid var(--line,#E4E8EE);padding:0 4px}
-    .rv-wk .b{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:5px;min-width:0}
-    .rv-wk .b i{display:block;width:100%;max-width:54px;border-radius:6px 6px 0 0;background:var(--teal,#149B96);min-height:3px}.rv-wk .b.now i{background:var(--navy,#0F2A4A)}
-    .rv-wk .b b{font-size:13px;color:var(--navy,#0F2A4A);font-variant-numeric:tabular-nums}
-    .rv-wx{display:flex;gap:10px;padding:6px 4px 0}.rv-wx span{flex:1;text-align:center;font-size:11.5px;color:var(--soft,#56627A);min-width:0}
-    .rv-hb{display:grid;grid-template-columns:minmax(110px,170px) 1fr 66px;gap:10px;align-items:center;margin-bottom:9px;font-size:13.5px}
-    .rv-hb .t{height:10px;background:var(--line,#E4E8EE);border-radius:99px;overflow:hidden}.rv-hb .t i{display:block;height:100%;background:var(--teal,#149B96);border-radius:99px}
-    .rv-hb .n{text-align:right;color:var(--soft,#56627A);font-size:12.5px;font-variant-numeric:tabular-nums;white-space:nowrap}.rv-hb .n b{color:var(--navy,#0F2A4A);font-size:14px}
     .rv-h{font-size:16px;color:var(--navy,#0F2A4A);margin:4px 2px 10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
     .rv-h small{font-size:12.5px;font-weight:400;color:var(--soft,#56627A)}
     .rv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-bottom:18px}
@@ -386,7 +365,7 @@
         const u=usage(list, ym, c, today);
         const daysCounted=monthDays(ym, today).filter(d=>!since || d>=since).length;
         const S=set ? set : (sample ? SAMPLE_SET : null);
-        LAST={ym, u, prev:(prev.used && (!since || since<=prevYm+'-28')) ? prev : null, m, since, weeks:weekly(list, ym, today, since), val:value(S, m, daysCounted), daysCounted, sample};
+        LAST={ym, u, prev:(prev.used && (!since || since<=prevYm+'-28')) ? prev : null, m, since, val:value(S, m, daysCounted), daysCounted, sample};
         paint(el, today);
         if(ym!==YM || AGAIN){ AGAIN=false; mount(host); }
       }, e=>{ BUSY=false; AGAIN=false; const el=host.querySelector(':scope > .rv'); if(el) el.innerHTML='<div class="rv-empty">The review couldn’t load: '+esc((e && e.message) || 'SharePoint didn’t answer')+'</div>'; });
@@ -420,8 +399,8 @@
     let h='<div class="rv-top"><div class="rv-mon" role="group" aria-label="Month"><button type="button" data-m="-1" aria-label="Earlier month"'+(L.ym<=firstMonth()?' disabled':'')+'>‹</button><b>'+esc(monthName(L.ym))+'</b>'+
       '<button type="button" data-m="1" aria-label="Later month"'+(L.ym>=today.slice(0,7)?' disabled':'')+'>›</button></div>'+(L.sample?'<span class="rv-tag">Sandbox: made-up numbers</span>':'')+
       '<div class="rv-acts"><button type="button" class="btn ghost sm" data-calc>🧮 Value calculator</button><button type="button" class="btn ghost sm" data-copy>📋 Copy for email</button></div></div>';
-    /* 1. the four numbers - then 2. value by app, 3. this month's work, 4. people each week. Nothing else (Cory: "easy to
-       see, use, and understand"). */
+    /* 1. the four numbers - then 2. value by app, 3. this month's work. Nothing else (Cory: "easy to see, use, and
+       understand"; people week by week is the Usage tab's - "Thats double data"). */
     const share=u.counted ? u.used/u.counted : null, was=L.prev ? L.prev.used/L.prev.counted : null;
     const delta=was==null ? 'first month counted' : (Math.round(share*100)>=Math.round(was*100) ? '▲ ' : '▼ ')+'from '+Math.round(was*100)+'% in '+MONTHS[+shiftMonth(L.ym,-1).slice(5,7)-1];
     h+='<div class="rv-kpis">'+
@@ -450,11 +429,6 @@
         '<div class="rv-ba"><div class="bf"><small>Before</small>'+esc(w.before)+'</div><div class="ar" aria-hidden="true">→</div><div class="nw"><small>Now</small>'+esc(w.now)+'</div></div>'+
         (OPEN[key] ? '<div class="rv-det"><div><span>Ask</span><span>'+esc(w.ask)+'</span></div><div><span>Why</span><span>'+esc(w.why)+'</span></div><div><span>Built</span><span>'+esc(w.built)+(w.extra?' <b>Plus:</b> '+esc(w.extra):'')+'</span></div></div>' : '')+
         '</div>'; }).join('')+'</div>' : '<div class="rv-empty">Nothing was delivered in '+esc(monthName(L.ym))+'.</div>';
-    /* 4. people using it, week by week */
-    const wmax=Math.max(1, ...L.weeks.map(w=>w.n));
-    h+='<h2 class="rv-h">People signing in, week by week <small>everyone who has signed in before'+(L.since && L.since.slice(0,7)===L.ym ? ' · counting began '+esc(short(L.since)) : '')+'</small></h2>'+
-      (L.weeks.length ? '<div class="rv-card"><div class="rv-wk">'+L.weeks.map((w,i)=>'<div class="b'+(i===L.weeks.length-1?' now':'')+'"><b>'+w.n+'</b><i style="height:'+Math.max(3, Math.round(w.n/wmax*88))+'%"></i></div>').join('')+'</div>'+
-        '<div class="rv-wx">'+L.weeks.map(w=>'<span>Week of '+esc(short(w.from))+'</span>').join('')+'</div></div>' : '<div class="rv-empty">Nothing counted in this month.</div>');
     h+='<p class="rv-note">“Did work” = something they did was saved (a consult logged, a sheet sent, a task ticked...); “opened” = they only looked. Usage counts only people who have signed in'+(L.since ? ' (counting began '+esc(short(L.since))+')' : '')+' and have that app'+(u.never ? '. '+u.never+' on the team list have never signed in, so they’re in no number' : '')+'. Staff time is an estimate from the value calculator.</p>';
     el.innerHTML=h;
     el.onclick=e=>{ const b=e.target.closest('button'); if(!b) return;
@@ -544,5 +518,5 @@
   }
   /* the same made-up visits for the Usage tab on the sandbox (Cory: "I don't see what you did to the usage app in sandbox") */
   const sample=list=>{ const t=isoDay(new Date()); return sampleRecords((list||[]).some(p=>p.listed) ? list : staffList(), t.slice(0,7), t); };
-  global.PH_REVIEW={mount, WORK, APPS, context, toolUse, sample, _pure:{APPS, WORK, JOBS, WEEKLY, usage, toolUse, weekly, hasTool, counted, monthDays, paySheets, tasksDone, consults, missed, prodDays, celebrations, cleanSet, value, history, shiftMonth, usageOf, workSince}};
+  global.PH_REVIEW={mount, WORK, APPS, context, toolUse, sample, _pure:{APPS, WORK, JOBS, WEEKLY, usage, toolUse, hasTool, counted, monthDays, paySheets, tasksDone, consults, missed, prodDays, celebrations, cleanSet, value, history, shiftMonth, usageOf, workSince}};
 })(typeof window!=='undefined' ? window : globalThis);

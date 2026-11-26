@@ -53,9 +53,6 @@ t('...and an override of "none" takes an app away', !R.hasTool(Object.assign({},
 t('this month = the 1st to today', R.monthDays(YM, TODAY).length===26 && R.monthDays(YM, TODAY)[25]==='2026-11-26');
 t('a finished month = all its days', R.monthDays('2026-10', TODAY).length===31);
 t('months step across the year', R.shiftMonth('2026-12', 1)==='2027-01' && R.shiftMonth('2027-01', -1)==='2026-12');
-const W=R.weekly(L, YM, TODAY, '2026-11-10');
-t('weeks start on Monday and only from the day counting began', W.length===3 && W[0].from==='2026-11-09' && W[2].from==='2026-11-23');
-t('people per week (Tia 12th, Olive 20th / Sam 18th, Pat 21st / Una 22nd)', W[0].n===1 && W[1].n===4 && W[2].n===0);
 
 /* The counted results - counts only, never names or amounts */
 const status={v:1, p:{'2026-24':{sent:{carlsbad:'2026-11-16T15:00:00Z', hobbs:'2026-11-17T19:00:00Z'}, entered:'2026-11-18T15:00:00Z'},

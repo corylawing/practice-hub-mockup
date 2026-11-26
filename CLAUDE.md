@@ -39,7 +39,7 @@ logged), payroll sheets sent (ph_pay_status), % of people using it (vs last mont
 "Used for" (Cory: "define better what its used for"), usage ring, its counted result, its $; VALUE BELONGS TO THE APP
 (Cory: upgrades "should contribute to the overall value of the specific app") - deliveries never get their own number;
 (3) THIS MONTH'S WORK = `WORK` in review.js (month, app, kind new|upgrade, before/now, ask/why/built under Details) - ADD
-THE MONTH'S LINES WHEN SOMETHING SHIPS; (4) people using it week by week. Copy for email. COUNTING RULE (Cory: "You
+THE MONTH'S LINES WHEN SOMETHING SHIPS. (No week-by-week chart - Cory: the Usage tab has it, "Thats double data".) Copy for email. COUNTING RULE (Cory: "You
 shouldn't count people who have never logged in, even if they have access"): only team-list people with a visit record;
 an app counts the people who HAVE it (Teams & Access, Admin's per-person access override - rosterView now carries
 `access` -, payroll senders, chat pilot list; admins have everything on) and only while it is on for staff
