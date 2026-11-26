@@ -163,6 +163,12 @@
       if(!started || String(start).slice(0,7)!==ym || r.sameDay==='Yes') return false;
       return (Array.isArray(r.calls) ? r.calls : []).some(c=>c && String(c.day || String(c.at||'').slice(0,10))<=start); }).length;
   }
+  /* FOUND BY HOME-BRACE (26/11/2026): patients the TC marked "Found from the OrthoFi check" (r.found - tc.html) - an exam
+     nobody had logged, so nobody would have called them back - who STARTED in the month. Money Home-Brace brought in. */
+  const startedIn=(r, ym)=>{ const started=r.fuStatus==='Closed - started' || r.outcome==='Started', start=r.startDate || (r.outcome==='Started' ? r.date : '');
+    return started && String(start).slice(0,7)===ym; };
+  function foundStarts(list, ym){ return (list||[]).filter(r=>live_(r) && r.found==='Yes' && startedIn(r, ym)).length; }
+  function foundLogged(list, ym){ return (list||[]).filter(r=>live_(r) && r.found==='Yes' && String(r.foundAt||r.date||'').slice(0,7)===ym).length; }
   function prodDays(logs, ym){
     let n=0; (logs||[]).forEach(list=>(Array.isArray(list) ? list : []).forEach(e=>{
       if(e && e.from && e.from.how==='schedule' && inMonth(e.at, ym)) n+=(e.changes||[]).length; }));
@@ -226,7 +232,7 @@
     sc.src=me_ ? me_.getAttribute('src').replace(/user\.js/, name) : name; sc.onload=()=>ok(true); sc.onerror=()=>ok(false); document.head.appendChild(sc); }); }
   const CACHE={};
   function loadMetrics(ym, today){
-    if(!live()) return Promise.resolve({paySheets:16, consults:214, missed:23, wonBack:9, tasksDone:23, prodDays:96, offices:8, celebrations:11, sample:true});
+    if(!live()) return Promise.resolve({paySheets:16, consults:214, missed:23, wonBack:9, found:3, foundLogged:11, tasksDone:23, prodDays:96, offices:8, celebrations:11, sample:true});
     if(CACHE[ym] && Date.now()-CACHE[ym].at<10*60e3) return CACHE[ym].p;
     const S=global.PH_STORE, P=global.PH, out={offices:(P.officeNames ? P.officeNames() : []).length}, y=ym.slice(0,4);
     const first=ym+'-01', lastD=isoDay(new Date(+y, +ym.slice(5,7), 0)), last=lastD<today ? lastD : today;
@@ -236,7 +242,7 @@
     const pa=S.get('ph_celebrate').then(r=>{ out.celebrations=celebrations(r, ym); }, ()=>{});
     const tcList=(global.TCSTORE && global.TC ? Promise.resolve() : script('tcstore.js').then(()=>script('tc.js')))
       .then(()=>global.TCSTORE.getAll(global.TC.LOG_PREFIX, {partial:true})).then(L=>global.TC.consultsFrom(L));
-    const tc=tcList.then(list=>{ out.consults=consults(list, ym); out.wonBack=wonBack(list, ym);
+    const tc=tcList.then(list=>{ out.consults=consults(list, ym); out.wonBack=wonBack(list, ym); out.found=foundStarts(list, ym); out.foundLogged=foundLogged(list, ym);
       return (global.PH_ORTHOFI ? Promise.resolve() : script('orthofi.js')).then(()=>{ const O=global.PH_ORTHOFI; if(!O || !O.ask) return;
         const NEW={keptExamFlag:['kept exam'], examTypeName:['new']}, offs=P.officeNames ? P.officeNames() : [];
         return S.get(O.KEY).then(v=>O.cleanMap(v)).then(M=>Promise.all(offs.map(o=>{ const locs=O.locsOf(M, o); if(!locs.length) return [o, null];
@@ -411,10 +417,12 @@
     /* 1. the four numbers - then 2. value by app, 3. this month's work. Nothing else (Cory: "easy to see, use, and
        understand"; people week by week is the Usage tab's - "Thats double data"). */
     h+='<div class="rv-kpis">'+
-      (()=>{ const n=m.wonBack, fee=V.set.fee;
-        if(typeof n!=='number') return '<div class="rv-kpi"><div class="ic">🦷</div><div class="v">—</div><div class="l">patients started after a follow-up in Home-Brace</div><span class="d">from the TC Tracker’s call list</span></div>';
-        return '<div class="rv-kpi"><div class="ic">💰</div><div class="v">'+(fee ? money(n*fee) : n.toLocaleString())+'</div><div class="l">'+(fee ? 'from '+n+' '+(n===1?'patient':'patients')+' who started after a follow-up in Home-Brace' : (n===1?'patient':'patients')+' started after a follow-up in Home-Brace')+'</div>'+
-          (fee ? '<span class="d">'+n+' × '+money(fee)+' average case fee</span>' : '<button type="button" class="d" data-calc>add the average case fee for $</button>')+'</div>'; })()+
+      (()=>{ const fee=V.set.fee, f=m.found, w=m.wonBack;
+        if(typeof f==='number' && f>0) return '<div class="rv-kpi"><div class="ic">🔎</div><div class="v">'+(fee ? money(f*fee) : f.toLocaleString())+'</div><div class="l">'+(fee ? 'from ' : '')+f+' '+(f===1?'patient':'patients')+' Home-Brace found who started - exams nobody had logged</div>'+
+          (fee ? '<span class="d">'+f+' × '+money(fee)+' average case fee'+(typeof w==='number' && w>f ? ' · +'+(w-f)+' more after a follow-up' : '')+'</span>' : '<button type="button" class="d" data-calc>add the average case fee for $</button>')+'</div>';
+        if(typeof w!=='number') return '<div class="rv-kpi"><div class="ic">🔎</div><div class="v">—</div><div class="l">patients Home-Brace found who started</div><span class="d">from the TC Tracker</span></div>';
+        return '<div class="rv-kpi"><div class="ic">💰</div><div class="v">'+(fee ? money(w*fee) : w.toLocaleString())+'</div><div class="l">'+(fee ? 'from '+w+' '+(w===1?'patient':'patients')+' who started after a follow-up in Home-Brace' : (w===1?'patient':'patients')+' started after a follow-up in Home-Brace')+'</div>'+
+          (fee ? '<span class="d">'+w+' × '+money(fee)+' average case fee'+(typeof m.foundLogged==='number' ? ' · '+m.foundLogged+' found so far' : '')+'</span>' : '<button type="button" class="d" data-calc>add the average case fee for $</button>')+'</div>'; })()+
       (V.ready ? '<div class="rv-kpi"><div class="ic">⏱️</div><div class="v">'+money(V.dollars)+'</div><div class="l">of staff time given back in '+esc(mon)+' (≈ '+Math.round(V.hrs)+' hours)</div><button type="button" class="d" data-calc>≈ '+money(V.year)+' a year · how it’s worked out</button></div>'
                : '<div class="rv-kpi ask"><div class="ic">⏱️</div><div class="v">$ ?</div><div class="l">Staff time given back: set the minutes each job saves and the hourly cost.</div><button type="button" class="d" data-calc>Open the value calculator</button></div>')+
       (typeof m.missed==='number' ? '<div class="rv-kpi"><div class="ic">🦷</div><div class="v">'+m.missed.toLocaleString()+'</div><div class="l">exams OrthoFi saw that weren’t logged</div><span class="d">found for follow-up by the TC Tracker</span></div>'
@@ -508,6 +516,7 @@
     let t='Home-Brace - '+monthName(L.ym)+'\n\n';
     if(V.ready) t+='Staff time given back: '+money(V.dollars)+' (about '+Math.round(V.hrs)+' hours) - about '+money(V.year)+' a year at this pace\n';
     if(typeof m.missed==='number') t+='Exams OrthoFi saw that weren\'t logged, found for follow-up: '+m.missed+'\n';
+    if(typeof m.found==='number' && m.found>0) t+='Patients Home-Brace found (exams nobody had logged) who started: '+m.found+(V.set.fee ? ' (about '+money(m.found*V.set.fee)+' at the average case fee)' : '')+'\n';
     if(typeof m.wonBack==='number') t+='Patients who started after a follow-up in Home-Brace: '+m.wonBack+(V.set.fee ? ' (about '+money(m.wonBack*V.set.fee)+' at the average case fee)' : '')+'\n';
     if(typeof m.paySheets==='number') t+='Payroll sheets sent in Home-Brace: '+m.paySheets+'\n';
     t+='Signed in this month: '+u.used+' of '+u.counted+' people ('+pct(u.used, u.counted)+')'+(u.workSince ? '; '+u.worked+' did work in an app' : '')+'\n\nValue by app:\n';
@@ -532,5 +541,5 @@
   }
   /* the same made-up visits for the Usage tab on the sandbox (Cory: "I don't see what you did to the usage app in sandbox") */
   const sample=list=>{ const t=isoDay(new Date()); return sampleRecords((list||[]).some(p=>p.listed) ? list : staffList(), t.slice(0,7), t); };
-  global.PH_REVIEW={mount, WORK, APPS, context, toolUse, sample, _pure:{APPS, WORK, JOBS, WEEKLY, usage, toolUse, hasTool, counted, monthDays, paySheets, tasksDone, consults, missed, prodDays, celebrations, cleanSet, value, history, shiftMonth, usageOf, workSince, wonBack}};
+  global.PH_REVIEW={mount, WORK, APPS, context, toolUse, sample, _pure:{APPS, WORK, JOBS, WEEKLY, usage, toolUse, hasTool, counted, monthDays, paySheets, tasksDone, consults, missed, prodDays, celebrations, cleanSet, value, history, shiftMonth, usageOf, workSince, wonBack, foundStarts, foundLogged}};
 })(typeof window!=='undefined' ? window : globalThis);

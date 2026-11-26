@@ -363,15 +363,15 @@
     *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}
   }
 </style>
-<script src="user.js?v=hc275"></script>
+<script src="user.js?v=hc276"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc275"></script>
-  <script src="gate.js?v=hc275"></script>
-  <script src="_staff.js?v=hc275"></script>
-  <script src="tc.js?v=hc275"></script>
-  <script src="tcstore.js?v=hc275"></script>
-  <script src="orthofi.js?v=hc275"></script>
-  <script src="schedrec.js?v=hc275"></script>
+  <script src="store.js?v=hc276"></script>
+  <script src="gate.js?v=hc276"></script>
+  <script src="_staff.js?v=hc276"></script>
+  <script src="tc.js?v=hc276"></script>
+  <script src="tcstore.js?v=hc276"></script>
+  <script src="orthofi.js?v=hc276"></script>
+  <script src="schedrec.js?v=hc276"></script>
 </head>
 <body>
 <div class="ribbon">SANDBOX — made-up patients. Use “Try it as” to see it as a TC, an office manager or Selene.</div>
@@ -974,7 +974,7 @@
     const pill=(o,l)=>{ const d=l-o; return d===0 ? '<span class="ofpill ok">✓ All logged</span>' : d<0 ? '<span class="ofpill neg">'+(-d)+' not logged</span>' : '<span class="ofpill pos">'+d+' more than OrthoFi</span>'; };
     const when=esc(fmtM(month))+(sp.open?' · through '+esc(fmtS(sp.last)):'');
     let h='<div class="card ofcheck"><div class="ofhead"><h2>Logged vs OrthoFi</h2><span class="small muted">'+when+(sample?' · sample OrthoFi numbers (sandbox)':'')+'</span></div>'+
-      '<p class="sub">New-patient exams kept in OrthoFi next to the consults logged here - a check that catches anything missed. The TC Tracker stays the place to log.</p>';
+      '<p class="sub">New-patient exams kept in OrthoFi next to the consults logged here - a check that catches anything missed. The TC Tracker stays the place to log. <b>Found one in OrthoFi?</b> Log it and answer <b>“Found from the OrthoFi check: Yes”</b> - it counts as found by Home-Brace.</p>';
     if(ready.length>1){
       const O=sum(ready.map(o=>lined[o].o),'ex'), L=sum(ready.map(o=>lined[o].l),'ex'), share=O?Math.min(100, Math.round(L/O*100)):0;
       h+='<div class="ofsum"><div><b>'+O+'</b> exams in OrthoFi · <b>'+L+'</b> logged'+(L<O?' · <span class="negt">'+(O-L)+' not logged</span>':L>O?' · <span class="post">'+(L-O)+' more than OrthoFi</span>':' · <span class="okt">all logged</span>')+'</div>'+
@@ -1271,6 +1271,10 @@
       field('Consult date','date','date',{req:true})+field('Time','time','time')+
       '<div class="fld full"><label>Consult type</label>'+(ro?'<b>'+esc(r.type||'—')+'</b>':chips('type', LISTS.types, r.type))+'</div>'+
       '<div class="fld full"><label>Lead source</label>'+(ro?'<b>'+esc(r.lead||'—')+'</b>':chips('lead', LISTS.leads, r.lead))+'</div>'+
+      /* FOUND BY HOME-BRACE (26/11/2026, Cory: "build the found tag"): OrthoFi only ever sends Home-Brace totals, so the TC
+         says when this patient is one the "Logged vs OrthoFi" check showed as never logged. Kept on the consult (found,
+         foundAt, foundBy); the Monthly review counts the ones who start - money that would otherwise have been lost. */
+      '<div class="fld full"><label>Found from the OrthoFi check? <span class="small muted">An exam OrthoFi had that was never logged here</span></label>'+(ro?'<b>'+(r.found==='Yes'?'🔎 Yes - found by Home-Brace':'No')+'</b>':yesNo('found', r.found))+'</div>'+
       (r.office && tcs.length?'<div class="fld"><label>TC</label><select'+attr('in','rec')+attr('f','tc')+(ro?' disabled':'')+'>'+tcs.map(x=>'<option'+(x.name===r.tc?' selected':'')+'>'+esc(x.name)+'</option>').join('')+'</select></div>':'')+
       '</div></div>';
     h+='<div class="grp"><div class="gl">Outcome</div>'+(ro?ocBadge(r.outcome):
@@ -1473,6 +1477,8 @@
       return;
     }
     d.busy=true; d.err=''; drawDlg();
+    if(r.found==='Yes'){ if(!r.foundAt){ r.foundAt=today(); r.foundBy=myMail()||myName(); } }      // found by Home-Brace: when, and who said so
+    else { delete r.foundAt; delete r.foundBy; }
     const jobs=[persist(r, d.isNew?null:d.origKey, d.isNew?null:d.orig)];
     if(r.outcome==='Rescheduled / Cancelled' && d.newDate) jobs.push(persist(copyFor(r, d.newDate, d.newTime, 'Rescheduled from '+fmtS(r.date)), null));
     Promise.all(jobs).then(w=>{ const warn=w.filter(Boolean)[0]; if(DLG===d) closeDlg(); render(); toast(warn || (d.isNew?'✓ Consult saved':'✓ Saved'), !!warn); },
@@ -1678,7 +1684,7 @@
 })();
 </script>
 <script>PH.nav('tc');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(window.TCPAGE)TCPAGE.identity();});document.addEventListener('ph-identity',function(){if(window.TCPAGE)TCPAGE.identity();});</script>
-<script src="tour.js?v=hc275"></script>
+<script src="tour.js?v=hc276"></script>
 <script>
 Tour.init([
   {sel:'#offbar', title:'Your office', body:'You see the offices you work at. Heather, Selene and leadership see every office and can pick one.'},

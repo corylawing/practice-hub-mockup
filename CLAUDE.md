@@ -70,7 +70,15 @@ consults across the practice, payroll sheets in (of offices that send), practice
 week. A box only when the person can see the source (TC: tc view/admin; payroll: payLevel; month: dashboard view;
 production books must be on Home-Brace mode) AND it read - never a false zero (payroll status unread = no box). No
 tasks/birthdays (own cards - no double data). Counts only; consults/month counts kept 5/30 min in sessionStorage.
-Lazy-loads schedrec / tcstore+tc / workbook+prodbook+prodstore. Sandbox: made-up per persona. test/yourday.test.js. Personal-email sign-in = invite staff as Entra GUESTS with
+Lazy-loads schedrec / tcstore+tc / workbook+prodbook+prodstore. Sandbox: made-up per persona. test/yourday.test.js.
+FOUND BY HOME-BRACE (hc276, Cory "build the found tag"): the Log/Edit consult form asks "Found from the OrthoFi check?"
+(Yes/No, r.found); Save stamps foundAt (practice day) + foundBy, clears both on No. OrthoFi only sends Home-Brace TOTALS,
+so the TC says which patient it was. The OrthoFi check card tells TCs to answer Yes. Monthly review: first tile = found
+patients who STARTED in the month x average case fee (review.js foundStarts); until there is one it falls back to
+"started after a follow-up" (+ "N found so far"). LIVE CHECK 26/11 (read-only, Cory's Safari, counts only): no consult
+logged 2+ days late since the check went live 24/11 = nothing caught yet. November so far OrthoFi new exams vs logged:
+Carlsbad 45/52, Hobbs 28/31, San Angelo 39/41 (fully logged); Clovis 34/7, Lubbock 29/5, Mansfield 30/0, Cruces LCO 27/0,
+Cruces FFO 17/0 = ~125 November exams not in the TC Tracker (5 offices barely/not using it) - asked Cory to find out why. Personal-email sign-in = invite staff as Entra GUESTS with
 the email one-time passcode (Cory to ask staff + IT); guests stay out of patient data (TC Tracker via Teams & Access). NEXT (Cory's plan): "Your day" card on Home for
 doctors/OMs (and take the app tiles off Home - Cory: they repeat the menu), then a morning phone alert.
 

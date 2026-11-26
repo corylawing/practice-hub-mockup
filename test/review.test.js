@@ -149,4 +149,21 @@ t('no <input type="month"> (Safari types it)', !/type="month"/.test(src));
   t('won back: started this month, not same-day, with a call logged on or before the start', R.wonBack(W, YM)===1);
   t('the average case fee is kept (and capped)', R.cleanSet({fee:5200}).fee===5200 && R.cleanSet({fee:-3}).fee===0 && R.cleanSet({fee:1e9}).fee===50000);
 }
+
+/* FOUND BY HOME-BRACE - the TC said "Found from the OrthoFi check: Yes" (Cory 26/11: "build the found tag") */
+{
+  const F=[
+    {date:'2026-11-02', found:'Yes', foundAt:'2026-11-03', outcome:'Pending', fuStatus:'Closed - started', startDate:'2026-11-20'},   // found, started this month
+    {date:'2026-11-04', found:'Yes', foundAt:'2026-11-05', outcome:'Pending'},                                                    // found, not started yet
+    {date:'2026-10-20', found:'Yes', foundAt:'2026-10-22', outcome:'Started', startDate:'2026-10-25'},                           // started last month
+    {date:'2026-11-06', outcome:'Started', startDate:'2026-11-06'},                                                              // not found by the check
+    {date:'2026-11-07', found:'Yes', foundAt:'2026-11-08', outcome:'Started', startDate:'2026-11-09', deleted:true}               // deleted
+  ];
+  t('found who started: only the ones the TC marked found, started this month', R.foundStarts(F, YM)===1);
+  t('found this month (marked when logged), started or not', R.foundLogged(F, YM)===2);
+  const tch=fs.readFileSync(path.join(__dirname,'..','v1','tc.html'),'utf8');
+  t('the consult asks "Found from the OrthoFi check?"', /Found from the OrthoFi check\?/.test(tch) && /yesNo\('found', r\.found\)/.test(tch));
+  t('saving stamps when and who (and clears them on No)', /if\(r\.found==='Yes'\)\{ if\(!r\.foundAt\)\{ r\.foundAt=today\(\); r\.foundBy=myMail\(\)\|\|myName\(\); \} \}/.test(tch) && /else \{ delete r\.foundAt; delete r\.foundBy; \}/.test(tch));
+  t('the OrthoFi check tells TCs how to count one', /Found one in OrthoFi\?/.test(tch));
+}
 console.log(pass+' passed, '+fail+' failed'); if(fail) process.exit(1);
