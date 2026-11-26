@@ -170,12 +170,13 @@
   }
 
 </style>
-<script src="user.js?v=hc274"></script>
+<script src="user.js?v=hc275"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc274"></script>
-  <script src="gate.js?v=hc274"></script>
-  <script src="party.js?v=hc274"></script>
-  <script src="tasks.js?v=hc274"></script>
+  <script src="store.js?v=hc275"></script>
+  <script src="gate.js?v=hc275"></script>
+  <script src="party.js?v=hc275"></script>
+  <script src="tasks.js?v=hc275"></script>
+  <script src="yourday.js?v=hc275"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — this is the logged-in home. Use “Viewing as” to see how the app changes for each role.</div>
@@ -196,15 +197,13 @@
   </div>
 
   <div class="whoami" id="whoami"><span class="av" id="who_av"></span><div><div class="hi"><h1 id="who_name"></h1><span class="dp" id="who_dp" aria-hidden="true"></span></div><div class="sub" id="who_sub"></div></div></div>
-  <div class="summary" id="summary"></div>
+  <div id="yourday" hidden></div>
 
   <div id="party" hidden></div>
 
   <div id="tasks" hidden></div>
 
   <div class="updates" id="updates"></div>
-
-  <div id="tiles"></div>
 
   <div class="note"><b>How this works:</b> each person logs in and sees only the <b>sections</b> their role &amp; team allow — and within a section, only the <b>folders</b> meant for them (their office, their brand). What they can <i>do</i> is set per section: view, add files, edit, or manage. Admins set all of this in the Admin console.<br><br><b>Two-way with your Microsoft drive:</b> documents live on <b>SharePoint/OneDrive</b> and the hub links to them. Change a file on the drive → it shows here (and editors get notified). Update data or a doc from inside the hub → it writes back to the same file on the drive. One source of truth, never a second copy to keep in sync.</div>
 </div>
@@ -406,12 +405,18 @@
     paintAvatar();
     greet();
     el('who_sub').textContent=cur.sub;
-    const nSec=SECTIONS.filter(s=>s.kind==='tool'&&(!s.adminOnly||cur.id==='admin')&&cur.sec[s.k]).length + (foldersFor(cur).length?1:0);
-    const docScope = cur.scope==='all'?'all offices':('the '+esc((cur.scopes||[cur.scope]).join(', '))+' folder'+((cur.scopes||[]).length>1?'s':'')+' only');
-    el('summary').innerHTML='Sees <b>'+nSec+'</b> section'+(nSec===1?'':'s')+'. In Documents, sees <b>'+docScope+'</b>.'+(cur.id==='admin'?' Plus the <b>Admin console</b> to manage everyone.':'');
-    PH.nav('home'); renderUpdates(cur); renderTiles(cur);
+    PH.nav('home'); renderUpdates(cur);
+    /* YOUR DAY (26/11/2026) replaces the app tiles and the "Sees N sections" line (Cory: the tiles repeat the menu). */
+    yourDay();
     if(typeof renderTasks==='function' && TASKS_READY) try{ renderTasks(); }catch(_){}
   }
+
+  /* Your day: drawn once identity has settled (sign-in fires several updates), a moment after the last one. */
+  let YD_T=null;
+  function yourDay(){ clearTimeout(YD_T); YD_T=setTimeout(function(){
+    if(!window.PH_DAY) return;
+    if(PH.isLive && PH.isLive() && PH.learning && PH.learning()){ yourDay(); return; }
+    try{ PH_DAY.mount(el('yourday'), PH_DAY.whoFrom(cur)); }catch(e){ el('yourday').hidden=true; } }, 400); }
 
   // build the dropdown
   el('persona').innerHTML=PERSONAS.map(p=>'<option value="'+p.id+'">'+p.name+(p.scope!=='all'&&p.id!=='admin'?' — '+p.scope:'')+'</option>').join('');
@@ -494,15 +499,15 @@
 })();
 </script>
 <script>PH.nav('home');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();if(PH.loadActivity)PH.loadActivity().then(function(){return PH.loadSeen?PH.loadSeen():null;}).then(function(){if(window.HOME&&HOME.refreshUpdates)HOME.refreshUpdates();if(PH.refreshBell)PH.refreshBell();});});</script>
-<script src="tour.js?v=hc274"></script>
+<script src="tour.js?v=hc275"></script>
 <script>
 Tour.init([
   {sel:'.ph-av', title:'This is you', body:'Your name and photo, top right. Tap it any time for <b>My profile</b> \u2014 your photo, preferred name, phone and \u201cAbout me\u201d. Those follow you between devices.'},
   /* Only shown in the sandbox — the switcher doesn't exist in production, and tour.js
      skips a step whose target is missing. */
   {sel:'.viewas', title:'Try it as your staff', body:'A sandbox control for trying roles out. Switch to an office manager or a front-desk person and watch the whole app change around them. In the live hub people simply sign in as themselves, and an administrator can use <b>View as</b> in Admin \u2192 People to check what someone sees.'},
+  {sel:'#yourday', title:'Your day', body:'The few things that matter today, for you: where you are, consults booked, payroll and how the month is going against goal. A doctor, an office manager and leadership each see their own. Tap any box to open the page behind it.'},
   {sel:'#updates', title:'What\u2019s new for me', body:'Whenever a document or a number changes, the people it affects see it here \u2014 filtered by their <b>role, team and location</b>. A Texas policy never reaches New Mexico staff.'},
-  {sel:'#tiles', title:'Your sections', body:'Everyone lands here and only sees the tiles they\u2019re allowed to open. The label on each tile (<b>View only</b>, <b>Add files</b>, <b>Full control</b>) says what they can do inside.'},
   {sel:'.note', title:'The whole idea, in one line', body:'Your <b>team</b> decides what you can do. Your <b>location</b> decides whose offices you see. Everything else follows from those two settings.'}
 ], {key:'home', title:'Getting started', launch:'Show me around the whole app', next:{label:'the Dashboard', href:'index.html'}});
 </script>

@@ -245,7 +245,7 @@ t('chained changes keep the last record when a step changes nothing (Change, Nud
   /let rec; late\.forEach\(x=>\{ rec=R\.nudged\(rec\|\|cur, x\.id, new Date\(\)\) \|\| rec; \}\); return rec;/.test(P));
 t('the sheet can’t be closed while a new task is saving', /case 'sheetx': if\(FORM && FORM\.busy\) return; return closeSheet\(\);/.test(P) && /if\(e\.key==='Escape' && FORM\)\{ if\(FORM\.busy\) return; return closeSheet\(\); \}/.test(P));
 t('Home: no second ph-identity listener reading ph_tasks again (set() already redraws the tasks)', !/addEventListener\('ph-identity', function\(\)\{ try\{ renderTasks\(\); \}catch\(_\)\{\} \}\)/.test(HOME) && /tasksRead\(R\.KEY\)\.then\(got/.test(HOME) && /partyRead\(\)\.then\(r=>draw/.test(HOME));
-t('Home: office names on the Documents tile and the summary are escaped', /'<span class="locchip">'\+esc\(l\)\+'<\/span>'/.test(HOME) && /'the '\+esc\(\(cur\.scopes\|\|\[cur\.scope\]\)\.join\(', '\)\)/.test(HOME));
+t('Home: office names on the Documents tile are escaped; the "Sees N sections" summary is gone (Your day, 26/11/2026)', /'<span class="locchip">'\+esc\(l\)\+'<\/span>'/.test(HOME) && !/id="summary"/.test(HOME));
 (async ()=>{
   /* tasks.html send(): run as written, against a stand-in store answering each way store.js can */
   const sendSrc=afn(P,'send'), saveSrc=afn(P,'save'), changeSrc=afn(P,'saveChange');

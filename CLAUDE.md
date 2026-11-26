@@ -61,8 +61,16 @@ home show "checked it"). "Did work" starts the day it ships (workSince) - before
 PATIENTS WON BACK (hc274; Cory "1. I guess" to showing money found): the first big tile = consults that STARTED in the
 month, were not same-day, with a call-list line (r.calls) on or before the start date (review.js wonBack) x the AVERAGE
 CASE FEE Heather types in the value calculator (ph_review_set.fee); without a fee it shows the count. It replaced the
-"% signed in" tile (Usage tab has that). NEXT: "Your day" card on Home - mock-up sent 26/11 (doctor / office manager /
-leadership), waiting on Cory's OK; app tiles come off Home. Personal-email sign-in = invite staff as Entra GUESTS with
+"% signed in" tile (Usage tab has that). YOUR DAY ON HOME (hc275, Cory "build it but userfriendly"): `v1/yourday.js` (PH_DAY), home.html #yourday after the
+greeting; the app TILES and the "Sees N sections" line are GONE from Home (Cory: they repeat the menu; renderTiles is
+unused). Big boxes, each opens its page: doctor = where today (+ tomorrow) from the Schedule (ph_docs name match, last
+name only works), consults today there, that office's month vs goal/pace; office manager = office today, consults +
+calls due, payroll #n for their sheet, month vs goal; TC = office today, consults + calls; leadership = offices open,
+consults across the practice, payroll sheets in (of offices that send), practice month; staff = office today + the
+week. A box only when the person can see the source (TC: tc view/admin; payroll: payLevel; month: dashboard view;
+production books must be on Home-Brace mode) AND it read - never a false zero (payroll status unread = no box). No
+tasks/birthdays (own cards - no double data). Counts only; consults/month counts kept 5/30 min in sessionStorage.
+Lazy-loads schedrec / tcstore+tc / workbook+prodbook+prodstore. Sandbox: made-up per persona. test/yourday.test.js. Personal-email sign-in = invite staff as Entra GUESTS with
 the email one-time passcode (Cory to ask staff + IT); guests stay out of patient data (TC Tracker via Teams & Access). NEXT (Cory's plan): "Your day" card on Home for
 doctors/OMs (and take the app tiles off Home - Cory: they repeat the menu), then a morning phone alert.
 
