@@ -39,18 +39,18 @@
   /* ---------- THE APPS: what each is for, who HAS it, and how its value is counted ----------
      metric = the result Home-Brace counts for it (alt when that can't be read); jobs/weekly = its value calculator rows. */
   const APPS=[
-    {k:'payroll',    n:'Payroll',              icon:'💵', use:'Every office sends its payroll to Heather each pay period.', on:c=>c.on.payroll, has:(p,c)=>c.lv(p,'payroll')>=RANK.view || c.senders.has(p.email), metric:'paySheets'},
-    {k:'tc',         n:'TC Tracker',           icon:'🗂️', use:'TCs log every new-patient consult and work the call list.', on:c=>c.on.tc, has:(p,c)=>c.lv(p,'tc')>=RANK.view, metric:'missed', alt:'consults'},
-    {k:'tasks',      n:'Tasks',                icon:'✅', use:'Leaders give staff jobs and see who’s done them.', on:c=>c.on.tasks, has:()=>true, metric:'tasksDone'},
-    {k:'dashboard',  n:'Production Dashboard', icon:'📊', use:'Production against goal and pace, every office.', on:()=>true, has:(p,c)=>c.lv(p,'dashboard')>=RANK.view, metric:'prodDays'},
-    {k:'production', n:'Enter Production',     icon:'📝', use:'Typing the month’s production numbers.', on:()=>true, has:(p,c)=>c.lv(p,'production')>=RANK.edit},
-    {k:'monthly',    n:'Monthly Report',       icon:'📈', use:'Each office’s month-end numbers, for Heather and the doctors.', on:()=>true, has:(p,c)=>c.on.monthly && c.lv(p,'monthly')>=RANK.view, metric:'offices'},
-    {k:'schedule',   n:'Schedule',             icon:'📅', use:'Who works where, each day.', on:()=>true, has:(p,c)=>c.lv(p,'schedule')>=RANK.view},
-    {k:'chat',       n:'Team Chat',            icon:'💬', use:'Messages, photos and videos between staff, with phone alerts.', on:()=>true, has:(p,c)=>c.on.chat || c.pilot.has(p.email)},
-    {k:'documents',  n:'Documents',            icon:'📁', use:'Forms, policies and files for each office.', on:()=>true, has:(p,c)=>c.lv(p,'documents')>=RANK.view},
-    {k:'marketing',  n:'Marketing',            icon:'📣', use:'Events and social posts.', on:()=>true, has:(p,c)=>c.lv(p,'marketing')>=RANK.view},
-    {k:'team',       n:'Team',                 icon:'👥', use:'Everyone’s contact card.', on:()=>true, has:(p,c)=>c.lv(p,'team')>=RANK.view},
-    {k:'home',       n:'Home',                 icon:'🏠', use:'Each person’s day, tasks, updates and celebrations.', on:()=>true, has:()=>true, metric:'celebrations'}
+    {k:'payroll',    n:'Payroll',              icon:'💵', use:'Every office sends its payroll to Heather each pay period.', work:'filled in or sent a sheet', on:c=>c.on.payroll, has:(p,c)=>c.lv(p,'payroll')>=RANK.view || c.senders.has(p.email), metric:'paySheets'},
+    {k:'tc',         n:'TC Tracker',           icon:'🗂️', use:'TCs log every new-patient consult and work the call list.', work:'logged or updated a consult', on:c=>c.on.tc, has:(p,c)=>c.lv(p,'tc')>=RANK.view, metric:'missed', alt:'consults'},
+    {k:'tasks',      n:'Tasks',                icon:'✅', use:'Leaders give staff jobs and see who’s done them.', work:'gave or ticked off a task', on:c=>c.on.tasks, has:()=>true, metric:'tasksDone'},
+    {k:'dashboard',  n:'Production Dashboard', icon:'📊', use:'Production against goal and pace, every office.', view:'checked the numbers', on:()=>true, has:(p,c)=>c.lv(p,'dashboard')>=RANK.view, metric:'prodDays'},
+    {k:'production', n:'Enter Production',     icon:'📝', use:'Typing the month’s production numbers.', work:'saved production numbers', on:()=>true, has:(p,c)=>c.lv(p,'production')>=RANK.edit},
+    {k:'monthly',    n:'Monthly Report',       icon:'📈', use:'Each office’s month-end numbers, for Heather and the doctors.', work:'saved or sent a month', on:()=>true, has:(p,c)=>c.on.monthly && c.lv(p,'monthly')>=RANK.view, metric:'offices'},
+    {k:'schedule',   n:'Schedule',             icon:'📅', use:'Who works where, each day.', view:'checked who works where', work:'changed the schedule', on:()=>true, has:(p,c)=>c.lv(p,'schedule')>=RANK.view},
+    {k:'chat',       n:'Team Chat',            icon:'💬', use:'Messages, photos and videos between staff, with phone alerts.', work:'sent a message', on:()=>true, has:(p,c)=>c.on.chat || c.pilot.has(p.email)},
+    {k:'documents',  n:'Documents',            icon:'📁', use:'Forms, policies and files for each office.', view:'looked for a form or file', work:'added files', on:()=>true, has:(p,c)=>c.lv(p,'documents')>=RANK.view},
+    {k:'marketing',  n:'Marketing',            icon:'📣', use:'Events and social posts.', view:'checked the board', work:'added or changed an item', on:()=>true, has:(p,c)=>c.lv(p,'marketing')>=RANK.view},
+    {k:'team',       n:'Team',                 icon:'👥', use:'Everyone’s contact card.', view:'looked someone up', on:()=>true, has:(p,c)=>c.lv(p,'team')>=RANK.view},
+    {k:'home',       n:'Home',                 icon:'🏠', use:'Each person’s day, tasks, updates and celebrations.', view:'opened Home-Brace', on:()=>true, has:()=>true, metric:'celebrations'}
   ];
   const APP=k=>APPS.find(a=>a.k===k);
 
@@ -111,17 +111,24 @@
     for(let i=1;i<=last;i++){ const d=ym+'-'+pad(i); if(!today || d<=today) out.push(d); }
     return out;
   }
-  const usedIn=(p, days, k)=>!!(p.rec && p.rec.d && days.some(d=>{ const e=p.rec.d[d]; return e && (k ? e.p && e.p[k]>0 : e.n>0); }));
+  /* opened = the app was open that day; worked = something they did in it was saved (PH.did - user.js) */
+  const usedIn=(p, days, k, work)=>!!(p.rec && p.rec.d && days.some(d=>{ const e=p.rec.d[d]; if(!e) return false;
+    if(work) return k ? !!(e.w && e.w[k]>0) : !!(e.w && Object.keys(e.w).some(x=>e.w[x]>0));
+    return k ? !!(e.p && e.p[k]>0) : e.n>0; }));
+  /* The first day anyone's work was recorded: "did work" means nothing before it. */
+  const workSince=list=>{ let f=''; (list||[]).forEach(p=>{ const d=(p && p.rec && p.rec.d) || {}; Object.keys(d).forEach(day=>{ const w=d[day] && d[day].w; if(w && Object.keys(w).length && (!f || day<f)) f=day; }); }); return f; };
   /* Each app that is on: of the counted people who have it, how many opened it on those days. */
   function toolUse(list, days, c){
     const ppl=(list||[]).filter(counted);
     return APPS.filter(a=>a.on(c)).map(a=>{ const have=ppl.filter(p=>hasTool(p, a, c));
-      return {k:a.k, n:a.n, use:a.use, have:have.length, used:have.filter(p=>usedIn(p, days, a.k)).length}; }).filter(t=>t.have>0);
+      const opened=have.filter(p=>usedIn(p, days, a.k)).length, worked=have.filter(p=>usedIn(p, days, a.k, true)).length;
+      return {k:a.k, n:a.n, use:a.use, have:have.length, used:opened, opened, worked}; }).filter(t=>t.have>0);
   }
   function usage(list, ym, c, today){
     const days=monthDays(ym, today), ppl=(list||[]).filter(counted);
     const tools=toolUse(list, days, c);
-    return {counted:ppl.length, used:ppl.filter(p=>usedIn(p, days)).length, never:(list||[]).filter(p=>p.listed && !p.rec).length, tools, days:days.length};
+    return {counted:ppl.length, used:ppl.filter(p=>usedIn(p, days)).length, worked:ppl.filter(p=>usedIn(p, days, null, true)).length,
+      never:(list||[]).filter(p=>p.listed && !p.rec).length, tools, days:days.length, workSince:workSince(list)};
   }
   /* People using it each week (Monday to Sunday) that touches the month, from the day counting began. */
   function weekly(list, ym, today, since){
@@ -265,7 +272,8 @@
     const prevDays=monthDays(shiftMonth(ym,-1)).slice(-12), curDays=monthDays(ym, today), keys=APPS.map(a=>a.k);
     return (list||[]).filter(p=>p.listed && /@/.test(p.email||'')).map(p=>{ if(rnd()<0.12) return Object.assign({}, p, {rec:null});
       const mine=keys.filter(()=>rnd()<0.7), busy=0.15+rnd()*0.35, d={};
-      const visit=day=>{ const pp={home:1}; mine.forEach(k=>{ if(rnd()<0.6) pp[k]=1; }); d[day]={n:2, p:pp}; };
+      const WORKS=APPS.filter(a=>a.work).map(a=>a.k);
+      const visit=day=>{ const pp={home:1}, ww={}; mine.forEach(k=>{ if(rnd()<0.6){ pp[k]=1; if(WORKS.indexOf(k)>=0 && rnd()<0.55) ww[k]=1; } }); d[day]={n:2, p:pp, w:ww}; };
       if(rnd()<0.6) prevDays.forEach(day=>{ if(rnd()<busy*0.5) visit(day); });
       if(rnd()<0.8) curDays.forEach((day,i)=>{ if(rnd()<busy*(0.4+0.8*i/curDays.length)) visit(day); });
       return Object.assign({}, p, {rec:{d}}); });
@@ -322,6 +330,7 @@
     .rv-ring b{width:40px;height:40px;border-radius:50%;background:#fff;display:grid;place-items:center;font-size:12px;color:var(--navy,#0F2A4A)}
     .rv-nums .x{font-size:12px;color:var(--soft,#56627A);line-height:1.3;min-width:0}.rv-nums .x b{display:block;font-size:22px;color:var(--navy,#0F2A4A);line-height:1.1;font-variant-numeric:tabular-nums}
     .rv-nums .x.money b{color:var(--teal-600,#0F827E)}
+    .rv-nums .x small{display:block;font-size:11.5px;color:var(--soft,#56627A);margin-top:3px;line-height:1.3}
     .rv-app .foot{font-size:12px;color:var(--soft,#56627A);border-top:1px solid var(--line,#E4E8EE);padding-top:10px}
     .rv-work{display:flex;flex-direction:column;gap:10px;margin-bottom:18px}
     .rv-w{background:#fff;border:1px solid var(--line,#E4E8EE);border-radius:16px;padding:13px 16px;display:grid;grid-template-columns:38px minmax(160px,1fr) minmax(0,2.2fr);gap:12px;align-items:center}
@@ -383,9 +392,20 @@
   }
   const ring=(a,b)=>{ const p=b ? Math.round(a/b*100) : 0; return '<div class="rv-ring" style="background:conic-gradient(var(--teal,#149B96) '+p+'%,var(--line,#E4E8EE) 0)"><b>'+(b?p+'%':'—')+'</b></div>'; };
   /* The apps worth a card this month: anything with something built, a counted result or a value - most valuable first. */
+  /* What an app's usage number IS, in words (Cory: "used it" was vague). A working app (payroll, TC, tasks...) counts the
+     people who DID WORK in it - something they did was saved - once that has been recorded; a look-up app (dashboard,
+     team...) counts the people who checked it. */
+  function usageOf(a, t, L){
+    const ws=L.u.workSince, monthEnd=L.ym+'-31', workOn=!!(ws && ws<=monthEnd);
+    if(a.work && !a.view){
+      if(workOn) return {n:t.worked, d:t.have, label:'did work in it', sub:a.work+(t.opened>t.worked ? ' · '+(t.opened-t.worked)+' more only opened it' : '')};
+      return {n:t.opened, d:t.have, label:'opened it', sub:'“Did work” is counted from the next update'};
+    }
+    return {n:t.opened, d:t.have, label:a.view||'opened it', sub:(a.work && workOn && t.worked) ? t.worked+' '+a.work : ''};
+  }
   function appCards(L){
     const use={}; L.u.tools.forEach(t=>{ use[t.k]=t; });
-    return APPS.map(a=>{ const t=a.k==='home' ? {used:L.u.used, have:L.u.counted} : use[a.k], r=resultOf(a, L.m), v=L.val.app[a.k], hst=history(a.k, L.ym);
+    return APPS.map(a=>{ const t=a.k==='home' ? {used:L.u.used, opened:L.u.used, worked:L.u.worked, have:L.u.counted} : use[a.k], r=resultOf(a, L.m), v=L.val.app[a.k], hst=history(a.k, L.ym);
         return {a, t, r, v:(v && v.dollars>0 && L.val.set.rate) ? v : null, hst}; })
       .filter(x=>x.t && (x.hst.total || x.r || x.v))
       .sort((x,y)=>((y.v?y.v.dollars:0)-(x.v?x.v.dollars:0)) || ((y.hst.thisMonth?1:0)-(x.hst.thisMonth?1:0)) || (y.t.used/Math.max(1,y.t.have))-(x.t.used/Math.max(1,x.t.have)));
@@ -405,7 +425,7 @@
       (typeof m.missed==='number' ? '<div class="rv-kpi"><div class="ic">🦷</div><div class="v">'+m.missed.toLocaleString()+'</div><div class="l">exams OrthoFi saw that weren’t logged</div><span class="d">found for follow-up by the TC Tracker</span></div>'
         : '<div class="rv-kpi"><div class="ic">🦷</div><div class="v">'+(typeof m.consults==='number' ? m.consults.toLocaleString() : '—')+'</div><div class="l">new-patient consults logged</div><span class="d">every office, one tracker</span></div>')+
       '<div class="rv-kpi"><div class="ic">💵</div><div class="v">'+(typeof m.paySheets==='number' ? m.paySheets.toLocaleString() : '—')+'</div><div class="l">payroll sheets sent in Home-Brace</div><span class="d">totals add up themselves</span></div>'+
-      '<div class="rv-kpi"><div class="ic">👥</div><div class="v">'+(share==null ? '—' : Math.round(share*100)+'%')+'</div><div class="l">'+u.used+' of the '+u.counted+' people who have signed in used it</div><span class="d">'+esc(delta)+'</span></div></div>';
+      '<div class="rv-kpi"><div class="ic">👥</div><div class="v">'+(share==null ? '—' : Math.round(share*100)+'%')+'</div><div class="l">'+u.used+' of '+u.counted+' people signed in this month'+(u.workSince ? ' · '+u.worked+' did work in an app' : '')+'</div><span class="d">'+esc(delta)+'</span></div></div>';
     if(CALC) h+=calcHTML();
     /* 2. value by app */
     const cards=appCards(L);
@@ -413,7 +433,7 @@
     h+=cards.length ? '<div class="rv-grid">'+cards.map(x=>{ const a=x.a;
       return '<div class="rv-app"><div class="hd"><div class="ico" aria-hidden="true">'+a.icon+'</div><div><div class="nm">'+esc(a.n)+'</div><div class="use">Used for: '+esc(a.use)+'</div></div>'+
         (x.hst.thisMonth ? '<span class="rv-chip '+x.hst.thisMonth+'">'+(x.hst.thisMonth==='new'?'New':'Upgraded')+' in '+esc(mon.slice(0,3))+'</span>' : '')+'</div>'+
-        '<div class="rv-nums">'+ring(x.t.used, x.t.have)+'<div class="x"><b>'+x.t.used+' of '+x.t.have+'</b>with access used it</div>'+
+        (()=>{ const g=usageOf(a, x.t, L); return '<div class="rv-nums">'+ring(g.n, g.d)+'<div class="x"><b>'+g.n+' of '+g.d+'</b>'+esc(g.label)+(g.sub ? '<small>'+esc(g.sub)+'</small>' : '')+'</div>'; })()+
         (x.v ? '<div class="x money"><b>'+money(x.v.dollars)+'</b>staff time saved</div>' : x.r ? '<div class="x"><b>'+esc(x.r.n)+'</b>'+esc(x.r.t)+'</div>' : '<div class="x"></div>')+'</div>'+
         ((x.v && x.r) ? '<div class="foot"><b>'+esc(x.r.n)+'</b> '+esc(x.r.t)+'</div>' : '')+
         '</div>'; }).join('')+'</div>' : '<div class="rv-empty">No apps to show yet.</div>';
@@ -427,10 +447,10 @@
         '</div>'; }).join('')+'</div>' : '<div class="rv-empty">Nothing was delivered in '+esc(monthName(L.ym))+'.</div>';
     /* 4. people using it, week by week */
     const wmax=Math.max(1, ...L.weeks.map(w=>w.n));
-    h+='<h2 class="rv-h">People using Home-Brace, week by week <small>everyone who has signed in'+(L.since && L.since.slice(0,7)===L.ym ? ' · counting began '+esc(short(L.since)) : '')+'</small></h2>'+
+    h+='<h2 class="rv-h">People signing in, week by week <small>everyone who has signed in before'+(L.since && L.since.slice(0,7)===L.ym ? ' · counting began '+esc(short(L.since)) : '')+'</small></h2>'+
       (L.weeks.length ? '<div class="rv-card"><div class="rv-wk">'+L.weeks.map((w,i)=>'<div class="b'+(i===L.weeks.length-1?' now':'')+'"><b>'+w.n+'</b><i style="height:'+Math.max(3, Math.round(w.n/wmax*88))+'%"></i></div>').join('')+'</div>'+
         '<div class="rv-wx">'+L.weeks.map(w=>'<span>Week of '+esc(short(w.from))+'</span>').join('')+'</div></div>' : '<div class="rv-empty">Nothing counted in this month.</div>');
-    h+='<p class="rv-note">Usage counts only people who have signed in'+(L.since ? ' (counting began '+esc(short(L.since))+')' : '')+' and have that app'+(u.never ? '. '+u.never+' on the team list have never signed in, so they’re in no number' : '')+'. Staff time is an estimate from the value calculator.</p>';
+    h+='<p class="rv-note">“Did work” = something they did was saved (a consult logged, a sheet sent, a task ticked...); “opened” = they only looked. Usage counts only people who have signed in'+(L.since ? ' (counting began '+esc(short(L.since))+')' : '')+' and have that app'+(u.never ? '. '+u.never+' on the team list have never signed in, so they’re in no number' : '')+'. Staff time is an estimate from the value calculator.</p>';
     el.innerHTML=h;
     el.onclick=e=>{ const b=e.target.closest('button'); if(!b) return;
       if(b.dataset.m){ YM=shiftMonth(YM, +b.dataset.m); mount(el.parentNode); return; }
@@ -483,12 +503,12 @@
     if(V.ready) t+='Staff time given back: '+money(V.dollars)+' (about '+Math.round(V.hrs)+' hours) - about '+money(V.year)+' a year at this pace\n';
     if(typeof m.missed==='number') t+='Exams OrthoFi saw that weren\'t logged, found for follow-up: '+m.missed+'\n';
     if(typeof m.paySheets==='number') t+='Payroll sheets sent in Home-Brace: '+m.paySheets+'\n';
-    t+='People using it: '+u.used+' of the '+u.counted+' who have signed in ('+pct(u.used, u.counted)+')\n\nValue by app:\n';
-    appCards(L).forEach(x=>{ t+='- '+x.a.n+' ('+x.a.use.replace(/\.$/,'')+'): '+x.t.used+' of '+x.t.have+' with access used it'+(x.r ? '; '+x.r.n+' '+x.r.t : '')+(x.v ? '; '+money(x.v.dollars)+' staff time saved' : '')+'\n'; });
+    t+='Signed in this month: '+u.used+' of '+u.counted+' people ('+pct(u.used, u.counted)+')'+(u.workSince ? '; '+u.worked+' did work in an app' : '')+'\n\nValue by app:\n';
+    appCards(L).forEach(x=>{ const g=usageOf(x.a, x.t, L); t+='- '+x.a.n+' ('+x.a.use.replace(/\.$/,'')+'): '+g.n+' of '+g.d+' with access '+g.label+(x.r ? '; '+x.r.n+' '+x.r.t : '')+(x.v ? '; '+money(x.v.dollars)+' staff time saved' : '')+'\n'; });
     t+='\nThis month\'s work:\n';
     work.forEach(w=>{ t+='- '+KIND[w.kind]+': '+w.title+' ('+(APP(w.app)||{n:w.app}).n+', asked by '+w.who+(w.status!=='live' ? ', '+STATUS[w.status].toLowerCase() : '')+'): '+w.before+' -> '+w.now+'.\n'; });
     return t;
   }
 
-  global.PH_REVIEW={mount, WORK, APPS, context, toolUse, _pure:{APPS, WORK, JOBS, WEEKLY, usage, toolUse, weekly, hasTool, counted, monthDays, paySheets, tasksDone, consults, missed, prodDays, celebrations, cleanSet, value, history, shiftMonth}};
+  global.PH_REVIEW={mount, WORK, APPS, context, toolUse, _pure:{APPS, WORK, JOBS, WEEKLY, usage, toolUse, weekly, hasTool, counted, monthDays, paySheets, tasksDone, consults, missed, prodDays, celebrations, cleanSet, value, history, shiftMonth, usageOf, workSince}};
 })(typeof window!=='undefined' ? window : globalThis);

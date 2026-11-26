@@ -106,4 +106,36 @@ t('the sandbox never reads the practice\'s stores for the numbers', /if\(!live\(
 t('only an admin can save the calculator', /function saveCalc\(el, today\)\{\s*if\(!isAdminNow\(\)/.test(src));
 t('no <input type="month"> (Safari types it)', !/type="month"/.test(src));
 
+
+/* DID WORK vs OPENED (Cory 26/11: "Its a bit vague to just say they used it (meaning they looked at it or did they actually
+   use it)") */
+{
+  const dw=(p,w)=>({n:2, p:Object.assign({home:1}, p||{}), w:w||{}});
+  const L2=[
+    person('Wanda Works', 'w@example.com', ['TCs'], {'2026-11-20':dw({tc:1},{tc:1})}),
+    person('Lou Looks', 'l@example.com', ['TCs'], {'2026-11-21':dw({tc:1})}),
+    person('Old Work', 'o@example.com', ['TCs'], {'2026-10-21':dw({tc:1},{tc:2})})
+  ];
+  const T=R.usage(L2, YM, ctxOf(), TODAY).tools.find(x=>x.k==='tc');
+  t('opened = the app was open; did work = something saved in it', T.opened===2 && T.worked===1 && T.have===3);
+  t('people who did work anywhere this month', R.usage(L2, YM, ctxOf(), TODAY).worked===1);
+  t('work is counted from the first day anyone\'s work was recorded', R.workSince(L2)==='2026-10-21' && R.workSince(L)==='');
+  const tc=R.APPS.find(a=>a.k==='tc'), dash=R.APPS.find(a=>a.k==='dashboard');
+  const Lw={ym:YM, u:{workSince:'2026-11-27'}}, Lon={ym:YM, u:{workSince:'2026-11-20'}};
+  const g1=R.usageOf(tc, {opened:5, worked:3, have:8}, Lon);
+  t('a working app shows who DID WORK, says what that is, and how many only opened it', g1.n===3 && g1.d===8 && g1.label==='did work in it' && /logged or updated a consult/.test(g1.sub) && /2 more only opened it/.test(g1.sub));
+  const g2=R.usageOf(tc, {opened:5, worked:0, have:8}, {ym:'2026-10', u:{workSince:'2026-11-20'}});
+  t('before work was recorded: "opened it", and it says when work counting starts', g2.n===5 && g2.label==='opened it' && /next update/.test(g2.sub));
+  const g3=R.usageOf(dash, {opened:6, worked:0, have:9}, Lw);
+  t('a look-up app says what checking it means', g3.n===6 && g3.label==='checked the numbers');
+  t('every app says either what counts as work or what checking it means', R.APPS.every(a=>a.work || a.view));
+  const us=fs.readFileSync(path.join(__dirname,'..','v1','user.js'),'utf8'), did=us.slice(us.indexOf('function did(sec)'), us.indexOf('function did(sec)')+1500);
+  t('did(): never while an admin views as someone, never for someone who switched recording off', /impersonating\(\) && isAdmin\(realMe\(\)\)\) return;/.test(did) && /if\(cur && cur\.off\) return undefined;/.test(did));
+  t('did(): at most once per app per 10 minutes on a device', /DID_GAP=10\*60\*1000/.test(us) && /Date\.now\(\)-was<DID_GAP/.test(did));
+  t('did() is offered to the pages', /usageReady, did,/.test(us));
+  const calls={tc:'tc.html', payroll:'payroll.html', tasks:'tasks.html', production:'production.html', monthly:'monthly.html', schedule:'schedule.html', marketing:'marketing.html', documents:'documents.html', chat:'chat.html'};
+  t('every working app records its work', Object.keys(calls).every(k=>fs.readFileSync(path.join(__dirname,'..','v1',calls[k]),'utf8').indexOf("PH.did('"+k+"')")>=0));
+  const tk=fs.readFileSync(path.join(__dirname,'..','v1','tasks.html'),'utf8');
+  t('tasks: archiving old tasks is housekeeping, not anyone\'s work', /R\.dropArchived\(cur, R\.cleanRecord\(a\.value\)\), undefined, true\)/.test(tk) && /if\(!bad && !chore\)/.test(tk));
+}
 console.log(pass+' passed, '+fail+' failed'); if(fail) process.exit(1);

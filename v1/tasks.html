@@ -198,11 +198,11 @@
   }
   @media (prefers-reduced-motion: reduce){ *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important} .burst{display:none} }
 </style>
-<script src="user.js?v=hc269"></script>
+<script src="user.js?v=hc270"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc269"></script>
-  <script src="gate.js?v=hc269"></script>
-  <script src="tasks.js?v=hc269"></script>
+  <script src="store.js?v=hc270"></script>
+  <script src="gate.js?v=hc270"></script>
+  <script src="tasks.js?v=hc270"></script>
 </head>
 <body>
 <div class="ribbon">MOCK-UP for Heather — made-up people. Try it as Jordan to make a task, then as Maya to tick it off.</div>
@@ -285,11 +285,12 @@
     REC=R.cleanRecord(r);
   }
   /* Every change goes through PH_STORE.update: the shared copy is read first and this one change laid on it. */
-  async function save(mutate, ok){
+  async function save(mutate, ok, chore){                            // chore: housekeeping, not someone's work (review.js)
     let r=null; try{ r=await PH_STORE.update(R.KEY, cur=>mutate(R.cleanRecord(cur))); }catch(e){ r={error:e}; }
     if(r && r.value && !r.blocked) REC=R.cleanRecord(r.value);     // a refused save was kept nowhere: don't show it (21/11/2026, code review)
     const bad=!r || r.error || r.blocked;
     if(bad) toast('That didn’t save — try again in a moment'); else if(ok) toast(ok);
+    if(!bad && !chore) if(typeof PH!=='undefined' && PH.did) PH.did('tasks');
     render(); return bad ? null : r;
   }
   async function tidy(){
@@ -299,7 +300,7 @@
     for(const y of Object.keys(old)){
       const a=await PH_STORE.update(R.OLD+y, cur=>R.toArchive(cur, old[y])).catch(()=>null);
       if(!a || a.error || a.blocked || !a.value) continue;
-      await save(cur=>R.dropArchived(cur, R.cleanRecord(a.value)));
+      await save(cur=>R.dropArchived(cur, R.cleanRecord(a.value)), undefined, true);
     }
   }
   async function loadOld(){
@@ -515,6 +516,7 @@
     let r=null; try{ r=await PH_STORE.update(R.KEY, cur=>R.add(R.cleanRecord(cur), t)); }catch(e){ r={error:e}; }
     F.busy=false;
     const kept=!!(r && r.local && r.error && !r.blocked);
+    if(r && !r.blocked && (!r.error || kept)) if(typeof PH!=='undefined' && PH.did) PH.did('tasks');
     if(!r || r.blocked || (r.error && !kept)){
       F.errs=['That didn’t save — try again in a moment']; if(FORM===F) drawParts(); else toast('That didn’t save — try again in a moment'); return;
     }

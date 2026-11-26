@@ -2426,6 +2426,34 @@
     }).catch(function(){ try{ localStorage.removeItem(gate); }catch(_){} });
   }
   document.addEventListener('visibilitychange', function(){ if(document.visibilityState==='visible') setTimeout(useTick, 1500); });
+  /* DID WORK, NOT JUST OPENED (26/11/2026). Cory: "Its a bit vague to just say they used it (meaning they looked at it or
+     did they actually use it)". Each app calls PH.did(<its NAV key>) when something the person did was SAVED - a consult
+     logged, a payroll sheet filled in or sent, a task given or ticked, production saved, a month saved or sent, a schedule
+     day changed, a marketing item saved, a file added, a chat message sent. The same visit record gets d[day].w[app]
+     (a count), so the Monthly review can say "did work in it" apart from "opened it". Same rules as a visit: not while an
+     admin is viewing as someone, not for someone who switched recording off, at most once per app per 10 minutes on a
+     device. Housekeeping saves (archiving, background syncs) never call it. */
+  const DID_GAP=10*60*1000;
+  function did(sec){
+    if(!sec || !window.PH_STORE || !PH_STORE.update) return;
+    if(isLive() && (!SIGNED_IN || stillLearning())) return;
+    if(impersonating() && isAdmin(realMe())) return;
+    const em=useEmail(); if(!em) return;
+    const gate='ph_didgate_'+em+'_'+sec;
+    let was=0; try{ was=+localStorage.getItem(gate)||0; }catch(_){}
+    if(Date.now()-was<DID_GAP) return;
+    try{ localStorage.setItem(gate, String(Date.now())); }catch(_){}
+    const now=new Date(), day=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0'), at=now.toISOString();
+    PH_STORE.update('ph_use_'+em, function(cur){
+      if(cur && cur.off) return undefined;
+      const x=(cur && typeof cur==='object') ? cur : {v:1, email:em, first:at, d:{}};
+      x.v=1; x.email=em; x.last=at; if(!x.first) x.first=at;
+      x.d=(x.d && typeof x.d==='object') ? x.d : {};
+      const dd=x.d[day]=x.d[day]||{n:1, p:{}}; dd.p=dd.p||{}; dd.w=dd.w||{}; dd.w[sec]=(dd.w[sec]||0)+1;
+      if(!dd.p[sec]) dd.p[sec]=1;                                     // doing work in an app means it was open
+      return x;
+    }).catch(function(){ try{ localStorage.removeItem(gate); }catch(_){} });
+  }
   let USAGE_P=null;
   function usageReady(){
     if(window.PH_USAGE) return Promise.resolve(window.PH_USAGE);
@@ -4200,6 +4228,6 @@
   window.PH={PEOPLE,newHiresOn,pickOn,chatPilotMe,chatPilotKnown:()=>CHATPILOT!==null,chatGuest,reloadChatPilot,cleanChatPilot,CHAT_PILOT_KEY,me,name,initials,email,face,faceStyle,can,atLeast,offices,locations,saveLocations,officeNames,teamNames,drivePicker,DRIVE,setMe,mount,nav,NAV,guard,profile,pickPhoto,clearPhoto,saveProfile,setColor,closeProfile,readOnlyBanner,palette:()=>PALETTE.slice(), colorOf, colorForOffice, env, isLive, setProfile, profileOf:()=>PROFILE, dechrome, realMe, isAdmin, viewAs, stopViewAs, impersonating, personFromStaff, DEPT_CAN, logActivity, activity, loadActivity, ago, reloadAccess, reloadPeople, reloadLocations, personKey, asPersona, rosterRows, rosterView, removedRows, saveRosterExtra, reloadRosterExtra, notifications, unreadCount, markSeen, markAllSeen, loadSeen, refreshBell:bellBadge, chatBadge, identityChanged, photoFor, loadPhotos, rosterReady, WORKBOOK, notesHTML, searchHTML, searchDocs, searchDocsHTML, levelForTeams, teamsSeeAll, switches:()=>({tc:TC_LIVE, payroll:PAY_LIVE, tasks:TASKS_LIVE, monthly:MONTHLY_LIVE, chat:false /* chat: pilot list only on live (NAV chat show) - true when it goes to everyone */}), tcOn, tcRoleFor, payOn, monthlyOn, tasksOn, partyOn, partyPref, partySeen, PARTY_KEY, payRoleFor, paySenders, reloadPaySenders, paySenderOffices, payLevel, payReminders, payMark, reloadPayStatus, payRulesReady, payAlertPlan, payAlertsTick, signOut, centralNow, alertsReady, saveFace, faceOf, avatar, viewLink, isWordName, wordAttrs, wordPdfInto,
     sensRecord, reloadSensitive, sensLevelFor, sensitiveLevel, sensConfirmOk,
     setTheme, theme:()=>THEME, setLayout, layout:()=>LAYOUT, layouts:()=>LAYOUTS.map(l=>({k:l.k, n:l.n})), themes:()=>THEMES.map(t=>({k:t.k, n:t.n})), schemeTokens:k=>schemeTokens(themeOf(k)), contrast,
-    feedback:openFeedback, feedbackText, feedbackContext, learning:stillLearning, fbReady, myFeedback, fbTick, usageReady, rosterName, useEmail, useTrackMe, loadHold, loadDone};
+    feedback:openFeedback, feedbackText, feedbackContext, learning:stillLearning, fbReady, myFeedback, fbTick, usageReady, did, rosterName, useEmail, useTrackMe, loadHold, loadDone};
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mount); else mount();
 })();

@@ -324,13 +324,13 @@
   }
   @media (prefers-reduced-motion: reduce){ *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important} }
 </style>
-<script src="user.js?v=hc269"></script>
+<script src="user.js?v=hc270"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc269"></script>
-  <script src="gate.js?v=hc269"></script>
-  <script src="prodbook.js?v=hc269"></script>
-  <script src="monthly.js?v=hc269"></script>
-  <script src="orthofi.js?v=hc269"></script>
+  <script src="store.js?v=hc270"></script>
+  <script src="gate.js?v=hc270"></script>
+  <script src="prodbook.js?v=hc270"></script>
+  <script src="monthly.js?v=hc270"></script>
+  <script src="orthofi.js?v=hc270"></script>
 </head>
 <body>
 <div class="ribbon">MOCK-UP for Heather — made-up numbers. Try it as an office manager first, then as Heather.</div>
@@ -1116,13 +1116,13 @@
   // a box typed into while the save was on its way keeps what was typed (21/11/2026, code review)
   function doneEditing(saved){ Object.keys(saved).forEach(k=>{ if(EDIT[k]===saved[k]) delete EDIT[k]; }); }
   async function save(quiet){ const saved=await write((r,e)=>applyEdits(r,e));
-    if(saved){ doneEditing(saved); Object.keys(CORRECT).forEach(k=>{ if(EDIT[k]===undefined) delete CORRECT[k]; }); if(!quiet) toast('Saved'); render(); } return !!saved; }
+    if(saved){ doneEditing(saved); Object.keys(CORRECT).forEach(k=>{ if(EDIT[k]===undefined) delete CORRECT[k]; }); if(!quiet) toast('Saved'); if(typeof PH!=='undefined' && PH.did) PH.did('monthly'); render(); } return !!saved; }
   async function send(force){
     const r=recOf(OFF,Y,MO)||M.cleanMonth(null), fields=M.fieldsFor(OFF,SET);
     const empty=fields.filter(f=>{ const e=EDIT[f.k]; return e!==undefined ? M.num(e)===null : r.v[f.k]===undefined; });
     if(empty.length && !force){ SENDASK=true; render(); return; }
     SENDASK=false; const mo=MO, saved=await write((x,e)=>{ applyEdits(x,e); x.sent={at:new Date().toISOString(), by:by()}; });
-    if(saved){ doneEditing(saved); toast(M.MONTHS[mo-1]+' sent — Heather can see it now'); render(); }
+    if(saved){ doneEditing(saved); toast(M.MONTHS[mo-1]+' sent — Heather can see it now'); if(typeof PH!=='undefined' && PH.did) PH.did('monthly'); render(); }
   }
   async function markFinal(on){ const mo=MO, saved=await write((x,e)=>{ applyEdits(x,e); if(on){ x.final={at:new Date().toISOString(), by:by()}; if(!x.sent) x.sent={at:x.final.at, by:by()}; } else delete x.final; });
     if(saved){ doneEditing(saved); toast(on ? M.MONTHS[mo-1]+' marked final' : 'Reopened'); render(); } }
@@ -1229,7 +1229,7 @@
 })();
 </script>
 <script>PH.nav('monthly');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc269"></script>
+<script src="tour.js?v=hc270"></script>
 <script>
 Tour.init([
   {sel:'.statusline, .openbanner', title:'Who has sent it', body:'Every office’s report for the month, in one line: final, waiting for you, or late. No chasing eight Excel files.'},

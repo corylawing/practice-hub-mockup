@@ -381,12 +381,12 @@
   }
 
 </style>
-<script src="user.js?v=hc269"></script>
+<script src="user.js?v=hc270"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc269"></script>
-  <script src="schedrec.js?v=hc269"></script>
-  <script src="gate.js?v=hc269"></script>
-  <script src="meetings.js?v=hc269"></script>
+  <script src="store.js?v=hc270"></script>
+  <script src="schedrec.js?v=hc270"></script>
+  <script src="gate.js?v=hc270"></script>
+  <script src="meetings.js?v=hc270"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — sample staff schedule for validation. Live version = one Microsoft List the practice maintains.</div>
@@ -1064,6 +1064,7 @@
     if(t.closed){ t.closed=false; } else { t.closed=true; t.ydot=false; t.ps=[]; } renderDay(); }
   function clearDay(){ setCell(loc(cur.loc),parseISO(cur.date),null); closeModal(); refresh(); }
   function saveDay(){
+    if(typeof PH!=='undefined' && PH.did) PH.did('schedule');                            // did work: a schedule day changed (review.js)
     const t=cur.tmp, l=loc(cur.loc), d=parseISO(cur.date);
     /* A special event is a LABEL on the day, not a state of its own, so it can sit on a
        day that already has a doctor, a Yellow Dot or a closure - "Dr. Coleman in, plus a
@@ -1712,7 +1713,7 @@
    machine is missing here until the next page load. */
 document.addEventListener('ph-locations-changed',function(){ if(window.PS&&PS.relocate)PS.relocate(); });
 PH.nav('schedule');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc269"></script>
+<script src="tour.js?v=hc270"></script>
 <script>
 Tour.init([
   {sel:'#viewseg', title:'Week or month', body:'<b>Week</b> is the day-to-day working view. <b>Month</b> shows the whole month at a glance, with every office in its own color.'},

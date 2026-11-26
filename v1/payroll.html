@@ -266,15 +266,15 @@
     .perhead .when{font-size:17px}
   }
 </style>
-<script src="user.js?v=hc269"></script>
+<script src="user.js?v=hc270"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="store.js?v=hc269"></script>
-  <script src="gate.js?v=hc269"></script>
-  <script src="alerts.js?v=hc269"></script>
-  <script src="_staff.js?v=hc269"></script>
-  <script src="payrules.js?v=hc269"></script>
-  <script src="paystore.js?v=hc269"></script>
-  <script src="docs.js?v=hc269"></script>
+  <script src="store.js?v=hc270"></script>
+  <script src="gate.js?v=hc270"></script>
+  <script src="alerts.js?v=hc270"></script>
+  <script src="_staff.js?v=hc270"></script>
+  <script src="payrules.js?v=hc270"></script>
+  <script src="paystore.js?v=hc270"></script>
+  <script src="docs.js?v=hc270"></script>
 </head>
 <body>
 <div class="ribbon">MOCK-UP for Heather — made-up people and amounts. Try it as the Carlsbad TC first, then as Heather.</div>
@@ -2074,7 +2074,7 @@
     LIVE.q[id]=[]; LIVE.busy++; paintSave();
     return store(k).update(file, cur=>{ const r0=LIVE.refused, was=JSON.stringify(cur===undefined ? null : cur), v=fns.reduce((v,fn)=>fn(v), cur);
         return (LIVE.refused!==r0 && JSON.stringify(v===undefined ? null : v)===was) ? undefined : v; })   // only refused (a locked sheet): nothing written (21/11/2026, code review)
-      .then(()=>{ LIVE.busy--; if(!pending()) LIVE.failed=''; paintSave(); return true; },
+      .then(()=>{ LIVE.busy--; if(!pending()) LIVE.failed=''; paintSave(); if(typeof PH!=='undefined' && PH.did) PH.did('payroll'); return true; },
             e=>{ LIVE.q[id]=fns.concat(LIVE.q[id]||[]); LIVE.busy--; LIVE.failed=(e && e.message)||'SharePoint didn’t answer'; paintSave(); return false; });
   }
   function liveFlushAll(){
@@ -2450,7 +2450,7 @@
 })();
 </script>
 <script>PH.nav('payroll');PH.dechrome();document.addEventListener('ph-signed-in',function(){PH.mount();PH.dechrome();if(PH.reloadPeople)PH.reloadPeople();if(PH.reloadAccess)PH.reloadAccess();});</script>
-<script src="tour.js?v=hc269"></script>
+<script src="tour.js?v=hc270"></script>
 <script>
 Tour.init([
   ...((window.PH && PH.isLive && PH.isLive()) || (()=>{ try{ return localStorage.getItem('ph_pay_real')==='1'; }catch(_){ return false; } })() ? [] : [{sel:'#persona', title:'A mock-up', body:'Made-up people and amounts. Start as the <b>Carlsbad TC</b>, who sends Carlsbad’s sheet, then switch to <b>Heather</b>.'}]),
