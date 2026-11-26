@@ -50,21 +50,21 @@ const recs=[
 {
   const L=U.people(roster, roster, recs);
   const S=U.summary(L, {kind:'7d', today:TODAY, includeAdmins:false, offices:['Carlsbad','Hobbs','Clovis']});
-  t('Adoption leaves admins out: Quinn + Morgan of Quinn, Morgan, Riley, Avery = 50%', S.total===4 && S.active===2 && S.adoption===0.5);
+  t('Adoption leaves admins out AND anyone never signed in (Cory 26/11): Quinn + Morgan of Quinn, Morgan, Riley = 2 of 3', S.total===3 && S.active===2 && Math.abs(S.adoption-2/3)<1e-9);
   t('Using it today: Quinn (Priya is an admin, Vic is not on the list)', S.today===1);
   t('Days used: (2 + 1) / 2 = 1.5', S.avgDays===1.5);
   t('Never signed in: Avery only (Riley came in October)', S.never===1);
   t('States: using / quiet / never', S.rows.find(x=>x.name==='Quinn Quill').state==='using' && S.rows.find(x=>x.name==='Riley "Ri" Chen').state==='quiet' && S.rows.find(x=>x.name==='Avery Brooks').state==='never');
   t('People each day across the period', S.perDay.length===7 && S.perDay.find(x=>x.d==='2026-11-10').n===2 && S.perDay.find(x=>x.d==='2026-11-09').n===1);
-  t('By office: Hobbs 1 of 2, Carlsbad 1 of 2; Clovis (nobody listed) left out', S.byOffice.length===2 && S.byOffice.every(r=>r.total===2 && r.active===1));
+  t('By office: Hobbs 1 of 2, Carlsbad 1 of 1 (Avery never signed in, not counted); Clovis (nobody listed) left out', S.byOffice.length===2 && S.byOffice.find(r=>r.o==='Hobbs').total===2 && S.byOffice.find(r=>r.o==='Hobbs').active===1 && S.byOffice.find(r=>r.o==='Carlsbad').total===1 && S.byOffice.find(r=>r.o==='Carlsbad').active===1);
   t('Sections: people who opened each', S.bySection.find(r=>r.k==='payroll').n===3);
   const A=U.summary(L, {kind:'7d', today:TODAY, includeAdmins:true});
-  t('Include admins: Priya counts too', A.total===5 && A.active===3 && A.today===2);
+  t('Include admins: Priya counts too', A.total===4 && A.active===3 && A.today===2);
   const T=U.summary(L, {kind:'today', today:TODAY, includeAdmins:false});
   t('Today: the chart still shows the last 7 days', T.days===1 && T.perDay.length===7);
   t('Counting since the first visit anyone made', S.firstEver==='2026-11-01T15:00:00Z');
   const E=U.summary(U.people(roster, roster, []), {kind:'30d', today:TODAY, includeAdmins:false});
-  t('Nothing recorded yet: 0%, no averages, everyone never', E.adoption===0 && E.avgDays===null && E.never===4 && E.firstEver==='');
+  t('Nothing recorded yet: no percentage at all (nobody has signed in), no averages, everyone never', E.adoption===null && E.total===0 && E.avgDays===null && E.never===4 && E.firstEver==='');
   /* 12/11/2026, Cory: "Probably don't need to show the months before this was live". Counting began on a day; a period
      starts no earlier than that day. Made-up people. */
   { const late=(email, name, days)=>rec(email, name, days, {first:days[0]+'T15:00:00'});
@@ -93,7 +93,7 @@ const recs=[
   const L=U.people(roster, roster, off);
   t('switched off: gone from the list (not even "Never signed in")', !L.some(x=>x.name==='Quinn Quill'));
   const S=U.summary(L, {kind:'7d', today:TODAY, includeAdmins:true});
-  t('...and from every number, even with Include admins', S.total===4 && S.today===1 && !S.rows.some(x=>x.name==='Quinn Quill'));
+  t('...and from every number, even with Include admins', S.total===3 && S.today===1 && !S.rows.some(x=>x.name==='Quinn Quill'));
   const X=U.people(roster, roster, recs.concat([{v:1, email:'pat.off@elsewhere.com', name:'Pat Off', off:true, d:{}}]));
   t('switched off and not on the team list: not an extra either', !X.some(x=>x.name==='Pat Off'));
   const src=fs.readFileSync(path.join(__dirname,'..','v1','user.js'),'utf8');

@@ -29,6 +29,29 @@ HUB" in the demo (Cory 25/11: "Don't call it home brace though") - build-demo.py
 practice's own name. Link previews: every demo page + the root carry deploy/demo-share.jpg (Cory's picture, wording
 changed to Practice Hub) as demo/share.jpg. Rebuild only when Cory asks ("refresh the demo").
 
+**ADMIN -> MONTHLY REVIEW + USAGE FIX (26/11/2026, hc269, SANDBOX ONLY until Cory says "deploy").** Doctors question
+Home-Brace's value; Jessica wants monthly: "What is the ask? Why? What is built ... What is the usage? Value add". Cory:
+in Admin, "not data vomit", "high level and clear", "easy to see, use, and understand"; the text-card version was "just
+words" (rebuilt numbers-first from an approved mock-up). `v1/review.js` (PH_REVIEW), Admin tab "Monthly review"
+(admin.html#review), 4 parts only: (1) four big numbers - staff time given back in $ (the VALUE CALCULATOR), exams
+OrthoFi saw that weren't logged (per office max(0, OrthoFi kept new exams - logged exams that happened), else consults
+logged), payroll sheets sent (ph_pay_status), % of people using it (vs last month); (2) VALUE BY APP - one card per app:
+"Used for" (Cory: "define better what its used for"), usage ring, its counted result, its $; VALUE BELONGS TO THE APP
+(Cory: upgrades "should contribute to the overall value of the specific app") - deliveries never get their own number;
+(3) THIS MONTH'S WORK = `WORK` in review.js (month, app, kind new|upgrade, before/now, ask/why/built under Details) - ADD
+THE MONTH'S LINES WHEN SOMETHING SHIPS; (4) people using it week by week. Copy for email. COUNTING RULE (Cory: "You
+shouldn't count people who have never logged in, even if they have access"): only team-list people with a visit record;
+an app counts the people who HAVE it (Teams & Access, Admin's per-person access override - rosterView now carries
+`access` -, payroll senders, chat pilot list; admins have everything on) and only while it is on for staff
+(PH.switches()). VALUE CALCULATOR (Cory: "Estimate time saved per week, average hourly salary"): ph_review_set {rate,
+jobs:{paySheets,consults,prodDays,tasksDone: minutes each}, weekly:{schedule,documents,dashboard,monthly,chat: minutes a
+week}, by, at} - admins save; Heather/Jessica set the numbers (until then the $ tile asks). Counted results: tasks
+(ph_tasks + archive), production days filled (ph_prod_log_<year> how:'schedule' changes), celebrations (ph_celebrate).
+Re-counts when the team list lands (AGAIN). Usage tab (usage.js) follows the same rule: adoption = of people who have
+signed in; "Never signed in" stays its own tile, in no %; "What they use" = used of those who have each app. Sandbox:
+made-up visits/numbers. test/review.test.js (51), usage.test.js updated. NEXT (Cory's plan): "Your day" card on Home for
+doctors/OMs (and take the app tiles off Home - Cory: they repeat the menu), then a morning phone alert.
+
 **The user is Cory Lawing.** He is building this for a friend's orthodontic practice. He is not a
 developer. Keep answers **short** — he has told me repeatedly that I write too much. Give the
 answer, not the reasoning behind every alternative.

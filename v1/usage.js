@@ -41,7 +41,7 @@
       const w=raw[view.indexOf(v)]||v;
       const rec=byKey[keyOf(w)] || byKey[keyOf(v)] || (v.email && byMail[String(v.email).toLowerCase()]) || byName[normName(v.name)] || null;
       if(rec) used.add(rec);
-      return {name:v.name||'', email:String(v.email||'').toLowerCase(), offices:v.offices||[], teams:v.teams||[], admin:isAdminTeams(v.teams) || !!(rec && rec.admin), rec, listed:true};
+      return {name:v.name||'', email:String(v.email||'').toLowerCase(), offices:v.offices||[], teams:v.teams||[], access:v.access||null, admin:isAdminTeams(v.teams) || !!(v.access && v.access.admin==='manage') || !!(rec && rec.admin), rec, listed:true};
     });
     recs.filter(r=>!used.has(r)).forEach(r=>list.push({name:r.name||r.email, email:r.email||'', offices:[], teams:[], admin:!!r.admin, rec:r, listed:false}));
     return list.filter(x=>!(x.rec && x.rec.off));                     // asked not to be tracked: never in any number
@@ -60,7 +60,10 @@
     const daysUsed=x=>!x.rec ? 0 : days.filter(d=>x.rec.d[d] && x.rec.d[d].n>0).length;
     const rows=ppl.map(x=>{ const du=daysUsed(x);
       return Object.assign({}, x, {days:du, last:x.rec ? x.rec.last||'' : '', state:du ? 'using' : x.rec ? 'quiet' : 'never'}); });
-    const listed=rows.filter(x=>x.listed), active=listed.filter(x=>x.days>0);
+    /* NEVER SIGNED IN = NOT COUNTED (26/11/2026). Cory: "You shouldn't count people who have never logged in, even if they
+       have access." Adoption, office bars and days are out of the people who have signed in at least once; the ones who
+       never have are their own tile and list, outside every percentage. */
+    const everyone=rows.filter(x=>x.listed), listed=everyone.filter(x=>x.rec), active=listed.filter(x=>x.days>0);
     const chartFrom=addDays(today,-6), chartDays=opts.kind==='today' ? daysIn((since && since>chartFrom) ? since : chartFrom, today) : days;
     const perDay=chartDays.map(d=>({d, n:rows.filter(x=>x.rec && x.rec.d[d] && x.rec.d[d].n>0).length}));
     const offices=[...new Set([].concat(opts.offices||[], ...listed.map(x=>x.offices)))].filter(Boolean);
@@ -74,7 +77,7 @@
       total:listed.length, active:active.length, adoption:listed.length ? active.length/listed.length : null,
       today:listed.filter(x=>x.rec && x.rec.d[today] && x.rec.d[today].n>0).length,
       avgDays:active.length ? active.reduce((a,x)=>a+x.days,0)/active.length : null,
-      never:listed.filter(x=>!x.rec).length};
+      never:everyone.filter(x=>!x.rec).length, days_:days};
   }
 
   /* ---------- reading every record ---------- */
@@ -152,6 +155,14 @@
   const secName=k=>{ const n=((global.PH && PH.NAV)||[]).find(x=>x.k===k); return n ? String(n.n).replace(/^[^A-Za-z]+/,'') : (k==='other' ? 'Other' : k.charAt(0).toUpperCase()+k.slice(1)); };
   const pct=x=>x==null ? '—' : Math.round(x*100)+'%';
 
+  /* Each tool against the people who HAVE it (26/11/2026, Cory: "if we have 20 users in Home-Brace but only 4 have access
+     to chat it shouldn't count the 20 users but the 4"): review.js knows who has what. Until it has answered (or on a page
+     without it) the old count shows. */
+  let CTX=null, CTX_P=null;
+  function TOOLUSE(S){ const R=global.PH_REVIEW; return (R && CTX && S.days_) ? R.toolUse(S.rows, S.days_, CTX) : null; }
+  function wantCtx(el){ const R=global.PH_REVIEW; if(!R || CTX || CTX_P) return;
+    CTX_P=R.context().then(c=>{ CTX=c; if(el.isConnected && DATA) paint(el); }, ()=>{ CTX_P=null; }); }
+
   /* ---------- the page ---------- */
   let KIND='30d', ADMINS=false, WHO='all', LAST='', DATA=null;
   function mountAdmin(host, opts){
@@ -162,7 +173,7 @@
     if(el._busy && !force) return;
     el._busy=true;
     load().then(recs=>{ el._busy=false; if(!el.isConnected) return; const sig=JSON.stringify(recs);
-        if(!force && sig===LAST && el.querySelector('.use-tiles')) return; LAST=sig; DATA=recs; paint(el); },
+        if(!force && sig===LAST && el.querySelector('.use-tiles')) return; LAST=sig; DATA=recs; paint(el); wantCtx(el); },
       e=>{ el._busy=false; if(!el.isConnected || el.querySelector('.use-tiles')) return; el.innerHTML='<div class="intro">Usage couldn’t load: '+esc((e && e.message)||'SharePoint didn’t answer')+'</div>'; });
   }
   function paint(el){
@@ -177,20 +188,23 @@
       '<label><input type="checkbox" data-adm'+(ADMINS?' checked':'')+'> Include admins</label></div>';
     h+='<p class="use-since"><b>'+esc(fmtDay(S.from))+(S.from!==S.to?' – '+esc(fmtDay(S.to)):'')+'</b>'+(S.since ? ' · Home-Brace has counted visits since '+esc(fmtShort(S.since))+(S.since>period(KIND, today).from && KIND!=='today' ? ', so this starts there' : '')+'.' : ' · Nothing counted yet - visits count from the day this went live.')+'</p>';
     h+='<div class="use-tiles">'+
-      '<div class="use-tile"><div class="k">Adoption · '+esc(label)+'</div><div class="v">'+pct(S.adoption)+'</div><div class="s">'+S.active+' of '+S.total+' people used Home-Brace</div><div class="use-meter" aria-hidden="true"><i style="width:'+Math.round((S.adoption||0)*100)+'%"></i></div></div>'+
+      '<div class="use-tile"><div class="k">Adoption · '+esc(label)+'</div><div class="v">'+pct(S.adoption)+'</div><div class="s">'+S.active+' of the '+S.total+' people who have signed in</div><div class="use-meter" aria-hidden="true"><i style="width:'+Math.round((S.adoption||0)*100)+'%"></i></div></div>'+
       '<div class="use-tile"><div class="k">Using it today</div><div class="v">'+S.today+'</div><div class="s">'+(S.today===1?'person':'people')+' so far today</div></div>'+
       '<div class="use-tile"><div class="k">Days used</div><div class="v">'+(S.avgDays==null?'—':(Math.round(S.avgDays*10)/10))+'</div><div class="s">'+(S.avgDays==null?'no one yet':'days each, of '+S.days+', for those using it')+'</div></div>'+
-      '<div class="use-tile"><div class="k">Never signed in</div><div class="v">'+S.never+'</div>'+(S.never?'<button type="button" class="s" data-who="never">See who →</button>':'<div class="s">Everyone has been in</div>')+'</div>'+
+      '<div class="use-tile"><div class="k">Never signed in</div><div class="v">'+S.never+'</div>'+(S.never?'<button type="button" class="s" data-who="never">See who →</button><div class="s">not in any percentage</div>':'<div class="s">Everyone has been in</div>')+'</div>'+
       '</div>';
     const max=Math.max(1, ...S.perDay.map(x=>x.n));
     h+='<div class="use-card"><h3>People using it each day</h3><p class="sub">'+(KIND==='today'?'The last 7 days':'Each day of the period')+(ADMINS?'':', admins left out')+'.</p>'+
       '<div class="use-chart" role="img" aria-label="People using Home-Brace each day"><span class="ymax">'+max+'</span>'+
       S.perDay.map(x=>'<span class="b'+(x.n?'':' zero')+'" tabindex="0" data-tip="'+esc(fmtDay(x.d))+': '+x.n+' '+(x.n===1?'person':'people')+'" aria-label="'+esc(fmtDay(x.d))+': '+x.n+'"><i style="height:'+Math.max(2, Math.round(x.n/max*100))+'%"></i></span>').join('')+'</div>'+
       (S.perDay.length ? '<div class="use-x"><span>'+esc(fmtShort(S.perDay[0].d))+'</span>'+(S.perDay.length>2?'<span>'+esc(fmtShort(S.perDay[Math.floor(S.perDay.length/2)].d))+'</span>':'')+(S.perDay.length>1?'<span>'+esc(fmtShort(S.perDay[S.perDay.length-1].d))+'</span>':'')+'</div>' : '')+'</div>';
-    h+='<div class="use-two"><div class="use-card"><h3>By office</h3><p class="sub">People on the team list who used it, '+esc(label.toLowerCase())+'.</p><div class="use-bars">'+
+    h+='<div class="use-two"><div class="use-card"><h3>By office</h3><p class="sub">Of the people who have signed in, who used it '+esc(label.toLowerCase())+'.</p><div class="use-bars">'+
       (S.byOffice.length ? S.byOffice.map(r=>'<div class="use-bar"><span>'+esc(r.o)+'</span><span class="t"><i style="width:'+Math.round(r.active/r.total*100)+'%"></i></span><span class="n"><b>'+r.active+'</b> of '+r.total+' · '+pct(r.active/r.total)+'</span></div>').join('') : '<div class="use-empty">No offices on the team list.</div>')+'</div></div>'+
-      '<div class="use-card"><h3>What they use</h3><p class="sub">How many people opened each section, '+esc(label.toLowerCase())+'.</p><div class="use-bars">'+
-      (S.bySection.length ? S.bySection.map(r=>'<div class="use-bar"><span>'+esc(secName(r.k))+'</span><span class="t"><i style="width:'+Math.round(r.n/Math.max(1,S.bySection[0].n)*100)+'%"></i></span><span class="n"><b>'+r.n+'</b> '+(r.n===1?'person':'people')+'</span></div>').join('') : '<div class="use-empty">Nothing yet.</div>')+'</div></div></div>';
+      '<div class="use-card"><h3>What they use</h3>'+(TOOLUSE(S) ?
+        '<p class="sub">Of the people who have each tool (and have signed in), how many opened it, '+esc(label.toLowerCase())+'.</p><div class="use-bars">'+
+        (TOOLUSE(S).length ? TOOLUSE(S).slice().sort((a,b)=>(b.used/b.have)-(a.used/a.have) || b.have-a.have).map(r=>'<div class="use-bar"><span>'+esc(r.n)+'</span><span class="t"><i style="width:'+Math.round(r.used/r.have*100)+'%"></i></span><span class="n"><b>'+r.used+'</b> of '+r.have+'</span></div>').join('') : '<div class="use-empty">Nothing yet.</div>')
+        : '<p class="sub">How many people opened each section, '+esc(label.toLowerCase())+'.</p><div class="use-bars">'+
+        (S.bySection.length ? S.bySection.map(r=>'<div class="use-bar"><span>'+esc(secName(r.k))+'</span><span class="t"><i style="width:'+Math.round(r.n/Math.max(1,S.bySection[0].n)*100)+'%"></i></span><span class="n"><b>'+r.n+'</b> '+(r.n===1?'person':'people')+'</span></div>').join('') : '<div class="use-empty">Nothing yet.</div>'))+'</div></div></div>';
     h+='<div style="height:14px"></div>';
     const cnt={all:S.rows.length, using:S.rows.filter(x=>x.state==='using').length, quiet:S.rows.filter(x=>x.state==='quiet').length, never:S.rows.filter(x=>x.state==='never').length};
     const shown=S.rows.filter(x=>WHO==='all' || x.state===WHO).sort((a,b)=>({using:0,quiet:1,never:2}[a.state]-{using:0,quiet:1,never:2}[b.state]) || String(b.last).localeCompare(String(a.last)) || b.days-a.days || String(a.name).localeCompare(String(b.name)));

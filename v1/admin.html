@@ -272,21 +272,22 @@
   }
 
 </style>
-<script src="user.js?v=hc268"></script>
+<script src="user.js?v=hc269"></script>
   <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/msal-browser.min.js"></script>
-  <script src="_staff.js?v=hc268"></script>
-  <script src="store.js?v=hc268"></script>
-  <script src="gate.js?v=hc268"></script>
-  <script src="docs.js?v=hc268"></script>
-  <script src="payrules.js?v=hc268"></script>
-  <script src="workbook.js?v=hc268"></script>
-  <script src="prodbook.js?v=hc268"></script>
-  <script src="party.js?v=hc268"></script>
-  <script src="prodfx.js?v=hc268"></script>
-  <script src="prodstore.js?v=hc268"></script>
-<script src="schedrec.js?v=hc268"></script>
-<script src="proddays.js?v=hc268"></script>
-  <script src="prodadmin.js?v=hc268"></script>
+  <script src="_staff.js?v=hc269"></script>
+  <script src="store.js?v=hc269"></script>
+  <script src="gate.js?v=hc269"></script>
+  <script src="docs.js?v=hc269"></script>
+  <script src="payrules.js?v=hc269"></script>
+  <script src="workbook.js?v=hc269"></script>
+  <script src="prodbook.js?v=hc269"></script>
+  <script src="party.js?v=hc269"></script>
+  <script src="prodfx.js?v=hc269"></script>
+  <script src="prodstore.js?v=hc269"></script>
+<script src="schedrec.js?v=hc269"></script>
+<script src="proddays.js?v=hc269"></script>
+  <script src="prodadmin.js?v=hc269"></script>
+  <script src="review.js?v=hc269"></script>
 </head>
 <body>
 <div class="ribbon">PROTOTYPE — admin console concept for validation. Real build: people sync from Microsoft 365; access is managed here.</div>
@@ -315,6 +316,7 @@
     <button class="tab" data-t="prod" onclick="AD.tab('prod')">Production data</button>
     <button class="tab" data-t="chat" onclick="AD.tab('chat')">Chat</button>
     <button class="tab" data-t="fb" onclick="AD.tab('fb')">Feedback</button>
+    <button class="tab" data-t="rev" onclick="AD.tab('rev')">Monthly review</button>
     <button class="tab" data-t="use" onclick="AD.tab('use')">Usage</button>
   </div>
 
@@ -725,12 +727,12 @@
   try{ window.matchMedia('(max-width:640px)').addEventListener('change', function(){ render(); }); }catch(_){}
   const av=u=>PAL[u.c%PAL.length];
   const initials=u=>(u.f[0]+u.l[0]).toUpperCase();
-  let tab=location.hash==='#feedback'?'fb':location.hash==='#usage'?'use':'users', search='',     // the bell's "new feedback" opens straight on Feedback
+  let tab=location.hash==='#feedback'?'fb':location.hash==='#usage'?'use':location.hash==='#review'?'rev':'users', search='',     // the bell's "new feedback" opens straight on Feedback
    tmpU=null, openSecs=new Set(['managers','hr']);
 
   function tabSet(t){ tab=t; [...document.querySelectorAll('.tab')].forEach(b=>b.classList.toggle('active',b.dataset.t===t)); render();
     // the address follows the tab (no reload, no hashchange), so a reload stays put and the bell's link always means a move
-    try{ const h=t==='fb'?'#feedback':t==='use'?'#usage':''; if(location.hash!==h) history.replaceState(null,'',location.pathname+location.search+h); }catch(_){} }
+    try{ const h=t==='fb'?'#feedback':t==='use'?'#usage':t==='rev'?'#review':''; if(location.hash!==h) history.replaceState(null,'',location.pathname+location.search+h); }catch(_){} }
   /* Repainting a whole tab throws away where the person was. The access matrix is
      wider than the screen, so setting a permission on a right-hand column used to
      snap back to the far left; expanding a document section jumped the page to the
@@ -746,7 +748,7 @@
   }
 
   function render(){ if(tab==='users')renderUsers(); else if(tab==='access')renderAccess();
-    else if(tab==='locs')renderLocs(); else if(tab==='prod')renderProd(); else if(tab==='fb')renderFb(); else if(tab==='use')renderUse(); else if(tab==='chat')renderChat(); else renderFiles(); }
+    else if(tab==='locs')renderLocs(); else if(tab==='prod')renderProd(); else if(tab==='fb')renderFb(); else if(tab==='use')renderUse(); else if(tab==='rev')renderRev(); else if(tab==='chat')renderChat(); else renderFiles(); }
   /* CHAT PILOT (17/11/2026). Cory: "start with chat but its important only people in this tenant can use it, and only me
      heather, jessica can use it first until we verify its good". While chat is a pilot, the real Teams chat on the live
      site is only for the people on this list - the shared list 'ph_chat_pilot' {list:[{email,name}], upd, updBy}
@@ -801,6 +803,11 @@
     chatSave(l=>l.filter(t=>t.email!==em), x.name+' is out of the chat pilot.');
   }
   function chatRetry(){ CHATP=null; CHATP_ERR=''; renderChat(); }
+  /* MONTHLY REVIEW (26/11/2026): Jessica's monthly ask / why / built / usage / value, one screen - review.js. */
+  function renderRev(){ const v=document.getElementById('view');
+    if(!window.PH_REVIEW){ v.innerHTML='<div class="intro">The monthly review could not load.</div>'; return; }
+    if(!v.querySelector(':scope > .rv')) v.innerHTML='';
+    PH_REVIEW.mount(v); }
   /* USAGE (10/11/2026): the adoption dashboard - usage.js. Kept and refreshed quietly on Admin's redraws, like Feedback. */
   function renderUse(){ const v=document.getElementById('view');
     if(!v.querySelector(':scope > .use-admin')) v.innerHTML='<div class="use-admin"><div style="font-size:14px;color:#56627A;padding:8px 2px">Loading usage…</div></div>';
@@ -2411,7 +2418,7 @@
   const thenSync=f=>function(){ const r=f.apply(this,arguments); syncEdit(); return r; };
   if(location.hash==='#feedback') setTimeout(()=>tabSet('fb'), 0);
   /* The bell's "new feedback" while Admin is already open (20/11/2026): the page doesn't reload, so follow the address. */
-  window.addEventListener('hashchange', ()=>{ if(location.hash==='#feedback') tabSet('fb'); else if(location.hash==='#usage') tabSet('use'); });
+  window.addEventListener('hashchange', ()=>{ if(location.hash==='#feedback') tabSet('fb'); else if(location.hash==='#usage') tabSet('use'); else if(location.hash==='#review') tabSet('rev'); });
   if(location.hash==='#usage') setTimeout(()=>tabSet('use'), 0);      // the bell's "new feedback" opens here
   window.AD={chatAdd,chatDel,chatRetry,tabNow:()=>tab,setupSecs,editSyncNow,tcSyncNow,paySyncNow,sensAdd,sensChange,sensRemove,sensClose,sensQ,sensToggle,sensClear,sensLevel,sensTyped,sensBack,sensNext,sensGo,sensSyncNow,tab:tabSet,viewAs:doViewAs,newTeam,editTeam,saveTeam:thenSync(saveTeam),delTeam:thenSync(delTeam),resetTeams,profile,whyNoAdd,
     addPerson,npSet,npLoc,npTeam,saveNewPerson:thenSync(saveNewPerson),accTeam:setAccTeam,removePerson:thenSync(removePerson),restorePerson:thenSync(restorePerson),showRemoved,togTeam,togLoc,setStatus,saveUser:thenSync(saveUser),pickLevel,pickAud,setField,pickPhoto,photoChosen,clearPhoto,pickUserLevel,clearUserLevel,tog,addFile,noop,newSec,editSec,saveSec:thenSync(saveSec),delSec,delSecGo,resetSecs,setSecName,setSecIcon,setSecStruct,setSecLocMode,setSecTeamMode,togSecLoc,togSecTeam,saveFile,cd,useFile,clearFile,uploadFile,setFileTeamMode,setFileLocMode,togFileLoc,togFileTeam,renderLocs,newLoc,editLoc,saveLoc,delLoc,delLocGo,resetLocs,setLocBrand,setLocState,setLocTZ,testAlert,setCeleb,hireOpen,hireRead,hireSet,hireSave,close:closeModal};
@@ -2498,7 +2505,7 @@ function sizeWatch(){
   }).catch(()=>{});
 }
 </script>
-<script src="tour.js?v=hc268"></script>
+<script src="tour.js?v=hc269"></script>
 <script>
 Tour.init([
   {sel:'#tabs', title:'This is your control room', body:'Four tabs and you can run the whole hub: <b>People</b>, <b>Teams &amp; Access</b>, <b>Document Sections</b> and <b>Locations</b>. No developer, no consultant.', pre:()=>AD.tab('users')},
